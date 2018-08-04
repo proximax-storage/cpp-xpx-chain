@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/IdGenerator.h"
 #include "src/builders/RegisterNamespaceBuilder.h"
-#include "plugins/txes/namespace/src/model/IdGenerator.h"
 #include "sdk/tests/builders/test/BuilderTestUtils.h"
 
 namespace catapult { namespace builders {
@@ -64,7 +64,7 @@ namespace catapult { namespace builders {
 			EXPECT_TRUE(0 == std::memcmp(namespaceName.data(), transaction.NamePtr(), namespaceName.size()));
 
 			// - id matches
-			auto expectedId = model::GenerateNamespaceId(parentId, namespaceName);
+			auto expectedId = crypto::GenerateNamespaceId(parentId, namespaceName);
 			EXPECT_EQ(expectedId, transaction.NamespaceId);
 		}
 

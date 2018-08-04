@@ -92,9 +92,9 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenValidatingXemTransfer) {
+	TEST(TEST_CLASS, SuccessWhenValidatingXpxTransfer) {
 		// Arrange:
-		auto notification = model::BalanceTransferNotification(Key(), Address(), Xem_Id, Amount(123));
+		auto notification = model::BalanceTransferNotification(Key(), Address(), Xpx_Id, Amount(123));
 		auto cache = CreateCache();
 
 		// Assert:

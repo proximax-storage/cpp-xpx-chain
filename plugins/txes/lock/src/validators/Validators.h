@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(SecretLockHashAlgorithm, model::SecretLockHashAlgorithmNotification)();
 
 	/// A validator implementation that applies to hash lock mosaic notifications and validates that:
-	/// - mosaic id is nem.xem
+	/// - mosaic id is prx.xpx
 	/// - mosaic amount is equal to \a lockedFundsPerAggregate
 	DECLARE_STATELESS_VALIDATOR(HashLockMosaic, model::HashLockMosaicNotification)(Amount lockedFundsPerAggregate);
 

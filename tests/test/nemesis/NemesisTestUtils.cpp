@@ -58,7 +58,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(Height(1), accountState.PublicKeyHeight);
 			EXPECT_EQ(nemesisKeyPair.publicKey(), accountState.PublicKey);
 
-			EXPECT_EQ(Amount(0), accountState.Balances.get(Xem_Id));
+			EXPECT_EQ(Amount(0), accountState.Balances.get(Xpx_Id));
 
 			EXPECT_EQ(model::ImportanceHeight(0), accountState.ImportanceInfo.height());
 			EXPECT_EQ(Importance(0), accountState.ImportanceInfo.current());
@@ -75,7 +75,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(Height(1), accountState.PublicKeyHeight) << message;
 			EXPECT_EQ(publicKey, accountState.PublicKey) << message;
 
-			EXPECT_EQ(Amount(0), accountState.Balances.get(Xem_Id)) << message;
+			EXPECT_EQ(Amount(0), accountState.Balances.get(Xpx_Id)) << message;
 
 			EXPECT_EQ(model::ImportanceHeight(0), accountState.ImportanceInfo.height()) << message;
 			EXPECT_EQ(Importance(0), accountState.ImportanceInfo.current()) << message;
@@ -91,7 +91,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(Height(0), accountState.PublicKeyHeight) << message;
 			// recipient public key is unknown (public key height is zero)
 
-			EXPECT_EQ(Nemesis_Recipient_Amount, accountState.Balances.get(Xem_Id)) << message;
+			EXPECT_EQ(Nemesis_Recipient_Amount, accountState.Balances.get(Xpx_Id)) << message;
 
 			EXPECT_EQ(model::ImportanceHeight(1), accountState.ImportanceInfo.height()) << message;
 			EXPECT_EQ(Nemesis_Recipient_Importance, accountState.ImportanceInfo.current()) << message;
@@ -124,8 +124,8 @@ namespace catapult { namespace test {
 			EXPECT_EQ(1u, view.size());
 
 			// - check for known mosaics
-			ASSERT_TRUE(view.contains(Xem_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.get(Xem_Id).supply());
+			ASSERT_TRUE(view.contains(Xpx_Id));
+			EXPECT_EQ(Amount(8'999'999'998'000'000), view.get(Xpx_Id).supply());
 		}
 	}
 
@@ -139,7 +139,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(1u, view.size());
 
 			// - check for known namespaces
-			EXPECT_TRUE(view.contains(Nem_Id));
+			EXPECT_TRUE(view.contains(Prx_Id));
 		}
 	}
 

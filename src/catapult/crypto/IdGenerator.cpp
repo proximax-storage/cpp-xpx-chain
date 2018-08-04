@@ -19,10 +19,10 @@
 **/
 
 #include "IdGenerator.h"
-#include "NamespaceConstants.h"
-#include "catapult/crypto/Hashes.h"
+#include "Hashes.h"
+#include "catapult/types.h"
 
-namespace catapult { namespace model {
+namespace catapult { namespace crypto {
 
 	namespace {
 		template<typename TId>

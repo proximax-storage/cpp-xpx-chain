@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/IdGenerator.h"
 #include "src/builders/MosaicSupplyChangeBuilder.h"
-#include "plugins/txes/namespace/src/model/IdGenerator.h"
 #include "sdk/tests/builders/test/BuilderTestUtils.h"
 
 namespace catapult { namespace builders {
@@ -106,7 +106,7 @@ namespace catapult { namespace builders {
 		auto mosaicName = std::string();
 
 		// Assert:
-		auto mosaicId = model::GenerateMosaicId(namespaceId, mosaicName);
+		auto mosaicId = crypto::GenerateMosaicId(namespaceId, mosaicName);
 		AssertCanBuildTransaction<TTraits>(
 				CreateTransactionBuilder(namespaceId, mosaicName, [](const auto&) {}),
 				CreatePropertyChecker(mosaicId, model::MosaicSupplyChangeDirection::Increase, Amount(0)));

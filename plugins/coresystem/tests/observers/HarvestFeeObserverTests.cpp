@@ -48,7 +48,7 @@ namespace catapult { namespace observers {
 		// Arrange:
 		RunHarvestFeeObserverTest(NotifyMode::Commit, [](test::AccountObserverTestContext& context, const auto& observer) {
 			auto signer = test::GenerateRandomData<Key_Size>();
-			test::SetCacheBalances(context.cache(), signer, { { Xem_Id, Amount(987) } });
+			test::SetCacheBalances(context.cache(), signer, { { Xpx_Id, Amount(987) } });
 
 			auto notification = test::CreateBlockNotification(signer);
 			notification.TotalFee = Amount(123);
@@ -57,7 +57,7 @@ namespace catapult { namespace observers {
 			test::ObserveNotification(observer, notification, context);
 
 			// Assert:
-			test::AssertBalances(context.cache(), signer, { { Xem_Id, Amount(987 + 123) } });
+			test::AssertBalances(context.cache(), signer, { { Xpx_Id, Amount(987 + 123) } });
 		});
 	}
 
@@ -65,7 +65,7 @@ namespace catapult { namespace observers {
 		// Arrange:
 		RunHarvestFeeObserverTest(NotifyMode::Rollback, [](test::AccountObserverTestContext& context, const auto& observer) {
 			auto signer = test::GenerateRandomData<Key_Size>();
-			test::SetCacheBalances(context.cache(), signer, { { Xem_Id, Amount(987 + 123) } });
+			test::SetCacheBalances(context.cache(), signer, { { Xpx_Id, Amount(987 + 123) } });
 
 			auto notification = test::CreateBlockNotification(signer);
 			notification.TotalFee = Amount(123);
@@ -74,7 +74,7 @@ namespace catapult { namespace observers {
 			test::ObserveNotification(observer, notification, context);
 
 			// Assert:
-			test::AssertBalances(context.cache(), signer, { { Xem_Id, Amount(987) } });
+			test::AssertBalances(context.cache(), signer, { { Xpx_Id, Amount(987) } });
 		});
 	}
 }}

@@ -62,7 +62,7 @@ namespace catapult { namespace extensions {
 				// seed the "nemesis" / transfer account (this account is used to fund all other accounts)
 				auto delta = m_cache.createDelta();
 				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(m_specialAccountKey, Height(1));
-				accountState.Balances.credit(Xem_Id, GetTotalChainBalance(numAccounts));
+				accountState.Balances.credit(Xpx_Id, GetTotalChainBalance(numAccounts));
 				m_cache.commit(Height());
 			}
 
@@ -74,7 +74,7 @@ namespace catapult { namespace extensions {
 				for (uint8_t i = startAccountId; i < startAccountId + numAccounts; ++i) {
 					uint8_t multiplier = i - startAccountId + 1;
 					auto pTransaction = mocks::CreateTransactionWithFeeAndTransfers(Amount(), {
-						{ Xem_Id, Amount(multiplier * baseUnit * 1'000'000) }
+						{ Xpx_Id, Amount(multiplier * baseUnit * 1'000'000) }
 					});
 					pTransaction->Signer = m_specialAccountKey;
 					pTransaction->Recipient = Key{ { i } };
@@ -90,7 +90,7 @@ namespace catapult { namespace extensions {
 				for (uint8_t i = startAccountId; i < startAccountId + numAccounts; ++i) {
 					const auto& accountState = accountStateCacheView->get(Key{ { i } });
 					auto pTransaction = mocks::CreateTransactionWithFeeAndTransfers(Amount(), {
-						{ Xem_Id, accountState.Balances.get(Xem_Id) }
+						{ Xpx_Id, accountState.Balances.get(Xpx_Id) }
 					});
 					pTransaction->Signer = Key{ { i } };
 					pTransaction->Recipient = m_specialAccountKey;
@@ -105,7 +105,7 @@ namespace catapult { namespace extensions {
 				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView();
 				const auto& accountState1 = accountStateCacheView->get(Key{ { accountId1 } });
 				auto pTransaction = mocks::CreateTransactionWithFeeAndTransfers(Amount(), {
-					{ Xem_Id, accountState1.Balances.get(Xem_Id) }
+					{ Xpx_Id, accountState1.Balances.get(Xpx_Id) }
 				});
 				pTransaction->Signer = accountState1.PublicKey;
 				pTransaction->Recipient = Key{ { accountId2 } };

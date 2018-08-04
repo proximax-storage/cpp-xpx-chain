@@ -35,7 +35,7 @@ namespace catapult { namespace observers {
 
 		public:
 			static MosaicId LockInfoMosaicId() {
-				return Xem_Id;
+				return Xpx_Id;
 			}
 
 			static auto CreateObserver() {

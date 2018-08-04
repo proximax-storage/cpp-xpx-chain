@@ -141,36 +141,36 @@ namespace catapult { namespace validators {
 		// Arrange: do not register the signer with the cache
 		auto sender = test::GenerateRandomData<Key_Size>();
 		auto recipient = test::GenerateRandomData<Address_Decoded_Size>();
-		auto notification = model::BalanceTransferNotification(sender, recipient, Xem_Id, Amount(0));
+		auto notification = model::BalanceTransferNotification(sender, recipient, Xpx_Id, Amount(0));
 		auto cache = test::CreateEmptyCatapultCache();
 
 		// Assert:
 		AssertValidationResult<TValidatorTraits>(Failure_Core_Insufficient_Balance, cache, notification);
 	}
 
-	VARIABLE_BALANCE_TEST(Xem) {
+	VARIABLE_BALANCE_TEST(Xpx) {
 		// Arrange:
 		auto sender = test::GenerateRandomData<Key_Size>();
 		auto recipient = test::GenerateRandomData<Address_Decoded_Size>();
-		auto notification = model::BalanceTransferNotification(sender, recipient, Xem_Id, Amount(234));
-		auto cache = test::CreateCache(sender, { { Xem_Id, TTraits::Adjust(Amount(234)) } });
+		auto notification = model::BalanceTransferNotification(sender, recipient, Xpx_Id, Amount(234));
+		auto cache = test::CreateCache(sender, { { Xpx_Id, TTraits::Adjust(Amount(234)) } });
 
 		// Assert:
 		AssertValidationResult<TValidatorTraits>(TTraits::Expected_Result, cache, notification);
 	}
 
-	VARIABLE_BALANCE_TEST(Xem_SeededByAddress) {
+	VARIABLE_BALANCE_TEST(Xpx_SeededByAddress) {
 		// Arrange:
 		auto sender = test::GenerateRandomData<Key_Size>();
 		auto recipient = test::GenerateRandomData<Address_Decoded_Size>();
-		auto notification = model::BalanceTransferNotification(sender, recipient, Xem_Id, Amount(234));
+		auto notification = model::BalanceTransferNotification(sender, recipient, Xpx_Id, Amount(234));
 
 		// - seed the sender by address
 		auto cache = test::CreateEmptyCatapultCache();
 		auto senderAddress = model::PublicKeyToAddress(sender, cache.sub<cache::AccountStateCache>().networkIdentifier());
 		{
 			auto delta = cache.createDelta();
-			test::SetCacheBalances(delta, senderAddress, { { Xem_Id, TTraits::Adjust(Amount(234)) } });
+			test::SetCacheBalances(delta, senderAddress, { { Xpx_Id, TTraits::Adjust(Amount(234)) } });
 			cache.commit(Height());
 		}
 

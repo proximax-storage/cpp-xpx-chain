@@ -60,6 +60,6 @@ namespace catapult { namespace cache {
 
 		return pAccountState
 				&& pAccountState->ImportanceInfo.current() > Importance(0)
-				&& pAccountState->Balances.get(Xem_Id) >= minHarvestingBalance;
+				&& pAccountState->Balances.get(Xpx_Id) >= minHarvestingBalance;
 	}
 }}

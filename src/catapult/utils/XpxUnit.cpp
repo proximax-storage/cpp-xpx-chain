@@ -18,12 +18,31 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#include <stddef.h>
-#include <stdint.h>
+#include "ConfigurationValueParsers.h"
+#include "StreamFormatGuard.h"
+#include "XpxUnit.h"
 
-namespace catapult { namespace model {
+namespace catapult { namespace utils {
 
-	/// Returns \c true if \a pName with size \a nameSize points to a valid name.
-	bool IsValidName(const uint8_t* pName, size_t nameSize);
+	std::ostream& operator<<(std::ostream& out, XpxUnit unit) {
+		StreamFormatGuard guard(out, std::ios::dec, '0');
+		out << unit.xpx();
+		if (unit.isFractional())
+			out << '.' << std::setw(6) << (unit.m_value % XpxUnit::Microxpx_Per_Xpx);
+
+		return out;
+	}
+
+	bool TryParseValue(const std::string& str, XpxUnit& parsedValue) {
+		Amount microxpx;
+		if (!TryParseValue(str, microxpx))
+			return false;
+
+		XpxUnit xpxUnit(microxpx);
+		if (xpxUnit.isFractional())
+			return false;
+
+		parsedValue = xpxUnit;
+		return true;
+	}
 }}

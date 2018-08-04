@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/model/IdGenerator.h"
+#include "catapult/crypto/IdGenerator.h"
 #include "catapult/constants.h"
 #include "tests/TestHarness.h"
 
@@ -30,15 +30,15 @@ namespace catapult { namespace model {
 		template<typename TGenerator>
 		void AssertDifferentNamesProduceDifferentIds(TGenerator generator) {
 			// Assert:
-			for (const auto name : { "jeff", "bloodyrookie", "nem.xem", "nemx" })
-				EXPECT_NE(generator("nem"), generator(name)) << "nem vs " << name;
+			for (const auto name : { "jeff", "bloodyrookie", "prx.xpx", "prxx" })
+				EXPECT_NE(generator("prx"), generator(name)) << "prx vs " << name;
 		}
 
 		template<typename TGenerator>
 		void AssertDifferentlyCasedNamesProduceDifferentIds(TGenerator generator) {
 			// Assert:
-			for (const auto name : { "NEM", "Nem", "nEm", "NeM" })
-				EXPECT_NE(generator("nem"), generator(name)) << "nem vs " << name;
+			for (const auto name : { "PRX", "Prx", "pRx", "PrX" })
+				EXPECT_NE(generator("prx"), generator(name)) << "prx vs " << name;
 		}
 
 		template<typename TGenerator>
@@ -53,17 +53,17 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, GenerateRootNamespaceId_GeneratesCorrectWellKnownIds) {
 		// Assert:
-		EXPECT_EQ(Nem_Id, GenerateRootNamespaceId("nem"));
+		EXPECT_EQ(Prx_Id, crypto::GenerateRootNamespaceId("prx"));
 	}
 
 	TEST(TEST_CLASS, GenerateRootNamespaceId_DifferentNamesProduceDifferentIds) {
 		// Assert:
-		AssertDifferentNamesProduceDifferentIds(GenerateRootNamespaceId);
+		AssertDifferentNamesProduceDifferentIds(crypto::GenerateRootNamespaceId);
 	}
 
 	TEST(TEST_CLASS, GenerateRootNamespaceId_NamesAreCaseSensitive) {
 		// Assert:
-		AssertDifferentlyCasedNamesProduceDifferentIds(GenerateRootNamespaceId);
+		AssertDifferentlyCasedNamesProduceDifferentIds(crypto::GenerateRootNamespaceId);
 	}
 
 	// endregion
@@ -72,28 +72,28 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, GenerateNamespaceId_GeneratesCorrectWellKnownIds) {
 		// Assert:
-		EXPECT_EQ(Nem_Id, GenerateNamespaceId(NamespaceId(), "nem"));
+		EXPECT_EQ(Prx_Id, crypto::GenerateNamespaceId(NamespaceId(), "prx"));
 	}
 
 	TEST(TEST_CLASS, GenerateNamespaceId_DifferentNamesProduceDifferentIds) {
 		// Assert:
-		AssertDifferentNamesProduceDifferentIds([](const auto& name) { return GenerateNamespaceId(NamespaceId(), name); });
+		AssertDifferentNamesProduceDifferentIds([](const auto& name) { return crypto::GenerateNamespaceId(NamespaceId(), name); });
 	}
 
 	TEST(TEST_CLASS, GenerateNamespaceId_NamesAreCaseSensitive) {
 		// Assert:
-		AssertDifferentlyCasedNamesProduceDifferentIds([](const auto& name) { return GenerateNamespaceId(NamespaceId(), name); });
+		AssertDifferentlyCasedNamesProduceDifferentIds([](const auto& name) { return crypto::GenerateNamespaceId(NamespaceId(), name); });
 	}
 
 	TEST(TEST_CLASS, GenerateNamespaceId_DifferentParentNamespaceIdsProduceDifferentIds) {
 		// Assert:
-		AssertDifferentParentNamespaceIdsProduceDifferentIds([](const auto& nsId) { return GenerateNamespaceId(nsId, "nem"); });
+		AssertDifferentParentNamespaceIdsProduceDifferentIds([](const auto& nsId) { return crypto::GenerateNamespaceId(nsId, "prx"); });
 	}
 
 	TEST(TEST_CLASS, GenerateNamespaceId_CanGenerateRootNamespaceIds) {
 		// Assert:
-		for (const auto name : { "jeff", "bloodyrookie", "nem.xem", "nemx" })
-			EXPECT_EQ(GenerateRootNamespaceId(name), GenerateNamespaceId(NamespaceId(), name)) << "ns: " << name;
+		for (const auto name : { "jeff", "bloodyrookie", "prx.xpx", "prxx" })
+			EXPECT_EQ(crypto::GenerateRootNamespaceId(name), crypto::GenerateNamespaceId(NamespaceId(), name)) << "ns: " << name;
 	}
 
 	// endregion
@@ -102,22 +102,22 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, GenerateMosaicId_GeneratesCorrectWellKnownIds) {
 		// Assert:
-		EXPECT_EQ(Xem_Id, GenerateMosaicId(Nem_Id, "xem"));
+		EXPECT_EQ(Xpx_Id, crypto::GenerateMosaicId(Prx_Id, "xpx"));
 	}
 
 	TEST(TEST_CLASS, GenerateMosaicId_DifferentNamesProduceDifferentIds) {
 		// Assert:
-		AssertDifferentNamesProduceDifferentIds([](const auto& name) { return GenerateMosaicId(NamespaceId(), name); });
+		AssertDifferentNamesProduceDifferentIds([](const auto& name) { return crypto::GenerateMosaicId(NamespaceId(), name); });
 	}
 
 	TEST(TEST_CLASS, GenerateMosaicId_NamesAreCaseSensitive) {
 		// Assert:
-		AssertDifferentlyCasedNamesProduceDifferentIds([](const auto& name) { return GenerateMosaicId(NamespaceId(), name); });
+		AssertDifferentlyCasedNamesProduceDifferentIds([](const auto& name) { return crypto::GenerateMosaicId(NamespaceId(), name); });
 	}
 
 	TEST(TEST_CLASS, GenerateMosaicId_DifferentParentNamespaceIdsProduceDifferentIds) {
 		// Assert:
-		AssertDifferentParentNamespaceIdsProduceDifferentIds([](const auto& nsId) { return GenerateMosaicId(nsId, "nem"); });
+		AssertDifferentParentNamespaceIdsProduceDifferentIds([](const auto& nsId) { return crypto::GenerateMosaicId(nsId, "prx"); });
 	}
 
 	// endregion

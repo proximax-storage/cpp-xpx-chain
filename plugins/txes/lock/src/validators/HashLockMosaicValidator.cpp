@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 			if (lockedFundsPerAggregate != notification.Mosaic.Amount)
 				return Failure_Lock_Invalid_Mosaic_Amount;
 
-			return Xem_Id != notification.Mosaic.MosaicId ? Failure_Lock_Invalid_Mosaic_Id : ValidationResult::Success;
+			return Xpx_Id != notification.Mosaic.MosaicId ? Failure_Lock_Invalid_Mosaic_Id : ValidationResult::Success;
 		}));
 	}
 }}

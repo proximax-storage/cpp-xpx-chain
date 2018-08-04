@@ -19,7 +19,8 @@
 **/
 
 #include "MosaicDefinitionBuilder.h"
-#include "plugins/txes/namespace/src/model/IdGenerator.h"
+
+#include "catapult/crypto/IdGenerator.h"
 
 namespace catapult { namespace builders {
 
@@ -70,7 +71,7 @@ namespace catapult { namespace builders {
 
 		// 2. set transaction fields
 		pTransaction->ParentId = m_parentId;
-		pTransaction->MosaicId = model::GenerateMosaicId(m_parentId, m_name);
+		pTransaction->MosaicId = crypto::GenerateMosaicId(m_parentId, m_name);
 
 		pTransaction->PropertiesHeader.Flags = m_flags;
 		pTransaction->PropertiesHeader.Divisibility = m_divisibility;

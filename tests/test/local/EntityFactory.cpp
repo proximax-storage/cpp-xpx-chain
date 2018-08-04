@@ -59,7 +59,7 @@ namespace catapult { namespace test {
 			const Key& signerPublicKey,
 			const Address& recipient,
 			Amount amount) {
-		return CreateUnsignedTransferTransaction(signerPublicKey, recipient, {}, { { Xem_Id, amount } });
+		return CreateUnsignedTransferTransaction(signerPublicKey, recipient, {}, { { Xpx_Id, amount } });
 	}
 
 	std::unique_ptr<model::Transaction> CreateTransferTransaction(const crypto::KeyPair& signer, const Address& recipient, Amount amount) {

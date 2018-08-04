@@ -119,28 +119,28 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	PLUGIN_TEST(CanMapTransferTransactionWithoutMessageButWithSingleMosaic) {
 		// Assert:
-		AssertCanMapTransferTransaction<TTraits>({}, { { Xem_Id, Amount(234) } });
+		AssertCanMapTransferTransaction<TTraits>({}, { { Xpx_Id, Amount(234) } });
 	}
 
 	PLUGIN_TEST(CanMapTransferTransactionWithoutMessageButWithMultipleMosaics) {
 		// Assert:
 		AssertCanMapTransferTransaction<TTraits>(
 				{},
-				{ { Xem_Id, Amount(234) }, { MosaicId(1357), Amount(345) }, { MosaicId(31), Amount(45) } });
+				{ { Xpx_Id, Amount(234) }, { MosaicId(1357), Amount(345) }, { MosaicId(31), Amount(45) } });
 	}
 
 	PLUGIN_TEST(CanMapTransferTransactionWithMessageAndSingleMosaic) {
 		// Assert:
 		AssertCanMapTransferTransaction<TTraits>(
 				{ 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64 },
-				{ { Xem_Id, Amount(234) } });
+				{ { Xpx_Id, Amount(234) } });
 	}
 
 	PLUGIN_TEST(CanMapTransferTransactionWithMessageAndMultipleMosaics) {
 		// Assert:
 		AssertCanMapTransferTransaction<TTraits>(
 				{ 0x48, 0x65, 0x6C, 0x6C, 0x6F, 0x20, 0x57, 0x6F, 0x72, 0x6C, 0x64 },
-				{ { Xem_Id, Amount(234) }, { MosaicId(1357), Amount(345) }, { MosaicId(31), Amount(45) } });
+				{ { Xpx_Id, Amount(234) }, { MosaicId(1357), Amount(345) }, { MosaicId(31), Amount(45) } });
 	}
 
 	// endregion

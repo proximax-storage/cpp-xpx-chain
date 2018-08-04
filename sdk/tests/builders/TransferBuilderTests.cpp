@@ -297,10 +297,10 @@ namespace catapult { namespace builders {
 		// Arrange:
 		RunBuilderTest([](auto& builder) {
 			// Act:
-			builder.addMosaic(Xem_Id, Amount(123));
+			builder.addMosaic(Xpx_Id, Amount(123));
 
 			// Act + Assert:
-			EXPECT_THROW(builder.addMosaic("nem:xem", Amount(234)), catapult_runtime_error);
+			EXPECT_THROW(builder.addMosaic("prx:xpx", Amount(234)), catapult_runtime_error);
 		});
 	}
 
@@ -340,7 +340,7 @@ namespace catapult { namespace builders {
 				[&message](auto& builder) {
 					builder.addMosaic(MosaicId(0), Amount(4'321));
 					builder.setStringMessage(message);
-					builder.addMosaic("nem:xem", Amount(1'000'000));
+					builder.addMosaic("prx:xpx", Amount(1'000'000));
 				},
 				[&message](const auto& transfer) {
 					// Assert: a message is present
@@ -349,7 +349,7 @@ namespace catapult { namespace builders {
 
 					// - two mosaics are present
 					auto expectedMosaicsMap = std::map<MosaicId, Amount>{{
-						{ Xem_Id, Amount(1'000'000) },
+						{ Xpx_Id, Amount(1'000'000) },
 						{ MosaicId(0), Amount(4'321) }
 					}};
 					EXPECT_EQ(2u, transfer.MosaicsCount);

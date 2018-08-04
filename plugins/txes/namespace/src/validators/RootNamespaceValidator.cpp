@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/IdGenerator.h"
 #include "Validators.h"
-#include "src/model/IdGenerator.h"
 #include "catapult/utils/Hashers.h"
 
 namespace catapult { namespace validators {

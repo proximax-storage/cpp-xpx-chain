@@ -61,7 +61,7 @@ namespace catapult { namespace test {
 	std::shared_ptr<state::AccountState> CreateAccountStateWithoutPublicKey(uint64_t height) {
 		auto address = test::GenerateRandomAddress();
 		auto pState = std::make_shared<state::AccountState>(address, Height(height));
-		pState->Balances.credit(Xem_Id, Amount(1));
+		pState->Balances.credit(Xpx_Id, Amount(1));
 		pState->ImportanceInfo.set(Importance(123456), model::ImportanceHeight(height));
 		return pState;
 	}

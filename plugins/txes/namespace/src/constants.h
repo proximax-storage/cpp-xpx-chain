@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/crypto/IdGenerator.h"
 #include "types.h"
 
 namespace catapult {
@@ -29,16 +30,6 @@ namespace catapult {
 	/// Duration of eternal artifact.
 	constexpr BlockDuration Eternal_Artifact_Duration(0);
 
-	/// Base id for namespaces.
-	constexpr NamespaceId Namespace_Base_Id(0);
-
 	/// Number of rules for a mosaic levy.
 	constexpr size_t Num_Mosaic_Levy_Rule_Ids = 5;
-
-	/// NEM namespace id.
-#ifdef SIGNATURE_SCHEME_NIS1
-	constexpr NamespaceId Nem_Id(0x2912FDE512A2C7B8ULL);
-#else
-	constexpr NamespaceId Nem_Id(0x84B3552D375FFA4BULL);
-#endif
 }

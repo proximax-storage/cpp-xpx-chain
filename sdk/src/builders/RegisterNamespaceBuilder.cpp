@@ -19,7 +19,8 @@
 **/
 
 #include "RegisterNamespaceBuilder.h"
-#include "plugins/txes/namespace/src/model/IdGenerator.h"
+
+#include "catapult/crypto/IdGenerator.h"
 #include "plugins/txes/namespace/src/model/NamespaceConstants.h"
 
 namespace catapult { namespace builders {
@@ -57,7 +58,7 @@ namespace catapult { namespace builders {
 			pTransaction->ParentId = m_parentId;
 		}
 
-		pTransaction->NamespaceId = model::GenerateNamespaceId(m_parentId, m_name);
+		pTransaction->NamespaceId = crypto::GenerateNamespaceId(m_parentId, m_name);
 
 		// 3. set name
 		pTransaction->NamespaceNameSize = utils::checked_cast<size_t, uint8_t>(m_name.size());

@@ -20,6 +20,7 @@
 
 #pragma once
 #include "types.h"
+#include "crypto/IdGenerator.h"
 
 namespace catapult {
 
@@ -30,10 +31,9 @@ namespace catapult {
 	/// \note Reducing below `Hash256_Size` can save memory but will increase possibility of false positive rejections.
 	constexpr size_t Cached_Hash_Size = Hash256_Size;
 
-	/// XEM mosaic id.
-#ifdef SIGNATURE_SCHEME_NIS1
-	constexpr MosaicId Xem_Id = MosaicId(0x493B6D561C49F4B8ULL);
-#else
-	constexpr MosaicId Xem_Id = MosaicId(0xD525AD41D95FCF29ULL);
-#endif
+	/// PRX namespace id.
+	const NamespaceId Prx_Id(crypto::GenerateRootNamespaceId("prx"));
+
+	/// XPX mosaic id.
+	const MosaicId Xpx_Id(crypto::GenerateMosaicId(Prx_Id, "xpx"));
 }

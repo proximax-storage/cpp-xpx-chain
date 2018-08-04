@@ -80,7 +80,7 @@ namespace catapult { namespace cache {
 							if (!pAccountState)
 								continue;
 
-							sums[r] = sums[r] + pAccountState->Balances.get(Xem_Id);
+							sums[r] = sums[r] + pAccountState->Balances.get(Xpx_Id);
 							break;
 						}
 					}
@@ -97,7 +97,7 @@ namespace catapult { namespace cache {
 
 					auto key = GetKeyFromId(i);
 					auto& accountState = delta->addAccount(key, Height(456));
-					accountState.Balances.credit(Xem_Id, Amount(i * 100'000));
+					accountState.Balances.credit(Xpx_Id, Amount(i * 100'000));
 					cache.commit();
 				}
 			});
@@ -136,7 +136,7 @@ namespace catapult { namespace cache {
 
 				auto key = GetKeyFromId(i);
 				auto& accountState = delta->addAccount(key, Height(456));
-				accountState.Balances.credit(Xem_Id, Amount(i * 100'000));
+				accountState.Balances.credit(Xpx_Id, Amount(i * 100'000));
 				cache.commit();
 			}
 		}

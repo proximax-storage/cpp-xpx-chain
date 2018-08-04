@@ -141,7 +141,7 @@ namespace catapult { namespace timesync {
 					, pTimeSyncState(std::make_shared<TimeSynchronizationState>(Default_Threshold))
 					, NetworkTimeSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Local)) {
 				auto& mutableBlockChainConfig = const_cast<model::BlockChainConfiguration&>(ServiceTestState.config().BlockChain);
-				mutableBlockChainConfig.TotalChainBalance = utils::XemAmount(Total_Chain_Balance);
+				mutableBlockChainConfig.TotalChainBalance = utils::XpxAmount(Total_Chain_Balance);
 			}
 
 		public:

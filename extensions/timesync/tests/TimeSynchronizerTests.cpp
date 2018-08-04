@@ -51,7 +51,7 @@ namespace catapult { namespace timesync {
 			auto delta = cache.createDelta();
 			auto& accountState = delta->addAccount(key, Height(100));
 			accountState.ImportanceInfo.set(importance, importanceHeight);
-			accountState.Balances.credit(Xem_Id, Amount(1000));
+			accountState.Balances.credit(Xpx_Id, Amount(1000));
 			cache.commit();
 		}
 

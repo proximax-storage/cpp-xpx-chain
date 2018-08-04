@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/IdGenerator.h"
 #include "src/validators/Validators.h"
-#include "src/model/IdGenerator.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 	namespace {
 		model::NamespaceNameNotification CreateNamespaceNameNotification(uint8_t nameSize, const uint8_t* pName) {
 			auto notification = model::NamespaceNameNotification(NamespaceId(), NamespaceId(777), nameSize, pName);
-			notification.NamespaceId = model::GenerateNamespaceId(NamespaceId(777), reinterpret_cast<const char*>(pName));
+			notification.NamespaceId = crypto::GenerateNamespaceId(NamespaceId(777), reinterpret_cast<const char*>(pName));
 			return notification;
 		}
 	}
@@ -153,15 +153,15 @@ namespace catapult { namespace validators {
 			auto nameSize = static_cast<uint8_t>(name.size());
 			const auto* pName = reinterpret_cast<const uint8_t*>(name.data());
 			auto notification = model::NamespaceNameNotification(NamespaceId(), Namespace_Base_Id, nameSize, pName);
-			notification.NamespaceId = model::GenerateNamespaceId(Namespace_Base_Id, name);
+			notification.NamespaceId = crypto::GenerateNamespaceId(Namespace_Base_Id, name);
 			return notification;
 		}
 
 		model::NamespaceNameNotification CreateChildNamespaceNotification(const std::string& parentName) {
 			const auto* pChildName = reinterpret_cast<const uint8_t*>("alice");
 			auto notification = model::NamespaceNameNotification(NamespaceId(), NamespaceId(), 5, pChildName);
-			notification.ParentId = model::GenerateNamespaceId(Namespace_Base_Id, parentName);
-			notification.NamespaceId = model::GenerateNamespaceId(notification.ParentId, reinterpret_cast<const char*>(pChildName));
+			notification.ParentId = crypto::GenerateNamespaceId(Namespace_Base_Id, parentName);
+			notification.NamespaceId = crypto::GenerateNamespaceId(notification.ParentId, reinterpret_cast<const char*>(pChildName));
 			return notification;
 		}
 

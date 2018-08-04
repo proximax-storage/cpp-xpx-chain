@@ -35,7 +35,7 @@ namespace catapult { namespace observers {
 
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.TotalChainBalance = utils::XemAmount(9'000'000'000);
+			config.TotalChainBalance = utils::XpxAmount(9'000'000'000);
 			config.MinHarvesterBalance = Amount(1'000'000'000'000);
 			return config;
 		}
@@ -52,7 +52,7 @@ namespace catapult { namespace observers {
 				uint8_t i = 0;
 				for (auto amount : amounts) {
 					auto& accountState = Delta->addAccount(Key{ { ++i } }, Height(height.unwrap()));
-					accountState.Balances.credit(Xem_Id, Amount(amount));
+					accountState.Balances.credit(Xpx_Id, Amount(amount));
 				}
 			}
 
@@ -74,12 +74,12 @@ namespace catapult { namespace observers {
 			for (uint8_t i = 1; i <= Num_Account_States; ++i) {
 				const auto& accountState = cache.get(Key{ { i } });
 				sum += accountState.ImportanceInfo.current().unwrap();
-				if (config.MinHarvesterBalance <= accountState.Balances.get(Xem_Id))
+				if (config.MinHarvesterBalance <= accountState.Balances.get(Xpx_Id))
 					++maxExpectedDeviation;
 			}
 
 			// Assert: deviation should be maximal 1 for each account due to rounding
-			auto deviation = config.TotalChainBalance.xem().unwrap() - sum;
+			auto deviation = config.TotalChainBalance.xpx().unwrap() - sum;
 			EXPECT_GE(maxExpectedDeviation, deviation);
 		}
 
@@ -129,19 +129,19 @@ namespace catapult { namespace observers {
 
 		// Assert:
 		const auto& referenceAccountState = holder.get(Key{ { 1 } });
-		auto referenceAmount = referenceAccountState.Balances.get(Xem_Id).unwrap();
+		auto referenceAmount = referenceAccountState.Balances.get(Xpx_Id).unwrap();
 		auto referenceImportance = referenceAccountState.ImportanceInfo.current().unwrap();
 		for (uint8_t i = 1; i <= Num_Account_States; ++i) {
 			// deviation should be maximal i * i due to rounding
 			const auto& accountState = holder.get(Key{ { i } });
-			EXPECT_EQ(referenceAmount * i * i, accountState.Balances.get(Xem_Id).unwrap());
+			EXPECT_EQ(referenceAmount * i * i, accountState.Balances.get(Xpx_Id).unwrap());
 			EXPECT_GE((referenceImportance + 1) * i * i, accountState.ImportanceInfo.current().unwrap());
 			EXPECT_LE(referenceImportance * i * i, accountState.ImportanceInfo.current().unwrap());
 			EXPECT_EQ(Recalculation_Height, accountState.ImportanceInfo.height());
 		}
 	}
 
-	TEST(TEST_CLASS, AccountImportancesSumIsEqualToAllXem) {
+	TEST(TEST_CLASS, AccountImportancesSumIsEqualToAllXpx) {
 		// Arrange:
 		auto config = CreateConfiguration();
 		std::vector<Amount::ValueType> amounts;
@@ -184,7 +184,7 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	TEST(TEST_CLASS, ImportanceIsProportionalToTheAvailableXem) {
+	TEST(TEST_CLASS, ImportanceIsProportionalToTheAvailableXpx) {
 		// Arrange:
 		auto config = CreateConfiguration();
 
@@ -197,7 +197,7 @@ namespace catapult { namespace observers {
 		auto pCalculator1 = CreateImportanceCalculator(config);
 
 		auto customConfig = CreateConfiguration();
-		customConfig.TotalChainBalance = utils::XemAmount(2 * config.TotalChainBalance.xem().unwrap());
+		customConfig.TotalChainBalance = utils::XpxAmount(2 * config.TotalChainBalance.xpx().unwrap());
 		auto pCalculator2 = CreateImportanceCalculator(customConfig);
 
 		// Act:

@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/IdGenerator.h"
 #include "src/validators/Validators.h"
-#include "src/model/IdGenerator.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 	namespace {
 		model::MosaicNameNotification CreateMosaicNameNotification(uint8_t nameSize, const uint8_t* pName) {
 			auto notification = model::MosaicNameNotification(MosaicId(), NamespaceId(777), nameSize, pName);
-			notification.MosaicId = model::GenerateMosaicId(NamespaceId(777), reinterpret_cast<const char*>(pName));
+			notification.MosaicId = crypto::GenerateMosaicId(NamespaceId(777), reinterpret_cast<const char*>(pName));
 			return notification;
 		}
 	}

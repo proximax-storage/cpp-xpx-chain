@@ -19,10 +19,11 @@
 **/
 
 #include "NemesisConfiguration.h"
+
+#include "catapult/crypto/IdGenerator.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/IdGenerator.h"
-#include "catapult/model/IdGenerator.h"
 #include "catapult/state/Namespace.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/ConfigurationUtils.h"
@@ -57,7 +58,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto CreateRoot(const utils::ConfigurationBag& bag, const Key& owner, const std::string& namespaceName) {
 			const std::string section = Namespace_Section_Prefix + namespaceName;
 			auto duration = bag.get<uint64_t>(utils::ConfigurationKey(section.c_str(), "duration"));
-			auto id = model::GenerateRootNamespaceId(namespaceName);
+			auto id = crypto::GenerateRootNamespaceId(namespaceName);
 			auto endHeight = 0 == duration ? Height(std::numeric_limits<BlockDuration::ValueType>::max()) : Height(duration + 1);
 			return state::RootNamespace(id, owner, state::NamespaceLifetime(Height(1), endHeight));
 		}
@@ -70,7 +71,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			auto namespaceName = name.substr(0, pos);
 			auto mosaicName = name.substr(pos + 1, name.size() - pos - 1);
 			auto ns = state::Namespace(extensions::GenerateNamespacePath(namespaceName));
-			auto entry = state::MosaicEntry(ns.id(), model::GenerateMosaicId(ns.id(), mosaicName), definition);
+			auto entry = state::MosaicEntry(ns.id(), crypto::GenerateMosaicId(ns.id(), mosaicName), definition);
 			entry.increaseSupply(supply);
 			return entry;
 		}

@@ -76,33 +76,33 @@ namespace catapult { namespace observers {
 	TEST(BalanceObserverTests, CanTransfer##TEST_NAME##_Commit) { AssertCommitObservation<TEST_NAME##Traits>(); } \
 	TEST(BalanceObserverTests, CanTransfer##TEST_NAME##_Rollback) { AssertRollbackObservation<TEST_NAME##Traits>(); }
 
-	// region xem
+	// region xpx
 
 	namespace {
-		struct XemTraits {
+		struct XpxTraits {
 			static auto CreateNotification(const Key& sender, const Address& recipient) {
-				return model::BalanceTransferNotification(sender, recipient, Xem_Id, Amount(234));
+				return model::BalanceTransferNotification(sender, recipient, Xpx_Id, Amount(234));
 			}
 
 			static test::BalanceTransfers GetInitialSenderBalances() {
-				return { { Xem_Id, Amount(1000) } };
+				return { { Xpx_Id, Amount(1000) } };
 			}
 
 			static test::BalanceTransfers GetFinalSenderBalances() {
-				return { { Xem_Id, Amount(1000 - 234) } };
+				return { { Xpx_Id, Amount(1000 - 234) } };
 			}
 
 			static test::BalanceTransfers GetInitialRecipientBalances() {
-				return { { Xem_Id, Amount(750) } };
+				return { { Xpx_Id, Amount(750) } };
 			}
 
 			static test::BalanceTransfers GetFinalRecipientBalances() {
-				return { { Xem_Id, Amount(750 + 234) } };
+				return { { Xpx_Id, Amount(750 + 234) } };
 			}
 		};
 	}
 
-	DEFINE_BALANCE_OBSERVATION_TESTS(Xem)
+	DEFINE_BALANCE_OBSERVATION_TESTS(Xpx)
 
 	// endregion
 
@@ -115,19 +115,19 @@ namespace catapult { namespace observers {
 			}
 
 			static test::BalanceTransfers GetInitialSenderBalances() {
-				return { { Xem_Id, Amount(1000) }, { MosaicId(12), Amount(1200) } };
+				return { { Xpx_Id, Amount(1000) }, { MosaicId(12), Amount(1200) } };
 			}
 
 			static test::BalanceTransfers GetFinalSenderBalances() {
-				return { { Xem_Id, Amount(1000) }, { MosaicId(12), Amount(1200 - 234) } };
+				return { { Xpx_Id, Amount(1000) }, { MosaicId(12), Amount(1200 - 234) } };
 			}
 
 			static test::BalanceTransfers GetInitialRecipientBalances() {
-				return { { Xem_Id, Amount(750) }, { MosaicId(12), Amount(500) } };
+				return { { Xpx_Id, Amount(750) }, { MosaicId(12), Amount(500) } };
 			}
 
 			static test::BalanceTransfers GetFinalRecipientBalances() {
-				return { { Xem_Id, Amount(750) }, { MosaicId(12), Amount(500 + 234) } };
+				return { { Xpx_Id, Amount(750) }, { MosaicId(12), Amount(500 + 234) } };
 			}
 		};
 	}

@@ -105,7 +105,7 @@ namespace catapult { namespace harvesting {
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			auto& accountState = accountStateCache.addAccount(keyPair.publicKey(), Height(1));
 			accountState.ImportanceInfo.set(Importance(1'000'000'000), model::ImportanceHeight(1));
-			accountState.Balances.credit(Xem_Id, Amount(1'000'000'000'000'000));
+			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000));
 			cache.commit(Height());
 			return test::CopyKeyPair(keyPair);
 		}

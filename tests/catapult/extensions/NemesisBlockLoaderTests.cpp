@@ -210,25 +210,25 @@ namespace catapult { namespace extensions {
 
 	// region success
 
-	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_SingleXemTransfer) {
-		// Arrange: create a valid nemesis block with a single (xem) transaction
-		auto pNemesisBlock = CreateNemesisBlock({ { { Xem_Id, Amount(1234) } } });
+	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_SingleXpxTransfer) {
+		// Arrange: create a valid nemesis block with a single (xpx) transaction
+		auto pNemesisBlock = CreateNemesisBlock({ { { Xpx_Id, Amount(1234) } } });
 
 		// Act:
 		RunLoadNemesisBlockTest<TTraits>(*pNemesisBlock, Amount(1234), [&nemesisBlock = *pNemesisBlock](const auto& accountStateCache) {
 			// Assert:
 			EXPECT_EQ(2u, accountStateCache.size());
 			test::AssertBalances(accountStateCache, nemesisBlock.Signer, {});
-			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 0), { { Xem_Id, Amount(1234) } });
+			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 0), { { Xpx_Id, Amount(1234) } });
 		});
 	}
 
-	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_MultipleXemTransfers) {
-		// Arrange: create a valid nemesis block with multiple xem transactions
+	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_MultipleXpxTransfers) {
+		// Arrange: create a valid nemesis block with multiple xpx transactions
 		auto pNemesisBlock = CreateNemesisBlock({
-			{ { Xem_Id, Amount(1234) } },
-			{ { Xem_Id, Amount(123) }, { Xem_Id, Amount(213) } },
-			{ { Xem_Id, Amount(987) } }
+			{ { Xpx_Id, Amount(1234) } },
+			{ { Xpx_Id, Amount(123) }, { Xpx_Id, Amount(213) } },
+			{ { Xpx_Id, Amount(987) } }
 		});
 
 		// Act:
@@ -238,16 +238,16 @@ namespace catapult { namespace extensions {
 			// Assert:
 			EXPECT_EQ(4u, accountStateCache.size());
 			test::AssertBalances(accountStateCache, nemesisBlock.Signer, {});
-			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 0), { { Xem_Id, Amount(1234) } });
-			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 1), { { Xem_Id, Amount(123 + 213) } });
-			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 2), { { Xem_Id, Amount(987) } });
+			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 0), { { Xpx_Id, Amount(1234) } });
+			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 1), { { Xpx_Id, Amount(123 + 213) } });
+			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 2), { { Xpx_Id, Amount(987) } });
 		});
 	}
 
 	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_MultipleMosaicTransfers) {
-		// Arrange: create a valid nemesis block with multiple xem and mosaic transactions
+		// Arrange: create a valid nemesis block with multiple xpx and mosaic transactions
 		auto pNemesisBlock = CreateNemesisBlock({
-			{ { Xem_Id, Amount(1234) }, { MosaicId(123), Amount(111) }, { MosaicId(444), Amount(222) } },
+			{ { Xpx_Id, Amount(1234) }, { MosaicId(123), Amount(111) }, { MosaicId(444), Amount(222) } },
 			{ { MosaicId(123), Amount(987) } },
 			{ { MosaicId(333), Amount(213) }, { MosaicId(444), Amount(123) }, { MosaicId(333), Amount(217) } }
 		});
@@ -258,7 +258,7 @@ namespace catapult { namespace extensions {
 			EXPECT_EQ(4u, accountStateCache.size());
 			test::AssertBalances(accountStateCache, nemesisBlock.Signer, {});
 			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 0), {
-				{ Xem_Id, Amount(1234) },
+				{ Xpx_Id, Amount(1234) },
 				{ MosaicId(123), Amount(111) },
 				{ MosaicId(444), Amount(222) }
 			});
@@ -275,8 +275,8 @@ namespace catapult { namespace extensions {
 	// region account states
 
 	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_NemesisAccountStateIsCorrectAfterLoading) {
-		// Arrange: create a valid nemesis block with a single (xem) transaction
-		auto pNemesisBlock = CreateNemesisBlock({ { { Xem_Id, Amount(1234) } } });
+		// Arrange: create a valid nemesis block with a single (xpx) transaction
+		auto pNemesisBlock = CreateNemesisBlock({ { { Xpx_Id, Amount(1234) } } });
 
 		// Act:
 		RunLoadNemesisBlockTest<TTraits>(*pNemesisBlock, Amount(1234), [&nemesisBlock = *pNemesisBlock](const auto& accountStateCache) {
@@ -293,8 +293,8 @@ namespace catapult { namespace extensions {
 	}
 
 	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_OtherAccountStateIsCorrectAfterLoading) {
-		// Arrange: create a valid nemesis block with a single (xem) transaction
-		auto pNemesisBlock = CreateNemesisBlock({ { { Xem_Id, Amount(1234) } } });
+		// Arrange: create a valid nemesis block with a single (xpx) transaction
+		auto pNemesisBlock = CreateNemesisBlock({ { { Xpx_Id, Amount(1234) } } });
 
 		// Act:
 		RunLoadNemesisBlockTest<TTraits>(*pNemesisBlock, Amount(1234), [&nemesisBlock = *pNemesisBlock](const auto& accountStateCache) {
@@ -315,24 +315,24 @@ namespace catapult { namespace extensions {
 	// region failure
 
 	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithTotalChainBalanceTooSmall) {
-		// Arrange: create a valid nemesis block with a single (xem) transaction
-		auto pNemesisBlock = CreateNemesisBlock({ { { Xem_Id, Amount(1234) } } });
+		// Arrange: create a valid nemesis block with a single (xpx) transaction
+		auto pNemesisBlock = CreateNemesisBlock({ { { Xpx_Id, Amount(1234) } } });
 
 		// Act: pass in the wrong chain balance
 		AssertLoadNemesisBlockFailure<TTraits>(*pNemesisBlock, Amount(1233));
 	}
 
 	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithTotalChainBalanceTooLarge) {
-		// Arrange: create a valid nemesis block with a single (xem) transaction
-		auto pNemesisBlock = CreateNemesisBlock({ { { Xem_Id, Amount(1234) } } });
+		// Arrange: create a valid nemesis block with a single (xpx) transaction
+		auto pNemesisBlock = CreateNemesisBlock({ { { Xpx_Id, Amount(1234) } } });
 
 		// Act: pass in the wrong chain balance
 		AssertLoadNemesisBlockFailure<TTraits>(*pNemesisBlock, Amount(1235));
 	}
 
 	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithWrongNetwork) {
-		// Arrange: create a valid nemesis block with a single (xem) transaction
-		auto pNemesisBlock = CreateNemesisBlock({ { { Xem_Id, Amount(1234) } } });
+		// Arrange: create a valid nemesis block with a single (xpx) transaction
+		auto pNemesisBlock = CreateNemesisBlock({ { { Xpx_Id, Amount(1234) } } });
 
 		// - use the wrong network
 		pNemesisBlock->Version ^= 0xFF00;
@@ -342,28 +342,28 @@ namespace catapult { namespace extensions {
 	}
 
 	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithWrongPublicKey) {
-		// Arrange: create a valid nemesis block with a single (xem) transaction
-		auto pNemesisBlock = CreateNemesisBlock({ { { Xem_Id, Amount(1234) } } });
+		// Arrange: create a valid nemesis block with a single (xpx) transaction
+		auto pNemesisBlock = CreateNemesisBlock({ { { Xpx_Id, Amount(1234) } } });
 
 		// Act: use the wrong public key
 		AssertLoadNemesisBlockFailure<TTraits>(*pNemesisBlock, Amount(1234), NemesisBlockModification::Public_Key);
 	}
 
 	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithWrongGenerationHash) {
-		// Arrange: create a valid nemesis block with a single (xem) transaction
-		auto pNemesisBlock = CreateNemesisBlock({ { { Xem_Id, Amount(1234) } } });
+		// Arrange: create a valid nemesis block with a single (xpx) transaction
+		auto pNemesisBlock = CreateNemesisBlock({ { { Xpx_Id, Amount(1234) } } });
 
 		// Act: use the wrong generation hash
 		AssertLoadNemesisBlockFailure<TTraits>(*pNemesisBlock, Amount(1234), NemesisBlockModification::Generation_Hash);
 	}
 
 	TRAITS_BASED_TEST(CannotLoadNemesisBlockContainingUnknownTransactions) {
-		// Arrange: create a valid nemesis block with multiple xem transactions but make the second transaction type unknown
+		// Arrange: create a valid nemesis block with multiple xpx transactions but make the second transaction type unknown
 		//          so that none of its transfers are processed
 		auto pNemesisBlock = CreateNemesisBlock({
-			{ { Xem_Id, Amount(1234) } },
-			{ { Xem_Id, Amount(123) }, { Xem_Id, Amount(213) } },
-			{ { Xem_Id, Amount(987) } }
+			{ { Xpx_Id, Amount(1234) } },
+			{ { Xpx_Id, Amount(123) }, { Xpx_Id, Amount(213) } },
+			{ { Xpx_Id, Amount(987) } }
 		});
 
 		// - only MockTransaction::Entity_Type type is registered

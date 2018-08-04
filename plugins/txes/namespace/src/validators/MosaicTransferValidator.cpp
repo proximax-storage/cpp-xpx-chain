@@ -43,8 +43,8 @@ namespace catapult { namespace validators {
 	}
 
 	DEFINE_STATEFUL_VALIDATOR(MosaicTransfer, [](const auto& notification, const auto& context) {
-		// 0. whitelist xem
-		if (Xem_Id == notification.MosaicId)
+		// 0. whitelist xpx
+		if (Xpx_Id == notification.MosaicId)
 			return ValidationResult::Success;
 
 		// 1. check that the mosaic exists
