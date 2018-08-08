@@ -23,10 +23,10 @@
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/FileSize.h"
 #include "catapult/utils/TimeSpan.h"
+#include "catapult/utils/XpxUnit.h"
 #include "catapult/types.h"
 #include <unordered_map>
 #include <stdint.h>
-#include "../utils/XpxUnit.h"
 
 namespace catapult { namespace model {
 
