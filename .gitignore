@@ -26,3 +26,9 @@ npm-*.log*
 /build/
 .cproject
 .project
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
