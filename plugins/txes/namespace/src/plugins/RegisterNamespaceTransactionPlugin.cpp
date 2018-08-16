@@ -48,7 +48,7 @@ namespace catapult { namespace plugins {
 				rentalFee = Amount(config.RootFeePerBlock.unwrap() * transaction.Duration.unwrap());
 			}
 
-			sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, Xem_Id, rentalFee));
+			sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, Xpx_Id, rentalFee));
 		}
 
 		template<typename TTransaction>

@@ -82,10 +82,10 @@ namespace catapult { namespace extensions {
 				CATAPULT_LOG(info) << "nemesis block seeded with " << utils::HexFormat(transfer.first) << ": " << transfer.second;
 		}
 
-		void CheckOutflows(const BalanceTransfers& transfers, Amount expectedXemBalance) {
-			auto iter = transfers.find(Xem_Id);
-			if (transfers.cend() == iter || expectedXemBalance != iter->second)
-				CATAPULT_THROW_INVALID_ARGUMENT_1("xem outflows do not add up to expected", expectedXemBalance);
+		void CheckOutflows(const BalanceTransfers& transfers, Amount expectedXpxBalance) {
+			auto iter = transfers.find(Xpx_Id);
+			if (transfers.cend() == iter || expectedXpxBalance != iter->second)
+				CATAPULT_THROW_INVALID_ARGUMENT_1("xpx outflows do not add up to expected", expectedXpxBalance);
 		}
 
 		void PrepareNemesisAccount(const Key& nemesisPublicKey, const BalanceTransfers& transfers, cache::CatapultCacheDelta& cacheDelta) {
@@ -144,7 +144,7 @@ namespace catapult { namespace extensions {
 		if (Verbosity::On == verbosity)
 			LogOutflows(outflows);
 
-		CheckOutflows(outflows, config.TotalChainBalance.microxem());
+		CheckOutflows(outflows, config.TotalChainBalance.microxpx());
 
 		// 3. prepare the nemesis account
 		PrepareNemesisAccount(nemesisBlock.Signer, outflows, cacheDelta);

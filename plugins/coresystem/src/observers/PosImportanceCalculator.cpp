@@ -46,19 +46,19 @@ namespace catapult { namespace observers {
 				highValueAccounts.reserve(highValueAddresses.size());
 
 				// 2. calculate sum
-				Amount activeXem;
+				Amount activeXpx;
 				for (const auto& address : highValueAddresses) {
 					auto& accountState = cache.get(address);
 					highValueAccounts.push_back(&accountState);
-					activeXem = activeXem + accountState.Balances.get(Xem_Id);
+					activeXpx = activeXpx + accountState.Balances.get(Xpx_Id);
 				}
 
 				// 3. update accounts
 				for (auto* pAccountState : highValueAccounts) {
-					boost::multiprecision::uint128_t importance = m_totalChainBalance.microxem().unwrap();
-					importance *= pAccountState->Balances.get(Xem_Id).unwrap();
-					importance /= activeXem.unwrap();
-					importance /= utils::XemUnit(utils::XemAmount(1)).microxem().unwrap();
+					boost::multiprecision::uint128_t importance = m_totalChainBalance.microxpx().unwrap();
+					importance *= pAccountState->Balances.get(Xpx_Id).unwrap();
+					importance /= activeXpx.unwrap();
+					importance /= utils::XpxUnit(utils::XpxAmount(1)).microxpx().unwrap();
 					pAccountState->ImportanceInfo.set(Importance(static_cast<Importance::ValueType>(importance)), importanceHeight);
 				}
 
@@ -66,7 +66,7 @@ namespace catapult { namespace observers {
 			}
 
 		private:
-			const utils::XemUnit m_totalChainBalance;
+			const utils::XpxUnit m_totalChainBalance;
 		};
 	}
 

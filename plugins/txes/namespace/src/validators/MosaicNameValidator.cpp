@@ -18,9 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/NameChecker.h"
+#include "catapult/crypto/IdGenerator.h"
 #include "Validators.h"
-#include "src/model/IdGenerator.h"
-#include "src/model/NameChecker.h"
 
 namespace catapult { namespace validators {
 
@@ -31,11 +31,11 @@ namespace catapult { namespace validators {
 			if (MosaicId() == notification.MosaicId)
 				return Failure_Mosaic_Name_Reserved;
 
-			if (maxNameSize < notification.NameSize || !model::IsValidName(notification.NamePtr, notification.NameSize))
+			if (maxNameSize < notification.NameSize || !crypto::IsValidName(notification.NamePtr, notification.NameSize))
 				return Failure_Mosaic_Invalid_Name;
 
 			auto name = utils::RawString(reinterpret_cast<const char*>(notification.NamePtr), notification.NameSize);
-			if (notification.MosaicId != model::GenerateMosaicId(notification.ParentId, name))
+			if (notification.MosaicId != crypto::GenerateMosaicId(notification.ParentId, name))
 				return Failure_Mosaic_Name_Id_Mismatch;
 
 			return ValidationResult::Success;

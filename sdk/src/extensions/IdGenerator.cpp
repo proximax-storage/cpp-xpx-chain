@@ -19,8 +19,8 @@
 **/
 
 #include "IdGenerator.h"
-#include "plugins/txes/namespace/src/model/IdGenerator.h"
-#include "plugins/txes/namespace/src/model/NameChecker.h"
+#include "catapult/crypto/IdGenerator.h"
+#include "catapult/crypto/NameChecker.h"
 #include "catapult/exceptions.h"
 
 namespace catapult { namespace extensions {
@@ -47,7 +47,7 @@ namespace catapult { namespace extensions {
 				ThrowInvalidFqn("empty part", name);
 
 			RawString partName(&name.pData[start], size);
-			if (!model::IsValidName(reinterpret_cast<const uint8_t*>(partName.pData), partName.Size))
+			if (!crypto::IsValidName(reinterpret_cast<const uint8_t*>(partName.pData), partName.Size))
 				ThrowInvalidFqn("invalid part name", name);
 
 			return partName;
@@ -82,18 +82,18 @@ namespace catapult { namespace extensions {
 		auto namespacePath = GenerateNamespacePath(namespaceName);
 		auto namespaceId = namespacePath[namespacePath.size() - 1];
 
-		return model::GenerateMosaicId(namespaceId, ExtractPartName(name, mosaicSeparatorIndex + 1, name.Size - mosaicSeparatorIndex - 1));
+		return crypto::GenerateMosaicId(namespaceId, ExtractPartName(name, mosaicSeparatorIndex + 1, name.Size - mosaicSeparatorIndex - 1));
 	}
 
 	NamespacePath GenerateNamespacePath(const RawString& name) {
 		auto namespaceId = Namespace_Base_Id;
 		NamespacePath path;
 		auto start = Split(name, [&name, &namespaceId, &path](auto substringStart, auto size) {
-			namespaceId = model::GenerateNamespaceId(namespaceId, ExtractPartName(name, substringStart, size));
+			namespaceId = crypto::GenerateNamespaceId(namespaceId, ExtractPartName(name, substringStart, size));
 			Append(path, namespaceId, name);
 		});
 
-		namespaceId = model::GenerateNamespaceId(namespaceId, ExtractPartName(name, start, name.Size - start));
+		namespaceId = crypto::GenerateNamespaceId(namespaceId, ExtractPartName(name, start, name.Size - start));
 		Append(path, namespaceId, name);
 		return path;
 	}

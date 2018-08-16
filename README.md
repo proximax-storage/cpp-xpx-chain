@@ -2,13 +2,16 @@ Catapult is x64 only, there are no 32-bit builds.
 
 Dependencies:
 
- * cmake
- * python 3 - various scripts
- * boost
- * gtest
- * mongo + mongo-cxx
- * zmq
- * rocksdb
+ * python 3
+ * rocksdb: 5.12.4
+ * cmake: 3.11.1
+ * boost: 1.65.1
+ * mongoc 1.4.2
+ * mongo-cxx 3.0.2
+ * gtest: 1.8.0
+ * libzmq: 4.2.3
+ * cppzmq: 4.2.3
+ * g++-7(Optional, either you can have compilation errors on different platforms)
 
 Variables required to build catapult:
 
@@ -49,3 +52,18 @@ cmake -DCMAKE_BUILD_TYPE=RelWithDebugInfo -G "Visual Studio 14 2015 Win64" ..
 # Open up catapult_server.sln
 ```
 
+To create a release docker images you need to install docker first:
+```
+sudo apt-get install docker-compose -y
+```
+  Then you need to build an image:
+  To build a tools image:
+  ```
+  cd proximax-catapult-server
+  sudo ./scripts/ToolsRealeaseDocker/buildTools.sh
+  ```
+  To build a catapult.server image:
+  ```
+  cd proximax-catapult-server
+  sudo ./scripts/Catapult.serverRealeaseDocker/buildCatapultServer.sh
+  ```

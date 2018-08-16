@@ -103,7 +103,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MaxTransactionLifetime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MaxBlockFutureTime);
 
-				EXPECT_EQ(utils::XemUnit(), config.TotalChainBalance);
+				EXPECT_EQ(utils::XpxUnit(), config.TotalChainBalance);
 				EXPECT_EQ(Amount(0), config.MinHarvesterBalance);
 
 				EXPECT_EQ(0u, config.BlockPruneInterval);
@@ -128,7 +128,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(30), config.MaxTransactionLifetime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(21), config.MaxBlockFutureTime);
 
-				EXPECT_EQ(utils::XemUnit(Amount(88'000'000'000)), config.TotalChainBalance);
+				EXPECT_EQ(utils::XpxUnit(Amount(88'000'000'000)), config.TotalChainBalance);
 				EXPECT_EQ(Amount(4'000'000'000), config.MinHarvesterBalance);
 
 				EXPECT_EQ(432u, config.BlockPruneInterval);
@@ -254,7 +254,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, TotalImportanceIsDerivedFromTotalChainBalance) {
 		// Act:
 		auto config = BlockChainConfiguration::Uninitialized();
-		config.TotalChainBalance = utils::XemUnit(utils::XemAmount(1234));
+		config.TotalChainBalance = utils::XpxUnit(utils::XpxAmount(1234));
 
 		// Assert:
 		EXPECT_EQ(Importance(1234), GetTotalImportance(config));

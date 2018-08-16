@@ -51,7 +51,7 @@ namespace catapult { namespace extensions {
 					accountInfo.AddressHeight = Height(5 * i);
 					accountInfo.MosaicsCount = 1u;
 					auto pMosaic = accountInfo.MosaicsPtr();
-					pMosaic->MosaicId = Xem_Id;
+					pMosaic->MosaicId = Xpx_Id;
 					pMosaic->Amount = Amount(123 * i);
 				}
 

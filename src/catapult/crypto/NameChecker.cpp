@@ -18,31 +18,26 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "XemUnit.h"
-#include "ConfigurationValueParsers.h"
-#include "StreamFormatGuard.h"
+#include "catapult/crypto/NameChecker.h"
 
-namespace catapult { namespace utils {
+#include <algorithm>
 
-	std::ostream& operator<<(std::ostream& out, XemUnit unit) {
-		StreamFormatGuard guard(out, std::ios::dec, '0');
-		out << unit.xem();
-		if (unit.isFractional())
-			out << '.' << std::setw(6) << (unit.m_value % XemUnit::Microxem_Per_Xem);
+namespace catapult { namespace crypto {
 
-		return out;
+	namespace {
+		constexpr bool IsAlphaNumeric(uint8_t ch) {
+			return (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9');
+		}
+
+		constexpr bool IsValidChar(uint8_t ch) {
+			return IsAlphaNumeric(ch) || '-' == ch || '_' == ch;
+		}
 	}
 
-	bool TryParseValue(const std::string& str, XemUnit& parsedValue) {
-		Amount microxem;
-		if (!TryParseValue(str, microxem))
+	bool IsValidName(const uint8_t* pName, size_t nameSize) {
+		if (0 == nameSize)
 			return false;
 
-		XemUnit xemUnit(microxem);
-		if (xemUnit.isFractional())
-			return false;
-
-		parsedValue = xemUnit;
-		return true;
+		return IsAlphaNumeric(pName[0]) && std::all_of(pName + 1, pName + nameSize, IsValidChar);
 	}
 }}

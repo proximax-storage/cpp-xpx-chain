@@ -60,7 +60,7 @@ namespace catapult { namespace mongo { namespace storages {
 				auto randomAmount = Amount((test::Random() % 1'000'000 + 1'000) * 1'000'000);
 				auto randomImportance = Importance(test::Random() % 1'000'000'000 + 1'000'000'000);
 				auto randomImportanceHeight = test::GenerateRandomValue<model::ImportanceHeight>();
-				pState->Balances.credit(Xem_Id, randomAmount);
+				pState->Balances.credit(Xpx_Id, randomAmount);
 				pState->ImportanceInfo.set(randomImportance, randomImportanceHeight);
 				return pState;
 			}
@@ -68,7 +68,7 @@ namespace catapult { namespace mongo { namespace storages {
 			static void Add(cache::CatapultCacheDelta& delta, const ModelType& pAccountState) {
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
 				auto& accountState = accountStateCacheDelta.addAccount(pAccountState->PublicKey, pAccountState->PublicKeyHeight);
-				accountState.Balances.credit(Xem_Id, pAccountState->Balances.get(Xem_Id));
+				accountState.Balances.credit(Xpx_Id, pAccountState->Balances.get(Xpx_Id));
 
 				auto height = pAccountState->ImportanceInfo.height();
 				accountState.ImportanceInfo.set(pAccountState->ImportanceInfo.get(height), height);
@@ -82,12 +82,12 @@ namespace catapult { namespace mongo { namespace storages {
 
 			static void Mutate(cache::CatapultCacheDelta& delta, const ModelType& pAccountState) {
 				// update expected
-				pAccountState->Balances.credit(Xem_Id, Amount(12'345'000'000));
+				pAccountState->Balances.credit(Xpx_Id, Amount(12'345'000'000));
 
 				// update cache
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
 				auto& accountStateFromCache = accountStateCacheDelta.get(pAccountState->PublicKey);
-				accountStateFromCache.Balances.credit(Xem_Id, Amount(12'345'000'000));
+				accountStateFromCache.Balances.credit(Xpx_Id, Amount(12'345'000'000));
 			}
 
 			static auto GetFindFilter(const ModelType& pAccountState) {

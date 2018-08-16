@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/IdGenerator.h"
 #include "src/builders/MosaicDefinitionBuilder.h"
-#include "plugins/txes/namespace/src/model/IdGenerator.h"
 #include "sdk/tests/builders/test/BuilderTestUtils.h"
 
 namespace catapult { namespace builders {
@@ -69,7 +69,7 @@ namespace catapult { namespace builders {
 			EXPECT_TRUE(0 == std::memcmp(mosaicName.data(), transaction.NamePtr(), mosaicName.size()));
 
 			// - id matches
-			auto expectedId = model::GenerateMosaicId(parentId, mosaicName);
+			auto expectedId = crypto::GenerateMosaicId(parentId, mosaicName);
 			EXPECT_EQ(expectedId, transaction.MosaicId);
 		}
 

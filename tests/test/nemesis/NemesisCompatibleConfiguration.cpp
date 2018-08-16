@@ -39,7 +39,7 @@ namespace catapult { namespace test {
 
 			{ "maxNamespaceDuration", "365d" },
 			{ "namespaceGracePeriodDuration", "30d" },
-			{ "reservedRootNamespaceNames", "xem" },
+			{ "reservedRootNamespaceNames", "xpx" },
 
 			{ "namespaceRentalFeeSinkPublicKey", Namespace_Rental_Fee_Sink_Public_Key },
 			{ "rootNamespaceRentalFeePerBlock", "10" },

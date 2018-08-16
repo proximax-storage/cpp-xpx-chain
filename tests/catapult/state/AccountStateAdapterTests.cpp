@@ -84,7 +84,7 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_SingleMosaic) {
 		// Arrange:
 		auto accountState = CreateAccountStateWithZeroMosaics();
-		accountState.Balances.credit(Xem_Id, Amount(13579));
+		accountState.Balances.credit(Xpx_Id, Amount(13579));
 
 		// Act:
 		auto pAccountInfo = ToAccountInfo(accountState);
@@ -94,14 +94,14 @@ namespace catapult { namespace state {
 
 		auto pMosaic = pAccountInfo->MosaicsPtr();
 		ASSERT_TRUE(!!pMosaic);
-		AssertMosaic(*pMosaic, Xem_Id, Amount(13579));
+		AssertMosaic(*pMosaic, Xpx_Id, Amount(13579));
 	}
 
 	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_MultipleMosaics) {
 		// Arrange:
 		auto accountState = CreateAccountStateWithZeroMosaics();
 		accountState.Balances.credit(MosaicId(123), Amount(111));
-		accountState.Balances.credit(Xem_Id, Amount(13579));
+		accountState.Balances.credit(Xpx_Id, Amount(13579));
 		accountState.Balances.credit(MosaicId(987), Amount(222));
 
 		// Act:
@@ -120,7 +120,7 @@ namespace catapult { namespace state {
 		}
 
 		AssertMosaic(mosaics[MosaicId(123)], MosaicId(123), Amount(111));
-		AssertMosaic(mosaics[Xem_Id], Xem_Id, Amount(13579));
+		AssertMosaic(mosaics[Xpx_Id], Xpx_Id, Amount(13579));
 		AssertMosaic(mosaics[MosaicId(987)], MosaicId(987), Amount(222));
 	}
 
@@ -165,14 +165,14 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_SingleMosaic) {
 		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({ { Xem_Id, Amount(13579) } });
+		AssertCanCreateAccountStateFromAccountInfo({ { Xpx_Id, Amount(13579) } });
 	}
 
 	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_MultipleMosaics) {
 		// Assert:
 		AssertCanCreateAccountStateFromAccountInfo({
 			{ MosaicId(123), Amount(111) },
-			{ Xem_Id, Amount(13579) },
+			{ Xpx_Id, Amount(13579) },
 			{ MosaicId(987), Amount(222) }
 		});
 	}

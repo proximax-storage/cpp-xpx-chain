@@ -241,7 +241,7 @@ namespace catapult { namespace cache {
 		}
 
 		Amount GetBalance(const state::AccountState& accountState) {
-			return accountState.Balances.get(Xem_Id);
+			return accountState.Balances.get(Xpx_Id);
 		}
 
 		void DefaultFillCache(AccountStateCache& cache, uint8_t count) {
@@ -268,7 +268,7 @@ namespace catapult { namespace cache {
 		template<typename TKeyTraits>
 		state::AccountState* AddAccountToCacheDelta(AccountStateCacheDelta& delta, const typename TKeyTraits::Type& key, Amount balance) {
 			auto& accountState = delta.addAccount(key, TKeyTraits::DefaultHeight());
-			accountState.Balances.credit(Xem_Id, balance);
+			accountState.Balances.credit(Xpx_Id, balance);
 			return &accountState;
 		}
 	}
@@ -906,7 +906,7 @@ namespace catapult { namespace cache {
 			auto addresses = test::GenerateRandomDataVector<Address>(balances.size());
 			for (auto i = 0u; i < balances.size(); ++i) {
 				auto& accountState = delta.addAccount(addresses[i], Height(1));
-				accountState.Balances.credit(Xem_Id, balances[i]);
+				accountState.Balances.credit(Xpx_Id, balances[i]);
 			}
 
 			return addresses;
@@ -974,7 +974,7 @@ namespace catapult { namespace cache {
 		RunHighValueAddressesTest(balances, [](const auto& addresses, auto& delta) {
 			// - increment balances of all accounts (this will make 2/3 have sufficient balance)
 			for (const auto& address : addresses)
-				delta->get(address).Balances.credit(Xem_Id, Amount(1));
+				delta->get(address).Balances.credit(Xpx_Id, Amount(1));
 
 			// Act:
 			auto highValueAddresses = delta->highValueAddresses();
@@ -1009,8 +1009,8 @@ namespace catapult { namespace cache {
 			auto uncommittedAddresses = AddAccountsWithBalances(*delta, { Amount(1'100'000), Amount(900'000), Amount(1'000'000) });
 
 			// - modify two [5 match]
-			delta->get(addresses[1]).Balances.credit(Xem_Id, Amount(100'000));
-			delta->get(addresses[4]).Balances.debit(Xem_Id, Amount(200'001));
+			delta->get(addresses[1]).Balances.credit(Xpx_Id, Amount(100'000));
+			delta->get(addresses[4]).Balances.debit(Xpx_Id, Amount(200'001));
 
 			// - delete two [3 match]
 			delta->queueRemove(addresses[2], Height(1));
@@ -1046,8 +1046,8 @@ namespace catapult { namespace cache {
 			auto uncommittedAddresses = AddAccountsWithBalances(*delta, { Amount(1'100'000), Amount(900'000), Amount(1'000'000) });
 
 			// - modify two [5 match]
-			delta->get(addresses[1]).Balances.credit(Xem_Id, Amount(100'000));
-			delta->get(addresses[4]).Balances.debit(Xem_Id, Amount(200'001));
+			delta->get(addresses[1]).Balances.credit(Xpx_Id, Amount(100'000));
+			delta->get(addresses[4]).Balances.debit(Xpx_Id, Amount(200'001));
 
 			// - delete two [3 match]
 			delta->queueRemove(addresses[2], Height(1));
@@ -1075,9 +1075,9 @@ namespace catapult { namespace cache {
 		{
 			auto delta = cache.createDelta();
 			auto& addedAccount1 = delta->addAccount(test::GenerateRandomData<Address_Decoded_Size>(), Height());
-			addedAccount1.Balances.credit(Xem_Id, Amount(1'000'000));
+			addedAccount1.Balances.credit(Xpx_Id, Amount(1'000'000));
 			auto& addedAccount2 = delta->addAccount(test::GenerateRandomData<Address_Decoded_Size>(), Height());
-			addedAccount2.Balances.credit(Xem_Id, Amount(500'000));
+			addedAccount2.Balances.credit(Xpx_Id, Amount(500'000));
 
 			// Sanity:
 			EXPECT_EQ(1u, delta->highValueAddresses().size());

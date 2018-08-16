@@ -61,7 +61,7 @@ namespace catapult { namespace cache {
 			auto delta = cache.createDelta();
 			auto& accountState = TTraits::AddAccount(*delta, publicKey, Height(100));
 			accountState.ImportanceInfo.set(importance, importanceHeight);
-			accountState.Balances.credit(Xem_Id, balance);
+			accountState.Balances.credit(Xpx_Id, balance);
 			cache.commit();
 		}
 

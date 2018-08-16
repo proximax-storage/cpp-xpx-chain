@@ -56,7 +56,7 @@ namespace catapult { namespace config {
 			EXPECT_EQ(utils::TimeSpan::FromHours(24), config.MaxTransactionLifetime);
 			EXPECT_EQ(utils::TimeSpan::FromSeconds(10), config.MaxBlockFutureTime);
 
-			EXPECT_EQ(utils::XemUnit(Amount(8'999'999'998'000'000)), config.TotalChainBalance);
+			EXPECT_EQ(utils::XpxUnit(Amount(8'999'999'998'000'000)), config.TotalChainBalance);
 			EXPECT_EQ(Amount(1'000'000'000'000), config.MinHarvesterBalance);
 
 			EXPECT_EQ(360u, config.BlockPruneInterval);

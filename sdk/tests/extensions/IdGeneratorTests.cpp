@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/crypto/IdGenerator.h"
 #include "src/extensions/IdGenerator.h"
-#include "plugins/txes/namespace/src/model/IdGenerator.h"
 #include "catapult/constants.h"
 #include "tests/TestHarness.h"
 
@@ -31,14 +31,14 @@ namespace catapult { namespace extensions {
 		template<typename TGenerator>
 		void AssertDifferentNamesProduceDifferentResults(TGenerator generator) {
 			// Assert:
-			for (const auto name : { "bloodyrookie.alice", "nem.mex", "bloodyrookie.xem", "bloody_rookie.xem" })
-				EXPECT_NE(generator("nem.xem"), generator(name)) << "nem.xem vs " << name;
+			for (const auto name : { "bloodyrookie.alice", "prx.pxx", "bloodyrookie.xpx", "bloody_rookie.xpx" })
+				EXPECT_NE(generator("prx.xpx"), generator(name)) << "prx.xpx vs " << name;
 		}
 
 		template<typename TGenerator>
 		void AssertNamesWithUppercaseCharactersAreRejected(TGenerator generator) {
 			// Act + Assert:
-			for (const auto name : { "NEM.xem", "NEM.XEM", "nem.XEM", "nEm.XeM", "NeM.xEm" }) {
+			for (const auto name : { "PRX.xpx", "PRX.XPX", "prx.XPX", "pRx.XpX", "PrX.xPx" }) {
 				EXPECT_THROW(generator(name), catapult_invalid_argument) << "name " << name;
 			}
 		}
@@ -87,13 +87,13 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, GenerateMosaicId_GeneratesCorrectWellKnownId) {
 		// Assert:
-		EXPECT_EQ(Xem_Id, GenerateMosaicId("nem:xem"));
+		EXPECT_EQ(Xpx_Id, GenerateMosaicId("prx:xpx"));
 	}
 
 	TEST(TEST_CLASS, GenerateMosaicId_SupportsMultiLevelMosaics) {
 		// Arrange:
-		auto expected = model::GenerateMosaicId(
-				model::GenerateNamespaceId(model::GenerateNamespaceId(model::GenerateRootNamespaceId("foo"), "bar"), "baz"),
+		auto expected = crypto::GenerateMosaicId(
+				crypto::GenerateNamespaceId(crypto::GenerateNamespaceId(crypto::GenerateRootNamespaceId("foo"), "bar"), "baz"),
 				"tokens");
 
 		// Assert:
@@ -102,14 +102,14 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, GenerateMosaicId_RejectsNamespaceOnlyNames) {
 		// Act + Assert:
-		for (const auto name : { "bloodyrookie.alice", "nem.mex", "bloodyrookie.xem", "bloody_rookie.xem" }) {
+		for (const auto name : { "bloodyrookie.alice", "prx.xxp", "bloodyrookie.xpx", "bloody_rookie.xpx" }) {
 			EXPECT_THROW(GenerateMosaicId(name), catapult_invalid_argument) << "name " << name;
 		}
 	}
 
 	TEST(TEST_CLASS, GenerateMosaicId_RejectsMosaicOnlyNames) {
 		// Act + Assert:
-		for (const auto name : { "nem", "xem", "alpha" }) {
+		for (const auto name : { "prx", "xpx", "alpha" }) {
 			EXPECT_THROW(GenerateMosaicId(name), catapult_invalid_argument) << "name " << name;
 		}
 	}
@@ -149,29 +149,29 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, GenerateNamespacePath_GeneratesCorrectWellKnownRootPath) {
 		// Act:
-		auto path = GenerateNamespacePath("nem");
+		auto path = GenerateNamespacePath("prx");
 
 		// Assert:
 		EXPECT_EQ(1u, path.size());
-		EXPECT_EQ(Nem_Id, path[0]);
+		EXPECT_EQ(Prx_Id, path[0]);
 	}
 
 	TEST(TEST_CLASS, GenerateNamespacePath_GeneratesCorrectWellKnownChildPath) {
 		// Act:
-		auto path = GenerateNamespacePath("nem.xem");
+		auto path = GenerateNamespacePath("prx.xpx");
 
 		// Assert:
 		EXPECT_EQ(2u, path.size());
-		EXPECT_EQ(Nem_Id, path[0]);
-		EXPECT_EQ(NamespaceId(Xem_Id.unwrap()), path[1]);
+		EXPECT_EQ(Prx_Id, path[0]);
+		EXPECT_EQ(NamespaceId(Xpx_Id.unwrap()), path[1]);
 	}
 
 	TEST(TEST_CLASS, GenerateNamespacePath_SupportsMultiLevelNamespaces) {
 		// Arrange:
 		NamespacePath expected;
-		expected.push_back(model::GenerateRootNamespaceId("foo"));
-		expected.push_back(model::GenerateNamespaceId(expected[0], "bar"));
-		expected.push_back(model::GenerateNamespaceId(expected[1], "baz"));
+		expected.push_back(crypto::GenerateRootNamespaceId("foo"));
+		expected.push_back(crypto::GenerateNamespaceId(expected[0], "bar"));
+		expected.push_back(crypto::GenerateNamespaceId(expected[1], "baz"));
 
 		// Assert:
 		EXPECT_EQ(expected, GenerateNamespacePath("foo.bar.baz"));

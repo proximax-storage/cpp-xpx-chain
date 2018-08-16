@@ -114,7 +114,7 @@ namespace catapult { namespace plugins {
 			// Assert:
 			EXPECT_EQ(5u, sub.numNotifications());
 			EXPECT_EQ(1u, sub.numTransfers());
-			EXPECT_TRUE(sub.contains(signer, recipient, Xem_Id, Amount(987)));
+			EXPECT_TRUE(sub.contains(signer, recipient, Xpx_Id, Amount(987)));
 		});
 	}
 

@@ -181,7 +181,7 @@ namespace catapult { namespace cache {
 
 		// 2. update for changes
 		auto hasHighValue = [minBalance = m_options.MinHighValueAccountBalance](const auto& accountState) {
-			return accountState.Balances.get(Xem_Id) >= minBalance;
+			return accountState.Balances.get(Xpx_Id) >= minBalance;
 		};
 
 		auto deltas = m_pStateByAddress->deltas();

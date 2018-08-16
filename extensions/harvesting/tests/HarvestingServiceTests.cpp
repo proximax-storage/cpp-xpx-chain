@@ -176,7 +176,7 @@ namespace catapult { namespace harvesting {
 			// - add an account
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
 			accountState.ImportanceInfo.set(Importance(123), importanceHeight);
-			accountState.Balances.credit(Xem_Id, Account_Balance);
+			accountState.Balances.credit(Xpx_Id, Account_Balance);
 
 			// - commit changes
 			cache.commit(height);

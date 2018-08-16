@@ -255,7 +255,7 @@ namespace catapult { namespace filechain {
 			if (Amount(0) != amountSpent)
 				EXPECT_LT(Height(0), accountState.PublicKeyHeight) << message;
 
-			EXPECT_EQ(Nemesis_Recipient_Amount - amountSpent, accountState.Balances.get(Xem_Id)) << message;
+			EXPECT_EQ(Nemesis_Recipient_Amount - amountSpent, accountState.Balances.get(Xpx_Id)) << message;
 		}
 
 		void AssertSecondaryRecipient(const cache::AccountStateCacheView& view, const Address& address, size_t i, Amount amountReceived) {
@@ -264,7 +264,7 @@ namespace catapult { namespace filechain {
 
 			EXPECT_EQ(Height(i + 2), accountState.AddressHeight) << message;
 			EXPECT_EQ(Height(0), accountState.PublicKeyHeight) << message;
-			EXPECT_EQ(amountReceived, accountState.Balances.get(Xem_Id)) << message;
+			EXPECT_EQ(amountReceived, accountState.Balances.get(Xpx_Id)) << message;
 		}
 	}
 

@@ -85,7 +85,7 @@ namespace catapult { namespace sync {
 
 			// add a balance and importance for the signer
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(signer.publicKey(), Height(1));
-			accountState.Balances.credit(Xem_Id, Amount(1'000'000'000'000));
+			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000));
 			accountState.ImportanceInfo.set(Importance(1'000'000'000), model::ImportanceHeight(1));
 
 			// commit all changes

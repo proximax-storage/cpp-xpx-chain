@@ -88,7 +88,7 @@ namespace catapult { namespace sync {
 
 		config::LocalNodeConfiguration CreateLocalNodeConfigurationFromSettings(const ThrottleTestSettings& settings) {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.TotalChainBalance = utils::XemUnit(utils::XemAmount(1'000'000'000));
+			blockChainConfig.TotalChainBalance = utils::XpxUnit(utils::XpxAmount(1'000'000'000));
 			blockChainConfig.MaxTransactionsPerBlock = settings.MaxBlockSize;
 			blockChainConfig.ImportanceGrouping = 1;
 

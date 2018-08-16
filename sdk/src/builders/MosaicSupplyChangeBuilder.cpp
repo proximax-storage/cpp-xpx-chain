@@ -19,7 +19,8 @@
 **/
 
 #include "MosaicSupplyChangeBuilder.h"
-#include "plugins/txes/namespace/src/model/IdGenerator.h"
+
+#include "catapult/crypto/IdGenerator.h"
 
 namespace catapult { namespace builders {
 
@@ -34,7 +35,7 @@ namespace catapult { namespace builders {
 			const Key& signer,
 			NamespaceId namespaceId,
 			const RawString& mosaicName)
-			: MosaicSupplyChangeBuilder(networkIdentifier, signer, model::GenerateMosaicId(namespaceId, mosaicName))
+			: MosaicSupplyChangeBuilder(networkIdentifier, signer, crypto::GenerateMosaicId(namespaceId, mosaicName))
 	{}
 
 	void MosaicSupplyChangeBuilder::setDecrease() {

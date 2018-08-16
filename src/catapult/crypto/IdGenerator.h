@@ -18,25 +18,24 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "NameChecker.h"
-#include <algorithm>
+#pragma once
+//#include "src/catapult/types.h"
+#include "plugins/txes/namespace/src/types.h"
+//#include "catapult/constants.h"
 
-namespace catapult { namespace model {
+namespace catapult {
 
-	namespace {
-		constexpr bool IsAlphaNumeric(uint8_t ch) {
-			return (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9');
-		}
+	/// Base id for namespaces.
+	constexpr NamespaceId Namespace_Base_Id(0);
 
-		constexpr bool IsValidChar(uint8_t ch) {
-			return IsAlphaNumeric(ch) || '-' == ch || '_' == ch;
-		}
-	}
+	namespace crypto {
 
-	bool IsValidName(const uint8_t* pName, size_t nameSize) {
-		if (0 == nameSize)
-			return false;
+		/// Generates a root namespace id given \a name.
+		NamespaceId GenerateRootNamespaceId(const RawString& name) noexcept;
 
-		return IsAlphaNumeric(pName[0]) && std::all_of(pName + 1, pName + nameSize, IsValidChar);
-	}
+		/// Generates a namespace id given \a parentId and namespace \a name.
+		NamespaceId GenerateNamespaceId(NamespaceId parentId, const RawString& name) noexcept;
+
+		/// Generates a mosaic id given \a namespaceId and \a name.
+		MosaicId GenerateMosaicId(NamespaceId namespaceId, const RawString& name) noexcept;
 }}

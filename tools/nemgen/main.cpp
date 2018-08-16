@@ -109,8 +109,8 @@ namespace catapult { namespace tools { namespace nemgen {
 				}
 			}
 
-			if (config.MosaicEntries.cend() == config.MosaicEntries.find("nem:xem")) {
-				CATAPULT_LOG(warning) << "nem:xem must be included in nemesis block";
+			if (config.MosaicEntries.cend() == config.MosaicEntries.find("prx:xpx")) {
+				CATAPULT_LOG(warning) << "prx:xpx must be included in nemesis block";
 				return false;
 			}
 

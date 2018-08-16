@@ -19,16 +19,11 @@
 **/
 
 #pragma once
-#include "NamespaceConstants.h"
+#include <stddef.h>
+#include <stdint.h>
 
-namespace catapult { namespace model {
+namespace catapult { namespace crypto {
 
-	/// Generates a root namespace id given \a name.
-	NamespaceId GenerateRootNamespaceId(const RawString& name) noexcept;
-
-	/// Generates a namespace id given \a parentId and namespace \a name.
-	NamespaceId GenerateNamespaceId(NamespaceId parentId, const RawString& name) noexcept;
-
-	/// Generates a mosaic id given \a namespaceId and \a name.
-	MosaicId GenerateMosaicId(NamespaceId namespaceId, const RawString& name) noexcept;
+	/// Returns \c true if \a pName with size \a nameSize points to a valid name.
+	bool IsValidName(const uint8_t* pName, size_t nameSize);
 }}

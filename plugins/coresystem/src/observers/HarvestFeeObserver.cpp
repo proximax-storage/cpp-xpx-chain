@@ -28,8 +28,8 @@ namespace catapult { namespace observers {
 		auto& cache = context.Cache.sub<cache::AccountStateCache>();
 		auto& harvesterState = cache.get(notification.Signer);
 		if (NotifyMode::Commit == context.Mode)
-			harvesterState.Balances.credit(Xem_Id, notification.TotalFee);
+			harvesterState.Balances.credit(Xpx_Id, notification.TotalFee);
 		else
-			harvesterState.Balances.debit(Xem_Id, notification.TotalFee);
+			harvesterState.Balances.debit(Xpx_Id, notification.TotalFee);
 	});
 }}

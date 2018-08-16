@@ -46,7 +46,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithProperMosaicIdAndAmount) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, Xem_Id, Amount(500), Amount(500));
+		AssertValidationResult(ValidationResult::Success, Xpx_Id, Amount(500), Amount(500));
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithInvalidMosaicId) {

@@ -23,7 +23,7 @@
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/FileSize.h"
 #include "catapult/utils/TimeSpan.h"
-#include "catapult/utils/XemUnit.h"
+#include "catapult/utils/XpxUnit.h"
 #include "catapult/types.h"
 #include <unordered_map>
 #include <stdint.h>
@@ -61,11 +61,11 @@ namespace catapult { namespace model {
 		/// Maximum future time of a block that can be accepted.
 		utils::TimeSpan MaxBlockFutureTime;
 
-		/// Total number of XEM base units available in the network.
-		/// \note This quantity is specified as micro XEM in the configuration file.
-		utils::XemUnit TotalChainBalance;
+		/// Total number of XPX base units available in the network.
+		/// \note This quantity is specified as micro XPX in the configuration file.
+		utils::XpxUnit TotalChainBalance;
 
-		/// Minimum number of micro XEM needed for an account to be eligible for harvesting.
+		/// Minimum number of micro XPX needed for an account to be eligible for harvesting.
 		Amount MinHarvesterBalance;
 
 		/// Number of blocks between cache pruning.
@@ -115,7 +115,7 @@ namespace catapult { namespace model {
 
 	/// Gets the total importance for the block chain described by \a config.
 	constexpr Importance GetTotalImportance(const BlockChainConfiguration& config) {
-		return Importance(config.TotalChainBalance.xem().unwrap());
+		return Importance(config.TotalChainBalance.xpx().unwrap());
 	}
 
 	/// Loads plugin configuration for plugin named \a pluginName from \a config.

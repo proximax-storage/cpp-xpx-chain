@@ -23,3 +23,12 @@ __pycache__
 data*/
 npm-*.log*
 .vscode/
+/build/
+.cproject
+.project
+
+# IntelliJ project files
+.idea
+*.iml
+out
+gen
