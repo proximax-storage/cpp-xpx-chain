@@ -32,3 +32,5 @@ npm-*.log*
 *.iml
 out
 gen
+cmake-build-debug
+temp
