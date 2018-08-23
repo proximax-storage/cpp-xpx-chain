@@ -23,7 +23,7 @@ Allowed options:
 ```
 
 Spammer generates 3 500 - 4 500 transactions per second.
-It can work in to modes:
+It can work in two modes:
  * node - You need use it, if you want connect to Api Node. But, you need to pass apiNodePublicKey and restPrivateKey(it is need to pass validation challenge).
 ```
 ./bin/spammer --privateKeys F9051FFB354BBF7E4D0F3650E3A26EF697FDB96541F61A9D4EC0F679F46EA24A --total 10000 --rate 1000 --host 127.0.0.1 --port 7900 --apiNodePublicKey C946570D2A4842D80140C744F7C9286B39FAEB7B2B94D811963D34F38832B886 --restPrivateKey 91CD243FC24FC000DC52127CBA3AD9372DDBE478BD69F2C53730E1D29A320EDA --mode node

@@ -77,7 +77,7 @@ unique_ptr<model::Transaction> generateTransferTransaction(const crypto::KeyPair
 	Address recipientAddress = model::PublicKeyToAddress(publicKey, networkIdentifier);
 
 	builders::TransferBuilder builder(networkIdentifier, signer.publicKey(), recipientAddress);
-	builder.addMosaic("prx:xpx", Amount(100000));
+	builder.addMosaic("prx:xpx", Amount(1));
 	builder.setStringMessage("Hello world "+ to_string(rand()));
 
 	unique_ptr<model::Transaction> transaction = builder.build();
@@ -166,13 +166,13 @@ void sendRest(const vector<crypto::KeyPair>& signers, boost::asio::ip::tcp::sock
 
 void sendApi(const shared_ptr<ionet::PacketIo>& pConnectedSocket, const vector<crypto::KeyPair>& signers, const SpammerOptions& options) {
 
-	if (sended < options.Total) {
+	if (sended >= options.Total) {
 		return;
 	}
 
 	++sended;
 
-	if (++sended % 500 == 0)
+	if (sended % 500 == 0)
 	{
 		cout << sended << endl;
 	}
@@ -184,8 +184,13 @@ void sendApi(const shared_ptr<ionet::PacketIo>& pConnectedSocket, const vector<c
 			std::shared_ptr<model::Transaction>(std::move(pTransaction))
 	);
 
-	pConnectedSocket->write(pPacket, [pConnectedSocket, &signers, &options](auto){
+	pConnectedSocket->write(pPacket, [pConnectedSocket, &signers, &options](auto code){
 		usleep(1000000 / options.Rate);
+
+		if (code != catapult::ionet::SocketOperationCode::Success) {
+			cout << code << endl;
+		}
+
 		sendApi(pConnectedSocket, signers, options);
 		++got;
 	});
@@ -194,6 +199,7 @@ void sendApi(const shared_ptr<ionet::PacketIo>& pConnectedSocket, const vector<c
 int main(int argc, const char** argv) {
 
 	SpammerOptions options;
+	srand(time(0));
 
 	if (parseArguments(argc, argv, options) < 0) {
 		return 0;
@@ -220,8 +226,16 @@ int main(int argc, const char** argv) {
 		ip::tcp::endpoint endpoint(ip::address::from_string(options.Host), options.Port);
 		sock.connect(endpoint);
 		sendRest(signers, sock, options);
+
+		io_service::work some_work(svc);
+		svc.run();
 	} else if (options.Mode == "node") {
+
 		crypto::KeyPair keyPair = crypto::KeyPair::FromString(options.RestPrivateKey);
+		net::VerifiedPeerInfo serverPeerInfo;
+		serverPeerInfo.PublicKey = crypto::ParseKey(options.ApiNodePublicKey);
+		serverPeerInfo.SecurityMode = ionet::ConnectionSecurityMode::None;
+
 		catapult::ionet::NodeEndpoint endpoint;
 		endpoint.Host = options.Host;
 		endpoint.Port = options.Port;
@@ -236,18 +250,14 @@ int main(int argc, const char** argv) {
 				packetSocketOptions,
 				endpoint,
 				[&](auto, const shared_ptr<ionet::PacketIo>& pConnectedSocket) {
-
-					net::VerifiedPeerInfo serverPeerInfo;
-					serverPeerInfo.PublicKey = crypto::ParseKey(options.ApiNodePublicKey);
-					serverPeerInfo.SecurityMode = ionet::ConnectionSecurityMode::None;
 					net::VerifyServer(pConnectedSocket, serverPeerInfo, keyPair, [pConnectedSocket, &signers, &options](auto, const auto&) {
 						sendApi(pConnectedSocket, signers, options);
 					});
 				});
-	}
 
-	io_service::work some_work(svc);
-	svc.run();
+		io_service::work some_work(svc);
+		svc.run();
+	}
 
 	return 0;
 }
