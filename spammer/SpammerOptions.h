@@ -20,6 +20,8 @@ public:
 	vector<string> privateKeys;
 	string ApiNodePublicKey;
 	string RestPrivateKey;
+	string Token;
+	int Amount;
 };
 
 #endif //CATAPULT_SERVER_SPAMMEROPTIONS_H

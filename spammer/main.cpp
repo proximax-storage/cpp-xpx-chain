@@ -56,7 +56,9 @@ int parseArguments(int argc, const char** argv, SpammerOptions& options) {
 			("mode", value<string>(&options.Mode)->default_value("rest"), "Mode of connection: {rest, node}")
 			("apiNodePublicKey", value<string>(&options.ApiNodePublicKey)->default_value(""), "Public key of api node")
 			("restPrivateKey", value<string>(&options.RestPrivateKey)->default_value(""), "Private key verify connection to api node")
-			("privateKeys", value<vector<string>>(&options.privateKeys)->composing(), "Private keys of accounts with tokens");
+			("privateKeys", value<vector<string>>(&options.privateKeys)->composing(), "Private keys of accounts with tokens")
+			("token", value<string>(&options.Token)->default_value("prx:xpx"), "Tokens that you want to transfer")
+			("value", value<int>(&options.Amount)->default_value(1), "Amount of tokens that you want to transfer");
 
 	variables_map vm;
 	store(parse_command_line(argc, argv, desc), vm);
@@ -70,14 +72,14 @@ int parseArguments(int argc, const char** argv, SpammerOptions& options) {
 	return 0;
 }
 
-unique_ptr<model::Transaction> generateTransferTransaction(const crypto::KeyPair& signer) {
+unique_ptr<model::Transaction> generateTransferTransaction(const crypto::KeyPair& signer, const SpammerOptions& options) {
 
 	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Mijin_Test;
 	auto publicKey = test::GenerateRandomData<Key_Size>();
 	Address recipientAddress = model::PublicKeyToAddress(publicKey, networkIdentifier);
 
 	builders::TransferBuilder builder(networkIdentifier, signer.publicKey(), recipientAddress);
-	builder.addMosaic("prx:xpx", Amount(1));
+	builder.addMosaic(options.Token, Amount(options.Amount));
 	builder.setStringMessage("Hello world "+ to_string(rand()));
 
 	unique_ptr<model::Transaction> transaction = builder.build();
@@ -95,7 +97,7 @@ bool init = true;
 void sendRest(const vector<crypto::KeyPair>& signers, boost::asio::ip::tcp::socket& sock, const SpammerOptions& options){
 
 	// Generate transaction
-	auto pTransaction = generateTransferTransaction(signers[rand() % signers.size()]);
+	auto pTransaction = generateTransferTransaction(signers[rand() % signers.size()], options);
 
 	auto pPacket = ionet::PacketPayloadFactory::FromEntity(
 			ionet::PacketType::Push_Transactions,
@@ -177,7 +179,7 @@ void sendApi(const shared_ptr<ionet::PacketIo>& pConnectedSocket, const vector<c
 		cout << sended << endl;
 	}
 	// Generate transaction
-	auto pTransaction = generateTransferTransaction(signers[rand() % signers.size()]);
+	auto pTransaction = generateTransferTransaction(signers[rand() % signers.size()], options);
 
 	auto pPacket = ionet::PacketPayloadFactory::FromEntity(
 			ionet::PacketType::Push_Transactions,
