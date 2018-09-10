@@ -22,6 +22,7 @@
 #include "utils/ClampedBaseValue.h"
 #include "utils/RawBuffer.h"
 #include <array>
+#include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult {
 
@@ -76,4 +77,6 @@ namespace catapult {
 	constexpr size_t CountOf(T const (&)[N]) noexcept {
 		return N;
 	}
+
+	using BlockTarget = boost::multiprecision::uint256_t;
 }

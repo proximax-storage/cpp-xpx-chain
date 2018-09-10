@@ -21,12 +21,19 @@
 #include "BlockScorer.h"
 #include "catapult/model/Block.h"
 #include "catapult/model/ImportanceHeight.h"
+#include "catapult/state/AccountState.h"
 #include "catapult/utils/IntegerMath.h"
 
 namespace catapult { namespace chain {
 
 	namespace {
 		constexpr uint64_t Two_To_54 = 1ull << 54;
+		constexpr uint64_t TWO_TO_64 = 1ull << 64;
+		constexpr uint64_t MAXRATIO = 67;
+		constexpr uint64_t MINRATIO = 53;
+		constexpr double GAMMA = 0.64;
+		constexpr int BLOCK_GENERATION_TIME = 60;
+		constexpr int OLD_BALANCE = 0;
 
 		struct GenerationHashInfo {
 			uint32_t Value;
@@ -120,28 +127,26 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	BlockTarget CalculateTarget(
-			const utils::TimeSpan& timeSpan,
-			Difficulty difficulty,
-			Importance signerImportance,
-			const model::BlockChainConfiguration& config) {
-		BlockTarget target = timeSpan.seconds();
-		target *= signerImportance.unwrap();
-		target *= GetMultiplier(timeSpan.seconds(), config);
-		target /= difficulty.unwrap();
-		return target;
+	BlockTarget CalculateBaseTarget(
+			const model::Block& parentBlock,
+			const utils::TimeSpan& averageBlockTime) {
+		if (averageBlockTime > utils::TimeSpan::FromSeconds(BLOCK_GENERATION_TIME)) {
+			return (parentBlock.BaseTarget * std::min(averageBlockTime.seconds(), MAXRATIO)) / BLOCK_GENERATION_TIME;
+		} else {
+			return (parentBlock.BaseTarget -
+					parentBlock.BaseTarget * GAMMA * (BLOCK_GENERATION_TIME - std::max(averageBlockTime.seconds(), MINRATIO))) / BLOCK_GENERATION_TIME;
+		}
 	}
 
 	BlockTarget CalculateTarget(
 			const model::Block& parentBlock,
 			const model::Block& currentBlock,
-			Importance signerImportance,
-			const model::BlockChainConfiguration& config) {
-		if (currentBlock.Timestamp <= parentBlock.Timestamp)
-			return BlockTarget(0);
-
-		auto timeDiff = TimeBetweenBlocks(parentBlock, currentBlock);
-		return CalculateTarget(timeDiff, currentBlock.Difficulty, signerImportance, config);
+			const utils::TimeSpan& averageBlockTime,
+			const state::AccountState& accountState) {
+		BlockTarget target = CalculateBaseTarget(parentBlock, averageBlockTime);
+		target *= TimeBetweenBlocks(parentBlock, currentBlock).seconds();
+		target *= (accountState.Balances.get(Xpx_Id).unwrap() - OLD_BALANCE); // TODO: replace with actual old balance.
+		return target;
 	}
 
 	BlockHitPredicate::BlockHitPredicate(const model::BlockChainConfiguration& config, const ImportanceLookupFunc& importanceLookup)
@@ -150,16 +155,17 @@ namespace catapult { namespace chain {
 	{}
 
 	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash) const {
-		auto importance = m_importanceLookup(block.Signer, block.Height);
 		auto hit = CalculateHit(generationHash);
-		auto target = CalculateTarget(parentBlock, block, importance, m_config);
+		state::AccountState accountState;
+		auto target = CalculateTarget(parentBlock, block, TimeBetweenBlocks(parentBlock, block), accountState);
 		return hit < target;
 	}
 
 	bool BlockHitPredicate::operator()(const BlockHitContext& context) const {
-		auto importance = m_importanceLookup(context.Signer, context.Height);
 		auto hit = CalculateHit(context.GenerationHash);
-		auto target = CalculateTarget(context.ElapsedTime, context.Difficulty, importance, m_config);
+		state::AccountState accountState;
+		auto target = CalculateTarget(context.parentBlock, context.currentBlock,
+			TimeBetweenBlocks(context.parentBlock, context.currentBlock), accountState);
 		return hit < target;
 	}
 }}

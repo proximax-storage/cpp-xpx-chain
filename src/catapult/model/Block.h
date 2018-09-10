@@ -46,6 +46,9 @@ namespace catapult { namespace model {
 		/// Difficulty of a block.
 		catapult::Difficulty Difficulty;
 
+		/// Difficulty of a block.
+		catapult::BlockTarget BaseTarget;
+
 		/// Hash of the previous block.
 		Hash256 PreviousBlockHash;
 

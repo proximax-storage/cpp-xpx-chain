@@ -21,36 +21,17 @@
 #pragma once
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/types.h"
-#include <boost/multiprecision/cpp_int.hpp>
 #include <functional>
 
 namespace catapult { namespace model { struct Block; } }
 
 namespace catapult { namespace chain {
 
-	using BlockTarget = boost::multiprecision::uint256_t;
-
 	/// Calculates the hit for a \a generationHash.
 	uint64_t CalculateHit(const Hash256& generationHash);
 
 	/// Calculates the score of \a currentBlock with parent \a parentBlock.
 	uint64_t CalculateScore(const model::Block& parentBlock, const model::Block& currentBlock);
-
-	/// Calculates the target from a time span (\a timeSpan), a \a difficulty and an effective signer importance
-	/// of \a signerImportance for the block chain described by \a config.
-	BlockTarget CalculateTarget(
-			const utils::TimeSpan& timeSpan,
-			Difficulty difficulty,
-			Importance signerImportance,
-			const model::BlockChainConfiguration& config);
-
-	/// Calculates the target of \a currentBlock with parent \a parentBlock and effective signer importance
-	/// of \a signerImportance for the block chain described by \a config.
-	BlockTarget CalculateTarget(
-			const model::Block& parentBlock,
-			const model::Block& currentBlock,
-			Importance signerImportance,
-			const model::BlockChainConfiguration& config);
 
 	/// Contextual information for calculating a block hit.
 	struct BlockHitContext {
@@ -74,6 +55,10 @@ namespace catapult { namespace chain {
 
 		/// Block height.
 		catapult::Height Height;
+
+		const model::Block parentBlock;
+
+		const model::Block currentBlock;
 	};
 
 	/// Predicate used to determine if a block is a hit or not.
