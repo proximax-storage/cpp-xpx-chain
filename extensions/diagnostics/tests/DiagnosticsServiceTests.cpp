@@ -77,7 +77,7 @@ namespace catapult { namespace diagnostics {
 
 		// - correct params were forwarded to callback
 		EXPECT_EQ(&packetHandlers, capture.pHandlers);
-		EXPECT_EQ(&context.testState().state().cache(), capture.pCache);
+		EXPECT_EQ(&context.testState().state().currentCache(), capture.pCache);
 	}
 
 	TEST(TEST_CLASS, CountersAreSourcedFromLocatorAndState) {

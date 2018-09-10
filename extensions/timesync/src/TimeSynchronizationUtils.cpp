@@ -58,11 +58,12 @@ namespace catapult { namespace timesync {
 		};
 
 		ionet::NodeSet SelectNodes(
-				const cache::AccountStateCache& cache,
+				const extensions::LocalNodeStateRef& localNodeState,
 				const ImportanceAwareNodeSelector& selector,
 				const ionet::NodeContainer& nodes,
 				Height height) {
-			auto view = cache.createView();
+			// TODO: ? Do we need to rework it?
+			auto view = localNodeState.CurrentCache.sub<cache::AccountStateCache>().createView();
 			cache::ImportanceView importanceView(view->asReadOnly());
 			auto selectedNodes = selector.selectNodes(importanceView, nodes.view(), height);
 			CATAPULT_LOG(debug) << "timesync: number of selected nodes: " << selectedNodes.size();
@@ -116,26 +117,23 @@ namespace catapult { namespace timesync {
 			const extensions::ServiceState& state,
 			TimeSynchronizationState& timeSyncState,
 			const NetworkTimeSupplier& networkTimeSupplier) {
-		const auto& cache = state.cache().sub<cache::AccountStateCache>();
+		const extensions::LocalNodeStateRef& nodeLocalState = state.nodeLocalState();
 		const auto& nodes = state.nodes();
-		const auto& storage = state.storage();
-		const auto& config = state.config();
-		auto selector = CreateImportanceAwareNodeSelector(timeSyncConfig, config);
+		auto selector = CreateImportanceAwareNodeSelector(timeSyncConfig, nodeLocalState.Config);
 		return thread::CreateNamedTask("time synchronization task", [&, resultSupplier, networkTimeSupplier, selector]() {
-			auto height = storage.view().chainHeight();
+			auto height = nodeLocalState.Storage.view().chainHeight();
 
 			// select nodes
-			auto selectedNodes = SelectNodes(cache, selector, nodes, height);
+			auto selectedNodes = SelectNodes(nodeLocalState, selector, nodes, height);
 
 			// retrieve samples from selected nodes
 			auto samplesFuture = RetrieveSamples(selectedNodes, resultSupplier, networkTimeSupplier);
-			return samplesFuture.then([&timeSynchronizer, &timeSyncState, &cache, height](auto&& future) {
+			return samplesFuture.then([&timeSynchronizer, &timeSyncState, &nodeLocalState, height](auto&& future) {
 				auto samples = future.get();
 				CATAPULT_LOG(debug) << "timesync: number of retrieved samples: " << samples.size();
 
 				// calculate new offset and update state
-				auto view = cache.createView();
-				auto offset = timeSynchronizer.calculateTimeOffset(*view, height, std::move(samples), timeSyncState.nodeAge());
+				auto offset = timeSynchronizer.calculateTimeOffset(nodeLocalState, height, std::move(samples), timeSyncState.nodeAge());
 				timeSyncState.update(offset);
 
 				return thread::TaskResult::Continue;

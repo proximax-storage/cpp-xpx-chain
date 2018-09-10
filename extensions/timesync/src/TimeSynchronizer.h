@@ -19,9 +19,11 @@
 **/
 
 #pragma once
+
 #include "constants.h"
-#include "types.h"
 #include "timesync/src/filters/AggregateSynchronizationFilter.h"
+#include "types.h"
+#include <src/catapult/extensions/LocalNodeStateRef.h>
 
 namespace catapult {
 	namespace cache {
@@ -44,7 +46,7 @@ namespace catapult { namespace timesync {
 	public:
 		/// Calculates a time offset from \a samples using \a accountStateCacheView, \a height and \a nodeAge.
 		TimeOffset calculateTimeOffset(
-				const cache::AccountStateCacheView& accountStateCacheView,
+				const extensions::LocalNodeStateRef& localNodeState,
 				Height height,
 				TimeSynchronizationSamples&& samples,
 				NodeAge nodeAge);

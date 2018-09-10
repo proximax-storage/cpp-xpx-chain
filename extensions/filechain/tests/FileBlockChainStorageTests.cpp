@@ -76,7 +76,7 @@ namespace catapult { namespace filechain {
 			}
 
 			auto cacheView() const {
-				return m_localNodeState.cref().Cache.createView();
+				return m_localNodeState.cref().CurrentCache.createView();
 			}
 
 			auto score() const {

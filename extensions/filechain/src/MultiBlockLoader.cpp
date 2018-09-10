@@ -139,12 +139,12 @@ namespace catapult { namespace filechain {
 
 	private:
 		void execute(const model::BlockElement& blockElement) const {
-			auto cacheDelta = m_stateRef.Cache.createDelta();
+			auto cacheDelta = m_stateRef.CurrentCache.createDelta();
 			auto observerState = observers::ObserverState(cacheDelta, m_stateRef.State);
 
 			const auto& block = blockElement.Block;
 			chain::ExecuteBlock(blockElement, m_observerFactory(block), observerState);
-			m_stateRef.Cache.commit(block.Height);
+			m_stateRef.CurrentCache.commit(block.Height);
 		}
 
 	private:

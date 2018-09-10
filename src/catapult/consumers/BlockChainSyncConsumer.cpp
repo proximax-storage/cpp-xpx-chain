@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <src/catapult/config/LocalNodeConfiguration.h>
 #include "BlockConsumers.h"
 #include "ConsumerResultFactory.h"
 #include "InputUtils.h"
@@ -114,15 +115,9 @@ namespace catapult { namespace consumers {
 		class BlockChainSyncConsumer {
 		public:
 			explicit BlockChainSyncConsumer(
-					cache::CatapultCache& cache,
-					state::CatapultState& state,
-					io::BlockStorageCache& storage,
-					uint32_t maxRollbackBlocks,
+					const extensions::LocalNodeStateRef& localNodeState,
 					const BlockChainSyncHandlers& handlers)
-					: m_cache(cache)
-					, m_state(state)
-					, m_storage(storage)
-					, m_maxRollbackBlocks(maxRollbackBlocks)
+					: m_localNodeState(localNodeState)
 					, m_handlers(handlers)
 			{}
 
@@ -153,8 +148,9 @@ namespace catapult { namespace consumers {
 
 		private:
 			ConsumerResult preprocess(const BlockElements& elements, InputSource source, SyncState& syncState) const {
+				// TODO: ? Implement effective balance calculation
 				// 1. check that the peer chain can be linked to the current chain
-				auto storageView = m_storage.view();
+				auto storageView = m_localNodeState.Storage.view();
 				auto peerStartHeight = elements[0].Block.Height;
 				auto localChainHeight = storageView.chainHeight();
 				if (!IsLinked(peerStartHeight, localChainHeight, source))
@@ -162,16 +158,16 @@ namespace catapult { namespace consumers {
 
 				// 2. check that the remote chain is not too far behind the current chain
 				auto heightDifference = static_cast<int64_t>((localChainHeight - peerStartHeight).unwrap());
-				if (heightDifference > m_maxRollbackBlocks)
+				if (heightDifference > m_localNodeState.Config.BlockChain.MaxRollbackBlocks)
 					return Abort(Failure_Consumer_Remote_Chain_Too_Far_Behind);
 
 				// 3. check difficulties against difficulties in cache
 				auto blocks = ExtractBlocks(elements);
-				if (!m_handlers.DifficultyChecker(blocks, m_cache))
+				if (!m_handlers.DifficultyChecker(blocks, m_localNodeState.CurrentCache))
 					return Abort(Failure_Consumer_Remote_Chain_Mismatched_Difficulties);
 
 				// 4. unwind to the common block height and calculate the local chain score
-				syncState = SyncState(m_cache, m_state);
+				syncState = SyncState(m_localNodeState.CurrentCache, m_localNodeState.State);
 				auto commonBlockHeight = peerStartHeight - Height(1);
 				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, syncState.observerState());
 				const auto& localScore = unwindResult.Score;
@@ -264,26 +260,20 @@ namespace catapult { namespace consumers {
 			}
 
 			void commitToStorage(Height commonBlockHeight, const BlockElements& elements) const {
-				auto storageModifier = m_storage.modifier();
+				auto storageModifier = m_localNodeState.Storage.modifier();
 				storageModifier.dropBlocksAfter(commonBlockHeight);
 				storageModifier.saveBlocks(elements);
 			}
 
 		private:
-			cache::CatapultCache& m_cache;
-			state::CatapultState& m_state;
-			io::BlockStorageCache& m_storage;
-			uint32_t m_maxRollbackBlocks;
+			const extensions::LocalNodeStateRef& m_localNodeState;
 			BlockChainSyncHandlers m_handlers;
 		};
 	}
 
 	disruptor::DisruptorConsumer CreateBlockChainSyncConsumer(
-			cache::CatapultCache& cache,
-			state::CatapultState& state,
-			io::BlockStorageCache& storage,
-			uint32_t maxRollbackBlocks,
+			const extensions::LocalNodeStateRef& localNodeState,
 			const BlockChainSyncHandlers& handlers) {
-		return BlockChainSyncConsumer(cache, state, storage, maxRollbackBlocks, handlers);
+		return BlockChainSyncConsumer(localNodeState, handlers);
 	}
 }}

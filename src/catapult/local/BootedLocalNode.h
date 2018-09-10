@@ -67,7 +67,10 @@ namespace catapult { namespace local {
 
 	public:
 		/// Gets the current cache.
-		virtual const cache::CatapultCache& cache() const = 0;
+		virtual const cache::CatapultCache& currentCache() const = 0;
+
+		/// Gets the previous cache.
+		virtual const cache::CatapultCache& previousCache() const = 0;
 
 		/// Gets the current chain score.
 		virtual model::ChainScore score() const = 0;

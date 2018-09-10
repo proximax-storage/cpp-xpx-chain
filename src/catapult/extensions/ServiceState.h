@@ -19,12 +19,13 @@
 **/
 
 #pragma once
-#include "ServerHooks.h"
-#include "ServiceState.h"
 #include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/net/PacketIoPickerContainer.h"
 #include "catapult/thread/Task.h"
+#include "LocalNodeStateRef.h"
+#include "ServerHooks.h"
+#include "ServiceState.h"
 
 namespace catapult {
 	namespace cache {
@@ -53,12 +54,8 @@ namespace catapult { namespace extensions {
 		/// Creates service state around \a config, \a nodes, \a cache, \a state, \a storage, \a score, \a utCache, \a timeSupplier
 		/// \a transactionStatusSubscriber, \a stateChangeSubscriber, \a nodeSubscriber, \a counters, \a pluginManager and \a pool.
 		ServiceState(
-				const config::LocalNodeConfiguration& config,
+				extensions::LocalNodeState& state,
 				ionet::NodeContainer& nodes,
-				cache::CatapultCache& cache,
-				state::CatapultState& state,
-				io::BlockStorageCache& storage,
-				LocalNodeChainScore& score,
 				cache::MemoryUtCacheProxy& utCache,
 				const supplier<Timestamp>& timeSupplier,
 				subscribers::TransactionStatusSubscriber& transactionStatusSubscriber,
@@ -67,12 +64,8 @@ namespace catapult { namespace extensions {
 				const std::vector<utils::DiagnosticCounter>& counters,
 				const plugins::PluginManager& pluginManager,
 				thread::MultiServicePool& pool)
-				: m_config(config)
+				: m_state(state)
 				, m_nodes(nodes)
-				, m_cache(cache)
-				, m_state(state)
-				, m_storage(storage)
-				, m_score(score)
 				, m_utCache(utCache)
 				, m_timeSupplier(timeSupplier)
 				, m_transactionStatusSubscriber(transactionStatusSubscriber)
@@ -81,13 +74,18 @@ namespace catapult { namespace extensions {
 				, m_counters(counters)
 				, m_pluginManager(pluginManager)
 				, m_pool(pool)
-				, m_packetHandlers(m_config.Node.MaxPacketDataSize.bytes32())
+				, m_packetHandlers(m_state.Config.Node.MaxPacketDataSize.bytes32())
 		{}
 
 	public:
+		/// Gets the nodes.
+		auto& nodeLocalState() const {
+			return m_state;
+		}
+
 		/// Gets the config.
 		const auto& config() const {
-			return m_config;
+			return m_state.Config;
 		}
 
 		/// Gets the nodes.
@@ -95,24 +93,29 @@ namespace catapult { namespace extensions {
 			return m_nodes;
 		}
 
-		/// Gets the cache.
-		auto& cache() const {
-			return m_cache;
+		/// Gets the current cache.
+		auto& currentCache() const {
+			return m_state.CurrentCache;
+		}
+
+		/// Gets the previous cache.
+		auto& previousCache() const {
+			return m_state.PreviousCache;
 		}
 
 		/// Gets the state.
 		auto& state() const {
-			return m_state;
+			return m_state.State;
 		}
 
 		/// Gets the storage.
 		auto& storage() const {
-			return m_storage;
+			return m_state.Storage;
 		}
 
 		/// Gets the score.
 		auto& score() const {
-			return m_score;
+			return m_state.Score;
 		}
 
 		/// Gets the unconfirmed transactions cache.
@@ -183,12 +186,8 @@ namespace catapult { namespace extensions {
 
 	private:
 		// references
-		const config::LocalNodeConfiguration& m_config;
+		extensions::LocalNodeStateRef m_state;
 		ionet::NodeContainer& m_nodes;
-		cache::CatapultCache& m_cache;
-		state::CatapultState& m_state;
-		io::BlockStorageCache& m_storage;
-		LocalNodeChainScore& m_score;
 		cache::MemoryUtCacheProxy& m_utCache;
 		supplier<Timestamp> m_timeSupplier;
 

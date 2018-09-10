@@ -188,10 +188,7 @@ namespace catapult { namespace sync {
 
 				auto disruptorConsumers = DisruptorConsumersFromBlockConsumers(m_consumers);
 				disruptorConsumers.push_back(CreateBlockChainSyncConsumer(
-						m_state.cache(),
-						m_state.state(),
-						m_state.storage(),
-						m_state.config().BlockChain.MaxRollbackBlocks,
+						m_state.nodeLocalState(),
 						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
 
 				disruptorConsumers.push_back(CreateNewBlockConsumer(m_state.hooks().newBlockSink(), InputSource::Local));
@@ -308,7 +305,7 @@ namespace catapult { namespace sync {
 		chain::UtUpdater& CreateAndRegisterUtUpdater(extensions::ServiceLocator& locator, extensions::ServiceState& state) {
 			auto pUtUpdater = std::make_shared<chain::UtUpdater>(
 					state.utCache(),
-					state.cache(),
+					state.currentCache(),
 					CreateExecutionConfiguration(state.pluginManager()),
 					state.timeSupplier(),
 					extensions::SubscriberToSink(state.transactionStatusSubscriber()),

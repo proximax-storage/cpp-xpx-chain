@@ -249,7 +249,7 @@ namespace catapult { namespace timesync {
 			SeedNodeContainer(context.ServiceTestState.state().nodes(), keys);
 
 			// - prepare account state cache
-			auto& cache = context.ServiceTestState.state().cache();
+			auto& cache = context.ServiceTestState.state().currentCache();
 			auto cacheDelta = cache.createDelta();
 			SeedAccountStateCache(cacheDelta.sub<cache::AccountStateCache>(), keys, importances);
 			cache.commit(Height(1));

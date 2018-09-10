@@ -18,15 +18,19 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "harvesting/src/Harvester.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
+#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/LoggingConfiguration.h"
+#include "catapult/config/UserConfiguration.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/TransactionPlugin.h"
+#include "harvesting/src/Harvester.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
+#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/TestHarness.h"
 
@@ -83,20 +87,31 @@ namespace catapult { namespace harvesting {
 			return pBlock;
 		}
 
-		model::BlockChainConfiguration CreateConfiguration() {
+		model::BlockChainConfiguration CreateBlockConfiguration() {
+
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Network_Identifier;
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
 			config.MaxDifficultyBlocks = 60;
 			config.ImportanceGrouping = 123;
+
 			return config;
+		}
+
+		config::LocalNodeConfiguration CreateConfiguration(model::BlockChainConfiguration config = CreateBlockConfiguration()) {
+			return config::LocalNodeConfiguration(
+					std::move(config),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					config::UserConfiguration::Uninitialized()
+			);
 		}
 
 		struct HarvesterContext {
 		public:
 			HarvesterContext()
-					: Cache(test::CreateEmptyCatapultCache(CreateConfiguration()))
+					: Cache(test::CreateEmptyCatapultCache(CreateConfiguration().BlockChain))
 					, KeyPairs(CreateKeyPairs(Num_Accounts))
 					, Importances(CreateImportances(Num_Accounts))
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts))
@@ -115,11 +130,21 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			auto CreateHarvester(const model::BlockChainConfiguration& config, const TransactionsInfoSupplier& transactionsInfoSupplier) {
-				return std::make_unique<Harvester>(Cache, config, *pUnlockedAccounts, transactionsInfoSupplier);
+			auto CreateHarvester(const config::LocalNodeConfiguration& config, const TransactionsInfoSupplier& transactionsInfoSupplier) {
+				return std::make_unique<Harvester>(
+						extensions::LocalNodeStateRef(
+								*std::make_unique<extensions::LocalNodeState>(
+										config,
+										std::make_unique<mocks::MockMemoryBasedStorage>(),
+										std::move(Cache)
+								)
+						),
+						*pUnlockedAccounts,
+						transactionsInfoSupplier
+				);
 			}
 
-			auto CreateHarvester(const model::BlockChainConfiguration& config) {
+			auto CreateHarvester(const config::LocalNodeConfiguration& config) {
 				return CreateHarvester(config, [](size_t) { return TransactionsInfo(); });
 			}
 
@@ -155,7 +180,7 @@ namespace catapult { namespace harvesting {
 		Timestamp CalculateBlockGenerationTime(const HarvesterContext& context, const Key& publicKey) {
 			auto pLastBlock = context.pLastBlock;
 			auto config = CreateConfiguration();
-			auto difficulty = chain::CalculateDifficulty(context.Cache.sub<cache::BlockDifficultyCache>(), pLastBlock->Height, config);
+			auto difficulty = chain::CalculateDifficulty(context.Cache.sub<cache::BlockDifficultyCache>(), pLastBlock->Height, config.BlockChain);
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto view = accountStateCache.createView();
 			const auto& accountState = view->get(publicKey);
@@ -164,7 +189,7 @@ namespace catapult { namespace harvesting {
 					utils::TimeSpan::FromMilliseconds(1000),
 					difficulty,
 					accountState.ImportanceInfo.current(),
-					config));
+					config.BlockChain));
 			uint64_t seconds = hit / referenceTarget;
 			return Timestamp((seconds + 1) * 1000);
 		}
@@ -207,7 +232,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		HarvesterContext context;
 		auto pHarvester = context.CreateHarvester();
-		auto numBlocks = CreateConfiguration().MaxDifficultyBlocks + 10;
+		auto numBlocks = CreateConfiguration().BlockChain.MaxDifficultyBlocks + 10;
 
 		// - seed the block difficulty cache (it already has an entry for height 1)
 		{
@@ -357,7 +382,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(bestKey, pBlock->Signer);
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
-			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, pLastBlock->Height, config), pBlock->Difficulty);
+			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, pLastBlock->Height, config.BlockChain), pBlock->Difficulty);
 			EXPECT_EQ(model::MakeVersion(Network_Identifier, 3), pBlock->Version);
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
@@ -369,9 +394,10 @@ namespace catapult { namespace harvesting {
 		// Arrange: the custom configuration has a much higher target time and uses smoothing. After 24 hours
 		//          the harvester using the default configuration is most likely able to harvest a block
 		//          while with the custom configuration it is very unlikely to have a hit.
-		auto customConfig = CreateConfiguration();
-		customConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1000);
-		customConfig.BlockTimeSmoothingFactor = 10000;
+		auto BlockChain = CreateBlockConfiguration();
+		BlockChain.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1000);
+		BlockChain.BlockTimeSmoothingFactor = 10000;
+		auto customConfig = CreateConfiguration(BlockChain);
 
 		auto numHarvester1Blocks = 0u;
 		auto numHarvester2Blocks = 0u;
@@ -417,8 +443,9 @@ namespace catapult { namespace harvesting {
 			size_t counter = 0;
 			uint32_t numRequestedInfos = 0;
 			auto info = CreateTransactionsInfo(numAvailableTransactions);
-			auto config = CreateConfiguration();
-			config.MaxTransactionsPerBlock = maxTransactionsPerBlock;
+			auto BlockChain = CreateBlockConfiguration();
+			BlockChain.MaxTransactionsPerBlock = maxTransactionsPerBlock;
+			auto config = CreateConfiguration(BlockChain);
 			auto pHarvester = context.CreateHarvester(config, [&, info](auto count) mutable {
 				++counter;
 				numRequestedInfos = count;

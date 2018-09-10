@@ -222,7 +222,7 @@ namespace catapult { namespace partialtransaction {
 			auto pUpdaterPool = state.pool().pushIsolatedPool("ptUpdater");
 
 			// validator needs to be created here because bootstrapper does not have cache nor all validators registered
-			auto pValidator = chain::CreatePtValidator(state.cache(), state.timeSupplier(), state.pluginManager());
+			auto pValidator = chain::CreatePtValidator(state.currentCache(), state.timeSupplier(), state.pluginManager());
 
 			auto transactionRangeConsumerFactory = state.hooks().transactionRangeConsumerFactory();
 			return std::make_unique<chain::PtUpdater>(

@@ -36,7 +36,7 @@ namespace catapult { namespace hashcache {
 			}
 
 			void registerServices(extensions::ServiceLocator&, extensions::ServiceState& state) override {
-				state.hooks().addKnownHashPredicate([&cache = state.cache()](auto timestamp, const auto& hash) {
+				state.hooks().addKnownHashPredicate([&cache = state.currentCache()](auto timestamp, const auto& hash) {
 					return cache::HashCacheContains(cache, timestamp, hash);
 				});
 			}

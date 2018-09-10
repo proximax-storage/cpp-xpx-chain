@@ -18,12 +18,16 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "harvesting/src/ScheduledHarvesterTask.h"
-#include "harvesting/src/Harvester.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
+#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/LoggingConfiguration.h"
+#include "catapult/config/UserConfiguration.h"
+#include "harvesting/src/Harvester.h"
+#include "harvesting/src/ScheduledHarvesterTask.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
+#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/TestHarness.h"
 
 using catapult::crypto::KeyPair;
@@ -128,10 +132,24 @@ namespace catapult { namespace harvesting {
 			UnlockedAccounts Accounts;
 		};
 
+		config::LocalNodeConfiguration CreateConfiguration(model::BlockChainConfiguration& config) {
+			return config::LocalNodeConfiguration(
+					std::move(config),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					config::UserConfiguration::Uninitialized()
+			);
+		}
+
 		auto CreateHarvester(HarvesterContext& context) {
 			return std::make_unique<Harvester>(
-					context.Cache,
-					context.Config,
+					extensions::LocalNodeStateRef(
+							*std::make_unique<extensions::LocalNodeState>(
+									CreateConfiguration(context.Config),
+									std::make_unique<mocks::MockMemoryBasedStorage>(),
+									std::move(context.Cache)
+							)
+					),
 					context.Accounts,
 					[](size_t) { return TransactionsInfo(); });
 		}

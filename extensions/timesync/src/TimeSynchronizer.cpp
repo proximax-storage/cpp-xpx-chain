@@ -18,12 +18,13 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "TimeSynchronizer.h"
-#include "constants.h"
-#include "timesync/src/filters/filter_constants.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheView.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/utils/Functional.h"
+#include "constants.h"
+#include "timesync/src/filters/filter_constants.h"
+#include "TimeSynchronizer.h"
 #include <cmath>
 
 namespace catapult { namespace timesync {
@@ -49,7 +50,7 @@ namespace catapult { namespace timesync {
 	{}
 
 	TimeOffset TimeSynchronizer::calculateTimeOffset(
-			const cache::AccountStateCacheView& accountStateCacheView,
+			const extensions::LocalNodeStateRef& localNodeState,
 			Height height,
 			TimeSynchronizationSamples&& samples,
 			NodeAge nodeAge) {
@@ -59,14 +60,15 @@ namespace catapult { namespace timesync {
 			return TimeOffset(0);
 		}
 
-		cache::ImportanceView importanceView(accountStateCacheView.asReadOnly());
+		auto accountStateCacheView = localNodeState.CurrentCache.sub<cache::AccountStateCache>().createView();
+		cache::ImportanceView importanceView(accountStateCacheView->asReadOnly());
 		auto cumulativeImportance = sumImportances(importanceView, height, samples);
 		if (0 == cumulativeImportance) {
 			CATAPULT_LOG(warning) << "cannot calculate network time, cumulativeImportance is zero";
 			return TimeOffset(0);
 		}
 
-		auto highValueAddressesSize = accountStateCacheView.highValueAddressesSize();
+		auto highValueAddressesSize = accountStateCacheView->highValueAddressesSize();
 		auto viewPercentage = static_cast<double>(samples.size()) / highValueAddressesSize;
 		auto importancePercentage = static_cast<double>(cumulativeImportance) / m_totalChainBalance;
 		auto scaling = importancePercentage > viewPercentage ? 1.0 / importancePercentage : 1.0 / viewPercentage;
