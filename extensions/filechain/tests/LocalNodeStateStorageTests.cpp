@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "filechain/src/LocalNodeStateStorage.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalData.h"
 #include "catapult/cache_core/AccountStateCache.h"
@@ -26,8 +25,10 @@
 #include "catapult/io/FileLock.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "filechain/src/LocalNodeStateStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
+#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
@@ -72,6 +73,23 @@ namespace catapult { namespace filechain {
 			EXPECT_EQ(expectedView.sub<cache::BlockDifficultyCache>().size(), actualView.sub<cache::BlockDifficultyCache>().size());
 		}
 
+		std::unique_ptr<extensions::LocalNodeState> createLocalNodeState(std::string name, cache::CatapultCache& cache) {
+			auto UserConfig = config::UserConfiguration::Uninitialized();
+			UserConfig.DataDirectory = name;
+			auto LocalConfig = config::LocalNodeConfiguration(
+					model::BlockChainConfiguration::Uninitialized(),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					std::move(UserConfig)
+			);
+
+			return std::make_unique<extensions::LocalNodeState>(
+					LocalConfig,
+					std::make_unique<mocks::MockMemoryBasedStorage>(),
+					std::move(cache)
+			);
+		}
+
 		cache::SupplementalData SaveState(const std::string& dataDirectory, cache::CatapultCache& cache) {
 			cache::SupplementalData supplementalData;
 			{
@@ -86,8 +104,9 @@ namespace catapult { namespace filechain {
 
 			supplementalData.ChainScore = model::ChainScore(0x1234567890ABCDEF, 0xFEDCBA0987654321);
 			supplementalData.State.LastRecalculationHeight = model::ImportanceHeight(12345);
-			filechain::SaveState(dataDirectory, cache, supplementalData);
-			return supplementalData;
+			auto state = extensions::LocalNodeStateConstRef(*createLocalNodeState(dataDirectory, cache));
+			filechain::SaveState(state);
+			return { state.State, state. Score.get() };
 		}
 	}
 
@@ -100,7 +119,7 @@ namespace catapult { namespace filechain {
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 		cache::SupplementalData supplementalData;
-		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData);
+		auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(tempDir.name(), cache)), supplementalData);
 
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
@@ -123,7 +142,7 @@ namespace catapult { namespace filechain {
 			// Act: load the cache
 			auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			cache::SupplementalData supplementalData;
-			auto isStateLoaded = LoadState(dataDirectory, cache, supplementalData);
+			auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(dataDirectory, cache)), supplementalData);
 
 			// Assert:
 			EXPECT_FALSE(isStateLoaded);
@@ -176,7 +195,7 @@ namespace catapult { namespace filechain {
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 		cache::SupplementalData supplementalData;
-		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData);
+		auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(tempDir.name(), cache)), supplementalData);
 
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);

@@ -54,7 +54,7 @@ namespace catapult { namespace extensions {
 		/// Creates service state around \a config, \a nodes, \a cache, \a state, \a storage, \a score, \a utCache, \a timeSupplier
 		/// \a transactionStatusSubscriber, \a stateChangeSubscriber, \a nodeSubscriber, \a counters, \a pluginManager and \a pool.
 		ServiceState(
-				extensions::LocalNodeState& state,
+				extensions::LocalNodeStateRef& state,
 				ionet::NodeContainer& nodes,
 				cache::MemoryUtCacheProxy& utCache,
 				const supplier<Timestamp>& timeSupplier,
@@ -186,7 +186,7 @@ namespace catapult { namespace extensions {
 
 	private:
 		// references
-		extensions::LocalNodeStateRef m_state;
+		extensions::LocalNodeStateRef& m_state;
 		ionet::NodeContainer& m_nodes;
 		cache::MemoryUtCacheProxy& m_utCache;
 		supplier<Timestamp> m_timeSupplier;

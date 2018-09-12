@@ -40,7 +40,8 @@ namespace catapult { namespace plugins {
 
 			auto cacheConfig = manager.cacheConfig(AccountStateCache::Name);
 			auto cacheOptions = CreateAccountStateCacheOptions(config);
-			manager.addCacheSupport<AccountStateCacheStorage>(std::make_unique<AccountStateCache>(cacheConfig, cacheOptions));
+			manager.addCurrentCacheSupport<AccountStateCacheStorage>(std::make_unique<AccountStateCache>(cacheConfig, cacheOptions));
+			manager.addPreviousCacheSupport<AccountStateCacheStorage>(std::make_unique<OldAccountStateCache>(cacheConfig, cacheOptions));
 
 			manager.addDiagnosticHandlerHook([](auto& handlers, const CatapultCache& cache) {
 				handlers::RegisterAccountInfosHandler(
@@ -59,7 +60,7 @@ namespace catapult { namespace plugins {
 			using namespace catapult::cache;
 
 			auto difficultyHistorySize = CalculateDifficultyHistorySize(config);
-			manager.addCacheSupport<BlockDifficultyCacheStorage>(std::make_unique<BlockDifficultyCache>(difficultyHistorySize));
+			manager.addCurrentCacheSupport<BlockDifficultyCacheStorage>(std::make_unique<BlockDifficultyCache>(difficultyHistorySize));
 
 			manager.addDiagnosticCounterHook([](auto& counters, const CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("BLKDIF C"), [&cache]() {

@@ -43,7 +43,7 @@ namespace catapult { namespace filechain {
 				cache::SupplementalData supplementalData;
 				bool isStateLoaded = false;
 				try {
-					isStateLoaded = LoadState(stateRef.Config.User.DataDirectory, stateRef.CurrentCache, supplementalData);
+					isStateLoaded = LoadState(stateRef, supplementalData);
 				} catch (...) {
 					CATAPULT_LOG(error) << "error when loading state, remove state directories and start again";
 					throw;
@@ -123,7 +123,7 @@ namespace catapult { namespace filechain {
 
 		public:
 			void saveToStorage(const extensions::LocalNodeStateConstRef& stateRef) override {
-				SaveState(stateRef.Config.User.DataDirectory, stateRef.CurrentCache, { stateRef.State, stateRef.Score.get() });
+				SaveState(stateRef);
 			}
 		};
 	}

@@ -55,11 +55,12 @@ namespace catapult { namespace test {
 						std::make_unique<mocks::MockMemoryBasedStorage>(),
 						std::move(cache)
 				)
+				, m_stateRef(m_state)
 				, m_pUtCache(CreateUtCacheProxy())
 				, m_pluginManager(m_state.Config.BlockChain, plugins::StorageConfiguration())
 				, m_pool("service locator test context", 2)
 				, m_serviceState(
-						  m_state,
+						  m_stateRef,
 						  m_nodes,
 						  *m_pUtCache,
 						  timeSupplier,
@@ -111,6 +112,7 @@ namespace catapult { namespace test {
 
 	private:
 		extensions::LocalNodeState m_state;
+		extensions::LocalNodeStateRef m_stateRef;
 		ionet::NodeContainer m_nodes;
 		std::unique_ptr<cache::MemoryUtCacheProxy> m_pUtCache;
 

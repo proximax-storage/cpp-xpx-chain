@@ -168,8 +168,8 @@ namespace catapult { namespace observers {
 
 		cache::CatapultCache CreateSimpleCatapultCache() {
 			cache::CatapultCacheBuilder builder;
-			builder.add<test::SimpleCacheStorageTraits>(std::make_unique<PrunableCache>());
-			return builder.build();
+			builder.addCurrentSubCache<test::SimpleCacheStorageTraits>(std::make_unique<PrunableCache>());
+			return builder.buildCurrentCache();
 		}
 
 		std::string CreateMessage(NotifyMode mode, Height height) {

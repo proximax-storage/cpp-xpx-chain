@@ -42,6 +42,7 @@ namespace catapult { namespace extensions {
 
 		ionet::NodeContainer nodes;
 		extensions::LocalNodeState state(config, std::make_unique<mocks::MockMemoryBasedStorage>());
+		extensions::LocalNodeStateRef stateRef(state);
 		auto pUtCache = test::CreateUtCacheProxy();
 
 		auto numTimeSupplierCalls = 0u;
@@ -60,7 +61,7 @@ namespace catapult { namespace extensions {
 
 		// Act:
 		auto serviceState = ServiceState(
-				state,
+				stateRef,
 				nodes,
 				*pUtCache,
 				timeSupplier,

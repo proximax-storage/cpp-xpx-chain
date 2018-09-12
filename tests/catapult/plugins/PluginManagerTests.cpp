@@ -104,7 +104,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<size_t CacheId>
 		void AddSubCacheWithId(PluginManager& manager) {
-			manager.addCacheSupport<test::SimpleCacheStorageTraits>(std::make_unique<test::SimpleCacheT<CacheId>>());
+			manager.addCurrentCacheSupport<test::SimpleCacheStorageTraits>(std::make_unique<test::SimpleCacheT<CacheId>>());
 		}
 	}
 
@@ -116,7 +116,7 @@ namespace catapult { namespace plugins {
 		AddSubCacheWithId<7>(manager);
 		AddSubCacheWithId<9>(manager);
 		AddSubCacheWithId<4>(manager);
-		auto cache = manager.createCache();
+		auto cache = manager.createCurrentCache();
 
 		// Assert:
 		EXPECT_EQ(3u, cache.storages().size());
@@ -143,7 +143,7 @@ namespace catapult { namespace plugins {
 		});
 
 		ionet::ServerPacketHandlers handlers;
-		manager.addDiagnosticHandlers(handlers, manager.createCache());
+		manager.addDiagnosticHandlers(handlers, manager.createCurrentCache());
 
 		// Assert:
 		EXPECT_EQ(3u, handlers.size());
@@ -178,7 +178,7 @@ namespace catapult { namespace plugins {
 		});
 
 		std::vector<utils::DiagnosticCounter> counters;
-		manager.addDiagnosticCounters(counters, manager.createCache());
+		manager.addDiagnosticCounters(counters, manager.createCurrentCache());
 
 		// Assert:
 		ASSERT_EQ(3u, counters.size());

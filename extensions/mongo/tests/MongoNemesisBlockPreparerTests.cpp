@@ -96,7 +96,7 @@ namespace catapult { namespace mongo {
 
 			explicit TestContext(Height externalStorageHeight)
 					: m_pPluginManager(test::CreateDefaultPluginManager(CreateBlockChainConfiguration()))
-					, m_cache(m_pPluginManager->createCache())
+					, m_cache(m_pPluginManager->createCurrentCache())
 					, m_mongoStorage(externalStorageHeight)
 			{}
 

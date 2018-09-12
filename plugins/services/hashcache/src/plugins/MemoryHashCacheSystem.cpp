@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 	void RegisterMemoryHashCacheSystem(PluginManager& manager) {
 		const auto& config = manager.config();
 
-		manager.addCacheSupport<cache::HashCacheStorage>(std::make_unique<cache::HashCache>(
+		manager.addCurrentCacheSupport<cache::HashCacheStorage>(std::make_unique<cache::HashCache>(
 				manager.cacheConfig(cache::HashCache::Name),
 				CalculateTransactionCacheDuration(config)));
 

@@ -21,6 +21,7 @@ minHarvesterBalance = 1'000'000'000'000
 
 blockPruneInterval = 360
 maxTransactionsPerBlock = 200'000
+effectiveBalanceRange = 1
 
 [plugin:catapult.plugins.aggregate]
 

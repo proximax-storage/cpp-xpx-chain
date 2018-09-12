@@ -45,6 +45,8 @@ namespace catapult { namespace local {
 							m_pBootstrapper->config(),
 							m_pBootstrapper->subscriptionManager().createBlockStorage()
 					)
+					, m_stateRef(m_state)
+					, m_stateConstRef(m_state)
 					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(GetUtCacheOptions(m_state.Config.Node)))
 					, m_pTransactionStatusSubscriber(m_pBootstrapper->subscriptionManager().createTransactionStatusSubscriber())
 					, m_pStateChangeSubscriber(m_pBootstrapper->subscriptionManager().createStateChangeSubscriber())
@@ -66,20 +68,21 @@ namespace catapult { namespace local {
 				loadPlugins();
 
 				CATAPULT_LOG(debug) << "initializing cache";
-				m_state.CurrentCache = m_pluginManager.createCache();
-//				m_state.PreviousCache = m_pluginManager.createCache();
+				m_state.CurrentCache = m_pluginManager.createCurrentCache();
+				m_state.PreviousCache = m_pluginManager.createPreviousCache();
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
 
 				utils::StackLogger stackLogger("booting local node", utils::LogLevel::Info);
 				extensionManager.preLoadHandler()(m_state.CurrentCache);
-//				extensionManager.preLoadHandler()(m_previousCatapultCache); TODO: ?
+				extensionManager.preLoadHandler()(m_state.PreviousCache);
 				m_pBlockChainStorage->loadFromStorage(stateRef(), m_pluginManager);
+				m_pBlockChainStorage->saveToStorage(stateCref());
 
 				CATAPULT_LOG(debug) << "booting extension services";
 				auto serviceState = extensions::ServiceState(
-						m_state,
+						m_stateRef,
 						m_nodes,
 						*m_pUtCache,
 						extensionManager.networkTimeSupplier(),
@@ -88,7 +91,9 @@ namespace catapult { namespace local {
 						*m_pNodeSubscriber,
 						m_counters,
 						m_pluginManager,
-						m_pBootstrapper->pool());
+						m_pBootstrapper->pool()
+				);
+
 				extensionManager.registerServices(m_serviceLocator, serviceState);
 				for (const auto& counter : m_serviceLocator.counters())
 					m_counters.push_back(counter);
@@ -155,12 +160,12 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			extensions::LocalNodeStateConstRef stateCref() const {
-				return extensions::LocalNodeStateConstRef(m_state);
+			const extensions::LocalNodeStateConstRef& stateCref() const {
+				return m_stateConstRef;
 			}
 
-			extensions::LocalNodeStateRef stateRef() {
-				return extensions::LocalNodeStateRef(m_state);
+			const extensions::LocalNodeStateRef& stateRef() {
+				return m_stateRef;
 			}
 
 		private:
@@ -173,6 +178,8 @@ namespace catapult { namespace local {
 			ionet::NodeContainer m_nodes;
 
 			extensions::LocalNodeState m_state;
+			extensions::LocalNodeStateRef m_stateRef;
+			extensions::LocalNodeStateConstRef m_stateConstRef;
 			std::unique_ptr<cache::MemoryUtCacheProxy> m_pUtCache;
 
 			std::unique_ptr<subscribers::TransactionStatusSubscriber> m_pTransactionStatusSubscriber;

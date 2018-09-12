@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <src/catapult/config/LocalNodeConfiguration.h>
 #include "MultiBlockLoader.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
@@ -123,11 +124,20 @@ namespace catapult { namespace filechain {
 
 			model::ChainScore score;
 			auto chainHeight = storage.chainHeight();
+			auto effectiveBalanceHeight = Height(m_stateRef.Config.BlockChain.EffectiveBalanceRange);
 			while (chainHeight >= height) {
 				auto pBlockElement = storage.loadBlockElement(height);
 				score += model::ChainScore(chain::CalculateScore(pParentBlockElement->Block, pBlockElement->Block));
 
-				execute(*pBlockElement);
+				// Restore current cache
+				executeForCurrentCache(*pBlockElement);
+
+				// Restore cache effectiveBalanceHeight block below
+				if (height > effectiveBalanceHeight) {
+					auto pOldBlockElement = storage.loadBlockElement(height - effectiveBalanceHeight);
+					executeForPreviousCache(*pOldBlockElement);
+				}
+
 				notifyProgress(height, chainHeight);
 
 				pParentBlockElement = std::move(pBlockElement);
@@ -138,13 +148,22 @@ namespace catapult { namespace filechain {
 		}
 
 	private:
-		void execute(const model::BlockElement& blockElement) const {
-			auto cacheDelta = m_stateRef.CurrentCache.createDelta();
+
+		void executeForCurrentCache(const model::BlockElement& blockElement) const {
+			execute(blockElement, m_stateRef.CurrentCache);
+		}
+
+		void executeForPreviousCache(const model::BlockElement& blockElement) const {
+			execute(blockElement, m_stateRef.PreviousCache);
+		}
+
+		void execute(const model::BlockElement& blockElement, cache::CatapultCache& cache) const {
+			auto cacheDelta = cache.createDelta();
 			auto observerState = observers::ObserverState(cacheDelta, m_stateRef.State);
 
 			const auto& block = blockElement.Block;
 			chain::ExecuteBlock(blockElement, m_observerFactory(block), observerState);
-			m_stateRef.CurrentCache.commit(block.Height);
+			cache.commit(block.Height);
 		}
 
 	private:
