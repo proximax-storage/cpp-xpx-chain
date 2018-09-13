@@ -183,13 +183,15 @@ namespace catapult { namespace consumers {
 		struct ProcessorTestContext {
 		public:
 			ProcessorTestContext() : BlockHitPredicateFactory(BlockHitPredicate) {
+				Handlers.BatchEntityProcessor = [this](auto height, auto timestamp, const auto& entities, const auto& state) {
+					return BatchEntityProcessor(height, timestamp, entities, state);
+				};
+
 				Processor = CreateBlockChainProcessor(
 						[this](const auto& cache) {
 							return BlockHitPredicateFactory(cache);
 						},
-						[this](auto height, auto timestamp, const auto& entities, const auto& state) {
-							return BatchEntityProcessor(height, timestamp, entities, state);
-						});
+						Handlers);
 			}
 
 		public:
@@ -199,13 +201,14 @@ namespace catapult { namespace consumers {
 			MockBlockHitPredicateFactory BlockHitPredicateFactory;
 			MockBatchEntityProcessor BatchEntityProcessor;
 			BlockChainProcessor Processor;
+			BlockChainSyncHandlers Handlers;
 
 		public:
-			ValidationResult Process(const model::BlockElement& parentBlockElement, BlockElements& elements) {
+			ValidationResult Process(const model::BlockElement&, BlockElements& elements) {
 				auto cache = test::CreateCatapultCacheWithMarkerAccount();
 				auto delta = cache.createDelta();
 
-				return Processor(WeakBlockInfo(parentBlockElement), elements, observers::ObserverState(delta, State));
+				return Processor(*std::make_unique<SyncState>(), elements);
 			}
 
 			ValidationResult Process(const model::Block& parentBlock, BlockElements& elements) {

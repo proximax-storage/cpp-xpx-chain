@@ -101,25 +101,20 @@ namespace catapult { namespace sync {
 
 		// region block
 
+		BlockChainSyncHandlers::CommitBlockFunc CreateSyncCommitBlockHandler(
+				const std::shared_ptr<const observers::EntityObserver>& pObserver) {
+			return [pObserver](const auto& blockElement, const auto& state) {
+				CATAPULT_LOG(debug) << "comniting block at height " << blockElement.Block.Height;
+				chain::ExecuteBlock(blockElement, *pObserver, state);
+			};
+		}
+
 		BlockChainSyncHandlers::UndoBlockFunc CreateSyncUndoBlockHandler(
 				const std::shared_ptr<const observers::EntityObserver>& pUndoObserver) {
 			return [pUndoObserver](const auto& blockElement, const auto& state) {
 				CATAPULT_LOG(debug) << "rolling back block at height " << blockElement.Block.Height;
 				chain::RollbackBlock(blockElement, *pUndoObserver, state);
 			};
-		}
-
-		BlockChainProcessor CreateSyncProcessor(
-				const model::BlockChainConfiguration& blockChainConfig,
-				const chain::ExecutionConfiguration& executionConfig) {
-			return CreateBlockChainProcessor(
-					[&blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
-						cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
-						return chain::BlockHitPredicate(blockChainConfig, [view](const auto& publicKey, auto height) {
-							return view.getAccountImportanceOrDefault(publicKey, height);
-						});
-					},
-					chain::CreateBatchEntityProcessor(executionConfig));
 		}
 
 		BlockChainSyncHandlers CreateBlockChainSyncHandlers(extensions::ServiceState& state, RollbackInfo& rollbackInfo) {
@@ -138,8 +133,12 @@ namespace catapult { namespace sync {
 				rollbackInfo.increment();
 				undoBlockHandler(blockElement, observerState);
 			};
-			syncHandlers.Processor = CreateSyncProcessor(blockChainConfig, CreateExecutionConfiguration(pluginManager));
+			auto commitBlockHandler = CreateSyncCommitBlockHandler(extensions::CreateEntityObserver(pluginManager));
+			syncHandlers.CommitBlock = [commitBlockHandler](const auto& blockElement, const auto& observerState) {
+				commitBlockHandler(blockElement, observerState);
+			};
 
+			syncHandlers.BatchEntityProcessor = chain::CreateBatchEntityProcessor(CreateExecutionConfiguration(pluginManager));
 			syncHandlers.StateChange = [&rollbackInfo, &localScore = state.score(), &subscriber = state.stateChangeSubscriber()](
 					const auto& changeInfo) {
 				localScore += changeInfo.ScoreDelta;

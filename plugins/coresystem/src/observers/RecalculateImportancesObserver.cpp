@@ -68,7 +68,7 @@ namespace catapult { namespace observers {
 			void notify(const model::BlockNotification&, const ObserverContext& context) const override {
 				auto& cache = context.Cache.sub<cache::AccountStateCache>();
 				auto importanceHeight = model::ConvertToImportanceHeight(GetEffectiveHeight(context), cache.importanceGrouping());
-				if (importanceHeight == context.State.LastRecalculationHeight)
+				if (importanceHeight <= context.State.LastRecalculationHeight)
 					return;
 
 				const auto& calculator = *(NotifyMode::Commit == context.Mode ? m_pCommitCalculator : m_pRollbackCalculator);

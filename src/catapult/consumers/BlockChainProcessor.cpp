@@ -45,27 +45,34 @@ namespace catapult { namespace consumers {
 		public:
 			DefaultBlockChainProcessor(
 					const BlockHitPredicateFactory& blockHitPredicateFactory,
-					const chain::BatchEntityProcessor& batchEntityProcessor)
+					const BlockChainSyncHandlers& handlers)
 					: m_blockHitPredicateFactory(blockHitPredicateFactory)
-					, m_batchEntityProcessor(batchEntityProcessor)
+					, m_handlers(handlers)
 			{}
 
 		public:
 			ValidationResult operator()(
-					const WeakBlockInfo& parentBlockInfo,
-					BlockElements& elements,
-					const observers::ObserverState& state) const {
+					SyncState& state,
+					BlockElements& elements) const {
 				if (elements.empty())
 					return ValidationResult::Neutral;
+
+				const auto& parentBlockInfo = state.commonBlockInfo();
 
 				if (!IsLinked(parentBlockInfo, elements))
 					return chain::Failure_Chain_Unlinked;
 
-				auto readOnlyCache = state.Cache.toReadOnly();
-				auto blockHitPredicate = m_blockHitPredicateFactory(readOnlyCache);
+				// TODO: ? Pass current and previous cache to hitPredicate, to calculate effective balance
+//				auto readOnlyPreviousCache = state.previousCacheDelta().toReadOnly();
+				auto readOnlyCurrentCache = state.currentCacheDelta().toReadOnly();
+				auto blockHitPredicate = m_blockHitPredicateFactory(readOnlyCurrentCache);
 
 				const auto* pParent = &parentBlockInfo.entity();
 				const auto* pParentGenerationHash = &parentBlockInfo.generationHash();
+				const auto& currentObserverState = state.currentObserverState();
+				const auto& preivousObserverState = state.preivousObserverState();
+				const auto& storage = state.storage();
+				const auto& effectiveBalanceHeight = state.EffectiveBalanceHeight;
 				for (auto& element : elements) {
 					const auto& block = element.Block;
 					element.GenerationHash = model::CalculateGenerationHash(*pParentGenerationHash, block.Signer);
@@ -74,10 +81,26 @@ namespace catapult { namespace consumers {
 						return chain::Failure_Chain_Block_Not_Hit;
 					}
 
-					auto result = m_batchEntityProcessor(block.Height, block.Timestamp, ExtractEntityInfos(element), state);
+					auto result = m_handlers.BatchEntityProcessor(block.Height, block.Timestamp, ExtractEntityInfos(element), currentObserverState);
 					if (!IsValidationResultSuccess(result)) {
 						CATAPULT_LOG(warning) << "batch processing of block " << block.Height << " failed with " << result;
 						return result;
+					}
+
+					// Restore old block which is EffectiveBalanceHeight blocks below
+					if (block.Height > effectiveBalanceHeight) {
+						std::shared_ptr<const model::BlockElement> pOldBlockElement;
+						const auto& chainHeight = storage.chainHeight();
+
+						auto diff = block.Height - effectiveBalanceHeight;
+						if (diff <= chainHeight) {
+							pOldBlockElement = storage.loadBlockElement(diff);
+						} else {
+							diff = diff - chainHeight;
+							pOldBlockElement = std::make_shared<const model::BlockElement>(elements[diff.unwrap() - 1]);
+						}
+
+						m_handlers.CommitBlock(*pOldBlockElement, preivousObserverState);
 					}
 
 					pParent = &block;
@@ -89,13 +112,13 @@ namespace catapult { namespace consumers {
 
 		private:
 			BlockHitPredicateFactory m_blockHitPredicateFactory;
-			chain::BatchEntityProcessor m_batchEntityProcessor;
+			const BlockChainSyncHandlers& m_handlers;
 		};
 	}
 
 	BlockChainProcessor CreateBlockChainProcessor(
 			const BlockHitPredicateFactory& blockHitPredicateFactory,
-			const chain::BatchEntityProcessor& batchEntityProcessor) {
-		return DefaultBlockChainProcessor(blockHitPredicateFactory, batchEntityProcessor);
+			const BlockChainSyncHandlers& handlers) {
+		return DefaultBlockChainProcessor(blockHitPredicateFactory, handlers);
 	}
 }}

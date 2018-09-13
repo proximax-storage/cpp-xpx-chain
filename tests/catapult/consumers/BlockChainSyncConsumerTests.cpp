@@ -288,9 +288,9 @@ namespace catapult { namespace consumers {
 				handlers.UndoBlock = [this](const auto& block, const auto& state) {
 					return UndoBlock(block, state);
 				};
-				handlers.Processor = [this](const auto& parentBlockInfo, auto& elements, const auto& cache) {
-					return Processor(parentBlockInfo, elements, cache);
-				};
+//				Handlers.BatchEntityProcessor = [this](auto height, auto timestamp, const auto& entities, const auto& state) {
+//					return BatchEntityProcessor(height, timestamp, entities, state);
+//				};
 				handlers.StateChange = [this](const auto& changeInfo) {
 					return StateChange(changeInfo);
 				};
