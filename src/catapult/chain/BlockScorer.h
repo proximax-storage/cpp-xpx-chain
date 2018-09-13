@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/state/AccountState.h"
 #include "catapult/types.h"
 #include <functional>
 
@@ -27,22 +28,18 @@ namespace catapult { namespace model { struct Block; } }
 
 namespace catapult { namespace chain {
 
-	/// Calculates the hit for a \a generationHash.
-	uint64_t CalculateHit(const Hash256& generationHash);
-
-	/// Calculates the score of \a currentBlock with parent \a parentBlock.
-	uint64_t CalculateScore(const model::Block& parentBlock, const model::Block& currentBlock);
+	BlockTarget CalculateBaseTarget(
+		const BlockTarget& parentBaseTarget,
+		const utils::TimeSpan& averageBlockTime);
 
 	/// Contextual information for calculating a block hit.
 	struct BlockHitContext {
-	public:
-		/// Creates a block hit context.
-		BlockHitContext() : ElapsedTime(utils::TimeSpan::FromSeconds(0))
-		{}
 
 	public:
 		/// Generation hash.
 		Hash256 GenerationHash;
+
+		BlockTarget BaseTarget;
 
 		/// Time since the last block.
 		utils::TimeSpan ElapsedTime;
@@ -50,36 +47,17 @@ namespace catapult { namespace chain {
 		/// Public key of the block signer.
 		Key Signer;
 
-		/// Block difficulty.
-		catapult::Difficulty Difficulty;
-
-		/// Block height.
-		catapult::Height Height;
-
-		const model::Block parentBlock;
-
-		const model::Block currentBlock;
+		state::AccountState AccountState;
 	};
 
 	/// Predicate used to determine if a block is a hit or not.
 	class BlockHitPredicate {
-	private:
-		using ImportanceLookupFunc = std::function<Importance (const Key&, Height)>;
-
 	public:
-		/// Creates a predicate around a block chain configuration (\a config) and an importance lookup function
-		/// (\a importanceLookup).
-		BlockHitPredicate(const model::BlockChainConfiguration& config, const ImportanceLookupFunc& importanceLookup);
-
-	public:
-		/// Determines if the \a block is a hit given its parent (\a parentBlock) and generation hash (\a generationHash).
-		bool operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash) const;
+		/// Determines if the \a block is a hit given generation hash (\a generationHash) and time elapsed since last block (\a ElapsedTime).
+		bool operator()(const Hash256& generationHash, const BlockTarget& parentBaseTarget,
+				const utils::TimeSpan& ElapsedTime, const state::AccountState& accountState) const;
 
 		/// Determines if the specified \a context is a hit.
 		bool operator()(const BlockHitContext& context) const;
-
-	private:
-		model::BlockChainConfiguration m_config;
-		ImportanceLookupFunc m_importanceLookup;
 	};
 }}

@@ -20,29 +20,25 @@
 
 #include "BlockScorer.h"
 #include "catapult/model/Block.h"
-#include "catapult/model/ImportanceHeight.h"
 #include "catapult/state/AccountState.h"
 #include "catapult/utils/IntegerMath.h"
+#include "catapult/utils/TimeSpan.h"
 
 namespace catapult { namespace chain {
 
 	namespace {
-		constexpr uint64_t Two_To_54 = 1ull << 54;
-		constexpr uint64_t TWO_TO_64 = 1ull << 64;
-		constexpr uint64_t MAXRATIO = 67;
-		constexpr uint64_t MINRATIO = 53;
-		constexpr double GAMMA = 0.64;
-		constexpr int BLOCK_GENERATION_TIME = 60;
-		constexpr int OLD_BALANCE = 0;
+		constexpr uint64_t Two_To_54{1ull << 54};
+
+		constexpr uint64_t MAXRATIO{67};
+		constexpr uint64_t MINRATIO{53};
+		constexpr double GAMMA{0.64};
+		constexpr int BLOCK_GENERATION_TIME{0};
+		constexpr uint64_t TWO_TO_64{1ull << 64};
 
 		struct GenerationHashInfo {
 			uint32_t Value;
 			uint32_t NumLeadingZeros;
 		};
-
-		constexpr utils::TimeSpan TimeBetweenBlocks(const model::Block& parent, const model::Block& block) {
-			return utils::TimeSpan::FromDifference(block.Timestamp, parent.Timestamp);
-		}
 
 		uint32_t NumLeadingZeros(const Hash256& generationHash) {
 			for (auto i = 0u; i < Hash256_Size; ++i) {
@@ -50,7 +46,7 @@ namespace catapult { namespace chain {
 					return 8u * i + 7u - utils::Log2(generationHash[i]);
 			}
 
-			return 256u;
+			return Hash256_Size;
 		}
 
 #ifdef _MSC_VER
@@ -75,97 +71,84 @@ namespace catapult { namespace chain {
 			value += generationHash[quotient + 4] >> (8 - remainder);
 			return GenerationHashInfo{ value, numLeadingZeros };
 		}
+
+		/// Calculates the hit for a \a generationHash.
+		uint64_t CalculateHit(const Hash256& generationHash) {
+			// we want to calculate 2^54 * abs(log(x)), where x = value/2^256 and value is a 256 bit integer
+			// note that x is always < 1, therefore log(x) is always negative
+			// the original version used boost::multiprecision to convert the generation hash (interpreted as 256 bit integer) to a double
+			// the new version uses only the 32 bits beginning at the first non-zero bit of the hash
+			// this results in a slightly less exact calculation but the difference is less than one ppm
+			auto hashInfo = ExtractGenerationHashInfo(generationHash);
+
+			// handle edge cases
+			if (0 == hashInfo.Value)
+				return std::numeric_limits<uint64_t>::max();
+
+			if (0xFFFFFFFF == hashInfo.Value)
+				return 0;
+
+			// calculate nearest integer for log2(value) * 2 ^ 54
+			auto logValue = utils::Log2TimesPowerOfTwo(hashInfo.Value, 54);
+
+			// result is 256 * 2^54 - logValue - (256 - 32 - hashInfo.NumLeadingZeros) * 2^54 which can be simplified
+			boost::multiprecision::uint128_t result = (32 + hashInfo.NumLeadingZeros) * Two_To_54 - logValue;
+
+			// divide by log2(e)
+			result = result * 10'000'000'000'000'000ull / 14'426'950'408'889'634ull;
+			return result.convert_to<uint64_t>();
+		}
 	}
 
-	uint64_t CalculateHit(const Hash256& generationHash) {
-		// we want to calculate 2^54 * abs(log(x)), where x = value/2^256 and value is a 256 bit integer
-		// note that x is always < 1, therefore log(x) is always negative
-		// the original version used boost::multiprecision to convert the generation hash (interpreted as 256 bit integer) to a double
-		// the new version uses only the 32 bits beginning at the first non-zero bit of the hash
-		// this results in a slightly less exact calculation but the difference is less than one ppm
-		auto hashInfo = ExtractGenerationHashInfo(generationHash);
-
-		// handle edge cases
-		if (0 == hashInfo.Value)
-			return std::numeric_limits<uint64_t>::max();
-
-		if (0xFFFFFFFF == hashInfo.Value)
-			return 0;
-
-		// calculate nearest integer for log2(value) * 2 ^ 54
-		auto logValue = utils::Log2TimesPowerOfTwo(hashInfo.Value, 54);
-
-		// result is 256 * 2^54 - logValue - (256 - 32 - hashInfo.NumLeadingZeros) * 2^54 which can be simplified
-		boost::multiprecision::uint128_t result = (32 + hashInfo.NumLeadingZeros) * Two_To_54 - logValue;
-
-		// divide by log2(e)
-		result = result * 10'000'000'000'000'000ull / 14'426'950'408'889'634ull;
-		return result.convert_to<uint64_t>();
-	}
-
-	uint64_t CalculateScore(const model::Block& parentBlock, const model::Block& currentBlock) {
-		if (currentBlock.Timestamp <= parentBlock.Timestamp)
-			return 0u;
-
-		// r = difficulty(1) - (t(1) - t(0)) / MS_In_S
-		auto timeDiff = TimeBetweenBlocks(parentBlock, currentBlock);
-		return currentBlock.Difficulty.unwrap() - timeDiff.seconds();
+	// The base target is calculated as follows:
+	// If S>60
+	//     Tb = (Tp * Min(S, MAXRATIO)) / 60
+	// Else
+	//     Tb = Tp - Tp * GAMMA * (60 - Max(S, MINRATIO)) / 60;
+	// where:
+	// S - average block time for the last 3 blocks
+	// Tp - previous base target
+	// Tb - calculated base target
+	BlockTarget CalculateBaseTarget(
+			const BlockTarget& parentBaseTarget,
+			const utils::TimeSpan& averageBlockTime) {
+		if (averageBlockTime > utils::TimeSpan::FromSeconds(BLOCK_GENERATION_TIME)) {
+			return (parentBaseTarget * std::min(averageBlockTime.seconds(), MAXRATIO)) / BLOCK_GENERATION_TIME;
+		} else {
+			return (parentBaseTarget -
+					parentBaseTarget * GAMMA * (BLOCK_GENERATION_TIME - std::max(averageBlockTime.seconds(), MINRATIO))) / BLOCK_GENERATION_TIME;
+		}
 	}
 
 	namespace {
-		BlockTarget GetMultiplier(uint64_t timeDiff, const model::BlockChainConfiguration& config) {
-			auto targetTime = config.BlockGenerationTargetTime.seconds();
-			double smoother = 1.0;
-			if (0 != config.BlockTimeSmoothingFactor) {
-				double factor = config.BlockTimeSmoothingFactor / 1000.0;
-				smoother = std::min(std::exp(factor * static_cast<int64_t>(timeDiff - targetTime) / targetTime), 100.0);
-			}
-
-			BlockTarget target(static_cast<uint64_t>(Two_To_54 * smoother));
-			target <<= 10;
+		// Each account calculates its own target value, based on its current effective stake. This value is:
+		// T = Tb x S x Be
+		// where:
+		// T is the new target value
+		// Tb is the base target value
+		// S is the time since the last block, in seconds
+		// Be is the effective balance of the account
+		BlockTarget CalculateTarget(
+				const BlockTarget& baseTarget,
+				const utils::TimeSpan& ElapsedTime,
+				const state::AccountState& accountState) {
+			BlockTarget target = baseTarget * ElapsedTime.seconds();
+			constexpr Amount OLD_BALANCE{0};
+			target *= std::min(accountState.Balances.get(Xpx_Id).unwrap(), OLD_BALANCE.unwrap()); // TODO: replace with actual old balance.
 			return target;
 		}
 	}
 
-	BlockTarget CalculateBaseTarget(
-			const model::Block& parentBlock,
-			const utils::TimeSpan& averageBlockTime) {
-		if (averageBlockTime > utils::TimeSpan::FromSeconds(BLOCK_GENERATION_TIME)) {
-			return (parentBlock.BaseTarget * std::min(averageBlockTime.seconds(), MAXRATIO)) / BLOCK_GENERATION_TIME;
-		} else {
-			return (parentBlock.BaseTarget -
-					parentBlock.BaseTarget * GAMMA * (BLOCK_GENERATION_TIME - std::max(averageBlockTime.seconds(), MINRATIO))) / BLOCK_GENERATION_TIME;
-		}
-	}
-
-	BlockTarget CalculateTarget(
-			const model::Block& parentBlock,
-			const model::Block& currentBlock,
-			const utils::TimeSpan& averageBlockTime,
-			const state::AccountState& accountState) {
-		BlockTarget target = CalculateBaseTarget(parentBlock, averageBlockTime);
-		target *= TimeBetweenBlocks(parentBlock, currentBlock).seconds();
-		target *= (accountState.Balances.get(Xpx_Id).unwrap() - OLD_BALANCE); // TODO: replace with actual old balance.
-		return target;
-	}
-
-	BlockHitPredicate::BlockHitPredicate(const model::BlockChainConfiguration& config, const ImportanceLookupFunc& importanceLookup)
-			: m_config(config)
-			, m_importanceLookup(importanceLookup)
-	{}
-
-	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash) const {
+	bool BlockHitPredicate::operator()(const Hash256& generationHash, const BlockTarget& parentBaseTarget,
+			const utils::TimeSpan& ElapsedTime, const state::AccountState& accountState) const {
 		auto hit = CalculateHit(generationHash);
-		state::AccountState accountState;
-		auto target = CalculateTarget(parentBlock, block, TimeBetweenBlocks(parentBlock, block), accountState);
+		auto target = CalculateTarget(parentBaseTarget, ElapsedTime, accountState);
 		return hit < target;
 	}
 
 	bool BlockHitPredicate::operator()(const BlockHitContext& context) const {
 		auto hit = CalculateHit(context.GenerationHash);
-		state::AccountState accountState;
-		auto target = CalculateTarget(context.parentBlock, context.currentBlock,
-			TimeBetweenBlocks(context.parentBlock, context.currentBlock), accountState);
+		auto target = CalculateTarget(context.BaseTarget, context.ElapsedTime, context.AccountState);
 		return hit < target;
 	}
 }}

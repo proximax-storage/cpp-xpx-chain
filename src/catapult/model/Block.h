@@ -38,16 +38,16 @@ namespace catapult { namespace model {
 
 	public:
 		/// Height of a block.
-		catapult::Height Height;
+		Height Height;
 
 		/// Timestamp of a block.
-		catapult::Timestamp Timestamp;
+		Timestamp Timestamp;
 
-		/// Difficulty of a block.
-		catapult::Difficulty Difficulty;
+		/// Cumulative difficulty of a block.
+		Difficulty Difficulty;
 
-		/// Difficulty of a block.
-		catapult::BlockTarget BaseTarget;
+		/// Base target of a block.
+		BlockTarget BaseTarget;
 
 		/// Hash of the previous block.
 		Hash256 PreviousBlockHash;

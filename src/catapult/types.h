@@ -56,13 +56,8 @@ namespace catapult {
 	struct BlockDuration_tag {};
 	using BlockDuration = utils::BaseValue<uint64_t, BlockDuration_tag>;
 
-	struct Difficulty_tag {
-	public:
-		static constexpr uint64_t Default_Value = 100'000'000'000'000;
-		static constexpr uint64_t Min_Value = Default_Value / 10;
-		static constexpr uint64_t Max_Value = Default_Value * 10;
-	};
-	using Difficulty = utils::ClampedBaseValue<uint64_t, Difficulty_tag>;
+	struct Difficulty_tag {};
+	using Difficulty = utils::BaseValue<uint64_t, Difficulty_tag>;
 
 	struct Importance_tag {};
 	using Importance = utils::BaseValue<uint64_t, Importance_tag>;

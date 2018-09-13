@@ -23,11 +23,13 @@
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/utils/TimeSpan.h"
 #include <cstring>
 
 namespace catapult { namespace model {
 
 	namespace {
+
 		RawBuffer BlockDataBuffer(const Block& block) {
 			return {
 				reinterpret_cast<const uint8_t*>(&block) + VerifiableEntity::Header_Size,
@@ -93,6 +95,18 @@ namespace catapult { namespace model {
 			return totalTransactionsSize;
 		}
 
+	    // The cumulative difficulty value is derived from the base target value, using the formula:
+		// Dcb = Dpb + 2^64 / Tb
+		// where:
+		// Dcb is the difficulty of the current block
+		// Dpb is the difficulty of the previous block
+		// Tb is the base target value for the current block
+		Difficulty CalculateCumulativeDifficulty(
+				const BlockTarget& target,
+				const Difficulty& previousBlockDifficulty) {
+			return previousBlockDifficulty.unwrap() + TWO_TO_64 / target;
+		}
+
 		template<typename TContainer>
 		std::unique_ptr<Block> CreateBlockT(
 				const PreviousBlockContext& context,
@@ -110,8 +124,9 @@ namespace catapult { namespace model {
 			block.Signature = Signature{}; // zero the signature
 			block.Timestamp = Timestamp();
 			block.Height = context.BlockHeight + Height(1);
-			block.Difficulty = Difficulty();
 			block.PreviousBlockHash = context.BlockHash;
+			block.BaseTarget = CalculateBaseTarget(context.BaseTarget, utils::TimeSpan::FromSeconds(BLOCK_GENERATION_TIME));
+			block.Difficulty = CalculateCumulativeDifficulty(block.BaseTarget, context.Difficulty);
 
 			// append all the transactions
 			auto pDestination = reinterpret_cast<uint8_t*>(block.TransactionsPtr());

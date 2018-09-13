@@ -34,10 +34,6 @@ namespace catapult { namespace utils { namespace traits {
 	struct is_scalar<BaseValue<X, Y>> : std::true_type
 	{};
 
-	template<typename X, typename Y>
-	struct is_scalar<ClampedBaseValue<X, Y>> : std::true_type
-	{};
-
 	template<typename X>
 	struct is_scalar<ImmutableValue<X>> : std::true_type
 	{};
@@ -55,10 +51,6 @@ namespace catapult { namespace utils { namespace traits {
 
 	template<typename X, typename Y>
 	struct is_pod<BaseValue<X, Y>> : std::true_type
-	{};
-
-	template<typename X, typename Y>
-	struct is_pod<ClampedBaseValue<X, Y>> : std::true_type
 	{};
 
 	template<typename X>

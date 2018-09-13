@@ -60,16 +60,20 @@ namespace catapult { namespace model {
 		PreviousBlockContext()
 				: BlockHash{}
 				, GenerationHash{}
-				, BlockHeight(0)
-				, Timestamp(0)
+				, BlockHeight{0}
+				, Timestamp{0}
+				, BaseTarget{0}
+				, Difficulty{0}
 		{}
 
 		/// Creates a context with \a blockElement as the previous block.
 		explicit PreviousBlockContext(const BlockElement& blockElement)
-				: BlockHash(blockElement.EntityHash)
-				, GenerationHash(blockElement.GenerationHash)
-				, BlockHeight(blockElement.Block.Height)
-				, Timestamp(blockElement.Block.Timestamp)
+				: BlockHash{blockElement.EntityHash}
+				, GenerationHash{blockElement.GenerationHash}
+				, BlockHeight{blockElement.Block.Height}
+				, Timestamp{blockElement.Block.Timestamp}
+				, BaseTarget{blockElement.Block.BaseTarget}
+				, Difficulty{blockElement.Block.Difficulty}
 		{}
 
 		/// Hash of previous block.
@@ -83,6 +87,12 @@ namespace catapult { namespace model {
 
 		/// Timestamp of previous block.
 		catapult::Timestamp Timestamp;
+
+		/// Base target of a block.
+		catapult::BlockTarget BaseTarget;
+
+		/// Difficulty of a block.
+		catapult::Difficulty Difficulty;
 	};
 
 	/// Creates an unsigned Block given a \a context, signer public key (\a signerPublicKey) and \a transactions
