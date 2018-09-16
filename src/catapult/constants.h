@@ -27,6 +27,9 @@ namespace catapult {
 	/// Number of historical importances associated with a single account.
 	constexpr size_t Importance_History_Size = 3;
 
+	/// Number of block timestamps to calculate average block time.
+	constexpr size_t Block_Timestamp_History_Size = 3;
+
 	/// Size of hashes in the hash cache.
 	/// \note Reducing below `Hash256_Size` can save memory but will increase possibility of false positive rejections.
 	constexpr size_t Cached_Hash_Size = Hash256_Size;

@@ -61,8 +61,7 @@ namespace catapult { namespace consumers {
 				if (!IsLinked(parentBlockInfo, elements))
 					return chain::Failure_Chain_Unlinked;
 
-				auto readOnlyCache = state.Cache.toReadOnly();
-				auto blockHitPredicate = m_blockHitPredicateFactory(readOnlyCache);
+				auto blockHitPredicate = m_blockHitPredicateFactory();
 
 				const auto* pParent = &parentBlockInfo.entity();
 				const auto* pParentGenerationHash = &parentBlockInfo.generationHash();

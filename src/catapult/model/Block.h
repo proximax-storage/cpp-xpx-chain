@@ -22,7 +22,7 @@
 #include "Transaction.h"
 #include "TransactionContainer.h"
 #include "VerifiableEntity.h"
-#include "catapult/types.h"
+#include "catapult/constants.h"
 #include <memory>
 #include <vector>
 
@@ -54,6 +54,12 @@ namespace catapult { namespace model {
 
 		/// Aggregate hash of a block's transactions.
 		Hash256 BlockTransactionsHash;
+
+		/// Effective balance of the account that generated this block.
+		Amount EffectiveBalance;
+
+		/// Timestamps of last 3 blocks.
+		catapult::Timestamp Timestamps[Block_Timestamp_History_Size];
 	};
 
 	/// Binary layout for a block.

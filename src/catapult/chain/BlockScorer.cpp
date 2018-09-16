@@ -98,6 +98,23 @@ namespace catapult { namespace chain {
 			result = result * 10'000'000'000'000'000ull / 14'426'950'408'889'634ull;
 			return result.convert_to<uint64_t>();
 		}
+
+		// Each account calculates its own target value, based on its current effective stake. This value is:
+		// T = Tb x S x Be
+		// where:
+		// T is the new target value
+		// Tb is the base target value
+		// S is the time since the last block, in seconds
+		// Be is the effective balance of the account
+		BlockTarget CalculateTarget(
+				const BlockTarget& baseTarget,
+				const utils::TimeSpan& ElapsedTime,
+				const state::AccountState& accountState) {
+			BlockTarget target = baseTarget * ElapsedTime.seconds();
+			constexpr Amount OLD_BALANCE{};
+			target *= std::min(accountState.Balances.get(Xpx_Id).unwrap(), OLD_BALANCE.unwrap()); // TODO: replace with actual old balance.
+			return target;
+		}
 	}
 
 	// The base target is calculated as follows:
@@ -120,29 +137,10 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	namespace {
-		// Each account calculates its own target value, based on its current effective stake. This value is:
-		// T = Tb x S x Be
-		// where:
-		// T is the new target value
-		// Tb is the base target value
-		// S is the time since the last block, in seconds
-		// Be is the effective balance of the account
-		BlockTarget CalculateTarget(
-				const BlockTarget& baseTarget,
-				const utils::TimeSpan& ElapsedTime,
-				const state::AccountState& accountState) {
-			BlockTarget target = baseTarget * ElapsedTime.seconds();
-			constexpr Amount OLD_BALANCE{0};
-			target *= std::min(accountState.Balances.get(Xpx_Id).unwrap(), OLD_BALANCE.unwrap()); // TODO: replace with actual old balance.
-			return target;
-		}
-	}
-
-	bool BlockHitPredicate::operator()(const Hash256& generationHash, const BlockTarget& parentBaseTarget,
+	bool BlockHitPredicate::operator()(const Hash256& generationHash, const BlockTarget& baseTarget,
 			const utils::TimeSpan& ElapsedTime, const state::AccountState& accountState) const {
 		auto hit = CalculateHit(generationHash);
-		auto target = CalculateTarget(parentBaseTarget, ElapsedTime, accountState);
+		auto target = CalculateTarget(baseTarget, ElapsedTime, accountState);
 		return hit < target;
 	}
 

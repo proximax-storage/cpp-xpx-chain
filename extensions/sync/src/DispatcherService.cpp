@@ -110,14 +110,11 @@ namespace catapult { namespace sync {
 		}
 
 		BlockChainProcessor CreateSyncProcessor(
-				const model::BlockChainConfiguration& blockChainConfig,
 				const chain::ExecutionConfiguration& executionConfig) {
 			return CreateBlockChainProcessor(
-					[&blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
+					[](const cache::ReadOnlyCatapultCache& cache) {
 						cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
-						return chain::BlockHitPredicate(blockChainConfig, [view](const auto& publicKey, auto height) {
-							return view.getAccountImportanceOrDefault(publicKey, height);
-						});
+						return chain::BlockHitPredicate{};
 					},
 					chain::CreateBatchEntityProcessor(executionConfig));
 		}
@@ -138,7 +135,7 @@ namespace catapult { namespace sync {
 				rollbackInfo.increment();
 				undoBlockHandler(blockElement, observerState);
 			};
-			syncHandlers.Processor = CreateSyncProcessor(blockChainConfig, CreateExecutionConfiguration(pluginManager));
+			syncHandlers.Processor = CreateSyncProcessor(CreateExecutionConfiguration(pluginManager));
 
 			syncHandlers.StateChange = [&rollbackInfo, &localScore = state.score(), &subscriber = state.stateChangeSubscriber()](
 					const auto& changeInfo) {

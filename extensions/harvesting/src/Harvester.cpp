@@ -28,30 +28,12 @@
 namespace catapult { namespace harvesting {
 
 	namespace {
-		struct NextBlockContext {
-		public:
-			explicit NextBlockContext(const model::BlockElement& parentBlockElement, Timestamp nextTimestamp)
-					: ParentBlock(parentBlockElement.Block)
-					, ParentContext(parentBlockElement)
-					, Timestamp(nextTimestamp)
-					, Height(ParentBlock.Height + catapult::Height(1))
-					, BlockTime(utils::TimeSpan::FromDifference(Timestamp, ParentBlock.Timestamp))
-			{}
-
-		public:
-			const model::Block& ParentBlock;
-			model::PreviousBlockContext ParentContext;
-			catapult::Timestamp Timestamp;
-			catapult::Height Height;
-			utils::TimeSpan BlockTime;
-		};
-
 		auto CreateBlock(
-				const NextBlockContext& context,
+				const model::PreviousBlockContext& context,
 				model::NetworkIdentifier networkIdentifier,
 				const crypto::KeyPair& keyPair,
 				const TransactionsInfo& info) {
-			auto pBlock = model::CreateBlock(context.ParentContext, networkIdentifier, keyPair.publicKey(), info.Transactions);
+			auto pBlock = model::CreateBlock(context, networkIdentifier, keyPair.publicKey(), info.Transactions);
 			pBlock->Timestamp = context.Timestamp;
 			pBlock->BlockTransactionsHash = info.TransactionsHash;
 			SignBlockHeader(keyPair, *pBlock);
@@ -71,21 +53,21 @@ namespace catapult { namespace harvesting {
 	{}
 
 	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
-		NextBlockContext context(lastBlockElement, timestamp);
+		model::PreviousBlockContext previousBlockContext(lastBlockElement);
 
 		chain::BlockHitContext hitContext;
 		hitContext.ElapsedTime = utils::TimeSpan::FromDifference(timestamp, lastBlockElement.Block.Timestamp);
 		utils::TimeSpan averageBlockTime{hitContext.ElapsedTime};
 		hitContext.BaseTarget = chain::CalculateBaseTarget(lastBlockElement.Block.BaseTarget, averageBlockTime);
 
-		const auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
+		auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(m_cache.createView().sub<cache::AccountStateCache>());
 
 		auto unlockedAccountsView = m_unlockedAccounts.view();
 		const crypto::KeyPair* pHarvesterKeyPair = nullptr;
 		for (const auto& keyPair : unlockedAccountsView) {
 			hitContext.Signer = keyPair.publicKey();
-			hitContext.GenerationHash = model::CalculateGenerationHash(context.ParentContext.GenerationHash, hitContext.Signer);
-			accountStateCache.get(hitContext.Signer);
+			hitContext.GenerationHash = model::CalculateGenerationHash(previousBlockContext.GenerationHash, hitContext.Signer);
+			hitContext.AccountState = readOnlyAccountStateCache.get(hitContext.Signer);
 
 			chain::BlockHitPredicate hitPredicate;
 			if (hitPredicate(hitContext)) {
@@ -98,6 +80,6 @@ namespace catapult { namespace harvesting {
 			return nullptr;
 
 		auto transactionsInfo = m_transactionsInfoSupplier(m_config.MaxTransactionsPerBlock);
-		return CreateBlock(context, m_config.Network.Identifier, *pHarvesterKeyPair, transactionsInfo);
+		return CreateBlock(previousBlockContext, m_config.Network.Identifier, *pHarvesterKeyPair, transactionsInfo);
 	}
 }}
