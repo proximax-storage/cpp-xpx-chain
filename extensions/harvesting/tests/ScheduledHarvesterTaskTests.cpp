@@ -94,7 +94,7 @@ namespace catapult { namespace harvesting {
 		void AddDifficultyInfo(cache::CatapultCache& cache, const model::Block& block) {
 			auto delta = cache.createDelta();
 			auto& difficultyCache = delta.sub<cache::BlockDifficultyCache>();
-			state::BlockDifficultyInfo info(block.Height, block.Timestamp, block.Difficulty);
+			state::BlockDifficultyInfo info(block.Height, block.Timestamp, block.CumulativeDifficulty);
 			difficultyCache.insert(info);
 			cache.commit(Height());
 		}

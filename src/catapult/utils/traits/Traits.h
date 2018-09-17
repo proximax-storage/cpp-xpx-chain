@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/utils/ClampedBaseValue.h"
+#include "catapult/utils/BaseValue.h"
 #include <type_traits>
 
 namespace catapult { namespace utils { namespace traits {

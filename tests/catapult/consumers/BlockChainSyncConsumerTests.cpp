@@ -249,7 +249,7 @@ namespace catapult { namespace consumers {
 
 		void SetBlockHeight(model::Block& block, Height height) {
 			block.Timestamp = Timestamp(height.unwrap() * 1000);
-			block.Difficulty = Difficulty();
+			block.CumulativeDifficulty = Difficulty();
 			block.Height = height;
 		}
 
@@ -715,7 +715,7 @@ namespace catapult { namespace consumers {
 		ConsumerTestContext context;
 		context.seedStorage(Height(7));
 		auto input = CreateInput(Height(5), 1);
-		const_cast<model::Block&>(input.blocks()[0].Block).Difficulty = Difficulty(Base_Difficulty * 3);
+		const_cast<model::Block&>(input.blocks()[0].Block).CumulativeDifficulty = Difficulty(Base_Difficulty * 3);
 
 		// Act:
 		auto result = context.Consumer(input);

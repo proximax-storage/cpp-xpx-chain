@@ -22,6 +22,7 @@
 #include "TransactionsInfo.h"
 #include "UnlockedAccounts.h"
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/Elements.h"
 #include "catapult/model/EntityInfo.h"
@@ -37,7 +38,8 @@ namespace catapult { namespace harvesting {
 				const cache::CatapultCache& cache,
 				const model::BlockChainConfiguration& config,
 				const UnlockedAccounts& unlockedAccounts,
-				const TransactionsInfoSupplier& transactionsInfoSupplier);
+				const TransactionsInfoSupplier& transactionsInfoSupplier,
+				const io::BlockStorageCache& storage);
 
 	public:
 		/// Creates the best block (if any) harvested by any unlocked account.
@@ -49,5 +51,6 @@ namespace catapult { namespace harvesting {
 		const model::BlockChainConfiguration m_config;
 		const UnlockedAccounts& m_unlockedAccounts;
 		TransactionsInfoSupplier m_transactionsInfoSupplier;
+		const io::BlockStorageCache& m_storage;
 	};
 }}

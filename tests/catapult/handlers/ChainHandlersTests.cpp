@@ -113,7 +113,7 @@ namespace catapult { namespace handlers {
 				auto pBlock = reinterpret_cast<model::Block*>(buffer.data());
 				pBlock->Size = size;
 				pBlock->Height = Height(i);
-				pBlock->Difficulty = Difficulty::Min() + Difficulty::Unclamped(1000 + i);
+				pBlock->CumulativeDifficulty = Difficulty::Min() + Difficulty::Unclamped(1000 + i);
 				reinterpret_cast<model::Transaction*>(pBlock + 1)->Size = size - sizeof(model::Block);
 				storageModifier.saveBlock(test::BlockToBlockElement(*pBlock, test::GenerateRandomData<Hash256_Size>()));
 			}

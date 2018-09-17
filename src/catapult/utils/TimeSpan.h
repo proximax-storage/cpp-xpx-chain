@@ -123,6 +123,13 @@ namespace catapult { namespace utils {
 			return m_millis < rhs.m_millis;
 		}
 
+		/// Divides this time span by a \a divider.
+		template<typename TDivider>
+		TimeSpan& operator/(const TDivider& divider) {
+			m_millis /= divider;
+			return *this;
+		}
+
 	private:
 		std::chrono::milliseconds m_millis;
 	};
@@ -133,6 +140,17 @@ namespace catapult { namespace utils {
 	/// Adds \a timestamp and a \a timeSpan resulting in new timestamp.
 	constexpr Timestamp operator+(const Timestamp& timestamp, const TimeSpan& timeSpan) {
 		return timestamp + Timestamp(timeSpan.millis());
+	}
+
+	/// Subtracts \a timestamp1 and a \a timestamp2 resulting in TimeSpan.
+	constexpr TimeSpan operator-(const Timestamp& timestamp1, const Timestamp& timestamp2) {
+		return TimeSpan::FromDifference(timestamp1, timestamp2);
+	}
+
+	/// Divides \a timestamp by a \a divider resulting in TimeSpan.
+	template<typename TDivider>
+	constexpr TimeSpan operator/(const Timestamp& timestamp, const TDivider& divider) {
+		return TimeSpan::FromMilliseconds(timestamp.unwrap() / divider);
 	}
 
 	/// Subtracts \a timeSpan from \a timestamp and returns the maximum of the difference and zero.

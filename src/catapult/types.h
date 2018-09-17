@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "utils/ClampedBaseValue.h"
+#include "utils/BaseValue.h"
 #include "utils/RawBuffer.h"
 #include <array>
 #include <boost/multiprecision/cpp_int.hpp>

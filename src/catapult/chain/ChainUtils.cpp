@@ -66,7 +66,7 @@ namespace catapult { namespace chain {
 
 		size_t i = 0;
 		for (const auto* pBlock : blocks) {
-			if (difficulty != pBlock->Difficulty)
+			if (difficulty != pBlock->CumulativeDifficulty)
 				break;
 
 			difficulties.insert(state::BlockDifficultyInfo(pBlock->Height, pBlock->Timestamp, difficulty));

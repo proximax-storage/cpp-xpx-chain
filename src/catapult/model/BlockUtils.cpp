@@ -19,6 +19,7 @@
 **/
 
 #include "BlockUtils.h"
+#include "catapult/chain/BlockScorer.h"
 #include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/crypto/Signer.h"
@@ -29,6 +30,7 @@
 namespace catapult { namespace model {
 
 	namespace {
+		constexpr uint64_t TWO_TO_64{1ull << 64};
 
 		RawBuffer BlockDataBuffer(const Block& block) {
 			return {
@@ -109,7 +111,8 @@ namespace catapult { namespace model {
 
 		template<typename TContainer>
 		std::unique_ptr<Block> CreateBlockT(
-				const PreviousBlockContext& context,
+				const PreviousBlockContext& previousBlockContext,
+				const chain::BlockHitContext& hitContext,
 				NetworkIdentifier networkIdentifier,
 				const Key& signerPublicKey,
 				const TContainer& transactions) {
@@ -123,10 +126,11 @@ namespace catapult { namespace model {
 			block.Signer = signerPublicKey;
 			block.Signature = Signature{}; // zero the signature
 			block.Timestamp = Timestamp();
-			block.Height = context.BlockHeight + Height(1);
-			block.PreviousBlockHash = context.BlockHash;
-			block.BaseTarget = CalculateBaseTarget(context.BaseTarget, utils::TimeSpan::FromSeconds(BLOCK_GENERATION_TIME));
-			block.Difficulty = CalculateCumulativeDifficulty(block.BaseTarget, context.Difficulty);
+			block.Height = previousBlockContext.BlockHeight + Height(1);
+			block.PreviousBlockHash = previousBlockContext.BlockHash;
+			block.BaseTarget = hitContext.BaseTarget;
+			block.CumulativeDifficulty = CalculateCumulativeDifficulty(hitContext.BaseTarget, previousBlockContext.Difficulty);
+			block.EffectiveBalance = hitContext.EffectiveBalance;
 
 			// append all the transactions
 			auto pDestination = reinterpret_cast<uint8_t*>(block.TransactionsPtr());
@@ -136,11 +140,12 @@ namespace catapult { namespace model {
 	}
 
 	std::unique_ptr<Block> CreateBlock(
-			const PreviousBlockContext& context,
+			const PreviousBlockContext& previousBlockContext,
+			const chain::BlockHitContext& hitContext,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
 			const Transactions& transactions) {
-		return CreateBlockT(context, networkIdentifier, signerPublicKey, transactions);
+		return CreateBlockT(previousBlockContext, hitContext, networkIdentifier, signerPublicKey, transactions);
 	}
 
 	// endregion

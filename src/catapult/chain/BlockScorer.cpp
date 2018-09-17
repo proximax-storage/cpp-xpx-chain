@@ -27,76 +27,14 @@
 namespace catapult { namespace chain {
 
 	namespace {
-		constexpr uint64_t Two_To_54{1ull << 54};
-
 		constexpr uint64_t MAXRATIO{67};
 		constexpr uint64_t MINRATIO{53};
 		constexpr double GAMMA{0.64};
 		constexpr int BLOCK_GENERATION_TIME{0};
-		constexpr uint64_t TWO_TO_64{1ull << 64};
 
-		struct GenerationHashInfo {
-			uint32_t Value;
-			uint32_t NumLeadingZeros;
-		};
-
-		uint32_t NumLeadingZeros(const Hash256& generationHash) {
-			for (auto i = 0u; i < Hash256_Size; ++i) {
-				if (0 != generationHash[i])
-					return 8u * i + 7u - utils::Log2(generationHash[i]);
-			}
-
-			return Hash256_Size;
-		}
-
-#ifdef _MSC_VER
-#define BSWAP(VAL) _byteswap_ulong(VAL)
-#else
-#define BSWAP(VAL) __builtin_bswap32(VAL)
-#endif
-
-		uint32_t ExtractFromHashAtPosition(const Hash256& hash, size_t index) {
-			return BSWAP(*reinterpret_cast<const uint32_t*>(hash.data() + index));
-		}
-
-		GenerationHashInfo ExtractGenerationHashInfo(const Hash256& generationHash) {
-			auto numLeadingZeros = NumLeadingZeros(generationHash);
-			if (224 <= numLeadingZeros)
-				return GenerationHashInfo{ ExtractFromHashAtPosition(generationHash, Hash256_Size - 4), 224 };
-
-			auto quotient = numLeadingZeros / 8;
-			auto remainder = numLeadingZeros % 8;
-			auto value = ExtractFromHashAtPosition(generationHash, quotient);
-			value <<= remainder;
-			value += generationHash[quotient + 4] >> (8 - remainder);
-			return GenerationHashInfo{ value, numLeadingZeros };
-		}
-
-		/// Calculates the hit for a \a generationHash.
+		/// The first 8 bytes of a \a generationHash are converted to a number, referred to as the account hit.
 		uint64_t CalculateHit(const Hash256& generationHash) {
-			// we want to calculate 2^54 * abs(log(x)), where x = value/2^256 and value is a 256 bit integer
-			// note that x is always < 1, therefore log(x) is always negative
-			// the original version used boost::multiprecision to convert the generation hash (interpreted as 256 bit integer) to a double
-			// the new version uses only the 32 bits beginning at the first non-zero bit of the hash
-			// this results in a slightly less exact calculation but the difference is less than one ppm
-			auto hashInfo = ExtractGenerationHashInfo(generationHash);
-
-			// handle edge cases
-			if (0 == hashInfo.Value)
-				return std::numeric_limits<uint64_t>::max();
-
-			if (0xFFFFFFFF == hashInfo.Value)
-				return 0;
-
-			// calculate nearest integer for log2(value) * 2 ^ 54
-			auto logValue = utils::Log2TimesPowerOfTwo(hashInfo.Value, 54);
-
-			// result is 256 * 2^54 - logValue - (256 - 32 - hashInfo.NumLeadingZeros) * 2^54 which can be simplified
-			boost::multiprecision::uint128_t result = (32 + hashInfo.NumLeadingZeros) * Two_To_54 - logValue;
-
-			// divide by log2(e)
-			result = result * 10'000'000'000'000'000ull / 14'426'950'408'889'634ull;
-			return result.convert_to<uint64_t>();
+			return *reinterpret_cast<uint64_t*>(generationHash.data());
 		}
 
 		// Each account calculates its own target value, based on its current effective stake. This value is:
@@ -109,11 +47,8 @@ namespace catapult { namespace chain {
 		BlockTarget CalculateTarget(
 				const BlockTarget& baseTarget,
 				const utils::TimeSpan& ElapsedTime,
-				const state::AccountState& accountState) {
-			BlockTarget target = baseTarget * ElapsedTime.seconds();
-			constexpr Amount OLD_BALANCE{};
-			target *= std::min(accountState.Balances.get(Xpx_Id).unwrap(), OLD_BALANCE.unwrap()); // TODO: replace with actual old balance.
-			return target;
+				const Amount& effectiveBalance) {
+			return baseTarget * ElapsedTime.seconds() * effectiveBalance;
 		}
 	}
 
@@ -138,15 +73,15 @@ namespace catapult { namespace chain {
 	}
 
 	bool BlockHitPredicate::operator()(const Hash256& generationHash, const BlockTarget& baseTarget,
-			const utils::TimeSpan& ElapsedTime, const state::AccountState& accountState) const {
+			const utils::TimeSpan& ElapsedTime, const Amount& effectiveBalance) const {
 		auto hit = CalculateHit(generationHash);
-		auto target = CalculateTarget(baseTarget, ElapsedTime, accountState);
+		auto target = CalculateTarget(baseTarget, ElapsedTime, effectiveBalance);
 		return hit < target;
 	}
 
 	bool BlockHitPredicate::operator()(const BlockHitContext& context) const {
 		auto hit = CalculateHit(context.GenerationHash);
-		auto target = CalculateTarget(context.BaseTarget, context.ElapsedTime, context.AccountState);
+		auto target = CalculateTarget(context.BaseTarget, context.ElapsedTime, context.EffectiveBalance);
 		return hit < target;
 	}
 }}

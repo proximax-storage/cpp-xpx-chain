@@ -22,7 +22,7 @@
 #include "Transaction.h"
 #include "TransactionContainer.h"
 #include "VerifiableEntity.h"
-#include "catapult/constants.h"
+#include "catapult/types.h"
 #include <memory>
 #include <vector>
 
@@ -44,7 +44,7 @@ namespace catapult { namespace model {
 		Timestamp Timestamp;
 
 		/// Cumulative difficulty of a block.
-		Difficulty Difficulty;
+		Difficulty CumulativeDifficulty;
 
 		/// Base target of a block.
 		BlockTarget BaseTarget;
@@ -57,9 +57,6 @@ namespace catapult { namespace model {
 
 		/// Effective balance of the account that generated this block.
 		Amount EffectiveBalance;
-
-		/// Timestamps of last 3 blocks.
-		catapult::Timestamp Timestamps[Block_Timestamp_History_Size];
 	};
 
 	/// Binary layout for a block.

@@ -112,10 +112,7 @@ namespace catapult { namespace sync {
 		BlockChainProcessor CreateSyncProcessor(
 				const chain::ExecutionConfiguration& executionConfig) {
 			return CreateBlockChainProcessor(
-					[](const cache::ReadOnlyCatapultCache& cache) {
-						cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
-						return chain::BlockHitPredicate{};
-					},
+					[]() { return chain::BlockHitPredicate{}; },
 					chain::CreateBatchEntityProcessor(executionConfig));
 		}
 

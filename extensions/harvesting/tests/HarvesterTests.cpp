@@ -79,7 +79,7 @@ namespace catapult { namespace harvesting {
 			// the created block needs to have height 1 to be able to add it to the block difficulty cache
 			auto pBlock = test::GenerateEmptyRandomBlock();
 			pBlock->Height = Height(1);
-			pBlock->Difficulty = Difficulty::Min();
+			pBlock->CumulativeDifficulty = Difficulty::Min();
 			return pBlock;
 		}
 
@@ -106,7 +106,7 @@ namespace catapult { namespace harvesting {
 				AccountStates = CreateAccounts(delta.sub<cache::AccountStateCache>(), KeyPairs, Importances);
 
 				auto& difficultyCache = delta.sub<cache::BlockDifficultyCache>();
-				state::BlockDifficultyInfo info(pLastBlock->Height, pLastBlock->Timestamp, pLastBlock->Difficulty);
+				state::BlockDifficultyInfo info(pLastBlock->Height, pLastBlock->Timestamp, pLastBlock->CumulativeDifficulty);
 				difficultyCache.insert(info);
 				Cache.commit(Height());
 				UnlockAllAccounts(*pUnlockedAccounts, KeyPairs);
@@ -357,7 +357,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(bestKey, pBlock->Signer);
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
-			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, pLastBlock->Height, config), pBlock->Difficulty);
+			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, pLastBlock->Height, config), pBlock->CumulativeDifficulty);
 			EXPECT_EQ(model::MakeVersion(Network_Identifier, 3), pBlock->Version);
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));

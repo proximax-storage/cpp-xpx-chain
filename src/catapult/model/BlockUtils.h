@@ -23,7 +23,10 @@
 #include "Elements.h"
 #include "EntityInfo.h"
 
-namespace catapult { namespace crypto { class KeyPair; } }
+namespace catapult {
+	namespace crypto { class KeyPair; }
+	namespace chain { class BlockHitContext; }
+}
 
 namespace catapult { namespace model {
 
@@ -73,7 +76,7 @@ namespace catapult { namespace model {
 				, BlockHeight{blockElement.Block.Height}
 				, Timestamp{blockElement.Block.Timestamp}
 				, BaseTarget{blockElement.Block.BaseTarget}
-				, Difficulty{blockElement.Block.Difficulty}
+				, Difficulty{blockElement.Block.CumulativeDifficulty}
 		{}
 
 		/// Hash of previous block.
@@ -98,7 +101,8 @@ namespace catapult { namespace model {
 	/// Creates an unsigned Block given a \a context, signer public key (\a signerPublicKey) and \a transactions
 	/// for a network with identifier \a networkIdentifier.
 	std::unique_ptr<Block> CreateBlock(
-			const PreviousBlockContext& context,
+			const PreviousBlockContext& previousBlockContext,
+			const chain::BlockHitContext& hitContext,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
 			const Transactions& transactions);

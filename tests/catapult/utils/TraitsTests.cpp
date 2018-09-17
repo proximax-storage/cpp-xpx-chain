@@ -71,7 +71,6 @@ namespace catapult { namespace utils {
 		AssertIsScalar<Height>(__LINE__); // well known base value
 		AssertIsScalar<Difficulty>(__LINE__); // well known clamped base value
 		AssertIsScalar<BaseValue<short, void>>(__LINE__); // arbitrary base value
-		AssertIsScalar<ClampedBaseValue<int32_t, void>>(__LINE__); // arbitrary clamped base value
 		AssertIsScalar<ImmutableValue<uint64_t>>(__LINE__); // arbitrary immutable value
 
 		// - compound types
@@ -91,7 +90,6 @@ namespace catapult { namespace utils {
 		AssertIsPod<Height>(__LINE__); // well known base value
 		AssertIsPod<Difficulty>(__LINE__); // well known clamped base value
 		AssertIsPod<BaseValue<short, void>>(__LINE__); // arbitrary base value
-		AssertIsPod<ClampedBaseValue<int32_t, void>>(__LINE__); // arbitrary clamped base value
 		AssertIsPod<ImmutableValue<uint64_t>>(__LINE__); // arbitrary immutable value
 
 		// - compound types

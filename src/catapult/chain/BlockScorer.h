@@ -47,7 +47,8 @@ namespace catapult { namespace chain {
 		/// Public key of the block signer.
 		Key Signer;
 
-		state::AccountState AccountState;
+		/// Effective balance of the signer account.
+		Amount EffectiveBalance;
 	};
 
 	/// Predicate used to determine if a block is a hit or not.
@@ -55,7 +56,7 @@ namespace catapult { namespace chain {
 	public:
 		/// Determines if the \a block is a hit given generation hash (\a generationHash) and time elapsed since last block (\a ElapsedTime).
 		bool operator()(const Hash256& generationHash, const BlockTarget& parentBaseTarget,
-				const utils::TimeSpan& ElapsedTime, const state::AccountState& accountState) const;
+				const utils::TimeSpan& ElapsedTime, const Amount& effectiveBalance) const;
 
 		/// Determines if the specified \a context is a hit.
 		bool operator()(const BlockHitContext& context) const;

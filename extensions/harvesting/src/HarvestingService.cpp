@@ -79,7 +79,8 @@ namespace catapult { namespace harvesting {
 							cache,
 							blockChainConfig,
 							unlockedAccounts,
-							CreateTransactionsInfoSupplier(state.utCache())));
+							CreateTransactionsInfoSupplier(state.utCache()),
+							state.storage()));
 
 			auto minHarvesterBalance = blockChainConfig.MinHarvesterBalance;
 			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, minHarvesterBalance]() {
