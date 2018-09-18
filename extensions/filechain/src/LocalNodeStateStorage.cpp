@@ -129,7 +129,6 @@ namespace catapult { namespace filechain {
 
 			cache::SupplementalData data;
 			data.State = supplementalData.State;
-			data.ChainScore = supplementalData.ChainScore;
 			cache::SaveSupplementalData(data, cache.createView().height(), file);
 		}
 	}

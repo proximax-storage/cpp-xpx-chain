@@ -38,10 +38,10 @@ namespace catapult { namespace model {
 
 	public:
 		/// Height of a block.
-		Height Height;
+		catapult::Height Height;
 
 		/// Timestamp of a block.
-		Timestamp Timestamp;
+		catapult::Timestamp Timestamp;
 
 		/// Cumulative difficulty of a block.
 		Difficulty CumulativeDifficulty;

@@ -85,15 +85,4 @@ namespace catapult { namespace chain {
 
 		return i;
 	}
-
-	model::ChainScore CalculatePartialChainScore(const model::Block& parent, const std::vector<const model::Block*>& blocks) {
-		model::ChainScore score;
-		auto pPreviousBlock = &parent;
-		for (const auto* pBlock : blocks) {
-			score += model::ChainScore(CalculateScore(*pPreviousBlock, *pBlock));
-			pPreviousBlock = pBlock;
-		}
-
-		return score;
-	}
 }}

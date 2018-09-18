@@ -84,7 +84,6 @@ namespace catapult { namespace filechain {
 			// Sanity:
 			SanityAssertCache(cache);
 
-			supplementalData.ChainScore = model::ChainScore(0x1234567890ABCDEF, 0xFEDCBA0987654321);
 			supplementalData.State.LastRecalculationHeight = model::ImportanceHeight(12345);
 			filechain::SaveState(dataDirectory, cache, supplementalData);
 			return supplementalData;
@@ -105,7 +104,6 @@ namespace catapult { namespace filechain {
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
 		AssertSubCaches(originalCache, cache);
-		EXPECT_EQ(originalSupplementalData.ChainScore, supplementalData.ChainScore);
 		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}
@@ -181,7 +179,6 @@ namespace catapult { namespace filechain {
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
 		AssertSubCaches(originalCache, cache);
-		EXPECT_EQ(originalSupplementalData.ChainScore, supplementalData.ChainScore);
 		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}

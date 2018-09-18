@@ -19,7 +19,6 @@
 **/
 
 #include "BlockUtils.h"
-#include "catapult/chain/BlockScorer.h"
 #include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/crypto/Signer.h"
@@ -30,8 +29,6 @@
 namespace catapult { namespace model {
 
 	namespace {
-		constexpr uint64_t TWO_TO_64{1ull << 64};
-
 		RawBuffer BlockDataBuffer(const Block& block) {
 			return {
 				reinterpret_cast<const uint8_t*>(&block) + VerifiableEntity::Header_Size,
@@ -106,13 +103,16 @@ namespace catapult { namespace model {
 		Difficulty CalculateCumulativeDifficulty(
 				const BlockTarget& target,
 				const Difficulty& previousBlockDifficulty) {
-			return previousBlockDifficulty.unwrap() + TWO_TO_64 / target;
+			BlockTarget TWO_TO_64{1};
+			TWO_TO_64 <<= 64;
+			auto res = BlockTarget{previousBlockDifficulty.unwrap()} + TWO_TO_64 / target;
+			return Difficulty{res.convert_to<uint64_t>()};
 		}
 
 		template<typename TContainer>
 		std::unique_ptr<Block> CreateBlockT(
 				const PreviousBlockContext& previousBlockContext,
-				const chain::BlockHitContext& hitContext,
+				const model::BlockHitContext& hitContext,
 				NetworkIdentifier networkIdentifier,
 				const Key& signerPublicKey,
 				const TContainer& transactions) {
@@ -141,7 +141,7 @@ namespace catapult { namespace model {
 
 	std::unique_ptr<Block> CreateBlock(
 			const PreviousBlockContext& previousBlockContext,
-			const chain::BlockHitContext& hitContext,
+			const model::BlockHitContext& hitContext,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
 			const Transactions& transactions) {

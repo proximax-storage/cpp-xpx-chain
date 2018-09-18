@@ -22,6 +22,7 @@
 #include "catapult/chain/BatchEntityProcessor.h"
 #include "catapult/disruptor/DisruptorElement.h"
 #include "catapult/model/WeakEntityInfo.h"
+#include "catapult/utils/TimeSpan.h"
 #include <functional>
 
 namespace catapult {

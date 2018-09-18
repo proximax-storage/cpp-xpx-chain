@@ -321,7 +321,6 @@ namespace catapult { namespace tools { namespace health {
 			auto valuesMap = valuesMapFuture.get();
 			api::ChainInfo chainInfo;
 			chainInfo.Height = Height(valuesMap["height"]);
-			chainInfo.Score = model::ChainScore(valuesMap["scoreHigh"], valuesMap["scoreLow"]);
 			return chainInfo;
 		});
 	}

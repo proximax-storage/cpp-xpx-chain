@@ -32,12 +32,6 @@ namespace catapult { namespace api {
 
 		/// Chain height.
 		catapult::Height Height;
-
-		/// High part of the score.
-		uint64_t ScoreHigh;
-
-		/// Low part of the score.
-		uint64_t ScoreLow;
 	};
 
 	/// A packet containing header information and a height.

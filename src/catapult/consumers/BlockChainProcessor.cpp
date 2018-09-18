@@ -25,6 +25,7 @@
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/utils/TimeSpan.h"
 
 using namespace catapult::validators;
 
@@ -63,12 +64,13 @@ namespace catapult { namespace consumers {
 
 				auto blockHitPredicate = m_blockHitPredicateFactory();
 
-				auto& previousTimeStamp = parentBlockInfo.entity().Timestamp;
+				auto previousTimeStamp = parentBlockInfo.entity().Timestamp;
 				const auto* pParentGenerationHash = &parentBlockInfo.generationHash();
 				for (auto& element : elements) {
 					const auto& block = element.Block;
 					element.GenerationHash = model::CalculateGenerationHash(*pParentGenerationHash, block.Signer);
-					if (!blockHitPredicate(element.GenerationHash, block.BaseTarget, block.Timestamp - previousTimeStamp, block.EffectiveBalance)) {
+					if (!blockHitPredicate(element.GenerationHash, block.BaseTarget,
+							utils::TimeSpan::FromDifference(block.Timestamp, previousTimeStamp), block.EffectiveBalance)) {
 						CATAPULT_LOG(warning) << "block " << block.Height << " failed hit";
 						return chain::Failure_Chain_Block_Not_Hit;
 					}

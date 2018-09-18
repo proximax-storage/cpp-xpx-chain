@@ -37,7 +37,6 @@ namespace catapult { namespace test {
 
 	void ChainInfoApiTraits::VerifyResult(const ResultType& info) {
 		EXPECT_EQ(Height(1), info.Height);
-		EXPECT_EQ(model::ChainScore(0), info.Score);
 	}
 
 	// endregion

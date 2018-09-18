@@ -22,7 +22,6 @@
 #include "LocalTestUtils.h"
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
@@ -62,7 +61,6 @@ namespace catapult { namespace test {
 						m_catapultCache,
 						m_catapultState,
 						m_storage,
-						m_score,
 						*m_pUtCache,
 						timeSupplier,
 						m_transactionStatusSubscriber,
@@ -116,7 +114,6 @@ namespace catapult { namespace test {
 		cache::CatapultCache m_catapultCache;
 		state::CatapultState m_catapultState;
 		io::BlockStorageCache m_storage;
-		extensions::LocalNodeChainScore m_score;
 		std::unique_ptr<cache::MemoryUtCacheProxy> m_pUtCache;
 
 		mocks::MockTransactionStatusSubscriber m_transactionStatusSubscriber;

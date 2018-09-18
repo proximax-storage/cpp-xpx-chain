@@ -276,7 +276,7 @@ namespace catapult { namespace tools { namespace nemgen {
 				transactions.addTransfer(model::StringToAddress(addressMosaicSeedsPair.first), addressMosaicSeedsPair.second);
 
 			model::PreviousBlockContext previousBlockContext;
-			chain::BlockHitContext hitContext;
+			model::BlockHitContext hitContext;
 			auto pBlock = model::CreateBlock(previousBlockContext, hitContext, config.NetworkIdentifier, signer.publicKey(), transactions.transactions());
 			pBlock->Type = model::Entity_Type_Nemesis_Block;
 			extensions::BlockExtensions().signFullBlock(signer, *pBlock);

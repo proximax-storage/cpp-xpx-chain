@@ -22,7 +22,6 @@
 #include "ConfigurationUtils.h"
 #include "MemoryCounters.h"
 #include "NodeUtils.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
@@ -81,7 +80,6 @@ namespace catapult { namespace local {
 						m_catapultCache,
 						m_catapultState,
 						m_storage,
-						m_score,
 						*m_pUtCache,
 						extensionManager.networkTimeSupplier(),
 						*m_pTransactionStatusSubscriber,
@@ -134,10 +132,6 @@ namespace catapult { namespace local {
 				return m_catapultCache;
 			}
 
-			model::ChainScore score() const override {
-				return m_score.get();
-			}
-
 			LocalNodeCounterValues counters() const override {
 				LocalNodeCounterValues values;
 				values.reserve(m_counters.size());
@@ -153,11 +147,11 @@ namespace catapult { namespace local {
 
 		private:
 			extensions::LocalNodeStateConstRef stateCref() const {
-				return extensions::LocalNodeStateConstRef(m_config, m_catapultState, m_catapultCache, m_storage, m_score);
+				return extensions::LocalNodeStateConstRef(m_config, m_catapultState, m_catapultCache, m_storage);
 			}
 
 			extensions::LocalNodeStateRef stateRef() {
-				return extensions::LocalNodeStateRef(m_config, m_catapultState, m_catapultCache, m_storage, m_score);
+				return extensions::LocalNodeStateRef(m_config, m_catapultState, m_catapultCache, m_storage);
 			}
 
 		private:
@@ -173,7 +167,6 @@ namespace catapult { namespace local {
 			cache::CatapultCache m_catapultCache;
 			state::CatapultState m_catapultState;
 			io::BlockStorageCache m_storage;
-			extensions::LocalNodeChainScore m_score;
 			std::unique_ptr<cache::MemoryUtCacheProxy> m_pUtCache;
 
 			std::unique_ptr<subscribers::TransactionStatusSubscriber> m_pTransactionStatusSubscriber;

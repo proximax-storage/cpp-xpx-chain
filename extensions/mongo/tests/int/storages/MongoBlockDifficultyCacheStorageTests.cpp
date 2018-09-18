@@ -79,7 +79,7 @@ namespace catapult { namespace mongo { namespace storages {
 		};
 
 		auto ToBlockDifficultyInfo(const model::Block& block) {
-			return state::BlockDifficultyInfo(block.Height, block.Timestamp, block.Difficulty);
+			return state::BlockDifficultyInfo(block.Height, block.Timestamp, block.CumulativeDifficulty);
 		}
 
 		template<typename TIter>

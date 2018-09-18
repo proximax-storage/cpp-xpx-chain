@@ -20,7 +20,6 @@
 
 #pragma once
 #include "ApiTypes.h"
-#include "catapult/model/ChainScore.h"
 #include "catapult/model/RangeTypes.h"
 #include "catapult/thread/Future.h"
 #include "catapult/utils/NonCopyable.h"
@@ -32,8 +31,8 @@ namespace catapult { namespace api {
 		/// Chain height.
 		catapult::Height Height;
 
-		/// Chain score.
-		model::ChainScore Score;
+		/// Chain difficulty.
+		catapult::Difficulty Difficulty;
 	};
 
 	/// An api for retrieving chain information from a node.

@@ -39,7 +39,6 @@ namespace catapult { namespace consumers {
 
 		struct UnwindResult {
 		public:
-			model::ChainScore Score;
 			consumers::TransactionInfos TransactionInfos;
 
 		public:
@@ -68,10 +67,6 @@ namespace catapult { namespace consumers {
 				return m_pCommonBlockElement->Block.Height;
 			}
 
-			const model::ChainScore& scoreDelta() const {
-				return m_scoreDelta;
-			}
-
 			const cache::CatapultCacheDelta& cacheDelta() const {
 				return *m_pCacheDelta;
 			}
@@ -87,10 +82,8 @@ namespace catapult { namespace consumers {
 
 			void update(
 					std::shared_ptr<const model::BlockElement>&& pCommonBlockElement,
-					model::ChainScore&& scoreDelta,
 					TransactionInfos&& removedTransactionInfos) {
 				m_pCommonBlockElement = std::move(pCommonBlockElement);
-				m_scoreDelta = std::move(scoreDelta);
 				m_removedTransactionInfos = std::move(removedTransactionInfos);
 			}
 
@@ -107,7 +100,6 @@ namespace catapult { namespace consumers {
 			std::unique_ptr<cache::CatapultCacheDelta> m_pCacheDelta; // unique_ptr to allow explicit release of lock in commit
 			state::CatapultState m_stateCopy;
 			std::shared_ptr<const model::BlockElement> m_pCommonBlockElement;
-			model::ChainScore m_scoreDelta;
 			TransactionInfos m_removedTransactionInfos;
 		};
 
@@ -170,25 +162,14 @@ namespace catapult { namespace consumers {
 				if (!m_handlers.DifficultyChecker(blocks, m_cache))
 					return Abort(Failure_Consumer_Remote_Chain_Mismatched_Difficulties);
 
-				// 4. unwind to the common block height and calculate the local chain score
+				// 4. unwind to the common block height
 				syncState = SyncState(m_cache, m_state);
 				auto commonBlockHeight = peerStartHeight - Height(1);
 				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, syncState.observerState());
-				const auto& localScore = unwindResult.Score;
 
-				// 5. calculate the remote chain score
 				auto pCommonBlockElement = storageView.loadBlockElement(commonBlockHeight);
-				auto peerScore = chain::CalculatePartialChainScore(pCommonBlockElement->Block, blocks);
 
-				// 6. do not accept a chain with the same score because two different blocks with the same height
-				//    that are pushed to the network could result in indefinite switching and lots of i/o
-				if (peerScore <= localScore) {
-					CATAPULT_LOG(warning) << "peer score (" << peerScore << ") is not better than local score (" << localScore << ")";
-					return Abort(Failure_Consumer_Remote_Chain_Score_Not_Better);
-				}
-
-				peerScore -= localScore; // calculate the score delta
-				syncState.update(std::move(pCommonBlockElement), std::move(peerScore), std::move(unwindResult.TransactionInfos));
+				syncState.update(std::move(pCommonBlockElement), std::move(unwindResult.TransactionInfos));
 				return Continue();
 			}
 
@@ -216,8 +197,6 @@ namespace catapult { namespace consumers {
 				while (true) {
 					auto pParentBlockElement = storage.loadBlockElement(height);
 					if (pChildBlockElement) {
-						result.Score += model::ChainScore(chain::CalculateScore(pParentBlockElement->Block, pChildBlockElement->Block));
-
 						// add all child block transaction infos to the result
 						result.addBlockTransactionInfos(pChildBlockElement);
 					}
@@ -250,7 +229,7 @@ namespace catapult { namespace consumers {
 				commitToStorage(syncState.commonBlockHeight(), elements);
 
 				// 2. indicate a state change
-				m_handlers.StateChange(StateChangeInfo(syncState.cacheDelta(), syncState.scoreDelta(), newHeight));
+				m_handlers.StateChange(StateChangeInfo(syncState.cacheDelta(), newHeight));
 
 				// 3. commit changes to the in-memory cache
 				syncState.commit(newHeight);

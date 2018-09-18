@@ -137,10 +137,9 @@ namespace catapult { namespace filechain {
 		test::LocalNodeTestState state;
 
 		// Act:
-		auto score = LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(2));
+		LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(2));
 
 		// Assert:
-		EXPECT_EQ(model::ChainScore(), score);
 		EXPECT_EQ(0u, observer.blockHeights().size());
 		EXPECT_EQ(0u, factoryHeights.size());
 	}
@@ -153,18 +152,6 @@ namespace catapult { namespace filechain {
 				storage.saveBlock(test::BlockToBlockElement(*pBlock));
 			}
 		}
-
-		constexpr uint64_t CalculateExpectedScore(size_t height) {
-			// - nemesis difficulty is 0 and nemesis time is 0
-			// - all other blocks have a difficulty of base + height
-			// - blocks at heights 1 and 2 have time difference of 6s
-			// - all other blocks have a time difference of 3s
-			return
-					Difficulty().unwrap() * (height - 1) // sum base difficulties
-					+ height * (height + 1) / 2 // sum difficulty deltas (1..N)
-					- 1 // adjust for range (2..N), first block has height 2
-					- (6 + (height - 2) * 3); // subtract the time differences
-		}
 	}
 
 	TEST(TEST_CLASS, LoadBlockChainLoadsSingleBlockWhenStorageHeightIsTwo) {
@@ -175,11 +162,10 @@ namespace catapult { namespace filechain {
 		SetStorageChainHeight(state.ref().Storage.modifier(), 2);
 
 		// Act:
-		auto score = LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(2));
+		LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(2));
 
 		// Assert:
 		auto expectedHeights = std::vector<Height>{ Height(2) };
-		EXPECT_EQ(model::ChainScore(CalculateExpectedScore(2)), score);
 		EXPECT_EQ(1u, observer.blockHeights().size());
 		EXPECT_EQ(expectedHeights, observer.blockHeights());
 		EXPECT_EQ(expectedHeights, factoryHeights);
@@ -193,11 +179,10 @@ namespace catapult { namespace filechain {
 		SetStorageChainHeight(state.ref().Storage.modifier(), 7);
 
 		// Act:
-		auto score = LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(2));
+		LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(2));
 
 		// Assert:
 		auto expectedHeights = std::vector<Height>{ Height(2), Height(3), Height(4), Height(5), Height(6), Height(7) };
-		EXPECT_EQ(model::ChainScore(CalculateExpectedScore(7)), score);
 		EXPECT_EQ(6u, observer.blockHeights().size());
 		EXPECT_EQ(expectedHeights, observer.blockHeights());
 		EXPECT_EQ(expectedHeights, factoryHeights);
@@ -211,11 +196,10 @@ namespace catapult { namespace filechain {
 		SetStorageChainHeight(state.ref().Storage.modifier(), 7);
 
 		// Act: load blocks 4-7
-		auto score = LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(4));
+		LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(4));
 
 		// Assert:
 		auto expectedHeights = std::vector<Height>{ Height(4), Height(5), Height(6), Height(7) };
-		EXPECT_EQ(model::ChainScore(CalculateExpectedScore(7) - CalculateExpectedScore(3)), score);
 		EXPECT_EQ(4u, observer.blockHeights().size());
 		EXPECT_EQ(expectedHeights, observer.blockHeights());
 		EXPECT_EQ(expectedHeights, factoryHeights);

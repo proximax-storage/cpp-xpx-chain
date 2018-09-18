@@ -24,32 +24,13 @@
 #include "catapult/types.h"
 #include <functional>
 
-namespace catapult { namespace model { struct Block; } }
+namespace catapult { namespace model { struct BlockHitContext; } }
 
 namespace catapult { namespace chain {
 
 	BlockTarget CalculateBaseTarget(
 		const BlockTarget& parentBaseTarget,
 		const utils::TimeSpan& averageBlockTime);
-
-	/// Contextual information for calculating a block hit.
-	struct BlockHitContext {
-
-	public:
-		/// Generation hash.
-		Hash256 GenerationHash;
-
-		BlockTarget BaseTarget;
-
-		/// Time since the last block.
-		utils::TimeSpan ElapsedTime;
-
-		/// Public key of the block signer.
-		Key Signer;
-
-		/// Effective balance of the signer account.
-		Amount EffectiveBalance;
-	};
 
 	/// Predicate used to determine if a block is a hit or not.
 	class BlockHitPredicate {
@@ -59,6 +40,6 @@ namespace catapult { namespace chain {
 				const utils::TimeSpan& ElapsedTime, const Amount& effectiveBalance) const;
 
 		/// Determines if the specified \a context is a hit.
-		bool operator()(const BlockHitContext& context) const;
+		bool operator()(const model::BlockHitContext& context) const;
 	};
 }}

@@ -23,7 +23,6 @@
 
 namespace catapult {
 	namespace cache { class CatapultCacheDelta; }
-	namespace model { class ChainScore; }
 }
 
 namespace catapult { namespace consumers {
@@ -31,19 +30,15 @@ namespace catapult { namespace consumers {
 	/// State change information.
 	struct StateChangeInfo {
 	public:
-		/// Creates a new state change info around \a cacheDelta, \a scoreDelta and \a height.
-		StateChangeInfo(const cache::CatapultCacheDelta& cacheDelta, const model::ChainScore& scoreDelta, Height height)
+		/// Creates a new state change info around \a cacheDelta and \a height.
+		StateChangeInfo(const cache::CatapultCacheDelta& cacheDelta, Height height)
 				: CacheDelta(cacheDelta)
-				, ScoreDelta(scoreDelta)
 				, Height(height)
 		{}
 
 	public:
 		/// Cache delta (uncommitted).
 		const cache::CatapultCacheDelta& CacheDelta;
-
-		/// Chain score delta.
-		const model::ChainScore& ScoreDelta;
 
 		/// New chain height.
 		const catapult::Height Height;

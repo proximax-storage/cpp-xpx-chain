@@ -21,7 +21,6 @@
 #include "SyncSourceService.h"
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/config/LocalNodeConfiguration.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ServerHooksUtils.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/handlers/ChainHandlers.h"
@@ -38,7 +37,6 @@ namespace catapult { namespace syncsource {
 
 		struct HandlersConfiguration {
 			handlers::BlockRangeHandler PushBlockCallback;
-			model::ChainScoreSupplier ChainScoreSupplier;
 			handlers::PullBlocksHandlerConfiguration BlocksHandlerConfig;
 			handlers::UtRetriever UtRetriever;
 		};
@@ -47,7 +45,6 @@ namespace catapult { namespace syncsource {
 			HandlersConfiguration config;
 			config.PushBlockCallback = extensions::CreateBlockPushEntityCallback(state.hooks());
 
-			config.ChainScoreSupplier = [&chainScore = state.score()]() { return chainScore.get(); };
 			config.UtRetriever = [&cache = state.utCache()](const auto& shortHashes) {
 				return cache.view().unknownTransactions(shortHashes);
 			};
@@ -64,7 +61,7 @@ namespace catapult { namespace syncsource {
 			handlers::RegisterPushBlockHandler(handlers, registry, config.PushBlockCallback);
 			handlers::RegisterPullBlockHandler(handlers, storage);
 
-			handlers::RegisterChainInfoHandler(handlers, storage, config.ChainScoreSupplier);
+			handlers::RegisterChainInfoHandler(handlers, storage);
 			handlers::RegisterBlockHashesHandler(handlers, storage, static_cast<uint32_t>(config.BlocksHandlerConfig.MaxBlocks));
 			handlers::RegisterPullBlocksHandler(handlers, storage, config.BlocksHandlerConfig);
 

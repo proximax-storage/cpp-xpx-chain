@@ -22,7 +22,6 @@
 #include "plugins/services/hashcache/src/cache/HashCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/EntityFactory.h"
@@ -79,10 +78,6 @@ namespace catapult { namespace filechain {
 				return m_localNodeState.cref().Cache.createView();
 			}
 
-			auto score() const {
-				return m_localNodeState.cref().Score.get();
-			}
-
 		public:
 			void load() {
 				m_pBlockChainStorage->loadFromStorage(m_localNodeState.ref(), *m_pPluginManager);
@@ -134,17 +129,6 @@ namespace catapult { namespace filechain {
 		const auto& view = context.cacheView();
 		test::AssertNemesisNamespaceState(view);
 		test::AssertNemesisMosaicState(view);
-	}
-
-	TEST(TEST_CLASS, ProperChainScoreAfterLoadingNemesisBlock) {
-		// Arrange:
-		TestContext context;
-
-		// Act:
-		context.load();
-
-		// Assert:
-		EXPECT_EQ(model::ChainScore(), context.score());
 	}
 
 	// endregion
@@ -220,7 +204,7 @@ namespace catapult { namespace filechain {
 				auto harvesterIndex = accountIndexDistribution(rnd);
 				auto pBlock = test::GenerateBlockWithTransactions(nemesisKeyPairs[harvesterIndex], transactions);
 				pBlock->Height = Height(height);
-				pBlock->Difficulty = Difficulty(Difficulty().unwrap() + height);
+				pBlock->CumulativeDifficulty = Difficulty(Difficulty().unwrap() + height);
 				pBlock->Timestamp = Timestamp(height * timeSpacing.millis());
 				storage.saveBlock(test::BlockToBlockElement(*pBlock));
 				++height;
@@ -345,43 +329,6 @@ namespace catapult { namespace filechain {
 	TEST(TEST_CLASS, ProperCacheHeightAfterLoadingMultipleBlocks_SomeBlocksContributeToTransientState) {
 		// Assert: cache height is permanent and should not be short-circuited
 		AssertProperCacheHeightAfterLoadingMultipleBlocks(utils::TimeSpan::FromMinutes(1));
-	}
-
-	// endregion
-
-	// region multi block loading - ProperChainScore
-
-	namespace {
-		void AssertProperChainScoreAfterLoadingMultipleBlocks(const utils::TimeSpan& timeSpacing) {
-			// Arrange:
-			TestContext context;
-			PrepareRandomBlocks(context.storageModifier(), timeSpacing);
-
-			// Act:
-			context.load();
-
-			// Assert:
-			// note that there are Num_Recipient_Accounts blocks (one per recipient)
-			// - each block has a difficulty of base + height
-			// - all blocks except for the first one have a time difference of 1s (the first one has a difference of 2s)
-			auto result = context.score();
-			uint64_t expectedDifficulty =
-					Difficulty().unwrap() * Num_Recipient_Accounts // sum base difficulties
-					+ (Num_Recipient_Accounts + 1) * (Num_Recipient_Accounts + 2) / 2 // sum difficulty deltas (1..N+1)
-					- 1 // adjust for range (2..N+1) - first 'recipient' block has height 2
-					- (Num_Recipient_Accounts + 1) * timeSpacing.seconds(); // subtract time differences
-			EXPECT_EQ(model::ChainScore(expectedDifficulty), result);
-		}
-	}
-
-	TEST(TEST_CLASS, ProperChainScoreAfterLoadingMultipleBlocks_AllBlocksContributeToTransientState) {
-		// Assert:
-		AssertProperChainScoreAfterLoadingMultipleBlocks(utils::TimeSpan::FromSeconds(1));
-	}
-
-	TEST(TEST_CLASS, ProperChainScoreAfterLoadingMultipleBlocks_SomeBlocksContributeToTransientState) {
-		// Assert: chain score is permanent and should not be short-circuited
-		AssertProperChainScoreAfterLoadingMultipleBlocks(utils::TimeSpan::FromMinutes(1));
 	}
 
 	// endregion

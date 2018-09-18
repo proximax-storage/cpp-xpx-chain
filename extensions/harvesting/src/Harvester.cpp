@@ -30,7 +30,7 @@ namespace catapult { namespace harvesting {
 	namespace {
 		auto CreateBlock(
 				const model::PreviousBlockContext& previousBlockContext,
-				const chain::BlockHitContext& hitContext,
+				const model::BlockHitContext& hitContext,
 				model::NetworkIdentifier networkIdentifier,
 				const crypto::KeyPair& keyPair,
 				const TransactionsInfo& info) {
@@ -58,7 +58,7 @@ namespace catapult { namespace harvesting {
 	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
 		model::PreviousBlockContext previousBlockContext(lastBlockElement);
 
-		chain::BlockHitContext hitContext;
+		model::BlockHitContext hitContext;
 		hitContext.ElapsedTime = utils::TimeSpan::FromDifference(timestamp, lastBlockElement.Block.Timestamp);
 		utils::TimeSpan averageBlockTime{};
 		if (lastBlockElement.Block.Height < Height(Block_Timestamp_History_Size + 1)) {

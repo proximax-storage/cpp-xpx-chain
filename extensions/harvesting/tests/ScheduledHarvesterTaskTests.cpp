@@ -21,9 +21,11 @@
 #include "harvesting/src/ScheduledHarvesterTask.h"
 #include "harvesting/src/Harvester.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
+#include "catapult/io/BlockStorageCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
+#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/TestHarness.h"
 
 using catapult::crypto::KeyPair;
@@ -119,13 +121,15 @@ namespace catapult { namespace harvesting {
 			HarvesterContext(const model::Block& lastBlock)
 					: Config(CreateConfiguration())
 					, Cache(test::CreateEmptyCatapultCache(Config))
-					, Accounts(1) {
+					, Accounts(1)
+					, Storage(std::make_unique<mocks::MockMemoryBasedStorage>()) {
 				AddDifficultyInfo(Cache, lastBlock);
 			}
 
 			model::BlockChainConfiguration Config;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
+			io::BlockStorageCache Storage;
 		};
 
 		auto CreateHarvester(HarvesterContext& context) {
@@ -133,7 +137,8 @@ namespace catapult { namespace harvesting {
 					context.Cache,
 					context.Config,
 					context.Accounts,
-					[](size_t) { return TransactionsInfo(); });
+					[](size_t) { return TransactionsInfo(); },
+					context.Storage);
 		}
 	}
 

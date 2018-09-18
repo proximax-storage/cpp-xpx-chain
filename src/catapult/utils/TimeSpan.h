@@ -142,11 +142,6 @@ namespace catapult { namespace utils {
 		return timestamp + Timestamp(timeSpan.millis());
 	}
 
-	/// Subtracts \a timestamp1 and a \a timestamp2 resulting in TimeSpan.
-	constexpr TimeSpan operator-(const Timestamp& timestamp1, const Timestamp& timestamp2) {
-		return TimeSpan::FromDifference(timestamp1, timestamp2);
-	}
-
 	/// Divides \a timestamp by a \a divider resulting in TimeSpan.
 	template<typename TDivider>
 	constexpr TimeSpan operator/(const Timestamp& timestamp, const TDivider& divider) {

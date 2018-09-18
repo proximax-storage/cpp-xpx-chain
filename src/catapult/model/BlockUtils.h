@@ -20,13 +20,11 @@
 
 #pragma once
 #include "Block.h"
+#include "catapult/utils/TimeSpan.h"
 #include "Elements.h"
 #include "EntityInfo.h"
 
-namespace catapult {
-	namespace crypto { class KeyPair; }
-	namespace chain { class BlockHitContext; }
-}
+namespace catapult { namespace crypto { class KeyPair; } }
 
 namespace catapult { namespace model {
 
@@ -98,11 +96,30 @@ namespace catapult { namespace model {
 		catapult::Difficulty Difficulty;
 	};
 
+	/// Contextual information for calculating a block hit.
+	struct BlockHitContext {
+
+	public:
+		/// Generation hash.
+		Hash256 GenerationHash;
+
+		BlockTarget BaseTarget;
+
+		/// Time since the last block.
+		utils::TimeSpan ElapsedTime;
+
+		/// Public key of the block signer.
+		Key Signer;
+
+		/// Effective balance of the signer account.
+		Amount EffectiveBalance;
+	};
+
 	/// Creates an unsigned Block given a \a context, signer public key (\a signerPublicKey) and \a transactions
 	/// for a network with identifier \a networkIdentifier.
 	std::unique_ptr<Block> CreateBlock(
 			const PreviousBlockContext& previousBlockContext,
-			const chain::BlockHitContext& hitContext,
+			const BlockHitContext& hitContext,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
 			const Transactions& transactions);

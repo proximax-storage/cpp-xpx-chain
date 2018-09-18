@@ -98,9 +98,10 @@ namespace catapult { namespace sync {
 			mocks::MockMemoryBasedStorage storage;
 			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
 
-			model::PreviousBlockContext context(*pNemesisBlockElement);
-			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
-			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
+			model::PreviousBlockContext previousBlockContext(*pNemesisBlockElement);
+			model::BlockHitContext hitContext;
+			auto pBlock = model::CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
+			pBlock->Timestamp = previousBlockContext.Timestamp + Timestamp(60000);
 			test::SignBlock(signer, *pBlock);
 			return std::move(pBlock);
 		}
@@ -429,11 +430,8 @@ namespace catapult { namespace sync {
 			EXPECT_EQ(0u, context.numNewBlockSinkCalls());
 			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
 
-			// - state change subscriber shouldn't have been called for an invalid element, so chain score should be unchanged (zero)
 			const auto& stateChangeSubscriber = context.testState().stateChangeSubscriber();
-			EXPECT_EQ(0u, stateChangeSubscriber.numScoreChanges());
 			EXPECT_EQ(0u, stateChangeSubscriber.numStateChanges());
-			EXPECT_EQ(model::ChainScore(), stateChangeSubscriber.lastChainScore());
 		});
 	}
 
@@ -448,11 +446,8 @@ namespace catapult { namespace sync {
 			EXPECT_EQ(1u, context.numNewBlockSinkCalls());
 			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
 
-			// - state change subscriber should have been called, so chain score should be changed (non-zero)
 			const auto& stateChangeSubscriber = context.testState().stateChangeSubscriber();
-			EXPECT_EQ(1u, stateChangeSubscriber.numScoreChanges());
 			EXPECT_EQ(1u, stateChangeSubscriber.numStateChanges());
-			EXPECT_EQ(model::ChainScore(99'999'999'999'940), stateChangeSubscriber.lastChainScore());
 		});
 	}
 

@@ -20,7 +20,6 @@
 
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/cache/MemoryUtCache.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/thread/MultiServicePool.h"
@@ -44,7 +43,6 @@ namespace catapult { namespace extensions {
 		auto catapultCache = cache::CatapultCache({});
 		state::CatapultState catapultState;
 		io::BlockStorageCache storage(std::make_unique<mocks::MockMemoryBasedStorage>());
-		LocalNodeChainScore score;
 		auto pUtCache = test::CreateUtCacheProxy();
 
 		auto numTimeSupplierCalls = 0u;
@@ -68,7 +66,6 @@ namespace catapult { namespace extensions {
 				catapultCache,
 				catapultState,
 				storage,
-				score,
 				*pUtCache,
 				timeSupplier,
 				transactionStatusSubscriber,
@@ -85,7 +82,6 @@ namespace catapult { namespace extensions {
 		EXPECT_EQ(&catapultCache, &state.cache());
 		EXPECT_EQ(&catapultState, &state.state());
 		EXPECT_EQ(&storage, &state.storage());
-		EXPECT_EQ(&score, &state.score());
 		EXPECT_EQ(pUtCache.get(), &state.utCache());
 
 		EXPECT_EQ(&transactionStatusSubscriber, &state.transactionStatusSubscriber());

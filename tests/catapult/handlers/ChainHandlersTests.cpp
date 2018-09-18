@@ -113,7 +113,7 @@ namespace catapult { namespace handlers {
 				auto pBlock = reinterpret_cast<model::Block*>(buffer.data());
 				pBlock->Size = size;
 				pBlock->Height = Height(i);
-				pBlock->CumulativeDifficulty = Difficulty::Min() + Difficulty::Unclamped(1000 + i);
+				pBlock->CumulativeDifficulty = Difficulty(1000 + i);
 				reinterpret_cast<model::Transaction*>(pBlock + 1)->Size = size - sizeof(model::Block);
 				storageModifier.saveBlock(test::BlockToBlockElement(*pBlock, test::GenerateRandomData<Hash256_Size>()));
 			}
@@ -272,8 +272,7 @@ namespace catapult { namespace handlers {
 		auto pStorage = CreateStorage(12);
 		RegisterChainInfoHandler(
 				handlers,
-				*pStorage,
-				[]() { return model::ChainScore(0x7890ABCDEF012345, 0x7711BBCC00DD99AA); });
+				*pStorage);
 
 		// - malform the packet
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>();
@@ -294,8 +293,7 @@ namespace catapult { namespace handlers {
 		auto pStorage = CreateStorage(12);
 		RegisterChainInfoHandler(
 				handlers,
-				*pStorage,
-				[]() { return model::ChainScore(0x7890ABCDEF012345, 0x7711BBCC00DD99AA); });
+				*pStorage);
 
 		// - create a valid request
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>();
@@ -305,13 +303,10 @@ namespace catapult { namespace handlers {
 		ionet::ServerPacketHandlerContext context({}, "");
 		EXPECT_TRUE(handlers.process(*pPacket, context));
 
-		// Assert: chain score is written
 		test::AssertPacketHeader(context, sizeof(api::ChainInfoResponse), ionet::PacketType::Chain_Info);
 
 		const auto* pResponse = reinterpret_cast<const uint64_t*>(test::GetSingleBufferData(context));
 		EXPECT_EQ(12u, pResponse[0]); // height
-		EXPECT_EQ(0x7890ABCDEF012345, pResponse[1]); // score high
-		EXPECT_EQ(0x7711BBCC00DD99AA, pResponse[2]); // score low
 	}
 
 	// endregion
@@ -477,92 +472,92 @@ namespace catapult { namespace handlers {
 		AssertCanRetrieveBlocks(12, 5, 10 * 1024 * 1024, Height(12), { Height(12) });
 	}
 
-	namespace {
-		void AssertCanRetrieveBlocksWithNumBlocksClamping(
-				size_t numBlocks,
-				uint32_t numRequestBlocks,
-				uint32_t maxBlocks,
-				Height requestHeight,
-				const std::vector<Height>& expectedHeights) {
-			// Arrange:
-			auto pRequest = ionet::CreateSharedPacket<api::PullBlocksRequest>();
-			pRequest->Height = requestHeight;
-			pRequest->NumBlocks = numRequestBlocks;
-			pRequest->NumResponseBytes = 100 * 1024 * 1024;
-
-			PullBlocksHandlerConfiguration config;
-			config.MaxBlocks = maxBlocks;
-			config.MaxResponseBytes = 100 * 1024 * 1024;
-
-			// Assert:
-			AssertCanRetrieveBlocks(numBlocks, *pRequest, config, expectedHeights);
-		}
-
-		TEST(TEST_CLASS, PullBlocksHandler_NumBlocksIsClampedByMaxBlocks) {
-			// Arrange: chain-size == 12, request-height == 2, max == 7
-			auto assertFunc = [](auto numRequestBlocks, const auto& expectedBlockHeights) {
-				AssertCanRetrieveBlocksWithNumBlocksClamping(12, numRequestBlocks, 7, Height(2), expectedBlockHeights);
-			};
-
-			// Assert:
-			std::vector<Height> expectedBlockHeights{ Height(2), Height(3), Height(4), Height(5), Height(6) };
-
-			// - request (5 < max) is unchanged
-			assertFunc(5u, expectedBlockHeights);
-
-			// - request (9 > max) is decreased to max (7)
-			expectedBlockHeights.push_back(Height(7));
-			expectedBlockHeights.push_back(Height(8));
-			assertFunc(9u, expectedBlockHeights);
-		}
-
-		void AssertCanRetrieveBlocksWithNumResponseBytesClamping(
-				size_t numBlocks,
-				uint32_t numRequestResponseBytes,
-				uint32_t maxResponseBytes,
-				Height requestHeight,
-				const std::vector<Height>& expectedHeights) {
-			// Arrange:
-			auto pRequest = ionet::CreateSharedPacket<api::PullBlocksRequest>();
-			pRequest->Height = requestHeight;
-			pRequest->NumBlocks = 100;
-			pRequest->NumResponseBytes = numRequestResponseBytes;
-
-			PullBlocksHandlerConfiguration config;
-			config.MaxBlocks = 100;
-			config.MaxResponseBytes = maxResponseBytes;
-
-			// Assert:
-			AssertCanRetrieveBlocks(numBlocks, *pRequest, config, expectedHeights);
-		}
-
-		TEST(TEST_CLASS, PullBlocksHandler_NumResponseBytesIsClampedByMaxResponseBytes) {
-			// Arrange: chain-size == 12, request-height == 2, max == 7
-			std::vector<Height> heights{ Height(2), Height(3), Height(4), Height(5), Height(6), Height(7), Height(8) };
-			auto maxBytes = GetSumBlockSizesAtHeights(heights);
-			auto assertFunc = [maxBytes](auto numRequestResponseBytes, const auto& expectedBlockHeights) {
-				AssertCanRetrieveBlocksWithNumResponseBytesClamping(
-						12,
-						numRequestResponseBytes,
-						maxBytes,
-						Height(2),
-						expectedBlockHeights);
-			};
-
-			// Assert:
-			std::vector<Height> expectedBlockHeights{ Height(2), Height(3), Height(4), Height(5), Height(6) };
-
-			// - requestBytes < maxBytes is unchanged
-			auto requestBytes = GetSumBlockSizesAtHeights(expectedBlockHeights);
-			assertFunc(requestBytes, expectedBlockHeights);
-
-			// - requestBytes > maxBytes is decreased to maxBytes
-			expectedBlockHeights.push_back(Height(7));
-			expectedBlockHeights.push_back(Height(8));
-			requestBytes = maxBytes + GetSumBlockSizesAtHeights({ Height(9), Height(10) });
-			assertFunc(requestBytes, expectedBlockHeights);
-		}
-	}
+//	namespace {
+//		void AssertCanRetrieveBlocksWithNumBlocksClamping(
+//				size_t numBlocks,
+//				uint32_t numRequestBlocks,
+//				uint32_t maxBlocks,
+//				Height requestHeight,
+//				const std::vector<Height>& expectedHeights) {
+//			// Arrange:
+//			auto pRequest = ionet::CreateSharedPacket<api::PullBlocksRequest>();
+//			pRequest->Height = requestHeight;
+//			pRequest->NumBlocks = numRequestBlocks;
+//			pRequest->NumResponseBytes = 100 * 1024 * 1024;
+//
+//			PullBlocksHandlerConfiguration config;
+//			config.MaxBlocks = maxBlocks;
+//			config.MaxResponseBytes = 100 * 1024 * 1024;
+//
+//			// Assert:
+//			AssertCanRetrieveBlocks(numBlocks, *pRequest, config, expectedHeights);
+//		}
+//
+//		TEST(TEST_CLASS, PullBlocksHandler_NumBlocksIsClampedByMaxBlocks) {
+//			// Arrange: chain-size == 12, request-height == 2, max == 7
+//			auto assertFunc = [](auto numRequestBlocks, const auto& expectedBlockHeights) {
+//				AssertCanRetrieveBlocksWithNumBlocksClamping(12, numRequestBlocks, 7, Height(2), expectedBlockHeights);
+//			};
+//
+//			// Assert:
+//			std::vector<Height> expectedBlockHeights{ Height(2), Height(3), Height(4), Height(5), Height(6) };
+//
+//			// - request (5 < max) is unchanged
+//			assertFunc(5u, expectedBlockHeights);
+//
+//			// - request (9 > max) is decreased to max (7)
+//			expectedBlockHeights.push_back(Height(7));
+//			expectedBlockHeights.push_back(Height(8));
+//			assertFunc(9u, expectedBlockHeights);
+//		}
+//
+//		void AssertCanRetrieveBlocksWithNumResponseBytesClamping(
+//				size_t numBlocks,
+//				uint32_t numRequestResponseBytes,
+//				uint32_t maxResponseBytes,
+//				Height requestHeight,
+//				const std::vector<Height>& expectedHeights) {
+//			// Arrange:
+//			auto pRequest = ionet::CreateSharedPacket<api::PullBlocksRequest>();
+//			pRequest->Height = requestHeight;
+//			pRequest->NumBlocks = 100;
+//			pRequest->NumResponseBytes = numRequestResponseBytes;
+//
+//			PullBlocksHandlerConfiguration config;
+//			config.MaxBlocks = 100;
+//			config.MaxResponseBytes = maxResponseBytes;
+//
+//			// Assert:
+//			AssertCanRetrieveBlocks(numBlocks, *pRequest, config, expectedHeights);
+//		}
+//
+//		TEST(TEST_CLASS, PullBlocksHandler_NumResponseBytesIsClampedByMaxResponseBytes) {
+//			// Arrange: chain-size == 12, request-height == 2, max == 7
+//			std::vector<Height> heights{ Height(2), Height(3), Height(4), Height(5), Height(6), Height(7), Height(8) };
+//			auto maxBytes = GetSumBlockSizesAtHeights(heights);
+//			auto assertFunc = [maxBytes](auto numRequestResponseBytes, const auto& expectedBlockHeights) {
+//				AssertCanRetrieveBlocksWithNumResponseBytesClamping(
+//						12,
+//						numRequestResponseBytes,
+//						maxBytes,
+//						Height(2),
+//						expectedBlockHeights);
+//			};
+//
+//			// Assert:
+//			std::vector<Height> expectedBlockHeights{ Height(2), Height(3), Height(4), Height(5), Height(6) };
+//
+//			// - requestBytes < maxBytes is unchanged
+//			auto requestBytes = GetSumBlockSizesAtHeights(expectedBlockHeights);
+//			assertFunc(requestBytes, expectedBlockHeights);
+//
+//			// - requestBytes > maxBytes is decreased to maxBytes
+//			expectedBlockHeights.push_back(Height(7));
+//			expectedBlockHeights.push_back(Height(8));
+//			requestBytes = maxBytes + GetSumBlockSizesAtHeights({ Height(9), Height(10) });
+//			assertFunc(requestBytes, expectedBlockHeights);
+//		}
+//	}
 
 	// endregion
 }}

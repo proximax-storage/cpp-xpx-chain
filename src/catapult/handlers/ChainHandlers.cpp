@@ -105,18 +105,14 @@ namespace catapult { namespace handlers {
 	}
 
 	namespace {
-		auto CreateChainInfoHandler(const io::BlockStorageCache& storage, const model::ChainScoreSupplier& chainScoreSupplier) {
-			return [&storage, chainScoreSupplier](const auto& packet, auto& context) {
+		auto CreateChainInfoHandler(const io::BlockStorageCache& storage) {
+			return [&storage](const auto& packet, auto& context) {
 				using RequestType = api::ChainInfoResponse;
 				if (!ionet::IsPacketValid(packet, RequestType::Packet_Type))
 					return;
 
 				auto pResponsePacket = ionet::CreateSharedPacket<RequestType>();
 				pResponsePacket->Height = storage.view().chainHeight();
-
-				auto scoreArray = chainScoreSupplier().toArray();
-				pResponsePacket->ScoreHigh = scoreArray[0];
-				pResponsePacket->ScoreLow = scoreArray[1];
 				context.response(ionet::PacketPayload(pResponsePacket));
 			};
 		}
@@ -124,9 +120,8 @@ namespace catapult { namespace handlers {
 
 	void RegisterChainInfoHandler(
 			ionet::ServerPacketHandlers& handlers,
-			const io::BlockStorageCache& storage,
-			const model::ChainScoreSupplier& chainScoreSupplier) {
-		handlers.registerHandler(ionet::PacketType::Chain_Info, CreateChainInfoHandler(storage, chainScoreSupplier));
+			const io::BlockStorageCache& storage) {
+		handlers.registerHandler(ionet::PacketType::Chain_Info, CreateChainInfoHandler(storage));
 	}
 
 	namespace {

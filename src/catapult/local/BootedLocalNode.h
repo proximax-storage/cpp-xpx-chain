@@ -26,7 +26,6 @@
 namespace catapult {
 	namespace cache { class CatapultCache; }
 	namespace ionet { class NodeContainerView; }
-	namespace model { class ChainScore; }
 }
 
 namespace catapult { namespace local {
@@ -68,9 +67,6 @@ namespace catapult { namespace local {
 	public:
 		/// Gets the current cache.
 		virtual const cache::CatapultCache& cache() const = 0;
-
-		/// Gets the current chain score.
-		virtual model::ChainScore score() const = 0;
 
 		/// Gets the current node counters.
 		virtual LocalNodeCounterValues counters() const = 0;

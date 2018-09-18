@@ -20,6 +20,7 @@
 
 #include "BlockScorer.h"
 #include "catapult/model/Block.h"
+#include "catapult/model/BlockUtils.h"
 #include "catapult/state/AccountState.h"
 #include "catapult/utils/IntegerMath.h"
 #include "catapult/utils/TimeSpan.h"
@@ -29,12 +30,13 @@ namespace catapult { namespace chain {
 	namespace {
 		constexpr uint64_t MAXRATIO{67};
 		constexpr uint64_t MINRATIO{53};
-		constexpr double GAMMA{0.64};
+		constexpr int GAMMA_NUMERATOR{64};
+		constexpr int GAMMA_DENOMINATOR{100};
 		constexpr int BLOCK_GENERATION_TIME{0};
 
 		/// The first 8 bytes of a \a generationHash are converted to a number, referred to as the account hit.
 		uint64_t CalculateHit(const Hash256& generationHash) {
-			return *reinterpret_cast<uint64_t*>(generationHash.data());
+			return *reinterpret_cast<const uint64_t*>(generationHash.data());
 		}
 
 		// Each account calculates its own target value, based on its current effective stake. This value is:
@@ -48,7 +50,7 @@ namespace catapult { namespace chain {
 				const BlockTarget& baseTarget,
 				const utils::TimeSpan& ElapsedTime,
 				const Amount& effectiveBalance) {
-			return baseTarget * ElapsedTime.seconds() * effectiveBalance;
+			return baseTarget * ElapsedTime.seconds() * effectiveBalance.unwrap();
 		}
 	}
 
@@ -68,7 +70,8 @@ namespace catapult { namespace chain {
 			return (parentBaseTarget * std::min(averageBlockTime.seconds(), MAXRATIO)) / BLOCK_GENERATION_TIME;
 		} else {
 			return (parentBaseTarget -
-					parentBaseTarget * GAMMA * (BLOCK_GENERATION_TIME - std::max(averageBlockTime.seconds(), MINRATIO))) / BLOCK_GENERATION_TIME;
+					parentBaseTarget * GAMMA_NUMERATOR * (BLOCK_GENERATION_TIME - std::max(averageBlockTime.seconds(), MINRATIO)))
+					/ BLOCK_GENERATION_TIME / GAMMA_DENOMINATOR;
 		}
 	}
 
@@ -79,7 +82,7 @@ namespace catapult { namespace chain {
 		return hit < target;
 	}
 
-	bool BlockHitPredicate::operator()(const BlockHitContext& context) const {
+	bool BlockHitPredicate::operator()(const model::BlockHitContext& context) const {
 		auto hit = CalculateHit(context.GenerationHash);
 		auto target = CalculateTarget(context.BaseTarget, context.ElapsedTime, context.EffectiveBalance);
 		return hit < target;

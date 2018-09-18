@@ -76,7 +76,7 @@ namespace catapult { namespace mongo { namespace mappers {
 		StreamVerifiableEntity(builder, block)
 				<< "height" << ToInt64(block.Height)
 				<< "timestamp" << ToInt64(block.Timestamp)
-				<< "difficulty" << ToInt64(block.Difficulty)
+				<< "difficulty" << ToInt64(block.CumulativeDifficulty)
 				<< "previousBlockHash" << ToBinary(block.PreviousBlockHash)
 				<< "blockTransactionsHash" << ToBinary(block.BlockTransactionsHash);
 		builder << bson_stream::close_document;

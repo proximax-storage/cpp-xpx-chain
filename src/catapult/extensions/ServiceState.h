@@ -31,7 +31,6 @@ namespace catapult {
 		class CatapultCache;
 		class MemoryUtCacheProxy;
 	}
-	namespace extensions { class LocalNodeChainScore; }
 	namespace io { class BlockStorageCache; }
 	namespace ionet { class NodeContainer; }
 	namespace plugins { class PluginManager; }
@@ -50,7 +49,7 @@ namespace catapult { namespace extensions {
 	/// State that is used as part of service registration.
 	class ServiceState {
 	public:
-		/// Creates service state around \a config, \a nodes, \a cache, \a state, \a storage, \a score, \a utCache, \a timeSupplier
+		/// Creates service state around \a config, \a nodes, \a cache, \a state, \a storage, \a utCache, \a timeSupplier
 		/// \a transactionStatusSubscriber, \a stateChangeSubscriber, \a nodeSubscriber, \a counters, \a pluginManager and \a pool.
 		ServiceState(
 				const config::LocalNodeConfiguration& config,
@@ -58,7 +57,6 @@ namespace catapult { namespace extensions {
 				cache::CatapultCache& cache,
 				state::CatapultState& state,
 				io::BlockStorageCache& storage,
-				LocalNodeChainScore& score,
 				cache::MemoryUtCacheProxy& utCache,
 				const supplier<Timestamp>& timeSupplier,
 				subscribers::TransactionStatusSubscriber& transactionStatusSubscriber,
@@ -72,7 +70,6 @@ namespace catapult { namespace extensions {
 				, m_cache(cache)
 				, m_state(state)
 				, m_storage(storage)
-				, m_score(score)
 				, m_utCache(utCache)
 				, m_timeSupplier(timeSupplier)
 				, m_transactionStatusSubscriber(transactionStatusSubscriber)
@@ -108,11 +105,6 @@ namespace catapult { namespace extensions {
 		/// Gets the storage.
 		auto& storage() const {
 			return m_storage;
-		}
-
-		/// Gets the score.
-		auto& score() const {
-			return m_score;
 		}
 
 		/// Gets the unconfirmed transactions cache.
@@ -188,7 +180,6 @@ namespace catapult { namespace extensions {
 		cache::CatapultCache& m_cache;
 		state::CatapultState& m_state;
 		io::BlockStorageCache& m_storage;
-		LocalNodeChainScore& m_score;
 		cache::MemoryUtCacheProxy& m_utCache;
 		supplier<Timestamp> m_timeSupplier;
 

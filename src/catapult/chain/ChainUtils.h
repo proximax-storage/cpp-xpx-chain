@@ -20,7 +20,6 @@
 
 #pragma once
 #include "catapult/model/Block.h"
-#include "catapult/model/ChainScore.h"
 #include <vector>
 
 namespace catapult {
@@ -40,7 +39,4 @@ namespace catapult { namespace chain {
 			const cache::BlockDifficultyCache& cache,
 			const std::vector<const model::Block*>& blocks,
 			const model::BlockChainConfiguration& config);
-
-	/// Calculates the partial chain score of \a blocks starting at \a parent.
-	model::ChainScore CalculatePartialChainScore(const model::Block& parent, const std::vector<const model::Block*>& blocks);
 }}

@@ -22,7 +22,6 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/ChainScore.h"
 #include "tests/catapult/consumers/test/ConsumerInputFactory.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -182,15 +181,13 @@ namespace catapult { namespace consumers {
 		struct StateChangeParams {
 		public:
 			StateChangeParams(const StateChangeInfo& changeInfo)
-					: ScoreDelta(changeInfo.ScoreDelta)
 					// all processing should have occurred before the state change notification,
 					// so the sentinel account should have been added
-					, IsPassedMarkedCache(changeInfo.CacheDelta.sub<cache::AccountStateCache>().contains(Sentinel_Processor_Public_Key))
+					: IsPassedMarkedCache(changeInfo.CacheDelta.sub<cache::AccountStateCache>().contains(Sentinel_Processor_Public_Key))
 					, Height(changeInfo.Height)
 			{}
 
 		public:
-			model::ChainScore ScoreDelta;
 			bool IsPassedMarkedCache;
 			catapult::Height Height;
 		};
@@ -383,7 +380,7 @@ namespace catapult { namespace consumers {
 				EXPECT_EQ(Initial_Last_Recalculation_Height, State.LastRecalculationHeight);
 			}
 
-			void assertStored(const ConsumerInput& input, const model::ChainScore& expectedScoreDelta) {
+			void assertStored(const ConsumerInput& input) {
 				// Assert: all input blocks should be saved in the storage
 				auto storageView = Storage.view();
 				auto inputHeight = input.blocks()[0].Block.Height;
@@ -411,7 +408,6 @@ namespace catapult { namespace consumers {
 				// - the state was changed
 				ASSERT_EQ(1u, StateChange.params().size());
 				const auto& stateChangeParams = StateChange.params()[0];
-				EXPECT_EQ(expectedScoreDelta, stateChangeParams.ScoreDelta);
 				EXPECT_TRUE(stateChangeParams.IsPassedMarkedCache);
 				EXPECT_EQ(chainHeight, stateChangeParams.Height);
 
@@ -578,11 +574,11 @@ namespace catapult { namespace consumers {
 
 	// endregion
 
-	// region chain score test
+	// region chain difficulty test
 
-	TEST(TEST_CLASS, ChainWithSmallerScoreIsRejected) {
+	TEST(TEST_CLASS, ChainWithSmallerDifficultyIsRejected) {
 		// Arrange: create a local storage with blocks 1-7 and a remote storage with blocks 5-6
-		//          (note that the test setup ensures scores are linearly correlated with number of blocks)
+		//          (note that the test setup ensures difficulties are linearly correlated with number of blocks)
 		ConsumerTestContext context;
 		context.seedStorage(Height(7));
 		auto input = CreateInput(Height(5), 2);
@@ -599,9 +595,9 @@ namespace catapult { namespace consumers {
 		context.assertNoStorageChanges();
 	}
 
-	TEST(TEST_CLASS, ChainWithIdenticalScoreIsRejected) {
+	TEST(TEST_CLASS, ChainWithIdenticalDifficultyIsRejected) {
 		// Arrange: create a local storage with blocks 1-7 and a remote storage with blocks 6-7
-		//          (note that the test setup ensures scores are linearly correlated with number of blocks)
+		//          (note that the test setup ensures difficulties are linearly correlated with number of blocks)
 		ConsumerTestContext context;
 		context.seedStorage(Height(7));
 		auto input = CreateInput(Height(6), 2);
@@ -671,7 +667,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(0u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertProcessorInvocation(input);
-		context.assertStored(input, model::ChainScore(4 * (Base_Difficulty - 1)));
+//		context.assertStored(input, model::ChainScore(4 * (Base_Difficulty - 1)));
 	}
 
 	TEST(TEST_CLASS, CanSyncIncompatibleChains) {
@@ -689,7 +685,7 @@ namespace catapult { namespace consumers {
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
 		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+//		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
 	}
 
 	TEST(TEST_CLASS, CanSyncIncompatibleChainsWithOnlyLastBlockDifferent) {
@@ -707,10 +703,10 @@ namespace catapult { namespace consumers {
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7) });
 		context.assertProcessorInvocation(input, 1);
-		context.assertStored(input, model::ChainScore(3 * (Base_Difficulty - 1)));
+//		context.assertStored(input, model::ChainScore(3 * (Base_Difficulty - 1)));
 	}
 
-	TEST(TEST_CLASS, CanSyncIncompatibleChainsWhereShorterRemoteChainHasHigherScore) {
+	TEST(TEST_CLASS, CanSyncIncompatibleChainsWhereShorterRemoteChainHasHigherDifficulty) {
 		// Arrange: create a local storage with blocks 1-7 and a remote storage with blocks 5
 		ConsumerTestContext context;
 		context.seedStorage(Height(7));
@@ -726,7 +722,7 @@ namespace catapult { namespace consumers {
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
 		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(2));
+//		context.assertStored(input, model::ChainScore(2));
 	}
 
 	// endregion
@@ -827,7 +823,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(0u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertProcessorInvocation(input);
-		context.assertStored(input, model::ChainScore(4 * (Base_Difficulty - 1)));
+//		context.assertStored(input, model::ChainScore(4 * (Base_Difficulty - 1)));
 
 		// - the change notification had 6 added and 0 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());
@@ -863,7 +859,7 @@ namespace catapult { namespace consumers {
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
 		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+//		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
 
 		// - the change notification had 6 added and 9 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());
@@ -904,7 +900,7 @@ namespace catapult { namespace consumers {
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
 		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+//		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
 
 		// - the change notification had 8 added and 7 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());

@@ -46,7 +46,7 @@ namespace catapult { namespace extensions {
 				transactions.push_back(std::move(pTransaction));
 			}
 
-			return CreateBlock(model::PreviousBlockContext(), Network_Identifier, nemesisPublicKey, transactions);
+			return CreateBlock(model::PreviousBlockContext(), model::BlockHitContext(), Network_Identifier, nemesisPublicKey, transactions);
 		}
 
 		enum class NemesisBlockModification {

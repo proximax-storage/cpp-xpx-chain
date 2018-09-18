@@ -90,17 +90,17 @@ namespace catapult { namespace chain {
 				if (isRemoteTooFarBehind(localInfo.Height, remoteInfo.Height))
 					return ChainComparisonCode::Remote_Is_Too_Far_Behind;
 
-				const auto& localScore = localInfo.Score;
-				const auto& remoteScore = remoteInfo.Score;
-				CATAPULT_LOG_LEVEL(localScore == remoteScore ? utils::LogLevel::Trace : utils::LogLevel::Debug)
-						<< "comparing chain scores: " << localScore << " (local) vs " << remoteScore << " (remote)";
+				const auto& localDifficulty = localInfo.Difficulty;
+				const auto& remoteDifficulty = remoteInfo.Difficulty;
+				CATAPULT_LOG_LEVEL(localDifficulty == remoteDifficulty ? utils::LogLevel::Trace : utils::LogLevel::Debug)
+						<< "comparing chain difficulties: " << localDifficulty << " (local) vs " << remoteDifficulty << " (remote)";
 
-				if (remoteScore > localScore) {
+				if (remoteDifficulty > localDifficulty) {
 					m_localHeight = localInfo.Height;
 					return Incomplete_Chain_Comparison_Code;
 				}
 
-				return localScore == remoteScore
+				return localDifficulty == remoteDifficulty
 						? ChainComparisonCode::Remote_Reported_Equal_Chain_Score
 						: ChainComparisonCode::Remote_Reported_Lower_Chain_Score;
 			}
@@ -140,7 +140,7 @@ namespace catapult { namespace chain {
 				if (0 == firstDifferenceIndex)
 					return ChainComparisonCode::Remote_Is_Forked;
 
-				// if all the hashes match, the remote node lied because it can't have a higher score
+				// if all the hashes match, the remote node lied because it can't have a higher difficulty
 				if (remoteHashes.size() == firstDifferenceIndex)
 					return ChainComparisonCode::Remote_Lied_About_Chain_Score;
 

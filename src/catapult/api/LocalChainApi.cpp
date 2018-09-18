@@ -30,9 +30,8 @@ namespace catapult { namespace api {
 
 		class LocalChainApi : public ChainApi {
 		public:
-			LocalChainApi(const io::BlockStorageCache& storage, const model::ChainScoreSupplier& chainScoreSupplier, uint32_t maxHashes)
+			LocalChainApi(const io::BlockStorageCache& storage, uint32_t maxHashes)
 					: m_storage(storage)
-					, m_chainScoreSupplier(chainScoreSupplier)
 					, m_maxHashes(maxHashes)
 			{}
 
@@ -40,7 +39,6 @@ namespace catapult { namespace api {
 			thread::future<ChainInfo> chainInfo() const override {
 				auto info = ChainInfo();
 				info.Height = m_storage.view().chainHeight();
-				info.Score = m_chainScoreSupplier();
 				return thread::make_ready_future(std::move(info));
 			}
 
@@ -56,15 +54,13 @@ namespace catapult { namespace api {
 
 		private:
 			const io::BlockStorageCache& m_storage;
-			model::ChainScoreSupplier m_chainScoreSupplier;
 			uint32_t m_maxHashes;
 		};
 	}
 
 	std::unique_ptr<ChainApi> CreateLocalChainApi(
 			const io::BlockStorageCache& storage,
-			const model::ChainScoreSupplier& chainScoreSupplier,
 			uint32_t maxHashes) {
-		return std::make_unique<LocalChainApi>(storage, chainScoreSupplier, maxHashes);
+		return std::make_unique<LocalChainApi>(storage, maxHashes);
 	}
 }}
