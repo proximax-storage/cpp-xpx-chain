@@ -33,3 +33,4 @@ npm-*.log*
 out
 gen
 cmake-build-debug
+temp

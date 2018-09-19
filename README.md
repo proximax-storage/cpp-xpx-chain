@@ -34,7 +34,7 @@ cd _build
 
 Generate makefiles and build:
 ```
-cmake -DCMAKE_BUILD_TYPE=RelWithDebugInfo ..
+cmake -DCMAKE_BUILD_TYPE=RelWithDebugInfo -DCMAKE_CXX_FLAGS="-pthread" ..
 make publish
 make
 ```
