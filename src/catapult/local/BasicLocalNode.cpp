@@ -76,7 +76,6 @@ namespace catapult { namespace local {
 
 				utils::StackLogger stackLogger("booting local node", utils::LogLevel::Info);
 				extensionManager.preLoadHandler()(m_state.CurrentCache);
-				extensionManager.preLoadHandler()(m_state.PreviousCache);
 				m_pBlockChainStorage->loadFromStorage(stateRef(), m_pluginManager);
 				m_pBlockChainStorage->saveToStorage(stateCref());
 

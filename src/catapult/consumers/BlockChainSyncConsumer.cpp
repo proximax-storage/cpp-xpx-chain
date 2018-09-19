@@ -197,7 +197,6 @@ namespace catapult { namespace consumers {
 				commitToStorage(syncState.commonBlockHeight(), elements);
 
 				// 2. indicate a state change
-				m_handlers.StateChange(StateChangeInfo(syncState.previousCacheDelta(), syncState.scoreDelta(), newHeight));
 				m_handlers.StateChange(StateChangeInfo(syncState.currentCacheDelta(), syncState.scoreDelta(), newHeight));
 
 				// 3. commit changes to the in-memory cache
