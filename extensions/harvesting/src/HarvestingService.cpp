@@ -71,20 +71,19 @@ namespace catapult { namespace harvesting {
 		}
 
 		thread::Task CreateHarvestingTask(extensions::ServiceState& state, UnlockedAccounts& unlockedAccounts) {
-			const auto& cache = state.cache();
-			const auto& blockChainConfig = state.config().BlockChain;
+			const auto& nodeLocalState = state.nodeLocalState();
 			auto pHarvesterTask = std::make_shared<ScheduledHarvesterTask>(
 					CreateHarvesterTaskOptions(state),
 					std::make_unique<Harvester>(
-							cache,
-							blockChainConfig,
+							nodeLocalState,
 							unlockedAccounts,
 							CreateTransactionsInfoSupplier(state.utCache())));
 
-			auto minHarvesterBalance = blockChainConfig.MinHarvesterBalance;
-			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, minHarvesterBalance]() {
+			auto minHarvesterBalance = nodeLocalState.Config.BlockChain.MinHarvesterBalance;
+			return thread::CreateNamedTask("harvesting task", [&nodeLocalState, &unlockedAccounts, pHarvesterTask, minHarvesterBalance]() {
+				// TODO: ? Maybe remove it forever
 				// prune accounts that are not eligible to harvest the next block
-				PruneUnlockedAccounts(unlockedAccounts, cache, minHarvesterBalance);
+				PruneUnlockedAccounts(unlockedAccounts, nodeLocalState.CurrentCache, minHarvesterBalance);
 
 				// harvest the next block
 				pHarvesterTask->harvest();

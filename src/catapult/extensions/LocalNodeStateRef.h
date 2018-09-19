@@ -18,34 +18,87 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "LocalNodeChainScore.h"
+#include <memory>
+#include <src/catapult/cache/CatapultCache.h>
+#include <src/catapult/io/BlockStorageCache.h>
+#include <src/catapult/state/CatapultState.h>
+
 #pragma once
 
 namespace catapult {
 	namespace cache { class CatapultCache; }
 	namespace config { class LocalNodeConfiguration; }
 	namespace extensions { class LocalNodeChainScore; }
-	namespace io { class BlockStorageCache; }
+	namespace io { class BlockStorageCache; class BlockStorage; }
 	namespace state { struct CatapultState; }
 }
 
 namespace catapult { namespace extensions {
+
+	/// A local node's basic state.
+	struct LocalNodeState {
+	public:
+
+		/// Creates a local node state state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeState(
+				const config::LocalNodeConfiguration& config,
+				std::unique_ptr<io::BlockStorage>&& pStorage)
+				: Config(config)
+				, State()
+				, CurrentCache({})
+				, PreviousCache({})
+				, Storage(std::move(pStorage))
+				, Score()
+		{}
+
+		/// Creates a local node state state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeState(
+				const config::LocalNodeConfiguration& config,
+				std::unique_ptr<io::BlockStorage>&& pStorage,
+				cache::CatapultCache&& cache)
+				: Config(config)
+				, State()
+				, CurrentCache(std::move(cache))
+				, PreviousCache(std::move(cache))
+				, Storage(std::move(pStorage))
+				, Score()
+		{}
+
+	public:
+		/// Local node configuration.
+		const config::LocalNodeConfiguration& Config;
+
+		/// Local node state.
+		state::CatapultState State;
+
+		/// It is cache of current state of local node.
+		cache::CatapultCache CurrentCache;
+
+		/// It is cache of previous state of local node. We use it to calculate balance of accounts some blocks below.
+		cache::CatapultCache PreviousCache;
+
+		/// Local node storage.
+		io::BlockStorageCache Storage;
+
+		/// Local node score.
+		LocalNodeChainScore Score;
+	};
 
 	/// A reference to a local node's basic state.
 	struct LocalNodeStateRef {
 	public:
 		/// Creates a local node state ref referencing state composed of
 		/// \a config, \a state, \a cache, \a storage and \a score.
-		LocalNodeStateRef(
-				const config::LocalNodeConfiguration& config,
-				state::CatapultState& state,
-				cache::CatapultCache& cache,
-				io::BlockStorageCache& storage,
-				LocalNodeChainScore& score)
-				: Config(config)
-				, State(state)
-				, Cache(cache)
-				, Storage(storage)
-				, Score(score)
+		LocalNodeStateRef(LocalNodeState& state)
+				: Config(state.Config)
+				, State(state.State)
+				, CurrentCache(state.CurrentCache)
+				, PreviousCache(state.PreviousCache)
+				, Storage(state.Storage)
+				, Score(state.Score)
 		{}
 
 	public:
@@ -55,8 +108,11 @@ namespace catapult { namespace extensions {
 		/// Local node state.
 		state::CatapultState& State;
 
-		/// Local node cache.
-		cache::CatapultCache& Cache;
+		/// It is cache of current state of local node.
+		cache::CatapultCache& CurrentCache;
+
+		/// It is cache of previous state of local node. We use it to calculate balance of accounts some blocks below.
+		cache::CatapultCache& PreviousCache;
 
 		/// Local node storage.
 		io::BlockStorageCache& Storage;
@@ -70,17 +126,13 @@ namespace catapult { namespace extensions {
 	public:
 		/// Creates a local node state const ref referencing state composed of
 		/// \a config, \a state, \a cache, \a storage and \a score.
-		LocalNodeStateConstRef(
-				const config::LocalNodeConfiguration& config,
-				const state::CatapultState& state,
-				const cache::CatapultCache& cache,
-				const io::BlockStorageCache& storage,
-				const LocalNodeChainScore& score)
-				: Config(config)
-				, State(state)
-				, Cache(cache)
-				, Storage(storage)
-				, Score(score)
+		LocalNodeStateConstRef(const LocalNodeState& state)
+				: Config(state.Config)
+				, State(state.State)
+				, CurrentCache(state.CurrentCache)
+				, PreviousCache(state.PreviousCache)
+				, Storage(state.Storage)
+				, Score(state.Score)
 		{}
 
 	public:
@@ -90,8 +142,11 @@ namespace catapult { namespace extensions {
 		/// Local node state.
 		const state::CatapultState& State;
 
-		/// Local node cache.
-		const cache::CatapultCache& Cache;
+		/// It is cache of current state of local node.
+		const cache::CatapultCache& CurrentCache;
+
+		/// It is cache of previous state of local node. We use it to calculate balance of accounts some blocks below.
+		const cache::CatapultCache& PreviousCache;
 
 		/// Local node storage.
 		const io::BlockStorageCache& Storage;

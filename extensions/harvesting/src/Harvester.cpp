@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <src/catapult/config/LocalNodeConfiguration.h>
 #include "Harvester.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
@@ -67,19 +68,19 @@ namespace catapult { namespace harvesting {
 	}
 
 	Harvester::Harvester(
-			const cache::CatapultCache& cache,
-			const model::BlockChainConfiguration& config,
+			const extensions::LocalNodeStateRef& localNodeState,
 			const UnlockedAccounts& unlockedAccounts,
 			const TransactionsInfoSupplier& transactionsInfoSupplier)
-			: m_cache(cache)
-			, m_config(config)
+			: m_localNodeState(localNodeState)
 			, m_unlockedAccounts(unlockedAccounts)
 			, m_transactionsInfoSupplier(transactionsInfoSupplier)
 	{}
 
 	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
 		NextBlockContext context(lastBlockElement, timestamp);
-		if (!context.tryCalculateDifficulty(m_cache.sub<cache::BlockDifficultyCache>(), m_config)) {
+		auto& cache = m_localNodeState.CurrentCache;
+		auto& config = m_localNodeState.Config.BlockChain;
+		if (!context.tryCalculateDifficulty(cache.sub<cache::BlockDifficultyCache>(), config)) {
 			CATAPULT_LOG(debug) << "skipping harvest attempt due to error calculating difficulty";
 			return nullptr;
 		}
@@ -89,8 +90,8 @@ namespace catapult { namespace harvesting {
 		hitContext.Difficulty = context.Difficulty;
 		hitContext.Height = context.Height;
 
-		const auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
-		chain::BlockHitPredicate hitPredicate(m_config, [&accountStateCache](const auto& key, auto height) {
+		const auto& accountStateCache = cache.sub<cache::AccountStateCache>();
+		chain::BlockHitPredicate hitPredicate(config, [&accountStateCache](const auto& key, auto height) {
 			auto lockedCacheView = accountStateCache.createView();
 			cache::ReadOnlyAccountStateCache readOnlyCache(*lockedCacheView);
 			cache::ImportanceView view(readOnlyCache);
@@ -112,7 +113,7 @@ namespace catapult { namespace harvesting {
 		if (!pHarvesterKeyPair)
 			return nullptr;
 
-		auto transactionsInfo = m_transactionsInfoSupplier(m_config.MaxTransactionsPerBlock);
-		return CreateBlock(context, m_config.Network.Identifier, *pHarvesterKeyPair, transactionsInfo);
+		auto transactionsInfo = m_transactionsInfoSupplier(config.MaxTransactionsPerBlock);
+		return CreateBlock(context, config.Network.Identifier, *pHarvesterKeyPair, transactionsInfo);
 	}
 }}

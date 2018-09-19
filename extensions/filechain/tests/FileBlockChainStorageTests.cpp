@@ -58,7 +58,7 @@ namespace catapult { namespace filechain {
 		public:
 			explicit TestContext(const model::BlockChainConfiguration& config, const std::string& dataDirectory)
 					: m_pPluginManager(test::CreateDefaultPluginManager(config))
-					, m_localNodeState(m_pPluginManager->config(), dataDirectory, m_pPluginManager->createCache())
+					, m_localNodeState(m_pPluginManager->config(), dataDirectory, m_pPluginManager->createCurrentCache())
 					, m_pBlockChainStorage(CreateFileBlockChainStorage())
 			{}
 
@@ -76,7 +76,7 @@ namespace catapult { namespace filechain {
 			}
 
 			auto cacheView() const {
-				return m_localNodeState.cref().Cache.createView();
+				return m_localNodeState.cref().CurrentCache.createView();
 			}
 
 			auto score() const {

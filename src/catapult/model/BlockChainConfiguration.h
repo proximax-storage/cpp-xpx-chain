@@ -74,6 +74,9 @@ namespace catapult { namespace model {
 		/// Maximum number of transactions per block.
 		uint32_t MaxTransactionsPerBlock;
 
+		/// Number of blocks that should be treated to calculate effective balance.
+		uint64_t EffectiveBalanceRange;
+
 		/// Unparsed map of plugin configuration.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 

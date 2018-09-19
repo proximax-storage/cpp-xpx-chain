@@ -74,6 +74,9 @@ namespace catapult { namespace observers {
 	}
 
 	DEFINE_OBSERVER(ModifyMultisigCosigners, Notification, [](const auto& notification, const ObserverContext& context) {
+		if (!context.Cache.contains<cache::MultisigCache>())
+			return;
+
 		auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
 
 		MultisigAccountFacade multisigAccountFacade(multisigCache, notification.Signer);

@@ -49,7 +49,7 @@ namespace catapult { namespace cache {
 
 		template<size_t CacheId>
 		void AddSubCacheWithId(CatapultCacheBuilder& builder, test::SimpleCacheViewMode viewMode = test::SimpleCacheViewMode::Iterable) {
-			builder.add<test::SimpleCacheStorageTraits>(std::make_unique<test::SimpleCacheT<CacheId>>(viewMode));
+			builder.addCurrentSubCache<test::SimpleCacheStorageTraits>(std::make_unique<test::SimpleCacheT<CacheId>>(viewMode));
 		}
 
 		CatapultCache CreateSimpleCatapultCache() {
@@ -57,7 +57,7 @@ namespace catapult { namespace cache {
 			AddSubCacheWithId<2>(builder);
 			AddSubCacheWithId<6>(builder);
 			AddSubCacheWithId<4>(builder);
-			return builder.build();
+			return builder.buildCurrentCache();
 		}
 	}
 
@@ -296,7 +296,7 @@ namespace catapult { namespace cache {
 			AddSubCacheWithId<2>(builder);
 			AddSubCacheWithId<4>(builder, test::SimpleCacheViewMode::Non_Iterable);
 			AddSubCacheWithId<6>(builder);
-			return builder.build();
+			return builder.buildCurrentCache();
 		}
 	}
 

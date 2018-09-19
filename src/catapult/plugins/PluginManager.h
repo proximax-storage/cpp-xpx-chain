@@ -87,14 +87,23 @@ namespace catapult { namespace plugins {
 
 		// region cache
 
-		/// Adds support for a subcache described by \a pSubCache.
+		/// Adds support for a current subcache described by \a pSubCache.
 		template<typename TStorageTraits, typename TCache>
-		void addCacheSupport(std::unique_ptr<TCache>&& pSubCache) {
-			m_cacheBuilder.add<TStorageTraits>(std::move(pSubCache));
+		void addCurrentCacheSupport(std::unique_ptr<TCache>&& pSubCache) {
+			m_cacheBuilder.addCurrentSubCache<TStorageTraits>(std::move(pSubCache));
 		}
 
-		/// Creates a catapult cache.
-		cache::CatapultCache createCache();
+		/// Adds support for a previous subcache described by \a pSubCache.
+		template<typename TStorageTraits, typename TCache>
+		void addPreviousCacheSupport(std::unique_ptr<TCache>&& pSubCache) {
+			m_cacheBuilder.addPreviousSubCache<TStorageTraits>(std::move(pSubCache));
+		}
+
+		/// Creates a current catapult cache.
+		cache::CatapultCache createCurrentCache();
+
+		/// Creates a previous catapult cache.
+		cache::CatapultCache createPreviousCache();
 
 		// endregion
 

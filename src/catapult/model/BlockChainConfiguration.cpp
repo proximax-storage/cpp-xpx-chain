@@ -63,8 +63,14 @@ namespace catapult { namespace model {
 
 		LOAD_CHAIN_PROPERTY(BlockPruneInterval);
 		LOAD_CHAIN_PROPERTY(MaxTransactionsPerBlock);
+		LOAD_CHAIN_PROPERTY(EffectiveBalanceRange);
 
 #undef LOAD_CHAIN_PROPERTY
+
+		// If we didn't set custom EffectiveBalanceRange, then lets set it like a TransactionLifeTime / BlockGenerationTime
+		if (!config.EffectiveBalanceRange) {
+			config.EffectiveBalanceRange = config.MaxTransactionLifetime.millis() / config.BlockGenerationTargetTime.millis();
+		}
 
 		size_t numPluginProperties = 0;
 		for (const auto& section : bag.sections()) {
@@ -81,7 +87,7 @@ namespace catapult { namespace model {
 			numPluginProperties += iter->second.size();
 		}
 
-		utils::VerifyBagSizeLte(bag, 14 + numPluginProperties);
+		utils::VerifyBagSizeLte(bag, 15 + numPluginProperties);
 		return config;
 	}
 }}

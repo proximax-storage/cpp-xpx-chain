@@ -41,10 +41,8 @@ namespace catapult { namespace extensions {
 		const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromKilobytes(1234);
 
 		ionet::NodeContainer nodes;
-		auto catapultCache = cache::CatapultCache({});
-		state::CatapultState catapultState;
-		io::BlockStorageCache storage(std::make_unique<mocks::MockMemoryBasedStorage>());
-		LocalNodeChainScore score;
+		extensions::LocalNodeState state(config, std::make_unique<mocks::MockMemoryBasedStorage>());
+		extensions::LocalNodeStateRef stateRef(state);
 		auto pUtCache = test::CreateUtCacheProxy();
 
 		auto numTimeSupplierCalls = 0u;
@@ -62,13 +60,9 @@ namespace catapult { namespace extensions {
 		thread::MultiServicePool pool("test", 1);
 
 		// Act:
-		auto state = ServiceState(
-				config,
+		auto serviceState = ServiceState(
+				stateRef,
 				nodes,
-				catapultCache,
-				catapultState,
-				storage,
-				score,
 				*pUtCache,
 				timeSupplier,
 				transactionStatusSubscriber,
@@ -80,33 +74,33 @@ namespace catapult { namespace extensions {
 
 		// Assert:
 		// - check references
-		EXPECT_EQ(&config, &state.config());
-		EXPECT_EQ(&nodes, &state.nodes());
-		EXPECT_EQ(&catapultCache, &state.cache());
-		EXPECT_EQ(&catapultState, &state.state());
-		EXPECT_EQ(&storage, &state.storage());
-		EXPECT_EQ(&score, &state.score());
-		EXPECT_EQ(pUtCache.get(), &state.utCache());
+		EXPECT_EQ(&state.Config, &serviceState.config());
+		EXPECT_EQ(&nodes, &serviceState.nodes());
+		EXPECT_EQ(&state.CurrentCache, &serviceState.currentCache());
+		EXPECT_EQ(&state.State, &serviceState.state());
+		EXPECT_EQ(&state.Storage, &serviceState.storage());
+		EXPECT_EQ(&state.Score, &serviceState.score());
+		EXPECT_EQ(pUtCache.get(), &serviceState.utCache());
 
-		EXPECT_EQ(&transactionStatusSubscriber, &state.transactionStatusSubscriber());
-		EXPECT_EQ(&stateChangeSubscriber, &state.stateChangeSubscriber());
-		EXPECT_EQ(&nodeSubscriber, &state.nodeSubscriber());
+		EXPECT_EQ(&transactionStatusSubscriber, &serviceState.transactionStatusSubscriber());
+		EXPECT_EQ(&stateChangeSubscriber, &serviceState.stateChangeSubscriber());
+		EXPECT_EQ(&nodeSubscriber, &serviceState.nodeSubscriber());
 
-		EXPECT_EQ(&counters, &state.counters());
-		EXPECT_EQ(&pluginManager, &state.pluginManager());
-		EXPECT_EQ(&pool, &state.pool());
+		EXPECT_EQ(&counters, &serviceState.counters());
+		EXPECT_EQ(&pluginManager, &serviceState.pluginManager());
+		EXPECT_EQ(&pool, &serviceState.pool());
 
 		// - check functions
-		EXPECT_EQ(Timestamp(111), state.timeSupplier()());
+		EXPECT_EQ(Timestamp(111), serviceState.timeSupplier()());
 		EXPECT_EQ(1u, numTimeSupplierCalls);
 
 		// - check empty
-		EXPECT_TRUE(state.tasks().empty());
+		EXPECT_TRUE(serviceState.tasks().empty());
 
-		EXPECT_EQ(0u, state.packetHandlers().size());
-		EXPECT_EQ(1234u * 1024, state.packetHandlers().maxPacketDataSize()); // should be initialized from config
+		EXPECT_EQ(0u, serviceState.packetHandlers().size());
+		EXPECT_EQ(1234u * 1024, serviceState.packetHandlers().maxPacketDataSize()); // should be initialized from config
 
-		EXPECT_TRUE(state.hooks().chainSyncedPredicate()); // just check that hooks is valid and default predicate can be called
-		EXPECT_TRUE(state.packetIoPickers().pickMatching(utils::TimeSpan::FromSeconds(1), ionet::NodeRoles::None).empty());
+		EXPECT_TRUE(serviceState.hooks().chainSyncedPredicate()); // just check that hooks is valid and default predicate can be called
+		EXPECT_TRUE(serviceState.packetIoPickers().pickMatching(utils::TimeSpan::FromSeconds(1), ionet::NodeRoles::None).empty());
 	}
 }}

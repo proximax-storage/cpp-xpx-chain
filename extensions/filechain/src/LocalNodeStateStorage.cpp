@@ -18,16 +18,18 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "LocalNodeStateStorage.h"
 #include "catapult/cache/CacheStorageAdapter.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalData.h"
 #include "catapult/cache/SupplementalDataStorage.h"
+#include "catapult/config/UserConfiguration.h"
+#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/io/BufferedFileStream.h"
 #include "catapult/io/FileLock.h"
 #include "catapult/utils/StackLogger.h"
-#include <boost/filesystem/path.hpp>
+#include "LocalNodeStateStorage.h"
 #include <boost/filesystem.hpp>
+#include <boost/filesystem/path.hpp>
 
 namespace catapult { namespace filechain {
 
@@ -68,7 +70,8 @@ namespace catapult { namespace filechain {
 		}
 	}
 
-	bool LoadState(const std::string& dataDirectory, cache::CatapultCache& cache, cache::SupplementalData& supplementalData) {
+	bool LoadState(const extensions::LocalNodeStateRef& stateRef, cache::SupplementalData& supplementalData) {
+		std::string dataDirectory = stateRef.Config.User.DataDirectory;
 		auto lockFilePath = GetStatePath(dataDirectory, State_Lock_Filename);
 		io::FileLock stateLock(lockFilePath);
 		if (!stateLock.try_lock()) {
@@ -81,7 +84,9 @@ namespace catapult { namespace filechain {
 
 		utils::StackLogger stopwatch("load state", utils::LogLevel::Warning);
 
-		for (const auto& pStorage : cache.storages())
+		for (const auto& pStorage : stateRef.CurrentCache.storages())
+			LoadCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage);
+		for (const auto& pStorage : stateRef.PreviousCache.storages())
 			LoadCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage);
 
 		Height chainHeight;
@@ -91,8 +96,11 @@ namespace catapult { namespace filechain {
 			cache::LoadSupplementalData(file, supplementalData, chainHeight);
 		}
 
-		auto cacheDelta = cache.createDelta();
-		cache.commit(chainHeight);
+		auto cacheDelta = stateRef.CurrentCache.createDelta();
+		stateRef.CurrentCache.commit(chainHeight);
+		cacheDelta = stateRef.PreviousCache.createDelta();
+		stateRef.PreviousCache.commit(chainHeight);
+
 		return true;
 	}
 
@@ -108,11 +116,12 @@ namespace catapult { namespace filechain {
 		}
 	}
 
-	void SaveState(const std::string& dataDirectory, const cache::CatapultCache& cache, const cache::SupplementalData& supplementalData) {
+	void SaveState(const extensions::LocalNodeStateConstRef& stateRef) {
 		// 1. if the previous SaveState crashed, an orphaned lock file will be present, which would have caused LoadState to be bypassed
 		//    and instead triggered a rebuild of the cache by reloading all blocks
 		// 2. in the current SaveState, delete any existing lock file (state is not written incrementally) and create a new one
 		// 3. if successful, the lock file will be deleted and the next LoadState will load directly from the saved state
+		std::string dataDirectory = stateRef.Config.User.DataDirectory;
 		auto lockFilePath = GetStatePath(dataDirectory, State_Lock_Filename);
 		io::FileLock stateLock(lockFilePath);
 		if (TryRemoveLockFile(lockFilePath))
@@ -120,7 +129,9 @@ namespace catapult { namespace filechain {
 		else
 			CATAPULT_LOG(warning) << "lock file could not be removed and must be removed manually";
 
-		for (const auto& pStorage : cache.storages())
+		for (const auto& pStorage : stateRef.CurrentCache.storages())
+			SaveCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage);
+		for (const auto& pStorage : stateRef.PreviousCache.storages())
 			SaveCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage);
 
 		{
@@ -128,9 +139,9 @@ namespace catapult { namespace filechain {
 			io::BufferedOutputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Write));
 
 			cache::SupplementalData data;
-			data.State = supplementalData.State;
-			data.ChainScore = supplementalData.ChainScore;
-			cache::SaveSupplementalData(data, cache.createView().height(), file);
+			data.State = stateRef.State;
+			data.ChainScore = stateRef.Score.get();
+			cache::SaveSupplementalData(data, stateRef.CurrentCache.createView().height(), file);
 		}
 	}
 }}

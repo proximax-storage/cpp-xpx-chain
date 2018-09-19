@@ -23,6 +23,7 @@
 
 namespace catapult { namespace state {
 
+	// TODO: ? Remove
 	/// Stateful catapult information.
 	struct CatapultState {
 	public:

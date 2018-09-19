@@ -54,7 +54,7 @@ namespace catapult { namespace extensions {
 		public:
 			explicit TestContext(uint32_t numAccounts)
 					: m_pPluginManager(test::CreateDefaultPluginManager(CreateBlockChainConfiguration(numAccounts)))
-					, m_cache(m_pPluginManager->createCache())
+					, m_cache(m_pPluginManager->createCurrentCache())
 					, m_specialAccountKey(test::GenerateRandomData<Key_Size>()) {
 				// register mock transaction plugin so that BalanceTransferNotifications are produced and observed
 				m_pPluginManager->addTransactionSupport(mocks::CreateMockTransactionPlugin(mocks::PluginOptionFlags::Publish_Transfers));

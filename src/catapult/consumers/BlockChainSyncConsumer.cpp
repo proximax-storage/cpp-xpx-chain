@@ -18,15 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "BlockChainSyncConsumer.h"
 #include "BlockConsumers.h"
+#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/utils/Casting.h"
 #include "ConsumerResultFactory.h"
 #include "InputUtils.h"
-#include "catapult/cache/CatapultCache.h"
-#include "catapult/chain/BlockScorer.h"
-#include "catapult/chain/ChainUtils.h"
-#include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/BlockUtils.h"
-#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace consumers {
 
@@ -48,81 +45,12 @@ namespace catapult { namespace consumers {
 			}
 		};
 
-		struct SyncState {
-		public:
-			SyncState() = default;
-
-			SyncState(cache::CatapultCache& cache, state::CatapultState& state)
-					: m_pOriginalCache(&cache)
-					, m_pOriginalState(&state)
-					, m_pCacheDelta(std::make_unique<cache::CatapultCacheDelta>(cache.createDelta()))
-					, m_stateCopy(state)
-			{}
-
-		public:
-			WeakBlockInfo commonBlockInfo() const {
-				return WeakBlockInfo(*m_pCommonBlockElement);
-			}
-
-			Height commonBlockHeight() const {
-				return m_pCommonBlockElement->Block.Height;
-			}
-
-			const model::ChainScore& scoreDelta() const {
-				return m_scoreDelta;
-			}
-
-			const cache::CatapultCacheDelta& cacheDelta() const {
-				return *m_pCacheDelta;
-			}
-
-		public:
-			TransactionInfos detachRemovedTransactionInfos() {
-				return std::move(m_removedTransactionInfos);
-			}
-
-			observers::ObserverState observerState() {
-				return observers::ObserverState(*m_pCacheDelta, m_stateCopy);
-			}
-
-			void update(
-					std::shared_ptr<const model::BlockElement>&& pCommonBlockElement,
-					model::ChainScore&& scoreDelta,
-					TransactionInfos&& removedTransactionInfos) {
-				m_pCommonBlockElement = std::move(pCommonBlockElement);
-				m_scoreDelta = std::move(scoreDelta);
-				m_removedTransactionInfos = std::move(removedTransactionInfos);
-			}
-
-			void commit(Height height) {
-				m_pOriginalCache->commit(height);
-				m_pCacheDelta.reset(); // release the delta after commit so that the UT updater can acquire a lock
-
-				*m_pOriginalState = m_stateCopy;
-			}
-
-		private:
-			cache::CatapultCache* m_pOriginalCache;
-			state::CatapultState* m_pOriginalState;
-			std::unique_ptr<cache::CatapultCacheDelta> m_pCacheDelta; // unique_ptr to allow explicit release of lock in commit
-			state::CatapultState m_stateCopy;
-			std::shared_ptr<const model::BlockElement> m_pCommonBlockElement;
-			model::ChainScore m_scoreDelta;
-			TransactionInfos m_removedTransactionInfos;
-		};
-
 		class BlockChainSyncConsumer {
 		public:
 			explicit BlockChainSyncConsumer(
-					cache::CatapultCache& cache,
-					state::CatapultState& state,
-					io::BlockStorageCache& storage,
-					uint32_t maxRollbackBlocks,
+					const extensions::LocalNodeStateRef& localNodeState,
 					const BlockChainSyncHandlers& handlers)
-					: m_cache(cache)
-					, m_state(state)
-					, m_storage(storage)
-					, m_maxRollbackBlocks(maxRollbackBlocks)
+					: m_localNodeState(localNodeState)
 					, m_handlers(handlers)
 			{}
 
@@ -154,7 +82,7 @@ namespace catapult { namespace consumers {
 		private:
 			ConsumerResult preprocess(const BlockElements& elements, InputSource source, SyncState& syncState) const {
 				// 1. check that the peer chain can be linked to the current chain
-				auto storageView = m_storage.view();
+				auto storageView = m_localNodeState.Storage.view();
 				auto peerStartHeight = elements[0].Block.Height;
 				auto localChainHeight = storageView.chainHeight();
 				if (!IsLinked(peerStartHeight, localChainHeight, source))
@@ -162,18 +90,18 @@ namespace catapult { namespace consumers {
 
 				// 2. check that the remote chain is not too far behind the current chain
 				auto heightDifference = static_cast<int64_t>((localChainHeight - peerStartHeight).unwrap());
-				if (heightDifference > m_maxRollbackBlocks)
+				if (heightDifference > m_localNodeState.Config.BlockChain.MaxRollbackBlocks)
 					return Abort(Failure_Consumer_Remote_Chain_Too_Far_Behind);
 
 				// 3. check difficulties against difficulties in cache
 				auto blocks = ExtractBlocks(elements);
-				if (!m_handlers.DifficultyChecker(blocks, m_cache))
+				if (!m_handlers.DifficultyChecker(blocks, m_localNodeState.CurrentCache))
 					return Abort(Failure_Consumer_Remote_Chain_Mismatched_Difficulties);
 
 				// 4. unwind to the common block height and calculate the local chain score
-				syncState = SyncState(m_cache, m_state);
+				syncState = SyncState(m_localNodeState);
 				auto commonBlockHeight = peerStartHeight - Height(1);
-				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, syncState.observerState());
+				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, syncState);
 				const auto& localScore = unwindResult.Score;
 
 				// 5. calculate the remote chain score
@@ -205,12 +133,14 @@ namespace catapult { namespace consumers {
 			UnwindResult unwindLocalChain(
 					Height localChainHeight,
 					Height commonBlockHeight,
-					const io::BlockStorageView& storage,
-					const observers::ObserverState& observerState) const {
+					SyncState& state) const {
 				UnwindResult result;
 				if (localChainHeight == commonBlockHeight)
 					return result;
 
+				const auto& currentObserver = state.currentObserverState();
+				const auto& preivousObserver = state.preivousObserverState();
+				const auto& storage = state.storage();
 				auto height = localChainHeight;
 				std::shared_ptr<const model::BlockElement> pChildBlockElement;
 				while (true) {
@@ -225,7 +155,13 @@ namespace catapult { namespace consumers {
 					if (height == commonBlockHeight)
 						break;
 
-					m_handlers.UndoBlock(*pParentBlockElement, observerState);
+					m_handlers.UndoBlock(*pParentBlockElement, currentObserver);
+					// Restore cache effectiveBalanceHeight blocks below
+					if (height > state.EffectiveBalanceHeight) {
+						auto pOldBlockElement = storage.loadBlockElement(height - state.EffectiveBalanceHeight);
+						m_handlers.UndoBlock(*pOldBlockElement, preivousObserver);
+					}
+
 					pChildBlockElement = std::move(pParentBlockElement);
 					height = height - Height(1);
 				}
@@ -234,7 +170,18 @@ namespace catapult { namespace consumers {
 			}
 
 			ConsumerResult process(BlockElements& elements, SyncState& syncState) const {
-				auto processResult = m_handlers.Processor(syncState.commonBlockInfo(), elements, syncState.observerState());
+				auto blockChainConfig = m_localNodeState.Config.BlockChain;
+				auto processor = CreateBlockChainProcessor(
+						[&blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
+							cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
+							return chain::BlockHitPredicate(blockChainConfig, [view](const auto& publicKey, auto height) {
+								return view.getAccountImportanceOrDefault(publicKey, height);
+							});
+						},
+						m_handlers
+				);
+
+				auto processResult = processor(syncState, elements);
 				if (!validators::IsValidationResultSuccess(processResult)) {
 					CATAPULT_LOG(warning) << "processing of peer chain failed with " << processResult;
 					return Abort(processResult);
@@ -250,7 +197,8 @@ namespace catapult { namespace consumers {
 				commitToStorage(syncState.commonBlockHeight(), elements);
 
 				// 2. indicate a state change
-				m_handlers.StateChange(StateChangeInfo(syncState.cacheDelta(), syncState.scoreDelta(), newHeight));
+				m_handlers.StateChange(StateChangeInfo(syncState.previousCacheDelta(), syncState.scoreDelta(), newHeight));
+				m_handlers.StateChange(StateChangeInfo(syncState.currentCacheDelta(), syncState.scoreDelta(), newHeight));
 
 				// 3. commit changes to the in-memory cache
 				syncState.commit(newHeight);
@@ -264,26 +212,20 @@ namespace catapult { namespace consumers {
 			}
 
 			void commitToStorage(Height commonBlockHeight, const BlockElements& elements) const {
-				auto storageModifier = m_storage.modifier();
+				auto storageModifier = m_localNodeState.Storage.modifier();
 				storageModifier.dropBlocksAfter(commonBlockHeight);
 				storageModifier.saveBlocks(elements);
 			}
 
 		private:
-			cache::CatapultCache& m_cache;
-			state::CatapultState& m_state;
-			io::BlockStorageCache& m_storage;
-			uint32_t m_maxRollbackBlocks;
+			const extensions::LocalNodeStateRef& m_localNodeState;
 			BlockChainSyncHandlers m_handlers;
 		};
 	}
 
 	disruptor::DisruptorConsumer CreateBlockChainSyncConsumer(
-			cache::CatapultCache& cache,
-			state::CatapultState& state,
-			io::BlockStorageCache& storage,
-			uint32_t maxRollbackBlocks,
+			const extensions::LocalNodeStateRef& localNodeState,
 			const BlockChainSyncHandlers& handlers) {
-		return BlockChainSyncConsumer(cache, state, storage, maxRollbackBlocks, handlers);
+		return BlockChainSyncConsumer(localNodeState, handlers);
 	}
 }}

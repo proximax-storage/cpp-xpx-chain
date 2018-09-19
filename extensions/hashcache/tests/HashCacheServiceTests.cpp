@@ -59,7 +59,7 @@ namespace catapult { namespace hashcache {
 			TestContext context(CreateCache());
 			context.boot();
 
-			auto& cache = context.testState().state().cache();
+			auto& cache = context.testState().state().currentCache();
 
 			// - populate the hash cache
 			auto delta = cache.createDelta();

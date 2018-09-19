@@ -41,6 +41,10 @@ namespace catapult { namespace observers {
 		return MAKE_OBSERVER(RegisterNamespaceMosaicPruning, Notification, [constraints](
 				const auto& notification,
 				const ObserverContext& context) {
+
+			if (!context.Cache.contains<cache::NamespaceCache>())
+				return;
+
 			if (NotifyMode::Rollback == context.Mode)
 				return;
 
