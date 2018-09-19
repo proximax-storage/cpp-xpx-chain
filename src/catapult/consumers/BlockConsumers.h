@@ -74,6 +74,15 @@ namespace catapult { namespace consumers {
 			const extensions::LocalNodeStateRef& localNodeState,
 			const BlockChainSyncHandlers& handlers);
 
+	/// Creates a mock consumer that attempts to synchronize a remote chain with the local chain, which is composed of
+	/// state and blocks (in \a localNodeState). You can use your manual Processor.
+	/// \a handlers are used to customize the sync process.
+	/// \note This consumer is non-const because it updates the element generation hashes.
+	disruptor::DisruptorConsumer CreateMockBlockChainSyncConsumer(
+			const extensions::LocalNodeStateRef& localNodeState,
+			const BlockChainSyncHandlers& handlers,
+			const BlockChainProcessor& processor);
+
 	/// Prototype for a function that is called with a new block.
 	using NewBlockSink = consumer<const std::shared_ptr<const model::Block>&>;
 

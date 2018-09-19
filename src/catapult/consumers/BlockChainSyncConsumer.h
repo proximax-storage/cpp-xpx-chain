@@ -79,7 +79,7 @@ namespace catapult { namespace consumers {
 		Height EffectiveBalanceHeight;
 
 	public:
-		WeakBlockInfo commonBlockInfo() const {
+		virtual WeakBlockInfo commonBlockInfo() const {
 			return WeakBlockInfo(*m_pCommonBlockElement);
 		}
 

@@ -64,7 +64,8 @@ namespace catapult { namespace model {
 							{ "minHarvesterBalance", "4'000'000'000" },
 
 							{ "blockPruneInterval", "432" },
-							{ "maxTransactionsPerBlock", "120" }
+							{ "maxTransactionsPerBlock", "120" },
+							{ "effectiveBalanceRange", "0" }
 						}
 					},
 					{

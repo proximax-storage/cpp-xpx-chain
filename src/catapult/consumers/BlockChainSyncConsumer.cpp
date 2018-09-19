@@ -169,7 +169,7 @@ namespace catapult { namespace consumers {
 				return result;
 			}
 
-			ConsumerResult process(BlockElements& elements, SyncState& syncState) const {
+			virtual BlockChainProcessor createProcessor() const {
 				auto blockChainConfig = m_localNodeState.Config.BlockChain;
 				auto processor = CreateBlockChainProcessor(
 						[&blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
@@ -181,6 +181,11 @@ namespace catapult { namespace consumers {
 						m_handlers
 				);
 
+				return processor;
+			}
+
+			ConsumerResult process(BlockElements& elements, SyncState& syncState) const {
+				auto processor = createProcessor();
 				auto processResult = processor(syncState, elements);
 				if (!validators::IsValidationResultSuccess(processResult)) {
 					CATAPULT_LOG(warning) << "processing of peer chain failed with " << processResult;
@@ -220,11 +225,39 @@ namespace catapult { namespace consumers {
 			const extensions::LocalNodeStateRef& m_localNodeState;
 			BlockChainSyncHandlers m_handlers;
 		};
+
+		class MockBlockChainSyncConsumer : public BlockChainSyncConsumer {
+
+		public:
+			explicit MockBlockChainSyncConsumer(
+					const extensions::LocalNodeStateRef& localNodeState,
+					const BlockChainSyncHandlers& handlers,
+					const BlockChainProcessor& processor)
+					: BlockChainSyncConsumer(localNodeState, handlers)
+					, Processor(processor)
+			{}
+
+		private:
+
+			virtual BlockChainProcessor createProcessor() const override {
+				return Processor;
+			}
+
+		private:
+			BlockChainProcessor Processor;
+		};
 	}
 
 	disruptor::DisruptorConsumer CreateBlockChainSyncConsumer(
 			const extensions::LocalNodeStateRef& localNodeState,
 			const BlockChainSyncHandlers& handlers) {
 		return BlockChainSyncConsumer(localNodeState, handlers);
+	}
+
+	disruptor::DisruptorConsumer CreateMockBlockChainSyncConsumer(
+			const extensions::LocalNodeStateRef& localNodeState,
+			const BlockChainSyncHandlers& handlers,
+			const BlockChainProcessor& processor) {
+		return MockBlockChainSyncConsumer(localNodeState, handlers, processor);
 	}
 }}

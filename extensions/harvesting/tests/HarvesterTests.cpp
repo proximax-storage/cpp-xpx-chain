@@ -20,17 +20,14 @@
 
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
-#include "catapult/config/LocalNodeConfiguration.h"
-#include "catapult/config/LoggingConfiguration.h"
-#include "catapult/config/UserConfiguration.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "harvesting/src/Harvester.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/TestHarness.h"
 
@@ -130,22 +127,18 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			auto CreateHarvester(const config::LocalNodeConfiguration& config, const TransactionsInfoSupplier& transactionsInfoSupplier) {
+			auto CreateHarvester(config::LocalNodeConfiguration&& config, const TransactionsInfoSupplier& transactionsInfoSupplier) {
 				return std::make_unique<Harvester>(
 						extensions::LocalNodeStateRef(
-								*std::make_unique<extensions::LocalNodeState>(
-										config,
-										std::make_unique<mocks::MockMemoryBasedStorage>(),
-										std::move(Cache)
-								)
+								*test::LocalNodeStateUtils::CreateLocalNodeState(std::move(config), std::move(Cache))
 						),
 						*pUnlockedAccounts,
 						transactionsInfoSupplier
 				);
 			}
 
-			auto CreateHarvester(const config::LocalNodeConfiguration& config) {
-				return CreateHarvester(config, [](size_t) { return TransactionsInfo(); });
+			auto CreateHarvester(config::LocalNodeConfiguration&& config) {
+				return CreateHarvester(std::move(config), [](size_t) { return TransactionsInfo(); });
 			}
 
 			auto CreateHarvester() {
@@ -404,7 +397,7 @@ namespace catapult { namespace harvesting {
 		for (auto i = 0u; i < test::Max_Non_Deterministic_Test_Retries; ++i) {
 			HarvesterContext context;
 			auto pHarvester1 = context.CreateHarvester(); // using default configuration
-			auto pHarvester2 = context.CreateHarvester(customConfig);
+			auto pHarvester2 = context.CreateHarvester(std::move(customConfig));
 			auto harvestTime = Timestamp(utils::TimeSpan::FromHours(24).millis());
 
 			// Act:
@@ -446,7 +439,7 @@ namespace catapult { namespace harvesting {
 			auto BlockChain = CreateBlockConfiguration();
 			BlockChain.MaxTransactionsPerBlock = maxTransactionsPerBlock;
 			auto config = CreateConfiguration(BlockChain);
-			auto pHarvester = context.CreateHarvester(config, [&, info](auto count) mutable {
+			auto pHarvester = context.CreateHarvester(std::move(config), [&, info](auto count) mutable {
 				++counter;
 				numRequestedInfos = count;
 				if (info.Transactions.size() > count)

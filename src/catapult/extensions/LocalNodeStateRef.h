@@ -23,6 +23,7 @@
 #include <src/catapult/cache/CatapultCache.h>
 #include <src/catapult/io/BlockStorageCache.h>
 #include <src/catapult/state/CatapultState.h>
+#include <src/catapult/config/LocalNodeConfiguration.h>
 
 #pragma once
 
@@ -56,20 +57,33 @@ namespace catapult { namespace extensions {
 		/// Creates a local node state state composed of
 		/// \a config, \a state, \a cache, \a storage and \a score.
 		LocalNodeState(
-				const config::LocalNodeConfiguration& config,
+				config::LocalNodeConfiguration&& config,
+				std::unique_ptr<io::BlockStorage>&& pStorage)
+				: Config(std::move(config))
+				, State()
+				, CurrentCache({})
+				, PreviousCache({})
+				, Storage(std::move(pStorage))
+				, Score()
+		{}
+
+		/// Creates a local node state state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeState(
+				config::LocalNodeConfiguration&& config,
 				std::unique_ptr<io::BlockStorage>&& pStorage,
 				cache::CatapultCache&& cache)
-				: Config(config)
+				: Config(std::move(config))
 				, State()
 				, CurrentCache(std::move(cache))
-				, PreviousCache(std::move(cache))
+				, PreviousCache({})
 				, Storage(std::move(pStorage))
 				, Score()
 		{}
 
 	public:
 		/// Local node configuration.
-		const config::LocalNodeConfiguration& Config;
+		config::LocalNodeConfiguration Config;
 
 		/// Local node state.
 		state::CatapultState State;

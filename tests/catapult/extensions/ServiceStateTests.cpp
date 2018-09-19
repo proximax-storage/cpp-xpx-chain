@@ -18,13 +18,13 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/extensions/ServiceState.h"
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ServiceLocator.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/thread/MultiServicePool.h"
-#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
@@ -41,8 +41,7 @@ namespace catapult { namespace extensions {
 		const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromKilobytes(1234);
 
 		ionet::NodeContainer nodes;
-		extensions::LocalNodeState state(config, std::make_unique<mocks::MockMemoryBasedStorage>());
-		extensions::LocalNodeStateRef stateRef(state);
+		extensions::LocalNodeStateRef state = test::LocalNodeStateUtils::CreateLocalNodeStateRef(std::move(config));
 		auto pUtCache = test::CreateUtCacheProxy();
 
 		auto numTimeSupplierCalls = 0u;
@@ -61,7 +60,7 @@ namespace catapult { namespace extensions {
 
 		// Act:
 		auto serviceState = ServiceState(
-				stateRef,
+				state,
 				nodes,
 				*pUtCache,
 				timeSupplier,

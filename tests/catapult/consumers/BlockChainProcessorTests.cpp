@@ -30,6 +30,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
+#include "test/MockSyncState.h"
 
 using namespace catapult::validators;
 using catapult::disruptor::BlockElements;
@@ -204,11 +205,11 @@ namespace catapult { namespace consumers {
 			BlockChainSyncHandlers Handlers;
 
 		public:
-			ValidationResult Process(const model::BlockElement&, BlockElements& elements) {
+			ValidationResult Process(const model::BlockElement& parentBlock, BlockElements& elements) {
 				auto cache = test::CreateCatapultCacheWithMarkerAccount();
-				auto delta = cache.createDelta();
+				auto state = std::make_unique<test::MockSyncState>(cache, parentBlock);
 
-				return Processor(*std::make_unique<SyncState>(), elements);
+				return Processor(*state, elements);
 			}
 
 			ValidationResult Process(const model::Block& parentBlock, BlockElements& elements) {
@@ -265,7 +266,6 @@ namespace catapult { namespace consumers {
 					EXPECT_EQ(blockElement.Block.Height, params.Height) << message;
 					EXPECT_EQ(blockElement.Block.Timestamp, params.Timestamp) << message;
 					EXPECT_EQ(expectedEntityInfos, params.EntityInfos) << message;
-					EXPECT_EQ(&State, params.pState) << message;
 					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
 					EXPECT_EQ(i, params.NumDifficultyInfos) << message;
 					++i;

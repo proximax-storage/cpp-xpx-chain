@@ -24,14 +24,13 @@
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/io/FileLock.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "filechain/src/LocalNodeStateStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
 #include <boost/filesystem.hpp>
 
 namespace catapult { namespace filechain {
@@ -73,7 +72,7 @@ namespace catapult { namespace filechain {
 			EXPECT_EQ(expectedView.sub<cache::BlockDifficultyCache>().size(), actualView.sub<cache::BlockDifficultyCache>().size());
 		}
 
-		std::unique_ptr<extensions::LocalNodeState> createLocalNodeState(std::string name, cache::CatapultCache& cache) {
+		std::shared_ptr<extensions::LocalNodeState> createLocalNodeState(std::string name, cache::CatapultCache& cache) {
 			auto UserConfig = config::UserConfiguration::Uninitialized();
 			UserConfig.DataDirectory = name;
 			auto LocalConfig = config::LocalNodeConfiguration(
@@ -83,11 +82,7 @@ namespace catapult { namespace filechain {
 					std::move(UserConfig)
 			);
 
-			return std::make_unique<extensions::LocalNodeState>(
-					LocalConfig,
-					std::make_unique<mocks::MockMemoryBasedStorage>(),
-					std::move(cache)
-			);
+			return test::LocalNodeStateUtils::CreateLocalNodeState(std::move(LocalConfig), std::move(cache));
 		}
 
 		cache::SupplementalData SaveState(const std::string& dataDirectory, cache::CatapultCache& cache) {

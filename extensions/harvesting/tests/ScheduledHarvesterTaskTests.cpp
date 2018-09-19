@@ -19,15 +19,12 @@
 **/
 
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/config/LocalNodeConfiguration.h"
-#include "catapult/config/LoggingConfiguration.h"
-#include "catapult/config/UserConfiguration.h"
 #include "harvesting/src/Harvester.h"
 #include "harvesting/src/ScheduledHarvesterTask.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/TestHarness.h"
 
 using catapult::crypto::KeyPair;
@@ -144,11 +141,7 @@ namespace catapult { namespace harvesting {
 		auto CreateHarvester(HarvesterContext& context) {
 			return std::make_unique<Harvester>(
 					extensions::LocalNodeStateRef(
-							*std::make_unique<extensions::LocalNodeState>(
-									CreateConfiguration(context.Config),
-									std::make_unique<mocks::MockMemoryBasedStorage>(),
-									std::move(context.Cache)
-							)
+							*test::LocalNodeStateUtils::CreateLocalNodeState(CreateConfiguration(context.Config), std::move(context.Cache))
 					),
 					context.Accounts,
 					[](size_t) { return TransactionsInfo(); });
