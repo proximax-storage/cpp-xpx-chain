@@ -32,6 +32,9 @@ namespace catapult { namespace api {
 
 		/// Chain height.
 		catapult::Height Height;
+
+		/// Chain difficulty.
+		catapult::Difficulty Difficulty;
 	};
 
 	/// A packet containing header information and a height.

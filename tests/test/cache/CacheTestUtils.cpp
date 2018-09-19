@@ -22,7 +22,6 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache/SubCachePluginAdapter.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
-#include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/nodeps/Random.h"
 
@@ -52,9 +51,6 @@ namespace catapult { namespace test {
 			config.ImportanceGrouping,
 			config.MinHarvesterBalance
 		});
-
-		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(
-				CalculateDifficultyHistorySize(config));
 	}
 
 	// endregion

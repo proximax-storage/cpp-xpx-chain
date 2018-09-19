@@ -21,7 +21,6 @@
 #include "filechain/src/FileBlockChainStorage.h"
 #include "plugins/services/hashcache/src/cache/HashCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/EntityFactory.h"
@@ -344,16 +343,6 @@ namespace catapult { namespace filechain {
 
 			return sum;
 		}
-
-		void AssertBlockDifficultyCacheRange(
-				const cache::BlockDifficultyCacheView& view,
-				Height expectedStartHeight,
-				Height expectedEndHeight) {
-			auto pIterableView = view.tryMakeIterableView();
-			ASSERT_TRUE(!!pIterableView);
-			EXPECT_EQ(expectedStartHeight, pIterableView->begin()->BlockHeight);
-			EXPECT_EQ(expectedEndHeight, std::prev(pIterableView->end())->BlockHeight);
-		}
 	}
 
 	TEST(TEST_CLASS, ProperTransientCacheStateAfterLoadingMultipleBlocks_AllBlocksContributeToTransientState) {
@@ -377,10 +366,6 @@ namespace catapult { namespace filechain {
 		EXPECT_EQ(
 				numTotalTransferTransactions + Num_Nemesis_Accounts + Num_Nemesis_Namespaces + 2 * Num_Nemesis_Mosaics,
 				cacheView.sub<cache::HashCache>().size());
-
-		const auto& blockDifficultyCache = cacheView.sub<cache::BlockDifficultyCache>();
-		EXPECT_EQ(transactionCounts.size() + 1, blockDifficultyCache.size());
-		AssertBlockDifficultyCacheRange(blockDifficultyCache, Height(1), Height(1 + transactionCounts.size()));
 	}
 
 	namespace {
@@ -407,13 +392,6 @@ namespace catapult { namespace filechain {
 			//         (note that transactionCounts indexes 0..N correspond to heights 2..N+2)
 			auto cacheView = context.cacheView();
 			EXPECT_EQ(numTotalTransactions, cacheView.sub<cache::HashCache>().size());
-
-			const auto& blockDifficultyCache = cacheView.sub<cache::BlockDifficultyCache>();
-			EXPECT_EQ(numExpectedSignificantBlocks, blockDifficultyCache.size());
-			AssertBlockDifficultyCacheRange(
-					blockDifficultyCache,
-					Height(2 + startAllObserversIndex),
-					Height(1 + transactionCounts.size()));
 		}
 	}
 
@@ -470,14 +448,6 @@ namespace catapult { namespace filechain {
 				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
 				++i;
 			}
-
-			// - spot check the block difficulty cache
-			const auto& blockDifficultyCache = cacheView.sub<cache::BlockDifficultyCache>();
-			EXPECT_EQ(maxDifficultyBlocks, blockDifficultyCache.size());
-			AssertBlockDifficultyCacheRange(
-					blockDifficultyCache,
-					storageChainHeight - Height(maxDifficultyBlocks) + Height(1),
-					storageChainHeight);
 		}
 	}
 
@@ -540,7 +510,7 @@ namespace catapult { namespace filechain {
 		// Arrange:
 		RunReloadWithInconsistentCacheAndStorageHeightTest(false, [](
 				auto& context,
-				auto maxDifficultyBlocks,
+				auto /*maxDifficultyBlocks*/,
 				const auto& amountsCollected,
 				const auto& newAccounts) {
 			auto storageChainHeight = Height(Num_Recipient_Accounts + 1);
@@ -560,11 +530,6 @@ namespace catapult { namespace filechain {
 				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
 				++i;
 			}
-
-			// - spot check the block difficulty cache (notice that pruning leaves an extra entry in the cache)
-			const auto& blockDifficultyCache = cacheView.template sub<cache::BlockDifficultyCache>();
-			EXPECT_EQ(maxDifficultyBlocks + 1, blockDifficultyCache.size());
-			AssertBlockDifficultyCacheRange(blockDifficultyCache, storageChainHeight - Height(maxDifficultyBlocks), storageChainHeight);
 		});
 	}
 
@@ -588,10 +553,6 @@ namespace catapult { namespace filechain {
 
 			// - save to disk
 			context.save();
-
-			// - delete a cache state file
-			auto cacheStateFilename = boost::filesystem::path(tempDataDirectory.name()) / "state" / "BlockDifficultyCache.dat";
-			remove(cacheStateFilename.generic_string().c_str());
 		}
 
 		// Act + Assert: reload the state from the saved cache state (the reload should fail due to incomplete saved cache state)

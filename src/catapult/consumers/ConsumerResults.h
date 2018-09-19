@@ -52,17 +52,14 @@ namespace catapult { namespace consumers {
 	/// Validation failed because the chain part does not link to the current chain.
 	DEFINE_CONSUMER_RESULT(Remote_Chain_Unlinked, 0x3001);
 
-	/// Validation failed because the remote chain difficulties do not match the calculated difficulties.
-	DEFINE_CONSUMER_RESULT(Remote_Chain_Mismatched_Difficulties, 0x3002);
-
-	/// Validation failed because the remote chain score is not better.
-	DEFINE_CONSUMER_RESULT(Remote_Chain_Score_Not_Better, 0x3003);
+	/// Validation failed because the remote chain cumulative difficulty is not better.
+	DEFINE_CONSUMER_RESULT(Remote_Chain_Difficulty_Not_Better, 0x3002);
 
 	/// Validation failed because the remote chain is too far behind.
-	DEFINE_CONSUMER_RESULT(Remote_Chain_Too_Far_Behind, 0x3004);
+	DEFINE_CONSUMER_RESULT(Remote_Chain_Too_Far_Behind, 0x3003);
 
 	/// Validation failed because the remote chain timestamp is too far in the future.
-	DEFINE_CONSUMER_RESULT(Remote_Chain_Too_Far_In_Future, 0x3005);
+	DEFINE_CONSUMER_RESULT(Remote_Chain_Too_Far_In_Future, 0x3004);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

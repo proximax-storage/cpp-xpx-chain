@@ -34,9 +34,6 @@ namespace catapult { namespace consumers {
 	/// Extracts all transaction hashes from \a elements.
 	utils::HashPointerSet ExtractTransactionHashes(const BlockElements& elements);
 
-	/// Extracts all blocks from \a elements.
-	std::vector<const model::Block*> ExtractBlocks(const BlockElements& elements);
-
 	/// Extracts all non-skipped entity infos from \a elements into \a entityInfos and stores corresponding element indexes
 	/// in \a entityInfoElementIndexes.
 	void ExtractEntityInfos(

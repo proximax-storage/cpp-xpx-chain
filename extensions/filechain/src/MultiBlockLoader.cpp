@@ -78,7 +78,7 @@ namespace catapult { namespace filechain {
 	namespace {
 		class AnalyzeProgressLogger {
 		private:
-			static constexpr auto Log_Interval_Millis = 2'000;
+			static constexpr auto Log_Interval_Millis = 2000;
 
 		public:
 			explicit AnalyzeProgressLogger(const utils::StackLogger& stopwatch) : m_stopwatch(stopwatch), m_numLogs(0)

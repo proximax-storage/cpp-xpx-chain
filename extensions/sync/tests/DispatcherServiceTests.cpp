@@ -21,7 +21,6 @@
 #include "sync/src/DispatcherService.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/plugins/PluginLoader.h"
@@ -79,9 +78,6 @@ namespace catapult { namespace sync {
 		void InitializeCatapultCacheForDispatcherTests(cache::CatapultCache& cache, const crypto::KeyPair& signer) {
 			// create the delta
 			auto delta = cache.createDelta();
-
-			// set a difficulty for the nemesis block
-			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), Timestamp(0), Difficulty());
 
 			// add a balance and importance for the signer
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(signer.publicKey(), Height(1));

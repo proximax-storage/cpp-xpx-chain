@@ -43,7 +43,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetCacheNames() {
-				return { "AccountStateCache", "BlockDifficultyCache" };
+				return { "AccountStateCache" };
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {

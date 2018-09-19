@@ -314,13 +314,14 @@ namespace catapult { namespace tools { namespace health {
 	}
 
 	thread::future<api::ChainInfo> CreateApiNodeChainInfoFuture(thread::IoServiceThreadPool& pool, const ionet::Node& node) {
-		auto apiUris = std::vector<std::string>{ "/chain/height", "/chain/score" };
+		auto apiUris = std::vector<std::string>{ "/chain/height", "/chain/difficulty" };
 		auto pRetriever = std::make_shared<MultiHttpGetRetriever>(pool.service(), node.endpoint().Host, Rest_Api_Port, apiUris);
 		pRetriever->start();
 		return pRetriever->future().then([pRetriever](auto&& valuesMapFuture) {
 			auto valuesMap = valuesMapFuture.get();
 			api::ChainInfo chainInfo;
 			chainInfo.Height = Height(valuesMap["height"]);
+			chainInfo.Difficulty = Difficulty(valuesMap["difficulty"]);
 			return chainInfo;
 		});
 	}

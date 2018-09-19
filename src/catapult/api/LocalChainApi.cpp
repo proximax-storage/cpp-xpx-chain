@@ -38,7 +38,9 @@ namespace catapult { namespace api {
 		public:
 			thread::future<ChainInfo> chainInfo() const override {
 				auto info = ChainInfo();
-				info.Height = m_storage.view().chainHeight();
+				auto view = m_storage.view();
+				info.Height = view.chainHeight();
+				info.Difficulty = view.loadBlock(info.Height)->CumulativeDifficulty;
 				return thread::make_ready_future(std::move(info));
 			}
 

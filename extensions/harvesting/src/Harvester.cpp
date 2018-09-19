@@ -20,7 +20,6 @@
 
 #include "Harvester.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/model/BlockUtils.h"
@@ -65,8 +64,8 @@ namespace catapult { namespace harvesting {
 			averageBlockTime = lastBlockElement.Block.Timestamp / lastBlockElement.Block.Height.unwrap();
 		} else {
 			auto storageView = m_storage.view();
-			auto pBlockElement = storageView.loadBlockElement(Height(lastBlockElement.Block.Height.unwrap() - Block_Timestamp_History_Size));
-			averageBlockTime = (lastBlockElement.Block.Timestamp - pBlockElement->Block.Timestamp) / Block_Timestamp_History_Size;
+			auto pBlock = storageView.loadBlock(Height(lastBlockElement.Block.Height.unwrap() - Block_Timestamp_History_Size));
+			averageBlockTime = (lastBlockElement.Block.Timestamp - pBlock->Timestamp) / Block_Timestamp_History_Size;
 		}
 		hitContext.BaseTarget = chain::CalculateBaseTarget(lastBlockElement.Block.BaseTarget, averageBlockTime);
 

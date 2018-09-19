@@ -20,7 +20,6 @@
 
 #include "harvesting/src/ScheduledHarvesterTask.h"
 #include "harvesting/src/Harvester.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
@@ -93,14 +92,6 @@ namespace catapult { namespace harvesting {
 			disruptor::ProcessingCompleteFunc CompletionFunction;
 		};
 
-		void AddDifficultyInfo(cache::CatapultCache& cache, const model::Block& block) {
-			auto delta = cache.createDelta();
-			auto& difficultyCache = delta.sub<cache::BlockDifficultyCache>();
-			state::BlockDifficultyInfo info(block.Height, block.Timestamp, block.CumulativeDifficulty);
-			difficultyCache.insert(info);
-			cache.commit(Height());
-		}
-
 		KeyPair AddImportantAccount(cache::CatapultCache& cache) {
 			auto keyPair = KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
 			auto delta = cache.createDelta();
@@ -118,13 +109,11 @@ namespace catapult { namespace harvesting {
 		}
 
 		struct HarvesterContext {
-			HarvesterContext(const model::Block& lastBlock)
+			HarvesterContext(const model::Block& /*lastBlock*/)
 					: Config(CreateConfiguration())
 					, Cache(test::CreateEmptyCatapultCache(Config))
 					, Accounts(1)
-					, Storage(std::make_unique<mocks::MockMemoryBasedStorage>()) {
-				AddDifficultyInfo(Cache, lastBlock);
-			}
+					, Storage(std::make_unique<mocks::MockMemoryBasedStorage>()) {}
 
 			model::BlockChainConfiguration Config;
 			cache::CatapultCache Cache;

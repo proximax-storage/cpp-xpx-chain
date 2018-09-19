@@ -112,7 +112,9 @@ namespace catapult { namespace handlers {
 					return;
 
 				auto pResponsePacket = ionet::CreateSharedPacket<RequestType>();
-				pResponsePacket->Height = storage.view().chainHeight();
+				auto view = storage.view();
+				pResponsePacket->Height = view.chainHeight();
+				pResponsePacket->Difficulty = view.loadBlock(pResponsePacket->Height)->CumulativeDifficulty;
 				context.response(ionet::PacketPayload(pResponsePacket));
 			};
 		}

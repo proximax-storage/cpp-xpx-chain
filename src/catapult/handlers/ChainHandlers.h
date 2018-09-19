@@ -38,7 +38,7 @@ namespace catapult { namespace handlers {
 	void RegisterPullBlockHandler(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage);
 
 	/// Registers a chain info handler in \a handlers that responds with the height of the chain in \a storage
-	/// and the score of the chain returned by \a chainScoreSupplier.
+	/// and the cumulative difficulty of the chain.
 	void RegisterChainInfoHandler(
 			ionet::ServerPacketHandlers& handlers,
 			const io::BlockStorageCache& storage);

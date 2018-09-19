@@ -19,8 +19,6 @@
 **/
 
 #include "catapult/chain/ChainUtils.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/TimeSpan.h"

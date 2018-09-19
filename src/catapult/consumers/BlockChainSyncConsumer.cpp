@@ -157,10 +157,9 @@ namespace catapult { namespace consumers {
 				if (heightDifference > m_maxRollbackBlocks)
 					return Abort(Failure_Consumer_Remote_Chain_Too_Far_Behind);
 
-				// 3. check difficulties against difficulties in cache
-				auto blocks = ExtractBlocks(elements);
-				if (!m_handlers.DifficultyChecker(blocks, m_cache))
-					return Abort(Failure_Consumer_Remote_Chain_Mismatched_Difficulties);
+				// 3. check remote difficulty against difficulty in cache
+				if (!m_handlers.DifficultyChecker(elements[elements.size() - 1].Block, storageView.loadBlockElement(localChainHeight)->Block))
+					return Abort(Failure_Consumer_Remote_Chain_Difficulty_Not_Better);
 
 				// 4. unwind to the common block height
 				syncState = SyncState(m_cache, m_state);

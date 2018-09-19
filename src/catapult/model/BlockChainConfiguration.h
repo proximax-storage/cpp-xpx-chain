@@ -108,11 +108,6 @@ namespace catapult { namespace model {
 				+ CalculateRollbackVariabilityBufferDuration(config).millis());
 	}
 
-	/// Calculates the number of historical difficulties to cache in memory for the block chain described by \a config.
-	constexpr uint64_t CalculateDifficultyHistorySize(const BlockChainConfiguration& config) {
-		return config.MaxRollbackBlocks + config.MaxDifficultyBlocks;
-	}
-
 	/// Gets the total importance for the block chain described by \a config.
 	constexpr Importance GetTotalImportance(const BlockChainConfiguration& config) {
 		return Importance(config.TotalChainBalance.xpx().unwrap());

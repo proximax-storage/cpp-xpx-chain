@@ -46,6 +46,7 @@ namespace catapult { namespace api {
 					return false;
 
 				result.Height = pResponse->Height;
+				result.Difficulty = pResponse->Difficulty;
 				return true;
 			}
 		};

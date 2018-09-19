@@ -21,7 +21,6 @@
 #include "catapult/consumers/BlockChainProcessor.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/consumers/InputUtils.h"
 #include "catapult/model/BlockUtils.h"

@@ -25,7 +25,6 @@
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
@@ -116,14 +115,13 @@ namespace catapult { namespace sync {
 		}
 
 		BlockChainSyncHandlers CreateBlockChainSyncHandlers(extensions::ServiceState& state, RollbackInfo& rollbackInfo) {
-			const auto& blockChainConfig = state.config().BlockChain;
 			const auto& pluginManager = state.pluginManager();
 
 			BlockChainSyncHandlers syncHandlers;
-			syncHandlers.DifficultyChecker = [&rollbackInfo, blockChainConfig](const auto& blocks, const cache::CatapultCache& cache) {
-				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, blockChainConfig);
+			syncHandlers.DifficultyChecker = [&rollbackInfo](const model::Block& remoteBlock, const model::Block& localBlock) {
+				auto result = remoteBlock.CumulativeDifficulty > localBlock.CumulativeDifficulty;
 				rollbackInfo.reset();
-				return blocks.size() == result;
+				return result;
 			};
 
 			auto undoBlockHandler = CreateSyncUndoBlockHandler(extensions::CreateUndoEntityObserver(pluginManager));
