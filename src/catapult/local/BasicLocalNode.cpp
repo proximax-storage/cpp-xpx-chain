@@ -77,7 +77,8 @@ namespace catapult { namespace local {
 				utils::StackLogger stackLogger("booting local node", utils::LogLevel::Info);
 				extensionManager.preLoadHandler()(m_state.CurrentCache);
 				m_pBlockChainStorage->loadFromStorage(stateRef(), m_pluginManager);
-				m_pBlockChainStorage->saveToStorage(stateCref());
+//				Maybe will be better to save state after boot. But need to think about it
+//				m_pBlockChainStorage->saveToStorage(stateCref());
 
 				CATAPULT_LOG(debug) << "booting extension services";
 				auto serviceState = extensions::ServiceState(

@@ -36,7 +36,7 @@ namespace catapult { namespace harvesting {
 		/// Creates a harvester around a catapult \a localNodeState, an unlocked accounts set (\a unlockedAccounts)
 		/// and a transactions info supplier (\a transactionsInfoSupplier).
 		explicit Harvester(
-				const extensions::LocalNodeStateRef& localNodeState,
+				extensions::LocalNodeStateRef localNodeState,
 				const UnlockedAccounts& unlockedAccounts,
 				const TransactionsInfoSupplier& transactionsInfoSupplier);
 
@@ -46,7 +46,7 @@ namespace catapult { namespace harvesting {
 		std::unique_ptr<model::Block> harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp);
 
 	private:
-		const extensions::LocalNodeStateRef& m_localNodeState;
+		extensions::LocalNodeStateRef m_localNodeState;
 		const UnlockedAccounts& m_unlockedAccounts;
 		TransactionsInfoSupplier m_transactionsInfoSupplier;
 	};

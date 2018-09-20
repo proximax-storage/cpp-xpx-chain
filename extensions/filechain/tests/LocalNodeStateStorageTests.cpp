@@ -72,7 +72,7 @@ namespace catapult { namespace filechain {
 			EXPECT_EQ(expectedView.sub<cache::BlockDifficultyCache>().size(), actualView.sub<cache::BlockDifficultyCache>().size());
 		}
 
-		std::shared_ptr<extensions::LocalNodeState> createLocalNodeState(std::string name, cache::CatapultCache& cache) {
+		std::shared_ptr<extensions::LocalNodeState> createLocalNodeState(std::string name) {
 			auto UserConfig = config::UserConfiguration::Uninitialized();
 			UserConfig.DataDirectory = name;
 			auto LocalConfig = config::LocalNodeConfiguration(
@@ -82,7 +82,7 @@ namespace catapult { namespace filechain {
 					std::move(UserConfig)
 			);
 
-			return test::LocalNodeStateUtils::CreateLocalNodeState(std::move(LocalConfig), std::move(cache));
+			return test::LocalNodeStateUtils::CreateLocalNodeState(std::move(LocalConfig));
 		}
 
 		cache::SupplementalData SaveState(const std::string& dataDirectory, cache::CatapultCache& cache) {
@@ -99,7 +99,7 @@ namespace catapult { namespace filechain {
 
 			supplementalData.ChainScore = model::ChainScore(0x1234567890ABCDEF, 0xFEDCBA0987654321);
 			supplementalData.State.LastRecalculationHeight = model::ImportanceHeight(12345);
-			auto state = extensions::LocalNodeStateConstRef(*createLocalNodeState(dataDirectory, cache));
+			auto state = extensions::LocalNodeStateConstRef(*createLocalNodeState(dataDirectory), cache);
 			filechain::SaveState(state);
 			return { state.State, state. Score.get() };
 		}
@@ -114,7 +114,7 @@ namespace catapult { namespace filechain {
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 		cache::SupplementalData supplementalData;
-		auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(tempDir.name(), cache)), supplementalData);
+		auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(tempDir.name()), cache), supplementalData);
 
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
@@ -137,7 +137,7 @@ namespace catapult { namespace filechain {
 			// Act: load the cache
 			auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			cache::SupplementalData supplementalData;
-			auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(dataDirectory, cache)), supplementalData);
+			auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(dataDirectory), cache), supplementalData);
 
 			// Assert:
 			EXPECT_FALSE(isStateLoaded);
@@ -190,7 +190,7 @@ namespace catapult { namespace filechain {
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 		cache::SupplementalData supplementalData;
-		auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(tempDir.name(), cache)), supplementalData);
+		auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(tempDir.name()), cache), supplementalData);
 
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);

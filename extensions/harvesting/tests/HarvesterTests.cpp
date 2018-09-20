@@ -130,7 +130,8 @@ namespace catapult { namespace harvesting {
 			auto CreateHarvester(config::LocalNodeConfiguration&& config, const TransactionsInfoSupplier& transactionsInfoSupplier) {
 				return std::make_unique<Harvester>(
 						extensions::LocalNodeStateRef(
-								*test::LocalNodeStateUtils::CreateLocalNodeState(std::move(config), std::move(Cache))
+								*test::LocalNodeStateUtils::CreateLocalNodeState(std::move(config)),
+								Cache
 						),
 						*pUnlockedAccounts,
 						transactionsInfoSupplier

@@ -115,6 +115,17 @@ namespace catapult { namespace extensions {
 				, Score(state.Score)
 		{}
 
+		/// Creates a local node state ref referencing state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeStateRef(LocalNodeState& state, cache::CatapultCache& currentCache)
+				: Config(state.Config)
+				, State(state.State)
+				, CurrentCache(currentCache)
+				, PreviousCache(state.PreviousCache)
+				, Storage(state.Storage)
+				, Score(state.Score)
+		{}
+
 	public:
 		/// Local node configuration.
 		const config::LocalNodeConfiguration& Config;
@@ -144,6 +155,17 @@ namespace catapult { namespace extensions {
 				: Config(state.Config)
 				, State(state.State)
 				, CurrentCache(state.CurrentCache)
+				, PreviousCache(state.PreviousCache)
+				, Storage(state.Storage)
+				, Score(state.Score)
+		{}
+		
+		/// Creates a local node state const ref referencing state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeStateConstRef(const LocalNodeState& state, const cache::CatapultCache& currentCache)
+				: Config(state.Config)
+				, State(state.State)
+				, CurrentCache(currentCache)
 				, PreviousCache(state.PreviousCache)
 				, Storage(state.Storage)
 				, Score(state.Score)

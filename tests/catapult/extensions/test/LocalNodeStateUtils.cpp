@@ -52,6 +52,7 @@ namespace catapult { namespace test {
 		std::shared_ptr<extensions::LocalNodeState> LocalNodeStateUtils::CreateLocalNodeState(cache::CatapultCache&& cache) {
 			auto blockConfig = model::BlockChainConfiguration::Uninitialized();
 			blockConfig.EffectiveBalanceRange = 1440;
+
 			auto LocalConfig = config::LocalNodeConfiguration(
 					std::move(blockConfig),
 					config::NodeConfiguration::Uninitialized(),
@@ -59,6 +60,10 @@ namespace catapult { namespace test {
 					config::UserConfiguration::Uninitialized()
 			);
 			return LocalNodeStateUtils::CreateLocalNodeState(std::move(LocalConfig), std::move(cache));
+		}
+
+		std::shared_ptr<extensions::LocalNodeState> LocalNodeStateUtils::CreateLocalNodeState() {
+			return LocalNodeStateUtils::CreateLocalNodeState(cache::CatapultCache({}));
 		}
 
 		extensions::LocalNodeStateRef LocalNodeStateUtils::CreateLocalNodeStateRef(cache::CatapultCache&& cache) {

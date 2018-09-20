@@ -141,7 +141,8 @@ namespace catapult { namespace harvesting {
 		auto CreateHarvester(HarvesterContext& context) {
 			return std::make_unique<Harvester>(
 					extensions::LocalNodeStateRef(
-							*test::LocalNodeStateUtils::CreateLocalNodeState(CreateConfiguration(context.Config), std::move(context.Cache))
+							*test::LocalNodeStateUtils::CreateLocalNodeState(CreateConfiguration(context.Config)),
+							context.Cache
 					),
 					context.Accounts,
 					[](size_t) { return TransactionsInfo(); });

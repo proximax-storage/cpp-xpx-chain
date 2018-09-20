@@ -18,12 +18,14 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "timesync/src/TimeSynchronizer.h"
-#include "timesync/src/constants.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
-#include "timesync/tests/test/TimeSynchronizationTestUtils.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/TestHarness.h"
+#include "timesync/src/constants.h"
+#include "timesync/src/TimeSynchronizer.h"
+#include "timesync/tests/test/TimeSynchronizationTestUtils.h"
 #include <cmath>
 
 namespace catapult { namespace timesync {
@@ -44,20 +46,21 @@ namespace catapult { namespace timesync {
 
 		template<typename TKey>
 		void AddAccount(
-				cache::AccountStateCache& cache,
+				cache::CatapultCache& cache,
 				const TKey& key,
 				Importance importance,
 				model::ImportanceHeight importanceHeight) {
 			auto delta = cache.createDelta();
-			auto& accountState = delta->addAccount(key, Height(100));
+			auto& accountCache = delta.sub<cache::AccountStateCache>();
+			auto& accountState = accountCache.addAccount(key, Height(100));
 			accountState.ImportanceInfo.set(importance, importanceHeight);
 			accountState.Balances.credit(Xpx_Id, Amount(1000));
-			cache.commit();
+			cache.commit(Height(100));
 		}
 
 		template<typename TKey>
 		void SeedAccountStateCache(
-				cache::AccountStateCache& cache,
+				cache::CatapultCache& cache,
 				const std::vector<TKey>& keys,
 				const std::vector<Importance>& importances) {
 			for (auto i = 0u; i < keys.size(); ++i)
@@ -74,13 +77,22 @@ namespace catapult { namespace timesync {
 
 		enum class KeyType { Address, PublicKey, };
 
+		model::BlockChainConfiguration createConfig() {
+			auto blockConfig = model::BlockChainConfiguration::Uninitialized();
+			blockConfig.ImportanceGrouping = 234;
+			blockConfig.MinHarvesterBalance = Amount(1000);
+			blockConfig.Network.Identifier = Default_Network_Identifier;
+
+			return blockConfig;
+		}
+
 		class TestContext {
 		public:
 			explicit TestContext(
 					const std::vector<std::pair<int64_t, uint64_t>>& offsetsAndRawImportances,
 					const std::vector<filters::SynchronizationFilter>& filters = {},
 					KeyType keyType = KeyType::PublicKey)
-					: m_cache(cache::CacheConfiguration(), { Default_Network_Identifier, 234, Amount(1000) })
+					: m_cache(test::CreateEmptyCatapultCache(createConfig()))
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), Total_Chain_Balance, Warning_Threshold_Millis) {
 				std::vector<Importance> importances;
 				for (const auto& offsetAndRawImportance : offsetsAndRawImportances) {
@@ -96,7 +108,7 @@ namespace catapult { namespace timesync {
 					SeedAccountStateCache(m_cache, addresses, importances);
 
 				// Sanity:
-				auto view = m_cache.createView();
+				auto view = m_cache.sub<cache::AccountStateCache>().createView();
 				for (auto i = 0u; i < keys.size(); ++i) {
 					if (KeyType::PublicKey == keyType)
 						EXPECT_EQ(importances[i], view->get(keys[i]).ImportanceInfo.current()) << "at index " << i;
@@ -107,7 +119,8 @@ namespace catapult { namespace timesync {
 
 		public:
 			TimeOffset calculateTimeOffset(NodeAge nodeAge = NodeAge()) {
-				return TimeOffset(nodeAge.unwrap());// m_synchronizer.calculateTimeOffset(*m_cache.createView(), Height(1), std::move(m_samples), nodeAge); TODO: ?
+				auto state = extensions::LocalNodeStateRef(*test::LocalNodeStateUtils::CreateLocalNodeState(), m_cache);
+				return m_synchronizer.calculateTimeOffset(state, Height(1), std::move(m_samples), nodeAge);
 			}
 
 			void addHighValueAccounts(size_t count) {
@@ -116,7 +129,7 @@ namespace catapult { namespace timesync {
 			}
 
 		private:
-			cache::AccountStateCache m_cache;
+			cache::CatapultCache m_cache;
 			TimeSynchronizer m_synchronizer;
 			TimeSynchronizationSamples m_samples;
 		};
@@ -175,24 +188,22 @@ namespace catapult { namespace timesync {
 	// region coupling
 
 	namespace {
-		void AssertCorrectTimeOffsetWithCoupling(NodeAge /* nodeAge */, TimeOffset /* expectedTimeOffset */) {
+		void AssertCorrectTimeOffsetWithCoupling(NodeAge nodeAge, TimeOffset expectedTimeOffset) {
 			// Arrange:
 			auto numSamples = 100u;
 			filters::AggregateSynchronizationFilter aggregateFilter({});
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
-			cache::AccountStateCache cache(cache::CacheConfiguration(), cache::AccountStateCacheTypes::Options{
-				model::NetworkIdentifier::Mijin_Test,
-				234,
-				Amount(1000)});
+			cache::CatapultCache cache = test::CreateEmptyCatapultCache(createConfig());
 			SeedAccountStateCache(cache, keys, std::vector<Importance>(numSamples, Importance(Total_Chain_Balance / numSamples)));
 			TimeSynchronizer synchronizer(aggregateFilter, Total_Chain_Balance, Warning_Threshold_Millis);
-//			TODO: ?
-//			// Act:
-//			auto timeOffset = synchronizer.calculateTimeOffset(*cache.createView(), Height(1), std::move(samples), nodeAge);
-//
-//			// Assert:
-//			EXPECT_EQ(expectedTimeOffset, timeOffset);
+
+			auto state = extensions::LocalNodeStateRef(*test::LocalNodeStateUtils::CreateLocalNodeState(), cache);
+			// Act:
+			auto timeOffset = synchronizer.calculateTimeOffset(state, Height(1), std::move(samples), nodeAge);
+
+			// Assert:
+			EXPECT_EQ(expectedTimeOffset, timeOffset);
 		}
 	}
 

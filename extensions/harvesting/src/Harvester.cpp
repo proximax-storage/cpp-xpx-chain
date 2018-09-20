@@ -68,7 +68,7 @@ namespace catapult { namespace harvesting {
 	}
 
 	Harvester::Harvester(
-			const extensions::LocalNodeStateRef& localNodeState,
+			extensions::LocalNodeStateRef localNodeState,
 			const UnlockedAccounts& unlockedAccounts,
 			const TransactionsInfoSupplier& transactionsInfoSupplier)
 			: m_localNodeState(localNodeState)

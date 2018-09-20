@@ -170,9 +170,9 @@ namespace catapult { namespace consumers {
 			}
 
 			virtual BlockChainProcessor createProcessor() const {
-				auto blockChainConfig = m_localNodeState.Config.BlockChain;
+				const auto& blockChainConfig = m_localNodeState.Config.BlockChain;
 				auto processor = CreateBlockChainProcessor(
-						[&blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
+						[blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
 							cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
 							return chain::BlockHitPredicate(blockChainConfig, [view](const auto& publicKey, auto height) {
 								return view.getAccountImportanceOrDefault(publicKey, height);

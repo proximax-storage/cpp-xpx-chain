@@ -39,6 +39,8 @@ namespace catapult { namespace test {
 
 			static std::shared_ptr<extensions::LocalNodeState> CreateLocalNodeState(cache::CatapultCache&& cache);
 
+			static std::shared_ptr<extensions::LocalNodeState> CreateLocalNodeState();
+
 			static std::shared_ptr<extensions::LocalNodeState> CreateLocalNodeState(
 					config::LocalNodeConfiguration&& config, cache::CatapultCache&& cache);
 
