@@ -170,7 +170,6 @@ EXTENSION_FIRSTINCLUDES = {
 
 SKIP_FORWARDS = (
     re.compile(r'src.catapult.validators.ValidatorTypes.h'),
-    re.compile(r'src.catapult.utils.ClampedBaseValue.h'),
     re.compile(r'.*\.cpp$'),
 )
 

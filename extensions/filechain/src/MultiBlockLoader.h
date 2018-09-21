@@ -19,7 +19,6 @@
 **/
 
 #pragma once
-#include "catapult/model/ChainScore.h"
 #include "catapult/observers/ObserverTypes.h"
 #include <functional>
 
@@ -47,7 +46,7 @@ namespace catapult { namespace filechain {
 
 	/// Loads a block chain from storage using the supplied observer factory (\a observerFactory) and updating \a stateRef
 	/// starting with the block at \a startHeight.
-	model::ChainScore LoadBlockChain(
+	void LoadBlockChain(
 			const BlockDependentEntityObserverFactory& observerFactory,
 			const extensions::LocalNodeStateRef& stateRef,
 			Height startHeight);

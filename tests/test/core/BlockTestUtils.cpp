@@ -48,8 +48,9 @@ namespace catapult { namespace test {
 	}
 
 	std::unique_ptr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const ConstTransactions& transactions) {
-		model::PreviousBlockContext context;
-		auto pBlock = CreateBlock(context, Network_Identifier, signer.publicKey(), transactions);
+		model::PreviousBlockContext previousBlockContext;
+		model::BlockHitContext hitContext;
+		auto pBlock = CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), transactions);
 		SignBlock(signer, *pBlock);
 		return pBlock;
 	}
@@ -86,9 +87,10 @@ namespace catapult { namespace test {
 	}
 
 	std::unique_ptr<model::Block> GenerateVerifiableBlockAtHeight(Height height) {
-		model::PreviousBlockContext context;
+		model::PreviousBlockContext previousBlockContext;
+		model::BlockHitContext hitContext;
 		auto signer = GenerateKeyPair();
-		auto pBlock = CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
+		auto pBlock = CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
 		pBlock->Height = height;
 		SignBlock(signer, *pBlock);
 		return pBlock;
@@ -105,7 +107,7 @@ namespace catapult { namespace test {
 		ConstTransactions transactions;
 		transactions.push_back(GenerateDeterministicTransaction());
 		auto pBlock = test::GenerateBlockWithTransactions(keyPair, transactions);
-		pBlock->Difficulty = Difficulty(123'456'789'123'456);
+		pBlock->CumulativeDifficulty = Difficulty(123'456'789'123'456);
 		pBlock->Height = Height(12345);
 		pBlock->Signer = keyPair.publicKey();
 		pBlock->Timestamp = Timestamp(54321);

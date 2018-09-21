@@ -25,7 +25,6 @@
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
@@ -38,7 +37,6 @@
 #include "catapult/consumers/TransactionConsumers.h"
 #include "catapult/disruptor/BatchRangeDispatcher.h"
 #include "catapult/extensions/DispatcherUtils.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
@@ -118,14 +116,13 @@ namespace catapult { namespace sync {
 		}
 
 		BlockChainSyncHandlers CreateBlockChainSyncHandlers(extensions::ServiceState& state, RollbackInfo& rollbackInfo) {
-			const auto& blockChainConfig = state.config().BlockChain;
 			const auto& pluginManager = state.pluginManager();
 
 			BlockChainSyncHandlers syncHandlers;
-			syncHandlers.DifficultyChecker = [&rollbackInfo, blockChainConfig](const auto& blocks, const cache::CatapultCache& cache) {
-				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, blockChainConfig);
+			syncHandlers.DifficultyChecker = [&rollbackInfo](const model::Block& remoteBlock, const model::Block& localBlock) {
+				auto result = remoteBlock.CumulativeDifficulty > localBlock.CumulativeDifficulty;
 				rollbackInfo.reset();
-				return blocks.size() == result;
+				return result;
 			};
 
 			auto undoBlockHandler = CreateSyncUndoBlockHandler(extensions::CreateUndoEntityObserver(pluginManager));
@@ -141,10 +138,6 @@ namespace catapult { namespace sync {
 			syncHandlers.BatchEntityProcessor = chain::CreateBatchEntityProcessor(CreateExecutionConfiguration(pluginManager));
 			syncHandlers.StateChange = [&rollbackInfo, &localScore = state.score(), &subscriber = state.stateChangeSubscriber()](
 					const auto& changeInfo) {
-				localScore += changeInfo.ScoreDelta;
-
-				// note: changeInfo contains only score delta, subscriber will get both current local score and changeInfo
-				subscriber.notifyScoreChange(localScore.get());
 				subscriber.notifyStateChange(changeInfo);
 
 				rollbackInfo.save();

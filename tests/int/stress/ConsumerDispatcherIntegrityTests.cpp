@@ -48,7 +48,7 @@ namespace catapult { namespace disruptor {
 		test::GlobalLogFilter testLogFilter(utils::LogLevel::Info);
 		auto ranges = test::PrepareRanges(1);
 
-		std::atomic<uint64_t> counter1(Difficulty::Min().unwrap());
+		std::atomic<uint64_t> counter1(0/*Difficulty::Min().unwrap()*/);
 		std::atomic<uint64_t> counter2(0);
 		std::atomic<uint64_t> inspectorCounter(0);
 		ConsumerDispatcherOptions options{ "ConsumerDispatcherIntegrityTests", Default_Disruptor_Size };
@@ -82,7 +82,7 @@ namespace catapult { namespace disruptor {
 		constexpr uint64_t Iteration_Count = Outer_Iteration * Elements_Per_Inner_Iteration;
 		WAIT_FOR_VALUE(Iteration_Count, inspectorCounter);
 
-		EXPECT_EQ(Difficulty::Min().unwrap() + Iteration_Count, counter1);
+		EXPECT_EQ(/*Difficulty::Min().unwrap() + */Iteration_Count, counter1);
 		EXPECT_EQ(Iteration_Count, counter2);
 		EXPECT_EQ(Iteration_Count, inspectorCounter);
 	}

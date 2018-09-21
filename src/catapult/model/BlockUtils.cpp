@@ -23,6 +23,7 @@
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/utils/TimeSpan.h"
 #include <cstring>
 
 namespace catapult { namespace model {
@@ -93,9 +94,25 @@ namespace catapult { namespace model {
 			return totalTransactionsSize;
 		}
 
+	    // The cumulative difficulty value is derived from the base target value, using the formula:
+		// Dcb = Dpb + 2^64 / Tb
+		// where:
+		// Dcb is the difficulty of the current block
+		// Dpb is the difficulty of the previous block
+		// Tb is the base target value for the current block
+		Difficulty CalculateCumulativeDifficulty(
+				const BlockTarget& target,
+				const Difficulty& previousBlockDifficulty) {
+			BlockTarget TWO_TO_64{1};
+			TWO_TO_64 <<= 64;
+			auto res = BlockTarget{previousBlockDifficulty.unwrap()} + TWO_TO_64 / target;
+			return Difficulty{res.convert_to<uint64_t>()};
+		}
+
 		template<typename TContainer>
 		std::unique_ptr<Block> CreateBlockT(
-				const PreviousBlockContext& context,
+				const PreviousBlockContext& previousBlockContext,
+				const model::BlockHitContext& hitContext,
 				NetworkIdentifier networkIdentifier,
 				const Key& signerPublicKey,
 				const TContainer& transactions) {
@@ -109,9 +126,11 @@ namespace catapult { namespace model {
 			block.Signer = signerPublicKey;
 			block.Signature = Signature{}; // zero the signature
 			block.Timestamp = Timestamp();
-			block.Height = context.BlockHeight + Height(1);
-			block.Difficulty = Difficulty();
-			block.PreviousBlockHash = context.BlockHash;
+			block.Height = previousBlockContext.BlockHeight + Height(1);
+			block.PreviousBlockHash = previousBlockContext.BlockHash;
+			block.BaseTarget = hitContext.BaseTarget;
+			block.CumulativeDifficulty = CalculateCumulativeDifficulty(hitContext.BaseTarget, previousBlockContext.Difficulty);
+			block.EffectiveBalance = hitContext.EffectiveBalance;
 
 			// append all the transactions
 			auto pDestination = reinterpret_cast<uint8_t*>(block.TransactionsPtr());
@@ -121,11 +140,12 @@ namespace catapult { namespace model {
 	}
 
 	std::unique_ptr<Block> CreateBlock(
-			const PreviousBlockContext& context,
+			const PreviousBlockContext& previousBlockContext,
+			const model::BlockHitContext& hitContext,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
 			const Transactions& transactions) {
-		return CreateBlockT(context, networkIdentifier, signerPublicKey, transactions);
+		return CreateBlockT(previousBlockContext, hitContext, networkIdentifier, signerPublicKey, transactions);
 	}
 
 	// endregion

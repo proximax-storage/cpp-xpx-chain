@@ -32,7 +32,6 @@ namespace catapult {
 		class CatapultCache;
 		class MemoryUtCacheProxy;
 	}
-	namespace extensions { class LocalNodeChainScore; }
 	namespace io { class BlockStorageCache; }
 	namespace ionet { class NodeContainer; }
 	namespace plugins { class PluginManager; }
@@ -51,7 +50,7 @@ namespace catapult { namespace extensions {
 	/// State that is used as part of service registration.
 	class ServiceState {
 	public:
-		/// Creates service state around \a config, \a nodes, \a cache, \a state, \a storage, \a score, \a utCache, \a timeSupplier
+		/// Creates service state around \a config, \a nodes, \a cache, \a state, \a storage, \a utCache, \a timeSupplier
 		/// \a transactionStatusSubscriber, \a stateChangeSubscriber, \a nodeSubscriber, \a counters, \a pluginManager and \a pool.
 		ServiceState(
 				extensions::LocalNodeStateRef& state,
@@ -111,11 +110,6 @@ namespace catapult { namespace extensions {
 		/// Gets the storage.
 		auto& storage() const {
 			return m_state.Storage;
-		}
-
-		/// Gets the score.
-		auto& score() const {
-			return m_state.Score;
 		}
 
 		/// Gets the unconfirmed transactions cache.

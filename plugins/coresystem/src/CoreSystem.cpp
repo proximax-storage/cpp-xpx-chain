@@ -23,7 +23,6 @@
 #include "observers/Observers.h"
 #include "validators/Validators.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
-#include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/PluginManager.h"
@@ -55,26 +54,12 @@ namespace catapult { namespace plugins {
 				});
 			});
 		}
-
-		void AddBlockDifficultyCache(PluginManager& manager, const model::BlockChainConfiguration& config) {
-			using namespace catapult::cache;
-
-			auto difficultyHistorySize = CalculateDifficultyHistorySize(config);
-			manager.addCurrentCacheSupport<BlockDifficultyCacheStorage>(std::make_unique<BlockDifficultyCache>(difficultyHistorySize));
-
-			manager.addDiagnosticCounterHook([](auto& counters, const CatapultCache& cache) {
-				counters.emplace_back(utils::DiagnosticCounterId("BLKDIF C"), [&cache]() {
-					return cache.sub<BlockDifficultyCache>().createView()->size();
-				});
-			});
-		}
 	}
 
 	void RegisterCoreSystem(PluginManager& manager) {
 		const auto& config = manager.config();
 
 		AddAccountStateCache(manager, config);
-		AddBlockDifficultyCache(manager, config);
 
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder
@@ -105,12 +90,7 @@ namespace catapult { namespace plugins {
 					observers::CreateImportanceCalculator(config),
 					observers::CreateRestoreImportanceCalculator());
 			builder
-				.add(std::move(pRecalculateImportancesObserver))
-				.add(observers::CreateBlockDifficultyObserver())
-				.add(observers::CreateCacheBlockPruningObserver<cache::BlockDifficultyCache>(
-						"BlockDifficulty",
-						config.BlockPruneInterval,
-						BlockDuration()));
+				.add(std::move(pRecalculateImportancesObserver));
 		});
 	}
 }}

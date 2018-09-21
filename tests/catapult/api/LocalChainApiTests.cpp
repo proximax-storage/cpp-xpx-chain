@@ -29,7 +29,7 @@ namespace catapult { namespace api {
 
 	namespace {
 		std::unique_ptr<ChainApi> CreateLocalChainApi(const io::BlockStorageCache& storage, uint32_t maxHashes) {
-			return api::CreateLocalChainApi(storage, []() { return model::ChainScore(1); }, maxHashes);
+			return api::CreateLocalChainApi(storage, maxHashes);
 		}
 	}
 
@@ -38,13 +38,9 @@ namespace catapult { namespace api {
 	TEST(TEST_CLASS, CanRetrieveChainInfo) {
 		// Arrange:
 		auto numSupplierCalls = 0;
-		auto chainScoreSupplier = [&numSupplierCalls]() {
-			++numSupplierCalls;
-			return model::ChainScore(12345);
-		};
 
 		auto pStorage = mocks::CreateMemoryBasedStorageCache(12);
-		auto pApi = api::CreateLocalChainApi(*pStorage, chainScoreSupplier, 5);
+		auto pApi = api::CreateLocalChainApi(*pStorage, 5);
 
 		// Act:
 		auto info = pApi->chainInfo().get();
@@ -52,7 +48,6 @@ namespace catapult { namespace api {
 		// Assert:
 		EXPECT_EQ(1u, numSupplierCalls);
 		EXPECT_EQ(Height(12), info.Height);
-		EXPECT_EQ(model::ChainScore(12345), info.Score);
 	}
 
 	// endregion

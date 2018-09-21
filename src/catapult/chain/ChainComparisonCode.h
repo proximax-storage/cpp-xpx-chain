@@ -34,11 +34,11 @@ namespace catapult { namespace chain {
 	/* Remote node is not in sync with the local node. */ \
 	ENUM_VALUE(Remote_Is_Not_Synced, 4) \
 	\
-	/* Remote and local nodes reported equal chain scores. */ \
-	ENUM_VALUE(Remote_Reported_Equal_Chain_Score, 5) \
+	/* Remote and local nodes reported equal chain cumulative difficulties. */ \
+	ENUM_VALUE(Remote_Reported_Equal_Chain_Difficulty, 5) \
 	\
-	/* Remote node reported a lower chain score than the local node. */ \
-	ENUM_VALUE(Remote_Reported_Lower_Chain_Score, 6) \
+	/* Remote node reported a lower chain cumulative difficulty than the local node. */ \
+	ENUM_VALUE(Remote_Reported_Lower_Chain_Difficulty, 6) \
 	\
 	/* Remote node returned too many hashes. */ \
 	ENUM_VALUE(Remote_Returned_Too_Many_Hashes, Remote_Is_Evil_Flag | 2) \

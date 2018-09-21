@@ -39,7 +39,6 @@ namespace catapult { namespace tools { namespace health {
 		public:
 			ionet::Node Node;
 			Height ChainHeight;
-			model::ChainScore ChainScore;
 			model::EntityRange<model::DiagnosticCounterValue> DiagnosticCounters;
 		};
 
@@ -61,7 +60,6 @@ namespace catapult { namespace tools { namespace health {
 			return chainInfoFuture.then([&nodeInfo](auto&& infoFuture) {
 				return UnwrapFutureAndSuppressErrors("querying chain info", std::move(infoFuture), [&nodeInfo](const auto& info) {
 					nodeInfo.ChainHeight = info.Height;
-					nodeInfo.ChainScore = info.Score;
 				});
 			});
 		}
@@ -136,8 +134,7 @@ namespace catapult { namespace tools { namespace health {
 				CATAPULT_LOG_LEVEL(level)
 						<< std::string(GetLevelLeftPadding(level), ' ') << std::setw(static_cast<int>(maxNodeNameSize)) << pNodeInfo->Node
 						<< " [" << (HasFlag(ionet::NodeRoles::Api, pNodeInfo->Node.metadata().Roles) ? "API" : "P2P") << "]"
-						<< " at height " << std::setw(static_cast<int>(maxHeightSize)) << pNodeInfo->ChainHeight
-						<< " with score " << pNodeInfo->ChainScore;
+						<< " at height " << std::setw(static_cast<int>(maxHeightSize)) << pNodeInfo->ChainHeight;
 			}
 		}
 

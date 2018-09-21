@@ -20,7 +20,6 @@
 
 #pragma once
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/ExecutionConfiguration.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/NotificationSubscriber.h"
@@ -83,7 +82,6 @@ namespace catapult { namespace test {
 				, SequenceId(notification.Id)
 				, Context(context)
 				, IsPassedMarkedCache(test::IsMarkedCache(context.Cache))
-				, NumDifficultyInfos(context.Cache.sub<cache::BlockDifficultyCache>().size())
 				, StateCopy(context.State) // make a copy of the state
 		{}
 
@@ -92,7 +90,6 @@ namespace catapult { namespace test {
 		const size_t SequenceId;
 		const observers::ObserverContext Context;
 		const bool IsPassedMarkedCache;
-		const size_t NumDifficultyInfos;
 		const state::CatapultState StateCopy;
 	};
 
@@ -114,10 +111,6 @@ namespace catapult { namespace test {
 			const_cast<MockAggregateNotificationObserver*>(this)->push(
 					test::CastToDerivedNotification<MockNotification>(notification),
 					context);
-
-			// - add a block difficulty info to the cache as a marker
-			auto& cache = context.Cache.sub<cache::BlockDifficultyCache>();
-			cache.insert(state::BlockDifficultyInfo(Height(cache.size() + 1)));
 		}
 
 	private:
@@ -135,7 +128,6 @@ namespace catapult { namespace test {
 				, SequenceId(notification.Id)
 				, Context(context)
 				, IsPassedMarkedCache(test::IsMarkedCache(context.Cache))
-				, NumDifficultyInfos(context.Cache.sub<cache::BlockDifficultyCache>().size())
 		{}
 
 	public:
@@ -143,7 +135,6 @@ namespace catapult { namespace test {
 		const size_t SequenceId;
 		const validators::ValidatorContext Context;
 		const bool IsPassedMarkedCache;
-		const size_t NumDifficultyInfos;
 	};
 
 	class MockAggregateNotificationValidator

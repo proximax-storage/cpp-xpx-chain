@@ -21,7 +21,6 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalData.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/io/FileLock.h"
 #include "catapult/model/Address.h"
 #include "filechain/src/LocalNodeStateStorage.h"
@@ -53,15 +52,9 @@ namespace catapult { namespace filechain {
 			}
 		}
 
-		void PopulateBlockDifficultyCache(cache::BlockDifficultyCacheDelta& cacheDelta) {
-			for (auto i = 0u; i < Block_Cache_Size; ++i)
-				cacheDelta.insert(Height(i), Timestamp(2 * i + 1), Difficulty(3 * i + 1));
-		}
-
 		void SanityAssertCache(const cache::CatapultCache& catapultCache) {
 			auto view = catapultCache.createView();
 			EXPECT_EQ(Account_Cache_Size, view.sub<cache::AccountStateCache>().size());
-			EXPECT_EQ(Block_Cache_Size, view.sub<cache::BlockDifficultyCache>().size());
 		}
 
 		void AssertSubCaches(const cache::CatapultCache& expectedCache, const cache::CatapultCache& actualCache) {
@@ -69,7 +62,6 @@ namespace catapult { namespace filechain {
 			auto actualView = actualCache.createView();
 
 			EXPECT_EQ(expectedView.sub<cache::AccountStateCache>().size(), actualView.sub<cache::AccountStateCache>().size());
-			EXPECT_EQ(expectedView.sub<cache::BlockDifficultyCache>().size(), actualView.sub<cache::BlockDifficultyCache>().size());
 		}
 
 		std::shared_ptr<extensions::LocalNodeState> createLocalNodeState(std::string name) {
@@ -90,14 +82,12 @@ namespace catapult { namespace filechain {
 			{
 				auto delta = cache.createDelta();
 				PopulateAccountStateCache(delta.sub<cache::AccountStateCache>());
-				PopulateBlockDifficultyCache(delta.sub<cache::BlockDifficultyCache>());
 				cache.commit(Height(54321));
 			}
 
 			// Sanity:
 			SanityAssertCache(cache);
 
-			supplementalData.ChainScore = model::ChainScore(0x1234567890ABCDEF, 0xFEDCBA0987654321);
 			supplementalData.State.LastRecalculationHeight = model::ImportanceHeight(12345);
 			auto state = extensions::LocalNodeStateConstRef(*createLocalNodeState(dataDirectory), cache);
 			filechain::SaveState(state);
@@ -119,7 +109,6 @@ namespace catapult { namespace filechain {
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
 		AssertSubCaches(originalCache, cache);
-		EXPECT_EQ(originalSupplementalData.ChainScore, supplementalData.ChainScore);
 		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}
@@ -195,7 +184,6 @@ namespace catapult { namespace filechain {
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
 		AssertSubCaches(originalCache, cache);
-		EXPECT_EQ(originalSupplementalData.ChainScore, supplementalData.ChainScore);
 		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}

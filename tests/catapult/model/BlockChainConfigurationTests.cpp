@@ -234,7 +234,6 @@ namespace catapult { namespace model {
 		EXPECT_EQ(TimeSpanFromMillis(30'001 * 600), CalculateFullRollbackDuration(config));
 		EXPECT_EQ(TimeSpanFromMillis(30'001 * 150), CalculateRollbackVariabilityBufferDuration(config));
 		EXPECT_EQ(TimeSpanFromMillis(30'001 * (600 + 150)), CalculateTransactionCacheDuration(config));
-		EXPECT_EQ(645u, CalculateDifficultyHistorySize(config));
 	}
 
 	TEST(TEST_CLASS, TransactionCacheDurationIncludesBufferTimeOfAtLeastOneHour) {
@@ -249,7 +248,6 @@ namespace catapult { namespace model {
 		EXPECT_EQ(TimeSpanFromMillis(15'000 * 20), CalculateFullRollbackDuration(config));
 		EXPECT_EQ(utils::TimeSpan::FromHours(1), CalculateRollbackVariabilityBufferDuration(config));
 		EXPECT_EQ(TimeSpanFromMillis(15'000 * 20 + One_Hour_Ms), CalculateTransactionCacheDuration(config));
-		EXPECT_EQ(65u, CalculateDifficultyHistorySize(config));
 	}
 
 	TEST(TEST_CLASS, TotalImportanceIsDerivedFromTotalChainBalance) {

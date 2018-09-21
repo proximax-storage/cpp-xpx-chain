@@ -127,11 +127,6 @@ namespace catapult { namespace mongo {
 			EXPECT_EQ(0u, NumTransactionsAtHeight(database, height));
 		}
 
-		template<typename TClamped>
-		TClamped RandomClamped() {
-			return TClamped(TClamped::Min().unwrap() + test::Random() % (TClamped::Max() - TClamped::Min()).unwrap());
-		}
-
 		std::unique_ptr<model::Block> PrepareDbAndBlock(size_t numTransactions = 7) {
 			// Arrange:
 			test::PrepareDatabase(test::DatabaseName());
@@ -139,7 +134,7 @@ namespace catapult { namespace mongo {
 			auto pRawData = reinterpret_cast<uint8_t*>(pBlock.get());
 			test::FillWithRandomData({ pRawData + sizeof(uint32_t), sizeof(model::Block) - sizeof(uint32_t) });
 			pBlock->Height = Height(1);
-			pBlock->Difficulty = RandomClamped<Difficulty>();
+			pBlock->CumulativeDifficulty = Difficulty(test::Random());
 			return pBlock;
 		}
 

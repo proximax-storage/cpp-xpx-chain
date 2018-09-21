@@ -56,7 +56,7 @@ namespace catapult { namespace consumers {
 	struct BlockChainSyncHandlers {
 	public:
 		/// Prototype for checking block difficulties.
-		using DifficultyCheckerFunc = predicate<const std::vector<const model::Block*>&, const cache::CatapultCache&>;
+		using DifficultyCheckerFunc = predicate<const model::Block&, const model::Block&>;
 
 		/// Prototype for undoing a block.
 		using UndoBlockFunc = consumer<const model::BlockElement&, const observers::ObserverState&>;

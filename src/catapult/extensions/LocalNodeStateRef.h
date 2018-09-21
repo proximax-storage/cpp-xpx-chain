@@ -141,9 +141,6 @@ namespace catapult { namespace extensions {
 
 		/// Local node storage.
 		io::BlockStorageCache& Storage;
-
-		/// Local node score.
-		LocalNodeChainScore& Score;
 	};
 
 	/// A const reference to a local node's basic state.
@@ -186,8 +183,5 @@ namespace catapult { namespace extensions {
 
 		/// Local node storage.
 		const io::BlockStorageCache& Storage;
-
-		/// Local node score.
-		const LocalNodeChainScore& Score;
 	};
 }}

@@ -22,7 +22,6 @@
 #include "ConfigurationUtils.h"
 #include "MemoryCounters.h"
 #include "NodeUtils.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
@@ -140,10 +139,6 @@ namespace catapult { namespace local {
 
 			const cache::CatapultCache& previousCache() const override {
 				return m_state.PreviousCache;
-			}
-
-			model::ChainScore score() const override {
-				return m_state.Score.get();
 			}
 
 			LocalNodeCounterValues counters() const override {

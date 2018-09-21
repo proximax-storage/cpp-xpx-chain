@@ -131,8 +131,8 @@ namespace catapult { namespace chain {
 
 		NodeInteractionResult ToNodeInteractionResult(ChainComparisonCode code) {
 			switch (code) {
-			case ChainComparisonCode::Remote_Reported_Equal_Chain_Score:
-			case ChainComparisonCode::Remote_Reported_Lower_Chain_Score:
+			case ChainComparisonCode::Remote_Reported_Equal_Chain_Difficulty:
+			case ChainComparisonCode::Remote_Reported_Lower_Chain_Difficulty:
 				return NodeInteractionResult::Neutral;
 			default:
 				return NodeInteractionResult::Failure;

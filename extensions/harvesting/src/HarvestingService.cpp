@@ -77,7 +77,8 @@ namespace catapult { namespace harvesting {
 					std::make_unique<Harvester>(
 							nodeLocalState,
 							unlockedAccounts,
-							CreateTransactionsInfoSupplier(state.utCache())));
+							CreateTransactionsInfoSupplier(state.utCache()),
+							state.storage()));
 
 			auto minHarvesterBalance = nodeLocalState.Config.BlockChain.MinHarvesterBalance;
 			return thread::CreateNamedTask("harvesting task", [&nodeLocalState, &unlockedAccounts, pHarvesterTask, minHarvesterBalance]() {

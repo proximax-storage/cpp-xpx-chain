@@ -21,6 +21,7 @@
 #pragma once
 
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/Elements.h"
 #include "catapult/model/EntityInfo.h"
@@ -38,7 +39,8 @@ namespace catapult { namespace harvesting {
 		explicit Harvester(
 				extensions::LocalNodeStateRef localNodeState,
 				const UnlockedAccounts& unlockedAccounts,
-				const TransactionsInfoSupplier& transactionsInfoSupplier);
+				const TransactionsInfoSupplier& transactionsInfoSupplier,
+				const io::BlockStorageCache& storage);
 
 	public:
 		/// Creates the best block (if any) harvested by any unlocked account.
@@ -49,5 +51,6 @@ namespace catapult { namespace harvesting {
 		extensions::LocalNodeStateRef m_localNodeState;
 		const UnlockedAccounts& m_unlockedAccounts;
 		TransactionsInfoSupplier m_transactionsInfoSupplier;
+		const io::BlockStorageCache& m_storage;
 	};
 }}

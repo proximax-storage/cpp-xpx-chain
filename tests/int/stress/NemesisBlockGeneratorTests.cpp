@@ -80,8 +80,9 @@ namespace catapult {
 				transactions.push_back(std::move(pTransfer));
 			}
 
-			model::PreviousBlockContext context;
-			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), transactions);
+			model::PreviousBlockContext previousBlockContext;
+			model::BlockHitContext hitContext;
+			auto pBlock = model::CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), transactions);
 			test::SignBlock(signer, *pBlock);
 			return pBlock;
 		}

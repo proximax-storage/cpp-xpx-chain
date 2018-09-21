@@ -26,6 +26,7 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "BlockChainSyncHandlers.h"
+#include "catapult/utils/TimeSpan.h"
 #include <functional>
 
 namespace catapult {
@@ -41,11 +42,11 @@ namespace catapult { namespace consumers {
 			SyncState&,
 			disruptor::BlockElements&)>;
 
-	/// A predicate for determining whether or not two blocks form a hit.
-	using BlockHitPredicate = predicate<const model::Block&, const model::Block&, const Hash256&>;
+	/// A predicate for determining whether or not a block form a hit.
+	using BlockHitPredicate = predicate<const Hash256&, const BlockTarget&, const utils::TimeSpan&, const Amount&>;
 
 	/// A factory for creating a predicate for determining whether or not two blocks form a hit.
-	using BlockHitPredicateFactory = std::function<BlockHitPredicate (const cache::ReadOnlyCatapultCache&)>;
+	using BlockHitPredicateFactory = std::function<BlockHitPredicate ()>;
 
 	/// Creates a block chain processor around the specified block hit predicate factory (\a blockHitPredicateFactory)
 	/// and batch entity processor (\a batchEntityProcessor).

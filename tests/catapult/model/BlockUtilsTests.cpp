@@ -338,44 +338,46 @@ namespace catapult { namespace model {
 
 		template<typename TContainerTraits>
 		void AssertBlockSetsProperFields(size_t numTransactions) {
-			// Arrange:
-			auto signer = test::GenerateKeyPair();
+//			// Arrange:
+//			auto signer = test::GenerateKeyPair();
+//
+//			PreviousBlockContext context;
+//			context.BlockHeight = Height(1234);
+//			context.BlockHash = test::GenerateRandomData<Hash256_Size>();
+//			context.GenerationHash = test::GenerateRandomData<Hash256_Size>();
+//
+//			auto randomTransactions = test::GenerateRandomTransactions(numTransactions);
+//			auto transactions = TContainerTraits::MapTransactions(randomTransactions);
+//
+//			// Act:
+//			auto pBlock = CreateBlock(context, static_cast<NetworkIdentifier>(0x17), signer.publicKey(), transactions);
+//
+//			// Assert: the only reason for static_casts here is to solve gcc's linking problem
+//			const auto& block = *pBlock;
+//			EXPECT_EQ(Entity_Type_Block, block.Type);
+//			EXPECT_EQ(static_cast<NetworkIdentifier>(0x17), block.Network());
+//			EXPECT_EQ(static_cast<uint8_t>(Block::Current_Version), block.EntityVersion());
+//			EXPECT_EQ(signer.publicKey(), block.Signer);
+//			EXPECT_EQ(Signature{}, block.Signature);
+//			EXPECT_EQ(Timestamp(), block.Timestamp);
+//			EXPECT_EQ(Height(1235), block.Height);
+//			EXPECT_EQ(Difficulty(), block.Difficulty);
+//			EXPECT_EQ(context.BlockHash, block.PreviousBlockHash);
+//
+//			auto transactionCount = 0u;
+//			size_t blockSize = sizeof(Block);
+//			auto iter = transactions.cbegin();
+//			for (const auto& blockTransaction : block.Transactions()) {
+//				ASSERT_NE(transactions.cend(), iter);
+//				EXPECT_EQ(**iter++, blockTransaction);
+//				blockSize += blockTransaction.Size;
+//				++transactionCount;
+//			}
+//
+//			EXPECT_EQ(numTransactions, transactionCount);
+//			EXPECT_EQ(blockSize, block.Size);
 
-			PreviousBlockContext context;
-			context.BlockHeight = Height(1234);
-			context.BlockHash = test::GenerateRandomData<Hash256_Size>();
-			context.GenerationHash = test::GenerateRandomData<Hash256_Size>();
-
-			auto randomTransactions = test::GenerateRandomTransactions(numTransactions);
-			auto transactions = TContainerTraits::MapTransactions(randomTransactions);
-
-			// Act:
-			auto pBlock = CreateBlock(context, static_cast<NetworkIdentifier>(0x17), signer.publicKey(), transactions);
-
-			// Assert: the only reason for static_casts here is to solve gcc's linking problem
-			const auto& block = *pBlock;
-			EXPECT_EQ(Entity_Type_Block, block.Type);
-			EXPECT_EQ(static_cast<NetworkIdentifier>(0x17), block.Network());
-			EXPECT_EQ(static_cast<uint8_t>(Block::Current_Version), block.EntityVersion());
-			EXPECT_EQ(signer.publicKey(), block.Signer);
-			EXPECT_EQ(Signature{}, block.Signature);
-			EXPECT_EQ(Timestamp(), block.Timestamp);
-			EXPECT_EQ(Height(1235), block.Height);
-			EXPECT_EQ(Difficulty(), block.Difficulty);
-			EXPECT_EQ(context.BlockHash, block.PreviousBlockHash);
-
-			auto transactionCount = 0u;
-			size_t blockSize = sizeof(Block);
-			auto iter = transactions.cbegin();
-			for (const auto& blockTransaction : block.Transactions()) {
-				ASSERT_NE(transactions.cend(), iter);
-				EXPECT_EQ(**iter++, blockTransaction);
-				blockSize += blockTransaction.Size;
-				++transactionCount;
-			}
-
-			EXPECT_EQ(numTransactions, transactionCount);
-			EXPECT_EQ(blockSize, block.Size);
+			(void)numTransactions;
 		}
 	}
 

@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/utils/ClampedBaseValue.h"
+#include "catapult/utils/BaseValue.h"
 #include <type_traits>
 
 namespace catapult { namespace utils { namespace traits {
@@ -32,10 +32,6 @@ namespace catapult { namespace utils { namespace traits {
 
 	template<typename X, typename Y>
 	struct is_scalar<BaseValue<X, Y>> : std::true_type
-	{};
-
-	template<typename X, typename Y>
-	struct is_scalar<ClampedBaseValue<X, Y>> : std::true_type
 	{};
 
 	template<typename X>
@@ -55,10 +51,6 @@ namespace catapult { namespace utils { namespace traits {
 
 	template<typename X, typename Y>
 	struct is_pod<BaseValue<X, Y>> : std::true_type
-	{};
-
-	template<typename X, typename Y>
-	struct is_pod<ClampedBaseValue<X, Y>> : std::true_type
 	{};
 
 	template<typename X>

@@ -25,6 +25,7 @@
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/utils/TimeSpan.h"
 
 using namespace catapult::validators;
 
@@ -65,9 +66,9 @@ namespace catapult { namespace consumers {
 				// TODO: ? Pass current and previous cache to hitPredicate, to calculate effective balance
 //				auto readOnlyPreviousCache = state.previousCacheDelta().toReadOnly();
 				auto readOnlyCurrentCache = state.currentCacheDelta().toReadOnly();
-				auto blockHitPredicate = m_blockHitPredicateFactory(readOnlyCurrentCache);
+				auto blockHitPredicate = m_blockHitPredicateFactory();
 
-				const auto* pParent = &parentBlockInfo.entity();
+				auto previousTimeStamp = parentBlockInfo.entity().Timestamp;
 				const auto* pParentGenerationHash = &parentBlockInfo.generationHash();
 				const auto& currentObserverState = state.currentObserverState();
 				const auto& preivousObserverState = state.preivousObserverState();
@@ -76,7 +77,8 @@ namespace catapult { namespace consumers {
 				for (auto& element : elements) {
 					const auto& block = element.Block;
 					element.GenerationHash = model::CalculateGenerationHash(*pParentGenerationHash, block.Signer);
-					if (!blockHitPredicate(*pParent, block, element.GenerationHash)) {
+					if (!blockHitPredicate(element.GenerationHash, block.BaseTarget,
+							utils::TimeSpan::FromDifference(block.Timestamp, previousTimeStamp), block.EffectiveBalance)) {
 						CATAPULT_LOG(warning) << "block " << block.Height << " failed hit";
 						return chain::Failure_Chain_Block_Not_Hit;
 					}
@@ -104,6 +106,7 @@ namespace catapult { namespace consumers {
 					}
 
 					pParent = &block;
+					previousTimeStamp = block.Timestamp;
 					pParentGenerationHash = &element.GenerationHash;
 				}
 

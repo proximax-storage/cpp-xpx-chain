@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/cache/MemoryUtCache.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
