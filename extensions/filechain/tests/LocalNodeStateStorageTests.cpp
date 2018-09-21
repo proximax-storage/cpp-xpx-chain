@@ -78,7 +78,6 @@ namespace catapult { namespace filechain {
 		}
 
 		cache::SupplementalData SaveState(const std::string& dataDirectory, cache::CatapultCache& cache) {
-			cache::SupplementalData supplementalData;
 			{
 				auto delta = cache.createDelta();
 				PopulateAccountStateCache(delta.sub<cache::AccountStateCache>());
@@ -88,10 +87,9 @@ namespace catapult { namespace filechain {
 			// Sanity:
 			SanityAssertCache(cache);
 
-			supplementalData.State.LastRecalculationHeight = model::ImportanceHeight(12345);
 			auto state = extensions::LocalNodeStateConstRef(*createLocalNodeState(dataDirectory), cache);
 			filechain::SaveState(state);
-			return { state.State, state. Score.get() };
+			return {  };
 		}
 	}
 
@@ -99,7 +97,7 @@ namespace catapult { namespace filechain {
 		// Arrange: seed and save the cache state
 		test::TempDirectoryGuard tempDir;
 		auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
-		auto originalSupplementalData = SaveState(tempDir.name(), originalCache);
+		/* auto originalSupplementalData = */ SaveState(tempDir.name(), originalCache);
 
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
@@ -109,7 +107,6 @@ namespace catapult { namespace filechain {
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
 		AssertSubCaches(originalCache, cache);
-		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}
 
@@ -171,7 +168,7 @@ namespace catapult { namespace filechain {
 
 		// - seed and save the cache state in the presence of a lock file
 		auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
-		auto originalSupplementalData = SaveState(tempDir.name(), originalCache);
+		/* auto originalSupplementalData = */ SaveState(tempDir.name(), originalCache);
 
 		// Sanity: the lock file should have been removed by SaveState
 		EXPECT_FALSE(boost::filesystem::exists(lockFilePath));
@@ -184,7 +181,6 @@ namespace catapult { namespace filechain {
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
 		AssertSubCaches(originalCache, cache);
-		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}
 }}

@@ -121,7 +121,7 @@ namespace catapult { namespace extensions {
 				auto pRootObserver = CreateEntityObserver(*m_pPluginManager);
 
 				auto delta = m_cache.createDelta();
-				auto observerState = observers::ObserverState(delta, m_state);
+				auto observerState = observers::ObserverState(delta);
 
 				// Act: use BlockExecutor to execute all transactions and blocks
 				if (NotifyMode::Commit == mode)
@@ -222,7 +222,6 @@ namespace catapult { namespace extensions {
 		private:
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			cache::CatapultCache m_cache;
-			state::CatapultState m_state;
 
 			Key m_specialAccountKey;
 

@@ -19,13 +19,10 @@
 **/
 
 #pragma once
-#include "catapult/state/CatapultState.h"
 
 namespace catapult { namespace cache {
 
 	/// Chain supplemental data.
 	struct SupplementalData {
-		/// Catapult state.
-		state::CatapultState State;
 	};
 }}

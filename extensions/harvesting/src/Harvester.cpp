@@ -49,26 +49,28 @@ namespace catapult { namespace harvesting {
 			: m_localNodeState(localNodeState)
 			, m_unlockedAccounts(unlockedAccounts)
 			, m_transactionsInfoSupplier(transactionsInfoSupplier)
-			, m_storage(storage)
 	{}
 
 	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
 		model::PreviousBlockContext previousBlockContext(lastBlockElement);
 		model::BlockHitContext hitContext;
+		auto& config = m_localNodeState.Config.BlockChain;
+		auto& storage = m_localNodeState.Storage;
+		auto& currentCache = m_localNodeState.CurrentCache;
+//		auto& previousCache = m_localNodeState.PreviousCache;
 
 		hitContext.ElapsedTime = utils::TimeSpan::FromDifference(timestamp, lastBlockElement.Block.Timestamp);
 		utils::TimeSpan averageBlockTime{};
 		if (lastBlockElement.Block.Height < Height(Block_Timestamp_History_Size + 1)) {
 			averageBlockTime = lastBlockElement.Block.Timestamp / lastBlockElement.Block.Height.unwrap();
 		} else {
-			auto storageView = m_storage.view();
+			auto storageView = storage.view();
 			auto pBlock = storageView.loadBlock(Height(lastBlockElement.Block.Height.unwrap() - Block_Timestamp_History_Size));
 			averageBlockTime = (lastBlockElement.Block.Timestamp - pBlock->Timestamp) / Block_Timestamp_History_Size;
-		auto& config = m_localNodeState.Config.BlockChain;
 		}
 		hitContext.BaseTarget = chain::CalculateBaseTarget(lastBlockElement.Block.BaseTarget, averageBlockTime);
 
-		auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(m_cache.createView().sub<cache::AccountStateCache>());
+		auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(currentCache.createView().sub<cache::AccountStateCache>());
 
 		auto unlockedAccountsView = m_unlockedAccounts.view();
 		const crypto::KeyPair* pHarvesterKeyPair = nullptr;
@@ -90,6 +92,6 @@ namespace catapult { namespace harvesting {
 			return nullptr;
 
 		auto transactionsInfo = m_transactionsInfoSupplier(config.MaxTransactionsPerBlock);
-		return CreateBlock(previousBlockContext, hitContext, m_config.Network.Identifier, *pHarvesterKeyPair, transactionsInfo);
+		return CreateBlock(previousBlockContext, hitContext, config.Network.Identifier, *pHarvesterKeyPair, transactionsInfo);
 	}
 }}

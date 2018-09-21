@@ -19,12 +19,10 @@
 **/
 
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/consumers/BlockConsumers.h"
 #include "catapult/consumers/BlockChainSyncConsumer.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
-#include "catapult/model/ChainScore.h"
 #include "tests/catapult/consumers/test/ConsumerInputFactory.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
@@ -96,13 +94,11 @@ namespace catapult { namespace consumers {
 		public:
 			UndoBlockParams(const model::BlockElement& blockElement, const observers::ObserverState& state)
 					: pBlock(test::CopyBlock(blockElement.Block))
-					, LastRecalculationHeight(state.State.LastRecalculationHeight)
 					, IsPassedMarkedCache(test::IsMarkedCache(state.Cache))
 			{}
 
 		public:
 			std::shared_ptr<const model::Block> pBlock;
-			const model::ImportanceHeight LastRecalculationHeight;
 			const bool IsPassedMarkedCache;
 		};
 
@@ -110,9 +106,6 @@ namespace catapult { namespace consumers {
 		public:
 			void operator()(const model::BlockElement& blockElement, const observers::ObserverState& state) const {
 				const_cast<MockUndoBlock*>(this)->push(blockElement, state);
-
-				auto& height = state.State.LastRecalculationHeight;
-				height = AddImportanceHeight(height, 1);
 			}
 		};
 
@@ -126,7 +119,6 @@ namespace catapult { namespace consumers {
 					: pParentBlock(test::CopyBlock(state.commonBlockInfo().entity()))
 					, ParentHash(state.commonBlockInfo().hash())
 					, pElements(&elements)
-					, LastRecalculationHeight(state.currentObserverState().State.LastRecalculationHeight)
 					, IsPassedMarkedCache(test::IsMarkedCache(state.currentObserverState().Cache))
 			{}
 
@@ -134,7 +126,6 @@ namespace catapult { namespace consumers {
 			std::shared_ptr<const model::Block> pParentBlock;
 			const Hash256 ParentHash;
 			const BlockElements* pElements;
-			const model::ImportanceHeight LastRecalculationHeight;
 			const bool IsPassedMarkedCache;
 		};
 
@@ -150,7 +141,6 @@ namespace catapult { namespace consumers {
 				// mark the state by modifying it
 				auto observerState = state.currentObserverState();
 				observerState.Cache.sub<cache::AccountStateCache>().addAccount(Sentinel_Processor_Public_Key, Height(1));
-				observerState.State.LastRecalculationHeight = Modified_Last_Recalculation_Height;
 
 				// modify all the elements
 				for (auto& element : elements)
@@ -267,8 +257,6 @@ namespace catapult { namespace consumers {
 							)
 					)
 			{
-				LocalNodeStateRef.State.LastRecalculationHeight = Initial_Last_Recalculation_Height;
-
 				BlockChainSyncHandlers handlers;
 //				handlers.DifficultyChecker = [this](const auto& blocks, const auto& cache) {
 //					return DifficultyChecker(blocks, cache);
@@ -342,10 +330,8 @@ namespace catapult { namespace consumers {
 				auto i = 0u;
 				for (auto height : unwoundHeights) {
 					const auto& undoBlockParams = UndoBlock.params()[i];
-					auto expectedHeight = AddImportanceHeight(Initial_Last_Recalculation_Height, i);
 
 					EXPECT_EQ(*OriginalBlocks[(height - Height(2)).unwrap()], *undoBlockParams.pBlock) << "undo at " << i;
-					EXPECT_EQ(expectedHeight, undoBlockParams.LastRecalculationHeight) << "undo at " << i;
 					EXPECT_TRUE(undoBlockParams.IsPassedMarkedCache) << "undo at " << i;
 //					EXPECT_EQ(i, undoBlockParams.NumDifficultyInfos) << "undo at " << i;
 					++i;
@@ -356,14 +342,13 @@ namespace catapult { namespace consumers {
 				// Assert:
 				ASSERT_EQ(1u, Processor.params().size());
 				const auto& processorParams = Processor.params()[0];
-				auto expectedHeight = AddImportanceHeight(Initial_Last_Recalculation_Height, numUnwoundBlocks);
 				auto pCommonBlockElement = LocalNodeStateRef.Storage.view().loadBlockElement(input.blocks()[0].Block.Height - Height(1));
 
 				EXPECT_EQ(pCommonBlockElement->Block, *processorParams.pParentBlock);
 				EXPECT_EQ(pCommonBlockElement->EntityHash, processorParams.ParentHash);
 				EXPECT_EQ(&input.blocks(), processorParams.pElements);
-				EXPECT_EQ(expectedHeight, processorParams.LastRecalculationHeight);
 				EXPECT_TRUE(processorParams.IsPassedMarkedCache);
+				EXPECT_EQ(numUnwoundBlocks, numUnwoundBlocks);
 //				EXPECT_EQ(numUnwoundBlocks, processorParams.NumDifficultyInfos);
 			}
 
@@ -378,16 +363,12 @@ namespace catapult { namespace consumers {
 
 				// - the cache was not committed
 				EXPECT_FALSE(LocalNodeStateRef.CurrentCache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
-				EXPECT_EQ(0u, LocalNodeStateRef.CurrentCache.sub<cache::BlockDifficultyCache>().createView()->size());
 
 				// - no state changes were announced
 				EXPECT_EQ(0u, StateChange.params().size());
 
 				// - no transaction changes were announced
 				EXPECT_EQ(0u, TransactionsChange.params().size());
-
-				// - the state was not changed
-				EXPECT_EQ(Initial_Last_Recalculation_Height, LocalNodeStateRef.State.LastRecalculationHeight);
 			}
 
 			void assertStored(const ConsumerInput& input) {
@@ -410,9 +391,6 @@ namespace catapult { namespace consumers {
 
 				// - the cache was committed (add 1 to OriginalBlocks.size() because it does not include the nemesis)
 				EXPECT_TRUE(LocalNodeStateRef.CurrentCache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
-				EXPECT_EQ(
-						OriginalBlocks.size() + 1 - inputHeight.unwrap() + 1,
-						LocalNodeStateRef.CurrentCache.sub<cache::BlockDifficultyCache>().createView()->size());
 				EXPECT_EQ(chainHeight, LocalNodeStateRef.CurrentCache.createView().height());
 
 				// - the state was changed
@@ -423,9 +401,6 @@ namespace catapult { namespace consumers {
 
 				// - transaction changes were announced
 				EXPECT_EQ(1u, TransactionsChange.params().size());
-
-				// - the state was changed
-				EXPECT_EQ(Modified_Last_Recalculation_Height, LocalNodeStateRef.State.LastRecalculationHeight);
 			}
 		};
 	}

@@ -64,7 +64,6 @@ namespace catapult { namespace extensions {
 				const model::BlockChainConfiguration& config,
 				const model::BlockElement& nemesisBlockElement,
 				cache::CatapultCacheDelta& cacheDelta,
-				state::CatapultState& catapultState,
 				Verbosity verbosity) const;
 
 	private:

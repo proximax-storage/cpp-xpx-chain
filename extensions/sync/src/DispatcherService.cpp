@@ -136,7 +136,7 @@ namespace catapult { namespace sync {
 			};
 
 			syncHandlers.BatchEntityProcessor = chain::CreateBatchEntityProcessor(CreateExecutionConfiguration(pluginManager));
-			syncHandlers.StateChange = [&rollbackInfo, &localScore = state.score(), &subscriber = state.stateChangeSubscriber()](
+			syncHandlers.StateChange = [&rollbackInfo, &subscriber = state.stateChangeSubscriber()](
 					const auto& changeInfo) {
 				subscriber.notifyStateChange(changeInfo);
 

@@ -39,8 +39,7 @@ namespace catapult { namespace harvesting {
 		explicit Harvester(
 				extensions::LocalNodeStateRef localNodeState,
 				const UnlockedAccounts& unlockedAccounts,
-				const TransactionsInfoSupplier& transactionsInfoSupplier,
-				const io::BlockStorageCache& storage);
+				const TransactionsInfoSupplier& transactionsInfoSupplier);
 
 	public:
 		/// Creates the best block (if any) harvested by any unlocked account.
@@ -51,6 +50,5 @@ namespace catapult { namespace harvesting {
 		extensions::LocalNodeStateRef m_localNodeState;
 		const UnlockedAccounts& m_unlockedAccounts;
 		TransactionsInfoSupplier m_transactionsInfoSupplier;
-		const io::BlockStorageCache& m_storage;
 	};
 }}

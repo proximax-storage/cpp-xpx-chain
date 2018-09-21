@@ -48,7 +48,7 @@ namespace catapult { namespace chain {
 			ValidationResult process(Height height, Timestamp timestamp, const model::WeakEntityInfos& entityInfos) {
 				auto cache = test::CreateCatapultCacheWithMarkerAccount();
 				auto delta = cache.createDelta();
-				return m_processor(height, timestamp, entityInfos, observers::ObserverState(delta, m_state));
+				return m_processor(height, timestamp, entityInfos, observers::ObserverState(delta));
 			}
 
 		public:
@@ -89,7 +89,6 @@ namespace catapult { namespace chain {
 					// - context
 					EXPECT_EQ(height, params.Context.Height) << message;
 					EXPECT_EQ(observers::NotifyMode::Commit, params.Context.Mode) << message;
-					EXPECT_EQ(&m_state, &params.Context.State) << message;
 
 //					// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)
 //					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
@@ -148,7 +147,6 @@ namespace catapult { namespace chain {
 
 		private:
 			test::MockExecutionConfiguration m_executionConfig;
-			state::CatapultState m_state;
 			BatchEntityProcessor m_processor;
 		};
 

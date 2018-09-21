@@ -105,7 +105,6 @@ namespace catapult { namespace consumers {
 						m_handlers.CommitBlock(*pOldBlockElement, preivousObserverState);
 					}
 
-					pParent = &block;
 					previousTimeStamp = block.Timestamp;
 					pParentGenerationHash = &element.GenerationHash;
 				}

@@ -235,10 +235,6 @@ namespace catapult { namespace chain {
 					else
 						EXPECT_EQ(observers::NotifyMode::Commit, params.Context.Mode) << message;
 
-					// - compare the copied state to the default state
-					//   (a dummy state is passed by the updater because only block observers modify it)
-					EXPECT_EQ(model::ImportanceHeight(0), params.StateCopy.LastRecalculationHeight) << message;
-
 //					// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)
 //					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
 //					EXPECT_EQ(numInitialCacheDifficultyInfos + i, params.NumDifficultyInfos) << message;

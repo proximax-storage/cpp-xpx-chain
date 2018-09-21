@@ -99,7 +99,7 @@ namespace catapult { namespace consumers {
 				// 4. unwind to the common block height and calculate the local chain score
 				syncState = SyncState(m_localNodeState);
 				auto commonBlockHeight = peerStartHeight - Height(1);
-				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, syncState.observerState());
+				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, syncState);
 
 				auto pCommonBlockElement = storageView.loadBlockElement(commonBlockHeight);
 
@@ -155,14 +155,8 @@ namespace catapult { namespace consumers {
 			}
 
 			virtual BlockChainProcessor createProcessor() const {
-				const auto& blockChainConfig = m_localNodeState.Config.BlockChain;
 				auto processor = CreateBlockChainProcessor(
-						[blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
-							cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
-							return chain::BlockHitPredicate(blockChainConfig, [view](const auto& publicKey, auto height) {
-								return view.getAccountImportanceOrDefault(publicKey, height);
-							});
-						},
+						[]() { return chain::BlockHitPredicate{}; },
 						m_handlers
 				);
 
@@ -187,7 +181,7 @@ namespace catapult { namespace consumers {
 				commitToStorage(syncState.commonBlockHeight(), elements);
 
 				// 2. indicate a state change
-				m_handlers.StateChange(StateChangeInfo(syncState.currentCacheDelta(), syncState.scoreDelta(), newHeight));
+				m_handlers.StateChange(StateChangeInfo(syncState.currentCacheDelta(), newHeight));
 
 				// 3. commit changes to the in-memory cache
 				syncState.commit(newHeight);

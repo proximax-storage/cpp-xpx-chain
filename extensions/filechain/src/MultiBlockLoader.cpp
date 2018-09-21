@@ -155,7 +155,7 @@ namespace catapult { namespace filechain {
 
 		void execute(const model::BlockElement& blockElement, cache::CatapultCache& cache) const {
 			auto cacheDelta = cache.createDelta();
-			auto observerState = observers::ObserverState(cacheDelta, m_stateRef.State);
+			auto observerState = observers::ObserverState(cacheDelta);
 
 			const auto& block = blockElement.Block;
 			chain::ExecuteBlock(blockElement, m_observerFactory(block), observerState);

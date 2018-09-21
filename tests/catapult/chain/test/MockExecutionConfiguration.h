@@ -82,7 +82,6 @@ namespace catapult { namespace test {
 				, SequenceId(notification.Id)
 				, Context(context)
 				, IsPassedMarkedCache(test::IsMarkedCache(context.Cache))
-				, StateCopy(context.State) // make a copy of the state
 		{}
 
 	public:
@@ -90,7 +89,6 @@ namespace catapult { namespace test {
 		const size_t SequenceId;
 		const observers::ObserverContext Context;
 		const bool IsPassedMarkedCache;
-		const state::CatapultState StateCopy;
 	};
 
 	class MockAggregateNotificationObserver : public observers::AggregateNotificationObserver, public test::ParamsCapture<ObserverParams> {

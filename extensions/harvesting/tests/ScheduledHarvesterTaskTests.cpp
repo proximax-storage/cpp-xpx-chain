@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "harvesting/src/Harvester.h"
 #include "harvesting/src/ScheduledHarvesterTask.h"
 #include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
@@ -116,12 +115,11 @@ namespace catapult { namespace harvesting {
 					: Config(CreateConfiguration())
 					, Cache(test::CreateEmptyCatapultCache(Config))
 					, Accounts(1)
-					, Storage(std::make_unique<mocks::MockMemoryBasedStorage>()) {}
+			{}
 
 			model::BlockChainConfiguration Config;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
-			io::BlockStorageCache Storage;
 		};
 
 		config::LocalNodeConfiguration CreateConfiguration(model::BlockChainConfiguration& config) {
@@ -140,8 +138,8 @@ namespace catapult { namespace harvesting {
 							context.Cache
 					),
 					context.Accounts,
-					[](size_t) { return TransactionsInfo(); },
-					context.Storage);
+					[](size_t) { return TransactionsInfo(); }
+			);
 		}
 	}
 

@@ -19,7 +19,6 @@
 **/
 
 #include "harvesting/src/Harvester.h"
-#include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/TransactionPlugin.h"

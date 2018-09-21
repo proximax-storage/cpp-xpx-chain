@@ -68,10 +68,8 @@ namespace catapult { namespace consumers {
 			: EffectiveBalanceHeight(localNodeState.Config.BlockChain.EffectiveBalanceRange)
 			, m_pOriginalCurrentCache(&localNodeState.CurrentCache)
 			, m_pOriginalPreviousCache(&localNodeState.PreviousCache)
-			, m_pOriginalState(&localNodeState.State)
 			, m_pCacheCurrentDelta(std::make_unique<cache::CatapultCacheDelta>(m_pOriginalCurrentCache->createDelta()))
 			, m_pCachePreviousDelta(std::make_unique<cache::CatapultCacheDelta>(m_pOriginalPreviousCache->createDelta()))
-			, m_stateCopy(localNodeState.State)
 			, m_storage(&localNodeState.Storage)
 		{}
 
@@ -85,10 +83,6 @@ namespace catapult { namespace consumers {
 
 		Height commonBlockHeight() const {
 			return m_pCommonBlockElement->Block.Height;
-		}
-
-		const model::ChainScore& scoreDelta() const {
-			return m_scoreDelta;
 		}
 
 		const cache::CatapultCacheDelta& currentCacheDelta() const {
@@ -105,11 +99,11 @@ namespace catapult { namespace consumers {
 		}
 
 		observers::ObserverState currentObserverState() {
-			return observers::ObserverState(*m_pCacheCurrentDelta, m_stateCopy);
+			return observers::ObserverState(*m_pCacheCurrentDelta);
 		}
 
 		observers::ObserverState preivousObserverState() {
-			return observers::ObserverState(*m_pCachePreviousDelta, m_stateCopy);
+			return observers::ObserverState(*m_pCachePreviousDelta);
 		}
 
 		io::BlockStorageView storage() const {
@@ -118,10 +112,8 @@ namespace catapult { namespace consumers {
 
 		void update(
 				std::shared_ptr<const model::BlockElement>&& pCommonBlockElement,
-				model::ChainScore&& scoreDelta,
 				consumers::TransactionInfos&& removedTransactionInfos) {
 			m_pCommonBlockElement = std::move(pCommonBlockElement);
-			m_scoreDelta = std::move(scoreDelta);
 			m_removedTransactionInfos = std::move(removedTransactionInfos);
 		}
 
@@ -130,19 +122,14 @@ namespace catapult { namespace consumers {
 			m_pOriginalPreviousCache->commit(height);
 			m_pCacheCurrentDelta.reset(); // release the delta after commit so that the UT updater can acquire a lock
 			m_pCachePreviousDelta.reset(); // release the delta after commit so that the UT updater can acquire a lock
-
-			*m_pOriginalState = m_stateCopy;
 		}
 
 	private:
 		cache::CatapultCache* m_pOriginalCurrentCache;
 		cache::CatapultCache* m_pOriginalPreviousCache;
-		state::CatapultState* m_pOriginalState;
 		std::unique_ptr<cache::CatapultCacheDelta> m_pCacheCurrentDelta; // unique_ptr to allow explicit release of lock in commit
 		std::unique_ptr<cache::CatapultCacheDelta> m_pCachePreviousDelta; // unique_ptr to allow explicit release of lock in commit
-		state::CatapultState m_stateCopy;
 		std::shared_ptr<const model::BlockElement> m_pCommonBlockElement;
-		model::ChainScore m_scoreDelta;
 		consumers::TransactionInfos m_removedTransactionInfos;
 		io::BlockStorageCache* m_storage;
 	};

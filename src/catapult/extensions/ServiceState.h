@@ -50,7 +50,7 @@ namespace catapult { namespace extensions {
 	/// State that is used as part of service registration.
 	class ServiceState {
 	public:
-		/// Creates service state around \a config, \a nodes, \a cache, \a state, \a storage, \a utCache, \a timeSupplier
+		/// Creates service state around \a config, \a nodes, \a cache, \a storage, \a utCache, \a timeSupplier
 		/// \a transactionStatusSubscriber, \a stateChangeSubscriber, \a nodeSubscriber, \a counters, \a pluginManager and \a pool.
 		ServiceState(
 				extensions::LocalNodeStateRef& state,
@@ -100,11 +100,6 @@ namespace catapult { namespace extensions {
 		/// Gets the previous cache.
 		auto& previousCache() const {
 			return m_state.PreviousCache;
-		}
-
-		/// Gets the state.
-		auto& state() const {
-			return m_state.State;
 		}
 
 		/// Gets the storage.

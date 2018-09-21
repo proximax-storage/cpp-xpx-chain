@@ -75,9 +75,7 @@ namespace catapult { namespace extensions {
 		EXPECT_EQ(&state.Config, &serviceState.config());
 		EXPECT_EQ(&nodes, &serviceState.nodes());
 		EXPECT_EQ(&state.CurrentCache, &serviceState.currentCache());
-		EXPECT_EQ(&state.State, &serviceState.state());
 		EXPECT_EQ(&state.Storage, &serviceState.storage());
-		EXPECT_EQ(&state.Score, &serviceState.score());
 		EXPECT_EQ(pUtCache.get(), &serviceState.utCache());
 
 		EXPECT_EQ(&transactionStatusSubscriber, &serviceState.transactionStatusSubscriber());

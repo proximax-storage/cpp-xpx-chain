@@ -32,7 +32,7 @@ namespace catapult { namespace chain {
 		constexpr uint64_t MINRATIO{53};
 		constexpr int GAMMA_NUMERATOR{64};
 		constexpr int GAMMA_DENOMINATOR{100};
-		constexpr int BLOCK_GENERATION_TIME{0};
+		constexpr int BLOCK_GENERATION_TIME{60};
 
 		/// The first 8 bytes of a \a generationHash are converted to a number, referred to as the account hit.
 		uint64_t CalculateHit(const Hash256& generationHash) {

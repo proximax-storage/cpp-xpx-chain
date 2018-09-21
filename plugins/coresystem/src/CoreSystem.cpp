@@ -84,13 +84,5 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateBalanceObserver())
 				.add(observers::CreateHarvestFeeObserver());
 		});
-
-		manager.addTransientObserverHook([&config](auto& builder) {
-			auto pRecalculateImportancesObserver = observers::CreateRecalculateImportancesObserver(
-					observers::CreateImportanceCalculator(config),
-					observers::CreateRestoreImportanceCalculator());
-			builder
-				.add(std::move(pRecalculateImportancesObserver));
-		});
 	}
 }}

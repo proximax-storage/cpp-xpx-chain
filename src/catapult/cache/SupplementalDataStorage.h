@@ -21,6 +21,7 @@
 #pragma once
 #include "CacheStorageInclude.h"
 #include "SupplementalData.h"
+#include "catapult/types.h"
 
 namespace catapult { namespace cache {
 

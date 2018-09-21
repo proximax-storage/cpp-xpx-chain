@@ -139,7 +139,6 @@ namespace catapult { namespace filechain {
 			io::BufferedOutputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Write));
 
 			cache::SupplementalData data;
-			data.State = stateRef.State;
 			cache::SaveSupplementalData(data, stateRef.CurrentCache.createView().height(), file);
 		}
 	}

@@ -56,9 +56,6 @@ namespace catapult { namespace filechain {
 					return;
 				}
 
-				// otherwise, use loaded state
-				stateRef.State = supplementalData.State;
-
 				auto cacheHeight = stateRef.CurrentCache.createView().height();
 				LogChainStats("state", cacheHeight);
 
