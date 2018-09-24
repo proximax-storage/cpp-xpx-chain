@@ -18,22 +18,28 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ImportanceHeight.h"
-#include "catapult/exceptions.h"
+#include "AccountStateCache.h"
+#include "BalanceView.h"
+#include "catapult/chain/BlockScorer.h"
+#include "catapult/model/Address.h"
 
-namespace catapult { namespace model {
+namespace catapult { namespace cache {
 
-	namespace {
-		void CheckImportanceGrouping(Height::ValueType grouping) {
-			if (0 == grouping)
-				CATAPULT_THROW_INVALID_ARGUMENT_1("importance grouping must be non-zero", grouping);
-		}
+	Amount BalanceView::getEffectiveBalance(const Key& publicKey, Height height) const {
+		return chain::CalculateEffectiveBalance(
+				m_currentCache,
+				m_previousCache,
+				m_effectiveBalanceHeight,
+				height,
+				publicKey
+		);
 	}
 
-	ImportanceHeight ConvertToImportanceHeight(Height height, Height::ValueType grouping) {
-		CheckImportanceGrouping(grouping);
-		Height::ValueType previousHeight = height.unwrap() - 1;
-		Height::ValueType groupedHeight = (previousHeight / grouping) * grouping;
-		return ImportanceHeight(groupedHeight < 1 ? 1 : groupedHeight);
+	Amount BalanceView::getBalance(const Key& publicKey) const {
+		return getEffectiveBalance(publicKey, Height(0));
+	}
+
+	bool BalanceView::canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance) const {
+		return getEffectiveBalance(publicKey, height) >= minHarvestingBalance;
 	}
 }}

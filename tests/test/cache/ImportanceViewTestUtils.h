@@ -20,7 +20,7 @@
 
 #pragma once
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 
 namespace catapult { namespace test {
 
@@ -36,19 +36,19 @@ namespace catapult { namespace test {
 
 	public:
 		/// Gets a const reference to the underlying importance view.
-		const cache::ImportanceView& operator*() {
+		const cache::BalanceView& operator*() {
 			return m_view;
 		}
 
 		/// Gets a const pointer to the underlying importance view.
-		const cache::ImportanceView* operator->() {
+		const cache::BalanceView* operator->() {
 			return &m_view;
 		}
 
 	private:
 		cache::LockedCacheView<cache::AccountStateCacheView> m_cacheView;
 		cache::ReadOnlyAccountStateCache m_readOnlyCache;
-		cache::ImportanceView m_view;
+		cache::BalanceView m_view;
 	};
 
 	/// Creates an importance view wrapper around \a cache.

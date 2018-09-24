@@ -58,10 +58,7 @@ namespace catapult { namespace mongo { namespace storages {
 				pState->PublicKey = publicKey;
 				pState->PublicKeyHeight = Height(1234567) + height;
 				auto randomAmount = Amount((test::Random() % 1'000'000 + 1'000) * 1'000'000);
-				auto randomImportance = Importance(test::Random() % 1'000'000'000 + 1'000'000'000);
-				auto randomImportanceHeight = test::GenerateRandomValue<model::ImportanceHeight>();
 				pState->Balances.credit(Xpx_Id, randomAmount);
-				pState->ImportanceInfo.set(randomImportance, randomImportanceHeight);
 				return pState;
 			}
 
@@ -69,9 +66,6 @@ namespace catapult { namespace mongo { namespace storages {
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
 				auto& accountState = accountStateCacheDelta.addAccount(pAccountState->PublicKey, pAccountState->PublicKeyHeight);
 				accountState.Balances.credit(Xpx_Id, pAccountState->Balances.get(Xpx_Id));
-
-				auto height = pAccountState->ImportanceInfo.height();
-				accountState.ImportanceInfo.set(pAccountState->ImportanceInfo.get(height), height);
 			}
 
 			static void Remove(cache::CatapultCacheDelta& delta, const ModelType& pAccountState) {

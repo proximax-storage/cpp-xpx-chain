@@ -21,7 +21,8 @@
 #include "BlockScorer.h"
 #include "catapult/model/Block.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/state/AccountState.h"
+#include "catapult/model/Address.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/utils/IntegerMath.h"
 #include "catapult/utils/TimeSpan.h"
 
@@ -73,6 +74,37 @@ namespace catapult { namespace chain {
 					parentBaseTarget * GAMMA_NUMERATOR * (BLOCK_GENERATION_TIME - std::max(averageBlockTime.seconds(), MINRATIO)))
 					/ BLOCK_GENERATION_TIME / GAMMA_DENOMINATOR;
 		}
+	}
+
+	inline Amount getXpxOfAccount(const cache::ReadOnlyAccountStateCache& cache, const Key& signer) {
+		auto pAccount = cache.tryGet(signer);
+
+		if (!pAccount) {
+			pAccount = cache.tryGet(model::PublicKeyToAddress(signer, cache.networkIdentifier()));
+		}
+
+		if (pAccount) {
+			return pAccount->Balances.get(Xpx_Id);
+		}
+
+		return Amount(0);
+	}
+
+	Amount CalculateEffectiveBalance(
+			const cache::ReadOnlyAccountStateCache& currentCache,
+			const cache::ReadOnlyAccountStateCache& previousCache,
+			const Height& effectiveBalanceHeight,
+			const Height& currentHeight,
+			const Key& signer) {
+		Amount result(0);
+
+		if (currentHeight < effectiveBalanceHeight) {
+			result = getXpxOfAccount(currentCache, signer);
+		} else {
+			result = std::min(getXpxOfAccount(currentCache, signer), getXpxOfAccount(previousCache, signer));
+		}
+
+		return result;
 	}
 
 	bool BlockHitPredicate::operator()(const Hash256& generationHash, const BlockTarget& baseTarget,

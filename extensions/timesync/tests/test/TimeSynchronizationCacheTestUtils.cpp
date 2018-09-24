@@ -27,11 +27,8 @@ namespace catapult { namespace test {
 
 	void AddAccount(
 			cache::AccountStateCacheDelta& delta,
-			const Key& publicKey,
-			Importance importance,
-			model::ImportanceHeight importanceHeight) {
+			const Key& publicKey) {
 		auto& accountState = delta.addAccount(publicKey, Height(100));
-		accountState.ImportanceInfo.set(importance, importanceHeight);
 		accountState.Balances.credit(Xpx_Id, Amount(1000));
 	}
 

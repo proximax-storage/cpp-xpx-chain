@@ -20,7 +20,7 @@
 
 #include "BlockChainSyncConsumer.h"
 #include "BlockConsumers.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/utils/Casting.h"
 #include "ConsumerResultFactory.h"
 #include "InputUtils.h"

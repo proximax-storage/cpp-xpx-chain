@@ -19,14 +19,14 @@
 **/
 
 #include "TimeSynchronizationUtils.h"
-#include "ImportanceAwareNodeSelector.h"
+#include "BalanceAwareNodeSelector.h"
 #include "TimeSynchronizationConfiguration.h"
 #include "TimeSynchronizationState.h"
 #include "TimeSynchronizer.h"
 #include "constants.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
@@ -37,12 +37,12 @@ namespace catapult { namespace timesync {
 	namespace {
 		using NetworkTimeSupplier = extensions::ExtensionManager::NetworkTimeSupplier;
 
-		ImportanceAwareNodeSelector CreateImportanceAwareNodeSelector(
+		BalanceAwareNodeSelector CreateBalanceAwareNodeSelector(
 				const TimeSynchronizationConfiguration& timeSyncConfig,
 				const config::LocalNodeConfiguration& config) {
-			auto totalChainImportance = model::GetTotalImportance(config.BlockChain).unwrap();
-			auto minImportance = Importance(static_cast<uint64_t>(Required_Minimum_Importance * totalChainImportance));
-			return ImportanceAwareNodeSelector(ionet::ServiceIdentifier(0x53594E43), timeSyncConfig.MaxNodes, minImportance);
+			auto totalChainImportance = model::GetTotalBalance(config.BlockChain).unwrap();
+			auto minImportance = Amount(static_cast<uint64_t>(Required_Minimum_Importance * totalChainImportance));
+			return BalanceAwareNodeSelector(ionet::ServiceIdentifier(0x53594E43), timeSyncConfig.MaxNodes, minImportance);
 		}
 
 		struct SamplesResult {
@@ -59,13 +59,20 @@ namespace catapult { namespace timesync {
 
 		ionet::NodeSet SelectNodes(
 				const extensions::LocalNodeStateRef& localNodeState,
-				const ImportanceAwareNodeSelector& selector,
+				const BalanceAwareNodeSelector& selector,
 				const ionet::NodeContainer& nodes,
 				Height height) {
-			// TODO: ? Do we need to rework it?
-			auto view = localNodeState.CurrentCache.sub<cache::AccountStateCache>().createView();
-			cache::ImportanceView importanceView(view->asReadOnly());
-			auto selectedNodes = selector.selectNodes(importanceView, nodes.view(), height);
+
+			auto currentCacheView = localNodeState.CurrentCache.createView();
+			auto previousCacheView = localNodeState.PreviousCache.createView();
+
+			cache::BalanceView balanceView(
+					cache::ReadOnlyAccountStateCache(currentCacheView.sub<cache::AccountStateCache>()),
+					cache::ReadOnlyAccountStateCache(previousCacheView.sub<cache::AccountStateCache>()),
+					Height(localNodeState.Config.BlockChain.EffectiveBalanceRange)
+			);
+
+			auto selectedNodes = selector.selectNodes(balanceView, nodes.view(), height);
 			CATAPULT_LOG(debug) << "timesync: number of selected nodes: " << selectedNodes.size();
 			return selectedNodes;
 		}
@@ -119,7 +126,7 @@ namespace catapult { namespace timesync {
 			const NetworkTimeSupplier& networkTimeSupplier) {
 		const extensions::LocalNodeStateRef& nodeLocalState = state.nodeLocalState();
 		const auto& nodes = state.nodes();
-		auto selector = CreateImportanceAwareNodeSelector(timeSyncConfig, nodeLocalState.Config);
+		auto selector = CreateBalanceAwareNodeSelector(timeSyncConfig, nodeLocalState.Config);
 		return thread::CreateNamedTask("time synchronization task", [&, resultSupplier, networkTimeSupplier, selector]() {
 			auto height = nodeLocalState.Storage.view().chainHeight();
 

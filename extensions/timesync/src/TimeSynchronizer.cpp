@@ -20,7 +20,7 @@
 
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheView.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/utils/Functional.h"
 #include "constants.h"
 #include "timesync/src/filters/filter_constants.h"
@@ -60,44 +60,49 @@ namespace catapult { namespace timesync {
 			return TimeOffset(0);
 		}
 
-		auto accountStateCacheView = localNodeState.CurrentCache.sub<cache::AccountStateCache>().createView();
-		cache::ImportanceView importanceView(accountStateCacheView->asReadOnly());
-		auto cumulativeImportance = sumImportances(importanceView, height, samples);
+		auto currentCacheView = localNodeState.CurrentCache.createView();
+		auto previousCacheView = localNodeState.PreviousCache.createView();
+
+		cache::BalanceView balanceView(
+				cache::ReadOnlyAccountStateCache(currentCacheView.sub<cache::AccountStateCache>()),
+				cache::ReadOnlyAccountStateCache(previousCacheView.sub<cache::AccountStateCache>()),
+				Height(localNodeState.Config.BlockChain.EffectiveBalanceRange)
+		);
+		auto cumulativeImportance = sumImportances(balanceView, height, samples);
 		if (0 == cumulativeImportance) {
 			CATAPULT_LOG(warning) << "cannot calculate network time, cumulativeImportance is zero";
 			return TimeOffset(0);
 		}
 
-		auto highValueAddressesSize = accountStateCacheView->highValueAddressesSize();
-		auto viewPercentage = static_cast<double>(samples.size()) / highValueAddressesSize;
+		// TODO: ? Maybe re-work recalculation after refactoring?
 		auto importancePercentage = static_cast<double>(cumulativeImportance) / m_totalChainBalance;
-		auto scaling = importancePercentage > viewPercentage ? 1.0 / importancePercentage : 1.0 / viewPercentage;
-		auto sum = sumScaledOffsets(importanceView, height, samples, scaling);
+		auto scaling = 1.0 / importancePercentage;
+		auto sum = sumScaledOffsets(balanceView, height, samples, scaling);
 		return TimeOffset(static_cast<int64_t>(GetCoupling(nodeAge) * sum));
 	}
 
-	Importance::ValueType TimeSynchronizer::sumImportances(
-			const cache::ImportanceView& importanceView,
+	Amount::ValueType TimeSynchronizer::sumImportances(
+			const cache::BalanceView& view,
 			Height height,
 			const TimeSynchronizationSamples& samples) {
-		return utils::Sum(samples, [&importanceView, height](const auto& sample) {
-			return importanceView.getAccountImportanceOrDefault(sample.node().identityKey(), height).unwrap();
+		return utils::Sum(samples, [&view, height](const auto& sample) {
+			return view.getEffectiveBalance(sample.node().identityKey(), height).unwrap();
 		});
 	}
 
 	double TimeSynchronizer::sumScaledOffsets(
-			const cache::ImportanceView& importanceView,
+			const cache::BalanceView& view,
 			Height height,
 			const TimeSynchronizationSamples& samples,
 			double scaling) {
 		auto totalChainBalance = m_totalChainBalance;
 		auto warningThresholdMillis = m_warningThresholdMillis;
-		return utils::Sum(samples, [&importanceView, height, scaling, totalChainBalance, warningThresholdMillis](const auto& sample) {
+		return utils::Sum(samples, [&view, height, scaling, totalChainBalance, warningThresholdMillis](const auto& sample) {
 			int64_t offset = sample.timeOffsetToRemote();
 			CATAPULT_LOG_LEVEL(MapToLogLevel(warningThresholdMillis, offset))
 					<< sample.node().metadata().Name << ": network time offset to local node is " << offset << "ms";
 
-			auto importance = importanceView.getAccountImportanceOrDefault(sample.node().identityKey(), height);
+			auto importance = view.getEffectiveBalance(sample.node().identityKey(), height);
 			return scaling * offset * importance.unwrap() / totalChainBalance;
 		});
 	}

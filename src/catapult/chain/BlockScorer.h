@@ -19,6 +19,8 @@
 **/
 
 #pragma once
+#include "catapult/cache_core/ReadOnlyAccountStateCache.h"
+#include "catapult/constants.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/state/AccountState.h"
 #include "catapult/types.h"
@@ -31,6 +33,14 @@ namespace catapult { namespace chain {
 	BlockTarget CalculateBaseTarget(
 		const BlockTarget& parentBaseTarget,
 		const utils::TimeSpan& averageBlockTime);
+
+	// Calculate effective balance of account = min(Balance[currentHeight], Balance[previousHeight])
+	Amount CalculateEffectiveBalance(
+			const cache::ReadOnlyAccountStateCache& currentCache,
+			const cache::ReadOnlyAccountStateCache& previousCache,
+			const Height& effectiveBalanceHeight,
+			const Height& currentHeight,
+			const Key& signer);
 
 	/// Predicate used to determine if a block is a hit or not.
 	class BlockHitPredicate {

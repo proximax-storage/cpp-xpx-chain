@@ -18,10 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <src/catapult/cache_core/BalanceView.h>
 #include "BlockChainProcessor.h"
 #include "InputUtils.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
+#include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/model/BlockUtils.h"
@@ -63,22 +64,30 @@ namespace catapult { namespace consumers {
 				if (!IsLinked(parentBlockInfo, elements))
 					return chain::Failure_Chain_Unlinked;
 
-				// TODO: ? Pass current and previous cache to hitPredicate, to calculate effective balance
-//				auto readOnlyPreviousCache = state.previousCacheDelta().toReadOnly();
-				auto readOnlyCurrentCache = state.currentCacheDelta().toReadOnly();
 				auto blockHitPredicate = m_blockHitPredicateFactory();
-
 				auto previousTimeStamp = parentBlockInfo.entity().Timestamp;
 				const auto* pParentGenerationHash = &parentBlockInfo.generationHash();
+
 				const auto& currentObserverState = state.currentObserverState();
 				const auto& preivousObserverState = state.preivousObserverState();
 				const auto& storage = state.storage();
+
 				const auto& effectiveBalanceHeight = state.EffectiveBalanceHeight;
+				auto currentHeight = parentBlockInfo.entity().Height;
+
+				auto balanceView = cache::BalanceView(
+						cache::ReadOnlyAccountStateCache(currentObserverState.Cache.sub<cache::AccountStateCache>()),
+						cache::ReadOnlyAccountStateCache(preivousObserverState.Cache.sub<cache::AccountStateCache>()),
+						effectiveBalanceHeight
+				);
+
 				for (auto& element : elements) {
 					const auto& block = element.Block;
+					Amount effectiveBalance = balanceView.getEffectiveBalance(block.Signer, currentHeight);
 					element.GenerationHash = model::CalculateGenerationHash(*pParentGenerationHash, block.Signer);
+
 					if (!blockHitPredicate(element.GenerationHash, block.BaseTarget,
-							utils::TimeSpan::FromDifference(block.Timestamp, previousTimeStamp), block.EffectiveBalance)) {
+							utils::TimeSpan::FromDifference(block.Timestamp, previousTimeStamp), effectiveBalance)) {
 						CATAPULT_LOG(warning) << "block " << block.Height << " failed hit";
 						return chain::Failure_Chain_Block_Not_Hit;
 					}
@@ -107,6 +116,7 @@ namespace catapult { namespace consumers {
 
 					previousTimeStamp = block.Timestamp;
 					pParentGenerationHash = &element.GenerationHash;
+					currentHeight = currentHeight + Height(1);
 				}
 
 				return ValidationResult::Success;

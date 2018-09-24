@@ -43,7 +43,6 @@ namespace catapult { namespace harvesting {
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
 			config.MaxDifficultyBlocks = 60;
-			config.ImportanceGrouping = 123;
 			return config;
 		}
 
@@ -99,7 +98,6 @@ namespace catapult { namespace harvesting {
 			auto delta = cache.createDelta();
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			auto& accountState = accountStateCache.addAccount(keyPair.publicKey(), Height(1));
-			accountState.ImportanceInfo.set(Importance(1'000'000'000), model::ImportanceHeight(1));
 			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000));
 			cache.commit(Height());
 			return test::CopyKeyPair(keyPair);

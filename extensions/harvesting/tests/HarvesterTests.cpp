@@ -90,7 +90,6 @@ namespace catapult { namespace harvesting {
 //			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 //			config.BlockTimeSmoothingFactor = 0;
 //			config.MaxDifficultyBlocks = 60;
-//			config.ImportanceGrouping = 123;
 //			return config;
 //		}
 //

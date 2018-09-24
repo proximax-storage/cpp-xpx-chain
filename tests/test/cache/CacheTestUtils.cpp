@@ -48,7 +48,6 @@ namespace catapult { namespace test {
 
 		subCaches[AccountStateCache::Id] = MakeSubCachePlugin<AccountStateCache, AccountStateCacheStorage>(AccountStateCacheTypes::Options{
 			config.Network.Identifier,
-			config.ImportanceGrouping,
 			config.MinHarvesterBalance
 		});
 	}

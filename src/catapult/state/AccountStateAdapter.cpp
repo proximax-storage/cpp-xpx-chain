@@ -29,14 +29,6 @@ namespace catapult { namespace state {
 		accountState.PublicKey = info.PublicKey;
 		accountState.PublicKeyHeight = info.PublicKeyHeight;
 
-		for (auto i = Importance_History_Size; i > 0; --i) {
-			auto importanceHeight = info.ImportanceHeights[i - 1];
-			if (model::ImportanceHeight() == importanceHeight)
-				continue;
-
-			accountState.ImportanceInfo.set(info.Importances[i - 1], importanceHeight);
-		}
-
 		auto pMosaic = info.MosaicsPtr();
 		for (auto i = 0u; i < info.MosaicsCount; ++i, ++pMosaic)
 			accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
@@ -53,13 +45,6 @@ namespace catapult { namespace state {
 		pAccountInfo->AddressHeight = accountState.AddressHeight;
 		pAccountInfo->PublicKey = accountState.PublicKey;
 		pAccountInfo->PublicKeyHeight = accountState.PublicKeyHeight;
-
-		auto i = 0u;
-		for (const auto& pair : accountState.ImportanceInfo) {
-			pAccountInfo->Importances[i] = pair.Importance;
-			pAccountInfo->ImportanceHeights[i] = pair.Height;
-			++i;
-		}
 
 		pAccountInfo->MosaicsCount = numMosaics;
 		auto pMosaic = pAccountInfo->MosaicsPtr();

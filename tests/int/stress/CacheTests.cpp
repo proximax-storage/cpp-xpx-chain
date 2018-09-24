@@ -36,7 +36,6 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
-			359,
 			Amount(std::numeric_limits<Amount::ValueType>::max())
 		};
 

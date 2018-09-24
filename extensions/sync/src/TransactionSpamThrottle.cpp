@@ -22,22 +22,22 @@
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/model/Transaction.h"
 #include <cmath>
 
 namespace catapult { namespace sync {
 
 	namespace {
-		Importance GetEffectiveImportance(Amount fee, Importance importance, const SpamThrottleConfiguration& config) {
+		Amount GetEffectiveImportance(Amount fee, Amount importance, const SpamThrottleConfiguration& config) {
 			// maxImportanceBoost <= 9 * 10 ^ 7, so maxImportanceBoost * maxFee should not overflow
 			uint64_t maxImportanceBoost = config.TotalImportance.unwrap() / 100u;
 			Amount maxFee = std::min(config.MaxBoostFee, fee);
 			uint64_t attemptedImportanceBoost = maxImportanceBoost * maxFee.unwrap() / config.MaxBoostFee.unwrap();
-			return importance + Importance(attemptedImportanceBoost);
+			return importance + Amount(attemptedImportanceBoost);
 		}
 
-		size_t GetMaxTransactions(size_t cacheSize, size_t maxCacheSize, Importance effectiveImportance, Importance totalImportance) {
+		size_t GetMaxTransactions(size_t cacheSize, size_t maxCacheSize, Amount effectiveImportance, Amount totalImportance) {
 			auto slotsLeft = maxCacheSize - cacheSize;
 			double scaleFactor = std::exp(-3.0 * cacheSize / maxCacheSize);
 
@@ -73,9 +73,13 @@ namespace catapult { namespace sync {
 
 				const auto& signer = transactionInfo.pEntity->Signer;
 				auto readOnlyAccountStateCache = context.UnconfirmedCatapultCache.sub<cache::AccountStateCache>();
-				cache::ImportanceView importanceView(readOnlyAccountStateCache);
-				auto importance = importanceView.getAccountImportanceOrDefault(signer, context.CacheHeight);
-				auto effectiveImportance = GetEffectiveImportance(transactionInfo.pEntity->Fee, importance, m_config);
+				cache::BalanceView view(
+						readOnlyAccountStateCache,
+						readOnlyAccountStateCache,
+						Height(1)
+				);
+				auto balance = view.getBalance(signer);
+				auto effectiveImportance = GetEffectiveImportance(transactionInfo.pEntity->Fee, balance, m_config);
 				auto maxTransactions = GetMaxTransactions(cacheSize, m_config.MaxCacheSize, effectiveImportance, m_config.TotalImportance);
 				return context.TransactionsCache.count(signer) >= maxTransactions;
 			}

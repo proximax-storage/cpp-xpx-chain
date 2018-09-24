@@ -24,9 +24,6 @@
 
 namespace catapult {
 
-	/// Number of historical importances associated with a single account.
-	constexpr size_t Importance_History_Size = 3;
-
 	/// Number of block timestamps to calculate average block time.
 	constexpr size_t Block_Timestamp_History_Size = 3;
 

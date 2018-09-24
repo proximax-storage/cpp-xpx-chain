@@ -67,22 +67,17 @@ namespace catapult { namespace sync {
 		}
 
 		cache::CatapultCache CreateCatapultCacheForDispatcherTests() {
-			// importance grouping must be non-zero
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ImportanceGrouping = 1;
-
 			// create the cache
-			return test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config);
+			return test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(model::BlockChainConfiguration::Uninitialized());
 		}
 
 		void InitializeCatapultCacheForDispatcherTests(cache::CatapultCache& cache, const crypto::KeyPair& signer) {
 			// create the delta
 			auto delta = cache.createDelta();
 
-			// add a balance and importance for the signer
+			// add a balance for the signer
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(signer.publicKey(), Height(1));
 			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000));
-			accountState.ImportanceInfo.set(Importance(1'000'000'000), model::ImportanceHeight(1));
 
 			// commit all changes
 			cache.commit(Height(1));

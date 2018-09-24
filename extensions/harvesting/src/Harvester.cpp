@@ -20,7 +20,7 @@
 
 #include <src/catapult/config/LocalNodeConfiguration.h>
 #include "Harvester.h"
-#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/model/BlockUtils.h"
@@ -56,8 +56,6 @@ namespace catapult { namespace harvesting {
 		model::BlockHitContext hitContext;
 		auto& config = m_localNodeState.Config.BlockChain;
 		auto& storage = m_localNodeState.Storage;
-		auto& currentCache = m_localNodeState.CurrentCache;
-//		auto& previousCache = m_localNodeState.PreviousCache;
 
 		hitContext.ElapsedTime = utils::TimeSpan::FromDifference(timestamp, lastBlockElement.Block.Timestamp);
 		utils::TimeSpan averageBlockTime{};
@@ -70,16 +68,22 @@ namespace catapult { namespace harvesting {
 		}
 		hitContext.BaseTarget = chain::CalculateBaseTarget(lastBlockElement.Block.BaseTarget, averageBlockTime);
 
-		auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(currentCache.createView().sub<cache::AccountStateCache>());
+		auto currentCacheView = m_localNodeState.CurrentCache.createView();
+		auto previousCacheView = m_localNodeState.PreviousCache.createView();
+
+		cache::BalanceView balanceView(
+				cache::ReadOnlyAccountStateCache(currentCacheView.sub<cache::AccountStateCache>()),
+				cache::ReadOnlyAccountStateCache(previousCacheView.sub<cache::AccountStateCache>()),
+				Height(config.EffectiveBalanceRange)
+		);
+		const auto& currentHeight = storage.view().chainHeight();
 
 		auto unlockedAccountsView = m_unlockedAccounts.view();
 		const crypto::KeyPair* pHarvesterKeyPair = nullptr;
 		for (const auto& keyPair : unlockedAccountsView) {
 			hitContext.Signer = keyPair.publicKey();
 			hitContext.GenerationHash = model::CalculateGenerationHash(previousBlockContext.GenerationHash, hitContext.Signer);
-			auto& accountState = readOnlyAccountStateCache.get(hitContext.Signer);
-			constexpr Amount OLD_BALANCE{}; // TODO: replace with actual old balance.
-			hitContext.EffectiveBalance = Amount{std::min(accountState.Balances.get(Xpx_Id).unwrap(), OLD_BALANCE.unwrap())};
+			hitContext.EffectiveBalance = balanceView.getEffectiveBalance(hitContext.Signer, currentHeight);
 
 			chain::BlockHitPredicate hitPredicate;
 			if (hitPredicate(hitContext)) {

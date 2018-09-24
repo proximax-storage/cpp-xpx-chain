@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/constants.h"
 #include "catapult/model/Notifications.h"
 #include "catapult/observers/ObserverTypes.h"
 

@@ -126,23 +126,6 @@ namespace catapult { namespace test {
 		EXPECT_EQ(Height(0) != accountState.PublicKeyHeight ? accountState.PublicKey : Key{}, GetKeyValue(dbAccount, "publicKey"));
 		EXPECT_EQ(accountState.PublicKeyHeight.unwrap(), GetUint64(dbAccount, "publicKeyHeight"));
 
-		auto dbImportances = dbAccount["importances"].get_array().value;
-		const auto& accountImportances = accountState.ImportanceInfo;
-		size_t numImportances = 0;
-		for (const auto& importanceElement : dbImportances) {
-			auto importanceDocument = importanceElement.get_document();
-			auto importanceHeight = GetUint64(importanceDocument.view(), "height");
-
-			auto importance = accountImportances.get(model::ImportanceHeight(importanceHeight));
-			EXPECT_EQ(importance.unwrap(), GetUint64(importanceDocument.view(), "value"));
-			++numImportances;
-		}
-
-		auto expectedNumImportances = std::count_if(accountImportances.begin(), accountImportances.end(), [](const auto& importanceInfo){
-			return model::ImportanceHeight(0) != importanceInfo.Height;
-		});
-		EXPECT_EQ(expectedNumImportances, numImportances);
-
 		auto dbMosaics = dbAccount["mosaics"].get_array().value;
 		size_t numMosaics = 0;
 		for (const auto& mosaicElement : dbMosaics) {

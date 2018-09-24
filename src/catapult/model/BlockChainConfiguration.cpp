@@ -51,7 +51,6 @@ namespace catapult { namespace model {
 		LOAD_CHAIN_PROPERTY(BlockGenerationTargetTime);
 		LOAD_CHAIN_PROPERTY(BlockTimeSmoothingFactor);
 
-		LOAD_CHAIN_PROPERTY(ImportanceGrouping);
 		LOAD_CHAIN_PROPERTY(MaxRollbackBlocks);
 		LOAD_CHAIN_PROPERTY(MaxDifficultyBlocks);
 

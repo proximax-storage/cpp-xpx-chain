@@ -59,9 +59,6 @@ namespace catapult {
 	struct Difficulty_tag {};
 	using Difficulty = utils::BaseValue<uint64_t, Difficulty_tag>;
 
-	struct Importance_tag {};
-	using Importance = utils::BaseValue<uint64_t, Importance_tag>;
-
 	using utils::RawBuffer;
 	using utils::MutableRawBuffer;
 	using utils::RawString;

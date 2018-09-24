@@ -44,13 +44,7 @@ namespace catapult { namespace consumers {
 		constexpr auto Base_Difficulty = Difficulty().unwrap();
 		constexpr auto Max_Rollback_Blocks = 25u;
 		constexpr auto Effective_Balance = 1440u;
-		constexpr model::ImportanceHeight Initial_Last_Recalculation_Height(1234);
-		constexpr model::ImportanceHeight Modified_Last_Recalculation_Height(7777);
 		const Key Sentinel_Processor_Public_Key = test::GenerateRandomData<Key_Size>();
-
-		constexpr model::ImportanceHeight AddImportanceHeight(model::ImportanceHeight lhs, model::ImportanceHeight::ValueType rhs) {
-			return model::ImportanceHeight(lhs.unwrap() + rhs);
-		}
 
 		// region MockDifficultyChecker
 

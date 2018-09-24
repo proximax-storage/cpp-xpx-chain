@@ -23,7 +23,7 @@
 #include "ScheduledHarvesterTask.h"
 #include "UnlockedAccounts.h"
 #include "catapult/cache/MemoryUtCache.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
@@ -60,13 +60,24 @@ namespace catapult { namespace harvesting {
 			return options;
 		}
 
-		void PruneUnlockedAccounts(UnlockedAccounts& unlockedAccounts, const cache::CatapultCache& cache, Amount minHarvesterBalance) {
-			auto cacheView = cache.createView();
-			auto height = cacheView.height() + Height(1);
-			auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
-			unlockedAccounts.modifier().removeIf([height, minHarvesterBalance, &readOnlyAccountStateCache](const auto& key) {
-				cache::ImportanceView view(readOnlyAccountStateCache);
-				return !view.canHarvest(key, height, minHarvesterBalance);
+		void PruneUnlockedAccounts(UnlockedAccounts& unlockedAccounts, const extensions::LocalNodeStateRef& nodeLocalState) {
+			auto minHarvesterBalance = nodeLocalState.Config.BlockChain.MinHarvesterBalance;
+			auto currentCacheView = nodeLocalState.CurrentCache.createView();
+			auto previousCacheView = nodeLocalState.PreviousCache.createView();
+
+			auto height = currentCacheView.height() + Height(1);
+			auto effectiveBalanceHeight = Height(nodeLocalState.Config.BlockChain.EffectiveBalanceRange);
+			unlockedAccounts.modifier().removeIf([
+					height, minHarvesterBalance, effectiveBalanceHeight,
+					&currentCacheView, &previousCacheView](const auto& key) {
+
+				cache::BalanceView balanceView(
+						cache::ReadOnlyAccountStateCache(currentCacheView.sub<cache::AccountStateCache>()),
+						cache::ReadOnlyAccountStateCache(previousCacheView.sub<cache::AccountStateCache>()),
+						effectiveBalanceHeight
+				);
+
+				return !balanceView.canHarvest(key, height, minHarvesterBalance);
 			});
 		}
 
@@ -81,11 +92,8 @@ namespace catapult { namespace harvesting {
 					)
 			);
 
-			auto minHarvesterBalance = nodeLocalState.Config.BlockChain.MinHarvesterBalance;
-			return thread::CreateNamedTask("harvesting task", [&nodeLocalState, &unlockedAccounts, pHarvesterTask, minHarvesterBalance]() {
-				// TODO: ? Maybe remove it forever
-				// prune accounts that are not eligible to harvest the next block
-				PruneUnlockedAccounts(unlockedAccounts, nodeLocalState.CurrentCache, minHarvesterBalance);
+			return thread::CreateNamedTask("harvesting task", [&nodeLocalState, &unlockedAccounts, pHarvesterTask]() {
+				PruneUnlockedAccounts(unlockedAccounts, nodeLocalState);
 
 				// harvest the next block
 				pHarvesterTask->harvest();

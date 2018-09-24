@@ -73,7 +73,6 @@ namespace catapult { namespace cache {
 		AccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
 				: SynchronizedCache<BasicAccountStateCache>(BasicAccountStateCache(config, options))
 				, m_networkIdentifier(options.NetworkIdentifier)
-				, m_importanceGrouping(options.ImportanceGrouping)
 
 		{}
 
@@ -83,14 +82,8 @@ namespace catapult { namespace cache {
 			return m_networkIdentifier;
 		}
 
-		/// Gets the network importance grouping.
-		uint64_t importanceGrouping() const {
-			return m_importanceGrouping;
-		}
-
 	private:
 		model::NetworkIdentifier m_networkIdentifier;
-		uint64_t m_importanceGrouping;
 	};
 
 	/// Synchronized cache composed of stateful old account information.

@@ -34,7 +34,7 @@ namespace catapult { namespace sync {
 		{}
 
 		/// Creates a spam throttle configuration around \a maxBoostFee, \a totalImportance, \a maxCacheSize and \a maxBlockSize.
-		SpamThrottleConfiguration(Amount maxBoostFee, Importance totalImportance, uint32_t maxCacheSize, uint32_t maxBlockSize)
+		SpamThrottleConfiguration(Amount maxBoostFee, Amount totalImportance, uint32_t maxCacheSize, uint32_t maxBlockSize)
 				: MaxBoostFee(maxBoostFee)
 				, TotalImportance(totalImportance)
 				, MaxCacheSize(maxCacheSize)
@@ -46,7 +46,7 @@ namespace catapult { namespace sync {
 		Amount MaxBoostFee;
 
 		/// Total importance of all accounts.
-		Importance TotalImportance;
+		Amount TotalImportance;
 
 		/// Maximum transactions cache size.
 		uint32_t MaxCacheSize;

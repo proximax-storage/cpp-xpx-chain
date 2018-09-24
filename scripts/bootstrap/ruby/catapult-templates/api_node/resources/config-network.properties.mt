@@ -9,7 +9,6 @@ generationHash = {{network_generation_hash}}
 blockGenerationTargetTime = 15s
 blockTimeSmoothingFactor = 3000
 
-importanceGrouping = 359
 maxRollbackBlocks = 360
 maxDifficultyBlocks = 60
 

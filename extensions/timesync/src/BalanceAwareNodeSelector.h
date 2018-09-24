@@ -24,40 +24,40 @@
 #include "catapult/ionet/NodeInfo.h"
 
 namespace catapult {
-	namespace cache { class ImportanceView; }
+	namespace cache { class BalanceView; }
 	namespace ionet { class NodeContainerView; }
 }
 
 namespace catapult { namespace timesync {
 
 	/// A node selector that selects nodes according to the importance of the account used to boot the node.
-	class ImportanceAwareNodeSelector {
+	class BalanceAwareNodeSelector {
 	public:
 		using NodeSelector = std::function<ionet::NodeSet (extensions::WeightedCandidates&, uint64_t, size_t)>;
 
 	public:
-		/// Creates a selector that can pick up to \a maxNodes nodes with a minimum importance of \a minImportance
+		/// Creates a selector that can pick up to \a maxNodes nodes with a minimum balance of \a minBalance
 		/// that have active connections with service id \a serviceId.
-		explicit ImportanceAwareNodeSelector(ionet::ServiceIdentifier serviceId, uint8_t maxNodes, Importance minImportance);
+		explicit BalanceAwareNodeSelector(ionet::ServiceIdentifier serviceId, uint8_t maxNodes, Amount minBalance);
 
 		/// Creates a selector around a custom \a selector that can pick up to \a maxNodes nodes with
-		/// a minimum importance of \a minImportance that have active connections with service id \a serviceId.
-		explicit ImportanceAwareNodeSelector(
+		/// a minimum balance of \a minBalance that have active connections with service id \a serviceId.
+		explicit BalanceAwareNodeSelector(
 				ionet::ServiceIdentifier serviceId,
 				uint8_t maxNodes,
-				Importance minImportance,
+				Amount minBalance,
 				const NodeSelector& selector);
 
 	public:
 		/// Selects nodes from \a nodeContainerView that have a minimum importance at \a height according to \a importanceView.
 		ionet::NodeSet selectNodes(
-				const cache::ImportanceView& importanceView,
+				const cache::BalanceView& view,
 				const ionet::NodeContainerView& nodeContainerView,
 				Height height) const;
 
 	private:
-		std::pair<bool, Importance> isCandidate(
-				const cache::ImportanceView& importanceView,
+		std::pair<bool, Amount> isCandidate(
+				const cache::BalanceView& view,
 				const ionet::Node& node,
 				const ionet::NodeInfo& nodeInfo,
 				Height height) const;
@@ -65,7 +65,7 @@ namespace catapult { namespace timesync {
 	private:
 		ionet::ServiceIdentifier m_serviceId;
 		uint8_t m_maxNodes;
-		Importance m_minImportance;
+		Amount m_minBalance;
 		NodeSelector m_selector;
 	};
 }}
