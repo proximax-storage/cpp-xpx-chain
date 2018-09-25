@@ -30,7 +30,7 @@ namespace catapult {
 
 namespace catapult { namespace timesync {
 
-	/// A node selector that selects nodes according to the importance of the account used to boot the node.
+	/// A node selector that selects nodes according to the balance of the account used to boot the node.
 	class BalanceAwareNodeSelector {
 	public:
 		using NodeSelector = std::function<ionet::NodeSet (extensions::WeightedCandidates&, uint64_t, size_t)>;
@@ -49,7 +49,7 @@ namespace catapult { namespace timesync {
 				const NodeSelector& selector);
 
 	public:
-		/// Selects nodes from \a nodeContainerView that have a minimum importance at \a height according to \a importanceView.
+		/// Selects nodes from \a nodeContainerView that have a minimum balance at \a height according to \a balanceView.
 		ionet::NodeSet selectNodes(
 				const cache::BalanceView& view,
 				const ionet::NodeContainerView& nodeContainerView,

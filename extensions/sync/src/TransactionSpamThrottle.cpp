@@ -29,20 +29,20 @@
 namespace catapult { namespace sync {
 
 	namespace {
-		Amount GetEffectiveImportance(Amount fee, Amount importance, const SpamThrottleConfiguration& config) {
-			// maxImportanceBoost <= 9 * 10 ^ 7, so maxImportanceBoost * maxFee should not overflow
-			uint64_t maxImportanceBoost = config.TotalImportance.unwrap() / 100u;
+		Amount GetUsefulBalance(Amount fee, Amount balance, const SpamThrottleConfiguration& config) {
+			// maxBalanceBoost <= 9 * 10 ^ 7, so maxBalanceBoost * maxFee should not overflow
+			uint64_t maxBalanceBoost = config.TotalBalance.unwrap() / 100u;
 			Amount maxFee = std::min(config.MaxBoostFee, fee);
-			uint64_t attemptedImportanceBoost = maxImportanceBoost * maxFee.unwrap() / config.MaxBoostFee.unwrap();
-			return importance + Amount(attemptedImportanceBoost);
+			uint64_t attemptedBalanceBoost = maxBalanceBoost * maxFee.unwrap() / config.MaxBoostFee.unwrap();
+			return balance + Amount(attemptedBalanceBoost);
 		}
 
-		size_t GetMaxTransactions(size_t cacheSize, size_t maxCacheSize, Amount effectiveImportance, Amount totalImportance) {
+		size_t GetMaxTransactions(size_t cacheSize, size_t maxCacheSize, Amount usefulBalance, Amount totalBalance) {
 			auto slotsLeft = maxCacheSize - cacheSize;
 			double scaleFactor = std::exp(-3.0 * cacheSize / maxCacheSize);
 
 			// the value 100 is empirical and thus has no special meaning
-			return static_cast<size_t>(scaleFactor * effectiveImportance.unwrap() * slotsLeft * 100 / totalImportance.unwrap());
+			return static_cast<size_t>(scaleFactor * usefulBalance.unwrap() * slotsLeft * 100 / totalBalance.unwrap());
 		}
 
 		class TransactionSpamThrottle {
@@ -79,8 +79,8 @@ namespace catapult { namespace sync {
 						Height(1)
 				);
 				auto balance = view.getBalance(signer);
-				auto effectiveImportance = GetEffectiveImportance(transactionInfo.pEntity->Fee, balance, m_config);
-				auto maxTransactions = GetMaxTransactions(cacheSize, m_config.MaxCacheSize, effectiveImportance, m_config.TotalImportance);
+				auto usefulBalance = GetUsefulBalance(transactionInfo.pEntity->Fee, balance, m_config);
+				auto maxTransactions = GetMaxTransactions(cacheSize, m_config.MaxCacheSize, usefulBalance, m_config.TotalBalance);
 				return context.TransactionsCache.count(signer) >= maxTransactions;
 			}
 

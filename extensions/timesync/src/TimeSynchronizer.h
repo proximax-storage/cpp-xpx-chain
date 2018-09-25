@@ -52,7 +52,7 @@ namespace catapult { namespace timesync {
 				NodeAge nodeAge);
 
 	private:
-		Amount::ValueType sumImportances(
+		Amount::ValueType sumBalances(
 				const cache::BalanceView& view,
 				Height height,
 				const TimeSynchronizationSamples& samples);

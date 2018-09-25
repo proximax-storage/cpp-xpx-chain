@@ -40,9 +40,9 @@ namespace catapult { namespace timesync {
 		BalanceAwareNodeSelector CreateBalanceAwareNodeSelector(
 				const TimeSynchronizationConfiguration& timeSyncConfig,
 				const config::LocalNodeConfiguration& config) {
-			auto totalChainImportance = model::GetTotalBalance(config.BlockChain).unwrap();
-			auto minImportance = Amount(static_cast<uint64_t>(Required_Minimum_Importance * totalChainImportance));
-			return BalanceAwareNodeSelector(ionet::ServiceIdentifier(0x53594E43), timeSyncConfig.MaxNodes, minImportance);
+			auto totalChainBalance = model::GetTotalBalance(config.BlockChain).unwrap();
+			auto minBalance = Amount(static_cast<uint64_t>(Required_Minimum_Balance * totalChainBalance));
+			return BalanceAwareNodeSelector(ionet::ServiceIdentifier(0x53594E43), timeSyncConfig.MaxNodes, minBalance);
 		}
 
 		struct SamplesResult {

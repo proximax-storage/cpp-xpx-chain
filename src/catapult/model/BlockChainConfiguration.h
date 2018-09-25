@@ -42,7 +42,7 @@ namespace catapult { namespace model {
 		/// Smoothing factor in thousandths.
 		/// If this value is non-zero, the network will be biased in favor of evenly spaced blocks.
 		/// \note A higher value makes the network more biased.
-		/// \note This can lower security because it will increase the influence of time relative to importance.
+		/// \note This can lower security because it will increase the influence of time relative to balance.
 		uint32_t BlockTimeSmoothingFactor;
 
 		/// Maximum number of blocks that can be rolled back.

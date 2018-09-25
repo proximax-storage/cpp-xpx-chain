@@ -68,20 +68,20 @@ namespace catapult { namespace timesync {
 				cache::ReadOnlyAccountStateCache(previousCacheView.sub<cache::AccountStateCache>()),
 				Height(localNodeState.Config.BlockChain.EffectiveBalanceRange)
 		);
-		auto cumulativeImportance = sumImportances(balanceView, height, samples);
-		if (0 == cumulativeImportance) {
-			CATAPULT_LOG(warning) << "cannot calculate network time, cumulativeImportance is zero";
+		auto cumulativeBalance = sumBalances(balanceView, height, samples);
+		if (0 == cumulativeBalance) {
+			CATAPULT_LOG(warning) << "cannot calculate network time, cumulativeBalance is zero";
 			return TimeOffset(0);
 		}
 
 		// TODO: ? Maybe re-work recalculation after refactoring?
-		auto importancePercentage = static_cast<double>(cumulativeImportance) / m_totalChainBalance;
-		auto scaling = 1.0 / importancePercentage;
+		auto balancePercentage = static_cast<double>(cumulativeBalance) / m_totalChainBalance;
+		auto scaling = 1.0 / balancePercentage;
 		auto sum = sumScaledOffsets(balanceView, height, samples, scaling);
 		return TimeOffset(static_cast<int64_t>(GetCoupling(nodeAge) * sum));
 	}
 
-	Amount::ValueType TimeSynchronizer::sumImportances(
+	Amount::ValueType TimeSynchronizer::sumBalances(
 			const cache::BalanceView& view,
 			Height height,
 			const TimeSynchronizationSamples& samples) {
@@ -102,8 +102,8 @@ namespace catapult { namespace timesync {
 			CATAPULT_LOG_LEVEL(MapToLogLevel(warningThresholdMillis, offset))
 					<< sample.node().metadata().Name << ": network time offset to local node is " << offset << "ms";
 
-			auto importance = view.getEffectiveBalance(sample.node().identityKey(), height);
-			return scaling * offset * importance.unwrap() / totalChainBalance;
+			auto balance = view.getEffectiveBalance(sample.node().identityKey(), height);
+			return scaling * offset * balance.unwrap() / totalChainBalance;
 		});
 	}
 }}
