@@ -110,8 +110,9 @@ namespace catapult { namespace model {
 				CATAPULT_THROW_RUNTIME_ERROR("Can't calculate cumulative difficulty with zero target");
 			}
 
-			auto res = BlockTarget{previousBlockDifficulty.unwrap()} + TWO_TO_64 / target;
-			return Difficulty{res.convert_to<uint64_t>()};
+			TWO_TO_64 /= target;
+			TWO_TO_64 += previousBlockDifficulty.unwrap();
+			return Difficulty{TWO_TO_64.convert_to<uint64_t>()};
 		}
 
 		template<typename TContainer>

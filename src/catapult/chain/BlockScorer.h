@@ -32,7 +32,8 @@ namespace catapult { namespace chain {
 
 	BlockTarget CalculateBaseTarget(
 		const BlockTarget& parentBaseTarget,
-		const utils::TimeSpan& averageBlockTime);
+		const utils::TimeSpan& averageBlockTime,
+		const model::BlockChainConfiguration& config);
 
 	// Calculate effective balance of account = min(Balance[currentHeight], Balance[previousHeight])
 	Amount CalculateEffectiveBalance(

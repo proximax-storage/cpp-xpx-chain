@@ -29,11 +29,9 @@
 namespace catapult { namespace chain {
 
 	namespace {
-		constexpr uint64_t MAXRATIO{67};
-		constexpr uint64_t MINRATIO{53};
-		constexpr int GAMMA_NUMERATOR{64};
-		constexpr int GAMMA_DENOMINATOR{100};
-		constexpr int BLOCK_GENERATION_TIME{60};
+		constexpr uint64_t GAMMA_NUMERATOR{64};
+		constexpr uint64_t GAMMA_DENOMINATOR{100};
+		constexpr uint32_t SMOTHING_FACTOR_DENOMINATOR{1000};
 
 		/// The first 8 bytes of a \a generationHash are converted to a number, referred to as the account hit.
 		uint64_t CalculateHit(const Hash256& generationHash) {
@@ -65,14 +63,18 @@ namespace catapult { namespace chain {
 	// Tp - previous base target
 	// Tb - calculated base target
 	BlockTarget CalculateBaseTarget(
-			const BlockTarget& parentBaseTarget,
-			const utils::TimeSpan& averageBlockTime) {
-		if (averageBlockTime > utils::TimeSpan::FromSeconds(BLOCK_GENERATION_TIME)) {
-			return (parentBaseTarget * std::min(averageBlockTime.seconds(), MAXRATIO)) / BLOCK_GENERATION_TIME;
+			const BlockTarget& Tp,
+			const utils::TimeSpan& milliSeconds,
+			const model::BlockChainConfiguration& config) {
+		auto S = milliSeconds.seconds();
+		auto RATIO = config.BlockGenerationTargetTime.seconds();
+		auto factor = config.BlockTimeSmoothingFactor / SMOTHING_FACTOR_DENOMINATOR;
+		auto MINRATIO = RATIO - factor;
+		auto MAXRATIO = RATIO + factor;
+		if (S > RATIO) {
+			return Tp * std::min(S, MAXRATIO) / RATIO;
 		} else {
-			return (parentBaseTarget -
-					parentBaseTarget * GAMMA_NUMERATOR * (BLOCK_GENERATION_TIME - std::max(averageBlockTime.seconds(), MINRATIO)))
-					/ BLOCK_GENERATION_TIME / GAMMA_DENOMINATOR;
+			return Tp - Tp * GAMMA_NUMERATOR * (RATIO - std::max(S, MINRATIO) ) / GAMMA_DENOMINATOR / RATIO;
 		}
 	}
 

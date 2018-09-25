@@ -95,7 +95,7 @@ namespace catapult { namespace chain {
 				CATAPULT_LOG_LEVEL(localDifficulty == remoteDifficulty ? utils::LogLevel::Trace : utils::LogLevel::Debug)
 						<< "comparing chain difficulties: " << localDifficulty << " (local) vs " << remoteDifficulty << " (remote)";
 
-				if (remoteDifficulty < localDifficulty) {
+				if (remoteDifficulty > localDifficulty) {
 					m_localHeight = localInfo.Height;
 					return Incomplete_Chain_Comparison_Code;
 				}
