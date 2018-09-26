@@ -28,7 +28,7 @@ namespace catapult { namespace sync {
 	public:
 		/// Creates a default spam throttle configuration.
 		SpamThrottleConfiguration()
-				: totalBalance(0)
+				: TotalBalance(0)
 				, MaxCacheSize(0)
 				, MaxBlockSize(0)
 		{}

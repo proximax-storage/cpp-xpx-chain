@@ -18,17 +18,17 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <src/catapult/config/LocalNodeConfiguration.h>
-#include "MultiBlockLoader.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
+#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/Block.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/Elements.h"
 #include "catapult/utils/StackLogger.h"
+#include "MultiBlockLoader.h"
 
 namespace catapult { namespace filechain {
 

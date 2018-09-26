@@ -74,7 +74,6 @@ namespace catapult { namespace plugins {
 					"AccountPublicKeyObserver",
 					"BalanceObserver",
 					"HarvestFeeObserver",
-					"RecalculateImportancesObserver",
 				};
 			}
 

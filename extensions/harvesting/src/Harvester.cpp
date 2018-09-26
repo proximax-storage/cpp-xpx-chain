@@ -18,12 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <src/catapult/config/LocalNodeConfiguration.h>
-#include "Harvester.h"
 #include "catapult/cache_core/BalanceView.h"
 #include "catapult/chain/BlockScorer.h"
+#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/model/BlockUtils.h"
+#include "Harvester.h"
 
 namespace catapult { namespace harvesting {
 
