@@ -176,12 +176,9 @@ namespace catapult { namespace chain {
 			void AddAccount(
 					cache::CatapultCache& cache,
 					const Key& publicKey,
-					Importance importance,
-					model::ImportanceHeight importanceHeight,
 					Amount balance) {
 				auto delta = cache.createDelta();
 				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
-				accountState.ImportanceInfo.set(importance, importanceHeight);
 				accountState.Balances.credit(Xpx_Id, balance);
 				cache.commit(Height());
 			}
@@ -246,10 +243,6 @@ namespace catapult { namespace chain {
 						EXPECT_EQ(observers::NotifyMode::Rollback, params.Context.Mode) << message;
 					else
 						EXPECT_EQ(observers::NotifyMode::Commit, params.Context.Mode) << message;
-
-					// - compare the copied state to the default state
-					//   (a dummy state is passed by the updater because only block observers modify it)
-					EXPECT_EQ(model::ImportanceHeight(0), params.StateCopy.LastRecalculationHeight) << message;
 
 					// - cache contents + sequence
 					EXPECT_TRUE(params.IsPassedMarkedCache) << message;

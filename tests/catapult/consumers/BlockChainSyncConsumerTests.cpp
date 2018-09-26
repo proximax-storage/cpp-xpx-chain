@@ -329,7 +329,7 @@ namespace catapult { namespace consumers {
 				}
 			}
 
-			void assertProcessorInvocation(const ConsumerInput& input, size_t numUnwoundBlocks = 0) {
+			void assertProcessorInvocation(const ConsumerInput& input) {
 				// Assert:
 				ASSERT_EQ(1u, Processor.params().size());
 				const auto& processorParams = Processor.params()[0];
@@ -535,7 +535,7 @@ namespace catapult { namespace consumers {
 		auto input = CreateInput(Height(5), 2);
 
 		auto remoteDifficulty = input.blocks()[input.blocks().size() - 1].Block.CumulativeDifficulty;
-		auto localDifficulty = context.Storage.view().loadBlock(Height(7))->CumulativeDifficulty;
+		auto localDifficulty = context.LocalNodeStateRef.Storage.view().loadBlock(Height(7))->CumulativeDifficulty;
 		context.DifficultyChecker.setResult(remoteDifficulty > localDifficulty);
 
 		// Act:
@@ -557,7 +557,7 @@ namespace catapult { namespace consumers {
 		auto input = CreateInput(Height(6), 2);
 
 		auto remoteDifficulty = input.blocks()[input.blocks().size() - 1].Block.CumulativeDifficulty;
-		auto localDifficulty = context.Storage.view().loadBlock(Height(7))->CumulativeDifficulty;
+		auto localDifficulty = context.LocalNodeStateRef.Storage.view().loadBlock(Height(7))->CumulativeDifficulty;
 		context.DifficultyChecker.setResult(remoteDifficulty > localDifficulty);
 
 		// Act:
@@ -641,7 +641,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertProcessorInvocation(input, 3);
+		context.assertProcessorInvocation(input);
 		context.assertStored(input);
 	}
 
@@ -659,7 +659,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(1u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7) });
-		context.assertProcessorInvocation(input, 1);
+		context.assertProcessorInvocation(input);
 		context.assertStored(input);
 	}
 
@@ -678,7 +678,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertProcessorInvocation(input, 3);
+		context.assertProcessorInvocation(input);
 		context.assertStored(input);
 	}
 
@@ -815,7 +815,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertProcessorInvocation(input, 3);
+		context.assertProcessorInvocation(input);
 		context.assertStored(input);
 
 		// - the change notification had 6 added and 9 reverted
@@ -856,7 +856,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertProcessorInvocation(input, 3);
+		context.assertProcessorInvocation(input);
 		context.assertStored(input);
 
 		// - the change notification had 8 added and 7 reverted
