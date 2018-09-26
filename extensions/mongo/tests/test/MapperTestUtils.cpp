@@ -93,8 +93,8 @@ namespace catapult { namespace test {
 	}
 
 	void AssertEqualBlockData(const model::Block& block, const bsoncxx::document::view& dbBlock) {
-		// - 4 fields from VerifiableEntity, 5 fields from Block
-		EXPECT_EQ(9u, GetFieldCount(dbBlock));
+		// - 4 fields from VerifiableEntity, 6 fields from Block
+		EXPECT_EQ(10u, GetFieldCount(dbBlock));
 		AssertEqualVerifiableEntityData(block, dbBlock);
 		EXPECT_EQ(block.Height.unwrap(), GetUint64(dbBlock, "height"));
 		EXPECT_EQ(block.Timestamp.unwrap(), GetUint64(dbBlock, "timestamp"));

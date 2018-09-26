@@ -77,7 +77,7 @@ namespace catapult { namespace harvesting {
 
 		hitContext.ElapsedTime = utils::TimeSpan::FromDifference(timestamp, lastBlockElement.Block.Timestamp);
 		utils::TimeSpan averageBlockTime{};
-		if (lastBlockElement.Block.Height < Height(Block_Timestamp_History_Size + 1)) {
+		if (lastBlockElement.Block.Height < Height(Block_Timestamp_History_Size + 2)) {
 			averageBlockTime = lastBlockElement.Block.Timestamp / lastBlockElement.Block.Height.unwrap();
 		} else {
 			auto storageView = storage.view();

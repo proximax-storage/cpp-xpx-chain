@@ -36,8 +36,6 @@ namespace catapult { namespace api {
 	// region chainInfo
 
 	TEST(TEST_CLASS, CanRetrieveChainInfo) {
-		// Arrange:
-		auto numSupplierCalls = 0;
 
 		auto pStorage = mocks::CreateMemoryBasedStorageCache(12);
 		auto pApi = api::CreateLocalChainApi(*pStorage, 5);
@@ -46,7 +44,6 @@ namespace catapult { namespace api {
 		auto info = pApi->chainInfo().get();
 
 		// Assert:
-		EXPECT_EQ(1u, numSupplierCalls);
 		EXPECT_EQ(Height(12), info.Height);
 	}
 

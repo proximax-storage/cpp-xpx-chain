@@ -21,6 +21,7 @@
 #include "catapult/chain/UtUpdater.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/MemoryUtCache.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/model/TransactionStatus.h"
 #include "tests/catapult/chain/test/MockExecutionConfiguration.h"
@@ -163,13 +164,26 @@ namespace catapult { namespace chain {
 			}
 
 		public:
-			void seedDifficultyInfos(size_t /*count*/) {
-//				auto delta = m_cache.createDelta();
-//				auto& blockDifficultyCache = delta.sub<cache::BlockDifficultyCache>();
-//				for (auto i = 0u; i < count; ++i)
-//					blockDifficultyCache.insert(state::BlockDifficultyInfo(Height(blockDifficultyCache.size() + 1)));
+			void modifyCatapultCache() {
+				auto delta = m_cache.createDelta();
+				auto publicKey = test::GenerateRandomData<Key_Size>();
+				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
+				accountState.Balances.credit(Xpx_Id, Amount{1000});
 
 				m_cache.commit(Default_Height);
+			}
+
+			void AddAccount(
+					cache::CatapultCache& cache,
+					const Key& publicKey,
+					Importance importance,
+					model::ImportanceHeight importanceHeight,
+					Amount balance) {
+				auto delta = cache.createDelta();
+				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
+				accountState.ImportanceInfo.set(importance, importanceHeight);
+				accountState.Balances.credit(Xpx_Id, balance);
+				cache.commit(Height());
 			}
 
 			// region assertContexts
@@ -199,10 +213,9 @@ namespace catapult { namespace chain {
 				}
 			}
 
-			void assertValidatorContexts(const std::vector<size_t>& expectedNumDifficultyInfos) const {
+			void assertValidatorContexts() const {
 				// Assert:
 				CATAPULT_LOG(debug) << "checking validator contexts passed to validator";
-				ASSERT_EQ(expectedNumDifficultyInfos.size(), m_executionConfig.pValidator->params().size());
 
 				size_t i = 0;
 				for (const auto& params : m_executionConfig.pValidator->params()) {
@@ -213,14 +226,13 @@ namespace catapult { namespace chain {
 					EXPECT_EQ(Default_Time, params.Context.BlockTime) << message;
 					EXPECT_EQ(test::Mock_Execution_Configuration_Network_Identifier, params.Context.Network.Identifier) << message;
 
-//					// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)
-//					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
-//					EXPECT_EQ(expectedNumDifficultyInfos[i], params.NumDifficultyInfos) << message;
+					// - cache contents + sequence
+					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
 					++i;
 				}
 			}
 
-			void assertObserverContexts(size_t /*numInitialCacheDifficultyInfos*/) const {
+			void assertObserverContexts() const {
 				// Assert:
 				CATAPULT_LOG(debug) << "checking observer contexts passed to observer";
 
@@ -235,50 +247,29 @@ namespace catapult { namespace chain {
 					else
 						EXPECT_EQ(observers::NotifyMode::Commit, params.Context.Mode) << message;
 
-//					// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)
-//					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
-//					EXPECT_EQ(numInitialCacheDifficultyInfos + i, params.NumDifficultyInfos) << message;
+					// - compare the copied state to the default state
+					//   (a dummy state is passed by the updater because only block observers modify it)
+					EXPECT_EQ(model::ImportanceHeight(0), params.StateCopy.LastRecalculationHeight) << message;
+
+					// - cache contents + sequence
+					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
 					++i;
 				}
 			}
 
-			std::vector<size_t> getExpectedNumDifficultyInfos(size_t numInitialCacheDifficultyInfos) const {
-				std::vector<size_t> expectedNumDifficultyInfos;
-				for (auto i = 0u; i < m_executionConfig.pObserver->params().size(); ++i)
-					expectedNumDifficultyInfos.push_back(numInitialCacheDifficultyInfos + i);
-
-				return expectedNumDifficultyInfos;
-			}
-
 		public:
 			void assertContexts(
-					const std::vector<UtUpdater::TransactionSource>& expectedTransactionSources,
-					const std::vector<size_t>& expectedNumDifficultyInfos) const {
+					const std::vector<UtUpdater::TransactionSource>& expectedTransactionSources) const {
 				// Assert:
 				assertThrottleContexts(expectedTransactionSources);
-				assertValidatorContexts(expectedNumDifficultyInfos);
-				assertObserverContexts(0);
+				assertValidatorContexts();
+				assertObserverContexts();
 			}
 
 			void assertContexts(
-					UtUpdater::TransactionSource expectedTransactionSource,
-					const std::vector<size_t>& expectedNumDifficultyInfos) const {
+					UtUpdater::TransactionSource expectedTransactionSource) const {
 				// Assert:
-				assertContexts({ m_throttleParams.size(), expectedTransactionSource }, expectedNumDifficultyInfos);
-			}
-
-			void assertContexts(UtUpdater::TransactionSource expectedTransactionSource) const {
-				// Assert:
-				assertContexts(expectedTransactionSource, getExpectedNumDifficultyInfos(0));
-			}
-
-			void assertContexts(
-					const std::vector<UtUpdater::TransactionSource>& expectedTransactionSources,
-					size_t numInitialCacheDifficultyInfos = 0) const {
-				// Assert:
-				assertThrottleContexts(expectedTransactionSources);
-				assertValidatorContexts(getExpectedNumDifficultyInfos(numInitialCacheDifficultyInfos));
-				assertObserverContexts(numInitialCacheDifficultyInfos);
+				assertContexts({ m_throttleParams.size(), expectedTransactionSource });
 			}
 
 			// endregion
@@ -595,7 +586,7 @@ namespace catapult { namespace chain {
 
 			// - observer only gets called for entities that pass validation
 			//   E[0] V0,O1,V1,O2; E[1] V2; E[2] V2,O3,V3,O4; E[3] V4,O5,V5,O6; E[4] V6; E[5] V6,O7,V7,O8
-			context.assertContexts(TTraits::TransactionSource, { 0, 1, 2, 2, 3, 4, 5, 6, 6, 7 });
+			context.assertContexts(TTraits::TransactionSource);
 			context.assertEntityInfos(
 					transactionData.EntityInfos,
 					{ 0, 0, 1, 2, 2, 3, 3, 4, 5, 5 },
@@ -734,7 +725,7 @@ namespace catapult { namespace chain {
 				[](const auto& context, const auto&, const auto& entityInfos) {
 			// - observer only gets called for (unique) entities that were added
 			//   E[0] V0,O1,V1,O2; E[1]; E[2] V2,O3,V3,O4; E[3]; E[4] V4,O5,V5,O6
-			context.assertContexts(UtUpdater::TransactionSource::New, { 0, 1, 2, 3, 4, 5 });
+			context.assertContexts(UtUpdater::TransactionSource::New);
 
 			// - notice that cache check is FIRST so even publishing is short-circuited
 			context.assertEntityInfosWithDuplicates(entityInfos, { 0, 2, 4 });
@@ -748,7 +739,7 @@ namespace catapult { namespace chain {
 			// - observer only gets called for (unique) entities that were added
 			//   new: E[0] V0,O1,V1,O2; E[1] V2,O3,V3,O4; E[2] V4,O5,V5,O6; E[3] V6,O7,V7,O8; E[4] V8,O9,V9,O10
 			//   old: E[0]; E[1] V0,O1,V1,O2; E[2]
-			context.assertContexts(CreateRevertedAndExistingSources(5, 3), ConcatIds({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }, { 0, 1 }, 10));
+			context.assertContexts(CreateRevertedAndExistingSources(5, 3));
 
 			// - notice that cache check is FIRST so even publishing is short-circuited
 			context.assertEntityInfosWithDuplicates(
@@ -768,7 +759,7 @@ namespace catapult { namespace chain {
 		test::AddAll(context.transactionsCache(), originalTransactionData.UtInfos);
 
 		// - modify the catapult cache after creating the updater
-		context.seedDifficultyInfos(7);
+		context.modifyCatapultCache();
 
 		// - prepare 4 new transactions
 		auto transactionData = CreateTransactionData(4);
@@ -800,7 +791,7 @@ namespace catapult { namespace chain {
 		test::AddAll(context.transactionsCache(), originalTransactionData.UtInfos);
 
 		// - modify the catapult cache after creating the updater
-		context.seedDifficultyInfos(7);
+//		context.modifyCatapultCache();
 
 		// - prepare 4 new transactions
 		auto transactionData = CreateTransactionData(4);
@@ -819,7 +810,7 @@ namespace catapult { namespace chain {
 		// - both new and original entities were executed relative to the updated cache
 		//   (the rebase is implicitly checked by asserting that the first validator and observer were passed
 		//    a cache with 7 - instead of 0 - block difficulty infos)
-		context.assertContexts(CreateRevertedAndExistingSources(4, 3), 7);
+		context.assertContexts(CreateRevertedAndExistingSources(4, 3));
 		context.assertEntityInfos(ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos));
 	}
 
@@ -854,9 +845,7 @@ namespace catapult { namespace chain {
 		// - observer only gets called for entities that pass validation
 		//   new: E[0] V0,O1,V1,O2; E[1] V2,O3,V3,O4; E[2] V4,O5,V5,O6
 		//   old: E[0] V0,O1,V1,O2; E[1] V2; E[2] V2,O3,V3,O4; E[3] V4,O5,V5,O6; E[4] V6; E[5] V6,O7,V7,O8
-		context.assertContexts(
-				CreateRevertedAndExistingSources(3, 6),
-				ConcatIds({ 0, 1, 2, 3, 4, 5 }, { 0, 1, 2, 2, 3, 4, 5, 6, 6, 7 }, 6));
+		context.assertContexts(CreateRevertedAndExistingSources(3, 6));
 		context.assertEntityInfos(
 				ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos),
 				ConcatIds({ 0, 0, 1, 1, 2, 2 }, { 0, 0, 1, 2, 2, 3, 3, 4, 5, 5 }, 3),

@@ -51,7 +51,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "ACNTST C", "BLKDIF C" };
+				return { "ACNTST C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
@@ -75,8 +75,6 @@ namespace catapult { namespace plugins {
 					"BalanceObserver",
 					"HarvestFeeObserver",
 					"RecalculateImportancesObserver",
-					"BlockDifficultyObserver",
-					"BlockDifficultyPruningObserver"
 				};
 			}
 

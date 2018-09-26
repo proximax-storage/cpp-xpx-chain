@@ -93,6 +93,9 @@ namespace catapult { namespace sync {
 			model::BlockHitContext hitContext;
 			auto pBlock = model::CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
 			pBlock->Timestamp = previousBlockContext.Timestamp + Timestamp(60000);
+			pBlock->BaseTarget = std::numeric_limits<uint64_t>::max();
+			pBlock->EffectiveBalance = Amount{100};
+			pBlock->CumulativeDifficulty = Difficulty{std::numeric_limits<uint64_t>::max()};
 			test::SignBlock(signer, *pBlock);
 			return std::move(pBlock);
 		}
@@ -448,6 +451,7 @@ namespace catapult { namespace sync {
 		context.boot();
 		auto keyPair = GetBlockSignerKeyPair();
 		auto pBaseBlock = CreateValidBlockForDispatcherTests(keyPair);
+		pBaseBlock->CumulativeDifficulty = Difficulty{std::numeric_limits<uint64_t>::max() / 2};
 		auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
 
 		factory(test::CreateEntityRange({ pBaseBlock.get() }));
@@ -477,6 +481,7 @@ namespace catapult { namespace sync {
 		context.boot();
 		auto keyPair = GetBlockSignerKeyPair();
 		auto pBaseBlock = CreateValidBlockForDispatcherTests(keyPair);
+		pBaseBlock->CumulativeDifficulty = Difficulty{std::numeric_limits<uint64_t>::max() / 2};
 		auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
 
 		factory(test::CreateEntityRange({ pBaseBlock.get() }));

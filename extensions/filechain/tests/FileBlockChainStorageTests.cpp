@@ -553,6 +553,10 @@ namespace catapult { namespace filechain {
 
 			// - save to disk
 			context.save();
+
+			// - delete a cache state file
+			auto cacheStateFilename = boost::filesystem::path(tempDataDirectory.name()) / "state" / "AccountStateCache.dat";
+			remove(cacheStateFilename.generic_string().c_str());
 		}
 
 		// Act + Assert: reload the state from the saved cache state (the reload should fail due to incomplete saved cache state)

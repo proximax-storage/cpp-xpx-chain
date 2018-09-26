@@ -18,9 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/subscribers/SubscriptionManager.h"
+#include "catapult/cache/CatapultCache.h"
 #include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/consumers/StateChangeInfo.h"
 #include "catapult/ionet/Node.h"
+#include "catapult/subscribers/SubscriptionManager.h"
 #include "tests/catapult/subscribers/test/UnsupportedSubscribers.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
@@ -113,8 +115,10 @@ namespace catapult { namespace subscribers {
 				manager.addStateChangeSubscriber(std::move(pSubscriber));
 			}
 
-			static void Notify(StateChangeSubscriber& /*subscriber*/) {
-//				subscriber.notifyScoreChange(model::ChainScore());
+			static void Notify(StateChangeSubscriber& subscriber) {
+				auto cache = cache::CatapultCache({});
+				auto cacheDelta = cache.createDelta();
+				subscriber.notifyStateChange(consumers::StateChangeInfo(cacheDelta, Height(123)));
 			}
 		};
 
