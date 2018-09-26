@@ -39,7 +39,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(Block));
-		EXPECT_EQ(104u + 138u, sizeof(Block));
+		EXPECT_EQ(104u + 136u, sizeof(Block));
 	}
 
 	// region test utils

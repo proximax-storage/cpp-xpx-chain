@@ -86,7 +86,7 @@ namespace catapult { namespace model {
 			numPluginProperties += iter->second.size();
 		}
 
-		utils::VerifyBagSizeLte(bag, 15 + numPluginProperties);
+		utils::VerifyBagSizeLte(bag, 14 + numPluginProperties);
 		return config;
 	}
 }}
