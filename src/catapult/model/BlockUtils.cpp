@@ -136,7 +136,6 @@ namespace catapult { namespace model {
 			block.PreviousBlockHash = previousBlockContext.BlockHash;
 			block.BaseTarget = hitContext.BaseTarget;
 			block.CumulativeDifficulty = CalculateCumulativeDifficulty(hitContext.BaseTarget, previousBlockContext.Difficulty);
-			block.EffectiveBalance = hitContext.EffectiveBalance;
 
 			// append all the transactions
 			auto pDestination = reinterpret_cast<uint8_t*>(block.TransactionsPtr());

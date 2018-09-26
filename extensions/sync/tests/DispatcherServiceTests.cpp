@@ -91,10 +91,10 @@ namespace catapult { namespace sync {
 
 			model::PreviousBlockContext previousBlockContext(*pNemesisBlockElement);
 			model::BlockHitContext hitContext;
+			hitContext.BaseTarget = 1 << 16;
 			auto pBlock = model::CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
 			pBlock->Timestamp = previousBlockContext.Timestamp + Timestamp(60000);
 			pBlock->BaseTarget = std::numeric_limits<uint64_t>::max();
-			pBlock->EffectiveBalance = Amount{100};
 			pBlock->CumulativeDifficulty = Difficulty{std::numeric_limits<uint64_t>::max()};
 			test::SignBlock(signer, *pBlock);
 			return std::move(pBlock);

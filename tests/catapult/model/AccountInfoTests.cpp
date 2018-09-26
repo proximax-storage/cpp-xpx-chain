@@ -40,7 +40,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(AccountInfo));
-		EXPECT_EQ(127u, sizeof(AccountInfo));
+		EXPECT_EQ(79u, sizeof(AccountInfo));
 	}
 
 	TEST(TEST_CLASS, AccountInfoMaxSizeHasCorrectValue) {
@@ -51,7 +51,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedMaxSize, AccountInfo_Max_Size);
-		EXPECT_EQ(127u + 16 * 65535, AccountInfo_Max_Size);
+		EXPECT_EQ(79u + 16 * 65535, AccountInfo_Max_Size);
 	}
 
 	// region CalculateRealSize

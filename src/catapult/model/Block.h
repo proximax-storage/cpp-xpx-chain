@@ -54,9 +54,6 @@ namespace catapult { namespace model {
 
 		/// Aggregate hash of a block's transactions.
 		Hash256 BlockTransactionsHash;
-
-		/// Effective balance of the account that generated this block.
-		Amount EffectiveBalance;
 	};
 
 	/// Binary layout for a block.

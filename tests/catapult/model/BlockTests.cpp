@@ -35,12 +35,11 @@ namespace catapult { namespace model {
 				+ sizeof(uint64_t) // difficulty
 				+ sizeof(boost::multiprecision::uint256_t) // base target
 				+ Hash256_Size // previous block hash
-				+ Hash256_Size // block transactions hash
-				+ sizeof(uint64_t); // effective balance
+				+ Hash256_Size; // block transactions hash
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(Block));
-		EXPECT_EQ(104u + 144u, sizeof(Block));
+		EXPECT_EQ(104u + 138u, sizeof(Block));
 	}
 
 	// region test utils

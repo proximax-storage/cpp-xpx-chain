@@ -50,6 +50,7 @@ namespace catapult { namespace test {
 	std::unique_ptr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const ConstTransactions& transactions) {
 		model::PreviousBlockContext previousBlockContext;
 		model::BlockHitContext hitContext;
+		hitContext.BaseTarget = 1 << 16;
 		auto pBlock = CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), transactions);
 		SignBlock(signer, *pBlock);
 		return pBlock;
@@ -89,6 +90,7 @@ namespace catapult { namespace test {
 	std::unique_ptr<model::Block> GenerateVerifiableBlockAtHeight(Height height) {
 		model::PreviousBlockContext previousBlockContext;
 		model::BlockHitContext hitContext;
+		hitContext.BaseTarget = 1 << 16;
 		auto signer = GenerateKeyPair();
 		auto pBlock = CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
 		pBlock->Height = height;

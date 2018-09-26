@@ -79,8 +79,7 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "difficulty" << ToInt64(block.CumulativeDifficulty)
 				<< "previousBlockHash" << ToBinary(block.PreviousBlockHash)
 				<< "blockTransactionsHash" << ToBinary(block.BlockTransactionsHash)
-//				<< "baseTarget" << block.BaseTarget
-				<< "effectiveBalance" << ToInt64(block.EffectiveBalance);
+				<< "baseTarget" << block.BaseTarget.convert_to<std::string>();
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;
 	}

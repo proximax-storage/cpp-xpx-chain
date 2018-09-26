@@ -82,6 +82,7 @@ namespace catapult {
 
 			model::PreviousBlockContext previousBlockContext;
 			model::BlockHitContext hitContext;
+			hitContext.BaseTarget = 1 << 16;
 			auto pBlock = model::CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), transactions);
 			test::SignBlock(signer, *pBlock);
 			return pBlock;
