@@ -47,20 +47,29 @@ namespace catapult { namespace timesync {
 		template<typename TKey>
 		void AddAccount(
 				cache::CatapultCache& cache,
-				const TKey& key) {
+				const TKey& key,
+				uint64_t balance) {
 			auto delta = cache.createDelta();
 			auto& accountCache = delta.sub<cache::AccountStateCache>();
 			auto& accountState = accountCache.addAccount(key, Height(100));
-			accountState.Balances.credit(Xpx_Id, Amount(1000));
+			accountState.Balances.credit(Xpx_Id, Amount(balance));
 			cache.commit(Height(100));
+		}
+
+		template<typename TKey>
+		void AddAccount(
+				cache::CatapultCache& cache,
+				const TKey& key) {
+			AddAccount(cache, key, 1000);
 		}
 
 		template<typename TKey>
 		void SeedAccountStateCache(
 				cache::CatapultCache& cache,
-				const std::vector<TKey>& keys) {
+				const std::vector<TKey>& keys,
+				const std::vector<int64_t>& balances) {
 			for (auto i = 0u; i < keys.size(); ++i)
-				AddAccount(cache, keys[i]);
+				AddAccount(cache, keys[i], balances[i]);
 		}
 
 		std::vector<Address> ToAddresses(const std::vector<Key>& keys) {
@@ -84,47 +93,58 @@ namespace catapult { namespace timesync {
 		class TestContext {
 		public:
 			explicit TestContext(
-					const std::vector<std::pair<int64_t, uint64_t>>& offsetsAndRawImportances,
+					const std::vector<std::pair<int64_t, int64_t>>& offsetsAndBalances,
 					const std::vector<filters::SynchronizationFilter>& filters = {},
 					KeyType keyType = KeyType::PublicKey)
-					: m_cache(test::CreateEmptyCatapultCache(createConfig()))
+					: m_currentCache({})
+					, m_previousCache({})
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), Total_Chain_Balance, Warning_Threshold_Millis) {
-				for (const auto& offsetAndRawImportance : offsetsAndRawImportances) {
-					m_samples.emplace(test::CreateTimeSyncSampleWithTimeOffset(offsetAndRawImportance.first));
+				std::vector<int64_t> balances;
+				for (const auto& offsetsAndBalance : offsetsAndBalances) {
+					m_samples.emplace(test::CreateTimeSyncSampleWithTimeOffset(offsetsAndBalance.first));
+					balances.push_back(offsetsAndBalance.second);
 				}
 
-				auto keys = test::ExtractKeys(m_samples);
-				auto addresses = ToAddresses(keys);
-				if (KeyType::PublicKey == keyType)
-					SeedAccountStateCache(m_cache, keys);
-				else
-					SeedAccountStateCache(m_cache, addresses);
-//				Maybe rework?
-//				// Sanity:
-//				auto view = m_cache.sub<cache::AccountStateCache>().createView();
-//				for (auto i = 0u; i < keys.size(); ++i) {
-//					if (KeyType::PublicKey == keyType)
-//						EXPECT_EQ(importances[i], view->get(keys[i]).ImportanceInfo.current()) << "at index " << i;
-//					else
-//						EXPECT_EQ(importances[i], view->get(addresses[i]).ImportanceInfo.current()) << "at index " << i;
-//				}
+				m_currentCache = createCache(keyType, balances);
+				m_previousCache = createCache(keyType, balances);
 			}
 
 		public:
 			TimeOffset calculateTimeOffset(NodeAge nodeAge = NodeAge()) {
-				auto state = extensions::LocalNodeStateRef(*test::LocalNodeStateUtils::CreateLocalNodeState(), m_cache);
+				auto state = extensions::LocalNodeStateRef(
+						*test::LocalNodeStateUtils::CreateLocalNodeState(),
+						m_currentCache,
+						m_previousCache
+				);
 				return m_synchronizer.calculateTimeOffset(state, Height(1), std::move(m_samples), nodeAge);
 			}
 
 			void addHighValueAccounts(size_t count) {
-				for (auto i = 0u; i < count; ++i)
-					AddAccount(m_cache, test::GenerateRandomData<Key_Size>());
+				for (auto i = 0u; i < count; ++i) {
+					auto key = test::GenerateRandomData<Key_Size>();
+					AddAccount(m_currentCache, key);
+					AddAccount(m_previousCache, key);
+				}
 			}
 
 		private:
-			cache::CatapultCache m_cache;
+			cache::CatapultCache m_currentCache;
+			cache::CatapultCache m_previousCache;
 			TimeSynchronizer m_synchronizer;
 			TimeSynchronizationSamples m_samples;
+
+		private:
+			cache::CatapultCache createCache(KeyType keyType, const std::vector<int64_t>& balances) {
+				auto cache = test::CreateEmptyCatapultCache(createConfig());
+				auto keys = test::ExtractKeys(m_samples);
+				auto addresses = ToAddresses(keys);
+				if (KeyType::PublicKey == keyType)
+					SeedAccountStateCache(cache, keys, balances);
+				else
+					SeedAccountStateCache(cache, addresses, balances);
+
+				return cache;
+			}
 		};
 	}
 
@@ -187,11 +207,14 @@ namespace catapult { namespace timesync {
 			filters::AggregateSynchronizationFilter aggregateFilter({});
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
-			cache::CatapultCache cache = test::CreateEmptyCatapultCache(createConfig());
-			SeedAccountStateCache(cache, keys);
+			std::vector<int64_t> balances(numSamples, Total_Chain_Balance / numSamples);
+			cache::CatapultCache currentCache = test::CreateEmptyCatapultCache(createConfig());
+			SeedAccountStateCache(currentCache, keys, balances);
+			cache::CatapultCache previousCache = test::CreateEmptyCatapultCache(createConfig());
+			SeedAccountStateCache(previousCache, keys, balances);
 			TimeSynchronizer synchronizer(aggregateFilter, Total_Chain_Balance, Warning_Threshold_Millis);
 
-			auto state = extensions::LocalNodeStateRef(*test::LocalNodeStateUtils::CreateLocalNodeState(), cache);
+			auto state = extensions::LocalNodeStateRef(*test::LocalNodeStateUtils::CreateLocalNodeState(), currentCache, previousCache);
 			// Act:
 			auto timeOffset = synchronizer.calculateTimeOffset(state, Height(1), std::move(samples), nodeAge);
 

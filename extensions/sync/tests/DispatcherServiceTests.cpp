@@ -124,7 +124,7 @@ namespace catapult { namespace sync {
 
 		public:
 			TestContext()
-					: BaseType(CreateCatapultCacheForDispatcherTests())
+					: BaseType(CreateCatapultCacheForDispatcherTests(), CreateCatapultCacheForDispatcherTests())
 					, m_numNewBlockSinkCalls(0)
 					, m_numNewTransactionsSinkCalls(0) {
 				// initialize the cache

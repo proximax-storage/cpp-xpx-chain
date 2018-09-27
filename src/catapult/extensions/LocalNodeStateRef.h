@@ -72,6 +72,19 @@ namespace catapult { namespace extensions {
 				, Storage(std::move(pStorage))
 		{}
 
+		/// Creates a local node state state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeState(
+				config::LocalNodeConfiguration&& config,
+				std::unique_ptr<io::BlockStorage>&& pStorage,
+				cache::CatapultCache&& currentCache,
+				cache::CatapultCache&& previousCache)
+				: Config(std::move(config))
+				, CurrentCache(std::move(currentCache))
+				, PreviousCache(std::move(previousCache))
+				, Storage(std::move(pStorage))
+		{}
+
 	public:
 		/// Local node configuration.
 		config::LocalNodeConfiguration Config;

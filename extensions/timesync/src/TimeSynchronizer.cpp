@@ -62,6 +62,7 @@ namespace catapult { namespace timesync {
 
 		auto currentCacheView = localNodeState.CurrentCache.createView();
 		auto previousCacheView = localNodeState.PreviousCache.createView();
+		auto accountStateCacheView = localNodeState.CurrentCache.sub<cache::AccountStateCache>().createView();
 
 		cache::BalanceView balanceView(
 				cache::ReadOnlyAccountStateCache(currentCacheView.sub<cache::AccountStateCache>()),
@@ -74,9 +75,10 @@ namespace catapult { namespace timesync {
 			return TimeOffset(0);
 		}
 
-		// TODO: ? Maybe re-work recalculation after refactoring?
+		auto highValueAddressesSize = accountStateCacheView->highValueAddressesSize();
+		auto viewPercentage = static_cast<double>(samples.size()) / highValueAddressesSize;
 		auto balancePercentage = static_cast<double>(cumulativeBalance) / m_totalChainBalance;
-		auto scaling = 1.0 / balancePercentage;
+		auto scaling = balancePercentage > viewPercentage ? 1.0 / balancePercentage : 1.0 / viewPercentage;
 		auto sum = sumScaledOffsets(balanceView, height, samples, scaling);
 		return TimeOffset(static_cast<int64_t>(GetCoupling(nodeAge) * sum));
 	}

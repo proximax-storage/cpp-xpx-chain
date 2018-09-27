@@ -92,7 +92,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, CanBootService) {
 		// Arrange:
-		TestContext context(CreateCache());
+		TestContext context(CreateCache(), CreateCache());
 
 		// Act:
 		context.boot();
@@ -113,7 +113,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, CanShutdownService) {
 		// Arrange:
-		TestContext context(CreateCache());
+		TestContext context(CreateCache(), CreateCache());
 		context.boot();
 
 		// Act:
@@ -135,7 +135,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, PacketHandlersAreRegistered) {
 		// Arrange:
-		TestContext context(CreateCache());
+		TestContext context(CreateCache(), CreateCache());
 
 		// Act:
 		context.boot();
@@ -148,7 +148,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TasksAreRegistered) {
 		// Arrange:
-		TestContext context(CreateCache());
+		TestContext context(CreateCache(), CreateCache());
 
 		// Act:
 		context.boot();
@@ -163,7 +163,7 @@ namespace catapult { namespace timesync {
 		// Arrange:
 		auto pTimeSyncState = std::make_shared<TimeSynchronizationState>(100);
 		pTimeSyncState->update(TimeOffset(500));
-		TestContext context(CreateCache(), [&timeSyncState = *pTimeSyncState]() {
+		TestContext context(CreateCache(), CreateCache(), [&timeSyncState = *pTimeSyncState]() {
 			return timeSyncState.networkTime();
 		});
 		context.boot();
@@ -207,16 +207,21 @@ namespace catapult { namespace timesync {
 
 		enum class ResponseType { Success, Error };
 
-		template<typename TAssertState>
-		void AssertStateChange(int64_t remoteOffset, ResponseType responseType, TAssertState assertState) {
-			// Arrange: prepare account state cache
-			auto keyPair = test::GenerateKeyPair();
+		cache::CatapultCache CreateCacheWithAccount(const crypto::KeyPair& keyPair) {
 			auto cache = CreateCache(Total_Chain_Balance);
 			{
 				auto cacheDelta = cache.createDelta();
 				test::AddAccount(cacheDelta.sub<cache::AccountStateCache>(), keyPair.publicKey());
 				cache.commit(Height(1));
 			}
+
+			return cache;
+		}
+
+		template<typename TAssertState>
+		void AssertStateChange(int64_t remoteOffset, ResponseType responseType, TAssertState assertState) {
+			// Arrange: prepare account state cache
+			auto keyPair = test::GenerateKeyPair();
 
 			// - simulate the remote node by responding with communication timestamps
 			NetworkTimeServer networkTimeServer;
@@ -230,7 +235,7 @@ namespace catapult { namespace timesync {
 			auto timeSupplier = [&numTimeSuppierCalls]() { return Timestamp(numTimeSuppierCalls++ * 800); };
 
 			// - prepare context
-			TestContext context(std::move(cache), timeSupplier);
+			TestContext context(std::move(CreateCacheWithAccount(keyPair)), std::move(CreateCacheWithAccount(keyPair)), timeSupplier);
 			const_cast<model::BlockChainConfiguration&>(context.testState().config().BlockChain).TotalChainBalance = Total_Chain_Balance;
 			test::AddNode(context.testState().state().nodes(), keyPair.publicKey(), "alice");
 			auto pTimeSyncState = std::make_shared<TimeSynchronizationState>(Default_Threshold);
@@ -263,8 +268,8 @@ namespace catapult { namespace timesync {
 	}
 
 	TEST(TEST_CLASS, TaskExecutionDoesNotChangeOffsetWhenChangeIsLessThanThreshold) {
-		// Assert: balance = 0.1, calculated offset = 0.1 * 500 = 50 and threshold is 85
-		AssertStateChange(500, ResponseType::Success, [](const auto& context) {
+		// Assert: balance = 0.5, calculated offset = 0.5 * 100 = 50 and threshold is 85
+		AssertStateChange(100, ResponseType::Success, [](const auto& context) {
 			EXPECT_EQ(0u, context.counter(Time_Offset_Absolute_Counter_Name));
 			EXPECT_EQ(Positive, context.counter(Time_Offset_Direction_Counter_Name));
 			EXPECT_EQ(1u, context.counter(Node_Age_Counter_Name));

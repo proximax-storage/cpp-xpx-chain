@@ -136,7 +136,7 @@ namespace catapult { namespace timesync {
 					: Synchronizer(CreateEmptyAggregateFilter(), Total_Chain_Balance, Warning_Threshold_Millis)
 					, TimeSyncConfig{ 5 }
 					, RequestResultFutureSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Remote), numValidNodes)
-					, ServiceTestState(CreateCache())
+					, ServiceTestState(CreateCache(), CreateCache())
 					, pTimeSyncState(std::make_shared<TimeSynchronizationState>(Default_Threshold))
 					, NetworkTimeSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Local)) {
 				auto& mutableBlockChainConfig = const_cast<model::BlockChainConfiguration&>(ServiceTestState.config().BlockChain);
@@ -269,7 +269,7 @@ namespace catapult { namespace timesync {
 	TEST(TEST_CLASS, TaskProcessesSamples_Single) {
 		// Assert:
 		AssertStateChange({ 250 }, [](const auto& timeSyncState) {
-			EXPECT_EQ(250u, timeSyncState.offset().unwrap());
+			EXPECT_EQ(125u, timeSyncState.offset().unwrap());
 			EXPECT_EQ(1u, timeSyncState.nodeAge().unwrap());
 		});
 	}

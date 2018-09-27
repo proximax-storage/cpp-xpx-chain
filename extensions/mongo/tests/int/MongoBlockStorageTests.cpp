@@ -134,6 +134,7 @@ namespace catapult { namespace mongo {
 			auto pRawData = reinterpret_cast<uint8_t*>(pBlock.get());
 			test::FillWithRandomData({ pRawData + sizeof(uint32_t), sizeof(model::Block) - sizeof(uint32_t) });
 			pBlock->Height = Height(1);
+			pBlock->BaseTarget = BlockTarget(1 << 16);
 			pBlock->CumulativeDifficulty = Difficulty(test::Random());
 			return pBlock;
 		}
