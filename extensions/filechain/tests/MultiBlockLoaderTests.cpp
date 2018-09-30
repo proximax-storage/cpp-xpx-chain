@@ -165,8 +165,8 @@ namespace catapult { namespace filechain {
 		LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(2));
 
 		// Assert:
-		auto expectedHeights = std::vector<Height>{ Height(2) };
-		EXPECT_EQ(1u, observer.blockHeights().size());
+		auto expectedHeights = std::vector<Height>{ Height(2), Height(2) };
+		EXPECT_EQ(2u, observer.blockHeights().size());
 		EXPECT_EQ(expectedHeights, observer.blockHeights());
 		EXPECT_EQ(expectedHeights, factoryHeights);
 	}
@@ -182,8 +182,16 @@ namespace catapult { namespace filechain {
 		LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(2));
 
 		// Assert:
-		auto expectedHeights = std::vector<Height>{ Height(2), Height(3), Height(4), Height(5), Height(6), Height(7) };
-		EXPECT_EQ(6u, observer.blockHeights().size());
+		auto expectedHeights = std::vector<Height>{
+			Height(2), Height(2),
+			Height(3), Height(3),
+			Height(4), Height(4),
+			Height(5), Height(5),
+			Height(6), Height(6),
+			Height(7), Height(7)
+		};
+
+		EXPECT_EQ(12u, observer.blockHeights().size());
 		EXPECT_EQ(expectedHeights, observer.blockHeights());
 		EXPECT_EQ(expectedHeights, factoryHeights);
 	}
@@ -199,8 +207,13 @@ namespace catapult { namespace filechain {
 		LoadBlockChain(MakeObserverFactory(observer, factoryHeights), state.ref(), Height(4));
 
 		// Assert:
-		auto expectedHeights = std::vector<Height>{ Height(4), Height(5), Height(6), Height(7) };
-		EXPECT_EQ(4u, observer.blockHeights().size());
+		auto expectedHeights = std::vector<Height>{
+			Height(4), Height(4),
+			Height(5), Height(5),
+			Height(6), Height(6),
+			Height(7), Height(7)
+		};
+		EXPECT_EQ(8u, observer.blockHeights().size());
 		EXPECT_EQ(expectedHeights, observer.blockHeights());
 		EXPECT_EQ(expectedHeights, factoryHeights);
 	}

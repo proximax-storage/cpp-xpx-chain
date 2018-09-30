@@ -111,11 +111,14 @@ namespace catapult { namespace extensions {
 		auto pNemesisBlockElement = storageView.loadBlockElement(Height(1));
 
 		// 2. execute the nemesis block
-		auto cacheDelta = stateRef.CurrentCache.createDelta();
-		execute(stateRef.Config.BlockChain, *pNemesisBlockElement, cacheDelta, Verbosity::On);
+		auto currentCacheDelta = stateRef.CurrentCache.createDelta();
+		execute(stateRef.Config.BlockChain, *pNemesisBlockElement, currentCacheDelta, Verbosity::On);
+		auto previousCacheDelta = stateRef.PreviousCache.createDelta();
+		execute(stateRef.Config.BlockChain, *pNemesisBlockElement, previousCacheDelta, Verbosity::On);
 
 		// 3. commit changes
 		stateRef.CurrentCache.commit(pNemesisBlockElement->Block.Height);
+		stateRef.PreviousCache.commit(pNemesisBlockElement->Block.Height);
 	}
 
 	void NemesisBlockLoader::execute(

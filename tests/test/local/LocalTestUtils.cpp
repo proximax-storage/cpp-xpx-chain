@@ -92,7 +92,7 @@ namespace catapult { namespace test {
 
 		config.MaxRollbackBlocks = 10;
 		config.MaxDifficultyBlocks = 60;
-		config.EffectiveBalanceRange = 1440;
+		config.EffectiveBalanceRange = 0;
 
 		config.TotalChainBalance = Amount(8'999'999'998'000'000);
 		config.MinHarvesterBalance = Amount(1'000'000'000'000);

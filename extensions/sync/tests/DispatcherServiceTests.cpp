@@ -130,6 +130,7 @@ namespace catapult { namespace sync {
 				// initialize the cache
 				auto& state = testState().state();
 				InitializeCatapultCacheForDispatcherTests(state.currentCache(), GetBlockSignerKeyPair());
+				InitializeCatapultCacheForDispatcherTests(state.previousCache(), GetBlockSignerKeyPair());
 
 				// set up sinks
 				state.hooks().addNewBlockSink([&counter = m_numNewBlockSinkCalls](const auto&) { ++counter; });

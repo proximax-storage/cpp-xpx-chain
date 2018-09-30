@@ -56,7 +56,7 @@ namespace catapult { namespace filechain {
 		public:
 			explicit TestContext(const model::BlockChainConfiguration& config, const std::string& dataDirectory)
 					: m_pPluginManager(test::CreateDefaultPluginManager(config))
-					, m_localNodeState(m_pPluginManager->config(), dataDirectory, m_pPluginManager->createCurrentCache())
+					, m_localNodeState(m_pPluginManager->config(), dataDirectory, m_pPluginManager->createCurrentCache(), m_pPluginManager->createPreviousCache())
 					, m_pBlockChainStorage(CreateFileBlockChainStorage())
 			{}
 
@@ -73,8 +73,12 @@ namespace catapult { namespace filechain {
 				return m_localNodeState.ref().Storage.view();
 			}
 
-			auto cacheView() const {
+			auto currentCacheView() const {
 				return m_localNodeState.cref().CurrentCache.createView();
+			}
+
+			auto previousCacheView() const {
+				return m_localNodeState.cref().PreviousCache.createView();
 			}
 
 		public:
@@ -112,9 +116,10 @@ namespace catapult { namespace filechain {
 		context.load();
 
 		// Assert:
-		const auto& view = context.cacheView();
-		EXPECT_EQ(Height(1), view.height());
-		test::AssertNemesisAccountState(view);
+		const auto& currentCacheView = context.currentCacheView();
+		EXPECT_EQ(Height(1), currentCacheView.height());
+		test::AssertNemesisAccountState(currentCacheView);
+		test::AssertNemesisAccountState(context.previousCacheView());
 	}
 
 	TEST(TEST_CLASS, ProperMosaicStateAfterLoadingNemesisBlock) {
@@ -125,9 +130,12 @@ namespace catapult { namespace filechain {
 		context.load();
 
 		// Assert:
-		const auto& view = context.cacheView();
-		test::AssertNemesisNamespaceState(view);
-		test::AssertNemesisMosaicState(view);
+		const auto& currentCacheView = context.currentCacheView();
+		test::AssertNemesisNamespaceState(currentCacheView);
+		test::AssertNemesisMosaicState(currentCacheView);
+
+		const auto& previousCacheView = context.previousCacheView();
+		test::AssertNemesisMosaicState(previousCacheView);
 	}
 
 	// endregion
@@ -256,19 +264,13 @@ namespace catapult { namespace filechain {
 	// region multi block loading - ProperAccountCacheState
 
 	namespace {
-		void AssertProperAccountCacheStateAfterLoadingMultipleBlocks(const utils::TimeSpan& timeSpacing) {
-			// Arrange:
-			TestContext context;
-			std::vector<Amount> amountsSpent; // amounts spent by nemesis accounts to send to other newAccounts
-			std::vector<Amount> amountsCollected;
-			auto newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected, timeSpacing).Recipients;
 
-			// Act:
-			context.load();
-
-			// Assert:
+		void checkRecipient(
+				const cache::CatapultCacheView& cacheView,
+				const std::vector<Address>& newAccounts,
+				const std::vector<Amount>& amountsSpent,
+				const std::vector<Amount>& amountsCollected) {
 			auto i = 0u;
-			auto cacheView = context.cacheView();
 			const auto& accountStateCacheView = cacheView.sub<cache::AccountStateCache>();
 
 			// - check nemesis
@@ -288,6 +290,21 @@ namespace catapult { namespace filechain {
 				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
 				++i;
 			}
+		}
+
+		void AssertProperAccountCacheStateAfterLoadingMultipleBlocks(const utils::TimeSpan& timeSpacing) {
+			// Arrange:
+			TestContext context;
+			std::vector<Amount> amountsSpent; // amounts spent by nemesis accounts to send to other newAccounts
+			std::vector<Amount> amountsCollected;
+			auto newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected, timeSpacing).Recipients;
+
+			// Act:
+			context.load();
+
+			// Assert:
+			checkRecipient(context.currentCacheView(), newAccounts, amountsSpent, amountsCollected);
+			checkRecipient(context.previousCacheView(), newAccounts, amountsSpent, amountsCollected);
 		}
 	}
 
@@ -315,7 +332,9 @@ namespace catapult { namespace filechain {
 			context.load();
 
 			// Assert:
-			auto cacheView = context.cacheView();
+			auto cacheView = context.currentCacheView();
+			EXPECT_EQ(Height(Num_Recipient_Accounts + 1), cacheView.height());
+			cacheView = context.previousCacheView();
 			EXPECT_EQ(Height(Num_Recipient_Accounts + 1), cacheView.height());
 		}
 	}
@@ -362,7 +381,7 @@ namespace catapult { namespace filechain {
 		//   1) Num_Nemesis_Namespaces register namespace transactions
 		//   2) for each mosaic one mosaic definition transaction and one mosaic supply change transaction
 		//   3) Num_Nemesis_Accounts transfer transactions
-		auto cacheView = context.cacheView();
+		auto cacheView = context.currentCacheView();
 		EXPECT_EQ(
 				numTotalTransferTransactions + Num_Nemesis_Accounts + Num_Nemesis_Namespaces + 2 * Num_Nemesis_Mosaics,
 				cacheView.sub<cache::HashCache>().size());
@@ -390,7 +409,7 @@ namespace catapult { namespace filechain {
 
 			// Assert: older hashes and difficulties were not cached
 			//         (note that transactionCounts indexes 0..N correspond to heights 2..N+2)
-			auto cacheView = context.cacheView();
+			auto cacheView = context.currentCacheView();
 			EXPECT_EQ(numTotalTransactions, cacheView.sub<cache::HashCache>().size());
 		}
 	}
@@ -410,6 +429,20 @@ namespace catapult { namespace filechain {
 	// region saveToStorage
 
 	namespace {
+
+		// - spot check the new accounts by checking secondary recipients in cache
+		void inline checkSecondaryRecipient(
+				const cache::CatapultCacheView& cacheView,
+				const std::vector<Address>& newAccounts,
+				const std::vector<Amount>& amountsCollected) {
+			const auto& accountStateCacheView = cacheView.sub<cache::AccountStateCache>();
+			auto i = 0u;
+			for (const auto& address : newAccounts) {
+				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
+				++i;
+			}
+		}
+
 		void AssertCanSaveAndReloadCacheStateToAndFromDisk(bool useCacheDatabaseStorage) {
 			// Arrange:
 			test::TempDirectoryGuard tempDataDirectory;
@@ -424,7 +457,8 @@ namespace catapult { namespace filechain {
 				auto timeSpacing = utils::TimeSpan::FromMinutes(2);
 				TestContext context(maxDifficultyBlocks, tempDataDirectory.name());
 				context.enableCacheDatabaseStorage(useCacheDatabaseStorage);
-				newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected, timeSpacing).Recipients;
+				newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected,
+												  timeSpacing).Recipients;
 				context.load();
 
 				// Act: save to disk
@@ -437,17 +471,12 @@ namespace catapult { namespace filechain {
 			context.load();
 
 			// Assert: check the heights (notice that storage is empty because it was not reseeded in the second test context)
-			EXPECT_EQ(storageChainHeight, context.cacheView().height());
+			EXPECT_EQ(storageChainHeight, context.currentCacheView().height());
 			EXPECT_EQ(Height(1), context.storageView().chainHeight());
 
-			// - spot check the new accounts by checking secondary recipients
-			auto cacheView = context.cacheView();
-			const auto& accountStateCacheView = cacheView.sub<cache::AccountStateCache>();
-			auto i = 0u;
-			for (const auto& address : newAccounts) {
-				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
-				++i;
-			}
+			checkSecondaryRecipient(context.currentCacheView(), newAccounts, amountsCollected);
+			// The previous cache must be the same because effectiveBalanceRange is zero
+			checkSecondaryRecipient(context.previousCacheView(), newAccounts, amountsCollected);
 		}
 	}
 
@@ -491,7 +520,8 @@ namespace catapult { namespace filechain {
 				seedContext.load();
 
 				// Sanity:
-				EXPECT_EQ(savedCacheStateHeight, seedContext.cacheView().height());
+				EXPECT_EQ(savedCacheStateHeight, seedContext.currentCacheView().height());
+				EXPECT_EQ(savedCacheStateHeight, seedContext.previousCacheView().height());
 
 				// Act: save to disk
 				seedContext.save();
@@ -519,17 +549,13 @@ namespace catapult { namespace filechain {
 			context.load();
 
 			// Assert: check the heights
-			EXPECT_EQ(storageChainHeight, context.cacheView().height());
+			EXPECT_EQ(storageChainHeight, context.currentCacheView().height());
+			EXPECT_EQ(storageChainHeight, context.previousCacheView().height());
 			EXPECT_EQ(storageChainHeight, context.storageView().chainHeight());
 
 			// - spot check the new accounts by checking secondary recipients
-			auto cacheView = context.cacheView();
-			const auto& accountStateCacheView = cacheView.template sub<cache::AccountStateCache>();
-			auto i = 0u;
-			for (const auto& address : newAccounts) {
-				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
-				++i;
-			}
+			checkSecondaryRecipient(context.currentCacheView(), newAccounts, amountsCollected);
+			checkSecondaryRecipient(context.previousCacheView(), newAccounts, amountsCollected);
 		});
 	}
 

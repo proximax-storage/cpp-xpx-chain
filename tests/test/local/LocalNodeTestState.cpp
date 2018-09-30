@@ -28,11 +28,12 @@ namespace catapult { namespace test {
 
 	struct LocalNodeTestState::Impl {
 	public:
-		explicit Impl(config::LocalNodeConfiguration&& config, cache::CatapultCache&& cache)
+		explicit Impl(config::LocalNodeConfiguration&& config, cache::CatapultCache&& currentCache, cache::CatapultCache&& previousCache)
 				: m_state(
 						std::move(config),
 						std::make_unique<mocks::MockMemoryBasedStorage>(),
-						std::move(cache)
+						std::move(currentCache),
+						std::move(previousCache)
 				)
 		{}
 
@@ -49,24 +50,29 @@ namespace catapult { namespace test {
 		extensions::LocalNodeState m_state;
 	};
 
-	LocalNodeTestState::LocalNodeTestState() : LocalNodeTestState(CreateEmptyCatapultCache())
+	LocalNodeTestState::LocalNodeTestState() : LocalNodeTestState(CreateEmptyCatapultCache(), CreateEmptyCatapultCache())
 	{}
 
 	LocalNodeTestState::LocalNodeTestState(const model::BlockChainConfiguration& config)
-			: LocalNodeTestState(config, "", CreateEmptyCatapultCache(config))
+			: LocalNodeTestState(config, "", CreateEmptyCatapultCache(config), CreateEmptyCatapultCache(config))
 	{}
 
-	LocalNodeTestState::LocalNodeTestState(cache::CatapultCache&& cache)
-			: m_pImpl(std::make_unique<Impl>(CreatePrototypicalLocalNodeConfiguration(), std::move(cache)))
+	LocalNodeTestState::LocalNodeTestState(cache::CatapultCache&& currentCache, cache::CatapultCache&& previousCache)
+			: m_pImpl(std::make_unique<Impl>(CreatePrototypicalLocalNodeConfiguration(), std::move(currentCache), std::move(previousCache)))
 	{}
 
 	LocalNodeTestState::LocalNodeTestState(
 			const model::BlockChainConfiguration& config,
 			const std::string& userDataDirectory,
-			cache::CatapultCache&& cache)
-			: m_pImpl(std::make_unique<Impl>(
-					LoadLocalNodeConfiguration(model::BlockChainConfiguration(config), userDataDirectory),
-					std::move(cache)))
+			cache::CatapultCache&& currentCache,
+			cache::CatapultCache&& previousCache)
+			: m_pImpl(
+					std::make_unique<Impl>(
+						LoadLocalNodeConfiguration(model::BlockChainConfiguration(config), userDataDirectory),
+						std::move(currentCache),
+						std::move(previousCache)
+					)
+			)
 	{}
 
 	LocalNodeTestState::~LocalNodeTestState() = default;

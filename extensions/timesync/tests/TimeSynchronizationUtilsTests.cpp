@@ -233,6 +233,12 @@ namespace catapult { namespace timesync {
 			return samples;
 		}
 
+		void inline prepareAccountStateCache(cache::CatapultCache& cache, const std::vector<Key>& keys) {
+			auto cacheDelta = cache.createDelta();
+			SeedAccountStateCache(cacheDelta.sub<cache::AccountStateCache>(), keys);
+			cache.commit(Height(1));
+		}
+
 		template<typename TAssertState>
 		void AssertStateChange(
 				const std::vector<int64_t>& remoteOffsets,
@@ -246,10 +252,8 @@ namespace catapult { namespace timesync {
 			SeedNodeContainer(context.ServiceTestState.state().nodes(), keys);
 
 			// - prepare account state cache
-			auto& cache = context.ServiceTestState.state().currentCache();
-			auto cacheDelta = cache.createDelta();
-			SeedAccountStateCache(cacheDelta.sub<cache::AccountStateCache>(), keys);
-			cache.commit(Height(1));
+			prepareAccountStateCache(context.ServiceTestState.state().currentCache(), keys);
+			prepareAccountStateCache(context.ServiceTestState.state().previousCache(), keys);
 
 			// Sanity:
 			EXPECT_EQ(0u, context.pTimeSyncState->offset().unwrap());
