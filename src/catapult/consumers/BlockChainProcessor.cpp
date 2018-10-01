@@ -99,7 +99,9 @@ namespace catapult { namespace consumers {
 					}
 
 					// Restore old block which is EffectiveBalanceHeight blocks below
-					if (block.Height > effectiveBalanceHeight) {
+					// We don't need to commit nemesis block for previous cache,
+					// because initial state of previous cache is state of nemesis block
+					if (block.Height - Height(1) > effectiveBalanceHeight) {
 						std::shared_ptr<const model::BlockElement> pOldBlockElement;
 						const auto& chainHeight = storage.chainHeight();
 

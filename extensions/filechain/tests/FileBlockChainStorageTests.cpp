@@ -40,12 +40,14 @@ namespace catapult { namespace filechain {
 	namespace {
 		// region TestContext
 
-		model::BlockChainConfiguration CreateBlockChainConfiguration(uint32_t maxDifficultyBlocks, const std::string& dataDirectory) {
+		model::BlockChainConfiguration CreateBlockChainConfiguration(uint32_t maxDifficultyBlocks, uint64_t effectiveBalanceRange, const std::string& dataDirectory) {
 			auto config = test::LoadLocalNodeConfigurationWithNemesisPluginExtensions(dataDirectory).BlockChain;
 			config.Plugins.emplace("catapult.plugins.hashcache", utils::ConfigurationBag({{ "", { {} } }}));
 
 			if (maxDifficultyBlocks > 0)
 				config.MaxDifficultyBlocks = maxDifficultyBlocks;
+
+			config.EffectiveBalanceRange = effectiveBalanceRange;
 
 			// set the number of rollback blocks to zero to avoid unnecessarily influencing height-dominant tests
 			config.MaxRollbackBlocks = 0;
@@ -60,8 +62,8 @@ namespace catapult { namespace filechain {
 					, m_pBlockChainStorage(CreateFileBlockChainStorage())
 			{}
 
-			explicit TestContext(uint32_t maxDifficultyBlocks = 0, const std::string& dataDirectory = "")
-					: TestContext(CreateBlockChainConfiguration(maxDifficultyBlocks, dataDirectory), dataDirectory)
+			explicit TestContext(uint32_t maxDifficultyBlocks = 0, uint64_t effectiveBalanceRange = 0, const std::string& dataDirectory = "")
+					: TestContext(CreateBlockChainConfiguration(maxDifficultyBlocks, effectiveBalanceRange, dataDirectory), dataDirectory)
 			{}
 
 		public:
@@ -177,15 +179,18 @@ namespace catapult { namespace filechain {
 				io::BlockStorageModifier&& storage,
 				std::vector<Amount>& amountsSpent,
 				std::vector<Amount>& amountsCollected,
-				const utils::TimeSpan& timeSpacing) {
-			RandomChainAttributes attributes;
-			amountsSpent.resize(Num_Nemesis_Accounts);
-			amountsCollected.resize(Num_Recipient_Accounts);
-			attributes.Recipients = GenerateRandomAddresses(Num_Recipient_Accounts);
+				const utils::TimeSpan& timeSpacing,
+				uint64_t height = 2u,
+				RandomChainAttributes attributes = RandomChainAttributes()) {
+
+			if (attributes.Recipients.empty()) {
+				amountsSpent.resize(Num_Nemesis_Accounts);
+				amountsCollected.resize(Num_Recipient_Accounts);
+				attributes.Recipients = GenerateRandomAddresses(Num_Recipient_Accounts);
+			}
 
 			// Generate block per every recipient, each with random number of transactions.
 			auto recipientIndex = 0u;
-			auto height = 2u;
 			std::mt19937_64 rnd;
 			auto nemesisKeyPairs = GetNemesisKeyPairs();
 			for (const auto& recipientAddress : attributes.Recipients) {
@@ -294,17 +299,42 @@ namespace catapult { namespace filechain {
 
 		void AssertProperAccountCacheStateAfterLoadingMultipleBlocks(const utils::TimeSpan& timeSpacing) {
 			// Arrange:
-			TestContext context;
-			std::vector<Amount> amountsSpent; // amounts spent by nemesis accounts to send to other newAccounts
+			auto effetiveBalanceRange = Num_Recipient_Accounts;
+			TestContext context(0 /* maxDifficultyBlocks */, effetiveBalanceRange);
+
+			// Lets create second block and save information about amount of account
+			std::vector<Amount> amountsSpent;
 			std::vector<Amount> amountsCollected;
-			auto newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected, timeSpacing).Recipients;
+			auto attributes = PrepareRandomBlocks(
+					context.storageModifier(),
+					amountsSpent,
+					amountsCollected,
+					timeSpacing,
+					2
+			);
+			std::vector<Amount> amountsSpentOldCopy = amountsSpent;
+			std::vector<Amount> amountsCollectedOldCopy = amountsCollected;
+
+			// Now let's update balance of accounts more and then check previous cache and current cache
+			PrepareRandomBlocks(
+					context.storageModifier(),
+					amountsSpent,
+					amountsCollected,
+					timeSpacing,
+					2 + effetiveBalanceRange,
+					attributes
+			);
+
+			auto newAccounts = attributes.Recipients;
 
 			// Act:
 			context.load();
 
 			// Assert:
+			// Check that previous cache contains correct information
+			checkRecipient(context.previousCacheView(), newAccounts, amountsSpentOldCopy, amountsCollectedOldCopy);
+			// Check that current cache contains correct information
 			checkRecipient(context.currentCacheView(), newAccounts, amountsSpent, amountsCollected);
-			checkRecipient(context.previousCacheView(), newAccounts, amountsSpent, amountsCollected);
 		}
 	}
 
@@ -455,7 +485,7 @@ namespace catapult { namespace filechain {
 			{
 				// - generate random state
 				auto timeSpacing = utils::TimeSpan::FromMinutes(2);
-				TestContext context(maxDifficultyBlocks, tempDataDirectory.name());
+				TestContext context(maxDifficultyBlocks, 0 /* effectiveBalanceRange */, tempDataDirectory.name());
 				context.enableCacheDatabaseStorage(useCacheDatabaseStorage);
 				newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected,
 												  timeSpacing).Recipients;
@@ -466,7 +496,7 @@ namespace catapult { namespace filechain {
 			}
 
 			// Act: reload the state from the saved cache state
-			TestContext context(maxDifficultyBlocks, tempDataDirectory.name());
+			TestContext context(maxDifficultyBlocks, 0 /* effectiveBalanceRange */, tempDataDirectory.name());
 			context.enableCacheDatabaseStorage(useCacheDatabaseStorage);
 			context.load();
 
@@ -504,7 +534,7 @@ namespace catapult { namespace filechain {
 			auto storageChainHeight = Height(Num_Recipient_Accounts + 1);
 
 			// - force a prune at the last block and create a context for (re)loading
-			auto config = CreateBlockChainConfiguration(maxDifficultyBlocks, tempDataDirectory.name());
+			auto config = CreateBlockChainConfiguration(maxDifficultyBlocks, 0 /* effectiveBalanceRange */, tempDataDirectory.name());
 			config.BlockPruneInterval = static_cast<uint32_t>(storageChainHeight.unwrap());
 			TestContext context(config, tempDataDirectory.name());
 			context.enableCacheDatabaseStorage(useCacheDatabaseStorage);
@@ -573,7 +603,7 @@ namespace catapult { namespace filechain {
 		{
 			// - generate random state
 			auto timeSpacing = utils::TimeSpan::FromMinutes(1);
-			TestContext context(0, tempDataDirectory.name());
+			TestContext context(0 /* maxDifficultyBlocks */, 0 /* effectiveBalanceRange */, tempDataDirectory.name());
 			PrepareRandomBlocks(context.storageModifier(), timeSpacing);
 			context.load();
 
@@ -586,7 +616,7 @@ namespace catapult { namespace filechain {
 		}
 
 		// Act + Assert: reload the state from the saved cache state (the reload should fail due to incomplete saved cache state)
-		TestContext context(0, tempDataDirectory.name());
+		TestContext context(0 /* maxDifficultyBlocks */, 0 /* effectiveBalanceRange */, tempDataDirectory.name());
 		EXPECT_THROW(context.load(), catapult_runtime_error);
 	}
 

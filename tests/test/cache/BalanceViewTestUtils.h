@@ -25,13 +25,18 @@
 namespace catapult { namespace test {
 
 	/// Wrapper for an importance view.
-	class ImportanceViewWrapper {
+	class BalanceViewWrapper {
 	public:
 		/// Creates a wrapper around \a cache.
-		explicit ImportanceViewWrapper(const cache::AccountStateCache& cache)
-				: m_cacheView(cache.createView())
-				, m_readOnlyCache(*m_cacheView)
-				, m_view(m_readOnlyCache)
+		explicit BalanceViewWrapper(
+				const cache::AccountStateCache& currentCache,
+				const cache::AccountStateCache& previousCache,
+				const Height& effectiveBalanceHeight)
+			: m_currentCacheView(currentCache.createView())
+			, m_previousCacheView(previousCache.createView())
+			, m_readOnlyCurrentCache(*m_currentCacheView)
+			, m_readOnlyPreviousCache(*m_previousCacheView)
+			, m_view(m_readOnlyCurrentCache, m_readOnlyPreviousCache, effectiveBalanceHeight)
 		{}
 
 	public:
@@ -46,14 +51,19 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		cache::LockedCacheView<cache::AccountStateCacheView> m_cacheView;
-		cache::ReadOnlyAccountStateCache m_readOnlyCache;
+		cache::LockedCacheView<cache::AccountStateCacheView> m_currentCacheView;
+		cache::LockedCacheView<cache::AccountStateCacheView> m_previousCacheView;
+		cache::ReadOnlyAccountStateCache m_readOnlyCurrentCache;
+		cache::ReadOnlyAccountStateCache m_readOnlyPreviousCache;
 		cache::BalanceView m_view;
 	};
 
-	/// Creates an importance view wrapper around \a cache.
+	/// Creates an balance view wrapper around \a cache.
 	CATAPULT_INLINE
-	ImportanceViewWrapper CreateImportanceView(const cache::AccountStateCache& cache) {
-		return ImportanceViewWrapper(cache);
+	BalanceViewWrapper CreateBalanceView(
+			const cache::AccountStateCache& currentCache,
+			const cache::AccountStateCache& previousCache,
+			const Height& effectiveBalanceHeight) {
+		return BalanceViewWrapper(currentCache, previousCache, effectiveBalanceHeight);
 	}
 }}

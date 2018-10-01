@@ -142,7 +142,9 @@ namespace catapult { namespace consumers {
 
 					m_handlers.UndoBlock(*pParentBlockElement, currentObserver);
 					// Restore cache effectiveBalanceHeight blocks below
-					if (height > state.EffectiveBalanceHeight) {
+					// We don't need to undo nemesis block for previous cache,
+					// because initial state of previous cache is state of nemesis block
+					if (height - Height(1) > state.EffectiveBalanceHeight) {
 						auto pOldBlockElement = storage.loadBlockElement(height - state.EffectiveBalanceHeight);
 						m_handlers.UndoBlock(*pOldBlockElement, preivousObserver);
 					}

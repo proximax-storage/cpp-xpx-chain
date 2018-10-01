@@ -131,7 +131,9 @@ namespace catapult { namespace filechain {
 				executeForCurrentCache(*pBlockElement);
 
 				// Restore cache effectiveBalanceHeight block below
-				if (height > effectiveBalanceHeight) {
+				// We don't need to load nemesis block for previous cache,
+				// because initial state of previous cache is state of nemesis block
+				if (height - Height(1) > effectiveBalanceHeight) {
 					auto pOldBlockElement = storage.loadBlockElement(height - effectiveBalanceHeight);
 					executeForPreviousCache(*pOldBlockElement);
 				}
