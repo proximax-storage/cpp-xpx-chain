@@ -272,7 +272,7 @@ namespace catapult { namespace timesync {
 	// region scaling
 
 	TEST(TEST_CLASS, TimeSynchronizerScaling_ViewPercentageDominant_Max) {
-		// Arrange: importance percentage = 1 / 10, view percentage = 1: scaling == 1
+		// Arrange: balance percentage = 1 / 10, view percentage = 1: scaling == 1
 		TestContext context({ { 100, 50'000'000 }, { 100, 50'000'000 } });
 
 		// Act:
@@ -283,7 +283,7 @@ namespace catapult { namespace timesync {
 	}
 
 	TEST(TEST_CLASS, TimeSynchronizerScaling_ViewPercentageDominant_Half) {
-		// Arrange: importance percentage = 1 / 10, view percentage = 1 / 2: scaling == 2
+		// Arrange: balance percentage = 1 / 10, view percentage = 1 / 2: scaling == 2
 		TestContext context({ { 100, 50'000'000 }, { 100, 50'000'000 } });
 
 		// - add another 2 high value accounts
@@ -296,8 +296,8 @@ namespace catapult { namespace timesync {
 		EXPECT_EQ(TimeOffset(2 * 10), timeOffset);
 	}
 
-	TEST(TEST_CLASS, TimeSynchronizerScaling_ImportancePercentageDominant_Max) {
-		// Arrange: importance percentage = 1, view percentage = 1 / 5: scaling == 1
+	TEST(TEST_CLASS, TimeSynchronizerScaling_BalancePercentageDominant_Max) {
+		// Arrange: balance percentage = 1, view percentage = 1 / 5: scaling == 1
 		TestContext context({ { 100, 500'000'000 }, { 100, 500'000'000 } });
 
 		// - add another 8 high value accounts
@@ -310,8 +310,8 @@ namespace catapult { namespace timesync {
 		EXPECT_EQ(TimeOffset(100), timeOffset);
 	}
 
-	TEST(TEST_CLASS, TimeSynchronizerScaling_ImportancePercentageDominant_Half) {
-		// Arrange: importance percentage = 1 / 2, view percentage = 1 / 5: scaling == 2
+	TEST(TEST_CLASS, TimeSynchronizerScaling_BalancePercentageDominant_Half) {
+		// Arrange: balance percentage = 1 / 2, view percentage = 1 / 5: scaling == 2
 		TestContext context({ { 100, 250'000'000 }, { 100, 250'000'000 } });
 
 		// - add another 8 high value accounts

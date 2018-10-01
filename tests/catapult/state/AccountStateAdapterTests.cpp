@@ -114,16 +114,6 @@ namespace catapult { namespace state {
 		AssertMosaic(mosaics[MosaicId(987)], MosaicId(987), Amount(222));
 	}
 
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_NoImportanceHistory) {
-		// Assert:
-		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics();
-	}
-
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_PartialImportanceHistory) {
-		// Assert:
-		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics();
-	}
-
 	// endregion
 
 	// region AccountState <- AccountInfo
@@ -163,16 +153,6 @@ namespace catapult { namespace state {
 			{ Xpx_Id, Amount(13579) },
 			{ MosaicId(987), Amount(222) }
 		});
-	}
-
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_NoImportanceHistory) {
-		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({});
-	}
-
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_PartialImportanceHistory) {
-		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({});
 	}
 
 	// endregion

@@ -24,7 +24,7 @@
 
 namespace catapult { namespace test {
 
-	/// Wrapper for an importance view.
+	/// Wrapper for an balance view.
 	class BalanceViewWrapper {
 	public:
 		/// Creates a wrapper around \a cache.
@@ -40,12 +40,12 @@ namespace catapult { namespace test {
 		{}
 
 	public:
-		/// Gets a const reference to the underlying importance view.
+		/// Gets a const reference to the underlying balance view.
 		const cache::BalanceView& operator*() {
 			return m_view;
 		}
 
-		/// Gets a const pointer to the underlying importance view.
+		/// Gets a const pointer to the underlying balance view.
 		const cache::BalanceView* operator->() {
 			return &m_view;
 		}
