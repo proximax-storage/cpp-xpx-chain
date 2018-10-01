@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 
 			// note that Eternal_Artifact_Duration is default value and should not be specified explicitly
 			auto duration = BlockDuration(property.Value);
-			return maxMosaicDuration < duration || Eternal_Artifact_Duration == duration
+			return maxMosaicDuration < duration && Eternal_Artifact_Duration != duration
 					? Failure_Mosaic_Invalid_Duration
 					: ValidationResult::Success;
 		}

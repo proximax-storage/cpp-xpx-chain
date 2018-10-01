@@ -139,8 +139,8 @@ namespace catapult { namespace validators {
 	}
 
 	TEST(TEST_CLASS, FailuresWhenValidatingZeroDuration) {
-		// Assert: eternal duration is allowed but cannot be specified explicitly
-		AssertDurationValidationResult(Failure_Mosaic_Invalid_Duration, 0, 12345);
+		// Assert: eternal duration is allowed
+		AssertDurationValidationResult(ValidationResult::Success, 0, 12345);
 	}
 
 	// endregion
@@ -210,7 +210,7 @@ namespace catapult { namespace validators {
 		// Assert:
 		AssertInvalidOptionalProperty(
 				{ model::MosaicPropertyId::Duration, Eternal_Artifact_Duration.unwrap() },
-				Failure_Mosaic_Invalid_Duration);
+				ValidationResult::Success);
 	}
 
 	namespace {
