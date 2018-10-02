@@ -46,7 +46,7 @@ namespace catapult { namespace harvesting {
 		/// Created block will have \a lastBlockElement as parent and \a timestamp as timestamp.
 		std::unique_ptr<model::Block> harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp);
 
-	private:
+	protected:
 		extensions::LocalNodeStateRef m_localNodeState;
 		const UnlockedAccounts& m_unlockedAccounts;
 		TransactionsInfoSupplier m_transactionsInfoSupplier;

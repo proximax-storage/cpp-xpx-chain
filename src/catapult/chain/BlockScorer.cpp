@@ -31,44 +31,31 @@ namespace catapult { namespace chain {
 	namespace {
 		constexpr uint64_t GAMMA_NUMERATOR{64};
 		constexpr uint64_t GAMMA_DENOMINATOR{100};
-		constexpr uint32_t SMOTHING_FACTOR_DENOMINATOR{1000};
-
-		/// The first 8 bytes of a \a generationHash are converted to a number, referred to as the account hit.
-		uint64_t CalculateHit(const Hash256& generationHash) {
-			return *reinterpret_cast<const uint64_t*>(generationHash.data());
-		}
-
-		// Each account calculates its own target value, based on its current effective stake. This value is:
-		// T = Tb x S x Be
-		// where:
-		// T is the new target value
-		// Tb is the base target value
-		// S is the time since the last block, in seconds
-		// Be is the effective balance of the account
-		BlockTarget CalculateTarget(
-				const BlockTarget& baseTarget,
-				const utils::TimeSpan& ElapsedTime,
-				const Amount& effectiveBalance) {
-			return baseTarget * ElapsedTime.seconds() * effectiveBalance.unwrap();
-		}
+		constexpr uint32_t SMOOTHING_FACTOR_DENOMINATOR{1000};
 	}
 
-	// The base target is calculated as follows:
-	// If S>60
-	//     Tb = (Tp * Min(S, MAXRATIO)) / 60
-	// Else
-	//     Tb = Tp - Tp * GAMMA * (60 - Max(S, MINRATIO)) / 60;
-	// where:
-	// S - average block time for the last 3 blocks
-	// Tp - previous base target
-	// Tb - calculated base target
+	uint64_t CalculateHit(const Hash256& generationHash) {
+		return *reinterpret_cast<const uint64_t*>(generationHash.data());
+	}
+
+	BlockTarget CalculateTarget(
+			const BlockTarget& baseTarget,
+			const utils::TimeSpan& elapsedTime,
+			const Amount& effectiveBalance) {
+		return baseTarget * elapsedTime.seconds() * effectiveBalance.unwrap();
+	}
+
 	BlockTarget CalculateBaseTarget(
 			const BlockTarget& Tp,
 			const utils::TimeSpan& milliSeconds,
 			const model::BlockChainConfiguration& config) {
 		auto S = milliSeconds.seconds();
 		auto RATIO = config.BlockGenerationTargetTime.seconds();
-		auto factor = config.BlockTimeSmoothingFactor / SMOTHING_FACTOR_DENOMINATOR;
+		if (RATIO <= 0)
+		{
+			CATAPULT_THROW_INVALID_ARGUMENT("BlockGenerationTargetTime is invalid or not set");
+		}
+		auto factor = config.BlockTimeSmoothingFactor / SMOOTHING_FACTOR_DENOMINATOR;
 		auto MINRATIO = RATIO - factor;
 		auto MAXRATIO = RATIO + factor;
 		if (S > RATIO) {
@@ -98,21 +85,17 @@ namespace catapult { namespace chain {
 			const Height& effectiveBalanceHeight,
 			const Height& currentHeight,
 			const Key& signer) {
-		Amount result(0);
-
 		if (currentHeight < effectiveBalanceHeight) {
-			result = getXpxOfAccount(currentCache, signer);
+			return getXpxOfAccount(currentCache, signer);
 		} else {
-			result = std::min(getXpxOfAccount(currentCache, signer), getXpxOfAccount(previousCache, signer));
+			return std::min(getXpxOfAccount(currentCache, signer), getXpxOfAccount(previousCache, signer));
 		}
-
-		return result;
 	}
 
 	bool BlockHitPredicate::operator()(const Hash256& generationHash, const BlockTarget& baseTarget,
-			const utils::TimeSpan& ElapsedTime, const Amount& effectiveBalance) const {
+			const utils::TimeSpan& elapsedTime, const Amount& effectiveBalance) const {
 		auto hit = CalculateHit(generationHash);
-		auto target = CalculateTarget(baseTarget, ElapsedTime, effectiveBalance);
+		auto target = CalculateTarget(baseTarget, elapsedTime, effectiveBalance);
 		return hit < target;
 	}
 

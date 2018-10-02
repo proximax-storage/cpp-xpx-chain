@@ -52,6 +52,7 @@ namespace catapult { namespace test {
 		std::shared_ptr<extensions::LocalNodeState> LocalNodeStateUtils::CreateLocalNodeState(cache::CatapultCache&& cache) {
 			auto blockConfig = model::BlockChainConfiguration::Uninitialized();
 			blockConfig.EffectiveBalanceRange = 1440;
+			blockConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 
 			auto LocalConfig = config::LocalNodeConfiguration(
 					std::move(blockConfig),

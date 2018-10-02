@@ -30,6 +30,30 @@ namespace catapult { namespace model { struct BlockHitContext; } }
 
 namespace catapult { namespace chain {
 
+	// The first 8 bytes of a \a generationHash are converted to a number, referred to as the account hit.
+	uint64_t CalculateHit(const Hash256& generationHash);
+
+	// Each account calculates its own target value, based on its current effective stake. This value is:
+	// T = Tb x S x Be
+	// where:
+	// T is the new target value
+	// Tb is the base target value
+	// S is the time since the last block, in seconds
+	// Be is the effective balance of the account
+	BlockTarget CalculateTarget(
+			const BlockTarget& baseTarget,
+			const utils::TimeSpan& elapsedTime,
+			const Amount& effectiveBalance);
+
+	// The base target is calculated as follows:
+	// If S>60
+	//     Tb = (Tp * Min(S, MAXRATIO)) / 60
+	// Else
+	//     Tb = Tp - Tp * GAMMA * (60 - Max(S, MINRATIO)) / 60;
+	// where:
+	// S - average block time for the last 3 blocks
+	// Tp - previous base target
+	// Tb - calculated base target
 	BlockTarget CalculateBaseTarget(
 		const BlockTarget& parentBaseTarget,
 		const utils::TimeSpan& averageBlockTime,
@@ -48,7 +72,7 @@ namespace catapult { namespace chain {
 	public:
 		/// Determines if the \a block is a hit given generation hash (\a generationHash) and time elapsed since last block (\a ElapsedTime).
 		bool operator()(const Hash256& generationHash, const BlockTarget& parentBaseTarget,
-				const utils::TimeSpan& ElapsedTime, const Amount& effectiveBalance) const;
+				const utils::TimeSpan& elapsedTime, const Amount& effectiveBalance) const;
 
 		/// Determines if the specified \a context is a hit.
 		bool operator()(const model::BlockHitContext& context) const;
