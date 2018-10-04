@@ -34,7 +34,6 @@ namespace catapult { namespace config {
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 
 		LOAD_PROPERTY(MaxNameSize);
-		LOAD_PROPERTY(MaxNamespaceDuration);
 		LOAD_PROPERTY(NamespaceGracePeriodDuration);
 		LOAD_PROPERTY(ReservedRootNamespaceNames);
 
@@ -45,8 +44,6 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(MaxChildNamespaces);
 		LOAD_PROPERTY(MaxMosaicsPerAccount);
 
-		LOAD_PROPERTY(MaxMosaicDuration);
-
 		LOAD_PROPERTY(IsMosaicLevyUpdateAllowed);
 		LOAD_PROPERTY(MaxMosaicDivisibility);
 		LOAD_PROPERTY(MaxMosaicDivisibleUnits);
@@ -56,7 +53,7 @@ namespace catapult { namespace config {
 
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 15);
+		utils::VerifyBagSizeLte(bag, 13);
 		return config;
 	}
 }}

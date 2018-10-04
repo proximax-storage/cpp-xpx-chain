@@ -32,11 +32,10 @@ namespace catapult { namespace validators {
 #define ROOT_TEST_CLASS RootNamespaceAvailabilityValidatorTests
 #define CHILD_TEST_CLASS ChildNamespaceAvailabilityValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, model::NamespaceLifetimeConstraints(BlockDuration(), BlockDuration(), 0))
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, model::NamespaceLifetimeConstraints(BlockDuration(), 0))
 	DEFINE_COMMON_VALIDATOR_TESTS(ChildNamespaceAvailability,)
 
 	namespace {
-		constexpr BlockDuration Max_Duration(105);
 		constexpr BlockDuration Default_Duration(10);
 		constexpr BlockDuration Grace_Period_Duration(20);
 		constexpr uint32_t Max_Rollback_Blocks(5);
@@ -67,7 +66,7 @@ namespace catapult { namespace validators {
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto context = test::CreateValidatorContext(height, readOnlyCache);
 
-			model::NamespaceLifetimeConstraints constraints(Max_Duration, Grace_Period_Duration, Max_Rollback_Blocks);
+			model::NamespaceLifetimeConstraints constraints(Grace_Period_Duration, Max_Rollback_Blocks);
 			auto pValidator = CreateRootNamespaceAvailabilityValidator(constraints);
 
 			// Act:
@@ -222,14 +221,8 @@ namespace catapult { namespace validators {
 		AssertChangeDuration(Failure_Namespace_Invalid_Duration, Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
 	}
 
-	TEST(ROOT_TEST_CLASS, CannotRenewRootNamespaceWithDurationTooLarge) {
-		// Arrange: max duration is 120 [Max_Duration(105) + Grace_Period_Duration(20) + height(15) - lifetime.End(20)]
-		for (auto duration : { BlockDuration(121), BlockDuration(200) })
-			AssertChangeDuration(Failure_Namespace_Invalid_Duration, Height(15), test::CreateLifetime(10, 20), duration);
-	}
-
 	TEST(ROOT_TEST_CLASS, CanRenewRootNamespaceWithAcceptableDurations) {
-		// Arrange: max duration is 120 [Max_Duration(105) + Grace_Period_Duration(20) + height(15) - lifetime.End(20)]
+		// Arrange: max duration is 15 [Grace_Period_Duration(20) + height(15) - lifetime.End(20)]
 		for (auto duration : { BlockDuration(20), BlockDuration(75), BlockDuration(120) }) {
 			// Act: try to renew a root
 			auto signer = test::GenerateRandomData<Key_Size>();

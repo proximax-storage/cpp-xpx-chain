@@ -48,21 +48,12 @@ namespace catapult { namespace validators {
 				return ValidationResult::Success;
 
 			const auto& root = cache.get(notification.NamespaceId).root();
-			bool isNotEternal = (Eternal_Artifact_Duration != notification.Duration);
-			if (IsEternal(root.lifetime()) && isNotEternal)
+			if (IsEternal(root.lifetime()) && (Eternal_Artifact_Duration != notification.Duration))
 				return Failure_Namespace_Invalid_Duration;
 
 			// if grace period after expiration has passed, any signer can claim the namespace
 			if (!constraints.IsWithinLifetimePlusDuration(root.lifetime().End, height))
 				return ValidationResult::Success;
-
-			if (isNotEternal) {
-				auto newLifetimeEnd = root.lifetime().End + ToHeight(notification.Duration);
-				auto maxLifetimeEnd = height + ToHeight(constraints.MaxNamespaceDuration);
-				if (newLifetimeEnd > maxLifetimeEnd) {
-					return Failure_Namespace_Invalid_Duration;
-				}
-			}
 
 			return root.owner() == notification.Signer ? ValidationResult::Success : Failure_Namespace_Owner_Conflict;
 		});

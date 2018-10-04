@@ -38,7 +38,6 @@ namespace catapult { namespace config {
 						"",
 						{
 							{ "maxNameSize", "123" },
-							{ "maxNamespaceDuration", "234h" },
 							{ "namespaceGracePeriodDuration", "20d" },
 							{ "reservedRootNamespaceNames", "alpha,omega" },
 
@@ -48,8 +47,6 @@ namespace catapult { namespace config {
 
 							{ "maxChildNamespaces", "1234" },
 							{ "maxMosaicsPerAccount", "4321" },
-
-							{ "maxMosaicDuration", "2340h" },
 
 							{ "isMosaicLevyUpdateAllowed", "true" },
 							{ "maxMosaicDivisibility", "7" },
@@ -69,7 +66,6 @@ namespace catapult { namespace config {
 			static void AssertZero(const NamespaceConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(0u, config.MaxNameSize);
-				EXPECT_EQ(utils::BlockSpan(), config.MaxNamespaceDuration);
 				EXPECT_EQ(utils::BlockSpan(), config.NamespaceGracePeriodDuration);
 				EXPECT_EQ(std::unordered_set<std::string>(), config.ReservedRootNamespaceNames);
 
@@ -79,8 +75,6 @@ namespace catapult { namespace config {
 
 				EXPECT_EQ(0u, config.MaxChildNamespaces);
 				EXPECT_EQ(0u, config.MaxMosaicsPerAccount);
-
-				EXPECT_EQ(utils::BlockSpan(), config.MaxMosaicDuration);
 
 				EXPECT_FALSE(config.IsMosaicLevyUpdateAllowed);
 				EXPECT_EQ(0u, config.MaxMosaicDivisibility);
@@ -93,7 +87,6 @@ namespace catapult { namespace config {
 			static void AssertCustom(const NamespaceConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(123u, config.MaxNameSize);
-				EXPECT_EQ(utils::BlockSpan::FromHours(234), config.MaxNamespaceDuration);
 				EXPECT_EQ(utils::BlockSpan::FromDays(20), config.NamespaceGracePeriodDuration);
 				EXPECT_EQ((std::unordered_set<std::string>{ "alpha", "omega" }), config.ReservedRootNamespaceNames);
 
@@ -103,8 +96,6 @@ namespace catapult { namespace config {
 
 				EXPECT_EQ(1234u, config.MaxChildNamespaces);
 				EXPECT_EQ(4321u, config.MaxMosaicsPerAccount);
-
-				EXPECT_EQ(utils::BlockSpan::FromHours(2340), config.MaxMosaicDuration);
 
 				EXPECT_TRUE(config.IsMosaicLevyUpdateAllowed);
 				EXPECT_EQ(7u, config.MaxMosaicDivisibility);

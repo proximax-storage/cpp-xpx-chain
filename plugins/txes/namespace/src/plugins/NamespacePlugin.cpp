@@ -70,11 +70,10 @@ namespace catapult { namespace plugins {
 				counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C DS"), [&cache]() { return GetMosaicView(cache)->deepSize(); });
 			});
 
-			auto maxDuration = config.MaxMosaicDuration.blocks(manager.config().BlockGenerationTargetTime);
-			manager.addStatelessValidatorHook([config, maxDuration](auto& builder) {
+			manager.addStatelessValidatorHook([config](auto& builder) {
 				builder
 					.add(validators::CreateMosaicNameValidator(config.MaxNameSize))
-					.add(validators::CreateMosaicPropertiesValidator(config.MaxMosaicDivisibility, maxDuration))
+					.add(validators::CreateMosaicPropertiesValidator(config.MaxMosaicDivisibility))
 					.add(validators::CreateMosaicSupplyChangeValidator());
 			});
 
@@ -143,17 +142,16 @@ namespace catapult { namespace plugins {
 				counters.emplace_back(utils::DiagnosticCounterId("NS C DS"), [&cache]() { return GetNamespaceView(cache)->deepSize(); });
 			});
 
-			auto maxDuration = config.MaxNamespaceDuration.blocks(manager.config().BlockGenerationTargetTime);
-			manager.addStatelessValidatorHook([config, maxDuration](auto& builder) {
+			manager.addStatelessValidatorHook([config](auto& builder) {
 				const auto& reservedNames = config.ReservedRootNamespaceNames;
 				builder
 					.add(validators::CreateNamespaceTypeValidator())
 					.add(validators::CreateNamespaceNameValidator(config.MaxNameSize, reservedNames))
-					.add(validators::CreateRootNamespaceValidator(maxDuration));
+					.add(validators::CreateRootNamespaceValidator());
 			});
 
 			auto gracePeriodDuration = config.NamespaceGracePeriodDuration.blocks(manager.config().BlockGenerationTargetTime);
-			model::NamespaceLifetimeConstraints constraints(maxDuration, gracePeriodDuration, manager.config().MaxRollbackBlocks);
+			model::NamespaceLifetimeConstraints constraints(gracePeriodDuration, manager.config().MaxRollbackBlocks);
 			manager.addStatefulValidatorHook([constraints, maxChildNamespaces = config.MaxChildNamespaces](auto& builder) {
 				builder
 					.add(validators::CreateRootNamespaceAvailabilityValidator(constraints))
