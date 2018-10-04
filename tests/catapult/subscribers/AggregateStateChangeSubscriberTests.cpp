@@ -29,46 +29,45 @@ namespace catapult { namespace subscribers {
 
 #define TEST_CLASS AggregateStateChangeSubscriberTests
 
-//	namespace {
-//		using UnsupportedStateChangeSubscriber = test::UnsupportedStateChangeSubscriber;
-//
-//		template<typename TStateChangeSubscriber>
-//		using TestContext = test::AggregateSubscriberTestContext<
-//				TStateChangeSubscriber,
-//				AggregateStateChangeSubscriber<TStateChangeSubscriber>>;
-//	}
-//	}
-//
-//	TEST(TEST_CLASS, NotifyStateChangeForwardsToAllSubscribers) {
-//		// Arrange:
-//		class MockStateChangeSubscriber : public UnsupportedStateChangeSubscriber {
-//		public:
-//			std::vector<const consumers::StateChangeInfo*> StateChangeInfos;
-//
-//		public:
-//			void notifyStateChange(const consumers::StateChangeInfo& info) override {
-//				StateChangeInfos.push_back(&info);
-//			}
-//		};
-//
-//		TestContext<MockStateChangeSubscriber> context;
-//
-//		auto cache = test::CreateEmptyCatapultCache();
-//		auto cacheDelta = cache.createDelta();
-//		consumers::StateChangeInfo stateChangeInfo(cacheDelta, Height(444));
-//
-//		// Sanity:
-//		EXPECT_EQ(3u, context.subscribers().size());
-//
-//		// Act:
-//		context.aggregate().notifyStateChange(stateChangeInfo);
-//
-//		// Assert:
-//		auto i = 0u;
-//		for (const auto* pSubscriber : context.subscribers()) {
-//			auto message = "subscriber at " + std::to_string(i++);
-//			ASSERT_EQ(1u, pSubscriber->StateChangeInfos.size()) << message;
-//			EXPECT_EQ(&stateChangeInfo, pSubscriber->StateChangeInfos[0]) << message;
-//		}
-//	}
+	namespace {
+		using UnsupportedStateChangeSubscriber = test::UnsupportedStateChangeSubscriber;
+
+		template<typename TStateChangeSubscriber>
+		using TestContext = test::AggregateSubscriberTestContext<
+				TStateChangeSubscriber,
+				AggregateStateChangeSubscriber<TStateChangeSubscriber>>;
+	}
+
+	TEST(TEST_CLASS, NotifyStateChangeForwardsToAllSubscribers) {
+		// Arrange:
+		class MockStateChangeSubscriber : public UnsupportedStateChangeSubscriber {
+		public:
+			std::vector<const consumers::StateChangeInfo*> StateChangeInfos;
+
+		public:
+			void notifyStateChange(const consumers::StateChangeInfo& info) override {
+				StateChangeInfos.push_back(&info);
+			}
+		};
+
+		TestContext<MockStateChangeSubscriber> context;
+
+		auto cache = test::CreateEmptyCatapultCache();
+		auto cacheDelta = cache.createDelta();
+		consumers::StateChangeInfo stateChangeInfo(cacheDelta, Height(444));
+
+		// Sanity:
+		EXPECT_EQ(3u, context.subscribers().size());
+
+		// Act:
+		context.aggregate().notifyStateChange(stateChangeInfo);
+
+		// Assert:
+		auto i = 0u;
+		for (const auto* pSubscriber : context.subscribers()) {
+			auto message = "subscriber at " + std::to_string(i++);
+			ASSERT_EQ(1u, pSubscriber->StateChangeInfos.size()) << message;
+			EXPECT_EQ(&stateChangeInfo, pSubscriber->StateChangeInfos[0]) << message;
+		}
+	}
 }}
