@@ -46,25 +46,27 @@ namespace catapult { namespace test {
 			return crypto::KeyPair::FromString(Mijin_Test_Private_Keys[0]);// use a nemesis account
 		}
 
-//		std::shared_ptr<model::Block> CreateBlock() {
-//			constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
-//			auto signer = GetNemesisAccountKeyPair();
-//
-//			mocks::MockMemoryBasedStorage storage;
-//			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
-//
-//			model::PreviousBlockContext context(*pNemesisBlockElement);
-//			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
-//			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
-//			SignBlock(signer, *pBlock);
-//			return std::move(pBlock);
-//		}
+		std::shared_ptr<model::Block> CreateBlock() {
+			constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+			auto signer = GetNemesisAccountKeyPair();
+
+			mocks::MockMemoryBasedStorage storage;
+			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+
+			model::PreviousBlockContext context(*pNemesisBlockElement);
+			model::BlockHitContext hitContext;
+			hitContext.BaseTarget = 100u;
+			auto pBlock = model::CreateBlock(context, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
+			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
+			SignBlock(signer, *pBlock);
+			return std::move(pBlock);
+		}
 	}
 
-//	std::shared_ptr<ionet::PacketIo> PushValidBlock(ExternalSourceConnection& connection) {
-//		auto pBlock = CreateBlock();
-//		return PushEntity(connection, ionet::PacketType::Push_Block, pBlock);
-//	}
+	std::shared_ptr<ionet::PacketIo> PushValidBlock(ExternalSourceConnection& connection) {
+		auto pBlock = CreateBlock();
+		return PushEntity(connection, ionet::PacketType::Push_Block, pBlock);
+	}
 
 	std::shared_ptr<ionet::PacketIo> PushValidTransaction(ExternalSourceConnection& connection) {
 		auto pTransaction = CreateTransferTransaction(GetNemesisAccountKeyPair(), GenerateRandomAddress(), Amount(10000));
