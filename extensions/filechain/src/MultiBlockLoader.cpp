@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/cache/CacheUtils.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/config/LocalNodeConfiguration.h"
@@ -133,7 +134,7 @@ namespace catapult { namespace filechain {
 				// Restore cache effectiveBalanceHeight block below
 				// We don't need to load nemesis block for previous cache,
 				// because initial state of previous cache is state of nemesis block
-				if (height - Height(1) > effectiveBalanceHeight) {
+				if (cache::canUpdatePreviousCache(height, effectiveBalanceHeight)) {
 					auto pOldBlockElement = storage.loadBlockElement(height - effectiveBalanceHeight);
 					executeForPreviousCache(*pOldBlockElement);
 				}

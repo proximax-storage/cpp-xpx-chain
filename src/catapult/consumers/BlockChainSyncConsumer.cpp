@@ -20,6 +20,7 @@
 
 #include "BlockChainSyncConsumer.h"
 #include "BlockConsumers.h"
+#include "catapult/cache/CacheUtils.h"
 #include "catapult/cache_core/BalanceView.h"
 #include "catapult/utils/Casting.h"
 #include "ConsumerResultFactory.h"
@@ -142,9 +143,7 @@ namespace catapult { namespace consumers {
 
 					m_handlers.UndoBlock(*pParentBlockElement, currentObserver);
 					// Restore cache effectiveBalanceHeight blocks below
-					// We don't need to undo nemesis block for previous cache,
-					// because initial state of previous cache is state of nemesis block
-					if (height - Height(1) > state.EffectiveBalanceHeight) {
+					if (cache::canUpdatePreviousCache(height, state.EffectiveBalanceHeight)) {
 						auto pOldBlockElement = storage.loadBlockElement(height - state.EffectiveBalanceHeight);
 						m_handlers.UndoBlock(*pOldBlockElement, preivousObserver);
 					}

@@ -22,6 +22,7 @@
 #include "BlockChainProcessor.h"
 #include "InputUtils.h"
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/cache/CacheUtils.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainUtils.h"
@@ -101,7 +102,7 @@ namespace catapult { namespace consumers {
 					// Restore old block which is EffectiveBalanceHeight blocks below
 					// We don't need to commit nemesis block for previous cache,
 					// because initial state of previous cache is state of nemesis block
-					if (block.Height - Height(1) > effectiveBalanceHeight) {
+					if (cache::canUpdatePreviousCache(block.Height, effectiveBalanceHeight)) {
 						std::shared_ptr<const model::BlockElement> pOldBlockElement;
 						const auto& chainHeight = storage.chainHeight();
 

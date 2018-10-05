@@ -29,7 +29,6 @@ namespace catapult {
 	namespace cache { class CatapultCache; }
 	namespace config { class LocalNodeConfiguration; }
 	namespace io { class BlockStorageCache; class BlockStorage; }
-	namespace state { struct CatapultState; }
 }
 
 namespace catapult { namespace extensions {
