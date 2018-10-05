@@ -55,9 +55,12 @@ namespace catapult { namespace test {
 
 			model::PreviousBlockContext context(*pNemesisBlockElement);
 			model::BlockHitContext hitContext;
-			hitContext.BaseTarget = 100u;
+			hitContext.BaseTarget = 0xF000000000000000u;
+			hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(5u);
+			hitContext.EffectiveBalance = Amount{1000u};
 			auto pBlock = model::CreateBlock(context, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
-			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
+			pBlock->Timestamp = context.Timestamp + Timestamp(60000u);
+			pBlock->CumulativeDifficulty = Difficulty{0xF000000000000u};
 			SignBlock(signer, *pBlock);
 			return std::move(pBlock);
 		}
