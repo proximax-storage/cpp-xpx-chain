@@ -142,7 +142,7 @@ namespace catapult { namespace chain {
 
 				// if all the hashes match, the remote node lied because it can't have a higher difficulty
 				if (remoteHashes.size() == firstDifferenceIndex)
-					return ChainComparisonCode::Remote_Lied_About_Chain_Score;
+					return ChainComparisonCode::Remote_Lied_About_Chain_Difficulty;
 
 				m_commonBlockHeight = Height(startingHeight.unwrap() + firstDifferenceIndex - 1);
 				m_localHeight = startingHeight + Height(localHashes.size() - 1);

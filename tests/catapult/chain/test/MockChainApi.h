@@ -51,18 +51,18 @@ namespace catapult { namespace mocks {
 			m_blocks.emplace(Height(0), std::move(pLastBlock));
 		}
 
-		/// Creates a mock chain api around a chain \a score, a chain \a height and a range of \a hashes.
+		/// Creates a mock chain api around a chain \a difficulty, a chain \a height and a range of \a hashes.
 		MockChainApi(const Difficulty& difficulty, Height height, const model::HashRange& hashes)
 				: MockChainApi(difficulty, test::GenerateVerifiableBlockAtHeight(height), hashes)
 		{}
 
-		/// Creates a mock chain api around a chain \a score, a last block (\a pLastBlock) and the number of
+		/// Creates a mock chain api around a chain \a difficulty, a last block (\a pLastBlock) and the number of
 		/// hashes (\a numHashesToReturn) to return from a hashes-from request.
 		MockChainApi(const Difficulty& difficulty, std::shared_ptr<model::Block>&& pLastBlock, size_t numHashesToReturn = 0)
 				: MockChainApi(difficulty, std::move(pLastBlock), test::GenerateRandomHashes(numHashesToReturn))
 		{}
 
-		/// Creates a mock chain api around a chain \a score, a chain \a height and the number of
+		/// Creates a mock chain api around a chain \a difficulty, a chain \a height and the number of
 		/// hashes (\a numHashesToReturn) to return from a hashes-from request.
 		MockChainApi(const Difficulty& difficulty, Height height, size_t numHashesToReturn = 0)
 				: MockChainApi(difficulty, test::GenerateVerifiableBlockAtHeight(height), numHashesToReturn)

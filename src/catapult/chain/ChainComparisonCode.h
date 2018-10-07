@@ -46,8 +46,8 @@ namespace catapult { namespace chain {
 	/* Remote node is on a fork. */ \
 	ENUM_VALUE(Remote_Is_Forked, Remote_Is_Evil_Flag | 3) \
 	\
-	/* Remote node lied about having a higher chain score. */ \
-	ENUM_VALUE(Remote_Lied_About_Chain_Score, Remote_Is_Evil_Flag | 4)
+	/* Remote node lied about having a higher chain difficulty. */ \
+	ENUM_VALUE(Remote_Lied_About_Chain_Difficulty, Remote_Is_Evil_Flag | 4)
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// Possible chain comparison end states.
