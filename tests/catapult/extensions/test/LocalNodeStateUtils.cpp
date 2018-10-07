@@ -26,32 +26,26 @@ namespace catapult { namespace test {
 		std::vector<std::shared_ptr<extensions::LocalNodeState>> LocalNodeStateUtils::memory;
 
 		std::shared_ptr<extensions::LocalNodeState> LocalNodeStateUtils::CreateLocalNodeState(
-				config::LocalNodeConfiguration&& config, cache::CatapultCache&& cache) {
-			LocalNodeStateUtils::memory.push_back(
+				config::LocalNodeConfiguration&& config,
+				cache::CatapultCache&& currentCache,
+				cache::CatapultCache&& previousCache) {
+			LocalNodeStateUtils::memory.emplace_back(
 					std::make_shared<extensions::LocalNodeState>(
 							std::move(config),
 							std::make_unique<mocks::MockMemoryBasedStorage>(),
-							std::move(cache)
+							std::move(currentCache),
+							std::move(previousCache)
 					)
 			);
 
 			return LocalNodeStateUtils::memory.back();
 		}
 
-		std::shared_ptr<extensions::LocalNodeState> LocalNodeStateUtils::CreateLocalNodeState(config::LocalNodeConfiguration&& config) {
-			LocalNodeStateUtils::memory.push_back(
-					std::make_shared<extensions::LocalNodeState>(
-							std::move(config),
-							std::make_unique<mocks::MockMemoryBasedStorage>()
-					)
-			);
-
-			return LocalNodeStateUtils::memory.back();
-		}
-
-		std::shared_ptr<extensions::LocalNodeState> LocalNodeStateUtils::CreateLocalNodeState(cache::CatapultCache&& cache) {
+		std::shared_ptr<extensions::LocalNodeState> LocalNodeStateUtils::CreateLocalNodeState(
+				cache::CatapultCache&& currentCache,
+				cache::CatapultCache&& previousCache) {
 			auto blockConfig = model::BlockChainConfiguration::Uninitialized();
-			blockConfig.EffectiveBalanceRange = 1440;
+			blockConfig.EffectiveBalanceRange = 0;
 			blockConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 
 			auto LocalConfig = config::LocalNodeConfiguration(
@@ -60,15 +54,13 @@ namespace catapult { namespace test {
 					config::LoggingConfiguration::Uninitialized(),
 					config::UserConfiguration::Uninitialized()
 			);
-			return LocalNodeStateUtils::CreateLocalNodeState(std::move(LocalConfig), std::move(cache));
+			return LocalNodeStateUtils::CreateLocalNodeState(std::move(LocalConfig), std::move(currentCache), std::move(previousCache));
 		}
 
-		std::shared_ptr<extensions::LocalNodeState> LocalNodeStateUtils::CreateLocalNodeState() {
-			return LocalNodeStateUtils::CreateLocalNodeState(cache::CatapultCache({}));
-		}
-
-		extensions::LocalNodeStateRef LocalNodeStateUtils::CreateLocalNodeStateRef(cache::CatapultCache&& cache) {
-			return extensions::LocalNodeStateRef(*LocalNodeStateUtils::CreateLocalNodeState(std::move(cache)));
+		extensions::LocalNodeStateRef LocalNodeStateUtils::CreateLocalNodeStateRef(
+				cache::CatapultCache&& currentCache,
+				cache::CatapultCache&& previousCache) {
+			return extensions::LocalNodeStateRef(*LocalNodeStateUtils::CreateLocalNodeState(std::move(currentCache), std::move(previousCache)));
 		}
 
 		extensions::LocalNodeStateRef LocalNodeStateUtils::CreateLocalNodeStateRef(config::LocalNodeConfiguration&& config) {

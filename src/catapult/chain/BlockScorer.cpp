@@ -85,7 +85,7 @@ namespace catapult { namespace chain {
 			const Height& effectiveBalanceHeight,
 			const Height& currentHeight,
 			const Key& signer) {
-		if (currentHeight < effectiveBalanceHeight) {
+		if (currentHeight <= effectiveBalanceHeight) {
 			return getXpxOfAccount(currentCache, signer);
 		} else {
 			return std::min(getXpxOfAccount(currentCache, signer), getXpxOfAccount(previousCache, signer));

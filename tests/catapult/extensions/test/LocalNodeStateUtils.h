@@ -31,18 +31,23 @@ namespace catapult { namespace test {
 		class LocalNodeStateUtils {
 		public:
 
-			static extensions::LocalNodeStateRef CreateLocalNodeStateRef(cache::CatapultCache&& cache);
+			static extensions::LocalNodeStateRef CreateLocalNodeStateRef(
+					cache::CatapultCache&& currentCache = cache::CatapultCache({}),
+					cache::CatapultCache&& previousCache = cache::CatapultCache({})
+			);
 
 			static extensions::LocalNodeStateRef CreateLocalNodeStateRef(config::LocalNodeConfiguration&& config);
 
-			static std::shared_ptr<extensions::LocalNodeState> CreateLocalNodeState(config::LocalNodeConfiguration&& config);
-
-			static std::shared_ptr<extensions::LocalNodeState> CreateLocalNodeState(cache::CatapultCache&& cache);
-
-			static std::shared_ptr<extensions::LocalNodeState> CreateLocalNodeState();
+			static std::shared_ptr<extensions::LocalNodeState> CreateLocalNodeState(
+					cache::CatapultCache&& currentCache = cache::CatapultCache({}),
+					cache::CatapultCache&& previousCache = cache::CatapultCache({})
+			);
 
 			static std::shared_ptr<extensions::LocalNodeState> CreateLocalNodeState(
-					config::LocalNodeConfiguration&& config, cache::CatapultCache&& cache);
+					config::LocalNodeConfiguration&& config,
+					cache::CatapultCache&& currentCache = cache::CatapultCache({}),
+					cache::CatapultCache&& previousCache = cache::CatapultCache({})
+			);
 
 		private:
 			static std::vector<std::shared_ptr<extensions::LocalNodeState>> memory;

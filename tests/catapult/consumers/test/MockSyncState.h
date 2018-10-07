@@ -29,10 +29,15 @@ namespace catapult { namespace test {
 		public:
 			MockSyncState() = default;
 
-			explicit MockSyncState(cache::CatapultCache& cache, const model::BlockElement& parentBlock)
+			explicit MockSyncState(cache::CatapultCache&& cache, const model::BlockElement& parentBlock)
 					: consumers::SyncState(test::LocalNodeStateUtils::CreateLocalNodeStateRef(std::move(cache)))
 					, m_parentBlock(parentBlock)
 					{}
+
+			explicit MockSyncState(cache::CatapultCache&& currentCache, cache::CatapultCache&& previousCache, const model::BlockElement& parentBlock)
+					: consumers::SyncState(test::LocalNodeStateUtils::CreateLocalNodeStateRef(std::move(currentCache), std::move(previousCache)))
+					, m_parentBlock(parentBlock)
+			{}
 
 		public:
 			consumers::WeakBlockInfo commonBlockInfo() const override {

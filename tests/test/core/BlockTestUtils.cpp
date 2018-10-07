@@ -124,6 +124,7 @@ namespace catapult { namespace test {
 		for (auto i = 0u; i < numBlocks; ++i) {
 			auto& block = reinterpret_cast<model::Block&>(buffer[i * Entity_Size]);
 			block.Size = Entity_Size;
+			block.BaseTarget = 1 << 16;
 			block.Type = model::Entity_Type_Block;
 		}
 

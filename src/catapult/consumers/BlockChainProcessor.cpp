@@ -75,6 +75,7 @@ namespace catapult { namespace consumers {
 
 				const auto& effectiveBalanceHeight = state.EffectiveBalanceHeight;
 				auto currentHeight = parentBlockInfo.entity().Height;
+				const auto& commonHeight = parentBlockInfo.entity().Height;
 
 				auto balanceView = cache::BalanceView(
 						cache::ReadOnlyAccountStateCache(currentObserverState.Cache.sub<cache::AccountStateCache>()),
@@ -100,21 +101,14 @@ namespace catapult { namespace consumers {
 					}
 
 					// Restore old block which is EffectiveBalanceHeight blocks below
-					// We don't need to commit nemesis block for previous cache,
-					// because initial state of previous cache is state of nemesis block
 					if (cache::canUpdatePreviousCache(block.Height, effectiveBalanceHeight)) {
-						std::shared_ptr<const model::BlockElement> pOldBlockElement;
-						const auto& chainHeight = storage.chainHeight();
-
 						auto diff = block.Height - effectiveBalanceHeight;
-						if (diff <= chainHeight) {
-							pOldBlockElement = storage.loadBlockElement(diff);
+						if (diff <= commonHeight) {
+							m_handlers.CommitBlock(*storage.loadBlockElement(diff), preivousObserverState);
 						} else {
-							diff = diff - chainHeight;
-							pOldBlockElement = std::make_shared<const model::BlockElement>(elements[diff.unwrap() - 1]);
+							diff = diff - commonHeight;
+							m_handlers.CommitBlock(elements[diff.unwrap() - 1], preivousObserverState);
 						}
-
-						m_handlers.CommitBlock(*pOldBlockElement, preivousObserverState);
 					}
 
 					previousTimeStamp = block.Timestamp;

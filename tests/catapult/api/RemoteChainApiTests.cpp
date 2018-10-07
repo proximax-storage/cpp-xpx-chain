@@ -36,6 +36,7 @@ namespace catapult { namespace api {
 			auto pData = pPacket->Data();
 			for (auto i = 0u; i < numBlocks; ++i, pData += sizeof(model::Block)) {
 				auto& block = reinterpret_cast<model::Block&>(*pData);
+				block.BaseTarget = 1 << 16;
 				block.Size = sizeof(model::Block);
 				block.Type = model::Entity_Type_Block;
 				block.Height = startHeight + Height(i);

@@ -297,7 +297,7 @@ namespace catapult { namespace chain {
 			context.KeyPair.publicKey());
 
 		// Assert:
-		EXPECT_EQ(Amount{10}, balance);
+		EXPECT_EQ(Amount{100}, balance);
 	}
 
 	TEST(TEST_CLASS, ReturnedPreviousBalance_HeightGreater_PublicKey) {
@@ -329,7 +329,7 @@ namespace catapult { namespace chain {
 			context.KeyPair.publicKey());
 
 		// Assert:
-		EXPECT_EQ(Amount{10}, balance);
+		EXPECT_EQ(Amount{100}, balance);
 	}
 
 	TEST(TEST_CLASS, ReturnedPreviousBalance_HeightGreater_Address) {
@@ -508,7 +508,7 @@ namespace catapult { namespace chain {
 		EXPECT_EQ(Amount{10}, balance);
 	}
 
-	TEST(TEST_CLASS, ReturnedZeroBalance_PreviousBalanceNotPopulated_HeightsEqual) {
+	TEST(TEST_CLASS, ReturnedCurrentBalance_PreviousBalanceNotPopulated_HeightsEqual) {
 		// Arrange:
 		AccountContext context{Amount{10}, Amount{100}, false, true, false};
 
@@ -521,7 +521,7 @@ namespace catapult { namespace chain {
 			context.KeyPair.publicKey());
 
 		// Assert:
-		EXPECT_EQ(Amount{0}, balance);
+		EXPECT_EQ(Amount{10}, balance);
 	}
 
 	TEST(TEST_CLASS, ReturnedZeroBalance_PreviousBalanceNotPopulated_HeightGreater) {
