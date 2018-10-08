@@ -26,6 +26,7 @@ npm-*.log*
 /build/
 .cproject
 .project
+.settings
 
 # IntelliJ project files
 .idea

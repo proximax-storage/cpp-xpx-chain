@@ -39,7 +39,6 @@ namespace catapult { namespace plugins {
 					"",
 					{
 						{ "maxNameSize", "0" },
-						{ "maxNamespaceDuration", "0h" },
 						{ "namespaceGracePeriodDuration", "0h" },
 						{ "reservedRootNamespaceNames", "reserved" },
 
@@ -49,8 +48,6 @@ namespace catapult { namespace plugins {
 
 						{ "maxChildNamespaces", "0" },
 						{ "maxMosaicsPerAccount", "0" },
-
-						{ "maxMosaicDuration", "0h" },
 
 						{ "isMosaicLevyUpdateAllowed", "false" },
 						{ "maxMosaicDivisibility", "0" },

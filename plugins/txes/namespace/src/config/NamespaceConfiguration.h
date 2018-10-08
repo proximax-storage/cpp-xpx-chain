@@ -32,9 +32,6 @@ namespace catapult { namespace config {
 		/// Maximum namespace and mosaic name size.
 		uint8_t MaxNameSize;
 
-		/// Maximum namespace duration.
-		utils::BlockSpan MaxNamespaceDuration;
-
 		/// Grace period during which time only the previous owner can renew an expired namespace.
 		utils::BlockSpan NamespaceGracePeriodDuration;
 
@@ -55,9 +52,6 @@ namespace catapult { namespace config {
 
 		/// Maximum number of mosaics that an account can own.
 		uint16_t MaxMosaicsPerAccount;
-
-		/// Maximum mosaic duration.
-		utils::BlockSpan MaxMosaicDuration;
 
 		/// Flag indicating whether an update of an existing mosaic levy is allowed or not.
 		bool IsMosaicLevyUpdateAllowed;
