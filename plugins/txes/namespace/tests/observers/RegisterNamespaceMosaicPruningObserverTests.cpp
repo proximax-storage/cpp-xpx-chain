@@ -35,10 +35,10 @@ namespace catapult { namespace observers {
 
 	using ObserverTestContext = test::ObserverTestContextT<test::MosaicCacheFactory>;
 
-	DEFINE_COMMON_OBSERVER_TESTS(RegisterNamespaceMosaicPruning, model::NamespaceLifetimeConstraints(BlockDuration(), BlockDuration(), 31))
+	DEFINE_COMMON_OBSERVER_TESTS(RegisterNamespaceMosaicPruning, model::NamespaceLifetimeConstraints(BlockDuration(), 31))
 
 	namespace {
-		const model::NamespaceLifetimeConstraints Default_Constraints(BlockDuration(), BlockDuration(21), 10);
+		const model::NamespaceLifetimeConstraints Default_Constraints(BlockDuration(21), 10);
 
 		auto SeedCacheWithRoot25TreeSigner(const Key& signer) {
 			return [&signer](auto& namespaceCacheDelta) {
