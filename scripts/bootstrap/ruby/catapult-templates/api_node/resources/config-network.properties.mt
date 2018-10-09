@@ -42,7 +42,6 @@ maxCosignedAccountsPerAccount = 5
 maxNameSize = 64
 
 # *approximate* days based on blockGenerationTargetTime
-maxNamespaceDuration = 365d
 namespaceGracePeriodDuration = 0d
 reservedRootNamespaceNames = xem, nem, user, account, org, com, biz, net, edu, mil, gov, info, prx, xpx
 
@@ -52,8 +51,6 @@ childNamespaceRentalFee = 10'000'000
 
 maxChildNamespaces = 500
 maxMosaicsPerAccount = 10'000
-
-maxMosaicDuration = 3650d
 
 isMosaicLevyUpdateAllowed = true
 maxMosaicDivisibility = 6

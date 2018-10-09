@@ -37,7 +37,6 @@ namespace catapult { namespace test {
 		config.Plugins.emplace("catapult.plugins.namespace", utils::ConfigurationBag({ { "", {
 			{ "maxNameSize", "64" },
 
-			{ "maxNamespaceDuration", "365d" },
 			{ "namespaceGracePeriodDuration", "30d" },
 			{ "reservedRootNamespaceNames", "xpx" },
 
@@ -47,8 +46,6 @@ namespace catapult { namespace test {
 
 			{ "maxChildNamespaces", "100" },
 			{ "maxMosaicsPerAccount", "123" },
-
-			{ "maxMosaicDuration", "456d" },
 
 			{ "isMosaicLevyUpdateAllowed", "true" },
 			{ "maxMosaicDivisibility", "6" },

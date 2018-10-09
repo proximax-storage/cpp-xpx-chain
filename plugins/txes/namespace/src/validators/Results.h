@@ -75,9 +75,6 @@ namespace catapult { namespace validators {
 	/// Validation failed because the namespace is already active.
 	DEFINE_NAMESPACE_RESULT(Already_Active, 151);
 
-	/// Validation failed because an eternal namespace was received after the nemesis block.
-	DEFINE_NAMESPACE_RESULT(Eternal_After_Nemesis_Block, 152);
-
 	/// Validation failed because the maximum number of children for a root namespace was exceeded.
 	DEFINE_NAMESPACE_RESULT(Max_Children_Exceeded, 153);
 

@@ -78,44 +78,39 @@ RUN git clone https://github.com/mongodb/mongo-cxx-driver.git -b r3.0.2 --depth 
   && cd -
 
 # Copy local directory to image
-COPY . catapult-server
+COPY . /catapult
 
 # Build Catapult Server
-RUN cd catapult-server \
+RUN cd /catapult \
+   && rm -rf _build \
    && mkdir _build && cd _build \
-   && cmake -DCMAKE_BUILD_TYPE=RelWithDebugInfo \
+   && cmake -DCMAKE_BUILD_TYPE=Release \
     -DCMAKE_CXX_FLAGS="-pthread" \
     -DPYTHON_EXECUTABLE=/usr/bin/python3 \
     -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so \
     -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so \
     .. \
- && make publish && make -j4
+   && make publish \
+   && make \
+	catapult.plugins.namespace \
+	catapult.plugins.transfer \
+    catapult.tools.address \
+    catapult.tools.health \
+    catapult.tools.nemgen \
+    catapult.tools.network \
+    -j4
 
+# script for copying required libs to temporary folder /deps
+RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
 
-# catapult
-# RUN git clone https://github.com/nemtech/catapult-server.git -b master --depth 1 \
-#  && cd catapult-server \
-#  && mkdir _build && cd _build \
-#  && cmake -DCMAKE_BUILD_TYPE=RelWithDebugInfo \
-#    -DCMAKE_CXX_FLAGS="-pthread" \
-#    -DPYTHON_EXECUTABLE=/usr/bin/python3 \
-#    -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so \
-#    -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so \
-#    .. \
-# && make publish && make -j4
+#------------------------
+# Actual target image which only contains the required binaries
+#------------------------
+FROM ubuntu:16.04
 
-# ------------------------------------
-COPY patch/config-user.patch .
-RUN cd catapult-server \
-  && patch -p1 < /tmp/config-user.patch \
-  && mkdir -p seed/mijin-test \
-  && mkdir data \
-  && cd _build \
-  && mv resources resources.bk \
-  && cp -r ../resources .
+# copy required libs
+COPY --from=0 /deps /
 
-  # generate nemesis block
-  # && ./bin/catapult.tools.nemgen ../tools/nemgen/resources/mijin-test.properties \
-  # && cp -r ../seed/mijin-test/00000 ../data/
+# copy executables
+COPY --from=0 /catapult/_build/bin /catapult/bin
 
-WORKDIR catapult-server/_build

@@ -32,11 +32,10 @@ namespace catapult { namespace validators {
 #define ROOT_TEST_CLASS RootNamespaceAvailabilityValidatorTests
 #define CHILD_TEST_CLASS ChildNamespaceAvailabilityValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, model::NamespaceLifetimeConstraints(BlockDuration(), BlockDuration(), 0))
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, model::NamespaceLifetimeConstraints(BlockDuration(), 0))
 	DEFINE_COMMON_VALIDATOR_TESTS(ChildNamespaceAvailability,)
 
 	namespace {
-		constexpr BlockDuration Max_Duration(105);
 		constexpr BlockDuration Default_Duration(10);
 		constexpr BlockDuration Grace_Period_Duration(20);
 		constexpr uint32_t Max_Rollback_Blocks(5);
@@ -67,7 +66,7 @@ namespace catapult { namespace validators {
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto context = test::CreateValidatorContext(height, readOnlyCache);
 
-			model::NamespaceLifetimeConstraints constraints(Max_Duration, Grace_Period_Duration, Max_Rollback_Blocks);
+			model::NamespaceLifetimeConstraints constraints(Grace_Period_Duration, Max_Rollback_Blocks);
 			auto pValidator = CreateRootNamespaceAvailabilityValidator(constraints);
 
 			// Act:
@@ -131,19 +130,6 @@ namespace catapult { namespace validators {
 		// Act: try to create a root with an eternal duration
 		auto notification = model::RootNamespaceNotification(Key(), NamespaceId(26), Eternal_Artifact_Duration);
 		RunRootTest(ValidationResult::Success, notification, Height(1), SeedCacheWithRoot25);
-	}
-
-	TEST(ROOT_TEST_CLASS, CannotAddRootNamespaceWithEternalDurationAfterNemesis) {
-		// Act: try to create a root with an eternal duration
-		auto notification = model::RootNamespaceNotification(Key(), NamespaceId(26), Eternal_Artifact_Duration);
-		RunRootTest(Failure_Namespace_Eternal_After_Nemesis_Block, notification, Height(15), SeedCacheWithRoot25);
-	}
-
-	TEST(ROOT_TEST_CLASS, CannotRenewNonEternalRootNamespaceWithEternalDurationAfterNemesis) {
-		// Act: try to renew a root with an eternal duration
-		auto signer = test::GenerateRandomData<Key_Size>();
-		auto notification = model::RootNamespaceNotification(signer, NamespaceId(25), Eternal_Artifact_Duration);
-		RunRootTest(Failure_Namespace_Eternal_After_Nemesis_Block, notification, Height(15), SeedCacheWithRoot25Signer(signer));
 	}
 
 	// endregion
@@ -211,12 +197,12 @@ namespace catapult { namespace validators {
 	// region root - renew duration
 
 	namespace {
-		void AssertCannotChangeDuration(Height height, const state::NamespaceLifetime& lifetime, BlockDuration duration) {
+		void AssertChangeDuration(ValidationResult expectedResult, Height height, const state::NamespaceLifetime& lifetime, BlockDuration duration) {
 			// Act: try to extend a root that is already in the cache
 			auto signer = test::GenerateRandomData<Key_Size>();
 			auto notification = model::RootNamespaceNotification(signer, NamespaceId(25), duration);
 			RunRootTest(
-					Failure_Namespace_Invalid_Duration,
+					expectedResult,
 					notification,
 					height,
 					[&signer, &lifetime](auto& namespaceCacheDelta) {
@@ -229,25 +215,14 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(ROOT_TEST_CLASS, CannotRenewNonEternalRootNamespaceWithEternalDurationInNemesis) {
-		// Assert: extend a non-eternal namespace as eternal
-		AssertCannotChangeDuration(Height(1), test::CreateLifetime(10, 20), Eternal_Artifact_Duration);
-	}
-
 	TEST(ROOT_TEST_CLASS, CannotRenewRootNamespaceWithEternalDuration) {
 		// Assert: "extend" an external namespace
-		AssertCannotChangeDuration(Height(1), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), Eternal_Artifact_Duration);
-		AssertCannotChangeDuration(Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
-	}
-
-	TEST(ROOT_TEST_CLASS, CannotRenewRootNamespaceWithDurationTooLarge) {
-		// Arrange: max duration is 120 [Max_Duration(105) + Grace_Period_Duration(20) + height(15) - lifetime.End(20)]
-		for (auto duration : { BlockDuration(121), BlockDuration(200) })
-			AssertCannotChangeDuration(Height(15), test::CreateLifetime(10, 20), duration);
+		AssertChangeDuration(ValidationResult::Success, Height(1), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), Eternal_Artifact_Duration);
+		AssertChangeDuration(Failure_Namespace_Invalid_Duration, Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
 	}
 
 	TEST(ROOT_TEST_CLASS, CanRenewRootNamespaceWithAcceptableDurations) {
-		// Arrange: max duration is 120 [Max_Duration(105) + Grace_Period_Duration(20) + height(15) - lifetime.End(20)]
+		// Arrange: max duration is 15 [Grace_Period_Duration(20) + height(15) - lifetime.End(20)]
 		for (auto duration : { BlockDuration(20), BlockDuration(75), BlockDuration(120) }) {
 			// Act: try to renew a root
 			auto signer = test::GenerateRandomData<Key_Size>();

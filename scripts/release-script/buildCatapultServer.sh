@@ -5,7 +5,7 @@ cd _build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" ..
 
 make publish
-# First we build extensions which catapult.server requiring during runtime
+# First we build extensions which catapult.server required during runtime
 make \
 	catapult.mongo.plugins.aggregate \
 	catapult.mongo.plugins.lock \
@@ -45,8 +45,4 @@ cd ..
 # so we need to create it with shared libs which is required by catapult.server and extensions
 mkdir ./temp
 # We copy all libs to temp folder
-./scripts/jenkins/copyDeps.sh ./_build/bin/ ./temp
-# Now you need to create a docker image, you need to install docker first. You can do it by the next command:
-# sudo apt-get install docker-compose -y
-sudo docker build -tcatapult -f ./scripts/Catapult.serverRealeaseDocker/Dockerfile .
-rm -R temp
+./scripts/release-script/copyDeps.sh ./_build/bin/ ./temp
