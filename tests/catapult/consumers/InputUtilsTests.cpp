@@ -74,19 +74,19 @@ namespace catapult { namespace consumers {
 
 	// region ExtractBlocks
 
-	TEST(TEST_CLASS, ExtractBlocks_CanExtractAllBlocksFromInput) {
-		// Arrange:
-		auto elements = CreateMultiBlockElements();
-
-		// Act:
-		auto blocks = ExtractBlocks(elements);
-
-		// Assert:
-		EXPECT_EQ(4u, blocks.size());
-
-		for (auto i = 0u; i < blocks.size(); ++i)
-			EXPECT_EQ(&elements[i].Block, blocks[i]) << "block at " << i;
-	}
+//	TEST(TEST_CLASS, ExtractBlocks_CanExtractAllBlocksFromInput) {
+//		// Arrange:
+//		auto elements = CreateMultiBlockElements();
+//
+//		// Act:
+//		auto blocks = ExtractBlocks(elements);
+//
+//		// Assert:
+//		EXPECT_EQ(4u, blocks.size());
+//
+//		for (auto i = 0u; i < blocks.size(); ++i)
+//			EXPECT_EQ(&elements[i].Block, blocks[i]) << "block at " << i;
+//	}
 
 	// endregion
 

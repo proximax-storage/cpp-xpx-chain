@@ -87,16 +87,12 @@ namespace catapult { namespace cache {
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const;
 
-		/// Gets the network importance grouping.
-		uint64_t importanceGrouping() const;
-
 	public:
 		/// Gets the number of high value addresses.
 		size_t highValueAddressesSize() const;
 
 	private:
 		const model::NetworkIdentifier m_networkIdentifier;
-		const uint64_t m_importanceGrouping;
 		const model::AddressSet& m_highValueAddresses;
 		std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter> m_pKeyLookupAdapter;
 	};

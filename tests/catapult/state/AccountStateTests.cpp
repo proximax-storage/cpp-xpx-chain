@@ -39,10 +39,5 @@ namespace catapult { namespace state {
 		EXPECT_EQ(height, state.AddressHeight);
 		EXPECT_EQ(Height(0), state.PublicKeyHeight);
 		EXPECT_EQ(0u, state.Balances.size());
-
-		for (const auto& pair : state.ImportanceInfo) {
-			EXPECT_EQ(Importance(0), pair.Importance);
-			EXPECT_EQ(model::ImportanceHeight(0), pair.Height);
-		}
 	}
 }}

@@ -50,7 +50,7 @@ namespace catapult { namespace test {
 		// Arrange:
 		TTraits::RunTestAfterRegistration([](auto& manager) {
 			// Act:
-			auto cache = manager.createCache();
+			auto cache = manager.createCurrentCache();
 
 			// - extract the storage names
 			std::vector<std::string> storageNames;
@@ -69,7 +69,7 @@ namespace catapult { namespace test {
 		TTraits::RunTestAfterRegistration([](auto& manager) {
 			// Act:
 			ionet::ServerPacketHandlers handlers;
-			manager.addDiagnosticHandlers(handlers, manager.createCache());
+			manager.addDiagnosticHandlers(handlers, manager.createCurrentCache());
 
 			// Assert:
 			auto expectedTypes = TTraits::GetDiagnosticPacketTypes();
@@ -91,7 +91,7 @@ namespace catapult { namespace test {
 		TTraits::RunTestAfterRegistration([](auto& manager) {
 			// Act:
 			std::vector<utils::DiagnosticCounter> counters;
-			manager.addDiagnosticCounters(counters, manager.createCache());
+			manager.addDiagnosticCounters(counters, manager.createCurrentCache());
 
 			// - extract the counter names
 			std::vector<std::string> counterNames;

@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ImportanceAwareNodeSelector.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "BalanceAwareNodeSelector.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/extensions/NodeSelector.h"
 #include "catapult/ionet/NodeContainer.h"
 #include <random>
@@ -29,12 +29,12 @@ namespace catapult { namespace timesync {
 	namespace {
 		struct WeightedCandidatesInfo {
 		public:
-			WeightedCandidatesInfo() : CumulativeImportance(0)
+			WeightedCandidatesInfo() : CumulativeBalance(0)
 			{}
 
 		public:
 			extensions::WeightedCandidates WeightedCandidates;
-			Importance CumulativeImportance;
+			Amount CumulativeBalance;
 		};
 
 		template<typename TFilter>
@@ -46,50 +46,50 @@ namespace catapult { namespace timesync {
 					return;
 
 				candidatesInfo.WeightedCandidates.emplace_back(node, pair.second.unwrap());
-				candidatesInfo.CumulativeImportance = candidatesInfo.CumulativeImportance + pair.second;
+				candidatesInfo.CumulativeBalance = candidatesInfo.CumulativeBalance + pair.second;
 			});
 			return candidatesInfo;
 		}
 	}
 
-	ImportanceAwareNodeSelector::ImportanceAwareNodeSelector(
+	BalanceAwareNodeSelector::BalanceAwareNodeSelector(
 			ionet::ServiceIdentifier serviceId,
 			uint8_t maxNodes,
-			Importance minImportance)
-			: ImportanceAwareNodeSelector(serviceId, maxNodes, minImportance, extensions::SelectCandidatesBasedOnWeight)
+			Amount minBalance)
+			: BalanceAwareNodeSelector(serviceId, maxNodes, minBalance, extensions::SelectCandidatesBasedOnWeight)
 	{}
 
-	ImportanceAwareNodeSelector::ImportanceAwareNodeSelector(
+	BalanceAwareNodeSelector::BalanceAwareNodeSelector(
 			ionet::ServiceIdentifier serviceId,
 			uint8_t maxNodes,
-			Importance minImportance,
+			Amount minBalance,
 			const NodeSelector& selector)
 			: m_serviceId(serviceId)
 			, m_maxNodes(maxNodes)
-			, m_minImportance(minImportance)
+			, m_minBalance(minBalance)
 			, m_selector(selector)
 	{}
 
-	ionet::NodeSet ImportanceAwareNodeSelector::selectNodes(
-			const cache::ImportanceView& importanceView,
+	ionet::NodeSet BalanceAwareNodeSelector::selectNodes(
+			const cache::BalanceView& view,
 			const ionet::NodeContainerView& nodeContainerView,
 			Height height) const {
-		auto candidatesInfo = Filter(nodeContainerView, [this, &importanceView, height](const auto& node, const auto& nodeInfo) {
-			return this->isCandidate(importanceView, node, nodeInfo, height);
+		auto candidatesInfo = Filter(nodeContainerView, [this, view, height](const auto& node, const auto& nodeInfo) {
+			return this->isCandidate(view, node, nodeInfo, height);
 		});
 
-		return m_selector(candidatesInfo.WeightedCandidates, candidatesInfo.CumulativeImportance.unwrap(), m_maxNodes);
+		return m_selector(candidatesInfo.WeightedCandidates, candidatesInfo.CumulativeBalance.unwrap(), m_maxNodes);
 	}
 
-	std::pair<bool, Importance> ImportanceAwareNodeSelector::isCandidate(
-			const cache::ImportanceView& importanceView,
+	std::pair<bool, Amount> BalanceAwareNodeSelector::isCandidate(
+			const cache::BalanceView& view,
 			const ionet::Node& node,
 			const ionet::NodeInfo& nodeInfo,
 			Height height) const {
-		auto importance = importanceView.getAccountImportanceOrDefault(node.identityKey(), height);
-		auto isCandidate = importance >= m_minImportance
+		auto balance = view.getEffectiveBalance(node.identityKey(), height);
+		auto isCandidate = balance >= m_minBalance
 				&& !!nodeInfo.getConnectionState(m_serviceId)
 				&& ionet::NodeSource::Local != nodeInfo.source();
-		return std::make_pair(isCandidate, importance);
+		return std::make_pair(isCandidate, balance);
 	}
 }}

@@ -21,11 +21,12 @@
 #pragma once
 #include "BlockChainProcessor.h"
 #include "BlockChainSyncHandlers.h"
-#include "HashCheckOptions.h"
-#include "InputUtils.h"
 #include "catapult/chain/ChainFunctions.h"
 #include "catapult/disruptor/DisruptorConsumer.h"
+#include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/validators/ParallelValidationPolicy.h"
+#include "HashCheckOptions.h"
+#include "InputUtils.h"
 
 namespace catapult {
 	namespace chain { struct CatapultState; }
@@ -66,16 +67,21 @@ namespace catapult { namespace consumers {
 			const RequiresValidationPredicate& requiresValidationPredicate);
 
 	/// Creates a consumer that attempts to synchronize a remote chain with the local chain, which is composed of
-	/// state (in \a cache and \a state) and blocks (in \a storage).
-	/// \a maxRollbackBlocks The maximum number of blocks that can be rolled back.
+	/// state and blocks (in \a localNodeState).
 	/// \a handlers are used to customize the sync process.
 	/// \note This consumer is non-const because it updates the element generation hashes.
 	disruptor::DisruptorConsumer CreateBlockChainSyncConsumer(
-			cache::CatapultCache& cache,
-			state::CatapultState& state,
-			io::BlockStorageCache& storage,
-			uint32_t maxRollbackBlocks,
+			const extensions::LocalNodeStateRef& localNodeState,
 			const BlockChainSyncHandlers& handlers);
+
+	/// Creates a mock consumer that attempts to synchronize a remote chain with the local chain, which is composed of
+	/// state and blocks (in \a localNodeState). You can use your manual Processor.
+	/// \a handlers are used to customize the sync process.
+	/// \note This consumer is non-const because it updates the element generation hashes.
+	disruptor::DisruptorConsumer CreateMockBlockChainSyncConsumer(
+			const extensions::LocalNodeStateRef& localNodeState,
+			const BlockChainSyncHandlers& handlers,
+			const BlockChainProcessor& processor);
 
 	/// Prototype for a function that is called with a new block.
 	using NewBlockSink = consumer<const std::shared_ptr<const model::Block>&>;

@@ -95,6 +95,7 @@ namespace catapult { namespace consumers {
 			for (auto i = 0u; i < numBlocks; ++i) {
 				offsets.push_back(i * numBytesPerBlock);
 				auto& block = reinterpret_cast<model::Block&>(buffer[offsets.back()]);
+				block.BaseTarget = BlockTarget(1 << 16);
 				block.Size = numBytesPerBlock;
 				block.Type = model::Entity_Type_Block;
 

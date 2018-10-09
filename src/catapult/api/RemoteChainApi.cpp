@@ -46,7 +46,7 @@ namespace catapult { namespace api {
 					return false;
 
 				result.Height = pResponse->Height;
-				result.Score = model::ChainScore(pResponse->ScoreHigh, pResponse->ScoreLow);
+				result.Difficulty = pResponse->Difficulty;
 				return true;
 			}
 		};

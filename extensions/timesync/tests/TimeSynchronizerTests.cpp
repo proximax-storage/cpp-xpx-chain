@@ -18,12 +18,14 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "timesync/src/TimeSynchronizer.h"
-#include "timesync/src/constants.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
-#include "timesync/tests/test/TimeSynchronizationTestUtils.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/TestHarness.h"
+#include "timesync/src/constants.h"
+#include "timesync/src/TimeSynchronizer.h"
+#include "timesync/tests/test/TimeSynchronizationTestUtils.h"
 #include <cmath>
 
 namespace catapult { namespace timesync {
@@ -44,24 +46,30 @@ namespace catapult { namespace timesync {
 
 		template<typename TKey>
 		void AddAccount(
-				cache::AccountStateCache& cache,
+				cache::CatapultCache& cache,
 				const TKey& key,
-				Importance importance,
-				model::ImportanceHeight importanceHeight) {
+				uint64_t balance) {
 			auto delta = cache.createDelta();
-			auto& accountState = delta->addAccount(key, Height(100));
-			accountState.ImportanceInfo.set(importance, importanceHeight);
-			accountState.Balances.credit(Xpx_Id, Amount(1000));
-			cache.commit();
+			auto& accountCache = delta.sub<cache::AccountStateCache>();
+			auto& accountState = accountCache.addAccount(key, Height(100));
+			accountState.Balances.credit(Xpx_Id, Amount(balance));
+			cache.commit(Height(100));
+		}
+
+		template<typename TKey>
+		void AddAccount(
+				cache::CatapultCache& cache,
+				const TKey& key) {
+			AddAccount(cache, key, 1000);
 		}
 
 		template<typename TKey>
 		void SeedAccountStateCache(
-				cache::AccountStateCache& cache,
+				cache::CatapultCache& cache,
 				const std::vector<TKey>& keys,
-				const std::vector<Importance>& importances) {
+				const std::vector<int64_t>& balances) {
 			for (auto i = 0u; i < keys.size(); ++i)
-				AddAccount(cache, keys[i], importances[i], model::ImportanceHeight(1));
+				AddAccount(cache, keys[i], balances[i]);
 		}
 
 		std::vector<Address> ToAddresses(const std::vector<Key>& keys) {
@@ -74,51 +82,69 @@ namespace catapult { namespace timesync {
 
 		enum class KeyType { Address, PublicKey, };
 
+		model::BlockChainConfiguration createConfig() {
+			auto blockConfig = model::BlockChainConfiguration::Uninitialized();
+			blockConfig.MinHarvesterBalance = Amount(1000);
+			blockConfig.Network.Identifier = Default_Network_Identifier;
+
+			return blockConfig;
+		}
+
 		class TestContext {
 		public:
 			explicit TestContext(
-					const std::vector<std::pair<int64_t, uint64_t>>& offsetsAndRawImportances,
+					const std::vector<std::pair<int64_t, int64_t>>& offsetsAndBalances,
 					const std::vector<filters::SynchronizationFilter>& filters = {},
 					KeyType keyType = KeyType::PublicKey)
-					: m_cache(cache::CacheConfiguration(), { Default_Network_Identifier, 234, Amount(1000) })
+					: m_currentCache({})
+					, m_previousCache({})
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), Total_Chain_Balance, Warning_Threshold_Millis) {
-				std::vector<Importance> importances;
-				for (const auto& offsetAndRawImportance : offsetsAndRawImportances) {
-					m_samples.emplace(test::CreateTimeSyncSampleWithTimeOffset(offsetAndRawImportance.first));
-					importances.push_back(Importance(offsetAndRawImportance.second));
+				std::vector<int64_t> balances;
+				for (const auto& offsetsAndBalance : offsetsAndBalances) {
+					m_samples.emplace(test::CreateTimeSyncSampleWithTimeOffset(offsetsAndBalance.first));
+					balances.push_back(offsetsAndBalance.second);
 				}
 
-				auto keys = test::ExtractKeys(m_samples);
-				auto addresses = ToAddresses(keys);
-				if (KeyType::PublicKey == keyType)
-					SeedAccountStateCache(m_cache, keys, importances);
-				else
-					SeedAccountStateCache(m_cache, addresses, importances);
-
-				// Sanity:
-				auto view = m_cache.createView();
-				for (auto i = 0u; i < keys.size(); ++i) {
-					if (KeyType::PublicKey == keyType)
-						EXPECT_EQ(importances[i], view->get(keys[i]).ImportanceInfo.current()) << "at index " << i;
-					else
-						EXPECT_EQ(importances[i], view->get(addresses[i]).ImportanceInfo.current()) << "at index " << i;
-				}
+				m_currentCache = createCache(keyType, balances);
+				m_previousCache = createCache(keyType, balances);
 			}
 
 		public:
 			TimeOffset calculateTimeOffset(NodeAge nodeAge = NodeAge()) {
-				return m_synchronizer.calculateTimeOffset(*m_cache.createView(), Height(1), std::move(m_samples), nodeAge);
+				auto state = extensions::LocalNodeStateRef(
+						*test::LocalNodeStateUtils::CreateLocalNodeState(),
+						m_currentCache,
+						m_previousCache
+				);
+				return m_synchronizer.calculateTimeOffset(state, Height(1), std::move(m_samples), nodeAge);
 			}
 
 			void addHighValueAccounts(size_t count) {
-				for (auto i = 0u; i < count; ++i)
-					AddAccount(m_cache, test::GenerateRandomData<Key_Size>(), Importance(100'000), model::ImportanceHeight(1));
+				for (auto i = 0u; i < count; ++i) {
+					auto key = test::GenerateRandomData<Key_Size>();
+					AddAccount(m_currentCache, key);
+					AddAccount(m_previousCache, key);
+				}
 			}
 
 		private:
-			cache::AccountStateCache m_cache;
+			cache::CatapultCache m_currentCache;
+			cache::CatapultCache m_previousCache;
 			TimeSynchronizer m_synchronizer;
 			TimeSynchronizationSamples m_samples;
+
+		private:
+			cache::CatapultCache createCache(KeyType keyType, const std::vector<int64_t>& balances) {
+				auto cache = test::CreateEmptyCatapultCache(createConfig());
+				auto keys = test::ExtractKeys(m_samples);
+				auto addresses = ToAddresses(keys);
+				if (KeyType::PublicKey == keyType)
+					SeedAccountStateCache(cache, keys, balances);
+				else
+					SeedAccountStateCache(cache, addresses, balances);
+
+				return cache;
+			}
 		};
 	}
 
@@ -148,7 +174,7 @@ namespace catapult { namespace timesync {
 		EXPECT_EQ(TimeOffset(), timeOffset);
 	}
 
-	TEST(TEST_CLASS, TimeSynchronizerReturnsZeroTimeOffsetWhenCumulativeImportanceIsZero) {
+	TEST(TEST_CLASS, TimeSynchronizerReturnsZeroTimeOffsetWhenCumulativeBalanceIsZero) {
 		// Arrange:
 		TestContext context({ { 12, 0 }, { 23, 0 } });
 
@@ -181,15 +207,16 @@ namespace catapult { namespace timesync {
 			filters::AggregateSynchronizationFilter aggregateFilter({});
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
-			cache::AccountStateCache cache(cache::CacheConfiguration(), cache::AccountStateCacheTypes::Options{
-				model::NetworkIdentifier::Mijin_Test,
-				234,
-				Amount(1000)});
-			SeedAccountStateCache(cache, keys, std::vector<Importance>(numSamples, Importance(Total_Chain_Balance / numSamples)));
+			std::vector<int64_t> balances(numSamples, Total_Chain_Balance / numSamples);
+			cache::CatapultCache currentCache = test::CreateEmptyCatapultCache(createConfig());
+			SeedAccountStateCache(currentCache, keys, balances);
+			cache::CatapultCache previousCache = test::CreateEmptyCatapultCache(createConfig());
+			SeedAccountStateCache(previousCache, keys, balances);
 			TimeSynchronizer synchronizer(aggregateFilter, Total_Chain_Balance, Warning_Threshold_Millis);
 
+			auto state = extensions::LocalNodeStateRef(*test::LocalNodeStateUtils::CreateLocalNodeState(), currentCache, previousCache);
 			// Act:
-			auto timeOffset = synchronizer.calculateTimeOffset(*cache.createView(), Height(1), std::move(samples), nodeAge);
+			auto timeOffset = synchronizer.calculateTimeOffset(state, Height(1), std::move(samples), nodeAge);
 
 			// Assert:
 			EXPECT_EQ(expectedTimeOffset, timeOffset);
@@ -197,7 +224,7 @@ namespace catapult { namespace timesync {
 	}
 
 	TEST(TEST_CLASS, TimeSynchronizerReturnsCorrectTimeOffset_MaximumCoupling) {
-		// Arrange: 100 samples with offsets 1000, 1001, ..., 1099. All accounts have the same importance.
+		// Arrange: 100 samples with offsets 1000, 1001, ..., 1099. All accounts have the same balance.
 		// - the expected offset is therefore the mean value multiplied with the coupling
 		auto rawExpectedOffset = static_cast<int64_t>((100'000 + 99 * 100 / 2) * Coupling_Start / 100);
 
@@ -206,7 +233,7 @@ namespace catapult { namespace timesync {
 	}
 
 	TEST(TEST_CLASS, TimeSynchronizerReturnsCorrectTimeOffset_IntermediateCoupling) {
-		// Arrange: 100 samples with offsets 1000, 1001, ..., 1099. All accounts have the same importance.
+		// Arrange: 100 samples with offsets 1000, 1001, ..., 1099. All accounts have the same balance.
 		// - the expected offset is therefore the mean value multiplied with the coupling
 		constexpr uint64_t ageOffset = 5;
 		auto coupling = std::exp(-Coupling_Decay_Strength * ageOffset);
@@ -217,7 +244,7 @@ namespace catapult { namespace timesync {
 	}
 
 	TEST(TEST_CLASS, TimeSynchronizerReturnsCorrectTimeOffset_MinimumCoupling) {
-		// Arrange: 100 samples with offsets 1000, 1001, ..., 1099. All accounts have the same importance.
+		// Arrange: 100 samples with offsets 1000, 1001, ..., 1099. All accounts have the same balance.
 		// - the expected offset is therefore the mean value multiplied with the coupling
 		auto rawExpectedOffset = static_cast<int64_t>((100'000 + 99 * 100 / 2) * Coupling_Minimum / 100);
 
@@ -227,10 +254,10 @@ namespace catapult { namespace timesync {
 
 	// endregion
 
-	// region importance dependency
+	// region balance dependency
 
-	TEST(TEST_CLASS, TimeSynchronizerReturnsCorrectTimeOffset_ImportanceDependency) {
-		// Arrange: scaling is 1 in order to solely test the influence of importance
+	TEST(TEST_CLASS, TimeSynchronizerReturnsCorrectTimeOffset_BalanceDependency) {
+		// Arrange: scaling is 1 in order to solely test the influence of balance
 		TestContext context({ { 100, 100'000'000 }, { 500, 900'000'000 } });
 
 		// Act:
@@ -245,7 +272,7 @@ namespace catapult { namespace timesync {
 	// region scaling
 
 	TEST(TEST_CLASS, TimeSynchronizerScaling_ViewPercentageDominant_Max) {
-		// Arrange: importance percentage = 1 / 10, view percentage = 1: scaling == 1
+		// Arrange: balance percentage = 1 / 10, view percentage = 1: scaling == 1
 		TestContext context({ { 100, 50'000'000 }, { 100, 50'000'000 } });
 
 		// Act:
@@ -256,7 +283,7 @@ namespace catapult { namespace timesync {
 	}
 
 	TEST(TEST_CLASS, TimeSynchronizerScaling_ViewPercentageDominant_Half) {
-		// Arrange: importance percentage = 1 / 10, view percentage = 1 / 2: scaling == 2
+		// Arrange: balance percentage = 1 / 10, view percentage = 1 / 2: scaling == 2
 		TestContext context({ { 100, 50'000'000 }, { 100, 50'000'000 } });
 
 		// - add another 2 high value accounts
@@ -269,8 +296,8 @@ namespace catapult { namespace timesync {
 		EXPECT_EQ(TimeOffset(2 * 10), timeOffset);
 	}
 
-	TEST(TEST_CLASS, TimeSynchronizerScaling_ImportancePercentageDominant_Max) {
-		// Arrange: importance percentage = 1, view percentage = 1 / 5: scaling == 1
+	TEST(TEST_CLASS, TimeSynchronizerScaling_BalancePercentageDominant_Max) {
+		// Arrange: balance percentage = 1, view percentage = 1 / 5: scaling == 1
 		TestContext context({ { 100, 500'000'000 }, { 100, 500'000'000 } });
 
 		// - add another 8 high value accounts
@@ -283,8 +310,8 @@ namespace catapult { namespace timesync {
 		EXPECT_EQ(TimeOffset(100), timeOffset);
 	}
 
-	TEST(TEST_CLASS, TimeSynchronizerScaling_ImportancePercentageDominant_Half) {
-		// Arrange: importance percentage = 1 / 2, view percentage = 1 / 5: scaling == 2
+	TEST(TEST_CLASS, TimeSynchronizerScaling_BalancePercentageDominant_Half) {
+		// Arrange: balance percentage = 1 / 2, view percentage = 1 / 5: scaling == 2
 		TestContext context({ { 100, 250'000'000 }, { 100, 250'000'000 } });
 
 		// - add another 8 high value accounts

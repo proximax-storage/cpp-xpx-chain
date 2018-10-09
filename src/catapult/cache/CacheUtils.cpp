@@ -18,26 +18,13 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ImportanceCalculator.h"
-#include "catapult/cache_core/AccountStateCache.h"
+#include "CacheUtils.h"
 
-namespace catapult { namespace observers {
-
-	namespace {
-		class RestoreImportanceCalculator final : public ImportanceCalculator {
-		public:
-			void recalculate(model::ImportanceHeight importanceHeight, cache::AccountStateCacheDelta& cache) const override {
-				auto highValueAddresses = cache.highValueAddresses();
-				for (const auto& address : highValueAddresses) {
-					auto& accountState = cache.get(address);
-					if (importanceHeight < accountState.ImportanceInfo.height())
-						accountState.ImportanceInfo.pop();
-				}
-			}
-		};
+namespace catapult {
+	namespace cache {
+		bool canUpdatePreviousCache(const Height &currentHeight, const Height &effectiveBalanceHeight) {
+			// We don't want to update previous cache for nemesis block
+			return currentHeight - Height(1) > effectiveBalanceHeight;
+		}
 	}
-
-	std::unique_ptr<ImportanceCalculator> CreateRestoreImportanceCalculator() {
-		return std::make_unique<RestoreImportanceCalculator>();
-	}
-}}
+}

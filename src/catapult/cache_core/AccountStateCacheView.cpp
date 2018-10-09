@@ -49,17 +49,12 @@ namespace catapult { namespace cache {
 			, AccountStateCacheViewMixins::ConstAccessorAddress(accountStateSets.Primary)
 			, AccountStateCacheViewMixins::ConstAccessorKey(*pKeyLookupAdapter)
 			, m_networkIdentifier(options.NetworkIdentifier)
-			, m_importanceGrouping(options.ImportanceGrouping)
 			, m_highValueAddresses(highValueAddresses)
 			, m_pKeyLookupAdapter(std::move(pKeyLookupAdapter))
 	{}
 
 	model::NetworkIdentifier BasicAccountStateCacheView::networkIdentifier() const {
 		return m_networkIdentifier;
-	}
-
-	uint64_t BasicAccountStateCacheView::importanceGrouping() const {
-		return m_importanceGrouping;
 	}
 
 	size_t BasicAccountStateCacheView::highValueAddressesSize() const {

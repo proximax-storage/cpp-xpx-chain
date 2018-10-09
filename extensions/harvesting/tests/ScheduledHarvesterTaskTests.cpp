@@ -18,12 +18,15 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "harvesting/src/ScheduledHarvesterTask.h"
 #include "harvesting/src/Harvester.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
+#include "harvesting/src/ScheduledHarvesterTask.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
+#include "harvesting/src/Harvester.h"
+#include "catapult/io/BlockStorageCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
+#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/TestHarness.h"
 
 using catapult::crypto::KeyPair;
@@ -40,7 +43,6 @@ namespace catapult { namespace harvesting {
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
 			config.MaxDifficultyBlocks = 60;
-			config.ImportanceGrouping = 123;
 			return config;
 		}
 
@@ -54,6 +56,7 @@ namespace catapult { namespace harvesting {
 					, BlockSigner{}
 					, pLastBlock(std::make_shared<model::Block>())
 					, LastBlockHash(test::GenerateRandomData<Hash256_Size>()) {
+				pLastBlock->BaseTarget = 1 << 16;
 				HarvestingAllowed = [this]() {
 					++NumHarvestingAllowedCalls;
 					return true;
@@ -91,20 +94,10 @@ namespace catapult { namespace harvesting {
 			disruptor::ProcessingCompleteFunc CompletionFunction;
 		};
 
-		void AddDifficultyInfo(cache::CatapultCache& cache, const model::Block& block) {
-			auto delta = cache.createDelta();
-			auto& difficultyCache = delta.sub<cache::BlockDifficultyCache>();
-			state::BlockDifficultyInfo info(block.Height, block.Timestamp, block.Difficulty);
-			difficultyCache.insert(info);
-			cache.commit(Height());
-		}
-
-		KeyPair AddImportantAccount(cache::CatapultCache& cache) {
-			auto keyPair = KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+		KeyPair AddImportantAccount(cache::CatapultCache& cache, const KeyPair& keyPair) {
 			auto delta = cache.createDelta();
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			auto& accountState = accountStateCache.addAccount(keyPair.publicKey(), Height(1));
-			accountState.ImportanceInfo.set(Importance(1'000'000'000), model::ImportanceHeight(1));
 			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000));
 			cache.commit(Height());
 			return test::CopyKeyPair(keyPair);
@@ -116,24 +109,38 @@ namespace catapult { namespace harvesting {
 		}
 
 		struct HarvesterContext {
-			HarvesterContext(const model::Block& lastBlock)
+			HarvesterContext(const model::Block& /*lastBlock*/)
 					: Config(CreateConfiguration())
-					, Cache(test::CreateEmptyCatapultCache(Config))
-					, Accounts(1) {
-				AddDifficultyInfo(Cache, lastBlock);
-			}
+					, CurrentCache(test::CreateEmptyCatapultCache(Config))
+					, PreviousCache(test::CreateEmptyCatapultCache(Config))
+					, Accounts(1)
+			{}
 
 			model::BlockChainConfiguration Config;
-			cache::CatapultCache Cache;
+			cache::CatapultCache CurrentCache;
+			cache::CatapultCache PreviousCache;
 			UnlockedAccounts Accounts;
 		};
 
+		config::LocalNodeConfiguration CreateConfiguration(model::BlockChainConfiguration& config) {
+			return config::LocalNodeConfiguration(
+					std::move(config),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					config::UserConfiguration::Uninitialized()
+			);
+		}
+
 		auto CreateHarvester(HarvesterContext& context) {
 			return std::make_unique<Harvester>(
-					context.Cache,
-					context.Config,
+					extensions::LocalNodeStateRef(
+							*test::LocalNodeStateUtils::CreateLocalNodeState(CreateConfiguration(context.Config)),
+							context.CurrentCache,
+							context.PreviousCache
+					),
 					context.Accounts,
-					[](size_t) { return TransactionsInfo(); });
+					[](size_t) { return TransactionsInfo(); }
+			);
 		}
 	}
 
@@ -181,7 +188,9 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		HarvesterContext context(*options.pLastBlock);
-		auto keyPair = AddImportantAccount(context.Cache);
+		auto keyPair = KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+		AddImportantAccount(context.CurrentCache, keyPair);
+		AddImportantAccount(context.PreviousCache, keyPair);
 		UnlockAccount(context.Accounts, keyPair);
 		ScheduledHarvesterTask task(options, CreateHarvester(context));
 
@@ -201,7 +210,9 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		HarvesterContext context(*options.pLastBlock);
-		auto keyPair = AddImportantAccount(context.Cache);
+		auto keyPair = KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+		AddImportantAccount(context.CurrentCache, keyPair);
+		AddImportantAccount(context.PreviousCache, keyPair);
 		UnlockAccount(context.Accounts, keyPair);
 		ScheduledHarvesterTask task(options, CreateHarvester(context));
 
@@ -223,8 +234,9 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		HarvesterContext context(*options.pLastBlock);
-		auto keyPair = AddImportantAccount(context.Cache);
-		UnlockAccount(context.Accounts, keyPair);
+		auto keyPair = KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+		AddImportantAccount(context.CurrentCache, keyPair);
+		AddImportantAccount(context.PreviousCache, keyPair);UnlockAccount(context.Accounts, keyPair);
 		ScheduledHarvesterTask task(options, CreateHarvester(context));
 
 		// Act:
@@ -254,7 +266,9 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(0u, options.NumRangeConsumerCalls);
 
 		// Act: unlock an accuont and harvest again
-		auto keyPair = AddImportantAccount(context.Cache);
+		auto keyPair = KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
+		AddImportantAccount(context.CurrentCache, keyPair);
+		AddImportantAccount(context.PreviousCache, keyPair);
 		UnlockAccount(context.Accounts, keyPair);
 		task.harvest();
 

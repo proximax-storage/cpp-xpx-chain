@@ -38,6 +38,6 @@ namespace catapult { namespace mongo {
 
 		// Assert:
 		auto pStorage = manager.createStorage();
-		EXPECT_EQ("{ AccountStateCache, BlockDifficultyCache }", pStorage->name());
+		EXPECT_EQ("{ AccountStateCache }", pStorage->name());
 	}
 }}

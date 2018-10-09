@@ -22,16 +22,6 @@
 
 namespace catapult { namespace consumers {
 
-	std::vector<const model::Block*> ExtractBlocks(const BlockElements& elements) {
-		std::vector<const model::Block*> blocks;
-		blocks.reserve(elements.size());
-
-		for (const auto& element : elements)
-			blocks.push_back(&element.Block);
-
-		return blocks;
-	}
-
 	utils::HashPointerSet ExtractTransactionHashes(const BlockElements& elements) {
 		utils::HashPointerSet hashes;
 

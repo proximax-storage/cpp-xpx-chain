@@ -20,146 +20,88 @@
 
 #include "BlockScorer.h"
 #include "catapult/model/Block.h"
-#include "catapult/model/ImportanceHeight.h"
+#include "catapult/model/BlockUtils.h"
+#include "catapult/model/Address.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/utils/IntegerMath.h"
+#include "catapult/utils/TimeSpan.h"
 
 namespace catapult { namespace chain {
 
 	namespace {
-		constexpr uint64_t Two_To_54 = 1ull << 54;
-
-		struct GenerationHashInfo {
-			uint32_t Value;
-			uint32_t NumLeadingZeros;
-		};
-
-		constexpr utils::TimeSpan TimeBetweenBlocks(const model::Block& parent, const model::Block& block) {
-			return utils::TimeSpan::FromDifference(block.Timestamp, parent.Timestamp);
-		}
-
-		uint32_t NumLeadingZeros(const Hash256& generationHash) {
-			for (auto i = 0u; i < Hash256_Size; ++i) {
-				if (0 != generationHash[i])
-					return 8u * i + 7u - utils::Log2(generationHash[i]);
-			}
-
-			return 256u;
-		}
-
-#ifdef _MSC_VER
-#define BSWAP(VAL) _byteswap_ulong(VAL)
-#else
-#define BSWAP(VAL) __builtin_bswap32(VAL)
-#endif
-
-		uint32_t ExtractFromHashAtPosition(const Hash256& hash, size_t index) {
-			return BSWAP(*reinterpret_cast<const uint32_t*>(hash.data() + index));
-		}
-
-		GenerationHashInfo ExtractGenerationHashInfo(const Hash256& generationHash) {
-			auto numLeadingZeros = NumLeadingZeros(generationHash);
-			if (224 <= numLeadingZeros)
-				return GenerationHashInfo{ ExtractFromHashAtPosition(generationHash, Hash256_Size - 4), 224 };
-
-			auto quotient = numLeadingZeros / 8;
-			auto remainder = numLeadingZeros % 8;
-			auto value = ExtractFromHashAtPosition(generationHash, quotient);
-			value <<= remainder;
-			value += generationHash[quotient + 4] >> (8 - remainder);
-			return GenerationHashInfo{ value, numLeadingZeros };
-		}
+		constexpr uint64_t GAMMA_NUMERATOR{64};
+		constexpr uint64_t GAMMA_DENOMINATOR{100};
+		constexpr uint32_t SMOOTHING_FACTOR_DENOMINATOR{1000};
 	}
 
 	uint64_t CalculateHit(const Hash256& generationHash) {
-		// we want to calculate 2^54 * abs(log(x)), where x = value/2^256 and value is a 256 bit integer
-		// note that x is always < 1, therefore log(x) is always negative
-		// the original version used boost::multiprecision to convert the generation hash (interpreted as 256 bit integer) to a double
-		// the new version uses only the 32 bits beginning at the first non-zero bit of the hash
-		// this results in a slightly less exact calculation but the difference is less than one ppm
-		auto hashInfo = ExtractGenerationHashInfo(generationHash);
-
-		// handle edge cases
-		if (0 == hashInfo.Value)
-			return std::numeric_limits<uint64_t>::max();
-
-		if (0xFFFFFFFF == hashInfo.Value)
-			return 0;
-
-		// calculate nearest integer for log2(value) * 2 ^ 54
-		auto logValue = utils::Log2TimesPowerOfTwo(hashInfo.Value, 54);
-
-		// result is 256 * 2^54 - logValue - (256 - 32 - hashInfo.NumLeadingZeros) * 2^54 which can be simplified
-		boost::multiprecision::uint128_t result = (32 + hashInfo.NumLeadingZeros) * Two_To_54 - logValue;
-
-		// divide by log2(e)
-		result = result * 10'000'000'000'000'000ull / 14'426'950'408'889'634ull;
-		return result.convert_to<uint64_t>();
+		return *reinterpret_cast<const uint64_t*>(generationHash.data());
 	}
 
-	uint64_t CalculateScore(const model::Block& parentBlock, const model::Block& currentBlock) {
-		if (currentBlock.Timestamp <= parentBlock.Timestamp)
-			return 0u;
-
-		// r = difficulty(1) - (t(1) - t(0)) / MS_In_S
-		auto timeDiff = TimeBetweenBlocks(parentBlock, currentBlock);
-		return currentBlock.Difficulty.unwrap() - timeDiff.seconds();
+	BlockTarget CalculateTarget(
+			const BlockTarget& baseTarget,
+			const utils::TimeSpan& elapsedTime,
+			const Amount& effectiveBalance) {
+		return baseTarget * elapsedTime.seconds() * effectiveBalance.unwrap();
 	}
 
-	namespace {
-		BlockTarget GetMultiplier(uint64_t timeDiff, const model::BlockChainConfiguration& config) {
-			auto targetTime = config.BlockGenerationTargetTime.seconds();
-			double smoother = 1.0;
-			if (0 != config.BlockTimeSmoothingFactor) {
-				double factor = config.BlockTimeSmoothingFactor / 1000.0;
-				smoother = std::min(std::exp(factor * static_cast<int64_t>(timeDiff - targetTime) / targetTime), 100.0);
-			}
-
-			BlockTarget target(static_cast<uint64_t>(Two_To_54 * smoother));
-			target <<= 10;
-			return target;
+	BlockTarget CalculateBaseTarget(
+			const BlockTarget& Tp,
+			const utils::TimeSpan& milliSeconds,
+			const model::BlockChainConfiguration& config) {
+		auto S = milliSeconds.seconds();
+		auto RATIO = config.BlockGenerationTargetTime.seconds();
+		if (RATIO <= 0)
+		{
+			CATAPULT_THROW_INVALID_ARGUMENT("BlockGenerationTargetTime is invalid or not set");
+		}
+		auto factor = config.BlockTimeSmoothingFactor / SMOOTHING_FACTOR_DENOMINATOR;
+		auto MINRATIO = RATIO - factor;
+		auto MAXRATIO = RATIO + factor;
+		if (S > RATIO) {
+			return Tp * std::min(S, MAXRATIO) / RATIO;
+		} else {
+			return Tp - Tp * GAMMA_NUMERATOR * (RATIO - std::max(S, MINRATIO) ) / GAMMA_DENOMINATOR / RATIO;
 		}
 	}
 
-	BlockTarget CalculateTarget(
-			const utils::TimeSpan& timeSpan,
-			Difficulty difficulty,
-			Importance signerImportance,
-			const model::BlockChainConfiguration& config) {
-		BlockTarget target = timeSpan.seconds();
-		target *= signerImportance.unwrap();
-		target *= GetMultiplier(timeSpan.seconds(), config);
-		target /= difficulty.unwrap();
-		return target;
+	inline Amount getXpxOfAccount(const cache::ReadOnlyAccountStateCache& cache, const Key& signer) {
+		auto pAccount = cache.tryGet(signer);
+
+		if (!pAccount) {
+			pAccount = cache.tryGet(model::PublicKeyToAddress(signer, cache.networkIdentifier()));
+		}
+
+		if (pAccount) {
+			return pAccount->Balances.get(Xpx_Id);
+		}
+
+		return Amount(0);
 	}
 
-	BlockTarget CalculateTarget(
-			const model::Block& parentBlock,
-			const model::Block& currentBlock,
-			Importance signerImportance,
-			const model::BlockChainConfiguration& config) {
-		if (currentBlock.Timestamp <= parentBlock.Timestamp)
-			return BlockTarget(0);
-
-		auto timeDiff = TimeBetweenBlocks(parentBlock, currentBlock);
-		return CalculateTarget(timeDiff, currentBlock.Difficulty, signerImportance, config);
+	Amount CalculateEffectiveBalance(
+			const cache::ReadOnlyAccountStateCache& currentCache,
+			const cache::ReadOnlyAccountStateCache& previousCache,
+			const Height& effectiveBalanceHeight,
+			const Height& currentHeight,
+			const Key& signer) {
+		if (currentHeight <= effectiveBalanceHeight) {
+			return getXpxOfAccount(currentCache, signer);
+		} else {
+			return std::min(getXpxOfAccount(currentCache, signer), getXpxOfAccount(previousCache, signer));
+		}
 	}
 
-	BlockHitPredicate::BlockHitPredicate(const model::BlockChainConfiguration& config, const ImportanceLookupFunc& importanceLookup)
-			: m_config(config)
-			, m_importanceLookup(importanceLookup)
-	{}
-
-	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash) const {
-		auto importance = m_importanceLookup(block.Signer, block.Height);
+	bool BlockHitPredicate::operator()(const Hash256& generationHash, const BlockTarget& baseTarget,
+			const utils::TimeSpan& elapsedTime, const Amount& effectiveBalance) const {
 		auto hit = CalculateHit(generationHash);
-		auto target = CalculateTarget(parentBlock, block, importance, m_config);
+		auto target = CalculateTarget(baseTarget, elapsedTime, effectiveBalance);
 		return hit < target;
 	}
 
-	bool BlockHitPredicate::operator()(const BlockHitContext& context) const {
-		auto importance = m_importanceLookup(context.Signer, context.Height);
+	bool BlockHitPredicate::operator()(const model::BlockHitContext& context) const {
 		auto hit = CalculateHit(context.GenerationHash);
-		auto target = CalculateTarget(context.ElapsedTime, context.Difficulty, importance, m_config);
+		auto target = CalculateTarget(context.BaseTarget, context.ElapsedTime, context.EffectiveBalance);
 		return hit < target;
 	}
 }}

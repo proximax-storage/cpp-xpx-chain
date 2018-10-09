@@ -31,20 +31,11 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, NetworkIdentifierIsExposed) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(19);
-		AccountStateCache originalCache(CacheConfiguration(), { networkIdentifier, 123, Amount() });
+		AccountStateCache originalCache(CacheConfiguration(), { networkIdentifier, Amount() });
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, ReadOnlyAccountStateCache(*originalCache.createView()).networkIdentifier());
 		EXPECT_EQ(networkIdentifier, ReadOnlyAccountStateCache(*originalCache.createDelta()).networkIdentifier());
-	}
-
-	TEST(TEST_CLASS, ImportanceGroupingIsExposed) {
-		// Arrange:
-		AccountStateCache originalCache(CacheConfiguration(), { static_cast<model::NetworkIdentifier>(19), 123, Amount() });
-
-		// Act + Assert:
-		EXPECT_EQ(123u, ReadOnlyAccountStateCache(*originalCache.createView()).importanceGrouping());
-		EXPECT_EQ(123u, ReadOnlyAccountStateCache(*originalCache.createDelta()).importanceGrouping());
 	}
 
 	// endregion
@@ -52,7 +43,6 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
-			543,
 			Amount(std::numeric_limits<Amount::ValueType>::max())
 		};
 

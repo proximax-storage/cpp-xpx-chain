@@ -47,7 +47,7 @@ namespace catapult { namespace sync {
 	chain::UtUpdater::Throttle CreateUtUpdaterThrottle(const config::LocalNodeConfiguration& config) {
 		SpamThrottleConfiguration throttleConfig(
 				config.Node.TransactionSpamThrottlingMaxBoostFee,
-				model::GetTotalImportance(config.BlockChain),
+				model::GetTotalBalance(config.BlockChain),
 				config.Node.UnconfirmedTransactionsCacheMaxSize,
 				config.BlockChain.MaxTransactionsPerBlock);
 

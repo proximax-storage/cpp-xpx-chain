@@ -21,7 +21,6 @@
 #include "sync/src/DispatcherService.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/plugins/PluginLoader.h"
@@ -68,25 +67,17 @@ namespace catapult { namespace sync {
 		}
 
 		cache::CatapultCache CreateCatapultCacheForDispatcherTests() {
-			// importance grouping must be non-zero
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ImportanceGrouping = 1;
-
 			// create the cache
-			return test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config);
+			return test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(model::BlockChainConfiguration::Uninitialized());
 		}
 
 		void InitializeCatapultCacheForDispatcherTests(cache::CatapultCache& cache, const crypto::KeyPair& signer) {
 			// create the delta
 			auto delta = cache.createDelta();
 
-			// set a difficulty for the nemesis block
-			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), Timestamp(0), Difficulty());
-
-			// add a balance and importance for the signer
+			// add a balance for the signer
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(signer.publicKey(), Height(1));
 			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000));
-			accountState.ImportanceInfo.set(Importance(1'000'000'000), model::ImportanceHeight(1));
 
 			// commit all changes
 			cache.commit(Height(1));
@@ -98,9 +89,13 @@ namespace catapult { namespace sync {
 			mocks::MockMemoryBasedStorage storage;
 			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
 
-			model::PreviousBlockContext context(*pNemesisBlockElement);
-			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
-			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
+			model::PreviousBlockContext previousBlockContext(*pNemesisBlockElement);
+			model::BlockHitContext hitContext;
+			hitContext.BaseTarget = 1 << 16;
+			auto pBlock = model::CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
+			pBlock->Timestamp = previousBlockContext.Timestamp + Timestamp(60000);
+			pBlock->BaseTarget = std::numeric_limits<uint64_t>::max();
+			pBlock->CumulativeDifficulty = Difficulty{std::numeric_limits<uint64_t>::max()};
 			test::SignBlock(signer, *pBlock);
 			return std::move(pBlock);
 		}
@@ -129,12 +124,13 @@ namespace catapult { namespace sync {
 
 		public:
 			TestContext()
-					: BaseType(CreateCatapultCacheForDispatcherTests())
+					: BaseType(CreateCatapultCacheForDispatcherTests(), CreateCatapultCacheForDispatcherTests())
 					, m_numNewBlockSinkCalls(0)
 					, m_numNewTransactionsSinkCalls(0) {
 				// initialize the cache
 				auto& state = testState().state();
-				InitializeCatapultCacheForDispatcherTests(state.cache(), GetBlockSignerKeyPair());
+				InitializeCatapultCacheForDispatcherTests(state.currentCache(), GetBlockSignerKeyPair());
+				InitializeCatapultCacheForDispatcherTests(state.previousCache(), GetBlockSignerKeyPair());
 
 				// set up sinks
 				state.hooks().addNewBlockSink([&counter = m_numNewBlockSinkCalls](const auto&) { ++counter; });
@@ -429,11 +425,8 @@ namespace catapult { namespace sync {
 			EXPECT_EQ(0u, context.numNewBlockSinkCalls());
 			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
 
-			// - state change subscriber shouldn't have been called for an invalid element, so chain score should be unchanged (zero)
 			const auto& stateChangeSubscriber = context.testState().stateChangeSubscriber();
-			EXPECT_EQ(0u, stateChangeSubscriber.numScoreChanges());
 			EXPECT_EQ(0u, stateChangeSubscriber.numStateChanges());
-			EXPECT_EQ(model::ChainScore(), stateChangeSubscriber.lastChainScore());
 		});
 	}
 
@@ -448,11 +441,8 @@ namespace catapult { namespace sync {
 			EXPECT_EQ(1u, context.numNewBlockSinkCalls());
 			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
 
-			// - state change subscriber should have been called, so chain score should be changed (non-zero)
 			const auto& stateChangeSubscriber = context.testState().stateChangeSubscriber();
-			EXPECT_EQ(1u, stateChangeSubscriber.numScoreChanges());
 			EXPECT_EQ(1u, stateChangeSubscriber.numStateChanges());
-			EXPECT_EQ(model::ChainScore(99'999'999'999'940), stateChangeSubscriber.lastChainScore());
 		});
 	}
 
@@ -462,6 +452,7 @@ namespace catapult { namespace sync {
 		context.boot();
 		auto keyPair = GetBlockSignerKeyPair();
 		auto pBaseBlock = CreateValidBlockForDispatcherTests(keyPair);
+		pBaseBlock->CumulativeDifficulty = Difficulty{std::numeric_limits<uint64_t>::max() / 2};
 		auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
 
 		factory(test::CreateEntityRange({ pBaseBlock.get() }));
@@ -491,6 +482,7 @@ namespace catapult { namespace sync {
 		context.boot();
 		auto keyPair = GetBlockSignerKeyPair();
 		auto pBaseBlock = CreateValidBlockForDispatcherTests(keyPair);
+		pBaseBlock->CumulativeDifficulty = Difficulty{std::numeric_limits<uint64_t>::max() / 2};
 		auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
 
 		factory(test::CreateEntityRange({ pBaseBlock.get() }));

@@ -18,19 +18,18 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "filechain/src/LocalNodeStateStorage.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalData.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/io/FileLock.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "filechain/src/LocalNodeStateStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
 #include <boost/filesystem.hpp>
 
 namespace catapult { namespace filechain {
@@ -53,15 +52,9 @@ namespace catapult { namespace filechain {
 			}
 		}
 
-		void PopulateBlockDifficultyCache(cache::BlockDifficultyCacheDelta& cacheDelta) {
-			for (auto i = 0u; i < Block_Cache_Size; ++i)
-				cacheDelta.insert(Height(i), Timestamp(2 * i + 1), Difficulty(3 * i + 1));
-		}
-
 		void SanityAssertCache(const cache::CatapultCache& catapultCache) {
 			auto view = catapultCache.createView();
 			EXPECT_EQ(Account_Cache_Size, view.sub<cache::AccountStateCache>().size());
-			EXPECT_EQ(Block_Cache_Size, view.sub<cache::BlockDifficultyCache>().size());
 		}
 
 		void AssertSubCaches(const cache::CatapultCache& expectedCache, const cache::CatapultCache& actualCache) {
@@ -69,25 +62,34 @@ namespace catapult { namespace filechain {
 			auto actualView = actualCache.createView();
 
 			EXPECT_EQ(expectedView.sub<cache::AccountStateCache>().size(), actualView.sub<cache::AccountStateCache>().size());
-			EXPECT_EQ(expectedView.sub<cache::BlockDifficultyCache>().size(), actualView.sub<cache::BlockDifficultyCache>().size());
+		}
+
+		std::shared_ptr<extensions::LocalNodeState> createLocalNodeState(std::string name) {
+			auto UserConfig = config::UserConfiguration::Uninitialized();
+			UserConfig.DataDirectory = name;
+			auto LocalConfig = config::LocalNodeConfiguration(
+					model::BlockChainConfiguration::Uninitialized(),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					std::move(UserConfig)
+			);
+
+			return test::LocalNodeStateUtils::CreateLocalNodeState(std::move(LocalConfig));
 		}
 
 		cache::SupplementalData SaveState(const std::string& dataDirectory, cache::CatapultCache& cache) {
-			cache::SupplementalData supplementalData;
 			{
 				auto delta = cache.createDelta();
 				PopulateAccountStateCache(delta.sub<cache::AccountStateCache>());
-				PopulateBlockDifficultyCache(delta.sub<cache::BlockDifficultyCache>());
 				cache.commit(Height(54321));
 			}
 
 			// Sanity:
 			SanityAssertCache(cache);
 
-			supplementalData.ChainScore = model::ChainScore(0x1234567890ABCDEF, 0xFEDCBA0987654321);
-			supplementalData.State.LastRecalculationHeight = model::ImportanceHeight(12345);
-			filechain::SaveState(dataDirectory, cache, supplementalData);
-			return supplementalData;
+			auto state = extensions::LocalNodeStateConstRef(*createLocalNodeState(dataDirectory), cache);
+			filechain::SaveState(state);
+			return {  };
 		}
 	}
 
@@ -95,18 +97,16 @@ namespace catapult { namespace filechain {
 		// Arrange: seed and save the cache state
 		test::TempDirectoryGuard tempDir;
 		auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
-		auto originalSupplementalData = SaveState(tempDir.name(), originalCache);
+		SaveState(tempDir.name(), originalCache);
 
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 		cache::SupplementalData supplementalData;
-		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData);
+		auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(tempDir.name()), cache), supplementalData);
 
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
 		AssertSubCaches(originalCache, cache);
-		EXPECT_EQ(originalSupplementalData.ChainScore, supplementalData.ChainScore);
-		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}
 
@@ -123,7 +123,7 @@ namespace catapult { namespace filechain {
 			// Act: load the cache
 			auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			cache::SupplementalData supplementalData;
-			auto isStateLoaded = LoadState(dataDirectory, cache, supplementalData);
+			auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(dataDirectory), cache), supplementalData);
 
 			// Assert:
 			EXPECT_FALSE(isStateLoaded);
@@ -168,7 +168,7 @@ namespace catapult { namespace filechain {
 
 		// - seed and save the cache state in the presence of a lock file
 		auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
-		auto originalSupplementalData = SaveState(tempDir.name(), originalCache);
+		SaveState(tempDir.name(), originalCache);
 
 		// Sanity: the lock file should have been removed by SaveState
 		EXPECT_FALSE(boost::filesystem::exists(lockFilePath));
@@ -176,13 +176,11 @@ namespace catapult { namespace filechain {
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 		cache::SupplementalData supplementalData;
-		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData);
+		auto isStateLoaded = LoadState(extensions::LocalNodeStateRef(*createLocalNodeState(tempDir.name()), cache), supplementalData);
 
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
 		AssertSubCaches(originalCache, cache);
-		EXPECT_EQ(originalSupplementalData.ChainScore, supplementalData.ChainScore);
-		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}
 }}

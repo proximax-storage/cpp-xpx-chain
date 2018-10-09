@@ -38,10 +38,14 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateSecretProofTransactionPlugin());
 		manager.addTransactionSupport(CreateSecretLockTransactionPlugin());
 
-		manager.addCacheSupport<cache::HashLockInfoCacheStorage>(
+		manager.addCurrentCacheSupport<cache::HashLockInfoCacheStorage>(
 				std::make_unique<cache::HashLockInfoCache>(manager.cacheConfig(cache::HashLockInfoCache::Name)));
-		manager.addCacheSupport<cache::SecretLockInfoCacheStorage>(
+		manager.addCurrentCacheSupport<cache::SecretLockInfoCacheStorage>(
 				std::make_unique<cache::SecretLockInfoCache>(manager.cacheConfig(cache::SecretLockInfoCache::Name)));
+		manager.addPreviousCacheSupport<cache::HashLockInfoCacheStorage>(
+				std::make_unique<cache::OldHashLockInfoCache>(manager.cacheConfig(cache::OldHashLockInfoCache::Name)));
+		manager.addPreviousCacheSupport<cache::SecretLockInfoCacheStorage>(
+				std::make_unique<cache::OldSecretLockInfoCache>(manager.cacheConfig(cache::OldSecretLockInfoCache::Name)));
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("HASHLOCK C"), [&cache]() {

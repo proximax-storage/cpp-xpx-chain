@@ -34,11 +34,11 @@ namespace catapult { namespace chain {
 	/* Remote node is not in sync with the local node. */ \
 	ENUM_VALUE(Remote_Is_Not_Synced, 4) \
 	\
-	/* Remote and local nodes reported equal chain scores. */ \
-	ENUM_VALUE(Remote_Reported_Equal_Chain_Score, 5) \
+	/* Remote and local nodes reported equal chain cumulative difficulties. */ \
+	ENUM_VALUE(Remote_Reported_Equal_Chain_Difficulty, 5) \
 	\
-	/* Remote node reported a lower chain score than the local node. */ \
-	ENUM_VALUE(Remote_Reported_Lower_Chain_Score, 6) \
+	/* Remote node reported a lower chain cumulative difficulty than the local node. */ \
+	ENUM_VALUE(Remote_Reported_Lower_Chain_Difficulty, 6) \
 	\
 	/* Remote node returned too many hashes. */ \
 	ENUM_VALUE(Remote_Returned_Too_Many_Hashes, Remote_Is_Evil_Flag | 2) \
@@ -46,8 +46,8 @@ namespace catapult { namespace chain {
 	/* Remote node is on a fork. */ \
 	ENUM_VALUE(Remote_Is_Forked, Remote_Is_Evil_Flag | 3) \
 	\
-	/* Remote node lied about having a higher chain score. */ \
-	ENUM_VALUE(Remote_Lied_About_Chain_Score, Remote_Is_Evil_Flag | 4)
+	/* Remote node lied about having a higher chain difficulty. */ \
+	ENUM_VALUE(Remote_Lied_About_Chain_Difficulty, Remote_Is_Evil_Flag | 4)
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// Possible chain comparison end states.

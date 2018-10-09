@@ -25,8 +25,7 @@
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
@@ -38,7 +37,6 @@
 #include "catapult/consumers/TransactionConsumers.h"
 #include "catapult/disruptor/BatchRangeDispatcher.h"
 #include "catapult/extensions/DispatcherUtils.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
@@ -101,6 +99,14 @@ namespace catapult { namespace sync {
 
 		// region block
 
+		BlockChainSyncHandlers::CommitBlockFunc CreateSyncCommitBlockHandler(
+				const std::shared_ptr<const observers::EntityObserver>& pObserver) {
+			return [pObserver](const auto& blockElement, const auto& state) {
+				CATAPULT_LOG(debug) << "comniting block at height " << blockElement.Block.Height;
+				chain::ExecuteBlock(blockElement, *pObserver, state);
+			};
+		}
+
 		BlockChainSyncHandlers::UndoBlockFunc CreateSyncUndoBlockHandler(
 				const std::shared_ptr<const observers::EntityObserver>& pUndoObserver) {
 			return [pUndoObserver](const auto& blockElement, const auto& state) {
@@ -109,28 +115,14 @@ namespace catapult { namespace sync {
 			};
 		}
 
-		BlockChainProcessor CreateSyncProcessor(
-				const model::BlockChainConfiguration& blockChainConfig,
-				const chain::ExecutionConfiguration& executionConfig) {
-			return CreateBlockChainProcessor(
-					[&blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
-						cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
-						return chain::BlockHitPredicate(blockChainConfig, [view](const auto& publicKey, auto height) {
-							return view.getAccountImportanceOrDefault(publicKey, height);
-						});
-					},
-					chain::CreateBatchEntityProcessor(executionConfig));
-		}
-
 		BlockChainSyncHandlers CreateBlockChainSyncHandlers(extensions::ServiceState& state, RollbackInfo& rollbackInfo) {
-			const auto& blockChainConfig = state.config().BlockChain;
 			const auto& pluginManager = state.pluginManager();
 
 			BlockChainSyncHandlers syncHandlers;
-			syncHandlers.DifficultyChecker = [&rollbackInfo, blockChainConfig](const auto& blocks, const cache::CatapultCache& cache) {
-				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, blockChainConfig);
+			syncHandlers.DifficultyChecker = [&rollbackInfo](const model::Block& remoteBlock, const model::Block& localBlock) {
+				auto result = remoteBlock.CumulativeDifficulty > localBlock.CumulativeDifficulty;
 				rollbackInfo.reset();
-				return blocks.size() == result;
+				return result;
 			};
 
 			auto undoBlockHandler = CreateSyncUndoBlockHandler(extensions::CreateUndoEntityObserver(pluginManager));
@@ -138,14 +130,14 @@ namespace catapult { namespace sync {
 				rollbackInfo.increment();
 				undoBlockHandler(blockElement, observerState);
 			};
-			syncHandlers.Processor = CreateSyncProcessor(blockChainConfig, CreateExecutionConfiguration(pluginManager));
+			auto commitBlockHandler = CreateSyncCommitBlockHandler(extensions::CreateEntityObserver(pluginManager));
+			syncHandlers.CommitBlock = [commitBlockHandler](const auto& blockElement, const auto& observerState) {
+				commitBlockHandler(blockElement, observerState);
+			};
 
-			syncHandlers.StateChange = [&rollbackInfo, &localScore = state.score(), &subscriber = state.stateChangeSubscriber()](
+			syncHandlers.BatchEntityProcessor = chain::CreateBatchEntityProcessor(CreateExecutionConfiguration(pluginManager));
+			syncHandlers.StateChange = [&rollbackInfo, &subscriber = state.stateChangeSubscriber()](
 					const auto& changeInfo) {
-				localScore += changeInfo.ScoreDelta;
-
-				// note: changeInfo contains only score delta, subscriber will get both current local score and changeInfo
-				subscriber.notifyScoreChange(localScore.get());
 				subscriber.notifyStateChange(changeInfo);
 
 				rollbackInfo.save();
@@ -188,10 +180,7 @@ namespace catapult { namespace sync {
 
 				auto disruptorConsumers = DisruptorConsumersFromBlockConsumers(m_consumers);
 				disruptorConsumers.push_back(CreateBlockChainSyncConsumer(
-						m_state.cache(),
-						m_state.state(),
-						m_state.storage(),
-						m_state.config().BlockChain.MaxRollbackBlocks,
+						m_state.nodeLocalState(),
 						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
 
 				disruptorConsumers.push_back(CreateNewBlockConsumer(m_state.hooks().newBlockSink(), InputSource::Local));
@@ -308,7 +297,7 @@ namespace catapult { namespace sync {
 		chain::UtUpdater& CreateAndRegisterUtUpdater(extensions::ServiceLocator& locator, extensions::ServiceState& state) {
 			auto pUtUpdater = std::make_shared<chain::UtUpdater>(
 					state.utCache(),
-					state.cache(),
+					state.currentCache(),
 					CreateExecutionConfiguration(state.pluginManager()),
 					state.timeSupplier(),
 					extensions::SubscriberToSink(state.transactionStatusSubscriber()),

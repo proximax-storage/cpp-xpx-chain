@@ -93,12 +93,12 @@ namespace catapult { namespace test {
 	}
 
 	void AssertEqualBlockData(const model::Block& block, const bsoncxx::document::view& dbBlock) {
-		// - 4 fields from VerifiableEntity, 5 fields from Block
-		EXPECT_EQ(9u, GetFieldCount(dbBlock));
+		// - 4 fields from VerifiableEntity, 6 fields from Block
+		EXPECT_EQ(10u, GetFieldCount(dbBlock));
 		AssertEqualVerifiableEntityData(block, dbBlock);
 		EXPECT_EQ(block.Height.unwrap(), GetUint64(dbBlock, "height"));
 		EXPECT_EQ(block.Timestamp.unwrap(), GetUint64(dbBlock, "timestamp"));
-		EXPECT_EQ(block.Difficulty.unwrap(), GetUint64(dbBlock, "difficulty"));
+		EXPECT_EQ(block.CumulativeDifficulty.unwrap(), GetUint64(dbBlock, "difficulty"));
 		EXPECT_EQ(block.PreviousBlockHash, GetHashValue(dbBlock, "previousBlockHash"));
 		EXPECT_EQ(block.BlockTransactionsHash, GetHashValue(dbBlock, "blockTransactionsHash"));
 	}
@@ -125,23 +125,6 @@ namespace catapult { namespace test {
 		EXPECT_EQ(accountState.AddressHeight.unwrap(), GetUint64(dbAccount, "addressHeight"));
 		EXPECT_EQ(Height(0) != accountState.PublicKeyHeight ? accountState.PublicKey : Key{}, GetKeyValue(dbAccount, "publicKey"));
 		EXPECT_EQ(accountState.PublicKeyHeight.unwrap(), GetUint64(dbAccount, "publicKeyHeight"));
-
-		auto dbImportances = dbAccount["importances"].get_array().value;
-		const auto& accountImportances = accountState.ImportanceInfo;
-		size_t numImportances = 0;
-		for (const auto& importanceElement : dbImportances) {
-			auto importanceDocument = importanceElement.get_document();
-			auto importanceHeight = GetUint64(importanceDocument.view(), "height");
-
-			auto importance = accountImportances.get(model::ImportanceHeight(importanceHeight));
-			EXPECT_EQ(importance.unwrap(), GetUint64(importanceDocument.view(), "value"));
-			++numImportances;
-		}
-
-		auto expectedNumImportances = std::count_if(accountImportances.begin(), accountImportances.end(), [](const auto& importanceInfo){
-			return model::ImportanceHeight(0) != importanceInfo.Height;
-		});
-		EXPECT_EQ(expectedNumImportances, numImportances);
 
 		auto dbMosaics = dbAccount["mosaics"].get_array().value;
 		size_t numMosaics = 0;

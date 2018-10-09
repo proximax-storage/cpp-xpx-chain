@@ -111,26 +111,27 @@ namespace catapult { namespace extensions {
 		auto pNemesisBlockElement = storageView.loadBlockElement(Height(1));
 
 		// 2. execute the nemesis block
-		auto cacheDelta = stateRef.Cache.createDelta();
-		execute(stateRef.Config.BlockChain, *pNemesisBlockElement, cacheDelta, stateRef.State, Verbosity::On);
+		auto currentCacheDelta = stateRef.CurrentCache.createDelta();
+		execute(stateRef.Config.BlockChain, *pNemesisBlockElement, currentCacheDelta, Verbosity::On);
+		auto previousCacheDelta = stateRef.PreviousCache.createDelta();
+		execute(stateRef.Config.BlockChain, *pNemesisBlockElement, previousCacheDelta, Verbosity::On);
 
 		// 3. commit changes
-		stateRef.Cache.commit(pNemesisBlockElement->Block.Height);
+		stateRef.CurrentCache.commit(pNemesisBlockElement->Block.Height);
+		stateRef.PreviousCache.commit(pNemesisBlockElement->Block.Height);
 	}
 
 	void NemesisBlockLoader::execute(
 			const model::BlockChainConfiguration& config,
 			const model::BlockElement& nemesisBlockElement,
 			cache::CatapultCacheDelta& cacheDelta) const {
-		auto catapultState = state::CatapultState();
-		execute(config, nemesisBlockElement, cacheDelta, catapultState, Verbosity::Off);
+		execute(config, nemesisBlockElement, cacheDelta, Verbosity::Off);
 	}
 
 	void NemesisBlockLoader::execute(
 			const model::BlockChainConfiguration& config,
 			const model::BlockElement& nemesisBlockElement,
 			cache::CatapultCacheDelta& cacheDelta,
-			state::CatapultState& catapultState,
 			Verbosity verbosity) const {
 		// 1. check the nemesis block
 		if (Verbosity::On == verbosity)
@@ -150,7 +151,7 @@ namespace catapult { namespace extensions {
 		PrepareNemesisAccount(nemesisBlock.Signer, outflows, cacheDelta);
 
 		// 4. execute the block
-		auto observerState = observers::ObserverState(cacheDelta, catapultState);
+		auto observerState = observers::ObserverState(cacheDelta);
 		chain::ExecuteBlock(nemesisBlockElement, m_observer, observerState);
 	}
 }}

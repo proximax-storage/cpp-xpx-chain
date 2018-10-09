@@ -26,7 +26,6 @@
 #include "tests/TestHarness.h"
 #include <map>
 
-using catapult::model::ChainScore;
 using catapult::mocks::MockChainApi;
 
 namespace catapult { namespace chain {
@@ -34,13 +33,15 @@ namespace catapult { namespace chain {
 #define TEST_CLASS CompareChainsTests
 
 	namespace {
+		constexpr Difficulty DefaultDifficulty{1000u};
+		constexpr Difficulty HigherDifficulty{2000u};
 		void AssertLocalChainExceptionPropagation(MockChainApi::EntryPoint entryPoint) {
 			// Arrange:
 			auto commonHashes = test::GenerateRandomHashes(3);
 			auto localHashes = test::ConcatHashes(commonHashes, test::GenerateRandomHashes(1));
 			auto remoteHashes = test::ConcatHashes(commonHashes, test::GenerateRandomHashes(1));
-			MockChainApi local(ChainScore(10), Height(4), localHashes);
-			MockChainApi remote(ChainScore(11), Height(4), remoteHashes);
+			MockChainApi local(DefaultDifficulty, Height(4), localHashes);
+			MockChainApi remote(HigherDifficulty, Height(4), remoteHashes);
 			local.setError(entryPoint);
 
 			// Act + Assert:
@@ -52,8 +53,8 @@ namespace catapult { namespace chain {
 			auto commonHashes = test::GenerateRandomHashes(3);
 			auto localHashes = test::ConcatHashes(commonHashes, test::GenerateRandomHashes(1));
 			auto remoteHashes = test::ConcatHashes(commonHashes, test::GenerateRandomHashes(1));
-			MockChainApi local(ChainScore(10), Height(4), localHashes);
-			MockChainApi remote(ChainScore(11), Height(4), remoteHashes);
+			MockChainApi local(DefaultDifficulty, Height(4), localHashes);
+			MockChainApi remote(HigherDifficulty, Height(4), remoteHashes);
 			remote.setError(entryPoint);
 
 			// Act + Assert:
@@ -78,32 +79,6 @@ namespace catapult { namespace chain {
 
 	// region chain info
 
-	TEST(TEST_CLASS, RemoteReportedLowerChainScoreIfRemoteChainScoreIsLessThanLocalChainScore) {
-		// Arrange:
-		MockChainApi local(ChainScore(10), Height(20));
-		MockChainApi remote(ChainScore(9), Height(20));
-
-		// Act:
-		auto result = CompareChains(local, remote, { 1000, 1000 }).get();
-
-		// Assert:
-		EXPECT_EQ(ChainComparisonCode::Remote_Reported_Lower_Chain_Score, result.Code);
-		AssertDefaultChainInformation(result);
-	}
-
-	TEST(TEST_CLASS, RemoteReportedEqualChainScoreIfRemoteChainScoreIsEqualToLocalChainScore) {
-		// Arrange:
-		MockChainApi local(ChainScore(10), Height(20));
-		MockChainApi remote(ChainScore(10), Height(20));
-
-		// Act:
-		auto result = CompareChains(local, remote, { 1000, 1000 }).get();
-
-		// Assert:
-		EXPECT_EQ(ChainComparisonCode::Remote_Reported_Equal_Chain_Score, result.Code);
-		AssertDefaultChainInformation(result);
-	}
-
 	TEST(TEST_CLASS, LocalChainInfoExceptionIsPropagated) {
 		// Assert:
 		AssertLocalChainExceptionPropagation(MockChainApi::EntryPoint::Chain_Info);
@@ -117,8 +92,8 @@ namespace catapult { namespace chain {
 	namespace {
 		void AssertIsTooFarBehind(Height localHeight, Height remoteHeight, uint32_t rewriteLimit, bool expected) {
 			// Arrange:
-			MockChainApi local(ChainScore(10), localHeight);
-			MockChainApi remote(ChainScore(11), remoteHeight);
+			MockChainApi local(DefaultDifficulty, localHeight);
+			MockChainApi remote(DefaultDifficulty, remoteHeight);
 			CompareChainsOptions options{ 1000, rewriteLimit };
 
 			// Act:
@@ -156,8 +131,8 @@ namespace catapult { namespace chain {
 	namespace {
 		void AssertRemoteReturnedTooManyHashes(uint32_t numHashes, uint32_t analyzeLimit, bool expected) {
 			// Arrange:
-			MockChainApi local(ChainScore(10), Height(numHashes));
-			MockChainApi remote(ChainScore(11), Height(numHashes), numHashes);
+			MockChainApi local(DefaultDifficulty, Height(numHashes));
+			MockChainApi remote(HigherDifficulty, Height(numHashes), numHashes);
 			CompareChainsOptions options{ analyzeLimit, 1000 };
 
 			// Act:
@@ -189,8 +164,8 @@ namespace catapult { namespace chain {
 		auto remoteHashes = test::GenerateRandomHashes(3);
 		*--remoteHashes.end() = *--localHashes.cend();
 		*----remoteHashes.end() = *----localHashes.cend();
-		MockChainApi local(ChainScore(10), Height(3), localHashes);
-		MockChainApi remote(ChainScore(11), Height(3), remoteHashes);
+		MockChainApi local(DefaultDifficulty, Height(3), localHashes);
+		MockChainApi remote(HigherDifficulty, Height(3), remoteHashes);
 
 		// Act:
 		auto result = CompareChains(local, remote, { 1000, 1000 }).get();
@@ -200,32 +175,32 @@ namespace catapult { namespace chain {
 		AssertDefaultChainInformation(result);
 	}
 
-	TEST(TEST_CLASS, RemoteLiedAboutChainScoreIfLocalIsSameSizeAsRemoteChainAndContainsAllHashesInRemoteChain) {
+	TEST(TEST_CLASS, RemoteLiedAboutChainDifficultyIfLocalIsSameSizeAsRemoteChainAndContainsAllHashesInRemoteChain) {
 		// Arrange: Local { A, B, C }, Remote { A, B, C }
 		auto commonHashes = test::GenerateRandomHashes(3);
-		MockChainApi local(ChainScore(10), Height(3), commonHashes);
-		MockChainApi remote(ChainScore(11), Height(3), commonHashes);
+		MockChainApi local(DefaultDifficulty, Height(3), commonHashes);
+		MockChainApi remote(HigherDifficulty, Height(3), commonHashes);
 
 		// Act:
 		auto result = CompareChains(local, remote, { 1000, 1000 }).get();
 
 		// Assert:
-		EXPECT_EQ(ChainComparisonCode::Remote_Lied_About_Chain_Score, result.Code);
+		EXPECT_EQ(ChainComparisonCode::Remote_Lied_About_Chain_Difficulty, result.Code);
 		AssertDefaultChainInformation(result);
 	}
 
-	TEST(TEST_CLASS, RemoteLiedAboutChainScoreIfRemoteChainIsSubsetOfLocalChainButRemoteReportedHigherScore) {
+	TEST(TEST_CLASS, RemoteLiedAboutChainDifficultyIfRemoteChainIsSubsetOfLocalChainButRemoteReportedHigherDifficulty) {
 		// Arrange: Local { A, B, C }, Remote { A, B }
 		auto localHashes = test::GenerateRandomHashes(3);
 		auto remoteHashes = test::GenerateRandomHashesSubset(localHashes, 2);
-		MockChainApi local(ChainScore(10), Height(3), localHashes);
-		MockChainApi remote(ChainScore(11), Height(2), remoteHashes);
+		MockChainApi local(DefaultDifficulty, Height(3), localHashes);
+		MockChainApi remote(HigherDifficulty, Height(2), remoteHashes);
 
 		// Act:
 		auto result = CompareChains(local, remote, { 1000, 1000 }).get();
 
 		// Assert:
-		EXPECT_EQ(ChainComparisonCode::Remote_Lied_About_Chain_Score, result.Code);
+		EXPECT_EQ(ChainComparisonCode::Remote_Lied_About_Chain_Difficulty, result.Code);
 		AssertDefaultChainInformation(result);
 	}
 
@@ -233,8 +208,8 @@ namespace catapult { namespace chain {
 		// Arrange: Local { A, B }, Remote { A, B, C }
 		auto remoteHashes = test::GenerateRandomHashes(3);
 		auto localHashes = test::GenerateRandomHashesSubset(remoteHashes, 2);
-		MockChainApi local(ChainScore(10), Height(2), localHashes);
-		MockChainApi remote(ChainScore(11), Height(3), remoteHashes);
+		MockChainApi local(DefaultDifficulty, Height(2), localHashes);
+		MockChainApi remote(HigherDifficulty, Height(3), remoteHashes);
 		remote.addBlock(test::GenerateVerifiableBlockAtHeight(Height(3)));
 
 		// Act:
@@ -251,13 +226,13 @@ namespace catapult { namespace chain {
 		// Arrange: simulate the scenario where the local height increases in-between the height and hashes requests
 		//   1. report local height as 8
 		//   2. return 12 local hashes (12 > 8)
-		//   3. return 13 remote hashes so that the remote still has a better score
+		//   3. return 13 remote hashes so that the remote still has a better difficulty
 		//   (notice that this is only exploitable when local height < MaxBlocksToRewrite because even if local height grows in-between
 		//   (1) and (2) at most MaxBlocksToRewrite will be returned)
 		auto remoteHashes = test::GenerateRandomHashes(13);
 		auto localHashes = test::GenerateRandomHashesSubset(remoteHashes, 12);
-		MockChainApi local(ChainScore(10), Height(8), localHashes);
-		MockChainApi remote(ChainScore(11), Height(13), remoteHashes);
+		MockChainApi local(DefaultDifficulty, Height(8), localHashes);
+		MockChainApi remote(HigherDifficulty, Height(13), remoteHashes);
 		remote.addBlock(test::GenerateVerifiableBlockAtHeight(Height(3)));
 
 		// Act:
@@ -286,12 +261,12 @@ namespace catapult { namespace chain {
 
 	namespace {
 		void AssertRemoteIsNotSynced(uint32_t rewriteLimit, Height expectedHashesFromHeight, Height expectedCommonBlockHeight) {
-			// Arrange: Local { ..., A, B, C, D }, Remote { ..., A, B, C, E }
+			// Arrange: Local { ..., A, B, C, D }, Remote { ..., A, B, C, E }.
 			auto commonHashes = test::GenerateRandomHashes(20 - expectedHashesFromHeight.unwrap());
 			auto localHashes = test::ConcatHashes(commonHashes, test::GenerateRandomHashes(1));
 			auto remoteHashes = test::ConcatHashes(commonHashes, test::GenerateRandomHashes(1));
-			MockChainApi local(ChainScore(10), Height(20), localHashes);
-			MockChainApi remote(ChainScore(11), Height(20), remoteHashes);
+			MockChainApi local(DefaultDifficulty, Height(20), localHashes);
+			MockChainApi remote(HigherDifficulty, Height(20), remoteHashes);
 
 			// Act:
 			auto result = CompareChains(local, remote, { 1000, rewriteLimit }).get();
@@ -307,7 +282,7 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	TEST(TEST_CLASS, RemoteIsNotSyncedIfChainsDivergeAndRemoteHasHigherScore) {
+	TEST(TEST_CLASS, RemoteIsNotSyncedIfChainsDivergeAndRemoteHasHigherDifficulty) {
 		// Assert: note chain height is 20 < 1000
 		AssertRemoteIsNotSynced(1000, Height(1), Height(19));
 	}

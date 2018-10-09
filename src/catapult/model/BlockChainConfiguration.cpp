@@ -51,7 +51,6 @@ namespace catapult { namespace model {
 		LOAD_CHAIN_PROPERTY(BlockGenerationTargetTime);
 		LOAD_CHAIN_PROPERTY(BlockTimeSmoothingFactor);
 
-		LOAD_CHAIN_PROPERTY(ImportanceGrouping);
 		LOAD_CHAIN_PROPERTY(MaxRollbackBlocks);
 		LOAD_CHAIN_PROPERTY(MaxDifficultyBlocks);
 
@@ -63,8 +62,14 @@ namespace catapult { namespace model {
 
 		LOAD_CHAIN_PROPERTY(BlockPruneInterval);
 		LOAD_CHAIN_PROPERTY(MaxTransactionsPerBlock);
+		LOAD_CHAIN_PROPERTY(EffectiveBalanceRange);
 
 #undef LOAD_CHAIN_PROPERTY
+
+		// If we didn't set custom EffectiveBalanceRange, then lets set it like a TransactionLifeTime / BlockGenerationTime
+		if (!config.EffectiveBalanceRange) {
+			config.EffectiveBalanceRange = config.MaxTransactionLifetime.millis() / config.BlockGenerationTargetTime.millis();
+		}
 
 		size_t numPluginProperties = 0;
 		for (const auto& section : bag.sections()) {

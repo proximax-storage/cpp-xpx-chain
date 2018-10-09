@@ -9,7 +9,6 @@ generationHash = {{network_generation_hash}}
 blockGenerationTargetTime = 15s
 blockTimeSmoothingFactor = 3000
 
-importanceGrouping = 359
 maxRollbackBlocks = 360
 maxDifficultyBlocks = 60
 
@@ -21,6 +20,7 @@ minHarvesterBalance = 1'000'000'000'000
 
 blockPruneInterval = 360
 maxTransactionsPerBlock = 200'000
+effectiveBalanceRange = 0
 
 [plugin:catapult.plugins.aggregate]
 

@@ -53,7 +53,6 @@ namespace catapult { namespace model {
 							{ "blockGenerationTargetTime", "10m" },
 							{ "blockTimeSmoothingFactor", "765" },
 
-							{ "importanceGrouping", "444" },
 							{ "maxRollbackBlocks", "720" },
 							{ "maxDifficultyBlocks", "15" },
 
@@ -64,7 +63,8 @@ namespace catapult { namespace model {
 							{ "minHarvesterBalance", "4'000'000'000" },
 
 							{ "blockPruneInterval", "432" },
-							{ "maxTransactionsPerBlock", "120" }
+							{ "maxTransactionsPerBlock", "120" },
+							{ "effectiveBalanceRange", "0" }
 						}
 					},
 					{
@@ -96,7 +96,6 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.BlockGenerationTargetTime);
 				EXPECT_EQ(0u, config.BlockTimeSmoothingFactor);
 
-				EXPECT_EQ(0u, config.ImportanceGrouping);
 				EXPECT_EQ(0u, config.MaxRollbackBlocks);
 				EXPECT_EQ(0u, config.MaxDifficultyBlocks);
 
@@ -121,7 +120,6 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(10), config.BlockGenerationTargetTime);
 				EXPECT_EQ(765u, config.BlockTimeSmoothingFactor);
 
-				EXPECT_EQ(444u, config.ImportanceGrouping);
 				EXPECT_EQ(720u, config.MaxRollbackBlocks);
 				EXPECT_EQ(15u, config.MaxDifficultyBlocks);
 
@@ -233,7 +231,6 @@ namespace catapult { namespace model {
 		EXPECT_EQ(TimeSpanFromMillis(30'001 * 600), CalculateFullRollbackDuration(config));
 		EXPECT_EQ(TimeSpanFromMillis(30'001 * 150), CalculateRollbackVariabilityBufferDuration(config));
 		EXPECT_EQ(TimeSpanFromMillis(30'001 * (600 + 150)), CalculateTransactionCacheDuration(config));
-		EXPECT_EQ(645u, CalculateDifficultyHistorySize(config));
 	}
 
 	TEST(TEST_CLASS, TransactionCacheDurationIncludesBufferTimeOfAtLeastOneHour) {
@@ -248,16 +245,15 @@ namespace catapult { namespace model {
 		EXPECT_EQ(TimeSpanFromMillis(15'000 * 20), CalculateFullRollbackDuration(config));
 		EXPECT_EQ(utils::TimeSpan::FromHours(1), CalculateRollbackVariabilityBufferDuration(config));
 		EXPECT_EQ(TimeSpanFromMillis(15'000 * 20 + One_Hour_Ms), CalculateTransactionCacheDuration(config));
-		EXPECT_EQ(65u, CalculateDifficultyHistorySize(config));
 	}
 
-	TEST(TEST_CLASS, TotalImportanceIsDerivedFromTotalChainBalance) {
+	TEST(TEST_CLASS, TotalBalanceIsDerivedFromTotalChainBalance) {
 		// Act:
 		auto config = BlockChainConfiguration::Uninitialized();
 		config.TotalChainBalance = utils::XpxUnit(utils::XpxAmount(1234));
 
 		// Assert:
-		EXPECT_EQ(Importance(1234), GetTotalImportance(config));
+		EXPECT_EQ(Amount(1234), GetTotalBalance(config));
 	}
 
 	// endregion

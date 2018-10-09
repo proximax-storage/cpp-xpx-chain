@@ -43,7 +43,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetCacheNames() {
-				return { "AccountStateCache", "BlockDifficultyCache" };
+				return { "AccountStateCache" };
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
@@ -51,7 +51,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "ACNTST C", "BLKDIF C" };
+				return { "ACNTST C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
@@ -74,9 +74,6 @@ namespace catapult { namespace plugins {
 					"AccountPublicKeyObserver",
 					"BalanceObserver",
 					"HarvestFeeObserver",
-					"RecalculateImportancesObserver",
-					"BlockDifficultyObserver",
-					"BlockDifficultyPruningObserver"
 				};
 			}
 

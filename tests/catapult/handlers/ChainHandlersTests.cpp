@@ -113,7 +113,7 @@ namespace catapult { namespace handlers {
 				auto pBlock = reinterpret_cast<model::Block*>(buffer.data());
 				pBlock->Size = size;
 				pBlock->Height = Height(i);
-				pBlock->Difficulty = Difficulty::Min() + Difficulty::Unclamped(1000 + i);
+				pBlock->CumulativeDifficulty = Difficulty(1000 + i);
 				reinterpret_cast<model::Transaction*>(pBlock + 1)->Size = size - sizeof(model::Block);
 				storageModifier.saveBlock(test::BlockToBlockElement(*pBlock, test::GenerateRandomData<Hash256_Size>()));
 			}
@@ -272,8 +272,7 @@ namespace catapult { namespace handlers {
 		auto pStorage = CreateStorage(12);
 		RegisterChainInfoHandler(
 				handlers,
-				*pStorage,
-				[]() { return model::ChainScore(0x7890ABCDEF012345, 0x7711BBCC00DD99AA); });
+				*pStorage);
 
 		// - malform the packet
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>();
@@ -294,8 +293,7 @@ namespace catapult { namespace handlers {
 		auto pStorage = CreateStorage(12);
 		RegisterChainInfoHandler(
 				handlers,
-				*pStorage,
-				[]() { return model::ChainScore(0x7890ABCDEF012345, 0x7711BBCC00DD99AA); });
+				*pStorage);
 
 		// - create a valid request
 		auto pPacket = ionet::CreateSharedPacket<ionet::Packet>();
@@ -305,13 +303,10 @@ namespace catapult { namespace handlers {
 		ionet::ServerPacketHandlerContext context({}, "");
 		EXPECT_TRUE(handlers.process(*pPacket, context));
 
-		// Assert: chain score is written
 		test::AssertPacketHeader(context, sizeof(api::ChainInfoResponse), ionet::PacketType::Chain_Info);
 
 		const auto* pResponse = reinterpret_cast<const uint64_t*>(test::GetSingleBufferData(context));
 		EXPECT_EQ(12u, pResponse[0]); // height
-		EXPECT_EQ(0x7890ABCDEF012345, pResponse[1]); // score high
-		EXPECT_EQ(0x7711BBCC00DD99AA, pResponse[2]); // score low
 	}
 
 	// endregion

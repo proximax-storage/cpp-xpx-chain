@@ -72,9 +72,6 @@ namespace catapult { namespace cache {
 			/// Network identifier.
 			model::NetworkIdentifier NetworkIdentifier;
 
-			/// Importance grouping.
-			uint64_t ImportanceGrouping;
-
 			/// Minimum high value account balance.
 			Amount MinHighValueAccountBalance;
 		};

@@ -76,18 +76,11 @@ namespace catapult { namespace mongo { namespace mappers {
 		StreamVerifiableEntity(builder, block)
 				<< "height" << ToInt64(block.Height)
 				<< "timestamp" << ToInt64(block.Timestamp)
-				<< "difficulty" << ToInt64(block.Difficulty)
+				<< "difficulty" << ToInt64(block.CumulativeDifficulty)
 				<< "previousBlockHash" << ToBinary(block.PreviousBlockHash)
-				<< "blockTransactionsHash" << ToBinary(block.BlockTransactionsHash);
+				<< "blockTransactionsHash" << ToBinary(block.BlockTransactionsHash)
+				<< "baseTarget" << block.BaseTarget.convert_to<std::string>();
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;
-	}
-
-	state::BlockDifficultyInfo ToDifficultyInfo(const bsoncxx::document::view& document) {
-		state::BlockDifficultyInfo difficultyInfo;
-		difficultyInfo.BlockHeight = GetValue64<Height>(document["height"]);
-		difficultyInfo.BlockDifficulty = GetValue64<Difficulty>(document["difficulty"]);
-		difficultyInfo.BlockTimestamp = GetValue64<Timestamp>(document["timestamp"]);
-		return difficultyInfo;
 	}
 }}}

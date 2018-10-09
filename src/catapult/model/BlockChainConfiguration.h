@@ -42,12 +42,8 @@ namespace catapult { namespace model {
 		/// Smoothing factor in thousandths.
 		/// If this value is non-zero, the network will be biased in favor of evenly spaced blocks.
 		/// \note A higher value makes the network more biased.
-		/// \note This can lower security because it will increase the influence of time relative to importance.
+		/// \note This can lower security because it will increase the influence of time relative to balance.
 		uint32_t BlockTimeSmoothingFactor;
-
-		/// Number of blocks that should be treated as a group for importance purposes.
-		/// \note Importances will only be calculated at blocks that are multiples of this grouping number.
-		uint64_t ImportanceGrouping;
 
 		/// Maximum number of blocks that can be rolled back.
 		uint32_t MaxRollbackBlocks;
@@ -73,6 +69,9 @@ namespace catapult { namespace model {
 
 		/// Maximum number of transactions per block.
 		uint32_t MaxTransactionsPerBlock;
+
+		/// Number of blocks that should be treated to calculate effective balance.
+		uint64_t EffectiveBalanceRange;
 
 		/// Unparsed map of plugin configuration.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
@@ -108,14 +107,9 @@ namespace catapult { namespace model {
 				+ CalculateRollbackVariabilityBufferDuration(config).millis());
 	}
 
-	/// Calculates the number of historical difficulties to cache in memory for the block chain described by \a config.
-	constexpr uint64_t CalculateDifficultyHistorySize(const BlockChainConfiguration& config) {
-		return config.MaxRollbackBlocks + config.MaxDifficultyBlocks;
-	}
-
-	/// Gets the total importance for the block chain described by \a config.
-	constexpr Importance GetTotalImportance(const BlockChainConfiguration& config) {
-		return Importance(config.TotalChainBalance.xpx().unwrap());
+	/// Gets the total balance for the block chain described by \a config.
+	constexpr Amount GetTotalBalance(const BlockChainConfiguration& config) {
+		return Amount(config.TotalChainBalance.xpx().unwrap());
 	}
 
 	/// Loads plugin configuration for plugin named \a pluginName from \a config.

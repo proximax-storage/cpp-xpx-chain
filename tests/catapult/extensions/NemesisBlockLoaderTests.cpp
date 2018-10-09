@@ -45,8 +45,10 @@ namespace catapult { namespace extensions {
 				pTransaction->Signer = nemesisPublicKey;
 				transactions.push_back(std::move(pTransaction));
 			}
+			model::BlockHitContext hitContext;
+			hitContext.BaseTarget = 1 << 16;
 
-			return CreateBlock(model::PreviousBlockContext(), Network_Identifier, nemesisPublicKey, transactions);
+			return CreateBlock(model::PreviousBlockContext(), hitContext, Network_Identifier, nemesisPublicKey, transactions);
 		}
 
 		enum class NemesisBlockModification {
@@ -169,7 +171,7 @@ namespace catapult { namespace extensions {
 				loader.executeAndCommit(stateRef);
 
 				// Assert: changes should be committed to the underlying cache, so check the view
-				const auto& cacheView = stateRef.Cache.createView();
+				const auto& cacheView = stateRef.CurrentCache.createView();
 				const auto& accountStateCache = cacheView.sub<cache::AccountStateCache>();
 				assertAccountStateCache(accountStateCache);
 			}
@@ -178,7 +180,7 @@ namespace catapult { namespace extensions {
 		struct ExecuteTraits {
 			static void Execute(const NemesisBlockLoader& loader, const LocalNodeStateRef& stateRef) {
 				auto pNemesisBlockElement = stateRef.Storage.view().loadBlockElement(Height(1));
-				auto cacheDelta = stateRef.Cache.createDelta();
+				auto cacheDelta = stateRef.CurrentCache.createDelta();
 				loader.execute(stateRef.Config.BlockChain, *pNemesisBlockElement, cacheDelta);
 			}
 
@@ -188,7 +190,7 @@ namespace catapult { namespace extensions {
 					const LocalNodeStateRef& stateRef,
 					TAssertAccountStateCache assertAccountStateCache) {
 				auto pNemesisBlockElement = stateRef.Storage.view().loadBlockElement(Height(1));
-				auto cacheDelta = stateRef.Cache.createDelta();
+				auto cacheDelta = stateRef.CurrentCache.createDelta();
 				loader.execute(stateRef.Config.BlockChain, *pNemesisBlockElement, cacheDelta);
 
 				// Assert: changes should only be present in the delta
@@ -196,7 +198,7 @@ namespace catapult { namespace extensions {
 				assertAccountStateCache(accountStateCache);
 
 				// Sanity: the view is not modified
-				const auto& cacheView = stateRef.Cache.createView();
+				const auto& cacheView = stateRef.CurrentCache.createView();
 				EXPECT_EQ(0u, cacheView.sub<cache::AccountStateCache>().size());
 			}
 		};

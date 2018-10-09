@@ -35,27 +35,17 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, Amount(1234))
 
 	namespace {
-		constexpr auto Importance_Grouping = 234u;
-
-		auto ConvertToImportanceHeight(Height height) {
-			return model::ConvertToImportanceHeight(height, Importance_Grouping);
-		}
-
 		auto CreateEmptyCatapultCache() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ImportanceGrouping = Importance_Grouping;
 			return test::CreateEmptyCatapultCache(config);
 		}
 
 		void AddAccount(
 				cache::CatapultCache& cache,
 				const Key& publicKey,
-				Importance importance,
-				model::ImportanceHeight importanceHeight,
 				Amount balance) {
 			auto delta = cache.createDelta();
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
-			accountState.ImportanceInfo.set(importance, importanceHeight);
 			accountState.Balances.credit(Xpx_Id, balance);
 			cache.commit(Height());
 		}
@@ -66,7 +56,7 @@ namespace catapult { namespace validators {
 		auto cache = CreateEmptyCatapultCache();
 		auto key = test::GenerateRandomData<Key_Size>();
 		auto height = Height(1000);
-		AddAccount(cache, key, Importance(1000), ConvertToImportanceHeight(height), Amount(9999));
+		AddAccount(cache, key, Amount(9999));
 
 		auto cacheView = cache.createView();
 		auto readOnlyCache = cacheView.toReadOnly();
@@ -87,14 +77,12 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				int64_t minBalanceDelta,
-				Importance importance,
-				model::ImportanceHeight importanceHeight,
 				Height blockHeight) {
 			// Arrange:
 			auto cache = CreateEmptyCatapultCache();
 			auto key = test::GenerateRandomData<Key_Size>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
-			AddAccount(cache, key, importance, importanceHeight, initialBalance);
+			AddAccount(cache, key, initialBalance);
 
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
@@ -115,27 +103,16 @@ namespace catapult { namespace validators {
 		// Assert:
 		constexpr auto expectedResult = Failure_Core_Block_Harvester_Ineligible;
 		auto height = Height(10000);
-		AssertValidationResult(expectedResult, -1, Importance(123), ConvertToImportanceHeight(height), height);
-		AssertValidationResult(expectedResult, -100, Importance(123), ConvertToImportanceHeight(height), height);
-	}
-
-	TEST(TEST_CLASS, FailureIfImportanceIsZero) {
-		// Assert:
-		auto height = Height(10000);
-		AssertValidationResult(Failure_Core_Block_Harvester_Ineligible, 12345, Importance(0), ConvertToImportanceHeight(height), height);
-	}
-
-	TEST(TEST_CLASS, FailureIfImportanceIsNotSetAtCorrectHeight) {
-		// Assert:
-		AssertValidationResult(Failure_Core_Block_Harvester_Ineligible, 12345, Importance(0), model::ImportanceHeight(123), Height(1234));
+		AssertValidationResult(expectedResult, -1, height);
+		AssertValidationResult(expectedResult, -100, height);
 	}
 
 	TEST(TEST_CLASS, SuccessIfAllCriteriaAreMet) {
 		// Assert:
 		constexpr auto expectedResult = ValidationResult::Success;
 		auto height = Height(10000);
-		AssertValidationResult(expectedResult, 0, Importance(123), ConvertToImportanceHeight(height), height);
-		AssertValidationResult(expectedResult, 1, Importance(123), ConvertToImportanceHeight(height), height);
-		AssertValidationResult(expectedResult, 12345, Importance(123), ConvertToImportanceHeight(height), height);
+		AssertValidationResult(expectedResult, 0, height);
+		AssertValidationResult(expectedResult, 1, height);
+		AssertValidationResult(expectedResult, 12345, height);
 	}
 }}

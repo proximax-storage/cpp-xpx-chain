@@ -28,25 +28,25 @@ namespace catapult { namespace sync {
 	public:
 		/// Creates a default spam throttle configuration.
 		SpamThrottleConfiguration()
-				: TotalImportance(0)
+				: TotalBalance(0)
 				, MaxCacheSize(0)
 				, MaxBlockSize(0)
 		{}
 
-		/// Creates a spam throttle configuration around \a maxBoostFee, \a totalImportance, \a maxCacheSize and \a maxBlockSize.
-		SpamThrottleConfiguration(Amount maxBoostFee, Importance totalImportance, uint32_t maxCacheSize, uint32_t maxBlockSize)
+		/// Creates a spam throttle configuration around \a maxBoostFee, \a totalBalance, \a maxCacheSize and \a maxBlockSize.
+		SpamThrottleConfiguration(Amount maxBoostFee, Amount totalBalance, uint32_t maxCacheSize, uint32_t maxBlockSize)
 				: MaxBoostFee(maxBoostFee)
-				, TotalImportance(totalImportance)
+				, TotalBalance(totalBalance)
 				, MaxCacheSize(maxCacheSize)
 				, MaxBlockSize(maxBlockSize)
 		{}
 
 	public:
-		/// Max fee for boosting importance.
+		/// Max fee for boosting balance.
 		Amount MaxBoostFee;
 
-		/// Total importance of all accounts.
-		Importance TotalImportance;
+		/// Total balance of all accounts.
+		Amount TotalBalance;
 
 		/// Maximum transactions cache size.
 		uint32_t MaxCacheSize;

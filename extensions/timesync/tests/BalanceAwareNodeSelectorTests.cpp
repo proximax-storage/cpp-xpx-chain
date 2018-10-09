@@ -18,35 +18,35 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "timesync/src/ImportanceAwareNodeSelector.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/ionet/NodeInfo.h"
 #include "catapult/utils/ArraySet.h"
-#include "tests/test/cache/ImportanceViewTestUtils.h"
+#include "tests/test/cache/BalanceViewTestUtils.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/test/other/NodeSelectorTestUtils.h"
 #include "tests/TestHarness.h"
+#include "timesync/src/BalanceAwareNodeSelector.h"
 
 namespace catapult { namespace timesync {
 
-#define TEST_CLASS ImportanceAwareNodeSelectorTests
+#define TEST_CLASS BalanceAwareNodeSelectorTests
 
 	namespace {
 		constexpr ionet::ServiceIdentifier Default_Service_Identifier(123);
-		constexpr model::ImportanceHeight Default_Importance_Height(234);
+		constexpr Height Default_Balance_Height(234);
+		constexpr Height Effective_Balance_Height(0);
 
 		void SeedAccountStateCache(
 				cache::AccountStateCache& cache,
 				const std::vector<Key>& keys,
-				const std::vector<Importance>& importances,
-				model::ImportanceHeight importanceHeight) {
+				const std::vector<Amount>& balances) {
 			auto delta = cache.createDelta();
 			for (auto i = 0u; i < keys.size(); ++i) {
 				auto& accountState = delta->addAccount(keys[i], Height(100));
-				accountState.ImportanceInfo.set(importances[i], importanceHeight);
+				accountState.Balances.credit(Xpx_Id, balances[i]);
 			}
 
 			cache.commit();
@@ -56,7 +56,6 @@ namespace catapult { namespace timesync {
 			auto cacheConfig = cache::CacheConfiguration();
 			return std::make_unique<cache::AccountStateCache>(cacheConfig, cache::AccountStateCacheTypes::Options{
 				model::NetworkIdentifier::Mijin_Test,
-				234,
 				Amount(std::numeric_limits<Amount::ValueType>::max())
 			});
 		}
@@ -96,50 +95,41 @@ namespace catapult { namespace timesync {
 		public:
 			Options()
 					: NodeServiceIdentifier(Default_Service_Identifier)
-					, NodeImportance(1234)
-					, NodeImportanceHeight(Default_Importance_Height)
+					, NodeBalance(1234)
 			{}
 
 		public:
 			ionet::ServiceIdentifier NodeServiceIdentifier;
-			Importance NodeImportance;
-			model::ImportanceHeight NodeImportanceHeight;
+			Amount NodeBalance;
 			SeedNodeContainerOptions SeedNodeOptions;
 		};
 
 		void AssertNoNodesAreSelected(const Options& options) {
 			// Arrange:
 			auto keys = test::GenerateRandomDataVector<Key>(3);
-			std::vector<Importance> importances(3, options.NodeImportance);
-			auto pCache = CreateAccountStateCache();
-			SeedAccountStateCache(*pCache, keys, importances, options.NodeImportanceHeight);
+			std::vector<Amount> balances(3, options.NodeBalance);
+			auto pCurrentCache = CreateAccountStateCache();
+			SeedAccountStateCache(*pCurrentCache, keys, balances);
+			auto pPreviousCache = CreateAccountStateCache();
+			SeedAccountStateCache(*pPreviousCache, keys, balances);
 
 			ionet::NodeContainer nodeContainer;
 			SeedNodeContainer(nodeContainer, keys, options.SeedNodeOptions);
-			auto pView = test::CreateImportanceView(*pCache);
-			ImportanceAwareNodeSelector selector(options.NodeServiceIdentifier, 5, Importance(1000));
+			auto pView = test::CreateBalanceView(*pCurrentCache, *pPreviousCache, Effective_Balance_Height);
+			BalanceAwareNodeSelector selector(options.NodeServiceIdentifier, 5, Amount(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(Default_Importance_Height.unwrap() + 1));
+			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Default_Balance_Height + Height(1));
 
 			// Assert:
 			EXPECT_TRUE(selectNodes.empty());
 		}
 	}
 
-	TEST(TEST_CLASS, ReturnsEmptySetIfNoNodeHasImportanceSetAtHeight) {
+	TEST(TEST_CLASS, ReturnsEmptySetIfNoNodeHasEnoughBalance) {
 		// Arrange:
 		Options options;
-		options.NodeImportanceHeight = model::ImportanceHeight(124);
-
-		// Assert:
-		AssertNoNodesAreSelected(options);
-	}
-
-	TEST(TEST_CLASS, ReturnsEmptySetIfNoNodeHasEnoughImportance) {
-		// Arrange:
-		Options options;
-		options.NodeImportance = Importance(123);
+		options.NodeBalance = Amount(123);
 
 		// Assert:
 		AssertNoNodesAreSelected(options);
@@ -175,18 +165,20 @@ namespace catapult { namespace timesync {
 
 	namespace {
 		template<typename TAssert>
-		void AssertSelectedNodes(const std::vector<Key>& keys, const std::vector<Importance>& importances, TAssert assertKeys) {
+		void AssertSelectedNodes(const std::vector<Key>& keys, const std::vector<Amount>& balances, TAssert assertKeys) {
 			// Arrange:
-			auto pCache = CreateAccountStateCache();
-			SeedAccountStateCache(*pCache, keys, importances, Default_Importance_Height);
+			auto pCurrentCache = CreateAccountStateCache();
+			SeedAccountStateCache(*pCurrentCache, keys, balances);
+			auto pPreviousCache = CreateAccountStateCache();
+			SeedAccountStateCache(*pPreviousCache, keys, balances);
 
 			ionet::NodeContainer nodeContainer;
 			SeedNodeContainer(nodeContainer, keys);
-			auto pView = test::CreateImportanceView(*pCache);
-			ImportanceAwareNodeSelector selector(Default_Service_Identifier, 3, Importance(1000));
+			auto pView = test::CreateBalanceView(*pCurrentCache, *pPreviousCache, Effective_Balance_Height);
+			BalanceAwareNodeSelector selector(Default_Service_Identifier, 3, Amount(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(Default_Importance_Height.unwrap() + 1));
+			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Default_Balance_Height + Height(1));
 
 			// Assert:
 			assertKeys(test::ExtractNodeIdentities(selectNodes));
@@ -194,13 +186,13 @@ namespace catapult { namespace timesync {
 	}
 
 	TEST(TEST_CLASS, ReturnsOnlyNodesThatMeetAllRequirements) {
-		// Arrange: only importances at indexes 0, 2 and 3 qualify
-		std::vector<Importance> importances{ Importance(1234), Importance(123), Importance(5000), Importance(10000), Importance(50) };
-		auto allKeys = test::GenerateRandomDataVector<Key>(importances.size());
+		// Arrange: only balances at indexes 0, 2 and 3 qualify
+		std::vector<Amount> balances{ Amount(1234), Amount(123), Amount(5000), Amount(10000), Amount(50) };
+		auto allKeys = test::GenerateRandomDataVector<Key>(balances.size());
 		utils::KeySet expectedKeys{ allKeys[0], allKeys[2], allKeys[3] };
 
 		// Act:
-		AssertSelectedNodes(allKeys, importances, [&expectedKeys](const auto& keys) {
+		AssertSelectedNodes(allKeys, balances, [&expectedKeys](const auto& keys) {
 			// Assert:
 			EXPECT_EQ(3u, keys.size());
 			EXPECT_EQ(expectedKeys, keys);
@@ -222,15 +214,17 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, UsesProvidedCustomSelector) {
 		// Arrange:
-		std::vector<Importance> importances(5, Importance(1000));
-		auto keys = test::GenerateRandomDataVector<Key>(importances.size());
-		auto pCache = CreateAccountStateCache();
-		SeedAccountStateCache(*pCache, keys, importances, Default_Importance_Height);
+		std::vector<Amount> balances(5, Amount(1000));
+		auto keys = test::GenerateRandomDataVector<Key>(balances.size());
+		auto pCurrentCache = CreateAccountStateCache();
+		SeedAccountStateCache(*pCurrentCache, keys, balances);
+		auto pPreviousCache = CreateAccountStateCache();
+		SeedAccountStateCache(*pPreviousCache, keys, balances);
 
 		ionet::NodeContainer nodeContainer;
 		SeedNodeContainer(nodeContainer, keys);
 
-		auto pView = test::CreateImportanceView(*pCache);
+		auto pView = test::CreateBalanceView(*pCurrentCache, *pPreviousCache, Effective_Balance_Height);
 		SelectorParamCapture capture;
 		auto customSelector = [&capture](const auto& weightedCandidates, auto totalWeight, auto maxCandidates) {
 			for (const auto& weightedCandidate : weightedCandidates)
@@ -241,10 +235,11 @@ namespace catapult { namespace timesync {
 			++capture.NumSelectorCalls;
 			return ionet::NodeSet();
 		};
-		ImportanceAwareNodeSelector selector(Default_Service_Identifier, 3, Importance(1000), customSelector);
+
+		BalanceAwareNodeSelector selector(Default_Service_Identifier, 3, Amount(1000), customSelector);
 
 		// Act:
-		selector.selectNodes(*pView, nodeContainer.view(), Height(Default_Importance_Height.unwrap() + 1));
+		selector.selectNodes(*pView, nodeContainer.view(), Default_Balance_Height + Height(1));
 
 		// Assert:
 		EXPECT_EQ(1u, capture.NumSelectorCalls);
@@ -262,33 +257,35 @@ namespace catapult { namespace timesync {
 	// region probability test
 
 	namespace {
-		struct ImportanceAwareNodeSelectorTraits {
+		struct BalanceAwareNodeSelectorTraits {
 		public:
 			using KeyStatistics = std::unordered_map<Key, uint32_t, utils::ArrayHasher<Key>>;
-			static constexpr auto Description() { return "node selection and importance correlation"; }
+			static constexpr auto Description() { return "node selection and balance correlation"; }
 
 			static KeyStatistics CreateStatistics(
 					const std::vector<ionet::Node>& nodes,
 					const std::vector<uint64_t>& rawWeights,
 					uint64_t numIterations) {
 				uint64_t cummulativeWeight = 0u;
-				std::vector<Importance> importances;
+				std::vector<Amount> balances;
 				for (auto weight : rawWeights) {
 					cummulativeWeight += weight;
-					importances.push_back(Importance(weight));
+					balances.push_back(Amount(weight));
 				}
 
 				std::vector<Key> keys;
 				for (const auto& node : nodes)
 					keys.push_back(node.identityKey());
 
-				auto pCache = CreateAccountStateCache();
-				SeedAccountStateCache(*pCache, keys, importances, model::ImportanceHeight(1));
+				auto pCurrentCache = CreateAccountStateCache();
+				SeedAccountStateCache(*pCurrentCache, keys, balances);
+				auto pPreviousCache = CreateAccountStateCache();
+				SeedAccountStateCache(*pPreviousCache, keys, balances);
 
 				ionet::NodeContainer nodeContainer;
 				SeedNodeContainer(nodeContainer, keys);
-				auto pView = test::CreateImportanceView(*pCache);
-				ImportanceAwareNodeSelector selector(Default_Service_Identifier, 1, Importance(1000));
+				auto pView = test::CreateBalanceView(*pCurrentCache, *pPreviousCache, Effective_Balance_Height);
+				BalanceAwareNodeSelector selector(Default_Service_Identifier, 1, Amount(1000));
 
 				KeyStatistics keyStatistics;
 				for (auto i = 0u; i < numIterations; ++i) {
@@ -304,7 +301,7 @@ namespace catapult { namespace timesync {
 		};
 	}
 
-	DEFINE_NODE_SELECTOR_PROBABILITY_TESTS(ImportanceAwareNodeSelector)
+	DEFINE_NODE_SELECTOR_PROBABILITY_TESTS(BalanceAwareNodeSelector)
 
 	// endregion
 }}

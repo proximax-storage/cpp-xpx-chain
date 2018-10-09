@@ -22,7 +22,6 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache/SubCachePluginAdapter.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
-#include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/nodeps/Random.h"
 
@@ -49,12 +48,8 @@ namespace catapult { namespace test {
 
 		subCaches[AccountStateCache::Id] = MakeSubCachePlugin<AccountStateCache, AccountStateCacheStorage>(AccountStateCacheTypes::Options{
 			config.Network.Identifier,
-			config.ImportanceGrouping,
 			config.MinHarvesterBalance
 		});
-
-		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(
-				CalculateDifficultyHistorySize(config));
 	}
 
 	// endregion

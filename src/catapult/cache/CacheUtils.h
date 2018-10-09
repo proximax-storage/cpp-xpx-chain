@@ -19,11 +19,11 @@
 **/
 
 #pragma once
-#include "ChainScoreProvider.h"
-#include "MongoStorageContext.h"
+#include <catapult/constants.h>
 
-namespace catapult { namespace mongo {
-
-	/// Creates a mongodb chain score provider around \a context.
-	std::unique_ptr<ChainScoreProvider> CreateMongoChainScoreProvider(MongoStorageContext& context);
-}}
+namespace catapult {
+	namespace cache {
+		/// This function return true if current height is enough to update previous cache
+		bool canUpdatePreviousCache(const Height& currentHeight, const Height& effectiveBalanceHeight);
+	}
+}

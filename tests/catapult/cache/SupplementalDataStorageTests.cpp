@@ -28,7 +28,7 @@ namespace catapult { namespace cache {
 #define TEST_CLASS SupplementalDataStorageTests
 
 	namespace {
-		constexpr auto Data_Size = sizeof(model::ImportanceHeight) + 2 * sizeof(uint64_t) + sizeof(Height);
+		constexpr auto Data_Size = sizeof(Height);
 	}
 
 	TEST(TEST_CLASS, CanSaveData) {
@@ -38,8 +38,6 @@ namespace catapult { namespace cache {
 
 		// - create random data
 		SupplementalData data;
-		data.State.LastRecalculationHeight = test::GenerateRandomValue<model::ImportanceHeight>();
-		data.ChainScore = model::ChainScore(test::Random(), test::Random());
 		auto chainHeight = test::GenerateRandomValue<Height>();
 
 		// Act:
@@ -49,9 +47,7 @@ namespace catapult { namespace cache {
 		ASSERT_EQ(Data_Size, buffer.size());
 
 		const auto* pData64 = reinterpret_cast<const uint64_t*>(buffer.data());
-		EXPECT_EQ(data.State.LastRecalculationHeight, model::ImportanceHeight(pData64[0]));
-		EXPECT_EQ(data.ChainScore, model::ChainScore(pData64[1], pData64[2]));
-		EXPECT_EQ(chainHeight, Height(pData64[3]));
+		EXPECT_EQ(chainHeight, Height(pData64[0]));
 
 		EXPECT_EQ(1u, stream.numFlushes());
 	}
@@ -70,8 +66,6 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		const auto* pData64 = reinterpret_cast<const uint64_t*>(buffer.data());
-		EXPECT_EQ(model::ImportanceHeight(pData64[0]), data.State.LastRecalculationHeight);
-		EXPECT_EQ(model::ChainScore(pData64[1], pData64[2]), data.ChainScore);
-		EXPECT_EQ(Height(pData64[3]), chainHeight);
+		EXPECT_EQ(Height(pData64[0]), chainHeight);
 	}
 }}

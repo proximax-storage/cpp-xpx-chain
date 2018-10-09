@@ -54,8 +54,13 @@ namespace catapult { namespace test {
 			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
 
 			model::PreviousBlockContext context(*pNemesisBlockElement);
-			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
-			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
+			model::BlockHitContext hitContext;
+			hitContext.BaseTarget = 0xF000000000000000u;
+			hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(5u);
+			hitContext.EffectiveBalance = Amount{1000u};
+			auto pBlock = model::CreateBlock(context, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());
+			pBlock->Timestamp = context.Timestamp + Timestamp(60000u);
+			pBlock->CumulativeDifficulty = Difficulty{0xF000000000000u};
 			SignBlock(signer, *pBlock);
 			return std::move(pBlock);
 		}

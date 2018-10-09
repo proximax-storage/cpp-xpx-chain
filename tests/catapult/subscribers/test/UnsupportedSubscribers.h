@@ -30,10 +30,6 @@ namespace catapult { namespace test {
 	/// An unsupported state change subscriber.
 	class UnsupportedStateChangeSubscriber : public subscribers::StateChangeSubscriber {
 	public:
-		void notifyScoreChange(const model::ChainScore&) override {
-			CATAPULT_THROW_RUNTIME_ERROR("notifyScoreChange - not supported in mock");
-		}
-
 		void notifyStateChange(const consumers::StateChangeInfo&) override {
 			CATAPULT_THROW_RUNTIME_ERROR("notifyStateChange - not supported in mock");
 		}

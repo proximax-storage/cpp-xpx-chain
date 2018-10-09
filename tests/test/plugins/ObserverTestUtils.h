@@ -57,10 +57,9 @@ namespace catapult { namespace test {
 	/// Creates an observer context around \a cache and \a state at \a height with specified \a mode.
 	constexpr observers::ObserverContext CreateObserverContext(
 			cache::CatapultCacheDelta& cache,
-			state::CatapultState& state,
 			Height height,
 			observers::NotifyMode mode) {
-		return observers::ObserverContext(cache, state, height, mode);
+		return observers::ObserverContext(cache, height, mode);
 	}
 
 /// Defines common observer tests for an observer with \a NAME.

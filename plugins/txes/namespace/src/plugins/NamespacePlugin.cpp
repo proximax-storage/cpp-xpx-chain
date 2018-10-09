@@ -62,8 +62,10 @@ namespace catapult { namespace plugins {
 			manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(rentalFeeConfig));
 			manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
 
-			manager.addCacheSupport<cache::MosaicCacheStorage>(
+			manager.addCurrentCacheSupport<cache::MosaicCacheStorage>(
 					std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));
+			manager.addPreviousCacheSupport<cache::MosaicCacheStorage>(
+					std::make_unique<cache::OldMosaicCache>(manager.cacheConfig(cache::OldMosaicCache::Name)));
 
 			manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C"), [&cache]() { return GetMosaicView(cache)->size(); });
@@ -124,7 +126,7 @@ namespace catapult { namespace plugins {
 			auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(manager.config().Network, config);
 			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(rentalFeeConfig));
 
-			manager.addCacheSupport<cache::NamespaceCacheStorage>(
+			manager.addCurrentCacheSupport<cache::NamespaceCacheStorage>(
 					std::make_unique<cache::NamespaceCache>(manager.cacheConfig(cache::NamespaceCache::Name)));
 
 			manager.addDiagnosticHandlerHook([](auto& handlers, const cache::CatapultCache& cache) {

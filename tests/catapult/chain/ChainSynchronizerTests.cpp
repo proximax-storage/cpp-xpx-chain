@@ -22,7 +22,6 @@
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/model/ChainScore.h"
 #include "catapult/model/EntityRange.h"
 #include "tests/catapult/chain/test/MockChainApi.h"
 #include "tests/test/core/HashTestUtils.h"
@@ -62,24 +61,24 @@ namespace catapult { namespace chain {
 		}
 
 		struct TestContext {
-			TestContext(const ChainScore& localScore, const ChainScore& remoteScore)
-					: TestContext(localScore, remoteScore, {}, {}, test::GenerateVerifiableBlockAtHeight(Default_Height))
+			TestContext(const Difficulty& localDifficulty, const Difficulty& remoteDifficulty)
+					: TestContext(localDifficulty, remoteDifficulty, {}, {}, test::GenerateVerifiableBlockAtHeight(Default_Height))
 			{}
 
-			TestContext(const ChainScore& localScore, const ChainScore& remoteScore, std::unique_ptr<Block>&& pRemoteLastBlock)
-					: TestContext(localScore, remoteScore, {}, {}, std::move(pRemoteLastBlock))
+			TestContext(const Difficulty& localDifficulty, const Difficulty& remoteDifficulty, std::unique_ptr<Block>&& pRemoteLastBlock)
+					: TestContext(localDifficulty, remoteDifficulty, {}, {}, std::move(pRemoteLastBlock))
 			{}
 
 			TestContext(
-					const ChainScore& localScore,
-					const ChainScore& remoteScore,
+					const Difficulty& localDifficulty,
+					const Difficulty& remoteDifficulty,
 					const HashRange& localHashes,
 					const HashRange& remoteHashes,
 					std::unique_ptr<Block>&& pRemoteLastBlock)
-					: LocalScore(localScore)
+					: LocalDifficulty(localDifficulty)
 					, LocalHashes(HashRange::CopyRange(localHashes))
 					, pIo(std::make_shared<MockPacketIo>())
-					, pChainApi(std::make_shared<MockChainApi>(remoteScore, std::move(pRemoteLastBlock), remoteHashes))
+					, pChainApi(std::make_shared<MockChainApi>(remoteDifficulty, std::move(pRemoteLastBlock), remoteHashes))
 					, BlockRangeConsumerCalls(0)
 					, Config(CreateConfiguration())
 			{}
@@ -88,7 +87,7 @@ namespace catapult { namespace chain {
 				EXPECT_EQ(0u, BlockRangeConsumerCalls);
 			}
 
-			ChainScore LocalScore;
+			Difficulty LocalDifficulty;
 			HashRange LocalHashes;
 			std::shared_ptr<MockPacketIo> pIo;
 			std::shared_ptr<MockChainApi> pChainApi;
@@ -101,7 +100,7 @@ namespace catapult { namespace chain {
 
 		RemoteNodeSynchronizer<api::RemoteChainApi> CreateSynchronizer(TestContext& context, ConsumerMode mode = ConsumerMode::Normal) {
 			auto pVerifiableBlock = test::GenerateVerifiableBlockAtHeight(Default_Height);
-			auto pLocal = std::make_shared<MockChainApi>(context.LocalScore, std::move(pVerifiableBlock), context.LocalHashes);
+			auto pLocal = std::make_shared<MockChainApi>(context.LocalDifficulty, std::move(pVerifiableBlock), context.LocalHashes);
 
 			auto& blockConsumerCalls = context.BlockRangeConsumerCalls;
 			auto blockRangeConsumer = [mode, &blockConsumerCalls, &context](const auto&, const auto& processingComplete) {
@@ -121,33 +120,31 @@ namespace catapult { namespace chain {
 	// region chain synchronization
 
 	namespace {
-		void AssertNeutralInteraction(ChainScore localScore, ChainScore remoteScore) {
+		void AssertNeutralInteraction(Difficulty localDifficulty, Difficulty remoteDifficulty) {
 			// Arrange:
-			TestContext context(localScore, remoteScore);
+			TestContext context(localDifficulty, remoteDifficulty);
 			auto synchronizer = CreateSynchronizer(context);
-
 			// Act:
 			auto result = synchronizer(*context.pChainApi).get();
-
 			// Assert:
 			EXPECT_EQ(NodeInteractionResult::Neutral, result);
 			EXPECT_EQ(0u, context.BlockRangeConsumerCalls);
 		}
 	}
 
-	TEST(TEST_CLASS, NeutralInteractionIfCompareChainsReturnsEqualScoreResult) {
+	TEST(TEST_CLASS, NeutralInteractionIfCompareChainsReturnsEqualDifficultyResult) {
 		// Assert:
-		AssertNeutralInteraction(ChainScore(10), ChainScore(10));
+		AssertNeutralInteraction(Difficulty(10), Difficulty(10));
 	}
 
-	TEST(TEST_CLASS, NeutralInteractionIfCompareChainsReturnsLowerScoreResult) {
+	TEST(TEST_CLASS, NeutralInteractionIfCompareChainsReturnsLowerDifficultyResult) {
 		// Assert:
-		AssertNeutralInteraction(ChainScore(11), ChainScore(10));
+		AssertNeutralInteraction(Difficulty(11), Difficulty(10));
 	}
 
 	TEST(TEST_CLASS, FailedInteractionIfCompareChainsReturnsFailureResult) {
 		// Arrange: trigger failure by letting the remote return a non-verifiable last block
-		TestContext context(ChainScore(10), ChainScore(11), test::GenerateNonVerifiableBlockAtHeight(Default_Height));
+		TestContext context(Difficulty(10), Difficulty(11), test::GenerateNonVerifiableBlockAtHeight(Default_Height));
 		auto synchronizer = CreateSynchronizer(context);
 
 		// Act:
@@ -160,7 +157,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, FailedInteractionIfCompareChainsReturnsException) {
 		// Arrange:
-		TestContext context(ChainScore(10), ChainScore(11));
+		TestContext context(Difficulty(10), Difficulty(11));
 		context.pChainApi->setError(MockChainApi::EntryPoint::Chain_Info);
 		auto synchronizer = CreateSynchronizer(context);
 
@@ -179,8 +176,8 @@ namespace catapult { namespace chain {
 			localHashes = test::ConcatHashes(localHashes, test::GenerateRandomHashes(forkDepth));
 
 			TestContext context(
-					ChainScore(10),
-					ChainScore(11),
+					Difficulty(10),
+					Difficulty(11),
 					localHashes,
 					remoteHashes,
 					test::GenerateVerifiableBlockAtHeight(Default_Height));
@@ -328,17 +325,13 @@ namespace catapult { namespace chain {
 	// region unprocessed elements
 
 	namespace {
-		enum class ChainScoreRelation {
-			RemoteBetter,
-			Equal
-		};
 
-		auto CreateTestContextForUnprocessedElementTests(ChainScoreRelation relation = ChainScoreRelation::RemoteBetter) {
+		auto CreateTestContextForUnprocessedElementTests(bool remoteBetter = true) {
 			auto remoteHashes = test::GenerateRandomHashes(10);
 			auto localHashes = test::GenerateRandomHashesSubset(remoteHashes, 9);
 			auto context = TestContext(
-					ChainScore(10),
-					ChainScoreRelation::RemoteBetter == relation ? ChainScore(11) : ChainScore(10),
+					Difficulty(10),
+					remoteBetter ? Difficulty(11) : Difficulty(10),
 					localHashes,
 					remoteHashes,
 					test::GenerateVerifiableBlockAtHeight(Default_Height));

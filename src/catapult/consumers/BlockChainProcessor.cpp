@@ -18,13 +18,16 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <src/catapult/cache_core/BalanceView.h>
 #include "BlockChainProcessor.h"
 #include "InputUtils.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
+#include "catapult/cache/CacheUtils.h"
+#include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/utils/TimeSpan.h"
 
 using namespace catapult::validators;
 
@@ -45,43 +48,72 @@ namespace catapult { namespace consumers {
 		public:
 			DefaultBlockChainProcessor(
 					const BlockHitPredicateFactory& blockHitPredicateFactory,
-					const chain::BatchEntityProcessor& batchEntityProcessor)
+					const BlockChainSyncHandlers& handlers)
 					: m_blockHitPredicateFactory(blockHitPredicateFactory)
-					, m_batchEntityProcessor(batchEntityProcessor)
+					, m_handlers(handlers)
 			{}
 
 		public:
 			ValidationResult operator()(
-					const WeakBlockInfo& parentBlockInfo,
-					BlockElements& elements,
-					const observers::ObserverState& state) const {
+					SyncState& state,
+					BlockElements& elements) const {
 				if (elements.empty())
 					return ValidationResult::Neutral;
+
+				const auto& parentBlockInfo = state.commonBlockInfo();
 
 				if (!IsLinked(parentBlockInfo, elements))
 					return chain::Failure_Chain_Unlinked;
 
-				auto readOnlyCache = state.Cache.toReadOnly();
-				auto blockHitPredicate = m_blockHitPredicateFactory(readOnlyCache);
-
-				const auto* pParent = &parentBlockInfo.entity();
+				auto blockHitPredicate = m_blockHitPredicateFactory();
+				auto previousTimeStamp = parentBlockInfo.entity().Timestamp;
 				const auto* pParentGenerationHash = &parentBlockInfo.generationHash();
+
+				const auto& currentObserverState = state.currentObserverState();
+				const auto& preivousObserverState = state.preivousObserverState();
+				const auto& storage = state.storage();
+
+				const auto& effectiveBalanceHeight = state.EffectiveBalanceHeight;
+				auto currentHeight = parentBlockInfo.entity().Height;
+				const auto& commonHeight = parentBlockInfo.entity().Height;
+
+				auto balanceView = cache::BalanceView(
+						cache::ReadOnlyAccountStateCache(currentObserverState.Cache.sub<cache::AccountStateCache>()),
+						cache::ReadOnlyAccountStateCache(preivousObserverState.Cache.sub<cache::AccountStateCache>()),
+						effectiveBalanceHeight
+				);
+
 				for (auto& element : elements) {
 					const auto& block = element.Block;
+					Amount effectiveBalance = balanceView.getEffectiveBalance(block.Signer, currentHeight);
 					element.GenerationHash = model::CalculateGenerationHash(*pParentGenerationHash, block.Signer);
-					if (!blockHitPredicate(*pParent, block, element.GenerationHash)) {
+
+					if (!blockHitPredicate(element.GenerationHash, block.BaseTarget,
+							utils::TimeSpan::FromDifference(block.Timestamp, previousTimeStamp), effectiveBalance)) {
 						CATAPULT_LOG(warning) << "block " << block.Height << " failed hit";
 						return chain::Failure_Chain_Block_Not_Hit;
 					}
 
-					auto result = m_batchEntityProcessor(block.Height, block.Timestamp, ExtractEntityInfos(element), state);
+					auto result = m_handlers.BatchEntityProcessor(block.Height, block.Timestamp, ExtractEntityInfos(element), currentObserverState);
 					if (!IsValidationResultSuccess(result)) {
 						CATAPULT_LOG(warning) << "batch processing of block " << block.Height << " failed with " << result;
 						return result;
 					}
 
-					pParent = &block;
+					// Restore old block which is EffectiveBalanceHeight blocks below
+					if (cache::canUpdatePreviousCache(block.Height, effectiveBalanceHeight)) {
+						auto diff = block.Height - effectiveBalanceHeight;
+						if (diff <= commonHeight) {
+							m_handlers.CommitBlock(*storage.loadBlockElement(diff), preivousObserverState);
+						} else {
+							diff = diff - commonHeight;
+							m_handlers.CommitBlock(elements[diff.unwrap() - 1], preivousObserverState);
+						}
+					}
+
+					previousTimeStamp = block.Timestamp;
 					pParentGenerationHash = &element.GenerationHash;
+					currentHeight = currentHeight + Height(1);
 				}
 
 				return ValidationResult::Success;
@@ -89,13 +121,13 @@ namespace catapult { namespace consumers {
 
 		private:
 			BlockHitPredicateFactory m_blockHitPredicateFactory;
-			chain::BatchEntityProcessor m_batchEntityProcessor;
+			const BlockChainSyncHandlers& m_handlers;
 		};
 	}
 
 	BlockChainProcessor CreateBlockChainProcessor(
 			const BlockHitPredicateFactory& blockHitPredicateFactory,
-			const chain::BatchEntityProcessor& batchEntityProcessor) {
-		return DefaultBlockChainProcessor(blockHitPredicateFactory, batchEntityProcessor);
+			const BlockChainSyncHandlers& handlers) {
+		return DefaultBlockChainProcessor(blockHitPredicateFactory, handlers);
 	}
 }}

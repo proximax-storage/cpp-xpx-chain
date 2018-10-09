@@ -56,10 +56,10 @@ namespace catapult { namespace hashcache {
 		template<typename TAction>
 		void RunHashCacheTest(TAction action) {
 			// Arrange:
-			TestContext context(CreateCache());
+			TestContext context(CreateCache(), CreateCache());
 			context.boot();
 
-			auto& cache = context.testState().state().cache();
+			auto& cache = context.testState().state().currentCache();
 
 			// - populate the hash cache
 			auto delta = cache.createDelta();

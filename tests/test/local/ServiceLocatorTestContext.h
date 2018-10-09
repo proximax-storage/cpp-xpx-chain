@@ -19,18 +19,18 @@
 **/
 
 #pragma once
-#include "LocalTestUtils.h"
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/utils/NetworkTime.h"
+#include "LocalTestUtils.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/SchedulerTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBasedStorage.h"
+#include "tests/test/core/SchedulerTestUtils.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
@@ -41,48 +41,50 @@ namespace catapult { namespace test {
 	class ServiceTestState {
 	public:
 		/// Creates the test state.
-		ServiceTestState() : ServiceTestState(cache::CatapultCache({}))
+		ServiceTestState() : ServiceTestState(cache::CatapultCache({}), cache::CatapultCache({}))
 		{}
 
 		/// Creates the test state around \a cache.
-		explicit ServiceTestState(cache::CatapultCache&& cache) : ServiceTestState(std::move(cache), &utils::NetworkTime)
+		explicit ServiceTestState(cache::CatapultCache&& currentCache, cache::CatapultCache&& previousCache)
+				: ServiceTestState(std::move(currentCache), std::move(previousCache), &utils::NetworkTime)
 		{}
 
 		/// Creates the test state around \a cache and \a timeSupplier.
-		explicit ServiceTestState(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
-				: m_config(LoadLocalNodeConfiguration(""))
-				, m_catapultCache(std::move(cache))
-				, m_storage(std::make_unique<mocks::MockMemoryBasedStorage>())
+		explicit ServiceTestState(cache::CatapultCache&& currentCache, cache::CatapultCache&& previousCache, const supplier<Timestamp>& timeSupplier)
+				: m_state(
+						LoadLocalNodeConfiguration(""),
+						std::make_unique<mocks::MockMemoryBasedStorage>(),
+						std::move(currentCache),
+						std::move(previousCache)
+				)
+				, m_stateRef(m_state)
 				, m_pUtCache(CreateUtCacheProxy())
-				, m_pluginManager(m_config.BlockChain, plugins::StorageConfiguration())
+				, m_pluginManager(m_state.Config.BlockChain, plugins::StorageConfiguration())
 				, m_pool("service locator test context", 2)
-				, m_state(
-						m_config,
-						m_nodes,
-						m_catapultCache,
-						m_catapultState,
-						m_storage,
-						m_score,
-						*m_pUtCache,
-						timeSupplier,
-						m_transactionStatusSubscriber,
-						m_stateChangeSubscriber,
-						m_nodeSubscriber,
-						m_counters,
-						m_pluginManager,
-						m_pool)
+				, m_serviceState(
+						  m_stateRef,
+						  m_nodes,
+						  *m_pUtCache,
+						  timeSupplier,
+						  m_transactionStatusSubscriber,
+						  m_stateChangeSubscriber,
+						  m_nodeSubscriber,
+						  m_counters,
+						  m_pluginManager,
+						  m_pool
+				)
 		{}
 
 	public:
 		/// Gets the service state.
 		auto& state() {
-			return m_state;
+			return m_serviceState;
 		}
 
 	public:
 		/// Gets the config.
 		auto& config() const {
-			return m_config;
+			return m_state.Config;
 		}
 
 		/// Gets the transaction status subscriber.
@@ -111,12 +113,9 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		config::LocalNodeConfiguration m_config;
+		extensions::LocalNodeState m_state;
+		extensions::LocalNodeStateRef m_stateRef;
 		ionet::NodeContainer m_nodes;
-		cache::CatapultCache m_catapultCache;
-		state::CatapultState m_catapultState;
-		io::BlockStorageCache m_storage;
-		extensions::LocalNodeChainScore m_score;
 		std::unique_ptr<cache::MemoryUtCacheProxy> m_pUtCache;
 
 		mocks::MockTransactionStatusSubscriber m_transactionStatusSubscriber;
@@ -127,7 +126,7 @@ namespace catapult { namespace test {
 		plugins::PluginManager m_pluginManager;
 		thread::MultiServicePool m_pool;
 
-		extensions::ServiceState m_state;
+		extensions::ServiceState m_serviceState;
 	};
 
 	/// A test context for extension service tests.
@@ -141,15 +140,15 @@ namespace catapult { namespace test {
 		{}
 
 		/// Creates the test context around \a cache.
-		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache)
-				: ServiceLocatorTestContext(std::move(cache), &utils::NetworkTime)
+		explicit ServiceLocatorTestContext(cache::CatapultCache&& currentCache, cache::CatapultCache&& previousCache)
+				: ServiceLocatorTestContext(std::move(currentCache), std::move(previousCache), &utils::NetworkTime)
 		{}
 
 		/// Creates the test context around \a cache and \a timeSupplier.
-		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
+		explicit ServiceLocatorTestContext(cache::CatapultCache&& currentCache, cache::CatapultCache&& previousCache, const supplier<Timestamp>& timeSupplier)
 				: m_keyPair(GenerateKeyPair())
 				, m_locator(m_keyPair)
-				, m_testState(std::move(cache), timeSupplier)
+				, m_testState(std::move(currentCache), std::move(previousCache), timeSupplier)
 		{}
 
 	public:

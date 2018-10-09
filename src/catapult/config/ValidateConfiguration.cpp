@@ -35,8 +35,8 @@ namespace catapult { namespace config {
 		}
 
 		void ValidateConfiguration(const model::BlockChainConfiguration& config) {
-			if (2 * config.ImportanceGrouping <= config.MaxRollbackBlocks)
-				CATAPULT_THROW_VALIDATION_ERROR("ImportanceGrouping must be greater than MaxRollbackBlocks / 2");
+			if (config.MaxRollbackBlocks >= config.EffectiveBalanceRange)
+				CATAPULT_THROW_VALIDATION_ERROR("EffectiveBalanceRange must be greater than MaxRollbackBlocks");
 		}
 	}
 

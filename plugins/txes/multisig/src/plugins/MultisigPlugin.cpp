@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 	void RegisterMultisigSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateModifyMultisigAccountTransactionPlugin());
 
-		manager.addCacheSupport<cache::MultisigCacheStorage>(
+		manager.addCurrentCacheSupport<cache::MultisigCacheStorage>(
 				std::make_unique<cache::MultisigCache>(manager.cacheConfig(cache::MultisigCache::Name)));
 
 		manager.addStatelessValidatorHook([](auto& builder) {

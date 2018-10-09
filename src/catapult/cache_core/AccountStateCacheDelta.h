@@ -99,9 +99,6 @@ namespace catapult { namespace cache {
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const;
 
-		/// Gets the network importance grouping.
-		uint64_t importanceGrouping() const;
-
 	public:
 		/// If not present, adds an account to the cache at given height (\a addressHeight) using \a address.
 		/// Returns an account state.

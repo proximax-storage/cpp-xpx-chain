@@ -45,10 +45,6 @@ namespace catapult { namespace cache {
 		return m_pCache ? m_pCache->networkIdentifier() : m_pCacheDelta->networkIdentifier();
 	}
 
-	uint64_t ReadOnlyAccountStateCache::importanceGrouping() const {
-		return m_pCache ? m_pCache->importanceGrouping() : m_pCacheDelta->importanceGrouping();
-	}
-
 	size_t ReadOnlyAccountStateCache::size() const {
 		return m_pCache ? m_pCache->size() : m_pCacheDelta->size();
 	}

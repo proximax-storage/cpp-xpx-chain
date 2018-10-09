@@ -29,7 +29,7 @@ namespace catapult { namespace cache {
 	namespace {
 		template<size_t CacheId>
 		void AddSubCacheWithId(CatapultCacheBuilder& builder) {
-			builder.add<test::SimpleCacheStorageTraits>(std::make_unique<test::SimpleCacheT<CacheId>>());
+			builder.addCurrentSubCache<test::SimpleCacheStorageTraits>(std::make_unique<test::SimpleCacheT<CacheId>>());
 		}
 
 		size_t GetNumSubCaches(const CatapultCache& cache) {
@@ -42,7 +42,7 @@ namespace catapult { namespace cache {
 		CatapultCacheBuilder builder;
 
 		// Act:
-		auto cache = builder.build();
+		auto cache = builder.buildCurrentCache();
 
 		// Assert:
 		EXPECT_EQ(0u, GetNumSubCaches(cache));
@@ -54,7 +54,7 @@ namespace catapult { namespace cache {
 		AddSubCacheWithId<2>(builder);
 
 		// Act:
-		auto cache = builder.build();
+		auto cache = builder.buildCurrentCache();
 
 		// Assert:
 		EXPECT_EQ(1u, GetNumSubCaches(cache));
@@ -68,7 +68,7 @@ namespace catapult { namespace cache {
 		AddSubCacheWithId<4>(builder);
 
 		// Act:
-		auto cache = builder.build();
+		auto cache = builder.buildCurrentCache();
 
 		// Assert:
 		EXPECT_EQ(3u, GetNumSubCaches(cache));

@@ -90,9 +90,9 @@ namespace catapult { namespace test {
 		config.BlockTimeSmoothingFactor = 0;
 		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
 
-		config.ImportanceGrouping = 1;
 		config.MaxRollbackBlocks = 10;
 		config.MaxDifficultyBlocks = 60;
+		config.EffectiveBalanceRange = 0;
 
 		config.TotalChainBalance = Amount(8'999'999'998'000'000);
 		config.MinHarvesterBalance = Amount(1'000'000'000'000);
@@ -125,7 +125,6 @@ namespace catapult { namespace test {
 
 	config::LocalNodeConfiguration CreateUninitializedLocalNodeConfiguration() {
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		blockChainConfig.ImportanceGrouping = 1;
 		blockChainConfig.MaxRollbackBlocks = 0;
 
 		auto userConfig = config::UserConfiguration::Uninitialized();
@@ -150,7 +149,6 @@ namespace catapult { namespace test {
 		auto config = model::BlockChainConfiguration::Uninitialized();
 		SetNetwork(config.Network);
 		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
-		config.ImportanceGrouping = 123;
 		config.MaxDifficultyBlocks = 123;
 		config.TotalChainBalance = Amount(15'000'000);
 		config.BlockPruneInterval = 360;

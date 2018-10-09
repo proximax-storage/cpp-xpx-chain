@@ -18,21 +18,28 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#include "extensions/mongo/src/ChainScoreProvider.h"
-#include "catapult/model/ChainScore.h"
+#include "AccountStateCache.h"
+#include "BalanceView.h"
+#include "catapult/chain/BlockScorer.h"
+#include "catapult/model/Address.h"
 
-namespace catapult { namespace mocks {
+namespace catapult { namespace cache {
 
-	/// A mock chain score provider.
-	class MockChainScoreProvider : public mongo::ChainScoreProvider {
-	public:
-		void saveScore(const model::ChainScore&) override {
-			CATAPULT_THROW_RUNTIME_ERROR("not implemented");
-		}
+	Amount BalanceView::getEffectiveBalance(const Key& publicKey, Height height) const {
+		return chain::CalculateEffectiveBalance(
+				m_currentCache,
+				m_previousCache,
+				m_effectiveBalanceHeight,
+				height,
+				publicKey
+		);
+	}
 
-		model::ChainScore loadScore() const override {
-			return model::ChainScore();
-		}
-	};
+	Amount BalanceView::getBalance(const Key& publicKey) const {
+		return getEffectiveBalance(publicKey, Height(0));
+	}
+
+	bool BalanceView::canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance) const {
+		return getEffectiveBalance(publicKey, height) >= minHarvestingBalance;
+	}
 }}
