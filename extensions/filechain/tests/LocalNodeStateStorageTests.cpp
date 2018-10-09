@@ -97,7 +97,7 @@ namespace catapult { namespace filechain {
 		// Arrange: seed and save the cache state
 		test::TempDirectoryGuard tempDir;
 		auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
-		/* auto originalSupplementalData = */ SaveState(tempDir.name(), originalCache);
+		SaveState(tempDir.name(), originalCache);
 
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
@@ -168,7 +168,7 @@ namespace catapult { namespace filechain {
 
 		// - seed and save the cache state in the presence of a lock file
 		auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
-		/* auto originalSupplementalData = */ SaveState(tempDir.name(), originalCache);
+		SaveState(tempDir.name(), originalCache);
 
 		// Sanity: the lock file should have been removed by SaveState
 		EXPECT_FALSE(boost::filesystem::exists(lockFilePath));

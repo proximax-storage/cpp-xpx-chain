@@ -73,10 +73,6 @@ namespace catapult { namespace chain {
 					EXPECT_EQ(height, params.Context.Height) << message;
 					EXPECT_EQ(timestamp, params.Context.BlockTime) << message;
 					EXPECT_EQ(test::Mock_Execution_Configuration_Network_Identifier, params.Context.Network.Identifier) << message;
-
-//					// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)
-//					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
-//					EXPECT_EQ(i, params.NumDifficultyInfos) << message;
 					++i;
 				}
 			}
@@ -89,10 +85,6 @@ namespace catapult { namespace chain {
 					// - context
 					EXPECT_EQ(height, params.Context.Height) << message;
 					EXPECT_EQ(observers::NotifyMode::Commit, params.Context.Mode) << message;
-
-//					// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)
-//					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
-//					EXPECT_EQ(i, params.NumDifficultyInfos) << message;
 					++i;
 				}
 			}
