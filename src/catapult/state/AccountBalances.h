@@ -19,10 +19,12 @@
 **/
 
 #pragma once
-#include "CompactMosaicUnorderedMap.h"
-#include "catapult/utils/Hashers.h"
 #include "catapult/exceptions.h"
+#include "catapult/model/BalanceSnapshot.h"
 #include "catapult/types.h"
+#include "catapult/utils/Hashers.h"
+#include "CompactMosaicUnorderedMap.h"
+#include <deque>
 #include <unordered_map>
 
 namespace catapult { namespace state {
@@ -47,6 +49,16 @@ namespace catapult { namespace state {
 		AccountBalances& operator=(AccountBalances&& accountBalances);
 
 	public:
+		/// Returns const ref to snapshots.
+		const std::deque<model::BalanceSnapshot>& getSnapshots() const {
+			return m_snapshots;
+		}
+
+		/// Returns ref to snapshots.
+		std::deque<model::BalanceSnapshot>& getSnapshots() {
+			return m_snapshots;
+		}
+
 		/// Returns the number of mosaics owned.
 		size_t size() const {
 			return m_balances.size();
@@ -74,5 +86,6 @@ namespace catapult { namespace state {
 
 	private:
 		CompactMosaicUnorderedMap m_balances;
+		std::deque<model::BalanceSnapshot> m_snapshots;
 	};
 }}

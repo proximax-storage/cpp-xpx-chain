@@ -40,6 +40,9 @@ namespace catapult { namespace state {
 		for (const auto& pair : accountBalances)
 			m_balances.insert(pair);
 
+		for (const auto& snapshot : accountBalances.getSnapshots())
+			m_snapshots.push_front(snapshot);
+
 		return *this;
 	}
 

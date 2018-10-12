@@ -19,10 +19,11 @@
 **/
 
 #pragma once
-#include "Mosaic.h"
-#include "TrailingVariableDataLayout.h"
+#include "BalanceSnapshot.h"
 #include "catapult/constants.h"
 #include "catapult/types.h"
+#include "Mosaic.h"
+#include "TrailingVariableDataLayout.h"
 #include <cstring>
 #include <memory>
 
@@ -50,6 +51,11 @@ namespace catapult { namespace model {
 
 		// followed by mosaics data if MosaicsCount != 0
 
+		/// Number of types of BalanceSnapshot related to the account.
+		uint16_t BalanceSnapshotCount;
+
+		// followed by BalanceSnapshot data if BalanceHeightCount != 0
+
 	public:
 		/// Returns a const pointer to the first mosaic contained in this account info.
 		const Mosaic* MosaicsPtr() const {
@@ -59,6 +65,16 @@ namespace catapult { namespace model {
 		/// Returns a pointer to the first mosaic contained in this account info.
 		Mosaic* MosaicsPtr() {
 			return MosaicsCount ? ToTypedPointer(PayloadStart(*this)) : nullptr;
+		}
+
+		/// Returns a const pointer to the first BalanceSnapshot contained in this account info.
+		const BalanceSnapshot* BalanceSnapshotPtr() const {
+			return BalanceSnapshotCount ? reinterpret_cast<const BalanceSnapshot*>(PayloadStart(*this) + MosaicsCount * sizeof(Mosaic)) : nullptr;
+		}
+
+		/// Returns a pointer to the first BalanceSnapshot contained in this account info.
+		BalanceSnapshot* BalanceSnapshotPtr() {
+			return BalanceSnapshotCount ? reinterpret_cast<BalanceSnapshot*>(PayloadStart(*this) + MosaicsCount * sizeof(Mosaic)) : nullptr;
 		}
 
 	public:
@@ -75,12 +91,16 @@ namespace catapult { namespace model {
 	public:
 		/// Calculates the real size of \a accountInfo.
 		static constexpr uint64_t CalculateRealSize(const AccountInfo& accountInfo) noexcept {
-			return sizeof(AccountInfo) + accountInfo.MosaicsCount * sizeof(Mosaic);
+			return  sizeof(AccountInfo) +
+					accountInfo.MosaicsCount * sizeof(Mosaic) +
+					accountInfo.BalanceSnapshotCount * sizeof(BalanceSnapshot);
 		}
 	};
 
 #pragma pack(pop)
 
-	/// Maximum size of AccountInfo containing maximum allowed number of mosaics.
-	constexpr auto AccountInfo_Max_Size = sizeof(AccountInfo) + sizeof(Mosaic) * ((1 << (8 * sizeof(AccountInfo::MosaicsCount))) - 1);
+	/// Maximum size of AccountInfo containing maximum allowed number of mosaics and maximum allowed number of BalanceSnapshot.
+	constexpr auto AccountInfo_Max_Size = sizeof(AccountInfo) +
+			sizeof(Mosaic) * ((1 << (8 * sizeof(AccountInfo::MosaicsCount))) - 1) +
+			sizeof(BalanceSnapshot) * (1 << 16);
 }}

@@ -33,12 +33,18 @@ namespace catapult { namespace state {
 		for (auto i = 0u; i < info.MosaicsCount; ++i, ++pMosaic)
 			accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
 
+		auto pBalanceSnapshot = info.BalanceSnapshotPtr();
+		auto snapshots = accountState.Balances.getSnapshots();
+		for (auto i = 0u; i < info.BalanceSnapshotCount; ++i, ++pBalanceSnapshot)
+			snapshots.push_back(*pBalanceSnapshot);
+
 		return accountState;
 	}
 
 	std::unique_ptr<model::AccountInfo> ToAccountInfo(const AccountState& accountState) {
 		auto numMosaics = utils::checked_cast<size_t, uint16_t>(accountState.Balances.size());
-		uint32_t entitySize = sizeof(model::AccountInfo) + numMosaics * sizeof(model::Mosaic);
+		auto numSnapshots = utils::checked_cast<size_t, uint16_t>(accountState.Balances.getSnapshots().size());
+		uint32_t entitySize = sizeof(model::AccountInfo) + numMosaics * sizeof(model::Mosaic) + numSnapshots * sizeof(model::BalanceSnapshot);
 		auto pAccountInfo = utils::MakeUniqueWithSize<model::AccountInfo>(entitySize);
 		pAccountInfo->Size = entitySize;
 		pAccountInfo->Address = accountState.Address;
@@ -52,6 +58,13 @@ namespace catapult { namespace state {
 			pMosaic->MosaicId = pair.first;
 			pMosaic->Amount = pair.second;
 			++pMosaic;
+		}
+
+		pAccountInfo->BalanceSnapshotCount = numSnapshots;
+		auto pBalanceSnapshot = pAccountInfo->BalanceSnapshotPtr();
+		for (const auto& snapshot : accountState.Balances.getSnapshots()) {
+			*pBalanceSnapshot = snapshot;
+			++pBalanceSnapshot;
 		}
 
 		return pAccountInfo;

@@ -39,6 +39,12 @@ namespace catapult { namespace mongo { namespace mappers {
 				StreamMosaic(mosaicsArray, entry.first, entry.second);
 
 			mosaicsArray << bson_stream::close_array;
+
+			auto snapshotsArray = builder << "snapshots" << bson_stream::open_array;
+			for (const auto& snapshot : balances.getSnapshots())
+				StreamSnapshot(snapshotsArray, snapshot.Amount, snapshot.BalanceHeight);
+
+			snapshotsArray << bson_stream::close_array;
 			return builder;
 		}
 
@@ -71,6 +77,15 @@ namespace catapult { namespace mongo { namespace mappers {
 		void ToAccountBalance(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
 			accountBalances.credit(GetValue64<MosaicId>(mosaicDocument["id"]), GetValue64<Amount>(mosaicDocument["amount"]));
 		}
+
+		void ToAccountBalanceSnapshot(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
+			accountBalances.getSnapshots().push_back(
+					model::BalanceSnapshot{
+						GetValue64<Amount>(mosaicDocument["amount"]),
+				        GetValue64<Height>(mosaicDocument["height"]) 
+				    }
+			);
+		}
 	}
 
 	void ToAccountState(const bsoncxx::document::view& document, const AccountStateFactory& accountStateFactory) {
@@ -86,6 +101,10 @@ namespace catapult { namespace mongo { namespace mappers {
 		auto dbMosaics = accountDocument["mosaics"].get_array().value;
 		for (const auto& mosaicEntry : dbMosaics)
 			ToAccountBalance(accountState.Balances, mosaicEntry.get_document().view());
+
+		auto dbSnapshots = accountDocument["snapshots"].get_array().value;
+		for (const auto& snapshotEntry : dbSnapshots)
+			ToAccountBalanceSnapshot(accountState.Balances, snapshotEntry.get_document().view());
 	}
 
 	// endregion
