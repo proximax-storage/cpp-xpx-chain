@@ -65,7 +65,7 @@ namespace catapult { namespace mongo { namespace storages {
 			static void Add(cache::CatapultCacheDelta& delta, const ModelType& pAccountState) {
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
 				auto& accountState = accountStateCacheDelta.addAccount(pAccountState->PublicKey, pAccountState->PublicKeyHeight);
-				accountState.Balances.credit(Xpx_Id, pAccountState->Balances.get(Xpx_Id), Height(1));
+				accountState.Balances.credit(Xpx_Id, pAccountState->Balances.get(Xpx_Id), pAccountState->AddressHeight + Height(1));
 			}
 
 			static void Remove(cache::CatapultCacheDelta& delta, const ModelType& pAccountState) {
@@ -76,12 +76,12 @@ namespace catapult { namespace mongo { namespace storages {
 
 			static void Mutate(cache::CatapultCacheDelta& delta, const ModelType& pAccountState) {
 				// update expected
-				pAccountState->Balances.credit(Xpx_Id, Amount(12'345'000'000), Height(1));
+				pAccountState->Balances.credit(Xpx_Id, Amount(12'345'000'000), pAccountState->AddressHeight + Height(1));
 
 				// update cache
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
 				auto& accountStateFromCache = accountStateCacheDelta.get(pAccountState->PublicKey);
-				accountStateFromCache.Balances.credit(Xpx_Id, Amount(12'345'000'000), Height(1));
+				accountStateFromCache.Balances.credit(Xpx_Id, Amount(12'345'000'000), pAccountState->AddressHeight + Height(1));
 			}
 
 			static auto GetFindFilter(const ModelType& pAccountState) {
