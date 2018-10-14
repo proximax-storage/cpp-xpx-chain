@@ -37,9 +37,9 @@ namespace catapult { namespace state {
 			return accountState;
 		}
 
-		void AssertNonMosaicPart(const model::AccountInfo& info, const AccountState& accountState, uint32_t expectedMosaicsCount) {
+		void AssertNonMosaicPart(const model::AccountInfo& info, const AccountState& accountState, uint32_t expectedMosaicsCount, uint32_t expectedSnapshotCount) {
 			// Assert:
-			EXPECT_EQ(sizeof(model::AccountInfo) + expectedMosaicsCount * sizeof(model::Mosaic), info.Size);
+			EXPECT_EQ(sizeof(model::AccountInfo) + expectedMosaicsCount * sizeof(model::Mosaic) + expectedSnapshotCount * sizeof(model::BalanceSnapshot), info.Size);
 			EXPECT_EQ(accountState.Address, info.Address);
 			EXPECT_EQ(accountState.AddressHeight, info.AddressHeight);
 			EXPECT_EQ(accountState.PublicKey, info.PublicKey);
@@ -53,6 +53,12 @@ namespace catapult { namespace state {
 			EXPECT_EQ(expectedAmount, mosaic.Amount);
 		}
 
+		void AssertSnapshot(const model::BalanceSnapshot& snapshot, Amount expectedAmount, Height height) {
+			// Assert:
+			EXPECT_EQ(height, snapshot.BalanceHeight);
+			EXPECT_EQ(expectedAmount, snapshot.Amount);
+		}
+
 		void AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics() {
 			// Arrange:
 			auto accountState = CreateAccountStateWithZeroMosaics();
@@ -61,7 +67,7 @@ namespace catapult { namespace state {
 			auto pAccountInfo = ToAccountInfo(accountState);
 
 			// Assert:
-			AssertNonMosaicPart(*pAccountInfo, accountState, 0);
+			AssertNonMosaicPart(*pAccountInfo, accountState, 0, 0);
 			EXPECT_FALSE(!!pAccountInfo->MosaicsPtr());
 		}
 	}
@@ -80,11 +86,14 @@ namespace catapult { namespace state {
 		auto pAccountInfo = ToAccountInfo(accountState);
 
 		// Assert:
-		AssertNonMosaicPart(*pAccountInfo, accountState, 1);
+		AssertNonMosaicPart(*pAccountInfo, accountState, 1, 1);
 
 		auto pMosaic = pAccountInfo->MosaicsPtr();
+		auto pSnapshot = pAccountInfo->BalanceSnapshotPtr();
 		ASSERT_TRUE(!!pMosaic);
 		AssertMosaic(*pMosaic, Xpx_Id, Amount(13579));
+		ASSERT_TRUE(!!pSnapshot);
+		AssertSnapshot(*pSnapshot, Amount(13579), Height(1));
 	}
 
 	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_MultipleMosaics) {
@@ -98,7 +107,7 @@ namespace catapult { namespace state {
 		auto pAccountInfo = ToAccountInfo(accountState);
 
 		// Assert:
-		AssertNonMosaicPart(*pAccountInfo, accountState, 3);
+		AssertNonMosaicPart(*pAccountInfo, accountState, 3, 1);
 
 		auto pMosaic = pAccountInfo->MosaicsPtr();
 		ASSERT_TRUE(!!pMosaic);
@@ -112,6 +121,10 @@ namespace catapult { namespace state {
 		AssertMosaic(mosaics[MosaicId(123)], MosaicId(123), Amount(111));
 		AssertMosaic(mosaics[Xpx_Id], Xpx_Id, Amount(13579));
 		AssertMosaic(mosaics[MosaicId(987)], MosaicId(987), Amount(222));
+
+		auto pSnapshot = pAccountInfo->BalanceSnapshotPtr();
+		ASSERT_TRUE(!!pSnapshot);
+		AssertSnapshot(*pSnapshot, Amount(13579), Height(1));
 	}
 
 	// endregion

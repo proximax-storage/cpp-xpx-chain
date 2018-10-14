@@ -74,6 +74,7 @@ namespace catapult { namespace plugins {
 					"AccountPublicKeyObserver",
 					"BalanceObserver",
 					"HarvestFeeObserver",
+					"SnapshotCleanUpObserver",
 				};
 			}
 
@@ -82,7 +83,8 @@ namespace catapult { namespace plugins {
 					"AccountAddressObserver",
 					"AccountPublicKeyObserver",
 					"BalanceObserver",
-					"HarvestFeeObserver"
+					"HarvestFeeObserver",
+					"SnapshotCleanUpObserver"
 				};
 			}
 		};

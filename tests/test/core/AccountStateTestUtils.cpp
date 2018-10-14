@@ -25,8 +25,14 @@
 namespace catapult { namespace test {
 
 	void RandomFillAccountData(uint64_t seed, state::AccountState& state, size_t numMosaics) {
-		for (auto i = 0u; i < numMosaics; ++i)
+		if (numMosaics) {
+			state.Balances.credit(Xpx_Id, Amount(seed * 1000 + 1), Height(1));
+			--numMosaics;
+		}
+		for (auto i = 0u; i < numMosaics; ++i) {
 			state.Balances.credit(MosaicId(10 + i), Amount(seed * 1000 + i + 1), Height(1));
+			state.Balances.credit(Xpx_Id, Amount(seed * 1000 + i + 2), Height(i + 2));
+		}
 	}
 
 	void AssertEqual(const state::AccountState& expected, const state::AccountState& actual) {

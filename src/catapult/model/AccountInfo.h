@@ -102,5 +102,5 @@ namespace catapult { namespace model {
 	/// Maximum size of AccountInfo containing maximum allowed number of mosaics and maximum allowed number of BalanceSnapshot.
 	constexpr auto AccountInfo_Max_Size = sizeof(AccountInfo) +
 			sizeof(Mosaic) * ((1 << (8 * sizeof(AccountInfo::MosaicsCount))) - 1) +
-			sizeof(BalanceSnapshot) * (1 << 16);
+			sizeof(BalanceSnapshot) * ((1 << (8 * sizeof(AccountInfo::BalanceSnapshotCount))) - 1);
 }}

@@ -52,7 +52,7 @@ namespace catapult { namespace cache {
 			AccountStateCacheStorage::Save(std::make_pair(Address(), pOriginalAccountState), stream);
 
 			// Assert:
-			ASSERT_EQ(sizeof(model::AccountInfo) + mosaicsCount * sizeof(model::Mosaic), buffer.size());
+			ASSERT_EQ(sizeof(model::AccountInfo) + mosaicsCount * sizeof(model::Mosaic) + mosaicsCount * sizeof(model::BalanceSnapshot), buffer.size());
 
 			const auto& savedAccountInfo = reinterpret_cast<const model::AccountInfo&>(*buffer.data());
 			EXPECT_EQ(mosaicsCount, savedAccountInfo.MosaicsCount);

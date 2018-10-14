@@ -42,7 +42,7 @@ namespace catapult { namespace state {
 			m_balances.insert(pair);
 
 		for (const auto& snapshot : accountBalances.getSnapshots())
-			m_snapshots.push_front(snapshot);
+			m_snapshots.push_back(snapshot);
 
 		return *this;
 	}
@@ -102,7 +102,7 @@ namespace catapult { namespace state {
 	void AccountBalances::maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config) {
 		auto unstableHeight = Height(config.EffectiveBalanceRange + config.MaxRollbackBlocks);
 
-		if (height < unstableHeight) {
+		if (height <= unstableHeight) {
 			return;
 		}
 
@@ -128,13 +128,13 @@ namespace catapult { namespace state {
 	}
 
 	void AccountBalances::maybePopSnapshot(const MosaicId& mosaicId, const Amount& /* amount */, const Height& height) {
-		if (mosaicId != Xpx_Id || m_snapshots.empty() || height == Height(0)) {
+		if (mosaicId != Xpx_Id || m_snapshots.empty() || height == Height(0) || height == Height(-1)) {
 			return;
 		}
 	}
 
 	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
-		if (mosaicId != Xpx_Id || height == Height(0)) {
+		if (mosaicId != Xpx_Id || height == Height(0) || height == Height(-1)) {
 			return;
 		}
 
