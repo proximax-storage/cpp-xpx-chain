@@ -25,19 +25,19 @@
 
 namespace catapult { namespace cache {
 
-	void SaveSupplementalData(const SupplementalData&, Height chainHeight, io::OutputStream& output) {
-		io::Write(output, chainHeight);
+	void SaveSupplementalData(const SupplementalData& data, io::OutputStream& output) {
+		io::Write(output, data.ChainHeight);
 
 		CATAPULT_LOG(debug)
-				<< "wrote height = " << chainHeight;
+				<< "wrote height = " << data.ChainHeight;
 
 		output.flush();
 	}
 
-	void LoadSupplementalData(io::InputStream& input, SupplementalData&, Height& chainHeight) {
-		io::Read(input, chainHeight);
+	void LoadSupplementalData(io::InputStream& input, SupplementalData& data) {
+		io::Read(input, data.ChainHeight);
 
 		CATAPULT_LOG(debug)
-				<< "read height = " << chainHeight;
+				<< "read height = " << data.ChainHeight;
 	}
 }}

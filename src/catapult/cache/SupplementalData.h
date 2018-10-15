@@ -19,10 +19,12 @@
 **/
 
 #pragma once
+#include "catapult/types.h"
 
 namespace catapult { namespace cache {
 
 	/// Chain supplemental data.
 	struct SupplementalData {
+		Height ChainHeight;
 	};
 }}

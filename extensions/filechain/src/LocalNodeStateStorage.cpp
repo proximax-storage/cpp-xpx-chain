@@ -87,15 +87,14 @@ namespace catapult { namespace filechain {
 		for (const auto& pStorage : stateRef.Cache.storages())
 			LoadCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage);
 
-		Height chainHeight;
 		{
 			auto path = GetStatePath(dataDirectory, Supplemental_Data_Filename);
 			io::BufferedInputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Only));
-			cache::LoadSupplementalData(file, supplementalData, chainHeight);
+			cache::LoadSupplementalData(file, supplementalData);
 		}
 
 		auto cacheDelta = stateRef.Cache.createDelta();
-		stateRef.Cache.commit(chainHeight);
+		stateRef.Cache.commit(supplementalData.ChainHeight);
 
 		return true;
 	}
@@ -133,7 +132,8 @@ namespace catapult { namespace filechain {
 			io::BufferedOutputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Write));
 
 			cache::SupplementalData data;
-			cache::SaveSupplementalData(data, stateRef.Cache.createView().height(), file);
+			data.ChainHeight = stateRef.Cache.createView().height();
+			cache::SaveSupplementalData(data, file);
 		}
 	}
 }}

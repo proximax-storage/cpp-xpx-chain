@@ -89,7 +89,7 @@ namespace catapult { namespace filechain {
 
 			auto state = extensions::LocalNodeStateConstRef(*createLocalNodeState(dataDirectory), cache);
 			filechain::SaveState(state);
-			return {  };
+			return { cache.createView().height() };
 		}
 	}
 

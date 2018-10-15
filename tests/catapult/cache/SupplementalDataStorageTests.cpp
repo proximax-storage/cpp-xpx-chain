@@ -38,16 +38,16 @@ namespace catapult { namespace cache {
 
 		// - create random data
 		SupplementalData data;
-		auto chainHeight = test::GenerateRandomValue<Height>();
+		data.ChainHeight = test::GenerateRandomValue<Height>();
 
 		// Act:
-		SaveSupplementalData(data, chainHeight, stream);
+		SaveSupplementalData(data, stream);
 
 		// Assert:
 		ASSERT_EQ(Data_Size, buffer.size());
 
 		const auto* pData64 = reinterpret_cast<const uint64_t*>(buffer.data());
-		EXPECT_EQ(chainHeight, Height(pData64[0]));
+		EXPECT_EQ(data.ChainHeight, Height(pData64[0]));
 
 		EXPECT_EQ(1u, stream.numFlushes());
 	}
@@ -55,17 +55,16 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanLoadData) {
 		// Arrange:
 		SupplementalData data;
-		Height chainHeight;
 
 		std::vector<uint8_t> buffer(Data_Size);
 		test::FillWithRandomData(buffer);
 		mocks::MockMemoryStream stream("", buffer);
 
 		// Act:
-		LoadSupplementalData(stream, data, chainHeight);
+		LoadSupplementalData(stream, data);
 
 		// Assert:
 		const auto* pData64 = reinterpret_cast<const uint64_t*>(buffer.data());
-		EXPECT_EQ(Height(pData64[0]), chainHeight);
+		EXPECT_EQ(Height(pData64[0]), data.ChainHeight);
 	}
 }}
