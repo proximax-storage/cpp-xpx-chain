@@ -65,16 +65,4 @@ namespace catapult { namespace cache {
 		explicit MosaicCache(const CacheConfiguration& config) : SynchronizedCache<BasicMosaicCache>(BasicMosaicCache(config))
 		{}
 	};
-
-	/// Synchronized cache composed of old mosaic information.
-	class OldMosaicCache : public MosaicCache {
-	public:
-		static constexpr size_t Id = utils::to_underlying_type(CacheId::Mosaic);
-		static constexpr auto Name = "OldMosaicCache";
-
-	public:
-		/// Creates a cache around \a config.
-		explicit OldMosaicCache(const CacheConfiguration& config) : MosaicCache(config)
-		{}
-	};
 }}

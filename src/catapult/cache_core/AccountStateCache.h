@@ -85,17 +85,4 @@ namespace catapult { namespace cache {
 	private:
 		model::NetworkIdentifier m_networkIdentifier;
 	};
-
-	/// Synchronized cache composed of stateful old account information.
-	class OldAccountStateCache : public AccountStateCache {
-	public:
-		static constexpr size_t Id = utils::to_underlying_type(CacheId::AccountState);
-		static constexpr auto Name = "OldAccountStateCache";
-
-	public:
-		/// Creates a cache around \a config and \a options.
-		OldAccountStateCache(const CacheConfiguration &config, const AccountStateCacheTypes::Options &options)
-				: AccountStateCache(config, options)
-		{}
-	};
 }}
