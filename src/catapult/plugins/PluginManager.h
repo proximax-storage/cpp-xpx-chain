@@ -90,7 +90,7 @@ namespace catapult { namespace plugins {
 		/// Adds support for a subcache described by \a pSubCache.
 		template<typename TStorageTraits, typename TCache>
 		void addCacheSupport(std::unique_ptr<TCache>&& pSubCache) {
-			m_cacheBuilder.add<TStorageTraits>(std::move(pSubCache));
+			m_cacheBuilder.addSubCache<TStorageTraits>(std::move(pSubCache));
 		}
 
 		/// Creates a catapult cache.

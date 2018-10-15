@@ -90,7 +90,6 @@ namespace catapult { namespace sync {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.TotalChainBalance = utils::XpxUnit(utils::XpxAmount(1'000'000'000));
 			blockChainConfig.MaxTransactionsPerBlock = settings.MaxBlockSize;
-			blockChainConfig.ImportanceGrouping = 1;
 
 			auto nodeConfig = config::NodeConfiguration::Uninitialized();
 			nodeConfig.ShouldEnableTransactionSpamThrottling = settings.ShouldEnableTransactionSpamThrottling;
@@ -118,7 +117,6 @@ namespace catapult { namespace sync {
 			// Arrange:
 			auto config = CreateLocalNodeConfigurationFromSettings(settings);
 
-			// - create a read only catapult cache (importance grouping needs to be nonzero)
 			auto catapultCache = test::CreateEmptyCatapultCache(config.BlockChain);
 			auto catapultCacheView = catapultCache.createView();
 			auto readOnlyCatapultCache = catapultCacheView.toReadOnly();

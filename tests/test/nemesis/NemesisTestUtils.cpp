@@ -34,7 +34,6 @@ namespace catapult { namespace test {
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 		constexpr Amount Nemesis_Recipient_Amount(409'090'909'000'000);
-		constexpr Importance Nemesis_Recipient_Importance(409'090'909);
 	}
 
 	Address RawPrivateKeyToAddress(const char* privateKeyString) {
@@ -59,9 +58,6 @@ namespace catapult { namespace test {
 			EXPECT_EQ(nemesisKeyPair.publicKey(), accountState.PublicKey);
 
 			EXPECT_EQ(Amount(0), accountState.Balances.get(Xpx_Id));
-
-			EXPECT_EQ(model::ImportanceHeight(0), accountState.ImportanceInfo.height());
-			EXPECT_EQ(Importance(0), accountState.ImportanceInfo.current());
 		}
 
 		void AssertRentalFeeAccount(const cache::AccountStateCacheView& view, const Key& publicKey) {
@@ -76,9 +72,6 @@ namespace catapult { namespace test {
 			EXPECT_EQ(publicKey, accountState.PublicKey) << message;
 
 			EXPECT_EQ(Amount(0), accountState.Balances.get(Xpx_Id)) << message;
-
-			EXPECT_EQ(model::ImportanceHeight(0), accountState.ImportanceInfo.height()) << message;
-			EXPECT_EQ(Importance(0), accountState.ImportanceInfo.current()) << message;
 		}
 
 		void AssertRecipientAccount(const cache::AccountStateCacheView& view, const Address& address) {
@@ -92,9 +85,6 @@ namespace catapult { namespace test {
 			// recipient public key is unknown (public key height is zero)
 
 			EXPECT_EQ(Nemesis_Recipient_Amount, accountState.Balances.get(Xpx_Id)) << message;
-
-			EXPECT_EQ(model::ImportanceHeight(1), accountState.ImportanceInfo.height()) << message;
-			EXPECT_EQ(Nemesis_Recipient_Importance, accountState.ImportanceInfo.current()) << message;
 		}
 
 		void AssertNemesisState(const cache::AccountStateCacheView& view) {

@@ -36,13 +36,11 @@ namespace catapult { namespace model {
 				+ sizeof(Height) // address height
 				+ Key_Size // public key
 				+ sizeof(Height) // public key height
-				+ Importance_History_Size * sizeof(Importance) // account importances
-				+ Importance_History_Size * sizeof(ImportanceHeight) // account importance heights
 				+ sizeof(uint16_t); // number of mosaics
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(AccountInfo));
-		EXPECT_EQ(127u, sizeof(AccountInfo));
+		EXPECT_EQ(79u, sizeof(AccountInfo));
 	}
 
 	TEST(TEST_CLASS, AccountInfoMaxSizeHasCorrectValue) {
@@ -53,7 +51,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedMaxSize, AccountInfo_Max_Size);
-		EXPECT_EQ(127u + 16 * 65535, AccountInfo_Max_Size);
+		EXPECT_EQ(79u + 16 * 65535, AccountInfo_Max_Size);
 	}
 
 	// region CalculateRealSize
@@ -126,12 +124,6 @@ namespace catapult { namespace model {
 		EXPECT_EQ(Key(), pAccountInfo->PublicKey);
 		EXPECT_EQ(Height(0), pAccountInfo->PublicKeyHeight);
 		EXPECT_EQ(0, pAccountInfo->MosaicsCount);
-
-		for (auto i = 0u; i < Importance_History_Size; ++i) {
-			const auto message = "importance at " + std::to_string(i);
-			EXPECT_EQ(Importance(0), pAccountInfo->Importances[i]) << message;
-			EXPECT_EQ(model::ImportanceHeight(0), pAccountInfo->ImportanceHeights[i]) << message;
-		}
 	}
 
 	// endregion

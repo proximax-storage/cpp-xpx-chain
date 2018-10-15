@@ -140,12 +140,6 @@ CORE_FIRSTINCLUDES = {
 }
 
 PLUGINS_FIRSTINCLUDES = {
-    'plugins/coresystem/src/observers/PosImportanceCalculator.cpp': 'ImportanceCalculator.h',
-    'plugins/coresystem/src/observers/RestoreImportanceCalculator.cpp': 'ImportanceCalculator.h',
-
-    'plugins/coresystem/tests/observers/PosImportanceCalculatorTests.cpp': 'src/observers/ImportanceCalculator.h',
-    'plugins/coresystem/tests/observers/RestoreImportanceCalculatorTests.cpp': 'src/observers/ImportanceCalculator.h',
-
     'plugins/txes/lock/tests/cache/LockInfoCacheTests.cpp': 'src/cache/HashLockInfoCache.h',
 }
 
@@ -170,7 +164,6 @@ EXTENSION_FIRSTINCLUDES = {
 
 SKIP_FORWARDS = (
     re.compile(r'src.catapult.validators.ValidatorTypes.h'),
-    re.compile(r'src.catapult.utils.ClampedBaseValue.h'),
     re.compile(r'.*\.cpp$'),
 )
 

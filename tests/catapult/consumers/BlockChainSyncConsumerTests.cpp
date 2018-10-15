@@ -18,16 +18,16 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/consumers/BlockConsumers.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
+#include "catapult/consumers/BlockConsumers.h"
+#include "catapult/consumers/BlockChainSyncConsumer.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/ChainScore.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "tests/catapult/consumers/test/ConsumerInputFactory.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
+#include "tests/catapult/extensions/test/LocalNodeStateUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
 
@@ -43,26 +43,21 @@ namespace catapult { namespace consumers {
 	namespace {
 		constexpr auto Base_Difficulty = Difficulty().unwrap();
 		constexpr auto Max_Rollback_Blocks = 25u;
-		constexpr model::ImportanceHeight Initial_Last_Recalculation_Height(1234);
-		constexpr model::ImportanceHeight Modified_Last_Recalculation_Height(7777);
+		constexpr auto Effective_Balance = 1440u;
 		const Key Sentinel_Processor_Public_Key = test::GenerateRandomData<Key_Size>();
-
-		constexpr model::ImportanceHeight AddImportanceHeight(model::ImportanceHeight lhs, model::ImportanceHeight::ValueType rhs) {
-			return model::ImportanceHeight(lhs.unwrap() + rhs);
-		}
 
 		// region MockDifficultyChecker
 
 		struct DifficultyCheckerParams {
 		public:
-			DifficultyCheckerParams(const std::vector<const model::Block*>& blocks, const cache::CatapultCache& cache)
-					: Blocks(blocks)
-					, Cache(cache)
+			DifficultyCheckerParams(const model::Block& remoteBlock, const model::Block& localBlock)
+					: RemoteBlock(test::CopyBlock(remoteBlock))
+					, LocalBlock(test::CopyBlock(localBlock))
 			{}
 
 		public:
-			const std::vector<const model::Block*> Blocks;
-			const cache::CatapultCache& Cache;
+			std::shared_ptr<model::Block> RemoteBlock;
+			std::shared_ptr<model::Block> LocalBlock;
 		};
 
 		class MockDifficultyChecker : public test::ParamsCapture<DifficultyCheckerParams> {
@@ -71,14 +66,14 @@ namespace catapult { namespace consumers {
 			{}
 
 		public:
-			bool operator()(const std::vector<const model::Block*>& blocks, const cache::CatapultCache& cache) const {
-				const_cast<MockDifficultyChecker*>(this)->push(blocks, cache);
+			bool operator()(const model::Block& remoteBlock, const model::Block& localBlock) const {
+				const_cast<MockDifficultyChecker*>(this)->push(remoteBlock, localBlock);
 				return m_result;
 			}
 
 		public:
-			void setFailure() {
-				m_result = false;
+			void setResult(bool result) {
+				m_result = result;
 			}
 
 		private:
@@ -93,29 +88,18 @@ namespace catapult { namespace consumers {
 		public:
 			UndoBlockParams(const model::BlockElement& blockElement, const observers::ObserverState& state)
 					: pBlock(test::CopyBlock(blockElement.Block))
-					, LastRecalculationHeight(state.State.LastRecalculationHeight)
 					, IsPassedMarkedCache(test::IsMarkedCache(state.Cache))
-					, NumDifficultyInfos(state.Cache.sub<cache::BlockDifficultyCache>().size())
 			{}
 
 		public:
 			std::shared_ptr<const model::Block> pBlock;
-			const model::ImportanceHeight LastRecalculationHeight;
 			const bool IsPassedMarkedCache;
-			const size_t NumDifficultyInfos;
 		};
 
 		class MockUndoBlock : public test::ParamsCapture<UndoBlockParams> {
 		public:
 			void operator()(const model::BlockElement& blockElement, const observers::ObserverState& state) const {
 				const_cast<MockUndoBlock*>(this)->push(blockElement, state);
-
-				// mark the state by modifying it
-				auto& blockDifficultyCache = state.Cache.sub<cache::BlockDifficultyCache>();
-				blockDifficultyCache.insert(state::BlockDifficultyInfo(Height(blockDifficultyCache.size() + 1)));
-
-				auto& height = state.State.LastRecalculationHeight;
-				height = AddImportanceHeight(height, 1);
 			}
 		};
 
@@ -125,22 +109,18 @@ namespace catapult { namespace consumers {
 
 		struct ProcessorParams {
 		public:
-			ProcessorParams(const WeakBlockInfo& parentBlockInfo, const BlockElements& elements, const observers::ObserverState& state)
-					: pParentBlock(test::CopyBlock(parentBlockInfo.entity()))
-					, ParentHash(parentBlockInfo.hash())
+			ProcessorParams(SyncState& state, BlockElements& elements)
+					: pParentBlock(test::CopyBlock(state.commonBlockInfo().entity()))
+					, ParentHash(state.commonBlockInfo().hash())
 					, pElements(&elements)
-					, LastRecalculationHeight(state.State.LastRecalculationHeight)
-					, IsPassedMarkedCache(test::IsMarkedCache(state.Cache))
-					, NumDifficultyInfos(state.Cache.sub<cache::BlockDifficultyCache>().size())
+					, IsPassedMarkedCache(test::IsMarkedCache(state.observerState().Cache))
 			{}
 
 		public:
 			std::shared_ptr<const model::Block> pParentBlock;
 			const Hash256 ParentHash;
 			const BlockElements* pElements;
-			const model::ImportanceHeight LastRecalculationHeight;
 			const bool IsPassedMarkedCache;
-			const size_t NumDifficultyInfos;
 		};
 
 		class MockProcessor : public test::ParamsCapture<ProcessorParams> {
@@ -149,15 +129,12 @@ namespace catapult { namespace consumers {
 			{}
 
 		public:
-			ValidationResult operator()(
-					const WeakBlockInfo& parentBlockInfo,
-					BlockElements& elements,
-					const observers::ObserverState& state) const {
-				const_cast<MockProcessor*>(this)->push(parentBlockInfo, elements, state);
+			ValidationResult operator()(SyncState& state, BlockElements& elements) const {
+				const_cast<MockProcessor*>(this)->push(state, elements);
 
 				// mark the state by modifying it
-				state.Cache.sub<cache::AccountStateCache>().addAccount(Sentinel_Processor_Public_Key, Height(1));
-				state.State.LastRecalculationHeight = Modified_Last_Recalculation_Height;
+				auto observerState = state.observerState();
+				observerState.Cache.sub<cache::AccountStateCache>().addAccount(Sentinel_Processor_Public_Key, Height(1));
 
 				// modify all the elements
 				for (auto& element : elements)
@@ -182,15 +159,13 @@ namespace catapult { namespace consumers {
 		struct StateChangeParams {
 		public:
 			StateChangeParams(const StateChangeInfo& changeInfo)
-					: ScoreDelta(changeInfo.ScoreDelta)
 					// all processing should have occurred before the state change notification,
 					// so the sentinel account should have been added
-					, IsPassedMarkedCache(changeInfo.CacheDelta.sub<cache::AccountStateCache>().contains(Sentinel_Processor_Public_Key))
+					: IsPassedMarkedCache(changeInfo.CacheDelta.sub<cache::AccountStateCache>().contains(Sentinel_Processor_Public_Key))
 					, Height(changeInfo.Height)
 			{}
 
 		public:
-			model::ChainScore ScoreDelta;
 			bool IsPassedMarkedCache;
 			catapult::Height Height;
 		};
@@ -248,27 +223,40 @@ namespace catapult { namespace consumers {
 		// endregion
 
 		void SetBlockHeight(model::Block& block, Height height) {
-			block.Timestamp = Timestamp(height.unwrap() * 1000);
-			block.Difficulty = Difficulty();
+			block.Timestamp = Timestamp{height.unwrap() * 1000};
+			block.CumulativeDifficulty = Difficulty{height.unwrap()};
 			block.Height = height;
+		}
+
+		config::LocalNodeConfiguration CreateUninitializedLocalNodeConfiguration() {
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.MaxRollbackBlocks = Max_Rollback_Blocks;
+			blockChainConfig.EffectiveBalanceRange = Effective_Balance;
+
+			return config::LocalNodeConfiguration(
+					std::move(blockChainConfig),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					config::UserConfiguration::Uninitialized()
+			);
 		}
 
 		struct ConsumerTestContext {
 		public:
 			ConsumerTestContext()
-					: Cache(test::CreateCatapultCacheWithMarkerAccount())
-					, Storage(std::make_unique<mocks::MockMemoryBasedStorage>()) {
-				State.LastRecalculationHeight = Initial_Last_Recalculation_Height;
-
+					: LocalNodeStateRef(
+							*test::LocalNodeStateUtils::CreateLocalNodeState(
+								CreateUninitializedLocalNodeConfiguration(),
+								test::CreateCatapultCacheWithMarkerAccount()
+							)
+					)
+			{
 				BlockChainSyncHandlers handlers;
-				handlers.DifficultyChecker = [this](const auto& blocks, const auto& cache) {
-					return DifficultyChecker(blocks, cache);
+				handlers.DifficultyChecker = [this](const auto& remoteBlock, const auto& localBlock) {
+					return DifficultyChecker(remoteBlock, localBlock);
 				};
 				handlers.UndoBlock = [this](const auto& block, const auto& state) {
 					return UndoBlock(block, state);
-				};
-				handlers.Processor = [this](const auto& parentBlockInfo, auto& elements, const auto& cache) {
-					return Processor(parentBlockInfo, elements, cache);
 				};
 				handlers.StateChange = [this](const auto& changeInfo) {
 					return StateChange(changeInfo);
@@ -277,13 +265,14 @@ namespace catapult { namespace consumers {
 					return TransactionsChange(changeInfo);
 				};
 
-				Consumer = CreateBlockChainSyncConsumer(Cache, State, Storage, Max_Rollback_Blocks, handlers);
+				auto process = [this](auto& state, auto& elements) {
+					return Processor(state, elements);
+				};
+				Consumer = CreateMockBlockChainSyncConsumer(LocalNodeStateRef, handlers, process);
 			}
 
 		public:
-			cache::CatapultCache Cache;
-			state::CatapultState State;
-			io::BlockStorageCache Storage;
+			extensions::LocalNodeStateRef LocalNodeStateRef;
 			std::vector<std::shared_ptr<model::Block>> OriginalBlocks; // original stored blocks (excluding nemesis)
 
 			MockDifficultyChecker DifficultyChecker;
@@ -297,8 +286,8 @@ namespace catapult { namespace consumers {
 		public:
 			void seedStorage(Height desiredHeight, size_t numTransactionsPerBlock = 0) {
 				// Arrange:
-				auto height = Storage.view().chainHeight();
-				auto storageModifier = Storage.modifier();
+				auto height = LocalNodeStateRef.Storage.view().chainHeight();
+				auto storageModifier = LocalNodeStateRef.Storage.modifier();
 
 				while (height < desiredHeight) {
 					height = height + Height(1);
@@ -323,10 +312,8 @@ namespace catapult { namespace consumers {
 				ASSERT_EQ(1u, DifficultyChecker.params().size());
 				auto difficultyParams = DifficultyChecker.params()[0];
 
-				EXPECT_EQ(&Cache, &difficultyParams.Cache);
-				ASSERT_EQ(input.blocks().size(), difficultyParams.Blocks.size());
-				for (auto i = 0u; i < input.blocks().size(); ++i)
-					EXPECT_EQ(&input.blocks()[i].Block, difficultyParams.Blocks[i]) << "block at " << i;
+				ASSERT_EQ(input.blocks()[input.blocks().size() - 1].Block, *difficultyParams.RemoteBlock);
+				ASSERT_EQ(*OriginalBlocks[OriginalBlocks.size() - 1], *difficultyParams.LocalBlock);
 			}
 
 			void assertUnwind(const std::vector<Height>& unwoundHeights) {
@@ -335,34 +322,28 @@ namespace catapult { namespace consumers {
 				auto i = 0u;
 				for (auto height : unwoundHeights) {
 					const auto& undoBlockParams = UndoBlock.params()[i];
-					auto expectedHeight = AddImportanceHeight(Initial_Last_Recalculation_Height, i);
 
 					EXPECT_EQ(*OriginalBlocks[(height - Height(2)).unwrap()], *undoBlockParams.pBlock) << "undo at " << i;
-					EXPECT_EQ(expectedHeight, undoBlockParams.LastRecalculationHeight) << "undo at " << i;
 					EXPECT_TRUE(undoBlockParams.IsPassedMarkedCache) << "undo at " << i;
-					EXPECT_EQ(i, undoBlockParams.NumDifficultyInfos) << "undo at " << i;
 					++i;
 				}
 			}
 
-			void assertProcessorInvocation(const ConsumerInput& input, size_t numUnwoundBlocks = 0) {
+			void assertProcessorInvocation(const ConsumerInput& input) {
 				// Assert:
 				ASSERT_EQ(1u, Processor.params().size());
 				const auto& processorParams = Processor.params()[0];
-				auto expectedHeight = AddImportanceHeight(Initial_Last_Recalculation_Height, numUnwoundBlocks);
-				auto pCommonBlockElement = Storage.view().loadBlockElement(input.blocks()[0].Block.Height - Height(1));
+				auto pCommonBlockElement = LocalNodeStateRef.Storage.view().loadBlockElement(input.blocks()[0].Block.Height - Height(1));
 
 				EXPECT_EQ(pCommonBlockElement->Block, *processorParams.pParentBlock);
 				EXPECT_EQ(pCommonBlockElement->EntityHash, processorParams.ParentHash);
 				EXPECT_EQ(&input.blocks(), processorParams.pElements);
-				EXPECT_EQ(expectedHeight, processorParams.LastRecalculationHeight);
 				EXPECT_TRUE(processorParams.IsPassedMarkedCache);
-				EXPECT_EQ(numUnwoundBlocks, processorParams.NumDifficultyInfos);
 			}
 
 			void assertNoStorageChanges() {
 				// Assert: all original blocks are present in the storage
-				auto storageView = Storage.view();
+				auto storageView = LocalNodeStateRef.Storage.view();
 				ASSERT_EQ(Height(OriginalBlocks.size()) + Height(1), storageView.chainHeight());
 				for (const auto& pBlock : OriginalBlocks) {
 					auto pStorageBlock = storageView.loadBlock(pBlock->Height);
@@ -370,22 +351,18 @@ namespace catapult { namespace consumers {
 				}
 
 				// - the cache was not committed
-				EXPECT_FALSE(Cache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
-				EXPECT_EQ(0u, Cache.sub<cache::BlockDifficultyCache>().createView()->size());
+				EXPECT_FALSE(LocalNodeStateRef.Cache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
 
 				// - no state changes were announced
 				EXPECT_EQ(0u, StateChange.params().size());
 
 				// - no transaction changes were announced
 				EXPECT_EQ(0u, TransactionsChange.params().size());
-
-				// - the state was not changed
-				EXPECT_EQ(Initial_Last_Recalculation_Height, State.LastRecalculationHeight);
 			}
 
-			void assertStored(const ConsumerInput& input, const model::ChainScore& expectedScoreDelta) {
+			void assertStored(const ConsumerInput& input) {
 				// Assert: all input blocks should be saved in the storage
-				auto storageView = Storage.view();
+				auto storageView = LocalNodeStateRef.Storage.view();
 				auto inputHeight = input.blocks()[0].Block.Height;
 				auto chainHeight = storageView.chainHeight();
 				ASSERT_EQ(inputHeight + Height(input.blocks().size() - 1), chainHeight);
@@ -402,24 +379,17 @@ namespace catapult { namespace consumers {
 				}
 
 				// - the cache was committed (add 1 to OriginalBlocks.size() because it does not include the nemesis)
-				EXPECT_TRUE(Cache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
-				EXPECT_EQ(
-						OriginalBlocks.size() + 1 - inputHeight.unwrap() + 1,
-						Cache.sub<cache::BlockDifficultyCache>().createView()->size());
-				EXPECT_EQ(chainHeight, Cache.createView().height());
+				EXPECT_TRUE(LocalNodeStateRef.Cache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
+				EXPECT_EQ(chainHeight, LocalNodeStateRef.Cache.createView().height());
 
 				// - the state was changed
 				ASSERT_EQ(1u, StateChange.params().size());
 				const auto& stateChangeParams = StateChange.params()[0];
-				EXPECT_EQ(expectedScoreDelta, stateChangeParams.ScoreDelta);
 				EXPECT_TRUE(stateChangeParams.IsPassedMarkedCache);
 				EXPECT_EQ(chainHeight, stateChangeParams.Height);
 
 				// - transaction changes were announced
 				EXPECT_EQ(1u, TransactionsChange.params().size());
-
-				// - the state was changed
-				EXPECT_EQ(Modified_Last_Recalculation_Height, State.LastRecalculationHeight);
 			}
 		};
 	}
@@ -555,66 +525,49 @@ namespace catapult { namespace consumers {
 
 	// endregion
 
-	// region difficulties check
+	// region chain difficulty test
 
-	TEST(TEST_CLASS, RemoteChainWithIncorrectDifficultiesIsRejected) {
-		// Arrange: trigger a difficulty check failure
+	TEST(TEST_CLASS, ChainWithSmallerDifficultyIsRejected) {
+		// Arrange: create a local storage with blocks 1-7 and a remote storage with blocks 5-6
+		//          (note that the test setup ensures difficulties are linearly correlated with number of blocks)
 		ConsumerTestContext context;
-		context.seedStorage(Height(3));
-		context.DifficultyChecker.setFailure();
+		context.seedStorage(Height(7));
+		auto input = CreateInput(Height(5), 2);
 
-		auto input = CreateInput(Height(4), 2);
+		auto remoteDifficulty = input.blocks()[input.blocks().size() - 1].Block.CumulativeDifficulty;
+		auto localDifficulty = context.LocalNodeStateRef.Storage.view().loadBlock(Height(7))->CumulativeDifficulty;
+		context.DifficultyChecker.setResult(remoteDifficulty > localDifficulty);
 
 		// Act:
 		auto result = context.Consumer(input);
 
 		// Assert:
-		test::AssertAborted(result, Failure_Consumer_Remote_Chain_Mismatched_Difficulties);
+		test::AssertAborted(result, Failure_Consumer_Remote_Chain_Difficulty_Not_Better);
 		EXPECT_EQ(0u, context.UndoBlock.params().size());
 		EXPECT_EQ(0u, context.Processor.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertNoStorageChanges();
 	}
 
-	// endregion
-
-	// region chain score test
-
-	TEST(TEST_CLASS, ChainWithSmallerScoreIsRejected) {
-		// Arrange: create a local storage with blocks 1-7 and a remote storage with blocks 5-6
-		//          (note that the test setup ensures scores are linearly correlated with number of blocks)
-		ConsumerTestContext context;
-		context.seedStorage(Height(7));
-		auto input = CreateInput(Height(5), 2);
-
-		// Act:
-		auto result = context.Consumer(input);
-
-		// Assert:
-		test::AssertAborted(result, Failure_Consumer_Remote_Chain_Score_Not_Better);
-		EXPECT_EQ(3u, context.UndoBlock.params().size());
-		EXPECT_EQ(0u, context.Processor.params().size());
-		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertNoStorageChanges();
-	}
-
-	TEST(TEST_CLASS, ChainWithIdenticalScoreIsRejected) {
+	TEST(TEST_CLASS, ChainWithIdenticalDifficultyIsRejected) {
 		// Arrange: create a local storage with blocks 1-7 and a remote storage with blocks 6-7
-		//          (note that the test setup ensures scores are linearly correlated with number of blocks)
+		//          (note that the test setup ensures difficulties are linearly correlated with number of blocks)
 		ConsumerTestContext context;
 		context.seedStorage(Height(7));
 		auto input = CreateInput(Height(6), 2);
 
+		auto remoteDifficulty = input.blocks()[input.blocks().size() - 1].Block.CumulativeDifficulty;
+		auto localDifficulty = context.LocalNodeStateRef.Storage.view().loadBlock(Height(7))->CumulativeDifficulty;
+		context.DifficultyChecker.setResult(remoteDifficulty > localDifficulty);
+
 		// Act:
 		auto result = context.Consumer(input);
 
 		// Assert:
-		test::AssertAborted(result, Failure_Consumer_Remote_Chain_Score_Not_Better);
-		EXPECT_EQ(2u, context.UndoBlock.params().size());
+		test::AssertAborted(result, Failure_Consumer_Remote_Chain_Difficulty_Not_Better);
+		EXPECT_EQ(0u, context.UndoBlock.params().size());
 		EXPECT_EQ(0u, context.Processor.params().size());
 		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7), Height(6) });
 		context.assertNoStorageChanges();
 	}
 
@@ -671,7 +624,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(0u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertProcessorInvocation(input);
-		context.assertStored(input, model::ChainScore(4 * (Base_Difficulty - 1)));
+		context.assertStored(input);
 	}
 
 	TEST(TEST_CLASS, CanSyncIncompatibleChains) {
@@ -688,8 +641,8 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+		context.assertProcessorInvocation(input);
+		context.assertStored(input);
 	}
 
 	TEST(TEST_CLASS, CanSyncIncompatibleChainsWithOnlyLastBlockDifferent) {
@@ -706,16 +659,16 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(1u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7) });
-		context.assertProcessorInvocation(input, 1);
-		context.assertStored(input, model::ChainScore(3 * (Base_Difficulty - 1)));
+		context.assertProcessorInvocation(input);
+		context.assertStored(input);
 	}
 
-	TEST(TEST_CLASS, CanSyncIncompatibleChainsWhereShorterRemoteChainHasHigherScore) {
+	TEST(TEST_CLASS, CanSyncIncompatibleChainsWhereShorterRemoteChainHasHigherDifficulty) {
 		// Arrange: create a local storage with blocks 1-7 and a remote storage with blocks 5
 		ConsumerTestContext context;
 		context.seedStorage(Height(7));
 		auto input = CreateInput(Height(5), 1);
-		const_cast<model::Block&>(input.blocks()[0].Block).Difficulty = Difficulty(Base_Difficulty * 3);
+		const_cast<model::Block&>(input.blocks()[0].Block).CumulativeDifficulty = Difficulty(Base_Difficulty * 3);
 
 		// Act:
 		auto result = context.Consumer(input);
@@ -725,8 +678,8 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(2));
+		context.assertProcessorInvocation(input);
+		context.assertStored(input);
 	}
 
 	// endregion
@@ -827,7 +780,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(0u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertProcessorInvocation(input);
-		context.assertStored(input, model::ChainScore(4 * (Base_Difficulty - 1)));
+		context.assertStored(input);
 
 		// - the change notification had 6 added and 0 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());
@@ -852,7 +805,7 @@ namespace catapult { namespace consumers {
 		builder.addRandom(3, 2);
 
 		// - extract original hashes from storage
-		auto expectedRevertedHashes = ExtractTransactionHashesFromStorage(context.Storage.view(), Height(5), Height(7));
+		auto expectedRevertedHashes = ExtractTransactionHashesFromStorage(context.LocalNodeStateRef.Storage.view(), Height(5), Height(7));
 
 		// Act:
 		auto result = context.Consumer(input);
@@ -862,8 +815,8 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+		context.assertProcessorInvocation(input);
+		context.assertStored(input);
 
 		// - the change notification had 6 added and 9 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());
@@ -887,11 +840,11 @@ namespace catapult { namespace consumers {
 		builder.addRandom(0, 1);
 		builder.addRandom(2, 3);
 		builder.addRandom(3, 2);
-		builder.addFromStorage(2, context.Storage, Height(5), 2);
-		builder.addFromStorage(0, context.Storage, Height(7), 1);
+		builder.addFromStorage(2, context.LocalNodeStateRef.Storage, Height(5), 2);
+		builder.addFromStorage(0, context.LocalNodeStateRef.Storage, Height(7), 1);
 
 		// - extract original hashes from storage
-		auto expectedRevertedHashes = ExtractTransactionHashesFromStorage(context.Storage.view(), Height(5), Height(7));
+		auto expectedRevertedHashes = ExtractTransactionHashesFromStorage(context.LocalNodeStateRef.Storage.view(), Height(5), Height(7));
 		expectedRevertedHashes.erase(expectedRevertedHashes.begin() + 2 * 3 + 1); // block 7 tx 2
 		expectedRevertedHashes.erase(expectedRevertedHashes.begin() + 2); // block 5 tx 3
 
@@ -903,8 +856,8 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertUnwind({ Height(7), Height(6), Height(5) });
-		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+		context.assertProcessorInvocation(input);
+		context.assertStored(input);
 
 		// - the change notification had 8 added and 7 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());

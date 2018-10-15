@@ -18,12 +18,13 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "TimeSynchronizer.h"
+#include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/AccountStateCacheView.h"
+#include "catapult/cache_core/BalanceView.h"
+#include "catapult/utils/Functional.h"
 #include "constants.h"
 #include "timesync/src/filters/filter_constants.h"
-#include "catapult/cache_core/AccountStateCacheView.h"
-#include "catapult/cache_core/ImportanceView.h"
-#include "catapult/utils/Functional.h"
+#include "TimeSynchronizer.h"
 #include <cmath>
 
 namespace catapult { namespace timesync {
@@ -49,7 +50,7 @@ namespace catapult { namespace timesync {
 	{}
 
 	TimeOffset TimeSynchronizer::calculateTimeOffset(
-			const cache::AccountStateCacheView& accountStateCacheView,
+			const extensions::LocalNodeStateRef& localNodeState,
 			Height height,
 			TimeSynchronizationSamples&& samples,
 			NodeAge nodeAge) {
@@ -59,44 +60,50 @@ namespace catapult { namespace timesync {
 			return TimeOffset(0);
 		}
 
-		cache::ImportanceView importanceView(accountStateCacheView.asReadOnly());
-		auto cumulativeImportance = sumImportances(importanceView, height, samples);
-		if (0 == cumulativeImportance) {
-			CATAPULT_LOG(warning) << "cannot calculate network time, cumulativeImportance is zero";
+		auto cacheView = localNodeState.Cache.createView();
+		auto accountStateCacheView = localNodeState.Cache.sub<cache::AccountStateCache>().createView();
+
+		cache::BalanceView balanceView(
+				cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()),
+				Height(localNodeState.Config.BlockChain.EffectiveBalanceRange)
+		);
+		auto cumulativeBalance = sumBalances(balanceView, height, samples);
+		if (0 == cumulativeBalance) {
+			CATAPULT_LOG(warning) << "cannot calculate network time, cumulativeBalance is zero";
 			return TimeOffset(0);
 		}
 
-		auto highValueAddressesSize = accountStateCacheView.highValueAddressesSize();
+		auto highValueAddressesSize = accountStateCacheView->highValueAddressesSize();
 		auto viewPercentage = static_cast<double>(samples.size()) / highValueAddressesSize;
-		auto importancePercentage = static_cast<double>(cumulativeImportance) / m_totalChainBalance;
-		auto scaling = importancePercentage > viewPercentage ? 1.0 / importancePercentage : 1.0 / viewPercentage;
-		auto sum = sumScaledOffsets(importanceView, height, samples, scaling);
+		auto balancePercentage = static_cast<double>(cumulativeBalance) / m_totalChainBalance;
+		auto scaling = balancePercentage > viewPercentage ? 1.0 / balancePercentage : 1.0 / viewPercentage;
+		auto sum = sumScaledOffsets(balanceView, height, samples, scaling);
 		return TimeOffset(static_cast<int64_t>(GetCoupling(nodeAge) * sum));
 	}
 
-	Importance::ValueType TimeSynchronizer::sumImportances(
-			const cache::ImportanceView& importanceView,
-			Height height,
+	Amount::ValueType TimeSynchronizer::sumBalances(
+			const cache::BalanceView& /*view*/,
+			Height /*height*/,
 			const TimeSynchronizationSamples& samples) {
-		return utils::Sum(samples, [&importanceView, height](const auto& sample) {
-			return importanceView.getAccountImportanceOrDefault(sample.node().identityKey(), height).unwrap();
+		return utils::Sum(samples, [/*&view, height*/](const auto& /*sample*/) {
+			return 0; // TODO: add effective balance calculation.
 		});
 	}
 
 	double TimeSynchronizer::sumScaledOffsets(
-			const cache::ImportanceView& importanceView,
+			const cache::BalanceView& view,
 			Height height,
 			const TimeSynchronizationSamples& samples,
 			double scaling) {
 		auto totalChainBalance = m_totalChainBalance;
 		auto warningThresholdMillis = m_warningThresholdMillis;
-		return utils::Sum(samples, [&importanceView, height, scaling, totalChainBalance, warningThresholdMillis](const auto& sample) {
+		return utils::Sum(samples, [&view, height, scaling, totalChainBalance, warningThresholdMillis](const auto& sample) {
 			int64_t offset = sample.timeOffsetToRemote();
 			CATAPULT_LOG_LEVEL(MapToLogLevel(warningThresholdMillis, offset))
 					<< sample.node().metadata().Name << ": network time offset to local node is " << offset << "ms";
 
-			auto importance = importanceView.getAccountImportanceOrDefault(sample.node().identityKey(), height);
-			return scaling * offset * importance.unwrap() / totalChainBalance;
+			auto balance = Amount{0}; // TODO: add effective balance calculation.
+			return scaling * offset * balance.unwrap() / totalChainBalance;
 		});
 	}
 }}

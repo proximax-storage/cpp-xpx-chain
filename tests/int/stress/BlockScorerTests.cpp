@@ -22,8 +22,10 @@
 #include "catapult/crypto/Hashes.h"
 #include "catapult/model/Block.h"
 #include "catapult/utils/Logging.h"
+#include "catapult/utils/TimeSpan.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
+#include <deque>
 
 namespace catapult { namespace chain {
 
@@ -32,19 +34,14 @@ namespace catapult { namespace chain {
 	namespace {
 #ifdef STRESS
 		constexpr size_t Num_Iterations = 100'000;
-		constexpr size_t Min_Hits_For_Percentage_Deviation = 1;
-		constexpr size_t Max_Percentage_Deviation = 10;
-		constexpr size_t Max_Average_Deviation = 5;
 #else
-		// due to the small number of samples, the number of hits can vary significantly between successive levels
-		// (especially for low importances), so set a min hits threshold
-		constexpr size_t Num_Iterations = 25'000;
-		constexpr size_t Min_Hits_For_Percentage_Deviation = 1000;
-		constexpr size_t Max_Percentage_Deviation = 20;
-		constexpr size_t Max_Average_Deviation = 8;
+		constexpr size_t Num_Iterations = 25000;
 #endif
 
 		constexpr Timestamp Max_Time(1000 * 1000);
+		constexpr size_t HitCounterNumber{20};
+		constexpr BlockTarget ParentBaseTarget{100000000u};
+		constexpr uint64_t EffectiveBalanceStep{100000000u};
 
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
@@ -53,44 +50,72 @@ namespace catapult { namespace chain {
 			return config;
 		}
 
-		struct ImportanceGroup {
+		struct HitCounter {
 		public:
-			catapult::Importance Importance;
+			Amount EffectiveBalance;
 			std::atomic<size_t> HitCount;
 			Key Signer;
 
 		public:
-			explicit ImportanceGroup(catapult::Importance::ValueType importance)
-					: Importance(catapult::Importance(importance))
+			explicit HitCounter(const Amount& effectiveBalance)
+					: EffectiveBalance(effectiveBalance)
 					, HitCount(0)
 					, Signer(test::GenerateRandomData<Key_Size>())
 			{}
 		};
 
-		using ImportanceGroups = std::vector<std::unique_ptr<ImportanceGroup>>;
+		using HitCounters = std::vector<std::unique_ptr<HitCounter>>;
 
-		ImportanceGroups CreateDoublingImportances() {
-			uint64_t importance = 10'000'000;
-			ImportanceGroups groups;
-			for (auto i = 0u; i < 7; ++i) {
-				groups.push_back(std::make_unique<ImportanceGroup>(importance));
-				importance *= 2;
+		HitCounters CreateHitCounters() {
+			HitCounters hitCounters;
+			for (auto i = 0u; i < HitCounterNumber; ++i) {
+				hitCounters.push_back(std::make_unique<HitCounter>(Amount{EffectiveBalanceStep * (i + 1)}));
 			}
 
-			return groups;
+			return hitCounters;
 		}
+
+		class AverageBlockTime {
+		public:
+			void Add(const utils::TimeSpan& blockTime)
+			{
+				Add(blockTime.millis());
+			}
+
+			void Add(const Timestamp& blockTime)
+			{
+				Add(blockTime.unwrap());
+			}
+
+			void Add(uint64_t blockTime)
+			{
+				if (m_blockTimes.size() == Block_Timestamp_History_Size) {
+					m_blockTimes.pop_front();
+				}
+
+				m_blockTimes.push_back(blockTime);
+				m_average = 0;
+				std::for_each(m_blockTimes.begin(), m_blockTimes.end(), [this](const uint64_t& value){ m_average += value; });
+				m_average /= m_blockTimes.size();
+			}
+
+			utils::TimeSpan Get() { return utils::TimeSpan::FromMilliseconds(m_average); }
+		private:
+			std::deque<uint64_t> m_blockTimes;
+			uint64_t m_average;
+		};
 
 		// calculate the block time by updating the Timestamp in current and checking if it hits using the predicate
 		Timestamp GetBlockTime(
-				const model::Block& parent,
-				model::Block& current,
+				const Amount& effectiveBalance,
 				const Hash256& generationHash,
+				const BlockTarget& baseTarget,
 				const BlockHitPredicate& predicate) {
 			const auto MS_In_S = 1000;
 
 			// - make sure that there is a hit possibility
-			current.Timestamp = Max_Time;
-			if (!predicate(parent, current, generationHash))
+			Timestamp elapsedTime = Max_Time;
+			if (!predicate(generationHash, baseTarget, utils::TimeSpan::FromMilliseconds(elapsedTime.unwrap()), effectiveBalance))
 				return Max_Time;
 
 			// - use a binary search to find the hit time
@@ -98,173 +123,122 @@ namespace catapult { namespace chain {
 			uint64_t upperBound = Max_Time.unwrap();
 			while (upperBound - lowerBound > MS_In_S) {
 				auto middle = (upperBound + lowerBound) / 2;
-				current.Timestamp = parent.Timestamp + Timestamp(middle);
+				elapsedTime = Timestamp(middle);
 
-				if (predicate(parent, current, generationHash))
+				if (predicate(generationHash, baseTarget, utils::TimeSpan::FromMilliseconds(elapsedTime.unwrap()), effectiveBalance)) {
 					upperBound = middle;
-				else
+				} else {
 					lowerBound = middle;
+				}
 			}
 
-			return Timestamp(upperBound);
+			return elapsedTime;
 		}
 
 		// runs an iteration and returns the next generation hash
-		Hash256 RunHitCountIteration(
-				const BlockHitPredicate& predicate,
-				ImportanceGroups& importances,
-				const model::Block& parent,
-				const Hash256& parentGenerationHash,
-				model::Block& current) {
+		void RunHitCountIteration(
+				HitCounters& hitCounters,
+				Hash256& parentGenerationHash,
+				AverageBlockTime& averageBlockTime,
+				const model::BlockChainConfiguration& config) {
+			BlockHitPredicate predicate;
 			Timestamp bestTime = Max_Time;
 			Hash256 bestGenerationHash{};
-			ImportanceGroup* pBestGroup = nullptr;
-			for (const auto& pGroup : importances) {
+			BlockTarget baseTarget = CalculateBaseTarget(ParentBaseTarget, averageBlockTime.Get(), config);
+			HitCounter* pBestHitter = nullptr;
+			for (const auto& pHitCounter : hitCounters) {
 				// - set the signer and generation hash
-				current.Signer = pGroup->Signer;
 				Hash256 nextGenerationHash;
 
 				crypto::Sha3_256_Builder sha3;
 				sha3.update(parentGenerationHash);
-				sha3.update(current.Signer);
+				sha3.update(pHitCounter->Signer);
 				sha3.final(nextGenerationHash);
 
-				auto time = GetBlockTime(parent, current, nextGenerationHash, predicate);
+				auto time = GetBlockTime(pHitCounter->EffectiveBalance, nextGenerationHash, baseTarget, predicate);
 				if (time >= bestTime)
 					continue;
 
 				bestTime = time;
 				bestGenerationHash = nextGenerationHash;
-				pBestGroup = pGroup.get();
+				pBestHitter = pHitCounter.get();
 			}
 
-			// - if no blocks hit, use a random generation hash for the next iteration
-			//   (in a real scenario, this would result in a lowered difficulty)
-			if (!pBestGroup)
-				return test::GenerateRandomData<Hash256_Size>();
-
-			// - increment the hit count for the best group and use its generation hash for the next iteration
-			++pBestGroup->HitCount;
-			return bestGenerationHash;
-		}
-
-		uint64_t CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(const ImportanceGroups& importances) {
-			// log all values
-			for (const auto& pGroup : importances)
-				CATAPULT_LOG(debug) << pGroup->Importance << " -> " << pGroup->HitCount;
-
-			// Assert:
-			auto numGroupsWithSufficientHits = 0u;
-			uint64_t cumulativePercentageDeviation = 0;
-			for (auto i = 1u; i < importances.size(); ++i) {
-				const auto& previousGroup = *importances[i - 1];
-				const auto& currentGroup = *importances[i];
-				auto previousHitCount = previousGroup.HitCount.load();
-				auto currentHitCount = currentGroup.HitCount.load();
-
-				// - current hit count is greater than previous (and previous is nonzero to avoid divide by zero)
-				EXPECT_GT(currentHitCount, previousHitCount) << "current " << i;
-				if (0 == previousHitCount) {
-					CATAPULT_LOG(debug) << "no hits for iteration " << (i - 1);
-					return Max_Average_Deviation + 1;
-				}
-
-				// - expected hit count for current is 2x previous because importance is 2x
-				auto expectedHitCount = 2 * previousHitCount;
-				auto deviation = static_cast<int64_t>(expectedHitCount - currentHitCount);
-				auto absoluteDeviation = static_cast<uint64_t>(std::abs(deviation));
-				auto percentageDeviation = absoluteDeviation * 100u / expectedHitCount;
-
-				// - allow a max percentage deviation between consecutive groups
-				auto hasSufficientHits = currentHitCount >= Min_Hits_For_Percentage_Deviation;
-				CATAPULT_LOG(debug)
-						<< previousGroup.Importance << " -> " << currentGroup.Importance
-						<< " deviation: " << percentageDeviation << "%"
-						<< (hasSufficientHits ? "" : " (insufficient hits)");
-
-				if (!hasSufficientHits)
-					continue;
-
-				// - if the deviation is too large, fail the iteration
-				if (Max_Percentage_Deviation <= percentageDeviation) {
-					CATAPULT_LOG(debug) << "Max_Percentage_Deviation <= percentageDeviation (" << percentageDeviation << ")";
-					return Max_Average_Deviation + 1;
-				}
-
-				EXPECT_GT(Max_Percentage_Deviation, percentageDeviation);
-				cumulativePercentageDeviation += percentageDeviation;
-				++numGroupsWithSufficientHits;
+			if (!pBestHitter) {
+				// - if no blocks hit, use a random generation hash for the next iteration
+				//   (in a real scenario, this would result in a lowered difficulty)
+				parentGenerationHash = test::GenerateRandomData<Hash256_Size>();
+			} else {
+				// - increment the hit count for the best group and use its generation hash for the next iteration
+				++pBestHitter->HitCount;
+				parentGenerationHash = bestGenerationHash;
+				averageBlockTime.Add(bestTime);
 			}
-
-			// - allow max average percentage deviation among all groups with sufficient hits
-			auto averageDeviation = cumulativePercentageDeviation / numGroupsWithSufficientHits;
-			CATAPULT_LOG(debug) << "average deviation " << averageDeviation << " (num groups " << numGroupsWithSufficientHits << ")";
-			return averageDeviation;
 		}
 
-		uint64_t CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(const model::BlockChainConfiguration& config) {
-			// Arrange: set up test importances
-			auto importances = CreateDoublingImportances();
-
-			// - set up chain
-			BlockHitPredicate predicate(config, [&importances](const auto& signerKey, auto) {
-				auto iter = std::find_if(importances.cbegin(), importances.cend(), [&signerKey](const auto& pGroup) {
-					return pGroup->Signer == signerKey;
-				});
-				return importances.cend() != iter ? (*iter)->Importance : Importance(0);
-			});
+		void RunHitCount(const model::BlockChainConfiguration& config, HitCounters& hitCounters) {
 
 			// - calculate chain scores on all threads
 			const auto numIterationsPerThread = Num_Iterations / test::GetNumDefaultPoolThreads();
 			boost::thread_group threads;
 			for (auto i = 0u; i < test::GetNumDefaultPoolThreads(); ++i) {
-				threads.create_thread([&predicate, &importances, i, numIterationsPerThread] {
+				threads.create_thread([&config, &hitCounters, i, numIterationsPerThread] {
 					// Arrange: seed srand per thread
 					std::srand(static_cast<unsigned int>(std::time(nullptr)) + (2u << i));
 
 					// - set up blocks
-					model::Block parent;
-					parent.Timestamp = Timestamp((900 + i) * 1000);
 					auto parentGenerationHash = test::GenerateRandomData<Hash256_Size>();
 
-					model::Block current;
-					current.Difficulty = Difficulty((50 + i) * 1'000'000'000'000);
-
-					CATAPULT_LOG(debug) << "generation hash " << i << ": " << utils::HexFormat(parentGenerationHash);
+					AverageBlockTime averageBlockTime;
+					averageBlockTime.Add(config.BlockGenerationTargetTime);
 
 					// Act: calculate hit counts for lots of blocks
 					for (auto j = 0u; j < numIterationsPerThread; ++j)
-						parentGenerationHash = RunHitCountIteration(predicate, importances, parent, parentGenerationHash, current);
+						RunHitCountIteration(hitCounters, parentGenerationHash, averageBlockTime, config);
 				});
 			}
 
 			// - wait for all threads
 			threads.join_all();
-
-			// Assert: the distribution is linearly correlated with importance
-			return CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(importances);
 		}
 
-		void AssertHitProbabilityIsLinearlyCorrelatedWithImportance(const model::BlockChainConfiguration& config) {
-			// Arrange: non-deterministic because operation is probabilistic
-			test::RunNonDeterministicTest("hit probability and importance correlation", [&config]() {
-				// Assert:
-				auto averageDeviation = CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(config);
-				return Max_Average_Deviation > averageDeviation;
-			});
+		void CalculateLinearlyCorrelatedHitCountAndEffectiveBalance(const HitCounters& hitCounters) {
+			// Assert:
+			auto lowerBalanceHitCount = 0u;
+			for (auto i = 0u; i < hitCounters.size() / 2; ++i) {
+				lowerBalanceHitCount = hitCounters[i]->HitCount.load();
+			}
+
+			auto higherBalanceHitCount = 0u;
+			for (auto i = hitCounters.size() / 2; i < hitCounters.size(); ++i) {
+				higherBalanceHitCount = hitCounters[i]->HitCount.load();
+			}
+
+			EXPECT_GT(higherBalanceHitCount, lowerBalanceHitCount);
+		}
+
+		void AssertHitProbabilityIsLinearlyCorrelatedWithEffectiveBalance(const model::BlockChainConfiguration& config) {
+			// Arrange:
+			auto hitCounters = CreateHitCounters();
+
+			//Act:
+			RunHitCount(config, hitCounters);
+
+			// Assert: the distribution is linearly correlated with effective balance
+			CalculateLinearlyCorrelatedHitCountAndEffectiveBalance(hitCounters);
 		}
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, HitProbabilityIsLinearlyCorrelatedWithImportance) {
+	NO_STRESS_TEST(TEST_CLASS, HitProbabilityIsLinearlyCorrelatedWithEffectiveBalance) {
 		// Assert:
 		auto config = CreateConfiguration();
-		AssertHitProbabilityIsLinearlyCorrelatedWithImportance(config);
+		AssertHitProbabilityIsLinearlyCorrelatedWithEffectiveBalance(config);
 	}
 
-	NO_STRESS_TEST(TEST_CLASS, HitProbabilityIsLinearlyCorrelatedWithImportanceWhenSmoothingIsEnabled) {
+	NO_STRESS_TEST(TEST_CLASS, HitProbabilityIsLinearlyCorrelatedWithEffectiveBalanceWhenSmoothingIsEnabled) {
 		// Assert:
 		auto config = CreateConfiguration();
 		config.BlockTimeSmoothingFactor = 10000;
-		AssertHitProbabilityIsLinearlyCorrelatedWithImportance(config);
+		AssertHitProbabilityIsLinearlyCorrelatedWithEffectiveBalance(config);
 	}
 }}

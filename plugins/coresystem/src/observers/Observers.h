@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "ImportanceCalculator.h"
+#include "catapult/constants.h"
 #include "catapult/model/Notifications.h"
 #include "catapult/observers/ObserverTypes.h"
 
@@ -37,17 +37,8 @@ namespace catapult { namespace observers {
 
 	// region Block
 
-	/// Observes block notifications and triggers importance recalculations using either \a pCommitCalculator (for commits)
-	/// or \a pRollbackCalculator (for rollbacks).
-	DECLARE_OBSERVER(RecalculateImportances, model::BlockNotification)(
-			std::unique_ptr<ImportanceCalculator>&& pCommitCalculator,
-			std::unique_ptr<ImportanceCalculator>&& pRollbackCalculator);
-
 	/// Observes block notifications and credits the harvester with transaction fees.
 	DECLARE_OBSERVER(HarvestFee, model::BlockNotification)();
-
-	/// Observes block difficulties.
-	DECLARE_OBSERVER(BlockDifficulty, model::BlockNotification)();
 
 	// endregion
 

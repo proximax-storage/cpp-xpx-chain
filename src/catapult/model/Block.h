@@ -43,8 +43,11 @@ namespace catapult { namespace model {
 		/// Timestamp of a block.
 		catapult::Timestamp Timestamp;
 
-		/// Difficulty of a block.
-		catapult::Difficulty Difficulty;
+		/// Cumulative difficulty of a block.
+		Difficulty CumulativeDifficulty;
+
+		/// Base target of a block.
+		BlockTarget BaseTarget;
 
 		/// Hash of the previous block.
 		Hash256 PreviousBlockHash;

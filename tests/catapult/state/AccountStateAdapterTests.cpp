@@ -29,12 +29,10 @@ namespace catapult { namespace state {
 	// region AccountState -> AccountInfo
 
 	namespace {
-		AccountState CreateAccountStateWithZeroMosaics(size_t numImportances = Importance_History_Size) {
+		AccountState CreateAccountStateWithZeroMosaics() {
 			AccountState accountState(test::GenerateRandomData<Address_Decoded_Size>(), Height(123));
 			accountState.PublicKey = test::GenerateRandomData<Key_Size>();
 			accountState.PublicKeyHeight = Height(456);
-			for (auto i = 1u; i <= numImportances; ++i)
-				accountState.ImportanceInfo.set(Importance(i * i), model::ImportanceHeight(i));
 
 			return accountState;
 		}
@@ -47,14 +45,6 @@ namespace catapult { namespace state {
 			EXPECT_EQ(accountState.PublicKey, info.PublicKey);
 			EXPECT_EQ(accountState.PublicKeyHeight, info.PublicKeyHeight);
 			EXPECT_EQ(expectedMosaicsCount, info.MosaicsCount);
-
-			auto i = 0u;
-			for (const auto& pair : accountState.ImportanceInfo) {
-				const auto message = "importance at " + std::to_string(i);
-				EXPECT_EQ(pair.Importance, info.Importances[i]) << message;
-				EXPECT_EQ(pair.Height, info.ImportanceHeights[i]) << message;
-				++i;
-			}
 		}
 
 		void AssertMosaic(const model::Mosaic& mosaic, MosaicId expectedId, Amount expectedAmount) {
@@ -63,9 +53,9 @@ namespace catapult { namespace state {
 			EXPECT_EQ(expectedAmount, mosaic.Amount);
 		}
 
-		void AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics(size_t numImportances) {
+		void AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics() {
 			// Arrange:
-			auto accountState = CreateAccountStateWithZeroMosaics(numImportances);
+			auto accountState = CreateAccountStateWithZeroMosaics();
 
 			// Act:
 			auto pAccountInfo = ToAccountInfo(accountState);
@@ -78,7 +68,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_ZeroMosaics) {
 		// Assert:
-		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics(Importance_History_Size);
+		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics();
 	}
 
 	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_SingleMosaic) {
@@ -124,26 +114,14 @@ namespace catapult { namespace state {
 		AssertMosaic(mosaics[MosaicId(987)], MosaicId(987), Amount(222));
 	}
 
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_NoImportanceHistory) {
-		// Assert:
-		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics(0);
-	}
-
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_PartialImportanceHistory) {
-		// Assert:
-		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics(Importance_History_Size - 1);
-	}
-
 	// endregion
 
 	// region AccountState <- AccountInfo
 
 	namespace {
-		void AssertCanCreateAccountStateFromAccountInfo(
-				const std::vector<model::Mosaic>& mosaics,
-				size_t numImportances = Importance_History_Size) {
+		void AssertCanCreateAccountStateFromAccountInfo(const std::vector<model::Mosaic>& mosaics) {
 			// Arrange:
-			auto originalAccountState = CreateAccountStateWithZeroMosaics(numImportances);
+			auto originalAccountState = CreateAccountStateWithZeroMosaics();
 			for (const auto& mosaic : mosaics)
 				originalAccountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
 
@@ -175,16 +153,6 @@ namespace catapult { namespace state {
 			{ Xpx_Id, Amount(13579) },
 			{ MosaicId(987), Amount(222) }
 		});
-	}
-
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_NoImportanceHistory) {
-		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({}, 0);
-	}
-
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_PartialImportanceHistory) {
-		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({}, Importance_History_Size - 1);
 	}
 
 	// endregion

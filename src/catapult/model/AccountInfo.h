@@ -19,7 +19,6 @@
 **/
 
 #pragma once
-#include "ImportanceHeight.h"
 #include "Mosaic.h"
 #include "TrailingVariableDataLayout.h"
 #include "catapult/constants.h"
@@ -45,12 +44,6 @@ namespace catapult { namespace model {
 
 		/// Height at which public key has been obtained.
 		Height PublicKeyHeight;
-
-		/// Importances of the account (current followed by historical).
-		catapult::Importance Importances[Importance_History_Size];
-
-		/// Importance heights (current followed by historical).
-		ImportanceHeight ImportanceHeights[Importance_History_Size];
 
 		/// Number of types of mosaics owned by the account.
 		uint16_t MosaicsCount;

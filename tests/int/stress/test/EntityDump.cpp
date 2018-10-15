@@ -73,7 +73,7 @@ namespace catapult { namespace test {
 		CATAPULT_LOG(debug) << "   Timestamp: " << VALANDHEX(block.Timestamp);
 		CATAPULT_LOG(debug) << "   Signature:\n" << HexFormat(block.Signature);
 		CATAPULT_LOG(debug) << "      Height: " << VALANDHEX(block.Height);
-		CATAPULT_LOG(debug) << "  Difficulty: " << VALANDHEX(block.Difficulty);
+		CATAPULT_LOG(debug) << "  Difficulty: " << VALANDHEX(block.CumulativeDifficulty);
 		CATAPULT_LOG(debug) << " PrevBlockHa: " << HexFormat(block.PreviousBlockHash);
 	}
 

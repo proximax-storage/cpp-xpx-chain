@@ -21,8 +21,6 @@
 #include "filechain/src/FileBlockChainStorage.h"
 #include "plugins/services/hashcache/src/cache/HashCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/EntityFactory.h"
@@ -42,12 +40,11 @@ namespace catapult { namespace filechain {
 	namespace {
 		// region TestContext
 
-		model::BlockChainConfiguration CreateBlockChainConfiguration(uint32_t maxDifficultyBlocks, const std::string& dataDirectory) {
+		model::BlockChainConfiguration CreateBlockChainConfiguration(uint64_t effectiveBalanceRange, const std::string& dataDirectory) {
 			auto config = test::LoadLocalNodeConfigurationWithNemesisPluginExtensions(dataDirectory).BlockChain;
 			config.Plugins.emplace("catapult.plugins.hashcache", utils::ConfigurationBag({{ "", { {} } }}));
 
-			if (maxDifficultyBlocks > 0)
-				config.MaxDifficultyBlocks = maxDifficultyBlocks;
+			config.EffectiveBalanceRange = effectiveBalanceRange;
 
 			// set the number of rollback blocks to zero to avoid unnecessarily influencing height-dominant tests
 			config.MaxRollbackBlocks = 0;
@@ -62,8 +59,8 @@ namespace catapult { namespace filechain {
 					, m_pBlockChainStorage(CreateFileBlockChainStorage())
 			{}
 
-			explicit TestContext(uint32_t maxDifficultyBlocks = 0, const std::string& dataDirectory = "")
-					: TestContext(CreateBlockChainConfiguration(maxDifficultyBlocks, dataDirectory), dataDirectory)
+			explicit TestContext(uint64_t effectiveBalanceRange = 0, const std::string& dataDirectory = "")
+					: TestContext(CreateBlockChainConfiguration(effectiveBalanceRange, dataDirectory), dataDirectory)
 			{}
 
 		public:
@@ -77,10 +74,6 @@ namespace catapult { namespace filechain {
 
 			auto cacheView() const {
 				return m_localNodeState.cref().Cache.createView();
-			}
-
-			auto score() const {
-				return m_localNodeState.cref().Score.get();
 			}
 
 		public:
@@ -118,9 +111,9 @@ namespace catapult { namespace filechain {
 		context.load();
 
 		// Assert:
-		const auto& view = context.cacheView();
-		EXPECT_EQ(Height(1), view.height());
-		test::AssertNemesisAccountState(view);
+		const auto& cacheView = context.cacheView();
+		EXPECT_EQ(Height(1), cacheView.height());
+		test::AssertNemesisAccountState(cacheView);
 	}
 
 	TEST(TEST_CLASS, ProperMosaicStateAfterLoadingNemesisBlock) {
@@ -131,20 +124,9 @@ namespace catapult { namespace filechain {
 		context.load();
 
 		// Assert:
-		const auto& view = context.cacheView();
-		test::AssertNemesisNamespaceState(view);
-		test::AssertNemesisMosaicState(view);
-	}
-
-	TEST(TEST_CLASS, ProperChainScoreAfterLoadingNemesisBlock) {
-		// Arrange:
-		TestContext context;
-
-		// Act:
-		context.load();
-
-		// Assert:
-		EXPECT_EQ(model::ChainScore(), context.score());
+		const auto& cacheView = context.cacheView();
+		test::AssertNemesisNamespaceState(cacheView);
+		test::AssertNemesisMosaicState(cacheView);
 	}
 
 	// endregion
@@ -186,15 +168,18 @@ namespace catapult { namespace filechain {
 				io::BlockStorageModifier&& storage,
 				std::vector<Amount>& amountsSpent,
 				std::vector<Amount>& amountsCollected,
-				const utils::TimeSpan& timeSpacing) {
-			RandomChainAttributes attributes;
-			amountsSpent.resize(Num_Nemesis_Accounts);
-			amountsCollected.resize(Num_Recipient_Accounts);
-			attributes.Recipients = GenerateRandomAddresses(Num_Recipient_Accounts);
+				const utils::TimeSpan& timeSpacing,
+				uint64_t height = 2u,
+				RandomChainAttributes attributes = RandomChainAttributes()) {
+
+			if (attributes.Recipients.empty()) {
+				amountsSpent.resize(Num_Nemesis_Accounts);
+				amountsCollected.resize(Num_Recipient_Accounts);
+				attributes.Recipients = GenerateRandomAddresses(Num_Recipient_Accounts);
+			}
 
 			// Generate block per every recipient, each with random number of transactions.
 			auto recipientIndex = 0u;
-			auto height = 2u;
 			std::mt19937_64 rnd;
 			auto nemesisKeyPairs = GetNemesisKeyPairs();
 			for (const auto& recipientAddress : attributes.Recipients) {
@@ -220,7 +205,7 @@ namespace catapult { namespace filechain {
 				auto harvesterIndex = accountIndexDistribution(rnd);
 				auto pBlock = test::GenerateBlockWithTransactions(nemesisKeyPairs[harvesterIndex], transactions);
 				pBlock->Height = Height(height);
-				pBlock->Difficulty = Difficulty(Difficulty().unwrap() + height);
+				pBlock->CumulativeDifficulty = Difficulty(Difficulty().unwrap() + height);
 				pBlock->Timestamp = Timestamp(height * timeSpacing.millis());
 				storage.saveBlock(test::BlockToBlockElement(*pBlock));
 				++height;
@@ -273,19 +258,13 @@ namespace catapult { namespace filechain {
 	// region multi block loading - ProperAccountCacheState
 
 	namespace {
-		void AssertProperAccountCacheStateAfterLoadingMultipleBlocks(const utils::TimeSpan& timeSpacing) {
-			// Arrange:
-			TestContext context;
-			std::vector<Amount> amountsSpent; // amounts spent by nemesis accounts to send to other newAccounts
-			std::vector<Amount> amountsCollected;
-			auto newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected, timeSpacing).Recipients;
 
-			// Act:
-			context.load();
-
-			// Assert:
+		void checkRecipient(
+				const cache::CatapultCacheView& cacheView,
+				const std::vector<Address>& newAccounts,
+				const std::vector<Amount>& amountsSpent,
+				const std::vector<Amount>& amountsCollected) {
 			auto i = 0u;
-			auto cacheView = context.cacheView();
 			const auto& accountStateCacheView = cacheView.sub<cache::AccountStateCache>();
 
 			// - check nemesis
@@ -305,6 +284,44 @@ namespace catapult { namespace filechain {
 				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
 				++i;
 			}
+		}
+
+		void AssertProperAccountCacheStateAfterLoadingMultipleBlocks(const utils::TimeSpan& timeSpacing) {
+			// Arrange:
+			auto effetiveBalanceRange = Num_Recipient_Accounts;
+			TestContext context(effetiveBalanceRange);
+
+			// Lets create second block and save information about amount of account
+			std::vector<Amount> amountsSpent;
+			std::vector<Amount> amountsCollected;
+			auto attributes = PrepareRandomBlocks(
+					context.storageModifier(),
+					amountsSpent,
+					amountsCollected,
+					timeSpacing,
+					2
+			);
+			std::vector<Amount> amountsSpentOldCopy = amountsSpent;
+			std::vector<Amount> amountsCollectedOldCopy = amountsCollected;
+
+			// Now let's update balance of accounts more and then check the cache
+			PrepareRandomBlocks(
+					context.storageModifier(),
+					amountsSpent,
+					amountsCollected,
+					timeSpacing,
+					2 + effetiveBalanceRange,
+					attributes
+			);
+
+			auto newAccounts = attributes.Recipients;
+
+			// Act:
+			context.load();
+
+			// Assert:
+			// Check that the cache contains correct information
+			checkRecipient(context.cacheView(), newAccounts, amountsSpent, amountsCollected);
 		}
 	}
 
@@ -349,43 +366,6 @@ namespace catapult { namespace filechain {
 
 	// endregion
 
-	// region multi block loading - ProperChainScore
-
-	namespace {
-		void AssertProperChainScoreAfterLoadingMultipleBlocks(const utils::TimeSpan& timeSpacing) {
-			// Arrange:
-			TestContext context;
-			PrepareRandomBlocks(context.storageModifier(), timeSpacing);
-
-			// Act:
-			context.load();
-
-			// Assert:
-			// note that there are Num_Recipient_Accounts blocks (one per recipient)
-			// - each block has a difficulty of base + height
-			// - all blocks except for the first one have a time difference of 1s (the first one has a difference of 2s)
-			auto result = context.score();
-			uint64_t expectedDifficulty =
-					Difficulty().unwrap() * Num_Recipient_Accounts // sum base difficulties
-					+ (Num_Recipient_Accounts + 1) * (Num_Recipient_Accounts + 2) / 2 // sum difficulty deltas (1..N+1)
-					- 1 // adjust for range (2..N+1) - first 'recipient' block has height 2
-					- (Num_Recipient_Accounts + 1) * timeSpacing.seconds(); // subtract time differences
-			EXPECT_EQ(model::ChainScore(expectedDifficulty), result);
-		}
-	}
-
-	TEST(TEST_CLASS, ProperChainScoreAfterLoadingMultipleBlocks_AllBlocksContributeToTransientState) {
-		// Assert:
-		AssertProperChainScoreAfterLoadingMultipleBlocks(utils::TimeSpan::FromSeconds(1));
-	}
-
-	TEST(TEST_CLASS, ProperChainScoreAfterLoadingMultipleBlocks_SomeBlocksContributeToTransientState) {
-		// Assert: chain score is permanent and should not be short-circuited
-		AssertProperChainScoreAfterLoadingMultipleBlocks(utils::TimeSpan::FromMinutes(1));
-	}
-
-	// endregion
-
 	// region multi block loading - ProperTransientCacheState
 
 	namespace {
@@ -396,16 +376,6 @@ namespace catapult { namespace filechain {
 				sum += vec[i];
 
 			return sum;
-		}
-
-		void AssertBlockDifficultyCacheRange(
-				const cache::BlockDifficultyCacheView& view,
-				Height expectedStartHeight,
-				Height expectedEndHeight) {
-			auto pIterableView = view.tryMakeIterableView();
-			ASSERT_TRUE(!!pIterableView);
-			EXPECT_EQ(expectedStartHeight, pIterableView->begin()->BlockHeight);
-			EXPECT_EQ(expectedEndHeight, std::prev(pIterableView->end())->BlockHeight);
 		}
 	}
 
@@ -430,21 +400,15 @@ namespace catapult { namespace filechain {
 		EXPECT_EQ(
 				numTotalTransferTransactions + Num_Nemesis_Accounts + Num_Nemesis_Namespaces + 2 * Num_Nemesis_Mosaics,
 				cacheView.sub<cache::HashCache>().size());
-
-		const auto& blockDifficultyCache = cacheView.sub<cache::BlockDifficultyCache>();
-		EXPECT_EQ(transactionCounts.size() + 1, blockDifficultyCache.size());
-		AssertBlockDifficultyCacheRange(blockDifficultyCache, Height(1), Height(1 + transactionCounts.size()));
 	}
 
 	namespace {
-		void AssertProperTransientCacheStateAfterLoadingMultipleBlocksWithInflection(
-				uint32_t maxDifficultyBlocks,
-				size_t numExpectedSignificantBlocks) {
+		void AssertProperTransientCacheStateAfterLoadingMultipleBlocksWithInflection(size_t numExpectedSignificantBlocks) {
 			// Arrange:
 			// - note that even though the config is zeroed, MaxTransientStateCacheDuration is 1hr because of the
 			//   min RollbackVariabilityBufferDuration
 			// - 1m block spacing will sum to greater than 1hr, so state from some blocks should not be cached
-			TestContext context(maxDifficultyBlocks);
+			TestContext context;
 			auto transactionCounts = PrepareRandomBlocks(context.storageModifier(), utils::TimeSpan::FromMinutes(1)).TransactionCounts;
 
 			// Act:
@@ -460,24 +424,12 @@ namespace catapult { namespace filechain {
 			//         (note that transactionCounts indexes 0..N correspond to heights 2..N+2)
 			auto cacheView = context.cacheView();
 			EXPECT_EQ(numTotalTransactions, cacheView.sub<cache::HashCache>().size());
-
-			const auto& blockDifficultyCache = cacheView.sub<cache::BlockDifficultyCache>();
-			EXPECT_EQ(numExpectedSignificantBlocks, blockDifficultyCache.size());
-			AssertBlockDifficultyCacheRange(
-					blockDifficultyCache,
-					Height(2 + startAllObserversIndex),
-					Height(1 + transactionCounts.size()));
 		}
 	}
 
 	TEST(TEST_CLASS, ProperTransientCacheStateAfterLoadingMultipleBlocks_SomeBlocksContributeToTransientState_TimeDominant) {
 		// Assert: state from blocks at times [T - 60, T] should be cached
-		AssertProperTransientCacheStateAfterLoadingMultipleBlocksWithInflection(60, 61);
-	}
-
-	TEST(TEST_CLASS, ProperTransientCacheStateAfterLoadingMultipleBlocks_SomeBlocksContributeToTransientState_HeightDominant) {
-		// Assert: state from the last 75 blocks should be cached
-		AssertProperTransientCacheStateAfterLoadingMultipleBlocksWithInflection(75, 75);
+		AssertProperTransientCacheStateAfterLoadingMultipleBlocksWithInflection(61);
 	}
 
 	// endregion
@@ -485,6 +437,20 @@ namespace catapult { namespace filechain {
 	// region saveToStorage
 
 	namespace {
+
+		// - spot check the new accounts by checking secondary recipients in cache
+		void inline checkSecondaryRecipient(
+				const cache::CatapultCacheView& cacheView,
+				const std::vector<Address>& newAccounts,
+				const std::vector<Amount>& amountsCollected) {
+			const auto& accountStateCacheView = cacheView.sub<cache::AccountStateCache>();
+			auto i = 0u;
+			for (const auto& address : newAccounts) {
+				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
+				++i;
+			}
+		}
+
 		void AssertCanSaveAndReloadCacheStateToAndFromDisk(bool useCacheDatabaseStorage) {
 			// Arrange:
 			test::TempDirectoryGuard tempDataDirectory;
@@ -492,14 +458,14 @@ namespace catapult { namespace filechain {
 			std::vector<Amount> amountsCollected;
 			std::vector<Address> newAccounts;
 
-			uint32_t maxDifficultyBlocks = Num_Recipient_Accounts / 4;
 			auto storageChainHeight = Height(Num_Recipient_Accounts + 1);
 			{
 				// - generate random state
 				auto timeSpacing = utils::TimeSpan::FromMinutes(2);
-				TestContext context(maxDifficultyBlocks, tempDataDirectory.name());
+				TestContext context(0 /* effectiveBalanceRange */, tempDataDirectory.name());
 				context.enableCacheDatabaseStorage(useCacheDatabaseStorage);
-				newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected, timeSpacing).Recipients;
+				newAccounts = PrepareRandomBlocks(context.storageModifier(), amountsSpent, amountsCollected,
+												  timeSpacing).Recipients;
 				context.load();
 
 				// Act: save to disk
@@ -507,7 +473,7 @@ namespace catapult { namespace filechain {
 			}
 
 			// Act: reload the state from the saved cache state
-			TestContext context(maxDifficultyBlocks, tempDataDirectory.name());
+			TestContext context(0 /* effectiveBalanceRange */, tempDataDirectory.name());
 			context.enableCacheDatabaseStorage(useCacheDatabaseStorage);
 			context.load();
 
@@ -515,22 +481,7 @@ namespace catapult { namespace filechain {
 			EXPECT_EQ(storageChainHeight, context.cacheView().height());
 			EXPECT_EQ(Height(1), context.storageView().chainHeight());
 
-			// - spot check the new accounts by checking secondary recipients
-			auto cacheView = context.cacheView();
-			const auto& accountStateCacheView = cacheView.sub<cache::AccountStateCache>();
-			auto i = 0u;
-			for (const auto& address : newAccounts) {
-				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
-				++i;
-			}
-
-			// - spot check the block difficulty cache
-			const auto& blockDifficultyCache = cacheView.sub<cache::BlockDifficultyCache>();
-			EXPECT_EQ(maxDifficultyBlocks, blockDifficultyCache.size());
-			AssertBlockDifficultyCacheRange(
-					blockDifficultyCache,
-					storageChainHeight - Height(maxDifficultyBlocks) + Height(1),
-					storageChainHeight);
+			checkSecondaryRecipient(context.cacheView(), newAccounts, amountsCollected);
 		}
 	}
 
@@ -553,12 +504,11 @@ namespace catapult { namespace filechain {
 			std::vector<Amount> amountsCollected;
 			std::vector<Address> newAccounts;
 
-			uint32_t maxDifficultyBlocks = Num_Recipient_Accounts / 4;
 			auto savedCacheStateHeight = Height(Num_Recipient_Accounts / 2);
 			auto storageChainHeight = Height(Num_Recipient_Accounts + 1);
 
 			// - force a prune at the last block and create a context for (re)loading
-			auto config = CreateBlockChainConfiguration(maxDifficultyBlocks, tempDataDirectory.name());
+			auto config = CreateBlockChainConfiguration(0 /* effectiveBalanceRange */, tempDataDirectory.name());
 			config.BlockPruneInterval = static_cast<uint32_t>(storageChainHeight.unwrap());
 			TestContext context(config, tempDataDirectory.name());
 			context.enableCacheDatabaseStorage(useCacheDatabaseStorage);
@@ -585,7 +535,7 @@ namespace catapult { namespace filechain {
 					context.storageModifier().saveBlock(*seedContext.storageView().loadBlockElement(height));
 			}
 
-			action(context, maxDifficultyBlocks, amountsCollected, newAccounts);
+			action(context, amountsCollected, newAccounts);
 		}
 	}
 
@@ -593,7 +543,6 @@ namespace catapult { namespace filechain {
 		// Arrange:
 		RunReloadWithInconsistentCacheAndStorageHeightTest(false, [](
 				auto& context,
-				auto maxDifficultyBlocks,
 				const auto& amountsCollected,
 				const auto& newAccounts) {
 			auto storageChainHeight = Height(Num_Recipient_Accounts + 1);
@@ -606,24 +555,13 @@ namespace catapult { namespace filechain {
 			EXPECT_EQ(storageChainHeight, context.storageView().chainHeight());
 
 			// - spot check the new accounts by checking secondary recipients
-			auto cacheView = context.cacheView();
-			const auto& accountStateCacheView = cacheView.template sub<cache::AccountStateCache>();
-			auto i = 0u;
-			for (const auto& address : newAccounts) {
-				AssertSecondaryRecipient(accountStateCacheView, address, i, amountsCollected[i]);
-				++i;
-			}
-
-			// - spot check the block difficulty cache (notice that pruning leaves an extra entry in the cache)
-			const auto& blockDifficultyCache = cacheView.template sub<cache::BlockDifficultyCache>();
-			EXPECT_EQ(maxDifficultyBlocks + 1, blockDifficultyCache.size());
-			AssertBlockDifficultyCacheRange(blockDifficultyCache, storageChainHeight - Height(maxDifficultyBlocks), storageChainHeight);
+			checkSecondaryRecipient(context.cacheView(), newAccounts, amountsCollected);
 		});
 	}
 
 	TEST(TEST_CLASS, CannotLoadRemainingStateFromAdditionalStorageBlocksWhenCacheDatabaseStorageIsEnabled) {
 		// Arrange:
-		RunReloadWithInconsistentCacheAndStorageHeightTest(true, [](auto& context, auto, const auto&, const auto&) {
+		RunReloadWithInconsistentCacheAndStorageHeightTest(true, [](auto& context, const auto&, const auto&) {
 			// Act + Assert: reload the state from the saved cache state and storage (it should fail because of inconsistent heights)
 			EXPECT_THROW(context.load(), catapult_runtime_error);
 		});
@@ -635,7 +573,7 @@ namespace catapult { namespace filechain {
 		{
 			// - generate random state
 			auto timeSpacing = utils::TimeSpan::FromMinutes(1);
-			TestContext context(0, tempDataDirectory.name());
+			TestContext context(0 /* effectiveBalanceRange */, tempDataDirectory.name());
 			PrepareRandomBlocks(context.storageModifier(), timeSpacing);
 			context.load();
 
@@ -643,12 +581,12 @@ namespace catapult { namespace filechain {
 			context.save();
 
 			// - delete a cache state file
-			auto cacheStateFilename = boost::filesystem::path(tempDataDirectory.name()) / "state" / "BlockDifficultyCache.dat";
+			auto cacheStateFilename = boost::filesystem::path(tempDataDirectory.name()) / "state" / "AccountStateCache.dat";
 			remove(cacheStateFilename.generic_string().c_str());
 		}
 
 		// Act + Assert: reload the state from the saved cache state (the reload should fail due to incomplete saved cache state)
-		TestContext context(0, tempDataDirectory.name());
+		TestContext context(0 /* effectiveBalanceRange */, tempDataDirectory.name());
 		EXPECT_THROW(context.load(), catapult_runtime_error);
 	}
 

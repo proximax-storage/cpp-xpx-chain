@@ -50,9 +50,6 @@ namespace catapult { namespace cache {
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const;
 
-		/// Gets the network importance grouping.
-		uint64_t importanceGrouping() const;
-
 	public:
 		/// Returns the number of elements in the cache.
 		size_t size() const;

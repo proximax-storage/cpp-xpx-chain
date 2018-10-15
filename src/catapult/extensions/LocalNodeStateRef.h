@@ -18,51 +18,95 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <memory>
+#include <src/catapult/cache/CatapultCache.h>
+#include <src/catapult/io/BlockStorageCache.h>
+#include <src/catapult/config/LocalNodeConfiguration.h>
+
 #pragma once
 
 namespace catapult {
 	namespace cache { class CatapultCache; }
 	namespace config { class LocalNodeConfiguration; }
-	namespace extensions { class LocalNodeChainScore; }
-	namespace io { class BlockStorageCache; }
-	namespace state { struct CatapultState; }
+	namespace io { class BlockStorageCache; class BlockStorage; }
 }
 
 namespace catapult { namespace extensions {
+
+	/// A local node's basic state.
+	struct LocalNodeState {
+	public:
+
+		/// Creates a local node state state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeState(
+				const config::LocalNodeConfiguration& config,
+				std::unique_ptr<io::BlockStorage>&& pStorage)
+				: Config(config)
+				, Cache({})
+				, Storage(std::move(pStorage))
+		{}
+
+		/// Creates a local node state state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeState(
+				config::LocalNodeConfiguration&& config,
+				std::unique_ptr<io::BlockStorage>&& pStorage)
+				: Config(std::move(config))
+				, Cache({})
+				, Storage(std::move(pStorage))
+		{}
+
+		/// Creates a local node state state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeState(
+				config::LocalNodeConfiguration&& config,
+				std::unique_ptr<io::BlockStorage>&& pStorage,
+				cache::CatapultCache&& cache)
+				: Config(std::move(config))
+				, Cache(std::move(cache))
+				, Storage(std::move(pStorage))
+		{}
+
+	public:
+		/// Local node configuration.
+		config::LocalNodeConfiguration Config;
+
+		/// It is cache of current state of local node.
+		cache::CatapultCache Cache;
+
+		/// Local node storage.
+		io::BlockStorageCache Storage;
+	};
 
 	/// A reference to a local node's basic state.
 	struct LocalNodeStateRef {
 	public:
 		/// Creates a local node state ref referencing state composed of
 		/// \a config, \a state, \a cache, \a storage and \a score.
-		LocalNodeStateRef(
-				const config::LocalNodeConfiguration& config,
-				state::CatapultState& state,
-				cache::CatapultCache& cache,
-				io::BlockStorageCache& storage,
-				LocalNodeChainScore& score)
-				: Config(config)
-				, State(state)
+		LocalNodeStateRef(LocalNodeState& state)
+				: Config(state.Config)
+				, Cache(state.Cache)
+				, Storage(state.Storage)
+		{}
+
+		/// Creates a local node state ref referencing state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeStateRef(LocalNodeState& state, cache::CatapultCache& cache)
+				: Config(state.Config)
 				, Cache(cache)
-				, Storage(storage)
-				, Score(score)
+				, Storage(state.Storage)
 		{}
 
 	public:
 		/// Local node configuration.
 		const config::LocalNodeConfiguration& Config;
 
-		/// Local node state.
-		state::CatapultState& State;
-
-		/// Local node cache.
+		/// It is cache of current state of local node.
 		cache::CatapultCache& Cache;
 
 		/// Local node storage.
 		io::BlockStorageCache& Storage;
-
-		/// Local node score.
-		LocalNodeChainScore& Score;
 	};
 
 	/// A const reference to a local node's basic state.
@@ -70,33 +114,28 @@ namespace catapult { namespace extensions {
 	public:
 		/// Creates a local node state const ref referencing state composed of
 		/// \a config, \a state, \a cache, \a storage and \a score.
-		LocalNodeStateConstRef(
-				const config::LocalNodeConfiguration& config,
-				const state::CatapultState& state,
-				const cache::CatapultCache& cache,
-				const io::BlockStorageCache& storage,
-				const LocalNodeChainScore& score)
-				: Config(config)
-				, State(state)
+		LocalNodeStateConstRef(const LocalNodeState& state)
+				: Config(state.Config)
+				, Cache(state.Cache)
+				, Storage(state.Storage)
+		{}
+		
+		/// Creates a local node state const ref referencing state composed of
+		/// \a config, \a state, \a cache, \a storage and \a score.
+		LocalNodeStateConstRef(const LocalNodeState& state, const cache::CatapultCache& cache)
+				: Config(state.Config)
 				, Cache(cache)
-				, Storage(storage)
-				, Score(score)
+				, Storage(state.Storage)
 		{}
 
 	public:
 		/// Local node configuration.
 		const config::LocalNodeConfiguration& Config;
 
-		/// Local node state.
-		const state::CatapultState& State;
-
-		/// Local node cache.
+		/// It is cache of current state of local node.
 		const cache::CatapultCache& Cache;
 
 		/// Local node storage.
 		const io::BlockStorageCache& Storage;
-
-		/// Local node score.
-		const LocalNodeChainScore& Score;
 	};
 }}

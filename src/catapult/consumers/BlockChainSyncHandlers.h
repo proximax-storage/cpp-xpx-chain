@@ -19,9 +19,12 @@
 **/
 
 #pragma once
-#include "BlockChainProcessor.h"
-#include "StateChangeInfo.h"
+#include "catapult/chain/BatchEntityProcessor.h"
+#include "catapult/model/Block.h"
+#include "catapult/model/Elements.h"
+#include "catapult/model/EntityInfo.h"
 #include "catapult/utils/ArraySet.h"
+#include "StateChangeInfo.h"
 
 namespace catapult {
 	namespace cache { class CatapultCache; }
@@ -53,7 +56,7 @@ namespace catapult { namespace consumers {
 	struct BlockChainSyncHandlers {
 	public:
 		/// Prototype for checking block difficulties.
-		using DifficultyCheckerFunc = predicate<const std::vector<const model::Block*>&, const cache::CatapultCache&>;
+		using DifficultyCheckerFunc = predicate<const model::Block&, const model::Block&>;
 
 		/// Prototype for undoing a block.
 		using UndoBlockFunc = consumer<const model::BlockElement&, const observers::ObserverState&>;
@@ -68,8 +71,8 @@ namespace catapult { namespace consumers {
 		/// Checks all difficulties in a block chain for correctness.
 		DifficultyCheckerFunc DifficultyChecker;
 
-		/// Processes (validates and executes) a block chain.
-		BlockChainProcessor Processor;
+		/// BatchEntityProcessor (validates and executes) a block chain.
+		chain::BatchEntityProcessor BatchEntityProcessor;
 
 		/// Undoes a block and updates a cache.
 		UndoBlockFunc UndoBlock;

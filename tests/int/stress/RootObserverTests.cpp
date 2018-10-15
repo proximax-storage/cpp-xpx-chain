@@ -20,6 +20,7 @@
 
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
@@ -34,6 +35,8 @@ namespace catapult { namespace extensions {
 	namespace {
 		using NotifyMode = observers::NotifyMode;
 
+		uint64_t Effective_Balance_Range = 10;
+
 		Amount GetTotalChainBalance(uint32_t numAccounts) {
 			return Amount(numAccounts * (numAccounts + 1) / 2 * 1'000'000);
 		}
@@ -41,12 +44,12 @@ namespace catapult { namespace extensions {
 		model::BlockChainConfiguration CreateBlockChainConfiguration(uint32_t numAccounts) {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			config.ImportanceGrouping = 123;
 			config.MaxDifficultyBlocks = 123;
 			config.MaxRollbackBlocks = 124;
 			config.BlockPruneInterval = 360;
 			config.TotalChainBalance = GetTotalChainBalance(numAccounts);
 			config.MinHarvesterBalance = Amount(1'000'000);
+			config.EffectiveBalanceRange = Effective_Balance_Range;
 			return config;
 		}
 
@@ -59,11 +62,7 @@ namespace catapult { namespace extensions {
 				// register mock transaction plugin so that BalanceTransferNotifications are produced and observed
 				m_pPluginManager->addTransactionSupport(mocks::CreateMockTransactionPlugin(mocks::PluginOptionFlags::Publish_Transfers));
 
-				// seed the "nemesis" / transfer account (this account is used to fund all other accounts)
-				auto delta = m_cache.createDelta();
-				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(m_specialAccountKey, Height(1));
-				accountState.Balances.credit(Xpx_Id, GetTotalChainBalance(numAccounts));
-				m_cache.commit(Height());
+				initNemesisCache(m_cache, numAccounts);
 			}
 
 		public:
@@ -119,17 +118,7 @@ namespace catapult { namespace extensions {
 				auto blockElement = test::BlockToBlockElement(*pBlock);
 
 				auto pRootObserver = CreateEntityObserver(*m_pPluginManager);
-
-				auto delta = m_cache.createDelta();
-				auto observerState = observers::ObserverState(delta, m_state);
-
-				// Act: use BlockExecutor to execute all transactions and blocks
-				if (NotifyMode::Commit == mode)
-					chain::ExecuteBlock(blockElement, *pRootObserver, observerState);
-				else
-					chain::RollbackBlock(blockElement, *pRootObserver, observerState);
-
-				m_cache.commit(height);
+				executeBlock(m_cache, blockElement, pRootObserver, mode, height);
 			}
 
 			void notifyAllCommit(Height startHeight, Height endHeight) {
@@ -148,52 +137,78 @@ namespace catapult { namespace extensions {
 				AssertOptions(
 						uint8_t startAccountId,
 						uint8_t numAccounts,
-						model::ImportanceHeight importanceHeight,
-						uint8_t startAdjustment = 0)
+						uint64_t height,
+						uint8_t startAdjustment = 0,
+						uint8_t multiplier = 1)
 						: StartAccountId(startAccountId)
 						, NumAccounts(numAccounts)
-						, ImportanceHeight(importanceHeight)
+						, Height(height)
 						, StartAdjustment(startAdjustment)
+						, Multiplier(multiplier)
 				{}
 
 			public:
 				uint8_t StartAccountId;
 				uint8_t NumAccounts;
-				model::ImportanceHeight ImportanceHeight;
+				uint64_t Height;
 				uint8_t StartAdjustment;
+				uint8_t Multiplier;
 			};
-
-			void assertSingleImportance(
-					uint8_t accountId,
-					model::ImportanceHeight expectedImportanceHeight,
-					Importance expectedImportance) {
-				const auto message = "importance for account " + std::to_string(accountId);
-				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView();
-
-				const auto& accountState = accountStateCacheView->get(Key{ { accountId } });
-				EXPECT_EQ(expectedImportanceHeight, accountState.ImportanceInfo.height()) << message;
-				EXPECT_EQ(expectedImportance, accountState.ImportanceInfo.current()) << message;
-			}
-
-			void assertLinearImportances(const AssertOptions& options) {
-				assertImportances(options, [](auto multiplier) {
-					return Importance(multiplier);
-				});
-			}
-
-			void assertZeroedImportances(const AssertOptions& options) {
-				assertImportances(options, [](auto) {
-					return Importance(0);
-				});
-			}
 
 			void assertRemovedAccounts(uint8_t startAccountId, uint8_t numAccounts) {
 				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView();
 				for (uint8_t i = startAccountId; i < startAccountId + numAccounts; ++i)
-					EXPECT_FALSE(accountStateCacheView->contains(Key{ { i } })) << "importance for account " << static_cast<int>(i);
+					EXPECT_FALSE(accountStateCacheView->contains(Key{ { i } })) << "balance for account " << static_cast<int>(i);
+			}
+
+			void assertSingleEffectiveBalance(
+					uint8_t accountId,
+					Amount expectedBalance) {
+				const auto message = "balance for account " + std::to_string(accountId);
+
+				auto cacheView = m_cache.createView();
+
+				cache::BalanceView balanceView(
+						cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()),
+						Height(Effective_Balance_Range)
+				);
+				EXPECT_EQ(expectedBalance, Amount{0}) << message; // TODO: add effective balance calculation.
+			}
+
+			void assertLinearEffectiveBalance(const AssertOptions& options) {
+				for (uint8_t i = options.StartAccountId; i < options.StartAccountId + options.NumAccounts; ++i) {
+					uint64_t multiplier = options.StartAdjustment + i - options.StartAccountId + 1;
+					assertSingleEffectiveBalance(i, Amount(multiplier * options.Multiplier * 1'000'000));
+				}
 			}
 
 		private:
+			void inline initNemesisCache(cache::CatapultCache& cache, const uint32_t& numAccounts) {
+				// seed the "nemesis" / transfer account (this account is used to fund all other accounts)
+				auto delta = cache.createDelta();
+				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(m_specialAccountKey, Height(1));
+				accountState.Balances.credit(Xpx_Id, GetTotalChainBalance(numAccounts));
+				cache.commit(Height());
+			}
+
+			void inline executeBlock(
+					cache::CatapultCache& cache,
+					model::BlockElement& blockElement,
+					const std::unique_ptr<const observers::EntityObserver>& pRootObserver,
+					const NotifyMode& mode,
+					const Height& height) {
+				auto delta = cache.createDelta();
+				auto observerState = observers::ObserverState(delta);
+
+				// Act: use BlockExecutor to execute all transactions and blocks
+				if (NotifyMode::Commit == mode)
+					chain::ExecuteBlock(blockElement, *pRootObserver, observerState);
+				else
+					chain::RollbackBlock(blockElement, *pRootObserver, observerState);
+
+				cache.commit(height);
+			}
+
 			std::unique_ptr<model::Block> createBlock(Height height) {
 				// if there are transactions, add them to the block
 				auto transactionsIter = m_heightToTransactions.find(height);
@@ -212,17 +227,9 @@ namespace catapult { namespace extensions {
 				return pBlock;
 			}
 
-			void assertImportances(const AssertOptions& options, const std::function<Importance (uint8_t)>& getImportanceFromMultiplier) {
-				for (uint8_t i = options.StartAccountId; i < options.StartAccountId + options.NumAccounts; ++i) {
-					uint8_t multiplier = options.StartAdjustment + i - options.StartAccountId + 1;
-					assertSingleImportance(i, options.ImportanceHeight, getImportanceFromMultiplier(multiplier));
-				}
-			}
-
 		private:
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			cache::CatapultCache m_cache;
-			state::CatapultState m_state;
 
 			Key m_specialAccountKey;
 
@@ -234,233 +241,122 @@ namespace catapult { namespace extensions {
 
 	// region execute
 
-	TEST(TEST_CLASS, ExecuteCalculatesImportancesCorrectly) {
-		// Arrange: create a context with 10/20 important accounts
+	TEST(TEST_CLASS, ExecuteCalculatesEffectiveBalanceCorrectly) {
+		// Arrange: create a context with 10 accounts
 		TestContext context(10);
-		context.addAccounts(1, 10, Height(246));
-		context.addAccounts(25, 10, Height(246), 0);
+		context.addAccounts(1, 10, Height(2));
 
-		// Act: calculate importances at height 246
-		context.notify(Height(246), NotifyMode::Commit);
+		// Act: commit second block to update balance
+		context.notifyAllCommit(Height(2), Height(2 + Effective_Balance_Range));
 
-		// Assert: importance should have been calculated from only high value account balances
-		context.assertLinearImportances({ 1, 10, model::ImportanceHeight(246) }); // updated
-		context.assertZeroedImportances({ 25, 10, model::ImportanceHeight(0) }); // excluded
+		// Assert: balance of account must be updated
+		context.assertLinearEffectiveBalance({ 1, 10, 2 + Effective_Balance_Range}); // updated
 	}
 
-	TEST(TEST_CLASS, ExecuteCalculatesImportancesCorrectly_WhenAllHighValueAccountsChangeAtImportanceHeight) {
-		// Arrange: create a context with 10/10 important accounts
+	TEST(TEST_CLASS, ExecuteCalculatesEffectiveBalanceCorrectly_AfterZeroBalanceOfAllAccounts) {
+		// Arrange: create a context with 10 accounts
 		TestContext context(10);
-		context.addAccounts(1, 10, Height(246));
+		context.addAccounts(1, 10, Height(2));
+		context.notify(Height(2), NotifyMode::Commit);
 
-		// - calculate importances at height 246
-		context.notify(Height(246), NotifyMode::Commit);
+		context.zeroBalances(1, 10, Height(2 + Effective_Balance_Range + 1));
+		context.notifyAllCommit(Height(3), Height(2 + Effective_Balance_Range));
 
-		// - replace existing high value accounts with new high value accounts
-		context.zeroBalances(1, 10, Height(247));
-		context.addAccounts(25, 10, Height(247));
+		// Assert: effective balance must be not zero on height 2 + Effective_Balance_Range
+		context.assertLinearEffectiveBalance({1, 10, 2 + Effective_Balance_Range });
 
-		// Act: calculate importances at height 369
-		context.notifyAllCommit(Height(247), Height(369));
-
-		// Assert: only newly high balance accounts should have updated importances
-		context.assertLinearImportances({ 1, 10, model::ImportanceHeight(246) });
-		context.assertLinearImportances({ 25, 10, model::ImportanceHeight(369) }); // updated
+		// But effective balance must be zero on 2 + Effective_Balance_Range + 1 height
+		context.notify(Height(2 + Effective_Balance_Range + 1), NotifyMode::Commit);
+		context.assertLinearEffectiveBalance({1, 10, 2 + Effective_Balance_Range + 1, 0, 0});
 	}
 
-	TEST(TEST_CLASS, ExecuteCalculatesImportancesCorrectly_WhenSomeHighValueAccountsChangeAtImportanceHeight) {
-		// Arrange: create a context with 10/10 important accounts
+	TEST(TEST_CLASS, ExecuteCalculatesEffectiveBalanceCorrectly_WithDifferentBalances) {
+		// Arrange: create a context with 10 accounts
 		TestContext context(10);
-		context.addAccounts(1, 10, Height(246));
+		context.addAccounts(1, 10, Height(2));
+		context.notify(Height(2), NotifyMode::Commit);
 
-		// - calculate importances at height 246
-		context.notify(Height(246), NotifyMode::Commit);
+		// - replace some existing balance accounts with new balance accounts
+		context.zeroBalances(1, 5, Height(3));
+		context.addAccounts(25, 5, Height(3));
+		context.addAccounts(30, 5, Height(3), 0);
 
-		// - replace some existing high value accounts with new high value accounts
-		context.zeroBalances(1, 5, Height(247));
-		context.addAccounts(25, 5, Height(247));
-		context.addAccounts(30, 5, Height(247), 0);
+		context.notifyAllCommit(Height(3), Height(2 + Effective_Balance_Range + 1));
 
-		// Act: calculate importances at height 369
-		context.notifyAllCommit(Height(247), Height(369));
-
-		// Assert: only current high balance accounts should have updated importances
-		// - original accounts [6, 10] but NOT [1, 5]
-		// - new accounts [25, 29] but NOT [30, 34]
-		context.assertLinearImportances({ 1, 5, model::ImportanceHeight(246) });
-		context.assertLinearImportances({ 6, 5, model::ImportanceHeight(369), 5 }); // updated
-		context.assertLinearImportances({ 25, 5, model::ImportanceHeight(369) }); // updated
-		context.assertZeroedImportances({ 30, 5, model::ImportanceHeight(0), 5 }); // excluded
+		// Assert:
+		context.assertLinearEffectiveBalance({ 1, 5, 2 + Effective_Balance_Range + 1, 0, 0 });
+		context.assertLinearEffectiveBalance({ 6, 5, 2 + Effective_Balance_Range + 1, 5 });
+		context.assertLinearEffectiveBalance({ 25, 5, 2 + Effective_Balance_Range + 1 });
+		context.assertLinearEffectiveBalance({ 30, 5, 2 + Effective_Balance_Range + 1, 0, 0 });
 	}
 
 	// endregion
 
 	// region undo one level
-
-	TEST(TEST_CLASS, UndoCalculatesImportancesCorrectly) {
-		// Arrange: create a context with 10/20 important accounts
+	TEST(TEST_CLASS, UndoCalculatesEffectiveBalanceCorrectly) {
+		// Arrange: create a context with 10 accounts
 		TestContext context(10);
-		context.addAccounts(1, 10, Height(245));
-		context.addAccounts(25, 10, Height(245), 0);
+		context.addAccounts(1, 10, Height(2));
 
-		// - calculate importances at height 245 (importance height will be 123)
-		context.notify(Height(245), NotifyMode::Commit);
+		// Act: commit second block to update balance
+		context.notifyAllCommit(Height(2), Height(2 + Effective_Balance_Range));
 
-		// - change balances of two accounts and recalculate importances at height 246 (this ensures importances are different)
-		context.moveBalance(1, 2, Height(246));
-		context.notify(Height(246), NotifyMode::Commit);
+		// Assert: balance of account must be updated
+		context.assertLinearEffectiveBalance({ 1, 10, 2 + Effective_Balance_Range }); // updated
 
-		// Sanity:
-		context.assertSingleImportance(1, model::ImportanceHeight(123), Importance(1)); // excluded
-		context.assertSingleImportance(2, model::ImportanceHeight(246), Importance(3)); // increased (3 instead of 2)
+		// Act: undo second block to update balance
+		context.notify(Height(2 + Effective_Balance_Range), NotifyMode::Rollback);
 
-		// Act: rollback importances to height 245
-		context.notify(Height(246), NotifyMode::Rollback);
-
-		// Assert: importance should have been restored for only high value account balances (balance changes are rolled back)
-		context.assertLinearImportances({ 1, 10, model::ImportanceHeight(123) }); // reverted
-		context.assertZeroedImportances({ 25, 10, model::ImportanceHeight(0) }); // excluded
+		context.assertLinearEffectiveBalance({ 1, 10, 2 + Effective_Balance_Range - 1, 0, 0 }); // updated
 	}
 
-	TEST(TEST_CLASS, UndoCalculatesImportancesCorrectly_WhenAllHighValueAccountsChangeAtImportanceHeight) {
-		// Arrange: create a context with 10/10 important accounts
+	TEST(TEST_CLASS, UndoCalculatesEffectiveBalanceCorrectly_AfterZeroBalanceOfAllAccounts) {
+		// Arrange: create a context with 10 accounts
 		TestContext context(10);
-		context.addAccounts(1, 10, Height(246));
+		context.addAccounts(1, 10, Height(2));
+		context.notify(Height(2), NotifyMode::Commit);
 
-		// - calculate importances at height 246
-		context.notify(Height(246), NotifyMode::Commit);
+		context.zeroBalances(1, 10, Height(2 + Effective_Balance_Range + 1));
 
-		// - replace existing high value accounts with new high value accounts
-		context.zeroBalances(1, 10, Height(247));
-		context.addAccounts(25, 10, Height(247));
+		context.notifyAllCommit(Height(3), Height(2 + Effective_Balance_Range));
 
-		// - calculate importances at height 369
-		context.notifyAllCommit(Height(247), Height(369));
+		// Assert: effective balance must be not zero on height 2 + Effective_Balance_Range
+		context.assertLinearEffectiveBalance({1, 10, 2 + Effective_Balance_Range});
 
-		// Sanity:
-		context.assertLinearImportances({ 1, 10, model::ImportanceHeight(246) });
-		context.assertLinearImportances({ 25, 10, model::ImportanceHeight(369) }); // updated
+		// But effective balance must be zero on 2 + Effective_Balance_Range + 1 height
+		context.notify(Height(2 + Effective_Balance_Range + 1), NotifyMode::Commit);
+		context.assertLinearEffectiveBalance({1, 10, 2 + Effective_Balance_Range + 1, 0, 0});
 
-		// Act: rollback importances to height 246
-		context.notifyAllRollback(Height(369), Height(247));
-
-		// Assert: only pre-existing high balance accounts should have updated importances
-		context.assertLinearImportances({ 1, 10, model::ImportanceHeight(246) });
-		context.assertRemovedAccounts(25, 10); // reverted
+		// Let's undo last block
+		context.notify(Height(2 + Effective_Balance_Range + 1), NotifyMode::Rollback);
+		context.assertLinearEffectiveBalance({1, 10, 2 + Effective_Balance_Range });
 	}
 
-	TEST(TEST_CLASS, UndoCalculatesImportancesCorrectly_WhenSomeHighValueAccountsChangeAtImportanceHeight) {
+	TEST(TEST_CLASS, UndoCalculatesEffectiveBalanceCorrectly_UndoMultiplyBlocks) {
 		// Arrange: create a context with 10/10 important accounts
-		TestContext context(10);
-		context.addAccounts(1, 10, Height(246));
+		TestContext context(30);
+		context.addAccounts(1, 10, Height(2));
+		context.addAccounts(1, 10, Height(2 + Effective_Balance_Range));
+		context.addAccounts(1, 10, Height(2 + 2 * Effective_Balance_Range));
 
-		// - calculate importances at height 246
-		context.notify(Height(246), NotifyMode::Commit);
+		context.notifyAllCommit(Height(2), Height(2 + Effective_Balance_Range));
+		context.assertLinearEffectiveBalance({ 1, 10, 2 + Effective_Balance_Range, 0, 1 });
 
-		// - replace some existing high value accounts with new high value accounts
-		context.zeroBalances(1, 5, Height(247));
-		context.addAccounts(25, 5, Height(247));
-		context.addAccounts(30, 5, Height(247), 0);
+		context.notifyAllCommit(Height(2 + Effective_Balance_Range + 1), Height(2 + 2 * Effective_Balance_Range));
+		context.assertLinearEffectiveBalance({ 1, 10, 2 + 2 * Effective_Balance_Range, 0, 2});
 
-		// - calculate importances at height 369
-		context.notifyAllCommit(Height(247), Height(369));
+		context.notifyAllCommit(Height(2 + 2 * Effective_Balance_Range + 1), Height(2 + 3 * Effective_Balance_Range));
+		context.assertLinearEffectiveBalance({ 1, 10, 2 + 3 * Effective_Balance_Range, 0, 3});
 
-		// Sanity:
-		context.assertLinearImportances({ 1, 5, model::ImportanceHeight(246) });
-		context.assertLinearImportances({ 6, 5, model::ImportanceHeight(369), 5 }); // updated
-		context.assertLinearImportances({ 25, 5, model::ImportanceHeight(369) }); // updated
-		context.assertZeroedImportances({ 30, 5, model::ImportanceHeight(0), 5 }); // excluded
+		// Act: let's undo blocks
+		context.notifyAllRollback(Height(2 + 3 * Effective_Balance_Range), Height(2 + 2 * Effective_Balance_Range + 1));
+		context.assertLinearEffectiveBalance({ 1, 10, 2 + 2 * Effective_Balance_Range, 0, 2});
 
-		// Act: rollback importances to height 246
-		context.notifyAllRollback(Height(369), Height(247));
+		context.notifyAllRollback(Height(2 + 2 * Effective_Balance_Range), Height(2 + 1 * Effective_Balance_Range + 1));
+		context.assertLinearEffectiveBalance({ 1, 10, 2 + 1 * Effective_Balance_Range, 0, 1});
 
-		// Assert: only pre-existing high balance accounts should have updated importances
-		context.assertLinearImportances({ 1, 5, model::ImportanceHeight(246) });
-		context.assertLinearImportances({ 6, 5, model::ImportanceHeight(246), 5 }); // reverted
-		context.assertRemovedAccounts(25, 5); // reverted
-		context.assertRemovedAccounts(30, 5); // reverted
-	}
-
-	// endregion
-
-	// region undo multiple levels
-
-	TEST(TEST_CLASS, UndoCalculatesImportancesCorrectly_WhenSomeHighValueAccountsChangeAtImportanceHeight_MultipleRollbacks) {
-		// Arrange: create a context with 10/10 important accounts
-		TestContext context(10);
-		context.addAccounts(1, 10, Height(245));
-
-		// - calculate importances at height 245
-		context.notify(Height(245), NotifyMode::Commit);
-
-		// - change balances of two accounts and recalculate importances at height 246 (this ensures importances are different)
-		context.moveBalance(1, 2, Height(246));
-		context.notify(Height(246), NotifyMode::Commit);
-
-		// Sanity:
-		context.assertSingleImportance(1, model::ImportanceHeight(123), Importance(1)); // excluded
-		context.assertSingleImportance(2, model::ImportanceHeight(246), Importance(3)); // increased (3 instead of 2)
-
-		// Arrange: replace some existing high value accounts with new high value accounts
-		context.zeroBalances(1, 5, Height(247));
-		context.addAccounts(25, 5, Height(247));
-		context.addAccounts(30, 5, Height(247), 0);
-
-		// - calculate importances at height 369
-		context.notifyAllCommit(Height(247), Height(369));
-
-		// Sanity:
-		context.assertLinearImportances({ 6, 5, model::ImportanceHeight(369), 5 }); // updated
-		context.assertLinearImportances({ 25, 5, model::ImportanceHeight(369) }); // updated
-
-		// Act: rollback importances to height 245 (requires two rollbacks)
-		context.notifyAllRollback(Height(369), Height(246));
-
-		// Assert: only original high balance accounts should have restored importances
-		// - important accounts at 369: 6 - 10, 25 - 29
-		// - important accounts at 246: 2 - 10
-		// - important accounts at 123: 1 - 10
-		context.assertLinearImportances({ 1, 10, model::ImportanceHeight(123) }); // restored
-		context.assertRemovedAccounts(25, 10); // reverted
-	}
-
-	TEST(TEST_CLASS, UndoCalculatesImportancesCorrectly_WhenSomeHighValueAccountsChangeAtImportanceHeight_MultipleRollbacksToOriginal) {
-		// Arrange: create a context with 10/10 important accounts
-		TestContext context(10);
-		context.addAccounts(1, 10, Height(1));
-
-		// - calculate importances at height 1
-		context.notify(Height(1), NotifyMode::Commit);
-
-		// - replace some existing high value accounts with new high value accounts
-		context.zeroBalances(1, 5, Height(2));
-		context.addAccounts(25, 5, Height(2));
-		context.addAccounts(30, 5, Height(2), 0);
-
-		//- calculate importances at height 245
-		context.notifyAllCommit(Height(2), Height(245));
-
-		// Sanity:
-		context.assertLinearImportances({ 6, 5, model::ImportanceHeight(123), 5 }); // updated
-		context.assertLinearImportances({ 25, 5, model::ImportanceHeight(123) }); // updated
-
-		// Arrange: change balances of two accounts and recalculate importances at height 246 (this ensures importances are different)
-		context.moveBalance(25, 26, Height(246));
-		context.notify(Height(246), NotifyMode::Commit);
-
-		// Sanity:
-		context.assertSingleImportance(25, model::ImportanceHeight(123), Importance(1)); // excluded
-		context.assertSingleImportance(26, model::ImportanceHeight(246), Importance(3)); // increased (3 instead of 2)
-
-		// Act: rollback importances to height 122 (requires two rollbacks)
-		context.notifyAllRollback(Height(246), Height(123));
-
-		// Assert: only original high balance accounts should have restored importances
-		// - important accounts at 246: 6 - 10, 26 - 29
-		// - important accounts at 123: 6 - 10, 25 - 29
-		// - important accounts at   1: 1 - 10
-		context.assertLinearImportances({ 1, 10, model::ImportanceHeight(1) }); // restored
-		context.assertZeroedImportances({ 25, 10, model::ImportanceHeight(0) }); // excluded
+		context.notifyAllRollback(Height(2 + Effective_Balance_Range), Height(2));
+		context.assertLinearEffectiveBalance({ 1, 10, 1, 0, 0});
 	}
 
 	// endregion

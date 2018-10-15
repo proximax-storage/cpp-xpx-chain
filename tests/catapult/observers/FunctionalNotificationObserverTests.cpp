@@ -59,10 +59,9 @@ namespace catapult { namespace observers {
 		});
 
 		// Act:
-		state::CatapultState state;
 		cache::CatapultCache cache({});
 		auto cacheDelta = cache.createDelta();
-		auto context = test::CreateObserverContext(cacheDelta, state, Height(123), NotifyMode::Commit);
+		auto context = test::CreateObserverContext(cacheDelta, Height(123), NotifyMode::Commit);
 
 		auto publicKey = test::GenerateRandomData<Key_Size>();
 		model::AccountPublicKeyNotification notification(publicKey);

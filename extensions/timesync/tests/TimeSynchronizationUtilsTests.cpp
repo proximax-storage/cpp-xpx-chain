@@ -120,7 +120,6 @@ namespace catapult { namespace timesync {
 
 		cache::CatapultCache CreateCache(Amount totalChainBalance) {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.ImportanceGrouping = 123;
 			blockChainConfig.TotalChainBalance = totalChainBalance;
 			return test::CoreSystemCacheFactory::Create(blockChainConfig);
 		}
@@ -204,10 +203,9 @@ namespace catapult { namespace timesync {
 	namespace {
 		void SeedAccountStateCache(
 				cache::AccountStateCacheDelta& delta,
-				const std::vector<Key>& keys,
-				const std::vector<Importance>& importances) {
+				const std::vector<Key>& keys) {
 			for (auto i = 0u; i < keys.size(); ++i)
-				test::AddAccount(delta, keys[i], importances[i], model::ImportanceHeight(1));
+				test::AddAccount(delta, keys[i]);
 		}
 
 		void SeedNodeContainer(ionet::NodeContainer& nodeContainer, const std::vector<Key>& keys) {
@@ -235,10 +233,15 @@ namespace catapult { namespace timesync {
 			return samples;
 		}
 
+		void inline prepareAccountStateCache(cache::CatapultCache& cache, const std::vector<Key>& keys) {
+			auto cacheDelta = cache.createDelta();
+			SeedAccountStateCache(cacheDelta.sub<cache::AccountStateCache>(), keys);
+			cache.commit(Height(1));
+		}
+
 		template<typename TAssertState>
 		void AssertStateChange(
 				const std::vector<int64_t>& remoteOffsets,
-				const std::vector<Importance>& importances,
 				TAssertState assertState) {
 			// Arrange: prepare samples
 			auto samples = CreateSamples(remoteOffsets);
@@ -249,10 +252,7 @@ namespace catapult { namespace timesync {
 			SeedNodeContainer(context.ServiceTestState.state().nodes(), keys);
 
 			// - prepare account state cache
-			auto& cache = context.ServiceTestState.state().cache();
-			auto cacheDelta = cache.createDelta();
-			SeedAccountStateCache(cacheDelta.sub<cache::AccountStateCache>(), keys, importances);
-			cache.commit(Height(1));
+			prepareAccountStateCache(context.ServiceTestState.state().cache(), keys);
 
 			// Sanity:
 			EXPECT_EQ(0u, context.pTimeSyncState->offset().unwrap());
@@ -271,8 +271,8 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TaskProcessesSamples_Single) {
 		// Assert:
-		AssertStateChange({ 250 }, { Importance(1'000'000) }, [](const auto& timeSyncState) {
-			EXPECT_EQ(250u, timeSyncState.offset().unwrap());
+		AssertStateChange({ 250 }, [](const auto& timeSyncState) {
+			EXPECT_EQ(125u, timeSyncState.offset().unwrap());
 			EXPECT_EQ(1u, timeSyncState.nodeAge().unwrap());
 		});
 	}
@@ -280,10 +280,9 @@ namespace catapult { namespace timesync {
 	TEST(TEST_CLASS, TaskProcessesSamples_Multiple) {
 		// Arrange:
 		std::vector<int64_t> remoteOffsets{ 250, -150, 500, 0 };
-		std::vector<Importance> importances{ Importance(250'000), Importance(250'000), Importance(250'000), Importance(250'000) };
 
 		// Assert:
-		AssertStateChange(remoteOffsets, importances, [](const auto& timeSyncState) {
+		AssertStateChange(remoteOffsets, [](const auto& timeSyncState) {
 			EXPECT_EQ(150u, timeSyncState.offset().unwrap());
 			EXPECT_EQ(1u, timeSyncState.nodeAge().unwrap());
 		});

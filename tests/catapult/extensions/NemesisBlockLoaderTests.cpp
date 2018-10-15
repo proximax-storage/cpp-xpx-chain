@@ -45,8 +45,10 @@ namespace catapult { namespace extensions {
 				pTransaction->Signer = nemesisPublicKey;
 				transactions.push_back(std::move(pTransaction));
 			}
+			model::BlockHitContext hitContext;
+			hitContext.BaseTarget = 1 << 16;
 
-			return CreateBlock(model::PreviousBlockContext(), Network_Identifier, nemesisPublicKey, transactions);
+			return CreateBlock(model::PreviousBlockContext(), hitContext, Network_Identifier, nemesisPublicKey, transactions);
 		}
 
 		enum class NemesisBlockModification {

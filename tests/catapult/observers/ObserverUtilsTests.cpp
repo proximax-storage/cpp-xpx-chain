@@ -35,8 +35,7 @@ namespace catapult { namespace observers {
 			// Arrange:
 			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheDelta = cache.createDelta();
-			state::CatapultState state;
-			ObserverContext context(cacheDelta, state, height, mode);
+			ObserverContext context(cacheDelta, height, mode);
 
 			// Act:
 			auto result = ShouldPrune(context, pruneInterval);
@@ -168,8 +167,8 @@ namespace catapult { namespace observers {
 
 		cache::CatapultCache CreateSimpleCatapultCache() {
 			cache::CatapultCacheBuilder builder;
-			builder.add<test::SimpleCacheStorageTraits>(std::make_unique<PrunableCache>());
-			return builder.build();
+			builder.addSubCache<test::SimpleCacheStorageTraits>(std::make_unique<PrunableCache>());
+			return builder.buildCache();
 		}
 
 		std::string CreateMessage(NotifyMode mode, Height height) {
@@ -184,8 +183,7 @@ namespace catapult { namespace observers {
 			// Arrange:
 			auto cache = CreateSimpleCatapultCache();
 			auto cacheDelta = cache.createDelta();
-			state::CatapultState state;
-			ObserverContext context(cacheDelta, state, height, mode);
+			ObserverContext context(cacheDelta, height, mode);
 
 			// Act:
 			observer.notify(model::BlockNotification(Key(), Timestamp(), Difficulty()), context);
@@ -201,8 +199,7 @@ namespace catapult { namespace observers {
 			// Arrange:
 			auto cache = CreateSimpleCatapultCache();
 			auto cacheDelta = cache.createDelta();
-			state::CatapultState state;
-			ObserverContext context(cacheDelta, state, height, mode);
+			ObserverContext context(cacheDelta, height, mode);
 
 			// Act:
 			observer.notify(model::BlockNotification(Key(), Timestamp(), Difficulty()), context);
@@ -218,8 +215,7 @@ namespace catapult { namespace observers {
 			// Arrange:
 			auto cache = CreateSimpleCatapultCache();
 			auto cacheDelta = cache.createDelta();
-			state::CatapultState state;
-			ObserverContext context(cacheDelta, state, height, mode);
+			ObserverContext context(cacheDelta, height, mode);
 
 			// Act:
 			observer.notify(model::BlockNotification(Key(), timestamp, Difficulty()), context);

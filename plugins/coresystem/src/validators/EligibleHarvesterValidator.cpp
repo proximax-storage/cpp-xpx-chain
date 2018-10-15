@@ -20,7 +20,7 @@
 
 #include "Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
@@ -31,7 +31,12 @@ namespace catapult { namespace validators {
 		return MAKE_STATEFUL_VALIDATOR(EligibleHarvester, [minHarvesterBalance](
 				const auto& notification,
 				const ValidatorContext& context) {
-			cache::ImportanceView view(context.Cache.sub<cache::AccountStateCache>());
+			auto readOnlyAccountStateCache = context.Cache.sub<cache::AccountStateCache>();
+
+			cache::BalanceView view(
+					readOnlyAccountStateCache,
+					Height(1)
+			);
 			return view.canHarvest(notification.Signer, context.Height, minHarvesterBalance)
 					? ValidationResult::Success
 					: Failure_Core_Block_Harvester_Ineligible;

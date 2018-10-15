@@ -342,15 +342,18 @@ namespace catapult { namespace model {
 			auto signer = test::GenerateKeyPair();
 
 			PreviousBlockContext context;
-			context.BlockHeight = Height(1234);
+			context.BlockHeight = Height(1234u);
 			context.BlockHash = test::GenerateRandomData<Hash256_Size>();
 			context.GenerationHash = test::GenerateRandomData<Hash256_Size>();
+
+			BlockHitContext hitContext;
+			hitContext.BaseTarget = 1024u;
 
 			auto randomTransactions = test::GenerateRandomTransactions(numTransactions);
 			auto transactions = TContainerTraits::MapTransactions(randomTransactions);
 
 			// Act:
-			auto pBlock = CreateBlock(context, static_cast<NetworkIdentifier>(0x17), signer.publicKey(), transactions);
+			auto pBlock = CreateBlock(context, hitContext, static_cast<NetworkIdentifier>(0x17), signer.publicKey(), transactions);
 
 			// Assert: the only reason for static_casts here is to solve gcc's linking problem
 			const auto& block = *pBlock;
@@ -360,9 +363,10 @@ namespace catapult { namespace model {
 			EXPECT_EQ(signer.publicKey(), block.Signer);
 			EXPECT_EQ(Signature{}, block.Signature);
 			EXPECT_EQ(Timestamp(), block.Timestamp);
-			EXPECT_EQ(Height(1235), block.Height);
-			EXPECT_EQ(Difficulty(), block.Difficulty);
+			EXPECT_EQ(Height(1235u), block.Height);
+			EXPECT_EQ(Difficulty(1ull << 54ull), block.CumulativeDifficulty);
 			EXPECT_EQ(context.BlockHash, block.PreviousBlockHash);
+			EXPECT_EQ(BlockTarget(1024u), block.BaseTarget);
 
 			auto transactionCount = 0u;
 			size_t blockSize = sizeof(Block);

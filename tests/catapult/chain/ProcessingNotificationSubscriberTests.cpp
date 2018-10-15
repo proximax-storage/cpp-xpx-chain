@@ -50,7 +50,7 @@ namespace catapult { namespace chain {
 					: m_cache({})
 					, m_cacheDelta(m_cache.createDelta())
 					, m_validatorContext(test::CreateValidatorContext(Height(123), m_cacheDelta.toReadOnly()))
-					, m_observerContext(m_cacheDelta, m_state, Height(123), executeMode)
+					, m_observerContext(m_cacheDelta, Height(123), executeMode)
 					, m_sub(m_validator, m_validatorContext, m_observer, m_observerContext) {
 				CATAPULT_LOG(debug) << "preparing test context with execute mode " << executeMode;
 			}
@@ -92,7 +92,6 @@ namespace catapult { namespace chain {
 						// - cache and state should refer to same objects
 						const auto& observerContext = m_observer.contexts()[i];
 						EXPECT_EQ(&m_observerContext.Cache, &observerContext.Cache) << message;
-						EXPECT_EQ(&m_observerContext.State, &observerContext.State) << message;
 
 						// - height should be the same but mode should be reversed
 						EXPECT_EQ(m_observerContext.Height, observerContext.Height) << message;
@@ -118,7 +117,6 @@ namespace catapult { namespace chain {
 
 			cache::CatapultCache m_cache;
 			cache::CatapultCacheDelta m_cacheDelta;
-			state::CatapultState m_state;
 
 			validators::ValidatorContext m_validatorContext;
 			observers::ObserverContext m_observerContext;

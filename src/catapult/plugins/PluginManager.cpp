@@ -61,7 +61,7 @@ namespace catapult { namespace plugins {
 	// region cache
 
 	cache::CatapultCache PluginManager::createCache() {
-		return m_cacheBuilder.build();
+		return m_cacheBuilder.buildCache();
 	}
 
 	// endregion

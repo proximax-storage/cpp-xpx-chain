@@ -36,6 +36,7 @@ namespace catapult { namespace api {
 			auto pData = pPacket->Data();
 			for (auto i = 0u; i < numBlocks; ++i, pData += sizeof(model::Block)) {
 				auto& block = reinterpret_cast<model::Block&>(*pData);
+				block.BaseTarget = 1 << 16;
 				block.Size = sizeof(model::Block);
 				block.Type = model::Entity_Type_Block;
 				block.Height = startHeight + Height(i);
@@ -52,8 +53,6 @@ namespace catapult { namespace api {
 			static auto CreateValidResponsePacket() {
 				auto pResponsePacket = ionet::CreateSharedPacket<ChainInfoResponse>();
 				pResponsePacket->Height = Height(625);
-				pResponsePacket->ScoreHigh = 0x1234567812345678;
-				pResponsePacket->ScoreLow = 0xABCDABCDABCDABCD;
 				return pResponsePacket;
 			}
 
@@ -70,10 +69,6 @@ namespace catapult { namespace api {
 
 			static void ValidateResponse(const ionet::Packet&, const ChainInfo& info) {
 				EXPECT_EQ(Height(625), info.Height);
-
-				auto scoreArray = info.Score.toArray();
-				EXPECT_EQ(0x1234567812345678, scoreArray[0]);
-				EXPECT_EQ(0xABCDABCDABCDABCD, scoreArray[1]);
 			}
 		};
 

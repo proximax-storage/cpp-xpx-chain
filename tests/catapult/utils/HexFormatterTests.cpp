@@ -93,16 +93,6 @@ namespace catapult { namespace utils {
 		};
 	}
 
-	TEST(TEST_CLASS, CanFormatClampedBaseValueType) {
-		// Arrange:
-		using TestValue = ClampedBaseValue<uint16_t, TestValueRange>;
-
-		// Assert:
-		AssertHexString("0777", TestValue());
-		AssertHexString("7123", TestValue(0x7123));
-		AssertHexString("0808", TestValue(0x0808));
-	}
-
 	// endregion
 
 	// region enum types

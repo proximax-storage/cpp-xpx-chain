@@ -73,7 +73,6 @@ namespace catapult { namespace cache {
 		AccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
 				: SynchronizedCache<BasicAccountStateCache>(BasicAccountStateCache(config, options))
 				, m_networkIdentifier(options.NetworkIdentifier)
-				, m_importanceGrouping(options.ImportanceGrouping)
 
 		{}
 
@@ -83,13 +82,20 @@ namespace catapult { namespace cache {
 			return m_networkIdentifier;
 		}
 
-		/// Gets the network importance grouping.
-		uint64_t importanceGrouping() const {
-			return m_importanceGrouping;
-		}
-
 	private:
 		model::NetworkIdentifier m_networkIdentifier;
-		uint64_t m_importanceGrouping;
+	};
+
+	/// Synchronized cache composed of stateful old account information.
+	class OldAccountStateCache : public AccountStateCache {
+	public:
+		static constexpr size_t Id = utils::to_underlying_type(CacheId::AccountState);
+		static constexpr auto Name = "OldAccountStateCache";
+
+	public:
+		/// Creates a cache around \a config and \a options.
+		OldAccountStateCache(const CacheConfiguration &config, const AccountStateCacheTypes::Options &options)
+				: AccountStateCache(config, options)
+		{}
 	};
 }}

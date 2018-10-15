@@ -21,7 +21,6 @@
 #pragma once
 #include "HandlerTypes.h"
 #include "catapult/ionet/PacketHandlers.h"
-#include "catapult/model/ChainScore.h"
 #include "catapult/model/RangeTypes.h"
 
 namespace catapult { namespace io { class BlockStorageCache; } }
@@ -39,11 +38,10 @@ namespace catapult { namespace handlers {
 	void RegisterPullBlockHandler(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage);
 
 	/// Registers a chain info handler in \a handlers that responds with the height of the chain in \a storage
-	/// and the score of the chain returned by \a chainScoreSupplier.
+	/// and the cumulative difficulty of the chain.
 	void RegisterChainInfoHandler(
 			ionet::ServerPacketHandlers& handlers,
-			const io::BlockStorageCache& storage,
-			const model::ChainScoreSupplier& chainScoreSupplier);
+			const io::BlockStorageCache& storage);
 
 	/// Registers a block hashes handler in \a handlers that responds with at most \a maxHashes hashes in \a storage.
 	void RegisterBlockHashesHandler(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage, uint32_t maxHashes);

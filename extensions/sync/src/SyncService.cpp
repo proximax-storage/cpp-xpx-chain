@@ -26,7 +26,6 @@
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/chain/UtSynchronizer.h"
 #include "catapult/config/LocalNodeConfiguration.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/extensions/SynchronizerTaskCallbacks.h"
 #include "catapult/thread/FutureUtils.h"
@@ -61,7 +60,6 @@ namespace catapult { namespace sync {
 			auto chainSynchronizer = chain::CreateChainSynchronizer(
 					api::CreateLocalChainApi(
 							state.storage(),
-							[&score = state.score()]() { return score.get(); },
 							config.Node.MaxBlocksPerSyncAttempt),
 					CreateChainSynchronizerConfiguration(config),
 					state.hooks().completionAwareBlockRangeConsumerFactory()(Sync_Source));

@@ -140,7 +140,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		auto pBlock = GenerateBlockWithTransactionFees({});
 		pBlock->Timestamp = Timestamp(123);
-		pBlock->Difficulty = Difficulty(575);
+		pBlock->CumulativeDifficulty = Difficulty(575);
 
 		// Act:
 		PublishOne<BlockNotification>(*pBlock, [&block = *pBlock](const auto& notification) {
@@ -157,7 +157,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		auto pBlock = GenerateBlockWithTransactionFees({ Amount(11), Amount(25), Amount(17) });
 		pBlock->Timestamp = Timestamp(432);
-		pBlock->Difficulty = Difficulty(575);
+		pBlock->CumulativeDifficulty = Difficulty(575);
 
 		// Act:
 		PublishOne<BlockNotification>(*pBlock, [&block = *pBlock](const auto& notification) {

@@ -38,4 +38,17 @@ namespace catapult { namespace cache {
 				: SynchronizedCache<BasicHashLockInfoCache>(BasicHashLockInfoCache(config))
 		{}
 	};
+
+	/// Synchronized cache composed of old hash lock info information.
+	class OldHashLockInfoCache : public HashLockInfoCache {
+	public:
+		static constexpr size_t Id = utils::to_underlying_type(CacheId::HashLockInfo);
+		static constexpr auto Name = "OldHashLockInfoCache";
+
+	public:
+		/// Creates a cache around \a config.
+		explicit OldHashLockInfoCache(const CacheConfiguration& config)
+				: HashLockInfoCache(config)
+		{}
+	};
 }}

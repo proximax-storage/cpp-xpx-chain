@@ -53,7 +53,7 @@ namespace catapult { namespace model {
 		private:
 			void publish(const Block& block, NotificationSubscriber& sub) const {
 				// raise a block notification
-				BlockNotification blockNotification(block.Signer, block.Timestamp, block.Difficulty);
+				BlockNotification blockNotification(block.Signer, block.Timestamp, block.CumulativeDifficulty);
 				for (const auto& transaction : block.Transactions()) {
 					blockNotification.TotalFee = blockNotification.TotalFee + transaction.Fee;
 					++blockNotification.NumTransactions;

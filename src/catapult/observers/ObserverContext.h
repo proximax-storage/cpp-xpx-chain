@@ -20,7 +20,7 @@
 
 #pragma once
 #include "catapult/cache/CatapultCacheDelta.h"
-#include "catapult/state/CatapultState.h"
+#include "catapult/types.h"
 #include <iosfwd>
 
 namespace catapult { namespace observers {
@@ -46,17 +46,13 @@ namespace catapult { namespace observers {
 	struct ObserverState {
 	public:
 		/// Creates an observer state around \a cache and \a state.
-		ObserverState(cache::CatapultCacheDelta& cache, state::CatapultState& state)
+		explicit ObserverState(cache::CatapultCacheDelta& cache)
 				: Cache(cache)
-				, State(state)
 		{}
 
 	public:
 		/// Catapult cache.
 		cache::CatapultCacheDelta& Cache;
-
-		/// Catapult state.
-		state::CatapultState& State;
 	};
 
 	/// Context passed to all the observers.
@@ -64,13 +60,12 @@ namespace catapult { namespace observers {
 	public:
 		/// Creates an observer context around \a state at \a height with specified \a mode.
 		constexpr ObserverContext(const ObserverState& state, Height height, NotifyMode mode)
-				: ObserverContext(state.Cache, state.State, height, mode)
+				: ObserverContext(state.Cache, height, mode)
 		{}
 
 		/// Creates an observer context around \a cache and \a state at \a height with specified \a mode.
-		constexpr ObserverContext(cache::CatapultCacheDelta& cache, state::CatapultState& state, Height height, NotifyMode mode)
+		constexpr ObserverContext(cache::CatapultCacheDelta& cache, Height height, NotifyMode mode)
 				: Cache(cache)
-				, State(state)
 				, Height(height)
 				, Mode(mode)
 		{}
@@ -78,9 +73,6 @@ namespace catapult { namespace observers {
 	public:
 		/// Catapult cache.
 		cache::CatapultCacheDelta& Cache;
-
-		/// Catapult state.
-		state::CatapultState& State;
 
 		/// Current height.
 		const catapult::Height Height;

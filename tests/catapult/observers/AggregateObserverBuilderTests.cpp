@@ -38,8 +38,7 @@ namespace catapult { namespace observers {
 			void notify(uint8_t notificationId, NotifyMode mode) {
 				auto cache = test::CreateEmptyCatapultCache();
 				auto cacheDelta = cache.createDelta();
-				state::CatapultState state;
-				auto context = test::CreateObserverContext(cacheDelta, state, Height(123), mode);
+				auto context = test::CreateObserverContext(cacheDelta, Height(123), mode);
 				test::ObserveNotification(*pAggregateObserver, test::TaggedNotification(notificationId), context);
 			}
 		};

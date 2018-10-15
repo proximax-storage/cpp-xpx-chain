@@ -64,10 +64,6 @@ namespace catapult { namespace cache {
 		return m_options.NetworkIdentifier;
 	}
 
-	uint64_t BasicAccountStateCacheDelta::importanceGrouping() const {
-		return m_options.ImportanceGrouping;
-	}
-
 	Address BasicAccountStateCacheDelta::getAddress(const Key& publicKey) {
 		const auto* pPair = m_pKeyToAddress->find(publicKey);
 		if (pPair)

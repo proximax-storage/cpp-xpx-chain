@@ -18,13 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "sync/src/TransactionSpamThrottle.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
-#include "catapult/model/ImportanceHeight.h"
+#include "sync/src/TransactionSpamThrottle.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
@@ -37,25 +36,25 @@ namespace catapult { namespace sync {
 	namespace {
 		using TransactionSource = chain::UtUpdater::TransactionSource;
 
-		cache::CatapultCache CreateCatapultCacheWithImportanceGrouping(uint64_t importanceGrouping) {
+		cache::CatapultCache CreateCatapultCache() {
 			auto blockChainConfiguration = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfiguration.ImportanceGrouping = importanceGrouping;
 			return test::CreateEmptyCatapultCache(blockChainConfiguration);
 		}
 
-		const state::AccountState& AddAccount(cache::AccountStateCacheDelta& delta, Importance importance) {
+		const state::AccountState& AddAccount(cache::AccountStateCacheDelta& delta, Amount balance) {
 			auto& accountState = delta.addAccount(test::GenerateRandomData<Key_Size>(), Height(1));
-			accountState.ImportanceInfo.set(importance, model::ImportanceHeight(1));
+			accountState.Balances.credit(Xpx_Id, balance);
 			return accountState;
 		}
 
 		std::vector<const state::AccountState*> SeedAccountStateCache(
 				cache::AccountStateCacheDelta& delta,
 				size_t count,
-				Importance importance) {
+				Amount balance) {
 			std::vector<const state::AccountState*> accountStates;
-			for (auto i = 0u; i < count; ++i)
-				accountStates.push_back(&AddAccount(delta, importance));
+			for (auto i = 0u; i < count; ++i) {
+				accountStates.push_back(&AddAccount(delta, balance));
+			}
 
 			return accountStates;
 		}
@@ -107,10 +106,10 @@ namespace catapult { namespace sync {
 		enum class TransactionBondPolicy { Unbonded, Bonded };
 
 		struct ThrottleTestSettings {
-			SpamThrottleConfiguration ThrottleConfig{ Amount(10'000'000), Importance(1'000'000), 1'200, 120 };
+			SpamThrottleConfiguration ThrottleConfig{ Amount(10'000'000), Amount(1'000'000), 1'200, 120 };
 			uint32_t CacheSize = 120;
-			Importance DefaultImportance = Importance(1'000);
-			Importance SignerImportance = Importance();
+			Amount DefaultBalance = Amount(1'000);
+			Amount SignerBalance = Amount();
 			Amount Fee = Amount();
 			TransactionSource Source = TransactionSource::New;
 			TransactionBondPolicy BondPolicy = TransactionBondPolicy::Unbonded;
@@ -122,9 +121,9 @@ namespace catapult { namespace sync {
 			return settings;
 		}
 
-		ThrottleTestSettings CreateSettingsWithSignerImportance(Importance signerImportance) {
+		ThrottleTestSettings CreateSettingsWithSignerBalance(Amount signerBalance) {
 			ThrottleTestSettings settings;
-			settings.SignerImportance = signerImportance;
+			settings.SignerBalance = signerBalance;
 			return settings;
 		}
 
@@ -141,10 +140,10 @@ namespace catapult { namespace sync {
 			return settings;
 		}
 
-		ThrottleTestSettings CreateSettings(uint32_t cacheSize, Importance signerImportance, Amount fee) {
+		ThrottleTestSettings CreateSettings(uint32_t cacheSize, Amount signerBalance, Amount fee) {
 			ThrottleTestSettings settings;
 			settings.CacheSize = cacheSize;
-			settings.SignerImportance = signerImportance;
+			settings.SignerBalance = signerBalance;
 			settings.Fee = fee;
 			return settings;
 		}
@@ -154,7 +153,7 @@ namespace catapult { namespace sync {
 			settings.ThrottleConfig.MaxCacheSize = cacheMaxSize;
 			settings.ThrottleConfig.MaxBlockSize = 10;
 			settings.CacheSize = cacheSize;
-			settings.DefaultImportance = Importance();
+			settings.DefaultBalance = Amount();
 			settings.Source = source;
 			return settings;
 		}
@@ -169,14 +168,14 @@ namespace catapult { namespace sync {
 
 		void AssertThrottling(const ThrottleTestSettings& settings, bool expectedResult) {
 			// Arrange: prepare account state cache
-			auto catapultCache = CreateCatapultCacheWithImportanceGrouping(100);
+			auto catapultCache = CreateCatapultCache();
 			std::vector<const state::AccountState*> accountStates;
 			const state::AccountState* pAccountState;
 			{
 				auto delta = catapultCache.createDelta();
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
-				accountStates = SeedAccountStateCache(accountStateCacheDelta, settings.CacheSize, settings.DefaultImportance);
-				pAccountState = &AddAccount(accountStateCacheDelta, settings.SignerImportance);
+				accountStates = SeedAccountStateCache(accountStateCacheDelta, settings.CacheSize, settings.DefaultBalance);
+				pAccountState = &AddAccount(accountStateCacheDelta, settings.SignerBalance);
 				catapultCache.commit(Height(1));
 			}
 
@@ -199,12 +198,12 @@ namespace catapult { namespace sync {
 			auto result = filter(transactionInfo, throttleContext);
 
 			// Assert:
-			EXPECT_EQ(expectedResult, result) << "for importance " << settings.SignerImportance;
+			EXPECT_EQ(expectedResult, result) << "for balance " << settings.SignerBalance;
 			auto expectedTransactions =
 					settings.CacheSize >= settings.ThrottleConfig.MaxBlockSize && settings.CacheSize < settings.ThrottleConfig.MaxCacheSize
 					? std::vector<const model::Transaction*>{ transactionInfo.pEntity.get() }
 					: std::vector<const model::Transaction*>();
-			EXPECT_EQ(expectedTransactions, transactions) << "for importance " << settings.SignerImportance;
+			EXPECT_EQ(expectedTransactions, transactions) << "for balance " << settings.SignerBalance;
 		}
 	}
 
@@ -232,38 +231,38 @@ namespace catapult { namespace sync {
 
 	// endregion
 
-	// region importance
+	// region balance
 
-	TEST(TEST_CLASS, ImportanceIncreasesEffectiveImportance) {
-		// Act: signer has no importance
-		AssertThrottling(CreateSettingsWithSignerImportance(Importance()), true);
+	TEST(TEST_CLASS, BalanceIncreasesUsefulBalance) {
+		// Act: signer has no balance
+		AssertThrottling(CreateSettingsWithSignerBalance(Amount()), true);
 
-		// Act: signer has 0.1% importance of total importance, transaction is accepted
-		AssertThrottling(CreateSettingsWithSignerImportance(Importance(1'000)), false);
+		// Act: signer has 0.1% balance of total balance, transaction is accepted
+		AssertThrottling(CreateSettingsWithSignerBalance(Amount(1'000)), false);
 	}
 
 	// endregion
 
 	// region fee
 
-	TEST(TEST_CLASS, TransactionFeeIncreasesEffectiveImportance) {
+	TEST(TEST_CLASS, TransactionFeeIncreasesUsefulBalance) {
 		// Act: no fee, transaction is rejected
 		AssertThrottling(CreateSettingsWithFee(Amount()), true);
 
-		// Act: high fee boosts the effective importance to 1% of total importance:
-		//      - total importance = 1'000'000, fee = 10 xpx, so attemptedImportanceBoost = 10'000
+		// Act: high fee boosts the useful balance to 1% of total balance:
+		//      - total balance = 1'000'000, fee = 10 xpx, so attemptedBalanceBoost = 10'000
 		AssertThrottling(CreateSettingsWithFee(Amount(10'000'000)), false);
 	}
 
-	TEST(TEST_CLASS, MaxBoostFeeAffectsHowTransactionFeeIncreasesEffectiveImportance) {
+	TEST(TEST_CLASS, MaxBoostFeeAffectsHowTransactionFeeIncreasesUsefulBalance) {
 		// Act: the max boost fee is 10 xpx, a low fee is not enough to get the transactions accepted
-		//      - low fee boosts the effective importance by only 0.001% of total importance:
-		//      - total importance = 1'000'000, fee = 0.01 xpx, max boost fee = 10 xpx, so attemptedImportanceBoost = 10
+		//      - low fee boosts the useful balance by only 0.001% of total balance:
+		//      - total balance = 1'000'000, fee = 0.01 xpx, max boost fee = 10 xpx, so attemptedBalanceBoost = 10
 		AssertThrottling(CreateSettingsWithFee(Amount(10'000), Amount(10'000'000)), true);
 
 		// Act: the max boost fee is 0.01 xpx, even a low fee is enough to get the transactions accepted
-		//      - even a low fee boosts the effective importance to 1% of total importance:
-		//      - total importance = 1'000'000, fee = 0.01 xpx, max boost fee = 0.01 xpx, so attemptedImportanceBoost = 10'000
+		//      - even a low fee boosts the useful balance to 1% of total balance:
+		//      - total balance = 1'000'000, fee = 0.01 xpx, max boost fee = 0.01 xpx, so attemptedBalanceBoost = 10'000
 		AssertThrottling(CreateSettingsWithFee(Amount(10'000), Amount(10'000)), false);
 	}
 
@@ -277,12 +276,12 @@ namespace catapult { namespace sync {
 		void AssertThrottling(const ThrottleTestSettings& settings, AccountPolicy accountPolicy, uint32_t expectedCacheSize) {
 			// Arrange:
 			auto config = settings.ThrottleConfig;
-			auto catapultCache = CreateCatapultCacheWithImportanceGrouping(100);
+			auto catapultCache = CreateCatapultCache();
 			std::vector<const state::AccountState*> accountStates;
 			{
 				auto delta = catapultCache.createDelta();
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
-				accountStates = SeedAccountStateCache(accountStateCacheDelta, config.MaxCacheSize, settings.SignerImportance);
+				accountStates = SeedAccountStateCache(accountStateCacheDelta, config.MaxCacheSize, settings.SignerBalance);
 				catapultCache.commit(Height(1));
 			}
 
@@ -312,19 +311,19 @@ namespace catapult { namespace sync {
 			}
 
 			// Assert:
-			EXPECT_EQ(expectedCacheSize, context.transactionsCacheModifier().size()) << "for importance " << settings.SignerImportance;
+			EXPECT_EQ(expectedCacheSize, context.transactionsCacheModifier().size()) << "for balance " << settings.SignerBalance;
 		}
 	}
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_SingleAccount) {
 		// Arrange:
 		// - single account fills the cache
-		// - rounded solutions for equation: importance * e^(-3 * y / 1200) * 100 * (1200 - y) = y
-		// - for a relative importance <= 0.001, only max transactions per block (120) are allowed when cache is initially empty
-		std::vector<uint64_t> rawImportances{ 1'000'000, 100'000, 10'000, 1000, 100, 10 };
+		// - rounded solutions for equation: balance * e^(-3 * y / 1200) * 100 * (1200 - y) = y
+		// - for a relative balance <= 0.001, only max transactions per block (120) are allowed when cache is initially empty
+		std::vector<uint64_t> rawBalances{ 1'000'000, 100'000, 10'000, 1000, 100, 10 };
 		std::vector<uint32_t> expectedCacheSizes{ 1054, 736, 352, 120, 120, 120 };
-		for (auto i = 0u; i < rawImportances.size(); ++i) {
-			auto settings = CreateSettings(0, Importance(rawImportances[i]), Amount());
+		for (auto i = 0u; i < rawBalances.size(); ++i) {
+			auto settings = CreateSettings(0, Amount(rawBalances[i]), Amount());
 			AssertThrottling(settings, AccountPolicy::Single, expectedCacheSizes[i]);
 		}
 	}
@@ -332,11 +331,11 @@ namespace catapult { namespace sync {
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_MultipleAccounts) {
 		// Arrange:
 		// - different accounts fill the cache
-		// - rounded solutions for equation: importance * e^(-3 * y / 1200) * 100 * (1200 - y) = 1
-		std::vector<uint64_t> rawImportances{ 1'000'000, 100'000, 10'000, 1000, 100, 10 };
+		// - rounded solutions for equation: balance * e^(-3 * y / 1200) * 100 * (1200 - y) = 1
+		std::vector<uint64_t> rawBalances{ 1'000'000, 100'000, 10'000, 1000, 100, 10 };
 		std::vector<uint32_t> expectedCacheSizes{ 1200, 1199, 1181, 1059, 669, 120 };
-		for (auto i = 0u; i < rawImportances.size(); ++i) {
-			auto settings = CreateSettings(0, Importance(rawImportances[i]), Amount());
+		for (auto i = 0u; i < rawBalances.size(); ++i) {
+			auto settings = CreateSettings(0, Amount(rawBalances[i]), Amount());
 			AssertThrottling(settings, AccountPolicy::Multiple, expectedCacheSizes[i]);
 		}
 	}
@@ -346,48 +345,48 @@ namespace catapult { namespace sync {
 	// region throttling - different fill levels
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_FullCache) {
-		// Act + Assert: max importance to try to force acceptance
-		AssertThrottling(CreateSettings(1199, Importance(1'000'000), Amount()), false); // almost full
-		AssertThrottling(CreateSettings(1200, Importance(1'000'000), Amount()), true); // full
+		// Act + Assert: max balance to try to force acceptance
+		AssertThrottling(CreateSettings(1199, Amount(1'000'000), Amount()), false); // almost full
+		AssertThrottling(CreateSettings(1200, Amount(1'000'000), Amount()), true); // full
 	}
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_HighFillLevel) {
 		// Act + Assert:
-		AssertThrottling(CreateSettings(1000, Importance(), Amount()), true); // no importance and fee
-		AssertThrottling(CreateSettings(1000, Importance(), Amount(100'000)), true); // no importance, medium fee
-		AssertThrottling(CreateSettings(1000, Importance(), Amount(1000'000)), false); // no importance, high fee
+		AssertThrottling(CreateSettings(1000, Amount(), Amount()), true); // no balance and fee
+		AssertThrottling(CreateSettings(1000, Amount(), Amount(100'000)), true); // no balance, medium fee
+		AssertThrottling(CreateSettings(1000, Amount(), Amount(1000'000)), false); // no balance, high fee
 
-		AssertThrottling(CreateSettings(1000, Importance(100), Amount()), true); // medium importance and no fee
-		AssertThrottling(CreateSettings(1000, Importance(100), Amount(100'000)), true); // medium importance and fee
+		AssertThrottling(CreateSettings(1000, Amount(100), Amount()), true); // medium balance and no fee
+		AssertThrottling(CreateSettings(1000, Amount(100), Amount(100'000)), true); // medium balance and fee
 
-		AssertThrottling(CreateSettings(1000, Importance(10'000), Amount()), false); // high importance and no fee
-		AssertThrottling(CreateSettings(1000, Importance(10'000), Amount(1'000'000)), false); // high importance and fee
+		AssertThrottling(CreateSettings(1000, Amount(10'000), Amount()), false); // high balance and no fee
+		AssertThrottling(CreateSettings(1000, Amount(10'000), Amount(1'000'000)), false); // high balance and fee
 	}
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_MediumFillLevel) {
 		// Act + Assert:
-		AssertThrottling(CreateSettings(250, Importance(), Amount()), true); // no importance and fee
-		AssertThrottling(CreateSettings(250, Importance(), Amount(100'000)), false); // no importance, medium fee
-		AssertThrottling(CreateSettings(250, Importance(), Amount(1000'000)), false); // no importance, high fee
+		AssertThrottling(CreateSettings(250, Amount(), Amount()), true); // no balance and fee
+		AssertThrottling(CreateSettings(250, Amount(), Amount(100'000)), false); // no balance, medium fee
+		AssertThrottling(CreateSettings(250, Amount(), Amount(1000'000)), false); // no balance, high fee
 
-		AssertThrottling(CreateSettings(250, Importance(100), Amount()), false); // medium importance and no fee
-		AssertThrottling(CreateSettings(250, Importance(100), Amount(100'000)), false); // medium importance and fee
+		AssertThrottling(CreateSettings(250, Amount(100), Amount()), false); // medium balance and no fee
+		AssertThrottling(CreateSettings(250, Amount(100), Amount(100'000)), false); // medium balance and fee
 
-		AssertThrottling(CreateSettings(250, Importance(10'000), Amount()), false); // high importance and no fee
-		AssertThrottling(CreateSettings(250, Importance(10'000), Amount(1'000'000)), false); // high importance and fee
+		AssertThrottling(CreateSettings(250, Amount(10'000), Amount()), false); // high balance and no fee
+		AssertThrottling(CreateSettings(250, Amount(10'000), Amount(1'000'000)), false); // high balance and fee
 	}
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_LowFillLevel) {
 		// Act + Assert:
-		AssertThrottling(CreateSettings(100, Importance(), Amount()), false); // no importance and fee
-		AssertThrottling(CreateSettings(100, Importance(), Amount(100'000)), false); // no importance, medium fee
-		AssertThrottling(CreateSettings(100, Importance(), Amount(1000'000)), false); // no importance, high fee
+		AssertThrottling(CreateSettings(100, Amount(), Amount()), false); // no balance and fee
+		AssertThrottling(CreateSettings(100, Amount(), Amount(100'000)), false); // no balance, medium fee
+		AssertThrottling(CreateSettings(100, Amount(), Amount(1000'000)), false); // no balance, high fee
 
-		AssertThrottling(CreateSettings(100, Importance(100), Amount()), false); // medium importance and no fee
-		AssertThrottling(CreateSettings(100, Importance(100), Amount(100'000)), false); // medium importance and fee
+		AssertThrottling(CreateSettings(100, Amount(100), Amount()), false); // medium balance and no fee
+		AssertThrottling(CreateSettings(100, Amount(100), Amount(100'000)), false); // medium balance and fee
 
-		AssertThrottling(CreateSettings(100, Importance(10'000), Amount()), false); // high importance and no fee
-		AssertThrottling(CreateSettings(100, Importance(10'000), Amount(1'000'000)), false); // high importance and fee
+		AssertThrottling(CreateSettings(100, Amount(10'000), Amount()), false); // high balance and no fee
+		AssertThrottling(CreateSettings(100, Amount(10'000), Amount(1'000'000)), false); // high balance and fee
 	}
 
 	// endregion
@@ -395,21 +394,21 @@ namespace catapult { namespace sync {
 	// region throttling - transaction source
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_TransactionSourceNew) {
-		// Act + Assert: block size is 10, no importance and fee
+		// Act + Assert: block size is 10, no balance and fee
 		AssertThrottling(CreateSettings(100, 9, TransactionSource::New), false); // cache size < block max size
 		AssertThrottling(CreateSettings(100, 10, TransactionSource::New), true); // cache size == block max size
 		AssertThrottling(CreateSettings(100, 50, TransactionSource::New), true); // cache size > block max size
 	}
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_TransactionSourceExisting) {
-		// Act + Assert: block size is 10, no importance and fee
+		// Act + Assert: block size is 10, no balance and fee
 		AssertThrottling(CreateSettings(100, 9, TransactionSource::Existing), false); // cache size < block max size
 		AssertThrottling(CreateSettings(100, 10, TransactionSource::Existing), true); // cache size == block max size
 		AssertThrottling(CreateSettings(100, 50, TransactionSource::Existing), true); // cache size > block max size
 	}
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_TransactionSourceReverted) {
-		// Act + Assert: block size is 10, no importance and fee
+		// Act + Assert: block size is 10, no balance and fee
 		AssertThrottling(CreateSettings(100, 50, TransactionSource::Reverted), false); // cache is half full
 		AssertThrottling(CreateSettings(100, 99, TransactionSource::Reverted), false); // cache is almost full
 		AssertThrottling(CreateSettings(100, 100, TransactionSource::Reverted), true); // cache is full
@@ -420,14 +419,14 @@ namespace catapult { namespace sync {
 	// region throttling - bonded transactions
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_BondedTransactions) {
-		// Act + Assert: block size is 10, no importance and fee
+		// Act + Assert: block size is 10, no balance and fee
 		AssertThrottling(CreateSettings(100, 50, TransactionBondPolicy::Bonded), false); // cache is half full
 		AssertThrottling(CreateSettings(100, 99, TransactionBondPolicy::Bonded), false); // cache is almost full
 		AssertThrottling(CreateSettings(100, 100, TransactionBondPolicy::Bonded), true); // cache is full
 	}
 
 	TEST(TEST_CLASS, ThrottlingBehavesAsExpected_UnbondedTransactions) {
-		// Act + Assert: block size is 10, no importance and fee
+		// Act + Assert: block size is 10, no balance and fee
 		AssertThrottling(CreateSettings(100, 9, TransactionBondPolicy::Unbonded), false); // cache size < block max size
 		AssertThrottling(CreateSettings(100, 10, TransactionBondPolicy::Unbonded), true); // cache size == block max size
 		AssertThrottling(CreateSettings(100, 50, TransactionBondPolicy::Unbonded), true); // cache size > block max size

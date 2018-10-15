@@ -43,7 +43,7 @@ namespace catapult { namespace test {
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const model::BlockChainConfiguration& config)
 				: m_cache(TCacheFactory::Create(config))
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context(m_cacheDelta, m_state, height, mode)
+				, m_context(m_cacheDelta, height, mode)
 		{}
 
 	public:
@@ -62,11 +62,6 @@ namespace catapult { namespace test {
 			return m_cacheDelta;
 		}
 
-		/// Gets the catapult state.
-		const state::CatapultState& state() const {
-			return m_state;
-		}
-
 	public:
 		/// Commits all changes to the underlying cache.
 		void commitCacheChanges() {
@@ -76,7 +71,6 @@ namespace catapult { namespace test {
 	private:
 		cache::CatapultCache m_cache;
 		cache::CatapultCacheDelta m_cacheDelta;
-		state::CatapultState m_state;
 		observers::ObserverContext m_context;
 	};
 

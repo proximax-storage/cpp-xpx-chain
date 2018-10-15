@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include <src/catapult/extensions/LocalNodeStateRef.h>
 #include <string>
 
 namespace catapult {
@@ -31,9 +32,9 @@ namespace catapult {
 namespace catapult { namespace filechain {
 
 	/// Save catapult \a cache state along with \a supplementalData into state directory inside \a dataDirectory.
-	void SaveState(const std::string& dataDirectory, const cache::CatapultCache& cache, const cache::SupplementalData& supplementalData);
+	void SaveState(const extensions::LocalNodeStateConstRef& stateRef);
 
 	/// Load catapult \a cache state and \a supplementalData from state directory inside \a dataDirectory.
 	/// Returns \c true if data has been loaded, \c false if there was nothing to load.
-	bool LoadState(const std::string& dataDirectory, cache::CatapultCache& cache, cache::SupplementalData& supplementalData);
+	bool LoadState(const extensions::LocalNodeStateRef& stateRef, cache::SupplementalData& supplementalData);
 }}

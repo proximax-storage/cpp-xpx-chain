@@ -42,30 +42,30 @@ namespace catapult { namespace mocks {
 		};
 
 	public:
-		/// Creates a mock chain api around a chain \a score, a last block (\a pLastBlock) and a range of \a hashes.
-		MockChainApi(const model::ChainScore& score, std::shared_ptr<model::Block>&& pLastBlock, const model::HashRange& hashes)
-				: m_score(score)
+		/// Creates a mock chain api around a chain \a difficulty, a last block (\a pLastBlock) and a range of \a hashes.
+		MockChainApi(const Difficulty& difficulty, std::shared_ptr<model::Block>&& pLastBlock, const model::HashRange& hashes)
+				: m_difficulty(difficulty)
 				, m_errorEntryPoint(EntryPoint::None)
 				, m_hashes(model::HashRange::CopyRange(hashes))
 				, m_numBlocksPerBlocksFromRequest({ 2 }) {
 			m_blocks.emplace(Height(0), std::move(pLastBlock));
 		}
 
-		/// Creates a mock chain api around a chain \a score, a chain \a height and a range of \a hashes.
-		MockChainApi(const model::ChainScore& score, Height height, const model::HashRange& hashes)
-				: MockChainApi(score, test::GenerateVerifiableBlockAtHeight(height), hashes)
+		/// Creates a mock chain api around a chain \a difficulty, a chain \a height and a range of \a hashes.
+		MockChainApi(const Difficulty& difficulty, Height height, const model::HashRange& hashes)
+				: MockChainApi(difficulty, test::GenerateVerifiableBlockAtHeight(height), hashes)
 		{}
 
-		/// Creates a mock chain api around a chain \a score, a last block (\a pLastBlock) and the number of
+		/// Creates a mock chain api around a chain \a difficulty, a last block (\a pLastBlock) and the number of
 		/// hashes (\a numHashesToReturn) to return from a hashes-from request.
-		MockChainApi(const model::ChainScore& score, std::shared_ptr<model::Block>&& pLastBlock, size_t numHashesToReturn = 0)
-				: MockChainApi(score, std::move(pLastBlock), test::GenerateRandomHashes(numHashesToReturn))
+		MockChainApi(const Difficulty& difficulty, std::shared_ptr<model::Block>&& pLastBlock, size_t numHashesToReturn = 0)
+				: MockChainApi(difficulty, std::move(pLastBlock), test::GenerateRandomHashes(numHashesToReturn))
 		{}
 
-		/// Creates a mock chain api around a chain \a score, a chain \a height and the number of
+		/// Creates a mock chain api around a chain \a difficulty, a chain \a height and the number of
 		/// hashes (\a numHashesToReturn) to return from a hashes-from request.
-		MockChainApi(const model::ChainScore& score, Height height, size_t numHashesToReturn = 0)
-				: MockChainApi(score, test::GenerateVerifiableBlockAtHeight(height), numHashesToReturn)
+		MockChainApi(const Difficulty& difficulty, Height height, size_t numHashesToReturn = 0)
+				: MockChainApi(difficulty, test::GenerateVerifiableBlockAtHeight(height), numHashesToReturn)
 		{}
 
 	public:
@@ -118,7 +118,7 @@ namespace catapult { namespace mocks {
 
 			auto info = api::ChainInfo();
 			info.Height = chainHeight();
-			info.Score = m_score;
+			info.Difficulty = m_difficulty;
 			return CreateFutureResponse(std::move(info));
 		}
 
@@ -209,7 +209,7 @@ namespace catapult { namespace mocks {
 		}
 
 	private:
-		model::ChainScore m_score;
+		Difficulty m_difficulty;
 		EntryPoint m_errorEntryPoint;
 		model::HashRange m_hashes;
 		std::map<Height, std::shared_ptr<model::Block>> m_blocks;

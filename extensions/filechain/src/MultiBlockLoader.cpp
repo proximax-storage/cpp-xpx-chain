@@ -18,16 +18,17 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "MultiBlockLoader.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
+#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/Block.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/Elements.h"
 #include "catapult/utils/StackLogger.h"
+#include "MultiBlockLoader.h"
 
 namespace catapult { namespace filechain {
 
@@ -115,17 +116,15 @@ namespace catapult { namespace filechain {
 		{}
 
 	public:
-		model::ChainScore loadAll(const NotifyProgressFunc& notifyProgress) const {
+		void loadAll(const NotifyProgressFunc& notifyProgress) const {
 			const auto& storage = m_stateRef.Storage.view();
 
 			auto height = m_startHeight;
 			auto pParentBlockElement = storage.loadBlockElement(height - Height(1));
 
-			model::ChainScore score;
 			auto chainHeight = storage.chainHeight();
 			while (chainHeight >= height) {
 				auto pBlockElement = storage.loadBlockElement(height);
-				score += model::ChainScore(chain::CalculateScore(pParentBlockElement->Block, pBlockElement->Block));
 
 				execute(*pBlockElement);
 				notifyProgress(height, chainHeight);
@@ -133,14 +132,12 @@ namespace catapult { namespace filechain {
 				pParentBlockElement = std::move(pBlockElement);
 				height = height + Height(1);
 			}
-
-			return score;
 		}
 
 	private:
 		void execute(const model::BlockElement& blockElement) const {
 			auto cacheDelta = m_stateRef.Cache.createDelta();
-			auto observerState = observers::ObserverState(cacheDelta, m_stateRef.State);
+			auto observerState = observers::ObserverState(cacheDelta);
 
 			const auto& block = blockElement.Block;
 			chain::ExecuteBlock(blockElement, m_observerFactory(block), observerState);
@@ -153,14 +150,14 @@ namespace catapult { namespace filechain {
 		Height m_startHeight;
 	};
 
-	model::ChainScore LoadBlockChain(
+	void LoadBlockChain(
 			const BlockDependentEntityObserverFactory& observerFactory,
 			const extensions::LocalNodeStateRef& stateRef,
 			Height startHeight) {
 		BlockChainLoader loader(observerFactory, stateRef, startHeight);
 
 		utils::StackLogger stopwatch("load block chain", utils::LogLevel::Warning);
-		return loader.loadAll(AnalyzeProgressLogger(stopwatch));
+		loader.loadAll(AnalyzeProgressLogger(stopwatch));
 	}
 
 	// endregion

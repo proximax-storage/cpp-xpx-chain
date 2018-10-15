@@ -24,7 +24,6 @@
 #include "src/MongoBlockStorage.h"
 #include "src/MongoBlockStorageUtils.h"
 #include "src/MongoBulkWriter.h"
-#include "src/MongoChainScoreProvider.h"
 #include "src/MongoNemesisBlockPreparer.h"
 #include "src/MongoPluginLoader.h"
 #include "src/MongoPluginManager.h"
@@ -105,8 +104,7 @@ namespace catapult { namespace mongo {
 			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext, config.BlockChain);
 			auto pTransactionRegistry = CreateTransactionRegistry(pPluginManager, config.User.PluginsDirectory, dbConfig.Plugins);
 
-			// create mongo chain score provider and mongo (cache) storage
-			auto pChainScoreProvider = CreateMongoChainScoreProvider(*pMongoContext);
+			// create mongo (cache) storage
 			auto pExternalCacheStorage = pPluginManager->createStorage();
 
 			// add a dummy service for extending service lifetimes
@@ -140,7 +138,6 @@ namespace catapult { namespace mongo {
 			bootstrapper.subscriptionManager().addPtChangeSubscriber(CreateMongoPtStorage(*pMongoContext, *pTransactionRegistry));
 			bootstrapper.subscriptionManager().addTransactionStatusSubscriber(CreateMongoTransactionStatusStorage(*pMongoContext));
 			bootstrapper.subscriptionManager().addStateChangeSubscriber(std::make_unique<ApiStateChangeSubscriber>(
-					std::move(pChainScoreProvider),
 					std::move(pExternalCacheStorage)));
 		}
 	}

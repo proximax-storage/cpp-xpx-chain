@@ -38,7 +38,6 @@ namespace catapult { namespace cache {
 
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			Network_Identifier,
-			543,
 			Amount(std::numeric_limits<Amount::ValueType>::max())
 		};
 
@@ -282,12 +281,12 @@ namespace catapult { namespace cache {
 
 namespace catapult { namespace cache {
 
-	// region network identifier / importance grouping
+	// region network identifier
 
 	TEST(TEST_CLASS, CacheExposesNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(17);
-		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, 234, Amount() });
+		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, Amount() });
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.networkIdentifier());
@@ -296,30 +295,12 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, 543, Amount() });
+		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, Amount() });
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());
 		EXPECT_EQ(networkIdentifier, cache.createDelta()->networkIdentifier());
 		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta().lock()->networkIdentifier());
-	}
-
-	TEST(TEST_CLASS, CacheExposesImportanceGrouping) {
-		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), { static_cast<model::NetworkIdentifier>(17), 234, Amount() });
-
-		// Act + Assert:
-		EXPECT_EQ(234u, cache.importanceGrouping());
-	}
-
-	TEST(TEST_CLASS, CacheWrappersExposeImportanceGrouping) {
-		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), { static_cast<model::NetworkIdentifier>(18), 543, Amount() });
-
-		// Act + Assert:
-		EXPECT_EQ(543u, cache.createView()->importanceGrouping());
-		EXPECT_EQ(543u, cache.createDelta()->importanceGrouping());
-		EXPECT_EQ(543u, cache.createDetachedDelta().lock()->importanceGrouping());
 	}
 
 	// endregion
@@ -787,8 +768,6 @@ namespace catapult { namespace cache {
 			info.Address = test::GenerateRandomAddress();
 			info.PublicKey = GenerateRandomPublicKey();
 			info.PublicKeyHeight = Height(123);
-			info.Importances[0] = Importance(421);
-			info.ImportanceHeights[0] = model::ImportanceHeight(1);
 			info.MosaicsCount = 0;
 			return info;
 		}
@@ -798,7 +777,6 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(expected.Address, actual.Address) << message;
 			EXPECT_EQ(expected.PublicKey, actual.PublicKey) << message;
 			EXPECT_EQ(expected.PublicKeyHeight, actual.PublicKeyHeight) << message;
-			EXPECT_EQ(expected.Importances[0], actual.ImportanceInfo.current()) << message;
 			EXPECT_EQ(0u, actual.Balances.size()) << message;
 		}
 	}
@@ -853,26 +831,21 @@ namespace catapult { namespace cache {
 		void AssertAddAccountViaInfoDoesNotOverrideKnownAccounts(TAdd add) {
 			// Arrange: create an info
 			auto info = CreateRandomAccountInfoWithKey();
-			info.Importances[0] = Importance(777);
 
 			AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
 			auto delta = cache.createDelta();
 
-			// Act: add the info using add and set importance to 123
+			// Act: add the info using add
 			auto& addState1 = add(*delta, info);
-			addState1.ImportanceInfo.set(Importance(123), model::ImportanceHeight(1));
 
-			// - add the info again (with importance 777)
 			const auto& addState2 = delta->addAccount(info);
 
 			// - get the info from the cache
 			const auto* pAccountState = delta->tryGet(info.Address);
 
-			// Assert: the second add had no effect (the importance is still 123)
 			ASSERT_TRUE(!!pAccountState);
 			EXPECT_EQ(&addState1, pAccountState);
 			EXPECT_EQ(&addState2, pAccountState);
-			EXPECT_EQ(Importance(123), pAccountState->ImportanceInfo.current());
 		}
 	}
 

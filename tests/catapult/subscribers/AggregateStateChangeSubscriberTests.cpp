@@ -20,7 +20,6 @@
 
 #include "catapult/subscribers/AggregateStateChangeSubscriber.h"
 #include "catapult/consumers/StateChangeInfo.h"
-#include "catapult/model/ChainScore.h"
 #include "tests/catapult/subscribers/test/AggregateSubscriberTestContext.h"
 #include "tests/catapult/subscribers/test/UnsupportedSubscribers.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -39,36 +38,6 @@ namespace catapult { namespace subscribers {
 				AggregateStateChangeSubscriber<TStateChangeSubscriber>>;
 	}
 
-	TEST(TEST_CLASS, NotifyScoreChangeForwardsToAllSubscribers) {
-		// Arrange:
-		class MockStateChangeSubscriber : public UnsupportedStateChangeSubscriber {
-		public:
-			std::vector<const model::ChainScore*> Scores;
-
-		public:
-			void notifyScoreChange(const model::ChainScore& chainScore) override {
-				Scores.push_back(&chainScore);
-			}
-		};
-
-		TestContext<MockStateChangeSubscriber> context;
-		model::ChainScore chainScore;
-
-		// Sanity:
-		EXPECT_EQ(3u, context.subscribers().size());
-
-		// Act:
-		context.aggregate().notifyScoreChange(chainScore);
-
-		// Assert:
-		auto i = 0u;
-		for (const auto* pSubscriber : context.subscribers()) {
-			auto message = "subscriber at " + std::to_string(i++);
-			ASSERT_EQ(1u, pSubscriber->Scores.size()) << message;
-			EXPECT_EQ(&chainScore, pSubscriber->Scores[0]) << message;
-		}
-	}
-
 	TEST(TEST_CLASS, NotifyStateChangeForwardsToAllSubscribers) {
 		// Arrange:
 		class MockStateChangeSubscriber : public UnsupportedStateChangeSubscriber {
@@ -85,8 +54,7 @@ namespace catapult { namespace subscribers {
 
 		auto cache = test::CreateEmptyCatapultCache();
 		auto cacheDelta = cache.createDelta();
-		model::ChainScore scoreDelta;
-		consumers::StateChangeInfo stateChangeInfo(cacheDelta, scoreDelta, Height(444));
+		consumers::StateChangeInfo stateChangeInfo(cacheDelta, Height(444));
 
 		// Sanity:
 		EXPECT_EQ(3u, context.subscribers().size());

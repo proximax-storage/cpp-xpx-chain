@@ -18,13 +18,14 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/consumers/BlockChainProcessor.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/chain/ChainResults.h"
+#include "catapult/consumers/BlockChainProcessor.h"
 #include "catapult/consumers/InputUtils.h"
 #include "catapult/model/BlockUtils.h"
+#include "test/MockSyncState.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
@@ -43,16 +44,18 @@ namespace catapult { namespace consumers {
 
 		struct BlockHitPredicateParams {
 		public:
-			BlockHitPredicateParams(const model::Block* pParent, const model::Block* pChild, const Hash256& generationHash)
-					: pParentBlock(pParent)
-					, pChildBlock(pChild)
-					, GenerationHash(generationHash)
+			BlockHitPredicateParams(const Hash256& hash, const BlockTarget& target, const utils::TimeSpan& time, const Amount& balance)
+					: Hash(hash)
+					, Target(target)
+					, Timestamp(time)
+					, Balance(balance)
 			{}
 
 		public:
-			const model::Block* pParentBlock;
-			const model::Block* pChildBlock;
-			const Hash256 GenerationHash;
+			Hash256 Hash;
+			BlockTarget Target;
+			utils::TimeSpan Timestamp;
+			Amount Balance;
 		};
 
 		class MockBlockHitPredicate : public test::ParamsCapture<BlockHitPredicateParams> {
@@ -61,8 +64,8 @@ namespace catapult { namespace consumers {
 			{}
 
 		public:
-			bool operator()(const model::Block& parent, const model::Block& child, const Hash256& generationHash) const {
-				const_cast<MockBlockHitPredicate*>(this)->push(&parent, &child, generationHash);
+			bool operator()(const Hash256& hash, const BlockTarget& target, const utils::TimeSpan& time, const Amount& balance) const {
+				const_cast<MockBlockHitPredicate*>(this)->push(hash, target, time, balance);
 				return ++m_numCalls < m_trigger;
 			}
 
@@ -74,42 +77,6 @@ namespace catapult { namespace consumers {
 		private:
 			mutable size_t m_numCalls;
 			size_t m_trigger;
-		};
-
-		// endregion
-
-		// region MockBlockHitPredicateFactory
-
-		struct BlockHitPredicateFactoryParams {
-		public:
-			BlockHitPredicateFactoryParams(const cache::ReadOnlyCatapultCache& cache)
-					: IsPassedMarkedCache(test::IsMarkedCache(cache))
-					, NumDifficultyInfos(cache.sub<cache::BlockDifficultyCache>().size())
-			{}
-
-		public:
-			const bool IsPassedMarkedCache;
-			const size_t NumDifficultyInfos;
-		};
-
-		class MockBlockHitPredicateFactory : public test::ParamsCapture<BlockHitPredicateFactoryParams> {
-		public:
-			MockBlockHitPredicateFactory(const MockBlockHitPredicate& blockHitPredicate)
-					: m_blockHitPredicate(blockHitPredicate)
-			{}
-
-		public:
-			BlockHitPredicate operator()(const cache::ReadOnlyCatapultCache& cache) const {
-				const_cast<MockBlockHitPredicateFactory*>(this)->push(cache);
-
-				const auto& blockHitPredicate = m_blockHitPredicate;
-				return [&blockHitPredicate](const auto& parent, const auto& child, const auto& generationHash) {
-					return blockHitPredicate(parent, child, generationHash);
-				};
-			}
-
-		private:
-			const MockBlockHitPredicate& m_blockHitPredicate;
 		};
 
 		// endregion
@@ -126,18 +93,14 @@ namespace catapult { namespace consumers {
 					: Height(height)
 					, Timestamp(timestamp)
 					, EntityInfos(entityInfos)
-					, pState(&state.State)
-					, IsPassedMarkedCache(test::IsMarkedCache(state.Cache))
-					, NumDifficultyInfos(state.Cache.sub<cache::BlockDifficultyCache>().size())
+					, State(state)
 			{}
 
 		public:
 			const catapult::Height Height;
 			const catapult::Timestamp Timestamp;
 			const model::WeakEntityInfos EntityInfos;
-			const state::CatapultState* pState;
-			const bool IsPassedMarkedCache;
-			const size_t NumDifficultyInfos;
+			const observers::ObserverState State;
 		};
 
 		class MockBatchEntityProcessor : public test::ParamsCapture<BatchEntityProcessorParams> {
@@ -147,16 +110,11 @@ namespace catapult { namespace consumers {
 
 		public:
 			ValidationResult operator()(
-					Height height,
-					Timestamp timestamp,
+					const Height& height,
+					const Timestamp& timestamp,
 					const model::WeakEntityInfos& entityInfos,
 					const observers::ObserverState& state) const {
 				const_cast<MockBatchEntityProcessor*>(this)->push(height, timestamp, entityInfos, state);
-
-				// - add a block difficulty info to the cache as a marker
-				auto& blockDifficultyCache = state.Cache.sub<cache::BlockDifficultyCache>();
-				blockDifficultyCache.insert(state::BlockDifficultyInfo(Height(blockDifficultyCache.size() + 1)));
-
 				return ++m_numCalls < m_trigger ? ValidationResult::Success : m_result;
 			}
 
@@ -182,74 +140,59 @@ namespace catapult { namespace consumers {
 
 		struct ProcessorTestContext {
 		public:
-			ProcessorTestContext() : BlockHitPredicateFactory(BlockHitPredicate) {
+			ProcessorTestContext() {
+				Handlers.BatchEntityProcessor = [this](const auto& height, const auto& timestamp, const auto& entities, const auto& state) {
+					return BatchEntityProcessor(height, timestamp, entities, state);
+				};
 				Processor = CreateBlockChainProcessor(
-						[this](const auto& cache) {
-							return BlockHitPredicateFactory(cache);
+						[this]() {
+							return [this](const auto& hash, const auto& target, const auto& time, const auto& balance) {
+								return BlockHitPredicate(hash, target, time, balance);
+							};
 						},
-						[this](auto height, auto timestamp, const auto& entities, const auto& state) {
-							return BatchEntityProcessor(height, timestamp, entities, state);
-						});
+						Handlers
+				);
 			}
 
 		public:
-			state::CatapultState State;
-
 			MockBlockHitPredicate BlockHitPredicate;
-			MockBlockHitPredicateFactory BlockHitPredicateFactory;
 			MockBatchEntityProcessor BatchEntityProcessor;
+			BlockChainSyncHandlers Handlers;
 			BlockChainProcessor Processor;
 
 		public:
-			ValidationResult Process(const model::BlockElement& parentBlockElement, BlockElements& elements) {
-				auto cache = test::CreateCatapultCacheWithMarkerAccount();
-				auto delta = cache.createDelta();
-
-				return Processor(WeakBlockInfo(parentBlockElement), elements, observers::ObserverState(delta, State));
+			ValidationResult Process(BlockElements& elements) {
+				SyncState state;
+				return Processor(state, elements);
 			}
 
-			ValidationResult Process(const model::Block& parentBlock, BlockElements& elements) {
-				// use the real parent block hash to ensure the chain is linked
-				return Process(test::BlockToBlockElement(parentBlock), elements);
+			ValidationResult Process(SyncState& state, BlockElements& elements) {
+				return Processor(state, elements);
 			}
 
 		public:
-			void assertBlockHitPredicateCalls(const model::Block& parentBlock, const BlockElements& elements) {
-				// block hit predicate factory
-				{
-					const auto& allParams = BlockHitPredicateFactory.params();
-					EXPECT_EQ(1u, allParams.size());
+			void assertBlockHitPredicateCalls(const BlockElements& elements) {
+				const auto& allParams = BlockHitPredicate.params();
+				ASSERT_LE(allParams.size(), elements.size());
 
-					auto i = 0u;
-					for (auto params : allParams) {
-						auto message = "hit predicate factory at " + std::to_string(i);
-						EXPECT_TRUE(params.IsPassedMarkedCache) << message;
-						EXPECT_EQ(i, params.NumDifficultyInfos) << message;
-						++i;
-					}
-				}
+				auto i = 0u;
+				auto previousTimeStamp = Timestamp(0);
+				for (auto params : allParams) {
+					auto message = "hit predicate at " + std::to_string(i);
+					const auto& currentBlockElement = elements[i];
 
-				// block hit
-				{
-					const auto& allParams = BlockHitPredicate.params();
-					ASSERT_LE(allParams.size(), elements.size());
+					Amount expectedEffectiveBalance{0};
 
-					auto i = 0u;
-					const auto* pPreviousBlock = &parentBlock;
-					for (auto params : allParams) {
-						auto message = "hit predicate at " + std::to_string(i);
-						const auto& currentBlockElement = elements[i];
-						const auto* pCurrentBlock = &currentBlockElement.Block;
-						EXPECT_EQ(pPreviousBlock, params.pParentBlock) << message;
-						EXPECT_EQ(pCurrentBlock, params.pChildBlock) << message;
-						EXPECT_EQ(currentBlockElement.GenerationHash, params.GenerationHash) << message;
-						pPreviousBlock = pCurrentBlock;
-						++i;
-					}
+					EXPECT_EQ(utils::TimeSpan::FromDifference(currentBlockElement.Block.Timestamp, previousTimeStamp), params.Timestamp) << message;
+					EXPECT_EQ(currentBlockElement.Block.BaseTarget, params.Target) << message;
+					EXPECT_EQ(currentBlockElement.GenerationHash, params.Hash) << message;
+					EXPECT_EQ(expectedEffectiveBalance, params.Balance) << message;
+					++i;
+					previousTimeStamp = currentBlockElement.Block.Timestamp;
 				}
 			}
 
-			void assertBatchEntityProcessorCalls(const BlockElements& elements) {
+			void assertBatchEntityProcessorCalls(SyncState& state, const BlockElements& elements) {
 				const auto& allParams = BatchEntityProcessor.params();
 				ASSERT_LE(allParams.size(), elements.size());
 
@@ -262,16 +205,13 @@ namespace catapult { namespace consumers {
 					EXPECT_EQ(blockElement.Block.Height, params.Height) << message;
 					EXPECT_EQ(blockElement.Block.Timestamp, params.Timestamp) << message;
 					EXPECT_EQ(expectedEntityInfos, params.EntityInfos) << message;
-					EXPECT_EQ(&State, params.pState) << message;
-					EXPECT_TRUE(params.IsPassedMarkedCache) << message;
-					EXPECT_EQ(i, params.NumDifficultyInfos) << message;
+					EXPECT_EQ(&state.observerState().Cache, &params.State.Cache) << message;
 					++i;
 				}
 			}
 
 			void assertNoHandlerCalls() {
 				EXPECT_EQ(0u, BlockHitPredicate.params().size());
-				EXPECT_EQ(0u, BlockHitPredicateFactory.params().size());
 				EXPECT_EQ(0u, BatchEntityProcessor.params().size());
 			}
 		};
@@ -284,7 +224,7 @@ namespace catapult { namespace consumers {
 		BlockElements elements;
 
 		// Act:
-		auto result = context.Process(*pParentBlock, elements);
+		auto result = context.Process(elements);
 
 		// Assert:
 		EXPECT_EQ(ValidationResult::Neutral, result);
@@ -299,9 +239,13 @@ namespace catapult { namespace consumers {
 			auto elements = test::CreateBlockElements(1);
 			test::LinkBlocks(*pParentBlock, const_cast<model::Block&>(elements[0].Block));
 			unlink(const_cast<model::Block&>(elements[0].Block));
+			std::unique_ptr<test::MockSyncState> state = std::make_unique<test::MockSyncState>(
+					test::CreateCatapultCacheWithMarkerAccount(),
+					test::BlockToBlockElement(*pParentBlock)
+			);
 
 			// Act:
-			auto result = context.Process(*pParentBlock, elements);
+			auto result = context.Process(*state, elements);
 
 			// Assert:
 			EXPECT_EQ(chain::Failure_Chain_Unlinked, result);
@@ -325,16 +269,22 @@ namespace catapult { namespace consumers {
 			auto pParentBlock = test::GenerateEmptyRandomBlock();
 			pParentBlock->Height = Height(11);
 			test::LinkBlocks(*pParentBlock, const_cast<model::Block&>(elements[0].Block));
+			std::unique_ptr<test::MockSyncState> state = std::make_unique<test::MockSyncState>(
+					test::CreateCatapultCacheWithMarkerAccount(),
+					test::BlockToBlockElement(*pParentBlock)
+			);
+
+			EXPECT_EQ(state->EffectiveBalanceHeight, Height(0));
 
 			// Act:
-			auto result = context.Process(*pParentBlock, elements);
+			auto result = context.Process(*state, elements);
 
 			// Assert:
 			EXPECT_EQ(ValidationResult::Success, result);
 			EXPECT_EQ(numExpectedBlocks, context.BlockHitPredicate.params().size());
 			EXPECT_EQ(numExpectedBlocks, context.BatchEntityProcessor.params().size());
-			context.assertBlockHitPredicateCalls(*pParentBlock, elements);
-			context.assertBatchEntityProcessorCalls(elements);
+			context.assertBlockHitPredicateCalls(elements);
+			context.assertBatchEntityProcessorCalls(*state, elements);
 		}
 	}
 
@@ -383,9 +333,15 @@ namespace catapult { namespace consumers {
 		pParentBlock->Height = Height(11);
 		auto elements = test::CreateBlockElements(3);
 		test::LinkBlocks(*pParentBlock, const_cast<model::Block&>(elements[0].Block));
+		std::unique_ptr<test::MockSyncState> state = std::make_unique<test::MockSyncState>(
+				test::CreateCatapultCacheWithMarkerAccount(),
+				test::BlockToBlockElement(*pParentBlock)
+		);
+
+		EXPECT_EQ(state->EffectiveBalanceHeight, Height(0));
 
 		// Act:
-		auto result = context.Process(*pParentBlock, elements);
+		auto result = context.Process(*state, elements);
 
 		// Assert:
 		// - block hit predicate returned { true, false }
@@ -393,8 +349,8 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(chain::Failure_Chain_Block_Not_Hit, result);
 		EXPECT_EQ(2u, context.BlockHitPredicate.params().size());
 		EXPECT_EQ(1u, context.BatchEntityProcessor.params().size());
-		context.assertBlockHitPredicateCalls(*pParentBlock, elements);
-		context.assertBatchEntityProcessorCalls(elements);
+		context.assertBlockHitPredicateCalls(elements);
+		context.assertBatchEntityProcessorCalls(*state, elements);
 	}
 
 	namespace {
@@ -407,9 +363,15 @@ namespace catapult { namespace consumers {
 			pParentBlock->Height = Height(11);
 			auto elements = test::CreateBlockElements(3);
 			test::LinkBlocks(*pParentBlock, const_cast<model::Block&>(elements[0].Block));
+			std::unique_ptr<test::MockSyncState> state = std::make_unique<test::MockSyncState>(
+					test::CreateCatapultCacheWithMarkerAccount(),
+					test::BlockToBlockElement(*pParentBlock)
+			);
+
+			EXPECT_EQ(state->EffectiveBalanceHeight, Height(0));
 
 			// Act:
-			auto result = context.Process(*pParentBlock, elements);
+			auto result = context.Process(*state, elements);
 
 			// Assert:
 			// - block hit predicate returned true
@@ -417,8 +379,8 @@ namespace catapult { namespace consumers {
 			EXPECT_EQ(processorResult, result);
 			EXPECT_EQ(2u, context.BlockHitPredicate.params().size());
 			EXPECT_EQ(2u, context.BatchEntityProcessor.params().size());
-			context.assertBlockHitPredicateCalls(*pParentBlock, elements);
-			context.assertBatchEntityProcessorCalls(elements);
+			context.assertBlockHitPredicateCalls(elements);
+			context.assertBatchEntityProcessorCalls(*state, elements);
 		}
 	}
 
@@ -449,7 +411,12 @@ namespace catapult { namespace consumers {
 			// Act:
 			auto parentBlockElement = test::BlockToBlockElement(*pParentBlock);
 			test::FillWithRandomData(parentBlockElement.GenerationHash);
-			auto result = context.Process(parentBlockElement, elements);
+			std::unique_ptr<test::MockSyncState> state = std::make_unique<test::MockSyncState>(
+					test::CreateCatapultCacheWithMarkerAccount(),
+					parentBlockElement
+			);
+			// Act:
+			auto result = context.Process(*state, elements);
 
 			// Sanity:
 			EXPECT_EQ(ValidationResult::Success, result);

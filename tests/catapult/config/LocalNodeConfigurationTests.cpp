@@ -49,7 +49,6 @@ namespace catapult { namespace config {
 			EXPECT_EQ(utils::TimeSpan::FromSeconds(15), config.BlockGenerationTargetTime);
 			EXPECT_EQ(3000u, config.BlockTimeSmoothingFactor);
 
-			EXPECT_EQ(359u, config.ImportanceGrouping);
 			EXPECT_EQ(360u, config.MaxRollbackBlocks);
 			EXPECT_EQ(60u, config.MaxDifficultyBlocks);
 

@@ -23,7 +23,6 @@
 #include "MultiBlockLoader.h"
 #include "catapult/cache/SupplementalData.h"
 #include "catapult/config/LocalNodeConfiguration.h"
-#include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/extensions/NemesisBlockLoader.h"
 #include "catapult/extensions/PluginUtils.h"
@@ -33,8 +32,8 @@
 namespace catapult { namespace filechain {
 
 	namespace {
-		void LogChainStats(const char* source, Height height, const model::ChainScore& score) {
-			CATAPULT_LOG(info) << "loaded block chain from " << source << " (height = " << height << ", score = " << score << ")";
+		void LogChainStats(const char* source, Height height) {
+			CATAPULT_LOG(info) << "loaded block chain from " << source << " height = " << height;
 		}
 
 		class FileBlockChainStorage : public extensions::BlockChainStorage {
@@ -43,7 +42,7 @@ namespace catapult { namespace filechain {
 				cache::SupplementalData supplementalData;
 				bool isStateLoaded = false;
 				try {
-					isStateLoaded = LoadState(stateRef.Config.User.DataDirectory, stateRef.Cache, supplementalData);
+					isStateLoaded = LoadState(stateRef, supplementalData);
 				} catch (...) {
 					CATAPULT_LOG(error) << "error when loading state, remove state directories and start again";
 					throw;
@@ -53,23 +52,19 @@ namespace catapult { namespace filechain {
 				auto storageHeight = stateRef.Storage.view().chainHeight();
 				if (!isStateLoaded) {
 					loadCompleteBlockChainFromStorage(stateRef, pluginManager);
-					LogChainStats("block storage", storageHeight, stateRef.Score.get());
+					LogChainStats("block storage", storageHeight);
 					return;
 				}
 
-				// otherwise, use loaded state
-				stateRef.Score += supplementalData.ChainScore;
-				stateRef.State = supplementalData.State;
-
 				auto cacheHeight = stateRef.Cache.createView().height();
-				LogChainStats("state", cacheHeight, stateRef.Score.get());
+				LogChainStats("state", cacheHeight);
 
 				// if there are any additional storage blocks, load them too
 				if (storageHeight <= cacheHeight)
 					return;
 
 				loadPartialBlockChainFromStorage(stateRef, pluginManager, cacheHeight + Height(1));
-				LogChainStats("state and block storage", storageHeight, stateRef.Score.get());
+				LogChainStats("state and block storage", storageHeight);
 			}
 
 		private:
@@ -92,7 +87,7 @@ namespace catapult { namespace filechain {
 				extensions::NemesisBlockLoader loader(pluginManager.transactionRegistry(), *pPublisher, observerFactory(*pNemesisBlock));
 				loader.executeAndCommit(stateRef);
 
-				loadBlockChainFromStorage(observerFactory, stateRef, Height(2));
+				LoadBlockChain(observerFactory, stateRef, Height(2));
 			}
 
 			void loadPartialBlockChainFromStorage(
@@ -110,20 +105,12 @@ namespace catapult { namespace filechain {
 					return observer;
 				};
 
-				loadBlockChainFromStorage(observerFactory, stateRef, startHeight);
-			}
-
-			void loadBlockChainFromStorage(
-					const BlockDependentEntityObserverFactory& observerFactory,
-					const extensions::LocalNodeStateRef& stateRef,
-					Height startHeight) {
-				auto score = LoadBlockChain(observerFactory, stateRef, startHeight);
-				stateRef.Score += score;
+				LoadBlockChain(observerFactory, stateRef, startHeight);
 			}
 
 		public:
 			void saveToStorage(const extensions::LocalNodeStateConstRef& stateRef) override {
-				SaveState(stateRef.Config.User.DataDirectory, stateRef.Cache, { stateRef.State, stateRef.Score.get() });
+				SaveState(stateRef);
 			}
 		};
 	}
