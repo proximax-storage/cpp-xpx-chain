@@ -44,9 +44,6 @@ namespace catapult { namespace observers {
 			if (context.Height.unwrap() <= gracePeriod.unwrap())
 				return;
 
-			if (!context.Cache.template contains<TCache>())
-				return;
-
 			auto pruneHeight = Height(context.Height.unwrap() - gracePeriod.unwrap());
 			auto& cache = context.Cache.template sub<TCache>();
 			cache.prune(pruneHeight);
@@ -59,9 +56,6 @@ namespace catapult { namespace observers {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification>;
 		return std::make_unique<ObserverType>(name + "PruningObserver", [interval](const auto& notification, const auto& context) {
 			if (!ShouldPrune(context, interval))
-				return;
-
-			if (!context.Cache.template contains<TCache>())
 				return;
 
 			auto& cache = context.Cache.template sub<TCache>();

@@ -42,9 +42,6 @@ namespace catapult { namespace observers {
 				const auto& notification,
 				const ObserverContext& context) {
 
-			if (!context.Cache.contains<cache::NamespaceCache>())
-				return;
-
 			if (NotifyMode::Rollback == context.Mode)
 				return;
 

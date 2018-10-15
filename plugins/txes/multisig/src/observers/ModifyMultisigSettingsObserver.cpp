@@ -32,9 +32,6 @@ namespace catapult { namespace observers {
 	}
 
 	DEFINE_OBSERVER(ModifyMultisigSettings, Notification, [](const Notification& notification, const ObserverContext& context) {
-		if (!context.Cache.contains<cache::MultisigCache>())
-			return;
-
 		auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
 		if (!multisigCache.contains(notification.Signer))
 			return;

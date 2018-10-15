@@ -54,12 +54,6 @@ namespace catapult { namespace cache {
 			return *static_cast<typename TCache::CacheDeltaType*>(m_subViews[TCache::Id]->get());
 		}
 
-		/// Checks that contains specific subcache delta view or not.
-		template<typename TCache>
-		bool contains() {
-			return m_subViews[TCache::Id] != nullptr;
-		}
-
 	public:
 		/// Creates a read-only view of this delta.
 		ReadOnlyCatapultCache toReadOnly() const;

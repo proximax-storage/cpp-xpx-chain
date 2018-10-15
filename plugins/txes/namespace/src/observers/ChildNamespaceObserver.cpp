@@ -24,9 +24,6 @@
 namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(ChildNamespace, model::ChildNamespaceNotification, [](const auto& notification, const ObserverContext& context) {
-		if (!context.Cache.contains<cache::NamespaceCache>())
-			return;
-
 		auto& cache = context.Cache.sub<cache::NamespaceCache>();
 
 		if (NotifyMode::Rollback == context.Mode) {
