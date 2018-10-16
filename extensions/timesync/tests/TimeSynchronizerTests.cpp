@@ -51,9 +51,9 @@ namespace catapult { namespace timesync {
 				uint64_t balance) {
 			auto delta = cache.createDelta();
 			auto& accountCache = delta.sub<cache::AccountStateCache>();
-			auto& accountState = accountCache.addAccount(key, Height(100));
-			accountState.Balances.credit(Xpx_Id, Amount(balance), Height(100));
-			cache.commit(Height(100));
+			auto& accountState = accountCache.addAccount(key, Height(1));
+			accountState.Balances.credit(Xpx_Id, Amount(balance), Height(1));
+			cache.commit(Height(1));
 		}
 
 		template<typename TKey>
@@ -113,7 +113,7 @@ namespace catapult { namespace timesync {
 						*test::LocalNodeStateUtils::CreateLocalNodeState(),
 						m_cache
 				);
-				return m_synchronizer.calculateTimeOffset(state, Height(1), std::move(m_samples), nodeAge);
+				return m_synchronizer.calculateTimeOffset(state, std::move(m_samples), nodeAge);
 			}
 
 			void addHighValueAccounts(size_t count) {
@@ -209,7 +209,7 @@ namespace catapult { namespace timesync {
 
 			auto state = extensions::LocalNodeStateRef(*test::LocalNodeStateUtils::CreateLocalNodeState(), cache);
 			// Act:
-			auto timeOffset = synchronizer.calculateTimeOffset(state, Height(1), std::move(samples), nodeAge);
+			auto timeOffset = synchronizer.calculateTimeOffset(state, std::move(samples), nodeAge);
 
 			// Assert:
 			EXPECT_EQ(expectedTimeOffset, timeOffset);

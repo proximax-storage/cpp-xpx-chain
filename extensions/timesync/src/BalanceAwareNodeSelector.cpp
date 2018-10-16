@@ -20,9 +20,7 @@
 
 #include "BalanceAwareNodeSelector.h"
 #include "catapult/cache_core/BalanceView.h"
-#include "catapult/extensions/NodeSelector.h"
 #include "catapult/ionet/NodeContainer.h"
-#include <random>
 
 namespace catapult { namespace timesync {
 
@@ -72,21 +70,19 @@ namespace catapult { namespace timesync {
 
 	ionet::NodeSet BalanceAwareNodeSelector::selectNodes(
 			const cache::BalanceView& view,
-			const ionet::NodeContainerView& nodeContainerView,
-			Height height) const {
-		auto candidatesInfo = Filter(nodeContainerView, [this, view, height](const auto& node, const auto& nodeInfo) {
-			return this->isCandidate(view, node, nodeInfo, height);
+			const ionet::NodeContainerView& nodeContainerView) const {
+		auto candidatesInfo = Filter(nodeContainerView, [this, view](const auto& node, const auto& nodeInfo) {
+			return this->isCandidate(view, node, nodeInfo);
 		});
 
 		return m_selector(candidatesInfo.WeightedCandidates, candidatesInfo.CumulativeBalance.unwrap(), m_maxNodes);
 	}
 
 	std::pair<bool, Amount> BalanceAwareNodeSelector::isCandidate(
-			const cache::BalanceView& /*view*/,
-			const ionet::Node& /*node*/,
-			const ionet::NodeInfo& nodeInfo,
-			Height /*height*/) const {
-		auto balance = m_minBalance; // TODO: add effective balance calculation.
+			const cache::BalanceView& view,
+			const ionet::Node& node,
+			const ionet::NodeInfo& nodeInfo) const {
+		auto balance = view.getEffectiveBalance(node.identityKey());
 		auto isCandidate = balance >= m_minBalance
 				&& !!nodeInfo.getConnectionState(m_serviceId)
 				&& ionet::NodeSource::Local != nodeInfo.source();

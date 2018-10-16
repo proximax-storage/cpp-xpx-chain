@@ -85,6 +85,8 @@ namespace catapult { namespace harvesting {
 			averageBlockTime = (lastBlockElement.Block.Timestamp - pBlock->Timestamp) / Block_Timestamp_History_Size;
 		}
 		hitContext.BaseTarget = chain::CalculateBaseTarget(lastBlockElement.Block.BaseTarget, averageBlockTime, config);
+		auto cacheView = m_localNodeState.Cache.createView();
+		cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()));
 
 		auto unlockedAccountsView = m_unlockedAccounts.view();
 		const crypto::KeyPair* pHarvesterKeyPair = nullptr;
@@ -95,7 +97,7 @@ namespace catapult { namespace harvesting {
 				hitContext.Signer
 			);
 
-			hitContext.EffectiveBalance = Amount{0}; // TODO: add effective balance calculation.
+			hitContext.EffectiveBalance = balanceView.getEffectiveBalance(hitContext.Signer);
 
 			chain::BlockHitPredicate hitPredicate;
 			if (hitPredicate(hitContext)) {

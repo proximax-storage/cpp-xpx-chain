@@ -168,11 +168,8 @@ namespace catapult { namespace extensions {
 
 				auto cacheView = m_cache.createView();
 
-				cache::BalanceView balanceView(
-						cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()),
-						Height(Effective_Balance_Range)
-				);
-				EXPECT_EQ(expectedBalance, Amount{0}) << message; // TODO: add effective balance calculation.
+				cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()));
+				EXPECT_EQ(expectedBalance, balanceView.getEffectiveBalance({ { accountId } })) << message;
 			}
 
 			void assertLinearEffectiveBalance(const AssertOptions& options) {

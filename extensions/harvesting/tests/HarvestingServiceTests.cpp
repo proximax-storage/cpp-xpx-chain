@@ -169,8 +169,8 @@ namespace catapult { namespace harvesting {
 			auto delta = cache.createDelta();
 
 			// - add an account
-			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
-			accountState.Balances.credit(Xpx_Id, Account_Balance, Height(100));
+			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, height);
+			accountState.Balances.credit(Xpx_Id, Account_Balance, height);
 
 			// - commit changes
 			cache.commit(height);
@@ -179,8 +179,8 @@ namespace catapult { namespace harvesting {
 	}
 
 	TEST(TEST_CLASS, HarvestingTaskDoesNotPruneEligibleAccount) {
-		// Arrange: eligible because next height and importance height match
-		auto height = Height(2);
+		// Arrange: eligible because account have enough xpx and he is from nemesis block
+		auto height = Height(1);
 		auto keyPair = test::GenerateKeyPair();
 		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey()));
 		context.setMinHarvesterBalance(Account_Balance);
@@ -199,7 +199,7 @@ namespace catapult { namespace harvesting {
 
 	TEST(TEST_CLASS, HarvestingTaskDoesPruneAccountIneligibleDueToBalance) {
 		// Arrange: ineligible because account balance is too low
-		auto height = Height(2);
+		auto height = Height(1);
 		auto keyPair = test::GenerateKeyPair();
 		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey()));
 		context.setMinHarvesterBalance(Account_Balance + Amount(1));

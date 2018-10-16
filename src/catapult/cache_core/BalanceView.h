@@ -31,20 +31,19 @@ namespace catapult { namespace cache {
 	class BalanceView {
 	public:
 		/// Creates a view around \a cache.
-		explicit BalanceView(
-				ReadOnlyAccountStateCache cache,
-				const Height& effectiveBalanceHeight)
+		explicit BalanceView(ReadOnlyAccountStateCache cache)
 				: m_cache(cache)
-				, m_effectiveBalanceHeight(effectiveBalanceHeight)
 		{}
 
 	public:
-		/// Returns \c true if \a publicKey can harvest at \a height, given a minimum harvesting balance of
+		/// Returns \c true if \a publicKey can harvest, given a minimum harvesting balance of
 		/// \a minHarvestingBalance.
-		bool canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance) const;
+		bool canHarvest(const Key& publicKey, Amount minHarvestingBalance) const ;
+
+		/// Returns effective balance of account with \a publicKey.
+		Amount getEffectiveBalance(const Key& publicKey) const ;
 
 	private:
 		ReadOnlyAccountStateCache m_cache;
-		Height m_effectiveBalanceHeight;
 	};
 }}

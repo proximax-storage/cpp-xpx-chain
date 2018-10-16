@@ -44,22 +44,19 @@ namespace catapult { namespace timesync {
 				int64_t warningThresholdMillis = Warning_Threshold_Millis);
 
 	public:
-		/// Calculates a time offset from \a samples using \a accountStateCacheView, \a height and \a nodeAge.
+		/// Calculates a time offset from \a samples using \a accountStateCacheView and \a nodeAge.
 		TimeOffset calculateTimeOffset(
 				const extensions::LocalNodeStateRef& localNodeState,
-				Height height,
 				TimeSynchronizationSamples&& samples,
 				NodeAge nodeAge);
 
 	private:
 		Amount::ValueType sumBalances(
 				const cache::BalanceView& view,
-				Height height,
 				const TimeSynchronizationSamples& samples);
 
 		double sumScaledOffsets(
 				const cache::BalanceView& view,
-				Height height,
 				const TimeSynchronizationSamples& samples,
 				double scaling);
 	private:

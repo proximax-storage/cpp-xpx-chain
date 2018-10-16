@@ -29,11 +29,10 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a wrapper around \a cache.
 		explicit BalanceViewWrapper(
-				const cache::AccountStateCache& cache,
-				const Height& effectiveBalanceHeight)
+				const cache::AccountStateCache& cache)
 			: m_cacheView(cache.createView())
 			, m_readOnlyCache(*m_cacheView)
-			, m_view(m_readOnlyCache, effectiveBalanceHeight)
+			, m_view(m_readOnlyCache)
 		{}
 
 	public:
@@ -56,8 +55,7 @@ namespace catapult { namespace test {
 	/// Creates an balance view wrapper around \a cache.
 	CATAPULT_INLINE
 	BalanceViewWrapper CreateBalanceView(
-			const cache::AccountStateCache& cache,
-			const Height& effectiveBalanceHeight) {
-		return BalanceViewWrapper(cache, effectiveBalanceHeight);
+			const cache::AccountStateCache& cache) {
+		return BalanceViewWrapper(cache);
 	}
 }}

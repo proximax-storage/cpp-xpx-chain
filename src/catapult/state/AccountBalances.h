@@ -89,17 +89,23 @@ namespace catapult { namespace state {
 		void maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config);
 
 		/// Get effective balance of account
-		Amount getEffectiveBalance();
+		Amount getEffectiveBalance() const ;
 
 	private:
-		/// Maybe pop snapshot from deque during rollback by \a mosaicId, new \a amount of xpx at \a height.
-		void maybePopSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
-
-		/// Maybe push m_cachedMinimumSnapshot.
+		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
 		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 		/// Maybe invalid snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
 		void maybeInvalidCache(const model::BalanceSnapshot& snapshot);
+
+		/// Returns \a tru if cache is valid
+		bool cacheIsValid() const ;
+
+		/// Push snapshot to deque
+		void push(const model::BalanceSnapshot& snapshot);
+
+		/// Pop snapshot from \a back of deque
+		void pop(bool back = true);
 
 	private:
 		CompactMosaicUnorderedMap m_balances;

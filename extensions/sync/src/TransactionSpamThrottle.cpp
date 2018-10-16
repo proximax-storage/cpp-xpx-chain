@@ -23,8 +23,6 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BalanceView.h"
-#include "catapult/model/Transaction.h"
-#include <cmath>
 
 namespace catapult { namespace sync {
 
@@ -72,7 +70,9 @@ namespace catapult { namespace sync {
 					return false;
 
 				const auto& signer = transactionInfo.pEntity->Signer;
-				auto balance = Amount{0}; // TODO: add effective balance calculation.
+				auto readOnlyAccountStateCache = context.UnconfirmedCatapultCache.sub<cache::AccountStateCache>();
+				cache::BalanceView balanceView(readOnlyAccountStateCache);
+				auto balance = balanceView.getEffectiveBalance(signer);
 				auto usefulBalance = GetUsefulBalance(transactionInfo.pEntity->Fee, balance, m_config);
 				auto maxTransactions = GetMaxTransactions(cacheSize, m_config.MaxCacheSize, usefulBalance, m_config.TotalBalance);
 				return context.TransactionsCache.count(signer) >= maxTransactions;

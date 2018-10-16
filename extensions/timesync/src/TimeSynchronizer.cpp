@@ -51,7 +51,6 @@ namespace catapult { namespace timesync {
 
 	TimeOffset TimeSynchronizer::calculateTimeOffset(
 			const extensions::LocalNodeStateRef& localNodeState,
-			Height height,
 			TimeSynchronizationSamples&& samples,
 			NodeAge nodeAge) {
 		m_filter(samples, nodeAge);
@@ -63,11 +62,8 @@ namespace catapult { namespace timesync {
 		auto cacheView = localNodeState.Cache.createView();
 		auto accountStateCacheView = localNodeState.Cache.sub<cache::AccountStateCache>().createView();
 
-		cache::BalanceView balanceView(
-				cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()),
-				Height(localNodeState.Config.BlockChain.EffectiveBalanceRange)
-		);
-		auto cumulativeBalance = sumBalances(balanceView, height, samples);
+		cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()));
+		auto cumulativeBalance = sumBalances(balanceView, samples);
 		if (0 == cumulativeBalance) {
 			CATAPULT_LOG(warning) << "cannot calculate network time, cumulativeBalance is zero";
 			return TimeOffset(0);
@@ -77,32 +73,30 @@ namespace catapult { namespace timesync {
 		auto viewPercentage = static_cast<double>(samples.size()) / highValueAddressesSize;
 		auto balancePercentage = static_cast<double>(cumulativeBalance) / m_totalChainBalance;
 		auto scaling = balancePercentage > viewPercentage ? 1.0 / balancePercentage : 1.0 / viewPercentage;
-		auto sum = sumScaledOffsets(balanceView, height, samples, scaling);
+		auto sum = sumScaledOffsets(balanceView, samples, scaling);
 		return TimeOffset(static_cast<int64_t>(GetCoupling(nodeAge) * sum));
 	}
 
 	Amount::ValueType TimeSynchronizer::sumBalances(
-			const cache::BalanceView& /*view*/,
-			Height /*height*/,
+			const cache::BalanceView& view,
 			const TimeSynchronizationSamples& samples) {
-		return utils::Sum(samples, [/*&view, height*/](const auto& /*sample*/) {
-			return 0; // TODO: add effective balance calculation.
+		return utils::Sum(samples, [&view](const auto& sample) {
+			return view.getEffectiveBalance(sample.node().identityKey()).unwrap();
 		});
 	}
 
 	double TimeSynchronizer::sumScaledOffsets(
 			const cache::BalanceView& view,
-			Height height,
 			const TimeSynchronizationSamples& samples,
 			double scaling) {
 		auto totalChainBalance = m_totalChainBalance;
 		auto warningThresholdMillis = m_warningThresholdMillis;
-		return utils::Sum(samples, [&view, height, scaling, totalChainBalance, warningThresholdMillis](const auto& sample) {
+		return utils::Sum(samples, [&view, scaling, totalChainBalance, warningThresholdMillis](const auto& sample) {
 			int64_t offset = sample.timeOffsetToRemote();
 			CATAPULT_LOG_LEVEL(MapToLogLevel(warningThresholdMillis, offset))
 					<< sample.node().metadata().Name << ": network time offset to local node is " << offset << "ms";
 
-			auto balance = Amount{0}; // TODO: add effective balance calculation.
+			auto balance = view.getEffectiveBalance(sample.node().identityKey());
 			return scaling * offset * balance.unwrap() / totalChainBalance;
 		});
 	}

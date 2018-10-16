@@ -64,18 +64,12 @@ namespace catapult { namespace harvesting {
 			auto minHarvesterBalance = nodeLocalState.Config.BlockChain.MinHarvesterBalance;
 			auto cacheView = nodeLocalState.Cache.createView();
 
-			auto height = cacheView.height() + Height(1);
-			auto effectiveBalanceHeight = Height(nodeLocalState.Config.BlockChain.EffectiveBalanceRange);
 			unlockedAccounts.modifier().removeIf([
-					height, minHarvesterBalance, effectiveBalanceHeight,
+					minHarvesterBalance,
 					&cacheView](const auto& key) {
 
-				cache::BalanceView balanceView(
-						cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()),
-						effectiveBalanceHeight
-				);
-
-				return !balanceView.canHarvest(key, height, minHarvesterBalance);
+				cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()));
+				return !balanceView.canHarvest(key, minHarvesterBalance);
 			});
 		}
 

@@ -44,12 +44,10 @@ namespace catapult { namespace cache {
 
 		// Act:
 		auto cacheView = cache.createView();
+		auto read = cache::ReadOnlyAccountStateCache(*cacheView);
 
-		BalanceView view(
-				ReadOnlyAccountStateCache(*cacheView),
-				Height(1) /* effectiveBalanceHeight */
-		);
+		cache::BalanceView view(read);
 
-		EXPECT_TRUE(view.canHarvest(SIGNER_KEY, Height(1), Amount(100)));
+		EXPECT_TRUE(view.canHarvest(SIGNER_KEY, Amount(100)));
 	}
 }}
