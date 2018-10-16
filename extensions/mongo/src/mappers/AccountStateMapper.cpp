@@ -75,14 +75,14 @@ namespace catapult { namespace mongo { namespace mappers {
 
 	namespace {
 		void ToAccountBalance(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
-			accountBalances.credit(GetValue64<MosaicId>(mosaicDocument["id"]), GetValue64<Amount>(mosaicDocument["amount"]));
+			accountBalances.credit(GetValue64<MosaicId>(mosaicDocument["id"]), GetValue64<Amount>(mosaicDocument["amount"]), Height(0));
 		}
 
 		void ToAccountBalanceSnapshot(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
 			accountBalances.getSnapshots().push_back(
 					model::BalanceSnapshot{
 						GetValue64<Amount>(mosaicDocument["amount"]),
-				        GetValue64<Height>(mosaicDocument["height"]) 
+				        GetValue64<Height>(mosaicDocument["height"])
 				    }
 			);
 		}

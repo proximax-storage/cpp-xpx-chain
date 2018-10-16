@@ -77,7 +77,7 @@ namespace catapult { namespace sync {
 
 			// add a balance for the signer
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(signer.publicKey(), Height(1));
-			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000));
+			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000), Height(1));
 
 			// commit all changes
 			cache.commit(Height(1));

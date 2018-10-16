@@ -49,8 +49,8 @@ namespace catapult { namespace state {
 	namespace {
 		AccountBalances CreateBalancesForConstructionTests() {
 			AccountBalances balances;
-			balances.credit(Test_Mosaic_Id, Amount(777));
-			balances.credit(Xpx_Id, Amount(1000));
+			balances.credit(Test_Mosaic_Id, Amount(777), Height(1));
+			balances.credit(Xpx_Id, Amount(1000), Height(1));
 			return balances;
 		}
 	}
@@ -61,7 +61,7 @@ namespace catapult { namespace state {
 
 		// Act:
 		AccountBalances balancesCopy(balances);
-		balancesCopy.credit(Xpx_Id, Amount(500));
+		balancesCopy.credit(Xpx_Id, Amount(500), Height(1));
 
 		// Assert: the copy is detached from the original
 		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
@@ -93,7 +93,7 @@ namespace catapult { namespace state {
 		// Act:
 		AccountBalances balancesCopy;
 		const auto& assignResult = balancesCopy = balances;
-		balancesCopy.credit(Xpx_Id, Amount(500));
+		balancesCopy.credit(Xpx_Id, Amount(500), Height(1));
 
 		// Assert: the copy is detached from the original
 		EXPECT_EQ(&balancesCopy, &assignResult);
@@ -130,7 +130,7 @@ namespace catapult { namespace state {
 		AccountBalances balances;
 
 		// Act:
-		balances.credit(Xpx_Id, Amount(0));
+		balances.credit(Xpx_Id, Amount(0), Height(1));
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
@@ -142,7 +142,7 @@ namespace catapult { namespace state {
 		AccountBalances balances;
 
 		// Act:
-		balances.credit(Xpx_Id, Amount(12345));
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
@@ -154,9 +154,9 @@ namespace catapult { namespace state {
 		AccountBalances balances;
 
 		// Act:
-		balances.credit(Xpx_Id, Amount(12345));
-		balances.credit(Test_Mosaic_Id, Amount(3456));
-		balances.credit(Xpx_Id, Amount(54321));
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id, Amount(3456), Height(1));
+		balances.credit(Xpx_Id, Amount(54321), Height(1));
 
 		// Assert:
 		EXPECT_EQ(2u, balances.size());
@@ -173,7 +173,7 @@ namespace catapult { namespace state {
 		AccountBalances balances;
 
 		// Act:
-		balances.debit(Xpx_Id, Amount(0));
+		balances.debit(Xpx_Id, Amount(0), Height(1));
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
@@ -183,10 +183,10 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, DebitDecreasesAmountStored) {
 		// Arrange:
 		AccountBalances balances;
-		balances.credit(Xpx_Id, Amount(12345));
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Act:
-		balances.debit(Xpx_Id, Amount(222));
+		balances.debit(Xpx_Id, Amount(222), Height(1));
 
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
@@ -197,10 +197,10 @@ namespace catapult { namespace state {
 		// Arrange:
 		AccountBalances balances;
 		Amount amount = Amount(12345);
-		balances.credit(Xpx_Id, amount);
+		balances.credit(Xpx_Id, amount, Height(1));
 
 		// Act:
-		balances.debit(Xpx_Id, amount);
+		balances.debit(Xpx_Id, amount, Height(1));
 		auto xpxHeld = balances.get(Xpx_Id);
 
 		// Assert:
@@ -211,13 +211,13 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, InterleavingDebitsYieldCorrectState) {
 		// Arrange:
 		AccountBalances balances;
-		balances.credit(Xpx_Id, Amount(12345));
-		balances.credit(Test_Mosaic_Id, Amount(3456));
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
 		// Act:
-		balances.debit(Xpx_Id, Amount(222));
-		balances.debit(Test_Mosaic_Id, Amount(1111));
-		balances.debit(Xpx_Id, Amount(111));
+		balances.debit(Xpx_Id, Amount(222), Height(1));
+		balances.debit(Test_Mosaic_Id, Amount(1111), Height(1));
+		balances.debit(Xpx_Id, Amount(111), Height(1));
 
 		// Assert:
 		EXPECT_EQ(2u, balances.size());
@@ -228,10 +228,10 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, DebitDoesNotAllowUnderflowOfNonZeroBalance) {
 		// Arrange:
 		AccountBalances balances;
-		balances.credit(Xpx_Id, Amount(12345));
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Act + Assert:
-		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346), Height(1)), catapult_runtime_error);
 
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
@@ -243,7 +243,7 @@ namespace catapult { namespace state {
 		AccountBalances balances;
 
 		// Act + Assert:
-		EXPECT_THROW(balances.debit(Xpx_Id, Amount(222)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(222), Height(1)), catapult_runtime_error);
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
@@ -257,16 +257,16 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, InterleavingDebitsAndCreditsYieldCorrectState) {
 		// Arrange:
 		AccountBalances balances;
-		balances.credit(Xpx_Id, Amount(12345));
-		balances.credit(Test_Mosaic_Id, Amount(3456));
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
 		// Act:
-		balances.debit(Test_Mosaic_Id, Amount(1111));
-		balances.credit(Xpx_Id, Amount(1111));
-		balances.credit(Test_Mosaic_Id2, Amount(0)); // no op
-		balances.debit(Xpx_Id, Amount(2345));
-		balances.debit(Test_Mosaic_Id2, Amount(0)); // no op
-		balances.credit(Test_Mosaic_Id, Amount(5432));
+		balances.debit(Test_Mosaic_Id, Amount(1111), Height(1));
+		balances.credit(Xpx_Id, Amount(1111), Height(1));
+		balances.credit(Test_Mosaic_Id2, Amount(0), Height(1)); // no op
+		balances.debit(Xpx_Id, Amount(2345), Height(1));
+		balances.debit(Test_Mosaic_Id2, Amount(0), Height(1)); // no op
+		balances.credit(Test_Mosaic_Id, Amount(5432), Height(1));
 
 		// Assert:
 		EXPECT_EQ(2u, balances.size());
@@ -278,17 +278,17 @@ namespace catapult { namespace state {
 		// Arrange:
 		AccountBalances balances;
 		balances
-			.credit(Xpx_Id, Amount(12345))
-			.credit(Test_Mosaic_Id, Amount(3456));
+			.credit(Xpx_Id, Amount(12345), Height(1))
+			.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
 		// Act:
 		balances
-			.debit(Test_Mosaic_Id, Amount(1111))
-			.credit(Xpx_Id, Amount(1111))
-			.credit(Test_Mosaic_Id2, Amount(0)) // no op
-			.debit(Xpx_Id, Amount(2345))
-			.debit(Test_Mosaic_Id2, Amount(0)) // no op
-			.credit(Test_Mosaic_Id, Amount(5432));
+			.debit(Test_Mosaic_Id, Amount(1111), Height(1))
+			.credit(Xpx_Id, Amount(1111), Height(1))
+			.credit(Test_Mosaic_Id2, Amount(0), Height(1)) // no op
+			.debit(Xpx_Id, Amount(2345), Height(1))
+			.debit(Test_Mosaic_Id2, Amount(0), Height(1)) // no op
+			.credit(Test_Mosaic_Id, Amount(5432), Height(1));
 
 		// Assert:
 		EXPECT_EQ(2u, balances.size());
@@ -304,9 +304,9 @@ namespace catapult { namespace state {
 		// Arrange:
 		AccountBalances balances;
 		balances
-			.credit(Xpx_Id, Amount(12345))
-			.credit(Test_Mosaic_Id2, Amount(0))
-			.credit(Test_Mosaic_Id, Amount(3456));
+			.credit(Xpx_Id, Amount(12345), Height(1))
+			.credit(Test_Mosaic_Id2, Amount(0), Height(1))
+			.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
 		// Act:
 		auto numBalances = 0u;

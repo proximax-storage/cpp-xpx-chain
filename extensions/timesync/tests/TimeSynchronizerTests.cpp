@@ -52,7 +52,7 @@ namespace catapult { namespace timesync {
 			auto delta = cache.createDelta();
 			auto& accountCache = delta.sub<cache::AccountStateCache>();
 			auto& accountState = accountCache.addAccount(key, Height(100));
-			accountState.Balances.credit(Xpx_Id, Amount(balance));
+			accountState.Balances.credit(Xpx_Id, Amount(balance), Height(100));
 			cache.commit(Height(100));
 		}
 

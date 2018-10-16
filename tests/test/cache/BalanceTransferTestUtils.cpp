@@ -32,7 +32,7 @@ namespace catapult { namespace test {
 			auto& accountStateCache = cache.sub<cache::AccountStateCache>();
 			auto& accountState = accountStateCache.addAccount(key, Height(123));
 			for (const auto& transfer : transfers)
-				accountState.Balances.credit(transfer.MosaicId, transfer.Amount);
+				accountState.Balances.credit(transfer.MosaicId, transfer.Amount, Height(123));
 		}
 	}
 

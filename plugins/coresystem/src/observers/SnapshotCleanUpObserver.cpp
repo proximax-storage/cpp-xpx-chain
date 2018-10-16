@@ -23,13 +23,16 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(HarvestFee, model::BlockNotification, [](const auto& notification, const ObserverContext& context) {
-		// credit the harvester
-		auto& cache = context.Cache.sub<cache::AccountStateCache>();
-		auto& harvesterState = cache.get(notification.Signer);
-		if (NotifyMode::Commit == context.Mode)
-			harvesterState.Balances.credit(Xpx_Id, notification.TotalFee, context.Height);
-		else
-			harvesterState.Balances.debit(Xpx_Id, notification.TotalFee, context.Height);
-	});
+	using Notification = model::BlockNotification;
+
+	DECLARE_OBSERVER(SnapshotCleanUp, Notification)(const model::BlockChainConfiguration& config) {
+		return MAKE_OBSERVER(SnapshotCleanUp, Notification, [&config](const auto&, const ObserverContext& context) {
+			auto& cache = context.Cache.sub<cache::AccountStateCache>();
+			auto updatedAddresses = cache.updatedAddresses();
+
+			for (const auto& address : updatedAddresses) {
+				cache.get(address).Balances.maybeCleanUpSnapshots(context.Height, config);
+			}
+		});
+	}
 }}

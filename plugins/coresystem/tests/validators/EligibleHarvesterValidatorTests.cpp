@@ -46,7 +46,7 @@ namespace catapult { namespace validators {
 				Amount balance) {
 			auto delta = cache.createDelta();
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
-			accountState.Balances.credit(Xpx_Id, balance);
+			accountState.Balances.credit(Xpx_Id, balance, Height(1));
 			cache.commit(Height());
 		}
 	}

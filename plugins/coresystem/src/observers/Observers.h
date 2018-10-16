@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/constants.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/Notifications.h"
 #include "catapult/observers/ObserverTypes.h"
 
@@ -39,6 +40,9 @@ namespace catapult { namespace observers {
 
 	/// Observes block notifications and credits the harvester with transaction fees.
 	DECLARE_OBSERVER(HarvestFee, model::BlockNotification)();
+
+	/// Observes block notifications and clean up snapshot from modified accounts.
+	DECLARE_OBSERVER(SnapshotCleanUp, model::BlockNotification)(const model::BlockChainConfiguration& config);
 
 	// endregion
 

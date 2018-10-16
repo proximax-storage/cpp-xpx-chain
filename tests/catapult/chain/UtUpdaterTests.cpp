@@ -168,7 +168,7 @@ namespace catapult { namespace chain {
 				auto delta = m_cache.createDelta();
 				auto publicKey = test::GenerateRandomData<Key_Size>();
 				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
-				accountState.Balances.credit(Xpx_Id, Amount{1000});
+				accountState.Balances.credit(Xpx_Id, Amount{1000}, Height(100));
 
 				m_cache.commit(Default_Height);
 			}
@@ -179,7 +179,7 @@ namespace catapult { namespace chain {
 					Amount balance) {
 				auto delta = cache.createDelta();
 				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
-				accountState.Balances.credit(Xpx_Id, balance);
+				accountState.Balances.credit(Xpx_Id, balance, Height(100));
 				cache.commit(Height());
 			}
 

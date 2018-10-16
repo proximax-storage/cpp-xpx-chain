@@ -24,9 +24,9 @@
 namespace catapult { namespace observers {
 
 	namespace {
-		void Transfer(state::AccountState& debitState, state::AccountState& creditState, MosaicId mosaicId, Amount amount) {
-			debitState.Balances.debit(mosaicId, amount);
-			creditState.Balances.credit(mosaicId, amount);
+		void Transfer(state::AccountState& debitState, state::AccountState& creditState, MosaicId mosaicId, Amount amount, Height height) {
+			debitState.Balances.debit(mosaicId, amount, height);
+			creditState.Balances.credit(mosaicId, amount, height);
 		}
 	}
 
@@ -36,8 +36,8 @@ namespace catapult { namespace observers {
 		auto& recipientState = cache.get(notification.Recipient);
 
 		if (NotifyMode::Commit == context.Mode)
-			Transfer(senderState, recipientState, notification.MosaicId, notification.Amount);
+			Transfer(senderState, recipientState, notification.MosaicId, notification.Amount, context.Height);
 		else
-			Transfer(recipientState, senderState, notification.MosaicId, notification.Amount);
+			Transfer(recipientState, senderState, notification.MosaicId, notification.Amount, context.Height);
 	});
 }}
