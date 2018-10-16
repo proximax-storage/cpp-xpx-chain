@@ -42,6 +42,7 @@ namespace catapult { namespace state {
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
+		EXPECT_EQ(0u, balances.getSnapshots().size());
 		EXPECT_EQ(Amount(0), amount1);
 		EXPECT_EQ(Amount(0), amount2);
 	}
@@ -61,7 +62,7 @@ namespace catapult { namespace state {
 
 		// Act:
 		AccountBalances balancesCopy(balances);
-		balancesCopy.credit(Xpx_Id, Amount(500), Height(1));
+		balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
 
 		// Assert: the copy is detached from the original
 		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
@@ -69,6 +70,16 @@ namespace catapult { namespace state {
 
 		EXPECT_EQ(Amount(777), balancesCopy.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(1500), balancesCopy.get(Xpx_Id));
+
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(1000), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+
+		EXPECT_EQ(2, balancesCopy.getSnapshots().size());
+		EXPECT_EQ(Amount(1000), balancesCopy.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balancesCopy.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(1500), balancesCopy.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balancesCopy.getSnapshots()[1].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, CanMoveConstructAccountBalances) {
@@ -81,9 +92,11 @@ namespace catapult { namespace state {
 		// Assert: the original values are moved into the copy (move does not clear first mosaic)
 		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 
 		EXPECT_EQ(Amount(777), balancesMoved.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(1000), balancesMoved.get(Xpx_Id));
+		EXPECT_EQ(1, balancesMoved.getSnapshots().size());
 	}
 
 	TEST(TEST_CLASS, CanAssignAccountBalances) {
@@ -93,7 +106,7 @@ namespace catapult { namespace state {
 		// Act:
 		AccountBalances balancesCopy;
 		const auto& assignResult = balancesCopy = balances;
-		balancesCopy.credit(Xpx_Id, Amount(500), Height(1));
+		balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
 
 		// Assert: the copy is detached from the original
 		EXPECT_EQ(&balancesCopy, &assignResult);
@@ -102,6 +115,16 @@ namespace catapult { namespace state {
 
 		EXPECT_EQ(Amount(777), balancesCopy.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(1500), balancesCopy.get(Xpx_Id));
+
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(1000), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+
+		EXPECT_EQ(2, balancesCopy.getSnapshots().size());
+		EXPECT_EQ(Amount(1000), balancesCopy.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balancesCopy.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(1500), balancesCopy.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balancesCopy.getSnapshots()[1].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, CanMoveAssignAccountBalances) {
@@ -116,9 +139,11 @@ namespace catapult { namespace state {
 		EXPECT_EQ(&balancesMoved, &assignResult);
 		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 
 		EXPECT_EQ(Amount(777), balancesMoved.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(1000), balancesMoved.get(Xpx_Id));
+		EXPECT_EQ(1, balancesMoved.getSnapshots().size());
 	}
 
 	// endregion
@@ -135,6 +160,8 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance());
+		EXPECT_EQ(0, balances.getSnapshots().size());
 	}
 
 	TEST(TEST_CLASS, CreditIncreasesAmountStored) {
@@ -147,6 +174,9 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
 		EXPECT_EQ(Amount(12345), balances.get(Xpx_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, InterleavingCreditsYieldCorrectState) {
@@ -162,6 +192,9 @@ namespace catapult { namespace state {
 		EXPECT_EQ(2u, balances.size());
 		EXPECT_EQ(Amount(12345 + 54321), balances.get(Xpx_Id));
 		EXPECT_EQ(Amount(3456), balances.get(Test_Mosaic_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 54321), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	// endregion
@@ -178,6 +211,7 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 	}
 
 	TEST(TEST_CLASS, DebitDecreasesAmountStored) {
@@ -191,6 +225,9 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
 		EXPECT_EQ(Amount(12345 - 222), balances.get(Xpx_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 - 222), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, FullDebitRemovesMosaicFromCache) {
@@ -200,12 +237,17 @@ namespace catapult { namespace state {
 		balances.credit(Xpx_Id, amount, Height(1));
 
 		// Act:
-		balances.debit(Xpx_Id, amount, Height(1));
+		balances.debit(Xpx_Id, amount, Height(2));
 		auto xpxHeld = balances.get(Xpx_Id);
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), xpxHeld);
+		EXPECT_EQ(2, balances.getSnapshots().size());
+		EXPECT_EQ(amount, balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(0), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, InterleavingDebitsYieldCorrectState) {
@@ -223,6 +265,9 @@ namespace catapult { namespace state {
 		EXPECT_EQ(2u, balances.size());
 		EXPECT_EQ(Amount(12345 - 222 - 111), balances.get(Xpx_Id));
 		EXPECT_EQ(Amount(3456 - 1111), balances.get(Test_Mosaic_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 - 222 - 111), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, DebitDoesNotAllowUnderflowOfNonZeroBalance) {
@@ -231,11 +276,14 @@ namespace catapult { namespace state {
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Act + Assert:
-		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346), Height(1)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346), Height(2)), catapult_runtime_error);
 
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
 		EXPECT_EQ(Amount(12345), balances.get(Xpx_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, DebitDoesNotAllowUnderflowOfZeroBalance) {
@@ -248,6 +296,7 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 	}
 
 	// endregion
@@ -272,6 +321,9 @@ namespace catapult { namespace state {
 		EXPECT_EQ(2u, balances.size());
 		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.get(Xpx_Id));
 		EXPECT_EQ(Amount(3456 - 1111 + 5432), balances.get(Test_Mosaic_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, ChainedInterleavingDebitsAndCreditsYieldCorrectState) {
@@ -294,6 +346,9 @@ namespace catapult { namespace state {
 		EXPECT_EQ(2u, balances.size());
 		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.get(Xpx_Id));
 		EXPECT_EQ(Amount(3456 - 1111 + 5432), balances.get(Test_Mosaic_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	// endregion
@@ -321,6 +376,9 @@ namespace catapult { namespace state {
 		EXPECT_EQ(2u, iteratedBalances.size());
 		EXPECT_EQ(Amount(12345), iteratedBalances[Xpx_Id]);
 		EXPECT_EQ(Amount(3456), iteratedBalances[Test_Mosaic_Id]);
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	// endregion

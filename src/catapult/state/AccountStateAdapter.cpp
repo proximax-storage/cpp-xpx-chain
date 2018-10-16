@@ -34,7 +34,7 @@ namespace catapult { namespace state {
 			accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount, Height(0));
 
 		auto pBalanceSnapshot = info.BalanceSnapshotPtr();
-		auto snapshots = accountState.Balances.getSnapshots();
+		auto& snapshots = accountState.Balances.getSnapshots();
 		for (auto i = 0u; i < info.BalanceSnapshotCount && pBalanceSnapshot; ++i, ++pBalanceSnapshot)
 			snapshots.push_back(*pBalanceSnapshot);
 

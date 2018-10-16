@@ -95,11 +95,15 @@ namespace catapult { namespace state {
 		/// Maybe pop snapshot from deque during rollback by \a mosaicId, new \a amount of xpx at \a height.
 		void maybePopSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
-		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
+		/// Maybe push m_cachedMinimumSnapshot.
 		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Maybe invalid snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
+		void maybeInvalidCache(const model::BalanceSnapshot& snapshot);
 
 	private:
 		CompactMosaicUnorderedMap m_balances;
 		std::deque<model::BalanceSnapshot> m_snapshots;
+		model::BalanceSnapshot m_cachedMinimumSnapshot{Amount(-1), Height(-1)};
 	};
 }}

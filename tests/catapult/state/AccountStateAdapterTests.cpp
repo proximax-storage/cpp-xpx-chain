@@ -45,6 +45,7 @@ namespace catapult { namespace state {
 			EXPECT_EQ(accountState.PublicKey, info.PublicKey);
 			EXPECT_EQ(accountState.PublicKeyHeight, info.PublicKeyHeight);
 			EXPECT_EQ(expectedMosaicsCount, info.MosaicsCount);
+			EXPECT_EQ(expectedSnapshotCount, info.BalanceSnapshotCount);
 		}
 
 		void AssertMosaic(const model::Mosaic& mosaic, MosaicId expectedId, Amount expectedAmount) {
@@ -69,6 +70,7 @@ namespace catapult { namespace state {
 			// Assert:
 			AssertNonMosaicPart(*pAccountInfo, accountState, 0, 0);
 			EXPECT_FALSE(!!pAccountInfo->MosaicsPtr());
+			EXPECT_FALSE(!!pAccountInfo->BalanceSnapshotPtr());
 		}
 	}
 
@@ -77,10 +79,11 @@ namespace catapult { namespace state {
 		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics();
 	}
 
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_SingleMosaic) {
+	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_SingleMosaicAndSnapshot) {
 		// Arrange:
 		auto accountState = CreateAccountStateWithZeroMosaics();
-		accountState.Balances.credit(Xpx_Id, Amount(13579), Height(1));
+		accountState.Balances.credit(Xpx_Id, Amount(13579), Height(0));
+		accountState.Balances.getSnapshots().push_back(model::BalanceSnapshot{Amount(13579), Height(1)});
 
 		// Act:
 		auto pAccountInfo = ToAccountInfo(accountState);
@@ -96,12 +99,13 @@ namespace catapult { namespace state {
 		AssertSnapshot(*pSnapshot, Amount(13579), Height(1));
 	}
 
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_MultipleMosaics) {
+	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_MultipleMosaicsAndSingleSnapshot) {
 		// Arrange:
 		auto accountState = CreateAccountStateWithZeroMosaics();
 		accountState.Balances.credit(MosaicId(123), Amount(111), Height(1));
-		accountState.Balances.credit(Xpx_Id, Amount(13579), Height(1));
+		accountState.Balances.credit(Xpx_Id, Amount(13579), Height(0));
 		accountState.Balances.credit(MosaicId(987), Amount(222), Height(1));
+		accountState.Balances.getSnapshots().push_back(model::BalanceSnapshot{Amount(13579), Height(1)});
 
 		// Act:
 		auto pAccountInfo = ToAccountInfo(accountState);
@@ -132,11 +136,13 @@ namespace catapult { namespace state {
 	// region AccountState <- AccountInfo
 
 	namespace {
-		void AssertCanCreateAccountStateFromAccountInfo(const std::vector<model::Mosaic>& mosaics) {
+		void AssertCanCreateAccountStateFromAccountInfo(const std::vector<model::Mosaic>& mosaics, const std::vector<model::BalanceSnapshot>& snapshots) {
 			// Arrange:
 			auto originalAccountState = CreateAccountStateWithZeroMosaics();
 			for (const auto& mosaic : mosaics)
-				originalAccountState.Balances.credit(mosaic.MosaicId, mosaic.Amount, Height(1));
+				originalAccountState.Balances.credit(mosaic.MosaicId, mosaic.Amount, Height(0));
+			for (const auto& snapshot : snapshots)
+				originalAccountState.Balances.getSnapshots().push_back(snapshot);
 
 			auto pAccountInfo = ToAccountInfo(originalAccountState);
 
@@ -145,26 +151,31 @@ namespace catapult { namespace state {
 
 			// Assert:
 			EXPECT_EQ(mosaics.size(), accountState.Balances.size());
+			EXPECT_EQ(snapshots.size(), accountState.Balances.getSnapshots().size());
 			test::AssertEqual(originalAccountState, accountState);
 		}
 	}
 
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_ZeroMosaics) {
+	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_ZeroMosaicsAndSnapshots) {
 		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({});
+		AssertCanCreateAccountStateFromAccountInfo({}, {});
 	}
 
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_SingleMosaic) {
+	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_SingleMosaicAndSnapshot) {
 		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({ { Xpx_Id, Amount(13579) } });
+		AssertCanCreateAccountStateFromAccountInfo({ { Xpx_Id, Amount(13579) } }, { { Amount(13579), Height(1) } });
 	}
 
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_MultipleMosaics) {
+	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_MultipleMosaicsAndSnapshots) {
 		// Assert:
 		AssertCanCreateAccountStateFromAccountInfo({
 			{ MosaicId(123), Amount(111) },
 			{ Xpx_Id, Amount(13579) },
 			{ MosaicId(987), Amount(222) }
+		}, {
+			{ Amount(13579 * 3), Height(1) } ,
+			{ Amount(13579 * 2), Height(2) } ,
+			{ Amount(13579), Height(3) }
 		});
 	}
 

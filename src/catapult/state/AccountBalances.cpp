@@ -109,6 +109,7 @@ namespace catapult { namespace state {
 		auto stableHeight = height - unstableHeight;
 
 		while(!m_snapshots.empty() && m_snapshots.front().BalanceHeight <= stableHeight) {
+			maybeInvalidCache(m_snapshots.front());
 			m_snapshots.pop_front();
 		}
 	}
@@ -119,12 +120,18 @@ namespace catapult { namespace state {
 			return m_balances.end() == iter ? Amount(0) : iter->second;
 		}
 
-		Amount result = m_snapshots.back().Amount;
-		for (const auto& snapshot : m_snapshots) {
-			result = std::min(result, snapshot.Amount);
+		if (m_cachedMinimumSnapshot.BalanceHeight != Height(-1)) {
+			return m_cachedMinimumSnapshot.Amount;
 		}
+		m_cachedMinimumSnapshot = *std::min_element(
+			m_snapshots.begin(),
+			m_snapshots.end(),
+			[](const model::BalanceSnapshot& l, const model::BalanceSnapshot& r){
+				return l.Amount < r.Amount;
+			}
+		);
 
-		return result;
+		return m_cachedMinimumSnapshot.Amount;
 	}
 
 	void AccountBalances::maybePopSnapshot(const MosaicId& mosaicId, const Amount& /* amount */, const Height& height) {
@@ -147,6 +154,7 @@ namespace catapult { namespace state {
 			CATAPULT_THROW_RUNTIME_ERROR_2(
 					"height can't be lower than height of snapshot", height, m_snapshots.back().BalanceHeight);
 		} else if (height == m_snapshots.back().BalanceHeight) {
+			maybeInvalidCache(m_snapshots.back());
 			m_snapshots.pop_back();
 			m_snapshots.push_back(model::BalanceSnapshot{amount, height});
 		} else if (height > m_snapshots.back().BalanceHeight) {
@@ -154,7 +162,15 @@ namespace catapult { namespace state {
 		}
 
 		while(m_snapshots.size() > 1 && m_snapshots[m_snapshots.size() - 1].Amount == m_snapshots[m_snapshots.size() - 2].Amount) {
+			maybeInvalidCache(m_snapshots.back());
 			m_snapshots.pop_back();
+		}
+	}
+
+	void AccountBalances::maybeInvalidCache(const model::BalanceSnapshot& snapshot) {
+		if (snapshot.BalanceHeight == m_cachedMinimumSnapshot.BalanceHeight) {
+			m_cachedMinimumSnapshot.Amount = Amount(-1);
+			m_cachedMinimumSnapshot.BalanceHeight = Height(-1);
 		}
 	}
 }}
