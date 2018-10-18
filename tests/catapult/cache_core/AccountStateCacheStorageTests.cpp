@@ -144,7 +144,7 @@ namespace catapult { namespace cache {
 		template<typename TLoadTraits>
 		void AssertCanLoadValueWithMosaicsAndSnapshots(size_t numMosaics, size_t numSnapshots) {
 			// Arrange: create a random account info
-			auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(123));
+			auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(1));
 			test::RandomFillAccountData(0, *pOriginalAccountState, numMosaics, numSnapshots);
 			auto pOriginalAccountInfo = state::ToAccountInfo(*pOriginalAccountState);
 

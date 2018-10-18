@@ -29,12 +29,13 @@
 #include <unordered_map>
 
 namespace catapult { namespace state {
+	struct AccountState;
 
 	/// Container holding information about account.
 	class AccountBalances {
 	public:
 		/// Creates an empty account balances.
-		AccountBalances();
+		explicit AccountBalances(AccountState* accountState);
 
 		/// Copy constructor that makes a deep copy of \a accountBalances.
 		AccountBalances(const AccountBalances& accountBalances);
@@ -104,5 +105,6 @@ namespace catapult { namespace state {
 	private:
 		CompactMosaicUnorderedMap m_balances;
 		std::deque<model::BalanceSnapshot> m_snapshots;
+		AccountState* m_accountState = nullptr;
 	};
 }}

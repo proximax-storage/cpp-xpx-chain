@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/state/AccountState.h"
 #include "catapult/state/AccountBalances.h"
 #include "tests/test/core/TransactionTestUtils.h"
 
@@ -28,13 +29,14 @@ namespace catapult { namespace state {
 	namespace {
 		constexpr MosaicId Test_Mosaic_Id = MosaicId(12345);
 		constexpr MosaicId Test_Mosaic_Id2 = MosaicId(54321);
+		AccountState Test_Account(Address{ { 1 } }, Height(1));
 	}
 
 	// region construction + assignment
 
 	TEST(TEST_CLASS, CanCreateEmptyAccountBalances) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
 		auto amount1 = balances.get(Xpx_Id);
@@ -49,7 +51,7 @@ namespace catapult { namespace state {
 
 	namespace {
 		AccountBalances CreateBalancesForConstructionTests() {
-			AccountBalances balances;
+			AccountBalances balances(&Test_Account);
 			balances.credit(Test_Mosaic_Id, Amount(777), Height(1));
 			balances.credit(Xpx_Id, Amount(1000), Height(1));
 			return balances;
@@ -104,7 +106,7 @@ namespace catapult { namespace state {
 		auto balances = CreateBalancesForConstructionTests();
 
 		// Act:
-		AccountBalances balancesCopy;
+		AccountBalances balancesCopy(&Test_Account);
 		const auto& assignResult = balancesCopy = balances;
 		balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
 
@@ -132,7 +134,7 @@ namespace catapult { namespace state {
 		auto balances = CreateBalancesForConstructionTests();
 
 		// Act:
-		AccountBalances balancesMoved;
+		AccountBalances balancesMoved(&Test_Account);
 		const auto& assignResult = balancesMoved = std::move(balances);
 
 		// Assert: the original values are moved into the copy (move does not clear first mosaic)
@@ -152,7 +154,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CreditDoesNotAddZeroBalance) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
 		balances.credit(Xpx_Id, Amount(0), Height(1));
@@ -166,7 +168,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CreditIncreasesAmountStored) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
@@ -181,7 +183,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, InterleavingCreditsYieldCorrectState) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
@@ -203,7 +205,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanDebitZeroFromZeroBalance) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
 		balances.debit(Xpx_Id, Amount(0), Height(1));
@@ -216,7 +218,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, DebitDecreasesAmountStored) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Act:
@@ -232,7 +234,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, FullDebitRemovesMosaicFromCache) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		Amount amount = Amount(12345);
 		balances.credit(Xpx_Id, amount, Height(1));
 
@@ -252,7 +254,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, InterleavingDebitsYieldCorrectState) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 		balances.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
@@ -272,7 +274,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, DebitDoesNotAllowUnderflowOfNonZeroBalance) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Act + Assert:
@@ -288,7 +290,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, DebitDoesNotAllowUnderflowOfZeroBalance) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act + Assert:
 		EXPECT_THROW(balances.debit(Xpx_Id, Amount(222), Height(1)), catapult_runtime_error);
@@ -305,7 +307,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, InterleavingDebitsAndCreditsYieldCorrectState) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 		balances.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
@@ -328,7 +330,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, ChainedInterleavingDebitsAndCreditsYieldCorrectState) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances
 			.credit(Xpx_Id, Amount(12345), Height(1))
 			.credit(Test_Mosaic_Id, Amount(3456), Height(1));
@@ -357,7 +359,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanIterateOverAllBalances) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances
 			.credit(Xpx_Id, Amount(12345), Height(1))
 			.credit(Test_Mosaic_Id2, Amount(0), Height(1))
@@ -387,7 +389,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, DoesNotAddSnapshotsForZeroHeight) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
 		balances.credit(Xpx_Id, Amount(12345), Height(0));
@@ -404,7 +406,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, AddOneSnapshotForNemesisBlock) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Assert:
@@ -415,7 +417,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, AddTwoSnapshotIfSnapshotsAreEmptyAndPreviousBlockIsNotNemesis_PreviousBalanceOfAccountIsZero) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 
 		// Assert:
@@ -428,7 +430,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, AddTwoSnapshotIfSnapshotsAreEmptyAndPreviousBlockIsNotNemesis_PreviousBalanceOfAccountIsNotZero) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(0));
 		// Assert:
 		EXPECT_EQ(0, balances.getSnapshots().size());
@@ -445,7 +447,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, UpdateOfBalanceOnCurrentHeightMustUpdateSnapshot) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Assert:
@@ -470,7 +472,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, UpdateOfBalanceOnIncreasingHeightMustAddNewSnapshot) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 		balances.debit(Xpx_Id, Amount(12345), Height(3));
@@ -493,7 +495,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, UpdateOfBalanceOnPreviousHeightWithoutRollbackMustThrowException) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 
 		// Assert:
@@ -502,7 +504,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, UpdateOfBalanceOnPreviousHeightAfterRollback) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 
@@ -527,7 +529,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, SeveralCommitsAndRollbacks_OnTheSameHeights) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
@@ -551,7 +553,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, SeveralCommitsAndRollbacks_OnTheDifferentHeights) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 		balances.credit(Xpx_Id, Amount(12345), Height(3));
@@ -579,7 +581,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, GetEffectiveBalanceOfOldBalance) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(0));
 
 		// Assert:
@@ -588,7 +590,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNemesisBlock) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Assert:
@@ -597,7 +599,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNotNemesisBlock) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 
 		// Assert:
@@ -607,7 +609,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, GetEffectiveBalanceDefaultCase) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345 + 12345 + 12345), Height(1));
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 
@@ -633,7 +635,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(0));
 		balances.debit(Xpx_Id, Amount(12345), Height(1));
 
@@ -648,7 +650,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 		balances.credit(Xpx_Id, Amount(12345), Height(2));
 		balances.credit(Xpx_Id, Amount(12345), Height(3));
@@ -665,7 +667,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_SeveralDebitAndCredit) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345), Height(1));
 		balances.debit(Xpx_Id, Amount(12345), Height(2));
 		balances.credit(Xpx_Id, Amount(12345), Height(3));
@@ -684,7 +686,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_OnlyDebit) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances.credit(Xpx_Id, Amount(12345 * 5), Height(0));
 		// Assert:
 		EXPECT_EQ(Amount(12345 * 5), balances.getEffectiveBalance(Height(1), 6));
@@ -708,6 +710,37 @@ namespace catapult { namespace state {
 		balances.debit(Xpx_Id, Amount(12345), Height(5));
 		// Assert:
 		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(5), 6));
+	}
+
+	// endregion
+
+	// region account height
+
+	TEST(TEST_CLASS, CreditOrDebitOnHeightThatLowerThanHeightOfAccount) {
+		// Arrange:
+		AccountState accountState(Address{ { 1 } }, Height(100));
+		AccountBalances balances(&accountState);
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+
+		// Act + Assert:
+		EXPECT_THROW(balances.credit(Xpx_Id, Amount(12346), Height(50)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346), Height(50)), catapult_runtime_error);
+	}
+
+	TEST(TEST_CLASS, CreditOrDebitWidthoutAccount) {
+		// Arrange:
+		AccountBalances balances(nullptr);
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+
+		// Act + Assert:
+		EXPECT_THROW(balances.credit(Xpx_Id, Amount(12346), Height(1)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346), Height(1)), catapult_runtime_error);
 	}
 
 	// endregion

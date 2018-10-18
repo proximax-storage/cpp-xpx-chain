@@ -32,7 +32,14 @@ namespace catapult { namespace state {
 				: Address(address)
 				, AddressHeight(addressHeight)
 				, PublicKeyHeight(0)
+				, Balances(this)
 		{}
+
+		/// Copy constructor that makes a deep copy of \a accountState.
+		AccountState(const AccountState& accountState)
+		: Balances(this) {
+			*this = accountState;
+		}
 
 	public:
 		/// Address of an account.

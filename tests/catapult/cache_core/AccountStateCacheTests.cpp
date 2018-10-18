@@ -268,7 +268,7 @@ namespace catapult { namespace cache {
 		template<typename TKeyTraits>
 		state::AccountState* AddAccountToCacheDelta(AccountStateCacheDelta& delta, const typename TKeyTraits::Type& key, Amount balance) {
 			auto& accountState = delta.addAccount(key, TKeyTraits::DefaultHeight());
-			accountState.Balances.credit(Xpx_Id, balance, Height(1));
+			accountState.Balances.credit(Xpx_Id, balance, TKeyTraits::DefaultHeight());
 			return &accountState;
 		}
 	}
