@@ -62,7 +62,7 @@ namespace catapult { namespace timesync {
 
 			cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()));
 
-			auto selectedNodes = selector.selectNodes(balanceView, nodes.view());
+			auto selectedNodes = selector.selectNodes(balanceView, cacheView.height(), nodes.view());
 			CATAPULT_LOG(debug) << "timesync: number of selected nodes: " << selectedNodes.size();
 			return selectedNodes;
 		}

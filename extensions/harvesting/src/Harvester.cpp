@@ -97,7 +97,7 @@ namespace catapult { namespace harvesting {
 				hitContext.Signer
 			);
 
-			hitContext.EffectiveBalance = balanceView.getEffectiveBalance(hitContext.Signer);
+			hitContext.EffectiveBalance = balanceView.getEffectiveBalance(hitContext.Signer, lastBlockElement.Block.Height);
 
 			chain::BlockHitPredicate hitPredicate;
 			if (hitPredicate(hitContext)) {

@@ -163,19 +163,21 @@ namespace catapult { namespace extensions {
 
 			void assertSingleEffectiveBalance(
 					uint8_t accountId,
-					Amount expectedBalance) {
+					Amount expectedBalance,
+					Height height) {
 				const auto message = "balance for account " + std::to_string(accountId);
 
 				auto cacheView = m_cache.createView();
+				EXPECT_EQ(height, cacheView.height()) << "Height is not equil";
 
 				cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()));
-				EXPECT_EQ(expectedBalance, balanceView.getEffectiveBalance({ { accountId } })) << message;
+				EXPECT_EQ(expectedBalance, balanceView.getEffectiveBalance({ { accountId } }, cacheView.height())) << message;
 			}
 
 			void assertLinearEffectiveBalance(const AssertOptions& options) {
 				for (uint8_t i = options.StartAccountId; i < options.StartAccountId + options.NumAccounts; ++i) {
 					uint64_t multiplier = options.StartAdjustment + i - options.StartAccountId + 1;
-					assertSingleEffectiveBalance(i, Amount(multiplier * options.Multiplier * 1'000'000));
+					assertSingleEffectiveBalance(i, Amount(multiplier * options.Multiplier * 1'000'000), Height(options.Height));
 				}
 			}
 
@@ -198,12 +200,13 @@ namespace catapult { namespace extensions {
 				auto observerState = observers::ObserverState(delta);
 
 				// Act: use BlockExecutor to execute all transactions and blocks
-				if (NotifyMode::Commit == mode)
+				if (NotifyMode::Commit == mode) {
 					chain::ExecuteBlock(blockElement, *pRootObserver, observerState);
-				else
+					cache.commit(height);
+				} else {
 					chain::RollbackBlock(blockElement, *pRootObserver, observerState);
-
-				cache.commit(height);
+					cache.commit(height - Height(1));
+				}
 			}
 
 			std::unique_ptr<model::Block> createBlock(Height height) {

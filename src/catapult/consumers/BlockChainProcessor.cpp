@@ -73,7 +73,7 @@ namespace catapult { namespace consumers {
 				for (auto& element : elements) {
 					const auto& block = element.Block;
 					cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(observerState.Cache.toReadOnly().sub<cache::AccountStateCache>()));
-					const Amount& effectiveBalance = balanceView.getEffectiveBalance(block.Signer);
+					const Amount& effectiveBalance = balanceView.getEffectiveBalance(block.Signer, block.Height);
 					element.GenerationHash = model::CalculateGenerationHash(*pParentGenerationHash, block.Signer);
 
 					if (!blockHitPredicate(element.GenerationHash, block.BaseTarget,

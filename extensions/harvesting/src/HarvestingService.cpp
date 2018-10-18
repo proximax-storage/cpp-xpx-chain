@@ -69,7 +69,7 @@ namespace catapult { namespace harvesting {
 					&cacheView](const auto& key) {
 
 				cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()));
-				return !balanceView.canHarvest(key, minHarvesterBalance);
+				return !balanceView.canHarvest(key, cacheView.height(), minHarvesterBalance);
 			});
 		}
 

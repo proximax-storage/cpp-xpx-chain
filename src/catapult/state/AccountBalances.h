@@ -88,28 +88,21 @@ namespace catapult { namespace state {
 		/// Check do we need to clean up the deque at \a height with \a config
 		void maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config);
 
-		/// Get effective balance of account
-		Amount getEffectiveBalance() const ;
+		/// Get effective balance of account at \a height with \a effectiveBalanceRange
+		Amount getEffectiveBalance(const Height& height, const uint64_t& effectiveBalanceRange) const;
 
 	private:
 		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
 		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
-		/// Maybe invalid snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
-		void maybeInvalidCache(const model::BalanceSnapshot& snapshot);
-
-		/// Returns \a tru if cache is valid
-		bool cacheIsValid() const ;
-
 		/// Push snapshot to deque
-		void push(const model::BalanceSnapshot& snapshot);
+		void pushSnapshot(const model::BalanceSnapshot& snapshot);
 
 		/// Pop snapshot from \a back of deque
-		void pop(bool back = true);
+		void popSnapshot(bool back = true);
 
 	private:
 		CompactMosaicUnorderedMap m_balances;
 		std::deque<model::BalanceSnapshot> m_snapshots;
-		model::BalanceSnapshot m_cachedMinimumSnapshot{Amount(-1), Height(-1)};
 	};
 }}

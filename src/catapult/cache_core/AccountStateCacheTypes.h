@@ -74,6 +74,9 @@ namespace catapult { namespace cache {
 
 			/// Minimum high value account balance.
 			Amount MinHighValueAccountBalance;
+
+			/// Effective balance range
+			uint64_t EffectiveBalanceRange;
 		};
 
 	// region value adapters

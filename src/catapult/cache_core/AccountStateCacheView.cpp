@@ -52,6 +52,7 @@ namespace catapult { namespace cache {
 			, AccountStateCacheViewMixins::ConstAccessorAddress(accountStateSets.Primary)
 			, AccountStateCacheViewMixins::ConstAccessorKey(*pKeyLookupAdapter)
 			, m_networkIdentifier(options.NetworkIdentifier)
+			, m_effectiveBalanceRange(options.EffectiveBalanceRange)
 			, m_highValueAddresses(highValueAddresses)
 			, m_updatedAddresses(updatedAddresses)
 			, m_pKeyLookupAdapter(std::move(pKeyLookupAdapter))
@@ -59,6 +60,10 @@ namespace catapult { namespace cache {
 
 	model::NetworkIdentifier BasicAccountStateCacheView::networkIdentifier() const {
 		return m_networkIdentifier;
+	}
+
+	uint64_t BasicAccountStateCacheView::effectiveBalanceRange() const {
+		return m_effectiveBalanceRange;
 	}
 
 	size_t BasicAccountStateCacheView::highValueAddressesSize() const {

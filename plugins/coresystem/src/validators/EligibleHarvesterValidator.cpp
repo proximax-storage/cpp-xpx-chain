@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 			auto readOnlyAccountStateCache = context.Cache.sub<cache::AccountStateCache>();
 
 			cache::BalanceView view(readOnlyAccountStateCache);
-			return view.canHarvest(notification.Signer, minHarvesterBalance)
+			return view.canHarvest(notification.Signer, context.Height, minHarvesterBalance)
 					? ValidationResult::Success
 					: Failure_Core_Block_Harvester_Ineligible;
 		});

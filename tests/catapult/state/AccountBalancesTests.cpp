@@ -160,7 +160,7 @@ namespace catapult { namespace state {
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
-		EXPECT_EQ(Amount(0), balances.getEffectiveBalance());
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
 		EXPECT_EQ(0, balances.getSnapshots().size());
 	}
 
@@ -379,6 +379,335 @@ namespace catapult { namespace state {
 		EXPECT_EQ(1, balances.getSnapshots().size());
 		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
 		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	// endregion
+
+	// region snapshots
+
+	TEST(TEST_CLASS, DoesNotAddSnapshotsForZeroHeight) {
+		// Arrange:
+		AccountBalances balances;
+
+		// Act:
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+
+		// Act:
+		balances.debit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+	}
+
+	TEST(TEST_CLASS, AddOneSnapshotForNemesisBlock) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, AddTwoSnapshotIfSnapshotsAreEmptyAndPreviousBlockIsNotNemesis_PreviousBalanceOfAccountIsZero) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(2, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(0), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, AddTwoSnapshotIfSnapshotsAreEmptyAndPreviousBlockIsNotNemesis_PreviousBalanceOfAccountIsNotZero) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(2, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UpdateOfBalanceOnCurrentHeightMustUpdateSnapshot) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+
+		balances.debit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UpdateOfBalanceOnIncreasingHeightMustAddNewSnapshot) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.debit(Xpx_Id, Amount(12345), Height(3));
+		balances.debit(Xpx_Id, Amount(12345), Height(4));
+		balances.credit(Xpx_Id, Amount(12345), Height(5));
+
+		// Assert:
+		EXPECT_EQ(5, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[2].Amount);
+		EXPECT_EQ(Height(3), balances.getSnapshots()[2].BalanceHeight);
+		EXPECT_EQ(Amount(0), balances.getSnapshots()[3].Amount);
+		EXPECT_EQ(Height(4), balances.getSnapshots()[3].BalanceHeight);
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[4].Amount);
+		EXPECT_EQ(Height(5), balances.getSnapshots()[4].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UpdateOfBalanceOnPreviousHeightWithoutRollbackMustThrowException) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_THROW(balances.credit(Xpx_Id, Amount(12345), Height(1)), catapult_runtime_error);
+	}
+
+	TEST(TEST_CLASS, UpdateOfBalanceOnPreviousHeightAfterRollback) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(2, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
+
+		// Rollback last credit
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+
+		// Update balance on previous height
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, SeveralCommitsAndRollbacks_OnTheSameHeights) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(2, balances.getSnapshots().size());
+
+		// Rollbacks
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, SeveralCommitsAndRollbacks_OnTheDifferentHeights) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(3));
+		balances.credit(Xpx_Id, Amount(12345), Height(4));
+		balances.credit(Xpx_Id, Amount(12345), Height(5));
+
+		// Assert:
+		EXPECT_EQ(5, balances.getSnapshots().size());
+
+		// Rollbacks
+		balances.debit(Xpx_Id, Amount(12345), Height(5));
+		balances.debit(Xpx_Id, Amount(12345), Height(4));
+		balances.debit(Xpx_Id, Amount(12345), Height(3));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	// endregion
+
+	// region effective balance region
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfOldBalance) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNemesisBlock) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNotNemesisBlock) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		// We expect zero because previous balance of account on nemesis block was zero
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceDefaultCase) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345 + 12345 + 12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345 + 12345 + 12345), balances.getEffectiveBalance(Height(0), 0));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(3));
+		balances.debit(Xpx_Id, Amount(12345), Height(4));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345 + 12345), balances.getEffectiveBalance(Height(0), 0));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(5));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(6));
+
+		// Assert:
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		balances.debit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(3));
+		balances.credit(Xpx_Id, Amount(12345), Height(4));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance(Height(4), 0));
+		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance(Height(4), 1));
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(4), 2));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 3));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 4));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 5));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_SeveralDebitAndCredit) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(3));
+		balances.credit(Xpx_Id, Amount(12345), Height(4));
+		balances.debit(Xpx_Id, Amount(12345), Height(5));
+		balances.credit(Xpx_Id, Amount(12345), Height(6));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(6), 0));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 1));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 2));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 3));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(6), 4));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(6), 5));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_OnlyDebit) {
+		// Arrange:
+		AccountBalances balances;
+		balances.credit(Xpx_Id, Amount(12345 * 5), Height(0));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 5), balances.getEffectiveBalance(Height(1), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(1));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance(Height(1), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance(Height(2), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(3));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(3), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(4));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(5));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(5), 6));
 	}
 
 	// endregion

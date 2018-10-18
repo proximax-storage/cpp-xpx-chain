@@ -54,7 +54,8 @@ namespace catapult { namespace timesync {
 			auto cacheConfig = cache::CacheConfiguration();
 			return std::make_unique<cache::AccountStateCache>(cacheConfig, cache::AccountStateCacheTypes::Options{
 				model::NetworkIdentifier::Mijin_Test,
-				Amount(std::numeric_limits<Amount::ValueType>::max())
+				Amount(std::numeric_limits<Amount::ValueType>::max()),
+				std::numeric_limits<uint64_t >::max()
 			});
 		}
 
@@ -115,7 +116,7 @@ namespace catapult { namespace timesync {
 			BalanceAwareNodeSelector selector(options.NodeServiceIdentifier, 5, Amount(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view());
+			auto selectNodes = selector.selectNodes(*pView, Height(1), nodeContainer.view());
 
 			// Assert:
 			EXPECT_TRUE(selectNodes.empty());
@@ -172,7 +173,7 @@ namespace catapult { namespace timesync {
 			BalanceAwareNodeSelector selector(Default_Service_Identifier, 3, Amount(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view());
+			auto selectNodes = selector.selectNodes(*pView, Height(1), nodeContainer.view());
 
 			// Assert:
 			assertKeys(test::ExtractNodeIdentities(selectNodes));
@@ -231,7 +232,7 @@ namespace catapult { namespace timesync {
 		BalanceAwareNodeSelector selector(Default_Service_Identifier, 3, Amount(1000), customSelector);
 
 		// Act:
-		selector.selectNodes(*pView, nodeContainer.view());
+		selector.selectNodes(*pView, Height(1), nodeContainer.view());
 
 		// Assert:
 		EXPECT_EQ(1u, capture.NumSelectorCalls);
@@ -278,7 +279,7 @@ namespace catapult { namespace timesync {
 
 				KeyStatistics keyStatistics;
 				for (auto i = 0u; i < numIterations; ++i) {
-					auto selectedNodes = selector.selectNodes(*pView, nodeContainer.view());
+					auto selectedNodes = selector.selectNodes(*pView, Height(1), nodeContainer.view());
 					if (1u != selectedNodes.size())
 						CATAPULT_THROW_RUNTIME_ERROR_1("unexpected number of nodes were selected", selectedNodes.size());
 

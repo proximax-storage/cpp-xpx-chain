@@ -28,12 +28,19 @@ namespace catapult { namespace state {
 			return Amount(0) == amount;
 		}
 
-		inline auto min(const std::deque<model::BalanceSnapshot>& snapshots) {
+		inline auto minSnapshot(const std::deque<model::BalanceSnapshot>& snapshots, const Height& height, const uint64_t& effectiveBalanceRange) {
+			auto effectiveBalanceRangeHeight = Height(effectiveBalanceRange);
+			auto effectiveHeight = Height(0);
+
+			if (height > effectiveBalanceRangeHeight) {
+				effectiveHeight = height - effectiveBalanceRangeHeight;
+			}
+
 			return std::min_element(
 				snapshots.begin(),
 				snapshots.end(),
-				[](const model::BalanceSnapshot& l, const model::BalanceSnapshot& r){
-					return l.Amount < r.Amount;
+				[&effectiveHeight](const model::BalanceSnapshot& l, const model::BalanceSnapshot& r){
+					return l.BalanceHeight <= effectiveHeight || l.Amount < r.Amount;
 				}
 			);
 		}
@@ -52,7 +59,7 @@ namespace catapult { namespace state {
 			m_balances.insert(pair);
 
 		for (const auto& snapshot : accountBalances.getSnapshots())
-			push(snapshot);
+			pushSnapshot(snapshot);
 
 		return *this;
 	}
@@ -119,25 +126,17 @@ namespace catapult { namespace state {
 		auto stableHeight = height - unstableHeight;
 
 		while(!m_snapshots.empty() && m_snapshots.front().BalanceHeight <= stableHeight) {
-			pop(false /* back */);
-		}
-
-		if (!cacheIsValid()) {
-			m_cachedMinimumSnapshot = *min(m_snapshots);
+			popSnapshot(false /* back */);
 		}
 	}
 
-	Amount AccountBalances::getEffectiveBalance() const {
+	Amount AccountBalances::getEffectiveBalance(const Height& height, const uint64_t& effectiveBalanceRange) const {
 		if (m_snapshots.empty()) {
 			auto iter = m_balances.find(Xpx_Id);
 			return m_balances.end() == iter ? Amount(0) : iter->second;
 		}
 
-		if (cacheIsValid()) {
-			return m_cachedMinimumSnapshot.Amount;
-		}
-
-		return min(m_snapshots)->Amount;
+		return minSnapshot(m_snapshots, height, effectiveBalanceRange)->Amount;
 	}
 
 	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
@@ -146,7 +145,7 @@ namespace catapult { namespace state {
 		}
 
 		if (m_snapshots.empty()) {
-			push(model::BalanceSnapshot{amount, height});
+			pushSnapshot(model::BalanceSnapshot{amount, height});
 			return;
 		}
 
@@ -154,41 +153,25 @@ namespace catapult { namespace state {
 			CATAPULT_THROW_RUNTIME_ERROR_2(
 					"height can't be lower than height of snapshot", height, m_snapshots.back().BalanceHeight);
 		} else if (height == m_snapshots.back().BalanceHeight) {
-			pop();
-			push(model::BalanceSnapshot{amount, height});
+			popSnapshot();
+			pushSnapshot(model::BalanceSnapshot{amount, height});
 		} else if (height > m_snapshots.back().BalanceHeight) {
-			push(model::BalanceSnapshot{amount, height});
+			pushSnapshot(model::BalanceSnapshot{amount, height});
 		}
 
 		while(m_snapshots.size() > 1 && m_snapshots[m_snapshots.size() - 1].Amount == m_snapshots[m_snapshots.size() - 2].Amount) {
-			pop();
+			popSnapshot();
 		}
 	}
 
-	void AccountBalances::maybeInvalidCache(const model::BalanceSnapshot& snapshot) {
-		if (snapshot.BalanceHeight == m_cachedMinimumSnapshot.BalanceHeight) {
-			m_cachedMinimumSnapshot.Amount = Amount(-1);
-			m_cachedMinimumSnapshot.BalanceHeight = Height(-1);
-		}
-	}
-
-	bool AccountBalances::cacheIsValid() const {
-		return m_cachedMinimumSnapshot.BalanceHeight != Height(-1);
-	}
-
-	void AccountBalances::push(const model::BalanceSnapshot& snapshot) {
+	void AccountBalances::pushSnapshot(const model::BalanceSnapshot& snapshot) {
 		m_snapshots.push_back(snapshot);
-		if (snapshot.Amount < m_cachedMinimumSnapshot.Amount) {
-			m_cachedMinimumSnapshot = snapshot;
-		}
 	}
 
-	void AccountBalances::pop(bool back) {
+	void AccountBalances::popSnapshot(bool back) {
 		if (back) {
-			maybeInvalidCache(m_snapshots.back());
 			m_snapshots.pop_back();
 		} else {
-			maybeInvalidCache(m_snapshots.front());
 			m_snapshots.pop_front();
 		}
 	}

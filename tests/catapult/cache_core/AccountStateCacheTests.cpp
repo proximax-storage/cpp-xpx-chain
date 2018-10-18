@@ -38,7 +38,8 @@ namespace catapult { namespace cache {
 
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			Network_Identifier,
-			Amount(std::numeric_limits<Amount::ValueType>::max())
+			Amount(std::numeric_limits<Amount::ValueType>::max()),
+			std::numeric_limits<uint64_t >::max()
 		};
 
 		struct AddressTraits {
@@ -286,7 +287,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheExposesNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(17);
-		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, Amount() });
+		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, Amount(), 0 });
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.networkIdentifier());
@@ -295,12 +296,33 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, Amount() });
+		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, Amount(), 0 });
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());
 		EXPECT_EQ(networkIdentifier, cache.createDelta()->networkIdentifier());
 		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta().lock()->networkIdentifier());
+	}
+
+	// endregion
+
+	// region effective balance range
+
+	TEST(TEST_CLASS, CacheExposesEffectiveBalanceRange) {
+		AccountStateCache cache(CacheConfiguration(), { model::NetworkIdentifier::Zero, Amount(), 10 });
+
+		// Act + Assert:
+		EXPECT_EQ(10, cache.effectiveBalanceRange());
+	}
+
+	TEST(TEST_CLASS, CacheWrappersExposeEffectiveBalanceRange) {
+		// Arrange:
+		AccountStateCache cache(CacheConfiguration(), { model::NetworkIdentifier::Zero, Amount(), 10 });
+
+		// Act + Assert:
+		EXPECT_EQ(10, cache.createView()->effectiveBalanceRange());
+		EXPECT_EQ(10, cache.createDelta()->effectiveBalanceRange());
+		EXPECT_EQ(10, cache.createDetachedDelta().lock()->effectiveBalanceRange());
 	}
 
 	// endregion
@@ -1060,6 +1082,108 @@ namespace catapult { namespace cache {
 
 		// Act + Assert:
 		EXPECT_EQ(1u, cache.createView()->highValueAddressesSize());
+	}
+
+	// endregion
+
+	// region updatedAddresses
+
+	namespace {
+		void IncreaseBalances(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10, Height height = Height(1), MosaicId mosaicId = Xpx_Id) {
+			for (auto i = start; i < end; ++i) {
+				auto &accountState = delta.addAccount(Key{ { i } }, height);
+				accountState.Balances.credit(mosaicId, Amount(1), height);
+			}
+		}
+
+		void CleanUpSnapshots(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10) {
+			for (auto i = start; i < end; ++i) {
+				auto& accountState = delta.get(Key{ { i } });
+				accountState.Balances.getSnapshots().clear();
+			}
+		}
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveOneSnapshot) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta);
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		// Assert:
+		EXPECT_EQ(10u, delta->updatedAddresses().size());
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveZeroSnapshot_HeightZero) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta, 0, 10, Height(0));
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		// Assert:
+		EXPECT_EQ(0u, delta->updatedAddresses().size());
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveZeroSnapshot_NotXpxMosaic) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta, 0, 10, Height(1), MosaicId{123});
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		// Assert:
+		EXPECT_EQ(0, delta->updatedAddresses().size());
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesModifyAccountToAddSnapshots) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta, 0, 10, Height(0));
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		EXPECT_EQ(0u, delta->updatedAddresses().size());
+
+		// Act:
+		IncreaseBalances(*delta, 0, 5, Height(1));
+		cache.commit();
+
+		// Assert:
+		EXPECT_EQ(5u, delta->updatedAddresses().size());
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesRemoveAccountWithoutSnapshots) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta);
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		EXPECT_EQ(10u, delta->updatedAddresses().size());
+
+		// Act:
+		CleanUpSnapshots(*delta, 0, 4);
+		cache.commit();
+
+		// Assert:
+		EXPECT_EQ(6u, delta->updatedAddresses().size());
 	}
 
 	// endregion

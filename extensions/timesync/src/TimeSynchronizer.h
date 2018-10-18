@@ -53,10 +53,12 @@ namespace catapult { namespace timesync {
 	private:
 		Amount::ValueType sumBalances(
 				const cache::BalanceView& view,
+				const Height& height,
 				const TimeSynchronizationSamples& samples);
 
 		double sumScaledOffsets(
 				const cache::BalanceView& view,
+				const Height& height,
 				const TimeSynchronizationSamples& samples,
 				double scaling);
 	private:

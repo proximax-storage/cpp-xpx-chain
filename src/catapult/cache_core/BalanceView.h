@@ -36,12 +36,12 @@ namespace catapult { namespace cache {
 		{}
 
 	public:
-		/// Returns \c true if \a publicKey can harvest, given a minimum harvesting balance of
+		/// Returns \c true if \a publicKey can harvest at \a height, given a minimum harvesting balance of
 		/// \a minHarvestingBalance.
-		bool canHarvest(const Key& publicKey, Amount minHarvestingBalance) const ;
+		bool canHarvest(const Key& publicKey, const Height& height, Amount minHarvestingBalance) const ;
 
-		/// Returns effective balance of account with \a publicKey.
-		Amount getEffectiveBalance(const Key& publicKey) const ;
+		/// Returns effective balance of account with \a publicKey at \a height.
+		Amount getEffectiveBalance(const Key& publicKey, const Height& height) const ;
 
 	private:
 		ReadOnlyAccountStateCache m_cache;

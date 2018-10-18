@@ -72,7 +72,7 @@ namespace catapult { namespace sync {
 				const auto& signer = transactionInfo.pEntity->Signer;
 				auto readOnlyAccountStateCache = context.UnconfirmedCatapultCache.sub<cache::AccountStateCache>();
 				cache::BalanceView balanceView(readOnlyAccountStateCache);
-				auto balance = balanceView.getEffectiveBalance(signer);
+				auto balance = balanceView.getEffectiveBalance(signer, context.CacheHeight);
 				auto usefulBalance = GetUsefulBalance(transactionInfo.pEntity->Fee, balance, m_config);
 				auto maxTransactions = GetMaxTransactions(cacheSize, m_config.MaxCacheSize, usefulBalance, m_config.TotalBalance);
 				return context.TransactionsCache.count(signer) >= maxTransactions;
