@@ -50,6 +50,9 @@ namespace catapult { namespace cache {
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const;
 
+		/// Gets the effective balance range.
+		uint64_t effectiveBalanceRange() const;
+
 	public:
 		/// Returns the number of elements in the cache.
 		size_t size() const;

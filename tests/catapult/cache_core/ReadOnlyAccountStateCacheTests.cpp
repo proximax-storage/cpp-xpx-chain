@@ -31,11 +31,20 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, NetworkIdentifierIsExposed) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(19);
-		AccountStateCache originalCache(CacheConfiguration(), { networkIdentifier, Amount() });
+		AccountStateCache originalCache(CacheConfiguration(), { networkIdentifier, Amount(), 0 });
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, ReadOnlyAccountStateCache(*originalCache.createView()).networkIdentifier());
 		EXPECT_EQ(networkIdentifier, ReadOnlyAccountStateCache(*originalCache.createDelta()).networkIdentifier());
+	}
+
+	TEST(TEST_CLASS, EffectiveBalanceRangeIsExposed) {
+		// Arrange:
+		AccountStateCache originalCache(CacheConfiguration(), { model::NetworkIdentifier::Zero, Amount(), 10 });
+
+		// Act + Assert:
+		EXPECT_EQ(10, ReadOnlyAccountStateCache(*originalCache.createView()).effectiveBalanceRange());
+		EXPECT_EQ(10, ReadOnlyAccountStateCache(*originalCache.createDelta()).effectiveBalanceRange());
 	}
 
 	// endregion
@@ -43,7 +52,8 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
-			Amount(std::numeric_limits<Amount::ValueType>::max())
+			Amount(std::numeric_limits<Amount::ValueType>::max()),
+			std::numeric_limits<uint64_t>::max()
 		};
 
 		struct AccountStateCacheByAddressTraits {

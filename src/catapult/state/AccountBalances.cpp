@@ -19,6 +19,7 @@
 **/
 
 #include "AccountBalances.h"
+#include "AccountState.h"
 #include "catapult/constants.h"
 
 namespace catapult { namespace state {
@@ -27,9 +28,26 @@ namespace catapult { namespace state {
 		constexpr static bool IsZero(Amount amount) {
 			return Amount(0) == amount;
 		}
+
+		inline auto minSnapshot(const std::deque<model::BalanceSnapshot>& snapshots, const Height& height, const uint64_t& effectiveBalanceRange) {
+			auto effectiveBalanceRangeHeight = Height(effectiveBalanceRange);
+			auto effectiveHeight = Height(0);
+
+			if (height > effectiveBalanceRangeHeight) {
+				effectiveHeight = height - effectiveBalanceRangeHeight;
+			}
+
+			return std::min_element(
+				snapshots.begin(),
+				snapshots.end(),
+				[&effectiveHeight](const model::BalanceSnapshot& l, const model::BalanceSnapshot& r){
+					return l.BalanceHeight <= effectiveHeight || l.Amount < r.Amount;
+				}
+			);
+		}
 	}
 
-	AccountBalances::AccountBalances() = default;
+	AccountBalances::AccountBalances(AccountState* accountState) : m_accountState(accountState) {}
 
 	AccountBalances::AccountBalances(const AccountBalances& accountBalances) {
 		*this = accountBalances;
@@ -38,11 +56,15 @@ namespace catapult { namespace state {
 	AccountBalances::AccountBalances(AccountBalances&& accountBalances) = default;
 
 	AccountBalances& AccountBalances::operator=(const AccountBalances& accountBalances) {
+		if (!m_accountState) {
+			m_accountState = accountBalances.m_accountState;
+		}
+
 		for (const auto& pair : accountBalances)
 			m_balances.insert(pair);
 
-		for (const auto& snapshot : accountBalances.getSnapshots())
-			m_snapshots.push_back(snapshot);
+		for (const auto& snapshot : accountBalances.m_snapshots)
+			pushSnapshot(snapshot);
 
 		return *this;
 	}
@@ -109,35 +131,17 @@ namespace catapult { namespace state {
 		auto stableHeight = height - unstableHeight;
 
 		while(!m_snapshots.empty() && m_snapshots.front().BalanceHeight <= stableHeight) {
-			maybeInvalidCache(m_snapshots.front());
-			m_snapshots.pop_front();
+			popSnapshot(false /* back */);
 		}
 	}
 
-	Amount AccountBalances::getEffectiveBalance() {
+	Amount AccountBalances::getEffectiveBalance(const Height& height, const uint64_t& effectiveBalanceRange) const {
 		if (m_snapshots.empty()) {
 			auto iter = m_balances.find(Xpx_Id);
 			return m_balances.end() == iter ? Amount(0) : iter->second;
 		}
 
-		if (m_cachedMinimumSnapshot.BalanceHeight != Height(-1)) {
-			return m_cachedMinimumSnapshot.Amount;
-		}
-		m_cachedMinimumSnapshot = *std::min_element(
-			m_snapshots.begin(),
-			m_snapshots.end(),
-			[](const model::BalanceSnapshot& l, const model::BalanceSnapshot& r){
-				return l.Amount < r.Amount;
-			}
-		);
-
-		return m_cachedMinimumSnapshot.Amount;
-	}
-
-	void AccountBalances::maybePopSnapshot(const MosaicId& mosaicId, const Amount& /* amount */, const Height& height) {
-		if (mosaicId != Xpx_Id || m_snapshots.empty() || height == Height(0) || height == Height(-1)) {
-			return;
-		}
+		return minSnapshot(m_snapshots, height, effectiveBalanceRange)->Amount;
 	}
 
 	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
@@ -146,7 +150,7 @@ namespace catapult { namespace state {
 		}
 
 		if (m_snapshots.empty()) {
-			m_snapshots.push_back(model::BalanceSnapshot{amount, height});
+			pushSnapshot(model::BalanceSnapshot{amount, height});
 			return;
 		}
 
@@ -154,23 +158,35 @@ namespace catapult { namespace state {
 			CATAPULT_THROW_RUNTIME_ERROR_2(
 					"height can't be lower than height of snapshot", height, m_snapshots.back().BalanceHeight);
 		} else if (height == m_snapshots.back().BalanceHeight) {
-			maybeInvalidCache(m_snapshots.back());
-			m_snapshots.pop_back();
-			m_snapshots.push_back(model::BalanceSnapshot{amount, height});
+			popSnapshot();
+			pushSnapshot(model::BalanceSnapshot{amount, height});
 		} else if (height > m_snapshots.back().BalanceHeight) {
-			m_snapshots.push_back(model::BalanceSnapshot{amount, height});
+			pushSnapshot(model::BalanceSnapshot{amount, height});
 		}
 
 		while(m_snapshots.size() > 1 && m_snapshots[m_snapshots.size() - 1].Amount == m_snapshots[m_snapshots.size() - 2].Amount) {
-			maybeInvalidCache(m_snapshots.back());
-			m_snapshots.pop_back();
+			popSnapshot();
 		}
 	}
 
-	void AccountBalances::maybeInvalidCache(const model::BalanceSnapshot& snapshot) {
-		if (snapshot.BalanceHeight == m_cachedMinimumSnapshot.BalanceHeight) {
-			m_cachedMinimumSnapshot.Amount = Amount(-1);
-			m_cachedMinimumSnapshot.BalanceHeight = Height(-1);
+	void AccountBalances::pushSnapshot(const model::BalanceSnapshot& snapshot) {
+		if (!m_accountState) {
+			CATAPULT_THROW_RUNTIME_ERROR("each balance must have own account");
+		}
+
+		if (snapshot.BalanceHeight + Height(1) < m_accountState->AddressHeight) {
+			CATAPULT_THROW_RUNTIME_ERROR_2(
+					"height of snapshot can't be lower than height of account", snapshot.BalanceHeight, m_accountState->AddressHeight);
+		}
+
+		m_snapshots.push_back(snapshot);
+	}
+
+	void AccountBalances::popSnapshot(bool back) {
+		if (back) {
+			m_snapshots.pop_back();
+		} else {
+			m_snapshots.pop_front();
 		}
 	}
 }}

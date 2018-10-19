@@ -45,6 +45,10 @@ namespace catapult { namespace cache {
 		return m_pCache ? m_pCache->networkIdentifier() : m_pCacheDelta->networkIdentifier();
 	}
 
+	uint64_t ReadOnlyAccountStateCache::effectiveBalanceRange() const {
+		return m_pCache ? m_pCache->effectiveBalanceRange() : m_pCacheDelta->effectiveBalanceRange();
+	}
+
 	size_t ReadOnlyAccountStateCache::size() const {
 		return m_pCache ? m_pCache->size() : m_pCacheDelta->size();
 	}

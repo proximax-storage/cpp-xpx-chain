@@ -52,15 +52,15 @@ namespace catapult { namespace timesync {
 		/// Selects nodes from \a nodeContainerView that have a minimum balance at \a height according to \a balanceView.
 		ionet::NodeSet selectNodes(
 				const cache::BalanceView& view,
-				const ionet::NodeContainerView& nodeContainerView,
-				Height height) const;
+				const Height& height,
+				const ionet::NodeContainerView& nodeContainerView) const;
 
 	private:
 		std::pair<bool, Amount> isCandidate(
 				const cache::BalanceView& view,
 				const ionet::Node& node,
 				const ionet::NodeInfo& nodeInfo,
-				Height height) const;
+				const Height& height) const;
 
 	private:
 		ionet::ServiceIdentifier m_serviceId;

@@ -20,12 +20,20 @@
 
 #include "AccountStateCache.h"
 #include "BalanceView.h"
-#include "catapult/chain/BlockScorer.h"
 #include "catapult/model/Address.h"
 
 namespace catapult { namespace cache {
-	bool BalanceView::canHarvest(const Key&, Height, Amount) const {
-		// TODO: check effective balance of the account.
-		return true;
+	bool BalanceView::canHarvest(const Key& publicKey, const Height& height, Amount minHarvestingBalance) const {
+		return getEffectiveBalance(publicKey, height) >= minHarvestingBalance;
+	}
+
+	Amount BalanceView::getEffectiveBalance(const Key& publicKey, const Height& height) const {
+		auto pAccountState = m_cache.tryGet(publicKey);
+
+		// if state could not be accessed by public key, try searching by address
+		if (!pAccountState)
+			pAccountState = m_cache.tryGet(model::PublicKeyToAddress(publicKey, m_cache.networkIdentifier()));
+
+		return pAccountState ? pAccountState->Balances.getEffectiveBalance(height, m_cache.effectiveBalanceRange()) : Amount();
 	}
 }}

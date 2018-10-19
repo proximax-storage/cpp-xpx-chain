@@ -21,6 +21,7 @@
 #include "BlockChainProcessor.h"
 #include "InputUtils.h"
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/cache_core/BalanceView.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainUtils.h"
@@ -68,13 +69,11 @@ namespace catapult { namespace consumers {
 				const auto* pParentGenerationHash = &parentBlockInfo.generationHash();
 
 				const auto& observerState = state.observerState();
-				const auto& storage = state.storage();
-
-				auto currentHeight = parentBlockInfo.entity().Height;
 
 				for (auto& element : elements) {
 					const auto& block = element.Block;
-					Amount effectiveBalance{0}; // TODO: add effective balance calculation.
+					cache::BalanceView balanceView(cache::ReadOnlyAccountStateCache(observerState.Cache.toReadOnly().sub<cache::AccountStateCache>()));
+					const Amount& effectiveBalance = balanceView.getEffectiveBalance(block.Signer, block.Height);
 					element.GenerationHash = model::CalculateGenerationHash(*pParentGenerationHash, block.Signer);
 
 					if (!blockHitPredicate(element.GenerationHash, block.BaseTarget,
@@ -91,7 +90,6 @@ namespace catapult { namespace consumers {
 
 					previousTimeStamp = block.Timestamp;
 					pParentGenerationHash = &element.GenerationHash;
-					currentHeight = currentHeight + Height(1);
 				}
 
 				return ValidationResult::Success;

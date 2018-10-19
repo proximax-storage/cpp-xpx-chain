@@ -101,6 +101,9 @@ namespace catapult { namespace cache {
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const;
 
+		/// Gets the effective balance range.
+		uint64_t effectiveBalanceRange() const;
+
 	public:
 		/// If not present, adds an account to the cache at given height (\a addressHeight) using \a address.
 		/// Returns an account state.

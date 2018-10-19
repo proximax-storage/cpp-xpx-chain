@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions(const model::BlockChainConfiguration& config) {
-			return { config.Network.Identifier, config.MinHarvesterBalance };
+			return { config.Network.Identifier, config.MinHarvesterBalance, config.EffectiveBalanceRange };
 		}
 
 		void AddAccountStateCache(PluginManager& manager, const model::BlockChainConfiguration& config) {

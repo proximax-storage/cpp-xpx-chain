@@ -36,8 +36,6 @@ namespace catapult { namespace timesync {
 
 	namespace {
 		constexpr ionet::ServiceIdentifier Default_Service_Identifier(123);
-		constexpr Height Default_Balance_Height(234);
-		constexpr Height Effective_Balance_Height(0);
 
 		void SeedAccountStateCache(
 				cache::AccountStateCache& cache,
@@ -45,8 +43,8 @@ namespace catapult { namespace timesync {
 				const std::vector<Amount>& balances) {
 			auto delta = cache.createDelta();
 			for (auto i = 0u; i < keys.size(); ++i) {
-				auto& accountState = delta->addAccount(keys[i], Height(100));
-				accountState.Balances.credit(Xpx_Id, balances[i], Height(100));
+				auto& accountState = delta->addAccount(keys[i], Height(1));
+				accountState.Balances.credit(Xpx_Id, balances[i], Height(1));
 			}
 
 			cache.commit();
@@ -56,7 +54,8 @@ namespace catapult { namespace timesync {
 			auto cacheConfig = cache::CacheConfiguration();
 			return std::make_unique<cache::AccountStateCache>(cacheConfig, cache::AccountStateCacheTypes::Options{
 				model::NetworkIdentifier::Mijin_Test,
-				Amount(std::numeric_limits<Amount::ValueType>::max())
+				Amount(std::numeric_limits<Amount::ValueType>::max()),
+				std::numeric_limits<uint64_t >::max()
 			});
 		}
 
@@ -113,11 +112,11 @@ namespace catapult { namespace timesync {
 
 			ionet::NodeContainer nodeContainer;
 			SeedNodeContainer(nodeContainer, keys, options.SeedNodeOptions);
-			auto pView = test::CreateBalanceView(*pCache, Effective_Balance_Height);
+			auto pView = test::CreateBalanceView(*pCache);
 			BalanceAwareNodeSelector selector(options.NodeServiceIdentifier, 5, Amount(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Default_Balance_Height + Height(1));
+			auto selectNodes = selector.selectNodes(*pView, Height(1), nodeContainer.view());
 
 			// Assert:
 			EXPECT_TRUE(selectNodes.empty());
@@ -170,11 +169,11 @@ namespace catapult { namespace timesync {
 
 			ionet::NodeContainer nodeContainer;
 			SeedNodeContainer(nodeContainer, keys);
-			auto pView = test::CreateBalanceView(*pCache, Effective_Balance_Height);
+			auto pView = test::CreateBalanceView(*pCache);
 			BalanceAwareNodeSelector selector(Default_Service_Identifier, 3, Amount(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Default_Balance_Height + Height(1));
+			auto selectNodes = selector.selectNodes(*pView, Height(1), nodeContainer.view());
 
 			// Assert:
 			assertKeys(test::ExtractNodeIdentities(selectNodes));
@@ -218,7 +217,7 @@ namespace catapult { namespace timesync {
 		ionet::NodeContainer nodeContainer;
 		SeedNodeContainer(nodeContainer, keys);
 
-		auto pView = test::CreateBalanceView(*pCache, Effective_Balance_Height);
+		auto pView = test::CreateBalanceView(*pCache);
 		SelectorParamCapture capture;
 		auto customSelector = [&capture](const auto& weightedCandidates, auto totalWeight, auto maxCandidates) {
 			for (const auto& weightedCandidate : weightedCandidates)
@@ -233,7 +232,7 @@ namespace catapult { namespace timesync {
 		BalanceAwareNodeSelector selector(Default_Service_Identifier, 3, Amount(1000), customSelector);
 
 		// Act:
-		selector.selectNodes(*pView, nodeContainer.view(), Default_Balance_Height + Height(1));
+		selector.selectNodes(*pView, Height(1), nodeContainer.view());
 
 		// Assert:
 		EXPECT_EQ(1u, capture.NumSelectorCalls);
@@ -275,12 +274,12 @@ namespace catapult { namespace timesync {
 				SeedAccountStateCache(*pCache, keys, balances);
 				ionet::NodeContainer nodeContainer;
 				SeedNodeContainer(nodeContainer, keys);
-				auto pView = test::CreateBalanceView(*pCache, Effective_Balance_Height);
+				auto pView = test::CreateBalanceView(*pCache);
 				BalanceAwareNodeSelector selector(Default_Service_Identifier, 1, Amount(1000));
 
 				KeyStatistics keyStatistics;
 				for (auto i = 0u; i < numIterations; ++i) {
-					auto selectedNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(1));
+					auto selectedNodes = selector.selectNodes(*pView, Height(1), nodeContainer.view());
 					if (1u != selectedNodes.size())
 						CATAPULT_THROW_RUNTIME_ERROR_1("unexpected number of nodes were selected", selectedNodes.size());
 

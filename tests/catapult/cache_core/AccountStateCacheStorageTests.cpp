@@ -32,7 +32,8 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
-			Amount(std::numeric_limits<Amount::ValueType>::max())
+			Amount(std::numeric_limits<Amount::ValueType>::max()),
+			std::numeric_limits<uint64_t>::max()
 		};
 	}
 
@@ -143,7 +144,7 @@ namespace catapult { namespace cache {
 		template<typename TLoadTraits>
 		void AssertCanLoadValueWithMosaicsAndSnapshots(size_t numMosaics, size_t numSnapshots) {
 			// Arrange: create a random account info
-			auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(123));
+			auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(1));
 			test::RandomFillAccountData(0, *pOriginalAccountState, numMosaics, numSnapshots);
 			auto pOriginalAccountInfo = state::ToAccountInfo(*pOriginalAccountState);
 

@@ -78,6 +78,7 @@ namespace catapult { namespace cache {
 		AccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
 				: SynchronizedCache<BasicAccountStateCache>(BasicAccountStateCache(config, options))
 				, m_networkIdentifier(options.NetworkIdentifier)
+				, m_effectiveBalanceRange(options.EffectiveBalanceRange)
 
 		{}
 
@@ -87,7 +88,13 @@ namespace catapult { namespace cache {
 			return m_networkIdentifier;
 		}
 
+		/// Gets the effective balance range.
+		uint64_t effectiveBalanceRange() const {
+			return m_effectiveBalanceRange;
+		}
+
 	private:
 		model::NetworkIdentifier m_networkIdentifier;
+		uint64_t m_effectiveBalanceRange;
 	};
 }}

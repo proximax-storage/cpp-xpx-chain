@@ -30,7 +30,7 @@ namespace catapult { namespace test {
 		}
 
 		for (auto i = 0u; i < numSnapshots; ++i) {
-			state.Balances.getSnapshots().push_back(model::BalanceSnapshot{Amount(seed * 1000 + i + 1), Height(i + 1)});
+			state.Balances.getSnapshots().push_back(model::BalanceSnapshot{Amount(seed * 1000 + i + 1), state.AddressHeight + Height(i + 1)});
 		}
 	}
 

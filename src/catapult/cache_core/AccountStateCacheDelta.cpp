@@ -68,6 +68,10 @@ namespace catapult { namespace cache {
 		return m_options.NetworkIdentifier;
 	}
 
+	uint64_t BasicAccountStateCacheDelta::effectiveBalanceRange() const {
+		return m_options.EffectiveBalanceRange;
+	}
+
 	Address BasicAccountStateCacheDelta::getAddress(const Key& publicKey) {
 		const auto* pPair = m_pKeyToAddress->find(publicKey);
 		if (pPair)

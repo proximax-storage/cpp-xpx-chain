@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/cache_core/BalanceView.h"
+#include "catapult/model/Address.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -26,29 +27,63 @@ namespace catapult { namespace cache {
 #define TEST_CLASS BalanceViewTests
 
 	auto SIGNER_KEY = Key({ { 1 } });
+	auto SIGNER_ADDRESS = model::PublicKeyToAddress(SIGNER_KEY, model::NetworkIdentifier::Mijin_Test);
 
 	constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
-			Amount(std::numeric_limits<Amount::ValueType>::max())
+			Amount(std::numeric_limits<Amount::ValueType>::max()),
+			1 /* Effective Balance Range */
 	};
+
+	TEST(TEST_CLASS, BalanceViewGetEffectiveBalance_PublicKey) {
+		// Arrange:
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			auto cacheDelta = cache.createDelta();
+			auto& account = cacheDelta->addAccount(SIGNER_KEY, Height(1));
+			account.Balances.credit(Xpx_Id, Amount(100), Height(1));
+			cache.commit();
+		}
+		// Act:
+		auto cacheView = cache.createView();
+		auto readOnlyCache = ReadOnlyAccountStateCache(*cacheView);
+		BalanceView view(readOnlyCache);
+
+		EXPECT_EQ(view.getEffectiveBalance(SIGNER_KEY, Height(1)), Amount(100));
+	}
+
+	TEST(TEST_CLASS, BalanceViewGetEffectiveBalance_Address) {
+		// Arrange:
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			auto cacheDelta = cache.createDelta();
+			auto& account = cacheDelta->addAccount(SIGNER_ADDRESS, Height(1));
+			account.Balances.credit(Xpx_Id, Amount(100), Height(1));
+			cache.commit();
+		}
+		// Act:
+		auto cacheView = cache.createView();
+		auto readOnlyCache = ReadOnlyAccountStateCache(*cacheView);
+		BalanceView view(readOnlyCache);
+
+		EXPECT_EQ(view.getEffectiveBalance(SIGNER_KEY, Height(1)), Amount(100));
+	}
 
 	TEST(TEST_CLASS, BalanceViewCanHarvest) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
 		{
 			auto cacheDelta = cache.createDelta();
-			auto& account = cacheDelta->addAccount(SIGNER_KEY, Height(0));
-			account.Balances.credit(Xpx_Id, Amount(100), Height(0));
+			auto& account = cacheDelta->addAccount(SIGNER_KEY, Height(1));
+			account.Balances.credit(Xpx_Id, Amount(100), Height(1));
 			cache.commit();
 		}
 
 		// Act:
 		auto cacheView = cache.createView();
+		auto read = cache::ReadOnlyAccountStateCache(*cacheView);
 
-		BalanceView view(
-				ReadOnlyAccountStateCache(*cacheView),
-				Height(1) /* effectiveBalanceHeight */
-		);
+		cache::BalanceView view(read);
 
 		EXPECT_TRUE(view.canHarvest(SIGNER_KEY, Height(1), Amount(100)));
 	}

@@ -29,12 +29,13 @@
 #include <unordered_map>
 
 namespace catapult { namespace state {
+	struct AccountState;
 
 	/// Container holding information about account.
 	class AccountBalances {
 	public:
 		/// Creates an empty account balances.
-		AccountBalances();
+		explicit AccountBalances(AccountState* accountState);
 
 		/// Copy constructor that makes a deep copy of \a accountBalances.
 		AccountBalances(const AccountBalances& accountBalances);
@@ -88,22 +89,22 @@ namespace catapult { namespace state {
 		/// Check do we need to clean up the deque at \a height with \a config
 		void maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config);
 
-		/// Get effective balance of account
-		Amount getEffectiveBalance();
+		/// Get effective balance of account at \a height with \a effectiveBalanceRange
+		Amount getEffectiveBalance(const Height& height, const uint64_t& effectiveBalanceRange) const;
 
 	private:
-		/// Maybe pop snapshot from deque during rollback by \a mosaicId, new \a amount of xpx at \a height.
-		void maybePopSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
-
-		/// Maybe push m_cachedMinimumSnapshot.
+		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
 		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
-		/// Maybe invalid snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
-		void maybeInvalidCache(const model::BalanceSnapshot& snapshot);
+		/// Push snapshot to deque
+		void pushSnapshot(const model::BalanceSnapshot& snapshot);
+
+		/// Pop snapshot from \a back of deque
+		void popSnapshot(bool back = true);
 
 	private:
 		CompactMosaicUnorderedMap m_balances;
 		std::deque<model::BalanceSnapshot> m_snapshots;
-		model::BalanceSnapshot m_cachedMinimumSnapshot{Amount(-1), Height(-1)};
+		AccountState* m_accountState = nullptr;
 	};
 }}
