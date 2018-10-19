@@ -18,18 +18,21 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "Observers.h"
-#include "catapult/cache_core/AccountStateCache.h"
+#pragma once
+#include "catapult/types.h"
 
-namespace catapult { namespace observers {
+namespace catapult { namespace model {
 
-	DEFINE_OBSERVER(HarvestFee, model::BlockNotification, [](const auto& notification, const ObserverContext& context) {
-		// credit the harvester
-		auto& cache = context.Cache.sub<cache::AccountStateCache>();
-		auto& harvesterState = cache.get(notification.Signer);
-		if (NotifyMode::Commit == context.Mode)
-			harvesterState.Balances.credit(Xpx_Id, notification.TotalFee, context.Height);
-		else
-			harvesterState.Balances.debit(Xpx_Id, notification.TotalFee, context.Height);
-	});
+#pragma pack(push, 1)
+
+	/// Binary layout for a balance snapshot.
+	struct BalanceSnapshot {
+		/// Balance amount when snap shot was done.
+		catapult::Amount Amount;
+
+		/// Height of balance when snap shot was done.
+		Height BalanceHeight;
+	};
+
+#pragma pack(pop)
 }}

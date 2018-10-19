@@ -75,7 +75,7 @@ namespace catapult { namespace mongo {
 
 		auto ModifyAccounts(const AccountStates& accountStates) {
 			for (auto& pAccountState : accountStates)
-				pAccountState->Balances.credit(Xpx_Id, Amount(123));
+				pAccountState->Balances.credit(Xpx_Id, Amount(123), Height(1));
 		}
 
 		auto CreateTransactions(size_t count) {

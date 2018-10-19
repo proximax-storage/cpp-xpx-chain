@@ -27,11 +27,13 @@ namespace catapult { namespace cache {
 	BasicAccountStateCacheView::BasicAccountStateCacheView(
 			const AccountStateCacheTypes::BaseSets& accountStateSets,
 			const AccountStateCacheTypes::Options& options,
-			const model::AddressSet& highValueAddresses)
+			const model::AddressSet& highValueAddresses,
+			model::AddressSet& updatedAddresses)
 			: BasicAccountStateCacheView(
 					accountStateSets,
 					options,
 					highValueAddresses,
+					updatedAddresses,
 					std::make_unique<AccountStateCacheViewMixins::KeyLookupAdapter>(
 							accountStateSets.KeyLookupMap,
 							accountStateSets.Primary))
@@ -41,6 +43,7 @@ namespace catapult { namespace cache {
 			const AccountStateCacheTypes::BaseSets& accountStateSets,
 			const AccountStateCacheTypes::Options& options,
 			const model::AddressSet& highValueAddresses,
+			model::AddressSet& updatedAddresses,
 			std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter>&& pKeyLookupAdapter)
 			: AccountStateCacheViewMixins::Size(accountStateSets.Primary)
 			, AccountStateCacheViewMixins::ContainsAddress(accountStateSets.Primary)
@@ -50,6 +53,7 @@ namespace catapult { namespace cache {
 			, AccountStateCacheViewMixins::ConstAccessorKey(*pKeyLookupAdapter)
 			, m_networkIdentifier(options.NetworkIdentifier)
 			, m_highValueAddresses(highValueAddresses)
+			, m_updatedAddresses(updatedAddresses)
 			, m_pKeyLookupAdapter(std::move(pKeyLookupAdapter))
 	{}
 

@@ -24,9 +24,14 @@
 
 namespace catapult { namespace test {
 
-	void RandomFillAccountData(uint64_t seed, state::AccountState& state, size_t numMosaics) {
-		for (auto i = 0u; i < numMosaics; ++i)
-			state.Balances.credit(MosaicId(10 + i), Amount(seed * 1000 + i + 1));
+	void RandomFillAccountData(uint64_t seed, state::AccountState& state, size_t numMosaics, size_t numSnapshots) {
+		for (auto i = 0u; i < numMosaics; ++i) {
+			state.Balances.credit(MosaicId(10 + i), Amount(seed * 1000 + i + 1), Height(0));
+		}
+
+		for (auto i = 0u; i < numSnapshots; ++i) {
+			state.Balances.getSnapshots().push_back(model::BalanceSnapshot{Amount(seed * 1000 + i + 1), Height(i + 1)});
+		}
 	}
 
 	void AssertEqual(const state::AccountState& expected, const state::AccountState& actual) {
@@ -39,12 +44,19 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size());
 		for (const auto& pair : expected.Balances)
 			EXPECT_EQ(pair.second, actual.Balances.get(pair.first)) << "for mosaic " << pair.first;
+
+		const auto& expectedSnapshots = expected.Balances.getSnapshots();
+		const auto& actualSnapshots = actual.Balances.getSnapshots();
+		for (auto i = 0u; i < expectedSnapshots.size(); ++i) {
+			EXPECT_EQ(expectedSnapshots[i].BalanceHeight, actualSnapshots[i].BalanceHeight);
+			EXPECT_EQ(expectedSnapshots[i].Amount, actualSnapshots[i].Amount);
+		}
 	}
 
 	std::shared_ptr<state::AccountState> CreateAccountStateWithoutPublicKey(uint64_t height) {
 		auto address = test::GenerateRandomAddress();
 		auto pState = std::make_shared<state::AccountState>(address, Height(height));
-		pState->Balances.credit(Xpx_Id, Amount(1));
+		pState->Balances.credit(Xpx_Id, Amount(1), Height(0));
 		return pState;
 	}
 

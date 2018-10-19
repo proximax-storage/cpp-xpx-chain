@@ -187,7 +187,7 @@ namespace catapult { namespace extensions {
 				// seed the "nemesis" / transfer account (this account is used to fund all other accounts)
 				auto delta = cache.createDelta();
 				auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(m_specialAccountKey, Height(1));
-				accountState.Balances.credit(Xpx_Id, GetTotalChainBalance(numAccounts));
+				accountState.Balances.credit(Xpx_Id, GetTotalChainBalance(numAccounts), Height(1));
 				cache.commit(Height());
 			}
 

@@ -38,9 +38,9 @@ namespace catapult { namespace observers {
 		for (const auto* pLockInfo : lockInfos) {
 			auto& accountState = accountStateCache.get(ownerAccountIdSupplier(*pLockInfo));
 			if (NotifyMode::Commit == context.Mode)
-				accountState.Balances.credit(pLockInfo->MosaicId, pLockInfo->Amount);
+				accountState.Balances.credit(pLockInfo->MosaicId, pLockInfo->Amount, context.Height);
 			else
-				accountState.Balances.debit(pLockInfo->MosaicId, pLockInfo->Amount);
+				accountState.Balances.debit(pLockInfo->MosaicId, pLockInfo->Amount, context.Height);
 		}
 	}
 
@@ -58,10 +58,10 @@ namespace catapult { namespace observers {
 
 		if (NotifyMode::Commit == context.Mode) {
 			cache.get(key).Status = model::LockStatus::Used;
-			account.Balances.credit(lockInfo.MosaicId, lockInfo.Amount);
+			account.Balances.credit(lockInfo.MosaicId, lockInfo.Amount, context.Height);
 		} else {
 			cache.get(key).Status = model::LockStatus::Unused;
-			account.Balances.debit(lockInfo.MosaicId, lockInfo.Amount);
+			account.Balances.debit(lockInfo.MosaicId, lockInfo.Amount, context.Height);
 		}
 	}
 }}

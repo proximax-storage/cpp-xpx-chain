@@ -43,7 +43,7 @@ namespace catapult { namespace sync {
 
 		const state::AccountState& AddAccount(cache::AccountStateCacheDelta& delta, Amount balance) {
 			auto& accountState = delta.addAccount(test::GenerateRandomData<Key_Size>(), Height(1));
-			accountState.Balances.credit(Xpx_Id, balance);
+			accountState.Balances.credit(Xpx_Id, balance, Height(1));
 			return accountState;
 		}
 

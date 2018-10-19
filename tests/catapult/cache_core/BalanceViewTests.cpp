@@ -38,7 +38,7 @@ namespace catapult { namespace cache {
 		{
 			auto cacheDelta = cache.createDelta();
 			auto& account = cacheDelta->addAccount(SIGNER_KEY, Height(0));
-			account.Balances.credit(Xpx_Id, Amount(100));
+			account.Balances.credit(Xpx_Id, Amount(100), Height(0));
 			cache.commit();
 		}
 

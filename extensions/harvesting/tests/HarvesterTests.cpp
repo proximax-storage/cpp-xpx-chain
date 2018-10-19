@@ -62,7 +62,7 @@ namespace catapult { namespace harvesting {
 			for (auto i = 0u; i < keyPairs.size(); ++i) {
 				auto& accountState = cache.addAccount(keyPairs[i].publicKey(), Height(1));
 				if (i < balances.size()) {
-					accountState.Balances.credit(Xpx_Id, balances[i]);
+					accountState.Balances.credit(Xpx_Id, balances[i], Height(1));
 				}
 				accountStates.push_back(&accountState);
 			}

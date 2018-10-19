@@ -41,10 +41,10 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Commit == context.Mode) {
 			auto endHeight = context.Height + Height(notification.Duration.unwrap());
 			cache.insert(CreateLockInfo(signer.PublicKey, endHeight, notification));
-			signer.Balances.debit(notification.Mosaic.MosaicId, notification.Mosaic.Amount);
+			signer.Balances.debit(notification.Mosaic.MosaicId, notification.Mosaic.Amount, context.Height);
 		} else {
 			cache.remove(notification.Hash);
-			signer.Balances.credit(notification.Mosaic.MosaicId, notification.Mosaic.Amount);
+			signer.Balances.credit(notification.Mosaic.MosaicId, notification.Mosaic.Amount, context.Height);
 		}
 	});
 }}

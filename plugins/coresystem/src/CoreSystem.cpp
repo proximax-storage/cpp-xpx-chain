@@ -76,12 +76,13 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateBalanceTransferValidator());
 		});
 
-		manager.addObserverHook([](auto& builder) {
+		manager.addObserverHook([&config](auto& builder) {
 			builder
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceObserver())
-				.add(observers::CreateHarvestFeeObserver());
+				.add(observers::CreateHarvestFeeObserver())
+				.add(observers::CreateSnapshotCleanUpObserver(config));
 		});
 	}
 }}

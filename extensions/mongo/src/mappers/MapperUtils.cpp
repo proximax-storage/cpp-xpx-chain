@@ -91,5 +91,14 @@ namespace catapult { namespace mongo { namespace mappers {
 		return context;
 	}
 
+	bson_stream::array_context& StreamSnapshot(bson_stream::array_context& context, Amount amount, Height height) {
+		context
+				<< bson_stream::open_document
+				<< "amount" << ToInt64(amount)
+				<< "height" << ToInt64(height)
+				<< bson_stream::close_document;
+		return context;
+	}
+
 	// endregion
 }}}
