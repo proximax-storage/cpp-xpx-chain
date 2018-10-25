@@ -56,8 +56,12 @@ namespace catapult {
 	struct BlockDuration_tag {};
 	using BlockDuration = utils::BaseValue<uint64_t, BlockDuration_tag>;
 
-	struct Difficulty_tag {};
-	using Difficulty = utils::BaseValue<uint64_t, Difficulty_tag>;
+	using Difficulty = boost::multiprecision::uint128_t;
+
+	struct BlockTarget_tag {};
+	using BlockTarget = utils::BaseValue<uint64_t, BlockTarget_tag>;
+
+	using Target = boost::multiprecision::uint256_t;
 
 	using utils::RawBuffer;
 	using utils::MutableRawBuffer;
@@ -69,6 +73,4 @@ namespace catapult {
 	constexpr size_t CountOf(T const (&)[N]) noexcept {
 		return N;
 	}
-
-	using BlockTarget = boost::multiprecision::uint256_t;
 }

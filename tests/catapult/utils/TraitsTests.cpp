@@ -69,7 +69,7 @@ namespace catapult { namespace utils {
 
 		// - catapult scalars
 		AssertIsScalar<Height>(__LINE__); // well known base value
-		AssertIsScalar<Difficulty>(__LINE__); // well known base value
+		AssertIsScalar<BlockTarget>(__LINE__); // well known base value
 		AssertIsScalar<BaseValue<short, void>>(__LINE__); // arbitrary base value
 		AssertIsScalar<ImmutableValue<uint64_t>>(__LINE__); // arbitrary immutable value
 
@@ -88,7 +88,7 @@ namespace catapult { namespace utils {
 
 		// - catapult scalars
 		AssertIsPod<Height>(__LINE__); // well known base value
-		AssertIsPod<Difficulty>(__LINE__); // well known base value
+		AssertIsPod<BlockTarget >(__LINE__); // well known base value
 		AssertIsPod<BaseValue<short, void>>(__LINE__); // arbitrary base value
 		AssertIsPod<ImmutableValue<uint64_t>>(__LINE__); // arbitrary immutable value
 

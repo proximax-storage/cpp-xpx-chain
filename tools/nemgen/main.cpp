@@ -18,13 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "NemesisConfiguration.h"
-#include "TransactionRegistryFactory.h"
-#include "tools/ToolMain.h"
 #include "catapult/builders/MosaicDefinitionBuilder.h"
 #include "catapult/builders/MosaicSupplyChangeBuilder.h"
 #include "catapult/builders/RegisterNamespaceBuilder.h"
 #include "catapult/builders/TransferBuilder.h"
+#include "catapult/constants.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/BlockExtensions.h"
@@ -37,15 +35,15 @@
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/HexParser.h"
+#include "NemesisConfiguration.h"
+#include "tools/ToolMain.h"
+#include "TransactionRegistryFactory.h"
 #include <boost/filesystem.hpp>
 #include <string>
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	namespace {
-		// Initial target for nemesis block
-
-		uint64_t NEMESIS_BLOCK_TARGET = 1 << 16;
 
 		// region config
 

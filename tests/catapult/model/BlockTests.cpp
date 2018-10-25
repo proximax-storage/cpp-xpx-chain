@@ -32,14 +32,14 @@ namespace catapult { namespace model {
 		auto expectedSize = sizeof(VerifiableEntity) // base
 				+ sizeof(uint64_t) // height
 				+ sizeof(uint64_t) // timestamp
-				+ sizeof(uint64_t) // difficulty
-				+ sizeof(boost::multiprecision::uint256_t) // base target
+				+ sizeof(boost::multiprecision::uint128_t) // difficulty
+				+ sizeof(uint64_t) // base target
 				+ Hash256_Size // previous block hash
 				+ Hash256_Size; // block transactions hash
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(Block));
-		EXPECT_EQ(104u + 136u, sizeof(Block));
+		EXPECT_EQ(104u + 104u, sizeof(Block));
 	}
 
 	// region test utils

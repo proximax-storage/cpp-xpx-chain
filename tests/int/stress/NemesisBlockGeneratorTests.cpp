@@ -18,11 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "sdk/src/extensions/BlockExtensions.h"
-#include "sdk/src/extensions/TransactionExtensions.h"
+#include "catapult/constants.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/NetworkInfo.h"
+#include "sdk/src/extensions/BlockExtensions.h"
+#include "sdk/src/extensions/TransactionExtensions.h"
 #include "tests/int/stress/test/EntityDump.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/EntityFactory.h"
@@ -82,7 +83,7 @@ namespace catapult {
 
 			model::PreviousBlockContext previousBlockContext;
 			model::BlockHitContext hitContext;
-			hitContext.BaseTarget = 1 << 16;
+			hitContext.BaseTarget = NEMESIS_BLOCK_TARGET;
 			auto pBlock = model::CreateBlock(previousBlockContext, hitContext, Network_Identifier, signer.publicKey(), transactions);
 			test::SignBlock(signer, *pBlock);
 			return pBlock;

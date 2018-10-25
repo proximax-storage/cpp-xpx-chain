@@ -86,7 +86,7 @@ namespace catapult { namespace chain {
 		auto target = CalculateTarget(BlockTarget{0}, utils::TimeSpan::FromSeconds(15), Amount{1000});
 
 		// Assert:
-		EXPECT_EQ(BlockTarget{0}, target);
+		EXPECT_EQ(Target{0}, target);
 	}
 
 	TEST(TEST_CLASS, BlockTargetIsZeroWhenElapsedTimeIsZero) {
@@ -94,7 +94,7 @@ namespace catapult { namespace chain {
 		auto target = CalculateTarget(BlockTarget{1000}, utils::TimeSpan::FromSeconds(0), Amount{1000});
 
 		// Assert:
-		EXPECT_EQ(BlockTarget{0}, target);
+		EXPECT_EQ(Target{0}, target);
 	}
 
 	TEST(TEST_CLASS, BlockTargetIncreasesAlongWithParentBlockTarget) {
@@ -129,7 +129,7 @@ namespace catapult { namespace chain {
 		auto target = CalculateTarget(BlockTarget{1000}, utils::TimeSpan::FromSeconds(10), Amount{1000});
 
 		// Assert:
-		EXPECT_EQ(1000 * 10 * 1000, target);
+		EXPECT_EQ(Target{1000 * 10 * 1000}, target);
 	}
 
 	// endregion

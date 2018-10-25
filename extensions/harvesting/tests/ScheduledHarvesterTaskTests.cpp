@@ -56,7 +56,7 @@ namespace catapult { namespace harvesting {
 					, BlockSigner{}
 					, pLastBlock(std::make_shared<model::Block>())
 					, LastBlockHash(test::GenerateRandomData<Hash256_Size>()) {
-				pLastBlock->BaseTarget = 1 << 16;
+				pLastBlock->BaseTarget = NEMESIS_BLOCK_TARGET;
 				HarvestingAllowed = [this]() {
 					++NumHarvestingAllowedCalls;
 					return true;

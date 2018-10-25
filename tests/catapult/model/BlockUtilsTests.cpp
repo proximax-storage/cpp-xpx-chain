@@ -347,7 +347,7 @@ namespace catapult { namespace model {
 			context.GenerationHash = test::GenerateRandomData<Hash256_Size>();
 
 			BlockHitContext hitContext;
-			hitContext.BaseTarget = 1024u;
+			hitContext.BaseTarget = NEMESIS_BLOCK_TARGET;
 
 			auto randomTransactions = test::GenerateRandomTransactions(numTransactions);
 			auto transactions = TContainerTraits::MapTransactions(randomTransactions);
@@ -364,9 +364,9 @@ namespace catapult { namespace model {
 			EXPECT_EQ(Signature{}, block.Signature);
 			EXPECT_EQ(Timestamp(), block.Timestamp);
 			EXPECT_EQ(Height(1235u), block.Height);
-			EXPECT_EQ(Difficulty(1ull << 54ull), block.CumulativeDifficulty);
+			EXPECT_EQ(Difficulty(1ull << 32ull), block.CumulativeDifficulty);
 			EXPECT_EQ(context.BlockHash, block.PreviousBlockHash);
-			EXPECT_EQ(BlockTarget(1024u), block.BaseTarget);
+			EXPECT_EQ(NEMESIS_BLOCK_TARGET, block.BaseTarget);
 
 			auto transactionCount = 0u;
 			size_t blockSize = sizeof(Block);

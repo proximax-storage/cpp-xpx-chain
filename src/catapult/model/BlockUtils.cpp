@@ -103,16 +103,16 @@ namespace catapult { namespace model {
 		Difficulty CalculateCumulativeDifficulty(
 				const BlockTarget& target,
 				const Difficulty& previousBlockDifficulty) {
-			BlockTarget TWO_TO_64{1};
+			Difficulty TWO_TO_64{1};
 			TWO_TO_64 <<= 64;
 
-			if (!target) {
+			if (!target.unwrap()) {
 				CATAPULT_THROW_RUNTIME_ERROR("Can't calculate cumulative difficulty with zero target");
 			}
 
-			TWO_TO_64 /= target;
-			TWO_TO_64 += previousBlockDifficulty.unwrap();
-			return Difficulty{TWO_TO_64.convert_to<uint64_t>()};
+			TWO_TO_64 /= target.unwrap();
+			TWO_TO_64 += previousBlockDifficulty;
+			return TWO_TO_64;
 		}
 
 		template<typename TContainer>

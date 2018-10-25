@@ -148,7 +148,7 @@ namespace catapult { namespace filechain {
 		void SetStorageChainHeight(io::BlockStorageModifier&& storage, size_t height) {
 			for (auto i = 2u; i <= height; ++i) {
 				auto pBlock = test::GenerateBlockWithTransactions(0, Height(i), Timestamp(i * 3000));
-				pBlock->CumulativeDifficulty = Difficulty(Difficulty().unwrap() + i);
+				pBlock->CumulativeDifficulty = Difficulty(Difficulty() + i);
 				storage.saveBlock(test::BlockToBlockElement(*pBlock));
 			}
 		}

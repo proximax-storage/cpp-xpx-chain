@@ -38,18 +38,19 @@ namespace catapult { namespace chain {
 		return *reinterpret_cast<const uint64_t*>(generationHash.data());
 	}
 
-	BlockTarget CalculateTarget(
+	Target CalculateTarget(
 			const BlockTarget& baseTarget,
 			const utils::TimeSpan& elapsedTime,
 			const Amount& effectiveBalance) {
-		return baseTarget * elapsedTime.seconds() * effectiveBalance.unwrap();
+		return Target(baseTarget.unwrap()) * elapsedTime.seconds() * effectiveBalance.unwrap();
 	}
 
 	BlockTarget CalculateBaseTarget(
-			const BlockTarget& Tp,
+			const BlockTarget& blockTarget,
 			const utils::TimeSpan& milliSeconds,
 			const model::BlockChainConfiguration& config) {
 		auto S = milliSeconds.seconds();
+		auto Tp = blockTarget.unwrap();
 		auto RATIO = config.BlockGenerationTargetTime.seconds();
 		if (RATIO <= 0)
 		{
@@ -59,9 +60,9 @@ namespace catapult { namespace chain {
 		auto MINRATIO = RATIO - factor;
 		auto MAXRATIO = RATIO + factor;
 		if (S > RATIO) {
-			return Tp * std::min(S, MAXRATIO) / RATIO;
+			return BlockTarget(Tp * std::min(S, MAXRATIO) / RATIO);
 		} else {
-			return Tp - Tp * GAMMA_NUMERATOR * (RATIO - std::max(S, MINRATIO) ) / GAMMA_DENOMINATOR / RATIO;
+			return BlockTarget(Tp - Tp * GAMMA_NUMERATOR * (RATIO - std::max(S, MINRATIO) ) / GAMMA_DENOMINATOR / RATIO);
 		}
 	}
 

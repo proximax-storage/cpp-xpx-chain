@@ -33,7 +33,7 @@ namespace catapult { namespace test {
 #ifdef SIGNATURE_SCHEME_NIS1
 	constexpr auto Deterministic_Block_Hash_String = "E0FE82A8A8A3A4D795C1342B60D2931650524F679163CA2E4175A0A71305FA03";
 #else
-	constexpr auto Deterministic_Block_Hash_String = "78114C55475FFDCDFA0F77BDAC3B0805269ED71D65EA9A56581659D9B553D704";
+	constexpr auto Deterministic_Block_Hash_String = "6EBE316AF5AAC40AFC590D566E4789BBF07853BD47642AB4866D9A6C37755A02";
 #endif
 
 	/// Generates an empty block with random signer and no transactions.
