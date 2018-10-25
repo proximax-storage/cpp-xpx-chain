@@ -1,23 +1,35 @@
 node {
 
+    // download the Docker image with required libraries for building catapult-server
     docker.withRegistry('https://249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/proximax-catapult-server', 'ecr:ap-southeast-1:jenkins-ecr') {
         docker.image('catapult-server-build-image').pull()
-        
+    }
+
+    // set catapult-server-build-image Docker container as the build agent
+    docker.image('249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/catapult-server-build-image').inside {
         stage('Build') {
             echo 'Building catapult-server'
+
+            // TODO: OS details should be Ubuntu. Build catapult-server inside the catapult-server-build-image Docker container
             sh 'cat /etc/*release'
         }
+
+        stage('Test') {
+            echo 'Running unit tests'
+
+            // TODO: Run the tests while inside the catapult-server-build-image Docker container
+        }
     }
-    
-    stage('Test') {
-        echo 'Running unit tests'
-    }
-    
+
     stage('Build Docker Image') {
+        // TODO: Copy the binary and dependencies similar to the process in the link below
+        // https://github.com/proximax-storage/proximax-catapult-server/blob/master/scripts/catapult-server-docker/Dockerfile
         echo 'Building catapult-server Docker image'
     }
-    
+
     stage('Push Image to Docker Registry') {
+        // TODO: Push the created Docker image to Docker registry. Set the build number as the image tag
+        // 249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/proximax-catapult-server
         echo 'Pushing catapult-server Docker image to AWS ECR Docker registry'
     }
 }
