@@ -1,7 +1,7 @@
 node {
 
     // download the Docker image with required libraries for building catapult-server
-    docker.withRegistry('https://249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/proximax-catapult-server', 'ecr:ap-southeast-1:jenkins-ecr') {
+    docker.withRegistry('https://249767383774.dkr.ecr.ap-southeast-1.amazonaws.com', 'ecr:ap-southeast-1:jenkins-ecr') {
         docker.image('catapult-server-build-image').pull()
     }
 
