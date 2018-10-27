@@ -205,7 +205,7 @@ namespace catapult { namespace filechain {
 				auto harvesterIndex = accountIndexDistribution(rnd);
 				auto pBlock = test::GenerateBlockWithTransactions(nemesisKeyPairs[harvesterIndex], transactions);
 				pBlock->Height = Height(height);
-				pBlock->CumulativeDifficulty = Difficulty(Difficulty().unwrap() + height);
+				pBlock->CumulativeDifficulty = Difficulty(Difficulty() + height);
 				pBlock->Timestamp = Timestamp(height * timeSpacing.millis());
 				storage.saveBlock(test::BlockToBlockElement(*pBlock));
 				++height;

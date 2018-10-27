@@ -18,11 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/extensions/NemesisBlockLoader.h"
-#include "plugins/coresystem/src/observers/Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/constants.h"
+#include "catapult/extensions/NemesisBlockLoader.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
+#include "plugins/coresystem/src/observers/Observers.h"
 #include "tests/test/core/BalanceTransfers.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBasedStorage.h"
@@ -46,7 +47,7 @@ namespace catapult { namespace extensions {
 				transactions.push_back(std::move(pTransaction));
 			}
 			model::BlockHitContext hitContext;
-			hitContext.BaseTarget = 1 << 16;
+			hitContext.BaseTarget = NEMESIS_BLOCK_TARGET;
 
 			return CreateBlock(model::PreviousBlockContext(), hitContext, Network_Identifier, nemesisPublicKey, transactions);
 		}

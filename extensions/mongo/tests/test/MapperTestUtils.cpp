@@ -98,7 +98,8 @@ namespace catapult { namespace test {
 		AssertEqualVerifiableEntityData(block, dbBlock);
 		EXPECT_EQ(block.Height.unwrap(), GetUint64(dbBlock, "height"));
 		EXPECT_EQ(block.Timestamp.unwrap(), GetUint64(dbBlock, "timestamp"));
-		EXPECT_EQ(block.CumulativeDifficulty.unwrap(), GetUint64(dbBlock, "difficulty"));
+		EXPECT_EQ(block.CumulativeDifficulty, GetUint128(dbBlock, "difficulty"));
+		EXPECT_EQ(block.BaseTarget.unwrap(), GetUint64(dbBlock, "baseTarget"));
 		EXPECT_EQ(block.PreviousBlockHash, GetHashValue(dbBlock, "previousBlockHash"));
 		EXPECT_EQ(block.BlockTransactionsHash, GetHashValue(dbBlock, "blockTransactionsHash"));
 	}

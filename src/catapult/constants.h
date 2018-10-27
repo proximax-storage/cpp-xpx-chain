@@ -31,6 +31,9 @@ namespace catapult {
 	/// \note Reducing below `Hash256_Size` can save memory but will increase possibility of false positive rejections.
 	constexpr size_t Cached_Hash_Size = Hash256_Size;
 
+	/// Initial target for nemesis block
+	const BlockTarget NEMESIS_BLOCK_TARGET = BlockTarget(1ull << 32);
+
 	/// PRX namespace id.
 	const NamespaceId Prx_Id(crypto::GenerateRootNamespaceId("prx"));
 

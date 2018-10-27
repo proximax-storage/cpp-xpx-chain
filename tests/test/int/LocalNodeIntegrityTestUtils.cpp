@@ -55,7 +55,7 @@ namespace catapult { namespace test {
 
 			model::PreviousBlockContext context(*pNemesisBlockElement);
 			model::BlockHitContext hitContext;
-			hitContext.BaseTarget = 0xF000000000000000u;
+			hitContext.BaseTarget = NEMESIS_BLOCK_TARGET;
 			hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(5u);
 			hitContext.EffectiveBalance = Amount{1000u};
 			auto pBlock = model::CreateBlock(context, hitContext, Network_Identifier, signer.publicKey(), model::Transactions());

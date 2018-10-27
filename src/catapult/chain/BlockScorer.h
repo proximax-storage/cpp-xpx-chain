@@ -40,7 +40,7 @@ namespace catapult { namespace chain {
 	// Tb is the base target value
 	// S is the time since the last block, in seconds
 	// Be is the effective balance of the account
-	BlockTarget CalculateTarget(
+	Target CalculateTarget(
 			const BlockTarget& baseTarget,
 			const utils::TimeSpan& elapsedTime,
 			const Amount& effectiveBalance);

@@ -165,7 +165,7 @@ namespace catapult { namespace harvesting {
 
 		Timestamp CalculateBlockGenerationTime(const HarvesterContext& context, const Key& publicKey) {
 			uint64_t hit = chain::CalculateHit(model::CalculateGenerationHash(context.LastBlockElement.GenerationHash, publicKey));
-			uint64_t seconds = (BlockTarget{hit} / BlockTarget{DefaultBalance.unwrap()} / context.pLastBlock->BaseTarget).convert_to<uint64_t>();
+			uint64_t seconds = (Target{hit} / Target{DefaultBalance.unwrap()} / context.pLastBlock->BaseTarget.unwrap()).convert_to<uint64_t>();
 			return Timestamp((seconds + 1) * 1000);
 		}
 
@@ -173,7 +173,7 @@ namespace catapult { namespace harvesting {
 			uint64_t hit = chain::CalculateHit(model::CalculateGenerationHash(context.LastBlockElement.GenerationHash, publicKey));
 			auto baseTarget = chain::CalculateBaseTarget(context.pLastBlock->BaseTarget,
 				utils::TimeSpan::FromMilliseconds(elapsedTime.unwrap()), CreateConfiguration());
-			Amount balance = Amount{(BlockTarget{hit} / BlockTarget{elapsedTime.unwrap() / 1000} / baseTarget).convert_to<uint64_t>()};
+			Amount balance = Amount{(Target{hit} / Target{elapsedTime.unwrap() / 1000} / baseTarget.unwrap()).convert_to<uint64_t>() + 1};
 			return balance;
 		}
 	}

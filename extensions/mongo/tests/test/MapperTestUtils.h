@@ -74,6 +74,12 @@ namespace catapult { namespace test {
 		return static_cast<uint64_t>(doc[name].get_int64().value);
 	}
 
+	/// Returns value \a name from a document (\a doc) as an unsigned 128 bit value.
+	template<typename TDocument>
+	auto GetUint128(const TDocument& doc, const std::string& name) {
+		return boost::multiprecision::uint128_t(doc[name].get_utf8().value.to_string());
+	}
+
 	/// Returns number of fields in a document \a view.
 	template<typename TDocumentView>
 	size_t GetFieldCount(const TDocumentView& view) {

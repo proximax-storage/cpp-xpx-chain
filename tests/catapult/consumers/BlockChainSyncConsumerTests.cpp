@@ -41,7 +41,7 @@ namespace catapult { namespace consumers {
 #define TEST_CLASS BlockChainSyncConsumerTests
 
 	namespace {
-		constexpr auto Base_Difficulty = Difficulty().unwrap();
+		constexpr auto Base_Difficulty = Difficulty();
 		constexpr auto Max_Rollback_Blocks = 25u;
 		constexpr auto Effective_Balance = 1440u;
 		const Key Sentinel_Processor_Public_Key = test::GenerateRandomData<Key_Size>();
