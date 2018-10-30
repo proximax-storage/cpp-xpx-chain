@@ -137,6 +137,9 @@ namespace catapult { namespace cache {
 		/// Gets all updated addresses.
 		const model::AddressSet& updatedAddresses() const;
 
+		/// Commit snapshots of modified accounts
+		void commitSnapshots() const;
+
 		/// Adds new and modified elements to set
 		void addUpdatedAddresses(model::AddressSet& set) const;
 

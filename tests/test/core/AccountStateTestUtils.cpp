@@ -47,9 +47,11 @@ namespace catapult { namespace test {
 
 		const auto& expectedSnapshots = expected.Balances.snapshots();
 		const auto& actualSnapshots = actual.Balances.snapshots();
-		for (auto i = 0u; i < expectedSnapshots.size(); ++i) {
-			EXPECT_EQ(expectedSnapshots[i].BalanceHeight, actualSnapshots[i].BalanceHeight);
-			EXPECT_EQ(expectedSnapshots[i].Amount, actualSnapshots[i].Amount);
+		for (auto expectedIt = expectedSnapshots.begin(), actualIt = actualSnapshots.begin();
+			expectedIt != expectedSnapshots.end();
+			++expectedIt, ++actualIt) {
+			EXPECT_EQ(expectedIt->BalanceHeight, actualIt->BalanceHeight);
+			EXPECT_EQ(expectedIt->Amount, actualIt->Amount);
 		}
 	}
 

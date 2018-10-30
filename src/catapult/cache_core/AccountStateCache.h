@@ -55,6 +55,7 @@ namespace catapult { namespace cache {
 		/// Commits all pending changes to the underlying storage.
 		/// \note This hides AccountStateBasicCache::commit.
 		void commit(const CacheDeltaType& delta) {
+			delta.commitSnapshots();
 			delta.addUpdatedAddresses(*m_pAddressesToUpdate);
 			AccountStateBasicCache::commit(delta);
 		}

@@ -177,6 +177,18 @@ namespace catapult { namespace cache {
 					addresses.erase(accountState.Address);
 			}
 		}
+
+		void commitSnapshotsOf(const DeltasSet& source) {
+			for (const auto& pairs : source) {
+				pairs.second->Balances.commitSnapshots();
+			}
+		}
+	}
+
+	void BasicAccountStateCacheDelta::commitSnapshots() const {
+		auto deltas = m_pStateByAddress->deltas();
+		commitSnapshotsOf(deltas.Added);
+		commitSnapshotsOf(deltas.Copied);
 	}
 
 	void BasicAccountStateCacheDelta::addUpdatedAddresses(model::AddressSet& set) const {

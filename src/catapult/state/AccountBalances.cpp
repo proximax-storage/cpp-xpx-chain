@@ -29,7 +29,7 @@ namespace catapult { namespace state {
 			return Amount(0) == amount;
 		}
 
-		inline auto minSnapshot(const std::deque<model::BalanceSnapshot>& snapshots, const Height& height, const uint64_t& importanceGrouping) {
+		inline auto minSnapshot(const std::list<model::BalanceSnapshot>& snapshots, const Height& height, const uint64_t& importanceGrouping) {
 			auto importanceGroupingHeight = Height(importanceGrouping);
 			auto effectiveHeight = Height(0);
 
@@ -64,7 +64,10 @@ namespace catapult { namespace state {
 			m_balances.insert(pair);
 
 		for (const auto& snapshot : accountBalances.m_snapshots)
-			pushSnapshot(snapshot);
+			pushSnapshot(snapshot, true /* committed */);
+
+		for (const auto& snapshot : accountBalances.m_notCommittedSnapshots)
+			pushSnapshot(snapshot, false /* committed */);
 
 		return *this;
 	}
@@ -82,13 +85,13 @@ namespace catapult { namespace state {
 
 		auto iter = m_balances.find(mosaicId);
 		if (m_balances.end() == iter) {
-			if (m_snapshots.empty()) {
+			if (m_notCommittedSnapshots.empty() && m_snapshots.empty()) {
 				maybePushSnapshot(mosaicId, Amount(0), height - Height(1));
 			}
 			m_balances.insert(std::make_pair(mosaicId, amount));
 			maybePushSnapshot(mosaicId, amount, height);
 		} else {
-			if (m_snapshots.empty()) {
+			if (m_notCommittedSnapshots.empty() && m_snapshots.empty()) {
 				maybePushSnapshot(mosaicId, iter->second, height - Height(1));
 			}
 			iter->second = iter->second + amount;
@@ -121,6 +124,23 @@ namespace catapult { namespace state {
 		return *this;
 	}
 
+	void AccountBalances::commitSnapshots() {
+		if (m_notCommittedSnapshots.empty()) {
+			return;
+		}
+
+		while (!m_snapshots.empty() && m_snapshots.back().BalanceHeight >= m_notCommittedSnapshots.front().BalanceHeight) {
+			m_snapshots.pop_back();
+		}
+
+		while (!m_snapshots.empty() && !m_notCommittedSnapshots.empty()
+				&& m_snapshots.back().Amount == m_notCommittedSnapshots.front().Amount) {
+			m_notCommittedSnapshots.pop_front();
+		}
+
+		m_snapshots.splice(m_snapshots.end(), m_notCommittedSnapshots);
+	}
+
 	void AccountBalances::maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config) {
 		auto unstableHeight = Height(config.ImportanceGrouping + config.MaxRollbackBlocks);
 
@@ -131,17 +151,26 @@ namespace catapult { namespace state {
 		auto stableHeight = height - unstableHeight;
 
 		while(!m_snapshots.empty() && m_snapshots.front().BalanceHeight <= stableHeight) {
-			popSnapshot(false /* back */);
+			m_snapshots.pop_front();
 		}
 	}
 
 	Amount AccountBalances::getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
-		if (m_snapshots.empty()) {
+		if (m_snapshots.empty() && m_notCommittedSnapshots.empty()) {
 			auto iter = m_balances.find(Xpx_Id);
 			return m_balances.end() == iter ? Amount(0) : iter->second;
 		}
 
-		return minSnapshot(m_snapshots, height, importanceGrouping)->Amount;
+		if (m_notCommittedSnapshots.empty()) {
+			return minSnapshot(m_snapshots, height, importanceGrouping)->Amount;
+		} else if (m_snapshots.empty()) {
+			return minSnapshot(m_notCommittedSnapshots, height, importanceGrouping)->Amount;
+		} else {
+			return std::min(
+				minSnapshot(m_snapshots, height, importanceGrouping)->Amount,
+				minSnapshot(m_notCommittedSnapshots, height, importanceGrouping)->Amount
+			);
+		}
 	}
 
 	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
@@ -149,27 +178,22 @@ namespace catapult { namespace state {
 			return;
 		}
 
-		if (m_snapshots.empty()) {
+		if (m_notCommittedSnapshots.empty()) {
 			pushSnapshot(model::BalanceSnapshot{amount, height});
 			return;
 		}
 
-		if (height < m_snapshots.back().BalanceHeight) {
-			CATAPULT_THROW_RUNTIME_ERROR_2(
-					"height can't be lower than height of snapshot", height, m_snapshots.back().BalanceHeight);
-		} else if (height == m_snapshots.back().BalanceHeight) {
-			popSnapshot();
+		if (height <= m_notCommittedSnapshots.back().BalanceHeight) {
+			while(!m_notCommittedSnapshots.empty() &&  m_notCommittedSnapshots.back().BalanceHeight >= height) {
+				m_notCommittedSnapshots.pop_back();
+			}
 			pushSnapshot(model::BalanceSnapshot{amount, height});
-		} else if (height > m_snapshots.back().BalanceHeight) {
+		} else if (height > m_notCommittedSnapshots.back().BalanceHeight) {
 			pushSnapshot(model::BalanceSnapshot{amount, height});
-		}
-
-		while(m_snapshots.size() > 1 && m_snapshots[m_snapshots.size() - 1].Amount == m_snapshots[m_snapshots.size() - 2].Amount) {
-			popSnapshot();
 		}
 	}
 
-	void AccountBalances::pushSnapshot(const model::BalanceSnapshot& snapshot) {
+	void AccountBalances::pushSnapshot(const model::BalanceSnapshot& snapshot, bool committed) {
 		if (!m_accountState) {
 			CATAPULT_THROW_RUNTIME_ERROR("each balance must have own account");
 		}
@@ -179,14 +203,10 @@ namespace catapult { namespace state {
 					"height of snapshot can't be lower than height of account", snapshot.BalanceHeight, m_accountState->AddressHeight);
 		}
 
-		m_snapshots.push_back(snapshot);
-	}
-
-	void AccountBalances::popSnapshot(bool back) {
-		if (back) {
-			m_snapshots.pop_back();
+		if (committed) {
+			m_snapshots.push_back(snapshot);
 		} else {
-			m_snapshots.pop_front();
+			m_notCommittedSnapshots.push_back(snapshot);
 		}
 	}
 }}
