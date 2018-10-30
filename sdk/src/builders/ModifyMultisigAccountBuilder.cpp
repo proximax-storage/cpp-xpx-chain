@@ -36,8 +36,8 @@ namespace catapult { namespace builders {
 		m_minApprovalDelta = minApprovalDelta;
 	}
 
-	void ModifyMultisigAccountBuilder::addCosignatoryModification(model::CosignatoryModificationType type, const Key& key) {
-		m_modifications.push_back(model::CosignatoryModification{ type, key });
+	void ModifyMultisigAccountBuilder::addCosignatoryModification(model::CosignatoryModificationType type, const Key& key, bool changeReputation) {
+		m_modifications.push_back(model::CosignatoryModification{ type, key, changeReputation });
 	}
 
 	template<typename TransactionType>

@@ -233,7 +233,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(CanAddCosignatories) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Add, keys[1] }, { Add, keys[2] }, { Add, keys[3] } };
+		Modifications modifications = { { Add, keys[1], false }, { Add, keys[2], false }, { Add, keys[3], false } };
 		auto notification = CreateNotification(keys[0], modifications);
 
 		// Act + Assert:
@@ -243,7 +243,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(CanConvertCosignatoryToMultisigAccount) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Add, keys[3] }, { Add, keys[4] } };
+		Modifications modifications = { { Add, keys[3], false }, { Add, keys[4], false } };
 		auto notification = CreateNotification(keys[1], modifications);
 
 		// Act + Assert:
@@ -253,7 +253,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(CanAddMultisigAccountAsACosignatory) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Add, keys[1] }, { Add, keys[4] } };
+		Modifications modifications = { { Add, keys[1], false }, { Add, keys[4], false } };
 		auto notification = CreateNotification(keys[0], modifications);
 
 		// Act + Assert:
@@ -267,7 +267,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(CanAddAndRemoveCosignatories) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Add, keys[1] }, { Del, keys[2] }, { Del, keys[3] }, { Add, keys[4] } };
+		Modifications modifications = { { Add, keys[1], false }, { Del, keys[2], false }, { Del, keys[3], false }, { Add, keys[4], false } };
 		auto notification = CreateNotification(keys[0], modifications);
 
 		// Act + Assert:
@@ -281,7 +281,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(RemovingCosignatory_RemovesCosignatoryWithNoLinks_RemovesMultisigAccountWithNoLinks) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Del, keys[1] } };
+		Modifications modifications = { { Del, keys[1], false } };
 		auto notification = CreateNotification(keys[0], modifications);
 
 		// Act + Assert:
@@ -291,7 +291,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(RemovingCosignatory_RemovesCosignatoryWithNoLinks_LeavesMultisigAccountWithCosignatories) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Del, keys[2] } };
+		Modifications modifications = { { Del, keys[2], false } };
 		auto notification = CreateNotification(keys[0], modifications);
 
 		// Act + Assert:
@@ -301,7 +301,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(RemovingCosignatory_RemovesCosignatoryWithNoLinks_LeavesMultisigAccountWithMultisigAccounts) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Del, keys[2] } };
+		Modifications modifications = { { Del, keys[2], false } };
 		auto notification = CreateNotification(keys[1], modifications);
 
 		// Act + Assert:
@@ -311,7 +311,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(RemovingCosignatory_LeavesCosignatoryWithCosignatories_RemovesMultisigAccountWitNoLinks) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Del, keys[1] } };
+		Modifications modifications = { { Del, keys[1], false } };
 		auto notification = CreateNotification(keys[0], modifications);
 
 		// Act + Assert:
@@ -321,7 +321,7 @@ namespace catapult { namespace observers {
 	NOTIFY_MODE_BASED_TRAITS(RemovingCosignatory_LeavesCosignatoryWithMultisigAccounts_RemovesMultisigAccountWitNoLinks) {
 		// Arrange:
 		auto keys = test::GenerateKeys(10);
-		Modifications modifications = { { Del, keys[2] } };
+		Modifications modifications = { { Del, keys[2], false } };
 		auto notification = CreateNotification(keys[0], modifications);
 
 		// Act + Assert:

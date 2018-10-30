@@ -103,9 +103,9 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
 		auto* pModification = pTransaction->ModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
 
 		// Assert:
 		AssertNumNotifications<TTraits>(2, *pTransaction);
@@ -115,9 +115,9 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
 		auto* pModification = pTransaction->ModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>(), false };
 
 		// Assert:
 		AssertNumNotifications<TTraits>(4, *pTransaction, [](const auto& sub) {
@@ -164,9 +164,9 @@ namespace catapult { namespace plugins {
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
 		auto* pModification = pTransaction->ModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>(), false };
 
 		// Act:
 		pPlugin->publish(*pTransaction, sub);
@@ -206,9 +206,9 @@ namespace catapult { namespace plugins {
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
 		auto* pModification = pTransaction->ModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Add, test::GenerateRandomData<Key_Size>(), false };
 
 		// Act:
 		pPlugin->publish(*pTransaction, sub);
@@ -230,9 +230,9 @@ namespace catapult { namespace plugins {
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
 		auto* pModification = pTransaction->ModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>(), false };
 
 		// Act:
 		pPlugin->publish(*pTransaction, sub);

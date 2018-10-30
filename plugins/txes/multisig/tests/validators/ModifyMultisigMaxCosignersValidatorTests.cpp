@@ -63,7 +63,7 @@ namespace catapult { namespace validators {
 
 			std::vector<model::CosignatoryModification> modifications;
 			for (auto modificationType : modificationTypes)
-				modifications.push_back({ modificationType, test::GenerateRandomData<Key_Size>() });
+				modifications.push_back({ modificationType, test::GenerateRandomData<Key_Size>(), false });
 
 			model::ModifyMultisigCosignersNotification notification(
 					signer,

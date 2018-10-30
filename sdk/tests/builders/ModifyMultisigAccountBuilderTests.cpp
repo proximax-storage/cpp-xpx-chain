@@ -116,7 +116,7 @@ namespace catapult { namespace builders {
 			Modifications modifications;
 			for (auto i = 0u; i < count; ++i) {
 				auto type = 0 == i % 2 ? model::CosignatoryModificationType::Add : model::CosignatoryModificationType::Del;
-				modifications.push_back(model::CosignatoryModification{ type, test::GenerateRandomData<Key_Size>() });
+				modifications.push_back(model::CosignatoryModification{ type, test::GenerateRandomData<Key_Size>(), false });
 			}
 
 			return modifications;
@@ -124,7 +124,8 @@ namespace catapult { namespace builders {
 
 		void AddAll(ModifyMultisigAccountBuilder& builder, const Modifications& modifications) {
 			for (const auto& modification : modifications)
-				builder.addCosignatoryModification(modification.ModificationType, modification.CosignatoryPublicKey);
+				builder.addCosignatoryModification(modification.ModificationType,
+					modification.CosignatoryPublicKey, modification.ChangeReputation);
 		}
 	}
 

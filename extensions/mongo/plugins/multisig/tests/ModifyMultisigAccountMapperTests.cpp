@@ -45,7 +45,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			builder.setMinRemovalDelta(minRemovalDelta);
 			builder.setMinApprovalDelta(minApprovalDelta);
 			for (const auto& modification : modifications)
-				builder.addCosignatoryModification(modification.ModificationType, modification.CosignatoryPublicKey);
+				builder.addCosignatoryModification(modification.ModificationType, modification.CosignatoryPublicKey, false);
 
 			return builder;
 		}
@@ -102,15 +102,15 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	PLUGIN_TEST(CanMapModifiyMultisigAccountTransactionWithSingleModification) {
 		// Assert:
-		AssertCanMapModifyMultisigAccountTransaction<TTraits>(3, 5, { { ModificationType::Add, test::GenerateRandomData<Key_Size>() } });
+		AssertCanMapModifyMultisigAccountTransaction<TTraits>(3, 5, { { ModificationType::Add, test::GenerateRandomData<Key_Size>(), false } });
 	}
 
 	PLUGIN_TEST(CanMapModifiyMultisigAccountTransactionWithMultipleModification) {
 		// Assert:
 		AssertCanMapModifyMultisigAccountTransaction<TTraits>(3, 5, {
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Del, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
+			{ ModificationType::Add, test::GenerateRandomData<Key_Size>(), false },
+			{ ModificationType::Del, test::GenerateRandomData<Key_Size>(), false },
+			{ ModificationType::Add, test::GenerateRandomData<Key_Size>(), false },
 		});
 	}
 

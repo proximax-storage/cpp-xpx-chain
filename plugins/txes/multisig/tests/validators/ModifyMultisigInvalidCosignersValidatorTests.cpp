@@ -66,7 +66,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto keys = test::GenerateKeys(4);
 			const auto& signer = keys[0];
-			auto modifications = Modifications{ { Add, keys[1] }, { operation, keys[2] }, { Add, keys[3] } };
+			auto modifications = Modifications{ { Add, keys[1], false }, { operation, keys[2], false }, { Add, keys[3], false } };
 			auto notification = CreateNotification(signer, modifications);
 
 			auto cache = test::MultisigCacheFactory::Create();
@@ -101,7 +101,7 @@ namespace catapult { namespace validators {
 			const auto& signer = keys[0];
 			Modifications modifications;
 			for (auto i = 0u; i < settings.size(); ++i)
-				modifications.push_back({ settings[i].Operation, keys[1 + i] });
+				modifications.push_back({ settings[i].Operation, keys[1 + i], false });
 
 			auto notification = CreateNotification(signer, modifications);
 

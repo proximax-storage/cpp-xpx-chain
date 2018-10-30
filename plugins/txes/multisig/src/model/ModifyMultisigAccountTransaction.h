@@ -43,6 +43,9 @@ namespace catapult { namespace model {
 
 		/// Cosignatory account public key.
 		Key CosignatoryPublicKey;
+
+		// True if cosig's reputation should be changed based on modification.
+		bool ChangeReputation;
 	};
 
 	/// Binary layout for a modify multisig account transaction body.

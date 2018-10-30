@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 		auto key = test::GenerateRandomData<Key_Size>();
 
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, { { Add, key } });
+		AssertValidationResult(ValidationResult::Success, { { Add, key, false } });
 	}
 
 	TEST(TEST_CLASS, SuccessWhenSingleDelModificationIsPresent) {
@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
 		auto key = test::GenerateRandomData<Key_Size>();
 
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, { { Del, key } });
+		AssertValidationResult(ValidationResult::Success, { { Del, key, false } });
 	}
 
 	TEST(TEST_CLASS, FailureWhenSingleUnsupportedModificationIsPresent) {
@@ -78,7 +78,7 @@ namespace catapult { namespace validators {
 		constexpr auto expectedResult = Failure_Multisig_Modify_Unsupported_Modification_Type;
 		for (auto type : { 2, 3, 0xFF }) {
 			CATAPULT_LOG(debug) << "validating modification with type " << type;
-			AssertValidationResult(expectedResult, { { static_cast<model::CosignatoryModificationType>(type), key } });
+			AssertValidationResult(expectedResult, { { static_cast<model::CosignatoryModificationType>(type), key, false } });
 		}
 	}
 
@@ -91,7 +91,7 @@ namespace catapult { namespace validators {
 
 			for (auto modificationType : modificationTypes) {
 				auto key = test::GenerateRandomData<Key_Size>();
-				modifications.push_back({ modificationType, key });
+				modifications.push_back({ modificationType, key, false });
 			}
 
 			// Assert:
@@ -131,7 +131,7 @@ namespace catapult { namespace validators {
 			std::vector<model::CosignatoryModification> modifications;
 
 			for (auto modificationType : modificationTypes)
-				modifications.push_back({ modificationType, key });
+				modifications.push_back({ modificationType, key, false });
 
 			// Assert:
 			AssertValidationResult(expectedResult, modifications);

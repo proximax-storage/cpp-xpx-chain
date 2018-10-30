@@ -94,7 +94,7 @@ namespace catapult { namespace model {
 		auto realSize = TransactionType::CalculateRealSize(transaction);
 
 		// Assert:
-		EXPECT_EQ(33u, sizeof(CosignatoryModification));
+		EXPECT_EQ(34u, sizeof(CosignatoryModification));
 		EXPECT_EQ(sizeof(TransactionType) + 11 * sizeof(CosignatoryModification), realSize);
 	}
 

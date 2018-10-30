@@ -45,7 +45,8 @@ namespace catapult { namespace builders {
 		void setMinApprovalDelta(int8_t minApprovalDelta);
 
 		/// Adds a cosignatory modification around \a type and \a key.
-		void addCosignatoryModification(model::CosignatoryModificationType type, const Key& key);
+		void addCosignatoryModification(model::CosignatoryModificationType type,
+			const Key& key, bool changeReputation);
 
 	public:
 		/// Builds a new modify multisig account transaction.
