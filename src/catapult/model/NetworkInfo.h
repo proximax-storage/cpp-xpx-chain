@@ -33,6 +33,12 @@ namespace catapult { namespace model {
 	/* Mijin test network identifier. */ \
 	ENUM_VALUE(Mijin_Test, 0x90) \
 	\
+	/* Private network identifier. */ \
+	ENUM_VALUE(Private, 0x61) \
+	\
+	/* Private test network identifier. */ \
+	ENUM_VALUE(Private_Test, 0x91) \
+	\
 	/* Public main network identifier. */ \
 	ENUM_VALUE(Public, 0x68) \
 	\
