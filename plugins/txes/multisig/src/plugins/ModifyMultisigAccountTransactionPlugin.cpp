@@ -36,7 +36,7 @@ namespace catapult { namespace plugins {
 				// raise new cosigner notifications first because they are used for multisig loop detection
 				const auto* pModifications = transaction.ModificationsPtr();
 				for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
-					if (model::CosignatoryModificationType::Add == pModifications[i].ModificationType)
+					if (model::IsCosignatoryAdd(pModifications[i].ModificationType))
 						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModifications[i].CosignatoryPublicKey));
 				}
 

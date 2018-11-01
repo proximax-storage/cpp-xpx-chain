@@ -42,10 +42,12 @@ namespace catapult { namespace validators {
 			for (auto i = 0u; i < modifyMultisig.ModificationsCount; ++i) {
 				switch (pModification->ModificationType) {
 				case model::CosignatoryModificationType::Add:
+				case model::CosignatoryModificationType::AddToContract:
 					hasAdds = true;
 					break;
 
 				case model::CosignatoryModificationType::Del:
+				case model::CosignatoryModificationType::DelFromContract:
 					hasDeletes = true;
 					break;
 				}

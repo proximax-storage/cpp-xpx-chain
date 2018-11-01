@@ -32,8 +32,28 @@ namespace catapult { namespace model {
 		Add,
 
 		/// Remove cosignatory.
-		Del
+		Del,
+
+		/// Add cosignatory for contract execution.
+		AddToContract,
+
+		/// Remove cosignatory due to contract execution failure.
+		DelFromContract,
 	};
+
+	CATAPULT_INLINE bool IsCosignatoryAdd(CosignatoryModificationType type) {
+		bool res = false;
+		switch (type) {
+			case CosignatoryModificationType::Add:
+			case CosignatoryModificationType::AddToContract:
+				res = true;
+				break;
+			case CosignatoryModificationType::Del:
+			case CosignatoryModificationType::DelFromContract:
+				break;
+		}
+		return res;
+	}
 
 	/// Binary layout for cosignatory modification.
 	struct CosignatoryModification {

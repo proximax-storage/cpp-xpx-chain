@@ -79,7 +79,7 @@ namespace catapult { namespace observers {
 		MultisigAccountFacade multisigAccountFacade(multisigCache, notification.Signer);
 		const auto* pModifications = notification.ModificationsPtr;
 		for (auto i = 0u; i < notification.ModificationsCount; ++i) {
-			auto isNotificationAdd = model::CosignatoryModificationType::Add == pModifications[i].ModificationType;
+			auto isNotificationAdd = model::IsCosignatoryAdd(pModifications[i].ModificationType);
 			auto isNotificationForward = NotifyMode::Commit == context.Mode;
 
 			if (isNotificationAdd == isNotificationForward)
