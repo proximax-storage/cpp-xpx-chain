@@ -52,12 +52,12 @@ namespace catapult { namespace state {
 	public:
 		/// Returns const ref to snapshots.
 		const std::list<model::BalanceSnapshot>& getSnapshots() const {
-			return m_snapshots;
+			return m_localSnapshots;
 		}
 
 		/// Returns ref to snapshots.
 		std::list<model::BalanceSnapshot>& getSnapshots() {
-			return m_snapshots;
+			return m_localSnapshots;
 		}
 
 		/// Returns the number of mosaics owned.
@@ -85,8 +85,8 @@ namespace catapult { namespace state {
 		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
 		AccountBalances& debit(MosaicId mosaicId, Amount amount, Height height);
 
-		/// Commit snapshots from m_notCommittedSnapshots queue to m_snapshots queue
-		/// During commit we can remove snapshots from front of m_snapshots, to have valid history of account
+		/// Commit snapshots from m_remoteSnapshots queue to m_localSnapshots queue
+		/// During commit we can remove snapshots from front of m_localSnapshots, to have valid history of account
 		void commitSnapshots();
 
 		/// Check do we need to clean up the deque at \a height with \a config
@@ -104,8 +104,8 @@ namespace catapult { namespace state {
 
 	private:
 		CompactMosaicUnorderedMap m_balances;
-		std::list<model::BalanceSnapshot> m_snapshots;
-		std::list<model::BalanceSnapshot> m_notCommittedSnapshots;
+		std::list<model::BalanceSnapshot> m_localSnapshots;
+		std::list<model::BalanceSnapshot> m_remoteSnapshots;
 		AccountState* m_accountState = nullptr;
 	};
 }}
