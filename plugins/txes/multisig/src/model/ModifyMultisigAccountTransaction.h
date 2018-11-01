@@ -55,6 +55,10 @@ namespace catapult { namespace model {
 		return res;
 	}
 
+	constexpr bool IsValidModificationType(model::CosignatoryModificationType type) {
+		return model::CosignatoryModificationType::Add <= type && model::CosignatoryModificationType::DelFromContract >= type;
+	}
+
 	/// Binary layout for cosignatory modification.
 	struct CosignatoryModification {
 	public:

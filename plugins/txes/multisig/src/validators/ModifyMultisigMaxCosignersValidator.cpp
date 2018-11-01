@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 
 			const auto* pCosignatoryModification = notification.ModificationsPtr;
 			for (auto i = 0u; i < notification.ModificationsCount; ++i) {
-				if (model::CosignatoryModificationType::Add == pCosignatoryModification->ModificationType)
+				if (model::IsCosignatoryAdd(pCosignatoryModification->ModificationType))
 					++numCosignatories;
 				else
 					--numCosignatories;

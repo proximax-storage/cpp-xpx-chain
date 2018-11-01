@@ -40,15 +40,10 @@ namespace catapult { namespace validators {
 			const auto& modifyMultisig = static_cast<const model::EmbeddedModifyMultisigAccountTransaction&>(transaction);
 			const auto* pModification = modifyMultisig.ModificationsPtr();
 			for (auto i = 0u; i < modifyMultisig.ModificationsCount; ++i) {
-				switch (pModification->ModificationType) {
-				case model::CosignatoryModificationType::Add:
-				case model::CosignatoryModificationType::AddToContract:
-					hasAdds = true;
-					break;
+				hasAdds = model::IsCosignatoryAdd(pModification->ModificationType);
+				hasDeletes = !hasAdds;
 
-				case model::CosignatoryModificationType::Del:
-				case model::CosignatoryModificationType::DelFromContract:
-					hasDeletes = true;
+				if (hasAdds && hasDeletes) {
 					break;
 				}
 

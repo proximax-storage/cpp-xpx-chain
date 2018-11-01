@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 
 		if (!multisigCache.contains(notification.Signer)) {
 			for (auto i = 0u; i < notification.ModificationsCount; ++i) {
-				if (model::CosignatoryModificationType::Del == pModifications[i].ModificationType)
+				if (!model::IsCosignatoryAdd(pModifications[i].ModificationType))
 					return Failure_Multisig_Modify_Unknown_Multisig_Account;
 			}
 
@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 		const auto& multisigEntry = multisigCache.get(notification.Signer);
 		for (auto i = 0u; i < notification.ModificationsCount; ++i) {
 			auto isCosignatory = multisigEntry.hasCosignatory(pModifications[i].CosignatoryPublicKey);
-			auto isEnablingCosignatory = model::CosignatoryModificationType::Add == pModifications[i].ModificationType;
+			auto isEnablingCosignatory = model::IsCosignatoryAdd(pModifications[i].ModificationType);
 
 			if (!isEnablingCosignatory && !isCosignatory)
 				return Failure_Multisig_Modify_Not_A_Cosigner;

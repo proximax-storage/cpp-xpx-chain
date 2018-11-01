@@ -26,22 +26,16 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMultisigCosignersNotification;
 
-	namespace {
-		constexpr bool IsValidModificationType(model::CosignatoryModificationType type) {
-			return model::CosignatoryModificationType::Add == type || model::CosignatoryModificationType::Del == type;
-		}
-	}
-
 	DEFINE_STATELESS_VALIDATOR(ModifyMultisigCosigners, [](const auto& notification) {
 		utils::KeyPointerSet addedAccounts;
 		utils::KeyPointerSet removedAccounts;
 
 		auto pModifications = notification.ModificationsPtr;
 		for (auto i = 0u; i < notification.ModificationsCount; ++i) {
-			if (!IsValidModificationType(pModifications[i].ModificationType))
+			if (!model::IsValidModificationType(pModifications[i].ModificationType))
 				return Failure_Multisig_Modify_Unsupported_Modification_Type;
 
-			auto& accounts = model::CosignatoryModificationType::Add == pModifications[i].ModificationType
+			auto& accounts = model::IsCosignatoryAdd(pModifications[i].ModificationType)
 					? addedAccounts
 					: removedAccounts;
 			const auto& oppositeAccounts = &accounts == &addedAccounts ? removedAccounts : addedAccounts;
