@@ -63,10 +63,10 @@ namespace catapult { namespace state {
 		for (const auto& pair : accountBalances)
 			m_balances.insert(pair);
 
-		for (const auto& snapshot : accountBalances.m_snapshots)
+		for (const auto& snapshot : accountBalances.m_localSnapshots)
 			pushSnapshot(snapshot, true /* committed */);
 
-		for (const auto& snapshot : accountBalances.m_notCommittedSnapshots)
+		for (const auto& snapshot : accountBalances.m_remoteSnapshots)
 			pushSnapshot(snapshot, false /* committed */);
 
 		return *this;
@@ -85,13 +85,13 @@ namespace catapult { namespace state {
 
 		auto iter = m_balances.find(mosaicId);
 		if (m_balances.end() == iter) {
-			if (m_notCommittedSnapshots.empty() && m_snapshots.empty()) {
+			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
 				maybePushSnapshot(mosaicId, Amount(0), height - Height(1));
 			}
 			m_balances.insert(std::make_pair(mosaicId, amount));
 			maybePushSnapshot(mosaicId, amount, height);
 		} else {
-			if (m_notCommittedSnapshots.empty() && m_snapshots.empty()) {
+			if (m_remoteSnapshots.empty() && m_localSnapshots.empty()) {
 				maybePushSnapshot(mosaicId, iter->second, height - Height(1));
 			}
 			iter->second = iter->second + amount;
@@ -125,20 +125,20 @@ namespace catapult { namespace state {
 	}
 
 	void AccountBalances::commitSnapshots() {
-		if (m_notCommittedSnapshots.empty()) {
+		if (m_remoteSnapshots.empty()) {
 			return;
 		}
 
-		while (!m_snapshots.empty() && m_snapshots.back().BalanceHeight >= m_notCommittedSnapshots.front().BalanceHeight) {
-			m_snapshots.pop_back();
+		while (!m_localSnapshots.empty() && m_localSnapshots.back().BalanceHeight >= m_remoteSnapshots.front().BalanceHeight) {
+			m_localSnapshots.pop_back();
 		}
 
-		while (!m_snapshots.empty() && !m_notCommittedSnapshots.empty()
-				&& m_snapshots.back().Amount == m_notCommittedSnapshots.front().Amount) {
-			m_notCommittedSnapshots.pop_front();
+		while (!m_localSnapshots.empty() && !m_remoteSnapshots.empty()
+				&& m_localSnapshots.back().Amount == m_remoteSnapshots.front().Amount) {
+			m_remoteSnapshots.pop_front();
 		}
 
-		m_snapshots.splice(m_snapshots.end(), m_notCommittedSnapshots);
+		m_localSnapshots.splice(m_localSnapshots.end(), m_remoteSnapshots);
 	}
 
 	void AccountBalances::maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config) {
@@ -150,25 +150,25 @@ namespace catapult { namespace state {
 
 		auto stableHeight = height - unstableHeight;
 
-		while(!m_snapshots.empty() && m_snapshots.front().BalanceHeight <= stableHeight) {
-			m_snapshots.pop_front();
+		while(!m_localSnapshots.empty() && m_localSnapshots.front().BalanceHeight <= stableHeight) {
+			m_localSnapshots.pop_front();
 		}
 	}
 
 	Amount AccountBalances::getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
-		if (m_snapshots.empty() && m_notCommittedSnapshots.empty()) {
+		if (m_localSnapshots.empty() && m_remoteSnapshots.empty()) {
 			auto iter = m_balances.find(Xpx_Id);
 			return m_balances.end() == iter ? Amount(0) : iter->second;
 		}
 
-		if (m_notCommittedSnapshots.empty()) {
-			return minSnapshot(m_snapshots, height, importanceGrouping)->Amount;
-		} else if (m_snapshots.empty()) {
-			return minSnapshot(m_notCommittedSnapshots, height, importanceGrouping)->Amount;
+		if (m_remoteSnapshots.empty()) {
+			return minSnapshot(m_localSnapshots, height, importanceGrouping)->Amount;
+		} else if (m_localSnapshots.empty()) {
+			return minSnapshot(m_remoteSnapshots, height, importanceGrouping)->Amount;
 		} else {
 			return std::min(
-				minSnapshot(m_snapshots, height, importanceGrouping)->Amount,
-				minSnapshot(m_notCommittedSnapshots, height, importanceGrouping)->Amount
+				minSnapshot(m_localSnapshots, height, importanceGrouping)->Amount,
+				minSnapshot(m_remoteSnapshots, height, importanceGrouping)->Amount
 			);
 		}
 	}
@@ -178,17 +178,17 @@ namespace catapult { namespace state {
 			return;
 		}
 
-		if (m_notCommittedSnapshots.empty()) {
+		if (m_remoteSnapshots.empty()) {
 			pushSnapshot(model::BalanceSnapshot{amount, height});
 			return;
 		}
 
-		if (height <= m_notCommittedSnapshots.back().BalanceHeight) {
-			while(!m_notCommittedSnapshots.empty() &&  m_notCommittedSnapshots.back().BalanceHeight >= height) {
-				m_notCommittedSnapshots.pop_back();
+		if (height <= m_remoteSnapshots.back().BalanceHeight) {
+			while(!m_remoteSnapshots.empty() &&  m_remoteSnapshots.back().BalanceHeight >= height) {
+				m_remoteSnapshots.pop_back();
 			}
 			pushSnapshot(model::BalanceSnapshot{amount, height});
-		} else if (height > m_notCommittedSnapshots.back().BalanceHeight) {
+		} else if (height > m_remoteSnapshots.back().BalanceHeight) {
 			pushSnapshot(model::BalanceSnapshot{amount, height});
 		}
 	}
@@ -204,9 +204,9 @@ namespace catapult { namespace state {
 		}
 
 		if (committed) {
-			m_snapshots.push_back(snapshot);
+			m_localSnapshots.push_back(snapshot);
 		} else {
-			m_notCommittedSnapshots.push_back(snapshot);
+			m_remoteSnapshots.push_back(snapshot);
 		}
 	}
 }}
