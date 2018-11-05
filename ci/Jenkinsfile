@@ -14,7 +14,8 @@ node {
                 mkdir _build 
                 cd _build
                 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so .. 
-                make
+		make -j4 publish
+                make -j4
 
             """
             // TODO: OS details should be Ubuntu. Build catapult-server inside the catapult-server-build-image Docker container
