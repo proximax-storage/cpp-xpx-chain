@@ -27,6 +27,7 @@ namespace catapult { namespace chain {
 		constexpr uint64_t GAMMA_NUMERATOR{64};
 		constexpr uint64_t GAMMA_DENOMINATOR{100};
 		constexpr uint32_t SMOOTHING_FACTOR_DENOMINATOR{1000};
+		constexpr uint64_t NEMESIS_BLOCK_DIFFICULTY{1000};
 
 		constexpr utils::TimeSpan TimeDifference(const Timestamp& firstTimestamp, const Timestamp& lastTimestamp) {
 			return utils::TimeSpan::FromDifference(lastTimestamp, firstTimestamp);
@@ -39,8 +40,12 @@ namespace catapult { namespace chain {
 		size_t historySize = 0;
 		for (auto iter = difficultyInfos.begin(); iter != difficultyInfos.end(); historySize++, iter++) {}
 
-		if (historySize < 2)
-			return Difficulty();
+		if (historySize < 2) {
+			if (historySize == 1 && difficultyInfos.begin()->BlockHeight == Height(1)) {
+				return Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+			}
+			return Difficulty(0);
+		}
 
 		auto firstTimestamp = difficultyInfos.begin()->BlockTimestamp;
 
