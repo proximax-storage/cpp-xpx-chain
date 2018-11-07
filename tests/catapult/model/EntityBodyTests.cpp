@@ -31,7 +31,7 @@ namespace catapult { namespace model {
 		// Assert:
 		EXPECT_EQ(0x0000u, MakeVersion(NetworkIdentifier::Zero, 0)); // zero version
 		EXPECT_EQ(0x9002u, MakeVersion(NetworkIdentifier::Mijin_Test, 2)); // non zero version
-		EXPECT_EQ(0x6802u, MakeVersion(NetworkIdentifier::Public, 2)); // vary network
+		EXPECT_EQ(0xB802u, MakeVersion(NetworkIdentifier::Public, 2)); // vary network
 		EXPECT_EQ(0x9054u, MakeVersion(NetworkIdentifier::Mijin_Test, 0x54)); // vary version
 
 		EXPECT_EQ(0xFF54u, MakeVersion(static_cast<NetworkIdentifier>(0xFF), 0x54)); // max network
