@@ -23,15 +23,21 @@
 
 namespace catapult { namespace chain {
 
+	namespace {
+		constexpr uint64_t GAMMA_NUMERATOR{64};
+		constexpr uint64_t GAMMA_DENOMINATOR{100};
+		constexpr uint32_t SMOOTHING_FACTOR_DENOMINATOR{1000};
+
+		constexpr utils::TimeSpan TimeDifference(const Timestamp& firstTimestamp, const Timestamp& lastTimestamp) {
+			return utils::TimeSpan::FromDifference(lastTimestamp, firstTimestamp);
+		}
+	}
+
 	Difficulty CalculateDifficulty(const cache::DifficultyInfoRange& difficultyInfos, const model::BlockChainConfiguration& config) {
 		// note that difficultyInfos is sorted by both heights and timestamps, so the first info has the smallest
 		// height and earliest timestamp and the last info has the largest height and latest timestamp
 		size_t historySize = 0;
-		Difficulty::ValueType averageDifficulty = 0;
-		for (const auto& difficultyInfo : difficultyInfos) {
-			++historySize;
-			averageDifficulty += difficultyInfo.BlockDifficulty.unwrap();
-		}
+		for (auto iter = difficultyInfos.begin(); iter != difficultyInfos.end(); historySize++, iter++) {}
 
 		if (historySize < 2)
 			return Difficulty();
@@ -40,24 +46,32 @@ namespace catapult { namespace chain {
 
 		const auto& lastInfo = *(--difficultyInfos.end());
 		auto lastTimestamp = lastInfo.BlockTimestamp;
-		auto lastDifficulty = lastInfo.BlockDifficulty.unwrap();
+		auto timeDiff = TimeDifference(lastTimestamp, firstTimestamp);
 
-		auto timeDiff = (lastTimestamp - firstTimestamp).unwrap();
-		averageDifficulty /= historySize;
+		// Calculate the base target and return it as difficulty:
+		// If S > 60
+		//     Tb = (Tp * Min(S, MAXRATIO)) / 60
+		// Else
+		//     Tb = Tp - Tp * GAMMA * (60 - Max(S, MINRATIO)) / 60;
+		// where:
+		// S - average block time for the last 3 blocks
+		// Tp - previous base target
+		// Tb - calculated base target
+		boost::multiprecision::uint128_t Tp = lastInfo.BlockDifficulty.unwrap();
+		auto S = (timeDiff / (historySize - 1)).seconds();
+		auto RATIO = config.BlockGenerationTargetTime.seconds();
+		if (RATIO <= 0)
+		{
+			CATAPULT_THROW_INVALID_ARGUMENT("BlockGenerationTargetTime is invalid or not set");
+		}
+		auto factor = config.BlockTimeSmoothingFactor / SMOOTHING_FACTOR_DENOMINATOR;
+		auto MINRATIO = RATIO - factor;
+		auto MAXRATIO = RATIO + factor;
+		Tp = (S > RATIO) ?
+			Tp * std::min(S, MAXRATIO) / RATIO :
+			Tp - Tp * GAMMA_NUMERATOR * (RATIO - std::max(S, MINRATIO) ) / GAMMA_DENOMINATOR / RATIO;
 
-		boost::multiprecision::uint128_t largeDifficulty = averageDifficulty;
-		largeDifficulty *= config.BlockGenerationTargetTime.millis();
-		largeDifficulty *= (historySize - 1);
-		largeDifficulty /= timeDiff;
-		auto difficulty = static_cast<uint64_t>(largeDifficulty);
-
-		// clamp difficulty changes to 5%
-		if (19 * lastDifficulty > 20 * difficulty)
-			difficulty = (19 * lastDifficulty) / 20;
-		else if (21 * lastDifficulty < 20 * difficulty)
-			difficulty = (21 * lastDifficulty) / 20;
-
-		return Difficulty(difficulty);
+		return Difficulty(Tp.convert_to<uint64_t>());
 	}
 
 	namespace {

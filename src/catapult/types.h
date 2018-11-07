@@ -22,6 +22,7 @@
 #include "utils/ClampedBaseValue.h"
 #include "utils/RawBuffer.h"
 #include <array>
+#include <limits>
 
 namespace catapult {
 
@@ -57,9 +58,9 @@ namespace catapult {
 
 	struct Difficulty_tag {
 	public:
-		static constexpr uint64_t Default_Value = 100'000'000'000'000;
-		static constexpr uint64_t Min_Value = Default_Value / 10;
-		static constexpr uint64_t Max_Value = Default_Value * 10;
+		static constexpr uint64_t Default_Value = 0;
+		static constexpr uint64_t Min_Value = 0;
+		static constexpr uint64_t Max_Value = std::numeric_limits<uint64_t>::max();
 	};
 	using Difficulty = utils::ClampedBaseValue<uint64_t, Difficulty_tag>;
 

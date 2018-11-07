@@ -18,21 +18,21 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#include "catapult/model/ImportanceHeight.h"
+#include "Observers.h"
+#include "catapult/cache_core/AccountStateCache.h"
 
-namespace catapult {
-	namespace cache { class AccountStateCacheDelta; }
-	namespace ionet { class NodeContainer; }
-}
+namespace catapult { namespace observers {
 
-namespace catapult { namespace test {
+	using Notification = model::BlockNotification;
 
-	/// Adds an account with \a publicKey, \a importance and \a importanceHeight to account state cache \a delta.
-	void AddAccount(
-			cache::AccountStateCacheDelta& delta,
-			const Key& publicKey);
+	DECLARE_OBSERVER(SnapshotCleanUp, Notification)(const model::BlockChainConfiguration& config) {
+		return MAKE_OBSERVER(SnapshotCleanUp, Notification, [&config](const auto&, const ObserverContext& context) {
+			auto& cache = context.Cache.sub<cache::AccountStateCache>();
+			auto updatedAddresses = cache.updatedAddresses();
 
-	/// Adds a node with \a identityKey and \a nodeName to node \a container.
-	void AddNode(ionet::NodeContainer& container, const Key& identityKey, const std::string& nodeName);
+			for (const auto& address : updatedAddresses) {
+				cache.get(address).Balances.maybeCleanUpSnapshots(context.Height, config);
+			}
+		});
+	}
 }}

@@ -162,11 +162,7 @@ namespace catapult { namespace harvesting {
 		constexpr Amount Account_Balance(1000);
 		constexpr auto Importance_Grouping = 234u;
 
-		auto ConvertToImportanceHeight(Height height) {
-			return model::ConvertToImportanceHeight(height, Importance_Grouping);
-		}
-
-		auto CreateCacheWithAccount(Height height, const Key& publicKey, model::ImportanceHeight importanceHeight) {
+		auto CreateCacheWithAccount(Height height, const Key& publicKey) {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.ImportanceGrouping = Importance_Grouping;
@@ -175,8 +171,7 @@ namespace catapult { namespace harvesting {
 
 			// - add an account
 			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
-			accountState.ImportanceInfo.set(Importance(123), importanceHeight);
-			accountState.Balances.credit(Xpx_Id, Account_Balance);
+			accountState.Balances.credit(Xpx_Id, Account_Balance, Height(100));
 
 			// - commit changes
 			cache.commit(height);
@@ -185,15 +180,11 @@ namespace catapult { namespace harvesting {
 	}
 
 	TEST(TEST_CLASS, HarvestingTaskDoesNotPruneEligibleAccount) {
-		// Arrange: eligible because next height and importance height match
+		// Arrange:
 		auto height = Height(2 * Importance_Grouping - 1);
-		auto importanceHeight = model::ImportanceHeight(Importance_Grouping);
 		auto keyPair = test::GenerateKeyPair();
-		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey(), importanceHeight));
+		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey()));
 		context.setMinHarvesterBalance(Account_Balance);
-
-		// Sanity:
-		EXPECT_EQ(importanceHeight, ConvertToImportanceHeight(height + Height(1)));
 
 		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
 			unlockedAccounts.modifier().add(std::move(keyPair));
@@ -207,39 +198,12 @@ namespace catapult { namespace harvesting {
 		});
 	}
 
-	TEST(TEST_CLASS, HarvestingTaskDoesPruneAccountIneligibleDueToImportanceHeight) {
-		// Arrange: ineligible because next height and importance height do not match
-		auto height = Height(2 * Importance_Grouping);
-		auto importanceHeight = model::ImportanceHeight(Importance_Grouping);
-		auto keyPair = test::GenerateKeyPair();
-		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey(), importanceHeight));
-		context.setMinHarvesterBalance(Account_Balance);
-
-		// Sanity:
-		EXPECT_NE(importanceHeight, ConvertToImportanceHeight(height + Height(1)));
-
-		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
-			unlockedAccounts.modifier().add(std::move(keyPair));
-
-			// Act:
-			auto result = task.Callback().get();
-
-			// Assert:
-			EXPECT_EQ(thread::TaskResult::Continue, result);
-			EXPECT_EQ(0u, unlockedAccounts.view().size());
-		});
-	}
-
 	TEST(TEST_CLASS, HarvestingTaskDoesPruneAccountIneligibleDueToBalance) {
 		// Arrange: ineligible because account balance is too low
 		auto height = Height(2 * Importance_Grouping - 1);
-		auto importanceHeight = model::ImportanceHeight(Importance_Grouping);
 		auto keyPair = test::GenerateKeyPair();
-		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey(), importanceHeight));
+		TestContext context(CreateCacheWithAccount(height, keyPair.publicKey()));
 		context.setMinHarvesterBalance(Account_Balance + Amount(1));
-
-		// Sanity:
-		EXPECT_EQ(importanceHeight, ConvertToImportanceHeight(height + Height(1)));
 
 		RunTaskTest(context, Task_Name, [keyPair = std::move(keyPair)](auto& unlockedAccounts, const auto& task) mutable {
 			unlockedAccounts.modifier().add(std::move(keyPair));

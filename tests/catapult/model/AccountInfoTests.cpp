@@ -36,24 +36,24 @@ namespace catapult { namespace model {
 				+ sizeof(Height) // address height
 				+ Key_Size // public key
 				+ sizeof(Height) // public key height
-				+ Importance_History_Size * sizeof(Importance) // account importances
-				+ Importance_History_Size * sizeof(ImportanceHeight) // account importance heights
-				+ sizeof(uint16_t); // number of mosaics
+				+ sizeof(uint16_t) // number of mosaics
+				+ sizeof(uint16_t); // number of snapshots
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(AccountInfo));
-		EXPECT_EQ(127u, sizeof(AccountInfo));
+		EXPECT_EQ(81u, sizeof(AccountInfo));
 	}
 
 	TEST(TEST_CLASS, AccountInfoMaxSizeHasCorrectValue) {
 		// Arrange:
 		auto expectedMaxSize =
 				sizeof(AccountInfo)
-				+ sizeof(Mosaic) * 65535; // size of mosaic * maximum number of mosaics
+				+ sizeof(Mosaic) * 65535 // size of mosaic * maximum number of mosaics
+				+ sizeof(BalanceSnapshot) * 65535; // size of snapshot * maximum number of snapshots
 
 		// Assert:
 		EXPECT_EQ(expectedMaxSize, AccountInfo_Max_Size);
-		EXPECT_EQ(127u + 16 * 65535, AccountInfo_Max_Size);
+		EXPECT_EQ(81u + 16 * 65535 + 16 * 65535, AccountInfo_Max_Size);
 	}
 
 	// region CalculateRealSize
@@ -63,12 +63,13 @@ namespace catapult { namespace model {
 		AccountInfo accountInfo;
 		accountInfo.Size = 0;
 		accountInfo.MosaicsCount = 100;
+		accountInfo.BalanceSnapshotCount = 100;
 
 		// Act:
 		auto realSize = AccountInfo::CalculateRealSize(accountInfo);
 
 		// Assert:
-		EXPECT_EQ(sizeof(AccountInfo) + 100 * sizeof(Mosaic), realSize);
+		EXPECT_EQ(sizeof(AccountInfo) + 100 * sizeof(Mosaic) + 100 * sizeof(BalanceSnapshot), realSize);
 	}
 
 	TEST(TEST_CLASS, CalculateRealSizeDoesNotOverflowWithMaxValues) {
@@ -81,7 +82,7 @@ namespace catapult { namespace model {
 		auto realSize = AccountInfo::CalculateRealSize(accountInfo);
 
 		// Assert:
-		EXPECT_EQ(sizeof(AccountInfo) + accountInfo.MosaicsCount * sizeof(Mosaic), realSize);
+		EXPECT_EQ(sizeof(AccountInfo) + accountInfo.MosaicsCount * sizeof(Mosaic) + accountInfo.BalanceSnapshotCount * sizeof(BalanceSnapshot), realSize);
 		EXPECT_GE(std::numeric_limits<uint32_t>::max(), realSize);
 	}
 
@@ -90,12 +91,13 @@ namespace catapult { namespace model {
 	// region data pointers
 
 	namespace {
-		struct AccountInfoTraits {
+		struct AccountInfoMosaicTraits {
 			static auto GenerateEntityWithAttachments(uint16_t count) {
 				uint32_t entitySize = sizeof(AccountInfo) + count * sizeof(Mosaic);
 				auto pAccountInfo = utils::MakeUniqueWithSize<AccountInfo>(entitySize);
 				pAccountInfo->Size = entitySize;
 				pAccountInfo->MosaicsCount = count;
+				pAccountInfo->BalanceSnapshotCount = 0;
 				return pAccountInfo;
 			}
 
@@ -104,9 +106,26 @@ namespace catapult { namespace model {
 				return entity.MosaicsPtr();
 			}
 		};
+
+		struct AccountInfoSnapshotTraits {
+			static auto GenerateEntityWithAttachments(uint16_t count) {
+				uint32_t entitySize = sizeof(AccountInfo) + count * sizeof(BalanceSnapshot);
+				auto pAccountInfo = utils::MakeUniqueWithSize<AccountInfo>(entitySize);
+				pAccountInfo->Size = entitySize;
+				pAccountInfo->MosaicsCount = 0;
+				pAccountInfo->BalanceSnapshotCount = count;
+				return pAccountInfo;
+			}
+
+			template<typename TEntity>
+			static auto GetAttachmentPointer(TEntity& entity) {
+				return entity.BalanceSnapshotPtr();
+			}
+		};
 	}
 
-	DEFINE_ATTACHMENT_POINTER_TESTS(TEST_CLASS, AccountInfoTraits) // MosaicsPtr
+	DEFINE_ATTACHMENT_POINTER_TESTS(TEST_CLASS, AccountInfoMosaicTraits) // MosaicsPtr
+	DEFINE_ATTACHMENT_POINTER_TESTS(TEST_CLASS, AccountInfoSnapshotTraits) // SnapshotPtr
 
 	// endregion
 
@@ -126,12 +145,6 @@ namespace catapult { namespace model {
 		EXPECT_EQ(Key(), pAccountInfo->PublicKey);
 		EXPECT_EQ(Height(0), pAccountInfo->PublicKeyHeight);
 		EXPECT_EQ(0, pAccountInfo->MosaicsCount);
-
-		for (auto i = 0u; i < Importance_History_Size; ++i) {
-			const auto message = "importance at " + std::to_string(i);
-			EXPECT_EQ(Importance(0), pAccountInfo->Importances[i]) << message;
-			EXPECT_EQ(model::ImportanceHeight(0), pAccountInfo->ImportanceHeights[i]) << message;
-		}
 	}
 
 	// endregion

@@ -30,11 +30,13 @@ namespace catapult { namespace cache {
 	BasicAccountStateCacheDelta::BasicAccountStateCacheDelta(
 			const AccountStateCacheTypes::BaseSetDeltaPointers& accountStateSets,
 			const AccountStateCacheTypes::Options& options,
-			const model::AddressSet& highValueAddresses)
+			const model::AddressSet& highValueAddresses,
+			model::AddressSet& addressesToUpdate)
 			: BasicAccountStateCacheDelta(
 					accountStateSets,
 					options,
 					highValueAddresses,
+					addressesToUpdate,
 					std::make_unique<AccountStateCacheDeltaMixins::KeyLookupAdapter>(
 							*accountStateSets.pKeyLookupMap,
 							*accountStateSets.pPrimary))
@@ -44,6 +46,7 @@ namespace catapult { namespace cache {
 			const AccountStateCacheTypes::BaseSetDeltaPointers& accountStateSets,
 			const AccountStateCacheTypes::Options& options,
 			const model::AddressSet& highValueAddresses,
+			model::AddressSet& addressesToUpdate,
 			std::unique_ptr<AccountStateCacheDeltaMixins::KeyLookupAdapter>&& pKeyLookupAdapter)
 			: AccountStateCacheDeltaMixins::Size(*accountStateSets.pPrimary)
 			, AccountStateCacheDeltaMixins::ContainsAddress(*accountStateSets.pPrimary)
@@ -57,6 +60,7 @@ namespace catapult { namespace cache {
 			, m_pKeyToAddress(accountStateSets.pKeyLookupMap)
 			, m_options(options)
 			, m_highValueAddresses(highValueAddresses)
+			, m_addressesToUpdate(addressesToUpdate)
 			, m_pKeyLookupAdapter(std::move(pKeyLookupAdapter))
 	{}
 
@@ -175,6 +179,17 @@ namespace catapult { namespace cache {
 		}
 	}
 
+	void BasicAccountStateCacheDelta::addUpdatedAddresses(model::AddressSet& set) const {
+		auto include = [](const auto& accountState) {
+			return !accountState.Balances.getSnapshots().empty();
+		};
+
+		auto deltas = m_pStateByAddress->deltas();
+		UpdateAddresses(set, deltas.Added, include);
+		UpdateAddresses(set, deltas.Copied, include);
+		UpdateAddresses(set, deltas.Removed, [](const auto&) { return false; });
+	}
+
 	model::AddressSet BasicAccountStateCacheDelta::highValueAddresses() const {
 		// 1. copy original high value addresses
 		auto highValueAddresses = m_highValueAddresses;
@@ -189,5 +204,9 @@ namespace catapult { namespace cache {
 		UpdateAddresses(highValueAddresses, deltas.Copied, hasHighValue);
 		UpdateAddresses(highValueAddresses, deltas.Removed, [](const auto&) { return false; });
 		return highValueAddresses;
+	}
+
+	const model::AddressSet& BasicAccountStateCacheDelta::updatedAddresses() const{
+		return m_addressesToUpdate;
 	}
 }}

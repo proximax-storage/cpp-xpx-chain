@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
 				auto& accountState = accountStateCacheDelta.addAccount(key, Height());
 				for (auto i = 0u; i < 5; ++i)
-					accountState.Balances.credit(MosaicId(i + 1), Amount(1));
+					accountState.Balances.credit(MosaicId(i + 1), Amount(1), Height(1));
 
 				cache.commit(Height());
 			}

@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 					[&lockInfo, initialAmount](auto& cache, auto& accountState) {
 						cache.insert(lockInfo);
 						if (Amount(0) != initialAmount)
-							accountState.Balances.credit(lockInfo.MosaicId, initialAmount);
+							accountState.Balances.credit(lockInfo.MosaicId, initialAmount, Height(1));
 					},
 					[&lockInfo, initialAmount](const auto& lockInfoCache, const auto& accountState) {
 						// Assert: status and balance
@@ -74,7 +74,7 @@ namespace catapult { namespace test {
 					lockInfo,
 					[&lockInfo](auto& cache, auto& accountState) {
 						cache.insert(lockInfo);
-						accountState.Balances.credit(lockInfo.MosaicId, lockInfo.Amount + Amount(100));
+						accountState.Balances.credit(lockInfo.MosaicId, lockInfo.Amount + Amount(100), Height(1));
 					},
 					[&lockInfo](const auto& lockInfoCache, const auto& accountState) {
 						// Assert: status and balance

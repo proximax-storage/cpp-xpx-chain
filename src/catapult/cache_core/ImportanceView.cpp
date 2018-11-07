@@ -25,28 +25,26 @@
 namespace catapult { namespace cache {
 
 	namespace {
-		const state::AccountState* FindStateWithImportance(const ReadOnlyAccountStateCache& cache, const Key& publicKey, Height height) {
+		const state::AccountState* FindStateWithImportance(const ReadOnlyAccountStateCache& cache, const Key& publicKey) {
 			auto pAccountState = cache.tryGet(publicKey);
 
 			// if state could not be accessed by public key, try searching by address
 			if (!pAccountState)
 				pAccountState = cache.tryGet(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
 
-			auto importanceHeight = model::ConvertToImportanceHeight(height, cache.importanceGrouping());
-			if (!pAccountState || importanceHeight != pAccountState->ImportanceInfo.height())
-				return nullptr;
-
 			return pAccountState;
 		}
 	}
 
 	bool ImportanceView::tryGetAccountImportance(const Key& publicKey, Height height, Importance& importance) const {
-		auto pAccountState = FindStateWithImportance(m_cache, publicKey, height);
+		auto pAccountState = FindStateWithImportance(m_cache, publicKey);
 
 		if (!pAccountState)
 			return false;
 
-		importance = pAccountState->ImportanceInfo.current();
+		importance = pAccountState ?
+			Importance(pAccountState->Balances.getEffectiveBalance(height, m_cache.importanceGrouping()).unwrap()) : Importance(0);
+
 		return true;
 	}
 
@@ -56,10 +54,6 @@ namespace catapult { namespace cache {
 	}
 
 	bool ImportanceView::canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance) const {
-		auto pAccountState = FindStateWithImportance(m_cache, publicKey, height);
-
-		return pAccountState
-				&& pAccountState->ImportanceInfo.current() > Importance(0)
-				&& pAccountState->Balances.get(Xpx_Id) >= minHarvestingBalance;
+		return getAccountImportanceOrDefault(publicKey, height).unwrap() >= minHarvestingBalance.unwrap();
 	}
 }}

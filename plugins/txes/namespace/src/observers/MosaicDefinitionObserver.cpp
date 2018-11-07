@@ -25,9 +25,9 @@
 namespace catapult { namespace observers {
 
 	namespace {
-		void ZeroBalance(state::AccountState& accountState, MosaicId mosaicId) {
+		void ZeroBalance(state::AccountState& accountState, MosaicId mosaicId, Height height) {
 			auto ownerBalance = accountState.Balances.get(mosaicId);
-			accountState.Balances.debit(mosaicId, ownerBalance);
+			accountState.Balances.debit(mosaicId, ownerBalance, height);
 		}
 	}
 
@@ -37,7 +37,7 @@ namespace catapult { namespace observers {
 
 		// always zero the owner's balance when a mosaic definition changes (in case of rollback, it will be fixed below)
 		auto& ownerState = accountStateCache.get(notification.Signer);
-		ZeroBalance(ownerState, notification.MosaicId);
+		ZeroBalance(ownerState, notification.MosaicId, context.Height);
 
 		if (NotifyMode::Rollback == context.Mode) {
 			cache.remove(notification.MosaicId);
@@ -46,7 +46,7 @@ namespace catapult { namespace observers {
 			if (cache.contains(notification.MosaicId)) {
 				// set the owner's balance to the full supply
 				const auto& mosaicEntry = cache.get(notification.MosaicId);
-				ownerState.Balances.credit(notification.MosaicId, mosaicEntry.supply());
+				ownerState.Balances.credit(notification.MosaicId, mosaicEntry.supply(), context.Height);
 			}
 
 			return;

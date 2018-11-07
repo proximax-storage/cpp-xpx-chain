@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 			RunTest(
 					typename TTraits::ObserverTestContext(observers::NotifyMode::Commit, DefaultHeight()),
 					[](const auto&, auto& ownerState, const auto& notification) {
-						ownerState.Balances.credit(notification.Mosaic.MosaicId, notification.Mosaic.Amount);
+						ownerState.Balances.credit(notification.Mosaic.MosaicId, notification.Mosaic.Amount, Height(1));
 					},
 					// Assert: lock info was added to cache
 					[](const auto& lockInfoCacheDelta, const auto& ownerState, const auto& notification) {
@@ -70,7 +70,7 @@ namespace catapult { namespace test {
 			auto pObserver = TTraits::CreateObserver();
 			auto& accountStateCacheDelta = context.cache().template sub<cache::AccountStateCache>();
 			auto& ownerState = accountStateCacheDelta.addAccount(notification.Signer, Height(1));
-			ownerState.Balances.credit(notification.Mosaic.MosaicId, notification.Mosaic.Amount);
+			ownerState.Balances.credit(notification.Mosaic.MosaicId, notification.Mosaic.Amount, Height(1));
 
 			// - seed with lock info with same hash
 			auto& lockInfoCacheDelta = context.cache().template sub<typename TTraits::CacheType>();
@@ -86,7 +86,7 @@ namespace catapult { namespace test {
 			RunTest(
 					typename TTraits::ObserverTestContext(observers::NotifyMode::Commit, DefaultHeight()),
 					[](const auto&, auto& ownerState, const auto& notification) {
-						ownerState.Balances.credit(notification.Mosaic.MosaicId, notification.Mosaic.Amount + Amount(100));
+						ownerState.Balances.credit(notification.Mosaic.MosaicId, notification.Mosaic.Amount + Amount(100), Height(1));
 					},
 					[](const auto&, const auto& ownerState, const auto& notification) {
 						// Assert: owner balance has been debited
@@ -119,7 +119,7 @@ namespace catapult { namespace test {
 					[](auto& lockInfoCacheDelta, auto& ownerState, const auto& notification) {
 						auto lockInfo = TTraits::GenerateRandomLockInfo(notification);
 						lockInfoCacheDelta.insert(lockInfo);
-						ownerState.Balances.credit(notification.Mosaic.MosaicId, Amount(100));
+						ownerState.Balances.credit(notification.Mosaic.MosaicId, Amount(100), Height(1));
 					},
 					[](const auto&, const auto& ownerState, const auto& notification) {
 						// Assert: owner balance has been credited

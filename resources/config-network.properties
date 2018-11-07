@@ -11,7 +11,7 @@ blockTimeSmoothingFactor = 3000
 
 importanceGrouping = 359
 maxRollbackBlocks = 360
-maxDifficultyBlocks = 60
+maxDifficultyBlocks = 4
 
 maxTransactionLifetime = 24h
 maxBlockFutureTime = 10s

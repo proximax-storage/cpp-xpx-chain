@@ -21,6 +21,7 @@
 #pragma once
 #include "AccountBalances.h"
 #include "AccountImportance.h"
+#include "catapult/constants.h"
 
 namespace catapult { namespace state {
 
@@ -32,7 +33,14 @@ namespace catapult { namespace state {
 				: Address(address)
 				, AddressHeight(addressHeight)
 				, PublicKeyHeight(0)
+				, Balances(this)
 		{}
+
+		/// Copy constructor that makes a deep copy of \a accountState.
+		AccountState(const AccountState& accountState)
+		: Balances(this) {
+			*this = accountState;
+		}
 
 	public:
 		/// Address of an account.
@@ -46,9 +54,6 @@ namespace catapult { namespace state {
 
 		/// Height at which public key has been obtained.
 		Height PublicKeyHeight;
-
-		/// Importance information of the account.
-		AccountImportance ImportanceInfo;
 
 		/// Balances of an account.
 		AccountBalances Balances;

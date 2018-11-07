@@ -92,7 +92,7 @@ namespace catapult { namespace extensions {
 			auto& accountStateCache = cacheDelta.sub<cache::AccountStateCache>();
 			auto& nemesisState = accountStateCache.addAccount(nemesisPublicKey, Height(1));
 			for (const auto& transfer : transfers)
-				nemesisState.Balances.credit(transfer.first, transfer.second);
+				nemesisState.Balances.credit(transfer.first, transfer.second, Height(1));
 		}
 	}
 

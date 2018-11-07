@@ -29,44 +29,42 @@ namespace catapult { namespace state {
 		accountState.PublicKey = info.PublicKey;
 		accountState.PublicKeyHeight = info.PublicKeyHeight;
 
-		for (auto i = Importance_History_Size; i > 0; --i) {
-			auto importanceHeight = info.ImportanceHeights[i - 1];
-			if (model::ImportanceHeight() == importanceHeight)
-				continue;
-
-			accountState.ImportanceInfo.set(info.Importances[i - 1], importanceHeight);
-		}
-
 		auto pMosaic = info.MosaicsPtr();
-		for (auto i = 0u; i < info.MosaicsCount; ++i, ++pMosaic)
-			accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
+		for (auto i = 0u; i < info.MosaicsCount && pMosaic; ++i, ++pMosaic)
+			accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount, Height(0));
+
+		auto pBalanceSnapshot = info.BalanceSnapshotPtr();
+		auto& snapshots = accountState.Balances.getSnapshots();
+		for (auto i = 0u; i < info.BalanceSnapshotCount && pBalanceSnapshot; ++i, ++pBalanceSnapshot)
+			snapshots.push_back(*pBalanceSnapshot);
 
 		return accountState;
 	}
 
 	std::unique_ptr<model::AccountInfo> ToAccountInfo(const AccountState& accountState) {
 		auto numMosaics = utils::checked_cast<size_t, uint16_t>(accountState.Balances.size());
-		uint32_t entitySize = sizeof(model::AccountInfo) + numMosaics * sizeof(model::Mosaic);
+		auto numSnapshots = utils::checked_cast<size_t, uint16_t>(accountState.Balances.getSnapshots().size());
+		uint32_t entitySize = sizeof(model::AccountInfo) + numMosaics * sizeof(model::Mosaic) + numSnapshots * sizeof(model::BalanceSnapshot);
 		auto pAccountInfo = utils::MakeUniqueWithSize<model::AccountInfo>(entitySize);
 		pAccountInfo->Size = entitySize;
+		pAccountInfo->MosaicsCount = numMosaics;
+		pAccountInfo->BalanceSnapshotCount = numSnapshots;
 		pAccountInfo->Address = accountState.Address;
 		pAccountInfo->AddressHeight = accountState.AddressHeight;
 		pAccountInfo->PublicKey = accountState.PublicKey;
 		pAccountInfo->PublicKeyHeight = accountState.PublicKeyHeight;
 
-		auto i = 0u;
-		for (const auto& pair : accountState.ImportanceInfo) {
-			pAccountInfo->Importances[i] = pair.Importance;
-			pAccountInfo->ImportanceHeights[i] = pair.Height;
-			++i;
-		}
-
-		pAccountInfo->MosaicsCount = numMosaics;
 		auto pMosaic = pAccountInfo->MosaicsPtr();
 		for (const auto& pair : accountState.Balances) {
 			pMosaic->MosaicId = pair.first;
 			pMosaic->Amount = pair.second;
 			++pMosaic;
+		}
+
+		auto pBalanceSnapshot = pAccountInfo->BalanceSnapshotPtr();
+		for (const auto& snapshot : accountState.Balances.getSnapshots()) {
+			*pBalanceSnapshot = snapshot;
+			++pBalanceSnapshot;
 		}
 
 		return pAccountInfo;

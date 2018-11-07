@@ -60,17 +60,19 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 
 	public:
-		/// Creates a view around \a accountStateSets, \a options and \a highValueAddresses.
+		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a updatedAddresses.
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
-				const model::AddressSet& highValueAddresses);
+				const model::AddressSet& highValueAddresses,
+				model::AddressSet& updatedAddresses);
 
 	private:
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
+				model::AddressSet& updatedAddresses,
 				std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter>&& pKeyLookupAdapter);
 
 	public:
@@ -98,18 +100,20 @@ namespace catapult { namespace cache {
 		const model::NetworkIdentifier m_networkIdentifier;
 		const uint64_t m_importanceGrouping;
 		const model::AddressSet& m_highValueAddresses;
+		model::AddressSet& m_updatedAddresses;
 		std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter> m_pKeyLookupAdapter;
 	};
 
 	/// View on top of the account state cache.
 	class AccountStateCacheView : public ReadOnlyViewSupplier<BasicAccountStateCacheView> {
 	public:
-		/// Creates a view around \a accountStateSets, \a options and \a highValueAddresses.
+		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a updatedAddresses.
 		AccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
-				const model::AddressSet& highValueAddresses)
-				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses)
+				const model::AddressSet& highValueAddresses,
+				model::AddressSet& updatedAddresses)
+				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses, updatedAddresses)
 		{}
 	};
 }}

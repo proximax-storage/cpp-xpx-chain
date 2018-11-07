@@ -38,7 +38,7 @@ namespace catapult { namespace cache {
 
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			Network_Identifier,
-			543,
+			std::numeric_limits<uint64_t >::max(),
 			Amount(std::numeric_limits<Amount::ValueType>::max())
 		};
 
@@ -268,7 +268,7 @@ namespace catapult { namespace cache {
 		template<typename TKeyTraits>
 		state::AccountState* AddAccountToCacheDelta(AccountStateCacheDelta& delta, const typename TKeyTraits::Type& key, Amount balance) {
 			auto& accountState = delta.addAccount(key, TKeyTraits::DefaultHeight());
-			accountState.Balances.credit(Xpx_Id, balance);
+			accountState.Balances.credit(Xpx_Id, balance, TKeyTraits::DefaultHeight());
 			return &accountState;
 		}
 	}
@@ -282,12 +282,12 @@ namespace catapult { namespace cache {
 
 namespace catapult { namespace cache {
 
-	// region network identifier / importance grouping
+	// region network identifier
 
 	TEST(TEST_CLASS, CacheExposesNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(17);
-		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, 234, Amount() });
+		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, 0, Amount() });
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.networkIdentifier());
@@ -296,7 +296,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, 543, Amount() });
+		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, 0, Amount() });
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());
@@ -304,22 +304,25 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta().lock()->networkIdentifier());
 	}
 
+	// endregion
+
+	// region effective balance range
+
 	TEST(TEST_CLASS, CacheExposesImportanceGrouping) {
-		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), { static_cast<model::NetworkIdentifier>(17), 234, Amount() });
+		AccountStateCache cache(CacheConfiguration(), { model::NetworkIdentifier::Zero, 10, Amount() });
 
 		// Act + Assert:
-		EXPECT_EQ(234u, cache.importanceGrouping());
+		EXPECT_EQ(10, cache.importanceGrouping());
 	}
 
-	TEST(TEST_CLASS, CacheWrappersExposeImportanceGrouping) {
+	TEST(TEST_CLASS, CacheWrappersExposesImportanceGrouping) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), { static_cast<model::NetworkIdentifier>(18), 543, Amount() });
+		AccountStateCache cache(CacheConfiguration(), { model::NetworkIdentifier::Zero, 10, Amount() });
 
 		// Act + Assert:
-		EXPECT_EQ(543u, cache.createView()->importanceGrouping());
-		EXPECT_EQ(543u, cache.createDelta()->importanceGrouping());
-		EXPECT_EQ(543u, cache.createDetachedDelta().lock()->importanceGrouping());
+		EXPECT_EQ(10, cache.createView()->importanceGrouping());
+		EXPECT_EQ(10, cache.createDelta()->importanceGrouping());
+		EXPECT_EQ(10, cache.createDetachedDelta().lock()->importanceGrouping());
 	}
 
 	// endregion
@@ -787,8 +790,6 @@ namespace catapult { namespace cache {
 			info.Address = test::GenerateRandomAddress();
 			info.PublicKey = GenerateRandomPublicKey();
 			info.PublicKeyHeight = Height(123);
-			info.Importances[0] = Importance(421);
-			info.ImportanceHeights[0] = model::ImportanceHeight(1);
 			info.MosaicsCount = 0;
 			return info;
 		}
@@ -798,7 +799,6 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(expected.Address, actual.Address) << message;
 			EXPECT_EQ(expected.PublicKey, actual.PublicKey) << message;
 			EXPECT_EQ(expected.PublicKeyHeight, actual.PublicKeyHeight) << message;
-			EXPECT_EQ(expected.Importances[0], actual.ImportanceInfo.current()) << message;
 			EXPECT_EQ(0u, actual.Balances.size()) << message;
 		}
 	}
@@ -853,26 +853,21 @@ namespace catapult { namespace cache {
 		void AssertAddAccountViaInfoDoesNotOverrideKnownAccounts(TAdd add) {
 			// Arrange: create an info
 			auto info = CreateRandomAccountInfoWithKey();
-			info.Importances[0] = Importance(777);
 
 			AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
 			auto delta = cache.createDelta();
 
-			// Act: add the info using add and set importance to 123
+			// Act: add the info using add
 			auto& addState1 = add(*delta, info);
-			addState1.ImportanceInfo.set(Importance(123), model::ImportanceHeight(1));
 
-			// - add the info again (with importance 777)
 			const auto& addState2 = delta->addAccount(info);
 
 			// - get the info from the cache
 			const auto* pAccountState = delta->tryGet(info.Address);
 
-			// Assert: the second add had no effect (the importance is still 123)
 			ASSERT_TRUE(!!pAccountState);
 			EXPECT_EQ(&addState1, pAccountState);
 			EXPECT_EQ(&addState2, pAccountState);
-			EXPECT_EQ(Importance(123), pAccountState->ImportanceInfo.current());
 		}
 	}
 
@@ -906,7 +901,7 @@ namespace catapult { namespace cache {
 			auto addresses = test::GenerateRandomDataVector<Address>(balances.size());
 			for (auto i = 0u; i < balances.size(); ++i) {
 				auto& accountState = delta.addAccount(addresses[i], Height(1));
-				accountState.Balances.credit(Xpx_Id, balances[i]);
+				accountState.Balances.credit(Xpx_Id, balances[i], Height(1));
 			}
 
 			return addresses;
@@ -974,7 +969,7 @@ namespace catapult { namespace cache {
 		RunHighValueAddressesTest(balances, [](const auto& addresses, auto& delta) {
 			// - increment balances of all accounts (this will make 2/3 have sufficient balance)
 			for (const auto& address : addresses)
-				delta->get(address).Balances.credit(Xpx_Id, Amount(1));
+				delta->get(address).Balances.credit(Xpx_Id, Amount(1), Height(1));
 
 			// Act:
 			auto highValueAddresses = delta->highValueAddresses();
@@ -1009,8 +1004,8 @@ namespace catapult { namespace cache {
 			auto uncommittedAddresses = AddAccountsWithBalances(*delta, { Amount(1'100'000), Amount(900'000), Amount(1'000'000) });
 
 			// - modify two [5 match]
-			delta->get(addresses[1]).Balances.credit(Xpx_Id, Amount(100'000));
-			delta->get(addresses[4]).Balances.debit(Xpx_Id, Amount(200'001));
+			delta->get(addresses[1]).Balances.credit(Xpx_Id, Amount(100'000), Height(1));
+			delta->get(addresses[4]).Balances.debit(Xpx_Id, Amount(200'001), Height(1));
 
 			// - delete two [3 match]
 			delta->queueRemove(addresses[2], Height(1));
@@ -1046,8 +1041,8 @@ namespace catapult { namespace cache {
 			auto uncommittedAddresses = AddAccountsWithBalances(*delta, { Amount(1'100'000), Amount(900'000), Amount(1'000'000) });
 
 			// - modify two [5 match]
-			delta->get(addresses[1]).Balances.credit(Xpx_Id, Amount(100'000));
-			delta->get(addresses[4]).Balances.debit(Xpx_Id, Amount(200'001));
+			delta->get(addresses[1]).Balances.credit(Xpx_Id, Amount(100'000), Height(1));
+			delta->get(addresses[4]).Balances.debit(Xpx_Id, Amount(200'001), Height(1));
 
 			// - delete two [3 match]
 			delta->queueRemove(addresses[2], Height(1));
@@ -1075,9 +1070,9 @@ namespace catapult { namespace cache {
 		{
 			auto delta = cache.createDelta();
 			auto& addedAccount1 = delta->addAccount(test::GenerateRandomData<Address_Decoded_Size>(), Height());
-			addedAccount1.Balances.credit(Xpx_Id, Amount(1'000'000));
+			addedAccount1.Balances.credit(Xpx_Id, Amount(1'000'000), Height(1));
 			auto& addedAccount2 = delta->addAccount(test::GenerateRandomData<Address_Decoded_Size>(), Height());
-			addedAccount2.Balances.credit(Xpx_Id, Amount(500'000));
+			addedAccount2.Balances.credit(Xpx_Id, Amount(500'000), Height(1));
 
 			// Sanity:
 			EXPECT_EQ(1u, delta->highValueAddresses().size());
@@ -1087,6 +1082,108 @@ namespace catapult { namespace cache {
 
 		// Act + Assert:
 		EXPECT_EQ(1u, cache.createView()->highValueAddressesSize());
+	}
+
+	// endregion
+
+	// region updatedAddresses
+
+	namespace {
+		void IncreaseBalances(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10, Height height = Height(1), MosaicId mosaicId = Xpx_Id) {
+			for (auto i = start; i < end; ++i) {
+				auto &accountState = delta.addAccount(Key{ { i } }, height);
+				accountState.Balances.credit(mosaicId, Amount(1), height);
+			}
+		}
+
+		void CleanUpSnapshots(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10) {
+			for (auto i = start; i < end; ++i) {
+				auto& accountState = delta.get(Key{ { i } });
+				accountState.Balances.getSnapshots().clear();
+			}
+		}
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveOneSnapshot) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta);
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		// Assert:
+		EXPECT_EQ(10u, delta->updatedAddresses().size());
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveZeroSnapshot_HeightZero) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta, 0, 10, Height(0));
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		// Assert:
+		EXPECT_EQ(0u, delta->updatedAddresses().size());
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveZeroSnapshot_NotXpxMosaic) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta, 0, 10, Height(1), MosaicId{123});
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		// Assert:
+		EXPECT_EQ(0, delta->updatedAddresses().size());
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesModifyAccountToAddSnapshots) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta, 0, 10, Height(0));
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		EXPECT_EQ(0u, delta->updatedAddresses().size());
+
+		// Act:
+		IncreaseBalances(*delta, 0, 5, Height(1));
+		cache.commit();
+
+		// Assert:
+		EXPECT_EQ(5u, delta->updatedAddresses().size());
+	}
+
+	TEST(TEST_CLASS, UpdatedAddressesRemoveAccountWithoutSnapshots) {
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		{
+			// - prepare delta
+			auto delta = cache.createDelta();
+			IncreaseBalances(*delta);
+			cache.commit();
+		}
+
+		auto delta = cache.createDelta();
+		EXPECT_EQ(10u, delta->updatedAddresses().size());
+
+		// Act:
+		CleanUpSnapshots(*delta, 0, 4);
+		cache.commit();
+
+		// Assert:
+		EXPECT_EQ(6u, delta->updatedAddresses().size());
 	}
 
 	// endregion

@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/state/AccountState.h"
 #include "catapult/state/AccountBalances.h"
 #include "tests/test/core/TransactionTestUtils.h"
 
@@ -28,13 +29,14 @@ namespace catapult { namespace state {
 	namespace {
 		constexpr MosaicId Test_Mosaic_Id = MosaicId(12345);
 		constexpr MosaicId Test_Mosaic_Id2 = MosaicId(54321);
+		AccountState Test_Account(Address{ { 1 } }, Height(1));
 	}
 
 	// region construction + assignment
 
 	TEST(TEST_CLASS, CanCreateEmptyAccountBalances) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
 		auto amount1 = balances.get(Xpx_Id);
@@ -42,15 +44,16 @@ namespace catapult { namespace state {
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
+		EXPECT_EQ(0u, balances.getSnapshots().size());
 		EXPECT_EQ(Amount(0), amount1);
 		EXPECT_EQ(Amount(0), amount2);
 	}
 
 	namespace {
 		AccountBalances CreateBalancesForConstructionTests() {
-			AccountBalances balances;
-			balances.credit(Test_Mosaic_Id, Amount(777));
-			balances.credit(Xpx_Id, Amount(1000));
+			AccountBalances balances(&Test_Account);
+			balances.credit(Test_Mosaic_Id, Amount(777), Height(1));
+			balances.credit(Xpx_Id, Amount(1000), Height(1));
 			return balances;
 		}
 	}
@@ -61,7 +64,7 @@ namespace catapult { namespace state {
 
 		// Act:
 		AccountBalances balancesCopy(balances);
-		balancesCopy.credit(Xpx_Id, Amount(500));
+		balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
 
 		// Assert: the copy is detached from the original
 		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
@@ -69,6 +72,16 @@ namespace catapult { namespace state {
 
 		EXPECT_EQ(Amount(777), balancesCopy.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(1500), balancesCopy.get(Xpx_Id));
+
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(1000), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+
+		EXPECT_EQ(2, balancesCopy.getSnapshots().size());
+		EXPECT_EQ(Amount(1000), balancesCopy.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balancesCopy.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(1500), balancesCopy.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balancesCopy.getSnapshots()[1].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, CanMoveConstructAccountBalances) {
@@ -81,9 +94,11 @@ namespace catapult { namespace state {
 		// Assert: the original values are moved into the copy (move does not clear first mosaic)
 		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 
 		EXPECT_EQ(Amount(777), balancesMoved.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(1000), balancesMoved.get(Xpx_Id));
+		EXPECT_EQ(1, balancesMoved.getSnapshots().size());
 	}
 
 	TEST(TEST_CLASS, CanAssignAccountBalances) {
@@ -91,9 +106,9 @@ namespace catapult { namespace state {
 		auto balances = CreateBalancesForConstructionTests();
 
 		// Act:
-		AccountBalances balancesCopy;
+		AccountBalances balancesCopy(&Test_Account);
 		const auto& assignResult = balancesCopy = balances;
-		balancesCopy.credit(Xpx_Id, Amount(500));
+		balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
 
 		// Assert: the copy is detached from the original
 		EXPECT_EQ(&balancesCopy, &assignResult);
@@ -102,6 +117,16 @@ namespace catapult { namespace state {
 
 		EXPECT_EQ(Amount(777), balancesCopy.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(1500), balancesCopy.get(Xpx_Id));
+
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(1000), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+
+		EXPECT_EQ(2, balancesCopy.getSnapshots().size());
+		EXPECT_EQ(Amount(1000), balancesCopy.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balancesCopy.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(1500), balancesCopy.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balancesCopy.getSnapshots()[1].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, CanMoveAssignAccountBalances) {
@@ -109,16 +134,18 @@ namespace catapult { namespace state {
 		auto balances = CreateBalancesForConstructionTests();
 
 		// Act:
-		AccountBalances balancesMoved;
+		AccountBalances balancesMoved(&Test_Account);
 		const auto& assignResult = balancesMoved = std::move(balances);
 
 		// Assert: the original values are moved into the copy (move does not clear first mosaic)
 		EXPECT_EQ(&balancesMoved, &assignResult);
 		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 
 		EXPECT_EQ(Amount(777), balancesMoved.get(Test_Mosaic_Id));
 		EXPECT_EQ(Amount(1000), balancesMoved.get(Xpx_Id));
+		EXPECT_EQ(1, balancesMoved.getSnapshots().size());
 	}
 
 	// endregion
@@ -127,41 +154,49 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CreditDoesNotAddZeroBalance) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
-		balances.credit(Xpx_Id, Amount(0));
+		balances.credit(Xpx_Id, Amount(0), Height(1));
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 	}
 
 	TEST(TEST_CLASS, CreditIncreasesAmountStored) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
-		balances.credit(Xpx_Id, Amount(12345));
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
 		EXPECT_EQ(Amount(12345), balances.get(Xpx_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, InterleavingCreditsYieldCorrectState) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
-		balances.credit(Xpx_Id, Amount(12345));
-		balances.credit(Test_Mosaic_Id, Amount(3456));
-		balances.credit(Xpx_Id, Amount(54321));
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id, Amount(3456), Height(1));
+		balances.credit(Xpx_Id, Amount(54321), Height(1));
 
 		// Assert:
 		EXPECT_EQ(2u, balances.size());
 		EXPECT_EQ(Amount(12345 + 54321), balances.get(Xpx_Id));
 		EXPECT_EQ(Amount(3456), balances.get(Test_Mosaic_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 54321), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	// endregion
@@ -170,84 +205,100 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanDebitZeroFromZeroBalance) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act:
-		balances.debit(Xpx_Id, Amount(0));
+		balances.debit(Xpx_Id, Amount(0), Height(1));
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 	}
 
 	TEST(TEST_CLASS, DebitDecreasesAmountStored) {
 		// Arrange:
-		AccountBalances balances;
-		balances.credit(Xpx_Id, Amount(12345));
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Act:
-		balances.debit(Xpx_Id, Amount(222));
+		balances.debit(Xpx_Id, Amount(222), Height(1));
 
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
 		EXPECT_EQ(Amount(12345 - 222), balances.get(Xpx_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 - 222), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, FullDebitRemovesMosaicFromCache) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		Amount amount = Amount(12345);
-		balances.credit(Xpx_Id, amount);
+		balances.credit(Xpx_Id, amount, Height(1));
 
 		// Act:
-		balances.debit(Xpx_Id, amount);
+		balances.debit(Xpx_Id, amount, Height(2));
 		auto xpxHeld = balances.get(Xpx_Id);
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), xpxHeld);
+		EXPECT_EQ(2, balances.getSnapshots().size());
+		EXPECT_EQ(amount, balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(0), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, InterleavingDebitsYieldCorrectState) {
 		// Arrange:
-		AccountBalances balances;
-		balances.credit(Xpx_Id, Amount(12345));
-		balances.credit(Test_Mosaic_Id, Amount(3456));
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
 		// Act:
-		balances.debit(Xpx_Id, Amount(222));
-		balances.debit(Test_Mosaic_Id, Amount(1111));
-		balances.debit(Xpx_Id, Amount(111));
+		balances.debit(Xpx_Id, Amount(222), Height(1));
+		balances.debit(Test_Mosaic_Id, Amount(1111), Height(1));
+		balances.debit(Xpx_Id, Amount(111), Height(1));
 
 		// Assert:
 		EXPECT_EQ(2u, balances.size());
 		EXPECT_EQ(Amount(12345 - 222 - 111), balances.get(Xpx_Id));
 		EXPECT_EQ(Amount(3456 - 1111), balances.get(Test_Mosaic_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 - 222 - 111), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, DebitDoesNotAllowUnderflowOfNonZeroBalance) {
 		// Arrange:
-		AccountBalances balances;
-		balances.credit(Xpx_Id, Amount(12345));
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
 
 		// Act + Assert:
-		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346), Height(2)), catapult_runtime_error);
 
 		// Assert:
 		EXPECT_EQ(1u, balances.size());
 		EXPECT_EQ(Amount(12345), balances.get(Xpx_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, DebitDoesNotAllowUnderflowOfZeroBalance) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 
 		// Act + Assert:
-		EXPECT_THROW(balances.debit(Xpx_Id, Amount(222)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(222), Height(1)), catapult_runtime_error);
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(Amount(0), balances.get(Xpx_Id));
+		EXPECT_EQ(0, balances.getSnapshots().size());
 	}
 
 	// endregion
@@ -256,44 +307,50 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, InterleavingDebitsAndCreditsYieldCorrectState) {
 		// Arrange:
-		AccountBalances balances;
-		balances.credit(Xpx_Id, Amount(12345));
-		balances.credit(Test_Mosaic_Id, Amount(3456));
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
 		// Act:
-		balances.debit(Test_Mosaic_Id, Amount(1111));
-		balances.credit(Xpx_Id, Amount(1111));
-		balances.credit(Test_Mosaic_Id2, Amount(0)); // no op
-		balances.debit(Xpx_Id, Amount(2345));
-		balances.debit(Test_Mosaic_Id2, Amount(0)); // no op
-		balances.credit(Test_Mosaic_Id, Amount(5432));
+		balances.debit(Test_Mosaic_Id, Amount(1111), Height(1));
+		balances.credit(Xpx_Id, Amount(1111), Height(1));
+		balances.credit(Test_Mosaic_Id2, Amount(0), Height(1)); // no op
+		balances.debit(Xpx_Id, Amount(2345), Height(1));
+		balances.debit(Test_Mosaic_Id2, Amount(0), Height(1)); // no op
+		balances.credit(Test_Mosaic_Id, Amount(5432), Height(1));
 
 		// Assert:
 		EXPECT_EQ(2u, balances.size());
 		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.get(Xpx_Id));
 		EXPECT_EQ(Amount(3456 - 1111 + 5432), balances.get(Test_Mosaic_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	TEST(TEST_CLASS, ChainedInterleavingDebitsAndCreditsYieldCorrectState) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances
-			.credit(Xpx_Id, Amount(12345))
-			.credit(Test_Mosaic_Id, Amount(3456));
+			.credit(Xpx_Id, Amount(12345), Height(1))
+			.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
 		// Act:
 		balances
-			.debit(Test_Mosaic_Id, Amount(1111))
-			.credit(Xpx_Id, Amount(1111))
-			.credit(Test_Mosaic_Id2, Amount(0)) // no op
-			.debit(Xpx_Id, Amount(2345))
-			.debit(Test_Mosaic_Id2, Amount(0)) // no op
-			.credit(Test_Mosaic_Id, Amount(5432));
+			.debit(Test_Mosaic_Id, Amount(1111), Height(1))
+			.credit(Xpx_Id, Amount(1111), Height(1))
+			.credit(Test_Mosaic_Id2, Amount(0), Height(1)) // no op
+			.debit(Xpx_Id, Amount(2345), Height(1))
+			.debit(Test_Mosaic_Id2, Amount(0), Height(1)) // no op
+			.credit(Test_Mosaic_Id, Amount(5432), Height(1));
 
 		// Assert:
 		EXPECT_EQ(2u, balances.size());
 		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.get(Xpx_Id));
 		EXPECT_EQ(Amount(3456 - 1111 + 5432), balances.get(Test_Mosaic_Id));
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
 	}
 
 	// endregion
@@ -302,11 +359,11 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanIterateOverAllBalances) {
 		// Arrange:
-		AccountBalances balances;
+		AccountBalances balances(&Test_Account);
 		balances
-			.credit(Xpx_Id, Amount(12345))
-			.credit(Test_Mosaic_Id2, Amount(0))
-			.credit(Test_Mosaic_Id, Amount(3456));
+			.credit(Xpx_Id, Amount(12345), Height(1))
+			.credit(Test_Mosaic_Id2, Amount(0), Height(1))
+			.credit(Test_Mosaic_Id, Amount(3456), Height(1));
 
 		// Act:
 		auto numBalances = 0u;
@@ -321,6 +378,369 @@ namespace catapult { namespace state {
 		EXPECT_EQ(2u, iteratedBalances.size());
 		EXPECT_EQ(Amount(12345), iteratedBalances[Xpx_Id]);
 		EXPECT_EQ(Amount(3456), iteratedBalances[Test_Mosaic_Id]);
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	// endregion
+
+	// region snapshots
+
+	TEST(TEST_CLASS, DoesNotAddSnapshotsForZeroHeight) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+
+		// Act:
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+
+		// Act:
+		balances.debit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+	}
+
+	TEST(TEST_CLASS, AddOneSnapshotForNemesisBlock) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, AddTwoSnapshotIfSnapshotsAreEmptyAndPreviousBlockIsNotNemesis_PreviousBalanceOfAccountIsZero) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(2, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(0), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, AddTwoSnapshotIfSnapshotsAreEmptyAndPreviousBlockIsNotNemesis_PreviousBalanceOfAccountIsNotZero) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(2, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UpdateOfBalanceOnCurrentHeightMustUpdateSnapshot) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+
+		balances.debit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UpdateOfBalanceOnIncreasingHeightMustAddNewSnapshot) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.debit(Xpx_Id, Amount(12345), Height(3));
+		balances.debit(Xpx_Id, Amount(12345), Height(4));
+		balances.credit(Xpx_Id, Amount(12345), Height(5));
+
+		// Assert:
+		EXPECT_EQ(5, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[2].Amount);
+		EXPECT_EQ(Height(3), balances.getSnapshots()[2].BalanceHeight);
+		EXPECT_EQ(Amount(0), balances.getSnapshots()[3].Amount);
+		EXPECT_EQ(Height(4), balances.getSnapshots()[3].BalanceHeight);
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[4].Amount);
+		EXPECT_EQ(Height(5), balances.getSnapshots()[4].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, UpdateOfBalanceOnPreviousHeightWithoutRollbackMustThrowException) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_THROW(balances.credit(Xpx_Id, Amount(12345), Height(1)), catapult_runtime_error);
+	}
+
+	TEST(TEST_CLASS, UpdateOfBalanceOnPreviousHeightAfterRollback) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(2, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[1].Amount);
+		EXPECT_EQ(Height(2), balances.getSnapshots()[1].BalanceHeight);
+
+		// Rollback last credit
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+
+		// Update balance on previous height
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345 + 12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, SeveralCommitsAndRollbacks_OnTheSameHeights) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(2, balances.getSnapshots().size());
+
+		// Rollbacks
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	TEST(TEST_CLASS, SeveralCommitsAndRollbacks_OnTheDifferentHeights) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(3));
+		balances.credit(Xpx_Id, Amount(12345), Height(4));
+		balances.credit(Xpx_Id, Amount(12345), Height(5));
+
+		// Assert:
+		EXPECT_EQ(5, balances.getSnapshots().size());
+
+		// Rollbacks
+		balances.debit(Xpx_Id, Amount(12345), Height(5));
+		balances.debit(Xpx_Id, Amount(12345), Height(4));
+		balances.debit(Xpx_Id, Amount(12345), Height(3));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(1, balances.getSnapshots().size());
+		EXPECT_EQ(Amount(12345), balances.getSnapshots()[0].Amount);
+		EXPECT_EQ(Height(1), balances.getSnapshots()[0].BalanceHeight);
+	}
+
+	// endregion
+
+	// region effective balance region
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfOldBalance) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNemesisBlock) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceOfBalanceFromNotNemesisBlock) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		// We expect zero because previous balance of account on nemesis block was zero
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceDefaultCase) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345 + 12345 + 12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345 + 12345 + 12345), balances.getEffectiveBalance(Height(0), 0));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(3));
+		balances.debit(Xpx_Id, Amount(12345), Height(4));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345 + 12345), balances.getEffectiveBalance(Height(0), 0));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(5));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(6));
+
+		// Assert:
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		balances.debit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(0), balances.getEffectiveBalance(Height(0), 0));
+
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.credit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(3));
+		balances.credit(Xpx_Id, Amount(12345), Height(4));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance(Height(4), 0));
+		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance(Height(4), 1));
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(4), 2));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 3));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 4));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 5));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_SeveralDebitAndCredit) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345), Height(1));
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		balances.credit(Xpx_Id, Amount(12345), Height(3));
+		balances.credit(Xpx_Id, Amount(12345), Height(4));
+		balances.debit(Xpx_Id, Amount(12345), Height(5));
+		balances.credit(Xpx_Id, Amount(12345), Height(6));
+
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(6), 0));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 1));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 2));
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(6), 3));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(6), 4));
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(6), 5));
+	}
+
+	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_OnlyDebit) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.credit(Xpx_Id, Amount(12345 * 5), Height(0));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 5), balances.getEffectiveBalance(Height(1), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(1));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 4), balances.getEffectiveBalance(Height(1), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(2));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 3), balances.getEffectiveBalance(Height(2), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(3));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 2), balances.getEffectiveBalance(Height(3), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(4));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 1), balances.getEffectiveBalance(Height(4), 6));
+
+		balances.debit(Xpx_Id, Amount(12345), Height(5));
+		// Assert:
+		EXPECT_EQ(Amount(12345 * 0), balances.getEffectiveBalance(Height(5), 6));
+	}
+
+	// endregion
+
+	// region account height
+
+	TEST(TEST_CLASS, CreditOrDebitOnHeightThatLowerThanHeightOfAccount) {
+		// Arrange:
+		AccountState accountState(Address{ { 1 } }, Height(100));
+		AccountBalances balances(&accountState);
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+
+		// Act + Assert:
+		EXPECT_THROW(balances.credit(Xpx_Id, Amount(12346), Height(50)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346), Height(50)), catapult_runtime_error);
+	}
+
+	TEST(TEST_CLASS, CreditOrDebitWidthoutAccount) {
+		// Arrange:
+		AccountBalances balances(nullptr);
+		balances.credit(Xpx_Id, Amount(12345), Height(0));
+
+		// Assert:
+		EXPECT_EQ(0, balances.getSnapshots().size());
+
+		// Act + Assert:
+		EXPECT_THROW(balances.credit(Xpx_Id, Amount(12346), Height(1)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12346), Height(1)), catapult_runtime_error);
 	}
 
 	// endregion

@@ -19,19 +19,23 @@
 **/
 
 #pragma once
-#include "CompactMosaicUnorderedMap.h"
-#include "catapult/utils/Hashers.h"
 #include "catapult/exceptions.h"
+#include "catapult/model/BalanceSnapshot.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/types.h"
+#include "catapult/utils/Hashers.h"
+#include "CompactMosaicUnorderedMap.h"
+#include <deque>
 #include <unordered_map>
 
 namespace catapult { namespace state {
+	struct AccountState;
 
 	/// Container holding information about account.
 	class AccountBalances {
 	public:
 		/// Creates an empty account balances.
-		AccountBalances();
+		explicit AccountBalances(AccountState* accountState);
 
 		/// Copy constructor that makes a deep copy of \a accountBalances.
 		AccountBalances(const AccountBalances& accountBalances);
@@ -47,6 +51,16 @@ namespace catapult { namespace state {
 		AccountBalances& operator=(AccountBalances&& accountBalances);
 
 	public:
+		/// Returns const ref to snapshots.
+		const std::deque<model::BalanceSnapshot>& getSnapshots() const {
+			return m_snapshots;
+		}
+
+		/// Returns ref to snapshots.
+		std::deque<model::BalanceSnapshot>& getSnapshots() {
+			return m_snapshots;
+		}
+
 		/// Returns the number of mosaics owned.
 		size_t size() const {
 			return m_balances.size();
@@ -66,13 +80,31 @@ namespace catapult { namespace state {
 		Amount get(MosaicId mosaicId) const;
 
 	public:
-		/// Adds \a amount funds to a given mosaic (\a mosaicId).
-		AccountBalances& credit(MosaicId mosaicId, Amount amount);
+		/// Adds \a amount funds to a given mosaic (\a mosaicId) at \a height.
+		AccountBalances& credit(MosaicId mosaicId, Amount amount, Height height);
 
-		/// Subtracts \a amount funds from a given mosaic (\a mosaicId).
-		AccountBalances& debit(MosaicId mosaicId, Amount amount);
+		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
+		AccountBalances& debit(MosaicId mosaicId, Amount amount, Height height);
+
+		/// Check do we need to clean up the deque at \a height with \a config
+		void maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config);
+
+		/// Get effective balance of account at \a height with \a importanceGrouping
+		Amount getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
+
+	private:
+		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
+		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Push snapshot to deque
+		void pushSnapshot(const model::BalanceSnapshot& snapshot);
+
+		/// Pop snapshot from \a back of deque
+		void popSnapshot(bool back = true);
 
 	private:
 		CompactMosaicUnorderedMap m_balances;
+		std::deque<model::BalanceSnapshot> m_snapshots;
+		AccountState* m_accountState = nullptr;
 	};
 }}

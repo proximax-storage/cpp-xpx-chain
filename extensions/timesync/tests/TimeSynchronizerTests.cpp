@@ -45,23 +45,19 @@ namespace catapult { namespace timesync {
 		template<typename TKey>
 		void AddAccount(
 				cache::AccountStateCache& cache,
-				const TKey& key,
-				Importance importance,
-				model::ImportanceHeight importanceHeight) {
+				const TKey& key) {
 			auto delta = cache.createDelta();
 			auto& accountState = delta->addAccount(key, Height(100));
-			accountState.ImportanceInfo.set(importance, importanceHeight);
-			accountState.Balances.credit(Xpx_Id, Amount(1000));
+			accountState.Balances.credit(Xpx_Id, Amount(1000), Height(100));
 			cache.commit();
 		}
 
 		template<typename TKey>
 		void SeedAccountStateCache(
 				cache::AccountStateCache& cache,
-				const std::vector<TKey>& keys,
-				const std::vector<Importance>& importances) {
+				const std::vector<TKey>& keys) {
 			for (auto i = 0u; i < keys.size(); ++i)
-				AddAccount(cache, keys[i], importances[i], model::ImportanceHeight(1));
+				AddAccount(cache, keys[i]);
 		}
 
 		std::vector<Address> ToAddresses(const std::vector<Key>& keys) {
@@ -82,27 +78,16 @@ namespace catapult { namespace timesync {
 					KeyType keyType = KeyType::PublicKey)
 					: m_cache(cache::CacheConfiguration(), { Default_Network_Identifier, 234, Amount(1000) })
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), Total_Chain_Balance, Warning_Threshold_Millis) {
-				std::vector<Importance> importances;
 				for (const auto& offsetAndRawImportance : offsetsAndRawImportances) {
 					m_samples.emplace(test::CreateTimeSyncSampleWithTimeOffset(offsetAndRawImportance.first));
-					importances.push_back(Importance(offsetAndRawImportance.second));
 				}
 
 				auto keys = test::ExtractKeys(m_samples);
 				auto addresses = ToAddresses(keys);
 				if (KeyType::PublicKey == keyType)
-					SeedAccountStateCache(m_cache, keys, importances);
+					SeedAccountStateCache(m_cache, keys);
 				else
-					SeedAccountStateCache(m_cache, addresses, importances);
-
-				// Sanity:
-				auto view = m_cache.createView();
-				for (auto i = 0u; i < keys.size(); ++i) {
-					if (KeyType::PublicKey == keyType)
-						EXPECT_EQ(importances[i], view->get(keys[i]).ImportanceInfo.current()) << "at index " << i;
-					else
-						EXPECT_EQ(importances[i], view->get(addresses[i]).ImportanceInfo.current()) << "at index " << i;
-				}
+					SeedAccountStateCache(m_cache, addresses);
 			}
 
 		public:
@@ -112,7 +97,7 @@ namespace catapult { namespace timesync {
 
 			void addHighValueAccounts(size_t count) {
 				for (auto i = 0u; i < count; ++i)
-					AddAccount(m_cache, test::GenerateRandomData<Key_Size>(), Importance(100'000), model::ImportanceHeight(1));
+					AddAccount(m_cache, test::GenerateRandomData<Key_Size>());
 			}
 
 		private:
@@ -185,7 +170,7 @@ namespace catapult { namespace timesync {
 				model::NetworkIdentifier::Mijin_Test,
 				234,
 				Amount(1000)});
-			SeedAccountStateCache(cache, keys, std::vector<Importance>(numSamples, Importance(Total_Chain_Balance / numSamples)));
+			SeedAccountStateCache(cache, keys);
 			TimeSynchronizer synchronizer(aggregateFilter, Total_Chain_Balance, Warning_Threshold_Millis);
 
 			// Act:

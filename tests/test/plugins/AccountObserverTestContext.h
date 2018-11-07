@@ -52,15 +52,15 @@ namespace catapult { namespace test {
 	public:
 		/// Sets the (xpx) balance of the account identified by \a accountIdentifier to \a amount.
 		template<typename IdType>
-		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount::ValueType amount) {
-			return setAccountBalance(accountIdentifier, Amount(amount));
+		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount::ValueType amount, const Height& height) {
+			return setAccountBalance(accountIdentifier, Amount(amount), height);
 		}
 
 		/// Sets the (xpx) balance of the account identified by \a accountIdentifier to \a amount.
 		template<typename IdType>
-		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount amount) {
+		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount amount, const Height& height) {
 			auto& accountState = addAccount(accountIdentifier);
-			accountState.Balances.credit(Xpx_Id, amount);
+			accountState.Balances.credit(Xpx_Id, amount, height);
 			return accountState.Balances;
 		}
 

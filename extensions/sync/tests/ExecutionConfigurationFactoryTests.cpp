@@ -44,7 +44,8 @@ namespace catapult { namespace sync {
 			"HarvestFeeObserver",
 			"RecalculateImportancesObserver",
 			"BlockDifficultyObserver",
-			"BlockDifficultyPruningObserver"
+			"BlockDifficultyPruningObserver",
+			"SnapshotCleanUpObserver"
 		};
 		EXPECT_EQ(expectedObserverNames, config.pObserver->names());
 

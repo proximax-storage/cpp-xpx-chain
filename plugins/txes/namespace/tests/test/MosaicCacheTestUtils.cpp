@@ -57,7 +57,7 @@ namespace catapult { namespace test {
 
 	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, const Key& owner, Amount amount) {
 		auto& accountStateCacheDelta = cache.sub<cache::AccountStateCache>();
-		accountStateCacheDelta.addAccount(owner, Height(1)).Balances.credit(id, amount);
+		accountStateCacheDelta.addAccount(owner, Height(1)).Balances.credit(id, amount, Height(1));
 	}
 
 	namespace {

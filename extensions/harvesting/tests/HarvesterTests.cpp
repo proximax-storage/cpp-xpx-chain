@@ -19,6 +19,7 @@
 **/
 
 #include "harvesting/src/Harvester.h"
+#include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/model/EntityHasher.h"
@@ -50,19 +51,12 @@ namespace catapult { namespace harvesting {
 
 			return keyPairs;
 		}
-
-		std::vector<Importance> CreateImportances(size_t count) {
-			return std::vector<Importance>(count, Default_Importance);
-		}
-
 		std::vector<state::AccountState*> CreateAccounts(
 				cache::AccountStateCacheDelta& cache,
-				const std::vector<KeyPair>& keyPairs,
-				const std::vector<Importance> importances) {
+				const std::vector<KeyPair>& keyPairs) {
 			std::vector<state::AccountState*> accountStates;
 			for (auto i = 0u; i < keyPairs.size(); ++i) {
 				auto& accountState = cache.addAccount(keyPairs[i].publicKey(), Height(1));
-				accountState.ImportanceInfo.set(importances[i], model::ImportanceHeight(1));
 				accountStates.push_back(&accountState);
 			}
 
@@ -98,12 +92,11 @@ namespace catapult { namespace harvesting {
 			HarvesterContext()
 					: Cache(test::CreateEmptyCatapultCache(CreateConfiguration()))
 					, KeyPairs(CreateKeyPairs(Num_Accounts))
-					, Importances(CreateImportances(Num_Accounts))
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts))
 					, pLastBlock(CreateBlock())
 					, LastBlockElement(test::BlockToBlockElement(*pLastBlock)) {
 				auto delta = Cache.createDelta();
-				AccountStates = CreateAccounts(delta.sub<cache::AccountStateCache>(), KeyPairs, Importances);
+				AccountStates = CreateAccounts(delta.sub<cache::AccountStateCache>(), KeyPairs);
 
 				auto& difficultyCache = delta.sub<cache::BlockDifficultyCache>();
 				state::BlockDifficultyInfo info(pLastBlock->Height, pLastBlock->Timestamp, pLastBlock->Difficulty);
@@ -130,7 +123,6 @@ namespace catapult { namespace harvesting {
 		public:
 			cache::CatapultCache Cache;
 			std::vector<KeyPair> KeyPairs;
-			std::vector<Importance> Importances;
 			std::vector<state::AccountState*> AccountStates;
 			std::unique_ptr<UnlockedAccounts> pUnlockedAccounts;
 			std::shared_ptr<model::Block> pLastBlock;
@@ -158,12 +150,13 @@ namespace catapult { namespace harvesting {
 			auto difficulty = chain::CalculateDifficulty(context.Cache.sub<cache::BlockDifficultyCache>(), pLastBlock->Height, config);
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto view = accountStateCache.createView();
-			const auto& accountState = view->get(publicKey);
+			cache::ReadOnlyAccountStateCache readOnlyCache(*view);
+			cache::ImportanceView importanceView(readOnlyCache);
 			uint64_t hit = chain::CalculateHit(model::CalculateGenerationHash(context.LastBlockElement.GenerationHash, publicKey));
 			uint64_t referenceTarget = static_cast<uint64_t>(chain::CalculateTarget(
 					utils::TimeSpan::FromMilliseconds(1000),
 					difficulty,
-					accountState.ImportanceInfo.current(),
+					importanceView.getAccountImportanceOrDefault(publicKey, pLastBlock->Height),
 					config));
 			uint64_t seconds = hit / referenceTarget;
 			return Timestamp((seconds + 1) * 1000);
@@ -277,10 +270,10 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, HarvestReturnsNullptrIfNoHarvesterHasImportanceAtBlockHeight) {
 		// Arrange:
 		HarvesterContext context;
-		for (auto pState : context.AccountStates) {
-			// next block has height 2 and thus importance is expected to be set at height 1
-			pState->ImportanceInfo.set(pState->ImportanceInfo.current(), model::ImportanceHeight(360));
-		}
+//		for (auto pState : context.AccountStates) {
+//			// next block has height 2 and thus importance is expected to be set at height 1
+//			pState->ImportanceInfo.set(pState->ImportanceInfo.current(), model::ImportanceHeight(360));
+//		}
 
 		auto pHarvester = context.CreateHarvester();
 
