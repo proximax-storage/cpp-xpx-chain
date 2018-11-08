@@ -50,7 +50,10 @@ namespace catapult { namespace chain {
 			Difficulty difficulty,
 			Importance signerImportance,
 			const model::BlockChainConfiguration&) {
-		return difficulty.unwrap() * timeSpan.seconds() * signerImportance.unwrap();
+		BlockTarget temp(difficulty.unwrap());
+		temp *= timeSpan.seconds();
+		temp *= signerImportance.unwrap();
+		return temp;
 	}
 
 	BlockTarget CalculateTarget(

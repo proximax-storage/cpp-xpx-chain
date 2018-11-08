@@ -100,17 +100,6 @@ namespace catapult { namespace cache {
 		AssertCannotFindImportance(*pView, test::GenerateRandomData<Key_Size>(), height);
 	}
 
-	KEY_TRAITS_BASED_TEST(CannotRetrieveImportanceForAccountAtMismatchedHeight) {
-		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
-		auto pCache = CreateAccountStateCache();
-		AddAccount<TTraits>(*pCache, key);
-		auto pView = test::CreateImportanceView(*pCache);
-
-		// Act + Assert: mismatched height
-		AssertCannotFindImportance(*pView, key, Height(3333));
-	}
-
 	namespace {
 		template<typename TTraits>
 		void AssertCanFindImportance(Importance accountImportance) {
@@ -118,7 +107,7 @@ namespace catapult { namespace cache {
 			auto key = test::GenerateRandomData<Key_Size>();
 			auto height = Height(1000);
 			auto pCache = CreateAccountStateCache();
-			AddAccount<TTraits>(*pCache, key);
+			AddAccount<TTraits>(*pCache, key, Amount(accountImportance.unwrap()));
 			auto pView = test::CreateImportanceView(*pCache);
 
 			// Act:

@@ -51,7 +51,7 @@ namespace catapult { namespace chain {
 
 		const auto& lastInfo = *(--difficultyInfos.end());
 		auto lastTimestamp = lastInfo.BlockTimestamp;
-		auto timeDiff = TimeDifference(lastTimestamp, firstTimestamp);
+		auto timeDiff = TimeDifference(firstTimestamp, lastTimestamp);
 
 		// Calculate the base target and return it as difficulty:
 		// If S > 60

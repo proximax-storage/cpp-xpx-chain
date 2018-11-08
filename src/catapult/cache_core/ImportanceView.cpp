@@ -42,8 +42,7 @@ namespace catapult { namespace cache {
 		if (!pAccountState)
 			return false;
 
-		importance = pAccountState ?
-			Importance(pAccountState->Balances.getEffectiveBalance(height, m_cache.importanceGrouping()).unwrap()) : Importance(0);
+		importance = Importance(pAccountState->Balances.getEffectiveBalance(height, m_cache.importanceGrouping()).unwrap());
 
 		return true;
 	}
