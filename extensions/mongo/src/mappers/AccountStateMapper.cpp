@@ -41,7 +41,7 @@ namespace catapult { namespace mongo { namespace mappers {
 			mosaicsArray << bson_stream::close_array;
 
 			auto snapshotsArray = builder << "snapshots" << bson_stream::open_array;
-			for (const auto& snapshot : balances.getSnapshots())
+			for (const auto& snapshot : balances.snapshots())
 				StreamSnapshot(snapshotsArray, snapshot.Amount, snapshot.BalanceHeight);
 
 			snapshotsArray << bson_stream::close_array;
@@ -79,7 +79,7 @@ namespace catapult { namespace mongo { namespace mappers {
 		}
 
 		void ToAccountBalanceSnapshot(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
-			accountBalances.getSnapshots().push_back(
+			accountBalances.snapshots().push_back(
 					model::BalanceSnapshot{
 						GetValue64<Amount>(mosaicDocument["amount"]),
 				        GetValue64<Height>(mosaicDocument["height"])

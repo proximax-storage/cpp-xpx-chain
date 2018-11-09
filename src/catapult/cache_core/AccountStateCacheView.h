@@ -64,15 +64,13 @@ namespace catapult { namespace cache {
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
-				const model::AddressSet& highValueAddresses,
-				model::AddressSet& updatedAddresses);
+				const model::AddressSet& highValueAddresses);
 
 	private:
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
-				model::AddressSet& updatedAddresses,
 				std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter>&& pKeyLookupAdapter);
 
 	public:
@@ -100,20 +98,19 @@ namespace catapult { namespace cache {
 		const model::NetworkIdentifier m_networkIdentifier;
 		const uint64_t m_importanceGrouping;
 		const model::AddressSet& m_highValueAddresses;
-		model::AddressSet& m_updatedAddresses;
 		std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter> m_pKeyLookupAdapter;
 	};
 
 	/// View on top of the account state cache.
 	class AccountStateCacheView : public ReadOnlyViewSupplier<BasicAccountStateCacheView> {
 	public:
-		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a updatedAddresses.
+		/// Creates a view around \a accountStateSets, \a options and \a highValueAddresses.
 		AccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
-				model::AddressSet& updatedAddresses)
-				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses, updatedAddresses)
+				const model::AddressSet&)
+				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses)
 		{}
 	};
 }}

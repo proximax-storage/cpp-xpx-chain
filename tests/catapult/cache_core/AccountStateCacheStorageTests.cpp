@@ -99,7 +99,7 @@ namespace catapult { namespace cache {
 
 				// Assert:
 				EXPECT_EQ(numMosaics, loadedAccountState.Balances.size());
-				EXPECT_EQ(numSnapshots, loadedAccountState.Balances.getSnapshots().size());
+				EXPECT_EQ(numSnapshots, loadedAccountState.Balances.snapshots().size());
 				test::AssertEqual(serializedAccountState, loadedAccountState);
 			}
 		};
@@ -133,7 +133,7 @@ namespace catapult { namespace cache {
 
 				// - the account state contents are correct
 				EXPECT_EQ(numMosaics, loadedAccountState.Balances.size());
-				EXPECT_EQ(numSnapshots, loadedAccountState.Balances.getSnapshots().size());
+				EXPECT_EQ(numSnapshots, loadedAccountState.Balances.snapshots().size());
 				test::AssertEqual(serializedAccountState, loadedAccountState);
 
 				// - the state buffer was resized

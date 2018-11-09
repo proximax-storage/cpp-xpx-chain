@@ -30,7 +30,7 @@ namespace catapult { namespace test {
 		}
 
 		for (auto i = 0u; i < numSnapshots; ++i) {
-			state.Balances.getSnapshots().push_back(model::BalanceSnapshot{Amount(seed * 1000 + i + 1), state.AddressHeight + Height(i + 1)});
+			state.Balances.snapshots().push_back(model::BalanceSnapshot{Amount(seed * 1000 + i + 1), state.AddressHeight + Height(i + 1)});
 		}
 	}
 
@@ -45,8 +45,8 @@ namespace catapult { namespace test {
 		for (const auto& pair : expected.Balances)
 			EXPECT_EQ(pair.second, actual.Balances.get(pair.first)) << "for mosaic " << pair.first;
 
-		const auto& expectedSnapshots = expected.Balances.getSnapshots();
-		const auto& actualSnapshots = actual.Balances.getSnapshots();
+		const auto& expectedSnapshots = expected.Balances.snapshots();
+		const auto& actualSnapshots = actual.Balances.snapshots();
 		for (auto i = 0u; i < expectedSnapshots.size(); ++i) {
 			EXPECT_EQ(expectedSnapshots[i].BalanceHeight, actualSnapshots[i].BalanceHeight);
 			EXPECT_EQ(expectedSnapshots[i].Amount, actualSnapshots[i].Amount);

@@ -55,14 +55,14 @@ namespace catapult { namespace observers {
 				context.commitCacheChanges();
 
 				auto account = context.find(signer);
-				EXPECT_EQ(Effective_Balance_Range + Max_Rollback_Blocks + 1, account->Balances.getSnapshots().size());
+				EXPECT_EQ(Effective_Balance_Range + Max_Rollback_Blocks + 1, account->Balances.snapshots().size());
 
 				auto notification = test::CreateBlockNotification(signer);
 				// Act:
 				test::ObserveNotification(*pObserver, notification, context);
 
 				account = context.find(signer);
-				EXPECT_EQ(expectedSizeOfSnapshots, account->Balances.getSnapshots().size());
+				EXPECT_EQ(expectedSizeOfSnapshots, account->Balances.snapshots().size());
 			}
 		}
 

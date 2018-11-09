@@ -73,14 +73,14 @@ namespace catapult { namespace cache {
 				const AccountStateCacheTypes::BaseSetDeltaPointers& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
-				model::AddressSet& addressesToUpdate);
+				const model::AddressSet& addressesToUpdate);
 
 	private:
 		BasicAccountStateCacheDelta(
 				const AccountStateCacheTypes::BaseSetDeltaPointers& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
-				model::AddressSet& addressesToUpdate,
+				const model::AddressSet& addressesToUpdate,
 				std::unique_ptr<AccountStateCacheDeltaMixins::KeyLookupAdapter>&& pKeyLookupAdapter);
 
 	public:
@@ -169,7 +169,7 @@ namespace catapult { namespace cache {
 
 		const AccountStateCacheTypes::Options& m_options;
 		const model::AddressSet& m_highValueAddresses;
-		model::AddressSet& m_addressesToUpdate;
+		const model::AddressSet& m_addressesToUpdate;
 		std::unique_ptr<AccountStateCacheDeltaMixins::KeyLookupAdapter> m_pKeyLookupAdapter;
 
 		QueuedRemovalSet<Address> m_queuedRemoveByAddress;

@@ -48,7 +48,7 @@ namespace catapult { namespace mongo { namespace mappers {
 				state.Balances.credit(mosaic.MosaicId, mosaic.Amount, Height(0));
 
 			for (const auto& snapshot : snapshots)
-				state.Balances.getSnapshots().push_back(snapshot);
+				state.Balances.snapshots().push_back(snapshot);
 
 			return state;
 		}

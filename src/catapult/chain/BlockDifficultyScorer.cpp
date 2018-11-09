@@ -37,15 +37,13 @@ namespace catapult { namespace chain {
 	Difficulty CalculateDifficulty(const cache::DifficultyInfoRange& difficultyInfos, const model::BlockChainConfiguration& config) {
 		// note that difficultyInfos is sorted by both heights and timestamps, so the first info has the smallest
 		// height and earliest timestamp and the last info has the largest height and latest timestamp
-		size_t historySize = 0;
-		for (auto iter = difficultyInfos.begin(); iter != difficultyInfos.end(); historySize++, iter++) {}
+		size_t historySize = std::distance(difficultyInfos.begin(), difficultyInfos.end());
 
-		if (historySize < 2) {
-			if (historySize == 1 && difficultyInfos.begin()->BlockHeight == Height(1)) {
-				return Difficulty(NEMESIS_BLOCK_DIFFICULTY);
-			}
+		if (historySize == 1 && difficultyInfos.begin()->BlockHeight == Height(1))
+			return Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+
+		if (historySize < 2)
 			return Difficulty(0);
-		}
 
 		auto firstTimestamp = difficultyInfos.begin()->BlockTimestamp;
 

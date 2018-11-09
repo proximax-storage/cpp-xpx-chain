@@ -31,7 +31,7 @@ namespace catapult { namespace cache {
 			const AccountStateCacheTypes::BaseSetDeltaPointers& accountStateSets,
 			const AccountStateCacheTypes::Options& options,
 			const model::AddressSet& highValueAddresses,
-			model::AddressSet& addressesToUpdate)
+			const model::AddressSet& addressesToUpdate)
 			: BasicAccountStateCacheDelta(
 					accountStateSets,
 					options,
@@ -46,7 +46,7 @@ namespace catapult { namespace cache {
 			const AccountStateCacheTypes::BaseSetDeltaPointers& accountStateSets,
 			const AccountStateCacheTypes::Options& options,
 			const model::AddressSet& highValueAddresses,
-			model::AddressSet& addressesToUpdate,
+			const model::AddressSet& addressesToUpdate,
 			std::unique_ptr<AccountStateCacheDeltaMixins::KeyLookupAdapter>&& pKeyLookupAdapter)
 			: AccountStateCacheDeltaMixins::Size(*accountStateSets.pPrimary)
 			, AccountStateCacheDeltaMixins::ContainsAddress(*accountStateSets.pPrimary)
@@ -181,7 +181,7 @@ namespace catapult { namespace cache {
 
 	void BasicAccountStateCacheDelta::addUpdatedAddresses(model::AddressSet& set) const {
 		auto include = [](const auto& accountState) {
-			return !accountState.Balances.getSnapshots().empty();
+			return !accountState.Balances.snapshots().empty();
 		};
 
 		auto deltas = m_pStateByAddress->deltas();

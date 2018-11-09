@@ -27,10 +27,10 @@ namespace catapult { namespace model {
 
 	/// Binary layout for a balance snapshot.
 	struct BalanceSnapshot {
-		/// Balance amount when snap shot was done.
+		/// Balance amount when snapshot was done.
 		catapult::Amount Amount;
 
-		/// Height of balance when snap shot was done.
+		/// Height of balance when snapshot was done.
 		Height BalanceHeight;
 	};
 

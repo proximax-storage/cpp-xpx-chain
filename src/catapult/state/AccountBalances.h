@@ -52,12 +52,12 @@ namespace catapult { namespace state {
 
 	public:
 		/// Returns const ref to snapshots.
-		const std::deque<model::BalanceSnapshot>& getSnapshots() const {
+		const std::deque<model::BalanceSnapshot>& snapshots() const {
 			return m_snapshots;
 		}
 
 		/// Returns ref to snapshots.
-		std::deque<model::BalanceSnapshot>& getSnapshots() {
+		std::deque<model::BalanceSnapshot>& snapshots() {
 			return m_snapshots;
 		}
 

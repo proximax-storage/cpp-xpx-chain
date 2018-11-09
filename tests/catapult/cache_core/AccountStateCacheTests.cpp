@@ -936,18 +936,6 @@ namespace catapult { namespace cache {
 		});
 	}
 
-	TEST(TEST_CLASS, HighValueAddressesReturnsOriginalAccountsMeetingCriteria) {
-		// Arrange: add 2/3 accounts with sufficient balance
-		auto balances = std::vector<Amount>{ Amount(1'100'000), Amount(900'000), Amount(1'000'000) };
-		RunHighValueAddressesTest(balances, [](const auto& addresses, const auto& delta) {
-			// Act:
-			auto highValueAddresses = delta->highValueAddresses();
-
-			// Assert:
-			EXPECT_EQ(model::AddressSet({ addresses[0], addresses[2] }), highValueAddresses);
-		});
-	}
-
 	TEST(TEST_CLASS, HighValueAddressesReturnsAddedAccountsMeetingCriteria) {
 		// Arrange:
 		RunHighValueAddressesTest({}, [](const auto&, auto& delta) {
@@ -996,94 +984,6 @@ namespace catapult { namespace cache {
 		});
 	}
 
-	TEST(TEST_CLASS, HighValueAddressesReturnsAllAccountsMeetingCriteria) {
-		// Arrange: add 3/5 accounts with sufficient balance [3 match]
-		auto balances = std::vector<Amount>{ Amount(1'100'000), Amount(900'000), Amount(1'000'000), Amount(800'000), Amount(1'200'000) };
-		RunHighValueAddressesTest(balances, [](const auto& addresses, auto& delta) {
-			// - add 2/3 accounts with sufficient balance (uncommitted) [5 match]
-			auto uncommittedAddresses = AddAccountsWithBalances(*delta, { Amount(1'100'000), Amount(900'000), Amount(1'000'000) });
-
-			// - modify two [5 match]
-			delta->get(addresses[1]).Balances.credit(Xpx_Id, Amount(100'000), Height(1));
-			delta->get(addresses[4]).Balances.debit(Xpx_Id, Amount(200'001), Height(1));
-
-			// - delete two [3 match]
-			delta->queueRemove(addresses[2], Height(1));
-			delta->queueRemove(uncommittedAddresses[0], Height(1));
-			delta->commitRemovals();
-
-			// Act:
-			auto highValueAddresses = delta->highValueAddresses();
-
-			// Assert:
-			EXPECT_EQ(model::AddressSet({ addresses[0], addresses[1], uncommittedAddresses[2] }), highValueAddresses);
-		});
-	}
-
-	TEST(TEST_CLASS, HighValueAddressesReturnsAllAccountsMeetingCriteriaAfterDeltaChangesAreThrownAway) {
-		// Arrange: set min balance to 1M
-		auto options = Default_Cache_Options;
-		options.MinHighValueAccountBalance = Amount(1'000'000);
-		AccountStateCache cache(CacheConfiguration(), options);
-
-		// - prepare delta with requested accounts
-		std::vector<Address> addresses;
-		{
-			// - add 3/5 accounts with sufficient balance [3 match]
-			auto delta = cache.createDelta();
-			addresses = AddAccountsWithBalances(*delta, {
-				Amount(1'100'000), Amount(900'000), Amount(1'000'000), Amount(800'000), Amount(1'200'000)
-			});
-			cache.commit();
-
-			// - make changes to delta but do not commit
-			// - add 2/3 accounts with sufficient balance (uncommitted) [5 match]
-			auto uncommittedAddresses = AddAccountsWithBalances(*delta, { Amount(1'100'000), Amount(900'000), Amount(1'000'000) });
-
-			// - modify two [5 match]
-			delta->get(addresses[1]).Balances.credit(Xpx_Id, Amount(100'000), Height(1));
-			delta->get(addresses[4]).Balances.debit(Xpx_Id, Amount(200'001), Height(1));
-
-			// - delete two [3 match]
-			delta->queueRemove(addresses[2], Height(1));
-			delta->queueRemove(uncommittedAddresses[0], Height(1));
-			delta->commitRemovals();
-		}
-
-		// - create a new delta and get addresses from it
-		{
-			auto delta = cache.createDelta();
-
-			// Act:
-			auto highValueAddresses = delta->highValueAddresses();
-
-			// Assert: only original accounts with highValue addresses are returned
-			EXPECT_EQ(model::AddressSet({ addresses[0], addresses[2], addresses[4] }), highValueAddresses);
-		}
-	}
-
-	TEST(TEST_CLASS, CacheViewExposesHighValueAddressesSize) {
-		// Arrange:
-		auto options = Default_Cache_Options;
-		options.MinHighValueAccountBalance = Amount(1'000'000);
-		AccountStateCache cache(CacheConfiguration(), options);
-		{
-			auto delta = cache.createDelta();
-			auto& addedAccount1 = delta->addAccount(test::GenerateRandomData<Address_Decoded_Size>(), Height());
-			addedAccount1.Balances.credit(Xpx_Id, Amount(1'000'000), Height(1));
-			auto& addedAccount2 = delta->addAccount(test::GenerateRandomData<Address_Decoded_Size>(), Height());
-			addedAccount2.Balances.credit(Xpx_Id, Amount(500'000), Height(1));
-
-			// Sanity:
-			EXPECT_EQ(1u, delta->highValueAddresses().size());
-
-			cache.commit();
-		}
-
-		// Act + Assert:
-		EXPECT_EQ(1u, cache.createView()->highValueAddressesSize());
-	}
-
 	// endregion
 
 	// region updatedAddresses
@@ -1099,7 +999,7 @@ namespace catapult { namespace cache {
 		void CleanUpSnapshots(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10) {
 			for (auto i = start; i < end; ++i) {
 				auto& accountState = delta.get(Key{ { i } });
-				accountState.Balances.getSnapshots().clear();
+				accountState.Balances.snapshots().clear();
 			}
 		}
 	}
