@@ -149,21 +149,14 @@ namespace catapult { namespace filechain {
 		void SetStorageChainHeight(io::BlockStorageModifier&& storage, size_t height) {
 			for (auto i = 2u; i <= height; ++i) {
 				auto pBlock = test::GenerateBlockWithTransactions(0, Height(i), Timestamp(i * 3000));
-				pBlock->Difficulty = Difficulty(Difficulty().unwrap() + i);
+				pBlock->Difficulty = Difficulty(1 << 8);
 				storage.saveBlock(test::BlockToBlockElement(*pBlock));
 			}
 		}
 
 		constexpr uint64_t CalculateExpectedScore(size_t height) {
-			// - nemesis difficulty is 0 and nemesis time is 0
-			// - all other blocks have a difficulty of base + height
-			// - blocks at heights 1 and 2 have time difference of 6s
-			// - all other blocks have a time difference of 3s
-			return
-					Difficulty().unwrap() * (height - 1) // sum base difficulties
-					+ height * (height + 1) / 2 // sum difficulty deltas (1..N)
-					- 1 // adjust for range (2..N), first block has height 2
-					- (6 + (height - 2) * 3); // subtract the time differences
+			// - all difficulties are 2^8, we sum them all, so expected score is 2^64/2^8 = 2^56 * (height - 1)
+			return (1ll << 56) * (height - 1);
 		}
 	}
 
