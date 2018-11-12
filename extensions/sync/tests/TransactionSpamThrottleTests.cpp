@@ -43,17 +43,19 @@ namespace catapult { namespace sync {
 			return test::CreateEmptyCatapultCache(blockChainConfiguration);
 		}
 
-		const state::AccountState& AddAccount(cache::AccountStateCacheDelta& delta) {
+		const state::AccountState& AddAccount(cache::AccountStateCacheDelta& delta, Importance importance) {
 			auto& accountState = delta.addAccount(test::GenerateRandomData<Key_Size>(), Height(1));
+			accountState.Balances.credit(Xpx_Id, Amount(importance.unwrap()), Height(1));
 			return accountState;
 		}
 
 		std::vector<const state::AccountState*> SeedAccountStateCache(
 				cache::AccountStateCacheDelta& delta,
-				size_t count) {
+				size_t count,
+				Importance importance) {
 			std::vector<const state::AccountState*> accountStates;
 			for (auto i = 0u; i < count; ++i)
-				accountStates.push_back(&AddAccount(delta));
+				accountStates.push_back(&AddAccount(delta, importance));
 
 			return accountStates;
 		}
@@ -173,8 +175,8 @@ namespace catapult { namespace sync {
 			{
 				auto delta = catapultCache.createDelta();
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
-				accountStates = SeedAccountStateCache(accountStateCacheDelta, settings.CacheSize);
-				pAccountState = &AddAccount(accountStateCacheDelta);
+				accountStates = SeedAccountStateCache(accountStateCacheDelta, settings.CacheSize, settings.DefaultImportance);
+				pAccountState = &AddAccount(accountStateCacheDelta, settings.SignerImportance);
 				catapultCache.commit(Height(1));
 			}
 
@@ -280,7 +282,7 @@ namespace catapult { namespace sync {
 			{
 				auto delta = catapultCache.createDelta();
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
-				accountStates = SeedAccountStateCache(accountStateCacheDelta, config.MaxCacheSize);
+				accountStates = SeedAccountStateCache(accountStateCacheDelta, config.MaxCacheSize, settings.SignerImportance);
 				catapultCache.commit(Height(1));
 			}
 
