@@ -63,10 +63,10 @@ namespace catapult { namespace chain {
 		boost::multiprecision::uint128_t Tp = lastInfo.BlockDifficulty.unwrap();
 		auto S = (timeDiff / (historySize - 1)).seconds();
 		auto RATIO = config.BlockGenerationTargetTime.seconds();
+
 		if (RATIO <= 0)
-		{
 			CATAPULT_THROW_INVALID_ARGUMENT("BlockGenerationTargetTime is invalid or not set");
-		}
+
 		auto factor = config.BlockTimeSmoothingFactor / SMOOTHING_FACTOR_DENOMINATOR;
 		auto MINRATIO = RATIO - factor;
 		auto MAXRATIO = RATIO + factor;

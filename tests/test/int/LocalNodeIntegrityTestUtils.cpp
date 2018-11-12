@@ -56,6 +56,7 @@ namespace catapult { namespace test {
 			model::PreviousBlockContext context(*pNemesisBlockElement);
 			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
 			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
+			pBlock->Difficulty = Difficulty(1000);
 			SignBlock(signer, *pBlock);
 			return std::move(pBlock);
 		}

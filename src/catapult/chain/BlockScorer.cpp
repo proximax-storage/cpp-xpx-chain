@@ -39,6 +39,9 @@ namespace catapult { namespace chain {
 		if (currentBlock.Timestamp <= parentBlock.Timestamp)
 			return 0u;
 
+		if (currentBlock.Difficulty.unwrap() == 0)
+			CATAPULT_THROW_INVALID_ARGUMENT("Difficulty of block can't be zero");
+
 		BlockTarget score{1u};
 		score <<= 64u;
 		score /= currentBlock.Difficulty.unwrap();
