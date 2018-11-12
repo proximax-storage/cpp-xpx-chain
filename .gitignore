@@ -26,6 +26,7 @@ npm-*.log*
 /build/
 .cproject
 .project
+.settings
 
 # IntelliJ project files
 .idea
@@ -33,3 +34,4 @@ npm-*.log*
 out
 gen
 cmake-build-debug
+temp
