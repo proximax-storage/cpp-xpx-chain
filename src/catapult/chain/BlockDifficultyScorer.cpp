@@ -28,6 +28,7 @@ namespace catapult { namespace chain {
 		constexpr uint64_t GAMMA_DENOMINATOR{100};
 		constexpr uint32_t SMOOTHING_FACTOR_DENOMINATOR{1000};
 		constexpr uint64_t NEMESIS_BLOCK_DIFFICULTY{1000};
+		constexpr uint64_t MILLISECONDS_PER_SECOND{1000};
 
 		constexpr utils::TimeSpan TimeDifference(const Timestamp& firstTimestamp, const Timestamp& lastTimestamp) {
 			return utils::TimeSpan::FromDifference(lastTimestamp, firstTimestamp);
@@ -61,7 +62,7 @@ namespace catapult { namespace chain {
 		// Tp - previous base target
 		// Tb - calculated base target
 		boost::multiprecision::uint128_t Tp = lastInfo.BlockDifficulty.unwrap();
-		auto S = (timeDiff / (historySize - 1)).seconds();
+		auto S = timeDiff.millis() / ((historySize - 1) * MILLISECONDS_PER_SECOND);
 		auto RATIO = config.BlockGenerationTargetTime.seconds();
 		if (RATIO <= 0)
 		{
