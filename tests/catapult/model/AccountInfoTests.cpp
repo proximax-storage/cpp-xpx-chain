@@ -77,6 +77,7 @@ namespace catapult { namespace model {
 		AccountInfo accountInfo;
 		accountInfo.Size = 0;
 		test::SetMaxValue(accountInfo.MosaicsCount);
+		test::SetMaxValue(accountInfo.BalanceSnapshotCount);
 
 		// Act:
 		auto realSize = AccountInfo::CalculateRealSize(accountInfo);
