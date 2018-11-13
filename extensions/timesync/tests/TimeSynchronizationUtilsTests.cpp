@@ -204,9 +204,12 @@ namespace catapult { namespace timesync {
 	namespace {
 		void SeedAccountStateCache(
 				cache::AccountStateCacheDelta& delta,
-				const std::vector<Key>& keys) {
-			for (auto i = 0u; i < keys.size(); ++i)
-				test::AddAccount(delta, keys[i]);
+				const std::vector<Key>& keys,
+				const std::vector<Importance>& importances) {
+			for (auto i = 0u; i < keys.size(); ++i) {
+				auto& accountState = delta.addAccount(keys[i], Height(1));
+				accountState.Balances.credit(Xpx_Id, Amount(importances[i].unwrap()), Height(1));
+			}
 		}
 
 		void SeedNodeContainer(ionet::NodeContainer& nodeContainer, const std::vector<Key>& keys) {
@@ -237,6 +240,7 @@ namespace catapult { namespace timesync {
 		template<typename TAssertState>
 		void AssertStateChange(
 				const std::vector<int64_t>& remoteOffsets,
+				const std::vector<Importance>& importances,
 				TAssertState assertState) {
 			// Arrange: prepare samples
 			auto samples = CreateSamples(remoteOffsets);
@@ -249,7 +253,7 @@ namespace catapult { namespace timesync {
 			// - prepare account state cache
 			auto& cache = context.ServiceTestState.state().cache();
 			auto cacheDelta = cache.createDelta();
-			SeedAccountStateCache(cacheDelta.sub<cache::AccountStateCache>(), keys);
+			SeedAccountStateCache(cacheDelta.sub<cache::AccountStateCache>(), keys, importances);
 			cache.commit(Height(1));
 
 			// Sanity:
@@ -269,7 +273,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TaskProcessesSamples_Single) {
 		// Assert:
-		AssertStateChange({ 250 }, [](const auto& timeSyncState) {
+		AssertStateChange({ 250 }, { Importance(1'000'000) }, [](const auto& timeSyncState) {
 			EXPECT_EQ(250u, timeSyncState.offset().unwrap());
 			EXPECT_EQ(1u, timeSyncState.nodeAge().unwrap());
 		});
@@ -278,9 +282,10 @@ namespace catapult { namespace timesync {
 	TEST(TEST_CLASS, TaskProcessesSamples_Multiple) {
 		// Arrange:
 		std::vector<int64_t> remoteOffsets{ 250, -150, 500, 0 };
+		std::vector<Importance> importances{ Importance(250'000), Importance(250'000), Importance(250'000), Importance(250'000) };
 
 		// Assert:
-		AssertStateChange(remoteOffsets, [](const auto& timeSyncState) {
+		AssertStateChange(remoteOffsets, importances, [](const auto& timeSyncState) {
 			EXPECT_EQ(150u, timeSyncState.offset().unwrap());
 			EXPECT_EQ(1u, timeSyncState.nodeAge().unwrap());
 		});

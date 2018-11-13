@@ -40,10 +40,12 @@ namespace catapult { namespace timesync {
 
 		void SeedAccountStateCache(
 				cache::AccountStateCache& cache,
-				const std::vector<Key>& keys) {
+				const std::vector<Key>& keys,
+				const std::vector<Importance>& importances) {
 			auto delta = cache.createDelta();
 			for (auto i = 0u; i < keys.size(); ++i) {
-				delta->addAccount(keys[i], Height(100));
+				auto& accountState = delta->addAccount(keys[i], Height(1));
+				accountState.Balances.credit(Xpx_Id, Amount(importances[i].unwrap()), Height(1));
 			}
 
 			cache.commit();
@@ -107,8 +109,9 @@ namespace catapult { namespace timesync {
 		void AssertNoNodesAreSelected(const Options& options) {
 			// Arrange:
 			auto keys = test::GenerateRandomDataVector<Key>(3);
+			std::vector<Importance> importances(3, options.NodeImportance);
 			auto pCache = CreateAccountStateCache();
-			SeedAccountStateCache(*pCache, keys);
+			SeedAccountStateCache(*pCache, keys, importances);
 
 			ionet::NodeContainer nodeContainer;
 			SeedNodeContainer(nodeContainer, keys, options.SeedNodeOptions);
@@ -116,20 +119,11 @@ namespace catapult { namespace timesync {
 			ImportanceAwareNodeSelector selector(options.NodeServiceIdentifier, 5, Importance(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(Default_Importance_Height.unwrap() + 1));
+			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(100));
 
 			// Assert:
 			EXPECT_TRUE(selectNodes.empty());
 		}
-	}
-
-	TEST(TEST_CLASS, ReturnsEmptySetIfNoNodeHasImportanceSetAtHeight) {
-		// Arrange:
-		Options options;
-		options.NodeImportanceHeight = model::ImportanceHeight(124);
-
-		// Assert:
-		AssertNoNodesAreSelected(options);
 	}
 
 	TEST(TEST_CLASS, ReturnsEmptySetIfNoNodeHasEnoughImportance) {
@@ -171,10 +165,10 @@ namespace catapult { namespace timesync {
 
 	namespace {
 		template<typename TAssert>
-		void AssertSelectedNodes(const std::vector<Key>& keys, TAssert assertKeys) {
+		void AssertSelectedNodes(const std::vector<Key>& keys, const std::vector<Importance>& importances, TAssert assertKeys) {
 			// Arrange:
 			auto pCache = CreateAccountStateCache();
-			SeedAccountStateCache(*pCache, keys);
+			SeedAccountStateCache(*pCache, keys, importances);
 
 			ionet::NodeContainer nodeContainer;
 			SeedNodeContainer(nodeContainer, keys);
@@ -182,7 +176,7 @@ namespace catapult { namespace timesync {
 			ImportanceAwareNodeSelector selector(Default_Service_Identifier, 3, Importance(1000));
 
 			// Act:
-			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(Default_Importance_Height.unwrap() + 1));
+			auto selectNodes = selector.selectNodes(*pView, nodeContainer.view(), Height(1));
 
 			// Assert:
 			assertKeys(test::ExtractNodeIdentities(selectNodes));
@@ -190,12 +184,13 @@ namespace catapult { namespace timesync {
 	}
 
 	TEST(TEST_CLASS, ReturnsOnlyNodesThatMeetAllRequirements) {
-		// Arrange:
+		// Arrange: only importances at indexes 0, 2 and 3 qualify
+		std::vector<Importance> importances{ Importance(1234), Importance(123), Importance(5000), Importance(10000), Importance(50) };
 		auto allKeys = test::GenerateRandomDataVector<Key>(5);
 		utils::KeySet expectedKeys{ allKeys[0], allKeys[2], allKeys[3] };
 
 		// Act:
-		AssertSelectedNodes(allKeys, [&expectedKeys](const auto& keys) {
+		AssertSelectedNodes(allKeys, importances, [&expectedKeys](const auto& keys) {
 			// Assert:
 			EXPECT_EQ(3u, keys.size());
 			EXPECT_EQ(expectedKeys, keys);
@@ -217,9 +212,10 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, UsesProvidedCustomSelector) {
 		// Arrange:
-		auto keys = test::GenerateRandomDataVector<Key>(5);
+		std::vector<Importance> importances(5, Importance(1000));
+		auto keys = test::GenerateRandomDataVector<Key>(importances.size());
 		auto pCache = CreateAccountStateCache();
-		SeedAccountStateCache(*pCache, keys);
+		SeedAccountStateCache(*pCache, keys, importances);
 
 		ionet::NodeContainer nodeContainer;
 		SeedNodeContainer(nodeContainer, keys);
@@ -266,8 +262,10 @@ namespace catapult { namespace timesync {
 					const std::vector<uint64_t>& rawWeights,
 					uint64_t numIterations) {
 				uint64_t cummulativeWeight = 0u;
+				std::vector<Importance> importances;
 				for (auto weight : rawWeights) {
 					cummulativeWeight += weight;
+					importances.push_back(Importance(weight));
 				}
 
 				std::vector<Key> keys;
@@ -275,7 +273,7 @@ namespace catapult { namespace timesync {
 					keys.push_back(node.identityKey());
 
 				auto pCache = CreateAccountStateCache();
-				SeedAccountStateCache(*pCache, keys);
+				SeedAccountStateCache(*pCache, keys, importances);
 
 				ionet::NodeContainer nodeContainer;
 				SeedNodeContainer(nodeContainer, keys);

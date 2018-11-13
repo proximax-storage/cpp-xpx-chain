@@ -45,19 +45,21 @@ namespace catapult { namespace timesync {
 		template<typename TKey>
 		void AddAccount(
 				cache::AccountStateCache& cache,
-				const TKey& key) {
+				const TKey& key,
+				Importance importance) {
 			auto delta = cache.createDelta();
-			auto& accountState = delta->addAccount(key, Height(100));
-			accountState.Balances.credit(Xpx_Id, Amount(1000), Height(100));
+			auto& accountState = delta->addAccount(key, Height(1));
+			accountState.Balances.credit(Xpx_Id, Amount(importance.unwrap()), Height(1));
 			cache.commit();
 		}
 
 		template<typename TKey>
 		void SeedAccountStateCache(
 				cache::AccountStateCache& cache,
-				const std::vector<TKey>& keys) {
+				const std::vector<TKey>& keys,
+				const std::vector<Importance>& importances) {
 			for (auto i = 0u; i < keys.size(); ++i)
-				AddAccount(cache, keys[i]);
+				AddAccount(cache, keys[i], importances[i]);
 		}
 
 		std::vector<Address> ToAddresses(const std::vector<Key>& keys) {
@@ -78,16 +80,18 @@ namespace catapult { namespace timesync {
 					KeyType keyType = KeyType::PublicKey)
 					: m_cache(cache::CacheConfiguration(), { Default_Network_Identifier, 234, Amount(1000) })
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), Total_Chain_Balance, Warning_Threshold_Millis) {
+				std::vector<Importance> importances;
 				for (const auto& offsetAndRawImportance : offsetsAndRawImportances) {
 					m_samples.emplace(test::CreateTimeSyncSampleWithTimeOffset(offsetAndRawImportance.first));
+					importances.push_back(Importance(offsetAndRawImportance.second));
 				}
 
 				auto keys = test::ExtractKeys(m_samples);
 				auto addresses = ToAddresses(keys);
 				if (KeyType::PublicKey == keyType)
-					SeedAccountStateCache(m_cache, keys);
+					SeedAccountStateCache(m_cache, keys, importances);
 				else
-					SeedAccountStateCache(m_cache, addresses);
+					SeedAccountStateCache(m_cache, addresses, importances);
 			}
 
 		public:
@@ -97,7 +101,7 @@ namespace catapult { namespace timesync {
 
 			void addHighValueAccounts(size_t count) {
 				for (auto i = 0u; i < count; ++i)
-					AddAccount(m_cache, test::GenerateRandomData<Key_Size>());
+					AddAccount(m_cache, test::GenerateRandomData<Key_Size>(), Importance(100'000));
 			}
 
 		private:
@@ -170,7 +174,7 @@ namespace catapult { namespace timesync {
 				model::NetworkIdentifier::Mijin_Test,
 				234,
 				Amount(1000)});
-			SeedAccountStateCache(cache, keys);
+			SeedAccountStateCache(cache, keys, std::vector<Importance>(numSamples, Importance(Total_Chain_Balance / numSamples)));
 			TimeSynchronizer synchronizer(aggregateFilter, Total_Chain_Balance, Warning_Threshold_Millis);
 
 			// Act:
