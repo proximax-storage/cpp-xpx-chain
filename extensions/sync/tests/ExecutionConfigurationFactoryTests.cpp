@@ -42,7 +42,7 @@ namespace catapult { namespace sync {
 			"AccountPublicKeyObserver",
 			"BalanceObserver",
 			"HarvestFeeObserver",
-			"RecalculateImportancesObserver",
+			"SnapshotCleanUpObserver",
 			"BlockDifficultyObserver",
 			"BlockDifficultyPruningObserver"
 		};

@@ -41,10 +41,10 @@ namespace catapult { namespace observers {
 		auto& accountState = accountStateCache.get(notification.Signer);
 		auto& entry = cache.get(notification.MosaicId);
 		if (ShouldIncrease(context.Mode, notification.Direction)) {
-			accountState.Balances.credit(notification.MosaicId, notification.Delta);
+			accountState.Balances.credit(notification.MosaicId, notification.Delta, context.Height);
 			entry.increaseSupply(notification.Delta);
 		} else {
-			accountState.Balances.debit(notification.MosaicId, notification.Delta);
+			accountState.Balances.debit(notification.MosaicId, notification.Delta, context.Height);
 			entry.decreaseSupply(notification.Delta);
 		}
 	});

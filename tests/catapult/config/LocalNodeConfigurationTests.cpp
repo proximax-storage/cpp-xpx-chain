@@ -51,7 +51,7 @@ namespace catapult { namespace config {
 
 			EXPECT_EQ(359u, config.ImportanceGrouping);
 			EXPECT_EQ(360u, config.MaxRollbackBlocks);
-			EXPECT_EQ(60u, config.MaxDifficultyBlocks);
+			EXPECT_EQ(4u, config.MaxDifficultyBlocks);
 
 			EXPECT_EQ(utils::TimeSpan::FromHours(24), config.MaxTransactionLifetime);
 			EXPECT_EQ(utils::TimeSpan::FromSeconds(10), config.MaxBlockFutureTime);

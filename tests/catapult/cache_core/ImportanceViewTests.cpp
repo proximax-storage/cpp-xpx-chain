@@ -55,18 +55,11 @@ namespace catapult { namespace cache {
 		void AddAccount(
 				AccountStateCache& cache,
 				const Key& publicKey,
-				Importance importance,
-				ImportanceHeight importanceHeight,
 				Amount balance = Amount(0)) {
 			auto delta = cache.createDelta();
 			auto& accountState = TTraits::AddAccount(*delta, publicKey, Height(100));
-			accountState.ImportanceInfo.set(importance, importanceHeight);
-			accountState.Balances.credit(Xpx_Id, balance);
+			accountState.Balances.credit(Xpx_Id, balance, Height(100));
 			cache.commit();
-		}
-
-		auto ConvertToImportanceHeight(Height height) {
-			return model::ConvertToImportanceHeight(height, Default_Cache_Options.ImportanceGrouping);
 		}
 
 		auto CreateAccountStateCache() {
@@ -100,22 +93,11 @@ namespace catapult { namespace cache {
 		auto key = test::GenerateRandomData<Key_Size>();
 		auto height = Height(1000);
 		auto pCache = CreateAccountStateCache();
-		AddAccount<TTraits>(*pCache, key, Importance(1000), ConvertToImportanceHeight(height));
+		AddAccount<TTraits>(*pCache, key);
 		auto pView = test::CreateImportanceView(*pCache);
 
 		// Act + Assert: mismatched key
 		AssertCannotFindImportance(*pView, test::GenerateRandomData<Key_Size>(), height);
-	}
-
-	KEY_TRAITS_BASED_TEST(CannotRetrieveImportanceForAccountAtMismatchedHeight) {
-		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
-		auto pCache = CreateAccountStateCache();
-		AddAccount<TTraits>(*pCache, key, Importance(1000), ConvertToImportanceHeight(Height(10000)));
-		auto pView = test::CreateImportanceView(*pCache);
-
-		// Act + Assert: mismatched height
-		AssertCannotFindImportance(*pView, key, Height(3333));
 	}
 
 	namespace {
@@ -125,7 +107,7 @@ namespace catapult { namespace cache {
 			auto key = test::GenerateRandomData<Key_Size>();
 			auto height = Height(1000);
 			auto pCache = CreateAccountStateCache();
-			AddAccount<TTraits>(*pCache, key, accountImportance, ConvertToImportanceHeight(height));
+			AddAccount<TTraits>(*pCache, key, Amount(accountImportance.unwrap()));
 			auto pView = test::CreateImportanceView(*pCache);
 
 			// Act:
@@ -177,7 +159,7 @@ namespace catapult { namespace cache {
 		auto key = test::GenerateRandomData<Key_Size>();
 		auto height = Height(1000);
 		auto pCache = CreateAccountStateCache();
-		AddAccount<TTraits>(*pCache, key, Importance(1000), ConvertToImportanceHeight(height));
+		AddAccount<TTraits>(*pCache, key);
 
 		// Act + Assert:
 		EXPECT_FALSE(TTraits::CanHarvest(*pCache, test::GenerateRandomData<Key_Size>(), height, Amount(1234)));
@@ -185,12 +167,12 @@ namespace catapult { namespace cache {
 
 	namespace {
 		template<typename TTraits>
-		bool CanHarvest(int64_t minBalanceDelta, Importance importance, ImportanceHeight importanceHeight, Height testHeight) {
+		bool CanHarvest(int64_t minBalanceDelta, Height testHeight) {
 			// Arrange:
 			auto key = test::GenerateRandomData<Key_Size>();
 			auto pCache = CreateAccountStateCache();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
-			AddAccount<TTraits>(*pCache, key, importance, importanceHeight, initialBalance);
+			AddAccount<TTraits>(*pCache, key, initialBalance);
 
 			// Act:
 			return TTraits::CanHarvest(*pCache, key, testHeight, Amount(1234));
@@ -200,27 +182,16 @@ namespace catapult { namespace cache {
 	CAN_HARVEST_TRAITS_BASED_TEST(CannotHarvestIfBalanceIsBelowMinBalance) {
 		// Assert:
 		auto height = Height(10000);
-		EXPECT_FALSE(CanHarvest<TTraits>(-1, Importance(123), ConvertToImportanceHeight(height), height));
-		EXPECT_FALSE(CanHarvest<TTraits>(-100, Importance(123), ConvertToImportanceHeight(height), height));
-	}
-
-	CAN_HARVEST_TRAITS_BASED_TEST(CannotHarvestIfImportanceIsZero) {
-		// Assert:
-		auto height = Height(10000);
-		EXPECT_FALSE(CanHarvest<TTraits>(12345, Importance(0), ConvertToImportanceHeight(height), height));
-	}
-
-	CAN_HARVEST_TRAITS_BASED_TEST(CannotHarvestIfImportanceIsNotSetAtCorrectHeight) {
-		// Assert:
-		EXPECT_FALSE(CanHarvest<TTraits>(12345, Importance(0), ImportanceHeight(123), Height(1234)));
+		EXPECT_FALSE(CanHarvest<TTraits>(-1, height));
+		EXPECT_FALSE(CanHarvest<TTraits>(-100, height));
 	}
 
 	CAN_HARVEST_TRAITS_BASED_TEST(CanHarvestIfAllCriteriaAreMet) {
 		// Assert:
 		auto height = Height(10000);
-		EXPECT_TRUE(CanHarvest<TTraits>(0, Importance(123), ConvertToImportanceHeight(height), height));
-		EXPECT_TRUE(CanHarvest<TTraits>(1, Importance(123), ConvertToImportanceHeight(height), height));
-		EXPECT_TRUE(CanHarvest<TTraits>(12345, Importance(123), ConvertToImportanceHeight(height), height));
+		EXPECT_TRUE(CanHarvest<TTraits>(0, height));
+		EXPECT_TRUE(CanHarvest<TTraits>(1, height));
+		EXPECT_TRUE(CanHarvest<TTraits>(12345, height));
 	}
 
 	// endregion

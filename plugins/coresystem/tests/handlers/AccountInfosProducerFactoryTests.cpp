@@ -63,7 +63,7 @@ namespace catapult { namespace handlers {
 		auto PrepareCache(size_t count) {
 			auto pCache = std::make_unique<cache::AccountStateCache>(cache::CacheConfiguration(), cache::AccountStateCacheTypes::Options{
 				model::NetworkIdentifier::Mijin_Test,
-				777,
+				std::numeric_limits<uint64_t>::max(),
 				Amount(std::numeric_limits<Amount::ValueType>::max())
 			});
 			auto delta = pCache->createDelta();

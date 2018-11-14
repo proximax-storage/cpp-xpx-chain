@@ -57,7 +57,7 @@ namespace catapult { namespace observers {
 			// - seed the cache
 			auto& accountStateCacheDelta = context.cache().sub<cache::AccountStateCache>();
 			auto& ownerState = accountStateCacheDelta.addAccount(notification.Signer, Height(1));
-			ownerState.Balances.credit(notification.MosaicId, initialOwnerBalance);
+			ownerState.Balances.credit(notification.MosaicId, initialOwnerBalance, Height(1));
 
 			auto& mosaicCacheDelta = context.cache().sub<cache::MosaicCache>();
 			seedCache(mosaicCacheDelta);

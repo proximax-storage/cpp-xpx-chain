@@ -220,7 +220,7 @@ namespace catapult { namespace filechain {
 				auto harvesterIndex = accountIndexDistribution(rnd);
 				auto pBlock = test::GenerateBlockWithTransactions(nemesisKeyPairs[harvesterIndex], transactions);
 				pBlock->Height = Height(height);
-				pBlock->Difficulty = Difficulty(Difficulty().unwrap() + height);
+				pBlock->Difficulty = Difficulty(1 << 8);
 				pBlock->Timestamp = Timestamp(height * timeSpacing.millis());
 				storage.saveBlock(test::BlockToBlockElement(*pBlock));
 				++height;
@@ -362,14 +362,8 @@ namespace catapult { namespace filechain {
 
 			// Assert:
 			// note that there are Num_Recipient_Accounts blocks (one per recipient)
-			// - each block has a difficulty of base + height
-			// - all blocks except for the first one have a time difference of 1s (the first one has a difference of 2s)
 			auto result = context.score();
-			uint64_t expectedDifficulty =
-					Difficulty().unwrap() * Num_Recipient_Accounts // sum base difficulties
-					+ (Num_Recipient_Accounts + 1) * (Num_Recipient_Accounts + 2) / 2 // sum difficulty deltas (1..N+1)
-					- 1 // adjust for range (2..N+1) - first 'recipient' block has height 2
-					- (Num_Recipient_Accounts + 1) * timeSpacing.seconds(); // subtract time differences
+			uint64_t expectedDifficulty = Num_Recipient_Accounts * (1ll << 56);
 			EXPECT_EQ(model::ChainScore(expectedDifficulty), result);
 		}
 	}

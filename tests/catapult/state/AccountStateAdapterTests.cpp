@@ -29,32 +29,23 @@ namespace catapult { namespace state {
 	// region AccountState -> AccountInfo
 
 	namespace {
-		AccountState CreateAccountStateWithZeroMosaics(size_t numImportances = Importance_History_Size) {
+		AccountState CreateAccountStateWithZeroMosaics() {
 			AccountState accountState(test::GenerateRandomData<Address_Decoded_Size>(), Height(123));
 			accountState.PublicKey = test::GenerateRandomData<Key_Size>();
 			accountState.PublicKeyHeight = Height(456);
-			for (auto i = 1u; i <= numImportances; ++i)
-				accountState.ImportanceInfo.set(Importance(i * i), model::ImportanceHeight(i));
 
 			return accountState;
 		}
 
-		void AssertNonMosaicPart(const model::AccountInfo& info, const AccountState& accountState, uint32_t expectedMosaicsCount) {
+		void AssertNonMosaicPart(const model::AccountInfo& info, const AccountState& accountState, uint32_t expectedMosaicsCount, uint32_t expectedSnapshotCount) {
 			// Assert:
-			EXPECT_EQ(sizeof(model::AccountInfo) + expectedMosaicsCount * sizeof(model::Mosaic), info.Size);
+			EXPECT_EQ(sizeof(model::AccountInfo) + expectedMosaicsCount * sizeof(model::Mosaic) + expectedSnapshotCount * sizeof(model::BalanceSnapshot), info.Size);
 			EXPECT_EQ(accountState.Address, info.Address);
 			EXPECT_EQ(accountState.AddressHeight, info.AddressHeight);
 			EXPECT_EQ(accountState.PublicKey, info.PublicKey);
 			EXPECT_EQ(accountState.PublicKeyHeight, info.PublicKeyHeight);
 			EXPECT_EQ(expectedMosaicsCount, info.MosaicsCount);
-
-			auto i = 0u;
-			for (const auto& pair : accountState.ImportanceInfo) {
-				const auto message = "importance at " + std::to_string(i);
-				EXPECT_EQ(pair.Importance, info.Importances[i]) << message;
-				EXPECT_EQ(pair.Height, info.ImportanceHeights[i]) << message;
-				++i;
-			}
+			EXPECT_EQ(expectedSnapshotCount, info.BalanceSnapshotCount);
 		}
 
 		void AssertMosaic(const model::Mosaic& mosaic, MosaicId expectedId, Amount expectedAmount) {
@@ -63,52 +54,64 @@ namespace catapult { namespace state {
 			EXPECT_EQ(expectedAmount, mosaic.Amount);
 		}
 
-		void AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics(size_t numImportances) {
+		void AssertSnapshot(const model::BalanceSnapshot& snapshot, Amount expectedAmount, Height height) {
+			// Assert:
+			EXPECT_EQ(height, snapshot.BalanceHeight);
+			EXPECT_EQ(expectedAmount, snapshot.Amount);
+		}
+
+		void AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics() {
 			// Arrange:
-			auto accountState = CreateAccountStateWithZeroMosaics(numImportances);
+			auto accountState = CreateAccountStateWithZeroMosaics();
 
 			// Act:
 			auto pAccountInfo = ToAccountInfo(accountState);
 
 			// Assert:
-			AssertNonMosaicPart(*pAccountInfo, accountState, 0);
+			AssertNonMosaicPart(*pAccountInfo, accountState, 0, 0);
 			EXPECT_FALSE(!!pAccountInfo->MosaicsPtr());
+			EXPECT_FALSE(!!pAccountInfo->BalanceSnapshotPtr());
 		}
 	}
 
 	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_ZeroMosaics) {
 		// Assert:
-		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics(Importance_History_Size);
+		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics();
 	}
 
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_SingleMosaic) {
+	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_SingleMosaicAndSnapshot) {
 		// Arrange:
 		auto accountState = CreateAccountStateWithZeroMosaics();
-		accountState.Balances.credit(Xpx_Id, Amount(13579));
+		accountState.Balances.credit(Xpx_Id, Amount(13579), Height(0));
+		accountState.Balances.snapshots().push_back(model::BalanceSnapshot{Amount(13579), Height(1)});
 
 		// Act:
 		auto pAccountInfo = ToAccountInfo(accountState);
 
 		// Assert:
-		AssertNonMosaicPart(*pAccountInfo, accountState, 1);
+		AssertNonMosaicPart(*pAccountInfo, accountState, 1, 1);
 
 		auto pMosaic = pAccountInfo->MosaicsPtr();
+		auto pSnapshot = pAccountInfo->BalanceSnapshotPtr();
 		ASSERT_TRUE(!!pMosaic);
 		AssertMosaic(*pMosaic, Xpx_Id, Amount(13579));
+		ASSERT_TRUE(!!pSnapshot);
+		AssertSnapshot(*pSnapshot, Amount(13579), Height(1));
 	}
 
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_MultipleMosaics) {
+	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_MultipleMosaicsAndSingleSnapshot) {
 		// Arrange:
 		auto accountState = CreateAccountStateWithZeroMosaics();
-		accountState.Balances.credit(MosaicId(123), Amount(111));
-		accountState.Balances.credit(Xpx_Id, Amount(13579));
-		accountState.Balances.credit(MosaicId(987), Amount(222));
+		accountState.Balances.credit(MosaicId(123), Amount(111), Height(1));
+		accountState.Balances.credit(Xpx_Id, Amount(13579), Height(0));
+		accountState.Balances.credit(MosaicId(987), Amount(222), Height(1));
+		accountState.Balances.snapshots().push_back(model::BalanceSnapshot{Amount(13579), Height(1)});
 
 		// Act:
 		auto pAccountInfo = ToAccountInfo(accountState);
 
 		// Assert:
-		AssertNonMosaicPart(*pAccountInfo, accountState, 3);
+		AssertNonMosaicPart(*pAccountInfo, accountState, 3, 1);
 
 		auto pMosaic = pAccountInfo->MosaicsPtr();
 		ASSERT_TRUE(!!pMosaic);
@@ -122,16 +125,10 @@ namespace catapult { namespace state {
 		AssertMosaic(mosaics[MosaicId(123)], MosaicId(123), Amount(111));
 		AssertMosaic(mosaics[Xpx_Id], Xpx_Id, Amount(13579));
 		AssertMosaic(mosaics[MosaicId(987)], MosaicId(987), Amount(222));
-	}
 
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_NoImportanceHistory) {
-		// Assert:
-		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics(0);
-	}
-
-	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_PartialImportanceHistory) {
-		// Assert:
-		AssertToAccountInfoInitializesAllAccountInfoFieldsZeroMosaics(Importance_History_Size - 1);
+		auto pSnapshot = pAccountInfo->BalanceSnapshotPtr();
+		ASSERT_TRUE(!!pSnapshot);
+		AssertSnapshot(*pSnapshot, Amount(13579), Height(1));
 	}
 
 	// endregion
@@ -139,13 +136,13 @@ namespace catapult { namespace state {
 	// region AccountState <- AccountInfo
 
 	namespace {
-		void AssertCanCreateAccountStateFromAccountInfo(
-				const std::vector<model::Mosaic>& mosaics,
-				size_t numImportances = Importance_History_Size) {
+		void AssertCanCreateAccountStateFromAccountInfo(const std::vector<model::Mosaic>& mosaics, const std::vector<model::BalanceSnapshot>& snapshots) {
 			// Arrange:
-			auto originalAccountState = CreateAccountStateWithZeroMosaics(numImportances);
+			auto originalAccountState = CreateAccountStateWithZeroMosaics();
 			for (const auto& mosaic : mosaics)
-				originalAccountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
+				originalAccountState.Balances.credit(mosaic.MosaicId, mosaic.Amount, Height(0));
+			for (const auto& snapshot : snapshots)
+				originalAccountState.Balances.snapshots().push_back(snapshot);
 
 			auto pAccountInfo = ToAccountInfo(originalAccountState);
 
@@ -154,37 +151,32 @@ namespace catapult { namespace state {
 
 			// Assert:
 			EXPECT_EQ(mosaics.size(), accountState.Balances.size());
+			EXPECT_EQ(snapshots.size(), accountState.Balances.snapshots().size());
 			test::AssertEqual(originalAccountState, accountState);
 		}
 	}
 
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_ZeroMosaics) {
+	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_ZeroMosaicsAndSnapshots) {
 		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({});
+		AssertCanCreateAccountStateFromAccountInfo({}, {});
 	}
 
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_SingleMosaic) {
+	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_SingleMosaicAndSnapshot) {
 		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({ { Xpx_Id, Amount(13579) } });
+		AssertCanCreateAccountStateFromAccountInfo({ { Xpx_Id, Amount(13579) } }, { { Amount(13579), Height(1) } });
 	}
 
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_MultipleMosaics) {
+	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_MultipleMosaicsAndSnapshots) {
 		// Assert:
 		AssertCanCreateAccountStateFromAccountInfo({
 			{ MosaicId(123), Amount(111) },
 			{ Xpx_Id, Amount(13579) },
 			{ MosaicId(987), Amount(222) }
+		}, {
+			{ Amount(13579 * 3), Height(1) } ,
+			{ Amount(13579 * 2), Height(2) } ,
+			{ Amount(13579), Height(3) }
 		});
-	}
-
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_NoImportanceHistory) {
-		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({}, 0);
-	}
-
-	TEST(TEST_CLASS, CanCreateAccountStateFromAccountInfo_PartialImportanceHistory) {
-		// Assert:
-		AssertCanCreateAccountStateFromAccountInfo({}, Importance_History_Size - 1);
 	}
 
 	// endregion

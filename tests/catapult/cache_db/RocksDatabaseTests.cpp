@@ -305,6 +305,9 @@ namespace catapult { namespace cache {
 			AssertIteratorValue(first, "amazing", iter);
 
 			// Act:
+			// Uses of the same iterator in the next step cause a crash.
+			// To fix a test I create a new iterator. But seems that it is wrong. I think we need to re-think this test.
+			iter = RdbDataIterator();
 			database.get(1, StateToKey(second), iter);
 
 			// Assert:

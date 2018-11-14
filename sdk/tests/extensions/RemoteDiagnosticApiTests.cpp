@@ -37,7 +37,7 @@ namespace catapult { namespace extensions {
 
 			static constexpr auto PacketType() { return ionet::PacketType::Account_Infos; }
 			static constexpr auto Request_Entity_Size = Address_Decoded_Size;
-			static constexpr auto Response_Entity_Size = sizeof(model::AccountInfo) + sizeof(model::Mosaic);
+			static constexpr auto Response_Entity_Size = sizeof(model::AccountInfo) + sizeof(model::Mosaic) + sizeof(model::BalanceSnapshot);
 
 			static auto CreateResponsePacket(uint32_t numAccountInfos) {
 				uint32_t payloadSize = numAccountInfos * Response_Entity_Size;
@@ -50,9 +50,13 @@ namespace catapult { namespace extensions {
 					accountInfo.Size = Response_Entity_Size;
 					accountInfo.AddressHeight = Height(5 * i);
 					accountInfo.MosaicsCount = 1u;
+					accountInfo.BalanceSnapshotCount = 1u;
 					auto pMosaic = accountInfo.MosaicsPtr();
 					pMosaic->MosaicId = Xpx_Id;
 					pMosaic->Amount = Amount(123 * i);
+					auto pBalanceSnapshot = accountInfo.BalanceSnapshotPtr();
+					pBalanceSnapshot->BalanceHeight = Height(1);
+					pBalanceSnapshot->Amount = Amount(123 * i);
 				}
 
 				return pPacket;

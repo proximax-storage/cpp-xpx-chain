@@ -18,26 +18,21 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ImportanceCalculator.h"
-#include "catapult/cache_core/AccountStateCache.h"
+#pragma once
+#include "catapult/types.h"
 
-namespace catapult { namespace observers {
+namespace catapult { namespace model {
 
-	namespace {
-		class RestoreImportanceCalculator final : public ImportanceCalculator {
-		public:
-			void recalculate(model::ImportanceHeight importanceHeight, cache::AccountStateCacheDelta& cache) const override {
-				auto highValueAddresses = cache.highValueAddresses();
-				for (const auto& address : highValueAddresses) {
-					auto& accountState = cache.get(address);
-					if (importanceHeight < accountState.ImportanceInfo.height())
-						accountState.ImportanceInfo.pop();
-				}
-			}
-		};
-	}
+#pragma pack(push, 1)
 
-	std::unique_ptr<ImportanceCalculator> CreateRestoreImportanceCalculator() {
-		return std::make_unique<RestoreImportanceCalculator>();
-	}
+	/// Binary layout for a balance snapshot.
+	struct BalanceSnapshot {
+		/// Balance amount when snapshot was done.
+		catapult::Amount Amount;
+
+		/// Height of balance when snapshot was done.
+		Height BalanceHeight;
+	};
+
+#pragma pack(pop)
 }}

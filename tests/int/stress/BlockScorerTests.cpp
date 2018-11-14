@@ -48,7 +48,7 @@ namespace catapult { namespace chain {
 
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 			config.BlockTimeSmoothingFactor = 0;
 			return config;
 		}
@@ -70,7 +70,7 @@ namespace catapult { namespace chain {
 		using ImportanceGroups = std::vector<std::unique_ptr<ImportanceGroup>>;
 
 		ImportanceGroups CreateDoublingImportances() {
-			uint64_t importance = 10'000'000;
+			uint64_t importance = 1000;
 			ImportanceGroups groups;
 			for (auto i = 0u; i < 7; ++i) {
 				groups.push_back(std::make_unique<ImportanceGroup>(importance));
@@ -228,7 +228,7 @@ namespace catapult { namespace chain {
 					auto parentGenerationHash = test::GenerateRandomData<Hash256_Size>();
 
 					model::Block current;
-					current.Difficulty = Difficulty((50 + i) * 1'000'000'000'000);
+					current.Difficulty = Difficulty(1'000'000'000'000);
 
 					CATAPULT_LOG(debug) << "generation hash " << i << ": " << utils::HexFormat(parentGenerationHash);
 

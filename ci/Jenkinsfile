@@ -1,35 +1,59 @@
-node {
-
-    // download the Docker image with required libraries for building catapult-server
-    docker.withRegistry('https://249767383774.dkr.ecr.ap-southeast-1.amazonaws.com', 'ecr:ap-southeast-1:jenkins-ecr') {
-        docker.image('catapult-server-build-image').pull()
+pipeline {
+	agent {
+        label 'catapult-build-node'
     }
-
-    // set catapult-server-build-image Docker container as the build agent
-    docker.image('249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/catapult-server-build-image').inside {
-        stage('Build') {
-            echo 'Building catapult-server'
-
-            // TODO: OS details should be Ubuntu. Build catapult-server inside the catapult-server-build-image Docker container
-            sh 'cat /etc/*release'
+	stages {
+        stage ('git') {
+            steps {
+                checkout([
+                    $class: 'GitSCM',
+                    branches: scm.branches,
+                    doGenerateSubmoduleConfigurations: false,
+                    extensions: scm.extensions + [[$class: 'SubmoduleOption', disableSubmodules: false, recursiveSubmodules: true, reference: '', trackingSubmodules: false]],
+                    submoduleCfg: [],
+                    userRemoteConfigs: scm.userRemoteConfigs])
+            }
         }
-
-        stage('Test') {
-            echo 'Running unit tests'
-
-            // TODO: Run the tests while inside the catapult-server-build-image Docker container
+		stage ('build') {
+            steps {
+                sh """
+                    echo 'Building catapult-server'
+                    rm -rf _build
+                    mkdir _build 
+                    cd _build
+                    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so .. 
+		            make -j4 publish
+                    make -j4
+                """
+            }
+		}
+        stage('test') {
+            steps {
+                sh """
+                    echo 'Running unit tests'
+                    # Disable exit on non 0
+                    set +e
+                    cd _build
+                    # pipe to true to prevent exit failure
+                    ctest -T Test --no-compress-output || true
+                """
+            }
+            post {
+                always {
+                    xunit (
+                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                        tools: [ CTest(pattern: "_build/Testing/**/*.xml") ]
+                    )
+                }
+            }
         }
-    }
-
-    stage('Build Docker Image') {
-        // TODO: Copy the binary and dependencies similar to the process in the link below
-        // https://github.com/proximax-storage/proximax-catapult-server/blob/master/scripts/catapult-server-docker/Dockerfile
-        echo 'Building catapult-server Docker image'
-    }
-
-    stage('Push Image to Docker Registry') {
-        // TODO: Push the created Docker image to Docker registry. Set the build number as the image tag
-        // 249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/proximax-catapult-server
-        echo 'Pushing catapult-server Docker image to AWS ECR Docker registry'
-    }
+        stage('deploy') {
+            when {
+                branch 'master'
+            }
+            steps {
+                sh "echo 'TODO: Deploying catapult-server'"
+            }
+        }
+	}
 }
