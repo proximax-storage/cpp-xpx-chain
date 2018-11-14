@@ -170,7 +170,8 @@ namespace catapult { namespace extensions {
 				auto cacheView = m_cache.createView();
 				EXPECT_EQ(height, cacheView.height()) << "Height is not equil";
 
-				cache::ImportanceView importanceView(cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>()));
+				cache::ReadOnlyAccountStateCache readOnly(cacheView.sub<cache::AccountStateCache>());
+				cache::ImportanceView importanceView(readOnly);
 				EXPECT_EQ(expectedBalance.unwrap(), importanceView.getAccountImportanceOrDefault({ { accountId } }, cacheView.height()).unwrap()) << message;
 			}
 
