@@ -27,8 +27,8 @@ namespace catapult { namespace test {
 	/// Account states collection.
 	using AccountStates = std::vector<std::shared_ptr<state::AccountState>>;
 
-	/// Fill \a state with pseudo-random importances and \a numMosaics mosaics.
-	void RandomFillAccountData(uint64_t seed, state::AccountState& state, size_t numMosaics = 10);
+	/// Fill \a state with pseudo-random balance and \a numMosaics mosaics and \a numSnapshots.
+	void RandomFillAccountData(uint64_t seed, state::AccountState& state, size_t numMosaics = 10, size_t numSnapshots = 10);
 
 	/// Asserts that account state \a actual is equal to \a expected.
 	void AssertEqual(const state::AccountState& expected, const state::AccountState& actual);

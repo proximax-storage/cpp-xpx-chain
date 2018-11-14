@@ -151,7 +151,7 @@ namespace catapult { namespace test {
 			}
 
 			void credit(state::AccountState& accountState) {
-				accountState.Balances.credit(m_seedMosaic.MosaicId, m_seedMosaic.Amount);
+				accountState.Balances.credit(m_seedMosaic.MosaicId, m_seedMosaic.Amount, Height(1));
 			}
 
 		private:

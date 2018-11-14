@@ -122,5 +122,8 @@ namespace catapult { namespace mongo { namespace mappers {
 	/// Streams a mosaic composed of \a id and \a amount to \a context.
 	bson_stream::array_context& StreamMosaic(bson_stream::array_context& context, MosaicId id, Amount amount);
 
+	/// Streams a snapshot composed of \a amount and \a height to \a context.
+	bson_stream::array_context& StreamSnapshot(bson_stream::array_context& context, Amount amount, Height height);
+
 	// endregion
 }}}

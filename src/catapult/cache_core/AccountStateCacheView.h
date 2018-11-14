@@ -60,7 +60,7 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 
 	public:
-		/// Creates a view around \a accountStateSets, \a options and \a highValueAddresses.
+		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a updatedAddresses.
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
@@ -108,7 +108,8 @@ namespace catapult { namespace cache {
 		AccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
-				const model::AddressSet& highValueAddresses)
+				const model::AddressSet& highValueAddresses,
+				const model::AddressSet&)
 				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses)
 		{}
 	};

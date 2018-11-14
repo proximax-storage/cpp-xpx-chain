@@ -32,7 +32,7 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
-			543,
+			std::numeric_limits<uint64_t>::max(),
 			Amount(std::numeric_limits<Amount::ValueType>::max())
 		};
 	}
@@ -40,23 +40,24 @@ namespace catapult { namespace cache {
 	// region Save
 
 	namespace {
-		void AssertCanSaveValueWithMosaics(size_t mosaicsCount) {
+		void AssertCanSaveValueWithMosaicsAndSnapshots(size_t mosaicsCount, size_t snapshotsCount) {
 			// Arrange:
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream stream("", buffer);
 
 			// - create a random account state
 			auto pOriginalAccountState = std::make_shared<state::AccountState>(test::GenerateRandomAddress(), Height(123));
-			test::RandomFillAccountData(0, *pOriginalAccountState, mosaicsCount);
+			test::RandomFillAccountData(0, *pOriginalAccountState, mosaicsCount, snapshotsCount);
 
 			// Act:
 			AccountStateCacheStorage::Save(std::make_pair(Address(), pOriginalAccountState), stream);
 
 			// Assert:
-			ASSERT_EQ(sizeof(model::AccountInfo) + mosaicsCount * sizeof(model::Mosaic), buffer.size());
+			ASSERT_EQ(sizeof(model::AccountInfo) + mosaicsCount * sizeof(model::Mosaic) + snapshotsCount * sizeof(model::BalanceSnapshot), buffer.size());
 
 			const auto& savedAccountInfo = reinterpret_cast<const model::AccountInfo&>(*buffer.data());
 			EXPECT_EQ(mosaicsCount, savedAccountInfo.MosaicsCount);
+			EXPECT_EQ(snapshotsCount, savedAccountInfo.BalanceSnapshotCount);
 
 			auto savedAccountState = state::ToAccountState(savedAccountInfo);
 			test::AssertEqual(*pOriginalAccountState, savedAccountState);
@@ -67,12 +68,14 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanSaveValue) {
 		// Assert:
-		AssertCanSaveValueWithMosaics(3);
+		AssertCanSaveValueWithMosaicsAndSnapshots(3, 3);
 	}
 
-	TEST(TEST_CLASS, CanSaveValueWithManyMosaics) {
+	TEST(TEST_CLASS, CanSaveValueWithManyMosaicsAndSnapshots) {
 		// Assert:
-		AssertCanSaveValueWithMosaics(65535);
+		AssertCanSaveValueWithMosaicsAndSnapshots(65535, 65535);
+		AssertCanSaveValueWithMosaicsAndSnapshots(0, 65535);
+		AssertCanSaveValueWithMosaicsAndSnapshots(65535, 0);
 	}
 
 	// endregion
@@ -86,7 +89,7 @@ namespace catapult { namespace cache {
 				EXPECT_THROW(AccountStateCacheStorage::Load(inputStream), catapult_runtime_error);
 			}
 
-			static void LoadAndAssert(std::vector<uint8_t>& buffer, size_t numMosaics, const state::AccountState& serializedAccountState) {
+			static void LoadAndAssert(std::vector<uint8_t>& buffer, size_t numMosaics, size_t numSnapshots, const state::AccountState& serializedAccountState) {
 				// Arrange:
 				mocks::MockMemoryStream stream("", buffer);
 
@@ -96,6 +99,7 @@ namespace catapult { namespace cache {
 
 				// Assert:
 				EXPECT_EQ(numMosaics, loadedAccountState.Balances.size());
+				EXPECT_EQ(numSnapshots, loadedAccountState.Balances.snapshots().size());
 				test::AssertEqual(serializedAccountState, loadedAccountState);
 			}
 		};
@@ -110,7 +114,7 @@ namespace catapult { namespace cache {
 				EXPECT_THROW(AccountStateCacheStorage::LoadInto(inputStream, *delta, state), catapult_runtime_error);
 			}
 
-			static void LoadAndAssert(std::vector<uint8_t>& buffer, size_t numMosaics, const state::AccountState& serializedAccountState) {
+			static void LoadAndAssert(std::vector<uint8_t>& buffer, size_t numMosaics, size_t numSnapshots, const state::AccountState& serializedAccountState) {
 				// Arrange:
 				mocks::MockMemoryStream stream("", buffer);
 
@@ -129,6 +133,7 @@ namespace catapult { namespace cache {
 
 				// - the account state contents are correct
 				EXPECT_EQ(numMosaics, loadedAccountState.Balances.size());
+				EXPECT_EQ(numSnapshots, loadedAccountState.Balances.snapshots().size());
 				test::AssertEqual(serializedAccountState, loadedAccountState);
 
 				// - the state buffer was resized
@@ -137,17 +142,17 @@ namespace catapult { namespace cache {
 		};
 
 		template<typename TLoadTraits>
-		void AssertCanLoadValueWithMosaics(size_t numMosaics) {
+		void AssertCanLoadValueWithMosaicsAndSnapshots(size_t numMosaics, size_t numSnapshots) {
 			// Arrange: create a random account info
-			auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(123));
-			test::RandomFillAccountData(0, *pOriginalAccountState, numMosaics);
+			auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(1));
+			test::RandomFillAccountData(0, *pOriginalAccountState, numMosaics, numSnapshots);
 			auto pOriginalAccountInfo = state::ToAccountInfo(*pOriginalAccountState);
 
 			std::vector<uint8_t> buffer(pOriginalAccountInfo->Size);
 			memcpy(buffer.data(), pOriginalAccountInfo.get(), buffer.size());
 
 			// Act + Assert:
-			TLoadTraits::LoadAndAssert(buffer, numMosaics, *pOriginalAccountState);
+			TLoadTraits::LoadAndAssert(buffer, numMosaics, numSnapshots, *pOriginalAccountState);
 		}
 	}
 
@@ -159,18 +164,20 @@ namespace catapult { namespace cache {
 
 	LOAD_TEST(CanLoadValue) {
 		// Assert:
-		AssertCanLoadValueWithMosaics<TTraits>(3);
+		AssertCanLoadValueWithMosaicsAndSnapshots<TTraits>(3, 3);
 	}
 
-	LOAD_TEST(CanLoadValueWithManyMosaics) {
+	LOAD_TEST(CanLoadValueWithManyMosaicsAndSnapshots) {
 		// Assert:
-		AssertCanLoadValueWithMosaics<TTraits>(65535);
+		AssertCanLoadValueWithMosaicsAndSnapshots<TTraits>(65535, 65535);
+		AssertCanLoadValueWithMosaicsAndSnapshots<TTraits>(0, 65535);
+		AssertCanLoadValueWithMosaicsAndSnapshots<TTraits>(65535, 0);
 	}
 
 	LOAD_TEST(CannotLoadWhenAccountInfoSizeIsTooLarge) {
 		// Arrange: create an account info with a size one greater than max
 		auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(123));
-		test::RandomFillAccountData(0, *pOriginalAccountState, 65535);
+		test::RandomFillAccountData(0, *pOriginalAccountState, 65535, 65535);
 		auto pOriginalAccountInfo = state::ToAccountInfo(*pOriginalAccountState);
 		pOriginalAccountInfo->Size += 1;
 
@@ -185,7 +192,7 @@ namespace catapult { namespace cache {
 	LOAD_TEST(CannotLoadAccountInfoExtendingPastEndOfStream) {
 		// Arrange: create a random account info
 		auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(123));
-		test::RandomFillAccountData(0, *pOriginalAccountState, 2);
+		test::RandomFillAccountData(0, *pOriginalAccountState, 2, 2);
 		auto pOriginalAccountInfo = state::ToAccountInfo(*pOriginalAccountState);
 
 		// - size the buffer one byte too small

@@ -36,7 +36,7 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
-			359,
+			std::numeric_limits<uint64_t>::max(),
 			Amount(std::numeric_limits<Amount::ValueType>::max())
 		};
 
@@ -97,7 +97,7 @@ namespace catapult { namespace cache {
 
 					auto key = GetKeyFromId(i);
 					auto& accountState = delta->addAccount(key, Height(456));
-					accountState.Balances.credit(Xpx_Id, Amount(i * 100'000));
+					accountState.Balances.credit(Xpx_Id, Amount(i * 100'000), Height(456));
 					cache.commit();
 				}
 			});
@@ -136,7 +136,7 @@ namespace catapult { namespace cache {
 
 				auto key = GetKeyFromId(i);
 				auto& accountState = delta->addAccount(key, Height(456));
-				accountState.Balances.credit(Xpx_Id, Amount(i * 100'000));
+				accountState.Balances.credit(Xpx_Id, Amount(i * 100'000), Height(456));
 				cache.commit();
 			}
 		}

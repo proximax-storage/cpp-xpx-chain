@@ -325,7 +325,7 @@ namespace catapult { namespace net {
 	TEST(TEST_CLASS, TimeoutClosesVerifyingSocket) {
 		// Act:
 		ConnectionSettings settings;
-		settings.Timeout = utils::TimeSpan::FromMilliseconds(1);
+		settings.Timeout = utils::TimeSpan::FromMilliseconds(0);
 		ConnectorTestContext context(settings);
 		RunTimeoutTest(context);
 	}

@@ -45,7 +45,7 @@ namespace catapult { namespace sync {
 
 		const state::AccountState& AddAccount(cache::AccountStateCacheDelta& delta, Importance importance) {
 			auto& accountState = delta.addAccount(test::GenerateRandomData<Key_Size>(), Height(1));
-			accountState.ImportanceInfo.set(importance, model::ImportanceHeight(1));
+			accountState.Balances.credit(Xpx_Id, Amount(importance.unwrap()), Height(1));
 			return accountState;
 		}
 

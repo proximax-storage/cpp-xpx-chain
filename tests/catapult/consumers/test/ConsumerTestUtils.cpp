@@ -56,6 +56,7 @@ namespace catapult { namespace test {
 	void LinkBlocks(const model::Block& parentBlock, model::Block& childBlock) {
 		childBlock.Height = parentBlock.Height + Height(1);
 		childBlock.Timestamp = parentBlock.Timestamp + Timestamp(1);
+		childBlock.Difficulty = Difficulty(parentBlock.Difficulty.unwrap() + 1);
 		childBlock.PreviousBlockHash = model::CalculateHash(parentBlock);
 	}
 
@@ -64,6 +65,7 @@ namespace catapult { namespace test {
 		extensions::BlockExtensions().updateBlockTransactionsHash(*pParentBlock);
 		pParentBlock->Height = chainHeight;
 		pParentBlock->Timestamp = static_cast<Timestamp>(chainHeight.unwrap() * 2);
+		pParentBlock->Difficulty = Difficulty(chainHeight.unwrap() * 2);
 
 		for (auto i = 1u; i < blockElements.size(); ++i) {
 			auto& block = const_cast<model::Block&>(blockElements[i].Block);

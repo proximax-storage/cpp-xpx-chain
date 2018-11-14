@@ -129,18 +129,17 @@ namespace catapult { namespace chain {
 	// region CheckDifficulties
 
 	namespace {
-		constexpr auto Base_Difficulty = Difficulty().unwrap();
 
 		Timestamp CalculateTimestamp(Height height, const utils::TimeSpan& timeBetweenBlocks) {
 			return Timestamp((height - Height(1)).unwrap() * timeBetweenBlocks.millis());
 		}
 
-		std::unique_ptr<cache::BlockDifficultyCache> SeedBlockDifficultyCache(Height maxHeight, const utils::TimeSpan& timeBetweenBlocks) {
+		std::unique_ptr<cache::BlockDifficultyCache> SeedBlockDifficultyCache(Height maxHeight, const utils::TimeSpan& timeBetweenBlocks, uint32_t baseDiff = 0) {
 			auto pCache = std::make_unique<cache::BlockDifficultyCache>(0);
 			auto delta = pCache->createDelta();
 
 			for (auto height = Height(1); height <= maxHeight; height = height + Height(1)) {
-				state::BlockDifficultyInfo info(height, CalculateTimestamp(height, timeBetweenBlocks), Difficulty());
+				state::BlockDifficultyInfo info(height, CalculateTimestamp(height, timeBetweenBlocks), Difficulty(baseDiff));
 				delta->insert(info);
 			}
 
@@ -151,13 +150,14 @@ namespace catapult { namespace chain {
 		std::vector<std::unique_ptr<model::Block>> GenerateBlocks(
 				Height startHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
-				uint32_t numBlocks) {
+				uint32_t numBlocks,
+				uint32_t increamentor = 0) {
 			std::vector<std::unique_ptr<model::Block>> blocks;
 			for (auto i = 0u; i < numBlocks; ++i) {
 				auto pBlock = test::GenerateEmptyRandomBlock();
 				pBlock->Height = startHeight + Height(i);
 				pBlock->Timestamp = CalculateTimestamp(pBlock->Height, timeBetweenBlocks);
-				pBlock->Difficulty = Difficulty();
+				pBlock->Difficulty = Difficulty(0 + i * increamentor);
 				blocks.push_back(std::move(pBlock));
 			}
 
@@ -219,12 +219,12 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, DifficultiesAreValidIfAllDifficultiesAreCorrectAndFullHistoryIsPresent_Equal) {
 		// Assert:
-		AssertDifficultiesAreValidForBlocksWithEqualDifficulties(15, Height(20));
+		AssertDifficultiesAreValidForBlocksWithEqualDifficulties(4, Height(20));
 	}
 
 	TEST(TEST_CLASS, DifficultiesAreValidIfAllDifficultiesAreCorrectAndPartialHistoryIsPresent_Equal) {
 		// Assert:
-		AssertDifficultiesAreValidForBlocksWithEqualDifficulties(15, Height(5));
+		AssertDifficultiesAreValidForBlocksWithEqualDifficulties(4, Height(5));
 	}
 
 	namespace {
@@ -233,10 +233,11 @@ namespace catapult { namespace chain {
 			auto config = CreateConfiguration();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMilliseconds(10000);
 			config.MaxDifficultyBlocks = maxDifficultyBlocks;
+			config.BlockTimeSmoothingFactor = 5000;
 
 			// - seed the difficulty cache with chainHeight infos and copy all the infos
 			using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
-			auto pCache = SeedBlockDifficultyCache(chainHeight, utils::TimeSpan::FromMilliseconds(9000));
+			auto pCache = SeedBlockDifficultyCache(chainHeight, utils::TimeSpan::FromMilliseconds(18000), 1);
 			DifficultySet set;
 			{
 				auto view = pCache->createView();
@@ -272,12 +273,12 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, DifficultiesAreValidIfAllDifficultiesAreCorrectAndFullHistoryIsPresent_Increasing) {
 		// Assert:
-		AssertDifficultiesAreValidForBlocksWithIncreasingDifficulties(15, Height(20));
+		AssertDifficultiesAreValidForBlocksWithIncreasingDifficulties(4, Height(20));
 	}
 
 	TEST(TEST_CLASS, DifficultiesAreValidIfAllDifficultiesAreCorrectAndPartialHistoryIsPresent_Increasing) {
 		// Assert:
-		AssertDifficultiesAreValidForBlocksWithIncreasingDifficulties(15, Height(5));
+		AssertDifficultiesAreValidForBlocksWithIncreasingDifficulties(4, Height(5));
 	}
 
 	namespace {
@@ -297,7 +298,7 @@ namespace catapult { namespace chain {
 			// - generate a peer chain with peerChainSize blocks and change the difficulty of the block
 			//   at differenceIndex
 			auto blocks = GenerateBlocks(chainHeight, config.BlockGenerationTargetTime, peerChainSize);
-			blocks[differenceIndex]->Difficulty = Difficulty(Base_Difficulty + 1);
+			blocks[differenceIndex]->Difficulty = Difficulty(1);
 
 			// Act:
 			auto result = CheckDifficulties(*pCache, Unwrap(blocks), config);
@@ -356,7 +357,7 @@ namespace catapult { namespace chain {
 		auto score = CalculatePartialChainScore(*pParentBlock, { blocks[0].get() });
 
 		// Assert:
-		EXPECT_EQ(model::ChainScore(Base_Difficulty + 111 - (150 - 100)), score);
+		EXPECT_EQ(model::ChainScore(166186883546932897), score);
 	}
 
 	TEST(TEST_CLASS, CanCalculatePartialChainScoreForMultiBlockChain) {
@@ -371,7 +372,7 @@ namespace catapult { namespace chain {
 		auto score = CalculatePartialChainScore(*pParentBlock, { blocks[0].get(), blocks[1].get(), blocks[2].get() });
 
 		// Assert:
-		EXPECT_EQ(model::ChainScore(3 * Base_Difficulty + 111 - (150 - 100) + 200 - (175 - 150) + 300 - (190 - 175)), score);
+		EXPECT_EQ(model::ChainScore(319909750827845827), score);
 	}
 
 	// endregion
