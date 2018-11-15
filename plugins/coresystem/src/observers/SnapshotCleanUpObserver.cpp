@@ -30,8 +30,16 @@ namespace catapult { namespace observers {
 			auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			auto updatedAddresses = cache.updatedAddresses();
 
+			if (context.Mode == NotifyMode::Rollback)
+				return;
+
 			for (const auto& address : updatedAddresses) {
-				cache.get(address).Balances.maybeCleanUpSnapshots(context.Height, config);
+				auto pAccountState = cache.tryGet(address);
+
+				if (!pAccountState)
+					continue;
+				
+				pAccountState-> Balances.maybeCleanUpSnapshots(context.Height, config);
 			}
 		});
 	}
