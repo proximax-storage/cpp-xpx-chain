@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** PROXIMAX LIMITED. All rights reserved.
 ***
 *** This file is part of Catapult.
