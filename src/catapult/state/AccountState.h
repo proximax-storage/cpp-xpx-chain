@@ -55,6 +55,9 @@ namespace catapult { namespace state {
 		/// Height at which public key has been obtained.
 		Height PublicKeyHeight;
 
+		/// Importance information of the account.
+		AccountImportance ImportanceInfo;
+
 		/// Balances of an account.
 		AccountBalances Balances;
 	};
