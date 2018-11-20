@@ -108,6 +108,8 @@ namespace catapult { namespace sync {
 				LoadPluginByName(pluginManager, modules, "", "catapult.coresystem");
 				for (const auto& pair : config.BlockChain.Plugins)
 					LoadPluginByName(pluginManager, modules, "", pair.first);
+
+				testState().state().storage().modifier().dropBlocksAfter(Height{0u});
 			}
 
 			void initializeCache() {
@@ -139,6 +141,8 @@ namespace catapult { namespace sync {
 				auto pRootObserver = extensions::CreateEntityObserver(state.pluginManager());
 				chain::ExecuteBlock(blockElement, *pRootObserver, observerState);
 				state.cache().commit(blockElement.Block.Height);
+
+				testState().state().storage().modifier().saveBlock(blockElement);
 			}
 
 			void synchronizeChains(const io::BlockStorageCache& remoteStorage) {
@@ -186,7 +190,7 @@ namespace catapult { namespace sync {
 			}
 
 			model::PreviousBlockContext populateCommonBlocks(
-					const std::vector<io::BlockStorageCache*>& vStorages,
+					io::BlockStorageCache& remoteStorage,
 					Height endHeight) {
 				model::PreviousBlockContext previousBlockContext{};
 				previousBlockContext.BlockHeight = Height{1};
@@ -199,14 +203,9 @@ namespace catapult { namespace sync {
 					auto blockElement = createBlock(height, timestamp, previousBlockContext, signer, transactions);
 					previousBlockContext = model::PreviousBlockContext{blockElement};
 
-					auto delta = testState().state().cache().createDelta();
-					delta.sub<cache::BlockDifficultyCache>().insert(
-						blockElement.Block.Height, blockElement.Block.Timestamp, blockElement.Block.Difficulty);
-					testState().state().cache().commit(blockElement.Block.Height);
+					executeBlock(blockElement);
 
-					for (auto pStorage : vStorages) {
-						pStorage->modifier().saveBlock(blockElement);
-					}
+					remoteStorage.modifier().saveBlock(blockElement);
 				}
 
 				return previousBlockContext;
@@ -234,12 +233,8 @@ namespace catapult { namespace sync {
 		TestContext context{std::move(config), modules};
 		context.boot();
 
-		auto& localStorage = context.testState().state().storage();
-		localStorage.modifier().dropBlocksAfter(Height{0u});
-
 		auto endHeight = Height{50u};
-		auto previousBlockContext = context.populateCommonBlocks(
-			{ &localStorage, &remoteStorage }, endHeight);
+		auto previousBlockContext = context.populateCommonBlocks(remoteStorage, endHeight);
 
 		auto nemesisAccountAddress = model::PublicKeyToAddress(Nemesis_Account_Key_Pair.publicKey(),
 			config.BlockChain.Network.Identifier);
@@ -260,7 +255,6 @@ namespace catapult { namespace sync {
 			previousBlockContext,
 			Nemesis_Account_Key_Pair,
 			localTransactions);
-		localStorage.modifier().saveBlock(localBlockElement);
 		context.executeBlock(localBlockElement);
 
 		timestamp = Timestamp{timestamp.unwrap() - 1000};
