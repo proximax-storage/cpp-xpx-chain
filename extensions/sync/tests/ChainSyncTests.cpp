@@ -23,18 +23,24 @@
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
+#include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/ChainSynchronizer.h"
 #include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
+#include "catapult/extensions/PluginUtils.h"
 #include "catapult/extensions/ServerHooks.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
+#include "catapult/observers/ObserverContext.h"
+#include "catapult/plugins/PluginLoader.h"
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/utils/FileSize.h"
 #include "extensions/sync/src/DispatcherService.h"
 #include "MockRemoteChainApi.h"
+#include "sdk/src/builders/TransferBuilder.h"
+#include "sdk/src/extensions/TransactionExtensions.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBasedStorage.h"
@@ -50,20 +56,6 @@ namespace catapult { namespace sync {
 		auto Special_Account_Key_Pair = crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[0]);
 		auto Nemesis_Account_Key_Pair = crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[1]);
 		uint64_t constexpr Initial_Balance = 1'000'000'000'000'000u;
-
-		void InitializeCatapultCache(cache::CatapultCache& cache) {
-			auto delta = cache.createDelta();
-
-			auto& specialAccountState = delta.sub<cache::AccountStateCache>().addAccount(
-				Special_Account_Key_Pair.publicKey(), Height{1});
-			specialAccountState.Balances.credit(Xpx_Id, Amount(Initial_Balance), Height{1});
-
-			auto& nemesisAccountState = delta.sub<cache::AccountStateCache>().addAccount(
-				Nemesis_Account_Key_Pair.publicKey(), Height{1});
-			nemesisAccountState.Balances.credit(Xpx_Id, Amount(Initial_Balance), Height{1});
-
-			cache.commit(Height{1});
-		}
 
 		chain::ChainSynchronizerConfiguration CreateChainSynchronizerConfiguration(
 				const config::LocalNodeConfiguration& config) {
@@ -82,10 +74,14 @@ namespace catapult { namespace sync {
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15u);
 			blockChainConfig.MaxBlockFutureTime = utils::TimeSpan::FromSeconds(10u);
 			blockChainConfig.MaxDifficultyBlocks = 4u;
+			blockChainConfig.BlockPruneInterval = 360u;
+			blockChainConfig.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 
 			auto nodeConfig = config::NodeConfiguration::Uninitialized();
 			nodeConfig.MaxBlocksPerSyncAttempt = 30u;
 			nodeConfig.MaxChainBytesPerSyncAttempt = utils::FileSize::FromMegabytes(1u);
+			nodeConfig.BlockDisruptorSize = 4096u;
+			nodeConfig.TransactionDisruptorSize = 16384u;
 
 			return config::LocalNodeConfiguration{
 					std::move(blockChainConfig),
@@ -93,88 +89,6 @@ namespace catapult { namespace sync {
 					config::LoggingConfiguration::Uninitialized(),
 					config::UserConfiguration::Uninitialized()
 			};
-		}
-
-		void SynchronizeChains(
-				chain::CompletionAwareBlockRangeConsumerFunc& blockRangeConsumer,
-				extensions::ServiceState& serviceState,
-				const io::BlockStorageCache& remoteStorage,
-				const config::LocalNodeConfiguration& config) {
-			auto chainSynchronizer = chain::CreateChainSynchronizer(
-				api::CreateLocalChainApi(
-					serviceState.storage(),
-					[&score = serviceState.score()]() { return score.get(); },
-					config.Node.MaxBlocksPerSyncAttempt),
-				CreateChainSynchronizerConfiguration(config),
-				blockRangeConsumer);
-
-			extensions::LocalNodeChainScore remoteChainScore{model::ChainScore{2000u}};
-			mocks::MockRemoteChainApi remoteApi{
-				remoteStorage,
-				config.Node.MaxBlocksPerSyncAttempt,
-				remoteChainScore};
-
-			chainSynchronizer(remoteApi).get();
-
-			std::this_thread::sleep_for(std::chrono::milliseconds(100u));
-		}
-
-		auto CreatePreviousBlockContext(const std::shared_ptr<model::Block>& pBlock) {
-			return !pBlock ?
-				model::PreviousBlockContext{} :
-				model::PreviousBlockContext{test::BlockToBlockElement(*pBlock)};
-		}
-
-		std::shared_ptr<model::Block> CreateBlock(
-				cache::CatapultCache& cache,
-				const Height& height,
-				Timestamp timestamp,
-				const model::BlockChainConfiguration& config,
-				const std::shared_ptr<model::Block>& pParentBlock,
-				const crypto::KeyPair& signer) {
-			model::PreviousBlockContext previousBlockContext = CreatePreviousBlockContext(pParentBlock);
-			test::ConstTransactions transactions{};
-			auto pBlock = model::CreateBlock(previousBlockContext, model::NetworkIdentifier::Mijin_Test,
-					signer.publicKey(), transactions);
-			pBlock->Height = height;
-			pBlock->Timestamp = timestamp;
-			if (pParentBlock)
-				chain::TryCalculateDifficulty(cache.sub<cache::BlockDifficultyCache>(),
-					pParentBlock->Height, config, pBlock->Difficulty);
-			test::SignBlock(signer, *pBlock);
-
-			auto blockElement = test::BlockToBlockElement(*pBlock);
-			blockElement.GenerationHash = model::CalculateGenerationHash(
-				previousBlockContext.BlockHash,
-				signer.publicKey());
-			blockElement.EntityHash = model::CalculateHash(*pBlock);
-
-			return pBlock;
-		}
-
-		std::shared_ptr<model::Block> PopulateCommonBlocks(
-				const std::vector<io::BlockStorageCache*>& vStorages,
-				cache::CatapultCache& cache,
-				const model::BlockChainConfiguration& config,
-				Height endHeight) {
-			std::shared_ptr<model::Block> pLastBlock{};
-			for (auto height = Height{1u}; height <= endHeight; height = height + Height{1u}) {
-				auto timestamp = Timestamp{height.unwrap() * config.BlockGenerationTargetTime.millis()};
-				const auto& signer = height.unwrap() % 2 ?
-					Nemesis_Account_Key_Pair : Special_Account_Key_Pair;
-				pLastBlock = CreateBlock(cache, height, timestamp, config, pLastBlock, signer);
-
-				auto delta = cache.createDelta();
-				delta.sub<cache::BlockDifficultyCache>().insert(
-					pLastBlock->Height, pLastBlock->Timestamp, pLastBlock->Difficulty);
-				cache.commit(pLastBlock->Height);
-
-				for (auto pStorage : vStorages) {
-					pStorage->modifier().saveBlock(test::BlockToBlockElement(*pLastBlock));
-				}
-			}
-
-			return pLastBlock;
 		}
 
 		struct DispatcherServiceTraits {
@@ -186,10 +100,28 @@ namespace catapult { namespace sync {
 			using BaseType = test::ServiceLocatorTestContext<DispatcherServiceTraits>;
 
 		public:
-			TestContext(const model::BlockChainConfiguration& config)
-				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config)) {
-				// initialize the cache
-				InitializeCatapultCache(testState().state().cache());
+			TestContext(config::LocalNodeConfiguration&& config, std::vector<plugins::PluginModule>& modules)
+				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.BlockChain), std::move(config)) {
+				initializeCache();
+
+				auto& pluginManager = testState().pluginManager();
+				LoadPluginByName(pluginManager, modules, "", "catapult.coresystem");
+				for (const auto& pair : config.BlockChain.Plugins)
+					LoadPluginByName(pluginManager, modules, "", pair.first);
+			}
+
+			void initializeCache() {
+				auto delta = testState().state().cache().createDelta();
+
+				auto& specialAccountState = delta.sub<cache::AccountStateCache>().addAccount(
+					Special_Account_Key_Pair.publicKey(), Height{1});
+				specialAccountState.Balances.credit(Xpx_Id, Amount(Initial_Balance), Height{1});
+
+				auto& nemesisAccountState = delta.sub<cache::AccountStateCache>().addAccount(
+					Nemesis_Account_Key_Pair.publicKey(), Height{1});
+				nemesisAccountState.Balances.credit(Xpx_Id, Amount(Initial_Balance), Height{1});
+
+				testState().state().cache().commit(Height{1});
 			}
 
 			Importance getAccountImportanceOrDefault(const Key& publicKey, Height height) {
@@ -199,6 +131,89 @@ namespace catapult { namespace sync {
 				cache::ImportanceView importanceView(readOnlyCache);
 				return importanceView.getAccountImportanceOrDefault(publicKey, height);
 			}
+
+			void executeBlock(const model::BlockElement& blockElement) {
+				auto& state = testState().state();
+				auto delta = state.cache().createDelta();
+				auto observerState = observers::ObserverState(delta, state.state());
+				auto pRootObserver = extensions::CreateEntityObserver(state.pluginManager());
+				chain::ExecuteBlock(blockElement, *pRootObserver, observerState);
+				state.cache().commit(blockElement.Block.Height);
+			}
+
+			void synchronizeChains(const io::BlockStorageCache& remoteStorage) {
+				auto& state = testState().state();
+				const auto& config = state.config();
+				auto chainSynchronizer = chain::CreateChainSynchronizer(
+					api::CreateLocalChainApi(
+						state.storage(),
+						[&score = state.score()]() { return score.get(); },
+						config.Node.MaxBlocksPerSyncAttempt),
+					CreateChainSynchronizerConfiguration(config),
+					state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull));
+
+				extensions::LocalNodeChainScore remoteChainScore{model::ChainScore{2000u}};
+				mocks::MockRemoteChainApi remoteApi{
+					remoteStorage,
+					config.Node.MaxBlocksPerSyncAttempt,
+					remoteChainScore};
+
+				chainSynchronizer(remoteApi).get();
+
+				std::this_thread::sleep_for(std::chrono::milliseconds(100u));
+			}
+
+			model::BlockElement createBlock(
+					const Height& height,
+					Timestamp timestamp,
+					const model::PreviousBlockContext& previousBlockContext,
+					const crypto::KeyPair& signer,
+					test::ConstTransactions& transactions) {
+				m_pLastBlock = model::CreateBlock(previousBlockContext, model::NetworkIdentifier::Mijin_Test,
+						signer.publicKey(), transactions);
+				m_pLastBlock->Height = height;
+				m_pLastBlock->Timestamp = timestamp;
+				chain::TryCalculateDifficulty(testState().state().cache().sub<cache::BlockDifficultyCache>(),
+					previousBlockContext.BlockHeight, testState().state().config().BlockChain, m_pLastBlock->Difficulty);
+				test::SignBlock(signer, *m_pLastBlock);
+
+				auto blockElement = test::BlockToBlockElement(*m_pLastBlock);
+				blockElement.GenerationHash = model::CalculateGenerationHash(
+					previousBlockContext.BlockHash,
+					signer.publicKey());
+
+				return blockElement;
+			}
+
+			model::PreviousBlockContext populateCommonBlocks(
+					const std::vector<io::BlockStorageCache*>& vStorages,
+					Height endHeight) {
+				model::PreviousBlockContext previousBlockContext{};
+				previousBlockContext.BlockHeight = Height{1};
+				for (auto height = Height{1u}; height <= endHeight; height = height + Height{1u}) {
+					auto timestamp = Timestamp{height.unwrap() *
+						testState().state().config().BlockChain.BlockGenerationTargetTime.millis()};
+					const auto& signer = height.unwrap() % 2 ?
+						Nemesis_Account_Key_Pair : Special_Account_Key_Pair;
+					test::ConstTransactions transactions{};
+					auto blockElement = createBlock(height, timestamp, previousBlockContext, signer, transactions);
+					previousBlockContext = model::PreviousBlockContext{blockElement};
+
+					auto delta = testState().state().cache().createDelta();
+					delta.sub<cache::BlockDifficultyCache>().insert(
+						blockElement.Block.Height, blockElement.Block.Timestamp, blockElement.Block.Difficulty);
+					testState().state().cache().commit(blockElement.Block.Height);
+
+					for (auto pStorage : vStorages) {
+						pStorage->modifier().saveBlock(blockElement);
+					}
+				}
+
+				return previousBlockContext;
+			}
+
+		private:
+			std::unique_ptr<model::Block> m_pLastBlock;
 		};
 	}
 
@@ -215,51 +230,51 @@ namespace catapult { namespace sync {
 		io::BlockStorageCache remoteStorage{std::make_unique<mocks::MockMemoryBasedStorage>()};
 		remoteStorage.modifier().dropBlocksAfter(Height{0u});
 
-		TestContext context{config.BlockChain};
+		std::vector<plugins::PluginModule> modules;
+		TestContext context{std::move(config), modules};
 		context.boot();
 
-		auto& state = context.testState().state();
-		state.storage().modifier().dropBlocksAfter(Height{0u});
-		auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
+		auto& localStorage = context.testState().state().storage();
+		localStorage.modifier().dropBlocksAfter(Height{0u});
 
 		auto endHeight = Height{50u};
-		auto pLastBlock = PopulateCommonBlocks(
-			{ &state.storage(), &remoteStorage },
-			state.cache(),
-			config.BlockChain,
-			endHeight);
+		auto previousBlockContext = context.populateCommonBlocks(
+			{ &localStorage, &remoteStorage }, endHeight);
+
+		auto nemesisAccountAddress = model::PublicKeyToAddress(Nemesis_Account_Key_Pair.publicKey(),
+			config.BlockChain.Network.Identifier);
+		builders::TransferBuilder builder{config.BlockChain.Network.Identifier,
+			Special_Account_Key_Pair.publicKey(), nemesisAccountAddress};
+		builder.addMosaic(Xpx_Id, Amount(Initial_Balance / 2u));
+		auto pTransaction = builder.build();
+		extensions::SignTransaction(Special_Account_Key_Pair, *pTransaction);
+		test::ConstTransactions localTransactions{};
+		localTransactions.push_back(std::move(pTransaction));
 
 		endHeight = endHeight + Height{1u};
-		auto timestamp = Timestamp{endHeight.unwrap() * config.BlockChain.BlockGenerationTargetTime.millis()};
-		auto pLocalBlock = CreateBlock(
-			state.cache(),
+		auto timestamp = Timestamp{endHeight.unwrap() *
+			config.BlockChain.BlockGenerationTargetTime.millis()};
+		auto localBlockElement = context.createBlock(
 			endHeight,
 			timestamp,
-			config.BlockChain,
-			pLastBlock,
-			Nemesis_Account_Key_Pair);
-		state.storage().modifier().saveBlock(test::BlockToBlockElement(*pLocalBlock));
-
-		{
-			auto delta = state.cache().createDelta();
-			auto& cache = delta.sub<cache::AccountStateCache>();
-			auto& accountState = cache.get(Special_Account_Key_Pair.publicKey());
-			accountState.Balances.debit(Xpx_Id, Amount(Initial_Balance / 2u), endHeight);
-			state.cache().commit(endHeight);
-		}
+			previousBlockContext,
+			Nemesis_Account_Key_Pair,
+			localTransactions);
+		localStorage.modifier().saveBlock(localBlockElement);
+		context.executeBlock(localBlockElement);
 
 		timestamp = Timestamp{timestamp.unwrap() - 1000};
-		auto pRemoteBlock = CreateBlock(
-			state.cache(),
+		test::ConstTransactions remoteTransactions{};
+		auto remoteBlockElement = context.createBlock(
 			endHeight,
 			timestamp,
-			config.BlockChain,
-			pLastBlock,
-			Special_Account_Key_Pair);
-		remoteStorage.modifier().saveBlock(test::BlockToBlockElement(*pRemoteBlock));
+			previousBlockContext,
+			Special_Account_Key_Pair,
+			remoteTransactions);
+		remoteStorage.modifier().saveBlock(remoteBlockElement);
 
 		// Act:
-		SynchronizeChains(blockRangeConsumer, state, remoteStorage, config);
+		context.synchronizeChains(remoteStorage);
 
 		// Assert:
 		auto importance = context.getAccountImportanceOrDefault(Special_Account_Key_Pair.publicKey(), endHeight);

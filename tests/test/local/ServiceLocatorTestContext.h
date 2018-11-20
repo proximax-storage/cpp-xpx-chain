@@ -50,7 +50,12 @@ namespace catapult { namespace test {
 
 		/// Creates the test state around \a cache and \a timeSupplier.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
-				: m_config(LoadLocalNodeConfiguration(""))
+				: ServiceTestState(std::move(cache), LoadLocalNodeConfiguration(""), timeSupplier)
+		{}
+
+		/// Creates the test state around \a cache, \a config and \a timeSupplier.
+		explicit ServiceTestState(cache::CatapultCache&& cache, config::LocalNodeConfiguration&& config, const supplier<Timestamp>& timeSupplier)
+				: m_config(std::move(config))
 				, m_catapultCache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBasedStorage>())
 				, m_pUtCache(CreateUtCacheProxy())
@@ -150,6 +155,13 @@ namespace catapult { namespace test {
 				: m_keyPair(GenerateKeyPair())
 				, m_locator(m_keyPair)
 				, m_testState(std::move(cache), timeSupplier)
+		{}
+
+		/// Creates the test context around \a cache and \a timeSupplier.
+		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, config::LocalNodeConfiguration&& config)
+				: m_keyPair(GenerateKeyPair())
+				, m_locator(m_keyPair)
+				, m_testState(std::move(cache), std::move(config), &utils::NetworkTime)
 		{}
 
 	public:
