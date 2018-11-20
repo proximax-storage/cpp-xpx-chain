@@ -30,6 +30,9 @@ namespace catapult { namespace observers {
 			if (context.Mode == NotifyMode::Rollback)
 				return;
 
+			if (config.MaxRollbackBlocks != 0 && context.Height.unwrap() % config.MaxRollbackBlocks)
+				return;
+
 			auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			auto updatedAddresses = cache.updatedAddresses();
 

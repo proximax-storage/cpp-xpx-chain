@@ -79,7 +79,29 @@ namespace catapult { namespace state {
 		return m_balances.end() == iter ? Amount(0) : iter->second;
 	}
 
-	AccountBalances& AccountBalances::credit(MosaicId mosaicId, Amount amount, Height height) {
+	AccountBalances& AccountBalances::credit(const MosaicId& mosaicId, const Amount& amount) {
+		return internalCredit(mosaicId, amount, Height(0));
+	}
+
+	AccountBalances& AccountBalances::debit(const MosaicId& mosaicId, const Amount& amount) {
+		return internalDebit(mosaicId, amount, Height(0));
+	}
+
+	AccountBalances& AccountBalances::credit(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
+		if (height.unwrap() == 0)
+			CATAPULT_THROW_RUNTIME_ERROR("height can't be zero");
+
+		return internalCredit(mosaicId, amount, height);
+	}
+
+	AccountBalances& AccountBalances::debit(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
+		if (height.unwrap() == 0)
+			CATAPULT_THROW_RUNTIME_ERROR("height can't be zero");
+
+		return internalDebit(mosaicId, amount, height);
+	}
+
+	AccountBalances& AccountBalances::internalCredit(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
 		if (IsZero(amount))
 			return *this;
 
@@ -101,18 +123,17 @@ namespace catapult { namespace state {
 		return *this;
 	}
 
-	AccountBalances& AccountBalances::debit(MosaicId mosaicId, Amount amount, Height height) {
+	AccountBalances& AccountBalances::internalDebit(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
 		if (IsZero(amount))
 			return *this;
 
 		auto iter = m_balances.find(mosaicId);
 		auto hasZeroBalance = m_balances.end() == iter;
-		if (hasZeroBalance || amount > iter->second) {
+		if (hasZeroBalance || amount > iter->second)
 			CATAPULT_THROW_RUNTIME_ERROR_2(
 					"debit amount is greater than current balance",
 					amount,
 					hasZeroBalance ? Amount(0) : iter->second);
-		}
 
 		iter->second = iter->second - amount;
 
@@ -194,14 +215,12 @@ namespace catapult { namespace state {
 	}
 
 	void AccountBalances::pushSnapshot(const model::BalanceSnapshot& snapshot, bool committed) {
-		if (!m_accountState) {
+		if (!m_accountState)
 			CATAPULT_THROW_RUNTIME_ERROR("each balance must have own account");
-		}
 
-		if (snapshot.BalanceHeight + Height(1) < m_accountState->AddressHeight) {
+		if (snapshot.BalanceHeight + Height(1) < m_accountState->AddressHeight)
 			CATAPULT_THROW_RUNTIME_ERROR_2(
 					"height of snapshot can't be lower than height of account", snapshot.BalanceHeight, m_accountState->AddressHeight);
-		}
 
 		if (committed) {
 			m_localSnapshots.push_back(snapshot);

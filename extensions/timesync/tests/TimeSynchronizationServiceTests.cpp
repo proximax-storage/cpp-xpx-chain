@@ -27,6 +27,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/VerifyPeer.h"
+#include "catapult/state/AccountBalances.h"
 #include "timesync/tests/test/TimeSynchronizationCacheTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
