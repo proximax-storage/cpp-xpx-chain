@@ -79,16 +79,20 @@ namespace catapult { namespace state {
 		Amount get(MosaicId mosaicId) const;
 
 	public:
-		/// Adds \a amount funds to a given mosaic (\a mosaicId) without update of snapshots.
+		/// Adds \a amount funds to a given mosaic (\a mosaicId).
+		/// It will increase balance of account without tracking of it in snapshots array.
 		AccountBalances& credit(const MosaicId& mosaicId, const Amount& amount);
 
-		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) without update of snapshots.
+		/// Subtracts \a amount funds from a given mosaic (\a mosaicId).
+		/// It will decrease balance of account without tracking of it in snapshots array.
 		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount);
 
 		/// Adds \a amount funds to a given mosaic (\a mosaicId) at \a height.
+		/// Increasing of XPX balance will be tracked in snapshots array.
 		AccountBalances& credit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
+		/// Decreasing of XPX balance will be tracked in snapshots array.
 		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 		/// Commit snapshots from m_remoteSnapshots queue to m_localSnapshots queue
