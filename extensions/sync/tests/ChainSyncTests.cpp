@@ -22,7 +22,6 @@
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/cache_core/ImportanceView.h"
-#include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/ChainSynchronizer.h"
 #include "catapult/config/LocalNodeConfiguration.h"
@@ -32,21 +31,14 @@
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/model/EntityHasher.h"
-#include "catapult/observers/ObserverContext.h"
 #include "catapult/plugins/PluginLoader.h"
-#include "catapult/utils/TimeSpan.h"
-#include "catapult/utils/FileSize.h"
 #include "extensions/sync/src/DispatcherService.h"
 #include "MockRemoteChainApi.h"
 #include "sdk/src/builders/TransferBuilder.h"
-#include "sdk/src/extensions/TransactionExtensions.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBasedStorage.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
-#include "tests/test/nodeps/MijinConstants.h"
 
 namespace catapult { namespace sync {
 
@@ -100,16 +92,16 @@ namespace catapult { namespace sync {
 			using BaseType = test::ServiceLocatorTestContext<DispatcherServiceTraits>;
 
 		public:
-			TestContext(config::LocalNodeConfiguration&& config, std::vector<plugins::PluginModule>& modules)
+			TestContext(config::LocalNodeConfiguration&& config)
 				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.BlockChain), std::move(config)) {
-				initializeCache();
 
-				auto& pluginManager = testState().pluginManager();
-				LoadPluginByName(pluginManager, modules, "", "catapult.coresystem");
+				testState().loadPluginByName("", "catapult.coresystem");
 				for (const auto& pair : config.BlockChain.Plugins)
-					LoadPluginByName(pluginManager, modules, "", pair.first);
+					testState().loadPluginByName("", pair.first);
 
 				testState().state().storage().modifier().dropBlocksAfter(Height{0u});
+
+				initializeCache();
 			}
 
 			void initializeCache() {
@@ -172,7 +164,7 @@ namespace catapult { namespace sync {
 					Timestamp timestamp,
 					const model::PreviousBlockContext& previousBlockContext,
 					const crypto::KeyPair& signer,
-					test::ConstTransactions& transactions) {
+					const test::ConstTransactions& transactions) {
 				m_pLastBlock = model::CreateBlock(previousBlockContext, model::NetworkIdentifier::Mijin_Test,
 						signer.publicKey(), transactions);
 				m_pLastBlock->Height = height;
@@ -226,45 +218,46 @@ namespace catapult { namespace sync {
 
 		auto config = CreateLocalNodeConfiguration();
 
+		TestContext context(std::move(config));
+		context.boot();
+
 		io::BlockStorageCache remoteStorage{std::make_unique<mocks::MockMemoryBasedStorage>()};
 		remoteStorage.modifier().dropBlocksAfter(Height{0u});
 
-		std::vector<plugins::PluginModule> modules;
-		TestContext context{std::move(config), modules};
-		context.boot();
-
-		auto endHeight = Height{50u};
+		Height endHeight(50u);
 		auto previousBlockContext = context.populateCommonBlocks(remoteStorage, endHeight);
 
 		auto nemesisAccountAddress = model::PublicKeyToAddress(Nemesis_Account_Key_Pair.publicKey(),
 			config.BlockChain.Network.Identifier);
-		builders::TransferBuilder builder{config.BlockChain.Network.Identifier,
-			Special_Account_Key_Pair.publicKey(), nemesisAccountAddress};
+		builders::TransferBuilder builder(
+			config.BlockChain.Network.Identifier,
+			Special_Account_Key_Pair.publicKey() /* signer */,
+			nemesisAccountAddress /* recipient */
+		);
 		builder.addMosaic(Xpx_Id, Amount(Initial_Balance / 2u));
+
+		test::ConstTransactions localTransactions{};
 		auto pTransaction = builder.build();
 		extensions::SignTransaction(Special_Account_Key_Pair, *pTransaction);
-		test::ConstTransactions localTransactions{};
 		localTransactions.push_back(std::move(pTransaction));
 
 		endHeight = endHeight + Height{1u};
-		auto timestamp = Timestamp{endHeight.unwrap() *
-			config.BlockChain.BlockGenerationTargetTime.millis()};
+		uint64_t timestampOfLocalChain(endHeight.unwrap() * config.BlockChain.BlockGenerationTargetTime.millis());
 		auto localBlockElement = context.createBlock(
 			endHeight,
-			timestamp,
+			Timestamp(timestampOfLocalChain),
 			previousBlockContext,
 			Nemesis_Account_Key_Pair,
 			localTransactions);
 		context.executeBlock(localBlockElement);
 
-		timestamp = Timestamp{timestamp.unwrap() - 1000};
-		test::ConstTransactions remoteTransactions{};
+		// Remote block has less timestamp, so his difficulty is greater
 		auto remoteBlockElement = context.createBlock(
 			endHeight,
-			timestamp,
+			Timestamp(timestampOfLocalChain - 1000),
 			previousBlockContext,
 			Special_Account_Key_Pair,
-			remoteTransactions);
+			test::ConstTransactions());
 		remoteStorage.modifier().saveBlock(remoteBlockElement);
 
 		// Act:
