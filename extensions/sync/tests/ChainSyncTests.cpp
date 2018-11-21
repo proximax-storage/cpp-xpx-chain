@@ -22,6 +22,7 @@
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/cache_core/ImportanceView.h"
+#include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/ChainSynchronizer.h"
 #include "catapult/config/LocalNodeConfiguration.h"
@@ -35,10 +36,12 @@
 #include "extensions/sync/src/DispatcherService.h"
 #include "MockRemoteChainApi.h"
 #include "sdk/src/builders/TransferBuilder.h"
+#include "sdk/src/extensions/TransactionExtensions.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBasedStorage.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
+#include "tests/test/nodeps/MijinConstants.h"
 
 namespace catapult { namespace sync {
 
