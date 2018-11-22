@@ -86,8 +86,8 @@ namespace catapult { namespace test {
 		auto config = model::BlockChainConfiguration::Uninitialized();
 		SetNetwork(config.Network);
 
-		config.BlockGenerationTargetTime = utils::TimeSpan::FromMilliseconds(1'000);
-		config.BlockTimeSmoothingFactor = 0;
+		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+		config.BlockTimeSmoothingFactor = 10'000;
 		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
 
 		config.ImportanceGrouping = 1;

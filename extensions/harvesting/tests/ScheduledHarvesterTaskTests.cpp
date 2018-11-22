@@ -78,6 +78,7 @@ namespace catapult { namespace harvesting {
 				};
 				pLastBlock->Size = sizeof(model::Block);
 				pLastBlock->Height = Height(1);
+				pLastBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 			}
 
 			size_t NumHarvestingAllowedCalls;

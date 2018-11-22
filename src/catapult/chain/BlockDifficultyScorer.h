@@ -25,19 +25,21 @@
 
 namespace catapult { namespace chain {
 
-	/// Calculates the block difficulty given the past difficulties and timestamps (\a difficultyInfos) for the
+	/// Calculates the block difficulty given the past \a difficultyInfos and \a nextBlockInfo for the
 	/// block chain described by \a config.
-	Difficulty CalculateDifficulty(const cache::DifficultyInfoRange& difficultyInfos, const model::BlockChainConfiguration& config);
+	Difficulty CalculateDifficulty(const cache::DifficultyInfoRange& difficultyInfos,
+			const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config);
 
-	/// Calculates the block difficulty at \a height for the block chain described by \a config
-	/// given the block difficulty \a cache.
-	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache, Height height, const model::BlockChainConfiguration& config);
+	/// Calculates the block difficulty for the block chain described by \a config
+	/// given the block difficulty \a cache and \a nextBlockInfo.
+	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache,
+			const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config);
 
-	/// Calculates the block difficulty at \a height into \a difficulty for the block chain described by
-	/// \a config given the block difficulty \a cache.
+	/// Calculates the block difficulty into \a difficulty for the block chain described by
+	/// \a config given the block difficulty \a cache and \a nextBlockInfo.
 	bool TryCalculateDifficulty(
 			const cache::BlockDifficultyCache& cache,
-			Height height,
+			const state::BlockDifficultyInfo& nextBlockInfo,
 			const model::BlockChainConfiguration& config,
 			Difficulty& difficulty);
 }}

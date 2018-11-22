@@ -277,6 +277,7 @@ namespace catapult { namespace tools { namespace nemgen {
 
 			model::PreviousBlockContext context;
 			auto pBlock = model::CreateBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.transactions());
+			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 			pBlock->Type = model::Entity_Type_Nemesis_Block;
 			extensions::BlockExtensions().signFullBlock(signer, *pBlock);
 			return pBlock;

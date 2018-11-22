@@ -21,6 +21,7 @@
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/utils/Logging.h"
 #include "tests/TestHarness.h"
+#include "catapult/constants.h"
 #include <cmath>
 
 namespace catapult { namespace chain {
@@ -39,7 +40,7 @@ namespace catapult { namespace chain {
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-			config.MaxDifficultyBlocks = 4;
+			config.MaxDifficultyBlocks = 3;
 			config.BlockTimeSmoothingFactor = 3000;
 			return config;
 		}
@@ -48,7 +49,11 @@ namespace catapult { namespace chain {
 	namespace {
 		void AssertCalculatedDifficultyIsBaseDifficulty(const DifficultySet& set, Difficulty expectedDifficulty = Difficulty(0)) {
 			// Act:
-			auto difficulty = CalculateDifficulty(ToRange(set), CreateConfiguration());
+			auto difficulty = CalculateDifficulty(
+					ToRange(set),
+					state::BlockDifficultyInfo(Height(2), Timestamp(60010), Difficulty()),
+					CreateConfiguration()
+			);
 
 			// Assert:
 			EXPECT_EQ(expectedDifficulty, difficulty);
@@ -66,10 +71,10 @@ namespace catapult { namespace chain {
 	TEST(TEST_CLASS, CalculatingDifficultyOnSingleSample) {
 		// Arrange:
 		DifficultySet set;
-		set.emplace(Height(1), Timestamp(10), Difficulty(75'000'000'000'000));
+		set.emplace(Height(1), Timestamp(10), Difficulty(75'000));
 
 		// Assert:
-		AssertCalculatedDifficultyIsBaseDifficulty(set, Difficulty(1000));
+		AssertCalculatedDifficultyIsBaseDifficulty(set, Difficulty(75'000));
 	}
 
 	TEST(TEST_CLASS, CalculatingDifficultyOnSingleSampleOnWrongHeightYieldsBaseDifficulty) {
@@ -78,7 +83,16 @@ namespace catapult { namespace chain {
 		set.emplace(Height(10), Timestamp(10), Difficulty(75'000'000'000'000));
 
 		// Assert:
-		AssertCalculatedDifficultyIsBaseDifficulty(set);
+		EXPECT_THROW(AssertCalculatedDifficultyIsBaseDifficulty(set), catapult_invalid_argument);
+	}
+
+	TEST(TEST_CLASS, CalculatingDifficultyOnSingleSampleWithZeroLastDifficulty) {
+		// Arrange:
+		DifficultySet set;
+		set.emplace(Height(1), Timestamp(10), Difficulty(0));
+
+		// Assert:
+		EXPECT_THROW(AssertCalculatedDifficultyIsBaseDifficulty(set), catapult_invalid_argument);
 	}
 
 	namespace {
@@ -88,11 +102,14 @@ namespace catapult { namespace chain {
 			for (auto i = 0u; i < 4; ++i)
 				set.emplace(Height(100 + i), Timestamp(12345 + i * actualSpacing), Base_Difficulty);
 
+			auto nextBlockInfo = *(--set.end());
+			set.erase(--set.end());
+
 			auto config = CreateConfiguration();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMilliseconds(targetSpacing);
 
 			// Act:
-			return CalculateDifficulty(ToRange(set), config);
+			return CalculateDifficulty(ToRange(set), nextBlockInfo, config);
 		}
 	}
 
@@ -122,10 +139,9 @@ namespace catapult { namespace chain {
 
 	namespace {
 		void PrepareCache(cache::BlockDifficultyCache& cache, size_t numInfos) {
-			auto minDifficulty = Difficulty::Min().unwrap();
 			auto delta = cache.createDelta();
 			for (auto i = 0u; i < numInfos; ++i)
-				delta->insert(Height(i + 1), Timestamp(60'000 * i), Difficulty(minDifficulty + 1000 * i));
+				delta->insert(Height(i + 1), Timestamp(60'000 * i), Difficulty(1 + NEMESIS_BLOCK_DIFFICULTY * i));
 
 			cache.commit();
 		}
@@ -133,36 +149,36 @@ namespace catapult { namespace chain {
 		struct CacheTraits {
 			static Difficulty CalculateDifficulty(
 					const cache::BlockDifficultyCache& cache,
-					Height height,
+					state::BlockDifficultyInfo nextBlockInfo,
 					const model::BlockChainConfiguration& config) {
-				return chain::CalculateDifficulty(cache, height, config);
+				return chain::CalculateDifficulty(cache, nextBlockInfo, config);
 			}
 
 			static void AssertDifficultyCalculationFailure(
 					const cache::BlockDifficultyCache& cache,
-					Height height,
+					state::BlockDifficultyInfo nextBlockInfo,
 					const model::BlockChainConfiguration& config) {
 				// Act + Assert:
-				EXPECT_THROW(chain::CalculateDifficulty(cache, height, config), catapult_invalid_argument);
+				EXPECT_THROW(chain::CalculateDifficulty(cache, nextBlockInfo, config), catapult_invalid_argument);
 			}
 		};
 
 		struct TryCacheTraits {
 			static Difficulty CalculateDifficulty(
 					const cache::BlockDifficultyCache& cache,
-					Height height,
+					state::BlockDifficultyInfo nextBlockInfo,
 					const model::BlockChainConfiguration& config) {
 				Difficulty difficulty;
-				EXPECT_TRUE(TryCalculateDifficulty(cache, height, config, difficulty));
+				EXPECT_TRUE(TryCalculateDifficulty(cache, nextBlockInfo, config, difficulty));
 				return difficulty;
 			}
 
 			static void AssertDifficultyCalculationFailure(
 					const cache::BlockDifficultyCache& cache,
-					Height height,
+					state::BlockDifficultyInfo nextBlockInfo,
 					const model::BlockChainConfiguration& config) {
 				Difficulty difficulty;
-				EXPECT_FALSE(TryCalculateDifficulty(cache, height, config, difficulty));
+				EXPECT_FALSE(TryCalculateDifficulty(cache, nextBlockInfo, config, difficulty));
 			}
 		};
 	}
@@ -179,12 +195,17 @@ namespace catapult { namespace chain {
 		cache::BlockDifficultyCache cache(count);
 		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
+		state::BlockDifficultyInfo nextBlockInfo(
+				Height(count + 1),
+				Timestamp(60'000 * count),
+				Difficulty()
+		);
 
 		// Act:
-		auto difficulty1 = TTraits::CalculateDifficulty(cache, Height(count), config);
+		auto difficulty1 = TTraits::CalculateDifficulty(cache, nextBlockInfo, config);
 
 		auto view = cache.createView();
-		auto difficulty2 = CalculateDifficulty(view->difficultyInfos(Height(count), count), config);
+		auto difficulty2 = CalculateDifficulty(view->difficultyInfos(Height(count), count), nextBlockInfo, config);
 
 		// Assert:
 		EXPECT_EQ(difficulty1, difficulty2);
@@ -196,14 +217,18 @@ namespace catapult { namespace chain {
 		cache::BlockDifficultyCache cache(count);
 		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
-		config.MaxDifficultyBlocks = 4;
+		config.MaxDifficultyBlocks = 3;
+		state::BlockDifficultyInfo nextBlockInfo(
+				Height(count + 1),
+				Timestamp(60'000 * count),
+				Difficulty()
+		);
 
-		// Act: target time of blocks in history cache is met, so calculated difficulty should be
-		//      the average historical difficulty of the last 5 blocks which is minDifficulty + 7000
-		auto difficulty = TTraits::CalculateDifficulty(cache, Height(count), config);
+		// Act:
+		auto difficulty = TTraits::CalculateDifficulty(cache, nextBlockInfo, config);
 
 		// Assert:
-		EXPECT_EQ(Difficulty::Min() + Difficulty::Unclamped(9000), difficulty);
+		EXPECT_EQ(Difficulty::Min() + Difficulty::Unclamped(9001), difficulty);
 	}
 
 	CACHE_OVERLOAD_TRAITS_BASED_TEST(CannotCalculateDifficultyIfStartingHeightIsNotInCache) {
@@ -212,8 +237,13 @@ namespace catapult { namespace chain {
 		cache::BlockDifficultyCache cache(count);
 		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
+		state::BlockDifficultyInfo nextBlockInfo(
+				Height(count + 2),
+				Timestamp(60'000 * count),
+				Difficulty()
+		);
 
 		// Act + Assert: try to calculate the difficulty for a height two past the last info
-		TTraits::AssertDifficultyCalculationFailure(cache, Height(count + 1), config);
+		TTraits::AssertDifficultyCalculationFailure(cache, nextBlockInfo, config);
 	}
 }}

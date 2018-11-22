@@ -73,7 +73,7 @@ namespace catapult { namespace harvesting {
 			// the created block needs to have height 1 to be able to add it to the block difficulty cache
 			auto pBlock = test::GenerateEmptyRandomBlock();
 			pBlock->Height = Height(1);
-			pBlock->Difficulty = Difficulty(1000);
+			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 			return pBlock;
 		}
 
@@ -147,7 +147,11 @@ namespace catapult { namespace harvesting {
 		Timestamp CalculateBlockGenerationTime(const HarvesterContext& context, const Key& publicKey) {
 			auto pLastBlock = context.pLastBlock;
 			auto config = CreateConfiguration();
-			auto difficulty = chain::CalculateDifficulty(context.Cache.sub<cache::BlockDifficultyCache>(), pLastBlock->Height, config);
+			auto difficulty = chain::CalculateDifficulty(
+					context.Cache.sub<cache::BlockDifficultyCache>(),
+					state::BlockDifficultyInfo(pLastBlock->Height + Height(1), pLastBlock->Timestamp, Difficulty()),
+					config
+			);
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto view = accountStateCache.createView();
 			cache::ReadOnlyAccountStateCache readOnlyCache(*view);
@@ -207,7 +211,7 @@ namespace catapult { namespace harvesting {
 			auto delta = context.Cache.createDelta();
 			auto& blockDifficultyCache = delta.sub<cache::BlockDifficultyCache>();
 			for (auto i = 2u; i <= numBlocks; ++i)
-				blockDifficultyCache.insert(state::BlockDifficultyInfo(Height(i), Timestamp(i * 1'000), Difficulty(1000)));
+				blockDifficultyCache.insert(state::BlockDifficultyInfo(Height(i), Timestamp(i * 1'000), Difficulty(NEMESIS_BLOCK_DIFFICULTY)));
 
 			context.Cache.commit(Height());
 		}
@@ -333,7 +337,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(bestKey, pBlock->Signer);
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
-			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, pLastBlock->Height, config), pBlock->Difficulty);
+			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, state::BlockDifficultyInfo(*pBlock), config), pBlock->Difficulty);
 			EXPECT_EQ(model::MakeVersion(Network_Identifier, 3), pBlock->Version);
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
