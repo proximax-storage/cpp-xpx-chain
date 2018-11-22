@@ -252,7 +252,6 @@ namespace catapult { namespace sync {
 			previousBlockContext,
 			Nemesis_Account_Key_Pair,
 			localTransactions);
-		context.executeBlock(localBlockElement);
 
 		// Remote block has less timestamp, so his difficulty is greater
 		auto remoteBlockElement = context.createBlock(
@@ -261,7 +260,9 @@ namespace catapult { namespace sync {
 			previousBlockContext,
 			Special_Account_Key_Pair,
 			test::ConstTransactions());
+
 		remoteStorage.modifier().saveBlock(remoteBlockElement);
+		context.executeBlock(localBlockElement);
 
 		// Act:
 		context.synchronizeChains(remoteStorage);
