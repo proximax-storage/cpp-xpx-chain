@@ -1,0 +1,74 @@
+/**
+*** Copyright (c) 2016-present,
+*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
+***
+*** This file is part of Catapult.
+***
+*** Catapult is free software: you can redistribute it and/or modify
+*** it under the terms of the GNU Lesser General Public License as published by
+*** the Free Software Foundation, either version 3 of the License, or
+*** (at your option) any later version.
+***
+*** Catapult is distributed in the hope that it will be useful,
+*** but WITHOUT ANY WARRANTY; without even the implied warranty of
+*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+*** GNU Lesser General Public License for more details.
+***
+*** You should have received a copy of the GNU Lesser General Public License
+*** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
+**/
+
+#pragma once
+#include "src/state/ReputationEntry.h"
+#include "catapult/cache/CacheDescriptorAdapters.h"
+#include "catapult/cache/SingleSetCacheTypesAdapter.h"
+#include "catapult/utils/Hashers.h"
+
+namespace catapult {
+	namespace cache {
+		class BasicReputationCacheDelta;
+		class BasicReputationCacheView;
+		class ReputationCache;
+		class ReputationCacheDelta;
+		class ReputationCacheView;
+
+		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
+		class ReadOnlyArtifactCache;
+	}
+}
+
+namespace catapult { namespace cache {
+
+	/// Describes a reputation cache.
+	struct ReputationCacheDescriptor {
+	public:
+		static constexpr auto Name = "ReputationCache";
+
+	public:
+		// key value types
+		using KeyType = Key;
+		using ValueType = state::ReputationEntry;
+
+		// cache types
+		using CacheType = ReputationCache;
+		using CacheDeltaType = ReputationCacheDelta;
+		using CacheViewType = ReputationCacheView;
+
+	public:
+		/// Gets the key corresponding to \a entry.
+		static const auto& GetKeyFromValue(const ValueType& entry) {
+			return entry.key();
+		}
+	};
+
+	/// Reputation cache types.
+	struct ReputationCacheTypes
+			: public SingleSetCacheTypesAdapter<MutableUnorderedMapAdapter<ReputationCacheDescriptor, utils::ArrayHasher<Key>>> {
+	public:
+		using CacheReadOnlyType = ReadOnlyArtifactCache<
+			BasicReputationCacheView,
+			BasicReputationCacheDelta,
+			const Key&,
+			const state::ReputationEntry&>;
+	};
+}}

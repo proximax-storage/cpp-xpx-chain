@@ -19,35 +19,23 @@
 **/
 
 #pragma once
-#include "catapult/model/FacilityCode.h"
-#include "catapult/utils/Casting.h"
+#include "ReputationCacheDelta.h"
+#include "ReputationCacheView.h"
+#include "catapult/cache/BasicCache.h"
 
-namespace catapult { namespace validators {
+namespace catapult { namespace cache {
 
-#define COPY_FACILITY_CODE(FACILITY_NAME) FACILITY_NAME = utils::to_underlying_type(model::FacilityCode::FACILITY_NAME)
+	/// Cache composed of Reputation information.
+	using BasicReputationCache = BasicCache<ReputationCacheDescriptor, ReputationCacheTypes::BaseSets>;
 
-	/// Possible validation facility codes.
-	enum class FacilityCode : uint8_t {
-		COPY_FACILITY_CODE(Aggregate),
-		COPY_FACILITY_CODE(Core),
-		COPY_FACILITY_CODE(Lock),
-		COPY_FACILITY_CODE(Mosaic),
-		COPY_FACILITY_CODE(Multisig),
-		COPY_FACILITY_CODE(Namespace),
-		COPY_FACILITY_CODE(Reputation),
-		COPY_FACILITY_CODE(Transfer),
+	/// Synchronized cache composed of reputation information.
+	class ReputationCache : public SynchronizedCache<BasicReputationCache> {
+	public:
+		DEFINE_CACHE_CONSTANTS(Reputation)
 
-		/// Chain facility code.
-		Chain = 0xFF,
-		/// Consumer facility code.
-		Consumer = 0xFE,
-		/// Extension facility code.
-		Extension = 0x45,
-		/// Hash facility code.
-		Hash = 0x48,
-		/// Signature facility code.
-		Signature = 0x53
+	public:
+		/// Creates a cache around \a config.
+		explicit ReputationCache(const CacheConfiguration& config) : SynchronizedCache<BasicReputationCache>(BasicReputationCache(config))
+		{}
 	};
-
-#undef COPY_FACILITY_CODE
 }}

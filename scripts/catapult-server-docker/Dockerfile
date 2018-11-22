@@ -96,12 +96,14 @@ RUN cd /catapult \
     catapult.mongo.plugins.lock \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
+    catapult.mongo.plugins.reputation \
     catapult.mongo.plugins.transfer \
     catapult.plugins.aggregate \
     catapult.plugins.hashcache \
     catapult.plugins.lock \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
+    catapult.plugins.reputation \
     catapult.plugins.signature \
     catapult.plugins.transfer \
     extension.addressextraction \

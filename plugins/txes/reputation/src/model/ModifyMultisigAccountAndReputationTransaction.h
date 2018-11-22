@@ -19,35 +19,24 @@
 **/
 
 #pragma once
-#include "catapult/model/FacilityCode.h"
-#include "catapult/utils/Casting.h"
+#include "ReputationEntityType.h"
+#include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
 
-namespace catapult { namespace validators {
+namespace catapult { namespace model {
 
-#define COPY_FACILITY_CODE(FACILITY_NAME) FACILITY_NAME = utils::to_underlying_type(model::FacilityCode::FACILITY_NAME)
+#pragma pack(push, 1)
 
-	/// Possible validation facility codes.
-	enum class FacilityCode : uint8_t {
-		COPY_FACILITY_CODE(Aggregate),
-		COPY_FACILITY_CODE(Core),
-		COPY_FACILITY_CODE(Lock),
-		COPY_FACILITY_CODE(Mosaic),
-		COPY_FACILITY_CODE(Multisig),
-		COPY_FACILITY_CODE(Namespace),
-		COPY_FACILITY_CODE(Reputation),
-		COPY_FACILITY_CODE(Transfer),
+	/// Binary layout for a modify reputation account transaction body.
+	template<typename THeader>
+	struct ModifyMultisigAccountAndReputationTransactionBody : ModifyMultisigAccountTransactionBody<THeader> {
+	private:
+		using TransactionType = ModifyMultisigAccountAndReputationTransactionBody<THeader>;
 
-		/// Chain facility code.
-		Chain = 0xFF,
-		/// Consumer facility code.
-		Consumer = 0xFE,
-		/// Extension facility code.
-		Extension = 0x45,
-		/// Hash facility code.
-		Hash = 0x48,
-		/// Signature facility code.
-		Signature = 0x53
+	public:
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Modify_Multisig_Account_And_Reputation, 3)
 	};
 
-#undef COPY_FACILITY_CODE
+	DEFINE_EMBEDDABLE_TRANSACTION(ModifyMultisigAccountAndReputation)
+
+#pragma pack(pop)
 }}

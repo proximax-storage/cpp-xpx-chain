@@ -18,14 +18,18 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ModifyMultisigAccountMapper.h"
-#include "mongo/src/MongoTransactionPluginFactory.h"
-#include "mongo/src/mappers/MultisigMapper.h"
-#include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
+#include "ModifyMultisigAccountAndReputationMapper.h"
+#include "mongo/src/MongoPluginManager.h"
+#include "storages/MongoReputationCacheStorage.h"
 
-using namespace catapult::mongo::mappers;
+extern "C" PLUGIN_API
+void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
+	// transaction support
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateModifyMultisigAccountAndReputationTransactionMongoPlugin());
 
-namespace catapult { namespace mongo { namespace plugins {
-
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, StreamMultisigTransaction)
-}}}
+	// cache storage support
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoReputationCacheStorage(
+			manager.createDatabaseConnection(),
+			manager.mongoContext().bulkWriter(),
+			manager.chainConfig().Network.Identifier));
+}

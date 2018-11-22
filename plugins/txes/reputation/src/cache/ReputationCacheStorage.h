@@ -19,35 +19,20 @@
 **/
 
 #pragma once
-#include "catapult/model/FacilityCode.h"
-#include "catapult/utils/Casting.h"
+#include "ReputationCache.h"
+#include "catapult/cache/CacheStorageInclude.h"
 
-namespace catapult { namespace validators {
+namespace catapult { namespace cache {
 
-#define COPY_FACILITY_CODE(FACILITY_NAME) FACILITY_NAME = utils::to_underlying_type(model::FacilityCode::FACILITY_NAME)
+	/// Policy for saving and loading reputation cache data.
+	struct ReputationCacheStorage : public MapCacheStorageFromDescriptor<ReputationCacheDescriptor> {
+		/// Saves \a element to \a output.
+		static void Save(const StorageType& element, io::OutputStream& output);
 
-	/// Possible validation facility codes.
-	enum class FacilityCode : uint8_t {
-		COPY_FACILITY_CODE(Aggregate),
-		COPY_FACILITY_CODE(Core),
-		COPY_FACILITY_CODE(Lock),
-		COPY_FACILITY_CODE(Mosaic),
-		COPY_FACILITY_CODE(Multisig),
-		COPY_FACILITY_CODE(Namespace),
-		COPY_FACILITY_CODE(Reputation),
-		COPY_FACILITY_CODE(Transfer),
+		/// Loads a single value from \a input.
+		static state::ReputationEntry Load(io::InputStream& input);
 
-		/// Chain facility code.
-		Chain = 0xFF,
-		/// Consumer facility code.
-		Consumer = 0xFE,
-		/// Extension facility code.
-		Extension = 0x45,
-		/// Hash facility code.
-		Hash = 0x48,
-		/// Signature facility code.
-		Signature = 0x53
+		/// Loads a single value from \a input into \a cacheDelta.
+		static void LoadInto(io::InputStream& input, DestinationType& cacheDelta);
 	};
-
-#undef COPY_FACILITY_CODE
 }}

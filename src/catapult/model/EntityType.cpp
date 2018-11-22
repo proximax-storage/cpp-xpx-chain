@@ -48,6 +48,7 @@ namespace catapult { namespace model {
 			#include "plugins/txes/multisig/src/model/MultisigEntityType.h"
 			#include "plugins/txes/namespace/src/model/MosaicEntityType.h"
 			#include "plugins/txes/namespace/src/model/NamespaceEntityType.h"
+			#include "plugins/txes/reputation/src/model/ReputationEntityType.h"
 			#include "plugins/txes/transfer/src/model/TransferEntityType.h"
 			}
 
