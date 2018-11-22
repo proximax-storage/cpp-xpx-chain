@@ -40,11 +40,11 @@ namespace catapult { namespace observers {
 
 		public:
 			void increaseReputation(const Key& accountKey) {
-				getReputationEntry(accountKey).increasePositiveInteractions();
+				getReputationEntry(accountKey).incrementPositiveInteractions();
 			}
 
 			void decreaseReputation(const Key& accountKey) {
-				getReputationEntry(accountKey).increaseNegativeInteractions();
+				getReputationEntry(accountKey).incrementNegativeInteractions();
 			}
 
 		private:

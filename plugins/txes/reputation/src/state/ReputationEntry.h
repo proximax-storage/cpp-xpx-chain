@@ -37,7 +37,7 @@ namespace catapult { namespace state {
 		}
 
 		// Increases the number of positive interactions of the account.
-		void increasePositiveInteractions() {
+		void incrementPositiveInteractions() {
 			m_nPositiveInteractions = m_nPositiveInteractions + Reputation{1};
 		}
 
@@ -52,7 +52,7 @@ namespace catapult { namespace state {
 		}
 
 		// Increases the number of negative interactions of the account.
-		void increaseNegativeInteractions() {
+		void incrementNegativeInteractions() {
 			m_nNegativeInteractions = m_nNegativeInteractions + Reputation{1};
 		}
 
