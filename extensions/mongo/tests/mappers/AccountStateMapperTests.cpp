@@ -45,10 +45,10 @@ namespace catapult { namespace mongo { namespace mappers {
 			}
 
 			for (const auto& mosaic : mosaics)
-				state.Balances.credit(mosaic.MosaicId, mosaic.Amount, Height(0));
+				state.Balances.credit(mosaic.MosaicId, mosaic.Amount);
 
 			for (const auto& snapshot : snapshots)
-				state.Balances.snapshots().push_back(snapshot);
+				state.Balances.addSnapshot(snapshot);
 
 			return state;
 		}

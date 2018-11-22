@@ -82,8 +82,8 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, ToAccountInfoInitializesAllAccountInfoFields_SingleMosaicAndSnapshot) {
 		// Arrange:
 		auto accountState = CreateAccountStateWithZeroMosaics();
-		accountState.Balances.credit(Xpx_Id, Amount(13579), Height(0));
-		accountState.Balances.snapshots().push_back(model::BalanceSnapshot{Amount(13579), Height(1)});
+		accountState.Balances.credit(Xpx_Id, Amount(13579));
+		accountState.Balances.addSnapshot(model::BalanceSnapshot{Amount(13579), Height(1)});
 
 		// Act:
 		auto pAccountInfo = ToAccountInfo(accountState);
@@ -103,9 +103,9 @@ namespace catapult { namespace state {
 		// Arrange:
 		auto accountState = CreateAccountStateWithZeroMosaics();
 		accountState.Balances.credit(MosaicId(123), Amount(111), Height(1));
-		accountState.Balances.credit(Xpx_Id, Amount(13579), Height(0));
+		accountState.Balances.credit(Xpx_Id, Amount(13579));
 		accountState.Balances.credit(MosaicId(987), Amount(222), Height(1));
-		accountState.Balances.snapshots().push_back(model::BalanceSnapshot{Amount(13579), Height(1)});
+		accountState.Balances.addSnapshot(model::BalanceSnapshot{Amount(13579), Height(1)});
 
 		// Act:
 		auto pAccountInfo = ToAccountInfo(accountState);
@@ -140,9 +140,9 @@ namespace catapult { namespace state {
 			// Arrange:
 			auto originalAccountState = CreateAccountStateWithZeroMosaics();
 			for (const auto& mosaic : mosaics)
-				originalAccountState.Balances.credit(mosaic.MosaicId, mosaic.Amount, Height(0));
+				originalAccountState.Balances.credit(mosaic.MosaicId, mosaic.Amount);
 			for (const auto& snapshot : snapshots)
-				originalAccountState.Balances.snapshots().push_back(snapshot);
+				originalAccountState.Balances.addSnapshot(snapshot);
 
 			auto pAccountInfo = ToAccountInfo(originalAccountState);
 

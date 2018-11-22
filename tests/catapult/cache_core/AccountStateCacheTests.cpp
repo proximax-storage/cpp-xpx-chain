@@ -992,14 +992,18 @@ namespace catapult { namespace cache {
 		void IncreaseBalances(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10, Height height = Height(1), MosaicId mosaicId = Xpx_Id) {
 			for (auto i = start; i < end; ++i) {
 				auto &accountState = delta.addAccount(Key{ { i } }, height);
-				accountState.Balances.credit(mosaicId, Amount(1), height);
+				if (height.unwrap() != 0) {
+					accountState.Balances.credit(mosaicId, Amount(1), height);
+				} else {
+					accountState.Balances.credit(mosaicId, Amount(1));
+				}
 			}
 		}
 
 		void CleanUpSnapshots(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10) {
 			for (auto i = start; i < end; ++i) {
 				auto& accountState = delta.get(Key{ { i } });
-				accountState.Balances.snapshots().clear();
+				accountState.Balances.maybeCleanUpSnapshots(Height(100), model::BlockChainConfiguration::Uninitialized());
 			}
 		}
 	}

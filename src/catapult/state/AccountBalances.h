@@ -55,9 +55,9 @@ namespace catapult { namespace state {
 			return m_localSnapshots;
 		}
 
-		/// Returns ref to snapshots.
-		std::list<model::BalanceSnapshot>& snapshots() {
-			return m_localSnapshots;
+		/// Add snapshots to snapshots
+		void addSnapshot(const model::BalanceSnapshot& snapshot) {
+			return m_localSnapshots.push_back(snapshot);
 		}
 
 		/// Returns the number of mosaics owned.
@@ -79,11 +79,21 @@ namespace catapult { namespace state {
 		Amount get(MosaicId mosaicId) const;
 
 	public:
+		/// Adds \a amount funds to a given mosaic (\a mosaicId).
+		/// It will increase balance of account without tracking of it in snapshots array.
+		AccountBalances& credit(const MosaicId& mosaicId, const Amount& amount);
+
+		/// Subtracts \a amount funds from a given mosaic (\a mosaicId).
+		/// It will decrease balance of account without tracking of it in snapshots array.
+		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount);
+
 		/// Adds \a amount funds to a given mosaic (\a mosaicId) at \a height.
-		AccountBalances& credit(MosaicId mosaicId, Amount amount, Height height);
+		/// Increasing of XPX balance will be tracked in snapshots array.
+		AccountBalances& credit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
-		AccountBalances& debit(MosaicId mosaicId, Amount amount, Height height);
+		/// Decreasing of XPX balance will be tracked in snapshots array.
+		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 		/// Commit snapshots from m_remoteSnapshots queue to m_localSnapshots queue
 		/// During commit we can remove snapshots from front of m_localSnapshots, to have valid history of account
@@ -101,6 +111,12 @@ namespace catapult { namespace state {
 
 		/// Push snapshot to deque
 		void pushSnapshot(const model::BalanceSnapshot& snapshot, bool committed = false);
+
+		/// Adds \a amount funds to a given mosaic (\a mosaicId) at \a height.
+		AccountBalances& internalCredit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
+		AccountBalances& internalDebit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 	private:
 		CompactMosaicUnorderedMap m_balances;

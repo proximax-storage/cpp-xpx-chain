@@ -32,8 +32,8 @@ namespace catapult { namespace observers {
 
 		DEFINE_COMMON_OBSERVER_TESTS(SnapshotCleanUp, model::BlockChainConfiguration::Uninitialized())
 
-		const uint64_t Effective_Balance_Range = 5;
-		const uint64_t Max_Rollback_Blocks = 5;
+		const uint64_t Effective_Balance_Range = 10;
+		const uint64_t Max_Rollback_Blocks = 1;
 
 		namespace {
 			void AssertCleanUpSnapshots(Height contextHeight, uint64_t expectedSizeOfSnapshots,

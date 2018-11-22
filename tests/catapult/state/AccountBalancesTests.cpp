@@ -406,16 +406,20 @@ namespace catapult { namespace state {
 		AccountBalances balances(&Test_Account);
 
 		// Act:
-		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		balances.credit(Xpx_Id, Amount(12345));
 
 		// Assert:
 		EXPECT_EQ(0, balances.snapshots().size());
 
 		// Act:
-		balances.debit(Xpx_Id, Amount(12345), Height(0));
+		balances.debit(Xpx_Id, Amount(12345));
 
 		// Assert:
 		EXPECT_EQ(0, balances.snapshots().size());
+
+		// Assert:
+		EXPECT_THROW(balances.credit(Xpx_Id, Amount(12345), Height(0)), catapult_runtime_error);
+		EXPECT_THROW(balances.debit(Xpx_Id, Amount(12345), Height(0)), catapult_runtime_error);
 	}
 
 	TEST(TEST_CLASS, AddOneSnapshotForNemesisBlock) {
@@ -447,7 +451,7 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, AddTwoSnapshotIfSnapshotsAreEmptyAndPreviousBlockIsNotNemesis_PreviousBalanceOfAccountIsNotZero) {
 		// Arrange:
 		AccountBalances balances(&Test_Account);
-		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		balances.credit(Xpx_Id, Amount(12345));
 		// Assert:
 		EXPECT_EQ(0, balances.snapshots().size());
 
@@ -605,7 +609,7 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, GetEffectiveBalanceOfOldBalance) {
 		// Arrange:
 		AccountBalances balances(&Test_Account);
-		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		balances.credit(Xpx_Id, Amount(12345));
 
 		// Assert:
 		EXPECT_EQ(Amount(12345), balances.getEffectiveBalance(Height(0), 0));
@@ -659,7 +663,7 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback) {
 		// Arrange:
 		AccountBalances balances(&Test_Account);
-		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		balances.credit(Xpx_Id, Amount(12345));
 		balances.debit(Xpx_Id, Amount(12345), Height(1));
 
 		// Assert:
@@ -674,7 +678,7 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, GetEffectiveBalanceWithRollback_WithCommitAfterDebit) {
 		// Arrange:
 		AccountBalances balances(&Test_Account);
-		balances.credit(Xpx_Id, Amount(12345 * 3), Height(0));
+		balances.credit(Xpx_Id, Amount(12345 * 3));
 		balances.debit(Xpx_Id, Amount(12345), Height(1));
 		balances.debit(Xpx_Id, Amount(12345), Height(2));
 		balances.debit(Xpx_Id, Amount(12345), Height(3));
@@ -732,7 +736,7 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, GetEffectiveBalanceWithEffectiveRange_OnlyDebit) {
 		// Arrange:
 		AccountBalances balances(&Test_Account);
-		balances.credit(Xpx_Id, Amount(12345 * 5), Height(0));
+		balances.credit(Xpx_Id, Amount(12345 * 5));
 		// Assert:
 		EXPECT_EQ(Amount(12345 * 5), balances.getEffectiveBalance(Height(1), 6));
 
@@ -765,7 +769,7 @@ namespace catapult { namespace state {
 		// Arrange:
 		AccountState accountState(Address{ { 1 } }, Height(100));
 		AccountBalances balances(&accountState);
-		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		balances.credit(Xpx_Id, Amount(12345));
 
 		// Assert:
 		EXPECT_EQ(0, balances.snapshots().size());
@@ -778,7 +782,7 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, CreditOrDebitWidthoutAccount) {
 		// Arrange:
 		AccountBalances balances(nullptr);
-		balances.credit(Xpx_Id, Amount(12345), Height(0));
+		balances.credit(Xpx_Id, Amount(12345));
 
 		// Assert:
 		EXPECT_EQ(0, balances.snapshots().size());
