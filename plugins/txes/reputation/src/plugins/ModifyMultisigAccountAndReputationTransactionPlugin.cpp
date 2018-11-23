@@ -42,7 +42,7 @@ namespace catapult { namespace plugins {
 				}
 
 				sub.notify(ModifyMultisigCosignersNotification(transaction.Signer, transaction.ModificationsCount, pModifications));
-				sub.notify(ReputationUpdateNotification(transaction.Signer, transaction.ModificationsCount, pModifications));
+				sub.notify(ReputationUpdateNotification(transaction.ModificationsCount, pModifications));
 			}
 
 			// 2. setting changes

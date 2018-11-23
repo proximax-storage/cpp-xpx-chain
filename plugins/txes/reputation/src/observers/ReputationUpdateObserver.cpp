@@ -28,31 +28,34 @@ namespace catapult { namespace observers {
 	namespace {
 		class AccountReputationFacade {
 		public:
-			explicit AccountReputationFacade(cache::ReputationCacheDelta& reputationCache, const Key& accountKey)
+			explicit AccountReputationFacade(cache::ReputationCacheDelta& reputationCache)
 					: m_reputationCache(reputationCache)
-					, m_accountKey(accountKey)
-					, m_reputationEntry(getReputationEntry(m_accountKey))
 			{}
 
-			~AccountReputationFacade() {
-				removeIfEmpty();
-			}
-
 		public:
-			void incrementPositiveInteractions(const Key& accountKey) {
-				getReputationEntry(accountKey).incrementPositiveInteractions();
+			void incrementPositiveInteractions(const Key& key) {
+				getReputationEntry(key).incrementPositiveInteractions();
 			}
 
-			void decrementPositiveInteractions(const Key& accountKey) {
-				getReputationEntry(accountKey).decrementPositiveInteractions();
+			void decrementPositiveInteractions(const Key& key) {
+				getReputationEntry(key).decrementPositiveInteractions();
 			}
 
-			void incrementNegativeInteractions(const Key& accountKey) {
-				getReputationEntry(accountKey).incrementNegativeInteractions();
+			void incrementNegativeInteractions(const Key& key) {
+				getReputationEntry(key).incrementNegativeInteractions();
 			}
 
-			void decrementNegativeInteractions(const Key& accountKey) {
-				getReputationEntry(accountKey).decrementNegativeInteractions();
+			void decrementNegativeInteractions(const Key& key) {
+				getReputationEntry(key).decrementNegativeInteractions();
+			}
+
+			void removeIfEmpty(const Key& key) {
+				if (m_reputationCache.contains(key)) {
+					auto& entry = m_reputationCache.get(key);
+					if (!entry.positiveInteractions().unwrap() &&
+						!entry.negativeInteractions().unwrap())
+						m_reputationCache.remove(key);
+				}
 			}
 
 		private:
@@ -63,23 +66,15 @@ namespace catapult { namespace observers {
 				return m_reputationCache.get(key);
 			}
 
-			void removeIfEmpty() {
-				if (!m_reputationEntry.positiveInteractions().unwrap() &&
-					!m_reputationEntry.negativeInteractions().unwrap())
-					m_reputationCache.remove(m_accountKey);
-			}
-
 		private:
 			cache::ReputationCacheDelta& m_reputationCache;
-			const Key& m_accountKey;
-			state::ReputationEntry& m_reputationEntry;
 		};
 	}
 
 	DEFINE_OBSERVER(ReputationUpdate, Notification, [](const auto& notification, const ObserverContext& context) {
 		auto& reputationCache = context.Cache.sub<cache::ReputationCache>();
 
-		AccountReputationFacade accountReputationFacade(reputationCache, notification.Signer);
+		AccountReputationFacade accountReputationFacade(reputationCache);
 		const auto* pModifications = notification.ModificationsPtr;
 		for (auto i = 0u; i < notification.ModificationsCount; ++i) {
 			auto isNotificationAdd = model::CosignatoryModificationType::Add == pModifications[i].ModificationType;
@@ -97,6 +92,8 @@ namespace catapult { namespace observers {
 				else
 					accountReputationFacade.decrementNegativeInteractions(key);
 			}
+
+			accountReputationFacade.removeIfEmpty(key);
 		}
 	});
 }}

@@ -40,19 +40,14 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a modificationsCount and \a pModifications.
 		explicit ReputationUpdateNotification(
-				const Key& signer,
 				uint8_t modificationsCount,
 				const CosignatoryModification* pModifications)
 				: Notification(Notification_Type, sizeof(ReputationUpdateNotification))
-				, Signer(signer)
 				, ModificationsCount(modificationsCount)
 				, ModificationsPtr(pModifications)
 		{}
 
 	public:
-		/// Signer.
-		const Key& Signer;
-
 		/// Number of modifications.
 		uint8_t ModificationsCount;
 
