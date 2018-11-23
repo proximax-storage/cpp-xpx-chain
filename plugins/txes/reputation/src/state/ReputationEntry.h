@@ -41,6 +41,12 @@ namespace catapult { namespace state {
 			m_nPositiveInteractions = m_nPositiveInteractions + Reputation{1};
 		}
 
+		// Increases the number of positive interactions of the account.
+		void decrementPositiveInteractions() {
+			if (m_nPositiveInteractions.unwrap() > 0)
+				m_nPositiveInteractions = m_nPositiveInteractions - Reputation{1};
+		}
+
 		// Gets the number of negative interactions of the account.
 		Reputation negativeInteractions() const {
 			return m_nNegativeInteractions;
@@ -54,6 +60,12 @@ namespace catapult { namespace state {
 		// Increases the number of negative interactions of the account.
 		void incrementNegativeInteractions() {
 			m_nNegativeInteractions = m_nNegativeInteractions + Reputation{1};
+		}
+
+		// Increases the number of negative interactions of the account.
+		void decrementNegativeInteractions() {
+			if (m_nNegativeInteractions.unwrap() > 0)
+				m_nNegativeInteractions = m_nNegativeInteractions - Reputation{1};
 		}
 
 	private:

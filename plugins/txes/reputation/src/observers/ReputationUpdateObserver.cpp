@@ -39,12 +39,20 @@ namespace catapult { namespace observers {
 			}
 
 		public:
-			void increaseReputation(const Key& accountKey) {
+			void incrementPositiveInteractions(const Key& accountKey) {
 				getReputationEntry(accountKey).incrementPositiveInteractions();
 			}
 
-			void decreaseReputation(const Key& accountKey) {
+			void decrementPositiveInteractions(const Key& accountKey) {
+				getReputationEntry(accountKey).decrementPositiveInteractions();
+			}
+
+			void incrementNegativeInteractions(const Key& accountKey) {
 				getReputationEntry(accountKey).incrementNegativeInteractions();
+			}
+
+			void decrementNegativeInteractions(const Key& accountKey) {
+				getReputationEntry(accountKey).decrementNegativeInteractions();
 			}
 
 		private:
@@ -76,11 +84,19 @@ namespace catapult { namespace observers {
 		for (auto i = 0u; i < notification.ModificationsCount; ++i) {
 			auto isNotificationAdd = model::CosignatoryModificationType::Add == pModifications[i].ModificationType;
 			auto isNotificationForward = NotifyMode::Commit == context.Mode;
+			const auto& key = pModifications[i].CosignatoryPublicKey;
 
-			if (isNotificationAdd == isNotificationForward)
-				accountReputationFacade.increaseReputation(pModifications[i].CosignatoryPublicKey);
-			else
-				accountReputationFacade.decreaseReputation(pModifications[i].CosignatoryPublicKey);
+			if (isNotificationAdd) {
+				if (isNotificationForward)
+					accountReputationFacade.incrementPositiveInteractions(key);
+				else
+					accountReputationFacade.decrementPositiveInteractions(key);
+			} else {
+				if (isNotificationForward)
+					accountReputationFacade.incrementNegativeInteractions(key);
+				else
+					accountReputationFacade.decrementNegativeInteractions(key);
+			}
 		}
 	});
 }}
