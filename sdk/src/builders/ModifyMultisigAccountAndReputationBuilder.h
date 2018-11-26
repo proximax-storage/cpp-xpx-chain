@@ -29,4 +29,14 @@ namespace catapult { namespace builders {
 	public:
 		using Transaction = model::ModifyMultisigAccountAndReputationTransaction;
 		using EmbeddedTransaction = model::EmbeddedModifyMultisigAccountAndReputationTransaction;
+
+		using Super = ModifyMultisigAccountBuilder;
+
+		/// Creates a modify multisig account and reputation builder for building a modify multisig
+		/// account transaction from \a signer for the network specified by \a networkIdentifier.
+		explicit ModifyMultisigAccountAndReputationBuilder(
+				model::NetworkIdentifier networkIdentifier, const Key& signer)
+			: Super(networkIdentifier, signer)
+		{}
+	};
 }}
