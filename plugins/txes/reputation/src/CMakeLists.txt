@@ -4,6 +4,7 @@ set(PLUGIN_BASE_NAME catapult.plugins.reputation)
 
 # create a deps lib
 catapult_library_target(${PLUGIN_BASE_NAME}.deps cache model observers state)
+target_link_libraries(${PLUGIN_BASE_NAME}.deps ${PLUGIN_CATAPULT_LIBS})
 
 # create a plugin dll
 catapult_shared_library_target(${PLUGIN_BASE_NAME} plugins)
