@@ -26,8 +26,6 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
 
-namespace catapult { namespace model { struct NamespaceLifetimeConstraints; } }
-
 namespace catapult { namespace validators {
 
 	// region RegisterNamespaceTransaction
@@ -50,10 +48,8 @@ namespace catapult { namespace validators {
 	/// - namespace duration is zero for child namespace
 	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification)();
 
-	/// A validator implementation that applies to root register namespace transactions and validates that:
-	/// - the namespace is available and can be created or renewed given namespace lifetime \a constraints
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification)(
-			const model::NamespaceLifetimeConstraints& constraints);
+	/// A validator implementation that applies to root register namespace transactions and validates that
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification)();
 
 	/// A validator implementation that applies to child register namespace transactions and validates that:
 	/// - the namespace is available and can be created

@@ -25,6 +25,18 @@
 
 namespace catapult { namespace state {
 
+	/// Possible account types.
+	enum class AccountType : uint8_t {
+		/// Account is not linked to another account.
+		Unlinked,
+
+		/// Account is a balance-holding account that is linked to a remote harvester account.
+		Main,
+
+		/// Account is a remote harvester account that is linked to a balance-holding account.
+		Remote
+	};
+
 	/// Account state data.
 	struct AccountState {
 	public:
@@ -32,7 +44,10 @@ namespace catapult { namespace state {
 		explicit AccountState(const catapult::Address& address, Height addressHeight)
 				: Address(address)
 				, AddressHeight(addressHeight)
+				, PublicKey()
 				, PublicKeyHeight(0)
+				, AccountType(AccountType::Unlinked)
+				, LinkedAccountKey()
 				, Balances(this)
 		{}
 
@@ -54,6 +69,12 @@ namespace catapult { namespace state {
 
 		/// Height at which public key has been obtained.
 		Height PublicKeyHeight;
+
+		/// Type of account.
+		state::AccountType AccountType;
+
+		/// Public key of linked account.
+		Key LinkedAccountKey;
 
 		/// Balances of an account.
 		AccountBalances Balances;

@@ -86,8 +86,9 @@ namespace catapult { namespace sync {
 			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), Timestamp(0), Difficulty(NEMESIS_BLOCK_DIFFICULTY));
 
 			// add a balance and importance for the signer
-			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(signer.publicKey(), Height(1));
-			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
+			auto& accountCache = delta.sub<cache::AccountStateCache>();
+			accountCache.addAccount(signer.publicKey(), Height(1));
+			accountCache.find(signer.publicKey()).get().Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
 
 			// commit all changes
 			cache.commit(Height(1));
@@ -189,7 +190,7 @@ namespace catapult { namespace sync {
 		std::shared_ptr<model::Block> CreateValidBlockForDispatcherTests(const crypto::KeyPair& signer, const TestContext& testContext) {
 			constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
-			mocks::MockMemoryBasedStorage storage;
+			mocks::MockMemoryBlockStorage storage;
 			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
 
 			model::PreviousBlockContext context(*pNemesisBlockElement);

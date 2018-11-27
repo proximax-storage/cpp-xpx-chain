@@ -52,6 +52,11 @@ namespace catapult { namespace cache {
 		{}
 
 	public:
+		/// Initializes the cache with \a highValueAddresses.
+		void init(model::AddressSet&& highValueAddresses) {
+			*m_pHighValueAddresses = std::move(highValueAddresses);
+		}
+
 		/// Commits all pending changes to the underlying storage.
 		/// \note This hides AccountStateBasicCache::commit.
 		void commit(const CacheDeltaType& delta) {
@@ -70,17 +75,16 @@ namespace catapult { namespace cache {
 	};
 
 	/// Synchronized cache composed of stateful account information.
-	class AccountStateCache : public SynchronizedCache<BasicAccountStateCache> {
+	class AccountStateCache : public SynchronizedCacheWithInit<BasicAccountStateCache> {
 	public:
 		DEFINE_CACHE_CONSTANTS(AccountState)
 
 	public:
 		/// Creates a cache around \a config and \a options.
 		AccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
-				: SynchronizedCache<BasicAccountStateCache>(BasicAccountStateCache(config, options))
+				: SynchronizedCacheWithInit<BasicAccountStateCache>(BasicAccountStateCache(config, options))
 				, m_networkIdentifier(options.NetworkIdentifier)
 				, m_importanceGrouping(options.ImportanceGrouping)
-
 		{}
 
 	public:

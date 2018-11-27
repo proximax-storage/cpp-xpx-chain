@@ -48,8 +48,8 @@ namespace catapult { namespace timesync {
 				const TKey& key,
 				Importance importance) {
 			auto delta = cache.createDelta();
-			auto& accountState = delta->addAccount(key, Height(1));
-			accountState.Balances.credit(Xpx_Id, Amount(importance.unwrap()), Height(1));
+			delta->addAccount(key, Height(1));
+			delta->find(key).get().Balances.credit(Xpx_Id, Amount(importance.unwrap()), Height(1));
 			cache.commit();
 		}
 

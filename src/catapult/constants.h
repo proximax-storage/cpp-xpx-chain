@@ -39,4 +39,7 @@ namespace catapult {
 
 	/// XPX mosaic id.
 	const MosaicId Xpx_Id(crypto::GenerateMosaicId(Prx_Id, "xpx"));
+
+	/// Unresolved XPX mosaic id.
+	const auto Unresolved_Xpx_Id = UnresolvedMosaicId(Xpx_Id.unwrap());
 }

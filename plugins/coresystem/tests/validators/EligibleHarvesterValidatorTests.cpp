@@ -48,8 +48,9 @@ namespace catapult { namespace validators {
 				const Key& publicKey,
 				Amount balance) {
 			auto delta = cache.createDelta();
-			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(publicKey, Height(100));
-			accountState.Balances.credit(Xpx_Id, balance, Height(100));
+			auto& accountCache = delta.sub<cache::AccountStateCache>();
+			accountCache.addAccount(publicKey, Height(100));
+			accountCache.find(publicKey).get().Balances.credit(Xpx_Id, balance, Height(100));
 			cache.commit(Height());
 		}
 	}
@@ -61,16 +62,13 @@ namespace catapult { namespace validators {
 		auto height = Height(1000);
 		AddAccount(cache, key, Amount(9999));
 
-		auto cacheView = cache.createView();
-		auto readOnlyCache = cacheView.toReadOnly();
 		auto pValidator = CreateEligibleHarvesterValidator(Amount(1234));
-		auto context = test::CreateValidatorContext(height, readOnlyCache);
 
 		auto signer = test::GenerateRandomData<Key_Size>();
 		auto notification = test::CreateBlockNotification(signer);
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification, context);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, height);
 
 		// Assert:
 		EXPECT_EQ(Failure_Core_Block_Harvester_Ineligible, result);
@@ -87,15 +85,11 @@ namespace catapult { namespace validators {
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
 			AddAccount(cache, key, initialBalance);
 
-			auto cacheView = cache.createView();
-			auto readOnlyCache = cacheView.toReadOnly();
 			auto pValidator = CreateEligibleHarvesterValidator(Amount(1234));
-			auto context = test::CreateValidatorContext(blockHeight, readOnlyCache);
-
 			auto notification = test::CreateBlockNotification(key);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, blockHeight);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

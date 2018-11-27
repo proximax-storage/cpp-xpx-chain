@@ -89,14 +89,14 @@ namespace catapult { namespace state {
 
 	AccountBalances& AccountBalances::credit(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
 		if (height.unwrap() == 0)
-			CATAPULT_THROW_RUNTIME_ERROR("height can't be zero");
+			CATAPULT_THROW_RUNTIME_ERROR("height during credit can't be zero");
 
 		return internalCredit(mosaicId, amount, height);
 	}
 
 	AccountBalances& AccountBalances::debit(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
 		if (height.unwrap() == 0)
-			CATAPULT_THROW_RUNTIME_ERROR("height can't be zero");
+			CATAPULT_THROW_RUNTIME_ERROR("height during debit can't be zero");
 
 		return internalDebit(mosaicId, amount, height);
 	}
