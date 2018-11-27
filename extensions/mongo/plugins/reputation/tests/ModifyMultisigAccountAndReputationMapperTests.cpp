@@ -19,7 +19,7 @@
 **/
 
 #include "src/ModifyMultisigAccountAndReputationMapper.h"
-#include "sdk/src/builders/ModifyMultisigAccountAndReputationBuilder.h"
+#include "sdk/src/builders/ModifyMultisigAccountBuilder.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/constants.h"
 #include "mongo/tests/test/MapperTestUtils.h"

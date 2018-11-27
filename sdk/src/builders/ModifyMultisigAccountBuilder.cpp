@@ -22,26 +22,31 @@
 
 namespace catapult { namespace builders {
 
-	ModifyMultisigAccountBuilder::ModifyMultisigAccountBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer)
+	template<typename TRegularTransaction, typename TEmbeddedTransaction>
+	ModifyMultisigAccountBuilderT<TRegularTransaction, TEmbeddedTransaction>::ModifyMultisigAccountBuilderT(model::NetworkIdentifier networkIdentifier, const Key& signer)
 			: TransactionBuilder(networkIdentifier, signer)
 			, m_minRemovalDelta(0)
 			, m_minApprovalDelta(0)
 	{}
 
-	void ModifyMultisigAccountBuilder::setMinRemovalDelta(int8_t minRemovalDelta) {
+	template<typename TRegularTransaction, typename TEmbeddedTransaction>
+	void ModifyMultisigAccountBuilderT<TRegularTransaction, TEmbeddedTransaction>::setMinRemovalDelta(int8_t minRemovalDelta) {
 		m_minRemovalDelta = minRemovalDelta;
 	}
 
-	void ModifyMultisigAccountBuilder::setMinApprovalDelta(int8_t minApprovalDelta) {
+	template<typename TRegularTransaction, typename TEmbeddedTransaction>
+	void ModifyMultisigAccountBuilderT<TRegularTransaction, TEmbeddedTransaction>::setMinApprovalDelta(int8_t minApprovalDelta) {
 		m_minApprovalDelta = minApprovalDelta;
 	}
 
-	void ModifyMultisigAccountBuilder::addCosignatoryModification(model::CosignatoryModificationType type, const Key& key) {
+	template<typename TRegularTransaction, typename TEmbeddedTransaction>
+	void ModifyMultisigAccountBuilderT<TRegularTransaction, TEmbeddedTransaction>::addCosignatoryModification(model::CosignatoryModificationType type, const Key& key) {
 		m_modifications.push_back(model::CosignatoryModification{ type, key });
 	}
 
+	template<typename TRegularTransaction, typename TEmbeddedTransaction>
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> ModifyMultisigAccountBuilder::buildImpl() const {
+	std::unique_ptr<TransactionType> ModifyMultisigAccountBuilderT<TRegularTransaction, TEmbeddedTransaction>::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType) + m_modifications.size() * sizeof(model::CosignatoryModification);
 		auto pTransaction = createTransaction<TransactionType>(size);
@@ -65,11 +70,21 @@ namespace catapult { namespace builders {
 		return pTransaction;
 	}
 
-	std::unique_ptr<ModifyMultisigAccountBuilder::Transaction> ModifyMultisigAccountBuilder::build() const {
-		return buildImpl<Transaction>();
+	template<typename TRegularTransaction, typename TEmbeddedTransaction>
+	std::unique_ptr<TRegularTransaction> ModifyMultisigAccountBuilderT<TRegularTransaction, TEmbeddedTransaction>::build() const {
+		return buildImpl<TRegularTransaction>();
 	}
 
-	std::unique_ptr<ModifyMultisigAccountBuilder::EmbeddedTransaction> ModifyMultisigAccountBuilder::buildEmbedded() const {
-		return buildImpl<EmbeddedTransaction>();
+	template<typename TRegularTransaction, typename TEmbeddedTransaction>
+	std::unique_ptr<TEmbeddedTransaction> ModifyMultisigAccountBuilderT<TRegularTransaction, TEmbeddedTransaction>::buildEmbedded() const {
+		return buildImpl<TEmbeddedTransaction>();
 	}
+
+	template class ModifyMultisigAccountBuilderT<
+		model::ModifyMultisigAccountTransaction,
+		model::EmbeddedModifyMultisigAccountTransaction>;
+
+	template class ModifyMultisigAccountBuilderT<
+		model::ModifyMultisigAccountAndReputationTransaction,
+		model::EmbeddedModifyMultisigAccountAndReputationTransaction>;
 }}
