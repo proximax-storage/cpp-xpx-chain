@@ -24,9 +24,14 @@ namespace catapult { namespace cache {
 
 	void AccountStateCacheSummaryCacheStorage::saveAll(io::OutputStream& output) const {
 		auto view = cache().createView();
-		const auto& addresses = view->highValueAddresses();
-		io::Write64(output, addresses.size());
-		for (const auto& address : addresses)
+		const auto& highValueAddresses = view->highValueAddresses();
+		io::Write64(output, highValueAddresses.size());
+		for (const auto& address : highValueAddresses)
+			output.write(address);
+
+		const auto& addressesToUpdate = view->addressesToUpdate();
+		io::Write64(output, addressesToUpdate.size());
+		for (const auto& address : addressesToUpdate)
 			output.write(address);
 
 		output.flush();
@@ -35,14 +40,23 @@ namespace catapult { namespace cache {
 	void AccountStateCacheSummaryCacheStorage::loadAll(io::InputStream& input, size_t) {
 		auto numAddresses = io::Read64(input);
 
-		model::AddressSet addresses;
+		model::AddressSet highValueAddresses;
 		for (auto i = 0u; i < numAddresses; ++i) {
 			Address address;
 			input.read(address);
-			addresses.insert(address);
+			highValueAddresses.insert(address);
 		}
 
-		cache().init(std::move(addresses));
+		numAddresses = io::Read64(input);
+
+		model::AddressSet addressesToUpdate;
+		for (auto i = 0u; i < numAddresses; ++i) {
+			Address address;
+			input.read(address);
+			addressesToUpdate.insert(address);
+		}
+
+		cache().init(std::move(highValueAddresses), std::move(addressesToUpdate));
 	}
 
 	AccountStateCacheSubCachePlugin::AccountStateCacheSubCachePlugin(

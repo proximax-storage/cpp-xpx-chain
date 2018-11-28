@@ -63,17 +63,19 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 
 	public:
-		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a updatedAddresses.
+		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a addressesToUpdate.
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
-				const model::AddressSet& highValueAddresses);
+				const model::AddressSet& highValueAddresses,
+				const model::AddressSet& addressesToUpdate);
 
 	private:
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
+				const model::AddressSet& addressesToUpdate,
 				std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter>&& pKeyLookupAdapter);
 
 	public:
@@ -94,23 +96,27 @@ namespace catapult { namespace cache {
 		/// Gets all high value addresses.
 		const model::AddressSet& highValueAddresses() const;
 
+		/// Gets all addresses that we need to clean up.
+		const model::AddressSet& addressesToUpdate() const;
+
 	private:
 		const model::NetworkIdentifier m_networkIdentifier;
 		const uint64_t m_importanceGrouping;
 		const model::AddressSet& m_highValueAddresses;
+		const model::AddressSet& m_addressesToUpdate;
 		std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter> m_pKeyLookupAdapter;
 	};
 
 	/// View on top of the account state cache.
 	class AccountStateCacheView : public ReadOnlyViewSupplier<BasicAccountStateCacheView> {
 	public:
-		/// Creates a view around \a accountStateSets, \a options and \a highValueAddresses.
+		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a addressesToUpdate.
 		AccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
-				const model::AddressSet&)
-				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses)
+				const model::AddressSet& addressesToUpdate)
+				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses, addressesToUpdate)
 		{}
 	};
 }}

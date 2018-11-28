@@ -61,7 +61,8 @@ namespace catapult { namespace cache {
 			storage.saveAll(stream);
 
 			// Assert: all addresses were saved
-			ASSERT_EQ(sizeof(uint64_t) + numExpectedAccounts * sizeof(Address), buffer.size());
+			ASSERT_EQ(sizeof(uint64_t) + numExpectedAccounts * sizeof(Address) +
+					  sizeof(uint64_t) + addresses.size() * sizeof(Address), buffer.size());
 
 			auto numAddresses = reinterpret_cast<uint64_t&>(*buffer.data());
 			EXPECT_EQ(numExpectedAccounts, numAddresses);
@@ -112,12 +113,16 @@ namespace catapult { namespace cache {
 			AccountStateCache cache(config, AccountStateCacheTypes::Options());
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
-			auto addresses = test::GenerateRandomDataVector<Address>(numAccounts);
+			size_t numUpdateAddresses = 2 * numAccounts;
+			auto highValueAddresses = test::GenerateRandomDataVector<Address>(numAccounts);
+			auto addressesToUpdate = test::GenerateRandomDataVector<Address>(numUpdateAddresses);
 
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream stream("", buffer);
 			io::Write64(stream, numAccounts);
-			stream.write({ reinterpret_cast<const uint8_t*>(addresses.data()), numAccounts * sizeof(Address) });
+			stream.write({ reinterpret_cast<const uint8_t*>(highValueAddresses.data()), numAccounts * sizeof(Address) });
+			io::Write64(stream, numUpdateAddresses);
+			stream.write({ reinterpret_cast<const uint8_t*>(addressesToUpdate.data()), numUpdateAddresses * sizeof(Address) });
 
 			// Act:
 			storage.loadAll(stream, 0);
@@ -125,7 +130,9 @@ namespace catapult { namespace cache {
 			// Assert: all addresses were saved
 			auto view = cache.createView();
 			EXPECT_EQ(numAccounts, view->highValueAddresses().size());
-			EXPECT_EQ(model::AddressSet(addresses.cbegin(), addresses.cend()), view->highValueAddresses());
+			EXPECT_EQ(model::AddressSet(highValueAddresses.cbegin(), highValueAddresses.cend()), view->highValueAddresses());
+			EXPECT_EQ(numUpdateAddresses, view->addressesToUpdate().size());
+			EXPECT_EQ(model::AddressSet(addressesToUpdate.cbegin(), addressesToUpdate.cend()), view->addressesToUpdate());
 		}
 	}
 

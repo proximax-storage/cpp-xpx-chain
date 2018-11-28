@@ -52,9 +52,10 @@ namespace catapult { namespace cache {
 		{}
 
 	public:
-		/// Initializes the cache with \a highValueAddresses.
-		void init(model::AddressSet&& highValueAddresses) {
+		/// Initializes the cache with \a highValueAddresses and \a addressesToUpdate.
+		void init(model::AddressSet&& highValueAddresses, model::AddressSet&& addressesToUpdate) {
 			*m_pHighValueAddresses = std::move(highValueAddresses);
+			*m_pAddressesToUpdate = std::move(addressesToUpdate);
 		}
 
 		/// Commits all pending changes to the underlying storage.
