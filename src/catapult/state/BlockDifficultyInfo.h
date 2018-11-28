@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/model/Block.h"
 
 namespace catapult { namespace state {
 
@@ -42,6 +43,11 @@ namespace catapult { namespace state {
 				: BlockHeight(height)
 				, BlockTimestamp(timestamp)
 				, BlockDifficulty(difficulty)
+		{}
+
+		/// Creates a block difficulty info from a \a block.
+		constexpr explicit BlockDifficultyInfo(const model::Block& block)
+				: BlockDifficultyInfo(block.Height, block.Timestamp, block.Difficulty)
 		{}
 
 		/// Block height.

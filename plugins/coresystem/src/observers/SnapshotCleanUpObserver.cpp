@@ -27,11 +27,22 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(SnapshotCleanUp, Notification)(const model::BlockChainConfiguration& config) {
 		return MAKE_OBSERVER(SnapshotCleanUp, Notification, [&config](const auto&, const ObserverContext& context) {
+			if (context.Mode == NotifyMode::Rollback)
+				return;
+
+			if (config.MaxRollbackBlocks != 0 && context.Height.unwrap() % config.MaxRollbackBlocks)
+				return;
+
 			auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			auto updatedAddresses = cache.updatedAddresses();
 
 			for (const auto& address : updatedAddresses) {
-				cache.get(address).Balances.maybeCleanUpSnapshots(context.Height, config);
+				auto pAccountState = cache.tryGet(address);
+
+				if (!pAccountState)
+					continue;
+
+				pAccountState-> Balances.maybeCleanUpSnapshots(context.Height, config);
 			}
 		});
 	}

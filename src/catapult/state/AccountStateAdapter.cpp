@@ -31,12 +31,11 @@ namespace catapult { namespace state {
 
 		auto pMosaic = info.MosaicsPtr();
 		for (auto i = 0u; i < info.MosaicsCount && pMosaic; ++i, ++pMosaic)
-			accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount, Height(0));
+			accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
 
 		auto pBalanceSnapshot = info.BalanceSnapshotPtr();
-		auto& snapshots = accountState.Balances.snapshots();
 		for (auto i = 0u; i < info.BalanceSnapshotCount && pBalanceSnapshot; ++i, ++pBalanceSnapshot)
-			snapshots.push_back(*pBalanceSnapshot);
+			accountState.Balances.addSnapshot(*pBalanceSnapshot);
 
 		return accountState;
 	}

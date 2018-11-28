@@ -85,6 +85,11 @@ namespace catapult { namespace test {
 			return m_config;
 		}
 
+		/// Gets the config.
+		auto& cache() const {
+			return m_catapultCache;
+		}
+
 		/// Gets the transaction status subscriber.
 		const auto& transactionStatusSubscriber() const {
 			return m_transactionStatusSubscriber;
