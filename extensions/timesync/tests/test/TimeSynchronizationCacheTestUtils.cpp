@@ -28,8 +28,8 @@ namespace catapult { namespace test {
 	void AddAccount(
 			cache::AccountStateCacheDelta& delta,
 			const Key& publicKey) {
-		auto& accountState = delta.addAccount(publicKey, Height(100));
-		accountState.Balances.credit(Xpx_Id, Amount(500000), Height(100));
+		delta.addAccount(publicKey, Height(100));
+		delta.find(publicKey).get().Balances.credit(Xpx_Id, Amount(500000), Height(100));
 	}
 
 	void AddNode(ionet::NodeContainer& container, const Key& identityKey, const std::string& nodeName) {
