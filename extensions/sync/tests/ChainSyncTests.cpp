@@ -96,7 +96,7 @@ namespace catapult { namespace sync {
 			using BaseType = test::ServiceLocatorTestContext<DispatcherServiceTraits>;
 
 		public:
-			TestContext(const config::LocalNodeConfiguration& config)
+			TestContext(const config::LocalNodeConfiguration& config, uint64_t initialBalance)
 				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.BlockChain), config) {
 
 				testState().loadPluginByName("", "catapult.coresystem");
@@ -105,19 +105,19 @@ namespace catapult { namespace sync {
 
 				testState().state().storage().modifier().dropBlocksAfter(Height{0u});
 
-				initializeCache();
+				initializeCache(initialBalance);
 			}
 
-			void initializeCache() {
+			void initializeCache(uint64_t initialBalance) {
 				auto delta = testState().state().cache().createDelta();
 
 				auto& specialAccountState = delta.sub<cache::AccountStateCache>().addAccount(
 					Special_Account_Key_Pair.publicKey(), Height{1});
-				specialAccountState.Balances.credit(Xpx_Id, Amount(Initial_Balance), Height{1});
+				specialAccountState.Balances.credit(Xpx_Id, Amount(initialBalance), Height{1});
 
 				auto& nemesisAccountState = delta.sub<cache::AccountStateCache>().addAccount(
 					Nemesis_Account_Key_Pair.publicKey(), Height{1});
-				nemesisAccountState.Balances.credit(Xpx_Id, Amount(Initial_Balance), Height{1});
+				nemesisAccountState.Balances.credit(Xpx_Id, Amount(initialBalance), Height{1});
 
 				testState().state().cache().commit(Height{1});
 			}
@@ -202,7 +202,7 @@ namespace catapult { namespace sync {
 			return previousBlockContext;
 		}
 
-		test::ConstTransactions CreateSpecialTransaction(const model::BlockChainConfiguration& config) {
+		test::ConstTransactions CreateSpecialTransaction(const model::BlockChainConfiguration& config, uint64_t initialBalance) {
 			auto nemesisAccountAddress = model::PublicKeyToAddress(
 				Nemesis_Account_Key_Pair.publicKey(),
 				config.Network.Identifier);
@@ -212,7 +212,7 @@ namespace catapult { namespace sync {
 				Special_Account_Key_Pair.publicKey() /* signer */,
 				nemesisAccountAddress /* recipient */
 			);
-			builder.addMosaic(Xpx_Id, Amount(Initial_Balance / 2u));
+			builder.addMosaic(Xpx_Id, Amount(initialBalance / 2u));
 
 			test::ConstTransactions transactions{};
 			auto pTransaction = builder.build();
@@ -263,18 +263,19 @@ namespace catapult { namespace sync {
 				const Height& commonHeight,
 				const Height& localEndHeight,
 				const Height& remoteEndHeight,
+				uint64_t initialBalance,
 				disruptor::ConsumerCompletionResult& consumerResult) {
 			auto config = CreateLocalNodeConfiguration();
 
-			TestContext localContext(config);
+			TestContext localContext(config, initialBalance);
 			localContext.boot();
 
-			TestContext remoteContext(config);
+			TestContext remoteContext(config, initialBalance);
 			remoteContext.boot();
 
 			auto previousBlockContext = PopulateCommonBlocks(localContext, remoteContext, commonHeight);
 
-			auto localTransactions = CreateSpecialTransaction(config.BlockChain);
+			auto localTransactions = CreateSpecialTransaction(config.BlockChain, initialBalance);
 			localContext.createBlocks(
 				localEndHeight,
 				Timestamp(config.BlockChain.BlockGenerationTargetTime.millis()),
@@ -302,7 +303,7 @@ namespace catapult { namespace sync {
 		disruptor::ConsumerCompletionResult consumerResult;
 
 		// Act:
-		SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, consumerResult);
+		SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, Initial_Balance, consumerResult);
 
 		// Assert:
 		auto validationResult = static_cast<validators::ValidationResult>(consumerResult.CompletionCode);
@@ -317,7 +318,7 @@ namespace catapult { namespace sync {
 		disruptor::ConsumerCompletionResult consumerResult;
 
 		// Act:
-		SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, consumerResult);
+		SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, Initial_Balance, consumerResult);
 
 		// Assert:
 		auto validationResult = static_cast<validators::ValidationResult>(consumerResult.CompletionCode);
@@ -332,7 +333,7 @@ namespace catapult { namespace sync {
 		disruptor::ConsumerCompletionResult consumerResult;
 
 		// Act:
-		SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, consumerResult);
+		SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, Initial_Balance, consumerResult);
 
 		// Assert:
 		auto validationResult = static_cast<validators::ValidationResult>(consumerResult.CompletionCode);
@@ -347,9 +348,23 @@ namespace catapult { namespace sync {
 		disruptor::ConsumerCompletionResult consumerResult;
 
 		// Act:
-		auto syncResult = SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, consumerResult);
+		auto syncResult = SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, Initial_Balance, consumerResult);
 
 		// Assert:
 		ASSERT_EQ(chain::NodeInteractionResult::Failure, syncResult);
+	}
+
+	TEST(TEST_CLASS, DoubleSpendWhenRemoteNodeSpentNotAllMoneyAndCanDoAttack) {
+		// Arange:
+		Height commonHeight{10};
+		Height localEndHeight{11};
+		Height remoteEndHeight{11};
+		disruptor::ConsumerCompletionResult consumerResult;
+
+		// Act:
+		auto syncResult = SynchronizeChains(commonHeight, localEndHeight, remoteEndHeight, Initial_Balance * 10, consumerResult);
+
+		// Assert:
+		ASSERT_EQ(chain::NodeInteractionResult::Success, syncResult);
 	}
 }}
