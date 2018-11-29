@@ -33,6 +33,7 @@ namespace catapult { namespace cache {
 		Multisig,
 		HashLockInfo,
 		SecretLockInfo,
+		Property,
 		Reputation,
 	};
 

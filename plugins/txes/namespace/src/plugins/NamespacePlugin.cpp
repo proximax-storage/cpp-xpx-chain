@@ -22,13 +22,19 @@
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "MosaicSupplyChangeTransactionPlugin.h"
 #include "RegisterNamespaceTransactionPlugin.h"
+#include "src/cache/MosaicCache.h"
 #include "src/cache/MosaicCacheStorage.h"
+#include "src/cache/MosaicCacheSubCachePlugin.h"
+#include "src/cache/NamespaceCache.h"
 #include "src/cache/NamespaceCacheStorage.h"
+#include "src/cache/NamespaceCacheSubCachePlugin.h"
 #include "src/config/NamespaceConfiguration.h"
 #include "src/handlers/NamespaceDiagnosticHandlers.h"
 #include "src/model/NamespaceLifetimeConstraints.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
+#include "catapult/handlers/CacheEntryInfosProducerFactory.h"
+#include "catapult/handlers/StatePathHandlerFactory.h"
 #include "catapult/model/Address.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/PluginManager.h"
@@ -62,8 +68,15 @@ namespace catapult { namespace plugins {
 			manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(rentalFeeConfig));
 			manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
 
-			manager.addCacheSupport<cache::MosaicCacheStorage>(
-					std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));
+			manager.addCacheSupport(std::make_unique<cache::MosaicCacheSubCachePlugin>(manager.cacheConfig(cache::MosaicCache::Name)));
+
+			manager.addDiagnosticHandlerHook([](auto& handlers, const cache::CatapultCache& cache) {
+				using MosaicInfosProducerFactory = handlers::CacheEntryInfosProducerFactory<cache::MosaicCacheDescriptor>;
+				handlers::RegisterMosaicInfosHandler(handlers, MosaicInfosProducerFactory::Create(cache.sub<cache::MosaicCache>()));
+
+				using PacketType = handlers::StatePathRequestPacket<ionet::PacketType::Mosaic_State_Path, MosaicId>;
+				handlers::RegisterStatePathHandler<PacketType>(handlers, cache.sub<cache::MosaicCache>());
+			});
 
 			manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C"), [&cache]() { return GetMosaicView(cache)->size(); });
@@ -96,6 +109,7 @@ namespace catapult { namespace plugins {
 				builder
 					.add(observers::CreateMosaicDefinitionObserver())
 					.add(observers::CreateMosaicSupplyChangeObserver())
+					.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic"))
 					.add(observers::CreateCacheBlockPruningObserver<cache::MosaicCache>("Mosaic", 1, maxRollbackBlocks));
 			});
 		}
@@ -124,16 +138,19 @@ namespace catapult { namespace plugins {
 			auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(manager.config().Network, config);
 			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(rentalFeeConfig));
 
-			manager.addCacheSupport<cache::NamespaceCacheStorage>(
-					std::make_unique<cache::NamespaceCache>(manager.cacheConfig(cache::NamespaceCache::Name)));
+			auto gracePeriodDuration = config.NamespaceGracePeriodDuration.blocks(manager.config().BlockGenerationTargetTime);
+			manager.addCacheSupport(std::make_unique<cache::NamespaceCacheSubCachePlugin>(
+					manager.cacheConfig(cache::NamespaceCache::Name),
+					cache::NamespaceCacheTypes::Options{ gracePeriodDuration }));
 
 			manager.addDiagnosticHandlerHook([](auto& handlers, const cache::CatapultCache& cache) {
+				using NamespaceInfosProducerFactory = handlers::CacheEntryInfosProducerFactory<cache::NamespaceCacheDescriptor>;
 				handlers::RegisterNamespaceInfosHandler(
 						handlers,
-						handlers::CreateNamespaceInfosProducerFactory(cache.sub<cache::NamespaceCache>()));
-				handlers::RegisterMosaicInfosHandler(
-						handlers,
-						handlers::CreateMosaicInfosProducerFactory(cache.sub<cache::MosaicCache>()));
+						NamespaceInfosProducerFactory::Create(cache.sub<cache::NamespaceCache>()));
+
+				using PacketType = handlers::StatePathRequestPacket<ionet::PacketType::Namespace_State_Path, NamespaceId>;
+				handlers::RegisterStatePathHandler<PacketType>(handlers, cache.sub<cache::NamespaceCache>());
 			});
 
 			manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
@@ -150,23 +167,22 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateRootNamespaceValidator());
 			});
 
-			auto gracePeriodDuration = config.NamespaceGracePeriodDuration.blocks(manager.config().BlockGenerationTargetTime);
-			model::NamespaceLifetimeConstraints constraints(gracePeriodDuration, manager.config().MaxRollbackBlocks);
-			manager.addStatefulValidatorHook([constraints, maxChildNamespaces = config.MaxChildNamespaces](auto& builder) {
+			manager.addStatefulValidatorHook([maxChildNamespaces = config.MaxChildNamespaces](auto& builder) {
 				builder
-					.add(validators::CreateRootNamespaceAvailabilityValidator(constraints))
+					.add(validators::CreateRootNamespaceAvailabilityValidator())
 					// note that the following validator needs to run before the RootNamespaceMaxChildrenValidator
 					.add(validators::CreateChildNamespaceAvailabilityValidator())
 					.add(validators::CreateRootNamespaceMaxChildrenValidator(maxChildNamespaces));
 			});
 
-			manager.addObserverHook([constraints](auto& builder) {
-				auto gracePeriod = constraints.TotalGracePeriodDuration;
+			auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
+			manager.addObserverHook([maxRollbackBlocks](auto& builder) {
 				builder
-					.add(observers::CreateRegisterNamespaceMosaicPruningObserver(constraints))
+					.add(observers::CreateRegisterNamespaceMosaicPruningObserver(maxRollbackBlocks))
 					.add(observers::CreateRootNamespaceObserver())
 					.add(observers::CreateChildNamespaceObserver())
-					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1, gracePeriod));
+					.add(observers::CreateCacheBlockTouchObserver<cache::NamespaceCache>("Namespace"))
+					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1, maxRollbackBlocks));
 			});
 		}
 

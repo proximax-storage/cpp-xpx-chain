@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/constants.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
@@ -134,16 +135,27 @@ namespace catapult { namespace chain {
 			return Timestamp((height - Height(1)).unwrap() * timeBetweenBlocks.millis());
 		}
 
-		std::unique_ptr<cache::BlockDifficultyCache> SeedBlockDifficultyCache(Height maxHeight, const utils::TimeSpan& timeBetweenBlocks, uint32_t baseDiff = 0) {
+		std::unique_ptr<cache::BlockDifficultyCache> SeedBlockDifficultyCache(
+				Height maxHeight,
+				const utils::TimeSpan& timeBetweenBlocks,
+				const model::BlockChainConfiguration& config) {
 			auto pCache = std::make_unique<cache::BlockDifficultyCache>(0);
-			auto delta = pCache->createDelta();
-
-			for (auto height = Height(1); height <= maxHeight; height = height + Height(1)) {
-				state::BlockDifficultyInfo info(height, CalculateTimestamp(height, timeBetweenBlocks), Difficulty(baseDiff));
-				delta->insert(info);
+			{
+				auto delta = pCache->createDelta();
+				state::BlockDifficultyInfo baseInfo(Height(1));
+				baseInfo.BlockDifficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+				delta->insert(baseInfo);
+				pCache->commit();
 			}
 
-			pCache->commit();
+			for (auto height = Height(2); height <= maxHeight; height = height + Height(1)) {
+				state::BlockDifficultyInfo nextBlockInfo(height, CalculateTimestamp(height, timeBetweenBlocks), Difficulty(0));
+				nextBlockInfo.BlockDifficulty = CalculateDifficulty(*pCache, nextBlockInfo, config);
+				auto delta = pCache->createDelta();
+				delta->insert(nextBlockInfo);
+				pCache->commit();
+			}
+
 			return pCache;
 		}
 
@@ -151,13 +163,33 @@ namespace catapult { namespace chain {
 				Height startHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
 				uint32_t numBlocks,
-				uint32_t increamentor = 0) {
+				const cache::BlockDifficultyCache& cache,
+				const model::BlockChainConfiguration& config) {
+
+			using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
+
 			std::vector<std::unique_ptr<model::Block>> blocks;
+			auto infos = cache.createView()->difficultyInfos(startHeight - Height(1), config.MaxDifficultyBlocks);
+
+			DifficultySet difficulties;
+			difficulties.insert(infos.begin(), infos.end());
+
 			for (auto i = 0u; i < numBlocks; ++i) {
 				auto pBlock = test::GenerateEmptyRandomBlock();
 				pBlock->Height = startHeight + Height(i);
 				pBlock->Timestamp = CalculateTimestamp(pBlock->Height, timeBetweenBlocks);
-				pBlock->Difficulty = Difficulty(0 + i * increamentor);
+
+				pBlock->Difficulty = CalculateDifficulty(
+						cache::DifficultyInfoRange(difficulties.cbegin(), difficulties.cend()),
+						state::BlockDifficultyInfo(*pBlock),
+						config
+				);
+
+				difficulties.insert(state::BlockDifficultyInfo(*pBlock));
+
+				if (difficulties.size() > config.MaxDifficultyBlocks)
+					difficulties.erase(difficulties.cbegin());
+
 				blocks.push_back(std::move(pBlock));
 			}
 
@@ -187,7 +219,7 @@ namespace catapult { namespace chain {
 		config.MaxDifficultyBlocks = 15;
 
 		// - seed the difficulty cache with 20 infos
-		auto pCache = SeedBlockDifficultyCache(Height(20), config.BlockGenerationTargetTime);
+		auto pCache = SeedBlockDifficultyCache(Height(20), config.BlockGenerationTargetTime, config);
 
 		// Act: check the difficulties of an empty chain
 		auto result = CheckDifficulties(*pCache, {}, config);
@@ -204,10 +236,10 @@ namespace catapult { namespace chain {
 			config.MaxDifficultyBlocks = maxDifficultyBlocks;
 
 			// - seed the difficulty cache with chainHeight infos
-			auto pCache = SeedBlockDifficultyCache(chainHeight, config.BlockGenerationTargetTime);
+			auto pCache = SeedBlockDifficultyCache(chainHeight, config.BlockGenerationTargetTime, config);
 
 			// - generate a peer chain with five blocks
-			auto blocks = GenerateBlocks(chainHeight, config.BlockGenerationTargetTime, 5);
+			auto blocks = GenerateBlocks(chainHeight, config.BlockGenerationTargetTime, 5, *pCache, config);
 
 			// Act:
 			auto result = CheckDifficulties(*pCache, Unwrap(blocks), config);
@@ -237,7 +269,7 @@ namespace catapult { namespace chain {
 
 			// - seed the difficulty cache with chainHeight infos and copy all the infos
 			using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
-			auto pCache = SeedBlockDifficultyCache(chainHeight, utils::TimeSpan::FromMilliseconds(18000), 1);
+			auto pCache = SeedBlockDifficultyCache(chainHeight, utils::TimeSpan::FromMilliseconds(18000), config);
 			DifficultySet set;
 			{
 				auto view = pCache->createView();
@@ -246,21 +278,20 @@ namespace catapult { namespace chain {
 			}
 
 			// - generate a peer chain with seven blocks
-			auto blocks = GenerateBlocks(chainHeight, utils::TimeSpan::FromMilliseconds(8000), 7);
-			auto lastDifficulty = Difficulty();
+			auto blocks = GenerateBlocks(chainHeight, utils::TimeSpan::FromMilliseconds(8000), 7, *pCache, config);
+			auto newDifficulty = Difficulty();
 			for (const auto& pBlock : blocks) {
 				// - ensure only the maxDifficultyBlocks recent infos are used
 				while (set.size() > maxDifficultyBlocks)
 					set.erase(set.cbegin());
 
 				// - calculate the expected difficulty
-				pBlock->Difficulty = CalculateDifficulty(cache::DifficultyInfoRange(set.cbegin(), set.cend()), config);
+				newDifficulty = CalculateDifficulty(cache::DifficultyInfoRange(set.cbegin(), set.cend()), state::BlockDifficultyInfo(*pBlock), config);
 				set.insert(state::BlockDifficultyInfo(pBlock->Height, pBlock->Timestamp, pBlock->Difficulty));
 
 				// Sanity:
-				EXPECT_NE(Difficulty(), pBlock->Difficulty);
-				EXPECT_LE(lastDifficulty, pBlock->Difficulty);
-				lastDifficulty = pBlock->Difficulty;
+				EXPECT_NE(Difficulty(), newDifficulty);
+				EXPECT_LE(newDifficulty, pBlock->Difficulty);
 			}
 
 			// Act:
@@ -293,11 +324,11 @@ namespace catapult { namespace chain {
 			config.MaxDifficultyBlocks = maxDifficultyBlocks;
 
 			// - seed the difficulty cache with chainHeight infos
-			auto pCache = SeedBlockDifficultyCache(chainHeight, config.BlockGenerationTargetTime);
+			auto pCache = SeedBlockDifficultyCache(chainHeight, config.BlockGenerationTargetTime, config);
 
 			// - generate a peer chain with peerChainSize blocks and change the difficulty of the block
 			//   at differenceIndex
-			auto blocks = GenerateBlocks(chainHeight, config.BlockGenerationTargetTime, peerChainSize);
+			auto blocks = GenerateBlocks(chainHeight, config.BlockGenerationTargetTime, peerChainSize, *pCache, config);
 			blocks[differenceIndex]->Difficulty = Difficulty(1);
 
 			// Act:

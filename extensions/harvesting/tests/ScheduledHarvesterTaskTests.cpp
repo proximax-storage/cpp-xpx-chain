@@ -78,6 +78,7 @@ namespace catapult { namespace harvesting {
 				};
 				pLastBlock->Size = sizeof(model::Block);
 				pLastBlock->Height = Height(1);
+				pLastBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 			}
 
 			size_t NumHarvestingAllowedCalls;
@@ -103,8 +104,8 @@ namespace catapult { namespace harvesting {
 			auto keyPair = KeyPair::FromPrivate(test::GenerateRandomPrivateKey());
 			auto delta = cache.createDelta();
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
-			auto& accountState = accountStateCache.addAccount(keyPair.publicKey(), Height(1));
-			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
+			accountStateCache.addAccount(keyPair.publicKey(), Height(1));
+			accountStateCache.find(keyPair.publicKey()).get().Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
 			cache.commit(Height());
 			return test::CopyKeyPair(keyPair);
 		}
@@ -128,11 +129,11 @@ namespace catapult { namespace harvesting {
 		};
 
 		auto CreateHarvester(HarvesterContext& context) {
-			return std::make_unique<Harvester>(
-					context.Cache,
-					context.Config,
-					context.Accounts,
-					[](size_t) { return TransactionsInfo(); });
+			Harvester::Suppliers harvesterSuppliers{
+				[](const auto&) { return std::make_pair(Hash256(), true); },
+				[](auto) { return TransactionsInfo(); }
+			};
+			return std::make_unique<Harvester>(context.Cache, context.Config, context.Accounts, harvesterSuppliers);
 		}
 	}
 

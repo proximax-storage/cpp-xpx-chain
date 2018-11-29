@@ -19,7 +19,8 @@
 **/
 
 #pragma once
-#include "AccountStateCacheTypes.h"
+#include "AccountStateBaseSets.h"
+#include "AccountStateCacheSerializers.h"
 #include "ReadOnlyAccountStateCache.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -33,7 +34,7 @@ namespace catapult { namespace cache {
 		using KeyLookupAdapter = AccountStateCacheTypes::ComposedLookupAdapter<AccountStateCacheTypes::ComposableBaseSets>;
 
 	private:
-		using AddressMixins = BasicCacheMixins<AccountStateCacheTypes::PrimaryTypes::BaseSetType, AccountStateCacheDescriptor>;
+		using AddressMixins = PatriciaTreeCacheMixins<AccountStateCacheTypes::PrimaryTypes::BaseSetType, AccountStateCacheDescriptor>;
 		using KeyMixins = BasicCacheMixins<KeyLookupAdapter, KeyLookupAdapter>;
 
 	public:
@@ -43,8 +44,9 @@ namespace catapult { namespace cache {
 			AccountStateCacheTypes::KeyLookupMapTypes::BaseSetType,
 			AccountStateCacheTypes::KeyLookupMapTypesDescriptor>;
 		using Iteration = AddressMixins::Iteration;
-		using ConstAccessorAddress = AddressMixins::ConstAccessorWithAdapter<AccountStateCacheTypes::ConstValueAdapter>;
-		using ConstAccessorKey = KeyMixins::ConstAccessorWithAdapter<AccountStateCacheTypes::ConstValueAdapter>;
+		using ConstAccessorAddress = AddressMixins::ConstAccessor;
+		using ConstAccessorKey = KeyMixins::ConstAccessor;
+		using PatriciaTreeView = AddressMixins::PatriciaTreeView;
 	};
 
 	/// Basic view on top of the account state cache.
@@ -55,33 +57,33 @@ namespace catapult { namespace cache {
 			, public AccountStateCacheViewMixins::ContainsKey
 			, public AccountStateCacheViewMixins::Iteration
 			, public AccountStateCacheViewMixins::ConstAccessorAddress
-			, public AccountStateCacheViewMixins::ConstAccessorKey {
+			, public AccountStateCacheViewMixins::ConstAccessorKey
+			, public AccountStateCacheViewMixins::PatriciaTreeView {
 	public:
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 
 	public:
-		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a updatedAddresses.
+		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a addressesToUpdate.
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
-				const model::AddressSet& highValueAddresses);
+				const model::AddressSet& highValueAddresses,
+				const model::AddressSet& addressesToUpdate);
 
 	private:
 		BasicAccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
+				const model::AddressSet& addressesToUpdate,
 				std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter>&& pKeyLookupAdapter);
 
 	public:
 		using AccountStateCacheViewMixins::ContainsAddress::contains;
 		using AccountStateCacheViewMixins::ContainsKey::contains;
 
-		using AccountStateCacheViewMixins::ConstAccessorAddress::get;
-		using AccountStateCacheViewMixins::ConstAccessorKey::get;
-
-		using AccountStateCacheViewMixins::ConstAccessorAddress::tryGet;
-		using AccountStateCacheViewMixins::ConstAccessorKey::tryGet;
+		using AccountStateCacheViewMixins::ConstAccessorAddress::find;
+		using AccountStateCacheViewMixins::ConstAccessorKey::find;
 
 	public:
 		/// Gets the network identifier.
@@ -91,26 +93,30 @@ namespace catapult { namespace cache {
 		uint64_t importanceGrouping() const;
 
 	public:
-		/// Gets the number of high value addresses.
-		size_t highValueAddressesSize() const;
+		/// Gets all high value addresses.
+		const model::AddressSet& highValueAddresses() const;
+
+		/// Gets all addresses that we need to clean up.
+		const model::AddressSet& addressesToUpdate() const;
 
 	private:
 		const model::NetworkIdentifier m_networkIdentifier;
 		const uint64_t m_importanceGrouping;
 		const model::AddressSet& m_highValueAddresses;
+		const model::AddressSet& m_addressesToUpdate;
 		std::unique_ptr<AccountStateCacheViewMixins::KeyLookupAdapter> m_pKeyLookupAdapter;
 	};
 
 	/// View on top of the account state cache.
 	class AccountStateCacheView : public ReadOnlyViewSupplier<BasicAccountStateCacheView> {
 	public:
-		/// Creates a view around \a accountStateSets, \a options and \a highValueAddresses.
+		/// Creates a view around \a accountStateSets, \a options, \a highValueAddresses and \a addressesToUpdate.
 		AccountStateCacheView(
 				const AccountStateCacheTypes::BaseSets& accountStateSets,
 				const AccountStateCacheTypes::Options& options,
 				const model::AddressSet& highValueAddresses,
-				const model::AddressSet&)
-				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses)
+				const model::AddressSet& addressesToUpdate)
+				: ReadOnlyViewSupplier(accountStateSets, options, highValueAddresses, addressesToUpdate)
 		{}
 	};
 }}

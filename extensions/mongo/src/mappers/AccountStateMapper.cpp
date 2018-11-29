@@ -21,6 +21,7 @@
 #include "AccountStateMapper.h"
 #include "MapperUtils.h"
 #include "catapult/state/AccountState.h"
+#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace mongo { namespace mappers {
 
@@ -47,10 +48,6 @@ namespace catapult { namespace mongo { namespace mappers {
 			snapshotsArray << bson_stream::close_array;
 			return builder;
 		}
-
-		Key GetPublicKey(const state::AccountState& accountState) {
-			return Height(0) == accountState.PublicKeyHeight ? Key{} : accountState.PublicKey;
-		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::AccountState& accountState) {
@@ -62,8 +59,10 @@ namespace catapult { namespace mongo { namespace mappers {
 		builder << "account" << bson_stream::open_document
 				<< "address" << ToBinary(accountState.Address)
 				<< "addressHeight" << ToInt64(accountState.AddressHeight)
-				<< "publicKey" << ToBinary(GetPublicKey(accountState))
-				<< "publicKeyHeight" << ToInt64(accountState.PublicKeyHeight);
+				<< "publicKey" << ToBinary(accountState.PublicKey)
+				<< "publicKeyHeight" << ToInt64(accountState.PublicKeyHeight)
+				<< "accountType" << utils::to_underlying_type(accountState.AccountType)
+				<< "linkedAccountKey" << ToBinary(accountState.LinkedAccountKey);
 		StreamAccountBalances(builder, accountState.Balances);
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;
@@ -75,11 +74,11 @@ namespace catapult { namespace mongo { namespace mappers {
 
 	namespace {
 		void ToAccountBalance(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
-			accountBalances.credit(GetValue64<MosaicId>(mosaicDocument["id"]), GetValue64<Amount>(mosaicDocument["amount"]), Height(0));
+			accountBalances.credit(GetValue64<MosaicId>(mosaicDocument["id"]), GetValue64<Amount>(mosaicDocument["amount"]));
 		}
 
 		void ToAccountBalanceSnapshot(state::AccountBalances& accountBalances, const bsoncxx::document::view& mosaicDocument) {
-			accountBalances.snapshots().push_back(
+			accountBalances.addSnapshot(
 					model::BalanceSnapshot{
 						GetValue64<Amount>(mosaicDocument["amount"]),
 				        GetValue64<Height>(mosaicDocument["height"])
@@ -97,6 +96,9 @@ namespace catapult { namespace mongo { namespace mappers {
 		auto& accountState = accountStateFactory(accountAddress, accountAddressHeight);
 		DbBinaryToModelArray(accountState.PublicKey, accountDocument["publicKey"].get_binary());
 		accountState.PublicKeyHeight = GetValue64<Height>(accountDocument["publicKeyHeight"]);
+
+		accountState.AccountType = static_cast<state::AccountType>(ToUint8(accountDocument["accountType"].get_int32()));
+		DbBinaryToModelArray(accountState.LinkedAccountKey, accountDocument["linkedAccountKey"].get_binary());
 
 		auto dbMosaics = accountDocument["mosaics"].get_array().value;
 		for (const auto& mosaicEntry : dbMosaics)

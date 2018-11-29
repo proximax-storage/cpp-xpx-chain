@@ -19,10 +19,9 @@
 **/
 
 #include "catapult/cache_core/AccountStateCacheStorage.h"
-#include "catapult/state/AccountStateAdapter.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -37,172 +36,26 @@ namespace catapult { namespace cache {
 		};
 	}
 
-	// region Save
+	TEST(TEST_CLASS, CanLoadValueIntoCache) {
+		// Arrange: create a random value to insert
+		state::AccountState originalAccountState(test::GenerateRandomAddress(), Height(111));
+		test::RandomFillAccountData(0, originalAccountState, 123, 123);
 
-	namespace {
-		void AssertCanSaveValueWithMosaicsAndSnapshots(size_t mosaicsCount, size_t snapshotsCount) {
-			// Arrange:
-			std::vector<uint8_t> buffer;
-			mocks::MockMemoryStream stream("", buffer);
+		// Act:
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		auto delta = cache.createDelta();
+		AccountStateCacheStorage::LoadInto(originalAccountState, *delta);
+		cache.commit();
 
-			// - create a random account state
-			auto pOriginalAccountState = std::make_shared<state::AccountState>(test::GenerateRandomAddress(), Height(123));
-			test::RandomFillAccountData(0, *pOriginalAccountState, mosaicsCount, snapshotsCount);
+		// Assert: the cache contains the value
+		auto view = cache.createView();
+		EXPECT_EQ(1u, view->size());
+		ASSERT_TRUE(view->contains(originalAccountState.Address));
+		const auto& loadedAccountState = view->find(originalAccountState.Address).get();
 
-			// Act:
-			AccountStateCacheStorage::Save(std::make_pair(Address(), pOriginalAccountState), stream);
-
-			// Assert:
-			ASSERT_EQ(sizeof(model::AccountInfo) + mosaicsCount * sizeof(model::Mosaic) + snapshotsCount * sizeof(model::BalanceSnapshot), buffer.size());
-
-			const auto& savedAccountInfo = reinterpret_cast<const model::AccountInfo&>(*buffer.data());
-			EXPECT_EQ(mosaicsCount, savedAccountInfo.MosaicsCount);
-			EXPECT_EQ(snapshotsCount, savedAccountInfo.BalanceSnapshotCount);
-
-			auto savedAccountState = state::ToAccountState(savedAccountInfo);
-			test::AssertEqual(*pOriginalAccountState, savedAccountState);
-
-			EXPECT_EQ(0u, stream.numFlushes());
-		}
+		// - the loaded cache value is correct
+		EXPECT_EQ(123u, loadedAccountState.Balances.size());
+		EXPECT_EQ(123u, loadedAccountState.Balances.snapshots().size());
+		test::AssertEqual(originalAccountState, loadedAccountState);
 	}
-
-	TEST(TEST_CLASS, CanSaveValue) {
-		// Assert:
-		AssertCanSaveValueWithMosaicsAndSnapshots(3, 3);
-	}
-
-	TEST(TEST_CLASS, CanSaveValueWithManyMosaicsAndSnapshots) {
-		// Assert:
-		AssertCanSaveValueWithMosaicsAndSnapshots(65535, 65535);
-		AssertCanSaveValueWithMosaicsAndSnapshots(0, 65535);
-		AssertCanSaveValueWithMosaicsAndSnapshots(65535, 0);
-	}
-
-	// endregion
-
-	// region Load
-
-	namespace {
-		struct LoadTraits {
-			static void AssertCannotLoad(io::InputStream& inputStream) {
-				// Assert:
-				EXPECT_THROW(AccountStateCacheStorage::Load(inputStream), catapult_runtime_error);
-			}
-
-			static void LoadAndAssert(std::vector<uint8_t>& buffer, size_t numMosaics, size_t numSnapshots, const state::AccountState& serializedAccountState) {
-				// Arrange:
-				mocks::MockMemoryStream stream("", buffer);
-
-				// Act: load the account info and convert it to an account state for easier comparison
-				auto pResult = AccountStateCacheStorage::Load(stream);
-				auto loadedAccountState = state::ToAccountState(*pResult);
-
-				// Assert:
-				EXPECT_EQ(numMosaics, loadedAccountState.Balances.size());
-				EXPECT_EQ(numSnapshots, loadedAccountState.Balances.snapshots().size());
-				test::AssertEqual(serializedAccountState, loadedAccountState);
-			}
-		};
-
-		struct LoadIntoTraits {
-			static void AssertCannotLoad(io::InputStream& inputStream) {
-				// Assert:
-				AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
-				auto delta = cache.createDelta();
-
-				std::vector<uint8_t> state;
-				EXPECT_THROW(AccountStateCacheStorage::LoadInto(inputStream, *delta, state), catapult_runtime_error);
-			}
-
-			static void LoadAndAssert(std::vector<uint8_t>& buffer, size_t numMosaics, size_t numSnapshots, const state::AccountState& serializedAccountState) {
-				// Arrange:
-				mocks::MockMemoryStream stream("", buffer);
-
-				// Act:
-				AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
-				auto delta = cache.createDelta();
-				std::vector<uint8_t> state;
-				AccountStateCacheStorage::LoadInto(stream, *delta, state);
-				cache.commit();
-
-				// Assert: the cache contains the account state
-				auto view = cache.createView();
-				EXPECT_EQ(1u, view->size());
-				ASSERT_TRUE(view->contains(serializedAccountState.Address));
-				const auto& loadedAccountState = view->get(serializedAccountState.Address);
-
-				// - the account state contents are correct
-				EXPECT_EQ(numMosaics, loadedAccountState.Balances.size());
-				EXPECT_EQ(numSnapshots, loadedAccountState.Balances.snapshots().size());
-				test::AssertEqual(serializedAccountState, loadedAccountState);
-
-				// - the state buffer was resized
-				EXPECT_EQ(buffer.size(), state.size());
-			}
-		};
-
-		template<typename TLoadTraits>
-		void AssertCanLoadValueWithMosaicsAndSnapshots(size_t numMosaics, size_t numSnapshots) {
-			// Arrange: create a random account info
-			auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(1));
-			test::RandomFillAccountData(0, *pOriginalAccountState, numMosaics, numSnapshots);
-			auto pOriginalAccountInfo = state::ToAccountInfo(*pOriginalAccountState);
-
-			std::vector<uint8_t> buffer(pOriginalAccountInfo->Size);
-			memcpy(buffer.data(), pOriginalAccountInfo.get(), buffer.size());
-
-			// Act + Assert:
-			TLoadTraits::LoadAndAssert(buffer, numMosaics, numSnapshots, *pOriginalAccountState);
-		}
-	}
-
-#define LOAD_TEST(TEST_NAME) \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Load) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<LoadTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_LoadInto) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<LoadIntoTraits>(); } \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
-
-	LOAD_TEST(CanLoadValue) {
-		// Assert:
-		AssertCanLoadValueWithMosaicsAndSnapshots<TTraits>(3, 3);
-	}
-
-	LOAD_TEST(CanLoadValueWithManyMosaicsAndSnapshots) {
-		// Assert:
-		AssertCanLoadValueWithMosaicsAndSnapshots<TTraits>(65535, 65535);
-		AssertCanLoadValueWithMosaicsAndSnapshots<TTraits>(0, 65535);
-		AssertCanLoadValueWithMosaicsAndSnapshots<TTraits>(65535, 0);
-	}
-
-	LOAD_TEST(CannotLoadWhenAccountInfoSizeIsTooLarge) {
-		// Arrange: create an account info with a size one greater than max
-		auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(123));
-		test::RandomFillAccountData(0, *pOriginalAccountState, 65535, 65535);
-		auto pOriginalAccountInfo = state::ToAccountInfo(*pOriginalAccountState);
-		pOriginalAccountInfo->Size += 1;
-
-		std::vector<uint8_t> buffer(pOriginalAccountInfo->Size);
-		memcpy(buffer.data(), pOriginalAccountInfo.get(), buffer.size() - 1); // copy the account info but not the extra byte
-		mocks::MockMemoryStream stream("", buffer);
-
-		// Act + Assert:
-		TTraits::AssertCannotLoad(stream);
-	}
-
-	LOAD_TEST(CannotLoadAccountInfoExtendingPastEndOfStream) {
-		// Arrange: create a random account info
-		auto pOriginalAccountState = std::make_unique<state::AccountState>(test::GenerateRandomAddress(), Height(123));
-		test::RandomFillAccountData(0, *pOriginalAccountState, 2, 2);
-		auto pOriginalAccountInfo = state::ToAccountInfo(*pOriginalAccountState);
-
-		// - size the buffer one byte too small
-		std::vector<uint8_t> buffer(pOriginalAccountInfo->Size - 1);
-		memcpy(buffer.data(), pOriginalAccountInfo.get(), buffer.size());
-		mocks::MockMemoryStream stream("", buffer);
-
-		// Act + Assert:
-		TTraits::AssertCannotLoad(stream);
-	}
-
-	// endregion
 }}

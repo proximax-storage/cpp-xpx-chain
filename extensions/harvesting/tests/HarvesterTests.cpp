@@ -38,6 +38,8 @@ namespace catapult { namespace harvesting {
 #define TEST_CLASS HarvesterTests
 
 	namespace {
+		// region test utils
+
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
@@ -55,8 +57,9 @@ namespace catapult { namespace harvesting {
 				const std::vector<KeyPair>& keyPairs) {
 			std::vector<state::AccountState*> accountStates;
 			for (auto i = 0u; i < keyPairs.size(); ++i) {
-				auto& accountState = cache.addAccount(keyPairs[i].publicKey(), Height(1));
-				accountState.Balances.credit(Xpx_Id, Amount(1000), Height(1));
+				cache.addAccount(keyPairs[i].publicKey(), Height(1));
+				auto& accountState = cache.find(keyPairs[i].publicKey()).get();
+				accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
 				accountStates.push_back(&accountState);
 			}
 
@@ -73,7 +76,7 @@ namespace catapult { namespace harvesting {
 			// the created block needs to have height 1 to be able to add it to the block difficulty cache
 			auto pBlock = test::GenerateEmptyRandomBlock();
 			pBlock->Height = Height(1);
-			pBlock->Difficulty = Difficulty(1000);
+			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 			return pBlock;
 		}
 
@@ -108,16 +111,22 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			auto CreateHarvester(const model::BlockChainConfiguration& config, const TransactionsInfoSupplier& transactionsInfoSupplier) {
-				return std::make_unique<Harvester>(Cache, config, *pUnlockedAccounts, transactionsInfoSupplier);
-			}
-
-			auto CreateHarvester(const model::BlockChainConfiguration& config) {
-				return CreateHarvester(config, [](size_t) { return TransactionsInfo(); });
-			}
-
-			auto CreateHarvester() {
+			std::unique_ptr<Harvester> CreateHarvester() {
 				return CreateHarvester(CreateConfiguration());
+			}
+
+			std::unique_ptr<Harvester> CreateHarvester(const model::BlockChainConfiguration& config) {
+				Harvester::Suppliers harvesterSuppliers{
+					[](const auto&) { return std::make_pair(Hash256(), true); },
+					[](auto) { return TransactionsInfo(); }
+				};
+				return CreateHarvester(config, harvesterSuppliers);
+			}
+
+			std::unique_ptr<Harvester> CreateHarvester(
+					const model::BlockChainConfiguration& config,
+					const Harvester::Suppliers& harvesterSuppliers) {
+				return std::make_unique<Harvester>(Cache, config, *pUnlockedAccounts, harvesterSuppliers);
 			}
 
 		public:
@@ -147,7 +156,11 @@ namespace catapult { namespace harvesting {
 		Timestamp CalculateBlockGenerationTime(const HarvesterContext& context, const Key& publicKey) {
 			auto pLastBlock = context.pLastBlock;
 			auto config = CreateConfiguration();
-			auto difficulty = chain::CalculateDifficulty(context.Cache.sub<cache::BlockDifficultyCache>(), pLastBlock->Height, config);
+			auto difficulty = chain::CalculateDifficulty(
+					context.Cache.sub<cache::BlockDifficultyCache>(),
+					state::BlockDifficultyInfo(pLastBlock->Height + Height(1), pLastBlock->Timestamp, Difficulty()),
+					config
+			);
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto view = accountStateCache.createView();
 			cache::ReadOnlyAccountStateCache readOnlyCache(*view);
@@ -161,7 +174,11 @@ namespace catapult { namespace harvesting {
 			uint64_t seconds = hit / referenceTarget;
 			return Timestamp((seconds + 1) * 1000);
 		}
+
+		// endregion
 	}
+
+	// region basic tests
 
 	TEST(TEST_CLASS, HarvestReturnsNullptrIfNoAccountIsUnlocked) {
 		// Arrange:
@@ -207,7 +224,7 @@ namespace catapult { namespace harvesting {
 			auto delta = context.Cache.createDelta();
 			auto& blockDifficultyCache = delta.sub<cache::BlockDifficultyCache>();
 			for (auto i = 2u; i <= numBlocks; ++i)
-				blockDifficultyCache.insert(state::BlockDifficultyInfo(Height(i), Timestamp(i * 1'000), Difficulty(1000)));
+				blockDifficultyCache.insert(state::BlockDifficultyInfo(Height(i), Timestamp(i * 1'000), Difficulty(NEMESIS_BLOCK_DIFFICULTY)));
 
 			context.Cache.commit(Height());
 		}
@@ -273,10 +290,10 @@ namespace catapult { namespace harvesting {
 		auto pHarvester = context.CreateHarvester();
 
 		{
-			auto delta = context.Cache.createDelta();
-			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
-			for (auto pState : context.AccountStates)
-				accountStateCache.queueRemove(pState->Address, pState->AddressHeight);
+			auto cacheDelta = context.Cache.createDelta();
+			auto& accountStateCache = cacheDelta.sub<cache::AccountStateCache>();
+			for (const auto& keyPair : context.KeyPairs)
+				accountStateCache.queueRemove(keyPair.publicKey(), Height(1));
 
 			accountStateCache.commitRemovals();
 			context.Cache.commit(Height());
@@ -333,13 +350,15 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(bestKey, pBlock->Signer);
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
-			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, pLastBlock->Height, config), pBlock->Difficulty);
+			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, state::BlockDifficultyInfo(*pBlock), config), pBlock->Difficulty);
 			EXPECT_EQ(model::MakeVersion(Network_Identifier, 3), pBlock->Version);
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
 			return true;
 		});
 	}
+
+	// endregion
 
 	// region transaction supplier
 
@@ -353,6 +372,13 @@ namespace catapult { namespace harvesting {
 			return info;
 		}
 
+		Harvester::Suppliers CreateHarvesterSuppliers(const TransactionsInfoSupplier& transactionsInfoSupplier) {
+			return {
+				[](const auto&) { return std::make_pair(Hash256(), true); },
+				transactionsInfoSupplier
+			};
+		}
+
 		void AssertTransactionsInBlock(
 				size_t numAvailableTransactions,
 				uint32_t maxTransactionsPerBlock,
@@ -364,7 +390,8 @@ namespace catapult { namespace harvesting {
 			auto info = CreateTransactionsInfo(numAvailableTransactions);
 			auto config = CreateConfiguration();
 			config.MaxTransactionsPerBlock = maxTransactionsPerBlock;
-			auto pHarvester = context.CreateHarvester(config, [&, info](auto count) mutable {
+
+			auto harvesterSuppliers = CreateHarvesterSuppliers([&, info](auto count) mutable {
 				++counter;
 				numRequestedInfos = count;
 				if (info.Transactions.size() > count)
@@ -372,6 +399,7 @@ namespace catapult { namespace harvesting {
 
 				return info;
 			});
+			auto pHarvester = context.CreateHarvester(config, harvesterSuppliers);
 
 			// Act:
 			auto pBlock = pHarvester->harvest(context.LastBlockElement, Max_Time);
@@ -396,12 +424,11 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		HarvesterContext context;
 		size_t counter = 0u;
-		auto pHarvester = context.CreateHarvester(
-				CreateConfiguration(),
-				[&counter](size_t) {
-					++counter;
-					return TransactionsInfo();
-				});
+		auto harvesterSuppliers = CreateHarvesterSuppliers([&counter](auto) {
+			++counter;
+			return TransactionsInfo();
+		});
+		auto pHarvester = context.CreateHarvester(CreateConfiguration(), harvesterSuppliers);
 
 		// Act:
 		auto pBlock = pHarvester->harvest(context.LastBlockElement, Max_Time);
@@ -424,6 +451,54 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, HarvestPutsMaxTransactionsIntoBlockIfMaxTransactionsAreRequestedAndCacheHasEnoughTransactions) {
 		// Assert: numAvailableTransactions / maxTransactionsPerBlock / numExpectedTransactionsInBlock
 		AssertTransactionsInBlock(10, 5, 5);
+	}
+
+	// endregion
+
+	// region state hash
+
+	TEST(TEST_CLASS, HarvestUsesStateHashCalculator) {
+		// Arrange:
+		HarvesterContext context;
+		auto stateHash = test::GenerateRandomData<Hash256_Size>();
+		std::vector<Hash256> capturedPreviousBlockHashes;
+		Harvester::Suppliers harvesterSuppliers{
+			[&stateHash, &capturedPreviousBlockHashes](const auto& block) {
+				// - use previous block hash as a proxy for a block
+				capturedPreviousBlockHashes.push_back(block.PreviousBlockHash);
+				stateHash[3] = block.PreviousBlockHash[0];
+				return std::make_pair(stateHash, true);
+			},
+			[](auto) { return TransactionsInfo(); }
+		};
+		auto pHarvester = context.CreateHarvester(CreateConfiguration(), harvesterSuppliers);
+
+		// Act:
+		auto pBlock = pHarvester->harvest(context.LastBlockElement, Max_Time);
+
+		// Assert:
+		ASSERT_TRUE(!!pBlock);
+		EXPECT_EQ(std::vector<Hash256>({ pBlock->PreviousBlockHash }), capturedPreviousBlockHashes);
+		EXPECT_EQ(stateHash, pBlock->StateHash);
+
+		// Sanity: block is properly signed even with nonzero state hash
+		EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
+	}
+
+	TEST(TEST_CLASS, HarvestReturnsNullptrIfStateHashCalculatorFails) {
+		// Arrange:
+		HarvesterContext context;
+		Harvester::Suppliers harvesterSuppliers{
+			[](const auto&) { return std::make_pair(test::GenerateRandomData<Hash256_Size>(), false); },
+			[](auto) { return TransactionsInfo(); }
+		};
+		auto pHarvester = context.CreateHarvester(CreateConfiguration(), harvesterSuppliers);
+
+		// Act:
+		auto pBlock = pHarvester->harvest(context.LastBlockElement, Max_Time);
+
+		// Assert:
+		EXPECT_FALSE(!!pBlock);
 	}
 
 	// endregion

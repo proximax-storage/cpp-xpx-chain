@@ -41,14 +41,17 @@ namespace catapult { namespace mongo { namespace mappers {
 			state::AccountState state(test::GenerateRandomAddress(), Height(123));
 			if (Height(0) != publicKeyHeight) {
 				state.PublicKeyHeight = publicKeyHeight;
-				state.PublicKey = test::GenerateRandomData<Key_Size>();
+				test::FillWithRandomData(state.PublicKey);
 			}
 
+			state.AccountType = static_cast<state::AccountType>(34);
+			test::FillWithRandomData(state.LinkedAccountKey);
+
 			for (const auto& mosaic : mosaics)
-				state.Balances.credit(mosaic.MosaicId, mosaic.Amount, Height(0));
+				state.Balances.credit(mosaic.MosaicId, mosaic.Amount);
 
 			for (const auto& snapshot : snapshots)
-				state.Balances.snapshots().push_back(snapshot);
+				state.Balances.addSnapshot(snapshot);
 
 			return state;
 		}
@@ -68,7 +71,7 @@ namespace catapult { namespace mongo { namespace mappers {
 			AssertEqualAccountStateMetadata(metaView);
 
 			auto account = view["account"].get_document().view();
-			EXPECT_EQ(6u, test::GetFieldCount(account));
+			EXPECT_EQ(8u, test::GetFieldCount(account));
 			test::AssertEqualAccountState(state, account);
 		}
 	}
@@ -85,7 +88,7 @@ namespace catapult { namespace mongo { namespace mappers {
 
 	TEST(TEST_CLASS, CanMapAccountStateWithoutPublicKeyButWithSingleMosaicAndSnapshot) {
 		// Assert:
-		AssertCanMapAccountState(Height(0), { { Xpx_Id, Amount(234) } }, { { Amount(234), Height(1) } });
+		AssertCanMapAccountState(Height(0), { { Xpx_Id, Amount(234) } }, { { Amount(234), Height(123) } });
 	}
 
 	TEST(TEST_CLASS, CanMapAccountStateWithoutPublicKeyButWithMultipleMosaicsAndSingleSnapshot) {
@@ -98,7 +101,7 @@ namespace catapult { namespace mongo { namespace mappers {
 				{ MosaicId(31), Amount(45) }
 			},
 			{
-				{ Amount(234), Height(1) }
+				{ Amount(234), Height(123) }
 			}
 		);
 	}

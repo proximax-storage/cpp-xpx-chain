@@ -79,7 +79,12 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
-				return { ionet::PacketType::Mosaic_Infos, ionet::PacketType::Namespace_Infos };
+				return {
+					ionet::PacketType::Namespace_Infos,
+					ionet::PacketType::Namespace_State_Path,
+					ionet::PacketType::Mosaic_Infos,
+					ionet::PacketType::Mosaic_State_Path
+				};
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
@@ -117,23 +122,17 @@ namespace catapult { namespace plugins {
 					"RegisterNamespaceMosaicPruningObserver",
 					"RootNamespaceObserver",
 					"ChildNamespaceObserver",
+					"NamespaceTouchObserver",
 					"NamespacePruningObserver",
 					"MosaicDefinitionObserver",
 					"MosaicSupplyChangeObserver",
+					"MosaicTouchObserver",
 					"MosaicPruningObserver"
 				};
 			}
 
 			static std::vector<std::string> GetPermanentObserverNames() {
-				return {
-					"RegisterNamespaceMosaicPruningObserver",
-					"RootNamespaceObserver",
-					"ChildNamespaceObserver",
-					"NamespacePruningObserver",
-					"MosaicDefinitionObserver",
-					"MosaicSupplyChangeObserver",
-					"MosaicPruningObserver"
-				};
+				return GetObserverNames();
 			}
 		};
 	}
