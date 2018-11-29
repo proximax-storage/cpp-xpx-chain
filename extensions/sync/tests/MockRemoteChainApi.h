@@ -31,19 +31,17 @@ namespace catapult { namespace mocks {
 
 	class MockRemoteChainApi : public api::RemoteChainApi {
 	public:
-		explicit MockRemoteChainApi(const io::BlockStorageCache& storage, uint32_t maxHashes,
-			const extensions::LocalNodeChainScore& chainScore);
+		explicit MockRemoteChainApi(const io::BlockStorageCache& storage, const extensions::LocalNodeChainScore& chainScore);
 
 	public:
 		thread::future<api::ChainInfo> chainInfo() const override;
-		thread::future<model::HashRange> hashesFrom(Height height) const override;
+		thread::future<model::HashRange> hashesFrom(Height height, uint32_t maxHashes) const override;
 		thread::future<std::shared_ptr<const model::Block>> blockLast() const override;
 		thread::future<std::shared_ptr<const model::Block>> blockAt(Height height) const override;
 		thread::future<model::BlockRange> blocksFrom(Height height, const api::BlocksFromOptions& options) const override;
 
 	private:
 		const io::BlockStorageCache& m_storage;
-		uint32_t m_maxHashes;
 		extensions::LocalNodeChainScore m_chainScore;
 	};
 }}

@@ -21,6 +21,7 @@
 #include "catapult/api/LocalChainApi.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/ChainResults.h"
@@ -39,7 +40,7 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
+#include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/MijinConstants.h"
 
@@ -111,12 +112,12 @@ namespace catapult { namespace sync {
 			void initializeCache(uint64_t initialBalance) {
 				auto delta = testState().state().cache().createDelta();
 
-				auto& specialAccountState = delta.sub<cache::AccountStateCache>().addAccount(
-					Special_Account_Key_Pair.publicKey(), Height{1});
+				auto& accountCache = delta.sub<cache::AccountStateCache>();
+				accountCache.addAccount(Special_Account_Key_Pair.publicKey(), Height{1});
+				auto& specialAccountState = accountCache.find(Special_Account_Key_Pair.publicKey()).get();
 				specialAccountState.Balances.credit(Xpx_Id, Amount(initialBalance), Height{1});
-
-				auto& nemesisAccountState = delta.sub<cache::AccountStateCache>().addAccount(
-					Nemesis_Account_Key_Pair.publicKey(), Height{1});
+				accountCache.addAccount(Nemesis_Account_Key_Pair.publicKey(), Height{1});
+				auto& nemesisAccountState = accountCache.find(Nemesis_Account_Key_Pair.publicKey()).get();
 				nemesisAccountState.Balances.credit(Xpx_Id, Amount(initialBalance), Height{1});
 
 				testState().state().cache().commit(Height{1});
@@ -210,9 +211,9 @@ namespace catapult { namespace sync {
 			builders::TransferBuilder builder(
 				config.Network.Identifier,
 				Special_Account_Key_Pair.publicKey() /* signer */,
-				nemesisAccountAddress /* recipient */
+				extensions::CopyToUnresolvedAddress(nemesisAccountAddress) /* recipient */
 			);
-			builder.addMosaic(Xpx_Id, Amount(initialBalance / 2u));
+			builder.addMosaic(Unresolved_Xpx_Id, Amount(initialBalance / 2u));
 
 			test::ConstTransactions transactions{};
 			auto pTransaction = builder.build();
@@ -241,15 +242,13 @@ namespace catapult { namespace sync {
 			auto chainSynchronizer = chain::CreateChainSynchronizer(
 				api::CreateLocalChainApi(
 					state.storage(),
-					[&score = state.score()]() { return score.get(); },
-					config.Node.MaxBlocksPerSyncAttempt),
+					[&score = state.score()]() { return score.get(); }),
 				CreateChainSynchronizerConfiguration(config),
 				blockRangeConsumerWrapper);
 
 			extensions::LocalNodeChainScore remoteChainScore{model::ChainScore{2000u}};
 			mocks::MockRemoteChainApi remoteApi{
 				remoteContext.testState().state().storage(),
-				config.Node.MaxBlocksPerSyncAttempt,
 				remoteChainScore};
 
 			auto syncResult = chainSynchronizer(remoteApi).get();

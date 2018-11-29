@@ -51,7 +51,7 @@ namespace catapult { namespace test {
 
 		/// Creates the test state around \a cache and \a timeSupplier.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
-				: ServiceTestState(std::move(cache), LoadLocalNodeConfiguration(""), timeSupplier)
+				: ServiceTestState(std::move(cache), CreateLocalNodeConfiguration(""), timeSupplier)
 		{}
 
 		/// Creates the test state around \a cache, \a config and \a timeSupplier.

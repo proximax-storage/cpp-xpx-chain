@@ -31,10 +31,8 @@ namespace catapult { namespace mocks {
 		}
 	}
 
-	MockRemoteChainApi::MockRemoteChainApi(const io::BlockStorageCache& storage, uint32_t maxHashes,
-		const extensions::LocalNodeChainScore& chainScore)
+	MockRemoteChainApi::MockRemoteChainApi(const io::BlockStorageCache& storage, const extensions::LocalNodeChainScore& chainScore)
 			: m_storage(storage)
-			, m_maxHashes(maxHashes)
 			, m_chainScore(chainScore.get())
 	{}
 
@@ -47,9 +45,9 @@ namespace catapult { namespace mocks {
 		return thread::make_ready_future(std::move(info));
 	}
 
-	thread::future<model::HashRange> MockRemoteChainApi::hashesFrom(Height height) const {
+	thread::future<model::HashRange> MockRemoteChainApi::hashesFrom(Height height, uint32_t maxHashes) const {
 		CATAPULT_LOG(info) << __FUNCTION__;
-		auto hashes = m_storage.view().loadHashesFrom(height, m_maxHashes);
+		auto hashes = m_storage.view().loadHashesFrom(height, maxHashes);
 		CATAPULT_LOG(info) << __FUNCTION__ << ": number of hashes = " << hashes.size();
 		if (hashes.empty()) {
 			auto exception = CreateHeightException("unable to get hashes from height", height);
