@@ -32,6 +32,7 @@
 #include "catapult/utils/RawBuffer.h"
 #include "SpammerOptions.h"
 #include "tests/test/nodeps/Random.h"
+#include "tests/test/core/AddressTestUtils.h"
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 #include <chrono>
@@ -75,10 +76,8 @@ int parseArguments(int argc, const char** argv, SpammerOptions& options) {
 unique_ptr<model::Transaction> generateTransferTransaction(const crypto::KeyPair& signer, const SpammerOptions& options) {
 
 	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Mijin_Test;
-	auto publicKey = test::GenerateRandomData<Key_Size>();
-	Address recipientAddress = model::PublicKeyToAddress(publicKey, networkIdentifier);
 
-	builders::TransferBuilder builder(networkIdentifier, signer.publicKey(), recipientAddress);
+	builders::TransferBuilder builder(networkIdentifier, signer.publicKey(), test::GenerateRandomUnresolvedAddress());
 	builder.addMosaic(options.Token, Amount(options.Amount));
 	builder.setStringMessage("Hello world "+ to_string(rand()));
 

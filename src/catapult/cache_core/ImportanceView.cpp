@@ -25,26 +25,55 @@
 namespace catapult { namespace cache {
 
 	namespace {
-		const state::AccountState* FindStateWithImportance(const ReadOnlyAccountStateCache& cache, const Key& publicKey) {
-			auto pAccountState = cache.tryGet(publicKey);
+		bool CheckLinkedMainAccount(const state::AccountState& accountState, const Key& remotePublicKey) {
+			return state::AccountType::Main == accountState.AccountType && remotePublicKey == accountState.LinkedAccountKey;
+		}
+
+		template<typename TAction>
+		bool ForwardIfAccountHasImportanceAtHeight(
+				const state::AccountState& accountState,
+				const ReadOnlyAccountStateCache& cache,
+				Height height,
+				TAction action) {
+			if (state::AccountType::Remote == accountState.AccountType) {
+				auto linkedAccountStateIter = cache.find(accountState.LinkedAccountKey);
+				const auto& linkedAccountState = linkedAccountStateIter.get();
+
+				// this check is merely a precaution and will only fire if there is a bug that has corrupted links
+				if (!CheckLinkedMainAccount(linkedAccountState, accountState.PublicKey)) {
+					std::ostringstream out;
+					out
+							<< "remote " << model::AddressToString(accountState.Address) << " link to "
+							<< utils::HexFormat(accountState.LinkedAccountKey) << " is improper";
+					CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
+				}
+
+				return ForwardIfAccountHasImportanceAtHeight(linkedAccountState, cache, height, action);
+			}
+
+			return action(accountState);
+		}
+
+		template<typename TAction>
+		bool FindAccountStateWithImportance(const ReadOnlyAccountStateCache& cache, const Key& publicKey, Height height, TAction action) {
+			auto accountStateKeyIter = cache.find(publicKey);
+			if (accountStateKeyIter.tryGet())
+				return ForwardIfAccountHasImportanceAtHeight(accountStateKeyIter.get(), cache, height, action);
 
 			// if state could not be accessed by public key, try searching by address
-			if (!pAccountState)
-				pAccountState = cache.tryGet(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
+			auto accountStateAddressIter = cache.find(model::PublicKeyToAddress(publicKey, cache.networkIdentifier()));
+			if (accountStateAddressIter.tryGet())
+				return ForwardIfAccountHasImportanceAtHeight(accountStateAddressIter.get(), cache, height, action);
 
-			return pAccountState;
+			return false;
 		}
 	}
 
 	bool ImportanceView::tryGetAccountImportance(const Key& publicKey, Height height, Importance& importance) const {
-		auto pAccountState = FindStateWithImportance(m_cache, publicKey);
-
-		if (!pAccountState)
-			return false;
-
-		importance = Importance(pAccountState->Balances.getEffectiveBalance(height, m_cache.importanceGrouping()).unwrap());
-
-		return true;
+		return FindAccountStateWithImportance(m_cache, publicKey, height, [&](const auto& accountState) {
+			importance = Importance(accountState.Balances.getEffectiveBalance(height, m_cache.importanceGrouping()).unwrap());
+			return true;
+		});
 	}
 
 	Importance ImportanceView::getAccountImportanceOrDefault(const Key& publicKey, Height height) const {
@@ -53,6 +82,8 @@ namespace catapult { namespace cache {
 	}
 
 	bool ImportanceView::canHarvest(const Key& publicKey, Height height, Amount minHarvestingBalance) const {
-		return getAccountImportanceOrDefault(publicKey, height).unwrap() >= minHarvestingBalance.unwrap();
+		return FindAccountStateWithImportance(m_cache, publicKey, height, [&](const auto& accountState) {
+			return accountState.Balances.getEffectiveBalance(height, m_cache.importanceGrouping()) >= minHarvestingBalance;
+		});
 	}
 }}

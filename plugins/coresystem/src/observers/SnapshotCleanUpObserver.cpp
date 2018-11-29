@@ -37,12 +37,12 @@ namespace catapult { namespace observers {
 			auto updatedAddresses = cache.updatedAddresses();
 
 			for (const auto& address : updatedAddresses) {
-				auto pAccountState = cache.tryGet(address);
+				auto pAccountState = cache.find(address).tryGet();
 
 				if (!pAccountState)
 					continue;
 
-				pAccountState-> Balances.maybeCleanUpSnapshots(context.Height, config);
+				pAccountState->Balances.maybeCleanUpSnapshots(context.Height, config);
 			}
 		});
 	}

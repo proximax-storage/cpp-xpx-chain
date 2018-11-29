@@ -25,8 +25,6 @@ namespace catapult { namespace model {
 
 #define TEST_CLASS NamespaceLifetimeConstraintsTests
 
-	// region constructor
-
 	TEST(TEST_CLASS, CanCreateNamespaceLifetimeConstraints) {
 		// Act:
 		NamespaceLifetimeConstraints constraints(BlockDuration(234), 345);

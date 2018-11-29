@@ -215,8 +215,9 @@ namespace catapult { namespace timesync {
 			auto cache = CreateCache(Total_Chain_Balance);
 			{
 				auto cacheDelta = cache.createDelta();
-				auto& accountState = cacheDelta.sub<cache::AccountStateCache>().addAccount(keyPair.publicKey(), Height(1));
-				accountState.Balances.credit(Xpx_Id, balance, Height(1));
+				auto& accountCache = cacheDelta.sub<cache::AccountStateCache>();
+				accountCache.addAccount(keyPair.publicKey(), Height(1));
+				accountCache.find(keyPair.publicKey()).get().Balances.credit(Xpx_Id, balance, Height(1));
 				cache.commit(Height(1));
 			}
 
