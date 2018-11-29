@@ -96,8 +96,8 @@ namespace catapult { namespace sync {
 			using BaseType = test::ServiceLocatorTestContext<DispatcherServiceTraits>;
 
 		public:
-			TestContext(config::LocalNodeConfiguration&& config)
-				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.BlockChain), std::move(config)) {
+			TestContext(const config::LocalNodeConfiguration& config)
+				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.BlockChain), config) {
 
 				testState().loadPluginByName("", "catapult.coresystem");
 				for (const auto& pair : config.BlockChain.Plugins)
@@ -266,10 +266,10 @@ namespace catapult { namespace sync {
 				disruptor::ConsumerCompletionResult& consumerResult) {
 			auto config = CreateLocalNodeConfiguration();
 
-			TestContext localContext(std::move(config));
+			TestContext localContext(config);
 			localContext.boot();
 
-			TestContext remoteContext(std::move(config));
+			TestContext remoteContext(config);
 			remoteContext.boot();
 
 			auto previousBlockContext = PopulateCommonBlocks(localContext, remoteContext, commonHeight);
