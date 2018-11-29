@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -134,10 +134,10 @@ namespace catapult { namespace cache {
 			// - positiveInteractions / negativeInteractions
 			auto* pData = buffer.data();
 			auto positiveInteractions = entry.positiveInteractions().unwrap();
-			memcpy(pData, &positiveInteractions, Key_Size);
+			memcpy(pData, &positiveInteractions, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
 			auto negativeInteractions = entry.negativeInteractions().unwrap();
-			memcpy(pData, &negativeInteractions, Key_Size);
+			memcpy(pData, &negativeInteractions, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
 
 			// - account key

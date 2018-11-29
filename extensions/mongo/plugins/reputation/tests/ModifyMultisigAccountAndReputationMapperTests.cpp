@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -38,12 +38,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		auto CreateModifyMultisigAccountAndReputationTransactionBuilder(
 				const Key& signer,
-				int8_t minRemovalDelta,
-				int8_t minApprovalDelta,
 				std::initializer_list<model::CosignatoryModification> modifications) {
 			builders::ModifyMultisigAccountAndReputationBuilder builder(model::NetworkIdentifier::Mijin_Test, signer);
-			builder.setMinRemovalDelta(minRemovalDelta);
-			builder.setMinApprovalDelta(minApprovalDelta);
+			builder.setMinRemovalDelta(3);
+			builder.setMinApprovalDelta(5);
 			for (const auto& modification : modifications)
 				builder.addCosignatoryModification(modification.ModificationType, modification.CosignatoryPublicKey);
 
@@ -71,12 +69,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		template<typename TTraits>
 		void AssertCanMapModifyMultisigAccountAndReputationTransaction(
-				int8_t minRemovalDelta,
-				int8_t minApprovalDelta,
 				std::initializer_list<model::CosignatoryModification> modifications) {
 			// Arrange:
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto pBuilder = CreateModifyMultisigAccountAndReputationTransactionBuilder(signer, minRemovalDelta, minApprovalDelta, modifications);
+			auto pBuilder = CreateModifyMultisigAccountAndReputationTransactionBuilder(signer, modifications);
 			auto pTransaction = TTraits::Adapt(pBuilder);
 			auto pPlugin = TTraits::CreatePlugin();
 
@@ -97,17 +93,17 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	PLUGIN_TEST(CanMapModifyMultisigAccountAndReputationTransactionWithoutModification) {
 		// Assert:
-		AssertCanMapModifyMultisigAccountAndReputationTransaction<TTraits>(3, 5, {});
+		AssertCanMapModifyMultisigAccountAndReputationTransaction<TTraits>({});
 	}
 
 	PLUGIN_TEST(CanMapModifyMultisigAccountAndReputationTransactionWithSingleModification) {
 		// Assert:
-		AssertCanMapModifyMultisigAccountAndReputationTransaction<TTraits>(3, 5, { { ModificationType::Add, test::GenerateRandomData<Key_Size>() } });
+		AssertCanMapModifyMultisigAccountAndReputationTransaction<TTraits>({ { ModificationType::Add, test::GenerateRandomData<Key_Size>() } });
 	}
 
 	PLUGIN_TEST(CanMapModifyMultisigAccountAndReputationTransactionWithMultipleModification) {
 		// Assert:
-		AssertCanMapModifyMultisigAccountAndReputationTransaction<TTraits>(3, 5, {
+		AssertCanMapModifyMultisigAccountAndReputationTransaction<TTraits>({
 			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
 			{ ModificationType::Del, test::GenerateRandomData<Key_Size>() },
 			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },

@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -86,7 +86,7 @@ namespace catapult { namespace cache {
 
 	// region custom tests
 
-	TEST(TEST_CLASS, LinksCanBeAddedLater) {
+	TEST(TEST_CLASS, InteractionValuesCanBeChangedLater) {
 		// Arrange:
 		ReputationCacheMixinTraits::CacheType cache;
 		auto key = test::GenerateRandomData<Key_Size>();
@@ -102,7 +102,7 @@ namespace catapult { namespace cache {
 		// Sanity:
 		EXPECT_EQ(1u, cache.createView()->size());
 
-		// Act: add links
+		// Act:
 		{
 			auto delta = cache.createDelta();
 			auto& entry = delta->get(key);
