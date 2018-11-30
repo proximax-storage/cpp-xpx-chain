@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -18,14 +18,21 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ModifyMultisigAccountMapper.h"
-#include "mongo/src/MongoTransactionPluginFactory.h"
-#include "mongo/src/mappers/MultisigMapper.h"
-#include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
+#pragma once
+#include "ReputationCache.h"
+#include "catapult/cache/CacheStorageInclude.h"
 
-using namespace catapult::mongo::mappers;
+namespace catapult { namespace cache {
 
-namespace catapult { namespace mongo { namespace plugins {
+	/// Policy for saving and loading reputation cache data.
+	struct ReputationCacheStorage : public MapCacheStorageFromDescriptor<ReputationCacheDescriptor> {
+		/// Saves \a element to \a output.
+		static void Save(const StorageType& element, io::OutputStream& output);
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, StreamMultisigTransaction)
-}}}
+		/// Loads a single value from \a input.
+		static state::ReputationEntry Load(io::InputStream& input);
+
+		/// Loads a single value from \a input into \a cacheDelta.
+		static void LoadInto(io::InputStream& input, DestinationType& cacheDelta);
+	};
+}}

@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -18,14 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ModifyMultisigAccountMapper.h"
-#include "mongo/src/MongoTransactionPluginFactory.h"
-#include "mongo/src/mappers/MultisigMapper.h"
-#include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
+#pragma once
+#include "src/model/ReputationNotifications.h"
+#include "catapult/observers/ObserverTypes.h"
 
-using namespace catapult::mongo::mappers;
+namespace catapult { namespace observers {
 
-namespace catapult { namespace mongo { namespace plugins {
-
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, StreamMultisigTransaction)
-}}}
+	/// Observes changes triggered by update reputation notifications
+	DECLARE_OBSERVER(ReputationUpdate, model::ReputationUpdateNotification)();
+}}

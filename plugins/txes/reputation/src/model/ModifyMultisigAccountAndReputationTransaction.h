@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -18,14 +18,25 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ModifyMultisigAccountMapper.h"
-#include "mongo/src/MongoTransactionPluginFactory.h"
-#include "mongo/src/mappers/MultisigMapper.h"
+#pragma once
+#include "ReputationEntityType.h"
 #include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
 
-using namespace catapult::mongo::mappers;
+namespace catapult { namespace model {
 
-namespace catapult { namespace mongo { namespace plugins {
+#pragma pack(push, 1)
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, StreamMultisigTransaction)
-}}}
+	/// Binary layout for a modify reputation account transaction body.
+	template<typename THeader>
+	struct ModifyMultisigAccountAndReputationTransactionBody : ModifyMultisigAccountTransactionBody<THeader> {
+	private:
+		using TransactionType = ModifyMultisigAccountAndReputationTransactionBody<THeader>;
+
+	public:
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Modify_Multisig_Account_And_Reputation, 3)
+	};
+
+	DEFINE_EMBEDDABLE_TRANSACTION(ModifyMultisigAccountAndReputation)
+
+#pragma pack(pop)
+}}

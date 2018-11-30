@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -18,14 +18,14 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ModifyMultisigAccountMapper.h"
-#include "mongo/src/MongoTransactionPluginFactory.h"
-#include "mongo/src/mappers/MultisigMapper.h"
-#include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
+#pragma once
+#include "catapult/plugins.h"
 
-using namespace catapult::mongo::mappers;
+namespace catapult { namespace model { class TransactionPlugin; } }
 
-namespace catapult { namespace mongo { namespace plugins {
+namespace catapult { namespace plugins {
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, StreamMultisigTransaction)
-}}}
+	/// Creates a modify multisig account and reputation transaction plugin.
+	PLUGIN_API
+	std::unique_ptr<model::TransactionPlugin> CreateModifyMultisigAccountAndReputationTransactionPlugin();
+}}

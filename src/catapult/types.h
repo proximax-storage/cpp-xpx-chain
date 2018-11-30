@@ -73,6 +73,9 @@ namespace catapult {
 	struct Importance_tag {};
 	using Importance = utils::BaseValue<uint64_t, Importance_tag>;
 
+	struct Reputation_tag {};
+	using Reputation = utils::BaseValue<uint64_t, Reputation_tag>;
+
 	using utils::RawBuffer;
 	using utils::MutableRawBuffer;
 	using utils::RawString;

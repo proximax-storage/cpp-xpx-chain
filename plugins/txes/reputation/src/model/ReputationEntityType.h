@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -18,14 +18,17 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ModifyMultisigAccountMapper.h"
-#include "mongo/src/MongoTransactionPluginFactory.h"
-#include "mongo/src/mappers/MultisigMapper.h"
-#include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
+#pragma once
+#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
+#include "catapult/model/EntityType.h"
 
-using namespace catapult::mongo::mappers;
+namespace catapult { namespace model {
 
-namespace catapult { namespace mongo { namespace plugins {
+#endif
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, StreamMultisigTransaction)
-}}}
+	/// Modify multisig account and reputation transaction.
+	DEFINE_TRANSACTION_TYPE(Reputation, Modify_Multisig_Account_And_Reputation, 0x1);
+
+#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
+}}
+#endif

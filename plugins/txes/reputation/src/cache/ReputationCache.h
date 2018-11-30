@@ -1,5 +1,5 @@
 /**
-*** Copyright (c) 2016-present,
+*** Copyright (c) 2018-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
 *** This file is part of Catapult.
@@ -18,14 +18,24 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ModifyMultisigAccountMapper.h"
-#include "mongo/src/MongoTransactionPluginFactory.h"
-#include "mongo/src/mappers/MultisigMapper.h"
-#include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
+#pragma once
+#include "ReputationCacheDelta.h"
+#include "ReputationCacheView.h"
+#include "catapult/cache/BasicCache.h"
 
-using namespace catapult::mongo::mappers;
+namespace catapult { namespace cache {
 
-namespace catapult { namespace mongo { namespace plugins {
+	/// Cache composed of Reputation information.
+	using BasicReputationCache = BasicCache<ReputationCacheDescriptor, ReputationCacheTypes::BaseSets>;
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, StreamMultisigTransaction)
-}}}
+	/// Synchronized cache composed of reputation information.
+	class ReputationCache : public SynchronizedCache<BasicReputationCache> {
+	public:
+		DEFINE_CACHE_CONSTANTS(Reputation)
+
+	public:
+		/// Creates a cache around \a config.
+		explicit ReputationCache(const CacheConfiguration& config) : SynchronizedCache<BasicReputationCache>(BasicReputationCache(config))
+		{}
+	};
+}}

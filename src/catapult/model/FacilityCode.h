@@ -39,6 +39,8 @@ namespace catapult { namespace model {
 		Multisig = 0x55,
 		/// Namespace facility code.
 		Namespace = 0x4E,
+		/// Reputation facility code.
+		Reputation = 0x56,
 		/// Property facility code.
 		Property = 0x50,
 		/// Transfer facility code.
