@@ -90,27 +90,12 @@ namespace catapult { namespace tools { namespace address {
 				if (!parseEnum(mode))
 					CATAPULT_THROW_INVALID_ARGUMENT_1("unknown mode", mode);
 
-				std::ifstream input(m_inputpath, std::ofstream::in);
-				std::ofstream output;
-				output.open(m_outputpath, std::ofstream::out);
-
-				if (!input.good())
-					CATAPULT_THROW_INVALID_ARGUMENT_1("can't read from file ", m_inputpath);
-
-				if (!output.good())
-					CATAPULT_THROW_INVALID_ARGUMENT_1("can't write to file ", m_outputpath);
-
-				input.close();
-				output.close();
-
 				switch (m_mode) {
-					case JsonToBinary:
-					{
+					case JsonToBinary: {
 						createBinaryFromJson();
 						break;
 					}
-					case BinaryToJson:
-					{
+					case BinaryToJson: {
 						createJsonFromBinary();
 						break;
 					}
@@ -122,7 +107,6 @@ namespace catapult { namespace tools { namespace address {
 		private:
 
 			void createJsonFromBinary() {
-				std::ofstream output(m_outputpath, std::ofstream::out);
 				pt::ptree root, children;
 				test::RunInputDependentTest(m_inputpath, ParseAccount, [&children](const state::AccountState& accountState) {
 					pt::ptree accountJson;
@@ -159,7 +143,7 @@ namespace catapult { namespace tools { namespace address {
 					children.push_back({ "", accountJson });
 				});
 				root.add_child("accounts", children);
-				pt::write_json(output, root);
+				pt::write_json(m_outputpath, root);
 			}
 
 			void createBinaryFromJson() {
@@ -168,7 +152,14 @@ namespace catapult { namespace tools { namespace address {
 				pt::read_json(m_inputpath, root);
 				auto children = root.get_child("accounts");
 
-				std::ofstream output(m_outputpath, std::ofstream::out);
+				std::ofstream output;
+				output.open(m_outputpath, std::ofstream::out);
+
+				if (!output){
+					CATAPULT_THROW_INVALID_ARGUMENT_1("can't open file", m_outputpath);
+					output.close();
+				}
+
 				output << "# : account address : serialized account state" << std::endl;
 
 				for (pt::ptree::value_type &accountJson : children) {
@@ -202,6 +193,8 @@ namespace catapult { namespace tools { namespace address {
 					auto parts = StringifyAccount(accountState);
 					output << parts[Placeholder] << ": " << parts[Address] << " : " << parts[AccountState] << std::endl;
 				}
+
+				output.close();
 			}
 
 			bool parseEnum(const std::string& mode) {

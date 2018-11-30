@@ -99,7 +99,7 @@ namespace catapult { namespace tools {
 			// add options common for all tools
 			optionsBuilder("help,h", "print help message");
 			optionsBuilder("loggingConfigurationPath,l",
-						OptionsValue<std::string>(options.LoggingConfigurationPath),
+						OptionsValue<std::string>(options.LoggingConfigurationPath)->default_value("../resources/config-logging.properties"),
 						"the path to the logging configuration file");
 
 			// 1. add tool-specific options
