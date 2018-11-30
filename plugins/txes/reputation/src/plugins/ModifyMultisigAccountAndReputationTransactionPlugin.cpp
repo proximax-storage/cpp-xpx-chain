@@ -31,19 +31,26 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, const PublisherContext&, NotificationSubscriber& sub) {
 			// 1. cosig and reputation changes
+			utils::KeySet addedCosignatoryKeys;
 			if (0 < transaction.ModificationsCount) {
 				// raise new cosigner notifications first because they are used for multisig loop detection
 				const auto* pModifications = transaction.ModificationsPtr();
 				for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
-					if (model::CosignatoryModificationType::Add == pModifications[i].ModificationType)
+					if (model::CosignatoryModificationType::Add == pModifications[i].ModificationType) {
 						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModifications[i].CosignatoryPublicKey));
+						addedCosignatoryKeys.insert(pModifications[i].CosignatoryPublicKey);
+					}
 				}
 
 				sub.notify(ModifyMultisigCosignersNotification(transaction.Signer, transaction.ModificationsCount, pModifications));
 				sub.notify(ReputationUpdateNotification(transaction.ModificationsCount, pModifications));
+
 			}
+
+			if (!addedCosignatoryKeys.empty())
+				sub.notify(AddressInteractionNotification(transaction.Signer, model::AddressSet{}, addedCosignatoryKeys));
 
 			// 2. setting changes
 			sub.notify(ModifyMultisigSettingsNotification(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));

@@ -18,12 +18,18 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ReputationCacheStorage.h"
-#include "ReputationCacheDelta.h"
+#pragma once
+#include "ReputationEntry.h"
+#include "catapult/io/Stream.h"
 
-namespace catapult { namespace cache {
+namespace catapult { namespace state {
 
-	void ReputationCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
-		cacheDelta.insert(entry);
-	}
+	/// Policy for saving and loading reputation entry data.
+	struct ReputationEntrySerializer {
+		/// Saves \a entry to \a output.
+		static void Save(const ReputationEntry& entry, io::OutputStream& output);
+
+		/// Loads a single value from \a input.
+		static ReputationEntry Load(io::InputStream& input);
+	};
 }}

@@ -19,20 +19,17 @@
 **/
 
 #pragma once
-#include "ReputationCache.h"
+#include "ReputationCacheTypes.h"
+#include "src/state/ReputationEntrySerializer.h"
 #include "catapult/cache/CacheStorageInclude.h"
 
 namespace catapult { namespace cache {
 
 	/// Policy for saving and loading reputation cache data.
-	struct ReputationCacheStorage : public MapCacheStorageFromDescriptor<ReputationCacheDescriptor> {
-		/// Saves \a element to \a output.
-		static void Save(const StorageType& element, io::OutputStream& output);
-
-		/// Loads a single value from \a input.
-		static state::ReputationEntry Load(io::InputStream& input);
-
-		/// Loads a single value from \a input into \a cacheDelta.
-		static void LoadInto(io::InputStream& input, DestinationType& cacheDelta);
+	struct ReputationCacheStorage
+			: public CacheStorageFromDescriptor<ReputationCacheDescriptor>
+			, public state::ReputationEntrySerializer {
+		/// Loads \a entry into \a cacheDelta.
+		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);
 	};
 }}

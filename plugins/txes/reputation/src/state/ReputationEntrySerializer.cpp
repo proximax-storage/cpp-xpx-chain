@@ -18,12 +18,28 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ReputationCacheStorage.h"
-#include "ReputationCacheDelta.h"
+#include "ReputationEntrySerializer.h"
+#include "catapult/io/PodIoUtils.h"
+#include "catapult/utils/HexFormatter.h"
 
-namespace catapult { namespace cache {
+namespace catapult { namespace state {
 
-	void ReputationCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
-		cacheDelta.insert(entry);
+	void ReputationEntrySerializer::Save(const ReputationEntry& entry, io::OutputStream& output) {
+		io::Write64(output, entry.positiveInteractions().unwrap());
+		io::Write64(output, entry.negativeInteractions().unwrap());
+		io::Write(output, entry.key());
+	}
+
+	ReputationEntry ReputationEntrySerializer::Load(io::InputStream& input) {
+		auto positiveInteractions = Reputation{io::Read64(input)};
+		auto negativeInteractions = Reputation{io::Read64(input)};
+		Key key;
+		input.read(key);
+
+		auto entry = state::ReputationEntry(key);
+		entry.setPositiveInteractions(positiveInteractions);
+		entry.setNegativeInteractions(negativeInteractions);
+
+		return entry;
 	}
 }}

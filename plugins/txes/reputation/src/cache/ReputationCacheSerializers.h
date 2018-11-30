@@ -18,12 +18,14 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ReputationCacheStorage.h"
-#include "ReputationCacheDelta.h"
+#pragma once
+#include "ReputationCacheTypes.h"
+#include "src/state/ReputationEntrySerializer.h"
+#include "catapult/cache/CacheSerializerAdapter.h"
 
 namespace catapult { namespace cache {
 
-	void ReputationCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
-		cacheDelta.insert(entry);
-	}
+	/// Primary serializer for reputation cache.
+	struct ReputationEntryPrimarySerializer : public CacheSerializerAdapter<state::ReputationEntrySerializer, ReputationCacheDescriptor>
+	{};
 }}

@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "ReputationCacheTypes.h"
+#include "ReputationBaseSets.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -28,7 +28,7 @@
 namespace catapult { namespace cache {
 
 	/// Mixins used by the reputation cache delta.
-	using ReputationCacheDeltaMixins = BasicCacheMixins<ReputationCacheTypes::PrimaryTypes::BaseSetDeltaType, ReputationCacheDescriptor>;
+	using ReputationCacheDeltaMixins = PatriciaTreeCacheMixins<ReputationCacheTypes::PrimaryTypes::BaseSetDeltaType, ReputationCacheDescriptor>;
 
 	/// Basic delta on top of the Reputation cache.
 	class BasicReputationCacheDelta
@@ -37,6 +37,7 @@ namespace catapult { namespace cache {
 			, public ReputationCacheDeltaMixins::Contains
 			, public ReputationCacheDeltaMixins::ConstAccessor
 			, public ReputationCacheDeltaMixins::MutableAccessor
+			, public ReputationCacheDeltaMixins::PatriciaTreeDelta
 			, public ReputationCacheDeltaMixins::BasicInsertRemove
 			, public ReputationCacheDeltaMixins::DeltaElements {
 	public:
@@ -49,17 +50,15 @@ namespace catapult { namespace cache {
 				, ReputationCacheDeltaMixins::Contains(*reputationSets.pPrimary)
 				, ReputationCacheDeltaMixins::ConstAccessor(*reputationSets.pPrimary)
 				, ReputationCacheDeltaMixins::MutableAccessor(*reputationSets.pPrimary)
+				, ReputationCacheDeltaMixins::PatriciaTreeDelta(*reputationSets.pPrimary, reputationSets.pPatriciaTree)
 				, ReputationCacheDeltaMixins::BasicInsertRemove(*reputationSets.pPrimary)
 				, ReputationCacheDeltaMixins::DeltaElements(*reputationSets.pPrimary)
 				, m_pReputationEntries(reputationSets.pPrimary)
 		{}
 
 	public:
-		using ReputationCacheDeltaMixins::ConstAccessor::get;
-		using ReputationCacheDeltaMixins::MutableAccessor::get;
-
-		using ReputationCacheDeltaMixins::ConstAccessor::tryGet;
-		using ReputationCacheDeltaMixins::MutableAccessor::tryGet;
+		using ReputationCacheDeltaMixins::ConstAccessor::find;
+		using ReputationCacheDeltaMixins::MutableAccessor::find;
 
 	private:
 		ReputationCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pReputationEntries;

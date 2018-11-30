@@ -18,12 +18,20 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "ReputationCacheStorage.h"
-#include "ReputationCacheDelta.h"
+#pragma once
+#include "catapult/handlers/HandlerTypes.h"
+#include "catapult/model/CacheEntryInfo.h"
 
-namespace catapult { namespace cache {
+namespace catapult { namespace ionet { class ServerPacketHandlers; } }
 
-	void ReputationCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
-		cacheDelta.insert(entry);
-	}
+namespace catapult { namespace handlers {
+
+	/// Alias for a reputation infos producer factory.
+	using ReputationInfosProducerFactory = SharedPointerProducerFactory<Key, model::CacheEntryInfo<Hash256>>;
+
+	/// Registers a reputation infos handler in \a handlers that responds with reputation infos
+	/// returned by a producer from \a reputationInfosProducerFactory.
+	void RegisterReputationInfosHandler(
+			ionet::ServerPacketHandlers& handlers,
+			const ReputationInfosProducerFactory& reputationInfosProducerFactory);
 }}
