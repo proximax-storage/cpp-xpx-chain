@@ -92,16 +92,23 @@ RUN cd /catapult \
     .. \
    && make publish \
    && make \
+# Required extensions
     catapult.mongo.plugins.aggregate \
-    catapult.mongo.plugins.lock \
+    catapult.mongo.plugins.lockhash \
+    catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
+    catapult.mongo.plugins.property \
+    catapult.mongo.plugins.reputation \
     catapult.mongo.plugins.transfer \
     catapult.plugins.aggregate \
     catapult.plugins.hashcache \
-    catapult.plugins.lock \
+    catapult.plugins.lockhash \
+    catapult.plugins.locksecret \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
+    catapult.plugins.property \
+    catapult.plugins.reputation \
     catapult.plugins.signature \
     catapult.plugins.transfer \
     extension.addressextraction \
@@ -121,6 +128,12 @@ RUN cd /catapult \
     extension.transactionsink \
     extension.unbondedpruning \
     extension.zeromq \
+# Tools
+    catapult.tools.address \
+    catapult.tools.health \
+    catapult.tools.nemgen \
+    catapult.tools.network \
+# Catapult
     catapult.server \
     -j4
 
