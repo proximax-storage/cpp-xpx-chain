@@ -51,7 +51,7 @@ namespace catapult { namespace observers {
 
 			void removeIfEmpty(const Key& key) {
 				if (m_reputationCache.contains(key)) {
-					auto& entry = m_reputationCache.get(key);
+					auto& entry = m_reputationCache.find(key).get();
 					if (!entry.positiveInteractions().unwrap() &&
 						!entry.negativeInteractions().unwrap())
 						m_reputationCache.remove(key);
@@ -63,7 +63,7 @@ namespace catapult { namespace observers {
 				if (!m_reputationCache.contains(key))
 					m_reputationCache.insert(state::ReputationEntry(key));
 
-				return m_reputationCache.get(key);
+				return m_reputationCache.find(key).get();
 			}
 
 		private:

@@ -25,7 +25,7 @@
 
 namespace catapult { namespace cache {
 
-	/// Cache composed of Reputation information.
+	/// Cache composed of reputation information.
 	using BasicReputationCache = BasicCache<ReputationCacheDescriptor, ReputationCacheTypes::BaseSets>;
 
 	/// Synchronized cache composed of reputation information.

@@ -18,11 +18,15 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/handlers/CacheEntryInfosProducerFactory.h"
+#include "catapult/handlers/StatePathHandlerFactory.h"
+#include "catapult/plugins/PluginManager.h"
 #include "ReputationPlugin.h"
+#include "src/cache/ReputationCache.h"
 #include "src/cache/ReputationCacheStorage.h"
+#include "src/handlers/ReputationDiagnosticHandlers.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ModifyMultisigAccountAndReputationTransactionPlugin.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
 
@@ -31,6 +35,14 @@ namespace catapult { namespace plugins {
 
 		manager.addCacheSupport<cache::ReputationCacheStorage>(
 			std::make_unique<cache::ReputationCache>(manager.cacheConfig(cache::ReputationCache::Name)));
+
+		manager.addDiagnosticHandlerHook([](auto& handlers, const cache::CatapultCache& cache) {
+			using ReputationInfosProducerFactory = handlers::CacheEntryInfosProducerFactory<cache::ReputationCacheDescriptor>;
+			handlers::RegisterReputationInfosHandler(handlers, ReputationInfosProducerFactory::Create(cache.sub<cache::ReputationCache>()));
+
+			using PacketType = handlers::StatePathRequestPacket<ionet::PacketType::Reputation_State_Path, Key>;
+			handlers::RegisterStatePathHandler<PacketType>(handlers, cache.sub<cache::ReputationCache>());
+		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder.add(observers::CreateReputationUpdateObserver());

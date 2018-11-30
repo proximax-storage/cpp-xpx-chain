@@ -21,16 +21,19 @@
 #pragma once
 #include "src/state/ReputationEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
-#include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"
 
 namespace catapult {
 	namespace cache {
 		class BasicReputationCacheDelta;
 		class BasicReputationCacheView;
+		struct ReputationBaseSetDeltaPointers;
+		struct ReputationBaseSets;
 		class ReputationCache;
 		class ReputationCacheDelta;
 		class ReputationCacheView;
+		struct ReputationEntryPrimarySerializer;
+		class ReputationPatriciaTree;
 
 		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
@@ -54,6 +57,9 @@ namespace catapult { namespace cache {
 		using CacheDeltaType = ReputationCacheDelta;
 		using CacheViewType = ReputationCacheView;
 
+		using Serializer = ReputationEntryPrimarySerializer;
+		using PatriciaTree = ReputationPatriciaTree;
+
 	public:
 		/// Gets the key corresponding to \a entry.
 		static const auto& GetKeyFromValue(const ValueType& entry) {
@@ -62,13 +68,12 @@ namespace catapult { namespace cache {
 	};
 
 	/// Reputation cache types.
-	struct ReputationCacheTypes
-			: public SingleSetCacheTypesAdapter<MutableUnorderedMapAdapter<ReputationCacheDescriptor, utils::ArrayHasher<Key>>> {
-	public:
-		using CacheReadOnlyType = ReadOnlyArtifactCache<
-			BasicReputationCacheView,
-			BasicReputationCacheDelta,
-			const Key&,
-			const state::ReputationEntry&>;
+	struct ReputationCacheTypes {
+		using PrimaryTypes = MutableUnorderedMapAdapter<ReputationCacheDescriptor, utils::ArrayHasher<Key>>;
+
+		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicReputationCacheView, BasicReputationCacheDelta, const Key&, state::ReputationEntry>;
+
+		using BaseSetDeltaPointers = ReputationBaseSetDeltaPointers;
+		using BaseSets = ReputationBaseSets;
 	};
 }}

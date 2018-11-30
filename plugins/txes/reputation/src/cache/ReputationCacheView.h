@@ -19,7 +19,8 @@
 **/
 
 #pragma once
-#include "ReputationCacheTypes.h"
+#include "ReputationBaseSets.h"
+#include "ReputationCacheSerializers.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -27,7 +28,7 @@
 namespace catapult { namespace cache {
 
 	/// Mixins used by the reputation cache view.
-	using ReputationCacheViewMixins = BasicCacheMixins<ReputationCacheTypes::PrimaryTypes::BaseSetType, ReputationCacheDescriptor>;
+	using ReputationCacheViewMixins = PatriciaTreeCacheMixins<ReputationCacheTypes::PrimaryTypes::BaseSetType, ReputationCacheDescriptor>;
 
 	/// Basic view on top of the reputation cache.
 	class BasicReputationCacheView
@@ -35,7 +36,8 @@ namespace catapult { namespace cache {
 			, public ReputationCacheViewMixins::Size
 			, public ReputationCacheViewMixins::Contains
 			, public ReputationCacheViewMixins::Iteration
-			, public ReputationCacheViewMixins::ConstAccessor {
+			, public ReputationCacheViewMixins::ConstAccessor
+			, public ReputationCacheViewMixins::PatriciaTreeView {
 	public:
 		using ReadOnlyView = ReputationCacheTypes::CacheReadOnlyType;
 
@@ -46,6 +48,7 @@ namespace catapult { namespace cache {
 				, ReputationCacheViewMixins::Contains(reputationSets.Primary)
 				, ReputationCacheViewMixins::Iteration(reputationSets.Primary)
 				, ReputationCacheViewMixins::ConstAccessor(reputationSets.Primary)
+				, ReputationCacheViewMixins::PatriciaTreeView(reputationSets.PatriciaTree.get())
 		{}
 	};
 
