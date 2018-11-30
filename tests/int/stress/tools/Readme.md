@@ -11,7 +11,7 @@ make tests.catapult.int.stress.patriciaTreeGenerator -j 4
 ./bin/tests.catapult.int.stress.patriciaTreeGenerator --help
 Patricia Tree Generator Tool options:
   -h [ --help ]     print help message
-  -l [ --loggingConfigurationPath ] arg
+  -l [ --loggingConfigurationPath ] arg (=../resources/config-logging.properties)
                     the path to the logging configuration file
   -i [ --input ] arg (=../tests/int/stress/resources/1.patricia-tree-account.dat)
                     path to input file
