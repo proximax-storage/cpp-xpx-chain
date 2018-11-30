@@ -1,0 +1,235 @@
+/**
+*** Copyright (c) 2018-present,
+*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
+***
+*** This file is part of Catapult.
+***
+*** Catapult is free software: you can redistribute it and/or modify
+*** it under the terms of the GNU Lesser General Public License as published by
+*** the Free Software Foundation, either version 3 of the License, or
+*** (at your option) any later version.
+***
+*** Catapult is distributed in the hope that it will be useful,
+*** but WITHOUT ANY WARRANTY; without even the implied warranty of
+*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+*** GNU Lesser General Public License for more details.
+***
+*** You should have received a copy of the GNU Lesser General Public License
+*** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
+**/
+
+#include "catapult/cache_core/AccountStateCacheSerializers.h"
+#include "catapult/crypto/KeyUtils.h"
+#include "catapult/model/Address.h"
+#include "catapult/state/AccountState.h"
+#include "catapult/utils/HexParser.h"
+#include "catapult/utils/HexParser.h"
+#include "sdk/src/extensions/IdGenerator.h"
+#include "tests/int/stress/test/InputDependentTest.h"
+#include "tools/tools/ToolMain.h"
+#include <boost/property_tree/json_parser.hpp>
+#include <boost/property_tree/ptree.hpp>
+#include <random>
+
+// Short alias for this namespace
+namespace pt = boost::property_tree;
+
+namespace catapult { namespace tools { namespace address {
+
+	namespace {
+
+		// indexes into parsed line
+		enum : size_t { Placeholder, Address, AccountState };
+
+		std::map<uint64_t, std::string> reverseTable = {
+				{ extensions::GenerateMosaicId("nem:xem").unwrap(), "nem:xem" },
+				{ extensions::GenerateMosaicId("prx:xpx").unwrap(), "prx:xpx" },
+		};
+
+		std::pair<state::AccountState, bool> ParseAccount(const std::vector<std::string>& parts) {
+			auto address = model::StringToAddress(parts[Address]);
+
+			std::vector<uint8_t> serializedBuffer(parts[AccountState].size() / 2);
+			utils::ParseHexStringIntoContainer(parts[AccountState].data(), parts[AccountState].size(), serializedBuffer);
+			auto accountState = cache::AccountStatePrimarySerializer::DeserializeValue(serializedBuffer);
+
+			return std::make_pair(accountState, address == accountState.Address);
+		}
+
+		std::vector<std::string> StringifyAccount(const state::AccountState& accountState) {
+			std::string strAccount = crypto::FormatKeyAsString(cache::AccountStatePrimarySerializer::SerializeValue(accountState));
+
+			return { "" , model::AddressToString(accountState.Address) , strAccount };
+		}
+
+		enum  Mode {
+			JsonToBinary,
+			BinaryToJson
+		};
+
+		class PatriciaTreeGeneratorTool : public Tool {
+		public:
+			std::string name() const override {
+				return "Patricia Tree Generator Tool";
+			}
+
+			void prepareOptions(OptionsBuilder& optionsBuilder, OptionsPositional&) override {
+				optionsBuilder("input,i",
+							   OptionsValue<std::string>(m_inputpath)->default_value("../tests/int/stress/resources/1.patricia-tree-account.dat"),
+							   "path to input file");
+				optionsBuilder("output,o",
+							   OptionsValue<std::string>(m_outputpath)->default_value("../tests/int/stress/resources/accounts.json"),
+							   "path to output file");
+				optionsBuilder("mode,m",
+							   boost::program_options::value<std::string>()->default_value("JsonToBinary"),
+							   "mode { JsonToBinary, BinaryToJson }");
+			}
+
+			int run(const Options& options) override {
+				std::string mode = options["mode"].as<std::string>();
+				if (!parseEnum(mode))
+					CATAPULT_THROW_INVALID_ARGUMENT_1("unknown mode", mode);
+
+				std::ifstream input(m_inputpath, std::ofstream::in);
+				std::ofstream output;
+				output.open(m_outputpath, std::ofstream::out);
+
+				if (!input.good())
+					CATAPULT_THROW_INVALID_ARGUMENT_1("can't read from file ", m_inputpath);
+
+				if (!output.good())
+					CATAPULT_THROW_INVALID_ARGUMENT_1("can't write to file ", m_outputpath);
+
+				input.close();
+				output.close();
+
+				switch (m_mode) {
+					case JsonToBinary:
+					{
+						createBinaryFromJson();
+						break;
+					}
+					case BinaryToJson:
+					{
+						createJsonFromBinary();
+						break;
+					}
+				}
+
+				return 0;
+			}
+
+		private:
+
+			void createJsonFromBinary() {
+				std::ofstream output(m_outputpath, std::ofstream::out);
+				pt::ptree root, children;
+				test::RunInputDependentTest(m_inputpath, ParseAccount, [&children](const state::AccountState& accountState) {
+					pt::ptree accountJson;
+
+					accountJson.put("Address", model::AddressToString(accountState.Address));
+					accountJson.put("AddressHeight", accountState.AddressHeight);
+					accountJson.put("PublicKeyHeight", accountState.PublicKeyHeight);
+					accountJson.put("PublicKey", crypto::FormatKeyAsString(accountState.PublicKey));
+					accountJson.put("AccountType", (uint64_t)accountState.AccountType);
+					accountJson.put("LinkedAccountKey", crypto::FormatKeyAsString(accountState.LinkedAccountKey));
+
+					pt::ptree mosaics;
+					for (auto& pair : accountState.Balances) {
+						pt::ptree mosaic;
+						mosaic.put("MosaicName", reverseTable[pair.first.unwrap()]);
+						mosaic.put("Amount", pair.second);
+
+						mosaics.push_back({ "", mosaic });
+					}
+
+					accountJson.put_child("mosaics", mosaics);
+
+					pt::ptree snapshots;
+					for (auto& pair : accountState.Balances.snapshots()) {
+						pt::ptree snapshot;
+						snapshot.put("Amount", pair.Amount.unwrap());
+						snapshot.put("Height", pair.BalanceHeight.unwrap());
+
+						snapshots.push_back({ "", snapshot });
+					}
+
+					accountJson.put_child("snapshots", snapshots);
+
+					children.push_back({ "", accountJson });
+				});
+				root.add_child("accounts", children);
+				pt::write_json(output, root);
+			}
+
+			void createBinaryFromJson() {
+				// Load the json file in this ptree
+				pt::ptree root;
+				pt::read_json(m_inputpath, root);
+				auto children = root.get_child("accounts");
+
+				std::ofstream output(m_outputpath, std::ofstream::out);
+				output << "# : account address : serialized account state" << std::endl;
+
+				for (pt::ptree::value_type &accountJson : children) {
+					auto& account = accountJson.second;
+
+					state::AccountState accountState(
+							model::StringToAddress(account.get<std::string>("Address")),
+							Height(account.get<uint64_t>("AddressHeight"))
+					);
+					accountState.PublicKeyHeight = Height(account.get<uint64_t>("PublicKeyHeight"));
+					accountState.PublicKey = crypto::ParseKey(account.get<std::string>("PublicKey"));
+					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
+					accountState.LinkedAccountKey = crypto::ParseKey(account.get<std::string>("LinkedAccountKey"));
+
+					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
+						auto& mosaic = mosaicJson.second;
+						accountState.Balances.credit(
+								extensions::GenerateMosaicId(mosaic.get<std::string>("MosaicName")),
+								Amount(mosaic.get<uint64_t>("Amount"))
+						);
+					}
+
+					for (pt::ptree::value_type&  snapshotJson: account.get_child("snapshots")) {
+						auto& snapshot = snapshotJson.second;
+						accountState.Balances.addSnapshot({
+							Amount(snapshot.get<uint64_t>("Amount")),
+							Height(snapshot.get<uint64_t>("Height"))
+						});
+					}
+
+					auto parts = StringifyAccount(accountState);
+					output << parts[Placeholder] << ": " << parts[Address] << " : " << parts[AccountState] << std::endl;
+				}
+			}
+
+			bool parseEnum(const std::string& mode) {
+				std::map<std::string, Mode> table = {
+						{ "binarytojson", Mode::BinaryToJson },
+						{ "jsontobinary", Mode::JsonToBinary }
+				};
+
+				std::string lower(mode);
+				std::transform(lower.begin(), lower.end(), lower.begin(), ::tolower);
+
+				if (!table.count(lower))
+					return false;
+
+				m_mode = table[lower];
+
+				return true;
+			}
+
+		private:
+			std::string m_inputpath;
+			std::string m_outputpath;
+			Mode m_mode;
+		};
+	}
+}}}
+
+int main(int argc, const char** argv) {
+	catapult::tools::address::PatriciaTreeGeneratorTool tool;
+	return catapult::tools::ToolMain(argc, argv, tool);
+}

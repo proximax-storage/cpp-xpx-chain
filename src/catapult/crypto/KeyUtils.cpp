@@ -32,6 +32,10 @@ namespace catapult { namespace crypto {
 		return utils::HexFormat(key.begin(), key.end());
 	}
 
+	utils::ContainerHexFormatter<const uint8_t*> FormatKey(const std::string& key) {
+		return utils::HexFormat((const uint8_t*)key.data(), (const uint8_t*)key.data() + key.size());
+	}
+
 	Key ParseKey(const std::string& keyString) {
 		Key key;
 		utils::ParseHexStringIntoContainer(keyString.c_str(), keyString.size(), key);

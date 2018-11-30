@@ -28,15 +28,6 @@ namespace catapult { namespace crypto {
 
 #define TEST_CLASS KeyUtilsTests
 
-	namespace {
-		template<typename T>
-		std::string FormatKeyAsString(const T& key) {
-			std::ostringstream out;
-			out << FormatKey(key);
-			return out.str();
-		}
-	}
-
 	TEST(TEST_CLASS, CanOutputPublicKey) {
 		// Arrange:
 		auto key = ParseKey("031729D10DB52ECF0AD3684558DB31895DDFA5CD7F4143AF6E822E114E16E31C");

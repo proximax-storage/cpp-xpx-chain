@@ -9,3 +9,5 @@ set_property(TEST ${TARGET_NAME} PROPERTY LABELS Stress)
 
 # add dependency on hash cache plugin
 include_directories(../../../plugins/services/hashcache)
+
+add_subdirectory(tools)
