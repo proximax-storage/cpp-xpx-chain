@@ -32,9 +32,20 @@ namespace catapult { namespace crypto {
 	/// Formats a private \a key for printing.
 	utils::ContainerHexFormatter<Key::const_iterator> FormatKey(const PrivateKey& key);
 
+	/// Formats a string \a key for printing.
+	utils::ContainerHexFormatter<const uint8_t*> FormatKey(const std::string& key);
+
 	/// Parses a key from a string (\a keyString) and returns the result.
 	Key ParseKey(const std::string& keyString);
 
 	/// Returns \c true if \a str represents a valid public key, \c false otherwise.
 	bool IsValidKeyString(const std::string& str);
+
+	/// Returns string representation of Key.
+	template<typename T>
+	std::string FormatKeyAsString(const T& key) {
+		std::ostringstream out;
+		out << FormatKey(key);
+		return out.str();
+	}
 }}
