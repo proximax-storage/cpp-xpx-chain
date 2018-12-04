@@ -23,68 +23,92 @@
 
 namespace catapult { namespace chain {
 
-	Difficulty CalculateDifficulty(const cache::DifficultyInfoRange& difficultyInfos, const model::BlockChainConfiguration& config) {
+	namespace {
+		constexpr uint64_t GAMMA_NUMERATOR{64};
+		constexpr uint64_t GAMMA_DENOMINATOR{100};
+		constexpr uint32_t SMOOTHING_FACTOR_DENOMINATOR{1000};
+		constexpr uint64_t MILLISECONDS_PER_SECOND{1000};
+
+		constexpr utils::TimeSpan TimeDifference(const Timestamp& firstTimestamp, const Timestamp& lastTimestamp) {
+			return utils::TimeSpan::FromDifference(lastTimestamp, firstTimestamp);
+		}
+	}
+
+	Difficulty CalculateDifficulty(
+			const cache::DifficultyInfoRange& difficultyInfos,
+			const state::BlockDifficultyInfo& nextBlockInfo,
+			const model::BlockChainConfiguration& config) {
 		// note that difficultyInfos is sorted by both heights and timestamps, so the first info has the smallest
 		// height and earliest timestamp and the last info has the largest height and latest timestamp
-		size_t historySize = 0;
-		Difficulty::ValueType averageDifficulty = 0;
-		for (const auto& difficultyInfo : difficultyInfos) {
-			++historySize;
-			averageDifficulty += difficultyInfo.BlockDifficulty.unwrap();
-		}
+		size_t historySize = std::distance(difficultyInfos.begin(), difficultyInfos.end());
 
-		if (historySize < 2)
-			return Difficulty();
+		if (historySize < 1)
+			return Difficulty(0);
 
 		auto firstTimestamp = difficultyInfos.begin()->BlockTimestamp;
 
 		const auto& lastInfo = *(--difficultyInfos.end());
-		auto lastTimestamp = lastInfo.BlockTimestamp;
-		auto lastDifficulty = lastInfo.BlockDifficulty.unwrap();
 
-		auto timeDiff = (lastTimestamp - firstTimestamp).unwrap();
-		averageDifficulty /= historySize;
+		if (lastInfo.BlockDifficulty.unwrap() == 0)
+			CATAPULT_THROW_INVALID_ARGUMENT("BlockDifficulty can't be zero!");
 
-		boost::multiprecision::uint128_t largeDifficulty = averageDifficulty;
-		largeDifficulty *= config.BlockGenerationTargetTime.millis();
-		largeDifficulty *= (historySize - 1);
-		largeDifficulty /= timeDiff;
-		auto difficulty = static_cast<uint64_t>(largeDifficulty);
+		if (lastInfo.BlockHeight.unwrap() + 1 != nextBlockInfo.BlockHeight.unwrap())
+			CATAPULT_THROW_INVALID_ARGUMENT("Blocks must be synced!");
 
-		// clamp difficulty changes to 5%
-		if (19 * lastDifficulty > 20 * difficulty)
-			difficulty = (19 * lastDifficulty) / 20;
-		else if (21 * lastDifficulty < 20 * difficulty)
-			difficulty = (21 * lastDifficulty) / 20;
+		auto lastTimestamp = nextBlockInfo.BlockTimestamp;
+		auto timeDiff = TimeDifference(firstTimestamp, lastTimestamp);
 
-		return Difficulty(difficulty);
+		// Calculate the base target and return it as difficulty:
+		// If S > 60
+		//     Tb = (Tp * Min(S, MAXRATIO)) / 60
+		// Else
+		//     Tb = Tp - Tp * GAMMA * (60 - Max(S, MINRATIO)) / 60;
+		// where:
+		// S - average block time for the last 3 blocks
+		// Tp - previous base target
+		// Tb - calculated base target
+		boost::multiprecision::uint128_t Tp = lastInfo.BlockDifficulty.unwrap();
+		auto S = timeDiff.millis() / (historySize * MILLISECONDS_PER_SECOND);
+		auto RATIO = config.BlockGenerationTargetTime.seconds();
+
+		if (RATIO <= 0)
+			CATAPULT_THROW_INVALID_ARGUMENT("BlockGenerationTargetTime is invalid or not set");
+
+		auto factor = config.BlockTimeSmoothingFactor / SMOOTHING_FACTOR_DENOMINATOR;
+		auto MINRATIO = RATIO - factor;
+		auto MAXRATIO = RATIO + factor;
+		Tp = (S > RATIO) ?
+			Tp * std::min(S, MAXRATIO) / RATIO :
+			Tp - Tp * GAMMA_NUMERATOR * (RATIO - std::max(S, MINRATIO) ) / GAMMA_DENOMINATOR / RATIO;
+
+		return Difficulty(Tp.convert_to<uint64_t>());
 	}
 
 	namespace {
 		Difficulty CalculateDifficulty(
 				const cache::BlockDifficultyCacheView& view,
-				Height height,
+				const state::BlockDifficultyInfo& nextBlockInfo,
 				const model::BlockChainConfiguration& config) {
-			auto infos = view.difficultyInfos(height, config.MaxDifficultyBlocks);
-			return chain::CalculateDifficulty(infos, config);
+			auto infos = view.difficultyInfos(nextBlockInfo.BlockHeight - Height(1), config.MaxDifficultyBlocks);
+			return chain::CalculateDifficulty(infos, nextBlockInfo, config);
 		}
 	}
 
-	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache, Height height, const model::BlockChainConfiguration& config) {
+	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache, const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config) {
 		auto view = cache.createView();
-		return CalculateDifficulty(*view, height, config);
+		return CalculateDifficulty(*view, nextBlockInfo, config);
 	}
 
 	bool TryCalculateDifficulty(
 			const cache::BlockDifficultyCache& cache,
-			Height height,
+			const state::BlockDifficultyInfo& nextBlockInfo,
 			const model::BlockChainConfiguration& config,
 			Difficulty& difficulty) {
 		auto view = cache.createView();
-		if (!view->contains(state::BlockDifficultyInfo(height)))
+		if (!view->contains(state::BlockDifficultyInfo(nextBlockInfo.BlockHeight - Height(1))))
 			return false;
 
-		difficulty = CalculateDifficulty(*view, height, config);
+		difficulty = CalculateDifficulty(*view, nextBlockInfo, config);
 		return true;
 	}
 }}

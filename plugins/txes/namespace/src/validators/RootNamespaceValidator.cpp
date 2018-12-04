@@ -26,12 +26,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::RootNamespaceNotification;
 
-	DECLARE_STATELESS_VALIDATOR(RootNamespace, Notification)(BlockDuration maxDuration) {
-		return MAKE_STATELESS_VALIDATOR(RootNamespace, [maxDuration](const auto& notification) {
-			// note that zero duration is acceptable because it is eternal
-			if (maxDuration < notification.Duration)
-				return Failure_Namespace_Invalid_Duration;
-
+	DECLARE_STATELESS_VALIDATOR(RootNamespace, Notification)() {
+		return MAKE_STATELESS_VALIDATOR(RootNamespace, [](const auto& /*notification*/) {
 			return ValidationResult::Success;
 		});
 	}

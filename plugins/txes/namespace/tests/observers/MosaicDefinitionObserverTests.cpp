@@ -56,8 +56,9 @@ namespace catapult { namespace observers {
 
 			// - seed the cache
 			auto& accountStateCacheDelta = context.cache().sub<cache::AccountStateCache>();
-			auto& ownerState = accountStateCacheDelta.addAccount(notification.Signer, Height(1));
-			ownerState.Balances.credit(notification.MosaicId, initialOwnerBalance);
+			accountStateCacheDelta.addAccount(notification.Signer, Height(1));
+			auto& ownerState = accountStateCacheDelta.find(notification.Signer).get();
+			ownerState.Balances.credit(notification.MosaicId, initialOwnerBalance, Height(1));
 
 			auto& mosaicCacheDelta = context.cache().sub<cache::MosaicCache>();
 			seedCache(mosaicCacheDelta);
@@ -89,7 +90,7 @@ namespace catapult { namespace observers {
 			ASSERT_TRUE(mosaicCacheDelta.contains(Default_Mosaic_Id));
 
 			// - entry
-			const auto& entry = mosaicCacheDelta.get(Default_Mosaic_Id);
+			const auto& entry = mosaicCacheDelta.find(Default_Mosaic_Id).get();
 			EXPECT_EQ(Default_Namespace_Id, entry.namespaceId());
 			EXPECT_EQ(Default_Mosaic_Id, entry.mosaicId());
 

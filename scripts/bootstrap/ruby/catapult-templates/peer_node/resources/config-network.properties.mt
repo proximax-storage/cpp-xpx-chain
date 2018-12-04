@@ -6,12 +6,15 @@ generationHash = {{network_generation_hash}}
 
 [chain]
 
+shouldEnableVerifiableState = true
+
 blockGenerationTargetTime = 15s
 blockTimeSmoothingFactor = 3000
 
-importanceGrouping = 359
+# maxTransactionLifetime / blockGenerationTargetTime
+importanceGrouping = 5760
 maxRollbackBlocks = 360
-maxDifficultyBlocks = 60
+maxDifficultyBlocks = 3
 
 maxTransactionLifetime = 24h
 maxBlockFutureTime = 10s
@@ -31,6 +34,17 @@ maxCosignaturesPerAggregate = 15
 enableStrictCosignatureCheck = false
 enableBondedAggregateSupport = true
 
+[plugin:catapult.plugins.lockhash]
+
+lockedFundsPerAggregate = 10'000'000
+maxHashLockDuration = 2d
+
+[plugin:catapult.plugins.locksecret]
+
+maxSecretLockDuration = 30d
+minProofSize = 10
+maxProofSize = 1000
+
 [plugin:catapult.plugins.multisig]
 
 maxMultisigDepth = 3
@@ -42,34 +56,27 @@ maxCosignedAccountsPerAccount = 5
 maxNameSize = 64
 
 # *approximate* days based on blockGenerationTargetTime
-maxNamespaceDuration = 365d
 namespaceGracePeriodDuration = 0d
-reservedRootNamespaceNames = xem, nem, user, account, org, com, biz, net, edu, mil, gov, info, prx, xpx
+reservedRootNamespaceNames = xem, nem, user, account, org, com, biz, net, edu, mil, gov, info, prx, xpx, xarcade, xar, proximax, prc, storage
 
 namespaceRentalFeeSinkPublicKey = 3E82E1C1E4A75ADAA3CBA8C101C3CD31D9817A2EB966EB3B511FB2ED45B8E262
-rootNamespaceRentalFeePerBlock = 100'000
-childNamespaceRentalFee = 10'000'000
+rootNamespaceRentalFeePerBlock = 1'000'000
+childNamespaceRentalFee = 100'000'000
 
 maxChildNamespaces = 500
 maxMosaicsPerAccount = 10'000
-
-maxMosaicDuration = 3650d
 
 isMosaicLevyUpdateAllowed = true
 maxMosaicDivisibility = 6
 maxMosaicDivisibleUnits = 9'000'000'000'000'000
 
 mosaicRentalFeeSinkPublicKey = 53E140B5947F104CABC2D6FE8BAEDBC30EF9A0609C717D9613DE593EC2A266D3
-mosaicRentalFee = 50'000'000
+mosaicRentalFee = 500'000'000
+
+[plugin:catapult.plugins.property]
+
+maxPropertyValues = 512
 
 [plugin:catapult.plugins.transfer]
 
 maxMessageSize = 1024
-
-[plugin:catapult.plugins.lock]
-
-lockedFundsPerAggregate = 10'000'000
-maxHashLockDuration = 2d
-maxSecretLockDuration = 30d
-minProofSize = 10
-maxProofSize = 1000

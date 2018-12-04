@@ -27,7 +27,7 @@
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBasedStorage.h"
+#include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
 
@@ -42,6 +42,7 @@ namespace catapult { namespace consumers {
 
 	namespace {
 		constexpr auto Base_Difficulty = Difficulty().unwrap();
+		constexpr auto Two_In_60 = 1ll << 60;
 		constexpr auto Max_Rollback_Blocks = 25u;
 		constexpr model::ImportanceHeight Initial_Last_Recalculation_Height(1234);
 		constexpr model::ImportanceHeight Modified_Last_Recalculation_Height(7777);
@@ -91,8 +92,9 @@ namespace catapult { namespace consumers {
 
 		struct UndoBlockParams {
 		public:
-			UndoBlockParams(const model::BlockElement& blockElement, const observers::ObserverState& state)
+			UndoBlockParams(const model::BlockElement& blockElement, const observers::ObserverState& state, UndoBlockType undoBlockType)
 					: pBlock(test::CopyBlock(blockElement.Block))
+					, UndoBlockType(undoBlockType)
 					, LastRecalculationHeight(state.State.LastRecalculationHeight)
 					, IsPassedMarkedCache(test::IsMarkedCache(state.Cache))
 					, NumDifficultyInfos(state.Cache.sub<cache::BlockDifficultyCache>().size())
@@ -100,6 +102,7 @@ namespace catapult { namespace consumers {
 
 		public:
 			std::shared_ptr<const model::Block> pBlock;
+			consumers::UndoBlockType UndoBlockType;
 			const model::ImportanceHeight LastRecalculationHeight;
 			const bool IsPassedMarkedCache;
 			const size_t NumDifficultyInfos;
@@ -107,10 +110,17 @@ namespace catapult { namespace consumers {
 
 		class MockUndoBlock : public test::ParamsCapture<UndoBlockParams> {
 		public:
-			void operator()(const model::BlockElement& blockElement, const observers::ObserverState& state) const {
-				const_cast<MockUndoBlock*>(this)->push(blockElement, state);
+			void operator()(
+					const model::BlockElement& blockElement,
+					const observers::ObserverState& state,
+					UndoBlockType undoBlockType) const {
+				const_cast<MockUndoBlock*>(this)->push(blockElement, state, undoBlockType);
 
-				// mark the state by modifying it
+				// simulate undoing a block by modifying the state to mark it
+				// if the block is common, it should not change any state (but it is still checked in assertUnwind)
+				if (UndoBlockType::Common == undoBlockType)
+					return;
+
 				auto& blockDifficultyCache = state.Cache.sub<cache::BlockDifficultyCache>();
 				blockDifficultyCache.insert(state::BlockDifficultyInfo(Height(blockDifficultyCache.size() + 1)));
 
@@ -249,7 +259,7 @@ namespace catapult { namespace consumers {
 
 		void SetBlockHeight(model::Block& block, Height height) {
 			block.Timestamp = Timestamp(height.unwrap() * 1000);
-			block.Difficulty = Difficulty();
+			block.Difficulty = Difficulty(16);
 			block.Height = height;
 		}
 
@@ -257,15 +267,15 @@ namespace catapult { namespace consumers {
 		public:
 			ConsumerTestContext()
 					: Cache(test::CreateCatapultCacheWithMarkerAccount())
-					, Storage(std::make_unique<mocks::MockMemoryBasedStorage>()) {
+					, Storage(std::make_unique<mocks::MockMemoryBlockStorage>()) {
 				State.LastRecalculationHeight = Initial_Last_Recalculation_Height;
 
 				BlockChainSyncHandlers handlers;
 				handlers.DifficultyChecker = [this](const auto& blocks, const auto& cache) {
 					return DifficultyChecker(blocks, cache);
 				};
-				handlers.UndoBlock = [this](const auto& block, const auto& state) {
-					return UndoBlock(block, state);
+				handlers.UndoBlock = [this](const auto& block, const auto& state, auto undoBlockType) {
+					return UndoBlock(block, state, undoBlockType);
 				};
 				handlers.Processor = [this](const auto& parentBlockInfo, auto& elements, const auto& cache) {
 					return Processor(parentBlockInfo, elements, cache);
@@ -336,11 +346,14 @@ namespace catapult { namespace consumers {
 				for (auto height : unwoundHeights) {
 					const auto& undoBlockParams = UndoBlock.params()[i];
 					auto expectedHeight = AddImportanceHeight(Initial_Last_Recalculation_Height, i);
+					auto expectedUndoType = i == unwoundHeights.size() - 1 ? UndoBlockType::Common : UndoBlockType::Rollback;
+					auto message = "undo at " + std::to_string(i);
 
-					EXPECT_EQ(*OriginalBlocks[(height - Height(2)).unwrap()], *undoBlockParams.pBlock) << "undo at " << i;
-					EXPECT_EQ(expectedHeight, undoBlockParams.LastRecalculationHeight) << "undo at " << i;
-					EXPECT_TRUE(undoBlockParams.IsPassedMarkedCache) << "undo at " << i;
-					EXPECT_EQ(i, undoBlockParams.NumDifficultyInfos) << "undo at " << i;
+					EXPECT_EQ(*OriginalBlocks[(height - Height(2)).unwrap()], *undoBlockParams.pBlock) << message;
+					EXPECT_EQ(expectedUndoType, undoBlockParams.UndoBlockType) << message;
+					EXPECT_EQ(expectedHeight, undoBlockParams.LastRecalculationHeight) << message;
+					EXPECT_TRUE(undoBlockParams.IsPassedMarkedCache) << message;
+					EXPECT_EQ(i, undoBlockParams.NumDifficultyInfos) << message;
 					++i;
 				}
 			}
@@ -592,10 +605,10 @@ namespace catapult { namespace consumers {
 
 		// Assert:
 		test::AssertAborted(result, Failure_Consumer_Remote_Chain_Score_Not_Better);
-		EXPECT_EQ(3u, context.UndoBlock.params().size());
+		EXPECT_EQ(4u, context.UndoBlock.params().size());
 		EXPECT_EQ(0u, context.Processor.params().size());
 		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7), Height(6), Height(5) });
+		context.assertUnwind({ Height(7), Height(6), Height(5), Height(4) });
 		context.assertNoStorageChanges();
 	}
 
@@ -611,10 +624,10 @@ namespace catapult { namespace consumers {
 
 		// Assert:
 		test::AssertAborted(result, Failure_Consumer_Remote_Chain_Score_Not_Better);
-		EXPECT_EQ(2u, context.UndoBlock.params().size());
+		EXPECT_EQ(3u, context.UndoBlock.params().size());
 		EXPECT_EQ(0u, context.Processor.params().size());
 		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7), Height(6) });
+		context.assertUnwind({ Height(7), Height(6), Height(5) });
 		context.assertNoStorageChanges();
 	}
 
@@ -671,7 +684,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(0u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertProcessorInvocation(input);
-		context.assertStored(input, model::ChainScore(4 * (Base_Difficulty - 1)));
+		context.assertStored(input, model::ChainScore(4 * Two_In_60));
 	}
 
 	TEST(TEST_CLASS, CanSyncIncompatibleChains) {
@@ -685,11 +698,11 @@ namespace catapult { namespace consumers {
 
 		// Assert:
 		test::AssertContinued(result);
-		EXPECT_EQ(3u, context.UndoBlock.params().size());
+		EXPECT_EQ(4u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7), Height(6), Height(5) });
+		context.assertUnwind({ Height(7), Height(6), Height(5), Height(4) });
 		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+		context.assertStored(input, model::ChainScore(Two_In_60));
 	}
 
 	TEST(TEST_CLASS, CanSyncIncompatibleChainsWithOnlyLastBlockDifferent) {
@@ -703,11 +716,11 @@ namespace catapult { namespace consumers {
 
 		// Assert:
 		test::AssertContinued(result);
-		EXPECT_EQ(1u, context.UndoBlock.params().size());
+		EXPECT_EQ(2u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7) });
+		context.assertUnwind({ Height(7), Height(6) });
 		context.assertProcessorInvocation(input, 1);
-		context.assertStored(input, model::ChainScore(3 * (Base_Difficulty - 1)));
+		context.assertStored(input, model::ChainScore(3 * Two_In_60));
 	}
 
 	TEST(TEST_CLASS, CanSyncIncompatibleChainsWhereShorterRemoteChainHasHigherScore) {
@@ -715,18 +728,22 @@ namespace catapult { namespace consumers {
 		ConsumerTestContext context;
 		context.seedStorage(Height(7));
 		auto input = CreateInput(Height(5), 1);
-		const_cast<model::Block&>(input.blocks()[0].Block).Difficulty = Difficulty(Base_Difficulty * 3);
+		for (auto& blockElement : input.blocks()) {
+			const_cast<model::Block&>(blockElement.Block).Difficulty = Difficulty(4);
+		}
 
 		// Act:
 		auto result = context.Consumer(input);
 
 		// Assert:
 		test::AssertContinued(result);
-		EXPECT_EQ(3u, context.UndoBlock.params().size());
+		EXPECT_EQ(4u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7), Height(6), Height(5) });
+		context.assertUnwind({ Height(7), Height(6), Height(5), Height(4) });
 		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(2));
+		uint64_t Two_In_62 = 1ll << 62;
+		// We undo 3 blocks with diff 2^60, and add a new block with diff 2^62
+		context.assertStored(input, model::ChainScore(Two_In_62 - 3ll * Two_In_60));
 	}
 
 	// endregion
@@ -827,7 +844,7 @@ namespace catapult { namespace consumers {
 		EXPECT_EQ(0u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
 		context.assertProcessorInvocation(input);
-		context.assertStored(input, model::ChainScore(4 * (Base_Difficulty - 1)));
+		context.assertStored(input, model::ChainScore(4 * Two_In_60));
 
 		// - the change notification had 6 added and 0 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());
@@ -859,11 +876,11 @@ namespace catapult { namespace consumers {
 
 		// Assert:
 		test::AssertContinued(result);
-		EXPECT_EQ(3u, context.UndoBlock.params().size());
+		EXPECT_EQ(4u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7), Height(6), Height(5) });
+		context.assertUnwind({ Height(7), Height(6), Height(5), Height(4) });
 		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+		context.assertStored(input, model::ChainScore(Two_In_60));
 
 		// - the change notification had 6 added and 9 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());
@@ -900,11 +917,11 @@ namespace catapult { namespace consumers {
 
 		// Assert:
 		test::AssertContinued(result);
-		EXPECT_EQ(3u, context.UndoBlock.params().size());
+		EXPECT_EQ(4u, context.UndoBlock.params().size());
 		context.assertDifficultyCheckerInvocation(input);
-		context.assertUnwind({ Height(7), Height(6), Height(5) });
+		context.assertUnwind({ Height(7), Height(6), Height(5), Height(4) });
 		context.assertProcessorInvocation(input, 3);
-		context.assertStored(input, model::ChainScore(Base_Difficulty - 1));
+		context.assertStored(input, model::ChainScore(Two_In_60));
 
 		// - the change notification had 8 added and 7 reverted
 		ASSERT_EQ(1u, context.TransactionsChange.params().size());

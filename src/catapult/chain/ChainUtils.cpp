@@ -49,8 +49,9 @@ namespace catapult { namespace chain {
 			return set;
 		}
 
-		Difficulty CalculateDifficulty(const DifficultySet& difficulties, const model::BlockChainConfiguration& config) {
-			return chain::CalculateDifficulty(cache::DifficultyInfoRange(difficulties.cbegin(), difficulties.cend()), config);
+		Difficulty CalculateDifficulty(const DifficultySet& difficulties,
+				const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config) {
+			return chain::CalculateDifficulty(cache::DifficultyInfoRange(difficulties.cbegin(), difficulties.cend()), nextBlockInfo, config);
 		}
 	}
 
@@ -62,19 +63,18 @@ namespace catapult { namespace chain {
 			return 0;
 
 		auto difficulties = LoadDifficulties(cache, blocks[0]->Height - Height(1), config);
-		auto difficulty = CalculateDifficulty(difficulties, config);
 
 		size_t i = 0;
 		for (const auto* pBlock : blocks) {
+			auto difficulty = CalculateDifficulty(difficulties, state::BlockDifficultyInfo(*pBlock), config);
+
 			if (difficulty != pBlock->Difficulty)
 				break;
 
-			difficulties.insert(state::BlockDifficultyInfo(pBlock->Height, pBlock->Timestamp, difficulty));
+			difficulties.insert(state::BlockDifficultyInfo(*pBlock));
 
 			if (difficulties.size() > config.MaxDifficultyBlocks)
 				difficulties.erase(difficulties.cbegin());
-
-			difficulty = CalculateDifficulty(difficulties, config);
 			++i;
 		}
 

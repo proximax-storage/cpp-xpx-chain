@@ -25,9 +25,9 @@
 namespace catapult { namespace observers {
 
 	namespace {
-		void ZeroBalance(state::AccountState& accountState, MosaicId mosaicId) {
+		void ZeroBalance(state::AccountState& accountState, MosaicId mosaicId, Height height) {
 			auto ownerBalance = accountState.Balances.get(mosaicId);
-			accountState.Balances.debit(mosaicId, ownerBalance);
+			accountState.Balances.debit(mosaicId, ownerBalance, height);
 		}
 	}
 
@@ -36,8 +36,9 @@ namespace catapult { namespace observers {
 		auto& cache = context.Cache.sub<cache::MosaicCache>();
 
 		// always zero the owner's balance when a mosaic definition changes (in case of rollback, it will be fixed below)
-		auto& ownerState = accountStateCache.get(notification.Signer);
-		ZeroBalance(ownerState, notification.MosaicId);
+		auto ownerStateIter = accountStateCache.find(notification.Signer);
+		auto& ownerState = ownerStateIter.get();
+		ZeroBalance(ownerState, notification.MosaicId, context.Height);
 
 		if (NotifyMode::Rollback == context.Mode) {
 			cache.remove(notification.MosaicId);
@@ -45,8 +46,9 @@ namespace catapult { namespace observers {
 			// mosaic is not completely removed from the cache if it initially had a history depth greater than one
 			if (cache.contains(notification.MosaicId)) {
 				// set the owner's balance to the full supply
-				const auto& mosaicEntry = cache.get(notification.MosaicId);
-				ownerState.Balances.credit(notification.MosaicId, mosaicEntry.supply());
+				auto mosaicIter = cache.find(notification.MosaicId);
+				const auto& mosaicEntry = mosaicIter.get();
+				ownerState.Balances.credit(notification.MosaicId, mosaicEntry.supply(), context.Height);
 			}
 
 			return;

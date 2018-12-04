@@ -38,34 +38,6 @@ namespace catapult { namespace chain {
 		void SetTimestampSeconds(model::Block& block, uint64_t time) {
 			block.Timestamp = Timestamp(time * 1'000);
 		}
-
-		void SetDifficultyBillions(model::Block& block, uint64_t difficulty) {
-			block.Difficulty = Difficulty(difficulty * 1'000'000'000);
-		}
-
-		void SetDifficultyTrillions(model::Block& block, uint64_t difficulty) {
-			SetDifficultyBillions(block, difficulty * 1'000);
-		}
-
-		uint64_t CalculateHitWithDoubles(const Hash256& generationHash) {
-			constexpr uint64_t Two_To_54 = 18014398509481984;
-			const double Two_To_256 = std::pow(2, 256);
-
-			// 1. v1 = generation-hash
-			BlockTarget value;
-			boost::multiprecision::import_bits(value, generationHash.cbegin(), generationHash.cend());
-
-			// 2. temp = double(v1) / 2^256
-			auto temp = value.convert_to<double>() / Two_To_256;
-
-			// 3. temp = abs(log(temp))
-			temp = std::abs(std::log(temp));
-			if (std::isinf(temp))
-				return std::numeric_limits<uint64_t>::max();
-
-			// 4. r = temp * 2^54
-			return static_cast<uint64_t>(temp * Two_To_54);
-		}
 	}
 
 	// region CalculateHit
@@ -83,7 +55,7 @@ namespace catapult { namespace chain {
 		auto hit = CalculateHit(generationHash);
 
 		// Assert:
-		EXPECT_EQ(0x20A80E8A6AF7Fu, hit);
+		EXPECT_EQ(17361925168090707703ull, hit);
 	}
 
 	TEST(TEST_CLASS, CanCalculateHitWhenGenerationHashIsZero) {
@@ -94,7 +66,7 @@ namespace catapult { namespace chain {
 		auto hit = CalculateHit(generationHash);
 
 		// Assert:
-		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), hit);
+		EXPECT_EQ(0, hit);
 	}
 
 	TEST(TEST_CLASS, CanCalculateHitWhenGenerationHashIsMax) {
@@ -110,30 +82,7 @@ namespace catapult { namespace chain {
 		auto hit = CalculateHit(generationHash);
 
 		// Assert:
-		EXPECT_EQ(0u, hit);
-	}
-
-	TEST(TEST_CLASS, HitCalculationDeviationFromHitCalculationWithDoublesIsTolerable) {
-		for (auto i = 0u; i < Hash256_Size; ++i) {
-			uint8_t value = 8;
-			for (auto j = 0; j < 16; ++j) {
-				// Arrange:
-				Hash256 generationHash{};
-				generationHash[i] = value;
-
-				// Act:
-				auto hit = CalculateHit(generationHash);
-				auto oldHit = CalculateHitWithDoubles(generationHash);
-				auto ratio = static_cast<double>(hit) / static_cast<double>(oldHit);
-
-				// Assert:
-				auto message = "at index " + std::to_string(i) + ", value = " + std::to_string(value);
-				EXPECT_LT(0.999999, ratio) << message;
-				EXPECT_GT(1.000001, ratio) << message;
-
-				value += 0x10;
-			}
-		}
+		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), hit);
 	}
 
 	// endregion
@@ -147,13 +96,13 @@ namespace catapult { namespace chain {
 
 		model::Block current;
 		SetTimestampSeconds(current, 5568532ull);
-		SetDifficultyBillions(current, 44'888);
+		current.Difficulty = Difficulty(1 << 16);
 
 		// Act:
 		auto score = CalculateScore(parent, current);
 
 		// Assert:
-		EXPECT_EQ(44'888'000'000'000ull - (5568532 - 5567320), score);
+		EXPECT_EQ(1ull << (64 - 16), score);
 	}
 
 	namespace {
@@ -164,7 +113,7 @@ namespace catapult { namespace chain {
 
 			model::Block current;
 			SetTimestampSeconds(current, currentTime);
-			SetDifficultyBillions(current, 44'888);
+			current.Difficulty = Difficulty(44'888);
 
 			// Act:
 			return CalculateScore(parent, current);
@@ -200,7 +149,7 @@ namespace catapult { namespace chain {
 				const model::BlockChainConfiguration& config = CreateConfiguration()) {
 			// Arrange:
 			auto timeDiff = utils::TimeSpan::FromSeconds(currentTime - parentTime);
-			auto realDifficulty = Difficulty(difficulty * 1'000'000'000'000);
+			auto realDifficulty = Difficulty(difficulty);
 
 			// Act:
 			return CalculateTarget(timeDiff, realDifficulty, Importance(importance), config);
@@ -218,7 +167,7 @@ namespace catapult { namespace chain {
 
 			model::Block current;
 			SetTimestampSeconds(current, currentTime);
-			SetDifficultyTrillions(current, difficulty);
+			current.Difficulty = Difficulty(difficulty);
 
 			// Act:
 			return CalculateTarget(parent, current, Importance(importance), config);
@@ -267,21 +216,13 @@ namespace catapult { namespace chain {
 		EXPECT_GT(target2, target1);
 	}
 
-	TEST(TEST_CLASS, BlockTargetIncreasesAsDifficultyDecreases) {
+	TEST(TEST_CLASS, BlockTargetIncreasesAsDifficultyIncrease) {
 		// Act:
-		auto target1 = CalculateBlockTarget(900, 1000, 72000, 50);
-		auto target2 = CalculateBlockTarget(900, 1000, 72000, 40);
+		auto target1 = CalculateBlockTarget(900, 1000, 72000, 40);
+		auto target2 = CalculateBlockTarget(900, 1000, 72000, 50);
 
 		// Assert:
 		EXPECT_GT(target2, target1);
-	}
-
-	namespace {
-		const BlockTarget Two_To_64 = []() {
-			BlockTarget result = 1;
-			result <<= 64;
-			return result;
-		}();
 	}
 
 	TEST(TEST_CLASS, BlockTargetIsCorrectlyCalculated) {
@@ -291,8 +232,7 @@ namespace catapult { namespace chain {
 		// Assert:
 		BlockTarget expectedTarget = 100; // time difference (in seconds)
 		expectedTarget *= 72000; // importance
-		expectedTarget *= Two_To_64; // magic number
-		expectedTarget /= 50'000'000'000'000; // difficulty
+		expectedTarget *= 50; // base target
 
 		// Assert:
 		EXPECT_EQ(expectedTarget, target);
@@ -305,8 +245,7 @@ namespace catapult { namespace chain {
 		// Assert:
 		BlockTarget expectedTarget = 100; // time difference (in seconds)
 		expectedTarget *= 72000; // importance
-		expectedTarget *= Two_To_64; // magic number
-		expectedTarget /= 50'000'000'000'000; // difficulty
+		expectedTarget *= 50; // difficulty
 
 		// Assert:
 		EXPECT_EQ(expectedTarget, target);
@@ -314,14 +253,12 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, BlockTargetIsConsistentWithLegacyBlockTarget) {
 		// Act:
-		auto target = CalculateBlockTarget(1, 101, 72000 * 8'000'000'000L);
+		auto target = CalculateBlockTarget(1, 1000001, 72000 * 8'000'000'000L);
 
 		// Assert:
-		// - expected target is 17708874310761169551360, but it is too large to fit in any built-in integral type
-		// - so split it up as 1770887431076116955 * 10000 + 1360
-		BlockTarget expectedTarget = 1770887431076116955ull;
-		expectedTarget *= 10000;
-		expectedTarget += 1360;
+		BlockTarget expectedTarget = 72000 * 8'000'000'000L;
+		expectedTarget *= 1000000;
+		expectedTarget *= 60;
 		EXPECT_EQ(expectedTarget, target);
 	}
 
@@ -337,114 +274,6 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		EXPECT_EQ(target2, target1);
-	}
-
-	TEST(TEST_CLASS, BlockTargetIncreasesAsGenerationTimeDecreasesWhenSmoothingIsEnabled) {
-		// Act:
-		auto config = CreateConfiguration();
-		config.BlockTimeSmoothingFactor = 6000;
-		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
-		auto target1 = CalculateBlockTarget(900, 916, 72000, 50, config);
-
-		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(10);
-		auto target2 = CalculateBlockTarget(900, 916, 72000, 50, config);
-
-		// Assert:
-		EXPECT_GT(target2, target1);
-	}
-
-	namespace {
-		void AssertLargerSmoothingFactorBiasesTowardsLargerTargetWhenLastBlockTimeIsLarger(uint32_t factor1, uint32_t factor2) {
-			// Sanity:
-			EXPECT_GT(factor2, factor1);
-
-			// Act:
-			auto config = CreateConfiguration();
-			config.BlockTimeSmoothingFactor = factor1;
-			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
-			auto target1 = CalculateBlockTarget(900, 916, 72000, 50, config);
-
-			config.BlockTimeSmoothingFactor = factor2;
-			auto target2 = CalculateBlockTarget(900, 916, 72000, 50, config);
-
-			// Assert:
-			EXPECT_GT(target2, target1);
-		}
-
-		void AssertLargerSmoothingFactorBiasesTowardsSmallerTargetWhenLastBlockTimeIsSmaller(uint32_t factor1, uint32_t factor2) {
-			// Sanity:
-			EXPECT_GT(factor2, factor1);
-
-			// Act:
-			auto config = CreateConfiguration();
-			config.BlockTimeSmoothingFactor = factor1;
-			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
-			auto target1 = CalculateBlockTarget(900, 914, 72000, 50, config);
-
-			config.BlockTimeSmoothingFactor = factor2;
-			auto target2 = CalculateBlockTarget(900, 914, 72000, 50, config);
-
-			// Assert:
-			EXPECT_LT(target2, target1);
-		}
-	}
-
-	TEST(TEST_CLASS, BlockTargetWithSmoothingIsGreaterThanTargetWithoutSmoothingWhenLastBlockTimeIsLarger) {
-		// Assert:
-		AssertLargerSmoothingFactorBiasesTowardsLargerTargetWhenLastBlockTimeIsLarger(0, 6000);
-	}
-
-	TEST(TEST_CLASS, BlockTargetWithSmoothingIsLessThanTargetWithoutSmoothingWhenLastBlockTimeIsSmaller) {
-		// Assert:
-		AssertLargerSmoothingFactorBiasesTowardsSmallerTargetWhenLastBlockTimeIsSmaller(0, 6000);
-	}
-
-	TEST(TEST_CLASS, LargerSmoothingFactorBiasesTowardsLargerTargetWhenLastBlockTimeIsLarger) {
-		// Assert:
-		AssertLargerSmoothingFactorBiasesTowardsLargerTargetWhenLastBlockTimeIsLarger(3000, 6000);
-	}
-
-	TEST(TEST_CLASS, LargerSmoothingFactorBiasesTowardsSmallerTargetWhenLastBlockTimeIsSmaller) {
-		// Assert:
-		AssertLargerSmoothingFactorBiasesTowardsSmallerTargetWhenLastBlockTimeIsSmaller(3000, 6000);
-	}
-
-	TEST(TEST_CLASS, BlockTargetIsCorrectlyCalculatedWhenSmoothingIsEnabled) {
-		// Act:
-		auto config = CreateConfiguration();
-		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(10);
-		config.BlockTimeSmoothingFactor = 6000;
-		auto target = CalculateBlockTarget(900, 911, 72000, 50, config);
-
-		// Assert:
-		BlockTarget multiplier = static_cast<uint64_t>((1ull << 54) * std::exp(6.0 * (11 - 10) / 10));
-		multiplier <<= 10;
-
-		BlockTarget expectedTarget = 11; // time difference (in seconds)
-		expectedTarget *= 72000; // importance
-		expectedTarget *= multiplier; // magic number with smoothing multiplier
-		expectedTarget /= 50'000'000'000'000; // difficulty
-
-		// Assert:
-		EXPECT_EQ(expectedTarget, target);
-	}
-
-	TEST(TEST_CLASS, BlockTargetSmoothingIsCapped) {
-		// Act:
-		auto config = CreateConfiguration();
-		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(10);
-		config.BlockTimeSmoothingFactor = 6000;
-		auto target = CalculateBlockTarget(900, 1000, 72000, 50, config);
-
-		// Assert:
-		BlockTarget expectedTarget = 100; // time difference (in seconds)
-		expectedTarget *= 72000; // importance
-		expectedTarget *= Two_To_64; // magic number
-		expectedTarget *= 100; // max smoothing
-		expectedTarget /= 50'000'000'000'000; // difficulty
-
-		// Assert:
-		EXPECT_EQ(expectedTarget, target);
 	}
 
 	// endregion
@@ -468,12 +297,12 @@ namespace catapult { namespace chain {
 			std::vector<std::pair<Key, Height>> ImportanceLookupParams;
 		};
 
-		std::unique_ptr<model::Block> CreateBlock(Height height, uint32_t timestampSeconds, uint32_t difficultyTrillions) {
+		std::unique_ptr<model::Block> CreateBlock(Height height, uint32_t timestampSeconds, uint32_t difficulty) {
 			auto pBlock = std::make_unique<model::Block>();
 			pBlock->Signer = test::GenerateRandomData<Hash256_Size>();
 			pBlock->Height = height;
+			pBlock->Difficulty = Difficulty(difficulty);
 			SetTimestampSeconds(*pBlock, timestampSeconds);
-			SetDifficultyTrillions(*pBlock, difficultyTrillions);
 			return pBlock;
 		}
 	}
@@ -527,8 +356,8 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, BlockHitPredicateReturnsFalseWhenHitIsEqualToTarget) {
 		// Arrange:
-		auto pParent = CreateBlock(Height(10), 900, 0);
-		auto pCurrent = CreateBlock(Height(11), 900, 50);
+		auto pParent = CreateBlock(Height(10), 1, 0);
+		auto pCurrent = CreateBlock(Height(11), 65537 * 641 + 1, 257 * 17 * 5 * 3);
 		const Hash256 generationHash{ {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -536,7 +365,7 @@ namespace catapult { namespace chain {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 		} };
 
-		Importance signerImportance = Importance(100000);
+		Importance signerImportance = Importance(6700417);
 		BlockHitPredicateContext context(signerImportance);
 
 		// Act:
@@ -560,12 +389,12 @@ namespace catapult { namespace chain {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 		} };
-		hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(0);
+		hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(65537 * 641);
 		hitContext.Signer = test::GenerateRandomData<Hash256_Size>();
-		hitContext.Difficulty = Difficulty(50 * 1'000'000'000'000);
+		hitContext.Difficulty = Difficulty(257 * 17 * 5 * 3);
 		hitContext.Height = Height(11);
 
-		Importance signerImportance = Importance(100000);
+		Importance signerImportance = Importance(6700417);
 		BlockHitPredicateContext context(signerImportance);
 
 		// Act:
@@ -609,7 +438,7 @@ namespace catapult { namespace chain {
 		hitContext.GenerationHash = { { 0xF7, 0xF6, 0xF5, 0xF4 } };
 		hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(100);
 		hitContext.Signer = test::GenerateRandomData<Hash256_Size>();
-		hitContext.Difficulty = Difficulty(50 * 1'000'000'000'000);
+		hitContext.Difficulty = Difficulty(50);
 		hitContext.Height = Height(11);
 
 		Importance signerImportance = Importance(1000);

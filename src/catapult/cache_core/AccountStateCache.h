@@ -29,31 +29,42 @@ namespace catapult { namespace cache {
 		AccountStateCacheDescriptor,
 		AccountStateCacheTypes::BaseSets,
 		AccountStateCacheTypes::Options,
-		const model::AddressSet&>;
+		const model::AddressSet&,
+		model::AddressSet&>;
 
 	/// Cache composed of stateful account information.
 	class BasicAccountStateCache : public AccountStateBasicCache {
 	public:
 		/// Creates a cache around \a config and \a options.
 		explicit BasicAccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
-				: BasicAccountStateCache(config, options, std::make_unique<model::AddressSet>())
+				: BasicAccountStateCache(config, options, std::make_unique<model::AddressSet>(), std::make_unique<model::AddressSet>())
 		{}
 
 	private:
 		BasicAccountStateCache(
 				const CacheConfiguration& config,
 				const AccountStateCacheTypes::Options& options,
-				std::unique_ptr<model::AddressSet>&& pHighValueAddresses)
-				: AccountStateBasicCache(config, AccountStateCacheTypes::Options(options), *pHighValueAddresses)
+				std::unique_ptr<model::AddressSet>&& pHighValueAddresses,
+				std::unique_ptr<model::AddressSet>&& pAddressesToUpdate)
+				: AccountStateBasicCache(config, AccountStateCacheTypes::Options(options), *pHighValueAddresses, *pAddressesToUpdate)
 				, m_pHighValueAddresses(std::move(pHighValueAddresses))
+				, m_pAddressesToUpdate(std::move(pAddressesToUpdate))
 		{}
 
 	public:
+		/// Initializes the cache with \a highValueAddresses and \a addressesToUpdate.
+		void init(model::AddressSet&& highValueAddresses, model::AddressSet&& addressesToUpdate) {
+			*m_pHighValueAddresses = std::move(highValueAddresses);
+			*m_pAddressesToUpdate = std::move(addressesToUpdate);
+		}
+
 		/// Commits all pending changes to the underlying storage.
 		/// \note This hides AccountStateBasicCache::commit.
 		void commit(const CacheDeltaType& delta) {
 			// high value addresses need to be captured before committing because committing clears the deltas
 			auto highValueAddresses = delta.highValueAddresses();
+			delta.commitSnapshots();
+			delta.addUpdatedAddresses(*m_pAddressesToUpdate);
 			AccountStateBasicCache::commit(delta);
 			*m_pHighValueAddresses = std::move(highValueAddresses);
 		}
@@ -61,20 +72,20 @@ namespace catapult { namespace cache {
 	private:
 		// unique pointer to allow set reference to be valid after moves of this cache
 		std::unique_ptr<model::AddressSet> m_pHighValueAddresses;
+		std::unique_ptr<model::AddressSet> m_pAddressesToUpdate;
 	};
 
 	/// Synchronized cache composed of stateful account information.
-	class AccountStateCache : public SynchronizedCache<BasicAccountStateCache> {
+	class AccountStateCache : public SynchronizedCacheWithInit<BasicAccountStateCache> {
 	public:
 		DEFINE_CACHE_CONSTANTS(AccountState)
 
 	public:
 		/// Creates a cache around \a config and \a options.
 		AccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
-				: SynchronizedCache<BasicAccountStateCache>(BasicAccountStateCache(config, options))
+				: SynchronizedCacheWithInit<BasicAccountStateCache>(BasicAccountStateCache(config, options))
 				, m_networkIdentifier(options.NetworkIdentifier)
 				, m_importanceGrouping(options.ImportanceGrouping)
-
 		{}
 
 	public:

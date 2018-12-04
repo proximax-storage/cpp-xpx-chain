@@ -5,6 +5,7 @@ option(ENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 message(STATUS "CATAPULT_VERSION_DESCRIPTION: ${CATAPULT_VERSION_DESCRIPTION}")
 MESSAGE(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
 MESSAGE(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
@@ -59,3 +60,6 @@ if (EXISTS "${CMAKE_SOURCE_DIR}/internal/CMakeLists.txt")
 endif()
 
 add_subdirectory(tools)
+
+# Help programs
+add_subdirectory(spammer)

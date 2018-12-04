@@ -19,19 +19,23 @@
 **/
 
 #pragma once
-#include "CompactMosaicUnorderedMap.h"
+#include "CompactMosaicMap.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/exceptions.h"
+#include "catapult/model/BalanceSnapshot.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/types.h"
-#include <unordered_map>
+#include "catapult/utils/Hashers.h"
+#include <list>
 
 namespace catapult { namespace state {
+	struct AccountState;
 
 	/// Container holding information about account.
 	class AccountBalances {
 	public:
 		/// Creates an empty account balances.
-		AccountBalances();
+		explicit AccountBalances(AccountState* accountState);
 
 		/// Copy constructor that makes a deep copy of \a accountBalances.
 		AccountBalances(const AccountBalances& accountBalances);
@@ -47,6 +51,16 @@ namespace catapult { namespace state {
 		AccountBalances& operator=(AccountBalances&& accountBalances);
 
 	public:
+		/// Returns const ref to snapshots.
+		const std::list<model::BalanceSnapshot>& snapshots() const {
+			return m_localSnapshots;
+		}
+
+		/// Add snapshots to snapshots
+		void addSnapshot(const model::BalanceSnapshot& snapshot) {
+			return pushSnapshot(snapshot, true /* committed */);
+		}
+
 		/// Returns the number of mosaics owned.
 		size_t size() const {
 			return m_balances.size();
@@ -67,12 +81,54 @@ namespace catapult { namespace state {
 
 	public:
 		/// Adds \a amount funds to a given mosaic (\a mosaicId).
-		AccountBalances& credit(MosaicId mosaicId, Amount amount);
+		/// It will increase balance of account without tracking of it in snapshots array.
+		AccountBalances& credit(const MosaicId& mosaicId, const Amount& amount);
 
 		/// Subtracts \a amount funds from a given mosaic (\a mosaicId).
-		AccountBalances& debit(MosaicId mosaicId, Amount amount);
+		/// It will decrease balance of account without tracking of it in snapshots array.
+		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount);
+
+		/// Adds \a amount funds to a given mosaic (\a mosaicId) at \a height.
+		/// Increasing of XPX balance will be tracked in snapshots array.
+		AccountBalances& credit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
+		/// Decreasing of XPX balance will be tracked in snapshots array.
+		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Commit snapshots from m_remoteSnapshots queue to m_localSnapshots queue
+		/// During commit we can remove snapshots from front of m_localSnapshots, to have valid history of account
+		void commitSnapshots();
+
+		/// Remove all snapshots
+		void cleanUpSnaphots() {
+			m_remoteSnapshots.clear();
+			m_localSnapshots.clear();
+		}
+
+		/// Check do we need to clean up the deque at \a height with \a config
+		void maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config);
+
+		/// Get effective balance of account at \a height with \a importanceGrouping
+		Amount getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
 
 	private:
-		CompactMosaicUnorderedMap m_balances;
+		/// Maybe push snapshot to deque during commit by \a mosaicId, new \a amount of xpx at \a height.
+		void maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Push snapshot to deque
+		void pushSnapshot(const model::BalanceSnapshot& snapshot, bool committed = false);
+
+		/// Adds \a amount funds to a given mosaic (\a mosaicId) at \a height.
+		AccountBalances& internalCredit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
+		AccountBalances& internalDebit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
+
+	private:
+		std::list<model::BalanceSnapshot> m_localSnapshots;
+		std::list<model::BalanceSnapshot> m_remoteSnapshots;
+		AccountState* m_accountState = nullptr;
+		CompactMosaicMap m_balances;
 	};
 }}

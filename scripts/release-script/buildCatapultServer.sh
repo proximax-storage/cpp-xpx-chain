@@ -51,6 +51,7 @@ make \
     # Catapult
     catapult.server \
     -j4
+
 cd ..
 
 # Now we want to create a docker image,

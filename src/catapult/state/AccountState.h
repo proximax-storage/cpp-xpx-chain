@@ -21,8 +21,21 @@
 #pragma once
 #include "AccountBalances.h"
 #include "AccountImportance.h"
+#include "catapult/constants.h"
 
 namespace catapult { namespace state {
+
+	/// Possible account types.
+	enum class AccountType : uint8_t {
+		/// Account is not linked to another account.
+		Unlinked,
+
+		/// Account is a balance-holding account that is linked to a remote harvester account.
+		Main,
+
+		/// Account is a remote harvester account that is linked to a balance-holding account.
+		Remote
+	};
 
 	/// Account state data.
 	struct AccountState {
@@ -31,8 +44,18 @@ namespace catapult { namespace state {
 		explicit AccountState(const catapult::Address& address, Height addressHeight)
 				: Address(address)
 				, AddressHeight(addressHeight)
+				, PublicKey()
 				, PublicKeyHeight(0)
+				, AccountType(AccountType::Unlinked)
+				, LinkedAccountKey()
+				, Balances(this)
 		{}
+
+		/// Copy constructor that makes a deep copy of \a accountState.
+		AccountState(const AccountState& accountState)
+		: Balances(this) {
+			*this = accountState;
+		}
 
 	public:
 		/// Address of an account.
@@ -47,8 +70,11 @@ namespace catapult { namespace state {
 		/// Height at which public key has been obtained.
 		Height PublicKeyHeight;
 
-		/// Importance information of the account.
-		AccountImportance ImportanceInfo;
+		/// Type of account.
+		state::AccountType AccountType;
+
+		/// Public key of linked account.
+		Key LinkedAccountKey;
 
 		/// Balances of an account.
 		AccountBalances Balances;

@@ -1,6 +1,8 @@
 cmake_minimum_required(VERSION 3.2)
 project(catapult)
 
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
+
 add_subdirectory(api)
 add_subdirectory(cache)
 add_subdirectory(cache_core)

@@ -26,8 +26,6 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
 
-namespace catapult { namespace model { struct NamespaceLifetimeConstraints; } }
-
 namespace catapult { namespace validators {
 
 	// region RegisterNamespaceTransaction
@@ -48,12 +46,10 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to root namespace notifications and validates that:
 	/// - namespace duration is less than or equal to \a maxDuration for root namespace
 	/// - namespace duration is zero for child namespace
-	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification)(BlockDuration maxDuration);
+	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification)();
 
-	/// A validator implementation that applies to root register namespace transactions and validates that:
-	/// - the namespace is available and can be created or renewed given namespace lifetime \a constraints
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification)(
-			const model::NamespaceLifetimeConstraints& constraints);
+	/// A validator implementation that applies to root register namespace transactions and validates that
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification)();
 
 	/// A validator implementation that applies to child register namespace transactions and validates that:
 	/// - the namespace is available and can be created
@@ -83,11 +79,9 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to mosaic properties notifications and validates that:
 	/// - definition has valid mosaic flags
 	/// - definition has divisibility no greater than \a maxDivisibility
-	/// - mosaic duration has a value not larger than \a maxMosaicDuration
 	/// - optional mosaic properties are sorted, known and not duplicative
 	DECLARE_STATELESS_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification)(
-			uint8_t maxDivisibility,
-			BlockDuration maxMosaicDuration);
+			uint8_t maxDivisibility);
 
 	/// A validator implementation that applies to mosaic definition notifications and validates that:
 	/// - a mosaic is consistent with its purported namespace

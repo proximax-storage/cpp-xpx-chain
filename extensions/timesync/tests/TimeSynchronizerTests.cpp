@@ -46,12 +46,10 @@ namespace catapult { namespace timesync {
 		void AddAccount(
 				cache::AccountStateCache& cache,
 				const TKey& key,
-				Importance importance,
-				model::ImportanceHeight importanceHeight) {
+				Importance importance) {
 			auto delta = cache.createDelta();
-			auto& accountState = delta->addAccount(key, Height(100));
-			accountState.ImportanceInfo.set(importance, importanceHeight);
-			accountState.Balances.credit(Xpx_Id, Amount(1000));
+			delta->addAccount(key, Height(1));
+			delta->find(key).get().Balances.credit(Xpx_Id, Amount(importance.unwrap()), Height(1));
 			cache.commit();
 		}
 
@@ -61,7 +59,7 @@ namespace catapult { namespace timesync {
 				const std::vector<TKey>& keys,
 				const std::vector<Importance>& importances) {
 			for (auto i = 0u; i < keys.size(); ++i)
-				AddAccount(cache, keys[i], importances[i], model::ImportanceHeight(1));
+				AddAccount(cache, keys[i], importances[i]);
 		}
 
 		std::vector<Address> ToAddresses(const std::vector<Key>& keys) {
@@ -94,15 +92,6 @@ namespace catapult { namespace timesync {
 					SeedAccountStateCache(m_cache, keys, importances);
 				else
 					SeedAccountStateCache(m_cache, addresses, importances);
-
-				// Sanity:
-				auto view = m_cache.createView();
-				for (auto i = 0u; i < keys.size(); ++i) {
-					if (KeyType::PublicKey == keyType)
-						EXPECT_EQ(importances[i], view->get(keys[i]).ImportanceInfo.current()) << "at index " << i;
-					else
-						EXPECT_EQ(importances[i], view->get(addresses[i]).ImportanceInfo.current()) << "at index " << i;
-				}
 			}
 
 		public:
@@ -112,7 +101,7 @@ namespace catapult { namespace timesync {
 
 			void addHighValueAccounts(size_t count) {
 				for (auto i = 0u; i < count; ++i)
-					AddAccount(m_cache, test::GenerateRandomData<Key_Size>(), Importance(100'000), model::ImportanceHeight(1));
+					AddAccount(m_cache, test::GenerateRandomData<Key_Size>(), Importance(100'000));
 			}
 
 		private:

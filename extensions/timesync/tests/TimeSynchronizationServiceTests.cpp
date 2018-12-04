@@ -209,13 +209,15 @@ namespace catapult { namespace timesync {
 		enum class ResponseType { Success, Error };
 
 		template<typename TAssertState>
-		void AssertStateChange(int64_t remoteOffset, Importance importance, ResponseType responseType, TAssertState assertState) {
+		void AssertStateChange(int64_t remoteOffset, ResponseType responseType, Amount balance, TAssertState assertState) {
 			// Arrange: prepare account state cache
 			auto keyPair = test::GenerateKeyPair();
 			auto cache = CreateCache(Total_Chain_Balance);
 			{
 				auto cacheDelta = cache.createDelta();
-				test::AddAccount(cacheDelta.sub<cache::AccountStateCache>(), keyPair.publicKey(), importance, model::ImportanceHeight(1));
+				auto& accountCache = cacheDelta.sub<cache::AccountStateCache>();
+				accountCache.addAccount(keyPair.publicKey(), Height(1));
+				accountCache.find(keyPair.publicKey()).get().Balances.credit(Xpx_Id, balance, Height(1));
 				cache.commit(Height(1));
 			}
 
@@ -265,7 +267,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TaskExecutionDoesNotChangeOffsetWhenChangeIsLessThanThreshold) {
 		// Assert: importance = 0.1, calculated offset = 0.1 * 500 = 50 and threshold is 85
-		AssertStateChange(500, Importance(100'000), ResponseType::Success, [](const auto& context) {
+		AssertStateChange(500, ResponseType::Success, Amount(100000), [](const auto& context) {
 			EXPECT_EQ(0u, context.counter(Time_Offset_Absolute_Counter_Name));
 			EXPECT_EQ(Positive, context.counter(Time_Offset_Direction_Counter_Name));
 			EXPECT_EQ(1u, context.counter(Node_Age_Counter_Name));
@@ -275,7 +277,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TaskExecutionChangesOffsetWhenChangeIsGreaterThanThreshold) {
 		// Assert: importance = 0.5, calculated offset = 0.5 * 200 = 100 and threshold is 85
-		AssertStateChange(200, Importance(500'000), ResponseType::Success, [](const auto& context) {
+		AssertStateChange(200, ResponseType::Success, Amount(500000), [](const auto& context) {
 			EXPECT_EQ(100u, context.counter(Time_Offset_Absolute_Counter_Name));
 			EXPECT_EQ(Positive, context.counter(Time_Offset_Direction_Counter_Name));
 			EXPECT_EQ(1u, context.counter(Node_Age_Counter_Name));
@@ -285,7 +287,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TaskExecutionDoesNotChangeOffsetWhenRemoteErrors) {
 		// Assert: initial offset is zero
-		AssertStateChange(200, Importance(500'000), ResponseType::Error, [](const auto& context) {
+		AssertStateChange(200, ResponseType::Error, Amount(500000), [](const auto& context) {
 			EXPECT_EQ(0u, context.counter(Time_Offset_Absolute_Counter_Name));
 			EXPECT_EQ(Positive, context.counter(Time_Offset_Direction_Counter_Name));
 			EXPECT_EQ(1u, context.counter(Node_Age_Counter_Name));

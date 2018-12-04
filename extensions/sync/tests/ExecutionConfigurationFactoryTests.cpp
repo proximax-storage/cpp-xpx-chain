@@ -40,9 +40,10 @@ namespace catapult { namespace sync {
 		std::vector<std::string> expectedObserverNames{
 			"AccountAddressObserver",
 			"AccountPublicKeyObserver",
-			"BalanceObserver",
+			"BalanceDebitObserver",
+			"BalanceTransferObserver",
 			"HarvestFeeObserver",
-			"RecalculateImportancesObserver",
+			"SnapshotCleanUpObserver",
 			"BlockDifficultyObserver",
 			"BlockDifficultyPruningObserver"
 		};
@@ -52,7 +53,7 @@ namespace catapult { namespace sync {
 			"DeadlineValidator",
 			"NemesisSinkValidator",
 			"EligibleHarvesterValidator",
-			"BalanceReserveValidator",
+			"BalanceDebitValidator",
 			"BalanceTransferValidator"
 		};
 		EXPECT_EQ(expectedValidatorNames, config.pValidator->names());

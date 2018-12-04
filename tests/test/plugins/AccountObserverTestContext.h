@@ -32,35 +32,39 @@ namespace catapult { namespace test {
 	public:
 		/// Finds the account identified by \a address.
 		const state::AccountState* find(const Address& address) const {
-			return cache().sub<cache::AccountStateCache>().tryGet(address);
+			return cache().sub<cache::AccountStateCache>().find(address).tryGet();
 		}
 
 		/// Finds the account identified by \a publicKey.
 		const state::AccountState* find(const Key& publicKey) const {
-			return cache().sub<cache::AccountStateCache>().tryGet(publicKey);
+			return cache().sub<cache::AccountStateCache>().find(publicKey).tryGet();
 		}
 
 	private:
 		state::AccountState& addAccount(const Address& address) {
-			return cache().sub<cache::AccountStateCache>().addAccount(address, Height(1234));
+			auto& accountStateCache = cache().sub<cache::AccountStateCache>();
+			accountStateCache.addAccount(address, Height(1234));
+			return accountStateCache.find(address).get();
 		}
 
 		state::AccountState& addAccount(const Key& publicKey) {
-			return cache().sub<cache::AccountStateCache>().addAccount(publicKey, Height(1));
+			auto& accountStateCache = cache().sub<cache::AccountStateCache>();
+			accountStateCache.addAccount(publicKey, Height(1));
+			return accountStateCache.find(publicKey).get();
 		}
 
 	public:
 		/// Sets the (xpx) balance of the account identified by \a accountIdentifier to \a amount.
 		template<typename IdType>
-		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount::ValueType amount) {
-			return setAccountBalance(accountIdentifier, Amount(amount));
+		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount::ValueType amount, const Height& height) {
+			return setAccountBalance(accountIdentifier, Amount(amount), height);
 		}
 
 		/// Sets the (xpx) balance of the account identified by \a accountIdentifier to \a amount.
 		template<typename IdType>
-		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount amount) {
+		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount amount, const Height& height) {
 			auto& accountState = addAccount(accountIdentifier);
-			accountState.Balances.credit(Xpx_Id, amount);
+			accountState.Balances.credit(Xpx_Id, amount, height);
 			return accountState.Balances;
 		}
 

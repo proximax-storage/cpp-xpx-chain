@@ -27,21 +27,16 @@ namespace catapult { namespace model {
 	/// Constraints for a namespace's lifetime.
 	struct NamespaceLifetimeConstraints {
 	public:
-		/// Creates constraints around \a maxDuration, \a gracePeriodDuration and \a maxRollbackBlocks.
+		/// Creates constraints around \a gracePeriodDuration and \a maxRollbackBlocks.
 		constexpr explicit NamespaceLifetimeConstraints(
-				BlockDuration maxDuration,
 				BlockDuration gracePeriodDuration,
 				uint32_t maxRollbackBlocks)
 				: TotalGracePeriodDuration(gracePeriodDuration.unwrap() + maxRollbackBlocks)
-				, MaxNamespaceDuration(maxDuration.unwrap() + gracePeriodDuration.unwrap())
 		{}
 
 	public:
 		/// Total grace period duration including the possibility of a chain rollback.
 		BlockDuration TotalGracePeriodDuration;
-
-		/// Maximum lifetime a namespace may have including the grace period.
-		BlockDuration MaxNamespaceDuration;
 
 	public:
 		/// Returns a value indicating whether or not \a height is within the total grace period given \a lifetimeEnd.

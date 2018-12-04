@@ -22,6 +22,7 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
+#include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/plugins/PluginLoader.h"
@@ -32,6 +33,7 @@
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
 #include "tests/TestHarness.h"
 #include <boost/filesystem.hpp>
@@ -64,7 +66,7 @@ namespace catapult { namespace sync {
 			// so, use a fixed account that will generate a hit lower than the target, which is fixed in the test
 			// since the cache is setup in InitializeCatapultCacheForDispatcherTests,
 			// this account does not need to be a 'real' nemesis account
-			return crypto::KeyPair::FromString("75C1A1762304FE9EC59C5E9632D8E88C746BDB92B0563CCDDFC4A15C7BFD4578");
+			return crypto::KeyPair::FromString(test::Mijin_Test_Private_Keys[0]);
 		}
 
 		cache::CatapultCache CreateCatapultCacheForDispatcherTests() {
@@ -81,28 +83,15 @@ namespace catapult { namespace sync {
 			auto delta = cache.createDelta();
 
 			// set a difficulty for the nemesis block
-			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), Timestamp(0), Difficulty());
+			delta.sub<cache::BlockDifficultyCache>().insert(Height(1), Timestamp(0), Difficulty(NEMESIS_BLOCK_DIFFICULTY));
 
 			// add a balance and importance for the signer
-			auto& accountState = delta.sub<cache::AccountStateCache>().addAccount(signer.publicKey(), Height(1));
-			accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000));
-			accountState.ImportanceInfo.set(Importance(1'000'000'000), model::ImportanceHeight(1));
+			auto& accountCache = delta.sub<cache::AccountStateCache>();
+			accountCache.addAccount(signer.publicKey(), Height(1));
+			accountCache.find(signer.publicKey()).get().Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
 
 			// commit all changes
 			cache.commit(Height(1));
-		}
-
-		std::shared_ptr<model::Block> CreateValidBlockForDispatcherTests(const crypto::KeyPair& signer) {
-			constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
-
-			mocks::MockMemoryBasedStorage storage;
-			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
-
-			model::PreviousBlockContext context(*pNemesisBlockElement);
-			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
-			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
-			test::SignBlock(signer, *pBlock);
-			return std::move(pBlock);
 		}
 
 		// endregion
@@ -197,6 +186,24 @@ namespace catapult { namespace sync {
 			std::atomic<size_t> m_numNewTransactionsSinkCalls;
 			mocks::MockNotificationValidatorT<model::BlockNotification>* m_pBlockValidator;
 		};
+
+		std::shared_ptr<model::Block> CreateValidBlockForDispatcherTests(const crypto::KeyPair& signer, const TestContext& testContext) {
+			constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+
+			mocks::MockMemoryBlockStorage storage;
+			auto pNemesisBlockElement = storage.loadBlockElement(Height(1));
+
+			model::PreviousBlockContext context(*pNemesisBlockElement);
+			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
+			pBlock->Timestamp = context.Timestamp + Timestamp(61'000);
+			pBlock->Difficulty = chain::CalculateDifficulty(
+					testContext.testState().cache().sub<cache::BlockDifficultyCache>(),
+					state::BlockDifficultyInfo(*pBlock),
+					testContext.testState().config().BlockChain
+			);
+			test::SignBlock(signer, *pBlock);
+			return std::move(pBlock);
+		}
 
 		// region DispatcherStatus
 
@@ -354,9 +361,8 @@ namespace catapult { namespace sync {
 
 	namespace {
 		template<typename THandler>
-		void AssertCanConsumeBlockRange(model::BlockRange&& range, THandler handler) {
+		void AssertCanConsumeBlockRange(model::BlockRange&& range, TestContext& context, THandler handler) {
 			// Arrange:
-			TestContext context;
 			context.boot();
 			auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
 
@@ -375,8 +381,9 @@ namespace catapult { namespace sync {
 	}
 
 	TEST(TEST_CLASS, CanConsumeBlockRange_InvalidElement) {
+		TestContext context;
 		// Assert:
-		AssertCanConsumeBlockRange(test::CreateBlockEntityRange(1), [](const auto& context) {
+		AssertCanConsumeBlockRange(test::CreateBlockEntityRange(1), context, [](const auto& context) {
 			// - the block was not forwarded to the sink
 			EXPECT_EQ(0u, context.numNewBlockSinkCalls());
 			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
@@ -385,11 +392,12 @@ namespace catapult { namespace sync {
 
 	TEST(TEST_CLASS, CanConsumeBlockRange_ValidElement) {
 		// Arrange:
-		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair());
+		TestContext context;
+		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair(), context);
 		auto range = test::CreateEntityRange({ pNextBlock.get() });
 
 		// Assert:
-		AssertCanConsumeBlockRange(std::move(range), [](const auto& context) {
+		AssertCanConsumeBlockRange(std::move(range), context, [](const auto& context) {
 			WAIT_FOR_ONE_EXPR(context.numNewBlockSinkCalls());
 
 			// - the block was forwarded to the sink
@@ -400,9 +408,8 @@ namespace catapult { namespace sync {
 
 	namespace {
 		template<typename THandler>
-		void AssertCanConsumeBlockRangeCompletionAware(model::BlockRange&& range, THandler handler) {
+		void AssertCanConsumeBlockRangeCompletionAware(model::BlockRange&& range, TestContext& context, THandler handler) {
 			// Arrange:
-			TestContext context;
 			context.boot();
 			auto factory = context.testState().state().hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Local);
 
@@ -423,8 +430,9 @@ namespace catapult { namespace sync {
 	}
 
 	TEST(TEST_CLASS, CanConsumeBlockRangeCompletionAware_InvalidElement) {
+		TestContext context;
 		// Assert:
-		AssertCanConsumeBlockRangeCompletionAware(test::CreateBlockEntityRange(1), [](const auto& context) {
+		AssertCanConsumeBlockRangeCompletionAware(test::CreateBlockEntityRange(1), context, [](const auto& context) {
 			// - the block was not forwarded to the sink
 			EXPECT_EQ(0u, context.numNewBlockSinkCalls());
 			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
@@ -439,11 +447,12 @@ namespace catapult { namespace sync {
 
 	TEST(TEST_CLASS, CanConsumeBlockRangeCompletionAware_ValidElement) {
 		// Arrange:
-		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair());
+		TestContext context;
+		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair(), context);
 		auto range = test::CreateEntityRange({ pNextBlock.get() });
 
 		// Assert:
-		AssertCanConsumeBlockRangeCompletionAware(std::move(range), [](const auto& context) {
+		AssertCanConsumeBlockRangeCompletionAware(std::move(range), context, [](const auto& context) {
 			// - the block was forwarded to the sink
 			EXPECT_EQ(1u, context.numNewBlockSinkCalls());
 			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
@@ -452,7 +461,8 @@ namespace catapult { namespace sync {
 			const auto& stateChangeSubscriber = context.testState().stateChangeSubscriber();
 			EXPECT_EQ(1u, stateChangeSubscriber.numScoreChanges());
 			EXPECT_EQ(1u, stateChangeSubscriber.numStateChanges());
-			EXPECT_EQ(model::ChainScore(99'999'999'999'940), stateChangeSubscriber.lastChainScore());
+			// 18'156'244'167'036'960 = 2^64 / NEMESIS_BLOCK_DIFFICULTY * 61 / 60
+			EXPECT_EQ(model::ChainScore(18'156'244'167'036'960), stateChangeSubscriber.lastChainScore());
 		});
 	}
 
@@ -461,15 +471,20 @@ namespace catapult { namespace sync {
 		TestContext context;
 		context.boot();
 		auto keyPair = GetBlockSignerKeyPair();
-		auto pBaseBlock = CreateValidBlockForDispatcherTests(keyPair);
+		auto pBaseBlock = CreateValidBlockForDispatcherTests(keyPair, context);
 		auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
 
 		factory(test::CreateEntityRange({ pBaseBlock.get() }));
 		WAIT_FOR_ONE_EXPR(context.numNewBlockSinkCalls());
 
 		// Act: create a better block to cause a rollback
-		auto pBetterBlock = CreateValidBlockForDispatcherTests(keyPair);
+		auto pBetterBlock = CreateValidBlockForDispatcherTests(keyPair, context);
 		pBetterBlock->Timestamp = pBetterBlock->Timestamp - Timestamp(1000);
+		pBetterBlock->Difficulty = chain::CalculateDifficulty(
+				context.testState().cache().sub<cache::BlockDifficultyCache>(),
+				state::BlockDifficultyInfo(*pBetterBlock),
+				context.testState().config().BlockChain
+		);
 		test::SignBlock(GetBlockSignerKeyPair(), *pBetterBlock);
 
 		factory(test::CreateEntityRange({ pBetterBlock.get() }));
@@ -490,15 +505,20 @@ namespace catapult { namespace sync {
 		TestContext context;
 		context.boot();
 		auto keyPair = GetBlockSignerKeyPair();
-		auto pBaseBlock = CreateValidBlockForDispatcherTests(keyPair);
+		auto pBaseBlock = CreateValidBlockForDispatcherTests(keyPair, context);
 		auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
 
 		factory(test::CreateEntityRange({ pBaseBlock.get() }));
 		WAIT_FOR_ONE_EXPR(context.numNewBlockSinkCalls());
 
 		// Act: create a better block to cause a rollback and fail validation
-		auto pBetterBlock = CreateValidBlockForDispatcherTests(keyPair);
+		auto pBetterBlock = CreateValidBlockForDispatcherTests(keyPair, context);
 		pBetterBlock->Timestamp = pBetterBlock->Timestamp - Timestamp(1000);
+		pBetterBlock->Difficulty = chain::CalculateDifficulty(
+				context.testState().cache().sub<cache::BlockDifficultyCache>(),
+				state::BlockDifficultyInfo(*pBetterBlock),
+				context.testState().config().BlockChain
+		);
 		test::SignBlock(GetBlockSignerKeyPair(), *pBetterBlock);
 		context.setBlockValidationResult(ValidationResult::Failure);
 
@@ -507,6 +527,11 @@ namespace catapult { namespace sync {
 
 		// - failure is unknown until next rollback, alter timestamp not to hit recency cache
 		pBetterBlock->Timestamp = pBetterBlock->Timestamp - Timestamp(2000);
+		pBetterBlock->Difficulty = chain::CalculateDifficulty(
+				context.testState().cache().sub<cache::BlockDifficultyCache>(),
+				state::BlockDifficultyInfo(*pBetterBlock),
+				context.testState().config().BlockChain
+		);
 		test::SignBlock(GetBlockSignerKeyPair(), *pBetterBlock);
 		context.setBlockValidationResult(ValidationResult::Success);
 
@@ -605,8 +630,9 @@ namespace catapult { namespace sync {
 	// region transaction status subscriber flush
 
 	TEST(TEST_CLASS, BlockDispatcherFlushesTransactionStatusSubscriber) {
+		TestContext context;
 		// Arrange: notice that flush should be called even (especially) if block failed validation
-		AssertCanConsumeBlockRange(test::CreateBlockEntityRange(1), [](const auto& context) {
+		AssertCanConsumeBlockRange(test::CreateBlockEntityRange(1), context, [](const auto& context) {
 			const auto& subscriber = context.testState().transactionStatusSubscriber();
 			WAIT_FOR_ONE_EXPR(subscriber.numFlushes());
 

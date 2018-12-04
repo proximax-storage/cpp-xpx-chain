@@ -68,6 +68,8 @@ namespace catapult { namespace model {
 		// Assert:
 		assertSuccessfulParse("mijin", NetworkIdentifier::Mijin);
 		assertSuccessfulParse("mijin-test", NetworkIdentifier::Mijin_Test);
+		assertSuccessfulParse("private", NetworkIdentifier::Private);
+		assertSuccessfulParse("private-test", NetworkIdentifier::Private_Test);
 		assertSuccessfulParse("public", NetworkIdentifier::Public);
 		assertSuccessfulParse("public-test", NetworkIdentifier::Public_Test);
 
