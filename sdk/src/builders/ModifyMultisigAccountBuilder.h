@@ -21,19 +21,18 @@
 #pragma once
 #include "TransactionBuilder.h"
 #include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
+#include "plugins/txes/reputation/src/model/ModifyMultisigAccountAndReputationTransaction.h"
 #include <vector>
 
 namespace catapult { namespace builders {
 
-	/// Builder for a modify multisig account transaction.
-	class ModifyMultisigAccountBuilder : public TransactionBuilder {
+	/// Builder for a modify multisig account transaction types.
+	template<typename TRegularTransaction, typename TEmbeddedTransaction>
+	class ModifyMultisigAccountBuilderT : public TransactionBuilder {
 	public:
-		using Transaction = model::ModifyMultisigAccountTransaction;
-		using EmbeddedTransaction = model::EmbeddedModifyMultisigAccountTransaction;
-
 		/// Creates a modify multisig account builder for building a modify multisig account transaction from \a signer
 		/// for the network specified by \a networkIdentifier.
-		ModifyMultisigAccountBuilder(model::NetworkIdentifier networkIdentifier, const Key& signer);
+		ModifyMultisigAccountBuilderT(model::NetworkIdentifier networkIdentifier, const Key& signer);
 
 	public:
 		/// Sets the relative change of the minimal number of cosignatories (\a minRemovalDelta)
@@ -49,10 +48,10 @@ namespace catapult { namespace builders {
 
 	public:
 		/// Builds a new modify multisig account transaction.
-		std::unique_ptr<Transaction> build() const;
+		std::unique_ptr<TRegularTransaction> build() const;
 
 		/// Builds a new embedded modify multisig account transaction.
-		std::unique_ptr<EmbeddedTransaction> buildEmbedded() const;
+		std::unique_ptr<TEmbeddedTransaction> buildEmbedded() const;
 
 	private:
 		template<typename TTransaction>
@@ -63,4 +62,14 @@ namespace catapult { namespace builders {
 		int8_t m_minApprovalDelta;
 		std::vector<model::CosignatoryModification> m_modifications;
 	};
+
+	/// Builder for a modify multisig account transaction.
+	using ModifyMultisigAccountBuilder = ModifyMultisigAccountBuilderT<
+		model::ModifyMultisigAccountTransaction,
+		model::EmbeddedModifyMultisigAccountTransaction>;
+
+	/// Builder for a modify multisig account and reputation transaction.
+	using ModifyMultisigAccountAndReputationBuilder = ModifyMultisigAccountBuilderT<
+		model::ModifyMultisigAccountAndReputationTransaction,
+		model::EmbeddedModifyMultisigAccountAndReputationTransaction>;
 }}
