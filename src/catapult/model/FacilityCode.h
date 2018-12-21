@@ -27,6 +27,8 @@ namespace catapult { namespace model {
 	enum class FacilityCode : uint8_t {
 		/// Aggregate facility code.
 		Aggregate = 0x41,
+		/// Contract facility code.
+		Contract = 0x57,
 		/// Core facility code.
 		Core = 0x43,
 		/// Lock hash facility code.

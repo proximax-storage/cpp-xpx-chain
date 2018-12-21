@@ -1,0 +1,6 @@
+cmake_minimum_required(VERSION 3.2)
+
+set(PLUGIN_BASE_NAME catapult.plugins.contract)
+
+include_directories(${PROJECT_SOURCE_DIR}/plugins/txes/multisig)
+catapult_tx_plugin_src(${PLUGIN_BASE_NAME})

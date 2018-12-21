@@ -26,6 +26,7 @@ namespace catapult { namespace cache {
 	/// Cache ids for well-known caches.
 	enum class CacheId : uint32_t {
 		AccountState,
+		Contract,
 		BlockDifficulty,
 		Hash,
 		Namespace,

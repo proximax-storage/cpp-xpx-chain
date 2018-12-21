@@ -44,22 +44,23 @@ NAMESPACES_FALSEPOSITIVES = (
 
     # cache aliases (only headers without 'real' types)
     re.compile(r'plugins.services.hashcache.src.cache.HashCacheTypes.h'),
+    re.compile(r'plugins.txes.contract.src.cache.ContractCacheTypes.h'),
+    re.compile(r'plugins.txes.contract.src.cache.ReputationCacheTypes.h'),
     re.compile(r'plugins.txes.multisig.src.cache.MultisigCacheTypes.h'),
     re.compile(r'plugins.txes.namespace.src.cache.MosaicCacheTypes.h'),
     re.compile(r'plugins.txes.namespace.src.cache.NamespaceCacheTypes.h'),
-    re.compile(r'plugins.txes.reputation.src.cache.ReputationCacheTypes.h'),
 
     # main entry points
     re.compile(r'src.catapult.server.main.cpp'),
 
     # mongo plugins (only entry point)
     re.compile(r'extensions.mongo.plugins.aggregate.src.MongoAggregatePlugin.cpp'),
+    re.compile(r'extensions.mongo.plugins.contract.src.MongoContractPlugin.cpp'),
     re.compile(r'extensions.mongo.plugins.lock_hash.src.MongoHashLockPlugin.cpp'),
     re.compile(r'extensions.mongo.plugins.lock_secret.src.MongoSecretLockPlugin.cpp'),
     re.compile(r'extensions.mongo.plugins.multisig.src.MongoMultisigPlugin.cpp'),
     re.compile(r'extensions.mongo.plugins.namespace.src.MongoNamespacePlugin.cpp'),
     re.compile(r'extensions.mongo.plugins.property.src.MongoPropertyPlugin.cpp'),
-    re.compile(r'extensions.mongo.plugins.reputation.src.MongoReputationPlugin.cpp'),
     re.compile(r'extensions.mongo.plugins.transfer.src.MongoTransferPlugin.cpp'),
 
     # everything in int tests, as there's no hierarchy there and we can't figure out ns
@@ -162,6 +163,7 @@ EXTENSION_FIRSTINCLUDES = {
     # mongo
     'extensions/mongo/plugins/aggregate/src/MongoAggregatePlugin.cpp': 'AggregateMapper.h',
     'extensions/mongo/plugins/aggregate/tests/MongoAggregatePluginTests.cpp': 'mongo/tests/test/MongoPluginTestUtils.h',
+    'extensions/mongo/plugins/contract/src/MongoContractPlugin.cpp': 'ModifyContractMapper.h',
     'extensions/mongo/plugins/lock_hash/src/MongoHashLockPlugin.cpp': 'HashLockMapper.h',
     'extensions/mongo/plugins/lock_hash/tests/MongoHashLockPluginTests.cpp': 'mongo/tests/test/MongoPluginTestUtils.h',
     'extensions/mongo/plugins/lock_secret/src/MongoSecretLockPlugin.cpp': 'SecretLockMapper.h',
@@ -172,7 +174,6 @@ EXTENSION_FIRSTINCLUDES = {
     'extensions/mongo/plugins/namespace/tests/MongoNamespacePluginTests.cpp': 'mongo/tests/test/MongoPluginTestUtils.h',
     'extensions/mongo/plugins/property/src/MongoPropertyPlugin.cpp': 'PropertyMapper.h',
     'extensions/mongo/plugins/property/tests/MongoPropertyPluginTests.cpp': 'mongo/tests/test/MongoPluginTestUtils.h',
-    'extensions/mongo/plugins/reputation/src/MongoReputationPlugin.cpp': 'ModifyReputationAccountMapper.h',
     'extensions/mongo/plugins/transfer/src/MongoTransferPlugin.cpp': 'TransferMapper.h',
     'extensions/mongo/plugins/transfer/tests/MongoTransferPluginTests.cpp': 'mongo/tests/test/MongoPluginTestUtils.h',
 }
