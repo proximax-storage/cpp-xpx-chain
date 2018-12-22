@@ -26,21 +26,56 @@ namespace catapult { namespace builders {
 #define TEST_CLASS ModifyMultisigAccountBuilderTests
 
 	namespace {
-		using RegularTraits = test::RegularTransactionTraits<model::ModifyMultisigAccountTransaction>;
-		using EmbeddedTraits = test::EmbeddedTransactionTraits<model::EmbeddedModifyMultisigAccountTransaction>;
+		using MultisigRegularTraits = test::RegularTransactionTraits<model::ModifyMultisigAccountTransaction>;
+		using MultisigEmbeddedTraits = test::EmbeddedTransactionTraits<model::EmbeddedModifyMultisigAccountTransaction>;
+		using ReputationRegularTraits = test::RegularTransactionTraits<model::ModifyMultisigAccountAndReputationTransaction>;
+		using ReputationEmbeddedTraits = test::EmbeddedTransactionTraits<model::EmbeddedModifyMultisigAccountAndReputationTransaction>;
 		using Modifications = std::vector<model::CosignatoryModification>;
+		using MultisigBuilder = ModifyMultisigAccountBuilder;
+		using ReputationBuilder = ModifyMultisigAccountAndReputationBuilder;
 
-		template<typename TTraits, typename TValidationFunction>
+		constexpr auto MultisigType = model::Entity_Type_Modify_Multisig_Account;
+		constexpr auto ReputationType = model::Entity_Type_Modify_Multisig_Account_And_Reputation;
+
+		struct TransactionProperties {
+		public:
+			TransactionProperties()
+					: MinRemovalDelta(0)
+					, MinApprovalDelta(0)
+			{}
+
+		public:
+			int8_t MinRemovalDelta;
+			int8_t MinApprovalDelta;
+			std::vector<model::CosignatoryModification> Modifications;
+		};
+
+		template<typename TTransaction>
+		void AssertTransactionProperties(const TransactionProperties& expectedProperties, const TTransaction& transaction) {
+			EXPECT_EQ(expectedProperties.MinRemovalDelta, transaction.MinRemovalDelta);
+			EXPECT_EQ(expectedProperties.MinApprovalDelta, transaction.MinApprovalDelta);
+
+			auto i = 0u;
+			const auto* pModification = transaction.ModificationsPtr();
+			for (const auto& modification : expectedProperties.Modifications) {
+				auto rawType = static_cast<uint16_t>(modification.ModificationType);
+				EXPECT_EQ(modification.ModificationType, pModification->ModificationType) << "type " << rawType << " at index " << i;
+				EXPECT_EQ(modification.CosignatoryPublicKey, pModification->CosignatoryPublicKey) << "at index " << i;
+				++pModification;
+			}
+		}
+
+		template<typename TTraits, typename TBuilder, model::EntityType TransactionType>
 		void AssertCanBuildTransaction(
 				size_t additionalSize,
-				const consumer<ModifyMultisigAccountBuilder&>& buildTransaction,
-				const TValidationFunction& validateTransaction) {
+				const TransactionProperties& expectedProperties,
+				const consumer<TBuilder&>& buildTransaction) {
 			// Arrange:
 			auto networkId = static_cast<model::NetworkIdentifier>(0x62);
 			auto signer = test::GenerateRandomData<Key_Size>();
 
 			// Act:
-			ModifyMultisigAccountBuilder builder(networkId, signer);
+			TBuilder builder(networkId, signer);
 			buildTransaction(builder);
 			auto pTransaction = TTraits::InvokeBuilder(builder);
 
@@ -48,39 +83,25 @@ namespace catapult { namespace builders {
 			TTraits::CheckFields(additionalSize, *pTransaction);
 			EXPECT_EQ(signer, pTransaction->Signer);
 			EXPECT_EQ(0x6203, pTransaction->Version);
-			EXPECT_EQ(model::Entity_Type_Modify_Multisig_Account, pTransaction->Type);
+			EXPECT_EQ(TransactionType, pTransaction->Type);
 
-			validateTransaction(*pTransaction);
-		}
-
-		auto CreatePropertyChecker(int8_t minRemovalDelta, int8_t minApprovalDelta, const Modifications& modifications) {
-			return [minRemovalDelta, minApprovalDelta, &modifications](const auto& transaction) {
-				EXPECT_EQ(minRemovalDelta, transaction.MinRemovalDelta);
-				EXPECT_EQ(minApprovalDelta, transaction.MinApprovalDelta);
-
-				auto i = 0u;
-				const auto* pModification = transaction.ModificationsPtr();
-				for (const auto& modification : modifications) {
-					EXPECT_EQ(modification.ModificationType, pModification->ModificationType)
-							<< "type " << static_cast<uint16_t>(modification.ModificationType) << "at index " << i;
-					EXPECT_EQ(modification.CosignatoryPublicKey, pModification->CosignatoryPublicKey) << "at index " << i;
-					++pModification;
-				}
-			};
+			AssertTransactionProperties(expectedProperties, *pTransaction);
 		}
 	}
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Regular) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RegularTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Embedded) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedTraits>(); } \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+	template<typename TTraits, typename TBuilder, model::EntityType TransactionType> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_MultisigRegular) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MultisigRegularTraits, MultisigBuilder, MultisigType>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_MultisigEmbedded) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MultisigEmbeddedTraits, MultisigBuilder, MultisigType>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_ReputationRegular) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ReputationRegularTraits, ReputationBuilder, ReputationType>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_ReputationEmbedded) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ReputationEmbeddedTraits, ReputationBuilder, ReputationType>(); } \
+	template<typename TTraits, typename TBuilder, model::EntityType TransactionType> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	// region constructor
 
 	TRAITS_BASED_TEST(CanCreateTransactionWithDefaultValues) {
 		// Assert:
-		AssertCanBuildTransaction<TTraits>(0, [](const auto&) {}, CreatePropertyChecker(0, 0, {}));
+		AssertCanBuildTransaction<TTraits, TBuilder, TransactionType>(0, TransactionProperties(), [](auto&) {});
 	}
 
 	// endregion
@@ -88,23 +109,25 @@ namespace catapult { namespace builders {
 	// region min cosignatory settings
 
 	TRAITS_BASED_TEST(CanSetMinRemovalDelta) {
+		// Arrange:
+		auto expectedProperties = TransactionProperties();
+		expectedProperties.MinRemovalDelta = 3;
+
 		// Assert:
-		AssertCanBuildTransaction<TTraits>(
-				0,
-				[](auto& builder) {
-					builder.setMinRemovalDelta(3);
-				},
-				CreatePropertyChecker(3, 0, {}));
+		AssertCanBuildTransaction<TTraits, TBuilder, TransactionType>(0, expectedProperties, [](auto& builder) {
+			builder.setMinRemovalDelta(3);
+		});
 	}
 
 	TRAITS_BASED_TEST(CanSetMinApprovalDelta) {
+		// Arrange:
+		auto expectedProperties = TransactionProperties();
+		expectedProperties.MinApprovalDelta = 3;
+
 		// Assert:
-		AssertCanBuildTransaction<TTraits>(
-				0,
-				[](auto& builder) {
-					builder.setMinApprovalDelta(3);
-				},
-				CreatePropertyChecker(0, 3, {}));
+		AssertCanBuildTransaction<TTraits, TBuilder, TransactionType>(0, expectedProperties, [](auto& builder) {
+			builder.setMinApprovalDelta(3);
+		});
 	}
 
 	// endregion
@@ -122,7 +145,8 @@ namespace catapult { namespace builders {
 			return modifications;
 		}
 
-		void AddAll(ModifyMultisigAccountBuilder& builder, const Modifications& modifications) {
+		template<typename TBuilder>
+		void AddAll(TBuilder& builder, const Modifications& modifications) {
 			for (const auto& modification : modifications)
 				builder.addCosignatoryModification(modification.ModificationType, modification.CosignatoryPublicKey);
 		}
@@ -130,43 +154,45 @@ namespace catapult { namespace builders {
 
 	TRAITS_BASED_TEST(CanAddSingleModification) {
 		// Arrange:
-		auto modifications = CreateModifications(1);
+		auto expectedProperties = TransactionProperties();
+		expectedProperties.Modifications = CreateModifications(1);
+		const auto& modifications = expectedProperties.Modifications;
+		auto totalCosignatorySize = sizeof(model::CosignatoryModification);
 
 		// Assert:
-		AssertCanBuildTransaction<TTraits>(
-				sizeof(model::CosignatoryModification),
-				[&modifications](auto& builder) {
-					AddAll(builder, modifications);
-				},
-				CreatePropertyChecker(0, 0, modifications));
+		AssertCanBuildTransaction<TTraits, TBuilder, TransactionType>(totalCosignatorySize, expectedProperties, [&modifications](auto& builder) {
+			AddAll(builder, modifications);
+		});
 	}
 
 	TRAITS_BASED_TEST(CanAddMultipleModifications) {
 		// Arrange:
-		auto modifications = CreateModifications(5);
+		auto expectedProperties = TransactionProperties();
+		expectedProperties.Modifications = CreateModifications(5);
+		const auto& modifications = expectedProperties.Modifications;
+		auto totalCosignatorySize = 5 * sizeof(model::CosignatoryModification);
 
 		// Assert:
-		AssertCanBuildTransaction<TTraits>(
-				5 * sizeof(model::CosignatoryModification),
-				[&modifications](auto& builder) {
-					AddAll(builder, modifications);
-				},
-				CreatePropertyChecker(0, 0, modifications));
+		AssertCanBuildTransaction<TTraits, TBuilder, TransactionType>(totalCosignatorySize, expectedProperties, [&modifications](auto& builder) {
+			AddAll(builder, modifications);
+		});
 	}
 
 	TRAITS_BASED_TEST(CanSetDeltasAndAddModifications) {
 		// Arrange:
-		auto modifications = CreateModifications(4);
+		auto expectedProperties = TransactionProperties();
+		expectedProperties.MinRemovalDelta = -3;
+		expectedProperties.MinApprovalDelta = 3;
+		expectedProperties.Modifications = CreateModifications(4);
+		const auto& modifications = expectedProperties.Modifications;
+		auto totalCosignatorySize = 4 * sizeof(model::CosignatoryModification);
 
 		// Assert:
-		AssertCanBuildTransaction<TTraits>(
-				4 * sizeof(model::CosignatoryModification),
-				[&modifications](auto& builder) {
-					builder.setMinRemovalDelta(-3);
-					builder.setMinApprovalDelta(3);
-					AddAll(builder, modifications);
-				},
-				CreatePropertyChecker(-3, 3, modifications));
+		AssertCanBuildTransaction<TTraits, TBuilder, TransactionType>(totalCosignatorySize, expectedProperties, [&modifications](auto& builder) {
+			builder.setMinRemovalDelta(-3);
+			builder.setMinApprovalDelta(3);
+			AddAll(builder, modifications);
+		});
 	}
 
 	// endregion

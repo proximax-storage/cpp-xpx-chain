@@ -32,23 +32,23 @@ namespace catapult { namespace validators {
 #define ROOT_TEST_CLASS RootNamespaceAvailabilityValidatorTests
 #define CHILD_TEST_CLASS ChildNamespaceAvailabilityValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, model::NamespaceLifetimeConstraints(BlockDuration(), 0))
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability,)
 	DEFINE_COMMON_VALIDATOR_TESTS(ChildNamespaceAvailability,)
 
 	namespace {
 		constexpr BlockDuration Default_Duration(10);
-		constexpr BlockDuration Grace_Period_Duration(20);
-		constexpr uint32_t Max_Rollback_Blocks(5);
+		constexpr BlockDuration Grace_Period_Duration(25);
 
 		template<typename TSeedCacheFunc>
 		auto CreateAndSeedCache(TSeedCacheFunc seedCache) {
-			auto cache = test::NamespaceCacheFactory::Create();
+			auto cache = test::NamespaceCacheFactory::Create(Grace_Period_Duration);
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
 				seedCache(namespaceCacheDelta);
 				cache.commit(Height());
 			}
+
 			return cache;
 		}
 
@@ -58,19 +58,12 @@ namespace catapult { namespace validators {
 				const model::RootNamespaceNotification& notification,
 				Height height,
 				TSeedCacheFunc seedCache) {
-			// Arrange: seed the cache
+			// Arrange:
 			auto cache = CreateAndSeedCache(seedCache);
-
-			// - create the validator context
-			auto cacheView = cache.createView();
-			auto readOnlyCache = cacheView.toReadOnly();
-			auto context = test::CreateValidatorContext(height, readOnlyCache);
-
-			model::NamespaceLifetimeConstraints constraints(Grace_Period_Duration, Max_Rollback_Blocks);
-			auto pValidator = CreateRootNamespaceAvailabilityValidator(constraints);
+			auto pValidator = CreateRootNamespaceAvailabilityValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "height " << height << ", duration " << notification.Duration;
@@ -82,18 +75,12 @@ namespace catapult { namespace validators {
 				const model::ChildNamespaceNotification& notification,
 				Height height,
 				TSeedCacheFunc seedCache) {
-			// Arrange: seed the cache
+			// Arrange:
 			auto cache = CreateAndSeedCache(seedCache);
-
-			// - create the validator context
-			auto cacheView = cache.createView();
-			auto readOnlyCache = cacheView.toReadOnly();
-			auto context = test::CreateValidatorContext(height, readOnlyCache);
-
 			auto pValidator = CreateChildNamespaceAvailabilityValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, context);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "height " << height;

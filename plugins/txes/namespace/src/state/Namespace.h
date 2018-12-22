@@ -21,7 +21,7 @@
 #pragma once
 #include "NamespaceLifetime.h"
 #include "src/model/NamespaceConstants.h"
-#include "catapult/utils/Array.h"
+#include "catapult/utils/CheckedArray.h"
 #include "catapult/types.h"
 #include "catapult/crypto/IdGenerator.h"
 
@@ -30,7 +30,7 @@ namespace catapult { namespace state {
 	/// A catapult namespace.
 	class Namespace {
 	public:
-		using Path = utils::Array<NamespaceId, Namespace_Max_Depth>;
+		using Path = utils::CheckedArray<NamespaceId, Namespace_Max_Depth>;
 
 	public:
 		/// Creates a namespace around \a path.

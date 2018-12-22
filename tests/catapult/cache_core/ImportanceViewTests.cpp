@@ -32,6 +32,8 @@ namespace catapult { namespace cache {
 
 #define TEST_CLASS ImportanceViewTests
 
+	// region utils
+
 	namespace {
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
@@ -40,14 +42,43 @@ namespace catapult { namespace cache {
 		};
 
 		struct AddressTraits {
-			static auto& AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
-				return delta.addAccount(model::PublicKeyToAddress(publicKey, Default_Cache_Options.NetworkIdentifier), height);
+			static auto AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
+				auto address = model::PublicKeyToAddress(publicKey, Default_Cache_Options.NetworkIdentifier);
+				delta.addAccount(address, height);
+				return delta.find(address);
 			}
 		};
 
 		struct PublicKeyTraits {
-			static auto& AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
-				return delta.addAccount(publicKey, height);
+			static auto AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
+				delta.addAccount(publicKey, height);
+				return delta.find(publicKey);
+			}
+		};
+
+		struct MainAccountTraits {
+			static auto AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
+				// explicitly mark the account as a main account (local harvesting when remote harvesting is enabled)
+				auto accountStateIter = PublicKeyTraits::AddAccount(delta, publicKey, height);
+				accountStateIter.get().AccountType = state::AccountType::Main;
+				accountStateIter.get().LinkedAccountKey = test::GenerateRandomData<Key_Size>();
+				return accountStateIter;
+			}
+		};
+
+		struct RemoteAccountTraits {
+			static auto AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
+				// 1. add the main account with a balance
+				auto mainAccountPublicKey = test::GenerateRandomData<Key_Size>();
+				auto mainAccountStateIter = PublicKeyTraits::AddAccount(delta, mainAccountPublicKey, height);
+				mainAccountStateIter.get().AccountType = state::AccountType::Main;
+				mainAccountStateIter.get().LinkedAccountKey = publicKey;
+
+				// 2. add the remote account with specified key
+				auto accountStateIter = PublicKeyTraits::AddAccount(delta, publicKey, height);
+				accountStateIter.get().AccountType = state::AccountType::Remote;
+				accountStateIter.get().LinkedAccountKey = mainAccountPublicKey;
+				return mainAccountStateIter;
 			}
 		};
 
@@ -57,7 +88,8 @@ namespace catapult { namespace cache {
 				const Key& publicKey,
 				Amount balance = Amount(0)) {
 			auto delta = cache.createDelta();
-			auto& accountState = TTraits::AddAccount(*delta, publicKey, Height(100));
+			auto accountStateIter = TTraits::AddAccount(*delta, publicKey, Height(100));
+			auto& accountState = accountStateIter.get();
 			accountState.Balances.credit(Xpx_Id, balance, Height(100));
 			cache.commit();
 		}
@@ -67,13 +99,17 @@ namespace catapult { namespace cache {
 		}
 	}
 
+	// endregion
+
+	// region tryGetAccountImportance / getAccountImportanceOrDefault
+
 #define KEY_TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
 	TEST(TEST_CLASS, TEST_NAME##_Address) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressTraits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_PublicKey) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PublicKeyTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_MainAccount) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MainAccountTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_RemoteAccount) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RemoteAccountTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
-
-	// region tryGetAccountImportance / getAccountImportanceOrDefault
 
 	namespace {
 		void AssertCannotFindImportance(const ImportanceView& view, const Key& key, Height height) {
@@ -134,6 +170,8 @@ namespace catapult { namespace cache {
 
 	// endregion
 
+	// region canHarvest
+
 	namespace {
 		struct CanHarvestViaMemberTraits {
 			static bool CanHarvest(const AccountStateCache& cache, const Key& publicKey, Height height, Amount minBalance) {
@@ -144,15 +182,17 @@ namespace catapult { namespace cache {
 
 		struct AddressCanHarvestViaMemberTraits : public AddressTraits, public CanHarvestViaMemberTraits {};
 		struct PublicKeyCanHarvestViaMemberTraits : public PublicKeyTraits, public CanHarvestViaMemberTraits {};
+		struct MainAccountCanHarvestViaMemberTraits : public MainAccountTraits, public CanHarvestViaMemberTraits {};
+		struct RemoteAccountCanHarvestViaMemberTraits : public RemoteAccountTraits, public CanHarvestViaMemberTraits {};
 	}
 
 #define CAN_HARVEST_TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_AddressViaMember) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressCanHarvestViaMemberTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_PublicKeyViaMember) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PublicKeyCanHarvestViaMemberTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Address) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressCanHarvestViaMemberTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_PublicKey) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PublicKeyCanHarvestViaMemberTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_MainAccount) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<MainAccountCanHarvestViaMemberTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_RemoteAccount) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RemoteAccountCanHarvestViaMemberTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
-
-	// region canHarvest
 
 	CAN_HARVEST_TRAITS_BASED_TEST(CannotHarvestIfAccountIsUnknown) {
 		// Arrange:
@@ -192,6 +232,75 @@ namespace catapult { namespace cache {
 		EXPECT_TRUE(CanHarvest<TTraits>(0, height));
 		EXPECT_TRUE(CanHarvest<TTraits>(1, height));
 		EXPECT_TRUE(CanHarvest<TTraits>(12345, height));
+	}
+
+	// endregion
+
+	// region improper links
+
+	namespace {
+		struct TryGetTraits {
+			static void Act(const ImportanceView& view, const Key& publicKey) {
+				Importance importance;
+				view.tryGetAccountImportance(publicKey, Height(111), importance);
+			}
+		};
+
+		struct GetTraits {
+			static void Act(const ImportanceView& view, const Key& publicKey) {
+				view.getAccountImportanceOrDefault(publicKey, Height(111));
+			}
+		};
+
+		struct CanHarvestTraits {
+			static void Act(const ImportanceView& view, const Key& publicKey) {
+				view.canHarvest(publicKey, Height(111), Amount());
+			}
+		};
+	}
+
+#define IMPROPER_LINKS_TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_TryGet) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TryGetTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Get) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<GetTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_CanHarvest) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<CanHarvestTraits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	namespace {
+		template<typename TTraits, typename TMutator>
+		void AssertImproperLink(TMutator mutator) {
+			// Arrange:
+			auto publicKey = test::GenerateRandomData<Key_Size>();
+			auto pCache = CreateAccountStateCache();
+
+			{
+				auto delta = pCache->createDelta();
+				auto accountStateIter = RemoteAccountTraits::AddAccount(*delta, publicKey, Height(100));
+				mutator(accountStateIter.get());
+				pCache->commit();
+			}
+
+			auto pView = test::CreateImportanceView(*pCache);
+
+			// Act + Assert:
+			EXPECT_THROW(TTraits::Act(*pView, publicKey), catapult_runtime_error);
+		}
+	}
+
+	IMPROPER_LINKS_TRAITS_BASED_TEST(FailureIfLinkedAccountHasWrongType) {
+		// Assert:
+		AssertImproperLink<TTraits>([](auto& accountState) {
+			// Arrange: change the main account to have the wrong type
+			accountState.AccountType = state::AccountType::Remote;
+		});
+	}
+
+	IMPROPER_LINKS_TRAITS_BASED_TEST(FailureIfLinkedAccountDoesNotReferenceRemoteAccount) {
+		// Assert:
+		AssertImproperLink<TTraits>([](auto& accountState) {
+			// Arrange: change the main account to point to a different account
+			test::FillWithRandomData(accountState.LinkedAccountKey);
+		});
 	}
 
 	// endregion

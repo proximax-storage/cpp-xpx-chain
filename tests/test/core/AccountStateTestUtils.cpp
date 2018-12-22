@@ -34,16 +34,20 @@ namespace catapult { namespace test {
 		}
 	}
 
-	void AssertEqual(const state::AccountState& expected, const state::AccountState& actual) {
+	void AssertEqual(const state::AccountState& expected, const state::AccountState& actual, const std::string& message) {
 		// Assert:
-		EXPECT_EQ(expected.Address, actual.Address);
-		EXPECT_EQ(expected.AddressHeight, actual.AddressHeight);
-		EXPECT_EQ(expected.PublicKey, actual.PublicKey);
-		EXPECT_EQ(expected.PublicKeyHeight, actual.PublicKeyHeight);
+		EXPECT_EQ(expected.Address, actual.Address) << message;
+		EXPECT_EQ(expected.AddressHeight, actual.AddressHeight) << message;
+		EXPECT_EQ(expected.PublicKey, actual.PublicKey) << message;
+		EXPECT_EQ(expected.PublicKeyHeight, actual.PublicKeyHeight) << message;
 
+		EXPECT_EQ(expected.AccountType, actual.AccountType) << message;
+		EXPECT_EQ(expected.LinkedAccountKey, actual.LinkedAccountKey) << message;
+
+		EXPECT_EQ(expected.Balances.size(), actual.Balances.size()) << message;
 		EXPECT_EQ(expected.Balances.size(), actual.Balances.size());
 		for (const auto& pair : expected.Balances)
-			EXPECT_EQ(pair.second, actual.Balances.get(pair.first)) << "for mosaic " << pair.first;
+			EXPECT_EQ(pair.second, actual.Balances.get(pair.first)) << message << ": for mosaic " << pair.first;
 
 		const auto& expectedSnapshots = expected.Balances.snapshots();
 		const auto& actualSnapshots = actual.Balances.snapshots();

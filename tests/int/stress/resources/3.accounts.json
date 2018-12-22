@@ -1,0 +1,254 @@
+{
+    "accounts": [
+        {
+            "Address": "SDKDPA36TE53BO24FD4KA6OPGOUSEVOU3O5SIFMY",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "1188832332847600384",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "76",
+            "LinkedAccountKey": "ABC2D6FE8BAEDBC30EF9A0609C717D9613DE593EC2A266D30100000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SD6ZH6T6BR3NMNDYNVRTHDCF6OZYCHFQEUT6QXE7",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SA4YXJHBHUUBOX6GVKGAQSCN6VKLTDGAGATXK2BV",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "3198079663259684096",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "169",
+            "LinkedAccountKey": "A3BF0E81330F7F244067386C7B50F001BE3BE8EB17C59E1F0900000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SCDSFEWJX4ILTGVNJGMSVLJZIDEQTMMFRJRFE5B6",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SABDVQSXHD3FRM26QIGN4SES24SSZO5GIPGO4NWR",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SACWFYVHGEYOV5YTPFBCZ2SFYHR3CTQZQR2JDSUM",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "17778230791875130368",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "143",
+            "LinkedAccountKey": "17169B6301CB51D518C88896CC593E8A40FE4E9169AE62110B00000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SA3JCE2LX6Z4YY72IOXEQFNQW3IQBWYZINI26CPP",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "14567118197645263104",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "30",
+            "LinkedAccountKey": "AE6F830BC0FE9BD45BAD5AB9A9F307E8B52883B251785B920500000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SAKT3CKHCYIG5BBOPTSY2WXSVPBSLIA67AEOX4ND",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SBZ22LWA7GDZLPLQF7PXTMNLWSEZ7ZRVGRMWLXWV",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SCEABFIOJC2GGNM3FOLPTTI73VW5ADYK67AM3DO3",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SBIN2SDQWFD47RFB3IOJ4IVA4GTCKHIC6YIHR3XX",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SA767PEH52O3MMJXQKVTMOHBJ6WUNCPYGOGQY6FL",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SBOUKTPDJBX2QTZ6FLXNSYOWWG7NVYWRR325RNFM",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "15280141152480794880",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "173",
+            "LinkedAccountKey": "FC28286266CEFC0019BA95CBA195321C42831CDCC8FFB73B0200000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SCGQF2ZB7E2EEIOHAPV3KRSIEI3QD7L3MNNQHIH6",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SA7V4HPJBZR6HD3E6GPSVVIIVXFK4WSOAOKKKIOM",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "12437104094841378048",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "92",
+            "LinkedAccountKey": "CAB6BB0A85FDC9356C47B8017FCF00C67002C5143AF553CA0400000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SAG3I2WEYTTQNT5WKB7ITUY23LPXN2IEUZPGQANE",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "1059832025659549440",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "42",
+            "LinkedAccountKey": "8CB8E2998BD6337C9882022D77D47A618FF6C03EAE56D4AF0800000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SAAZBWCQAXVFPYVH7L3ZJVVSYPLSUDJOOKJJJ2CD",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SD2TR2USDXE4QIBX3OW2MFTLSQB6DGYWRJH4ZNDB",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SARNASAS2BIAB6LMFA3FPMGBPGIJGK6IJETM3ZSP",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "5073761810921927680",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "9",
+            "LinkedAccountKey": "1E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF0100000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SAOLTPFDPDREJFUAGTTXAQCFCNMHMFJPVASZ5VLW",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SDTZ23JBJZP3GTKKM2P6FYCMXS6RQYPB6R477TTR",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "6532441305887424000",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "218",
+            "LinkedAccountKey": "A3CBA8C101C3CD31D9817A2EB966EB3B511FB2ED45B8E2620100000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SCEYFB35CYFF2U7UZ32RYXXZ5JTPCSKU4P6BRXZR",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SCKM5PAMXE7FNBAPE37Q7GOUU7CU5HEQDLAZTOS6",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SCKWUMYOFK647EXNFZWHMXSFYDVKIDH3LZGDWCMJ",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        },
+        {
+            "Address": "SANWMR3GEKGHQWTBE4VDVDPV562EYTQKE47VL75V",
+            "AddressHeight": "1",
+            "PublicKeyHeight": "0",
+            "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "AccountType": "0",
+            "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
+            "mosaics": "",
+            "snapshots": ""
+        }
+    ]
+}

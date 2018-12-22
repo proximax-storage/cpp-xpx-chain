@@ -1,17 +1,17 @@
-PATH_TO_CATAPULT_SERVER="/home/green/482.solutions/proximax-catapult-server"
-PATH_TO_BOOTSTRAP="/home/green/482.solutions/proximax-catapult-server/scripts/bootstrap"
+PATH_TO_CATAPULT_SERVER="/home/green/482.solutions.proximax/proximax-catapult-server"
+PATH_TO_BOOTSTRAP="/home/green/482.solutions.proximax/proximax-catapult-server/scripts/bootstrap"
 
 
-WORK_DIR=$PATH_TO_CATAPULT_SERVER/_build
+WORK_DIR=$PATH_TO_CATAPULT_SERVER/cmake-build-debug
 num_addresses=50
 raw_addresses_path=$WORK_DIR/addresses/raw-addresses.txt
 formatted_address_path=$WORK_DIR/addresses/addresses.yaml
 
 
-# rm -R $WORK_DIR/data/
-# rm -R $WORK_DIR/nemesis/
-# rm -R $WORK_DIR/config-build/
-# rm -R $WORK_DIR/addresses/
+sudo rm -R $WORK_DIR/data/
+sudo rm -R $WORK_DIR/nemesis/
+sudo rm -R $WORK_DIR/config-build/
+#sudo rm -R $WORK_DIR/addresses/
 
 mkdir -p $WORK_DIR/addresses
 if [ ! -f $formatted_address_path ] ;
@@ -34,6 +34,9 @@ generate_nem()
       exit 1
     fi
 
+    sed -i "/dataDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+    echo "dataDirectory = $WORK_DIR/data/$1/data" >> $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+
     if [ ! -d $WORK_DIR/data/$1/data/00000 ]; then
 
         mkdir -p $WORK_DIR/data/$1/data/
@@ -43,6 +46,7 @@ generate_nem()
         mkdir -p seed/mijin-test/00000
         dd if=/dev/zero of=seed/mijin-test/00000/hashes.dat bs=1 count=64
         cd settings
+        cp -R $WORK_DIR/config-build/$1/userconfig/resources ../resources
         $WORK_DIR/bin/catapult.tools.nemgen --nemesisProperties $WORK_DIR/nemesis/block-properties-file.properties
         cp -r $WORK_DIR/data/$1/seed/mijin-test/* $WORK_DIR/data/$1/data/
         rm -R $WORK_DIR/data/$1/seed
@@ -52,10 +56,7 @@ generate_nem()
       echo "no need to run nemgen"
     fi
 
-    sed -i "/dataDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
-    echo "dataDirectory = $WORK_DIR/data/$1/data" >> $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
-
-    $WORK_DIR/bin/catapult.server $WORK_DIR/config-build/$1/userconfig & #> /dev/null 2>&1 &
+    #$WORK_DIR/bin/catapult.server $WORK_DIR/config-build/$1/userconfig & #> /dev/null 2>&1 &
     echo "You can find logs in '$WORK_DIR/data/$1/'"
 }
 
@@ -66,6 +67,7 @@ generate_nem "peer-node-2"
 generate_nem "peer-node-3"
 generate_nem "peer-node-4"
 echo "You can kill all catapult servers 'killall $WORK_DIR/bin/catapult.server'"
+echo "multitail -i $WORK_DIR/data/api-node-0/log -i $WORK_DIR/data/peer-node-0/log -i $WORK_DIR/data/peer-node-1/log -i $WORK_DIR/data/peer-node-2/log -i $WORK_DIR/data/peer-node-3/log -i $WORK_DIR/data/peer-node-4/log"
 echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 # echo "tail -f $WORK_DIR/data/api-node-0/catapult_server0000.log $WORK_DIR/data/peer-node-1/catapult_server0000.log $WORK_DIR/data/peer-node-1/catapult_server0000.log"
 # tail -f $WORK_DIR/api-node-0.log $WORK_DIR/peer-node-0.log $WORK_DIR/peer-node-1.log

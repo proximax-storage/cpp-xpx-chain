@@ -19,12 +19,13 @@
 **/
 
 #pragma once
+#include "CompactMosaicMap.h"
+#include "catapult/utils/Hashers.h"
 #include "catapult/exceptions.h"
 #include "catapult/model/BalanceSnapshot.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/types.h"
 #include "catapult/utils/Hashers.h"
-#include "CompactMosaicUnorderedMap.h"
 #include <list>
 
 namespace catapult { namespace state {
@@ -57,7 +58,7 @@ namespace catapult { namespace state {
 
 		/// Add snapshots to snapshots
 		void addSnapshot(const model::BalanceSnapshot& snapshot) {
-			return m_localSnapshots.push_back(snapshot);
+			return pushSnapshot(snapshot, true /* committed */);
 		}
 
 		/// Returns the number of mosaics owned.
@@ -99,6 +100,12 @@ namespace catapult { namespace state {
 		/// During commit we can remove snapshots from front of m_localSnapshots, to have valid history of account
 		void commitSnapshots();
 
+		/// Remove all snapshots
+		void cleanUpSnaphots() {
+			m_remoteSnapshots.clear();
+			m_localSnapshots.clear();
+		}
+
 		/// Check do we need to clean up the deque at \a height with \a config
 		void maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config);
 
@@ -119,9 +126,9 @@ namespace catapult { namespace state {
 		AccountBalances& internalDebit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
 	private:
-		CompactMosaicUnorderedMap m_balances;
 		std::list<model::BalanceSnapshot> m_localSnapshots;
 		std::list<model::BalanceSnapshot> m_remoteSnapshots;
 		AccountState* m_accountState = nullptr;
+		CompactMosaicMap m_balances;
 	};
 }}

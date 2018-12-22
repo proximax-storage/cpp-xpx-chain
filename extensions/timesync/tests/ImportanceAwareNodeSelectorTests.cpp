@@ -44,8 +44,8 @@ namespace catapult { namespace timesync {
 				const std::vector<Importance>& importances) {
 			auto delta = cache.createDelta();
 			for (auto i = 0u; i < keys.size(); ++i) {
-				auto& accountState = delta->addAccount(keys[i], Height(1));
-				accountState.Balances.credit(Xpx_Id, Amount(importances[i].unwrap()), Height(1));
+				delta->addAccount(keys[i], Height(1));
+				delta->find(keys[i]).get().Balances.credit(Xpx_Id, Amount(importances[i].unwrap()), Height(1));
 			}
 
 			cache.commit();
