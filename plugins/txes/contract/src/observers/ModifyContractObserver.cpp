@@ -24,109 +24,109 @@
 
 namespace catapult { namespace observers {
 
-    using Notification = model::ModifyContractNotification;
+	using Notification = model::ModifyContractNotification;
 
-    namespace {
-        auto GetContractEntry(cache::ContractCacheDelta& contractCache, const Key& key) {
-            if (!contractCache.contains(key))
-                contractCache.insert(state::ContractEntry(key));
+	namespace {
+		auto GetContractEntry(cache::ContractCacheDelta& contractCache, const Key& key) {
+			if (!contractCache.contains(key))
+				contractCache.insert(state::ContractEntry(key));
 
-            return contractCache.find(key);
-        }
+			return contractCache.find(key);
+		}
 
-        class ContractFacade {
-        public:
-            explicit ContractFacade(cache::ContractCacheDelta& contractCache, const Key& contractMultisigKey)
-                    : m_contractCache(contractCache)
-                    , m_contractEntry(GetContractEntry(m_contractCache, contractMultisigKey).get())
-            {}
+		class ContractFacade {
+		public:
+			explicit ContractFacade(cache::ContractCacheDelta& contractCache, const Key& contractMultisigKey)
+					: m_contractCache(contractCache)
+					, m_contractEntry(GetContractEntry(m_contractCache, contractMultisigKey).get())
+			{}
 
-        public:
-            Height start() const {
-                return m_contractEntry.start();
-            }
+		public:
+			Height start() const {
+				return m_contractEntry.start();
+			}
 
-            void setStart(const Height& start) {
-                m_contractEntry.setStart(start);
-            }
+			void setStart(const Height& start) {
+				m_contractEntry.setStart(start);
+			}
 
-            BlockDuration duration() const {
-                return m_contractEntry.duration();
-            }
+			BlockDuration duration() const {
+				return m_contractEntry.duration();
+			}
 
-            void setDuration(const BlockDuration& duration) {
-                m_contractEntry.setDuration(duration);
-            }
+			void setDuration(const BlockDuration& duration) {
+				m_contractEntry.setDuration(duration);
+			}
 
-            void setHash(const Hash256& hash) {
-                m_contractEntry.setHash(hash);
-            }
+			void setHash(const Hash256& hash) {
+				m_contractEntry.setHash(hash);
+			}
 
-            void addCustomer(const Key& customerKey) {
-                m_contractEntry.customers().insert(customerKey);
-            }
+			void addCustomer(const Key& customerKey) {
+				m_contractEntry.customers().insert(customerKey);
+			}
 
-            void removeCustomer(const Key& customerKey) {
-                m_contractEntry.customers().erase(customerKey);
-            }
+			void removeCustomer(const Key& customerKey) {
+				m_contractEntry.customers().erase(customerKey);
+			}
 
-            void addExecutor(const Key& executorKey) {
-                m_contractEntry.executors().insert(executorKey);
-            }
+			void addExecutor(const Key& executorKey) {
+				m_contractEntry.executors().insert(executorKey);
+			}
 
-            void removeExecutor(const Key& executorKey) {
-                m_contractEntry.executors().erase(executorKey);
-            }
+			void removeExecutor(const Key& executorKey) {
+				m_contractEntry.executors().erase(executorKey);
+			}
 
-            void addVerifier(const Key& verifierKey) {
-                m_contractEntry.verifiers().insert(verifierKey);
-            }
+			void addVerifier(const Key& verifierKey) {
+				m_contractEntry.verifiers().insert(verifierKey);
+			}
 
-            void removeVerifier(const Key& verifierKey) {
-                m_contractEntry.verifiers().erase(verifierKey);
-            }
+			void removeVerifier(const Key& verifierKey) {
+				m_contractEntry.verifiers().erase(verifierKey);
+			}
 
-            uint8_t verifierCount() {
-                return m_contractEntry.verifiers().size();
-            }
+			uint8_t verifierCount() {
+				return m_contractEntry.verifiers().size();
+			}
 
-        private:
-            cache::ContractCacheDelta& m_contractCache;
-            state::ContractEntry& m_contractEntry;
-        };
-    }
+		private:
+			cache::ContractCacheDelta& m_contractCache;
+			state::ContractEntry& m_contractEntry;
+		};
+	}
 
-    DEFINE_OBSERVER(ModifyContract, Notification, [](const auto& notification, const ObserverContext& context) {
-        auto& contractCache = context.Cache.sub<cache::ContractCache>();
-        ContractFacade contractFacade(contractCache, notification.Multisig);
+	DEFINE_OBSERVER(ModifyContract, Notification, [](const auto& notification, const ObserverContext& context) {
+		auto& contractCache = context.Cache.sub<cache::ContractCache>();
+		ContractFacade contractFacade(contractCache, notification.Multisig);
 
-        if (contractFacade.start() == Height{0u}) {
-            contractFacade.setStart(context.Height);
-            contractFacade.setDuration(BlockDuration{static_cast<uint64_t>(notification.DurationDelta)});
-        } else {
-            contractFacade.setDuration(BlockDuration{
-                contractFacade.duration().unwrap() + static_cast<uint64_t>(notification.DurationDelta)});
-        }
-        contractFacade.setHash(notification.Hash);
+		if (contractFacade.start() == Height{0u}) {
+			contractFacade.setStart(context.Height);
+			contractFacade.setDuration(BlockDuration{static_cast<uint64_t>(notification.DurationDelta)});
+		} else {
+			contractFacade.setDuration(BlockDuration{
+				contractFacade.duration().unwrap() + static_cast<uint64_t>(notification.DurationDelta)});
+		}
+		contractFacade.setHash(notification.Hash);
 
 #define MODIFY_CONTRACTORS(CONTRACTOR_TYPE) \
-        for (auto i = 0u; i < notification.CONTRACTOR_TYPE##ModificationCount; ++i) { \
-            auto isNotificationAdd = model::CosignatoryModificationType::Add == notification.CONTRACTOR_TYPE##ModificationsPtr[i].ModificationType; \
-            auto isNotificationForward = NotifyMode::Commit == context.Mode; \
-            if (isNotificationAdd == isNotificationForward) \
-                contractFacade.add##CONTRACTOR_TYPE(notification.CONTRACTOR_TYPE##ModificationsPtr[i].CosignatoryPublicKey); \
-            else \
-                contractFacade.remove##CONTRACTOR_TYPE(notification.CONTRACTOR_TYPE##ModificationsPtr[i].CosignatoryPublicKey); \
-        }
+		for (auto i = 0u; i < notification.CONTRACTOR_TYPE##ModificationCount; ++i) { \
+			auto isNotificationAdd = model::CosignatoryModificationType::Add == notification.CONTRACTOR_TYPE##ModificationsPtr[i].ModificationType; \
+			auto isNotificationForward = NotifyMode::Commit == context.Mode; \
+			if (isNotificationAdd == isNotificationForward) \
+				contractFacade.add##CONTRACTOR_TYPE(notification.CONTRACTOR_TYPE##ModificationsPtr[i].CosignatoryPublicKey); \
+			else \
+				contractFacade.remove##CONTRACTOR_TYPE(notification.CONTRACTOR_TYPE##ModificationsPtr[i].CosignatoryPublicKey); \
+		}
 
-        MODIFY_CONTRACTORS(Customer)
-        MODIFY_CONTRACTORS(Executor)
-        MODIFY_CONTRACTORS(Verifier)
+		MODIFY_CONTRACTORS(Customer)
+		MODIFY_CONTRACTORS(Executor)
+		MODIFY_CONTRACTORS(Verifier)
 
-        auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
-        auto& multisigEntry = multisigCache.find(notification.Multisig).get();
-        uint8_t minApproval = contractFacade.verifierCount();
-        multisigEntry.setMinApproval(minApproval);
-        multisigEntry.setMinRemoval(minApproval / 2 + 1);
-    });
+		auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
+		auto& multisigEntry = multisigCache.find(notification.Multisig).get();
+		uint8_t minApproval = contractFacade.verifierCount();
+		multisigEntry.setMinApproval(minApproval);
+		multisigEntry.setMinRemoval(minApproval / 2 + 1);
+	});
 }}

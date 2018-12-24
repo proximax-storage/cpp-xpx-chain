@@ -38,16 +38,16 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Reputation_Update_Notification;
 
 	public:
-		/// Creates a notification around \a signer, \a modificationsCount and \a pModifications.
+		/// Creates a notification around \a signer, \a modificationCount and \a pModifications.
 		explicit ReputationUpdateNotification(
-				const std::vector<const CosignatoryModification*>& modifications)
-				: Notification(Notification_Type, sizeof(ReputationUpdateNotification))
-				, Modifications(modifications)
+			const std::vector<CosignatoryModification>& modifications)
+			: Notification(Notification_Type, sizeof(ReputationUpdateNotification))
+			, Modifications(modifications)
 		{}
 
 	public:
 		/// Const pointer to the first modification.
-		const std::vector<const CosignatoryModification*>& Modifications;
+		const std::vector<CosignatoryModification>& Modifications;
 	};
 
 	// endregion
@@ -66,27 +66,27 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Contract_Modify_Notification;
 
 	public:
-		/// Creates a notification around \a signer, \a modificationsCount and \a pModifications.
+		/// Creates a notification around \a signer, \a modificationCount and \a pModifications.
 		explicit ModifyContractNotification(
-                const int64_t& durationDelta,
-				const Key& multisig,
-				const Hash256& hash,
-				const uint8_t& customerModificationCount,
-				const CosignatoryModification* pCustomerModifications,
-				const uint8_t& executorModificationCount,
-				const CosignatoryModification* pExecutorModifications,
-				const uint8_t& verifierModificationCount,
-				const CosignatoryModification* pVerifierModifications)
-				: Notification(Notification_Type, sizeof(ModifyContractNotification))
-				, DurationDelta(durationDelta)
-				, Multisig(multisig)
-				, Hash(hash)
-				, CustomerModificationCount(customerModificationCount)
-				, CustomerModificationsPtr(pCustomerModifications)
-				, ExecutorModificationCount(executorModificationCount)
-				, ExecutorModificationsPtr(pExecutorModifications)
-				, VerifierModificationCount(verifierModificationCount)
-				, VerifierModificationsPtr(pVerifierModifications)
+			const int64_t& durationDelta,
+			const Key& multisig,
+			const Hash256& hash,
+			const uint8_t& customerModificationCount,
+			const CosignatoryModification* pCustomerModifications,
+			const uint8_t& executorModificationCount,
+			const CosignatoryModification* pExecutorModifications,
+			const uint8_t& verifierModificationCount,
+			const CosignatoryModification* pVerifierModifications)
+			: Notification(Notification_Type, sizeof(ModifyContractNotification))
+			, DurationDelta(durationDelta)
+			, Multisig(multisig)
+			, Hash(hash)
+			, CustomerModificationCount(customerModificationCount)
+			, CustomerModificationsPtr(pCustomerModifications)
+			, ExecutorModificationCount(executorModificationCount)
+			, ExecutorModificationsPtr(pExecutorModifications)
+			, VerifierModificationCount(verifierModificationCount)
+			, VerifierModificationsPtr(pVerifierModifications)
 		{}
 
 	public:

@@ -55,27 +55,27 @@ namespace catapult { namespace model {
 		/// Number of verifier modifications.
 		uint8_t VerifierModificationCount;
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Customers, CosignatoryModification)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(CustomerModifications, CosignatoryModification)
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Executors, CosignatoryModification)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(ExecutorModifications, CosignatoryModification)
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Verifiers, CosignatoryModification)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(VerifierModifications, CosignatoryModification)
 
 	private:
 		template<typename T>
-		static auto CustomersPtrT(T& transaction) {
+		static auto CustomerModificationsPtrT(T& transaction) {
 			return transaction.CustomerModificationCount ? THeader::PayloadStart(transaction) : nullptr;
 		}
 
 		template<typename T>
-		static auto* ExecutorsPtrT(T& transaction) {
+		static auto* ExecutorModificationsPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
 			return transaction.ExecutorModificationCount && pPayloadStart ?
 				pPayloadStart + transaction.CustomerModificationCount * sizeof(CosignatoryModification) : nullptr;
 		}
 
 		template<typename T>
-		static auto* VerifiersPtrT(T& transaction) {
+		static auto* VerifierModificationsPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
 			return transaction.VerifierModificationCount && pPayloadStart ? pPayloadStart
 			   + transaction.CustomerModificationCount * sizeof(CosignatoryModification)
@@ -86,10 +86,11 @@ namespace catapult { namespace model {
 	public:
 		// Calculates the real size of a modify contract \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType)
+			auto size = sizeof(TransactionType)
 				+ transaction.CustomerModificationCount * sizeof(CosignatoryModification)
 				+ transaction.ExecutorModificationCount * sizeof(CosignatoryModification)
 				+ transaction.VerifierModificationCount * sizeof(CosignatoryModification);
+            return size;
 		}
 	};
 

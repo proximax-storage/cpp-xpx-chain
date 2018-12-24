@@ -31,7 +31,7 @@ namespace catapult { namespace test {
 	/// Generates \a count random keys.
 	std::vector<Key> GenerateKeys(size_t count);
 
-	/// Creates a modify multisig account and reputation transaction from \a signer with \a modificationTypes.
+	/// Creates a modify contract transaction from \a signer with \a modificationTypes.
 	std::unique_ptr<model::EmbeddedModifyContractTransaction> CreateModifyContractTransaction(
 			const Key& signer,
 			const std::vector<model::CosignatoryModificationType>& modificationTypes);

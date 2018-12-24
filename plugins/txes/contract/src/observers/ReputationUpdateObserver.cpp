@@ -75,11 +75,11 @@ namespace catapult { namespace observers {
 		auto& reputationCache = context.Cache.sub<cache::ReputationCache>();
 
 		AccountReputationFacade accountReputationFacade(reputationCache);
-        auto isNotificationForward = NotifyMode::Commit == context.Mode;
-		for (auto& pModification : notification.Modifications) {
-			const auto& key = pModification->CosignatoryPublicKey;
+		auto isNotificationForward = NotifyMode::Commit == context.Mode;
+		for (auto& modification : notification.Modifications) {
+			const auto& key = modification.CosignatoryPublicKey;
 
-			if (model::CosignatoryModificationType::Add == pModification->ModificationType) {
+			if (model::CosignatoryModificationType::Add == modification.ModificationType) {
 				if (isNotificationForward)
 					accountReputationFacade.incrementPositiveInteractions(key);
 				else

@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 		const auto* pModifications = notification.CONTRACTOR_TYPE##ModificationsPtr; \
 		const auto& contractEntry = contractCache.find(notification.Multisig).get(); \
 		for (auto i = 0u; i < notification.CONTRACTOR_TYPE##ModificationCount; ++i) { \
-			auto isAdded = contractEntry.hasCONTRACTOR_TYPE##(pModifications[i].CosignatoryPublicKey); \
+			auto isAdded = contractEntry.has##CONTRACTOR_TYPE(pModifications[i].CosignatoryPublicKey); \
 			auto isAdding = model::CosignatoryModificationType::Add == pModifications[i].ModificationType; \
 			if (!isAdding && !isAdded) \
 				return Failure_Contract_Modify_Not_A_##CONTRACTOR_TYPE; \

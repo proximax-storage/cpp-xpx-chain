@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(ModifyContractDuration, [](const auto& notification, const ValidatorContext& context) {
 		const auto& contractCache = context.Cache.sub<cache::ContractCache>();
 		if (!contractCache.contains(notification.Multisig) && (notification.DurationDelta <= 0))
-            return Modify_Invalid_Duration;
+            return Failure_Contract_Modify_Invalid_Duration;
 
 		return ValidationResult::Success;
 	});

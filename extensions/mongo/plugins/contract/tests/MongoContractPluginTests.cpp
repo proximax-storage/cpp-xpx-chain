@@ -25,7 +25,7 @@
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		struct MongoReputationPluginTraits {
+		struct MongoContractPluginTraits {
 		public:
 			static constexpr auto RegisterSubsystem = RegisterMongoSubsystem;
 
@@ -34,10 +34,10 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static std::string GetStorageName() {
-				return "{ ContractCache, ReputationCache }";
+				return "{ ReputationCache, ContractCache }";
 			}
 		};
 	}
 
-	DEFINE_MONGO_PLUGIN_TESTS(MongoReputationPluginTests, MongoReputationPluginTraits)
+	DEFINE_MONGO_PLUGIN_TESTS(MongoContractPluginTests, MongoContractPluginTraits)
 }}}

@@ -207,6 +207,165 @@ namespace catapult { namespace test {
 
 	// endregion
 
+	// region (triple) attachment pointers
+
+	/// Asserts that data pointers are inaccessible when entity has size less than minimum entity size.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleDataPointersAreInaccessibleWhenSizeIsLessThanEntitySize() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(111, 5, 23);
+		pEntity->Size = sizeof(typename decltype(pEntity)::element_type) - 1;
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that data pointers are inaccessible when entity has no attachments.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleDataPointersAreInaccessibleWhenNoDataArePresent() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(0, 0, 0);
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that data pointers are inaccessible when entity size is too small and contains only first attachment.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleDataPointersAreInaccessibleWhenSizeIsLessThanCalculatedSizeWithFirstData() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(111, 0, 0);
+		--pEntity->Size;
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that data pointers are inaccessible when entity size is too small and contains only second attachment.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleDataPointersAreInaccessibleWhenSizeIsLessThanCalculatedSizeWithSecondData() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(0, 5, 0);
+		--pEntity->Size;
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that data pointers are inaccessible when entity size is too small and contains only second attachment.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleDataPointersAreInaccessibleWhenSizeIsLessThanCalculatedSizeWithThirdData() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(0, 0, 23);
+		--pEntity->Size;
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that data pointers are inaccessible when entity size is too small and contains first and second attachment.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleDataPointersAreInaccessibleWhenSizeIsLessThanCalculatedSizeWithAllData() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(111, 5, 23);
+		--pEntity->Size;
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that data pointers are inaccessible when entity size is too large and contains first and second attachment.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleDataPointersAreInaccessibleWhenSizeIsGreaterThanCalculatedSizeWithAllData() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(111, 5, 23);
+		++pEntity->Size;
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that the first data pointer is accessible when entity only has first attachment.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleFirstPointerIsValidWhenOnlyFirstDataIsPresent() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(111, 0, 0);
+		auto pEntityEnd = test::AsVoidPointer(pEntity.get() + 1);
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_EQ(pEntityEnd, TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that the second data pointer is accessible when entity only has second attachment.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleSecondPointerIsValidWhenOnlySecondDataIsPresent() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(0, 5, 0);
+		auto pEntityEnd = test::AsVoidPointer(pEntity.get() + 1);
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_EQ(pEntityEnd, TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that the second data pointer is accessible when entity only has second attachment.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleThirdPointerIsValidWhenOnlyThirdDataIsPresent() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(0, 0, 23);
+		auto pEntityEnd = test::AsVoidPointer(pEntity.get() + 1);
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_FALSE(!!TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_EQ(pEntityEnd, TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	/// Asserts that the all data pointers are accessible when all attachments are present.
+	template<typename TEntityTraits, typename TAccessor>
+	void AssertTripleAllPointersAreValidWhenAllDataArePresent() {
+		// Arrange:
+		auto pEntity = TEntityTraits::GenerateEntityWithAttachments(111, 5, 23);
+		auto pEntityEnd = test::AsVoidPointer(pEntity.get() + 1);
+		auto pEntity2End = test::AsVoidPointer(reinterpret_cast<const uint8_t*>(pEntityEnd) + TEntityTraits::GetAttachment1Size(111));
+		auto pEntity3End = test::AsVoidPointer(reinterpret_cast<const uint8_t*>(pEntity2End) + TEntityTraits::GetAttachment2Size(5));
+		auto& accessor = TAccessor::Get(*pEntity);
+
+		// Act + Assert:
+		EXPECT_EQ(pEntityEnd, TEntityTraits::GetAttachmentPointer1(accessor));
+		EXPECT_EQ(pEntity2End, TEntityTraits::GetAttachmentPointer2(accessor));
+		EXPECT_EQ(pEntity3End, TEntityTraits::GetAttachmentPointer3(accessor));
+	}
+
+	// endregion
+
 	/// Traits for accessing an entity as const.
 	struct ConstAccessor {
 		/// Gets a const reference.
@@ -251,3 +410,18 @@ namespace catapult { namespace test {
 	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, FirstPointerIsValidWhenOnlyFirstDataIsPresent) \
 	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, SecondPointerIsValidWhenOnlySecondDataIsPresent) \
 	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, AllPointersAreValidWhenAllDataArePresent)
+
+/// Adds all attachment pointer tests to the specified test class (\a TEST_CLASS) using \a TEST_TRAITS.
+/// \note These tests only support entities with three pointers.
+#define DEFINE_TRIPLE_ATTACHMENT_POINTER_TESTS(TEST_CLASS, TEST_TRAITS) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleDataPointersAreInaccessibleWhenSizeIsLessThanEntitySize) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleDataPointersAreInaccessibleWhenNoDataArePresent) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleDataPointersAreInaccessibleWhenSizeIsLessThanCalculatedSizeWithFirstData) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleDataPointersAreInaccessibleWhenSizeIsLessThanCalculatedSizeWithSecondData) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleDataPointersAreInaccessibleWhenSizeIsLessThanCalculatedSizeWithThirdData) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleDataPointersAreInaccessibleWhenSizeIsLessThanCalculatedSizeWithAllData) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleDataPointersAreInaccessibleWhenSizeIsGreaterThanCalculatedSizeWithAllData) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleFirstPointerIsValidWhenOnlyFirstDataIsPresent) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleSecondPointerIsValidWhenOnlySecondDataIsPresent) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleThirdPointerIsValidWhenOnlyThirdDataIsPresent) \
+	DEFINE_ATTACHMENT_ACCESS_TESTS(TEST_CLASS, TEST_TRAITS, TripleAllPointersAreValidWhenAllDataArePresent)

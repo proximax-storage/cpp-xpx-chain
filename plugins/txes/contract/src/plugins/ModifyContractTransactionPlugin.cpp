@@ -32,27 +32,27 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, const PublisherContext&, NotificationSubscriber& sub) {
-			std::vector<const CosignatoryModification*> reputationModificationKeys;
+			std::vector<CosignatoryModification> reputationModificationKeys;
 			if (0 < transaction.ExecutorModificationCount) {
-				const auto* pModifications = transaction.ExecutorsPtr();
-				for (auto i = 0u; i < transaction.ExecutorModificationCount; ++i, ++pModifications) {
-					reputationModificationKeys.push_back(pModifications);
+				const auto* pModification = transaction.ExecutorModificationsPtr();
+				for (auto i = 0u; i < transaction.ExecutorModificationCount; ++i, ++pModification) {
+					reputationModificationKeys.push_back(*pModification);
 				}
 			}
 
 			if (0 < transaction.VerifierModificationCount) {
 				utils::KeySet addedVerifierKeys;
-				const auto* pModifications = transaction.VerifiersPtr();
-				for (auto i = 0u; i < transaction.VerifierModificationCount; ++i, ++pModifications) {
-					reputationModificationKeys.push_back(pModifications);
-					if (model::CosignatoryModificationType::Add == pModifications->ModificationType) {
-						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Multisig, pModifications->CosignatoryPublicKey));
-                        addedVerifierKeys.insert(pModifications[i].CosignatoryPublicKey);
+				const auto* pModification = transaction.VerifierModificationsPtr();
+				for (auto i = 0u; i < transaction.VerifierModificationCount; ++i, ++pModification) {
+					reputationModificationKeys.push_back(*pModification);
+					if (model::CosignatoryModificationType::Add == pModification->ModificationType) {
+						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Multisig, pModification->CosignatoryPublicKey));
+						addedVerifierKeys.insert(pModification->CosignatoryPublicKey);
 					}
 				}
 
 				sub.notify(ModifyMultisigCosignersNotification(
-						transaction.Multisig, transaction.VerifierModificationCount, transaction.VerifiersPtr()));
+					transaction.Multisig, transaction.VerifierModificationCount, transaction.VerifierModificationsPtr()));
 
 				if (!addedVerifierKeys.empty())
 					sub.notify(AddressInteractionNotification(transaction.Multisig, model::AddressSet{}, addedVerifierKeys));
@@ -63,11 +63,11 @@ namespace catapult { namespace plugins {
 				transaction.Multisig,
 				transaction.Hash,
 				transaction.CustomerModificationCount,
-				transaction.CustomersPtr(),
+				transaction.CustomerModificationsPtr(),
 				transaction.ExecutorModificationCount,
-				transaction.ExecutorsPtr(),
+				transaction.ExecutorModificationsPtr(),
 				transaction.VerifierModificationCount,
-				transaction.VerifiersPtr()));
+				transaction.VerifierModificationsPtr()));
 
 			if (!reputationModificationKeys.empty())
 				sub.notify(ReputationUpdateNotification(reputationModificationKeys));

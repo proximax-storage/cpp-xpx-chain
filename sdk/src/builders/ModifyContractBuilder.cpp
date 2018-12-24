@@ -50,6 +50,19 @@ namespace catapult { namespace builders {
 		m_verifierModifications.push_back(model::CosignatoryModification{ type, key });
 	}
 
+	namespace {
+		inline void addModifications(
+				const std::vector<model::CosignatoryModification>& builderModifications,
+				model::CosignatoryModification* pTransactionModifications) {
+			if (!builderModifications.empty()) {
+				for (const auto& modification : builderModifications) {
+					*pTransactionModifications = modification;
+					++pTransactionModifications;
+				}
+			}
+		}
+	}
+
 	template<typename TransactionType>
 	std::unique_ptr<TransactionType> ModifyContractBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
@@ -70,29 +83,9 @@ namespace catapult { namespace builders {
 		pTransaction->VerifierModificationCount = utils::checked_cast<size_t, uint8_t>(m_verifierModifications.size());
 
 		// 4. set modifications
-		if (!m_customerModifications.empty()) {
-			auto* pModification = pTransaction->CustomersPtr();
-			for (const auto& modification : m_customerModifications) {
-				*pModification = modification;
-				++pModification;
-			}
-		}
-
-		if (!m_executorModifications.empty()) {
-			auto* pModification = pTransaction->ExecutorsPtr();
-			for (const auto& modification : m_executorModifications) {
-				*pModification = modification;
-				++pModification;
-			}
-		}
-
-		if (!m_verifierModifications.empty()) {
-			auto* pModification = pTransaction->VerifiersPtr();
-			for (const auto& modification : m_verifierModifications) {
-				*pModification = modification;
-				++pModification;
-			}
-		}
+		addModifications(m_customerModifications, pTransaction->CustomerModificationsPtr());
+		addModifications(m_executorModifications, pTransaction->ExecutorModificationsPtr());
+		addModifications(m_verifierModifications, pTransaction->VerifierModificationsPtr());
 
 		return pTransaction;
 	}

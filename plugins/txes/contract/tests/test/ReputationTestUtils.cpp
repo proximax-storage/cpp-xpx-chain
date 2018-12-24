@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 		pTransaction->Type = model::Entity_Type_Modify_Contract;
 		pTransaction->Signer = signer;
 
-		auto* pModification = pTransaction->ExecutorsPtr();
+		auto* pModification = pTransaction->ExecutorModificationsPtr();
 		for (auto i = 0u; i < numModifications; ++i) {
 			pModification->ModificationType = modificationTypes[i];
 			test::FillWithRandomData(pModification->CosignatoryPublicKey);

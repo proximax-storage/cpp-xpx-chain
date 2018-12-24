@@ -62,7 +62,7 @@ namespace catapult { namespace builders {
 				const auto* pModification = transaction.ModificationsPtr();
 				for (const auto& modification : modifications) {
 					EXPECT_EQ(modification.ModificationType, pModification->ModificationType)
-										<< "type " << static_cast<uint16_t>(modification.ModificationType) << "at index " << i;
+						<< "type " << static_cast<uint16_t>(modification.ModificationType) << "at index " << i;
 					EXPECT_EQ(modification.CosignatoryPublicKey, pModification->CosignatoryPublicKey) << "at index " << i;
 					++pModification;
 				}
