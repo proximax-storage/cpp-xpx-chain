@@ -32,7 +32,13 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.contract", utils::ConfigurationBag({{ "", { {} } }}));
+				config.Plugins.emplace("catapult.plugins.contract", utils::ConfigurationBag({{
+					"",
+					{
+						{ "minPercentageOfApproval", "100" },
+						{ "minPercentageOfRemoval", "66" },
+					}
+				}}));
 
 				PluginManager manager(config, StorageConfiguration());
 				RegisterContractSubsystem(manager);

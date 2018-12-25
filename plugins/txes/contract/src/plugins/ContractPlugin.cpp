@@ -26,6 +26,7 @@
 #include "src/cache/ContractCacheStorage.h"
 #include "src/cache/ReputationCache.h"
 #include "src/cache/ReputationCacheStorage.h"
+#include "src/config/ContractConfiguration.h"
 #include "src/handlers/ContractDiagnosticHandlers.h"
 #include "src/handlers/ReputationDiagnosticHandlers.h"
 #include "src/observers/Observers.h"
@@ -36,6 +37,7 @@ namespace catapult { namespace plugins {
 
 	void RegisterContractSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateModifyContractTransactionPlugin());
+		auto config = model::LoadPluginConfiguration<config::ContractConfiguration>(manager.config(), "catapult.plugins.contract");
 
 		manager.addCacheSupport<cache::ContractCacheStorage>(
 			std::make_unique<cache::ContractCache>(manager.cacheConfig(cache::ContractCache::Name)));
@@ -71,8 +73,8 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateModifyContractDurationValidator());
 		});
 
-		manager.addObserverHook([](auto& builder) {
-			builder.add(observers::CreateModifyContractObserver());
+		manager.addObserverHook([config](auto& builder) {
+			builder.add(observers::CreateModifyContractObserver(config));
 			builder.add(observers::CreateReputationUpdateObserver());
 		});
 	}

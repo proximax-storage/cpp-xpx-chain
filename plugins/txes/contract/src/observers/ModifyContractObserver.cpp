@@ -20,7 +20,9 @@
 
 #include "Observers.h"
 #include "src/cache/ContractCache.h"
+#include "src/config/ContractConfiguration.h"
 #include "plugins/txes/multisig/src/cache/MultisigCache.h"
+#include <math.h>
 
 namespace catapult { namespace observers {
 
@@ -96,18 +98,19 @@ namespace catapult { namespace observers {
 		};
 	}
 
-	DEFINE_OBSERVER(ModifyContract, Notification, [](const auto& notification, const ObserverContext& context) {
-		auto& contractCache = context.Cache.sub<cache::ContractCache>();
-		ContractFacade contractFacade(contractCache, notification.Multisig);
+	DECLARE_OBSERVER(ModifyContract, Notification)(config::ContractConfiguration config) {
+		return MAKE_OBSERVER(ModifyContract, Notification, [config](const auto& notification, const ObserverContext& context) {
+			auto& contractCache = context.Cache.sub<cache::ContractCache>();
+			ContractFacade contractFacade(contractCache, notification.Multisig);
 
-		if (contractFacade.start() == Height{0u}) {
-			contractFacade.setStart(context.Height);
-			contractFacade.setDuration(BlockDuration{static_cast<uint64_t>(notification.DurationDelta)});
-		} else {
-			contractFacade.setDuration(BlockDuration{
-				contractFacade.duration().unwrap() + static_cast<uint64_t>(notification.DurationDelta)});
-		}
-		contractFacade.setHash(notification.Hash);
+			if (contractFacade.start() == Height{0u}) {
+				contractFacade.setStart(context.Height);
+				contractFacade.setDuration(BlockDuration{static_cast<uint64_t>(notification.DurationDelta)});
+			} else {
+				contractFacade.setDuration(BlockDuration{
+						contractFacade.duration().unwrap() + static_cast<uint64_t>(notification.DurationDelta)});
+			}
+			contractFacade.setHash(notification.Hash);
 
 #define MODIFY_CONTRACTORS(CONTRACTOR_TYPE) \
 		for (auto i = 0u; i < notification.CONTRACTOR_TYPE##ModificationCount; ++i) { \
@@ -119,14 +122,15 @@ namespace catapult { namespace observers {
 				contractFacade.remove##CONTRACTOR_TYPE(notification.CONTRACTOR_TYPE##ModificationsPtr[i].CosignatoryPublicKey); \
 		}
 
-		MODIFY_CONTRACTORS(Customer)
-		MODIFY_CONTRACTORS(Executor)
-		MODIFY_CONTRACTORS(Verifier)
+			MODIFY_CONTRACTORS(Customer)
+			MODIFY_CONTRACTORS(Executor)
+			MODIFY_CONTRACTORS(Verifier)
 
-		auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
-		auto& multisigEntry = multisigCache.find(notification.Multisig).get();
-		uint8_t minApproval = contractFacade.verifierCount();
-		multisigEntry.setMinApproval(minApproval);
-		multisigEntry.setMinRemoval(minApproval / 2 + 1);
-	});
+			auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
+			auto& multisigEntry = multisigCache.find(notification.Multisig).get();
+			float verifierCount = contractFacade.verifierCount();
+			multisigEntry.setMinApproval(ceil(verifierCount * config.MinPercentageOfApproval / 100));
+			multisigEntry.setMinRemoval(ceil(verifierCount * config.MinPercentageOfRemoval / 100));
+		});
+	}
 }}

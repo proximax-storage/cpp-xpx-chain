@@ -18,16 +18,25 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#pragma once
-#include "src/config/ContractConfiguration.h"
-#include "src/model/ContractNotifications.h"
-#include "catapult/observers/ObserverTypes.h"
+#include "ContractConfiguration.h"
+#include "catapult/utils/ConfigurationBag.h"
+#include "catapult/utils/ConfigurationUtils.h"
 
-namespace catapult { namespace observers {
+namespace catapult { namespace config {
 
-	/// Observes changes triggered by update contract notifications
-	DECLARE_OBSERVER(ModifyContract, model::ModifyContractNotification)(config::ContractConfiguration config);
+	ContractConfiguration ContractConfiguration::Uninitialized() {
+		return ContractConfiguration();
+	}
 
-	/// Observes changes triggered by update reputation notifications
-	DECLARE_OBSERVER(ReputationUpdate, model::ReputationUpdateNotification)();
+	ContractConfiguration ContractConfiguration::LoadFromBag(const utils::ConfigurationBag& bag) {
+		ContractConfiguration config;
+
+#define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
+		LOAD_PROPERTY(MinPercentageOfApproval);
+		LOAD_PROPERTY(MinPercentageOfRemoval);
+#undef LOAD_PROPERTY
+
+		utils::VerifyBagSizeLte(bag, 2);
+		return config;
+	}
 }}
