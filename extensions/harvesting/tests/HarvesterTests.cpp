@@ -463,10 +463,10 @@ namespace catapult { namespace harvesting {
 		auto stateHash = test::GenerateRandomData<Hash256_Size>();
 		std::vector<Hash256> capturedPreviousBlockHashes;
 		Harvester::Suppliers harvesterSuppliers{
-			[&stateHash, &capturedPreviousBlockHashes](const auto& block) {
+			[&stateHash, &capturedPreviousBlockHashes](const auto& blockElement) {
 				// - use previous block hash as a proxy for a block
-				capturedPreviousBlockHashes.push_back(block.PreviousBlockHash);
-				stateHash[3] = block.PreviousBlockHash[0];
+				capturedPreviousBlockHashes.push_back(blockElement.Block.PreviousBlockHash);
+				stateHash[3] = blockElement.Block.PreviousBlockHash[0];
 				return std::make_pair(stateHash, true);
 			},
 			[](auto) { return TransactionsInfo(); }

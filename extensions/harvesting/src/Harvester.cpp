@@ -28,6 +28,18 @@
 namespace catapult { namespace harvesting {
 
 	namespace {
+
+		model::BlockElement ToBlockElement(const model::Block& block, const std::vector<const model::TransactionInfo*>& transactionInfos) {
+			model::BlockElement blockElement(block);
+
+			for (const auto& transactionInfo : transactionInfos) {
+				blockElement.Transactions.push_back(model::TransactionElement(*transactionInfo->pEntity));
+				blockElement.Transactions.back().EntityHash = transactionInfo->EntityHash;
+			}
+
+			return blockElement;
+		}
+
 		struct NextBlockContext {
 		public:
 			explicit NextBlockContext(const model::BlockElement& parentBlockElement, Timestamp nextTimestamp)
@@ -113,7 +125,7 @@ namespace catapult { namespace harvesting {
 
 		auto transactionsInfo = m_suppliers.SupplyTransactions(m_config.MaxTransactionsPerBlock);
 		auto pBlock = CreateUnsignedBlock(context, m_config.Network.Identifier, *pHarvesterKeyPair, transactionsInfo);
-		auto stateHashResult = m_suppliers.CalculateStateHash(*pBlock);
+		auto stateHashResult = m_suppliers.CalculateStateHash(ToBlockElement(*pBlock, transactionsInfo.Infos));
 		if (!stateHashResult.second)
 			return nullptr;
 

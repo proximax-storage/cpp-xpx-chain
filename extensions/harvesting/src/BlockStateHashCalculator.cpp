@@ -21,31 +21,14 @@
 #include "BlockStateHashCalculator.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/BlockExecutor.h"
+#include "catapult/model/EntityHasher.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace harvesting {
 
-	namespace {
-		// just need to extract transactions in order to execute them
-		// since there is no validation, hashes only need to be unique (to avoid redundant hash cache insert) but don't need to be correct
-		model::BlockElement ExplodeToBlockElement(const model::Block& block) {
-			model::BlockElement blockElement(block);
-
-			auto counter = 0u;
-			for (const auto& transaction : block.Transactions()) {
-				blockElement.Transactions.push_back(model::TransactionElement(transaction));
-
-				auto& entityHash = blockElement.Transactions.back().EntityHash;
-				reinterpret_cast<uint32_t&>(*entityHash.data()) = ++counter;
-			}
-
-			return blockElement;
-		}
-	}
-
 	std::pair<Hash256, bool> CalculateBlockStateHash(
-			const model::Block& block,
+			const model::BlockElement& blockElements,
 			const cache::CatapultCache& cache,
 			const model::BlockChainConfiguration& config,
 			const plugins::PluginManager& pluginManager) {
@@ -55,10 +38,10 @@ namespace catapult { namespace harvesting {
 
 		// 1. lock the cache and make sure the height is consistent with the *next* block
 		auto cacheView = cache.createView();
-		if (cacheView.height() + Height(1) != block.Height) {
+		if (cacheView.height() + Height(1) != blockElements.Block.Height) {
 			CATAPULT_LOG(debug)
 					<< "bypassing state hash calculation because cache height (" << cacheView.height()
-					<< ") is inconsistent with block height (" << block.Height << ")";
+					<< ") is inconsistent with block height (" << blockElements.Block.Height << ")";
 			return std::make_pair(Hash256(), false);
 		}
 
@@ -67,7 +50,7 @@ namespace catapult { namespace harvesting {
 
 		// 3. prepare observer state (for the *next* harvested block)
 		const auto& accountStateCache = cache.sub<cache::AccountStateCache>();
-		auto importanceHeight = model::ConvertToImportanceHeight(block.Height, accountStateCache.importanceGrouping());
+		auto importanceHeight = model::ConvertToImportanceHeight(blockElements.Block.Height, accountStateCache.importanceGrouping());
 
 		auto cacheDetachedDelta = cache.createDetachableDelta().detach();
 		auto pCacheDelta = cacheDetachedDelta.lock();
@@ -76,7 +59,7 @@ namespace catapult { namespace harvesting {
 		auto observerState = observers::ObserverState(*pCacheDelta, catapultState);
 
 		// 4. execute block
-		chain::ExecuteBlock(ExplodeToBlockElement(block), entityObserver, observerState);
-		return std::make_pair(pCacheDelta->calculateStateHash(block.Height).StateHash, true);
+		chain::ExecuteBlock(blockElements, entityObserver, observerState);
+		return std::make_pair(pCacheDelta->calculateStateHash(blockElements.Block.Height).StateHash, true);
 	}
 }}
