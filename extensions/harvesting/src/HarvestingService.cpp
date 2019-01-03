@@ -76,8 +76,8 @@ namespace catapult { namespace harvesting {
 			const auto& blockChainConfig = state.config().BlockChain;
 
 			Harvester::Suppliers harvesterSuppliers{
-				[&cache, &blockChainConfig, &pluginManager = state.pluginManager()](const auto& block) {
-					return CalculateBlockStateHash(block, cache, blockChainConfig, pluginManager);
+				[&cache, &blockChainConfig, &pluginManager = state.pluginManager()](const auto& blockElements) {
+					return CalculateBlockStateHash(blockElements, cache, blockChainConfig, pluginManager);
 				},
 				CreateTransactionsInfoSupplier(state.utCache())
 			};

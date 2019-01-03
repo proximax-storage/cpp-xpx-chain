@@ -34,7 +34,7 @@ namespace catapult { namespace harvesting {
 		/// Suppliers used to customize block generation.
 		struct Suppliers {
 			/// Calculates a state hash for a block.
-			std::function<std::pair<Hash256, bool> (const model::Block&)> CalculateStateHash;
+			std::function<std::pair<Hash256, bool> (const model::BlockElement&)> CalculateStateHash;
 
 			/// Supplies transaction infos for a block.
 			TransactionsInfoSupplier SupplyTransactions;

@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/model/Elements.h"
 
 namespace catapult {
 	namespace cache { class CatapultCache; }
@@ -32,10 +33,10 @@ namespace catapult {
 
 namespace catapult { namespace harvesting {
 
-	/// Calculates the state hash after executing \a block given \a cache for the network configured with \a config
+	/// Calculates the state hash after executing \a blockElements given \a cache for the network configured with \a config
 	/// and \a pluginManager.
 	std::pair<Hash256, bool> CalculateBlockStateHash(
-			const model::Block& block,
+			const model::BlockElement& blockElements,
 			const cache::CatapultCache& cache,
 			const model::BlockChainConfiguration& config,
 			const plugins::PluginManager& pluginManager);
