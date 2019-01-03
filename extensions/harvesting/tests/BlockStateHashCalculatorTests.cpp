@@ -50,6 +50,7 @@ namespace catapult { namespace harvesting {
 		void RunTest(bool enableVerifiableState, Height blockHeight, uint32_t numTransactions, TAssertHashes assertHashes) {
 			// Arrange:
 			auto pBlock = test::GenerateBlockWithTransactions(numTransactions, blockHeight, Timestamp());
+			auto blockElement = test::BlockToBlockElement(*pBlock);
 			ZeroTransactionFees(*pBlock);
 
 			test::TempDirectoryGuard dbDirGuard("testdb");
@@ -72,7 +73,7 @@ namespace catapult { namespace harvesting {
 			auto preCacheStateHash = cache.createView().calculateStateHash().StateHash;
 
 			// Act:
-			auto blockStateHashResult = CalculateBlockStateHash(*pBlock, cache, config, *pPluginManager);
+			auto blockStateHashResult = CalculateBlockStateHash(blockElement, cache, config, *pPluginManager);
 			auto postCacheStateHash = cache.createView().calculateStateHash().StateHash;
 
 			// Assert: cache state hash should not change
@@ -145,8 +146,8 @@ namespace catapult { namespace harvesting {
 			pPluginManager->addTransactionSupport(mocks::CreateMockTransactionPlugin());
 
 			// Act:
-			auto blockStateHashResult1 = CalculateBlockStateHash(block1, cache, config, *pPluginManager);
-			auto blockStateHashResult2 = CalculateBlockStateHash(block2, cache, config, *pPluginManager);
+			auto blockStateHashResult1 = CalculateBlockStateHash(test::BlockToBlockElement(block1), cache, config, *pPluginManager);
+			auto blockStateHashResult2 = CalculateBlockStateHash(test::BlockToBlockElement(block2), cache, config, *pPluginManager);
 
 			// Assert:
 			EXPECT_TRUE(blockStateHashResult1.second);
@@ -203,10 +204,11 @@ namespace catapult { namespace harvesting {
 			});
 
 			auto pBlock = test::GenerateBlockWithTransactionsAtHeight(numTransactions, Height(2));
+			auto blockElement = test::BlockToBlockElement(*pBlock);
 			ZeroTransactionFees(*pBlock);
 
 			// Act: calculate state hash
-			CalculateBlockStateHash(*pBlock, cache, config, *pPluginManager);
+			CalculateBlockStateHash(blockElement, cache, config, *pPluginManager);
 
 			// Assert: all transaction hashes are unique
 			EXPECT_EQ(numTransactions, capturedHashes.size());

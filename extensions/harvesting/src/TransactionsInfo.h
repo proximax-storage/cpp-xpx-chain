@@ -29,6 +29,7 @@ namespace catapult { namespace harvesting {
 	struct TransactionsInfo {
 		/// Transactions.
 		model::Transactions Transactions;
+		std::vector<const model::TransactionInfo*> Infos;
 
 		/// Aggregate transactions hash.
 		Hash256 TransactionsHash;
