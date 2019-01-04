@@ -34,6 +34,11 @@ maxCosignaturesPerAggregate = 15
 enableStrictCosignatureCheck = false
 enableBondedAggregateSupport = true
 
+[plugin:catapult.plugins.contract]
+
+minPercentageOfApproval = 100
+minPercentageOfRemoval = 66
+
 [plugin:catapult.plugins.lockhash]
 
 lockedFundsPerAggregate = 10'000'000

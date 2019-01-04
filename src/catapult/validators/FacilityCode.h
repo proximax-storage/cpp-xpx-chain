@@ -29,13 +29,13 @@ namespace catapult { namespace validators {
 	/// Possible validation facility codes.
 	enum class FacilityCode : uint8_t {
 		COPY_FACILITY_CODE(Aggregate),
+        COPY_FACILITY_CODE(Contract),
 		COPY_FACILITY_CODE(Core),
 		COPY_FACILITY_CODE(LockHash),
 		COPY_FACILITY_CODE(LockSecret),
 		COPY_FACILITY_CODE(Mosaic),
 		COPY_FACILITY_CODE(Multisig),
 		COPY_FACILITY_CODE(Namespace),
-		COPY_FACILITY_CODE(Reputation),
 		COPY_FACILITY_CODE(Property),
 		COPY_FACILITY_CODE(Transfer),
 

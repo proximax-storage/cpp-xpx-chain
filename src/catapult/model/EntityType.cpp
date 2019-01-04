@@ -39,17 +39,17 @@ namespace catapult { namespace model {
 	namespace {
 		const char* ToString(EntityType entityType) {
 			switch (utils::to_underlying_type(entityType)) {
-			// well known types defined in EntityType.h
-			CASE_WELL_KNOWN_ENTITY_TYPE(Nemesis_Block);
-			CASE_WELL_KNOWN_ENTITY_TYPE(Block);
+				// well known types defined in EntityType.h
+				CASE_WELL_KNOWN_ENTITY_TYPE(Nemesis_Block);
+				CASE_WELL_KNOWN_ENTITY_TYPE(Block);
 
-			// plugin entity types
-			#include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
-			#include "plugins/txes/multisig/src/model/MultisigEntityType.h"
-			#include "plugins/txes/namespace/src/model/MosaicEntityType.h"
-			#include "plugins/txes/namespace/src/model/NamespaceEntityType.h"
-			#include "plugins/txes/reputation/src/model/ReputationEntityType.h"
-			#include "plugins/txes/transfer/src/model/TransferEntityType.h"
+					// plugin entity types
+					#include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
+					#include "plugins/txes/contract/src/model/ContractEntityType.h"
+					#include "plugins/txes/multisig/src/model/MultisigEntityType.h"
+					#include "plugins/txes/namespace/src/model/MosaicEntityType.h"
+					#include "plugins/txes/namespace/src/model/NamespaceEntityType.h"
+					#include "plugins/txes/transfer/src/model/TransferEntityType.h"
 			}
 
 			return nullptr;
