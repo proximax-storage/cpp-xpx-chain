@@ -94,21 +94,21 @@ RUN cd /catapult \
    && make \
 # Required extensions
     catapult.mongo.plugins.aggregate \
+    catapult.mongo.plugins.contract \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.property \
-    catapult.mongo.plugins.reputation \
     catapult.mongo.plugins.transfer \
     catapult.plugins.aggregate \
+    catapult.plugins.contract \
     catapult.plugins.hashcache \
     catapult.plugins.lockhash \
     catapult.plugins.locksecret \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
     catapult.plugins.property \
-    catapult.plugins.reputation \
     catapult.plugins.signature \
     catapult.plugins.transfer \
     extension.addressextraction \

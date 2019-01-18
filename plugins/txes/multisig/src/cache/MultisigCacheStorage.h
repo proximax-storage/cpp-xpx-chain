@@ -20,7 +20,7 @@
 
 #pragma once
 #include "MultisigCacheTypes.h"
-#include "src/state/MultisigEntrySerializer.h"
+#include "plugins/txes/multisig/src/state/MultisigEntrySerializer.h"
 #include "catapult/cache/CacheStorageInclude.h"
 
 namespace catapult { namespace cache {

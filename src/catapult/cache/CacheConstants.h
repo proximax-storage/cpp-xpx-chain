@@ -35,6 +35,7 @@ namespace catapult { namespace cache {
 		SecretLockInfo,
 		Property,
 		Reputation,
+		Contract,
 	};
 
 /// Defines cache constants for a cache with \a NAME.
