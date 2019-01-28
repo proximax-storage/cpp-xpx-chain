@@ -107,7 +107,7 @@ namespace catapult { namespace state {
 		}
 
 		/// Check do we need to clean up the deque at \a height with \a config
-		void maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config);
+		void maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration& config);
 
 		/// Get effective balance of account at \a height with \a importanceGrouping
 		Amount getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const;
