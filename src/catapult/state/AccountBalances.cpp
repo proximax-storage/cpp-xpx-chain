@@ -162,7 +162,7 @@ namespace catapult { namespace state {
 		m_localSnapshots.splice(m_localSnapshots.end(), m_remoteSnapshots);
 	}
 
-	void AccountBalances::maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration config) {
+	void AccountBalances::maybeCleanUpSnapshots(const Height& height, const model::BlockChainConfiguration& config) {
 		auto unstableHeight = Height(config.ImportanceGrouping + config.MaxRollbackBlocks);
 
 		if (height <= unstableHeight) {
