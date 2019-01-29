@@ -17,7 +17,8 @@ namespace catapult { namespace cache {
 		state::ContractEntry originalEntry(test::GenerateRandomData<Key_Size>());
 		originalEntry.setDuration(BlockDuration(20));
 		originalEntry.setStart(Height(12));
-		originalEntry.setHash(test::GenerateRandomData<Hash256_Size>());
+		originalEntry.pushHash(test::GenerateRandomData<Hash256_Size>(), Height(12));
+		originalEntry.pushHash(test::GenerateRandomData<Hash256_Size>(), Height(13));
 		originalEntry.executors() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
 		originalEntry.customers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
 		originalEntry.verifiers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
@@ -38,6 +39,7 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(originalEntry.key(), loadedEntry.key());
 		EXPECT_EQ(originalEntry.start(), loadedEntry.start());
 		EXPECT_EQ(originalEntry.duration(), loadedEntry.duration());
+		EXPECT_EQ(originalEntry.hashes(), loadedEntry.hashes());
 		EXPECT_EQ(originalEntry.executors(), loadedEntry.executors());
 		EXPECT_EQ(originalEntry.customers(), loadedEntry.customers());
 		EXPECT_EQ(originalEntry.verifiers(), loadedEntry.verifiers());

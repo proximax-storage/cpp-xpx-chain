@@ -45,17 +45,24 @@ namespace catapult { namespace state {
 		EXPECT_EQ(20, entry.duration().unwrap());
 	}
 
-	TEST(TEST_CLASS, CanSetHash) {
+	TEST(TEST_CLASS, CanSetHashs) {
 		// Arrange:
 		auto key = test::GenerateRandomData<Key_Size>();
 		auto entry = ContractEntry(key);
 
 		// Act:
-		auto hash = test::GenerateRandomData<Hash256_Size>();
-		entry.setHash(hash);
+		auto hash1 = test::GenerateRandomData<Hash256_Size>();
+		auto hash2 = test::GenerateRandomData<Hash256_Size>();
+		entry.pushHash(hash1, Height(1));
+		entry.pushHash(hash2, Height(2));
 
 		// Assert:
-		EXPECT_EQ(hash, entry.hash());
+		EXPECT_EQ(hash2, entry.hash());
+		EXPECT_EQ(2, entry.hashes().size());
+
+		entry.popHash();
+		EXPECT_EQ(hash1, entry.hash());
+		EXPECT_EQ(1, entry.hashes().size());
 	}
 
 	TEST(TEST_CLASS, CanSetCustomers) {

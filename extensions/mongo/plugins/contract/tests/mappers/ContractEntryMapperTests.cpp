@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "src/mappers/ContractEntryMapper.h"
@@ -26,7 +25,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			entry.verifiers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
 			entry.setStart(Height(12));
 			entry.setDuration(BlockDuration(12));
-			entry.setHash(test::GenerateRandomData<Key_Size>());
+			entry.pushHash(test::GenerateRandomData<Key_Size>(), Height(12));
+			entry.pushHash(test::GenerateRandomData<Key_Size>(), Height(13));
 
 			return entry;
 		}
@@ -45,7 +45,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		EXPECT_EQ(1u, test::GetFieldCount(documentView));
 
 		auto contractView = documentView["contract"].get_document().view();
-		EXPECT_EQ(8u, test::GetFieldCount(contractView));
+		EXPECT_EQ(9u, test::GetFieldCount(contractView));
 		test::AssertEqualContractData(entry, address, contractView);
 	}
 
@@ -73,7 +73,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		EXPECT_EQ(1u, test::GetFieldCount(view));
 
 		auto contractView = view["contract"].get_document().view();
-		EXPECT_EQ(8u, test::GetFieldCount(contractView));
+		EXPECT_EQ(9u, test::GetFieldCount(contractView));
 		test::AssertEqualContractData(entry, address, contractView);
 	}
 
