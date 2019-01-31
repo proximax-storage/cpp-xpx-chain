@@ -1,26 +1,14 @@
 /**
-*** Copyright (c) 2018-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
-***
-*** This file is part of Catapult.
-***
-*** Catapult is free software: you can redistribute it and/or modify
-*** it under the terms of the GNU Lesser General Public License as published by
-*** the Free Software Foundation, either version 3 of the License, or
-*** (at your option) any later version.
-***
-*** Catapult is distributed in the hope that it will be useful,
-*** but WITHOUT ANY WARRANTY; without even the implied warranty of
-*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*** GNU Lesser General Public License for more details.
-***
-*** You should have received a copy of the GNU Lesser General Public License
-*** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
+*** Copyright 2018 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
 **/
 
 #pragma once
 #include "catapult/types.h"
 #include "catapult/utils/ArraySet.h"
+#include "src/model/HashSnapshot.h"
+#include <vector>
 
 namespace catapult { namespace state {
 
@@ -47,14 +35,24 @@ namespace catapult { namespace state {
 			m_duration = duration;
 		}
 
-		/// Gets the hash of an entity passed from customers to executors (e.g. file hash).
+		/// Gets the last hash of an entity passed from customers to executors (e.g. file hash).
 		Hash256 hash() const {
-			return m_hash;
+			return m_hashes.empty() ? Hash256() : m_hashes.back().Hash;
 		}
 
-		/// Sets the \a hash of an entity passed from customers to executors (e.g. file hash).
-		void setHash(const Hash256& hash) {
-			m_hash = hash;
+		/// Gets the hashes of an entity passed from customers to executors (e.g. file hash).
+		const std::vector<model::HashSnapshot>& hashes() const {
+			return m_hashes;
+		}
+
+		/// Pushs the \a hash of an entity passed from customers to executors (e.g. file hash) at \a height to array of hashes.
+		void pushHash(const Hash256 & hash, const Height& height) {
+			m_hashes.emplace_back(model::HashSnapshot{ hash, height });
+		}
+
+		/// Pops the last \a hash of an entity passed from customers to executors (e.g. file hash) from array of hashes.
+		void popHash() {
+			m_hashes.pop_back();
 		}
 
 		/// Gets customer account keys.
@@ -105,7 +103,7 @@ namespace catapult { namespace state {
 	private:
 		Height m_start;
 		BlockDuration m_duration;
-		Hash256 m_hash;
+		std::vector<model::HashSnapshot> m_hashes;
 		utils::SortedKeySet m_customers;
 		utils::SortedKeySet m_executors;
 		utils::SortedKeySet m_verifiers;

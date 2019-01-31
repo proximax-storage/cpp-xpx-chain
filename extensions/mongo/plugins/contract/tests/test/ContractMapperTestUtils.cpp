@@ -31,6 +31,18 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry.duration().unwrap(), GetUint64(dbContract, "duration"));
 		EXPECT_EQ(entry.hash(), GetHashValue(dbContract, "hash"));
 
+		auto dbHashes = dbContract["hashes"].get_array().value;
+		auto hashesIt = entry.hashes().begin();
+		ASSERT_EQ(entry.hashes().size(), test::GetFieldCount(dbHashes));
+		for (const auto& dbHash : dbHashes) {
+			auto snapshot = dbHash.get_document().view();
+			Hash256 hash;
+			mongo::mappers::DbBinaryToModelArray(hash, snapshot["hash"].get_binary());
+			EXPECT_EQ(hashesIt->Hash, hash);
+			EXPECT_EQ(hashesIt->HashHeight, mongo::mappers::GetValue64<Height>(snapshot["height"]));
+			++hashesIt;
+		}
+
 		AssertKeySet(entry.customers(), dbContract["customers"].get_array().value);
 		AssertKeySet(entry.executors(), dbContract["executors"].get_array().value);
 		AssertKeySet(entry.verifiers(), dbContract["verifiers"].get_array().value);

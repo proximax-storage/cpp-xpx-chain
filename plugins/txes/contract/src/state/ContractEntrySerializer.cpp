@@ -1,21 +1,7 @@
 /**
-*** Copyright (c) 2018-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
-***
-*** This file is part of Catapult.
-***
-*** Catapult is free software: you can redistribute it and/or modify
-*** it under the terms of the GNU Lesser General Public License as published by
-*** the Free Software Foundation, either version 3 of the License, or
-*** (at your option) any later version.
-***
-*** Catapult is distributed in the hope that it will be useful,
-*** but WITHOUT ANY WARRANTY; without even the implied warranty of
-*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*** GNU Lesser General Public License for more details.
-***
-*** You should have received a copy of the GNU Lesser General Public License
-*** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
+*** Copyright 2018 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
 **/
 
 #include "ContractEntrySerializer.h"
@@ -29,14 +15,22 @@ namespace catapult { namespace state {
 			for (const auto& key : keySet)
 				io::Write(output, key);
 		}
+
+		void SaveHashes(io::OutputStream& output, const std::vector<model::HashSnapshot>& hashes) {
+			io::Write64(output, hashes.size());
+			for (const auto& hashSnpashot : hashes) {
+				io::Write(output, hashSnpashot.Hash);
+				io::Write64(output, hashSnpashot.HashHeight.unwrap());
+			}
+		}
 	}
 
 	void ContractEntrySerializer::Save(const ContractEntry& entry, io::OutputStream& output) {
 		io::Write64(output, entry.start().unwrap());
 		io::Write64(output, entry.duration().unwrap());
-		io::Write(output, entry.hash());
 		io::Write(output, entry.key());
 
+		SaveHashes(output, entry.hashes());
 		SaveKeySet(output, entry.customers());
 		SaveKeySet(output, entry.executors());
 		SaveKeySet(output, entry.verifiers());
@@ -51,21 +45,28 @@ namespace catapult { namespace state {
 				keySet.insert(key);
 			}
 		}
+
+		void LoadHashes(io::InputStream& input, state::ContractEntry& entry) {
+			auto numKeys = io::Read64(input);
+			while (numKeys--) {
+				Hash256 hash;
+				input.read(hash);
+				entry.pushHash(hash, Height(io::Read64(input)));
+			}
+		}
 	}
 
 	ContractEntry ContractEntrySerializer::Load(io::InputStream& input) {
 		auto start = Height{io::Read64(input)};
 		auto duration = BlockDuration{io::Read64(input)};
-		Hash256 hash;
-		input.read(hash);
 		Key key;
 		input.read(key);
 
 		auto entry = state::ContractEntry(key);
 		entry.setStart(start);
 		entry.setDuration(duration);
-		entry.setHash(hash);
 
+		LoadHashes(input, entry);
 		LoadKeySet(input, entry.customers());
 		LoadKeySet(input, entry.executors());
 		LoadKeySet(input, entry.verifiers());
