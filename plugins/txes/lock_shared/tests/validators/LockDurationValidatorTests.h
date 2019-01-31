@@ -32,12 +32,16 @@ namespace catapult { namespace validators {
 			// Act + Assert:
 			for (auto duration : { 1u, 100u })
 				AssertDurationValidator(TTraits::Failure_Result, MaxDuration() + BlockDuration(duration));
+
+			AssertDurationValidator(TTraits::Failure_Result, BlockDuration(0));
 		}
 
 		static void AssertSuccessIfDurationIsLessThanOrEqualToMaxDurationSetting() {
 			// Act + Assert:
 			for (auto duration : { 10u, 1u, 0u })
 				AssertDurationValidator(ValidationResult::Success, MaxDuration() - BlockDuration(duration));
+
+			AssertDurationValidator(ValidationResult::Success, BlockDuration(1));
 		}
 
 	private:
