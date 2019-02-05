@@ -127,7 +127,7 @@ namespace catapult { namespace state {
 		// Assert:
 		auto duration = Eternal_Artifact_Duration.unwrap();
 		auto height = Default_Height.unwrap();
-		AssertActiveOrNot(duration, { height - 1, height, height + 1, 500u, 5000u, std::numeric_limits<Height::ValueType>::max() }, true);
+		AssertActiveOrNot(duration, { height - 1, height, height + 1, 500u, 5000u, Eternal_Artifact_Height.unwrap() }, true);
 	}
 
 	TEST(TEST_CLASS, IsActiveReturnsFalseIfMosaicDefinitionIsNotActive) {
@@ -163,7 +163,7 @@ namespace catapult { namespace state {
 		// Assert:
 		auto duration = Eternal_Artifact_Duration.unwrap();
 		auto height = Default_Height.unwrap();
-		AssertExpiredOrNot(duration, { 1, height - 1, height, height + 1, 5000u, std::numeric_limits<Height::ValueType>::max() }, false);
+		AssertExpiredOrNot(duration, { 1, height - 1, height, height + 1, 5000u, Eternal_Artifact_Height.unwrap() }, false);
 	}
 
 	TEST(TEST_CLASS, IsExpiredReturnsFalseIfMosaicDefinitionIsNotExpired) {

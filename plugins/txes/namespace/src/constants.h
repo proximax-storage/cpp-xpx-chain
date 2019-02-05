@@ -30,6 +30,9 @@ namespace catapult {
 	/// Duration of eternal artifact.
 	constexpr BlockDuration Eternal_Artifact_Duration(0);
 
+	/// Height of eternal artifact.
+	constexpr Height Eternal_Artifact_Height(std::numeric_limits<Height::ValueType>::max());
+
 	/// Number of rules for a mosaic levy.
 	constexpr size_t Num_Mosaic_Levy_Rule_Ids = 5;
 }

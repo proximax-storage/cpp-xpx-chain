@@ -39,7 +39,7 @@ namespace catapult { namespace observers {
 		}
 
 		auto lifetimeEnd = Eternal_Artifact_Duration == notification.Duration
-				? Height(std::numeric_limits<Height::ValueType>::max())
+				? Eternal_Artifact_Height
 				: context.Height + Height(notification.Duration.unwrap());
 		auto lifetime = state::NamespaceLifetime(context.Height, lifetimeEnd);
 		if (cache.contains(notification.NamespaceId)) {

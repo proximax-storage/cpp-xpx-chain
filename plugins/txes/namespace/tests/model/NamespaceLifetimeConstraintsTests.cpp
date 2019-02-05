@@ -69,8 +69,8 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, IsWithinLifetimePlusDurationHandlesOverflowCorrectly) {
 		// Arrange:
-		std::vector<Height::ValueType> testHeights{ 5, 20, 1000, std::numeric_limits<Height::ValueType>::max() };
-		Height lifetimeEnd(std::numeric_limits<Height::ValueType>::max() - 10);
+		std::vector<Height::ValueType> testHeights{ 5, 20, 1000, Eternal_Artifact_Height.unwrap() };
+		Height lifetimeEnd(Eternal_Artifact_Height.unwrap() - 10);
 		NamespaceLifetimeConstraints constraints(BlockDuration(15), 5);
 
 		// Assert:
