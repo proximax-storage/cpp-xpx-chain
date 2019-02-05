@@ -54,7 +54,8 @@ maxProofSize = 1000
 
 maxMultisigDepth = 3
 maxCosignersPerAccount = 10
-maxCosignedAccountsPerAccount = 5
+# 2^20
+maxCosignedAccountsPerAccount = 1048576
 
 [plugin:catapult.plugins.namespace]
 
