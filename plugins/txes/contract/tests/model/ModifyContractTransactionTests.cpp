@@ -39,7 +39,6 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize = baseSize // base
 					+ sizeof(int64_t) // duration delta
-					+ sizeof(Key) // multisig account publick key
 					+ sizeof(Hash256) // hash
 					+ sizeof(uint8_t) // customer modification count
 					+ sizeof(uint8_t) // executor modification count
@@ -47,7 +46,7 @@ namespace catapult { namespace model {
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 75u, sizeof(T));
+			EXPECT_EQ(baseSize + 43u, sizeof(T));
 		}
 
 		template<typename T>

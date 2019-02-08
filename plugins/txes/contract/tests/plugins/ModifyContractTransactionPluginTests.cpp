@@ -164,7 +164,7 @@ namespace catapult { namespace plugins {
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
 		pTransaction->DurationDelta = 1000;
-		pTransaction->Multisig = test::GenerateRandomData<Key_Size>();
+		pTransaction->Signer = test::GenerateRandomData<Key_Size>();
 		pTransaction->Hash = test::GenerateRandomData<Hash256_Size>();
 
 		// Act:
@@ -174,7 +174,7 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(1000, notification.DurationDelta);
-		EXPECT_EQ(pTransaction->Multisig, notification.Multisig);
+		EXPECT_EQ(pTransaction->Signer, notification.Multisig);
 		EXPECT_EQ(pTransaction->Hash, notification.Hash);
 	}
 
@@ -195,7 +195,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Multisig, notification.Signer);
+		EXPECT_EQ(pTransaction->Signer, notification.Signer);
 		EXPECT_EQ(3, notification.ModificationsCount);
 		EXPECT_EQ(pTransaction->VerifierModificationsPtr(), notification.ModificationsPtr);
 	}
@@ -232,10 +232,10 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(2u, sub.numMatchingNotifications());
 
-		EXPECT_EQ(pTransaction->Multisig, sub.matchingNotifications()[0].MultisigAccountKey);
+		EXPECT_EQ(pTransaction->Signer, sub.matchingNotifications()[0].MultisigAccountKey);
 		EXPECT_EQ(pTransaction->VerifierModificationsPtr()[0].CosignatoryPublicKey, sub.matchingNotifications()[0].CosignatoryKey);
 
-		EXPECT_EQ(pTransaction->Multisig, sub.matchingNotifications()[1].MultisigAccountKey);
+		EXPECT_EQ(pTransaction->Signer, sub.matchingNotifications()[1].MultisigAccountKey);
 		EXPECT_EQ(pTransaction->VerifierModificationsPtr()[2].CosignatoryPublicKey, sub.matchingNotifications()[1].CosignatoryKey);
 	}
 
@@ -340,7 +340,7 @@ namespace catapult { namespace plugins {
 				pModification = pTransaction->VerifierModificationsPtr();
 				auto addedKeys = ExtractAddedModificationKeys(pModification, numAddModifications + numDelModifications);
 				const auto& notification = sub.matchingNotifications()[0];
-				EXPECT_EQ(pTransaction->Multisig, notification.Source);
+				EXPECT_EQ(pTransaction->Signer, notification.Source);
 				EXPECT_EQ(model::AddressSet{}, notification.ParticipantsByAddress);
 				EXPECT_EQ(addedKeys, notification.ParticipantsByKey);
 			}

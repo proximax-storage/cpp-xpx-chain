@@ -30,10 +30,6 @@ namespace catapult { namespace builders {
 		m_durationDelta = durationDelta;
 	}
 
-	void ModifyContractBuilder::setMultisig(const Key& multisig) {
-		m_multisig = multisig;
-	}
-
 	void ModifyContractBuilder::setHash(const Hash256& hash) {
 		m_hash = hash;
 	}
@@ -74,7 +70,6 @@ namespace catapult { namespace builders {
 
 		// 2. set transaction fields
 		pTransaction->DurationDelta = m_durationDelta;
-		pTransaction->Multisig = m_multisig;
 		pTransaction->Hash = m_hash;
 
 		// 3. set sizes upfront, so that pointers are calculated correctly

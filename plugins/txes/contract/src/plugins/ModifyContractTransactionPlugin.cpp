@@ -46,21 +46,21 @@ namespace catapult { namespace plugins {
 				for (auto i = 0u; i < transaction.VerifierModificationCount; ++i, ++pModification) {
 					reputationModificationKeys.push_back(*pModification);
 					if (model::CosignatoryModificationType::Add == pModification->ModificationType) {
-						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Multisig, pModification->CosignatoryPublicKey));
+						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModification->CosignatoryPublicKey));
 						addedVerifierKeys.insert(pModification->CosignatoryPublicKey);
 					}
 				}
 
 				sub.notify(ModifyMultisigCosignersNotification(
-					transaction.Multisig, transaction.VerifierModificationCount, transaction.VerifierModificationsPtr()));
+					transaction.Signer, transaction.VerifierModificationCount, transaction.VerifierModificationsPtr()));
 
 				if (!addedVerifierKeys.empty())
-					sub.notify(AddressInteractionNotification(transaction.Multisig, model::AddressSet{}, addedVerifierKeys));
+					sub.notify(AddressInteractionNotification(transaction.Signer, model::AddressSet{}, addedVerifierKeys));
 			}
 
 			sub.notify(ModifyContractNotification(
 				transaction.DurationDelta,
-				transaction.Multisig,
+				transaction.Signer,
 				transaction.Hash,
 				transaction.CustomerModificationCount,
 				transaction.CustomerModificationsPtr(),
