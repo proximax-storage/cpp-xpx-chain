@@ -115,6 +115,15 @@ namespace catapult { namespace state {
 			EXPECT_TRUE(lifetime.isActiveOrGracePeriod(Height(height))) << "at height " << height;
 	}
 
+	TEST(TEST_CLASS, IsActiveOrGracePeriodReturnsTrueIfLifetimeIsEternalAndGracePeriodIsNotZero) {
+		// Arrange:
+		NamespaceLifetime lifetime(Height(123), Eternal_Artifact_Height, BlockDuration(50));
+
+		// Assert:
+		for (auto height : { 123lu, 124lu, 213lu, 232lu, 233lu, 234lu, 235lu, 283lu, Eternal_Artifact_Height.unwrap() })
+			EXPECT_TRUE(lifetime.isActiveOrGracePeriod(Height(height))) << "at height " << height;
+	}
+
 	TEST(TEST_CLASS, IsActiveOrGracePeriodReturnsFalseIfHeightIsNotWithinLifetimeOrGracePeriod) {
 		// Arrange:
 		NamespaceLifetime lifetime(Height(123), Height(234), BlockDuration(50));

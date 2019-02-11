@@ -28,11 +28,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		constexpr bool IsEternal(const state::NamespaceLifetime& lifetime) {
-			return Height(std::numeric_limits<Height::ValueType>::max()) == lifetime.End;
-		}
-
-		constexpr Height ToHeight(BlockDuration duration) {
-			return Height(duration.unwrap());
+			return Eternal_Artifact_Height == lifetime.End;
 		}
 	}
 
