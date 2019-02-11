@@ -43,7 +43,6 @@ namespace catapult { namespace mongo { namespace plugins {
 				std::initializer_list<model::CosignatoryModification> verifierModifications) {
 			builders::ModifyContractBuilder builder(model::NetworkIdentifier::Mijin_Test, signer);
 			builder.setDurationDelta(100);
-			builder.setMultisig(test::GenerateRandomData<Key_Size>());
 			builder.setHash(test::GenerateRandomData<Hash256_Size>());
 			for (const auto& modification : customerModifications)
 				builder.addCustomerModification(modification.ModificationType, modification.CosignatoryPublicKey);
@@ -72,7 +71,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		template<typename TTransaction>
 		void AssertEqualNonInheritedTransferData(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
 			EXPECT_EQ(transaction.DurationDelta, test::GetInt64(dbTransaction, "durationDelta"));
-			EXPECT_EQ(transaction.Multisig, test::GetKeyValue(dbTransaction, "multisig"));
+			EXPECT_EQ(transaction.Signer, test::GetKeyValue(dbTransaction, "multisig"));
 			EXPECT_EQ(transaction.Hash, test::GetHashValue(dbTransaction, "hash"));
 
 			AssertEqualModifications(dbTransaction["customerModifications"].get_array().value,
