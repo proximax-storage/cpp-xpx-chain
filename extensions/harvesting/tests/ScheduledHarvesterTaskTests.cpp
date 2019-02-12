@@ -27,6 +27,7 @@
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
+#include "catapult/constants.h"
 
 using catapult::crypto::KeyPair;
 
@@ -36,6 +37,8 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
+		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+		Constants::setHarvestingMosaicId(Harvesting_Mosaic_Id);
 
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
@@ -108,7 +111,7 @@ namespace catapult { namespace harvesting {
 			auto delta = cache.createDelta();
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			accountStateCache.addAccount(keyPair.publicKey(), Height(1));
-			accountStateCache.find(keyPair.publicKey()).get().Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
+			accountStateCache.find(keyPair.publicKey()).get().Balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
 			cache.commit(Height(1));
 			return test::CopyKeyPair(keyPair);
 		}

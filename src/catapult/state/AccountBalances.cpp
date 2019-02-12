@@ -192,7 +192,7 @@ namespace catapult { namespace state {
 
 	Amount AccountBalances::getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
 		if (m_localSnapshots.empty() && m_remoteSnapshots.empty()) {
-			auto iter = m_balances.find(Xpx_Id);
+			auto iter = m_balances.find(Constants::getHarvestingMosaicId());
 			return m_balances.end() == iter ? Amount(0) : iter->second;
 		}
 
@@ -209,7 +209,7 @@ namespace catapult { namespace state {
 	}
 
 	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
-		if (mosaicId != Xpx_Id || height == Height(0) || height == Height(-1)) {
+		if (mosaicId != Constants::getHarvestingMosaicId() || height == Height(0) || height == Height(-1)) {
 			return;
 		}
 

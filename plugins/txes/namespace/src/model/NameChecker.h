@@ -19,23 +19,11 @@
 **/
 
 #pragma once
-//#include "src/catapult/types.h"
-#include "plugins/txes/namespace/src/types.h"
-//#include "catapult/constants.h"
+#include <stddef.h>
+#include <stdint.h>
 
-namespace catapult {
+namespace catapult { namespace model {
 
-	/// Base id for namespaces.
-	constexpr NamespaceId Namespace_Base_Id(0);
-
-	namespace crypto {
-
-		/// Generates a root namespace id given \a name.
-		NamespaceId GenerateRootNamespaceId(const RawString& name) noexcept;
-
-		/// Generates a namespace id given \a parentId and namespace \a name.
-		NamespaceId GenerateNamespaceId(NamespaceId parentId, const RawString& name) noexcept;
-
-		/// Generates a mosaic id given \a namespaceId and \a name.
-		MosaicId GenerateMosaicId(NamespaceId namespaceId, const RawString& name) noexcept;
+	/// Returns \c true if \a pName with size \a nameSize points to a valid name.
+	bool IsValidName(const uint8_t* pName, size_t nameSize);
 }}

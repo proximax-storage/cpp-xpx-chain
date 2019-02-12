@@ -48,6 +48,8 @@ namespace catapult { namespace plugins {
 
 			auto cacheConfig = manager.cacheConfig(AccountStateCache::Name);
 			auto cacheOptions = CreateAccountStateCacheOptions(config);
+			Constants::setHarvestingMosaicId(cacheOptions.HarvestingMosaicId);
+			Constants::setCurrencyMosaicId(cacheOptions.CurrencyMosaicId);
 			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, cacheOptions));
 
 			using CacheHandlers = CacheHandlers<cache::AccountStateCacheDescriptor>;

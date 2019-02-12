@@ -29,6 +29,7 @@
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/TestHarness.h"
+#include "catapult/constants.h"
 
 namespace catapult { namespace extensions {
 
@@ -40,6 +41,7 @@ namespace catapult { namespace extensions {
 		uint64_t Importance_Grouping = 10;
 
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+		Constants::setHarvestingMosaicId(Harvesting_Mosaic_Id);
 
 		Importance GetTotalChainImportance(uint32_t numAccounts) {
 			return Importance(numAccounts * (numAccounts + 1) / 2);

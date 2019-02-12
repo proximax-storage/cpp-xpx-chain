@@ -35,4 +35,31 @@ namespace catapult {
 
 	/// Duration of eternal artifact.
 	constexpr BlockDuration Eternal_Artifact_Duration(0);
+
+	/// Singleton to get constants
+	class Constants {
+	public:
+		/// Setter for Currency Mosaic Id
+		static void setCurrencyMosaicId(const MosaicId& id) {
+			m_currencyMosaicId = id;
+		}
+
+		/// Getter for Currency Mosaic Id
+		static MosaicId getCurrencyMosaicId() {
+			return m_currencyMosaicId;
+		}
+
+		/// Setter for Harvesting Mosaic Id
+		static void setHarvestingMosaicId(const MosaicId& id) {
+			m_harvestingMosaicId = id;
+		}
+
+		/// Setter for Harvesting Mosaic Id
+		static MosaicId getHarvestingMosaicId() {
+			return m_harvestingMosaicId;
+		}
+	private:
+		static MosaicId m_currencyMosaicId;
+		static MosaicId m_harvestingMosaicId;
+	};
 }

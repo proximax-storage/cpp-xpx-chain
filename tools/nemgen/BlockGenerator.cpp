@@ -173,7 +173,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			// - root
 			const auto& root = rootPair.second;
 			const auto& rootName = config.NamespaceNames.at(root.id());
-			auto duration = Eternal_Artifact_Height == root.lifetime().End
+			auto duration = std::numeric_limits<BlockDuration::ValueType>::max() == root.lifetime().End.unwrap()
 					? Eternal_Artifact_Duration
 					: BlockDuration((root.lifetime().End - root.lifetime().Start).unwrap());
 			transactions.addRegisterNamespace(rootName, duration);

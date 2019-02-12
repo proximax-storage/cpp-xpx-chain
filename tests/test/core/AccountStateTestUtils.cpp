@@ -24,6 +24,8 @@
 
 namespace catapult { namespace test {
 
+	constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+
 	void RandomFillAccountData(uint64_t seed, state::AccountState& state, size_t numMosaics, size_t numSnapshots) {
 		for (auto i = 0u; i < numMosaics; ++i) {
 			state.Balances.credit(MosaicId(10 + i), Amount(seed * 1000 + i + 1));
@@ -62,7 +64,7 @@ namespace catapult { namespace test {
 	std::shared_ptr<state::AccountState> CreateAccountStateWithoutPublicKey(uint64_t height) {
 		auto address = test::GenerateRandomAddress();
 		auto pState = std::make_shared<state::AccountState>(address, Height(height));
-		pState->Balances.credit(Xpx_Id, Amount(1));
+		pState->Balances.credit(Harvesting_Mosaic_Id, Amount(1));
 		return pState;
 	}
 

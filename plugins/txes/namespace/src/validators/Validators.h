@@ -22,10 +22,15 @@
 #include "Results.h"
 #include "src/model/AliasNotifications.h"
 #include "src/model/NamespaceNotifications.h"
+#include "catapult/model/Notifications.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
 
+namespace catapult { namespace model { struct NamespaceLifetimeConstraints; } }
+
 namespace catapult { namespace validators {
+
+	// region RegisterNamespaceTransaction
 
 	/// A validator implementation that applies to namespace notifications and validates that:
 	/// - namespace type is valid
@@ -46,8 +51,9 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification)(BlockDuration maxDuration);
 
 	/// A validator implementation that applies to root register namespace transactions and validates that:
-	/// - the namespace is available and can be created or renewed given \a maxNamespaceDuration
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification)(BlockDuration maxNamespaceDuration);
+	/// - the namespace is available and can be created or renewed given namespace lifetime \a constraints
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification)(
+			const model::NamespaceLifetimeConstraints& constraints);
 
 	/// A validator implementation that applies to child register namespace transactions and validates that:
 	/// - the namespace is available and can be created

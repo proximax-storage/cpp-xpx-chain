@@ -32,6 +32,7 @@
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/TestHarness.h"
+#include "catapult/constants.h"
 
 using catapult::crypto::KeyPair;
 
@@ -45,6 +46,8 @@ namespace catapult { namespace harvesting {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
+		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+		Constants::setHarvestingMosaicId(Harvesting_Mosaic_Id);
 		constexpr size_t Num_Accounts = 5;
 
 		std::vector<KeyPair> CreateKeyPairs(size_t count) {
@@ -61,7 +64,7 @@ namespace catapult { namespace harvesting {
 			for (auto i = 0u; i < keyPairs.size(); ++i) {
 				cache.addAccount(keyPairs[i].publicKey(), Height(1));
 				auto& accountState = cache.find(keyPairs[i].publicKey()).get();
-				accountState.Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
+				accountState.Balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
 				accountStates.push_back(&accountState);
 			}
 

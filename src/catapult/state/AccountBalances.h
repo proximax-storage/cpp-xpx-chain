@@ -99,6 +99,9 @@ namespace catapult { namespace state {
 		/// Decreasing of XPX balance will be tracked in snapshots array.
 		AccountBalances& debit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
+		/// Optimizes access of the mosaic with \a id.
+		void optimize(MosaicId id);
+
 		/// Commit snapshots from m_remoteSnapshots queue to m_localSnapshots queue
 		/// During commit we can remove snapshots from front of m_localSnapshots, to have valid history of account
 		void commitSnapshots();
@@ -127,9 +130,6 @@ namespace catapult { namespace state {
 
 		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
 		AccountBalances& internalDebit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
-
-		/// Optimizes access of the mosaic with \a id.
-		void optimize(MosaicId id);
 
 	private:
 		std::list<model::BalanceSnapshot> m_localSnapshots;
