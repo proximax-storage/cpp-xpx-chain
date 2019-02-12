@@ -56,6 +56,8 @@ namespace catapult { namespace state {
 	AccountBalances::AccountBalances(AccountBalances&& accountBalances) = default;
 
 	AccountBalances& AccountBalances::operator=(const AccountBalances& accountBalances) {
+		m_optimizedMosaicId = accountBalances.optimizedMosaicId();
+		m_balances.optimize(m_optimizedMosaicId);
 		if (!m_accountState) {
 			m_accountState = accountBalances.m_accountState;
 		}
@@ -73,6 +75,10 @@ namespace catapult { namespace state {
 	}
 
 	AccountBalances& AccountBalances::operator=(AccountBalances&& accountBalances) = default;
+
+	MosaicId AccountBalances::optimizedMosaicId() const {
+		return m_optimizedMosaicId;
+	}
 
 	Amount AccountBalances::get(MosaicId mosaicId) const {
 		auto iter = m_balances.find(mosaicId);
@@ -129,11 +135,14 @@ namespace catapult { namespace state {
 
 		auto iter = m_balances.find(mosaicId);
 		auto hasZeroBalance = m_balances.end() == iter;
-		if (hasZeroBalance || amount > iter->second)
-			CATAPULT_THROW_RUNTIME_ERROR_2(
-					"debit amount is greater than current balance",
-					amount,
-					hasZeroBalance ? Amount(0) : iter->second);
+		if (hasZeroBalance || amount > iter->second) {
+			auto currentBalance = hasZeroBalance ? Amount(0) : iter->second;
+			std::ostringstream out;
+			out
+					<< "debit amount (" << amount << ") is greater than current balance (" << currentBalance
+					<< ") for mosaic " << utils::HexFormat(mosaicId);
+			CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
+		}
 
 		iter->second = iter->second - amount;
 
@@ -143,6 +152,11 @@ namespace catapult { namespace state {
 			m_balances.erase(mosaicId);
 
 		return *this;
+	}
+
+	void AccountBalances::optimize(MosaicId id) {
+		m_balances.optimize(id);
+		m_optimizedMosaicId = id;
 	}
 
 	void AccountBalances::commitSnapshots() {

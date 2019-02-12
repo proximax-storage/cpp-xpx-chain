@@ -76,6 +76,9 @@ namespace catapult { namespace state {
 			return m_balances.end();
 		}
 
+		/// Gets the optimized mosaic id.
+		MosaicId optimizedMosaicId() const;
+
 		/// Returns amount of funds of a given mosaic (\a mosaicId).
 		Amount get(MosaicId mosaicId) const;
 
@@ -125,10 +128,14 @@ namespace catapult { namespace state {
 		/// Subtracts \a amount funds from a given mosaic (\a mosaicId) at \a height.
 		AccountBalances& internalDebit(const MosaicId& mosaicId, const Amount& amount, const Height& height);
 
+		/// Optimizes access of the mosaic with \a id.
+		void optimize(MosaicId id);
+
 	private:
 		std::list<model::BalanceSnapshot> m_localSnapshots;
 		std::list<model::BalanceSnapshot> m_remoteSnapshots;
 		AccountState* m_accountState = nullptr;
 		CompactMosaicMap m_balances;
+		MosaicId m_optimizedMosaicId;
 	};
 }}

@@ -20,7 +20,6 @@
 
 #include "catapult/state/AccountState.h"
 #include "catapult/state/AccountBalances.h"
-#include "catapult/constants.h"
 #include "tests/test/core/TransactionTestUtils.h"
 
 namespace catapult { namespace state {
@@ -28,8 +27,9 @@ namespace catapult { namespace state {
 #define TEST_CLASS AccountBalancesTests
 
 	namespace {
-		constexpr MosaicId Test_Mosaic_Id = MosaicId(12345);
+		constexpr MosaicId Test_Mosaic_Id1 = MosaicId(12345);
 		constexpr MosaicId Test_Mosaic_Id2 = MosaicId(54321);
+		constexpr MosaicId Test_Mosaic_Id3 = MosaicId(99999);
 		AccountState Test_Account(Address{ { 1 } }, Height(1));
 	}
 
@@ -40,116 +40,147 @@ namespace catapult { namespace state {
 		AccountBalances balances(&Test_Account);
 
 		// Act:
-		auto amount1 = balances.get(Xpx_Id);
-		auto amount2 = balances.get(Test_Mosaic_Id);
+		auto amount1 = balances.get(Test_Mosaic_Id1);
+		auto amount2 = balances.get(Test_Mosaic_Id2);
 
 		// Assert:
 		EXPECT_EQ(0u, balances.size());
 		EXPECT_EQ(0u, balances.snapshots().size());
 		EXPECT_EQ(Amount(0), amount1);
 		EXPECT_EQ(Amount(0), amount2);
+
+		EXPECT_EQ(MosaicId(), balances.optimizedMosaicId());
 	}
 
 	namespace {
-		AccountBalances CreateBalancesForConstructionTests() {
-			AccountBalances balances(&Test_Account);
-			balances.credit(Test_Mosaic_Id, Amount(777), Height(1));
-			balances.credit(Xpx_Id, Amount(1000), Height(1));
-			balances.commitSnapshots();
+		AccountBalances CreateBalancesForConstructionTests(MosaicId optimizedMosaicId) {
+			AccountBalances balances;
+			balances.credit(Test_Mosaic_Id2, Amount(777));
+			balances.credit(Test_Mosaic_Id1, Amount(1000));
+			balances.optimize(optimizedMosaicId);
 			return balances;
+		}
+
+		void AssertCopied(const AccountBalances& balances, const AccountBalances& balancesCopy, MosaicId optimizedMosaicId) {
+			// Assert: the copy is detached from the original
+			EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id2));
+			EXPECT_EQ(Amount(1000), balances.get(Test_Mosaic_Id1));
+
+			EXPECT_EQ(Amount(777), balancesCopy.get(Test_Mosaic_Id2));
+			EXPECT_EQ(Amount(1500), balancesCopy.get(Test_Mosaic_Id1));
+
+			// - optimization is preserved
+			EXPECT_EQ(optimizedMosaicId, balancesCopy.optimizedMosaicId());
+		}
+
+		void AssertMoved(const AccountBalances& balances, const AccountBalances& balancesMoved, MosaicId optimizedMosaicId) {
+			// Assert: the original values are moved into the copy (move does not clear first mosaic)
+			if (Test_Mosaic_Id2 == optimizedMosaicId) {
+				EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id2));
+				EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id1));
+			} else {
+				EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id2));
+				EXPECT_EQ(Amount(1000), balances.get(Test_Mosaic_Id1));
+			}
+
+			EXPECT_EQ(Amount(777), balancesMoved.get(Test_Mosaic_Id2));
+			EXPECT_EQ(Amount(1000), balancesMoved.get(Test_Mosaic_Id1));
+
+			// - optimization is preserved
+			EXPECT_EQ(optimizedMosaicId, balancesMoved.optimizedMosaicId());
+		}
+
+		void AssertCanCopyConstructAccountBalances(MosaicId optimizedMosaicId) {
+			// Arrange:
+			auto balances = CreateBalancesForConstructionTests(optimizedMosaicId);
+
+			// Act:
+			AccountBalances balancesCopy(balances);
+			balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
+			balancesCopy.commitSnapshots();
+
+			// Assert:
+			AssertCopied(balances, balancesCopy, optimizedMosaicId);
+		}
+
+		void AssertCanMoveConstructAccountBalances(MosaicId optimizedMosaicId) {
+			// Arrange:
+			auto balances = CreateBalancesForConstructionTests(optimizedMosaicId);
+
+			// Act:
+			AccountBalances balancesMoved(std::move(balances));
+
+			// Assert:
+			AssertMoved(balances, balancesMoved, optimizedMosaicId);
+		}
+
+		void AssertCanAssignAccountBalances(MosaicId optimizedMosaicId) {
+			// Arrange:
+			auto balances = CreateBalancesForConstructionTests(optimizedMosaicId);
+
+			// Act:
+			AccountBalances balancesCopy(&Test_Account);
+			const auto& assignResult = balancesCopy = balances;
+			balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
+			balancesCopy.commitSnapshots();
+
+			// Assert:
+			EXPECT_EQ(&balancesCopy, &assignResult);
+			AssertCopied(balances, balancesCopy, optimizedMosaicId);
+		}
+
+		void AssertCanMoveAssignAccountBalances(MosaicId optimizedMosaicId) {
+			// Arrange:
+			auto balances = CreateBalancesForConstructionTests(optimizedMosaicId);
+
+			// Act:
+			AccountBalances balancesMoved(&Test_Account);
+			const auto& assignResult = balancesMoved = std::move(balances);
+
+			// Assert:
+			EXPECT_EQ(&balancesMoved, &assignResult);
+			AssertMoved(balances, balancesMoved, optimizedMosaicId);
 		}
 	}
 
 	TEST(TEST_CLASS, CanCopyConstructAccountBalances) {
-		// Arrange:
-		auto balances = CreateBalancesForConstructionTests();
+		// Assert:
+		AssertCanCopyConstructAccountBalances(Test_Mosaic_Id2);
+	}
 
-		// Act:
-		AccountBalances balancesCopy(balances);
-		balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
-		balancesCopy.commitSnapshots();
-
-		// Assert: the copy is detached from the original
-		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
-		EXPECT_EQ(Amount(1000), balances.get(Xpx_Id));
-
-		EXPECT_EQ(Amount(777), balancesCopy.get(Test_Mosaic_Id));
-		EXPECT_EQ(Amount(1500), balancesCopy.get(Xpx_Id));
-
-		EXPECT_EQ(1, balances.snapshots().size());
-		EXPECT_EQ(Amount(1000), balances.snapshots().front().Amount);
-		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
-
-		EXPECT_EQ(2, balancesCopy.snapshots().size());
-		EXPECT_EQ(Amount(1000), balancesCopy.snapshots().front().Amount);
-		EXPECT_EQ(Height(1), balancesCopy.snapshots().front().BalanceHeight);
-		EXPECT_EQ(Amount(1500), balancesCopy.snapshots().back().Amount);
-		EXPECT_EQ(Height(2), balancesCopy.snapshots().back().BalanceHeight);
+	TEST(TEST_CLASS, CanCopyConstructAccountBalances_NoOptimization) {
+		// Assert:
+		AssertCanCopyConstructAccountBalances(MosaicId());
 	}
 
 	TEST(TEST_CLASS, CanMoveConstructAccountBalances) {
-		// Arrange:
-		auto balances = CreateBalancesForConstructionTests();
+		// Assert:
+		AssertCanMoveConstructAccountBalances(Test_Mosaic_Id2);
+	}
 
-		// Act:
-		AccountBalances balancesMoved(std::move(balances));
-
-		// Assert: the original values are moved into the copy (move does not clear first mosaic)
-		EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id));
-		EXPECT_EQ(Amount(1000), balances.get(Xpx_Id));
-		EXPECT_EQ(0, balances.snapshots().size());
-
-		EXPECT_EQ(Amount(777), balancesMoved.get(Test_Mosaic_Id));
-		EXPECT_EQ(Amount(1000), balancesMoved.get(Xpx_Id));
-		EXPECT_EQ(1, balancesMoved.snapshots().size());
+	TEST(TEST_CLASS, CanMoveConstructAccountBalances_NoOptimization) {
+		// Assert:
+		AssertCanMoveConstructAccountBalances(MosaicId());
 	}
 
 	TEST(TEST_CLASS, CanAssignAccountBalances) {
-		// Arrange:
-		auto balances = CreateBalancesForConstructionTests();
+		// Assert:
+		AssertCanAssignAccountBalances(Test_Mosaic_Id2);
+	}
 
-		// Act:
-		AccountBalances balancesCopy(&Test_Account);
-		const auto& assignResult = balancesCopy = balances;
-		balancesCopy.credit(Xpx_Id, Amount(500), Height(2));
-		balancesCopy.commitSnapshots();
-
-		// Assert: the copy is detached from the original
-		EXPECT_EQ(&balancesCopy, &assignResult);
-		EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id));
-		EXPECT_EQ(Amount(1000), balances.get(Xpx_Id));
-
-		EXPECT_EQ(Amount(777), balancesCopy.get(Test_Mosaic_Id));
-		EXPECT_EQ(Amount(1500), balancesCopy.get(Xpx_Id));
-
-		EXPECT_EQ(1, balances.snapshots().size());
-		EXPECT_EQ(Amount(1000), balances.snapshots().front().Amount);
-		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
-
-		EXPECT_EQ(2, balancesCopy.snapshots().size());
-		EXPECT_EQ(Amount(1000), balancesCopy.snapshots().front().Amount);
-		EXPECT_EQ(Height(1), balancesCopy.snapshots().front().BalanceHeight);
-		EXPECT_EQ(Amount(1500), balancesCopy.snapshots().back().Amount);
-		EXPECT_EQ(Height(2), balancesCopy.snapshots().back().BalanceHeight);
+	TEST(TEST_CLASS, CanAssignAccountBalances_NoOptimization) {
+		// Assert:
+		AssertCanAssignAccountBalances(MosaicId());
 	}
 
 	TEST(TEST_CLASS, CanMoveAssignAccountBalances) {
-		// Arrange:
-		auto balances = CreateBalancesForConstructionTests();
+		// Assert:
+		AssertCanMoveAssignAccountBalances(Test_Mosaic_Id2);
+	}
 
-		// Act:
-		AccountBalances balancesMoved(&Test_Account);
-		const auto& assignResult = balancesMoved = std::move(balances);
-
-		// Assert: the original values are moved into the copy (move does not clear first mosaic)
-		EXPECT_EQ(&balancesMoved, &assignResult);
-		EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id));
-		EXPECT_EQ(Amount(1000), balances.get(Xpx_Id));
-		EXPECT_EQ(0, balances.snapshots().size());
-
-		EXPECT_EQ(Amount(777), balancesMoved.get(Test_Mosaic_Id));
-		EXPECT_EQ(Amount(1000), balancesMoved.get(Xpx_Id));
-		EXPECT_EQ(1, balancesMoved.snapshots().size());
+	TEST(TEST_CLASS, CanMoveAssignAccountBalances_NoOptimization) {
+		// Assert:
+		AssertCanMoveAssignAccountBalances(MosaicId());
 	}
 
 	// endregion
@@ -365,6 +396,29 @@ namespace catapult { namespace state {
 		EXPECT_EQ(1, balances.snapshots().size());
 		EXPECT_EQ(Amount(12345 + 1111 - 2345), balances.snapshots().front().Amount);
 		EXPECT_EQ(Height(1), balances.snapshots().front().BalanceHeight);
+	}
+
+	// endregion
+
+	// region optimize
+
+	TEST(TEST_CLASS, CanOptimizeMosaicStorage) {
+		// Arrange:
+		AccountBalances balances;
+		balances
+			.credit(Test_Mosaic_Id1, Amount(12345))
+			.credit(Test_Mosaic_Id3, Amount(2244))
+			.credit(Test_Mosaic_Id2, Amount(3456));
+
+		// Sanity:
+		EXPECT_EQ(Test_Mosaic_Id1, balances.begin()->first);
+
+		// Act:
+		balances.optimize(Test_Mosaic_Id2);
+
+		// Assert:
+		EXPECT_EQ(Test_Mosaic_Id2, balances.optimizedMosaicId());
+		EXPECT_EQ(Test_Mosaic_Id2, balances.begin()->first);
 	}
 
 	// endregion

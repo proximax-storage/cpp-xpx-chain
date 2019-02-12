@@ -124,7 +124,7 @@ template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 		void AddAll(ModifyMultisigAccountBuilder& builder, const Modifications& modifications) {
 			for (const auto& modification : modifications)
-				builder.addCosignatoryModification(modification.ModificationType, modification.CosignatoryPublicKey);
+				builder.addModification(modification);
 		}
 	}
 

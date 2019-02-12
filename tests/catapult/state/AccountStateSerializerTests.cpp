@@ -30,11 +30,9 @@ namespace catapult { namespace state {
 #define TEST_CLASS AccountStateSerializerTests
 
 	namespace {
-#ifdef STRESS
-		constexpr size_t Many_Mosaics_Count = 65535;
-#else
-		constexpr size_t Many_Mosaics_Count = 1000;
-#endif
+		size_t GetManyMosaicsCount() {
+			return test::GetStressIterationCount() ? 65535 : 1000;
+		}
 	}
 
 	// region raw serialization
@@ -66,6 +64,11 @@ namespace catapult { namespace state {
 					+ accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
 		}
 
+		const model::Mosaic* GetMosaicPointer(const AccountStateHeader& header) {
+			const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&header + 1);
+			return reinterpret_cast<const model::Mosaic*>(pHeaderData);
+		}
+
 		template<typename TTraits>
 		AccountState CopyHeaderToAccountState(const AccountStateHeader& header) {
 			auto accountState = AccountState(header.Address, header.AddressHeight);
@@ -75,7 +78,8 @@ namespace catapult { namespace state {
 			accountState.AccountType = header.AccountType;
 			accountState.LinkedAccountKey = header.LinkedAccountKey;
 
-			const auto* pMosaic = reinterpret_cast<const model::Mosaic*>(&header + 1);
+			accountState.Balances.optimize(header.OptimizedMosaicId);
+			const auto* pMosaic = GetMosaicPointer(header);
 			for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
 				accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
 
@@ -101,6 +105,8 @@ namespace catapult { namespace state {
 
 			header.AccountType = accountState.AccountType;
 			header.LinkedAccountKey = accountState.LinkedAccountKey;
+
+			header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
 			header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
 
 			auto* pData = buffer.data();
@@ -188,6 +194,7 @@ namespace catapult { namespace state {
 			test::FillWithRandomData(accountState.LinkedAccountKey);
 
 			test::RandomFillAccountData(0, accountState, numMosaics, numMosaics);
+			accountState.Balances.optimize(test::GenerateRandomValue<MosaicId>());
 			return accountState;
 		}
 
@@ -232,14 +239,14 @@ namespace catapult { namespace state {
 
 	SERIALIZER_TEST(CanSaveValueWithManyMosaics) {
 		// Assert:
-		AssertCanSaveValueWithMosaics<TTraits>(Many_Mosaics_Count);
+		AssertCanSaveValueWithMosaics<TTraits>(GetManyMosaicsCount());
 	}
 
 	SERIALIZER_TEST(MosaicsAreSavedInSortedOrder) {
 		// Assert:
 		AssertCanSaveValueWithMosaics<TTraits>(128, [](const auto&, const auto& savedAccountStateHeader) {
 			auto lastMosaicId = MosaicId();
-			const auto* pMosaic = reinterpret_cast<const model::Mosaic*>(&savedAccountStateHeader + 1);
+			const auto* pMosaic = GetMosaicPointer(savedAccountStateHeader);
 			for (auto i = 0u; i < savedAccountStateHeader.MosaicsCount; ++i, ++pMosaic) {
 				EXPECT_LT(lastMosaicId, pMosaic->MosaicId) << "expected ordering at " << i;
 
@@ -260,37 +267,34 @@ namespace catapult { namespace state {
 		}
 
 		template<typename TTraits>
-		static void LoadAndAssert(std::vector<uint8_t>& buffer, size_t numMosaics, const AccountState& serializedAccountState) {
-			// Arrange:
-			mocks::MockMemoryStream stream("", buffer);
-
-			// Act: load the account info and convert it to an account state for easier comparison
-			auto result = TTraits::Serializer::Load(stream);
-
-			// Assert:
-			EXPECT_EQ(numMosaics, result.Balances.size());
-			TTraits::AssertEqual(serializedAccountState, result);
-		}
-
-		template<typename TTraits>
 		void AssertCanLoadValueWithMosaics(size_t numMosaics) {
 			// Arrange: create a random account info
 			auto originalAccountState = CreateRandomAccountState(numMosaics);
 			auto buffer = CopyToBuffer(originalAccountState);
 
-			// Act + Assert:
-			LoadAndAssert<TTraits>(buffer, numMosaics, originalAccountState);
+			// Act: load the account state
+			mocks::MockMemoryStream stream("", buffer);
+			auto result = TTraits::Serializer::Load(stream);
+
+			// Assert:
+			EXPECT_EQ(numMosaics, result.Balances.size());
+			TTraits::AssertEqual(originalAccountState, result);
 		}
 	}
 
-	SERIALIZER_TEST(CanLoadValue) {
+	SERIALIZER_TEST(CanLoadValueWithNoMosaics) {
+		// Assert:
+		AssertCanLoadValueWithMosaics<TTraits>(0);
+	}
+
+	SERIALIZER_TEST(CanLoadValueWithSomeMosaics) {
 		// Assert:
 		AssertCanLoadValueWithMosaics<TTraits>(3);
 	}
 
 	SERIALIZER_TEST(CanLoadValueWithManyMosaics) {
 		// Assert:
-		AssertCanLoadValueWithMosaics<TTraits>(Many_Mosaics_Count);
+		AssertCanLoadValueWithMosaics<TTraits>(GetManyMosaicsCount());
 	}
 
 	SERIALIZER_TEST(CannotLoadAccountInfoExtendingPastEndOfStream) {

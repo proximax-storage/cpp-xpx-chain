@@ -37,11 +37,14 @@ namespace catapult { namespace observers {
 
 	// region Block
 
-	/// Observes block notifications and credits the harvester with transaction fees.
-	DECLARE_OBSERVER(HarvestFee, model::BlockNotification)();
+	/// Observes block notifications and credits the harvester with transaction fees given the currency mosaic id (\a currencyMosaicId).
+	DECLARE_OBSERVER(HarvestFee, model::BlockNotification)(MosaicId currencyMosaicId);
 
 	/// Observes block difficulties.
 	DECLARE_OBSERVER(BlockDifficulty, model::BlockNotification)();
+
+	/// Observes block notifications and counts transactions.
+	DECLARE_OBSERVER(TotalTransactions, model::BlockNotification)();
 
 	/// Observes block notifications and clean up snapshot from modified accounts.
 	DECLARE_OBSERVER(SnapshotCleanUp, model::BlockNotification)(const model::BlockChainConfiguration& config);
@@ -55,6 +58,13 @@ namespace catapult { namespace observers {
 
 	/// Observes balance changes triggered by balance debit notifications.
 	DECLARE_OBSERVER(BalanceDebit, model::BalanceDebitNotification)();
+
+	// endregion
+
+	// region SourceChange
+
+	/// Observes source changes and changes observer source.
+	DECLARE_OBSERVER(SourceChange, model::SourceChangeNotification)();
 
 	// endregion
 }}

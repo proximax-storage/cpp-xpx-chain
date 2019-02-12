@@ -35,10 +35,12 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, Amount(1234))
 
 	namespace {
+		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 		constexpr auto Importance_Grouping = 234u;
 
 		auto CreateEmptyCatapultCache() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.ImportanceGrouping = Importance_Grouping;
 			return test::CreateEmptyCatapultCache(config);
 		}
@@ -50,7 +52,7 @@ namespace catapult { namespace validators {
 			auto delta = cache.createDelta();
 			auto& accountCache = delta.sub<cache::AccountStateCache>();
 			accountCache.addAccount(publicKey, Height(100));
-			accountCache.find(publicKey).get().Balances.credit(Xpx_Id, balance, Height(100));
+			accountCache.find(publicKey).get().Balances.credit(Harvesting_Mosaic_Id, balance, Height(100));
 			cache.commit(Height());
 		}
 	}

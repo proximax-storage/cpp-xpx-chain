@@ -34,7 +34,10 @@ namespace catapult { namespace state {
 		Main,
 
 		/// Account is a remote harvester account that is linked to a balance-holding account.
-		Remote
+		Remote,
+
+		/// Account is a remote harvester eligible account that is unlinked.
+		Remote_Unlinked
 	};
 
 	/// Account state data.
@@ -79,4 +82,10 @@ namespace catapult { namespace state {
 		/// Balances of an account.
 		AccountBalances Balances;
 	};
+
+	/// Returns \c true if \a accountType corresponds to a remote account.
+	bool IsRemote(AccountType accountType);
+
+	/// Requires that \a remoteAccountState and \a mainAccountState state are linked.
+	void RequireLinkedRemoteAndMainAccounts(const AccountState& remoteAccountState, const AccountState& mainAccountState);
 }}

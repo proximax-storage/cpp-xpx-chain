@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/model/Address.h"
 #include "catapult/utils/Casting.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
@@ -35,11 +36,15 @@ namespace catapult { namespace cache {
 
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+		constexpr auto Currency_Mosaic_Id = MosaicId(1234);
+		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			Network_Identifier,
-			std::numeric_limits<uint64_t >::max(),
-			Amount(std::numeric_limits<Amount::ValueType>::max())
+			543,
+			Amount(std::numeric_limits<Amount::ValueType>::max()),
+			Currency_Mosaic_Id,
+			Harvesting_Mosaic_Id
 		};
 
 		struct AddressTraits {
@@ -197,7 +202,7 @@ namespace catapult { namespace cache {
 		struct AccountStateModificationPolicy {
 			static void Modify(DeltaProxy<TTraits>& delta, const state::AccountState& accountState) {
 				auto& accountStateFromCache = delta.find(TTraits::ToKey(accountState)).get();
-				accountStateFromCache.Balances.credit(Xpx_Id, Amount(1), accountStateFromCache.AddressHeight + Height(1));
+				accountStateFromCache.Balances.credit(Harvesting_Mosaic_Id, Amount(1), accountStateFromCache.AddressHeight + Height(1));
 			}
 		};
 	}
@@ -235,7 +240,7 @@ namespace catapult { namespace cache {
 		}
 
 		Amount GetBalance(const state::AccountState& accountState) {
-			return accountState.Balances.get(Xpx_Id);
+			return accountState.Balances.get(Harvesting_Mosaic_Id);
 		}
 
 		void DefaultFillCache(AccountStateCache& cache, uint8_t count) {
@@ -262,7 +267,7 @@ namespace catapult { namespace cache {
 		template<typename TKeyTraits>
 		void AddAccountToCacheDelta(AccountStateCacheDelta& delta, const typename TKeyTraits::Type& key, Amount balance) {
 			delta.addAccount(key, TKeyTraits::DefaultHeight());
-			delta.find(key).get().Balances.credit(Xpx_Id, balance, TKeyTraits::DefaultHeight());
+			delta.find(key).get().Balances.credit(Harvesting_Mosaic_Id, balance, TKeyTraits::DefaultHeight());
 		}
 
 		state::AccountState CreateAccountStateWithRandomAddressAndPublicKey() {
@@ -301,7 +306,9 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheExposesNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(17);
-		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, 0, Amount() });
+		auto options = Default_Cache_Options;
+		options.NetworkIdentifier = networkIdentifier;
+		AccountStateCache cache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.networkIdentifier());
@@ -310,7 +317,9 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		AccountStateCache cache(CacheConfiguration(), { networkIdentifier, 0, Amount() });
+		auto options = Default_Cache_Options;
+		options.NetworkIdentifier = networkIdentifier;
+		AccountStateCache cache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());
@@ -323,20 +332,25 @@ namespace catapult { namespace cache {
 	// region effective balance range
 
 	TEST(TEST_CLASS, CacheExposesImportanceGrouping) {
-		AccountStateCache cache(CacheConfiguration(), { model::NetworkIdentifier::Zero, 10, Amount() });
+		// Arrange:
+		auto options = Default_Cache_Options;
+		options.ImportanceGrouping = 10;
+		AccountStateCache cache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(10, cache.importanceGrouping());
 	}
 
-	TEST(TEST_CLASS, CacheWrappersExposesImportanceGrouping) {
+	TEST(TEST_CLASS, CacheWrappersExposeHarvestingMosaicId) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), { model::NetworkIdentifier::Zero, 10, Amount() });
+		auto options = Default_Cache_Options;
+		options.HarvestingMosaicId = MosaicId(11229988);
+		AccountStateCache cache(CacheConfiguration(), options);
 
 		// Act + Assert:
-		EXPECT_EQ(10, cache.createView()->importanceGrouping());
-		EXPECT_EQ(10, cache.createDelta()->importanceGrouping());
-		EXPECT_EQ(10, cache.createDetachedDelta().lock()->importanceGrouping());
+		EXPECT_EQ(MosaicId(11229988), cache.createView()->harvestingMosaicId());
+		EXPECT_EQ(MosaicId(11229988), cache.createDelta()->harvestingMosaicId());
+		EXPECT_EQ(MosaicId(11229988), cache.createDetachedDelta().lock()->harvestingMosaicId());
 	}
 
 	// endregion
@@ -385,6 +399,14 @@ namespace catapult { namespace cache {
 
 	// region addAccount (basic)
 
+	namespace {
+		void AddThreeMosaicBalances(state::AccountState& accountState) {
+			accountState.Balances.credit(MosaicId(1), Amount(2));
+			accountState.Balances.credit(Harvesting_Mosaic_Id, Amount(3));
+			accountState.Balances.credit(Currency_Mosaic_Id, Amount(1));
+		}
+	}
+
 	ID_BASED_TEST(AddAccountChangesSizeOfCache) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
@@ -398,6 +420,20 @@ namespace catapult { namespace cache {
 		// Assert:
 		EXPECT_EQ(11u, delta->size());
 		EXPECT_TRUE(!!delta->find(accountId).tryGet());
+	}
+
+	ID_BASED_TEST(AddAccountAutomaticallyOptimizesCurrencyMosaicAccess) {
+		// Arrange:
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		auto delta = cache.createDelta();
+		auto accountId = TTraits::GenerateAccountId();
+
+		// Act:
+		delta->addAccount(accountId, TTraits::DefaultHeight());
+		AddThreeMosaicBalances(delta->find(accountId).get());
+
+		// Assert:
+		EXPECT_EQ(Currency_Mosaic_Id, delta->find(accountId).get().Balances.begin()->first);
 	}
 
 	ID_BASED_TEST(SubsequentAddAccountHasNoEffect) {
@@ -514,6 +550,20 @@ namespace catapult { namespace cache {
 
 	// region addAccount (AccountState)
 
+	TEST(TEST_CLASS, AddAccountAutomaticallyOptimizesCurrencyMosaicAccess) {
+		// Arrange:
+		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		auto delta = cache.createDelta();
+		auto accountState = CreateAccountStateWithMismatchedAddressAndPublicKey();
+
+		// Act:
+		delta->addAccount(accountState);
+		AddThreeMosaicBalances(delta->find(accountState.Address).get());
+
+		// Assert:
+		EXPECT_EQ(Currency_Mosaic_Id, delta->find(accountState.Address).get().Balances.begin()->first);
+	}
+
 	TEST(TEST_CLASS, CanAddAccountViaAccountStateWithoutPublicKey) {
 		// Arrange: note that public key height is 0
 		auto accountState = CreateAccountStateWithMismatchedAddressAndPublicKey();
@@ -533,6 +583,8 @@ namespace catapult { namespace cache {
 		ASSERT_TRUE(!!pAccountStateFromAddress);
 		EXPECT_FALSE(!!pAccountStateFromKey);
 
+		// - cache automatically optimizes added account state, so update to match expected
+		accountState.Balances.optimize(Currency_Mosaic_Id);
 		test::AssertEqual(accountState, *pAccountStateFromAddress, "pAccountStateFromAddress");
 	}
 
@@ -553,6 +605,8 @@ namespace catapult { namespace cache {
 		ASSERT_TRUE(!!pAccountStateFromAddress);
 		ASSERT_TRUE(!!pAccountStateFromKey);
 
+		// - cache automatically optimizes added account state, so update to match expected
+		accountState.Balances.optimize(Currency_Mosaic_Id);
 		test::AssertEqual(accountState, *pAccountStateFromAddress, "pAccountStateFromAddress");
 		test::AssertEqual(accountState, *pAccountStateFromKey, "pAccountStateFromKey");
 	}
@@ -953,7 +1007,8 @@ namespace catapult { namespace cache {
 			auto addresses = test::GenerateRandomDataVector<Address>(balances.size());
 			for (auto i = 0u; i < balances.size(); ++i) {
 				delta.addAccount(addresses[i], Height(1));
-				delta.find(addresses[i]).get().Balances.credit(Xpx_Id, balances[i], Height(1));
+				auto& accountState = delta.find(addresses[i]).get();
+				accountState.Balances.credit(Harvesting_Mosaic_Id, balances[i]);
 			}
 
 			return addresses;
@@ -1015,7 +1070,7 @@ namespace catapult { namespace cache {
 		RunHighValueAddressesTest(balances, [](const auto& addresses, auto& delta, const auto& view) {
 			// - increment balances of all accounts (this will make 2/3 have sufficient balance)
 			for (const auto& address : addresses)
-				delta->find(address).get().Balances.credit(Xpx_Id, Amount(1), Height(1));
+				delta->find(address).get().Balances.credit(Harvesting_Mosaic_Id, Amount(1));
 
 			// Act + Assert:
 			EXPECT_EQ(model::AddressSet({ addresses[0], addresses[2] }), delta->highValueAddresses());

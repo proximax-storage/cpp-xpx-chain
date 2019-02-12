@@ -72,6 +72,10 @@ namespace catapult { namespace cache {
 		return m_options.ImportanceGrouping;
 	}
 
+	MosaicId BasicAccountStateCacheDelta::harvestingMosaicId() const {
+		return m_options.HarvestingMosaicId;
+	}
+
 	Address BasicAccountStateCacheDelta::getAddress(const Key& publicKey) {
 		auto keyToAddressIter = m_pKeyToAddress->find(publicKey);
 		const auto* pPair = keyToAddressIter.get();
@@ -87,7 +91,7 @@ namespace catapult { namespace cache {
 		if (contains(address))
 			return;
 
-		m_pStateByAddress->emplace(address, height);
+		addAccount(state::AccountState(address, height));
 	}
 
 	void BasicAccountStateCacheDelta::addAccount(const Key& publicKey, Height height) {
@@ -114,6 +118,7 @@ namespace catapult { namespace cache {
 			m_pKeyToAddress->emplace(accountState.PublicKey, accountState.Address);
 
 		m_pStateByAddress->insert(accountState);
+		m_pStateByAddress->find(accountState.Address).get()->Balances.optimize(m_options.CurrencyMosaicId);
 	}
 
 	void BasicAccountStateCacheDelta::remove(const Address& address, Height height) {
@@ -216,8 +221,10 @@ namespace catapult { namespace cache {
 		auto highValueAddresses = m_highValueAddresses;
 
 		// 2. update for changes
-		auto hasHighValue = [minBalance = m_options.MinHighValueAccountBalance](const auto& accountState) {
-			return accountState.Balances.get(Xpx_Id) >= minBalance;
+		auto minBalance = m_options.MinHighValueAccountBalance;
+		auto harvestingMosaicId = m_options.HarvestingMosaicId;
+		auto hasHighValue = [minBalance, harvestingMosaicId](const auto& accountState) {
+			return accountState.Balances.get(harvestingMosaicId) >= minBalance;
 		};
 
 		auto deltas = m_pStateByAddress->deltas();

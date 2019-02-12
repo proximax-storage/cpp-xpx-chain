@@ -31,8 +31,10 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
 			model::NetworkIdentifier::Mijin_Test,
-			std::numeric_limits<uint64_t>::max(),
-			Amount(std::numeric_limits<Amount::ValueType>::max())
+			543,
+			Amount(std::numeric_limits<Amount::ValueType>::max()),
+			MosaicId(1111),
+			MosaicId(2222)
 		};
 	}
 
@@ -56,6 +58,9 @@ namespace catapult { namespace cache {
 		// - the loaded cache value is correct
 		EXPECT_EQ(123u, loadedAccountState.Balances.size());
 		EXPECT_EQ(123u, loadedAccountState.Balances.snapshots().size());
+
+		// - cache automatically optimizes added account state, so update to match expected
+		originalAccountState.Balances.optimize(Default_Cache_Options.CurrencyMosaicId);
 		test::AssertEqual(originalAccountState, loadedAccountState);
 	}
 }}

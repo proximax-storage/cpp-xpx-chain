@@ -18,9 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/crypto/IdGenerator.h"
 #include "src/extensions/IdGenerator.h"
-#include "catapult/constants.h"
+#include "plugins/txes/mosaic/src/model/MosaicIdGenerator.h"
+#include "plugins/txes/namespace/src/model/NamespaceIdGenerator.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
@@ -31,14 +32,14 @@ namespace catapult { namespace extensions {
 		template<typename TGenerator>
 		void AssertDifferentNamesProduceDifferentResults(TGenerator generator) {
 			// Assert:
-			for (const auto name : { "bloodyrookie.alice", "prx.pxx", "bloodyrookie.xpx", "bloody_rookie.xpx" })
-				EXPECT_NE(generator("prx.xpx"), generator(name)) << "prx.xpx vs " << name;
+			for (const auto name : { "bloodyrookie.alice", "cat.nekot", "bloodyrookie.token", "bloody_rookie.token" })
+				EXPECT_NE(generator("cat.token"), generator(name)) << "cat.token vs " << name;
 		}
 
 		template<typename TGenerator>
 		void AssertNamesWithUppercaseCharactersAreRejected(TGenerator generator) {
 			// Act + Assert:
-			for (const auto name : { "PRX.xpx", "PRX.XPX", "prx.XPX", "pRx.XpX", "PrX.xPx" }) {
+			for (const auto name : { "CAT.token", "CAT.TOKEN", "cat.TOKEN", "cAt.ToKeN", "CaT.tOkEn" }) {
 				EXPECT_THROW(generator(name), catapult_invalid_argument) << "name " << name;
 			}
 		}
@@ -66,78 +67,48 @@ namespace catapult { namespace extensions {
 		}
 
 #define ADD_BASIC_TESTS(PREFIX, GENERATOR) \
-		TEST(TEST_CLASS, PREFIX##_DifferentNamesProduceDifferentResults) { \
-			AssertDifferentNamesProduceDifferentResults(GENERATOR); \
-		} \
-		TEST(TEST_CLASS, PREFIX##_RejectsNamesWithUppercaseCharacters) { \
-			AssertNamesWithUppercaseCharactersAreRejected(GENERATOR); \
-		} \
-		TEST(TEST_CLASS, PREFIX##_RejectsImproperQualifiedNames) { \
-			AssertImproperQualifiedNamesAreRejected(GENERATOR); \
-		} \
-		TEST(TEST_CLASS, PREFIX##_RejectsImproperPartNames) { \
-			AssertImproperPartNamesAreRejected(GENERATOR); \
-		} \
-		TEST(TEST_CLASS, PREFIX##_RejectsEmptyString) { \
-			AssertEmptyStringIsRejected(GENERATOR); \
-		}
+		TEST(TEST_CLASS, PREFIX##_DifferentNamesProduceDifferentResults) { AssertDifferentNamesProduceDifferentResults(GENERATOR); } \
+		TEST(TEST_CLASS, PREFIX##_RejectsNamesWithUppercaseCharacters) { AssertNamesWithUppercaseCharactersAreRejected(GENERATOR); } \
+		TEST(TEST_CLASS, PREFIX##_RejectsImproperQualifiedNames) { AssertImproperQualifiedNamesAreRejected(GENERATOR); } \
+		TEST(TEST_CLASS, PREFIX##_RejectsImproperPartNames) { AssertImproperPartNamesAreRejected(GENERATOR); } \
+		TEST(TEST_CLASS, PREFIX##_RejectsEmptyString) { AssertEmptyStringIsRejected(GENERATOR); }
 	}
 
-	// region GenerateMosaicId
+	// region GenerateMosaicAliasId
 
-	TEST(TEST_CLASS, GenerateMosaicId_GeneratesCorrectWellKnownId) {
-		// Assert:
-		EXPECT_EQ(Xpx_Id, GenerateMosaicId("prx:xpx"));
-	}
-
-	TEST(TEST_CLASS, GenerateMosaicId_SupportsMultiLevelMosaics) {
+	TEST(TEST_CLASS, GenerateMosaicAliasId_GeneratesCorrectWellKnownId) {
 		// Arrange:
-		auto expected = crypto::GenerateMosaicId(
-				crypto::GenerateNamespaceId(crypto::GenerateNamespaceId(crypto::GenerateRootNamespaceId("foo"), "bar"), "baz"),
-				"tokens");
+		constexpr auto Known_Mosaic_Alias_Id = UnresolvedMosaicId(0xA029'E100'621B'2E33ULL);
 
 		// Assert:
-		EXPECT_EQ(expected, GenerateMosaicId("foo.bar.baz:tokens"));
+		EXPECT_EQ(Known_Mosaic_Alias_Id, GenerateMosaicAliasId("cat.token"));
 	}
 
-	TEST(TEST_CLASS, GenerateMosaicId_RejectsNamespaceOnlyNames) {
-		// Act + Assert:
-		for (const auto name : { "bloodyrookie.alice", "prx.xxp", "bloodyrookie.xpx", "bloody_rookie.xpx" }) {
-			EXPECT_THROW(GenerateMosaicId(name), catapult_invalid_argument) << "name " << name;
-		}
+	TEST(TEST_CLASS, GenerateMosaicAliasId_SupportsMultiLevelMosaics) {
+		// Arrange:
+		auto expected = model::GenerateNamespaceId(model::GenerateNamespaceId(model::GenerateRootNamespaceId("foo"), "bar"), "baz");
+
+		// Assert:
+		EXPECT_EQ(UnresolvedMosaicId(expected.unwrap()), GenerateMosaicAliasId("foo.bar.baz"));
 	}
 
-	TEST(TEST_CLASS, GenerateMosaicId_RejectsMosaicOnlyNames) {
+	TEST(TEST_CLASS, GenerateMosaicAliasId_CanGenerateIdFromTopLevelNamespace) {
 		// Act + Assert:
-		for (const auto name : { "prx", "xpx", "alpha" }) {
-			EXPECT_THROW(GenerateMosaicId(name), catapult_invalid_argument) << "name " << name;
-		}
+		for (const auto name : { "cat", "token", "alpha" })
+			EXPECT_NE(UnresolvedMosaicId(), GenerateMosaicAliasId(name)) << "name " << name;
 	}
 
-	TEST(TEST_CLASS, GenerateMosaicId_RejectsNamesWithTooManyParts) {
+	TEST(TEST_CLASS, GenerateMosaicAliasId_RejectsNamesWithTooManyParts) {
 		// Act + Assert:
-		for (const auto name : { "a.b.c.d:e", "a.b.c.d.e:f" }) {
-			EXPECT_THROW(GenerateMosaicId(name), catapult_invalid_argument) << "name " << name;
-		}
-	}
-
-	TEST(TEST_CLASS, GenerateMosaicId_RejectsImproperMosaicQualifiedNames) {
-		// Act + Assert:
-		for (const auto name : { "a:b:c", "a::b" }) {
-			EXPECT_THROW(GenerateMosaicId(name), catapult_invalid_argument) << "name " << name;
+		for (const auto name : { "a.b.c.d", "a.b.c.d.e.f" }) {
+			EXPECT_THROW(GenerateMosaicAliasId(name), catapult_invalid_argument) << "name " << name;
 		}
 	}
 
 	namespace {
-		MosaicId GenerateMosaicIdAdapter(const RawString& namespaceName) {
-			// Arrange: replace the last namespace separator with a mosaic separator
-			std::string namespaceAndMosaicName(namespaceName.pData, namespaceName.Size);
-			auto separatorIndex = namespaceAndMosaicName.find_last_of('.');
-			if (std::string::npos != separatorIndex)
-				namespaceAndMosaicName[separatorIndex] = ':';
-
+		UnresolvedMosaicId GenerateMosaicIdAdapter(const RawString& namespaceName) {
 			// Act:
-			return GenerateMosaicId(namespaceAndMosaicName);
+			return GenerateMosaicAliasId(namespaceName);
 		}
 	}
 
@@ -149,29 +120,32 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, GenerateNamespacePath_GeneratesCorrectWellKnownRootPath) {
 		// Act:
-		auto path = GenerateNamespacePath("prx");
+		auto path = GenerateNamespacePath("cat");
 
 		// Assert:
 		EXPECT_EQ(1u, path.size());
-		EXPECT_EQ(Prx_Id, path[0]);
+		EXPECT_EQ(NamespaceId(test::Default_Namespace_Id), path[0]);
 	}
 
-	TEST(TEST_CLASS, GenerateNamespacePath_GeneratesCorrectWellKnownChildPath) {
+	TEST(TEST_CLASS, GenerateNamespacePath_GeneratesCorrectWellKnownNamespace) {
+		// Arrange:
+		constexpr auto Known_Namespace_Id = NamespaceId(0xA029'E100'621B'2E33ULL);
+
 		// Act:
-		auto path = GenerateNamespacePath("prx.xpx");
+		auto path = GenerateNamespacePath("cat.token");
 
 		// Assert:
 		EXPECT_EQ(2u, path.size());
-		EXPECT_EQ(Prx_Id, path[0]);
-		EXPECT_EQ(NamespaceId(Xpx_Id.unwrap()), path[1]);
+		EXPECT_EQ(NamespaceId(test::Default_Namespace_Id), path[0]);
+		EXPECT_EQ(Known_Namespace_Id, path[1]);
 	}
 
 	TEST(TEST_CLASS, GenerateNamespacePath_SupportsMultiLevelNamespaces) {
 		// Arrange:
 		NamespacePath expected;
-		expected.push_back(crypto::GenerateRootNamespaceId("foo"));
-		expected.push_back(crypto::GenerateNamespaceId(expected[0], "bar"));
-		expected.push_back(crypto::GenerateNamespaceId(expected[1], "baz"));
+		expected.push_back(model::GenerateRootNamespaceId("foo"));
+		expected.push_back(model::GenerateNamespaceId(expected[0], "bar"));
+		expected.push_back(model::GenerateNamespaceId(expected[1], "baz"));
 
 		// Assert:
 		EXPECT_EQ(expected, GenerateNamespacePath("foo.bar.baz"));

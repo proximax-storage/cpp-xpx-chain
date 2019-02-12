@@ -32,6 +32,7 @@ namespace catapult { namespace chain {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
+			config.TotalChainImportance = test::Default_Total_Chain_Importance;
 			return config;
 		}
 
