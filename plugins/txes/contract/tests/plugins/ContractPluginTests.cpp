@@ -68,7 +68,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "Contract C", "Reputation C" };
+				return { "CONTRACT C", "REPUTATION C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
