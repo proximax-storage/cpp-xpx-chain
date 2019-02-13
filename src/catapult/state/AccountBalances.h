@@ -79,6 +79,9 @@ namespace catapult { namespace state {
 		/// Gets the optimized mosaic id.
 		MosaicId optimizedMosaicId() const;
 
+		/// Gets the tracked mosaic id.
+		MosaicId trackedMosaicId() const;
+
 		/// Returns amount of funds of a given mosaic (\a mosaicId).
 		Amount get(MosaicId mosaicId) const;
 
@@ -101,6 +104,9 @@ namespace catapult { namespace state {
 
 		/// Optimizes access of the mosaic with \a id.
 		void optimize(MosaicId id);
+
+		/// Trackes the mosaic with \a id.
+		void track(MosaicId id);
 
 		/// Commit snapshots from m_remoteSnapshots queue to m_localSnapshots queue
 		/// During commit we can remove snapshots from front of m_localSnapshots, to have valid history of account
@@ -137,5 +143,6 @@ namespace catapult { namespace state {
 		AccountState* m_accountState = nullptr;
 		CompactMosaicMap m_balances;
 		MosaicId m_optimizedMosaicId;
+		MosaicId m_trackedMosaicId;
 	};
 }}

@@ -20,7 +20,6 @@
 
 #include "AccountBalances.h"
 #include "AccountState.h"
-#include "catapult/constants.h"
 
 namespace catapult { namespace state {
 
@@ -57,6 +56,7 @@ namespace catapult { namespace state {
 
 	AccountBalances& AccountBalances::operator=(const AccountBalances& accountBalances) {
 		m_optimizedMosaicId = accountBalances.optimizedMosaicId();
+		m_trackedMosaicId = accountBalances.trackedMosaicId();
 		m_balances.optimize(m_optimizedMosaicId);
 		if (!m_accountState) {
 			m_accountState = accountBalances.m_accountState;
@@ -78,6 +78,10 @@ namespace catapult { namespace state {
 
 	MosaicId AccountBalances::optimizedMosaicId() const {
 		return m_optimizedMosaicId;
+	}
+
+	MosaicId AccountBalances::trackedMosaicId() const {
+		return m_trackedMosaicId;
 	}
 
 	Amount AccountBalances::get(MosaicId mosaicId) const {
@@ -159,6 +163,13 @@ namespace catapult { namespace state {
 		m_optimizedMosaicId = id;
 	}
 
+	void AccountBalances::track(MosaicId id) {
+		if (m_trackedMosaicId != id && (!m_localSnapshots.empty() || !m_remoteSnapshots.empty()))
+			CATAPULT_THROW_RUNTIME_ERROR("can't track another id, if history for previous id is not empty");
+
+		m_trackedMosaicId = id;
+	}
+
 	void AccountBalances::commitSnapshots() {
 		if (m_remoteSnapshots.empty()) {
 			return;
@@ -192,7 +203,7 @@ namespace catapult { namespace state {
 
 	Amount AccountBalances::getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
 		if (m_localSnapshots.empty() && m_remoteSnapshots.empty()) {
-			auto iter = m_balances.find(Constants::getHarvestingMosaicId());
+			auto iter = m_balances.find(m_trackedMosaicId);
 			return m_balances.end() == iter ? Amount(0) : iter->second;
 		}
 
@@ -209,7 +220,7 @@ namespace catapult { namespace state {
 	}
 
 	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
-		if (mosaicId != Constants::getHarvestingMosaicId() || height == Height(0) || height == Height(-1)) {
+		if (mosaicId != m_trackedMosaicId || height == Height(0) || height == Height(-1)) {
 			return;
 		}
 

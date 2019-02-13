@@ -27,6 +27,7 @@
 #include "tests/test/cache/ImportanceViewTestUtils.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/Waits.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/NodeSelectorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -45,7 +46,9 @@ namespace catapult { namespace timesync {
 			auto delta = cache.createDelta();
 			for (auto i = 0u; i < keys.size(); ++i) {
 				delta->addAccount(keys[i], Height(1));
-				delta->find(keys[i]).get().Balances.credit(Xpx_Id, Amount(importances[i].unwrap()), Height(1));
+				auto& accountState = delta->find(keys[i]).get();
+				accountState.Balances.track(test::Default_Harvesting_Mosaic_Id);
+				accountState.Balances.credit(test::Default_Harvesting_Mosaic_Id, Amount(importances[i].unwrap()), Height(1));
 			}
 
 			cache.commit();

@@ -180,8 +180,9 @@ namespace catapult { namespace filechain {
 			}
 
 		public:
-			void SetStorageChainHeight(io::BlockStorageModifier&& storage, size_t height) {
-				for (auto i = 2u; i <= height; ++i) {
+			void setStorageChainHeight(Height chainHeight) {
+				auto storage = m_state.ref().Storage.modifier();
+				for (auto i = 2u; i <= chainHeight.unwrap(); ++i) {
 					auto pBlock = test::GenerateBlockWithTransactions(0, Height(i), Timestamp(i * 3000));
 					pBlock->Difficulty = Difficulty(1 << 8);
 					storage.saveBlock(test::BlockToBlockElement(*pBlock));

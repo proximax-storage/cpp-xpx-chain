@@ -1098,13 +1098,17 @@ namespace catapult { namespace cache {
 	// region updatedAddresses
 
 	namespace {
-		void IncreaseBalances(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10, Height height = Height(1), MosaicId mosaicId = Xpx_Id) {
+		constexpr MosaicId Test_Mosaic = MosaicId(12345);
+
+		void IncreaseBalances(AccountStateCacheDelta &delta, u_char start = 0, u_char end = 10, Height height = Height(1), MosaicId mosaicId = Test_Mosaic) {
 			for (auto i = start; i < end; ++i) {
 				delta.addAccount(Key{ { i } }, height);
+				auto& accountState = delta.find(Key{ { i } }).get();
+				accountState.Balances.track(Test_Mosaic);
 				if (height.unwrap() == 0)
-					delta.find(Key{ { i } }).get().Balances.credit(mosaicId, Amount(1));
+					accountState.Balances.credit(mosaicId, Amount(1));
 				else
-					delta.find(Key{ { i } }).get().Balances.credit(mosaicId, Amount(1), height);
+					accountState.Balances.credit(mosaicId, Amount(1), height);
 			}
 		}
 

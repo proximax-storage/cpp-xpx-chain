@@ -36,7 +36,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS ModifyContractTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract, 3, 3)
 
 		CosignatoryModification GenerateModification(int index) {
 			return { ((index % 2) ? CosignatoryModificationType::Del : CosignatoryModificationType::Add),
@@ -60,6 +60,7 @@ namespace catapult { namespace plugins {
 			pTransaction->ExecutorModificationCount = executorModificationCount;
 			pTransaction->VerifierModificationCount = verifierModificationCount;
 			test::FillWithRandomData(pTransaction->Signer);
+			pTransaction->Type = static_cast<model::EntityType>(0x0815);
 			if (generateModifications) {
 				auto *pModification = pTransaction->ExecutorModificationsPtr();
 				for (int i = 0; i < executorModificationCount; ++i)
@@ -341,7 +342,8 @@ namespace catapult { namespace plugins {
 				auto addedKeys = ExtractAddedModificationKeys(pModification, numAddModifications + numDelModifications);
 				const auto& notification = sub.matchingNotifications()[0];
 				EXPECT_EQ(pTransaction->Signer, notification.Source);
-				EXPECT_EQ(model::AddressSet{}, notification.ParticipantsByAddress);
+				EXPECT_EQ(pTransaction->Type, notification.TransactionType);
+				EXPECT_EQ(model::UnresolvedAddressSet{}, notification.ParticipantsByAddress);
 				EXPECT_EQ(addedKeys, notification.ParticipantsByKey);
 			}
 		}

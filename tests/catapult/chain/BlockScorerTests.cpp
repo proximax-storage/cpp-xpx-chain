@@ -22,6 +22,7 @@
 #include "catapult/model/Block.h"
 #include "catapult/utils/Logging.h"
 #include "tests/TestHarness.h"
+#include "tests/test/nodeps/TestConstants.h"
 
 namespace catapult { namespace chain {
 

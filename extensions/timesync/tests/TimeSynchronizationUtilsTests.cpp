@@ -30,6 +30,7 @@
 #include "timesync/tests/test/TimeSynchronizationTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <limits>
 
@@ -208,7 +209,9 @@ namespace catapult { namespace timesync {
 				const std::vector<Importance>& importances) {
 			for (auto i = 0u; i < keys.size(); ++i) {
 				delta.addAccount(keys[i], Height(1));
-				delta.find(keys[i]).get().Balances.credit(Xpx_Id, Amount(importances[i].unwrap()), Height(1));
+				auto& accountState = delta.find(keys[i]).get();
+				accountState.Balances.track(test::Default_Harvesting_Mosaic_Id);
+				accountState.Balances.credit(test::Default_Harvesting_Mosaic_Id, Amount(importances[i].unwrap()), Height(1));
 			}
 		}
 

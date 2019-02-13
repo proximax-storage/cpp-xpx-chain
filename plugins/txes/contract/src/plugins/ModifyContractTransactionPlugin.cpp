@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, const PublisherContext&, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
 			std::vector<CosignatoryModification> reputationModificationKeys;
 			if (0 < transaction.ExecutorModificationCount) {
 				const auto* pModification = transaction.ExecutorModificationsPtr();
@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 					transaction.Signer, transaction.VerifierModificationCount, transaction.VerifierModificationsPtr()));
 
 				if (!addedVerifierKeys.empty())
-					sub.notify(AddressInteractionNotification(transaction.Signer, model::AddressSet{}, addedVerifierKeys));
+					sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {}, addedVerifierKeys));
 			}
 
 			sub.notify(ModifyContractNotification(

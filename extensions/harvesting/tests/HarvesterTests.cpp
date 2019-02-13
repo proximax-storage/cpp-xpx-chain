@@ -47,7 +47,6 @@ namespace catapult { namespace harvesting {
 
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
-		Constants::setHarvestingMosaicId(Harvesting_Mosaic_Id);
 		constexpr size_t Num_Accounts = 5;
 
 		std::vector<KeyPair> CreateKeyPairs(size_t count) {
@@ -64,7 +63,9 @@ namespace catapult { namespace harvesting {
 			for (auto i = 0u; i < keyPairs.size(); ++i) {
 				cache.addAccount(keyPairs[i].publicKey(), Height(1));
 				auto& accountState = cache.find(keyPairs[i].publicKey()).get();
-				accountState.Balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
+				auto& balances = accountState.Balances;
+				balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
+				balances.track(Harvesting_Mosaic_Id);
 				accountStates.push_back(&accountState);
 			}
 

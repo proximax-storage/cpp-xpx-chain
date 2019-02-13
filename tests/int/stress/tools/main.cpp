@@ -42,8 +42,8 @@ namespace catapult { namespace tools { namespace address {
 		enum : size_t { Placeholder, Address, AccountState };
 
 		std::map<uint64_t, std::string> reverseTable = {
-				{ extensions::GenerateMosaicId("nem:xem").unwrap(), "nem:xem" },
-				{ extensions::GenerateMosaicId("prx:xpx").unwrap(), "prx:xpx" },
+//				{ extensions::GenerateMosaicId("nem:xem").unwrap(), "nem:xem" },
+//				{ extensions::GenerateMosaicId("prx:xpx").unwrap(), "prx:xpx" },
 		};
 
 		std::pair<state::AccountState, bool> ParseAccount(const std::vector<std::string>& parts) {
@@ -174,13 +174,13 @@ namespace catapult { namespace tools { namespace address {
 					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
 					accountState.LinkedAccountKey = crypto::ParseKey(account.get<std::string>("LinkedAccountKey"));
 
-					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
-						auto& mosaic = mosaicJson.second;
-						accountState.Balances.credit(
-								extensions::GenerateMosaicId(mosaic.get<std::string>("MosaicName")),
-								Amount(mosaic.get<uint64_t>("Amount"))
-						);
-					}
+//					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
+//						auto& mosaic = mosaicJson.second;
+//						accountState.Balances.credit(
+//								extensions::GenerateMosaicId(mosaic.get<std::string>("MosaicName")),
+//								Amount(mosaic.get<uint64_t>("Amount"))
+//						);
+//					}
 
 					for (pt::ptree::value_type&  snapshotJson: account.get_child("snapshots")) {
 						auto& snapshot = snapshotJson.second;

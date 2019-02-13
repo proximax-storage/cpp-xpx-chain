@@ -119,6 +119,7 @@ namespace catapult { namespace cache {
 
 		m_pStateByAddress->insert(accountState);
 		m_pStateByAddress->find(accountState.Address).get()->Balances.optimize(m_options.CurrencyMosaicId);
+		m_pStateByAddress->find(accountState.Address).get()->Balances.track(m_options.HarvestingMosaicId);
 	}
 
 	void BasicAccountStateCacheDelta::remove(const Address& address, Height height) {

@@ -59,14 +59,16 @@ namespace catapult { namespace plugins {
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
 				return {
 					ionet::PacketType::Contract_Infos,
-					ionet::PacketType::Contract_State_Path,
 					ionet::PacketType::Reputation_Infos,
-					ionet::PacketType::Reputation_State_Path
 				};
 			}
 
+			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
+				return { ionet::PacketType::Contract_State_Path, ionet::PacketType::Reputation_State_Path };
+			}
+
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return {};
+				return { "Contract C", "Reputation C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {

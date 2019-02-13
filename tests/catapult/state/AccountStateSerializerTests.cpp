@@ -49,10 +49,12 @@ namespace catapult { namespace state {
 			state::AccountType AccountType;
 			Key LinkedAccountKey;
 
+			MosaicId OptimizedMosaicId;
+			MosaicId TrackedMosaicId;
 			uint16_t MosaicsCount;
 		};
 
-		struct HistoricalSnapshotsHeader {
+		struct MAY_ALIAS HistoricalSnapshotsHeader {
 			uint16_t SnapshotsCount;
 		};
 
@@ -79,6 +81,7 @@ namespace catapult { namespace state {
 			accountState.LinkedAccountKey = header.LinkedAccountKey;
 
 			accountState.Balances.optimize(header.OptimizedMosaicId);
+			accountState.Balances.track(header.TrackedMosaicId);
 			const auto* pMosaic = GetMosaicPointer(header);
 			for (auto i = 0u; i < header.MosaicsCount; ++i, ++pMosaic)
 				accountState.Balances.credit(pMosaic->MosaicId, pMosaic->Amount);
@@ -107,6 +110,7 @@ namespace catapult { namespace state {
 			header.LinkedAccountKey = accountState.LinkedAccountKey;
 
 			header.OptimizedMosaicId = accountState.Balances.optimizedMosaicId();
+			header.TrackedMosaicId = accountState.Balances.trackedMosaicId();
 			header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
 
 			auto* pData = buffer.data();
@@ -195,6 +199,7 @@ namespace catapult { namespace state {
 
 			test::RandomFillAccountData(0, accountState, numMosaics, numMosaics);
 			accountState.Balances.optimize(test::GenerateRandomValue<MosaicId>());
+			accountState.Balances.track(test::GenerateRandomValue<MosaicId>());
 			return accountState;
 		}
 

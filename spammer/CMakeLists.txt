@@ -8,5 +8,5 @@ include_directories(. ${CMAKE_BINARY_DIR}/inc)
 include_directories(${PROJECT_SOURCE_DIR} ${PROJECT_SOURCE_DIR}/src)
 
 catapult_executable(${TARGET_NAME})
-target_link_libraries(${TARGET_NAME} catapult.sdk catapult.net tests.catapult.test.nodeps)
+target_link_libraries(${TARGET_NAME} catapult.sdk catapult.net tests.catapult.test.nodeps tests.catapult.test.core)
 catapult_target(${TARGET_NAME})

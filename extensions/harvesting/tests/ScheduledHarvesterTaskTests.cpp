@@ -38,7 +38,6 @@ namespace catapult { namespace harvesting {
 	namespace {
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
-		Constants::setHarvestingMosaicId(Harvesting_Mosaic_Id);
 
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
@@ -111,7 +110,9 @@ namespace catapult { namespace harvesting {
 			auto delta = cache.createDelta();
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			accountStateCache.addAccount(keyPair.publicKey(), Height(1));
-			accountStateCache.find(keyPair.publicKey()).get().Balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
+			auto& balances = accountStateCache.find(keyPair.publicKey()).get().Balances;
+			balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
+			balances.track(Harvesting_Mosaic_Id);
 			cache.commit(Height(1));
 			return test::CopyKeyPair(keyPair);
 		}

@@ -28,6 +28,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace sync {
@@ -46,7 +47,9 @@ namespace catapult { namespace sync {
 		Key AddAccount(cache::AccountStateCacheDelta& delta, Importance importance) {
 			auto key = test::GenerateRandomData<Key_Size>();
 			delta.addAccount(key, Height(1));
-			delta.find(key).get().Balances.credit(Xpx_Id, Amount(importance.unwrap()), Height(1));
+			auto& accountState = delta.find(key).get();
+			accountState.Balances.track(test::Default_Harvesting_Mosaic_Id);
+			accountState.Balances.credit(test::Default_Harvesting_Mosaic_Id, Amount(importance.unwrap()), Height(1));
 			return key;
 		}
 

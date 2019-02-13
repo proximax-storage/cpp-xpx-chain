@@ -143,8 +143,8 @@ namespace catapult { namespace harvesting {
 					auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
 					accountStateCacheDelta.addAccount(keyPair.publicKey(), Height(1));
 					auto accountStateIter = accountStateCacheDelta.find(keyPair.publicKey());
+					accountStateIter.get().Balances.track(mosaicId);
 					accountStateIter.get().Balances.credit(mosaicId, Amount(GetNumIterations()));
-					accountStateIter.get().ImportanceInfo.set(Importance(10'000'000), model::ImportanceHeight(1));
 					m_cache.commit(Height(1));
 				}
 

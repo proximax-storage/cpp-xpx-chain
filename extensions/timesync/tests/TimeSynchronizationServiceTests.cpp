@@ -34,7 +34,8 @@
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/net/BriefServerRequestorTestUtils.h"
 #include "tests/test/net/SocketTestUtils.h"
-#include "tests/test/nodeps//Waits.h"
+#include "tests/test/nodeps/Waits.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace timesync {
@@ -217,7 +218,9 @@ namespace catapult { namespace timesync {
 				auto cacheDelta = cache.createDelta();
 				auto& accountCache = cacheDelta.sub<cache::AccountStateCache>();
 				accountCache.addAccount(keyPair.publicKey(), Height(1));
-				accountCache.find(keyPair.publicKey()).get().Balances.credit(Xpx_Id, balance, Height(1));
+				auto& accountState = accountCache.find(keyPair.publicKey()).get();
+				accountState.Balances.track(test::Default_Harvesting_Mosaic_Id);
+				accountState.Balances.credit(test::Default_Harvesting_Mosaic_Id, balance, Height(1));
 				cache.commit(Height(1));
 			}
 

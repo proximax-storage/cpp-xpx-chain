@@ -34,6 +34,7 @@
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/MijinConstants.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
 #include "tests/TestHarness.h"
 #include <boost/filesystem.hpp>
@@ -88,7 +89,9 @@ namespace catapult { namespace sync {
 			// add a balance and importance for the signer
 			auto& accountCache = delta.sub<cache::AccountStateCache>();
 			accountCache.addAccount(signer.publicKey(), Height(1));
-			accountCache.find(signer.publicKey()).get().Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
+			auto& accountState = accountCache.find(signer.publicKey()).get();
+			accountState.Balances.track(test::Default_Harvesting_Mosaic_Id);
+			accountState.Balances.credit(test::Default_Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
 
 			// commit all changes
 			cache.commit(Height(1));
@@ -414,7 +417,6 @@ namespace catapult { namespace sync {
 		template<typename THandler>
 		void AssertCanConsumeBlockRange(bool shouldEnableVerifiableReceipts, model::AnnotatedBlockRange&& range, TestContext& context, THandler handler) {
 			// Arrange:
-			TestContext context;
 			const auto& blockChainConfig = context.testState().config().BlockChain;
 			const_cast<model::BlockChainConfiguration&>(blockChainConfig).ShouldEnableVerifiableReceipts = shouldEnableVerifiableReceipts;
 
@@ -435,8 +437,8 @@ namespace catapult { namespace sync {
 		}
 
 		template<typename THandler>
-		void AssertCanConsumeBlockRange(model::AnnotatedBlockRange&& range, THandler handler) {
-			AssertCanConsumeBlockRange(false, std::move(range), handler);
+		void AssertCanConsumeBlockRange(model::AnnotatedBlockRange&& range, TestContext& context, THandler handler) {
+			AssertCanConsumeBlockRange(false, std::move(range), context, handler);
 		}
 	}
 
@@ -468,11 +470,12 @@ namespace catapult { namespace sync {
 
 	TEST(TEST_CLASS, CanConsumeBlockRange_InvalidElement_WithVerifiableReceipts) {
 		// Arrange: block does not contain correct block receipts hash, so should get rejected
-		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair());
+		TestContext context;
+		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair(), context);
 		auto range = test::CreateEntityRange({ pNextBlock.get() });
 
 		// Assert:
-		AssertCanConsumeBlockRange(true, std::move(range), [](const auto& context) {
+		AssertCanConsumeBlockRange(true, std::move(range), context, [](const auto& context) {
 			// - the block was not forwarded to the sink
 			EXPECT_EQ(0u, context.numNewBlockSinkCalls());
 			EXPECT_EQ(0u, context.numNewTransactionsSinkCalls());
@@ -493,14 +496,15 @@ namespace catapult { namespace sync {
 
 	TEST(TEST_CLASS, CanConsumeBlockRange_ValidElement_WithVerifiableReceipts) {
 		// Arrange: block contains correct block receipts hash, so should get accepted
+		TestContext context;
 		auto signer = GetBlockSignerKeyPair();
-		auto pNextBlock = CreateValidBlockForDispatcherTests(signer);
+		auto pNextBlock = CreateValidBlockForDispatcherTests(signer, context);
 		SetBlockReceiptsHash(*pNextBlock);
 		test::SignBlock(signer, *pNextBlock);
 		auto range = test::CreateEntityRange({ pNextBlock.get() });
 
 		// Assert:
-		AssertCanConsumeBlockRange(true, std::move(range), [](const auto& context) {
+		AssertCanConsumeBlockRange(true, std::move(range), context, [](const auto& context) {
 			WAIT_FOR_ONE_EXPR(context.numNewBlockSinkCalls());
 
 			// - the block was forwarded to the sink
@@ -521,7 +525,6 @@ namespace catapult { namespace sync {
 				TestContext& context,
 				THandler handler) {
 			// Arrange:
-			TestContext context;
 			context.setBlockValidationResults(blockValidationResults);
 			context.boot();
 			auto factory = context.testState().state().hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Local);
@@ -556,32 +559,36 @@ namespace catapult { namespace sync {
 
 	TEST(TEST_CLASS, CanConsumeBlockRangeCompletionAware_InvalidElement) {
 		// Assert: BlockTransactionsHash mismatch
+		TestContext context;
 		AssertCanConsumeBlockRangeCompletionAware(
 				ValidationResults(),
 				test::CreateBlockEntityRange(1),
+				context,
 				AssertBlockRangeCompletionAwareInvalidElement);
 	}
 
 	TEST(TEST_CLASS, CanConsumeBlockRangeCompletionAware_InvalidElement_Stateless) {
 		// Arrange:
-		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair());
+		TestContext context;
+		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair(), context);
 		auto range = test::CreateEntityRange({ pNextBlock.get() });
 
 		// - stateless failure
 		ValidationResults blockValidationResults;
 		blockValidationResults.Stateless = ValidationResult::Failure;
-		AssertCanConsumeBlockRangeCompletionAware(blockValidationResults, std::move(range), AssertBlockRangeCompletionAwareInvalidElement);
+		AssertCanConsumeBlockRangeCompletionAware(blockValidationResults, std::move(range), context, AssertBlockRangeCompletionAwareInvalidElement);
 	}
 
 	TEST(TEST_CLASS, CanConsumeBlockRangeCompletionAware_InvalidElement_Stateful) {
 		// Arrange:
-		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair());
+		TestContext context;
+		auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair(), context);
 		auto range = test::CreateEntityRange({ pNextBlock.get() });
 
 		// - stateful failure
 		ValidationResults blockValidationResults;
 		blockValidationResults.Stateful = ValidationResult::Failure;
-		AssertCanConsumeBlockRangeCompletionAware(blockValidationResults, std::move(range), AssertBlockRangeCompletionAwareInvalidElement);
+		AssertCanConsumeBlockRangeCompletionAware(blockValidationResults, std::move(range), context, AssertBlockRangeCompletionAwareInvalidElement);
 	}
 
 	TEST(TEST_CLASS, CanConsumeBlockRangeCompletionAware_ValidElement) {
@@ -704,7 +711,7 @@ namespace catapult { namespace sync {
 			context.boot();
 
 			auto nodeIdentity = test::GenerateRandomData<Key_Size>();
-			auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair());
+			auto pNextBlock = CreateValidBlockForDispatcherTests(GetBlockSignerKeyPair(), context);
 			auto range = test::CreateEntityRange({ pNextBlock.get() });
 			auto annotatedRange = model::AnnotatedBlockRange(std::move(range), nodeIdentity);
 

@@ -26,6 +26,8 @@
 #include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/model/Address.h"
+#include "catapult/model/Mosaic.h"
+#include "catapult/utils/RawBuffer.h"
 #include "catapult/net/VerifyPeer.h"
 #include "catapult/utils/FileSize.h"
 #include "catapult/utils/NetworkTime.h"
@@ -58,8 +60,8 @@ int parseArguments(int argc, const char** argv, SpammerOptions& options) {
 			("apiNodePublicKey", value<string>(&options.ApiNodePublicKey)->default_value(""), "Public key of api node")
 			("restPrivateKey", value<string>(&options.RestPrivateKey)->default_value(""), "Private key verify connection to api node")
 			("privateKeys", value<vector<string>>(&options.privateKeys)->composing(), "Private keys of accounts with tokens")
-			("token", value<string>(&options.Token)->default_value("prx:xpx"), "Tokens that you want to transfer")
-			("value", value<int>(&options.Amount)->default_value(1), "Amount of tokens that you want to transfer");
+			("token", value<uint64_t>(&options.Token)->default_value(0x0DC6'7FBE'1CAD'29E3), "Tokens that you want to transfer")
+			("value", value<uint64_t>(&options.Amount)->default_value(1), "Amount of tokens that you want to transfer");
 
 	variables_map vm;
 	store(parse_command_line(argc, argv, desc), vm);
@@ -77,9 +79,11 @@ unique_ptr<model::Transaction> generateTransferTransaction(const crypto::KeyPair
 
 	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Mijin_Test;
 
-	builders::TransferBuilder builder(networkIdentifier, signer.publicKey(), test::GenerateRandomUnresolvedAddress());
-	builder.addMosaic(options.Token, Amount(options.Amount));
-	builder.setStringMessage("Hello world "+ to_string(rand()));
+	builders::TransferBuilder builder(networkIdentifier, signer.publicKey());
+	builder.addMosaic(model::UnresolvedMosaic{ UnresolvedMosaicId(options.Token), Amount(options.Amount) });
+	builder.setRecipient(test::GenerateRandomUnresolvedAddress());
+	string message = "Hello world "+ to_string(rand());
+	builder.setMessage(RawBuffer((const uint8_t* )message.data(), message.size()));
 
 	unique_ptr<model::Transaction> transaction = builder.build();
 	transaction->Deadline = Timestamp(60 * 60 * 1000 + utils::NetworkTime().unwrap());
