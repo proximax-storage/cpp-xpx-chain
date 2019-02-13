@@ -38,7 +38,9 @@ namespace catapult { namespace cache {
 			auto addresses = test::GenerateRandomDataVector<Address>(balances.size());
 			for (auto i = 0u; i < balances.size(); ++i) {
 				delta->addAccount(addresses[i], Height(1));
-				delta->find(addresses[i]).get().Balances.credit(Harvesting_Mosaic_Id, balances[i]);
+				auto& accountState = delta->find(addresses[i]).get();
+				accountState.Balances.track(Harvesting_Mosaic_Id);
+				accountState.Balances.credit(Harvesting_Mosaic_Id, balances[i], Height(2));
 			}
 
 			cache.commit();

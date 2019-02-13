@@ -58,7 +58,7 @@ namespace catapult { namespace state {
 			AccountBalances balances(&Test_Account);
 			balances.track(Test_Mosaic_Id3);
 			balances.credit(Test_Mosaic_Id2, Amount(777));
-			balances.credit(Test_Mosaic_Id1, Amount(1000));
+			balances.credit(Test_Mosaic_Id3, Amount(1000));
 			balances.optimize(optimizedMosaicId);
 			return balances;
 		}
@@ -66,30 +66,32 @@ namespace catapult { namespace state {
 		void AssertCopied(const AccountBalances& balances, const AccountBalances& balancesCopy, MosaicId optimizedMosaicId) {
 			// Assert: the copy is detached from the original
 			EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id2));
-			EXPECT_EQ(Amount(1000), balances.get(Test_Mosaic_Id1));
+			EXPECT_EQ(Amount(1000), balances.get(Test_Mosaic_Id3));
 
 			EXPECT_EQ(Amount(777), balancesCopy.get(Test_Mosaic_Id2));
-			EXPECT_EQ(Amount(1500), balancesCopy.get(Test_Mosaic_Id1));
+			EXPECT_EQ(Amount(1500), balancesCopy.get(Test_Mosaic_Id3));
 
 			// - optimization is preserved
 			EXPECT_EQ(optimizedMosaicId, balancesCopy.optimizedMosaicId());
+			EXPECT_EQ(balances.trackedMosaicId(), balancesCopy.trackedMosaicId());
 		}
 
 		void AssertMoved(const AccountBalances& balances, const AccountBalances& balancesMoved, MosaicId optimizedMosaicId) {
 			// Assert: the original values are moved into the copy (move does not clear first mosaic)
-			if (Test_Mosaic_Id2 == optimizedMosaicId) {
-				EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id2));
-				EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id1));
-			} else {
+			if (Test_Mosaic_Id3 == optimizedMosaicId) {
 				EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id2));
-				EXPECT_EQ(Amount(1000), balances.get(Test_Mosaic_Id1));
+				EXPECT_EQ(Amount(1000), balances.get(Test_Mosaic_Id3));
+			} else {
+				EXPECT_EQ(Amount(777), balances.get(Test_Mosaic_Id2));
+				EXPECT_EQ(Amount(0), balances.get(Test_Mosaic_Id3));
 			}
 
 			EXPECT_EQ(Amount(777), balancesMoved.get(Test_Mosaic_Id2));
-			EXPECT_EQ(Amount(1000), balancesMoved.get(Test_Mosaic_Id1));
+			EXPECT_EQ(Amount(1000), balancesMoved.get(Test_Mosaic_Id3));
 
 			// - optimization is preserved
 			EXPECT_EQ(optimizedMosaicId, balancesMoved.optimizedMosaicId());
+			EXPECT_EQ(balances.trackedMosaicId(), balancesMoved.trackedMosaicId());
 		}
 
 		void AssertCanCopyConstructAccountBalances(MosaicId optimizedMosaicId) {
@@ -157,7 +159,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanMoveConstructAccountBalances) {
 		// Assert:
-		AssertCanMoveConstructAccountBalances(Test_Mosaic_Id2);
+		AssertCanMoveConstructAccountBalances(Test_Mosaic_Id3);
 	}
 
 	TEST(TEST_CLASS, CanMoveConstructAccountBalances_NoOptimization) {
@@ -177,7 +179,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanMoveAssignAccountBalances) {
 		// Assert:
-		AssertCanMoveAssignAccountBalances(Test_Mosaic_Id2);
+		AssertCanMoveAssignAccountBalances(Test_Mosaic_Id3);
 	}
 
 	TEST(TEST_CLASS, CanMoveAssignAccountBalances_NoOptimization) {
@@ -856,6 +858,7 @@ namespace catapult { namespace state {
 		// Arrange:
 		AccountState accountState(Address{ { 1 } }, Height(100));
 		AccountBalances balances(&accountState);
+		balances.track(Test_Mosaic_Id3);
 		balances.credit(Test_Mosaic_Id3, Amount(12345));
 
 		// Assert:
@@ -869,6 +872,7 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, CreditOrDebitWidthoutAccount) {
 		// Arrange:
 		AccountBalances balances(nullptr);
+		balances.track(Test_Mosaic_Id3);
 		balances.credit(Test_Mosaic_Id3, Amount(12345));
 
 		// Assert:
@@ -877,6 +881,39 @@ namespace catapult { namespace state {
 		// Act + Assert:
 		EXPECT_THROW(balances.credit(Test_Mosaic_Id3, Amount(12346), Height(1)), catapult_runtime_error);
 		EXPECT_THROW(balances.debit(Test_Mosaic_Id3, Amount(12346), Height(1)), catapult_runtime_error);
+	}
+
+	TEST(TEST_CLASS, TrackAnotherIdWhenRemoteAndLocalSnapshotsAreEmpty) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+
+		// Act:
+		balances.track(Test_Mosaic_Id2);
+	}
+
+	TEST(TEST_CLASS, TrackAnotherIdWhenLocalSnapshotsIsNotEmpty) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(1));
+		balances.commitSnapshots();
+
+		// Assert:
+		EXPECT_EQ(1, balances.snapshots().size());
+
+		// Act + Assert:
+		EXPECT_THROW(balances.track(Test_Mosaic_Id2), catapult_runtime_error);
+	}
+
+	TEST(TEST_CLASS, TrackAnotherIdWhenRemoteSnapshotsIsNotEmpty) {
+		// Arrange:
+		AccountBalances balances(&Test_Account);
+		balances.track(Test_Mosaic_Id3);
+		balances.credit(Test_Mosaic_Id3, Amount(12345), Height(2));
+
+		// Act + Assert:
+		EXPECT_THROW(balances.track(Test_Mosaic_Id2), catapult_runtime_error);
 	}
 
 	// endregion

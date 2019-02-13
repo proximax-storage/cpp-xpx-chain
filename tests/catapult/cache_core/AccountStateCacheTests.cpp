@@ -616,6 +616,7 @@ namespace catapult { namespace cache {
 		void AssertAddAccountViaStateDoesNotOverrideKnownAccounts(TAdd add) {
 			// Arrange:
 			auto accountState = CreateAccountStateWithRandomAddressAndPublicKey();
+			accountState.Balances.track(Default_Cache_Options.HarvestingMosaicId);
 			accountState.Balances.addSnapshot({ Amount(777), Height(123)});
 
 			AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);

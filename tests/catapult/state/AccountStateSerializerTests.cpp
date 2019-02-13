@@ -199,7 +199,6 @@ namespace catapult { namespace state {
 
 			test::RandomFillAccountData(0, accountState, numMosaics, numMosaics);
 			accountState.Balances.optimize(test::GenerateRandomValue<MosaicId>());
-			accountState.Balances.track(test::GenerateRandomValue<MosaicId>());
 			return accountState;
 		}
 

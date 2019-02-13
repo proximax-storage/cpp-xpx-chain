@@ -41,16 +41,11 @@ namespace catapult { namespace extensions {
 	public:
 		/// Creates a default nemesis funding state.
 		NemesisFundingState()
-		: TotalAccountState(Address{ { 1 } },Height(1))
-		, TotalFundedMosaics(&TotalAccountState)
+		: TotalFundedMosaics(nullptr)
 		, FundingType(NemesisFundingType::Unknown)
 		{}
 
 	public:
-		/// Total sums of mosaics credited in nemesis block.
-		/// \note Only sum of harvesting mosaic is used. Rest are accumulated for diagnostics.
-		state::AccountState TotalAccountState;
-
 		/// Total sums of mosaics credited in nemesis block.
 		/// \note Only sum of harvesting mosaic is used. Rest are accumulated for diagnostics.
 		state::AccountBalances TotalFundedMosaics;
