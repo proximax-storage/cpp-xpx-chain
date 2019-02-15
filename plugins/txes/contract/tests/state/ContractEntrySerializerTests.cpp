@@ -17,7 +17,8 @@ namespace catapult { namespace state {
 #define TEST_CLASS ContractEntrySerializerTests
 
 	namespace {
-		constexpr auto Entry_Size = Key_Size * 3 + Key_Size * 3 + Key_Size * 3 + sizeof(uint64_t) * 3 + Hash256_Size + sizeof(uint64_t) * 2 + Key_Size;
+		constexpr auto Entry_Size = Key_Size * 3 + Key_Size * 3 + Key_Size * 3 + sizeof(uint64_t) * 3
+				+ sizeof(uint64_t) + 2 * (Hash256_Size + sizeof(uint64_t)) + sizeof(uint64_t) * 2 + Key_Size;
 		class TestContext {
 		public:
 			explicit TestContext(size_t numAccounts = 10)
@@ -39,7 +40,8 @@ namespace catapult { namespace state {
 				state::ContractEntry entry(m_accountKeys[mainAccountId]);
 				entry.setDuration(BlockDuration(mainAccountId + 20));
 				entry.setStart(Height(mainAccountId + 12));
-				entry.setHash(test::GenerateRandomData<Hash256_Size>());
+				entry.pushHash(test::GenerateRandomData<Hash256_Size>(), entry.start());
+				entry.pushHash(test::GenerateRandomData<Hash256_Size>(), entry.start() + Height(1));
 				entry.customers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
 				entry.executors() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
 				entry.verifiers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
@@ -84,13 +86,20 @@ namespace catapult { namespace state {
 			EXPECT_EQ(entry.duration().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
 
-			auto hash = Extract<Hash256_Size>(pData);
-			EXPECT_EQ(entry.hash(), hash);
-			pData += Hash256_Size;
-
 			auto accountKey = Extract<Key_Size>(pData);
 			EXPECT_EQ(entry.key(), accountKey);
 			pData += Key_Size;
+
+			EXPECT_EQ(entry.hashes().size(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+
+			for (const auto& hashSnapshot : entry.hashes()) {
+				auto hash = Extract<Hash256_Size>(pData);
+				EXPECT_EQ(hashSnapshot.Hash, hash);
+				pData += Hash256_Size;
+				EXPECT_EQ(hashSnapshot.HashHeight.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
+			}
 
 			AssertVectorBuffer(entry.customers(), pData);
 			pData += Key_Size * entry.customers().size() + sizeof(uint64_t);
@@ -162,25 +171,32 @@ namespace catapult { namespace state {
 		}
 
 		std::vector<uint8_t> CreateEntryBuffer(const state::ContractEntry& entry) {
-			// positiveInteractions / negativeInteractions / key
 			std::vector<uint8_t> buffer(Entry_Size);
 
-			// - positiveInteractions / negativeInteractions
+			// - start / duration
 			auto* pData = buffer.data();
-			auto positiveInteractions = entry.start().unwrap();
-			memcpy(pData, &positiveInteractions, sizeof(uint64_t));
+			auto start = entry.start().unwrap();
+			memcpy(pData, &start, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
-			auto negativeInteractions = entry.duration().unwrap();
-			memcpy(pData, &negativeInteractions, sizeof(uint64_t));
+			auto duration = entry.duration().unwrap();
+			memcpy(pData, &duration, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
-
-			// - hash
-			memcpy(pData, entry.hash().data(), Hash256_Size);
-			pData += Key_Size;
 
 			// - account key
 			memcpy(pData, entry.key().data(), Key_Size);
 			pData += Key_Size;
+
+			auto count = entry.hashes().size();
+			memcpy(pData, &count, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
+			for (const auto& hashSnapshot : entry.hashes()) {
+				// - hash
+				memcpy(pData, hashSnapshot.Hash.data(), Hash256_Size);
+				pData += Hash256_Size;
+				auto height = hashSnapshot.HashHeight;
+				memcpy(pData, &height, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+			}
 
 			AddVectorToBuffer(entry.customers(), pData);
 			AddVectorToBuffer(entry.executors(), pData);

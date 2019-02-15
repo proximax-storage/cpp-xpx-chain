@@ -39,9 +39,6 @@ namespace catapult { namespace builders {
 		/// Sets the \a durationDelta of the contract.
 		void setDurationDelta(const int64_t& durationDelta);
 
-		/// Sets the \a multisig account of the contract.
-		void setMultisig(const Key& multisig);
-
 		/// Sets the \a hash of an entity passed from customers to executors (e.g. file hash).
 		void setHash(const Hash256& hash);
 
@@ -67,7 +64,6 @@ namespace catapult { namespace builders {
 
 	private:
 		int64_t m_durationDelta;
-		Key m_multisig;
 		Hash256 m_hash;
 		std::vector<model::CosignatoryModification> m_customerModifications;
 		std::vector<model::CosignatoryModification> m_executorModifications;

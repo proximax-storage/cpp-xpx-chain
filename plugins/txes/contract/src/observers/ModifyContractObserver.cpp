@@ -1,21 +1,7 @@
 /**
-*** Copyright (c) 2018-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
-***
-*** This file is part of Catapult.
-***
-*** Catapult is free software: you can redistribute it and/or modify
-*** it under the terms of the GNU Lesser General Public License as published by
-*** the Free Software Foundation, either version 3 of the License, or
-*** (at your option) any later version.
-***
-*** Catapult is distributed in the hope that it will be useful,
-*** but WITHOUT ANY WARRANTY; without even the implied warranty of
-*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*** GNU Lesser General Public License for more details.
-***
-*** You should have received a copy of the GNU Lesser General Public License
-*** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
+*** Copyright 2018 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
 **/
 
 #include "Observers.h"
@@ -44,24 +30,26 @@ namespace catapult { namespace observers {
 			{}
 
 		public:
-			Height start() const {
-				return m_contractEntry.start();
+			void changeDuration(const int64_t& delta, Height height) {
+				if (m_contractEntry.start().unwrap() == 0)
+					m_contractEntry.setStart(height);
+
+				m_contractEntry.setDuration(BlockDuration{m_contractEntry.duration().unwrap() + delta});
+
+				if (m_contractEntry.start() == height && m_contractEntry.duration().unwrap() == 0)
+					m_contractEntry.setStart(Height(0));
 			}
 
-			void setStart(const Height& start) {
-				m_contractEntry.setStart(start);
+			void pushHash(const Hash256& hash, const Height& height) {
+				m_contractEntry.pushHash(hash, height);
 			}
 
-			BlockDuration duration() const {
-				return m_contractEntry.duration();
-			}
+			void popHash(const Hash256& hash, const Height& height) {
+				auto lastSnapshot = m_contractEntry.hashes().back();
+				if (hash != lastSnapshot.Hash || height != lastSnapshot.HashHeight)
+					CATAPULT_THROW_RUNTIME_ERROR("during rollback we can remove only last hash snapshot");
 
-			void setDuration(const BlockDuration& duration) {
-				m_contractEntry.setDuration(duration);
-			}
-
-			void setHash(const Hash256& hash) {
-				m_contractEntry.setHash(hash);
+				m_contractEntry.popHash();
 			}
 
 			void addCustomer(const Key& customerKey) {
@@ -103,14 +91,13 @@ namespace catapult { namespace observers {
 			auto& contractCache = context.Cache.sub<cache::ContractCache>();
 			ContractFacade contractFacade(contractCache, notification.Multisig);
 
-			if (contractFacade.start() == Height{0u}) {
-				contractFacade.setStart(context.Height);
-				contractFacade.setDuration(BlockDuration{static_cast<uint64_t>(notification.DurationDelta)});
+			if (NotifyMode::Commit == context.Mode) {
+				contractFacade.changeDuration(notification.DurationDelta, context.Height);
+				contractFacade.pushHash(notification.Hash, context.Height);
 			} else {
-				contractFacade.setDuration(BlockDuration{
-						contractFacade.duration().unwrap() + static_cast<uint64_t>(notification.DurationDelta)});
+				contractFacade.changeDuration(-notification.DurationDelta, context.Height);
+				contractFacade.popHash(notification.Hash, context.Height);
 			}
-			contractFacade.setHash(notification.Hash);
 
 #define MODIFY_CONTRACTORS(CONTRACTOR_TYPE) \
 		for (auto i = 0u; i < notification.CONTRACTOR_TYPE##ModificationCount; ++i) { \

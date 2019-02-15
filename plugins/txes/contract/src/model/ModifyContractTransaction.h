@@ -40,9 +40,6 @@ namespace catapult { namespace model {
 		/// Relative change of the duration of the contract in blocks.
 		int64_t DurationDelta;
 
-		/// Public key of the contract multisig account.
-		Key Multisig;
-
 		/// Hash of an entity passed from customers to executors (e.g. file hash).
 		Hash256 Hash;
 

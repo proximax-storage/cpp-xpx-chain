@@ -53,7 +53,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamContractTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder
 				<< "durationDelta" << transaction.DurationDelta
-				<< "multisig" << ToBinary(transaction.Multisig)
+				<< "multisig" << ToBinary(transaction.Signer)
 				<< "hash" << ToBinary(transaction.Hash);
 		StreamModifications(builder, transaction.CustomerModificationsPtr(), transaction.CustomerModificationCount, "customerModifications");
 		StreamModifications(builder, transaction.ExecutorModificationsPtr(), transaction.ExecutorModificationCount, "executorModifications");

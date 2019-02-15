@@ -21,8 +21,15 @@
 #pragma once
 #include "catapult/exceptions.h"
 #include "catapult/types.h"
+#include "src/constants.h"
 
 namespace catapult { namespace state {
+
+	namespace {
+		constexpr bool IsEternal(const Height& End) {
+			return Eternal_Artifact_Height == End;
+		}
+	}
 
 	/// Lifetime of a namespace.
 	struct NamespaceLifetime {
@@ -48,7 +55,7 @@ namespace catapult { namespace state {
 
 		/// Returns \c true if history is active at \a height (including grace period).
 		bool isActiveOrGracePeriod(Height height) const {
-			return height >= Start && height < GracePeriodEnd;
+			return height >= Start && (height < GracePeriodEnd || IsEternal(End));
 		}
 
 	public:
