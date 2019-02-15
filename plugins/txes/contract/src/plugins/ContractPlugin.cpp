@@ -46,16 +46,16 @@ namespace catapult { namespace plugins {
 		CacheHandlersContract::Register<model::FacilityCode::Contract>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("Contract C"), [&cache]() {
+			counters.emplace_back(utils::DiagnosticCounterId("CONTRACT C"), [&cache]() {
 				return cache.sub<cache::ContractCache>().createView()->size();
 			});
 		});
 
 		using CacheHandlersReputation = CacheHandlers<cache::ReputationCacheDescriptor>;
-		CacheHandlersReputation::Register<model::FacilityCode::Contract>(manager);
+		CacheHandlersReputation::Register<model::FacilityCode::Reputation>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("Reputation C"), [&cache]() {
+			counters.emplace_back(utils::DiagnosticCounterId("REPUTATION C"), [&cache]() {
 				return cache.sub<cache::ReputationCache>().createView()->size();
 			});
 		});
