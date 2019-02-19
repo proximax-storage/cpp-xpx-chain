@@ -915,7 +915,7 @@ namespace catapult { namespace sync {
 
 	TEST(TEST_CLASS, CanEnableSpamThrottling) {
 		// Assert: the entire cache should not be filled because unimportant accounts are used
-		AssertTransactionSpamThrottleBehavior(true, 50, 40);
+		AssertTransactionSpamThrottleBehavior(true, 50, 25);
 	}
 
 	// endregion

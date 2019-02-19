@@ -99,7 +99,7 @@ namespace catapult { namespace extensions {
 		}
 
 		void CheckImportanceAndBalanceConsistency(Importance totalChainImportance, Amount totalChainBalance) {
-			if (!utils::IsPowerMultiple<uint64_t>(totalChainImportance.unwrap(), totalChainBalance.unwrap(), 10)) {
+			if (totalChainImportance.unwrap() != totalChainBalance.unwrap()) {
 				std::ostringstream out;
 				out
 						<< "harvesting outflows (" << totalChainBalance << ") do not add up to power ten multiple of "

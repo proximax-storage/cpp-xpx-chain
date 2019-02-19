@@ -410,8 +410,8 @@ namespace catapult { namespace extensions {
 	}
 
 	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_BalanceMultipleOfImportance) {
-		// Assert: (balance == 10000 * importance)
-		AssertCanLoadValidNemesisBlockWithSingleMosaicTransfer<TTraits>(Importance(1234), Amount(1234 * 10000));
+		// Assert: (balance == importance)
+		AssertCanLoadValidNemesisBlockWithSingleMosaicTransfer<TTraits>(Importance(1234), Amount(1234));
 	}
 
 	// endregion

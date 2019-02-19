@@ -94,9 +94,8 @@ namespace catapult { namespace test {
 			EXPECT_EQ(Height(0), accountState.PublicKeyHeight) << message;
 			// recipient public key is unknown (public key height is zero)
 
-			auto expectedImportance = GetNemesisImportance(publicKey);
 			EXPECT_EQ(Amount(409'090'909'000'000), accountState.Balances.get(Default_Currency_Mosaic_Id)) << message;
-			EXPECT_EQ(Amount(expectedImportance.unwrap() * 1000), accountState.Balances.get(Default_Harvesting_Mosaic_Id)) << message;
+			EXPECT_EQ(Amount(409'090'909'000'000), accountState.Balances.get(Default_Harvesting_Mosaic_Id)) << message;
 		}
 
 		void AssertNemesisState(const cache::AccountStateCacheView& view) {
@@ -123,14 +122,14 @@ namespace catapult { namespace test {
 	namespace {
 		void AssertNemesisState(const cache::MosaicCacheView& view) {
 			// Assert:
-			EXPECT_EQ(2u, view.size());
+			EXPECT_EQ(1u, view.size());
 
 			// - check for known mosaics
 			ASSERT_TRUE(view.contains(Default_Currency_Mosaic_Id));
 			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Currency_Mosaic_Id).get().supply());
 
 			ASSERT_TRUE(view.contains(Default_Harvesting_Mosaic_Id));
-			EXPECT_EQ(Amount(17'000'000), view.find(Default_Harvesting_Mosaic_Id).get().supply());
+			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Harvesting_Mosaic_Id).get().supply());
 		}
 	}
 

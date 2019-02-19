@@ -292,9 +292,9 @@ namespace catapult { namespace local {
 	namespace {
 		// namespace is pruned after the sum of the following
 		//   (1) namespace duration ==> 12
-		//   (2) grace period ========> 1hr of blocks with 20s target time
+		//   (2) grace period ========> 1hr of blocks with 60s target time
 		//   (3) max rollback blocks => 10
-		constexpr auto Blocks_Before_Namespace_Prune = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 20) + 10);
+		constexpr auto Blocks_Before_Namespace_Prune = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 60) + 10);
 
 		template<typename TTestContext>
 		NamespaceStateHashes RunPruneNamespaceTest(TTestContext& context) {
@@ -342,7 +342,7 @@ namespace catapult { namespace local {
 		// namespace is deactivated after the sum of the following
 		//   (1) namespace duration ==> 12
 		//   (2) grace period ========> 1hr of blocks with 20s target time
-		constexpr auto Blocks_Before_Namespace_Deactivate = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 20));
+		constexpr auto Blocks_Before_Namespace_Deactivate = static_cast<uint32_t>(12 + (utils::TimeSpan::FromHours(1).seconds() / 60));
 
 		template<typename TTestContext>
 		NamespaceStateHashes RunRegisterAndDeactivateNamespaceTest(TTestContext& context, size_t numAliveBlocks) {

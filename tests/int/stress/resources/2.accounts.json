@@ -6,6 +6,8 @@
             "PublicKeyHeight": "1",
             "PublicKey": "53E140B5947F104CABC2D6FE8BAEDBC30EF9A0609C717D9613DE593EC2A266D3",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -16,10 +18,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -31,10 +35,12 @@
             "PublicKeyHeight": "7",
             "PublicKey": "8DFE7382DC612CA9A3BF0E81330F7F244067386C7B50F001BE3BE8EB17C59E1F",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -46,10 +52,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -61,10 +69,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -76,10 +86,12 @@
             "PublicKeyHeight": "5",
             "PublicKey": "F4A04CB6F6B8F68F17169B6301CB51D518C88896CC593E8A40FE4E9169AE6211",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -91,10 +103,12 @@
             "PublicKeyHeight": "16",
             "PublicKey": "41C623D2CC28CA1EAE6F830BC0FE9BD45BAD5AB9A9F307E8B52883B251785B92",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -106,10 +120,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -121,10 +137,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -136,10 +154,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -151,10 +171,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -166,10 +188,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -181,10 +205,12 @@
             "PublicKeyHeight": "2",
             "PublicKey": "1972A76BF70DD4ADFC28286266CEFC0019BA95CBA195321C42831CDCC8FFB73B",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -196,10 +222,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -211,10 +239,12 @@
             "PublicKeyHeight": "4",
             "PublicKey": "959397477899AC5CCAB6BB0A85FDC9356C47B8017FCF00C67002C5143AF553CA",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -226,10 +256,12 @@
             "PublicKeyHeight": "8",
             "PublicKey": "2705B39C47B50E2A8CB8E2998BD6337C9882022D77D47A618FF6C03EAE56D4AF",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -241,10 +273,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -256,10 +290,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -271,6 +307,8 @@
             "PublicKeyHeight": "1",
             "PublicKey": "B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -281,10 +319,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -296,6 +336,8 @@
             "PublicKeyHeight": "1",
             "PublicKey": "3E82E1C1E4A75ADAA3CBA8C101C3CD31D9817A2EB966EB3B511FB2ED45B8E262",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -306,10 +348,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -321,10 +365,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -336,10 +382,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],
@@ -351,10 +399,12 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": [
                 {
-                    "MosaicName": "prx:xpx",
+                    "MosaicId": "992621222383397347",
                     "Amount": "409090909000000"
                 }
             ],

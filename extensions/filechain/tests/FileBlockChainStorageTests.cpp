@@ -117,8 +117,8 @@ namespace catapult { namespace filechain {
 
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 		constexpr auto Num_Nemesis_Accounts = CountOf(test::Mijin_Test_Private_Keys);
-		constexpr auto Num_Nemesis_Namespaces = 3;
-		constexpr auto Num_Nemesis_Mosaics = 2;
+		constexpr auto Num_Nemesis_Namespaces = 2;
+		constexpr auto Num_Nemesis_Mosaics = 1;
 		constexpr auto Num_Recipient_Accounts = 10 * Num_Nemesis_Accounts;
 		constexpr auto Num_Nemesis_Transactions = Num_Nemesis_Namespaces + 3 * Num_Nemesis_Mosaics + Num_Nemesis_Accounts;
 		constexpr Amount Nemesis_Recipient_Amount(409'090'909'000'000);
@@ -161,17 +161,6 @@ namespace catapult { namespace filechain {
 
 		// Assert:
 		EXPECT_EQ(model::ChainScore(), context.score());
-	}
-
-	TEST(TEST_CLASS, ProperRecalculationHeightAfterLoadingNemesisBlock) {
-		// Arrange:
-		TestContext context;
-
-		// Act:
-		context.load();
-
-		// Assert:
-		EXPECT_EQ(model::ImportanceHeight(1), context.state().LastRecalculationHeight);
 	}
 
 	TEST(TEST_CLASS, ProperNumTransactionsAfterLoadingNemesisBlock) {
@@ -462,14 +451,8 @@ namespace catapult { namespace filechain {
 
 			// Assert:
 			// note that there are Num_Recipient_Accounts blocks (one per recipient)
-			// - each block has a difficulty of base + height
-			// - all blocks except for the first one have a time difference of 1s (the first one has a difference of 2s)
 			auto result = context.score();
-			uint64_t expectedDifficulty =
-					Difficulty().unwrap() * Num_Recipient_Accounts // sum base difficulties
-					+ (Num_Recipient_Accounts + 1) * (Num_Recipient_Accounts + 2) / 2 // sum difficulty deltas (1..N+1)
-					- 1 // adjust for range (2..N+1) - first 'recipient' block has height 2
-					- (Num_Recipient_Accounts + 1) * timeSpacing.seconds(); // subtract time differences
+			uint64_t expectedDifficulty = Num_Recipient_Accounts * (1ll << 56);
 			EXPECT_EQ(model::ChainScore(expectedDifficulty), result);
 		}
 	}
