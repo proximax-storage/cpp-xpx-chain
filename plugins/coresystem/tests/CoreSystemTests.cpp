@@ -96,9 +96,8 @@ namespace catapult { namespace plugins {
 					"BalanceDebitObserver",
 					"BalanceTransferObserver",
 					"HarvestFeeObserver",
+					"TotalTransactionsObserver",
 					"SnapshotCleanUpObserver",
-					"HarvestFeeObserver",
-					"TotalTransactionsObserver"
 				};
 			}
 		};

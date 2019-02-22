@@ -22,6 +22,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -33,8 +34,8 @@ namespace catapult { namespace cache {
 			model::NetworkIdentifier::Mijin_Test,
 			543,
 			Amount(std::numeric_limits<Amount::ValueType>::max()),
-			MosaicId(1111),
-			MosaicId(2222)
+			test::Default_Currency_Mosaic_Id,
+			test::Default_Harvesting_Mosaic_Id
 		};
 	}
 

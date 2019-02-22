@@ -35,7 +35,7 @@ namespace catapult { namespace state {
 		NamespaceLifetime(Height start, Height end, BlockDuration gracePeriodDuration)
 				: Start(start)
 				, End(end)
-				, GracePeriodEnd(end.unwrap() + gracePeriodDuration.unwrap()) {
+				, GracePeriodEnd(std::max(end.unwrap() + gracePeriodDuration.unwrap(), end.unwrap())) {
 			if (start >= end)
 				CATAPULT_THROW_INVALID_ARGUMENT("namespace lifetime must be positive");
 		}

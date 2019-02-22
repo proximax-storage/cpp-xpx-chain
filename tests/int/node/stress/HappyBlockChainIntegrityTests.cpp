@@ -73,7 +73,7 @@ namespace catapult { namespace local {
 		void UpdateBlockChainConfiguration(model::BlockChainConfiguration& blockChainConfig) {
 			blockChainConfig.ImportanceGrouping = Max_Rollback_Blocks / 2 + 1;
 			blockChainConfig.MaxRollbackBlocks = Max_Rollback_Blocks;
-			blockChainConfig.MaxDifficultyBlocks = Max_Rollback_Blocks - 1;
+			blockChainConfig.MaxDifficultyBlocks = 4;
 		}
 
 		void UpdateConfigurationForNode(config::LocalNodeConfiguration& config, uint32_t id) {

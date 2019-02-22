@@ -26,7 +26,6 @@
 namespace catapult { namespace model { struct Block; } }
 
 namespace catapult { namespace chain {
-
 	/// Block execution context.
 	struct BlockExecutionContext {
 	public:

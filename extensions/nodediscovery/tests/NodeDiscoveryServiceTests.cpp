@@ -387,7 +387,7 @@ namespace catapult { namespace nodediscovery {
 			//  (2) delaying all io operations
 			auto nodeIdentity = test::GenerateRandomData<Key_Size>();
 			mocks::PickOneAwareMockPacketWriters picker(mocks::PickOneAwareMockPacketWriters::SetPacketIoBehavior::Use_Once);
-			pPacketIo->setDelay(utils::TimeSpan::FromMilliseconds(50));
+			pPacketIo->setDelay(utils::TimeSpan::FromMilliseconds(500));
 			picker.setPacketIo(std::move(pPacketIo));
 			picker.setNodeIdentity(nodeIdentity);
 

@@ -53,7 +53,7 @@ namespace catapult { namespace config {
 			// - raw values are used instead of test::Default_*_Mosaic_Ids because
 			// config files contain mosaic ids when SIGNATURE_SCHEME_NIS1 is disabled
 			EXPECT_EQ(MosaicId(0x0DC6'7FBE'1CAD'29E3), config.CurrencyMosaicId);
-			EXPECT_EQ(MosaicId(0x2651'4E2A'1EF3'3824), config.HarvestingMosaicId);
+			EXPECT_EQ(MosaicId(0x0DC6'7FBE'1CAD'29E3), config.HarvestingMosaicId);
 
 			EXPECT_EQ(utils::TimeSpan::FromSeconds(15), config.BlockGenerationTargetTime);
 			EXPECT_EQ(3000u, config.BlockTimeSmoothingFactor);
@@ -65,8 +65,8 @@ namespace catapult { namespace config {
 			EXPECT_EQ(utils::TimeSpan::FromHours(24), config.MaxTransactionLifetime);
 			EXPECT_EQ(utils::TimeSpan::FromSeconds(10), config.MaxBlockFutureTime);
 
-			EXPECT_EQ(Importance(15'000'000), config.TotalChainImportance);
-			EXPECT_EQ(Amount(500), config.MinHarvesterBalance);
+			EXPECT_EQ(Importance(8'999'999'998'000'000), config.TotalChainImportance);
+			EXPECT_EQ(Amount(1'000'000'000'000), config.MinHarvesterBalance);
 
 			EXPECT_EQ(360u, config.BlockPruneInterval);
 			EXPECT_EQ(200'000u, config.MaxTransactionsPerBlock);

@@ -106,8 +106,8 @@ namespace catapult { namespace test {
 		config.MaxRollbackBlocks = 10;
 		config.MaxDifficultyBlocks = 60;
 
-		config.TotalChainImportance = Importance(17'000);
-		config.MinHarvesterBalance = Amount(500'000);
+		config.TotalChainImportance = Importance(8'999'999'998'000'000);
+		config.MinHarvesterBalance = Amount(1'000'000'000'000);
 
 		config.BlockPruneInterval = 360;
 		config.MaxTransactionsPerBlock = 200'000;
