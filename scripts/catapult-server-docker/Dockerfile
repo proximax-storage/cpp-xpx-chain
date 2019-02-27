@@ -36,16 +36,22 @@ RUN git clone https://gitlab.kitware.com/cmake/cmake.git -b v3.11.1 --depth 1 \
   && cd -
 
 # boost
-RUN wget https://dl.bintray.com/boostorg/release/1.65.1/source/boost_1_65_1.tar.gz \
-  && tar xzf boost_1_65_1.tar.gz && cd boost_1_65_1 \
+RUN wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.gz \
+  && tar xzf boost_1_64_0.tar.gz && cd boost_1_64_0 \
   && ./bootstrap.sh && ./b2 toolset=gcc install --prefix=/usr/local -j4 \
-  && cd -
+  && cd - && rm boost_1_64_0.tar.gz && rm -rf boost_1_64_0.tar.gz
 
 # gtest
 RUN git clone https://github.com/google/googletest.git -b release-1.8.0 --depth 1 \
   && mkdir -p googletest/_build && cd googletest/_build \
   && cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. && make -j4 && make install \
   && cd -
+
+# benchmark
+RUN git clone https://github.com/google/benchmark.git google.benchmark.git -b v1.4.1 --depth 1 \
+  && cd google.benchmark.git && mkdir _build && cd _build
+  && cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_GTEST_TESTS=OFF .. && make -j4 && make install \
+  && cd - && rm -rf google.benchmark.git
 
 # rocksdb
 RUN git clone https://github.com/facebook/rocksdb.git -b v5.12.4 --depth 1 \
@@ -66,16 +72,21 @@ RUN git clone https://github.com/zeromq/cppzmq.git -b v4.2.3 --depth 1 \
   && cd -
 
 # mongo-c
-RUN git clone https://github.com/mongodb/mongo-c-driver.git -b 1.4.3 --depth 1 && cd mongo-c-driver \
-  && ./autogen.sh && ./configure --disable-automatic-init-and-cleanup --prefix=/usr/local \
+RUN git clone https://github.com/mongodb/mongo-c-driver.git mongo-c-driver.git -b 1.13.0 --depth 1 && cd mongo-c-driver.git \
+  && mkdir _build && cd _build \
+  && cmake -DENABLE_AUTOMATIC_INIT_AND_CLEANUP=OFF -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. \
   && make -j4 && make install \
-  && cd -
+  && cd - && rm -rf mongo-c-driver.git
 
 # mongo-cxx
-RUN git clone https://github.com/mongodb/mongo-cxx-driver.git -b r3.0.2 --depth 1 && cd mongo-cxx-driver/build \
-  && cmake -DBSONCXX_POLY_USE_BOOST=1 -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. \
+RUN git clone https://github.com/mongodb/mongo-cxx-driver.git mongo-cxx-driver.git -b r3.4.0 --depth 1 && cd mongo-cxx-driver.git \
+  && sed -i 's/kvp("maxAwaitTimeMS", count)/kvp("maxAwaitTimeMS", static_cast<int64_t>(count))/' src/mongocxx/options/change_stream.cpp \
+  && mkdir _build && cd _build \
+  && cmake -DLIBBSON_DIR=/usr/local -DBOOST_ROOT=~/boost-build-1.64.0 \
+    -DLIBMONGOC_DIR=/usr/local -DBSONCXX_POLY_USE_BOOST=1 \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. \
   && make -j4 && make install \
-  && cd -
+  && cd - rm -rf mongo-cxx-driver.git
 
 # Copy local directory to image
 COPY . /catapult

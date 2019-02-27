@@ -9,8 +9,8 @@ generationHash = {{network_generation_hash}}
 shouldEnableVerifiableState = true
 shouldEnableVerifiableReceipts = true
 
-currencyMosaicId = 0x20B5'A75C'59C1'8264
-harvestingMosaicId = 0x20B5'A75C'59C1'8264
+currencyMosaicId = 0x0DC6'7FBE'1CAD'29E3
+harvestingMosaicId = 0x0DC6'7FBE'1CAD'29E3
 
 blockGenerationTargetTime = 15s
 blockTimeSmoothingFactor = 3000
