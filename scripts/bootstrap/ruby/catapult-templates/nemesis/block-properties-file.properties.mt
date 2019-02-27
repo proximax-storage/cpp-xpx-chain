@@ -19,6 +19,7 @@ binDirectory = ../seed/mijin-test
 [namespaces]
 cat = true
 cat.currency = true
+cat.storage = true
 
 [namespace>cat]
 
@@ -26,6 +27,7 @@ duration = 0
 
 [mosaics]
 cat:currency = true
+cat:storage = true
 
 [mosaic>cat:currency]
 divisibility = 6
@@ -37,6 +39,20 @@ isSupplyMutable = false
 isLevyMutable = false
 
 [distribution>cat:currency]
+{{#xpx.distribution}}
+{{address}} = {{amount}}
+{{/xpx.distribution}}
+
+[mosaic>cat:storage]
+divisibility = 6
+duration = 0
+supply = {{xpx.supply}}
+
+isTransferable = true
+isSupplyMutable = true
+isLevyMutable = false
+
+[distribution>cat:storage]
 {{#xpx.distribution}}
 {{address}} = {{amount}}
 {{/xpx.distribution}}

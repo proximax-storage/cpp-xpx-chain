@@ -63,7 +63,7 @@ namespace catapult { namespace test {
 				++transactionIndex;
 			}
 
-			if (1u != primarySourceIds.size())
+			if (2u != primarySourceIds.size())
 				CATAPULT_THROW_INVALID_ARGUMENT_1("nemesis block has unexpected number of mosaic supply changes", primarySourceIds.size());
 
 			return primarySourceIds;
@@ -86,6 +86,9 @@ namespace catapult { namespace test {
 			auto aliasFirstUsedPrimarySourceIds = GetMosaicSupplyChangePrimarySourceIds(nemesisBlock);
 			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[0], 0 });
 			blockStatementBuilder.addResolution(UnresolvedMosaicId(0x85BBEA6CC462B244), feeMosaicId);
+
+			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[1], 0 });
+			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xFF8918A670A31F3A), Default_Storage_Mosaic_Id);
 
 			// 3. calculate the block receipts hash
 			auto pStatement = blockStatementBuilder.build();

@@ -155,7 +155,7 @@ namespace catapult { namespace test {
 		auto numNamespaces = GetCounterValue(localNode.counters(), "NS C");
 		auto numActiveNamespaces = GetCounterValue(localNode.counters(), "NS C AS");
 		EXPECT_EQ(numExpectedNamespaces, numNamespaces);
-		EXPECT_EQ(numExpectedNamespaces + 1, numActiveNamespaces); // default namespace defined in nemesis has one subnamespace
+		EXPECT_EQ(numExpectedNamespaces + 2, numActiveNamespaces); // default namespace defined in nemesis has two subnamespaces
 	}
 
 	// endregion

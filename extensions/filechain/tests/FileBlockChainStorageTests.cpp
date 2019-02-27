@@ -117,8 +117,8 @@ namespace catapult { namespace filechain {
 
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 		constexpr auto Num_Nemesis_Accounts = CountOf(test::Mijin_Test_Private_Keys);
-		constexpr auto Num_Nemesis_Namespaces = 2;
-		constexpr auto Num_Nemesis_Mosaics = 1;
+		constexpr auto Num_Nemesis_Namespaces = 3;
+		constexpr auto Num_Nemesis_Mosaics = 2;
 		constexpr auto Num_Recipient_Accounts = 10 * Num_Nemesis_Accounts;
 		constexpr auto Num_Nemesis_Transactions = Num_Nemesis_Namespaces + 3 * Num_Nemesis_Mosaics + Num_Nemesis_Accounts;
 		constexpr Amount Nemesis_Recipient_Amount(409'090'909'000'000);

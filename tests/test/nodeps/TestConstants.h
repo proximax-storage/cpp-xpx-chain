@@ -39,6 +39,9 @@ namespace catapult { namespace test {
 
 	/// Default (well known) harvesting mosaic id used in tests (`harvest`).
 	constexpr MosaicId Default_Harvesting_Mosaic_Id(0x0DC6'7FBE'1CAD'29E3);
+
+	/// Default (well known) storage mosaic id used in tests (`storage`).
+	constexpr MosaicId Default_Storage_Mosaic_Id(0x2651'4E2A'1EF3'3824);
 #endif
 
 	/// Default total chain importance used for scaling block target calculation.
