@@ -7,7 +7,7 @@
   "port": 3000,
   "crossDomainHttpMethods": ["GET", "POST", "PUT", "OPTIONS"],
   "clientPrivateKey": "{{rest_gateway_private_key}}",
-  "extensions": ["aggregate", "contract", "lock", "multisig", "namespace", "transfer"],
+  "extensions": ["accountProperties", "aggregate", "contract", "lock", "mosaic", "multisig", "namespace", "transfer"],
   "db": {
     "url": "mongodb://{{mongo_host}}:27017/",
     "name": "catapult",

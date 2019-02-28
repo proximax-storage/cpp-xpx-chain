@@ -49,7 +49,7 @@ RUN git clone https://github.com/google/googletest.git -b release-1.8.0 --depth 
 
 # benchmark
 RUN git clone https://github.com/google/benchmark.git google.benchmark.git -b v1.4.1 --depth 1 \
-  && cd google.benchmark.git && mkdir _build && cd _build
+  && cd google.benchmark.git && mkdir _build && cd _build \
   && cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_GTEST_TESTS=OFF .. && make -j4 && make install \
   && cd - && rm -rf google.benchmark.git
 
@@ -104,19 +104,24 @@ RUN cd /catapult \
    && make publish \
    && make \
 # Required extensions
+    catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
+    catapult.mongo.plugins.mosaic \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
+    catapult.plugins.accountlink \
     catapult.plugins.aggregate \
     catapult.plugins.contract \
     catapult.plugins.hashcache \
+    catapult.plugins.hashcache.cache \
     catapult.plugins.lockhash \
     catapult.plugins.locksecret \
+    catapult.plugins.mosaic \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
     catapult.plugins.property \
@@ -133,6 +138,7 @@ RUN cd /catapult \
     extension.nodediscovery \
     extension.packetserver \
     extension.partialtransaction \
+    extension.pluginhandlers \
     extension.sync \
     extension.syncsource \
     extension.timesync \
