@@ -8,19 +8,24 @@ make publish
 # First we build extensions which catapult.server required during runtime
 make \
     # Required extensions
+    catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
+    catapult.mongo.plugins.mosaic \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
+    catapult.plugins.accountlink \
     catapult.plugins.aggregate \
     catapult.plugins.contract \
     catapult.plugins.hashcache \
+    catapult.plugins.hashcache.cache \
     catapult.plugins.lockhash \
     catapult.plugins.locksecret \
+    catapult.plugins.mosaic \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
     catapult.plugins.property \
@@ -37,6 +42,7 @@ make \
     extension.nodediscovery \
     extension.packetserver \
     extension.partialtransaction \
+    extension.pluginhandlers \
     extension.sync \
     extension.syncsource \
     extension.timesync \

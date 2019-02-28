@@ -1,3 +1,8 @@
+# properties for nemesis block compatible with catapult signature scheme used in tests
+# for proper generation, update following config-network properties:
+# - shouldEnableVerifiableState = false
+# - shouldEnableVerifiableReceipts = false
+
 [nemesis]
 networkIdentifier = {{network_identifier}}
 nemesisGenerationHash = {{nemesis_generation_hash}}
@@ -12,19 +17,19 @@ cppFile =
 binDirectory = ../seed/mijin-test
 
 [namespaces]
-prx = true
-eur = false
+cat = true
+cat.currency = true
+cat.storage = true
 
-[namespace>prx]
+[namespace>cat]
+
 duration = 0
-[namespace>eur]
-duration = 123456789
 
 [mosaics]
-prx:xpx = true
-eur:euro = false
+cat:currency = true
+cat:storage = true
 
-[mosaic>prx:xpx]
+[mosaic>cat:currency]
 divisibility = 6
 duration = 0
 supply = {{xpx.supply}}
@@ -33,15 +38,21 @@ isTransferable = true
 isSupplyMutable = false
 isLevyMutable = false
 
-[distribution>prx:xpx]
+[distribution>cat:currency]
 {{#xpx.distribution}}
 {{address}} = {{amount}}
 {{/xpx.distribution}}
 
-[mosaic>eur:euro]
-divisibility = 2
-duration = 1234567890
-supply = 15'000'000
+[mosaic>cat:storage]
+divisibility = 6
+duration = 0
+supply = {{xpx.supply}}
+
 isTransferable = true
 isSupplyMutable = true
 isLevyMutable = false
+
+[distribution>cat:storage]
+{{#xpx.distribution}}
+{{address}} = {{amount}}
+{{/xpx.distribution}}

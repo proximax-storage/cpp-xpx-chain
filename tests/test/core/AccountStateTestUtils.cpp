@@ -20,11 +20,13 @@
 
 #include "AccountStateTestUtils.h"
 #include "AddressTestUtils.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 
 	void RandomFillAccountData(uint64_t seed, state::AccountState& state, size_t numMosaics, size_t numSnapshots) {
+		state.Balances.track(test::Default_Harvesting_Mosaic_Id);
 		for (auto i = 0u; i < numMosaics; ++i) {
 			state.Balances.credit(MosaicId(10 + i), Amount(seed * 1000 + i + 1));
 		}
@@ -62,7 +64,8 @@ namespace catapult { namespace test {
 	std::shared_ptr<state::AccountState> CreateAccountStateWithoutPublicKey(uint64_t height) {
 		auto address = test::GenerateRandomAddress();
 		auto pState = std::make_shared<state::AccountState>(address, Height(height));
-		pState->Balances.credit(Xpx_Id, Amount(1));
+		pState->Balances.track(test::Default_Harvesting_Mosaic_Id);
+		pState->Balances.credit(test::Default_Harvesting_Mosaic_Id, Amount(1));
 		return pState;
 	}
 

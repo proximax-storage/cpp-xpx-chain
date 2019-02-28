@@ -39,6 +39,8 @@ namespace catapult { namespace state {
 		io::Write(output, accountState.LinkedAccountKey);
 
 		// write mosaics
+		io::Write(output, accountState.Balances.optimizedMosaicId());
+		io::Write(output, accountState.Balances.trackedMosaicId());
 		io::Write16(output, static_cast<uint16_t>(accountState.Balances.size()));
 		for (const auto& pair : accountState.Balances) {
 			io::Write(output, pair.first);
@@ -70,6 +72,8 @@ namespace catapult { namespace state {
 			io::Read(input, accountState.LinkedAccountKey);
 
 			// read mosaics
+			accountState.Balances.optimize(io::Read<MosaicId>(input));
+			accountState.Balances.track(io::Read<MosaicId>(input));
 			auto numMosaics = io::Read16(input);
 			for (auto i = 0u; i < numMosaics; ++i) {
 				auto mosaicId = io::Read<MosaicId>(input);

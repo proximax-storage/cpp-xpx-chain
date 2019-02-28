@@ -19,27 +19,17 @@
 **/
 
 #include "Harvester.h"
+#include "BlockExecutionHashesCalculator.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/utils/StackLogger.h"
 
 namespace catapult { namespace harvesting {
 
 	namespace {
-
-		model::BlockElement ToBlockElement(const model::Block& block, const std::vector<const model::TransactionInfo*>& transactionInfos) {
-			model::BlockElement blockElement(block);
-
-			for (const auto& transactionInfo : transactionInfos) {
-				blockElement.Transactions.push_back(model::TransactionElement(*transactionInfo->pEntity));
-				blockElement.Transactions.back().EntityHash = transactionInfo->EntityHash;
-			}
-
-			return blockElement;
-		}
-
 		struct NextBlockContext {
 		public:
 			explicit NextBlockContext(const model::BlockElement& parentBlockElement, Timestamp nextTimestamp)
@@ -123,13 +113,17 @@ namespace catapult { namespace harvesting {
 		if (!pHarvesterKeyPair)
 			return nullptr;
 
-		auto transactionsInfo = m_suppliers.SupplyTransactions(m_config.MaxTransactionsPerBlock);
+		utils::StackLogger stackLogger("generating candidate block", utils::LogLevel::Debug);
+		auto transactionsInfo = m_suppliers.SupplyTransactions(context.Timestamp, m_config.MaxTransactionsPerBlock);
 		auto pBlock = CreateUnsignedBlock(context, m_config.Network.Identifier, *pHarvesterKeyPair, transactionsInfo);
-		auto stateHashResult = m_suppliers.CalculateStateHash(ToBlockElement(*pBlock, transactionsInfo.Infos));
-		if (!stateHashResult.second)
+		pBlock->FeeMultiplier = transactionsInfo.FeeMultiplier;
+
+		auto blockExecutionHashes = m_suppliers.CalculateBlockExecutionHashes(*pBlock, transactionsInfo.TransactionHashes);
+		if (!blockExecutionHashes.IsExecutionSuccess)
 			return nullptr;
 
-		pBlock->StateHash = stateHashResult.first;
+		pBlock->BlockReceiptsHash = blockExecutionHashes.ReceiptsHash;
+		pBlock->StateHash = blockExecutionHashes.StateHash;
 		SignBlockHeader(*pHarvesterKeyPair, *pBlock);
 		return pBlock;
 	}

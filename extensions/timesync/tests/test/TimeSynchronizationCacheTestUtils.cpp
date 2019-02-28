@@ -22,6 +22,7 @@
 #include "catapult/cache_core/AccountStateCacheDelta.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "tests/test/net/NodeTestUtils.h"
+#include "tests/test/nodeps/TestConstants.h"
 
 namespace catapult { namespace test {
 
@@ -29,7 +30,9 @@ namespace catapult { namespace test {
 			cache::AccountStateCacheDelta& delta,
 			const Key& publicKey) {
 		delta.addAccount(publicKey, Height(100));
-		delta.find(publicKey).get().Balances.credit(Xpx_Id, Amount(500000), Height(100));
+		auto& accountState = delta.find(publicKey).get();
+		accountState.Balances.track(test::Default_Harvesting_Mosaic_Id);
+		accountState.Balances.credit(test::Default_Harvesting_Mosaic_Id, Amount(500000), Height(100));
 	}
 
 	void AddNode(ionet::NodeContainer& container, const Key& identityKey, const std::string& nodeName) {

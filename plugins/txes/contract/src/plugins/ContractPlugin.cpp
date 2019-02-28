@@ -18,8 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/handlers/CacheEntryInfosProducerFactory.h"
-#include "catapult/handlers/StatePathHandlerFactory.h"
 #include "catapult/plugins/PluginManager.h"
 #include "ContractPlugin.h"
 #include "src/cache/ContractCache.h"
@@ -27,11 +25,10 @@
 #include "src/cache/ReputationCache.h"
 #include "src/cache/ReputationCacheStorage.h"
 #include "src/config/ContractConfiguration.h"
-#include "src/handlers/ContractDiagnosticHandlers.h"
-#include "src/handlers/ReputationDiagnosticHandlers.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ModifyContractTransactionPlugin.h"
 #include "src/validators/Validators.h"
+#include "catapult/plugins/CacheHandlers.h"
 
 namespace catapult { namespace plugins {
 
@@ -45,18 +42,22 @@ namespace catapult { namespace plugins {
 		manager.addCacheSupport<cache::ReputationCacheStorage>(
 			std::make_unique<cache::ReputationCache>(manager.cacheConfig(cache::ReputationCache::Name)));
 
-		manager.addDiagnosticHandlerHook([](auto& handlers, const cache::CatapultCache& cache) {
-			using ContractInfosProducerFactory = handlers::CacheEntryInfosProducerFactory<cache::ContractCacheDescriptor>;
-			handlers::RegisterContractInfosHandler(handlers, ContractInfosProducerFactory::Create(cache.sub<cache::ContractCache>()));
+		using CacheHandlersContract = CacheHandlers<cache::ContractCacheDescriptor>;
+		CacheHandlersContract::Register<model::FacilityCode::Contract>(manager);
 
-			using ContractPacketType = handlers::StatePathRequestPacket<ionet::PacketType::Contract_State_Path, Key>;
-			handlers::RegisterStatePathHandler<ContractPacketType>(handlers, cache.sub<cache::ContractCache>());
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("CONTRACT C"), [&cache]() {
+				return cache.sub<cache::ContractCache>().createView()->size();
+			});
+		});
 
-			using ReputationInfosProducerFactory = handlers::CacheEntryInfosProducerFactory<cache::ReputationCacheDescriptor>;
-			handlers::RegisterReputationInfosHandler(handlers, ReputationInfosProducerFactory::Create(cache.sub<cache::ReputationCache>()));
+		using CacheHandlersReputation = CacheHandlers<cache::ReputationCacheDescriptor>;
+		CacheHandlersReputation::Register<model::FacilityCode::Reputation>(manager);
 
-			using ReputationPacketType = handlers::StatePathRequestPacket<ionet::PacketType::Reputation_State_Path, Key>;
-			handlers::RegisterStatePathHandler<ReputationPacketType>(handlers, cache.sub<cache::ReputationCache>());
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("REPUTATION C"), [&cache]() {
+				return cache.sub<cache::ReputationCache>().createView()->size();
+			});
 		});
 
 		manager.addStatelessValidatorHook([](auto& builder) {

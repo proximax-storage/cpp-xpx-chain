@@ -19,12 +19,15 @@
 **/
 
 #include "harvesting/src/ScheduledHarvesterTask.h"
+#include "harvesting/src/BlockExecutionHashesCalculator.h"
 #include "harvesting/src/Harvester.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
+#include "catapult/constants.h"
 
 using catapult::crypto::KeyPair;
 
@@ -34,6 +37,7 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
+		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
@@ -41,6 +45,7 @@ namespace catapult { namespace harvesting {
 			config.BlockTimeSmoothingFactor = 0;
 			config.MaxDifficultyBlocks = 60;
 			config.ImportanceGrouping = 123;
+			config.TotalChainImportance = test::Default_Total_Chain_Importance;
 			return config;
 		}
 
@@ -51,7 +56,7 @@ namespace catapult { namespace harvesting {
 					, NumTimeSupplierCalls(0)
 					, NumRangeConsumerCalls(0)
 					, BlockHeight(0)
-					, BlockSigner{}
+					, BlockSigner()
 					, pLastBlock(std::make_shared<model::Block>())
 					, LastBlockHash(test::GenerateRandomData<Hash256_Size>()) {
 				HarvestingAllowed = [this]() {
@@ -105,8 +110,10 @@ namespace catapult { namespace harvesting {
 			auto delta = cache.createDelta();
 			auto& accountStateCache = delta.sub<cache::AccountStateCache>();
 			accountStateCache.addAccount(keyPair.publicKey(), Height(1));
-			accountStateCache.find(keyPair.publicKey()).get().Balances.credit(Xpx_Id, Amount(1'000'000'000'000'000), Height(1));
-			cache.commit(Height());
+			auto& balances = accountStateCache.find(keyPair.publicKey()).get().Balances;
+			balances.credit(Harvesting_Mosaic_Id, Amount(1'000'000'000'000'000), Height(1));
+			balances.track(Harvesting_Mosaic_Id);
+			cache.commit(Height(1));
 			return test::CopyKeyPair(keyPair);
 		}
 
@@ -130,8 +137,8 @@ namespace catapult { namespace harvesting {
 
 		auto CreateHarvester(HarvesterContext& context) {
 			Harvester::Suppliers harvesterSuppliers{
-				[](const auto&) { return std::make_pair(Hash256(), true); },
-				[](auto) { return TransactionsInfo(); }
+				[](const auto&, const auto&) { return BlockExecutionHashes(true); },
+				[](auto, auto) { return TransactionsInfo(); }
 			};
 			return std::make_unique<Harvester>(context.Cache, context.Config, context.Accounts, harvesterSuppliers);
 		}

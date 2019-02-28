@@ -62,6 +62,9 @@ namespace catapult {
 	struct BlockDuration_tag {};
 	using BlockDuration = utils::BaseValue<uint64_t, BlockDuration_tag>;
 
+	struct BlockFeeMultiplier_tag {};
+	using BlockFeeMultiplier = utils::BaseValue<uint32_t, BlockFeeMultiplier_tag>;
+
 	struct Difficulty_tag {
 	public:
 		static constexpr uint64_t Default_Value = 0;

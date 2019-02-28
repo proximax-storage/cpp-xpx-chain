@@ -20,7 +20,6 @@
 
 #pragma once
 #include "types.h"
-#include "crypto/IdGenerator.h"
 
 namespace catapult {
 
@@ -34,12 +33,6 @@ namespace catapult {
 	/// \note Reducing below `Hash256_Size` can save memory but will increase possibility of false positive rejections.
 	constexpr size_t Cached_Hash_Size = Hash256_Size;
 
-	/// PRX namespace id.
-	const NamespaceId Prx_Id(crypto::GenerateRootNamespaceId("prx"));
-
-	/// XPX mosaic id.
-	const MosaicId Xpx_Id(crypto::GenerateMosaicId(Prx_Id, "xpx"));
-
-	/// Unresolved XPX mosaic id.
-	const auto Unresolved_Xpx_Id = UnresolvedMosaicId(Xpx_Id.unwrap());
+	/// Duration of eternal artifact.
+	constexpr BlockDuration Eternal_Artifact_Duration(0);
 }

@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/crypto/IdGenerator.h"
 #include "Validators.h"
 #include "catapult/utils/Hashers.h"
 
@@ -26,9 +25,10 @@ namespace catapult { namespace validators {
 
 	using Notification = model::RootNamespaceNotification;
 
-	DECLARE_STATELESS_VALIDATOR(RootNamespace, Notification)() {
-		return MAKE_STATELESS_VALIDATOR(RootNamespace, [](const auto& /*notification*/) {
-			return ValidationResult::Success;
+	DECLARE_STATELESS_VALIDATOR(RootNamespace, Notification)(BlockDuration maxDuration) {
+		return MAKE_STATELESS_VALIDATOR(RootNamespace, [maxDuration](const auto& notification) {
+			// note that zero duration is acceptable because it is eternal
+			return maxDuration < notification.Duration ? Failure_Namespace_Invalid_Duration : ValidationResult::Success;
 		});
 	}
 }}

@@ -19,7 +19,6 @@
 **/
 
 #pragma once
-#include "catapult/crypto/IdGenerator.h"
 #include "types.h"
 
 namespace catapult {
@@ -27,12 +26,6 @@ namespace catapult {
 	/// Maximum number of parts for a namespace.
 	constexpr size_t Namespace_Max_Depth = 3;
 
-	/// Duration of eternal artifact.
-	constexpr BlockDuration Eternal_Artifact_Duration(0);
-
-	/// Height of eternal artifact.
-	constexpr Height Eternal_Artifact_Height(std::numeric_limits<Height::ValueType>::max());
-
-	/// Number of rules for a mosaic levy.
-	constexpr size_t Num_Mosaic_Levy_Rule_Ids = 5;
+	/// Base id for namespaces.
+	constexpr NamespaceId Namespace_Base_Id(0);
 }

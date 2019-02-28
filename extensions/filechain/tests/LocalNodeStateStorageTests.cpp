@@ -30,6 +30,7 @@
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <boost/filesystem.hpp>
 
@@ -41,6 +42,14 @@ namespace catapult { namespace filechain {
 		constexpr model::NetworkIdentifier Default_Network_Id = model::NetworkIdentifier::Mijin_Test;
 		constexpr size_t Account_Cache_Size = 123;
 		constexpr size_t Block_Cache_Size = 200;
+
+		model::BlockChainConfiguration createConfig() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
+			config.CurrencyMosaicId = test::Default_Currency_Mosaic_Id;
+
+			return config;
+		}
 
 		void PopulateAccountStateCache(cache::AccountStateCacheDelta& cacheDelta) {
 			for (auto i = 2u; i < Account_Cache_Size + 2; ++i) {
@@ -92,6 +101,7 @@ namespace catapult { namespace filechain {
 
 			supplementalData.ChainScore = model::ChainScore(0x1234567890ABCDEF, 0xFEDCBA0987654321);
 			supplementalData.State.LastRecalculationHeight = model::ImportanceHeight(12345);
+			supplementalData.State.NumTotalTransactions = 7654321;
 			filechain::SaveState(dataDirectory, cache, supplementalData);
 			return supplementalData;
 		}
@@ -100,11 +110,11 @@ namespace catapult { namespace filechain {
 	TEST(TEST_CLASS, CanSaveAndLoadState) {
 		// Arrange: seed and save the cache state
 		test::TempDirectoryGuard tempDir;
-		auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto originalCache = test::CoreSystemCacheFactory::Create(createConfig());
 		auto originalSupplementalData = SaveState(tempDir.name(), originalCache);
 
 		// Act: load the cache
-		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::CoreSystemCacheFactory::Create(createConfig());
 		cache::SupplementalData supplementalData;
 		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData);
 
@@ -113,6 +123,7 @@ namespace catapult { namespace filechain {
 		AssertSubCaches(originalCache, cache);
 		EXPECT_EQ(originalSupplementalData.ChainScore, supplementalData.ChainScore);
 		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
+		EXPECT_EQ(originalSupplementalData.State.NumTotalTransactions, supplementalData.State.NumTotalTransactions);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}
 
@@ -120,14 +131,14 @@ namespace catapult { namespace filechain {
 		template<typename TAction>
 		void AssertLoadStateFailure(const std::string& dataDirectory, TAction corruptSavedState) {
 			// Arrange: seed and save the cache state
-			auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto originalCache = test::CoreSystemCacheFactory::Create(createConfig());
 			SaveState(dataDirectory, originalCache);
 
 			// - corrupt the saved state
 			corruptSavedState();
 
 			// Act: load the cache
-			auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create(createConfig());
 			cache::SupplementalData supplementalData;
 			auto isStateLoaded = LoadState(dataDirectory, cache, supplementalData);
 
@@ -173,14 +184,14 @@ namespace catapult { namespace filechain {
 		}
 
 		// - seed and save the cache state in the presence of a lock file
-		auto originalCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto originalCache = test::CoreSystemCacheFactory::Create(createConfig());
 		auto originalSupplementalData = SaveState(tempDir.name(), originalCache);
 
 		// Sanity: the lock file should have been removed by SaveState
 		EXPECT_FALSE(boost::filesystem::exists(lockFilePath));
 
 		// Act: load the cache
-		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::CoreSystemCacheFactory::Create(createConfig());
 		cache::SupplementalData supplementalData;
 		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData);
 
@@ -189,6 +200,7 @@ namespace catapult { namespace filechain {
 		AssertSubCaches(originalCache, cache);
 		EXPECT_EQ(originalSupplementalData.ChainScore, supplementalData.ChainScore);
 		EXPECT_EQ(originalSupplementalData.State.LastRecalculationHeight, supplementalData.State.LastRecalculationHeight);
+		EXPECT_EQ(originalSupplementalData.State.NumTotalTransactions, supplementalData.State.NumTotalTransactions);
 		EXPECT_EQ(Height(54321), cache.createView().height());
 	}
 }}
