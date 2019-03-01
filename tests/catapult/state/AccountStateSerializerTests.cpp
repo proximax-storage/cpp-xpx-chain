@@ -88,8 +88,9 @@ namespace catapult { namespace state {
 
 			if (TTraits::Has_Historical_Snapshots) {
 				const auto& historicalSnapshotsHeader = reinterpret_cast<const HistoricalSnapshotsHeader&>(*pMosaic);
+				const auto* pHeaderData = reinterpret_cast<const uint8_t*>(&historicalSnapshotsHeader + 1);
 
-				const auto* pBalanceSnapshot = reinterpret_cast<const model::BalanceSnapshot*>(&historicalSnapshotsHeader + 1);
+				const auto* pBalanceSnapshot = reinterpret_cast<const model::BalanceSnapshot*>(pHeaderData);
 				for (int i = 0; i < historicalSnapshotsHeader.SnapshotsCount; ++i, ++pBalanceSnapshot)
 					accountState.Balances.addSnapshot(*pBalanceSnapshot);
 			}
