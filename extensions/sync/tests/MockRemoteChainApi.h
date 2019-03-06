@@ -31,7 +31,7 @@ namespace catapult { namespace mocks {
 
 	class MockRemoteChainApi : public api::RemoteChainApi {
 	public:
-		explicit MockRemoteChainApi(const io::BlockStorageCache& storage, const extensions::LocalNodeChainScore& chainScore);
+		explicit MockRemoteChainApi(const Key& remotePublicKey, const io::BlockStorageCache& storage, const extensions::LocalNodeChainScore& chainScore);
 
 	public:
 		thread::future<api::ChainInfo> chainInfo() const override;

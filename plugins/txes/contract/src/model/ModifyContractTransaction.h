@@ -60,7 +60,7 @@ namespace catapult { namespace model {
 
 	private:
 		template<typename T>
-		static auto CustomerModificationsPtrT(T& transaction) {
+		static auto* CustomerModificationsPtrT(T& transaction) {
 			return transaction.CustomerModificationCount ? THeader::PayloadStart(transaction) : nullptr;
 		}
 

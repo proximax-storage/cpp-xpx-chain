@@ -23,7 +23,6 @@
 #include "src/model/NamespaceConstants.h"
 #include "catapult/utils/CheckedArray.h"
 #include "catapult/types.h"
-#include "catapult/crypto/IdGenerator.h"
 
 namespace catapult { namespace state {
 

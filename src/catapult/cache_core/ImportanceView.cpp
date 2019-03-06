@@ -25,10 +25,6 @@
 namespace catapult { namespace cache {
 
 	namespace {
-		bool CheckLinkedMainAccount(const state::AccountState& accountState, const Key& remotePublicKey) {
-			return state::AccountType::Main == accountState.AccountType && remotePublicKey == accountState.LinkedAccountKey;
-		}
-
 		template<typename TAction>
 		bool ForwardIfAccountHasImportanceAtHeight(
 				const state::AccountState& accountState,
@@ -40,13 +36,7 @@ namespace catapult { namespace cache {
 				const auto& linkedAccountState = linkedAccountStateIter.get();
 
 				// this check is merely a precaution and will only fire if there is a bug that has corrupted links
-				if (!CheckLinkedMainAccount(linkedAccountState, accountState.PublicKey)) {
-					std::ostringstream out;
-					out
-							<< "remote " << model::AddressToString(accountState.Address) << " link to "
-							<< utils::HexFormat(accountState.LinkedAccountKey) << " is improper";
-					CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
-				}
+				RequireLinkedRemoteAndMainAccounts(accountState, linkedAccountState);
 
 				return ForwardIfAccountHasImportanceAtHeight(linkedAccountState, cache, height, action);
 			}

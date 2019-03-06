@@ -24,6 +24,8 @@
 
 namespace catapult { namespace test {
 
+	constexpr MosaicId Test_Mosaic = MosaicId(12345);
+
 	/// Observer test context that wraps an observer context and exposes functions for interacting with the account state cache.
 	class AccountObserverTestContext : public test::ObserverTestContext {
 	public:
@@ -54,28 +56,29 @@ namespace catapult { namespace test {
 		}
 
 	public:
-		/// Sets the (xpx) balance of the account identified by \a accountIdentifier to \a amount.
+		/// Sets the (xem) balance of the account identified by \a accountIdentifier to \a amount.
 		template<typename IdType>
 		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount::ValueType amount, const Height& height) {
 			return setAccountBalance(accountIdentifier, Amount(amount), height);
 		}
 
-		/// Sets the (xpx) balance of the account identified by \a accountIdentifier to \a amount.
+		/// Sets the (xem) balance of the account identified by \a accountIdentifier to \a amount.
 		template<typename IdType>
 		state::AccountBalances& setAccountBalance(const IdType& accountIdentifier, Amount amount, const Height& height) {
 			auto& accountState = addAccount(accountIdentifier);
-			accountState.Balances.credit(Xpx_Id, amount, height);
+			accountState.Balances.credit(Test_Mosaic, amount, height);
+			accountState.Balances.track(Test_Mosaic);
 			return accountState.Balances;
 		}
 
-		/// Gets the (xpx) balance of the account identified by \a accountIdentifier.
+		/// Gets the (xem) balance of the account identified by \a accountIdentifier.
 		template<typename IdType>
 		Amount getAccountBalance(const IdType& accountIdentifier) const {
 			auto pAccountState = find(accountIdentifier);
 			if (!pAccountState)
-				CATAPULT_THROW_RUNTIME_ERROR_1("could not find account in cache", utils::HexFormat(accountIdentifier));
+			CATAPULT_THROW_RUNTIME_ERROR_1("could not find account in cache", utils::HexFormat(accountIdentifier));
 
-			return pAccountState->Balances.get(Xpx_Id);
+			return pAccountState->Balances.get(Test_Mosaic);
 		}
 	};
 }}

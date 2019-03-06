@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/crypto/NameChecker.h"
-#include "tests/test/TransactionTestUtils.h"
+#include "src/model/NameChecker.h"
+#include "tests/test/NamespaceTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
@@ -28,7 +28,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		bool IsValidName(const std::string& str) {
-			return crypto::IsValidName(reinterpret_cast<const uint8_t*>(str.data()), str.size());
+			return model::IsValidName(reinterpret_cast<const uint8_t*>(str.data()), str.size());
 		}
 	}
 

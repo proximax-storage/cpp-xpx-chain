@@ -22,6 +22,7 @@
 #include "catapult/model/Block.h"
 #include "catapult/utils/Logging.h"
 #include "tests/TestHarness.h"
+#include "tests/test/nodeps/TestConstants.h"
 
 namespace catapult { namespace chain {
 
@@ -32,6 +33,7 @@ namespace catapult { namespace chain {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
+			config.TotalChainImportance = test::Default_Total_Chain_Importance;
 			return config;
 		}
 

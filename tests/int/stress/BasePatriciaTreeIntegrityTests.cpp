@@ -47,15 +47,19 @@ namespace catapult { namespace cache {
 			return std::make_pair(accountState, address == accountState.Address);
 		}
 
+		AccountStateCacheTypes::Options CreateAccountStateCacheOptions() {
+			// CurrencyId must match id used when generating resources
+			return { model::NetworkIdentifier::Mijin_Test, 543, Amount(1000), MosaicId(0xE329'AD1C'BE7F'C60D), MosaicId(2222) };
+		}
+
 		template<typename TSerializer>
 		void AssertAccountStateMerkleRootIsCalculatedCorrectly(
 				const std::string& sourceFilename,
 				const std::string& expectedMerkleRootStr) {
 			// Arrange: create a db-backed account state cache
-			test::TempDirectoryGuard dbDirGuard("dbdir");
+			test::TempDirectoryGuard dbDirGuard;
 			CacheConfiguration cacheConfig(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Enabled);
-			AccountStateCacheTypes::Options accountStateCacheOptions{ model::NetworkIdentifier::Mijin_Test, 543, Amount(1000) };
-			AccountStateCache cache(cacheConfig, accountStateCacheOptions);
+			AccountStateCache cache(cacheConfig, CreateAccountStateCacheOptions());
 
 			// - load all test accounts into the delta
 			auto delta = cache.createDelta();
@@ -94,42 +98,42 @@ namespace catapult { namespace cache {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePrimarySerializer>(
 				"../tests/int/stress/resources/1.patricia-tree-account.dat",
-				"66D325DF995AE2C77BB9DA7F51264579FBD9A58C02BB984C965244502AD2321A");
+				"4A4DF89F728CDFE44AA807DA3D5BE9E2F764054F8B9FD186ABF1173D6C385106");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_PatriciaTree_1) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePatriciaTreeSerializer>(
 				"../tests/int/stress/resources/1.patricia-tree-account.dat",
-				"66D325DF995AE2C77BB9DA7F51264579FBD9A58C02BB984C965244502AD2321A");
+				"4A4DF89F728CDFE44AA807DA3D5BE9E2F764054F8B9FD186ABF1173D6C385106");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_Primary_2) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePrimarySerializer>(
 				"../tests/int/stress/resources/2.patricia-tree-account.dat",
-				"A7DFAFBC72536447D3AB1D6D1B2BD321C8F219178F668B4BCE09E9DF6BB1A6E7");
+				"1EBD3E4622E2DEF3DE6C61708D64EE0AD777DC757BAD492AD0ADF69BAB09E9B8");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_PatriciaTree_2) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePatriciaTreeSerializer>(
 				"../tests/int/stress/resources/2.patricia-tree-account.dat",
-				"A7DFAFBC72536447D3AB1D6D1B2BD321C8F219178F668B4BCE09E9DF6BB1A6E7");
+				"1EBD3E4622E2DEF3DE6C61708D64EE0AD777DC757BAD492AD0ADF69BAB09E9B8");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_Primary_3) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePrimarySerializer>(
 				"../tests/int/stress/resources/3.patricia-tree-account.dat",
-				"F9A3BD219057AF73671CF751113B8E4A7C0EC24B58AFB0DCA082CA32C0ABBA83");
+				"94CED7317B3788516B686A6DDE8027DA2FD3A1ABA0A3E713167E0ED7FF29BC99");
 	}
 
 	TEST(TEST_CLASS, AccountStateCacheMerkleRootIsCalculatedCorrectly_PatriciaTree_3) {
 		// Assert:
 		AssertAccountStateMerkleRootIsCalculatedCorrectly<AccountStatePatriciaTreeSerializer>(
 				"../tests/int/stress/resources/3.patricia-tree-account.dat",
-				"F9A3BD219057AF73671CF751113B8E4A7C0EC24B58AFB0DCA082CA32C0ABBA83");
+				"94CED7317B3788516B686A6DDE8027DA2FD3A1ABA0A3E713167E0ED7FF29BC99");
 	}
 
 	// endregion
@@ -137,11 +141,9 @@ namespace catapult { namespace cache {
 	// region stress tests
 
 	namespace {
-#ifdef STRESS
-		constexpr auto Num_Stress_Accounts = 200'000u;
-#else
-		constexpr auto Num_Stress_Accounts = 20'000u;
-#endif
+		size_t GetNumStressAccounts() {
+			return test::GetStressIterationCount() ? 200'000 : 20'000;
+		}
 
 		template<typename TAction>
 		void RunTimedStressAction(const char* description, TAction action) {
@@ -151,21 +153,20 @@ namespace catapult { namespace cache {
 			action();
 			auto elapsedMills = timer.millis();
 
-			auto elapsedNanosPerAccount = elapsedMills * 1000 / Num_Stress_Accounts;
+			auto elapsedNanosPerAccount = elapsedMills * 1000 / GetNumStressAccounts();
 			CATAPULT_LOG(debug) << "  END: " << description << " - " << elapsedMills << "ms (" << elapsedNanosPerAccount << "ns avg)";
 		}
 
 		void AssertCanApplyManyAddsToTree(size_t numBatches) {
 			// Arrange: create a db-backed account state cache
 			CATAPULT_LOG(debug) << "creating patricia tree enabled cache";
-			test::TempDirectoryGuard dbDirGuard("dbdir");
+			test::TempDirectoryGuard dbDirGuard;
 			CacheConfiguration cacheConfig(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Enabled);
-			AccountStateCacheTypes::Options accountStateCacheOptions{ model::NetworkIdentifier::Mijin_Test, 543, Amount(1000) };
-			AccountStateCache cache(cacheConfig, accountStateCacheOptions);
+			AccountStateCache cache(cacheConfig, CreateAccountStateCacheOptions());
 
 			// - load all test accounts into the delta
 			for (auto i = 0u; i < numBatches; ++i) {
-				std::vector<Address> addresses(Num_Stress_Accounts / numBatches);
+				std::vector<Address> addresses(GetNumStressAccounts() / numBatches);
 				test::FillWithRandomData({ reinterpret_cast<uint8_t*>(addresses.data()), addresses.size() * sizeof(Address) });
 
 				auto delta = cache.createDelta();
@@ -186,7 +187,7 @@ namespace catapult { namespace cache {
 
 			// Assert:
 			auto view = cache.createView();
-			EXPECT_EQ(Num_Stress_Accounts, view->size());
+			EXPECT_EQ(GetNumStressAccounts(), view->size());
 
 			auto merkleRootPair = view->tryGetMerkleRoot();
 			EXPECT_TRUE(merkleRootPair.second);

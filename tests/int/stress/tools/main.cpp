@@ -41,11 +41,6 @@ namespace catapult { namespace tools { namespace address {
 		// indexes into parsed line
 		enum : size_t { Placeholder, Address, AccountState };
 
-		std::map<uint64_t, std::string> reverseTable = {
-				{ extensions::GenerateMosaicId("nem:xem").unwrap(), "nem:xem" },
-				{ extensions::GenerateMosaicId("prx:xpx").unwrap(), "prx:xpx" },
-		};
-
 		std::pair<state::AccountState, bool> ParseAccount(const std::vector<std::string>& parts) {
 			auto address = model::StringToAddress(parts[Address]);
 
@@ -116,12 +111,14 @@ namespace catapult { namespace tools { namespace address {
 					accountJson.put("PublicKeyHeight", accountState.PublicKeyHeight);
 					accountJson.put("PublicKey", crypto::FormatKeyAsString(accountState.PublicKey));
 					accountJson.put("AccountType", (uint64_t)accountState.AccountType);
+					accountJson.put("OptimizedMosaicId", accountState.Balances.optimizedMosaicId().unwrap());
+					accountJson.put("TrackedMosaicId", accountState.Balances.trackedMosaicId().unwrap());
 					accountJson.put("LinkedAccountKey", crypto::FormatKeyAsString(accountState.LinkedAccountKey));
 
 					pt::ptree mosaics;
 					for (auto& pair : accountState.Balances) {
 						pt::ptree mosaic;
-						mosaic.put("MosaicName", reverseTable[pair.first.unwrap()]);
+						mosaic.put("MosaicId", pair.first.unwrap());
 						mosaic.put("Amount", pair.second);
 
 						mosaics.push_back({ "", mosaic });
@@ -172,12 +169,15 @@ namespace catapult { namespace tools { namespace address {
 					accountState.PublicKeyHeight = Height(account.get<uint64_t>("PublicKeyHeight"));
 					accountState.PublicKey = crypto::ParseKey(account.get<std::string>("PublicKey"));
 					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
+					accountState.AccountType = (state::AccountType)account.get<uint8_t>("AccountType");
+					accountState.Balances.optimize(MosaicId(account.get<uint64_t>("OptimizedMosaicId")));
+					accountState.Balances.track(MosaicId(account.get<uint64_t>("TrackedMosaicId")));
 					accountState.LinkedAccountKey = crypto::ParseKey(account.get<std::string>("LinkedAccountKey"));
 
 					for (pt::ptree::value_type&  mosaicJson: account.get_child("mosaics")) {
 						auto& mosaic = mosaicJson.second;
 						accountState.Balances.credit(
-								extensions::GenerateMosaicId(mosaic.get<std::string>("MosaicName")),
+								MosaicId(mosaic.get<std::uint64_t>("MosaicId")),
 								Amount(mosaic.get<uint64_t>("Amount"))
 						);
 					}

@@ -19,8 +19,8 @@
 **/
 
 #include "IdGenerator.h"
-#include "catapult/crypto/IdGenerator.h"
-#include "catapult/crypto/NameChecker.h"
+#include "plugins/txes/namespace/src/model/NameChecker.h"
+#include "plugins/txes/namespace/src/model/NamespaceIdGenerator.h"
 #include "catapult/exceptions.h"
 
 namespace catapult { namespace extensions {
@@ -33,21 +33,12 @@ namespace catapult { namespace extensions {
 			CATAPULT_THROW_INVALID_ARGUMENT(out.str().c_str());
 		}
 
-		size_t FindMosaicSeparatorIndex(const RawString& name) {
-			for (auto i = name.Size; i > 0; --i) {
-				if (':' == name.pData[i - 1])
-					return i - 1;
-			}
-
-			ThrowInvalidFqn("missing mosaic", name);
-		}
-
 		RawString ExtractPartName(const RawString& name, size_t start, size_t size) {
 			if (0 == size)
 				ThrowInvalidFqn("empty part", name);
 
 			RawString partName(&name.pData[start], size);
-			if (!crypto::IsValidName(reinterpret_cast<const uint8_t*>(partName.pData), partName.Size))
+			if (!model::IsValidName(reinterpret_cast<const uint8_t*>(partName.pData), partName.Size))
 				ThrowInvalidFqn("invalid part name", name);
 
 			return partName;
@@ -75,25 +66,21 @@ namespace catapult { namespace extensions {
 		}
 	}
 
-	MosaicId GenerateMosaicId(const RawString& name) {
-		auto mosaicSeparatorIndex = FindMosaicSeparatorIndex(name);
-
-		auto namespaceName = RawString(name.pData, mosaicSeparatorIndex);
-		auto namespacePath = GenerateNamespacePath(namespaceName);
+	UnresolvedMosaicId GenerateMosaicAliasId(const RawString& name) {
+		auto namespacePath = GenerateNamespacePath(name);
 		auto namespaceId = namespacePath[namespacePath.size() - 1];
-
-		return crypto::GenerateMosaicId(namespaceId, ExtractPartName(name, mosaicSeparatorIndex + 1, name.Size - mosaicSeparatorIndex - 1));
+		return UnresolvedMosaicId(namespaceId.unwrap());
 	}
 
 	NamespacePath GenerateNamespacePath(const RawString& name) {
 		auto namespaceId = Namespace_Base_Id;
 		NamespacePath path;
 		auto start = Split(name, [&name, &namespaceId, &path](auto substringStart, auto size) {
-			namespaceId = crypto::GenerateNamespaceId(namespaceId, ExtractPartName(name, substringStart, size));
+			namespaceId = model::GenerateNamespaceId(namespaceId, ExtractPartName(name, substringStart, size));
 			Append(path, namespaceId, name);
 		});
 
-		namespaceId = crypto::GenerateNamespaceId(namespaceId, ExtractPartName(name, start, name.Size - start));
+		namespaceId = model::GenerateNamespaceId(namespaceId, ExtractPartName(name, start, name.Size - start));
 		Append(path, namespaceId, name);
 		return path;
 	}

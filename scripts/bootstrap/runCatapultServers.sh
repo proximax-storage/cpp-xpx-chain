@@ -56,7 +56,7 @@ generate_nem()
       echo "no need to run nemgen"
     fi
 
-    #$WORK_DIR/bin/catapult.server $WORK_DIR/config-build/$1/userconfig & #> /dev/null 2>&1 &
+    $WORK_DIR/bin/catapult.server $WORK_DIR/config-build/$1/userconfig & > /dev/null 2>&1 &
     echo "You can find logs in '$WORK_DIR/data/$1/'"
 }
 
@@ -67,7 +67,7 @@ generate_nem "peer-node-2"
 generate_nem "peer-node-3"
 generate_nem "peer-node-4"
 echo "You can kill all catapult servers 'killall $WORK_DIR/bin/catapult.server'"
-echo "multitail -i $WORK_DIR/data/api-node-0/log -i $WORK_DIR/data/peer-node-0/log -i $WORK_DIR/data/peer-node-1/log -i $WORK_DIR/data/peer-node-2/log -i $WORK_DIR/data/peer-node-3/log -i $WORK_DIR/data/peer-node-4/log"
+echo "multitail -i $WORK_DIR/data/api-node-0/catapult_server0000.log -i $WORK_DIR/data/peer-node-0/catapult_server0000.log -i $WORK_DIR/data/peer-node-1/catapult_server0000.log -i $WORK_DIR/data/peer-node-2/catapult_server0000.log -i $WORK_DIR/data/peer-node-3/catapult_server0000.log -i $WORK_DIR/data/peer-node-4/catapult_server0000.log"
 echo "\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n"
 # echo "tail -f $WORK_DIR/data/api-node-0/catapult_server0000.log $WORK_DIR/data/peer-node-1/catapult_server0000.log $WORK_DIR/data/peer-node-1/catapult_server0000.log"
 # tail -f $WORK_DIR/api-node-0.log $WORK_DIR/peer-node-0.log $WORK_DIR/peer-node-1.log

@@ -31,8 +31,9 @@ namespace catapult { namespace mocks {
 		}
 	}
 
-	MockRemoteChainApi::MockRemoteChainApi(const io::BlockStorageCache& storage, const extensions::LocalNodeChainScore& chainScore)
-			: m_storage(storage)
+	MockRemoteChainApi::MockRemoteChainApi(const Key& remotePublicKey, const io::BlockStorageCache& storage, const extensions::LocalNodeChainScore& chainScore)
+			: RemoteChainApi(remotePublicKey)
+			, m_storage(storage)
 			, m_chainScore(chainScore.get())
 	{}
 

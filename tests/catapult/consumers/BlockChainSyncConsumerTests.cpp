@@ -92,7 +92,7 @@ namespace catapult { namespace consumers {
 
 		struct UndoBlockParams {
 		public:
-			UndoBlockParams(const model::BlockElement& blockElement, const observers::ObserverState& state, UndoBlockType undoBlockType)
+			UndoBlockParams(const model::BlockElement& blockElement, observers::ObserverState& state, UndoBlockType undoBlockType)
 					: pBlock(test::CopyBlock(blockElement.Block))
 					, UndoBlockType(undoBlockType)
 					, LastRecalculationHeight(state.State.LastRecalculationHeight)
@@ -110,10 +110,7 @@ namespace catapult { namespace consumers {
 
 		class MockUndoBlock : public test::ParamsCapture<UndoBlockParams> {
 		public:
-			void operator()(
-					const model::BlockElement& blockElement,
-					const observers::ObserverState& state,
-					UndoBlockType undoBlockType) const {
+			void operator()(const model::BlockElement& blockElement, observers::ObserverState& state, UndoBlockType undoBlockType) const {
 				const_cast<MockUndoBlock*>(this)->push(blockElement, state, undoBlockType);
 
 				// simulate undoing a block by modifying the state to mark it
@@ -135,7 +132,7 @@ namespace catapult { namespace consumers {
 
 		struct ProcessorParams {
 		public:
-			ProcessorParams(const WeakBlockInfo& parentBlockInfo, const BlockElements& elements, const observers::ObserverState& state)
+			ProcessorParams(const WeakBlockInfo& parentBlockInfo, const BlockElements& elements, observers::ObserverState& state)
 					: pParentBlock(test::CopyBlock(parentBlockInfo.entity()))
 					, ParentHash(parentBlockInfo.hash())
 					, pElements(&elements)
@@ -162,7 +159,7 @@ namespace catapult { namespace consumers {
 			ValidationResult operator()(
 					const WeakBlockInfo& parentBlockInfo,
 					BlockElements& elements,
-					const observers::ObserverState& state) const {
+					observers::ObserverState& state) const {
 				const_cast<MockProcessor*>(this)->push(parentBlockInfo, elements, state);
 
 				// mark the state by modifying it
@@ -274,11 +271,11 @@ namespace catapult { namespace consumers {
 				handlers.DifficultyChecker = [this](const auto& blocks, const auto& cache) {
 					return DifficultyChecker(blocks, cache);
 				};
-				handlers.UndoBlock = [this](const auto& block, const auto& state, auto undoBlockType) {
+				handlers.UndoBlock = [this](const auto& block, auto& state, auto undoBlockType) {
 					return UndoBlock(block, state, undoBlockType);
 				};
-				handlers.Processor = [this](const auto& parentBlockInfo, auto& elements, const auto& cache) {
-					return Processor(parentBlockInfo, elements, cache);
+				handlers.Processor = [this](const auto& parentBlockInfo, auto& elements, auto& state) {
+					return Processor(parentBlockInfo, elements, state);
 				};
 				handlers.StateChange = [this](const auto& changeInfo) {
 					return StateChange(changeInfo);

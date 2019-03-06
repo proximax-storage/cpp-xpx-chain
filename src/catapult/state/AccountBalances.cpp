@@ -20,7 +20,6 @@
 
 #include "AccountBalances.h"
 #include "AccountState.h"
-#include "catapult/constants.h"
 
 namespace catapult { namespace state {
 
@@ -56,6 +55,9 @@ namespace catapult { namespace state {
 	AccountBalances::AccountBalances(AccountBalances&& accountBalances) = default;
 
 	AccountBalances& AccountBalances::operator=(const AccountBalances& accountBalances) {
+		m_optimizedMosaicId = accountBalances.optimizedMosaicId();
+		m_trackedMosaicId = accountBalances.trackedMosaicId();
+		m_balances.optimize(m_optimizedMosaicId);
 		if (!m_accountState) {
 			m_accountState = accountBalances.m_accountState;
 		}
@@ -73,6 +75,14 @@ namespace catapult { namespace state {
 	}
 
 	AccountBalances& AccountBalances::operator=(AccountBalances&& accountBalances) = default;
+
+	MosaicId AccountBalances::optimizedMosaicId() const {
+		return m_optimizedMosaicId;
+	}
+
+	MosaicId AccountBalances::trackedMosaicId() const {
+		return m_trackedMosaicId;
+	}
 
 	Amount AccountBalances::get(MosaicId mosaicId) const {
 		auto iter = m_balances.find(mosaicId);
@@ -129,11 +139,14 @@ namespace catapult { namespace state {
 
 		auto iter = m_balances.find(mosaicId);
 		auto hasZeroBalance = m_balances.end() == iter;
-		if (hasZeroBalance || amount > iter->second)
-			CATAPULT_THROW_RUNTIME_ERROR_2(
-					"debit amount is greater than current balance",
-					amount,
-					hasZeroBalance ? Amount(0) : iter->second);
+		if (hasZeroBalance || amount > iter->second) {
+			auto currentBalance = hasZeroBalance ? Amount(0) : iter->second;
+			std::ostringstream out;
+			out
+					<< "debit amount (" << amount << ") is greater than current balance (" << currentBalance
+					<< ") for mosaic " << utils::HexFormat(mosaicId);
+			CATAPULT_THROW_RUNTIME_ERROR(out.str().c_str());
+		}
 
 		iter->second = iter->second - amount;
 
@@ -143,6 +156,18 @@ namespace catapult { namespace state {
 			m_balances.erase(mosaicId);
 
 		return *this;
+	}
+
+	void AccountBalances::optimize(MosaicId id) {
+		m_balances.optimize(id);
+		m_optimizedMosaicId = id;
+	}
+
+	void AccountBalances::track(MosaicId id) {
+		if (m_trackedMosaicId != id && (!m_localSnapshots.empty() || !m_remoteSnapshots.empty()))
+			CATAPULT_THROW_RUNTIME_ERROR("can't track another id, if history for previous id is not empty");
+
+		m_trackedMosaicId = id;
 	}
 
 	void AccountBalances::commitSnapshots() {
@@ -178,7 +203,7 @@ namespace catapult { namespace state {
 
 	Amount AccountBalances::getEffectiveBalance(const Height& height, const uint64_t& importanceGrouping) const {
 		if (m_localSnapshots.empty() && m_remoteSnapshots.empty()) {
-			auto iter = m_balances.find(Xpx_Id);
+			auto iter = m_balances.find(m_trackedMosaicId);
 			return m_balances.end() == iter ? Amount(0) : iter->second;
 		}
 
@@ -195,7 +220,7 @@ namespace catapult { namespace state {
 	}
 
 	void AccountBalances::maybePushSnapshot(const MosaicId& mosaicId, const Amount& amount, const Height& height) {
-		if (mosaicId != Xpx_Id || height == Height(0) || height == Height(-1)) {
+		if (mosaicId != m_trackedMosaicId || height == Height(0) || height == Height(-1)) {
 			return;
 		}
 

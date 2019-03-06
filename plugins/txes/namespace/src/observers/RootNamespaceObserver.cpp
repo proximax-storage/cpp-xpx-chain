@@ -20,6 +20,7 @@
 
 #include "Observers.h"
 #include "src/cache/NamespaceCache.h"
+#include "catapult/constants.h"
 #include <limits>
 
 namespace catapult { namespace observers {
@@ -39,8 +40,8 @@ namespace catapult { namespace observers {
 		}
 
 		auto lifetimeEnd = Eternal_Artifact_Duration == notification.Duration
-				? Eternal_Artifact_Height
-				: context.Height + Height(notification.Duration.unwrap());
+						   ? Height(std::numeric_limits<Height::ValueType>::max())
+						   : context.Height + Height(notification.Duration.unwrap());
 		auto lifetime = state::NamespaceLifetime(context.Height, lifetimeEnd);
 		if (cache.contains(notification.NamespaceId)) {
 			// if a renewal, duration should add onto current expiry

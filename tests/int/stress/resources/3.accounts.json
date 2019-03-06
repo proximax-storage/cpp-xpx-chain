@@ -6,6 +6,8 @@
             "PublicKeyHeight": "1188832332847600384",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "76",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "ABC2D6FE8BAEDBC30EF9A0609C717D9613DE593EC2A266D30100000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -16,6 +18,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -26,6 +30,8 @@
             "PublicKeyHeight": "3198079663259684096",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "169",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "A3BF0E81330F7F244067386C7B50F001BE3BE8EB17C59E1F0900000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -36,6 +42,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -46,6 +54,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -56,6 +66,8 @@
             "PublicKeyHeight": "17778230791875130368",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "143",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "17169B6301CB51D518C88896CC593E8A40FE4E9169AE62110B00000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -66,6 +78,8 @@
             "PublicKeyHeight": "14567118197645263104",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "30",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "AE6F830BC0FE9BD45BAD5AB9A9F307E8B52883B251785B920500000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -76,6 +90,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -86,6 +102,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -96,6 +114,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -106,6 +126,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -116,6 +138,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -126,6 +150,8 @@
             "PublicKeyHeight": "15280141152480794880",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "173",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "FC28286266CEFC0019BA95CBA195321C42831CDCC8FFB73B0200000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -136,6 +162,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -146,6 +174,8 @@
             "PublicKeyHeight": "12437104094841378048",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "92",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "CAB6BB0A85FDC9356C47B8017FCF00C67002C5143AF553CA0400000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -156,6 +186,8 @@
             "PublicKeyHeight": "1059832025659549440",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "42",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "8CB8E2998BD6337C9882022D77D47A618FF6C03EAE56D4AF0800000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -166,6 +198,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -176,6 +210,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -186,6 +222,8 @@
             "PublicKeyHeight": "5073761810921927680",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "9",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "1E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF0100000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -196,6 +234,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -206,6 +246,8 @@
             "PublicKeyHeight": "6532441305887424000",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "218",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "A3CBA8C101C3CD31D9817A2EB966EB3B511FB2ED45B8E2620100000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -216,6 +258,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -226,6 +270,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -236,6 +282,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""
@@ -246,6 +294,8 @@
             "PublicKeyHeight": "0",
             "PublicKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "AccountType": "0",
+            "OptimizedMosaicId": "0",
+            "TrackedMosaicId": "0",
             "LinkedAccountKey": "0000000000000000000000000000000000000000000000000000000000000000",
             "mosaics": "",
             "snapshots": ""

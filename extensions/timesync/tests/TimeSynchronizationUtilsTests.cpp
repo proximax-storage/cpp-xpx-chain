@@ -30,6 +30,7 @@
 #include "timesync/tests/test/TimeSynchronizationTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <limits>
 
@@ -39,7 +40,7 @@ namespace catapult { namespace timesync {
 
 	namespace {
 		constexpr int64_t Warning_Threshold_Millis = 5'000;
-		constexpr uint64_t Total_Chain_Balance = 1'000'000;
+		constexpr Importance Total_Chain_Importance(1'000'000);
 		constexpr uint64_t Default_Threshold = 85;
 
 		class SimpleResultSupplier {
@@ -118,15 +119,15 @@ namespace catapult { namespace timesync {
 			return filters::AggregateSynchronizationFilter({});
 		}
 
-		cache::CatapultCache CreateCache(Amount totalChainBalance) {
+		cache::CatapultCache CreateCache(Importance totalChainImportance) {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.ImportanceGrouping = 123;
-			blockChainConfig.TotalChainBalance = totalChainBalance;
+			blockChainConfig.TotalChainImportance = totalChainImportance;
 			return test::CoreSystemCacheFactory::Create(blockChainConfig);
 		}
 
 		cache::CatapultCache CreateCache() {
-			return CreateCache(Amount());
+			return CreateCache(Importance());
 		}
 
 		struct TestContext {
@@ -134,14 +135,14 @@ namespace catapult { namespace timesync {
 			explicit TestContext(
 					const std::vector<TimeSynchronizationSample>& samples,
 					size_t numValidNodes = std::numeric_limits<size_t>::max())
-					: Synchronizer(CreateEmptyAggregateFilter(), Total_Chain_Balance, Warning_Threshold_Millis)
+					: Synchronizer(CreateEmptyAggregateFilter(), Total_Chain_Importance, Warning_Threshold_Millis)
 					, TimeSyncConfig{ 5 }
 					, RequestResultFutureSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Remote), numValidNodes)
 					, ServiceTestState(CreateCache())
 					, pTimeSyncState(std::make_shared<TimeSynchronizationState>(Default_Threshold))
 					, NetworkTimeSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Local)) {
 				auto& mutableBlockChainConfig = const_cast<model::BlockChainConfiguration&>(ServiceTestState.config().BlockChain);
-				mutableBlockChainConfig.TotalChainBalance = utils::XpxAmount(Total_Chain_Balance);
+				mutableBlockChainConfig.TotalChainImportance = Total_Chain_Importance;
 			}
 
 		public:
@@ -208,7 +209,9 @@ namespace catapult { namespace timesync {
 				const std::vector<Importance>& importances) {
 			for (auto i = 0u; i < keys.size(); ++i) {
 				delta.addAccount(keys[i], Height(1));
-				delta.find(keys[i]).get().Balances.credit(Xpx_Id, Amount(importances[i].unwrap()), Height(1));
+				auto& accountState = delta.find(keys[i]).get();
+				accountState.Balances.track(test::Default_Harvesting_Mosaic_Id);
+				accountState.Balances.credit(test::Default_Harvesting_Mosaic_Id, Amount(importances[i].unwrap()), Height(1));
 			}
 		}
 
