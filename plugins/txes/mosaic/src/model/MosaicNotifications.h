@@ -54,7 +54,7 @@ namespace catapult { namespace model {
 
 	/// Notification of mosaic properties.
 	/// \note This is required due to potentially lossy conversion from raw properties to MosaicProperties.
-	struct MosaicPropertiesNotification : public Notification {
+	struct MosaicPropertiesNotification : public CloneableNotification<MosaicPropertiesNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Mosaic_Properties_Notification;
@@ -62,7 +62,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a propertiesHeader and \a pProperties.
 		explicit MosaicPropertiesNotification(const MosaicPropertiesHeader& propertiesHeader, const MosaicProperty* pProperties)
-				: Notification(Notification_Type, sizeof(MosaicPropertiesNotification))
+				: CloneableNotification(Notification_Type, sizeof(MosaicPropertiesNotification))
 				, PropertiesHeader(propertiesHeader)
 				, PropertiesPtr(pProperties)
 		{}
@@ -76,7 +76,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a mosaic definition.
-	struct MosaicDefinitionNotification : public Notification {
+	struct MosaicDefinitionNotification : public CloneableNotification<MosaicDefinitionNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Mosaic_Definition_Notification;
@@ -84,7 +84,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a mosaicId and \a properties.
 		explicit MosaicDefinitionNotification(const Key& signer, MosaicId mosaicId, const MosaicProperties& properties)
-				: Notification(Notification_Type, sizeof(MosaicDefinitionNotification))
+				: CloneableNotification(Notification_Type, sizeof(MosaicDefinitionNotification))
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, Properties(properties)
@@ -102,7 +102,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a mosaic nonce and id.
-	struct MosaicNonceNotification : public Notification {
+	struct MosaicNonceNotification : public CloneableNotification<MosaicNonceNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Mosaic_Nonce_Notification;
@@ -110,7 +110,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a mosaicNonce and \a mosaicId.
 		explicit MosaicNonceNotification(const Key& signer, MosaicNonce mosaicNonce, catapult::MosaicId mosaicId)
-				: Notification(Notification_Type, sizeof(MosaicNonceNotification))
+				: CloneableNotification(Notification_Type, sizeof(MosaicNonceNotification))
 				, Signer(signer)
 				, MosaicNonce(mosaicNonce)
 				, MosaicId(mosaicId)
@@ -132,7 +132,7 @@ namespace catapult { namespace model {
 	// region change
 
 	/// Notification of a mosaic supply change.
-	struct MosaicSupplyChangeNotification : public Notification {
+	struct MosaicSupplyChangeNotification : public CloneableNotification<MosaicSupplyChangeNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Mosaic_Supply_Change_Notification;
@@ -140,7 +140,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a mosaicId, \a direction and \a delta.
 		MosaicSupplyChangeNotification(const Key& signer, UnresolvedMosaicId mosaicId, MosaicSupplyChangeDirection direction, Amount delta)
-				: Notification(Notification_Type, sizeof(MosaicSupplyChangeNotification))
+				: CloneableNotification(Notification_Type, sizeof(MosaicSupplyChangeNotification))
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, Direction(direction)
@@ -166,7 +166,7 @@ namespace catapult { namespace model {
 	// region rental fee
 
 	/// Notification of a mosaic rental fee.
-	struct MosaicRentalFeeNotification : public BasicBalanceNotification<MosaicRentalFeeNotification> {
+	struct MosaicRentalFeeNotification : public CloneableNotification<MosaicRentalFeeNotification, BasicBalanceNotification<MosaicRentalFeeNotification>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Mosaic_Rental_Fee_Notification;
@@ -178,7 +178,7 @@ namespace catapult { namespace model {
 				const UnresolvedAddress& recipient,
 				UnresolvedMosaicId mosaicId,
 				catapult::Amount amount)
-				: BasicBalanceNotification(sender, mosaicId, amount)
+				: CloneableNotification(sender, mosaicId, amount)
 				, Recipient(recipient)
 		{}
 

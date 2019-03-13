@@ -21,6 +21,7 @@
 #include "ReverseNotificationObserverAdapter.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
+#include <memory>
 
 namespace catapult { namespace observers {
 
@@ -32,20 +33,18 @@ namespace catapult { namespace observers {
 					return;
 
 				// store a copy of the notification buffer
-				const auto* pData = reinterpret_cast<const uint8_t*>(&notification);
-				m_notificationBuffers.emplace_back(pData, pData + notification.Size);
+				m_notificationBuffers.emplace_back(notification.clone());
 			}
 
 		public:
 			void notifyAll(const NotificationObserver& observer, ObserverContext& context) const {
 				for (auto iter = m_notificationBuffers.crbegin(); m_notificationBuffers.crend() != iter; ++iter) {
-					const auto* pNotification = reinterpret_cast<const model::Notification*>(iter->data());
-					observer.notify(*pNotification, context);
+					observer.notify(*iter->get(), context);
 				}
 			}
 
 		private:
-			std::vector<std::vector<uint8_t>> m_notificationBuffers;
+			std::vector<std::unique_ptr<model::Notification>> m_notificationBuffers;
 		};
 	}
 

@@ -56,7 +56,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a property type.
-	struct PropertyTypeNotification : public Notification {
+	struct PropertyTypeNotification : public CloneableNotification<PropertyTypeNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Property_Type_Notification;
@@ -64,7 +64,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a propertyType.
 		explicit PropertyTypeNotification(model::PropertyType propertyType)
-				: Notification(Notification_Type, sizeof(PropertyTypeNotification))
+				: CloneableNotification(Notification_Type, sizeof(PropertyTypeNotification))
 				, PropertyType(propertyType)
 		{}
 
@@ -75,7 +75,7 @@ namespace catapult { namespace model {
 
 	/// Notification of a property value modification.
 	template<typename TPropertyValue, NotificationType Property_Notification_Type>
-	struct ModifyPropertyValueNotification : public Notification {
+	struct ModifyPropertyValueNotification : CloneableNotification<ModifyPropertyValueNotification<TPropertyValue, Property_Notification_Type>, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Property_Notification_Type;
@@ -86,7 +86,9 @@ namespace catapult { namespace model {
 				const Key& key,
 				PropertyType propertyType,
 				const PropertyModification<TPropertyValue>& modification)
-				: Notification(Notification_Type, sizeof(ModifyPropertyValueNotification))
+				: CloneableNotification<ModifyPropertyValueNotification<TPropertyValue, Property_Notification_Type>, Notification>(
+						Notification_Type,
+						sizeof(ModifyPropertyValueNotification))
 				, Key(key)
 				, PropertyDescriptor(propertyType)
 				, Modification(modification)
@@ -113,7 +115,7 @@ namespace catapult { namespace model {
 
 	/// Notification of a property modification.
 	template<typename TPropertyValue, NotificationType Property_Notification_Type>
-	struct ModifyPropertyNotification : public Notification {
+	struct ModifyPropertyNotification : public CloneableNotification<ModifyPropertyNotification<TPropertyValue, Property_Notification_Type>, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Property_Notification_Type;
@@ -125,7 +127,9 @@ namespace catapult { namespace model {
 				PropertyType propertyType,
 				uint8_t modificationsCount,
 				const PropertyModification<TPropertyValue>* pModifications)
-				: Notification(Notification_Type, sizeof(ModifyPropertyNotification))
+				: CloneableNotification<ModifyPropertyNotification<TPropertyValue, Property_Notification_Type>, Notification>(
+						Notification_Type,
+						sizeof(ModifyPropertyNotification))
 				, Key(key)
 				, PropertyDescriptor(propertyType)
 				, ModificationsCount(modificationsCount)

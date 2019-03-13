@@ -26,11 +26,13 @@ namespace catapult { namespace model {
 
 	/// Base for lock duration notification.
 	template<typename TDerivedNotification>
-	struct BaseLockDurationNotification : public Notification {
+	struct BaseLockDurationNotification : public CloneableNotification<BaseLockDurationNotification<TDerivedNotification>, Notification> {
 	public:
 		/// Creates a notification around \a duration.
 		explicit BaseLockDurationNotification(BlockDuration duration)
-				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+				: CloneableNotification<BaseLockDurationNotification<TDerivedNotification>, Notification>(
+						TDerivedNotification::Notification_Type,
+						sizeof(TDerivedNotification))
 				, Duration(duration)
 		{}
 
@@ -41,11 +43,13 @@ namespace catapult { namespace model {
 
 	/// Base for lock transaction notification.
 	template<typename TDerivedNotification>
-	struct BaseLockNotification : public Notification {
+	struct BaseLockNotification : CloneableNotification<BaseLockNotification<TDerivedNotification>, Notification> {
 	protected:
 		/// Creates base lock notification around \a signer, \a mosaic and \a duration.
 		BaseLockNotification(const Key& signer, const UnresolvedMosaic& mosaic, BlockDuration duration)
-				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+				: CloneableNotification<BaseLockNotification<TDerivedNotification>, Notification>(
+						TDerivedNotification::Notification_Type,
+						sizeof(TDerivedNotification))
 				, Signer(signer)
 				, Mosaic(mosaic)
 				, Duration(duration)
