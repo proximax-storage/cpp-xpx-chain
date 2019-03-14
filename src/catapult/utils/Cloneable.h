@@ -1,5 +1,5 @@
 /**
-*** Copyright 2018 ProximaX Limited. All rights reserved.
+*** Copyright 2019 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -16,7 +16,7 @@ namespace catapult { namespace utils {
 	public:
 		using Base::Base;
 		std::unique_ptr<ReturnCloneType> clone() const override {
-			return std::make_unique<Derived>(reinterpret_cast<Derived const&>(*this));
+			return std::make_unique<Derived>(dynamic_cast<Derived const&>(*this));
 		}
 	};
 }}
