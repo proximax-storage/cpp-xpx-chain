@@ -16,7 +16,7 @@ namespace catapult { namespace utils {
 	public:
 		using Base::Base;
 		std::unique_ptr<ReturnCloneType> clone() const override {
-			return std::make_unique<Derived>(reinterpret_cast<Derived const&>(*this));
+			return std::make_unique<Derived>(dynamic_cast<Derived const&>(*this));
 		}
 	};
 }}
