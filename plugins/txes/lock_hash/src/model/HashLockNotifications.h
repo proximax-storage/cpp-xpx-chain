@@ -42,7 +42,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a hash lock mosaic.
-	struct HashLockMosaicNotification : public Notification {
+	struct HashLockMosaicNotification : public CloneableNotification<HashLockMosaicNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = LockHash_Mosaic_Notification;
@@ -50,7 +50,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a mosaic.
 		explicit HashLockMosaicNotification(UnresolvedMosaic mosaic)
-				: Notification(Notification_Type, sizeof(HashLockMosaicNotification))
+				: CloneableNotification(Notification_Type, sizeof(HashLockMosaicNotification))
 				, Mosaic(mosaic)
 		{}
 
@@ -60,17 +60,17 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a hash lock duration.
-	struct HashLockDurationNotification : public BaseLockDurationNotification<HashLockDurationNotification> {
+	struct HashLockDurationNotification : public CloneableNotification<HashLockDurationNotification, BaseLockDurationNotification<HashLockDurationNotification>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = LockHash_Hash_Duration_Notification;
 
 	public:
-		using BaseLockDurationNotification<HashLockDurationNotification>::BaseLockDurationNotification;
+		using CloneableNotification::CloneableNotification;
 	};
 
 	/// Notification of a hash lock.
-	struct HashLockNotification : public BaseLockNotification<HashLockNotification> {
+	struct HashLockNotification : public CloneableNotification<HashLockNotification, BaseLockNotification<HashLockNotification>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = LockHash_Hash_Notification;
@@ -78,7 +78,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates hash lock notification around \a signer, \a mosaic, \a duration and \a hash.
 		HashLockNotification(const Key& signer, const UnresolvedMosaic& mosaic, BlockDuration duration, const Hash256& hash)
-				: BaseLockNotification(signer, mosaic, duration)
+				: CloneableNotification(signer, mosaic, duration)
 				, Hash(hash)
 		{}
 

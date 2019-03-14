@@ -25,7 +25,7 @@ namespace catapult { namespace test {
 
 	/// A notification with a tag.
 	template<uint32_t TaggedNotificationType>
-	struct TaggedNotificationT : model::Notification {
+	struct TaggedNotificationT : model::CloneableNotification<TaggedNotificationT<TaggedNotificationType>, model::Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = static_cast<model::NotificationType>(TaggedNotificationType);
@@ -33,7 +33,9 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a notification with \a tag.
 		explicit TaggedNotificationT(uint8_t tag)
-				: Notification(Notification_Type, sizeof(TaggedNotificationT))
+				: model::CloneableNotification<TaggedNotificationT<TaggedNotificationType>, model::Notification>(
+						Notification_Type,
+						sizeof(TaggedNotificationT))
 				, Tag(tag)
 		{}
 

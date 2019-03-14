@@ -32,7 +32,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a reputation update.
-	struct ReputationUpdateNotification : public Notification {
+	struct ReputationUpdateNotification : public CloneableNotification<ReputationUpdateNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Reputation_Update_Notification;
@@ -41,13 +41,13 @@ namespace catapult { namespace model {
 		/// Creates a notification around \a signer, \a modificationCount and \a pModifications.
 		explicit ReputationUpdateNotification(
 			const std::vector<CosignatoryModification>& modifications)
-			: Notification(Notification_Type, sizeof(ReputationUpdateNotification))
+			: CloneableNotification(Notification_Type, sizeof(ReputationUpdateNotification))
 			, Modifications(modifications)
 		{}
 
 	public:
 		/// Const pointer to the first modification.
-		const std::vector<CosignatoryModification>& Modifications;
+		std::vector<CosignatoryModification> Modifications;
 	};
 
 	// endregion
@@ -60,7 +60,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a contract update.
-	struct ModifyContractNotification : public Notification {
+	struct ModifyContractNotification : public CloneableNotification<ModifyContractNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Contract_Modify_Notification;
@@ -77,7 +77,7 @@ namespace catapult { namespace model {
 			const CosignatoryModification* pExecutorModifications,
 			const uint8_t& verifierModificationCount,
 			const CosignatoryModification* pVerifierModifications)
-			: Notification(Notification_Type, sizeof(ModifyContractNotification))
+			: CloneableNotification(Notification_Type, sizeof(ModifyContractNotification))
 			, DurationDelta(durationDelta)
 			, Multisig(multisig)
 			, Hash(hash)

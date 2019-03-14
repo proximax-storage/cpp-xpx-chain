@@ -42,11 +42,13 @@ namespace catapult { namespace model {
 
 	/// A basic aggregate notification.
 	template<typename TDerivedNotification>
-	struct BasicAggregateNotification : public Notification {
+	struct BasicAggregateNotification : public CloneableNotification<BasicAggregateNotification<TDerivedNotification>, Notification> {
 	public:
 		/// Creates a notification around \a signer, \a cosignaturesCount and \a pCosignatures.
 		explicit BasicAggregateNotification(const Key& signer, size_t cosignaturesCount, const Cosignature* pCosignatures)
-				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+				: CloneableNotification<BasicAggregateNotification<TDerivedNotification>, Notification>(
+						TDerivedNotification::Notification_Type,
+						sizeof(TDerivedNotification))
 				, Signer(signer)
 				, CosignaturesCount(cosignaturesCount)
 				, CosignaturesPtr(pCosignatures)
@@ -64,7 +66,8 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of an embedded aggregate transaction with cosignatures.
-	struct AggregateEmbeddedTransactionNotification : public BasicAggregateNotification<AggregateEmbeddedTransactionNotification> {
+	struct AggregateEmbeddedTransactionNotification : public CloneableNotification<AggregateEmbeddedTransactionNotification,
+			BasicAggregateNotification<AggregateEmbeddedTransactionNotification>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Aggregate_EmbeddedTransaction_Notification;
@@ -76,7 +79,7 @@ namespace catapult { namespace model {
 				const EmbeddedTransaction& transaction,
 				size_t cosignaturesCount,
 				const Cosignature* pCosignatures)
-				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification>(signer, cosignaturesCount, pCosignatures)
+				: CloneableNotification(signer, cosignaturesCount, pCosignatures)
 				, Transaction(transaction)
 		{}
 
@@ -87,7 +90,8 @@ namespace catapult { namespace model {
 
 	/// Notification of an aggregate transaction with transactions and cosignatures.
 	/// \note TransactionsPtr and CosignaturesPtr are provided instead of minimally required keys in order to support undoing.
-	struct AggregateCosignaturesNotification : public BasicAggregateNotification<AggregateCosignaturesNotification> {
+	struct AggregateCosignaturesNotification : public CloneableNotification<AggregateCosignaturesNotification,
+			BasicAggregateNotification<AggregateCosignaturesNotification>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Aggregate_Cosignatures_Notification;
@@ -100,7 +104,7 @@ namespace catapult { namespace model {
 				const EmbeddedTransaction* pTransactions,
 				size_t cosignaturesCount,
 				const Cosignature* pCosignatures)
-				: BasicAggregateNotification<AggregateCosignaturesNotification>(signer, cosignaturesCount, pCosignatures)
+				: CloneableNotification(signer, cosignaturesCount, pCosignatures)
 				, TransactionsCount(transactionsCount)
 				, TransactionsPtr(pTransactions)
 		{}
