@@ -49,25 +49,25 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a secret lock duration
-	struct SecretLockDurationNotification : public BaseLockDurationNotification<SecretLockDurationNotification> {
+	struct SecretLockDurationNotification : public CloneableNotification<SecretLockDurationNotification, BaseLockDurationNotification<SecretLockDurationNotification>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = LockSecret_Secret_Duration_Notification;
 
 	public:
-		using BaseLockDurationNotification<SecretLockDurationNotification>::BaseLockDurationNotification;
+		using CloneableNotification::CloneableNotification;
 	};
 
 	/// Notification of a secret lock hash algorithm.
-	struct SecretLockHashAlgorithmNotification : public Notification {
+	struct SecretLockHashAlgorithmNotification : public CloneableNotification<SecretLockHashAlgorithmNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = LockSecret_Hash_Algorithm_Notification;
 
 	public:
 		/// Creates secret lock hash algorithm notification around \a hashAlgorithm.
-		SecretLockHashAlgorithmNotification(LockHashAlgorithm hashAlgorithm)
-				: Notification(Notification_Type, sizeof(SecretLockHashAlgorithmNotification))
+		explicit SecretLockHashAlgorithmNotification(LockHashAlgorithm hashAlgorithm)
+				: CloneableNotification(Notification_Type, sizeof(SecretLockHashAlgorithmNotification))
 				, HashAlgorithm(hashAlgorithm)
 		{}
 
@@ -77,7 +77,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a secret lock.
-	struct SecretLockNotification : public BaseLockNotification<SecretLockNotification> {
+	struct SecretLockNotification : public CloneableNotification<SecretLockNotification, BaseLockNotification<SecretLockNotification>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = LockSecret_Secret_Notification;
@@ -91,7 +91,7 @@ namespace catapult { namespace model {
 				LockHashAlgorithm hashAlgorithm,
 				const Hash256& secret,
 				const UnresolvedAddress& recipient)
-				: BaseLockNotification(signer, mosaic, duration)
+				: CloneableNotification(signer, mosaic, duration)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)
 				, Recipient(recipient)
@@ -109,7 +109,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a secret and its proof.
-	struct ProofSecretNotification : public Notification {
+	struct ProofSecretNotification : public CloneableNotification<ProofSecretNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = LockSecret_Proof_Secret_Notification;
@@ -117,7 +117,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates proof secret notification around \a hashAlgorithm, \a secret and \a proof.
 		ProofSecretNotification(LockHashAlgorithm hashAlgorithm, const Hash256& secret, const RawBuffer& proof)
-				: Notification(Notification_Type, sizeof(ProofSecretNotification))
+				: CloneableNotification(Notification_Type, sizeof(ProofSecretNotification))
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)
 				, Proof(proof)
@@ -135,7 +135,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a proof publication.
-	struct ProofPublicationNotification : public Notification {
+	struct ProofPublicationNotification : public CloneableNotification<ProofPublicationNotification, Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = LockSecret_Proof_Publication_Notification;
@@ -143,7 +143,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates proof publication notification around \a signer, \a hashAlgorithm and \a secret.
 		ProofPublicationNotification(const Key& signer, LockHashAlgorithm hashAlgorithm, const Hash256& secret)
-				: Notification(Notification_Type, sizeof(ProofPublicationNotification))
+				: CloneableNotification(Notification_Type, sizeof(ProofPublicationNotification))
 				, Signer(signer)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)

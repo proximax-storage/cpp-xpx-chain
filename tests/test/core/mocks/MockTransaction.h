@@ -59,7 +59,7 @@ namespace catapult { namespace mocks {
 #undef DEFINE_MOCK_NOTIFICATION
 
 	/// Notifies the arrival of a hash.
-	struct HashNotification : public model::Notification {
+	struct HashNotification : public model::CloneableNotification<HashNotification, model::Notification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Mock_Hash_Notification;
@@ -67,7 +67,7 @@ namespace catapult { namespace mocks {
 	public:
 		/// Creates a hash notification around \a hash.
 		explicit HashNotification(const Hash256& hash)
-				: model::Notification(Notification_Type, sizeof(HashNotification))
+				: CloneableNotification(Notification_Type, sizeof(HashNotification))
 				, Hash(hash)
 		{}
 
