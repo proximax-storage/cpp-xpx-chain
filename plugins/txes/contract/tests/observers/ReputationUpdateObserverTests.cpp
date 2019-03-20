@@ -37,8 +37,14 @@ namespace catapult { namespace observers {
 		using Notification = model::ReputationUpdateNotification;
 		using Modifications = std::vector<model::CosignatoryModification>;
 
-		auto CreateNotification(const std::vector<model::CosignatoryModification>& modifications) {
-			return Notification(modifications);
+		std::unique_ptr<model::ReputationUpdateNotification> CreateNotification(const std::vector<model::CosignatoryModification>& modifications) {
+			std::vector<const model::CosignatoryModification*> modificationPtrs;
+
+			for (auto i = 0u; i < modifications.size(); ++i) {
+				modificationPtrs.emplace_back(&modifications[i]);
+			}
+
+			return Notification::CreateReputationUpdateNotification(modificationPtrs);
 		}
 
 		struct ReputationValues {
@@ -91,7 +97,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateNotification(modifications);
 
 		// Assert:
-		RunTest(NotifyMode::Commit, notification,
+		RunTest(NotifyMode::Commit, *notification,
 			{},
 			{ { keys[0], true, 1, 0 }, { keys[1], true, 0, 1 } });
 	}
@@ -103,7 +109,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateNotification(modifications);
 
 		// Assert:
-		RunTest(NotifyMode::Commit, notification,
+		RunTest(NotifyMode::Commit, *notification,
 			{ { keys[0], true, 1, 2 }, { keys[1], true, 3, 4 } },
 			{ { keys[0], true, 2, 2 }, { keys[1], true, 3, 5 } });
 	}
@@ -116,7 +122,7 @@ namespace catapult { namespace observers {
 
 		// Assert:
 		RunTest(
-			NotifyMode::Rollback, notification,
+			NotifyMode::Rollback, *notification,
 			{},
 			{ { keys[0], false, 0, 0 }, { keys[1], false, 0, 0 } });
 	}
@@ -128,7 +134,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateNotification(modifications);
 
 		// Assert:
-		RunTest(NotifyMode::Rollback, notification,
+		RunTest(NotifyMode::Rollback, *notification,
 			{ { keys[0], true, 1, 2 }, { keys[1], true, 3, 4 } },
 			{ { keys[0], true, 0, 2 }, { keys[1], true, 3, 3 } });
 	}

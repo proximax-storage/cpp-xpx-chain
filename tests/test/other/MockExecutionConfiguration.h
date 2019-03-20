@@ -51,10 +51,10 @@ namespace catapult { namespace test {
 		const Hash256 HashCopy;
 	};
 
-	struct MockNotification : public model::CloneableNotification<MockNotification, model::Notification> {
+	struct MockNotification : public model::Notification {
 	public:
 		explicit MockNotification(const Hash256& hash, size_t id)
-				: CloneableNotification(static_cast<model::NotificationType>(-1), sizeof(MockNotification))
+				: Notification(static_cast<model::NotificationType>(-1), sizeof(MockNotification))
 				, Hash(hash)
 				, Id(id)
 		{}

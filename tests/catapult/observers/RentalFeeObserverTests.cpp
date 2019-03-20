@@ -34,14 +34,14 @@ namespace catapult { namespace observers {
 		constexpr auto Default_Mosaic_Id = MosaicId(345);
 		constexpr auto Default_Amount = Amount(123);
 
-		struct MockRentalFeeNotification : public model::CloneableNotification<MockRentalFeeNotification, model::BalanceTransferNotification> {
+		struct MockRentalFeeNotification : public model::BalanceTransferNotification {
 		public:
 			MockRentalFeeNotification(
 					const Key& sender,
 					const UnresolvedAddress& recipient,
 					UnresolvedMosaicId mosaicId,
 					catapult::Amount amount)
-					: CloneableNotification(sender, recipient, mosaicId, amount) {
+					: BalanceTransferNotification(sender, recipient, mosaicId, amount) {
 				// override type
 				Type = Mock_Notification;
 			}

@@ -43,7 +43,7 @@ namespace catapult { namespace test {
 	/// Casts \a notification to a derived notification type.
 	template<typename TNotification>
 	const TNotification& CastToDerivedNotification(const model::Notification& notification) {
-		if (sizeof(TNotification) != notification.Size)
+		if (sizeof(TNotification) > notification.Size)
 			CATAPULT_THROW_INVALID_ARGUMENT_1("notification has incorrect size", utils::to_underlying_type(notification.Type));
 
 		return static_cast<const TNotification&>(notification);

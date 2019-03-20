@@ -45,7 +45,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Base alias notification.
-	struct BaseAliasNotification : CloneableNotification<BaseAliasNotification, Notification> {
+	struct BaseAliasNotification : public Notification {
 	public:
 		/// Creates a base alias notification around \a namespaceId and \a aliasAction using \a notificationType and \a notificationSize.
 		BaseAliasNotification(
@@ -53,7 +53,7 @@ namespace catapult { namespace model {
 				size_t notificationSize,
 				catapult::NamespaceId namespaceId,
 				model::AliasAction aliasAction)
-				: CloneableNotification(notificationType, notificationSize)
+				: Notification(notificationType, notificationSize)
 				, NamespaceId(namespaceId)
 				, AliasAction(aliasAction)
 		{}
@@ -67,7 +67,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of alias owner.
-	struct AliasOwnerNotification : public CloneableNotification<AliasOwnerNotification, BaseAliasNotification> {
+	struct AliasOwnerNotification : public BaseAliasNotification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Namespace_Alias_Owner_Notification;
@@ -75,7 +75,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a owner, \a namespaceId and \a aliasAction.
 		AliasOwnerNotification(const Key& owner, catapult::NamespaceId namespaceId, model::AliasAction aliasAction)
-				: CloneableNotification(Notification_Type, sizeof(AliasOwnerNotification), namespaceId, aliasAction)
+				: BaseAliasNotification(Notification_Type, sizeof(AliasOwnerNotification), namespaceId, aliasAction)
 				, Owner(owner)
 		{}
 
@@ -86,7 +86,7 @@ namespace catapult { namespace model {
 
 	/// Notification of aliased data.
 	template<typename TAliasedData, NotificationType Aliased_Notification_Type>
-	struct AliasedDataNotification : public CloneableNotification<AliasedDataNotification<TAliasedData, Aliased_Notification_Type>, BaseAliasNotification> {
+	struct AliasedDataNotification : public BaseAliasNotification {
 	private:
 		using AliasedNotification = AliasedDataNotification<TAliasedData, Aliased_Notification_Type>;
 
@@ -96,11 +96,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a namespaceId, \a aliasAction and \a aliasedData.
 		AliasedDataNotification(catapult::NamespaceId namespaceId, model::AliasAction aliasAction, const TAliasedData& aliasedData)
-				: CloneableNotification<AliasedDataNotification<TAliasedData, Aliased_Notification_Type>, BaseAliasNotification>(
-						Notification_Type,
-						sizeof(AliasedNotification),
-						namespaceId,
-						aliasAction)
+				: BaseAliasNotification(Notification_Type, sizeof(AliasedNotification), namespaceId, aliasAction)
 				, AliasedData(aliasedData)
 		{}
 

@@ -50,7 +50,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a namespace name.
-	struct NamespaceNameNotification : public CloneableNotification<NamespaceNameNotification, Notification> {
+	struct NamespaceNameNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Namespace_Name_Notification;
@@ -62,7 +62,7 @@ namespace catapult { namespace model {
 				catapult::NamespaceId parentId,
 				uint8_t nameSize,
 				const uint8_t* pName)
-				: CloneableNotification(Notification_Type, sizeof(NamespaceNameNotification))
+				: Notification(Notification_Type, sizeof(NamespaceNameNotification))
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)
 				, NameSize(nameSize)
@@ -84,7 +84,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a namespace registration.
-	struct NamespaceNotification : public CloneableNotification<NamespaceNotification, Notification> {
+	struct NamespaceNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Namespace_Registration_Notification;
@@ -92,7 +92,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a namespaceType.
 		explicit NamespaceNotification(model::NamespaceType namespaceType)
-				: CloneableNotification(Notification_Type, sizeof(NamespaceNotification))
+				: Notification(Notification_Type, sizeof(NamespaceNotification))
 				, NamespaceType(namespaceType)
 		{}
 
@@ -102,7 +102,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a root namespace registration.
-	struct RootNamespaceNotification : public CloneableNotification<RootNamespaceNotification, Notification> {
+	struct RootNamespaceNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Namespace_Root_Registration_Notification;
@@ -110,7 +110,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a namespaceId and \a duration.
 		explicit RootNamespaceNotification(const Key& signer, NamespaceId namespaceId, BlockDuration duration)
-				: CloneableNotification(Notification_Type, sizeof(RootNamespaceNotification))
+				: Notification(Notification_Type, sizeof(RootNamespaceNotification))
 				, Signer(signer)
 				, NamespaceId(namespaceId)
 				, Duration(duration)
@@ -128,7 +128,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a child namespace registration.
-	struct ChildNamespaceNotification : public CloneableNotification<ChildNamespaceNotification, Notification> {
+	struct ChildNamespaceNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Namespace_Child_Registration_Notification;
@@ -136,7 +136,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a namespaceId and \a parentId.
 		explicit ChildNamespaceNotification(const Key& signer, NamespaceId namespaceId, NamespaceId parentId)
-				: CloneableNotification(Notification_Type, sizeof(ChildNamespaceNotification))
+				: Notification(Notification_Type, sizeof(ChildNamespaceNotification))
 				, Signer(signer)
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)
@@ -156,7 +156,7 @@ namespace catapult { namespace model {
 	// region rental fee
 
 	/// Notification of a namespace rental fee.
-	struct NamespaceRentalFeeNotification : public CloneableNotification<NamespaceRentalFeeNotification, BasicBalanceNotification<NamespaceRentalFeeNotification>> {
+	struct NamespaceRentalFeeNotification : public BasicBalanceNotification<NamespaceRentalFeeNotification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Namespace_Rental_Fee_Notification;
@@ -168,7 +168,7 @@ namespace catapult { namespace model {
 				const UnresolvedAddress& recipient,
 				UnresolvedMosaicId mosaicId,
 				catapult::Amount amount)
-				: CloneableNotification(sender, mosaicId, amount)
+				: BasicBalanceNotification(sender, mosaicId, amount)
 				, Recipient(recipient)
 		{}
 

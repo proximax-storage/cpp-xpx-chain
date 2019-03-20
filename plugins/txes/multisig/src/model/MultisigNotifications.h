@@ -43,7 +43,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a multisig cosigners modification.
-	struct ModifyMultisigCosignersNotification : public CloneableNotification<ModifyMultisigCosignersNotification, Notification> {
+	struct ModifyMultisigCosignersNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Multisig_Modify_Cosigners_Notification;
@@ -54,7 +54,7 @@ namespace catapult { namespace model {
 				const Key& signer,
 				uint8_t modificationsCount,
 				const CosignatoryModification* pModifications)
-				: CloneableNotification(Notification_Type, sizeof(ModifyMultisigCosignersNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigCosignersNotification))
 				, Signer(signer)
 				, ModificationsCount(modificationsCount)
 				, ModificationsPtr(pModifications)
@@ -72,7 +72,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a new cosigner.
-	struct ModifyMultisigNewCosignerNotification : public CloneableNotification<ModifyMultisigNewCosignerNotification, Notification> {
+	struct ModifyMultisigNewCosignerNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Multisig_Modify_New_Cosigner_Notification;
@@ -80,7 +80,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a multisigAccountKey and \a cosignatoryKey.
 		explicit ModifyMultisigNewCosignerNotification(const Key& multisigAccountKey, const Key& cosignatoryKey)
-				: CloneableNotification(Notification_Type, sizeof(ModifyMultisigNewCosignerNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigNewCosignerNotification))
 				, MultisigAccountKey(multisigAccountKey)
 				, CosignatoryKey(cosignatoryKey)
 		{}
@@ -94,7 +94,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a multisig settings modification.
-	struct ModifyMultisigSettingsNotification : public CloneableNotification<ModifyMultisigSettingsNotification, Notification> {
+	struct ModifyMultisigSettingsNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Multisig_Modify_Settings_Notification;
@@ -102,7 +102,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a minRemovalDelta and \a minApprovalDelta.
 		explicit ModifyMultisigSettingsNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta)
-				: CloneableNotification(Notification_Type, sizeof(ModifyMultisigSettingsNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigSettingsNotification))
 				, Signer(signer)
 				, MinRemovalDelta(minRemovalDelta)
 				, MinApprovalDelta(minApprovalDelta)

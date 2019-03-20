@@ -21,6 +21,7 @@
 #pragma once
 #include "ModifyContractTransaction.h"
 #include "catapult/model/Notifications.h"
+#include "catapult/utils/MemoryUtils.h"
 
 namespace catapult { namespace model {
 
@@ -32,22 +33,59 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a reputation update.
-	struct ReputationUpdateNotification : public CloneableNotification<ReputationUpdateNotification, Notification> {
+	struct ReputationUpdateNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Reputation_Update_Notification;
 
-	public:
+	private:
 		/// Creates a notification around \a signer, \a modificationCount and \a pModifications.
 		explicit ReputationUpdateNotification(
-			const std::vector<CosignatoryModification>& modifications)
-			: CloneableNotification(Notification_Type, sizeof(ReputationUpdateNotification))
-			, Modifications(modifications)
+			const std::vector<const CosignatoryModification*>& modifications)
+			: Notification(Notification_Type, RealSize(modifications))
 		{}
 
+		uint8_t* ModificationsStart() {
+			return reinterpret_cast<uint8_t*>(this) + sizeof(ReputationUpdateNotification);
+		}
+
+		const void* ModificationsStart() const {
+			return reinterpret_cast<const uint8_t*>(this) + sizeof(ReputationUpdateNotification);
+		}
+
+		static size_t HeaderSize() {
+			return sizeof(ReputationUpdateNotification);
+		}
+
+		static size_t BodySize(const std::vector<const CosignatoryModification*>& modifications) {
+			return sizeof(modifications.data()) * modifications.size();
+		}
+
+		static size_t RealSize(const std::vector<const CosignatoryModification*>& modifications) {
+			return HeaderSize() + BodySize(modifications);
+		}
+
 	public:
-		/// Const pointer to the first modification.
-		std::vector<CosignatoryModification> Modifications;
+		/// Number of customer modifications.
+		size_t ModificationCount() const {
+			return (Size - HeaderSize()) / sizeof(const CosignatoryModification*);
+		}
+
+		/// Const pointer to the first customer modification.
+		const CosignatoryModification* const * ModificationsPtr() const {
+			return reinterpret_cast<const CosignatoryModification* const *>(ModificationsStart());
+		}
+
+		static std::unique_ptr<ReputationUpdateNotification> CreateReputationUpdateNotification(const std::vector<const CosignatoryModification*>& modifications) {
+			auto smart_ptr = utils::MakeUniqueWithSize<ReputationUpdateNotification>(RealSize(modifications));
+			auto& notification = *smart_ptr.get();
+			notification.Type = Notification_Type;
+			notification.Size = RealSize(modifications);
+
+			std::memcpy(notification.ModificationsStart(), modifications.data(), BodySize(modifications));
+
+			return smart_ptr;
+		}
 	};
 
 	// endregion
@@ -60,7 +98,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a contract update.
-	struct ModifyContractNotification : public CloneableNotification<ModifyContractNotification, Notification> {
+	struct ModifyContractNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Contract_Modify_Notification;
@@ -77,7 +115,7 @@ namespace catapult { namespace model {
 			const CosignatoryModification* pExecutorModifications,
 			const uint8_t& verifierModificationCount,
 			const CosignatoryModification* pVerifierModifications)
-			: CloneableNotification(Notification_Type, sizeof(ModifyContractNotification))
+			: Notification(Notification_Type, sizeof(ModifyContractNotification))
 			, DurationDelta(durationDelta)
 			, Multisig(multisig)
 			, Hash(hash)

@@ -41,7 +41,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a remote account link.
-	struct RemoteAccountLinkNotification : public CloneableNotification<RemoteAccountLinkNotification, Notification> {
+	struct RemoteAccountLinkNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = AccountLink_Remote_Notification;
@@ -49,7 +49,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
 		RemoteAccountLinkNotification(const Key& mainAccountKey, const Key& remoteAccountKey, AccountLinkAction linkAction)
-				: CloneableNotification(Notification_Type, sizeof(RemoteAccountLinkNotification))
+				: Notification(Notification_Type, sizeof(RemoteAccountLinkNotification))
 				, MainAccountKey(mainAccountKey)
 				, RemoteAccountKey(remoteAccountKey)
 				, LinkAction(linkAction)
@@ -67,7 +67,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a new remote account.
-	struct NewRemoteAccountNotification : public CloneableNotification<NewRemoteAccountNotification, Notification> {
+	struct NewRemoteAccountNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = AccountLink_New_Remote_Account_Notification;
@@ -75,7 +75,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a remoteAccountKey.
 		explicit NewRemoteAccountNotification(const Key& remoteAccountKey)
-				: CloneableNotification(Notification_Type, sizeof(NewRemoteAccountNotification))
+				: Notification(Notification_Type, sizeof(NewRemoteAccountNotification))
 				, RemoteAccountKey(remoteAccountKey)
 		{}
 

@@ -40,7 +40,7 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a transfer transaction with a message.
-	struct TransferMessageNotification : public CloneableNotification<TransferMessageNotification, Notification> {
+	struct TransferMessageNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Transfer_Message_Notification;
@@ -48,7 +48,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a messageSize.
 		explicit TransferMessageNotification(uint16_t messageSize)
-				: CloneableNotification(Notification_Type, sizeof(TransferMessageNotification))
+				: Notification(Notification_Type, sizeof(TransferMessageNotification))
 				, MessageSize(messageSize)
 		{}
 
@@ -58,7 +58,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a transfer transaction with mosaics.
-	struct TransferMosaicsNotification : public CloneableNotification<TransferMosaicsNotification, Notification> {
+	struct TransferMosaicsNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Transfer_Mosaics_Notification;
@@ -66,7 +66,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a mosaicsCount and \a pMosaics.
 		explicit TransferMosaicsNotification(uint8_t mosaicsCount, const UnresolvedMosaic* pMosaics)
-				: CloneableNotification(Notification_Type, sizeof(TransferMosaicsNotification))
+				: Notification(Notification_Type, sizeof(TransferMosaicsNotification))
 				, MosaicsCount(mosaicsCount)
 				, MosaicsPtr(pMosaics)
 		{}
