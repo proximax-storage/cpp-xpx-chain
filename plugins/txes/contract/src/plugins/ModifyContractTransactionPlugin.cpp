@@ -32,11 +32,11 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			std::vector<CosignatoryModification> reputationModificationKeys;
+			std::vector<const CosignatoryModification*> reputationModificationKeys;
 			if (0 < transaction.ExecutorModificationCount) {
 				const auto* pModification = transaction.ExecutorModificationsPtr();
 				for (auto i = 0u; i < transaction.ExecutorModificationCount; ++i, ++pModification) {
-					reputationModificationKeys.push_back(*pModification);
+					reputationModificationKeys.emplace_back(pModification);
 				}
 			}
 
@@ -44,7 +44,7 @@ namespace catapult { namespace plugins {
 				utils::KeySet addedVerifierKeys;
 				const auto* pModification = transaction.VerifierModificationsPtr();
 				for (auto i = 0u; i < transaction.VerifierModificationCount; ++i, ++pModification) {
-					reputationModificationKeys.push_back(*pModification);
+					reputationModificationKeys.emplace_back(pModification);
 					if (model::CosignatoryModificationType::Add == pModification->ModificationType) {
 						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModification->CosignatoryPublicKey));
 						addedVerifierKeys.insert(pModification->CosignatoryPublicKey);
@@ -70,7 +70,7 @@ namespace catapult { namespace plugins {
 				transaction.VerifierModificationsPtr()));
 
 			if (!reputationModificationKeys.empty())
-				sub.notify(ReputationUpdateNotification(reputationModificationKeys));
+				sub.notify(*ReputationUpdateNotification::CreateReputationUpdateNotification(reputationModificationKeys));
 		}
 	}
 

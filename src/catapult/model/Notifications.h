@@ -24,7 +24,6 @@
 #include "NetworkInfo.h"
 #include "NotificationType.h"
 #include "catapult/utils/ArraySet.h"
-#include "catapult/utils/Cloneable.h"
 #include "catapult/types.h"
 #include <vector>
 
@@ -39,10 +38,6 @@ namespace catapult { namespace model {
 				, Size(size)
 		{}
 
-		virtual std::unique_ptr<Notification> clone() const {
-			return std::make_unique<Notification>(*this);
-		};
-
 	public:
 		/// Notification type.
 		NotificationType Type;
@@ -51,16 +46,10 @@ namespace catapult { namespace model {
 		size_t Size;
 	};
 
-	template <class Derived, class Base>
-	struct CloneableNotification : public utils::Cloneable<Derived, Base, Notification> {
-	public:
-		using utils::Cloneable<Derived, Base, Notification>::Cloneable;
-	};
-
 	// region account
 
 	/// Notification of use of an account address.
-	struct AccountAddressNotification : public CloneableNotification<AccountAddressNotification, Notification> {
+	struct AccountAddressNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Register_Account_Address_Notification;
@@ -68,7 +57,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a address.
 		explicit AccountAddressNotification(const UnresolvedAddress& address)
-				: CloneableNotification(Notification_Type, sizeof(AccountAddressNotification))
+				: Notification(Notification_Type, sizeof(AccountAddressNotification))
 				, Address(address)
 		{}
 
@@ -78,7 +67,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of use of an account public key.
-	struct AccountPublicKeyNotification : public CloneableNotification<AccountPublicKeyNotification, Notification> {
+	struct AccountPublicKeyNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Register_Account_Public_Key_Notification;
@@ -86,7 +75,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a publicKey.
 		explicit AccountPublicKeyNotification(const Key& publicKey)
-				: CloneableNotification(Notification_Type, sizeof(AccountPublicKeyNotification))
+				: Notification(Notification_Type, sizeof(AccountPublicKeyNotification))
 				, PublicKey(publicKey)
 		{}
 
@@ -101,13 +90,11 @@ namespace catapult { namespace model {
 
 	/// A basic balance notification.
 	template<typename TDerivedNotification>
-	struct BasicBalanceNotification : CloneableNotification<BasicBalanceNotification<TDerivedNotification>, Notification> {
+	struct BasicBalanceNotification : public Notification {
 	public:
 		/// Creates a notification around \a sender, \a mosaicId and \a amount.
 		explicit BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, Amount amount)
-				: CloneableNotification<BasicBalanceNotification<TDerivedNotification>, Notification>(
-						TDerivedNotification::Notification_Type,
-						sizeof(TDerivedNotification))
+				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 				, Sender(sender)
 				, MosaicId(mosaicId)
 				, Amount(amount)
@@ -125,7 +112,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notifies a balance transfer from sender to recipient.
-	struct BalanceTransferNotification : public CloneableNotification<BalanceTransferNotification, BasicBalanceNotification<BalanceTransferNotification>> {
+	struct BalanceTransferNotification : public BasicBalanceNotification<BalanceTransferNotification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Balance_Transfer_Notification;
@@ -137,7 +124,7 @@ namespace catapult { namespace model {
 				const UnresolvedAddress& recipient,
 				UnresolvedMosaicId mosaicId,
 				catapult::Amount amount)
-				: CloneableNotification(sender, mosaicId, amount)
+				: BasicBalanceNotification(sender, mosaicId, amount)
 				, Recipient(recipient)
 		{}
 
@@ -147,13 +134,13 @@ namespace catapult { namespace model {
 	};
 
 	/// Notifies a balance debit by sender.
-	struct BalanceDebitNotification : public CloneableNotification<BalanceDebitNotification, BasicBalanceNotification<BalanceDebitNotification>> {
+	struct BalanceDebitNotification : public BasicBalanceNotification<BalanceDebitNotification> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Balance_Debit_Notification;
 
 	public:
-		using CloneableNotification<BalanceDebitNotification, BasicBalanceNotification<BalanceDebitNotification>>::CloneableNotification;
+		using BasicBalanceNotification<BalanceDebitNotification>::BasicBalanceNotification;
 	};
 
 	// endregion
@@ -161,7 +148,7 @@ namespace catapult { namespace model {
 	// region entity
 
 	/// Notifies the arrival of an entity.
-	struct EntityNotification : public CloneableNotification<EntityNotification, Notification> {
+	struct EntityNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Entity_Notification;
@@ -173,7 +160,7 @@ namespace catapult { namespace model {
 				uint8_t minVersion,
 				uint8_t maxVersion,
 				uint8_t entityVersion)
-				: CloneableNotification(Notification_Type, sizeof(EntityNotification))
+				: Notification(Notification_Type, sizeof(EntityNotification))
 				, NetworkIdentifier(networkIdentifier)
 				, MinVersion(minVersion)
 				, MaxVersion(maxVersion)
@@ -199,7 +186,7 @@ namespace catapult { namespace model {
 	// region block
 
 	/// Notifies the arrival of a block.
-	struct BlockNotification : public CloneableNotification<BlockNotification, Notification> {
+	struct BlockNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Block_Notification;
@@ -207,7 +194,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a block notification around \a signer, \a timestamp and \a difficulty.
 		explicit BlockNotification(const Key& signer, Timestamp timestamp, Difficulty difficulty)
-				: CloneableNotification(Notification_Type, sizeof(BlockNotification))
+				: Notification(Notification_Type, sizeof(BlockNotification))
 				, Signer(signer)
 				, Timestamp(timestamp)
 				, Difficulty(difficulty)
@@ -236,7 +223,7 @@ namespace catapult { namespace model {
 	// region transaction
 
 	/// Notifies the arrival of a transaction.
-	struct TransactionNotification : public CloneableNotification<TransactionNotification, Notification> {
+	struct TransactionNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Transaction_Notification;
@@ -244,7 +231,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a transaction notification around \a signer, \a transactionHash, \a transactionType and \a deadline.
 		explicit TransactionNotification(const Key& signer, const Hash256& transactionHash, EntityType transactionType, Timestamp deadline)
-				: CloneableNotification(Notification_Type, sizeof(TransactionNotification))
+				: Notification(Notification_Type, sizeof(TransactionNotification))
 				, Signer(signer)
 				, TransactionHash(transactionHash)
 				, TransactionType(transactionType)
@@ -266,7 +253,7 @@ namespace catapult { namespace model {
 	};
 
 	/// Notifies the arrival of a transaction fee.
-	struct TransactionFeeNotification : public CloneableNotification<TransactionFeeNotification, Notification> {
+	struct TransactionFeeNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Transaction_Fee_Notification;
@@ -274,7 +261,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a transaction fee notification around \a transactionSize, \a fee and \a maxFee.
 		explicit TransactionFeeNotification(uint32_t transactionSize, Amount fee, Amount maxFee)
-				: CloneableNotification(Notification_Type, sizeof(TransactionFeeNotification))
+				: Notification(Notification_Type, sizeof(TransactionFeeNotification))
 				, TransactionSize(transactionSize)
 				, Fee(fee)
 				, MaxFee(maxFee)
@@ -296,7 +283,7 @@ namespace catapult { namespace model {
 	// region signature
 
 	/// Notifies the presence of a signature.
-	struct SignatureNotification : public CloneableNotification<SignatureNotification, Notification> {
+	struct SignatureNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Signature_Notification;
@@ -304,7 +291,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a signature notification around \a signer, \a signature and \a data.
 		explicit SignatureNotification(const Key& signer, const Signature& signature, const RawBuffer& data)
-				: CloneableNotification(Notification_Type, sizeof(SignatureNotification))
+				: Notification(Notification_Type, sizeof(SignatureNotification))
 				, Signer(signer)
 				, Signature(signature)
 				, Data(data)
@@ -327,7 +314,7 @@ namespace catapult { namespace model {
 
 	/// Notifies that a source address interacts with participant addresses.
 	/// \note This notification cannot be used by an observer.
-	struct AddressInteractionNotification : public CloneableNotification<AddressInteractionNotification, Notification> {
+	struct AddressInteractionNotification : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Address_Interaction_Notification;
@@ -344,7 +331,7 @@ namespace catapult { namespace model {
 				EntityType transactionType,
 				const UnresolvedAddressSet& participantsByAddress,
 				const utils::KeySet& participantsByKey)
-				: CloneableNotification(Notification_Type, sizeof(AddressInteractionNotification))
+				: Notification(Notification_Type, sizeof(AddressInteractionNotification))
 				, Source(source)
 				, TransactionType(transactionType)
 				, ParticipantsByAddress(participantsByAddress)
@@ -370,7 +357,7 @@ namespace catapult { namespace model {
 	// region mosaic required
 
 	/// Notification of a required mosaic.
-	struct MosaicRequiredNotification : public CloneableNotification<MosaicRequiredNotification, Notification> {
+	struct MosaicRequiredNotification : public Notification {
 	public:
 		/// Mosaic types.
 		enum class MosaicType { Resolved, Unresolved };
@@ -382,7 +369,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer and \a mosaicId.
 		explicit MosaicRequiredNotification(const Key& signer, MosaicId mosaicId)
-				: CloneableNotification(Notification_Type, sizeof(MosaicRequiredNotification))
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification))
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Resolved)
@@ -390,7 +377,7 @@ namespace catapult { namespace model {
 
 		/// Creates a notification around \a signer and \a mosaicId.
 		explicit MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId)
-				: CloneableNotification(Notification_Type, sizeof(MosaicRequiredNotification))
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification))
 				, Signer(signer)
 				, UnresolvedMosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Unresolved)
@@ -415,7 +402,7 @@ namespace catapult { namespace model {
 	// region source change
 
 	/// Notification of a source change.
-	struct SourceChangeNotification : public CloneableNotification<SourceChangeNotification, Notification> {
+	struct SourceChangeNotification : public Notification {
 	public:
 		/// Source change types.
 		enum class SourceChangeType { Absolute, Relative };
@@ -427,7 +414,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a primaryId, \a secondaryId and \a changeType.
 		explicit SourceChangeNotification(uint32_t primaryId, uint32_t secondaryId, SourceChangeType changeType)
-				: CloneableNotification(Notification_Type, sizeof(SourceChangeNotification))
+				: Notification(Notification_Type, sizeof(SourceChangeNotification))
 				, PrimaryId(primaryId)
 				, SecondaryId(secondaryId)
 				, ChangeType(changeType)

@@ -26,10 +26,6 @@ namespace catapult { namespace state {
 	// Mixin for storing account reputation.
 	class ReputationMixin {
 	public:
-		// Creates a reputation mixin.
-		explicit ReputationMixin() : m_nPositiveInteractions(0), m_nNegativeInteractions(0)
-		{}
-
 		// Gets the number of positive interactions of the account.
 		Reputation positiveInteractions() const {
 			return m_nPositiveInteractions;

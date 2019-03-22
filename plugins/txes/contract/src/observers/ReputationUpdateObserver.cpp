@@ -76,7 +76,10 @@ namespace catapult { namespace observers {
 
 		AccountReputationFacade accountReputationFacade(reputationCache);
 		auto isNotificationForward = NotifyMode::Commit == context.Mode;
-		for (auto& modification : notification.Modifications) {
+		auto modificationsPtr = notification.ModificationsPtr();
+		auto count = notification.ModificationCount();
+		for (auto i = 0u; i < count; ++i) {
+			const auto& modification = **modificationsPtr;
 			const auto& key = modification.CosignatoryPublicKey;
 
 			if (model::CosignatoryModificationType::Add == modification.ModificationType) {
@@ -92,6 +95,7 @@ namespace catapult { namespace observers {
 			}
 
 			accountReputationFacade.removeIfEmpty(key);
+			++modificationsPtr;
 		}
 	});
 }}
