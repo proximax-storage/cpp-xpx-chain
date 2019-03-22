@@ -276,7 +276,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(5, notification.Modifications.size());
+		EXPECT_EQ(5, notification.ModificationCount());
 	}
 
 	PLUGIN_TEST(NoReputationUpdateNotificationIfNoModificationIsPresent) {

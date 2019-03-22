@@ -36,10 +36,10 @@ RUN git clone https://gitlab.kitware.com/cmake/cmake.git -b v3.11.1 --depth 1 \
   && cd -
 
 # boost
-RUN wget https://dl.bintray.com/boostorg/release/1.64.0/source/boost_1_64_0.tar.gz \
-  && tar xzf boost_1_64_0.tar.gz && cd boost_1_64_0 \
+RUN wget https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz \
+  && tar xzf boost_1_69_0.tar.gz && cd boost_1_69_0 \
   && ./bootstrap.sh && ./b2 toolset=gcc install --prefix=/usr/local -j4 \
-  && cd - && rm boost_1_64_0.tar.gz && rm -rf boost_1_64_0.tar.gz
+  && cd - && rm boost_1_69_0.tar.gz && rm -rf boost_1_69_0.tar.gz
 
 # gtest
 RUN git clone https://github.com/google/googletest.git -b release-1.8.0 --depth 1 \
@@ -54,7 +54,7 @@ RUN git clone https://github.com/google/benchmark.git google.benchmark.git -b v1
   && cd - && rm -rf google.benchmark.git
 
 # rocksdb
-RUN git clone https://github.com/facebook/rocksdb.git -b v5.12.4 --depth 1 \
+RUN git clone https://github.com/facebook/rocksdb.git -b 5.18.fb --depth 1 \
   && mkdir -p rocksdb/_build && cd rocksdb/_build \
   && cmake -DCMAKE_INSTALL_PREFIX=/usr/local .. && make -j4 && make install \
   && cd -
@@ -82,7 +82,7 @@ RUN git clone https://github.com/mongodb/mongo-c-driver.git mongo-c-driver.git -
 RUN git clone https://github.com/mongodb/mongo-cxx-driver.git mongo-cxx-driver.git -b r3.4.0 --depth 1 && cd mongo-cxx-driver.git \
   && sed -i 's/kvp("maxAwaitTimeMS", count)/kvp("maxAwaitTimeMS", static_cast<int64_t>(count))/' src/mongocxx/options/change_stream.cpp \
   && mkdir _build && cd _build \
-  && cmake -DLIBBSON_DIR=/usr/local -DBOOST_ROOT=~/boost-build-1.64.0 \
+  && cmake -DLIBBSON_DIR=/usr/local -DBOOST_ROOT=~/boost-build-1.69.0 \
     -DLIBMONGOC_DIR=/usr/local -DBSONCXX_POLY_USE_BOOST=1 \
     -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. \
   && make -j4 && make install \

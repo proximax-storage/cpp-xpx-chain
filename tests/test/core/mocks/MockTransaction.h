@@ -59,7 +59,7 @@ namespace catapult { namespace mocks {
 #undef DEFINE_MOCK_NOTIFICATION
 
 	/// Notifies the arrival of a hash.
-	struct HashNotification : public model::CloneableNotification<HashNotification, model::Notification> {
+	struct HashNotification : public model::Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Mock_Hash_Notification;
@@ -67,7 +67,7 @@ namespace catapult { namespace mocks {
 	public:
 		/// Creates a hash notification around \a hash.
 		explicit HashNotification(const Hash256& hash)
-				: CloneableNotification(Notification_Type, sizeof(HashNotification))
+				: model::Notification(Notification_Type, sizeof(HashNotification))
 				, Hash(hash)
 		{}
 
@@ -171,13 +171,13 @@ namespace catapult { namespace mocks {
 	bool IsPluginOptionFlagSet(PluginOptionFlags options, PluginOptionFlags flag);
 
 	/// Creates a (mock) transaction plugin with the specified \a type.
-	std::unique_ptr<model::TransactionPlugin> CreateMockTransactionPlugin(int type);
+	std::unique_ptr<model::TransactionPlugin> CreateMockTransactionPlugin(model::EntityType type);
 
 	/// Creates a (mock) transaction plugin with \a options.
 	std::unique_ptr<model::TransactionPlugin> CreateMockTransactionPlugin(PluginOptionFlags options = PluginOptionFlags::Default);
 
 	/// Creates a (mock) transaction plugin with the specified \a type and \a options.
-	std::unique_ptr<model::TransactionPlugin> CreateMockTransactionPlugin(int type, PluginOptionFlags options);
+	std::unique_ptr<model::TransactionPlugin> CreateMockTransactionPlugin(model::EntityType type, PluginOptionFlags options);
 
 	/// Creates a default transaction registry with a single registered (mock) transaction with \a options.
 	model::TransactionRegistry CreateDefaultTransactionRegistry(PluginOptionFlags options = PluginOptionFlags::Default);
