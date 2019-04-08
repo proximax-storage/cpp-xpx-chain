@@ -57,6 +57,12 @@ maxSecretLockDuration = 30d
 minProofSize = 1
 maxProofSize = 1000
 
+[plugin:catapult.plugins.metadata]
+
+maxFields = 10
+maxFieldKeySize = 128
+maxFieldValueSize = 1024
+
 [plugin:catapult.plugins.mosaic]
 
 maxMosaicsPerAccount = 10'000

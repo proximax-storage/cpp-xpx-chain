@@ -19,28 +19,22 @@
 **/
 
 #pragma once
-#include <stdint.h>
+#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
+#include "catapult/model/EntityType.h"
 
-namespace catapult { namespace cache {
+namespace catapult { namespace model {
 
-	/// Cache ids for well-known caches.
-	enum class CacheId : uint32_t {
-		AccountState,
-		BlockDifficulty,
-		Hash,
-		Namespace,
-		Metadata,
-		Mosaic,
-		Multisig,
-		HashLockInfo,
-		SecretLockInfo,
-		Property,
-		Reputation,
-		Contract,
-	};
+#endif
 
-/// Defines cache constants for a cache with \a NAME.
-#define DEFINE_CACHE_CONSTANTS(NAME) \
-	static constexpr size_t Id = utils::to_underlying_type(CacheId::NAME); \
-	static constexpr auto Name = #NAME "Cache";
+	/// Address metadata transaction.
+	DEFINE_TRANSACTION_TYPE(Metadata, Address_Metadata, 0x1);
+
+	/// Mosaic metadata transaction.
+	DEFINE_TRANSACTION_TYPE(Metadata, Mosaic_Metadata, 0x2);
+
+	/// Namespace metadata transaction.
+	DEFINE_TRANSACTION_TYPE(Metadata, Namespace_Metadata, 0x3);
+
+#ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
+#endif
