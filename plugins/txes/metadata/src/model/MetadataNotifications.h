@@ -22,14 +22,17 @@ namespace catapult { namespace model {
 	/// Metadata type.
 	DEFINE_METADATA_NOTIFICATION(Field_Modification, 0x0002, Validator);
 
+	/// Metadata modifications.
+	DEFINE_METADATA_NOTIFICATION(Modifications, 0x0003, Validator);
+
 	/// Address metadata modification.
-	DEFINE_METADATA_NOTIFICATION(Address_Modification, 0x0010, All);
+	DEFINE_METADATA_NOTIFICATION(Address_Modification, 0x0010, Observer);
 
 	/// Mosaic metadata modification.
-	DEFINE_METADATA_NOTIFICATION(Mosaic_Modification, 0x0011, All);
+	DEFINE_METADATA_NOTIFICATION(Mosaic_Modification, 0x0011, Observer);
 
 	/// Namespace metadata modification.
-	DEFINE_METADATA_NOTIFICATION(Namespace_Modification, 0x0012, All);
+	DEFINE_METADATA_NOTIFICATION(Namespace_Modification, 0x0012, Observer);
 
 	/// Address metadata modifications.
 	DEFINE_METADATA_NOTIFICATION(Address_Modifications, 0x0020, Validator);
@@ -60,6 +63,28 @@ namespace catapult { namespace model {
 	public:
 		/// Metadata type.
 		model::MetadataType MetadataType;
+	};
+
+	/// Notification of a metadata modifications.
+	struct MetadataModificationsNotification : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Metadata_Modifications_Notification;
+
+	public:
+		/// Creates a notification around \a metadataType.
+		explicit MetadataModificationsNotification(const Hash256& metadataId, const std::vector<const model::MetadataModification*>& modifications)
+				: Notification(Notification_Type, sizeof(MetadataModificationsNotification))
+				, MetadataId(metadataId)
+				, Modifications(modifications)
+		{}
+
+	public:
+		/// Metadata id.
+		Hash256 MetadataId;
+
+		/// Metadata modifications.
+		std::vector<const model::MetadataModification*> Modifications;
 	};
 
 	/// Notification of a metadata field modification.
@@ -168,12 +193,17 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a metadataId.
 		explicit ModifyMetadataNotification(
+				const Key& signer,
 				const TMetadataId& metadataId)
 				: Notification(Notification_Type, sizeof(ModifyMetadataNotification))
+				, Signer(signer)
 				, MetadataId(metadataId)
 		{}
 
 	public:
+		/// Metadata's signer.
+		Key Signer;
+
 		/// Metadata's id.
 		TMetadataId MetadataId;
 	};

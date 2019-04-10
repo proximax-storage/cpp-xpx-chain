@@ -15,6 +15,10 @@ namespace catapult { namespace state {
 	// Metadata entry.
 	class MetadataEntry {
 	public:
+		// Creates a empty metadata.
+		explicit MetadataEntry()
+		{}
+
 		// Creates a metadata entry around \a metadataId.
 		explicit MetadataEntry(const std::vector<uint8_t>& buffer, model::MetadataType type)
 				: m_metadataId(GetHash(buffer, type))

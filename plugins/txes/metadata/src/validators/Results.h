@@ -27,6 +27,36 @@ namespace catapult { namespace validators {
 	/// Validation failed because a modification type is invalid.
 	DEFINE_METADATA_RESULT(Modification_Value_Invalid, 4);
 
+	/// Validation failed because a modifications contains modification with the same key.
+	DEFINE_METADATA_RESULT(Modification_Key_Redundant, 10);
+
+	/// Validation failed because a modifications contains modification with the same key and value.
+	DEFINE_METADATA_RESULT(Modification_Value_Redundant, 11);
+
+	/// Validation failed because a modification remove not existing key.
+	DEFINE_METADATA_RESULT(Remove_Not_Existing_Key, 12);
+
+	/// Validation failed because a modification of address is not permitted.
+	DEFINE_METADATA_RESULT(Address_Modification_Not_Permitted, 16);
+
+	/// Validation failed because a modification of mosaic is not permitted.
+	DEFINE_METADATA_RESULT(Mosaic_Modification_Not_Permitted, 17);
+
+	/// Validation failed because a modification of namespace is not permitted.
+	DEFINE_METADATA_RESULT(Namespace_Modification_Not_Permitted, 18);
+
+	/// Validation failed because address is not exist.
+	DEFINE_METADATA_RESULT(Address_Is_Not_Exist, 21);
+
+	/// Validation failed because mosaic is not exist.
+	DEFINE_METADATA_RESULT(Mosaic_Is_Not_Exist, 22);
+
+	/// Validation failed because namespace is not exist.
+	DEFINE_METADATA_RESULT(Namespace_Is_Not_Exist, 23);
+
+	/// Validation failed because metadata contains to much keys.
+	DEFINE_METADATA_RESULT(Too_Much_Keys, 30);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

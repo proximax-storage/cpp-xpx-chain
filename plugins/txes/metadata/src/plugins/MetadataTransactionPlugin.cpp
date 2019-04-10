@@ -12,6 +12,7 @@
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/utils/UnresolvedAddress.h"
+#include "src/state/MetadataUtils.h"
 
 using namespace catapult::model;
 
@@ -19,22 +20,16 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		struct AddressTraits {
-			using UnresolvedValueType = UnresolvedAddress;
-			using ResolvedValueType = Address;
 			using ModifyMetadataNotification = ModifyAddressMetadataNotification;
 			using ModifyMetadataValueNotification = ModifyAddressMetadataValueNotification;
 		};
 
 		struct MosaicTraits {
-			using UnresolvedValueType = UnresolvedMosaicId;
-			using ResolvedValueType = MosaicId;
 			using ModifyMetadataNotification = ModifyMosaicMetadataNotification ;
 			using ModifyMetadataValueNotification = ModifyMosaicMetadataValueNotification;
 		};
 
 		struct NamespaceTraits {
-			using UnresolvedValueType = NamespaceId;
-			using ResolvedValueType = NamespaceId;
 			using ModifyMetadataNotification = ModifyNamespaceMetadataNotification ;
 			using ModifyMetadataValueNotification = ModifyNamespaceMetadataValueNotification;
 		};
@@ -46,6 +41,15 @@ namespace catapult { namespace plugins {
 			static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
 				sub.notify(MetadataTypeNotification(transaction.MetadataType));
 				sub.notify(CreateMetadataModificationsNotification<TTransaction>(transaction));
+
+				std::vector<const model::MetadataModification*> modifications;
+
+				for (const auto& modification : transaction.Transactions())
+					modifications.emplace_back(&modification);
+
+				sub.notify(MetadataModificationsNotification(
+						state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
+						modifications));
 
 				for (const auto& modification : transaction.Transactions()) {
 					sub.notify(ModifyMetadataFieldNotification(
@@ -64,7 +68,7 @@ namespace catapult { namespace plugins {
 		private:
 			template<typename TTransaction>
 			static auto CreateMetadataModificationsNotification(const TTransaction& transaction) {
-				return typename TTraits::ModifyMetadataNotification(transaction.MetadataId);
+				return typename TTraits::ModifyMetadataNotification(transaction.Signer, transaction.MetadataId);
 			}
 		};
 	}

@@ -35,33 +35,20 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addStatelessValidatorHook([&config](auto& builder) {
+		manager.addStatelessValidatorHook([config](auto& builder) {
 			builder
+				.add(validators::CreateMetadataTypeValidator())
 				.add(validators::CreateMetadataFieldModificationValidator(config.MaxFieldKeySize, config.MaxFieldValueSize));
-//				.add(validators::CreatePropertyAddressNoSelfModificationValidator(networkIdentifier))
-//				.add(validators::CreateMosaicPropertyModificationTypesValidator())
-//				.add(validators::CreateTransactionTypePropertyModificationTypesValidator())
-//				.add(validators::CreateTransactionTypePropertyModificationValuesValidator());
 		});
-//
-//		auto config = model::LoadPluginConfiguration<config::PropertyConfiguration>(manager.config(), "catapult.plugins.property");
-//		manager.addStatefulValidatorHook([maxPropertyValues = config.MaxPropertyValues](auto& builder) {
-//			builder
-//				.add(validators::CreateAddressPropertyRedundantModificationValidator())
-//				.add(validators::CreateAddressPropertyValueModificationValidator())
-//				.add(validators::CreateMaxAddressPropertyValuesValidator(maxPropertyValues))
-//				.add(validators::CreateAddressInteractionValidator())
-//				.add(validators::CreateMosaicPropertyRedundantModificationValidator())
-//				.add(validators::CreateMosaicPropertyValueModificationValidator())
-//				.add(validators::CreateMaxMosaicPropertyValuesValidator(maxPropertyValues))
-//				.add(validators::CreateMosaicRecipientValidator())
-//				.add(validators::CreateTransactionTypePropertyRedundantModificationValidator())
-//				.add(validators::CreateTransactionTypePropertyValueModificationValidator())
-//				.add(validators::CreateMaxTransactionTypePropertyValuesValidator(maxPropertyValues))
-//				.add(validators::CreateTransactionTypeValidator())
-//				.add(validators::CreateTransactionTypeNoSelfBlockingValidator());
-//		});
-//
+
+		manager.addStatefulValidatorHook([config](auto& builder) {
+			builder
+				.add(validators::CreateModifyAddressMetadataValidator())
+				.add(validators::CreateModifyMosaicMetadataValidator())
+				.add(validators::CreateModifyNamespaceMetadataValidator())
+				.add(validators::CreateMetadataModificationsValidator(config.MaxFields));
+		});
+
 		manager.addObserverHook([](auto& builder) {
 			builder
 				.add(observers::CreateAddressMetadataValueModificationObserver())
