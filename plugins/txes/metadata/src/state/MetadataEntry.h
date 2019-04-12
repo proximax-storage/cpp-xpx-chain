@@ -16,7 +16,7 @@ namespace catapult { namespace state {
 	class MetadataEntry {
 	public:
 		// Creates a empty metadata.
-		explicit MetadataEntry()
+		explicit MetadataEntry() : m_type(model::MetadataType{0})
 		{}
 
 		// Creates a metadata entry around \a metadataId.
@@ -32,8 +32,7 @@ namespace catapult { namespace state {
 			return m_metadataId;
 		}
 
-	public:
-		/// Gets the fields.
+		/// Gets the fields as const.
 		const std::vector<MetadataField>& fields() const {
 			return m_fields;
 		}
@@ -48,14 +47,14 @@ namespace catapult { namespace state {
 			return m_type;
 		}
 
-		/// Gets the raw of metadata.
+		/// Gets the metadata as bytes.
 		const std::vector<uint8_t>& raw() const {
 			return m_raw;
 		}
 
 	private:
 		Hash256 m_metadataId;
-		/// Raw is byted version of MosaicId, NamespaceId and etc.
+		/// Raw is bytes of MosaicId, NamespaceId and etc.
 		std::vector<uint8_t> m_raw;
 		model::MetadataType m_type;
 		std::vector<MetadataField> m_fields;
