@@ -20,6 +20,7 @@ namespace catapult { namespace cache {
 
 	public:
 		using Size = PrimaryMixins::Size;
+		using Contains = PrimaryMixins::Contains;
 		using Iteration = PrimaryMixins::Iteration;
 		using ConstAccessor = PrimaryMixins::ConstAccessor;
 		using PatriciaTreeView = PrimaryMixins::PatriciaTreeView;
@@ -29,6 +30,7 @@ namespace catapult { namespace cache {
 	class BasicMetadataCacheView
 			: public utils::MoveOnly
 			, public MetadataCacheViewMixins::Size
+			, public MetadataCacheViewMixins::Contains
 			, public MetadataCacheViewMixins::Iteration
 			, public MetadataCacheViewMixins::ConstAccessor
 			, public MetadataCacheViewMixins::PatriciaTreeView {
@@ -39,6 +41,7 @@ namespace catapult { namespace cache {
 		/// Creates a view around \a metadataSets.
 		BasicMetadataCacheView(const MetadataCacheTypes::BaseSets& metadataSets)
 				: MetadataCacheViewMixins::Size(metadataSets.Primary)
+				, MetadataCacheViewMixins::Contains(metadataSets.Primary)
 				, MetadataCacheViewMixins::Iteration(metadataSets.Primary)
 				, MetadataCacheViewMixins::ConstAccessor(metadataSets.Primary)
 				, MetadataCacheViewMixins::PatriciaTreeView(metadataSets.PatriciaTree.get())

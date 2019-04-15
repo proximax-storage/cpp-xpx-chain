@@ -19,5 +19,11 @@ namespace catapult { namespace state {
 
 		/// If RemoveHeight is zero it means that field is not removed
 		Height RemoveHeight;
+
+	public:
+		/// Returns \c true if this time span is equal to \a rhs.
+		bool operator==(const MetadataField& rhs) const {
+			return MetadataKey == rhs.MetadataKey && MetadataValue == rhs.MetadataValue && RemoveHeight == rhs.RemoveHeight;
+		}
 	};
 }}

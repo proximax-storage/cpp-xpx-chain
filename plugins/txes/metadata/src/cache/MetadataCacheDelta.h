@@ -21,6 +21,7 @@ namespace catapult { namespace cache {
 
 	public:
 		using Size = PrimaryMixins::Size;
+		using Contains = PrimaryMixins::Contains;
 		using PatriciaTreeDelta = PrimaryMixins::PatriciaTreeDelta;
 		using MutableAccessor = PrimaryMixins::ConstAccessor;
 		using ConstAccessor = PrimaryMixins::MutableAccessor;
@@ -31,6 +32,7 @@ namespace catapult { namespace cache {
 	class BasicMetadataCacheDelta
 			: public utils::MoveOnly
 			, public MetadataCacheDeltaMixins::Size
+			, public MetadataCacheDeltaMixins::Contains
 			, public MetadataCacheDeltaMixins::PatriciaTreeDelta
 			, public MetadataCacheDeltaMixins::ConstAccessor
 			, public MetadataCacheDeltaMixins::MutableAccessor
