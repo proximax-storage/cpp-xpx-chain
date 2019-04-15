@@ -70,10 +70,11 @@ namespace catapult { namespace model {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Metadata_Modifications_Notification;
+		using MetadataModifications = std::vector<const model::MetadataModification*>;
 
 	public:
 		/// Creates a notification around \a metadataType.
-		explicit MetadataModificationsNotification(const Hash256& metadataId, const std::vector<const model::MetadataModification*>& modifications)
+		explicit MetadataModificationsNotification(const Hash256& metadataId, const MetadataModifications& modifications)
 				: Notification(Notification_Type, sizeof(MetadataModificationsNotification))
 				, MetadataId(metadataId)
 				, Modifications(modifications)
@@ -84,7 +85,7 @@ namespace catapult { namespace model {
 		Hash256 MetadataId;
 
 		/// Metadata modifications.
-		std::vector<const model::MetadataModification*> Modifications;
+		MetadataModifications Modifications;
 	};
 
 	/// Notification of a metadata field modification.

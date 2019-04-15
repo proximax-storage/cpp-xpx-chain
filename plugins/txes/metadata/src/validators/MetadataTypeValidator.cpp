@@ -11,6 +11,7 @@ namespace catapult { namespace validators {
 	using Notification = model::MetadataTypeNotification;
 
 	DEFINE_STATELESS_VALIDATOR(MetadataType, [](const auto& notification) {
-		return notification.MetadataType <= model::MetadataType::NamespaceId? ValidationResult::Success : Failure_Metadata_Invalid_Metadata_Type;
+		return model::MetadataType::Address <= notification.MetadataType && notification.MetadataType <= model::MetadataType::NamespaceId?
+			ValidationResult::Success : Failure_Metadata_Invalid_Metadata_Type;
 	});
 }}

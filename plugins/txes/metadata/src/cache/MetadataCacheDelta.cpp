@@ -13,6 +13,7 @@ namespace catapult { namespace cache {
 
 	BasicMetadataCacheDelta::BasicMetadataCacheDelta(const MetadataCacheTypes::BaseSetDeltaPointers& metadataSets)
 			: MetadataCacheDeltaMixins::Size(*metadataSets.pPrimary)
+			, MetadataCacheDeltaMixins::Contains(*metadataSets.pPrimary)
 			, MetadataCacheDeltaMixins::PatriciaTreeDelta(*metadataSets.pPrimary, metadataSets.pPatriciaTree)
 			, MetadataCacheDeltaMixins::ConstAccessor(*metadataSets.pPrimary)
 			, MetadataCacheDeltaMixins::MutableAccessor(*metadataSets.pPrimary)

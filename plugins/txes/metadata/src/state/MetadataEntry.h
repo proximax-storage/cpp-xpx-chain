@@ -19,6 +19,12 @@ namespace catapult { namespace state {
 		explicit MetadataEntry() : m_type(model::MetadataType{0})
 		{}
 
+		// Test only constructor, creates a metadata entry around \a metadataId.
+		explicit MetadataEntry(const Hash256& hash)
+				: m_metadataId(hash)
+				, m_type(model::MetadataType{0})
+		{}
+
 		// Creates a metadata entry around \a metadataId.
 		explicit MetadataEntry(const std::vector<uint8_t>& buffer, model::MetadataType type)
 				: m_metadataId(GetHash(buffer, type))
