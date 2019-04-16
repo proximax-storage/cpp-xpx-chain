@@ -47,9 +47,10 @@ namespace catapult { namespace plugins {
 				for (const auto& modification : transaction.Transactions())
 					modifications.emplace_back(&modification);
 
-				sub.notify(MetadataModificationsNotification(
-						state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
-						modifications));
+				if (!modifications.empty())
+                    sub.notify(MetadataModificationsNotification(
+                            state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
+                            modifications));
 
 				for (const auto& modification : transaction.Transactions()) {
 					sub.notify(ModifyMetadataFieldNotification(

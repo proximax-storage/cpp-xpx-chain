@@ -9,6 +9,7 @@
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/core/TransactionContainerTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
+#include "tests/test/MetadataTestUtils.h"
 
 namespace catapult { namespace model {
 
@@ -43,41 +44,6 @@ namespace catapult { namespace model {
 
     // endregion
 
-    // region test utils
-
-    namespace {
-        std::unique_ptr<MetadataModification> CreateModification(
-                MetadataModificationType type, uint8_t keySize, uint16_t valueSize) {
-            uint32_t entitySize = sizeof(MetadataModification) + keySize + valueSize;
-            auto pModification = utils::MakeUniqueWithSize<MetadataModification>(entitySize);
-            pModification->Size = entitySize;
-            pModification->ModificationType = type;
-            pModification->KeySize = keySize;
-            pModification->ValueSize = valueSize;
-
-            return pModification;
-        }
-
-        std::unique_ptr<TransactionType> CreateTransaction(std::initializer_list<MetadataModification*> modifications) {
-            uint32_t entitySize = sizeof(TransactionType);
-            for (auto pModification : modifications) {
-                entitySize += pModification->Size;
-            }
-            auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
-            pTransaction->Size = entitySize;
-
-            auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
-            for (auto pModification : modifications) {
-                memcpy(pData, pModification, pModification->Size);
-                pData += pModification->Size;
-            }
-
-            return pTransaction;
-        }
-    }
-
-    // endregion
-
     // region transactions
 
     namespace {
@@ -93,7 +59,7 @@ namespace catapult { namespace model {
 
     DATA_POINTER_TEST(ModificationsAreInaccessibleWhenTransactionHasNoModifications) {
         // Arrange:
-        auto pTransaction = CreateTransaction({});
+        auto pTransaction = test::CreateTransaction<TransactionType>({});
         auto& accessor = TTraits::GetAccessor(*pTransaction);
 
         // Act + Assert:
@@ -103,7 +69,7 @@ namespace catapult { namespace model {
 
     DATA_POINTER_TEST(ModificationsAreInacessibleIfReportedSizeIsLessThanHeaderSize) {
         // Arrange:
-        auto pTransaction = CreateTransaction({});
+        auto pTransaction = test::CreateTransaction<TransactionType>({});
         --pTransaction->Size;
         auto& accessor = TTraits::GetAccessor(*pTransaction);
 
@@ -113,10 +79,10 @@ namespace catapult { namespace model {
 
     DATA_POINTER_TEST(ModificationsAreAccessibleWhenTransactionHasModifications) {
         // Arrange:
-        auto pTransaction = CreateTransaction({
-            CreateModification(MetadataModificationType::Add, 1, 2).get(),
-            CreateModification(MetadataModificationType::Del, 3, 4).get(),
-            CreateModification(MetadataModificationType::Add, 5, 6).get()
+        auto pTransaction = test::CreateTransaction<TransactionType>({
+            test::CreateModification(MetadataModificationType::Add, 1, 2).get(),
+            test::CreateModification(MetadataModificationType::Del, 3, 4).get(),
+            test::CreateModification(MetadataModificationType::Add, 5, 6).get()
         });
         const auto* pTransactionEnd = test::AsVoidPointer(pTransaction.get() + 1);
         auto& accessor = TTraits::GetAccessor(*pTransaction);
@@ -149,12 +115,12 @@ namespace catapult { namespace model {
 
     TEST(TEST_CLASS, CalculateRealSizeWithWrongModificationSize) {
         // Arrange:
-        auto pInvalidModification = CreateModification(MetadataModificationType::Add, 1, 2);
+        auto pInvalidModification = test::CreateModification(MetadataModificationType::Add, 1, 2);
         pInvalidModification->Size--;
-        auto pTransaction = CreateTransaction({
+        auto pTransaction = test::CreateTransaction<TransactionType>({
             pInvalidModification.get(),
-            CreateModification(MetadataModificationType::Del, 3, 4).get(),
-            CreateModification(MetadataModificationType::Add, 5, 6).get()
+            test::CreateModification(MetadataModificationType::Del, 3, 4).get(),
+            test::CreateModification(MetadataModificationType::Add, 5, 6).get()
         });
 
         // Act:
@@ -166,10 +132,10 @@ namespace catapult { namespace model {
 
     TEST(TEST_CLASS, CalculateRealSizeWithValidModificationSizes) {
         // Arrange:
-        auto pTransaction = CreateTransaction({
-            CreateModification(MetadataModificationType::Add, 1, 2).get(),
-            CreateModification(MetadataModificationType::Del, 3, 4).get(),
-            CreateModification(MetadataModificationType::Add, 5, 6).get()
+        auto pTransaction = test::CreateTransaction<TransactionType>({
+            test::CreateModification(MetadataModificationType::Add, 1, 2).get(),
+            test::CreateModification(MetadataModificationType::Del, 3, 4).get(),
+            test::CreateModification(MetadataModificationType::Add, 5, 6).get()
         });
 
         // Act:

@@ -94,7 +94,6 @@ namespace catapult { namespace model {
 					: m_pStart(pStart)
 					, m_pCurrent(pCurrent ? pCurrent : Advance(m_pStart, state.Size))
 					, m_state(state) {
-				CATAPULT_LOG(info) << "Calling checkError() from constructor";
 				checkError();
 			}
 
@@ -119,7 +118,6 @@ namespace catapult { namespace model {
 				if (isEnd(m_pCurrent))
 					return *this;
 
-				CATAPULT_LOG(info) << "Calling checkError() from increment method";
 				checkError();
 				return *this;
 			}
