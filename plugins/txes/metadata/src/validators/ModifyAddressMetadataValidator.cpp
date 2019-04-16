@@ -19,20 +19,29 @@ namespace catapult { namespace validators {
 			std::memcpy(dest.data(), address.data(), address.size());
 			return dest;
 		}
+		namespace {
+			ValidationResult validate(const Notification& notification, const ValidatorContext& context) {
+				auto address = model::PublicKeyToAddress(notification.Signer, context.Network.Identifier);
+
+				if (address != CopyToAddress(notification.MetadataId))
+					return Failure_Metadata_Address_Modification_Not_Permitted;
+
+				const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+				auto it = accountStateCache.find(notification.Signer);
+
+				if (!it.tryGet()) {
+					auto it = accountStateCache.find(address);
+
+					if (!it.tryGet())
+						return Failure_Metadata_Address_Is_Not_Exist;
+				}
+
+				return ValidationResult::Success;
+			}
+		}
 	}
 
 	DEFINE_STATEFUL_VALIDATOR(ModifyAddressMetadata, [](const auto& notification, const ValidatorContext& context) {
-		auto address = model::PublicKeyToAddress(notification.Signer, context.Network.Identifier);
-
-		if (address != CopyToAddress(notification.MetadataId))
-			return Failure_Metadata_Address_Modification_Not_Permitted;
-
-		const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-		auto it = accountStateCache.find(notification.Signer);
-
-		if (!it.tryGet())
-			return Failure_Metadata_Address_Is_Not_Exist;
-
-		return ValidationResult::Success;
+		return validate(notification, context);
 	});
 }}
