@@ -24,7 +24,7 @@ namespace catapult { namespace plugins {
 		auto config = model::LoadPluginConfiguration<config::MetadataConfiguration>(manager.config(), "catapult.plugins.metadata");
 
 		manager.addCacheSupport<cache::MetadataCacheStorage>(
-				std::make_unique<cache::MetadataCache>(manager.cacheConfig(cache::MetadataCache::Name)));
+			std::make_unique<cache::MetadataCache>(manager.cacheConfig(cache::MetadataCache::Name)));
 
 		using CacheHandlers = CacheHandlers<cache::MetadataCacheDescriptor>;
 		CacheHandlers::Register<model::FacilityCode::Metadata>(manager);
@@ -59,7 +59,7 @@ namespace catapult { namespace plugins {
 		auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
 		manager.addObserverHook([maxRollbackBlocks](auto& builder) {
 			builder
-					.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1, maxRollbackBlocks));
+				.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1, maxRollbackBlocks));
 		});
 	}
 }}
