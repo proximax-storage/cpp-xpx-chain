@@ -34,6 +34,7 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(Core),
 		COPY_FACILITY_CODE(LockHash),
 		COPY_FACILITY_CODE(LockSecret),
+		COPY_FACILITY_CODE(Metadata),
 		COPY_FACILITY_CODE(Mosaic),
 		COPY_FACILITY_CODE(Multisig),
 		COPY_FACILITY_CODE(Namespace),

@@ -13,6 +13,7 @@ make \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
+    catapult.mongo.plugins.metadata \
     catapult.mongo.plugins.mosaic \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
@@ -25,6 +26,7 @@ make \
     catapult.plugins.hashcache.cache \
     catapult.plugins.lockhash \
     catapult.plugins.locksecret \
+    catapult.plugins.metadata \
     catapult.plugins.mosaic \
     catapult.plugins.multisig \
     catapult.plugins.namespace \

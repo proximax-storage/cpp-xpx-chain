@@ -37,6 +37,8 @@ namespace catapult { namespace model {
 		LockHash = 0x48,
 		/// Lock secret facility code.
 		LockSecret = 0x52,
+		/// Metadata facility code.
+		Metadata = 0x3D,
 		/// Mosaic facility code.
 		Mosaic = 0x4D,
 		/// Multisig facility code.

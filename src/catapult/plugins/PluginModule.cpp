@@ -86,8 +86,10 @@ namespace catapult { namespace plugins {
 			CatapultUnload(pModule);
 		});
 
-		if (!m_pModule)
+		if (!m_pModule) {
+			CATAPULT_LOG(error) << "dlopen failed: " << dlerror();
 			CATAPULT_THROW_INVALID_ARGUMENT_1("unable to find plugin", pluginPath);
+		}
 
 		CATAPULT_LOG(debug) << "plugin " << pluginPath << " loaded as " << m_pModule.get();
 	}
