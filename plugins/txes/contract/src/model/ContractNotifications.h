@@ -93,7 +93,7 @@ namespace catapult { namespace model {
 	// region contract notification types
 
 	/// Defines a contract notification type.
-	DEFINE_NOTIFICATION_TYPE(Observer, Contract, Modify, 0x0002);
+	DEFINE_NOTIFICATION_TYPE(All, Contract, Modify, 0x0002);
 
 	// endregion
 

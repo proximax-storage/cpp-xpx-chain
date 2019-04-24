@@ -61,9 +61,10 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addStatelessValidatorHook([](auto& builder) {
-			builder.add(validators::CreateModifyContractCustomersValidator());
-			builder.add(validators::CreateModifyContractExecutorsValidator());
-			builder.add(validators::CreateModifyContractVerifiersValidator());
+			builder
+					.add(validators::CreateModifyContractCustomersValidator())
+					.add(validators::CreateModifyContractExecutorsValidator())
+					.add(validators::CreateModifyContractVerifiersValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
