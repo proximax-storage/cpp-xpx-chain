@@ -32,7 +32,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			context
 					<< bson_stream::open_document
 					<< "type" << utils::to_underlying_type(type)
-					<< "publicKey" << ToBinary(key)
+					<< "cosignatoryPublicKey" << ToBinary(key)
 					<< bson_stream::close_document;
 		}
 
@@ -53,11 +53,10 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamContractTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder
 				<< "durationDelta" << transaction.DurationDelta
-				<< "multisig" << ToBinary(transaction.Signer)
 				<< "hash" << ToBinary(transaction.Hash);
-		StreamModifications(builder, transaction.CustomerModificationsPtr(), transaction.CustomerModificationCount, "customerModifications");
-		StreamModifications(builder, transaction.ExecutorModificationsPtr(), transaction.ExecutorModificationCount, "executorModifications");
-		StreamModifications(builder, transaction.VerifierModificationsPtr(), transaction.VerifierModificationCount, "verifierModifications");
+		StreamModifications(builder, transaction.CustomerModificationsPtr(), transaction.CustomerModificationCount, "customers");
+		StreamModifications(builder, transaction.ExecutorModificationsPtr(), transaction.ExecutorModificationCount, "executors");
+		StreamModifications(builder, transaction.VerifierModificationsPtr(), transaction.VerifierModificationCount, "verifiers");
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(ModifyContract, StreamContractTransaction)

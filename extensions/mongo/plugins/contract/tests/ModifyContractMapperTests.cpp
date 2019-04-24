@@ -38,17 +38,17 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		auto CreateModifyContractTransactionBuilder(
 				const Key& signer,
-				std::initializer_list<model::CosignatoryModification> customerModifications,
-				std::initializer_list<model::CosignatoryModification> executorModifications,
-				std::initializer_list<model::CosignatoryModification> verifierModifications) {
+				std::initializer_list<model::CosignatoryModification> customers,
+				std::initializer_list<model::CosignatoryModification> executors,
+				std::initializer_list<model::CosignatoryModification> verifiers) {
 			builders::ModifyContractBuilder builder(model::NetworkIdentifier::Mijin_Test, signer);
 			builder.setDurationDelta(100);
 			builder.setHash(test::GenerateRandomData<Hash256_Size>());
-			for (const auto& modification : customerModifications)
+			for (const auto& modification : customers)
 				builder.addCustomerModification(modification.ModificationType, modification.CosignatoryPublicKey);
-			for (const auto& modification : executorModifications)
+			for (const auto& modification : executors)
 				builder.addExecutorModification(modification.ModificationType, modification.CosignatoryPublicKey);
-			for (const auto& modification : verifierModifications)
+			for (const auto& modification : verifiers)
 				builder.addVerifierModification(modification.ModificationType, modification.CosignatoryPublicKey);
 
 			return builder;
@@ -64,32 +64,31 @@ namespace catapult { namespace mongo { namespace plugins {
 				EXPECT_EQ(
 						pModification->ModificationType,
 						static_cast<ModificationType>(test::GetUint32(iter->get_document().view(), "type")));
-				EXPECT_EQ(pModification->CosignatoryPublicKey, test::GetKeyValue(iter->get_document().view(), "publicKey"));
+				EXPECT_EQ(pModification->CosignatoryPublicKey, test::GetKeyValue(iter->get_document().view(), "cosignatoryPublicKey"));
 			}
 		}
 
 		template<typename TTransaction>
 		void AssertEqualNonInheritedTransferData(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
 			EXPECT_EQ(transaction.DurationDelta, test::GetInt64(dbTransaction, "durationDelta"));
-			EXPECT_EQ(transaction.Signer, test::GetKeyValue(dbTransaction, "multisig"));
 			EXPECT_EQ(transaction.Hash, test::GetHashValue(dbTransaction, "hash"));
 
-			AssertEqualModifications(dbTransaction["customerModifications"].get_array().value,
+			AssertEqualModifications(dbTransaction["customers"].get_array().value,
 					transaction.CustomerModificationCount, transaction.CustomerModificationsPtr());
-			AssertEqualModifications(dbTransaction["executorModifications"].get_array().value,
+			AssertEqualModifications(dbTransaction["executors"].get_array().value,
 					transaction.ExecutorModificationCount, transaction.ExecutorModificationsPtr());
-			AssertEqualModifications(dbTransaction["verifierModifications"].get_array().value,
+			AssertEqualModifications(dbTransaction["verifiers"].get_array().value,
 					transaction.VerifierModificationCount, transaction.VerifierModificationsPtr());
 		}
 
 		template<typename TTraits>
 		void AssertCanMapModifyContractTransaction(
-				std::initializer_list<model::CosignatoryModification> customerModifications,
-				std::initializer_list<model::CosignatoryModification> executorModifications,
-				std::initializer_list<model::CosignatoryModification> verifierModifications) {
+				std::initializer_list<model::CosignatoryModification> customers,
+				std::initializer_list<model::CosignatoryModification> executors,
+				std::initializer_list<model::CosignatoryModification> verifiers) {
 			// Arrange:
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto pBuilder = CreateModifyContractTransactionBuilder(signer, customerModifications, executorModifications, verifierModifications);
+			auto pBuilder = CreateModifyContractTransactionBuilder(signer, customers, executors, verifiers);
 			auto pTransaction = TTraits::Adapt(pBuilder);
 			auto pPlugin = TTraits::CreatePlugin();
 
