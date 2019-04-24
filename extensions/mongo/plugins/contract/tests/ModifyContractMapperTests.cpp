@@ -98,7 +98,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto view = builder.view();
 
 			// Assert:
-			EXPECT_EQ(6u, test::GetFieldCount(view));
+			EXPECT_EQ(5u, test::GetFieldCount(view));
 			AssertEqualNonInheritedTransferData(*pTransaction, view);
 		}
 	}
