@@ -29,19 +29,19 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CanMakeVersionFromNetworkIdentifierAndEntityVersion) {
 		// Assert:
-		EXPECT_EQ(0x0000u, MakeVersion(NetworkIdentifier::Zero, 0)); // zero version
-		EXPECT_EQ(0x9002u, MakeVersion(NetworkIdentifier::Mijin_Test, 2)); // non zero version
-		EXPECT_EQ(0xB802u, MakeVersion(NetworkIdentifier::Public, 2)); // vary network
-		EXPECT_EQ(0x9054u, MakeVersion(NetworkIdentifier::Mijin_Test, 0x54)); // vary version
+		EXPECT_EQ(0x00000000u, MakeVersion(NetworkIdentifier::Zero, 0)); // zero version
+		EXPECT_EQ(0x90000002u, MakeVersion(NetworkIdentifier::Mijin_Test, 2)); // non zero version
+		EXPECT_EQ(0xB8000002u, MakeVersion(NetworkIdentifier::Public, 2)); // vary network
+		EXPECT_EQ(0x90000054u, MakeVersion(NetworkIdentifier::Mijin_Test, 0x54)); // vary version
 
-		EXPECT_EQ(0xFF54u, MakeVersion(static_cast<NetworkIdentifier>(0xFF), 0x54)); // max network
-		EXPECT_EQ(0x90FFu, MakeVersion(NetworkIdentifier::Mijin_Test, 0xFF)); // max version
+		EXPECT_EQ(0xFF000054u, MakeVersion(static_cast<NetworkIdentifier>(0xFF), 0x54)); // max network
+		EXPECT_EQ(0x900000FFu, MakeVersion(NetworkIdentifier::Mijin_Test, 0xFF)); // max version
 	}
 
 	namespace {
 		struct EmptyHeader {};
 
-		void AssertNetwork(uint16_t version, uint8_t expectedNetwork) {
+		void AssertNetwork(uint32_t version, uint8_t expectedNetwork) {
 			// Act:
 			EntityBody<EmptyHeader> entity;
 			entity.Version = version;
@@ -50,7 +50,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(static_cast<NetworkIdentifier>(expectedNetwork), entity.Network());
 		}
 
-		void AssertEntityVersion(uint16_t version, uint8_t expectedEntityVersion) {
+		void AssertEntityVersion(uint32_t version, uint32_t expectedEntityVersion) {
 			// Act:
 			EntityBody<EmptyHeader> entity;
 			entity.Version = version;
@@ -62,16 +62,16 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, NetworkReturnsNetworkPartOfVersion) {
 		// Assert:
-		AssertNetwork(0x0000, 0x00);
-		AssertNetwork(0x9002, 0x90);
-		AssertNetwork(0xFF54, 0xFF);
+		AssertNetwork(0x00000000, 0x00);
+		AssertNetwork(0x90000002, 0x90);
+		AssertNetwork(0xFF000054, 0xFF);
 	}
 
 	TEST(TEST_CLASS, EntityVersionReturnsEntityVersionPartOfVersion) {
 		// Assert:
-		AssertEntityVersion(0x0000, 0x00);
-		AssertEntityVersion(0x9002, 0x02);
-		AssertEntityVersion(0x90FF, 0xFF);
+		AssertEntityVersion(0x00000000, 0x00);
+		AssertEntityVersion(0x90000002, 0x02);
+		AssertEntityVersion(0x900000FF, 0xFF);
 	}
 
 	// endregion

@@ -41,7 +41,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(MosaicLevyChangeTransaction));
-		EXPECT_EQ(120u + 47u, sizeof(MosaicLevyChangeTransaction));
+		EXPECT_EQ(122u + 47u, sizeof(MosaicLevyChangeTransaction));
 	}
 
 	TEST(TEST_CLASS, TransactionHasExpectedProperties) {

@@ -113,7 +113,7 @@ namespace catapult { namespace builders {
 			// Assert:
 			TTraits::CheckFields(0, *pTransaction);
 			EXPECT_EQ(signer, pTransaction->Signer);
-			EXPECT_EQ(0x6201, pTransaction->Version);
+			EXPECT_EQ(0x62000001, pTransaction->Version);
 			EXPECT_EQ(TAliasTraits::Transaction_Type, pTransaction->Type);
 
 			TAliasTraits::AssertTransactionProperties(expectedProperties, *pTransaction);

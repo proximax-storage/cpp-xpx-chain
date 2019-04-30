@@ -120,7 +120,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanRaiseBlockEntityNotifications) {
 		// Arrange:
 		auto pBlock = test::GenerateEmptyRandomBlock();
-		pBlock->Version = 0x115A;
+		pBlock->Version = 0x1100005A;
 
 		// Act:
 		PublishOne<EntityNotification>(*pBlock, [](const auto& notification) {
@@ -264,7 +264,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanRaiseTransactionEntityNotifications) {
 		// Arrange:
 		auto pTransaction = mocks::CreateMockTransaction(0);
-		pTransaction->Version = 0x115A;
+		pTransaction->Version = 0x1100005A;
 
 		// Act:
 		PublishOne<EntityNotification>(*pTransaction, [](const auto& notification) {

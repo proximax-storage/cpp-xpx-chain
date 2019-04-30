@@ -89,4 +89,7 @@ namespace catapult {
 	constexpr size_t CountOf(T const (&)[N]) noexcept {
 		return N;
 	}
+
+	// Network type (8 bit) + entity type (24 bit).
+	using VersionType = uint32_t;
 }

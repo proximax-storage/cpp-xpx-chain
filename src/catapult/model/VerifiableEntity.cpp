@@ -25,7 +25,7 @@
 namespace catapult { namespace model {
 
 	std::ostream& operator<<(std::ostream& out, const VerifiableEntity& entity) {
-		out << entity.Type << " (v" << static_cast<uint16_t>(entity.EntityVersion()) << ") with size " << entity.Size;
+		out << entity.Type << " (v" << entity.EntityVersion() << ") with size " << entity.Size;
 		return out;
 	}
 

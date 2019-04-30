@@ -36,10 +36,10 @@ namespace catapult { namespace model {
 	/// Supported versions
 	struct SupportedVersions {
 		/// Minimum version supported by transaction plugin.
-		uint8_t MinVersion;
+        VersionType MinVersion;
 
 		/// Maximum version supported by transaction plugin.
-		uint8_t MaxVersion;
+        VersionType MaxVersion;
 	};
 
 	/// A typed transaction plugin.
