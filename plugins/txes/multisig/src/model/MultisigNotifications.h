@@ -51,10 +51,11 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a modificationsCount and \a pModifications.
 		explicit ModifyMultisigCosignersNotification(
-				const Key& signer,
-				uint8_t modificationsCount,
-				const CosignatoryModification* pModifications)
-				: Notification(Notification_Type, sizeof(ModifyMultisigCosignersNotification))
+            const Key& signer,
+            uint8_t modificationsCount,
+            const CosignatoryModification* pModifications,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ModifyMultisigCosignersNotification), version)
 				, Signer(signer)
 				, ModificationsCount(modificationsCount)
 				, ModificationsPtr(pModifications)
@@ -79,8 +80,11 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a multisigAccountKey and \a cosignatoryKey.
-		explicit ModifyMultisigNewCosignerNotification(const Key& multisigAccountKey, const Key& cosignatoryKey)
-				: Notification(Notification_Type, sizeof(ModifyMultisigNewCosignerNotification))
+		explicit ModifyMultisigNewCosignerNotification(
+            const Key& multisigAccountKey,
+            const Key& cosignatoryKey,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ModifyMultisigNewCosignerNotification), version)
 				, MultisigAccountKey(multisigAccountKey)
 				, CosignatoryKey(cosignatoryKey)
 		{}
@@ -101,8 +105,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a minRemovalDelta and \a minApprovalDelta.
-		explicit ModifyMultisigSettingsNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta)
-				: Notification(Notification_Type, sizeof(ModifyMultisigSettingsNotification))
+		explicit ModifyMultisigSettingsNotification(
+            const Key& signer,
+            int8_t minRemovalDelta,
+            int8_t minApprovalDelta,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ModifyMultisigSettingsNotification), version)
 				, Signer(signer)
 				, MinRemovalDelta(minRemovalDelta)
 				, MinApprovalDelta(minApprovalDelta)

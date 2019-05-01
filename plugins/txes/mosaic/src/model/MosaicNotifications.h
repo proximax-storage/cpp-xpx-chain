@@ -61,8 +61,11 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a propertiesHeader and \a pProperties.
-		explicit MosaicPropertiesNotification(const MosaicPropertiesHeader& propertiesHeader, const MosaicProperty* pProperties)
-				: Notification(Notification_Type, sizeof(MosaicPropertiesNotification))
+		explicit MosaicPropertiesNotification(
+            const MosaicPropertiesHeader& propertiesHeader,
+            const MosaicProperty* pProperties,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(MosaicPropertiesNotification), version)
 				, PropertiesHeader(propertiesHeader)
 				, PropertiesPtr(pProperties)
 		{}
@@ -83,8 +86,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicId and \a properties.
-		explicit MosaicDefinitionNotification(const Key& signer, MosaicId mosaicId, const MosaicProperties& properties)
-				: Notification(Notification_Type, sizeof(MosaicDefinitionNotification))
+		explicit MosaicDefinitionNotification(
+            const Key& signer,
+            MosaicId mosaicId,
+            const MosaicProperties& properties,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(MosaicDefinitionNotification), version)
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, Properties(properties)
@@ -109,8 +116,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicNonce and \a mosaicId.
-		explicit MosaicNonceNotification(const Key& signer, MosaicNonce mosaicNonce, catapult::MosaicId mosaicId)
-				: Notification(Notification_Type, sizeof(MosaicNonceNotification))
+		explicit MosaicNonceNotification(
+            const Key& signer,
+            MosaicNonce mosaicNonce,
+            catapult::MosaicId mosaicId,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(MosaicNonceNotification), version)
 				, Signer(signer)
 				, MosaicNonce(mosaicNonce)
 				, MosaicId(mosaicId)
@@ -139,8 +150,13 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicId, \a direction and \a delta.
-		MosaicSupplyChangeNotification(const Key& signer, UnresolvedMosaicId mosaicId, MosaicSupplyChangeDirection direction, Amount delta)
-				: Notification(Notification_Type, sizeof(MosaicSupplyChangeNotification))
+		MosaicSupplyChangeNotification(
+            const Key& signer,
+            UnresolvedMosaicId mosaicId,
+            MosaicSupplyChangeDirection direction,
+            Amount delta,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(MosaicSupplyChangeNotification), version)
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, Direction(direction)
@@ -174,11 +190,12 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
 		explicit MosaicRentalFeeNotification(
-				const Key& sender,
-				const UnresolvedAddress& recipient,
-				UnresolvedMosaicId mosaicId,
-				catapult::Amount amount)
-				: BasicBalanceNotification(sender, mosaicId, amount)
+            const Key& sender,
+            const UnresolvedAddress& recipient,
+            UnresolvedMosaicId mosaicId,
+            catapult::Amount amount,
+            VersionType version)
+				: BasicBalanceNotification(sender, mosaicId, amount, version)
 				, Recipient(recipient)
 		{}
 

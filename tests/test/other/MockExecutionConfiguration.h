@@ -53,8 +53,8 @@ namespace catapult { namespace test {
 
 	struct MockNotification : public model::Notification {
 	public:
-		explicit MockNotification(const Hash256& hash, size_t id)
-				: Notification(static_cast<model::NotificationType>(-1), sizeof(MockNotification))
+		explicit MockNotification(const Hash256& hash, size_t id, VersionType version)
+				: Notification(static_cast<model::NotificationType>(-1), sizeof(MockNotification),  version)
 				, Hash(hash)
 				, Id(id)
 		{}
@@ -68,8 +68,8 @@ namespace catapult { namespace test {
 	public:
 		void publish(const model::WeakEntityInfo& entityInfo, model::NotificationSubscriber& subscriber) const override {
 			const_cast<MockNotificationPublisher*>(this)->push(entityInfo);
-			subscriber.notify(MockNotification(entityInfo.hash(), 1));
-			subscriber.notify(MockNotification(entityInfo.hash(), 2));
+			subscriber.notify(MockNotification(entityInfo.hash(), 1, entityInfo.entity().EntityVersion()));
+			subscriber.notify(MockNotification(entityInfo.hash(), 2, entityInfo.entity().EntityVersion()));
 		}
 	};
 

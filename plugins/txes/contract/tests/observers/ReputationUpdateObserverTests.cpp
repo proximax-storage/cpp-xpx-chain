@@ -44,7 +44,7 @@ namespace catapult { namespace observers {
 				modificationPtrs.emplace_back(&modifications[i]);
 			}
 
-			return Notification::CreateReputationUpdateNotification(modificationPtrs);
+			return Notification::CreateReputationUpdateNotification(modificationPtrs, 0);
 		}
 
 		struct ReputationValues {

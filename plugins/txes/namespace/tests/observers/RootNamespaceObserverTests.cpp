@@ -58,7 +58,7 @@ namespace catapult { namespace observers {
 		};
 
 		model::RootNamespaceNotification CreateRootNotification(const Key& signer, NamespaceId id) {
-			return model::RootNamespaceNotification(signer, id, BlockDuration());
+			return model::RootNamespaceNotification(signer, id, BlockDuration(), 0);
 		}
 
 		template<typename TSeedCacheFunc, typename TCheckCacheFunc>

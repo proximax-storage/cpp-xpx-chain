@@ -46,7 +46,8 @@ namespace catapult { namespace validators {
 					test::GenerateRandomData<Key_Size>(),
 					model::PropertyType::TransactionType,
 					static_cast<uint8_t>(modifications.size()),
-					modifications.data());
+					modifications.data(),
+					0);
 			auto pValidator = CreateTransactionTypePropertyModificationValuesValidator();
 
 			// Act:

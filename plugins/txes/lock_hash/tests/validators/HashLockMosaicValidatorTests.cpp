@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 				Amount requiredBondedAmount) {
 			// Arrange:
 			model::UnresolvedMosaic mosaic{ mosaicId, bondedAmount };
-			auto notification = model::HashLockMosaicNotification(mosaic);
+			auto notification = model::HashLockMosaicNotification(mosaic, 0);
 			auto pValidator = CreateHashLockMosaicValidator(Currency_Mosaic_Id, requiredBondedAmount);
 
 			// Act:

@@ -124,7 +124,8 @@ namespace catapult { namespace observers {
 					TMetadataValueTraits::MainMetadataId(), TMetadataValueTraits::Metadata_Type,
 					modification.Type,
 					modification.Key.size(), modification.Key.data(),
-					modification.Value.size(), modification.Value.data());
+					modification.Value.size(), modification.Value.data(),
+                    0);
 
 			auto pObserver = TMetadataValueTraits::CreateObserver();
 

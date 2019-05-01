@@ -50,7 +50,7 @@ namespace catapult { namespace observers {
 
 			public:
 				auto notification() {
-					return model::TransactionNotification(m_signer, m_transactionHash, m_entityType, m_deadline);
+					return model::TransactionNotification(m_signer, m_transactionHash, m_entityType, m_deadline, 0);
 				}
 
 				void setHash(const Hash256& hash) {

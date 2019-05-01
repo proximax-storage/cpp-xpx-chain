@@ -48,10 +48,10 @@ namespace catapult { namespace model {
 				auto basicEntityType = ToBasicEntityType(entityInfo.type());
 
 				// 1. publish source change notification
-				publishSourceChange(basicEntityType, sub);
+				publishSourceChange(basicEntityType, sub, entity.EntityVersion());
 
 				// 2. publish common notifications
-				sub.notify(AccountPublicKeyNotification(entity.Signer));
+				sub.notify(AccountPublicKeyNotification(entity.Signer, entity.EntityVersion()));
 
 				// 3. publish entity specific notifications
 				const auto* pBlockHeader = entityInfo.isAssociatedBlockHeaderSet() ? &entityInfo.associatedBlockHeader() : nullptr;
@@ -68,18 +68,18 @@ namespace catapult { namespace model {
 			}
 
 		private:
-			void publishSourceChange(BasicEntityType basicEntityType, NotificationSubscriber& sub) const {
+			void publishSourceChange(BasicEntityType basicEntityType, NotificationSubscriber& sub, VersionType version) const {
 				using Notification = SourceChangeNotification;
 
 				switch (basicEntityType) {
 				case BasicEntityType::Block:
 					// set block source to zero (source ids are 1-based)
-					sub.notify(Notification(0, 0, Notification::SourceChangeType::Absolute));
+					sub.notify(Notification(0, 0, Notification::SourceChangeType::Absolute, version));
 					break;
 
 				case BasicEntityType::Transaction:
 					// set transaction source (source ids are 1-based)
-					sub.notify(Notification(1, 0, Notification::SourceChangeType::Relative));
+					sub.notify(Notification(1, 0, Notification::SourceChangeType::Relative, version));
 					break;
 
 				default:
@@ -89,11 +89,11 @@ namespace catapult { namespace model {
 
 			void publish(const Block& block, NotificationSubscriber& sub) const {
 				// raise an entity notification
-				sub.notify(EntityNotification(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion()));
+				sub.notify(EntityNotification(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion(), block.EntityVersion()));
 
 				// raise a block notification
 				auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
-				BlockNotification blockNotification(block.Signer, block.Timestamp, block.Difficulty);
+				BlockNotification blockNotification(block.Signer, block.Timestamp, block.Difficulty, block.EntityVersion());
 				blockNotification.NumTransactions = blockTransactionsInfo.Count;
 				blockNotification.TotalFee = blockTransactionsInfo.TotalFee;
 
@@ -102,7 +102,7 @@ namespace catapult { namespace model {
 				// raise a signature notification
 				auto headerSize = VerifiableEntity::Header_Size;
 				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
-				sub.notify(SignatureNotification(block.Signer, block.Signature, blockData));
+				sub.notify(SignatureNotification(block.Signer, block.Signature, blockData, block.EntityVersion()));
 			}
 
 			void publish(
@@ -118,16 +118,17 @@ namespace catapult { namespace model {
 						transaction.Network(),
 						supportedVersions.MinVersion,
 						supportedVersions.MaxVersion,
+						transaction.EntityVersion(),
 						transaction.EntityVersion()));
 
 				// raise transaction notifications
 				auto fee = pBlockHeader ? CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction) : transaction.MaxFee;
-				sub.notify(TransactionNotification(transaction.Signer, hash, transaction.Type, transaction.Deadline));
-				sub.notify(TransactionFeeNotification(transaction.Size, fee, transaction.MaxFee));
-				sub.notify(BalanceDebitNotification(transaction.Signer, m_feeMosaicId, fee));
+				sub.notify(TransactionNotification(transaction.Signer, hash, transaction.Type, transaction.Deadline, transaction.EntityVersion()));
+				sub.notify(TransactionFeeNotification(transaction.Size, fee, transaction.MaxFee, transaction.EntityVersion()));
+				sub.notify(BalanceDebitNotification(transaction.Signer, m_feeMosaicId, fee, transaction.EntityVersion()));
 
 				// raise a signature notification
-				sub.notify(SignatureNotification(transaction.Signer, transaction.Signature, plugin.dataBuffer(transaction)));
+				sub.notify(SignatureNotification(transaction.Signer, transaction.Signature, plugin.dataBuffer(transaction), transaction.EntityVersion()));
 			}
 
 		private:

@@ -39,20 +39,24 @@ namespace catapult { namespace plugins {
 				const auto* pModifications = transaction.ModificationsPtr();
 				for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
 					if (model::CosignatoryModificationType::Add == pModifications[i].ModificationType) {
-						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModifications[i].CosignatoryPublicKey));
+						sub.notify(ModifyMultisigNewCosignerNotification(
+						    transaction.Signer, pModifications[i].CosignatoryPublicKey, transaction.EntityVersion()));
 						addedCosignatoryKeys.insert(pModifications[i].CosignatoryPublicKey);
 					}
 				}
 
-				sub.notify(ModifyMultisigCosignersNotification(transaction.Signer, transaction.ModificationsCount, pModifications));
+				sub.notify(ModifyMultisigCosignersNotification(
+				    transaction.Signer, transaction.ModificationsCount, pModifications, transaction.EntityVersion()));
 
 			}
 
 			if (!addedCosignatoryKeys.empty())
-				sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {}, addedCosignatoryKeys));
+				sub.notify(AddressInteractionNotification(
+				    transaction.Signer, transaction.Type, {}, addedCosignatoryKeys, transaction.EntityVersion()));
 
 			// 2. setting changes
-			sub.notify(ModifyMultisigSettingsNotification(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));
+			sub.notify(ModifyMultisigSettingsNotification(
+			    transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta, transaction.EntityVersion()));
 		}
 	}
 

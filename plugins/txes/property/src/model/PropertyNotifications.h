@@ -63,8 +63,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a propertyType.
-		explicit PropertyTypeNotification(model::PropertyType propertyType)
-				: Notification(Notification_Type, sizeof(PropertyTypeNotification))
+		explicit PropertyTypeNotification(model::PropertyType propertyType, VersionType version)
+				: Notification(Notification_Type, sizeof(PropertyTypeNotification), version)
 				, PropertyType(propertyType)
 		{}
 
@@ -83,10 +83,11 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a key, \a propertyType and \a modification.
 		explicit ModifyPropertyValueNotification(
-				const Key& key,
-				PropertyType propertyType,
-				const PropertyModification<TPropertyValue>& modification)
-				: Notification(Notification_Type, sizeof(ModifyPropertyValueNotification))
+            const Key& key,
+            PropertyType propertyType,
+            const PropertyModification<TPropertyValue>& modification,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ModifyPropertyValueNotification), version)
 				, Key(key)
 				, PropertyDescriptor(propertyType)
 				, Modification(modification)
@@ -121,11 +122,12 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a key, \a propertyType, \a modificationsCount and \a pModifications.
 		explicit ModifyPropertyNotification(
-				const Key& key,
-				PropertyType propertyType,
-				uint8_t modificationsCount,
-				const PropertyModification<TPropertyValue>* pModifications)
-				: Notification(Notification_Type, sizeof(ModifyPropertyNotification))
+            const Key& key,
+            PropertyType propertyType,
+            uint8_t modificationsCount,
+            const PropertyModification<TPropertyValue>* pModifications,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ModifyPropertyNotification), version)
 				, Key(key)
 				, PropertyDescriptor(propertyType)
 				, ModificationsCount(modificationsCount)

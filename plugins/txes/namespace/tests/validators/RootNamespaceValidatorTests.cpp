@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 		void AssertDurationValidationResult(ValidationResult expectedResult, uint16_t duration, uint16_t maxDuration) {
 			// Arrange:
 			auto pValidator = CreateRootNamespaceValidator(BlockDuration(maxDuration));
-			auto notification = model::RootNamespaceNotification(Key(), NamespaceId(), BlockDuration(duration));
+			auto notification = model::RootNamespaceNotification(Key(), NamespaceId(), BlockDuration(duration), 0);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

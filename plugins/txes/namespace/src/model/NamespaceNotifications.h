@@ -58,11 +58,12 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a nameSize and \a pName given \a namespaceId and \a parentId.
 		explicit NamespaceNameNotification(
-				catapult::NamespaceId namespaceId,
-				catapult::NamespaceId parentId,
-				uint8_t nameSize,
-				const uint8_t* pName)
-				: Notification(Notification_Type, sizeof(NamespaceNameNotification))
+            catapult::NamespaceId namespaceId,
+            catapult::NamespaceId parentId,
+            uint8_t nameSize,
+            const uint8_t* pName,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(NamespaceNameNotification), version)
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)
 				, NameSize(nameSize)
@@ -91,8 +92,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a namespaceType.
-		explicit NamespaceNotification(model::NamespaceType namespaceType)
-				: Notification(Notification_Type, sizeof(NamespaceNotification))
+		explicit NamespaceNotification(model::NamespaceType namespaceType, VersionType version)
+				: Notification(Notification_Type, sizeof(NamespaceNotification), version)
 				, NamespaceType(namespaceType)
 		{}
 
@@ -109,8 +110,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a namespaceId and \a duration.
-		explicit RootNamespaceNotification(const Key& signer, NamespaceId namespaceId, BlockDuration duration)
-				: Notification(Notification_Type, sizeof(RootNamespaceNotification))
+		explicit RootNamespaceNotification(
+            const Key& signer,
+            NamespaceId namespaceId,
+            BlockDuration duration,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(RootNamespaceNotification), version)
 				, Signer(signer)
 				, NamespaceId(namespaceId)
 				, Duration(duration)
@@ -135,8 +140,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a namespaceId and \a parentId.
-		explicit ChildNamespaceNotification(const Key& signer, NamespaceId namespaceId, NamespaceId parentId)
-				: Notification(Notification_Type, sizeof(ChildNamespaceNotification))
+		explicit ChildNamespaceNotification(
+            const Key& signer,
+            NamespaceId namespaceId,
+            NamespaceId parentId,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ChildNamespaceNotification), version)
 				, Signer(signer)
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)
@@ -164,11 +173,12 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
 		explicit NamespaceRentalFeeNotification(
-				const Key& sender,
-				const UnresolvedAddress& recipient,
-				UnresolvedMosaicId mosaicId,
-				catapult::Amount amount)
-				: BasicBalanceNotification(sender, mosaicId, amount)
+            const Key& sender,
+            const UnresolvedAddress& recipient,
+            UnresolvedMosaicId mosaicId,
+            catapult::Amount amount,
+            VersionType version)
+				: BasicBalanceNotification(sender, mosaicId, amount, version)
 				, Recipient(recipient)
 		{}
 

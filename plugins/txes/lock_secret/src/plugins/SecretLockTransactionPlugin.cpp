@@ -31,18 +31,19 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(AccountAddressNotification(transaction.Recipient));
-			sub.notify(SecretLockDurationNotification(transaction.Duration));
-			sub.notify(SecretLockHashAlgorithmNotification(transaction.HashAlgorithm));
-			sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, { transaction.Recipient }));
-			sub.notify(BalanceDebitNotification(transaction.Signer, transaction.Mosaic.MosaicId, transaction.Mosaic.Amount));
+			sub.notify(AccountAddressNotification(transaction.Recipient, transaction.EntityVersion()));
+			sub.notify(SecretLockDurationNotification(transaction.Duration, transaction.EntityVersion()));
+			sub.notify(SecretLockHashAlgorithmNotification(transaction.HashAlgorithm, transaction.EntityVersion()));
+			sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, { transaction.Recipient }, transaction.EntityVersion()));
+			sub.notify(BalanceDebitNotification(transaction.Signer, transaction.Mosaic.MosaicId, transaction.Mosaic.Amount, transaction.EntityVersion()));
 			sub.notify(SecretLockNotification(
 					transaction.Signer,
 					transaction.Mosaic,
 					transaction.Duration,
 					transaction.HashAlgorithm,
 					transaction.Secret,
-					transaction.Recipient));
+					transaction.Recipient,
+					transaction.EntityVersion()));
 		}
 	}
 

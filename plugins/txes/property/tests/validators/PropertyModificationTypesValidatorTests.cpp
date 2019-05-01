@@ -74,7 +74,8 @@ namespace catapult { namespace validators {
 					test::GenerateRandomData<Key_Size>(),
 					TPropertyValueTraits::Property_Type,
 					static_cast<uint8_t>(modifications.size()),
-					modifications.data());
+					modifications.data(),
+					0);
 			auto pValidator = TPropertyValueTraits::CreateValidator();
 
 			// Act:

@@ -38,7 +38,8 @@ namespace catapult { namespace validators {
 			model::ModifyMultisigCosignersNotification notification(
 					signer,
 					static_cast<uint8_t>(modifications.size()),
-					modifications.data());
+					modifications.data(),
+                    0);
 			auto pValidator = CreateModifyMultisigCosignersValidator();
 
 			// Act:

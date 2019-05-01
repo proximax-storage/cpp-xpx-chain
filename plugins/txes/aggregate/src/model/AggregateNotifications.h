@@ -45,8 +45,12 @@ namespace catapult { namespace model {
 	struct BasicAggregateNotification : public Notification {
 	public:
 		/// Creates a notification around \a signer, \a cosignaturesCount and \a pCosignatures.
-		explicit BasicAggregateNotification(const Key& signer, size_t cosignaturesCount, const Cosignature* pCosignatures)
-				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+		explicit BasicAggregateNotification(
+            const Key& signer,
+            size_t cosignaturesCount,
+            const Cosignature* pCosignatures,
+            VersionType version)
+				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification), version)
 				, Signer(signer)
 				, CosignaturesCount(cosignaturesCount)
 				, CosignaturesPtr(pCosignatures)
@@ -72,11 +76,16 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a transaction, \a cosignaturesCount and \a pCosignatures.
 		explicit AggregateEmbeddedTransactionNotification(
-				const Key& signer,
-				const EmbeddedTransaction& transaction,
-				size_t cosignaturesCount,
-				const Cosignature* pCosignatures)
-				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification>(signer, cosignaturesCount, pCosignatures)
+            const Key& signer,
+            const EmbeddedTransaction& transaction,
+            size_t cosignaturesCount,
+            const Cosignature* pCosignatures,
+            VersionType version)
+				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification>(
+                    signer,
+                    cosignaturesCount,
+                    pCosignatures,
+                    version)
 				, Transaction(transaction)
 		{}
 
@@ -95,12 +104,17 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a transactionsCount, \a pTransactions, \a cosignaturesCount and \a pCosignatures.
 		explicit AggregateCosignaturesNotification(
-				const Key& signer,
-				size_t transactionsCount,
-				const EmbeddedTransaction* pTransactions,
-				size_t cosignaturesCount,
-				const Cosignature* pCosignatures)
-				: BasicAggregateNotification<AggregateCosignaturesNotification>(signer, cosignaturesCount, pCosignatures)
+            const Key& signer,
+            size_t transactionsCount,
+            const EmbeddedTransaction* pTransactions,
+            size_t cosignaturesCount,
+            const Cosignature* pCosignatures,
+            VersionType version)
+				: BasicAggregateNotification<AggregateCosignaturesNotification>(
+                    signer,
+                    cosignaturesCount,
+                    pCosignatures,
+                    version)
 				, TransactionsCount(transactionsCount)
 				, TransactionsPtr(pTransactions)
 		{}

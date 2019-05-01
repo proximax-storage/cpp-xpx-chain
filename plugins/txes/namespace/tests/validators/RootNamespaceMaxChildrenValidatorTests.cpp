@@ -68,7 +68,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureIfMaxChildrenIsExceeded) {
 		// Act: root with id 25 has 3 children
-		auto notification = model::ChildNamespaceNotification(Key(), NamespaceId(26), NamespaceId(25));
+		auto notification = model::ChildNamespaceNotification(Key(), NamespaceId(26), NamespaceId(25), 0);
 		RunTest(Failure_Namespace_Max_Children_Exceeded, notification, 1);
 		RunTest(Failure_Namespace_Max_Children_Exceeded, notification, 2);
 		RunTest(Failure_Namespace_Max_Children_Exceeded, notification, 3);
@@ -76,7 +76,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessIfMaxChildrenIsNotExceeded) {
 		// Act: root with id 25 has 3 children
-		auto notification = model::ChildNamespaceNotification(Key(), NamespaceId(26), NamespaceId(25));
+		auto notification = model::ChildNamespaceNotification(Key(), NamespaceId(26), NamespaceId(25), 0);
 		RunTest(ValidationResult::Success, notification, 4);
 		RunTest(ValidationResult::Success, notification, 5);
 		RunTest(ValidationResult::Success, notification, 123);

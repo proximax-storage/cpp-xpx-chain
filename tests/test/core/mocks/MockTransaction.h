@@ -66,8 +66,8 @@ namespace catapult { namespace mocks {
 
 	public:
 		/// Creates a hash notification around \a hash.
-		explicit HashNotification(const Hash256& hash)
-				: model::Notification(Notification_Type, sizeof(HashNotification))
+		explicit HashNotification(const Hash256& hash, VersionType version)
+				: model::Notification(Notification_Type, sizeof(HashNotification), version)
 				, Hash(hash)
 		{}
 

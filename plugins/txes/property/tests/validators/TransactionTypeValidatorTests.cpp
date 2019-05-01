@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 			auto cache = test::PropertyCacheFactory::Create();
 			PopulateCache<TOperationTraits>(cache, accountAddress, rawValues);
 			auto pValidator = CreateTransactionTypeValidator();
-			auto notification = model::TransactionNotification(signer, Hash256(), transactionType, Timestamp(123));
+			auto notification = model::TransactionNotification(signer, Hash256(), transactionType, Timestamp(123), 0);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

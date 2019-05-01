@@ -31,8 +31,8 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(AliasOwnerNotification(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
-			sub.notify(AliasedAddressNotification(transaction.NamespaceId, transaction.AliasAction, transaction.Address));
+			sub.notify(AliasOwnerNotification(transaction.Signer, transaction.NamespaceId, transaction.AliasAction, transaction.EntityVersion()));
+			sub.notify(AliasedAddressNotification(transaction.NamespaceId, transaction.AliasAction, transaction.Address, transaction.EntityVersion()));
 		}
 	}
 

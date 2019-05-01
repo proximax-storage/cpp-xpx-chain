@@ -222,7 +222,7 @@ namespace catapult { namespace validators {
 			auto pValidator = builder.build([](auto) { return false; });
 
 			// Act:
-			auto notification = model::AccountPublicKeyNotification(Key());
+			auto notification = model::AccountPublicKeyNotification(Key(), 0);
 			prepareNotification(notification);
 			auto result = test::ValidateNotification<model::Notification>(*pValidator, notification, cache);
 

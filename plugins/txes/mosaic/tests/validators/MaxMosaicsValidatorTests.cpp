@@ -60,7 +60,7 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(recipient);
 
 			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(maxMosaics);
-			auto notification = model::BalanceTransferNotification(owner, unresolvedRecipient, mosaicId, amount);
+			auto notification = model::BalanceTransferNotification(owner, unresolvedRecipient, mosaicId, amount, 0);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -105,7 +105,7 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(owner);
 
 			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(maxMosaics);
-			auto notification = model::MosaicSupplyChangeNotification(owner, mosaicId, direction, Amount(100));
+			auto notification = model::MosaicSupplyChangeNotification(owner, mosaicId, direction, Amount(100), 0);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

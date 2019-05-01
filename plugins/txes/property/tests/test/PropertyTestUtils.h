@@ -150,11 +150,13 @@ namespace catapult { namespace test {
 	template<typename TPropertyValueTraits, typename TOperationTraits = AllowTraits>
 	auto CreateNotification(
 			const Key& key,
-			const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification) {
+			const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification,
+			VersionType version = 0) {
 		return typename TPropertyValueTraits::NotificationType{
 			key,
 			TOperationTraits::CompletePropertyType(TPropertyValueTraits::Property_Type),
-			modification
+			modification,
+			version
 		};
 	}
 
@@ -162,22 +164,26 @@ namespace catapult { namespace test {
 	template<typename TPropertyValueTraits, typename TOperationTraits = AllowTraits>
 	auto CreateNotificationWithOppositeOperation(
 			const Key& key,
-			const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification) {
+			const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification,
+			VersionType version = 0) {
 		return typename TPropertyValueTraits::NotificationType{
 			key,
 			TOperationTraits::OppositeCompletePropertyType(TPropertyValueTraits::Property_Type),
-			modification
+			modification,
+			version
 		};
 	}
 
 	/// Creates a notification around \a key and \a modifications.
 	template<typename TPropertyValueTraits, typename TValueType, typename TOperationTraits = AllowTraits>
-	auto CreateNotification(const Key& key, const std::vector<model::PropertyModification<TValueType>>& modifications) {
+	auto CreateNotification(const Key& key, const std::vector<model::PropertyModification<TValueType>>& modifications,
+			VersionType version = 0) {
 		return typename TPropertyValueTraits::NotificationType{
 			key,
 			TOperationTraits::CompletePropertyType(TPropertyValueTraits::Property_Type),
 			utils::checked_cast<size_t, uint8_t>(modifications.size()),
-			modifications.data()
+			modifications.data(),
+			version
 		};
 	}
 

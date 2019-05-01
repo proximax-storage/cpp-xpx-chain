@@ -35,7 +35,7 @@ namespace catapult { namespace observers {
 		using Notification = model::ModifyMultisigSettingsNotification;
 
 		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta) {
-			return Notification(signer, minRemovalDelta, minApprovalDelta);
+			return Notification(signer, minRemovalDelta, minApprovalDelta, 0);
 		}
 
 		struct MultisigSettings {

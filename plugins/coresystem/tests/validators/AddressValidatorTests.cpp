@@ -37,7 +37,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto cache = test::CreateEmptyCatapultCache();
 
-			model::AccountAddressNotification notification(test::UnresolveXor(address));
+			model::AccountAddressNotification notification(test::UnresolveXor(address), 0);
 			auto pValidator = CreateAddressValidator(Network_Identifier);
 
 			// Act:

@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 				cache.commit(Height());
 			}
 
-			model::ModifyMultisigNewCosignerNotification notification(multisigAccountKey, cosignatoryKey);
+			model::ModifyMultisigNewCosignerNotification notification(multisigAccountKey, cosignatoryKey, 0);
 			auto pValidator = CreateModifyMultisigMaxCosignedAccountsValidator(maxCosignedAccountsPerAccount);
 
 			// Act:

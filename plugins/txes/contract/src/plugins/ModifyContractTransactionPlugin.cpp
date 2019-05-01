@@ -46,16 +46,19 @@ namespace catapult { namespace plugins {
 				for (auto i = 0u; i < transaction.VerifierModificationCount; ++i, ++pModification) {
 					reputationModificationKeys.emplace_back(pModification);
 					if (model::CosignatoryModificationType::Add == pModification->ModificationType) {
-						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModification->CosignatoryPublicKey));
+						sub.notify(ModifyMultisigNewCosignerNotification(
+						    transaction.Signer, pModification->CosignatoryPublicKey, transaction.EntityVersion()));
 						addedVerifierKeys.insert(pModification->CosignatoryPublicKey);
 					}
 				}
 
 				sub.notify(ModifyMultisigCosignersNotification(
-					transaction.Signer, transaction.VerifierModificationCount, transaction.VerifierModificationsPtr()));
+					transaction.Signer, transaction.VerifierModificationCount, transaction.VerifierModificationsPtr(),
+					transaction.EntityVersion()));
 
 				if (!addedVerifierKeys.empty())
-					sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {}, addedVerifierKeys));
+					sub.notify(AddressInteractionNotification(
+					    transaction.Signer, transaction.Type, {}, addedVerifierKeys, transaction.EntityVersion()));
 			}
 
 			sub.notify(ModifyContractNotification(
@@ -67,10 +70,12 @@ namespace catapult { namespace plugins {
 				transaction.ExecutorModificationCount,
 				transaction.ExecutorModificationsPtr(),
 				transaction.VerifierModificationCount,
-				transaction.VerifierModificationsPtr()));
+				transaction.VerifierModificationsPtr(),
+				transaction.EntityVersion()));
 
 			if (!reputationModificationKeys.empty())
-				sub.notify(*ReputationUpdateNotification::CreateReputationUpdateNotification(reputationModificationKeys));
+				sub.notify(*ReputationUpdateNotification::CreateReputationUpdateNotification(
+				    reputationModificationKeys, transaction.EntityVersion()));
 		}
 	}
 

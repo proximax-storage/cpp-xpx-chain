@@ -108,7 +108,7 @@ namespace catapult { namespace observers {
 		typename TTraits::NotificationType CreateNotification(model::AliasAction aliasAction) {
 			typename TTraits::AliasType alias;
 			test::FillWithRandomData(alias);
-			return typename TTraits::NotificationType(Default_Namespace_Id, aliasAction, alias);
+			return typename TTraits::NotificationType(Default_Namespace_Id, aliasAction, alias, 0);
 		}
 
 		void SeedCacheWithoutLink(cache::NamespaceCacheDelta& namespaceCacheDelta) {

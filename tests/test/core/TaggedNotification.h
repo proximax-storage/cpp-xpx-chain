@@ -33,7 +33,7 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a notification with \a tag.
 		explicit TaggedNotificationT(uint8_t tag)
-				: Notification(Notification_Type, sizeof(TaggedNotificationT))
+				: Notification(Notification_Type, sizeof(TaggedNotificationT), 0)
 				, Tag(tag)
 		{}
 

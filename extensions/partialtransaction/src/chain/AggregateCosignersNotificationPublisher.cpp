@@ -54,7 +54,8 @@ namespace catapult { namespace chain {
 				static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
 				aggregate.TransactionsPtr(),
 				numCosignatures,
-				transactionInfo.cosignatures().data()));
+				transactionInfo.cosignatures().data(),
+				0));
 
 		// publish all sub-transaction information
 		for (const auto& subTransaction : aggregate.Transactions()) {
@@ -63,7 +64,8 @@ namespace catapult { namespace chain {
 					aggregate.Signer,
 					subTransaction,
 					numCosignatures,
-					transactionInfo.cosignatures().data()));
+					transactionInfo.cosignatures().data(),
+					0));
 		}
 	}
 }}

@@ -33,9 +33,10 @@ namespace catapult { namespace model {
 	struct Notification {
 	public:
 		/// Creates a new notification with \a type and \a size.
-		explicit Notification(NotificationType type, size_t size)
+		explicit Notification(NotificationType type, size_t size, VersionType version)
 				: Type(type)
 				, Size(size)
+				, Version(version)
 		{}
 
 	public:
@@ -44,6 +45,9 @@ namespace catapult { namespace model {
 
 		/// Notification size.
 		size_t Size;
+
+		/// Notification size.
+        VersionType Version;
 	};
 
 	// region account
@@ -56,8 +60,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a address.
-		explicit AccountAddressNotification(const UnresolvedAddress& address)
-				: Notification(Notification_Type, sizeof(AccountAddressNotification))
+		explicit AccountAddressNotification(const UnresolvedAddress& address, VersionType version)
+				: Notification(Notification_Type, sizeof(AccountAddressNotification), version)
 				, Address(address)
 		{}
 
@@ -74,8 +78,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a publicKey.
-		explicit AccountPublicKeyNotification(const Key& publicKey)
-				: Notification(Notification_Type, sizeof(AccountPublicKeyNotification))
+		explicit AccountPublicKeyNotification(const Key& publicKey, VersionType version)
+				: Notification(Notification_Type, sizeof(AccountPublicKeyNotification), version)
 				, PublicKey(publicKey)
 		{}
 
@@ -93,8 +97,12 @@ namespace catapult { namespace model {
 	struct BasicBalanceNotification : public Notification {
 	public:
 		/// Creates a notification around \a sender, \a mosaicId and \a amount.
-		explicit BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, Amount amount)
-				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+		explicit BasicBalanceNotification(
+            const Key& sender,
+            UnresolvedMosaicId mosaicId,
+            Amount amount,
+            VersionType version)
+				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification), version)
 				, Sender(sender)
 				, MosaicId(mosaicId)
 				, Amount(amount)
@@ -120,11 +128,12 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
 		explicit BalanceTransferNotification(
-				const Key& sender,
-				const UnresolvedAddress& recipient,
-				UnresolvedMosaicId mosaicId,
-				catapult::Amount amount)
-				: BasicBalanceNotification(sender, mosaicId, amount)
+            const Key& sender,
+            const UnresolvedAddress& recipient,
+            UnresolvedMosaicId mosaicId,
+            catapult::Amount amount,
+            VersionType version)
+				: BasicBalanceNotification(sender, mosaicId, amount, version)
 				, Recipient(recipient)
 		{}
 
@@ -156,11 +165,12 @@ namespace catapult { namespace model {
 	public:
 		/// Creates an entity notification around \a networkIdentifier, \a minVersion, \a maxVersion and \a entityVersion.
 		explicit EntityNotification(
-				model::NetworkIdentifier networkIdentifier,
-                VersionType minVersion,
-                VersionType maxVersion,
-                VersionType entityVersion)
-				: Notification(Notification_Type, sizeof(EntityNotification))
+            model::NetworkIdentifier networkIdentifier,
+            VersionType minVersion,
+            VersionType maxVersion,
+            VersionType entityVersion,
+            VersionType notificationVersion)
+				: Notification(Notification_Type, sizeof(EntityNotification), notificationVersion)
 				, NetworkIdentifier(networkIdentifier)
 				, MinVersion(minVersion)
 				, MaxVersion(maxVersion)
@@ -193,8 +203,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a block notification around \a signer, \a timestamp and \a difficulty.
-		explicit BlockNotification(const Key& signer, Timestamp timestamp, Difficulty difficulty)
-				: Notification(Notification_Type, sizeof(BlockNotification))
+		explicit BlockNotification(
+            const Key& signer,
+            Timestamp timestamp,
+            Difficulty difficulty,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(BlockNotification), version)
 				, Signer(signer)
 				, Timestamp(timestamp)
 				, Difficulty(difficulty)
@@ -230,8 +244,13 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a transaction notification around \a signer, \a transactionHash, \a transactionType and \a deadline.
-		explicit TransactionNotification(const Key& signer, const Hash256& transactionHash, EntityType transactionType, Timestamp deadline)
-				: Notification(Notification_Type, sizeof(TransactionNotification))
+		explicit TransactionNotification(
+            const Key& signer,
+            const Hash256& transactionHash,
+            EntityType transactionType,
+            Timestamp deadline,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(TransactionNotification), version)
 				, Signer(signer)
 				, TransactionHash(transactionHash)
 				, TransactionType(transactionType)
@@ -260,8 +279,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a transaction fee notification around \a transactionSize, \a fee and \a maxFee.
-		explicit TransactionFeeNotification(uint32_t transactionSize, Amount fee, Amount maxFee)
-				: Notification(Notification_Type, sizeof(TransactionFeeNotification))
+		explicit TransactionFeeNotification(uint32_t transactionSize, Amount fee, Amount maxFee, VersionType version)
+				: Notification(Notification_Type, sizeof(TransactionFeeNotification), version)
 				, TransactionSize(transactionSize)
 				, Fee(fee)
 				, MaxFee(maxFee)
@@ -290,8 +309,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a signature notification around \a signer, \a signature and \a data.
-		explicit SignatureNotification(const Key& signer, const Signature& signature, const RawBuffer& data)
-				: Notification(Notification_Type, sizeof(SignatureNotification))
+		explicit SignatureNotification(
+            const Key& signer,
+            const Signature& signature,
+            const RawBuffer& data,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(SignatureNotification), version)
 				, Signer(signer)
 				, Signature(signature)
 				, Data(data)
@@ -321,17 +344,22 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a source, \a transactionType and \a participantsByAddress.
-		AddressInteractionNotification(const Key& source, EntityType transactionType, const UnresolvedAddressSet& participantsByAddress)
-				: AddressInteractionNotification(source, transactionType, participantsByAddress, {})
+		AddressInteractionNotification(
+            const Key& source,
+            EntityType transactionType,
+            const UnresolvedAddressSet& participantsByAddress,
+            VersionType version)
+				: AddressInteractionNotification(source, transactionType, participantsByAddress, {}, version)
 		{}
 
 		/// Creates a notification around \a source, \a transactionType, \a participantsByAddress and \a participantsByKey.
 		AddressInteractionNotification(
-				const Key& source,
-				EntityType transactionType,
-				const UnresolvedAddressSet& participantsByAddress,
-				const utils::KeySet& participantsByKey)
-				: Notification(Notification_Type, sizeof(AddressInteractionNotification))
+            const Key& source,
+            EntityType transactionType,
+            const UnresolvedAddressSet& participantsByAddress,
+            const utils::KeySet& participantsByKey,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(AddressInteractionNotification), version)
 				, Source(source)
 				, TransactionType(transactionType)
 				, ParticipantsByAddress(participantsByAddress)
@@ -368,16 +396,16 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer and \a mosaicId.
-		explicit MosaicRequiredNotification(const Key& signer, MosaicId mosaicId)
-				: Notification(Notification_Type, sizeof(MosaicRequiredNotification))
+		explicit MosaicRequiredNotification(const Key& signer, MosaicId mosaicId, VersionType version)
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification), version)
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Resolved)
 		{}
 
 		/// Creates a notification around \a signer and \a mosaicId.
-		explicit MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId)
-				: Notification(Notification_Type, sizeof(MosaicRequiredNotification))
+		explicit MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId, VersionType version)
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification), version)
 				, Signer(signer)
 				, UnresolvedMosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Unresolved)
@@ -413,8 +441,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a primaryId, \a secondaryId and \a changeType.
-		explicit SourceChangeNotification(uint32_t primaryId, uint32_t secondaryId, SourceChangeType changeType)
-				: Notification(Notification_Type, sizeof(SourceChangeNotification))
+		explicit SourceChangeNotification(
+            uint32_t primaryId,
+            uint32_t secondaryId,
+            SourceChangeType changeType,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(SourceChangeNotification), version)
 				, PrimaryId(primaryId)
 				, SecondaryId(secondaryId)
 				, ChangeType(changeType)

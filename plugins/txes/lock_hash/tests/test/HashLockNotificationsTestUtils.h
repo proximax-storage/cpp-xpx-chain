@@ -35,7 +35,7 @@ namespace catapult { namespace test {
 
 		/// Creates a notification.
 		auto notification() {
-			return model::HashLockNotification(m_signer, m_mosaic, m_duration, m_hash);
+			return model::HashLockNotification(m_signer, m_mosaic, m_duration, m_hash, 0);
 		}
 
 		/// Sets notification hash to \a hash.

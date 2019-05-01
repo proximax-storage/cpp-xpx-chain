@@ -26,7 +26,8 @@ namespace catapult { namespace validators {
 			model::ModifyMetadataFieldNotification notification(
 					modificationType,
 					key.size(), key.data(),
-					value.size(), value.data());
+					value.size(), value.data(),
+					0);
 			auto pValidator = CreateMetadataFieldModificationValidator(MAX_KEY_SIZE, MAX_VALUE_SIZE);
 
 			// Act:

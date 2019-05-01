@@ -31,12 +31,13 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(SecretLockHashAlgorithmNotification(transaction.HashAlgorithm));
+			sub.notify(SecretLockHashAlgorithmNotification(transaction.HashAlgorithm, transaction.EntityVersion()));
 			sub.notify(ProofSecretNotification(
 					transaction.HashAlgorithm,
 					transaction.Secret,
-					{ transaction.ProofPtr(), transaction.ProofSize }));
-			sub.notify(ProofPublicationNotification(transaction.Signer, transaction.HashAlgorithm, transaction.Secret));
+					{ transaction.ProofPtr(), transaction.ProofSize },
+					transaction.EntityVersion()));
+			sub.notify(ProofPublicationNotification(transaction.Signer, transaction.HashAlgorithm, transaction.Secret, transaction.EntityVersion()));
 		}
 	}
 

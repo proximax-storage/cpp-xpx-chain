@@ -55,8 +55,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a metadataType.
-		explicit MetadataTypeNotification(model::MetadataType metadataType)
-				: Notification(Notification_Type, sizeof(MetadataTypeNotification))
+		explicit MetadataTypeNotification(model::MetadataType metadataType, VersionType version)
+				: Notification(Notification_Type, sizeof(MetadataTypeNotification), version)
 				, MetadataType(metadataType)
 		{}
 
@@ -74,8 +74,11 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a metadataType.
-		explicit MetadataModificationsNotification(const Hash256& metadataId, const MetadataModifications& modifications)
-				: Notification(Notification_Type, sizeof(MetadataModificationsNotification))
+		explicit MetadataModificationsNotification(
+            const Hash256& metadataId,
+            const MetadataModifications& modifications,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(MetadataModificationsNotification), version)
 				, MetadataId(metadataId)
 				, Modifications(modifications)
 		{}
@@ -97,28 +100,31 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a modificationType, \a key and \a value.
 		explicit ModifyMetadataFieldNotification(
-				model::MetadataModificationType metadataModificationType,
-				const uint8_t& keySize,
-				const char* keyPtr,
-				const uint16_t& valueSize,
-				const char* valuePtr)
+            model::MetadataModificationType metadataModificationType,
+            const uint8_t& keySize,
+            const char* keyPtr,
+            const uint16_t& valueSize,
+            const char* valuePtr,
+            VersionType version)
 				: ModifyMetadataFieldNotification(
-				Notification_Type, sizeof(ModifyMetadataFieldNotification),
-				metadataModificationType,
-				keySize, keyPtr,
-				valueSize, valuePtr)
+                    Notification_Type, sizeof(ModifyMetadataFieldNotification),
+                    metadataModificationType,
+                    keySize, keyPtr,
+                    valueSize, valuePtr,
+                    version)
 		{}
 
 	protected:
 		/// Creates a notification around \a modificationType, \a key and \a value.
 		explicit ModifyMetadataFieldNotification(
-					NotificationType type, size_t size,
-					model::MetadataModificationType metadataModificationType,
-					const uint8_t& keySize,
-					const char* keyPtr,
-					const uint16_t& valueSize,
-					const char* valuePtr)
-				: Notification(type, size)
+            NotificationType type, size_t size,
+            model::MetadataModificationType metadataModificationType,
+            const uint8_t& keySize,
+            const char* keyPtr,
+            const uint16_t& valueSize,
+            const char* valuePtr,
+            VersionType version)
+				: Notification(type, size, version)
 				, ModificationType(metadataModificationType)
 				, KeySize(keySize)
 				, KeyPtr(keyPtr)
@@ -153,18 +159,20 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a metadataId and \a metadataType, \a key and \a value.
 		explicit ModifyMetadataValueNotification(
-				const TMetadataId& metadataId,
-				model::MetadataType metadataType,
-				model::MetadataModificationType metadataModificationType,
-				const uint8_t& keySize,
-				const char* keyPtr,
-				const uint16_t& valueSize,
-				const char* valuePtr)
+            const TMetadataId& metadataId,
+            model::MetadataType metadataType,
+            model::MetadataModificationType metadataModificationType,
+            const uint8_t& keySize,
+            const char* keyPtr,
+            const uint16_t& valueSize,
+            const char* valuePtr,
+            VersionType version)
 				: ModifyMetadataFieldNotification(
 						Notification_Type, sizeof(ModifyMetadataValueNotification),
 						metadataModificationType,
 						keySize, keyPtr,
-						valueSize, valuePtr)
+						valueSize, valuePtr,
+						version)
 				, MetadataId(metadataId)
 				, MetadataType(metadataType)
 		{}
@@ -194,9 +202,10 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a metadataId.
 		explicit ModifyMetadataNotification(
-				const Key& signer,
-				const TMetadataId& metadataId)
-				: Notification(Notification_Type, sizeof(ModifyMetadataNotification))
+            const Key& signer,
+            const TMetadataId& metadataId,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ModifyMetadataNotification), version)
 				, Signer(signer)
 				, MetadataId(metadataId)
 		{}

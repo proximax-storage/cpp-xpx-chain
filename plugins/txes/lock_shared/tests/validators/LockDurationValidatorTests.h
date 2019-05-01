@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 
 		static void AssertDurationValidator(ValidationResult expectedResult, BlockDuration notificationDuration) {
 			// Arrange:
-			typename TTraits::NotificationType notification(notificationDuration);
+			typename TTraits::NotificationType notification(notificationDuration, 0);
 			auto pValidator = TTraits::CreateValidator(MaxDuration());
 
 			// Act:

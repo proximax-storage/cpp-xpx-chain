@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(cacheAddress);
 
 			auto pValidator = CreateAddressAliasValidator();
-			auto notification = model::AliasedAddressNotification(NamespaceId(), model::AliasAction::Link, notificationAddress);
+			auto notification = model::AliasedAddressNotification(NamespaceId(), model::AliasAction::Link, notificationAddress, 0);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

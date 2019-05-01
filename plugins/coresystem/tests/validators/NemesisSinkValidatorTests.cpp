@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 			auto context = test::CreateValidatorContext(Height(height), networkInfo, readOnlyCache);
 
 			auto signature = test::GenerateRandomData<Signature_Size>();
-			model::SignatureNotification notification(signer, signature, {});
+			model::SignatureNotification notification(signer, signature, {}, 0);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);

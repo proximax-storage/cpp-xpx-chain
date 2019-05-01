@@ -41,7 +41,7 @@ namespace catapult { namespace validators {
 
 		public:
 			auto notification() {
-				return model::ProofSecretNotification(m_algorithm, m_secret, m_proof);
+				return model::ProofSecretNotification(m_algorithm, m_secret, m_proof, 0);
 			}
 
 			void setProofSize(size_t proofSize) {

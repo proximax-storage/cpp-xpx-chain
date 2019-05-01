@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, const cache::CatapultCache& cache, const Key& signer) {
 			// Arrange:
-			model::TransactionNotification notification(signer, Hash256(), model::EntityType(), Timestamp());
+			model::TransactionNotification notification(signer, Hash256(), model::EntityType(), Timestamp(), 0);
 			auto pValidator = CreateMultisigPermittedOperationValidator();
 
 			// Act:

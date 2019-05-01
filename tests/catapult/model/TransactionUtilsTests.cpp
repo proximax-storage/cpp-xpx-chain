@@ -48,13 +48,13 @@ namespace catapult { namespace model {
 				if (Mode::Address == m_mode) {
 					auto senderAddress = PublicKeyToAddress(transaction.Signer, Network_Identifier);
 					auto recipientAddress = PublicKeyToAddress(transaction.Recipient, Network_Identifier);
-					sub.notify(AccountAddressNotification(extensions::CopyToUnresolvedAddress(senderAddress)));
-					sub.notify(AccountAddressNotification(extensions::CopyToUnresolvedAddress(recipientAddress)));
+					sub.notify(AccountAddressNotification(extensions::CopyToUnresolvedAddress(senderAddress), transaction.EntityVersion()));
+					sub.notify(AccountAddressNotification(extensions::CopyToUnresolvedAddress(recipientAddress), transaction.EntityVersion()));
 				} else if (Mode::Public_Key == m_mode) {
-					sub.notify(AccountPublicKeyNotification(transaction.Signer));
-					sub.notify(AccountPublicKeyNotification(transaction.Recipient));
+					sub.notify(AccountPublicKeyNotification(transaction.Signer, transaction.EntityVersion()));
+					sub.notify(AccountPublicKeyNotification(transaction.Recipient, transaction.EntityVersion()));
 				} else {
-					sub.notify(EntityNotification(transaction.Network(), 0, 0, transaction.EntityVersion()));
+					sub.notify(EntityNotification(transaction.Network(), 0, 0, transaction.EntityVersion(), transaction.EntityVersion()));
 				}
 			}
 

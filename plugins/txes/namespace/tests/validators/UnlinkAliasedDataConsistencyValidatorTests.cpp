@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 			static NotificationType CreateNotification(model::AliasAction aliasAction = model::AliasAction::Unlink) {
 				typename TTraits::AliasType alias;
 				test::FillWithRandomData(alias);
-				return NotificationType(Default_Namespace_Id, aliasAction, alias);
+				return NotificationType(Default_Namespace_Id, aliasAction, alias, 0);
 			}
 
 			template<typename TSeedCacheFunc>

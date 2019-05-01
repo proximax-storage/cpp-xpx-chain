@@ -83,15 +83,15 @@ namespace catapult { namespace mocks {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& mockTransaction, PluginOptionFlags options, NotificationSubscriber& sub) {
-			sub.notify(AccountPublicKeyNotification(mockTransaction.Recipient));
+			sub.notify(AccountPublicKeyNotification(mockTransaction.Recipient, mockTransaction.EntityVersion()));
 
 			if (IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Custom_Notifications)) {
-				sub.notify(test::CreateNotification(Mock_Observer_1_Notification));
-				sub.notify(test::CreateNotification(Mock_Validator_1_Notification));
-				sub.notify(test::CreateNotification(Mock_All_1_Notification));
-				sub.notify(test::CreateNotification(Mock_Observer_2_Notification));
-				sub.notify(test::CreateNotification(Mock_Validator_2_Notification));
-				sub.notify(test::CreateNotification(Mock_All_2_Notification));
+				sub.notify(test::CreateNotification(Mock_Observer_1_Notification, mockTransaction.EntityVersion()));
+				sub.notify(test::CreateNotification(Mock_Validator_1_Notification, mockTransaction.EntityVersion()));
+				sub.notify(test::CreateNotification(Mock_All_1_Notification, mockTransaction.EntityVersion()));
+				sub.notify(test::CreateNotification(Mock_Observer_2_Notification, mockTransaction.EntityVersion()));
+				sub.notify(test::CreateNotification(Mock_Validator_2_Notification, mockTransaction.EntityVersion()));
+				sub.notify(test::CreateNotification(Mock_All_2_Notification, mockTransaction.EntityVersion()));
 			}
 
 			if (!IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Transfers))
@@ -104,7 +104,8 @@ namespace catapult { namespace mocks {
 				// forcibly XOR recipient even though PublicKeyToAddress always returns resolved address
 				// in order to force tests to use XOR resolver context with Publish_Transfers
 				auto recipient = PublicKeyToAddress(mockTransaction.Recipient, NetworkIdentifier::Mijin_Test);
-				sub.notify(BalanceTransferNotification(sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount));
+				sub.notify(BalanceTransferNotification(
+				    sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount, mockTransaction.EntityVersion()));
 			}
 		}
 
@@ -169,7 +170,7 @@ namespace catapult { namespace mocks {
 				// raise a custom notification that includes the provided hash
 				// (this allows other tests to verify that the appropriate hash was passed down)
 				if (IsPluginOptionFlagSet(m_options, PluginOptionFlags::Publish_Custom_Notifications))
-					sub.notify(HashNotification(transactionInfo.hash()));
+					sub.notify(HashNotification(transactionInfo.hash(), transactionInfo.entity().EntityVersion()));
 			}
 
 			RawBuffer dataBuffer(const Transaction& transaction) const override {

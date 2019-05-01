@@ -100,15 +100,17 @@ namespace catapult { namespace validators {
 		template<typename TPropertyValueTraits, typename TOperationTraits>
 		auto CreateNotification(
 				const Key& key,
-				const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification) {
-			return test::CreateNotification<TPropertyValueTraits, TOperationTraits>(key, modification);
+				const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification,
+				VersionType version) {
+			return test::CreateNotification<TPropertyValueTraits, TOperationTraits>(key, modification, version);
 		}
 
 		template<typename TPropertyValueTraits, typename TOperationTraits>
 		auto CreateNotificationWithRandomKey(
 				const Key&,
-				const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification) {
-			return test::CreateNotification<TPropertyValueTraits, TOperationTraits>(test::GenerateRandomData<Key_Size>(), modification);
+				const model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>& modification,
+				VersionType version) {
+			return test::CreateNotification<TPropertyValueTraits, TOperationTraits>(test::GenerateRandomData<Key_Size>(), modification, version);
 		}
 
 		template<typename TPropertyValueTraits, typename TOperationTraits, typename TCreateNotification, typename TModificationFactory>
@@ -125,7 +127,7 @@ namespace catapult { namespace validators {
 			auto modification = modificationFactory(values);
 
 			// Act:
-			RunValidator<TPropertyValueTraits>(expectedResult, cache, createNotification(key, modification));
+			RunValidator<TPropertyValueTraits>(expectedResult, cache, createNotification(key, modification, 0));
 		}
 	}
 

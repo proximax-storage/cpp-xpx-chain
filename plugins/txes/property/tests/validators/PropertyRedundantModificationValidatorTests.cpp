@@ -65,7 +65,8 @@ namespace catapult { namespace validators {
 					test::GenerateRandomData<Key_Size>(),
 					TPropertyValueTraits::Property_Type,
 					static_cast<uint8_t>(modifications.size()),
-					modifications.data());
+					modifications.data(),
+					0);
 			auto cache = test::PropertyCacheFactory::Create();
 			if (CacheSeed::Yes == cacheSeed) {
 				auto address = model::PublicKeyToAddress(notification.Key, model::NetworkIdentifier::Zero);

@@ -39,7 +39,7 @@ namespace catapult { namespace mongo {
 		public:
 			void publish(const model::WeakEntityInfo& entityInfo, model::NotificationSubscriber& sub) const override {
 				// just publish the signer
-				sub.notify(model::AccountPublicKeyNotification(entityInfo.entity().Signer));
+				sub.notify(model::AccountPublicKeyNotification(entityInfo.entity().Signer, 0));
 			}
 		};
 

@@ -38,7 +38,7 @@ namespace catapult { namespace observers {
 		using Modifications = std::vector<model::CosignatoryModification>;
 
 		auto CreateNotification(const Key& signerKey, const std::vector<model::CosignatoryModification>& modifications) {
-			return Notification(signerKey, static_cast<uint8_t>(modifications.size()), modifications.data());
+			return Notification(signerKey, static_cast<uint8_t>(modifications.size()), modifications.data(), 0);
 		}
 
 		void LinkMultisigWithCosignatory(

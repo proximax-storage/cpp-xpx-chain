@@ -48,28 +48,28 @@ namespace catapult { namespace plugins {
 				rentalFee = Amount(config.RootFeePerBlock.unwrap() * transaction.Duration.unwrap());
 			}
 
-			sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
-			sub.notify(NamespaceRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
+			sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee, transaction.EntityVersion()));
+			sub.notify(NamespaceRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee, transaction.EntityVersion()));
 		}
 
 		template<typename TTransaction>
 		auto CreatePublisher(const NamespaceRentalFeeConfiguration& config) {
 			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
 				// 1. sink account notification
-				sub.notify(AccountPublicKeyNotification(config.SinkPublicKey));
+				sub.notify(AccountPublicKeyNotification(config.SinkPublicKey, transaction.EntityVersion()));
 
 				// 2. rental fee charge
 				PublishBalanceTransfer(config, transaction, sub);
 
 				// 3. registration notifications
-				sub.notify(NamespaceNotification(transaction.NamespaceType));
+				sub.notify(NamespaceNotification(transaction.NamespaceType, transaction.EntityVersion()));
 				auto parentId = Namespace_Base_Id;
 				if (transaction.IsRootRegistration()) {
 					using Notification = RootNamespaceNotification;
-					sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.Duration));
+					sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.Duration, transaction.EntityVersion()));
 				} else {
 					using Notification = ChildNamespaceNotification;
-					sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.ParentId));
+					sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.ParentId, transaction.EntityVersion()));
 					parentId = transaction.ParentId;
 				}
 
@@ -77,7 +77,8 @@ namespace catapult { namespace plugins {
 						transaction.NamespaceId,
 						parentId,
 						transaction.NamespaceNameSize,
-						transaction.NamePtr()));
+						transaction.NamePtr(),
+						transaction.EntityVersion()));
 			};
 		}
 	}

@@ -221,7 +221,7 @@ namespace catapult { namespace observers {
 			auto pObserver = builder.build();
 
 			// Act:
-			auto notification = model::AccountPublicKeyNotification(Key());
+			auto notification = model::AccountPublicKeyNotification(Key(), 0);
 			prepareNotification(notification);
 			test::ObserveNotification<model::Notification>(*pObserver, notification, context);
 

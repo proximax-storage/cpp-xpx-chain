@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 				uint8_t divisibility,
 				BlockDuration duration) {
 			auto properties = model::MosaicProperties::FromValues({ { 0, divisibility, duration.unwrap() } });
-			return model::MosaicDefinitionNotification(signer, id, properties);
+			return model::MosaicDefinitionNotification(signer, id, properties, 0);
 		}
 
 		model::MosaicDefinitionNotification CreateNotification(const Key& signer, MosaicId id, BlockDuration duration) {

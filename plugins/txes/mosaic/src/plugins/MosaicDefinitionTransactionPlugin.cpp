@@ -33,22 +33,23 @@ namespace catapult { namespace plugins {
 		auto CreatePublisher(const MosaicRentalFeeConfiguration& config) {
 			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
 				// 1. sink account notification
-				sub.notify(AccountPublicKeyNotification(config.SinkPublicKey));
+				sub.notify(AccountPublicKeyNotification(config.SinkPublicKey, transaction.EntityVersion()));
 
 				// 2. rental fee charge
 				// a. exempt the nemesis account
 				if (config.NemesisPublicKey != transaction.Signer) {
-					sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
-					sub.notify(MosaicRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
+					sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee, transaction.EntityVersion()));
+					sub.notify(MosaicRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee, transaction.EntityVersion()));
 				}
 
 				// 3. registration
-				sub.notify(MosaicNonceNotification(transaction.Signer, transaction.MosaicNonce, transaction.MosaicId));
-				sub.notify(MosaicPropertiesNotification(transaction.PropertiesHeader, transaction.PropertiesPtr()));
+				sub.notify(MosaicNonceNotification(transaction.Signer, transaction.MosaicNonce, transaction.MosaicId, transaction.EntityVersion()));
+				sub.notify(MosaicPropertiesNotification(transaction.PropertiesHeader, transaction.PropertiesPtr(), transaction.EntityVersion()));
 				sub.notify(MosaicDefinitionNotification(
 						transaction.Signer,
 						transaction.MosaicId,
-						ExtractAllProperties(transaction.PropertiesHeader, transaction.PropertiesPtr())));
+						ExtractAllProperties(transaction.PropertiesHeader, transaction.PropertiesPtr()),
+						transaction.EntityVersion()));
 			};
 		}
 	}

@@ -66,8 +66,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates secret lock hash algorithm notification around \a hashAlgorithm.
-		SecretLockHashAlgorithmNotification(LockHashAlgorithm hashAlgorithm)
-				: Notification(Notification_Type, sizeof(SecretLockHashAlgorithmNotification))
+		SecretLockHashAlgorithmNotification(LockHashAlgorithm hashAlgorithm, VersionType version)
+				: Notification(Notification_Type, sizeof(SecretLockHashAlgorithmNotification), version)
 				, HashAlgorithm(hashAlgorithm)
 		{}
 
@@ -90,8 +90,9 @@ namespace catapult { namespace model {
 				BlockDuration duration,
 				LockHashAlgorithm hashAlgorithm,
 				const Hash256& secret,
-				const UnresolvedAddress& recipient)
-				: BaseLockNotification(signer, mosaic, duration)
+				const UnresolvedAddress& recipient,
+				VersionType version)
+				: BaseLockNotification(signer, mosaic, duration, version)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)
 				, Recipient(recipient)
@@ -116,8 +117,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates proof secret notification around \a hashAlgorithm, \a secret and \a proof.
-		ProofSecretNotification(LockHashAlgorithm hashAlgorithm, const Hash256& secret, const RawBuffer& proof)
-				: Notification(Notification_Type, sizeof(ProofSecretNotification))
+		ProofSecretNotification(
+            LockHashAlgorithm hashAlgorithm,
+            const Hash256& secret,
+            const RawBuffer& proof,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ProofSecretNotification), version)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)
 				, Proof(proof)
@@ -142,8 +147,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates proof publication notification around \a signer, \a hashAlgorithm and \a secret.
-		ProofPublicationNotification(const Key& signer, LockHashAlgorithm hashAlgorithm, const Hash256& secret)
-				: Notification(Notification_Type, sizeof(ProofPublicationNotification))
+		ProofPublicationNotification(
+            const Key& signer,
+            LockHashAlgorithm hashAlgorithm,
+            const Hash256& secret,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(ProofPublicationNotification), version)
 				, Signer(signer)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)

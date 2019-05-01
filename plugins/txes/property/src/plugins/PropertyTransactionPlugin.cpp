@@ -58,7 +58,7 @@ namespace catapult { namespace plugins {
 		public:
 			template<typename TTransaction>
 			static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-				sub.notify(PropertyTypeNotification(transaction.PropertyType));
+				sub.notify(PropertyTypeNotification(transaction.PropertyType, transaction.EntityVersion()));
 				sub.notify(CreatePropertyModificationsNotification<TTransaction>(transaction));
 
 				using ValueNotification = typename TTraits::ModifyPropertyValueNotification;
@@ -68,7 +68,8 @@ namespace catapult { namespace plugins {
 						pModifications[i].ModificationType,
 						pModifications[i].Value
 					};
-					sub.notify(ValueNotification(transaction.Signer, transaction.PropertyType, modification));
+					sub.notify(ValueNotification(
+					    transaction.Signer, transaction.PropertyType, modification, transaction.EntityVersion()));
 				}
 			}
 
@@ -79,7 +80,8 @@ namespace catapult { namespace plugins {
 						transaction.Signer,
 						transaction.PropertyType,
 						transaction.ModificationsCount,
-						transaction.ModificationsPtr());
+						transaction.ModificationsPtr(),
+						transaction.EntityVersion());
 			}
 		};
 	}

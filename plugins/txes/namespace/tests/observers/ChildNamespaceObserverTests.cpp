@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
 
 	namespace {
 		model::ChildNamespaceNotification CreateChildNotification(const Key& signer, NamespaceId parentId, NamespaceId id) {
-			return model::ChildNamespaceNotification(signer, id, parentId);
+			return model::ChildNamespaceNotification(signer, id, parentId, 0);
 		}
 
 		template<typename TSeedCacheFunc, typename TCheckCacheFunc>

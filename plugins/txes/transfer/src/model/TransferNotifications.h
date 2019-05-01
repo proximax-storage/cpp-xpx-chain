@@ -47,8 +47,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a messageSize.
-		explicit TransferMessageNotification(uint16_t messageSize)
-				: Notification(Notification_Type, sizeof(TransferMessageNotification))
+		explicit TransferMessageNotification(uint16_t messageSize, VersionType version)
+				: Notification(Notification_Type, sizeof(TransferMessageNotification), version)
 				, MessageSize(messageSize)
 		{}
 
@@ -65,8 +65,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a mosaicsCount and \a pMosaics.
-		explicit TransferMosaicsNotification(uint8_t mosaicsCount, const UnresolvedMosaic* pMosaics)
-				: Notification(Notification_Type, sizeof(TransferMosaicsNotification))
+		explicit TransferMosaicsNotification(uint8_t mosaicsCount, const UnresolvedMosaic* pMosaics, VersionType version)
+				: Notification(Notification_Type, sizeof(TransferMosaicsNotification), version)
 				, MosaicsCount(mosaicsCount)
 				, MosaicsPtr(pMosaics)
 		{}

@@ -65,7 +65,7 @@ namespace catapult { namespace observers {
 		auto context = test::CreateObserverContext(cacheDelta, state, Height(123), NotifyMode::Commit);
 
 		auto publicKey = test::GenerateRandomData<Key_Size>();
-		model::AccountPublicKeyNotification notification(publicKey);
+		model::AccountPublicKeyNotification notification(publicKey, 0);
 		observer.notify(notification, context);
 
 		// Assert:

@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 		using Modifications = std::vector<model::CosignatoryModification>;
 
 		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta) {
-			return model::ModifyMultisigSettingsNotification(signer, minRemovalDelta, minApprovalDelta);
+			return model::ModifyMultisigSettingsNotification(signer, minRemovalDelta, minApprovalDelta, 0);
 		}
 
 		auto GetValidationResult(const cache::CatapultCache& cache, const model::ModifyMultisigSettingsNotification& notification) {

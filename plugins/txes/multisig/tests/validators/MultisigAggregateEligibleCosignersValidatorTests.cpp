@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 			auto cosignatures = test::GenerateCosignaturesFromCosigners(cosigners);
 
 			using Notification = model::AggregateCosignaturesNotification;
-			Notification notification(signer, embeddedSigners.size(), pTransactions, cosignatures.size(), cosignatures.data());
+			Notification notification(signer, embeddedSigners.size(), pTransactions, cosignatures.size(), cosignatures.data(), 0);
 			auto pValidator = CreateMultisigAggregateEligibleCosignersValidator();
 
 			// Act:
@@ -260,7 +260,7 @@ namespace catapult { namespace validators {
 			auto cosignatures = test::GenerateCosignaturesFromCosigners(cosigners);
 
 			using Notification = model::AggregateCosignaturesNotification;
-			Notification notification(signer, 1, &transaction, cosignatures.size(), cosignatures.data());
+			Notification notification(signer, 1, &transaction, cosignatures.size(), cosignatures.data(), 0);
 			auto pValidator = CreateMultisigAggregateEligibleCosignersValidator();
 
 			// Act:

@@ -41,7 +41,7 @@ namespace catapult { namespace observers {
 					const UnresolvedAddress& recipient,
 					UnresolvedMosaicId mosaicId,
 					catapult::Amount amount)
-					: BalanceTransferNotification(sender, recipient, mosaicId, amount) {
+					: BalanceTransferNotification(sender, recipient, mosaicId, amount, 0) {
 				// override type
 				Type = Mock_Notification;
 			}

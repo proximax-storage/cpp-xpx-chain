@@ -41,8 +41,8 @@ namespace catapult { namespace model {
 	private:
 		/// Creates a notification around \a signer, \a modificationCount and \a pModifications.
 		explicit ReputationUpdateNotification(
-			const std::vector<const CosignatoryModification*>& modifications)
-			: Notification(Notification_Type, RealSize(modifications))
+			const std::vector<const CosignatoryModification*>& modifications, VersionType version)
+			: Notification(Notification_Type, RealSize(modifications), version)
 		{}
 
 		uint8_t* ModificationsStart() {
@@ -76,11 +76,13 @@ namespace catapult { namespace model {
 			return reinterpret_cast<const CosignatoryModification* const *>(ModificationsStart());
 		}
 
-		static std::unique_ptr<ReputationUpdateNotification> CreateReputationUpdateNotification(const std::vector<const CosignatoryModification*>& modifications) {
+		static std::unique_ptr<ReputationUpdateNotification> CreateReputationUpdateNotification(
+		        const std::vector<const CosignatoryModification*>& modifications, VersionType version) {
 			auto smart_ptr = utils::MakeUniqueWithSize<ReputationUpdateNotification>(RealSize(modifications));
 			auto& notification = *smart_ptr.get();
 			notification.Type = Notification_Type;
 			notification.Size = RealSize(modifications);
+            notification.Version = version;
 
 			std::memcpy(notification.ModificationsStart(), modifications.data(), BodySize(modifications));
 
@@ -114,8 +116,9 @@ namespace catapult { namespace model {
 			const uint8_t& executorModificationCount,
 			const CosignatoryModification* pExecutorModifications,
 			const uint8_t& verifierModificationCount,
-			const CosignatoryModification* pVerifierModifications)
-			: Notification(Notification_Type, sizeof(ModifyContractNotification))
+			const CosignatoryModification* pVerifierModifications,
+			VersionType version)
+			: Notification(Notification_Type, sizeof(ModifyContractNotification), version)
 			, DurationDelta(durationDelta)
 			, Multisig(multisig)
 			, Hash(hash)

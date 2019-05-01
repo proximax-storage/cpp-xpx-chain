@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 			}
 
 			static auto CreateNotification(EnumType value) {
-				return model::RemoteAccountLinkNotification(Key(), Key(), value);
+				return model::RemoteAccountLinkNotification(Key(), Key(), value, 0);
 			}
 		};
 	}

@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 				const Key& signer,
 				const model::PropertyModification<UnresolvedAddress>& modification) {
 			// Arrange:
-			model::ModifyAddressPropertyValueNotification notification(signer, model::PropertyType::Address, modification);
+			model::ModifyAddressPropertyValueNotification notification(signer, model::PropertyType::Address, modification, 0);
 			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(model::NetworkIdentifier::Zero);
 
 			// Act:

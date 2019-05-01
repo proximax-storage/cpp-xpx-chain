@@ -79,7 +79,7 @@ namespace catapult { namespace validators {
 		void AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection direction) {
 			// Arrange:
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
+			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100), 0);
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(500), model::MosaicFlags::None);
@@ -103,7 +103,7 @@ namespace catapult { namespace validators {
 		void AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply(model::MosaicSupplyChangeDirection direction) {
 			// Arrange:
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
+			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100), 0);
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(499), model::MosaicFlags::None);
@@ -132,7 +132,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto signer = test::GenerateRandomData<Key_Size>();
 			auto direction = model::MosaicSupplyChangeDirection::Decrease;
-			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
+			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, delta, 0);
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, ownerSupply);
@@ -168,7 +168,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto signer = test::GenerateRandomData<Key_Size>();
 			auto direction = model::MosaicSupplyChangeDirection::Increase;
-			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
+			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, delta, 0);
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, Amount(111));

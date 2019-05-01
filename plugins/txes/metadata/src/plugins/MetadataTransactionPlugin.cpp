@@ -39,7 +39,7 @@ namespace catapult { namespace plugins {
         public:
             template<typename TTransaction>
             static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-                sub.notify(MetadataTypeNotification(transaction.MetadataType));
+                sub.notify(MetadataTypeNotification(transaction.MetadataType, transaction.EntityVersion()));
                 sub.notify(CreateMetadataModificationsNotification<TTransaction>(transaction));
 
                 std::vector<const model::MetadataModification*> modifications;
@@ -50,26 +50,29 @@ namespace catapult { namespace plugins {
                 if (!modifications.empty())
                     sub.notify(MetadataModificationsNotification(
                         state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
-                        modifications));
+                        modifications, transaction.EntityVersion()));
 
                 for (const auto& modification : transaction.Transactions()) {
                     sub.notify(ModifyMetadataFieldNotification(
                         modification.ModificationType,
                         modification.KeySize, modification.KeyPtr(),
-                        modification.ValueSize, modification.ValuePtr()));
+                        modification.ValueSize, modification.ValuePtr(),
+                        transaction.EntityVersion()));
 
                     sub.notify(typename TTraits::ModifyMetadataValueNotification(
                         transaction.MetadataId, transaction.MetadataType,
                         modification.ModificationType,
                         modification.KeySize, modification.KeyPtr(),
-                        modification.ValueSize, modification.ValuePtr()));
+                        modification.ValueSize, modification.ValuePtr(),
+                        transaction.EntityVersion()));
                 }
             }
 
         private:
             template<typename TTransaction>
             static auto CreateMetadataModificationsNotification(const TTransaction& transaction) {
-                return typename TTraits::ModifyMetadataNotification(transaction.Signer, transaction.MetadataId);
+                return typename TTraits::ModifyMetadataNotification(
+                    transaction.Signer, transaction.MetadataId, transaction.EntityVersion());
             }
         };
     }

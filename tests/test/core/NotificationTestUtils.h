@@ -25,19 +25,19 @@
 namespace catapult { namespace test {
 
 	/// Creates a new notification with \a type.
-	inline model::Notification CreateNotification(model::NotificationType type) {
-		return model::Notification(type, sizeof(model::Notification));
+	inline model::Notification CreateNotification(model::NotificationType type, VersionType version = 0) {
+		return model::Notification(type, sizeof(model::Notification), version);
 	}
 
 	/// Creates a placeholder block notification.
-	inline model::BlockNotification CreateBlockNotification() {
+	inline model::BlockNotification CreateBlockNotification(VersionType version = 0) {
 		// notice that notification Signer will be garbage after this returns
-		return model::BlockNotification(Key(), Timestamp(), Difficulty());
+		return model::BlockNotification(Key(), Timestamp(), Difficulty(), version);
 	}
 
 	/// Creates a block notification around \a signer.
-	inline model::BlockNotification CreateBlockNotification(const Key& signer) {
-		return model::BlockNotification(signer, Timestamp(), Difficulty());
+	inline model::BlockNotification CreateBlockNotification(const Key& signer, VersionType version = 0) {
+		return model::BlockNotification(signer, Timestamp(), Difficulty(), version);
 	}
 
 	/// Casts \a notification to a derived notification type.

@@ -69,15 +69,17 @@ namespace catapult { namespace plugins {
 						static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
 						aggregate.TransactionsPtr(),
 						numCosignatures,
-						aggregate.CosignaturesPtr()));
+						aggregate.CosignaturesPtr(),
+                        aggregate.EntityVersion()));
 
 				// publish all sub-transaction information
 				for (const auto& subTransaction : aggregate.Transactions()) {
 					// - change source
-					sub.notify(SourceChangeNotification(0, 1, SourceChangeNotification::SourceChangeType::Relative));
+					sub.notify(SourceChangeNotification(
+					    0, 1, SourceChangeNotification::SourceChangeType::Relative, aggregate.EntityVersion()));
 
 					// - signers and entity
-					sub.notify(AccountPublicKeyNotification(subTransaction.Signer));
+					sub.notify(AccountPublicKeyNotification(subTransaction.Signer, aggregate.EntityVersion()));
 					const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
 					auto supportedVersions = plugin.supportedVersions();
 
@@ -85,14 +87,16 @@ namespace catapult { namespace plugins {
 							subTransaction.Network(),
 							supportedVersions.MinVersion,
 							supportedVersions.MaxVersion,
-							subTransaction.EntityVersion()));
+							subTransaction.EntityVersion(),
+                            aggregate.EntityVersion()));
 
 					// - generic sub-transaction notification
 					sub.notify(AggregateEmbeddedTransactionNotification(
 							aggregate.Signer,
 							subTransaction,
 							numCosignatures,
-							aggregate.CosignaturesPtr()));
+							aggregate.CosignaturesPtr(),
+                            aggregate.EntityVersion()));
 
 					// - specific sub-transaction notifications
 					//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
@@ -105,7 +109,8 @@ namespace catapult { namespace plugins {
 					// - notice that all valid cosigners must have been observed previously as part of either
 					//   (1) sub-transaction execution or (2) composite account setup
 					// - require the cosigners to sign the aggregate indirectly via the hash of its data
-					sub.notify(SignatureNotification(pCosignature->Signer, pCosignature->Signature, transactionInfo.hash()));
+					sub.notify(SignatureNotification(
+					    pCosignature->Signer, pCosignature->Signature, transactionInfo.hash(), aggregate.EntityVersion()));
 					++pCosignature;
 				}
 			}

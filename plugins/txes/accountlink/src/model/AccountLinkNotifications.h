@@ -48,8 +48,12 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
-		RemoteAccountLinkNotification(const Key& mainAccountKey, const Key& remoteAccountKey, AccountLinkAction linkAction)
-				: Notification(Notification_Type, sizeof(RemoteAccountLinkNotification))
+		RemoteAccountLinkNotification(
+            const Key& mainAccountKey,
+            const Key& remoteAccountKey,
+            AccountLinkAction linkAction,
+            VersionType version)
+				: Notification(Notification_Type, sizeof(RemoteAccountLinkNotification), version)
 				, MainAccountKey(mainAccountKey)
 				, RemoteAccountKey(remoteAccountKey)
 				, LinkAction(linkAction)
@@ -74,8 +78,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a remoteAccountKey.
-		explicit NewRemoteAccountNotification(const Key& remoteAccountKey)
-				: Notification(Notification_Type, sizeof(NewRemoteAccountNotification))
+		explicit NewRemoteAccountNotification(const Key& remoteAccountKey, VersionType version)
+				: Notification(Notification_Type, sizeof(NewRemoteAccountNotification), version)
 				, RemoteAccountKey(remoteAccountKey)
 		{}
 

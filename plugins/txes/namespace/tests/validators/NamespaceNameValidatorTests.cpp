@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		model::NamespaceNameNotification CreateNamespaceNameNotification(uint8_t nameSize, const uint8_t* pName) {
-			auto notification = model::NamespaceNameNotification(NamespaceId(), NamespaceId(777), nameSize, pName);
+			auto notification = model::NamespaceNameNotification(NamespaceId(), NamespaceId(777), nameSize, pName, 0);
 			notification.NamespaceId = model::GenerateNamespaceId(NamespaceId(777), reinterpret_cast<const char*>(pName));
 			return notification;
 		}
@@ -152,14 +152,14 @@ namespace catapult { namespace validators {
 		model::NamespaceNameNotification CreateRootNamespaceNotification(const std::string& name) {
 			auto nameSize = static_cast<uint8_t>(name.size());
 			const auto* pName = reinterpret_cast<const uint8_t*>(name.data());
-			auto notification = model::NamespaceNameNotification(NamespaceId(), Namespace_Base_Id, nameSize, pName);
+			auto notification = model::NamespaceNameNotification(NamespaceId(), Namespace_Base_Id, nameSize, pName, 0);
 			notification.NamespaceId = model::GenerateNamespaceId(Namespace_Base_Id, name);
 			return notification;
 		}
 
 		model::NamespaceNameNotification CreateChildNamespaceNotification(const std::string& parentName) {
 			const auto* pChildName = reinterpret_cast<const uint8_t*>("alice");
-			auto notification = model::NamespaceNameNotification(NamespaceId(), NamespaceId(), 5, pChildName);
+			auto notification = model::NamespaceNameNotification(NamespaceId(), NamespaceId(), 5, pChildName, 0);
 			notification.ParentId = model::GenerateNamespaceId(Namespace_Base_Id, parentName);
 			notification.NamespaceId = model::GenerateNamespaceId(notification.ParentId, reinterpret_cast<const char*>(pChildName));
 			return notification;

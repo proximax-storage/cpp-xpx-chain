@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t version) {
 			// Arrange:
-			model::EntityNotification notification(model::NetworkIdentifier::Zero, Min_Entity_Version, Max_Entity_Version, version);
+			model::EntityNotification notification(model::NetworkIdentifier::Zero, Min_Entity_Version, Max_Entity_Version, version, 0);
 			auto pValidator = CreateEntityVersionValidator();
 
 			// Act:
@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenEntityMatchesBounds) {
 		// Arrange:
-		model::EntityNotification notification(model::NetworkIdentifier::Zero, 5, 5, 5);
+		model::EntityNotification notification(model::NetworkIdentifier::Zero, 5, 5, 5, 0);
 		auto pValidator = CreateEntityVersionValidator();
 
 		// Act:

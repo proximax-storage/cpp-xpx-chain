@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 			auto context = ValidatorContext(Height(123), Block_Time, model::NetworkInfo(), resolverContext, readOnlyCache);
 			auto pValidator = CreateDeadlineValidator(Max_Transaction_Lifetime);
 
-			model::TransactionNotification notification(Key(), Hash256(), model::EntityType(), deadline);
+			model::TransactionNotification notification(Key(), Hash256(), model::EntityType(), deadline, 0);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);

@@ -87,7 +87,7 @@ namespace catapult { namespace validators {
 			PopulateCache<TOperationTraits>(cache, cacheContents);
 			auto pValidator = CreateAddressInteractionValidator();
 			auto entityType = static_cast<model::EntityType>(0x4123);
-			auto notification = model::AddressInteractionNotification(source, entityType, participantsByAddress, participantsByKey);
+			auto notification = model::AddressInteractionNotification(source, entityType, participantsByAddress, participantsByKey, 0);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

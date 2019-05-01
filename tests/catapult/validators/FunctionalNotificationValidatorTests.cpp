@@ -62,7 +62,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto publicKey = test::GenerateRandomData<Key_Size>();
-		model::AccountPublicKeyNotification notification(publicKey);
+		model::AccountPublicKeyNotification notification(publicKey, 0);
 		auto result = validator.validate(notification, 7);
 
 		// Assert:

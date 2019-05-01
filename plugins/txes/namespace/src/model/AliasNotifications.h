@@ -49,11 +49,12 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a base alias notification around \a namespaceId and \a aliasAction using \a notificationType and \a notificationSize.
 		BaseAliasNotification(
-				NotificationType notificationType,
-				size_t notificationSize,
-				catapult::NamespaceId namespaceId,
-				model::AliasAction aliasAction)
-				: Notification(notificationType, notificationSize)
+            NotificationType notificationType,
+            size_t notificationSize,
+            catapult::NamespaceId namespaceId,
+            model::AliasAction aliasAction,
+            VersionType version)
+				: Notification(notificationType, notificationSize, version)
 				, NamespaceId(namespaceId)
 				, AliasAction(aliasAction)
 		{}
@@ -74,8 +75,17 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a owner, \a namespaceId and \a aliasAction.
-		AliasOwnerNotification(const Key& owner, catapult::NamespaceId namespaceId, model::AliasAction aliasAction)
-				: BaseAliasNotification(Notification_Type, sizeof(AliasOwnerNotification), namespaceId, aliasAction)
+		AliasOwnerNotification(
+            const Key& owner,
+            catapult::NamespaceId namespaceId,
+            model::AliasAction aliasAction,
+            VersionType version)
+				: BaseAliasNotification(
+                    Notification_Type,
+                    sizeof(AliasOwnerNotification),
+                    namespaceId,
+                    aliasAction,
+                    version)
 				, Owner(owner)
 		{}
 
@@ -95,8 +105,17 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a namespaceId, \a aliasAction and \a aliasedData.
-		AliasedDataNotification(catapult::NamespaceId namespaceId, model::AliasAction aliasAction, const TAliasedData& aliasedData)
-				: BaseAliasNotification(Notification_Type, sizeof(AliasedNotification), namespaceId, aliasAction)
+		AliasedDataNotification(
+            catapult::NamespaceId namespaceId,
+            model::AliasAction aliasAction,
+            const TAliasedData& aliasedData,
+            VersionType version)
+				: BaseAliasNotification(
+                    Notification_Type,
+                    sizeof(AliasedNotification),
+                    namespaceId,
+                    aliasAction,
+                    version)
 				, AliasedData(aliasedData)
 		{}
 

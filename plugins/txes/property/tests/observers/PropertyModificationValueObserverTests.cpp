@@ -152,7 +152,7 @@ namespace catapult { namespace observers {
 			auto modificationType = NotifyMode::Commit == notifyMode ? Del : Add;
 			auto modification = model::PropertyModification<UnresolvedAddress>{ modificationType, unresolvedFilteredAddress };
 			auto completeType = TOperationTraits::CompletePropertyType(model::PropertyType::Address);
-			model::ModifyAddressPropertyValueNotification notification{ key, completeType, modification };
+			model::ModifyAddressPropertyValueNotification notification{ key, completeType, modification, 0 };
 			auto pObserver = CreateAddressPropertyValueModificationObserver();
 
 			// Act: cache entry is not removed, address property is empty but mosaic property is not

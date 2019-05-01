@@ -36,7 +36,7 @@ namespace catapult { namespace observers {
 		void AssertRollbackDoesNotChangeObserverSource(SourceChangeType changeType) {
 			// Arrange:
 			auto pObserver = CreateSourceChangeObserver();
-			auto notification = model::SourceChangeNotification(10, 5, changeType);
+			auto notification = model::SourceChangeNotification(10, 5, changeType, 0);
 
 			test::ObserverTestContext context(NotifyMode::Rollback);
 			context.statementBuilder().setSource({ 15, 22 });
@@ -69,7 +69,7 @@ namespace catapult { namespace observers {
 		void AssertCommitChangesObserverSource(SourceChangeType changeType, const model::ReceiptSource& expectedSource) {
 			// Arrange:
 			auto pObserver = CreateSourceChangeObserver();
-			auto notification = model::SourceChangeNotification(10, 5, changeType);
+			auto notification = model::SourceChangeNotification(10, 5, changeType, 0);
 
 			test::ObserverTestContext context(NotifyMode::Commit);
 			context.statementBuilder().setSource({ 15, 22 });

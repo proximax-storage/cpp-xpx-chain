@@ -17,7 +17,7 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, model::MetadataType metadataType) {
 			// Arrange:
-			model::MetadataTypeNotification notification(metadataType);
+			model::MetadataTypeNotification notification(metadataType, 0);
 			auto pValidator = CreateMetadataTypeValidator();
 
 			// Act:

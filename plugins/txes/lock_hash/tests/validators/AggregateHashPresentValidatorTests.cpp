@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		auto CreateNotification(const Hash256& transactionHash, model::EntityType transactionType) {
-			return model::TransactionNotification(Key(), transactionHash, transactionType, Timestamp());
+			return model::TransactionNotification(Key(), transactionHash, transactionType, Timestamp(), 0);
 		}
 
 		auto CreateCache(const Hash256& transactionHash, Height expirationHeight, state::LockStatus status = state::LockStatus::Unused) {
