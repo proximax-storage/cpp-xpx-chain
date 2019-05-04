@@ -48,16 +48,19 @@ namespace catapult { namespace cache {
 		void AssertSerializedValue(const TimeBasedDescriptor::ValueType& originalGroup, const std::string& result) {
 			// Assert:
 			using IdentifierType = Height;
-			auto expectedSize = sizeof(Timestamp) + sizeof(uint64_t) + originalGroup.size() * sizeof(IdentifierType);
+			auto expectedSize = sizeof(VersionType) + sizeof(Timestamp) + sizeof(uint64_t) + originalGroup.size() * sizeof(IdentifierType);
 			ASSERT_EQ(expectedSize, result.size());
 
-			auto timestamp = reinterpret_cast<const Timestamp&>(result.front());
+			auto version = reinterpret_cast<const VersionType&>(result.front());
+			EXPECT_EQ(1, version);
+
+			auto timestamp = *reinterpret_cast<const Timestamp*>(result.data() + sizeof(VersionType));
 			EXPECT_EQ(originalGroup.key(), timestamp);
 
-			auto size = *reinterpret_cast<const uint64_t*>(result.data() + sizeof(Timestamp));
+			auto size = *reinterpret_cast<const uint64_t*>(result.data() + sizeof(VersionType) + sizeof(Timestamp));
 			EXPECT_EQ(originalGroup.size(), size);
 
-			const auto* pIdentifier = reinterpret_cast<const IdentifierType*>(result.data() + sizeof(Timestamp) + sizeof(uint64_t));
+			const auto* pIdentifier = reinterpret_cast<const IdentifierType*>(result.data() + sizeof(VersionType) + sizeof(Timestamp) + sizeof(uint64_t));
 			const auto& expectedIdentifiers = originalGroup.identifiers();
 			for (auto i = 0u; i < originalGroup.size(); ++i, ++pIdentifier)
 				EXPECT_CONTAINS_MESSAGE(expectedIdentifiers, *pIdentifier, std::to_string(i));
@@ -82,13 +85,13 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanDeserializeGroupWithZeroIdentifiers) {
 		// Arrange:
-		std::vector<uint64_t> buffer{ 0x12345678'90ABCDEF, 0 };
+		std::vector<uint32_t> buffer{0x01, 0x12345678, 0x90ABCDEF, 0, 0 };
 
 		// Act:
 		auto value = Serializer::DeserializeValue(ToRawBuffer(buffer));
 
 		// Assert:
-		EXPECT_EQ(Timestamp(buffer[0]), value.key());
+		EXPECT_EQ(reinterpret_cast<const Timestamp&>(buffer[1]), value.key());
 		EXPECT_EQ(0u, value.size());
 		EXPECT_TRUE(value.empty());
 	}
@@ -109,8 +112,14 @@ namespace catapult { namespace cache {
 		auto buffer = test::GenerateRandomDataVector<uint64_t>(1 + 1 + 5);
 		buffer[1] = 5;
 
+		VersionType version{1};
+		auto pVersion = reinterpret_cast<const uint8_t*>(&version);
+		std::vector<uint8_t> data{pVersion, pVersion + sizeof(VersionType)};
+		auto rawBuffer = ToRawBuffer(buffer);
+        std::copy(rawBuffer.pData, rawBuffer.pData + rawBuffer.Size, std::back_inserter(data));
+
 		// Act:
-		auto value = Serializer::DeserializeValue(ToRawBuffer(buffer));
+		auto value = Serializer::DeserializeValue({ data.data(), data.size() });
 
 		// Assert:
 		EXPECT_EQ(Timestamp(buffer[0]), value.key());

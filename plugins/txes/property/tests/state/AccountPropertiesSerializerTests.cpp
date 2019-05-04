@@ -31,7 +31,7 @@ namespace catapult { namespace state {
 
 	namespace {
 		auto CalculateExpectedSize(const AccountProperties& accountProperties) {
-			auto size = Address_Decoded_Size + sizeof(uint64_t);
+			auto size = sizeof(VersionType) + Address_Decoded_Size + sizeof(uint64_t);
 			for (const auto& pair : accountProperties)
 				size += sizeof(uint8_t) + sizeof(uint64_t) + pair.second.values().size() * pair.second.propertyValueSize();
 
@@ -43,10 +43,12 @@ namespace catapult { namespace state {
 			EXPECT_EQ(expectedData, data) << message;
 		}
 
-		void AssertBuffer(const AccountProperties& accountProperties, const std::vector<uint8_t>& buffer, size_t expectedSize) {
+		void AssertBuffer(const AccountProperties& accountProperties, const std::vector<uint8_t>& buffer, size_t expectedSize, VersionType version) {
 			ASSERT_EQ(expectedSize, buffer.size());
 
 			const auto* pData = buffer.data();
+			EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
+			pData += sizeof(VersionType);
 			EXPECT_EQ(accountProperties.address(), reinterpret_cast<const Address&>(*pData));
 			pData += Address_Decoded_Size;
 
@@ -76,7 +78,7 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void AssertCanSaveAccountProperties(const std::vector<size_t>& valuesSizes) {
+		void AssertCanSaveAccountProperties(const std::vector<size_t>& valuesSizes, VersionType version) {
 			// Arrange:
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream outputStream("", buffer);
@@ -86,28 +88,28 @@ namespace catapult { namespace state {
 			AccountPropertiesSerializer::Save(accountProperties, outputStream);
 
 			// Assert:
-			AssertBuffer(accountProperties, buffer, CalculateExpectedSize(accountProperties));
+			AssertBuffer(accountProperties, buffer, CalculateExpectedSize(accountProperties), version);
 		}
 	}
 
 	// region Save
 
-	TEST(TEST_CLASS, CanSaveSingleAccountProperties_AllPropertiesEmpty) {
+	TEST(TEST_CLASS, CanSaveSingleAccountProperties_AllPropertiesEmpty_v1) {
 		// Assert:
-		AssertCanSaveAccountProperties({ 0, 0, 0 });
+		AssertCanSaveAccountProperties({ 0, 0, 0 }, 1);
 	}
 
-	TEST(TEST_CLASS, CanSaveSingleAccountProperties_SinglePropertyNonEmpty) {
+	TEST(TEST_CLASS, CanSaveSingleAccountProperties_SinglePropertyNonEmpty_v1) {
 		// Assert:
-		AssertCanSaveAccountProperties({ 1, 0, 0 });
-		AssertCanSaveAccountProperties({ 0, 1, 0 });
-		AssertCanSaveAccountProperties({ 0, 0, 1 });
+		AssertCanSaveAccountProperties({ 1, 0, 0 }, 1);
+		AssertCanSaveAccountProperties({ 0, 1, 0 }, 1);
+		AssertCanSaveAccountProperties({ 0, 0, 1 }, 1);
 	}
 
-	TEST(TEST_CLASS, CanSaveSingleAccountProperties_AllPropertiesNonEmpty) {
+	TEST(TEST_CLASS, CanSaveSingleAccountProperties_AllPropertiesNonEmpty_v1) {
 		// Assert:
-		AssertCanSaveAccountProperties({ 5, 3, 6 });
-		AssertCanSaveAccountProperties({ 123, 97, 24 });
+		AssertCanSaveAccountProperties({ 5, 3, 6 }, 1);
+		AssertCanSaveAccountProperties({ 123, 97, 24 }, 1);
 	}
 
 	namespace {
@@ -127,7 +129,7 @@ namespace catapult { namespace state {
 			}
 
 			static constexpr size_t GetKeyStartBufferOffset() {
-				return Address_Decoded_Size + sizeof(uint64_t) + sizeof(uint8_t);
+				return sizeof(VersionType) + Address_Decoded_Size + sizeof(uint64_t) + sizeof(uint8_t);
 			}
 		};
 	}
@@ -187,7 +189,7 @@ namespace catapult { namespace state {
 				model::PropertyType::MosaicId,
 				model::PropertyType::TransactionType | model::PropertyType::Block
 			};
-			AssertPropertyTypes(orderedPropertyTypes, buffer, Address_Decoded_Size);
+			AssertPropertyTypes(orderedPropertyTypes, buffer, sizeof(VersionType) + Address_Decoded_Size);
 		}
 	}
 
@@ -201,10 +203,12 @@ namespace catapult { namespace state {
 	// region Load
 
 	namespace {
-		std::vector<uint8_t> CreateBuffer(const AccountProperties& accountProperties) {
+		std::vector<uint8_t> CreateBuffer(const AccountProperties& accountProperties, VersionType version) {
 			std::vector<uint8_t> buffer(CalculateExpectedSize(accountProperties));
 
 			auto* pData = buffer.data();
+			std::memcpy(pData, &version, sizeof(VersionType));
+			pData += sizeof(VersionType);
 			std::memcpy(pData, accountProperties.address().data(), Address_Decoded_Size);
 			pData += Address_Decoded_Size;
 
@@ -227,10 +231,10 @@ namespace catapult { namespace state {
 			return buffer;
 		}
 
-		void AssertCanLoadSingleAccountProperties(state::OperationType operationType, const std::vector<size_t>& valuesSizes) {
+		void AssertCanLoadSingleAccountProperties(state::OperationType operationType, const std::vector<size_t>& valuesSizes, VersionType version) {
 			// Arrange: operation type of properties in the container are alternating between Allow and Block
 			auto originalAccountProperties = test::CreateAccountProperties(operationType, valuesSizes);
-			auto buffer = CreateBuffer(originalAccountProperties);
+			auto buffer = CreateBuffer(originalAccountProperties, version);
 
 			// Act:
 			AccountProperties result(test::GenerateRandomData<Address_Decoded_Size>());
@@ -241,23 +245,23 @@ namespace catapult { namespace state {
 		}
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleAccountPropertiesWithNoValues) {
-		AssertCanLoadSingleAccountProperties(state::OperationType::Allow, { 0, 0, 0 });
-		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 0, 0 });
+	TEST(TEST_CLASS, CanLoadSingleAccountPropertiesWithNoValues_v1) {
+		AssertCanLoadSingleAccountProperties(state::OperationType::Allow, { 0, 0, 0 }, 1);
+		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 0, 0 }, 1);
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleAccountPropertiesWithSingleNonEmptyProperty) {
-		AssertCanLoadSingleAccountProperties(state::OperationType::Allow, { 1, 0, 0 });
-		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 1, 0 });
-		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 0, 1 });
-		AssertCanLoadSingleAccountProperties(state::OperationType::Allow, { 5, 0, 0 });
-		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 5, 0 });
-		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 0, 5 });
+	TEST(TEST_CLASS, CanLoadSingleAccountPropertiesWithSingleNonEmptyProperty_v1) {
+		AssertCanLoadSingleAccountProperties(state::OperationType::Allow, { 1, 0, 0 }, 1);
+		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 1, 0 }, 1);
+		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 0, 1 }, 1);
+		AssertCanLoadSingleAccountProperties(state::OperationType::Allow, { 5, 0, 0 }, 1);
+		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 5, 0 }, 1);
+		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 0, 0, 5 }, 1);
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleAccountPropertiesWithMultipleNonEmptyProperties) {
-		AssertCanLoadSingleAccountProperties(state::OperationType::Allow, { 1, 1, 1 });
-		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 5, 7, 4 });
+	TEST(TEST_CLASS, CanLoadSingleAccountPropertiesWithMultipleNonEmptyProperties_v1) {
+		AssertCanLoadSingleAccountProperties(state::OperationType::Allow, { 1, 1, 1 }, 1);
+		AssertCanLoadSingleAccountProperties(state::OperationType::Block, { 5, 7, 4 }, 1);
 	}
 
 	// endregion

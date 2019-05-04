@@ -47,8 +47,8 @@ namespace catapult { namespace state {
 				return size;
 			}
 
-			static NamespaceHistoryHeader CreateHistoryHeader(NamespaceId namespaceId, uint64_t depth) {
-				return { depth, namespaceId };
+			static NamespaceHistoryHeader CreateHistoryHeader(VersionType version, NamespaceId namespaceId, uint64_t depth) {
+				return { version, depth, namespaceId };
 			}
 
 			static void AssertHistoryHeader(const std::vector<uint8_t>& buffer, NamespaceId namespaceId, uint64_t depth) {
@@ -60,6 +60,7 @@ namespace catapult { namespace state {
 
 		struct NonHistoricalTraits {
 			struct NamespaceHistoryHeader {
+			    VersionType Version;
 				catapult::NamespaceId NamespaceId;
 			};
 			using Serializer = RootNamespaceHistoryNonHistoricalSerializer;
@@ -70,8 +71,8 @@ namespace catapult { namespace state {
 				return sizeof(NamespaceHistoryHeader) + sizeof(RootNamespaceHeader) + *childCounts.begin() * sizeof(NamespaceData);
 			}
 
-			static NamespaceHistoryHeader CreateHistoryHeader(NamespaceId namespaceId, uint64_t) {
-				return { namespaceId };
+			static NamespaceHistoryHeader CreateHistoryHeader(VersionType version, NamespaceId namespaceId, uint64_t) {
+				return { version, namespaceId };
 			}
 
 			static void AssertHistoryHeader(const std::vector<uint8_t>& buffer, NamespaceId namespaceId, uint64_t) {
@@ -659,8 +660,8 @@ namespace catapult { namespace state {
 		};
 	}
 
-	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits<FullTraits>,)
-	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits<NonHistoricalTraits>, _NonHistorical)
+	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits<FullTraits>,,1)
+	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits<NonHistoricalTraits>, _NonHistorical,1)
 
 	// endregion
 }}

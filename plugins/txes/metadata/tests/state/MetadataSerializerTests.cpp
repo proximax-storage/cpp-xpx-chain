@@ -81,8 +81,10 @@ namespace catapult { namespace state {
             return pData;
         }
 
-        const uint8_t* AssertEntryBuffer(const state::MetadataEntry& entry, const uint8_t* pData) {
+        const uint8_t* AssertEntryBuffer(const state::MetadataEntry& entry, const uint8_t* pData, VersionType version) {
             uint8_t rawIdSize = entry.raw().size();
+			EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
+			pData += sizeof(VersionType);
             EXPECT_EQ(rawIdSize, *reinterpret_cast<const uint8_t*>(pData));
             pData += sizeof(uint8_t);
 
@@ -96,39 +98,47 @@ namespace catapult { namespace state {
 
             return AssertFieldBuffer(entry.fields(), pData);
         }
+
+		void AssertCanSaveSingleEntry(VersionType version) {
+            // Arrange:
+            TestContext context;
+            auto entry = context.createEntry(model::MetadataType::Address, 5);
+
+            // Act:
+            MetadataSerializer::Save(entry, context.outputStream());
+
+            // Assert:
+            AssertEntryBuffer(entry, context.buffer().data(), version);
+		}
+
+		void AssertCanSaveMultipleEntries(VersionType version) {
+            // Arrange:
+            TestContext context;
+            auto entry1 = context.createEntry(model::MetadataType::Address, 10);
+            auto entry2 = context.createEntry(model::MetadataType::MosaicId, 15);
+            auto entry3 = context.createEntry(model::MetadataType::NamespaceId, 20);
+
+            // Act:
+            MetadataSerializer::Save(entry1, context.outputStream());
+            MetadataSerializer::Save(entry2, context.outputStream());
+            MetadataSerializer::Save(entry3, context.outputStream());
+
+            // Assert:
+            const auto* pBuffer = context.buffer().data();
+            pBuffer = AssertEntryBuffer(entry1, pBuffer, version);
+            pBuffer = AssertEntryBuffer(entry2, pBuffer, version);
+            pBuffer = AssertEntryBuffer(entry3, pBuffer, version);
+		}
     }
 
     // region Save
 
-    TEST(TEST_CLASS, CanSaveSingleEntry) {
-        // Arrange:
-        TestContext context;
-        auto entry = context.createEntry(model::MetadataType::Address, 5);
-
-        // Act:
-        MetadataSerializer::Save(entry, context.outputStream());
-
-        // Assert:
-        AssertEntryBuffer(entry, context.buffer().data());
+    TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
+        AssertCanSaveSingleEntry(1);
     }
 
-    TEST(TEST_CLASS, CanSaveMultipleEntries) {
-        // Arrange:
-        TestContext context;
-        auto entry1 = context.createEntry(model::MetadataType::Address, 10);
-        auto entry2 = context.createEntry(model::MetadataType::MosaicId, 15);
-        auto entry3 = context.createEntry(model::MetadataType::NamespaceId, 20);
-
-        // Act:
-        MetadataSerializer::Save(entry1, context.outputStream());
-        MetadataSerializer::Save(entry2, context.outputStream());
-        MetadataSerializer::Save(entry3, context.outputStream());
-
-        // Assert:
-        const auto* pBuffer = context.buffer().data();
-        pBuffer = AssertEntryBuffer(entry1, pBuffer);
-        pBuffer = AssertEntryBuffer(entry2, pBuffer);
-        pBuffer = AssertEntryBuffer(entry3, pBuffer);
+    TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
+        AssertCanSaveMultipleEntries(1);
     }
 
     // endregion
@@ -136,15 +146,17 @@ namespace catapult { namespace state {
     // region Load
 
     namespace {
-        std::vector<uint8_t> CreateEntryBuffer(const state::MetadataEntry& entry) {
+        std::vector<uint8_t> CreateEntryBuffer(const state::MetadataEntry& entry, VersionType version) {
             std::vector<uint8_t> buffer;
+            auto pData = reinterpret_cast<const uint8_t*>(&version);
+            std::copy(pData, pData + sizeof(VersionType), std::back_inserter(buffer));
             buffer.emplace_back(static_cast<uint8_t>(entry.raw().size()));
             std::copy(entry.raw().begin(), entry.raw().end(), std::back_inserter(buffer));
             buffer.emplace_back(static_cast<uint8_t>(utils::to_underlying_type(entry.type())));
 
             buffer.emplace_back(static_cast<uint8_t>(entry.fields().size()));
             for (const auto& field : entry.fields()) {
-                auto pData = reinterpret_cast<const uint8_t*>(&field.RemoveHeight);
+                pData = reinterpret_cast<const uint8_t*>(&field.RemoveHeight);
                 std::copy(pData, pData + sizeof(Height), std::back_inserter(buffer));
 
                 buffer.emplace_back(static_cast<uint8_t>(field.MetadataKey.size()));
@@ -175,11 +187,11 @@ namespace catapult { namespace state {
             }
         }
 
-        void AssertCanLoadSingleEntry() {
+        void AssertCanLoadSingleEntry(VersionType version) {
             // Arrange:
             TestContext context;
             auto originalEntry = context.createEntry(model::MetadataType::Address, 5);
-            auto buffer = CreateEntryBuffer(originalEntry);
+            auto buffer = CreateEntryBuffer(originalEntry, version);
             state::MetadataEntry result;
 
             // Act:
@@ -190,8 +202,8 @@ namespace catapult { namespace state {
         }
     }
 
-    TEST(TEST_CLASS, CanLoadSingleEntry) {
-        AssertCanLoadSingleEntry();
+    TEST(TEST_CLASS, CanLoadSingleEntry_v1) {
+        AssertCanLoadSingleEntry(1);
     }
 
     // endregion

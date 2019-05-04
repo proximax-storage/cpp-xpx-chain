@@ -35,7 +35,10 @@ namespace catapult { namespace cache {
 	public:
 		/// Serializes \a value to string.
 		static std::string SerializeValue(const ValueType& value) {
-			io::StringOutputStream output(Size(value));
+			io::StringOutputStream output(sizeof(VersionType) + Size(value));
+
+            // write version
+            io::Write32(output, 1);
 
 			io::Write(output, value.key());
 			io::Write64(output, static_cast<uint64_t>(value.size()));
@@ -48,6 +51,12 @@ namespace catapult { namespace cache {
 		/// Deserializes value from \a buffer.
 		static ValueType DeserializeValue(const RawBuffer& buffer) {
 			io::BufferInputStreamAdapter<RawBuffer> input(buffer);
+
+            // read version
+            VersionType version = io::Read32(input);
+            if (version > 1)
+                CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of identifier group", version);
+
 			auto key = io::Read<typename ValueType::GroupingKeyType>(input);
 			ValueType value(key);
 
