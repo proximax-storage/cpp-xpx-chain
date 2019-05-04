@@ -34,7 +34,7 @@ namespace catapult { namespace test {
 		using ValueType = typename TTraits::ValueType;
 
 	public:
-		static void AssertCanSaveValue() {
+		static void AssertCanSaveValue(VersionType) {
 			// Arrange:
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream stream("", buffer);
@@ -46,8 +46,8 @@ namespace catapult { namespace test {
 			TTraits::StorageType::Save(originalValue, stream);
 
 			// Assert: the value was saved
-			ASSERT_EQ(TTraits::Value_Size, buffer.size());
-			const auto& savedValue = reinterpret_cast<const ValueType&>(*buffer.data());
+			ASSERT_EQ(TTraits::Serialized_Value_Size, buffer.size());
+			const auto& savedValue = reinterpret_cast<const ValueType&>(*(buffer.data() + sizeof(VersionType)));
 			EXPECT_EQ(originalValue, savedValue);
 
 			// - the stream was not flushed
@@ -81,12 +81,13 @@ namespace catapult { namespace test {
 		};
 
 		template<typename TLoadTraits>
-		static void AssertCanLoadValue() {
+		static void AssertCanLoadValue(VersionType version) {
 			// Arrange:
-			std::vector<uint8_t> buffer(TTraits::Value_Size);
+			std::vector<uint8_t> buffer(TTraits::Serialized_Value_Size);
 			test::FillWithRandomData(buffer);
+			memcpy(buffer.data(), &version, sizeof(VersionType));
 			mocks::MockMemoryStream inputStream("", buffer);
-			const auto& originalValue = reinterpret_cast<const ValueType&>(*buffer.data());
+			const auto& originalValue = reinterpret_cast<const ValueType&>(*(buffer.data() + sizeof(VersionType)));
 
 			// Act:
 			ValueType result;
@@ -97,22 +98,22 @@ namespace catapult { namespace test {
 		}
 
 	public:
-		static void AssertCanLoadValueViaLoad() {
-			AssertCanLoadValue<LoadTraits>();
+		static void AssertCanLoadValueViaLoad(VersionType version) {
+			AssertCanLoadValue<LoadTraits>(version);
 		}
 
-		static void AssertCanLoadValueViaLoadInto() {
-			AssertCanLoadValue<LoadIntoTraits>();
+		static void AssertCanLoadValueViaLoadInto(VersionType version) {
+			AssertCanLoadValue<LoadIntoTraits>(version);
 		}
 	};
 
-#define MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, TEST_NAME) \
-	TEST(TEST_CLASS, TEST_NAME) { test::ContainsOnlyCacheStorageTests<TRAITS>::Assert##TEST_NAME(); }
+#define MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, TEST_NAME, VERSION) \
+	TEST(TEST_CLASS, TEST_NAME) { test::ContainsOnlyCacheStorageTests<TRAITS>::Assert##TEST_NAME(VERSION); }
 
-#define DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(TEST_CLASS, TRAITS) \
-	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanSaveValue) \
-	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanLoadValueViaLoad) \
-	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanLoadValueViaLoadInto)
+#define DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(TEST_CLASS, TRAITS, VERSION) \
+	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanSaveValue, VERSION) \
+	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanLoadValueViaLoad, VERSION) \
+	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanLoadValueViaLoadInto, VERSION)
 
 	// endregion
 }}
