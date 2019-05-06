@@ -46,7 +46,7 @@ namespace catapult { namespace model {
 		/// Notification size.
 		size_t Size;
 
-		/// Notification size.
+		/// Notification version.
         VersionType Version;
 	};
 
