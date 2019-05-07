@@ -12,31 +12,31 @@ pipeline {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
         IMAGE = "proximax-catapult-server"
+        BUILD_IMAGE = "catapult-server-build-image"
     }
 
 	stages {
 		stage ('Build') {
-            agent {
-                docker {
-                    // Reuse the workspace on the agent defined at top-level of Pipeline but run inside a container.
-                    reuseNode true 
-                    image 'proximax-catapult-server-dependencies-build-image:latest' 
-                    registryUrl "https://${DOCKER_REGISTRY}"
-                    registryCredentialsId "${CREDENTIAL_ID}"
-                }
-            }
             steps {
-                sh """
-                    echo 'Building catapult-server'
-                    rm -rf _build
-                    mkdir _build 
-                    cd _build
-                    cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so .. 
-		                make -j4 publish
-                    make -j4
-                    cd ..
-                    ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
-                """
+                echo 'Building catapult-server inside a docker'
+                script {
+                    def buildImage = docker.image("${BUILD_IMAGE}")
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                        buildImage.inside {
+                            sh """
+                                echo 'Building catapult-server'
+                                rm -rf _build
+                                mkdir _build 
+                                cd _build
+                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so .. 
+                                    make -j4 publish
+                                make -j4
+                                cd ..
+                                ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
+                            """    
+                        }
+                    }
+                }
             }
 		}
 
@@ -121,21 +121,21 @@ pipeline {
                     }
                 }
             }
-            post {
-                success {
-                    slackSend channel: '#devops',
-                        color: 'good',
-                        message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${DOCKER_REGISTRY}/${IMAGE}:testing-jenkins-build-${env.BUILD_NUMBER}"
-                }
-            }
+            // post {
+            //     success {
+            //         slackSend channel: '#devops',
+            //             color: 'good',
+            //             message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${DOCKER_REGISTRY}/${IMAGE}:testing-jenkins-build-${env.BUILD_NUMBER}"
+            //     }
+            // }
         }
     }
 
-    post {
-        failure {
-            slackSend channel: '#devops',
-              color: 'bad',
-              message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
-        }
-    }
+    // post {
+    //     failure {
+    //         slackSend channel: '#devops',
+    //           color: 'bad',
+    //           message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
+    //     }
+    // }
 }
