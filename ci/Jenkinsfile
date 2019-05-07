@@ -18,13 +18,12 @@ pipeline {
 		stage ('Build') {
             agent {
                 docker {
-                     /*
-                      * Reuse the workspace on the agent defined at top-level of Pipeline but run inside a container.
-                      * In this case we are running a container with maven so we don't have to install specific versions
-                      * of maven directly on the agent
-                      */
+                    // Reuse the workspace on the agent defined at top-level of Pipeline but run inside a container.
                     reuseNode true 
-                    image '249767383774.dkr.ecr.ap-southeast-1.amazonaws.com/catapult-server-build-image:latest' }
+                    image 'proximax-catapult-server-dependencies-build-image:latest' 
+                    registryUrl "${DOCKER_REGISTRY}"
+                    registryCredentialsId "${CREDENTIAL_ID}"
+                }
             }
             steps {
                 sh """
