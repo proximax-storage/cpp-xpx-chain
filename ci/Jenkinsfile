@@ -21,7 +21,7 @@ pipeline {
                     // Reuse the workspace on the agent defined at top-level of Pipeline but run inside a container.
                     reuseNode true 
                     image 'proximax-catapult-server-dependencies-build-image:latest' 
-                    registryUrl "${DOCKER_REGISTRY}"
+                    registryUrl "https://${DOCKER_REGISTRY}"
                     registryCredentialsId "${CREDENTIAL_ID}"
                 }
             }
