@@ -34,12 +34,15 @@ namespace catapult { namespace observers {
 
 		lockInfoCache.processUnusedExpiredLocks(context.Height, [&context, &accountStateCache, ownerAccountIdSupplier](
 				const auto& lockInfo) {
+			if (context.Height != lockInfo.Height)
+				return;
+
 			auto accountStateIter = accountStateCache.find(ownerAccountIdSupplier(lockInfo));
 			auto& accountState = accountStateIter.get();
 			if (NotifyMode::Commit == context.Mode)
-				accountState.Balances.credit(lockInfo.MosaicId, lockInfo.Amount);
+				accountState.Balances.credit(lockInfo.MosaicId, lockInfo.Amount, context.Height);
 			else
-				accountState.Balances.debit(lockInfo.MosaicId, lockInfo.Amount);
+				accountState.Balances.debit(lockInfo.MosaicId, lockInfo.Amount, context.Height);
 		});
 	}
 }}
