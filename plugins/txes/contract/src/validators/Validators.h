@@ -24,47 +24,34 @@
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
-
 	/// A validator implementation that applies to modify contract notifications and validates that:
 	/// - same customer does not occur in removed and added
-	stateless::NotificationValidatorPointerT<model::ModifyContractNotification>
-	CreateModifyContractValidator();
-
-	/// A validator implementation that applies to modify contract notifications and validates that:
-	/// - same customer does not occur in removed and added
-	stateless::NotificationValidatorPointerT<model::ModifyContractNotification>
-	CreateModifyContractCustomersValidator();
+	DECLARE_STATELESS_VALIDATOR(ModifyContractCustomers, model::ModifyContractNotification)();
 
 	/// A validator implementation that applies to modify contract notifications and validates that:
 	/// - same executor does not occur in removed and added
-	stateless::NotificationValidatorPointerT<model::ModifyContractNotification>
-	CreateModifyContractExecutorsValidator();
+	DECLARE_STATELESS_VALIDATOR(ModifyContractExecutors, model::ModifyContractNotification)();
 
 	/// A validator implementation that applies to modify contract notifications and validates that:
 	/// - same verifier does not occur in removed and added
-	stateless::NotificationValidatorPointerT<model::ModifyContractNotification>
-	CreateModifyContractVerifiersValidator();
+	DECLARE_STATELESS_VALIDATOR(ModifyContractVerifiers, model::ModifyContractNotification)();
 
 	/// A validator implementation that applies to modify contract notifications and validates that:
 	/// - added account isn't already a customer
 	/// - removed account is already a customer
-	stateful::NotificationValidatorPointerT<model::ModifyContractNotification>
-	CreateModifyContractInvalidCustomersValidator();
+	DECLARE_STATEFUL_VALIDATOR(ModifyContractInvalidCustomers, model::ModifyContractNotification)();
 
 	/// A validator implementation that applies to modify contract notifications and validates that:
 	/// - added account isn't already a executor
 	/// - removed account is already a executor
-	stateful::NotificationValidatorPointerT<model::ModifyContractNotification>
-	CreateModifyContractInvalidExecutorsValidator();
+	DECLARE_STATEFUL_VALIDATOR(ModifyContractInvalidExecutors, model::ModifyContractNotification)();
 
 	/// A validator implementation that applies to modify contract notifications and validates that:
 	/// - added account isn't already a verifier
 	/// - removed account is already a verifier
-	stateful::NotificationValidatorPointerT<model::ModifyContractNotification>
-	CreateModifyContractInvalidVerifiersValidator();
+	DECLARE_STATEFUL_VALIDATOR(ModifyContractInvalidVerifiers, model::ModifyContractNotification)();
 
 	/// A validator implementation that applies to modify contract notifications and validates that:
 	/// - duration is positive at contract creation
-	stateful::NotificationValidatorPointerT<model::ModifyContractNotification>
-	CreateModifyContractDurationValidator();
+	DECLARE_STATEFUL_VALIDATOR(ModifyContractDuration, model::ModifyContractNotification)();
 }}

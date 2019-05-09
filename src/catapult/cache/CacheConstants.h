@@ -29,6 +29,7 @@ namespace catapult { namespace cache {
 		BlockDifficulty,
 		Hash,
 		Namespace,
+		Metadata,
 		Mosaic,
 		Multisig,
 		HashLockInfo,
