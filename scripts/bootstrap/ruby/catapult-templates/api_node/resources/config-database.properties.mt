@@ -11,6 +11,7 @@ catapult.mongo.plugins.aggregate = true
 catapult.mongo.plugins.contract = true
 catapult.mongo.plugins.lockhash = true
 catapult.mongo.plugins.locksecret = true
+catapult.mongo.plugins.metadata = true
 catapult.mongo.plugins.mosaic = true
 catapult.mongo.plugins.multisig = true
 catapult.mongo.plugins.namespace = true

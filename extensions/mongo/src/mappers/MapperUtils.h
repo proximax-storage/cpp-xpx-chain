@@ -104,6 +104,14 @@ namespace catapult { namespace mongo { namespace mappers {
 		std::memcpy(dest.data(), source.bytes, dest.size());
 	}
 
+	/// Populates \a dest with data from \a source.
+	template<typename TStdContainer, typename TMongoContainer>
+	void DbBinaryToStdContainer(TStdContainer& dest, const TMongoContainer& source) {
+		dest.resize(source.size);
+
+		std::memcpy(dest.data(), source.bytes, source.size);
+	}
+
 	// endregion
 
 	// region document helpers

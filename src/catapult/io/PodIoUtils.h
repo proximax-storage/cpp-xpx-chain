@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/utils/BaseValue.h"
+#include "catapult/utils/RawBuffer.h"
 #include "catapult/utils/traits/Traits.h"
 #include <array>
 #include <stdint.h>
@@ -35,6 +36,12 @@ namespace catapult { namespace io {
 	/// Writes \a buffer into \a output.
 	template<typename TIo, size_t Array_Size>
 	void Write(TIo& output, const std::array<uint8_t, Array_Size>& buffer) {
+		output.write(buffer);
+	}
+
+	/// Writes \a buffer into \a output.
+	template<typename TIo>
+	void Write(TIo& output, const utils::RawBuffer& buffer) {
 		output.write(buffer);
 	}
 
@@ -66,6 +73,12 @@ namespace catapult { namespace io {
 	template<typename TIo, typename TValue, typename TTag, typename TBaseValue>
 	void Read(TIo& input, utils::BasicBaseValue<TValue, TTag, TBaseValue>& value) {
 		input.read({ reinterpret_cast<uint8_t*>(&value), sizeof(TValue) });
+	}
+
+	/// Reads \a buffer from \a input.
+	template<typename TIo>
+	void Read(TIo& input, const utils::MutableRawBuffer& buffer) {
+		input.read(buffer);
 	}
 
 	/// Reads \a buffer from \a input.

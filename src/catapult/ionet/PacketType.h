@@ -122,8 +122,11 @@ namespace catapult { namespace ionet {
 	/* Reputation state path has been requested by a client. */ \
 	ENUM_VALUE(Reputation_State_Path, FACILITY_BASED_CODE(800, Reputation)) \
 	\
-	/* Reputation state path has been requested by a client. */ \
+	/* Contract state path has been requested by a client. */ \
 	ENUM_VALUE(Contract_State_Path, FACILITY_BASED_CODE(800, Contract)) \
+	\
+	/* Metadata state path has been requested by a client. */ \
+	ENUM_VALUE(Metadata_State_Path, FACILITY_BASED_CODE(800, Metadata)) \
 	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
@@ -163,8 +166,11 @@ namespace catapult { namespace ionet {
 	/* Reputation infos have been requested by a client. */ \
 	ENUM_VALUE(Reputation_Infos, FACILITY_BASED_CODE(1200, Reputation)) \
 	\
-	/* Reputation infos have been requested by a client. */ \
-	ENUM_VALUE(Contract_Infos, FACILITY_BASED_CODE(1200, Contract))
+	/* Contract infos have been requested by a client. */ \
+	ENUM_VALUE(Contract_Infos, FACILITY_BASED_CODE(1200, Contract)) \
+	\
+	/* Metadata infos have been requested by a client. */ \
+	ENUM_VALUE(Metadata_Infos, FACILITY_BASED_CODE(1200, Metadata))
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.
