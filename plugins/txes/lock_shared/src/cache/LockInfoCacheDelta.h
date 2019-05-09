@@ -84,8 +84,8 @@ namespace catapult { namespace cache {
 
 		/// Processes all unused lock infos that expired at \a height by passing them to \a consumer
 		void processUnusedExpiredLocks(Height height, const consumer<const typename TDescriptor::ValueType>& consumer) const {
-			ForEachIdentifierWithGroup(utils::as_const(*m_pDelta), *m_pHeightGroupingDelta, height, [consumer](const auto& lockInfo) {
-				if (state::LockStatus::Unused == lockInfo.Status)
+			ForEachIdentifierWithGroup(utils::as_const(*m_pDelta), *m_pHeightGroupingDelta, height, [consumer, height](const auto& lockInfo) {
+				if (state::LockStatus::Unused == lockInfo.Status && lockInfo.Height == height)
 					consumer(lockInfo);
 			});
 		}
