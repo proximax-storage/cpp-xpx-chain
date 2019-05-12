@@ -29,6 +29,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::MetadataEntry& metadataEntry) {
 		bson_stream::document builder;
 		auto doc = builder << "metadata" << bson_stream::open_document
+                << "version" << static_cast<int32_t>(metadataEntry.getVersion())
 				<< "metadataId" << ToBinary(metadataEntry.raw().data(), metadataEntry.raw().size())
 				<< "metadataType" << static_cast<int8_t>(metadataEntry.type());
 
@@ -50,11 +51,12 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	state::MetadataEntry ToMetadataEntry(const bsoncxx::document::view& document) {
 		auto dbMetadataEntry = document["metadata"];
+        VersionType version = ToUint32(dbMetadataEntry["version"].get_int32());
 		std::vector<uint8_t> raw;
 		model::MetadataType type;
 		DbBinaryToStdContainer(raw, dbMetadataEntry["metadataId"].get_binary());
 		type = model::MetadataType(ToUint8(dbMetadataEntry["metadataType"].get_int32()));
-		state::MetadataEntry metadataEntry(raw, type);
+		state::MetadataEntry metadataEntry(raw, type, version);
 
 		auto dbFields = dbMetadataEntry["fields"].get_array().value;
 		for (const auto& dbField : dbFields) {

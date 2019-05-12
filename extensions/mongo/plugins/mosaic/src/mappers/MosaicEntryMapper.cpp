@@ -49,6 +49,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamMosaicEntryMetadata(builder);
 		auto doc = builder
 				<< "mosaic" << bson_stream::open_document
+                    << "version" << static_cast<int32_t>(entry.getVersion())
 					<< "mosaicId" << ToInt64(entry.mosaicId())
 					<< "supply" << ToInt64(entry.supply())
 					<< "height" << ToInt64(definition.height())
@@ -84,6 +85,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	state::MosaicEntry ToMosaicEntry(const bsoncxx::document::view& document) {
 		auto dbMosaic = document["mosaic"];
+        VersionType version = ToUint32(dbMosaic["version"].get_int32());
 		auto id = GetValue64<MosaicId>(dbMosaic["mosaicId"]);
 		auto supply = GetValue64<Amount>(dbMosaic["supply"]);
 
@@ -94,7 +96,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto container = ReadProperties(dbMosaic["properties"].get_array().value);
 
 		auto definition = state::MosaicDefinition(height, owner, revision, model::MosaicProperties::FromValues(container));
-		auto entry = state::MosaicEntry(id, definition);
+		auto entry = state::MosaicEntry(id, definition, version);
 		entry.increaseSupply(supply);
 		return entry;
 	}

@@ -39,7 +39,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		EXPECT_EQ(1u, test::GetFieldCount(documentView));
 
 		auto reputationView = documentView["reputation"].get_document().view();
-		EXPECT_EQ(4u, test::GetFieldCount(reputationView));
+		EXPECT_EQ(5u, test::GetFieldCount(reputationView));
 		test::AssertEqualReputationData(entry, address, reputationView);
 	}
 
@@ -67,7 +67,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		EXPECT_EQ(1u, test::GetFieldCount(view));
 
 		auto reputationView = view["reputation"].get_document().view();
-		EXPECT_EQ(4u, test::GetFieldCount(reputationView));
+		EXPECT_EQ(5u, test::GetFieldCount(reputationView));
 		test::AssertEqualReputationData(entry, address, reputationView);
 	}
 

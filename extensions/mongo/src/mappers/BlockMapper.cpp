@@ -82,6 +82,7 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "height" << ToInt64(block.Height)
 				<< "timestamp" << ToInt64(block.Timestamp)
 				<< "difficulty" << ToInt64(block.Difficulty)
+				<< "difficultyVersion" << static_cast<int32_t>(VersionType{1})
 				<< "feeMultiplier" << ToInt32(block.FeeMultiplier)
 				<< "previousBlockHash" << ToBinary(block.PreviousBlockHash)
 				<< "blockTransactionsHash" << ToBinary(block.BlockTransactionsHash)
@@ -93,7 +94,8 @@ namespace catapult { namespace mongo { namespace mappers {
 	}
 
 	state::BlockDifficultyInfo ToDifficultyInfo(const bsoncxx::document::view& document) {
-		state::BlockDifficultyInfo difficultyInfo;
+	    VersionType version = ToUint32(document["difficultyVersion"].get_int32());
+		state::BlockDifficultyInfo difficultyInfo{version};
 		difficultyInfo.BlockHeight = GetValue64<Height>(document["height"]);
 		difficultyInfo.BlockDifficulty = GetValue64<Difficulty>(document["difficulty"]);
 		difficultyInfo.BlockTimestamp = GetValue64<Timestamp>(document["timestamp"]);

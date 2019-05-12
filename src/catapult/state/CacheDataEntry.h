@@ -17,7 +17,7 @@ namespace catapult { namespace state {
         explicit CacheDataEntry(VersionType version) : m_version(version) {
             if (m_version > TCacheEntry::MaxVersion) {
                 std::string name{typeid(this).name()};
-                CATAPULT_THROW_INVALID_ARGUMENT_2("invalid version of ", name, m_version);
+                CATAPULT_THROW_INVALID_ARGUMENT_2("invalid version", name, m_version);
             }
         }
 

@@ -24,7 +24,10 @@
 namespace catapult { namespace mongo { namespace plugins {
 
 	/// A namespace descriptor.
-	struct NamespaceDescriptor {
+	struct NamespaceDescriptor : state::CacheDataEntry<NamespaceDescriptor> {
+	public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates a namespace descriptor around \a path, \a alias, \a pRootNamespace, \a ownerAddress, \a index and \a isActive.
 		NamespaceDescriptor(
@@ -33,8 +36,10 @@ namespace catapult { namespace mongo { namespace plugins {
 				const std::shared_ptr<const state::RootNamespace>& pRootNamespace,
 				const Address& ownerAddress,
 				uint32_t index,
-				bool isActive)
-				: Path(path)
+				bool isActive,
+				VersionType version = 1)
+				: CacheDataEntry(version)
+				, Path(path)
 				, Alias(alias)
 				, pRoot(pRootNamespace)
 				, OwnerAddress(ownerAddress)

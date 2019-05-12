@@ -108,7 +108,8 @@ namespace catapult { namespace mongo { namespace mappers {
 			return state::BlockDifficultyInfo(
 					test::GenerateRandomValue<Height>(),
 					test::GenerateRandomValue<Timestamp>(),
-					test::GenerateRandomValue<Difficulty>());
+					test::GenerateRandomValue<Difficulty>(),
+					VersionType{1});
 		}
 
 		auto GenerateValue(const state::BlockDifficultyInfo& difficultyInfo) {
@@ -116,6 +117,7 @@ namespace catapult { namespace mongo { namespace mappers {
 					<< "height" << ToInt64(difficultyInfo.BlockHeight)
 					<< "timestamp" << ToInt64(difficultyInfo.BlockTimestamp)
 					<< "difficulty" << ToInt64(difficultyInfo.BlockDifficulty)
+                    << "difficultyVersion" << static_cast<int32_t>(difficultyInfo.getVersion())
 					<< bson_stream::finalize;
 		}
 	}

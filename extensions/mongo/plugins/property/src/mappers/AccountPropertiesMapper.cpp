@@ -46,6 +46,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::AccountProperties& accountProperties) {
 		bson_stream::document builder;
 		auto doc = builder << "accountProperties" << bson_stream::open_document
+                << "version" << static_cast<int32_t>(accountProperties.getVersion())
 				<< "address" << ToBinary(accountProperties.address());
 
 		auto propertyArray = builder << "properties" << bson_stream::open_array;
@@ -82,9 +83,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	state::AccountProperties ToAccountProperties(const bsoncxx::document::view& document) {
 		auto dbAccountProperties = document["accountProperties"];
+        VersionType version = ToUint32(dbAccountProperties["version"].get_int32());
 		Address address;
 		DbBinaryToModelArray(address, dbAccountProperties["address"].get_binary());
-		state::AccountProperties accountProperties(address);
+		state::AccountProperties accountProperties(address, version);
 
 		auto dbProperties = dbAccountProperties["properties"].get_array().value;
 		for (const auto& dbProperty : dbProperties) {

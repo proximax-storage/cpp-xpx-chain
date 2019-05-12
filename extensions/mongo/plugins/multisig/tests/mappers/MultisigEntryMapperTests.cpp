@@ -60,7 +60,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			EXPECT_EQ(1u, test::GetFieldCount(documentView));
 
 			auto multisigView = documentView["multisig"].get_document().view();
-			EXPECT_EQ(6u, test::GetFieldCount(multisigView));
+			EXPECT_EQ(7u, test::GetFieldCount(multisigView));
 			test::AssertEqualMultisigData(entry, address, multisigView);
 		}
 	}
@@ -107,7 +107,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			EXPECT_EQ(1u, test::GetFieldCount(view));
 
 			auto multisigView = view["multisig"].get_document().view();
-			EXPECT_EQ(6u, test::GetFieldCount(multisigView));
+			EXPECT_EQ(7u, test::GetFieldCount(multisigView));
 			test::AssertEqualMultisigData(entry, address, multisigView);
 		}
 	}

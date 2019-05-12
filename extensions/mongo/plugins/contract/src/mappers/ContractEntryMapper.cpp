@@ -40,6 +40,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::ContractEntry& entry, const Address& accountAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "contract" << bson_stream::open_document
+                << "version" << static_cast<int32_t>(entry.getVersion())
 				<< "multisig" << ToBinary(entry.key())
 				<< "multisigAddress" << ToBinary(accountAddress)
 				<< "start" << ToInt64(entry.start())
@@ -81,9 +82,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	state::ContractEntry ToContractEntry(const bsoncxx::document::view& document) {
 		auto dbContractEntry = document["contract"];
+        VersionType version = ToUint32(dbContractEntry["version"].get_int32());
 		Key multisig;
 		DbBinaryToModelArray(multisig, dbContractEntry["multisig"].get_binary());
-		state::ContractEntry entry(multisig);
+		state::ContractEntry entry(multisig, version);
 
 		auto start = static_cast<uint64_t>(dbContractEntry["start"].get_int64());
 		entry.setStart(Height{start});

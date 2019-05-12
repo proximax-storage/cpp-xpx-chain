@@ -50,7 +50,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			AssertEqualLockMetadata(metaView);
 
 			auto lockInfoView = view["lock"].get_document().view();
-			EXPECT_EQ(6u + TLockInfoTraits::Num_Additional_Fields, test::GetFieldCount(lockInfoView));
+			EXPECT_EQ(7u + TLockInfoTraits::Num_Additional_Fields, test::GetFieldCount(lockInfoView));
 			TLockInfoTraits::AssertEqualLockInfoData(lockInfo, address, lockInfoView);
 		}
 
@@ -73,7 +73,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			AssertEqualLockMetadata(metaView);
 
 			auto lockInfoView = view["lock"].get_document().view();
-			EXPECT_EQ(6u + TLockInfoTraits::Num_Additional_Fields, test::GetFieldCount(lockInfoView));
+			EXPECT_EQ(7u + TLockInfoTraits::Num_Additional_Fields, test::GetFieldCount(lockInfoView));
 			TLockInfoTraits::AssertEqualLockInfoData(lockInfo, address, lockInfoView);
 		}
 	};

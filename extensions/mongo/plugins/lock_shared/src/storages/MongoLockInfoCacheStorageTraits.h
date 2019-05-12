@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "catapult/model/Address.h"
 
@@ -45,7 +46,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		/// Inserts the lock info represented by \a document into \a cache.
 		static void Insert(CacheDeltaType& cache, const bsoncxx::document::view& document) {
-			ModelType lockInfo;
+			auto dbLockInfo = document["lock"];
+            VersionType version = mappers::ToUint32(dbLockInfo["version"].get_int32());
+			ModelType lockInfo{version};
 			ToLockInfo(document, lockInfo);
 			cache.insert(lockInfo);
 		}

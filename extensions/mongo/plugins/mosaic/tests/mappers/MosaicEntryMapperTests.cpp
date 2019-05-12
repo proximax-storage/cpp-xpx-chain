@@ -58,7 +58,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		AssertEqualMosaicEntryMetadata(metaView);
 
 		auto mosaicView = documentView["mosaic"].get_document().view();
-		EXPECT_EQ(7u, test::GetFieldCount(mosaicView));
+		EXPECT_EQ(8u, test::GetFieldCount(mosaicView));
 		test::AssertEqualMosaicData(entry, mosaicView);
 	}
 
@@ -84,7 +84,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		EXPECT_EQ(2u, test::GetFieldCount(view));
 
 		auto mosaicView = view["mosaic"].get_document().view();
-		EXPECT_EQ(7u, test::GetFieldCount(mosaicView));
+		EXPECT_EQ(8u, test::GetFieldCount(mosaicView));
 		test::AssertEqualMosaicData(entry, mosaicView);
 	}
 

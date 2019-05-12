@@ -27,7 +27,7 @@ namespace catapult { namespace state { struct AccountState; } }
 namespace catapult { namespace mongo { namespace mappers {
 
 	/// Prototype for creating account states around an address and a height.
-	using AccountStateFactory = std::function<state::AccountState& (const Address&, Height)>;
+	using AccountStateFactory = std::function<state::AccountState& (const Address&, Height, VersionType)>;
 
 	/// Maps an account state (\a accountState) to the corresponding db model value.
 	bsoncxx::document::value ToDbModel(const state::AccountState& accountState);

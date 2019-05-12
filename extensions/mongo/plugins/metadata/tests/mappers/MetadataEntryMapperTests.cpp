@@ -65,7 +65,7 @@ namespace catapult { namespace mongo { namespace plugins {
             EXPECT_EQ(1u, test::GetFieldCount(documentView));
 
             auto metadataView = documentView["metadata"].get_document().view();
-            EXPECT_EQ(3u, test::GetFieldCount(metadataView));
+            EXPECT_EQ(4u, test::GetFieldCount(metadataView));
             test::AssertEqualMetadataData(entry, metadataView);
         }
     }
@@ -121,7 +121,7 @@ namespace catapult { namespace mongo { namespace plugins {
             EXPECT_EQ(1u, test::GetFieldCount(view));
 
             auto metadataView = view["metadata"].get_document().view();
-            EXPECT_EQ(3u, test::GetFieldCount(metadataView));
+            EXPECT_EQ(4u, test::GetFieldCount(metadataView));
             test::AssertEqualMetadataData(entry, metadataView);
         }
     }

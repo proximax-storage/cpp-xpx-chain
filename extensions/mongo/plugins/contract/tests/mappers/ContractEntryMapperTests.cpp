@@ -45,7 +45,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		EXPECT_EQ(1u, test::GetFieldCount(documentView));
 
 		auto contractView = documentView["contract"].get_document().view();
-		EXPECT_EQ(9u, test::GetFieldCount(contractView));
+		EXPECT_EQ(10u, test::GetFieldCount(contractView));
 		test::AssertEqualContractData(entry, address, contractView);
 	}
 
@@ -73,7 +73,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		EXPECT_EQ(1u, test::GetFieldCount(view));
 
 		auto contractView = view["contract"].get_document().view();
-		EXPECT_EQ(9u, test::GetFieldCount(contractView));
+		EXPECT_EQ(10u, test::GetFieldCount(contractView));
 		test::AssertEqualContractData(entry, address, contractView);
 	}
 

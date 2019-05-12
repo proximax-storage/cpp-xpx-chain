@@ -40,7 +40,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			EXPECT_EQ(1u, test::GetFieldCount(view));
 
 			auto accountPropertiesView = view["accountProperties"].get_document().view();
-			EXPECT_EQ(2u, test::GetFieldCount(accountPropertiesView));
+			EXPECT_EQ(3u, test::GetFieldCount(accountPropertiesView));
 
 			size_t numPropertyValues = 0u;
 			for (const auto& pair : accountProperties)

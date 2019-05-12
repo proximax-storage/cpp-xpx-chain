@@ -87,16 +87,16 @@ namespace catapult { namespace cache {
 		return address;
 	}
 
-	void BasicAccountStateCacheDelta::addAccount(const Address& address, Height height) {
+	void BasicAccountStateCacheDelta::addAccount(const Address& address, Height height, VersionType version) {
 		if (contains(address))
 			return;
 
-		addAccount(state::AccountState(address, height));
+		addAccount(state::AccountState(address, height, version));
 	}
 
-	void BasicAccountStateCacheDelta::addAccount(const Key& publicKey, Height height) {
+	void BasicAccountStateCacheDelta::addAccount(const Key& publicKey, Height height, VersionType version) {
 		auto address = getAddress(publicKey);
-		addAccount(address, height);
+		addAccount(address, height, version);
 
 		// optimize common case where public key is already known by not marking account as dirty in that case
 		auto accountStateIterConst = const_cast<const BasicAccountStateCacheDelta*>(this)->find(address);

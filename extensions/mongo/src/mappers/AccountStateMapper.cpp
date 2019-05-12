@@ -57,6 +57,7 @@ namespace catapult { namespace mongo { namespace mappers {
 
 		// account data
 		builder << "account" << bson_stream::open_document
+				<< "version" << static_cast<int32_t>(accountState.getVersion())
 				<< "address" << ToBinary(accountState.Address)
 				<< "addressHeight" << ToInt64(accountState.AddressHeight)
 				<< "publicKey" << ToBinary(accountState.PublicKey)
@@ -89,11 +90,12 @@ namespace catapult { namespace mongo { namespace mappers {
 
 	void ToAccountState(const bsoncxx::document::view& document, const AccountStateFactory& accountStateFactory) {
 		auto accountDocument = document["account"];
+		VersionType version = ToUint32(accountDocument["version"].get_int32());
 		Address accountAddress;
 		DbBinaryToModelArray(accountAddress, accountDocument["address"].get_binary());
 		auto accountAddressHeight = GetValue64<Height>(accountDocument["addressHeight"]);
 
-		auto& accountState = accountStateFactory(accountAddress, accountAddressHeight);
+		auto& accountState = accountStateFactory(accountAddress, accountAddressHeight, version);
 		DbBinaryToModelArray(accountState.PublicKey, accountDocument["publicKey"].get_binary());
 		accountState.PublicKeyHeight = GetValue64<Height>(accountDocument["publicKeyHeight"]);
 

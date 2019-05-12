@@ -105,11 +105,11 @@ namespace catapult { namespace cache {
 
 	public:
 		/// If not present, adds an account to the cache at given height (\a addressHeight) using \a address.
-		void addAccount(const Address& address, Height addressHeight);
+		void addAccount(const Address& address, Height addressHeight, VersionType version = 1);
 
 		/// If not present, adds an account to the cache using \a publicKey.
 		/// If public key has not been known earlier, its height is set to \a publicKeyHeight.
-		void addAccount(const Key& publicKey, Height publicKeyHeight);
+		void addAccount(const Key& publicKey, Height publicKeyHeight, VersionType version = 1);
 
 		/// If not present, adds an account to the cache using information in \a accountState.
 		void addAccount(const state::AccountState& accountState);

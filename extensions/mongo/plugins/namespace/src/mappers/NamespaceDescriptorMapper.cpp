@@ -74,6 +74,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamDescriptorMetadata(builder, descriptor);
 		builder
 				<< "namespace" << bson_stream::open_document
+                    << "version" << static_cast<int32_t>(descriptor.getVersion())
 					<< "type" << (descriptor.IsRoot() ? Root_Type : Child_Type)
 					<< "depth" << static_cast<int32_t>(path.size())
 					<< "level0" << ToInt64(path[0]);
@@ -128,6 +129,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		// data
 		auto dbNamespace = document["namespace"];
+        VersionType version = ToUint32(dbNamespace["version"].get_int32());
 
 		// - path
 		auto depth = dbNamespace["depth"].get_int32();
@@ -150,7 +152,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		Address address;
 		DbBinaryToModelArray(address, dbNamespace["ownerAddress"].get_binary());
-		return NamespaceDescriptor(path, alias, pRoot, address, index, isActive);
+		return NamespaceDescriptor(path, alias, pRoot, address, index, isActive, version);
 	}
 
 	// endregion

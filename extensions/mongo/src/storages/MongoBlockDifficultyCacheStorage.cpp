@@ -50,6 +50,7 @@ namespace catapult { namespace mongo { namespace storages {
 					<< "block.height" << 1
 					<< "block.timestamp" << 1
 					<< "block.difficulty" << 1
+					<< "block.difficultyVersion" << 1
 					<< finalize);
 
 			auto cursor = blocks.find(filter.view(), options);

@@ -90,7 +90,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			test::AssertEqualNamespaceMetadata(descriptor, metaView);
 
 			auto namespaceView = documentView["namespace"].get_document().view();
-			EXPECT_EQ(8u + depth, test::GetFieldCount(namespaceView));
+			EXPECT_EQ(9u + depth, test::GetFieldCount(namespaceView));
 			test::AssertEqualNamespaceData(descriptor, namespaceView);
 		}
 	}
@@ -139,7 +139,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			test::AssertEqualNamespaceMetadata(descriptor, metaView);
 
 			auto namespaceView = view["namespace"].get_document().view();
-			EXPECT_EQ(8u + depth, test::GetFieldCount(namespaceView));
+			EXPECT_EQ(9u + depth, test::GetFieldCount(namespaceView));
 			test::AssertEqualNamespaceData(descriptor, namespaceView);
 		}
 	}

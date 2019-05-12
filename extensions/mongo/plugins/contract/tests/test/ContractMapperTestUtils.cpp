@@ -24,6 +24,7 @@ namespace catapult { namespace test {
 	}
 
 	void AssertEqualContractData(const state::ContractEntry& entry, const Address& address, const bsoncxx::document::view& dbContract) {
+        EXPECT_EQ(entry.getVersion(), GetUint32(dbContract, "version"));
 		EXPECT_EQ(address, test::GetAddressValue(dbContract, "multisigAddress"));
 
 		EXPECT_EQ(entry.key(), GetKeyValue(dbContract, "multisig"));

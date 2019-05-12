@@ -13,6 +13,7 @@
 namespace catapult { namespace test {
 
 	void AssertEqualReputationData(const state::ReputationEntry& entry, const Address& address, const bsoncxx::document::view& dbReputation) {
+        EXPECT_EQ(entry.getVersion(), GetUint32(dbReputation, "version"));
 		EXPECT_EQ(address, test::GetAddressValue(dbReputation, "accountAddress"));
 
 		EXPECT_EQ(entry.key(), GetKeyValue(dbReputation, "account"));

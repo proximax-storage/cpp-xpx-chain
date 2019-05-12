@@ -31,6 +31,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::ReputationEntry& entry, const Address& accountAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "reputation" << bson_stream::open_document
+                << "version" << static_cast<int32_t>(entry.getVersion())
 				<< "account" << ToBinary(entry.key())
 				<< "accountAddress" << ToBinary(accountAddress)
 				<< "positiveInteractions" << static_cast<int64_t>(entry.positiveInteractions().unwrap())
@@ -47,9 +48,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	state::ReputationEntry ToReputationEntry(const bsoncxx::document::view& document) {
 		auto dbReputationEntry = document["reputation"];
+        VersionType version = ToUint32(dbReputationEntry["version"].get_int32());
 		Key account;
 		DbBinaryToModelArray(account, dbReputationEntry["account"].get_binary());
-		state::ReputationEntry entry(account);
+		state::ReputationEntry entry(account, version);
 
 		auto positiveInteractions = static_cast<uint64_t>(dbReputationEntry["positiveInteractions"].get_int64());
 		auto negativeInteractions = static_cast<uint64_t>(dbReputationEntry["negativeInteractions"].get_int64());

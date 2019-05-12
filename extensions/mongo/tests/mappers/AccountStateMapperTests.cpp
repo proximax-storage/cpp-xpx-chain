@@ -74,7 +74,7 @@ namespace catapult { namespace mongo { namespace mappers {
 			AssertEqualAccountStateMetadata(metaView);
 
 			auto account = view["account"].get_document().view();
-			EXPECT_EQ(8u, test::GetFieldCount(account));
+			EXPECT_EQ(9u, test::GetFieldCount(account));
 			test::AssertEqualAccountState(state, account);
 		}
 	}
@@ -143,7 +143,7 @@ namespace catapult { namespace mongo { namespace mappers {
 
 			// Act:
 			state::AccountState newAccountState(Address(), Height(0));
-			ToAccountState(dbAccount, [&newAccountState](const auto& address, auto height) -> state::AccountState& {
+			ToAccountState(dbAccount, [&newAccountState](const auto& address, auto height, VersionType) -> state::AccountState& {
 				newAccountState.Address = address;
 				newAccountState.AddressHeight = height;
 				return newAccountState;

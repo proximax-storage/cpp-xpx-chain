@@ -41,6 +41,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::MultisigEntry& entry, const Address& accountAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "multisig" << bson_stream::open_document
+                << "version" << static_cast<int32_t>(entry.getVersion())
 				<< "account" << ToBinary(entry.key())
 				<< "accountAddress" << ToBinary(accountAddress)
 				<< "minApproval" << static_cast<int32_t>(entry.minApproval())
@@ -70,9 +71,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	state::MultisigEntry ToMultisigEntry(const bsoncxx::document::view& document) {
 		auto dbMultisigEntry = document["multisig"];
+        VersionType version = ToUint32(dbMultisigEntry["version"].get_int32());
 		Key account;
 		DbBinaryToModelArray(account, dbMultisigEntry["account"].get_binary());
-		state::MultisigEntry entry(account);
+		state::MultisigEntry entry(account, version);
 
 		auto minApproval = ToUint8(dbMultisigEntry["minApproval"].get_int32());
 		auto minRemoval = ToUint8(dbMultisigEntry["minRemoval"].get_int32());
