@@ -22,28 +22,31 @@
 #include "catapult/model/EntityRange.h"
 #include "catapult/constants.h"
 #include "catapult/types.h"
+#include "CacheDataEntry.h"
 
 namespace catapult { namespace state {
 
 #pragma pack(push, 1)
 
 	/// Represents a hash with attached timestamp.
-	struct TimestampedHash {
+	struct TimestampedHash : public CacheDataEntry<TimestampedHash> {
 	public:
 		/// Hash type.
 		using HashType = std::array<uint8_t, Cached_Hash_Size>;
 
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates a timestamped hash.
-		constexpr TimestampedHash() : TimestampedHash(Timestamp(0))
+		TimestampedHash(VersionType version = 1) : TimestampedHash(Timestamp(0), version)
 		{}
 
 		/// Creates a timestamped hash from a \a timestamp.
-		constexpr explicit TimestampedHash(Timestamp timestamp) : Time(timestamp), Hash()
+		explicit TimestampedHash(Timestamp timestamp, VersionType version = 1) : CacheDataEntry(version), Time(timestamp), Hash()
 		{}
 
 		/// Creates a timestamped hash from a \a timestamp and a \a hash.
-		explicit TimestampedHash(Timestamp timestamp, const Hash256& hash) : Time(timestamp) {
+		explicit TimestampedHash(Timestamp timestamp, const Hash256& hash, VersionType version = 1) : CacheDataEntry(version), Time(timestamp) {
 			std::memcpy(Hash.data(), hash.data(), Hash.size());
 		}
 

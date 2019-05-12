@@ -21,33 +21,36 @@
 #pragma once
 #include "catapult/types.h"
 #include "catapult/model/Block.h"
+#include "CacheDataEntry.h"
 
 namespace catapult { namespace state {
 
 	/// Represents detailed information about a block difficulty
 	/// including the block height and the block timestamp.
-	struct BlockDifficultyInfo {
+	struct BlockDifficultyInfo : public CacheDataEntry<BlockDifficultyInfo> {
+        static constexpr VersionType MaxVersion{1};
 
 		/// Creates a default block difficulty info.
-		constexpr BlockDifficultyInfo()
-				: BlockDifficultyInfo(Height(0))
+		BlockDifficultyInfo(VersionType version = 1)
+				: BlockDifficultyInfo(Height(0), version)
 		{}
 
 		/// Creates a block difficulty info from a \a height.
-		constexpr explicit BlockDifficultyInfo(Height height)
-				: BlockDifficultyInfo(height, Timestamp(0), Difficulty(0))
+		explicit BlockDifficultyInfo(Height height, VersionType version = 1)
+				: BlockDifficultyInfo(height, Timestamp(0), Difficulty(0), version)
 		{}
 
 		/// Creates a block difficulty info from a \a height, a \a timestamp and a \a difficulty.
-		constexpr explicit BlockDifficultyInfo(Height height, Timestamp timestamp, Difficulty difficulty)
-				: BlockHeight(height)
+		explicit BlockDifficultyInfo(Height height, Timestamp timestamp, Difficulty difficulty, VersionType version = 1)
+                : CacheDataEntry(version)
+				, BlockHeight(height)
 				, BlockTimestamp(timestamp)
 				, BlockDifficulty(difficulty)
-		{}
+        {}
 
 		/// Creates a block difficulty info from a \a block.
-		constexpr explicit BlockDifficultyInfo(const model::Block& block)
-				: BlockDifficultyInfo(block.Height, block.Timestamp, block.Difficulty)
+		explicit BlockDifficultyInfo(const model::Block& block, VersionType version = 1)
+				: BlockDifficultyInfo(block.Height, block.Timestamp, block.Difficulty, version)
 		{}
 
 		/// Block height.

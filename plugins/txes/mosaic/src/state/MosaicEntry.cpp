@@ -65,10 +65,11 @@ namespace catapult { namespace state {
 
 	// region MosaicEntry
 
-	MosaicEntry::MosaicEntry(MosaicId id, const MosaicDefinition& definition)
-			: m_id(id)
+	MosaicEntry::MosaicEntry(MosaicId id, const MosaicDefinition& definition, VersionType version)
+			: CacheDataEntry(version)
+			, m_id(id)
 			, m_definition(definition)
-	{}
+    {}
 
 	/// Gets the mosaic id.
 	MosaicId MosaicEntry::mosaicId() const {

@@ -34,7 +34,7 @@ namespace catapult { namespace cache {
 	{}
 
 	namespace {
-		constexpr state::BlockDifficultyInfo CreateFromHeight(Height height) {
+		state::BlockDifficultyInfo CreateFromHeight(Height height) {
 			return state::BlockDifficultyInfo(height);
 		}
 	}

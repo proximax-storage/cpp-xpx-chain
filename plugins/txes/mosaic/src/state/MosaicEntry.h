@@ -20,6 +20,7 @@
 
 #pragma once
 #include "MosaicDefinition.h"
+#include "catapult/state/CacheDataEntry.h"
 
 namespace catapult { namespace state { class MosaicLevy; } }
 
@@ -71,10 +72,13 @@ namespace catapult { namespace state {
 
 	/// A tuple composed of a mosaic definition and its current state.
 	/// \note The mosaic entry has no mosaic levy by default.
-	class MosaicEntry : public MosaicEntrySupplyMixin, public MosaicEntryLevyMixin {
+	class MosaicEntry : public CacheDataEntry<MosaicEntry>, public MosaicEntrySupplyMixin, public MosaicEntryLevyMixin {
+	public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates a mosaic entry around mosaic \a id and mosaic \a definition.
-		MosaicEntry(MosaicId id, const MosaicDefinition& definition);
+		MosaicEntry(MosaicId id, const MosaicDefinition& definition, VersionType version = 1);
 
 	public:
 		/// Gets the mosaic id.

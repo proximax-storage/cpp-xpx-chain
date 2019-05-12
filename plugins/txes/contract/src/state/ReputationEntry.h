@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/state/CacheDataEntry.h"
 
 namespace catapult { namespace state {
 
@@ -74,10 +75,13 @@ namespace catapult { namespace state {
 	};
 
 	// Reputation entry.
-	class ReputationEntry : public ReputationMixin {
+	class ReputationEntry : public CacheDataEntry<ReputationEntry>, public ReputationMixin {
+    public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		// Creates a reputation entry around \a key.
-		explicit ReputationEntry(const Key& key) : m_key(key)
+		explicit ReputationEntry(const Key& key, VersionType version = 1) : CacheDataEntry(version), m_key(key)
 		{}
 
 	public:

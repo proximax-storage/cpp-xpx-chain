@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/state/CacheDataEntry.h"
 #include "catapult/utils/ArraySet.h"
 #include "src/model/HashSnapshot.h"
 #include <vector>
@@ -110,10 +111,13 @@ namespace catapult { namespace state {
 	};
 
 	// Contract entry.
-	class ContractEntry : public ContractMixin {
+	class ContractEntry : public CacheDataEntry<ContractEntry>, public ContractMixin {
+	public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		// Creates a contract entry around \a key.
-		explicit ContractEntry(const Key& key) : m_key(key)
+		explicit ContractEntry(const Key& key, VersionType version = 1) : CacheDataEntry(version), m_key(key)
 		{}
 
 	public:

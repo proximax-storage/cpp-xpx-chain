@@ -36,12 +36,10 @@ namespace catapult { namespace state {
 		public:
 			explicit PackedHashLockInfo(const HashLockInfo& hashLockInfo)
 					: PackedLockInfo(hashLockInfo)
-					, Version(1)
 					, Hash(hashLockInfo.Hash)
 			{}
 
 		public:
-		    VersionType Version;
 			Hash256 Hash;
 		};
 

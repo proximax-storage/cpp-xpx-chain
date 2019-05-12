@@ -21,19 +21,21 @@
 #pragma once
 #include "NamespaceLifetime.h"
 #include "src/model/NamespaceConstants.h"
+#include "catapult/state/CacheDataEntry.h"
 #include "catapult/utils/CheckedArray.h"
 #include "catapult/types.h"
 
 namespace catapult { namespace state {
 
 	/// A catapult namespace.
-	class Namespace {
+	class Namespace : public CacheDataEntry<Namespace> {
 	public:
 		using Path = utils::CheckedArray<NamespaceId, Namespace_Max_Depth>;
+        static constexpr VersionType MaxVersion{1};
 
 	public:
 		/// Creates a namespace around \a path.
-		explicit Namespace(const Path& path) : m_path(path) {
+		explicit Namespace(const Path& path, VersionType version = 1) : CacheDataEntry(version), m_path(path) {
 			if (m_path.empty())
 				CATAPULT_THROW_OUT_OF_RANGE("path cannot be empty");
 		}

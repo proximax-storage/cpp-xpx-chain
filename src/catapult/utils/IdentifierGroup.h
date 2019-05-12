@@ -20,12 +20,13 @@
 
 #pragma once
 #include <unordered_set>
+#include "catapult/state/CacheDataEntry.h"
 
 namespace catapult { namespace utils {
 
 	/// A group of identifiers that share a common (external) attribute.
 	template<typename TIdentifier, typename TGroupingKey, typename TIdentifierHasher>
-	class IdentifierGroup {
+    class IdentifierGroup : public state::CacheDataEntry<IdentifierGroup<TIdentifier, TGroupingKey, TIdentifierHasher>> {
 	public:
 		/// Unordered set of identifiers.
 		using Identifiers = std::unordered_set<TIdentifier, TIdentifierHasher>;
@@ -33,9 +34,13 @@ namespace catapult { namespace utils {
 		/// Type of grouping key.
 		using GroupingKeyType = TGroupingKey;
 
+		using Base = state::CacheDataEntry<IdentifierGroup<TIdentifier, TGroupingKey, TIdentifierHasher>>;
+
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates a group around a given \a key.
-		explicit IdentifierGroup(const TGroupingKey& key) : m_key(key)
+		explicit IdentifierGroup(const TGroupingKey& key, VersionType version = 1) : Base(version), m_key(key)
 		{}
 
 	public:

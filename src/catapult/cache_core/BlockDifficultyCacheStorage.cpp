@@ -25,21 +25,15 @@
 namespace catapult { namespace cache {
 
 	void BlockDifficultyCacheStorage::Save(const ValueType& info, io::OutputStream& output) {
-        // write version
-        io::Write32(output, 1);
-
+        io::Write32(output, info.getVersion());
         io::Write(output, info.BlockHeight);
 		io::Write(output, info.BlockTimestamp);
 		io::Write(output, info.BlockDifficulty);
 	}
 
 	state::BlockDifficultyInfo BlockDifficultyCacheStorage::Load(io::InputStream& input) {
-        // read version
         VersionType version = io::Read32(input);
-        if (version > 1)
-            CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountState", version);
-
-		state::BlockDifficultyInfo info;
+		state::BlockDifficultyInfo info{version};
 		io::Read(input, info.BlockHeight);
 		io::Read(input, info.BlockTimestamp);
 		io::Read(input, info.BlockDifficulty);

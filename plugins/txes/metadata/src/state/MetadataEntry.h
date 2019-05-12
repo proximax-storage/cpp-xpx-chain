@@ -8,29 +8,35 @@
 #include "MetadataField.h"
 #include "MetadataUtils.h"
 #include "src/model/MetadataTypes.h"
+#include "catapult/state/CacheDataEntry.h"
 #include <vector>
 
 namespace catapult { namespace state {
 
 	// Metadata entry.
-	class MetadataEntry {
+	class MetadataEntry : public CacheDataEntry<MetadataEntry> {
+	public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		// Creates a empty metadata.
-		explicit MetadataEntry() : m_type(model::MetadataType{0})
+		explicit MetadataEntry(VersionType version = 1) : CacheDataEntry(version), m_type(model::MetadataType{0})
 		{}
 
 		// Test only constructor, creates a metadata entry around \a metadataId.
-		explicit MetadataEntry(const Hash256& hash)
-				: m_metadataId(hash)
+		explicit MetadataEntry(const Hash256& hash, VersionType version = 1)
+				: CacheDataEntry(version)
+				, m_metadataId(hash)
 				, m_type(model::MetadataType{0})
-		{}
+        {}
 
 		// Creates a metadata entry around \a metadataId.
-		explicit MetadataEntry(const std::vector<uint8_t>& buffer, model::MetadataType type)
-				: m_metadataId(GetHash(buffer, type))
+		explicit MetadataEntry(const std::vector<uint8_t>& buffer, model::MetadataType type, VersionType version = 1)
+				: CacheDataEntry(version)
+				, m_metadataId(GetHash(buffer, type))
 				, m_raw(buffer)
 				, m_type(type)
-		{}
+        {}
 
 	public:
 		// Gets the metadata id.

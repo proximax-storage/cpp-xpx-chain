@@ -37,8 +37,7 @@ namespace catapult { namespace state {
 		if (entry.hasLevy())
 			CATAPULT_THROW_RUNTIME_ERROR("cannot save mosaic entry with levy");
 
-        // write version
-        io::Write32(output, 1);
+        io::Write32(output, entry.getVersion());
 
 		io::Write(output, entry.mosaicId());
 		io::Write(output, entry.supply());
@@ -61,16 +60,13 @@ namespace catapult { namespace state {
 	}
 
 	MosaicEntry MosaicEntrySerializer::Load(io::InputStream& input) {
-        // read version
         VersionType version = io::Read32(input);
-	    if (version > 1)
-            CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicEntry", version);
 
 		auto mosaicId = io::Read<MosaicId>(input);
 		auto supply = io::Read<Amount>(input);
 		auto definition = LoadDefinition(input);
 
-		auto entry = MosaicEntry(mosaicId, definition);
+		auto entry = MosaicEntry(mosaicId, definition, version);
 		entry.increaseSupply(supply);
 		return entry;
 	}

@@ -23,7 +23,9 @@
 
 namespace catapult { namespace state {
 
-	AccountProperties::AccountProperties(const Address& address) : m_address(address) {
+	AccountProperties::AccountProperties(const Address& address, VersionType version)
+	        : CacheDataEntry(version)
+	        , m_address(address) {
 		addProperty(model::PropertyType::Address, Address_Decoded_Size);
 		addProperty(model::PropertyType::MosaicId, sizeof(MosaicId));
 		addProperty(model::PropertyType::TransactionType, sizeof(model::EntityType));

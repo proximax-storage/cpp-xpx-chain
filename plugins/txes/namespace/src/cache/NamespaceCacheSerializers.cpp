@@ -24,10 +24,9 @@
 namespace catapult { namespace cache {
 
 	std::string NamespaceFlatMapTypesSerializer::SerializeValue(const ValueType& value) {
-		io::StringOutputStream output(sizeof(VersionType) + sizeof(ValueType));
+		io::StringOutputStream output(sizeof(ValueType));
 
-        // write version
-		io::Write32(output, 1);
+        io::Write32(output, value.getVersion());
 
 		io::Write64(output, value.path().size());
 		for (auto id : value.path())

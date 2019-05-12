@@ -126,8 +126,8 @@ namespace catapult { namespace state {
 		auto result = SerializeKey(key);
 
 		// Assert:
-		ASSERT_EQ(sizeof(TimestampedHash), result.Size);
-		EXPECT_EQ(test::AsBytePointer(&key), result.pData);
+		ASSERT_EQ(sizeof(TimestampedHash) - sizeof(VersionType), result.Size);
+		EXPECT_EQ(test::AsBytePointer(&key) + sizeof(VersionType), result.pData);
 	}
 
 	// endregion

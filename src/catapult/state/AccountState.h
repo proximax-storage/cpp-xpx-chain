@@ -22,6 +22,7 @@
 #include "AccountBalances.h"
 #include "AccountImportance.h"
 #include "catapult/constants.h"
+#include "CacheDataEntry.h"
 
 namespace catapult { namespace state {
 
@@ -41,22 +42,27 @@ namespace catapult { namespace state {
 	};
 
 	/// Account state data.
-	struct AccountState {
+	struct AccountState : public CacheDataEntry<AccountState> {
+	public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates an account state from an \a address and a height (\a addressHeight).
-		explicit AccountState(const catapult::Address& address, Height addressHeight)
-				: Address(address)
+		explicit AccountState(const catapult::Address& address, Height addressHeight, VersionType version = 1)
+				: CacheDataEntry(version)
+				, Address(address)
 				, AddressHeight(addressHeight)
 				, PublicKey()
 				, PublicKeyHeight(0)
 				, AccountType(AccountType::Unlinked)
 				, LinkedAccountKey()
 				, Balances(this)
-		{}
+        {}
 
 		/// Copy constructor that makes a deep copy of \a accountState.
 		AccountState(const AccountState& accountState)
-		: Balances(this) {
+                : CacheDataEntry(accountState.getVersion())
+                , Balances(this) {
 			*this = accountState;
 		}
 

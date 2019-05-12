@@ -20,18 +20,22 @@
 
 #pragma once
 #include "TypedAccountProperty.h"
+#include "catapult/state/CacheDataEntry.h"
 
 namespace catapult { namespace state {
 
 	/// Account properties.
-	class AccountProperties {
+	class AccountProperties : public CacheDataEntry<AccountProperties> {
 	private:
 		using PropertiesMap = std::map<model::PropertyType, AccountProperty>;
 		using const_iterator = PropertiesMap::const_iterator;
 
+    public:
+	    static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates account properties around \a address.
-		explicit AccountProperties(const Address& address);
+		explicit AccountProperties(const Address& address, VersionType version = 1);
 
 	public:
 		/// Gets the account address.

@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/utils/ArraySet.h"
+#include "catapult/state/CacheDataEntry.h"
 
 namespace catapult { namespace state {
 
@@ -92,10 +93,13 @@ namespace catapult { namespace state {
 	};
 
 	/// Multisig entry.
-	class MultisigEntry : public MultisigCosignatoriesMixin, public MultisigCosignatoryOfMixin {
+	class MultisigEntry : public CacheDataEntry<MultisigEntry>, public MultisigCosignatoriesMixin, public MultisigCosignatoryOfMixin {
+	public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates a multisig entry around \a key.
-		explicit MultisigEntry(const Key& key) : m_key(key)
+		explicit MultisigEntry(const Key& key, VersionType version = 1) : CacheDataEntry(version), m_key(key)
 		{}
 
 	public:

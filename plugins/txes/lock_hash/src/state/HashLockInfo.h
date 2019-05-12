@@ -20,14 +20,18 @@
 
 #pragma once
 #include "plugins/txes/lock_shared/src/state/LockInfo.h"
+#include "catapult/state/CacheDataEntry.h"
 
 namespace catapult { namespace state {
 
 	/// A hash lock info.
-	struct HashLockInfo : public LockInfo {
+	struct HashLockInfo : public CacheDataEntry<HashLockInfo>, public LockInfo {
+	public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates a default hash lock info.
-		HashLockInfo() : LockInfo()
+		HashLockInfo(VersionType version = 1) : CacheDataEntry(version), LockInfo()
 		{}
 
 		/// Creates a hash lock info around \a account, \a mosaicId, \a amount, \a height and \a hash.
@@ -36,10 +40,12 @@ namespace catapult { namespace state {
 				catapult::MosaicId mosaicId,
 				catapult::Amount amount,
 				catapult::Height height,
-				const Hash256& hash)
-				: LockInfo(account, mosaicId, amount, height)
+				const Hash256& hash,
+				VersionType version = 1)
+				: CacheDataEntry(version)
+				, LockInfo(account, mosaicId, amount, height)
 				, Hash(hash)
-		{}
+        {}
 
 	public:
 		/// Hash.

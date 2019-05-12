@@ -46,8 +46,8 @@ namespace catapult { namespace test {
 			TTraits::StorageType::Save(originalValue, stream);
 
 			// Assert: the value was saved
-			ASSERT_EQ(TTraits::Serialized_Value_Size, buffer.size());
-			const auto& savedValue = reinterpret_cast<const ValueType&>(*(buffer.data() + sizeof(VersionType)));
+			ASSERT_EQ(TTraits::Value_Size, buffer.size());
+			const auto& savedValue = reinterpret_cast<const ValueType&>(*buffer.data());
 			EXPECT_EQ(originalValue, savedValue);
 
 			// - the stream was not flushed
@@ -83,11 +83,11 @@ namespace catapult { namespace test {
 		template<typename TLoadTraits>
 		static void AssertCanLoadValue(VersionType version) {
 			// Arrange:
-			std::vector<uint8_t> buffer(TTraits::Serialized_Value_Size);
+			std::vector<uint8_t> buffer(TTraits::Value_Size);
 			test::FillWithRandomData(buffer);
 			memcpy(buffer.data(), &version, sizeof(VersionType));
 			mocks::MockMemoryStream inputStream("", buffer);
-			const auto& originalValue = reinterpret_cast<const ValueType&>(*(buffer.data() + sizeof(VersionType)));
+			const auto& originalValue = reinterpret_cast<const ValueType&>(*buffer.data());
 
 			// Act:
 			ValueType result;

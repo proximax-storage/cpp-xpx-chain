@@ -21,14 +21,18 @@
 #pragma once
 #include "src/model/LockHashAlgorithm.h"
 #include "plugins/txes/lock_shared/src/state/LockInfo.h"
+#include "catapult/state/CacheDataEntry.h"
 
 namespace catapult { namespace state {
 
 	/// A secret lock info.
-	struct SecretLockInfo : public LockInfo {
+	struct SecretLockInfo : public CacheDataEntry<SecretLockInfo>, public LockInfo {
+    public:
+        static constexpr VersionType MaxVersion{1};
+
 	public:
 		/// Creates a default secret lock info.
-		SecretLockInfo() : LockInfo()
+		SecretLockInfo(VersionType version = 1) : CacheDataEntry(version), LockInfo()
 		{}
 
 		/// Creates a secret lock info around \a account, \a mosaicId, \a amount, \a height, \a hashAlgorithm, \a secret and \a recipient.
@@ -39,12 +43,14 @@ namespace catapult { namespace state {
 				catapult::Height height,
 				model::LockHashAlgorithm hashAlgorithm,
 				const Hash256& secret,
-				const catapult::Address& recipient)
-				: LockInfo(account, mosaicId, amount, height)
+				const catapult::Address& recipient,
+				VersionType version = 1)
+				: CacheDataEntry(version)
+				, LockInfo(account, mosaicId, amount, height)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)
 				, Recipient(recipient)
-		{}
+        {}
 
 	public:
 		/// Hash algorithm.

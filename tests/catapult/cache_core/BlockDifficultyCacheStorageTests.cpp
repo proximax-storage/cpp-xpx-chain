@@ -27,8 +27,7 @@ namespace catapult { namespace cache {
 	namespace {
 		struct BlockDifficultyCacheStorageTraits{
 			using ValueType = state::BlockDifficultyInfo;
-			static constexpr auto Value_Size = sizeof(Height) + sizeof(Timestamp) + sizeof(Difficulty);
-			static constexpr auto Serialized_Value_Size = sizeof(VersionType) + Value_Size;
+			static constexpr auto Value_Size = sizeof(VersionType) + sizeof(Height) + sizeof(Timestamp) + sizeof(Difficulty);
 
 			using StorageType = BlockDifficultyCacheStorage;
 			class CacheType : public BlockDifficultyCache {

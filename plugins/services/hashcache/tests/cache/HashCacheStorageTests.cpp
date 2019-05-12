@@ -27,8 +27,7 @@ namespace catapult { namespace cache {
 	namespace {
 		struct HashCacheStorageTraits{
 			using ValueType = state::TimestampedHash;
-			static constexpr auto Value_Size = sizeof(Timestamp) + sizeof(ValueType::HashType);
-			static constexpr auto Serialized_Value_Size = sizeof(VersionType) + Value_Size;
+			static constexpr auto Value_Size = sizeof(VersionType) + sizeof(Timestamp) + sizeof(ValueType::HashType);
 
 			using StorageType = HashCacheStorage;
 			class CacheType : public HashCache {
@@ -38,8 +37,8 @@ namespace catapult { namespace cache {
 			};
 
 			static auto CreateRandomValue() {
-				ValueType originalValue;
-				test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&originalValue), Value_Size });
+				ValueType originalValue{1};
+				test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&originalValue) + sizeof(VersionType), Value_Size - sizeof(VersionType)});
 				return originalValue;
 			}
 		};

@@ -26,7 +26,6 @@
 namespace catapult { namespace state {
 
 	void ReputationEntrySerializer::Save(const ReputationEntry& entry, io::OutputStream& output) {
-        // write version
 		io::Write32(output, 1);
 
 		io::Write64(output, entry.positiveInteractions().unwrap());
@@ -37,15 +36,13 @@ namespace catapult { namespace state {
 	ReputationEntry ReputationEntrySerializer::Load(io::InputStream& input) {
         // read version
         VersionType version = io::Read32(input);
-	    if (version > 1)
-            CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ReputationEntry", version);
 
 		auto positiveInteractions = Reputation{io::Read64(input)};
 		auto negativeInteractions = Reputation{io::Read64(input)};
 		Key key;
 		input.read(key);
 
-		auto entry = state::ReputationEntry(key);
+		auto entry = state::ReputationEntry(key, version);
 		entry.setPositiveInteractions(positiveInteractions);
 		entry.setNegativeInteractions(negativeInteractions);
 
