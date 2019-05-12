@@ -106,6 +106,7 @@ namespace catapult { namespace tools { namespace address {
 				test::RunInputDependentTest(m_inputpath, ParseAccount, [&children](const state::AccountState& accountState) {
 					pt::ptree accountJson;
 
+					accountJson.put("Version", accountState.getVersion());
 					accountJson.put("Address", model::AddressToString(accountState.Address));
 					accountJson.put("AddressHeight", accountState.AddressHeight);
 					accountJson.put("PublicKeyHeight", accountState.PublicKeyHeight);
@@ -164,7 +165,8 @@ namespace catapult { namespace tools { namespace address {
 
 					state::AccountState accountState(
 							model::StringToAddress(account.get<std::string>("Address")),
-							Height(account.get<uint64_t>("AddressHeight"))
+							Height(account.get<uint64_t>("AddressHeight")),
+							VersionType(account.get<uint32_t>("Version"))
 					);
 					accountState.PublicKeyHeight = Height(account.get<uint64_t>("PublicKeyHeight"));
 					accountState.PublicKey = crypto::ParseKey(account.get<std::string>("PublicKey"));

@@ -1,6 +1,7 @@
 {
     "accounts": [
         {
+            "Version": "1",
             "Address": "SDKDPA36TE53BO24FD4KA6OPGOUSEVOU3O5SIFMY",
             "AddressHeight": "1",
             "PublicKeyHeight": "1188832332847600384",
@@ -13,6 +14,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SD6ZH6T6BR3NMNDYNVRTHDCF6OZYCHFQEUT6QXE7",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -25,6 +27,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SA4YXJHBHUUBOX6GVKGAQSCN6VKLTDGAGATXK2BV",
             "AddressHeight": "1",
             "PublicKeyHeight": "3198079663259684096",
@@ -37,6 +40,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SCDSFEWJX4ILTGVNJGMSVLJZIDEQTMMFRJRFE5B6",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -49,6 +53,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SABDVQSXHD3FRM26QIGN4SES24SSZO5GIPGO4NWR",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -61,6 +66,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SACWFYVHGEYOV5YTPFBCZ2SFYHR3CTQZQR2JDSUM",
             "AddressHeight": "1",
             "PublicKeyHeight": "17778230791875130368",
@@ -73,6 +79,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SA3JCE2LX6Z4YY72IOXEQFNQW3IQBWYZINI26CPP",
             "AddressHeight": "1",
             "PublicKeyHeight": "14567118197645263104",
@@ -85,6 +92,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SAKT3CKHCYIG5BBOPTSY2WXSVPBSLIA67AEOX4ND",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -97,6 +105,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SBZ22LWA7GDZLPLQF7PXTMNLWSEZ7ZRVGRMWLXWV",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -109,6 +118,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SCEABFIOJC2GGNM3FOLPTTI73VW5ADYK67AM3DO3",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -121,6 +131,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SBIN2SDQWFD47RFB3IOJ4IVA4GTCKHIC6YIHR3XX",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -133,6 +144,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SA767PEH52O3MMJXQKVTMOHBJ6WUNCPYGOGQY6FL",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -145,6 +157,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SBOUKTPDJBX2QTZ6FLXNSYOWWG7NVYWRR325RNFM",
             "AddressHeight": "1",
             "PublicKeyHeight": "15280141152480794880",
@@ -157,6 +170,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SCGQF2ZB7E2EEIOHAPV3KRSIEI3QD7L3MNNQHIH6",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -169,6 +183,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SA7V4HPJBZR6HD3E6GPSVVIIVXFK4WSOAOKKKIOM",
             "AddressHeight": "1",
             "PublicKeyHeight": "12437104094841378048",
@@ -181,6 +196,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SAG3I2WEYTTQNT5WKB7ITUY23LPXN2IEUZPGQANE",
             "AddressHeight": "1",
             "PublicKeyHeight": "1059832025659549440",
@@ -193,6 +209,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SAAZBWCQAXVFPYVH7L3ZJVVSYPLSUDJOOKJJJ2CD",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -205,6 +222,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SD2TR2USDXE4QIBX3OW2MFTLSQB6DGYWRJH4ZNDB",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -217,6 +235,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SARNASAS2BIAB6LMFA3FPMGBPGIJGK6IJETM3ZSP",
             "AddressHeight": "1",
             "PublicKeyHeight": "5073761810921927680",
@@ -229,6 +248,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SAOLTPFDPDREJFUAGTTXAQCFCNMHMFJPVASZ5VLW",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -241,6 +261,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SDTZ23JBJZP3GTKKM2P6FYCMXS6RQYPB6R477TTR",
             "AddressHeight": "1",
             "PublicKeyHeight": "6532441305887424000",
@@ -253,6 +274,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SCEYFB35CYFF2U7UZ32RYXXZ5JTPCSKU4P6BRXZR",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -265,6 +287,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SCKM5PAMXE7FNBAPE37Q7GOUU7CU5HEQDLAZTOS6",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -277,6 +300,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SCKWUMYOFK647EXNFZWHMXSFYDVKIDH3LZGDWCMJ",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
@@ -289,6 +313,7 @@
             "snapshots": ""
         },
         {
+            "Version": "1",
             "Address": "SANWMR3GEKGHQWTBE4VDVDPV562EYTQKE47VL75V",
             "AddressHeight": "1",
             "PublicKeyHeight": "0",
