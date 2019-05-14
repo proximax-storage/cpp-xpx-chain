@@ -26,17 +26,18 @@ namespace catapult { namespace deltaset {
 	template<typename TSet>
 	struct DeltaElements {
 	public:
-		/// Creates new delta elements from \a addedElements, \a removedElements and \a copiedElements.
-		constexpr explicit DeltaElements(const TSet& addedElements, const TSet& removedElements, const TSet& copiedElements)
+		/// Creates new delta elements from \a addedElements, \a removedElements, \a uninsertedElements and \a copiedElements.
+		constexpr explicit DeltaElements(const TSet& addedElements, const TSet& removedElements, const TSet& uninsertedElements, const TSet& copiedElements)
 				: Added(addedElements)
 				, Removed(removedElements)
+				, Uninserted(uninsertedElements)
 				, Copied(copiedElements)
 		{}
 
 	public:
 		/// Returns \c true if there are any pending changes.
 		bool HasChanges() const {
-			return !(Added.empty() && Copied.empty() && Removed.empty());
+			return !(Added.empty() && Copied.empty() && Removed.empty() && Uninserted.empty());
 		}
 
 	public:
@@ -45,6 +46,9 @@ namespace catapult { namespace deltaset {
 
 		/// Removed elements.
 		const TSet& Removed;
+
+		/// Uninserted elements.
+		const TSet& Uninserted;
 
 		/// Copied elements.
 		const TSet& Copied;

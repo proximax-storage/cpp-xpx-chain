@@ -686,7 +686,8 @@ namespace catapult { namespace test {
 
 			// Assert:
 			EXPECT_EQ(deltaset::RemoveResult::Uninserted, result);
-			EXPECT_EQ(0u, pDelta->generationId(TTraits::CreateKey("MyTestElement", 234)));
+			EXPECT_EQ(2u, pDelta->generationId(TTraits::CreateKey("MyTestElement", 234)));
+			EXPECT_FALSE(!!pDelta->find(TTraits::CreateKey("MyTestElement", 234)).get());
 
 			TTraits::AssertContents(*pDelta, expectedElements);
 			AssertDeltaSizes(pDelta, 3, 0, 0, 0);

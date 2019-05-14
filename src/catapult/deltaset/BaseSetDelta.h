@@ -125,6 +125,9 @@ namespace catapult { namespace deltaset {
 			if (contains(set.m_removedElements, key))
 				return TResultIterator();
 
+			if (contains(set.m_uninsertedElements, key))
+				return TResultIterator();
+
 			auto originalIter = set.find(key, ElementMutabilityTag());
 			if (originalIter.get())
 				return originalIter;
@@ -171,7 +174,7 @@ namespace catapult { namespace deltaset {
 		/// Searches for \a key in this set.
 		/// Returns \c true if it is found or \c false if it is not found.
 		bool contains(const KeyType& key) const {
-			return !contains(m_removedElements, key) && (contains(m_addedElements, key) || contains(m_originalElements, key));
+			return !contains(m_removedElements, key) && !contains(m_uninsertedElements, key) && (contains(m_addedElements, key) || contains(m_originalElements, key));
 		}
 
 	private:
@@ -229,6 +232,14 @@ namespace catapult { namespace deltaset {
 				return InsertResult::Unremoved;
 			}
 
+			auto uninsertedIter = m_uninsertedElements.find(key);
+			if (m_uninsertedElements.cend() != uninsertedIter) {
+				// since the element is in the set of uninserted elements, it is not in added, copied, removed elements.
+				// so we can remove it in case, when we wan't to return it back to added elements
+				clearKey(key);
+				m_uninsertedElements.erase(uninsertedIter);
+			}
+
 			auto insertResult = InsertResult::Inserted;
 			decltype(m_copiedElements)* pTargetElements;
 			if (contains(m_originalElements, key)) {
@@ -259,6 +270,12 @@ namespace catapult { namespace deltaset {
 				return InsertResult::Unremoved;
 			}
 
+			auto uninsertedIter = m_uninsertedElements.find(key);
+			if (m_uninsertedElements.cend() != uninsertedIter) {
+				clearKey(key);
+				m_uninsertedElements.erase(uninsertedIter);
+			}
+
 			if (contains(m_originalElements, key) || contains(m_addedElements, key))
 				return InsertResult::Redundant;
 
@@ -271,6 +288,9 @@ namespace catapult { namespace deltaset {
 		/// Removes the element identified by \a key from the delta.
 		RemoveResult remove(const KeyType& key) {
 			if (contains(m_removedElements, key))
+				return RemoveResult::Redundant;
+
+			if (contains(m_uninsertedElements, key))
 				return RemoveResult::Redundant;
 
 			return remove(key, ElementMutabilityTag());
@@ -292,7 +312,8 @@ namespace catapult { namespace deltaset {
 		RemoveResult remove(const KeyType& key, ImmutableTypeTag) {
 			auto addedIter = m_addedElements.find(key);
 			if (m_addedElements.cend() != addedIter) {
-				clearKey(key);
+				markKey(key);
+				m_uninsertedElements.insert(*addedIter);
 				m_addedElements.erase(addedIter);
 				return RemoveResult::Uninserted;
 			}
@@ -310,13 +331,14 @@ namespace catapult { namespace deltaset {
 	public:
 		/// Gets const references to the pending modifications.
 		DeltaElements<MemorySetType> deltas() const {
-			return DeltaElements<MemorySetType>(m_addedElements, m_removedElements, m_copiedElements);
+			return DeltaElements<MemorySetType>(m_addedElements, m_removedElements, m_uninsertedElements, m_copiedElements);
 		}
 
 		/// Resets all pending modifications.
 		void reset() {
 			m_addedElements.clear();
 			m_removedElements.clear();
+			m_uninsertedElements.clear();
 			m_copiedElements.clear();
 
 			m_generationId = 1;
@@ -367,6 +389,7 @@ namespace catapult { namespace deltaset {
 		const SetType& m_originalElements;
 		MemorySetType m_addedElements;
 		MemorySetType m_removedElements;
+		MemorySetType m_uninsertedElements;
 		MemorySetType m_copiedElements;
 
 		uint32_t m_generationId;
