@@ -32,16 +32,16 @@ namespace catapult { namespace deltaset {
 	TEST(TEST_CLASS, HasChangesReturnsFalseWhenThereAreNoChanges) {
 		// Arrange:
 		std::set<int> empty;
-		Elements elements(empty, empty, empty);
+		Elements elements(empty, empty, empty, empty);
 
 		// Assert:
 		EXPECT_FALSE(elements.HasChanges());
 	}
 
 	namespace {
-		void AssertHasChanges(const std::set<int>& added, const std::set<int>& removed, const std::set<int>& copied) {
+		void AssertHasChanges(const std::set<int>& added, const std::set<int>& removed, const std::set<int>& uninserted, const std::set<int>& copied) {
 			// Arrange:
-			Elements elements(added, removed, copied);
+			Elements elements(added, removed, uninserted, copied);
 
 			// Assert:
 			EXPECT_TRUE(elements.HasChanges());
@@ -50,17 +50,26 @@ namespace catapult { namespace deltaset {
 
 	TEST(TEST_CLASS, HasChangesReturnsTrueWhenAnySetHasChanges) {
 		// Assert:
-		AssertHasChanges({ 1 }, {}, {});
-		AssertHasChanges({}, { 1 }, {});
-		AssertHasChanges({}, {}, { 1 });
+		AssertHasChanges({ 1 }, {}, {}, {});
+		AssertHasChanges({}, { 1 }, {}, {});
+		AssertHasChanges({}, {}, { 1 }, {});
+		AssertHasChanges({}, {}, {}, { 1 });
 
-		AssertHasChanges({ 1 }, { 1 }, {});
-		AssertHasChanges({ 1 }, {}, { 1 });
-		AssertHasChanges({}, { 1 }, { 1 });
+		AssertHasChanges({ 1 }, { 1 }, {}, {});
+		AssertHasChanges({ 1 }, {}, { 1 }, {});
+		AssertHasChanges({ 1 }, {}, {}, { 1 });
+		AssertHasChanges({ 1 }, {}, {}, { 1 });
+		AssertHasChanges({}, { 1 }, { 1 }, {});
+		AssertHasChanges({}, { 1 }, {}, { 1 });
+		AssertHasChanges({}, {}, { 1 }, { 1 });
+		AssertHasChanges({ 1 }, { 1 }, { 1 }, {});
+		AssertHasChanges({ 1 }, { 1 }, {}, { 1 });
+		AssertHasChanges({ 1 }, {}, { 1 }, { 1 });
+		AssertHasChanges({}, { 1 }, { 1 }, { 1 });
 	}
 
 	TEST(TEST_CLASS, HasChangesReturnsTrueWhenAllSetsHaveChanges) {
 		// Assert:
-		AssertHasChanges({ 1 }, { 1 }, { 1 });
+		AssertHasChanges({ 1 }, { 1 }, { 1 }, { 1 });
 	}
 }}
