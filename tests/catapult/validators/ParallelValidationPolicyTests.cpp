@@ -48,7 +48,7 @@ namespace catapult { namespace validators {
 				// shutdown order is important
 				// 1. wait for all validation operations to finish so that the only pointer is m_pValidationPolicy
 				// 2. m_pPool->join waits for threads to complete but must finish before m_pValidationPolicy
-				//    is destroyed
+				//	is destroyed
 				if (!m_isReleased)
 					test::WaitForUnique(m_pValidationPolicy, "m_pValidationPolicy");
 
@@ -570,7 +570,7 @@ namespace catapult { namespace validators {
 
 				// - the work was distributed evenly across threads
 				//   (a thread can do more than the min amount of work if the number of entities is not divisible by
-				//    the number of threads)
+				//	the number of threads)
 				for (auto counter : state.threadCounters())
 					EXPECT_LE(minWorkPerThread, counter) << "validator " << i;
 

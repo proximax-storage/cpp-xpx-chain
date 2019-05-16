@@ -43,7 +43,7 @@ namespace catapult { namespace state {
 			{}
 
 		public:
-            VersionType Version;
+			VersionType Version;
 			model::LockHashAlgorithm HashAlgorithm;
 			Hash256 Secret;
 			catapult::Address Recipient;

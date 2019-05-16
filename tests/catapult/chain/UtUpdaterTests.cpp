@@ -828,7 +828,7 @@ namespace catapult { namespace chain {
 
 		// - both new and original entities were executed relative to the updated cache
 		//   (the rebase is implicitly checked by asserting that the first validator and observer were passed
-		//    a cache with 7 - instead of 0 - block difficulty infos)
+		//	a cache with 7 - instead of 0 - block difficulty infos)
 		context.assertContexts(CreateRevertedAndExistingSources(4, 3), 7);
 		context.assertEntityInfos(ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos));
 	}

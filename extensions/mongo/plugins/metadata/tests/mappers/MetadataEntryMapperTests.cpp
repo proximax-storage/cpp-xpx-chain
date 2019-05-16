@@ -15,9 +15,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 #define TEST_CLASS MetadataEntryMapperTests
 
-    // region ToDbModel
+	// region ToDbModel
 
-    namespace {
+	namespace {
         constexpr auto Network_Identifier = model::NetworkIdentifier::Private_Test;
 
         state::MetadataEntry CreateMetadataEntry(int fieldCount, model::MetadataType type) {
@@ -68,43 +68,43 @@ namespace catapult { namespace mongo { namespace plugins {
             EXPECT_EQ(3u, test::GetFieldCount(metadataView));
             test::AssertEqualMetadataData(entry, metadataView);
         }
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_Address) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_Address) {
         // Assert:
         AssertCanMapMetadataEntry(0, model::MetadataType::Address);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_Address) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_Address) {
         // Assert:
         AssertCanMapMetadataEntry(5, model::MetadataType::Address);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_MosaicId) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_MosaicId) {
         // Assert:
         AssertCanMapMetadataEntry(0, model::MetadataType::MosaicId);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_MosaicId) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_MosaicId) {
         // Assert:
         AssertCanMapMetadataEntry(5, model::MetadataType::MosaicId);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_NamespaceId) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_ModelToDbModel_NamespaceId) {
         // Assert:
         AssertCanMapMetadataEntry(0, model::MetadataType::NamespaceId);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_NamespaceId) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithFields_ModelToDbModel_NamespaceId) {
         // Assert:
         AssertCanMapMetadataEntry(5, model::MetadataType::NamespaceId);
-    }
+	}
 
-    // endregion
+	// endregion
 
-    // region ToMetadataEntry
+	// region ToMetadataEntry
 
-    namespace {
+	namespace {
         bsoncxx::document::value CreateDbMetadataEntry(int fieldCount, model::MetadataType type) {
             return ToDbModel(CreateMetadataEntry(fieldCount, type));
         }
@@ -124,37 +124,37 @@ namespace catapult { namespace mongo { namespace plugins {
             EXPECT_EQ(3u, test::GetFieldCount(metadataView));
             test::AssertEqualMetadataData(entry, metadataView);
         }
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_Address) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_Address) {
         // Assert:
         AssertCanMapDbMetadataEntry(0, model::MetadataType::Address);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_Address) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_Address) {
         // Assert:
         AssertCanMapDbMetadataEntry(5, model::MetadataType::Address);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_MosaicId) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_MosaicId) {
         // Assert:
         AssertCanMapDbMetadataEntry(0, model::MetadataType::MosaicId);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_MosaicId) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_MosaicId) {
         // Assert:
         AssertCanMapDbMetadataEntry(5, model::MetadataType::MosaicId);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_NamespaceId) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithoutFields_DbModelToModel_NamespaceId) {
         // Assert:
         AssertCanMapDbMetadataEntry(0, model::MetadataType::NamespaceId);
-    }
+	}
 
-    TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_NamespaceId) {
+	TEST(TEST_CLASS, CanMapMetadataEntryWithFields_DbModelToModel_NamespaceId) {
         // Assert:
         AssertCanMapDbMetadataEntry(5, model::MetadataType::NamespaceId);
-    }
+	}
 
-    // endregion
+	// endregion
 }}}

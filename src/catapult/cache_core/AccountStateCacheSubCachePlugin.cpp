@@ -23,10 +23,10 @@
 namespace catapult { namespace cache {
 
 	void AccountStateCacheSummaryCacheStorage::saveAll(io::OutputStream& output) const {
-        // write version
-        io::Write32(output, 1);
+		// write version
+		io::Write32(output, 1);
 
-        auto view = cache().createView();
+		auto view = cache().createView();
 		const auto& highValueAddresses = view->highValueAddresses();
 		io::Write64(output, highValueAddresses.size());
 		for (const auto& address : highValueAddresses)
@@ -41,12 +41,12 @@ namespace catapult { namespace cache {
 	}
 
 	void AccountStateCacheSummaryCacheStorage::loadAll(io::InputStream& input, size_t) {
-        // read version
-        VersionType version = io::Read32(input);
-        if (version > 1)
-            CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountState cache summary", version);
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountState cache summary", version);
 
-        auto numAddresses = io::Read64(input);
+		auto numAddresses = io::Read64(input);
 
 		model::AddressSet highValueAddresses;
 		for (auto i = 0u; i < numAddresses; ++i) {

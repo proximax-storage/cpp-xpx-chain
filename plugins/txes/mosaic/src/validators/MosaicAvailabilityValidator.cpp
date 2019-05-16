@@ -53,7 +53,7 @@ namespace catapult { namespace validators {
 		// disallow a noop modification
 		// 1) if any required property changed then it is not a noop modification
 		// 2) if mosaic is eternal and duration property is non-zero, it is a change to non-eternal that the duration validator rejects,
-		//    so only need to check current definition and reject if it is eternal
+		//	so only need to check current definition and reject if it is eternal
 		const auto& entry = mosaicIter.get();
 		auto requiredPropertyChanged = ContainsRequiredPropertyChange(notification.Properties);
 		if (!requiredPropertyChanged && entry.definition().isEternal())

@@ -23,7 +23,7 @@ Please refer to SnP-documentation.h for more details.
 #define _SnP_Relaned_h_
 
 #define SnP_AddBytes(state, data, offset, length, SnP_AddLanes, SnP_AddBytesInLane, SnP_laneLengthInBytes) \
-    { \
+	{ \
         if ((offset) == 0) { \
             SnP_AddLanes(state, data, (length)/SnP_laneLengthInBytes); \
             SnP_AddBytesInLane(state, \
@@ -48,10 +48,10 @@ Please refer to SnP-documentation.h for more details.
                 _curData += _bytesInLane; \
             } \
         } \
-    }
+	}
 
 #define SnP_OverwriteBytes(state, data, offset, length, SnP_OverwriteLanes, SnP_OverwriteBytesInLane, SnP_laneLengthInBytes) \
-    { \
+	{ \
         if ((offset) == 0) { \
             SnP_OverwriteLanes(state, data, (length)/SnP_laneLengthInBytes); \
             SnP_OverwriteBytesInLane(state, \
@@ -76,10 +76,10 @@ Please refer to SnP-documentation.h for more details.
                 _curData += _bytesInLane; \
             } \
         } \
-    }
+	}
 
 #define SnP_ExtractBytes(state, data, offset, length, SnP_ExtractLanes, SnP_ExtractBytesInLane, SnP_laneLengthInBytes) \
-    { \
+	{ \
         if ((offset) == 0) { \
             SnP_ExtractLanes(state, data, (length)/SnP_laneLengthInBytes); \
             SnP_ExtractBytesInLane(state, \
@@ -104,10 +104,10 @@ Please refer to SnP-documentation.h for more details.
                 _curData += _bytesInLane; \
             } \
         } \
-    }
+	}
 
 #define SnP_ExtractAndAddBytes(state, input, output, offset, length, SnP_ExtractAndAddLanes, SnP_ExtractAndAddBytesInLane, SnP_laneLengthInBytes) \
-    { \
+	{ \
         if ((offset) == 0) { \
             SnP_ExtractAndAddLanes(state, input, output, (length)/SnP_laneLengthInBytes); \
             SnP_ExtractAndAddBytesInLane(state, \
@@ -135,6 +135,6 @@ Please refer to SnP-documentation.h for more details.
                 _curOutput += _bytesInLane; \
             } \
         } \
-    }
+	}
 
 #endif

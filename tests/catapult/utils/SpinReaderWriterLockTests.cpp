@@ -338,7 +338,7 @@ namespace catapult { namespace utils {
 	TEST(TEST_CLASS, WriterIsPreferredToReader) {
 		// Arrange:
 		//  M: |ReadLock     |      # M acquires ReadLock while other threads are spawned
-		//  W:   |WriteLock**  |    # when M ReadLock is released, pending writer is unblocked
+		//  W:   |WriteLock**  |	# when M ReadLock is released, pending writer is unblocked
 		//  R:     |ReadLock***  |  # when W WriteLock is released, pending reader2 is unblocked
 		ReaderWriterRaceState state;
 		test::LockTestGuard testGuard(state);
@@ -377,7 +377,7 @@ namespace catapult { namespace utils {
 		// Arrange:
 		//  M: |ReadLock       |        # M acquires ReadLock while other threads are spawned
 		//  W:   |ReadLock           |  # when M ReadLock is released, pending reader1 is unblocked
-		//  R:     |ReadLock       |    # when M ReadLock is released, pending reader2 is unblocked
+		//  R:     |ReadLock       |	# when M ReadLock is released, pending reader2 is unblocked
 		//  W:       [WriteLock****  |  # when R ReadLock is released, pending writer is unblocked
 		//                              # (note that promotion is blocked by R ReadLock)
 		ReaderWriterRaceState state;

@@ -11,7 +11,7 @@
 
 namespace catapult { namespace plugins {
 
-    namespace {
+	namespace {
         struct MetadataPluginTraits {
         public:
             template<typename TAction>
@@ -89,7 +89,7 @@ namespace catapult { namespace plugins {
                 return GetObserverNames();
             }
         };
-    }
+	}
 
-    DEFINE_PLUGIN_TESTS(MetadataPluginTests, MetadataPluginTraits)
+	DEFINE_PLUGIN_TESTS(MetadataPluginTests, MetadataPluginTraits)
 }}

@@ -110,7 +110,7 @@ namespace catapult { namespace filechain {
 
 	void SaveState(const std::string& dataDirectory, const cache::CatapultCache& cache, const cache::SupplementalData& supplementalData) {
 		// 1. if the previous SaveState crashed, an orphaned lock file will be present, which would have caused LoadState to be bypassed
-		//    and instead triggered a rebuild of the cache by reloading all blocks
+		//	and instead triggered a rebuild of the cache by reloading all blocks
 		// 2. in the current SaveState, delete any existing lock file (state is not written incrementally) and create a new one
 		// 3. if successful, the lock file will be deleted and the next LoadState will load directly from the saved state
 		auto lockFilePath = GetStatePath(dataDirectory, State_Lock_Filename);

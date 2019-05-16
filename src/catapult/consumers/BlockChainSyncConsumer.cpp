@@ -183,7 +183,7 @@ namespace catapult { namespace consumers {
 				auto peerScore = chain::CalculatePartialChainScore(pCommonBlockElement->Block, blocks);
 
 				// 6. do not accept a chain with the same score because two different blocks with the same height
-				//    that are pushed to the network could result in indefinite switching and lots of i/o
+				//	that are pushed to the network could result in indefinite switching and lots of i/o
 				if (peerScore <= localScore) {
 					CATAPULT_LOG(warning) << "peer score (" << peerScore << ") is not better than local score (" << localScore << ")";
 					return Abort(Failure_Consumer_Remote_Chain_Score_Not_Better);

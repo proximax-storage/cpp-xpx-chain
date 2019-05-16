@@ -14,7 +14,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 #define TEST_CLASS MongoAddressMetadataCacheStorageTests
 
-    namespace {
+	namespace {
         struct AddressMetadataEntryTraits {
             static constexpr auto MetadataType = model::MetadataType::Address;
 
@@ -27,7 +27,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 return buffer;
             }
         };
-    }
+	}
 
 	DEFINE_FLAT_CACHE_STORAGE_TESTS(test::MetadataCacheTraits<AddressMetadataEntryTraits>,)
 }}}

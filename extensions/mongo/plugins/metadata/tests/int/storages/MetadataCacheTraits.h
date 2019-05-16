@@ -14,8 +14,8 @@ using namespace bsoncxx::builder::stream;
 
 namespace catapult { namespace test {
 
-    template<typename TMetadataEntryTraits>
-    struct MetadataCacheTraits {
+	template<typename TMetadataEntryTraits>
+	struct MetadataCacheTraits {
         using CacheType = cache::MetadataCache;
         using ModelType = state::MetadataEntry;
 
@@ -68,5 +68,5 @@ namespace catapult { namespace test {
         static void AssertEqual(const ModelType& entry, const bsoncxx::document::view& view) {
             test::AssertEqualMetadataData(entry, view["metadata"].get_document().view());
         }
-    };
+	};
 }}

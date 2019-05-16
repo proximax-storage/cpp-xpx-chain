@@ -22,7 +22,7 @@ Please refer to SnP-documentation.h for more details.
 #include "KeccakP-1600-opt64-config.h"
 
 #define KeccakP1600_implementation      "generic 64-bit optimized implementation (" KeccakP1600_implementation_config ")"
-#define KeccakP1600_stateSizeInBytes    200
+#define KeccakP1600_stateSizeInBytes	200
 #define KeccakP1600_stateAlignment      8
 #define KeccakF1600_FastLoop_supported
 #define KeccakP1600_12rounds_FastLoop_supported
@@ -33,7 +33,7 @@ Please refer to SnP-documentation.h for more details.
 void KeccakP1600_Initialize(void *state);
 #if (PLATFORM_BYTE_ORDER == IS_LITTLE_ENDIAN)
 #define KeccakP1600_AddByte(state, byte, offset) \
-    ((unsigned char*)(state))[(offset)] ^= (byte)
+	((unsigned char*)(state))[(offset)] ^= (byte)
 #else
 void KeccakP1600_AddByte(void *state, unsigned char data, unsigned int offset);
 #endif

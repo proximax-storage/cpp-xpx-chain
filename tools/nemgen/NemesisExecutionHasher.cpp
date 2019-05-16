@@ -82,7 +82,7 @@ namespace catapult { namespace tools { namespace nemgen {
 				<< "           Height: " << blockElement.Block.Height << std::endl
 				<< "  Generation Hash: " << utils::HexFormat(blockElement.GenerationHash) << std::endl
 				<< "Transactions Hash: " << utils::HexFormat(blockElement.Block.BlockTransactionsHash) << std::endl
-				<< "    Receipts Hash: " << utils::HexFormat(blockExecutionHashesInfo.ReceiptsHash) << std::endl
+				<< "	Receipts Hash: " << utils::HexFormat(blockExecutionHashesInfo.ReceiptsHash) << std::endl
 				<< Format(blockExecutionHashesInfo);
 
 		return { blockExecutionHashesInfo.ReceiptsHash, blockExecutionHashesInfo.StateHash, out.str() };

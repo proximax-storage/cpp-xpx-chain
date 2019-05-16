@@ -28,10 +28,10 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-    namespace {
+	namespace {
         constexpr VersionType ENTITY_VERSION_MASK = VersionType(~VersionType{0}) >> (sizeof(NetworkIdentifier) * CHAR_BIT);
         constexpr uint8_t NETWORK_IDENTIFIER_SHIFT = (sizeof(VersionType) - sizeof(NetworkIdentifier)) * CHAR_BIT;
-    }
+	}
 
 	/// Binary layout for an entity body.
 	template<typename THeader>

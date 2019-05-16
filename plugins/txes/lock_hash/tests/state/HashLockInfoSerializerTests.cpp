@@ -41,7 +41,7 @@ namespace catapult { namespace state {
 			{}
 
 		public:
-		    VersionType Version;
+			VersionType Version;
 			Hash256 Hash;
 		};
 

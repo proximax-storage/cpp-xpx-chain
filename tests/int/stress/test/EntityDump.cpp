@@ -39,14 +39,14 @@ namespace catapult { namespace test {
 	namespace {
 		void EntityDump(const TransferTransaction& tx) {
 			CATAPULT_LOG(debug) << "  Recipient: " << AddressToString(extensions::CopyToAddress(tx.Recipient));
-			CATAPULT_LOG(debug) << "    Message: " << "size:" << VALANDHEX(tx.MessageSize);
+			CATAPULT_LOG(debug) << "	Message: " << "size:" << VALANDHEX(tx.MessageSize);
 			if (tx.MessageSize)
 				CATAPULT_LOG(debug) << "  Message D: " << HexFormat(tx.MessagePtr(), tx.MessagePtr() + tx.MessageSize);
 
 			CATAPULT_LOG(debug) << "Mosaics: " << VALANDHEX(tx.MosaicsCount);
 			auto pMosaic = tx.MosaicsPtr();
 			for (auto i = 0u; i < tx.MosaicsCount; ++i) {
-				CATAPULT_LOG(debug) << ":    Id: " << VALANDHEX(pMosaic->MosaicId);
+				CATAPULT_LOG(debug) << ":	Id: " << VALANDHEX(pMosaic->MosaicId);
 				CATAPULT_LOG(debug) << ":Amount: " << VALANDHEX(pMosaic->Amount);
 				pMosaic++;
 			}
@@ -55,11 +55,11 @@ namespace catapult { namespace test {
 
 	void EntityDump(const Transaction& tx) {
 		CATAPULT_LOG(debug) << "       Size: " << VALANDHEX(tx.Size);
-		CATAPULT_LOG(debug) << "    Version: " << VALANDHEX(tx.Version);
+		CATAPULT_LOG(debug) << "	Version: " << VALANDHEX(tx.Version);
 		CATAPULT_LOG(debug) << "       Type: " << VALANDHEX(tx.Type);
 		CATAPULT_LOG(debug) << "     Signer: " << FormatKey(tx.Signer);
 		CATAPULT_LOG(debug) << "  Signature:\n" << HexFormat(tx.Signature);
-		CATAPULT_LOG(debug) << "    Max Fee: " << VALANDHEX(tx.MaxFee);
+		CATAPULT_LOG(debug) << "	Max Fee: " << VALANDHEX(tx.MaxFee);
 		CATAPULT_LOG(debug) << "   Deadline: " << VALANDHEX(tx.Deadline);
 
 		if (Entity_Type_Transfer == tx.Type)

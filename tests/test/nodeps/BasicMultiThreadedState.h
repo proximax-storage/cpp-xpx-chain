@@ -76,7 +76,7 @@ namespace catapult { namespace test {
 			std::sort(pairs.begin(), pairs.end(), [](const auto& l, const auto& r) { return l.first < r.first; });
 
 			// 2. only add thread_ids that are different from the thread id for the previous item
-			//    (items are expected to be batched together, so there shouldn't be any interleaving)
+			//	(items are expected to be batched together, so there shouldn't be any interleaving)
 			std::vector<std::thread::id> threadIds;
 			for (const auto& pair : pairs) {
 				if (!threadIds.empty() && threadIds.back() == pair.second)

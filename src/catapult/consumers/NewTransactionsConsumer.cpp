@@ -36,9 +36,9 @@ namespace catapult { namespace consumers {
 					return Abort(Failure_Consumer_Empty_Input);
 
 				// 1. split up the input into its component transactions
-				//    - detachTransactionRange transfers ownership of the range from the input
+				//	- detachTransactionRange transfers ownership of the range from the input
 				//      but doesn't invalidate the input elements
-				//    - the range is moved into ExtractEntitiesFromRange, which extends the lifetime of the range
+				//	- the range is moved into ExtractEntitiesFromRange, which extends the lifetime of the range
 				//      to the lifetime of the returned transactions
 				auto transactions = model::TransactionRange::ExtractEntitiesFromRange(input.detachTransactionRange());
 
@@ -47,7 +47,7 @@ namespace catapult { namespace consumers {
 				transactionInfos.reserve(transactions.size());
 
 				// 3. filter transactions
-				//    - the input elements are still valid even though the backing range has been detached
+				//	- the input elements are still valid even though the backing range has been detached
 				auto i = 0u;
 				auto numSuccesses = 0u;
 				auto numFailures = 0u;

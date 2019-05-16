@@ -79,7 +79,7 @@ namespace catapult { namespace utils {
 		Colors ColorMappingFlags[] = {
 			/* trace   */ Colors::None,
 			/* debug   */ Colors::None,
-			/* info    */ Colors::None,
+			/* info	*/ Colors::None,
 			/* warning */ Colors::Fg_Yellow,
 			/* error   */ Colors::Fg_Red,
 			/* fatal   */ Colors::Fg_Red

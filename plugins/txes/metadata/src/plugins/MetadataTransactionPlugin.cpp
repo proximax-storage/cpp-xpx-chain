@@ -18,7 +18,7 @@ using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
-    namespace {
+	namespace {
         struct AddressTraits {
             using ModifyMetadataNotification = ModifyAddressMetadataNotification;
             using ModifyMetadataValueNotification = ModifyAddressMetadataValueNotification;
@@ -72,9 +72,9 @@ namespace catapult { namespace plugins {
                 return typename TTraits::ModifyMetadataNotification(transaction.Signer, transaction.MetadataId);
             }
         };
-    }
+	}
 
-    DEFINE_TRANSACTION_PLUGIN_FACTORY(AddressMetadata, Publisher<AddressTraits>::Publish)
-    DEFINE_TRANSACTION_PLUGIN_FACTORY(MosaicMetadata, Publisher<MosaicTraits>::Publish)
-    DEFINE_TRANSACTION_PLUGIN_FACTORY(NamespaceMetadata, Publisher<NamespaceTraits>::Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(AddressMetadata, Publisher<AddressTraits>::Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(MosaicMetadata, Publisher<MosaicTraits>::Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(NamespaceMetadata, Publisher<NamespaceTraits>::Publish)
 }}

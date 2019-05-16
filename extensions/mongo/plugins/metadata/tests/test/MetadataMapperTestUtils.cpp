@@ -39,4 +39,4 @@ namespace catapult { namespace test {
         }
 
         // endregion
-    }}
+	}}

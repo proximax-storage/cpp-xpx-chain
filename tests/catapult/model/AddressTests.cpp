@@ -265,9 +265,9 @@ namespace catapult { namespace model {
 		auto encoded = std::string(Encoded_Address);
 
 		// Assert:
-		EXPECT_FALSE(IsValidEncodedAddress("   \t    " + encoded, Network_Identifier));
-		EXPECT_FALSE(IsValidEncodedAddress(encoded + "   \t    ", Network_Identifier));
-		EXPECT_FALSE(IsValidEncodedAddress("   \t    " + encoded + "   \t    ", Network_Identifier));
+		EXPECT_FALSE(IsValidEncodedAddress("   \t	" + encoded, Network_Identifier));
+		EXPECT_FALSE(IsValidEncodedAddress(encoded + "   \t	", Network_Identifier));
+		EXPECT_FALSE(IsValidEncodedAddress("   \t	" + encoded + "   \t	", Network_Identifier));
 	}
 
 	// endregion

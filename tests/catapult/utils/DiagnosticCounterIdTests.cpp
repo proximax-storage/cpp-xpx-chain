@@ -157,7 +157,7 @@ namespace catapult { namespace utils {
 
 	TEST(TEST_CLASS, CannotCreateAroundStringTooLong) {
 		// Assert:
-		for (const auto& name : { "ABCDEFGHIJKLMN", "ABC EFG IJKLMN", "ABCD    IJKLMN", "ABCDEFGHIJKLMNOP" })
+		for (const auto& name : { "ABCDEFGHIJKLMN", "ABC EFG IJKLMN", "ABCD	IJKLMN", "ABCDEFGHIJKLMNOP" })
 			AssertInvalidName(name);
 
 		AssertInvalidName(std::string(DiagnosticCounterId::Max_Counter_Name_Size + 1, ' '));

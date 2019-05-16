@@ -10,7 +10,7 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-    namespace {
+	namespace {
         struct MongoMetadataPluginTraits {
             static constexpr auto RegisterSubsystem = RegisterMongoSubsystem;
 
@@ -30,7 +30,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 return "{ MetadataCache }";
             }
         };
-    }
+	}
 
-    DEFINE_MONGO_PLUGIN_TESTS(MongoMetadataPluginTests, MongoMetadataPluginTraits)
+	DEFINE_MONGO_PLUGIN_TESTS(MongoMetadataPluginTests, MongoMetadataPluginTraits)
 }}}

@@ -1206,7 +1206,7 @@ namespace catapult { namespace net {
 
 		// - pick a third socket
 		//   (use WaitFor because the completion handler triggered by the release of pIo2 is invoked after some
-		//    delay because it is posted onto a thread pool)
+		//	delay because it is posted onto a thread pool)
 		decltype(pIo1) pIo3;
 		WAIT_FOR_EXPR(!!(pIo3 = writers.pickOne(Default_Timeout).io()));
 

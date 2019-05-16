@@ -20,7 +20,7 @@ namespace catapult { namespace plugins {
 
 #define TEST_CLASS MetadataTransactionPluginTests
 
-    namespace {
+	namespace {
         DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(AddressMetadata, 1, 1, AddressMetadata)
         DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(MosaicMetadata, 1, 1, MosaicMetadata)
         DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(NamespaceMetadata, 1, 1, NamespaceMetadata)
@@ -54,11 +54,11 @@ namespace catapult { namespace plugins {
 
         using NamespaceRegularTraits = NamespaceTraits<model::NamespaceMetadataTransaction, NamespaceMetadataRegularTraits>;
         using NamespaceEmbeddedTraits = NamespaceTraits<model::EmbeddedNamespaceMetadataTransaction, NamespaceMetadataEmbeddedTraits>;
-    }
+	}
 
-    template<typename TTraits>
-    class MetadataTransactionPluginTests {
-    public:
+	template<typename TTraits>
+	class MetadataTransactionPluginTests {
+	public:
         // region TransactionPlugin
 
         static void AssertCanCalculateSize() {
@@ -216,11 +216,11 @@ namespace catapult { namespace plugins {
         }
 
         // endregion
-    };
+	};
 
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Address, _Address, model::Entity_Type_Address_Metadata)
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Mosaic, _Mosaic, model::Entity_Type_Mosaic_Metadata)
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Namespace, _Namespace, model::Entity_Type_Namespace_Metadata)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Address, _Address, model::Entity_Type_Address_Metadata)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Mosaic, _Mosaic, model::Entity_Type_Mosaic_Metadata)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Namespace, _Namespace, model::Entity_Type_Namespace_Metadata)
 
 #define MAKE_METADATA_TRANSACTION_PLUGIN_TEST(TRAITS_PREFIX, TEST_POSTFIX, TEST_NAME) \
 	TEST(TEST_CLASS, TEST_NAME##_Regular##TEST_POSTFIX) { \
@@ -238,7 +238,7 @@ namespace catapult { namespace plugins {
 	MAKE_METADATA_TRANSACTION_PLUGIN_TEST(TRAITS_PREFIX, TEST_POSTFIX, CanPublishModifyMetadataFieldNotification) \
 	MAKE_METADATA_TRANSACTION_PLUGIN_TEST(TRAITS_PREFIX, TEST_POSTFIX, CanPublishModifyMetadataValueNotification)
 
-    DEFINE_METADATA_TRANSACTION_PLUGIN_TESTS(Address, _Address)
-    DEFINE_METADATA_TRANSACTION_PLUGIN_TESTS(Mosaic, _Mosaic)
-    DEFINE_METADATA_TRANSACTION_PLUGIN_TESTS(Namespace, _Namespace)
+	DEFINE_METADATA_TRANSACTION_PLUGIN_TESTS(Address, _Address)
+	DEFINE_METADATA_TRANSACTION_PLUGIN_TESTS(Mosaic, _Mosaic)
+	DEFINE_METADATA_TRANSACTION_PLUGIN_TESTS(Namespace, _Namespace)
 }}

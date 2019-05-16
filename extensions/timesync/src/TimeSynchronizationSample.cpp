@@ -69,10 +69,10 @@ namespace catapult { namespace timesync {
 
 	// S=Send, R=Receive
 	// remote node   ---------R-------S------->
-	//                       o         \    network
-	//                      /           \    time
+	//                       o         \	network
+	//                      /           \	time
 	//                     /             o
-	// local node    -----S---------------R--->
+	// local node	-----S---------------R--->
 	int64_t TimeSynchronizationSample::timeOffsetToRemote() const {
 		auto roundtripTime = localDuration() - remoteDuration();
 		return ToSigned(m_remoteTimestamps.ReceiveTimestamp) - ToSigned(m_localTimestamps.SendTimestamp) - roundtripTime / 2;

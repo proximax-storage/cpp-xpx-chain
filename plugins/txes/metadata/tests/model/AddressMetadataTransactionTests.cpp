@@ -13,13 +13,13 @@
 
 namespace catapult { namespace model {
 
-    using TransactionType = AddressMetadataTransaction;
+	using TransactionType = AddressMetadataTransaction;
 
 #define TEST_CLASS AddressMetadataTransactionTests
 
-    // region size + properties
+	// region size + properties
 
-    namespace {
+	namespace {
         template<typename T>
         void AssertEntityHasExpectedSize(size_t baseSize) {
             // Arrange:
@@ -38,18 +38,18 @@ namespace catapult { namespace model {
             EXPECT_EQ(Entity_Type_Address_Metadata, static_cast<EntityType>(T::Entity_Type));
             EXPECT_EQ(1u, static_cast<VersionType>(T::Current_Version));
         }
-    }
+	}
 
-    ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(AddressMetadata)
+	ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(AddressMetadata)
 
-    // endregion
+	// endregion
 
-    // region transactions
+	// region transactions
 
-    namespace {
+	namespace {
         using ConstTraits = test::ConstTraitsT<TransactionType>;
         using NonConstTraits = test::NonConstTraitsT<TransactionType>;
-    }
+	}
 
 #define DATA_POINTER_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
@@ -57,7 +57,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, TEST_NAME##_NonConst) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<NonConstTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-    DATA_POINTER_TEST(ModificationsAreInaccessibleWhenTransactionHasNoModifications) {
+	DATA_POINTER_TEST(ModificationsAreInaccessibleWhenTransactionHasNoModifications) {
         // Arrange:
         auto pTransaction = test::CreateTransaction<TransactionType>({});
         auto& accessor = TTraits::GetAccessor(*pTransaction);
@@ -65,9 +65,9 @@ namespace catapult { namespace model {
         // Act + Assert:
         EXPECT_FALSE(!!accessor.TransactionsPtr());
         EXPECT_EQ(0u, test::CountTransactions(accessor.Transactions()));
-    }
+	}
 
-    DATA_POINTER_TEST(ModificationsAreInacessibleIfReportedSizeIsLessThanHeaderSize) {
+	DATA_POINTER_TEST(ModificationsAreInacessibleIfReportedSizeIsLessThanHeaderSize) {
         // Arrange:
         auto pTransaction = test::CreateTransaction<TransactionType>({});
         --pTransaction->Size;
@@ -75,9 +75,9 @@ namespace catapult { namespace model {
 
         // Act + Assert:
         EXPECT_FALSE(!!accessor.TransactionsPtr());
-    }
+	}
 
-    DATA_POINTER_TEST(ModificationsAreAccessibleWhenTransactionHasModifications) {
+	DATA_POINTER_TEST(ModificationsAreAccessibleWhenTransactionHasModifications) {
         // Arrange:
         auto pTransaction = test::CreateTransaction<TransactionType>({
             test::CreateModification(MetadataModificationType::Add, 1, 2).get(),
@@ -90,13 +90,13 @@ namespace catapult { namespace model {
         // Act + Assert:
         EXPECT_EQ(pTransactionEnd, accessor.TransactionsPtr());
         EXPECT_EQ(3u, test::CountTransactions(accessor.Transactions()));
-    }
+	}
 
-    // endregion
+	// endregion
 
-    // region GetTransactionPayloadSize
+	// region GetTransactionPayloadSize
 
-    TEST(TEST_CLASS, GetTransactionPayloadSizeReturnsCorrectPayloadSize) {
+	TEST(TEST_CLASS, GetTransactionPayloadSizeReturnsCorrectPayloadSize) {
         // Arrange:
         uint32_t entitySize = sizeof(TransactionType) + 123u;
         auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
@@ -107,13 +107,13 @@ namespace catapult { namespace model {
 
         // Assert:
         EXPECT_EQ(123u, payloadSize);
-    }
+	}
 
-    // endregion
+	// endregion
 
-    // region CalculateRealSize
+	// region CalculateRealSize
 
-    TEST(TEST_CLASS, CalculateRealSizeWithWrongModificationSize) {
+	TEST(TEST_CLASS, CalculateRealSizeWithWrongModificationSize) {
         // Arrange:
         auto pInvalidModification = test::CreateModification(MetadataModificationType::Add, 1, 2);
         pInvalidModification->Size--;
@@ -128,9 +128,9 @@ namespace catapult { namespace model {
 
         // Assert:
         EXPECT_EQ(std::numeric_limits<uint64_t>::max(), realSize);
-    }
+	}
 
-    TEST(TEST_CLASS, CalculateRealSizeWithValidModificationSizes) {
+	TEST(TEST_CLASS, CalculateRealSizeWithValidModificationSizes) {
         // Arrange:
         auto pTransaction = test::CreateTransaction<TransactionType>({
             test::CreateModification(MetadataModificationType::Add, 1, 2).get(),
@@ -143,7 +143,7 @@ namespace catapult { namespace model {
 
         // Assert:
         EXPECT_EQ(193u, realSize);
-    }
+	}
 
-    // endregion
+	// endregion
 }}

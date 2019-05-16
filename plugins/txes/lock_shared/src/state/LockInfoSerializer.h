@@ -31,8 +31,8 @@ namespace catapult { namespace state {
 	public:
 		/// Saves \a lockInfo to \a output.
 		static void Save(const TLockInfo& lockInfo, io::OutputStream& output){
-            // write version
-            io::Write32(output, 1);
+			// write version
+			io::Write32(output, 1);
 
 			io::Write(output, lockInfo.Account);
 			io::Write(output, lockInfo.MosaicId);
@@ -43,13 +43,13 @@ namespace catapult { namespace state {
 		}
 
 		/// Loads a single value from \a input.
-	    static TLockInfo Load(io::InputStream& input){
-            // read version
-            VersionType version = io::Read32(input);
-            if (version > 1)
-                CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of LockInfo", version);
+		static TLockInfo Load(io::InputStream& input){
+			// read version
+			VersionType version = io::Read32(input);
+			if (version > 1)
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of LockInfo", version);
 
-            TLockInfo lockInfo;
+			TLockInfo lockInfo;
 			io::Read(input, lockInfo.Account);
 			io::Read(input, lockInfo.MosaicId);
 			io::Read(input, lockInfo.Amount);

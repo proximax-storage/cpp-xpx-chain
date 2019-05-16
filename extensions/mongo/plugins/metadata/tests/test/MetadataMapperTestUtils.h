@@ -12,4 +12,4 @@ namespace catapult { namespace test {
 
         /// Verifies that db metadata (\a dbMetadata) is equivalent to model metadata \a entry.
         void AssertEqualMetadataData(const state::MetadataEntry& entry, const bsoncxx::document::view& dbMetadata);
-    }}
+	}}

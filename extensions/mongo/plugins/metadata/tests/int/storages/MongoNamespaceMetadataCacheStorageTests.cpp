@@ -13,7 +13,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 #define TEST_CLASS MongoNamespaceMetadataCacheStorageTests
 
-    namespace {
+	namespace {
         struct NamespaceMetadataEntryTraits {
             static constexpr auto MetadataType = model::MetadataType::NamespaceId;
 
@@ -22,7 +22,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 return std::vector<uint8_t>(data.cbegin(), data.cend());
             }
         };
-    }
+	}
 
 	DEFINE_FLAT_CACHE_STORAGE_TESTS(test::MetadataCacheTraits<NamespaceMetadataEntryTraits>,)
 }}}

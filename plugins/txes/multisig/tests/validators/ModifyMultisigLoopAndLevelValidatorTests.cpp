@@ -155,10 +155,10 @@ namespace catapult { namespace validators {
 		// Assert: { 6, 7, 8, A }
 		//  there are two possible arrangments:
 		//   (a)      |      (b)
-		//  6 -+ 7    |    6 -+ 7
-		//  |    |    |    |    |
-		//  +    +    |    +    +
-		//  8 +- A    |    8 -+ A
+		//  6 -+ 7	|	6 -+ 7
+		//  |	|	|	|	|
+		//  +	+	|	+	+
+		//  8 +- A	|	8 -+ A
 		//
 		//  (a) is allowable because 8 is cosigner of 6 and A
 		//  (b) is allowable because A is cosigner of 7 and 8

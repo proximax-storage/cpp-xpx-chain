@@ -124,7 +124,7 @@ namespace catapult { namespace cache {
 
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream stream("", buffer);
-            io::Write32(stream, 1);
+			io::Write32(stream, 1);
 			io::Write64(stream, numAccounts);
 			stream.write({ reinterpret_cast<const uint8_t*>(highValueAddresses.data()), numAccounts * sizeof(Address) });
 			io::Write64(stream, numUpdateAddresses);

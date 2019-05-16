@@ -99,14 +99,14 @@ void ripemd160_init(struct ripemd160_ctx *ctx);
 #ifdef CCAN_CRYPTO_RIPEMD160_USE_OPENSSL
 #define RIPEMD160_INIT							\
 	{ { 0x67452301ul, 0xEFCDAB89ul, 0x98BADCFEul, 0x10325476ul,	\
-	    0xC3D2E1F0ul,						\
-	    0x0, 0x0,							\
-	    { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },		\
-	    0 } }
+		0xC3D2E1F0ul,						\
+		0x0, 0x0,							\
+		{ 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 },		\
+		0 } }
 #else
 #define RIPEMD160_INIT							\
 	{ { 0x67452301ul, 0xEFCDAB89ul, 0x98BADCFEul, 0x10325476ul,	\
-	    0xC3D2E1F0ul }, 0 }
+		0xC3D2E1F0ul }, 0 }
 #endif
 
 /**

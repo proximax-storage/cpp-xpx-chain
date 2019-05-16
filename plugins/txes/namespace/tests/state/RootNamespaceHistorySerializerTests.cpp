@@ -60,7 +60,7 @@ namespace catapult { namespace state {
 
 		struct NonHistoricalTraits {
 			struct NamespaceHistoryHeader {
-			    VersionType Version;
+				VersionType Version;
 				catapult::NamespaceId NamespaceId;
 			};
 			using Serializer = RootNamespaceHistoryNonHistoricalSerializer;

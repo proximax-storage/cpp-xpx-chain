@@ -26,8 +26,8 @@ namespace catapult { namespace cache {
 	std::string KeyAddressPairSerializer::SerializeValue(const ValueType& value) {
 		io::StringOutputStream output(sizeof(VersionType) + sizeof(Key) + sizeof(Address));
 
-        // write version
-        io::Write32(output, 1);
+		// write version
+		io::Write32(output, 1);
 
 		output.write(value.first);
 		output.write(value.second);
@@ -37,10 +37,10 @@ namespace catapult { namespace cache {
 	KeyAddressPairSerializer::ValueType KeyAddressPairSerializer::DeserializeValue(const RawBuffer& buffer) {
 		io::BufferInputStreamAdapter<RawBuffer> input(buffer);
 
-        // read version
-        VersionType version = io::Read32(input);
-        if (version > 1)
-            CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of KeyAddress pair", version);
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of KeyAddress pair", version);
 
 		ValueType value;
 		input.read(value.first);

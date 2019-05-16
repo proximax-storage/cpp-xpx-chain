@@ -134,8 +134,8 @@ namespace catapult { namespace partialtransaction {
 		// 1. Pt updater gets updater pool, registering updater as a rooted service would cause deadlock during shutdown.
 		// 2. Dispatcher needs to extend lifetime of pt updater
 		// 3. usual shared_ptr-based tying of updater to dispatcher won't work, cause that would result in following order:
-		//    a. dispatcher is shutdown - but not freed
-		//    b. updater pool is shutdown - but dispatcher holds updater, so we'd have a loop
+		//	a. dispatcher is shutdown - but not freed
+		//	b. updater pool is shutdown - but dispatcher holds updater, so we'd have a loop
 		//
 		// That's why we need additional wrapper, to tie updater to dispatcher and enforce proper shutdown
 		class DispatcherServiceRegistrar {

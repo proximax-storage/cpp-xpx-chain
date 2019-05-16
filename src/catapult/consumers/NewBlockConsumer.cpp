@@ -44,9 +44,9 @@ namespace catapult { namespace consumers {
 					return Continue();
 
 				// 1. split up the input into its component blocks
-				//    - detachBlockRange transfers ownership of the range from the input
+				//	- detachBlockRange transfers ownership of the range from the input
 				//      but doesn't invalidate the input elements
-				//    - the range is moved into ExtractEntitiesFromRange, which extends the lifetime of the range
+				//	- the range is moved into ExtractEntitiesFromRange, which extends the lifetime of the range
 				//      to the lifetime of the returned blocks
 				auto blocks = model::BlockRange::ExtractEntitiesFromRange(input.detachBlockRange());
 				auto pNewBlock = blocks.front();

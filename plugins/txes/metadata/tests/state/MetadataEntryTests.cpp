@@ -13,11 +13,11 @@ namespace catapult { namespace state {
 
 #define TEST_CLASS MetadataEntryTests
 
-    namespace {
+	namespace {
         constexpr auto Network_Identifier = model::NetworkIdentifier::Private_Test;
-    }
+	}
 
-    TEST(TEST_CLASS, CanCreateEmptyMetadataEntry) {
+	TEST(TEST_CLASS, CanCreateEmptyMetadataEntry) {
         // Act:
         auto entry = MetadataEntry{};
 
@@ -25,9 +25,9 @@ namespace catapult { namespace state {
         EXPECT_TRUE(entry.fields().empty());
         EXPECT_EQ(model::MetadataType{0}, entry.type());
         EXPECT_TRUE(entry.raw().empty());
-    }
+	}
 
-    TEST(TEST_CLASS, CanCreateAddressMetadataEntry) {
+	TEST(TEST_CLASS, CanCreateAddressMetadataEntry) {
         // Arrange:
         auto pubKey = test::GenerateRandomData<Key_Size>();
         auto address = model::PublicKeyToAddress(pubKey, Network_Identifier);
@@ -44,9 +44,9 @@ namespace catapult { namespace state {
         EXPECT_TRUE(entry.fields().empty());
         EXPECT_EQ(type, entry.type());
         EXPECT_EQ(buffer, entry.raw());
-    }
+	}
 
-    TEST(TEST_CLASS, CanCreateMosaicMetadataEntry) {
+	TEST(TEST_CLASS, CanCreateMosaicMetadataEntry) {
         // Arrange:
         std::vector<uint8_t> buffer{sizeof(MosaicId)};
         auto mosaicId = MosaicId{0x1234567890ABCDEF};
@@ -63,9 +63,9 @@ namespace catapult { namespace state {
         EXPECT_TRUE(entry.fields().empty());
         EXPECT_EQ(type, entry.type());
         EXPECT_EQ(buffer, entry.raw());
-    }
+	}
 
-    TEST(TEST_CLASS, CanCreateNamespaceMetadataEntry) {
+	TEST(TEST_CLASS, CanCreateNamespaceMetadataEntry) {
         // Arrange:
         std::vector<uint8_t> buffer{sizeof(NamespaceId)};
         auto namespaceId = NamespaceId{0x1234567890ABCDEF};
@@ -82,5 +82,5 @@ namespace catapult { namespace state {
         EXPECT_TRUE(entry.fields().empty());
         EXPECT_EQ(type, entry.type());
         EXPECT_EQ(buffer, entry.raw());
-    }
+	}
 }}

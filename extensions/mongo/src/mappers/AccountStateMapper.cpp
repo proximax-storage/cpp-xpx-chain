@@ -82,7 +82,7 @@ namespace catapult { namespace mongo { namespace mappers {
 					model::BalanceSnapshot{
 						GetValue64<Amount>(mosaicDocument["amount"]),
 				        GetValue64<Height>(mosaicDocument["height"])
-				    }
+					}
 			);
 		}
 	}

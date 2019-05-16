@@ -29,9 +29,9 @@ namespace catapult { namespace crypto {
 
 	// the purpose of this test is to verify that:
 	// a) in case of !SIGNATURE_SCHEME_NIS1:
-	//    result of HashPrivateKey, matches 512-bit sha3 hash (tested in sha3_512 tests)
+	//	result of HashPrivateKey, matches 512-bit sha3 hash (tested in sha3_512 tests)
 	// b) in case of SIGNATURE_SCHEME_NIS1
-	//    result of HashPrivateKey, matches 512-bit keccak hash of REVERSED data
+	//	result of HashPrivateKey, matches 512-bit keccak hash of REVERSED data
 	TEST(TEST_CLASS, PassesShaVector) {
 		// Arrange:
 		auto privateKey = PrivateKey::FromString("9F2FCC7C90DE090D6B87CD7E9718C1EA6CB21118FC2D5DE9F97E5DB6AC1E9C10");

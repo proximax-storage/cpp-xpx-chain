@@ -123,45 +123,45 @@ namespace catapult { namespace state {
 		}
 
 		void AssertCanSaveSingleEntry(VersionType version) {
-            // Arrange:
-            TestContext context;
-            auto entry = context.createEntry(0);
+			// Arrange:
+			TestContext context;
+			auto entry = context.createEntry(0);
 
-            // Act:
-            ContractEntrySerializer::Save(entry, context.outputStream());
+			// Act:
+			ContractEntrySerializer::Save(entry, context.outputStream());
 
-            // Assert:
-            ASSERT_EQ(Entry_Size, context.buffer().size());
-            AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
+			// Assert:
+			ASSERT_EQ(Entry_Size, context.buffer().size());
+			AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
 		}
 
 		void AssertCanSaveMultipleEntries(VersionType version) {
-            // Arrange:
-            TestContext context(20);
-            auto entry1 = context.createEntry(0);
-            auto entry2 = context.createEntry(10);
+			// Arrange:
+			TestContext context(20);
+			auto entry1 = context.createEntry(0);
+			auto entry2 = context.createEntry(10);
 
-            // Act:
-            ContractEntrySerializer::Save(entry1, context.outputStream());
-            ContractEntrySerializer::Save(entry2, context.outputStream());
+			// Act:
+			ContractEntrySerializer::Save(entry1, context.outputStream());
+			ContractEntrySerializer::Save(entry2, context.outputStream());
 
-            // Assert:
-            ASSERT_EQ(2 * Entry_Size, context.buffer().size());
-            const auto* pBuffer1 = context.buffer().data();
-            const auto* pBuffer2 = pBuffer1 + Entry_Size;
-            AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
-            AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
+			// Assert:
+			ASSERT_EQ(2 * Entry_Size, context.buffer().size());
+			const auto* pBuffer1 = context.buffer().data();
+			const auto* pBuffer2 = pBuffer1 + Entry_Size;
+			AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
+			AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
 		}
 	}
 
 	// region Save
 
 	TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
-        AssertCanSaveSingleEntry(1);
+		AssertCanSaveSingleEntry(1);
 	}
 
 	TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
-        AssertCanSaveMultipleEntries(1);
+		AssertCanSaveMultipleEntries(1);
 	}
 
 	// endregion
@@ -185,8 +185,8 @@ namespace catapult { namespace state {
 
 			// - start / duration
 			auto* pData = buffer.data();
-            memcpy(pData, &version, sizeof(VersionType));
-            pData += sizeof(VersionType);
+			memcpy(pData, &version, sizeof(VersionType));
+			pData += sizeof(VersionType);
 			auto start = entry.start().unwrap();
 			memcpy(pData, &start, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
