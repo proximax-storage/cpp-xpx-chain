@@ -26,8 +26,7 @@
 namespace catapult { namespace model {
 
 	std::ostream& operator<<(std::ostream& out, const EmbeddedTransaction& transaction) {
-		auto version = static_cast<uint16_t>(transaction.EntityVersion());
-		out << "(embedded) " << transaction.Type << " (v" << version << ") with size " << transaction.Size;
+		out << "(embedded) " << transaction.Type << " (v" << transaction.EntityVersion() << ") with size " << transaction.Size;
 		return out;
 	}
 

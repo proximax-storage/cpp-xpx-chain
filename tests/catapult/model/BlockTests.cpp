@@ -43,7 +43,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(BlockHeader));
-		EXPECT_EQ(104u + 188u, sizeof(BlockHeader));
+		EXPECT_EQ(106u + 188u, sizeof(BlockHeader));
 
 		EXPECT_EQ(sizeof(BlockHeader), sizeof(decltype(Block()))); // use decltype to bypass lint rule
 	}

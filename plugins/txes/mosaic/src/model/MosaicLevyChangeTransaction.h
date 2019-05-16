@@ -43,7 +43,7 @@ namespace catapult { namespace model {
 	struct MosaicLevyChangeTransaction : public Transaction {
 	public:
 		/// Transaction format version.
-		static constexpr uint8_t Current_Version = 1;
+		static constexpr VersionType Current_Version = 1;
 
 		/// Transaction type.
 		static constexpr EntityType Entity_Type = Entity_Type_Mosaic_Levy_Change;

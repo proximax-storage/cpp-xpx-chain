@@ -39,7 +39,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(AggregateTransaction));
-		EXPECT_EQ(120u + 4, sizeof(AggregateTransaction));
+		EXPECT_EQ(122u + 4, sizeof(AggregateTransaction));
 	}
 
 	TEST(TEST_CLASS, TransactionHasExpectedProperties) {

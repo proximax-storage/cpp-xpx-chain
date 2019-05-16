@@ -72,7 +72,7 @@ namespace catapult { namespace mongo { namespace mappers {
 		bson_stream::document& StreamBasicEntity(bson_stream::document& builder, const TEntity& entity) {
 			builder
 					<< "signer" << ToBinary(entity.Signer)
-					<< "version" << entity.Version
+					<< "version" << static_cast<int32_t>(entity.Version)
 					<< "type" << utils::to_underlying_type(entity.Type);
 			return builder;
 		}
@@ -109,7 +109,7 @@ namespace catapult { namespace mongo { namespace mappers {
 
 	bson_stream::document& StreamReceipt(bson_stream::document& builder, const model::Receipt& receipt) {
 		builder
-				<< "version" << receipt.Version
+				<< "version" << static_cast<int32_t>(receipt.Version)
 				<< "type" << utils::to_underlying_type(receipt.Type);
 
 		return builder;

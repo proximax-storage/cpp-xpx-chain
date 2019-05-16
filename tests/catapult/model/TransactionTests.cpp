@@ -52,7 +52,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(Transaction));
-		EXPECT_EQ(104u + 16u, sizeof(Transaction));
+		EXPECT_EQ(106u + 16u, sizeof(Transaction));
 	}
 
 	// endregion
