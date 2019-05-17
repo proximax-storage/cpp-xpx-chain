@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.Version) {
 			case 2:
 				// NewRemoteAccountNotification must be raised before AccountPublicKeyNotification because the latter adds account to cache
-				sub.notify(NewRemoteAccountNotification(transaction.RemoteAccountKey));
+				sub.notify(NewRemoteAccountNotification<1>(transaction.RemoteAccountKey));
 				sub.notify(AccountPublicKeyNotification<1>(transaction.RemoteAccountKey));
 				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, { transaction.RemoteAccountKey }));
 				sub.notify(RemoteAccountLinkNotification<1>(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
