@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to mosaic required notifications and validates that:
 	/// - mosaic exists and is active
 	/// - mosaic owner matches requesting signer
-	DECLARE_STATEFUL_VALIDATOR(ProperMosaic, model::MosaicRequiredNotification)();
+	DECLARE_STATEFUL_VALIDATOR(ProperMosaic, model::MosaicRequiredNotification<1>)();
 
 	// endregion
 

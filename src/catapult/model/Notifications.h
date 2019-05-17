@@ -450,7 +450,11 @@ namespace catapult { namespace model {
 	// region mosaic required
 
 	/// Notification of a required mosaic.
-	struct MosaicRequiredNotification : public Notification {
+	template<VersionType version>
+	struct MosaicRequiredNotification;
+
+	template<>
+	struct MosaicRequiredNotification<1> : public Notification {
 	public:
 		/// Mosaic types.
 		enum class MosaicType { Resolved, Unresolved };
@@ -462,7 +466,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer and \a mosaicId.
 		explicit MosaicRequiredNotification(const Key& signer, MosaicId mosaicId)
-				: Notification(Notification_Type, sizeof(MosaicRequiredNotification))
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<1>))
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Resolved)
@@ -470,11 +474,16 @@ namespace catapult { namespace model {
 
 		/// Creates a notification around \a signer and \a mosaicId.
 		explicit MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId)
-				: Notification(Notification_Type, sizeof(MosaicRequiredNotification))
+				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<1>))
 				, Signer(signer)
 				, UnresolvedMosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Unresolved)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Signer.

@@ -70,7 +70,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishMosaicRequiredNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<MosaicRequiredNotification> sub;
+		mocks::MockTypedNotificationSubscriber<MosaicRequiredNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
@@ -86,7 +86,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(transaction.Signer, notification.Signer);
 		EXPECT_EQ(MosaicId(), notification.MosaicId);
 		EXPECT_EQ(transaction.MosaicId, notification.UnresolvedMosaicId);
-		EXPECT_EQ(MosaicRequiredNotification::MosaicType::Unresolved, notification.ProvidedMosaicType);
+		EXPECT_EQ(MosaicRequiredNotification<1>::MosaicType::Unresolved, notification.ProvidedMosaicType);
 	}
 
 	PLUGIN_TEST(CanPublishMosaicSupplyChangeNotification) {

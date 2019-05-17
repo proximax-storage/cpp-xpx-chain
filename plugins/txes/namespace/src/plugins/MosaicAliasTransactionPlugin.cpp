@@ -31,9 +31,16 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(AliasOwnerNotification(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
-			sub.notify(AliasedMosaicIdNotification(transaction.NamespaceId, transaction.AliasAction, transaction.MosaicId));
-			sub.notify(MosaicRequiredNotification(transaction.Signer, transaction.MosaicId));
+			switch (transaction.Version) {
+			case 1:
+				sub.notify(AliasOwnerNotification(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
+				sub.notify(AliasedMosaicIdNotification(transaction.NamespaceId, transaction.AliasAction, transaction.MosaicId));
+				sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
+				break;
+
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicAliasTransaction", transaction.Version);
+			}
 		}
 	}
 

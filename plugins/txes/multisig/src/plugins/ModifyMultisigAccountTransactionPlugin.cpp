@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 
 				// 2. setting changes
 				sub.notify(ModifyMultisigSettingsNotification(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));
-					break;
+				break;
 
 			default:
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ModifyMultisigAccountTransaction", transaction.Version);
