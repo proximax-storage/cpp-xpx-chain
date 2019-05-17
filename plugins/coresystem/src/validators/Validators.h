@@ -80,7 +80,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all transaction fee notifications and validates that:
 	/// - fee is no greater than max fee
 	/// - max fee multiplier does not overflow 32-bit value
-	DECLARE_STATELESS_VALIDATOR(TransactionFee, model::TransactionFeeNotification)();
+	DECLARE_STATELESS_VALIDATOR(TransactionFee, model::TransactionFeeNotification<1>)();
 
 	// endregion
 }}

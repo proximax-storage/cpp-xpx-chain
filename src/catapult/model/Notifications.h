@@ -319,7 +319,11 @@ namespace catapult { namespace model {
 	};
 
 	/// Notifies the arrival of a transaction fee.
-	struct TransactionFeeNotification : public Notification {
+	template<VersionType version>
+	struct TransactionFeeNotification;
+
+	template<>
+	struct TransactionFeeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Transaction_Fee_Notification;
@@ -327,11 +331,16 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a transaction fee notification around \a transactionSize, \a fee and \a maxFee.
 		explicit TransactionFeeNotification(uint32_t transactionSize, Amount fee, Amount maxFee)
-				: Notification(Notification_Type, sizeof(TransactionFeeNotification))
+				: Notification(Notification_Type, sizeof(TransactionFeeNotification<1>))
 				, TransactionSize(transactionSize)
 				, Fee(fee)
 				, MaxFee(maxFee)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Transaction size.
