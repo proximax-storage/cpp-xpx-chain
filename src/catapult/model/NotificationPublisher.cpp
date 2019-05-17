@@ -89,7 +89,13 @@ namespace catapult { namespace model {
 
 			void publish(const Block& block, NotificationSubscriber& sub) const {
 				// raise an entity notification
-				sub.notify(EntityNotification(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion()));
+				switch (block.Version) {
+				case 3:
+					sub.notify(EntityNotification<1>(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion()));
+					break;
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of Block", block.Version);
+				}
 
 				// raise a block notification
 				auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
@@ -114,7 +120,7 @@ namespace catapult { namespace model {
 				auto supportedVersions = plugin.supportedVersions();
 
 				// raise an entity notification
-				sub.notify(EntityNotification(
+				sub.notify(EntityNotification<1>(
 						transaction.Network(),
 						supportedVersions.MinVersion,
 						supportedVersions.MaxVersion,

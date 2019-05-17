@@ -23,7 +23,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::EntityNotification;
+	using Notification = model::EntityNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(Network, Notification)(model::NetworkIdentifier networkIdentifier) {
 		return MAKE_STATELESS_VALIDATOR(Network, [networkIdentifier](const auto& notification) {

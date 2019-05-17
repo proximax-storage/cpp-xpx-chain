@@ -68,7 +68,13 @@ namespace catapult { namespace model {
 						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountPublicKeyNotification", m_notificationVersion);
 					}
 				} else {
-					sub.notify(EntityNotification(transaction.Network(), 0, 0, transaction.EntityVersion()));
+					switch (m_notificationVersion) {
+					case 1:
+						sub.notify(EntityNotification<1>(transaction.Network(), 0, 0, transaction.EntityVersion()));
+						break;
+					default:
+						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of EntityNotification", m_notificationVersion);
+					}
 				}
 			}
 

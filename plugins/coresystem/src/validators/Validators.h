@@ -41,11 +41,11 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all entity notifications and validates that:
 	/// - the entity targets the expected network (\a networkIdentifier)
-	DECLARE_STATELESS_VALIDATOR(Network, model::EntityNotification)(model::NetworkIdentifier networkIdentifier);
+	DECLARE_STATELESS_VALIDATOR(Network, model::EntityNotification<1>)(model::NetworkIdentifier networkIdentifier);
 
 	/// A validator implementation that applies to entity notifications and validates that:
 	/// - the entity version is within supported range.
-	DECLARE_STATELESS_VALIDATOR(EntityVersion, model::EntityNotification)();
+	DECLARE_STATELESS_VALIDATOR(EntityVersion, model::EntityNotification<1>)();
 
 	// endregion
 

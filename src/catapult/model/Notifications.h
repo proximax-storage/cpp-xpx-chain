@@ -187,7 +187,11 @@ namespace catapult { namespace model {
 	// region entity
 
 	/// Notifies the arrival of an entity.
-	struct EntityNotification : public Notification {
+	template<VersionType version>
+	struct EntityNotification;
+
+	template<>
+	struct EntityNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Entity_Notification;
@@ -205,6 +209,11 @@ namespace catapult { namespace model {
 				, MaxVersion(maxVersion)
 				, EntityVersion(entityVersion)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Network identifier.

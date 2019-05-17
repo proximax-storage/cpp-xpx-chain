@@ -294,7 +294,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRaiseEntityNotificationsFromAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<EntityNotification> sub;
+		mocks::MockTypedNotificationSubscriber<EntityNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
 		auto wrapper = CreateAggregateTransaction(2, 3);

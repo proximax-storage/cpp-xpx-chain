@@ -83,7 +83,7 @@ namespace catapult { namespace plugins {
 						const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
 						auto supportedVersions = plugin.supportedVersions();
 
-						sub.notify(EntityNotification(
+						sub.notify(EntityNotification<1>(
 								subTransaction.Network(),
 								supportedVersions.MinVersion,
 								supportedVersions.MaxVersion,
