@@ -31,13 +31,17 @@ namespace catapult { namespace observers {
 	DEFINE_COMMON_OBSERVER_TESTS(AccountPublicKey,)
 
 	namespace {
-		struct AddressTraits {
+		template<VersionType version>
+		struct AddressTraits;
+
+		template<>
+		struct AddressTraits<1> {
 			static Address CreateKey() {
 				return test::GenerateRandomData<Address_Decoded_Size>();
 			}
 
 			static auto CreateNotification(const Address& key) {
-				return model::AccountAddressNotification(test::UnresolveXor(key));
+				return model::AccountAddressNotification<1>(test::UnresolveXor(key));
 			}
 
 			static auto CreateObserver() {
@@ -60,15 +64,15 @@ namespace catapult { namespace observers {
 		};
 	}
 
-#define ACCOUNT_KEY_TEST(TEST_NAME) \
+#define ACCOUNT_KEY_TEST(TEST_NAME, NOTIFICATION_VERSION) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(AccountAddressObserverTests, TEST_NAME##_Id) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressTraits>(); } \
+	TEST(AccountAddressObserverTests, TEST_NAME##_Id) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressTraits<NOTIFICATION_VERSION>>(); } \
 	TEST(AccountPublicKeyObserverTests, TEST_NAME##_Name) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PublicKeyTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	// region commit
 
-	ACCOUNT_KEY_TEST(AccountObserverAddsAccountOnCommit) {
+	ACCOUNT_KEY_TEST(AccountObserverAddsAccountOnCommit, 1) {
 		// Arrange:
 		test::AccountObserverTestContext context(NotifyMode::Commit);
 		auto pObserver = TTraits::CreateObserver();
@@ -84,7 +88,7 @@ namespace catapult { namespace observers {
 		EXPECT_TRUE(!!context.find(key));
 	}
 
-	ACCOUNT_KEY_TEST(SubsequentNotificationsDoNotInvalidatePointers) {
+	ACCOUNT_KEY_TEST(SubsequentNotificationsDoNotInvalidatePointers, 1) {
 		// Arrange:
 		test::AccountObserverTestContext context(NotifyMode::Commit);
 		auto pObserver = TTraits::CreateObserver();
@@ -144,12 +148,12 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	ACCOUNT_KEY_TEST(RollbackQueuesRemovalOfAccountAtSameHeight) {
+	ACCOUNT_KEY_TEST(RollbackQueuesRemovalOfAccountAtSameHeight, 1) {
 		// Assert:
 		AssertAccountObserverRollback<TTraits>(1, Height(1234), Height(1234));
 	}
 
-	ACCOUNT_KEY_TEST(RollbackDoesNotQueueRemovalAtDifferentHeight) {
+	ACCOUNT_KEY_TEST(RollbackDoesNotQueueRemovalAtDifferentHeight, 1) {
 		// Assert:
 		AssertAccountObserverRollback<TTraits>(0, Height(1234), Height(1235));
 	}

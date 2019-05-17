@@ -216,7 +216,7 @@ namespace catapult { namespace observers {
 
 			builder
 				.add(CreateBreadcrumbObserver<model::AccountPublicKeyNotification>(breadcrumbs, "alpha"))
-				.add(CreateBreadcrumbObserver<model::AccountAddressNotification>(breadcrumbs, "OMEGA"))
+				.add(CreateBreadcrumbObserver<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
 				.add(CreateBreadcrumbObserver(breadcrumbs, "zEtA"));
 			auto pObserver = builder.build();
 

@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all account address notifications and validates that:
 	/// - the address is valid and targets the expected network (\a networkIdentifier)
-	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification)(model::NetworkIdentifier networkIdentifier);
+	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification<1>)(model::NetworkIdentifier networkIdentifier);
 
 	// endregion
 

@@ -44,12 +44,20 @@ namespace catapult { namespace model {
 
 		/// Notification size.
 		size_t Size;
+
+	public:
+		virtual VersionType getVersion() const = 0;
 	};
 
 	// region account
 
 	/// Notification of use of an account address.
-	struct AccountAddressNotification : public Notification {
+	template<VersionType version>
+	struct AccountAddressNotification;
+
+	/// Notification of use of an account address.
+	template<>
+	struct AccountAddressNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Register_Account_Address_Notification;
@@ -57,9 +65,14 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a address.
 		explicit AccountAddressNotification(const UnresolvedAddress& address)
-				: Notification(Notification_Type, sizeof(AccountAddressNotification))
+				: Notification(Notification_Type, sizeof(AccountAddressNotification<1>))
 				, Address(address)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Address.

@@ -217,7 +217,7 @@ namespace catapult { namespace validators {
 
 			builder
 				.add(CreateBreadcrumbValidator<model::AccountPublicKeyNotification>(breadcrumbs, "alpha"))
-				.add(CreateBreadcrumbValidator<model::AccountAddressNotification>(breadcrumbs, "OMEGA"))
+				.add(CreateBreadcrumbValidator<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
 				.add(CreateBreadcrumbValidator(breadcrumbs, "zEtA"));
 			auto pValidator = builder.build([](auto) { return false; });
 

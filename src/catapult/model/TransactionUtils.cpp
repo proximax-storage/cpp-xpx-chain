@@ -36,7 +36,12 @@ namespace catapult { namespace model {
 		public:
 			void notify(const Notification& notification) override {
 				if (Core_Register_Account_Address_Notification == notification.Type)
-					m_addresses.insert(static_cast<const AccountAddressNotification&>(notification).Address);
+					switch (notification.getVersion()) {
+					case 1:
+						m_addresses.insert(static_cast<const AccountAddressNotification<1> &>(notification).Address);
+					default:
+						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountAddressNotification", notification.getVersion());
+					}
 				else if (Core_Register_Account_Public_Key_Notification == notification.Type)
 					m_addresses.insert(toAddress(static_cast<const AccountPublicKeyNotification&>(notification).PublicKey));
 			}

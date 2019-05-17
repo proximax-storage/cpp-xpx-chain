@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 	// region VerifiableEntity
 
 	/// Observes account address changes.
-	DECLARE_OBSERVER(AccountAddress, model::AccountAddressNotification)();
+	DECLARE_OBSERVER(AccountAddress, model::AccountAddressNotification<1>)();
 
 	/// Observes account public key changes.
 	DECLARE_OBSERVER(AccountPublicKey, model::AccountPublicKeyNotification)();
