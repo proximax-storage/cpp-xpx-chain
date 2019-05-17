@@ -64,7 +64,7 @@ namespace catapult { namespace observers {
 	// region SourceChange
 
 	/// Observes source changes and changes observer source.
-	DECLARE_OBSERVER(SourceChange, model::SourceChangeNotification)();
+	DECLARE_OBSERVER(SourceChange, model::SourceChangeNotification<1>)();
 
 	// endregion
 }}

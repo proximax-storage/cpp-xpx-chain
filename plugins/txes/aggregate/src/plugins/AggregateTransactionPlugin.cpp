@@ -76,7 +76,7 @@ namespace catapult { namespace plugins {
 					// publish all sub-transaction information
 					for (const auto& subTransaction : aggregate.Transactions()) {
 						// - change source
-						sub.notify(SourceChangeNotification(0, 1, SourceChangeNotification::SourceChangeType::Relative));
+						sub.notify(SourceChangeNotification<1>(0, 1, SourceChangeNotification<1>::SourceChangeType::Relative));
 
 						// - signers and entity
 						sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));

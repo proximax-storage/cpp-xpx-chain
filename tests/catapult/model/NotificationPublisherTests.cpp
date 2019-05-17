@@ -93,11 +93,11 @@ namespace catapult { namespace model {
 		auto pBlock = test::GenerateEmptyRandomBlock();
 
 		// Act:
-		PublishOne<SourceChangeNotification>(*pBlock, [](const auto& notification) {
+		PublishOne<SourceChangeNotification<1>>(*pBlock, [](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(0u, notification.PrimaryId);
 			EXPECT_EQ(0u, notification.SecondaryId);
-			EXPECT_EQ(SourceChangeNotification::SourceChangeType::Absolute, notification.ChangeType);
+			EXPECT_EQ(SourceChangeNotification<1>::SourceChangeType::Absolute, notification.ChangeType);
 		});
 	}
 
@@ -236,11 +236,11 @@ namespace catapult { namespace model {
 		auto pTransaction = mocks::CreateMockTransaction(0);
 
 		// Act:
-		PublishOne<SourceChangeNotification>(*pTransaction, [](const auto& notification) {
+		PublishOne<SourceChangeNotification<1>>(*pTransaction, [](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(1u, notification.PrimaryId);
 			EXPECT_EQ(0u, notification.SecondaryId);
-			EXPECT_EQ(SourceChangeNotification::SourceChangeType::Relative, notification.ChangeType);
+			EXPECT_EQ(SourceChangeNotification<1>::SourceChangeType::Relative, notification.ChangeType);
 		});
 	}
 
@@ -437,7 +437,7 @@ namespace catapult { namespace model {
 		VerifiableEntity entity{};
 
 		// Act:
-		EXPECT_THROW(PublishOne<SourceChangeNotification>(entity, [](const auto&) {}), catapult_runtime_error);
+		EXPECT_THROW(PublishOne<SourceChangeNotification<1>>(entity, [](const auto&) {}), catapult_runtime_error);
 	}
 
 	TEST(TEST_CLASS, CannotRaiseAnyNotificationsForUnknownEntitiesWithModeBasic) {

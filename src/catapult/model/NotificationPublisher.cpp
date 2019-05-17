@@ -69,7 +69,7 @@ namespace catapult { namespace model {
 
 		private:
 			void publishSourceChange(BasicEntityType basicEntityType, NotificationSubscriber& sub) const {
-				using Notification = SourceChangeNotification;
+				using Notification = SourceChangeNotification<1>;
 
 				switch (basicEntityType) {
 				case BasicEntityType::Block:

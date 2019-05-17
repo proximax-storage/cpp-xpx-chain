@@ -268,7 +268,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRaiseSourceChangeNotificationsFromAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<SourceChangeNotification> sub;
+		mocks::MockTypedNotificationSubscriber<SourceChangeNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
 		auto wrapper = CreateAggregateTransaction(2, 3);
@@ -284,7 +284,7 @@ namespace catapult { namespace plugins {
 
 			EXPECT_EQ(0u, notification.PrimaryId) << message;
 			EXPECT_EQ(1u, notification.SecondaryId) << message;
-			EXPECT_EQ(SourceChangeNotification::SourceChangeType::Relative, notification.ChangeType) << message;
+			EXPECT_EQ(SourceChangeNotification<1>::SourceChangeType::Relative, notification.ChangeType) << message;
 		}
 	}
 

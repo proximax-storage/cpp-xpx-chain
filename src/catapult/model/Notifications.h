@@ -504,7 +504,11 @@ namespace catapult { namespace model {
 	// region source change
 
 	/// Notification of a source change.
-	struct SourceChangeNotification : public Notification {
+	template<VersionType version>
+	struct SourceChangeNotification;
+
+	template<>
+	struct SourceChangeNotification<1> : public Notification {
 	public:
 		/// Source change types.
 		enum class SourceChangeType { Absolute, Relative };
@@ -516,11 +520,16 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a primaryId, \a secondaryId and \a changeType.
 		explicit SourceChangeNotification(uint32_t primaryId, uint32_t secondaryId, SourceChangeType changeType)
-				: Notification(Notification_Type, sizeof(SourceChangeNotification))
+				: Notification(Notification_Type, sizeof(SourceChangeNotification<1>))
 				, PrimaryId(primaryId)
 				, SecondaryId(secondaryId)
 				, ChangeType(changeType)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Primary source (e.g. index within block).

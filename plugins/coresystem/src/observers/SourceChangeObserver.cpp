@@ -22,7 +22,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(SourceChange, model::SourceChangeNotification, [](const auto& notification, auto& context) {
+	DEFINE_OBSERVER(SourceChange, model::SourceChangeNotification<1>, [](const auto& notification, auto& context) {
 		// source is only changed during commit (never rollback) because it is only used for supplemental receipt generation;
 		// never any intrinsic state changes
 		if (NotifyMode::Commit != context.Mode)
@@ -30,7 +30,7 @@ namespace catapult { namespace observers {
 
 		auto& statementBuilder = context.StatementBuilder();
 		model::ReceiptSource newSource(notification.PrimaryId, notification.SecondaryId);
-		if (model::SourceChangeNotification::SourceChangeType::Relative == notification.ChangeType) {
+		if (model::SourceChangeNotification<1>::SourceChangeType::Relative == notification.ChangeType) {
 			const auto& currentSource = statementBuilder.source();
 			newSource.PrimaryId += currentSource.PrimaryId;
 			newSource.SecondaryId += currentSource.SecondaryId;
