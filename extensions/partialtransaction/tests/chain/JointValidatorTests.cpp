@@ -195,7 +195,7 @@ namespace catapult { namespace chain {
 			auto pValidator = context.create();
 
 			// Act:
-			model::AccountPublicKeyNotification notification(test::GenerateRandomData<Key_Size>());
+			model::AccountPublicKeyNotification<1> notification(test::GenerateRandomData<Key_Size>());
 			auto result = pValidator->validate(notification);
 
 			// Assert:
@@ -231,7 +231,7 @@ namespace catapult { namespace chain {
 		auto pValidator = context.create();
 
 		// Act:
-		model::AccountPublicKeyNotification notification(test::GenerateRandomData<Key_Size>());
+		model::AccountPublicKeyNotification<1> notification(test::GenerateRandomData<Key_Size>());
 		auto result = pValidator->validate(notification);
 
 		// Assert:
@@ -247,7 +247,7 @@ namespace catapult { namespace chain {
 		auto pValidator = context.create(FailureMode::Suppress);
 
 		// Act:
-		model::AccountPublicKeyNotification notification(test::GenerateRandomData<Key_Size>());
+		model::AccountPublicKeyNotification<1> notification(test::GenerateRandomData<Key_Size>());
 		auto result = pValidator->validate(notification);
 
 		// Assert: the failures were suppressed

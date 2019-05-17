@@ -31,11 +31,18 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			// NewRemoteAccountNotification must be raised before AccountPublicKeyNotification because the latter adds account to cache
-			sub.notify(NewRemoteAccountNotification(transaction.RemoteAccountKey));
-			sub.notify(AccountPublicKeyNotification(transaction.RemoteAccountKey));
-			sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {}, { transaction.RemoteAccountKey }));
-			sub.notify(RemoteAccountLinkNotification(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
+			switch (transaction.Version) {
+			case 2:
+				// NewRemoteAccountNotification must be raised before AccountPublicKeyNotification because the latter adds account to cache
+				sub.notify(NewRemoteAccountNotification(transaction.RemoteAccountKey));
+				sub.notify(AccountPublicKeyNotification<1>(transaction.RemoteAccountKey));
+				sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {}, { transaction.RemoteAccountKey }));
+				sub.notify(RemoteAccountLinkNotification(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
+				break;
+
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountLinkTransaction", transaction.Version);
+			}
 		}
 	}
 

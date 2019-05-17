@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(AccountAddress, model::AccountAddressNotification<1>)();
 
 	/// Observes account public key changes.
-	DECLARE_OBSERVER(AccountPublicKey, model::AccountPublicKeyNotification)();
+	DECLARE_OBSERVER(AccountPublicKey, model::AccountPublicKeyNotification<1>)();
 
 	// endregion
 

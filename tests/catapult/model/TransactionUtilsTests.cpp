@@ -54,12 +54,19 @@ namespace catapult { namespace model {
 					case 1:
 						sub.notify(AccountAddressNotification<1>(extensions::CopyToUnresolvedAddress(senderAddress)));
 						sub.notify(AccountAddressNotification<1>(extensions::CopyToUnresolvedAddress(recipientAddress)));
+						break;
 					default:
 						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountAddressNotification", m_notificationVersion);
 					}
 				} else if (Mode::Public_Key == m_mode) {
-					sub.notify(AccountPublicKeyNotification(transaction.Signer));
-					sub.notify(AccountPublicKeyNotification(transaction.Recipient));
+					switch (m_notificationVersion) {
+					case 1:
+						sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
+						sub.notify(AccountPublicKeyNotification<1>(transaction.Recipient));
+						break;
+					default:
+						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountPublicKeyNotification", m_notificationVersion);
+					}
 				} else {
 					sub.notify(EntityNotification(transaction.Network(), 0, 0, transaction.EntityVersion()));
 				}

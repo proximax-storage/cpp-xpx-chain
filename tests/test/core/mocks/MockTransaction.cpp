@@ -83,28 +83,35 @@ namespace catapult { namespace mocks {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& mockTransaction, PluginOptionFlags options, NotificationSubscriber& sub) {
-			sub.notify(AccountPublicKeyNotification(mockTransaction.Recipient));
+			switch (mockTransaction.Version) {
+			case 0xFF:
+				sub.notify(AccountPublicKeyNotification<1>(mockTransaction.Recipient));
 
-			if (IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Custom_Notifications)) {
-				sub.notify(test::CreateNotification(Mock_Observer_1_Notification));
-				sub.notify(test::CreateNotification(Mock_Validator_1_Notification));
-				sub.notify(test::CreateNotification(Mock_All_1_Notification));
-				sub.notify(test::CreateNotification(Mock_Observer_2_Notification));
-				sub.notify(test::CreateNotification(Mock_Validator_2_Notification));
-				sub.notify(test::CreateNotification(Mock_All_2_Notification));
-			}
+				if (IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Custom_Notifications)) {
+					sub.notify(test::CreateNotification(Mock_Observer_1_Notification));
+					sub.notify(test::CreateNotification(Mock_Validator_1_Notification));
+					sub.notify(test::CreateNotification(Mock_All_1_Notification));
+					sub.notify(test::CreateNotification(Mock_Observer_2_Notification));
+					sub.notify(test::CreateNotification(Mock_Validator_2_Notification));
+					sub.notify(test::CreateNotification(Mock_All_2_Notification));
+				}
 
-			if (!IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Transfers))
-				return;
+				if (!IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Transfers))
+					return;
 
-			auto pMosaics = reinterpret_cast<const UnresolvedMosaic*>(mockTransaction.DataPtr());
-			for (auto i = 0u; i < mockTransaction.Data.Size / sizeof(UnresolvedMosaic); ++i) {
-				const auto& sender = mockTransaction.Signer;
+				auto pMosaics = reinterpret_cast<const UnresolvedMosaic*>(mockTransaction.DataPtr());
+				for (auto i = 0u; i < mockTransaction.Data.Size / sizeof(UnresolvedMosaic); ++i) {
+					const auto& sender = mockTransaction.Signer;
 
-				// forcibly XOR recipient even though PublicKeyToAddress always returns resolved address
-				// in order to force tests to use XOR resolver context with Publish_Transfers
-				auto recipient = PublicKeyToAddress(mockTransaction.Recipient, NetworkIdentifier::Mijin_Test);
-				sub.notify(BalanceTransferNotification(sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount));
+					// forcibly XOR recipient even though PublicKeyToAddress always returns resolved address
+					// in order to force tests to use XOR resolver context with Publish_Transfers
+					auto recipient = PublicKeyToAddress(mockTransaction.Recipient, NetworkIdentifier::Mijin_Test);
+					sub.notify(BalanceTransferNotification(sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount));
+				}
+				break;
+
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MockTransaction", mockTransaction.Version);
 			}
 		}
 

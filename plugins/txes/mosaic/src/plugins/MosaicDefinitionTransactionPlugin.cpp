@@ -32,23 +32,30 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		auto CreatePublisher(const MosaicRentalFeeConfiguration& config) {
 			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
-				// 1. sink account notification
-				sub.notify(AccountPublicKeyNotification(config.SinkPublicKey));
+				switch (transaction.Version) {
+				case 3:
+					// 1. sink account notification
+					sub.notify(AccountPublicKeyNotification<1>(config.SinkPublicKey));
 
-				// 2. rental fee charge
-				// a. exempt the nemesis account
-				if (config.NemesisPublicKey != transaction.Signer) {
-					sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
-					sub.notify(MosaicRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
-				}
+					// 2. rental fee charge
+					// a. exempt the nemesis account
+					if (config.NemesisPublicKey != transaction.Signer) {
+						sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
+						sub.notify(MosaicRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
+					}
 
-				// 3. registration
-				sub.notify(MosaicNonceNotification(transaction.Signer, transaction.MosaicNonce, transaction.MosaicId));
-				sub.notify(MosaicPropertiesNotification(transaction.PropertiesHeader, transaction.PropertiesPtr()));
-				sub.notify(MosaicDefinitionNotification(
+					// 3. registration
+					sub.notify(MosaicNonceNotification(transaction.Signer, transaction.MosaicNonce, transaction.MosaicId));
+					sub.notify(MosaicPropertiesNotification(transaction.PropertiesHeader, transaction.PropertiesPtr()));
+					sub.notify(MosaicDefinitionNotification(
 						transaction.Signer,
 						transaction.MosaicId,
 						ExtractAllProperties(transaction.PropertiesHeader, transaction.PropertiesPtr())));
+					break;
+
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicDefinitionTransaction", transaction.Version);
+				}
 			};
 		}
 	}

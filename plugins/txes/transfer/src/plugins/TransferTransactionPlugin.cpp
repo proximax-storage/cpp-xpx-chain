@@ -32,7 +32,7 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
 			switch (transaction.Version) {
-			case 1:
+			case 3:
 				sub.notify(AccountAddressNotification<1>(transaction.Recipient));
 				sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {transaction.Recipient}));
 

@@ -216,13 +216,13 @@ namespace catapult { namespace validators {
 			auto cache = test::CreateEmptyCatapultCache();
 
 			builder
-				.add(CreateBreadcrumbValidator<model::AccountPublicKeyNotification>(breadcrumbs, "alpha"))
+				.add(CreateBreadcrumbValidator<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))
 				.add(CreateBreadcrumbValidator<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
 				.add(CreateBreadcrumbValidator(breadcrumbs, "zEtA"));
 			auto pValidator = builder.build([](auto) { return false; });
 
 			// Act:
-			auto notification = model::AccountPublicKeyNotification(Key());
+			auto notification = model::AccountPublicKeyNotification<1>(Key());
 			prepareNotification(notification);
 			auto result = test::ValidateNotification<model::Notification>(*pValidator, notification, cache);
 

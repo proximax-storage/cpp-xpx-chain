@@ -325,7 +325,7 @@ namespace catapult { namespace plugins {
 			auto pValidator = suppress
 					? manager.createStatelessValidator([](auto) { return true; })
 					: manager.createStatelessValidator();
-			auto notification = model::AccountPublicKeyNotification(test::GenerateRandomData<Key_Size>());
+			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomData<Key_Size>());
 			return pValidator->validate(notification);
 		}
 	}
@@ -386,7 +386,7 @@ namespace catapult { namespace plugins {
 			auto pValidator = suppress
 					? manager.createStatefulValidator([](auto) { return true; })
 					: manager.createStatefulValidator();
-			auto notification = model::AccountPublicKeyNotification(test::GenerateRandomData<Key_Size>());
+			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomData<Key_Size>());
 			auto cache = cache::CatapultCache({});
 			auto context = test::CreateValidatorContext(Height(123), cache.createView().toReadOnly());
 			return pValidator->validate(notification, context);

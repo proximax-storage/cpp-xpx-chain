@@ -80,7 +80,12 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of use of an account public key.
-	struct AccountPublicKeyNotification : public Notification {
+	template<VersionType version>
+	struct AccountPublicKeyNotification;
+
+	/// Notification of use of an account public key.
+	template<>
+	struct AccountPublicKeyNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Register_Account_Public_Key_Notification;
@@ -88,9 +93,14 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a publicKey.
 		explicit AccountPublicKeyNotification(const Key& publicKey)
-				: Notification(Notification_Type, sizeof(AccountPublicKeyNotification))
+				: Notification(Notification_Type, sizeof(AccountPublicKeyNotification<1>))
 				, PublicKey(publicKey)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Public key.

@@ -49,13 +49,17 @@ namespace catapult { namespace observers {
 			}
 		};
 
-		struct PublicKeyTraits {
+		template<VersionType version>
+		struct PublicKeyTraits;
+
+		template<>
+		struct PublicKeyTraits<1> {
 			static Key CreateKey() {
 				return test::GenerateRandomData<Key_Size>();
 			}
 
 			static auto CreateNotification(const Key& key) {
-				return model::AccountPublicKeyNotification(key);
+				return model::AccountPublicKeyNotification<1>(key);
 			}
 
 			static auto CreateObserver() {
@@ -67,7 +71,7 @@ namespace catapult { namespace observers {
 #define ACCOUNT_KEY_TEST(TEST_NAME, NOTIFICATION_VERSION) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
 	TEST(AccountAddressObserverTests, TEST_NAME##_Id) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<AddressTraits<NOTIFICATION_VERSION>>(); } \
-	TEST(AccountPublicKeyObserverTests, TEST_NAME##_Name) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PublicKeyTraits>(); } \
+	TEST(AccountPublicKeyObserverTests, TEST_NAME##_Name) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PublicKeyTraits<NOTIFICATION_VERSION>>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	// region commit

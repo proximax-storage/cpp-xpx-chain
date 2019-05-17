@@ -46,8 +46,15 @@ namespace catapult { namespace mocks {
 			m_notificationHashes.push_back(test::CalculateNotificationHash(notification));
 			m_notificationTypes.push_back(notification.Type);
 
-			if (model::Core_Register_Account_Public_Key_Notification == notification.Type)
-				m_accountKeys.push_back(static_cast<const model::AccountPublicKeyNotification&>(notification).PublicKey);
+			if (model::Core_Register_Account_Public_Key_Notification == notification.Type) {
+				switch (notification.getVersion()) {
+				case 1:
+					m_accountKeys.push_back(static_cast<const model::AccountPublicKeyNotification<1>&>(notification).PublicKey);
+					break;
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountPublicKeyNotification", notification.getVersion());
+				}
+			}
 
 			m_contexts.push_back(context);
 			m_contextPointers.push_back(&context);

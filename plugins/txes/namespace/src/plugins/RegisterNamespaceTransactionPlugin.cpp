@@ -55,29 +55,36 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		auto CreatePublisher(const NamespaceRentalFeeConfiguration& config) {
 			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
-				// 1. sink account notification
-				sub.notify(AccountPublicKeyNotification(config.SinkPublicKey));
+				switch (transaction.Version) {
+				case 2:
+					// 1. sink account notification
+					sub.notify(AccountPublicKeyNotification<1>(config.SinkPublicKey));
 
-				// 2. rental fee charge
-				PublishBalanceTransfer(config, transaction, sub);
+					// 2. rental fee charge
+					PublishBalanceTransfer(config, transaction, sub);
 
-				// 3. registration notifications
-				sub.notify(NamespaceNotification(transaction.NamespaceType));
-				auto parentId = Namespace_Base_Id;
-				if (transaction.IsRootRegistration()) {
-					using Notification = RootNamespaceNotification;
-					sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.Duration));
-				} else {
-					using Notification = ChildNamespaceNotification;
-					sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.ParentId));
-					parentId = transaction.ParentId;
-				}
+					// 3. registration notifications
+					sub.notify(NamespaceNotification(transaction.NamespaceType));
+					auto parentId = Namespace_Base_Id;
+					if (transaction.IsRootRegistration()) {
+						using Notification = RootNamespaceNotification;
+						sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.Duration));
+					} else {
+						using Notification = ChildNamespaceNotification;
+						sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.ParentId));
+						parentId = transaction.ParentId;
+					}
 
-				sub.notify(NamespaceNameNotification(
+					sub.notify(NamespaceNameNotification(
 						transaction.NamespaceId,
 						parentId,
 						transaction.NamespaceNameSize,
 						transaction.NamePtr()));
+					break;
+
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of RegisterNamespaceTransaction", transaction.Version);
+				}
 			};
 		}
 	}

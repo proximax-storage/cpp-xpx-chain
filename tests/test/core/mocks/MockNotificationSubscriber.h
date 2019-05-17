@@ -38,11 +38,18 @@ namespace catapult { namespace mocks {
 				switch (notification.getVersion()) {
 				case 1:
 					m_addresses.push_back(test::CastToDerivedNotification<model::AccountAddressNotification<1>>(notification).Address);
+					break;
 				default:
 					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountAddressNotification", notification.getVersion());
 				}
 			else if (model::Core_Register_Account_Public_Key_Notification == notification.Type)
-				m_keys.push_back(test::CastToDerivedNotification<model::AccountPublicKeyNotification>(notification).PublicKey);
+				switch (notification.getVersion()) {
+				case 1:
+					m_keys.push_back(test::CastToDerivedNotification<model::AccountPublicKeyNotification<1>>(notification).PublicKey);
+					break;
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountPublicKeyNotification", notification.getVersion());
+				}
 			else if (model::Core_Balance_Transfer_Notification == notification.Type)
 				addTransfer(test::CastToDerivedNotification<model::BalanceTransferNotification>(notification));
 		}

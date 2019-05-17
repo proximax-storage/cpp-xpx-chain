@@ -51,7 +51,7 @@ namespace catapult { namespace model {
 				publishSourceChange(basicEntityType, sub);
 
 				// 2. publish common notifications
-				sub.notify(AccountPublicKeyNotification(entity.Signer));
+				sub.notify(AccountPublicKeyNotification<1>(entity.Signer));
 
 				// 3. publish entity specific notifications
 				const auto* pBlockHeader = entityInfo.isAssociatedBlockHeaderSet() ? &entityInfo.associatedBlockHeader() : nullptr;
