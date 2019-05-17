@@ -55,7 +55,6 @@ namespace catapult { namespace model {
 	template<VersionType version>
 	struct AccountAddressNotification;
 
-	/// Notification of use of an account address.
 	template<>
 	struct AccountAddressNotification<1> : public Notification {
 	public:
@@ -83,7 +82,6 @@ namespace catapult { namespace model {
 	template<VersionType version>
 	struct AccountPublicKeyNotification;
 
-	/// Notification of use of an account public key.
 	template<>
 	struct AccountPublicKeyNotification<1> : public Notification {
 	public:
@@ -135,7 +133,11 @@ namespace catapult { namespace model {
 	};
 
 	/// Notifies a balance transfer from sender to recipient.
-	struct BalanceTransferNotification : public BasicBalanceNotification<BalanceTransferNotification> {
+	template<VersionType version>
+	struct BalanceTransferNotification;
+
+	template<>
+	struct BalanceTransferNotification<1> : public BasicBalanceNotification<BalanceTransferNotification<1>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Balance_Transfer_Notification;
@@ -150,6 +152,11 @@ namespace catapult { namespace model {
 				: BasicBalanceNotification(sender, mosaicId, amount)
 				, Recipient(recipient)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Recipient.

@@ -38,8 +38,8 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification)(uint16_t maxMosaics) {
-		using ValidatorType = stateful::FunctionalNotificationValidatorT<model::BalanceTransferNotification>;
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(uint16_t maxMosaics) {
+		using ValidatorType = stateful::FunctionalNotificationValidatorT<model::BalanceTransferNotification<1>>;
 		auto name = "MaxMosaicsBalanceTransferValidator";
 		return std::make_unique<ValidatorType>(name, [maxMosaics](const auto& notification, const auto& context) {
 			if (Amount() == notification.Amount)

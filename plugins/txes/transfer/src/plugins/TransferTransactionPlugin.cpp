@@ -38,7 +38,7 @@ namespace catapult { namespace plugins {
 
 				const auto *pMosaics = transaction.MosaicsPtr();
 				for (auto i = 0u; i < transaction.MosaicsCount; ++i) {
-					auto notification = BalanceTransferNotification(
+					auto notification = BalanceTransferNotification<1>(
 						transaction.Signer,
 						transaction.Recipient,
 						pMosaics[i].MosaicId,

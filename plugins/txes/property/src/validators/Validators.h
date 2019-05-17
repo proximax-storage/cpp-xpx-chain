@@ -65,7 +65,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to balance transfer notifications and validates that:
 	/// - the mosaic is allowed to be transferred to the recipient
-	DECLARE_STATEFUL_VALIDATOR(MosaicRecipient, model::BalanceTransferNotification)();
+	DECLARE_STATEFUL_VALIDATOR(MosaicRecipient, model::BalanceTransferNotification<1>)();
 
 	/// A validator implementation that applies to transaction type property modification notifications and validates that:
 	/// - all transaction type property modification values are valid

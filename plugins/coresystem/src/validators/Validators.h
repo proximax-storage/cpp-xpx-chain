@@ -71,7 +71,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - the sending account has enough funds
-	DECLARE_STATEFUL_VALIDATOR(BalanceTransfer, model::BalanceTransferNotification)();
+	DECLARE_STATEFUL_VALIDATOR(BalanceTransfer, model::BalanceTransferNotification<1>)();
 
 	/// A validator implementation that applies to all balance debit notifications and validates that:
 	/// - the sending account has enough funds

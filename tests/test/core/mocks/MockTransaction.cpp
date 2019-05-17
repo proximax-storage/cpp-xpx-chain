@@ -106,7 +106,7 @@ namespace catapult { namespace mocks {
 					// forcibly XOR recipient even though PublicKeyToAddress always returns resolved address
 					// in order to force tests to use XOR resolver context with Publish_Transfers
 					auto recipient = PublicKeyToAddress(mockTransaction.Recipient, NetworkIdentifier::Mijin_Test);
-					sub.notify(BalanceTransferNotification(sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount));
+					sub.notify(BalanceTransferNotification<1>(sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount));
 				}
 				break;
 

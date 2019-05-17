@@ -60,7 +60,7 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(recipient);
 
 			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(maxMosaics);
-			auto notification = model::BalanceTransferNotification(owner, unresolvedRecipient, mosaicId, amount);
+			auto notification = model::BalanceTransferNotification<1>(owner, unresolvedRecipient, mosaicId, amount);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

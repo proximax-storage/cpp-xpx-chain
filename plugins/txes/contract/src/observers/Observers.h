@@ -32,5 +32,5 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(ReputationUpdate, model::ReputationUpdateNotification)();
 
 	/// Observes clean up contract, account and multisig cache, when balance of multisig account is zero
-	DECLARE_OBSERVER(CleanUpContract, model::BalanceTransferNotification)();
+	DECLARE_OBSERVER(CleanUpContract, model::BalanceTransferNotification<1>)();
 }}

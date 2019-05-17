@@ -30,7 +30,7 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		auto CreateBalanceTransferNotification(const Key& sender, UnresolvedMosaicId mosaicId, Amount amount) {
-			return model::BalanceTransferNotification(sender, test::GenerateRandomUnresolvedAddress(), mosaicId, amount);
+			return model::BalanceTransferNotification<1>(sender, test::GenerateRandomUnresolvedAddress(), mosaicId, amount);
 		}
 	}
 

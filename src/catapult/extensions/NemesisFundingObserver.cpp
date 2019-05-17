@@ -23,7 +23,7 @@
 
 namespace catapult { namespace extensions {
 
-	using Notification = model::BalanceTransferNotification;
+	using Notification = model::BalanceTransferNotification<1>;
 
 	DECLARE_OBSERVER(NemesisFunding, Notification)(const Key& nemesisPublicKey, NemesisFundingState& fundingState) {
 		return MAKE_OBSERVER(NemesisFunding, Notification, ([&nemesisPublicKey, &fundingState](

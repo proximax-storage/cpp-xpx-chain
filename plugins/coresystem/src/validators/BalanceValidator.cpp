@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using BalanceTransferNotification = model::BalanceTransferNotification;
+	using BalanceTransferNotification = model::BalanceTransferNotification<1>;
 	using BalanceDebitNotification = model::BalanceDebitNotification;
 
 	namespace {

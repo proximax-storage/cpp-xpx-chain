@@ -71,7 +71,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - transferred mosaic is active and is transferable
 	/// - as an optimization, special currency mosaic (\a currencyMosaicId) transfers are always allowed
-	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, model::BalanceTransferNotification)(UnresolvedMosaicId currencyMosaicId);
+	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, model::BalanceTransferNotification<1>)(UnresolvedMosaicId currencyMosaicId);
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the affected mosaic has mutable supply
@@ -90,7 +90,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - the recipient does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification)(uint16_t maxMosaics);
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(uint16_t maxMosaics);
 
 	// endregion
 }}

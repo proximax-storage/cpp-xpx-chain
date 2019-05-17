@@ -51,7 +51,13 @@ namespace catapult { namespace mocks {
 					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountPublicKeyNotification", notification.getVersion());
 				}
 			else if (model::Core_Balance_Transfer_Notification == notification.Type)
-				addTransfer(test::CastToDerivedNotification<model::BalanceTransferNotification>(notification));
+				switch (notification.getVersion()) {
+				case 1:
+					addTransfer(test::CastToDerivedNotification<model::BalanceTransferNotification<1>>(notification));
+					break;
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of BalanceTransferNotification", notification.getVersion());
+				}
 		}
 
 	public:
@@ -87,7 +93,7 @@ namespace catapult { namespace mocks {
 		}
 
 	private:
-		void addTransfer(const model::BalanceTransferNotification& notification) {
+		void addTransfer(const model::BalanceTransferNotification<1>& notification) {
 			CATAPULT_LOG(debug) << "visited " << notification.MosaicId << " transfer of " << notification.Amount << " units";
 			m_transfers.push_back(Transfer(notification));
 		}
@@ -112,7 +118,7 @@ namespace catapult { namespace mocks {
 	private:
 		struct Transfer {
 		public:
-			explicit Transfer(const model::BalanceTransferNotification& notification)
+			explicit Transfer(const model::BalanceTransferNotification<1>& notification)
 					: Transfer(notification.Sender, notification.Recipient, notification.MosaicId, notification.Amount)
 			{}
 
