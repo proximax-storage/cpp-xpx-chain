@@ -172,7 +172,7 @@ namespace catapult { namespace model {
 		pBlock->FeeMultiplier = BlockFeeMultiplier(3);
 
 		// Act:
-		PublishOne<BlockNotification>(*pBlock, [&block = *pBlock](const auto& notification) {
+		PublishOne<BlockNotification<1>>(*pBlock, [&block = *pBlock](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(block.Signer, notification.Signer);
 			EXPECT_EQ(Timestamp(123), notification.Timestamp);
@@ -190,7 +190,7 @@ namespace catapult { namespace model {
 		pBlock->FeeMultiplier = BlockFeeMultiplier(3);
 
 		// Act:
-		PublishOne<BlockNotification>(*pBlock, [&block = *pBlock](const auto& notification) {
+		PublishOne<BlockNotification<1>>(*pBlock, [&block = *pBlock](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(block.Signer, notification.Signer);
 			EXPECT_EQ(Timestamp(432), notification.Timestamp);

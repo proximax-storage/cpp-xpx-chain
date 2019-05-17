@@ -24,7 +24,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(BlockDifficulty, model::BlockNotification, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(BlockDifficulty, model::BlockNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto info = state::BlockDifficultyInfo(context.Height, notification.Timestamp, notification.Difficulty);
 		auto& cache = context.Cache.sub<cache::BlockDifficultyCache>();
 		if (NotifyMode::Commit == context.Mode)

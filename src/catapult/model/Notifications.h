@@ -203,7 +203,7 @@ namespace catapult { namespace model {
                 VersionType minVersion,
                 VersionType maxVersion,
                 VersionType entityVersion)
-				: Notification(Notification_Type, sizeof(EntityNotification))
+				: Notification(Notification_Type, sizeof(EntityNotification<1>))
 				, NetworkIdentifier(networkIdentifier)
 				, MinVersion(minVersion)
 				, MaxVersion(maxVersion)
@@ -234,7 +234,11 @@ namespace catapult { namespace model {
 	// region block
 
 	/// Notifies the arrival of a block.
-	struct BlockNotification : public Notification {
+	template<VersionType version>
+	struct BlockNotification;
+
+	template<>
+	struct BlockNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Block_Notification;
@@ -242,12 +246,17 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a block notification around \a signer, \a timestamp and \a difficulty.
 		explicit BlockNotification(const Key& signer, Timestamp timestamp, Difficulty difficulty)
-				: Notification(Notification_Type, sizeof(BlockNotification))
+				: Notification(Notification_Type, sizeof(BlockNotification<1>))
 				, Signer(signer)
 				, Timestamp(timestamp)
 				, Difficulty(difficulty)
 				, NumTransactions(0)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Block signer.

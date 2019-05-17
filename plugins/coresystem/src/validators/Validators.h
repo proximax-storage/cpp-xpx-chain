@@ -54,11 +54,11 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block signer was eligible to create the block given the minimum balance required to harvest a block
 	///   (\a minHarvesterBalance)
-	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, model::BlockNotification)(Amount minHarvesterBalance);
+	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, model::BlockNotification<1>)(Amount minHarvesterBalance);
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block does not contain more than \a maxTransactions transactions
-	DECLARE_STATELESS_VALIDATOR(MaxTransactions, model::BlockNotification)(uint32_t maxTransactions);
+	DECLARE_STATELESS_VALIDATOR(MaxTransactions, model::BlockNotification<1>)(uint32_t maxTransactions);
 
 	// endregion
 

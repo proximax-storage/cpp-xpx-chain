@@ -92,23 +92,24 @@ namespace catapult { namespace model {
 				switch (block.Version) {
 				case 3:
 					sub.notify(EntityNotification<1>(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion()));
+
+					// raise a block notification
+					auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
+					BlockNotification<1> blockNotification(block.Signer, block.Timestamp, block.Difficulty);
+					blockNotification.NumTransactions = blockTransactionsInfo.Count;
+					blockNotification.TotalFee = blockTransactionsInfo.TotalFee;
+
+					sub.notify(blockNotification);
+
+					// raise a signature notification
+					auto headerSize = VerifiableEntity::Header_Size;
+					auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
+					sub.notify(SignatureNotification(block.Signer, block.Signature, blockData));
 					break;
+
 				default:
 					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of Block", block.Version);
 				}
-
-				// raise a block notification
-				auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
-				BlockNotification blockNotification(block.Signer, block.Timestamp, block.Difficulty);
-				blockNotification.NumTransactions = blockTransactionsInfo.Count;
-				blockNotification.TotalFee = blockTransactionsInfo.TotalFee;
-
-				sub.notify(blockNotification);
-
-				// raise a signature notification
-				auto headerSize = VerifiableEntity::Header_Size;
-				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
-				sub.notify(SignatureNotification(block.Signer, block.Signature, blockData));
 			}
 
 			void publish(

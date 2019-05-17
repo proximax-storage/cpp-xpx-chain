@@ -22,7 +22,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BlockNotification;
+	using Notification = model::BlockNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(MaxTransactions, Notification)(uint32_t maxTransactions) {
 		return MAKE_STATELESS_VALIDATOR(MaxTransactions, [maxTransactions](const auto& notification) {

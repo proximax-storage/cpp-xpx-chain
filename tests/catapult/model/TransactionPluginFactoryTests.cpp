@@ -83,7 +83,7 @@ namespace catapult { namespace model {
 
 		typename TTraits::TransactionType transaction;
 		test::FillWithRandomData(transaction.Signer);
-		mocks::MockTypedNotificationSubscriber<BlockNotification> sub;
+		mocks::MockTypedNotificationSubscriber<BlockNotification<1>> sub;
 
 		// Act:
 		pPlugin->publish(transaction, sub);

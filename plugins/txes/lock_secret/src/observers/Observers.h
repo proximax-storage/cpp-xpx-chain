@@ -37,5 +37,5 @@ namespace catapult { namespace observers {
 
 	/// Observes block notifications and triggers handling of expired secret lock infos, including:
 	/// - crediting the lock creator the mosaics given in the lock info
-	DECLARE_OBSERVER(ExpiredSecretLockInfo, model::BlockNotification)();
+	DECLARE_OBSERVER(ExpiredSecretLockInfo, model::BlockNotification<1>)();
 }}

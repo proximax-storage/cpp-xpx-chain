@@ -38,11 +38,11 @@ namespace catapult { namespace observers {
 	/// Creates a block-based cache pruning observer with \a name that runs every \a interval blocks
 	/// with the specified grace period (\a gracePeriod).
 	template<typename TCache>
-	NotificationObserverPointerT<model::BlockNotification> CreateCacheBlockPruningObserver(
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
 			const std::string& name,
 			size_t interval,
 			BlockDuration gracePeriod) {
-		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification>;
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
 		return std::make_unique<ObserverType>(name + "PruningObserver", [interval, gracePeriod](const auto&, auto& context) {
 			if (!ShouldPrune(context, interval))
 				return;
@@ -58,8 +58,8 @@ namespace catapult { namespace observers {
 
 	/// Creates a time-based cache pruning observer with \a name that runs every \a interval blocks.
 	template<typename TCache>
-	NotificationObserverPointerT<model::BlockNotification> CreateCacheTimePruningObserver(const std::string& name, size_t interval) {
-		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification>;
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheTimePruningObserver(const std::string& name, size_t interval) {
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
 		return std::make_unique<ObserverType>(name + "PruningObserver", [interval](const auto& notification, const auto& context) {
 			if (!ShouldPrune(context, interval))
 				return;
@@ -72,10 +72,10 @@ namespace catapult { namespace observers {
 	/// Creates a block-based cache touch observer with \a name that touches the cache at every block height
 	/// and creates a receipt of type \a receiptType for all deactivating elements.
 	template<typename TCache>
-	NotificationObserverPointerT<model::BlockNotification> CreateCacheBlockTouchObserver(
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockTouchObserver(
 			const std::string& name,
 			model::ReceiptType receiptType) {
-		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification>;
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
 		return std::make_unique<ObserverType>(name + "TouchObserver", [receiptType](const auto&, auto& context) {
 			auto& cache = context.Cache.template sub<TCache>();
 			auto expiryIds = cache.touch(context.Height);

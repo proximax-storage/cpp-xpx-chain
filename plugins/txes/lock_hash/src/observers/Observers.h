@@ -36,5 +36,5 @@ namespace catapult { namespace observers {
 
 	/// Observes block notifications and triggers handling of expired hash lock infos, including:
 	/// - crediting the block signer the mosaics given in the lock info
-	DECLARE_OBSERVER(ExpiredHashLockInfo, model::BlockNotification)();
+	DECLARE_OBSERVER(ExpiredHashLockInfo, model::BlockNotification<1>)();
 }}
