@@ -167,7 +167,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishBalanceDebitNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<model::BalanceDebitNotification> sub;
+		mocks::MockTypedNotificationSubscriber<model::BalanceDebitNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 

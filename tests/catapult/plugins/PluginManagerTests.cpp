@@ -628,7 +628,7 @@ namespace catapult { namespace plugins {
 
 			auto pTransaction = mocks::CreateMockTransaction(0);
 			mocks::MockNotificationSubscriber subscriber;
-			mocks::MockTypedNotificationSubscriber<model::BalanceDebitNotification> feeSubscriber;
+			mocks::MockTypedNotificationSubscriber<model::BalanceDebitNotification<1>> feeSubscriber;
 
 			// Act: create a publisher and publish a transaction
 			auto pPublisher = publisherFactory(manager);

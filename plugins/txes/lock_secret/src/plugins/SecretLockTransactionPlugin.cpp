@@ -37,7 +37,7 @@ namespace catapult { namespace plugins {
 				sub.notify(SecretLockDurationNotification(transaction.Duration));
 				sub.notify(SecretLockHashAlgorithmNotification(transaction.HashAlgorithm));
 				sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {transaction.Recipient}));
-				sub.notify(BalanceDebitNotification(transaction.Signer, transaction.Mosaic.MosaicId, transaction.Mosaic.Amount));
+				sub.notify(BalanceDebitNotification<1>(transaction.Signer, transaction.Mosaic.MosaicId, transaction.Mosaic.Amount));
 				sub.notify(SecretLockNotification(
 					transaction.Signer,
 					transaction.Mosaic,

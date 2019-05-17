@@ -351,7 +351,7 @@ namespace catapult { namespace model {
 		pTransaction->MaxFee = Amount(765);
 
 		// Act:
-		PublishOne<BalanceDebitNotification>(*pTransaction, [&signer = pTransaction->Signer](const auto& notification) {
+		PublishOne<BalanceDebitNotification<1>>(*pTransaction, [&signer = pTransaction->Signer](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(signer, notification.Sender);
 			EXPECT_EQ(Currency_Mosaic_Id, notification.MosaicId);

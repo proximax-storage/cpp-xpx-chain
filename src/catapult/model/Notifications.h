@@ -164,13 +164,22 @@ namespace catapult { namespace model {
 	};
 
 	/// Notifies a balance debit by sender.
-	struct BalanceDebitNotification : public BasicBalanceNotification<BalanceDebitNotification> {
+	template<VersionType version>
+	struct BalanceDebitNotification;
+
+	template<>
+	struct BalanceDebitNotification<1> : public BasicBalanceNotification<BalanceDebitNotification<1>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Balance_Debit_Notification;
 
 	public:
-		using BasicBalanceNotification<BalanceDebitNotification>::BasicBalanceNotification;
+		using BasicBalanceNotification<BalanceDebitNotification<1>>::BasicBalanceNotification;
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 	};
 
 	// endregion

@@ -90,7 +90,7 @@ namespace catapult { namespace validators {
 				auto pValidator = CreateBalanceDebitValidator();
 
 				// - map transfer notification to a reserve notification
-				auto reserveNotification = model::BalanceDebitNotification(
+				auto reserveNotification = model::BalanceDebitNotification<1>(
 						notification.Sender,
 						notification.MosaicId,
 						notification.Amount);
