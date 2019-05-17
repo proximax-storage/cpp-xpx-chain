@@ -398,7 +398,11 @@ namespace catapult { namespace model {
 
 	/// Notifies that a source address interacts with participant addresses.
 	/// \note This notification cannot be used by an observer.
-	struct AddressInteractionNotification : public Notification {
+	template<VersionType version>
+	struct AddressInteractionNotification;
+
+	template<>
+	struct AddressInteractionNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Address_Interaction_Notification;
@@ -415,12 +419,17 @@ namespace catapult { namespace model {
 				EntityType transactionType,
 				const UnresolvedAddressSet& participantsByAddress,
 				const utils::KeySet& participantsByKey)
-				: Notification(Notification_Type, sizeof(AddressInteractionNotification))
+				: Notification(Notification_Type, sizeof(AddressInteractionNotification<1>))
 				, Source(source)
 				, TransactionType(transactionType)
 				, ParticipantsByAddress(participantsByAddress)
 				, ParticipantsByKey(participantsByKey)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Source.

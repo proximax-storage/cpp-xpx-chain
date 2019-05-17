@@ -61,7 +61,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to address interaction notifications and validates that:
 	/// - the source address is allowed to interact with all participant addresses
-	DECLARE_STATEFUL_VALIDATOR(AddressInteraction, model::AddressInteractionNotification)();
+	DECLARE_STATEFUL_VALIDATOR(AddressInteraction, model::AddressInteractionNotification<1>)();
 
 	/// A validator implementation that applies to balance transfer notifications and validates that:
 	/// - the mosaic is allowed to be transferred to the recipient

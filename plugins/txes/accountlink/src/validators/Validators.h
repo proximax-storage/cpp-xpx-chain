@@ -45,5 +45,5 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to address interaction notifications and validates that:
 	/// - remote account is allowed to participate in the interaction
-	DECLARE_STATEFUL_VALIDATOR(RemoteInteraction, model::AddressInteractionNotification)();
+	DECLARE_STATEFUL_VALIDATOR(RemoteInteraction, model::AddressInteractionNotification<1>)();
 }}

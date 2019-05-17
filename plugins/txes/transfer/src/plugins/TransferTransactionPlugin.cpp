@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.Version) {
 			case 3:
 				sub.notify(AccountAddressNotification<1>(transaction.Recipient));
-				sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {transaction.Recipient}));
+				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {transaction.Recipient}));
 
 				const auto *pMosaics = transaction.MosaicsPtr();
 				for (auto i = 0u; i < transaction.MosaicsCount; ++i) {

@@ -75,7 +75,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishAddressInteractionNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 		pTransaction->Type = static_cast<model::EntityType>(0x0815);

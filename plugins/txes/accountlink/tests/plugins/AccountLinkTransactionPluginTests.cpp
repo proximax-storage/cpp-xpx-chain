@@ -90,7 +90,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractAddressInteraction) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;

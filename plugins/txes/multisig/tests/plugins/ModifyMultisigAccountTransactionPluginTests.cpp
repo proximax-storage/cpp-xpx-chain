@@ -271,7 +271,7 @@ namespace catapult { namespace plugins {
 		template<typename TTraits>
 		void AssertAddressInteractionNotifications(size_t numAddModifications, size_t numDelModifications) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<AddressInteractionNotification> sub;
+			mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
 			auto pPlugin = TTraits::CreatePlugin();
 
 			auto numModifications = static_cast<uint8_t>(numAddModifications + numDelModifications);
