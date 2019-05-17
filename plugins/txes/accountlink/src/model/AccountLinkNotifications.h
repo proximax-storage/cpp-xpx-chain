@@ -41,7 +41,11 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a remote account link.
-	struct RemoteAccountLinkNotification : public Notification {
+	template<VersionType version>
+	struct RemoteAccountLinkNotification;
+
+	template<>
+	struct RemoteAccountLinkNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = AccountLink_Remote_Notification;
@@ -49,11 +53,16 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
 		RemoteAccountLinkNotification(const Key& mainAccountKey, const Key& remoteAccountKey, AccountLinkAction linkAction)
-				: Notification(Notification_Type, sizeof(RemoteAccountLinkNotification))
+				: Notification(Notification_Type, sizeof(RemoteAccountLinkNotification<1>))
 				, MainAccountKey(mainAccountKey)
 				, RemoteAccountKey(remoteAccountKey)
 				, LinkAction(linkAction)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Main account key.

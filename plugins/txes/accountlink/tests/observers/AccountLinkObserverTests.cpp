@@ -83,7 +83,7 @@ namespace catapult { namespace observers {
 			auto mainAccountKey = mainAccountState.PublicKey;
 			auto remoteAccountKey = remoteAccountState.PublicKey;
 
-			auto notification = model::RemoteAccountLinkNotification(mainAccountKey, remoteAccountKey, TTraits::Create_Link);
+			auto notification = model::RemoteAccountLinkNotification<1>(mainAccountKey, remoteAccountKey, TTraits::Create_Link);
 			auto pObserver = CreateAccountLinkObserver();
 
 			// Act:
@@ -111,7 +111,7 @@ namespace catapult { namespace observers {
 			remoteAccountState.LinkedAccountKey = mainAccountKey;
 			remoteAccountState.AccountType = state::AccountType::Remote;
 
-			auto notification = model::RemoteAccountLinkNotification(mainAccountKey, remoteAccountKey, TTraits::Remove_Link);
+			auto notification = model::RemoteAccountLinkNotification<1>(mainAccountKey, remoteAccountKey, TTraits::Remove_Link);
 			auto pObserver = CreateAccountLinkObserver();
 
 			// Act:

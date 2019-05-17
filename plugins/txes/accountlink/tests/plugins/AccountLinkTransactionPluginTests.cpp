@@ -112,7 +112,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractRemoteAccountLink) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<RemoteAccountLinkNotification> sub;
+		mocks::MockTypedNotificationSubscriber<RemoteAccountLinkNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
