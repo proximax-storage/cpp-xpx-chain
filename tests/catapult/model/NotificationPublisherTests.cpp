@@ -140,7 +140,7 @@ namespace catapult { namespace model {
 		test::FillWithRandomData(pBlock->Signature);
 
 		// Act:
-		PublishOne<SignatureNotification>(*pBlock, [&block = *pBlock](const auto& notification) {
+		PublishOne<SignatureNotification<1>>(*pBlock, [&block = *pBlock](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(block.Signer, notification.Signer);
 			EXPECT_EQ(block.Signature, notification.Signature);
@@ -283,7 +283,7 @@ namespace catapult { namespace model {
 		test::FillWithRandomData(pTransaction->Signature);
 
 		// Act:
-		PublishOne<SignatureNotification>(*pTransaction, [&transaction = *pTransaction](const auto& notification) {
+		PublishOne<SignatureNotification<1>>(*pTransaction, [&transaction = *pTransaction](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(transaction.Signer, notification.Signer);
 			EXPECT_EQ(transaction.Signature, notification.Signature);

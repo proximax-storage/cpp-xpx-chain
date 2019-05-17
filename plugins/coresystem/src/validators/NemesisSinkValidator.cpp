@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::SignatureNotification;
+	using Notification = model::SignatureNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(NemesisSink, [](const auto& notification, const auto& context) {
 		auto isBlockHeightOne = context.Height == Height(1);

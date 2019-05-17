@@ -104,7 +104,7 @@ namespace catapult { namespace model {
 					// raise a signature notification
 					auto headerSize = VerifiableEntity::Header_Size;
 					auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
-					sub.notify(SignatureNotification(block.Signer, block.Signature, blockData));
+					sub.notify(SignatureNotification<1>(block.Signer, block.Signature, blockData));
 					break;
 
 				default:
@@ -134,7 +134,7 @@ namespace catapult { namespace model {
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, m_feeMosaicId, fee));
 
 				// raise a signature notification
-				sub.notify(SignatureNotification(transaction.Signer, transaction.Signature, plugin.dataBuffer(transaction)));
+				sub.notify(SignatureNotification<1>(transaction.Signer, transaction.Signature, plugin.dataBuffer(transaction)));
 			}
 
 		private:

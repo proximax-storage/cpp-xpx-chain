@@ -362,7 +362,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		void AssertCanRaiseSignatureNotifications(uint8_t numTransactions, uint8_t numCosignatures) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<SignatureNotification> sub;
+			mocks::MockTypedNotificationSubscriber<SignatureNotification<1>> sub;
 			auto registry = mocks::CreateDefaultTransactionRegistry();
 			auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures);

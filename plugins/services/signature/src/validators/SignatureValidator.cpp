@@ -23,7 +23,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::SignatureNotification;
+	using Notification = model::SignatureNotification<1>;
 
 	DEFINE_STATELESS_VALIDATOR(Signature, [](const auto& notification) {
 		return crypto::Verify(notification.Signer, notification.Data, notification.Signature)

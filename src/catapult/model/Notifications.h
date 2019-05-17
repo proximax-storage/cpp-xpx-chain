@@ -358,7 +358,11 @@ namespace catapult { namespace model {
 	// region signature
 
 	/// Notifies the presence of a signature.
-	struct SignatureNotification : public Notification {
+	template<VersionType version>
+	struct SignatureNotification;
+
+	template<>
+	struct SignatureNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Signature_Notification;
@@ -366,11 +370,16 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a signature notification around \a signer, \a signature and \a data.
 		explicit SignatureNotification(const Key& signer, const Signature& signature, const RawBuffer& data)
-				: Notification(Notification_Type, sizeof(SignatureNotification))
+				: Notification(Notification_Type, sizeof(SignatureNotification<1>))
 				, Signer(signer)
 				, Signature(signature)
 				, Data(data)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Signer.
