@@ -28,6 +28,9 @@ namespace catapult { namespace state {
 	// region AccountStateNonHistoricalSerializer
 
 	void AccountStateNonHistoricalSerializer::Save(const AccountState& accountState, io::OutputStream& output) {
+		// write version
+		io::Write32(output, 1);
+
 		// write identifying information
 		io::Write(output, accountState.Address);
 		io::Write(output, accountState.AddressHeight);
@@ -56,7 +59,12 @@ namespace catapult { namespace state {
 			return snapshot;
 		}
 
-		AccountState LoadAccountStateWithoutHistory(io::InputStream& input) {
+		AccountState LoadAccountStateWithoutHistory(io::InputStream& input, VersionType& version) {
+			// read version
+			version = io::Read32(input);
+			if (version > 1)
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountState", version);
+
 			// read identifying information
 			Address address;
 			io::Read(input, address);
@@ -86,7 +94,8 @@ namespace catapult { namespace state {
 	}
 
 	AccountState AccountStateNonHistoricalSerializer::Load(io::InputStream& input) {
-		return LoadAccountStateWithoutHistory(input);
+		VersionType version{0};
+		return LoadAccountStateWithoutHistory(input, version);
 	}
 
 	// endregion
@@ -107,7 +116,8 @@ namespace catapult { namespace state {
 
 	AccountState AccountStateSerializer::Load(io::InputStream& input) {
 		// read non-historical information
-		auto accountState = LoadAccountStateWithoutHistory(input);
+		VersionType version{0};
+		auto accountState = LoadAccountStateWithoutHistory(input, version);
 
 		// read snapshots
 		auto numSnapshots = io::Read16(input);

@@ -23,6 +23,9 @@
 namespace catapult { namespace cache {
 
 	void NamespaceCacheSummaryCacheStorage::saveAll(io::OutputStream& output) const {
+		// write version
+		io::Write32(output, 1);
+
 		auto view = cache().createView();
 		io::Write64(output, view->activeSize());
 		io::Write64(output, view->deepSize());
@@ -30,6 +33,11 @@ namespace catapult { namespace cache {
 	}
 
 	void NamespaceCacheSummaryCacheStorage::loadAll(io::InputStream& input, size_t) {
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of namespace cache summary", version);
+
 		auto activeSize = io::Read64(input);
 		auto deepSize = io::Read64(input);
 		cache().init(activeSize, deepSize);

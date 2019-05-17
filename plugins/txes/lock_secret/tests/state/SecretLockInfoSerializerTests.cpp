@@ -36,12 +36,14 @@ namespace catapult { namespace state {
 		public:
 			explicit PackedSecretLockInfo(const SecretLockInfo& secretLockInfo)
 					: PackedLockInfo(secretLockInfo)
+					, Version(1)
 					, HashAlgorithm(secretLockInfo.HashAlgorithm)
 					, Secret(secretLockInfo.Secret)
 					, Recipient(secretLockInfo.Recipient)
 			{}
 
 		public:
+			VersionType Version;
 			model::LockHashAlgorithm HashAlgorithm;
 			Hash256 Secret;
 			catapult::Address Recipient;

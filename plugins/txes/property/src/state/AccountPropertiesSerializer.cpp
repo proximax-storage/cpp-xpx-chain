@@ -25,6 +25,9 @@
 namespace catapult { namespace state {
 
 	void AccountPropertiesSerializer::Save(const AccountProperties& accountProperties, io::OutputStream& output) {
+		// write version
+		io::Write32(output, 1);
+
 		io::Write(output, accountProperties.address());
 
 		io::Write64(output, accountProperties.size());
@@ -38,6 +41,11 @@ namespace catapult { namespace state {
 	}
 
 	AccountProperties AccountPropertiesSerializer::Load(io::InputStream& input) {
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountProperties", version);
+
 		Address address;
 		input.read(address);
 

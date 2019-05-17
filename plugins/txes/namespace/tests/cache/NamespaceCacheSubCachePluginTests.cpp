@@ -55,10 +55,10 @@ namespace catapult { namespace cache {
 		storage.saveAll(stream);
 
 		// Assert: all sizes were saved
-		ASSERT_EQ(sizeof(uint64_t) * 2, buffer.size());
+		ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) * 2, buffer.size());
 
-		auto activeSize = reinterpret_cast<uint64_t&>(*buffer.data());
-		auto deepSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(uint64_t)));
+		auto activeSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType)));
+		auto deepSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType) + sizeof(uint64_t)));
 		EXPECT_EQ(3u, activeSize);
 		EXPECT_EQ(6u, deepSize);
 
@@ -66,24 +66,31 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(1u, stream.numFlushes());
 	}
 
-	TEST(TEST_CLASS, CanLoadActiveAndDeepSize) {
-		// Arrange:
-		auto config = CacheConfiguration();
-		NamespaceCache cache(config, NamespaceCacheTypes::Options());
-		NamespaceCacheSummaryCacheStorage storage(cache);
+	namespace {
+		void AssertCanLoadActiveAndDeepSize(VersionType version) {
+			// Arrange:
+			auto config = CacheConfiguration();
+			NamespaceCache cache(config, NamespaceCacheTypes::Options());
+			NamespaceCacheSummaryCacheStorage storage(cache);
 
-		std::vector<uint8_t> buffer;
-		mocks::MockMemoryStream stream("", buffer);
-		io::Write64(stream, 7);
-		io::Write64(stream, 11);
+			std::vector<uint8_t> buffer;
+			mocks::MockMemoryStream stream("", buffer);
+			io::Write32(stream, version);
+			io::Write64(stream, 7);
+			io::Write64(stream, 11);
 
-		// Act:
-		storage.loadAll(stream, 0);
+			// Act:
+			storage.loadAll(stream, 0);
 
-		// Assert:
-		auto view = cache.createView();
-		EXPECT_EQ(7u, view->activeSize());
-		EXPECT_EQ(11u, view->deepSize());
+			// Assert:
+			auto view = cache.createView();
+			EXPECT_EQ(7u, view->activeSize());
+			EXPECT_EQ(11u, view->deepSize());
+		}
+	}
+
+	TEST(TEST_CLASS, CanLoadActiveAndDeepSize_v1) {
+		AssertCanLoadActiveAndDeepSize(1);
 	}
 
 	// endregion
