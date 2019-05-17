@@ -41,7 +41,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to transaction notifications and validates that:
 	/// - remote account is not the transaction signer
-	DECLARE_STATEFUL_VALIDATOR(RemoteSender, model::TransactionNotification)();
+	DECLARE_STATEFUL_VALIDATOR(RemoteSender, model::TransactionNotification<1>)();
 
 	/// A validator implementation that applies to address interaction notifications and validates that:
 	/// - remote account is allowed to participate in the interaction

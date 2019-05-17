@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransactionNotification;
+	using Notification = model::TransactionNotification<1>;
 
 	namespace {
 		auto ValidateTransactionDeadline(Timestamp timestamp, Timestamp deadline, const utils::TimeSpan& maxTransactionLifetime) {

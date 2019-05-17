@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to transaction notifications and validates that:
 	/// - multisig accounts cannot initiate transactions
-	stateful::NotificationValidatorPointerT<model::TransactionNotification>
+	stateful::NotificationValidatorPointerT<model::TransactionNotification<1>>
 	CreateMultisigPermittedOperationValidator();
 
 	/// A validator implementation that applies to modify multisig cosigners notifications and validates that:

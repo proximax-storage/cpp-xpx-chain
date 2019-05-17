@@ -73,7 +73,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to transaction notifications and validates that:
 	/// - the signer is allowed to initiate a transaction of the specified transaction type
-	DECLARE_STATEFUL_VALIDATOR(TransactionType, model::TransactionNotification)();
+	DECLARE_STATEFUL_VALIDATOR(TransactionType, model::TransactionNotification<1>)();
 
 	/// A validator implementation that applies to transaction type property value property modification notifications and validates that:
 	/// - transaction type property transactions are not blocked

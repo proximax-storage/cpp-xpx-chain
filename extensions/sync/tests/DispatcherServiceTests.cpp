@@ -169,14 +169,14 @@ namespace catapult { namespace sync {
 
 				// add transaction validators to emulate transaction validation failures
 				pluginManager.addStatelessValidatorHook([&result = m_transactionValidationResults.Stateless](auto& builder) {
-					auto pValidator = std::make_unique<mocks::MockStatelessNotificationValidatorT<model::TransactionNotification>>();
+					auto pValidator = std::make_unique<mocks::MockStatelessNotificationValidatorT<model::TransactionNotification<1>>>();
 					pValidator->setResult(result);
-					builder.template add<model::TransactionNotification>(std::move(pValidator));
+					builder.template add<model::TransactionNotification<1>>(std::move(pValidator));
 				});
 				pluginManager.addStatefulValidatorHook([&result = m_transactionValidationResults.Stateful](auto& builder) {
-					auto pValidator = std::make_unique<mocks::MockNotificationValidatorT<model::TransactionNotification>>();
+					auto pValidator = std::make_unique<mocks::MockNotificationValidatorT<model::TransactionNotification<1>>>();
 					pValidator->setResult(result);
-					builder.template add<model::TransactionNotification>(std::move(pValidator));
+					builder.template add<model::TransactionNotification<1>>(std::move(pValidator));
 				});
 
 				// add block validators to emulate block validation failures

@@ -302,7 +302,7 @@ namespace catapult { namespace model {
 		pTransaction->Deadline = Timestamp(454);
 
 		// Act:
-		PublishOne<TransactionNotification>(*pTransaction, hash, [&signer = pTransaction->Signer, &hash](const auto& notification) {
+		PublishOne<TransactionNotification<1>>(*pTransaction, hash, [&signer = pTransaction->Signer, &hash](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(signer, notification.Signer);
 			EXPECT_EQ(hash, notification.TransactionHash);

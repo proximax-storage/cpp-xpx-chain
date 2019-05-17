@@ -33,7 +33,7 @@ namespace catapult { namespace mocks {
 		explicit CapturedTransactionNotificationInfo(const model::Notification& notification) {
 			IsSet = model::Core_Transaction_Notification == notification.Type;
 			if (IsSet) {
-				const auto& transactionNotification = static_cast<const model::TransactionNotification&>(notification);
+				const auto& transactionNotification = static_cast<const model::TransactionNotification<1>&>(notification);
 				TransactionHash = transactionNotification.TransactionHash;
 				Deadline = transactionNotification.Deadline;
 			}

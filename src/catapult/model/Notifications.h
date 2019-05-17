@@ -280,7 +280,11 @@ namespace catapult { namespace model {
 	// region transaction
 
 	/// Notifies the arrival of a transaction.
-	struct TransactionNotification : public Notification {
+	template<VersionType version>
+	struct TransactionNotification;
+
+	template<>
+	struct TransactionNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Transaction_Notification;
@@ -288,12 +292,17 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a transaction notification around \a signer, \a transactionHash, \a transactionType and \a deadline.
 		explicit TransactionNotification(const Key& signer, const Hash256& transactionHash, EntityType transactionType, Timestamp deadline)
-				: Notification(Notification_Type, sizeof(TransactionNotification))
+				: Notification(Notification_Type, sizeof(TransactionNotification<1>))
 				, Signer(signer)
 				, TransactionHash(transactionHash)
 				, TransactionType(transactionType)
 				, Deadline(deadline)
 		{}
+
+	public:
+		virtual VersionType getVersion() const {
+			return 1;
+		}
 
 	public:
 		/// Transaction signer.
