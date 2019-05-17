@@ -37,7 +37,7 @@ namespace catapult { namespace cache {
 		// read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountState", version);
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of BlockDifficultyInfo", version);
 
 		state::BlockDifficultyInfo info;
 		io::Read(input, info.BlockHeight);
