@@ -60,7 +60,7 @@ namespace catapult { namespace state {
 		// read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicEntry", version);
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MultisigEntry", version);
 
 		auto minApproval = io::Read8(input);
 		auto minRemoval = io::Read8(input);

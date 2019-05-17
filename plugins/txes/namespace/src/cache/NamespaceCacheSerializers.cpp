@@ -42,7 +42,7 @@ namespace catapult { namespace cache {
 		// read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of identifier group", version);
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of Namespace", version);
 
 		state::Namespace::Path path;
 		auto size = io::Read64(input);
