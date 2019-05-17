@@ -116,7 +116,7 @@ namespace catapult { namespace cache {
 		auto pVersion = reinterpret_cast<const uint8_t*>(&version);
 		std::vector<uint8_t> data{pVersion, pVersion + sizeof(VersionType)};
 		auto rawBuffer = ToRawBuffer(buffer);
-        std::copy(rawBuffer.pData, rawBuffer.pData + rawBuffer.Size, std::back_inserter(data));
+		std::copy(rawBuffer.pData, rawBuffer.pData + rawBuffer.Size, std::back_inserter(data));
 
 		// Act:
 		auto value = Serializer::DeserializeValue({ data.data(), data.size() });

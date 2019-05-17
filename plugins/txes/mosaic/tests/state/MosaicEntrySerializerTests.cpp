@@ -33,7 +33,7 @@ namespace catapult { namespace state {
 
 	namespace {
 		struct MosaicEntryHeader {
-		    VersionType Version;
+			VersionType Version;
 			catapult::MosaicId MosaicId;
 			Amount Supply;
 			catapult::Height Height;
@@ -95,20 +95,20 @@ namespace catapult { namespace state {
 		}
 
 		void AssertCanSaveEntryWithoutMosaicLevy(VersionType version) {
-            // Arrange:
-            std::vector<uint8_t> buffer;
-            mocks::MockMemoryStream stream("", buffer);
+			// Arrange:
+			std::vector<uint8_t> buffer;
+			mocks::MockMemoryStream stream("", buffer);
 
-            auto definition = MosaicDefinition(Height(888), test::GenerateRandomData<Key_Size>(), 5, CreateMosaicProperties(17));
-            auto entry = MosaicEntry(MosaicId(123), definition);
-            entry.increaseSupply(Amount(111));
+			auto definition = MosaicDefinition(Height(888), test::GenerateRandomData<Key_Size>(), 5, CreateMosaicProperties(17));
+			auto entry = MosaicEntry(MosaicId(123), definition);
+			entry.increaseSupply(Amount(111));
 
-            // Act:
-            MosaicEntrySerializer::Save(entry, stream);
+			// Act:
+			MosaicEntrySerializer::Save(entry, stream);
 
-            // Assert:
-            ASSERT_EQ(sizeof(MosaicEntryHeader), buffer.size());
-            AssertEntryHeader(buffer, version, MosaicId(123), Amount(111), Height(888), definition.owner(), 5, 17);
+			// Assert:
+			ASSERT_EQ(sizeof(MosaicEntryHeader), buffer.size());
+			AssertEntryHeader(buffer, version, MosaicId(123), Amount(111), Height(888), definition.owner(), 5, 17);
 		}
 	}
 
@@ -128,7 +128,7 @@ namespace catapult { namespace state {
 	}
 
 	TEST(TEST_CLASS, CanSaveEntryWithoutMosaicLevy_v1) {
-        AssertCanSaveEntryWithoutMosaicLevy(1);
+		AssertCanSaveEntryWithoutMosaicLevy(1);
 	}
 
 	// endregion
@@ -165,22 +165,22 @@ namespace catapult { namespace state {
 		}
 
 		void AssertCanLoadEntryWithoutMosaicLevy(VersionType version) {
-            // Arrange:
-            auto owner = test::GenerateRandomData<Key_Size>();
-            std::vector<uint8_t> buffer(sizeof(MosaicEntryHeader));
-            reinterpret_cast<MosaicEntryHeader&>(*buffer.data()) = { version, MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } } };
-            mocks::MockMemoryStream stream("", buffer);
+			// Arrange:
+			auto owner = test::GenerateRandomData<Key_Size>();
+			std::vector<uint8_t> buffer(sizeof(MosaicEntryHeader));
+			reinterpret_cast<MosaicEntryHeader&>(*buffer.data()) = { version, MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } } };
+			mocks::MockMemoryStream stream("", buffer);
 
-            // Act:
-            auto entry = MosaicEntrySerializer::Load(stream);
+			// Act:
+			auto entry = MosaicEntrySerializer::Load(stream);
 
-            // Assert:
-            AssertMosaicEntry(entry, MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } });
+			// Assert:
+			AssertMosaicEntry(entry, MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } });
 		}
 	}
 
 	TEST(TEST_CLASS, CanLoadEntryWithoutMosaicLevy_v1) {
-        AssertCanLoadEntryWithoutMosaicLevy(1);
+		AssertCanLoadEntryWithoutMosaicLevy(1);
 	}
 
 	// endregion

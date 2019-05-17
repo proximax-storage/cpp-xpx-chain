@@ -25,7 +25,7 @@
 namespace catapult { namespace cache {
 
 	void HashCacheStorage::Save(const ValueType& timestampedHash, io::OutputStream& output) {
-        // write version
+		// write version
 		io::Write32(output, 1);
 
 		io::Write(output, timestampedHash.Time);
@@ -33,10 +33,10 @@ namespace catapult { namespace cache {
 	}
 
 	state::TimestampedHash HashCacheStorage::Load(io::InputStream& input) {
-        // read version
-        VersionType version = io::Read32(input);
-	    if (version > 1)
-            CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of TimestampedHash", version);
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of TimestampedHash", version);
 
 		state::TimestampedHash timestampedHash;
 		io::Read(input, timestampedHash.Time);

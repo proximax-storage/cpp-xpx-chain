@@ -64,41 +64,41 @@ namespace catapult { namespace cache {
 
 	namespace {
 		void AssertFlatMapTypesSerializer_CanDeserializePartialValue(VersionType version) {
-            // Arrange:
-            auto buffer = std::vector<uint64_t>{ 0, 1, 11 };
-            auto* pData = reinterpret_cast<uint8_t*>(buffer.data()) + sizeof(uint64_t) - sizeof(VersionType);
-            memcpy(pData, &version, sizeof(VersionType));
+			// Arrange:
+			auto buffer = std::vector<uint64_t>{ 0, 1, 11 };
+			auto* pData = reinterpret_cast<uint8_t*>(buffer.data()) + sizeof(uint64_t) - sizeof(VersionType);
+			memcpy(pData, &version, sizeof(VersionType));
 
-            // Act:
-            auto ns = Serializer::DeserializeValue({ pData, sizeof(VersionType) + (buffer.size() - 1) * sizeof(uint64_t) });
+			// Act:
+			auto ns = Serializer::DeserializeValue({ pData, sizeof(VersionType) + (buffer.size() - 1) * sizeof(uint64_t) });
 
-            // Assert:
-            ASSERT_EQ(1u, ns.path().size());
-            EXPECT_EQ(NamespaceId(11), ns.path()[0]);
+			// Assert:
+			ASSERT_EQ(1u, ns.path().size());
+			EXPECT_EQ(NamespaceId(11), ns.path()[0]);
 		}
 
 		void AssertFlatMapTypesSerializer_CanDeserializeFullValue(VersionType version) {
-            // Arrange:
-            auto buffer = std::vector<uint64_t>{ 0, 3, 11, 7, 21 };
-            auto* pData = reinterpret_cast<uint8_t*>(buffer.data()) + sizeof(uint64_t) - sizeof(VersionType);
-            memcpy(pData, &version, sizeof(VersionType));
+			// Arrange:
+			auto buffer = std::vector<uint64_t>{ 0, 3, 11, 7, 21 };
+			auto* pData = reinterpret_cast<uint8_t*>(buffer.data()) + sizeof(uint64_t) - sizeof(VersionType);
+			memcpy(pData, &version, sizeof(VersionType));
 
-            // Act:
-            auto ns = Serializer::DeserializeValue({ pData, sizeof(VersionType) + (buffer.size() - 1) * sizeof(uint64_t) });
+			// Act:
+			auto ns = Serializer::DeserializeValue({ pData, sizeof(VersionType) + (buffer.size() - 1) * sizeof(uint64_t) });
 
-            // Assert:
-            ASSERT_EQ(3u, ns.path().size());
-            EXPECT_EQ(NamespaceId(11), ns.path()[0]);
-            EXPECT_EQ(NamespaceId(7), ns.path()[1]);
-            EXPECT_EQ(NamespaceId(21), ns.path()[2]);
+			// Assert:
+			ASSERT_EQ(3u, ns.path().size());
+			EXPECT_EQ(NamespaceId(11), ns.path()[0]);
+			EXPECT_EQ(NamespaceId(7), ns.path()[1]);
+			EXPECT_EQ(NamespaceId(21), ns.path()[2]);
 		}
 	}
 
 	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializePartialValue_v1) {
-        AssertFlatMapTypesSerializer_CanDeserializePartialValue(1);
+		AssertFlatMapTypesSerializer_CanDeserializePartialValue(1);
 	}
 
 	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializeFullValue_v1) {
-        AssertFlatMapTypesSerializer_CanDeserializeFullValue(1);
+		AssertFlatMapTypesSerializer_CanDeserializeFullValue(1);
 	}
 }}

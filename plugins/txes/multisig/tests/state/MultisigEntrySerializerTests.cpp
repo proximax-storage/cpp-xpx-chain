@@ -115,42 +115,42 @@ namespace catapult { namespace state {
 		}
 
 		void AssertCanSaveSingleEntryWithNeitherCosignersNorMultisigAccounts(VersionType version) {
-            // Arrange:
-            TestContext context;
-            auto entry = context.createEntry(0, 0, 0);
+			// Arrange:
+			TestContext context;
+			auto entry = context.createEntry(0, 0, 0);
 
-            // Act:
-            MultisigEntrySerializer::Save(entry, context.outputStream());
+			// Act:
+			MultisigEntrySerializer::Save(entry, context.outputStream());
 
-            // Assert:
-            auto expectedSize = sizeof(VersionType) + sizeof(uint8_t) * 2 + sizeof(Key) + 2 * sizeof(uint64_t);
-            ASSERT_EQ(expectedSize, context.buffer().size());
-            AssertEntryBuffer(entry, context.buffer().data(), expectedSize, version);
+			// Assert:
+			auto expectedSize = sizeof(VersionType) + sizeof(uint8_t) * 2 + sizeof(Key) + 2 * sizeof(uint64_t);
+			ASSERT_EQ(expectedSize, context.buffer().size());
+			AssertEntryBuffer(entry, context.buffer().data(), expectedSize, version);
 		}
 
 		void AssertCanSaveSingleEntry(VersionType version) {
-            // Arrange:
-            TestContext context;
-            auto entry = context.createEntry(0, 3, 4);
+			// Arrange:
+			TestContext context;
+			auto entry = context.createEntry(0, 3, 4);
 
-            // Act:
-            MultisigEntrySerializer::Save(entry, context.outputStream());
+			// Act:
+			MultisigEntrySerializer::Save(entry, context.outputStream());
 
-            // Assert:
-            auto expectedSize = sizeof(VersionType) + sizeof(uint8_t) * 2 + sizeof(Key) + 2 * sizeof(uint64_t) + 3 * sizeof(Key) + 4 * sizeof(Key);
-            ASSERT_EQ(expectedSize, context.buffer().size());
-            AssertEntryBuffer(entry, context.buffer().data(), expectedSize, version);
+			// Assert:
+			auto expectedSize = sizeof(VersionType) + sizeof(uint8_t) * 2 + sizeof(Key) + 2 * sizeof(uint64_t) + 3 * sizeof(Key) + 4 * sizeof(Key);
+			ASSERT_EQ(expectedSize, context.buffer().size());
+			AssertEntryBuffer(entry, context.buffer().data(), expectedSize, version);
 		}
 	}
 
 	// region Save
 
 	TEST(TEST_CLASS, CanSaveSingleEntryWithNeitherCosignersNorMultisigAccounts_v1) {
-        AssertCanSaveSingleEntryWithNeitherCosignersNorMultisigAccounts(1);
+		AssertCanSaveSingleEntryWithNeitherCosignersNorMultisigAccounts(1);
 	}
 
 	TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
-        AssertCanSaveSingleEntry(1);
+		AssertCanSaveSingleEntry(1);
 	}
 
 	namespace {
@@ -223,12 +223,12 @@ namespace catapult { namespace state {
 			// - version
 			auto* pData = buffer.data();
 			memcpy(pData, &version, sizeof(VersionType));
-            pData += sizeof(VersionType);
+			pData += sizeof(VersionType);
 
 			// - minApproval / minRemoval
-            pData[0] = entry.minApproval();
-            pData[1] = entry.minRemoval();
-            pData += 2;
+			pData[0] = entry.minApproval();
+			pData[1] = entry.minRemoval();
+			pData += 2;
 
 			// - multisig account key
 			memcpy(pData, entry.key().data(), Key_Size);

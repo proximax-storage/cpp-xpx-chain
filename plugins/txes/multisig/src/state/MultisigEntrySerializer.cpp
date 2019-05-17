@@ -34,8 +34,8 @@ namespace catapult { namespace state {
 	}
 
 	void MultisigEntrySerializer::Save(const MultisigEntry& entry, io::OutputStream& output) {
-        // write version
-        io::Write32(output, 1);
+		// write version
+		io::Write32(output, 1);
 
 		io::Write8(output, entry.minApproval());
 		io::Write8(output, entry.minRemoval());
@@ -57,10 +57,10 @@ namespace catapult { namespace state {
 	}
 
 	MultisigEntry MultisigEntrySerializer::Load(io::InputStream& input) {
-        // read version
-        VersionType version = io::Read32(input);
-	    if (version > 1)
-            CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicEntry", version);
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicEntry", version);
 
 		auto minApproval = io::Read8(input);
 		auto minRemoval = io::Read8(input);

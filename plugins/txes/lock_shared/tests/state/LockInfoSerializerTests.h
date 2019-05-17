@@ -34,7 +34,7 @@ namespace catapult { namespace state {
 	public:
 		/// Creates a lock info from \a lockInfo.
 		explicit PackedLockInfo(const LockInfo& lockInfo)
-                : Version(1)
+				: Version(1)
 				, Account(lockInfo.Account)
 				, MosaicId(lockInfo.MosaicId)
 				, Amount(lockInfo.Amount)
@@ -43,7 +43,7 @@ namespace catapult { namespace state {
 		{}
 
 	public:
-        VersionType Version;
+		VersionType Version;
 		Key Account;
 		catapult::MosaicId MosaicId;
 		catapult::Amount Amount;

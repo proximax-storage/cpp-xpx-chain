@@ -92,7 +92,7 @@ namespace catapult { namespace state {
 	}
 
 	void RootNamespaceHistoryNonHistoricalSerializer::Save(const RootNamespaceHistory& history, io::OutputStream& output) {
-        VersionType version{1};
+		VersionType version{1};
 		SaveHeader(output, history, HeaderMode::Exclude_History_Depth, version);
 
 		SaveRootNamespace(output, history.back(), nullptr, version);
@@ -107,7 +107,7 @@ namespace catapult { namespace state {
 
 		Header ReadHeader(io::InputStream& input, HeaderMode headerMode) {
 			Header header;
-            header.Version = io::Read32(input);
+			header.Version = io::Read32(input);
 
 			if (headerMode == HeaderMode::Include_History_Depth) {
 				header.HistoryDepth = io::Read64(input);
@@ -197,7 +197,7 @@ namespace catapult { namespace state {
 	// region RootNamespaceHistorySerializer
 
 	void RootNamespaceHistorySerializer::Save(const RootNamespaceHistory& history, io::OutputStream& output) {
-        VersionType version{1};
+		VersionType version{1};
 		SaveHeader(output, history, HeaderMode::Include_History_Depth, version);
 
 		const Key* pLastOwner = nullptr;

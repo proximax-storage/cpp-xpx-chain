@@ -68,29 +68,29 @@ namespace catapult { namespace cache {
 
 	namespace {
 		void AssertCanLoadActiveAndDeepSize(VersionType version) {
-            // Arrange:
-            auto config = CacheConfiguration();
-            NamespaceCache cache(config, NamespaceCacheTypes::Options());
-            NamespaceCacheSummaryCacheStorage storage(cache);
+			// Arrange:
+			auto config = CacheConfiguration();
+			NamespaceCache cache(config, NamespaceCacheTypes::Options());
+			NamespaceCacheSummaryCacheStorage storage(cache);
 
-            std::vector<uint8_t> buffer;
-            mocks::MockMemoryStream stream("", buffer);
-            io::Write32(stream, version);
-            io::Write64(stream, 7);
-            io::Write64(stream, 11);
+			std::vector<uint8_t> buffer;
+			mocks::MockMemoryStream stream("", buffer);
+			io::Write32(stream, version);
+			io::Write64(stream, 7);
+			io::Write64(stream, 11);
 
-            // Act:
-            storage.loadAll(stream, 0);
+			// Act:
+			storage.loadAll(stream, 0);
 
-            // Assert:
-            auto view = cache.createView();
-            EXPECT_EQ(7u, view->activeSize());
-            EXPECT_EQ(11u, view->deepSize());
+			// Assert:
+			auto view = cache.createView();
+			EXPECT_EQ(7u, view->activeSize());
+			EXPECT_EQ(11u, view->deepSize());
 		}
 	}
 
 	TEST(TEST_CLASS, CanLoadActiveAndDeepSize_v1) {
-        AssertCanLoadActiveAndDeepSize(1);
+		AssertCanLoadActiveAndDeepSize(1);
 	}
 
 	// endregion

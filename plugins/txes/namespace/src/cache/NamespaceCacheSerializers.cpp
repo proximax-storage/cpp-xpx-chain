@@ -26,7 +26,7 @@ namespace catapult { namespace cache {
 	std::string NamespaceFlatMapTypesSerializer::SerializeValue(const ValueType& value) {
 		io::StringOutputStream output(sizeof(VersionType) + sizeof(ValueType));
 
-        // write version
+		// write version
 		io::Write32(output, 1);
 
 		io::Write64(output, value.path().size());
@@ -39,10 +39,10 @@ namespace catapult { namespace cache {
 	state::Namespace NamespaceFlatMapTypesSerializer::DeserializeValue(const RawBuffer& buffer) {
 		io::BufferInputStreamAdapter<RawBuffer> input(buffer);
 
-        // read version
-        VersionType version = io::Read32(input);
-        if (version > 1)
-            CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of identifier group", version);
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of identifier group", version);
 
 		state::Namespace::Path path;
 		auto size = io::Read64(input);

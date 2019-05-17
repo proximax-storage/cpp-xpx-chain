@@ -28,8 +28,8 @@ namespace catapult { namespace state {
 	// region AccountStateNonHistoricalSerializer
 
 	void AccountStateNonHistoricalSerializer::Save(const AccountState& accountState, io::OutputStream& output) {
-	    // write version
-        io::Write32(output, 1);
+		// write version
+		io::Write32(output, 1);
 
 		// write identifying information
 		io::Write(output, accountState.Address);
@@ -61,7 +61,7 @@ namespace catapult { namespace state {
 
 		AccountState LoadAccountStateWithoutHistory(io::InputStream& input, VersionType& version) {
 			// read version
-            version = io::Read32(input);
+			version = io::Read32(input);
 			if (version > 1)
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountState", version);
 

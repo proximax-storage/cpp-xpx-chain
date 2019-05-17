@@ -29,7 +29,7 @@ namespace catapult { namespace test {
 
 	/// Namespace history header.
 	struct NamespaceHistoryHeader {
-	    VersionType Version;
+		VersionType Version;
 		uint64_t Depth;
 		catapult::NamespaceId NamespaceId;
 	};
@@ -283,7 +283,7 @@ namespace catapult { namespace test {
 		static void AssertCanLoadHistoryWithDepthGreaterThanOneSameOwner(
 				size_t aliasDataSize,
 				const std::vector<state::NamespaceAlias>& aliases,
-                VersionType version) {
+				VersionType version) {
 			// Arrange:
 			auto owner = test::CreateRandomOwner();
 			auto namespaceDataSize = sizeof(NamespaceHistoryHeader) + 3 * sizeof(RootNamespaceHeader) + 4 * sizeof(NamespaceData);
@@ -334,7 +334,7 @@ namespace catapult { namespace test {
 		static void AssertCanLoadHistoryWithDepthGreaterThanOneDifferentOwner(
 				size_t aliasDataSize,
 				const std::vector<state::NamespaceAlias>& aliases,
-                VersionType version) {
+				VersionType version) {
 			// Arrange:
 			auto owner1 = test::CreateRandomOwner();
 			auto owner2 = test::CreateRandomOwner();
