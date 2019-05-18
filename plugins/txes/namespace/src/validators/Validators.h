@@ -59,14 +59,14 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to alias owner notifications and validates that:
 	/// - alias action is valid
-	DECLARE_STATELESS_VALIDATOR(AliasAction, model::AliasOwnerNotification)();
+	DECLARE_STATELESS_VALIDATOR(AliasAction, model::AliasOwnerNotification<1>)();
 
 	/// A validator implementation that applies to alias owner notifications and validates that:
 	/// - namespace exists
 	/// - link does not overwrite existing link
 	/// - unlinked alias exists
 	/// - owner of namespace matches alias owner
-	DECLARE_STATEFUL_VALIDATOR(AliasAvailability, model::AliasOwnerNotification)();
+	DECLARE_STATEFUL_VALIDATOR(AliasAvailability, model::AliasOwnerNotification<1>)();
 
 	/// A validator implementation that applies to aliased address notifications and validates that:
 	/// - unlink operation matches existing link

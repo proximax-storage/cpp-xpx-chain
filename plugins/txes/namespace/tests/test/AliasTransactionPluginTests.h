@@ -61,7 +61,7 @@ namespace catapult { namespace test {
 		template<typename TNotificationTraits>
 		static void AssertCanExtractAliasNotifications() {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<model::AliasOwnerNotification> aliasOwnerSub;
+			mocks::MockTypedNotificationSubscriber<model::AliasOwnerNotification<1>> aliasOwnerSub;
 			mocks::MockTypedNotificationSubscriber<typename TNotificationTraits::Notification_Type> aliasedSub;
 			auto pPlugin = TTraits::CreatePlugin();
 

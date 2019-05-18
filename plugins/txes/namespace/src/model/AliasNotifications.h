@@ -32,7 +32,7 @@ namespace catapult { namespace model {
 #define DEFINE_NAMESPACE_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Namespace, DESCRIPTION, CODE)
 
 	/// Alias owner was provided.
-	DEFINE_NAMESPACE_NOTIFICATION(Alias_Owner, 0x0081, Validator);
+	DEFINE_NAMESPACE_NOTIFICATION(Alias_Owner_v1, 0x0081, Validator);
 
 	/// Address alias was un/linked.
 	DEFINE_NAMESPACE_NOTIFICATION(Aliased_Address, 0x0091, All);
@@ -67,15 +67,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of alias owner.
-	struct AliasOwnerNotification : public BaseAliasNotification {
+	template<VersionType version>
+	struct AliasOwnerNotification;
+
+	template<>
+	struct AliasOwnerNotification<1> : public BaseAliasNotification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Alias_Owner_Notification;
+		static constexpr auto Notification_Type = Namespace_Alias_Owner_v1_Notification;
 
 	public:
 		/// Creates a notification around \a owner, \a namespaceId and \a aliasAction.
 		AliasOwnerNotification(const Key& owner, catapult::NamespaceId namespaceId, model::AliasAction aliasAction)
-				: BaseAliasNotification(Notification_Type, sizeof(AliasOwnerNotification), namespaceId, aliasAction)
+				: BaseAliasNotification(Notification_Type, sizeof(AliasOwnerNotification<1>), namespaceId, aliasAction)
 				, Owner(owner)
 		{}
 
