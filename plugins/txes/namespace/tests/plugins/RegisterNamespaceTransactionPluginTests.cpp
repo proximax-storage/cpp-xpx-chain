@@ -278,7 +278,7 @@ namespace catapult { namespace plugins {
 
 		public:
 			mocks::MockTypedNotificationSubscriber<NamespaceNotification> NamespaceSub;
-			mocks::MockTypedNotificationSubscriber<NamespaceNameNotification> NameSub;
+			mocks::MockTypedNotificationSubscriber<NamespaceNameNotification<1>> NameSub;
 			mocks::MockTypedNotificationSubscriber<RootNamespaceNotification> RootSub;
 			mocks::MockTypedNotificationSubscriber<ChildNamespaceNotification> ChildSub;
 			mocks::MockTypedNotificationSubscriber<NamespaceRentalFeeNotification> RentalFeeSub;
@@ -347,7 +347,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractNamespaceNameNotificationWhenThereIsNoName) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<NamespaceNameNotification> nsNameSub;
+		mocks::MockTypedNotificationSubscriber<NamespaceNameNotification<1>> nsNameSub;
 		auto config = CreateRentalFeeConfiguration(Amount(0), Amount(0));
 		auto pPlugin = TTraits::CreatePlugin(config);
 

@@ -31,7 +31,7 @@ namespace catapult { namespace model {
 #define DEFINE_NAMESPACE_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Namespace, DESCRIPTION, CODE)
 
 	/// Namespace name was provided.
-	DEFINE_NAMESPACE_NOTIFICATION(Name, 0x0011, Validator);
+	DEFINE_NAMESPACE_NOTIFICATION(Name_v1, 0x0011, Validator);
 
 	/// Namespace was registered.
 	DEFINE_NAMESPACE_NOTIFICATION(Registration, 0x0012, Validator);
@@ -50,10 +50,14 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a namespace name.
-	struct NamespaceNameNotification : public Notification {
+	template<VersionType version>
+	struct NamespaceNameNotification;
+
+	template<>
+	struct NamespaceNameNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Name_Notification;
+		static constexpr auto Notification_Type = Namespace_Name_v1_Notification;
 
 	public:
 		/// Creates a notification around \a nameSize and \a pName given \a namespaceId and \a parentId.
@@ -62,7 +66,7 @@ namespace catapult { namespace model {
 				catapult::NamespaceId parentId,
 				uint8_t nameSize,
 				const uint8_t* pName)
-				: Notification(Notification_Type, sizeof(NamespaceNameNotification))
+				: Notification(Notification_Type, sizeof(NamespaceNameNotification<1>))
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)
 				, NameSize(nameSize)

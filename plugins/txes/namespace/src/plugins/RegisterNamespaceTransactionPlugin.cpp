@@ -82,7 +82,7 @@ namespace catapult { namespace plugins {
 						parentId = transaction.ParentId;
 					}
 
-					sub.notify(NamespaceNameNotification(
+					sub.notify(NamespaceNameNotification<1>(
 						transaction.NamespaceId,
 						parentId,
 						transaction.NamespaceNameSize,

@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 	/// - namespace name consists only of allowed characters
 	/// - for root namespaces, name is not in \a reservedRootNamespaceNames
 	/// - for child namespaces, the parent id is not an id that can be generated from \a reservedRootNamespaceNames
-	DECLARE_STATELESS_VALIDATOR(NamespaceName, model::NamespaceNameNotification)(
+	DECLARE_STATELESS_VALIDATOR(NamespaceName, model::NamespaceNameNotification<1>)(
 			uint8_t maxNameSize,
 			const std::unordered_set<std::string>& reservedRootNamespaceNames);
 

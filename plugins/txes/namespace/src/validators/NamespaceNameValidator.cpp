@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::NamespaceNameNotification;
+	using Notification = model::NamespaceNameNotification<1>;
 	using NameSet = std::unordered_set<std::string>;
 
 	DECLARE_STATELESS_VALIDATOR(NamespaceName, Notification)(uint8_t maxNameSize, const NameSet& reservedRootNamespaceNames) {
