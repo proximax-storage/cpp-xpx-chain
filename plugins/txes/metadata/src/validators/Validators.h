@@ -24,11 +24,11 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, model::MetadataModificationsNotification<1>)(const uint8_t& maxFields);
 
 	/// A validator implementation that applies to metadata check that operation is permitted and address exists
-	DECLARE_STATEFUL_VALIDATOR(ModifyAddressMetadata, model::ModifyAddressMetadataNotification)();
+	DECLARE_STATEFUL_VALIDATOR(ModifyAddressMetadata, model::ModifyAddressMetadataNotification_v1)();
 
 	/// A validator implementation that applies to metadata check that operation is permitted and mosaicId exists
-	DECLARE_STATEFUL_VALIDATOR(ModifyMosaicMetadata, model::ModifyMosaicMetadataNotification)();
+	DECLARE_STATEFUL_VALIDATOR(ModifyMosaicMetadata, model::ModifyMosaicMetadataNotification_v1)();
 
 	/// A validator implementation that applies to metadata check that operation is permitted and namespaceId exists
-	DECLARE_STATEFUL_VALIDATOR(ModifyNamespaceMetadata, model::ModifyNamespaceMetadataNotification)();
+	DECLARE_STATEFUL_VALIDATOR(ModifyNamespaceMetadata, model::ModifyNamespaceMetadataNotification_v1)();
 }}

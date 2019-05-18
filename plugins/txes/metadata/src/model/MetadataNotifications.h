@@ -35,13 +35,13 @@ namespace catapult { namespace model {
 	DEFINE_METADATA_NOTIFICATION(Namespace_Modification_v1, 0x0012, Observer);
 
 	/// Address metadata modifications.
-	DEFINE_METADATA_NOTIFICATION(Address_Modifications, 0x0020, Validator);
+	DEFINE_METADATA_NOTIFICATION(Address_Modifications_v1, 0x0020, Validator);
 
 	/// Mosaic metadata modifications.
-	DEFINE_METADATA_NOTIFICATION(Mosaic_Modifications, 0x0021, Validator);
+	DEFINE_METADATA_NOTIFICATION(Mosaic_Modifications_v1, 0x0021, Validator);
 
 	/// Namespace metadata modifications.
-	DEFINE_METADATA_NOTIFICATION(Namespace_Modifications, 0x0022, Validator);
+	DEFINE_METADATA_NOTIFICATION(Namespace_Modifications_v1, 0x0022, Validator);
 
 #undef DEFINE_METADATA_NOTIFICATION
 
@@ -176,7 +176,7 @@ namespace catapult { namespace model {
 				const uint16_t& valueSize,
 				const char* valuePtr)
 				: ModifyMetadataFieldNotification(
-						Notification_Type, sizeof(ModifyMetadataValueNotification),
+						Notification_Type, sizeof(ModifyMetadataValueNotification<TMetadataId, Metadata_Notification_Type, 1>),
 						metadataModificationType,
 						keySize, keyPtr,
 						valueSize, valuePtr)
@@ -200,8 +200,11 @@ namespace catapult { namespace model {
 		ModifyMetadataValueNotification<NamespaceId, Metadata_Namespace_Modification_v1_Notification, 1>;
 
 	/// Notification of a metadata modification.
+	template<typename TMetadataId, NotificationType Metadata_Notification_Type, VersionType version>
+	struct ModifyMetadataNotification;
+
 	template<typename TMetadataId, NotificationType Metadata_Notification_Type>
-	struct ModifyMetadataNotification : public Notification {
+	struct ModifyMetadataNotification<TMetadataId, Metadata_Notification_Type, 1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Metadata_Notification_Type;
@@ -211,7 +214,7 @@ namespace catapult { namespace model {
 		explicit ModifyMetadataNotification(
 				const Key& signer,
 				const TMetadataId& metadataId)
-				: Notification(Notification_Type, sizeof(ModifyMetadataNotification))
+				: Notification(Notification_Type, sizeof(ModifyMetadataNotification<TMetadataId, Metadata_Notification_Type, 1>))
 				, Signer(signer)
 				, MetadataId(metadataId)
 		{}
@@ -224,7 +227,7 @@ namespace catapult { namespace model {
 		TMetadataId MetadataId;
 	};
 
-	using ModifyAddressMetadataNotification = ModifyMetadataNotification<UnresolvedAddress, Metadata_Address_Modifications_Notification>;
-	using ModifyMosaicMetadataNotification = ModifyMetadataNotification<UnresolvedMosaicId, Metadata_Mosaic_Modifications_Notification>;
-	using ModifyNamespaceMetadataNotification = ModifyMetadataNotification<NamespaceId, Metadata_Namespace_Modifications_Notification>;
+	using ModifyAddressMetadataNotification_v1 = ModifyMetadataNotification<UnresolvedAddress, Metadata_Address_Modifications_v1_Notification, 1>;
+	using ModifyMosaicMetadataNotification_v1 = ModifyMetadataNotification<UnresolvedMosaicId, Metadata_Mosaic_Modifications_v1_Notification, 1>;
+	using ModifyNamespaceMetadataNotification_v1 = ModifyMetadataNotification<NamespaceId, Metadata_Namespace_Modifications_v1_Notification, 1>;
 }}

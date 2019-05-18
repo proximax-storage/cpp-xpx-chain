@@ -11,7 +11,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyAddressMetadataNotification;
+	using Notification = model::ModifyAddressMetadataNotification_v1;
 
 	namespace {
 		Address CopyToAddress(const UnresolvedAddress& address) {

@@ -10,7 +10,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyNamespaceMetadataNotification;
+	using Notification = model::ModifyNamespaceMetadataNotification_v1;
 
 	DEFINE_STATEFUL_VALIDATOR(ModifyNamespaceMetadata, [](const auto& notification, const ValidatorContext& context) {
 		const auto& namespaceCache = context.Cache.sub<cache::NamespaceCache>();
