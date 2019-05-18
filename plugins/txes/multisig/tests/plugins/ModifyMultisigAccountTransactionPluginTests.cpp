@@ -124,8 +124,8 @@ namespace catapult { namespace plugins {
 		// Assert:
 		AssertNumNotifications<TTraits>(5, *pTransaction, [](const auto& sub) {
 			// - multisig modify new cosigner notifications must be the first raised notifications
-			EXPECT_EQ(Multisig_Modify_New_Cosigner_Notification, sub.notificationTypes()[0]);
-			EXPECT_EQ(Multisig_Modify_New_Cosigner_Notification, sub.notificationTypes()[1]);
+			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[0]);
+			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[1]);
 		});
 	}
 
@@ -203,7 +203,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishNewCosignerNotificationForEachAddModification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
@@ -227,7 +227,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(NoNewCosignerNotificationsIfNoAddModificationsArePresent) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);

@@ -33,7 +33,7 @@ namespace catapult { namespace model {
 	DEFINE_MULTISIG_NOTIFICATION(Modify_Cosigners_v1, 0x0001, All);
 
 	/// A cosigner was added to a multisig account.
-	DEFINE_MULTISIG_NOTIFICATION(Modify_New_Cosigner, 0x0002, Validator);
+	DEFINE_MULTISIG_NOTIFICATION(Modify_New_Cosigner_v1, 0x0002, Validator);
 
 	/// Multisig account settings were modified.
 	DEFINE_MULTISIG_NOTIFICATION(Modify_Settings, 0x1001, All);
@@ -76,15 +76,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a new cosigner.
-	struct ModifyMultisigNewCosignerNotification : public Notification {
+	template<VersionType version>
+	struct ModifyMultisigNewCosignerNotification;
+
+	template<>
+	struct ModifyMultisigNewCosignerNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Multisig_Modify_New_Cosigner_Notification;
+		static constexpr auto Notification_Type = Multisig_Modify_New_Cosigner_v1_Notification;
 
 	public:
 		/// Creates a notification around \a multisigAccountKey and \a cosignatoryKey.
 		explicit ModifyMultisigNewCosignerNotification(const Key& multisigAccountKey, const Key& cosignatoryKey)
-				: Notification(Notification_Type, sizeof(ModifyMultisigNewCosignerNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigNewCosignerNotification<1>))
 				, MultisigAccountKey(multisigAccountKey)
 				, CosignatoryKey(cosignatoryKey)
 		{}

@@ -48,7 +48,7 @@ namespace catapult { namespace plugins {
 					for (auto i = 0u; i < transaction.VerifierModificationCount; ++i, ++pModification) {
 						reputationModificationKeys.emplace_back(pModification);
 						if (model::CosignatoryModificationType::Add == pModification->ModificationType) {
-							sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModification->CosignatoryPublicKey));
+							sub.notify(ModifyMultisigNewCosignerNotification<1>(transaction.Signer, pModification->CosignatoryPublicKey));
 							addedVerifierKeys.insert(pModification->CosignatoryPublicKey);
 						}
 					}

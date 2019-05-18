@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to modify multisig new cosigner notifications and validates that:
 	/// - the cosignatory is cosigning at most \a maxCosignedAccountsPerAccount
-	stateful::NotificationValidatorPointerT<model::ModifyMultisigNewCosignerNotification>
+	stateful::NotificationValidatorPointerT<model::ModifyMultisigNewCosignerNotification<1>>
 	CreateModifyMultisigMaxCosignedAccountsValidator(uint32_t maxCosignedAccountsPerAccount);
 
 	/// A validator implementation that applies to modify multisig cosigners notifications and validates that:
@@ -56,7 +56,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to modify multisig new cosigner notifications and validates that:
 	/// - the multisig depth is at most \a maxMultisigDepth
 	/// - no multisig loops are created
-	stateful::NotificationValidatorPointerT<model::ModifyMultisigNewCosignerNotification>
+	stateful::NotificationValidatorPointerT<model::ModifyMultisigNewCosignerNotification<1>>
 	CreateModifyMultisigLoopAndLevelValidator(uint8_t maxMultisigDepth);
 
 	/// A validator implementation that applies to modify multisig settings notifications and validates that:

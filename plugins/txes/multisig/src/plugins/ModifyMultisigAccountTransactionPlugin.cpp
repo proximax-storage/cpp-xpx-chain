@@ -41,7 +41,7 @@ namespace catapult { namespace plugins {
 					const auto* pModifications = transaction.ModificationsPtr();
 					for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
 						if (model::CosignatoryModificationType::Add == pModifications[i].ModificationType) {
-							sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModifications[i].CosignatoryPublicKey));
+							sub.notify(ModifyMultisigNewCosignerNotification<1>(transaction.Signer, pModifications[i].CosignatoryPublicKey));
 							addedCosignatoryKeys.insert(pModifications[i].CosignatoryPublicKey);
 						}
 					}
