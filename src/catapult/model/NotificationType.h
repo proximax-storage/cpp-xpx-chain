@@ -82,40 +82,40 @@ namespace catapult { namespace model {
 #define DEFINE_CORE_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Core, DESCRIPTION, CODE)
 
 	/// Account was used with specified address.
-	DEFINE_CORE_NOTIFICATION(Register_Account_Address, 0x0001, All);
+	DEFINE_CORE_NOTIFICATION(Register_Account_Address_v1, 0x0001, All);
 
 	/// Account was used with specified public key.
-	DEFINE_CORE_NOTIFICATION(Register_Account_Public_Key, 0x0002, Observer);
+	DEFINE_CORE_NOTIFICATION(Register_Account_Public_Key_v1, 0x0002, Observer);
 
 	/// Mosaic was transferred between two accounts.
-	DEFINE_CORE_NOTIFICATION(Balance_Transfer, 0x0003, All);
+	DEFINE_CORE_NOTIFICATION(Balance_Transfer_v1, 0x0003, All);
 
 	/// Entity was received.
-	DEFINE_CORE_NOTIFICATION(Entity, 0x0004, Validator);
+	DEFINE_CORE_NOTIFICATION(Entity_v1, 0x0004, Validator);
 
 	/// Block was received.
-	DEFINE_CORE_NOTIFICATION(Block, 0x0005, All);
+	DEFINE_CORE_NOTIFICATION(Block_v1, 0x0005, All);
 
 	/// Transaction was received.
-	DEFINE_CORE_NOTIFICATION(Transaction, 0x0006, All);
+	DEFINE_CORE_NOTIFICATION(Transaction_v1, 0x0006, All);
 
 	/// Signature was received.
-	DEFINE_CORE_NOTIFICATION(Signature, 0x0007, Validator);
+	DEFINE_CORE_NOTIFICATION(Signature_v1, 0x0007, Validator);
 
 	/// Mosaic was debited from account.
-	DEFINE_CORE_NOTIFICATION(Balance_Debit, 0x0008, All);
+	DEFINE_CORE_NOTIFICATION(Balance_Debit_v1, 0x0008, All);
 
 	/// Source address interacts with destination addresses.
-	DEFINE_CORE_NOTIFICATION(Address_Interaction, 0x0009, Validator);
+	DEFINE_CORE_NOTIFICATION(Address_Interaction_v1, 0x0009, Validator);
 
 	/// Mosaic is required.
-	DEFINE_CORE_NOTIFICATION(Mosaic_Required, 0x000A, Validator);
+	DEFINE_CORE_NOTIFICATION(Mosaic_Required_v1, 0x000A, Validator);
 
 	/// Source has changed.
-	DEFINE_CORE_NOTIFICATION(Source_Change, 0x000B, Observer);
+	DEFINE_CORE_NOTIFICATION(Source_Change_v1, 0x000B, Observer);
 
 	/// Transaction fee was received.
-	DEFINE_CORE_NOTIFICATION(Transaction_Fee, 0x000C, Validator);
+	DEFINE_CORE_NOTIFICATION(Transaction_Fee_v1, 0x000C, Validator);
 
 #undef DEFINE_CORE_NOTIFICATION
 

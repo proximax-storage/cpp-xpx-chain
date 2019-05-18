@@ -31,10 +31,10 @@ namespace catapult { namespace model {
 #define DEFINE_ACCOUNT_LINK_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, AccountLink, DESCRIPTION, CODE)
 
 	/// Remote account was un/linked.
-	DEFINE_ACCOUNT_LINK_NOTIFICATION(Remote, 0x001, All);
+	DEFINE_ACCOUNT_LINK_NOTIFICATION(Remote_v1, 0x001, All);
 
 	/// New remote account was created.
-	DEFINE_ACCOUNT_LINK_NOTIFICATION(New_Remote_Account, 0x002, Validator);
+	DEFINE_ACCOUNT_LINK_NOTIFICATION(New_Remote_Account_v1, 0x002, Validator);
 
 #undef DEFINE_ACCOUNTLINK_NOTIFICATION
 
@@ -48,7 +48,7 @@ namespace catapult { namespace model {
 	struct RemoteAccountLinkNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = AccountLink_Remote_Notification;
+		static constexpr auto Notification_Type = AccountLink_Remote_v1_Notification;
 
 	public:
 		/// Creates a notification around \a mainAccountKey, \a remoteAccountKey and \a linkAction.
@@ -58,11 +58,6 @@ namespace catapult { namespace model {
 				, RemoteAccountKey(remoteAccountKey)
 				, LinkAction(linkAction)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Main account key.
@@ -83,7 +78,7 @@ namespace catapult { namespace model {
 	struct NewRemoteAccountNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = AccountLink_New_Remote_Account_Notification;
+		static constexpr auto Notification_Type = AccountLink_New_Remote_Account_v1_Notification;
 
 	public:
 		/// Creates a notification around \a remoteAccountKey.
@@ -91,11 +86,6 @@ namespace catapult { namespace model {
 				: Notification(Notification_Type, sizeof(NewRemoteAccountNotification<1>))
 				, RemoteAccountKey(remoteAccountKey)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Remote account key.

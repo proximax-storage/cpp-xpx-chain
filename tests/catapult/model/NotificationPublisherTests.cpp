@@ -208,11 +208,11 @@ namespace catapult { namespace model {
 		PublishAll(*pBlock, PublicationMode::Basic, [](const auto& sub) {
 			// Assert: no notifications were suppressed (blocks do not have custom notifications)
 			ASSERT_EQ(5u, sub.numNotifications());
-			EXPECT_EQ(Core_Source_Change_Notification, sub.notificationTypes()[0]);
-			EXPECT_EQ(Core_Register_Account_Public_Key_Notification, sub.notificationTypes()[1]);
-			EXPECT_EQ(Core_Entity_Notification, sub.notificationTypes()[2]);
-			EXPECT_EQ(Core_Block_Notification, sub.notificationTypes()[3]);
-			EXPECT_EQ(Core_Signature_Notification, sub.notificationTypes()[4]);
+			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[0]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
+			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[2]);
+			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[3]);
+			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[4]);
 		});
 	}
 
@@ -398,13 +398,13 @@ namespace catapult { namespace model {
 		PublishAll(*pTransaction, PublicationMode::Basic, [&transaction = *pTransaction](const auto& sub) {
 			// Assert: 7 raised by NotificationPublisher, none raised by MockTransaction::publish
 			ASSERT_EQ(7u, sub.numNotifications());
-			EXPECT_EQ(Core_Source_Change_Notification, sub.notificationTypes()[0]);
-			EXPECT_EQ(Core_Register_Account_Public_Key_Notification, sub.notificationTypes()[1]);
-			EXPECT_EQ(Core_Entity_Notification, sub.notificationTypes()[2]);
-			EXPECT_EQ(Core_Transaction_Notification, sub.notificationTypes()[3]);
-			EXPECT_EQ(Core_Transaction_Fee_Notification, sub.notificationTypes()[4]);
-			EXPECT_EQ(Core_Balance_Debit_Notification, sub.notificationTypes()[5]);
-			EXPECT_EQ(Core_Signature_Notification, sub.notificationTypes()[6]);
+			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[0]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
+			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[2]);
+			EXPECT_EQ(Core_Transaction_v1_Notification, sub.notificationTypes()[3]);
+			EXPECT_EQ(Core_Transaction_Fee_v1_Notification, sub.notificationTypes()[4]);
+			EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[5]);
+			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[6]);
 		});
 	}
 
@@ -417,7 +417,7 @@ namespace catapult { namespace model {
 			// Assert: 8 raised by MockTransaction::publish (first is AccountPublicKeyNotification)
 			ASSERT_EQ(1u + 7, sub.numNotifications());
 
-			EXPECT_EQ(Core_Register_Account_Public_Key_Notification, sub.notificationTypes()[0]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[0]);
 			EXPECT_EQ(mocks::Mock_Observer_1_Notification, sub.notificationTypes()[1]);
 			EXPECT_EQ(mocks::Mock_Validator_1_Notification, sub.notificationTypes()[2]);
 			EXPECT_EQ(mocks::Mock_All_1_Notification, sub.notificationTypes()[3]);

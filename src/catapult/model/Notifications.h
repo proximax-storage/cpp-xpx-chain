@@ -44,9 +44,6 @@ namespace catapult { namespace model {
 
 		/// Notification size.
 		size_t Size;
-
-	public:
-		virtual VersionType getVersion() const = 0;
 	};
 
 	// region account
@@ -59,7 +56,7 @@ namespace catapult { namespace model {
 	struct AccountAddressNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Register_Account_Address_Notification;
+		static constexpr auto Notification_Type = Core_Register_Account_Address_v1_Notification;
 
 	public:
 		/// Creates a notification around \a address.
@@ -67,11 +64,6 @@ namespace catapult { namespace model {
 				: Notification(Notification_Type, sizeof(AccountAddressNotification<1>))
 				, Address(address)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Address.
@@ -86,7 +78,7 @@ namespace catapult { namespace model {
 	struct AccountPublicKeyNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Register_Account_Public_Key_Notification;
+		static constexpr auto Notification_Type = Core_Register_Account_Public_Key_v1_Notification;
 
 	public:
 		/// Creates a notification around \a publicKey.
@@ -94,11 +86,6 @@ namespace catapult { namespace model {
 				: Notification(Notification_Type, sizeof(AccountPublicKeyNotification<1>))
 				, PublicKey(publicKey)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Public key.
@@ -140,7 +127,7 @@ namespace catapult { namespace model {
 	struct BalanceTransferNotification<1> : public BasicBalanceNotification<BalanceTransferNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Balance_Transfer_Notification;
+		static constexpr auto Notification_Type = Core_Balance_Transfer_v1_Notification;
 
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
@@ -152,11 +139,6 @@ namespace catapult { namespace model {
 				: BasicBalanceNotification(sender, mosaicId, amount)
 				, Recipient(recipient)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Recipient.
@@ -171,15 +153,10 @@ namespace catapult { namespace model {
 	struct BalanceDebitNotification<1> : public BasicBalanceNotification<BalanceDebitNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Balance_Debit_Notification;
+		static constexpr auto Notification_Type = Core_Balance_Debit_v1_Notification;
 
 	public:
 		using BasicBalanceNotification<BalanceDebitNotification<1>>::BasicBalanceNotification;
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 	};
 
 	// endregion
@@ -194,7 +171,7 @@ namespace catapult { namespace model {
 	struct EntityNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Entity_Notification;
+		static constexpr auto Notification_Type = Core_Entity_v1_Notification;
 
 	public:
 		/// Creates an entity notification around \a networkIdentifier, \a minVersion, \a maxVersion and \a entityVersion.
@@ -209,11 +186,6 @@ namespace catapult { namespace model {
 				, MaxVersion(maxVersion)
 				, EntityVersion(entityVersion)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Network identifier.
@@ -241,7 +213,7 @@ namespace catapult { namespace model {
 	struct BlockNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Block_Notification;
+		static constexpr auto Notification_Type = Core_Block_v1_Notification;
 
 	public:
 		/// Creates a block notification around \a signer, \a timestamp and \a difficulty.
@@ -252,11 +224,6 @@ namespace catapult { namespace model {
 				, Difficulty(difficulty)
 				, NumTransactions(0)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Block signer.
@@ -287,7 +254,7 @@ namespace catapult { namespace model {
 	struct TransactionNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Transaction_Notification;
+		static constexpr auto Notification_Type = Core_Transaction_v1_Notification;
 
 	public:
 		/// Creates a transaction notification around \a signer, \a transactionHash, \a transactionType and \a deadline.
@@ -298,11 +265,6 @@ namespace catapult { namespace model {
 				, TransactionType(transactionType)
 				, Deadline(deadline)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Transaction signer.
@@ -326,7 +288,7 @@ namespace catapult { namespace model {
 	struct TransactionFeeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Transaction_Fee_Notification;
+		static constexpr auto Notification_Type = Core_Transaction_v1_Fee_Notification;
 
 	public:
 		/// Creates a transaction fee notification around \a transactionSize, \a fee and \a maxFee.
@@ -336,11 +298,6 @@ namespace catapult { namespace model {
 				, Fee(fee)
 				, MaxFee(maxFee)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Transaction size.
@@ -365,7 +322,7 @@ namespace catapult { namespace model {
 	struct SignatureNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Signature_Notification;
+		static constexpr auto Notification_Type = Core_Signature_v1_Notification;
 
 	public:
 		/// Creates a signature notification around \a signer, \a signature and \a data.
@@ -375,11 +332,6 @@ namespace catapult { namespace model {
 				, Signature(signature)
 				, Data(data)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Signer.
@@ -405,7 +357,7 @@ namespace catapult { namespace model {
 	struct AddressInteractionNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Address_Interaction_Notification;
+		static constexpr auto Notification_Type = Core_Address_Interaction_v1_Notification;
 
 	public:
 		/// Creates a notification around \a source, \a transactionType and \a participantsByAddress.
@@ -425,11 +377,6 @@ namespace catapult { namespace model {
 				, ParticipantsByAddress(participantsByAddress)
 				, ParticipantsByKey(participantsByKey)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Source.
@@ -461,7 +408,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Mosaic_Required_Notification;
+		static constexpr auto Notification_Type = Core_Mosaic_Required_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer and \a mosaicId.
@@ -479,11 +426,6 @@ namespace catapult { namespace model {
 				, UnresolvedMosaicId(mosaicId)
 				, ProvidedMosaicType(MosaicType::Unresolved)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Signer.
@@ -515,7 +457,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Source_Change_Notification;
+		static constexpr auto Notification_Type = Core_Source_Change_v1_Notification;
 
 	public:
 		/// Creates a notification around \a primaryId, \a secondaryId and \a changeType.
@@ -525,11 +467,6 @@ namespace catapult { namespace model {
 				, SecondaryId(secondaryId)
 				, ChangeType(changeType)
 		{}
-
-	public:
-		virtual VersionType getVersion() const {
-			return 1;
-		}
 
 	public:
 		/// Primary source (e.g. index within block).

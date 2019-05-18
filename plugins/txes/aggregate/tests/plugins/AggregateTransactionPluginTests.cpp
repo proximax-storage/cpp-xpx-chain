@@ -211,17 +211,17 @@ namespace catapult { namespace plugins {
 		for (auto i = 0u; i < 2u; ++i) {
 			auto offset = i * 5;
 			auto message = "sub-transaction at " + std::to_string(i);
-			EXPECT_EQ(Core_Source_Change_Notification, sub.notificationTypes()[offset + 1]) << message;
-			EXPECT_EQ(Core_Register_Account_Public_Key_Notification, sub.notificationTypes()[offset + 2]) << message;
-			EXPECT_EQ(Core_Entity_Notification, sub.notificationTypes()[offset + 3]) << message;
+			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[offset + 1]) << message;
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[offset + 2]) << message;
+			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[offset + 3]) << message;
 			EXPECT_EQ(Aggregate_EmbeddedTransaction_Notification, sub.notificationTypes()[offset + 4]) << message;
-			EXPECT_EQ(Core_Register_Account_Public_Key_Notification, sub.notificationTypes()[offset + 5]) << message;
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[offset + 5]) << message;
 		}
 
 		// - signature notifications are raised last (and with wrong source) for performance reasons
-		EXPECT_EQ(Core_Signature_Notification, sub.notificationTypes()[11]);
-		EXPECT_EQ(Core_Signature_Notification, sub.notificationTypes()[12]);
-		EXPECT_EQ(Core_Signature_Notification, sub.notificationTypes()[13]);
+		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[11]);
+		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[12]);
+		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[13]);
 	}
 
 	// endregion

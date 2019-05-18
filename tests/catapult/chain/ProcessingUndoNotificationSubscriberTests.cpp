@@ -242,7 +242,7 @@ namespace catapult { namespace chain {
 		// - notice that notification1 is observer-only
 		// - notice that notification3 is validator-only
 		context.assertUndoObserverCalls({
-			model::Core_Transaction_Notification, Notification_Type_All, model::Core_Register_Account_Public_Key_Notification
+			model::Core_Transaction_v1_Notification, Notification_Type_All, model::Core_Register_Account_Public_Key_v1_Notification
 		});
 
 		// - check data integrity
