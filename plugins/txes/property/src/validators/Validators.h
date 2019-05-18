@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 	/* A validator implementation that applies to resolved property value modification notifications and validates that: */ \
 	/* - add modification does not add a known value */ \
 	/* - delete modification does not delete an unknown value */ \
-	DECLARE_STATEFUL_VALIDATOR(VALUE_NAME##PropertyValueModification, model::Modify##VALUE_NAME##PropertyValueNotification)(); \
+	DECLARE_STATEFUL_VALIDATOR(VALUE_NAME##PropertyValueModification, model::Modify##VALUE_NAME##PropertyValueNotification_v1)(); \
 	\
 	/* A validator implementation that applies to property notifications and validates that: */ \
 	/* - the maximum number of modifications (\a maxPropertyValues) is not exceeded */ \
@@ -56,7 +56,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to address property value property modification notifications and validates that:
 	/// - property modification value for network with id \a networkIdentifier is valid
-	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, model::ModifyAddressPropertyValueNotification)(
+	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, model::ModifyAddressPropertyValueNotification_v1)(
 			model::NetworkIdentifier networkIdentifier);
 
 	/// A validator implementation that applies to address interaction notifications and validates that:
@@ -77,5 +77,5 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to transaction type property value property modification notifications and validates that:
 	/// - transaction type property transactions are not blocked
-	DECLARE_STATEFUL_VALIDATOR(TransactionTypeNoSelfBlocking, model::ModifyTransactionTypePropertyValueNotification)();
+	DECLARE_STATEFUL_VALIDATOR(TransactionTypeNoSelfBlocking, model::ModifyTransactionTypePropertyValueNotification_v1)();
 }}

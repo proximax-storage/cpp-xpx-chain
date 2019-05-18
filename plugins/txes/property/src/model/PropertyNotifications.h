@@ -34,13 +34,13 @@ namespace catapult { namespace model {
 	DEFINE_PROPERTY_NOTIFICATION(Type_v1, 0x0001, Validator);
 
 	/// Address property modification.
-	DEFINE_PROPERTY_NOTIFICATION(Address_Modification, 0x0010, All);
+	DEFINE_PROPERTY_NOTIFICATION(Address_Modification_v1, 0x0010, All);
 
 	/// Mosaic property modification.
-	DEFINE_PROPERTY_NOTIFICATION(Mosaic_Modification, 0x0011, All);
+	DEFINE_PROPERTY_NOTIFICATION(Mosaic_Modification_v1, 0x0011, All);
 
 	/// Transaction type property modification.
-	DEFINE_PROPERTY_NOTIFICATION(Transaction_Type_Modification, 0x0012, All);
+	DEFINE_PROPERTY_NOTIFICATION(Transaction_Type_Modification_v1, 0x0012, All);
 
 	/// Address property modifications.
 	DEFINE_PROPERTY_NOTIFICATION(Address_Modifications, 0x0020, Validator);
@@ -78,8 +78,11 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a property value modification.
+	template<typename TPropertyValue, NotificationType Property_Notification_Type, VersionType version>
+	struct ModifyPropertyValueNotification;
+
 	template<typename TPropertyValue, NotificationType Property_Notification_Type>
-	struct ModifyPropertyValueNotification : public Notification {
+	struct ModifyPropertyValueNotification<TPropertyValue, Property_Notification_Type, 1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Property_Notification_Type;
@@ -90,7 +93,7 @@ namespace catapult { namespace model {
 				const Key& key,
 				PropertyType propertyType,
 				const PropertyModification<TPropertyValue>& modification)
-				: Notification(Notification_Type, sizeof(ModifyPropertyValueNotification))
+				: Notification(Notification_Type, sizeof(ModifyPropertyValueNotification<TPropertyValue, Property_Notification_Type, 1>))
 				, Key(key)
 				, PropertyDescriptor(propertyType)
 				, Modification(modification)
@@ -108,12 +111,12 @@ namespace catapult { namespace model {
 		PropertyModification<TPropertyValue> Modification;
 	};
 
-	using ModifyAddressPropertyValueNotification =
-		ModifyPropertyValueNotification<UnresolvedAddress, Property_Address_Modification_Notification>;
-	using ModifyMosaicPropertyValueNotification =
-		ModifyPropertyValueNotification<UnresolvedMosaicId, Property_Mosaic_Modification_Notification>;
-	using ModifyTransactionTypePropertyValueNotification =
-		ModifyPropertyValueNotification<EntityType, Property_Transaction_Type_Modification_Notification>;
+	using ModifyAddressPropertyValueNotification_v1 =
+		ModifyPropertyValueNotification<UnresolvedAddress, Property_Address_Modification_v1_Notification, 1>;
+	using ModifyMosaicPropertyValueNotification_v1 =
+		ModifyPropertyValueNotification<UnresolvedMosaicId, Property_Mosaic_Modification_v1_Notification, 1>;
+	using ModifyTransactionTypePropertyValueNotification_v1 =
+		ModifyPropertyValueNotification<EntityType, Property_Transaction_Type_Modification_v1_Notification, 1>;
 
 	/// Notification of a property modification.
 	template<typename TPropertyValue, NotificationType Property_Notification_Type>

@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyAddressPropertyValueNotification;
+	using Notification = model::ModifyAddressPropertyValueNotification_v1;
 
 	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, Notification)(model::NetworkIdentifier networkIdentifier) {
 		return MAKE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, [networkIdentifier](const auto& notification) {
