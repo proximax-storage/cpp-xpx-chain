@@ -144,7 +144,7 @@ namespace catapult { namespace plugins {
 
 		static void AssertCanPublishPropertyTypeNotification() {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<model::PropertyTypeNotification> sub;
+			mocks::MockTypedNotificationSubscriber<model::PropertyTypeNotification<1>> sub;
 			auto pPlugin = TTraits::CreatePlugin();
 
 			auto pTransaction = CreatePropertyTransaction();

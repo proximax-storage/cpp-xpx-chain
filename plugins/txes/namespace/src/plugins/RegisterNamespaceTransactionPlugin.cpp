@@ -35,13 +35,13 @@ namespace catapult { namespace plugins {
 				const NamespaceRentalFeeConfiguration& config,
 				const TTransaction& transaction,
 				NotificationSubscriber& sub) {
+			auto rentalFee = config.ChildFee;
 			switch (transaction.Version) {
 			case 2:
 				// a. exempt the nemesis account
 				if (config.NemesisPublicKey == transaction.Signer)
 					return;
 
-				auto rentalFee = config.ChildFee;
 				if (transaction.IsRootRegistration()) {
 					// b. don't charge fees for eternal namespaces
 					if (Eternal_Artifact_Duration == transaction.Duration)

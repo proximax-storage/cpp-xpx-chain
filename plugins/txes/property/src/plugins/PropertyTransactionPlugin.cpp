@@ -58,17 +58,24 @@ namespace catapult { namespace plugins {
 		public:
 			template<typename TTransaction>
 			static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-				sub.notify(PropertyTypeNotification(transaction.PropertyType));
-				sub.notify(CreatePropertyModificationsNotification<TTransaction>(transaction));
+				switch (transaction.Version) {
+				case 2:
+					sub.notify(PropertyTypeNotification<1>(transaction.PropertyType));
+					sub.notify(CreatePropertyModificationsNotification<TTransaction>(transaction));
 
-				using ValueNotification = typename TTraits::ModifyPropertyValueNotification;
-				const auto* pModifications = transaction.ModificationsPtr();
-				for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
-					PropertyModification<typename TTraits::UnresolvedValueType> modification{
-						pModifications[i].ModificationType,
-						pModifications[i].Value
-					};
-					sub.notify(ValueNotification(transaction.Signer, transaction.PropertyType, modification));
+					using ValueNotification = typename TTraits::ModifyPropertyValueNotification;
+					const auto* pModifications = transaction.ModificationsPtr();
+					for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
+						PropertyModification<typename TTraits::UnresolvedValueType> modification{
+							pModifications[i].ModificationType,
+							pModifications[i].Value
+						};
+						sub.notify(ValueNotification(transaction.Signer, transaction.PropertyType, modification));
+					}
+					break;
+
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of RegisterNamespaceTransaction", transaction.Version);
 				}
 			}
 

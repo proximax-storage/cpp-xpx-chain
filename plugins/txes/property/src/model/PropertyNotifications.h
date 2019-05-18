@@ -31,7 +31,7 @@ namespace catapult { namespace model {
 #define DEFINE_PROPERTY_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Property, DESCRIPTION, CODE)
 
 	/// Property type.
-	DEFINE_PROPERTY_NOTIFICATION(Type, 0x0001, Validator);
+	DEFINE_PROPERTY_NOTIFICATION(Type_v1, 0x0001, Validator);
 
 	/// Address property modification.
 	DEFINE_PROPERTY_NOTIFICATION(Address_Modification, 0x0010, All);
@@ -56,15 +56,19 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a property type.
-	struct PropertyTypeNotification : public Notification {
+	template<VersionType version>
+	struct PropertyTypeNotification;
+
+	template<>
+	struct PropertyTypeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Property_Type_Notification;
+		static constexpr auto Notification_Type = Property_Type_v1_Notification;
 
 	public:
 		/// Creates a notification around \a propertyType.
 		explicit PropertyTypeNotification(model::PropertyType propertyType)
-				: Notification(Notification_Type, sizeof(PropertyTypeNotification))
+				: Notification(Notification_Type, sizeof(PropertyTypeNotification<1>))
 				, PropertyType(propertyType)
 		{}
 
