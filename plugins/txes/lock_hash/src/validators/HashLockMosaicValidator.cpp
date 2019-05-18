@@ -22,7 +22,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::HashLockMosaicNotification;
+	using Notification = model::HashLockMosaicNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(HashLockMosaic, Notification)(UnresolvedMosaicId currencyMosaicId, Amount lockedFundsPerAggregate) {
 		return MAKE_STATELESS_VALIDATOR(HashLockMosaic, ([currencyMosaicId, lockedFundsPerAggregate](const auto& notification) {

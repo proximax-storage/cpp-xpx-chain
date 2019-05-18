@@ -32,7 +32,7 @@ namespace catapult { namespace model {
 	DEFINE_LOCKHASH_NOTIFICATION(Hash_Duration, 0x0001, Validator);
 
 	/// Lock mosaic.
-	DEFINE_LOCKHASH_NOTIFICATION(Mosaic, 0x0002, Validator);
+	DEFINE_LOCKHASH_NOTIFICATION(Mosaic_v1, 0x0002, Validator);
 
 	/// Lock hash.
 	DEFINE_LOCKHASH_NOTIFICATION(Hash, 0x0003, All);
@@ -42,15 +42,19 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a hash lock mosaic.
-	struct HashLockMosaicNotification : public Notification {
+	template<VersionType version>
+	struct HashLockMosaicNotification;
+
+	template<>
+	struct HashLockMosaicNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockHash_Mosaic_Notification;
+		static constexpr auto Notification_Type = LockHash_Mosaic_v1_Notification;
 
 	public:
 		/// Creates a notification around \a mosaic.
 		explicit HashLockMosaicNotification(UnresolvedMosaic mosaic)
-				: Notification(Notification_Type, sizeof(HashLockMosaicNotification))
+				: Notification(Notification_Type, sizeof(HashLockMosaicNotification<1>))
 				, Mosaic(mosaic)
 		{}
 

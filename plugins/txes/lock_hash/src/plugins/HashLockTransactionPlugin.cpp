@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.Version) {
 			case 1:
 				sub.notify(HashLockDurationNotification(transaction.Duration));
-				sub.notify(HashLockMosaicNotification(transaction.Mosaic));
+				sub.notify(HashLockMosaicNotification<1>(transaction.Mosaic));
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, transaction.Mosaic.MosaicId, transaction.Mosaic.Amount));
 				sub.notify(HashLockNotification(transaction.Signer, transaction.Mosaic, transaction.Duration, transaction.Hash));
 				break;

@@ -97,7 +97,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishMosaicNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<HashLockMosaicNotification> sub;
+		mocks::MockTypedNotificationSubscriber<HashLockMosaicNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 		pTransaction->Mosaic = { test::GenerateRandomValue<UnresolvedMosaicId>(), test::GenerateRandomValue<Amount>() };
