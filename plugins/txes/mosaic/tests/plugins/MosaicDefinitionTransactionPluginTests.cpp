@@ -213,7 +213,7 @@ namespace catapult { namespace plugins {
 
 		public:
 			mocks::MockTypedNotificationSubscriber<MosaicNonceNotification> NonceIdSub;
-			mocks::MockTypedNotificationSubscriber<MosaicPropertiesNotification> PropertiesSub;
+			mocks::MockTypedNotificationSubscriber<MosaicPropertiesNotification<1>> PropertiesSub;
 			mocks::MockTypedNotificationSubscriber<MosaicDefinitionNotification> DefinitionSub;
 			mocks::MockTypedNotificationSubscriber<MosaicRentalFeeNotification> RentalFeeSub;
 		};

@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 	/// - definition has divisibility no greater than \a maxDivisibility
 	/// - mosaic duration has a value not larger than \a maxMosaicDuration
 	/// - optional mosaic properties are sorted, known and not duplicative
-	DECLARE_STATELESS_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification)(
+	DECLARE_STATELESS_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)(
 			uint8_t maxDivisibility,
 			BlockDuration maxMosaicDuration);
 

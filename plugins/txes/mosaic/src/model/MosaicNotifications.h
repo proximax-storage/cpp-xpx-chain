@@ -32,7 +32,7 @@ namespace catapult { namespace model {
 #define DEFINE_MOSAIC_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Mosaic, DESCRIPTION, CODE)
 
 	/// Mosaic properties were provided.
-	DEFINE_MOSAIC_NOTIFICATION(Properties, 0x0012, Validator);
+	DEFINE_MOSAIC_NOTIFICATION(Properties_v1, 0x0012, Validator);
 
 	/// Mosaic was defined.
 	DEFINE_MOSAIC_NOTIFICATION(Definition, 0x0013, All);
@@ -54,15 +54,19 @@ namespace catapult { namespace model {
 
 	/// Notification of mosaic properties.
 	/// \note This is required due to potentially lossy conversion from raw properties to MosaicProperties.
-	struct MosaicPropertiesNotification : public Notification {
+	template<VersionType version>
+	struct MosaicPropertiesNotification;
+
+	template<>
+	struct MosaicPropertiesNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Properties_Notification;
+		static constexpr auto Notification_Type = Mosaic_Properties_v1_Notification;
 
 	public:
 		/// Creates a notification around \a propertiesHeader and \a pProperties.
 		explicit MosaicPropertiesNotification(const MosaicPropertiesHeader& propertiesHeader, const MosaicProperty* pProperties)
-				: Notification(Notification_Type, sizeof(MosaicPropertiesNotification))
+				: Notification(Notification_Type, sizeof(MosaicPropertiesNotification<1>))
 				, PropertiesHeader(propertiesHeader)
 				, PropertiesPtr(pProperties)
 		{}
