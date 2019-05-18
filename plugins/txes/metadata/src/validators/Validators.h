@@ -21,7 +21,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(MetadataFieldModification, model::ModifyMetadataFieldNotification)(uint8_t maxKeySize, uint16_t maxValueSize);
 
 	/// A validator implementation that applies to metadata modifications check that modification is valid
-	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, model::MetadataModificationsNotification)(const uint8_t& maxFields);
+	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, model::MetadataModificationsNotification<1>)(const uint8_t& maxFields);
 
 	/// A validator implementation that applies to metadata check that operation is permitted and address exists
 	DECLARE_STATEFUL_VALIDATOR(ModifyAddressMetadata, model::ModifyAddressMetadataNotification)();

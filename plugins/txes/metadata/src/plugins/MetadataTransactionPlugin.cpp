@@ -49,7 +49,7 @@ namespace catapult { namespace plugins {
 						modifications.emplace_back(&modification);
 
 					if (!modifications.empty())
-						sub.notify(MetadataModificationsNotification(
+						sub.notify(MetadataModificationsNotification<1>(
 							state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
 							modifications));
 

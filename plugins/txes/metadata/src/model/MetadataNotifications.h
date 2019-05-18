@@ -23,7 +23,7 @@ namespace catapult { namespace model {
 	DEFINE_METADATA_NOTIFICATION(Field_Modification, 0x0002, Validator);
 
 	/// Metadata modifications.
-	DEFINE_METADATA_NOTIFICATION(Modifications, 0x0003, Validator);
+	DEFINE_METADATA_NOTIFICATION(Modifications_v1, 0x0003, Validator);
 
 	/// Address metadata modification.
 	DEFINE_METADATA_NOTIFICATION(Address_Modification, 0x0010, Observer);
@@ -70,16 +70,20 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a metadata modifications.
-	struct MetadataModificationsNotification : public Notification {
+	template<VersionType version>
+	struct MetadataModificationsNotification;
+
+	template<>
+	struct MetadataModificationsNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_Modifications_Notification;
+		static constexpr auto Notification_Type = Metadata_Modifications_v1_Notification;
 		using MetadataModifications = std::vector<const model::MetadataModification*>;
 
 	public:
 		/// Creates a notification around \a metadataType.
 		explicit MetadataModificationsNotification(const Hash256& metadataId, const MetadataModifications& modifications)
-				: Notification(Notification_Type, sizeof(MetadataModificationsNotification))
+				: Notification(Notification_Type, sizeof(MetadataModificationsNotification<1>))
 				, MetadataId(metadataId)
 				, Modifications(modifications)
 		{}
