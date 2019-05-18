@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 		struct SecretCacheTraits {
 		public:
 			using DescriptorType = test::BasicSecretLockInfoTestTraits;
-			using NotificationType = model::SecretLockNotification;
+			using NotificationType = model::SecretLockNotification<1>;
 			using NotificationBuilder = test::SecretLockNotificationBuilder;
 			using CacheFactory = test::SecretLockInfoCacheFactory;
 

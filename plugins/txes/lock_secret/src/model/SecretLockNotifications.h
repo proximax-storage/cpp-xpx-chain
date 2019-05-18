@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 	DEFINE_LOCKSECRET_NOTIFICATION(Hash_Algorithm_v1, 0x0002, Validator);
 
 	/// Lock secret.
-	DEFINE_LOCKSECRET_NOTIFICATION(Secret, 0x0003, All);
+	DEFINE_LOCKSECRET_NOTIFICATION(Secret_v1, 0x0003, All);
 
 	/// Proof and secret.
 	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Secret, 0x0004, Validator);
@@ -85,10 +85,14 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a secret lock.
-	struct SecretLockNotification : public BaseLockNotification<SecretLockNotification> {
+	template<VersionType version>
+	struct SecretLockNotification;
+
+	template<>
+	struct SecretLockNotification<1> : public BaseLockNotification<SecretLockNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Secret_Notification;
+		static constexpr auto Notification_Type = LockSecret_Secret_v1_Notification;
 
 	public:
 		/// Creates secret lock notification around \a signer, \a mosaic, \a duration, \a hashAlgorithm, \a secret and \a recipient.

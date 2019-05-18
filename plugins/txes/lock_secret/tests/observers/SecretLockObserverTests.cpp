@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
 		struct SecretObserverTraits {
 		public:
 			using CacheType = cache::SecretLockInfoCache;
-			using NotificationType = model::SecretLockNotification;
+			using NotificationType = model::SecretLockNotification<1>;
 			using NotificationBuilder = test::SecretLockNotificationBuilder;
 			using ObserverTestContext = test::ObserverTestContextT<test::SecretLockInfoCacheFactory>;
 

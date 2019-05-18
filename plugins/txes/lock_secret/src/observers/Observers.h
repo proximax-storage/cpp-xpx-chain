@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by secret lock notifications and:
 	/// - adds/removes secret lock info to/from secret lock info cache
 	/// - debits/credits lock owner
-	DECLARE_OBSERVER(SecretLock, model::SecretLockNotification)();
+	DECLARE_OBSERVER(SecretLock, model::SecretLockNotification<1>)();
 
 	/// Observes changes triggered by proof notifications and:
 	/// - credits/debits proof publisher

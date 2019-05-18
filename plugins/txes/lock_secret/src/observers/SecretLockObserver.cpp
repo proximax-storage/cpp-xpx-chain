@@ -25,7 +25,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::SecretLockNotification;
+	using Notification = model::SecretLockNotification<1>;
 
 	namespace {
 		auto CreateLockInfo(
