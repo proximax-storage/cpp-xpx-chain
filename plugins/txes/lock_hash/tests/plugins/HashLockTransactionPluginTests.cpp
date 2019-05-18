@@ -118,7 +118,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void AssertHashLockNotification(const HashLockNotification& notification, const TTransaction& transaction) {
+		void AssertHashLockNotification(const HashLockNotification<1>& notification, const TTransaction& transaction) {
 			test::AssertBaseLockNotification(notification, transaction);
 			EXPECT_EQ(transaction.Hash, notification.Hash);
 		}
@@ -126,7 +126,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishTransactionHashNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<HashLockNotification> sub;
+		mocks::MockTypedNotificationSubscriber<HashLockNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 

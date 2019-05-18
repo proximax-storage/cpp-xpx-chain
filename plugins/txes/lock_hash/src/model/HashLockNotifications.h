@@ -35,7 +35,7 @@ namespace catapult { namespace model {
 	DEFINE_LOCKHASH_NOTIFICATION(Mosaic_v1, 0x0002, Validator);
 
 	/// Lock hash.
-	DEFINE_LOCKHASH_NOTIFICATION(Hash, 0x0003, All);
+	DEFINE_LOCKHASH_NOTIFICATION(Hash_v1, 0x0003, All);
 
 #undef DEFINE_LOCKHASH_NOTIFICATION
 
@@ -78,10 +78,14 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a hash lock.
-	struct HashLockNotification : public BaseLockNotification<HashLockNotification> {
+	template<VersionType version>
+	struct HashLockNotification;
+
+	template<>
+	struct HashLockNotification<1> : public BaseLockNotification<HashLockNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockHash_Hash_Notification;
+		static constexpr auto Notification_Type = LockHash_Hash_v1_Notification;
 
 	public:
 		/// Creates hash lock notification around \a signer, \a mosaic, \a duration and \a hash.

@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to hash lock notifications and validates that:
 	/// - attached hash is not present in hash lock info cache
-	DECLARE_STATEFUL_VALIDATOR(HashLockCacheUnique, model::HashLockNotification)();
+	DECLARE_STATEFUL_VALIDATOR(HashLockCacheUnique, model::HashLockNotification<1>)();
 
 	/// A validator implementation that applies to transaction notifications and validates that:
 	/// - incomplete aggregate transactions must have an active, unused hash lock info present in cache
