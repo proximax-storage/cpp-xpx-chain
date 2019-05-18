@@ -43,7 +43,7 @@ namespace catapult { namespace model {
 	DEFINE_NAMESPACE_NOTIFICATION(Child_Registration_v1, 0x0022, All);
 
 	/// Namespace rental fee has been sent.
-	DEFINE_NAMESPACE_NOTIFICATION(Rental_Fee, 0x0030, Observer);
+	DEFINE_NAMESPACE_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
 
 #undef DEFINE_NAMESPACE_NOTIFICATION
 
@@ -172,10 +172,14 @@ namespace catapult { namespace model {
 	// region rental fee
 
 	/// Notification of a namespace rental fee.
-	struct NamespaceRentalFeeNotification : public BasicBalanceNotification<NamespaceRentalFeeNotification> {
+	template<VersionType version>
+	struct NamespaceRentalFeeNotification;
+
+	template<>
+	struct NamespaceRentalFeeNotification<1> : public BasicBalanceNotification<NamespaceRentalFeeNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Rental_Fee_Notification;
+		static constexpr auto Notification_Type = Namespace_Rental_Fee_v1_Notification;
 
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.

@@ -193,7 +193,7 @@ namespace catapult { namespace plugins {
 				builder
 					.add(observers::CreateRootNamespaceObserver())
 					.add(observers::CreateChildNamespaceObserver())
-					.add(observers::CreateRentalFeeObserver<model::NamespaceRentalFeeNotification>("Namespace", rentalFeeReceiptType))
+					.add(observers::CreateRentalFeeObserver<model::NamespaceRentalFeeNotification<1>>("Namespace", rentalFeeReceiptType))
 					.add(observers::CreateCacheBlockTouchObserver<cache::NamespaceCache>("Namespace", expiryReceiptType))
 					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1, maxRollbackBlocks));
 			});

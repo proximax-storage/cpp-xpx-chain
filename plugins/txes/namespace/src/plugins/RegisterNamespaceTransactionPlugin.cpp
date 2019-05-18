@@ -51,7 +51,7 @@ namespace catapult { namespace plugins {
 				}
 
 				sub.notify(BalanceTransferNotification<1>(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
-				sub.notify(NamespaceRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
+				sub.notify(NamespaceRentalFeeNotification<1>(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
 				break;
 
 			default:
