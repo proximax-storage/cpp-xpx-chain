@@ -38,7 +38,7 @@ namespace catapult { namespace model {
 	DEFINE_MOSAIC_NOTIFICATION(Definition_v1, 0x0013, All);
 
 	/// Mosaic nonce and id were provided.
-	DEFINE_MOSAIC_NOTIFICATION(Nonce, 0x0014, Validator);
+	DEFINE_MOSAIC_NOTIFICATION(Nonce_v1, 0x0014, Validator);
 
 	/// Mosaic supply was changed.
 	DEFINE_MOSAIC_NOTIFICATION(Supply_Change, 0x0022, All);
@@ -110,15 +110,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a mosaic nonce and id.
-	struct MosaicNonceNotification : public Notification {
+	template<VersionType version>
+	struct MosaicNonceNotification;
+
+	template<>
+	struct MosaicNonceNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Nonce_Notification;
+		static constexpr auto Notification_Type = Mosaic_Nonce_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicNonce and \a mosaicId.
 		explicit MosaicNonceNotification(const Key& signer, MosaicNonce mosaicNonce, catapult::MosaicId mosaicId)
-				: Notification(Notification_Type, sizeof(MosaicNonceNotification))
+				: Notification(Notification_Type, sizeof(MosaicNonceNotification<1>))
 				, Signer(signer)
 				, MosaicNonce(mosaicNonce)
 				, MosaicId(mosaicId)

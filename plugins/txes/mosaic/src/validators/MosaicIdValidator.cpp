@@ -23,7 +23,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicNonceNotification;
+	using Notification = model::MosaicNonceNotification<1>;
 
 	DEFINE_STATELESS_VALIDATOR(MosaicId, [](const auto& notification) {
 		if (MosaicId() == notification.MosaicId)
