@@ -122,7 +122,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanRaiseAggregateCosignaturesNotificationsFromEmptyAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
 		AggregateCosignersNotificationPublisher publisher;
 		auto wrapper = test::CreateAggregateTransaction(0);
 
@@ -144,7 +144,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanRaiseAggregateCosignaturesNotificationsFromAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
 		AggregateCosignersNotificationPublisher publisher;
 		auto wrapper = test::CreateAggregateTransaction(2);
 

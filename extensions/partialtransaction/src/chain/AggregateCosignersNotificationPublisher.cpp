@@ -51,7 +51,7 @@ namespace catapult { namespace chain {
 		auto numCosignatures = transactionInfo.cosignatures().size();
 		switch (aggregate.Version) {
 		case 2:
-			sub.notify(model::AggregateCosignaturesNotification(
+			sub.notify(model::AggregateCosignaturesNotification<1>(
 					aggregate.Signer,
 					static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
 					aggregate.TransactionsPtr(),

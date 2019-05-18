@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
 	///  - all cosigners are eligible counterparties
-	stateful::NotificationValidatorPointerT<model::AggregateCosignaturesNotification>
+	stateful::NotificationValidatorPointerT<model::AggregateCosignaturesNotification<1>>
 	CreateMultisigAggregateEligibleCosignersValidator();
 
 	/// A validator implementation that applies to aggregate embeded transaction notifications and validates that:

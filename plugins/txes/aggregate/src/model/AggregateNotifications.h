@@ -31,7 +31,7 @@ namespace catapult { namespace model {
 #define DEFINE_AGGREGATE_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Aggregate, DESCRIPTION, CODE)
 
 	/// Aggregate was received with cosignatures.
-	DEFINE_AGGREGATE_NOTIFICATION(Cosignatures, 0x001, Validator);
+	DEFINE_AGGREGATE_NOTIFICATION(Cosignatures_v1, 0x001, Validator);
 
 	/// Aggregate was received with an embedded transaction.
 	DEFINE_AGGREGATE_NOTIFICATION(EmbeddedTransaction_v1, 0x002, Validator);
@@ -91,10 +91,14 @@ namespace catapult { namespace model {
 
 	/// Notification of an aggregate transaction with transactions and cosignatures.
 	/// \note TransactionsPtr and CosignaturesPtr are provided instead of minimally required keys in order to support undoing.
-	struct AggregateCosignaturesNotification : public BasicAggregateNotification<AggregateCosignaturesNotification> {
+	template<VersionType version>
+	struct AggregateCosignaturesNotification;
+
+	template<>
+	struct AggregateCosignaturesNotification<1> : public BasicAggregateNotification<AggregateCosignaturesNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Aggregate_Cosignatures_Notification;
+		static constexpr auto Notification_Type = Aggregate_Cosignatures_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a transactionsCount, \a pTransactions, \a cosignaturesCount and \a pCosignatures.
@@ -104,7 +108,7 @@ namespace catapult { namespace model {
 				const EmbeddedTransaction* pTransactions,
 				size_t cosignaturesCount,
 				const Cosignature* pCosignatures)
-				: BasicAggregateNotification<AggregateCosignaturesNotification>(signer, cosignaturesCount, pCosignatures)
+				: BasicAggregateNotification<AggregateCosignaturesNotification<1>>(signer, cosignaturesCount, pCosignatures)
 				, TransactionsCount(transactionsCount)
 				, TransactionsPtr(pTransactions)
 		{}

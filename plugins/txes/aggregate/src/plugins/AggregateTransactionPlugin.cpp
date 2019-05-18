@@ -66,7 +66,7 @@ namespace catapult { namespace plugins {
 					// publish aggregate notifications
 					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
 					auto numCosignatures = aggregate.CosignaturesCount();
-					sub.notify(AggregateCosignaturesNotification(
+					sub.notify(AggregateCosignaturesNotification<1>(
 							aggregate.Signer,
 							static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
 							aggregate.TransactionsPtr(),

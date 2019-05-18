@@ -46,7 +46,7 @@ namespace catapult { namespace validators {
 			for (auto i = 0u; i < cosigners.size(); ++i)
 				cosignatures[i].Signer = cosigners[i];
 
-			using Notification = model::AggregateCosignaturesNotification;
+			using Notification = model::AggregateCosignaturesNotification<1>;
 			Notification notification(signer, txSigners.size(), pTransactions, cosigners.size(), cosignatures.data());
 			auto pValidator = CreateStrictAggregateCosignaturesValidator();
 

@@ -182,7 +182,7 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numNotifications());
 
 		// - aggregate cosignatures notification must be the first raised notification
-		EXPECT_EQ(Aggregate_Cosignatures_Notification, sub.notificationTypes()[0]);
+		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[0]);
 	}
 
 	TEST(TEST_CLASS, CanRaiseCorrectNumberOfNotificationsFromAggregate) {
@@ -205,7 +205,7 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u + 3 + 2 + 4 + 2 + 2, sub.numNotifications());
 
 		// - aggregate cosignatures notification must be the first raised notification
-		EXPECT_EQ(Aggregate_Cosignatures_Notification, sub.notificationTypes()[0]);
+		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[0]);
 
 		// - source change notification must be the first raised sub-transaction notification
 		for (auto i = 0u; i < 2u; ++i) {
@@ -406,7 +406,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRaiseAggregateCosignaturesNotificationsFromEmptyAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
 		auto wrapper = CreateAggregateTransaction(0, 0);
@@ -426,7 +426,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRaiseAggregateCosignaturesNotificationsFromAggregate) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
 		auto wrapper = CreateAggregateTransaction(2, 3);
