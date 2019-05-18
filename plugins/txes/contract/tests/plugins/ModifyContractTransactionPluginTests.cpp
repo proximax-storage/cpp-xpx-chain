@@ -265,7 +265,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishReputationUpdateNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
@@ -281,7 +281,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(NoReputationUpdateNotificationIfNoModificationIsPresent) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);

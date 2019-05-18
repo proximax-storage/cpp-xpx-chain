@@ -32,9 +32,9 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
+			std::vector<const CosignatoryModification*> reputationModificationKeys;
 			switch (transaction.Version) {
 			case 3:
-				std::vector<const CosignatoryModification*> reputationModificationKeys;
 				if (0 < transaction.ExecutorModificationCount) {
 					const auto* pModification = transaction.ExecutorModificationsPtr();
 					for (auto i = 0u; i < transaction.ExecutorModificationCount; ++i, ++pModification) {
@@ -72,7 +72,7 @@ namespace catapult { namespace plugins {
 					transaction.VerifierModificationsPtr()));
 
 				if (!reputationModificationKeys.empty())
-					sub.notify(*ReputationUpdateNotification::CreateReputationUpdateNotification(reputationModificationKeys));
+					sub.notify(*ReputationUpdateNotification<1>::CreateReputationUpdateNotification(reputationModificationKeys));
 				break;
 
 			default:

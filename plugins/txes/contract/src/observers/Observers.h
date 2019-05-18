@@ -29,7 +29,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(ModifyContract, model::ModifyContractNotification)(config::ContractConfiguration config);
 
 	/// Observes changes triggered by update reputation notifications
-	DECLARE_OBSERVER(ReputationUpdate, model::ReputationUpdateNotification)();
+	DECLARE_OBSERVER(ReputationUpdate, model::ReputationUpdateNotification<1>)();
 
 	/// Observes clean up contract, account and multisig cache, when balance of multisig account is zero
 	DECLARE_OBSERVER(CleanUpContract, model::BalanceTransferNotification<1>)();
