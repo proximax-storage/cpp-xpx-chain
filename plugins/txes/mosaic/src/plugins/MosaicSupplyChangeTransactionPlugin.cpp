@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.Version) {
 			case 2:
 				sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
-				sub.notify(MosaicSupplyChangeNotification(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
+				sub.notify(MosaicSupplyChangeNotification<1>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
 				break;
 
 			default:

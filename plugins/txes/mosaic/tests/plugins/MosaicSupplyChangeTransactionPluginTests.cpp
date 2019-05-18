@@ -91,7 +91,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishMosaicSupplyChangeNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<MosaicSupplyChangeNotification> sub;
+		mocks::MockTypedNotificationSubscriber<MosaicSupplyChangeNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;

@@ -105,7 +105,7 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(owner);
 
 			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(maxMosaics);
-			auto notification = model::MosaicSupplyChangeNotification(owner, mosaicId, direction, Amount(100));
+			auto notification = model::MosaicSupplyChangeNotification<1>(owner, mosaicId, direction, Amount(100));
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

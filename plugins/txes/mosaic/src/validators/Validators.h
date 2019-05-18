@@ -66,7 +66,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - direction has a valid value
 	/// - delta amount is non-zero
-	DECLARE_STATELESS_VALIDATOR(MosaicSupplyChange, model::MosaicSupplyChangeNotification)();
+	DECLARE_STATELESS_VALIDATOR(MosaicSupplyChange, model::MosaicSupplyChangeNotification<1>)();
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - transferred mosaic is active and is transferable
@@ -78,11 +78,11 @@ namespace catapult { namespace validators {
 	/// - decrease does not cause owner amount to become negative
 	/// - increase does not cause total divisible units to exceed \a maxDivisibleUnits
 	/// \note This validator is dependent on MosaicChangeAllowedValidator.
-	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification)(Amount maxDivisibleUnits);
+	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification<1>)(Amount maxDivisibleUnits);
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the account changing the supply does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification)(uint16_t maxMosaics);
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)(uint16_t maxMosaics);
 
 	// endregion
 
