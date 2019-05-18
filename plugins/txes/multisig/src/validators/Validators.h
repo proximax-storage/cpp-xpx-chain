@@ -62,7 +62,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to modify multisig settings notifications and validates that:
 	/// - new min removal and min approval are greater than 0
 	/// - new min removal and min approval settings are not greater than total number of cosignatories
-	stateful::NotificationValidatorPointerT<model::ModifyMultisigSettingsNotification>
+	stateful::NotificationValidatorPointerT<model::ModifyMultisigSettingsNotification<1>>
 	CreateModifyMultisigInvalidSettingsValidator();
 
 	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:

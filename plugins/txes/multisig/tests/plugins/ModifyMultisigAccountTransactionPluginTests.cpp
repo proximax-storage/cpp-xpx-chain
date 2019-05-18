@@ -135,7 +135,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishSettingsNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigSettingsNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigSettingsNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;

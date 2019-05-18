@@ -32,10 +32,10 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
+			utils::KeySet addedCosignatoryKeys;
 			switch (transaction.Version) {
 			case 3:
 				// 1. cosig changes
-				utils::KeySet addedCosignatoryKeys;
 				if (0 < transaction.ModificationsCount) {
 					// raise new cosigner notifications first because they are used for multisig loop detection
 					const auto* pModifications = transaction.ModificationsPtr();
@@ -54,7 +54,7 @@ namespace catapult { namespace plugins {
 					sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, addedCosignatoryKeys));
 
 				// 2. setting changes
-				sub.notify(ModifyMultisigSettingsNotification(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));
+				sub.notify(ModifyMultisigSettingsNotification<1>(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));
 				break;
 
 			default:

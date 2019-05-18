@@ -28,7 +28,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyMultisigSettingsNotification;
+	using Notification = model::ModifyMultisigSettingsNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(ModifyMultisigInvalidSettings, [](const auto& notification, const ValidatorContext& context) {
 		const auto& multisigCache = context.Cache.sub<cache::MultisigCache>();

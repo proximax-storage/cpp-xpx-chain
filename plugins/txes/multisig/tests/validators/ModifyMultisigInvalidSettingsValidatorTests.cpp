@@ -36,10 +36,10 @@ namespace catapult { namespace validators {
 		using Modifications = std::vector<model::CosignatoryModification>;
 
 		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta) {
-			return model::ModifyMultisigSettingsNotification(signer, minRemovalDelta, minApprovalDelta);
+			return model::ModifyMultisigSettingsNotification<1>(signer, minRemovalDelta, minApprovalDelta);
 		}
 
-		auto GetValidationResult(const cache::CatapultCache& cache, const model::ModifyMultisigSettingsNotification& notification) {
+		auto GetValidationResult(const cache::CatapultCache& cache, const model::ModifyMultisigSettingsNotification<1>& notification) {
 			// Arrange:
 			auto pValidator = CreateModifyMultisigInvalidSettingsValidator();
 
@@ -65,7 +65,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureIfAccountIsUnknownAndAtLeastOneDeltaIsNotSetToMinusOne) {
 		// Arrange:
 		auto signer = test::GenerateRandomData<Key_Size>();
-		std::vector<model::ModifyMultisigSettingsNotification> notifications{
+		std::vector<model::ModifyMultisigSettingsNotification<1>> notifications{
 			CreateNotification(signer, 0, 1),
 			CreateNotification(signer, 0, -1),
 			CreateNotification(signer, -1, 0)

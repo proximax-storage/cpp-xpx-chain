@@ -31,5 +31,5 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by modify multisig settings notifications and:
 	/// - sets new values of min removal and min approval
-	DECLARE_OBSERVER(ModifyMultisigSettings, model::ModifyMultisigSettingsNotification)();
+	DECLARE_OBSERVER(ModifyMultisigSettings, model::ModifyMultisigSettingsNotification<1>)();
 }}

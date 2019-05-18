@@ -32,7 +32,7 @@ namespace catapult { namespace observers {
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::MultisigCacheFactory>;
-		using Notification = model::ModifyMultisigSettingsNotification;
+		using Notification = model::ModifyMultisigSettingsNotification<1>;
 
 		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta) {
 			return Notification(signer, minRemovalDelta, minApprovalDelta);

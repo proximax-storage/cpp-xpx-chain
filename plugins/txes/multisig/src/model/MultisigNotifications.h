@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 	DEFINE_MULTISIG_NOTIFICATION(Modify_New_Cosigner_v1, 0x0002, Validator);
 
 	/// Multisig account settings were modified.
-	DEFINE_MULTISIG_NOTIFICATION(Modify_Settings, 0x1001, All);
+	DEFINE_MULTISIG_NOTIFICATION(Modify_Settings_v1, 0x1001, All);
 
 #undef DEFINE_MULTISIG_NOTIFICATION
 
@@ -102,15 +102,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a multisig settings modification.
-	struct ModifyMultisigSettingsNotification : public Notification {
+	template<VersionType version>
+	struct ModifyMultisigSettingsNotification;
+
+	template<>
+	struct ModifyMultisigSettingsNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Multisig_Modify_Settings_Notification;
+		static constexpr auto Notification_Type = Multisig_Modify_Settings_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a minRemovalDelta and \a minApprovalDelta.
 		explicit ModifyMultisigSettingsNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta)
-				: Notification(Notification_Type, sizeof(ModifyMultisigSettingsNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigSettingsNotification<1>))
 				, Signer(signer)
 				, MinRemovalDelta(minRemovalDelta)
 				, MinApprovalDelta(minApprovalDelta)
