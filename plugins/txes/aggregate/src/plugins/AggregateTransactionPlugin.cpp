@@ -90,7 +90,7 @@ namespace catapult { namespace plugins {
 								subTransaction.EntityVersion()));
 
 						// - generic sub-transaction notification
-						sub.notify(AggregateEmbeddedTransactionNotification(
+						sub.notify(AggregateEmbeddedTransactionNotification<1>(
 								aggregate.Signer,
 								subTransaction,
 								numCosignatures,

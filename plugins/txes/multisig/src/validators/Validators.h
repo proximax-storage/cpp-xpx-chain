@@ -72,6 +72,6 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to aggregate embeded transaction notifications and validates that:
 	///  - present cosigners are sufficient
-	stateful::NotificationValidatorPointerT<model::AggregateEmbeddedTransactionNotification>
+	stateful::NotificationValidatorPointerT<model::AggregateEmbeddedTransactionNotification<1>>
 	CreateMultisigAggregateSufficientCosignersValidator();
 }}

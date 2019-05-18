@@ -214,7 +214,7 @@ namespace catapult { namespace plugins {
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[offset + 1]) << message;
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[offset + 2]) << message;
 			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[offset + 3]) << message;
-			EXPECT_EQ(Aggregate_EmbeddedTransaction_Notification, sub.notificationTypes()[offset + 4]) << message;
+			EXPECT_EQ(Aggregate_EmbeddedTransaction_v1_Notification, sub.notificationTypes()[offset + 4]) << message;
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[offset + 5]) << message;
 		}
 
@@ -323,7 +323,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		void AssertCanRaiseEmbeddedTransactionNotifications(uint8_t numTransactions, uint8_t numCosignatures) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification> sub;
+			mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
 			auto registry = mocks::CreateDefaultTransactionRegistry();
 			auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures);

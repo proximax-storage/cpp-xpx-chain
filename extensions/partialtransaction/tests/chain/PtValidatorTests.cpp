@@ -346,8 +346,8 @@ namespace catapult { namespace chain {
 			if (!expectedResult.IsShortCircuited) {
 				ASSERT_EQ(3u, notificationTypes.size());
 				EXPECT_EQ(model::Aggregate_Cosignatures_Notification, notificationTypes[0]);
-				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_Notification, notificationTypes[1]);
-				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_Notification, notificationTypes[2]);
+				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[1]);
+				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[2]);
 			} else {
 				ASSERT_EQ(1u, notificationTypes.size());
 				EXPECT_EQ(model::Aggregate_Cosignatures_Notification, notificationTypes[0]);

@@ -34,7 +34,7 @@ namespace catapult { namespace model {
 	DEFINE_AGGREGATE_NOTIFICATION(Cosignatures, 0x001, Validator);
 
 	/// Aggregate was received with an embedded transaction.
-	DEFINE_AGGREGATE_NOTIFICATION(EmbeddedTransaction, 0x002, Validator);
+	DEFINE_AGGREGATE_NOTIFICATION(EmbeddedTransaction_v1, 0x002, Validator);
 
 #undef DEFINE_AGGREGATE_NOTIFICATION
 
@@ -64,10 +64,14 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of an embedded aggregate transaction with cosignatures.
-	struct AggregateEmbeddedTransactionNotification : public BasicAggregateNotification<AggregateEmbeddedTransactionNotification> {
+	template<VersionType version>
+	struct AggregateEmbeddedTransactionNotification;
+
+	template<>
+	struct AggregateEmbeddedTransactionNotification<1> : public BasicAggregateNotification<AggregateEmbeddedTransactionNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Aggregate_EmbeddedTransaction_Notification;
+		static constexpr auto Notification_Type = Aggregate_EmbeddedTransaction_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a transaction, \a cosignaturesCount and \a pCosignatures.
@@ -76,7 +80,7 @@ namespace catapult { namespace model {
 				const EmbeddedTransaction& transaction,
 				size_t cosignaturesCount,
 				const Cosignature* pCosignatures)
-				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification>(signer, cosignaturesCount, pCosignatures)
+				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification<1>>(signer, cosignaturesCount, pCosignatures)
 				, Transaction(transaction)
 		{}
 

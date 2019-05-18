@@ -35,7 +35,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, NonAggregateTransactionIsNotSupported) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
 		AggregateCosignersNotificationPublisher publisher;
 		auto wrapper = test::CreateAggregateTransaction(2);
 
@@ -52,7 +52,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, AggregateWithCosignaturesIsNotSupported) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
 		AggregateCosignersNotificationPublisher publisher;
 		auto wrapper = test::CreateAggregateTransaction(2);
 
@@ -77,7 +77,7 @@ namespace catapult { namespace chain {
 				uint8_t numCosignatures,
 				model::EntityType transactionType) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification> sub;
+			mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
 			AggregateCosignersNotificationPublisher publisher;
 			auto wrapper = test::CreateAggregateTransaction(numTransactions);
 			wrapper.pTransaction->Type = transactionType;

@@ -26,7 +26,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AggregateEmbeddedTransactionNotification;
+	using Notification = model::AggregateEmbeddedTransactionNotification<1>;
 
 	namespace {
 		enum class OperationType { Normal, Removal, Max };
