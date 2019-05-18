@@ -89,7 +89,7 @@ namespace catapult { namespace model {
 
 			void publish(const Block& block, NotificationSubscriber& sub) const {
 				// raise an entity notification
-				switch (block.Version) {
+				switch (block.EntityVersion()) {
 				case 3: {
 					sub.notify(EntityNotification<1>(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion()));
 
@@ -109,7 +109,7 @@ namespace catapult { namespace model {
 				}
 
 				default:
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of Block", block.Version);
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of Block", block.EntityVersion());
 				}
 			}
 

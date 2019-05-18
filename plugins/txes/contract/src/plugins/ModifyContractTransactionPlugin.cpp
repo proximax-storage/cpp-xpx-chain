@@ -32,7 +32,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			switch (transaction.Version) {
+			switch (transaction.EntityVersion()) {
 			case 3: {
 				std::vector<const CosignatoryModification*> reputationModificationKeys;
 				if (0 < transaction.ExecutorModificationCount) {
@@ -77,7 +77,7 @@ namespace catapult { namespace plugins {
 			}
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ModifyContractTransaction", transaction.Version);
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ModifyContractTransaction", transaction.EntityVersion());
 			}
 		}
 	}

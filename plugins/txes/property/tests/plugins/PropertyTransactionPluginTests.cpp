@@ -33,6 +33,8 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS PropertyTransactionPluginTests
 
 	namespace {
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(AddressProperty, 1, 1, AddressProperty)
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(MosaicProperty, 1, 1, MosaicProperty)
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(TransactionTypeProperty, 1, 1, TransactionTypeProperty)
@@ -89,6 +91,7 @@ namespace catapult { namespace plugins {
 			using TransactionType = typename TTraits::TransactionType;
 			uint32_t entitySize = sizeof(TransactionType) + 12 * PropertyModificationSize();
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->ModificationsCount = 12;
 			auto* pModification = pTransaction->ModificationsPtr();
@@ -127,6 +130,7 @@ namespace catapult { namespace plugins {
 			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
+			transaction.Version = Transaction_Version;
 			transaction.ModificationsCount = 0;
 
 			// Act:

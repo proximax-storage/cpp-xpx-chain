@@ -33,6 +33,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AccountLink, 2, 2)
+		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 2);
 	}
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Account_Link)
@@ -57,6 +58,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 
@@ -77,6 +79,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 
@@ -94,6 +97,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		transaction.Type = static_cast<model::EntityType>(0x0815);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
@@ -116,6 +120,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Unlink;

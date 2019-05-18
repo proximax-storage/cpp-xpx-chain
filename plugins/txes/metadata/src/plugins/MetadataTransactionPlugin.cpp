@@ -39,7 +39,7 @@ namespace catapult { namespace plugins {
         public:
             template<typename TTransaction>
             static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-				switch (transaction.Version) {
+				switch (transaction.EntityVersion()) {
 				case 1: {
 					sub.notify(MetadataTypeNotification<1>(transaction.MetadataType));
 					sub.notify(CreateMetadataModificationsNotification<TTransaction>(transaction));
@@ -69,7 +69,7 @@ namespace catapult { namespace plugins {
 				}
 
 				default:
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MetadataTransaction", transaction.Version);
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MetadataTransaction", transaction.EntityVersion());
 				}
             }
 

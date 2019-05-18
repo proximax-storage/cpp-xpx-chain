@@ -32,7 +32,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			switch (transaction.Version) {
+			switch (transaction.EntityVersion()) {
 			case 3: {
 				// 1. cosig changes
 				utils::KeySet addedCosignatoryKeys;
@@ -59,7 +59,7 @@ namespace catapult { namespace plugins {
 			}
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ModifyMultisigAccountTransaction", transaction.Version);
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ModifyMultisigAccountTransaction", transaction.EntityVersion());
 			}
 		}
 	}

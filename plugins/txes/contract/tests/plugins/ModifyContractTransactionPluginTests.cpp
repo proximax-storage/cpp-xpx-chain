@@ -36,6 +36,8 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS ModifyContractTransactionPluginTests
 
 	namespace {
+		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 3);
+
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract, 3, 3)
 
 		CosignatoryModification GenerateModification(int index) {
@@ -55,6 +57,7 @@ namespace catapult { namespace plugins {
 				+ executorModificationCount * sizeof(CosignatoryModification)
 				+ verifierModificationCount * sizeof(CosignatoryModification);
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->CustomerModificationCount = customerModificationCount;
 			pTransaction->ExecutorModificationCount = executorModificationCount;

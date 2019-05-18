@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			switch (transaction.Version) {
+			switch (transaction.EntityVersion()) {
 			case 1:
 				sub.notify(HashLockDurationNotification<1>(transaction.Duration));
 				sub.notify(HashLockMosaicNotification<1>(transaction.Mosaic));
@@ -40,7 +40,7 @@ namespace catapult { namespace plugins {
 				break;
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of HashLockTransaction", transaction.Version);
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of HashLockTransaction", transaction.EntityVersion());
 			}
 		}
 	}

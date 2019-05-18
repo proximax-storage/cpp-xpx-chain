@@ -49,7 +49,7 @@ namespace catapult { namespace chain {
 		// publish aggregate notifications
 		const auto& aggregate = CoerceToAggregate(transactionInfo.transaction());
 		auto numCosignatures = transactionInfo.cosignatures().size();
-		switch (aggregate.Version) {
+		switch (aggregate.EntityVersion()) {
 		case 2:
 			sub.notify(model::AggregateCosignaturesNotification<1>(
 					aggregate.Signer,
@@ -70,7 +70,7 @@ namespace catapult { namespace chain {
 			break;
 
 		default:
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AggregateTransaction", aggregate.Version);
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AggregateTransaction", aggregate.EntityVersion());
 		}
 	}
 }}

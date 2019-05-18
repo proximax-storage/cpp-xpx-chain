@@ -120,7 +120,7 @@ namespace catapult { namespace model {
 	TEST(TEST_CLASS, CanRaiseBlockEntityNotifications) {
 		// Arrange:
 		auto pBlock = test::GenerateEmptyRandomBlock();
-		pBlock->Version = 0x1100005A;
+		pBlock->Version = 0x11000003;
 
 		// Act:
 		PublishOne<EntityNotification<1>>(*pBlock, [](const auto& notification) {
@@ -129,7 +129,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
 			EXPECT_EQ(expectedVersion, notification.MinVersion);
 			EXPECT_EQ(expectedVersion, notification.MaxVersion);
-			EXPECT_EQ(0x5Au, notification.EntityVersion);
+			EXPECT_EQ(0x03u, notification.EntityVersion);
 		});
 	}
 

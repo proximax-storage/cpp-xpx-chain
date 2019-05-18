@@ -40,6 +40,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		constexpr auto Entity_Type = static_cast<EntityType>(9876);
+		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 2);
 
 		struct AggregateTransactionWrapper {
 			std::unique_ptr<AggregateTransaction> pTransaction;
@@ -58,6 +59,7 @@ namespace catapult { namespace plugins {
 
 			AggregateTransactionWrapper wrapper;
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->PayloadSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 			test::FillWithRandomData(pTransaction->Signer);

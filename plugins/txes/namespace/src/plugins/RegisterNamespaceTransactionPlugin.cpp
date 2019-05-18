@@ -36,7 +36,7 @@ namespace catapult { namespace plugins {
 				const TTransaction& transaction,
 				NotificationSubscriber& sub) {
 			auto rentalFee = config.ChildFee;
-			switch (transaction.Version) {
+			switch (transaction.EntityVersion()) {
 			case 2:
 				// a. exempt the nemesis account
 				if (config.NemesisPublicKey == transaction.Signer)
@@ -55,14 +55,14 @@ namespace catapult { namespace plugins {
 				break;
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of RegisterNamespaceTransaction", transaction.Version);
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of RegisterNamespaceTransaction", transaction.EntityVersion());
 			}
 		}
 
 		template<typename TTransaction>
 		auto CreatePublisher(const NamespaceRentalFeeConfiguration& config) {
 			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
-				switch (transaction.Version) {
+				switch (transaction.EntityVersion()) {
 				case 2: {
 					// 1. sink account notification
 					sub.notify(AccountPublicKeyNotification<1>(config.SinkPublicKey));
@@ -91,7 +91,7 @@ namespace catapult { namespace plugins {
 				}
 
 				default:
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of RegisterNamespaceTransaction", transaction.Version);
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of RegisterNamespaceTransaction", transaction.EntityVersion());
 				}
 			};
 		}

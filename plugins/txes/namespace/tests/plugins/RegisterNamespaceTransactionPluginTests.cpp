@@ -38,6 +38,7 @@ namespace catapult { namespace plugins {
 		TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(RegisterNamespace, NamespaceRentalFeeConfiguration, 2, 2)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
 
 		NamespaceRentalFeeConfiguration CreateRentalFeeConfiguration(Amount rootFeePerBlock, Amount childFee) {
 			return {
@@ -53,6 +54,7 @@ namespace catapult { namespace plugins {
 		template<typename TTraits>
 		auto CreateTransactionFromTraits(model::NamespaceType namespaceType) {
 			auto pTransaction = std::make_unique<typename TTraits::TransactionType>();
+			pTransaction->Version = Transaction_Version;
 			pTransaction->NamespaceType = namespaceType;
 			test::FillWithRandomData(pTransaction->Signer);
 			return pTransaction;
@@ -86,6 +88,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin(config);
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.Duration = BlockDuration(1);
 		test::FillWithRandomData(transaction.Signer);
 
@@ -216,6 +219,7 @@ namespace catapult { namespace plugins {
 			using TransactionType = typename TTraits::TransactionType;
 			uint32_t entitySize = sizeof(TransactionType) + nameSize;
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->NamespaceNameSize = nameSize;
 			test::FillWithRandomData(pTransaction->Signer);

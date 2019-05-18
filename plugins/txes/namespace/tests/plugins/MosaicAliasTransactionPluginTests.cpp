@@ -60,6 +60,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 		transaction.NamespaceId = NamespaceId(123);
 		transaction.AliasAction = model::AliasAction::Unlink;
 		transaction.Signer = test::GenerateRandomData<Key_Size>();

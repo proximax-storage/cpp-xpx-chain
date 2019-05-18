@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			switch (transaction.Version) {
+			switch (transaction.EntityVersion()) {
 			case 3: {
 				sub.notify(AccountAddressNotification<1>(transaction.Recipient));
 				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {transaction.Recipient}));
@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 			}
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of TransferTransaction", transaction.Version);
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of TransferTransaction", transaction.EntityVersion());
 			}
 		}
 	}

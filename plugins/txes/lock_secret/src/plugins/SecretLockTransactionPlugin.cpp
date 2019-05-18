@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			switch (transaction.Version) {
+			switch (transaction.EntityVersion()) {
 			case 1:
 				sub.notify(AccountAddressNotification<1>(transaction.Recipient));
 				sub.notify(SecretLockDurationNotification<1>(transaction.Duration));
@@ -48,7 +48,7 @@ namespace catapult { namespace plugins {
 				break;
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of SecretLockTransaction", transaction.Version);
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of SecretLockTransaction", transaction.EntityVersion());
 			}
 		}
 	}

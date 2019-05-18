@@ -38,6 +38,7 @@ namespace catapult { namespace plugins {
 		TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, MosaicRentalFeeConfiguration, 3, 3)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 
 		MosaicRentalFeeConfiguration CreateRentalFeeConfiguration(Amount fee) {
 			return {
@@ -57,6 +58,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin(CreateRentalFeeConfiguration(Amount(0)));
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.Size = 0;
 		transaction.PropertiesHeader.Count = 2;
 
@@ -74,6 +76,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin(config);
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.PropertiesHeader.Count = 0;
 		test::FillWithRandomData(transaction.Signer);
 
@@ -100,6 +103,7 @@ namespace catapult { namespace plugins {
 
 			// - prepare the transaction
 			typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 			transaction.PropertiesHeader.Count = 0;
 			test::FillWithRandomData(transaction.Signer);
 			if (isSignerExempt)
@@ -144,6 +148,7 @@ namespace catapult { namespace plugins {
 			using TransactionType = typename TTraits::TransactionType;
 			uint32_t entitySize = sizeof(TransactionType) + numProperties * sizeof(MosaicProperty);
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->PropertiesHeader.Count = numProperties;
 			test::FillWithRandomData(pTransaction->Signer);

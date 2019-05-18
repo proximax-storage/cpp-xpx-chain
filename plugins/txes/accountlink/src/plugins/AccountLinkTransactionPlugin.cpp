@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			switch (transaction.Version) {
+			switch (transaction.EntityVersion()) {
 			case 2:
 				// NewRemoteAccountNotification must be raised before AccountPublicKeyNotification because the latter adds account to cache
 				sub.notify(NewRemoteAccountNotification<1>(transaction.RemoteAccountKey));
@@ -41,7 +41,7 @@ namespace catapult { namespace plugins {
 				break;
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountLinkTransaction", transaction.Version);
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountLinkTransaction", transaction.EntityVersion());
 			}
 		}
 	}

@@ -32,7 +32,7 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		auto CreatePublisher(const MosaicRentalFeeConfiguration& config) {
 			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
-				switch (transaction.Version) {
+				switch (transaction.EntityVersion()) {
 				case 3:
 					// 1. sink account notification
 					sub.notify(AccountPublicKeyNotification<1>(config.SinkPublicKey));
@@ -54,7 +54,7 @@ namespace catapult { namespace plugins {
 					break;
 
 				default:
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicDefinitionTransaction", transaction.Version);
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicDefinitionTransaction", transaction.EntityVersion());
 				}
 			};
 		}

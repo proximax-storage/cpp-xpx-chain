@@ -61,7 +61,7 @@ namespace catapult { namespace plugins {
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
 				const auto& aggregate = CastToDerivedType(transactionInfo.entity());
 
-				switch (aggregate.Version) {
+				switch (aggregate.EntityVersion()) {
 				case 2: {
 					// publish aggregate notifications
 					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
@@ -114,7 +114,7 @@ namespace catapult { namespace plugins {
 				}
 
 				default:
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AggregateTransaction", aggregate.Version);
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AggregateTransaction", aggregate.EntityVersion());
 				}
 			}
 
