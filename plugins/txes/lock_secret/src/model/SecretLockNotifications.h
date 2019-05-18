@@ -33,7 +33,7 @@ namespace catapult { namespace model {
 	DEFINE_LOCKSECRET_NOTIFICATION(Secret_Duration_v1, 0x0001, Validator);
 
 	/// Lock hash algorithm.
-	DEFINE_LOCKSECRET_NOTIFICATION(Hash_Algorithm, 0x0002, Validator);
+	DEFINE_LOCKSECRET_NOTIFICATION(Hash_Algorithm_v1, 0x0002, Validator);
 
 	/// Lock secret.
 	DEFINE_LOCKSECRET_NOTIFICATION(Secret, 0x0003, All);
@@ -63,15 +63,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a secret lock hash algorithm.
-	struct SecretLockHashAlgorithmNotification : public Notification {
+	template<VersionType version>
+	struct SecretLockHashAlgorithmNotification;
+
+	template<>
+	struct SecretLockHashAlgorithmNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Hash_Algorithm_Notification;
+		static constexpr auto Notification_Type = LockSecret_Hash_Algorithm_v1_Notification;
 
 	public:
 		/// Creates secret lock hash algorithm notification around \a hashAlgorithm.
 		SecretLockHashAlgorithmNotification(LockHashAlgorithm hashAlgorithm)
-				: Notification(Notification_Type, sizeof(SecretLockHashAlgorithmNotification))
+				: Notification(Notification_Type, sizeof(SecretLockHashAlgorithmNotification<1>))
 				, HashAlgorithm(hashAlgorithm)
 		{}
 

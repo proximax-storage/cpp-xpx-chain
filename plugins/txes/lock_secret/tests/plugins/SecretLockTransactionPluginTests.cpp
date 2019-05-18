@@ -119,7 +119,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishHashAlgorithmNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<SecretLockHashAlgorithmNotification> sub;
+		mocks::MockTypedNotificationSubscriber<SecretLockHashAlgorithmNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 

@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to secret lock hash algorithm notifications and validates that:
 	/// - hash algorithm is valid
-	DECLARE_STATELESS_VALIDATOR(SecretLockHashAlgorithm, model::SecretLockHashAlgorithmNotification)();
+	DECLARE_STATELESS_VALIDATOR(SecretLockHashAlgorithm, model::SecretLockHashAlgorithmNotification<1>)();
 
 	/// A validator implementation that applies to secret lock notifications and validates that:
 	/// - attached hash is not present in secret lock info cache
