@@ -40,7 +40,7 @@ namespace catapult { namespace model {
 	DEFINE_NAMESPACE_NOTIFICATION(Root_Registration_v1, 0x0021, All);
 
 	/// Child namespace was registered.
-	DEFINE_NAMESPACE_NOTIFICATION(Child_Registration, 0x0022, All);
+	DEFINE_NAMESPACE_NOTIFICATION(Child_Registration_v1, 0x0022, All);
 
 	/// Namespace rental fee has been sent.
 	DEFINE_NAMESPACE_NOTIFICATION(Rental_Fee, 0x0030, Observer);
@@ -140,15 +140,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a child namespace registration.
-	struct ChildNamespaceNotification : public Notification {
+	template<VersionType version>
+	struct ChildNamespaceNotification;
+
+	template<>
+	struct ChildNamespaceNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Child_Registration_Notification;
+		static constexpr auto Notification_Type = Namespace_Child_Registration_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a namespaceId and \a parentId.
 		explicit ChildNamespaceNotification(const Key& signer, NamespaceId namespaceId, NamespaceId parentId)
-				: Notification(Notification_Type, sizeof(ChildNamespaceNotification))
+				: Notification(Notification_Type, sizeof(ChildNamespaceNotification<1>))
 				, Signer(signer)
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)

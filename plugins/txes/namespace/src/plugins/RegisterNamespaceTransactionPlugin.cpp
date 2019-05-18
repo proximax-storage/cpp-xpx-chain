@@ -77,7 +77,7 @@ namespace catapult { namespace plugins {
 						using Notification = RootNamespaceNotification<1>;
 						sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.Duration));
 					} else {
-						using Notification = ChildNamespaceNotification;
+						using Notification = ChildNamespaceNotification<1>;
 						sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.ParentId));
 						parentId = transaction.ParentId;
 					}

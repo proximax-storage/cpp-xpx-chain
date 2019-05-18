@@ -74,7 +74,7 @@ namespace catapult { namespace validators {
 		template<typename TSeedCacheFunc>
 		void RunChildTest(
 				ValidationResult expectedResult,
-				const model::ChildNamespaceNotification& notification,
+				const model::ChildNamespaceNotification<1>& notification,
 				Height height,
 				TSeedCacheFunc seedCache) {
 			// Arrange:
@@ -267,7 +267,7 @@ namespace catapult { namespace validators {
 		for (auto height : { Height(10), Height(15), Height(19) }) {
 			// Act: try to create a child that is not in the cache (parent is root 25)
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto notification = model::ChildNamespaceNotification(signer, NamespaceId(38), NamespaceId(25));
+			auto notification = model::ChildNamespaceNotification<1>(signer, NamespaceId(38), NamespaceId(25));
 			RunChildTest(ValidationResult::Success, notification, height, SeedCacheWithRoot25TreeSigner(signer));
 		}
 	}
@@ -277,7 +277,7 @@ namespace catapult { namespace validators {
 		for (auto height : { Height(10), Height(15), Height(19) }) {
 			// Act: try to create a child that is not in the cache (parent is non-root 36)
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto notification = model::ChildNamespaceNotification(signer, NamespaceId(50), NamespaceId(36));
+			auto notification = model::ChildNamespaceNotification<1>(signer, NamespaceId(50), NamespaceId(36));
 			RunChildTest(ValidationResult::Success, notification, height, SeedCacheWithRoot25TreeSigner(signer));
 		}
 	}
@@ -286,7 +286,7 @@ namespace catapult { namespace validators {
 		// Act: try to create a child that is already in the cache
 		for (auto height : { Height(15), Height(19) }) {
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto notification = model::ChildNamespaceNotification(signer, NamespaceId(36), NamespaceId(25));
+			auto notification = model::ChildNamespaceNotification<1>(signer, NamespaceId(36), NamespaceId(25));
 			RunChildTest(Failure_Namespace_Already_Exists, notification, height, SeedCacheWithRoot25TreeSigner(signer));
 		};
 	}
@@ -298,14 +298,14 @@ namespace catapult { namespace validators {
 	TEST(CHILD_TEST_CLASS, CannotAddChildNamespaceThatHasUnknownParent) {
 		// Act: try to create a child with an unknown (root) parent
 		auto signer = test::GenerateRandomData<Key_Size>();
-		auto notification = model::ChildNamespaceNotification(signer, NamespaceId(38), NamespaceId(26));
+		auto notification = model::ChildNamespaceNotification<1>(signer, NamespaceId(38), NamespaceId(26));
 		RunChildTest(Failure_Namespace_Parent_Unknown, notification, Height(15), SeedCacheWithRoot25TreeSigner(signer));
 	}
 
 	TEST(CHILD_TEST_CLASS, CannotAddChildNamespaceToParentWithMaxNamespaceDepth) {
 		// Act: try to create a child that is too deep
 		auto signer = test::GenerateRandomData<Key_Size>();
-		auto notification = model::ChildNamespaceNotification(signer, NamespaceId(64), NamespaceId(49));
+		auto notification = model::ChildNamespaceNotification<1>(signer, NamespaceId(64), NamespaceId(49));
 		RunChildTest(Failure_Namespace_Too_Deep, notification, Height(15), SeedCacheWithRoot25TreeSigner(signer));
 	}
 
@@ -318,7 +318,7 @@ namespace catapult { namespace validators {
 		for (auto height : { Height(20), Height(25), Height(100) }) {
 			// Act: try to create a child attached to a root that has expired (root namespace expires at height 20)
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto notification = model::ChildNamespaceNotification(signer, NamespaceId(50), NamespaceId(36));
+			auto notification = model::ChildNamespaceNotification<1>(signer, NamespaceId(50), NamespaceId(36));
 			RunChildTest(Failure_Namespace_Expired, notification, height, SeedCacheWithRoot25TreeSigner(signer));
 		}
 	}
@@ -328,7 +328,7 @@ namespace catapult { namespace validators {
 		for (auto height : { Height(10), Height(15), Height(19) }) {
 			// Act: try to create a child attached to a root with a different owner
 			auto signer = test::GenerateRandomData<Key_Size>();
-			auto notification = model::ChildNamespaceNotification(signer, NamespaceId(50), NamespaceId(36));
+			auto notification = model::ChildNamespaceNotification<1>(signer, NamespaceId(50), NamespaceId(36));
 			auto rootSigner = test::CreateRandomOwner();
 			RunChildTest(Failure_Namespace_Owner_Conflict, notification, height, SeedCacheWithRoot25TreeSigner(rootSigner));
 		}

@@ -51,11 +51,11 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to child register namespace transactions and validates that:
 	/// - the namespace is available and can be created
-	DECLARE_STATEFUL_VALIDATOR(ChildNamespaceAvailability, model::ChildNamespaceNotification)();
+	DECLARE_STATEFUL_VALIDATOR(ChildNamespaceAvailability, model::ChildNamespaceNotification<1>)();
 
 	/// A validator implementation that applies to child register namespace transactions and validates that:
 	/// - the maximum number of children (\a maxChildren) for a root namespace is not exceeded
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, model::ChildNamespaceNotification)(uint16_t maxChildren);
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, model::ChildNamespaceNotification<1>)(uint16_t maxChildren);
 
 	/// A validator implementation that applies to alias owner notifications and validates that:
 	/// - alias action is valid

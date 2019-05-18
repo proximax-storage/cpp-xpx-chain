@@ -46,7 +46,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by child namespace notifications, including:
 	/// - creation of namespaces
-	DECLARE_OBSERVER(ChildNamespace, model::ChildNamespaceNotification)();
+	DECLARE_OBSERVER(ChildNamespace, model::ChildNamespaceNotification<1>)();
 
 	// endregion
 }}

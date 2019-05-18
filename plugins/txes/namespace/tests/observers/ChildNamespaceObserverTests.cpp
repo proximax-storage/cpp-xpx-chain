@@ -33,13 +33,13 @@ namespace catapult { namespace observers {
 	DEFINE_COMMON_OBSERVER_TESTS(ChildNamespace,)
 
 	namespace {
-		model::ChildNamespaceNotification CreateChildNotification(const Key& signer, NamespaceId parentId, NamespaceId id) {
-			return model::ChildNamespaceNotification(signer, id, parentId);
+		model::ChildNamespaceNotification<1> CreateChildNotification(const Key& signer, NamespaceId parentId, NamespaceId id) {
+			return model::ChildNamespaceNotification<1>(signer, id, parentId);
 		}
 
 		template<typename TSeedCacheFunc, typename TCheckCacheFunc>
 		void RunChildTest(
-				const model::ChildNamespaceNotification& notification,
+				const model::ChildNamespaceNotification<1>& notification,
 				ObserverTestContext&& context,
 				TSeedCacheFunc seedCache,
 				TCheckCacheFunc checkCache) {
