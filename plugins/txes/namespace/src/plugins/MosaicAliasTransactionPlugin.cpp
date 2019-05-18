@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.Version) {
 			case 1:
 				sub.notify(AliasOwnerNotification<1>(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
-				sub.notify(AliasedMosaicIdNotification(transaction.NamespaceId, transaction.AliasAction, transaction.MosaicId));
+				sub.notify(AliasedMosaicIdNotification_v1(transaction.NamespaceId, transaction.AliasAction, transaction.MosaicId));
 				sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
 				break;
 

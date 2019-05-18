@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.Version) {
 			case 1:
 				sub.notify(AliasOwnerNotification<1>(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
-				sub.notify(AliasedAddressNotification(transaction.NamespaceId, transaction.AliasAction, transaction.Address));
+				sub.notify(AliasedAddressNotification_v1(transaction.NamespaceId, transaction.AliasAction, transaction.Address));
 				break;
 
 			default:

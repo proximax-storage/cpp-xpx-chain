@@ -35,7 +35,7 @@ namespace catapult { namespace plugins {
 
 		struct NotificationTraits {
 		public:
-			using Notification_Type = model::AliasedMosaicIdNotification;
+			using Notification_Type = model::AliasedMosaicIdNotification_v1;
 
 		public:
 			static constexpr size_t NumNotifications() {

@@ -30,11 +30,11 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by aliased address notifications, including:
 	/// - linking/unlinking address to namespace
-	DECLARE_OBSERVER(AliasedAddress, model::AliasedAddressNotification)();
+	DECLARE_OBSERVER(AliasedAddress, model::AliasedAddressNotification_v1)();
 
 	/// Observes changes triggered by aliased mosaic id notifications, including:
 	/// - linking/unlinking mosaic id to namespace
-	DECLARE_OBSERVER(AliasedMosaicId, model::AliasedMosaicIdNotification)();
+	DECLARE_OBSERVER(AliasedMosaicId, model::AliasedMosaicIdNotification_v1)();
 
 	// endregion
 

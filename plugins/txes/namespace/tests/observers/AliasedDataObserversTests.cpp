@@ -51,7 +51,7 @@ namespace catapult { namespace observers {
 		};
 
 		struct AddressTraits {
-			using NotificationType = model::AliasedAddressNotification;
+			using NotificationType = model::AliasedAddressNotification_v1;
 			using AliasType = Address;
 
 			static auto CreateObserver() {
@@ -60,7 +60,7 @@ namespace catapult { namespace observers {
 		};
 
 		struct MosaicIdTraits {
-			using NotificationType = model::AliasedMosaicIdNotification;
+			using NotificationType = model::AliasedMosaicIdNotification_v1;
 			using AliasType = MosaicId;
 
 			static auto CreateObserver() {

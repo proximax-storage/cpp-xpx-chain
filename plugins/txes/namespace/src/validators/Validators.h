@@ -70,13 +70,13 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to aliased address notifications and validates that:
 	/// - unlink operation matches existing link
-	DECLARE_STATEFUL_VALIDATOR(UnlinkAliasedAddressConsistency, model::AliasedAddressNotification)();
+	DECLARE_STATEFUL_VALIDATOR(UnlinkAliasedAddressConsistency, model::AliasedAddressNotification_v1)();
 
 	/// A validator implementation that applies to aliased mosaic id notifications and validates that:
 	/// - unlink operation matches existing link
-	DECLARE_STATEFUL_VALIDATOR(UnlinkAliasedMosaicIdConsistency, model::AliasedMosaicIdNotification)();
+	DECLARE_STATEFUL_VALIDATOR(UnlinkAliasedMosaicIdConsistency, model::AliasedMosaicIdNotification_v1)();
 
 	/// A validator implementation that applies to aliased address notifications and validates that:
 	/// - account is known
-	DECLARE_STATEFUL_VALIDATOR(AddressAlias, model::AliasedAddressNotification)();
+	DECLARE_STATEFUL_VALIDATOR(AddressAlias, model::AliasedAddressNotification_v1)();
 }}

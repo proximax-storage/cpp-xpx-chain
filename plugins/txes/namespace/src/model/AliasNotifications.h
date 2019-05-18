@@ -35,10 +35,10 @@ namespace catapult { namespace model {
 	DEFINE_NAMESPACE_NOTIFICATION(Alias_Owner_v1, 0x0081, Validator);
 
 	/// Address alias was un/linked.
-	DEFINE_NAMESPACE_NOTIFICATION(Aliased_Address, 0x0091, All);
+	DEFINE_NAMESPACE_NOTIFICATION(Aliased_Address_v1, 0x0091, All);
 
 	/// Mosaic alias was un/linked.
-	DEFINE_NAMESPACE_NOTIFICATION(Aliased_MosaicId, 0x0092, All);
+	DEFINE_NAMESPACE_NOTIFICATION(Aliased_MosaicId_v1, 0x0092, All);
 
 #undef DEFINE_NAMESPACE_NOTIFICATION
 
@@ -89,10 +89,13 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of aliased data.
+	template<typename TAliasedData, NotificationType Aliased_Notification_Type, VersionType version>
+	struct AliasedDataNotification;
+
 	template<typename TAliasedData, NotificationType Aliased_Notification_Type>
-	struct AliasedDataNotification : public BaseAliasNotification {
+	struct AliasedDataNotification<TAliasedData, Aliased_Notification_Type, 1> : public BaseAliasNotification {
 	private:
-		using AliasedNotification = AliasedDataNotification<TAliasedData, Aliased_Notification_Type>;
+		using AliasedNotification = AliasedDataNotification<TAliasedData, Aliased_Notification_Type, 1>;
 
 	public:
 		static constexpr auto Notification_Type = Aliased_Notification_Type;
@@ -110,8 +113,8 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of an aliased address.
-	using AliasedAddressNotification = AliasedDataNotification<Address, Namespace_Aliased_Address_Notification>;
+	using AliasedAddressNotification_v1 = AliasedDataNotification<Address, Namespace_Aliased_Address_v1_Notification, 1>;
 
 	/// Notification of an aliased mosaic id.
-	using AliasedMosaicIdNotification = AliasedDataNotification<MosaicId, Namespace_Aliased_MosaicId_Notification>;
+	using AliasedMosaicIdNotification_v1 = AliasedDataNotification<MosaicId, Namespace_Aliased_MosaicId_v1_Notification, 1>;
 }}
