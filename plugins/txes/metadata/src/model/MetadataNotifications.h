@@ -20,7 +20,7 @@ namespace catapult { namespace model {
 	DEFINE_METADATA_NOTIFICATION(Type_v1, 0x0001, Validator);
 
 	/// Metadata type.
-	DEFINE_METADATA_NOTIFICATION(Field_Modification, 0x0002, Validator);
+	DEFINE_METADATA_NOTIFICATION(Field_Modification_v1, 0x0002, Validator);
 
 	/// Metadata modifications.
 	DEFINE_METADATA_NOTIFICATION(Modifications_v1, 0x0003, Validator);
@@ -97,10 +97,14 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a metadata field modification.
-	struct ModifyMetadataFieldNotification : public Notification {
+	template<VersionType version>
+	struct ModifyMetadataFieldNotification;
+
+	template<>
+	struct ModifyMetadataFieldNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_Field_Modification_Notification;
+		static constexpr auto Notification_Type = Metadata_Field_Modification_v1_Notification;
 
 	public:
 		/// Creates a notification around \a modificationType, \a key and \a value.
@@ -111,7 +115,7 @@ namespace catapult { namespace model {
 				const uint16_t& valueSize,
 				const char* valuePtr)
 				: ModifyMetadataFieldNotification(
-				Notification_Type, sizeof(ModifyMetadataFieldNotification),
+				Notification_Type, sizeof(ModifyMetadataFieldNotification<1>),
 				metadataModificationType,
 				keySize, keyPtr,
 				valueSize, valuePtr)
@@ -153,7 +157,7 @@ namespace catapult { namespace model {
 
 	/// Notification of a metadata value modification.
 	template<typename TMetadataId, NotificationType Metadata_Notification_Type>
-	struct ModifyMetadataValueNotification : public ModifyMetadataFieldNotification {
+	struct ModifyMetadataValueNotification : public ModifyMetadataFieldNotification<1> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Metadata_Notification_Type;

@@ -54,7 +54,7 @@ namespace catapult { namespace plugins {
 							modifications));
 
 					for (const auto& modification : transaction.Transactions()) {
-						sub.notify(ModifyMetadataFieldNotification(
+						sub.notify(ModifyMetadataFieldNotification<1>(
 							modification.ModificationType,
 							modification.KeySize, modification.KeyPtr(),
 							modification.ValueSize, modification.ValuePtr()));

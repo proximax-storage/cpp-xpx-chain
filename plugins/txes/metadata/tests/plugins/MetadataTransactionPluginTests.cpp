@@ -151,7 +151,7 @@ namespace catapult { namespace plugins {
 
         static void AssertCanPublishModifyMetadataFieldNotification() {
             // Arrange:
-            mocks::MockTypedNotificationSubscriber<model::ModifyMetadataFieldNotification> sub;
+            mocks::MockTypedNotificationSubscriber<model::ModifyMetadataFieldNotification<1>> sub;
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({

@@ -23,7 +23,7 @@ namespace catapult { namespace validators {
 				model::MetadataModificationType modificationType,
 				const std::string& key, const std::string& value) {
 			// Arrange:
-			model::ModifyMetadataFieldNotification notification(
+			model::ModifyMetadataFieldNotification<1> notification(
 					modificationType,
 					key.size(), key.data(),
 					value.size(), value.data());
