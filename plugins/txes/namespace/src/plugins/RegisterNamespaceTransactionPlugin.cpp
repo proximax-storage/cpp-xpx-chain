@@ -71,7 +71,7 @@ namespace catapult { namespace plugins {
 					PublishBalanceTransfer(config, transaction, sub);
 
 					// 3. registration notifications
-					sub.notify(NamespaceNotification(transaction.NamespaceType));
+					sub.notify(NamespaceNotification<1>(transaction.NamespaceType));
 					auto parentId = Namespace_Base_Id;
 					if (transaction.IsRootRegistration()) {
 						using Notification = RootNamespaceNotification;
