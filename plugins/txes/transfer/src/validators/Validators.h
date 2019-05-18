@@ -31,5 +31,5 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to transfer mosaics notifications and validates that:
 	/// - mosaics are ordered
-	DECLARE_STATELESS_VALIDATOR(TransferMosaics, model::TransferMosaicsNotification)();
+	DECLARE_STATELESS_VALIDATOR(TransferMosaics, model::TransferMosaicsNotification<1>)();
 }}

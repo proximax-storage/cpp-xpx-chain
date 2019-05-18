@@ -50,7 +50,7 @@ namespace catapult { namespace plugins {
 					sub.notify(TransferMessageNotification<1>(transaction.MessageSize));
 
 				if (transaction.MosaicsCount)
-					sub.notify(TransferMosaicsNotification(transaction.MosaicsCount, pMosaics));
+					sub.notify(TransferMosaicsNotification<1>(transaction.MosaicsCount, pMosaics));
 				break;
 
 			default:

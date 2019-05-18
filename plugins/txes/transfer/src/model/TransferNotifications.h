@@ -33,7 +33,7 @@ namespace catapult { namespace model {
 	DEFINE_TRANSFER_NOTIFICATION(Message_v1, 0x001, Validator);
 
 	/// Transfer was received with at least one mosaic.
-	DEFINE_TRANSFER_NOTIFICATION(Mosaics, 0x002, Validator);
+	DEFINE_TRANSFER_NOTIFICATION(Mosaics_v1, 0x002, Validator);
 
 #undef DEFINE_TRANSFER_NOTIFICATION
 
@@ -62,15 +62,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a transfer transaction with mosaics.
-	struct TransferMosaicsNotification : public Notification {
+	template<VersionType version>
+	struct TransferMosaicsNotification;
+
+	template<>
+	struct TransferMosaicsNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Transfer_Mosaics_Notification;
+		static constexpr auto Notification_Type = Transfer_Mosaics_v1_Notification;
 
 	public:
 		/// Creates a notification around \a mosaicsCount and \a pMosaics.
 		explicit TransferMosaicsNotification(uint8_t mosaicsCount, const UnresolvedMosaic* pMosaics)
-				: Notification(Notification_Type, sizeof(TransferMosaicsNotification))
+				: Notification(Notification_Type, sizeof(TransferMosaicsNotification<1>))
 				, MosaicsCount(mosaicsCount)
 				, MosaicsPtr(pMosaics)
 		{}
