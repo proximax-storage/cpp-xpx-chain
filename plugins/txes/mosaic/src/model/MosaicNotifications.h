@@ -44,7 +44,7 @@ namespace catapult { namespace model {
 	DEFINE_MOSAIC_NOTIFICATION(Supply_Change_v1, 0x0022, All);
 
 	/// Mosaic rental fee has been sent.
-	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee, 0x0030, Observer);
+	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
 
 #undef DEFINE_MOSAIC_NOTIFICATION
 
@@ -182,10 +182,14 @@ namespace catapult { namespace model {
 	// region rental fee
 
 	/// Notification of a mosaic rental fee.
-	struct MosaicRentalFeeNotification : public BasicBalanceNotification<MosaicRentalFeeNotification> {
+	template<VersionType version>
+	struct MosaicRentalFeeNotification;
+
+	template<>
+	struct MosaicRentalFeeNotification<1> : public BasicBalanceNotification<MosaicRentalFeeNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Rental_Fee_Notification;
+		static constexpr auto Notification_Type = Mosaic_Rental_Fee_v1_Notification;
 
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.

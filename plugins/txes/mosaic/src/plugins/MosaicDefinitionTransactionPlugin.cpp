@@ -41,7 +41,7 @@ namespace catapult { namespace plugins {
 					// a. exempt the nemesis account
 					if (config.NemesisPublicKey != transaction.Signer) {
 						sub.notify(BalanceTransferNotification<1>(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
-						sub.notify(MosaicRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
+						sub.notify(MosaicRentalFeeNotification<1>(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, config.Fee));
 					}
 
 					// 3. registration
