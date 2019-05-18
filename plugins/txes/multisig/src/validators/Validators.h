@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to modify multisig cosigners notifications and validates that:
 	/// - same account does not occur in removed and added cosignatories
 	/// - there is at most one cosignatory removed
-	stateless::NotificationValidatorPointerT<model::ModifyMultisigCosignersNotification>
+	stateless::NotificationValidatorPointerT<model::ModifyMultisigCosignersNotification<1>>
 	CreateModifyMultisigCosignersValidator();
 
 	/// A validator implementation that applies to transaction notifications and validates that:
@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to modify multisig cosigners notifications and validates that:
 	/// - added account isn't already a cosignatory
 	/// - removed account is already a cosignatory
-	stateful::NotificationValidatorPointerT<model::ModifyMultisigCosignersNotification>
+	stateful::NotificationValidatorPointerT<model::ModifyMultisigCosignersNotification<1>>
 	CreateModifyMultisigInvalidCosignersValidator();
 
 	/// A validator implementation that applies to modify multisig new cosigner notifications and validates that:
@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to modify multisig cosigners notifications and validates that:
 	/// - the multisig account has at most \a maxCosignersPerAccount cosignatories
-	stateful::NotificationValidatorPointerT<model::ModifyMultisigCosignersNotification>
+	stateful::NotificationValidatorPointerT<model::ModifyMultisigCosignersNotification<1>>
 	CreateModifyMultisigMaxCosignersValidator(uint8_t maxCosignersPerAccount);
 
 	/// A validator implementation that applies to modify multisig new cosigner notifications and validates that:

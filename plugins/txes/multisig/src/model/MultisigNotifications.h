@@ -30,7 +30,7 @@ namespace catapult { namespace model {
 #define DEFINE_MULTISIG_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Multisig, DESCRIPTION, CODE)
 
 	/// Multisig account cosigners were modified.
-	DEFINE_MULTISIG_NOTIFICATION(Modify_Cosigners, 0x0001, All);
+	DEFINE_MULTISIG_NOTIFICATION(Modify_Cosigners_v1, 0x0001, All);
 
 	/// A cosigner was added to a multisig account.
 	DEFINE_MULTISIG_NOTIFICATION(Modify_New_Cosigner, 0x0002, Validator);
@@ -43,10 +43,14 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a multisig cosigners modification.
-	struct ModifyMultisigCosignersNotification : public Notification {
+	template<VersionType version>
+	struct ModifyMultisigCosignersNotification;
+
+	template<>
+	struct ModifyMultisigCosignersNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Multisig_Modify_Cosigners_Notification;
+		static constexpr auto Notification_Type = Multisig_Modify_Cosigners_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a modificationsCount and \a pModifications.
@@ -54,7 +58,7 @@ namespace catapult { namespace model {
 				const Key& signer,
 				uint8_t modificationsCount,
 				const CosignatoryModification* pModifications)
-				: Notification(Notification_Type, sizeof(ModifyMultisigCosignersNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigCosignersNotification<1>))
 				, Signer(signer)
 				, ModificationsCount(modificationsCount)
 				, ModificationsPtr(pModifications)

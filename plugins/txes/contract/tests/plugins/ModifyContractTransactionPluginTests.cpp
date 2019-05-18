@@ -185,7 +185,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishCosignersNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
@@ -203,7 +203,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(NoCosignersNotificationIfNoModificationIsPresent) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);

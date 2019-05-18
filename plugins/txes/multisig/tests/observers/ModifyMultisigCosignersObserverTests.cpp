@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
 		constexpr auto Add = model::CosignatoryModificationType::Add;
 		constexpr auto Del = model::CosignatoryModificationType::Del;
 		using ObserverTestContext = test::ObserverTestContextT<test::MultisigCacheFactory>;
-		using Notification = model::ModifyMultisigCosignersNotification;
+		using Notification = model::ModifyMultisigCosignersNotification<1>;
 		using Modifications = std::vector<model::CosignatoryModification>;
 
 		auto CreateNotification(const Key& signerKey, const std::vector<model::CosignatoryModification>& modifications) {
