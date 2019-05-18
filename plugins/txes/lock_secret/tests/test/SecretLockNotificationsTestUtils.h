@@ -76,7 +76,7 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a notification.
 		auto notification() const {
-			return model::ProofPublicationNotification(m_signer, m_algorithm, m_hash);
+			return model::ProofPublicationNotification<1>(m_signer, m_algorithm, m_hash);
 		}
 
 		/// Sets notification \a height.

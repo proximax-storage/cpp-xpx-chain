@@ -42,7 +42,7 @@ namespace catapult { namespace model {
 	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Secret_v1, 0x0004, Validator);
 
 	/// Proof publication.
-	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Publication, 0x0005, All);
+	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Publication_v1, 0x0005, All);
 
 #undef DEFINE_LOCKSECRET_NOTIFICATION
 
@@ -151,15 +151,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a proof publication.
-	struct ProofPublicationNotification : public Notification {
+	template<VersionType version>
+	struct ProofPublicationNotification;
+
+	template<>
+	struct ProofPublicationNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Proof_Publication_Notification;
+		static constexpr auto Notification_Type = LockSecret_Proof_Publication_v1_Notification;
 
 	public:
 		/// Creates proof publication notification around \a signer, \a hashAlgorithm and \a secret.
 		ProofPublicationNotification(const Key& signer, LockHashAlgorithm hashAlgorithm, const Hash256& secret)
-				: Notification(Notification_Type, sizeof(ProofPublicationNotification))
+				: Notification(Notification_Type, sizeof(ProofPublicationNotification<1>))
 				, Signer(signer)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)

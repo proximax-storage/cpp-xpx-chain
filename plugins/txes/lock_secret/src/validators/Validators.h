@@ -45,5 +45,5 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to proof notifications and validates that:
 	/// - secret obtained from proof is present in cache
-	DECLARE_STATEFUL_VALIDATOR(Proof, model::ProofPublicationNotification)();
+	DECLARE_STATEFUL_VALIDATOR(Proof, model::ProofPublicationNotification<1>)();
 }}

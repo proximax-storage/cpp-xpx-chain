@@ -121,7 +121,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanSecretProofPublicationNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ProofPublicationNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ProofPublicationNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateSecretProofTransaction<TTraits>();
 
