@@ -75,7 +75,7 @@ namespace catapult { namespace observers {
 		HandleNotifications<NOTIFICATION_TYPE>(notification, context); \
 	});
 
-	DEFINE_METADATA_MODIFICATION_OBSERVER(AddressMetadataValueModification, model::ModifyAddressMetadataValueNotification)
-	DEFINE_METADATA_MODIFICATION_OBSERVER(MosaicMetadataValueModification, model::ModifyMosaicMetadataValueNotification)
-	DEFINE_METADATA_MODIFICATION_OBSERVER(NamespaceMetadataValueModification, model::ModifyNamespaceMetadataValueNotification)
+	DEFINE_METADATA_MODIFICATION_OBSERVER(AddressMetadataValueModification, model::ModifyAddressMetadataValueNotification_v1)
+	DEFINE_METADATA_MODIFICATION_OBSERVER(MosaicMetadataValueModification, model::ModifyMosaicMetadataValueNotification_v1)
+	DEFINE_METADATA_MODIFICATION_OBSERVER(NamespaceMetadataValueModification, model::ModifyNamespaceMetadataValueNotification_v1)
 }}

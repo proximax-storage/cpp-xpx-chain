@@ -29,7 +29,7 @@ namespace catapult { namespace plugins {
         struct AddressTraits : public TTransactionTraits {
             using TransactionType = TTransaction;
             using ModifyMetadataNotification = model::ModifyAddressMetadataNotification;
-            using ModifyMetadataValueNotification = model::ModifyAddressMetadataValueNotification;
+            using ModifyMetadataValueNotification = model::ModifyAddressMetadataValueNotification_v1;
         };
 
         using AddressRegularTraits = AddressTraits<model::AddressMetadataTransaction, AddressMetadataRegularTraits>;
@@ -39,7 +39,7 @@ namespace catapult { namespace plugins {
         struct MosaicTraits : public TTransactionTraits {
             using TransactionType = TTransaction;
             using ModifyMetadataNotification = model::ModifyMosaicMetadataNotification;
-            using ModifyMetadataValueNotification = model::ModifyMosaicMetadataValueNotification;
+            using ModifyMetadataValueNotification = model::ModifyMosaicMetadataValueNotification_v1;
         };
 
         using MosaicRegularTraits = MosaicTraits<model::MosaicMetadataTransaction, MosaicMetadataRegularTraits>;
@@ -49,7 +49,7 @@ namespace catapult { namespace plugins {
         struct NamespaceTraits : public TTransactionTraits {
             using TransactionType = TTransaction;
             using ModifyMetadataNotification = model::ModifyNamespaceMetadataNotification;
-            using ModifyMetadataValueNotification = model::ModifyNamespaceMetadataValueNotification;
+            using ModifyMetadataValueNotification = model::ModifyNamespaceMetadataValueNotification_v1;
         };
 
         using NamespaceRegularTraits = NamespaceTraits<model::NamespaceMetadataTransaction, NamespaceMetadataRegularTraits>;

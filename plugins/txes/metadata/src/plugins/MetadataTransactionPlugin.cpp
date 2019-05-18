@@ -21,17 +21,17 @@ namespace catapult { namespace plugins {
     namespace {
         struct AddressTraits {
             using ModifyMetadataNotification = ModifyAddressMetadataNotification;
-            using ModifyMetadataValueNotification = ModifyAddressMetadataValueNotification;
+            using ModifyMetadataValueNotification = ModifyAddressMetadataValueNotification_v1;
         };
 
         struct MosaicTraits {
             using ModifyMetadataNotification = ModifyMosaicMetadataNotification ;
-            using ModifyMetadataValueNotification = ModifyMosaicMetadataValueNotification;
+            using ModifyMetadataValueNotification = ModifyMosaicMetadataValueNotification_v1;
         };
 
         struct NamespaceTraits {
             using ModifyMetadataNotification = ModifyNamespaceMetadataNotification ;
-            using ModifyMetadataValueNotification = ModifyNamespaceMetadataValueNotification;
+            using ModifyMetadataValueNotification = ModifyNamespaceMetadataValueNotification_v1;
         };
 
         template<typename TTraits>
