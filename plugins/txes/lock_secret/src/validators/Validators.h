@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to secret lock notifications and validates that:
 	/// - lock duration is at most \a maxSecretLockDuration
-	DECLARE_STATELESS_VALIDATOR(SecretLockDuration, model::SecretLockDurationNotification)(BlockDuration maxSecretLockDuration);
+	DECLARE_STATELESS_VALIDATOR(SecretLockDuration, model::SecretLockDurationNotification<1>)(BlockDuration maxSecretLockDuration);
 
 	/// A validator implementation that applies to secret lock hash algorithm notifications and validates that:
 	/// - hash algorithm is valid
