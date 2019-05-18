@@ -43,13 +43,13 @@ namespace catapult { namespace model {
 	DEFINE_PROPERTY_NOTIFICATION(Transaction_Type_Modification_v1, 0x0012, All);
 
 	/// Address property modifications.
-	DEFINE_PROPERTY_NOTIFICATION(Address_Modifications, 0x0020, Validator);
+	DEFINE_PROPERTY_NOTIFICATION(Address_Modifications_v1, 0x0020, Validator);
 
 	/// Mosaic property modifications.
-	DEFINE_PROPERTY_NOTIFICATION(Mosaic_Modifications, 0x0021, Validator);
+	DEFINE_PROPERTY_NOTIFICATION(Mosaic_Modifications_v1, 0x0021, Validator);
 
 	/// Transaction type property modifications.
-	DEFINE_PROPERTY_NOTIFICATION(Transaction_Type_Modifications, 0x0022, Validator);
+	DEFINE_PROPERTY_NOTIFICATION(Transaction_Type_Modifications_v1, 0x0022, Validator);
 
 #undef DEFINE_PROPERTY_NOTIFICATION
 
@@ -119,8 +119,11 @@ namespace catapult { namespace model {
 		ModifyPropertyValueNotification<EntityType, Property_Transaction_Type_Modification_v1_Notification, 1>;
 
 	/// Notification of a property modification.
+	template<typename TPropertyValue, NotificationType Property_Notification_Type, VersionType version>
+	struct ModifyPropertyNotification;
+
 	template<typename TPropertyValue, NotificationType Property_Notification_Type>
-	struct ModifyPropertyNotification : public Notification {
+	struct ModifyPropertyNotification<TPropertyValue, Property_Notification_Type, 1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Property_Notification_Type;
@@ -132,7 +135,7 @@ namespace catapult { namespace model {
 				PropertyType propertyType,
 				uint8_t modificationsCount,
 				const PropertyModification<TPropertyValue>* pModifications)
-				: Notification(Notification_Type, sizeof(ModifyPropertyNotification))
+				: Notification(Notification_Type, sizeof(ModifyPropertyNotification<TPropertyValue, Property_Notification_Type, 1>))
 				, Key(key)
 				, PropertyDescriptor(propertyType)
 				, ModificationsCount(modificationsCount)
@@ -153,9 +156,10 @@ namespace catapult { namespace model {
 		const PropertyModification<TPropertyValue>* ModificationsPtr;
 	};
 
-	using ModifyAddressPropertyNotification = ModifyPropertyNotification<UnresolvedAddress, Property_Address_Modifications_Notification>;
-	using ModifyMosaicPropertyNotification = ModifyPropertyNotification<UnresolvedMosaicId, Property_Mosaic_Modifications_Notification>;
-	using ModifyTransactionTypePropertyNotification = ModifyPropertyNotification<
-		EntityType,
-		Property_Transaction_Type_Modifications_Notification>;
+	using ModifyAddressPropertyNotification_v1 =
+		ModifyPropertyNotification<UnresolvedAddress, Property_Address_Modifications_v1_Notification, 1>;
+	using ModifyMosaicPropertyNotification_v1 =
+		ModifyPropertyNotification<UnresolvedMosaicId, Property_Mosaic_Modifications_v1_Notification, 1>;
+	using ModifyTransactionTypePropertyNotification_v1 =
+		ModifyPropertyNotification<EntityType, Property_Transaction_Type_Modifications_v1_Notification, 1>;
 }}

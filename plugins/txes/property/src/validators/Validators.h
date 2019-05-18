@@ -29,11 +29,11 @@ namespace catapult { namespace validators {
 #define DECLARE_SHARED_VALIDATORS(VALUE_NAME) \
 	/* A validator implementation that applies to unresolved property value property modification notifications and validates that: */ \
 	/* - all property modification types are valid */ \
-	DECLARE_STATELESS_VALIDATOR(VALUE_NAME##PropertyModificationTypes, model::Modify##VALUE_NAME##PropertyNotification)(); \
+	DECLARE_STATELESS_VALIDATOR(VALUE_NAME##PropertyModificationTypes, model::Modify##VALUE_NAME##PropertyNotification_v1)(); \
 	\
 	/* A validator implementation that applies to unresolved property value property modification notifications and validates that: */ \
 	/* - there is no redundant property modification */ \
-	DECLARE_STATEFUL_VALIDATOR(VALUE_NAME##PropertyRedundantModification, model::Modify##VALUE_NAME##PropertyNotification)(); \
+	DECLARE_STATEFUL_VALIDATOR(VALUE_NAME##PropertyRedundantModification, model::Modify##VALUE_NAME##PropertyNotification_v1)(); \
 	\
 	/* A validator implementation that applies to resolved property value modification notifications and validates that: */ \
 	/* - add modification does not add a known value */ \
@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 	/* A validator implementation that applies to property notifications and validates that: */ \
 	/* - the maximum number of modifications (\a maxPropertyValues) is not exceeded */ \
 	/* - the maximum number of property values (\a maxPropertyValues) is not exeeded */ \
-	DECLARE_STATEFUL_VALIDATOR(Max##VALUE_NAME##PropertyValues, model::Modify##VALUE_NAME##PropertyNotification)( \
+	DECLARE_STATEFUL_VALIDATOR(Max##VALUE_NAME##PropertyValues, model::Modify##VALUE_NAME##PropertyNotification_v1)( \
 			uint16_t maxPropertyValues);
 
 	DECLARE_SHARED_VALIDATORS(Address)
@@ -69,7 +69,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to transaction type property modification notifications and validates that:
 	/// - all transaction type property modification values are valid
-	DECLARE_STATELESS_VALIDATOR(TransactionTypePropertyModificationValues, model::ModifyTransactionTypePropertyNotification)();
+	DECLARE_STATELESS_VALIDATOR(TransactionTypePropertyModificationValues, model::ModifyTransactionTypePropertyNotification_v1)();
 
 	/// A validator implementation that applies to transaction notifications and validates that:
 	/// - the signer is allowed to initiate a transaction of the specified transaction type

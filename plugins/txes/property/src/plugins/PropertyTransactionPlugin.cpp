@@ -35,21 +35,21 @@ namespace catapult { namespace plugins {
 		struct AddressTraits {
 			using UnresolvedValueType = UnresolvedAddress;
 			using ResolvedValueType = Address;
-			using ModifyPropertyNotification = ModifyAddressPropertyNotification;
+			using ModifyPropertyNotification = ModifyAddressPropertyNotification_v1;
 			using ModifyPropertyValueNotification = ModifyAddressPropertyValueNotification_v1;
 		};
 
 		struct MosaicTraits {
 			using UnresolvedValueType = UnresolvedMosaicId;
 			using ResolvedValueType = MosaicId;
-			using ModifyPropertyNotification = ModifyMosaicPropertyNotification;
+			using ModifyPropertyNotification = ModifyMosaicPropertyNotification_v1;
 			using ModifyPropertyValueNotification = ModifyMosaicPropertyValueNotification_v1;
 		};
 
 		struct TransactionTypeTraits {
 			using UnresolvedValueType = model::EntityType;
 			using ResolvedValueType = model::EntityType;
-			using ModifyPropertyNotification = ModifyTransactionTypePropertyNotification;
+			using ModifyPropertyNotification = ModifyTransactionTypePropertyNotification_v1;
 			using ModifyPropertyValueNotification = ModifyTransactionTypePropertyValueNotification_v1;
 		};
 

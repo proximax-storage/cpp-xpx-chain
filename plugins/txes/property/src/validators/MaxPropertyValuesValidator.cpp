@@ -79,10 +79,7 @@ namespace catapult { namespace validators {
 		}); \
 	}
 
-	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxAddressPropertyValues, model::ModifyAddressPropertyNotification, UnresolvedAddress)
-	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxMosaicPropertyValues, model::ModifyMosaicPropertyNotification, UnresolvedMosaicId)
-	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(
-			MaxTransactionTypePropertyValues,
-			model::ModifyTransactionTypePropertyNotification,
-			model::EntityType)
+	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxAddressPropertyValues, model::ModifyAddressPropertyNotification_v1, UnresolvedAddress)
+	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxMosaicPropertyValues, model::ModifyMosaicPropertyNotification_v1, UnresolvedMosaicId)
+	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxTransactionTypePropertyValues, model::ModifyTransactionTypePropertyNotification_v1, model::EntityType)
 }}

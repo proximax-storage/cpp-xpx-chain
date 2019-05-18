@@ -41,19 +41,19 @@ namespace catapult { namespace validators {
 		struct AddressPropertyTraits : public test::BaseAddressPropertyTraits {
 			static constexpr auto CreateValidator = CreateAddressPropertyRedundantModificationValidator;
 
-			using NotificationType = model::ModifyAddressPropertyNotification;
+			using NotificationType = model::ModifyAddressPropertyNotification_v1;
 		};
 
 		struct MosaicPropertyTraits : public test::BaseMosaicPropertyTraits {
 			static constexpr auto CreateValidator = CreateMosaicPropertyRedundantModificationValidator;
 
-			using NotificationType = model::ModifyMosaicPropertyNotification;
+			using NotificationType = model::ModifyMosaicPropertyNotification_v1;
 		};
 
 		struct TransactionTypePropertyTraits : public test::BaseTransactionTypePropertyTraits {
 			static constexpr auto CreateValidator = CreateTransactionTypePropertyRedundantModificationValidator;
 
-			using NotificationType = model::ModifyTransactionTypePropertyNotification;
+			using NotificationType = model::ModifyTransactionTypePropertyNotification_v1;
 		};
 
 		template<typename TPropertyValueTraits, typename TModificationsFactory>

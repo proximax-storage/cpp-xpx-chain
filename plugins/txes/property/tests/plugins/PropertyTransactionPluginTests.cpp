@@ -43,7 +43,7 @@ namespace catapult { namespace plugins {
 			using UnresolvedValueType = UnresolvedAddress;
 			using ValueType = Address;
 			using ModifyPropertyValueNotification = model::ModifyAddressPropertyValueNotification_v1;
-			using ModifyPropertyNotification = model::ModifyAddressPropertyNotification;
+			using ModifyPropertyNotification = model::ModifyAddressPropertyNotification_v1;
 		};
 
 		using AddressRegularTraits = AddressTraits<model::AddressPropertyTransaction, AddressPropertyRegularTraits>;
@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 			using UnresolvedValueType = UnresolvedMosaicId;
 			using ValueType = MosaicId;
 			using ModifyPropertyValueNotification = model::ModifyMosaicPropertyValueNotification_v1;
-			using ModifyPropertyNotification = model::ModifyMosaicPropertyNotification;
+			using ModifyPropertyNotification = model::ModifyMosaicPropertyNotification_v1;
 		};
 
 		using MosaicRegularTraits = MosaicTraits<model::MosaicPropertyTransaction, MosaicPropertyRegularTraits>;
@@ -67,7 +67,7 @@ namespace catapult { namespace plugins {
 			using UnresolvedValueType = model::EntityType;
 			using ValueType = model::EntityType;
 			using ModifyPropertyValueNotification = model::ModifyTransactionTypePropertyValueNotification_v1;
-			using ModifyPropertyNotification = model::ModifyTransactionTypePropertyNotification;
+			using ModifyPropertyNotification = model::ModifyTransactionTypePropertyNotification_v1;
 		};
 
 		using TransactionTypeRegularTraits = TransactionTypeTraits<
