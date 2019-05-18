@@ -77,7 +77,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishDurationNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<HashLockDurationNotification> sub;
+		mocks::MockTypedNotificationSubscriber<HashLockDurationNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 		pTransaction->Duration = test::GenerateRandomValue<BlockDuration>();

@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to hash lock notifications and validates that:
 	/// - lock duration is at most \a maxHashLockDuration
-	DECLARE_STATELESS_VALIDATOR(HashLockDuration, model::HashLockDurationNotification)(BlockDuration maxHashLockDuration);
+	DECLARE_STATELESS_VALIDATOR(HashLockDuration, model::HashLockDurationNotification<1>)(BlockDuration maxHashLockDuration);
 
 	/// A validator implementation that applies to hash lock mosaic notifications and validates that:
 	/// - mosaic id is \a currencyMosaicId
