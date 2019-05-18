@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicDefinitionNotification;
+	using Notification = model::MosaicDefinitionNotification<1>;
 
 	namespace {
 		bool ContainsRequiredPropertyChange(const model::MosaicProperties& properties) {

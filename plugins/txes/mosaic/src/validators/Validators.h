@@ -53,11 +53,11 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to mosaic definition notifications and validates that:
 	/// - the mosaic is available and can be created or modified
-	DECLARE_STATEFUL_VALIDATOR(MosaicAvailability, model::MosaicDefinitionNotification)();
+	DECLARE_STATEFUL_VALIDATOR(MosaicAvailability, model::MosaicDefinitionNotification<1>)();
 
 	/// A validator implementation that applies to mosaic definition notifications and validates that:
 	/// - the resulting mosaic duration is not larger than \a maxMosaicDuration and there was no overflow
-	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, model::MosaicDefinitionNotification)(BlockDuration maxMosaicDuration);
+	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, model::MosaicDefinitionNotification<1>)(BlockDuration maxMosaicDuration);
 
 	// endregion
 
