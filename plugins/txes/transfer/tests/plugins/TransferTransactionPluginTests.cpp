@@ -186,7 +186,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractMessage) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<TransferMessageNotification> sub;
+		mocks::MockTypedNotificationSubscriber<TransferMessageNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithMosaics<TTraits>(0, 17);

@@ -30,7 +30,7 @@ namespace catapult { namespace model {
 #define DEFINE_TRANSFER_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Transfer, DESCRIPTION, CODE)
 
 	/// Transfer was received with a message.
-	DEFINE_TRANSFER_NOTIFICATION(Message, 0x001, Validator);
+	DEFINE_TRANSFER_NOTIFICATION(Message_v1, 0x001, Validator);
 
 	/// Transfer was received with at least one mosaic.
 	DEFINE_TRANSFER_NOTIFICATION(Mosaics, 0x002, Validator);
@@ -40,15 +40,19 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a transfer transaction with a message.
-	struct TransferMessageNotification : public Notification {
+	template<VersionType version>
+	struct TransferMessageNotification;
+
+	template<>
+	struct TransferMessageNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Transfer_Message_Notification;
+		static constexpr auto Notification_Type = Transfer_Message_v1_Notification;
 
 	public:
 		/// Creates a notification around \a messageSize.
 		explicit TransferMessageNotification(uint16_t messageSize)
-				: Notification(Notification_Type, sizeof(TransferMessageNotification))
+				: Notification(Notification_Type, sizeof(TransferMessageNotification<1>))
 				, MessageSize(messageSize)
 		{}
 

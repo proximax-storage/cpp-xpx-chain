@@ -22,7 +22,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransferMessageNotification;
+	using Notification = model::TransferMessageNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(TransferMessage, Notification)(uint16_t maxMessageSize) {
 		return MAKE_STATELESS_VALIDATOR(TransferMessage, [maxMessageSize](const auto& notification) {
