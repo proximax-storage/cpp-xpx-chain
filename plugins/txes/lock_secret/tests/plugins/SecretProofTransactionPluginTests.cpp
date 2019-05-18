@@ -102,7 +102,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanSecretProofSecretNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ProofSecretNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ProofSecretNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateSecretProofTransaction<TTraits>();
 

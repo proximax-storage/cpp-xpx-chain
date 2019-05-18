@@ -39,7 +39,7 @@ namespace catapult { namespace model {
 	DEFINE_LOCKSECRET_NOTIFICATION(Secret_v1, 0x0003, All);
 
 	/// Proof and secret.
-	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Secret, 0x0004, Validator);
+	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Secret_v1, 0x0004, Validator);
 
 	/// Proof publication.
 	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Publication, 0x0005, All);
@@ -121,15 +121,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a secret and its proof.
-	struct ProofSecretNotification : public Notification {
+	template<VersionType version>
+	struct ProofSecretNotification;
+
+	template<>
+	struct ProofSecretNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Proof_Secret_Notification;
+		static constexpr auto Notification_Type = LockSecret_Proof_Secret_v1_Notification;
 
 	public:
 		/// Creates proof secret notification around \a hashAlgorithm, \a secret and \a proof.
 		ProofSecretNotification(LockHashAlgorithm hashAlgorithm, const Hash256& secret, const RawBuffer& proof)
-				: Notification(Notification_Type, sizeof(ProofSecretNotification))
+				: Notification(Notification_Type, sizeof(ProofSecretNotification<1>))
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)
 				, Proof(proof)

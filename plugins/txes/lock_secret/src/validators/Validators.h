@@ -41,7 +41,7 @@ namespace catapult { namespace validators {
 	/// - hash algorithm is supported
 	/// - proof size is within inclusive bounds of \a minProofSize and \a maxProofSize
 	/// - hash of proof matches secret
-	DECLARE_STATELESS_VALIDATOR(ProofSecret, model::ProofSecretNotification)(uint16_t minProofSize, uint16_t maxProofSize);
+	DECLARE_STATELESS_VALIDATOR(ProofSecret, model::ProofSecretNotification<1>)(uint16_t minProofSize, uint16_t maxProofSize);
 
 	/// A validator implementation that applies to proof notifications and validates that:
 	/// - secret obtained from proof is present in cache

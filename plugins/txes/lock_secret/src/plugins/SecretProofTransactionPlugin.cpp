@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.Version) {
 			case 1:
 				sub.notify(SecretLockHashAlgorithmNotification<1>(transaction.HashAlgorithm));
-				sub.notify(ProofSecretNotification(
+				sub.notify(ProofSecretNotification<1>(
 					transaction.HashAlgorithm,
 					transaction.Secret,
 					{ transaction.ProofPtr(), transaction.ProofSize }));

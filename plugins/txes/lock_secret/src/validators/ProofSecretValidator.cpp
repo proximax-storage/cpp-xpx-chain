@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ProofSecretNotification;
+	using Notification = model::ProofSecretNotification<1>;
 
 	namespace {
 		constexpr bool SupportedHash(model::LockHashAlgorithm hashAlgorithm) {
