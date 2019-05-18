@@ -279,7 +279,7 @@ namespace catapult { namespace plugins {
 		public:
 			mocks::MockTypedNotificationSubscriber<NamespaceNotification<1>> NamespaceSub;
 			mocks::MockTypedNotificationSubscriber<NamespaceNameNotification<1>> NameSub;
-			mocks::MockTypedNotificationSubscriber<RootNamespaceNotification> RootSub;
+			mocks::MockTypedNotificationSubscriber<RootNamespaceNotification<1>> RootSub;
 			mocks::MockTypedNotificationSubscriber<ChildNamespaceNotification> ChildSub;
 			mocks::MockTypedNotificationSubscriber<NamespaceRentalFeeNotification> RentalFeeSub;
 		};

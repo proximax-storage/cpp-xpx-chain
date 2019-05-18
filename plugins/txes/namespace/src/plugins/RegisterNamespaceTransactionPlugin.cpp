@@ -74,7 +74,7 @@ namespace catapult { namespace plugins {
 					sub.notify(NamespaceNotification<1>(transaction.NamespaceType));
 					auto parentId = Namespace_Base_Id;
 					if (transaction.IsRootRegistration()) {
-						using Notification = RootNamespaceNotification;
+						using Notification = RootNamespaceNotification<1>;
 						sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.Duration));
 					} else {
 						using Notification = ChildNamespaceNotification;

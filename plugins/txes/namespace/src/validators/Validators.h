@@ -43,11 +43,11 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to root namespace notifications and validates that:
 	/// - namespace duration is less than or equal to \a maxDuration for root namespace
 	/// - namespace duration is zero for child namespace
-	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification)(BlockDuration maxDuration);
+	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification<1>)(BlockDuration maxDuration);
 
 	/// A validator implementation that applies to root register namespace transactions and validates that:
 	/// - the namespace is available and can be created or renewed given \a maxNamespaceDuration
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification)(BlockDuration maxNamespaceDuration);
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification<1>)(BlockDuration maxNamespaceDuration);
 
 	/// A validator implementation that applies to child register namespace transactions and validates that:
 	/// - the namespace is available and can be created

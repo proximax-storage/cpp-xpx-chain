@@ -37,7 +37,7 @@ namespace catapult { namespace model {
 	DEFINE_NAMESPACE_NOTIFICATION(Registration_v1, 0x0012, Validator);
 
 	/// Root namespace was registered.
-	DEFINE_NAMESPACE_NOTIFICATION(Root_Registration, 0x0021, All);
+	DEFINE_NAMESPACE_NOTIFICATION(Root_Registration_v1, 0x0021, All);
 
 	/// Child namespace was registered.
 	DEFINE_NAMESPACE_NOTIFICATION(Child_Registration, 0x0022, All);
@@ -110,15 +110,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a root namespace registration.
-	struct RootNamespaceNotification : public Notification {
+	template<VersionType version>
+	struct RootNamespaceNotification;
+
+	template<>
+	struct RootNamespaceNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Root_Registration_Notification;
+		static constexpr auto Notification_Type = Namespace_Root_Registration_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a namespaceId and \a duration.
 		explicit RootNamespaceNotification(const Key& signer, NamespaceId namespaceId, BlockDuration duration)
-				: Notification(Notification_Type, sizeof(RootNamespaceNotification))
+				: Notification(Notification_Type, sizeof(RootNamespaceNotification<1>))
 				, Signer(signer)
 				, NamespaceId(namespaceId)
 				, Duration(duration)
