@@ -84,7 +84,7 @@ namespace catapult { namespace mocks {
 		template<typename TTransaction>
 		void Publish(const TTransaction& mockTransaction, PluginOptionFlags options, NotificationSubscriber& sub) {
 			switch (mockTransaction.Version) {
-			case 0xFF:
+			case 0xFF: {
 				sub.notify(AccountPublicKeyNotification<1>(mockTransaction.Recipient));
 
 				if (IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Custom_Notifications)) {
@@ -109,6 +109,7 @@ namespace catapult { namespace mocks {
 					sub.notify(BalanceTransferNotification<1>(sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount));
 				}
 				break;
+			}
 
 			default:
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MockTransaction", mockTransaction.Version);

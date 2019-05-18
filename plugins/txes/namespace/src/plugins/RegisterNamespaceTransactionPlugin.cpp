@@ -63,7 +63,7 @@ namespace catapult { namespace plugins {
 		auto CreatePublisher(const NamespaceRentalFeeConfiguration& config) {
 			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
 				switch (transaction.Version) {
-				case 2:
+				case 2: {
 					// 1. sink account notification
 					sub.notify(AccountPublicKeyNotification<1>(config.SinkPublicKey));
 
@@ -88,6 +88,7 @@ namespace catapult { namespace plugins {
 						transaction.NamespaceNameSize,
 						transaction.NamePtr()));
 					break;
+				}
 
 				default:
 					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of RegisterNamespaceTransaction", transaction.Version);

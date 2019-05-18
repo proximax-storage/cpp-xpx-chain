@@ -90,7 +90,7 @@ namespace catapult { namespace model {
 			void publish(const Block& block, NotificationSubscriber& sub) const {
 				// raise an entity notification
 				switch (block.Version) {
-				case 3:
+				case 3: {
 					sub.notify(EntityNotification<1>(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion()));
 
 					// raise a block notification
@@ -106,6 +106,7 @@ namespace catapult { namespace model {
 					auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
 					sub.notify(SignatureNotification<1>(block.Signer, block.Signature, blockData));
 					break;
+				}
 
 				default:
 					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of Block", block.Version);

@@ -57,7 +57,7 @@ namespace catapult { namespace observers {
 			}
 		};
 
-		model::RootNamespaceNotification CreateRootNotification<1>(const Key& signer, NamespaceId id) {
+		model::RootNamespaceNotification<1> CreateRootNotification(const Key& signer, NamespaceId id) {
 			return model::RootNamespaceNotification<1>(signer, id, BlockDuration());
 		}
 

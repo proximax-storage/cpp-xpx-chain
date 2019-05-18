@@ -32,10 +32,10 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			utils::KeySet addedCosignatoryKeys;
 			switch (transaction.Version) {
-			case 3:
+			case 3: {
 				// 1. cosig changes
+				utils::KeySet addedCosignatoryKeys;
 				if (0 < transaction.ModificationsCount) {
 					// raise new cosigner notifications first because they are used for multisig loop detection
 					const auto* pModifications = transaction.ModificationsPtr();
@@ -56,6 +56,7 @@ namespace catapult { namespace plugins {
 				// 2. setting changes
 				sub.notify(ModifyMultisigSettingsNotification<1>(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));
 				break;
+			}
 
 			default:
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ModifyMultisigAccountTransaction", transaction.Version);

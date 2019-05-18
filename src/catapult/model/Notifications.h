@@ -288,7 +288,7 @@ namespace catapult { namespace model {
 	struct TransactionFeeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Transaction_v1_Fee_Notification;
+		static constexpr auto Notification_Type = Core_Transaction_Fee_v1_Notification;
 
 	public:
 		/// Creates a transaction fee notification around \a transactionSize, \a fee and \a maxFee.

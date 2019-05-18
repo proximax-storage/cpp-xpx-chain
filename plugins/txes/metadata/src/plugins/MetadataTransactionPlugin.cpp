@@ -39,12 +39,12 @@ namespace catapult { namespace plugins {
         public:
             template<typename TTransaction>
             static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-				std::vector<const model::MetadataModification*> modifications;
 				switch (transaction.Version) {
-				case 1:
+				case 1: {
 					sub.notify(MetadataTypeNotification<1>(transaction.MetadataType));
 					sub.notify(CreateMetadataModificationsNotification<TTransaction>(transaction));
 
+					std::vector<const model::MetadataModification*> modifications;
 					for (const auto& modification : transaction.Transactions())
 						modifications.emplace_back(&modification);
 
@@ -66,6 +66,7 @@ namespace catapult { namespace plugins {
 							modification.ValueSize, modification.ValuePtr()));
 					}
 					break;
+				}
 
 				default:
 					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MetadataTransaction", transaction.Version);

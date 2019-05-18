@@ -62,7 +62,7 @@ namespace catapult { namespace plugins {
 				const auto& aggregate = CastToDerivedType(transactionInfo.entity());
 
 				switch (aggregate.Version) {
-				case 2:
+				case 2: {
 					// publish aggregate notifications
 					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
 					auto numCosignatures = aggregate.CosignaturesCount();
@@ -111,6 +111,7 @@ namespace catapult { namespace plugins {
 						++pCosignature;
 					}
 					break;
+				}
 
 				default:
 					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AggregateTransaction", aggregate.Version);

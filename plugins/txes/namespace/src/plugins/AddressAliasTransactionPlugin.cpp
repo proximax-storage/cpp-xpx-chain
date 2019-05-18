@@ -31,8 +31,15 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(AliasOwnerNotification(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
-			sub.notify(AliasedAddressNotification(transaction.NamespaceId, transaction.AliasAction, transaction.Address));
+			switch (transaction.Version) {
+			case 1:
+				sub.notify(AliasOwnerNotification(transaction.Signer, transaction.NamespaceId, transaction.AliasAction));
+				sub.notify(AliasedAddressNotification(transaction.NamespaceId, transaction.AliasAction, transaction.Address));
+				break;
+
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AddressAliasTransaction", transaction.Version);
+			}
 		}
 	}
 
