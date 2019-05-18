@@ -97,15 +97,19 @@ namespace catapult { namespace model {
 	// region contract notification types
 
 	/// Defines a contract notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Contract, Modify, 0x0002);
+	DEFINE_NOTIFICATION_TYPE(All, Contract, Modify_v1, 0x0002);
 
 	// endregion
 
 	/// Notification of a contract update.
-	struct ModifyContractNotification : public Notification {
+	template<VersionType version>
+	struct ModifyContractNotification;
+
+	template<>
+	struct ModifyContractNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Contract_Modify_Notification;
+		static constexpr auto Notification_Type = Contract_Modify_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a modificationCount and \a pModifications.
@@ -119,7 +123,7 @@ namespace catapult { namespace model {
 			const CosignatoryModification* pExecutorModifications,
 			const uint8_t& verifierModificationCount,
 			const CosignatoryModification* pVerifierModifications)
-			: Notification(Notification_Type, sizeof(ModifyContractNotification))
+			: Notification(Notification_Type, sizeof(ModifyContractNotification<1>))
 			, DurationDelta(durationDelta)
 			, Multisig(multisig)
 			, Hash(hash)

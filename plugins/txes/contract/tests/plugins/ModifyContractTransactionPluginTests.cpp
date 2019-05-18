@@ -160,7 +160,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishModifyContractNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyContractNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyContractNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);

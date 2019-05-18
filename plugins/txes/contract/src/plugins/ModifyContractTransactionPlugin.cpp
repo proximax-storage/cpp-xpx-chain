@@ -60,7 +60,7 @@ namespace catapult { namespace plugins {
 						sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, addedVerifierKeys));
 				}
 
-				sub.notify(ModifyContractNotification(
+				sub.notify(ModifyContractNotification<1>(
 					transaction.DurationDelta,
 					transaction.Signer,
 					transaction.Hash,

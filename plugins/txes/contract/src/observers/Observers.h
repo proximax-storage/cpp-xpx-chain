@@ -26,7 +26,7 @@
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by update contract notifications
-	DECLARE_OBSERVER(ModifyContract, model::ModifyContractNotification)(config::ContractConfiguration config);
+	DECLARE_OBSERVER(ModifyContract, model::ModifyContractNotification<1>)(config::ContractConfiguration config);
 
 	/// Observes changes triggered by update reputation notifications
 	DECLARE_OBSERVER(ReputationUpdate, model::ReputationUpdateNotification<1>)();
