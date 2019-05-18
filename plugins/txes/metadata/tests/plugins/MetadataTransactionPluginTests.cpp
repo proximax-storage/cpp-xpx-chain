@@ -83,7 +83,7 @@ namespace catapult { namespace plugins {
 
         static void AssertCanPublishMetadataTypeNotification() {
             // Arrange:
-            mocks::MockTypedNotificationSubscriber<model::MetadataTypeNotification> sub;
+            mocks::MockTypedNotificationSubscriber<model::MetadataTypeNotification<1>> sub;
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({});

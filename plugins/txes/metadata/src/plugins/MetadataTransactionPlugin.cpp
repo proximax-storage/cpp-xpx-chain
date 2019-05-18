@@ -39,31 +39,37 @@ namespace catapult { namespace plugins {
         public:
             template<typename TTransaction>
             static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-                sub.notify(MetadataTypeNotification(transaction.MetadataType));
-                sub.notify(CreateMetadataModificationsNotification<TTransaction>(transaction));
+				std::vector<const model::MetadataModification*> modifications;
+				switch (transaction.Version) {
+				case 1:
+					sub.notify(MetadataTypeNotification<1>(transaction.MetadataType));
+					sub.notify(CreateMetadataModificationsNotification<TTransaction>(transaction));
 
-                std::vector<const model::MetadataModification*> modifications;
+					for (const auto& modification : transaction.Transactions())
+						modifications.emplace_back(&modification);
 
-                for (const auto& modification : transaction.Transactions())
-                    modifications.emplace_back(&modification);
+					if (!modifications.empty())
+						sub.notify(MetadataModificationsNotification(
+							state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
+							modifications));
 
-                if (!modifications.empty())
-                    sub.notify(MetadataModificationsNotification(
-                        state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
-                        modifications));
+					for (const auto& modification : transaction.Transactions()) {
+						sub.notify(ModifyMetadataFieldNotification(
+							modification.ModificationType,
+							modification.KeySize, modification.KeyPtr(),
+							modification.ValueSize, modification.ValuePtr()));
 
-                for (const auto& modification : transaction.Transactions()) {
-                    sub.notify(ModifyMetadataFieldNotification(
-                        modification.ModificationType,
-                        modification.KeySize, modification.KeyPtr(),
-                        modification.ValueSize, modification.ValuePtr()));
+						sub.notify(typename TTraits::ModifyMetadataValueNotification(
+							transaction.MetadataId, transaction.MetadataType,
+							modification.ModificationType,
+							modification.KeySize, modification.KeyPtr(),
+							modification.ValueSize, modification.ValuePtr()));
+					}
+					break;
 
-                    sub.notify(typename TTraits::ModifyMetadataValueNotification(
-                        transaction.MetadataId, transaction.MetadataType,
-                        modification.ModificationType,
-                        modification.KeySize, modification.KeyPtr(),
-                        modification.ValueSize, modification.ValuePtr()));
-                }
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MetadataTransaction", transaction.Version);
+				}
             }
 
         private:

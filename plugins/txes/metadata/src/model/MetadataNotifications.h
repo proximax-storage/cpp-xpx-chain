@@ -17,7 +17,7 @@ namespace catapult { namespace model {
 #define DEFINE_METADATA_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Metadata, DESCRIPTION, CODE)
 
 	/// Metadata type.
-	DEFINE_METADATA_NOTIFICATION(Type, 0x0001, Validator);
+	DEFINE_METADATA_NOTIFICATION(Type_v1, 0x0001, Validator);
 
 	/// Metadata type.
 	DEFINE_METADATA_NOTIFICATION(Field_Modification, 0x0002, Validator);
@@ -48,15 +48,19 @@ namespace catapult { namespace model {
 	// endregion
 
 	/// Notification of a metadata type.
-	struct MetadataTypeNotification : public Notification {
+	template<VersionType version>
+	struct MetadataTypeNotification;
+
+	template<>
+	struct MetadataTypeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_Type_Notification;
+		static constexpr auto Notification_Type = Metadata_Type_v1_Notification;
 
 	public:
 		/// Creates a notification around \a metadataType.
 		explicit MetadataTypeNotification(model::MetadataType metadataType)
-				: Notification(Notification_Type, sizeof(MetadataTypeNotification))
+				: Notification(Notification_Type, sizeof(MetadataTypeNotification<1>))
 				, MetadataType(metadataType)
 		{}
 
