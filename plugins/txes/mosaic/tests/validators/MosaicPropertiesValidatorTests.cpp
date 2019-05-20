@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateMosaicPropertiesValidator(Max_Divisibility, Max_Duration);
 			model::MosaicPropertiesHeader header{};
 			header.Flags = flags;
-			auto notification = model::MosaicPropertiesNotification(header, nullptr);
+			auto notification = model::MosaicPropertiesNotification<1>(header, nullptr);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -74,7 +74,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateMosaicPropertiesValidator(maxDivisibility, Max_Duration);
 			model::MosaicPropertiesHeader header{};
 			header.Divisibility = divisibility;
-			auto notification = model::MosaicPropertiesNotification(header, nullptr);
+			auto notification = model::MosaicPropertiesNotification<1>(header, nullptr);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -113,7 +113,7 @@ namespace catapult { namespace validators {
 			model::MosaicPropertiesHeader header{};
 			header.Count = 1;
 			auto properties = std::vector<model::MosaicProperty>{ { model::MosaicPropertyId::Duration, duration } };
-			auto notification = model::MosaicPropertiesNotification(header, properties.data());
+			auto notification = model::MosaicPropertiesNotification<1>(header, properties.data());
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -153,7 +153,7 @@ namespace catapult { namespace validators {
 		auto pValidator = CreateMosaicPropertiesValidator(Max_Divisibility, Max_Duration);
 		model::MosaicPropertiesHeader header{};
 		header.Count = 0;
-		auto notification = model::MosaicPropertiesNotification(header, nullptr);
+		auto notification = model::MosaicPropertiesNotification<1>(header, nullptr);
 
 		// Act:
 		auto result = test::ValidateNotification(*pValidator, notification);
@@ -168,7 +168,7 @@ namespace catapult { namespace validators {
 		model::MosaicPropertiesHeader header{};
 		header.Count = 1;
 		auto properties = std::vector<model::MosaicProperty>{ { model::MosaicPropertyId::Duration, 123 } };
-		auto notification = model::MosaicPropertiesNotification(header, properties.data());
+		auto notification = model::MosaicPropertiesNotification<1>(header, properties.data());
 
 		// Act:
 		auto result = test::ValidateNotification(*pValidator, notification);
@@ -185,7 +185,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateMosaicPropertiesValidator(Max_Divisibility, Max_Duration);
 			model::MosaicPropertiesHeader header{};
 			header.Count = 1;
-			auto notification = model::MosaicPropertiesNotification(header, &property);
+			auto notification = model::MosaicPropertiesNotification<1>(header, &property);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -221,7 +221,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateMosaicPropertiesValidator(Max_Divisibility, Max_Duration);
 			model::MosaicPropertiesHeader header{};
 			header.Count = count;
-			auto notification = model::MosaicPropertiesNotification(header, nullptr);
+			auto notification = model::MosaicPropertiesNotification<1>(header, nullptr);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

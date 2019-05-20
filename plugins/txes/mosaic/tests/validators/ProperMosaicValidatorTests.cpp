@@ -54,7 +54,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateProperMosaicValidator();
 
 			// - create the notification
-			model::MosaicRequiredNotification notification(transactionSigner, affectedMosaicId);
+			model::MosaicRequiredNotification<1> notification(transactionSigner, affectedMosaicId);
 
 			// - create the validator context
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());

@@ -41,6 +41,6 @@ namespace catapult { namespace observers {
 		AliasedObserverHandler(context, notification); \
 	})
 
-	DEFINE_ALIASED_DATA_OBSERVER(AliasedAddress, model::AliasedAddressNotification)
-	DEFINE_ALIASED_DATA_OBSERVER(AliasedMosaicId, model::AliasedMosaicIdNotification)
+	DEFINE_ALIASED_DATA_OBSERVER(AliasedAddress, model::AliasedAddressNotification_v1)
+	DEFINE_ALIASED_DATA_OBSERVER(AliasedMosaicId, model::AliasedMosaicIdNotification_v1)
 }}

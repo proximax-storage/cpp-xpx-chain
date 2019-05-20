@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyMultisigCosignersNotification;
+	using Notification = model::ModifyMultisigCosignersNotification<1>;
 
 	namespace {
 		constexpr bool IsValidModificationType(model::CosignatoryModificationType type) {

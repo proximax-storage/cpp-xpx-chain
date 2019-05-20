@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, const std::vector<model::UnresolvedMosaic>& mosaics) {
 			// Arrange:
-			model::TransferMosaicsNotification notification(static_cast<uint8_t>(mosaics.size()), mosaics.data());
+			model::TransferMosaicsNotification<1> notification(static_cast<uint8_t>(mosaics.size()), mosaics.data());
 			auto pValidator = CreateTransferMosaicsValidator();
 
 			// Act:

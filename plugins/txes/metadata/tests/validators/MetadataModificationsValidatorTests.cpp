@@ -78,7 +78,7 @@ namespace catapult { namespace validators {
 				pointers.emplace_back(pModifications);
 			}
 
-			auto notification = model::MetadataModificationsNotification(metadataId, pointers);
+			auto notification = model::MetadataModificationsNotification<1>(metadataId, pointers);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

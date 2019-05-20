@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AccountAddressNotification;
+	using Notification = model::AccountAddressNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(Address, Notification)(model::NetworkIdentifier networkIdentifier) {
 		return MAKE_STATEFUL_VALIDATOR(Address, [networkIdentifier](const auto& notification, const auto& context) {

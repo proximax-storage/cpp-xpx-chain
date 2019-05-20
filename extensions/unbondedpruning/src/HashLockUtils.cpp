@@ -29,8 +29,8 @@ namespace catapult { namespace unbondedpruning {
 		class DependentTransactionCollector : public model::NotificationSubscriber {
 		public:
 			void notify(const model::Notification& notification) override {
-				if (model::LockHash_Hash_Notification == notification.Type)
-					m_hashes.insert(static_cast<const model::HashLockNotification&>(notification).Hash);
+				if (model::LockHash_Hash_v1_Notification == notification.Type)
+					m_hashes.insert(static_cast<const model::HashLockNotification<1>&>(notification).Hash);
 			}
 
 		public:

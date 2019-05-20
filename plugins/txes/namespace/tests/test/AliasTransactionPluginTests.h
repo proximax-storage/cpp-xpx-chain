@@ -28,6 +28,7 @@ namespace catapult { namespace test {
 	/// Alias transaction plugin test suite.
 	template<typename TTraits>
 	class AliasTransactionPluginTests {
+		static constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 	public:
 		static void AssertCanCalculateSize() {
 			// Arrange:
@@ -50,6 +51,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
+			transaction.Version = Transaction_Version;
 
 			// Act:
 			test::PublishTransaction(*pPlugin, transaction, sub);
@@ -61,11 +63,12 @@ namespace catapult { namespace test {
 		template<typename TNotificationTraits>
 		static void AssertCanExtractAliasNotifications() {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<model::AliasOwnerNotification> aliasOwnerSub;
+			mocks::MockTypedNotificationSubscriber<model::AliasOwnerNotification<1>> aliasOwnerSub;
 			mocks::MockTypedNotificationSubscriber<typename TNotificationTraits::Notification_Type> aliasedSub;
 			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
+			transaction.Version = Transaction_Version;
 			transaction.NamespaceId = NamespaceId(123);
 			transaction.AliasAction = model::AliasAction::Unlink;
 			transaction.Signer = test::GenerateRandomData<Key_Size>();

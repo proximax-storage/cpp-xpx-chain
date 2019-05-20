@@ -23,7 +23,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::RootNamespaceNotification;
+	using Notification = model::RootNamespaceNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(RootNamespace, Notification)(BlockDuration maxDuration) {
 		return MAKE_STATELESS_VALIDATOR(RootNamespace, [maxDuration](const auto& notification) {

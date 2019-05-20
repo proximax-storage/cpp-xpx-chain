@@ -31,24 +31,32 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(AccountAddressNotification(transaction.Recipient));
-			sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, { transaction.Recipient }));
+			switch (transaction.EntityVersion()) {
+			case 3: {
+				sub.notify(AccountAddressNotification<1>(transaction.Recipient));
+				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {transaction.Recipient}));
 
-			const auto* pMosaics = transaction.MosaicsPtr();
-			for (auto i = 0u; i < transaction.MosaicsCount; ++i) {
-				auto notification = BalanceTransferNotification(
+				const auto *pMosaics = transaction.MosaicsPtr();
+				for (auto i = 0u; i < transaction.MosaicsCount; ++i) {
+					auto notification = BalanceTransferNotification<1>(
 						transaction.Signer,
 						transaction.Recipient,
 						pMosaics[i].MosaicId,
 						pMosaics[i].Amount);
-				sub.notify(notification);
+					sub.notify(notification);
+				}
+
+				if (transaction.MessageSize)
+					sub.notify(TransferMessageNotification<1>(transaction.MessageSize));
+
+				if (transaction.MosaicsCount)
+					sub.notify(TransferMosaicsNotification<1>(transaction.MosaicsCount, pMosaics));
+				break;
 			}
 
-			if (transaction.MessageSize)
-				sub.notify(TransferMessageNotification(transaction.MessageSize));
-
-			if (transaction.MosaicsCount)
-				sub.notify(TransferMosaicsNotification(transaction.MosaicsCount, pMosaics));
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of TransferTransaction", transaction.EntityVersion());
+			}
 		}
 	}
 

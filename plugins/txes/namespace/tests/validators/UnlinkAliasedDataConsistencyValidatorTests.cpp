@@ -149,7 +149,7 @@ namespace catapult { namespace validators {
 	namespace {
 		struct AddressTraits {
 		public:
-			using NotificationType = model::AliasedAddressNotification;
+			using NotificationType = model::AliasedAddressNotification_v1;
 			using AliasType = Address;
 			using InvalidAliasType = MosaicId;
 
@@ -170,7 +170,7 @@ namespace catapult { namespace validators {
 	namespace {
 		struct MosaicIdTraits {
 		public:
-			using NotificationType = model::AliasedMosaicIdNotification;
+			using NotificationType = model::AliasedMosaicIdNotification_v1;
 			using AliasType = MosaicId;
 			using InvalidAliasType = Address;
 

@@ -38,7 +38,9 @@ namespace catapult { namespace model {
 			enum class Mode { Address, Public_Key, Other };
 
 		public:
-			explicit MockNotificationPublisher(Mode mode) : m_mode(mode)
+			explicit MockNotificationPublisher(Mode mode, VersionType notificationVersion = 1)
+				: m_mode(mode)
+				, m_notificationVersion(notificationVersion)
 			{}
 
 		public:
@@ -48,18 +50,37 @@ namespace catapult { namespace model {
 				if (Mode::Address == m_mode) {
 					auto senderAddress = PublicKeyToAddress(transaction.Signer, Network_Identifier);
 					auto recipientAddress = PublicKeyToAddress(transaction.Recipient, Network_Identifier);
-					sub.notify(AccountAddressNotification(extensions::CopyToUnresolvedAddress(senderAddress)));
-					sub.notify(AccountAddressNotification(extensions::CopyToUnresolvedAddress(recipientAddress)));
+					switch (m_notificationVersion) {
+					case 1:
+						sub.notify(AccountAddressNotification<1>(extensions::CopyToUnresolvedAddress(senderAddress)));
+						sub.notify(AccountAddressNotification<1>(extensions::CopyToUnresolvedAddress(recipientAddress)));
+						break;
+					default:
+						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountAddressNotification", m_notificationVersion);
+					}
 				} else if (Mode::Public_Key == m_mode) {
-					sub.notify(AccountPublicKeyNotification(transaction.Signer));
-					sub.notify(AccountPublicKeyNotification(transaction.Recipient));
+					switch (m_notificationVersion) {
+					case 1:
+						sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
+						sub.notify(AccountPublicKeyNotification<1>(transaction.Recipient));
+						break;
+					default:
+						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AccountPublicKeyNotification", m_notificationVersion);
+					}
 				} else {
-					sub.notify(EntityNotification(transaction.Network(), 0, 0, transaction.EntityVersion()));
+					switch (m_notificationVersion) {
+					case 1:
+						sub.notify(EntityNotification<1>(transaction.Network(), 0, 0, transaction.EntityVersion()));
+						break;
+					default:
+						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of EntityNotification", m_notificationVersion);
+					}
 				}
 			}
 
 		private:
 			Mode m_mode;
+			VersionType m_notificationVersion;
 		};
 
 		void RunExtractAddressesTest(MockNotificationPublisher::Mode mode) {

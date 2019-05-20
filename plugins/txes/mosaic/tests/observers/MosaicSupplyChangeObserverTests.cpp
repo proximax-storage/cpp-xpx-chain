@@ -48,7 +48,7 @@ namespace catapult { namespace observers {
 			auto pObserver = CreateMosaicSupplyChangeObserver();
 
 			auto signer = test::GenerateRandomData<Key_Size>();
-			model::MosaicSupplyChangeNotification notification(signer, test::UnresolveXor(Default_Mosaic_Id), direction, delta);
+			model::MosaicSupplyChangeNotification<1> notification(signer, test::UnresolveXor(Default_Mosaic_Id), direction, delta);
 
 			// - initialize cache with a mosaic supply
 			ObserverTestContext context(mode, Height(888));

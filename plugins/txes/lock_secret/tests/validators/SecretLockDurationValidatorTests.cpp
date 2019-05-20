@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 	namespace {
 		struct SecretTraits {
 		public:
-			using NotificationType = model::SecretLockDurationNotification;
+			using NotificationType = model::SecretLockDurationNotification<1>;
 			static constexpr auto Failure_Result = Failure_LockSecret_Invalid_Duration;
 
 			static auto CreateValidator(BlockDuration maxDuration) {

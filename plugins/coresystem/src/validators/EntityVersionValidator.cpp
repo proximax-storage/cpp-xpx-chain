@@ -22,7 +22,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::EntityNotification;
+	using Notification = model::EntityNotification<1>;
 
 	namespace {
 		auto ValidateEntityVersion(const Notification& notification) {

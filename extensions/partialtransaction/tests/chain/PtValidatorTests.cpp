@@ -202,14 +202,14 @@ namespace catapult { namespace chain {
 				// Assert:
 				if (!expectedResult.IsShortCircuited) {
 					ASSERT_EQ(5u, notificationTypes.size());
-					EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
-					EXPECT_EQ(model::Core_Transaction_Notification, notificationTypes[1]);
-					EXPECT_EQ(model::Core_Transaction_Fee_Notification, notificationTypes[2]);
-					EXPECT_EQ(model::Core_Balance_Debit_Notification, notificationTypes[3]);
-					EXPECT_EQ(model::Core_Signature_Notification, notificationTypes[4]);
+					EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
+					EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
+					EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[2]);
+					EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[3]);
+					EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[4]);
 				} else {
 					ASSERT_EQ(1u, notificationTypes.size());
-					EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
+					EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
 				}
 			});
 		}
@@ -242,12 +242,12 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, ValidatePartialMapsBasicStatefulFailureToFalse) {
 		// Arrange:
-		auto options = ValidatorResultOptions{ ValidatorType::Stateful, model::Core_Transaction_Notification };
+		auto options = ValidatorResultOptions{ ValidatorType::Stateful, model::Core_Transaction_v1_Notification };
 		RunValidatePartialTest(options, false, [](const auto& notificationTypes) {
 			// Assert:
 			ASSERT_EQ(2u, notificationTypes.size());
-			EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
-			EXPECT_EQ(model::Core_Transaction_Notification, notificationTypes[1]);
+			EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
+			EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
 		});
 	}
 
@@ -290,11 +290,11 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, ValidatePartialMapsBasicStatelessFailureToFalse) {
 		// Arrange:
-		RunInvalidStatelessValidatePartialTest(model::Core_Transaction_Notification, [](const auto& notificationTypes) {
+		RunInvalidStatelessValidatePartialTest(model::Core_Transaction_v1_Notification, [](const auto& notificationTypes) {
 			// Assert:
 			ASSERT_EQ(2u, notificationTypes.size());
-			EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
-			EXPECT_EQ(model::Core_Transaction_Notification, notificationTypes[1]);
+			EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
+			EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
 		});
 	}
 
@@ -303,11 +303,11 @@ namespace catapult { namespace chain {
 		RunInvalidStatelessValidatePartialTest(mocks::Mock_Validator_1_Notification, [](const auto& notificationTypes) {
 			// Assert:
 			ASSERT_EQ(6u, notificationTypes.size());
-			EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
-			EXPECT_EQ(model::Core_Transaction_Notification, notificationTypes[1]);
-			EXPECT_EQ(model::Core_Transaction_Fee_Notification, notificationTypes[2]);
-			EXPECT_EQ(model::Core_Balance_Debit_Notification, notificationTypes[3]);
-			EXPECT_EQ(model::Core_Signature_Notification, notificationTypes[4]);
+			EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
+			EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
+			EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[2]);
+			EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[3]);
+			EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[4]);
 			EXPECT_EQ(mocks::Mock_Validator_1_Notification, notificationTypes[5]);
 		});
 	}
@@ -345,12 +345,12 @@ namespace catapult { namespace chain {
 			const auto& notificationTypes = notificationValidator.notificationTypes();
 			if (!expectedResult.IsShortCircuited) {
 				ASSERT_EQ(3u, notificationTypes.size());
-				EXPECT_EQ(model::Aggregate_Cosignatures_Notification, notificationTypes[0]);
-				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_Notification, notificationTypes[1]);
-				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_Notification, notificationTypes[2]);
+				EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
+				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[1]);
+				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[2]);
 			} else {
 				ASSERT_EQ(1u, notificationTypes.size());
-				EXPECT_EQ(model::Aggregate_Cosignatures_Notification, notificationTypes[0]);
+				EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
 			}
 
 			// - correct timestamp was passed to validator

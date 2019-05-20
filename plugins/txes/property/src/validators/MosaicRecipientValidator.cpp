@@ -26,7 +26,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BalanceTransferNotification;
+	using Notification = model::BalanceTransferNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(MosaicRecipient, [](const auto& notification, const ValidatorContext& context) {
 		AccountPropertyView view(context.Cache);

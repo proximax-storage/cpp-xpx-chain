@@ -12,7 +12,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::ModifyContractNotification;
+	using Notification = model::ModifyContractNotification<1>;
 
 	namespace {
 		auto GetContractEntry(cache::ContractCacheDelta& contractCache, const Key& key) {

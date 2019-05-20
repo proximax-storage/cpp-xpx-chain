@@ -62,10 +62,10 @@ namespace catapult { namespace validators {
 		return Validate<PROPERTY_VALUE_TYPE, NOTIFICATION_TYPE>(notification, context); \
 	}));
 
-	DEFINE_PROPERTY_MODIFICATION_VALIDATOR(AddressPropertyValueModification, model::ModifyAddressPropertyValueNotification, Address)
-	DEFINE_PROPERTY_MODIFICATION_VALIDATOR(MosaicPropertyValueModification, model::ModifyMosaicPropertyValueNotification, MosaicId)
+	DEFINE_PROPERTY_MODIFICATION_VALIDATOR(AddressPropertyValueModification, model::ModifyAddressPropertyValueNotification_v1, Address)
+	DEFINE_PROPERTY_MODIFICATION_VALIDATOR(MosaicPropertyValueModification, model::ModifyMosaicPropertyValueNotification_v1, MosaicId)
 	DEFINE_PROPERTY_MODIFICATION_VALIDATOR(
 			TransactionTypePropertyValueModification,
-			model::ModifyTransactionTypePropertyValueNotification,
+			model::ModifyTransactionTypePropertyValueNotification_v1,
 			model::EntityType)
 }}

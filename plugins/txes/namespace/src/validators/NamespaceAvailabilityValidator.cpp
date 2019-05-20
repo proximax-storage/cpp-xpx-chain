@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::RootNamespaceNotification;
+	using Notification = model::RootNamespaceNotification<1>;
 
 	namespace {
 		constexpr bool IsEternal(const state::NamespaceLifetime& lifetime) {

@@ -48,7 +48,7 @@ namespace catapult { namespace observers {
 
 		auto ApplyNotification(
 				state::MosaicEntry& currentEntry,
-				const model::MosaicDefinitionNotification& notification,
+				const model::MosaicDefinitionNotification<1>& notification,
 				NotifyMode mode) {
 			const auto& currentDefinition = currentEntry.definition();
 			auto newProperties = MergeProperties(currentDefinition.properties(), notification.Properties, mode);
@@ -62,7 +62,7 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	DEFINE_OBSERVER(MosaicDefinition, model::MosaicDefinitionNotification, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(MosaicDefinition, model::MosaicDefinitionNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& cache = context.Cache.sub<cache::MosaicCache>();
 
 		// mosaic supply will always be zero when a mosaic definition is observed

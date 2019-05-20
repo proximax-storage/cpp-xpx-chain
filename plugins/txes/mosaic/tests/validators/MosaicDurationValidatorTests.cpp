@@ -34,9 +34,9 @@ namespace catapult { namespace validators {
 	namespace {
 		constexpr MosaicId Default_Mosaic_Id = MosaicId(0x1234);
 
-		model::MosaicDefinitionNotification CreateNotification(const Key& signer, BlockDuration duration) {
+		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, BlockDuration duration) {
 			auto properties = model::MosaicProperties::FromValues({ { 1, 2, duration.unwrap() } });
-			return model::MosaicDefinitionNotification(signer, Default_Mosaic_Id, properties);
+			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties);
 		}
 
 		void AddMosaic(cache::CatapultCache& cache, const Key& owner, BlockDuration duration) {
@@ -54,7 +54,7 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
-				const model::MosaicDefinitionNotification& notification,
+				const model::MosaicDefinitionNotification<1>& notification,
 				Height height = Height(50)) {
 			// Arrange:
 			auto pValidator = CreateMosaicDurationValidator(BlockDuration(123));

@@ -9,7 +9,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyMetadataFieldNotification;
+	using Notification = model::ModifyMetadataFieldNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(MetadataFieldModification, Notification)(uint8_t maxKeySize, uint16_t maxValueSize) {
 		return MAKE_STATELESS_VALIDATOR(MetadataFieldModification, ([maxKeySize, maxValueSize](const Notification& notification) {

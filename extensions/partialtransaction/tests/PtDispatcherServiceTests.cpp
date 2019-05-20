@@ -79,14 +79,14 @@ namespace catapult { namespace partialtransaction {
 			}
 
 			validators::ValidationResult validate(const model::Notification& notification) const override {
-				if (notification.Type == model::Aggregate_Cosignatures_Notification) {
-					return HasAllCosignatures(static_cast<const model::AggregateCosignaturesNotification&>(notification))
+				if (notification.Type == model::Aggregate_Cosignatures_v1_Notification) {
+					return HasAllCosignatures(static_cast<const model::AggregateCosignaturesNotification<1>&>(notification))
 							? ValidationResult::Success
 							: validators::Failure_Aggregate_Missing_Cosigners;
 				}
 
-				if (notification.Type == model::Aggregate_EmbeddedTransaction_Notification) {
-					return HasAllCosignatures(static_cast<const model::AggregateEmbeddedTransactionNotification&>(notification))
+				if (notification.Type == model::Aggregate_EmbeddedTransaction_v1_Notification) {
+					return HasAllCosignatures(static_cast<const model::AggregateEmbeddedTransactionNotification<1>&>(notification))
 							? ValidationResult::Success
 							: validators::Failure_Aggregate_Ineligible_Cosigners;
 				}

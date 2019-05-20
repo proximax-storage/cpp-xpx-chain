@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicSupplyChangeNotification;
+	using Notification = model::MosaicSupplyChangeNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, Notification)(Amount maxDivisibleUnits) {
 		return MAKE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, [maxDivisibleUnits](

@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 			// Arrange: setup cosignatures
 			auto cosignatures = test::GenerateCosignaturesFromCosigners(cosigners);
 
-			using Notification = model::AggregateEmbeddedTransactionNotification;
+			using Notification = model::AggregateEmbeddedTransactionNotification<1>;
 			Notification notification(signer, subTransaction, cosignatures.size(), cosignatures.data());
 			auto pValidator = CreateMultisigAggregateSufficientCosignersValidator();
 

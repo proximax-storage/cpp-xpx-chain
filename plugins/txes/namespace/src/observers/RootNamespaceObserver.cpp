@@ -26,12 +26,12 @@
 namespace catapult { namespace observers {
 
 	namespace {
-		bool IsRenewal(const state::RootNamespace& root, const model::RootNamespaceNotification& notification, Height height) {
+		bool IsRenewal(const state::RootNamespace& root, const model::RootNamespaceNotification<1>& notification, Height height) {
 			return root.lifetime().isActiveOrGracePeriod(height) && root.owner() == notification.Signer;
 		}
 	}
 
-	DEFINE_OBSERVER(RootNamespace, model::RootNamespaceNotification, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(RootNamespace, model::RootNamespaceNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& cache = context.Cache.sub<cache::NamespaceCache>();
 
 		if (NotifyMode::Rollback == context.Mode) {

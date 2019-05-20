@@ -27,7 +27,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyTransactionTypePropertyValueNotification;
+	using Notification = model::ModifyTransactionTypePropertyValueNotification_v1;
 
 	namespace {
 		constexpr auto Relevant_Entity_Type = model::TransactionTypePropertyTransaction::Entity_Type;

@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyMultisigNewCosignerNotification;
+	using Notification = model::ModifyMultisigNewCosignerNotification<1>;
 
 	namespace {
 		class LoopAndLevelChecker {

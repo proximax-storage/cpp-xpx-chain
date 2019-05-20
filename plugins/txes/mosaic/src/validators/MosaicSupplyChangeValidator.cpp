@@ -22,7 +22,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicSupplyChangeNotification;
+	using Notification = model::MosaicSupplyChangeNotification<1>;
 
 	namespace {
 		constexpr bool IsValidDirection(model::MosaicSupplyChangeDirection direction) {

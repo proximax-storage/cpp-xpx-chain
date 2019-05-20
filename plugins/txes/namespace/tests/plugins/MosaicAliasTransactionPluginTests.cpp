@@ -35,7 +35,7 @@ namespace catapult { namespace plugins {
 
 		struct NotificationTraits {
 		public:
-			using Notification_Type = model::AliasedMosaicIdNotification;
+			using Notification_Type = model::AliasedMosaicIdNotification_v1;
 
 		public:
 			static constexpr size_t NumNotifications() {
@@ -56,10 +56,11 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractMosaicRequiredNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<model::MosaicRequiredNotification> mosaicSub;
+		mocks::MockTypedNotificationSubscriber<model::MosaicRequiredNotification<1>> mosaicSub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 		transaction.NamespaceId = NamespaceId(123);
 		transaction.AliasAction = model::AliasAction::Unlink;
 		transaction.Signer = test::GenerateRandomData<Key_Size>();
@@ -74,7 +75,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(transaction.Signer, notification.Signer);
 		EXPECT_EQ(transaction.MosaicId, notification.MosaicId);
 		EXPECT_EQ(UnresolvedMosaicId(), notification.UnresolvedMosaicId);
-		EXPECT_EQ(MosaicRequiredNotification::MosaicType::Resolved, notification.ProvidedMosaicType);
+		EXPECT_EQ(MosaicRequiredNotification<1>::MosaicType::Resolved, notification.ProvidedMosaicType);
 	}
 
 	// endregion

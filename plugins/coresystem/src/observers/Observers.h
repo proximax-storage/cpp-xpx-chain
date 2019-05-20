@@ -28,43 +28,43 @@ namespace catapult { namespace observers {
 	// region VerifiableEntity
 
 	/// Observes account address changes.
-	DECLARE_OBSERVER(AccountAddress, model::AccountAddressNotification)();
+	DECLARE_OBSERVER(AccountAddress, model::AccountAddressNotification<1>)();
 
 	/// Observes account public key changes.
-	DECLARE_OBSERVER(AccountPublicKey, model::AccountPublicKeyNotification)();
+	DECLARE_OBSERVER(AccountPublicKey, model::AccountPublicKeyNotification<1>)();
 
 	// endregion
 
 	// region Block
 
 	/// Observes block notifications and credits the harvester with transaction fees given the currency mosaic id (\a currencyMosaicId).
-	DECLARE_OBSERVER(HarvestFee, model::BlockNotification)(MosaicId currencyMosaicId);
+	DECLARE_OBSERVER(HarvestFee, model::BlockNotification<1>)(MosaicId currencyMosaicId);
 
 	/// Observes block difficulties.
-	DECLARE_OBSERVER(BlockDifficulty, model::BlockNotification)();
+	DECLARE_OBSERVER(BlockDifficulty, model::BlockNotification<1>)();
 
 	/// Observes block notifications and counts transactions.
-	DECLARE_OBSERVER(TotalTransactions, model::BlockNotification)();
+	DECLARE_OBSERVER(TotalTransactions, model::BlockNotification<1>)();
 
 	/// Observes block notifications and clean up snapshot from modified accounts.
-	DECLARE_OBSERVER(SnapshotCleanUp, model::BlockNotification)(const model::BlockChainConfiguration& config);
+	DECLARE_OBSERVER(SnapshotCleanUp, model::BlockNotification<1>)(const model::BlockChainConfiguration& config);
 
 	// endregion
 
 	// region Transaction
 
 	/// Observes balance changes triggered by balance transfer notifications.
-	DECLARE_OBSERVER(BalanceTransfer, model::BalanceTransferNotification)();
+	DECLARE_OBSERVER(BalanceTransfer, model::BalanceTransferNotification<1>)();
 
 	/// Observes balance changes triggered by balance debit notifications.
-	DECLARE_OBSERVER(BalanceDebit, model::BalanceDebitNotification)();
+	DECLARE_OBSERVER(BalanceDebit, model::BalanceDebitNotification<1>)();
 
 	// endregion
 
 	// region SourceChange
 
 	/// Observes source changes and changes observer source.
-	DECLARE_OBSERVER(SourceChange, model::SourceChangeNotification)();
+	DECLARE_OBSERVER(SourceChange, model::SourceChangeNotification<1>)();
 
 	// endregion
 }}

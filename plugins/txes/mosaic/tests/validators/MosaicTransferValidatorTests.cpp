@@ -64,7 +64,7 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
-				const model::BalanceTransferNotification& notification) {
+				const model::BalanceTransferNotification<1>& notification) {
 			// Arrange:
 			auto pValidator = CreateMosaicTransferValidator(Currency_Mosaic_Id);
 
@@ -78,7 +78,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidatingCurrencyMosaicTransfer) {
 		// Arrange:
-		auto notification = model::BalanceTransferNotification(Key(), UnresolvedAddress(), Currency_Mosaic_Id, Amount(123));
+		auto notification = model::BalanceTransferNotification<1>(Key(), UnresolvedAddress(), Currency_Mosaic_Id, Amount(123));
 		auto cache = CreateCache();
 
 		// Assert:
@@ -105,7 +105,7 @@ namespace catapult { namespace validators {
 		void AssertMosaicsTest(ValidationResult expectedResult, UnresolvedMosaicId mosaicId) {
 			// Arrange:
 			auto owner = test::GenerateRandomData<Key_Size>();
-			auto notification = model::BalanceTransferNotification(owner, UnresolvedAddress(), mosaicId, Amount(123));
+			auto notification = model::BalanceTransferNotification<1>(owner, UnresolvedAddress(), mosaicId, Amount(123));
 
 			auto cache = CreateAndSeedCache(owner, model::MosaicFlags::Transferable);
 
@@ -139,7 +139,7 @@ namespace catapult { namespace validators {
 			// - notice that BalanceTransferNotification holds references to sender + recipient
 			Key sender;
 			auto mosaicId = test::UnresolveXor(Valid_Mosaic_Id);
-			auto notification = model::BalanceTransferNotification(sender, UnresolvedAddress(), mosaicId, Amount(123));
+			auto notification = model::BalanceTransferNotification<1>(sender, UnresolvedAddress(), mosaicId, Amount(123));
 
 			if (notificationFlags & Owner_Is_Sender)
 				sender = owner;

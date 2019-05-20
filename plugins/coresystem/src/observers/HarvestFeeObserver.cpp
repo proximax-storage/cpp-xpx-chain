@@ -45,8 +45,8 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	DECLARE_OBSERVER(HarvestFee, model::BlockNotification)(MosaicId currencyMosaicId) {
-		return MAKE_OBSERVER(HarvestFee, model::BlockNotification, ([currencyMosaicId](const auto& notification, auto& context) {
+	DECLARE_OBSERVER(HarvestFee, model::BlockNotification<1>)(MosaicId currencyMosaicId) {
+		return MAKE_OBSERVER(HarvestFee, model::BlockNotification<1>, ([currencyMosaicId](const auto& notification, auto& context) {
 			// credit the harvester
 			auto& cache = context.Cache.template sub<cache::AccountStateCache>();
 			auto accountStateIter = cache.find(notification.Signer);

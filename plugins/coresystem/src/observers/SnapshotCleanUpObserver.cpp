@@ -23,7 +23,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::BlockNotification;
+	using Notification = model::BlockNotification<1>;
 
 	DECLARE_OBSERVER(SnapshotCleanUp, Notification)(const model::BlockChainConfiguration& config) {
 		return MAKE_OBSERVER(SnapshotCleanUp, Notification, [&config](const auto&, const ObserverContext& context) {

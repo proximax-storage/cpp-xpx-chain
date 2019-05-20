@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicDefinitionNotification;
+	using Notification = model::MosaicDefinitionNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, Notification)(BlockDuration maxMosaicDuration) {
 		return MAKE_STATEFUL_VALIDATOR(MosaicDuration, [maxMosaicDuration](const auto& notification, const ValidatorContext& context) {

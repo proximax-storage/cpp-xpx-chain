@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 			auto cache = test::MetadataCacheFactory::Create();
 			PopulateCache(cache);
 			auto pValidator = CreateModifyMosaicMetadataValidator();
-			auto notification = model::ModifyMosaicMetadataNotification(signer, metadataId);
+			auto notification = model::ModifyMosaicMetadataNotification_v1(signer, metadataId);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

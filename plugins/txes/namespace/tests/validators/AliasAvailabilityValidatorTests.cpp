@@ -48,7 +48,7 @@ namespace catapult { namespace validators {
 		}
 
 		template<typename TSeedCacheFunc>
-		void RunAvailabilityTest(ValidationResult expectedResult, const AliasOwnerNotification& notification, TSeedCacheFunc seedCache) {
+		void RunAvailabilityTest(ValidationResult expectedResult, const AliasOwnerNotification<1>& notification, TSeedCacheFunc seedCache) {
 			// Arrange:
 			auto cache = CreateAndSeedCache(seedCache);
 
@@ -65,7 +65,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureIfNamespaceIsUnknown) {
 		// Arrange:
 		auto owner = test::GenerateRandomData<Key_Size>();
-		AliasOwnerNotification notification(owner, Default_Namespace_Id, AliasAction::Link);
+		AliasOwnerNotification<1> notification(owner, Default_Namespace_Id, AliasAction::Link);
 
 		// Assert:
 		RunAvailabilityTest(Failure_Namespace_Alias_Namespace_Unknown, notification, [](const auto&) {});
@@ -74,7 +74,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureIfOwnerDoesNotMatch) {
 		// Arrange:
 		auto owner = test::GenerateRandomData<Key_Size>();
-		AliasOwnerNotification notification(owner, Default_Namespace_Id, AliasAction::Link);
+		AliasOwnerNotification<1> notification(owner, Default_Namespace_Id, AliasAction::Link);
 
 		// Assert:
 		RunAvailabilityTest(Failure_Namespace_Alias_Owner_Conflict, notification, [&owner](auto& cache) {
@@ -87,7 +87,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureIfNamespaceExpired) {
 		// Arrange:
 		auto owner = test::GenerateRandomData<Key_Size>();
-		AliasOwnerNotification notification(owner, Default_Namespace_Id, AliasAction::Link);
+		AliasOwnerNotification<1> notification(owner, Default_Namespace_Id, AliasAction::Link);
 
 		// Assert: notification is at height 200, so limit lifetime to 150
 		RunAvailabilityTest(Failure_Namespace_Expired, notification, [&owner](auto& cache) {
@@ -128,7 +128,7 @@ namespace catapult { namespace validators {
 		void RunTest(ValidationResult expectedResult, AliasAction aliasAction, LinkState linkState) {
 			// Arrange:
 			auto owner = test::GenerateRandomData<Key_Size>();
-			AliasOwnerNotification notification(owner, TTraits::Notification_Namespace_Id, aliasAction);
+			AliasOwnerNotification<1> notification(owner, TTraits::Notification_Namespace_Id, aliasAction);
 
 			// Assert:
 			RunAvailabilityTest(expectedResult, notification, [&owner, linkState](auto& cache) {

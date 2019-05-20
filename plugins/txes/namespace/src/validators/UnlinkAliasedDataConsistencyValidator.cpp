@@ -54,7 +54,7 @@ namespace catapult { namespace validators {
 	namespace {
 		struct AddressTraits {
 		public:
-			using NotificationType = model::AliasedAddressNotification;
+			using NotificationType = model::AliasedAddressNotification_v1;
 			static constexpr auto AliasedType = state::AliasType::Address;
 
 		public:
@@ -65,7 +65,7 @@ namespace catapult { namespace validators {
 
 		struct MosaicIdTraits {
 		public:
-			using NotificationType = model::AliasedMosaicIdNotification;
+			using NotificationType = model::AliasedMosaicIdNotification_v1;
 			static constexpr auto AliasedType = state::AliasType::Mosaic;
 
 		public:

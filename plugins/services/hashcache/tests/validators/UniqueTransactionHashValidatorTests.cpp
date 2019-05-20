@@ -49,7 +49,7 @@ namespace catapult { namespace validators {
 				const state::TimestampedHash& timestampedHash) {
 			// Arrange:
 			auto pValidator = CreateUniqueTransactionHashValidator();
-			auto notification = model::TransactionNotification(Key(), timestampedHash.Hash, model::EntityType(), timestampedHash.Time);
+			auto notification = model::TransactionNotification<1>(Key(), timestampedHash.Hash, model::EntityType(), timestampedHash.Time);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

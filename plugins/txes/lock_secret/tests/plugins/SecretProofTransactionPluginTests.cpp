@@ -67,6 +67,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -83,7 +84,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishHashAlgorithmNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<SecretLockHashAlgorithmNotification> sub;
+		mocks::MockTypedNotificationSubscriber<SecretLockHashAlgorithmNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateSecretProofTransaction<TTraits>();
 
@@ -102,7 +103,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanSecretProofSecretNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ProofSecretNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ProofSecretNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateSecretProofTransaction<TTraits>();
 
@@ -121,7 +122,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanSecretProofPublicationNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ProofPublicationNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ProofPublicationNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateSecretProofTransaction<TTraits>();
 

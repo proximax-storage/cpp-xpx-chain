@@ -60,7 +60,7 @@ namespace catapult { namespace validators {
 			for (auto modificationType : modificationTypes)
 				modifications.push_back({ modificationType, test::GenerateRandomData<Key_Size>() });
 
-			model::ModifyMultisigCosignersNotification notification(
+			model::ModifyMultisigCosignersNotification<1> notification(
 					signer,
 					static_cast<uint8_t>(modifications.size()),
 					modifications.data());

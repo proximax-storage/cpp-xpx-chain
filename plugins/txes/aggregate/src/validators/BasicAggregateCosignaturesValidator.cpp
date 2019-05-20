@@ -23,7 +23,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AggregateCosignaturesNotification;
+	using Notification = model::AggregateCosignaturesNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(BasicAggregateCosignatures, Notification)(uint32_t maxTransactions, uint8_t maxCosignatures) {
 		return MAKE_STATELESS_VALIDATOR(BasicAggregateCosignatures, ([maxTransactions, maxCosignatures](const auto& notification) {

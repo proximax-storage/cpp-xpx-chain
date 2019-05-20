@@ -27,7 +27,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS FunctionalNotificationObserverTests
 
-	using NotificationType = model::AccountPublicKeyNotification;
+	using NotificationType = model::AccountPublicKeyNotification<1>;
 
 	TEST(TEST_CLASS, HasCorrectName) {
 		// Act:
@@ -65,7 +65,7 @@ namespace catapult { namespace observers {
 		auto context = test::CreateObserverContext(cacheDelta, state, Height(123), NotifyMode::Commit);
 
 		auto publicKey = test::GenerateRandomData<Key_Size>();
-		model::AccountPublicKeyNotification notification(publicKey);
+		NotificationType notification(publicKey);
 		observer.notify(notification, context);
 
 		// Assert:

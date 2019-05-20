@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 		struct AddressPropertyTraits : public test::BaseAddressPropertyTraits {
 			static constexpr auto CreateValidator = CreateMaxAddressPropertyValuesValidator;
 
-			using NotificationType = model::ModifyAddressPropertyNotification;
+			using NotificationType = model::ModifyAddressPropertyNotification_v1;
 
 			static auto ToUnresolved(const ValueType& value) {
 				return extensions::CopyToUnresolvedAddress(value);
@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 		struct MosaicPropertyTraits : public test::BaseMosaicPropertyTraits {
 			static constexpr auto CreateValidator = CreateMaxMosaicPropertyValuesValidator;
 
-			using NotificationType = model::ModifyMosaicPropertyNotification;
+			using NotificationType = model::ModifyMosaicPropertyNotification_v1;
 
 			static auto ToUnresolved(const ValueType& value) {
 				return extensions::CastToUnresolvedMosaicId(value);
@@ -60,7 +60,7 @@ namespace catapult { namespace validators {
 		struct TransactionTypePropertyTraits : public test::BaseTransactionTypePropertyTraits {
 			static constexpr auto CreateValidator = CreateMaxTransactionTypePropertyValuesValidator;
 
-			using NotificationType = model::ModifyTransactionTypePropertyNotification;
+			using NotificationType = model::ModifyTransactionTypePropertyNotification_v1;
 
 			static auto ToUnresolved(const ValueType& value) {
 				return value;

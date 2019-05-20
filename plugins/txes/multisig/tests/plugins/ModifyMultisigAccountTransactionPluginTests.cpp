@@ -37,11 +37,14 @@ namespace catapult { namespace plugins {
 	namespace {
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyMultisigAccount, 3, 3)
 
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
+
 		template<typename TTraits>
 		auto CreateTransactionWithModifications(uint8_t numModifications) {
 			using TransactionType = typename TTraits::TransactionType;
 			uint32_t entitySize = sizeof(TransactionType) + numModifications * sizeof(CosignatoryModification);
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->ModificationsCount = numModifications;
 			test::FillWithRandomData(pTransaction->Signer);
@@ -124,8 +127,8 @@ namespace catapult { namespace plugins {
 		// Assert:
 		AssertNumNotifications<TTraits>(5, *pTransaction, [](const auto& sub) {
 			// - multisig modify new cosigner notifications must be the first raised notifications
-			EXPECT_EQ(Multisig_Modify_New_Cosigner_Notification, sub.notificationTypes()[0]);
-			EXPECT_EQ(Multisig_Modify_New_Cosigner_Notification, sub.notificationTypes()[1]);
+			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[0]);
+			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[1]);
 		});
 	}
 
@@ -135,10 +138,11 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishSettingsNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigSettingsNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigSettingsNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.ModificationsCount = 0;
 		test::FillWithRandomData(transaction.Signer);
 		transaction.MinRemovalDelta = -3;
@@ -161,7 +165,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishCosignersNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
@@ -183,10 +187,11 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(NoCosignersNotificationIfNoModificationIsPresent) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.ModificationsCount = 0;
 
 		// Act:
@@ -203,7 +208,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishNewCosignerNotificationForEachAddModification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
@@ -227,7 +232,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(NoNewCosignerNotificationsIfNoAddModificationsArePresent) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3);
@@ -271,7 +276,7 @@ namespace catapult { namespace plugins {
 		template<typename TTraits>
 		void AssertAddressInteractionNotifications(size_t numAddModifications, size_t numDelModifications) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<AddressInteractionNotification> sub;
+			mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
 			auto pPlugin = TTraits::CreatePlugin();
 
 			auto numModifications = static_cast<uint8_t>(numAddModifications + numDelModifications);

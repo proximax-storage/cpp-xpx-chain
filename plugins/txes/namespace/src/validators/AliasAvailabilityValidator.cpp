@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AliasOwnerNotification;
+	using Notification = model::AliasOwnerNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(AliasAvailability, [](const auto& notification, const auto& context) {
 		const auto& cache = context.Cache.template sub<cache::NamespaceCache>();

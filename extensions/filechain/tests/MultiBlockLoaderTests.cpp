@@ -155,7 +155,7 @@ namespace catapult { namespace filechain {
 				MockNotificationObserverT::notify(notification, context);
 
 				// collect heights only when a block is processed
-				if (model::Core_Block_Notification == notification.Type)
+				if (model::Core_Block_v1_Notification == notification.Type)
 					m_blockHeights.push_back(context.Height);
 			}
 

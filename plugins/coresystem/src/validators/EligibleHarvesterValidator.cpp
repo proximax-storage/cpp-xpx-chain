@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BlockNotification;
+	using Notification = model::BlockNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, Notification)(Amount minHarvesterBalance) {
 		return MAKE_STATEFUL_VALIDATOR(EligibleHarvester, [minHarvesterBalance](

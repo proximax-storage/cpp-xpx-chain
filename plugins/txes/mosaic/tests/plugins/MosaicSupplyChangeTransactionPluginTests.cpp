@@ -36,6 +36,8 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicSupplyChange, 2, 2)
+
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
 	}
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Mosaic_Supply_Change)
@@ -45,6 +47,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.Size = 0;
 
 		// Act:
@@ -60,6 +63,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -70,10 +74,11 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishMosaicRequiredNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<MosaicRequiredNotification> sub;
+		mocks::MockTypedNotificationSubscriber<MosaicRequiredNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		transaction.MosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
 
@@ -86,15 +91,16 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(transaction.Signer, notification.Signer);
 		EXPECT_EQ(MosaicId(), notification.MosaicId);
 		EXPECT_EQ(transaction.MosaicId, notification.UnresolvedMosaicId);
-		EXPECT_EQ(MosaicRequiredNotification::MosaicType::Unresolved, notification.ProvidedMosaicType);
+		EXPECT_EQ(MosaicRequiredNotification<1>::MosaicType::Unresolved, notification.ProvidedMosaicType);
 	}
 
 	PLUGIN_TEST(CanPublishMosaicSupplyChangeNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<MosaicSupplyChangeNotification> sub;
+		mocks::MockTypedNotificationSubscriber<MosaicSupplyChangeNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		transaction.MosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
 		transaction.Direction = MosaicSupplyChangeDirection::Increase;

@@ -79,7 +79,7 @@ namespace catapult { namespace observers {
 
 		struct SingleMosaicTraits {
 			static auto CreateNotification(const Key& sender) {
-				return model::BalanceDebitNotification(sender, test::UnresolveXor(Currency_Mosaic_Id), Amount(234));
+				return model::BalanceDebitNotification<1>(sender, test::UnresolveXor(Currency_Mosaic_Id), Amount(234));
 			}
 
 			static test::BalanceTransfers GetInitialSenderBalances() {
@@ -101,7 +101,7 @@ namespace catapult { namespace observers {
 	namespace {
 		struct MultipleMosaicTraits {
 			static auto CreateNotification(const Key& sender) {
-				return model::BalanceDebitNotification(sender, test::UnresolveXor(MosaicId(12)), Amount(234));
+				return model::BalanceDebitNotification<1>(sender, test::UnresolveXor(MosaicId(12)), Amount(234));
 			}
 
 			static test::BalanceTransfers GetInitialSenderBalances() {

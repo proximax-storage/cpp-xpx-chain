@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 		void AssertMaxTransactionsValidationResult(ValidationResult expectedResult, uint32_t numTransactions, uint32_t maxTransactions) {
 			// Arrange: notice that transaction data is not actually checked
 			auto signer = test::GenerateRandomData<Key_Size>();
-			model::AggregateCosignaturesNotification notification(signer, numTransactions, nullptr, 0, nullptr);
+			model::AggregateCosignaturesNotification<1> notification(signer, numTransactions, nullptr, 0, nullptr);
 			auto pValidator = CreateBasicAggregateCosignaturesValidator(maxTransactions, std::numeric_limits<uint8_t>::max());
 
 			// Act:
@@ -82,7 +82,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto signer = test::GenerateRandomData<Key_Size>();
 			auto cosignatures = GenerateRandomCosignatures(numCosignatures);
-			model::AggregateCosignaturesNotification notification(signer, 3, nullptr, numCosignatures, cosignatures.data());
+			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, numCosignatures, cosignatures.data());
 			auto pValidator = CreateBasicAggregateCosignaturesValidator(std::numeric_limits<uint32_t>::max(), maxCosignatures);
 
 			// Act:
@@ -127,7 +127,7 @@ namespace catapult { namespace validators {
 				const Key& signer,
 				const std::vector<model::Cosignature>& cosignatures) {
 			// Arrange:
-			model::AggregateCosignaturesNotification notification(signer, 3, nullptr, cosignatures.size(), cosignatures.data());
+			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, cosignatures.size(), cosignatures.data());
 			auto pValidator = CreateBasicAggregateCosignaturesValidator(
 					std::numeric_limits<uint32_t>::max(),
 					std::numeric_limits<uint8_t>::max());

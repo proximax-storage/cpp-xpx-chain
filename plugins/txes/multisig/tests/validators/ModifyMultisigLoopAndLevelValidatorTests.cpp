@@ -72,7 +72,7 @@ namespace catapult { namespace validators {
 			auto keys = test::GenerateKeys(Num_Network_Accounts);
 			auto cache = CreateCacheMultisigNetwork(keys);
 
-			model::ModifyMultisigNewCosignerNotification notification(keys[multisigAccountIndex], keys[cosignatoryKeyIndex]);
+			model::ModifyMultisigNewCosignerNotification<1> notification(keys[multisigAccountIndex], keys[cosignatoryKeyIndex]);
 			auto pValidator = CreateModifyMultisigLoopAndLevelValidator(static_cast<uint8_t>(maxMultisigDepth));
 
 			// Act:

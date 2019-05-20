@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 		void AssertValidation(ValidationResult expectedResult, const cache::CatapultCache& cache, const Key& publicKey) {
 			// Arrange:
 			auto pValidator = CreateNewRemoteAccountAvailabilityValidator();
-			auto notification = model::NewRemoteAccountNotification(publicKey);
+			auto notification = model::NewRemoteAccountNotification<1>(publicKey);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

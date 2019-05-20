@@ -76,7 +76,7 @@ namespace catapult { namespace observers {
 		HandleNotifications<NOTIFICATION_TYPE>(notification, context); \
 	});
 
-	DEFINE_PROPERTY_MODIFICATION_OBSERVER(AddressPropertyValueModification, model::ModifyAddressPropertyValueNotification)
-	DEFINE_PROPERTY_MODIFICATION_OBSERVER(MosaicPropertyValueModification, model::ModifyMosaicPropertyValueNotification)
-	DEFINE_PROPERTY_MODIFICATION_OBSERVER(TransactionTypePropertyValueModification, model::ModifyTransactionTypePropertyValueNotification)
+	DEFINE_PROPERTY_MODIFICATION_OBSERVER(AddressPropertyValueModification, model::ModifyAddressPropertyValueNotification_v1)
+	DEFINE_PROPERTY_MODIFICATION_OBSERVER(MosaicPropertyValueModification, model::ModifyMosaicPropertyValueNotification_v1)
+	DEFINE_PROPERTY_MODIFICATION_OBSERVER(TransactionTypePropertyValueModification, model::ModifyTransactionTypePropertyValueNotification_v1)
 }}

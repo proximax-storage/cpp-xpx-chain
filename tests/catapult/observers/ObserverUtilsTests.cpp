@@ -217,7 +217,7 @@ namespace catapult { namespace observers {
 			return out.str();
 		}
 
-		using PruningObserver = NotificationObserverT<model::BlockNotification>;
+		using PruningObserver = NotificationObserverT<model::BlockNotification<1>>;
 
 		void AssertNoPruning(const PruningObserver& observer, NotifyMode mode, Height height) {
 			// Arrange:
@@ -227,7 +227,7 @@ namespace catapult { namespace observers {
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
 
 			// Act:
-			observer.notify(model::BlockNotification(Key(), Timestamp(), Difficulty()), context);
+			observer.notify(model::BlockNotification<1>(Key(), Timestamp(), Difficulty()), context);
 			const auto& subCache = cache.sub<PrunableCache>();
 
 			// Assert:
@@ -245,7 +245,7 @@ namespace catapult { namespace observers {
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
 
 			// Act:
-			observer.notify(model::BlockNotification(Key(), Timestamp(), Difficulty()), context);
+			observer.notify(model::BlockNotification<1>(Key(), Timestamp(), Difficulty()), context);
 			const auto& subCache = cache.sub<PrunableCache>();
 
 			// Assert:
@@ -263,7 +263,7 @@ namespace catapult { namespace observers {
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
 
 			// Act:
-			observer.notify(model::BlockNotification(Key(), timestamp, Difficulty()), context);
+			observer.notify(model::BlockNotification<1>(Key(), timestamp, Difficulty()), context);
 			const auto& subCache = cache.sub<PrunableCache>();
 
 			// Assert:
@@ -414,7 +414,7 @@ namespace catapult { namespace observers {
 			ObserverContext context({ cacheDelta, state, statementBuilder }, height, mode, model::ResolverContext());
 
 			// Act:
-			observer.notify(model::BlockNotification(Key(), Timestamp(), Difficulty()), context);
+			observer.notify(model::BlockNotification<1>(Key(), Timestamp(), Difficulty()), context);
 			const auto& subCache = cache.sub<PrunableCache>();
 
 			// Assert:

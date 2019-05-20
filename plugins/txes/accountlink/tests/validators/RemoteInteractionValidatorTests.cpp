@@ -64,7 +64,7 @@ namespace catapult { namespace validators {
 				AddAccount(cache, key, state::AccountType::Main);
 
 			auto pValidator = CreateRemoteInteractionValidator();
-			auto notification = model::AddressInteractionNotification(Key(), transactionType, participantsByAddress, participantsByKey);
+			auto notification = model::AddressInteractionNotification<1>(Key(), transactionType, participantsByAddress, participantsByKey);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

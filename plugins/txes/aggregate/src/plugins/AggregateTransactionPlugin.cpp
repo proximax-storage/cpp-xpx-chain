@@ -61,52 +61,60 @@ namespace catapult { namespace plugins {
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
 				const auto& aggregate = CastToDerivedType(transactionInfo.entity());
 
-				// publish aggregate notifications
-				// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
-				auto numCosignatures = aggregate.CosignaturesCount();
-				sub.notify(AggregateCosignaturesNotification(
-						aggregate.Signer,
-						static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
-						aggregate.TransactionsPtr(),
-						numCosignatures,
-						aggregate.CosignaturesPtr()));
-
-				// publish all sub-transaction information
-				for (const auto& subTransaction : aggregate.Transactions()) {
-					// - change source
-					sub.notify(SourceChangeNotification(0, 1, SourceChangeNotification::SourceChangeType::Relative));
-
-					// - signers and entity
-					sub.notify(AccountPublicKeyNotification(subTransaction.Signer));
-					const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
-					auto supportedVersions = plugin.supportedVersions();
-
-					sub.notify(EntityNotification(
-							subTransaction.Network(),
-							supportedVersions.MinVersion,
-							supportedVersions.MaxVersion,
-							subTransaction.EntityVersion()));
-
-					// - generic sub-transaction notification
-					sub.notify(AggregateEmbeddedTransactionNotification(
+				switch (aggregate.EntityVersion()) {
+				case 2: {
+					// publish aggregate notifications
+					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
+					auto numCosignatures = aggregate.CosignaturesCount();
+					sub.notify(AggregateCosignaturesNotification<1>(
 							aggregate.Signer,
-							subTransaction,
+							static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
+							aggregate.TransactionsPtr(),
 							numCosignatures,
 							aggregate.CosignaturesPtr()));
 
-					// - specific sub-transaction notifications
-					//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
-					plugin.publish(subTransaction, sub);
+					// publish all sub-transaction information
+					for (const auto& subTransaction : aggregate.Transactions()) {
+						// - change source
+						sub.notify(SourceChangeNotification<1>(0, 1, SourceChangeNotification<1>::SourceChangeType::Relative));
+
+						// - signers and entity
+						sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));
+						const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
+						auto supportedVersions = plugin.supportedVersions();
+
+						sub.notify(EntityNotification<1>(
+								subTransaction.Network(),
+								supportedVersions.MinVersion,
+								supportedVersions.MaxVersion,
+								subTransaction.EntityVersion()));
+
+						// - generic sub-transaction notification
+						sub.notify(AggregateEmbeddedTransactionNotification<1>(
+								aggregate.Signer,
+								subTransaction,
+								numCosignatures,
+								aggregate.CosignaturesPtr()));
+
+						// - specific sub-transaction notifications
+						//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
+						plugin.publish(subTransaction, sub);
+					}
+
+					// publish all cosigner information (as an optimization these are published with the source of the last sub-transaction)
+					const auto* pCosignature = aggregate.CosignaturesPtr();
+					for (auto i = 0u; i < numCosignatures; ++i) {
+						// - notice that all valid cosigners must have been observed previously as part of either
+						//   (1) sub-transaction execution or (2) composite account setup
+						// - require the cosigners to sign the aggregate indirectly via the hash of its data
+						sub.notify(SignatureNotification<1>(pCosignature->Signer, pCosignature->Signature, transactionInfo.hash()));
+						++pCosignature;
+					}
+					break;
 				}
 
-				// publish all cosigner information (as an optimization these are published with the source of the last sub-transaction)
-				const auto* pCosignature = aggregate.CosignaturesPtr();
-				for (auto i = 0u; i < numCosignatures; ++i) {
-					// - notice that all valid cosigners must have been observed previously as part of either
-					//   (1) sub-transaction execution or (2) composite account setup
-					// - require the cosigners to sign the aggregate indirectly via the hash of its data
-					sub.notify(SignatureNotification(pCosignature->Signer, pCosignature->Signature, transactionInfo.hash()));
-					++pCosignature;
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AggregateTransaction", aggregate.EntityVersion());
 				}
 			}
 

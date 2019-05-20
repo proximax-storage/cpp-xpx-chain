@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 	namespace {
 		struct HashTraits {
 		public:
-			using NotificationType = model::HashLockDurationNotification;
+			using NotificationType = model::HashLockDurationNotification<1>;
 			static constexpr auto Failure_Result = Failure_LockHash_Invalid_Duration;
 
 			static auto CreateValidator(BlockDuration maxDuration) {

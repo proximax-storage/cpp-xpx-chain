@@ -26,11 +26,16 @@
 
 namespace catapult { namespace test {
 
+	namespace {
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+	}
+
 	std::unique_ptr<model::AggregateTransaction> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {
 		uint32_t size = sizeof(model::AggregateTransaction) + 124 + numCosignatures * sizeof(model::Cosignature);
 		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
 
+		pTransaction->Version = Transaction_Version;
 		pTransaction->Size = size;
 		pTransaction->Type = model::Entity_Type_Aggregate_Bonded;
 		pTransaction->PayloadSize = 124;
@@ -58,6 +63,7 @@ namespace catapult { namespace test {
 		uint32_t entitySize = sizeof(TransactionType) + numTransactions * sizeof(mocks::EmbeddedMockTransaction);
 		AggregateTransactionWrapper wrapper;
 		auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+		pTransaction->Version = Transaction_Version;
 		pTransaction->Size = entitySize;
 		pTransaction->Type = model::Entity_Type_Aggregate_Bonded;
 		pTransaction->PayloadSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);

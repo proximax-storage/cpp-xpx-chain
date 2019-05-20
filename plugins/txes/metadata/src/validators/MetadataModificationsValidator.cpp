@@ -11,7 +11,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MetadataModificationsNotification;
+	using Notification = model::MetadataModificationsNotification<1>;
 
 
 	namespace {

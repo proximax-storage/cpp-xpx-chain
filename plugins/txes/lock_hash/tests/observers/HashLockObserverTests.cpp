@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
 		struct HashObserverTraits {
 		public:
 			using CacheType = cache::HashLockInfoCache;
-			using NotificationType = model::HashLockNotification;
+			using NotificationType = model::HashLockNotification<1>;
 			using NotificationBuilder = test::HashLockNotificationBuilder;
 			using ObserverTestContext = test::ObserverTestContextT<test::HashLockInfoCacheFactory>;
 

@@ -40,7 +40,7 @@ namespace catapult { namespace test {
 
 		/// Creates a notification.
 		auto notification() {
-			return model::SecretLockNotification(m_signer, m_mosaic, m_duration, m_hashAlgorithm, m_secret, m_recipient);
+			return model::SecretLockNotification<1>(m_signer, m_mosaic, m_duration, m_hashAlgorithm, m_secret, m_recipient);
 		}
 
 		/// Sets notification hash to \a secret.
@@ -76,7 +76,7 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a notification.
 		auto notification() const {
-			return model::ProofPublicationNotification(m_signer, m_algorithm, m_hash);
+			return model::ProofPublicationNotification<1>(m_signer, m_algorithm, m_hash);
 		}
 
 		/// Sets notification \a height.

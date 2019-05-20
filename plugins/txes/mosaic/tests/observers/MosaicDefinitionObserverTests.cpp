@@ -38,14 +38,14 @@ namespace catapult { namespace observers {
 		constexpr MosaicId Default_Mosaic_Id(345);
 		constexpr Height Seed_Height(7);
 
-		model::MosaicDefinitionNotification CreateDefaultNotification(const Key& signer) {
+		model::MosaicDefinitionNotification<1> CreateDefaultNotification(const Key& signer) {
 			auto properties = model::MosaicProperties::FromValues({ { 3, 6, 15 } });
-			return model::MosaicDefinitionNotification(signer, Default_Mosaic_Id, properties);
+			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties);
 		}
 
 		template<typename TSeedCacheFunc, typename TCheckCacheFunc>
 		void RunTest(
-				const model::MosaicDefinitionNotification& notification,
+				const model::MosaicDefinitionNotification<1>& notification,
 				ObserverTestContext&& context,
 				TSeedCacheFunc seedCache,
 				TCheckCacheFunc checkCache) {

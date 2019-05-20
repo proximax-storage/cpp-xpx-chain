@@ -27,7 +27,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BalanceTransferNotification;
+	using Notification = model::BalanceTransferNotification<1>;
 
 	namespace {
 		bool IsMosaicOwnerParticipant(

@@ -23,7 +23,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicPropertiesNotification;
+	using Notification = model::MosaicPropertiesNotification<1>;
 
 	namespace {
 		constexpr bool IsValidFlags(model::MosaicFlags flags) {

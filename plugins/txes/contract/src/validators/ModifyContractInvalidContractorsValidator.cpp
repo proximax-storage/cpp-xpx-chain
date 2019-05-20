@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyContractNotification;
+	using Notification = model::ModifyContractNotification<1>;
 
 #define DEFINE_INVALID_CONTRACTORS_VALIDATOR(CONTRACTOR_TYPE) \
 	DEFINE_STATEFUL_VALIDATOR(ModifyContractInvalid##CONTRACTOR_TYPE##s, [](const auto& notification, const ValidatorContext& context) { \

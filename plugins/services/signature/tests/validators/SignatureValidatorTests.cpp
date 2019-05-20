@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 #define TEST_CLASS SignatureValidatorTests
 
 	namespace {
-		void AssertValidationResult(ValidationResult expectedResult, const model::SignatureNotification& notification) {
+		void AssertValidationResult(ValidationResult expectedResult, const model::SignatureNotification<1>& notification) {
 			// Arrange:
 			auto pValidator = CreateSignatureValidator();
 
@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 		Signature signature;
 		crypto::Sign(signer, data, signature);
 
-		model::SignatureNotification notification(signer.publicKey(), signature, data);
+		model::SignatureNotification<1> notification(signer.publicKey(), signature, data);
 
 		// Assert:
 		AssertValidationResult(ValidationResult::Success, notification);
@@ -63,7 +63,7 @@ namespace catapult { namespace validators {
 		Signature signature;
 		crypto::Sign(signer, data, signature);
 
-		model::SignatureNotification notification(signer.publicKey(), signature, data);
+		model::SignatureNotification<1> notification(signer.publicKey(), signature, data);
 		signature[0] ^= 0xFF;
 
 		// Assert:
@@ -77,7 +77,7 @@ namespace catapult { namespace validators {
 		Signature signature;
 		crypto::Sign(signer, data, signature);
 
-		model::SignatureNotification notification(signer.publicKey(), signature, data);
+		model::SignatureNotification<1> notification(signer.publicKey(), signature, data);
 		data[10] ^= 0xFF;
 
 		// Assert:

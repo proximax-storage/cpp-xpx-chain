@@ -215,13 +215,13 @@ namespace catapult { namespace observers {
 			auto context = test::CreateObserverContext(cacheDelta, state, Height(123), NotifyMode::Commit);
 
 			builder
-				.add(CreateBreadcrumbObserver<model::AccountPublicKeyNotification>(breadcrumbs, "alpha"))
-				.add(CreateBreadcrumbObserver<model::AccountAddressNotification>(breadcrumbs, "OMEGA"))
+				.add(CreateBreadcrumbObserver<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))
+				.add(CreateBreadcrumbObserver<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
 				.add(CreateBreadcrumbObserver(breadcrumbs, "zEtA"));
 			auto pObserver = builder.build();
 
 			// Act:
-			auto notification = model::AccountPublicKeyNotification(Key());
+			auto notification = model::AccountPublicKeyNotification<1>(Key());
 			prepareNotification(notification);
 			test::ObserveNotification<model::Notification>(*pObserver, notification, context);
 

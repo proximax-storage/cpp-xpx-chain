@@ -22,7 +22,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyTransactionTypePropertyNotification;
+	using Notification = model::ModifyTransactionTypePropertyNotification_v1;
 
 	namespace {
 		bool AreAllPropertyValuesValid(const model::PropertyModification<model::EntityType>* pModifications, size_t modificationsCount) {

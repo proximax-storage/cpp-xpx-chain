@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ChildNamespaceNotification;
+	using Notification = model::ChildNamespaceNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(ChildNamespaceAvailability, [](const auto& notification, const ValidatorContext& context) {
 		const auto& cache = context.Cache.sub<cache::NamespaceCache>();
