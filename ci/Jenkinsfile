@@ -106,36 +106,13 @@ pipeline {
                 }
             }
         }
-
-        stage('Build and Publish Test Image in Branch feature/DEVOPS-329') {
-            when {
-                branch 'feature/DEVOPS-329'  // only run this stage in the feature/DEVOPS-329 branch
-            }
-            steps {
-                echo 'Build and Publish Image'
-
-                script {
-                    def newImage = docker.build("${IMAGE}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        newImage.push("testing-jenkins-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
-                    }
-                }
-            }
-            // post {
-            //     success {
-            //         slackSend channel: '#devops',
-            //             color: 'good',
-            //             message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${DOCKER_REGISTRY}/${IMAGE}:testing-jenkins-build-${env.BUILD_NUMBER}"
-            //     }
-            // }
-        }
     }
 
-    // post {
-    //     failure {
-    //         slackSend channel: '#devops',
-    //           color: 'bad',
-    //           message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
-    //     }
-    // }
+    post {
+        failure {
+            slackSend channel: '#devops',
+              color: 'bad',
+              message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
+        }
+    }
 }
