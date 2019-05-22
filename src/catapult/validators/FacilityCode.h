@@ -40,6 +40,7 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(Namespace),
 		COPY_FACILITY_CODE(Property),
 		COPY_FACILITY_CODE(Transfer),
+		COPY_FACILITY_CODE(CatapultUpgrade),
 
 		/// Chain facility code.
 		Chain = 0xFF,

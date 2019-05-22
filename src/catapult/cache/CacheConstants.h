@@ -37,6 +37,7 @@ namespace catapult { namespace cache {
 		Property,
 		Reputation,
 		Contract,
+		CatapultUpgrade,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

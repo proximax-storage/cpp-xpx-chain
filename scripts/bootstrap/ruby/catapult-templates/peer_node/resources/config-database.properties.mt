@@ -17,3 +17,4 @@ catapult.mongo.plugins.multisig = true
 catapult.mongo.plugins.namespace = true
 catapult.mongo.plugins.property = true
 catapult.mongo.plugins.transfer = true
+catapult.mongo.plugins.upgrade = true
