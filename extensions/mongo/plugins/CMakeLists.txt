@@ -54,6 +54,7 @@ endfunction()
 
 add_subdirectory(accountlink)
 add_subdirectory(aggregate)
+add_subdirectory(config)
 add_subdirectory(contract)
 add_subdirectory(lock_hash)
 add_subdirectory(lock_secret)
