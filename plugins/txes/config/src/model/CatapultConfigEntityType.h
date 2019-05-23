@@ -11,9 +11,9 @@
 namespace catapult { namespace model {
 
 #endif
-		/// Catapult config transaction.
-		DEFINE_TRANSACTION_TYPE(CatapultConfig, Catapult_Config, 0x1);
+	/// Catapult config transaction.
+	DEFINE_TRANSACTION_TYPE(CatapultConfig, Catapult_Config, 0x1);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
-	}}
+}}
 #endif

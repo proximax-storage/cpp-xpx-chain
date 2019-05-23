@@ -12,38 +12,38 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-		/// Binary layout for a catapult config transaction body.
-		template<typename THeader>
-		struct CatapultConfigTransactionBody : public THeader {
-		private:
-			using TransactionType = CatapultConfigTransactionBody<THeader>;
+	/// Binary layout for a catapult config transaction body.
+	template<typename THeader>
+	struct CatapultConfigTransactionBody : public THeader {
+	private:
+		using TransactionType = CatapultConfigTransactionBody<THeader>;
 
-		public:
-			DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Catapult_Config, 1)
+	public:
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Catapult_Config, 1)
 
-		public:
-			/// Number of blocks before applying config.
-			BlockDuration ApplyHeightDelta;
+	public:
+		/// Number of blocks before applying config.
+		BlockDuration ApplyHeightDelta;
 
-			/// Blockchain configuration size in bytes.
-			uint32_t BlockChainConfigSize;
+		/// Blockchain configuration size in bytes.
+		uint32_t BlockChainConfigSize;
 
-			// followed by blockchain configuration data if BlockChainConfigSize != 0
-			DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlockChainConfig, uint8_t)
+		// followed by blockchain configuration data if BlockChainConfigSize != 0
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlockChainConfig, uint8_t)
 
-		public:
-			template<typename T>
-			static auto* BlockChainConfigPtrT(T& transaction) {
-				return transaction.BlockChainConfigSize ? THeader::PayloadStart(transaction) : nullptr;
-			}
+	public:
+		template<typename T>
+		static auto* BlockChainConfigPtrT(T& transaction) {
+			return transaction.BlockChainConfigSize ? THeader::PayloadStart(transaction) : nullptr;
+		}
 
-			// Calculates the real size of a catapult config \a transaction.
-			static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-				return sizeof(TransactionType) + transaction.BlockChainConfigSize;
-			}
-		};
+		// Calculates the real size of a catapult config \a transaction.
+		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
+			return sizeof(TransactionType) + transaction.BlockChainConfigSize;
+		}
+	};
 
-		DEFINE_EMBEDDABLE_TRANSACTION(CatapultConfig)
+	DEFINE_EMBEDDABLE_TRANSACTION(CatapultConfig)
 
 #pragma pack(pop)
-	}}
+}}
