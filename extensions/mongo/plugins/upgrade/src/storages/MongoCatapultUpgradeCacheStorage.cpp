@@ -1,0 +1,37 @@
+/**
+*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "MongoCatapultUpgradeCacheStorage.h"
+#include "src/mappers/CatapultUpgradeEntryMapper.h"
+#include "mongo/src/storages/MongoCacheStorage.h"
+#include "plugins/txes/upgrade/src/cache/CatapultUpgradeCache.h"
+#include "catapult/model/Address.h"
+
+using namespace bsoncxx::builder::stream;
+
+namespace catapult { namespace mongo { namespace plugins {
+
+	namespace {
+		struct CatapultUpgradeCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::CatapultUpgradeCacheDescriptor> {
+			static constexpr const char* Collection_Name = "catapultUpgrades";
+			static constexpr const char* Id_Property_Name = "catapultUpgrade.height";
+
+			static auto MapToMongoId(const KeyType& key) {
+				return mappers::ToInt64(key);
+			}
+
+			static auto MapToMongoDocument(const ModelType& entry, model::NetworkIdentifier) {
+				return plugins::ToDbModel(entry);
+			}
+
+			static void Insert(CacheDeltaType& cache, const bsoncxx::document::view& document) {
+				cache.insert(ToCatapultUpgradeEntry(document));
+			}
+		};
+	}
+
+	DEFINE_MONGO_FLAT_CACHE_STORAGE(CatapultUpgrade, CatapultUpgradeCacheTraits)
+}}}

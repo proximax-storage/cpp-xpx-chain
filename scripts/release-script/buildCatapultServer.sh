@@ -33,6 +33,7 @@ make \
     catapult.plugins.property \
     catapult.plugins.signature \
     catapult.plugins.transfer \
+    catapult.plugins.upgrade \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \

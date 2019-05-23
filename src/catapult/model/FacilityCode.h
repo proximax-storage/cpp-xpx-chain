@@ -50,6 +50,8 @@ namespace catapult { namespace model {
 		/// Property facility code.
 		Property = 0x50,
 		/// Transfer facility code.
-		Transfer = 0x54
+		Transfer = 0x54,
+		/// Catapult upgrade facility code.
+		CatapultUpgrade = 0x58,
 	};
 }}

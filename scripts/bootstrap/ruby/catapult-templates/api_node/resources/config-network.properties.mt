@@ -103,3 +103,7 @@ maxPropertyValues = 512
 [plugin:catapult.plugins.transfer]
 
 maxMessageSize = 1024
+
+[plugin:catapult.plugins.upgrade]
+
+minUpgradePeriod = 360
