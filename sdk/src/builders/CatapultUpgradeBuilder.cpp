@@ -12,11 +12,11 @@ namespace catapult { namespace builders {
 		: TransactionBuilder(networkIdentifier, signer)
 	{}
 
-	void CatapultUpgradeBuilder::setUpgradePeriod(const uint16_t& upgradePeriod) {
+	void CatapultUpgradeBuilder::setUpgradePeriod(const BlockDuration& upgradePeriod) {
 		m_upgradePeriod = upgradePeriod;
 	}
 
-	void CatapultUpgradeBuilder::setNewCatapultVersion(const uint64_t& newCatapultVersion) {
+	void CatapultUpgradeBuilder::setNewCatapultVersion(const CatapultVersion& newCatapultVersion) {
 		m_newCatapultVersion = newCatapultVersion;
 	}
 

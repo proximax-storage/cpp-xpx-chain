@@ -17,5 +17,5 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to catapult upgrade notification and validates that:
 	/// - upgrade period is valid (greater or equal the minimum value set in config)
 	/// - no other upgrade is declared at the same height
-	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, model::CatapultUpgradeVersionNotification<1>)(uint16_t minUpgradePeriod);
+	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, model::CatapultUpgradeVersionNotification<1>)(BlockDuration minUpgradePeriod);
 }}

@@ -14,7 +14,7 @@ namespace catapult { namespace state {
 	class CatapultUpgradeEntry {
 	public:
 		// Creates a catapult upgrade entry around \a height and \a catapultVersion.
-		CatapultUpgradeEntry(const Height& height = Height{0}, const CatapultVersion catapultVersion = CatapultVersion{0})
+		CatapultUpgradeEntry(const Height& height = Height{0}, const CatapultVersion& catapultVersion = CatapultVersion{0})
 			: m_height(height)
 			, m_catapultVersion(catapultVersion)
 		{}

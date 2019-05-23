@@ -16,8 +16,8 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamCatapultUpgradeTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder
-				<< "upgradePeriod" << static_cast<int64_t>(transaction.UpgradePeriod)
-				<< "newCatapultVersion" << static_cast<int64_t>(transaction.NewCatapultVersion);
+				<< "upgradePeriod" << ToInt64(transaction.UpgradePeriod)
+				<< "newCatapultVersion" << ToInt64(transaction.NewCatapultVersion);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(CatapultUpgrade, StreamCatapultUpgradeTransaction)

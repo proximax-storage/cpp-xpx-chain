@@ -9,12 +9,12 @@
 
 namespace catapult { namespace validators {
 
-		using Notification = model::CatapultUpgradeSignerNotification<1>;
+	using Notification = model::CatapultUpgradeSignerNotification<1>;
 
-		DEFINE_STATEFUL_VALIDATOR(CatapultUpgradeSigner, [](const auto& notification, const ValidatorContext& context) {
-			if (notification.Signer != context.Network.PublicKey)
-				return Failure_CatapultUpgrade_Invalid_Signer;
+	DEFINE_STATEFUL_VALIDATOR(CatapultUpgradeSigner, [](const auto& notification, const ValidatorContext& context) {
+		if (notification.Signer != context.Network.PublicKey)
+			return Failure_CatapultUpgrade_Invalid_Signer;
 
-			return ValidationResult::Success;
-		});
-	}}
+		return ValidationResult::Success;
+	});
+}}

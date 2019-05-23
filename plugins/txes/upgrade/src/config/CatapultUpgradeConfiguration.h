@@ -15,7 +15,7 @@ namespace catapult { namespace config {
 	struct CatapultUpgradeConfiguration {
 	public:
 		/// Minimum duration in blocks before forcing update.
-		uint16_t MinUpgradePeriod;
+		BlockDuration MinUpgradePeriod;
 
 	private:
 		CatapultUpgradeConfiguration() = default;

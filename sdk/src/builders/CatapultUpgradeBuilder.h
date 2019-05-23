@@ -23,10 +23,10 @@ namespace catapult { namespace builders {
 
 	public:
 		/// Sets the \a durationDelta of the contract.
-		void setUpgradePeriod(const uint16_t& upgradePeriod);
+		void setUpgradePeriod(const BlockDuration& upgradePeriod);
 
 		/// Sets the \a hash of an entity passed from customers to executors (e.g. file hash).
-		void setNewCatapultVersion(const uint64_t& newCatapultVersion);
+		void setNewCatapultVersion(const CatapultVersion& newCatapultVersion);
 
 	public:
 		/// Builds a new modify multisig account transaction.
@@ -40,7 +40,7 @@ namespace catapult { namespace builders {
 		std::unique_ptr<TTransaction> buildImpl() const;
 
 	private:
-		uint16_t m_upgradePeriod;
-		uint64_t m_newCatapultVersion;
+		BlockDuration m_upgradePeriod;
+		CatapultVersion m_newCatapultVersion;
 	};
 }}
