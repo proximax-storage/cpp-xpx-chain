@@ -35,7 +35,8 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([config](auto& builder) {
 			builder
 				.add(validators::CreateCatapultUpgradeSignerValidator())
-				.add(validators::CreateCatapultUpgradeValidator(config.MinUpgradePeriod));
+				.add(validators::CreateCatapultUpgradeValidator(config.MinUpgradePeriod))
+				.add(validators::CreateCatapultVersionValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {

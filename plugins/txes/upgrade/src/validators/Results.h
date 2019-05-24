@@ -23,6 +23,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the upgrade already in-progress.
 	DEFINE_CATAPULT_UPGRADE_RESULT(Redundant, 3);
 
+	/// Validation failed because catapult version is invalid.
+	DEFINE_CATAPULT_UPGRADE_RESULT(Invalid_Catapult_Version, 4);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

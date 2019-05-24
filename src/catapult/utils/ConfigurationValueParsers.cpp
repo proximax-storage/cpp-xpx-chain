@@ -211,6 +211,10 @@ namespace catapult { namespace utils {
 		return TryParseCustomUnsignedIntHexValue<MosaicId::ValueType>([](auto raw) { return MosaicId(raw); }, str, parsedValue);
 	}
 
+	bool TryParseValue(const std::string& str, BlockDuration& parsedValue) {
+		return TryParseCustomUnsignedIntHexValue<BlockDuration::ValueType>([](auto raw) { return BlockDuration(raw); }, str, parsedValue);
+	}
+
 	bool TryParseValue(const std::string& str, TimeSpan& parsedValue) {
 		if (str.empty())
 			return false;

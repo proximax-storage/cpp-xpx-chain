@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "src/catapult/types.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
