@@ -54,4 +54,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to modify contract notifications and validates that:
 	/// - duration is positive at contract creation
 	DECLARE_STATEFUL_VALIDATOR(ModifyContractDuration, model::ModifyContractNotification<1>)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

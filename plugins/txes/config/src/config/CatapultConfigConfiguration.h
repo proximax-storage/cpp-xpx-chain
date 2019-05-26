@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/utils/FileSize.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }

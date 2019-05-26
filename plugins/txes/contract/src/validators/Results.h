@@ -76,6 +76,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because duration is invalid.
 	DEFINE_CONTRACT_RESULT(Modify_Invalid_Duration, 16);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_CONTRACT_RESULT(Plugin_Config_Malformed, 17);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -9,7 +9,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::CatapultBlockChainConfigNotification<1>;
+	using Notification = model::BlockChainConfigNotification<1>;
 
 	DECLARE_OBSERVER(CatapultConfig, Notification)() {
 		return MAKE_OBSERVER(CatapultConfig, Notification, [](const auto& notification, const ObserverContext& context) {

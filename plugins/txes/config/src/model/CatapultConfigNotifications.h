@@ -48,18 +48,18 @@ namespace catapult { namespace model {
 
 	/// Notification of a blockchain config.
 	template<VersionType version>
-	struct CatapultBlockChainConfigNotification;
+	struct BlockChainConfigNotification;
 
 	template<>
-	struct CatapultBlockChainConfigNotification<1> : public Notification {
+	struct BlockChainConfigNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = CatapultConfig_BlockChain_Config_v1_Notification;
 
 	public:
 		/// Creates a notification around \a applyHeightDelta, \a blockChainConfigSize and \a blockChainConfigPtr.
-		CatapultBlockChainConfigNotification(const BlockDuration& applyHeightDelta, uint32_t blockChainConfigSize, const uint8_t* blockChainConfigPtr)
-			: Notification(Notification_Type, sizeof(CatapultBlockChainConfigNotification<1>))
+		BlockChainConfigNotification(const BlockDuration& applyHeightDelta, uint32_t blockChainConfigSize, const uint8_t* blockChainConfigPtr)
+			: Notification(Notification_Type, sizeof(BlockChainConfigNotification<1>))
 			, ApplyHeightDelta(applyHeightDelta)
 			, BlockChainConfigSize(blockChainConfigSize)
 			, BlockChainConfigPtr(blockChainConfigPtr)

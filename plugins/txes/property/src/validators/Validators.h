@@ -78,4 +78,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to transaction type property value property modification notifications and validates that:
 	/// - transaction type property transactions are not blocked
 	DECLARE_STATEFUL_VALIDATOR(TransactionTypeNoSelfBlocking, model::ModifyTransactionTypePropertyValueNotification_v1)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

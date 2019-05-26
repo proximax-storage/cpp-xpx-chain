@@ -93,4 +93,8 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(uint16_t maxMosaics);
 
 	// endregion
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

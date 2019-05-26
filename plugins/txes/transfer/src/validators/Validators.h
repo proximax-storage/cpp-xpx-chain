@@ -32,4 +32,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to transfer mosaics notifications and validates that:
 	/// - mosaics are ordered
 	DECLARE_STATELESS_VALIDATOR(TransferMosaics, model::TransferMosaicsNotification<1>)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

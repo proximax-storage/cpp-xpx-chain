@@ -32,10 +32,10 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addStatefulValidatorHook([config](auto& builder) {
+		manager.addStatefulValidatorHook([&manager, &config](auto& builder) {
 			builder
 				.add(validators::CreateCatapultConfigSignerValidator())
-				.add(validators::CreateCatapultConfigValidator(config.MaxBlockChainConfigSize.bytes32()));
+				.add(validators::CreateCatapultConfigValidator(manager, config));
 		});
 
 		manager.addObserverHook([](auto& builder) {

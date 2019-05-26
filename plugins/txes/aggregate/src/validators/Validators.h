@@ -36,4 +36,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
 	/// - the set of component signers is equal to the set of cosigners
 	DECLARE_STATELESS_VALIDATOR(StrictAggregateCosignatures, model::AggregateCosignaturesNotification<1>)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

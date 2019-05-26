@@ -46,6 +46,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because at least one required cosigner is missing.
 	DEFINE_AGGREGATE_RESULT(Missing_Cosigners, 0x1002);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_AGGREGATE_RESULT(Plugin_Config_Malformed, 0x0005);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -20,7 +20,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1:
 				sub.notify(model::CatapultConfigSignerNotification<1>(transaction.Signer));
-				sub.notify(model::CatapultBlockChainConfigNotification<1>(
+				sub.notify(model::BlockChainConfigNotification<1>(
 					transaction.ApplyHeightDelta,
 					transaction.BlockChainConfigSize,
 					transaction.BlockChainConfigPtr()));

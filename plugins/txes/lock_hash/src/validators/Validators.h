@@ -43,4 +43,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to transaction notifications and validates that:
 	/// - incomplete aggregate transactions must have an active, unused hash lock info present in cache
 	DECLARE_STATEFUL_VALIDATOR(AggregateHashPresent, model::TransactionNotification<1>)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

@@ -74,4 +74,8 @@ namespace catapult { namespace validators {
 	///  - present cosigners are sufficient
 	stateful::NotificationValidatorPointerT<model::AggregateEmbeddedTransactionNotification<1>>
 	CreateMultisigAggregateSufficientCosignersValidator();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

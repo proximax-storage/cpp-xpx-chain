@@ -11,5 +11,5 @@
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by catapult config notifications
-	DECLARE_OBSERVER(CatapultConfig, model::CatapultBlockChainConfigNotification<1>)();
+	DECLARE_OBSERVER(CatapultConfig, model::BlockChainConfigNotification<1>)();
 }}

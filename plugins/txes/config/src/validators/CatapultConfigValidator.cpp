@@ -5,21 +5,39 @@
 **/
 
 #include "Validators.h"
+#include "catapult/plugins/PluginManager.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "src/cache/CatapultConfigCache.h"
+#include "src/config/CatapultConfigConfiguration.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::CatapultBlockChainConfigNotification<1>;
+	using Notification = model::BlockChainConfigNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(uint32_t maxBlockChainConfigSize) {
-		return MAKE_STATEFUL_VALIDATOR(CatapultConfig, ([maxBlockChainConfigSize](const Notification& notification, const ValidatorContext& context) {
-			if (notification.BlockChainConfigSize > maxBlockChainConfigSize)
+	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(plugins::PluginManager& pluginManager, const config::CatapultConfigConfiguration& config) {
+		return MAKE_STATEFUL_VALIDATOR(CatapultConfig, ([&pluginManager, &config](const Notification& notification, const ValidatorContext& context) {
+			if (notification.BlockChainConfigSize > config.MaxBlockChainConfigSize.bytes32())
 				return Failure_CatapultConfig_BlockChain_Config_Too_Large;
 
 			const auto& cache = context.Cache.sub<cache::CatapultConfigCache>();
 			if (cache.find(context.Height).tryGet())
 				return Failure_CatapultConfig_Redundant;
+
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			try {
+				std::istringstream configStream{std::string{(const char*)notification.BlockChainConfigPtr, notification.BlockChainConfigSize}};
+				auto bag = utils::ConfigurationBag::FromStream(configStream);
+				blockChainConfig = model::BlockChainConfiguration::LoadFromBag(bag);
+			} catch (...) {
+				return Failure_CatapultConfig_BlockChain_Config_Malformed;
+			}
+
+			auto pValidator = pluginManager.createStatelessValidator();
+			for (const auto& pair : blockChainConfig.Plugins) {
+				auto result = pValidator->validate(model::PluginConfigNotification<1>{pair.first, pair.second});
+				if (IsValidationResultFailure(result))
+					return result;
+			}
 
 			return ValidationResult::Success;
 		}));
