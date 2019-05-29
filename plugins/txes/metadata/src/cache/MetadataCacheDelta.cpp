@@ -56,8 +56,6 @@ namespace catapult { namespace cache {
 			}
 		});
 
-		m_pMetadataIdsByExpiryHeight->remove(height);
-
 		return collectedIds;
 	}
 }}

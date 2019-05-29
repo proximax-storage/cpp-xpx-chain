@@ -200,8 +200,6 @@ namespace catapult { namespace cache {
 			decrementDeepSize(originalSizes.Deep - newSizes.Deep);
 		});
 
-		m_pRootNamespaceIdsByExpiryHeight->remove(height);
-
 		return collectedIds;
 	}
 }}
