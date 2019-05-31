@@ -16,7 +16,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange:
-		state::MetadataEntry originalMetadataEntry(state::ToVector(test::GenerateRandomData<Address_Decoded_Size>()), model::MetadataType{0});
+		state::MetadataEntry originalMetadataEntry(state::ToVector(test::GenerateRandomByteArray<Address>()), model::MetadataType{0});
 		for (auto i = 0u; i < 3; ++i)
 			originalMetadataEntry.fields().push_back(state::MetadataField{ "Hello", "World", Height(1 + i) });
 

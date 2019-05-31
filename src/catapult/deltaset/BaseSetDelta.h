@@ -263,9 +263,12 @@ namespace catapult { namespace deltaset {
 			const auto& key = TSetTraits::ToKey(element);
 			auto removedIter = m_removedElements.find(key);
 			if (m_removedElements.cend() != removedIter) {
-				// since the element is in the set of removed elements, it must be an original element
-				// and cannot be in the set of added elements
-				clearKey(key);
+				// since element is immutable, always preserve the first seen element
+				if (contains(m_addedElements, key))
+					markKey(key);
+				else
+					clearKey(key);
+
 				m_removedElements.erase(removedIter);
 				return InsertResult::Unremoved;
 			}
@@ -312,6 +315,15 @@ namespace catapult { namespace deltaset {
 		RemoveResult remove(const KeyType& key, ImmutableTypeTag) {
 			auto addedIter = m_addedElements.find(key);
 			if (m_addedElements.cend() != addedIter) {
+				// in order for generations to work correctly, deltas must reflect removal of temporarily added elements
+				// so that subsequent generation processing can process their removal
+				//
+				// consider:
+				// 1. add(x) at generation y
+				// 2. remove(x) at generation y+1
+				//
+				// processing at generation y+1 must be able to detect removal of x
+				// chosen solution is to include x in both Added and Removed at generation y+1
 				markKey(key);
 				m_uninsertedElements.insert(*addedIter);
 				m_addedElements.erase(addedIter);

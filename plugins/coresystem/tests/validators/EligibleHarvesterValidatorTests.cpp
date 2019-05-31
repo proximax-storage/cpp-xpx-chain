@@ -60,13 +60,13 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureIfAccountIsUnknown) {
 		// Arrange:
 		auto cache = CreateEmptyCatapultCache();
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto height = Height(1000);
 		AddAccount(cache, key, Amount(9999));
 
 		auto pValidator = CreateEligibleHarvesterValidator(Amount(1234));
 
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = test::CreateBlockNotification(signer);
 
 		// Act:
@@ -83,7 +83,7 @@ namespace catapult { namespace validators {
 				Height blockHeight) {
 			// Arrange:
 			auto cache = CreateEmptyCatapultCache();
-			auto key = test::GenerateRandomData<Key_Size>();
+			auto key = test::GenerateRandomByteArray<Key>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
 			AddAccount(cache, key, initialBalance);
 

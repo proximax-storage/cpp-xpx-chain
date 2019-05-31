@@ -13,7 +13,7 @@ namespace catapult { namespace cache {
 
 	/// Policy for saving and loading contract cache data.
 	struct ContractCacheStorage
-			: public CacheStorageFromDescriptor<ContractCacheDescriptor>
+			: public CacheStorageForBasicInsertRemoveCache<ContractCacheDescriptor>
 			, public state::ContractEntrySerializer {
 		/// Loads \a entry into \a cacheDelta.
 		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);

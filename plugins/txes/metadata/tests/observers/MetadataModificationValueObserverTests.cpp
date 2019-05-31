@@ -26,7 +26,7 @@ namespace catapult { namespace observers {
 	namespace {
 		constexpr auto Add = model::MetadataModificationType::Add;
 		constexpr auto Del = model::MetadataModificationType::Del;
-		const Address Metadata_Main_Address = test::GenerateRandomData<Address_Decoded_Size>();
+		const Address Metadata_Main_Address = test::GenerateRandomByteArray<Address>();
 		const MosaicId Metadata_Main_MosaicId = MosaicId(25);
 		const NamespaceId Metadata_Main_NamespaceId = NamespaceId(25);
 		const Height CurrentHeight = Height(2);

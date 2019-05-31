@@ -22,8 +22,6 @@
 #include "catapult/io/BufferInputStreamAdapter.h"
 #include "catapult/io/SizeCalculatingOutputStream.h"
 #include "catapult/io/StringOutputStream.h"
-#include "catapult/utils/traits/Traits.h"
-#include "catapult/types.h"
 
 namespace catapult { namespace cache {
 

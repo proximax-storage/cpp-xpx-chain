@@ -43,7 +43,7 @@ namespace catapult { namespace test {
 
 			EXPECT_EQ(4u, pDelta->size());
 			TTraits::AssertContents(*pBaseSet, expectedElements);
-			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 1, 0, 0);
+			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 1, 0, 0, 0);
 		}
 
 		static void AssertRemoveDoesNotChangeOriginalBaseSet() {
@@ -60,7 +60,7 @@ namespace catapult { namespace test {
 
 			EXPECT_EQ(2u, pDelta->size());
 			TTraits::AssertContents(*pBaseSet, expectedElements);
-			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 0, 1, 0);
+			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 0, 1, 0, 0);
 		}
 
 		// endregion
@@ -77,7 +77,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 0, 0, 0);
+			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 0, 0, 0, 0);
 		}
 
 		static void AssertRebaseAllowsOnlyOneAttachedDeltaAtATime() {
@@ -94,7 +94,7 @@ namespace catapult { namespace test {
 			// Act: delta went out of scope, another delta is allowed
 			auto pDelta = pBaseSet->rebase();
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 0, 0, 0);
+			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 0, 0, 0, 0);
 		}
 
 		static void AssertRebaseDetachedCreatesDeltaAroundSuppliedElements() {
@@ -107,7 +107,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			TTraits::AssertContents(*pDetachedDelta, expectedElements);
-			AssertDeltaSizes(*pBaseSet, *pDetachedDelta, 3, 0, 0, 0);
+			AssertDeltaSizes(*pBaseSet, *pDetachedDelta, 3, 0, 0, 0, 0);
 		}
 
 		static void AssertRebaseDetachedAllowsManyDeltas() {
@@ -123,7 +123,7 @@ namespace catapult { namespace test {
 			// Assert:
 			for (const auto& pDetachedDelta : deltas) {
 				TTraits::AssertContents(*pDetachedDelta, expectedElements);
-				AssertDeltaSizes(*pBaseSet, *pDetachedDelta, 3, 0, 0, 0);
+				AssertDeltaSizes(*pBaseSet, *pDetachedDelta, 3, 0, 0, 0, 0);
 			}
 		}
 
@@ -139,7 +139,7 @@ namespace catapult { namespace test {
 			EXPECT_THROW(TTraits::Commit(*pBaseSet), catapult_runtime_error);
 		}
 
-		static void AssertCommitThrowsIfOnlyDetachedDeltasAreOutstanding() {
+		static void AssertCommitThrowsWhenOnlyDetachedDeltasAreOutstanding() {
 			// Arrange:
 			auto pBaseSet = TTraits::Create();
 			auto pDetachedDelta = pBaseSet->rebaseDetached();
@@ -165,7 +165,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			TTraits::AssertContents(*pBaseSet, expectedElements);
-			AssertDeltaSizes(*pBaseSet, *pDelta, 2, 0, 0, 0);
+			AssertDeltaSizes(*pBaseSet, *pDelta, 2, 0, 0, 0, 0);
 		}
 
 		static void AssertCommitReflectsChangesOnOriginalElements() {
@@ -181,7 +181,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			EXPECT_EQ(123u, pElementAfterCommit->Dummy);
-			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 0, 0, 0);
+			AssertDeltaSizes(*pBaseSet, *pDelta, 3, 0, 0, 0, 0);
 		}
 
 		static void AssertCommitIsIdempotent() {
@@ -202,7 +202,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			TTraits::AssertContents(*pBaseSet, expectedElements);
-			AssertDeltaSizes(*pBaseSet, *pDelta, 2, 0, 0, 0);
+			AssertDeltaSizes(*pBaseSet, *pDelta, 2, 0, 0, 0, 0);
 		}
 
 		// endregion
@@ -224,7 +224,7 @@ namespace catapult { namespace test {
 	MAKE_BASE_SET_TEST(TEST_CLASS, TRAITS, RebaseDetachedAllowsManyDeltas) \
 	\
 	MAKE_BASE_SET_TEST(TEST_CLASS, TRAITS, CannotCommitWhenThereAreNoPendingAttachedDeltas) \
-	MAKE_BASE_SET_TEST(TEST_CLASS, TRAITS, CommitThrowsIfOnlyDetachedDeltasAreOutstanding) \
+	MAKE_BASE_SET_TEST(TEST_CLASS, TRAITS, CommitThrowsWhenOnlyDetachedDeltasAreOutstanding) \
 	MAKE_BASE_SET_TEST(TEST_CLASS, TRAITS, CommitCommitsToOriginalElements) \
 	MAKE_BASE_SET_TEST(TEST_CLASS, TRAITS, CommitIsIdempotent)
 

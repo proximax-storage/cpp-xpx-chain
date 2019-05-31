@@ -37,7 +37,7 @@ namespace catapult { namespace test {
 	// region type declarations for common set types
 
 	template<typename TElement>
-	using OrderedSetTraits = deltaset::SetStorageTraits<std::set<TElement, deltaset::detail::OrderedSetDefaultComparator<TElement>>>;
+	using OrderedSetTraits = deltaset::SetStorageTraits<std::set<TElement, std::less<TElement>>>;
 
 	template<typename TElement>
 	using UnorderedSetTraits = deltaset::SetStorageTraits<std::unordered_set<TElement, Hasher<TElement>, EqualityChecker<TElement>>>;
@@ -62,11 +62,6 @@ namespace catapult { namespace test {
 
 	template<>
 	constexpr bool IsMutable<MutableTestElement>() {
-		return true;
-	}
-
-	template<>
-	constexpr bool IsMutable<std::shared_ptr<MutableTestElement>>() {
 		return true;
 	}
 
@@ -97,23 +92,6 @@ namespace catapult { namespace test {
 		template<typename TElement>
 		static TElement& ToSetElement(TElement* pElement) {
 			return *pElement;
-		}
-	};
-
-	template<typename T>
-	struct ElementFactory<std::shared_ptr<T>> {
-		using ElementType = std::shared_ptr<T>;
-
-		static std::shared_ptr<T> CreateElement(const std::string& name, unsigned int value) {
-			return std::make_shared<T>(name, value);
-		}
-
-		static std::shared_ptr<T> ToPointer(const std::shared_ptr<T>& pElement) {
-			return pElement;
-		}
-
-		static std::shared_ptr<T> ToSetElement(const std::shared_ptr<T>& pElement) {
-			return pElement;
 		}
 	};
 
@@ -245,11 +223,6 @@ namespace catapult { namespace test {
 		return *pElement;
 	}
 
-	template<typename T>
-	T Unwrap(const std::shared_ptr<T>& pElement) {
-		return *pElement;
-	}
-
 	/// Returns \c true if container allows native value modification.
 	template<typename T>
 	bool AllowsNativeValueModification(const T&) {
@@ -278,7 +251,8 @@ namespace catapult { namespace test {
 			size_t expectedOriginal,
 			size_t expectedAdded,
 			size_t expectedRemoved,
-			size_t expectedCopied) {
+			size_t expectedCopied,
+			size_t expectedUninserted) {
 		// Act:
 		auto deltas = deltaWrapper->deltas();
 
@@ -288,11 +262,18 @@ namespace catapult { namespace test {
 				<< " (O " << deltaWrapper.originalSize()
 				<< ", A " << deltas.Added.size()
 				<< ", R " << deltas.Removed.size()
-				<< ", C " << deltas.Copied.size() << ")";
-		EXPECT_EQ(expectedOriginal, deltaWrapper.originalSize());
-		EXPECT_EQ(expectedAdded, deltas.Added.size());
-		EXPECT_EQ(expectedRemoved, deltas.Removed.size());
-		EXPECT_EQ(expectedCopied, deltas.Copied.size());
+				<< ", C " << deltas.Copied.size()
+				<< ", U " << deltas.Uninserted.size() << ")";
+		auto original = deltaWrapper.originalSize();
+		EXPECT_EQ(expectedOriginal, original);
+		auto Added =  deltas.Added.size();
+		EXPECT_EQ(expectedAdded, Added);
+		auto Removed =  deltas.Removed.size();
+		EXPECT_EQ(expectedRemoved, Removed);
+		auto Copied =  deltas.Copied.size();
+		EXPECT_EQ(expectedCopied, Copied);
+		auto Uninserted =  deltas.Uninserted.size();
+		EXPECT_EQ(expectedUninserted, Uninserted);
 	}
 
 	/// Asserts that the delta sizes in \a delta and the original size in \a set have the expected values
@@ -304,7 +285,8 @@ namespace catapult { namespace test {
 			size_t expectedOriginal,
 			size_t expectedAdded,
 			size_t expectedRemoved,
-			size_t expectedCopied) {
+			size_t expectedCopied,
+			size_t expectedUninserted) {
 		// Act:
 		auto deltas = delta.deltas();
 
@@ -314,11 +296,18 @@ namespace catapult { namespace test {
 				<< " (O " << set.size()
 				<< ", A " << deltas.Added.size()
 				<< ", R " << deltas.Removed.size()
-				<< ", C " << deltas.Copied.size() << ")";
-		EXPECT_EQ(expectedOriginal, set.size());
-		EXPECT_EQ(expectedAdded, deltas.Added.size());
-		EXPECT_EQ(expectedRemoved, deltas.Removed.size());
-		EXPECT_EQ(expectedCopied, deltas.Copied.size());
+				<< ", C " << deltas.Copied.size()
+				<< ", U " << deltas.Uninserted.size() << ")";
+		auto original = set.size();
+		EXPECT_EQ(expectedOriginal, original);
+		auto Added =  deltas.Added.size();
+		EXPECT_EQ(expectedAdded, Added);
+		auto Removed =  deltas.Removed.size();
+		EXPECT_EQ(expectedRemoved, Removed);
+		auto Copied =  deltas.Copied.size();
+		EXPECT_EQ(expectedCopied, Copied);
+		auto Uninserted =  deltas.Uninserted.size();
+		EXPECT_EQ(expectedUninserted, Uninserted);
 	}
 
 	/// Utilities when testing base set deltas.

@@ -19,7 +19,8 @@
 **/
 
 #pragma once
-#include "catapult/cache/MemoryUtCache.h"
+#include "LocalTestUtils.h"
+#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/ServiceLocator.h"
@@ -28,10 +29,9 @@
 #include "catapult/plugins/PluginLoader.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/utils/NetworkTime.h"
-#include "LocalTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/core/SchedulerTestUtils.h"
+#include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
@@ -51,16 +51,16 @@ namespace catapult { namespace test {
 
 		/// Creates the test state around \a cache and \a timeSupplier.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
-				: ServiceTestState(std::move(cache), CreateLocalNodeConfiguration(""), timeSupplier)
+				: ServiceTestState(std::move(cache), CreatePrototypicalCatapultConfiguration(), timeSupplier)
 		{}
 
 		/// Creates the test state around \a cache, \a config and \a timeSupplier.
-		explicit ServiceTestState(cache::CatapultCache&& cache, const config::LocalNodeConfiguration& config, const supplier<Timestamp>& timeSupplier)
+		explicit ServiceTestState(cache::CatapultCache&& cache, const config::CatapultConfiguration& config, const supplier<Timestamp>& timeSupplier)
 				: m_config(config)
 				, m_catapultCache(std::move(cache))
-				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>())
+				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>(), std::make_unique<mocks::MockMemoryBlockStorage>())
 				, m_pUtCache(CreateUtCacheProxy())
-				, m_pluginManager(m_config.BlockChain, plugins::StorageConfiguration())
+				, m_pluginManager(m_config.BlockChain, plugins::StorageConfiguration(), m_config.Inflation)
 				, m_pool("service locator test context", 2)
 				, m_state(
 						m_config,
@@ -127,7 +127,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		config::LocalNodeConfiguration m_config;
+		config::CatapultConfiguration m_config;
 		ionet::NodeContainer m_nodes;
 		cache::CatapultCache m_catapultCache;
 		state::CatapultState m_catapultState;
@@ -170,7 +170,7 @@ namespace catapult { namespace test {
 		{}
 
 		/// Creates the test context around \a cache and \a timeSupplier.
-		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, const config::LocalNodeConfiguration& config)
+		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, const config::CatapultConfiguration& config)
 				: m_keyPair(GenerateKeyPair())
 				, m_locator(m_keyPair)
 				, m_testState(std::move(cache), config, &utils::NetworkTime)

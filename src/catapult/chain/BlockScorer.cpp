@@ -31,7 +31,7 @@ namespace catapult { namespace chain {
 		}
 	}
 
-	uint64_t CalculateHit(const Hash256& generationHash) {
+	uint64_t CalculateHit(const GenerationHash& generationHash) {
 		return *reinterpret_cast<const uint64_t*>(generationHash.data());
 	}
 
@@ -76,7 +76,7 @@ namespace catapult { namespace chain {
 			, m_importanceLookup(importanceLookup)
 	{}
 
-	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash) const {
+	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const GenerationHash& generationHash) const {
 		auto importance = m_importanceLookup(block.Signer, block.Height);
 		auto hit = CalculateHit(generationHash);
 		auto target = CalculateTarget(parentBlock, block, importance, m_config);

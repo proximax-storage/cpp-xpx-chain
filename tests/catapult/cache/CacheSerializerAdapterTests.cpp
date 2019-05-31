@@ -55,7 +55,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, SerializeValueForwardsToStorageSave) {
 		// Arrange:
-		auto value = test::GenerateRandomData<Hash512_Size>();
+		auto value = test::GenerateRandomByteArray<Hash512>();
 
 		// Act:
 		auto result = Serializer::SerializeValue(value);
@@ -66,9 +66,9 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(value, reinterpret_cast<const Hash512&>(result[5]));
 	}
 
-	TEST(TEST_CLASS, DeserializeValueFailsIfThereIsNotEnoughData) {
+	TEST(TEST_CLASS, DeserializeValueFailsWhenThereIsNotEnoughData) {
 		// Arrange:
-		auto serialized = test::GenerateRandomData<Hash512_Size - 1>();
+		auto serialized = test::GenerateRandomArray<Hash512_Size - 1>();
 
 		// Act + Assert:
 		EXPECT_THROW(Serializer::DeserializeValue(serialized), catapult_file_io_error);
@@ -76,12 +76,12 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, DeserializeValueForwardsToStorageLoad) {
 		// Arrange:
-		auto serialized = test::GenerateRandomData<Hash512_Size>();
+		auto serialized = test::GenerateRandomArray<Hash512_Size>();
 
 		// Act:
 		auto result = Serializer::DeserializeValue(serialized);
 
 		// Assert:
-		EXPECT_EQ(serialized, result);
+		EXPECT_EQ_MEMORY(serialized.data(), result.data(), serialized.size());
 	}
 }}

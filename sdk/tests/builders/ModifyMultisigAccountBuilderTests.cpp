@@ -37,7 +37,7 @@ namespace catapult { namespace builders {
 				const TValidationFunction& validateTransaction) {
 			// Arrange:
 			auto networkId = static_cast<model::NetworkIdentifier>(0x62);
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 
 			// Act:
 			ModifyMultisigAccountBuilder builder(networkId, signer);
@@ -116,7 +116,7 @@ template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 			Modifications modifications;
 			for (auto i = 0u; i < count; ++i) {
 				auto type = 0 == i % 2 ? model::CosignatoryModificationType::Add : model::CosignatoryModificationType::Del;
-				modifications.push_back(model::CosignatoryModification{ type, test::GenerateRandomData<Key_Size>() });
+				modifications.push_back(model::CosignatoryModification{ type, test::GenerateRandomByteArray<Key>() });
 			}
 
 			return modifications;

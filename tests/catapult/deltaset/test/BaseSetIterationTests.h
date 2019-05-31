@@ -112,7 +112,7 @@ namespace catapult { namespace test {
 	template<typename TTraits>
 	class BaseSetIterationTests {
 	public:
-		static void AssertFindIteratorReturnsIteratorToElementIfElementExists() {
+		static void AssertFindIteratorReturnsIteratorToElementWhenElementExists() {
 			// Arrange:
 			auto pSet = TTraits::CreateWithElements(3);
 			auto iterableSet = MakeIterableView(*pSet);
@@ -125,7 +125,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(*TTraits::ToPointer(element), *TTraits::ToPointerFromStorage(*iter));
 		}
 
-		static void AssertFindIteratorReturnsCendIfElementDoesNotExist() {
+		static void AssertFindIteratorReturnsCendWhenElementDoesNotExist() {
 			// Arrange:
 			auto pSet = TTraits::CreateWithElements(3);
 			auto iterableSet = MakeIterableView(*pSet);
@@ -145,8 +145,8 @@ namespace catapult { namespace test {
 #define DEFINE_BASE_SET_ITERATION_TESTS(TEST_CLASS, TRAITS) \
 	DEFINE_COMMON_BASE_SET_ITERATION_TESTS(TEST_CLASS, TRAITS) \
 	\
-	MAKE_BASE_SET_ITERATION_TEST(TEST_CLASS, TRAITS, FindIteratorReturnsIteratorToElementIfElementExists) \
-	MAKE_BASE_SET_ITERATION_TEST(TEST_CLASS, TRAITS, FindIteratorReturnsCendIfElementDoesNotExist)
+	MAKE_BASE_SET_ITERATION_TEST(TEST_CLASS, TRAITS, FindIteratorReturnsIteratorToElementWhenElementExists) \
+	MAKE_BASE_SET_ITERATION_TEST(TEST_CLASS, TRAITS, FindIteratorReturnsCendWhenElementDoesNotExist)
 
 	// endregion
 
@@ -185,7 +185,7 @@ namespace catapult { namespace test {
 				TestElement("TestElement", 2)
 			};
 			EXPECT_EQ(expectedElements, actualElements);
-			AssertDeltaSizes(pDelta, 3, 0, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 0, 0, 0);
 		}
 
 		static void AssertDeltaIterationCanIterateOnlyInsertedElements() {
@@ -203,7 +203,7 @@ namespace catapult { namespace test {
 				TestElement("TestElement", 7)
 			};
 			EXPECT_EQ(expectedElements, actualElements);
-			AssertDeltaSizes(pDelta, 0, 2, 0, 0);
+			AssertDeltaSizes(pDelta, 0, 2, 0, 0, 0);
 		}
 
 		static void AssertDeltaIterationIncludesInsertedElements() {
@@ -225,7 +225,7 @@ namespace catapult { namespace test {
 				TestElement("TestElement", 7)
 			};
 			EXPECT_EQ(expectedElements, actualElements);
-			AssertDeltaSizes(pDelta, 3, 2, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 2, 0, 0, 0);
 		}
 
 		static void AssertDeltaIterationExcludesRemovedElements() {
@@ -247,7 +247,7 @@ namespace catapult { namespace test {
 				TestElement("TestElement", 7)
 			};
 			EXPECT_EQ(expectedElements, actualElements);
-			AssertDeltaSizes(pDelta, 3, 1, 1, 0);
+			AssertDeltaSizes(pDelta, 3, 1, 1, 0, 1);
 		}
 
 	private:
@@ -285,7 +285,7 @@ namespace catapult { namespace test {
 			//         (in the case of immutable, the original element with the changed value will be returned)
 			std::set<size_t> expectedDummyValues{ 0, 42, 2 };
 			EXPECT_EQ(expectedDummyValues, actualDummyValues);
-			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0);
+			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0, 0);
 		}
 
 		static void AssertDeltaIterationCanIterateOnlyCopiedElements() {
@@ -307,7 +307,7 @@ namespace catapult { namespace test {
 			// Assert: iterating should pick up the new dummy values
 			std::set<size_t> expectedDummyValues{ 7, 8, 9 };
 			EXPECT_EQ(expectedDummyValues, actualDummyValues);
-			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 3 : 0);
+			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 3 : 0, 0);
 		}
 
 		static void AssertDeltaIterationDoesNotReiterateNewlyCopiedElements() {
@@ -347,7 +347,7 @@ namespace catapult { namespace test {
 			// Sanity: reiterating should pick up the new dummy values
 			expectedDummyValues = { 0, 41, 42, 3 };
 			EXPECT_EQ(expectedDummyValues, ExtractDummyValues(*pDelta));
-			AssertDeltaSizes(pDelta, 3, 1, 0, TTraits::IsElementMutable() ? 2 : 0);
+			AssertDeltaSizes(pDelta, 3, 1, 0, TTraits::IsElementMutable() ? 2 : 0, 0);
 		}
 
 		static void AssertDeltaCannotDereferenceAtEnd() {
@@ -431,7 +431,7 @@ namespace catapult { namespace test {
 
 			// Sanity: value_type should be const
 			EXPECT_TRUE(std::is_const<typename decltype(iterableDelta.begin())::value_type>());
-			AssertDeltaSizes(pDelta, 4, 2, 1, TTraits::IsElementMutable() ? 1 : 0);
+			AssertDeltaSizes(pDelta, 4, 2, 1, TTraits::IsElementMutable() ? 1 : 0, 1);
 		}
 
 	public:

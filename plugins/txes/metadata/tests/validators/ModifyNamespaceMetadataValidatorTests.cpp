@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(ModifyNamespaceMetadata,)
 
 	namespace {
-		const Key Namespace_Owner = test::GenerateRandomData<Key_Size>();
+		const Key Namespace_Owner = test::GenerateRandomByteArray<Key>();
 		constexpr NamespaceId Root_Namespace_Id = NamespaceId(25);
 		constexpr NamespaceId Child_Namespace_Id = NamespaceId(36);
 		constexpr NamespaceId Child_Child_Namespace_Id = NamespaceId(49);
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Modification_Not_Permitted,
 				Root_Namespace_Id,
-				test::GenerateRandomData<Key_Size>());
+				test::GenerateRandomByteArray<Key>());
 	}
 
 	TEST(TEST_CLASS, FailueWhenNamespaceNoExistButOwnerNotEquel) {
@@ -94,6 +94,6 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Is_Not_Exist,
 				NamespaceId(3),
-				test::GenerateRandomData<Key_Size>());
+				test::GenerateRandomByteArray<Key>());
 	}
 }}

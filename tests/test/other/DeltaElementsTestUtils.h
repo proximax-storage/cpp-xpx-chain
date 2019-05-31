@@ -47,22 +47,26 @@ namespace catapult { namespace test {
 		template<typename TSet>
 		struct Wrapper {
 		public:
+			using SetType = TSet;
+			using MemorySetType = SetType;
+
+		public:
 			/// Added elements.
-			TSet Added;
+			SetType Added;
 
 			/// Removed elements.
-			TSet Removed;
+			SetType Removed;
 
 			/// Uninserted elements.
-			TSet Uninserted;
+			SetType Uninserted;
 
 			/// Copied elements.
-			TSet Copied;
+			SetType Copied;
 
 		public:
 			/// Returns a delta elements around the sub sets.
 			auto deltas() const {
-				return deltaset::DeltaElements<TSet>(Added, Removed, Uninserted, Copied);
+				return deltaset::DeltaElements<SetType>(Added, Removed, Uninserted, Copied);
 			}
 		};
 

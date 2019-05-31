@@ -88,7 +88,7 @@ unique_ptr<model::Transaction> generateTransferTransaction(const crypto::KeyPair
 	unique_ptr<model::Transaction> transaction = builder.build();
 	transaction->Deadline = Timestamp(60 * 60 * 1000 + utils::NetworkTime().unwrap());
 	transaction->Type = model::Entity_Type_Transfer;
-	extensions::SignTransaction(signer, *transaction);
+	extensions::TransactionExtensions(test::GenerateRandomByteArray<GenerationHash>()).sign(signer, *transaction);
 
 	return transaction;
 }

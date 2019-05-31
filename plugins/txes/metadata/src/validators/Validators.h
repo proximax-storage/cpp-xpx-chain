@@ -9,7 +9,6 @@
 #include <plugins/txes/metadata/src/config/MetadataConfiguration.h>
 #include "Results.h"
 #include "plugins/txes/metadata/src/model/MetadataNotifications.h"
-#include "catapult/utils/UnresolvedAddress.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
