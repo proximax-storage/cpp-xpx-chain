@@ -24,23 +24,15 @@
 
 namespace catapult { namespace harvesting {
 
-	BlockGenerator CreateHarvesterBlockGenerator(
-			model::TransactionSelectionStrategy strategy,
-			const HarvestingUtFacadeFactory& utFacadeFactory,
-			const cache::MemoryUtCache& utCache) {
-		auto transactionsInfoSupplier = CreateTransactionsInfoSupplier(strategy, utCache);
-		return [utFacadeFactory, transactionsInfoSupplier](const auto& blockHeader, auto maxTransactionsPerBlock) {
+	BlockGenerator CreateHarvesterBlockGenerator() {
+		return [](auto pUtFacade, const auto& blockHeader, const auto& transactionsInfo) {
 			// 1. check height consistency
-			auto pUtFacade = utFacadeFactory.create(blockHeader.Timestamp);
 			if (blockHeader.Height != pUtFacade->height()) {
 				CATAPULT_LOG(debug)
 						<< "bypassing state hash calculation because cache height (" << pUtFacade->height() - Height(1)
 						<< ") is inconsistent with block height (" << blockHeader.Height << ")";
 				return std::unique_ptr<model::Block>();
 			}
-
-			// 2. select transactions
-			auto transactionsInfo = transactionsInfoSupplier(*pUtFacade, maxTransactionsPerBlock);
 
 			// 3. build a block
 			auto pBlock = pUtFacade->commit(blockHeader);

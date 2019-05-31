@@ -24,6 +24,7 @@
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/model/FeeUtils.h"
 #include "catapult/utils/StackLogger.h"
 
 namespace catapult { namespace harvesting {
@@ -68,11 +69,15 @@ namespace catapult { namespace harvesting {
 			const cache::CatapultCache& cache,
 			const model::BlockChainConfiguration& config,
 			const UnlockedAccounts& unlockedAccounts,
-			const BlockGenerator& blockGenerator)
+			const BlockGenerator& blockGenerator,
+			const TransactionsInfoSupplier& transactionsInfoSupplier,
+			const HarvestingUtFacadeFactory& utFacadeFactory)
 			: m_cache(cache)
 			, m_config(config)
 			, m_unlockedAccounts(unlockedAccounts)
 			, m_blockGenerator(blockGenerator)
+			, m_transactionsInfoSupplier(transactionsInfoSupplier)
+			, m_utFacadeFactory(utFacadeFactory)
 	{}
 
 	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
@@ -86,6 +91,15 @@ namespace catapult { namespace harvesting {
 		hitContext.ElapsedTime = context.BlockTime;
 		hitContext.Difficulty = context.Difficulty;
 		hitContext.Height = context.Height;
+		hitContext.MaxFee = Amount{0};
+		hitContext.Fee = Amount{0};
+
+		auto pUtFacade = m_utFacadeFactory.create(context.Timestamp);
+		auto transactionsInfo = m_transactionsInfoSupplier(*pUtFacade, m_config.MaxTransactionsPerBlock);
+		for (const auto& pTransaction : transactionsInfo.Transactions) {
+			hitContext.MaxFee = hitContext.MaxFee + pTransaction->MaxFee;
+			hitContext.Fee = hitContext.Fee + model::CalculateTransactionFee(transactionsInfo.FeeMultiplier, *pTransaction);
+		}
 
 		const auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
 		chain::BlockHitPredicate hitPredicate(m_config, [&accountStateCache](const auto& key, auto height) {
@@ -112,7 +126,7 @@ namespace catapult { namespace harvesting {
 
 		utils::StackLogger stackLogger("generating candidate block", utils::LogLevel::Debug);
 		auto pBlockHeader = CreateUnsignedBlockHeader(context, m_config.Network.Identifier, pHarvesterKeyPair->publicKey());
-		auto pBlock = m_blockGenerator(*pBlockHeader, m_config.MaxTransactionsPerBlock);
+		auto pBlock = m_blockGenerator(pUtFacade, *pBlockHeader, transactionsInfo);
 		if (pBlock)
 			SignBlockHeader(*pHarvesterKeyPair, *pBlock);
 

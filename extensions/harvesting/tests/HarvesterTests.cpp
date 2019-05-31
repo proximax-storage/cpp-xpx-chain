@@ -124,7 +124,7 @@ namespace catapult { namespace harvesting {
 			}
 
 			std::unique_ptr<Harvester> CreateHarvester(const model::BlockChainConfiguration& config) {
-				return CreateHarvester(config, [](const auto& blockHeader, auto) {
+				return CreateHarvester(config, [](auto, const auto& blockHeader, const auto& ) {
 					auto pBlock = std::make_unique<model::Block>();
 					std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
 					return pBlock;
@@ -134,7 +134,9 @@ namespace catapult { namespace harvesting {
 			std::unique_ptr<Harvester> CreateHarvester(
 					const model::BlockChainConfiguration& config,
 					const BlockGenerator& blockGenerator) {
-				return std::make_unique<Harvester>(Cache, config, *pUnlockedAccounts, blockGenerator);
+				return std::make_unique<Harvester>(Cache, config, *pUnlockedAccounts, blockGenerator,
+					[](auto&, auto) { return TransactionsInfo(); },
+					HarvestingUtFacadeFactory(Cache, config, chain::ExecutionConfiguration()));
 			}
 
 		private:
@@ -189,7 +191,9 @@ namespace catapult { namespace harvesting {
 					utils::TimeSpan::FromMilliseconds(1000),
 					difficulty,
 					importanceView.getAccountImportanceOrDefault(publicKey, pLastBlock->Height),
-					config));
+					config,
+					Amount{0},
+					Amount{0}));
 			uint64_t seconds = hit / referenceTarget;
 			return Timestamp((seconds + 1) * 1000);
 		}
@@ -393,10 +397,9 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		HarvesterContext context;
 		auto config = CreateConfiguration();
-		config.MaxTransactionsPerBlock = 123;
-		std::vector<std::pair<Key, uint32_t>> capturedParams;
-		auto pHarvester = context.CreateHarvester(config, [&capturedParams](const auto& blockHeader, auto maxTransactionsPerBlock) {
-			capturedParams.emplace_back(blockHeader.Signer, maxTransactionsPerBlock);
+		std::vector<Key> capturedParams;
+		auto pHarvester = context.CreateHarvester(config, [&capturedParams](auto, const auto& blockHeader, const auto&) {
+			capturedParams.emplace_back(blockHeader.Signer);
 			auto pBlock = test::GenerateEmptyRandomBlock();
 			pBlock->Signer = blockHeader.Signer;
 			return pBlock;
@@ -411,21 +414,19 @@ namespace catapult { namespace harvesting {
 
 		// - generator was called with expected params
 		ASSERT_EQ(1u, capturedParams.size());
-		EXPECT_TRUE(IsAnyKeyPairMatch(context.KeyPairs, capturedParams[0].first));
-		EXPECT_EQ(123u, capturedParams[0].second);
+		EXPECT_TRUE(IsAnyKeyPairMatch(context.KeyPairs, capturedParams[0]));
 
 		// - block signer was passed to generator
-		EXPECT_EQ(capturedParams[0].first, pHarvestedBlock->Signer);
+		EXPECT_EQ(capturedParams[0], pHarvestedBlock->Signer);
 	}
 
 	TEST(TEST_CLASS, HarvestReturnsNullptrWhenBlockGeneratorFails) {
 		// Arrange:
 		HarvesterContext context;
 		auto config = CreateConfiguration();
-		config.MaxTransactionsPerBlock = 123;
-		std::vector<std::pair<Key, uint32_t>> capturedParams;
-		auto pHarvester = context.CreateHarvester(config, [&capturedParams](const auto& blockHeader, auto maxTransactionsPerBlock) {
-			capturedParams.emplace_back(blockHeader.Signer, maxTransactionsPerBlock);
+		std::vector<Key> capturedParams;
+		auto pHarvester = context.CreateHarvester(config, [&capturedParams](auto, const auto& blockHeader, const auto&) {
+			capturedParams.emplace_back(blockHeader.Signer);
 			return nullptr;
 		});
 
@@ -437,8 +438,7 @@ namespace catapult { namespace harvesting {
 
 		// - generator was called with expected params
 		ASSERT_EQ(1u, capturedParams.size());
-		EXPECT_TRUE(IsAnyKeyPairMatch(context.KeyPairs, capturedParams[0].first));
-		EXPECT_EQ(123u, capturedParams[0].second);
+		EXPECT_TRUE(IsAnyKeyPairMatch(context.KeyPairs, capturedParams[0]));
 	}
 
 	// endregion

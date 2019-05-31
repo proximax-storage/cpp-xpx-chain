@@ -23,6 +23,7 @@
 #include "FileSize.h"
 #include "HexParser.h"
 #include "TimeSpan.h"
+#include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace utils {
 
@@ -166,6 +167,20 @@ namespace catapult { namespace utils {
 
 	bool TryParseValue(const std::string& str, uint64_t& parsedValue) {
 		return TryParseUnsignedIntDecimalValue(str, parsedValue);
+	}
+
+	// endregion
+
+	// region floating point
+
+	bool TryParseValue(const std::string& str, double& parsedValue) {
+		try {
+			parsedValue = boost::lexical_cast<double>(str);
+		} catch (...) {
+			return false;
+		}
+
+		return true;
 	}
 
 	// endregion

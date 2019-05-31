@@ -43,16 +43,21 @@ namespace catapult { namespace consumers {
 
 		struct BlockHitPredicateParams {
 		public:
-			BlockHitPredicateParams(const model::Block* pParent, const model::Block* pChild, const Hash256& generationHash)
+			BlockHitPredicateParams(const model::Block* pParent, const model::Block* pChild, const Hash256& generationHash,
+				const Amount& maxFee, const Amount& fee)
 					: pParentBlock(pParent)
 					, pChildBlock(pChild)
 					, GenerationHash(generationHash)
+					, MaxFee(maxFee)
+					, Fee(fee)
 			{}
 
 		public:
 			const model::Block* pParentBlock;
 			const model::Block* pChildBlock;
 			const Hash256 GenerationHash;
+			const Amount MaxFee;
+			const Amount Fee;
 		};
 
 		class MockBlockHitPredicate : public test::ParamsCapture<BlockHitPredicateParams> {
@@ -61,8 +66,9 @@ namespace catapult { namespace consumers {
 			{}
 
 		public:
-			bool operator()(const model::Block& parent, const model::Block& child, const Hash256& generationHash) const {
-				const_cast<MockBlockHitPredicate*>(this)->push(&parent, &child, generationHash);
+			bool operator()(const model::Block& parent, const model::Block& child, const Hash256& generationHash,
+					const Amount& maxFee, const Amount& fee) const {
+				const_cast<MockBlockHitPredicate*>(this)->push(&parent, &child, generationHash, maxFee, fee);
 				return ++m_numCalls < m_trigger;
 			}
 
@@ -103,8 +109,9 @@ namespace catapult { namespace consumers {
 				const_cast<MockBlockHitPredicateFactory*>(this)->push(cache);
 
 				const auto& blockHitPredicate = m_blockHitPredicate;
-				return [&blockHitPredicate](const auto& parent, const auto& child, const auto& generationHash) {
-					return blockHitPredicate(parent, child, generationHash);
+				return [&blockHitPredicate](const auto& parent, const auto& child, const auto& generationHash,
+						const Amount& maxFee, const Amount& fee) {
+					return blockHitPredicate(parent, child, generationHash, maxFee, fee);
 				};
 			}
 

@@ -140,24 +140,6 @@ namespace catapult { namespace harvesting {
 					Default_Time);
 		}
 
-		void AssertObserverContexts(
-				const test::MockExecutionConfiguration& executionConfig,
-				size_t numObserverCalls,
-				const std::unordered_set<size_t>& rollbackIndexes) {
-			// Assert:
-			EXPECT_EQ(numObserverCalls, executionConfig.pObserver->params().size());
-			test::MockExecutionConfiguration::AssertObserverContexts(
-					*executionConfig.pObserver,
-					0,
-					Default_Height + Height(1),
-					model::ImportanceHeight(16),
-					[&rollbackIndexes](auto i) { return rollbackIndexes.cend() != rollbackIndexes.find(i); });
-		}
-
-		void AssertObserverContexts(const test::MockExecutionConfiguration& executionConfig, size_t numObserverCalls) {
-			AssertObserverContexts(executionConfig, numObserverCalls, {});
-		}
-
 		// endregion
 	}
 
@@ -199,11 +181,9 @@ namespace catapult { namespace harvesting {
 				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 }
 			};
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, expectedIndexIdPairs);
-			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, expectedIndexIdPairs);
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7 });
-			AssertObserverContexts(executionConfig, 8);
+			AssertValidatorContexts(executionConfig, { 0, 0, 0, 0, 0, 0, 0, 0 });
 		});
 	}
 
@@ -231,11 +211,9 @@ namespace catapult { namespace harvesting {
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, {
 				{ 0, 1 }, { 1, 1 }, { 2, 1 }, { 3, 1 }
 			});
-			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, {});
 
 			// - check contexts
 			AssertValidatorContexts(executionConfig, { 0, 0, 0, 0 });
-			AssertObserverContexts(executionConfig, 0);
 		});
 	}
 
@@ -281,12 +259,8 @@ namespace catapult { namespace harvesting {
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, {
 				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 2, 1 }, { 2, 2 }, { 3, 1 }
 			});
-			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, {
-				{ 0, 1 }, { 0, 2 }, { 2, 1 }, { 2, 2 }
-			});
 
-			AssertValidatorContexts(executionConfig, { 0, 1, 2, 2, 3, 4 });
-			AssertObserverContexts(executionConfig, 4);
+			AssertValidatorContexts(executionConfig, { 0, 0, 0, 0, 0, 0 });
 		});
 	}
 
@@ -297,12 +271,8 @@ namespace catapult { namespace harvesting {
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, {
 				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 }
 			});
-			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, {
-				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 1 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 1 }
-			});
 
-			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7 });
-			AssertObserverContexts(executionConfig, 8, { 3, 7 });
+			AssertValidatorContexts(executionConfig, { 0, 0, 0, 0, 0, 0, 0, 0 });
 		});
 	}
 
@@ -339,14 +309,9 @@ namespace catapult { namespace harvesting {
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, {
 				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 }
 			});
-			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, {
-				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 },
-				{ 3, 2 }, { 3, 1 }, { 2, 2 }, { 2, 1 }, { 1, 2 }, { 1, 1 }
-			});
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7 });
-			AssertObserverContexts(executionConfig, 14, { 8, 9, 10, 11, 12, 13 });
+			AssertValidatorContexts(executionConfig, { 0, 0, 0, 0, 0, 0, 0, 0 });
 		});
 	}
 
@@ -423,13 +388,9 @@ namespace catapult { namespace harvesting {
 				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 },
 				{ 4, 1 }
 			});
-			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, {
-				{ 0, 1 }, { 0, 2 }, { 1, 1 }, { 1, 2 }, { 2, 1 }, { 2, 2 }, { 3, 1 }, { 3, 2 }
-			});
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7, 8 });
-			AssertObserverContexts(executionConfig, 8);
+			AssertValidatorContexts(executionConfig, { 0, 0, 0, 0, 0, 0, 0, 0, 0 });
 
 			// - no block was generated
 			EXPECT_FALSE(!!pBlock);
@@ -448,11 +409,9 @@ namespace catapult { namespace harvesting {
 
 			// - check entity infos (hashes): validator and observer should be called for all notifications (2 per transaction and block)
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), { Hash256() }, { { 0, 1 }, { 0, 2 } });
-			AssertEntityInfos("observer", executionConfig.pObserver->params(), { Hash256() }, { { 0, 1 }, { 0, 2 } });
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 1 });
-			AssertObserverContexts(executionConfig, 2);
+			AssertValidatorContexts(executionConfig, { 0, 0 });
 
 			// - check block
 			EXPECT_EQ_MEMORY(pBlockHeader.get(), pBlock.get(), sizeof(model::BlockHeader));
@@ -487,11 +446,9 @@ namespace catapult { namespace harvesting {
 				{ 4, 1 }, { 4, 2 }
 			};
 			AssertEntityInfos("validator", executionConfig.pValidator->params(), transactionHashes, expectedIndexIdPairs);
-			AssertEntityInfos("observer", executionConfig.pObserver->params(), transactionHashes, expectedIndexIdPairs);
 
 			// - check contexts
-			AssertValidatorContexts(executionConfig, { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 });
-			AssertObserverContexts(executionConfig, 10);
+			AssertValidatorContexts(executionConfig, { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 });
 
 			// - check block
 			EXPECT_EQ_MEMORY(pBlockHeader.get(), pBlock.get(), sizeof(model::BlockHeader));

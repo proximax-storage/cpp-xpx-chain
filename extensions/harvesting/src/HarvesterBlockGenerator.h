@@ -23,18 +23,18 @@
 #include "catapult/model/TransactionSelectionStrategy.h"
 
 namespace catapult {
-	namespace cache { class MemoryUtCache; }
-	namespace harvesting { class HarvestingUtFacadeFactory; }
+	namespace harvesting {
+		class HarvestingUtFacade;
+		class TransactionsInfo;
+	}
 }
 
 namespace catapult { namespace harvesting {
 
-	/// Generates a block from a seed block header given a maximum number of transactions.
-	using BlockGenerator = std::function<std::unique_ptr<model::Block> (const model::BlockHeader&, uint32_t)>;
+	/// Generates a block from collected unconfirmed transactions and a seed block header.
+	using BlockGenerator = std::function<std::unique_ptr<model::Block> (
+		std::shared_ptr<HarvestingUtFacade>, const model::BlockHeader&, const TransactionsInfo& transactionsInfo)>;
 
-	/// Creates a default block generator around \a utFacadeFactory and \a utCache for specified transaction \a strategy.
-	BlockGenerator CreateHarvesterBlockGenerator(
-			model::TransactionSelectionStrategy strategy,
-			const HarvestingUtFacadeFactory& utFacadeFactory,
-			const cache::MemoryUtCache& utCache);
+	/// Creates a default block generator.
+	BlockGenerator CreateHarvesterBlockGenerator();
 }}

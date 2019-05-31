@@ -63,6 +63,9 @@ namespace catapult { namespace chain {
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 			config.BlockTimeSmoothingFactor = 0;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
+			config.AverageBlockRecordingCost = 0.0;
+			config.GreedDelta = 0.5;
+			config.GreedExponent = 2.00;
 			return config;
 		}
 
@@ -98,12 +101,14 @@ namespace catapult { namespace chain {
 				const model::Block& parent,
 				model::Block& current,
 				const Hash256& generationHash,
-				const BlockHitPredicate& predicate) {
+				const BlockHitPredicate& predicate,
+				Amount maxFee = Amount{0},
+				Amount fee = Amount{0}) {
 			const auto MS_In_S = 1000;
 
 			// - make sure that there is a hit possibility
 			current.Timestamp = Max_Time;
-			if (!predicate(parent, current, generationHash))
+			if (!predicate(parent, current, generationHash, maxFee, fee))
 				return Max_Time;
 
 			// - use a binary search to find the hit time
@@ -113,7 +118,7 @@ namespace catapult { namespace chain {
 				auto middle = (upperBound + lowerBound) / 2;
 				current.Timestamp = parent.Timestamp + Timestamp(middle);
 
-				if (predicate(parent, current, generationHash))
+				if (predicate(parent, current, generationHash, maxFee, fee))
 					upperBound = middle;
 				else
 					lowerBound = middle;

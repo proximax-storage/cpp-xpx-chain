@@ -59,6 +59,10 @@ namespace catapult { namespace model {
 							{ "blockGenerationTargetTime", "10m" },
 							{ "blockTimeSmoothingFactor", "765" },
 
+							{ "averageBlockRecordingCost", "0" },
+							{ "greedDelta", "0.5" },
+							{ "greedExponent", "2" },
+
 							{ "importanceGrouping", "444" },
 							{ "maxRollbackBlocks", "720" },
 							{ "maxDifficultyBlocks", "15" },
@@ -108,6 +112,10 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.BlockGenerationTargetTime);
 				EXPECT_EQ(0u, config.BlockTimeSmoothingFactor);
 
+				EXPECT_EQ(0.0, config.AverageBlockRecordingCost);
+				EXPECT_EQ(0.0, config.GreedDelta);
+				EXPECT_EQ(0.0, config.GreedExponent);
+
 				EXPECT_EQ(0u, config.ImportanceGrouping);
 				EXPECT_EQ(0u, config.MaxRollbackBlocks);
 				EXPECT_EQ(0u, config.MaxDifficultyBlocks);
@@ -138,6 +146,10 @@ namespace catapult { namespace model {
 
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(10), config.BlockGenerationTargetTime);
 				EXPECT_EQ(765u, config.BlockTimeSmoothingFactor);
+
+				EXPECT_EQ(0.0, config.AverageBlockRecordingCost);
+				EXPECT_EQ(0.5, config.GreedDelta);
+				EXPECT_EQ(2.0, config.GreedExponent);
 
 				EXPECT_EQ(444u, config.ImportanceGrouping);
 				EXPECT_EQ(720u, config.MaxRollbackBlocks);

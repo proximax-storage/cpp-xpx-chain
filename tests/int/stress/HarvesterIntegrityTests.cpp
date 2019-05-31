@@ -91,10 +91,12 @@ namespace catapult { namespace harvesting {
 				// create the harvester
 				auto executionConfig = extensions::CreateExecutionConfiguration(*m_pPluginManager);
 				HarvestingUtFacadeFactory utFacadeFactory(m_cache, CreateConfiguration(), executionConfig);
-
 				auto strategy = model::TransactionSelectionStrategy::Oldest;
-				auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, m_transactionsCache);
-				m_pHarvester = std::make_unique<Harvester>(m_cache, m_config.BlockChain, m_unlockedAccounts, blockGenerator);
+				auto transactionsInfoSupplier = CreateTransactionsInfoSupplier(strategy, m_transactionsCache);
+
+				auto blockGenerator = CreateHarvesterBlockGenerator();
+				m_pHarvester = std::make_unique<Harvester>(m_cache, m_config.BlockChain, m_unlockedAccounts, blockGenerator,
+					transactionsInfoSupplier, utFacadeFactory);
 			}
 
 		public:

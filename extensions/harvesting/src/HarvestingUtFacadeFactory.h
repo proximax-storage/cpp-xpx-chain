@@ -78,7 +78,7 @@ namespace catapult { namespace harvesting {
 
 	public:
 		/// Creates a facade for applying transactions at a given block time (\a blockTime).
-		std::unique_ptr<HarvestingUtFacade> create(Timestamp blockTime) const;
+		std::shared_ptr<HarvestingUtFacade> create(Timestamp blockTime) const;
 
 	private:
 		const cache::CatapultCache& m_cache;

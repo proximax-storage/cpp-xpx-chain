@@ -62,7 +62,7 @@ namespace catapult { namespace consumers {
 			observers::ObserverState&)>;
 
 	/// A predicate for determining whether or not two blocks form a hit.
-	using BlockHitPredicate = predicate<const model::Block&, const model::Block&, const Hash256&>;
+	using BlockHitPredicate = predicate<const model::Block&, const model::Block&, const Hash256&, const Amount&, const Amount&>;
 
 	/// A factory for creating a predicate for determining whether or not two blocks form a hit.
 	using BlockHitPredicateFactory = std::function<BlockHitPredicate (const cache::ReadOnlyCatapultCache&)>;

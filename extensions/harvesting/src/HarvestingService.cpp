@@ -22,6 +22,7 @@
 #include "HarvesterBlockGenerator.h"
 #include "HarvestingUtFacadeFactory.h"
 #include "ScheduledHarvesterTask.h"
+#include "TransactionsInfoSupplier.h"
 #include "UnlockedAccounts.h"
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache_core/ImportanceView.h"
@@ -81,11 +82,13 @@ namespace catapult { namespace harvesting {
 			auto strategy = state.config().Node.TransactionSelectionStrategy;
 			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
 			HarvestingUtFacadeFactory utFacadeFactory(cache, blockChainConfig, executionConfig);
+			auto transactionsInfoSupplier = CreateTransactionsInfoSupplier(strategy, utCache);
 
-			auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, utCache);
+			auto blockGenerator = CreateHarvesterBlockGenerator();
 			auto pHarvesterTask = std::make_shared<ScheduledHarvesterTask>(
 					CreateHarvesterTaskOptions(state),
-					std::make_unique<Harvester>(cache, blockChainConfig, unlockedAccounts, blockGenerator));
+					std::make_unique<Harvester>(cache, blockChainConfig, unlockedAccounts, blockGenerator,
+						transactionsInfoSupplier, utFacadeFactory));
 
 			auto minHarvesterBalance = blockChainConfig.MinHarvesterBalance;
 			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, minHarvesterBalance]() {

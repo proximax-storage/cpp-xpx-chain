@@ -20,6 +20,7 @@
 
 #include "harvesting/src/HarvesterBlockGenerator.h"
 #include "harvesting/src/HarvestingUtFacadeFactory.h"
+#include "harvesting/src/TransactionsInfoSupplier.h"
 #include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockUtils.h"
@@ -53,7 +54,8 @@ namespace catapult { namespace harvesting {
 					, m_catapultCache(test::CreateEmptyCatapultCache(m_config, CreateCacheConfiguration(m_dbDirGuard.name())))
 					, m_utFacadeFactory(m_catapultCache, m_config, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(0))
-					, m_generator(CreateHarvesterBlockGenerator(strategy, m_utFacadeFactory, *m_pUtCache)) {
+					, m_generator(CreateHarvesterBlockGenerator())
+					, m_transactionsInfoSupplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache)) {
 				// add 5 transaction infos to UT cache with multipliers alternating between 10 and 20
 				auto transactionInfos = test::CreateTransactionInfosFromSizeMultiplierPairs({
 					{ 201, 200 }, { 202, 100 }, { 203, 200 }, { 204, 100 }, { 205, 200 }
@@ -80,7 +82,9 @@ namespace catapult { namespace harvesting {
 			auto generate(Height blockHeight, uint32_t maxTransactionsPerBlock) {
 				model::BlockHeader blockHeader;
 				blockHeader.Height = blockHeight;
-				return m_generator(blockHeader, maxTransactionsPerBlock);
+				auto pUtFacade = m_utFacadeFactory.create(blockHeader.Timestamp);
+				auto transactionsInfo = m_transactionsInfoSupplier(*pUtFacade, maxTransactionsPerBlock);
+				return m_generator(pUtFacade, blockHeader, transactionsInfo);
 			}
 
 		public:
@@ -101,6 +105,7 @@ namespace catapult { namespace harvesting {
 			HarvestingUtFacadeFactory m_utFacadeFactory;
 			std::unique_ptr<cache::MemoryUtCache> m_pUtCache;
 			BlockGenerator m_generator;
+			TransactionsInfoSupplier m_transactionsInfoSupplier;
 
 			Hash256 m_initialStateHash;
 		};

@@ -34,6 +34,9 @@ namespace catapult { namespace chain {
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
+			config.AverageBlockRecordingCost = 0.0;
+			config.GreedDelta = 0.5;
+			config.GreedExponent = 2.00;
 			return config;
 		}
 
@@ -148,13 +151,15 @@ namespace catapult { namespace chain {
 				uint64_t currentTime,
 				uint64_t importance,
 				uint64_t difficulty = 60,
-				const model::BlockChainConfiguration& config = CreateConfiguration()) {
+				const model::BlockChainConfiguration& config = CreateConfiguration(),
+				Amount maxFee = Amount{0},
+				Amount fee = Amount{0}) {
 			// Arrange:
 			auto timeDiff = utils::TimeSpan::FromSeconds(currentTime - parentTime);
 			auto realDifficulty = Difficulty(difficulty);
 
 			// Act:
-			return CalculateTarget(timeDiff, realDifficulty, Importance(importance), config);
+			return CalculateTarget(timeDiff, realDifficulty, Importance(importance), config, maxFee, fee);
 		}
 
 		BlockTarget CalculateBlockTarget(
@@ -162,7 +167,9 @@ namespace catapult { namespace chain {
 				uint64_t currentTime,
 				uint64_t importance,
 				uint64_t difficulty = 60,
-				const model::BlockChainConfiguration& config = CreateConfiguration()) {
+				const model::BlockChainConfiguration& config = CreateConfiguration(),
+				Amount maxFee = Amount{0},
+				Amount fee = Amount{0}) {
 			// Arrange:
 			model::Block parent;
 			SetTimestampSeconds(parent, parentTime);
@@ -172,7 +179,7 @@ namespace catapult { namespace chain {
 			current.Difficulty = Difficulty(difficulty);
 
 			// Act:
-			return CalculateTarget(parent, current, Importance(importance), config);
+			return CalculateTarget(parent, current, Importance(importance), config, maxFee, fee);
 		}
 	}
 
@@ -314,15 +321,17 @@ namespace catapult { namespace chain {
 		auto pParent = CreateBlock(Height(10), 900, 0);
 		auto pCurrent = CreateBlock(Height(11), 1000, 50);
 		const Hash256 generationHash{ { 0xF7, 0xF6, 0xF5, 0xF4 } };
+		Amount maxFee{0};
+		Amount fee{0};
 
 		Importance signerImportance = Importance(20000000);
 		BlockHitPredicateContext context(signerImportance);
 
 		// Act:
-		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
+		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash, maxFee, fee);
 
 		// Assert:
-		EXPECT_LT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config));
+		EXPECT_LT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config, maxFee, fee));
 		EXPECT_TRUE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -338,6 +347,8 @@ namespace catapult { namespace chain {
 		hitContext.Signer = test::GenerateRandomData<Hash256_Size>();
 		hitContext.Difficulty = Difficulty(50 * 1'000'000'000'000);
 		hitContext.Height = Height(11);
+		hitContext.MaxFee = Amount{0};
+		hitContext.Fee = Amount{0};
 
 		Importance signerImportance = Importance(20000000);
 		BlockHitPredicateContext context(signerImportance);
@@ -347,7 +358,8 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config,
+			hitContext.MaxFee, hitContext.Fee);
 		EXPECT_LT(hit, target);
 		EXPECT_TRUE(isHit);
 
@@ -359,22 +371,24 @@ namespace catapult { namespace chain {
 	TEST(TEST_CLASS, BlockHitPredicateReturnsFalseWhenHitIsEqualToTarget) {
 		// Arrange:
 		auto pParent = CreateBlock(Height(10), 1, 0);
-		auto pCurrent = CreateBlock(Height(11), 65537 * 641 + 1, 257 * 17 * 5 * 3);
+		auto pCurrent = CreateBlock(Height(11), 65537 * 640 + 1, 257 * 17 * 5 * 3);
 		const Hash256 generationHash{ {
-			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+			0x00, 0x40, 0x66, 0x00, 0x7F, 0xC2, 0x99, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 		} };
+		Amount maxFee{0};
+		Amount fee{0};
 
 		Importance signerImportance = Importance(6700417);
 		BlockHitPredicateContext context(signerImportance);
 
 		// Act:
-		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
+		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash, maxFee, fee);
 
 		// Assert:
-		EXPECT_EQ(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config));
+		EXPECT_EQ(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config, maxFee, fee));
 		EXPECT_FALSE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -386,15 +400,17 @@ namespace catapult { namespace chain {
 		// Arrange:
 		BlockHitContext hitContext;
 		hitContext.GenerationHash = { {
-			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
+			0x00, 0x40, 0x66, 0x00, 0x7F, 0xC2, 0x99, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 		} };
-		hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(65537 * 641);
+		hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(65537 * 640);
 		hitContext.Signer = test::GenerateRandomData<Hash256_Size>();
 		hitContext.Difficulty = Difficulty(257 * 17 * 5 * 3);
 		hitContext.Height = Height(11);
+		hitContext.MaxFee = Amount{0};
+		hitContext.Fee = Amount{0};
 
 		Importance signerImportance = Importance(6700417);
 		BlockHitPredicateContext context(signerImportance);
@@ -404,7 +420,8 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config,
+			hitContext.MaxFee, hitContext.Fee);
 		EXPECT_EQ(hit, target);
 		EXPECT_FALSE(isHit);
 
@@ -418,15 +435,17 @@ namespace catapult { namespace chain {
 		auto pParent = CreateBlock(Height(10), 900, 0);
 		auto pCurrent = CreateBlock(Height(11), 1000, 50);
 		const Hash256 generationHash{ { 0xF7, 0xF6, 0xF5, 0xF4 } };
+		Amount maxFee{0};
+		Amount fee{0};
 
 		Importance signerImportance = Importance(1000);
 		BlockHitPredicateContext context(signerImportance);
 
 		// Act:
-		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
+		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash, maxFee, fee);
 
 		// Assert:
-		EXPECT_GT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config));
+		EXPECT_GT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config, maxFee, fee));
 		EXPECT_FALSE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -442,6 +461,8 @@ namespace catapult { namespace chain {
 		hitContext.Signer = test::GenerateRandomData<Hash256_Size>();
 		hitContext.Difficulty = Difficulty(50);
 		hitContext.Height = Height(11);
+		hitContext.MaxFee = Amount{0};
+		hitContext.Fee = Amount{0};
 
 		Importance signerImportance = Importance(1000);
 		BlockHitPredicateContext context(signerImportance);
@@ -451,7 +472,8 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config,
+			hitContext.MaxFee, hitContext.Fee);
 		EXPECT_GT(hit, target);
 		EXPECT_FALSE(isHit);
 

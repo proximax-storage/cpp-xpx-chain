@@ -50,20 +50,26 @@ namespace catapult { namespace harvesting {
 		}
 
 	public:
-		bool apply(const model::TransactionInfo& transactionInfo) {
-			return apply(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash));
+		bool validate(const model::TransactionInfo& transactionInfo) {
+			return validate(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash));
 		}
 
-		void unapply(const model::TransactionInfo& transactionInfo) {
-			unapply(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash));
-			m_blockStatementBuilder.popSource();
-		}
-
-		std::unique_ptr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
+		std::unique_ptr<model::Block> commit(const model::BlockHeader& blockHeader, const std::vector<model::TransactionInfo>& transactionInfos) {
 			// 1. stitch block
+			model::Transactions transactions;
+			for (const auto& transactionInfo : transactionInfos)
+				transactions.push_back(transactionInfo.pEntity);
 			auto pBlock = model::StitchBlock(blockHeader, transactions);
 
-			// 2. add back fee surpluses to accounts (skip cache lookup if no surplus)
+			// 2. validate block (using zero hash)
+			if (!validate(model::WeakEntityInfo(*pBlock, Hash256())))
+				return nullptr;
+
+			// 3. commit transactions
+			for (const auto& transactionInfo : transactionInfos)
+				commit(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash));
+
+			// 4. add back fee surpluses to accounts (skip cache lookup if no surplus)
 			auto& accountStateCache = m_pCacheDelta->sub<cache::AccountStateCache>();
 			for (const auto& transaction : pBlock->Transactions()) {
 				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(blockHeader.FeeMultiplier, transaction);
@@ -71,11 +77,10 @@ namespace catapult { namespace harvesting {
 					accountStateCache.find(transaction.Signer).get().Balances.credit(m_blockChainConfig.CurrencyMosaicId, surplus, blockHeader.Height);
 			}
 
-			// 3. execute block (using zero hash)
-			if (!apply(model::WeakEntityInfo(*pBlock, Hash256())))
-				return nullptr;
+			// 5. execute block (using zero hash)
+			commit(model::WeakEntityInfo(*pBlock, Hash256()));
 
-			// 4. update block fields
+			// 6. update block fields
 			pBlock->StateHash = m_blockChainConfig.ShouldEnableVerifiableState
 					? m_pCacheDelta->calculateStateHash(height()).StateHash
 					: Hash256();
@@ -116,34 +121,34 @@ namespace catapult { namespace harvesting {
 			return processor(validator, validatorContext, observer, observerContext);
 		}
 
-		bool apply(const model::WeakEntityInfo& weakEntityInfo) {
+		bool validate(const model::WeakEntityInfo& weakEntityInfo) {
 			const auto& publisher = *m_executionConfig.pNotificationPublisher;
 			return process([&weakEntityInfo, &publisher](
 					const auto& validator,
 					const auto& validatorContext,
 					const auto& observer,
 					auto& observerContext) {
-				chain::ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext);
-				sub.enableUndo();
+				chain::ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext, true, false);
 
 				// execute entity
 				publisher.publish(weakEntityInfo, sub);
-				if (validators::IsValidationResultSuccess(sub.result()))
-					return true;
 
-				sub.undo();
-				return false;
+				return validators::IsValidationResultSuccess(sub.result());
 			});
 		}
 
-		void unapply(const model::WeakEntityInfo& weakEntityInfo) {
+		void commit(const model::WeakEntityInfo& weakEntityInfo) {
 			const auto& publisher = *m_executionConfig.pNotificationPublisher;
-			process([&weakEntityInfo, &publisher](const auto&, const auto&, const auto& observer, auto& observerContext) {
-				chain::ProcessingUndoNotificationSubscriber sub(observer, observerContext);
+			process([&weakEntityInfo, &publisher](
+					const auto& validator,
+					const auto& validatorContext,
+					const auto& observer,
+					auto& observerContext) {
+				chain::ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext, false, true);
 
 				// execute entity
 				publisher.publish(weakEntityInfo, sub);
-				sub.undo();
+
 				return true;
 			});
 		}
@@ -185,7 +190,7 @@ namespace catapult { namespace harvesting {
 	}
 
 	bool HarvestingUtFacade::apply(const model::TransactionInfo& transactionInfo) {
-		if (!m_pImpl->apply(transactionInfo))
+		if (!m_pImpl->validate(transactionInfo))
 			return false;
 
 		m_transactionInfos.push_back(transactionInfo.copy());
@@ -196,7 +201,6 @@ namespace catapult { namespace harvesting {
 		if (m_transactionInfos.empty())
 			CATAPULT_THROW_OUT_OF_RANGE("cannot call unapply when no transactions have been applied");
 
-		m_pImpl->unapply(m_transactionInfos.back());
 		m_transactionInfos.pop_back();
 	}
 
@@ -204,11 +208,7 @@ namespace catapult { namespace harvesting {
 		if (height() != blockHeader.Height)
 			CATAPULT_THROW_RUNTIME_ERROR("commit block header is inconsistent with facade state");
 
-		model::Transactions transactions;
-		for (const auto& transactionInfo : m_transactionInfos)
-			transactions.push_back(transactionInfo.pEntity);
-
-		auto pBlock = m_pImpl->commit(blockHeader, transactions);
+		auto pBlock = m_pImpl->commit(blockHeader, m_transactionInfos);
 		m_transactionInfos.clear();
 		return pBlock;
 	}
@@ -226,7 +226,7 @@ namespace catapult { namespace harvesting {
 			, m_executionConfig(executionConfig)
 	{}
 
-	std::unique_ptr<HarvestingUtFacade> HarvestingUtFacadeFactory::create(Timestamp blockTime) const {
+	std::shared_ptr<HarvestingUtFacade> HarvestingUtFacadeFactory::create(Timestamp blockTime) const {
 		return std::make_unique<HarvestingUtFacade>(blockTime, m_cache, m_blockChainConfig, m_executionConfig);
 	}
 

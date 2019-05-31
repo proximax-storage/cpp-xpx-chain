@@ -75,6 +75,9 @@ namespace catapult { namespace sync {
 			blockChainConfig.ImportanceGrouping = 10u;
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15u);
 			blockChainConfig.BlockTimeSmoothingFactor = 3000u;
+			blockChainConfig.AverageBlockRecordingCost = 0.0;
+			blockChainConfig.GreedDelta = 0.5;
+			blockChainConfig.GreedExponent = 2.00;
 			blockChainConfig.MaxBlockFutureTime = utils::TimeSpan::FromSeconds(10u);
 			blockChainConfig.MaxDifficultyBlocks = 4u;
 			blockChainConfig.BlockPruneInterval = 360u;
@@ -380,5 +383,7 @@ namespace catapult { namespace sync {
 
 		// Assert:
 		ASSERT_EQ(ionet::NodeInteractionResultCode::Success, syncResult);
+		auto validationResult = static_cast<validators::ValidationResult>(consumerResult.CompletionCode);
+		ASSERT_EQ(validators::ValidationResult::Success, validationResult);
 	}
 }}

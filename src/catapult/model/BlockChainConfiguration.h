@@ -56,6 +56,15 @@ namespace catapult { namespace model {
 		/// \note This can lower security because it will increase the influence of time relative to importance.
 		uint32_t BlockTimeSmoothingFactor;
 
+		/// Average cost of block recording in blockchain for a harvester.
+		double AverageBlockRecordingCost;
+
+		/// Greed smoothing parameter.
+		double GreedDelta;
+
+		/// Greed exponent parameter.
+		double GreedExponent;
+
 		/// Number of blocks that should be treated as a group for importance purposes.
 		/// \note Importances will only be calculated at blocks that are multiples of this grouping number.
 		uint64_t ImportanceGrouping;

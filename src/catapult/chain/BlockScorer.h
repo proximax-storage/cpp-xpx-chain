@@ -42,7 +42,9 @@ namespace catapult { namespace chain {
 			const utils::TimeSpan& timeSpan,
 			Difficulty difficulty,
 			Importance signerImportance,
-			const model::BlockChainConfiguration& config);
+			const model::BlockChainConfiguration& config,
+			const Amount& maxFee,
+			const Amount& fee);
 
 	/// Calculates the target of \a currentBlock with parent \a parentBlock and effective signer importance
 	/// of \a signerImportance for the block chain described by \a config.
@@ -50,7 +52,9 @@ namespace catapult { namespace chain {
 			const model::Block& parentBlock,
 			const model::Block& currentBlock,
 			Importance signerImportance,
-			const model::BlockChainConfiguration& config);
+			const model::BlockChainConfiguration& config,
+			const Amount& maxFee,
+			const Amount& fee);
 
 	/// Contextual information for calculating a block hit.
 	struct BlockHitContext {
@@ -74,6 +78,12 @@ namespace catapult { namespace chain {
 
 		/// Block height.
 		catapult::Height Height;
+
+		/// Total max fee of transactions in the block.
+		Amount MaxFee;
+
+		/// Actual fee taken by harverster.
+		Amount Fee;
 	};
 
 	/// Predicate used to determine if a block is a hit or not.
@@ -87,8 +97,10 @@ namespace catapult { namespace chain {
 		BlockHitPredicate(const model::BlockChainConfiguration& config, const ImportanceLookupFunc& importanceLookup);
 
 	public:
-		/// Determines if the \a block is a hit given its parent (\a parentBlock) and generation hash (\a generationHash).
-		bool operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash) const;
+		/// Determines if the \a block is a hit given its parent (\a parentBlock), generation hash (\a generationHash),
+		/// sum of max fee of all transactions in the block (\a maxFee) and sum of actual fee taken by the harvester (\a fee).
+		bool operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash,
+			const Amount& maxFee, const Amount& fee) const;
 
 		/// Determines if the specified \a context is a hit.
 		bool operator()(const BlockHitContext& context) const;

@@ -52,23 +52,32 @@ namespace catapult { namespace chain {
 			const utils::TimeSpan& timeSpan,
 			Difficulty difficulty,
 			Importance signerImportance,
-			const model::BlockChainConfiguration&) {
-		BlockTarget target(difficulty.unwrap());
+			const model::BlockChainConfiguration& config,
+			const Amount& maxFee,
+			const Amount& fee) {
+		double target(difficulty.unwrap());
 		target *= timeSpan.seconds();
 		target *= signerImportance.unwrap();
-		return target;
+		double greed = 0.5;
+		if ((config.AverageBlockRecordingCost + double(maxFee.unwrap())) > std::numeric_limits<double>::min())
+			greed = (config.AverageBlockRecordingCost + double(fee.unwrap())) / (config.AverageBlockRecordingCost + double(maxFee.unwrap()));
+		double lambda = std::pow(1.0 + config.GreedDelta * (1.0 - 2.0 * greed), config.GreedExponent);
+		target *= lambda;
+		return BlockTarget{target};
 	}
 
 	BlockTarget CalculateTarget(
 			const model::Block& parentBlock,
 			const model::Block& currentBlock,
 			Importance signerImportance,
-			const model::BlockChainConfiguration& config) {
+			const model::BlockChainConfiguration& config,
+			const Amount& maxFee,
+			const Amount& fee) {
 		if (currentBlock.Timestamp <= parentBlock.Timestamp)
 			return BlockTarget(0);
 
 		auto timeDiff = TimeBetweenBlocks(parentBlock, currentBlock);
-		return CalculateTarget(timeDiff, currentBlock.Difficulty, signerImportance, config);
+		return CalculateTarget(timeDiff, currentBlock.Difficulty, signerImportance, config, maxFee, fee);
 	}
 
 	BlockHitPredicate::BlockHitPredicate(const model::BlockChainConfiguration& config, const ImportanceLookupFunc& importanceLookup)
@@ -76,17 +85,18 @@ namespace catapult { namespace chain {
 			, m_importanceLookup(importanceLookup)
 	{}
 
-	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash) const {
+	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash,
+			const Amount& maxFee, const Amount& fee) const {
 		auto importance = m_importanceLookup(block.Signer, block.Height);
 		auto hit = CalculateHit(generationHash);
-		auto target = CalculateTarget(parentBlock, block, importance, m_config);
+		auto target = CalculateTarget(parentBlock, block, importance, m_config, maxFee, fee);
 		return hit < target;
 	}
 
 	bool BlockHitPredicate::operator()(const BlockHitContext& context) const {
 		auto importance = m_importanceLookup(context.Signer, context.Height);
 		auto hit = CalculateHit(context.GenerationHash);
-		auto target = CalculateTarget(context.ElapsedTime, context.Difficulty, importance, m_config);
+		auto target = CalculateTarget(context.ElapsedTime, context.Difficulty, importance, m_config, context.MaxFee, context.Fee);
 		return hit < target;
 	}
 }}

@@ -25,6 +25,7 @@
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/model/BlockUtils.h"
+#include "catapult/model/FeeUtils.h"
 
 using namespace catapult::validators;
 
@@ -132,7 +133,15 @@ namespace catapult { namespace consumers {
 					const BlockHitPredicate& blockHitPredicate) {
 				const auto& block = element.Block;
 				element.GenerationHash = model::CalculateGenerationHash(parentGenerationHash, block.Signer);
-				if (!blockHitPredicate(parentBlock, block, element.GenerationHash)) {
+
+				Amount maxFee{0};
+				Amount fee{0};
+				for (const auto& transaction : element.Block.Transactions()) {
+					maxFee = maxFee + transaction.MaxFee;
+					fee = fee + model::CalculateTransactionFee(element.Block.FeeMultiplier, transaction);
+				}
+
+				if (!blockHitPredicate(parentBlock, block, element.GenerationHash, maxFee, fee)) {
 					CATAPULT_LOG(warning) << "block " << block.Height << " failed hit";
 					return false;
 				}

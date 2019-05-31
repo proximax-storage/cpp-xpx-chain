@@ -27,7 +27,9 @@ namespace catapult { namespace chain {
 			const validators::stateful::NotificationValidator& validator,
 			const validators::ValidatorContext& validatorContext,
 			const observers::NotificationObserver& observer,
-			observers::ObserverContext& observerContext)
+			observers::ObserverContext& observerContext,
+			bool validate,
+			bool observe)
 			: m_validator(validator)
 			, m_validatorContext(validatorContext)
 			, m_observer(observer)
@@ -35,6 +37,8 @@ namespace catapult { namespace chain {
 			, m_undoNotificationSubscriber(m_observer, m_observerContext)
 			, m_aggregateResult(validators::ValidationResult::Success)
 			, m_isUndoEnabled(false)
+			, m_validate(validate)
+			, m_observe(observe)
 	{}
 
 	validators::ValidationResult ProcessingNotificationSubscriber::result() const {
@@ -56,14 +60,18 @@ namespace catapult { namespace chain {
 		if (notification.Size < sizeof(model::Notification))
 			CATAPULT_THROW_INVALID_ARGUMENT("cannot process notification with incorrect size");
 
-		if (!IsValidationResultSuccess(m_aggregateResult))
-			return;
+		if (m_validate) {
+			if (!IsValidationResultSuccess(m_aggregateResult))
+				return;
 
-		validate(notification);
-		if (!IsValidationResultSuccess(m_aggregateResult))
-			return;
+			validate(notification);
+			if (!IsValidationResultSuccess(m_aggregateResult))
+				return;
+		}
 
-		observe(notification);
+		if (m_observe) {
+			observe(notification);
+		}
 	}
 
 	void ProcessingNotificationSubscriber::validate(const model::Notification& notification) {

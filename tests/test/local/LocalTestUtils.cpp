@@ -100,6 +100,11 @@ namespace catapult { namespace test {
 
 		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 		config.BlockTimeSmoothingFactor = 10'000;
+
+		config.AverageBlockRecordingCost = 0.0;
+		config.GreedDelta = 0.5;
+		config.GreedExponent = 2.00;
+
 		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
 
 		config.ImportanceGrouping = 1;

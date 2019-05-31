@@ -20,6 +20,7 @@
 
 #include "harvesting/src/ScheduledHarvesterTask.h"
 #include "harvesting/src/Harvester.h"
+#include "harvesting/src/TransactionsInfoSupplier.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
@@ -42,6 +43,9 @@ namespace catapult { namespace harvesting {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
+			config.AverageBlockRecordingCost = 0.0;
+			config.GreedDelta = 0.5;
+			config.GreedExponent = 2.00;
 			config.MaxDifficultyBlocks = 60;
 			config.ImportanceGrouping = 123;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
@@ -135,11 +139,15 @@ namespace catapult { namespace harvesting {
 		};
 
 		auto CreateHarvester(HarvesterContext& context) {
-			return std::make_unique<Harvester>(context.Cache, context.Config, context.Accounts, [](const auto& blockHeader, auto) {
-				auto pBlock = std::make_unique<model::Block>();
-				std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
-				return pBlock;
-			});
+			return std::make_unique<Harvester>(context.Cache, context.Config, context.Accounts,
+				[](auto, const auto& blockHeader, const auto&) {
+					auto pBlock = std::make_unique<model::Block>();
+					std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
+					return pBlock;
+				},
+				[](auto&, auto) { return TransactionsInfo(); },
+				HarvestingUtFacadeFactory(context.Cache, context.Config, chain::ExecutionConfiguration())
+			);
 		}
 	}
 
