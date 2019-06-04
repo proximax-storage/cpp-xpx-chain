@@ -88,6 +88,9 @@ namespace catapult { namespace cache {
 		/// Prunes the namespace cache at \a height.
 		CollectedIds prune(Height height);
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const;
+
 	private:
 		void removeRoot(NamespaceId id);
 		void removeChild(const state::Namespace& ns);

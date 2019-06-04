@@ -51,6 +51,12 @@ namespace catapult { namespace cache {
 				, LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::PatriciaTreeView(lockInfoSets.PatriciaTree.get())
 				, LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::ActivePredicate(lockInfoSets.Primary)
 		{}
+
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
 	};
 
 	/// View on top of the lock info cache.

@@ -70,6 +70,9 @@ namespace catapult { namespace cache {
 		/// minus a constant (constant = rewrite limit + 60).
 		void prune(Height height);
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const;
+
 	private:
 		void checkInsert(Height height);
 		void checkRemove(Height height) const;

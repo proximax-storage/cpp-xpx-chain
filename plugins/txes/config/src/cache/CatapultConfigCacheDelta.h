@@ -46,6 +46,12 @@ namespace catapult { namespace cache {
 		using CatapultConfigCacheDeltaMixins::ConstAccessor::find;
 		using CatapultConfigCacheDeltaMixins::MutableAccessor::find;
 
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
+
 	private:
 		CatapultConfigCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pCatapultConfigEntries;
 	};

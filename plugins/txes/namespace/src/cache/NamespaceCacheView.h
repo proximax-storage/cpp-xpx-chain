@@ -71,6 +71,12 @@ namespace catapult { namespace cache {
 				, NamespaceCacheViewMixins::NamespaceDeepSize(namespaceSizes)
 				, NamespaceCacheViewMixins::NamespaceLookup(namespaceSets.Primary, namespaceSets.FlatMap)
 		{}
+
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
 	};
 
 	/// View on top of the namespace cache.

@@ -46,6 +46,12 @@ namespace catapult { namespace cache {
 				, MetadataCacheViewMixins::ConstAccessor(metadataSets.Primary)
 				, MetadataCacheViewMixins::PatriciaTreeView(metadataSets.PatriciaTree.get())
 		{}
+
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
 	};
 
 	/// View on top of the metadata cache.

@@ -60,6 +60,12 @@ namespace catapult { namespace cache {
 		using ReputationCacheDeltaMixins::ConstAccessor::find;
 		using ReputationCacheDeltaMixins::MutableAccessor::find;
 
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
+
 	private:
 		ReputationCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pReputationEntries;
 	};

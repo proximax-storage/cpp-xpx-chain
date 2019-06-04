@@ -50,6 +50,12 @@ namespace catapult { namespace cache {
 				, MultisigCacheViewMixins::ConstAccessor(multisigSets.Primary)
 				, MultisigCacheViewMixins::PatriciaTreeView(multisigSets.PatriciaTree.get())
 		{}
+
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
 	};
 
 	/// View on top of the multisig cache.

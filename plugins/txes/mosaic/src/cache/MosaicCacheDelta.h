@@ -63,6 +63,9 @@ namespace catapult { namespace cache {
 		/// Inserts the mosaic \a entry into the cache.
 		void insert(const state::MosaicEntry& entry);
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const;
+
 	private:
 		MosaicCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pEntryById;
 		MosaicCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pMosaicIdsByExpiryHeight;

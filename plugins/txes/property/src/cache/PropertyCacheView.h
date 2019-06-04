@@ -58,6 +58,11 @@ namespace catapult { namespace cache {
 			return m_blockChainConfig.Network.Identifier;
 		}
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
+
 	private:
 		const model::BlockChainConfiguration& m_blockChainConfig;
 	};

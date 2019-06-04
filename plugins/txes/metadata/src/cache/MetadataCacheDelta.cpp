@@ -58,4 +58,8 @@ namespace catapult { namespace cache {
 
 		return collectedIds;
 	}
+
+	bool BasicMetadataCacheDelta::enabled() const {
+		return true;
+	}
 }}

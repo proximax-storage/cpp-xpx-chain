@@ -90,6 +90,11 @@ namespace catapult { namespace cache {
 			});
 		}
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
+
 	private:
 		typename TCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pDelta;
 		typename TCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pHeightGroupingDelta;

@@ -59,6 +59,9 @@ namespace catapult { namespace cache {
 		/// Prunes the metadata cache at \a height.
 		CollectedIds prune(Height height);
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const;
+
 	private:
 		MetadataCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pMetadataById;
 		MetadataCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pMetadataIdsByExpiryHeight;

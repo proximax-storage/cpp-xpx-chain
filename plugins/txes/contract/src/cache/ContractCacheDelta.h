@@ -60,6 +60,12 @@ namespace catapult { namespace cache {
 		using ContractCacheDeltaMixins::ConstAccessor::find;
 		using ContractCacheDeltaMixins::MutableAccessor::find;
 
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
+
 	private:
 		ContractCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pContractEntries;
 	};

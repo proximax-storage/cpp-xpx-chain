@@ -54,6 +54,11 @@ namespace catapult { namespace cache {
 			return CalculateTransactionCacheDuration(m_config);
 		}
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
+
 	private:
 		const model::BlockChainConfiguration& m_config;
 	};

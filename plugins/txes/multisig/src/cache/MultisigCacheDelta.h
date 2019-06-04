@@ -60,6 +60,12 @@ namespace catapult { namespace cache {
 		using MultisigCacheDeltaMixins::ConstAccessor::find;
 		using MultisigCacheDeltaMixins::MutableAccessor::find;
 
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
+
 	private:
 		MultisigCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pMultisigEntries;
 	};

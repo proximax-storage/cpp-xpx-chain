@@ -94,4 +94,8 @@ namespace catapult { namespace cache {
 	Height BasicBlockDifficultyCacheDelta::nextHeight() const {
 		return Height(m_startHeight.unwrap() + size());
 	}
+
+	bool BasicBlockDifficultyCacheDelta::enabled() const {
+		return true;
+	}
 }}

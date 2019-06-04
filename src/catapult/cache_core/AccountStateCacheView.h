@@ -102,6 +102,9 @@ namespace catapult { namespace cache {
 		/// Gets all addresses that we need to clean up.
 		const model::AddressSet& addressesToUpdate() const;
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const;
+
 	private:
 		const AccountStateCacheTypes::Options& m_options;
 		const model::AddressSet& m_highValueAddresses;

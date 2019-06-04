@@ -36,6 +36,12 @@ namespace catapult { namespace cache {
 				, CatapultConfigCacheViewMixins::ConstAccessor(catapultConfigSets.Primary)
 				, CatapultConfigCacheViewMixins::PatriciaTreeView(catapultConfigSets.PatriciaTree.get())
 		{}
+
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
 	};
 
 	/// View on top of the catapult config cache.

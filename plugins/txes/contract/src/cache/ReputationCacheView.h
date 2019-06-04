@@ -50,6 +50,12 @@ namespace catapult { namespace cache {
 				, ReputationCacheViewMixins::ConstAccessor(reputationSets.Primary)
 				, ReputationCacheViewMixins::PatriciaTreeView(reputationSets.PatriciaTree.get())
 		{}
+
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
 	};
 
 	/// View on top of the reputation cache.

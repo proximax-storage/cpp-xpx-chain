@@ -139,6 +139,9 @@ namespace catapult { namespace cache {
 		/// Adds new and modified elements to set
 		void addUpdatedAddresses(model::AddressSet& set) const;
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const;
+
 	private:
 		Address getAddress(const Key& publicKey);
 

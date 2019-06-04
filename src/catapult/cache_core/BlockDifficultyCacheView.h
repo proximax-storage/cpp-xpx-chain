@@ -50,6 +50,9 @@ namespace catapult { namespace cache {
 		/// Gets a range object that spans \a count block difficulty infos starting at the specified \a height.
 		DifficultyInfoRange difficultyInfos(Height height, size_t count) const;
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const;
+
 	private:
 		const BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType& m_difficultyInfos;
 	};

@@ -71,6 +71,11 @@ namespace catapult { namespace cache {
 			return m_blockChainConfig.Network.Identifier;
 		}
 
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
+
 	private:
 		PropertyCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pPropertyEntries;
 		const model::BlockChainConfiguration& m_blockChainConfig;

@@ -205,4 +205,8 @@ namespace catapult { namespace cache {
 
 		return collectedIds;
 	}
+
+	bool BasicNamespaceCacheDelta::enabled() const {
+		return true;
+	}
 }}
