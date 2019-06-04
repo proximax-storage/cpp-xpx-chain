@@ -30,10 +30,18 @@ namespace catapult { namespace cache {
 	// region mixin traits based tests
 
 	namespace {
+		auto CreateConfig(uint32_t retentionTimeHours) {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			config.MaxRollbackBlocks = retentionTimeHours * 4 / 5;
+			return config;
+		}
+		auto Default_Config = CreateConfig(5);
+
 		struct HashCacheMixinTraits {
 			class CacheType : public HashCache {
 			public:
-				CacheType() : HashCache(CacheConfiguration(), utils::TimeSpan::FromMinutes(10))
+				CacheType() : HashCache(CacheConfiguration(), Default_Config)
 				{}
 			};
 
@@ -75,12 +83,13 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanCreateHashCacheWithCustomRetentionTime) {
 		// Act:
-		HashCache cache(CacheConfiguration(), utils::TimeSpan::FromHours(123));
+		auto config = CreateConfig(125);
+		HashCache cache(CacheConfiguration(), config);
 
 		// Assert:
-		EXPECT_EQ(utils::TimeSpan::FromHours(123), cache.createView()->retentionTime());
-		EXPECT_EQ(utils::TimeSpan::FromHours(123), cache.createDelta()->retentionTime());
-		EXPECT_EQ(utils::TimeSpan::FromHours(123), cache.createDetachedDelta().tryLock()->retentionTime());
+		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createView()->retentionTime());
+		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createDelta()->retentionTime());
+		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createDetachedDelta().tryLock()->retentionTime());
 	}
 
 	// endregion
@@ -89,7 +98,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, PruningBoundaryIsInitiallyUnset) {
 		// Arrange:
-		HashCache cache(CacheConfiguration(), utils::TimeSpan::FromHours(123));
+		auto config = CreateConfig(125);
+		HashCache cache(CacheConfiguration(), config);
 		auto delta = cache.createDelta();
 
 		// Assert:
@@ -98,15 +108,16 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, PruneUpdatesPruningBoundary) {
 		// Arrange:
-		HashCache cache(CacheConfiguration(), utils::TimeSpan::FromHours(32));
+		auto config = CreateConfig(30);
+		HashCache cache(CacheConfiguration(), config);
 		auto delta = cache.createDelta();
 
 		// Act (40 hours):
 		delta->prune(Timestamp(40 * 60 * 60 * 1000));
 		auto pruningBoundary = delta->pruningBoundary();
 
-		// Assert (40 - 32 hours):
-		EXPECT_EQ(Timestamp(8 * 60 * 60 * 1000), pruningBoundary.value().Time);
+		// Assert (40 - 30 hours):
+		EXPECT_EQ(Timestamp(10 * 60 * 60 * 1000), pruningBoundary.value().Time);
 		EXPECT_EQ(state::TimestampedHash::HashType(), pruningBoundary.value().Hash);
 	}
 

@@ -19,6 +19,7 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "src/config/MultisigConfiguration.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -27,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigMaxCosignedAccountsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosignedAccounts, 0)
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosignedAccounts, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		void AssertValidationResult(
@@ -53,7 +54,11 @@ namespace catapult { namespace validators {
 			}
 
 			model::ModifyMultisigNewCosignerNotification<1> notification(multisigAccountKey, cosignatoryKey);
-			auto pValidator = CreateModifyMultisigMaxCosignedAccountsValidator(maxCosignedAccountsPerAccount);
+			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
+			pluginConfig.MaxCosignedAccountsPerAccount = maxCosignedAccountsPerAccount;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.multisig", pluginConfig);
+			auto pValidator = CreateModifyMultisigMaxCosignedAccountsValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

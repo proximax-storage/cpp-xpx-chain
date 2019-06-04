@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/model/BlockChainConfiguration.h"
+#include "src/config/AggregateConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -26,11 +28,20 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS BasicAggregateCosignaturesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(BasicAggregateCosignatures, 0, 0)
+	DEFINE_COMMON_VALIDATOR_TESTS(BasicAggregateCosignatures, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		auto GenerateRandomCosignatures(uint8_t numCosignatures) {
 			return test::GenerateRandomDataVector<model::Cosignature>(numCosignatures);
+		}
+
+		auto CreateConfig(uint32_t maxTransactions, uint8_t maxCosignatures) {
+			auto pluginConfig = config::AggregateConfiguration::Uninitialized();
+			pluginConfig.MaxTransactionsPerAggregate = maxTransactions;
+			pluginConfig.MaxCosignaturesPerAggregate = maxCosignatures;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.aggregate", pluginConfig);
+			return blockChainConfig;
 		}
 	}
 
@@ -41,7 +52,8 @@ namespace catapult { namespace validators {
 			// Arrange: notice that transaction data is not actually checked
 			auto signer = test::GenerateRandomData<Key_Size>();
 			model::AggregateCosignaturesNotification<1> notification(signer, numTransactions, nullptr, 0, nullptr);
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(maxTransactions, std::numeric_limits<uint8_t>::max());
+			auto config = CreateConfig(maxTransactions, std::numeric_limits<uint8_t>::max());
+			auto pValidator = CreateBasicAggregateCosignaturesValidator(config);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -83,7 +95,8 @@ namespace catapult { namespace validators {
 			auto signer = test::GenerateRandomData<Key_Size>();
 			auto cosignatures = GenerateRandomCosignatures(numCosignatures);
 			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, numCosignatures, cosignatures.data());
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(std::numeric_limits<uint32_t>::max(), maxCosignatures);
+			auto config = CreateConfig(std::numeric_limits<uint32_t>::max(), maxCosignatures);
+			auto pValidator = CreateBasicAggregateCosignaturesValidator(config);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -128,9 +141,10 @@ namespace catapult { namespace validators {
 				const std::vector<model::Cosignature>& cosignatures) {
 			// Arrange:
 			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, cosignatures.size(), cosignatures.data());
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(
-					std::numeric_limits<uint32_t>::max(),
-					std::numeric_limits<uint8_t>::max());
+			auto config = CreateConfig(
+				std::numeric_limits<uint32_t>::max(),
+				std::numeric_limits<uint8_t>::max());
+			auto pValidator = CreateBasicAggregateCosignaturesValidator(config);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

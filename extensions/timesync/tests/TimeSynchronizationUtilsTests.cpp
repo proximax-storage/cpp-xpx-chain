@@ -119,26 +119,26 @@ namespace catapult { namespace timesync {
 			return filters::AggregateSynchronizationFilter({});
 		}
 
-		cache::CatapultCache CreateCache(Importance totalChainImportance) {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.ImportanceGrouping = 123;
-			blockChainConfig.TotalChainImportance = totalChainImportance;
-			return test::CoreSystemCacheFactory::Create(blockChainConfig);
+		cache::CatapultCache CreateCache(Importance totalChainImportance, const model::BlockChainConfiguration& config) {
+			const_cast<model::BlockChainConfiguration&>(config).ImportanceGrouping = 123;
+			const_cast<model::BlockChainConfiguration&>(config).TotalChainImportance = totalChainImportance;
+			return test::CoreSystemCacheFactory::Create(config);
 		}
 
-		cache::CatapultCache CreateCache() {
-			return CreateCache(Importance());
+		cache::CatapultCache CreateCache(const model::BlockChainConfiguration& config) {
+			return CreateCache(Importance(), config);
 		}
 
 		struct TestContext {
 		public:
 			explicit TestContext(
+					const model::BlockChainConfiguration& config,
 					const std::vector<TimeSynchronizationSample>& samples,
 					size_t numValidNodes = std::numeric_limits<size_t>::max())
 					: Synchronizer(CreateEmptyAggregateFilter(), Total_Chain_Importance, Warning_Threshold_Millis)
 					, TimeSyncConfig{ 5 }
 					, RequestResultFutureSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Remote), numValidNodes)
-					, ServiceTestState(CreateCache())
+					, ServiceTestState(CreateCache(config))
 					, pTimeSyncState(std::make_shared<TimeSynchronizationState>(Default_Threshold))
 					, NetworkTimeSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Local)) {
 				auto& mutableBlockChainConfig = const_cast<model::BlockChainConfiguration&>(ServiceTestState.config().BlockChain);
@@ -169,7 +169,8 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, CanCreateTask) {
 		// Arrange:
-		TestContext context({});
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		TestContext context(config, {});
 
 		// Act:
 		auto task = CreateTimeSyncTask(context);
@@ -180,7 +181,8 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TaskExecutionIncreasesNodeAge) {
 		// Arrange:
-		TestContext context({});
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		TestContext context(config, {});
 		auto task = CreateTimeSyncTask(context);
 
 		// Sanity:
@@ -250,7 +252,8 @@ namespace catapult { namespace timesync {
 			auto keys = test::ExtractKeys(samples);
 
 			// - prepare context
-			TestContext context(samples);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(config, samples);
 			SeedNodeContainer(context.ServiceTestState.state().nodes(), keys);
 
 			// - prepare account state cache
@@ -334,7 +337,8 @@ namespace catapult { namespace timesync {
 
 			// - TestContext initializes SamplesResultsFutureSupplier and NetworkTimeSupplier to return samples
 			//   with timestamps taken from orderedSamples
-			TestContext context(orderedSamples, numValidNodes);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(config, orderedSamples, numValidNodes);
 
 			// Act:
 			thread::future<TimeSynchronizationSamples> samplesFuture;

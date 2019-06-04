@@ -67,9 +67,6 @@ namespace catapult { namespace test {
 		return MakeSubCachePluginWithCacheConfiguration<TCache, TStorageTraits>(cache::CacheConfiguration(), std::forward<TArgs>(args)...);
 	}
 
-	/// Creates an empty catapult cache.
-	cache::CatapultCache CreateEmptyCatapultCache();
-
 	/// Creates an empty catapult cache around \a config.
 	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config);
 
@@ -85,10 +82,10 @@ namespace catapult { namespace test {
 	}
 
 	/// Creates a catapult cache with a marker account.
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount();
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::BlockChainConfiguration& config);
 
 	/// Creates a catapult cache with a marker account and a specified \a height.
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height);
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::BlockChainConfiguration& config);
 
 	/// Adds a marker account to \a cache.
 	void AddMarkerAccount(cache::CatapultCache& cache);

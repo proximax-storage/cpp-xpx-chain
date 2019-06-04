@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/NamespaceConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -26,14 +27,19 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RootNamespaceValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespace, BlockDuration())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespace, model::BlockChainConfiguration::Uninitialized())
 
 	// region duration
 
 	namespace {
 		void AssertDurationValidationResult(ValidationResult expectedResult, uint16_t duration, uint16_t maxDuration) {
 			// Arrange:
-			auto pValidator = CreateRootNamespaceValidator(BlockDuration(maxDuration));
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(maxDuration);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			auto pValidator = CreateRootNamespaceValidator(blockChainConfig);
 			auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(), BlockDuration(duration));
 
 			// Act:

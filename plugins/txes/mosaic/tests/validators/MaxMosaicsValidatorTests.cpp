@@ -19,6 +19,7 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "src/config/MosaicConfiguration.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/MosaicCacheTestUtils.h"
@@ -28,8 +29,8 @@
 
 namespace catapult { namespace validators {
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, 123)
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, 123)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, model::BlockChainConfiguration::Uninitialized())
 
 #define BALANCE_TRANSFER_TEST_CLASS BalanceTransferMaxMosaicsValidatorTests
 #define SUPPLY_CHANGE_TEST_CLASS SupplyChangeMaxMosaicsValidatorTests
@@ -52,6 +53,14 @@ namespace catapult { namespace validators {
 			return cache;
 		}
 
+		auto CreateConfig(uint16_t maxMosaics) {
+			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
+			pluginConfig.MaxMosaicsPerAccount = maxMosaics;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
+			return blockChainConfig;
+		}
+
 		void RunBalanceTransferTest(ValidationResult expectedResult, uint16_t maxMosaics, UnresolvedMosaicId mosaicId, Amount amount) {
 			// Arrange:
 			auto owner = test::GenerateRandomData<Key_Size>();
@@ -59,7 +68,8 @@ namespace catapult { namespace validators {
 			auto unresolvedRecipient = test::UnresolveXor(recipient);
 			auto cache = CreateAndSeedCache(recipient);
 
-			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(maxMosaics);
+			auto config = CreateConfig(maxMosaics);
+			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(config);
 			auto notification = model::BalanceTransferNotification<1>(owner, unresolvedRecipient, mosaicId, amount);
 
 			// Act:
@@ -104,7 +114,8 @@ namespace catapult { namespace validators {
 			auto owner = test::GenerateRandomData<Key_Size>();
 			auto cache = CreateAndSeedCache(owner);
 
-			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(maxMosaics);
+			auto config = CreateConfig(maxMosaics);
+			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(config);
 			auto notification = model::MosaicSupplyChangeNotification<1>(owner, mosaicId, direction, Amount(100));
 
 			// Act:

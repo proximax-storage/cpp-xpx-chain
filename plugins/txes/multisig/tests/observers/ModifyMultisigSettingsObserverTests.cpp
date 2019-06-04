@@ -88,10 +88,11 @@ namespace catapult { namespace observers {
 				// Arrange:
 				auto signer = test::GenerateRandomData<Key_Size>();
 				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
+				auto config = model::BlockChainConfiguration::Uninitialized();
 
 				// Act + Assert:
 				RunTest(
-						ObserverTestContext(Mode, Height(777)),
+						ObserverTestContext(Mode, Height(777), config),
 						signer,
 						{ removal.Current, approval.Current },
 						notification,
@@ -107,10 +108,11 @@ namespace catapult { namespace observers {
 				// Arrange:
 				auto signer = test::GenerateRandomData<Key_Size>();
 				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
+				auto config = model::BlockChainConfiguration::Uninitialized();
 
 				// Act + Assert:
 				RunTest(
-						ObserverTestContext(Mode, Height(777)),
+						ObserverTestContext(Mode, Height(777), config),
 						signer,
 						{ removal.Expected, approval.Expected },
 						notification,
@@ -131,7 +133,8 @@ namespace catapult { namespace observers {
 		auto notification = CreateNotification(signer, 0, 0);
 
 		auto pObserver = CreateModifyMultisigSettingsObserver();
-		ObserverTestContext context(TTraits::Mode, Height(777));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(TTraits::Mode, Height(777), config);
 
 		// Act: observer does not throw
 		test::ObserveNotification(*pObserver, notification, context);

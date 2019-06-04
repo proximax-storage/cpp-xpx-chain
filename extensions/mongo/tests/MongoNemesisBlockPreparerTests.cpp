@@ -88,6 +88,7 @@ namespace catapult { namespace mongo {
 		model::BlockChainConfiguration CreateBlockChainConfiguration() {
 			return test::CreateLocalNodeConfigurationWithNemesisPluginExtensions("").BlockChain;
 		}
+		auto Default_Config = CreateBlockChainConfiguration();
 
 		class TestContext {
 		public:
@@ -95,7 +96,7 @@ namespace catapult { namespace mongo {
 			{}
 
 			explicit TestContext(Height externalStorageHeight)
-					: m_pPluginManager(test::CreatePluginManager(CreateBlockChainConfiguration()))
+					: m_pPluginManager(test::CreatePluginManager(Default_Config))
 					, m_cache(m_pPluginManager->createCache())
 					, m_mongoStorage(externalStorageHeight)
 			{}

@@ -50,7 +50,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverInsertsDifficultyInfoIntoCacheInModeCommit) {
 		// Arrange:
-		test::ObserverTestContext context(NotifyMode::Commit, Height(Current_Height + 1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::ObserverTestContext context(NotifyMode::Commit, Height(Current_Height + 1), config);
 		auto pObserver = CreateBlockDifficultyObserver();
 		auto info = state::BlockDifficultyInfo(Height(Current_Height + 1), Timestamp(123), Difficulty(Base_Difficulty + 345));
 		auto notification = CreateBlockNotification(info);
@@ -71,7 +72,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverRemovesDifficultyInfoFromCacheInModeRollback) {
 		// Arrange:
-		test::ObserverTestContext context(NotifyMode::Rollback, Height(Current_Height + 1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::ObserverTestContext context(NotifyMode::Rollback, Height(Current_Height + 1), config);
 		auto pObserver = CreateBlockDifficultyObserver();
 		auto info = state::BlockDifficultyInfo(Height(Current_Height + 1), Timestamp(123), Difficulty(Base_Difficulty + 345));
 		auto notification = CreateBlockNotification(info);

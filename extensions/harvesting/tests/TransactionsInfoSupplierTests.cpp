@@ -40,6 +40,7 @@ namespace catapult { namespace harvesting {
 			config.ImportanceGrouping = 1;
 			return config;
 		}
+		auto Default_Config = CreateBlockChainConfiguration();
 
 		void AssertConsistent(const TransactionsInfo& transactionsInfo, const HarvestingUtFacade& facade) {
 			// Assert: transactionsInfo and facade should contain exact same transactions (and hashes)
@@ -55,8 +56,8 @@ namespace catapult { namespace harvesting {
 		class TestContext {
 		public:
 			explicit TestContext(TransactionSelectionStrategy strategy, uint32_t utCacheSize = 0)
-					: m_catapultCache(test::CreateCatapultCacheWithMarkerAccount(Height(7)))
-					, m_utFacadeFactory(m_catapultCache, CreateBlockChainConfiguration(), m_executionConfig.Config)
+					: m_catapultCache(test::CreateCatapultCacheWithMarkerAccount(Height(7), Default_Config))
+					, m_utFacadeFactory(m_catapultCache, Default_Config, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(utCacheSize))
 					, m_supplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache))
 			{}

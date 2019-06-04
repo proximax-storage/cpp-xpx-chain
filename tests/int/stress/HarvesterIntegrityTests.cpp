@@ -49,10 +49,10 @@ namespace catapult { namespace harvesting {
 
 		// region test factories
 
-		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
+		std::shared_ptr<plugins::PluginManager> CreatePluginManager(const model::BlockChainConfiguration& config) {
 			// include memory hash cache system to better trigger the race condition under test
-			auto config = test::CreateLocalNodeBlockChainConfiguration();
-			config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			const_cast<model::BlockChainConfiguration&>(config).Plugins.emplace("catapult.plugins.transfer",
+				utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 			auto pPluginManager = test::CreatePluginManager(config);
 			plugins::RegisterMemoryHashCacheSystem(*pPluginManager);
 			return pPluginManager;
@@ -64,15 +64,13 @@ namespace catapult { namespace harvesting {
 			return config;
 		}
 
-		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory) {
+		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const model::BlockChainConfiguration& config) {
 			auto cacheId = cache::HashCache::Id;
-			auto config = CreateConfiguration();
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			test::CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
-			auto transactionCacheDuration = CalculateTransactionCacheDuration(config);
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(transactionCacheDuration);
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(config);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 
@@ -83,10 +81,10 @@ namespace catapult { namespace harvesting {
 		class HarvesterTestContext {
 		public:
 			HarvesterTestContext()
-					: m_pPluginManager(CreatePluginManager())
-					, m_config(test::CreateLocalNodeConfiguration(CreateConfiguration(), ""))
+					: m_config(test::CreateLocalNodeConfiguration(CreateConfiguration(), ""))
+					, m_pPluginManager(CreatePluginManager(m_config.BlockChain))
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
-					, m_cache(CreateCatapultCache(m_dbDirGuard.name()))
+					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_config.BlockChain))
 					, m_unlockedAccounts(100) {
 				// create the harvester
 				auto executionConfig = extensions::CreateExecutionConfiguration(*m_pPluginManager);
@@ -179,8 +177,8 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			config::LocalNodeConfiguration m_config;
+			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			cache::MemoryUtCache m_transactionsCache;
 			cache::CatapultCache m_cache;
 			UnlockedAccounts m_unlockedAccounts;

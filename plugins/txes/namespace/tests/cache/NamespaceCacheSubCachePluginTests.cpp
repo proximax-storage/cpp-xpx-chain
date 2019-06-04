@@ -19,6 +19,7 @@
 **/
 
 #include "src/cache/NamespaceCacheSubCachePlugin.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
@@ -28,12 +29,28 @@ namespace catapult { namespace cache {
 
 #define TEST_CLASS NamespaceCacheSubCachePluginTests
 
+	namespace {
+		auto CreateBlockChainConfiguration() {
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(0);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			return blockChainConfig;
+		}
+		auto Default_Config = CreateBlockChainConfiguration();
+
+		auto DefaultCacheOptions() {
+			return NamespaceCacheTypes::Options{ Default_Config };
+		}
+	}
+
 	// region NamespaceCacheSummaryCacheStorage
 
 	TEST(TEST_CLASS, CanSaveActiveAndDeepSize) {
 		// Arrange:
 		auto config = CacheConfiguration();
-		NamespaceCache cache(config, NamespaceCacheTypes::Options());
+		NamespaceCache cache(config, DefaultCacheOptions());
 		NamespaceCacheSummaryCacheStorage storage(cache);
 		{
 			// - insert root with 2 children, then renew root
@@ -69,7 +86,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanLoadActiveAndDeepSize) {
 		// Arrange:
 		auto config = CacheConfiguration();
-		NamespaceCache cache(config, NamespaceCacheTypes::Options());
+		NamespaceCache cache(config, DefaultCacheOptions());
 		NamespaceCacheSummaryCacheStorage storage(cache);
 
 		std::vector<uint8_t> buffer;
@@ -97,7 +114,7 @@ namespace catapult { namespace cache {
 			class PluginType : public NamespaceCacheSubCachePlugin {
 			public:
 				explicit PluginType(const CacheConfiguration& config)
-						: NamespaceCacheSubCachePlugin(config, NamespaceCacheTypes::Options())
+						: NamespaceCacheSubCachePlugin(config, DefaultCacheOptions())
 				{}
 			};
 		};

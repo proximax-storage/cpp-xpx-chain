@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <plugins/txes/multisig/src/config/MultisigConfiguration.h>
+#include "src/config/MultisigConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/MultisigTestUtils.h"
@@ -28,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigLoopAndLevelValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigLoopAndLevel, 0)
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigLoopAndLevel, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		constexpr auto Num_Network_Accounts = 14 + 4 + 2; // last two keys are unassigned (and not in multisig cache)
@@ -73,7 +75,11 @@ namespace catapult { namespace validators {
 			auto cache = CreateCacheMultisigNetwork(keys);
 
 			model::ModifyMultisigNewCosignerNotification<1> notification(keys[multisigAccountIndex], keys[cosignatoryKeyIndex]);
-			auto pValidator = CreateModifyMultisigLoopAndLevelValidator(static_cast<uint8_t>(maxMultisigDepth));
+			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
+			pluginConfig.MaxMultisigDepth = maxMultisigDepth;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.multisig", pluginConfig);
+			auto pValidator = CreateModifyMultisigLoopAndLevelValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

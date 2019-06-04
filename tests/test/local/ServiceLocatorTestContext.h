@@ -38,6 +38,14 @@
 
 namespace catapult { namespace test {
 
+	namespace {
+		auto CreateConfigHolder(const config::LocalNodeConfiguration& config) {
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config.BlockChain);
+			return pConfigHolder;
+		}
+	}
+
 	/// Wrapper around ServiceState.
 	class ServiceTestState {
 	public:
@@ -60,7 +68,7 @@ namespace catapult { namespace test {
 				, m_catapultCache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>())
 				, m_pUtCache(CreateUtCacheProxy())
-				, m_pluginManager(m_config.BlockChain, plugins::StorageConfiguration())
+				, m_pluginManager(CreateConfigHolder(m_config), plugins::StorageConfiguration())
 				, m_pool("service locator test context", 2)
 				, m_state(
 						m_config,

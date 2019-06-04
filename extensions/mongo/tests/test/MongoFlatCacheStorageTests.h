@@ -40,7 +40,8 @@ namespace catapult { namespace test {
 		static void AssertSaveHasNoEffectWhenThereAreNoPendingChanges() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 			cache.commit(Height());
 
@@ -54,7 +55,8 @@ namespace catapult { namespace test {
 		static void AssertAddedElementIsSavedToStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with a single element
@@ -83,7 +85,8 @@ namespace catapult { namespace test {
 		static void AssertModifiedElementIsSavedToStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with a single element
@@ -111,7 +114,8 @@ namespace catapult { namespace test {
 		static void AssertDeletedElementIsRemovedFromStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with two elements
@@ -141,7 +145,8 @@ namespace catapult { namespace test {
 		static void AssertCanSaveMultipleElements() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// Act:
@@ -162,7 +167,8 @@ namespace catapult { namespace test {
 		static void AssertCanAddAndModifyAndDeleteMultipleElements() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - seed 100 elements
@@ -213,7 +219,8 @@ namespace catapult { namespace test {
 		static void AssertCanLoadFromEmptyDatabase() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 
 			// Act:
 			storage.get().loadAll(cache, Height(1));
@@ -226,10 +233,11 @@ namespace catapult { namespace test {
 		static void AssertCanLoadFromNonEmptyDatabase() {
 			// Arrange:
 			CacheStorageWrapper storage;
+			auto config = model::BlockChainConfiguration::Uninitialized();
 
 			// - seed the database with 100 elements
 			{
-				auto cache1 = TTraits::CreateCache();
+				auto cache1 = TTraits::CreateCache(config);
 				auto delta1 = cache1.createDelta();
 				for (auto i = 0u; i < 100; ++i)
 					TTraits::Add(delta1, TTraits::GenerateRandomElement(i));
@@ -241,7 +249,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(100u, GetCollectionSize());
 
 			// Act: load into a second cache
-			auto cache2 = TTraits::CreateCache();
+			auto cache2 = TTraits::CreateCache(config);
 			storage.get().loadAll(cache2, Height(1));
 			auto elements = GetCacheContents(cache2);
 

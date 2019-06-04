@@ -47,6 +47,7 @@ namespace catapult { namespace consumers {
 		constexpr model::ImportanceHeight Initial_Last_Recalculation_Height(1234);
 		constexpr model::ImportanceHeight Modified_Last_Recalculation_Height(7777);
 		const Key Sentinel_Processor_Public_Key = test::GenerateRandomData<Key_Size>();
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
 
 		constexpr model::ImportanceHeight AddImportanceHeight(model::ImportanceHeight lhs, model::ImportanceHeight::ValueType rhs) {
 			return model::ImportanceHeight(lhs.unwrap() + rhs);
@@ -263,7 +264,7 @@ namespace catapult { namespace consumers {
 		struct ConsumerTestContext {
 		public:
 			ConsumerTestContext()
-					: Cache(test::CreateCatapultCacheWithMarkerAccount())
+					: Cache(test::CreateCatapultCacheWithMarkerAccount(Default_Config))
 					, Storage(std::make_unique<mocks::MockMemoryBlockStorage>()) {
 				State.LastRecalculationHeight = Initial_Last_Recalculation_Height;
 

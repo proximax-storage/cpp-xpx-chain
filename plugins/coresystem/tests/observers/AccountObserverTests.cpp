@@ -78,7 +78,8 @@ namespace catapult { namespace observers {
 
 	ACCOUNT_KEY_TEST(AccountObserverAddsAccountOnCommit, 1) {
 		// Arrange:
-		test::AccountObserverTestContext context(NotifyMode::Commit);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 		auto pObserver = TTraits::CreateObserver();
 
 		auto key = TTraits::CreateKey();
@@ -94,7 +95,8 @@ namespace catapult { namespace observers {
 
 	ACCOUNT_KEY_TEST(SubsequentNotificationsDoNotInvalidatePointers, 1) {
 		// Arrange:
-		test::AccountObserverTestContext context(NotifyMode::Commit);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 		auto pObserver = TTraits::CreateObserver();
 
 		auto key = TTraits::CreateKey();
@@ -126,7 +128,8 @@ namespace catapult { namespace observers {
 			auto key = TTraits::CreateKey();
 
 			state::CatapultState state;
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheDelta = cache.createDelta();
 
 			// - commit

@@ -76,7 +76,8 @@ namespace catapult { namespace observers {
 
 	ACCOUNT_LINK_OBSERVER_TEST(ObserverCreatesLink) {
 		// Arrange:
-		auto context = ObserverTestContext(TTraits::Notify_Mode, Height(888));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto context = ObserverTestContext(TTraits::Notify_Mode, Height(888), config);
 		RunTwoAccountTest(context.cache().sub<cache::AccountStateCache>(), [&context](
 				const auto& mainAccountState,
 				const auto& remoteAccountState) {
@@ -100,8 +101,9 @@ namespace catapult { namespace observers {
 
 	ACCOUNT_LINK_OBSERVER_TEST(ObserverRemovesLink) {
 		// Arrange:
-		auto context = ObserverTestContext(TTraits::Notify_Mode, Height(888));
-		RunTwoAccountTest(context.cache().sub<cache::AccountStateCache>(), [&context](auto& mainAccountState, auto& remoteAccountState) {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto context = ObserverTestContext(TTraits::Notify_Mode, Height(888), config);
+			RunTwoAccountTest(context.cache().sub<cache::AccountStateCache>(), [&context](auto& mainAccountState, auto& remoteAccountState) {
 			auto mainAccountKey = mainAccountState.PublicKey;
 			auto remoteAccountKey = remoteAccountState.PublicKey;
 

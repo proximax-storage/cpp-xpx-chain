@@ -175,7 +175,9 @@ namespace catapult { namespace test {
 				const model::BlockChainConfiguration& config,
 				const plugins::StorageConfiguration& storageConfig) {
 			std::vector<plugins::PluginModule> modules;
-			auto pPluginManager = std::make_shared<plugins::PluginManager>(config, storageConfig);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig);
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");
 
 			for (const auto& pair : config.Plugins)

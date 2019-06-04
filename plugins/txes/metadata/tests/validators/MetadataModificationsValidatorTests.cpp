@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 
 	constexpr uint8_t MaxFields = 5;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications,MaxFields)
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		const Address Raw_Data = test::GenerateRandomData<Address_Decoded_Size>();
@@ -51,9 +51,14 @@ namespace catapult { namespace validators {
 				const Hash256 & metadataId,
 				const std::vector<Modification> modifications) {
 			// Arrange:
-			auto cache = test::MetadataCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::MetadataCacheFactory::Create(config);
 			PopulateCache(cache, initValues);
-			auto pValidator = CreateMetadataModificationsValidator(MaxFields);
+			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			pluginConfig.MaxFields = MaxFields;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
+			auto pValidator = CreateMetadataModificationsValidator(blockChainConfig);
 
 			uint32_t sizeOfBuffer = 0;
 
@@ -208,7 +213,7 @@ namespace catapult { namespace validators {
 			});
 	}
 
-	TEST(TEST_CLASS, FailureModifications_AddNewFields_WhereTwoModificationsAreEquel) {
+	TEST(TEST_CLASS, FailureModifications_AddNewFields_WhereTwoModificationsAreEqual) {
 		// Act:
 		AssertValidationResult(
 			Failure_Metadata_Modification_Key_Redundant,
@@ -224,7 +229,7 @@ namespace catapult { namespace validators {
 			});
 	}
 
-	TEST(TEST_CLASS, FailureModifications_AddNewFields_ToExistingAccount_WhereModificationEquelToFiledOfAccount) {
+	TEST(TEST_CLASS, FailureModifications_AddNewFields_ToExistingAccount_WhereModificationEqualsToFiledOfAccount) {
 		// Act:
 		AssertValidationResult(
 			Failure_Metadata_Modification_Value_Redundant,
@@ -240,7 +245,7 @@ namespace catapult { namespace validators {
 			});
 	}
 
-	TEST(TEST_CLASS, SuccessModifications_AddNewFields_ToExistingAccount_WhereModificationEquelToFiledOfAccount_ButAnotherValue) {
+	TEST(TEST_CLASS, SuccessModifications_AddNewFields_ToExistingAccount_WhereModificationEqualsToFiledOfAccount_ButAnotherValue) {
 		// Act:
 		AssertValidationResult(
 			ValidationResult::Success,

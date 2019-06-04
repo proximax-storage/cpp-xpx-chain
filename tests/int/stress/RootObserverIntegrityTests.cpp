@@ -66,7 +66,8 @@ namespace catapult { namespace extensions {
 		class TestContext {
 		public:
 			explicit TestContext(uint32_t numAccounts)
-					: m_pPluginManager(test::CreatePluginManager(CreateBlockChainConfiguration(numAccounts)))
+					: m_config(CreateBlockChainConfiguration(numAccounts))
+					, m_pPluginManager(test::CreatePluginManager(m_config))
 					, m_cache(m_pPluginManager->createCache())
 					, m_specialAccountKey(test::GenerateRandomData<Key_Size>()) {
 				// register mock transaction plugin so that BalanceTransferNotifications are produced and observed
@@ -242,6 +243,7 @@ namespace catapult { namespace extensions {
 			}
 
 		private:
+			model::BlockChainConfiguration m_config;
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			cache::CatapultCache m_cache;
 			state::CatapultState m_state;
