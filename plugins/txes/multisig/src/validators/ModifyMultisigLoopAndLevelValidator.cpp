@@ -21,6 +21,7 @@
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheUtils.h"
+#include "src/config/MultisigConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
@@ -60,11 +61,12 @@ namespace catapult { namespace validators {
 		};
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, Notification)(uint8_t maxMultisigDepth) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [maxMultisigDepth](
+	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [&blockChainConfig](
 					const auto& notification,
 					const ValidatorContext& context) {
-			auto checker = LoopAndLevelChecker(context.Cache.sub<cache::MultisigCache>(), maxMultisigDepth);
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>("catapult.plugins.multisig");
+			auto checker = LoopAndLevelChecker(context.Cache.sub<cache::MultisigCache>(), pluginConfig.MaxMultisigDepth);
 			return checker.validate(notification.MultisigAccountKey, notification.CosignatoryKey);
 		});
 	}

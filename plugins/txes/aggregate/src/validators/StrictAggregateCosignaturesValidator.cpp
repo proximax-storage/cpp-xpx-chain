@@ -20,6 +20,7 @@
 
 #include "Validators.h"
 #include "catapult/utils/ArraySet.h"
+#include "src/config/AggregateConfiguration.h"
 #include <unordered_map>
 
 namespace catapult { namespace validators {
@@ -33,33 +34,39 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATELESS_VALIDATOR(StrictAggregateCosignatures, [](const auto& notification) {
-		// collect all cosigners (initially set used flag to false)
-		utils::ArrayPointerFlagMap<Key> cosigners;
-		cosigners.emplace(&notification.Signer, false);
-		const auto* pCosignature = notification.CosignaturesPtr;
-		for (auto i = 0u; i < notification.CosignaturesCount; ++i) {
-			cosigners.emplace(&pCosignature->Signer, false);
-			++pCosignature;
-		}
+	DECLARE_STATELESS_VALIDATOR(StrictAggregateCosignatures, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATELESS_VALIDATOR(StrictAggregateCosignatures, ([&blockChainConfig](const auto& notification) {
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>("catapult.plugins.aggregate");
+			if (!pluginConfig.EnableStrictCosignatureCheck)
+				return ValidationResult::Success;
 
-		// check all transaction signers and mark cosigners as used
-		// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
-		auto hasMissingCosigners = false;
-		const auto* pTransaction = notification.TransactionsPtr;
-		for (auto i = 0u; i < notification.TransactionsCount; ++i) {
-			auto iter = cosigners.find(&pTransaction->Signer);
-			if (cosigners.cend() == iter)
-				hasMissingCosigners = true;
-			else
-				iter->second = true;
+			// collect all cosigners (initially set used flag to false)
+			utils::ArrayPointerFlagMap<Key> cosigners;
+			cosigners.emplace(&notification.Signer, false);
+			const auto* pCosignature = notification.CosignaturesPtr;
+			for (auto i = 0u; i < notification.CosignaturesCount; ++i) {
+				cosigners.emplace(&pCosignature->Signer, false);
+				++pCosignature;
+			}
 
-			pTransaction = AdvanceNext(pTransaction);
-		}
+			// check all transaction signers and mark cosigners as used
+			// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
+			auto hasMissingCosigners = false;
+			const auto* pTransaction = notification.TransactionsPtr;
+			for (auto i = 0u; i < notification.TransactionsCount; ++i) {
+				auto iter = cosigners.find(&pTransaction->Signer);
+				if (cosigners.cend() == iter)
+					hasMissingCosigners = true;
+				else
+					iter->second = true;
 
-		// only return success if all cosigners are used
-		return std::all_of(cosigners.cbegin(), cosigners.cend(), [](const auto& pair) { return pair.second; })
+				pTransaction = AdvanceNext(pTransaction);
+			}
+
+			// only return success if all cosigners are used
+			return std::all_of(cosigners.cbegin(), cosigners.cend(), [](const auto& pair) { return pair.second; })
 				? hasMissingCosigners ? Failure_Aggregate_Missing_Cosigners : ValidationResult::Success
 				: Failure_Aggregate_Ineligible_Cosigners;
-	});
+		}));
+	}
 }}

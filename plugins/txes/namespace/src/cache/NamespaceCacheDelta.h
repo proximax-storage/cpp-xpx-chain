@@ -19,6 +19,8 @@
 **/
 
 #pragma once
+
+#include <src/catapult/model/BlockChainConfiguration.h>
 #include "NamespaceBaseSets.h"
 #include "NamespaceCacheMixins.h"
 #include "NamespaceCacheSerializers.h"
@@ -94,7 +96,7 @@ namespace catapult { namespace cache {
 		NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pHistoryById;
 		NamespaceCacheTypes::NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaPointerType m_pNamespaceById;
 		NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRootNamespaceIdsByExpiryHeight;
-		BlockDuration m_gracePeriodDuration;
+		const model::BlockChainConfiguration& m_blockChainConfig;
 	};
 
 	/// Delta on top of the namespace cache.

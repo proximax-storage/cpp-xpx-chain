@@ -77,20 +77,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// Network identifier.
-			model::NetworkIdentifier NetworkIdentifier;
-
-			/// Importance grouping.
-			uint64_t ImportanceGrouping;
-
-			/// Minimum high value account balance.
-			Amount MinHighValueAccountBalance;
-
-			/// Mosaic id used as primary chain currency.
-			MosaicId CurrencyMosaicId;
-
-			/// Mosaic id used to provide harvesting ability.
-			MosaicId HarvestingMosaicId;
+			/// BlockChain configuration.
+			const model::BlockChainConfiguration& Config;
 		};
 
 	// region secondary descriptors

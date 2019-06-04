@@ -7,9 +7,13 @@
 #pragma once
 #include "src/model/CatapultConfigNotifications.h"
 #include "catapult/observers/ObserverTypes.h"
+#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by catapult config notifications
 	DECLARE_OBSERVER(CatapultConfig, model::BlockChainConfigNotification<1>)();
+
+	/// Observes block notifications and applies new catapult configuration if there is any
+	DECLARE_OBSERVER(CatapultConfigApply, model::BlockNotification<1>)(plugins::PluginManager& manager);
 }}

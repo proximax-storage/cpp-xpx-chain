@@ -24,7 +24,7 @@
 #include <memory>
 
 namespace catapult {
-	namespace config { class LocalNodeConfiguration; }
+	namespace config { class LocalNodeConfigurationHolder; }
 	namespace crypto { class KeyPair; }
 }
 
@@ -32,11 +32,7 @@ namespace catapult { namespace server {
 
 	/// Prototype for creating a local node.
 	/// \note Return value is a shared_ptr because unique_ptr of void is not allowed.
-	using CreateLocalNodeFunc = std::function<std::shared_ptr<void> (config::LocalNodeConfiguration&&, const crypto::KeyPair&)>;
-
-	/// Extracts the resources path from the command line arguments.
-	/// \a argc commmand line arguments are accessible via \a argv.
-	boost::filesystem::path GetResourcesPath(int argc, const char** argv);
+	using CreateLocalNodeFunc = std::function<std::shared_ptr<void> (const std::shared_ptr<config::LocalNodeConfigurationHolder>&, const crypto::KeyPair&)>;
 
 	/// Main entry point for a catapult server process.
 	/// \a argc commmand line arguments are accessible via \a argv.

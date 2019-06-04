@@ -45,17 +45,17 @@ namespace catapult { namespace cache {
 				: HashCacheViewMixins::Size(hashSets.Primary)
 				, HashCacheViewMixins::Contains(hashSets.Primary)
 				, HashCacheViewMixins::Iteration(hashSets.Primary)
-				, m_retentionTime(options.RetentionTime)
+				, m_config(options.Config)
 		{}
 
 	public:
 		/// Gets the retention time for the cache.
 		utils::TimeSpan retentionTime() const {
-			return m_retentionTime;
+			return CalculateTransactionCacheDuration(m_config);
 		}
 
 	private:
-		utils::TimeSpan m_retentionTime;
+		const model::BlockChainConfiguration& m_config;
 	};
 
 	/// View on top of the hash cache.

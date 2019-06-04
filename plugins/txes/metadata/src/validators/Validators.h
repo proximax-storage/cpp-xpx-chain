@@ -9,6 +9,7 @@
 #include <plugins/txes/metadata/src/config/MetadataConfiguration.h>
 #include "Results.h"
 #include "plugins/txes/metadata/src/model/MetadataNotifications.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/utils/UnresolvedAddress.h"
 #include "catapult/validators/ValidatorTypes.h"
 
@@ -18,10 +19,10 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(MetadataType, model::MetadataTypeNotification<1>)();
 
 	/// A validator implementation that applies to metadata field modification and validates that
-	DECLARE_STATELESS_VALIDATOR(MetadataFieldModification, model::ModifyMetadataFieldNotification<1>)(uint8_t maxKeySize, uint16_t maxValueSize);
+	DECLARE_STATELESS_VALIDATOR(MetadataFieldModification, model::ModifyMetadataFieldNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to metadata modifications check that modification is valid
-	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, model::MetadataModificationsNotification<1>)(const uint8_t& maxFields);
+	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, model::MetadataModificationsNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to metadata check that operation is permitted and address exists
 	DECLARE_STATEFUL_VALIDATOR(ModifyAddressMetadata, model::ModifyAddressMetadataNotification_v1)();

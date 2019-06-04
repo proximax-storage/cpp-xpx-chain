@@ -21,7 +21,7 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(MaxBlockChainConfigSize);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 1);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 1);
 		return config;
 	}
 }}

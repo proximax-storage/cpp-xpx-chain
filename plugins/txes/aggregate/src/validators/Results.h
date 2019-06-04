@@ -49,6 +49,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_AGGREGATE_RESULT(Plugin_Config_Malformed, 0x0005);
 
+	/// Validation failed because aggregate bonded transaction is not enabled.
+	DEFINE_AGGREGATE_RESULT(Bonded_Not_Enabled, 0x0006);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

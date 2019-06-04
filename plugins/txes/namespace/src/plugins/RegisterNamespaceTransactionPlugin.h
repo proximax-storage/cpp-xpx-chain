@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model//BlockChainConfiguration.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
 #include <memory>
@@ -50,5 +51,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a register namespace transaction plugin given the rental fee configuration (\a config).
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateRegisterNamespaceTransactionPlugin(const NamespaceRentalFeeConfiguration& config);
+	std::unique_ptr<model::TransactionPlugin> CreateRegisterNamespaceTransactionPlugin(const model::BlockChainConfiguration& config);
 }}

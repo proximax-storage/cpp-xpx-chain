@@ -20,20 +20,23 @@
 
 #include "Validators.h"
 #include "catapult/utils/ArraySet.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "src/config/AggregateConfiguration.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::AggregateCosignaturesNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(BasicAggregateCosignatures, Notification)(uint32_t maxTransactions, uint8_t maxCosignatures) {
-		return MAKE_STATELESS_VALIDATOR(BasicAggregateCosignatures, ([maxTransactions, maxCosignatures](const auto& notification) {
+	DECLARE_STATELESS_VALIDATOR(BasicAggregateCosignatures, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATELESS_VALIDATOR(BasicAggregateCosignatures, ([&blockChainConfig](const auto& notification) {
 			if (0 == notification.TransactionsCount)
 				return Failure_Aggregate_No_Transactions;
 
-			if (maxTransactions < notification.TransactionsCount)
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>("catapult.plugins.aggregate");
+			if (pluginConfig.MaxTransactionsPerAggregate < notification.TransactionsCount)
 				return Failure_Aggregate_Too_Many_Transactions;
 
-			if (maxCosignatures < notification.CosignaturesCount + 1)
+			if (pluginConfig.MaxCosignaturesPerAggregate < notification.CosignaturesCount + 1)
 				return Failure_Aggregate_Too_Many_Cosignatures;
 
 			utils::KeyPointerSet cosigners;

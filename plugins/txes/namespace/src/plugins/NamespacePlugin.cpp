@@ -25,13 +25,10 @@
 #include "src/cache/NamespaceCache.h"
 #include "src/cache/NamespaceCacheStorage.h"
 #include "src/cache/NamespaceCacheSubCachePlugin.h"
-#include "src/config/NamespaceConfiguration.h"
-#include "src/model/NamespaceLifetimeConstraints.h"
 #include "src/model/NamespaceReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
-#include "catapult/model/Address.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/observers/RentalFeeObserver.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -42,7 +39,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		// region alias
 
-		void RegisterAliasSubsystem(PluginManager& manager, const config::NamespaceConfiguration&) {
+		void RegisterAliasSubsystem(PluginManager& manager) {
 			manager.addTransactionSupport(CreateAddressAliasTransactionPlugin());
 			manager.addTransactionSupport(CreateMosaicAliasTransactionPlugin());
 
@@ -68,23 +65,6 @@ namespace catapult { namespace plugins {
 		// endregion
 
 		// region namespace
-
-		NamespaceRentalFeeConfiguration ToNamespaceRentalFeeConfiguration(
-				const model::NetworkInfo& network,
-				UnresolvedMosaicId currencyMosaicId,
-				const config::NamespaceConfiguration& config) {
-			NamespaceRentalFeeConfiguration rentalFeeConfig;
-			rentalFeeConfig.SinkPublicKey = config.NamespaceRentalFeeSinkPublicKey;
-			rentalFeeConfig.CurrencyMosaicId = currencyMosaicId;
-			rentalFeeConfig.RootFeePerBlock = config.RootNamespaceRentalFeePerBlock;
-			rentalFeeConfig.ChildFee = config.ChildNamespaceRentalFee;
-			rentalFeeConfig.NemesisPublicKey = network.PublicKey;
-
-			// sink address is already resolved but needs to be passed as unresolved into notification
-			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, network.Identifier);
-			std::memcpy(rentalFeeConfig.SinkAddress.data(), sinkAddress.data(), sinkAddress.size());
-			return rentalFeeConfig;
-		}
 
 		template<typename TAliasValue, typename TAliasValueAccessor>
 		bool RunNamespaceResolver(
@@ -147,19 +127,14 @@ namespace catapult { namespace plugins {
 			return cache.sub<cache::NamespaceCache>().createView();
 		}
 
-		void RegisterNamespaceSubsystem(PluginManager& manager, const config::NamespaceConfiguration& config) {
-			auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(manager.config());
-			auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(manager.config().Network, currencyMosaicId, config);
-			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(rentalFeeConfig));
-
-			auto gracePeriodDuration = config.NamespaceGracePeriodDuration.blocks(manager.config().BlockGenerationTargetTime);
-			auto maxDuration = config.MaxNamespaceDuration.blocks(manager.config().BlockGenerationTargetTime);
-			model::NamespaceLifetimeConstraints constraints(maxDuration, gracePeriodDuration);
+		void RegisterNamespaceSubsystemOnly(PluginManager& manager) {
+			const auto& config = manager.config();
+			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(config));
 
 			RegisterNamespaceAliasResolvers(manager);
 			manager.addCacheSupport(std::make_unique<cache::NamespaceCacheSubCachePlugin>(
 					manager.cacheConfig(cache::NamespaceCache::Name),
-					cache::NamespaceCacheTypes::Options{ gracePeriodDuration }));
+					cache::NamespaceCacheTypes::Options{ config }));
 
 			using CacheHandlers = CacheHandlers<cache::NamespaceCacheDescriptor>;
 			CacheHandlers::Register<model::FacilityCode::Namespace>(manager);
@@ -170,24 +145,22 @@ namespace catapult { namespace plugins {
 				counters.emplace_back(utils::DiagnosticCounterId("NS C DS"), [&cache]() { return GetNamespaceView(cache)->deepSize(); });
 			});
 
-			manager.addStatelessValidatorHook([config, maxDuration](auto& builder) {
-				const auto& reservedNames = config.ReservedRootNamespaceNames;
+			manager.addStatelessValidatorHook([&config](auto& builder) {
 				builder
 					.add(validators::CreateNamespaceTypeValidator())
-					.add(validators::CreateNamespaceNameValidator(config.MaxNameSize, reservedNames))
-					.add(validators::CreateRootNamespaceValidator(maxDuration));
+					.add(validators::CreateNamespaceNameValidator(config))
+					.add(validators::CreateRootNamespaceValidator(config));
 			});
 
-			manager.addStatefulValidatorHook([constraints, maxChildNamespaces = config.MaxChildNamespaces](auto& builder) {
+			manager.addStatefulValidatorHook([&config](auto& builder) {
 				builder
-					.add(validators::CreateRootNamespaceAvailabilityValidator(constraints.MaxNamespaceDuration))
+					.add(validators::CreateRootNamespaceAvailabilityValidator(config))
 					// note that the following validator needs to run before the RootNamespaceMaxChildrenValidator
 					.add(validators::CreateChildNamespaceAvailabilityValidator())
-					.add(validators::CreateRootNamespaceMaxChildrenValidator(maxChildNamespaces));
+					.add(validators::CreateRootNamespaceMaxChildrenValidator(config));
 			});
 
-			auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
-			manager.addObserverHook([maxRollbackBlocks](auto& builder) {
+			manager.addObserverHook([&config](auto& builder) {
 				auto rentalFeeReceiptType = model::Receipt_Type_Namespace_Rental_Fee;
 				auto expiryReceiptType = model::Receipt_Type_Namespace_Expired;
 				builder
@@ -195,7 +168,7 @@ namespace catapult { namespace plugins {
 					.add(observers::CreateChildNamespaceObserver())
 					.add(observers::CreateRentalFeeObserver<model::NamespaceRentalFeeNotification<1>>("Namespace", rentalFeeReceiptType))
 					.add(observers::CreateCacheBlockTouchObserver<cache::NamespaceCache>("Namespace", expiryReceiptType))
-					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1, maxRollbackBlocks));
+					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1, config));
 			});
 		}
 
@@ -203,9 +176,8 @@ namespace catapult { namespace plugins {
 	}
 
 	void RegisterNamespaceSubsystem(PluginManager& manager) {
-		auto config = model::LoadPluginConfiguration<config::NamespaceConfiguration>(manager.config(), "catapult.plugins.namespace");
-		RegisterNamespaceSubsystem(manager, config);
-		RegisterAliasSubsystem(manager, config);
+		RegisterNamespaceSubsystemOnly(manager);
+		RegisterAliasSubsystem(manager);
 	}
 }}
 

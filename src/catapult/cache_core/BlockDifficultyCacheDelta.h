@@ -24,6 +24,7 @@
 #include "catapult/cache/ReadOnlySimpleCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/deltaset/BaseSetDelta.h"
+#include "catapult/model/BlockChainConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -76,7 +77,7 @@ namespace catapult { namespace cache {
 
 	private:
 		BlockDifficultyCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pOrderedDelta;
-		uint64_t m_difficultyHistorySize;
+		const model::BlockChainConfiguration& m_config;
 		Height m_startHeight;
 		deltaset::PruningBoundary<ValueType> m_pruningBoundary;
 	};

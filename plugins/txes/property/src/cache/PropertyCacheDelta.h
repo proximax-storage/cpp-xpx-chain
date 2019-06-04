@@ -24,6 +24,7 @@
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/deltaset/BaseSetDelta.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/NetworkInfo.h"
 
 namespace catapult { namespace cache {
@@ -45,10 +46,10 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a delta around \a propertySets and \a networkIdentifier.
+		/// Creates a delta around \a propertySets and \a blockChainConfig.
 		explicit BasicPropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
-				model::NetworkIdentifier networkIdentifier)
+				const model::BlockChainConfiguration& blockChainConfig)
 				: PropertyCacheDeltaMixins::Size(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::Contains(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::ConstAccessor(*propertySets.pPrimary)
@@ -57,7 +58,7 @@ namespace catapult { namespace cache {
 				, PropertyCacheDeltaMixins::BasicInsertRemove(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::DeltaElements(*propertySets.pPrimary)
 				, m_pPropertyEntries(propertySets.pPrimary)
-				, m_networkIdentifier(networkIdentifier)
+				, m_blockChainConfig(blockChainConfig)
 		{}
 
 	public:
@@ -67,22 +68,22 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_networkIdentifier;
+			return m_blockChainConfig.Network.Identifier;
 		}
 
 	private:
 		PropertyCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pPropertyEntries;
-		model::NetworkIdentifier m_networkIdentifier;
+		const model::BlockChainConfiguration& m_blockChainConfig;
 	};
 
 	/// Delta on top of the property cache.
 	class PropertyCacheDelta : public ReadOnlyViewSupplier<BasicPropertyCacheDelta> {
 	public:
-		/// Creates a delta around \a propertySets and \a networkIdentifier.
+		/// Creates a delta around \a propertySets and \a blockChainConfig.
 		explicit PropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
-				model::NetworkIdentifier networkIdentifier)
-				: ReadOnlyViewSupplier(propertySets, networkIdentifier)
+				const model::BlockChainConfiguration& blockChainConfig)
+				: ReadOnlyViewSupplier(propertySets, blockChainConfig)
 		{}
 	};
 }}

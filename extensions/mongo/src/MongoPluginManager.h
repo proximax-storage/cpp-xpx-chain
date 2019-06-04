@@ -88,7 +88,7 @@ namespace catapult { namespace mongo {
 
 	private:
 		MongoStorageContext& m_mongoContext;
-		model::BlockChainConfiguration m_chainConfig;
+		const model::BlockChainConfiguration& m_chainConfig;
 		MongoTransactionRegistry m_transactionRegistry;
 		MongoReceiptRegistry m_receiptRegistry;
 		ExternalCacheStorageBuilder m_storageBuilder;

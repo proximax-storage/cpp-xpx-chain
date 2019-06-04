@@ -23,7 +23,6 @@
 #include "NodePingRequestor.h"
 #include "PeersProcessor.h"
 #include "nodediscovery/src/handlers/NodeDiscoveryHandlers.h"
-#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/extensions/NetworkUtils.h"
 #include "catapult/extensions/NodeInteractionUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
@@ -41,8 +40,9 @@ namespace catapult { namespace nodediscovery {
 
 		thread::Task CreatePingTask(
 				const extensions::PacketPayloadSink& packetPayloadSink,
-				const ConstNetworkNodePointer& pLocalNetworkNode) {
-			return thread::CreateNamedTask("node discovery ping task", [packetPayloadSink, pLocalNetworkNode]() {
+				const config::LocalNodeConfiguration& config) {
+			return thread::CreateNamedTask("node discovery ping task", [packetPayloadSink, &config]() {
+				auto pLocalNetworkNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(config)));
 				packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Node_Discovery_Push_Ping, pLocalNetworkNode));
 				return thread::make_ready_future(thread::TaskResult::Continue);
 			});
@@ -69,8 +69,8 @@ namespace catapult { namespace nodediscovery {
 
 		class NodeDiscoveryServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
-			explicit NodeDiscoveryServiceRegistrar(const ConstNetworkNodePointer& pLocalNetworkNode)
-					: m_pLocalNetworkNode(pLocalNetworkNode)
+			explicit NodeDiscoveryServiceRegistrar(const config::LocalNodeConfiguration& config)
+					: m_config(config)
 			{}
 
 		public:
@@ -111,7 +111,7 @@ namespace catapult { namespace nodediscovery {
 				auto& nodeContainer = state.nodes();
 				auto& pingRequestor = *pNodePingRequestor;
 				handlers::RegisterNodeDiscoveryPushPingHandler(state.packetHandlers(), networkIdentifier, pushNodeConsumer);
-				handlers::RegisterNodeDiscoveryPullPingHandler(state.packetHandlers(), m_pLocalNetworkNode);
+				handlers::RegisterNodeDiscoveryPullPingHandler(state.packetHandlers(), m_config);
 
 				auto pingRequestInitiator = [&pingRequestor](const auto& node, const auto& callback) {
 					return pingRequestor.beginRequest(node, callback);
@@ -126,16 +126,16 @@ namespace catapult { namespace nodediscovery {
 				});
 
 				// add task
-				state.tasks().push_back(CreatePingTask(state.hooks().packetPayloadSink(), m_pLocalNetworkNode));
+				state.tasks().push_back(CreatePingTask(state.hooks().packetPayloadSink(), m_config));
 				state.tasks().push_back(CreatePeersTask(state, pushPeersHandler));
 			}
 
 		private:
-			ConstNetworkNodePointer m_pLocalNetworkNode;
+			const config::LocalNodeConfiguration& m_config;
 		};
 	}
 
-	DECLARE_SERVICE_REGISTRAR(NodeDiscovery)(const ConstNetworkNodePointer& pLocalNetworkNode) {
-		return std::make_unique<NodeDiscoveryServiceRegistrar>(pLocalNetworkNode);
+	DECLARE_SERVICE_REGISTRAR(NodeDiscovery)(const config::LocalNodeConfiguration& config) {
+		return std::make_unique<NodeDiscoveryServiceRegistrar>(config);
 	}
 }}

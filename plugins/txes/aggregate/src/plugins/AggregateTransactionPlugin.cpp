@@ -63,6 +63,8 @@ namespace catapult { namespace plugins {
 
 				switch (aggregate.EntityVersion()) {
 				case 2: {
+					sub.notify(AggregateTransactionTypeNotification<1>(m_transactionType));
+
 					// publish aggregate notifications
 					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
 					auto numCosignatures = aggregate.CosignaturesCount();

@@ -20,7 +20,7 @@
 
 #pragma once
 #include "ExtensionManager.h"
-#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/LocalNodeConfigurationHolder.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/plugins/PluginModule.h"
 #include "catapult/subscribers/SubscriptionManager.h"
@@ -35,7 +35,7 @@ namespace catapult { namespace extensions {
 		/// Creates a local node bootstrapper around \a config and \a servicePoolName given the specified
 		/// resources path (\a resourcesPath).
 		LocalNodeBootstrapper(
-				const config::LocalNodeConfiguration& config,
+				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 				const std::string& resourcesPath,
 				const std::string& servicePoolName);
 
@@ -70,7 +70,7 @@ namespace catapult { namespace extensions {
 		void addStaticNodes(const std::vector<ionet::Node>& nodes);
 
 	private:
-		config::LocalNodeConfiguration m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		std::string m_resourcesPath;
 		std::unique_ptr<thread::MultiServicePool> m_pMultiServicePool;
 		std::vector<plugins::PluginModule> m_extensionModules;

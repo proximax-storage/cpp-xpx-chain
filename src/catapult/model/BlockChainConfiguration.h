@@ -20,8 +20,10 @@
 
 #pragma once
 #include "NetworkInfo.h"
+#include "PluginConfiguration.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/FileSize.h"
+#include "catapult/utils/MemoryUtils.h"
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
 #include <unordered_map>
@@ -84,8 +86,12 @@ namespace catapult { namespace model {
 		/// Maximum number of transactions per block.
 		uint32_t MaxTransactionsPerBlock;
 
-		/// Unparsed map of plugin configuration.
+		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
+
+	private:
+		/// Map of plugin configurations.
+		mutable std::unordered_map<std::string, std::shared_ptr<PluginConfiguration>> PluginConfigs;
 
 	private:
 		BlockChainConfiguration() = default;
@@ -96,6 +102,34 @@ namespace catapult { namespace model {
 
 		/// Loads a block chain configuration from \a bag.
 		static BlockChainConfiguration LoadFromBag(const utils::ConfigurationBag& bag);
+
+		/// Loads plugin configuration for plugin named \a pluginName.
+		template<typename T>
+		T LoadPluginConfiguration(const std::string& pluginName) const {
+			auto iter = Plugins.find(pluginName);
+			if (Plugins.cend() == iter)
+				CATAPULT_THROW_AND_LOG_1(utils::property_not_found_error, "plugin configuration not found", pluginName);
+
+			return T::LoadFromBag(iter->second);
+		}
+
+		/// Sets \a config of plugin named \a pluginName.
+		template<typename T>
+		void SetPluginConfiguration(const std::string& pluginName, const T& config) {
+			PluginConfigs[pluginName] = std::make_shared<T>(config);
+		}
+
+		/// Returns plugin configuration for plugin named \a pluginName.
+		template<typename T>
+		const T& GetPluginConfiguration(const std::string& pluginName) const {
+			auto iter = PluginConfigs.find(pluginName);
+			if (PluginConfigs.cend() == iter) {
+				const_cast<BlockChainConfiguration*>(this)->SetPluginConfiguration<T>(pluginName, LoadPluginConfiguration<T>(pluginName));
+				iter = PluginConfigs.find(pluginName);
+			}
+
+			return *dynamic_cast<const T*>(iter->second.get());
+		}
 	};
 
 	/// Gets unresolved currency mosaic id from \a config.
@@ -116,10 +150,6 @@ namespace catapult { namespace model {
 	/// Loads plugin configuration for plugin named \a pluginName from \a config.
 	template<typename T>
 	T LoadPluginConfiguration(const BlockChainConfiguration& config, const std::string& pluginName) {
-		auto iter = config.Plugins.find(pluginName);
-		if (config.Plugins.cend() == iter)
-			CATAPULT_THROW_AND_LOG_1(utils::property_not_found_error, "plugin configuration not found", pluginName);
-
-		return T::LoadFromBag(iter->second);
+		return config.LoadPluginConfiguration<T>(pluginName);
 	}
 }}

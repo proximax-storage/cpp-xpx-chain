@@ -56,7 +56,7 @@ namespace catapult { namespace cache {
 
 	private:
 		HashCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pOrderedDelta;
-		utils::TimeSpan m_retentionTime;
+		const model::BlockChainConfiguration& m_config;
 		deltaset::PruningBoundary<ValueType> m_pruningBoundary;
 	};
 

@@ -59,15 +59,15 @@ namespace catapult { namespace cache {
 	{}
 
 	model::NetworkIdentifier BasicAccountStateCacheView::networkIdentifier() const {
-		return m_options.NetworkIdentifier;
+		return m_options.Config.Network.Identifier;
 	}
 
 	uint64_t BasicAccountStateCacheView::importanceGrouping() const {
-		return m_options.ImportanceGrouping;
+		return m_options.Config.ImportanceGrouping;
 	}
 
 	MosaicId BasicAccountStateCacheView::harvestingMosaicId() const {
-		return m_options.HarvestingMosaicId;
+		return m_options.Config.HarvestingMosaicId;
 	}
 
 	const model::AddressSet& BasicAccountStateCacheView::highValueAddresses() const {

@@ -20,6 +20,7 @@
 
 #include "Validators.h"
 #include "src/cache/PropertyCache.h"
+#include "src/config/PropertyConfiguration.h"
 #include "catapult/model/Address.h"
 #include "catapult/validators/ValidatorContext.h"
 
@@ -70,12 +71,13 @@ namespace catapult { namespace validators {
 	}
 
 #define DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE, PROPERTY_VALUE_TYPE) \
-	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(uint16_t maxPropertyValues) { \
+	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(const model::BlockChainConfiguration& blockChainConfig) { \
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>; \
-		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [maxPropertyValues]( \
+		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [&blockChainConfig]( \
 				const auto& notification, \
 				const auto& context) { \
-			return Validate<PROPERTY_VALUE_TYPE, NOTIFICATION_TYPE>(maxPropertyValues, notification, context); \
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::PropertyConfiguration>("catapult.plugins.property"); \
+			return Validate<PROPERTY_VALUE_TYPE, NOTIFICATION_TYPE>(pluginConfig.MaxPropertyValues, notification, context); \
 		}); \
 	}
 

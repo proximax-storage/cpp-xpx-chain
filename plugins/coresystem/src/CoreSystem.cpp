@@ -33,22 +33,11 @@
 namespace catapult { namespace plugins {
 
 	namespace {
-		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions(const model::BlockChainConfiguration& config) {
-			return {
-				config.Network.Identifier,
-				config.ImportanceGrouping,
-				config.MinHarvesterBalance,
-				config.CurrencyMosaicId,
-				config.HarvestingMosaicId
-			};
-		}
-
-		void AddAccountStateCache(PluginManager& manager, const model::BlockChainConfiguration& config) {
+		void AddAccountStateCache(PluginManager& manager) {
 			using namespace catapult::cache;
 
 			auto cacheConfig = manager.cacheConfig(AccountStateCache::Name);
-			auto cacheOptions = CreateAccountStateCacheOptions(config);
-			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, cacheOptions));
+			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, manager.config()));
 
 			using CacheHandlers = CacheHandlers<cache::AccountStateCacheDescriptor>;
 			CacheHandlers::Register<model::FacilityCode::Core>(manager);
@@ -63,11 +52,10 @@ namespace catapult { namespace plugins {
 			});
 		}
 
-		void AddBlockDifficultyCache(PluginManager& manager, const model::BlockChainConfiguration& config) {
+		void AddBlockDifficultyCache(PluginManager& manager) {
 			using namespace catapult::cache;
 
-			auto difficultyHistorySize = CalculateDifficultyHistorySize(config);
-			manager.addCacheSupport<BlockDifficultyCacheStorage>(std::make_unique<BlockDifficultyCache>(difficultyHistorySize));
+			manager.addCacheSupport<BlockDifficultyCacheStorage>(std::make_unique<BlockDifficultyCache>(manager.config()));
 
 			manager.addDiagnosticCounterHook([](auto& counters, const CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("BLKDIF C"), [&cache]() {
@@ -80,23 +68,23 @@ namespace catapult { namespace plugins {
 	void RegisterCoreSystem(PluginManager& manager) {
 		const auto& config = manager.config();
 
-		AddAccountStateCache(manager, config);
-		AddBlockDifficultyCache(manager, config);
+		AddAccountStateCache(manager);
+		AddBlockDifficultyCache(manager);
 
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder
-				.add(validators::CreateMaxTransactionsValidator(config.MaxTransactionsPerBlock))
-				.add(validators::CreateNetworkValidator(config.Network.Identifier))
+				.add(validators::CreateMaxTransactionsValidator(config))
+				.add(validators::CreateNetworkValidator(config))
 				.add(validators::CreateEntityVersionValidator())
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
 		manager.addStatefulValidatorHook([&config](auto& builder) {
 			builder
-				.add(validators::CreateAddressValidator(config.Network.Identifier))
-				.add(validators::CreateDeadlineValidator(config.MaxTransactionLifetime))
+				.add(validators::CreateAddressValidator(config))
+				.add(validators::CreateDeadlineValidator(config))
 				.add(validators::CreateNemesisSinkValidator())
-				.add(validators::CreateEligibleHarvesterValidator(config.MinHarvesterBalance))
+				.add(validators::CreateEligibleHarvesterValidator(config))
 				.add(validators::CreateBalanceDebitValidator())
 				.add(validators::CreateBalanceTransferValidator());
 		});
@@ -108,7 +96,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceDebitObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(config.CurrencyMosaicId))
+				.add(observers::CreateHarvestFeeObserver(config))
 				.add(observers::CreateTotalTransactionsObserver())
 				.add(observers::CreateSnapshotCleanUpObserver(config));
 		});
@@ -118,8 +106,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateBlockDifficultyObserver())
 				.add(observers::CreateCacheBlockPruningObserver<cache::BlockDifficultyCache>(
 						"BlockDifficulty",
-						config.BlockPruneInterval,
-						BlockDuration()));
+						config));
 		});
 	}
 }}
