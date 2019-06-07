@@ -33,6 +33,8 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
+							{ "secretLockTransactionSupportedVersions", "1" },
+							{ "secretProofTransactionSupportedVersions", "1" },
 							{ "maxSecretLockDuration", "23'456d" },
 							{ "minProofSize", "42" },
 							{ "maxProofSize", "1234" }

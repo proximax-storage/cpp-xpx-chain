@@ -38,6 +38,9 @@ namespace catapult { namespace plugins {
 				config.Plugins.emplace("catapult.plugins.mosaic", utils::ConfigurationBag({{
 					"",
 					{
+						{ "mosaicDefinitionTransactionSupportedVersions", "3" },
+						{ "mosaicSupplyChangeTransactionSupportedVersions", "2" },
+
 						{ "maxMosaicsPerAccount", "0" },
 
 						{ "maxMosaicDuration", "0h" },

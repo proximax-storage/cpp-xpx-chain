@@ -24,6 +24,7 @@
 #include "catapult/model/Address.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/TestHarness.h"
 
@@ -33,6 +34,8 @@ namespace catapult { namespace consumers {
 #define TRANSACTION_TEST_CLASS TransactionAddressExtractionConsumerTests
 
 	namespace {
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 3 });
+
 		void AssertExtractedAddress(const model::TransactionElement& transactionElement, size_t id) {
 			auto message = "transaction at " + std::to_string(id);
 			const auto& pAddresses = transactionElement.OptionalExtractedAddresses;
@@ -58,7 +61,8 @@ namespace catapult { namespace consumers {
 			}
 
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), model::PublicationMode::Basic);
+			auto pPublisher = model::CreateNotificationPublisher(
+				registry, UnresolvedMosaicId(), Supported_Versions_Supplier, model::PublicationMode::Basic);
 			auto input = test::CreateBlockElements(rawBlocks);
 
 			// Act:
@@ -81,7 +85,8 @@ namespace catapult { namespace consumers {
 	TEST(BLOCK_TEST_CLASS, CanProcessZeroEntities) {
 		// Assert:
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), model::PublicationMode::Basic);
+		auto pPublisher = model::CreateNotificationPublisher(
+			registry, UnresolvedMosaicId(), Supported_Versions_Supplier, model::PublicationMode::Basic);
 		test::AssertPassthroughForEmptyInput(CreateBlockAddressExtractionConsumer(*pPublisher));
 	}
 
@@ -113,7 +118,8 @@ namespace catapult { namespace consumers {
 		void AssertTransactionAddressesAreExtractedCorrectly(uint32_t numTransactions) {
 			// Arrange:
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), model::PublicationMode::Basic);
+			auto pPublisher = model::CreateNotificationPublisher(
+				registry, UnresolvedMosaicId(), Supported_Versions_Supplier, model::PublicationMode::Basic);
 			auto input = test::CreateTransactionElements(numTransactions);
 
 			// Act:
@@ -134,7 +140,8 @@ namespace catapult { namespace consumers {
 	TEST(TRANSACTION_TEST_CLASS, CanProcessZeroEntities) {
 		// Assert:
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), model::PublicationMode::Basic);
+		auto pPublisher = model::CreateNotificationPublisher(
+			registry, UnresolvedMosaicId(), Supported_Versions_Supplier, model::PublicationMode::Basic);
 		test::AssertPassthroughForEmptyInput(CreateTransactionAddressExtractionConsumer(*pPublisher));
 	}
 

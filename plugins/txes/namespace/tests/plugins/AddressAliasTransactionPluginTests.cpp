@@ -21,6 +21,7 @@
 #include "src/plugins/AddressAliasTransactionPlugin.h"
 #include "src/model/AddressAliasTransaction.h"
 #include "tests/test/AliasTransactionPluginTests.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 
 using namespace catapult::model;
 
@@ -31,7 +32,9 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AddressAlias, 1, 1)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AddressAlias)
+
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 1 });
 
 		struct NotificationTraits {
 		public:
@@ -50,9 +53,9 @@ namespace catapult { namespace plugins {
 		};
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Alias_Address)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Alias_Address, Supported_Versions_Supplier)
 
-	DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, AddressAlias, NotificationTraits)
+	DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, AddressAlias, NotificationTraits, Supported_Versions_Supplier)
 
 	// endregion
 }}

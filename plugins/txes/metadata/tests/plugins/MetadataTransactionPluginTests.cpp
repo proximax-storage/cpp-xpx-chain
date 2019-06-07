@@ -12,6 +12,7 @@
 #include "src/plugins/MetadataTransactionPlugin.h"
 #include "src/state/MetadataUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/MetadataTestUtils.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -21,9 +22,11 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS MetadataTransactionPluginTests
 
     namespace {
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(AddressMetadata, 1, 1, AddressMetadata)
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(MosaicMetadata, 1, 1, MosaicMetadata)
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(NamespaceMetadata, 1, 1, NamespaceMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(AddressMetadata, AddressMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(MosaicMetadata, MosaicMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(NamespaceMetadata, NamespaceMetadata)
+
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 1 });
 
         template<typename TTransaction, typename TTransactionTraits>
         struct AddressTraits : public TTransactionTraits {
@@ -63,7 +66,7 @@ namespace catapult { namespace plugins {
 
         static void AssertCanCalculateSize() {
             // Arrange:
-            auto pPlugin = TTraits::CreatePlugin();
+            auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
                 test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
@@ -84,7 +87,7 @@ namespace catapult { namespace plugins {
         static void AssertCanPublishMetadataTypeNotification() {
             // Arrange:
             mocks::MockTypedNotificationSubscriber<model::MetadataTypeNotification<1>> sub;
-            auto pPlugin = TTraits::CreatePlugin();
+            auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({});
 
@@ -104,7 +107,7 @@ namespace catapult { namespace plugins {
         static void AssertCanPublishModifyMetadataNotification() {
             // Arrange:
             mocks::MockTypedNotificationSubscriber<typename TTraits::ModifyMetadataNotification> sub;
-            auto pPlugin = TTraits::CreatePlugin();
+            auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({});
 
@@ -125,7 +128,7 @@ namespace catapult { namespace plugins {
         static void AssertCanPublishMetadataModificationsNotification() {
             // Arrange:
             mocks::MockTypedNotificationSubscriber<model::MetadataModificationsNotification<1>> sub;
-            auto pPlugin = TTraits::CreatePlugin();
+            auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
                 test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
@@ -152,7 +155,7 @@ namespace catapult { namespace plugins {
         static void AssertCanPublishModifyMetadataFieldNotification() {
             // Arrange:
             mocks::MockTypedNotificationSubscriber<model::ModifyMetadataFieldNotification<1>> sub;
-            auto pPlugin = TTraits::CreatePlugin();
+            auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
                 test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
@@ -186,7 +189,7 @@ namespace catapult { namespace plugins {
         static void AssertCanPublishModifyMetadataValueNotification() {
             // Arrange:
             mocks::MockTypedNotificationSubscriber<typename TTraits::ModifyMetadataValueNotification> sub;
-            auto pPlugin = TTraits::CreatePlugin();
+            auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
                 test::CreateModification(model::MetadataModificationType::Add, 1, 2).get(),
@@ -218,9 +221,9 @@ namespace catapult { namespace plugins {
         // endregion
     };
 
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Address, _Address, model::Entity_Type_Address_Metadata)
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Mosaic, _Mosaic, model::Entity_Type_Mosaic_Metadata)
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Namespace, _Namespace, model::Entity_Type_Namespace_Metadata)
+    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Address, _Address, model::Entity_Type_Address_Metadata, Supported_Versions_Supplier)
+    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Mosaic, _Mosaic, model::Entity_Type_Mosaic_Metadata, Supported_Versions_Supplier)
+    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Namespace, _Namespace, model::Entity_Type_Namespace_Metadata, Supported_Versions_Supplier)
 
 #define MAKE_METADATA_TRANSACTION_PLUGIN_TEST(TRAITS_PREFIX, TEST_POSTFIX, TEST_NAME) \
 	TEST(TEST_CLASS, TEST_NAME##_Regular##TEST_POSTFIX) { \

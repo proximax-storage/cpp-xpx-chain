@@ -25,19 +25,24 @@
 #include "plugins/txes/namespace/src/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "plugins/txes/transfer/src/plugins/TransferTransactionPlugin.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/local/RealTransactionFactory.h"
 
 namespace catapult { namespace test {
+
+	namespace {
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+	}
 
 	// region ExternalSourceConnection
 
 	model::TransactionRegistry ExternalSourceConnection::CreateTransactionRegistry() {
 		auto registry = model::TransactionRegistry();
-		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(model::BlockChainConfiguration::Uninitialized()));
-		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
-		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
-		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(model::BlockChainConfiguration::Uninitialized()));
-		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
+		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(Default_Config, mocks::MockSupportedVersionSupplier({ 3 })));
+		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin(mocks::MockSupportedVersionSupplier({ 2 })));
+		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin(mocks::MockSupportedVersionSupplier({ 1 })));
+		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(Default_Config, mocks::MockSupportedVersionSupplier({ 2 })));
+		registry.registerPlugin(plugins::CreateTransferTransactionPlugin(mocks::MockSupportedVersionSupplier({ 3 })));
 		return registry;
 	}
 

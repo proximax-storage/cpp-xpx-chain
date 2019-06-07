@@ -36,6 +36,8 @@ namespace catapult { namespace plugins {
 				config.Plugins.emplace("catapult.plugins.locksecret", utils::ConfigurationBag({{
 					"",
 					{
+						{ "secretLockTransactionSupportedVersions", "1" },
+						{ "secretProofTransactionSupportedVersions", "1" },
 						{ "maxSecretLockDuration", "30d" },
 						{ "minProofSize", "10" },
 						{ "maxProofSize", "1000" }

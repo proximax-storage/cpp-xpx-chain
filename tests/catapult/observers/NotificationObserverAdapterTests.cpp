@@ -20,6 +20,7 @@
 
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
@@ -30,6 +31,8 @@ namespace catapult { namespace observers {
 #define TEST_CLASS NotificationObserverAdapterTests
 
 	namespace {
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 3 });
+
 		void ObserveEntity(const EntityObserver& observer, const model::VerifiableEntity& entity, test::ObserverTestContext& context) {
 			Hash256 hash;
 			observer.notify(model::WeakEntityInfo(entity, hash), context.observerContext());
@@ -42,7 +45,7 @@ namespace catapult { namespace observers {
 			const auto& observer = *pObserver;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId());
+			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), Supported_Versions_Supplier);
 			NotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 			// Act + Assert:

@@ -35,7 +35,7 @@ namespace catapult { namespace mocks {
 			CATAPULT_THROW_RUNTIME_ERROR("calculateRealSize - not implemented in mock");
 		}
 
-		model::SupportedVersions supportedVersions() const override {
+		const VersionSet& supportedVersions() const override {
 			CATAPULT_THROW_RUNTIME_ERROR("supportedVersions - not implemented in mock");
 		}
 

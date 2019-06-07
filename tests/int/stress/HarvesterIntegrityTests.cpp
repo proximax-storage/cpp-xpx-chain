@@ -51,8 +51,13 @@ namespace catapult { namespace harvesting {
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager(const model::BlockChainConfiguration& config) {
 			// include memory hash cache system to better trigger the race condition under test
-			const_cast<model::BlockChainConfiguration&>(config).Plugins.emplace("catapult.plugins.transfer",
-				utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			const_cast<model::BlockChainConfiguration&>(config).Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{
+				"",
+				{
+					{ "transferTransactionSupportedVersions", "3" },
+					{ "maxMessageSize", "0" },
+				}
+			}}));
 			auto pPluginManager = test::CreatePluginManager(config);
 			plugins::RegisterMemoryHashCacheSystem(*pPluginManager);
 			return pPluginManager;

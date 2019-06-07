@@ -27,6 +27,7 @@
 #include "catapult/constants.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -37,10 +38,11 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS RegisterNamespaceTransactionPluginTests
 
 	namespace {
-		TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(RegisterNamespace, model::BlockChainConfiguration, 2, 2)
+		TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(RegisterNamespace, model::BlockChainConfiguration)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 2 });
 
 		auto CreateNamespaceConfiguration(Amount rootFeePerBlock, Amount childFee) {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
@@ -79,12 +81,13 @@ namespace catapult { namespace plugins {
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(
 			TEST_CLASS,
 			Entity_Type_Register_Namespace,
-			CreateBlockChainConfiguration(CreateNamespaceConfiguration(Amount(0), Amount(0))))
+			CreateBlockChainConfiguration(CreateNamespaceConfiguration(Amount(0), Amount(0))),
+			Supported_Versions_Supplier)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
 		auto config = CreateBlockChainConfiguration(CreateNamespaceConfiguration(Amount(0), Amount(0)));
-		auto pPlugin = TTraits::CreatePlugin(config);
+		auto pPlugin = TTraits::CreatePlugin(config, Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = 0;
@@ -102,7 +105,7 @@ namespace catapult { namespace plugins {
 		mocks::MockNotificationSubscriber sub;
 		auto pluginConfig = CreateNamespaceConfiguration(Amount(0), Amount(0));
 		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto pPlugin = TTraits::CreatePlugin(blockChainConfig);
+		auto pPlugin = TTraits::CreatePlugin(blockChainConfig, Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -133,7 +136,7 @@ namespace catapult { namespace plugins {
 			auto pluginConfig = CreateNamespaceConfiguration(Amount(987), Amount(777));
 			auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
 			auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-			auto pPlugin = TTraits::CreatePlugin(blockChainConfig);
+			auto pPlugin = TTraits::CreatePlugin(blockChainConfig, Supported_Versions_Supplier);
 
 			// - prepare the transaction
 			if (isSignerExempt)
@@ -314,7 +317,7 @@ namespace catapult { namespace plugins {
 		auto pluginConfig = CreateNamespaceConfiguration(Default_Root_Rental_Fee_Per_Block, Default_Child_Rental_Fee);
 		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
 		auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-		auto pPlugin = TTraits::CreatePlugin(blockChainConfig);
+		auto pPlugin = TTraits::CreatePlugin(blockChainConfig, Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithName<TTraits>(12);
 		pTransaction->NamespaceType = NamespaceType::Root;
@@ -342,7 +345,7 @@ namespace catapult { namespace plugins {
 			auto pluginConfig = CreateNamespaceConfiguration(Default_Root_Rental_Fee_Per_Block, Default_Child_Rental_Fee);
 			auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
 			auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-			auto pPlugin = TTraits::CreatePlugin(blockChainConfig);
+			auto pPlugin = TTraits::CreatePlugin(blockChainConfig, Supported_Versions_Supplier);
 
 			auto pTransaction = CreateTransactionWithName<TTraits>(12);
 			pTransaction->NamespaceType = namespaceType;
@@ -377,7 +380,7 @@ namespace catapult { namespace plugins {
 		mocks::MockTypedNotificationSubscriber<NamespaceNameNotification<1>> nsNameSub;
 		auto pluginConfig = CreateNamespaceConfiguration(Amount(0), Amount(0));
 		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto pPlugin = TTraits::CreatePlugin(blockChainConfig);
+		auto pPlugin = TTraits::CreatePlugin(blockChainConfig, Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithName<TTraits>(0);
 

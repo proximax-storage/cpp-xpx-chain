@@ -21,6 +21,7 @@
 #include "catapult/model/NotificationPublisher.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/TestHarness.h"
@@ -31,6 +32,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		constexpr auto Currency_Mosaic_Id = UnresolvedMosaicId(1234);
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 3 });
 
 		constexpr auto Plugin_Option_Flags = static_cast<mocks::PluginOptionFlags>(
 				utils::to_underlying_type(mocks::PluginOptionFlags::Custom_Buffers) |
@@ -42,7 +44,7 @@ namespace catapult { namespace model {
 			mocks::MockNotificationSubscriber sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, mode);
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, Supported_Versions_Supplier, mode);
 
 			// Act:
 			auto hash = test::GenerateRandomData<Key_Size>();
@@ -63,7 +65,7 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id);
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, Supported_Versions_Supplier);
 
 			// Act:
 			pPub->publish(entityInfo, sub);
@@ -125,10 +127,8 @@ namespace catapult { namespace model {
 		// Act:
 		PublishOne<EntityNotification<1>>(*pBlock, [](const auto& notification) {
 			// Assert:
-			auto expectedVersion = Block::Current_Version;
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
-			EXPECT_EQ(expectedVersion, notification.MinVersion);
-			EXPECT_EQ(expectedVersion, notification.MaxVersion);
+			EXPECT_EQ(VersionSet{ 3 }, notification.SupportedVersions);
 			EXPECT_EQ(0x03u, notification.EntityVersion);
 		});
 	}
@@ -270,8 +270,8 @@ namespace catapult { namespace model {
 		PublishOne<EntityNotification<1>>(*pTransaction, [](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
-			EXPECT_EQ(0x02u, notification.MinVersion);
-			EXPECT_EQ(0xFEu, notification.MaxVersion);
+			for (VersionType supportedVersion = 0x02u; supportedVersion <= 0xFEu; ++supportedVersion)
+				EXPECT_TRUE(notification.SupportedVersions.find(supportedVersion) != notification.SupportedVersions.end());
 			EXPECT_EQ(0x5Au, notification.EntityVersion);
 		});
 	}

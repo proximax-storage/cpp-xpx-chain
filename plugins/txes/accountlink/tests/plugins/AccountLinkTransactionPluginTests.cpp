@@ -22,6 +22,7 @@
 #include "src/model/AccountLinkNotifications.h"
 #include "src/model/AccountLinkTransaction.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -32,15 +33,16 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS AccountLinkTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AccountLink, 2, 2)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AccountLink)
 		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 2);
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 2 });
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Account_Link)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Account_Link, Supported_Versions_Supplier)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = 0;
@@ -55,7 +57,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractAccounts) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -76,7 +78,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractNewRemoteAccount) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<NewRemoteAccountNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -94,7 +96,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractAddressInteraction) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -117,7 +119,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractRemoteAccountLink) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<RemoteAccountLinkNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;

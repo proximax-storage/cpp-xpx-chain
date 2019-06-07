@@ -25,6 +25,7 @@
 #include "src/model/ModifyContractTransaction.h"
 #include "src/model/ContractNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 #include <random>
@@ -37,8 +38,9 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 3);
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 3 });
 
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract, 3, 3)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract)
 
 		CosignatoryModification GenerateModification(int index) {
 			return { ((index % 2) ? CosignatoryModificationType::Del : CosignatoryModificationType::Add),
@@ -76,11 +78,11 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Modify_Contract)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Modify_Contract, Supported_Versions_Supplier)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = 0;
@@ -105,7 +107,7 @@ namespace catapult { namespace plugins {
 				TAdditionalAssert additionalAssert) {
 			// Arrange:
 			mocks::MockNotificationSubscriber sub;
-			auto pPlugin = TTraits::CreatePlugin();
+			auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 			// Act:
 			test::PublishTransaction(*pPlugin, transaction, sub);
@@ -164,7 +166,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishModifyContractNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ModifyContractNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
 		pTransaction->DurationDelta = 1000;
@@ -189,7 +191,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishCosignersNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
 
@@ -207,7 +209,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(NoCosignersNotificationIfNoModificationIsPresent) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
 
@@ -226,7 +228,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishNewCosignerNotificationForEachAddVerifierModification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
 
@@ -246,7 +248,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(NoNewCosignerNotificationsIfNoAddModificationsArePresent) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3, false);
 		auto* pModification = pTransaction->VerifierModificationsPtr();
@@ -269,7 +271,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishReputationUpdateNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
 
@@ -285,7 +287,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(NoReputationUpdateNotificationIfNoModificationIsPresent) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
 
@@ -326,7 +328,7 @@ namespace catapult { namespace plugins {
 		void AssertAddressInteractionNotifications(size_t numAddModifications, size_t numDelModifications) {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
-			auto pPlugin = TTraits::CreatePlugin();
+			auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 			auto numModifications = static_cast<uint8_t>(numAddModifications + numDelModifications);
 			auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, numModifications, false);

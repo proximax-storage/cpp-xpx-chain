@@ -33,6 +33,7 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
+							{ "aggregateTransactionSupportedVersions", "2" },
 							{ "maxTransactionsPerAggregate", "674" },
 							{ "maxCosignaturesPerAggregate", "52" },
 							{ "enableStrictCosignatureCheck", "true" },

@@ -34,7 +34,8 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t networkIdentifier) {
 			// Arrange:
-			model::EntityNotification<1> notification(static_cast<model::NetworkIdentifier>(networkIdentifier), 0, 0, 0);
+			VersionSet supportedVersions{ 0 };
+			model::EntityNotification<1> notification(static_cast<model::NetworkIdentifier>(networkIdentifier), supportedVersions, 0);
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Network_Identifier;
 			auto pValidator = CreateNetworkValidator(config);

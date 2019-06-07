@@ -20,6 +20,7 @@
 
 #include "catapult/model/TransactionPluginFactory.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
+#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -30,6 +31,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		constexpr auto Mock_Transaction_Type = static_cast<EntityType>(0x4FFF);
+		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 1 });
 
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
@@ -39,32 +41,37 @@ namespace catapult { namespace model {
 
 		struct RegularTraits {
 			using TransactionType = mocks::MockTransaction;
-			static constexpr auto Min_Supported_Version = TransactionType::Current_Version;
-			static constexpr auto Max_Supported_Version = TransactionType::Current_Version;
+			static VersionSet supportedVersions;
 
-			static auto CreatePlugin() {
+			static auto CreatePlugin(SupportedVersionsSupplier supportedVersionsSupplier) {
+				supportedVersions = supportedVersionsSupplier();
 				return TransactionPluginFactory::Create<mocks::MockTransaction, mocks::EmbeddedMockTransaction>(
-						Publish<mocks::MockTransaction>,
-						Publish<mocks::EmbeddedMockTransaction>);
+					Publish<mocks::MockTransaction>,
+					Publish<mocks::EmbeddedMockTransaction>,
+					supportedVersionsSupplier);
 			}
 		};
+		VersionSet RegularTraits::supportedVersions = VersionSet{};
 
 		struct EmbeddedTraits {
 			using TransactionType = mocks::EmbeddedMockTransaction;
-			static constexpr auto Min_Supported_Version = TransactionType::Current_Version;
-			static constexpr auto Max_Supported_Version = TransactionType::Current_Version;
+			static VersionSet supportedVersions;
 
-			static auto CreatePlugin() {
-				return TransactionPluginFactory::CreateEmbedded<mocks::EmbeddedMockTransaction>(Publish<mocks::EmbeddedMockTransaction>);
+			static auto CreatePlugin(SupportedVersionsSupplier supportedVersionsSupplier) {
+				supportedVersions = supportedVersionsSupplier();
+				return TransactionPluginFactory::CreateEmbedded<mocks::EmbeddedMockTransaction>(
+					Publish<mocks::EmbeddedMockTransaction>,
+					supportedVersionsSupplier);
 			}
 		};
+		VersionSet EmbeddedTraits::supportedVersions = VersionSet{};
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, , , Mock_Transaction_Type)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, , , Mock_Transaction_Type, Supported_Versions_Supplier)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = 0;
@@ -79,7 +86,7 @@ namespace catapult { namespace model {
 
 	PLUGIN_TEST(CanPublishNotifications) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin();
+		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
 
 		typename TTraits::TransactionType transaction;
 		test::FillWithRandomData(transaction.Signer);

@@ -111,6 +111,8 @@ namespace catapult { namespace test {
 
 		config.BlockPruneInterval = 360;
 		config.MaxTransactionsPerBlock = 200'000;
+
+		config.BlockSupportedVersions.emplace(3);
 		return config;
 	}
 
@@ -184,12 +186,13 @@ namespace catapult { namespace test {
 				LoadPluginByName(*pPluginManager, modules, "", pair.first);
 
 			return std::shared_ptr<plugins::PluginManager>(
-					pPluginManager.get(),
-					[pPluginManager, modules = std::move(modules)](const auto*) mutable {
-						// destroy the modules after the plugin manager
-						pPluginManager.reset();
-						modules.clear();
-					});
+				pPluginManager.get(),
+				[pPluginManager, modules = std::move(modules)](const auto*) mutable {
+					// destroy the modules after the plugin manager
+					pPluginManager.reset();
+					modules.clear();
+				}
+			);
 		}
 	}
 

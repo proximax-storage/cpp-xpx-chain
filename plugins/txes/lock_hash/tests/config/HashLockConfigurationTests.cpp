@@ -33,6 +33,7 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
+							{ "hashLockTransactionSupportedVersions", "1" },
 							{ "lockedFundsPerAggregate", "123'000'000" },
 							{ "maxHashLockDuration", "12'345d" }
 						}

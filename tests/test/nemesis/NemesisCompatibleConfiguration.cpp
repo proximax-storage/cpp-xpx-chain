@@ -33,8 +33,14 @@ namespace catapult { namespace test {
 	}
 
 	void AddNemesisPluginExtensions(model::BlockChainConfiguration& config) {
-		config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+		config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", {
+			{ "transferTransactionSupportedVersions", "3" },
+			{ "maxMessageSize", "0" },
+		} } }));
 		config.Plugins.emplace("catapult.plugins.mosaic", utils::ConfigurationBag({ { "", {
+			{ "mosaicDefinitionTransactionSupportedVersions", "3" },
+			{ "mosaicSupplyChangeTransactionSupportedVersions", "2" },
+
 			{ "maxMosaicsPerAccount", "123" },
 
 			{ "maxMosaicDuration", "456d" },
@@ -47,6 +53,10 @@ namespace catapult { namespace test {
 			{ "mosaicRentalFee", "500" }
 		} } }));
 		config.Plugins.emplace("catapult.plugins.namespace", utils::ConfigurationBag({ { "", {
+			{ "addressAliasTransactionSupportedVersions", "1" },
+			{ "mosaicAliasTransactionSupportedVersions", "1" },
+			{ "registerNamespaceTransactionSupportedVersions", "2" },
+
 			{ "maxNameSize", "64" },
 
 			{ "maxNamespaceDuration", "365d" },

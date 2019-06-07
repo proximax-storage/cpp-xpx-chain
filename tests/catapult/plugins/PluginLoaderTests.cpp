@@ -65,7 +65,10 @@ namespace catapult { namespace plugins {
 		void AssertCanLoadKnownDynamicallyLinkedPlugins(const std::string& directory) {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Plugins.emplace(Known_Plugin_Name, utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			config.Plugins.emplace(Known_Plugin_Name, utils::ConfigurationBag({{ "", {
+				{ "transferTransactionSupportedVersions", "3" },
+				{ "maxMessageSize", "0" },
+			} } }));
 
 			// Assert:
 			AssertCanLoadPlugins(directory, config, true, { Known_Plugin_Name });
@@ -119,7 +122,10 @@ namespace catapult { namespace plugins {
 		try {
 			// - prepare insufficient configuration
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Plugins.emplace(Known_Plugin_Name, utils::ConfigurationBag({{ "", { { "maxMessageSizeX", "0" } } }}));
+			config.Plugins.emplace(Known_Plugin_Name, utils::ConfigurationBag({{ "", {
+				{ "transferTransactionSupportedVersions", "3" },
+				{ "maxMessageSize", "0" },
+			} } }));
 
 			// - create the manager
 			PluginModules modules;

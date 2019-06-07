@@ -32,7 +32,13 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+				config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{
+					"",
+					{
+						{ "transferTransactionSupportedVersions", "3" },
+						{ "maxMessageSize", "0" },
+					}
+				}}));
 				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());

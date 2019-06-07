@@ -70,7 +70,9 @@ namespace catapult { namespace model {
 							{ "minHarvesterBalance", "4'000'000'000" },
 
 							{ "blockPruneInterval", "432" },
-							{ "maxTransactionsPerBlock", "120" }
+							{ "maxTransactionsPerBlock", "120" },
+
+							{ "blockSupportedVersions", "3, 10" },
 						}
 					},
 					{
@@ -121,6 +123,9 @@ namespace catapult { namespace model {
 				EXPECT_EQ(0u, config.BlockPruneInterval);
 				EXPECT_EQ(0u, config.MaxTransactionsPerBlock);
 
+				auto expectedBlockSupportedVersions = VersionSet{};
+				EXPECT_EQ(expectedBlockSupportedVersions, config.BlockSupportedVersions);
+
 				EXPECT_TRUE(config.Plugins.empty());
 			}
 
@@ -151,6 +156,9 @@ namespace catapult { namespace model {
 
 				EXPECT_EQ(432u, config.BlockPruneInterval);
 				EXPECT_EQ(120u, config.MaxTransactionsPerBlock);
+
+				auto expectedBlockSupportedVersions = VersionSet{ 3, 10 };
+				EXPECT_EQ(expectedBlockSupportedVersions, config.BlockSupportedVersions);
 
 				EXPECT_EQ(2u, config.Plugins.size());
 				const auto& pluginAlphaBag = config.Plugins.find("alpha")->second;

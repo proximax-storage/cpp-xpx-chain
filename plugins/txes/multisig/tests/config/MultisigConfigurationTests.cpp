@@ -33,6 +33,7 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
+							{ "modifyMultisigAccountTransactionSupportedVersions", "3" },
 							{ "maxMultisigDepth", "159" },
 							{ "maxCosignersPerAccount", "23" },
 							{ "maxCosignedAccountsPerAccount", "77" },

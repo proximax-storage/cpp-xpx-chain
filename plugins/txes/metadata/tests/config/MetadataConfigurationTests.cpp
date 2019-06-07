@@ -18,6 +18,9 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
+							{ "addressMetadataTransactionSupportedVersions", "1" },
+							{ "mosaicMetadataTransactionSupportedVersions", "1" },
+							{ "namespaceMetadataTransactionSupportedVersions", "1" },
 							{ "maxFields", "10" },
 							{ "maxFieldKeySize", "128" },
 							{ "maxFieldValueSize", "1024" },

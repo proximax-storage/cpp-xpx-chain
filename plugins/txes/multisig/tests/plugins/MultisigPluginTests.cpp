@@ -35,6 +35,7 @@ namespace catapult { namespace plugins {
 				config.Plugins.emplace("catapult.plugins.multisig", utils::ConfigurationBag({{
 					"",
 					{
+						{ "modifyMultisigAccountTransactionSupportedVersions", "3" },
 						{ "maxMultisigDepth", "0" },
 						{ "maxCosignersPerAccount", "0" },
 						{ "maxCosignedAccountsPerAccount", "0" }

@@ -69,11 +69,13 @@ namespace catapult { namespace model {
 					}
 				} else {
 					switch (m_notificationVersion) {
-					case 1:
-						sub.notify(EntityNotification<1>(transaction.Network(), 0, 0, transaction.EntityVersion()));
-						break;
-					default:
-						CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of EntityNotification", m_notificationVersion);
+						case 1: {
+							VersionSet supportedVersions{ 0 };
+							sub.notify(EntityNotification<1>(transaction.Network(), supportedVersions, transaction.EntityVersion()));
+							break;
+						}
+						default:
+							CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of EntityNotification", m_notificationVersion);
 					}
 				}
 			}

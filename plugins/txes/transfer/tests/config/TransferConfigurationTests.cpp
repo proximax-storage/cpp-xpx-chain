@@ -33,6 +33,7 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
+							{ "transferTransactionSupportedVersions", "3" },
 							{ "maxMessageSize", "859" }
 						}
 					}

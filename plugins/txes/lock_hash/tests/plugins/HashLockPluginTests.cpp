@@ -36,6 +36,7 @@ namespace catapult { namespace plugins {
 				config.Plugins.emplace("catapult.plugins.lockhash", utils::ConfigurationBag({{
 					"",
 					{
+						{ "hashLockTransactionSupportedVersions", "1" },
 						{ "lockedFundsPerAggregate", "10'000'000" },
 						{ "maxHashLockDuration", "2d" }
 					}
