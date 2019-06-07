@@ -33,6 +33,9 @@ namespace catapult { namespace config {
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 
+		LOAD_PROPERTY(MosaicDefinitionTransactionSupportedVersions);
+		LOAD_PROPERTY(MosaicSupplyChangeTransactionSupportedVersions);
+
 		LOAD_PROPERTY(MaxMosaicsPerAccount);
 
 		LOAD_PROPERTY(MaxMosaicDuration);
@@ -46,7 +49,7 @@ namespace catapult { namespace config {
 
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 7);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 9);
 		return config;
 	}
 }}

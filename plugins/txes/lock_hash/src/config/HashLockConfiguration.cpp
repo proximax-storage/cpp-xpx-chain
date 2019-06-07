@@ -32,11 +32,12 @@ namespace catapult { namespace config {
 		HashLockConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
+		LOAD_PROPERTY(HashLockTransactionSupportedVersions);
 		LOAD_PROPERTY(LockedFundsPerAggregate);
 		LOAD_PROPERTY(MaxHashLockDuration);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);
 		return config;
 	}
 }}

@@ -218,8 +218,23 @@ namespace catapult { namespace plugins {
 
 	// region publisher
 
+	namespace {
+		struct BlockSupportedVersionSupplier {
+			BlockSupportedVersionSupplier(const model::BlockChainConfiguration& config) : m_config(config)
+			{}
+
+			const VersionSet& operator()() const {
+				return m_config.BlockSupportedVersions;
+			}
+
+		private:
+			const model::BlockChainConfiguration& m_config;
+		};
+	}
+
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
-		return model::CreateNotificationPublisher(m_transactionRegistry, model::GetUnresolvedCurrencyMosaicId(config()), mode);
+		return model::CreateNotificationPublisher(m_transactionRegistry, model::GetUnresolvedCurrencyMosaicId(config()),
+			BlockSupportedVersionSupplier(config()), mode);
 	}
 
 	// endregion

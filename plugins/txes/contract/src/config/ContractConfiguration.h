@@ -29,6 +29,9 @@ namespace catapult { namespace config {
 	/// Contract plugin configuration settings.
 	struct ContractConfiguration : public model::PluginConfiguration {
 	public:
+		/// Supported modify contract transaction versions.
+		VersionSet ModifyContractTransactionSupportedVersions;
+
 		/// Minimum percentage of approval.
 		uint8_t MinPercentageOfApproval;
 

@@ -25,6 +25,7 @@
 #include "src/cache/NamespaceCache.h"
 #include "src/cache/NamespaceCacheStorage.h"
 #include "src/cache/NamespaceCacheSubCachePlugin.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
@@ -39,9 +40,13 @@ namespace catapult { namespace plugins {
 	namespace {
 		// region alias
 
+		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(AddressAlias, Namespace, "catapult.plugins.namespace")
+		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(MosaicAlias, Namespace, "catapult.plugins.namespace")
+
 		void RegisterAliasSubsystem(PluginManager& manager) {
-			manager.addTransactionSupport(CreateAddressAliasTransactionPlugin());
-			manager.addTransactionSupport(CreateMosaicAliasTransactionPlugin());
+			const auto& config = manager.config();
+			manager.addTransactionSupport(CreateAddressAliasTransactionPlugin(AddressAliasTransactionSupportedVersionSupplier(config)));
+			manager.addTransactionSupport(CreateMosaicAliasTransactionPlugin(MosaicAliasTransactionSupportedVersionSupplier(config)));
 
 			manager.addStatelessValidatorHook([](auto& builder) {
 				builder.add(validators::CreateAliasActionValidator());
@@ -65,6 +70,8 @@ namespace catapult { namespace plugins {
 		// endregion
 
 		// region namespace
+
+		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(RegisterNamespace, Namespace, "catapult.plugins.namespace")
 
 		template<typename TAliasValue, typename TAliasValueAccessor>
 		bool RunNamespaceResolver(
@@ -129,7 +136,7 @@ namespace catapult { namespace plugins {
 
 		void RegisterNamespaceSubsystemOnly(PluginManager& manager) {
 			const auto& config = manager.config();
-			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(config));
+			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(config, RegisterNamespaceTransactionSupportedVersionSupplier(config)));
 
 			RegisterNamespaceAliasResolvers(manager);
 			manager.addCacheSupport(std::make_unique<cache::NamespaceCacheSubCachePlugin>(

@@ -32,12 +32,14 @@ namespace catapult { namespace config {
 		SecretLockConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
+		LOAD_PROPERTY(SecretLockTransactionSupportedVersions);
+		LOAD_PROPERTY(SecretProofTransactionSupportedVersions);
 		LOAD_PROPERTY(MaxSecretLockDuration);
 		LOAD_PROPERTY(MinProofSize);
 		LOAD_PROPERTY(MaxProofSize);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 5);
 		return config;
 	}
 }}

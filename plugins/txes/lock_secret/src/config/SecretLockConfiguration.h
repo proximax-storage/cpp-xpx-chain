@@ -31,6 +31,12 @@ namespace catapult { namespace config {
 	/// Secret lock plugin configuration settings.
 	struct SecretLockConfiguration : public model::PluginConfiguration {
 	public:
+		/// Supported secret lock transaction versions.
+		VersionSet SecretLockTransactionSupportedVersions;
+
+		/// Supported secret proof transaction versions.
+		VersionSet SecretProofTransactionSupportedVersions;
+
 		/// Maximum number of blocks for which a secret lock can exist.
 		utils::BlockSpan MaxSecretLockDuration;
 

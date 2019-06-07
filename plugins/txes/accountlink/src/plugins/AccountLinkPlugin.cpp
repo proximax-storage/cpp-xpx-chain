@@ -20,14 +20,19 @@
 
 #include "AccountLinkPlugin.h"
 #include "AccountLinkTransactionPlugin.h"
+#include "src/config/AccountLinkConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
 
+	namespace {
+		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(AccountLink, AccountLink, "catapult.plugins.accountlink")
+	}
+
 	void RegisterAccountLinkSubsystem(PluginManager& manager) {
-		manager.addTransactionSupport(CreateAccountLinkTransactionPlugin());
+		manager.addTransactionSupport(CreateAccountLinkTransactionPlugin(AccountLinkTransactionSupportedVersionSupplier(manager.config())));
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(validators::CreateAccountLinkActionValidator());

@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/SupportedVersionsSupplier.h"
 #include "catapult/plugins.h"
 #include <memory>
 
@@ -26,7 +27,7 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a mosaic supply change transaction plugin.
+	/// Creates a mosaic supply change transaction plugin given \a supportedVersionsSupplier.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateMosaicSupplyChangeTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicSupplyChangeTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
 }}

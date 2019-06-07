@@ -35,9 +35,11 @@ namespace catapult { namespace plugins {
 
 		class AggregateTransactionPlugin : public TransactionPlugin {
 		public:
-			AggregateTransactionPlugin(const TransactionRegistry& transactionRegistry, model::EntityType transactionType)
+			AggregateTransactionPlugin(
+				const TransactionRegistry& transactionRegistry, model::EntityType transactionType, model::SupportedVersionsSupplier supportedVersionsSupplier)
 					: m_transactionRegistry(transactionRegistry)
 					, m_transactionType(transactionType)
+					, m_supportedVersionsSupplier(supportedVersionsSupplier)
 			{}
 
 		public:
@@ -53,9 +55,8 @@ namespace catapult { namespace plugins {
 						: std::numeric_limits<uint64_t>::max();
 			}
 
-			SupportedVersions supportedVersions() const override {
-				auto version = AggregateTransaction::Current_Version;
-				return { version, version };
+			const VersionSet& supportedVersions() const override {
+				return m_supportedVersionsSupplier();
 			}
 
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
@@ -83,12 +84,10 @@ namespace catapult { namespace plugins {
 						// - signers and entity
 						sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));
 						const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
-						auto supportedVersions = plugin.supportedVersions();
 
 						sub.notify(EntityNotification<1>(
 								subTransaction.Network(),
-								supportedVersions.MinVersion,
-								supportedVersions.MaxVersion,
+								plugin.supportedVersions(),
 								subTransaction.EntityVersion()));
 
 						// - generic sub-transaction notification
@@ -155,12 +154,14 @@ namespace catapult { namespace plugins {
 		private:
 			const TransactionRegistry& m_transactionRegistry;
 			model::EntityType m_transactionType;
+			model::SupportedVersionsSupplier m_supportedVersionsSupplier;
 		};
 	}
 
 	std::unique_ptr<TransactionPlugin> CreateAggregateTransactionPlugin(
 			const TransactionRegistry& transactionRegistry,
-			model::EntityType transactionType) {
-		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType);
+			model::EntityType transactionType,
+			model::SupportedVersionsSupplier supportedVersionsSupplier) {
+		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType, supportedVersionsSupplier);
 	}
 }}

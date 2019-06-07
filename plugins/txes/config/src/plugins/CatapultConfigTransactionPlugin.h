@@ -5,13 +5,14 @@
 **/
 
 #pragma once
+#include "catapult/model/SupportedVersionsSupplier.h"
 #include "catapult/plugins.h"
 
 namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a catapult config transaction plugin.
+	/// Creates a catapult config transaction plugin given \a supportedVersionsSupplier.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateCatapultConfigTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateCatapultConfigTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
 }}

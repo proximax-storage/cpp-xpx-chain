@@ -23,7 +23,6 @@
 #include "BlockUtils.h"
 #include "FeeUtils.h"
 #include "NotificationSubscriber.h"
-#include "TransactionPlugin.h"
 
 namespace catapult { namespace model {
 
@@ -35,9 +34,11 @@ namespace catapult { namespace model {
 
 		class BasicNotificationPublisher : public NotificationPublisher {
 		public:
-			BasicNotificationPublisher(const TransactionRegistry& transactionRegistry, UnresolvedMosaicId feeMosaicId)
+			BasicNotificationPublisher(const TransactionRegistry& transactionRegistry, UnresolvedMosaicId feeMosaicId,
+				SupportedVersionsSupplier blockSupportedVersionsSupplier)
 					: m_transactionRegistry(transactionRegistry)
 					, m_feeMosaicId(feeMosaicId)
+					, m_blockSupportedVersionsSupplier(blockSupportedVersionsSupplier)
 			{}
 
 		public:
@@ -91,7 +92,7 @@ namespace catapult { namespace model {
 				// raise an entity notification
 				switch (block.EntityVersion()) {
 				case 3: {
-					sub.notify(EntityNotification<1>(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion()));
+					sub.notify(EntityNotification<1>(block.Network(), m_blockSupportedVersionsSupplier(), block.EntityVersion()));
 
 					// raise a block notification
 					auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
@@ -119,13 +120,11 @@ namespace catapult { namespace model {
 					const BlockHeader* pBlockHeader,
 					NotificationSubscriber& sub) const {
 				const auto& plugin = *m_transactionRegistry.findPlugin(transaction.Type);
-				auto supportedVersions = plugin.supportedVersions();
 
 				// raise an entity notification
 				sub.notify(EntityNotification<1>(
 						transaction.Network(),
-						supportedVersions.MinVersion,
-						supportedVersions.MaxVersion,
+						plugin.supportedVersions(),
 						transaction.EntityVersion()));
 
 				// raise transaction notifications
@@ -141,6 +140,7 @@ namespace catapult { namespace model {
 		private:
 			const TransactionRegistry& m_transactionRegistry;
 			UnresolvedMosaicId m_feeMosaicId;
+			SupportedVersionsSupplier m_blockSupportedVersionsSupplier;
 		};
 
 		class CustomNotificationPublisher : public NotificationPublisher {
@@ -170,8 +170,9 @@ namespace catapult { namespace model {
 
 		class AllNotificationPublisher : public NotificationPublisher {
 		public:
-			AllNotificationPublisher(const TransactionRegistry& transactionRegistry, UnresolvedMosaicId feeMosaicId)
-					: m_basicPublisher(transactionRegistry, feeMosaicId)
+			AllNotificationPublisher(const TransactionRegistry& transactionRegistry, UnresolvedMosaicId feeMosaicId,
+				SupportedVersionsSupplier blockSupportedVersionsSupplier)
+					: m_basicPublisher(transactionRegistry, feeMosaicId, blockSupportedVersionsSupplier)
 					, m_customPublisher(transactionRegistry)
 			{}
 
@@ -190,16 +191,17 @@ namespace catapult { namespace model {
 	std::unique_ptr<NotificationPublisher> CreateNotificationPublisher(
 			const TransactionRegistry& transactionRegistry,
 			UnresolvedMosaicId feeMosaicId,
+			SupportedVersionsSupplier blockSupportedVersionsSupplier,
 			PublicationMode mode) {
 		switch (mode) {
 		case PublicationMode::Basic:
-			return std::make_unique<BasicNotificationPublisher>(transactionRegistry, feeMosaicId);
+			return std::make_unique<BasicNotificationPublisher>(transactionRegistry, feeMosaicId, blockSupportedVersionsSupplier);
 
 		case PublicationMode::Custom:
 			return std::make_unique<CustomNotificationPublisher>(transactionRegistry);
 
 		default:
-			return std::make_unique<AllNotificationPublisher>(transactionRegistry, feeMosaicId);
+			return std::make_unique<AllNotificationPublisher>(transactionRegistry, feeMosaicId, blockSupportedVersionsSupplier);
 		}
 	}
 }}

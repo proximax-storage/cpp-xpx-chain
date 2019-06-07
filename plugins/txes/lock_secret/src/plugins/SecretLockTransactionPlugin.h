@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/SupportedVersionsSupplier.h"
 #include "catapult/plugins.h"
 #include <memory>
 
@@ -26,7 +27,7 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a secret lock transaction plugin.
+	/// Creates a secret lock transaction plugin given \a supportedVersionsSupplier.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateSecretLockTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateSecretLockTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
 }}

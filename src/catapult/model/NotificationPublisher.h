@@ -20,6 +20,7 @@
 
 #pragma once
 #include "WeakEntityInfo.h"
+#include "TransactionPluginFactory.h"
 
 namespace catapult {
 	namespace model {
@@ -55,5 +56,6 @@ namespace catapult { namespace model {
 	std::unique_ptr<NotificationPublisher> CreateNotificationPublisher(
 			const TransactionRegistry& transactionRegistry,
 			UnresolvedMosaicId feeMosaicId,
+			SupportedVersionsSupplier blockSupportedVersionsSupplier,
 			PublicationMode mode = PublicationMode::All);
 }}

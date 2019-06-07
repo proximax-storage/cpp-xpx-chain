@@ -32,13 +32,14 @@ namespace catapult { namespace config {
 		AggregateConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
+		LOAD_PROPERTY(AggregateTransactionSupportedVersions);
 		LOAD_PROPERTY(MaxTransactionsPerAggregate);
 		LOAD_PROPERTY(MaxCosignaturesPerAggregate);
 		LOAD_PROPERTY(EnableStrictCosignatureCheck);
 		LOAD_PROPERTY(EnableBondedAggregateSupport);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 5);
 		return config;
 	}
 }}

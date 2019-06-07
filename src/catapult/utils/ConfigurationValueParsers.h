@@ -90,6 +90,10 @@ namespace catapult { namespace utils {
 	/// \note \a str is expected to be comma separated
 	bool TryParseValue(const std::string& str, std::unordered_set<std::string>& parsedValue);
 
+	/// Tries to parse \a str into a set of uint32_t (\a parsedValue).
+	/// \note \a str is expected to be comma separated
+	bool TryParseValue(const std::string& str, std::unordered_set<uint32_t>& parsedValue);
+
 	/// Tries to parse \a str into an enum value (\a parsedValue) given a mapping of strings to values (\a stringToValueMapping).
 	template<typename T, size_t N>
 	bool TryParseEnumValue(const std::array<std::pair<const char*, T>, N>& stringToValueMapping, const std::string& str, T& parsedValue) {

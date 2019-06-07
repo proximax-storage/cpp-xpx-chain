@@ -18,10 +18,11 @@ namespace catapult { namespace config {
 		CatapultUpgradeConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
+		LOAD_PROPERTY(CatapultUpgradeTransactionSupportedVersions);
 		LOAD_PROPERTY(MinUpgradePeriod);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 1);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
 		return config;
 	}
 }}

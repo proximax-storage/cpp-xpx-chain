@@ -30,6 +30,15 @@ namespace catapult { namespace config {
 	/// Namespace plugin configuration settings.
 	struct NamespaceConfiguration : public model::PluginConfiguration {
 	public:
+		/// Supported address alias transaction versions.
+		VersionSet AddressAliasTransactionSupportedVersions;
+
+		/// Supported mosaic alias transaction versions.
+		VersionSet MosaicAliasTransactionSupportedVersions;
+
+		/// Supported register namespace transaction versions.
+		VersionSet RegisterNamespaceTransactionSupportedVersions;
+
 		/// Maximum namespace and mosaic name size.
 		uint8_t MaxNameSize;
 

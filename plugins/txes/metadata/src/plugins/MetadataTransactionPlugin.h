@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/model/SupportedVersionsSupplier.h"
 #include "catapult/plugins.h"
 #include <memory>
 
@@ -12,15 +13,15 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates an address metadata transaction plugin.
+	/// Creates an address metadata transaction plugin given \a supportedVersionsSupplier.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateAddressMetadataTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateAddressMetadataTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
 
-	/// Creates a mosaic metadata transaction plugin.
+	/// Creates a mosaic metadata transaction plugin given \a supportedVersionsSupplier.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateMosaicMetadataTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicMetadataTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
 
-	/// Creates a namespace metadata transaction plugin.
+	/// Creates a namespace metadata transaction plugin given \a supportedVersionsSupplier.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateNamespaceMetadataTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateNamespaceMetadataTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
 }}

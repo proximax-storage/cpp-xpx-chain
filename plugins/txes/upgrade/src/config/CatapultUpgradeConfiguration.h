@@ -15,6 +15,9 @@ namespace catapult { namespace config {
 	/// Catapult upgrade plugin configuration settings.
 	struct CatapultUpgradeConfiguration : public model::PluginConfiguration {
 	public:
+		/// Supported catapult upgrade transaction versions.
+		VersionSet CatapultUpgradeTransactionSupportedVersions;
+
 		/// Minimum duration in blocks before forcing update.
 		uint16_t MinUpgradePeriod;
 

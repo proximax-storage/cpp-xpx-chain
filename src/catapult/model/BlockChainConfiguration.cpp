@@ -72,6 +72,8 @@ namespace catapult { namespace model {
 		LOAD_CHAIN_PROPERTY(BlockPruneInterval);
 		LOAD_CHAIN_PROPERTY(MaxTransactionsPerBlock);
 
+		LOAD_CHAIN_PROPERTY(BlockSupportedVersions);
+
 #undef LOAD_CHAIN_PROPERTY
 
 		size_t numPluginProperties = 0;
@@ -89,7 +91,7 @@ namespace catapult { namespace model {
 			numPluginProperties += iter->second.size();
 		}
 
-		utils::VerifyBagSizeLte(bag, 18 + numPluginProperties);
+		utils::VerifyBagSizeLte(bag, 19 + numPluginProperties);
 		return config;
 	}
 

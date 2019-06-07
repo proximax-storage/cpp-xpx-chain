@@ -16,6 +16,15 @@ namespace catapult { namespace config {
 	/// Metadata plugin configuration settings.
 	struct MetadataConfiguration : public model::PluginConfiguration {
 	public:
+		/// Supported address metadata transaction versions.
+		VersionSet AddressMetadataTransactionSupportedVersions;
+
+		/// Supported mosaic metadata transaction versions.
+		VersionSet MosaicMetadataTransactionSupportedVersions;
+
+		/// Supported namespace metadata transaction versions.
+		VersionSet NamespaceMetadataTransactionSupportedVersions;
+
 		/// Maximum fields in metadata.
 		uint8_t MaxFields;
 

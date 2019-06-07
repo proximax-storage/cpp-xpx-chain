@@ -33,15 +33,6 @@ namespace catapult {
 
 namespace catapult { namespace model {
 
-	/// Supported versions
-	struct SupportedVersions {
-		/// Minimum version supported by transaction plugin.
-        VersionType MinVersion;
-
-		/// Maximum version supported by transaction plugin.
-        VersionType MaxVersion;
-	};
-
 	/// A typed transaction plugin.
 	template<typename TTransaction>
 	class TransactionPluginT {
@@ -56,7 +47,7 @@ namespace catapult { namespace model {
 		virtual uint64_t calculateRealSize(const TTransaction& transaction) const = 0;
 
 		/// Returns a pair of minimum and maximum versions supported by plugin.
-		virtual SupportedVersions supportedVersions() const = 0;
+		virtual const VersionSet& supportedVersions() const = 0;
 	};
 
 	/// An embedded transaction plugin.

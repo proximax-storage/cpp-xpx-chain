@@ -5,8 +5,7 @@
 **/
 
 #pragma once
-
-namespace catapult { namespace utils { class ConfigurationBag; } }
+#include "catapult/types.h"
 
 namespace catapult { namespace model {
 

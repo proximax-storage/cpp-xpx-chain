@@ -9,14 +9,19 @@
 #include "CatapultConfigPlugin.h"
 #include "src/cache/CatapultConfigCache.h"
 #include "src/cache/CatapultConfigCacheStorage.h"
+#include "src/config/CatapultConfigConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/CatapultConfigTransactionPlugin.h"
 #include "src/validators/Validators.h"
 
 namespace catapult { namespace plugins {
 
+	namespace {
+		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(CatapultConfig, CatapultConfig, "catapult.plugins.config")
+	}
+
 	void RegisterCatapultConfigSubsystem(PluginManager& manager) {
-		manager.addTransactionSupport(CreateCatapultConfigTransactionPlugin());
+		manager.addTransactionSupport(CreateCatapultConfigTransactionPlugin(CatapultConfigTransactionSupportedVersionSupplier(manager.config())));
 
 		manager.addCacheSupport<cache::CatapultConfigCacheStorage>(
 			std::make_unique<cache::CatapultConfigCache>(manager.cacheConfig(cache::CatapultConfigCache::Name)));
