@@ -41,6 +41,10 @@ maxCosignaturesPerAggregate = 15
 enableStrictCosignatureCheck = false
 enableBondedAggregateSupport = true
 
+[plugin:catapult.plugins.config]
+
+maxBlockChainConfigSize = 1MB
+
 [plugin:catapult.plugins.contract]
 
 minPercentageOfApproval = 100

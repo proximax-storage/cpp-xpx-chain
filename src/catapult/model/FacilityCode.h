@@ -29,6 +29,8 @@ namespace catapult { namespace model {
 		AccountLink = 0x4C,
 		/// Aggregate facility code.
 		Aggregate = 0x41,
+		/// Catapult config facility code.
+		CatapultConfig = 0x59,
 		/// Contract facility code.
 		Contract = 0x57,
 		/// Core facility code.

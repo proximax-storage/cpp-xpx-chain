@@ -21,6 +21,7 @@ make \
     catapult.mongo.plugins.transfer \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
+    catapult.plugins.config \
     catapult.plugins.contract \
     catapult.plugins.hashcache \
     catapult.plugins.hashcache.cache \
