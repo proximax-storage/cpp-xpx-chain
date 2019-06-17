@@ -193,12 +193,19 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a block notification around \a signer, \a timestamp and \a difficulty.
-		explicit BlockNotification(const Key& signer, Timestamp timestamp, Difficulty difficulty)
+		explicit BlockNotification(
+			const Key& signer,
+			Timestamp timestamp,
+			Difficulty difficulty,
+			uint32_t feeInterest,
+			uint32_t feeInterestDenominator)
 				: Notification(Notification_Type, sizeof(BlockNotification))
 				, Signer(signer)
 				, Timestamp(timestamp)
 				, Difficulty(difficulty)
 				, NumTransactions(0)
+				, FeeInterest(feeInterest)
+				, FeeInterestDenominator(feeInterestDenominator)
 		{}
 
 	public:
@@ -216,6 +223,12 @@ namespace catapult { namespace model {
 
 		/// Number of block transactions.
 		uint32_t NumTransactions;
+
+		/// The part of the transaction fee harvester is willing to get.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
 	};
 
 	// endregion

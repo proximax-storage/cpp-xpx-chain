@@ -172,6 +172,8 @@ namespace catapult { namespace model {
 		pBlock->Timestamp = Timestamp(123);
 		pBlock->Difficulty = Difficulty(575);
 		pBlock->FeeMultiplier = BlockFeeMultiplier(3);
+		pBlock->FeeInterest = 3;
+		pBlock->FeeInterestDenominator = 7;
 
 		// Act:
 		PublishOne<BlockNotification>(*pBlock, [&block = *pBlock](const auto& notification) {
@@ -181,6 +183,8 @@ namespace catapult { namespace model {
 			EXPECT_EQ(Difficulty(575), notification.Difficulty);
 			EXPECT_EQ(Amount(0), notification.TotalFee);
 			EXPECT_EQ(0u, notification.NumTransactions);
+			EXPECT_EQ(3, notification.FeeInterest);
+			EXPECT_EQ(7, notification.FeeInterestDenominator);
 		});
 	}
 
@@ -190,6 +194,8 @@ namespace catapult { namespace model {
 		pBlock->Timestamp = Timestamp(432);
 		pBlock->Difficulty = Difficulty(575);
 		pBlock->FeeMultiplier = BlockFeeMultiplier(3);
+		pBlock->FeeInterest = 2;
+		pBlock->FeeInterestDenominator = 2;
 
 		// Act:
 		PublishOne<BlockNotification>(*pBlock, [&block = *pBlock](const auto& notification) {
@@ -199,6 +205,8 @@ namespace catapult { namespace model {
 			EXPECT_EQ(Difficulty(575), notification.Difficulty);
 			EXPECT_EQ(Amount(3 * 653), notification.TotalFee);
 			EXPECT_EQ(3u, notification.NumTransactions);
+			EXPECT_EQ(2, notification.FeeInterest);
+			EXPECT_EQ(2, notification.FeeInterestDenominator);
 		});
 	}
 

@@ -58,6 +58,12 @@ namespace catapult { namespace validators {
 	/// Validation failed because a block was harvested by an ineligible harvester.
 	DEFINE_CORE_RESULT(Block_Harvester_Ineligible, 105);
 
+	/// Validation failed because a block has invalid FeeInterest.
+	DEFINE_CORE_RESULT(Invalid_FeeInterest, 24);
+
+	/// Validation failed because a block has invalid FeeInterestDenominator.
+	DEFINE_CORE_RESULT(Invalid_FeeInterestDenominator, 25);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

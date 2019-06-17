@@ -93,7 +93,7 @@ namespace catapult { namespace model {
 
 				// raise a block notification
 				auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
-				BlockNotification blockNotification(block.Signer, block.Timestamp, block.Difficulty);
+				BlockNotification blockNotification(block.Signer, block.Timestamp, block.Difficulty, block.FeeInterest, block.FeeInterestDenominator);
 				blockNotification.NumTransactions = blockTransactionsInfo.Count;
 				blockNotification.TotalFee = blockTransactionsInfo.TotalFee;
 
