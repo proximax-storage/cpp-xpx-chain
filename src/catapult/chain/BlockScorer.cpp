@@ -61,6 +61,8 @@ namespace catapult { namespace chain {
 		double greed = feeInterest;
 		greed /= feeInterestDenominator;
 		double lambda = std::pow(1.0 + config.GreedDelta * (1.0 - 2.0 * greed), config.GreedExponent);
+		if (lambda < 0.0)
+			CATAPULT_THROW_INVALID_ARGUMENT("Target is negative");
 		target *= lambda;
 		return BlockTarget{target};
 	}
