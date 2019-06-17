@@ -230,6 +230,8 @@ namespace catapult { namespace extensions {
 							  : test::GenerateRandomBlockWithTransactions(transactionsIter->second);
 				pBlock->Height = height;
 				pBlock->FeeMultiplier = BlockFeeMultiplier(0);
+				pBlock->FeeInterest = 1;
+				pBlock->FeeInterestDenominator = 1;
 
 				// in order to emulate correctly, block must have same signer when executed and reverted
 				auto signerIter = m_heightToBlockSigner.find(height);

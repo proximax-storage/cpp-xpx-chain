@@ -68,7 +68,13 @@ namespace catapult { namespace cache {
 
 		/// Gets a vector of all transactions in the cache that have a fee multiplier at least \a minFeeMultiplier
 		/// and do not have a short hash in \a knownShortHashes.
-		UnknownTransactions unknownTransactions(BlockFeeMultiplier minFeeMultiplier, const utils::ShortHashesSet& knownShortHashes) const;
+		/// Also doesn't include those transactions for which fee calculated with given \a feeInterestDenominator and \a feeInterest
+		/// is greater than the transaction maximum fee.
+		UnknownTransactions unknownTransactions(
+			BlockFeeMultiplier minFeeMultiplier,
+			const utils::ShortHashesSet& knownShortHashes,
+			uint32_t feeInterest,
+			uint32_t feeInterestDenominator) const;
 
 	private:
 		uint64_t m_maxResponseSize;

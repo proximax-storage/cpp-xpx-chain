@@ -52,6 +52,9 @@ namespace catapult { namespace test {
 
 			config.ShortLivedCacheMaxSize = 10;
 
+			config.FeeInterest = 1;
+			config.FeeInterestDenominator = 1;
+
 			config.UnconfirmedTransactionsCacheMaxSize = 100;
 
 			config.ConnectTimeout = utils::TimeSpan::FromSeconds(10);
@@ -111,6 +114,9 @@ namespace catapult { namespace test {
 
 		config.BlockPruneInterval = 360;
 		config.MaxTransactionsPerBlock = 200'000;
+
+		config.GreedDelta = 0.5;
+		config.GreedExponent = 2.0;
 		return config;
 	}
 

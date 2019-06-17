@@ -76,6 +76,8 @@ namespace catapult { namespace local {
 			blockChainConfig.ImportanceGrouping = Max_Rollback_Blocks / 2 + 1;
 			blockChainConfig.MaxRollbackBlocks = Max_Rollback_Blocks;
 			blockChainConfig.MaxDifficultyBlocks = 4;
+			blockChainConfig.GreedDelta = 0.5;
+			blockChainConfig.GreedExponent = 2.0;
 		}
 
 		void UpdateConfigurationForNode(config::LocalNodeConfiguration& config, uint32_t id) {
@@ -84,6 +86,8 @@ namespace catapult { namespace local {
 			auto& nodeConfig = const_cast<config::NodeConfiguration&>(config.Node);
 			nodeConfig.Port = port;
 			nodeConfig.ApiPort = port + 1;
+			nodeConfig.FeeInterest = 1;
+			nodeConfig.FeeInterestDenominator = 2;
 
 			// 2. specify custom network settings
 			UpdateBlockChainConfiguration(const_cast<model::BlockChainConfiguration&>(config.BlockChain));

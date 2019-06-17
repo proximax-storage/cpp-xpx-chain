@@ -87,7 +87,9 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "blockTransactionsHash" << ToBinary(block.BlockTransactionsHash)
 				<< "blockReceiptsHash" << ToBinary(block.BlockReceiptsHash)
 				<< "stateHash" << ToBinary(block.StateHash)
-				<< "beneficiaryPublicKey" << ToBinary(block.BeneficiaryPublicKey);
+				<< "beneficiaryPublicKey" << ToBinary(block.BeneficiaryPublicKey)
+				<< "feeInterest" << static_cast<int32_t>(block.FeeInterest)
+				<< "feeInterestDenominator" << static_cast<int32_t>(block.FeeInterestDenominator);
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;
 	}

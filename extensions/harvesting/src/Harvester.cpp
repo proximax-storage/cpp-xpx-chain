@@ -66,7 +66,7 @@ namespace catapult { namespace harvesting {
 
 	Harvester::Harvester(
 			const cache::CatapultCache& cache,
-			const model::BlockChainConfiguration& config,
+			const config::LocalNodeConfiguration& config,
 			const UnlockedAccounts& unlockedAccounts,
 			const BlockGenerator& blockGenerator)
 			: m_cache(cache)
@@ -77,7 +77,7 @@ namespace catapult { namespace harvesting {
 
 	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
 		NextBlockContext context(lastBlockElement, timestamp);
-		if (!context.tryCalculateDifficulty(m_cache.sub<cache::BlockDifficultyCache>(), m_config)) {
+		if (!context.tryCalculateDifficulty(m_cache.sub<cache::BlockDifficultyCache>(), m_config.BlockChain)) {
 			CATAPULT_LOG(debug) << "skipping harvest attempt due to error calculating difficulty";
 			return nullptr;
 		}
@@ -86,9 +86,11 @@ namespace catapult { namespace harvesting {
 		hitContext.ElapsedTime = context.BlockTime;
 		hitContext.Difficulty = context.Difficulty;
 		hitContext.Height = context.Height;
+		hitContext.FeeInterest = m_config.Node.FeeInterest;
+		hitContext.FeeInterestDenominator = m_config.Node.FeeInterestDenominator;
 
 		const auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
-		chain::BlockHitPredicate hitPredicate(m_config, [&accountStateCache](const auto& key, auto height) {
+		chain::BlockHitPredicate hitPredicate(m_config.BlockChain, [&accountStateCache](const auto& key, auto height) {
 			auto lockedCacheView = accountStateCache.createView();
 			cache::ReadOnlyAccountStateCache readOnlyCache(*lockedCacheView);
 			cache::ImportanceView view(readOnlyCache);
@@ -111,8 +113,8 @@ namespace catapult { namespace harvesting {
 			return nullptr;
 
 		utils::StackLogger stackLogger("generating candidate block", utils::LogLevel::Debug);
-		auto pBlockHeader = CreateUnsignedBlockHeader(context, m_config.Network.Identifier, pHarvesterKeyPair->publicKey());
-		auto pBlock = m_blockGenerator(*pBlockHeader, m_config.MaxTransactionsPerBlock);
+		auto pBlockHeader = CreateUnsignedBlockHeader(context, m_config.BlockChain.Network.Identifier, pHarvesterKeyPair->publicKey());
+		auto pBlock = m_blockGenerator(*pBlockHeader, m_config.BlockChain.MaxTransactionsPerBlock);
 		if (pBlock)
 			SignBlockHeader(*pHarvesterKeyPair, *pBlock);
 

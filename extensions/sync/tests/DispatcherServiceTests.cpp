@@ -255,6 +255,8 @@ namespace catapult { namespace sync {
 					state::BlockDifficultyInfo(*pBlock),
 					testContext.testState().config().BlockChain
 			);
+			pBlock->FeeInterest = 1;
+			pBlock->FeeInterestDenominator = 2;
 			test::SignBlock(signer, *pBlock);
 			return std::move(pBlock);
 		}

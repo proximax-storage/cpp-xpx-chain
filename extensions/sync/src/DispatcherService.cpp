@@ -321,7 +321,7 @@ namespace catapult { namespace sync {
 			auto pUtUpdater = std::make_shared<chain::UtUpdater>(
 					state.utCache(),
 					state.cache(),
-					state.config().Node.MinFeeMultiplier,
+					state.config().Node,
 					extensions::CreateExecutionConfiguration(state.pluginManager()),
 					state.timeSupplier(),
 					extensions::SubscriberToSink(state.transactionStatusSubscriber()),

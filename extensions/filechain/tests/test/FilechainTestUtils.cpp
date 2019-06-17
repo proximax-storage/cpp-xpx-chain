@@ -97,6 +97,8 @@ namespace catapult { namespace test {
 		pBlock->Height = Height(height);
 		pBlock->Difficulty = Difficulty(1 << 8);
 		pBlock->Timestamp = Timestamp(height * timeSpacing.millis());
+		pBlock->FeeInterest = 1;
+		pBlock->FeeInterestDenominator = 1;
 
 		blockWithAttributes.pBlock = std::move(pBlock);
 		return blockWithAttributes;

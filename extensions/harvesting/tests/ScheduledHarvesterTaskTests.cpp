@@ -38,14 +38,24 @@ namespace catapult { namespace harvesting {
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
-		model::BlockChainConfiguration CreateConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-			config.BlockTimeSmoothingFactor = 0;
-			config.MaxDifficultyBlocks = 60;
-			config.ImportanceGrouping = 123;
-			config.TotalChainImportance = test::Default_Total_Chain_Importance;
-			return config;
+		auto CreateConfiguration() {
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+			blockChainConfig.BlockTimeSmoothingFactor = 0;
+			blockChainConfig.MaxDifficultyBlocks = 60;
+			blockChainConfig.ImportanceGrouping = 123;
+			blockChainConfig.TotalChainImportance = test::Default_Total_Chain_Importance;
+
+			auto nodeConfig = config::NodeConfiguration::Uninitialized();
+			nodeConfig.FeeInterest = 1;
+			nodeConfig.FeeInterestDenominator = 2;
+
+			return config::LocalNodeConfiguration {
+				std::move(blockChainConfig),
+				std::move(nodeConfig),
+				config::LoggingConfiguration::Uninitialized(),
+				config::UserConfiguration::Uninitialized()
+			};
 		}
 
 		struct TaskOptionsWithCounters : ScheduledHarvesterTaskOptions {
@@ -124,12 +134,12 @@ namespace catapult { namespace harvesting {
 		struct HarvesterContext {
 			HarvesterContext(const model::Block& lastBlock)
 					: Config(CreateConfiguration())
-					, Cache(test::CreateEmptyCatapultCache(Config))
+					, Cache(test::CreateEmptyCatapultCache(Config.BlockChain))
 					, Accounts(1) {
 				AddDifficultyInfo(Cache, lastBlock);
 			}
 
-			model::BlockChainConfiguration Config;
+			config::LocalNodeConfiguration Config;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
 		};

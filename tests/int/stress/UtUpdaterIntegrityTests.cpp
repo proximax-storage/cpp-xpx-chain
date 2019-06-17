@@ -47,6 +47,14 @@ namespace catapult { namespace chain {
 			return test::CreatePluginManager(config);
 		}
 
+		auto CreateConfiguration() {
+			auto config = config::NodeConfiguration::Uninitialized();
+			config.MinFeeMultiplier = BlockFeeMultiplier(0);
+			config.FeeInterest = 1;
+			config.FeeInterestDenominator = 1;
+			return config;
+		}
+
 		// region UpdaterTestContext
 
 		class UpdaterTestContext {
@@ -58,7 +66,7 @@ namespace catapult { namespace chain {
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
-							BlockFeeMultiplier(0),
+							CreateConfiguration(),
 							extensions::CreateExecutionConfiguration(*m_pPluginManager),
 							[]() { return Default_Time; },
 							[](const auto&, const auto&, auto) {},

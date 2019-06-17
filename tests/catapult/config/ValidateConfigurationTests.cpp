@@ -34,7 +34,10 @@ namespace catapult { namespace config {
 		const char* Valid_Private_Key = "3485D98EFD7EB07ABAFCFD1A157D89DE2796A95E780813C0258AF3F5F84ED8CB";
 
 		auto CreateValidNodeConfiguration() {
-			return NodeConfiguration::Uninitialized();
+			auto nodeConfig = NodeConfiguration::Uninitialized();
+			nodeConfig.FeeInterest = 1;
+			nodeConfig.FeeInterestDenominator = 1;
+			return nodeConfig;
 		}
 
 		auto CreateValidUserConfiguration() {

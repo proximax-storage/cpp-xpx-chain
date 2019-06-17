@@ -50,6 +50,8 @@ namespace catapult { namespace mongo { namespace storages {
 					auto transactions = test::GenerateRandomTransactions(10);
 					m_blocks.push_back(test::GenerateRandomBlockWithTransactions(test::MakeConst(transactions)));
 					m_blocks.back()->Height = Height(i);
+					m_blocks.back()->FeeInterest = 1;
+					m_blocks.back()->FeeInterestDenominator = 1;
 					m_blockElements.emplace_back(test::BlockToBlockElement(*m_blocks.back(), test::GenerateRandomData<Hash256_Size>()));
 				}
 

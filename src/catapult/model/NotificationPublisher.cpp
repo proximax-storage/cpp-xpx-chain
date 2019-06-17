@@ -121,7 +121,9 @@ namespace catapult { namespace model {
 						transaction.EntityVersion()));
 
 				// raise transaction notifications
-				auto fee = pBlockHeader ? CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction) : transaction.MaxFee;
+				auto fee = pBlockHeader ?
+					CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction, pBlockHeader->FeeInterest, pBlockHeader->FeeInterestDenominator)
+					: transaction.MaxFee;
 				sub.notify(TransactionNotification(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionFeeNotification(transaction.Size, fee, transaction.MaxFee));
 				sub.notify(BalanceDebitNotification(transaction.Signer, m_feeMosaicId, fee));

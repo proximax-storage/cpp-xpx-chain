@@ -80,12 +80,12 @@ namespace catapult { namespace harvesting {
 			const auto& utCache = state.utCache();
 			auto strategy = state.config().Node.TransactionSelectionStrategy;
 			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
-			HarvestingUtFacadeFactory utFacadeFactory(cache, blockChainConfig, executionConfig);
+			HarvestingUtFacadeFactory utFacadeFactory(cache, state.config(), executionConfig);
 
 			auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, utCache);
 			auto pHarvesterTask = std::make_shared<ScheduledHarvesterTask>(
 					CreateHarvesterTaskOptions(state),
-					std::make_unique<Harvester>(cache, blockChainConfig, unlockedAccounts, blockGenerator));
+					std::make_unique<Harvester>(cache, state.config(), unlockedAccounts, blockGenerator));
 
 			auto minHarvesterBalance = blockChainConfig.MinHarvesterBalance;
 			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, minHarvesterBalance]() {

@@ -59,6 +59,9 @@ namespace catapult { namespace model {
 		LOAD_CHAIN_PROPERTY(BlockGenerationTargetTime);
 		LOAD_CHAIN_PROPERTY(BlockTimeSmoothingFactor);
 
+		LOAD_CHAIN_PROPERTY(GreedDelta);
+		LOAD_CHAIN_PROPERTY(GreedExponent);
+
 		LOAD_CHAIN_PROPERTY(ImportanceGrouping);
 		LOAD_CHAIN_PROPERTY(MaxRollbackBlocks);
 		LOAD_CHAIN_PROPERTY(MaxDifficultyBlocks);
@@ -89,7 +92,7 @@ namespace catapult { namespace model {
 			numPluginProperties += iter->second.size();
 		}
 
-		utils::VerifyBagSizeLte(bag, 18 + numPluginProperties);
+		utils::VerifyBagSizeLte(bag, 20 + numPluginProperties);
 		return config;
 	}
 

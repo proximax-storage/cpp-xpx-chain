@@ -283,6 +283,8 @@ namespace catapult { namespace model {
 		// Arrange:
 		auto pBlock = test::GenerateEmptyRandomBlock();
 		pBlock->FeeMultiplier = BlockFeeMultiplier(3);
+		pBlock->FeeInterest = 1;
+		pBlock->FeeInterestDenominator = 1;
 
 		// Act:
 		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock);
@@ -296,6 +298,8 @@ namespace catapult { namespace model {
 		// Arrange:
 		auto pBlock = test::GenerateRandomBlockWithTransactions(test::ConstTransactions{ test::GenerateRandomTransactionWithSize(123) });
 		pBlock->FeeMultiplier = BlockFeeMultiplier(3);
+		pBlock->FeeInterest = 1;
+		pBlock->FeeInterestDenominator = 1;
 
 		// Act:
 		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock);
@@ -313,6 +317,8 @@ namespace catapult { namespace model {
 			test::GenerateRandomTransactionWithSize(552)
 		});
 		pBlock->FeeMultiplier = BlockFeeMultiplier(3);
+		pBlock->FeeInterest = 1;
+		pBlock->FeeInterestDenominator = 1;
 
 		// Act:
 		auto blockTransactionsInfo = CalculateBlockTransactionsInfo(*pBlock);

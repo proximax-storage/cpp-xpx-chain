@@ -47,14 +47,14 @@ namespace catapult { namespace chain {
 		Impl(
 				cache::UtCache& transactionsCache,
 				const cache::CatapultCache& confirmedCatapultCache,
-				BlockFeeMultiplier minFeeMultiplier,
+				const config::NodeConfiguration& config,
 				const ExecutionConfiguration& executionConfig,
 				const TimeSupplier& timeSupplier,
 				const FailedTransactionSink& failedTransactionSink,
 				const Throttle& throttle)
 				: m_transactionsCache(transactionsCache)
 				, m_detachedCatapultCache(confirmedCatapultCache)
-				, m_minFeeMultiplier(minFeeMultiplier)
+				, m_config(config)
 				, m_executionConfig(executionConfig)
 				, m_timeSupplier(timeSupplier)
 				, m_failedTransactionSink(failedTransactionSink)
@@ -137,7 +137,7 @@ namespace catapult { namespace chain {
 				if (!filter(utInfo))
 					continue;
 
-				auto minTransactionFee = model::CalculateTransactionFee(m_minFeeMultiplier, entity);
+				auto minTransactionFee = model::CalculateTransactionFee(m_config.MinFeeMultiplier, entity, m_config.FeeInterest, m_config.FeeInterestDenominator);
 				if (entity.MaxFee < minTransactionFee) {
 					// don't log reverted transactions that could have been included by harvester with lower min fee multiplier
 					if (TransactionSource::New == transactionSource) {
@@ -196,7 +196,7 @@ namespace catapult { namespace chain {
 	private:
 		cache::UtCache& m_transactionsCache;
 		cache::RelockableDetachedCatapultCache m_detachedCatapultCache;
-		BlockFeeMultiplier m_minFeeMultiplier;
+		config::NodeConfiguration m_config;
 		ExecutionConfiguration m_executionConfig;
 		TimeSupplier m_timeSupplier;
 		FailedTransactionSink m_failedTransactionSink;
@@ -206,7 +206,7 @@ namespace catapult { namespace chain {
 	UtUpdater::UtUpdater(
 			cache::UtCache& transactionsCache,
 			const cache::CatapultCache& confirmedCatapultCache,
-			BlockFeeMultiplier minFeeMultiplier,
+			const config::NodeConfiguration& config,
 			const ExecutionConfiguration& executionConfig,
 			const TimeSupplier& timeSupplier,
 			const FailedTransactionSink& failedTransactionSink,
@@ -214,7 +214,7 @@ namespace catapult { namespace chain {
 			: m_pImpl(std::make_unique<Impl>(
 					transactionsCache,
 					confirmedCatapultCache,
-					minFeeMultiplier,
+					config,
 					executionConfig,
 					timeSupplier,
 					failedTransactionSink,

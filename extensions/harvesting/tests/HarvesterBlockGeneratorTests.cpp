@@ -37,20 +37,30 @@ namespace catapult { namespace harvesting {
 
 		// region test context
 
-		auto CreateBlockChainConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ShouldEnableVerifiableState = true;
-			config.ShouldEnableVerifiableReceipts = true;
-			config.CurrencyMosaicId = MosaicId(123);
-			config.ImportanceGrouping = 1;
-			return config;
+		auto CreateConfiguration() {
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.ShouldEnableVerifiableState = true;
+			blockChainConfig.ShouldEnableVerifiableReceipts = true;
+			blockChainConfig.CurrencyMosaicId = MosaicId(123);
+			blockChainConfig.ImportanceGrouping = 1;
+
+			auto nodeConfig = config::NodeConfiguration::Uninitialized();
+			nodeConfig.FeeInterest = 1;
+			nodeConfig.FeeInterestDenominator = 1;
+
+			return config::LocalNodeConfiguration {
+				std::move(blockChainConfig),
+				std::move(nodeConfig),
+				config::LoggingConfiguration::Uninitialized(),
+				config::UserConfiguration::Uninitialized()
+			};
 		}
 
 		class TestContext {
 		public:
 			explicit TestContext(model::TransactionSelectionStrategy strategy)
-					: m_config(CreateBlockChainConfiguration())
-					, m_catapultCache(test::CreateEmptyCatapultCache(m_config, CreateCacheConfiguration(m_dbDirGuard.name())))
+					: m_config(CreateConfiguration())
+					, m_catapultCache(test::CreateEmptyCatapultCache(m_config.BlockChain, CreateCacheConfiguration(m_dbDirGuard.name())))
 					, m_utFacadeFactory(m_catapultCache, m_config, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(0))
 					, m_generator(CreateHarvesterBlockGenerator(strategy, m_utFacadeFactory, *m_pUtCache)) {
@@ -95,7 +105,7 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			model::BlockChainConfiguration m_config;
+			config::LocalNodeConfiguration m_config;
 			cache::CatapultCache m_catapultCache;
 			test::MockExecutionConfiguration m_executionConfig;
 			HarvestingUtFacadeFactory m_utFacadeFactory;

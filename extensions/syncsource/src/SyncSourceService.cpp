@@ -48,8 +48,8 @@ namespace catapult { namespace syncsource {
 			config.PushBlockCallback = extensions::CreateBlockPushEntityCallback(state.hooks());
 
 			config.ChainScoreSupplier = [&chainScore = state.score()]() { return chainScore.get(); };
-			config.UtRetriever = [&cache = state.utCache()](auto minFeeMultiplier, const auto& shortHashes) {
-				return cache.view().unknownTransactions(minFeeMultiplier, shortHashes);
+			config.UtRetriever = [&cache = state.utCache(), &nodeConfig = state.config().Node](auto minFeeMultiplier, const auto& shortHashes) {
+				return cache.view().unknownTransactions(minFeeMultiplier, shortHashes, nodeConfig.FeeInterest, nodeConfig.FeeInterestDenominator);
 			};
 
 			SetConfig(config.BlocksHandlerConfig, state.config().Node);

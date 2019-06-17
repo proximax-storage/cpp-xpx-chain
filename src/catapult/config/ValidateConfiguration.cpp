@@ -38,11 +38,20 @@ namespace catapult { namespace config {
 			if (2 * config.ImportanceGrouping <= config.MaxRollbackBlocks)
 				CATAPULT_THROW_VALIDATION_ERROR("ImportanceGrouping must be greater than MaxRollbackBlocks / 2");
 		}
+
+		void ValidateConfiguration(const NodeConfiguration& config) {
+			if (config.FeeInterestDenominator == 0)
+				CATAPULT_THROW_VALIDATION_ERROR("FeeInterestDenominator must be greater than zero");
+
+			if (config.FeeInterestDenominator < config.FeeInterest)
+				CATAPULT_THROW_VALIDATION_ERROR("FeeInterestDenominator must be not less than FeeInterest");
+		}
 	}
 
 	void ValidateConfiguration(const LocalNodeConfiguration& config) {
 		ValidateConfiguration(config.User);
 		ValidateConfiguration(config.BlockChain);
+		ValidateConfiguration(config.Node);
 	}
 
 #undef CATAPULT_THROW_VALIDATION_ERROR

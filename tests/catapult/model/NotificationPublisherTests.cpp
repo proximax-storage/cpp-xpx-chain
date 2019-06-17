@@ -160,6 +160,8 @@ namespace catapult { namespace model {
 
 			auto pBlock = test::GenerateRandomBlockWithTransactions(transactions);
 			test::FillWithRandomData(pBlock->Signer);
+			pBlock->FeeInterest = 1;
+			pBlock->FeeInterestDenominator = 1;
 			return pBlock;
 		}
 	}
@@ -333,6 +335,8 @@ namespace catapult { namespace model {
 		pTransaction->MaxFee = Amount(765);
 		BlockHeader blockHeader;
 		blockHeader.FeeMultiplier = BlockFeeMultiplier(4);
+		blockHeader.FeeInterest = 1;
+		blockHeader.FeeInterestDenominator = 1;
 
 		// Act:
 		PublishOne<TransactionFeeNotification>(WeakEntityInfo(*pTransaction, hash, blockHeader), [transactionSize = pTransaction->Size](

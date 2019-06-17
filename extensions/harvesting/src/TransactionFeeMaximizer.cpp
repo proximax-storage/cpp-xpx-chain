@@ -38,7 +38,7 @@ namespace catapult { namespace harvesting {
 
 		const auto& transaction = *transactionInfo.pEntity;
 		m_current.FeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(transaction);
-		m_current.BaseFee = m_current.BaseFee + model::CalculateTransactionFee(BlockFeeMultiplier(1), transaction);
+		m_current.BaseFee = m_current.BaseFee + model::CalculateTransactionFee(BlockFeeMultiplier(1), transaction, 1, 1);
 		++m_current.NumTransactions;
 
 		if (0 != m_best.NumTransactions && lastFeeMultiplier < m_current.FeeMultiplier)

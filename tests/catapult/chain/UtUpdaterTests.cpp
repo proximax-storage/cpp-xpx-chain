@@ -55,6 +55,14 @@ namespace catapult { namespace chain {
 			return test::CreateCatapultCacheWithMarkerAccount(Default_Height);
 		}
 
+		auto CreateConfiguration(const BlockFeeMultiplier& minFeeMultiplier) {
+			auto config = config::NodeConfiguration::Uninitialized();
+			config.MinFeeMultiplier = minFeeMultiplier;
+			config.FeeInterest = 1;
+			config.FeeInterestDenominator = 1;
+			return config;
+		}
+
 		// region functional helpers
 
 		auto ConcatIds(const std::vector<size_t>& lhs, const std::vector<size_t>& rhs, size_t rhsOffset) {
@@ -121,7 +129,7 @@ namespace catapult { namespace chain {
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
-							minFeeMultiplier,
+							CreateConfiguration(minFeeMultiplier),
 							m_executionConfig.Config,
 							[]() { return Default_Time; },
 							[this](const auto& transaction, const auto& hash, auto result) {
@@ -535,7 +543,7 @@ namespace catapult { namespace chain {
 		std::array<uint32_t, 10> feeMultiples{ 10, 20, 19, 30, 21, 40, 30, 10, 10, 20 };
 		for (auto& utInfo : transactionData.UtInfos) {
 			auto multiplier = BlockFeeMultiplier(feeMultiples[i++]);
-			const_cast<Amount&>(utInfo.pEntity->MaxFee) = model::CalculateTransactionFee(multiplier, *utInfo.pEntity);
+			const_cast<Amount&>(utInfo.pEntity->MaxFee) = model::CalculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1);
 		}
 
 		// Sanity:

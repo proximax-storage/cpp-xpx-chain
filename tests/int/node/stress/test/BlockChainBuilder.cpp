@@ -226,6 +226,8 @@ namespace catapult { namespace test {
 		auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), transactions);
 		pBlock->Timestamp = timestamp;
 		pBlock->Difficulty = difficulty;
+		pBlock->FeeInterest = 1;
+		pBlock->FeeInterestDenominator = 2;
 
 		pBlock->BlockReceiptsHash = m_blockReceiptsHashCalculator(*pBlock);
 		m_pStateHashCalculator->updateStateHash(*pBlock);
@@ -253,6 +255,8 @@ namespace catapult { namespace test {
 			blockHitContext.Signer = keyPair.publicKey();
 			blockHitContext.Difficulty = difficulty;
 			blockHitContext.Height = context.BlockHeight + Height(1);
+			blockHitContext.FeeInterest = 1;
+			blockHitContext.FeeInterestDenominator = 2;
 
 			if (hitPredicate(blockHitContext))
 				return keyPair;

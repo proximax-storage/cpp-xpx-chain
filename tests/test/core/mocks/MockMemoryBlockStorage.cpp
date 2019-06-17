@@ -49,6 +49,8 @@ namespace catapult { namespace mocks {
 			model::Block block;
 			block.Size = sizeof(model::BlockHeader);
 			block.Height = Height(i);
+			block.FeeInterest = 1;
+			block.FeeInterestDenominator = 1;
 			pStorage->saveBlock(test::BlockToBlockElement(block));
 		}
 

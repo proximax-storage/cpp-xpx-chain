@@ -58,6 +58,9 @@ namespace catapult { namespace utils {
 	/// Tries to parse \a str into a uint64_t (\a parsedValue).
 	bool TryParseValue(const std::string& str, uint64_t& parsedValue);
 
+	/// Tries to parse \a str into a double (\a parsedValue).
+	bool TryParseValue(const std::string& str, double& parsedValue);
+
 	/// Tries to parse \a str into an Amount (\a parsedValue).
 	bool TryParseValue(const std::string& str, Amount& parsedValue);
 

@@ -15,6 +15,9 @@ harvestingMosaicId = 0x0DC6'7FBE'1CAD'29E3
 blockGenerationTargetTime = 15s
 blockTimeSmoothingFactor = 3000
 
+greedDelta = 0.5
+greedExponent = 2
+
 # maxTransactionLifetime / blockGenerationTargetTime
 importanceGrouping = 5760
 maxRollbackBlocks = 360

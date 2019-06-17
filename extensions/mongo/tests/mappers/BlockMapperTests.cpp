@@ -93,6 +93,8 @@ namespace catapult { namespace mongo { namespace mappers {
 	TRAITS_BASED_RECEIPTS_TEST(CanMapBlockWithTransactions) {
 		// Arrange:
 		auto pBlock = test::GenerateBlockWithTransactionsAtHeight(5, Height(123));
+		pBlock->FeeInterest = 1;
+		pBlock->FeeInterestDenominator = 1;
 		auto totalFee = model::CalculateBlockTransactionsInfo(*pBlock).TotalFee;
 
 		// Assert:

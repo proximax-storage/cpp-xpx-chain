@@ -341,6 +341,8 @@ namespace catapult { namespace filechain {
 				// Arrange:
 				test::TempDirectoryGuard tempDataDirectory;
 				auto config = test::CreateStateHashEnabledLocalNodeConfiguration(tempDataDirectory.name());
+				const_cast<uint32_t&>(config.Node.FeeInterest) = 1;
+				const_cast<uint32_t&>(config.Node.FeeInterestDenominator) = 1;
 				TestContext context(test::CreatePluginManager(config), tempDataDirectory.name());
 				FixNemesisBlockStateHash(context);
 

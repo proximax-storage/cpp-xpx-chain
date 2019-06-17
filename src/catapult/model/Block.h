@@ -63,6 +63,14 @@ namespace catapult { namespace model {
 
 		/// Public key of optional beneficiary designated by harvester.
 		Key BeneficiaryPublicKey;
+
+		/// The part of the transaction fee harvester is willing to get.
+		/// From 0 up to FeeInterestDenominator. The customer gets
+		/// (FeeInterest / FeeInterestDenominator)'th part of the maximum transaction fee.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
 	};
 
 	/// Binary layout for a block.
