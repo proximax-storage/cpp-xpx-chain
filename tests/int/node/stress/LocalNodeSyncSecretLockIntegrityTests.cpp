@@ -512,12 +512,18 @@ namespace catapult { namespace local {
 				test::SecretLockTransactionsBuilder transactionsBuilder2(m_accounts);
 				transactionsBuilder2.addTransfer(0, 1, Amount(1));
 
-				auto betterBlocks = createBlocks(transactionsBuilder2, builder, allBlocks, utils::TimeSpan::FromSeconds(58));
-				allBlocks.push_back(betterBlocks[0]);
+				{
+					auto stateHashCalculator = m_context.createStateHashCalculator();
+					test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
+					builder = builder.createChainedBuilder(stateHashCalculator, *allBlocks.back());
+					builder.setBlockTimeInterval(utils::TimeSpan::FromSeconds(58));
+					auto betterBlocks = builder.asBlockChain(transactionsBuilder2);
+					allBlocks.push_back(betterBlocks[0]);
 
-				test::PushEntities(m_connection, ionet::PacketType::Push_Block, worseBlocks);
-				test::PushEntities(m_connection, ionet::PacketType::Push_Block, betterBlocks);
-				test::WaitForHeightAndElements(m_context, Height(4), 3, 1);
+					test::PushEntities(m_connection, ionet::PacketType::Push_Block, worseBlocks);
+					test::PushEntities(m_connection, ionet::PacketType::Push_Block, betterBlocks);
+					test::WaitForHeightAndElements(m_context, Height(4), 3, 1);
+				}
 
 				// Sanity: the cache has expected balances
 				test::AssertCurrencyBalances(m_accounts, m_context.localNode().cache(), {
@@ -527,28 +533,28 @@ namespace catapult { namespace local {
 				});
 
 				// - readd secret lock
-				auto stateHashCalculator = m_context.createStateHashCalculator();
-				test::SeedStateHashCalculator(stateHashCalculator, allBlocks);
-				auto builder2 = builder.createChainedBuilder(stateHashCalculator, *allBlocks.back());
+				auto stateHashCalculator2 = m_context.createStateHashCalculator();
+				test::SeedStateHashCalculator(stateHashCalculator2, allBlocks);
+				auto builder3 = builder.createChainedBuilder(stateHashCalculator2, *allBlocks.back());
 
 				test::SecretLockTransactionsBuilder transactionsBuilder3(m_accounts);
 				transactionsBuilder3.addSecretLock(2, 3, Amount(100'000), Lock_Duration, secretProof);
-				auto blocks2 = builder2.asBlockChain(transactionsBuilder3);
+				auto blocks2 = builder3.asBlockChain(transactionsBuilder3);
 				test::PushEntities(m_connection, ionet::PacketType::Push_Block, blocks2);
 				test::WaitForHeightAndElements(m_context, Height(5), 4, 1);
 
 				// - add empty blocks up to height where first added secret lock would expire next block
 				for (auto i = 0u; i < 8; ++i)
-					allBlocks.push_back(pushBlockAndWait(builder2, Height(6u + i)));
+					allBlocks.push_back(pushBlockAndWait(builder3, Height(6u + i)));
 
 				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 0));
 
 				// Act: add a single block, secret lock should not expire
-				allBlocks.push_back(pushBlockAndWait(builder2, Height(14)));
+				allBlocks.push_back(pushBlockAndWait(builder3, Height(14)));
 				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 0));
 
 				// - add another block, secret lock will expire
-				allBlocks.push_back(pushBlockAndWait(builder2, Height(15)));
+				allBlocks.push_back(pushBlockAndWait(builder3, Height(15)));
 				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 0));
 
 				return stateHashes;

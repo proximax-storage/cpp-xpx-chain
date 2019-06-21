@@ -251,8 +251,7 @@ namespace catapult { namespace test {
 			size_t expectedOriginal,
 			size_t expectedAdded,
 			size_t expectedRemoved,
-			size_t expectedCopied,
-			size_t expectedUninserted) {
+			size_t expectedCopied) {
 		// Act:
 		auto deltas = deltaWrapper->deltas();
 
@@ -262,18 +261,11 @@ namespace catapult { namespace test {
 				<< " (O " << deltaWrapper.originalSize()
 				<< ", A " << deltas.Added.size()
 				<< ", R " << deltas.Removed.size()
-				<< ", C " << deltas.Copied.size()
-				<< ", U " << deltas.Uninserted.size() << ")";
-		auto original = deltaWrapper.originalSize();
-		EXPECT_EQ(expectedOriginal, original);
-		auto Added =  deltas.Added.size();
-		EXPECT_EQ(expectedAdded, Added);
-		auto Removed =  deltas.Removed.size();
-		EXPECT_EQ(expectedRemoved, Removed);
-		auto Copied =  deltas.Copied.size();
-		EXPECT_EQ(expectedCopied, Copied);
-		auto Uninserted =  deltas.Uninserted.size();
-		EXPECT_EQ(expectedUninserted, Uninserted);
+				<< ", C " << deltas.Copied.size() << ")";
+		EXPECT_EQ(expectedOriginal, deltaWrapper.originalSize());
+		EXPECT_EQ(expectedAdded, deltas.Added.size());
+		EXPECT_EQ(expectedRemoved, deltas.Removed.size());
+		EXPECT_EQ(expectedCopied, deltas.Copied.size());
 	}
 
 	/// Asserts that the delta sizes in \a delta and the original size in \a set have the expected values
@@ -285,8 +277,7 @@ namespace catapult { namespace test {
 			size_t expectedOriginal,
 			size_t expectedAdded,
 			size_t expectedRemoved,
-			size_t expectedCopied,
-			size_t expectedUninserted) {
+			size_t expectedCopied) {
 		// Act:
 		auto deltas = delta.deltas();
 
@@ -296,18 +287,11 @@ namespace catapult { namespace test {
 				<< " (O " << set.size()
 				<< ", A " << deltas.Added.size()
 				<< ", R " << deltas.Removed.size()
-				<< ", C " << deltas.Copied.size()
-				<< ", U " << deltas.Uninserted.size() << ")";
-		auto original = set.size();
-		EXPECT_EQ(expectedOriginal, original);
-		auto Added =  deltas.Added.size();
-		EXPECT_EQ(expectedAdded, Added);
-		auto Removed =  deltas.Removed.size();
-		EXPECT_EQ(expectedRemoved, Removed);
-		auto Copied =  deltas.Copied.size();
-		EXPECT_EQ(expectedCopied, Copied);
-		auto Uninserted =  deltas.Uninserted.size();
-		EXPECT_EQ(expectedUninserted, Uninserted);
+				<< ", C " << deltas.Copied.size() << ")";
+		EXPECT_EQ(expectedOriginal, set.size());
+		EXPECT_EQ(expectedAdded, deltas.Added.size());
+		EXPECT_EQ(expectedRemoved, deltas.Removed.size());
+		EXPECT_EQ(expectedCopied, deltas.Copied.size());
 	}
 
 	/// Utilities when testing base set deltas.

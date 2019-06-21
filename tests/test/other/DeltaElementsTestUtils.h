@@ -57,16 +57,13 @@ namespace catapult { namespace test {
 			/// Removed elements.
 			SetType Removed;
 
-			/// Uninserted elements.
-			SetType Uninserted;
-
 			/// Copied elements.
 			SetType Copied;
 
 		public:
 			/// Returns a delta elements around the sub sets.
 			auto deltas() const {
-				return deltaset::DeltaElements<SetType>(Added, Removed, Uninserted, Copied);
+				return deltaset::DeltaElements<SetType>(Added, Removed, Copied);
 			}
 		};
 

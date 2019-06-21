@@ -143,9 +143,9 @@ namespace catapult { namespace test {
 			// Assert:
 			AssertMarkedElements(
 					delta,
+					{ TTraits::MakeId(110), TTraits::MakeId(111), TTraits::MakeId(112) },
 					{},
-					{},
-					{ TTraits::MakeId(108), TTraits::MakeId(109) });
+					{ TTraits::MakeId(108), TTraits::MakeId(109), TTraits::MakeId(110), TTraits::MakeId(111), TTraits::MakeId(112) });
 		}
 
 		template<typename TDelta>

@@ -32,13 +32,14 @@ namespace catapult { namespace observers {
 				state::AccountState& accountState,
 				NotifyMode notifyMode,
 				const model::Mosaic& feeMosaic,
-				ObserverStatementBuilder& statementBuilder) {
+				ObserverStatementBuilder& statementBuilder,
+				const Height& height) {
 			if (NotifyMode::Rollback == notifyMode) {
-				accountState.Balances.debit(feeMosaic.MosaicId, feeMosaic.Amount);
+				accountState.Balances.debit(feeMosaic.MosaicId, feeMosaic.Amount, height);
 				return;
 			}
 
-			accountState.Balances.credit(feeMosaic.MosaicId, feeMosaic.Amount);
+			accountState.Balances.credit(feeMosaic.MosaicId, feeMosaic.Amount, height);
 
 			// add fee receipt
 			auto receiptType = model::Receipt_Type_Harvest_Fee;
@@ -52,7 +53,7 @@ namespace catapult { namespace observers {
 			auto& accountState = accountStateIter.get();
 
 			if (state::AccountType::Remote != accountState.AccountType) {
-				ApplyFee(accountState, context.Mode, feeMosaic, context.StatementBuilder());
+				ApplyFee(accountState, context.Mode, feeMosaic, context.StatementBuilder(), context.Height);
 				return;
 			}
 
@@ -62,7 +63,7 @@ namespace catapult { namespace observers {
 			// this check is merely a precaution and will only fire if there is a bug that has corrupted links
 			RequireLinkedRemoteAndMainAccounts(accountState, linkedAccountState);
 
-			ApplyFee(linkedAccountState, context.Mode, feeMosaic, context.StatementBuilder());
+			ApplyFee(linkedAccountState, context.Mode, feeMosaic, context.StatementBuilder(), context.Height);
 		}
 
 		bool ShouldShareFees(const Key& signer, const Key& harvesterBeneficiary, uint8_t harvestBeneficiaryPercentage) {

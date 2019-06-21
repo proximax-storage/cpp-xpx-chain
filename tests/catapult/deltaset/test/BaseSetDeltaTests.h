@@ -43,7 +43,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			EXPECT_TRUE(pDelta->empty());
-			AssertDeltaSizes(pDelta, 3, 0, 3, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 3, 0);
 		}
 
 		static void AssertEmptyReturnsFalseWhenANonOriginalElementWasInserted() {
@@ -57,7 +57,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			EXPECT_FALSE(pDelta->empty());
-			AssertDeltaSizes(pDelta, 3, 1, 3, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 1, 3, 0);
 		}
 
 		// endregion
@@ -81,7 +81,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			EXPECT_NE(pBaseElement, pDeltaElement);
-			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 1, 0);
+			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 1);
 
 			EXPECT_EQ(2u, pDelta->generationId(TTraits::ToKey(element)));
 		}
@@ -103,7 +103,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			EXPECT_EQ(pBaseElement, pDeltaElement);
-			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 0, 0);
+			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 0);
 
 			EXPECT_EQ(0u, pDelta->generationId(TTraits::ToKey(element)));
 		}
@@ -138,7 +138,7 @@ namespace catapult { namespace test {
 
 			// Sanity: the original (base) set always returns const elements
 			EXPECT_TRUE(std::is_const<decltype(Unwrap(pSet->find(TTraits::ToKey(element)).get()))>());
-			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 1, 0);
+			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 1);
 
 			EXPECT_EQ(2u, pDelta->generationId(TTraits::ToKey(element)));
 		}
@@ -159,7 +159,7 @@ namespace catapult { namespace test {
 
 			// Sanity: the original (base) set always returns const elements
 			EXPECT_TRUE(std::is_const<decltype(Unwrap(pSet->find(TTraits::ToKey(element)).get()))>());
-			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 0, 0);
+			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 0);
 
 			EXPECT_EQ(0u, pDelta->generationId(TTraits::ToKey(element)));
 		}
@@ -189,7 +189,7 @@ namespace catapult { namespace test {
 			}
 
 			// Assert:
-			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 1, 0);
+			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 1);
 
 			EXPECT_EQ(2u + 3u, pDelta->generationId(key));
 		}
@@ -217,7 +217,7 @@ namespace catapult { namespace test {
 			}
 
 			// Assert:
-			AssertDeltaSizes(*pSet, *pDelta, 0, 1, 0, 0, 0);
+			AssertDeltaSizes(*pSet, *pDelta, 0, 1, 0, 0);
 
 			EXPECT_EQ(2u + 3u, pDelta->generationId(key));
 		}
@@ -246,7 +246,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			EXPECT_EQ(pBaseElement, pDeltaElement);
-			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 0, 0);
+			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 0);
 
 			EXPECT_EQ(0u, pDelta->generationId(TTraits::ToKey(element)));
 		}
@@ -262,7 +262,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			EXPECT_TRUE(std::is_const<decltype(Unwrap(MakeConst(pDelta)->find(TTraits::ToKey(element)).get()))>());
-			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 0, 0);
+			AssertDeltaSizes(*pSet, *pDelta, 1, 0, 0, 0);
 		}
 
 	private:
@@ -288,7 +288,7 @@ namespace catapult { namespace test {
 
 			// Assert: note that (non-const) find will make copies of all elements
 			AssertBatchFind<typename decltype(pDelta)::DeltaType>(*pDelta);
-			AssertDeltaSizes(pDelta, 4, 2, 1, TTraits::IsElementMutable() ? 3 : 0, 1);
+			AssertDeltaSizes(pDelta, 4, 3, 2, TTraits::IsElementMutable() ? 3 : 0);
 		}
 
 		static void AssertBaseSetDeltaCanAccessAllElementsThroughFindConst() {
@@ -297,7 +297,7 @@ namespace catapult { namespace test {
 
 			// Assert:
 			AssertBatchFind<const typename decltype(pDelta)::DeltaType>(*pDelta);
-			AssertDeltaSizes(pDelta, 4, 2, 1, TTraits::IsElementMutable() ? 1 : 0, 1);
+			AssertDeltaSizes(pDelta, 4, 3, 2, TTraits::IsElementMutable() ? 1 : 0);
 		}
 
 		// endregion
@@ -327,7 +327,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(2u, pDelta->generationId(TTraits::ToKey(element)));
 
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 0, 1, 0, 0, 0);
+			AssertDeltaSizes(pDelta, 0, 1, 0, 0);
 		}
 
 		static void AssertCanInsertWithSuppliedParameters() {
@@ -351,7 +351,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(2u, pDelta->generationId(TTraits::ToKey(expectedElements[1])));
 
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 0, 2, 0, 0, 0);
+			AssertDeltaSizes(pDelta, 0, 2, 0, 0);
 		}
 
 	private:
@@ -382,7 +382,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(expectedGenerationId, pDelta->generationId(TTraits::ToKey(element)));
 
 			EXPECT_EQ(expectedValue, pCurrent->Dummy);
-			AssertDeltaSizes(pDelta, 0, 1, 0, 0, 0);
+			AssertDeltaSizes(pDelta, 0, 1, 0, 0);
 		}
 
 	public:
@@ -419,7 +419,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(expectedGenerationId, pDelta->generationId(TTraits::CreateKey("TestElement", 1)));
 
 			EXPECT_EQ(777u, pUpdatedElement->Dummy);
-			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0);
 		}
 
 	public:
@@ -467,7 +467,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(expectedGenerationId, pDelta->generationId(TTraits::ToKey(element)));
 
 			EXPECT_EQ(expectedValue, pCurrent->Dummy);
-			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0);
 		}
 
 	public:
@@ -514,7 +514,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(expectedGenerationId, pDelta->generationId(TTraits::ToKey(element)));
 
 			EXPECT_EQ(expectedValue, pCurrent->Dummy);
-			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0);
 		}
 
 	public:
@@ -547,7 +547,7 @@ namespace catapult { namespace test {
 
 			EXPECT_EQ(3u, pDelta->size());
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 0, 3, 0, 0, 0);
+			AssertDeltaSizes(pDelta, 0, 3, 0, 0);
 		}
 
 	public:
@@ -585,7 +585,7 @@ namespace catapult { namespace test {
 
 			EXPECT_EQ(3u, pDelta->size());
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 0, TTraits::IsElementMutable() ? 1 : 0);
 		}
 
 	public:
@@ -634,12 +634,12 @@ namespace catapult { namespace test {
 			auto insertResult2 = pDelta->insert(insertElement2);
 
 			// Assert:
-			EXPECT_EQ(deltaset::InsertResult::Inserted, insertResult2);
+			EXPECT_EQ(deltaset::InsertResult::Unremoved, insertResult2);
 			EXPECT_EQ(3u, pDelta->generationId(insertElementKey));
 
 			auto pCurrent = pDelta->find(insertElementKey).get();
 			EXPECT_EQ(expectedValue, pCurrent->Dummy);
-			AssertDeltaSizes(pDelta, 3, 1, 0, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 1, 0, 0);
 		}
 
 	public:
@@ -650,7 +650,7 @@ namespace catapult { namespace test {
 
 		static void AssertImmutableBaseSetDeltaCanAddRemoveAndReinsertElement() {
 			// Assert:
-			AssertCanAddRemoveAndReinsertElement(234);
+			AssertCanAddRemoveAndReinsertElement(123); // immutable will always revert to first added element
 		}
 
 		// endregion
@@ -677,7 +677,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(2u, pDelta->generationId(TTraits::ToKey(element)));
 
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 3, 0, 1, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 1, 0);
 		}
 
 		static void AssertCanSubsequentlyRemoveExistingElements() {
@@ -705,7 +705,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(2u, pDelta->generationId(TTraits::CreateKey("TestElement", 4)));
 
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 5, 0, 3, 0, 0);
+			AssertDeltaSizes(pDelta, 5, 0, 3, 0);
 		}
 
 		static void AssertCanRemovePreviouslyInsertedElement() {
@@ -730,10 +730,11 @@ namespace catapult { namespace test {
 			EXPECT_EQ(2u, pDelta->generationId(TTraits::CreateKey("MyTestElement", 234)));
 
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 3, 0, 0, 0, 1);
+			AssertDeltaSizes(pDelta, 3, 1, 1, 0);
 
 			// - there is record of element being both added and removed
-			EXPECT_EQ(TTraits::CreateElement("MyTestElement", 234), *TTraits::ToPointerFromStorage(*pDelta->deltas().Uninserted.cbegin()));
+			EXPECT_EQ(TTraits::CreateElement("MyTestElement", 234), *TTraits::ToPointerFromStorage(*pDelta->deltas().Added.cbegin()));
+			EXPECT_EQ(TTraits::CreateElement("MyTestElement", 234), *TTraits::ToPointerFromStorage(*pDelta->deltas().Removed.cbegin()));
 		}
 
 		static void AssertCanRemoveMutatedElement() {
@@ -758,7 +759,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(2u, pDelta->generationId(TTraits::CreateKey("TestElement", 1)));
 
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 3, 0, 1, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 1, 0);
 		}
 
 		static void AssertRemovingNonexistentElementDoesNotRemoveAnyElement() {
@@ -778,7 +779,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(0u, pDelta->generationId(TTraits::ToKey(element)));
 
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 3, 0, 0, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 0, 0);
 		}
 
 		static void AssertRemoveOfAlreadyRemovedElementIsNullOperation() {
@@ -808,7 +809,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(1u, pDelta->generationId(TTraits::CreateKey("TestElement", 1))); // first remove happens before incrementGenerationId
 
 			TTraits::AssertContents(*pDelta, expectedElements);
-			AssertDeltaSizes(pDelta, 3, 0, 1, 0, 0);
+			AssertDeltaSizes(pDelta, 3, 0, 1, 0);
 		}
 
 		// endregion
@@ -820,13 +821,13 @@ namespace catapult { namespace test {
 			auto pDelta = CreateSetForBatchFindTests();
 
 			// Sanity:
-			AssertDeltaSizes(pDelta, 4, 2, 1, TTraits::IsElementMutable() ? 1 : 0, 1);
+			AssertDeltaSizes(pDelta, 4, 3, 2, TTraits::IsElementMutable() ? 1 : 0);
 
 			// Act:
 			pDelta->reset();
 
 			// Assert:
-			AssertDeltaSizes(pDelta, 4, 0, 0, 0, 0);
+			AssertDeltaSizes(pDelta, 4, 0, 0, 0);
 		}
 
 		// endregion
