@@ -36,6 +36,7 @@
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
 
@@ -61,15 +62,20 @@ namespace catapult { namespace harvesting {
 		}
 
 		auto CreateConfiguration() {
-			auto config = test::CreatePrototypicalBlockChainConfiguration();
-			config.MinHarvesterBalance = Amount(500'000);
-			config.ShouldEnableVerifiableState = true;
-			return config;
+			test::MutableCatapultConfiguration config;
+
+			config.BlockChain = test::CreatePrototypicalBlockChainConfiguration();
+			config.BlockChain.MinHarvesterBalance = Amount(500'000);
+			config.BlockChain.ShouldEnableVerifiableState = true;
+
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 2;
+
+			return config.ToConst();
 		}
 
-		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory) {
+		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const model::BlockChainConfiguration& config) {
 			auto cacheId = cache::HashCache::Id;
-			auto config = CreateConfiguration();
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
@@ -87,17 +93,17 @@ namespace catapult { namespace harvesting {
 		public:
 			HarvesterTestContext()
 					: m_pPluginManager(CreatePluginManager())
-					, m_config(test::CreatePrototypicalCatapultConfiguration(CreateConfiguration(), ""))
+					, m_config(CreateConfiguration())
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
-					, m_cache(CreateCatapultCache(m_dbDirGuard.name()))
+					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_config.BlockChain))
 					, m_unlockedAccounts(100) {
 				// create the harvester
 				auto executionConfig = extensions::CreateExecutionConfiguration(*m_pPluginManager);
-				HarvestingUtFacadeFactory utFacadeFactory(m_cache, CreateConfiguration(), executionConfig);
+				HarvestingUtFacadeFactory utFacadeFactory(m_cache, m_config, executionConfig);
 
 				auto strategy = model::TransactionSelectionStrategy::Oldest;
 				auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, m_transactionsCache);
-				m_pHarvester = std::make_unique<Harvester>(m_cache, m_config.BlockChain, Key(), m_unlockedAccounts, blockGenerator);
+				m_pHarvester = std::make_unique<Harvester>(m_cache, m_config, Key(), m_unlockedAccounts, blockGenerator);
 			}
 
 		public:
@@ -212,7 +218,7 @@ namespace catapult { namespace harvesting {
 				model::TransactionInfo nextTransactionInfo;
 				{
 					auto utCacheView = context.transactionsCache().view();
-					auto pTransaction = utCacheView.unknownTransactions(BlockFeeMultiplier(0), utils::ShortHashesSet())[0];
+					auto pTransaction = utCacheView.unknownTransactions(BlockFeeMultiplier(0), utils::ShortHashesSet(), 1, 1)[0];
 					auto transactionHash = model::CalculateHash(*pTransaction, test::GetNemesisGenerationHash());
 					nextTransactionInfo = model::TransactionInfo(std::move(pTransaction), transactionHash);
 				}

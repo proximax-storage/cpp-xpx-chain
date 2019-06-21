@@ -78,6 +78,14 @@ namespace catapult { namespace config {
 		/// Minimum fee multiplier of transactions to propagate and include in blocks.
 		BlockFeeMultiplier MinFeeMultiplier;
 
+		/// The part of the transaction fee harvester is willing to get.
+		/// From 0 up to FeeInterestDenominator. The customer gets
+		/// (FeeInterest / FeeInterestDenominator)'th part of the maximum transaction fee.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
+
 		/// Transaction selection strategy used for syncing and harvesting unconfirmed transactions.
 		model::TransactionSelectionStrategy TransactionSelectionStrategy;
 

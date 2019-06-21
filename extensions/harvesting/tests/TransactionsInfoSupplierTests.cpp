@@ -23,6 +23,7 @@
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
@@ -35,10 +36,15 @@ namespace catapult { namespace harvesting {
 
 		// region test context
 
-		auto CreateBlockChainConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ImportanceGrouping = 1;
-			return config;
+		auto CreateConfiguration() {
+			test::MutableCatapultConfiguration config;
+
+			config.BlockChain.ImportanceGrouping = 1;
+
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 2;
+
+			return config.ToConst();
 		}
 
 		void AssertConsistent(const TransactionsInfo& transactionsInfo, const HarvestingUtFacade& facade) {
@@ -56,7 +62,8 @@ namespace catapult { namespace harvesting {
 		public:
 			explicit TestContext(TransactionSelectionStrategy strategy, uint32_t utCacheSize = 0)
 					: m_catapultCache(test::CreateCatapultCacheWithMarkerAccount(Height(7)))
-					, m_utFacadeFactory(m_catapultCache, CreateBlockChainConfiguration(), m_executionConfig.Config)
+					, m_config(CreateConfiguration())
+					, m_utFacadeFactory(m_catapultCache, m_config, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(utCacheSize))
 					, m_supplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache))
 			{}
@@ -126,6 +133,7 @@ namespace catapult { namespace harvesting {
 		private:
 			cache::CatapultCache m_catapultCache;
 			test::MockExecutionConfiguration m_executionConfig;
+			config::CatapultConfiguration m_config;
 			HarvestingUtFacadeFactory m_utFacadeFactory;
 			std::unique_ptr<cache::MemoryUtCache> m_pUtCache;
 			TransactionsInfoSupplier m_supplier;

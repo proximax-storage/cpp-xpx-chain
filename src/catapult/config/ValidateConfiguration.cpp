@@ -53,12 +53,21 @@ namespace catapult { namespace config {
 			if (blockChainConfig.InitialCurrencyAtomicUnits > totalCurrency || totalCurrency > blockChainConfig.MaxMosaicAtomicUnits)
 				CATAPULT_THROW_VALIDATION_ERROR("sum of InitialCurrencyAtomicUnits and inflation must not exceed MaxMosaicAtomicUnits");
 		}
+
+		void ValidateConfiguration(const NodeConfiguration& config) {
+			if (config.FeeInterestDenominator == 0)
+				CATAPULT_THROW_VALIDATION_ERROR("FeeInterestDenominator must be greater than zero");
+
+			if (config.FeeInterestDenominator < config.FeeInterest)
+				CATAPULT_THROW_VALIDATION_ERROR("FeeInterestDenominator must be not less than FeeInterest");
+		}
 	}
 
 	void ValidateConfiguration(const CatapultConfiguration& config) {
 		ValidateConfiguration(config.User);
 		ValidateConfiguration(config.BlockChain);
 		ValidateConfiguration(config.BlockChain, config.Inflation);
+		ValidateConfiguration(config.Node);
 	}
 
 #undef CATAPULT_THROW_VALIDATION_ERROR

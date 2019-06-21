@@ -80,6 +80,8 @@ namespace catapult { namespace test {
 			model::BlockStatementBuilder blockStatementBuilder;
 
 			// 1. add harvest fee receipt
+			nemesisBlock.FeeInterest = 1;
+			nemesisBlock.FeeInterestDenominator = 1;
 			auto totalFee = model::CalculateBlockTransactionsInfo(nemesisBlock).TotalFee;
 
 			auto feeMosaicId = Default_Currency_Mosaic_Id;

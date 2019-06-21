@@ -79,6 +79,8 @@ namespace catapult { namespace extensions {
 			}
 
 			blockSignerPair.pBlock = CreateBlock(model::PreviousBlockContext(), Network_Identifier, nemesisPublicKey, transactions);
+			blockSignerPair.pBlock->FeeInterest = 1;
+			blockSignerPair.pBlock->FeeInterestDenominator = 1;
 			return blockSignerPair;
 		}
 

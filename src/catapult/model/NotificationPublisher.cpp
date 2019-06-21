@@ -97,7 +97,7 @@ namespace catapult { namespace model {
 
 				// raise a block notification
 				auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
-				BlockNotification blockNotification(block.Signer, block.Beneficiary, block.Timestamp, block.Difficulty);
+				BlockNotification blockNotification(block.Signer, block.Beneficiary, block.Timestamp, block.Difficulty, block.FeeInterest, block.FeeInterestDenominator);
 				blockNotification.NumTransactions = blockTransactionsInfo.Count;
 				blockNotification.TotalFee = blockTransactionsInfo.TotalFee;
 
@@ -125,7 +125,9 @@ namespace catapult { namespace model {
 						attributes.MaxVersion));
 
 				// raise transaction notifications
-				auto fee = pBlockHeader ? CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction) : transaction.MaxFee;
+				auto fee = pBlockHeader ?
+					CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction, pBlockHeader->FeeInterest, pBlockHeader->FeeInterestDenominator)
+					: transaction.MaxFee;
 				sub.notify(TransactionNotification(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionDeadlineNotification(transaction.Deadline, attributes.MaxLifetime));
 				sub.notify(TransactionFeeNotification(transaction.Size, fee, transaction.MaxFee));

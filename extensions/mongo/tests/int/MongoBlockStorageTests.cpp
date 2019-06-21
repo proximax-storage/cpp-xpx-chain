@@ -323,6 +323,8 @@ namespace catapult { namespace mongo {
 			test::FillWithRandomData({ pRawData + sizeof(uint32_t), sizeof(model::BlockHeader) - sizeof(uint32_t) });
 			pBlock->Height = Height(1);
 			pBlock->Difficulty = RandomClamped<Difficulty>();
+			pBlock->FeeInterest = 1;
+			pBlock->FeeInterestDenominator = 1;
 			return pBlock;
 		}
 
@@ -336,6 +338,8 @@ namespace catapult { namespace mongo {
 				for (auto i = 1u; i <= topHeight; ++i) {
 					auto transactions = test::GenerateRandomTransactions(10);
 					m_blocks.push_back(test::GenerateBlockWithTransactions(transactions));
+					m_blocks.back()->FeeInterest = 1;
+					m_blocks.back()->FeeInterestDenominator = 1;
 					m_blocks.back()->Height = Height(i);
 					auto blockElement = test::BlockToBlockElement(*m_blocks.back(), test::GenerateRandomByteArray<Hash256>());
 					AddStatements(blockElement, { 0, 1, 2, 3});

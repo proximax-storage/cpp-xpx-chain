@@ -41,6 +41,10 @@ namespace catapult { namespace config {
 			blockChainConfig.ImportanceGrouping = 1;
 			blockChainConfig.MaxMosaicAtomicUnits = Amount(1000);
 
+			auto& nodeConfig = config.Node;
+			nodeConfig.FeeInterest = 1;
+			nodeConfig.FeeInterestDenominator = 1;
+
 			auto& inflationConfig = config.Inflation;
 			inflationConfig.InflationCalculator.add(Height(1), Amount(1));
 			inflationConfig.InflationCalculator.add(Height(100), Amount());

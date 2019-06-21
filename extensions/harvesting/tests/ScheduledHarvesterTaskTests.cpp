@@ -25,6 +25,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 
@@ -38,14 +39,19 @@ namespace catapult { namespace harvesting {
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
-		model::BlockChainConfiguration CreateConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-			config.BlockTimeSmoothingFactor = 0;
-			config.MaxDifficultyBlocks = 60;
-			config.ImportanceGrouping = 123;
-			config.TotalChainImportance = test::Default_Total_Chain_Importance;
-			return config;
+		auto CreateConfiguration() {
+			test::MutableCatapultConfiguration config;
+
+			config.BlockChain.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+			config.BlockChain.BlockTimeSmoothingFactor = 0;
+			config.BlockChain.MaxDifficultyBlocks = 60;
+			config.BlockChain.ImportanceGrouping = 123;
+			config.BlockChain.TotalChainImportance = test::Default_Total_Chain_Importance;
+
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 2;
+
+			return config.ToConst();
 		}
 
 		struct TaskOptionsWithCounters : ScheduledHarvesterTaskOptions {
@@ -124,12 +130,12 @@ namespace catapult { namespace harvesting {
 		struct HarvesterContext {
 			HarvesterContext(const model::Block& lastBlock)
 					: Config(CreateConfiguration())
-					, Cache(test::CreateEmptyCatapultCache(Config))
+					, Cache(test::CreateEmptyCatapultCache(Config.BlockChain))
 					, Accounts(1) {
 				AddDifficultyInfo(Cache, lastBlock);
 			}
 
-			model::BlockChainConfiguration Config;
+			config::CatapultConfiguration Config;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
 		};

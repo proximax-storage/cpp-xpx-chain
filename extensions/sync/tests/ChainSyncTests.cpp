@@ -78,6 +78,8 @@ namespace catapult { namespace sync {
 			blockChainConfig.MaxBlockFutureTime = utils::TimeSpan::FromSeconds(10u);
 			blockChainConfig.MaxDifficultyBlocks = 4u;
 			blockChainConfig.BlockPruneInterval = 360u;
+			blockChainConfig.GreedDelta = 0.5;
+			blockChainConfig.GreedExponent = 2.0;
 			blockChainConfig.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 
 			auto nodeConfig = config::NodeConfiguration::Uninitialized();
@@ -85,6 +87,8 @@ namespace catapult { namespace sync {
 			nodeConfig.MaxChainBytesPerSyncAttempt = utils::FileSize::FromMegabytes(1u);
 			nodeConfig.BlockDisruptorSize = 4096u;
 			nodeConfig.TransactionDisruptorSize = 16384u;
+			nodeConfig.FeeInterest = 1u;
+			nodeConfig.FeeInterestDenominator = 1u;
 
 			return config::CatapultConfiguration{
 					std::move(blockChainConfig),
@@ -164,6 +168,8 @@ namespace catapult { namespace sync {
 						signer.publicKey(), transactions);
 				m_pLastBlock->Height = height;
 				m_pLastBlock->Timestamp = timestamp;
+				m_pLastBlock->FeeInterest = 1;
+				m_pLastBlock->FeeInterestDenominator = 1;
 				if (height.unwrap() == 1u)
 					m_pLastBlock->Difficulty = Difficulty{1000u};
 				else

@@ -39,11 +39,13 @@ namespace catapult { namespace model {
 				+ Hash256_Size // block transactions hash
 				+ Hash256_Size // block receipts hash
 				+ Hash256_Size // state hash
-				+ Key_Size; // beneficiary
+				+ Key_Size // beneficiary
+				+ sizeof(uint32_t) // fee interest
+				+ sizeof(uint32_t); // fee interest divisibility
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(BlockHeader));
-		EXPECT_EQ(104u + 188u, sizeof(BlockHeader));
+		EXPECT_EQ(104u + 196u, sizeof(BlockHeader));
 
 		EXPECT_EQ(sizeof(BlockHeader), sizeof(decltype(Block()))); // use decltype to bypass lint rule
 	}

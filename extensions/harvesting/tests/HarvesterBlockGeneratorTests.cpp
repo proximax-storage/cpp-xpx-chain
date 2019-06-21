@@ -26,6 +26,7 @@
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
@@ -37,20 +38,25 @@ namespace catapult { namespace harvesting {
 
 		// region test context
 
-		auto CreateBlockChainConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ShouldEnableVerifiableState = true;
-			config.ShouldEnableVerifiableReceipts = true;
-			config.CurrencyMosaicId = MosaicId(123);
-			config.ImportanceGrouping = 1;
-			return config;
+		auto CreateConfiguration() {
+			test::MutableCatapultConfiguration config;
+
+			config.BlockChain.ShouldEnableVerifiableState = true;
+			config.BlockChain.ShouldEnableVerifiableReceipts = true;
+			config.BlockChain.CurrencyMosaicId = MosaicId(123);
+			config.BlockChain.ImportanceGrouping = 1;
+
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 1;
+
+			return config.ToConst();
 		}
 
 		class TestContext {
 		public:
 			explicit TestContext(model::TransactionSelectionStrategy strategy)
-					: m_config(CreateBlockChainConfiguration())
-					, m_catapultCache(test::CreateEmptyCatapultCache(m_config, CreateCacheConfiguration(m_dbDirGuard.name())))
+					: m_config(CreateConfiguration())
+					, m_catapultCache(test::CreateEmptyCatapultCache(m_config.BlockChain, CreateCacheConfiguration(m_dbDirGuard.name())))
 					, m_utFacadeFactory(m_catapultCache, m_config, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(0))
 					, m_generator(CreateHarvesterBlockGenerator(strategy, m_utFacadeFactory, *m_pUtCache)) {
@@ -88,7 +94,7 @@ namespace catapult { namespace harvesting {
 				for (auto i = 0u; i < transactionSignerBalances.size(); ++i) {
 					auto balance = transactionSignerBalances[i];
 					const auto& signer = m_transactionInfos[i].pEntity->Signer;
-					accountStateCacheDelta.find(signer).get().Balances.credit(m_config.CurrencyMosaicId, balance);
+					accountStateCacheDelta.find(signer).get().Balances.credit(m_config.BlockChain.CurrencyMosaicId, balance);
 				}
 
 				return pCacheDelta->calculateStateHash(Cache_Height).StateHash;
@@ -113,7 +119,7 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			model::BlockChainConfiguration m_config;
+			config::CatapultConfiguration m_config;
 			cache::CatapultCache m_catapultCache;
 			test::MockExecutionConfiguration m_executionConfig;
 			HarvestingUtFacadeFactory m_utFacadeFactory;

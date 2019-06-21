@@ -60,6 +60,10 @@ namespace catapult { namespace validators {
 	/// - the block does not contain more than \a maxTransactions transactions
 	DECLARE_STATELESS_VALIDATOR(MaxTransactions, model::BlockNotification)(uint32_t maxTransactions);
 
+	/// A validator implementation that applies to all block notifications and validates that:
+	/// - the block has valid FeeInterest and FeeInterestDenominator
+	DECLARE_STATELESS_VALIDATOR(Greed, model::BlockNotification)();
+
 	// endregion
 
 	// region Transaction

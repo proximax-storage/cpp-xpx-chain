@@ -21,7 +21,6 @@
 #include "HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/ProcessingNotificationSubscriber.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/FeeUtils.h"
 
@@ -34,10 +33,10 @@ namespace catapult { namespace harvesting {
 		Impl(
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
-				const model::BlockChainConfiguration& blockChainConfig,
+				const config::CatapultConfiguration& config,
 				const chain::ExecutionConfiguration& executionConfig)
 				: m_blockTime(blockTime)
-				, m_blockChainConfig(blockChainConfig)
+				, m_config(config)
 				, m_executionConfig(executionConfig)
 				, m_cacheDetachableDelta(cache.createDetachableDelta())
 				, m_cacheDetachedDelta(m_cacheDetachableDelta.detach())
@@ -62,13 +61,16 @@ namespace catapult { namespace harvesting {
 		std::unique_ptr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
 			// 1. stitch block
 			auto pBlock = model::StitchBlock(blockHeader, transactions);
+			pBlock->FeeInterest = m_config.Node.FeeInterest;
+			pBlock->FeeInterestDenominator = m_config.Node.FeeInterestDenominator;
 
 			// 2. add back fee surpluses to accounts (skip cache lookup if no surplus)
 			auto& accountStateCache = m_pCacheDelta->sub<cache::AccountStateCache>();
 			for (const auto& transaction : pBlock->Transactions()) {
-				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(blockHeader.FeeMultiplier, transaction);
+				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(
+					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
 				if (Amount(0) != surplus)
-					accountStateCache.find(transaction.Signer).get().Balances.credit(m_blockChainConfig.CurrencyMosaicId, surplus, blockHeader.Height);
+					accountStateCache.find(transaction.Signer).get().Balances.credit(m_config.BlockChain.CurrencyMosaicId, surplus, blockHeader.Height);
 			}
 
 			// 3. execute block (using zero hash)
@@ -76,11 +78,11 @@ namespace catapult { namespace harvesting {
 				return nullptr;
 
 			// 4. update block fields
-			pBlock->StateHash = m_blockChainConfig.ShouldEnableVerifiableState
+			pBlock->StateHash = m_config.BlockChain.ShouldEnableVerifiableState
 					? m_pCacheDelta->calculateStateHash(height()).StateHash
 					: Hash256();
 
-			pBlock->BlockReceiptsHash = m_blockChainConfig.ShouldEnableVerifiableReceipts
+			pBlock->BlockReceiptsHash = m_config.BlockChain.ShouldEnableVerifiableReceipts
 					? model::CalculateMerkleHash(*m_blockStatementBuilder.build())
 					: Hash256();
 
@@ -97,8 +99,8 @@ namespace catapult { namespace harvesting {
 		bool process(const Processor& processor) {
 			// 1. prepare state
 			auto catapultState = state::CatapultState();
-			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), m_blockChainConfig.ImportanceGrouping);
-			auto observerState = m_blockChainConfig.ShouldEnableVerifiableReceipts
+			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), m_config.BlockChain.ImportanceGrouping);
+			auto observerState = m_config.BlockChain.ShouldEnableVerifiableReceipts
 					? observers::ObserverState(*m_pCacheDelta, catapultState, m_blockStatementBuilder)
 					: observers::ObserverState(*m_pCacheDelta, catapultState);
 
@@ -150,7 +152,7 @@ namespace catapult { namespace harvesting {
 
 	private:
 		Timestamp m_blockTime;
-		model::BlockChainConfiguration m_blockChainConfig;
+		const config::CatapultConfiguration& m_config;
 		chain::ExecutionConfiguration m_executionConfig;
 		cache::CatapultCacheDetachableDelta m_cacheDetachableDelta;
 		cache::CatapultCacheDetachedDelta m_cacheDetachedDelta;
@@ -165,9 +167,9 @@ namespace catapult { namespace harvesting {
 	HarvestingUtFacade::HarvestingUtFacade(
 			Timestamp blockTime,
 			const cache::CatapultCache& cache,
-			const model::BlockChainConfiguration& blockChainConfig,
+			const config::CatapultConfiguration& config,
 			const chain::ExecutionConfiguration& executionConfig)
-			: m_pImpl(std::make_unique<Impl>(blockTime, cache, blockChainConfig, executionConfig))
+			: m_pImpl(std::make_unique<Impl>(blockTime, cache, config, executionConfig))
 	{}
 
 	HarvestingUtFacade::~HarvestingUtFacade() = default;
@@ -219,15 +221,15 @@ namespace catapult { namespace harvesting {
 
 	HarvestingUtFacadeFactory::HarvestingUtFacadeFactory(
 			const cache::CatapultCache& cache,
-			const model::BlockChainConfiguration& blockChainConfig,
+			const config::CatapultConfiguration& config,
 			const chain::ExecutionConfiguration& executionConfig)
 			: m_cache(cache)
-			, m_blockChainConfig(blockChainConfig)
+			, m_config(config)
 			, m_executionConfig(executionConfig)
 	{}
 
 	std::unique_ptr<HarvestingUtFacade> HarvestingUtFacadeFactory::create(Timestamp blockTime) const {
-		return std::make_unique<HarvestingUtFacade>(blockTime, m_cache, m_blockChainConfig, m_executionConfig);
+		return std::make_unique<HarvestingUtFacade>(blockTime, m_cache, m_config, m_executionConfig);
 	}
 
 	// endregion
