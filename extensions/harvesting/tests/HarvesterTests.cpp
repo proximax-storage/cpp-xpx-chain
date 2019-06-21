@@ -86,8 +86,8 @@ namespace catapult { namespace harvesting {
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Network_Identifier;
-			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-			config.BlockTimeSmoothingFactor = 0;
+			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
+			config.BlockTimeSmoothingFactor = 3000;
 			config.MaxDifficultyBlocks = 60;
 			config.ImportanceGrouping = 123;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
@@ -103,6 +103,7 @@ namespace catapult { namespace harvesting {
 			HarvesterContext()
 					: Cache(test::CreateEmptyCatapultCache(CreateConfiguration()))
 					, KeyPairs(CreateKeyPairs(Num_Accounts))
+					, Beneficiary(test::GenerateRandomByteArray<Key>())
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts))
 					, pLastBlock(CreateBlock())
 					, LastBlockElement(test::BlockToBlockElement(*pLastBlock)) {
@@ -115,7 +116,7 @@ namespace catapult { namespace harvesting {
 				Cache.commit(Height(1));
 				UnlockAllAccounts(*pUnlockedAccounts, KeyPairs);
 
-				LastBlockElement.GenerationHash = test::GenerateRandomData<Hash256_Size>();
+				LastBlockElement.GenerationHash = test::GenerateRandomByteArray<GenerationHash>();
 			}
 
 		public:
@@ -134,7 +135,7 @@ namespace catapult { namespace harvesting {
 			std::unique_ptr<Harvester> CreateHarvester(
 					const model::BlockChainConfiguration& config,
 					const BlockGenerator& blockGenerator) {
-				return std::make_unique<Harvester>(Cache, config, *pUnlockedAccounts, blockGenerator);
+				return std::make_unique<Harvester>(Cache, config, Beneficiary, *pUnlockedAccounts, blockGenerator);
 			}
 
 		private:
@@ -147,6 +148,7 @@ namespace catapult { namespace harvesting {
 		public:
 			cache::CatapultCache Cache;
 			std::vector<KeyPair> KeyPairs;
+			Key Beneficiary;
 			std::vector<state::AccountState*> AccountStates;
 			std::unique_ptr<UnlockedAccounts> pUnlockedAccounts;
 			std::shared_ptr<model::Block> pLastBlock;
@@ -373,6 +375,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(model::MakeVersion(Network_Identifier, 3), pBlock->Version);
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
+			EXPECT_EQ(context.Beneficiary, pBlock->Beneficiary);
 			return true;
 		});
 	}

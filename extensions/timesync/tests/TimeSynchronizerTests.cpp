@@ -106,7 +106,7 @@ namespace catapult { namespace timesync {
 
 			void addHighValueAccounts(size_t count) {
 				for (auto i = 0u; i < count; ++i)
-					AddAccount(m_cache, test::GenerateRandomData<Key_Size>(), Importance(100'000));
+					AddAccount(m_cache, test::GenerateRandomByteArray<Key>(), Importance(100'000));
 			}
 
 		private:

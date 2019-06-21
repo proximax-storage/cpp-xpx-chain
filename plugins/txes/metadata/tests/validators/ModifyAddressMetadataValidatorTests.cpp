@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(ModifyAddressMetadata,)
 
 	namespace {
-		const Key Account_Public_Key = test::GenerateRandomData<Key_Size>();
+		const Key Account_Public_Key = test::GenerateRandomByteArray<Key>();
 		const Address Account_Address = model::PublicKeyToAddress(Account_Public_Key, model::NetworkIdentifier::Zero);
 
 		void PopulateCache(cache::CatapultCache& cache) {
@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailueWhenMetadataIdEquelToSignerButAccountNotExist) {
 		// Arrange:
-		auto publicKey = test::GenerateRandomData<Key_Size>();
+		auto publicKey = test::GenerateRandomByteArray<Key>();
 		auto accountAddress	= model::PublicKeyToAddress(publicKey, model::NetworkIdentifier::Zero);
 
 		// Act:
@@ -73,6 +73,6 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 				Failure_Metadata_Address_Modification_Not_Permitted,
 				extensions::CopyToUnresolvedAddress(Account_Address),
-				test::GenerateRandomData<Key_Size>());
+				test::GenerateRandomByteArray<Key>());
 	}
 }}

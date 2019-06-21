@@ -52,7 +52,7 @@ namespace catapult { namespace cache {
 			}
 		};
 
-		struct MetadataEntryModificationPolicy {
+		struct MetadataEntryModificationPolicy : public test::DeltaRemoveInsertModificationPolicy {
 			static void Modify(MetadataCacheDelta& delta, const state::MetadataEntry& metadataEntry) {
 				auto& metadataFromCache = delta.find(metadataEntry.metadataId()).get();
 				metadataFromCache.fields().push_back(state::MetadataField { "Key" , "Value", Height(0) });

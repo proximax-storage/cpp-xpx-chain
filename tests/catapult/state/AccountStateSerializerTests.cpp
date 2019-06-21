@@ -213,7 +213,7 @@ namespace catapult { namespace state {
 		void AssertCanSaveValueWithMosaics(size_t numMosaics, TAction action) {
 			// Arrange:
 			std::vector<uint8_t> buffer;
-			mocks::MockMemoryStream stream("", buffer);
+			mocks::MockMemoryStream stream(buffer);
 
 			// - create a random account state
 			auto originalAccountState = CreateRandomAccountState(numMosaics);
@@ -284,7 +284,7 @@ namespace catapult { namespace state {
 			auto buffer = CopyToBuffer(originalAccountState);
 
 			// Act: load the account state
-			mocks::MockMemoryStream stream("", buffer);
+			mocks::MockMemoryStream stream(buffer);
 			auto result = TTraits::Serializer::Load(stream);
 
 			// Assert:
@@ -315,7 +315,7 @@ namespace catapult { namespace state {
 
 		// - size the buffer one byte too small
 		buffer.resize(buffer.size() - TTraits::bufferPaddingSize(originalAccountState) - 1);
-		mocks::MockMemoryStream stream("", buffer);
+		mocks::MockMemoryStream stream(buffer);
 
 		// Act + Assert:
 		AssertCannotLoad<TTraits>(stream);

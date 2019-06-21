@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMosaicMetadata,)
 
 	namespace {
-		const Key Mosaic_Owner = test::GenerateRandomData<Key_Size>();
+		const Key Mosaic_Owner = test::GenerateRandomByteArray<Key>();
 		constexpr MosaicId Mosaic_Id = MosaicId(3);
 
 		void PopulateCache(cache::CatapultCache& cache) {
@@ -74,7 +74,7 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 				Failure_Metadata_Mosaic_Modification_Not_Permitted,
 				UnresolvedMosaicId(Mosaic_Id.unwrap()),
-				test::GenerateRandomData<Key_Size>());
+				test::GenerateRandomByteArray<Key>());
 	}
 
 	TEST(TEST_CLASS, FailueWhenMosaicNoExistButOwnerNotEquel) {
@@ -82,6 +82,6 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 				Failure_Metadata_Mosaic_Is_Not_Exist,
 				UnresolvedMosaicId(4),
-				test::GenerateRandomData<Key_Size>());
+				test::GenerateRandomByteArray<Key>());
 	}
 }}

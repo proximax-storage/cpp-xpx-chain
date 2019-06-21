@@ -22,11 +22,11 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS ModifyContractTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract, 3, 3)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract, 3, 3,)
 
 		CosignatoryModification GenerateModification(int index) {
 			return { ((index % 2) ? CosignatoryModificationType::Del : CosignatoryModificationType::Add),
-				 test::GenerateRandomData<Key_Size>() };
+				 test::GenerateRandomByteArray<Key>() };
 		}
 
 		template<typename TTraits>
@@ -59,7 +59,7 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Modify_Contract)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_Modify_Contract)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
@@ -117,12 +117,12 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3, false);
 		auto* pModification = pTransaction->ExecutorModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
 		pModification = pTransaction->VerifierModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
 
 		// Assert:
 		AssertNumNotifications<TTraits>(3, *pTransaction);
@@ -151,8 +151,8 @@ namespace catapult { namespace plugins {
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
 		pTransaction->DurationDelta = 1000;
-		pTransaction->Signer = test::GenerateRandomData<Key_Size>();
-		pTransaction->Hash = test::GenerateRandomData<Hash256_Size>();
+		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
+		pTransaction->Hash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -233,9 +233,9 @@ namespace catapult { namespace plugins {
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3, false);
 		auto* pModification = pTransaction->VerifierModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -316,7 +316,7 @@ namespace catapult { namespace plugins {
 			auto modificationTypes = GenerateRandomModificationTypeSequence(numAddModifications, numDelModifications);
 			auto* pModification = pTransaction->VerifierModificationsPtr();
 			for (auto modificationType : modificationTypes)
-				*pModification++ = { modificationType, test::GenerateRandomData<Key_Size>() };
+				*pModification++ = { modificationType, test::GenerateRandomByteArray<Key>() };
 
 			// Act:
 			test::PublishTransaction(*pPlugin, *pTransaction, sub);

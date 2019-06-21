@@ -46,7 +46,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanCalculateHit) {
 		// Arrange:
-		const Hash256 generationHash{ {
+		const GenerationHash generationHash{ {
 			0xF7, 0xF6, 0xF5, 0xF4, 0xF3, 0xF2, 0xF1, 0xF0,
 			0xE7, 0xE6, 0xE5, 0xE4, 0xE3, 0xE2, 0xE1, 0xE0,
 			0xD7, 0xD6, 0xD5, 0xD4, 0xD3, 0xD2, 0xD1, 0xD0,
@@ -62,7 +62,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanCalculateHitWhenGenerationHashIsZero) {
 		// Arrange:
-		const Hash256 generationHash{ {} };
+		const GenerationHash generationHash{ {} };
 
 		// Act:
 		auto hit = CalculateHit(generationHash);
@@ -73,7 +73,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanCalculateHitWhenGenerationHashIsMax) {
 		// Arrange:
-		const Hash256 generationHash{ {
+		const GenerationHash generationHash{ {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -301,7 +301,7 @@ namespace catapult { namespace chain {
 
 		std::unique_ptr<model::Block> CreateBlock(Height height, uint32_t timestampSeconds, uint32_t difficulty) {
 			auto pBlock = std::make_unique<model::Block>();
-			pBlock->Signer = test::GenerateRandomData<Hash256_Size>();
+			pBlock->Signer = test::GenerateRandomByteArray<Key>();
 			pBlock->Height = height;
 			pBlock->Difficulty = Difficulty(difficulty);
 			SetTimestampSeconds(*pBlock, timestampSeconds);
@@ -313,7 +313,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto pParent = CreateBlock(Height(10), 900, 0);
 		auto pCurrent = CreateBlock(Height(11), 1000, 50);
-		const Hash256 generationHash{ { 0xF7, 0xF6, 0xF5, 0xF4 } };
+		const GenerationHash generationHash{ { 0xF7, 0xF6, 0xF5, 0xF4 } };
 
 		Importance signerImportance = Importance(20000000);
 		BlockHitPredicateContext context(signerImportance);
@@ -335,7 +335,7 @@ namespace catapult { namespace chain {
 		BlockHitContext hitContext;
 		hitContext.GenerationHash = { { 0xF7, 0xF6, 0xF5, 0xF4 } };
 		hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(100);
-		hitContext.Signer = test::GenerateRandomData<Hash256_Size>();
+		hitContext.Signer = test::GenerateRandomByteArray<Key>();
 		hitContext.Difficulty = Difficulty(50 * 1'000'000'000'000);
 		hitContext.Height = Height(11);
 
@@ -360,7 +360,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto pParent = CreateBlock(Height(10), 1, 0);
 		auto pCurrent = CreateBlock(Height(11), 65537 * 641 + 1, 257 * 17 * 5 * 3);
-		const Hash256 generationHash{ {
+		const GenerationHash generationHash{ {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF,
@@ -392,7 +392,7 @@ namespace catapult { namespace chain {
 			0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF
 		} };
 		hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(65537 * 641);
-		hitContext.Signer = test::GenerateRandomData<Hash256_Size>();
+		hitContext.Signer = test::GenerateRandomByteArray<Key>();
 		hitContext.Difficulty = Difficulty(257 * 17 * 5 * 3);
 		hitContext.Height = Height(11);
 
@@ -417,7 +417,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto pParent = CreateBlock(Height(10), 900, 0);
 		auto pCurrent = CreateBlock(Height(11), 1000, 50);
-		const Hash256 generationHash{ { 0xF7, 0xF6, 0xF5, 0xF4 } };
+		const GenerationHash generationHash{ { 0xF7, 0xF6, 0xF5, 0xF4 } };
 
 		Importance signerImportance = Importance(1000);
 		BlockHitPredicateContext context(signerImportance);
@@ -439,7 +439,7 @@ namespace catapult { namespace chain {
 		BlockHitContext hitContext;
 		hitContext.GenerationHash = { { 0xF7, 0xF6, 0xF5, 0xF4 } };
 		hitContext.ElapsedTime = utils::TimeSpan::FromSeconds(100);
-		hitContext.Signer = test::GenerateRandomData<Hash256_Size>();
+		hitContext.Signer = test::GenerateRandomByteArray<Key>();
 		hitContext.Difficulty = Difficulty(50);
 		hitContext.Height = Height(11);
 

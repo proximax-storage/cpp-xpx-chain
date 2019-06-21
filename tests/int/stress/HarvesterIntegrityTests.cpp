@@ -23,9 +23,9 @@
 #include "extensions/harvesting/src/HarvestingUtFacadeFactory.h"
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
 #include "plugins/services/hashcache/src/plugins/MemoryHashCacheSystem.h"
-#include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
+#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
@@ -34,6 +34,7 @@
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -51,15 +52,17 @@ namespace catapult { namespace harvesting {
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
 			// include memory hash cache system to better trigger the race condition under test
-			auto config = test::CreateLocalNodeBlockChainConfiguration();
+			auto config = test::CreatePrototypicalBlockChainConfiguration();
+			config.MinHarvesterBalance = Amount(500'000);
 			config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
-			auto pPluginManager = test::CreatePluginManager(config);
+			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
 			plugins::RegisterMemoryHashCacheSystem(*pPluginManager);
 			return pPluginManager;
 		}
 
 		auto CreateConfiguration() {
-			auto config = test::CreateLocalNodeBlockChainConfiguration();
+			auto config = test::CreatePrototypicalBlockChainConfiguration();
+			config.MinHarvesterBalance = Amount(500'000);
 			config.ShouldEnableVerifiableState = true;
 			return config;
 		}
@@ -84,7 +87,7 @@ namespace catapult { namespace harvesting {
 		public:
 			HarvesterTestContext()
 					: m_pPluginManager(CreatePluginManager())
-					, m_config(test::CreateLocalNodeConfiguration(CreateConfiguration(), ""))
+					, m_config(test::CreatePrototypicalCatapultConfiguration(CreateConfiguration(), ""))
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
 					, m_cache(CreateCatapultCache(m_dbDirGuard.name()))
 					, m_unlockedAccounts(100) {
@@ -94,7 +97,7 @@ namespace catapult { namespace harvesting {
 
 				auto strategy = model::TransactionSelectionStrategy::Oldest;
 				auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, m_transactionsCache);
-				m_pHarvester = std::make_unique<Harvester>(m_cache, m_config.BlockChain, m_unlockedAccounts, blockGenerator);
+				m_pHarvester = std::make_unique<Harvester>(m_cache, m_config.BlockChain, Key(), m_unlockedAccounts, blockGenerator);
 			}
 
 		public:
@@ -129,12 +132,13 @@ namespace catapult { namespace harvesting {
 			void prepareAndUnlockSenderAccount(crypto::KeyPair&& keyPair) {
 				// 1. seed an account with an initial currency balance of N and harvesting balance of 10'000'000
 				auto currencyMosaicId = test::Default_Currency_Mosaic_Id;
+				auto harvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
 				auto cacheDelta = m_cache.createDelta();
 				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
 				accountStateCacheDelta.addAccount(keyPair.publicKey(), Height(1));
 				auto accountStateIter = accountStateCacheDelta.find(keyPair.publicKey());
-				accountStateIter.get().Balances.track(currencyMosaicId);
-				accountStateIter.get().Balances.credit(currencyMosaicId, Amount(1000000000000));
+				accountStateIter.get().Balances.credit(currencyMosaicId, Amount(GetNumIterations()));
+				accountStateIter.get().Balances.credit(harvestingMosaicId, Amount(10'000'000));
 				m_cache.commit(Height(1));
 
 				// 2. unlock the account
@@ -143,13 +147,13 @@ namespace catapult { namespace harvesting {
 
 			void prepareSenderAccountAndTransactions(crypto::KeyPair&& keyPair, Timestamp deadline) {
 				// 1. seed the UT cache with N txes
-				auto recipient = test::GenerateRandomData<Key_Size>();
+				auto recipient = test::GenerateRandomByteArray<Key>();
 				for (auto i = 0u; i < GetNumIterations(); ++i) {
 					auto pTransaction = test::CreateTransferTransaction(keyPair, recipient, Amount(1));
 					pTransaction->MaxFee = Amount(0);
 					pTransaction->Deadline = deadline;
 
-					auto transactionHash = model::CalculateHash(*pTransaction);
+					auto transactionHash = model::CalculateHash(*pTransaction, test::GetNemesisGenerationHash());
 					model::TransactionInfo transactionInfo(std::move(pTransaction), transactionHash);
 					m_transactionsCache.modifier().add(std::move(transactionInfo));
 				}
@@ -180,7 +184,7 @@ namespace catapult { namespace harvesting {
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
-			config::LocalNodeConfiguration m_config;
+			config::CatapultConfiguration m_config;
 			cache::MemoryUtCache m_transactionsCache;
 			cache::CatapultCache m_cache;
 			UnlockedAccounts m_unlockedAccounts;
@@ -188,6 +192,70 @@ namespace catapult { namespace harvesting {
 		};
 
 		// endregion
+	}
+
+	NO_STRESS_TEST(TEST_CLASS, HarvestIsThreadSafeWhenUtCacheIsChanging) {
+		// Arrange:
+		HarvesterTestContext context;
+		auto pLastBlock = context.createLastBlock();
+		auto nextBlockTimestamp = pLastBlock->Timestamp + Timestamp(10'000);
+
+		// - seed a sender account and unconfirmed transactions
+		context.prepareSenderAccountAndTransactions(test::GenerateKeyPair(), nextBlockTimestamp);
+
+		// Act:
+		// - simulate tx confirmation (block dispatcher) by confirming one tx at a time
+		boost::thread_group threads;
+		threads.create_thread([&context] {
+			for (auto i = 0u; i < GetNumIterations(); ++i) {
+				// 1. get next transaction info from UT cache
+				model::TransactionInfo nextTransactionInfo;
+				{
+					auto utCacheView = context.transactionsCache().view();
+					auto pTransaction = utCacheView.unknownTransactions(BlockFeeMultiplier(0), utils::ShortHashesSet())[0];
+					auto transactionHash = model::CalculateHash(*pTransaction, test::GetNemesisGenerationHash());
+					nextTransactionInfo = model::TransactionInfo(std::move(pTransaction), transactionHash);
+				}
+
+				// 2. simulate application
+				context.execute(nextTransactionInfo);
+				test::Sleep(5);
+
+				// 3. remove it from ut cache
+				{
+					auto utCacheModifier = context.transactionsCache().modifier();
+					utCacheModifier.remove(nextTransactionInfo.EntityHash);
+				}
+			}
+		});
+
+		// - simulate harvester by harvesting blocks one tx at a time
+		auto numHarvests = 0u;
+		auto numHarvestAttempts = 0u;
+		auto previousBlockElement = test::BlockToBlockElement(*pLastBlock);
+		threads.create_thread([&context, &numHarvests, &numHarvestAttempts, &previousBlockElement] {
+			auto harvestTimestamp = previousBlockElement.Block.Timestamp + Timestamp(std::numeric_limits<int64_t>::max());
+			for (;;) {
+				auto pHarvestedBlock = context.harvester().harvest(previousBlockElement, harvestTimestamp);
+
+				++numHarvestAttempts;
+				if (pHarvestedBlock)
+					++numHarvests;
+
+				if (0 == context.transactionsCache().view().size())
+					break;
+			}
+		});
+
+		// - wait for all threads
+		threads.join_all();
+
+		// Assert: all blocks were harvested (harvesting takes precedence) and all transactions were processed
+		CATAPULT_LOG(debug) << numHarvests << "/" << numHarvestAttempts << " blocks harvested";
+
+		auto cacheView = context.cache().createView();
+		EXPECT_EQ(numHarvests, numHarvestAttempts);
+		EXPECT_EQ(GetNumIterations(), cacheView.sub<cache::HashCache>().size());
 	}
 
 	NO_STRESS_TEST(TEST_CLASS, HarvestIsThreadSafeWhenBlockDifficultyCacheIsChanging) {

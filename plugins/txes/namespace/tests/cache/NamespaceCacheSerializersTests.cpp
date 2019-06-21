@@ -64,10 +64,13 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializePartialValue) {
 		// Arrange:
-		auto buffer = std::vector<uint64_t>{ 1, 11 };
+		std::vector<uint8_t> buffer{
+			1, 0, 0, 0, 0, 0, 0, 0, // path elements
+			11, 0, 0, 0, 0, 0, 0, 0 // id
+		};
 
 		// Act:
-		auto ns = Serializer::DeserializeValue({ reinterpret_cast<const uint8_t*>(buffer.data()), buffer.size() * sizeof(uint64_t) });
+		auto ns = Serializer::DeserializeValue(buffer);
 
 		// Assert:
 		ASSERT_EQ(1u, ns.path().size());
@@ -76,10 +79,15 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializeFullValue) {
 		// Arrange:
-		auto buffer = std::vector<uint64_t>{ 3, 11, 7, 21 };
+		std::vector<uint8_t> buffer{
+			3, 0, 0, 0, 0, 0, 0, 0, // path elements
+			11, 0, 0, 0, 0, 0, 0, 0, // id
+			7, 0, 0, 0, 0, 0, 0, 0, // id
+			21, 0, 0, 0, 0, 0, 0, 0, // id
+		};
 
 		// Act:
-		auto ns = Serializer::DeserializeValue({ reinterpret_cast<const uint8_t*>(buffer.data()), buffer.size() * sizeof(uint64_t) });
+		auto ns = Serializer::DeserializeValue(buffer);
 
 		// Assert:
 		ASSERT_EQ(3u, ns.path().size());

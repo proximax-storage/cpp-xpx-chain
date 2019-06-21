@@ -29,7 +29,7 @@ namespace catapult { namespace state {
 
     TEST(TEST_CLASS, CanCreateAddressMetadataEntry) {
         // Arrange:
-        auto pubKey = test::GenerateRandomData<Key_Size>();
+        auto pubKey = test::GenerateRandomByteArray<Key>();
         auto address = model::PublicKeyToAddress(pubKey, Network_Identifier);
         std::vector<uint8_t> buffer{address.size()};
         std::copy(address.begin(), address.end(), std::back_inserter(buffer));

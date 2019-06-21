@@ -28,7 +28,7 @@ namespace catapult { namespace plugins {
                     }
                 }}));
 
-                PluginManager manager(config, StorageConfiguration());
+                PluginManager manager(config, StorageConfiguration(), config::InflationConfiguration::Uninitialized());
                 RegisterMetadataSubsystem(manager);
 
                 // Act:

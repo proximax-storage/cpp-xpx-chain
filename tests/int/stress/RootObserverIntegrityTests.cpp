@@ -66,9 +66,9 @@ namespace catapult { namespace extensions {
 		class TestContext {
 		public:
 			explicit TestContext(uint32_t numAccounts)
-					: m_pPluginManager(test::CreatePluginManager(CreateBlockChainConfiguration(numAccounts)))
+					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateBlockChainConfiguration(numAccounts)))
 					, m_cache(m_pPluginManager->createCache())
-					, m_specialAccountKey(test::GenerateRandomData<Key_Size>()) {
+					, m_specialAccountKey(test::GenerateRandomByteArray<Key>()) {
 				// register mock transaction plugin so that BalanceTransferNotifications are produced and observed
 				// (MockTransaction Publish XORs recipient address, so XOR address resolver is required
 				// for proper roundtripping or else test will fail)
@@ -226,8 +226,8 @@ namespace catapult { namespace extensions {
 				// if there are transactions, add them to the block
 				auto transactionsIter = m_heightToTransactions.find(height);
 				auto pBlock = m_heightToTransactions.end() == transactionsIter
-							  ? test::GenerateEmptyRandomBlock()
-							  : test::GenerateRandomBlockWithTransactions(transactionsIter->second);
+						? test::GenerateEmptyRandomBlock()
+						: test::GenerateBlockWithTransactions(transactionsIter->second);
 				pBlock->Height = height;
 				pBlock->FeeMultiplier = BlockFeeMultiplier(0);
 

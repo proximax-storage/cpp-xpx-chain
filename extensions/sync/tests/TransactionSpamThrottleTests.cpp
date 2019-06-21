@@ -20,9 +20,9 @@
 
 #include "sync/src/TransactionSpamThrottle.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/ImportanceHeight.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -45,7 +45,7 @@ namespace catapult { namespace sync {
 		}
 
 		Key AddAccount(cache::AccountStateCacheDelta& delta, Importance importance) {
-			auto key = test::GenerateRandomData<Key_Size>();
+			auto key = test::GenerateRandomByteArray<Key>();
 			delta.addAccount(key, Height(1));
 			auto& accountState = delta.find(key).get();
 			accountState.Balances.track(test::Default_Harvesting_Mosaic_Id);

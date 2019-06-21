@@ -14,7 +14,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanCreateContractEntry) {
 		// Act:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ContractEntry(key);
 
 		// Assert:
@@ -23,7 +23,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetStart) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ContractEntry(key);
 
 		// Act:
@@ -35,7 +35,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetDuration) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ContractEntry(key);
 
 		// Act:
@@ -47,12 +47,12 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetHashs) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ContractEntry(key);
 
 		// Act:
-		auto hash1 = test::GenerateRandomData<Hash256_Size>();
-		auto hash2 = test::GenerateRandomData<Hash256_Size>();
+		auto hash1 = test::GenerateRandomByteArray<Hash256>();
+		auto hash2 = test::GenerateRandomByteArray<Hash256>();
 		entry.pushHash(hash1, Height(1));
 		entry.pushHash(hash2, Height(2));
 
@@ -67,11 +67,11 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetCustomers) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ContractEntry(key);
 
 		// Act:
-		utils::SortedKeySet customers = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
+		utils::SortedKeySet customers = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
 		entry.customers() = customers;
 
 		// Assert:
@@ -80,11 +80,11 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetExecutors) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ContractEntry(key);
 
 		// Act:
-		utils::SortedKeySet executors = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
+		utils::SortedKeySet executors = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
 		entry.executors() = executors;
 
 		// Assert:
@@ -93,11 +93,11 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetVerifiers) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ContractEntry(key);
 
 		// Act:
-		utils::SortedKeySet verifiers = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
+		utils::SortedKeySet verifiers = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
 		entry.verifiers() = verifiers;
 
 		// Assert:
