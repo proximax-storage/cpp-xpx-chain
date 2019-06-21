@@ -25,6 +25,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 
@@ -39,23 +40,18 @@ namespace catapult { namespace harvesting {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
 		auto CreateConfiguration() {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-			blockChainConfig.BlockTimeSmoothingFactor = 0;
-			blockChainConfig.MaxDifficultyBlocks = 60;
-			blockChainConfig.ImportanceGrouping = 123;
-			blockChainConfig.TotalChainImportance = test::Default_Total_Chain_Importance;
+			test::MutableCatapultConfiguration config;
 
-			auto nodeConfig = config::NodeConfiguration::Uninitialized();
-			nodeConfig.FeeInterest = 1;
-			nodeConfig.FeeInterestDenominator = 2;
+			config.BlockChain.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+			config.BlockChain.BlockTimeSmoothingFactor = 0;
+			config.BlockChain.MaxDifficultyBlocks = 60;
+			config.BlockChain.ImportanceGrouping = 123;
+			config.BlockChain.TotalChainImportance = test::Default_Total_Chain_Importance;
 
-			return config::LocalNodeConfiguration {
-				std::move(blockChainConfig),
-				std::move(nodeConfig),
-				config::LoggingConfiguration::Uninitialized(),
-				config::UserConfiguration::Uninitialized()
-			};
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 2;
+
+			return config.ToConst();
 		}
 
 		struct TaskOptionsWithCounters : ScheduledHarvesterTaskOptions {
@@ -67,7 +63,7 @@ namespace catapult { namespace harvesting {
 					, BlockHeight(0)
 					, BlockSigner()
 					, pLastBlock(std::make_shared<model::Block>())
-					, LastBlockHash(test::GenerateRandomData<Hash256_Size>()) {
+					, LastBlockHash(test::GenerateRandomByteArray<Hash256>()) {
 				HarvestingAllowed = [this]() {
 					++NumHarvestingAllowedCalls;
 					return true;
@@ -139,13 +135,13 @@ namespace catapult { namespace harvesting {
 				AddDifficultyInfo(Cache, lastBlock);
 			}
 
-			config::LocalNodeConfiguration Config;
+			config::CatapultConfiguration Config;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
 		};
 
 		auto CreateHarvester(HarvesterContext& context) {
-			return std::make_unique<Harvester>(context.Cache, context.Config, context.Accounts, [](const auto& blockHeader, auto) {
+			return std::make_unique<Harvester>(context.Cache, context.Config, Key(), context.Accounts, [](const auto& blockHeader, auto) {
 				auto pBlock = std::make_unique<model::Block>();
 				std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
 				return pBlock;
@@ -153,7 +149,7 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	TEST(TEST_CLASS, TaskIsShortCircuitedIfHarvestingIsNotAllowed) {
+	TEST(TEST_CLASS, TaskIsShortCircuitedWhenHarvestingIsNotAllowed) {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		options.HarvestingAllowed = [&options]() {
@@ -172,10 +168,10 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(0u, options.NumTimeSupplierCalls);
 		EXPECT_EQ(0u, options.NumRangeConsumerCalls);
 		EXPECT_EQ(Height(0), options.BlockHeight);
-		EXPECT_EQ(Key{}, options.BlockSigner);
+		EXPECT_EQ(Key(), options.BlockSigner);
 	}
 
-	TEST(TEST_CLASS, BlockConsumerIsNotCalledIfNoBlockWasHarvested) {
+	TEST(TEST_CLASS, BlockConsumerIsNotCalledWhenNoBlockIsHarvested) {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		HarvesterContext context(*options.pLastBlock);
@@ -190,10 +186,10 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(1u, options.NumTimeSupplierCalls);
 		EXPECT_EQ(0u, options.NumRangeConsumerCalls);
 		EXPECT_EQ(Height(0), options.BlockHeight);
-		EXPECT_EQ(Key{}, options.BlockSigner);
+		EXPECT_EQ(Key(), options.BlockSigner);
 	}
 
-	TEST(TEST_CLASS, BlockConsumerIsCalledIfBlockWasHarvested) {
+	TEST(TEST_CLASS, BlockConsumerIsCalledWhenBlockIsHarvested) {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		HarvesterContext context(*options.pLastBlock);
@@ -213,7 +209,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(keyPair.publicKey(), options.BlockSigner);
 	}
 
-	TEST(TEST_CLASS, BlockConsumerIsNotCalledMultipleTimesIfLastHarvestedBlockWasNotCompletelyProcessedYet) {
+	TEST(TEST_CLASS, BlockConsumerIsNotCalledWhenLastHarvestedBlockIsStillBeingProcessed) {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		HarvesterContext context(*options.pLastBlock);
@@ -235,7 +231,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(keyPair.publicKey(), options.BlockSigner);
 	}
 
-	TEST(TEST_CLASS, BlockConsumerIsCalledMultipleTimesWhenLastHarvestedBlockWasCompletelyProcessed) {
+	TEST(TEST_CLASS, BlockConsumerIsCalledAgainAfterLastHarvestedBlockWasCompletelyProcessed) {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		HarvesterContext context(*options.pLastBlock);
@@ -257,7 +253,7 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(keyPair.publicKey(), options.BlockSigner);
 	}
 
-	TEST(TEST_CLASS, BlockConsumerIsCalledIfLaterHarvestProducesBlock) {
+	TEST(TEST_CLASS, BlockConsumerIsCalledAgainWhenSubsequentHarvestProducesBlock) {
 		// Arrange:
 		TaskOptionsWithCounters options;
 		HarvesterContext context(*options.pLastBlock);
@@ -269,7 +265,7 @@ namespace catapult { namespace harvesting {
 		// Sanity:
 		EXPECT_EQ(0u, options.NumRangeConsumerCalls);
 
-		// Act: unlock an accuont and harvest again
+		// Act: unlock an account and harvest again
 		auto keyPair = AddImportantAccount(context.Cache);
 		UnlockAccount(context.Accounts, keyPair);
 		task.harvest();

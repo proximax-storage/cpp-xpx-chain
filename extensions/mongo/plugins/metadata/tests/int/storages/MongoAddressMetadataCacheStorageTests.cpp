@@ -19,7 +19,7 @@ namespace catapult { namespace mongo { namespace plugins {
             static constexpr auto MetadataType = model::MetadataType::Address;
 
             static std::vector<uint8_t> GenerateEntryBuffer(model::NetworkIdentifier network_Id) {
-                auto pubKey = test::GenerateRandomData<Key_Size>();
+                auto pubKey = test::GenerateRandomByteArray<Key>();
                 auto address = model::PublicKeyToAddress(pubKey, network_Id);
                 std::vector<uint8_t> buffer{address.size()};
                 std::copy(address.begin(), address.end(), std::back_inserter(buffer));

@@ -33,6 +33,7 @@
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/nodeps/Waits.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 
@@ -86,26 +87,21 @@ namespace catapult { namespace harvesting {
 		}
 
 		auto CreateConfiguration() {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.Network.Identifier = Network_Identifier;
-			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-			blockChainConfig.BlockTimeSmoothingFactor = 0;
-			blockChainConfig.MaxDifficultyBlocks = 60;
-			blockChainConfig.ImportanceGrouping = 123;
-			blockChainConfig.TotalChainImportance = test::Default_Total_Chain_Importance;
-			blockChainConfig.GreedDelta = 0.5;
-			blockChainConfig.GreedExponent = 2.0;
+			test::MutableCatapultConfiguration config;
 
-			auto nodeConfig = config::NodeConfiguration::Uninitialized();
-			nodeConfig.FeeInterest = 1;
-			nodeConfig.FeeInterestDenominator = 2;
+			config.BlockChain.Network.Identifier = Network_Identifier;
+			config.BlockChain.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
+			config.BlockChain.BlockTimeSmoothingFactor = 0;
+			config.BlockChain.MaxDifficultyBlocks = 60;
+			config.BlockChain.ImportanceGrouping = 123;
+			config.BlockChain.TotalChainImportance = test::Default_Total_Chain_Importance;
+			config.BlockChain.GreedDelta = 0.5;
+			config.BlockChain.GreedExponent = 2.0;
 
-			return config::LocalNodeConfiguration {
-				std::move(blockChainConfig),
-				std::move(nodeConfig),
-				config::LoggingConfiguration::Uninitialized(),
-				config::UserConfiguration::Uninitialized()
-			};
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 2;
+
+			return config.ToConst();
 		}
 
 		// endregion
@@ -118,6 +114,7 @@ namespace catapult { namespace harvesting {
 					: Config(CreateConfiguration())
 					, Cache(test::CreateEmptyCatapultCache(Config.BlockChain))
 					, KeyPairs(CreateKeyPairs(Num_Accounts))
+					, Beneficiary(test::GenerateRandomByteArray<Key>())
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts))
 					, pLastBlock(CreateBlock())
 					, LastBlockElement(test::BlockToBlockElement(*pLastBlock)) {
@@ -130,7 +127,7 @@ namespace catapult { namespace harvesting {
 				Cache.commit(Height(1));
 				UnlockAllAccounts(*pUnlockedAccounts, KeyPairs);
 
-				LastBlockElement.GenerationHash = test::GenerateRandomData<Hash256_Size>();
+				LastBlockElement.GenerationHash = test::GenerateRandomByteArray<GenerationHash>();
 			}
 
 		public:
@@ -138,7 +135,7 @@ namespace catapult { namespace harvesting {
 				return CreateHarvester(Config);
 			}
 
-			std::unique_ptr<Harvester> CreateHarvester(const config::LocalNodeConfiguration& config) {
+			std::unique_ptr<Harvester> CreateHarvester(const config::CatapultConfiguration& config) {
 				return CreateHarvester(config, [](const auto& blockHeader, auto) {
 					auto pBlock = std::make_unique<model::Block>();
 					std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
@@ -147,9 +144,9 @@ namespace catapult { namespace harvesting {
 			}
 
 			std::unique_ptr<Harvester> CreateHarvester(
-					const config::LocalNodeConfiguration& config,
+					const config::CatapultConfiguration& config,
 					const BlockGenerator& blockGenerator) {
-				return std::make_unique<Harvester>(Cache, config, *pUnlockedAccounts, blockGenerator);
+				return std::make_unique<Harvester>(Cache, config, Beneficiary, *pUnlockedAccounts, blockGenerator);
 			}
 
 		private:
@@ -160,9 +157,10 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			config::LocalNodeConfiguration Config;
+			config::CatapultConfiguration Config;
 			cache::CatapultCache Cache;
 			std::vector<KeyPair> KeyPairs;
+			Key Beneficiary;
 			std::vector<state::AccountState*> AccountStates;
 			std::unique_ptr<UnlockedAccounts> pUnlockedAccounts;
 			std::shared_ptr<model::Block> pLastBlock;
@@ -388,6 +386,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(model::MakeVersion(Network_Identifier, 3), pBlock->Version);
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
+			EXPECT_EQ(context.Beneficiary, pBlock->Beneficiary);
 			return true;
 		});
 	}

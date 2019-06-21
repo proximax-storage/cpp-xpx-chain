@@ -33,7 +33,7 @@ namespace catapult { namespace harvesting {
 		Impl(
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
-				const config::LocalNodeConfiguration& config,
+				const config::CatapultConfiguration& config,
 				const chain::ExecutionConfiguration& executionConfig)
 				: m_blockTime(blockTime)
 				, m_config(config)
@@ -152,7 +152,7 @@ namespace catapult { namespace harvesting {
 
 	private:
 		Timestamp m_blockTime;
-		const config::LocalNodeConfiguration& m_config;
+		const config::CatapultConfiguration& m_config;
 		chain::ExecutionConfiguration m_executionConfig;
 		cache::CatapultCacheDetachableDelta m_cacheDetachableDelta;
 		cache::CatapultCacheDetachedDelta m_cacheDetachedDelta;
@@ -167,7 +167,7 @@ namespace catapult { namespace harvesting {
 	HarvestingUtFacade::HarvestingUtFacade(
 			Timestamp blockTime,
 			const cache::CatapultCache& cache,
-			const config::LocalNodeConfiguration& config,
+			const config::CatapultConfiguration& config,
 			const chain::ExecutionConfiguration& executionConfig)
 			: m_pImpl(std::make_unique<Impl>(blockTime, cache, config, executionConfig))
 	{}
@@ -221,7 +221,7 @@ namespace catapult { namespace harvesting {
 
 	HarvestingUtFacadeFactory::HarvestingUtFacadeFactory(
 			const cache::CatapultCache& cache,
-			const config::LocalNodeConfiguration& config,
+			const config::CatapultConfiguration& config,
 			const chain::ExecutionConfiguration& executionConfig)
 			: m_cache(cache)
 			, m_config(config)

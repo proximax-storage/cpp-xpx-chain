@@ -87,7 +87,7 @@ namespace catapult { namespace io {
 		input.read(buffer);
 	}
 
-	/// Reads \a value from \a input.
+	/// Reads value from \a input.
 	template<typename TIo>
 	auto Read64(TIo& input) {
 		uint64_t result;
@@ -95,7 +95,7 @@ namespace catapult { namespace io {
 		return result;
 	}
 
-	/// Reads \a value from \a input.
+	/// Reads value from \a input.
 	template<typename TIo>
 	auto Read32(TIo& input) {
 		uint32_t result;
@@ -103,7 +103,7 @@ namespace catapult { namespace io {
 		return result;
 	}
 
-	/// Reads \a value from \a input.
+	/// Reads value from \a input.
 	template<typename TIo>
 	auto Read16(TIo& input) {
 		uint16_t result;
@@ -111,7 +111,7 @@ namespace catapult { namespace io {
 		return result;
 	}
 
-	/// Reads \a value from \a input.
+	/// Reads value from \a input.
 	template<typename TIo>
 	auto Read8(TIo& input) {
 		uint8_t result;

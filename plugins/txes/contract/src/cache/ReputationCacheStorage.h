@@ -13,7 +13,7 @@ namespace catapult { namespace cache {
 
 	/// Policy for saving and loading reputation cache data.
 	struct ReputationCacheStorage
-			: public CacheStorageFromDescriptor<ReputationCacheDescriptor>
+			: public CacheStorageForBasicInsertRemoveCache<ReputationCacheDescriptor>
 			, public state::ReputationEntrySerializer {
 		/// Loads \a entry into \a cacheDelta.
 		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);

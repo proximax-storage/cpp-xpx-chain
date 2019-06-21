@@ -70,9 +70,7 @@ maxFieldValueSize = 1024
 
 maxMosaicsPerAccount = 10'000
 maxMosaicDuration = 3650d
-isMosaicLevyUpdateAllowed = true
 maxMosaicDivisibility = 6
-maxMosaicDivisibleUnits = 9'000'000'000'000'000
 
 mosaicRentalFeeSinkPublicKey = 53E140B5947F104CABC2D6FE8BAEDBC30EF9A0609C717D9613DE593EC2A266D3
 mosaicRentalFee = 500'000'000

@@ -14,7 +14,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange: create a random value to insert
-		state::ReputationEntry originalEntry(test::GenerateRandomData<Key_Size>());
+		state::ReputationEntry originalEntry(test::GenerateRandomByteArray<Key>());
 		originalEntry.setPositiveInteractions(Reputation{12});
 		originalEntry.setNegativeInteractions(Reputation{34});
 

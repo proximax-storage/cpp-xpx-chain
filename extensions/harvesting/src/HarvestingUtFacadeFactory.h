@@ -21,7 +21,7 @@
 #pragma once
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/ExecutionConfiguration.h"
-#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/CatapultConfiguration.h"
 #include "catapult/model/Block.h"
 
 namespace catapult { namespace harvesting {
@@ -33,7 +33,7 @@ namespace catapult { namespace harvesting {
 		HarvestingUtFacade(
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
-				const config::LocalNodeConfiguration& config,
+				const config::CatapultConfiguration& config,
 				const chain::ExecutionConfiguration& executionConfig);
 
 		/// Destroys the facade.
@@ -73,7 +73,7 @@ namespace catapult { namespace harvesting {
 		/// Creates a factory around \a cache, \a config and \a executionConfig.
 		HarvestingUtFacadeFactory(
 				const cache::CatapultCache& cache,
-				const config::LocalNodeConfiguration& config,
+				const config::CatapultConfiguration& config,
 				const chain::ExecutionConfiguration& executionConfig);
 
 	public:
@@ -82,7 +82,7 @@ namespace catapult { namespace harvesting {
 
 	private:
 		const cache::CatapultCache& m_cache;
-		const config::LocalNodeConfiguration& m_config;
+		const config::CatapultConfiguration& m_config;
 		chain::ExecutionConfiguration m_executionConfig;
 	};
 }}

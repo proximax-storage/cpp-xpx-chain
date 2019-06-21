@@ -22,7 +22,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanCreateReputationEntry) {
 		// Act:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ReputationEntry(key);
 
 		// Assert:
@@ -32,7 +32,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetPositiveInteractions) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ReputationEntry(key);
 
 		// Act:
@@ -44,7 +44,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanIncrementPositiveInteractions) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ReputationEntry(key);
 
 		// Act:
@@ -57,7 +57,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanDecrementPositiveInteractions) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ReputationEntry(key);
 
 		// Act:
@@ -70,7 +70,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanSetNegativeInteractions) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ReputationEntry(key);
 
 		// Act:
@@ -82,7 +82,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanIncrementNegativeInteractions) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ReputationEntry(key);
 
 		// Act:
@@ -95,7 +95,7 @@ namespace catapult { namespace state {
 
 	TEST(TEST_CLASS, CanDecrementNegativeInteractions) {
 		// Arrange:
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto entry = ReputationEntry(key);
 
 		// Act:

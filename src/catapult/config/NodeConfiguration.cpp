@@ -40,6 +40,7 @@ namespace catapult { namespace config {
 		LOAD_NODE_PROPERTY(ShouldAllowAddressReuse);
 		LOAD_NODE_PROPERTY(ShouldUseSingleThreadPool);
 		LOAD_NODE_PROPERTY(ShouldUseCacheDatabaseStorage);
+		LOAD_NODE_PROPERTY(ShouldEnableAutoSyncCleanup);
 
 		LOAD_NODE_PROPERTY(ShouldEnableTransactionSpamThrottling);
 		LOAD_NODE_PROPERTY(TransactionSpamThrottlingMaxBoostFee);
@@ -73,7 +74,6 @@ namespace catapult { namespace config {
 
 		LOAD_NODE_PROPERTY(ShouldAbortWhenDispatcherIsFull);
 		LOAD_NODE_PROPERTY(ShouldAuditDispatcherInputs);
-		LOAD_NODE_PROPERTY(ShouldPrecomputeTransactionAddresses);
 
 		LOAD_NODE_PROPERTY(OutgoingSecurityMode);
 		LOAD_NODE_PROPERTY(IncomingSecurityModes);
@@ -111,10 +111,7 @@ namespace catapult { namespace config {
 
 #undef LOAD_IN_CONNECTIONS_PROPERTY
 
-		auto extensionsPair = utils::ExtractSectionAsOrderedVector(bag, "extensions");
-		config.Extensions = extensionsPair.first;
-
-		utils::VerifyBagSizeLte(bag, 35 + 4 + 4 + 5 + extensionsPair.second);
+		utils::VerifyBagSizeLte(bag, 35 + 4 + 4 + 5);
 		return config;
 	}
 

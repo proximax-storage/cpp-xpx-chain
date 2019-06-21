@@ -26,7 +26,7 @@
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainSynchronizer.h"
-#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/CatapultConfiguration.h"
 #include "catapult/consumers/ConsumerResults.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PluginUtils.h"
@@ -60,7 +60,7 @@ namespace catapult { namespace sync {
 		uint64_t constexpr Initial_Balance = 1'000'000'000'000'000u;
 
 		chain::ChainSynchronizerConfiguration CreateChainSynchronizerConfiguration(
-				const config::LocalNodeConfiguration& config) {
+				const config::CatapultConfiguration& config) {
 			chain::ChainSynchronizerConfiguration chainSynchronizerConfig;
 			chainSynchronizerConfig.MaxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
 			chainSynchronizerConfig.MaxChainBytesPerSyncAttempt = config.Node.MaxChainBytesPerSyncAttempt.bytes32();
@@ -68,7 +68,7 @@ namespace catapult { namespace sync {
 			return chainSynchronizerConfig;
 		}
 
-		config::LocalNodeConfiguration CreateLocalNodeConfiguration() {
+		config::CatapultConfiguration CreateCatapultConfiguration() {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
 			blockChainConfig.MaxRollbackBlocks = 5u;
@@ -90,11 +90,13 @@ namespace catapult { namespace sync {
 			nodeConfig.FeeInterest = 1u;
 			nodeConfig.FeeInterestDenominator = 1u;
 
-			return config::LocalNodeConfiguration{
+			return config::CatapultConfiguration{
 					std::move(blockChainConfig),
 					std::move(nodeConfig),
 					config::LoggingConfiguration::Uninitialized(),
-					config::UserConfiguration::Uninitialized()
+					config::UserConfiguration::Uninitialized(),
+					config::ExtensionsConfiguration::Uninitialized(),
+					config::InflationConfiguration::Uninitialized()
 			};
 		}
 
@@ -107,14 +109,16 @@ namespace catapult { namespace sync {
 			using BaseType = test::ServiceLocatorTestContext<DispatcherServiceTraits>;
 
 		public:
-			TestContext(const config::LocalNodeConfiguration& config, uint64_t initialBalance)
+			TestContext(const config::CatapultConfiguration& config, uint64_t initialBalance)
 				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.BlockChain), config) {
 
 				testState().loadPluginByName("", "catapult.coresystem");
 				for (const auto& pair : config.BlockChain.Plugins)
 					testState().loadPluginByName("", pair.first);
 
-				testState().state().storage().modifier().dropBlocksAfter(Height{0u});
+				auto modifier = testState().state().storage().modifier();
+				modifier.dropBlocksAfter(Height{0u});
+				modifier.commit();
 
 				initializeCache(initialBalance);
 			}
@@ -149,7 +153,9 @@ namespace catapult { namespace sync {
 				chain::ExecuteBlock(blockElement, blockExecutionContext);
 				state.cache().commit(blockElement.Block.Height);
 
-				testState().state().storage().modifier().saveBlock(blockElement);
+				auto modifier = testState().state().storage().modifier();
+				modifier.saveBlock(blockElement);
+				modifier.commit();
 			}
 
 			model::BlockElement createBlock(
@@ -170,11 +176,11 @@ namespace catapult { namespace sync {
 					chain::TryCalculateDifficulty(testState().state().cache().sub<cache::BlockDifficultyCache>(),
 						state::BlockDifficultyInfo(height, timestamp, m_pLastBlock->Difficulty),
 						testState().state().config().BlockChain, m_pLastBlock->Difficulty);
-				test::SignBlock(signer, *m_pLastBlock);
+				SignBlockHeader(signer, *m_pLastBlock);
 
 				auto blockElement = test::BlockToBlockElement(*m_pLastBlock);
 				blockElement.GenerationHash = model::CalculateGenerationHash(
-					previousBlockContext.BlockHash,
+					previousBlockContext.GenerationHash,
 					signer.publicKey());
 
 				return blockElement;
@@ -237,7 +243,7 @@ namespace catapult { namespace sync {
 
 			test::ConstTransactions transactions{};
 			auto pTransaction = builder.build();
-			extensions::SignTransaction(Special_Account_Key_Pair, *pTransaction);
+			extensions::TransactionExtensions(test::GenerateRandomByteArray<GenerationHash>()).sign(Special_Account_Key_Pair, *pTransaction);
 			transactions.push_back(std::move(pTransaction));
 
 			return transactions;
@@ -262,7 +268,7 @@ namespace catapult { namespace sync {
 			auto chainSynchronizer = chain::CreateChainSynchronizer(
 				api::CreateLocalChainApi(
 					state.storage(),
-					[&score = state.score()]() { return score.get(); }),
+					[]() { return model::ChainScore{1000u}; }),
 				CreateChainSynchronizerConfiguration(config),
 				blockRangeConsumerWrapper);
 
@@ -285,7 +291,7 @@ namespace catapult { namespace sync {
 				const Height& remoteEndHeight,
 				uint64_t initialBalance,
 				disruptor::ConsumerCompletionResult& consumerResult) {
-			auto config = CreateLocalNodeConfiguration();
+			auto config = CreateCatapultConfiguration();
 
 			TestContext localContext(config, initialBalance);
 			localContext.boot();

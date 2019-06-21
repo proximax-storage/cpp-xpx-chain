@@ -94,10 +94,7 @@ namespace catapult { namespace cache {
 				handleModification(pair);
 		}
 
-		auto removed = deltas.Removed;
-		removed.insert(deltas.Uninserted.begin(), deltas.Uninserted.end());
-
-		for (const auto& pair : removed) {
+		for (const auto& pair : deltas.Removed) {
 			if (needsApplication(pair.first))
 				tree.unset(pair.first);
 		}

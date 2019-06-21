@@ -38,6 +38,7 @@ namespace catapult { namespace config {
 							{ "shouldAllowAddressReuse", "true" },
 							{ "shouldUseSingleThreadPool", "true" },
 							{ "shouldUseCacheDatabaseStorage", "true" },
+							{ "shouldEnableAutoSyncCleanup", "true" },
 
 							{ "shouldEnableTransactionSpamThrottling", "true" },
 							{ "transactionSpamThrottlingMaxBoostFee", "54'123" },
@@ -71,7 +72,6 @@ namespace catapult { namespace config {
 
 							{ "shouldAbortWhenDispatcherIsFull", "true" },
 							{ "shouldAuditDispatcherInputs", "true" },
-							{ "shouldPrecomputeTransactionAddresses", "true" },
 
 							{ "outgoingSecurityMode", "Signed" },
 							{ "incomingSecurityModes", "None, Signed" },
@@ -107,20 +107,12 @@ namespace catapult { namespace config {
 							{ "numConsecutiveFailuresBeforeBanning", "19" },
 							{ "backlogSize", "21" }
 						}
-					},
-					{
-						"extensions",
-						{
-							{ "Alpha", "true" },
-							{ "BETA", "false" },
-							{ "gamma", "true" }
-						}
 					}
 				};
 			}
 
-			static bool IsSectionOptional(const std::string& section) {
-				return "extensions" == section;
+			static bool IsSectionOptional(const std::string&) {
+				return false;
 			}
 
 			static void AssertZero(const NodeConfiguration& config) {
@@ -130,6 +122,7 @@ namespace catapult { namespace config {
 				EXPECT_FALSE(config.ShouldAllowAddressReuse);
 				EXPECT_FALSE(config.ShouldUseSingleThreadPool);
 				EXPECT_FALSE(config.ShouldUseCacheDatabaseStorage);
+				EXPECT_FALSE(config.ShouldEnableAutoSyncCleanup);
 
 				EXPECT_FALSE(config.ShouldEnableTransactionSpamThrottling);
 				EXPECT_EQ(Amount(), config.TransactionSpamThrottlingMaxBoostFee);
@@ -163,7 +156,6 @@ namespace catapult { namespace config {
 
 				EXPECT_FALSE(config.ShouldAbortWhenDispatcherIsFull);
 				EXPECT_FALSE(config.ShouldAuditDispatcherInputs);
-				EXPECT_FALSE(config.ShouldPrecomputeTransactionAddresses);
 
 				EXPECT_EQ(static_cast<ionet::ConnectionSecurityMode>(0), config.OutgoingSecurityMode);
 				EXPECT_EQ(static_cast<ionet::ConnectionSecurityMode>(0), config.IncomingSecurityModes);
@@ -186,8 +178,6 @@ namespace catapult { namespace config {
 				EXPECT_EQ(0u, config.IncomingConnections.MaxConnectionBanAge);
 				EXPECT_EQ(0u, config.IncomingConnections.NumConsecutiveFailuresBeforeBanning);
 				EXPECT_EQ(0u, config.IncomingConnections.BacklogSize);
-
-				EXPECT_TRUE(config.Extensions.empty());
 			}
 
 			static void AssertCustom(const NodeConfiguration& config) {
@@ -197,6 +187,7 @@ namespace catapult { namespace config {
 				EXPECT_TRUE(config.ShouldAllowAddressReuse);
 				EXPECT_TRUE(config.ShouldUseSingleThreadPool);
 				EXPECT_TRUE(config.ShouldUseCacheDatabaseStorage);
+				EXPECT_TRUE(config.ShouldEnableAutoSyncCleanup);
 
 				EXPECT_TRUE(config.ShouldEnableTransactionSpamThrottling);
 				EXPECT_EQ(Amount(54'123), config.TransactionSpamThrottlingMaxBoostFee);
@@ -230,7 +221,6 @@ namespace catapult { namespace config {
 
 				EXPECT_TRUE(config.ShouldAbortWhenDispatcherIsFull);
 				EXPECT_TRUE(config.ShouldAuditDispatcherInputs);
-				EXPECT_TRUE(config.ShouldPrecomputeTransactionAddresses);
 
 				EXPECT_EQ(ionet::ConnectionSecurityMode::Signed, config.OutgoingSecurityMode);
 				EXPECT_EQ(ionet::ConnectionSecurityMode::None | ionet::ConnectionSecurityMode::Signed, config.IncomingSecurityModes);
@@ -253,8 +243,6 @@ namespace catapult { namespace config {
 				EXPECT_EQ(16u, config.IncomingConnections.MaxConnectionBanAge);
 				EXPECT_EQ(19u, config.IncomingConnections.NumConsecutiveFailuresBeforeBanning);
 				EXPECT_EQ(21u, config.IncomingConnections.BacklogSize);
-
-				EXPECT_EQ(std::vector<std::string>({ "Alpha", "gamma" }), config.Extensions);
 			}
 		};
 	}

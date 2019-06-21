@@ -18,7 +18,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
 		state::ReputationEntry CreateReputationEntry() {
-			state::ReputationEntry entry(test::GenerateRandomData<Key_Size>());
+			state::ReputationEntry entry(test::GenerateRandomByteArray<Key>());
 			entry.setPositiveInteractions(Reputation{12u});
 			entry.setNegativeInteractions(Reputation{34u});
 
@@ -29,7 +29,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	TEST(TEST_CLASS, CanMapReputationEntry_ModelToDbModel) {
 		// Arrange:
 		auto entry = CreateReputationEntry();
-		auto address = test::GenerateRandomData<Address_Decoded_Size>();
+		auto address = test::GenerateRandomByteArray<Address>();
 
 		// Act:
 		auto document = ToDbModel(entry, address);
@@ -56,7 +56,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	TEST(TEST_CLASS, CanMapReputationEntry_DbModelToModel) {
 		// Arrange:
-		auto address = test::GenerateRandomData<Address_Decoded_Size>();
+		auto address = test::GenerateRandomByteArray<Address>();
 		auto dbReputationEntry = CreateDbReputationEntry(address);
 
 		// Act:

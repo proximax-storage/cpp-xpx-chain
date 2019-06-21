@@ -62,7 +62,7 @@ namespace catapult { namespace model {
 		Hash256 StateHash;
 
 		/// Public key of optional beneficiary designated by harvester.
-		Key BeneficiaryPublicKey;
+		Key Beneficiary;
 
 		/// The part of the transaction fee harvester is willing to get.
 		/// From 0 up to FeeInterestDenominator. The customer gets

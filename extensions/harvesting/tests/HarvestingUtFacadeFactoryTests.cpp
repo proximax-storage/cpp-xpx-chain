@@ -24,6 +24,7 @@
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
@@ -50,29 +51,24 @@ namespace catapult { namespace harvesting {
 		}
 
 		auto CreateConfiguration(StateVerifyOptions verifyOptions = StateVerifyOptions::None) {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			blockChainConfig.ShouldEnableVerifiableState = HasFlag(StateVerifyOptions::State, verifyOptions);
-			blockChainConfig.ShouldEnableVerifiableReceipts = HasFlag(StateVerifyOptions::Receipts, verifyOptions);
-			blockChainConfig.CurrencyMosaicId = Currency_Mosaic_Id;
-			blockChainConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			blockChainConfig.ImportanceGrouping = 4;
-			blockChainConfig.MaxTransactionLifetime = utils::TimeSpan::FromHours(24);
-			blockChainConfig.MinHarvesterBalance = Amount(1000);
-			blockChainConfig.BlockPruneInterval = 10;
-			blockChainConfig.GreedDelta = 0.5;
-			blockChainConfig.GreedExponent = 2.0;
+			test::MutableCatapultConfiguration config;
 
-			auto nodeConfig = config::NodeConfiguration::Uninitialized();
-			nodeConfig.FeeInterest = 1;
-			nodeConfig.FeeInterestDenominator = 1;
+			config.BlockChain.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			config.BlockChain.ShouldEnableVerifiableState = HasFlag(StateVerifyOptions::State, verifyOptions);
+			config.BlockChain.ShouldEnableVerifiableReceipts = HasFlag(StateVerifyOptions::Receipts, verifyOptions);
+			config.BlockChain.CurrencyMosaicId = Currency_Mosaic_Id;
+			config.BlockChain.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.BlockChain.ImportanceGrouping = 4;
+			config.BlockChain.MaxTransactionLifetime = utils::TimeSpan::FromHours(24);
+			config.BlockChain.MinHarvesterBalance = Amount(1000);
+			config.BlockChain.BlockPruneInterval = 10;
+			config.BlockChain.GreedDelta = 0.5;
+			config.BlockChain.GreedExponent = 2.0;
+			
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 1;
 
-			return config::LocalNodeConfiguration {
-				std::move(blockChainConfig),
-				std::move(nodeConfig),
-				config::LoggingConfiguration::Uninitialized(),
-				config::UserConfiguration::Uninitialized()
-			};
+			return config.ToConst();
 		}
 
 		// endregion
@@ -526,7 +522,7 @@ namespace catapult { namespace harvesting {
 	namespace {
 		struct FacadeTestContext {
 		public:
-			FacadeTestContext(const config::LocalNodeConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
+			FacadeTestContext(const config::CatapultConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
 					: m_config(config)
 					, m_executionConfig(executionConfig)
 					, m_cache(test::CreateEmptyCatapultCache(m_config.BlockChain, CreateCacheConfiguration(m_dbDirGuard.name()))) {
@@ -588,7 +584,7 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			config::LocalNodeConfiguration m_config;
+			config::CatapultConfiguration m_config;
 			chain::ExecutionConfiguration m_executionConfig;
 			cache::CatapultCache m_cache;
 		};

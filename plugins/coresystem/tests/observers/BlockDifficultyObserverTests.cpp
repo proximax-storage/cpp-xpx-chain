@@ -44,7 +44,7 @@ namespace catapult { namespace observers {
 		}
 
 		BlockNotification CreateBlockNotification(const state::BlockDifficultyInfo& info) {
-			return BlockNotification(test::GenerateRandomData<Key_Size>(), info.BlockTimestamp, info.BlockDifficulty, 1, 1);
+			return BlockNotification(test::GenerateRandomByteArray<Key>(), Key(), info.BlockTimestamp, info.BlockDifficulty, 1, 1);
 		}
 	}
 
