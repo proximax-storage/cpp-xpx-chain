@@ -26,8 +26,12 @@ maxDifficultyBlocks = 3
 maxTransactionLifetime = 24h
 maxBlockFutureTime = 10s
 
+initialCurrencyAtomicUnits = 8'999'999'998'000'000
+maxMosaicAtomicUnits = 9'000'000'000'000'000
+
 totalChainImportance = 8'999'999'998'000'000
 minHarvesterBalance = 1'000'000'000'000
+harvestBeneficiaryPercentage = 10
 
 blockPruneInterval = 360
 maxTransactionsPerBlock = 200'000
@@ -43,6 +47,8 @@ maxCosignaturesPerAggregate = 15
 # multisig plugin is expected to do more advanced cosignature checks
 enableStrictCosignatureCheck = false
 enableBondedAggregateSupport = true
+
+maxBondedTransactionLifetime = 48h
 
 [plugin:catapult.plugins.contract]
 

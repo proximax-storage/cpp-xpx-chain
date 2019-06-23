@@ -71,7 +71,7 @@ namespace catapult { namespace config {
 			EXPECT_EQ(utils::TimeSpan::FromHours(24), config.MaxTransactionLifetime);
 			EXPECT_EQ(utils::TimeSpan::FromSeconds(10), config.MaxBlockFutureTime);
 
-			EXPECT_EQ(Amount(8'998'999'998'000'000), config.InitialCurrencyAtomicUnits);
+			EXPECT_EQ(Amount(8'999'999'998'000'000), config.InitialCurrencyAtomicUnits);
 			EXPECT_EQ(Amount(9'000'000'000'000'000), config.MaxMosaicAtomicUnits);
 
 			EXPECT_EQ(Importance(8'999'999'998'000'000), config.TotalChainImportance);

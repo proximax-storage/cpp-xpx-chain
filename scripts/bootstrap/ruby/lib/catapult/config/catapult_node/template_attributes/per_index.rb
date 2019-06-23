@@ -48,7 +48,7 @@ module Catapult
 
         def harvesting_is_on?
             # TODO: simple strategy that just turns on harvesting for first peer node
-          self.type == :peer_node and self.index  == 0
+          self.type == :peer_node and self.index  >= 0
         end
 
         def harvest_key?

@@ -17,7 +17,7 @@ module Catapult
       Global::ParseKey.peer_nodes                   => 5,
       Global::ParseKey.api_nodes                    => 2,
       Global::ParseKey.rest_gateways                => 2,
-      Global::ParseKey.nemesis_addresses_harvesting => 3,
+      Global::ParseKey.nemesis_addresses_harvesting => 6,
       Global::ParseKey.nemesis_generation_hash      => 1,
       Global::ParseKey.nemesis_signer_private_key   => 1
       # Global::ParseKey.nemesis_addresses => * # dyanmically calculated using left over address
