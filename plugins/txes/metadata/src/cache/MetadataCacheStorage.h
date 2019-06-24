@@ -13,7 +13,7 @@ namespace catapult { namespace cache {
 
 	/// Policy for saving and loading metadata cache data.
 	struct MetadataCacheStorage
-			: public CacheStorageFromDescriptor<MetadataCacheDescriptor>
+			: public CacheStorageForBasicInsertRemoveCache<MetadataCacheDescriptor>
 			, public state::MetadataSerializer {
 		/// Loads \a metadata into \a cacheDelta.
 		static void LoadInto(const ValueType& metadata, DestinationType& cacheDelta);

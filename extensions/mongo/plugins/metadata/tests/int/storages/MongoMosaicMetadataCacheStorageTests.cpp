@@ -18,8 +18,7 @@ namespace catapult { namespace mongo { namespace plugins {
             static constexpr auto MetadataType = model::MetadataType::MosaicId;
 
             static std::vector<uint8_t> GenerateEntryBuffer(model::NetworkIdentifier) {
-                auto data = test::GenerateRandomData<sizeof(UnresolvedMosaicId)>();
-                return std::vector<uint8_t>(data.cbegin(), data.cend());
+                return test::GenerateRandomVector(sizeof(UnresolvedMosaicId));
             }
         };
     }

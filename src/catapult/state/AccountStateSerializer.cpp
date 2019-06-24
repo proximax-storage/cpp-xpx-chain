@@ -29,14 +29,14 @@ namespace catapult { namespace state {
 
 	void AccountStateNonHistoricalSerializer::Save(const AccountState& accountState, io::OutputStream& output) {
 		// write identifying information
-		io::Write(output, accountState.Address);
+		output.write(accountState.Address);
 		io::Write(output, accountState.AddressHeight);
-		io::Write(output, accountState.PublicKey);
+		output.write(accountState.PublicKey);
 		io::Write(output, accountState.PublicKeyHeight);
 
 		// write link information
 		io::Write8(output, utils::to_underlying_type(accountState.AccountType));
-		io::Write(output, accountState.LinkedAccountKey);
+		output.write(accountState.LinkedAccountKey);
 
 		// write mosaics
 		io::Write(output, accountState.Balances.optimizedMosaicId());
@@ -59,17 +59,17 @@ namespace catapult { namespace state {
 		AccountState LoadAccountStateWithoutHistory(io::InputStream& input) {
 			// read identifying information
 			Address address;
-			io::Read(input, address);
+			input.read(address);
 			auto addressHeight = io::Read<Height>(input);
 
 			auto accountState = AccountState(address, addressHeight);
 
-			io::Read(input, accountState.PublicKey);
+			input.read(accountState.PublicKey);
 			accountState.PublicKeyHeight = io::Read<Height>(input);
 
 			// read link information
 			accountState.AccountType = static_cast<state::AccountType>(io::Read8(input));
-			io::Read(input, accountState.LinkedAccountKey);
+			input.read(accountState.LinkedAccountKey);
 
 			// read mosaics
 			accountState.Balances.optimize(io::Read<MosaicId>(input));

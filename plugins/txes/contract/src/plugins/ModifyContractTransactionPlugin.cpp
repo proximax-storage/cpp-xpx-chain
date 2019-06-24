@@ -60,5 +60,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(ModifyContract, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(ModifyContract, Default, Publish)
 }}

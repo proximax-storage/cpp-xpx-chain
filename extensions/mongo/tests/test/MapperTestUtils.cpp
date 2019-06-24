@@ -95,7 +95,7 @@ namespace catapult { namespace test {
 
 	void AssertEqualBlockData(const model::Block& block, const bsoncxx::document::view& dbBlock) {
 		// - 4 fields from VerifiableEntity, 9 fields from Block
-		EXPECT_EQ(13u, GetFieldCount(dbBlock));
+		EXPECT_EQ(15u, GetFieldCount(dbBlock));
 		AssertEqualVerifiableEntityData(block, dbBlock);
 
 		EXPECT_EQ(block.Height, Height(GetUint64(dbBlock, "height")));
@@ -106,7 +106,9 @@ namespace catapult { namespace test {
 		EXPECT_EQ(block.BlockTransactionsHash, GetHashValue(dbBlock, "blockTransactionsHash"));
 		EXPECT_EQ(block.BlockReceiptsHash, GetHashValue(dbBlock, "blockReceiptsHash"));
 		EXPECT_EQ(block.StateHash, GetHashValue(dbBlock, "stateHash"));
-		EXPECT_EQ(block.BeneficiaryPublicKey, GetKeyValue(dbBlock, "beneficiaryPublicKey"));
+		EXPECT_EQ(block.Beneficiary, GetKeyValue(dbBlock, "beneficiary"));
+		EXPECT_EQ(block.FeeInterest, GetUint32(dbBlock, "feeInterest"));
+		EXPECT_EQ(block.FeeInterestDenominator, GetUint32(dbBlock, "feeInterestDenominator"));
 	}
 
 	void AssertEqualBlockMetadata(
@@ -120,7 +122,7 @@ namespace catapult { namespace test {
 		auto expectedFieldCount = statementMerkleTree.empty() ? 6u : 8u;
 		EXPECT_EQ(expectedFieldCount, GetFieldCount(dbBlockMetadata));
 		EXPECT_EQ(blockElement.EntityHash, GetHashValue(dbBlockMetadata, "hash"));
-		EXPECT_EQ(blockElement.GenerationHash, GetHashValue(dbBlockMetadata, "generationHash"));
+		EXPECT_EQ(blockElement.GenerationHash, GetGenerationHashValue(dbBlockMetadata, "generationHash"));
 		EXPECT_EQ(totalFee, Amount(GetUint64(dbBlockMetadata, "totalFee")));
 		EXPECT_EQ(numTransactions, GetInt32(dbBlockMetadata, "numTransactions"));
 

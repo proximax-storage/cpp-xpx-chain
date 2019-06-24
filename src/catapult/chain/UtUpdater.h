@@ -21,6 +21,7 @@
 #pragma once
 #include "ChainFunctions.h"
 #include "ExecutionConfiguration.h"
+#include "catapult/config/NodeConfiguration.h"
 #include "catapult/model/EntityInfo.h"
 #include "catapult/observers/ObserverTypes.h"
 #include "catapult/utils/ArraySet.h"
@@ -42,8 +43,10 @@ namespace catapult { namespace chain {
 		enum class TransactionSource {
 			/// A new transaction that is added for the first time.
 			New,
+
 			/// A previously committed transaction that was reverted.
 			Reverted,
+
 			/// An existing transaction that is reapplied.
 			Existing
 		};
@@ -75,7 +78,7 @@ namespace catapult { namespace chain {
 		UtUpdater(
 				cache::UtCache& transactionsCache,
 				const cache::CatapultCache& confirmedCatapultCache,
-				BlockFeeMultiplier minFeeMultiplier,
+				const config::NodeConfiguration& config,
 				const ExecutionConfiguration& executionConfig,
 				const TimeSupplier& timeSupplier,
 				const FailedTransactionSink& failedTransactionSink,

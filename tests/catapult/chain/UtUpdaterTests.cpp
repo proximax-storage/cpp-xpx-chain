@@ -20,7 +20,7 @@
 
 #include "catapult/chain/UtUpdater.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/MemoryUtCache.h"
+#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/model/FeeUtils.h"
 #include "catapult/model/TransactionStatus.h"
@@ -53,6 +53,14 @@ namespace catapult { namespace chain {
 
 		auto CreateCacheWithDefaultHeight() {
 			return test::CreateCatapultCacheWithMarkerAccount(Default_Height);
+		}
+
+		auto CreateConfiguration(const BlockFeeMultiplier& minFeeMultiplier) {
+			auto config = config::NodeConfiguration::Uninitialized();
+			config.MinFeeMultiplier = minFeeMultiplier;
+			config.FeeInterest = 1;
+			config.FeeInterestDenominator = 1;
+			return config;
 		}
 
 		// region functional helpers
@@ -121,7 +129,7 @@ namespace catapult { namespace chain {
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
-							minFeeMultiplier,
+							CreateConfiguration(minFeeMultiplier),
 							m_executionConfig.Config,
 							[]() { return Default_Time; },
 							[this](const auto& transaction, const auto& hash, auto result) {
@@ -535,7 +543,7 @@ namespace catapult { namespace chain {
 		std::array<uint32_t, 10> feeMultiples{ 10, 20, 19, 30, 21, 40, 30, 10, 10, 20 };
 		for (auto& utInfo : transactionData.UtInfos) {
 			auto multiplier = BlockFeeMultiplier(feeMultiples[i++]);
-			const_cast<Amount&>(utInfo.pEntity->MaxFee) = model::CalculateTransactionFee(multiplier, *utInfo.pEntity);
+			const_cast<Amount&>(utInfo.pEntity->MaxFee) = model::CalculateTransactionFee(multiplier, *utInfo.pEntity, 1, 1);
 		}
 
 		// Sanity:
@@ -771,7 +779,7 @@ namespace catapult { namespace chain {
 
 	// region update (tx disruptor)
 
-	TEST(TEST_CLASS, NewTransactionsValidationIsSkippedIfUnconfirmedCacheIsStale) {
+	TEST(TEST_CLASS, NewTransactionsValidationIsSkippedWhenUnconfirmedCacheIsStale) {
 		// Arrange: initialize the UT cache with 3 transactions
 		UpdaterTestContext context;
 		auto originalTransactionData = CreateTransactionData(3);

@@ -44,7 +44,7 @@ namespace catapult { namespace cache {
 			}
 		};
 
-		struct ReputationEntryModificationPolicy {
+		struct ReputationEntryModificationPolicy : public test::DeltaRemoveInsertModificationPolicy {
 			static void Modify(ReputationCacheDelta& delta, const state::ReputationEntry& entry) {
 				auto& entryFromCache = delta.find(entry.key()).get();
 				entryFromCache.incrementPositiveInteractions();
@@ -75,7 +75,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, InteractionValuesCanBeChangedLater) {
 		// Arrange:
 		ReputationCacheMixinTraits::CacheType cache;
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 
 		// - insert single account key
 		{

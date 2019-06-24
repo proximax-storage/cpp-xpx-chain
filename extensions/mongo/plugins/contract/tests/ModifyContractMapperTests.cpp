@@ -29,7 +29,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				std::initializer_list<model::CosignatoryModification> verifiers) {
 			builders::ModifyContractBuilder builder(model::NetworkIdentifier::Mijin_Test, signer);
 			builder.setDurationDelta(100);
-			builder.setHash(test::GenerateRandomData<Hash256_Size>());
+			builder.setHash(test::GenerateRandomByteArray<Hash256>());
 			for (const auto& modification : customers)
 				builder.addCustomerModification(modification.ModificationType, modification.CosignatoryPublicKey);
 			for (const auto& modification : executors)
@@ -73,7 +73,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				std::initializer_list<model::CosignatoryModification> executors,
 				std::initializer_list<model::CosignatoryModification> verifiers) {
 			// Arrange:
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto pBuilder = CreateModifyContractTransactionBuilder(signer, customers, executors, verifiers);
 			auto pTransaction = TTraits::Adapt(pBuilder);
 			auto pPlugin = TTraits::CreatePlugin();
@@ -89,7 +89,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 	}
 
-	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, model::Entity_Type_Modify_Contract)
+	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, model::Entity_Type_Modify_Contract)
 
 	// region streamTransaction
 
@@ -100,60 +100,60 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	PLUGIN_TEST(CanMapModifyContractTransactionWithSingleCustomerModification) {
 		// Assert:
-		AssertCanMapModifyContractTransaction<TTraits>({ { ModificationType::Add, test::GenerateRandomData<Key_Size>() } }, {}, {});
+		AssertCanMapModifyContractTransaction<TTraits>({ { ModificationType::Add, test::GenerateRandomByteArray<Key>() } }, {}, {});
 	}
 
 	PLUGIN_TEST(CanMapModifyContractTransactionWithSingleExecutorModification) {
 		// Assert:
-		AssertCanMapModifyContractTransaction<TTraits>({}, { { ModificationType::Add, test::GenerateRandomData<Key_Size>() } }, {});
+		AssertCanMapModifyContractTransaction<TTraits>({}, { { ModificationType::Add, test::GenerateRandomByteArray<Key>() } }, {});
 	}
 
 	PLUGIN_TEST(CanMapModifyContractTransactionWithSingleVerifierModification) {
 		// Assert:
-		AssertCanMapModifyContractTransaction<TTraits>({}, {}, { { ModificationType::Add, test::GenerateRandomData<Key_Size>() } });
+		AssertCanMapModifyContractTransaction<TTraits>({}, {}, { { ModificationType::Add, test::GenerateRandomByteArray<Key>() } });
 	}
 
 	PLUGIN_TEST(CanMapModifyContractTransactionWithMultipleCustomerModifications) {
 		// Assert:
 		AssertCanMapModifyContractTransaction<TTraits>({
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Del, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Del, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
 		}, {}, {});
 	}
 
 	PLUGIN_TEST(CanMapModifyContractTransactionWithMultipleExecutorModifications) {
 		// Assert:
 		AssertCanMapModifyContractTransaction<TTraits>({}, {
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Del, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Del, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
 		}, {});
 	}
 
 	PLUGIN_TEST(CanMapModifyContractTransactionWithMultipleVerifierModifications) {
 		// Assert:
 		AssertCanMapModifyContractTransaction<TTraits>({}, {}, {
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Del, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Del, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
 		});
 	}
 
 	PLUGIN_TEST(CanMapModifyContractTransactionWithMultipleModifications) {
 		// Assert:
 		AssertCanMapModifyContractTransaction<TTraits>({
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Del, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Del, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
 		}, {
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Del, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Del, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
 		}, {
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Del, test::GenerateRandomData<Key_Size>() },
-			{ ModificationType::Add, test::GenerateRandomData<Key_Size>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Del, test::GenerateRandomByteArray<Key>() },
+			{ ModificationType::Add, test::GenerateRandomByteArray<Key>() },
 		});
 	}
 

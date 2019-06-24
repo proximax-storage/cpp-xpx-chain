@@ -47,13 +47,13 @@ namespace catapult { namespace model {
 		builder.final(blockTransactionsHash);
 	}
 
-	Hash256 CalculateGenerationHash(const Hash256& previousGenerationHash, const Key& publicKey) {
-		Hash256 hash;
-		crypto::Sha3_256_Builder sha3;
-		sha3.update(previousGenerationHash);
-		sha3.update(publicKey);
-		sha3.final(hash);
-		return hash;
+	GenerationHash CalculateGenerationHash(const GenerationHash& previousGenerationHash, const Key& publicKey) {
+		GenerationHash generationHash;
+		crypto::GenerationHash_Builder hasher;
+		hasher.update(previousGenerationHash);
+		hasher.update(publicKey);
+		hasher.final(generationHash);
+		return generationHash;
 	}
 
 	// endregion
@@ -75,7 +75,7 @@ namespace catapult { namespace model {
 	BlockTransactionsInfo CalculateBlockTransactionsInfo(const Block& block) {
 		BlockTransactionsInfo blockTransactionsInfo;
 		for (const auto& transaction : block.Transactions()) {
-			auto transactionFee = CalculateTransactionFee(block.FeeMultiplier, transaction);
+			auto transactionFee = CalculateTransactionFee(block.FeeMultiplier, transaction, block.FeeInterest, block.FeeInterestDenominator);
 			blockTransactionsInfo.TotalFee = blockTransactionsInfo.TotalFee + transactionFee;
 			++blockTransactionsInfo.Count;
 		}

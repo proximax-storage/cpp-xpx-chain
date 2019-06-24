@@ -11,7 +11,6 @@
 #include "src/model/MetadataNotifications.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/utils/UnresolvedAddress.h"
 #include "src/state/MetadataUtils.h"
 
 using namespace catapult::model;
@@ -74,7 +73,7 @@ namespace catapult { namespace plugins {
         };
     }
 
-    DEFINE_TRANSACTION_PLUGIN_FACTORY(AddressMetadata, Publisher<AddressTraits>::Publish)
-    DEFINE_TRANSACTION_PLUGIN_FACTORY(MosaicMetadata, Publisher<MosaicTraits>::Publish)
-    DEFINE_TRANSACTION_PLUGIN_FACTORY(NamespaceMetadata, Publisher<NamespaceTraits>::Publish)
+    DEFINE_TRANSACTION_PLUGIN_FACTORY(AddressMetadata, Default, Publisher<AddressTraits>::Publish)
+    DEFINE_TRANSACTION_PLUGIN_FACTORY(MosaicMetadata, Default, Publisher<MosaicTraits>::Publish)
+    DEFINE_TRANSACTION_PLUGIN_FACTORY(NamespaceMetadata, Default, Publisher<NamespaceTraits>::Publish)
 }}

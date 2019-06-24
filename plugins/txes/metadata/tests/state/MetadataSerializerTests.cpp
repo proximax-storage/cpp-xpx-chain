@@ -18,7 +18,7 @@ namespace catapult { namespace state {
     namespace {
         class TestContext {
         public:
-            explicit TestContext() : m_stream("", m_buffer)
+            explicit TestContext() : m_stream(m_buffer)
             {}
 
         public:
