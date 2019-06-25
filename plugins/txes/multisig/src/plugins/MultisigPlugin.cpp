@@ -49,7 +49,7 @@ namespace catapult { namespace plugins {
 			builder.add(validators::CreateModifyMultisigCosignersValidator());
 		});
 
-		auto config = model::LoadPluginConfiguration<config::MultisigConfiguration>(manager.config(), "catapult.plugins.multisig");
+		auto config = model::LoadPluginConfiguration<config::MultisigConfiguration>(manager.config(), PLUGIN_NAME(multisig));
 		manager.addStatefulValidatorHook([config](auto& builder) {
 			builder
 				.add(validators::CreateMultisigPermittedOperationValidator())

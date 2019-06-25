@@ -203,7 +203,7 @@ namespace catapult { namespace plugins {
 	}
 
 	void RegisterNamespaceSubsystem(PluginManager& manager) {
-		auto config = model::LoadPluginConfiguration<config::NamespaceConfiguration>(manager.config(), "catapult.plugins.namespace");
+		auto config = model::LoadPluginConfiguration<config::NamespaceConfiguration>(manager.config(), PLUGIN_NAME(namespace));
 		RegisterNamespaceSubsystem(manager, config);
 		RegisterAliasSubsystem(manager, config);
 	}

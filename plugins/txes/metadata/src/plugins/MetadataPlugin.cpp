@@ -21,7 +21,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateAddressMetadataTransactionPlugin());
 		manager.addTransactionSupport(CreateMosaicMetadataTransactionPlugin());
 		manager.addTransactionSupport(CreateNamespaceMetadataTransactionPlugin());
-		auto config = model::LoadPluginConfiguration<config::MetadataConfiguration>(manager.config(), "catapult.plugins.metadata");
+		auto config = model::LoadPluginConfiguration<config::MetadataConfiguration>(manager.config(), PLUGIN_NAME(metadata));
 
 		manager.addCacheSupport<cache::MetadataCacheStorage>(
 			std::make_unique<cache::MetadataCache>(manager.cacheConfig(cache::MetadataCache::Name)));

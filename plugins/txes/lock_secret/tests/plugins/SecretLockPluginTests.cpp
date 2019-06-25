@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/SecretLockPlugin.h"
 #include "src/model/SecretLockEntityType.h"
 #include "tests/test/plugins/PluginTestUtils.h"
@@ -33,7 +34,7 @@ namespace catapult { namespace plugins {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(1);
-				config.Plugins.emplace("catapult.plugins.locksecret", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(locksecret), utils::ConfigurationBag({{
 					"",
 					{
 						{ "maxSecretLockDuration", "30d" },

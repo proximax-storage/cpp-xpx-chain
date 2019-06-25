@@ -29,7 +29,7 @@ namespace catapult { namespace plugins {
 	void RegisterTransferSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateTransferTransactionPlugin());
 
-		auto config = model::LoadPluginConfiguration<config::TransferConfiguration>(manager.config(), "catapult.plugins.transfer");
+		auto config = model::LoadPluginConfiguration<config::TransferConfiguration>(manager.config(), PLUGIN_NAME(transfer));
 		manager.addStatelessValidatorHook([config](auto& builder) {
 			builder.add(validators::CreateTransferMessageValidator(config.MaxMessageSize));
 			builder.add(validators::CreateTransferMosaicsValidator());

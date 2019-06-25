@@ -46,7 +46,7 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		auto config = model::LoadPluginConfiguration<config::HashLockConfiguration>(manager.config(), "catapult.plugins.lockhash");
+		auto config = model::LoadPluginConfiguration<config::HashLockConfiguration>(manager.config(), PLUGIN_NAME(lockhash));
 		auto blockGenerationTargetTime = manager.config().BlockGenerationTargetTime;
 		auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(manager.config());
 		manager.addStatelessValidatorHook([config, blockGenerationTargetTime, currencyMosaicId](auto& builder) {

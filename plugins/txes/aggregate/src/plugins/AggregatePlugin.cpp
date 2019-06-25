@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 		// configure the aggregate to allow all registered transactions that support embedding
 		// (this works because the transaction registry is held by reference)
 		const auto& transactionRegistry = manager.transactionRegistry();
-		auto config = model::LoadPluginConfiguration<config::AggregateConfiguration>(manager.config(), "catapult.plugins.aggregate");
+		auto config = model::LoadPluginConfiguration<config::AggregateConfiguration>(manager.config(), PLUGIN_NAME(aggregate));
 		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Complete));
 		if (config.EnableBondedAggregateSupport)
 			manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded));

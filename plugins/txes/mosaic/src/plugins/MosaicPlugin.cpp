@@ -58,7 +58,7 @@ namespace catapult { namespace plugins {
 	}
 
 	void RegisterMosaicSubsystem(PluginManager& manager) {
-		auto config = model::LoadPluginConfiguration<config::MosaicConfiguration>(manager.config(), "catapult.plugins.mosaic");
+		auto config = model::LoadPluginConfiguration<config::MosaicConfiguration>(manager.config(), PLUGIN_NAME(mosaic));
 		auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(manager.config());
 		auto rentalFeeConfig = ToMosaicRentalFeeConfiguration(manager.config().Network, currencyMosaicId, config);
 		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(rentalFeeConfig));

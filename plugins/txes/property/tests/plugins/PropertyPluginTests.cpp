@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/PropertyPlugin.h"
 #include "src/model/PropertyEntityType.h"
 #include "tests/test/plugins/PluginTestUtils.h"
@@ -32,7 +33,7 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.property", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(property), utils::ConfigurationBag({{
 					"",
 					{
 						{ "maxPropertyValues", "10" },

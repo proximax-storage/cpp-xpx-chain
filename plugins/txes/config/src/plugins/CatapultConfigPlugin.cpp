@@ -18,7 +18,7 @@ namespace catapult { namespace plugins {
 
 	void RegisterCatapultConfigSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateCatapultConfigTransactionPlugin());
-		auto config = model::LoadPluginConfiguration<config::CatapultConfigConfiguration>(manager.config(), "catapult.plugins.config");
+		auto config = model::LoadPluginConfiguration<config::CatapultConfigConfiguration>(manager.config(), PLUGIN_NAME(config));
 
 		manager.addCacheSupport<cache::CatapultConfigCacheStorage>(
 			std::make_unique<cache::CatapultConfigCache>(manager.cacheConfig(cache::CatapultConfigCache::Name)));

@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 
 	void RegisterContractSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateModifyContractTransactionPlugin());
-		auto config = model::LoadPluginConfiguration<config::ContractConfiguration>(manager.config(), "catapult.plugins.contract");
+		auto config = model::LoadPluginConfiguration<config::ContractConfiguration>(manager.config(), PLUGIN_NAME(contract));
 
 		manager.addCacheSupport<cache::ContractCacheStorage>(
 			std::make_unique<cache::ContractCache>(manager.cacheConfig(cache::ContractCache::Name)));

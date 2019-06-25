@@ -48,7 +48,7 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		auto config = model::LoadPluginConfiguration<config::SecretLockConfiguration>(manager.config(), "catapult.plugins.locksecret");
+		auto config = model::LoadPluginConfiguration<config::SecretLockConfiguration>(manager.config(), PLUGIN_NAME(locksecret));
 		auto blockGenerationTargetTime = manager.config().BlockGenerationTargetTime;
 		manager.addStatelessValidatorHook([config, blockGenerationTargetTime](auto& builder) {
 			// secret lock validators

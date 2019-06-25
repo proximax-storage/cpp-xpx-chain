@@ -58,7 +58,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateTransactionTypePropertyModificationValuesValidator());
 		});
 
-		auto config = model::LoadPluginConfiguration<config::PropertyConfiguration>(manager.config(), "catapult.plugins.property");
+		auto config = model::LoadPluginConfiguration<config::PropertyConfiguration>(manager.config(), PLUGIN_NAME(property));
 		manager.addStatefulValidatorHook([maxPropertyValues = config.MaxPropertyValues](auto& builder) {
 			builder
 				.add(validators::CreateAddressPropertyRedundantModificationValidator())

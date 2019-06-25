@@ -52,7 +52,7 @@ namespace catapult { namespace harvesting {
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
 			// include memory hash cache system to better trigger the race condition under test
 			auto config = test::CreateLocalNodeBlockChainConfiguration();
-			config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 			auto pPluginManager = test::CreatePluginManager(config);
 			plugins::RegisterMemoryHashCacheSystem(*pPluginManager);
 			return pPluginManager;
