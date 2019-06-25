@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/AggregatePlugin.h"
 #include "src/model/AggregateEntityType.h"
 #include "tests/test/plugins/PluginTestUtils.h"
@@ -40,7 +41,7 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.aggregate", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(aggregate), utils::ConfigurationBag({{
 					"",
 					{
 						{ "maxTransactionsPerAggregate", "0" },

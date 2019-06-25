@@ -35,7 +35,6 @@ namespace catapult { namespace test {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
-//			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(0);
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(gracePeriodDuration.unwrap());
 			const_cast<model::BlockChainConfiguration&>(blockChainConfig).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
