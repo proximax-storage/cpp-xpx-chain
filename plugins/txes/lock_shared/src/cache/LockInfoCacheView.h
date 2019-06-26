@@ -37,7 +37,8 @@ namespace catapult { namespace cache {
 			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::Iteration
 			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::ConstAccessor
 			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::PatriciaTreeView
-			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::ActivePredicate {
+			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::ActivePredicate
+			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::Enable {
 	public:
 		using ReadOnlyView = typename TCacheTypes::CacheReadOnlyType;
 
@@ -51,12 +52,6 @@ namespace catapult { namespace cache {
 				, LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::PatriciaTreeView(lockInfoSets.PatriciaTree.get())
 				, LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::ActivePredicate(lockInfoSets.Primary)
 		{}
-
-	public:
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
-		}
 	};
 
 	/// View on top of the lock info cache.

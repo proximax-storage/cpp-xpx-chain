@@ -39,7 +39,8 @@ namespace catapult { namespace cache {
 			, public ReputationCacheDeltaMixins::MutableAccessor
 			, public ReputationCacheDeltaMixins::PatriciaTreeDelta
 			, public ReputationCacheDeltaMixins::BasicInsertRemove
-			, public ReputationCacheDeltaMixins::DeltaElements {
+			, public ReputationCacheDeltaMixins::DeltaElements
+			, public ReputationCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = ReputationCacheTypes::CacheReadOnlyType;
 
@@ -59,12 +60,6 @@ namespace catapult { namespace cache {
 	public:
 		using ReputationCacheDeltaMixins::ConstAccessor::find;
 		using ReputationCacheDeltaMixins::MutableAccessor::find;
-
-	public:
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
-		}
 
 	private:
 		ReputationCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pReputationEntries;

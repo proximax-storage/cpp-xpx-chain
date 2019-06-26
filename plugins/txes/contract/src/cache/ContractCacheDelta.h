@@ -39,7 +39,8 @@ namespace catapult { namespace cache {
 			, public ContractCacheDeltaMixins::MutableAccessor
 			, public ContractCacheDeltaMixins::PatriciaTreeDelta
 			, public ContractCacheDeltaMixins::BasicInsertRemove
-			, public ContractCacheDeltaMixins::DeltaElements {
+			, public ContractCacheDeltaMixins::DeltaElements
+			, public ContractCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = ContractCacheTypes::CacheReadOnlyType;
 
@@ -59,12 +60,6 @@ namespace catapult { namespace cache {
 	public:
 		using ContractCacheDeltaMixins::ConstAccessor::find;
 		using ContractCacheDeltaMixins::MutableAccessor::find;
-
-	public:
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
-		}
 
 	private:
 		ContractCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pContractEntries;

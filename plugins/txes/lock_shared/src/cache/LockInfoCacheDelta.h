@@ -50,7 +50,8 @@ namespace catapult { namespace cache {
 			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::BasicInsertRemove
 			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::Touch
 			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::Pruning
-			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::DeltaElements {
+			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::DeltaElements
+			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::Enable {
 	public:
 		using ReadOnlyView = typename TCacheTypes::CacheReadOnlyType;
 
@@ -88,11 +89,6 @@ namespace catapult { namespace cache {
 				if (state::LockStatus::Unused == lockInfo.Status)
 					consumer(lockInfo);
 			});
-		}
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
 		}
 
 	private:

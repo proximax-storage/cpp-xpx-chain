@@ -41,7 +41,8 @@ namespace catapult { namespace cache {
 			, public PropertyCacheDeltaMixins::MutableAccessor
 			, public PropertyCacheDeltaMixins::PatriciaTreeDelta
 			, public PropertyCacheDeltaMixins::BasicInsertRemove
-			, public PropertyCacheDeltaMixins::DeltaElements {
+			, public PropertyCacheDeltaMixins::DeltaElements
+			, public PropertyCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 
@@ -69,11 +70,6 @@ namespace catapult { namespace cache {
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
 			return m_blockChainConfig.Network.Identifier;
-		}
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
 		}
 
 	private:

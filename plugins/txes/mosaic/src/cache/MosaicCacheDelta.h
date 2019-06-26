@@ -47,7 +47,8 @@ namespace catapult { namespace cache {
 			, public MosaicCacheDeltaMixins::ActivePredicate
 			, public MosaicCacheDeltaMixins::BasicInsertRemove
 			, public MosaicCacheDeltaMixins::Touch
-			, public MosaicCacheDeltaMixins::DeltaElements {
+			, public MosaicCacheDeltaMixins::DeltaElements
+			, public MosaicCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = MosaicCacheTypes::CacheReadOnlyType;
 
@@ -62,9 +63,6 @@ namespace catapult { namespace cache {
 	public:
 		/// Inserts the mosaic \a entry into the cache.
 		void insert(const state::MosaicEntry& entry);
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const;
 
 	private:
 		MosaicCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pEntryById;

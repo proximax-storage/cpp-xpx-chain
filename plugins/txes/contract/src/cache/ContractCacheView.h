@@ -37,7 +37,8 @@ namespace catapult { namespace cache {
 			, public ContractCacheViewMixins::Contains
 			, public ContractCacheViewMixins::Iteration
 			, public ContractCacheViewMixins::ConstAccessor
-			, public ContractCacheViewMixins::PatriciaTreeView {
+			, public ContractCacheViewMixins::PatriciaTreeView
+			, public ContractCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = ContractCacheTypes::CacheReadOnlyType;
 
@@ -50,12 +51,6 @@ namespace catapult { namespace cache {
 				, ContractCacheViewMixins::ConstAccessor(contractSets.Primary)
 				, ContractCacheViewMixins::PatriciaTreeView(contractSets.PatriciaTree.get())
 		{}
-
-	public:
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
-		}
 	};
 
 	/// View on top of the contract cache.

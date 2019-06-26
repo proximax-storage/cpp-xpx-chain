@@ -25,7 +25,8 @@ namespace catapult { namespace cache {
 			, public CatapultUpgradeCacheDeltaMixins::MutableAccessor
 			, public CatapultUpgradeCacheDeltaMixins::PatriciaTreeDelta
 			, public CatapultUpgradeCacheDeltaMixins::BasicInsertRemove
-			, public CatapultUpgradeCacheDeltaMixins::DeltaElements {
+			, public CatapultUpgradeCacheDeltaMixins::DeltaElements
+			, public CatapultUpgradeCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = CatapultUpgradeCacheTypes::CacheReadOnlyType;
 
@@ -45,12 +46,6 @@ namespace catapult { namespace cache {
 	public:
 		using CatapultUpgradeCacheDeltaMixins::ConstAccessor::find;
 		using CatapultUpgradeCacheDeltaMixins::MutableAccessor::find;
-
-	public:
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
-		}
 
 	private:
 		CatapultUpgradeCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pCatapultUpgradeEntries;

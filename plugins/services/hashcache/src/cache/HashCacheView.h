@@ -35,7 +35,8 @@ namespace catapult { namespace cache {
 			: public utils::MoveOnly
 			, public HashCacheViewMixins::Size
 			, public HashCacheViewMixins::Contains
-			, public HashCacheViewMixins::Iteration {
+			, public HashCacheViewMixins::Iteration
+			, public HashCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = HashCacheTypes::CacheReadOnlyType;
 
@@ -52,11 +53,6 @@ namespace catapult { namespace cache {
 		/// Gets the retention time for the cache.
 		utils::TimeSpan retentionTime() const {
 			return CalculateTransactionCacheDuration(m_config);
-		}
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
 		}
 
 	private:
