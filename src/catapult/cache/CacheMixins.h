@@ -349,4 +349,27 @@ namespace catapult { namespace cache {
 		TSet& m_set;
 		THeightGroupedSet& m_heightGroupedSet;
 	};
+
+	/// A mixin for enabling/disabling a cache.
+	class EnableMixin {
+	public:
+		/// Creates a mixin around \a enabled.
+		explicit EnableMixin(bool enabled = true) : m_enabled(enabled)
+		{}
+
+	public:
+		/// Enables/disables the cache.
+		/// \a enabled True to enable the cache, false otherwise.
+		void setEnabled(bool enabled) {
+			m_enabled = enabled;
+		}
+
+		/// Returns \c true if the cache is enabled, otherwise \c false.
+		bool enabled() const {
+			return m_enabled;
+		}
+
+	private:
+		bool m_enabled;
+	};
 }}

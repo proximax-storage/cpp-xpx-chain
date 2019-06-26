@@ -34,7 +34,8 @@ namespace catapult { namespace cache {
 			: public utils::MoveOnly
 			, public HashCacheDeltaMixins::Size
 			, public HashCacheDeltaMixins::Contains
-			, public HashCacheDeltaMixins::BasicInsertRemove {
+			, public HashCacheDeltaMixins::BasicInsertRemove
+			, public HashCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = HashCacheTypes::CacheReadOnlyType;
 		using ValueType = HashCacheDescriptor::ValueType;
@@ -49,9 +50,6 @@ namespace catapult { namespace cache {
 
 		/// Gets the pruning boundary that is used during commit.
 		deltaset::PruningBoundary<ValueType> pruningBoundary() const;
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const;
 
 	public:
 		/// Removes all timestamped hashes that have timestamps prior to the given \a timestamp minus the retention time.

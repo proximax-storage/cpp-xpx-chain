@@ -61,8 +61,4 @@ namespace catapult { namespace cache {
 
 		return DifficultyInfoRange(firstIter, ++lastIter);
 	}
-
-	bool BasicBlockDifficultyCacheView::enabled() const {
-		return true;
-	}
 }}

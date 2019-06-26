@@ -49,6 +49,8 @@ namespace catapult { namespace cache {
 		using NamespaceLookup = NamespaceLookupMixin<
 			NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaType,
 			NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaType>;
+
+		using Enable = PrimaryMixins::Enable;
 	};
 
 	/// Basic delta on top of the namespace cache.
@@ -60,7 +62,8 @@ namespace catapult { namespace cache {
 			, public NamespaceCacheDeltaMixins::Touch
 			, public NamespaceCacheDeltaMixins::DeltaElements
 			, public NamespaceCacheDeltaMixins::NamespaceDeepSize
-			, public NamespaceCacheDeltaMixins::NamespaceLookup {
+			, public NamespaceCacheDeltaMixins::NamespaceLookup
+			, public NamespaceCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = NamespaceCacheTypes::CacheReadOnlyType;
 		using CollectedIds = std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>>;
@@ -87,9 +90,6 @@ namespace catapult { namespace cache {
 
 		/// Prunes the namespace cache at \a height.
 		CollectedIds prune(Height height);
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const;
 
 	private:
 		void removeRoot(NamespaceId id);

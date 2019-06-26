@@ -33,14 +33,13 @@ namespace catapult { namespace test {
 	}
 
 	void AddNemesisPluginExtensions(model::BlockChainConfiguration& config) {
-		config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", {
+		config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", {
 			{ "transferTransactionSupportedVersions", "3" },
 			{ "maxMessageSize", "0" },
 		} } }));
-		config.Plugins.emplace("catapult.plugins.mosaic", utils::ConfigurationBag({ { "", {
+		config.Plugins.emplace(PLUGIN_NAME(mosaic), utils::ConfigurationBag({ { "", {
 			{ "mosaicDefinitionTransactionSupportedVersions", "3" },
 			{ "mosaicSupplyChangeTransactionSupportedVersions", "2" },
-
 			{ "maxMosaicsPerAccount", "123" },
 
 			{ "maxMosaicDuration", "456d" },
@@ -52,11 +51,10 @@ namespace catapult { namespace test {
 			{ "mosaicRentalFeeSinkPublicKey", Mosaic_Rental_Fee_Sink_Public_Key },
 			{ "mosaicRentalFee", "500" }
 		} } }));
-		config.Plugins.emplace("catapult.plugins.namespace", utils::ConfigurationBag({ { "", {
+		config.Plugins.emplace(PLUGIN_NAME(namespace), utils::ConfigurationBag({ { "", {
 			{ "addressAliasTransactionSupportedVersions", "1" },
 			{ "mosaicAliasTransactionSupportedVersions", "1" },
 			{ "registerNamespaceTransactionSupportedVersions", "2" },
-
 			{ "maxNameSize", "64" },
 
 			{ "maxNamespaceDuration", "365d" },

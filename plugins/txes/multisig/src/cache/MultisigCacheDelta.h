@@ -39,7 +39,8 @@ namespace catapult { namespace cache {
 			, public MultisigCacheDeltaMixins::MutableAccessor
 			, public MultisigCacheDeltaMixins::PatriciaTreeDelta
 			, public MultisigCacheDeltaMixins::BasicInsertRemove
-			, public MultisigCacheDeltaMixins::DeltaElements {
+			, public MultisigCacheDeltaMixins::DeltaElements
+			, public MultisigCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = MultisigCacheTypes::CacheReadOnlyType;
 
@@ -59,12 +60,6 @@ namespace catapult { namespace cache {
 	public:
 		using MultisigCacheDeltaMixins::ConstAccessor::find;
 		using MultisigCacheDeltaMixins::MutableAccessor::find;
-
-	public:
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
-		}
 
 	private:
 		MultisigCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pMultisigEntries;

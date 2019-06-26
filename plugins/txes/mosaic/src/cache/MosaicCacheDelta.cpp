@@ -58,8 +58,4 @@ namespace catapult { namespace cache {
 		MosaicCacheDeltaMixins::BasicInsertRemove::insert(entry);
 		UpdateExpiryMap(*m_pMosaicIdsByExpiryHeight, entry);
 	}
-
-	bool BasicMosaicCacheDelta::enabled() const {
-		return true;
-	}
 }}

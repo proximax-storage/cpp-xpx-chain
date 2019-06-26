@@ -77,8 +77,4 @@ namespace catapult { namespace cache {
 	const model::AddressSet& BasicAccountStateCacheView::addressesToUpdate() const {
 		return m_addressesToUpdate;
 	}
-
-	bool BasicAccountStateCacheView::enabled() const {
-		return true;
-	}
 }}

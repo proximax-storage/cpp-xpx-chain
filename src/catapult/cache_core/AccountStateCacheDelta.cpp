@@ -238,8 +238,4 @@ namespace catapult { namespace cache {
 	const model::AddressSet& BasicAccountStateCacheDelta::updatedAddresses() const{
 		return m_addressesToUpdate;
 	}
-
-	bool BasicAccountStateCacheDelta::enabled() const {
-		return true;
-	}
 }}

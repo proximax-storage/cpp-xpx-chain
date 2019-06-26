@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/MultisigPlugin.h"
 #include "plugins/txes/multisig/src/model/MultisigEntityType.h"
 #include "tests/test/plugins/PluginTestUtils.h"
@@ -32,7 +33,7 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.multisig", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(multisig), utils::ConfigurationBag({{
 					"",
 					{
 						{ "modifyMultisigAccountTransactionSupportedVersions", "3" },

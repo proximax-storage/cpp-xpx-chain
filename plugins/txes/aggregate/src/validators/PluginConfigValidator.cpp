@@ -12,7 +12,7 @@ namespace catapult { namespace validators {
 	using Notification = model::PluginConfigNotification<1>;
 
 	DEFINE_STATELESS_VALIDATOR(PluginConfig, [](const auto& notification) {
-		if (notification.Name == "catapult.plugins.aggregate") {
+		if (notification.Name == PLUGIN_NAME(aggregate)) {
 			try {
 				(void)config::AggregateConfiguration::LoadFromBag(notification.Bag);
 			} catch (...) {

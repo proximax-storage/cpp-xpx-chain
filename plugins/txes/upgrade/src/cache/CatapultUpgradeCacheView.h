@@ -23,7 +23,8 @@ namespace catapult { namespace cache {
 			, public CatapultUpgradeCacheViewMixins::Contains
 			, public CatapultUpgradeCacheViewMixins::Iteration
 			, public CatapultUpgradeCacheViewMixins::ConstAccessor
-			, public CatapultUpgradeCacheViewMixins::PatriciaTreeView {
+			, public CatapultUpgradeCacheViewMixins::PatriciaTreeView
+			, public CatapultUpgradeCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = CatapultUpgradeCacheTypes::CacheReadOnlyType;
 
@@ -36,12 +37,6 @@ namespace catapult { namespace cache {
 				, CatapultUpgradeCacheViewMixins::ConstAccessor(catapultUpgradeSets.Primary)
 				, CatapultUpgradeCacheViewMixins::PatriciaTreeView(catapultUpgradeSets.PatriciaTree.get())
 		{}
-
-	public:
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
-		}
 	};
 
 	/// View on top of the catapult upgrade cache.

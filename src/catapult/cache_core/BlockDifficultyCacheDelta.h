@@ -37,7 +37,8 @@ namespace catapult { namespace cache {
 	class BasicBlockDifficultyCacheDelta
 			: public utils::MoveOnly
 			, public BlockDifficultyCacheDeltaMixins::Size
-			, public BlockDifficultyCacheDeltaMixins::Contains {
+			, public BlockDifficultyCacheDeltaMixins::Contains
+			, public BlockDifficultyCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = BlockDifficultyCacheTypes::CacheReadOnlyType;
 		using ValueType = BlockDifficultyCacheDescriptor::ValueType;
@@ -69,9 +70,6 @@ namespace catapult { namespace cache {
 		/// Removes all block difficulty infos that have a height less than the given height
 		/// minus a constant (constant = rewrite limit + 60).
 		void prune(Height height);
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const;
 
 	private:
 		void checkInsert(Height height);

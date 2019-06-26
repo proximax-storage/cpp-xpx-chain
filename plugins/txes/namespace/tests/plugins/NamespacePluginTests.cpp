@@ -22,6 +22,7 @@
 #include "src/cache/NamespaceCache.h"
 #include "src/model/NamespaceEntityType.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -41,7 +42,7 @@ namespace catapult { namespace plugins {
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(1);
 				config.BlockPruneInterval = 150;
-				config.Plugins.emplace("catapult.plugins.namespace", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(namespace), utils::ConfigurationBag({{
 					"",
 					{
 						{ "addressAliasTransactionSupportedVersions", "1" },

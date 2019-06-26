@@ -44,7 +44,7 @@ namespace catapult { namespace chain {
 		auto Default_Config = test::CreateLocalNodeBlockChainConfiguration();
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
-			Default_Config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{
+			Default_Config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{
 				"",
 				{
 					{ "transferTransactionSupportedVersions", "3" },

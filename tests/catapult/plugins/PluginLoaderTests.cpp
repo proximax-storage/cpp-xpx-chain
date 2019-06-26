@@ -30,7 +30,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS PluginLoaderTests
 
 	namespace {
-		constexpr auto Known_Plugin_Name = "catapult.plugins.transfer";
+		constexpr auto Known_Plugin_Name = PLUGIN_NAME(transfer);
 
 		void AssertCanLoadPlugins(
 				const std::string& directory,

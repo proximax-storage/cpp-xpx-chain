@@ -38,7 +38,8 @@ namespace catapult { namespace cache {
 			, public MosaicCacheViewMixins::Iteration
 			, public MosaicCacheViewMixins::ConstAccessor
 			, public MosaicCacheDeltaMixins::PatriciaTreeView
-			, public MosaicCacheViewMixins::ActivePredicate {
+			, public MosaicCacheViewMixins::ActivePredicate
+			, public MosaicCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = MosaicCacheTypes::CacheReadOnlyType;
 
@@ -52,12 +53,6 @@ namespace catapult { namespace cache {
 				, MosaicCacheViewMixins::PatriciaTreeView(mosaicSets.PatriciaTree.get())
 				, MosaicCacheViewMixins::ActivePredicate(mosaicSets.Primary)
 		{}
-
-	public:
-		/// Returns \c true if cache is enabled.
-		bool enabled() const {
-			return true;
-		}
 	};
 
 	/// View on top of the mosaic cache.

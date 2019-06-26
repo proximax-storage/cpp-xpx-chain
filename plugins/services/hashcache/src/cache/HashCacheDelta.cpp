@@ -42,8 +42,4 @@ namespace catapult { namespace cache {
 		auto pruneTime = SubtractNonNegative(timestamp, retentionTime());
 		m_pruningBoundary = ValueType(pruneTime);
 	}
-
-	bool BasicHashCacheDelta::enabled() const {
-		return true;
-	}
 }}

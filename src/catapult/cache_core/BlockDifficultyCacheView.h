@@ -36,7 +36,8 @@ namespace catapult { namespace cache {
 			: public utils::MoveOnly
 			, public BlockDifficultyCacheViewMixins::Size
 			, public BlockDifficultyCacheViewMixins::Contains
-			, public BlockDifficultyCacheViewMixins::Iteration {
+			, public BlockDifficultyCacheViewMixins::Iteration
+			, public BlockDifficultyCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = BlockDifficultyCacheTypes::CacheReadOnlyType;
 
@@ -49,9 +50,6 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets a range object that spans \a count block difficulty infos starting at the specified \a height.
 		DifficultyInfoRange difficultyInfos(Height height, size_t count) const;
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const;
 
 	private:
 		const BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType& m_difficultyInfos;

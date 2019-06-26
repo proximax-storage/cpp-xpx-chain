@@ -49,6 +49,7 @@ namespace catapult { namespace cache {
 		using MutableAccessorKey = KeyMixins::MutableAccessor;
 		using PatriciaTreeDelta = AddressMixins::PatriciaTreeDelta;
 		using DeltaElements = AddressMixins::DeltaElements;
+		using Enable = AddressMixins::Enable;
 
 		// no mutable key accessor because address-to-key pairs are immutable
 	};
@@ -64,7 +65,8 @@ namespace catapult { namespace cache {
 			, public AccountStateCacheDeltaMixins::MutableAccessorAddress
 			, public AccountStateCacheDeltaMixins::MutableAccessorKey
 			, public AccountStateCacheDeltaMixins::PatriciaTreeDelta
-			, public AccountStateCacheDeltaMixins::DeltaElements {
+			, public AccountStateCacheDeltaMixins::DeltaElements
+			, public AccountStateCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 
@@ -138,9 +140,6 @@ namespace catapult { namespace cache {
 
 		/// Adds new and modified elements to set
 		void addUpdatedAddresses(model::AddressSet& set) const;
-
-		/// Returns \c true if cache is enabled.
-		bool enabled() const;
 
 	private:
 		Address getAddress(const Key& publicKey);

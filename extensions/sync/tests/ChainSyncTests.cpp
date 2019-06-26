@@ -37,6 +37,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "extensions/sync/src/DispatcherService.h"
 #include "MockRemoteChainApi.h"
 #include "sdk/src/builders/TransferBuilder.h"
@@ -79,7 +80,7 @@ namespace catapult { namespace sync {
 			blockChainConfig.MaxDifficultyBlocks = 4u;
 			blockChainConfig.BlockPruneInterval = 360u;
 			blockChainConfig.BlockSupportedVersions.emplace(3);
-			blockChainConfig.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{
+			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{
 				"",
 				{
 					{ "transferTransactionSupportedVersions", "3" },
