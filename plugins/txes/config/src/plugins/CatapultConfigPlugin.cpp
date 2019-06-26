@@ -36,9 +36,10 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateCatapultConfigValidator(manager));
 		});
 
-		manager.addObserverHook([](auto& builder) {
+		manager.addObserverHook([&manager](auto& builder) {
 			builder
-				.add(observers::CreateCatapultConfigObserver());
+				.add(observers::CreateCatapultConfigObserver())
+				.add(observers::CreateCatapultConfigApplyObserver(manager));
 		});
 	}
 }}
