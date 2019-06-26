@@ -5,8 +5,10 @@
 **/
 
 #include "LocalNodeConfigurationHolder.h"
+#include "catapult/exceptions.h"
 #include "catapult/io/PodIoUtils.h"
 #include "catapult/io/Stream.h"
+#include <fstream>
 
 namespace catapult { namespace config {
 
@@ -16,6 +18,7 @@ namespace catapult { namespace config {
 			NodeConfiguration::Uninitialized(),
 			LoggingConfiguration::Uninitialized(),
 			UserConfiguration::Uninitialized())
+		, m_pDelta(nullptr)
 	{}
 
 	boost::filesystem::path LocalNodeConfigurationHolder::GetResourcesPath(int argc, const char** argv) {
@@ -37,7 +40,22 @@ namespace catapult { namespace config {
 		auto resourcesPath = GetResourcesPath(argc, argv);
 		std::cout << "loading resources from " << resourcesPath << std::endl;
 		SetConfig(config::LocalNodeConfiguration::LoadFromPath(resourcesPath));
+
+		auto blockChainConfigPath = resourcesPath / "config-network.properties";
+		std::ifstream inputStream(blockChainConfigPath.generic_string());
+		std::string serializedBlockChainConfig;
+		inputStream.seekg(0, std::ios::end);
+		serializedBlockChainConfig.reserve(inputStream.tellg());
+		inputStream.seekg(0, std::ios::beg);
+		serializedBlockChainConfig.assign(std::istreambuf_iterator<char>(inputStream), std::istreambuf_iterator<char>());
+		setInitialBlockChainConfig(serializedBlockChainConfig);
+
 		return m_currentLocalNodeConfig;
+	}
+
+	void LocalNodeConfigurationHolder::setInitialBlockChainConfig(const std::string& serializedBlockChainConfig) {
+		m_blockChainConfigs.emplace(Height(1), serializedBlockChainConfig);
+		update();
 	}
 
 	void LocalNodeConfigurationHolder::SetBlockChainConfig(const model::BlockChainConfiguration& config) {
@@ -55,11 +73,20 @@ namespace catapult { namespace config {
 	}
 
 	void LocalNodeConfigurationHolder::SetBlockChainConfig(const Height& height, const std::string& serializedBlockChainConfig) {
+		if (height <= Height(1))
+			CATAPULT_THROW_INVALID_ARGUMENT_1("invalid height", height);
+
+		if (!!m_pDelta)
+			m_pDelta->removeBlockChainConfig(height);
+
 		m_blockChainConfigs.emplace(height, serializedBlockChainConfig);
 		update();
 	}
 
 	void LocalNodeConfigurationHolder::RemoveBlockChainConfig(const Height& height) {
+		if (!!m_pDelta && !!m_blockChainConfigs.count(height))
+			m_pDelta->setBlockChainConfig(height, m_blockChainConfigs.at(height));
+
 		m_blockChainConfigs.erase(height);
 		update();
 	}
@@ -87,5 +114,33 @@ namespace catapult { namespace config {
 			m_blockChainConfigs.emplace(height, blockChainConfig);
 		}
 		update();
+	}
+
+	std::unique_ptr<LocalNodeConfigurationHolder::LocalNodeConfigurationHolderDelta> LocalNodeConfigurationHolder::CreateDelta() {
+		return std::make_unique<LocalNodeConfigurationHolderDelta>(*this);
+	}
+
+	LocalNodeConfigurationHolder::LocalNodeConfigurationHolderDelta::LocalNodeConfigurationHolderDelta(
+			LocalNodeConfigurationHolder& configHolder) : m_configHolder(configHolder) {
+		m_configHolder.m_pDelta = this;
+	}
+
+	LocalNodeConfigurationHolder::LocalNodeConfigurationHolderDelta::~LocalNodeConfigurationHolderDelta() {
+		for (const auto& pair : m_blockChainConfigs)
+			m_configHolder.SetBlockChainConfig(pair.first, pair.second);
+		m_configHolder.m_pDelta = nullptr;
+	}
+
+	void LocalNodeConfigurationHolder::LocalNodeConfigurationHolderDelta::setBlockChainConfig(
+			const Height& height, const std::string& serializedBlockChainConfig) {
+		m_blockChainConfigs.emplace(height, serializedBlockChainConfig);
+	}
+
+	void LocalNodeConfigurationHolder::LocalNodeConfigurationHolderDelta::removeBlockChainConfig(const Height& height) {
+		m_blockChainConfigs.erase(height);
+	}
+
+	void LocalNodeConfigurationHolder::LocalNodeConfigurationHolderDelta::Commit() {
+		m_blockChainConfigs.clear();
 	}
 }}

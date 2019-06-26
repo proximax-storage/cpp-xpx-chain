@@ -32,6 +32,7 @@ namespace catapult {
 	namespace io { class BlockStorageCache; }
 	namespace model { class TransactionRegistry; }
 	namespace utils { class TimeSpan; }
+	namespace config { class LocalNodeConfigurationHolder; }
 }
 
 namespace catapult { namespace consumers {
@@ -69,13 +70,15 @@ namespace catapult { namespace consumers {
 	/// state (in \a cache and \a state) and blocks (in \a storage).
 	/// \a maxRollbackBlocks The maximum number of blocks that can be rolled back.
 	/// \a handlers are used to customize the sync process.
+	/// \a pConfigHolder is used to properly apply catapult configuration changes after the synchronization.
 	/// \note This consumer is non-const because it updates the element generation hashes.
 	disruptor::DisruptorConsumer CreateBlockChainSyncConsumer(
 			cache::CatapultCache& cache,
 			state::CatapultState& state,
 			io::BlockStorageCache& storage,
 			uint32_t maxRollbackBlocks,
-			const BlockChainSyncHandlers& handlers);
+			const BlockChainSyncHandlers& handlers,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// Prototype for a function that is called with a new block.
 	using NewBlockSink = consumer<const std::shared_ptr<const model::Block>&>;

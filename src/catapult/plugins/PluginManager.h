@@ -31,6 +31,7 @@
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/plugins.h"
+#include "PluginUtils.h"
 
 namespace catapult { namespace plugins {
 
