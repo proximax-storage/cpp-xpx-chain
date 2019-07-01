@@ -44,58 +44,54 @@ namespace catapult { namespace test {
 
 /// Defines traits for transaction plugin based tests for \a NAME transaction using traits prefixed by \a TRAITS_PREFIX
 /// with support for transaction versions \a MIN_VERSION to \a MAX_VERSION.
-#define DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(NAME, TRAITS_PREFIX) \
+#define DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(NAME, MIN_VERSION, MAX_VERSION, TRAITS_PREFIX) \
 	struct TRAITS_PREFIX##RegularTraits { \
 		using TransactionType = model::NAME##Transaction; \
-		static VersionSet supportedVersions; \
+		static constexpr auto Min_Supported_Version = MIN_VERSION; \
+		static constexpr auto Max_Supported_Version = MAX_VERSION; \
 		\
-		static auto CreatePlugin(model::SupportedVersionsSupplier supportedVersionsSupplier) { \
-			supportedVersions = supportedVersionsSupplier(); \
-			return Create##NAME##TransactionPlugin(supportedVersionsSupplier); \
+		static auto CreatePlugin() { \
+			return Create##NAME##TransactionPlugin(); \
 		} \
 	}; \
-	VersionSet TRAITS_PREFIX##RegularTraits::supportedVersions = VersionSet{}; \
 	\
 	struct TRAITS_PREFIX##EmbeddedTraits { \
 		using TransactionType = model::Embedded##NAME##Transaction; \
-		static VersionSet supportedVersions; \
+		static constexpr auto Min_Supported_Version = MIN_VERSION; \
+		static constexpr auto Max_Supported_Version = MAX_VERSION; \
 		\
-		static auto CreatePlugin(model::SupportedVersionsSupplier supportedVersionsSupplier) { \
-			supportedVersions = supportedVersionsSupplier(); \
-			return test::ExtractEmbeddedPlugin(TRAITS_PREFIX##RegularTraits::CreatePlugin(supportedVersionsSupplier)); \
+		static auto CreatePlugin() { \
+			return test::ExtractEmbeddedPlugin(TRAITS_PREFIX##RegularTraits::CreatePlugin()); \
 		} \
-	}; \
-	VersionSet TRAITS_PREFIX##EmbeddedTraits::supportedVersions = VersionSet{}; \
+	};
 
 /// Defines traits for transaction plugin based tests for \a NAME transaction
 /// with support for transaction versions \a MIN_VERSION to \a MAX_VERSION.
-#define DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(NAME) \
-	DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(NAME,)
+#define DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(NAME, MIN_VERSION, MAX_VERSION) \
+	DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(NAME, MIN_VERSION, MAX_VERSION,)
 
 /// Defines traits for transaction plugin based tests for \a NAME transaction requiring configuration of type \a CONFIG_TYPE
 /// with support for transaction versions \a MIN_VERSION to \a MAX_VERSION.
-#define TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(NAME, CONFIG_TYPE) \
+#define TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(NAME, CONFIG_TYPE, MIN_VERSION, MAX_VERSION) \
 	struct RegularTraits { \
 		using TransactionType = model::NAME##Transaction; \
-		static VersionSet supportedVersions; \
+		static constexpr auto Min_Supported_Version = MIN_VERSION; \
+		static constexpr auto Max_Supported_Version = MAX_VERSION; \
 		\
-		static auto CreatePlugin(const CONFIG_TYPE& config, model::SupportedVersionsSupplier supportedVersionsSupplier) { \
-			supportedVersions = supportedVersionsSupplier(); \
-			return Create##NAME##TransactionPlugin(config, supportedVersionsSupplier); \
+		static auto CreatePlugin(const CONFIG_TYPE& config) { \
+			return Create##NAME##TransactionPlugin(config); \
 		} \
 	}; \
-	VersionSet RegularTraits::supportedVersions = VersionSet{}; \
 	\
 	struct EmbeddedTraits { \
 		using TransactionType = model::Embedded##NAME##Transaction; \
-		static VersionSet supportedVersions; \
+		static constexpr auto Min_Supported_Version = MIN_VERSION; \
+		static constexpr auto Max_Supported_Version = MAX_VERSION; \
 		\
-		static auto CreatePlugin(const CONFIG_TYPE& config, model::SupportedVersionsSupplier supportedVersionsSupplier) { \
-			supportedVersions = supportedVersionsSupplier(); \
-			return test::ExtractEmbeddedPlugin(RegularTraits::CreatePlugin(config, supportedVersionsSupplier)); \
+		static auto CreatePlugin(const CONFIG_TYPE& config) { \
+			return test::ExtractEmbeddedPlugin(RegularTraits::CreatePlugin(config)); \
 		} \
-	}; \
-	VersionSet EmbeddedTraits::supportedVersions = VersionSet{}; \
+	};
 
 /// Defines a test named \a TEST_NAME for both transaction and embedded transaction plugins using traits prefixed by \a TRAITS_PREFIX
 /// and test name postfixed by \a TEST_POSTFIX.
@@ -143,9 +139,10 @@ namespace catapult { namespace test {
 		auto supportedVersions = pPlugin->supportedVersions();
 
 		// Assert:
-		EXPECT_EQ(TTraits::supportedVersions.size(), supportedVersions.size());
-		for (const auto& supportedVersion : TTraits::supportedVersions)
-			EXPECT_TRUE(supportedVersions.find(supportedVersion) != supportedVersions.end());
+		auto minVersion = TTraits::Min_Supported_Version;
+		auto maxVersion = TTraits::Max_Supported_Version;
+		EXPECT_EQ(minVersion, supportedVersions.MinVersion);
+		EXPECT_EQ(maxVersion, supportedVersions.MaxVersion);
 	}
 
 /// Defines common tests for a transaction plugin with \a TYPE in \a TEST_CLASS using traits prefixed by \a TRAITS_PREFIX

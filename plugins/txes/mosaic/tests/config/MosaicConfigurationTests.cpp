@@ -36,9 +36,6 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
-							{ "mosaicDefinitionTransactionSupportedVersions", "3" },
-							{ "mosaicSupplyChangeTransactionSupportedVersions", "2" },
-
 							{ "maxMosaicsPerAccount", "4321" },
 
 							{ "maxMosaicDuration", "2340h" },

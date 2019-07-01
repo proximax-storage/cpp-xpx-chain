@@ -36,7 +36,6 @@ namespace catapult { namespace plugins {
 				config.Plugins.emplace(PLUGIN_NAME(contract), utils::ConfigurationBag({{
 					"",
 					{
-						{ "modifyContractTransactionSupportedVersions", "3" },
 						{ "minPercentageOfApproval", "100" },
 						{ "minPercentageOfRemoval", "66" },
 					}

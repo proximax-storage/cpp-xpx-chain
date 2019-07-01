@@ -19,7 +19,6 @@
 **/
 
 #pragma once
-#include "SupportedVersionsSupplier.h"
 #include "Transaction.h"
 #include "TransactionPlugin.h"
 #include "catapult/functions.h"
@@ -31,16 +30,14 @@ namespace catapult { namespace model {
 	public:
 		/// Creates an embedded transaction plugin around \a publishEmbeddedFunc.
 		template<typename TEmbeddedTransaction, typename TPublishEmbeddedFunc>
-		static std::unique_ptr<EmbeddedTransactionPlugin> CreateEmbedded(
-				TPublishEmbeddedFunc publishEmbeddedFunc, SupportedVersionsSupplier supportedVersionsSupplier) {
-			return std::make_unique<EmbeddedTransactionPluginT<TEmbeddedTransaction>>(publishEmbeddedFunc, supportedVersionsSupplier);
+		static std::unique_ptr<EmbeddedTransactionPlugin> CreateEmbedded(TPublishEmbeddedFunc publishEmbeddedFunc) {
+			return std::make_unique<EmbeddedTransactionPluginT<TEmbeddedTransaction>>(publishEmbeddedFunc);
 		}
 
 		/// Creates a transaction plugin that supports embedding around \a publishFunc and \a publishEmbeddedFunc.
 		template<typename TTransaction, typename TEmbeddedTransaction, typename TPublishFunc, typename TPublishEmbeddedFunc>
-		static std::unique_ptr<TransactionPlugin> Create(
-				TPublishFunc publishFunc, TPublishEmbeddedFunc publishEmbeddedFunc, SupportedVersionsSupplier supportedVersionsSupplier) {
-			return std::make_unique<TransactionPluginT<TTransaction, TEmbeddedTransaction>>(publishFunc, publishEmbeddedFunc, supportedVersionsSupplier);
+		static std::unique_ptr<TransactionPlugin> Create(TPublishFunc publishFunc, TPublishEmbeddedFunc publishEmbeddedFunc) {
+			return std::make_unique<TransactionPluginT<TTransaction, TEmbeddedTransaction>>(publishFunc, publishEmbeddedFunc);
 		}
 
 	private:
@@ -50,9 +47,7 @@ namespace catapult { namespace model {
 			using PublishFunc = consumer<const TDerivedTransaction&, NotificationSubscriber&>;
 
 		public:
-			explicit BasicTransactionPluginT(const PublishFunc& publishFunc, SupportedVersionsSupplier supportedVersionsSupplier)
-				: m_publishFunc(publishFunc)
-				, m_supportedVersionsSupplier(supportedVersionsSupplier)
+			explicit BasicTransactionPluginT(const PublishFunc& publishFunc) : m_publishFunc(publishFunc)
 			{}
 
 		public:
@@ -64,8 +59,9 @@ namespace catapult { namespace model {
 				return TDerivedTransaction::CalculateRealSize(static_cast<const TDerivedTransaction&>(transaction));
 			}
 
-			const VersionSet& supportedVersions() const override {
-				return m_supportedVersionsSupplier();
+			SupportedVersions supportedVersions() const override {
+				auto version = TDerivedTransaction::Current_Version;
+				return { version, version };
 			}
 
 		protected:
@@ -75,7 +71,6 @@ namespace catapult { namespace model {
 
 		private:
 			PublishFunc m_publishFunc;
-			SupportedVersionsSupplier m_supportedVersionsSupplier;
 		};
 
 		template<typename TEmbeddedTransaction>
@@ -86,8 +81,7 @@ namespace catapult { namespace model {
 
 		public:
 			template<typename TPublishEmbeddedFunc>
-			explicit EmbeddedTransactionPluginT(TPublishEmbeddedFunc publishEmbeddedFunc, SupportedVersionsSupplier supportedVersionsSupplier)
-				: BaseType(publishEmbeddedFunc, supportedVersionsSupplier)
+			explicit EmbeddedTransactionPluginT(TPublishEmbeddedFunc publishEmbeddedFunc) : BaseType(publishEmbeddedFunc)
 			{}
 
 		public:
@@ -103,9 +97,9 @@ namespace catapult { namespace model {
 
 		public:
 			template<typename TPublishFunc, typename TPublishEmbeddedFunc>
-			explicit TransactionPluginT(TPublishFunc publishFunc, TPublishEmbeddedFunc publishEmbeddedFunc, SupportedVersionsSupplier supportedVersionsSupplier)
-					: BaseType(publishFunc, supportedVersionsSupplier)
-					, m_pEmbeddedTransactionPlugin(CreateEmbedded<TEmbeddedTransaction>(publishEmbeddedFunc, supportedVersionsSupplier))
+			explicit TransactionPluginT(TPublishFunc publishFunc, TPublishEmbeddedFunc publishEmbeddedFunc)
+					: BaseType(publishFunc)
+					, m_pEmbeddedTransactionPlugin(CreateEmbedded<TEmbeddedTransaction>(publishEmbeddedFunc))
 			{}
 
 		public:
@@ -137,19 +131,17 @@ namespace catapult { namespace model {
 
 /// Defines a transaction plugin factory for \a NAME transaction using \a PUBLISH.
 #define DEFINE_TRANSACTION_PLUGIN_FACTORY(NAME, PUBLISH) \
-	std::unique_ptr<TransactionPlugin> Create##NAME##TransactionPlugin(SupportedVersionsSupplier supportedVersionsSupplier) { \
+	std::unique_ptr<TransactionPlugin> Create##NAME##TransactionPlugin() { \
 		return TransactionPluginFactory::Create<NAME##Transaction, Embedded##NAME##Transaction>( \
 				PUBLISH<NAME##Transaction>, \
-				PUBLISH<Embedded##NAME##Transaction>, \
-				supportedVersionsSupplier); \
+				PUBLISH<Embedded##NAME##Transaction>); \
 	}
 
 /// Defines a transaction plugin factory for \a NAME transaction using \a PUBLISH accepting \a CONFIG_TYPE configuration.
 #define DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(NAME, PUBLISH, CONFIG_TYPE) \
-	std::unique_ptr<TransactionPlugin> Create##NAME##TransactionPlugin(const CONFIG_TYPE& config, SupportedVersionsSupplier supportedVersionsSupplier) { \
+	std::unique_ptr<TransactionPlugin> Create##NAME##TransactionPlugin(const CONFIG_TYPE& config) { \
 		return TransactionPluginFactory::Create<NAME##Transaction, Embedded##NAME##Transaction>( \
 				PUBLISH<NAME##Transaction>(config), \
-				PUBLISH<Embedded##NAME##Transaction>(config), \
-				supportedVersionsSupplier); \
+				PUBLISH<Embedded##NAME##Transaction>(config)); \
 	}
 }}

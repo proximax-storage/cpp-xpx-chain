@@ -89,9 +89,6 @@ namespace catapult { namespace model {
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 
-		/// Supported block versions.
-		VersionSet BlockSupportedVersions;
-
 	private:
 		/// Map of plugin configurations.
 		mutable std::unordered_map<std::string, std::shared_ptr<PluginConfiguration>> PluginConfigs;

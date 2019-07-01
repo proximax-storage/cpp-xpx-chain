@@ -33,9 +33,6 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
-							{ "addressPropertyTransactionSupportedVersions", "1" },
-							{ "mosaicPropertyTransactionSupportedVersions", "1" },
-							{ "transactionTypePropertyTransactionSupportedVersions", "1" },
 							{ "maxPropertyValues", "1234" }
 						}
 					}

@@ -20,7 +20,6 @@
 
 #pragma once
 #include "catapult/model/BlockChainConfiguration.h"
-#include "catapult/model/SupportedVersionsSupplier.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
 #include <memory>
@@ -50,8 +49,7 @@ namespace catapult { namespace plugins {
 		Key NemesisPublicKey;
 	};
 
-	/// Creates a register namespace transaction plugin given the rental fee configuration (\a config) and \a supportedVersionsSupplier.
+	/// Creates a register namespace transaction plugin given the rental fee configuration (\a config).
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateRegisterNamespaceTransactionPlugin(
-		const model::BlockChainConfiguration& config, model::SupportedVersionsSupplier supportedVersionsSupplier);
+	std::unique_ptr<model::TransactionPlugin> CreateRegisterNamespaceTransactionPlugin(const model::BlockChainConfiguration& config);
 }}

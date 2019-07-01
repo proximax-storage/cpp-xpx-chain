@@ -113,10 +113,8 @@ namespace catapult { namespace mocks {
 		public:
 			explicit MockTransactionPluginT(EntityType type, PluginOptionFlags options)
 					: m_type(type)
-					, m_options(options) {
-				for (VersionType supportedVersion = 0x02u; supportedVersion <= 0xFEu; ++supportedVersion)
-					m_supportedVersions.emplace(supportedVersion);
-			}
+					, m_options(options)
+			{}
 
 		public:
 			EntityType type() const override {
@@ -127,14 +125,13 @@ namespace catapult { namespace mocks {
 				return TDerivedTransaction::CalculateRealSize(static_cast<const TDerivedTransaction&>(transaction));
 			}
 
-			const VersionSet& supportedVersions() const override {
-				return m_supportedVersions;
+			SupportedVersions supportedVersions() const override {
+				return { 0x02, 0xFE };
 			}
 
 		private:
 			EntityType m_type;
 			PluginOptionFlags m_options;
-			mutable VersionSet m_supportedVersions;
 		};
 
 		class EmbeddedMockTransactionPlugin

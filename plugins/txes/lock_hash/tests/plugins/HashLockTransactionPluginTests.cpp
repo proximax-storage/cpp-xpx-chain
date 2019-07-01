@@ -23,7 +23,6 @@
 #include "src/model/HashLockTransaction.h"
 #include "plugins/txes/lock_shared/tests/test/LockTransactionUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 
 using namespace catapult::model;
@@ -35,16 +34,14 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(HashLock)
-
-		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 1 });
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(HashLock, 1, 1)
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Hash_Lock, Supported_Versions_Supplier)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Hash_Lock)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		typename TTraits::TransactionType transaction;
 
 		// Act:
@@ -61,7 +58,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractAccounts) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
@@ -82,7 +79,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishDurationNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<HashLockDurationNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 		pTransaction->Duration = test::GenerateRandomValue<BlockDuration>();
 
@@ -102,7 +99,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishMosaicNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<HashLockMosaicNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 		pTransaction->Mosaic = { test::GenerateRandomValue<UnresolvedMosaicId>(), test::GenerateRandomValue<Amount>() };
 
@@ -131,7 +128,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishTransactionHashNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<HashLockNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 
 		// Act:
@@ -150,7 +147,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishBalanceDebitNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<model::BalanceDebitNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 
 		// Act:

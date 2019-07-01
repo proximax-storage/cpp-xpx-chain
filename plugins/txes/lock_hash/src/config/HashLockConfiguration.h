@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
 #include "catapult/utils/BlockSpan.h"
+#include "catapult/types.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -30,9 +31,6 @@ namespace catapult { namespace config {
 	/// Hash lock plugin configuration settings.
 	struct HashLockConfiguration : public model::PluginConfiguration {
 	public:
-		/// Supported hash lock transaction versions.
-		VersionSet HashLockTransactionSupportedVersions;
-
 		/// Amount that has to be locked per aggregate in partial cache.
 		Amount LockedFundsPerAggregate;
 

@@ -35,11 +35,6 @@
 namespace catapult { namespace plugins {
 
 	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(MosaicDefinition, Mosaic, "catapult.plugins.mosaic")
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(MosaicSupplyChange, Mosaic, "catapult.plugins.mosaic")
-	}
-
-	namespace {
 		auto GetMosaicView(const cache::CatapultCache& cache) {
 			return cache.sub<cache::MosaicCache>().createView();
 		}
@@ -47,8 +42,8 @@ namespace catapult { namespace plugins {
 
 	void RegisterMosaicSubsystem(PluginManager& manager) {
 		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(config, MosaicDefinitionTransactionSupportedVersionSupplier(config)));
-		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin(MosaicSupplyChangeTransactionSupportedVersionSupplier(config)));
+		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(config));
+		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
 
 		manager.addCacheSupport<cache::MosaicCacheStorage>(
 				std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));

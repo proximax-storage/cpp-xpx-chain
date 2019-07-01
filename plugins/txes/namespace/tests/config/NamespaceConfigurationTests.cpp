@@ -36,10 +36,6 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
-							{ "addressAliasTransactionSupportedVersions", "1" },
-							{ "mosaicAliasTransactionSupportedVersions", "1" },
-							{ "registerNamespaceTransactionSupportedVersions", "2" },
-
 							{ "maxNameSize", "123" },
 							{ "maxNamespaceDuration", "234h" },
 							{ "namespaceGracePeriodDuration", "20d" },

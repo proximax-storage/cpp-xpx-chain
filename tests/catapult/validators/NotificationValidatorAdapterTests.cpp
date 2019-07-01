@@ -20,8 +20,8 @@
 
 #include "catapult/validators/NotificationValidatorAdapter.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
-#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/core/mocks/MockTransaction.h"
+#include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -30,8 +30,6 @@ namespace catapult { namespace validators {
 #define TEST_CLASS NotificationValidatorAdapterTests
 
 	namespace {
-		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 3 });
-
 		ValidationResult ValidateEntity(const stateless::EntityValidator& validator, const model::VerifiableEntity& entity) {
 			Hash256 hash;
 			return validator.validate(model::WeakEntityInfo(entity, hash));
@@ -88,7 +86,9 @@ namespace catapult { namespace validators {
 			const auto& validator = *pValidator;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), Supported_Versions_Supplier);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
+			auto pPublisher = model::CreateNotificationPublisher(registry, pConfigHolder);
 			NotificationValidatorAdapter adapter(std::move(pValidator), std::move(pPublisher));
 
 			// Act + Assert:

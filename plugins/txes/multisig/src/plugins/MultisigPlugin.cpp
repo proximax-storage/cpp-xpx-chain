@@ -21,7 +21,6 @@
 #include "MultisigPlugin.h"
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheStorage.h"
-#include "src/config/MultisigConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -30,13 +29,8 @@
 
 namespace catapult { namespace plugins {
 
-	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(ModifyMultisigAccount, Multisig, "catapult.plugins.multisig")
-	}
-
 	void RegisterMultisigSubsystem(PluginManager& manager) {
-		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateModifyMultisigAccountTransactionPlugin(ModifyMultisigAccountTransactionSupportedVersionSupplier(config)));
+		manager.addTransactionSupport(CreateModifyMultisigAccountTransactionPlugin());
 
 		manager.addCacheSupport<cache::MultisigCacheStorage>(
 				std::make_unique<cache::MultisigCache>(manager.cacheConfig(cache::MultisigCache::Name)));
@@ -54,6 +48,7 @@ namespace catapult { namespace plugins {
 			builder.add(validators::CreateModifyMultisigCosignersValidator());
 		});
 
+		const auto& config = manager.config();
 		manager.addStatefulValidatorHook([config](auto& builder) {
 			builder
 				.add(validators::CreateMultisigPermittedOperationValidator())

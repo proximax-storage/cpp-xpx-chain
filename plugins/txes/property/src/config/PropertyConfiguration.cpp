@@ -32,13 +32,10 @@ namespace catapult { namespace config {
 		PropertyConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
-		LOAD_PROPERTY(AddressPropertyTransactionSupportedVersions);
-		LOAD_PROPERTY(MosaicPropertyTransactionSupportedVersions);
-		LOAD_PROPERTY(TransactionTypePropertyTransactionSupportedVersions);
 		LOAD_PROPERTY(MaxPropertyValues);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 1);
 		return config;
 	}
 }}

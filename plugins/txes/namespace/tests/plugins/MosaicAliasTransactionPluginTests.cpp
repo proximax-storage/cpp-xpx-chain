@@ -21,7 +21,6 @@
 #include "src/plugins/MosaicAliasTransactionPlugin.h"
 #include "src/model/MosaicAliasTransaction.h"
 #include "tests/test/AliasTransactionPluginTests.h"
-#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 
 using namespace catapult::model;
 
@@ -32,9 +31,7 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicAlias)
-
-		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 1 });
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicAlias, 1, 1)
 
 		struct NotificationTraits {
 		public:
@@ -53,14 +50,14 @@ namespace catapult { namespace plugins {
 		};
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Alias_Mosaic, Supported_Versions_Supplier)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Alias_Mosaic)
 
-	DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, MosaicAlias, NotificationTraits, Supported_Versions_Supplier)
+	DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, MosaicAlias, NotificationTraits)
 
 	PLUGIN_TEST(CanExtractMosaicRequiredNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<model::MosaicRequiredNotification<1>> mosaicSub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);

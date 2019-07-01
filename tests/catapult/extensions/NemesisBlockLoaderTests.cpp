@@ -130,7 +130,6 @@ namespace catapult { namespace extensions {
 			test::FillWithRandomData(config.Network.GenerationHash);
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.TotalChainImportance = totalChainImportance;
-			config.BlockSupportedVersions.emplace(3);
 			return config;
 		}
 

@@ -35,8 +35,8 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t version) {
 			// Arrange:
 			VersionSet supportedVersions;
-			for (VersionType supportedVersion = Min_Entity_Version; supportedVersion <= Max_Entity_Version; ++supportedVersion)
-				supportedVersions.emplace(supportedVersion);
+			for (VersionType i = Min_Entity_Version; i <= Max_Entity_Version; ++i)
+				supportedVersions.emplace(i);
 			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, supportedVersions, version);
 			auto pValidator = CreateEntityVersionValidator();
 

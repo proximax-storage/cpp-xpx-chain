@@ -20,7 +20,6 @@
 
 #include "SecretLockPlugin.h"
 #include "src/cache/SecretLockInfoCache.h"
-#include "src/config/SecretLockConfiguration.h"
 #include "src/model/SecretLockReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/SecretLockTransactionPlugin.h"
@@ -32,15 +31,9 @@
 
 namespace catapult { namespace plugins {
 
-	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(SecretProof, SecretLock, "catapult.plugins.locksecret")
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(SecretLock, SecretLock, "catapult.plugins.locksecret")
-	}
-
 	void RegisterSecretLockSubsystem(PluginManager& manager) {
-		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateSecretProofTransactionPlugin(SecretProofTransactionSupportedVersionSupplier(config)));
-		manager.addTransactionSupport(CreateSecretLockTransactionPlugin(SecretLockTransactionSupportedVersionSupplier(config)));
+		manager.addTransactionSupport(CreateSecretProofTransactionPlugin());
+		manager.addTransactionSupport(CreateSecretLockTransactionPlugin());
 
 		manager.addCacheSupport<cache::SecretLockInfoCacheStorage>(
 				std::make_unique<cache::SecretLockInfoCache>(manager.cacheConfig(cache::SecretLockInfoCache::Name)));
@@ -54,6 +47,7 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		const auto& config = manager.config();
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			// secret lock validators
 			builder.add(validators::CreateSecretLockDurationValidator(config));

@@ -342,35 +342,5 @@ namespace catapult { namespace utils {
 		return true;
 	}
 
-	bool TryParseValue(const std::string& str, std::unordered_set<uint32_t>& parsedValue) {
-		if (str.empty()) {
-			parsedValue.clear();
-			return true;
-		}
-
-		size_t searchIndex = 0;
-		std::unordered_set<uint32_t> values;
-		while (true) {
-			auto separatorIndex = str.find(',', searchIndex);
-			auto item = std::string::npos == separatorIndex
-					? str.substr(searchIndex)
-					: str.substr(searchIndex, separatorIndex - searchIndex);
-
-			item = Trim(item);
-			uint32_t value;
-			if (item.empty() || !TryParseUnsignedIntDecimalValue(item, value) ||
-				values.find(value) != values.end() || !values.emplace(value).second)
-				return false;
-
-			if (std::string::npos == separatorIndex)
-				break;
-
-			searchIndex = separatorIndex + 1;
-		}
-
-		parsedValue = std::move(values);
-		return true;
-	}
-
 	// endregion
 }}

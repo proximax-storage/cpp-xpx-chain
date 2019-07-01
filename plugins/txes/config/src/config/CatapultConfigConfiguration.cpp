@@ -18,8 +18,8 @@ namespace catapult { namespace config {
 		CatapultConfigConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
-		LOAD_PROPERTY(CatapultConfigTransactionSupportedVersions);
 		LOAD_PROPERTY(MaxBlockChainConfigSize);
+		LOAD_PROPERTY(MaxSupportedEntityVersionsSize);
 #undef LOAD_PROPERTY
 
 		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);

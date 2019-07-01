@@ -21,6 +21,7 @@
 #include "AggregateTransactionPlugin.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
+#include "catapult/config/LocalNodeConfigurationHolder.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
 
@@ -36,10 +37,12 @@ namespace catapult { namespace plugins {
 		class AggregateTransactionPlugin : public TransactionPlugin {
 		public:
 			AggregateTransactionPlugin(
-				const TransactionRegistry& transactionRegistry, model::EntityType transactionType, model::SupportedVersionsSupplier supportedVersionsSupplier)
+				const TransactionRegistry& transactionRegistry,
+				model::EntityType transactionType,
+				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 					: m_transactionRegistry(transactionRegistry)
 					, m_transactionType(transactionType)
-					, m_supportedVersionsSupplier(supportedVersionsSupplier)
+					, m_pConfigHolder(pConfigHolder)
 			{}
 
 		public:
@@ -55,8 +58,9 @@ namespace catapult { namespace plugins {
 						: std::numeric_limits<uint64_t>::max();
 			}
 
-			const VersionSet& supportedVersions() const override {
-				return m_supportedVersionsSupplier();
+			SupportedVersions supportedVersions() const override {
+				auto version = AggregateTransaction::Current_Version;
+				return { version, version };
 			}
 
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
@@ -87,7 +91,7 @@ namespace catapult { namespace plugins {
 
 						sub.notify(EntityNotification<1>(
 								subTransaction.Network(),
-								plugin.supportedVersions(),
+								m_pConfigHolder->Config().SupportedEntityVersions[subTransaction.Type],
 								subTransaction.EntityVersion()));
 
 						// - generic sub-transaction notification
@@ -154,14 +158,14 @@ namespace catapult { namespace plugins {
 		private:
 			const TransactionRegistry& m_transactionRegistry;
 			model::EntityType m_transactionType;
-			model::SupportedVersionsSupplier m_supportedVersionsSupplier;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		};
 	}
 
 	std::unique_ptr<TransactionPlugin> CreateAggregateTransactionPlugin(
 			const TransactionRegistry& transactionRegistry,
 			model::EntityType transactionType,
-			model::SupportedVersionsSupplier supportedVersionsSupplier) {
-		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType, supportedVersionsSupplier);
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType, pConfigHolder);
 	}
 }}

@@ -16,11 +16,11 @@ namespace catapult { namespace config {
 	/// Catapult config plugin configuration settings.
 	struct CatapultConfigConfiguration : public model::PluginConfiguration {
 	public:
-		/// Supported catapult config transaction versions.
-		VersionSet CatapultConfigTransactionSupportedVersions;
-
 		/// Maximum blockchain config data size.
 		utils::FileSize MaxBlockChainConfigSize;
+
+		/// Maximum supported entity versions config data size.
+		utils::FileSize MaxSupportedEntityVersionsSize;
 
 	private:
 		CatapultConfigConfiguration() = default;

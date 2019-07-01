@@ -18,11 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/config/LocalNodeConfigurationHolder.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/core/mocks/MockTransaction.h"
+#include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -32,11 +33,18 @@ namespace catapult { namespace model {
 
 	namespace {
 		constexpr auto Currency_Mosaic_Id = UnresolvedMosaicId(1234);
-		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 3 });
 
 		constexpr auto Plugin_Option_Flags = static_cast<mocks::PluginOptionFlags>(
 				utils::to_underlying_type(mocks::PluginOptionFlags::Custom_Buffers) |
 				utils::to_underlying_type(mocks::PluginOptionFlags::Publish_Custom_Notifications));
+
+		auto CreateConfigHolder() {
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
+			for (VersionType supportedVersion = 0x02u; supportedVersion <= 0xFEu; ++supportedVersion)
+				pConfigHolder->Config().SupportedEntityVersions[mocks::EmbeddedMockTransaction::Entity_Type].emplace(supportedVersion);
+			return pConfigHolder;
+		}
 
 		template<typename TEntity, typename TAssertSubFunc>
 		void PublishAll(const TEntity& entity, PublicationMode mode, TAssertSubFunc assertSub) {
@@ -44,7 +52,9 @@ namespace catapult { namespace model {
 			mocks::MockNotificationSubscriber sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, Supported_Versions_Supplier, mode);
+			auto pConfigHolder = CreateConfigHolder();
+			const_cast<MosaicId&>(pConfigHolder->Config().BlockChain.CurrencyMosaicId) = MosaicId(Currency_Mosaic_Id.unwrap());
+			auto pPub = CreateNotificationPublisher(registry, pConfigHolder, mode);
 
 			// Act:
 			auto hash = test::GenerateRandomData<Key_Size>();
@@ -65,7 +75,9 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, Supported_Versions_Supplier);
+			auto pConfigHolder = CreateConfigHolder();
+			const_cast<MosaicId&>(pConfigHolder->Config().BlockChain.CurrencyMosaicId) = MosaicId(Currency_Mosaic_Id.unwrap());
+			auto pPub = CreateNotificationPublisher(registry, pConfigHolder);
 
 			// Act:
 			pPub->publish(entityInfo, sub);

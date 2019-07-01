@@ -29,9 +29,6 @@ namespace catapult { namespace config {
 	/// Multisig plugin configuration settings.
 	struct MultisigConfiguration : public model::PluginConfiguration {
 	public:
-		/// Supported modify multisig account transaction versions.
-		VersionSet ModifyMultisigAccountTransactionSupportedVersions;
-
 		/// Maximum number of multisig levels.
 		uint8_t MaxMultisigDepth;
 

@@ -25,7 +25,6 @@
 #include "src/model/TransactionTypePropertyTransaction.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -35,11 +34,10 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
-		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 2 });
 
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(AddressProperty, AddressProperty)
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(MosaicProperty, MosaicProperty)
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(TransactionTypeProperty, TransactionTypeProperty)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(AddressProperty, 1, 1, AddressProperty)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(MosaicProperty, 1, 1, MosaicProperty)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(TransactionTypeProperty, 1, 1, TransactionTypeProperty)
 
 		template<typename TTransaction, typename TTransactionTraits>
 		struct AddressTraits : public TTransactionTraits {
@@ -110,7 +108,7 @@ namespace catapult { namespace plugins {
 
 		static void AssertCanCalculateSize() {
 			// Arrange:
-			auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
 			transaction.ModificationsCount = 123;
@@ -129,7 +127,7 @@ namespace catapult { namespace plugins {
 		static void AssertCanExtractAccounts() {
 			// Arrange:
 			mocks::MockNotificationSubscriber sub;
-			auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
 			transaction.Version = Transaction_Version;
@@ -151,7 +149,7 @@ namespace catapult { namespace plugins {
 		static void AssertCanPublishPropertyTypeNotification() {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<model::PropertyTypeNotification<1>> sub;
-			auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+			auto pPlugin = TTraits::CreatePlugin();
 
 			auto pTransaction = CreatePropertyTransaction();
 
@@ -171,7 +169,7 @@ namespace catapult { namespace plugins {
 		static void AssertCanPublishTypedPropertyModificationsNotification() {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<typename TTraits::ModifyPropertyNotification> sub;
-			auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+			auto pPlugin = TTraits::CreatePlugin();
 
 			auto pTransaction = CreatePropertyTransaction();
 
@@ -196,7 +194,7 @@ namespace catapult { namespace plugins {
 		static void AssertCanPublishTypedPropertyValueModificationNotification() {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<typename TTraits::ModifyPropertyValueNotification> sub;
-			auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+			auto pPlugin = TTraits::CreatePlugin();
 
 			auto pTransaction = CreatePropertyTransaction();
 
@@ -222,20 +220,13 @@ namespace catapult { namespace plugins {
 			TEST_CLASS,
 			Address,
 			_Address,
-			model::Entity_Type_Address_Property,
-			Supported_Versions_Supplier)
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(
-			TEST_CLASS,
-			Mosaic,
-			_Mosaic,
-			model::Entity_Type_Mosaic_Property,
-			Supported_Versions_Supplier)
+			model::Entity_Type_Address_Property)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Mosaic, _Mosaic, model::Entity_Type_Mosaic_Property)
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(
 			TEST_CLASS,
 			TransactionType,
 			_TransactionType,
-			model::Entity_Type_Transaction_Type_Property,
-			Supported_Versions_Supplier)
+			model::Entity_Type_Transaction_Type_Property)
 
 #define MAKE_PROPERTY_TRANSACTION_PLUGIN_TEST(TRAITS_PREFIX, TEST_POSTFIX, TEST_NAME) \
 	TEST(TEST_CLASS, TEST_NAME##_Regular##TEST_POSTFIX) { \

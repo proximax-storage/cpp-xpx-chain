@@ -33,7 +33,6 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
-							{ "modifyContractTransactionSupportedVersions", "3" },
 							{ "minPercentageOfApproval", "100" },
 							{ "minPercentageOfRemoval", "100" },
 						}

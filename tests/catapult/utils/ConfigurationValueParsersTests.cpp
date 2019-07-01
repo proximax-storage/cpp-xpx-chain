@@ -511,29 +511,5 @@ namespace catapult { namespace utils {
 		AssertFailedParse("alpha,beta,alpha", initialValue); // duplicate values
 	}
 
-	TEST(TEST_CLASS, CanParseValidUnorderedSetOfUint32) {
-		// Arrange:
-		using Container = std::unordered_set<uint32_t>;
-
-		// Assert:
-		AssertSuccessfulParse("", Container()); // no values
-		AssertSuccessfulParse("1", Container{ 1 });
-		AssertSuccessfulParse("1, 2, 3", Container{ 1, 2, 3 });
-		AssertSuccessfulParse("\t1\t,  2  "", 3,4 ", Container{ 1, 2, 3, 4 });
-	}
-
-	TEST(TEST_CLASS, CannotParseInvalidUnorderedSetOfUint32) {
-		// Arrange:
-		std::unordered_set<uint32_t> initialValue{ 1, 2 };
-
-		// Assert
-		AssertFailedParse(",", initialValue); // no values
-		AssertFailedParse("1,,3", initialValue); // empty value (middle)
-		AssertFailedParse("1,2,", initialValue); // empty value (last)
-		AssertFailedParse(",2,3", initialValue); // empty value (first)
-		AssertFailedParse("1, \t \t,3", initialValue); // whitespace value
-		AssertFailedParse("1,2,1", initialValue); // duplicate values
-	}
-
 	// endregion
 }}

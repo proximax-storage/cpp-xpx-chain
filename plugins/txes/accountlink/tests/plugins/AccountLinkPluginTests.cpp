@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/config/AccountLinkConfiguration.h"
 #include "src/plugins/AccountLinkPlugin.h"
 #include "plugins/txes/accountlink/src/model/AccountLinkEntityType.h"
 #include "tests/test/plugins/PluginTestUtils.h"
@@ -32,16 +31,8 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.accountlink", utils::ConfigurationBag({{
-					"",
-					{
-						{ "accountLinkTransactionSupportedVersions", "2" },
-					}
-				}}));
-
 				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(config);
+				pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterAccountLinkSubsystem(manager);
 

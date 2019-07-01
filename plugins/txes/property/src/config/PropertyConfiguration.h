@@ -29,15 +29,6 @@ namespace catapult { namespace config {
 	/// Property plugin configuration settings.
 	struct PropertyConfiguration : public model::PluginConfiguration {
 	public:
-		/// Supported address property transaction versions.
-		VersionSet AddressPropertyTransactionSupportedVersions;
-
-		/// Supported mosaic property transaction versions.
-		VersionSet MosaicPropertyTransactionSupportedVersions;
-
-		/// Supported transaction type property transaction versions.
-		VersionSet TransactionTypePropertyTransactionSupportedVersions;
-
 		/// Maximum number of property values.
 		uint16_t MaxPropertyValues;
 

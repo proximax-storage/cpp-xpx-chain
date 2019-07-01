@@ -44,7 +44,6 @@ namespace catapult { namespace plugins {
 				config.Plugins.emplace(PLUGIN_NAME(aggregate), utils::ConfigurationBag({{
 					"",
 					{
-						{ "aggregateTransactionSupportedVersions", "2" },
 						{ "maxTransactionsPerAggregate", "0" },
 						{ "maxCosignaturesPerAggregate", "0" },
 						{ "enableStrictCosignatureCheck", "false" },

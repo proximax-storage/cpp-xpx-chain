@@ -23,7 +23,6 @@
 #include "src/model/MosaicNotifications.h"
 #include "src/model/MosaicSupplyChangeTransaction.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -36,17 +35,16 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicSupplyChange)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicSupplyChange, 2, 2)
 
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
-		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 2 });
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Mosaic_Supply_Change, Supported_Versions_Supplier)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Mosaic_Supply_Change)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -62,7 +60,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -77,7 +75,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishMosaicRequiredNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<MosaicRequiredNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -99,7 +97,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishMosaicSupplyChangeNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<MosaicSupplyChangeNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;

@@ -20,7 +20,6 @@
 
 #pragma once
 #include "catapult/model/BlockChainConfiguration.h"
-#include "catapult/model/SupportedVersionsSupplier.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
 #include <memory>
@@ -47,8 +46,7 @@ namespace catapult { namespace plugins {
 		Key NemesisPublicKey;
 	};
 
-	/// Creates a mosaic definition transaction plugin given the (\a config) and \a supportedVersionsSupplier.
+	/// Creates a mosaic definition transaction plugin given the (\a config).
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateMosaicDefinitionTransactionPlugin(
-		const model::BlockChainConfiguration& config, model::SupportedVersionsSupplier supportedVersionsSupplier);
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicDefinitionTransactionPlugin(const model::BlockChainConfiguration& config);
 }}

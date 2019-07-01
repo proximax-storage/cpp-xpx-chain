@@ -45,10 +45,6 @@ namespace catapult { namespace plugins {
 				config.Plugins.emplace(PLUGIN_NAME(namespace), utils::ConfigurationBag({{
 					"",
 					{
-						{ "addressAliasTransactionSupportedVersions", "1" },
-						{ "mosaicAliasTransactionSupportedVersions", "1" },
-						{ "registerNamespaceTransactionSupportedVersions", "2" },
-
 						{ "maxNameSize", "0" },
 						{ "maxNamespaceDuration", "0h" },
 						{ "namespaceGracePeriodDuration", "0h" },

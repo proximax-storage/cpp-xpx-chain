@@ -23,7 +23,6 @@
 #include "src/model/SecretProofTransaction.h"
 #include "tests/test/SecretLockTransactionUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 
 using namespace catapult::model;
@@ -35,9 +34,7 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(SecretProof)
-
-		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 1 });
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(SecretProof, 1, 1)
 
 		template<typename TTraits>
 		auto CreateSecretProofTransaction() {
@@ -45,11 +42,11 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Secret_Proof, Supported_Versions_Supplier)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Secret_Proof)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		typename TTraits::TransactionType transaction;
 		transaction.ProofSize = 100;
 
@@ -67,7 +64,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractAccounts) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
@@ -88,7 +85,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishHashAlgorithmNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<SecretLockHashAlgorithmNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateSecretProofTransaction<TTraits>();
 
 		// Act:
@@ -107,7 +104,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanSecretProofSecretNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ProofSecretNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateSecretProofTransaction<TTraits>();
 
 		// Act:
@@ -126,7 +123,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanSecretProofPublicationNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<ProofPublicationNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateSecretProofTransaction<TTraits>();
 
 		// Act:

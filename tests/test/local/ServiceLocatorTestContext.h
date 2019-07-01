@@ -64,13 +64,14 @@ namespace catapult { namespace test {
 
 		/// Creates the test state around \a cache, \a config and \a timeSupplier.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const config::LocalNodeConfiguration& config, const supplier<Timestamp>& timeSupplier)
-				: m_catapultCache(std::move(cache))
+				: m_config(config)
+				, m_catapultCache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>())
 				, m_pUtCache(CreateUtCacheProxy())
-				, m_pluginManager(CreateConfigHolder(config), plugins::StorageConfiguration())
+				, m_pluginManager(CreateConfigHolder(m_config), plugins::StorageConfiguration())
 				, m_pool("service locator test context", 2)
 				, m_state(
-						m_pluginManager.configHolder()->Config(),
+						m_config,
 						m_nodes,
 						m_catapultCache,
 						m_catapultState,
@@ -95,7 +96,7 @@ namespace catapult { namespace test {
 	public:
 		/// Gets the config.
 		auto& config() const {
-			return m_pluginManager.configHolder()->Config();
+			return m_config;
 		}
 
 		/// Gets the config.
@@ -134,6 +135,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
+		config::LocalNodeConfiguration m_config;
 		ionet::NodeContainer m_nodes;
 		cache::CatapultCache m_catapultCache;
 		state::CatapultState m_catapultState;

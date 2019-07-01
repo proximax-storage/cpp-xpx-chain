@@ -36,9 +36,6 @@ namespace catapult { namespace plugins {
 				config.Plugins.emplace(PLUGIN_NAME(property), utils::ConfigurationBag({{
 					"",
 					{
-						{ "addressPropertyTransactionSupportedVersions", "1" },
-						{ "mosaicPropertyTransactionSupportedVersions", "1" },
-						{ "transactionTypePropertyTransactionSupportedVersions", "1" },
 						{ "maxPropertyValues", "10" },
 					}
 				}}));

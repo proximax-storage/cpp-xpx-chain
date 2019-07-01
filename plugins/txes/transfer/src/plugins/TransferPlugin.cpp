@@ -26,14 +26,10 @@
 
 namespace catapult { namespace plugins {
 
-	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(Transfer, Transfer, "catapult.plugins.transfer")
-	}
-
 	void RegisterTransferSubsystem(PluginManager& manager) {
-		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateTransferTransactionPlugin(TransferTransactionSupportedVersionSupplier(config)));
+		manager.addTransactionSupport(CreateTransferTransactionPlugin());
 
+		const auto& config = manager.config();
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder.add(validators::CreateTransferMessageValidator(config));
 			builder.add(validators::CreateTransferMosaicsValidator());

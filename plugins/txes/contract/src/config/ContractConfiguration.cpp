@@ -32,12 +32,11 @@ namespace catapult { namespace config {
 		ContractConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
-		LOAD_PROPERTY(ModifyContractTransactionSupportedVersions);
 		LOAD_PROPERTY(MinPercentageOfApproval);
 		LOAD_PROPERTY(MinPercentageOfRemoval);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
 		return config;
 	}
 }}

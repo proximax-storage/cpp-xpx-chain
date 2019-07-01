@@ -21,7 +21,6 @@
 #include "PropertyPlugin.h"
 #include "src/cache/PropertyCache.h"
 #include "src/cache/PropertyCacheStorage.h"
-#include "src/config/PropertyConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/PropertyTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -30,18 +29,12 @@
 
 namespace catapult { namespace plugins {
 
-	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(AddressProperty, Property, "catapult.plugins.property")
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(MosaicProperty, Property, "catapult.plugins.property")
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(TransactionTypeProperty, Property, "catapult.plugins.property")
-	}
-
 	void RegisterPropertySubsystem(PluginManager& manager) {
-		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateAddressPropertyTransactionPlugin(AddressPropertyTransactionSupportedVersionSupplier(config)));
-		manager.addTransactionSupport(CreateMosaicPropertyTransactionPlugin(MosaicPropertyTransactionSupportedVersionSupplier(config)));
-		manager.addTransactionSupport(CreateTransactionTypePropertyTransactionPlugin(TransactionTypePropertyTransactionSupportedVersionSupplier(config)));
+		manager.addTransactionSupport(CreateAddressPropertyTransactionPlugin());
+		manager.addTransactionSupport(CreateMosaicPropertyTransactionPlugin());
+		manager.addTransactionSupport(CreateTransactionTypePropertyTransactionPlugin());
 
+		const auto& config = manager.config();
 		manager.addCacheSupport<cache::PropertyCacheStorage>(
 				std::make_unique<cache::PropertyCache>(manager.cacheConfig(cache::PropertyCache::Name), config));
 

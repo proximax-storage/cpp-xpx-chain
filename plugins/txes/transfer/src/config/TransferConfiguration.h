@@ -29,9 +29,6 @@ namespace catapult { namespace config {
 	/// Transfer plugin configuration settings.
 	struct TransferConfiguration : public model::PluginConfiguration {
 	public:
-		/// Supported transfer transaction versions.
-		VersionSet TransferTransactionSupportedVersions;
-
 		/// Maximum transaction message size.
 		uint16_t MaxMessageSize;
 

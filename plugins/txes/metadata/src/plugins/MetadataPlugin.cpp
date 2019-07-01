@@ -7,7 +7,6 @@
 #include "MetadataPlugin.h"
 #include "src/cache/MetadataCache.h"
 #include "src/cache/MetadataCacheStorage.h"
-#include "src/config/MetadataConfiguration.h"
 #include "src/plugins/MetadataTransactionPlugin.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
@@ -17,17 +16,10 @@
 
 namespace catapult { namespace plugins {
 
-	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(AddressMetadata, Metadata, "catapult.plugins.metadata")
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(MosaicMetadata, Metadata, "catapult.plugins.metadata")
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(NamespaceMetadata, Metadata, "catapult.plugins.metadata")
-	}
-
 	void RegisterMetadataSubsystem(PluginManager& manager) {
-		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateAddressMetadataTransactionPlugin(AddressMetadataTransactionSupportedVersionSupplier(config)));
-		manager.addTransactionSupport(CreateMosaicMetadataTransactionPlugin(MosaicMetadataTransactionSupportedVersionSupplier(config)));
-		manager.addTransactionSupport(CreateNamespaceMetadataTransactionPlugin(NamespaceMetadataTransactionSupportedVersionSupplier(config)));
+		manager.addTransactionSupport(CreateAddressMetadataTransactionPlugin());
+		manager.addTransactionSupport(CreateMosaicMetadataTransactionPlugin());
+		manager.addTransactionSupport(CreateNamespaceMetadataTransactionPlugin());
 
 		manager.addCacheSupport<cache::MetadataCacheStorage>(
 			std::make_unique<cache::MetadataCache>(manager.cacheConfig(cache::MetadataCache::Name)));
@@ -41,6 +33,7 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		const auto& config = manager.config();
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder
 				.add(validators::CreateMetadataTypeValidator())

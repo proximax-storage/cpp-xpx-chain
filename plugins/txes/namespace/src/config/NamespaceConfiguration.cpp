@@ -33,10 +33,6 @@ namespace catapult { namespace config {
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 
-		LOAD_PROPERTY(AddressAliasTransactionSupportedVersions);
-		LOAD_PROPERTY(MosaicAliasTransactionSupportedVersions);
-		LOAD_PROPERTY(RegisterNamespaceTransactionSupportedVersions);
-
 		LOAD_PROPERTY(MaxNameSize);
 		LOAD_PROPERTY(MaxNamespaceDuration);
 		LOAD_PROPERTY(NamespaceGracePeriodDuration);
@@ -50,7 +46,7 @@ namespace catapult { namespace config {
 
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 11);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 8);
 		return config;
 	}
 }}

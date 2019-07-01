@@ -19,7 +19,6 @@
 **/
 
 #pragma once
-#include "catapult/model/SupportedVersionsSupplier.h"
 #include "catapult/plugins.h"
 #include <memory>
 
@@ -27,15 +26,15 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates an address property transaction plugin given \a supportedVersionsSupplier.
+	/// Creates an address property transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateAddressPropertyTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
+	std::unique_ptr<model::TransactionPlugin> CreateAddressPropertyTransactionPlugin();
 
-	/// Creates a mosaic property transaction plugin given \a supportedVersionsSupplier.
+	/// Creates a mosaic property transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateMosaicPropertyTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicPropertyTransactionPlugin();
 
-	/// Creates a transaction type property transaction plugin given \a supportedVersionsSupplier.
+	/// Creates a transaction type property transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateTransactionTypePropertyTransactionPlugin(model::SupportedVersionsSupplier supportedVersionsSupplier);
+	std::unique_ptr<model::TransactionPlugin> CreateTransactionTypePropertyTransactionPlugin();
 }}

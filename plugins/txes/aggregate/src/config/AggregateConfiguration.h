@@ -29,9 +29,6 @@ namespace catapult { namespace config {
 	/// Aggregate plugin configuration settings.
 	struct AggregateConfiguration : public model::PluginConfiguration {
 	public:
-		/// Supported aggregate transaction versions.
-		VersionSet AggregateTransactionSupportedVersions;
-
 		/// Maximum number of transactions per aggregate.
 		uint32_t MaxTransactionsPerAggregate;
 

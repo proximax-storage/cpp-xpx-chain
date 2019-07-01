@@ -30,9 +30,9 @@ namespace catapult { namespace test {
 	class AliasTransactionPluginTests {
 		static constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 	public:
-		static void AssertCanCalculateSize(model::SupportedVersionsSupplier supportedVersionsSupplier) {
+		static void AssertCanCalculateSize() {
 			// Arrange:
-			auto pPlugin = TTraits::CreatePlugin(supportedVersionsSupplier);
+			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
 			transaction.Size = 0;
@@ -45,10 +45,10 @@ namespace catapult { namespace test {
 		}
 
 		template<typename TNotificationTraits>
-		static void AssertCanPublishCorrectNumberOfNotifications(model::SupportedVersionsSupplier supportedVersionsSupplier) {
+		static void AssertCanPublishCorrectNumberOfNotifications() {
 			// Arrange:
 			mocks::MockNotificationSubscriber sub;
-			auto pPlugin = TTraits::CreatePlugin(supportedVersionsSupplier);
+			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
 			transaction.Version = Transaction_Version;
@@ -61,11 +61,11 @@ namespace catapult { namespace test {
 		}
 
 		template<typename TNotificationTraits>
-		static void AssertCanExtractAliasNotifications(model::SupportedVersionsSupplier supportedVersionsSupplier) {
+		static void AssertCanExtractAliasNotifications() {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<model::AliasOwnerNotification<1>> aliasOwnerSub;
 			mocks::MockTypedNotificationSubscriber<typename TNotificationTraits::Notification_Type> aliasedSub;
-			auto pPlugin = TTraits::CreatePlugin(supportedVersionsSupplier);
+			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
 			transaction.Version = Transaction_Version;
@@ -93,14 +93,14 @@ namespace catapult { namespace test {
 		}
 	};
 
-#define DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, TRAITS_PREFIX, NOTIFICATION_TRAITS, SUPPORTED_VERSIONS_SUPPLIER) \
+#define DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, TRAITS_PREFIX, NOTIFICATION_TRAITS) \
 	PLUGIN_TEST(CanCalculateSize) { \
-		test::AliasTransactionPluginTests<TTraits>::AssertCanCalculateSize(SUPPORTED_VERSIONS_SUPPLIER); \
+		test::AliasTransactionPluginTests<TTraits>::AssertCanCalculateSize(); \
 	} \
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) { \
-		test::AliasTransactionPluginTests<TTraits>::template AssertCanPublishCorrectNumberOfNotifications<NOTIFICATION_TRAITS>(SUPPORTED_VERSIONS_SUPPLIER); \
+		test::AliasTransactionPluginTests<TTraits>::template AssertCanPublishCorrectNumberOfNotifications<NOTIFICATION_TRAITS>(); \
 	} \
 	PLUGIN_TEST(CanExtractAliasNotifications) { \
-		test::AliasTransactionPluginTests<TTraits>::template AssertCanExtractAliasNotifications<NOTIFICATION_TRAITS>(SUPPORTED_VERSIONS_SUPPLIER); \
+		test::AliasTransactionPluginTests<TTraits>::template AssertCanExtractAliasNotifications<NOTIFICATION_TRAITS>(); \
 	}
 }}

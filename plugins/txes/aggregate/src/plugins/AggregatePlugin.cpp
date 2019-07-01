@@ -20,7 +20,6 @@
 
 #include "AggregatePlugin.h"
 #include "AggregateTransactionPlugin.h"
-#include "src/config/AggregateConfiguration.h"
 #include "src/model/AggregateEntityType.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/PluginManager.h"
@@ -28,19 +27,15 @@
 
 namespace catapult { namespace plugins {
 
-	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(Aggregate, Aggregate, "catapult.plugins.aggregate")
-	}
-
 	void RegisterAggregateSubsystem(PluginManager& manager) {
 		// configure the aggregate to allow all registered transactions that support embedding
 		// (this works because the transaction registry is held by reference)
-		const auto& config = manager.config();
-		model::SupportedVersionsSupplier supportedVersionsSupplier = AggregateTransactionSupportedVersionSupplier(config);
 		const auto& transactionRegistry = manager.transactionRegistry();
-		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Complete, supportedVersionsSupplier));
-		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded, supportedVersionsSupplier));
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Complete, pConfigHolder));
+		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded, pConfigHolder));
 
+		const auto& config = manager.config();
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder.add(validators::CreateBasicAggregateCosignaturesValidator(config));
 			builder.add(validators::CreateStrictAggregateCosignaturesValidator(config));

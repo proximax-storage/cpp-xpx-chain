@@ -19,16 +19,13 @@ namespace catapult { namespace config {
 
 #define LOAD_METADATA(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 
-		LOAD_METADATA(AddressMetadataTransactionSupportedVersions);
-		LOAD_METADATA(MosaicMetadataTransactionSupportedVersions);
-		LOAD_METADATA(NamespaceMetadataTransactionSupportedVersions);
 		LOAD_METADATA(MaxFields);
 		LOAD_METADATA(MaxFieldKeySize);
 		LOAD_METADATA(MaxFieldValueSize);
 
 #undef LOAD_METADATA
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 6);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);
 		return config;
 	}
 }}

@@ -5,7 +5,6 @@
 **/
 
 #pragma once
-#include "catapult/types.h"
 
 namespace catapult { namespace model {
 

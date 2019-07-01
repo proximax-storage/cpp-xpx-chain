@@ -9,20 +9,14 @@
 #include "CatapultUpgradePlugin.h"
 #include "src/cache/CatapultUpgradeCache.h"
 #include "src/cache/CatapultUpgradeCacheStorage.h"
-#include "src/config/CatapultUpgradeConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/CatapultUpgradeTransactionPlugin.h"
 #include "src/validators/Validators.h"
 
 namespace catapult { namespace plugins {
 
-	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(CatapultUpgrade, CatapultUpgrade, "catapult.plugins.upgrade")
-	}
-
 	void RegisterCatapultUpgradeSubsystem(PluginManager& manager) {
-		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateCatapultUpgradeTransactionPlugin(CatapultUpgradeTransactionSupportedVersionSupplier(config)));
+		manager.addTransactionSupport(CreateCatapultUpgradeTransactionPlugin());
 
 		manager.addCacheSupport<cache::CatapultUpgradeCacheStorage>(
 			std::make_unique<cache::CatapultUpgradeCache>(manager.cacheConfig(cache::CatapultUpgradeCache::Name)));
@@ -36,6 +30,7 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		const auto& config = manager.config();
 		manager.addStatefulValidatorHook([&config](auto& builder) {
 			builder
 				.add(validators::CreateCatapultUpgradeSignerValidator())

@@ -79,14 +79,7 @@ namespace catapult { namespace sync {
 			blockChainConfig.MaxBlockFutureTime = utils::TimeSpan::FromSeconds(10u);
 			blockChainConfig.MaxDifficultyBlocks = 4u;
 			blockChainConfig.BlockPruneInterval = 360u;
-			blockChainConfig.BlockSupportedVersions.emplace(3);
-			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{
-				"",
-				{
-					{ "transferTransactionSupportedVersions", "3" },
-					{ "maxMessageSize", "0" },
-				}
-			}}));
+			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 
 			auto nodeConfig = config::NodeConfiguration::Uninitialized();
 			nodeConfig.MaxBlocksPerSyncAttempt = 30u;
@@ -98,7 +91,8 @@ namespace catapult { namespace sync {
 					std::move(blockChainConfig),
 					std::move(nodeConfig),
 					config::LoggingConfiguration::Uninitialized(),
-					config::UserConfiguration::Uninitialized()
+					config::UserConfiguration::Uninitialized(),
+					test::CreateSupportedEntityVersions()
 			};
 		}
 

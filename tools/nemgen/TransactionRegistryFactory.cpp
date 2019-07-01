@@ -30,20 +30,6 @@
 
 namespace catapult { namespace tools { namespace nemgen {
 
-	namespace {
-		struct SupportedVersionSupplier {
-			SupportedVersionSupplier(VersionSet supportedVersions) : m_supportedVersions(supportedVersions)
-			{}
-
-			const VersionSet& operator()() const {
-				return m_supportedVersions;
-			}
-
-		private:
-			VersionSet m_supportedVersions;
-		};
-	}
-
 	model::TransactionRegistry CreateTransactionRegistry() {
 		auto mosaicConfig = config::MosaicConfiguration::Uninitialized();
 		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
@@ -51,11 +37,11 @@ namespace catapult { namespace tools { namespace nemgen {
 		blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", mosaicConfig);
 		blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", namespaceConfig);
 		model::TransactionRegistry registry;
-		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin(SupportedVersionSupplier({ 1 })));
-		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(blockChainConfig, SupportedVersionSupplier({ 3 })));
-		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin(SupportedVersionSupplier({ 2 })));
-		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(blockChainConfig, SupportedVersionSupplier({ 2 })));
-		registry.registerPlugin(plugins::CreateTransferTransactionPlugin(SupportedVersionSupplier({ 3 })));
+		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
+		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(blockChainConfig));
+		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
+		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(blockChainConfig));
+		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		return registry;
 	}
 }}}

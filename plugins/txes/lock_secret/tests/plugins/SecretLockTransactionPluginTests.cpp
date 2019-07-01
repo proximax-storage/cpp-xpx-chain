@@ -23,7 +23,6 @@
 #include "src/model/SecretLockTransaction.h"
 #include "tests/test/SecretLockTransactionUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/core/mocks/MockSupportedVersionSupplier.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 
 using namespace catapult::model;
@@ -35,16 +34,14 @@ namespace catapult { namespace plugins {
 	// region TransactionPlugin
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(SecretLock)
-
-		mocks::MockSupportedVersionSupplier Supported_Versions_Supplier({ 1 });
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(SecretLock, 1, 1)
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Secret_Lock, Supported_Versions_Supplier)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Secret_Lock)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		typename TTraits::TransactionType transaction;
 
 		// Act:
@@ -61,7 +58,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractAccounts) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 		test::FillWithRandomData(pTransaction->Recipient);
 
@@ -79,7 +76,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishAddressInteractionNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 		pTransaction->Type = static_cast<model::EntityType>(0x0815);
 		test::FillWithRandomData(pTransaction->Recipient);
@@ -103,7 +100,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishDurationNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<SecretLockDurationNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 		pTransaction->Duration = test::GenerateRandomValue<BlockDuration>();
 
@@ -123,7 +120,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishHashAlgorithmNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<SecretLockHashAlgorithmNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 
 		// Act:
@@ -152,7 +149,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishSecretNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<SecretLockNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 
 		// Act:
@@ -171,7 +168,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishBalanceDebitNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<model::BalanceDebitNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(Supported_Versions_Supplier);
+		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = test::CreateRandomLockTransaction<TTraits>();
 
 		// Act:

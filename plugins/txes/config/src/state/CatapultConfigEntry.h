@@ -13,10 +13,12 @@ namespace catapult { namespace state {
 	// Catapult config entry.
 	class CatapultConfigEntry {
 	public:
-		// Creates a catapult config entry around \a height and \a blockChainConfig.
-		CatapultConfigEntry(const Height& height = Height{0}, const std::string& blockChainConfig = std::string{})
+		// Creates a catapult config entry around \a height, \a blockChainConfig and \a supportedEntityVersions.
+		CatapultConfigEntry(const Height& height = Height{0}, const std::string& blockChainConfig = std::string{},
+				const std::string& supportedEntityVersions = std::string{})
 			: m_height(height)
 			, m_blockChainConfig(blockChainConfig)
+			, m_supportedEntityVersions(supportedEntityVersions)
 		{}
 
 	public:
@@ -40,8 +42,19 @@ namespace catapult { namespace state {
 			m_blockChainConfig = blockChainConfig;
 		}
 
+		/// Gets the catapult version.
+		const std::string& supportedEntityVersions() const {
+			return m_supportedEntityVersions;
+		}
+
+		/// Sets the \a supportedEntityVersions.
+		void setSupportedEntityVersions(const std::string& supportedEntityVersions) {
+			m_supportedEntityVersions = supportedEntityVersions;
+		}
+
 	private:
 		Height m_height;
 		std::string m_blockChainConfig;
+		std::string m_supportedEntityVersions;
 	};
 }}

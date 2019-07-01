@@ -37,6 +37,7 @@ namespace catapult { namespace filechain {
 		constexpr auto Supplemental_Data_Filename = "supplemental.dat";
 		constexpr auto State_Lock_Filename = "state.lock";
 		constexpr auto BlockChain_Configurations_Filename = "blockchain.config";
+		constexpr auto Supported_Entities_Filename = "supported-entities.config";
 
 		std::string GetStatePath(const std::string& baseDirectory, const std::string& filename) {
 			boost::filesystem::path path = baseDirectory;
@@ -70,6 +71,11 @@ namespace catapult { namespace filechain {
 			return boost::filesystem::exists(path);
 		}
 
+		bool HasSupportedEntities(const std::string& baseDirectory) {
+			auto path = GetStatePath(baseDirectory, Supported_Entities_Filename);
+			return boost::filesystem::exists(path);
+		}
+
 		std::string GetStorageFilename(const cache::CacheStorage& storage) {
 			return storage.name() + ".dat";
 		}
@@ -87,6 +93,9 @@ namespace catapult { namespace filechain {
 		if (!HasBlockChainConfigs(dataDirectory))
 			return false;
 
+		if (!HasSupportedEntities(dataDirectory))
+			return false;
+
 		if (!HasSupplementalData(dataDirectory))
 			return false;
 
@@ -96,6 +105,12 @@ namespace catapult { namespace filechain {
 			auto path = GetStatePath(dataDirectory, BlockChain_Configurations_Filename);
 			io::BufferedInputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Only));
 			pConfigHolder->LoadBlockChainConfigs(file);
+		}
+
+		{
+			auto path = GetStatePath(dataDirectory, Supported_Entities_Filename);
+			io::BufferedInputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Only));
+			pConfigHolder->LoadSupportedEntityVersions(file);
 		}
 
 		for (const auto& pStorage : cache.storages())
@@ -142,6 +157,12 @@ namespace catapult { namespace filechain {
 			auto path = GetStatePath(dataDirectory, BlockChain_Configurations_Filename);
 			io::BufferedOutputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Write));
 			pConfigHolder->SaveBlockChainConfigs(file);
+		}
+
+		{
+			auto path = GetStatePath(dataDirectory, Supported_Entities_Filename);
+			io::BufferedOutputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Write));
+			pConfigHolder->SaveSupportedEntityVersions(file);
 		}
 
 		for (const auto& pStorage : cache.storages())

@@ -20,7 +20,6 @@
 
 #include "HashLockPlugin.h"
 #include "src/cache/HashLockInfoCache.h"
-#include "src/config/HashLockConfiguration.h"
 #include "src/model/HashLockReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/HashLockTransactionPlugin.h"
@@ -31,13 +30,8 @@
 
 namespace catapult { namespace plugins {
 
-	namespace {
-		DEFINE_SUPPORTED_TRANSACTION_VERSION_SUPPLIER(HashLock, HashLock, "catapult.plugins.lockhash")
-	}
-
 	void RegisterHashLockSubsystem(PluginManager& manager) {
-		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateHashLockTransactionPlugin(HashLockTransactionSupportedVersionSupplier(config)));
+		manager.addTransactionSupport(CreateHashLockTransactionPlugin());
 
 		manager.addCacheSupport<cache::HashLockInfoCacheStorage>(
 				std::make_unique<cache::HashLockInfoCache>(manager.cacheConfig(cache::HashLockInfoCache::Name)));
@@ -51,6 +45,7 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		const auto& config = manager.config();
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			// hash lock validators
 			builder.add(validators::CreateHashLockDurationValidator(config));
