@@ -178,11 +178,11 @@ namespace catapult { namespace model {
 		/// Creates an entity notification around \a networkIdentifier, \a minVersion, \a maxVersion and \a entityVersion.
 		explicit EntityNotification(
 				model::NetworkIdentifier networkIdentifier,
-				const VersionSet& supportedVersions,
+				model::EntityType entityType,
                 VersionType entityVersion)
 				: Notification(Notification_Type, sizeof(EntityNotification<1>))
 				, NetworkIdentifier(networkIdentifier)
-				, SupportedVersions(supportedVersions)
+				, EntityType(entityType)
 				, EntityVersion(entityVersion)
 		{}
 
@@ -190,8 +190,8 @@ namespace catapult { namespace model {
 		/// Network identifier.
 		model::NetworkIdentifier NetworkIdentifier;
 
-		/// Supported versions.
-		const VersionSet& SupportedVersions;
+		/// Entity type.
+		model::EntityType EntityType;
 
 		/// Entity version.
         VersionType EntityVersion;

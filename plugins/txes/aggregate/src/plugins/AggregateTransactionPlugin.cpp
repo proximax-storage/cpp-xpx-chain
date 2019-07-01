@@ -38,11 +38,9 @@ namespace catapult { namespace plugins {
 		public:
 			AggregateTransactionPlugin(
 				const TransactionRegistry& transactionRegistry,
-				model::EntityType transactionType,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+				model::EntityType transactionType)
 					: m_transactionRegistry(transactionRegistry)
 					, m_transactionType(transactionType)
-					, m_pConfigHolder(pConfigHolder)
 			{}
 
 		public:
@@ -91,7 +89,7 @@ namespace catapult { namespace plugins {
 
 						sub.notify(EntityNotification<1>(
 								subTransaction.Network(),
-								m_pConfigHolder->Config().SupportedEntityVersions[subTransaction.Type],
+								subTransaction.Type,
 								subTransaction.EntityVersion()));
 
 						// - generic sub-transaction notification
@@ -158,14 +156,12 @@ namespace catapult { namespace plugins {
 		private:
 			const TransactionRegistry& m_transactionRegistry;
 			model::EntityType m_transactionType;
-			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		};
 	}
 
 	std::unique_ptr<TransactionPlugin> CreateAggregateTransactionPlugin(
 			const TransactionRegistry& transactionRegistry,
-			model::EntityType transactionType,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType, pConfigHolder);
+			model::EntityType transactionType) {
+		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType);
 	}
 }}

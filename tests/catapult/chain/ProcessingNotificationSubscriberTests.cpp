@@ -450,8 +450,7 @@ namespace catapult { namespace chain {
 		auto hash = test::GenerateRandomData<Hash256_Size>();
 		auto notification1 = model::AccountPublicKeyNotification<1>(signer);
 		auto notification2 = test::CreateNotification(Notification_Type_All);
-		VersionSet supportedVersions{ 0 };
-		auto notification3 = model::EntityNotification<1>(model::NetworkIdentifier::Mijin_Test, supportedVersions, 0);
+		auto notification3 = model::EntityNotification<1>(model::NetworkIdentifier::Mijin_Test, model::EntityType{0}, 0);
 		auto notification4 = model::TransactionNotification<1>(signer, hash, static_cast<model::EntityType>(22), Timestamp(11));
 
 		// - process notifications

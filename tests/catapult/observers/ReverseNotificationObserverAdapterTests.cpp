@@ -18,11 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/observers/ReverseNotificationObserverAdapter.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/test/core/mocks/MockTransaction.h"
-#include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
@@ -44,9 +42,7 @@ namespace catapult { namespace observers {
 			const auto& observer = *pObserver;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
-			auto pPublisher = model::CreateNotificationPublisher(registry, pConfigHolder);
+			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId());
 			ReverseNotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 			// Act + Assert:

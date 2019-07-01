@@ -26,19 +26,24 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EntityVersionValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion,)
+	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr uint8_t Min_Entity_Version = 55;
 		constexpr uint8_t Max_Entity_Version = 77;
+		constexpr auto Entity_Type = model::EntityType{1};
+
+		auto CreateLocalNodeConfigurationHolder() {
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			for (uint16_t i = Min_Entity_Version; i <= Max_Entity_Version; ++i)
+				pConfigHolder->Config().SupportedEntityVersions[Entity_Type].emplace(i);
+			return pConfigHolder;
+		}
 
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t version) {
 			// Arrange:
-			VersionSet supportedVersions;
-			for (VersionType i = Min_Entity_Version; i <= Max_Entity_Version; ++i)
-				supportedVersions.emplace(i);
-			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, supportedVersions, version);
-			auto pValidator = CreateEntityVersionValidator();
+			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, Entity_Type, version);
+			auto pValidator = CreateEntityVersionValidator(CreateLocalNodeConfigurationHolder());
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);
@@ -66,19 +71,6 @@ namespace catapult { namespace validators {
 		// Assert:
 		for (uint8_t version = Min_Entity_Version; version <= Max_Entity_Version; ++version)
 			AssertValidationResult(ValidationResult::Success, version);
-	}
-
-	TEST(TEST_CLASS, SuccessWhenEntityMatchesBounds) {
-		// Arrange:
-		VersionSet supportedVersions{ 5 };
-		model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, supportedVersions, 5);
-		auto pValidator = CreateEntityVersionValidator();
-
-		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification);
-
-		// Assert:
-		EXPECT_EQ(ValidationResult::Success, result);
 	}
 
 	// endregion

@@ -37,6 +37,5 @@ namespace catapult { namespace plugins {
 	PLUGIN_API
 	std::unique_ptr<model::TransactionPlugin> CreateAggregateTransactionPlugin(
 			const model::TransactionRegistry& transactionRegistry,
-			model::EntityType transactionType,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+			model::EntityType transactionType);
 }}

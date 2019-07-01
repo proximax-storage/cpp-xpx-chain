@@ -40,12 +40,6 @@ namespace catapult { namespace test {
 			const auto* pExpected = test::AsVoidPointer(pExpectedData);
 			EXPECT_EQ_MEMORY(pExpected, messagePart.data(), messagePart.size());
 		}
-
-		auto CreateConfigHolder() {
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
-			return pConfigHolder;
-		}
 	}
 
 	const mocks::MockTransaction& ToMockTransaction(const model::Transaction& transaction) {
@@ -201,16 +195,5 @@ namespace catapult { namespace test {
 	void AssertNoPendingMessages(zmq::socket_t& zmqSocket) {
 		zmq::multipart_t message;
 		ASSERT_FALSE(message.recv(zmqSocket));
-	}
-
-	MqContext::MqContext()
-			: m_registry(mocks::CreateDefaultTransactionRegistry())
-			, m_pConfigHolder(CreateConfigHolder())
-			, m_pZeroMqEntityPublisher(std::make_shared<zeromq::ZeroMqEntityPublisher>(
-				GetDefaultLocalHostZmqPort(),
-				model::CreateNotificationPublisher(m_registry, m_pConfigHolder)))
-			, m_zmqSocket(m_zmqContext, ZMQ_SUB) {
-		m_zmqSocket.setsockopt(ZMQ_RCVTIMEO, 10);
-		m_zmqSocket.connect("tcp://localhost:" + std::to_string(GetDefaultLocalHostZmqPort()));
 	}
 }}
