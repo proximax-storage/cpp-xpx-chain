@@ -39,14 +39,12 @@ namespace catapult { namespace observers {
 			void AssertCleanUpSnapshots(Height contextHeight, uint64_t expectedSizeOfSnapshots,
 										observers::NotifyMode mode = observers::NotifyMode::Commit) {
 				// Arrange:
-				test::AccountObserverTestContext context(
-						mode,
-						contextHeight
-				);
-
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.ImportanceGrouping = Effective_Balance_Range;
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
+
+				test::AccountObserverTestContext context(mode, contextHeight, config);
+
 				auto pObserver = CreateSnapshotCleanUpObserver(config);
 
 				auto signer = test::GenerateRandomData<Key_Size>();

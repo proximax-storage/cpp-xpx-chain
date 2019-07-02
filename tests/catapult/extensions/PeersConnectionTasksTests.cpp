@@ -194,7 +194,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateNodeSelector) {
 		// Arrange:
-		auto cache = test::CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto cache = test::CreateEmptyCatapultCache(config);
 		ionet::NodeContainer container;
 		auto serviceId = ionet::ServiceIdentifier(1);
 		auto settings = SelectorSettings(cache, Importance(100), container, serviceId, ionet::NodeRoles::Api, CreateConfiguration());
@@ -210,7 +211,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CreateNodeSelectorProvisionsConnectionStatesForRoleCompatibleNodes) {
 		// Arrange:
-		auto cache = test::CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto cache = test::CreateEmptyCatapultCache(config);
 		ionet::NodeContainer container;
 		auto keys = test::GenerateRandomDataVector<Key>(3);
 		Add(container, keys[0], "bob", ionet::NodeRoles::Api);
@@ -269,7 +271,8 @@ namespace catapult { namespace extensions {
 				ionet::ServiceIdentifier serviceId,
 				const NodeSelector& selector = NodeSelector()) {
 			// Act:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto settings = SelectorSettings(cache, Importance(100), container, serviceId, ionet::NodeRoles::Peer, CreateConfiguration());
 			auto task = selector
 					? CreateConnectPeersTask(settings, packetWriters, selector)
@@ -532,7 +535,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateRemoveOnlyNodeSelector) {
 		// Arrange:
-		auto cache = test::CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto cache = test::CreateEmptyCatapultCache(config);
 		ionet::NodeContainer container;
 		auto settings = SelectorSettings(cache, Importance(100), container, ionet::ServiceIdentifier(1), CreateConfiguration());
 		auto selector = CreateRemoveOnlyNodeSelector(settings);
@@ -555,7 +559,8 @@ namespace catapult { namespace extensions {
 				ionet::ServiceIdentifier serviceId,
 				const RemoveOnlyNodeSelector& selector = RemoveOnlyNodeSelector()) {
 			// Act:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto settings = SelectorSettings(cache, Importance(100), container, serviceId, CreateConfiguration());
 			auto task = selector
 					? CreateAgePeersTask(settings, packetWriters, selector)

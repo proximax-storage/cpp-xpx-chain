@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
 #include "src/cache/MosaicCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
@@ -29,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, BlockDuration(123))
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		constexpr MosaicId Default_Mosaic_Id = MosaicId(0x1234);
@@ -57,7 +58,12 @@ namespace catapult { namespace validators {
 				const model::MosaicDefinitionNotification<1>& notification,
 				Height height = Height(50)) {
 			// Arrange:
-			auto pValidator = CreateMosaicDurationValidator(BlockDuration(123));
+			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
+			pluginConfig.MaxMosaicDuration = utils::BlockSpan::FromHours(123);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
+			auto pValidator = CreateMosaicDurationValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, height);

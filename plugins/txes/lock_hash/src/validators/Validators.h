@@ -20,21 +20,21 @@
 
 #pragma once
 #include "Results.h"
-#include "src/model/HashLockNotifications.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/validators/ValidatorTypes.h"
+#include "src/config/HashLockConfiguration.h"
+#include "src/model/HashLockNotifications.h"
 
 namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to hash lock notifications and validates that:
 	/// - lock duration is at most \a maxHashLockDuration
-	DECLARE_STATELESS_VALIDATOR(HashLockDuration, model::HashLockDurationNotification<1>)(BlockDuration maxHashLockDuration);
+	DECLARE_STATELESS_VALIDATOR(HashLockDuration, model::HashLockDurationNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to hash lock mosaic notifications and validates that:
 	/// - mosaic id is \a currencyMosaicId
 	/// - mosaic amount is equal to \a lockedFundsPerAggregate
-	DECLARE_STATELESS_VALIDATOR(HashLockMosaic, model::HashLockMosaicNotification<1>)(
-			UnresolvedMosaicId currencyMosaicId,
-			Amount lockedFundsPerAggregate);
+	DECLARE_STATELESS_VALIDATOR(HashLockMosaic, model::HashLockMosaicNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to hash lock notifications and validates that:
 	/// - attached hash is not present in hash lock info cache
@@ -43,4 +43,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to transaction notifications and validates that:
 	/// - incomplete aggregate transactions must have an active, unused hash lock info present in cache
 	DECLARE_STATEFUL_VALIDATOR(AggregateHashPresent, model::TransactionNotification<1>)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

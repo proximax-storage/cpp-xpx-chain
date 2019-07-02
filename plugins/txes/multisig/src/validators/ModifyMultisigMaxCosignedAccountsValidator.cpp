@@ -20,14 +20,15 @@
 
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
+#include "src/config/MultisigConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMultisigNewCosignerNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, Notification)(uint32_t maxCosignedAccountsPerAccount) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, [maxCosignedAccountsPerAccount](
+	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, [&blockChainConfig](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
@@ -36,7 +37,8 @@ namespace catapult { namespace validators {
 
 			auto multisigIter = multisigCache.find(notification.CosignatoryKey);
 			const auto& cosignatoryEntry = multisigIter.get();
-			return cosignatoryEntry.multisigAccounts().size() >= maxCosignedAccountsPerAccount
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>("catapult.plugins.multisig");
+			return cosignatoryEntry.multisigAccounts().size() >= pluginConfig.MaxCosignedAccountsPerAccount
 					? Failure_Multisig_Modify_Max_Cosigned_Accounts
 					: ValidationResult::Success;
 		});

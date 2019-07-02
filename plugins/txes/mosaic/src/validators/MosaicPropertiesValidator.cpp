@@ -20,6 +20,8 @@
 
 #include "Validators.h"
 #include "catapult/constants.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
 
@@ -49,14 +51,16 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATELESS_VALIDATOR(MosaicProperties, Notification)(uint8_t maxDivisibility, BlockDuration maxMosaicDuration) {
-		return MAKE_STATELESS_VALIDATOR(MosaicProperties, ([maxDivisibility, maxMosaicDuration](const auto& notification) {
+	DECLARE_STATELESS_VALIDATOR(MosaicProperties, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATELESS_VALIDATOR(MosaicProperties, ([&blockChainConfig](const auto& notification) {
 			if (!IsValidFlags(notification.PropertiesHeader.Flags))
 				return Failure_Mosaic_Invalid_Flags;
 
-			if (notification.PropertiesHeader.Divisibility > maxDivisibility)
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+			if (notification.PropertiesHeader.Divisibility > pluginConfig.MaxMosaicDivisibility)
 				return Failure_Mosaic_Invalid_Divisibility;
 
+			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
 			return CheckOptionalProperties(notification, maxMosaicDuration);
 		}));
 	}

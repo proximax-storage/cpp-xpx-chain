@@ -30,6 +30,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange:
+		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+		blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
 		state::AccountProperties originalAccountProperties(test::GenerateRandomData<Address_Decoded_Size>());
 		auto& property = originalAccountProperties.property(model::PropertyType::Address);
 		for (auto i = 0u; i < 3; ++i)
@@ -39,7 +41,7 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(3u, originalAccountProperties.property<Address>(model::PropertyType::Address).size());
 
 		// Act:
-		PropertyCache cache(CacheConfiguration{}, model::NetworkIdentifier::Zero);
+		PropertyCache cache(CacheConfiguration{}, blockChainConfig);
 		{
 			auto delta = cache.createDelta();
 			PropertyCacheStorage::LoadInto(originalAccountProperties, *delta);

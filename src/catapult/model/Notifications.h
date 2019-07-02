@@ -24,6 +24,7 @@
 #include "NetworkInfo.h"
 #include "NotificationType.h"
 #include "catapult/utils/ArraySet.h"
+#include "catapult/utils/ConfigurationBag.h"
 #include "catapult/types.h"
 #include <vector>
 
@@ -177,13 +178,11 @@ namespace catapult { namespace model {
 		/// Creates an entity notification around \a networkIdentifier, \a minVersion, \a maxVersion and \a entityVersion.
 		explicit EntityNotification(
 				model::NetworkIdentifier networkIdentifier,
-                VersionType minVersion,
-                VersionType maxVersion,
+				model::EntityType entityType,
                 VersionType entityVersion)
 				: Notification(Notification_Type, sizeof(EntityNotification<1>))
 				, NetworkIdentifier(networkIdentifier)
-				, MinVersion(minVersion)
-				, MaxVersion(maxVersion)
+				, EntityType(entityType)
 				, EntityVersion(entityVersion)
 		{}
 
@@ -191,11 +190,8 @@ namespace catapult { namespace model {
 		/// Network identifier.
 		model::NetworkIdentifier NetworkIdentifier;
 
-		/// Minimum supported version.
-        VersionType MinVersion;
-
-		/// Maximum supported version.
-        VersionType MaxVersion;
+		/// Entity type.
+		model::EntityType EntityType;
 
 		/// Entity version.
         VersionType EntityVersion;
@@ -477,6 +473,36 @@ namespace catapult { namespace model {
 
 		/// Type of source change.
 		SourceChangeType ChangeType;
+	};
+
+	// endregion
+
+	// region configuration change
+
+	/// Notification of a plugin configuration change.
+	template<VersionType version>
+	struct PluginConfigNotification;
+
+	template<>
+	struct PluginConfigNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Plugin_Config_v1_Notification;
+
+	public:
+		/// Creates a notification around \a primaryId, \a secondaryId and \a changeType.
+		explicit PluginConfigNotification(const std::string& name, const utils::ConfigurationBag& bag)
+			: Notification(Notification_Type, sizeof(PluginConfigNotification<1>))
+			, Name(name)
+			, Bag(bag)
+		{}
+
+	public:
+		/// Plugin name.
+		const std::string& Name;
+
+		/// Plugin configuration bag.
+		const utils::ConfigurationBag& Bag;
 	};
 
 	// endregion

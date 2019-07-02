@@ -26,16 +26,21 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, BlockDuration(0))
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
+		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		struct HashTraits {
 		public:
 			using NotificationType = model::HashLockDurationNotification<1>;
 			static constexpr auto Failure_Result = Failure_LockHash_Invalid_Duration;
 
 			static auto CreateValidator(BlockDuration maxDuration) {
-				return CreateHashLockDurationValidator(maxDuration);
+				auto pluginConfig = config::HashLockConfiguration::Uninitialized();
+				pluginConfig.MaxHashLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
+				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+				blockChainConfig.SetPluginConfiguration("catapult.plugins.lockhash", pluginConfig);
+				return CreateHashLockDurationValidator(blockChainConfig);
 			}
 		};
 	}

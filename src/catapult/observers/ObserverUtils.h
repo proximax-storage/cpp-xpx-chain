@@ -21,6 +21,7 @@
 #pragma once
 #include "ObserverContext.h"
 #include "ObserverTypes.h"
+#include "catapult/model/BlockChainConfiguration.h"
 
 namespace catapult { namespace observers {
 
@@ -39,9 +40,9 @@ namespace catapult { namespace observers {
 	/// with the specified grace period (\a gracePeriod).
 	template<typename TCache>
 	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
-			const std::string& name,
-			size_t interval,
-			BlockDuration gracePeriod) {
+		const std::string& name,
+		size_t interval,
+		BlockDuration gracePeriod) {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
 		return std::make_unique<ObserverType>(name + "PruningObserver", [interval, gracePeriod](const auto&, auto& context) {
 			if (!ShouldPrune(context, interval))
@@ -56,12 +57,55 @@ namespace catapult { namespace observers {
 		});
 	}
 
+	/// Creates a block-based cache pruning observer with \a name that runs every \a interval blocks
+	/// with the grace period equals to maximum rollback blocks as specified in (\a config).
+	template<typename TCache>
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
+			const std::string& name,
+			size_t interval,
+			const model::BlockChainConfiguration& config) {
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
+		return std::make_unique<ObserverType>(name + "PruningObserver", [interval, &config](const auto&, auto& context) {
+			if (!ShouldPrune(context, interval))
+				return;
+
+			auto gracePeriod = BlockDuration(config.MaxRollbackBlocks);
+			if (context.Height.unwrap() <= gracePeriod.unwrap())
+				return;
+
+			auto pruneHeight = Height(context.Height.unwrap() - gracePeriod.unwrap());
+			auto& cache = context.Cache.template sub<TCache>();
+			cache.prune(pruneHeight);
+		});
+	}
+
+	/// Creates a block-based cache pruning observer with \a name that runs every BlockPruneInterval
+	/// as specified in (\a config).
+	template<typename TCache>
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
+			const std::string& name,
+			const model::BlockChainConfiguration& config) {
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
+		return std::make_unique<ObserverType>(name + "PruningObserver", [&config](const auto&, auto& context) {
+			if (!ShouldPrune(context, config.BlockPruneInterval))
+				return;
+
+			auto gracePeriod = BlockDuration{};
+			if (context.Height.unwrap() <= gracePeriod.unwrap())
+				return;
+
+			auto pruneHeight = Height(context.Height.unwrap() - gracePeriod.unwrap());
+			auto& cache = context.Cache.template sub<TCache>();
+			cache.prune(pruneHeight);
+		});
+	}
+
 	/// Creates a time-based cache pruning observer with \a name that runs every \a interval blocks.
 	template<typename TCache>
-	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheTimePruningObserver(const std::string& name, size_t interval) {
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheTimePruningObserver(const std::string& name, const model::BlockChainConfiguration& config) {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
-		return std::make_unique<ObserverType>(name + "PruningObserver", [interval](const auto& notification, const auto& context) {
-			if (!ShouldPrune(context, interval))
+		return std::make_unique<ObserverType>(name + "PruningObserver", [&config](const auto& notification, const auto& context) {
+			if (!ShouldPrune(context, config.BlockPruneInterval))
 				return;
 
 			auto& cache = context.Cache.template sub<TCache>();

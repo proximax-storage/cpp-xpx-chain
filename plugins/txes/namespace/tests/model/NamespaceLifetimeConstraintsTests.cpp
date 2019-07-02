@@ -27,9 +27,15 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CanCreateNamespaceLifetimeConstraints) {
 		// Act:
-		NamespaceLifetimeConstraints constraints(BlockDuration(123), BlockDuration(234));
+		auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+		pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(123);
+		pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(234);
+		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+		blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+		blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+		NamespaceLifetimeConstraints constraints(blockChainConfig);
 
 		// Assert:
-		EXPECT_EQ(BlockDuration(123 + 234), constraints.MaxNamespaceDuration);
+		EXPECT_EQ(BlockDuration(123 + 234), constraints.maxNamespaceDuration());
 	}
 }}

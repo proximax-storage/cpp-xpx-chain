@@ -91,7 +91,6 @@ namespace catapult { namespace subscribers {
 		void markUsed(SubscriberType subscriberType);
 
 	private:
-		const config::LocalNodeConfiguration& m_config;
 		std::unique_ptr<io::FileBlockStorage> m_pStorage;
 		std::array<bool, utils::to_underlying_type(SubscriberType::Count)> m_subscriberUsedFlags;
 

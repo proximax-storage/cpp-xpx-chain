@@ -187,9 +187,10 @@ namespace catapult { namespace observers {
 					const std::vector<size_t>& finalUnknownAccounts,
 					const std::vector<MultisigDescriptor>& finalMultisigAccounts) {
 
+				auto config = model::BlockChainConfiguration::Uninitialized();
 				RunTest(
 						notification,
-						ObserverTestContext(NotifyMode::Commit, Height(777)),
+						ObserverTestContext(NotifyMode::Commit, Height(777), config),
 						[&keys, &initialUnknownAccounts, &initialMultisigAccounts](auto& cacheFacade) {
 							InitMultisigTest(cacheFacade, keys, initialUnknownAccounts, initialMultisigAccounts);
 						},
@@ -209,9 +210,10 @@ namespace catapult { namespace observers {
 					const std::vector<size_t>& finalUnknownAccounts,
 					const std::vector<MultisigDescriptor>& finalMultisigAccounts) {
 
+				auto config = model::BlockChainConfiguration::Uninitialized();
 				RunTest(
 						notification,
-						ObserverTestContext(NotifyMode::Rollback, Height(777)),
+						ObserverTestContext(NotifyMode::Rollback, Height(777), config),
 						[&keys, &finalUnknownAccounts, &finalMultisigAccounts](auto& cacheFacade) {
 							InitMultisigTest(cacheFacade, keys, finalUnknownAccounts, finalMultisigAccounts);
 						},

@@ -25,6 +25,15 @@
 namespace catapult { namespace cache {
 
 	namespace {
+		auto CreateConfig() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(2);
+			config.MaxRollbackBlocks = 768;
+			return config;
+		}
+
+		auto Default_Config = CreateConfig();
+
 		struct HashCacheStorageTraits{
 			using ValueType = state::TimestampedHash;
 			static constexpr auto Value_Size = sizeof(Timestamp) + sizeof(ValueType::HashType);
@@ -33,7 +42,7 @@ namespace catapult { namespace cache {
 			using StorageType = HashCacheStorage;
 			class CacheType : public HashCache {
 			public:
-				CacheType() : HashCache(CacheConfiguration(), utils::TimeSpan::FromHours(32))
+				CacheType() : HashCache(CacheConfiguration(), Default_Config)
 				{}
 			};
 

@@ -33,10 +33,10 @@ namespace catapult { namespace test {
 
 	model::TransactionRegistry ExternalSourceConnection::CreateTransactionRegistry() {
 		auto registry = model::TransactionRegistry();
-		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(plugins::MosaicRentalFeeConfiguration()));
+		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(model::BlockChainConfiguration::Uninitialized()));
 		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
 		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
-		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(plugins::NamespaceRentalFeeConfiguration()));
+		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(model::BlockChainConfiguration::Uninitialized()));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		return registry;
 	}
@@ -77,6 +77,7 @@ namespace catapult { namespace test {
 			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
 			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
 			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+			pBlock->Version = MakeVersion(Network_Identifier, 3);
 			SignBlock(signer, *pBlock);
 			return std::move(pBlock);
 		}

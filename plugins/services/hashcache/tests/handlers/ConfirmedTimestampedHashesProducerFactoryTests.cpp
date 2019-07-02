@@ -51,7 +51,8 @@ namespace catapult { namespace handlers {
 
 		auto CreateCacheWithAlternatingHashes(const TimestampedHashes& timestampedHashes) {
 			// only insert every second timestamped hash into the cache
-			auto pCache = std::make_unique<cache::HashCache>(cache::CacheConfiguration(), utils::TimeSpan::FromHours(1));
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto pCache = std::make_unique<cache::HashCache>(cache::CacheConfiguration(), config);
 			auto delta = pCache->createDelta();
 			auto i = 0u;
 			for (auto timestampedHash : timestampedHashes)

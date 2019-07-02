@@ -20,7 +20,6 @@
 
 #include "HashLockPlugin.h"
 #include "src/cache/HashLockInfoCache.h"
-#include "src/config/HashLockConfiguration.h"
 #include "src/model/HashLockReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/HashLockTransactionPlugin.h"
@@ -46,14 +45,11 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		auto config = model::LoadPluginConfiguration<config::HashLockConfiguration>(manager.config(), "catapult.plugins.lockhash");
-		auto blockGenerationTargetTime = manager.config().BlockGenerationTargetTime;
-		auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(manager.config());
-		manager.addStatelessValidatorHook([config, blockGenerationTargetTime, currencyMosaicId](auto& builder) {
+		const auto& config = manager.config();
+		manager.addStatelessValidatorHook([&config](auto& builder) {
 			// hash lock validators
-			auto maxHashLockDuration = config.MaxHashLockDuration.blocks(blockGenerationTargetTime);
-			builder.add(validators::CreateHashLockDurationValidator(maxHashLockDuration));
-			builder.add(validators::CreateHashLockMosaicValidator(currencyMosaicId, config.LockedFundsPerAggregate));
+			builder.add(validators::CreateHashLockDurationValidator(config));
+			builder.add(validators::CreateHashLockMosaicValidator(config));
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
@@ -62,14 +58,13 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateHashLockCacheUniqueValidator());
 		});
 
-		auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
-		manager.addObserverHook([maxRollbackBlocks](auto& builder) {
+		manager.addObserverHook([&config](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockHash_Expired;
 			builder
 				.add(observers::CreateHashLockObserver())
 				.add(observers::CreateExpiredHashLockInfoObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::HashLockInfoCache>("HashLockInfo", expiryReceiptType))
-				.add(observers::CreateCacheBlockPruningObserver<cache::HashLockInfoCache>("HashLockInfo", 1, maxRollbackBlocks))
+				.add(observers::CreateCacheBlockPruningObserver<cache::HashLockInfoCache>("HashLockInfo", 1, config))
 				.add(observers::CreateCompletedAggregateObserver());
 		});
 	}

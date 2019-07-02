@@ -37,6 +37,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "extensions/sync/src/DispatcherService.h"
 #include "MockRemoteChainApi.h"
 #include "sdk/src/builders/TransferBuilder.h"
@@ -78,7 +79,7 @@ namespace catapult { namespace sync {
 			blockChainConfig.MaxBlockFutureTime = utils::TimeSpan::FromSeconds(10u);
 			blockChainConfig.MaxDifficultyBlocks = 4u;
 			blockChainConfig.BlockPruneInterval = 360u;
-			blockChainConfig.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 
 			auto nodeConfig = config::NodeConfiguration::Uninitialized();
 			nodeConfig.MaxBlocksPerSyncAttempt = 30u;
@@ -90,7 +91,8 @@ namespace catapult { namespace sync {
 					std::move(blockChainConfig),
 					std::move(nodeConfig),
 					config::LoggingConfiguration::Uninitialized(),
-					config::UserConfiguration::Uninitialized()
+					config::UserConfiguration::Uninitialized(),
+					test::CreateSupportedEntityVersions()
 			};
 		}
 

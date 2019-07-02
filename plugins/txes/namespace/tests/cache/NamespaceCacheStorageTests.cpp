@@ -28,7 +28,19 @@ namespace catapult { namespace cache {
 #define TEST_CLASS NamespaceCacheStorageTests
 
 	namespace {
-		constexpr auto Default_Cache_Options = NamespaceCacheTypes::Options{ BlockDuration(100) };
+		auto CreateBlockChainConfiguration() {
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(100);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			return blockChainConfig;
+		}
+		auto Default_Config = CreateBlockChainConfiguration();
+
+		auto DefaultCacheOptions() {
+			return NamespaceCacheTypes::Options{ Default_Config };
+		}
 
 		void LoadInto(io::InputStream& inputStream, NamespaceCacheDelta& delta) {
 			return NamespaceCacheStorage::LoadInto(NamespaceCacheStorage::Load(inputStream), delta);
@@ -52,7 +64,8 @@ namespace catapult { namespace cache {
 			template<typename TException>
 			static void AssertCannotLoad(io::InputStream& inputStream) {
 				// Assert:
-				NamespaceCache cache(CacheConfiguration{}, Default_Cache_Options);
+				auto options = DefaultCacheOptions();
+				NamespaceCache cache(CacheConfiguration{}, options);
 				auto delta = cache.createDelta();
 				EXPECT_THROW(LoadInto(inputStream, *delta), TException);
 			}
@@ -62,7 +75,7 @@ namespace catapult { namespace cache {
 					const Key& owner,
 					const state::NamespaceAlias& alias) {
 				// Act:
-				NamespaceCache cache(CacheConfiguration{}, Default_Cache_Options);
+				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				{
 					auto delta = cache.createDelta();
 					LoadInto(inputStream, *delta);
@@ -79,7 +92,7 @@ namespace catapult { namespace cache {
 
 			static void AssertCannotLoadHistoryWithDepthOneOutOfOrderChildren(io::InputStream& inputStream) {
 				// Arrange:
-				NamespaceCache cache(CacheConfiguration{}, Default_Cache_Options);
+				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				auto delta = cache.createDelta();
 
 				// Act + Assert:
@@ -91,7 +104,7 @@ namespace catapult { namespace cache {
 					const Key& owner,
 					const std::vector<state::NamespaceAlias>& aliases) {
 				// Act:
-				NamespaceCache cache(CacheConfiguration{}, Default_Cache_Options);
+				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				{
 					auto delta = cache.createDelta();
 					LoadInto(inputStream, *delta);
@@ -120,7 +133,7 @@ namespace catapult { namespace cache {
 					const Key& owner,
 					const std::vector<state::NamespaceAlias>& aliases) {
 				// Act:
-				NamespaceCache cache(CacheConfiguration{}, Default_Cache_Options);
+				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				{
 					auto delta = cache.createDelta();
 					LoadInto(inputStream, *delta);
@@ -166,7 +179,7 @@ namespace catapult { namespace cache {
 					const Key& owner3,
 					const std::vector<state::NamespaceAlias>& aliases) {
 				// Act:
-				NamespaceCache cache(CacheConfiguration{}, Default_Cache_Options);
+				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				{
 					auto delta = cache.createDelta();
 					LoadInto(inputStream, *delta);

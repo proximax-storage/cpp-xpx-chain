@@ -29,7 +29,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS HarvestFeeObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, MosaicId())
+	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, model::BlockChainConfiguration::Uninitialized())
 
 	// region traits
 
@@ -85,9 +85,10 @@ namespace catapult { namespace observers {
 		template<typename TAction>
 		void RunHarvestFeeObserverTest(NotifyMode notifyMode, TAction action) {
 			// Arrange:
-			test::AccountObserverTestContext context(notifyMode);
-
-			auto pObserver = CreateHarvestFeeObserver(Currency_Mosaic_Id);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.CurrencyMosaicId = Currency_Mosaic_Id;
+			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
+			auto pObserver = CreateHarvestFeeObserver(config);
 
 			// Act + Assert:
 			action(context, *pObserver);
@@ -164,9 +165,11 @@ namespace catapult { namespace observers {
 		template<typename TMutator>
 		void AssertImproperLink(TMutator mutator) {
 			// Arrange:
-			test::AccountObserverTestContext context(NotifyMode::Commit);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.CurrencyMosaicId = Currency_Mosaic_Id;
+			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-			auto pObserver = CreateHarvestFeeObserver(Currency_Mosaic_Id);
+			auto pObserver = CreateHarvestFeeObserver(config);
 
 			auto signerPublicKey = test::GenerateRandomData<Key_Size>();
 			auto accountStateIter = RemoteAccountTraits::AddAccount(accountStateCache, signerPublicKey, Height(1));

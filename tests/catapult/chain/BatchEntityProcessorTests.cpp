@@ -32,7 +32,9 @@ namespace catapult { namespace chain {
 	namespace {
 		class ProcessorTestContext {
 		public:
-			ProcessorTestContext() : m_processor(CreateBatchEntityProcessor(m_executionConfig.Config))
+			ProcessorTestContext(const model::BlockChainConfiguration& blockChainConfig)
+				: m_processor(CreateBatchEntityProcessor(m_executionConfig.Config))
+				, m_blockChainConfig(blockChainConfig)
 			{}
 
 		public:
@@ -46,7 +48,7 @@ namespace catapult { namespace chain {
 
 		public:
 			ValidationResult process(Height height, Timestamp timestamp, const model::WeakEntityInfos& entityInfos) {
-				auto cache = test::CreateCatapultCacheWithMarkerAccount();
+				auto cache = test::CreateCatapultCacheWithMarkerAccount(m_blockChainConfig);
 				auto delta = cache.createDelta();
 				auto observerState = observers::ObserverState(delta, m_state);
 				return m_processor(height, timestamp, entityInfos, observerState);
@@ -153,6 +155,7 @@ namespace catapult { namespace chain {
 			test::MockExecutionConfiguration m_executionConfig;
 			state::CatapultState m_state;
 			BatchEntityProcessor m_processor;
+			const model::BlockChainConfiguration& m_blockChainConfig;
 		};
 
 		model::WeakEntityInfos ExtractEntityInfosFromBlock(const model::Block& block) {
@@ -174,7 +177,8 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanProcessZeroEntities) {
 		// Arrange:
-		ProcessorTestContext context;
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ProcessorTestContext context{config};
 		model::WeakEntityInfos entityInfos;
 
 		// Act:
@@ -187,7 +191,8 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanProcessSingleEntity) {
 		// Arrange:
-		ProcessorTestContext context;
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ProcessorTestContext context{config};
 		auto pBlock = test::GenerateBlockWithTransactions(0);
 		auto entityInfos = ExtractEntityInfosFromBlock(*pBlock);
 
@@ -203,7 +208,8 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanProcessMultipleEntities) {
 		// Arrange:
-		ProcessorTestContext context;
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ProcessorTestContext context{config};
 		auto pBlock = test::GenerateBlockWithTransactions(3);
 		auto entityInfos = ExtractEntityInfosFromBlock(*pBlock);
 
@@ -226,7 +232,8 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanReuseProcessor) {
 		// Arrange:
-		ProcessorTestContext context;
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ProcessorTestContext context{config};
 		auto pBlock1 = test::GenerateBlockWithTransactions(0);
 		auto pBlock2 = test::GenerateBlockWithTransactions(0);
 		auto entityInfos1 = ExtractEntityInfosFromBlock(*pBlock1);
@@ -254,7 +261,8 @@ namespace catapult { namespace chain {
 
 	SHORT_CIRCUIT_TRAITS_BASED_TEST(ExecuteShortCircuitsOnSingleEntityStatefulValidation) {
 		// Arrange:
-		ProcessorTestContext context;
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ProcessorTestContext context{config};
 		context.setValidationResult(TResult, 2);
 		auto pBlock = test::GenerateBlockWithTransactions(3);
 		auto entityInfos = ExtractEntityInfosFromBlock(*pBlock);

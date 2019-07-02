@@ -94,6 +94,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the credit of the mosaic would exceed the maximum of different mosaics an account is allowed to own.
 	DEFINE_MOSAIC_RESULT(Max_Mosaics_Exceeded, 170);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_MOSAIC_RESULT(Plugin_Config_Malformed, 171);
+
 	// endregion
 
 #ifndef CUSTOM_RESULT_DEFINITION

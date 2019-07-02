@@ -48,12 +48,14 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto config = model::BlockChainConfiguration::Uninitialized();
 		config.BlockPruneInterval = 15;
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(config);
 
 		auto storageConfig = StorageConfiguration();
 		storageConfig.CacheDatabaseDirectory = "abc";
 
 		// Act:
-		PluginManager manager(config, storageConfig);
+		PluginManager manager(pConfigHolder, storageConfig);
 
 		// Assert: compare BlockPruneInterval and CacheDatabaseDirectory as sentinel values because the manager copies the configs
 		EXPECT_EQ(15u, manager.config().BlockPruneInterval);
@@ -62,6 +64,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateCacheConfiguration) {
 		// Arrange:
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+
 		auto storageConfig = StorageConfiguration();
 		storageConfig.PreferCacheDatabase = true;
 		storageConfig.CacheDatabaseDirectory = "abc";
@@ -75,7 +80,7 @@ namespace catapult { namespace plugins {
 		};
 
 		// Act:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), storageConfig);
+		PluginManager manager(pConfigHolder, storageConfig);
 
 		// Assert: cache configuration is constructed appropriately
 		assertCacheConfiguration(manager.cacheConfig("foo"), "abc/foo");
@@ -88,7 +93,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomTransactions) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		for (auto i : { 7, 9, 4 })
@@ -129,7 +136,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomCaches) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		AddSubCacheWithId<7>(manager);
@@ -146,7 +155,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomCachePlugins) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		AddSubCachePluginWithId<7>(manager);
@@ -181,7 +192,9 @@ namespace catapult { namespace plugins {
 		template<typename THandlerTraits>
 		void AssertCanRegisterCustomHandlers() {
 			// Arrange:
-			PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act:
 			THandlerTraits::AddHandlerHook(manager, [](auto& handlers, const auto&) {
@@ -243,7 +256,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomDiagnosticCounters) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		manager.addDiagnosticCounterHook([](auto& counters, const auto&) {
@@ -303,7 +318,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterStatelessValidators) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
 			builder.add(CreateNamedStatelessValidator("beta"));
@@ -332,7 +349,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatelessValidatorWithNoSuppressedFailureFiltering) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
 		});
@@ -346,7 +365,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatelessValidatorWithCustomSuppressedFailureFiltering) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
 		});
@@ -364,7 +385,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterStatefulValidators) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
 			builder.add(CreateNamedStatefulValidator("beta"));
@@ -395,7 +418,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatefulValidatorWithNoSuppressedFailureFiltering) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
 		});
@@ -409,7 +434,9 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatefulValidatorWithCustomSuppressedFailureFiltering) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
 		});
@@ -451,7 +478,9 @@ namespace catapult { namespace plugins {
 		template<typename TAction>
 		void RunObserverTest(TAction action) {
 			// Arrange:
-			PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+			PluginManager manager(pConfigHolder, StorageConfiguration());
 			manager.addObserverHook([](auto& builder) {
 				builder.add(CreateNamedObserver("alpha"));
 				builder.add(CreateNamedObserver("beta"));
@@ -564,7 +593,9 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateDefaultResolver) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		auto result = Resolve(manager, TTraits::CreateUnresolved(123));
@@ -575,7 +606,9 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverAroundMatchingResolver) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, true);
 
 		// Act:
@@ -587,7 +620,9 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverAroundNonMatchingResolver) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, false);
 
 		// Act:
@@ -599,7 +634,9 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverThatOnlyExecutesFirstMatchingResolver) {
 		// Arrange:
-		PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, false);
 		TTraits::AddResolver(manager, 2, true); // second one should match
 		TTraits::AddResolver(manager, 3, true);
@@ -623,7 +660,9 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			PluginManager manager(config, StorageConfiguration());
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			PluginManager manager(pConfigHolder, StorageConfiguration());
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin());
 
 			auto pTransaction = mocks::CreateMockTransaction(0);

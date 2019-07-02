@@ -36,10 +36,21 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Grace_Period_Duration = 7u;
 
+		auto CreateBlockChainConfiguration() {
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(Grace_Period_Duration);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			return blockChainConfig;
+		}
+		auto Default_Config = CreateBlockChainConfiguration();
+		auto Default_Cache_Options = NamespaceCacheTypes::Options{ Default_Config };
+
 		struct NamespaceCacheMixinTraits {
 			class CacheType : public NamespaceCache {
 			public:
-				CacheType() : NamespaceCache(CacheConfiguration(), NamespaceCacheTypes::Options{ BlockDuration(Grace_Period_Duration) })
+				CacheType() : NamespaceCache(CacheConfiguration(), NamespaceCacheTypes::Options{ Default_Cache_Options })
 				{}
 			};
 
@@ -1103,7 +1114,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanSpecifyInitialValuesViaInit) {
 		// Arrange:
 		auto config = CacheConfiguration();
-		NamespaceCache cache(config, NamespaceCacheTypes::Options());
+		NamespaceCache cache(config, Default_Cache_Options);
 
 		// Act:
 		cache.init(static_cast<size_t>(12), static_cast<size_t>(7));

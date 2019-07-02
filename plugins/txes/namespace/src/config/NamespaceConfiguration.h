@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/PluginConfiguration.h"
 #include "catapult/utils/BlockSpan.h"
 #include <unordered_set>
 
@@ -27,7 +28,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Namespace plugin configuration settings.
-	struct NamespaceConfiguration {
+	struct NamespaceConfiguration : public model::PluginConfiguration {
 	public:
 		/// Maximum namespace and mosaic name size.
 		uint8_t MaxNameSize;

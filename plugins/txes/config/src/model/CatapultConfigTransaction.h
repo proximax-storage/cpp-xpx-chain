@@ -28,8 +28,14 @@ namespace catapult { namespace model {
 		/// Blockchain configuration size in bytes.
 		uint32_t BlockChainConfigSize;
 
+		/// Supported entity versions configuration size in bytes.
+		uint32_t SupportedEntityVersionsSize;
+
 		// followed by blockchain configuration data if BlockChainConfigSize != 0
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlockChainConfig, uint8_t)
+
+		// followed by blockchain configuration data if SupportedEntityVersionsSize != 0
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(SupportedEntityVersions, uint8_t)
 
 	public:
 		template<typename T>
@@ -37,9 +43,14 @@ namespace catapult { namespace model {
 			return transaction.BlockChainConfigSize ? THeader::PayloadStart(transaction) : nullptr;
 		}
 
+		template<typename T>
+		static auto* SupportedEntityVersionsPtrT(T& transaction) {
+			return transaction.SupportedEntityVersionsSize ? THeader::PayloadStart(transaction) + transaction.BlockChainConfigSize : nullptr;
+		}
+
 		// Calculates the real size of a catapult config \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.BlockChainConfigSize;
+			return sizeof(TransactionType) + transaction.BlockChainConfigSize + transaction.SupportedEntityVersionsSize;
 		}
 	};
 

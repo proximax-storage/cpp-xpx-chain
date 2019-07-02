@@ -19,22 +19,28 @@
 **/
 
 #include "TransactionRegistryFactory.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
 #include "catapult/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "catapult/plugins/TransferTransactionPlugin.h"
+#include "mosaic/src/config/MosaicConfiguration.h"
+#include "namespace/src/config/NamespaceConfiguration.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	model::TransactionRegistry CreateTransactionRegistry() {
-		plugins::MosaicRentalFeeConfiguration mosaicConfig;
-		plugins::NamespaceRentalFeeConfiguration namespaceConfig;
+		auto mosaicConfig = config::MosaicConfiguration::Uninitialized();
+		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
+		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+		blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", mosaicConfig);
+		blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", namespaceConfig);
 		model::TransactionRegistry registry;
 		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
-		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(mosaicConfig));
+		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(blockChainConfig));
 		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
-		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(namespaceConfig));
+		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(blockChainConfig));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		return registry;
 	}

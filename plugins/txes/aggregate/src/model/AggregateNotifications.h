@@ -36,6 +36,9 @@ namespace catapult { namespace model {
 	/// Aggregate was received with an embedded transaction.
 	DEFINE_AGGREGATE_NOTIFICATION(EmbeddedTransaction_v1, 0x002, Validator);
 
+	/// Aggregate of specific type was received.
+	DEFINE_AGGREGATE_NOTIFICATION(Type_v1, 0x003, Validator);
+
 #undef DEFINE_AGGREGATE_NOTIFICATION
 
 	// endregion
@@ -119,5 +122,27 @@ namespace catapult { namespace model {
 
 		/// Const pointer to the first transaction.
 		const EmbeddedTransaction* TransactionsPtr;
+	};
+
+	/// Notification of transaction entity type.
+	template<VersionType version>
+	struct AggregateTransactionTypeNotification;
+
+	template<>
+	struct AggregateTransactionTypeNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Aggregate_Type_v1_Notification;
+
+	public:
+		/// Creates a notification around \a type.
+		explicit AggregateTransactionTypeNotification(const EntityType & type)
+				: Notification(Notification_Type, sizeof(AggregateTransactionTypeNotification<1>))
+				, Type(type)
+		{}
+
+	public:
+		/// Transaction entity type.
+		const EntityType& Type;
 	};
 }}

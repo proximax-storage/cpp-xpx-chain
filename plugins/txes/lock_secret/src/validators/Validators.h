@@ -21,13 +21,14 @@
 #pragma once
 #include "Results.h"
 #include "src/model/SecretLockNotifications.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to secret lock notifications and validates that:
 	/// - lock duration is at most \a maxSecretLockDuration
-	DECLARE_STATELESS_VALIDATOR(SecretLockDuration, model::SecretLockDurationNotification<1>)(BlockDuration maxSecretLockDuration);
+	DECLARE_STATELESS_VALIDATOR(SecretLockDuration, model::SecretLockDurationNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to secret lock hash algorithm notifications and validates that:
 	/// - hash algorithm is valid
@@ -41,9 +42,13 @@ namespace catapult { namespace validators {
 	/// - hash algorithm is supported
 	/// - proof size is within inclusive bounds of \a minProofSize and \a maxProofSize
 	/// - hash of proof matches secret
-	DECLARE_STATELESS_VALIDATOR(ProofSecret, model::ProofSecretNotification<1>)(uint16_t minProofSize, uint16_t maxProofSize);
+	DECLARE_STATELESS_VALIDATOR(ProofSecret, model::ProofSecretNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to proof notifications and validates that:
 	/// - secret obtained from proof is present in cache
 	DECLARE_STATEFUL_VALIDATOR(Proof, model::ProofPublicationNotification<1>)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

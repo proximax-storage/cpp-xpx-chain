@@ -30,7 +30,9 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				PluginManager manager(model::BlockChainConfiguration::Uninitialized(), StorageConfiguration());
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterSignatureSystem(manager);
 
 				// Act:

@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/PluginConfiguration.h"
 #include "catapult/utils/BlockSpan.h"
 #include "catapult/types.h"
 #include <stdint.h>
@@ -28,7 +29,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Secret lock plugin configuration settings.
-	struct SecretLockConfiguration {
+	struct SecretLockConfiguration : public model::PluginConfiguration {
 	public:
 		/// Maximum number of blocks for which a secret lock can exist.
 		utils::BlockSpan MaxSecretLockDuration;

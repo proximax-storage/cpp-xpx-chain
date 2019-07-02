@@ -26,9 +26,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ModifyAddressPropertyValueNotification_v1;
 
-	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, Notification)(model::NetworkIdentifier networkIdentifier) {
-		return MAKE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, [networkIdentifier](const auto& notification) {
-			auto address = model::PublicKeyToAddress(notification.Key, networkIdentifier);
+	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, Notification)(const model::BlockChainConfiguration& config) {
+		return MAKE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, [&config](const auto& notification) {
+			auto address = model::PublicKeyToAddress(notification.Key, config.Network.Identifier);
 			return address != model::ResolverContext().resolve(notification.Modification.Value)
 					? ValidationResult::Success
 					: Failure_Property_Modification_Address_Invalid;

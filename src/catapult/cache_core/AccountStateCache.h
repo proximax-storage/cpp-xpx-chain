@@ -36,17 +36,17 @@ namespace catapult { namespace cache {
 	class BasicAccountStateCache : public AccountStateBasicCache {
 	public:
 		/// Creates a cache around \a config and \a options.
-		explicit BasicAccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
-				: BasicAccountStateCache(config, options, std::make_unique<model::AddressSet>(), std::make_unique<model::AddressSet>())
+		explicit BasicAccountStateCache(const CacheConfiguration& config, const model::BlockChainConfiguration& blockChainConfig)
+				: BasicAccountStateCache(config, blockChainConfig, std::make_unique<model::AddressSet>(), std::make_unique<model::AddressSet>())
 		{}
 
 	private:
 		BasicAccountStateCache(
 				const CacheConfiguration& config,
-				const AccountStateCacheTypes::Options& options,
+				const model::BlockChainConfiguration& blockChainConfig,
 				std::unique_ptr<model::AddressSet>&& pHighValueAddresses,
 				std::unique_ptr<model::AddressSet>&& pAddressesToUpdate)
-				: AccountStateBasicCache(config, AccountStateCacheTypes::Options(options), *pHighValueAddresses, *pAddressesToUpdate)
+				: AccountStateBasicCache(config, AccountStateCacheTypes::Options{ blockChainConfig }, *pHighValueAddresses, *pAddressesToUpdate)
 				, m_pHighValueAddresses(std::move(pHighValueAddresses))
 				, m_pAddressesToUpdate(std::move(pAddressesToUpdate))
 		{}
@@ -82,25 +82,23 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config and \a options.
-		AccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
-				: SynchronizedCacheWithInit<BasicAccountStateCache>(BasicAccountStateCache(config, options))
-				, m_networkIdentifier(options.NetworkIdentifier)
-				, m_importanceGrouping(options.ImportanceGrouping)
+		AccountStateCache(const CacheConfiguration& config, const model::BlockChainConfiguration& blockChainConfig)
+				: SynchronizedCacheWithInit<BasicAccountStateCache>(BasicAccountStateCache(config, blockChainConfig))
+				, m_config(blockChainConfig)
 		{}
 
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_networkIdentifier;
+			return m_config.Network.Identifier;
 		}
 
 		/// Gets the network importance grouping.
 		uint64_t importanceGrouping() const {
-			return m_importanceGrouping;
+			return m_config.ImportanceGrouping;
 		}
 
 	private:
-		model::NetworkIdentifier m_networkIdentifier;
-		uint64_t m_importanceGrouping;
+		const model::BlockChainConfiguration& m_config;
 	};
 }}

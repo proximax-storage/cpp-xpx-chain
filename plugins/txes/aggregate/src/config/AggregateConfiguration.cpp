@@ -38,7 +38,7 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(EnableBondedAggregateSupport);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 4);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
 		return config;
 	}
 }}

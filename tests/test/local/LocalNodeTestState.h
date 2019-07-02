@@ -30,20 +30,17 @@ namespace catapult { namespace test {
 	/// Local node test state.
 	class LocalNodeTestState {
 	public:
-		/// Creates default state.
-		LocalNodeTestState();
-
 		/// Creates default state around \a config.
 		explicit LocalNodeTestState(const model::BlockChainConfiguration& config);
 
-		/// Creates default state around \a cache.
-		explicit LocalNodeTestState(cache::CatapultCache&& cache);
+		/// Creates default state around \a config and \a userDataDirectory.
+		explicit LocalNodeTestState(const model::BlockChainConfiguration& config, const std::string& userDataDirectory);
 
 		/// Creates default state around \a config, \a userDataDirectory and \a cache.
 		LocalNodeTestState(
-				const model::BlockChainConfiguration& config,
-				const std::string& userDataDirectory,
-				cache::CatapultCache&& cache);
+			const model::BlockChainConfiguration& config,
+			const std::string& userDataDirectory,
+			cache::CatapultCache&& cache);
 
 		/// Destroys the state.
 		~LocalNodeTestState();

@@ -25,6 +25,15 @@
 namespace catapult { namespace cache {
 
 	namespace {
+		auto CreateConfig() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxRollbackBlocks = 100;
+			config.MaxDifficultyBlocks = 745;
+			return config;
+		}
+
+		auto Default_Config = CreateConfig();
+
 		struct BlockDifficultyCacheStorageTraits{
 			using ValueType = state::BlockDifficultyInfo;
 			static constexpr auto Value_Size = sizeof(Height) + sizeof(Timestamp) + sizeof(Difficulty);
@@ -33,7 +42,7 @@ namespace catapult { namespace cache {
 			using StorageType = BlockDifficultyCacheStorage;
 			class CacheType : public BlockDifficultyCache {
 			public:
-				CacheType() : BlockDifficultyCache(845)
+				CacheType() : BlockDifficultyCache(Default_Config)
 				{}
 			};
 
