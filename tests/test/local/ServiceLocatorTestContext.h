@@ -41,7 +41,7 @@ namespace catapult { namespace test {
 	namespace {
 		auto CreateConfigHolder(const config::LocalNodeConfiguration& config) {
 			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config.BlockChain);
+			pConfigHolder->SetConfig(config);
 			return pConfigHolder;
 		}
 	}

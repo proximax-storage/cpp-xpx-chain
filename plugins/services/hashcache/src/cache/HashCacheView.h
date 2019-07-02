@@ -35,7 +35,8 @@ namespace catapult { namespace cache {
 			: public utils::MoveOnly
 			, public HashCacheViewMixins::Size
 			, public HashCacheViewMixins::Contains
-			, public HashCacheViewMixins::Iteration {
+			, public HashCacheViewMixins::Iteration
+			, public HashCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = HashCacheTypes::CacheReadOnlyType;
 

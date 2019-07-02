@@ -116,6 +116,12 @@ namespace catapult { namespace test {
 		/// Creates a view extension.
 		explicit SimpleCacheDisabledMerkleRootViewExtension(SimpleCacheViewMode, const SimpleCacheState&)
 		{}
+
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
 	};
 
 	/// A view extension that represents a default cache that supports merkle roots.
@@ -147,6 +153,11 @@ namespace catapult { namespace test {
 		/// \note This is just a placeholder and not implemented.
 		std::pair<Hash256, bool> tryLookup(const size_t&, std::vector<tree::TreeNode>&) const {
 			return std::make_pair(Hash256(), false);
+		}
+
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
 		}
 
 	private:

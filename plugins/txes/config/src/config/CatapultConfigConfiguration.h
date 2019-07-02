@@ -19,6 +19,9 @@ namespace catapult { namespace config {
 		/// Maximum blockchain config data size.
 		utils::FileSize MaxBlockChainConfigSize;
 
+		/// Maximum supported entity versions config data size.
+		utils::FileSize MaxSupportedEntityVersionsSize;
+
 	private:
 		CatapultConfigConfiguration() = default;
 

@@ -18,8 +18,10 @@ namespace catapult { namespace observers {
 				if (NotifyMode::Commit == context.Mode) {
 					const auto& entry = cache.find(context.Height).get();
 					manager.configHolder()->SetBlockChainConfig(context.Height, entry.blockChainConfig());
+					manager.configHolder()->SetSupportedEntityVersions(context.Height, entry.supportedEntityVersions());
 				} else {
 					manager.configHolder()->RemoveBlockChainConfig(context.Height);
+					manager.configHolder()->RemoveSupportedEntityVersions(context.Height);
 				}
 			}
 		});

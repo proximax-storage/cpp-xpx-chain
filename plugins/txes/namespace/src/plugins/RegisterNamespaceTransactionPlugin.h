@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/model//BlockChainConfiguration.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
 #include <memory>

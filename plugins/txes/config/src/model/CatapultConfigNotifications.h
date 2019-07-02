@@ -18,7 +18,7 @@ namespace catapult { namespace model {
 	DEFINE_CATAPULT_CONFIG_NOTIFICATION(Signer_v1, 0x001, Validator);
 
 	/// Blockchain config.
-	DEFINE_CATAPULT_CONFIG_NOTIFICATION(BlockChain_Config_v1, 0x002, All);
+	DEFINE_CATAPULT_CONFIG_NOTIFICATION(Catapult_Config_v1, 0x002, All);
 
 #undef DEFINE_CATAPULT_CONFIG_NOTIFICATION
 
@@ -48,21 +48,25 @@ namespace catapult { namespace model {
 
 	/// Notification of a blockchain config.
 	template<VersionType version>
-	struct BlockChainConfigNotification;
+	struct CatapultConfigNotification;
 
 	template<>
-	struct BlockChainConfigNotification<1> : public Notification {
+	struct CatapultConfigNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = CatapultConfig_BlockChain_Config_v1_Notification;
+		static constexpr auto Notification_Type = CatapultConfig_Catapult_Config_v1_Notification;
 
 	public:
-		/// Creates a notification around \a applyHeightDelta, \a blockChainConfigSize and \a blockChainConfigPtr.
-		BlockChainConfigNotification(const BlockDuration& applyHeightDelta, uint32_t blockChainConfigSize, const uint8_t* blockChainConfigPtr)
-			: Notification(Notification_Type, sizeof(BlockChainConfigNotification<1>))
+		/// Creates a notification around \a applyHeightDelta, \a blockChainConfigSize, \a blockChainConfigPtr,
+		/// \a supportedEntityVersionsSize and \a supportedEntityVersionsPtr
+		CatapultConfigNotification(const BlockDuration& applyHeightDelta, uint32_t blockChainConfigSize, const uint8_t* blockChainConfigPtr,
+				uint32_t supportedEntityVersionsSize, const uint8_t* supportedEntityVersionsPtr)
+			: Notification(Notification_Type, sizeof(CatapultConfigNotification<1>))
 			, ApplyHeightDelta(applyHeightDelta)
 			, BlockChainConfigSize(blockChainConfigSize)
 			, BlockChainConfigPtr(blockChainConfigPtr)
+			, SupportedEntityVersionsSize(supportedEntityVersionsSize)
+			, SupportedEntityVersionsPtr(supportedEntityVersionsPtr)
 		{}
 
 	public:
@@ -74,5 +78,11 @@ namespace catapult { namespace model {
 
 		/// Blockchain configuration data pointer.
 		const uint8_t* BlockChainConfigPtr;
+
+		/// Supported entity versions configuration size in bytes.
+		uint32_t SupportedEntityVersionsSize;
+
+		/// Supported entity versions configuration data pointer.
+		const uint8_t* SupportedEntityVersionsPtr;
 	};
 }}

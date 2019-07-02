@@ -55,6 +55,9 @@ namespace catapult { namespace test {
 	/// Creates a block chain configuration.
 	model::BlockChainConfiguration CreateLocalNodeBlockChainConfiguration();
 
+	/// Creates a supported entity versions configuration.
+	config::SupportedEntityVersions CreateSupportedEntityVersions();
+
 	/// Creates a test configuration for a local node with a storage in the specified directory (\a dataDirectory).
 	config::LocalNodeConfiguration CreateLocalNodeConfiguration(const std::string& dataDirectory);
 

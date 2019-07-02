@@ -49,6 +49,7 @@ namespace catapult { namespace cache {
 		using MutableAccessorKey = KeyMixins::MutableAccessor;
 		using PatriciaTreeDelta = AddressMixins::PatriciaTreeDelta;
 		using DeltaElements = AddressMixins::DeltaElements;
+		using Enable = AddressMixins::Enable;
 
 		// no mutable key accessor because address-to-key pairs are immutable
 	};
@@ -64,7 +65,8 @@ namespace catapult { namespace cache {
 			, public AccountStateCacheDeltaMixins::MutableAccessorAddress
 			, public AccountStateCacheDeltaMixins::MutableAccessorKey
 			, public AccountStateCacheDeltaMixins::PatriciaTreeDelta
-			, public AccountStateCacheDeltaMixins::DeltaElements {
+			, public AccountStateCacheDeltaMixins::DeltaElements
+			, public AccountStateCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 

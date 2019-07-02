@@ -37,7 +37,8 @@ namespace catapult { namespace cache {
 			, public PropertyCacheViewMixins::Contains
 			, public PropertyCacheViewMixins::Iteration
 			, public PropertyCacheViewMixins::ConstAccessor
-			, public PropertyCacheViewMixins::PatriciaTreeView {
+			, public PropertyCacheViewMixins::PatriciaTreeView
+			, public PropertyCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 

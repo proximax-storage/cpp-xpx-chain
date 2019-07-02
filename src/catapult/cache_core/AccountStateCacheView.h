@@ -47,6 +47,7 @@ namespace catapult { namespace cache {
 		using ConstAccessorAddress = AddressMixins::ConstAccessor;
 		using ConstAccessorKey = KeyMixins::ConstAccessor;
 		using PatriciaTreeView = AddressMixins::PatriciaTreeView;
+		using Enable = AddressMixins::Enable;
 	};
 
 	/// Basic view on top of the account state cache.
@@ -58,7 +59,8 @@ namespace catapult { namespace cache {
 			, public AccountStateCacheViewMixins::Iteration
 			, public AccountStateCacheViewMixins::ConstAccessorAddress
 			, public AccountStateCacheViewMixins::ConstAccessorKey
-			, public AccountStateCacheViewMixins::PatriciaTreeView {
+			, public AccountStateCacheViewMixins::PatriciaTreeView
+			, public AccountStateCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 

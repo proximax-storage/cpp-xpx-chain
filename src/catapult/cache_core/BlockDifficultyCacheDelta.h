@@ -37,7 +37,8 @@ namespace catapult { namespace cache {
 	class BasicBlockDifficultyCacheDelta
 			: public utils::MoveOnly
 			, public BlockDifficultyCacheDeltaMixins::Size
-			, public BlockDifficultyCacheDeltaMixins::Contains {
+			, public BlockDifficultyCacheDeltaMixins::Contains
+			, public BlockDifficultyCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = BlockDifficultyCacheTypes::CacheReadOnlyType;
 		using ValueType = BlockDifficultyCacheDescriptor::ValueType;

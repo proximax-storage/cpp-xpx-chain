@@ -19,6 +19,8 @@
 **/
 
 #pragma once
+
+#include <src/catapult/config/LocalNodeConfigurationHolder.h>
 #include "Results.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/utils/TimeSpan.h"
@@ -46,7 +48,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to entity notifications and validates that:
 	/// - the entity version is within supported range.
-	DECLARE_STATELESS_VALIDATOR(EntityVersion, model::EntityNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(EntityVersion, model::EntityNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
 

@@ -37,7 +37,8 @@ namespace catapult { namespace cache {
 			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::Iteration
 			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::ConstAccessor
 			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::PatriciaTreeView
-			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::ActivePredicate {
+			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::ActivePredicate
+			, public LockInfoCacheViewMixins<TDescriptor, TCacheTypes>::Enable {
 	public:
 		using ReadOnlyView = typename TCacheTypes::CacheReadOnlyType;
 

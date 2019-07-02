@@ -22,10 +22,12 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
+#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/model/Address.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
+#include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -317,8 +319,7 @@ namespace catapult { namespace plugins {
 
 			// - min/max version comes from MockTransactionPlugin created in CreateDefaultTransactionRegistry
 			EXPECT_EQ(static_cast<NetworkIdentifier>(100 + i), notification.NetworkIdentifier) << message;
-			EXPECT_EQ(0x02u, notification.MinVersion) << message;
-			EXPECT_EQ(0xFEu, notification.MaxVersion) << message;
+			EXPECT_EQ(mocks::EmbeddedMockTransaction::Entity_Type, notification.EntityType) << message;
 			EXPECT_EQ((i + 1) * 2, notification.EntityVersion) << message;
 		}
 	}
