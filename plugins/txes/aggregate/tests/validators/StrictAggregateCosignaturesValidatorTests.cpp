@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/AggregateConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -26,7 +27,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS StrictAggregateCosignaturesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(StrictAggregateCosignatures,)
+	DEFINE_COMMON_VALIDATOR_TESTS(StrictAggregateCosignatures, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		using Keys = std::vector<Key>;
@@ -48,7 +49,12 @@ namespace catapult { namespace validators {
 
 			using Notification = model::AggregateCosignaturesNotification<1>;
 			Notification notification(signer, txSigners.size(), pTransactions, cosigners.size(), cosignatures.data());
-			auto pValidator = CreateStrictAggregateCosignaturesValidator();
+
+			auto pluginConfig = config::AggregateConfiguration::Uninitialized();
+			pluginConfig.EnableStrictCosignatureCheck = true;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.aggregate", pluginConfig);
+			auto pValidator = CreateStrictAggregateCosignaturesValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

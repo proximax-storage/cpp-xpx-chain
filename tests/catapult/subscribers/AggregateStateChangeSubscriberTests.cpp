@@ -20,6 +20,7 @@
 
 #include "catapult/subscribers/AggregateStateChangeSubscriber.h"
 #include "catapult/consumers/StateChangeInfo.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/ChainScore.h"
 #include "tests/catapult/subscribers/test/AggregateSubscriberTestContext.h"
 #include "tests/catapult/subscribers/test/UnsupportedSubscribers.h"
@@ -83,7 +84,8 @@ namespace catapult { namespace subscribers {
 
 		TestContext<MockStateChangeSubscriber> context;
 
-		auto cache = test::CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto cache = test::CreateEmptyCatapultCache(config);
 		auto cacheDelta = cache.createDelta();
 		model::ChainScore scoreDelta;
 		consumers::StateChangeInfo stateChangeInfo(cacheDelta, scoreDelta, Height(444));

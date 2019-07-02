@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/MetadataPlugin.h"
 #include "plugins/txes/metadata/src/model/MetadataEntityType.h"
 #include "tests/test/plugins/PluginTestUtils.h"
@@ -18,7 +19,7 @@ namespace catapult { namespace plugins {
             static void RunTestAfterRegistration(TAction action) {
                 // Arrange:
                 auto config = model::BlockChainConfiguration::Uninitialized();
-                config.Plugins.emplace("catapult.plugins.metadata", utils::ConfigurationBag({
+                config.Plugins.emplace(PLUGIN_NAME(metadata), utils::ConfigurationBag({
                 {
                     "",
                     {
@@ -28,7 +29,9 @@ namespace catapult { namespace plugins {
                     }
                 }}));
 
-                PluginManager manager(config, StorageConfiguration());
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(config);
+				PluginManager manager(pConfigHolder, StorageConfiguration());
                 RegisterMetadataSubsystem(manager);
 
                 // Act:

@@ -39,7 +39,8 @@ namespace catapult { namespace extensions {
 	namespace {
 		void AssertUnsupported(observers::NotifyMode notifyMode, Height height) {
 			// Arrange:
-			test::AccountObserverTestContext context(notifyMode, height);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			test::AccountObserverTestContext context(notifyMode, height, config);
 			auto sender = test::GenerateRandomData<Key_Size>();
 
 			NemesisFundingState fundingState;
@@ -63,7 +64,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, ObserverFailsIfTransferIsFromNonNemesisAccount) {
 		// Arrange:
-		test::AccountObserverTestContext context(observers::NotifyMode::Commit, Height(1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::AccountObserverTestContext context(observers::NotifyMode::Commit, Height(1), config);
 		auto nemesis = test::GenerateRandomData<Key_Size>();
 		auto sender = test::GenerateRandomData<Key_Size>();
 
@@ -85,7 +87,8 @@ namespace catapult { namespace extensions {
 		auto mosaicId2 = MosaicId(8844);
 
 		// - pre-fund account
-		test::AccountObserverTestContext context(observers::NotifyMode::Commit, Height(1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::AccountObserverTestContext context(observers::NotifyMode::Commit, Height(1), config);
 		auto sender = test::GenerateRandomData<Key_Size>();
 
 		auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
@@ -130,7 +133,8 @@ namespace catapult { namespace extensions {
 		auto mosaicId2 = MosaicId(8844);
 
 		// - don't pre-fund account
-		test::AccountObserverTestContext context(observers::NotifyMode::Commit, Height(1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::AccountObserverTestContext context(observers::NotifyMode::Commit, Height(1), config);
 		auto sender = test::GenerateRandomData<Key_Size>();
 
 		NemesisFundingState fundingState;

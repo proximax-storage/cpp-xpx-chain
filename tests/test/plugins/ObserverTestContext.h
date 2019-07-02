@@ -31,18 +31,16 @@ namespace catapult { namespace test {
 	template<typename TCacheFactory>
 	class ObserverTestContextT {
 	public:
-		/// Creates a test context around \a mode.
-		explicit ObserverTestContextT(observers::NotifyMode mode) : ObserverTestContextT(mode, Height(444))
-		{}
-
-		/// Creates a test context around \a mode and \a height.
-		explicit ObserverTestContextT(observers::NotifyMode mode, Height height)
-				: ObserverTestContextT(mode, height, model::BlockChainConfiguration::Uninitialized())
-		{}
-
 		/// Creates a test context around \a mode, \a height and \a config.
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const model::BlockChainConfiguration& config)
 				: m_cache(TCacheFactory::Create(config))
+				, m_cacheDelta(m_cache.createDelta())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, height, mode, CreateResolverContextXor())
+		{}
+
+		/// Creates a test context around \a mode, \a height and \a config.
+		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const model::BlockChainConfiguration& config, BlockDuration gracePeriodDuration)
+				: m_cache(TCacheFactory::Create(config, gracePeriodDuration))
 				, m_cacheDelta(m_cache.createDelta())
 				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, height, mode, CreateResolverContextXor())
 		{}

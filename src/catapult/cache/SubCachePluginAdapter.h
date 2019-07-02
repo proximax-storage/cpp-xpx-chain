@@ -158,6 +158,10 @@ namespace catapult { namespace cache {
 				return &m_view->asReadOnly();
 			}
 
+			bool enabled() const override {
+				return m_view->enabled();
+			}
+
 		private:
 			enum class MerkleRootType { Unsupported, Supported };
 			using UnsupportedMerkleRootFlag = std::integral_constant<MerkleRootType, MerkleRootType::Unsupported>;

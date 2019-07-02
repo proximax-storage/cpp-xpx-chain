@@ -32,8 +32,7 @@ namespace catapult { namespace plugins {
 		const auto& config = manager.config();
 
 		manager.addCacheSupport<cache::HashCacheStorage>(std::make_unique<cache::HashCache>(
-				manager.cacheConfig(cache::HashCache::Name),
-				CalculateTransactionCacheDuration(config)));
+				manager.cacheConfig(cache::HashCache::Name), config));
 
 		manager.addDiagnosticHandlerHook([](auto& handlers, const cache::CatapultCache& cache) {
 			handlers::RegisterConfirmTimestampedHashesHandler(
@@ -54,7 +53,7 @@ namespace catapult { namespace plugins {
 		manager.addTransientObserverHook([&config](auto& builder) {
 			builder
 				.add(observers::CreateTransactionHashObserver())
-				.add(observers::CreateCacheTimePruningObserver<cache::HashCache>("TransactionHash", config.BlockPruneInterval));
+				.add(observers::CreateCacheTimePruningObserver<cache::HashCache>("TransactionHash", config));
 		});
 	}
 }}

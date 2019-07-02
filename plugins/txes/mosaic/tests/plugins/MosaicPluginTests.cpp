@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/MosaicPlugin.h"
 #include "src/cache/MosaicCache.h"
 #include "src/model/MosaicEntityType.h"
@@ -35,7 +36,7 @@ namespace catapult { namespace plugins {
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(1);
 				config.BlockPruneInterval = 150;
-				config.Plugins.emplace("catapult.plugins.mosaic", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(mosaic), utils::ConfigurationBag({{
 					"",
 					{
 						{ "maxMosaicsPerAccount", "0" },
@@ -51,7 +52,9 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				PluginManager manager(config, StorageConfiguration());
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(config);
+				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterMosaicSubsystem(manager);
 
 				// Act:

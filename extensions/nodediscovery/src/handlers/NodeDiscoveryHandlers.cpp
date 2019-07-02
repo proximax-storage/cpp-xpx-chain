@@ -58,11 +58,12 @@ namespace catapult { namespace handlers {
 
 	void RegisterNodeDiscoveryPullPingHandler(
 			ionet::ServerPacketHandlers& handlers,
-			const std::shared_ptr<const ionet::NetworkNode>& pLocalNode) {
-		handlers.registerHandler(ionet::PacketType::Node_Discovery_Pull_Ping, [pLocalNode](const auto& packet, auto& context) {
+			const config::LocalNodeConfiguration& config) {
+		handlers.registerHandler(ionet::PacketType::Node_Discovery_Pull_Ping, [&config](const auto& packet, auto& context) {
 			if (!IsPacketValid(packet, ionet::PacketType::Node_Discovery_Pull_Ping))
 				return;
 
+			auto pLocalNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(config)));
 			context.response(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Node_Discovery_Pull_Ping, pLocalNode));
 		});
 	}

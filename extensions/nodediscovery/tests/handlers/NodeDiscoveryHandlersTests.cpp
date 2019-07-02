@@ -157,8 +157,16 @@ namespace catapult { namespace handlers {
 		void RunPullPingHandlerTest(uint32_t packetExtraSize, TAssert assertFunc) {
 			// Arrange:
 			ionet::ServerPacketHandlers handlers;
-			auto pNetworkNode = utils::UniqueToShared(test::CreateNetworkNode("host", "alice"));
-			RegisterNodeDiscoveryPullPingHandler(handlers, pNetworkNode);
+			auto config = config::LocalNodeConfiguration(
+				model::BlockChainConfiguration::Uninitialized(),
+				config::NodeConfiguration::Uninitialized(),
+				config::LoggingConfiguration::Uninitialized(),
+				config::UserConfiguration::Uninitialized());
+			const_cast<config::NodeConfiguration&>(config.Node).Local.Host = "host";
+			const_cast<config::NodeConfiguration&>(config.Node).Local.FriendlyName = "alice";
+			const_cast<config::UserConfiguration&>(config.User).BootKey = test::GenerateRandomHexString(2 * Key_Size);
+			auto pNetworkNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(config)));
+			RegisterNodeDiscoveryPullPingHandler(handlers, config);
 
 			// - create a valid request
 			auto pPacket = ionet::CreateSharedPacket<ionet::Packet>();

@@ -30,10 +30,17 @@ namespace catapult { namespace cache {
 	// region mixin traits based tests
 
 	namespace {
+		auto CreateBlockChainConfig(model::NetworkIdentifier networkIdentifier) {
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.Network.Identifier = networkIdentifier;
+			return blockChainConfig;
+		}
+		auto Default_Config = CreateBlockChainConfig(model::NetworkIdentifier::Zero);
+
 		struct PropertyCacheMixinTraits {
 			class CacheType : public PropertyCache {
 			public:
-				CacheType() : PropertyCache(CacheConfiguration(), model::NetworkIdentifier::Zero)
+				CacheType() : PropertyCache(CacheConfiguration(), Default_Config)
 				{}
 			};
 
@@ -89,7 +96,8 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		PropertyCache cache(CacheConfiguration(), networkIdentifier);
+		auto config = CreateBlockChainConfig(networkIdentifier);
+		PropertyCache cache(CacheConfiguration(), config);
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());

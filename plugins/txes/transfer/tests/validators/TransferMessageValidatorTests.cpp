@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/TransferConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -26,13 +27,17 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS TransferMessageValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, 0)
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize) {
 			// Arrange:
 			auto notification = model::TransferMessageNotification<1>(messageSize);
-			auto pValidator = CreateTransferMessageValidator(maxMessageSize);
+			auto pluginConfig = config::TransferConfiguration::Uninitialized();
+			pluginConfig.MaxMessageSize = maxMessageSize;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.transfer", pluginConfig);
+			auto pValidator = CreateTransferMessageValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

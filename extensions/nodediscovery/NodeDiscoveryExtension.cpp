@@ -26,10 +26,8 @@ namespace catapult { namespace nodediscovery {
 
 	namespace {
 		void RegisterExtension(extensions::LocalNodeBootstrapper& bootstrapper) {
-			auto pLocalNetworkNode = ionet::PackNode(config::ToLocalNode(bootstrapper.config()));
-
 			// register service(s)
-			bootstrapper.extensionManager().addServiceRegistrar(CreateNodeDiscoveryServiceRegistrar(std::move(pLocalNetworkNode)));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateNodeDiscoveryServiceRegistrar(bootstrapper.config()));
 		}
 	}
 }}

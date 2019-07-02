@@ -117,6 +117,9 @@ namespace catapult { namespace model {
 	/// Transaction fee was received.
 	DEFINE_CORE_NOTIFICATION(Transaction_Fee_v1, 0x000C, Validator);
 
+	/// Mosaic was debited from account.
+	DEFINE_CORE_NOTIFICATION(Plugin_Config_v1, 0x000D, Validator);
+
 #undef DEFINE_CORE_NOTIFICATION
 
 	// endregion

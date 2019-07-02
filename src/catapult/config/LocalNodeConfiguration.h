@@ -23,6 +23,7 @@
 #include "NodeConfiguration.h"
 #include "PeersConfiguration.h"
 #include "UserConfiguration.h"
+#include "SupportedEntityVersions.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include <boost/filesystem/path.hpp>
 
@@ -31,12 +32,13 @@ namespace catapult { namespace config {
 	/// Comprehensive configuration for a local node.
 	class LocalNodeConfiguration {
 	public:
-		/// Creates a local node configuration around \a blockChainConfig, \a nodeConfig, \a loggingConfig and \a userConfig.
+		/// Creates a local node configuration around \a blockChainConfig, \a nodeConfig, \a loggingConfig, \a userConfig and \a supportedEntityVersions.
 		LocalNodeConfiguration(
 				model::BlockChainConfiguration&& blockChainConfig,
 				NodeConfiguration&& nodeConfig,
 				LoggingConfiguration&& loggingConfig,
-				UserConfiguration&& userConfig);
+				UserConfiguration&& userConfig,
+				SupportedEntityVersions&& supportedEntityVersions = config::SupportedEntityVersions());
 
 	public:
 		/// Block chain configuration.
@@ -50,6 +52,9 @@ namespace catapult { namespace config {
 
 		/// User configuration.
 		const UserConfiguration User;
+
+		/// Supported entity versions.
+		config::SupportedEntityVersions SupportedEntityVersions;
 
 	public:
 		/// Loads a local node configuration from \a resourcesPath.

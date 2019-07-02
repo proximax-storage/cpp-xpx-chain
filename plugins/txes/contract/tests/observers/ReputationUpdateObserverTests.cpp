@@ -61,7 +61,8 @@ namespace catapult { namespace observers {
 				const std::vector<ReputationValues> initialValues,
 				const std::vector<ReputationValues>& expectedValues) {
 			// Arrange:
-			ObserverTestContext context{mode, Height(777)};
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			ObserverTestContext context(mode, Height(777), config);
 			auto pObserver = CreateReputationUpdateObserver();
 
 			// - seed the cache

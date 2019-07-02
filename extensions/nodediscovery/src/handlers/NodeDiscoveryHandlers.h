@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/ionet/Node.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/model/NetworkInfo.h"
@@ -43,11 +44,11 @@ namespace catapult { namespace handlers {
 			model::NetworkIdentifier networkIdentifier,
 			const NodeConsumer& nodeConsumer);
 
-	/// Registers a node discovery pull ping handler in \a handlers that responds with \a pLocalNode.
+	/// Registers a node discovery pull ping handler in \a handlers that responds with the local node created from \a config.
 	/// \note shared_ptr is used to avoid copying into packet.
 	void RegisterNodeDiscoveryPullPingHandler(
 			ionet::ServerPacketHandlers& handlers,
-			const std::shared_ptr<const ionet::NetworkNode>& pLocalNode);
+			const config::LocalNodeConfiguration& config);
 
 	/// Registers a node discovery push peers handler in \a handlers that forwards received nodes to \a nodesConsumer.
 	void RegisterNodeDiscoveryPushPeersHandler(ionet::ServerPacketHandlers& handlers, const NodesConsumer& nodesConsumer);

@@ -25,6 +25,7 @@
 #include "NemesisExecutionHasher.h"
 #include "tools/ToolConfigurationUtils.h"
 #include "catapult/io/RawFile.h"
+#include "catapult/config/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
@@ -65,6 +66,8 @@ namespace catapult { namespace tools { namespace nemgen {
 			int run(const Options& options) override {
 				// 1. load config
 				auto config = LoadConfiguration(m_resourcesPath);
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetConfig(config);
 				auto nemesisConfig = LoadNemesisConfiguration(m_nemesisPropertiesFilePath);
 				if (!LogAndValidateNemesisConfiguration(nemesisConfig))
 					return -1;
@@ -75,7 +78,7 @@ namespace catapult { namespace tools { namespace nemgen {
 						: CacheDatabaseCleanupMode::None;
 				auto pBlock = CreateNemesisBlock(nemesisConfig);
 				auto blockElement = CreateNemesisBlockElement(nemesisConfig, *pBlock);
-				auto executionHashesDescriptor = CalculateAndLogNemesisExecutionHashes(blockElement, config, databaseCleanupMode);
+				auto executionHashesDescriptor = CalculateAndLogNemesisExecutionHashes(blockElement, pConfigHolder, databaseCleanupMode);
 				if (!options["no-summary"].as<bool>()) {
 					if (m_summaryFilePath.empty())
 						m_summaryFilePath = nemesisConfig.BinDirectory + "/summary.txt";

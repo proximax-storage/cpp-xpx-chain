@@ -25,6 +25,7 @@
 #include "catapult/cache/CacheDatabaseMixin.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/deltaset/BaseSetDelta.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/IdentifierGroup.h"
 
@@ -85,8 +86,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// Namespace grace period duration.
-			BlockDuration GracePeriodDuration;
+			/// Blockchain configuration.
+			const model::BlockChainConfiguration& BlockChainConfig;
 		};
 
 	// region secondary descriptors

@@ -38,9 +38,9 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)(const utils::TimeSpan& maxTransactionLifetime) {
-		return MAKE_STATEFUL_VALIDATOR(Deadline, [maxTransactionLifetime](const auto& notification, const auto& context) {
-			return ValidateTransactionDeadline(context.BlockTime, notification.Deadline, maxTransactionLifetime);
+	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)(const model::BlockChainConfiguration& config) {
+		return MAKE_STATEFUL_VALIDATOR(Deadline, [&config](const auto& notification, const auto& context) {
+			return ValidateTransactionDeadline(context.BlockTime, notification.Deadline, config.MaxTransactionLifetime);
 		});
 	}
 }}

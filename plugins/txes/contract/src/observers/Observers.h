@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/BlockChainConfiguration.h"
 #include "src/config/ContractConfiguration.h"
 #include "src/model/ContractNotifications.h"
 #include "catapult/observers/ObserverTypes.h"
@@ -26,7 +27,7 @@
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by update contract notifications
-	DECLARE_OBSERVER(ModifyContract, model::ModifyContractNotification<1>)(config::ContractConfiguration config);
+	DECLARE_OBSERVER(ModifyContract, model::ModifyContractNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// Observes changes triggered by update reputation notifications
 	DECLARE_OBSERVER(ReputationUpdate, model::ReputationUpdateNotification<1>)();

@@ -39,7 +39,8 @@ namespace catapult { namespace cache {
 			, public ContractCacheDeltaMixins::MutableAccessor
 			, public ContractCacheDeltaMixins::PatriciaTreeDelta
 			, public ContractCacheDeltaMixins::BasicInsertRemove
-			, public ContractCacheDeltaMixins::DeltaElements {
+			, public ContractCacheDeltaMixins::DeltaElements
+			, public ContractCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = ContractCacheTypes::CacheReadOnlyType;
 

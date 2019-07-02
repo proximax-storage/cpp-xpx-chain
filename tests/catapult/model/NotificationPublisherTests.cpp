@@ -123,12 +123,10 @@ namespace catapult { namespace model {
 		pBlock->Version = 0x11000003;
 
 		// Act:
-		PublishOne<EntityNotification<1>>(*pBlock, [](const auto& notification) {
+		PublishOne<EntityNotification<1>>(*pBlock, [&pBlock](const auto& notification) {
 			// Assert:
-			auto expectedVersion = Block::Current_Version;
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
-			EXPECT_EQ(expectedVersion, notification.MinVersion);
-			EXPECT_EQ(expectedVersion, notification.MaxVersion);
+			EXPECT_EQ(pBlock->Type, notification.EntityType);
 			EXPECT_EQ(0x03u, notification.EntityVersion);
 		});
 	}
@@ -267,11 +265,10 @@ namespace catapult { namespace model {
 		pTransaction->Version = 0x1100005A;
 
 		// Act:
-		PublishOne<EntityNotification<1>>(*pTransaction, [](const auto& notification) {
+		PublishOne<EntityNotification<1>>(*pTransaction, [&pTransaction](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(static_cast<NetworkIdentifier>(0x11), notification.NetworkIdentifier);
-			EXPECT_EQ(0x02u, notification.MinVersion);
-			EXPECT_EQ(0xFEu, notification.MaxVersion);
+			EXPECT_EQ(pTransaction->Type, notification.EntityType);
 			EXPECT_EQ(0x5Au, notification.EntityVersion);
 		});
 	}

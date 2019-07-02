@@ -19,16 +19,20 @@
 **/
 
 #include "Validators.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "src/config/HashLockConfiguration.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::HashLockMosaicNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(HashLockMosaic, Notification)(UnresolvedMosaicId currencyMosaicId, Amount lockedFundsPerAggregate) {
-		return MAKE_STATELESS_VALIDATOR(HashLockMosaic, ([currencyMosaicId, lockedFundsPerAggregate](const auto& notification) {
-			if (lockedFundsPerAggregate != notification.Mosaic.Amount)
+	DECLARE_STATELESS_VALIDATOR(HashLockMosaic, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATELESS_VALIDATOR(HashLockMosaic, ([&blockChainConfig](const auto& notification) {
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::HashLockConfiguration>("catapult.plugins.lockhash");
+			if (pluginConfig.LockedFundsPerAggregate != notification.Mosaic.Amount)
 				return Failure_LockHash_Invalid_Mosaic_Amount;
 
+			auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
 			return currencyMosaicId != notification.Mosaic.MosaicId ? Failure_LockHash_Invalid_Mosaic_Id : ValidationResult::Success;
 		}));
 	}

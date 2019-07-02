@@ -21,6 +21,7 @@
 #include "ServerMain.h"
 #include "Signals.h"
 #include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/LocalNodeConfigurationHolder.h"
 #include "catapult/config/ValidateConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
@@ -35,12 +36,6 @@ namespace catapult { namespace server {
 
 	namespace {
 		// region initialization utils
-
-		config::LocalNodeConfiguration LoadConfiguration(int argc, const char** argv) {
-			auto resourcesPath = GetResourcesPath(argc, argv);
-			std::cout << "loading resources from " << resourcesPath << std::endl;
-			return config::LocalNodeConfiguration::LoadFromPath(resourcesPath);
-		}
 
 		std::unique_ptr<utils::LogFilter> CreateLogFilter(const config::BasicLoggerConfiguration& config) {
 			auto pFilter = std::make_unique<utils::LogFilter>(config.Level);
@@ -73,20 +68,16 @@ namespace catapult { namespace server {
 
 		// endregion
 
-		void Run(config::LocalNodeConfiguration&& config, const CreateLocalNodeFunc& createLocalNode) {
-			auto keyPair = crypto::KeyPair::FromString(config.User.BootKey);
+		void Run(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const CreateLocalNodeFunc& createLocalNode) {
+			auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey);
 
 			CATAPULT_LOG(info) << "booting local node with public key " << crypto::FormatKey(keyPair.publicKey());
-			auto pLocalNode = createLocalNode(std::move(config), keyPair);
+			auto pLocalNode = createLocalNode(pConfigHolder, keyPair);
 			WaitForTerminationSignal();
 
 			CATAPULT_LOG(info) << "shutting down local node";
 			pLocalNode.reset();
 		}
-	}
-
-	boost::filesystem::path GetResourcesPath(int argc, const char** argv) {
-		return boost::filesystem::path(argc > 1 ? argv[1] : "..") / "resources";
 	}
 
 	int ServerMain(int argc, const char** argv, const CreateLocalNodeFunc& createLocalNode) {
@@ -95,7 +86,8 @@ namespace catapult { namespace server {
 		version::WriteVersionInformation(std::cout);
 
 		// 1. load and validate the configuration
-		auto config = LoadConfiguration(argc, argv);
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto config = pConfigHolder->LoadConfig(argc, argv);
 		ValidateConfiguration(config);
 
 		// 2. initialize logging
@@ -111,7 +103,7 @@ namespace catapult { namespace server {
 		}
 
 		// 4. run the server
-		Run(std::move(config), createLocalNode);
+		Run(pConfigHolder, createLocalNode);
 		return 0;
 	}
 }}

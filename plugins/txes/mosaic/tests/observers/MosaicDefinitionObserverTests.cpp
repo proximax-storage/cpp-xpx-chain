@@ -109,7 +109,8 @@ namespace catapult { namespace observers {
 		auto notification = CreateDefaultNotification(signer);
 
 		// Act: add it
-		auto context = ObserverTestContext(NotifyMode::Commit, Height(888));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto context = ObserverTestContext(NotifyMode::Commit, Height(888), config);
 		RunTest(notification, std::move(context), SeedCacheEmpty, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was added
 			EXPECT_EQ(1u, mosaicCacheDelta.size());
@@ -123,7 +124,8 @@ namespace catapult { namespace observers {
 		auto notification = CreateDefaultNotification(signer);
 
 		// Act: add it
-		auto context = ObserverTestContext(NotifyMode::Commit, Height(888));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto context = ObserverTestContext(NotifyMode::Commit, Height(888), config);
 		RunTest(notification, std::move(context), SeedCacheWithDefaultMosaic, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic definition was changed
 			// - height did not change
@@ -157,7 +159,8 @@ namespace catapult { namespace observers {
 		auto seedMosaics = [](auto& mosaicCacheDelta) { AddTwoMosaics(mosaicCacheDelta, 1); };
 
 		// Act: remove it
-		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height, config);
 		RunTest(notification, std::move(context), seedMosaics, [](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was removed
 			EXPECT_EQ(1u, mosaicCacheDelta.size());
@@ -173,7 +176,8 @@ namespace catapult { namespace observers {
 		auto seedMosaics = [](auto& mosaicCacheDelta) { AddTwoMosaics(mosaicCacheDelta, 2); };
 
 		// Act: remove it
-		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height, config);
 		RunTest(notification, std::move(context), seedMosaics, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was removed
 			EXPECT_EQ(2u, mosaicCacheDelta.size());
@@ -198,7 +202,8 @@ namespace catapult { namespace observers {
 		auto notification = CreateDefaultNotification(signer);
 
 		auto pObserver = CreateMosaicDefinitionObserver();
-		auto context = ObserverTestContext(NotifyMode::Commit, Seed_Height);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto context = ObserverTestContext(NotifyMode::Commit, Seed_Height, config);
 		auto& mosaicCacheDelta = context.cache().sub<cache::MosaicCache>();
 		auto definition = state::MosaicDefinition(Seed_Height, signer, 1, model::MosaicProperties::FromValues({ { 1, 2, 20 } }));
 		auto entry = state::MosaicEntry(Default_Mosaic_Id, definition);

@@ -21,7 +21,6 @@
 #include "PropertyPlugin.h"
 #include "src/cache/PropertyCache.h"
 #include "src/cache/PropertyCacheStorage.h"
-#include "src/config/PropertyConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/PropertyTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -35,9 +34,9 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateMosaicPropertyTransactionPlugin());
 		manager.addTransactionSupport(CreateTransactionTypePropertyTransactionPlugin());
 
-		auto networkIdentifier = manager.config().Network.Identifier;
+		const auto& config = manager.config();
 		manager.addCacheSupport<cache::PropertyCacheStorage>(
-				std::make_unique<cache::PropertyCache>(manager.cacheConfig(cache::PropertyCache::Name), networkIdentifier));
+				std::make_unique<cache::PropertyCache>(manager.cacheConfig(cache::PropertyCache::Name), config));
 
 		using CacheHandlers = CacheHandlers<cache::PropertyCacheDescriptor>;
 		CacheHandlers::Register<model::FacilityCode::Property>(manager);
@@ -48,30 +47,29 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addStatelessValidatorHook([networkIdentifier](auto& builder) {
+		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder
 				.add(validators::CreatePropertyTypeValidator())
 				.add(validators::CreateAddressPropertyModificationTypesValidator())
-				.add(validators::CreatePropertyAddressNoSelfModificationValidator(networkIdentifier))
+				.add(validators::CreatePropertyAddressNoSelfModificationValidator(config))
 				.add(validators::CreateMosaicPropertyModificationTypesValidator())
 				.add(validators::CreateTransactionTypePropertyModificationTypesValidator())
 				.add(validators::CreateTransactionTypePropertyModificationValuesValidator());
 		});
 
-		auto config = model::LoadPluginConfiguration<config::PropertyConfiguration>(manager.config(), "catapult.plugins.property");
-		manager.addStatefulValidatorHook([maxPropertyValues = config.MaxPropertyValues](auto& builder) {
+		manager.addStatefulValidatorHook([&config](auto& builder) {
 			builder
 				.add(validators::CreateAddressPropertyRedundantModificationValidator())
 				.add(validators::CreateAddressPropertyValueModificationValidator())
-				.add(validators::CreateMaxAddressPropertyValuesValidator(maxPropertyValues))
+				.add(validators::CreateMaxAddressPropertyValuesValidator(config))
 				.add(validators::CreateAddressInteractionValidator())
 				.add(validators::CreateMosaicPropertyRedundantModificationValidator())
 				.add(validators::CreateMosaicPropertyValueModificationValidator())
-				.add(validators::CreateMaxMosaicPropertyValuesValidator(maxPropertyValues))
+				.add(validators::CreateMaxMosaicPropertyValuesValidator(config))
 				.add(validators::CreateMosaicRecipientValidator())
 				.add(validators::CreateTransactionTypePropertyRedundantModificationValidator())
 				.add(validators::CreateTransactionTypePropertyValueModificationValidator())
-				.add(validators::CreateMaxTransactionTypePropertyValuesValidator(maxPropertyValues))
+				.add(validators::CreateMaxTransactionTypePropertyValuesValidator(config))
 				.add(validators::CreateTransactionTypeValidator())
 				.add(validators::CreateTransactionTypeNoSelfBlockingValidator());
 		});

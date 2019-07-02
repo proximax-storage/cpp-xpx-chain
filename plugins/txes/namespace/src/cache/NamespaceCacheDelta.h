@@ -19,6 +19,8 @@
 **/
 
 #pragma once
+
+#include <src/catapult/model/BlockChainConfiguration.h>
 #include "NamespaceBaseSets.h"
 #include "NamespaceCacheMixins.h"
 #include "NamespaceCacheSerializers.h"
@@ -47,6 +49,8 @@ namespace catapult { namespace cache {
 		using NamespaceLookup = NamespaceLookupMixin<
 			NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaType,
 			NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaType>;
+
+		using Enable = PrimaryMixins::Enable;
 	};
 
 	/// Basic delta on top of the namespace cache.
@@ -58,7 +62,8 @@ namespace catapult { namespace cache {
 			, public NamespaceCacheDeltaMixins::Touch
 			, public NamespaceCacheDeltaMixins::DeltaElements
 			, public NamespaceCacheDeltaMixins::NamespaceDeepSize
-			, public NamespaceCacheDeltaMixins::NamespaceLookup {
+			, public NamespaceCacheDeltaMixins::NamespaceLookup
+			, public NamespaceCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = NamespaceCacheTypes::CacheReadOnlyType;
 		using CollectedIds = std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>>;
@@ -94,7 +99,7 @@ namespace catapult { namespace cache {
 		NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pHistoryById;
 		NamespaceCacheTypes::NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaPointerType m_pNamespaceById;
 		NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRootNamespaceIdsByExpiryHeight;
-		BlockDuration m_gracePeriodDuration;
+		const model::BlockChainConfiguration& m_blockChainConfig;
 	};
 
 	/// Delta on top of the namespace cache.

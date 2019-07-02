@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/PluginConfiguration.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -26,7 +27,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Multisig plugin configuration settings.
-	struct MultisigConfiguration {
+	struct MultisigConfiguration : public model::PluginConfiguration {
 	public:
 		/// Maximum number of multisig levels.
 		uint8_t MaxMultisigDepth;

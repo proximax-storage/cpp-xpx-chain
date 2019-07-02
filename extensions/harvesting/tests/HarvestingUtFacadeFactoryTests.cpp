@@ -39,6 +39,8 @@ namespace catapult { namespace harvesting {
 		constexpr auto Currency_Mosaic_Id = MosaicId(1234);
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		// endregion
 
 		// region CreateBlockChainConfiguration
@@ -70,7 +72,7 @@ namespace catapult { namespace harvesting {
 		template<typename TAction>
 		void RunUtFacadeTest(TAction action) {
 			// Arrange: create factory and facade
-			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height);
+			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 			test::MockExecutionConfiguration executionConfig;
 			HarvestingUtFacadeFactory factory(catapultCache, CreateBlockChainConfiguration(), executionConfig.Config);
 
@@ -91,7 +93,7 @@ namespace catapult { namespace harvesting {
 			auto transactionInfos = test::CreateTransactionInfosFromSizeMultiplierPairs(sizeMultiplierPairs);
 
 			// - create factory and facade
-			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height);
+			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 			test::MockExecutionConfiguration executionConfig;
 			HarvestingUtFacadeFactory factory(catapultCache, CreateBlockChainConfiguration(), executionConfig.Config);
 

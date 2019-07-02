@@ -22,6 +22,7 @@
 #include "Results.h"
 #include "src/model/AliasNotifications.h"
 #include "src/model/NamespaceNotifications.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
 
@@ -36,18 +37,16 @@ namespace catapult { namespace validators {
 	/// - namespace name consists only of allowed characters
 	/// - for root namespaces, name is not in \a reservedRootNamespaceNames
 	/// - for child namespaces, the parent id is not an id that can be generated from \a reservedRootNamespaceNames
-	DECLARE_STATELESS_VALIDATOR(NamespaceName, model::NamespaceNameNotification<1>)(
-			uint8_t maxNameSize,
-			const std::unordered_set<std::string>& reservedRootNamespaceNames);
+	DECLARE_STATELESS_VALIDATOR(NamespaceName, model::NamespaceNameNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to root namespace notifications and validates that:
 	/// - namespace duration is less than or equal to \a maxDuration for root namespace
 	/// - namespace duration is zero for child namespace
-	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification<1>)(BlockDuration maxDuration);
+	DECLARE_STATELESS_VALIDATOR(RootNamespace, model::RootNamespaceNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to root register namespace transactions and validates that:
 	/// - the namespace is available and can be created or renewed given \a maxNamespaceDuration
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification<1>)(BlockDuration maxNamespaceDuration);
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to child register namespace transactions and validates that:
 	/// - the namespace is available and can be created
@@ -55,7 +54,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to child register namespace transactions and validates that:
 	/// - the maximum number of children (\a maxChildren) for a root namespace is not exceeded
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, model::ChildNamespaceNotification<1>)(uint16_t maxChildren);
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, model::ChildNamespaceNotification<1>)(const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to alias owner notifications and validates that:
 	/// - alias action is valid
@@ -79,4 +78,8 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to aliased address notifications and validates that:
 	/// - account is known
 	DECLARE_STATEFUL_VALIDATOR(AddressAlias, model::AliasedAddressNotification_v1)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

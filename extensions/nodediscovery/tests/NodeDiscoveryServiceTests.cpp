@@ -19,6 +19,7 @@
 **/
 
 #include "nodediscovery/src/NodeDiscoveryService.h"
+#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/ServerConnector.h"
@@ -50,22 +51,20 @@ namespace catapult { namespace nodediscovery {
 		constexpr auto Ping_Task_Name = "node discovery ping task";
 		constexpr auto Peers_Task_Name = "node discovery peers task";
 
-		auto CreateLocalNetworkNode() {
-			auto pNetworkNode = std::make_shared<ionet::NetworkNode>();
-			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pNetworkNode.get()), sizeof(ionet::NetworkNode) });
-			pNetworkNode->Size = sizeof(ionet::NetworkNode);
-			pNetworkNode->HostSize = 0;
-			pNetworkNode->FriendlyNameSize = 0;
-			return pNetworkNode;
+		auto CreateConfig() {
+			auto userConfig = config::UserConfiguration::Uninitialized();
+			userConfig.BootKey = test::GenerateRandomHexString(2 * Key_Size);
+			return config::LocalNodeConfiguration{
+				model::BlockChainConfiguration::Uninitialized(),
+				config::NodeConfiguration::Uninitialized(),
+				config::LoggingConfiguration::Uninitialized(),
+				std::move(userConfig)};
 		}
+		auto Default_Config = CreateConfig();
 
 		struct NodeDiscoveryServiceTraits {
-			static auto CreateRegistrar(const std::shared_ptr<const ionet::NetworkNode>& pLocalNetworkNode) {
-				return CreateNodeDiscoveryServiceRegistrar(pLocalNetworkNode);
-			}
-
 			static auto CreateRegistrar() {
-				return CreateRegistrar(CreateLocalNetworkNode());
+				return CreateNodeDiscoveryServiceRegistrar(Default_Config);
 			}
 		};
 
@@ -331,11 +330,10 @@ namespace catapult { namespace nodediscovery {
 		// Arrange:
 		TestContext context;
 
-		auto pLocalNetworkNode = CreateLocalNetworkNode();
-		context.boot(pLocalNetworkNode);
+		context.boot();
 
 		const auto& payloads = context.payloads();
-		test::RunTaskTestPostBoot(context, Num_Expected_Tasks, Ping_Task_Name, [&payloads, &node = *pLocalNetworkNode](const auto& task) {
+		test::RunTaskTestPostBoot(context, Num_Expected_Tasks, Ping_Task_Name, [&payloads](const auto& task) {
 			// Act:
 			auto result = task.Callback().get();
 
@@ -352,7 +350,6 @@ namespace catapult { namespace nodediscovery {
 
 			const auto& buffer = payload.buffers()[0];
 			ASSERT_EQ(sizeof(ionet::NetworkNode), buffer.Size);
-			EXPECT_EQ_MEMORY(&node, buffer.pData, buffer.Size);
 		});
 	}
 

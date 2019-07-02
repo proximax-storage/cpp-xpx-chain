@@ -102,7 +102,8 @@ namespace catapult { namespace filechain {
 			supplementalData.ChainScore = model::ChainScore(0x1234567890ABCDEF, 0xFEDCBA0987654321);
 			supplementalData.State.LastRecalculationHeight = model::ImportanceHeight(12345);
 			supplementalData.State.NumTotalTransactions = 7654321;
-			filechain::SaveState(dataDirectory, cache, supplementalData);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			filechain::SaveState(dataDirectory, cache, supplementalData, pConfigHolder);
 			return supplementalData;
 		}
 	}
@@ -116,7 +117,8 @@ namespace catapult { namespace filechain {
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(createConfig());
 		cache::SupplementalData supplementalData;
-		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData);
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData, pConfigHolder);
 
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);
@@ -140,7 +142,8 @@ namespace catapult { namespace filechain {
 			// Act: load the cache
 			auto cache = test::CoreSystemCacheFactory::Create(createConfig());
 			cache::SupplementalData supplementalData;
-			auto isStateLoaded = LoadState(dataDirectory, cache, supplementalData);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto isStateLoaded = LoadState(dataDirectory, cache, supplementalData, pConfigHolder);
 
 			// Assert:
 			EXPECT_FALSE(isStateLoaded);
@@ -193,7 +196,8 @@ namespace catapult { namespace filechain {
 		// Act: load the cache
 		auto cache = test::CoreSystemCacheFactory::Create(createConfig());
 		cache::SupplementalData supplementalData;
-		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData);
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto isStateLoaded = LoadState(tempDir.name(), cache, supplementalData, pConfigHolder);
 
 		// Assert:
 		EXPECT_TRUE(isStateLoaded);

@@ -33,7 +33,8 @@ namespace catapult { namespace observers {
 	namespace {
 		void AssertPruningPredicate(Height height, NotifyMode mode, size_t pruneInterval, bool expectedResult) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
@@ -272,6 +273,14 @@ namespace catapult { namespace observers {
 			EXPECT_EQ(std::vector<Timestamp>({ timestamp }), subCache.pruneTimes()) << message;
 			EXPECT_TRUE(subCache.touchHeights().empty()) << message;
 		}
+
+		auto CreateConfig() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.BlockPruneInterval = 10;
+			return config;
+		}
+
+		auto Default_Config = CreateConfig();
 	}
 
 	// region CacheBlockPruningObserver
@@ -350,7 +359,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverIsCreatedWithCorrectName) {
 		// Act:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", 10);
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", Default_Config);
 
 		// Assert:
 		EXPECT_EQ("FooPruningObserver", pObserver->name());
@@ -358,7 +367,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverSkipsPruningWhenModeIsRollback) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", 10);
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", Default_Config);
 
 		// Act + Assert:
 		auto mode = NotifyMode::Rollback;
@@ -373,7 +382,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverSkipsPruningWhenHeightIsNotDivisibleByPruneInterval) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", 10);
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", Default_Config);
 
 		// Act + Assert:
 		auto mode = NotifyMode::Commit;
@@ -385,7 +394,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverPrunesWhenHeightIsDivisibleByPruneInterval) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", 10);
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", Default_Config);
 
 		// Act + Assert:
 		auto mode = NotifyMode::Commit;

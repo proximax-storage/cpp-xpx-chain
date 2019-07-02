@@ -25,7 +25,8 @@ namespace catapult { namespace cache {
 			, public CatapultUpgradeCacheDeltaMixins::MutableAccessor
 			, public CatapultUpgradeCacheDeltaMixins::PatriciaTreeDelta
 			, public CatapultUpgradeCacheDeltaMixins::BasicInsertRemove
-			, public CatapultUpgradeCacheDeltaMixins::DeltaElements {
+			, public CatapultUpgradeCacheDeltaMixins::DeltaElements
+			, public CatapultUpgradeCacheDeltaMixins::Enable {
 	public:
 		using ReadOnlyView = CatapultUpgradeCacheTypes::CacheReadOnlyType;
 

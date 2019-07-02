@@ -92,7 +92,8 @@ namespace catapult { namespace filechain {
 			}
 
 			void save() const {
-				m_pBlockChainStorage->saveToStorage(m_localNodeState.cref());
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				m_pBlockChainStorage->saveToStorage(pConfigHolder, m_localNodeState.cref());
 			}
 
 		public:

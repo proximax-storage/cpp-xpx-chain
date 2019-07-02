@@ -56,10 +56,14 @@ namespace catapult { namespace timesync {
 
 		auto CreateAccountStateCache() {
 			auto cacheConfig = cache::CacheConfiguration();
-			auto networkIdentifier = model::NetworkIdentifier::Mijin_Test;
 			auto maxAmount = Amount(std::numeric_limits<Amount::ValueType>::max());
-			cache::AccountStateCacheTypes::Options options{ networkIdentifier, 234, maxAmount, MosaicId(1111), MosaicId(2222) };
-			return std::make_unique<cache::AccountStateCache>(cacheConfig, options);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			blockChainConfig.ImportanceGrouping = 234;
+			blockChainConfig.MinHarvesterBalance = maxAmount;
+			blockChainConfig.CurrencyMosaicId = MosaicId(1111);
+			blockChainConfig.HarvestingMosaicId = MosaicId(2222);
+			return std::make_unique<cache::AccountStateCache>(cacheConfig, blockChainConfig);
 		}
 
 		struct SeedNodeContainerOptions {

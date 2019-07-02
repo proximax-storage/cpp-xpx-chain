@@ -38,10 +38,17 @@ namespace catapult { namespace chain {
 
 		enum class FailureMode { Default, Suppress };
 
-		model::BlockChainConfiguration CreateConfiguration() {
+		model::BlockChainConfiguration CreateBlockChainConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Network_Identifier;
 			return config;
+		}
+		auto Default_Config = CreateBlockChainConfiguration();
+
+		auto CreateConfigHolder() {
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Default_Config);
+			return pConfigHolder;
 		}
 
 		class TestContext {
@@ -58,8 +65,8 @@ namespace catapult { namespace chain {
 					, m_statefulName(statefulName)
 					, m_statelessResult(ValidationResult::Success)
 					, m_statefulResult(ValidationResult::Success)
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount())
-					, m_pluginManager(CreateConfiguration(), plugins::StorageConfiguration()) {
+					, m_cache(test::CreateCatapultCacheWithMarkerAccount(Default_Config))
+					, m_pluginManager(CreateConfigHolder(), plugins::StorageConfiguration()) {
 				// set custom cache height
 				auto cacheDelta = m_cache.createDelta();
 				m_cache.commit(Cache_Height);

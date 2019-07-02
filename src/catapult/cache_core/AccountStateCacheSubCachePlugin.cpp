@@ -61,7 +61,7 @@ namespace catapult { namespace cache {
 
 	AccountStateCacheSubCachePlugin::AccountStateCacheSubCachePlugin(
 			const CacheConfiguration& config,
-			const AccountStateCacheTypes::Options& options)
-			: BaseAccountStateCacheSubCachePlugin(std::make_unique<AccountStateCache>(config, options))
+			const model::BlockChainConfiguration& blockChainConfig)
+			: BaseAccountStateCacheSubCachePlugin(std::make_unique<AccountStateCache>(config, blockChainConfig))
 	{}
 }}

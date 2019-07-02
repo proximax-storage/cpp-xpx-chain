@@ -36,7 +36,8 @@ namespace catapult { namespace cache {
 			: public utils::MoveOnly
 			, public BlockDifficultyCacheViewMixins::Size
 			, public BlockDifficultyCacheViewMixins::Contains
-			, public BlockDifficultyCacheViewMixins::Iteration {
+			, public BlockDifficultyCacheViewMixins::Iteration
+			, public BlockDifficultyCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = BlockDifficultyCacheTypes::CacheReadOnlyType;
 

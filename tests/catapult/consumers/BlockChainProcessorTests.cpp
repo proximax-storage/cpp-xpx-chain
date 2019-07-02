@@ -194,6 +194,8 @@ namespace catapult { namespace consumers {
 
 		// region ProcessorTestContext
 
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		struct ProcessorTestContext {
 		public:
 			explicit ProcessorTestContext(ReceiptValidationMode receiptValidationMode = ReceiptValidationMode::Disabled)
@@ -218,7 +220,7 @@ namespace catapult { namespace consumers {
 
 		public:
 			ValidationResult Process(const model::BlockElement& parentBlockElement, BlockElements& elements) {
-				auto cache = test::CreateCatapultCacheWithMarkerAccount();
+				auto cache = test::CreateCatapultCacheWithMarkerAccount(Default_Config);
 				auto delta = cache.createDelta();
 				auto observerState = observers::ObserverState(delta, State);
 

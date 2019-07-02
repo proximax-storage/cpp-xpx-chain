@@ -54,7 +54,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverInsertsHashIntoCacheInModeCommit) {
 		// Arrange:
-		ObserverTestContext context(NotifyMode::Commit);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 		auto pObserver = CreateTransactionHashObserver();
 
 		auto deadline = test::GenerateRandomValue<Timestamp>();
@@ -78,7 +79,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverRemovesHashFromCacheInModeRollback) {
 		// Arrange:
-		ObserverTestContext context(NotifyMode::Rollback);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(NotifyMode::Rollback, Height{444}, config);
 		auto pObserver = CreateTransactionHashObserver();
 
 		auto deadline = test::GenerateRandomValue<Timestamp>();

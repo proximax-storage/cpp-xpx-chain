@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/cache/RelockableDetachedCatapultCache.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -35,7 +36,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanCreateRelockableDetachedCatapultCache) {
 		// Arrange:
-		auto cache = test::CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto cache = test::CreateEmptyCatapultCache(config);
 		SetHeight(cache, Height(7));
 
 		// Act:
@@ -48,7 +50,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, RelockableDetachedCatapultCacheIsInvalidatedWhenUnderlyingCacheChanges) {
 		// Arrange:
-		auto cache = test::CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto cache = test::CreateEmptyCatapultCache(config);
 		SetHeight(cache, Height(7));
 
 		// - create the detached cache
@@ -64,7 +67,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, RelockableDetachedCatapultCacheCanBeRebasedOnTopOfUnderlyingCache) {
 		// Arrange:
-		auto cache = test::CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto cache = test::CreateEmptyCatapultCache(config);
 		SetHeight(cache, Height(7));
 
 		// - create the detached cache

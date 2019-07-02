@@ -21,13 +21,15 @@
 #include "Validators.h"
 #include "src/cache/MosaicCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::MosaicDefinitionNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, Notification)(BlockDuration maxMosaicDuration) {
-		return MAKE_STATEFUL_VALIDATOR(MosaicDuration, [maxMosaicDuration](const auto& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicDuration, [blockChainConfig](const auto& notification, const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::MosaicCache>();
 
 			// always allow a new mosaic (MosaicPropertiesValidator checks for valid duration in this case)
@@ -42,6 +44,8 @@ namespace catapult { namespace validators {
 			auto isIncompatibleChange =
 					(BlockDuration() == currentDuration && BlockDuration() != delta) ||
 					(BlockDuration() != currentDuration && BlockDuration() == delta);
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
 			return isIncompatibleChange || maxMosaicDuration < resultingDuration || resultingDuration < currentDuration
 					? Failure_Mosaic_Invalid_Duration
 					: ValidationResult::Success;

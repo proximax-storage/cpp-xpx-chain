@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/PluginConfiguration.h"
 #include "catapult/utils/BlockSpan.h"
 #include <unordered_set>
 
@@ -27,7 +28,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Mosaic plugin configuration settings.
-	struct MosaicConfiguration {
+	struct MosaicConfiguration : public model::PluginConfiguration {
 	public:
 		/// Maximum number of mosaics that an account can own.
 		uint16_t MaxMosaicsPerAccount;

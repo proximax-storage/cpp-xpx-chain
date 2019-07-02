@@ -132,6 +132,8 @@ namespace catapult { namespace filechain {
 	// region LoadBlockChain
 
 	namespace {
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		void AddXorResolvers(plugins::PluginManager& pluginManager) {
 			pluginManager.addMosaicResolver([](const auto&, const auto& unresolved, auto& resolved) {
 				resolved = test::CreateResolverContextXor().resolve(unresolved);
@@ -163,10 +165,17 @@ namespace catapult { namespace filechain {
 			std::vector<Height>& m_blockHeights;
 		};
 
+		auto CreateConfigHolder() {
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Default_Config);
+			return pConfigHolder;
+		}
+
 		class LoadBlockChainTestContext {
 		public:
 			LoadBlockChainTestContext()
-					: m_pluginManager(model::BlockChainConfiguration::Uninitialized(), plugins::StorageConfiguration()) {
+					: m_state(Default_Config)
+					, m_pluginManager(CreateConfigHolder(), plugins::StorageConfiguration()) {
 				AddXorResolvers(m_pluginManager);
 			}
 

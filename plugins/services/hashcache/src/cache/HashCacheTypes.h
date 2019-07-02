@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/state/TimestampedHash.h"
 #include "catapult/utils/TimeSpan.h"
 
@@ -69,8 +70,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// Cache retention time.
-			utils::TimeSpan RetentionTime;
+			/// Blockchain configuration.
+			const model::BlockChainConfiguration& Config;
 		};
 	};
 }}

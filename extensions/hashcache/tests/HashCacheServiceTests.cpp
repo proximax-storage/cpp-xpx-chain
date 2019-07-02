@@ -45,18 +45,18 @@ namespace catapult { namespace hashcache {
 	}
 
 	namespace {
-		cache::CatapultCache CreateCache() {
+		cache::CatapultCache CreateCache(const model::BlockChainConfiguration& config) {
 			auto cacheId = cache::HashCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			auto retentionTime = CalculateTransactionCacheDuration(model::BlockChainConfiguration::Uninitialized());
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(retentionTime);
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(config);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 
 		template<typename TAction>
 		void RunHashCacheTest(TAction action) {
 			// Arrange:
-			TestContext context(CreateCache());
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(CreateCache(config));
 			context.boot();
 
 			auto& cache = context.testState().state().cache();

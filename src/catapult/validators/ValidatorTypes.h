@@ -25,6 +25,7 @@
 #include "catapult/model/VerifiableEntity.h"
 #include "catapult/model/WeakEntityInfo.h"
 #include "catapult/functions.h"
+#include "catapult/plugins/PluginUtils.h"
 #include <memory>
 #include <vector>
 

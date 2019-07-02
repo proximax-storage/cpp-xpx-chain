@@ -23,6 +23,7 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalData.h"
 #include "catapult/cache/SupplementalDataStorage.h"
+#include "catapult/config/LocalNodeConfigurationHolder.h"
 #include "catapult/io/BufferedFileStream.h"
 #include "catapult/io/FileLock.h"
 #include "catapult/utils/StackLogger.h"
@@ -35,6 +36,8 @@ namespace catapult { namespace filechain {
 		constexpr size_t Default_Loader_Batch_Size = 100'000;
 		constexpr auto Supplemental_Data_Filename = "supplemental.dat";
 		constexpr auto State_Lock_Filename = "state.lock";
+		constexpr auto BlockChain_Configurations_Filename = "blockchain.config";
+		constexpr auto Supported_Entities_Filename = "supported-entities.config";
 
 		std::string GetStatePath(const std::string& baseDirectory, const std::string& filename) {
 			boost::filesystem::path path = baseDirectory;
@@ -63,12 +66,23 @@ namespace catapult { namespace filechain {
 			return boost::filesystem::exists(path);
 		}
 
+		bool HasBlockChainConfigs(const std::string& baseDirectory) {
+			auto path = GetStatePath(baseDirectory, BlockChain_Configurations_Filename);
+			return boost::filesystem::exists(path);
+		}
+
+		bool HasSupportedEntities(const std::string& baseDirectory) {
+			auto path = GetStatePath(baseDirectory, Supported_Entities_Filename);
+			return boost::filesystem::exists(path);
+		}
+
 		std::string GetStorageFilename(const cache::CacheStorage& storage) {
 			return storage.name() + ".dat";
 		}
 	}
 
-	bool LoadState(const std::string& dataDirectory, cache::CatapultCache& cache, cache::SupplementalData& supplementalData) {
+	bool LoadState(const std::string& dataDirectory, cache::CatapultCache& cache, cache::SupplementalData& supplementalData,
+		std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder) {
 		auto lockFilePath = GetStatePath(dataDirectory, State_Lock_Filename);
 		io::FileLock stateLock(lockFilePath);
 		if (!stateLock.try_lock()) {
@@ -76,10 +90,28 @@ namespace catapult { namespace filechain {
 			return false;
 		}
 
+		if (!HasBlockChainConfigs(dataDirectory))
+			return false;
+
+		if (!HasSupportedEntities(dataDirectory))
+			return false;
+
 		if (!HasSupplementalData(dataDirectory))
 			return false;
 
 		utils::StackLogger stopwatch("load state", utils::LogLevel::Warning);
+
+		{
+			auto path = GetStatePath(dataDirectory, BlockChain_Configurations_Filename);
+			io::BufferedInputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Only));
+			pConfigHolder->LoadBlockChainConfigs(file);
+		}
+
+		{
+			auto path = GetStatePath(dataDirectory, Supported_Entities_Filename);
+			io::BufferedInputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Only));
+			pConfigHolder->LoadSupportedEntityVersions(file);
+		}
 
 		for (const auto& pStorage : cache.storages())
 			LoadCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage);
@@ -108,7 +140,8 @@ namespace catapult { namespace filechain {
 		}
 	}
 
-	void SaveState(const std::string& dataDirectory, const cache::CatapultCache& cache, const cache::SupplementalData& supplementalData) {
+	void SaveState(const std::string& dataDirectory, const cache::CatapultCache& cache, const cache::SupplementalData& supplementalData,
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		// 1. if the previous SaveState crashed, an orphaned lock file will be present, which would have caused LoadState to be bypassed
 		//    and instead triggered a rebuild of the cache by reloading all blocks
 		// 2. in the current SaveState, delete any existing lock file (state is not written incrementally) and create a new one
@@ -119,6 +152,18 @@ namespace catapult { namespace filechain {
 			stateLock.lock();
 		else
 			CATAPULT_LOG(warning) << "lock file could not be removed and must be removed manually";
+
+		{
+			auto path = GetStatePath(dataDirectory, BlockChain_Configurations_Filename);
+			io::BufferedOutputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Write));
+			pConfigHolder->SaveBlockChainConfigs(file);
+		}
+
+		{
+			auto path = GetStatePath(dataDirectory, Supported_Entities_Filename);
+			io::BufferedOutputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Write));
+			pConfigHolder->SaveSupportedEntityVersions(file);
+		}
 
 		for (const auto& pStorage : cache.storages())
 			SaveCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage);

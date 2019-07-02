@@ -24,6 +24,7 @@
 #include "utils/UnresolvedAddress.h"
 #include <array>
 #include <limits>
+#include <unordered_set>
 
 namespace catapult {
 
@@ -92,6 +93,9 @@ namespace catapult {
 
 	// Network type (8 bit) + entity type (24 bit).
 	using VersionType = uint32_t;
+
+	/// Version set.
+	using VersionSet = std::unordered_set<VersionType>;
 
 	struct CatapultVersion_tag {};
 	using CatapultVersion = utils::BaseValue<uint64_t, CatapultVersion_tag>;

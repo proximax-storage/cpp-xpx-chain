@@ -19,6 +19,7 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceIdGenerator.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -27,13 +28,22 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NamespaceNameValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceName, 0, {})
+	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceName, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		model::NamespaceNameNotification<1> CreateNamespaceNameNotification(uint8_t nameSize, const uint8_t* pName) {
 			auto notification = model::NamespaceNameNotification<1>(NamespaceId(), NamespaceId(777), nameSize, pName);
 			notification.NamespaceId = model::GenerateNamespaceId(NamespaceId(777), reinterpret_cast<const char*>(pName));
 			return notification;
+		}
+
+		auto CreateConfig(uint8_t maxNameSize, const std::unordered_set<std::string>& reservedRootNamespaceNames) {
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.MaxNameSize = maxNameSize;
+			pluginConfig.ReservedRootNamespaceNames = reservedRootNamespaceNames;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			return blockChainConfig;
 		}
 	}
 
@@ -42,7 +52,8 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertSizeValidationResult(ValidationResult expectedResult, uint8_t nameSize, uint8_t maxNameSize) {
 			// Arrange:
-			auto pValidator = CreateNamespaceNameValidator(maxNameSize, {});
+			auto config = CreateConfig(maxNameSize, {});
+			auto pValidator = CreateNamespaceNameValidator(config);
 			auto name = std::string(nameSize, 'a');
 			auto notification = CreateNamespaceNameNotification(nameSize, reinterpret_cast<const uint8_t*>(name.data()));
 
@@ -84,7 +95,8 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertNameValidationResult(ValidationResult expectedResult, const std::string& name) {
 			// Arrange:
-			auto pValidator = CreateNamespaceNameValidator(static_cast<uint8_t>(name.size()), {});
+			auto config = CreateConfig(static_cast<uint8_t>(name.size()), {});
+			auto pValidator = CreateNamespaceNameValidator(config);
 			auto notification = CreateNamespaceNameNotification(
 					static_cast<uint8_t>(name.size()),
 					reinterpret_cast<const uint8_t*>(name.data()));
@@ -115,7 +127,8 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidatingNamespaceWithMatchingNameAndId) {
 		// Arrange: note that CreateNamespaceNameNotification creates proper id
-		auto pValidator = CreateNamespaceNameValidator(100, {});
+		auto config = CreateConfig(100, {});
+		auto pValidator = CreateNamespaceNameValidator(config);
 		auto name = std::string(10, 'a');
 		auto notification = CreateNamespaceNameNotification(
 				static_cast<uint8_t>(name.size()),
@@ -130,7 +143,8 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenValidatingNamespaceWithMismatchedNameAndId) {
 		// Arrange: corrupt the id
-		auto pValidator = CreateNamespaceNameValidator(100, {});
+		auto config = CreateConfig(100, {});
+		auto pValidator = CreateNamespaceNameValidator(config);
 		auto name = std::string(10, 'a');
 		auto notification = CreateNamespaceNameNotification(
 				static_cast<uint8_t>(name.size()),
@@ -170,7 +184,8 @@ namespace catapult { namespace validators {
 				const std::string& name,
 				const std::function<model::NamespaceNameNotification<1>(const std::string&)>& createNotification) {
 			// Arrange:
-			auto pValidator = CreateNamespaceNameValidator(20, { "foo", "foobar" });
+			auto config = CreateConfig(20, { "foo", "foobar" });
+			auto pValidator = CreateNamespaceNameValidator(config);
 			auto notification = createNotification(name);
 
 			// Act:

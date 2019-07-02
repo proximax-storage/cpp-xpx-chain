@@ -20,14 +20,15 @@
 
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
+#include "src/config/MultisigConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMultisigCosignersNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, Notification)(uint8_t maxCosignersPerAccount) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, [maxCosignersPerAccount](
+	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, [&blockChainConfig](
 				const auto& notification,
 				const ValidatorContext& context) {
 			size_t numCosignatories = 0u;
@@ -48,7 +49,8 @@ namespace catapult { namespace validators {
 				++pCosignatoryModification;
 			}
 
-			return numCosignatories > maxCosignersPerAccount ? Failure_Multisig_Modify_Max_Cosigners : ValidationResult::Success;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>("catapult.plugins.multisig");
+			return numCosignatories > pluginConfig.MaxCosignersPerAccount ? Failure_Multisig_Modify_Max_Cosigners : ValidationResult::Success;
 		});
 	}
 }}

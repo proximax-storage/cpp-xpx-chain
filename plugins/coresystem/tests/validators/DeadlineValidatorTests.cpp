@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS DeadlineValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, utils::TimeSpan::FromSeconds(14))
+	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		const auto Block_Time = Timestamp(8888);
@@ -38,12 +38,14 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, Timestamp deadline) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxTransactionLifetime = Max_Transaction_Lifetime;
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
 			auto context = ValidatorContext(Height(123), Block_Time, model::NetworkInfo(), resolverContext, readOnlyCache);
-			auto pValidator = CreateDeadlineValidator(Max_Transaction_Lifetime);
+			auto pValidator = CreateDeadlineValidator(config);
 
 			model::TransactionNotification<1> notification(Key(), Hash256(), model::EntityType(), deadline);
 

@@ -39,6 +39,8 @@ namespace catapult { namespace chain {
 		constexpr auto Default_Height = Height(17);
 		constexpr auto Default_Time = Timestamp(987);
 
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		ValidationResult Modify(ValidationResult result) {
 			// used to modify a ValidationResult while preserving its severity
 			return static_cast<ValidationResult>(utils::to_underlying_type(result) ^ 0xFF);
@@ -52,7 +54,7 @@ namespace catapult { namespace chain {
 		}
 
 		auto CreateCacheWithDefaultHeight() {
-			return test::CreateCatapultCacheWithMarkerAccount(Default_Height);
+			return test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 		}
 
 		// region functional helpers

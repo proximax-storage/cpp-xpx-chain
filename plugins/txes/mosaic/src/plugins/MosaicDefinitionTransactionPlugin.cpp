@@ -21,17 +21,39 @@
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "src/model/MosaicDefinitionTransaction.h"
 #include "src/model/MosaicNotifications.h"
+#include "src/config/MosaicConfiguration.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "catapult/model/Address.h"
 
 using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
 	namespace {
+		MosaicRentalFeeConfiguration ToMosaicRentalFeeConfiguration(
+			const model::NetworkInfo& network,
+			UnresolvedMosaicId currencyMosaicId,
+			const config::MosaicConfiguration& config) {
+			MosaicRentalFeeConfiguration rentalFeeConfig;
+			rentalFeeConfig.SinkPublicKey = config.MosaicRentalFeeSinkPublicKey;
+			rentalFeeConfig.CurrencyMosaicId = currencyMosaicId;
+			rentalFeeConfig.Fee = config.MosaicRentalFee;
+			rentalFeeConfig.NemesisPublicKey = network.PublicKey;
+
+			// sink address is already resolved but needs to be passed as unresolved into notification
+			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, network.Identifier);
+			std::memcpy(rentalFeeConfig.SinkAddress.data(), sinkAddress.data(), sinkAddress.size());
+			return rentalFeeConfig;
+		}
+
 		template<typename TTransaction>
-		auto CreatePublisher(const MosaicRentalFeeConfiguration& config) {
-			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
+		auto CreatePublisher(const model::BlockChainConfiguration& blockChainConfig) {
+			return [&blockChainConfig](const TTransaction& transaction, NotificationSubscriber& sub) {
+				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
+				auto config = ToMosaicRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
+
 				switch (transaction.EntityVersion()) {
 				case 3:
 					// 1. sink account notification
@@ -60,5 +82,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, CreatePublisher, MosaicRentalFeeConfiguration)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, CreatePublisher, model::BlockChainConfiguration)
 }}

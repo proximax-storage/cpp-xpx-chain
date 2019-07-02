@@ -30,13 +30,17 @@ namespace catapult { namespace cache {
 #define TEST_CLASS AccountStateCacheStorageTests
 
 	namespace {
-		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
-			model::NetworkIdentifier::Mijin_Test,
-			543,
-			Amount(std::numeric_limits<Amount::ValueType>::max()),
-			test::Default_Currency_Mosaic_Id,
-			test::Default_Harvesting_Mosaic_Id
-		};
+		auto CreateConfig() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			config.ImportanceGrouping = 543;
+			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
+			config.CurrencyMosaicId = test::Default_Currency_Mosaic_Id;
+			config.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
+			return config;
+		}
+
+		auto Default_Config = CreateConfig();
 	}
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
@@ -45,7 +49,7 @@ namespace catapult { namespace cache {
 		test::RandomFillAccountData(0, originalAccountState, 123, 123);
 
 		// Act:
-		AccountStateCache cache(CacheConfiguration(), Default_Cache_Options);
+		AccountStateCache cache(CacheConfiguration(), Default_Config);
 		{
 			auto delta = cache.createDelta();
 			AccountStateCacheStorage::LoadInto(originalAccountState, *delta);
@@ -63,7 +67,7 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(123u, loadedAccountState.Balances.snapshots().size());
 
 		// - cache automatically optimizes added account state, so update to match expected
-		originalAccountState.Balances.optimize(Default_Cache_Options.CurrencyMosaicId);
+		originalAccountState.Balances.optimize(Default_Config.CurrencyMosaicId);
 		test::AssertEqual(originalAccountState, loadedAccountState);
 	}
 }}

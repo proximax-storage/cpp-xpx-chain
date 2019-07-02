@@ -21,7 +21,6 @@
 #include "MultisigPlugin.h"
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheStorage.h"
-#include "src/config/MultisigConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -49,16 +48,16 @@ namespace catapult { namespace plugins {
 			builder.add(validators::CreateModifyMultisigCosignersValidator());
 		});
 
-		auto config = model::LoadPluginConfiguration<config::MultisigConfiguration>(manager.config(), "catapult.plugins.multisig");
+		const auto& config = manager.config();
 		manager.addStatefulValidatorHook([config](auto& builder) {
 			builder
 				.add(validators::CreateMultisigPermittedOperationValidator())
-				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator(config.MaxCosignedAccountsPerAccount))
-				.add(validators::CreateModifyMultisigMaxCosignersValidator(config.MaxCosignersPerAccount))
+				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator(config))
+				.add(validators::CreateModifyMultisigMaxCosignersValidator(config))
 				.add(validators::CreateModifyMultisigInvalidCosignersValidator())
 				.add(validators::CreateModifyMultisigInvalidSettingsValidator())
 				// notice that ModifyMultisigLoopAndLevelValidator must be called before multisig aggregate validators
-				.add(validators::CreateModifyMultisigLoopAndLevelValidator(config.MaxMultisigDepth))
+				.add(validators::CreateModifyMultisigLoopAndLevelValidator(config))
 				// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
 				.add(validators::CreateMultisigAggregateEligibleCosignersValidator())
 				.add(validators::CreateMultisigAggregateSufficientCosignersValidator());

@@ -23,7 +23,8 @@ namespace catapult { namespace cache {
 			, public CatapultUpgradeCacheViewMixins::Contains
 			, public CatapultUpgradeCacheViewMixins::Iteration
 			, public CatapultUpgradeCacheViewMixins::ConstAccessor
-			, public CatapultUpgradeCacheViewMixins::PatriciaTreeView {
+			, public CatapultUpgradeCacheViewMixins::PatriciaTreeView
+			, public CatapultUpgradeCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = CatapultUpgradeCacheTypes::CacheReadOnlyType;
 

@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/HashLockPlugin.h"
 #include "src/model/HashLockEntityType.h"
 #include "tests/test/plugins/PluginTestUtils.h"
@@ -33,7 +34,7 @@ namespace catapult { namespace plugins {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(1);
-				config.Plugins.emplace("catapult.plugins.lockhash", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(lockhash), utils::ConfigurationBag({{
 					"",
 					{
 						{ "lockedFundsPerAggregate", "10'000'000" },
@@ -41,7 +42,9 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				PluginManager manager(config, StorageConfiguration());
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(config);
+				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterHashLockSubsystem(manager);
 
 				// Act:

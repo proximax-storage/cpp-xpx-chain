@@ -72,9 +72,10 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, Notification)(const uint8_t& maxFields) {
-		return MAKE_STATEFUL_VALIDATOR(MetadataModifications, [maxFields](const Notification& notification, const ValidatorContext& context){
-			return validate(notification, context, maxFields);
+	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATEFUL_VALIDATOR(MetadataModifications, [blockChainConfig](const Notification& notification, const ValidatorContext& context) {
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MetadataConfiguration>("catapult.plugins.metadata");
+			return validate(notification, context, pluginConfig.MaxFields);
 		});
 	}
 }}

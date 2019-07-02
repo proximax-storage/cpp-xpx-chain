@@ -1,4 +1,6 @@
 cmake_minimum_required(VERSION 3.2)
 
-catapult_test_executable_target(tests.catapult.model core)
-target_link_libraries(tests.catapult.model external)
+set(TARGET_NAME tests.catapult.model)
+
+catapult_test_executable_target(${TARGET_NAME} core)
+target_link_libraries(${TARGET_NAME} external tests.catapult.test.local)

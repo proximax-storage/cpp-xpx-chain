@@ -19,15 +19,18 @@
 **/
 
 #include "Validators.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "catapult/utils/Hashers.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::RootNamespaceNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(RootNamespace, Notification)(BlockDuration maxDuration) {
-		return MAKE_STATELESS_VALIDATOR(RootNamespace, [maxDuration](const auto& notification) {
+	DECLARE_STATELESS_VALIDATOR(RootNamespace, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATELESS_VALIDATOR(RootNamespace, [&blockChainConfig](const auto& notification) {
 			// note that zero duration is acceptable because it is eternal
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
 			return maxDuration < notification.Duration ? Failure_Namespace_Invalid_Duration : ValidationResult::Success;
 		});
 	}

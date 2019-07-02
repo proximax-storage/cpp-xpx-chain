@@ -40,6 +40,7 @@ namespace catapult { namespace chain {
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+			config.MaxRollbackBlocks = 7;
 			config.MaxDifficultyBlocks = 3;
 			config.BlockTimeSmoothingFactor = 3000;
 			return config;
@@ -192,9 +193,9 @@ namespace catapult { namespace chain {
 	CACHE_OVERLOAD_TRAITS_BASED_TEST(DifferentOverloadsYieldSameResult) {
 		// Arrange:
 		auto count = 10u;
-		cache::BlockDifficultyCache cache(count);
-		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
+		cache::BlockDifficultyCache cache(config);
+		PrepareCache(cache, count);
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 1),
 				Timestamp(60'000 * count),
@@ -214,9 +215,9 @@ namespace catapult { namespace chain {
 	CACHE_OVERLOAD_TRAITS_BASED_TEST(MaxDifficultyBlocksInConfigIsRespected) {
 		// Arrange:
 		auto count = 10u;
-		cache::BlockDifficultyCache cache(count);
-		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
+		cache::BlockDifficultyCache cache(config);
+		PrepareCache(cache, count);
 		config.MaxDifficultyBlocks = 3;
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 1),
@@ -234,9 +235,9 @@ namespace catapult { namespace chain {
 	CACHE_OVERLOAD_TRAITS_BASED_TEST(CannotCalculateDifficultyIfStartingHeightIsNotInCache) {
 		// Arrange:
 		auto count = 10u;
-		cache::BlockDifficultyCache cache(count);
-		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
+		cache::BlockDifficultyCache cache(config);
+		PrepareCache(cache, count);
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 2),
 				Timestamp(60'000 * count),

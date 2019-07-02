@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/NamespaceConfiguration.h"
 #include "src/validators/Validators.h"
 #include "src/cache/NamespaceCache.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
@@ -29,11 +30,13 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RootNamespaceMaxChildrenValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, 123)
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		auto CreateAndSeedCache() {
-			auto cache = test::NamespaceCacheFactory::Create();
+			auto cache = test::NamespaceCacheFactory::Create(Default_Config);
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
@@ -56,7 +59,11 @@ namespace catapult { namespace validators {
 		void RunTest(ValidationResult expectedResult, const model::ChildNamespaceNotification<1>& notification, uint16_t maxChildren) {
 			// Arrange:
 			auto cache = CreateAndSeedCache();
-			auto pValidator = CreateRootNamespaceMaxChildrenValidator(maxChildren);
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.MaxChildNamespaces = maxChildren;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			auto pValidator = CreateRootNamespaceMaxChildrenValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

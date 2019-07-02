@@ -98,8 +98,11 @@ namespace catapult { namespace test {
 		// make additional configuration modifications
 		PrepareLocalNodeConfiguration(config, AddSimplePartnerPluginExtensions, nodeFlag);
 
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(config);
+
 		const auto& resourcesPath = dataDirectory + "/resources";
-		auto pBootstrapper = std::make_unique<extensions::LocalNodeBootstrapper>(std::move(config), resourcesPath, "Partner");
+		auto pBootstrapper = std::make_unique<extensions::LocalNodeBootstrapper>(pConfigHolder, resourcesPath, "Partner");
 		pBootstrapper->loadExtensions();
 
 		return local::CreateBasicLocalNode(keyPair, std::move(pBootstrapper));
