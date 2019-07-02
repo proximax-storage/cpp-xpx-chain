@@ -19,8 +19,10 @@
 **/
 
 #include "RegisterNamespaceTransactionPlugin.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
+#include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/constants.h"
@@ -59,16 +61,37 @@ namespace catapult { namespace plugins {
 			}
 		}
 
+		NamespaceRentalFeeConfiguration ToNamespaceRentalFeeConfiguration(
+			const model::NetworkInfo& network,
+			UnresolvedMosaicId currencyMosaicId,
+			const config::NamespaceConfiguration& config) {
+			NamespaceRentalFeeConfiguration rentalFeeConfig;
+			rentalFeeConfig.SinkPublicKey = config.NamespaceRentalFeeSinkPublicKey;
+			rentalFeeConfig.CurrencyMosaicId = currencyMosaicId;
+			rentalFeeConfig.RootFeePerBlock = config.RootNamespaceRentalFeePerBlock;
+			rentalFeeConfig.ChildFee = config.ChildNamespaceRentalFee;
+			rentalFeeConfig.NemesisPublicKey = network.PublicKey;
+
+			// sink address is already resolved but needs to be passed as unresolved into notification
+			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, network.Identifier);
+			std::memcpy(rentalFeeConfig.SinkAddress.data(), sinkAddress.data(), sinkAddress.size());
+			return rentalFeeConfig;
+		}
+
 		template<typename TTransaction>
-		auto CreatePublisher(const NamespaceRentalFeeConfiguration& config) {
-			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
+		auto CreatePublisher(const model::BlockChainConfiguration& blockChainConfig) {
+			return [&blockChainConfig](const TTransaction& transaction, NotificationSubscriber& sub) {
+				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
+				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
+
 				switch (transaction.EntityVersion()) {
 				case 2: {
 					// 1. sink account notification
-					sub.notify(AccountPublicKeyNotification<1>(config.SinkPublicKey));
+					sub.notify(AccountPublicKeyNotification<1>(rentalFeeConfig.SinkPublicKey));
 
 					// 2. rental fee charge
-					PublishBalanceTransfer(config, transaction, sub);
+					PublishBalanceTransfer(rentalFeeConfig, transaction, sub);
 
 					// 3. registration notifications
 					sub.notify(NamespaceNotification<1>(transaction.NamespaceType));
@@ -97,5 +120,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, CreatePublisher, NamespaceRentalFeeConfiguration)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, CreatePublisher, model::BlockChainConfiguration)
 }}

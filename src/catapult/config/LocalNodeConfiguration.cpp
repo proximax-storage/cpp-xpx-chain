@@ -33,11 +33,13 @@ namespace catapult { namespace config {
 			model::BlockChainConfiguration&& blockChainConfig,
 			NodeConfiguration&& nodeConfig,
 			LoggingConfiguration&& loggingConfig,
-			UserConfiguration&& userConfig)
+			UserConfiguration&& userConfig,
+			config::SupportedEntityVersions&& supportedEntityVersions)
 			: BlockChain(std::move(blockChainConfig))
 			, Node(std::move(nodeConfig))
 			, Logging(std::move(loggingConfig))
 			, User(std::move(userConfig))
+			, SupportedEntityVersions(std::move(supportedEntityVersions))
 	{}
 
 	LocalNodeConfiguration LocalNodeConfiguration::LoadFromPath(const boost::filesystem::path& resourcesPath) {
@@ -46,7 +48,8 @@ namespace catapult { namespace config {
 				std::move(blockChainConfig),
 				LoadIniConfiguration<NodeConfiguration>(resourcesPath / "config-node.properties"),
 				LoadIniConfiguration<LoggingConfiguration>(resourcesPath / "config-logging.properties"),
-				LoadIniConfiguration<UserConfiguration>(resourcesPath / "config-user.properties"));
+				LoadIniConfiguration<UserConfiguration>(resourcesPath / "config-user.properties"),
+				LoadSupportedEntityVersions(resourcesPath / "supported-entities.json"));
 	}
 
 	// endregion

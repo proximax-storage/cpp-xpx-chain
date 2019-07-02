@@ -20,7 +20,6 @@
 
 #include "SecretLockPlugin.h"
 #include "src/cache/SecretLockInfoCache.h"
-#include "src/config/SecretLockConfiguration.h"
 #include "src/model/SecretLockReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/SecretLockTransactionPlugin.h"
@@ -48,16 +47,14 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		auto config = model::LoadPluginConfiguration<config::SecretLockConfiguration>(manager.config(), PLUGIN_NAME(locksecret));
-		auto blockGenerationTargetTime = manager.config().BlockGenerationTargetTime;
-		manager.addStatelessValidatorHook([config, blockGenerationTargetTime](auto& builder) {
+		const auto& config = manager.config();
+		manager.addStatelessValidatorHook([&config](auto& builder) {
 			// secret lock validators
-			auto maxSecretLockDuration = config.MaxSecretLockDuration.blocks(blockGenerationTargetTime);
-			builder.add(validators::CreateSecretLockDurationValidator(maxSecretLockDuration));
+			builder.add(validators::CreateSecretLockDurationValidator(config));
 			builder.add(validators::CreateSecretLockHashAlgorithmValidator());
 
 			// proof secret
-			builder.add(validators::CreateProofSecretValidator(config.MinProofSize, config.MaxProofSize));
+			builder.add(validators::CreateProofSecretValidator(config));
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
@@ -66,15 +63,14 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateProofValidator());
 		});
 
-		auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
-		manager.addObserverHook([maxRollbackBlocks](auto& builder) {
+		manager.addObserverHook([&config](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockSecret_Expired;
 			builder
 				.add(observers::CreateSecretLockObserver())
 				.add(observers::CreateExpiredSecretLockInfoObserver())
 				.add(observers::CreateProofObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::SecretLockInfoCache>("SecretLockInfo", expiryReceiptType))
-				.add(observers::CreateCacheBlockPruningObserver<cache::SecretLockInfoCache>("SecretLockInfo", 1, maxRollbackBlocks));
+				.add(observers::CreateCacheBlockPruningObserver<cache::SecretLockInfoCache>("SecretLockInfo", 1, config));
 		});
 	}
 }}

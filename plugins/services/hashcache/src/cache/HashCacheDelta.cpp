@@ -27,11 +27,11 @@ namespace catapult { namespace cache {
 			, HashCacheDeltaMixins::Contains(*hashSets.pPrimary)
 			, HashCacheDeltaMixins::BasicInsertRemove(*hashSets.pPrimary)
 			, m_pOrderedDelta(hashSets.pPrimary)
-			, m_retentionTime(options.RetentionTime)
+			, m_config(options.Config)
 	{}
 
 	utils::TimeSpan BasicHashCacheDelta::retentionTime() const {
-		return m_retentionTime;
+		return CalculateTransactionCacheDuration(m_config);
 	}
 
 	deltaset::PruningBoundary<BasicHashCacheDelta::ValueType> BasicHashCacheDelta::pruningBoundary() const {
@@ -39,7 +39,7 @@ namespace catapult { namespace cache {
 	}
 
 	void BasicHashCacheDelta::prune(Timestamp timestamp) {
-		auto pruneTime = SubtractNonNegative(timestamp, m_retentionTime);
+		auto pruneTime = SubtractNonNegative(timestamp, retentionTime());
 		m_pruningBoundary = ValueType(pruneTime);
 	}
 }}

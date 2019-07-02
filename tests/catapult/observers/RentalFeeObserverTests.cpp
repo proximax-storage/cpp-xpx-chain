@@ -63,7 +63,8 @@ namespace catapult { namespace observers {
 					test::UnresolveXor(Default_Mosaic_Id),
 					Default_Amount);
 
-			ObserverTestContext context(mode, Height(888));
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			ObserverTestContext context(mode, Height(888), config);
 
 			// Act:
 			test::ObserveNotification(*pObserver, notification, context);

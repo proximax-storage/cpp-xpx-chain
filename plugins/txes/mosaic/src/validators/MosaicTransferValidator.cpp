@@ -24,6 +24,8 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
 
@@ -45,8 +47,9 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, Notification)(UnresolvedMosaicId currencyMosaicId) {
-		return MAKE_STATEFUL_VALIDATOR(MosaicTransfer, [currencyMosaicId](const auto& notification, const auto& context) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicTransfer, [blockChainConfig](const auto& notification, const auto& context) {
+			auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
 			// 0. allow currency mosaic id
 			if (currencyMosaicId == notification.MosaicId)
 				return ValidationResult::Success;

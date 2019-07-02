@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxTransactionsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactions, 123)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactions, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		constexpr uint32_t Max_Transactions = 10;
@@ -37,7 +37,9 @@ namespace catapult { namespace validators {
 			auto signer = test::GenerateRandomData<Key_Size>();
 			auto notification = test::CreateBlockNotification(signer);
 			notification.NumTransactions = numTransactions;
-			auto pValidator = CreateMaxTransactionsValidator(Max_Transactions);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxTransactionsPerBlock = Max_Transactions;
+			auto pValidator = CreateMaxTransactionsValidator(config);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

@@ -27,23 +27,23 @@
 namespace catapult { namespace extensions {
 
 	LocalNodeBootstrapper::LocalNodeBootstrapper(
-			const config::LocalNodeConfiguration& config,
-			const std::string& resourcesPath,
-			const std::string& servicePoolName)
-			: m_config(std::move(config))
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+		const std::string& resourcesPath,
+		const std::string& servicePoolName)
+			: m_pConfigHolder(pConfigHolder)
 			, m_resourcesPath(resourcesPath)
 			, m_pMultiServicePool(std::make_unique<thread::MultiServicePool>(
 					servicePoolName,
 					thread::MultiServicePool::DefaultPoolConcurrency(),
-					m_config.Node.ShouldUseSingleThreadPool
+					m_pConfigHolder->Config().Node.ShouldUseSingleThreadPool
 							? thread::MultiServicePool::IsolatedPoolMode::Disabled
 							: thread::MultiServicePool::IsolatedPoolMode::Enabled))
-			, m_subscriptionManager(config)
-			, m_pluginManager(m_config.BlockChain, CreateStorageConfiguration(config))
+			, m_subscriptionManager(m_pConfigHolder->Config())
+			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config()))
 	{}
 
 	const config::LocalNodeConfiguration& LocalNodeBootstrapper::config() const {
-		return m_config;
+		return m_pConfigHolder->Config();
 	}
 
 	const std::string& LocalNodeBootstrapper::resourcesPath() const {
@@ -88,8 +88,8 @@ namespace catapult { namespace extensions {
 	}
 
 	void LocalNodeBootstrapper::loadExtensions() {
-		for (const auto& extension : m_config.Node.Extensions) {
-			m_extensionModules.emplace_back(m_config.User.PluginsDirectory, extension);
+		for (const auto& extension : config().Node.Extensions) {
+			m_extensionModules.emplace_back(config().User.PluginsDirectory, extension);
 
 			CATAPULT_LOG(info) << "registering dynamic extension " << extension;
 			LoadExtension(m_extensionModules.back(), *this);

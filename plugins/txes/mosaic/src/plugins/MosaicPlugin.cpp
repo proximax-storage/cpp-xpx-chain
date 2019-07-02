@@ -27,7 +27,6 @@
 #include "src/model/MosaicReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
-#include "catapult/model/Address.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/observers/RentalFeeObserver.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -36,32 +35,14 @@
 namespace catapult { namespace plugins {
 
 	namespace {
-		MosaicRentalFeeConfiguration ToMosaicRentalFeeConfiguration(
-				const model::NetworkInfo& network,
-				UnresolvedMosaicId currencyMosaicId,
-				const config::MosaicConfiguration& config) {
-			MosaicRentalFeeConfiguration rentalFeeConfig;
-			rentalFeeConfig.SinkPublicKey = config.MosaicRentalFeeSinkPublicKey;
-			rentalFeeConfig.CurrencyMosaicId = currencyMosaicId;
-			rentalFeeConfig.Fee = config.MosaicRentalFee;
-			rentalFeeConfig.NemesisPublicKey = network.PublicKey;
-
-			// sink address is already resolved but needs to be passed as unresolved into notification
-			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, network.Identifier);
-			std::memcpy(rentalFeeConfig.SinkAddress.data(), sinkAddress.data(), sinkAddress.size());
-			return rentalFeeConfig;
-		}
-
 		auto GetMosaicView(const cache::CatapultCache& cache) {
 			return cache.sub<cache::MosaicCache>().createView();
 		}
 	}
 
 	void RegisterMosaicSubsystem(PluginManager& manager) {
-		auto config = model::LoadPluginConfiguration<config::MosaicConfiguration>(manager.config(), PLUGIN_NAME(mosaic));
-		auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(manager.config());
-		auto rentalFeeConfig = ToMosaicRentalFeeConfiguration(manager.config().Network, currencyMosaicId, config);
-		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(rentalFeeConfig));
+		const auto& config = manager.config();
+		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(config));
 		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
 
 		manager.addCacheSupport<cache::MosaicCacheStorage>(
@@ -74,30 +55,26 @@ namespace catapult { namespace plugins {
 			counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C"), [&cache]() { return GetMosaicView(cache)->size(); });
 		});
 
-		auto maxDuration = config.MaxMosaicDuration.blocks(manager.config().BlockGenerationTargetTime);
-		manager.addStatelessValidatorHook([config, maxDuration](auto& builder) {
+		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder
-				.add(validators::CreateMosaicPropertiesValidator(config.MaxMosaicDivisibility, maxDuration))
+				.add(validators::CreateMosaicPropertiesValidator(config))
 				.add(validators::CreateMosaicIdValidator())
 				.add(validators::CreateMosaicSupplyChangeValidator());
 		});
 
-		auto maxMosaics = config.MaxMosaicsPerAccount;
-		auto maxDivisibleUnits = config.MaxMosaicDivisibleUnits;
-		manager.addStatefulValidatorHook([maxMosaics, maxDivisibleUnits, maxDuration, currencyMosaicId](auto& builder) {
+		manager.addStatefulValidatorHook([&config](auto& builder) {
 			builder
 				.add(validators::CreateProperMosaicValidator())
 				.add(validators::CreateMosaicAvailabilityValidator())
-				.add(validators::CreateMosaicDurationValidator(maxDuration))
-				.add(validators::CreateMosaicTransferValidator(currencyMosaicId))
-				.add(validators::CreateMaxMosaicsBalanceTransferValidator(maxMosaics))
-				.add(validators::CreateMaxMosaicsSupplyChangeValidator(maxMosaics))
+				.add(validators::CreateMosaicDurationValidator(config))
+				.add(validators::CreateMosaicTransferValidator(config))
+				.add(validators::CreateMaxMosaicsBalanceTransferValidator(config))
+				.add(validators::CreateMaxMosaicsSupplyChangeValidator(config))
 				// note that the following validator depends on MosaicChangeAllowedValidator
-				.add(validators::CreateMosaicSupplyChangeAllowedValidator(maxDivisibleUnits));
+				.add(validators::CreateMosaicSupplyChangeAllowedValidator(config));
 		});
 
-		auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
-		manager.addObserverHook([maxRollbackBlocks](auto& builder) {
+		manager.addObserverHook([](auto& builder) {
 			auto rentalFeeReceiptType = model::Receipt_Type_Mosaic_Rental_Fee;
 			auto expiryReceiptType = model::Receipt_Type_Mosaic_Expired;
 			builder

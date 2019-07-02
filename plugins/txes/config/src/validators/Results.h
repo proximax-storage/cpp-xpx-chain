@@ -21,13 +21,19 @@ namespace catapult { namespace validators {
 	DEFINE_CATAPULT_CONFIG_RESULT(BlockChain_Config_Too_Large, 2);
 
 	/// Validation failed because there is another config change at the height.
-	DEFINE_CATAPULT_CONFIG_RESULT(Redundant, 3);
+	DEFINE_CATAPULT_CONFIG_RESULT(Config_Redundant, 3);
 
 	/// Validation failed because blockchain configuration data is malformed.
 	DEFINE_CATAPULT_CONFIG_RESULT(BlockChain_Config_Malformed, 4);
 
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_CATAPULT_CONFIG_RESULT(Plugin_Config_Malformed, 5);
+
+	/// Validation failed because the supported entity versions configuration data exceeded the limit.
+	DEFINE_CATAPULT_CONFIG_RESULT(SupportedEntityVersions_Config_Too_Large, 6);
+
+	/// Validation failed because the supported entity versions configuration data is malformed.
+	DEFINE_CATAPULT_CONFIG_RESULT(SupportedEntityVersions_Config_Malformed, 7);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

@@ -19,6 +19,7 @@
 **/
 
 #include "NamespaceCacheDelta.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "catapult/utils/Casting.h"
 #include <numeric>
 #include <unordered_set>
@@ -53,12 +54,14 @@ namespace catapult { namespace cache {
 			, m_pHistoryById(namespaceSets.pPrimary)
 			, m_pNamespaceById(namespaceSets.pFlatMap)
 			, m_pRootNamespaceIdsByExpiryHeight(namespaceSets.pHeightGrouping)
-			, m_gracePeriodDuration(options.GracePeriodDuration)
+			, m_blockChainConfig(options.BlockChainConfig)
 	{}
 
 	void BasicNamespaceCacheDelta::insert(const state::RootNamespace& ns) {
 		// register the namespace for expiration at the end of its lifetime (if its lifetime changes later, it will not be pruned)
-		auto nsLifetimeWithGracePeriod = state::NamespaceLifetime(ns.lifetime().Start, ns.lifetime().End, m_gracePeriodDuration);
+		const auto& pluginConfig = m_blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+		auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(m_blockChainConfig.BlockGenerationTargetTime);
+		auto nsLifetimeWithGracePeriod = state::NamespaceLifetime(ns.lifetime().Start, ns.lifetime().End, gracePeriodDuration);
 		AddIdentifierWithGroup(*m_pRootNamespaceIdsByExpiryHeight, nsLifetimeWithGracePeriod.GracePeriodEnd, ns.id());
 
 		auto historyIter = m_pHistoryById->find(ns.id());

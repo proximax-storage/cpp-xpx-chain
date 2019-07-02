@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/PropertyConfiguration.h"
 #include "src/validators/Validators.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/model/Address.h"
@@ -28,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PropertyAddressNoSelfModificationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, model::NetworkIdentifier::Zero)
+	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -40,7 +41,9 @@ namespace catapult { namespace validators {
 				const model::PropertyModification<UnresolvedAddress>& modification) {
 			// Arrange:
 			model::ModifyAddressPropertyValueNotification_v1 notification(signer, model::PropertyType::Address, modification);
-			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(model::NetworkIdentifier::Zero);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
+			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

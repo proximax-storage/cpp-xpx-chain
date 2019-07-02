@@ -24,9 +24,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(MaxTransactions, Notification)(uint32_t maxTransactions) {
-		return MAKE_STATELESS_VALIDATOR(MaxTransactions, [maxTransactions](const auto& notification) {
-			return notification.NumTransactions <= maxTransactions
+	DECLARE_STATELESS_VALIDATOR(MaxTransactions, Notification)(const model::BlockChainConfiguration& config) {
+		return MAKE_STATELESS_VALIDATOR(MaxTransactions, [&config](const auto& notification) {
+			return notification.NumTransactions <= config.MaxTransactionsPerBlock
 					? ValidationResult::Success
 					: Failure_Core_Too_Many_Transactions;
 		});

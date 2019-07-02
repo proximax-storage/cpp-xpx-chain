@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/MosaicCacheTestUtils.h"
@@ -28,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicSupplyChangeAllowedValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, Amount())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		constexpr auto Max_Divisible_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
@@ -40,7 +41,11 @@ namespace catapult { namespace validators {
 				const model::MosaicSupplyChangeNotification<1>& notification,
 				Amount maxDivisibleUnits = Max_Divisible_Units) {
 			// Arrange:
-			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(maxDivisibleUnits);
+			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
+			pluginConfig.MaxMosaicDivisibleUnits = maxDivisibleUnits;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
+			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, height);

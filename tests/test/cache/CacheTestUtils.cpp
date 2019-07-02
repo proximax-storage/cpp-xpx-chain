@@ -33,16 +33,6 @@ namespace catapult { namespace test {
 		Key GetSentinelCachePublicKey() {
 			return { { 0xFF, 0xFF, 0xFF, 0xFF } };
 		}
-
-		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions(const model::BlockChainConfiguration& config) {
-			return {
-				config.Network.Identifier,
-				config.ImportanceGrouping,
-				config.MinHarvesterBalance,
-				config.CurrencyMosaicId,
-				config.HarvestingMosaicId
-			};
-		}
 	}
 
 	// region CoreSystemCacheFactory
@@ -67,17 +57,12 @@ namespace catapult { namespace test {
 
 		subCaches[AccountStateCache::Id] = MakeSubCachePluginWithCacheConfiguration<AccountStateCache, AccountStateCacheStorage>(
 				cacheConfig,
-				CreateAccountStateCacheOptions(config));
+				config);
 
-		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(
-				CalculateDifficultyHistorySize(config));
+		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(config);
 	}
 
 	// endregion
-
-	cache::CatapultCache CreateEmptyCatapultCache() {
-		return CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized());
-	}
 
 	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
 		return CreateEmptyCatapultCache<CoreSystemCacheFactory>(config);
@@ -91,12 +76,12 @@ namespace catapult { namespace test {
 		return cache::CatapultCache(std::move(subCaches));
 	}
 
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount() {
-		return CreateCatapultCacheWithMarkerAccount(Height(0));
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::BlockChainConfiguration& config) {
+		return CreateCatapultCacheWithMarkerAccount(Height(0), config);
 	}
 
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height) {
-		auto cache = CreateEmptyCatapultCache();
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::BlockChainConfiguration& config) {
+		auto cache = CreateEmptyCatapultCache(config);
 		AddMarkerAccount(cache);
 
 		auto delta = cache.createDelta();

@@ -31,7 +31,7 @@ namespace catapult { namespace test {
 		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
 			auto cacheId = cache::HashCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(CalculateTransactionCacheDuration(config));
+			subCaches[cacheId] = MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(config);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 	};

@@ -61,7 +61,8 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ExtractsAndForwardsNotificationsFromEntityInReverseOrder) {
 		// Arrange:
 		RunTest([](const auto& adapter, const auto& observer) {
-			test::ObserverTestContext context(NotifyMode::Commit);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 
 			// Act:
 			auto pTransaction = mocks::CreateMockTransaction(0);
@@ -92,7 +93,8 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ForwardsObserverContexts) {
 		// Arrange:
 		RunTest([](const auto& adapter, const auto& observer) {
-			test::ObserverTestContext context(NotifyMode::Commit);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 
 			// Act:
 			auto pTransaction = mocks::CreateMockTransaction(0);
@@ -116,7 +118,8 @@ namespace catapult { namespace observers {
 		ReverseNotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 		auto pTransaction = mocks::CreateMockTransaction(0);
-		test::ObserverTestContext context(NotifyMode::Commit);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 
 		// Act:
 		ObserveEntity(adapter, *pTransaction, context);

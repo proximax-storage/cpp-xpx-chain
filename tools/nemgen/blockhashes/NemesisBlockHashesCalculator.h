@@ -21,9 +21,10 @@
 #pragma once
 #include "catapult/types.h"
 #include <vector>
+#include <memory>
 
 namespace catapult {
-	namespace config { class LocalNodeConfiguration; }
+	namespace config { class LocalNodeConfigurationHolder; }
 	namespace model { struct BlockElement; }
 }
 
@@ -44,5 +45,5 @@ namespace catapult { namespace tools { namespace nemgen {
 	/// Calculates the block execution dependent hashes after executing nemesis \a blockElement for network configured with \a config.
 	BlockExecutionHashesInfo CalculateNemesisBlockExecutionHashes(
 			const model::BlockElement& blockElement,
-			const config::LocalNodeConfiguration& config);
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 }}}

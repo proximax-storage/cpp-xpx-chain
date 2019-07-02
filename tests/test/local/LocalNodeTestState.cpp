@@ -53,15 +53,12 @@ namespace catapult { namespace test {
 		extensions::LocalNodeChainScore m_score;
 	};
 
-	LocalNodeTestState::LocalNodeTestState() : LocalNodeTestState(CreateEmptyCatapultCache())
-	{}
-
 	LocalNodeTestState::LocalNodeTestState(const model::BlockChainConfiguration& config)
 			: LocalNodeTestState(config, "", CreateEmptyCatapultCache(config))
 	{}
 
-	LocalNodeTestState::LocalNodeTestState(cache::CatapultCache&& cache)
-			: m_pImpl(std::make_unique<Impl>(CreatePrototypicalLocalNodeConfiguration(), std::move(cache)))
+	LocalNodeTestState::LocalNodeTestState(const model::BlockChainConfiguration& config, const std::string& userDataDirectory)
+			: LocalNodeTestState(config, userDataDirectory, CreateEmptyCatapultCache(config))
 	{}
 
 	LocalNodeTestState::LocalNodeTestState(

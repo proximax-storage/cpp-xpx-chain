@@ -52,7 +52,9 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				PluginManager manager(config, StorageConfiguration());
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(config);
+				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterMosaicSubsystem(manager);
 
 				// Act:

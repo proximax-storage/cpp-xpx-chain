@@ -46,9 +46,8 @@ namespace catapult { namespace mongo { namespace storages {
 			static constexpr auto Network_Id = static_cast<model::NetworkIdentifier>(0x5A);
 			static constexpr auto CreateCacheStorage = CreateMongoAccountStateCacheStorage;
 
-			static cache::CatapultCache CreateCache() {
-				auto chainConfig = model::BlockChainConfiguration::Uninitialized();
-				chainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			static cache::CatapultCache CreateCache(const model::BlockChainConfiguration& chainConfig) {
+				const_cast<model::BlockChainConfiguration&>(chainConfig).Network.Identifier = model::NetworkIdentifier::Mijin_Test;
 				return test::CreateEmptyCatapultCache(chainConfig);
 			}
 

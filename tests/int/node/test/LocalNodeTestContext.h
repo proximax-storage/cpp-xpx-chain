@@ -126,7 +126,9 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a copy of the default local node configuration.
 		config::LocalNodeConfiguration createConfig() const {
-			return CreateLocalNodeConfiguration(m_tempDir.name());
+			auto config = CreateLocalNodeConfiguration(m_tempDir.name());
+			prepareLocalNodeConfiguration(config);
+			return config;
 		}
 
 		/// Prepares a fresh data \a directory and returns corresponding configuration.
@@ -150,12 +152,12 @@ namespace catapult { namespace test {
 
 		/// Boots a new local node around \a config.
 		std::unique_ptr<local::BootedLocalNode> boot(config::LocalNodeConfiguration&& config) const {
-			prepareLocalNodeConfiguration(config);
-
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(config);
 			auto pBootstrapper = std::make_unique<extensions::LocalNodeBootstrapper>(
-					std::move(config),
-					resourcesDirectory(),
-					"LocalNodeTests");
+				pConfigHolder,
+				resourcesDirectory(),
+				"LocalNodeTests");
 			pBootstrapper->addStaticNodes(m_nodes);
 
 			auto& extensionManager = pBootstrapper->extensionManager();

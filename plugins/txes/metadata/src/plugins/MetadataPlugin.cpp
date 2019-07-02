@@ -5,7 +5,6 @@
 **/
 
 #include "MetadataPlugin.h"
-#include "src/config/MetadataConfiguration.h"
 #include "src/cache/MetadataCache.h"
 #include "src/cache/MetadataCacheStorage.h"
 #include "src/plugins/MetadataTransactionPlugin.h"
@@ -21,7 +20,6 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateAddressMetadataTransactionPlugin());
 		manager.addTransactionSupport(CreateMosaicMetadataTransactionPlugin());
 		manager.addTransactionSupport(CreateNamespaceMetadataTransactionPlugin());
-		auto config = model::LoadPluginConfiguration<config::MetadataConfiguration>(manager.config(), PLUGIN_NAME(metadata));
 
 		manager.addCacheSupport<cache::MetadataCacheStorage>(
 			std::make_unique<cache::MetadataCache>(manager.cacheConfig(cache::MetadataCache::Name)));
@@ -35,18 +33,19 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addStatelessValidatorHook([config](auto& builder) {
+		const auto& config = manager.config();
+		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder
 				.add(validators::CreateMetadataTypeValidator())
-				.add(validators::CreateMetadataFieldModificationValidator(config.MaxFieldKeySize, config.MaxFieldValueSize));
+				.add(validators::CreateMetadataFieldModificationValidator(config));
 		});
 
-		manager.addStatefulValidatorHook([config](auto& builder) {
+		manager.addStatefulValidatorHook([&config](auto& builder) {
 			builder
 				.add(validators::CreateModifyAddressMetadataValidator())
 				.add(validators::CreateModifyMosaicMetadataValidator())
 				.add(validators::CreateModifyNamespaceMetadataValidator())
-				.add(validators::CreateMetadataModificationsValidator(config.MaxFields));
+				.add(validators::CreateMetadataModificationsValidator(config));
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -56,10 +55,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateNamespaceMetadataValueModificationObserver());
 		});
 
-		auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
-		manager.addObserverHook([maxRollbackBlocks](auto& builder) {
+		manager.addObserverHook([&config](auto& builder) {
 			builder
-				.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1, maxRollbackBlocks));
+				.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1, config));
 		});
 	}
 }}

@@ -20,6 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "src/model/LockHashUtils.h"
+#include "src/config/SecretLockConfiguration.h"
 #include "catapult/crypto/Hashes.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -28,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ProofSecretValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, 0, 0)
+	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		struct NotificationBuilder {
@@ -59,14 +60,24 @@ namespace catapult { namespace validators {
 			Hash256 m_secret;
 		};
 
-		auto CreateDefaultProofSecretValidator() {
-			return CreateProofSecretValidator(10, 100);
+		auto CreateDefaultConfig() {
+			auto pluginConfig = config::SecretLockConfiguration::Uninitialized();
+			pluginConfig.MinProofSize = 10;
+			pluginConfig.MaxProofSize = 100;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.locksecret", pluginConfig);
+			return blockChainConfig;
+		}
+
+		auto CreateDefaultProofSecretValidator(const model::BlockChainConfiguration& config) {
+			return CreateProofSecretValidator(config);
 		}
 
 		void AssertFailureIfHashAlgorithmIsNotSupported(model::LockHashAlgorithm lockHashAlgorithm) {
 			// Arrange:
 			NotificationBuilder notificationBuilder(lockHashAlgorithm);
-			auto pValidator = CreateDefaultProofSecretValidator();
+			auto config = CreateDefaultConfig();
+			auto pValidator = CreateDefaultProofSecretValidator(config);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification());
@@ -87,7 +98,8 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureIfSecretDoesNotMatchProof) {
 		NotificationBuilder notificationBuilder;
-		auto pValidator = CreateDefaultProofSecretValidator();
+		auto config = CreateDefaultConfig();
+		auto pValidator = CreateDefaultProofSecretValidator(config);
 
 		// Act:
 		auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification());
@@ -101,7 +113,8 @@ namespace catapult { namespace validators {
 			// Arrange:
 			NotificationBuilder notificationBuilder(algorithm);
 			notificationBuilder.setValidHash();
-			auto pValidator = CreateDefaultProofSecretValidator();
+			auto config = CreateDefaultConfig();
+			auto pValidator = CreateDefaultProofSecretValidator(config);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification());
@@ -137,7 +150,8 @@ namespace catapult { namespace validators {
 			NotificationBuilder notificationBuilder;
 			notificationBuilder.setProofSize(proofSize);
 			notificationBuilder.setValidHash();
-			auto pValidator = CreateDefaultProofSecretValidator();
+			auto config = CreateDefaultConfig();
+			auto pValidator = CreateDefaultProofSecretValidator(config);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification());

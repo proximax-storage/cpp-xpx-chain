@@ -21,8 +21,8 @@
 #pragma once
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
+#include "catapult/config/LocalNodeConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/DemuxObserverBuilder.h"
@@ -74,13 +74,16 @@ namespace catapult { namespace plugins {
 
 	public:
 		/// Creates a new plugin manager around \a config and \a storageConfig.
-		explicit PluginManager(const model::BlockChainConfiguration& config, const StorageConfiguration& storageConfig);
+		explicit PluginManager(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const StorageConfiguration& storageConfig);
 
 	public:
 		// region config
 
 		/// Gets the block chain configuration.
 		const model::BlockChainConfiguration& config() const;
+
+		/// Gets the block chain configuration.
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
 
 		/// Gets the storage configuration.
 		const StorageConfiguration& storageConfig() const;
@@ -201,7 +204,7 @@ namespace catapult { namespace plugins {
 		// endregion
 
 	private:
-		model::BlockChainConfiguration m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
 		model::TransactionRegistry m_transactionRegistry;
 		cache::CatapultCacheBuilder m_cacheBuilder;

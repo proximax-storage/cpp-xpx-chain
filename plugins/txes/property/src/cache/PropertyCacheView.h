@@ -37,37 +37,38 @@ namespace catapult { namespace cache {
 			, public PropertyCacheViewMixins::Contains
 			, public PropertyCacheViewMixins::Iteration
 			, public PropertyCacheViewMixins::ConstAccessor
-			, public PropertyCacheViewMixins::PatriciaTreeView {
+			, public PropertyCacheViewMixins::PatriciaTreeView
+			, public PropertyCacheViewMixins::Enable {
 	public:
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a view around \a propertySets and \a networkIdentifier.
-		explicit BasicPropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, model::NetworkIdentifier networkIdentifier)
+		/// Creates a view around \a propertySets and \a blockChainConfig.
+		explicit BasicPropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, const model::BlockChainConfiguration& blockChainConfig)
 				: PropertyCacheViewMixins::Size(propertySets.Primary)
 				, PropertyCacheViewMixins::Contains(propertySets.Primary)
 				, PropertyCacheViewMixins::Iteration(propertySets.Primary)
 				, PropertyCacheViewMixins::ConstAccessor(propertySets.Primary)
 				, PropertyCacheViewMixins::PatriciaTreeView(propertySets.PatriciaTree.get())
-				, m_networkIdentifier(networkIdentifier)
+				, m_blockChainConfig(blockChainConfig)
 		{}
 
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_networkIdentifier;
+			return m_blockChainConfig.Network.Identifier;
 		}
 
 	private:
-		model::NetworkIdentifier m_networkIdentifier;
+		const model::BlockChainConfiguration& m_blockChainConfig;
 	};
 
 	/// View on top of the property cache.
 	class PropertyCacheView : public ReadOnlyViewSupplier<BasicPropertyCacheView> {
 	public:
-		/// Creates a view around \a propertySets and \a networkIdentifier.
-		explicit PropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, model::NetworkIdentifier networkIdentifier)
-				: ReadOnlyViewSupplier(propertySets, networkIdentifier)
+		/// Creates a view around \a propertySets and \a blockChainConfig.
+		explicit PropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, const model::BlockChainConfiguration& blockChainConfig)
+				: ReadOnlyViewSupplier(propertySets, blockChainConfig)
 		{}
 	};
 }}

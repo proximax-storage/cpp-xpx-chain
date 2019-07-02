@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/model/PluginConfiguration.h"
 #include "catapult/utils/BlockSpan.h"
 #include <unordered_set>
 
@@ -13,7 +14,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Metadata plugin configuration settings.
-	struct MetadataConfiguration {
+	struct MetadataConfiguration : public model::PluginConfiguration {
 	public:
 		/// Maximum fields in metadata.
 		uint8_t MaxFields;

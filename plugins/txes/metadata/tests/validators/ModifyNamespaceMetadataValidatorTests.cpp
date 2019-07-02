@@ -52,7 +52,12 @@ namespace catapult { namespace validators {
 				const NamespaceId& metadataId,
 				Key signer) {
 			// Arrange:
-			auto cache = test::MetadataCacheFactory::Create();
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(100);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
 			PopulateCache(cache);
 			auto pValidator = CreateModifyNamespaceMetadataValidator();
 			auto notification = model::ModifyNamespaceMetadataNotification_v1(signer, metadataId);
@@ -65,7 +70,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenNamespaceExistAndOwnerEquel) {
+	TEST(TEST_CLASS, SuccessWhenNamespaceExistsAndOwnerEquals) {
 		// Act:
 		AssertValidationResult(
 			ValidationResult::Success,
@@ -73,7 +78,7 @@ namespace catapult { namespace validators {
 			Namespace_Owner);
 	}
 
-	TEST(TEST_CLASS, FailureWhenNamespaceNotExistAndOwnerEquel) {
+	TEST(TEST_CLASS, FailureWhenNamespaceNotExistAndOwnerEquals) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Is_Not_Exist,
@@ -81,7 +86,7 @@ namespace catapult { namespace validators {
 				Namespace_Owner);
 	}
 
-	TEST(TEST_CLASS, FailueWhenNamespaceExistButOwnerNotEquel) {
+	TEST(TEST_CLASS, FailueWhenNamespaceExistButOwnerNotEqual) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Modification_Not_Permitted,
@@ -89,7 +94,7 @@ namespace catapult { namespace validators {
 				test::GenerateRandomData<Key_Size>());
 	}
 
-	TEST(TEST_CLASS, FailueWhenNamespaceNoExistButOwnerNotEquel) {
+	TEST(TEST_CLASS, FailueWhenNamespaceNoExistButOwnerNotEquals) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Is_Not_Exist,

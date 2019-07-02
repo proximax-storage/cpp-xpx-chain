@@ -5,6 +5,8 @@
 **/
 
 #include "Validators.h"
+#include "catapult/config/SupportedEntityVersions.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "src/cache/CatapultConfigCache.h"
@@ -12,16 +14,20 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BlockChainConfigNotification<1>;
+	using Notification = model::CatapultConfigNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(plugins::PluginManager& pluginManager, const config::CatapultConfigConfiguration& config) {
-		return MAKE_STATEFUL_VALIDATOR(CatapultConfig, ([&pluginManager, &config](const Notification& notification, const ValidatorContext& context) {
-			if (notification.BlockChainConfigSize > config.MaxBlockChainConfigSize.bytes32())
+	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(plugins::PluginManager& pluginManager) {
+		return MAKE_STATEFUL_VALIDATOR(CatapultConfig, ([&pluginManager](const Notification& notification, const ValidatorContext& context) {
+			const auto& pluginConfig = pluginManager.config().GetPluginConfiguration<config::CatapultConfigConfiguration>("catapult.plugins.config");
+			if (notification.BlockChainConfigSize > pluginConfig.MaxBlockChainConfigSize.bytes32())
 				return Failure_CatapultConfig_BlockChain_Config_Too_Large;
+
+			if (notification.SupportedEntityVersionsSize > pluginConfig.MaxSupportedEntityVersionsSize.bytes32())
+				return Failure_CatapultConfig_SupportedEntityVersions_Config_Too_Large;
 
 			const auto& cache = context.Cache.sub<cache::CatapultConfigCache>();
 			if (cache.find(context.Height).tryGet())
-				return Failure_CatapultConfig_Redundant;
+				return Failure_CatapultConfig_Config_Redundant;
 
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			try {
@@ -37,6 +43,13 @@ namespace catapult { namespace validators {
 				auto result = pValidator->validate(model::PluginConfigNotification<1>{pair.first, pair.second});
 				if (IsValidationResultFailure(result))
 					return result;
+			}
+
+			try {
+				std::istringstream configStream{std::string{(const char*)notification.SupportedEntityVersionsPtr, notification.SupportedEntityVersionsSize}};
+				config::LoadSupportedEntityVersions(configStream);
+			} catch (...) {
+				return Failure_CatapultConfig_SupportedEntityVersions_Config_Malformed;
 			}
 
 			return ValidationResult::Success;

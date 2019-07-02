@@ -27,15 +27,17 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NetworkValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Network, static_cast<model::NetworkIdentifier>(123))
+	DEFINE_COMMON_VALIDATOR_TESTS(Network, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
 
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t networkIdentifier) {
 			// Arrange:
-			model::EntityNotification<1> notification(static_cast<model::NetworkIdentifier>(networkIdentifier), 0, 0, 0);
-			auto pValidator = CreateNetworkValidator(Network_Identifier);
+			model::EntityNotification<1> notification(static_cast<model::NetworkIdentifier>(networkIdentifier), model::EntityType{0}, 0);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.Network.Identifier = Network_Identifier;
+			auto pValidator = CreateNetworkValidator(config);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

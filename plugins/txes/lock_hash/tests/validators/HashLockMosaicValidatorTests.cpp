@@ -26,7 +26,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockMosaicValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, UnresolvedMosaicId(11), Amount(123))
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
@@ -39,7 +39,12 @@ namespace catapult { namespace validators {
 			// Arrange:
 			model::UnresolvedMosaic mosaic{ mosaicId, bondedAmount };
 			auto notification = model::HashLockMosaicNotification<1>(mosaic);
-			auto pValidator = CreateHashLockMosaicValidator(Currency_Mosaic_Id, requiredBondedAmount);
+			auto pluginConfig = config::HashLockConfiguration::Uninitialized();
+			pluginConfig.LockedFundsPerAggregate = requiredBondedAmount;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.lockhash", pluginConfig);
+			auto pValidator = CreateHashLockMosaicValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

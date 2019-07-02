@@ -11,5 +11,9 @@ target_link_libraries(${TARGET_NAME}
 	catapult.plugins.mosaic
 	catapult.plugins.namespace
 	catapult.plugins.transfer)
-target_link_libraries(${TARGET_NAME} catapult.tools catapult.sdk catapult.plugins.namespace catapult.plugins.transfer catapult.crypto)
+target_link_libraries(${TARGET_NAME} catapult.tools catapult.sdk catapult.plugins.mosaic catapult.plugins.namespace catapult.plugins.transfer catapult.crypto catapult.config)
 catapult_target(${TARGET_NAME})
+
+# tool has chain dependency so it must be able to access these dirs.
+include_directories(${PROJECT_SOURCE_DIR}/plugins/txes)
+include_directories(${PROJECT_SOURCE_DIR}/src/catapult/config)

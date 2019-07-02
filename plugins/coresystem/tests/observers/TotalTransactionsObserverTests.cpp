@@ -40,7 +40,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverIncrementsTotalNumberOfTransactionsInModeCommit) {
 		// Arrange:
-		test::ObserverTestContext context(NotifyMode::Commit, Height(Current_Height + 1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::ObserverTestContext context(NotifyMode::Commit, Height(Current_Height + 1), config);
 		context.state().NumTotalTransactions = 123;
 		auto pObserver = CreateTotalTransactionsObserver();
 		auto notification = CreateBlockNotification(1123);
@@ -54,7 +55,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverDecrementsTotalNumberOfTransactionsInModeRollback) {
 		// Arrange:
-		test::ObserverTestContext context(NotifyMode::Rollback, Height(Current_Height + 1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::ObserverTestContext context(NotifyMode::Rollback, Height(Current_Height + 1), config);
 		context.state().NumTotalTransactions = 1246;
 		auto pObserver = CreateTotalTransactionsObserver();
 		auto notification = CreateBlockNotification(1123);

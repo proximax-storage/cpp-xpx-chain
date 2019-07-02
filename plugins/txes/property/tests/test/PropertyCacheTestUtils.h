@@ -31,22 +31,18 @@ namespace catapult { namespace test {
 	/// Cache factory for creating a catapult cache composed of property cache and core caches.
 	struct PropertyCacheFactory {
 	private:
-		static auto CreateSubCachesWithPropertyCache() {
+		static auto CreateSubCachesWithPropertyCache(const model::BlockChainConfiguration& config) {
 			auto cacheId = cache::PropertyCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(model::NetworkIdentifier::Zero);
+			const_cast<model::BlockChainConfiguration&>(config).Network.Identifier = model::NetworkIdentifier::Zero;
+			subCaches[cacheId] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(config);
 			return subCaches;
 		}
 
 	public:
-		/// Creates an empty catapult cache around default configuration.
-		static cache::CatapultCache Create() {
-			return Create(model::BlockChainConfiguration::Uninitialized());
-		}
-
 		/// Creates an empty catapult cache around \a config.
 		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
-			auto subCaches = CreateSubCachesWithPropertyCache();
+			auto subCaches = CreateSubCachesWithPropertyCache(config);
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}

@@ -16,7 +16,7 @@ namespace catapult { namespace validators {
 	constexpr uint8_t MAX_KEY_SIZE = 5;
 	constexpr uint8_t MAX_VALUE_SIZE = 10;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification,MAX_KEY_SIZE,MAX_VALUE_SIZE)
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult,
@@ -27,7 +27,12 @@ namespace catapult { namespace validators {
 					modificationType,
 					key.size(), key.data(),
 					value.size(), value.data());
-			auto pValidator = CreateMetadataFieldModificationValidator(MAX_KEY_SIZE, MAX_VALUE_SIZE);
+			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			pluginConfig.MaxFieldKeySize = MAX_KEY_SIZE;
+			pluginConfig.MaxFieldValueSize = MAX_VALUE_SIZE;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
+			auto pValidator = CreateMetadataFieldModificationValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification);

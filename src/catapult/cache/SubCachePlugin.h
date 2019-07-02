@@ -92,6 +92,9 @@ namespace catapult { namespace cache {
 
 		/// Returns a read-only view of this view.
 		virtual const void* asReadOnly() const = 0;
+
+		/// Returns \c true if sub cache is enabled.
+		virtual bool enabled() const = 0;
 	};
 
 	/// Detached sub cache view.

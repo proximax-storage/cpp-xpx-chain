@@ -22,10 +22,12 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
+#include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/model/Address.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
+#include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -181,10 +183,12 @@ namespace catapult { namespace plugins {
 
 		// Assert:
 		// - 1 AggregateCosignaturesNotification
-		ASSERT_EQ(1u, sub.numNotifications());
+		ASSERT_EQ(2u, sub.numNotifications());
 
-		// - aggregate cosignatures notification must be the first raised notification
-		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[0]);
+		// - aggregate transaction type notification must be the first raised notification
+		EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[0]);
+		// - aggregate cosignatures notification must be the second raised notification
+		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[1]);
 	}
 
 	TEST(TEST_CLASS, CanRaiseCorrectNumberOfNotificationsFromAggregate) {
@@ -198,20 +202,23 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
 
 		// Assert:
+		// - 1 AggregateTransactionTypeNotification
 		// - 1 AggregateCosignaturesNotification
 		// - 3 SignatureNotification (one per cosigner)
 		// - 2 SourceChangeNotification (one per embedded-mock)
 		// - 4 AccountPublicKeyNotification (two per embedded-mock; one signer and one recipient each)
 		// - 2 EntityNotification (one per embedded-mock)
 		// - 2 AggregateEmbeddedTransactionNotification (one per embedded-mock)
-		ASSERT_EQ(1u + 3 + 2 + 4 + 2 + 2, sub.numNotifications());
+		ASSERT_EQ(1u + 1 + 3 + 2 + 4 + 2 + 2, sub.numNotifications());
 
-		// - aggregate cosignatures notification must be the first raised notification
-		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[0]);
+		// - aggregate transaction type notification must be the first raised notification
+		EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[0]);
+		// - aggregate cosignatures notification must be the second raised notification
+		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[1]);
 
 		// - source change notification must be the first raised sub-transaction notification
 		for (auto i = 0u; i < 2u; ++i) {
-			auto offset = i * 5;
+			auto offset = i * 5 + 1;
 			auto message = "sub-transaction at " + std::to_string(i);
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[offset + 1]) << message;
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[offset + 2]) << message;
@@ -221,9 +228,9 @@ namespace catapult { namespace plugins {
 		}
 
 		// - signature notifications are raised last (and with wrong source) for performance reasons
-		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[11]);
 		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[12]);
 		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[13]);
+		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[14]);
 	}
 
 	// endregion
@@ -312,8 +319,7 @@ namespace catapult { namespace plugins {
 
 			// - min/max version comes from MockTransactionPlugin created in CreateDefaultTransactionRegistry
 			EXPECT_EQ(static_cast<NetworkIdentifier>(100 + i), notification.NetworkIdentifier) << message;
-			EXPECT_EQ(0x02u, notification.MinVersion) << message;
-			EXPECT_EQ(0xFEu, notification.MaxVersion) << message;
+			EXPECT_EQ(mocks::EmbeddedMockTransaction::Entity_Type, notification.EntityType) << message;
 			EXPECT_EQ((i + 1) * 2, notification.EntityVersion) << message;
 		}
 	}

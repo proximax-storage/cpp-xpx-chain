@@ -51,7 +51,7 @@ namespace catapult { namespace cache {
 			std::vector<Hash256> merkleRoots;
 			for (const auto& pSubView : subViews) {
 				Hash256 merkleRoot;
-				if (!pSubView)
+				if (!pSubView || !pSubView->enabled())
 					continue;
 
 				updateMerkleRoot(*pSubView);

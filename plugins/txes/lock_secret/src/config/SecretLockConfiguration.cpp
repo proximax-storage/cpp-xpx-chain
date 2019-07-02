@@ -37,7 +37,7 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(MaxProofSize);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 3);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);
 		return config;
 	}
 }}

@@ -21,6 +21,7 @@
 #pragma once
 #include "Results.h"
 #include "src/model/PropertyNotifications.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/utils/UnresolvedAddress.h"
 #include "catapult/validators/ValidatorTypes.h"
 
@@ -44,7 +45,7 @@ namespace catapult { namespace validators {
 	/* - the maximum number of modifications (\a maxPropertyValues) is not exceeded */ \
 	/* - the maximum number of property values (\a maxPropertyValues) is not exeeded */ \
 	DECLARE_STATEFUL_VALIDATOR(Max##VALUE_NAME##PropertyValues, model::Modify##VALUE_NAME##PropertyNotification_v1)( \
-			uint16_t maxPropertyValues);
+		const model::BlockChainConfiguration& config);
 
 	DECLARE_SHARED_VALIDATORS(Address)
 	DECLARE_SHARED_VALIDATORS(Mosaic)
@@ -57,7 +58,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to address property value property modification notifications and validates that:
 	/// - property modification value for network with id \a networkIdentifier is valid
 	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, model::ModifyAddressPropertyValueNotification_v1)(
-			model::NetworkIdentifier networkIdentifier);
+		const model::BlockChainConfiguration& config);
 
 	/// A validator implementation that applies to address interaction notifications and validates that:
 	/// - the source address is allowed to interact with all participant addresses

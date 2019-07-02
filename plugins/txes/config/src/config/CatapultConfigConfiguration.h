@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/utils/FileSize.h"
+#include "catapult/model/PluginConfiguration.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -13,10 +14,13 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Catapult config plugin configuration settings.
-	struct CatapultConfigConfiguration {
+	struct CatapultConfigConfiguration : public model::PluginConfiguration {
 	public:
 		/// Maximum blockchain config data size.
 		utils::FileSize MaxBlockChainConfigSize;
+
+		/// Maximum supported entity versions config data size.
+		utils::FileSize MaxSupportedEntityVersionsSize;
 
 	private:
 		CatapultConfigConfiguration() = default;

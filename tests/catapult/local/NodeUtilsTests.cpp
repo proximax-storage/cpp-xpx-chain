@@ -51,7 +51,9 @@ namespace catapult { namespace local {
 		// Arrange:
 		auto hexPrivateKey = test::GenerateRandomHexString(2 * Key_Size);
 		auto config = CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL");
-		extensions::LocalNodeBootstrapper bootstrapper(config, "", "bootstrapper");
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
+		extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		// Act:
 		ionet::NodeContainer nodes;
@@ -69,8 +71,9 @@ namespace catapult { namespace local {
 	TEST(TEST_CLASS, SeedNodeContainerAddsLocalAndStaticNodes) {
 		// Arrange:
 		auto hexPrivateKey = test::GenerateRandomHexString(2 * Key_Size);
-		auto config = CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL");
-		extensions::LocalNodeBootstrapper bootstrapper(config, "", "bootstrapper");
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
+		extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		auto keys = test::GenerateRandomDataVector<Key>(3);
 		bootstrapper.addStaticNodes({
@@ -109,8 +112,9 @@ namespace catapult { namespace local {
 					<< "seed with lengths: " << localHostSize << ", " << localNameSize
 					<< ", " << peerHostSize << ", " << peerNameSize;
 
-			auto config = CreateLocalNodeConfiguration(bootKey, std::string(localHostSize, 'm'), std::string(localNameSize, 'l'));
-			extensions::LocalNodeBootstrapper bootstrapper(config, "", "bootstrapper");
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(CreateLocalNodeConfiguration(bootKey, std::string(localHostSize, 'm'), std::string(localNameSize, 'l')));
+			extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 			auto peerEndpoint = ionet::NodeEndpoint{ std::string(peerHostSize, 'q'), 1234 };
 			auto peerMetadata = ionet::NodeMetadata(model::NetworkIdentifier::Zero, std::string(peerNameSize, 'p'));

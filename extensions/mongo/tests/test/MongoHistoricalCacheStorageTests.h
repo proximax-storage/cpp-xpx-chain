@@ -40,7 +40,8 @@ namespace catapult { namespace test {
 		static void AssertSaveHasNoEffectWhenThereAreNoPendingChanges() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 			cache.commit(Height());
 
@@ -54,7 +55,8 @@ namespace catapult { namespace test {
 		static void AssertAddedElementIsSavedToStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with a single element
@@ -83,7 +85,8 @@ namespace catapult { namespace test {
 		static void AssertModifiedElementIsSavedToStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with a single element
@@ -111,7 +114,8 @@ namespace catapult { namespace test {
 		static void AssertDeletedElementIsPartiallyRemovedFromStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with two elements
@@ -141,7 +145,8 @@ namespace catapult { namespace test {
 		static void AssertDeletedElementIsCompletelyRemovedFromStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with two elements
@@ -171,7 +176,8 @@ namespace catapult { namespace test {
 		static void AssertCanSaveMultipleElementsWithDistinctHistory() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// Act:
@@ -192,7 +198,8 @@ namespace catapult { namespace test {
 		static void AssertCanSaveMultipleElementsWithSharedHistory() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// Act: notice that indexes are 0-based
@@ -217,7 +224,8 @@ namespace catapult { namespace test {
 		static void AssertCanAddAndModifyAndDeleteMultipleElements() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 			auto delta = cache.createDelta();
 
 			// - seed 100 elements
@@ -268,7 +276,8 @@ namespace catapult { namespace test {
 		static void AssertCanLoadFromEmptyDatabase() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto cache = TTraits::CreateCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = TTraits::CreateCache(config);
 
 			// Act:
 			storage.get().loadAll(cache, Height(1));
@@ -310,11 +319,12 @@ namespace catapult { namespace test {
 		static void RunCustomLoadTest(TSeedCache seedCache) {
 			// Arrange:
 			CacheStorageWrapper storage;
+			auto config = model::BlockChainConfiguration::Uninitialized();
 
 			// - seed the database
 			std::pair<size_t, size_t> expectedCollectionSizes; // (cache-size, deep-size)
 			{
-				auto cache1 = TTraits::CreateCache();
+				auto cache1 = TTraits::CreateCache(config);
 				auto delta1 = cache1.createDelta();
 				expectedCollectionSizes = seedCache(delta1);
 				storage.get().saveDelta(delta1);
@@ -324,7 +334,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(expectedCollectionSizes.second, GetCollectionSize());
 
 			// Act: load into a second cache
-			auto cache2 = TTraits::CreateCache();
+			auto cache2 = TTraits::CreateCache(config);
 			storage.get().loadAll(cache2, Height(1));
 			auto elements = GetCacheContents(cache2);
 
@@ -339,17 +349,18 @@ namespace catapult { namespace test {
 		static void RunCustomLoadTest(TSeedCache seedCache, TAssertCache assertCache) {
 			// Arrange:
 			CacheStorageWrapper storage;
+			auto config = model::BlockChainConfiguration::Uninitialized();
 
 			// - seed the database
 			{
-				auto cache1 = TTraits::CreateCache();
+				auto cache1 = TTraits::CreateCache(config);
 				auto delta1 = cache1.createDelta();
 				seedCache(delta1);
 				storage.get().saveDelta(delta1);
 			}
 
 			// Act: load into a second cache
-			auto cache2 = TTraits::CreateCache();
+			auto cache2 = TTraits::CreateCache(config);
 			storage.get().loadAll(cache2, Height(1));
 
 			// Assert:

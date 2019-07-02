@@ -7,6 +7,7 @@
 #pragma once
 #include "src/cache/MetadataCache.h"
 #include "src/cache/MetadataCacheStorage.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "plugins/txes/mosaic/src/cache/MosaicCache.h"
 #include "plugins/txes/namespace/src/cache/NamespaceCache.h"
 #include "catapult/model/Address.h"
@@ -21,27 +22,24 @@ namespace catapult { namespace test {
 	/// Cache factory for creating a catapult cache composed of account cache and core caches.
 	struct MetadataCacheFactory {
 	private:
-		static auto CreateSubCachesWithMetadataCache() {
+		static auto CreateSubCachesWithMetadataCache(const model::BlockChainConfiguration& blockChainConfig) {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::MosaicCache::Id + 1);
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
 
 			subCaches[cache::MetadataCache::Id] =
 					MakeSubCachePlugin<cache::MetadataCache, cache::MetadataCacheStorage>();
 			subCaches[cache::MosaicCache::Id] =
 					MakeSubCachePlugin<cache::MosaicCache, cache::MosaicCacheStorage>();
 			subCaches[cache::NamespaceCache::Id] =
-					MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(cache::NamespaceCacheTypes::Options{ BlockDuration(0) });
+					MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(cache::NamespaceCacheTypes::Options{ blockChainConfig });
 			return subCaches;
 		}
 
 	public:
-		/// Creates an empty catapult cache around default configuration.
-		static cache::CatapultCache Create() {
-			return Create(model::BlockChainConfiguration::Uninitialized());
-		}
-
 		/// Creates an empty catapult cache around \a config.
 		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
-			auto subCaches = CreateSubCachesWithMetadataCache();
+			auto subCaches = CreateSubCachesWithMetadataCache(config);
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}

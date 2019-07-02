@@ -31,6 +31,15 @@ namespace catapult { namespace cache {
 		state::BlockDifficultyInfo CreateInfo(size_t id) {
 			return state::BlockDifficultyInfo(Height(id), Timestamp(id), Difficulty(id));
 		}
+
+		auto CreateConfig() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxRollbackBlocks = 100;
+			config.MaxDifficultyBlocks = 200;
+			return config;
+		}
+
+		auto Default_Config = CreateConfig();
 	}
 
 	// region mixin traits based tests
@@ -39,7 +48,7 @@ namespace catapult { namespace cache {
 		struct BlockDifficultyCacheMixinTraits {
 			class CacheType : public BlockDifficultyCache {
 			public:
-				CacheType() : BlockDifficultyCache(300)
+				CacheType() : BlockDifficultyCache(Default_Config)
 				{}
 			};
 
@@ -89,7 +98,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, InsertThrowsIfElementHasUnexpectedHeight) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 10);
 		auto delta = cache.createDelta();
 
@@ -100,7 +109,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanInsertElementIfOriginalSetIsEmpty) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		auto delta = cache.createDelta();
 
 		// Act:
@@ -115,7 +124,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanInsertElementIfOriginalSetIsNonEmpty) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 3);
 		auto delta = cache.createDelta();
 
@@ -131,7 +140,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanInsertElementAtArbitraryHeightIfOriginalSetIsEmpty) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		auto delta = cache.createDelta();
 
 		// Act: add elements with heights starting at 117
@@ -146,7 +155,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanInsertElementAtArbitraryHeightIfOriginalSetIsEmptied) {
 		// Arrange: create a delta around a cache with 3 elements
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 3);
 		auto delta = cache.createDelta();
 
@@ -171,7 +180,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanRemoveElementIfOriginalSetIsEmpty) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		auto delta = cache.createDelta();
 		auto element1 = CreateInfo(1);
 		auto element2 = CreateInfo(2);
@@ -194,7 +203,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanRemoveElementIfOriginalSetIsNonEmpty) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 3);
 		auto delta = cache.createDelta();
 		auto element = CreateInfo(3);
@@ -209,7 +218,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, RemovingElementAndInsertingNewElementWithSameHeightUpdatesCacheWithNewElement) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 3);
 		auto element = CreateInfo(3);
 		auto newElement = CreateInfo(3);
@@ -244,7 +253,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, RemoveThrowsIfElementHasUnexpectedHeight) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 10);
 		auto delta = cache.createDelta();
 
@@ -255,7 +264,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, RemoveThrowsIfCacheIsEmpty) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		auto delta = cache.createDelta();
 
 		// Act + Assert:
@@ -269,7 +278,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, PruningBoundaryIsInitiallyUnset) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		auto delta = cache.createDelta();
 
 		// Assert:
@@ -278,7 +287,9 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, PruneUpdatesPruningBoundary) {
 		// Arrange:
-		BlockDifficultyCache cache(420);
+		auto config = CreateConfig();
+		config.MaxRollbackBlocks = 220;
+		BlockDifficultyCache cache(config);
 		auto delta = cache.createDelta();
 
 		// Act:
@@ -299,7 +310,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, DifficultyInfosReturnsExpectedRange) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 100);
 		size_t begin = 78 - 35 + 1;
 		size_t end = 79;
@@ -317,7 +328,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, DifficultyInfosFirstIteratorPointsToSmallestInfoIfNotEnoughInfosAreAvailable) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 100);
 		auto beginInfo = state::BlockDifficultyInfo(Height(1));
 		auto endInfo = state::BlockDifficultyInfo(Height(31));
@@ -333,7 +344,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, DifficultyInfosThrowsIfCacheIsEmpty) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		auto view = cache.createView();
 
 		// Act + Assert:
@@ -342,7 +353,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, DifficultyInfosThrowsIfHeightOrCountIsZero) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 100);
 		auto view = cache.createView();
 
@@ -353,7 +364,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, DifficultyInfosThrowsIfInfoWithSpecifiedHeightIsNotFound) {
 		// Arrange:
-		BlockDifficultyCache cache(300);
+		BlockDifficultyCache cache(Default_Config);
 		SeedCache(cache, 100);
 		auto view = cache.createView();
 

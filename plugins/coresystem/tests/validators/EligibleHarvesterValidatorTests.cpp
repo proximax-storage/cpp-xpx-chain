@@ -32,16 +32,15 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EligibleHarvesterValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, Amount(1234))
+	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, model::BlockChainConfiguration::Uninitialized())
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 		constexpr auto Importance_Grouping = 234u;
 
-		auto CreateEmptyCatapultCache() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.ImportanceGrouping = Importance_Grouping;
+		auto CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
+			const_cast<model::BlockChainConfiguration&>(config).HarvestingMosaicId = Harvesting_Mosaic_Id;
+			const_cast<model::BlockChainConfiguration&>(config).ImportanceGrouping = Importance_Grouping;
 			return test::CreateEmptyCatapultCache(config);
 		}
 
@@ -59,12 +58,14 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureIfAccountIsUnknown) {
 		// Arrange:
-		auto cache = CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		config.MinHarvesterBalance = Amount(1234);
+		auto cache = CreateEmptyCatapultCache(config);
 		auto key = test::GenerateRandomData<Key_Size>();
 		auto height = Height(1000);
 		AddAccount(cache, key, Amount(9999));
 
-		auto pValidator = CreateEligibleHarvesterValidator(Amount(1234));
+		auto pValidator = CreateEligibleHarvesterValidator(config);
 
 		auto signer = test::GenerateRandomData<Key_Size>();
 		auto notification = test::CreateBlockNotification(signer);
@@ -82,12 +83,14 @@ namespace catapult { namespace validators {
 				int64_t minBalanceDelta,
 				Height blockHeight) {
 			// Arrange:
-			auto cache = CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MinHarvesterBalance = Amount(1234);
+			auto cache = CreateEmptyCatapultCache(config);
 			auto key = test::GenerateRandomData<Key_Size>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
 			AddAccount(cache, key, initialBalance);
 
-			auto pValidator = CreateEligibleHarvesterValidator(Amount(1234));
+			auto pValidator = CreateEligibleHarvesterValidator(config);
 			auto notification = test::CreateBlockNotification(key);
 
 			// Act:

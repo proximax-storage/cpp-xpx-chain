@@ -32,17 +32,18 @@ namespace catapult { namespace validators {
 #define ROOT_TEST_CLASS RootNamespaceAvailabilityValidatorTests
 #define CHILD_TEST_CLASS ChildNamespaceAvailabilityValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, BlockDuration())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, model::BlockChainConfiguration::Uninitialized())
 	DEFINE_COMMON_VALIDATOR_TESTS(ChildNamespaceAvailability,)
 
 	namespace {
 		constexpr BlockDuration Max_Duration(105);
 		constexpr BlockDuration Default_Duration(10);
 		constexpr BlockDuration Grace_Period_Duration(25);
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
 
 		template<typename TSeedCacheFunc>
 		auto CreateAndSeedCache(TSeedCacheFunc seedCache) {
-			auto cache = test::NamespaceCacheFactory::Create(Grace_Period_Duration);
+			auto cache = test::NamespaceCacheFactory::Create(Default_Config, Grace_Period_Duration);
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
@@ -61,8 +62,13 @@ namespace catapult { namespace validators {
 				TSeedCacheFunc seedCache) {
 			// Arrange:
 			auto cache = CreateAndSeedCache(seedCache);
-			model::NamespaceLifetimeConstraints constraints(Max_Duration, Grace_Period_Duration);
-			auto pValidator = CreateRootNamespaceAvailabilityValidator(constraints.MaxNamespaceDuration);
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(Max_Duration.unwrap());
+			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(Grace_Period_Duration.unwrap());
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			auto pValidator = CreateRootNamespaceAvailabilityValidator(blockChainConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, height);

@@ -32,13 +32,14 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateBootstrapper) {
 		// Arrange:
-		auto config = test::CreateUninitializedLocalNodeConfiguration();
-		const_cast<uint32_t&>(config.BlockChain.BlockPruneInterval) = 15;
-		const_cast<bool&>(config.Node.ShouldUseCacheDatabaseStorage) = true;
-		const_cast<std::string&>(config.User.DataDirectory) = "base_data_dir";
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
+		const_cast<uint32_t&>(pConfigHolder->Config().BlockChain.BlockPruneInterval) = 15;
+		const_cast<bool&>(pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage) = true;
+		const_cast<std::string&>(pConfigHolder->Config().User.DataDirectory) = "base_data_dir";
 
 		// Act:
-		LocalNodeBootstrapper bootstrapper(config, "resources path", "bootstrapper");
+		LocalNodeBootstrapper bootstrapper(pConfigHolder, "resources path", "bootstrapper");
 
 		// Assert: compare BlockPruneInterval as a sentinel value because the bootstrapper copies the config
 		EXPECT_EQ(15u, bootstrapper.config().BlockChain.BlockPruneInterval);
@@ -70,10 +71,11 @@ namespace catapult { namespace extensions {
 		template<typename TAction>
 		void RunExtensionsTest(const std::string& directory, const std::string& name, TAction action) {
 			// Arrange:
-			auto config = test::CreateUninitializedLocalNodeConfiguration();
-			const_cast<config::UserConfiguration&>(config.User).PluginsDirectory = directory;
-			const_cast<config::NodeConfiguration&>(config.Node).Extensions = { name };
-			LocalNodeBootstrapper bootstrapper(config, "resources path", "bootstrapper");
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
+			const_cast<config::UserConfiguration&>(pConfigHolder->Config().User).PluginsDirectory = directory;
+			const_cast<config::NodeConfiguration&>(pConfigHolder->Config().Node).Extensions = { name };
+			LocalNodeBootstrapper bootstrapper(pConfigHolder, "resources path", "bootstrapper");
 
 			// Act + Assert:
 			action(bootstrapper);
@@ -147,7 +149,9 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodes) {
 		// Arrange:
-		LocalNodeBootstrapper bootstrapper(test::CreateUninitializedLocalNodeConfiguration(), "", "bootstrapper");
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
+		LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		// - add five nodes
 		std::vector<ionet::Node> nodes1{
@@ -178,7 +182,9 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodesFromPath) {
 		// Arrange:
-		LocalNodeBootstrapper bootstrapper(test::CreateUninitializedLocalNodeConfiguration(), "", "bootstrapper");
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
+		LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		// Act:
 		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json");

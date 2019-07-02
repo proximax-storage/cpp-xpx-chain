@@ -30,7 +30,7 @@ namespace catapult { namespace cache {
 			: BlockDifficultyCacheDeltaMixins::Size(*difficultyInfoSets.pPrimary)
 			, BlockDifficultyCacheDeltaMixins::Contains(*difficultyInfoSets.pPrimary)
 			, m_pOrderedDelta(difficultyInfoSets.pPrimary)
-			, m_difficultyHistorySize(options.DifficultyHistorySize)
+			, m_config(options.Config)
 			// note: empty indicates initial cache seeding;
 			//       it cannot happen due to a rollback because the nemesis block cannot be rolled back
 			, m_startHeight(m_pOrderedDelta->empty() ? Height(1) : MakeIterableView(*m_pOrderedDelta).begin()->BlockHeight)
@@ -61,7 +61,8 @@ namespace catapult { namespace cache {
 	}
 
 	void BasicBlockDifficultyCacheDelta::prune(Height height) {
-		auto heightDifference = Height(m_difficultyHistorySize);
+		auto difficultyHistorySize = CalculateDifficultyHistorySize(m_config);
+		auto heightDifference = Height(difficultyHistorySize);
 		if (height > heightDifference)
 			m_pruningBoundary = deltaset::PruningBoundary<ValueType>(ValueType(height - heightDifference));
 	}
