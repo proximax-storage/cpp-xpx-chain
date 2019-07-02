@@ -91,7 +91,7 @@ namespace catapult { namespace model {
 				// raise an entity notification
 				switch (block.EntityVersion()) {
 				case 3: {
-					sub.notify(EntityNotification<1>(block.Network(), Block::Current_Version, Block::Current_Version, block.EntityVersion()));
+					sub.notify(EntityNotification<1>(block.Network(), block.Type, block.EntityVersion()));
 
 					// raise a block notification
 					auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
@@ -119,14 +119,9 @@ namespace catapult { namespace model {
 					const BlockHeader* pBlockHeader,
 					NotificationSubscriber& sub) const {
 				const auto& plugin = *m_transactionRegistry.findPlugin(transaction.Type);
-				auto supportedVersions = plugin.supportedVersions();
 
 				// raise an entity notification
-				sub.notify(EntityNotification<1>(
-						transaction.Network(),
-						supportedVersions.MinVersion,
-						supportedVersions.MaxVersion,
-						transaction.EntityVersion()));
+				sub.notify(EntityNotification<1>(transaction.Network(), transaction.Type, transaction.EntityVersion()));
 
 				// raise transaction notifications
 				auto fee = pBlockHeader ? CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction) : transaction.MaxFee;

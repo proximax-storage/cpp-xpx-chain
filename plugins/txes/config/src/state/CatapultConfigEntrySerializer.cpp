@@ -19,6 +19,10 @@ namespace catapult { namespace state {
 		const auto& blockChainConfig = entry.blockChainConfig();
 		io::Write32(output, blockChainConfig.size());
 		io::Write(output, RawBuffer((const uint8_t*)blockChainConfig.data(), blockChainConfig.size()));
+
+		const auto& supportedEntityVersions = entry.supportedEntityVersions();
+		io::Write32(output, supportedEntityVersions.size());
+		io::Write(output, RawBuffer((const uint8_t*)supportedEntityVersions.data(), supportedEntityVersions.size()));
 	}
 
 	CatapultConfigEntry CatapultConfigEntrySerializer::Load(io::InputStream& input) {
@@ -34,6 +38,11 @@ namespace catapult { namespace state {
 		blockChainConfig.resize(blockChainConfigSize);
 		io::Read(input, MutableRawBuffer((uint8_t*)blockChainConfig.data(), blockChainConfig.size()));
 
-		return state::CatapultConfigEntry(height, blockChainConfig);
+		std::string supportedEntityVersions;
+		uint32_t supportedEntityVersionsSize = io::Read32(input);
+		supportedEntityVersions.resize(supportedEntityVersionsSize);
+		io::Read(input, MutableRawBuffer((uint8_t*)supportedEntityVersions.data(), supportedEntityVersions.size()));
+
+		return state::CatapultConfigEntry(height, blockChainConfig, supportedEntityVersions);
 	}
 }}

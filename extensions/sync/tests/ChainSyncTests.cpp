@@ -91,7 +91,8 @@ namespace catapult { namespace sync {
 					std::move(blockChainConfig),
 					std::move(nodeConfig),
 					config::LoggingConfiguration::Uninitialized(),
-					config::UserConfiguration::Uninitialized()
+					config::UserConfiguration::Uninitialized(),
+					test::CreateSupportedEntityVersions()
 			};
 		}
 

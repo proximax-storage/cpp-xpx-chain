@@ -21,6 +21,7 @@
 #include "AggregateTransactionPlugin.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
+#include "catapult/config/LocalNodeConfigurationHolder.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
 
@@ -35,7 +36,9 @@ namespace catapult { namespace plugins {
 
 		class AggregateTransactionPlugin : public TransactionPlugin {
 		public:
-			AggregateTransactionPlugin(const TransactionRegistry& transactionRegistry, model::EntityType transactionType)
+			AggregateTransactionPlugin(
+				const TransactionRegistry& transactionRegistry,
+				model::EntityType transactionType)
 					: m_transactionRegistry(transactionRegistry)
 					, m_transactionType(transactionType)
 			{}
@@ -83,12 +86,10 @@ namespace catapult { namespace plugins {
 						// - signers and entity
 						sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));
 						const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
-						auto supportedVersions = plugin.supportedVersions();
 
 						sub.notify(EntityNotification<1>(
 								subTransaction.Network(),
-								supportedVersions.MinVersion,
-								supportedVersions.MaxVersion,
+								subTransaction.Type,
 								subTransaction.EntityVersion()));
 
 						// - generic sub-transaction notification

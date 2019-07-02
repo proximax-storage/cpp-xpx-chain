@@ -44,6 +44,7 @@ enableBondedAggregateSupport = true
 [plugin:catapult.plugins.config]
 
 maxBlockChainConfigSize = 1MB
+maxSupportedEntityVersionsSize = 1MB
 
 [plugin:catapult.plugins.contract]
 

@@ -28,11 +28,12 @@ namespace catapult {
 		class TransactionPlugin;
 		class TransactionRegistry;
 	}
+	namespace config { class LocalNodeConfigurationHolder; }
 }
 
 namespace catapult { namespace plugins {
 
-	/// Creates an aggregate transaction plugin around \a transactionRegistry for transactions with type \a transactionType.
+	/// Creates an aggregate transaction plugin around \a transactionRegistry and \a pConfigHolder for transactions with type \a transactionType.
 	PLUGIN_API
 	std::unique_ptr<model::TransactionPlugin> CreateAggregateTransactionPlugin(
 			const model::TransactionRegistry& transactionRegistry,

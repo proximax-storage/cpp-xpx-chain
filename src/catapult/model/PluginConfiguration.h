@@ -6,8 +6,6 @@
 
 #pragma once
 
-namespace catapult { namespace utils { class ConfigurationBag; } }
-
 namespace catapult { namespace model {
 
 	/// Plugin configuration base class.

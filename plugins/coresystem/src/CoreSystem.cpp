@@ -71,11 +71,11 @@ namespace catapult { namespace plugins {
 		AddAccountStateCache(manager);
 		AddBlockDifficultyCache(manager);
 
-		manager.addStatelessValidatorHook([&config](auto& builder) {
+		manager.addStatelessValidatorHook([&config, &pConfigHolder = manager.configHolder()](auto& builder) {
 			builder
 				.add(validators::CreateMaxTransactionsValidator(config))
 				.add(validators::CreateNetworkValidator(config))
-				.add(validators::CreateEntityVersionValidator())
+				.add(validators::CreateEntityVersionValidator(pConfigHolder))
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
