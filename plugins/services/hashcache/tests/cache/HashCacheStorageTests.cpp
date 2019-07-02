@@ -37,6 +37,7 @@ namespace catapult { namespace cache {
 		struct HashCacheStorageTraits{
 			using ValueType = state::TimestampedHash;
 			static constexpr auto Value_Size = sizeof(Timestamp) + sizeof(ValueType::HashType);
+			static constexpr auto Serialized_Value_Size = sizeof(VersionType) + Value_Size;
 
 			using StorageType = HashCacheStorage;
 			class CacheType : public HashCache {
@@ -53,5 +54,5 @@ namespace catapult { namespace cache {
 		};
 	}
 
-	DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(HashCacheStorageTests, HashCacheStorageTraits)
+	DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(HashCacheStorageTests, HashCacheStorageTraits, 1)
 }}

@@ -12,30 +12,30 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-		/// Binary layout for a catapult upgrade transaction body.
-		template<typename THeader>
-		struct CatapultUpgradeTransactionBody : public THeader {
-		private:
-			using TransactionType = CatapultUpgradeTransactionBody<THeader>;
+	/// Binary layout for a catapult upgrade transaction body.
+	template<typename THeader>
+	struct CatapultUpgradeTransactionBody : public THeader {
+	private:
+		using TransactionType = CatapultUpgradeTransactionBody<THeader>;
 
-		public:
-			DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Catapult_Upgrade, 1)
+	public:
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Catapult_Upgrade, 1)
 
-		public:
-			/// Number of blocks before forcing upgrade.
-			uint64_t UpgradePeriod;
+	public:
+		/// Number of blocks before forcing upgrade.
+		BlockDuration UpgradePeriod;
 
-			/// New version of catapult.
-			uint64_t NewCatapultVersion;
+		/// New version of catapult.
+		CatapultVersion NewCatapultVersion;
 
-		public:
-			// Calculates the real size of a catapult upgrade \a transaction.
-			static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
-				return sizeof(TransactionType);
-			}
-		};
+	public:
+		// Calculates the real size of a catapult upgrade transaction.
+		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
+			return sizeof(TransactionType);
+		}
+	};
 
-		DEFINE_EMBEDDABLE_TRANSACTION(CatapultUpgrade)
+	DEFINE_EMBEDDABLE_TRANSACTION(CatapultUpgrade)
 
 #pragma pack(pop)
-	}}
+}}

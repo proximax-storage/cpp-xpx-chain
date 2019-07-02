@@ -23,12 +23,20 @@
 namespace catapult { namespace state {
 
 	void SecretLockInfoExtendedDataSerializer::Save(const SecretLockInfo& lockInfo, io::OutputStream& output) {
+		// write version
+		io::Write32(output, 1);
+
 		io::Write8(output, utils::to_underlying_type(lockInfo.HashAlgorithm));
 		io::Write(output, lockInfo.Secret);
 		io::Write(output, lockInfo.Recipient);
 	}
 
 	void SecretLockInfoExtendedDataSerializer::Load(io::InputStream& input, SecretLockInfo& lockInfo) {
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of SecretLockInfo", version);
+
 		lockInfo.HashAlgorithm = static_cast<model::LockHashAlgorithm>(io::Read8(input));
 		io::Read(input, lockInfo.Secret);
 		io::Read(input, lockInfo.Recipient);

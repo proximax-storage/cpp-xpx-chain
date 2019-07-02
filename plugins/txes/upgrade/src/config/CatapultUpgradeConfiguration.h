@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
+#include "catapult/types.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -16,7 +17,7 @@ namespace catapult { namespace config {
 	struct CatapultUpgradeConfiguration : public model::PluginConfiguration {
 	public:
 		/// Minimum duration in blocks before forcing update.
-		uint16_t MinUpgradePeriod;
+		BlockDuration MinUpgradePeriod;
 
 	private:
 		CatapultUpgradeConfiguration() = default;

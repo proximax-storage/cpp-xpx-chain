@@ -20,6 +20,10 @@ namespace catapult { namespace validators {
 	/// - no other upgrade is declared at the same height
 	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, model::CatapultUpgradeVersionNotification<1>)(const model::BlockChainConfiguration& config);
 
+	/// A validator implementation that applies to all block notifications and validates that:
+	/// - the catapult version is valid
+	DECLARE_STATEFUL_VALIDATOR(CatapultVersion, model::BlockNotification<1>)();
+
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();

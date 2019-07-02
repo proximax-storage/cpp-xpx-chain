@@ -10,6 +10,6 @@
 
 namespace catapult { namespace observers {
 
-	/// Observes changes triggered by update reputation notifications
+	/// Observes changes triggered by catapult upgrade notifications
 	DECLARE_OBSERVER(CatapultUpgrade, model::CatapultUpgradeVersionNotification<1>)();
 }}

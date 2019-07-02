@@ -57,8 +57,8 @@ namespace catapult { namespace cache {
 		struct LoadTraits {
 			using NamespaceHistoryHeader = test::NamespaceHistoryHeader;
 
-			static NamespaceHistoryHeader CreateHistoryHeader(NamespaceId namespaceId, uint64_t depth) {
-				return { depth, namespaceId };
+			static NamespaceHistoryHeader CreateHistoryHeader(VersionType version, NamespaceId namespaceId, uint64_t depth) {
+				return { version, depth, namespaceId };
 			}
 
 			template<typename TException>
@@ -222,5 +222,5 @@ namespace catapult { namespace cache {
 		};
 	}
 
-	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits,)
+	DEFINE_ROOT_NAMESPACE_HISTORY_LOAD_TESTS(LoadTraits,,1)
 }}

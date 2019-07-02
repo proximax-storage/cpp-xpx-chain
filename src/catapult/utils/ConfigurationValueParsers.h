@@ -70,6 +70,9 @@ namespace catapult { namespace utils {
 	/// Tries to parse \a str into a MosaicId (\a parsedValue).
 	bool TryParseValue(const std::string& str, MosaicId& parsedValue);
 
+	/// Tries to parse \a str into a BlockDuration (\a parsedValue).
+	bool TryParseValue(const std::string& str, BlockDuration& parsedValue);
+
 	/// Tries to parse \a str into a TimeSpan (\a parsedValue).
 	bool TryParseValue(const std::string& str, TimeSpan& parsedValue);
 

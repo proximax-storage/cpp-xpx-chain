@@ -20,7 +20,7 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1:
 				sub.notify(model::CatapultUpgradeSignerNotification<1>(transaction.Signer));
-				sub.notify(model::CatapultUpgradeVersionNotification<1>(BlockDuration{transaction.UpgradePeriod}, CatapultVersion{transaction.NewCatapultVersion}));
+				sub.notify(model::CatapultUpgradeVersionNotification<1>(transaction.UpgradePeriod, transaction.NewCatapultVersion));
 				break;
 
 			default:

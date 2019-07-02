@@ -67,15 +67,15 @@ namespace catapult { namespace cache {
 			storage.saveAll(stream);
 
 			// Assert: all addresses were saved
-			ASSERT_EQ(sizeof(uint64_t) + numExpectedAccounts * sizeof(Address) +
+			ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) + numExpectedAccounts * sizeof(Address) +
 					  sizeof(uint64_t) + addresses.size() * sizeof(Address), buffer.size());
 
-			auto numAddresses = reinterpret_cast<uint64_t&>(*buffer.data());
+			auto numAddresses = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType)));
 			EXPECT_EQ(numExpectedAccounts, numAddresses);
 
 			model::AddressSet savedAddresses;
 			for (auto i = 0u; i < numAddresses; ++i)
-				savedAddresses.insert(reinterpret_cast<Address&>(*(buffer.data() + sizeof(uint64_t) + i * sizeof(Address))));
+				savedAddresses.insert(reinterpret_cast<Address&>(*(buffer.data() + sizeof(VersionType) + sizeof(uint64_t) + i * sizeof(Address))));
 
 			checkAddresses(addresses, savedAddresses);
 
@@ -125,6 +125,7 @@ namespace catapult { namespace cache {
 
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream stream("", buffer);
+			io::Write32(stream, 1);
 			io::Write64(stream, numAccounts);
 			stream.write({ reinterpret_cast<const uint8_t*>(highValueAddresses.data()), numAccounts * sizeof(Address) });
 			io::Write64(stream, numUpdateAddresses);

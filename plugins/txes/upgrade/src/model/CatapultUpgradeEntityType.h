@@ -11,9 +11,9 @@
 namespace catapult { namespace model {
 
 #endif
-		/// Catapult upgrade transaction.
-		DEFINE_TRANSACTION_TYPE(CatapultUpgrade, Catapult_Upgrade, 0x1);
+	/// Catapult upgrade transaction.
+	DEFINE_TRANSACTION_TYPE(CatapultUpgrade, Catapult_Upgrade, 0x1);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
-	}}
+}}
 #endif

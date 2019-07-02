@@ -19,9 +19,9 @@ namespace catapult { namespace state {
 	}
 
 	CatapultUpgradeEntry CatapultUpgradeEntrySerializer::Load(io::InputStream& input) {
-        // read version
-        VersionType version = io::Read32(input);
-        if (version > 1)
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of CatapultUpgradeEntry", version);
 
 		auto height = Height{io::Read64(input)};

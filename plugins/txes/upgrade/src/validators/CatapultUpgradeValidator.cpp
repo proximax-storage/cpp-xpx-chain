@@ -17,7 +17,7 @@ namespace catapult { namespace validators {
 		return MAKE_STATEFUL_VALIDATOR(CatapultUpgrade, ([&blockChainConfig](const Notification& notification, const ValidatorContext& context) {
 			auto upgradePeriod = notification.UpgradePeriod.unwrap();
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::CatapultUpgradeConfiguration>("catapult.plugins.upgrade");
-			if (static_cast<uint64_t>(pluginConfig.MinUpgradePeriod) > upgradePeriod)
+			if (pluginConfig.MinUpgradePeriod.unwrap() > upgradePeriod)
 				return Failure_CatapultUpgrade_Upgrade_Period_Too_Low;
 
 			const auto& cache = context.Cache.sub<cache::CatapultUpgradeCache>();
