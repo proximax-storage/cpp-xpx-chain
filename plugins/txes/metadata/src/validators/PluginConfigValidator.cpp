@@ -8,18 +8,5 @@
 #include "src/config/MetadataConfiguration.h"
 
 namespace catapult { namespace validators {
-
-	using Notification = model::PluginConfigNotification<1>;
-
-	DEFINE_STATELESS_VALIDATOR(PluginConfig, [](const auto& notification) {
-		if (notification.Name == PLUGIN_NAME(metadata)) {
-			try {
-				(void)config::MetadataConfiguration::LoadFromBag(notification.Bag);
-			} catch (...) {
-				return Failure_Metadata_Plugin_Config_Malformed;
-			}
-		}
-
-		return ValidationResult::Success;
-	});
+	DEFINE_PLUGIN_CONFIG_VALIDATOR(metadata, Metadata, 1)
 }}

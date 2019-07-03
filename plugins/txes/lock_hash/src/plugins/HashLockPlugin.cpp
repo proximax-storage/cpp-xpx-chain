@@ -50,6 +50,7 @@ namespace catapult { namespace plugins {
 			// hash lock validators
 			builder.add(validators::CreateHashLockDurationValidator(config));
 			builder.add(validators::CreateHashLockMosaicValidator(config));
+			builder.add(validators::CreatePluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {

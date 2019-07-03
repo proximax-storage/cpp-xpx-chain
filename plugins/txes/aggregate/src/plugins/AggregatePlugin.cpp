@@ -38,6 +38,7 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder.add(validators::CreateBasicAggregateCosignaturesValidator(config));
 			builder.add(validators::CreateStrictAggregateCosignaturesValidator(config));
+			builder.add(validators::CreatePluginConfigValidator());
 		});
 	}
 }}

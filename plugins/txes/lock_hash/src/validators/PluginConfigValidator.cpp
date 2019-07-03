@@ -8,18 +8,5 @@
 #include "src/config/HashLockConfiguration.h"
 
 namespace catapult { namespace validators {
-
-	using Notification = model::PluginConfigNotification<1>;
-
-	DEFINE_STATELESS_VALIDATOR(PluginConfig, [](const auto& notification) {
-		if (notification.Name == PLUGIN_NAME(lockhash)) {
-			try {
-				(void)config::HashLockConfiguration::LoadFromBag(notification.Bag);
-			} catch (...) {
-				return Failure_LockHash_Plugin_Config_Malformed;
-			}
-		}
-
-		return ValidationResult::Success;
-	});
+	DEFINE_PLUGIN_CONFIG_VALIDATOR_WITH_FAILURE(lockhash, HashLock, Failure_LockHash_Plugin_Config_Malformed, 1)
 }}

@@ -8,18 +8,5 @@
 #include "src/config/MultisigConfiguration.h"
 
 namespace catapult { namespace validators {
-
-	using Notification = model::PluginConfigNotification<1>;
-
-	DEFINE_STATELESS_VALIDATOR(PluginConfig, [](const auto& notification) {
-		if (notification.Name == PLUGIN_NAME(multisig)) {
-			try {
-				(void)config::MultisigConfiguration::LoadFromBag(notification.Bag);
-			} catch (...) {
-				return Failure_Multisig_Plugin_Config_Malformed;
-			}
-		}
-
-		return ValidationResult::Success;
-	});
+	DEFINE_PLUGIN_CONFIG_VALIDATOR(multisig, Multisig, 1)
 }}

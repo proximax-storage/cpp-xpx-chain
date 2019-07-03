@@ -37,7 +37,8 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([&config](auto& builder) {
 			builder
 				.add(validators::CreateMetadataTypeValidator())
-				.add(validators::CreateMetadataFieldModificationValidator(config));
+				.add(validators::CreateMetadataFieldModificationValidator(config))
+				.add(validators::CreatePluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([&config](auto& builder) {

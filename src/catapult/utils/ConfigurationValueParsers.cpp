@@ -212,7 +212,7 @@ namespace catapult { namespace utils {
 	}
 
 	bool TryParseValue(const std::string& str, BlockDuration& parsedValue) {
-		return TryParseCustomUnsignedIntHexValue<BlockDuration::ValueType>([](auto raw) { return BlockDuration(raw); }, str, parsedValue);
+		return TryParseCustomUnsignedIntDecimalValue<BlockDuration::ValueType>([](auto raw) { return BlockDuration(raw); }, str, parsedValue);
 	}
 
 	bool TryParseValue(const std::string& str, TimeSpan& parsedValue) {

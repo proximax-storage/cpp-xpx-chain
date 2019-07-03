@@ -8,18 +8,5 @@
 #include "src/config/CatapultUpgradeConfiguration.h"
 
 namespace catapult { namespace validators {
-
-	using Notification = model::PluginConfigNotification<1>;
-
-	DEFINE_STATELESS_VALIDATOR(PluginConfig, [](const auto& notification) {
-		if (notification.Name == PLUGIN_NAME(upgrade)) {
-			try {
-				(void)config::CatapultUpgradeConfiguration::LoadFromBag(notification.Bag);
-			} catch (...) {
-				return Failure_CatapultUpgrade_Plugin_Config_Malformed;
-			}
-		}
-
-		return ValidationResult::Success;
-	});
+	DEFINE_PLUGIN_CONFIG_VALIDATOR(upgrade, CatapultUpgrade, 1)
 }}

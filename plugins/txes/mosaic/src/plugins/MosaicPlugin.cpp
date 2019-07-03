@@ -59,7 +59,8 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateMosaicPropertiesValidator(config))
 				.add(validators::CreateMosaicIdValidator())
-				.add(validators::CreateMosaicSupplyChangeValidator());
+				.add(validators::CreateMosaicSupplyChangeValidator())
+				.add(validators::CreatePluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([&config](auto& builder) {

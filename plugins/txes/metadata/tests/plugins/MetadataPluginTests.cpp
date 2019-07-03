@@ -67,6 +67,7 @@ namespace catapult { namespace plugins {
                 return {
                         "MetadataTypeValidator",
                         "MetadataFieldModificationValidator",
+                        "PluginConfigValidator",
                 };
             }
 
