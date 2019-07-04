@@ -48,7 +48,9 @@ namespace catapult { namespace hashcache {
 		cache::CatapultCache CreateCache(const model::BlockChainConfiguration& config) {
 			auto cacheId = cache::HashCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(config);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 

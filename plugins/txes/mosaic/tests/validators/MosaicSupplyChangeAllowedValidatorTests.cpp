@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicSupplyChangeAllowedValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Max_Divisible_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
@@ -45,7 +45,9 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxMosaicDivisibleUnits = maxDivisibleUnits;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
-			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, height);

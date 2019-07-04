@@ -36,22 +36,23 @@ namespace catapult { namespace cache {
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
-		auto CreateConfig() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			config.Network.Identifier = Network_Identifier;
 			config.ImportanceGrouping = 123;
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = MosaicId(1111);
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			return config;
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			return pConfigHolder;
 		}
-
-		auto Default_BlockChain_Config = CreateConfig();
 
 		struct AddressTraits {
 			static auto AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
-				auto address = model::PublicKeyToAddress(publicKey, Default_BlockChain_Config.Network.Identifier);
+				auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
 				delta.addAccount(address, height);
 				return delta.find(address);
 			}
@@ -103,7 +104,7 @@ namespace catapult { namespace cache {
 		}
 
 		auto CreateAccountStateCache() {
-			return std::make_unique<AccountStateCache>(CacheConfiguration(), Default_BlockChain_Config);
+			return std::make_unique<AccountStateCache>(CacheConfiguration(), CreateConfigHolder());
 		}
 	}
 

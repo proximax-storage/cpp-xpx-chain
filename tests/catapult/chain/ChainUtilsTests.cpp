@@ -139,7 +139,9 @@ namespace catapult { namespace chain {
 				Height maxHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
 				const model::BlockChainConfiguration& config) {
-			auto pCache = std::make_unique<cache::BlockDifficultyCache>(config);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pCache = std::make_unique<cache::BlockDifficultyCache>(pConfigHolder);
 			{
 				auto delta = pCache->createDelta();
 				state::BlockDifficultyInfo baseInfo(Height(1));

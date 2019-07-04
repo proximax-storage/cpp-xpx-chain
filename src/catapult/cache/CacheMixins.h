@@ -372,4 +372,26 @@ namespace catapult { namespace cache {
 	private:
 		bool m_enabled;
 	};
+
+	/// A mixin for setting cache height.
+	class HeightMixin {
+	public:
+		/// Creates a mixin with zero height.
+		explicit HeightMixin() : m_height(Height{0})
+		{}
+
+	public:
+		/// Sets the \a height.
+		void setHeight(Height height) {
+			m_height = height;
+		}
+
+		/// Returns the height.
+		Height height() const {
+			return m_height;
+		}
+
+	private:
+		Height m_height;
+	};
 }}

@@ -29,10 +29,10 @@
 namespace catapult { namespace plugins {
 
 	void RegisterMemoryHashCacheSystem(PluginManager& manager) {
-		const auto& config = manager.config();
+		const auto& pConfigHolder = manager.configHolder();
 
 		manager.addCacheSupport<cache::HashCacheStorage>(std::make_unique<cache::HashCache>(
-				manager.cacheConfig(cache::HashCache::Name), config));
+				manager.cacheConfig(cache::HashCache::Name), pConfigHolder));
 
 		manager.addDiagnosticHandlerHook([](auto& handlers, const cache::CatapultCache& cache) {
 			handlers::RegisterConfirmTimestampedHashesHandler(
@@ -42,7 +42,7 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("HASH C"), [&cache]() {
-				return cache.sub<cache::HashCache>().createView()->size();
+				return cache.sub<cache::HashCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -50,10 +50,10 @@ namespace catapult { namespace plugins {
 			builder.add(validators::CreateUniqueTransactionHashValidator());
 		});
 
-		manager.addTransientObserverHook([&config](auto& builder) {
+		manager.addTransientObserverHook([&pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateTransactionHashObserver())
-				.add(observers::CreateCacheTimePruningObserver<cache::HashCache>("TransactionHash", config));
+				.add(observers::CreateCacheTimePruningObserver<cache::HashCache>("TransactionHash", pConfigHolder));
 		});
 	}
 }}

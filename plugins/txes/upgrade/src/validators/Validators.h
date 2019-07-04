@@ -7,7 +7,8 @@
 #pragma once
 #include "Results.h"
 #include "src/model/CatapultUpgradeNotifications.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
@@ -18,7 +19,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to catapult upgrade notification and validates that:
 	/// - upgrade period is valid (greater or equal the minimum value set in config)
 	/// - no other upgrade is declared at the same height
-	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, model::CatapultUpgradeVersionNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, model::CatapultUpgradeVersionNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the catapult version is valid

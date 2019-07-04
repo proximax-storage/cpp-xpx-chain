@@ -38,7 +38,8 @@ namespace catapult { namespace cache {
 			, public MultisigCacheViewMixins::Iteration
 			, public MultisigCacheViewMixins::ConstAccessor
 			, public MultisigCacheViewMixins::PatriciaTreeView
-			, public MultisigCacheViewMixins::Enable {
+			, public MultisigCacheViewMixins::Enable
+			, public MultisigCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = MultisigCacheTypes::CacheReadOnlyType;
 

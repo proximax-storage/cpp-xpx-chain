@@ -38,7 +38,7 @@ namespace catapult { namespace test {
 			CacheType cache;
 
 			// Sanity:
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			EXPECT_EQ(0u, delta->size());
 
 			// Act: prune on empty cache does not throw
@@ -54,7 +54,7 @@ namespace catapult { namespace test {
 			SeedCache(cache);
 
 			// Act: first element expires at height 10
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto i = 0u; 10u > i; ++i)
 				delta->prune(Height(i));
 
@@ -68,7 +68,7 @@ namespace catapult { namespace test {
 			SeedCache(cache);
 
 			// Act: for heights 11 to 19 no elements expired
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto i = 11u; 20u > i; ++i)
 				delta->prune(Height(i));
 
@@ -83,13 +83,13 @@ namespace catapult { namespace test {
 
 			// Act: prune element with id 3 that expires at height 30
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->prune(Height(30));
 				cache.commit();
 			}
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(9u, view->size());
 			for (auto id : std::initializer_list<uint8_t>{ 1, 2, 4, 5, 6, 7, 8, 9, 10 })
 				EXPECT_TRUE(view->contains(TTraits::MakeId(id))) << "id " << static_cast<uint16_t>(id);
@@ -102,13 +102,13 @@ namespace catapult { namespace test {
 
 			// Act: prune elements with id 1 - 7 that expire at heights 10, 20, ..., 70
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				PruneAll(*delta, Height(70));
 				cache.commit();
 			}
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(3u, view->size());
 			for (auto id : std::initializer_list<uint8_t>{ 8, 9, 10 })
 				EXPECT_TRUE(view->contains(TTraits::MakeId(id))) << "id " << static_cast<uint16_t>(id);
@@ -121,13 +121,13 @@ namespace catapult { namespace test {
 
 			// Act: prune elements expiring at height 10, 20 ids: 1, 2, 5, 6, 9, 10
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				PruneAll(*delta, Height(20));
 				cache.commit();
 			}
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(4u, view->size());
 			for (auto id : std::initializer_list<uint8_t>{ 3, 4, 7, 8 })
 				EXPECT_TRUE(view->contains(TTraits::MakeId(id))) << "id " << static_cast<uint16_t>(id);
@@ -139,7 +139,7 @@ namespace catapult { namespace test {
 			SeedCache(cache);
 
 			// Act: prune all elements
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			PruneAll(*delta, Height(100));
 
 			// Assert:
@@ -153,7 +153,7 @@ namespace catapult { namespace test {
 
 			// Act: prune elements with id 1 - 5 (multiple times)
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 
 				for (auto i = 0u; 10 > i; ++i)
 					PruneAll(*delta, Height(50));
@@ -162,7 +162,7 @@ namespace catapult { namespace test {
 			}
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(5u, view->size());
 			for (auto id : std::initializer_list<uint8_t>{ 6, 7, 8, 9, 10 })
 				EXPECT_TRUE(view->contains(TTraits::MakeId(id))) << "id " << static_cast<uint16_t>(id);
@@ -174,7 +174,7 @@ namespace catapult { namespace test {
 			// Arrange:
 			CacheType cache;
 			SeedCache(cache);
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Act + Assert:
 			action(*delta, [&cache, &delta](auto height) {
@@ -191,7 +191,7 @@ namespace catapult { namespace test {
 		}
 
 		static void SeedCache(CacheType& cache) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (uint8_t i = 1; i <= Num_Seed_Elements; ++i)
 				delta->insert(TTraits::CreateWithIdAndExpiration(i, Height(10 * i)));
 
@@ -202,7 +202,7 @@ namespace catapult { namespace test {
 		}
 
 		static void SeedCacheWithMultipleIdsAtSameHeight(CacheType& cache) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			// 10, 20, 30, 40, 10, 20, 30, 40, 10, 20
 			for (uint8_t i = 1; i <= Num_Seed_Elements; ++i)
 				delta->insert(TTraits::CreateWithIdAndExpiration(i, Height(10 * i % 40)));

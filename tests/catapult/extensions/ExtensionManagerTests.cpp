@@ -147,7 +147,7 @@ namespace catapult { namespace extensions {
 				CATAPULT_THROW_RUNTIME_ERROR("loadFromStorage - not supported in mock");
 			}
 
-			void saveToStorage(const std::shared_ptr<config::LocalNodeConfigurationHolder>&, const LocalNodeStateConstRef&) override {
+			void saveToStorage(const LocalNodeStateConstRef&) override {
 				CATAPULT_THROW_RUNTIME_ERROR("saveToStorage - not supported in mock");
 			}
 		};
@@ -168,7 +168,7 @@ namespace catapult { namespace extensions {
 		// Assert: saveToStorage should trigger storage exception
 		ASSERT_TRUE(!!pStorage);
 		EXPECT_EQ(&registeredStorage, pStorage.get());
-		EXPECT_THROW(pStorage->saveToStorage(pConfigHolder, test::LocalNodeTestState(config).cref()), catapult_runtime_error);
+		EXPECT_THROW(pStorage->saveToStorage(test::LocalNodeTestState(config).cref()), catapult_runtime_error);
 	}
 
 	TEST(TEST_CLASS, CannotSetBlockChainStorageMultipleTimes) {

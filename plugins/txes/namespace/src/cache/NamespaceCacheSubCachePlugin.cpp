@@ -26,7 +26,7 @@ namespace catapult { namespace cache {
 		// write version
 		io::Write32(output, 1);
 
-		auto view = cache().createView();
+		auto view = cache().createView(Height{0});
 		io::Write64(output, view->activeSize());
 		io::Write64(output, view->deepSize());
 		output.flush();

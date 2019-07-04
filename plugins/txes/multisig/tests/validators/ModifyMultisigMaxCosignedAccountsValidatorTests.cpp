@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigMaxCosignedAccountsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosignedAccounts, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosignedAccounts, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		void AssertValidationResult(
@@ -58,7 +58,9 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxCosignedAccountsPerAccount = maxCosignedAccountsPerAccount;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.multisig", pluginConfig);
-			auto pValidator = CreateModifyMultisigMaxCosignedAccountsValidator(blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pValidator = CreateModifyMultisigMaxCosignedAccountsValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

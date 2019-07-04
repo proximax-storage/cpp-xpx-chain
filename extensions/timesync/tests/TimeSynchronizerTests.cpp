@@ -71,17 +71,17 @@ namespace catapult { namespace timesync {
 			return addresses;
 		}
 
-		auto CreateConfig() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Default_Network_Identifier;
 			config.ImportanceGrouping = 234;
 			config.MinHarvesterBalance = Amount(1000);
 			config.CurrencyMosaicId = MosaicId(1111);
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			return config;
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			return pConfigHolder;
 		}
-
-		auto Default_Config = CreateConfig();
 
 		enum class KeyType { Address, PublicKey, };
 
@@ -91,7 +91,7 @@ namespace catapult { namespace timesync {
 					const std::vector<std::pair<int64_t, uint64_t>>& offsetsAndRawImportances,
 					const std::vector<filters::SynchronizationFilter>& filters = {},
 					KeyType keyType = KeyType::PublicKey)
-					: m_cache(cache::CacheConfiguration(), Default_Config)
+					: m_cache(cache::CacheConfiguration(), CreateConfigHolder())
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), Total_Chain_Importance, Warning_Threshold_Millis) {
 				std::vector<Importance> importances;
 				for (const auto& offsetAndRawImportance : offsetsAndRawImportances) {
@@ -183,7 +183,7 @@ namespace catapult { namespace timesync {
 			filters::AggregateSynchronizationFilter aggregateFilter({});
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
-			cache::AccountStateCache cache(cache::CacheConfiguration(), Default_Config);
+			cache::AccountStateCache cache(cache::CacheConfiguration(), CreateConfigHolder());
 			auto singleAccountImportance = Importance(Total_Chain_Importance.unwrap() / numSamples);
 			SeedAccountStateCache(cache, keys, std::vector<Importance>(numSamples, singleAccountImportance));
 			TimeSynchronizer synchronizer(aggregateFilter, Total_Chain_Importance, Warning_Threshold_Millis);

@@ -35,7 +35,8 @@ namespace catapult { namespace cache {
 			, public HashCacheDeltaMixins::Size
 			, public HashCacheDeltaMixins::Contains
 			, public HashCacheDeltaMixins::BasicInsertRemove
-			, public HashCacheDeltaMixins::Enable {
+			, public HashCacheDeltaMixins::Enable
+			, public HashCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = HashCacheTypes::CacheReadOnlyType;
 		using ValueType = HashCacheDescriptor::ValueType;
@@ -57,7 +58,7 @@ namespace catapult { namespace cache {
 
 	private:
 		HashCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pOrderedDelta;
-		const model::BlockChainConfiguration& m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		deltaset::PruningBoundary<ValueType> m_pruningBoundary;
 	};
 

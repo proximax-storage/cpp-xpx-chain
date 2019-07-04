@@ -22,6 +22,7 @@
 #include "src/model/LockHashUtils.h"
 #include "src/config/SecretLockConfiguration.h"
 #include "catapult/crypto/Hashes.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -29,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ProofSecretValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		struct NotificationBuilder {
@@ -60,27 +61,26 @@ namespace catapult { namespace validators {
 			Hash256 m_secret;
 		};
 
-		auto CreateDefaultConfig() {
+		auto CreateConfigHolder() {
 			auto pluginConfig = config::SecretLockConfiguration::Uninitialized();
 			pluginConfig.MinProofSize = 10;
 			pluginConfig.MaxProofSize = 100;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.locksecret", pluginConfig);
-			return blockChainConfig;
-		}
-
-		auto CreateDefaultProofSecretValidator(const model::BlockChainConfiguration& config) {
-			return CreateProofSecretValidator(config);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			return pConfigHolder;
 		}
 
 		void AssertFailureIfHashAlgorithmIsNotSupported(model::LockHashAlgorithm lockHashAlgorithm) {
 			// Arrange:
 			NotificationBuilder notificationBuilder(lockHashAlgorithm);
-			auto config = CreateDefaultConfig();
-			auto pValidator = CreateDefaultProofSecretValidator(config);
+			auto pConfigHolder = CreateConfigHolder();
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config(Height{0}).BlockChain);
+			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification());
+			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache);
 
 			// Assert:
 			EXPECT_EQ(Failure_LockSecret_Hash_Not_Implemented, result)
@@ -98,11 +98,12 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureIfSecretDoesNotMatchProof) {
 		NotificationBuilder notificationBuilder;
-		auto config = CreateDefaultConfig();
-		auto pValidator = CreateDefaultProofSecretValidator(config);
+		auto pConfigHolder = CreateConfigHolder();
+		auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config(Height{0}).BlockChain);
+		auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification());
+		auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache);
 
 		// Assert:
 		EXPECT_EQ(Failure_LockSecret_Secret_Mismatch, result);
@@ -113,11 +114,12 @@ namespace catapult { namespace validators {
 			// Arrange:
 			NotificationBuilder notificationBuilder(algorithm);
 			notificationBuilder.setValidHash();
-			auto config = CreateDefaultConfig();
-			auto pValidator = CreateDefaultProofSecretValidator(config);
+			auto pConfigHolder = CreateConfigHolder();
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config(Height{0}).BlockChain);
+			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification());
+			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache);
 
 			// Assert:
 			EXPECT_EQ(ValidationResult::Success, result);
@@ -150,11 +152,12 @@ namespace catapult { namespace validators {
 			NotificationBuilder notificationBuilder;
 			notificationBuilder.setProofSize(proofSize);
 			notificationBuilder.setValidHash();
-			auto config = CreateDefaultConfig();
-			auto pValidator = CreateDefaultProofSecretValidator(config);
+			auto pConfigHolder = CreateConfigHolder();
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config(Height{0}).BlockChain);
+			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification());
+			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "proof size: " << proofSize;

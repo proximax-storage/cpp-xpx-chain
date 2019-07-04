@@ -20,7 +20,7 @@
 
 #pragma once
 #include "ExtensionManager.h"
-#include "catapult/config/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/plugins/PluginModule.h"
 #include "catapult/subscribers/SubscriptionManager.h"

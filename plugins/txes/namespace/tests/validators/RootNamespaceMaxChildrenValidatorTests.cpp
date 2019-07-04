@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RootNamespaceMaxChildrenValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
@@ -63,7 +63,9 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxChildNamespaces = maxChildren;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
-			auto pValidator = CreateRootNamespaceMaxChildrenValidator(blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pValidator = CreateRootNamespaceMaxChildrenValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

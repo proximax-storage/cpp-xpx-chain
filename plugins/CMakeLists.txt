@@ -7,6 +7,7 @@ set(PLUGIN_CATAPULT_LIBS
 	catapult.cache
 	catapult.cache_core
 	catapult.config
+	catapult.config_holder
 	catapult.observers
 	catapult.plugins
 	catapult.state

@@ -167,7 +167,6 @@ namespace catapult { namespace filechain {
 
 		auto CreateConfigHolder() {
 			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Default_Config);
 			return pConfigHolder;
 		}
 
@@ -325,7 +324,7 @@ namespace catapult { namespace filechain {
 			auto pPluginManager = test::CreatePluginManager(config);
 			auto observerFactory = [&pluginManager = *pPluginManager](const auto&) { return pluginManager.createObserver(); };
 
-			auto blockChainConfig = pPluginManager->config();
+			auto blockChainConfig = pPluginManager->config(Height{0});
 			auto localNodeConfig = test::CreateLocalNodeConfiguration(std::move(blockChainConfig), tempDataDirectory.name());
 
 			auto cache = pPluginManager->createCache();

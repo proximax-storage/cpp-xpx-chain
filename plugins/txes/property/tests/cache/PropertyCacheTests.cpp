@@ -100,9 +100,9 @@ namespace catapult { namespace cache {
 		PropertyCache cache(CacheConfiguration(), config);
 
 		// Act + Assert:
-		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());
-		EXPECT_EQ(networkIdentifier, cache.createDelta()->networkIdentifier());
-		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta().tryLock()->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createView(Height{0})->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createDelta(Height{0})->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta(Height{0}).tryLock()->networkIdentifier());
 	}
 
 	// endregion

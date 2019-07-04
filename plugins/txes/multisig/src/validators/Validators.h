@@ -22,8 +22,9 @@
 #include "Results.h"
 #include "src/model/MultisigNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
-#include "catapult/model/BlockChainConfiguration.h"
 
 namespace catapult { namespace validators {
 
@@ -47,18 +48,18 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to modify multisig new cosigner notifications and validates that:
 	/// - the cosignatory is cosigning at most \a maxCosignedAccountsPerAccount
 	stateful::NotificationValidatorPointerT<model::ModifyMultisigNewCosignerNotification<1>>
-	CreateModifyMultisigMaxCosignedAccountsValidator(const model::BlockChainConfiguration& config);
+	CreateModifyMultisigMaxCosignedAccountsValidator(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to modify multisig cosigners notifications and validates that:
 	/// - the multisig account has at most \a maxCosignersPerAccount cosignatories
 	stateful::NotificationValidatorPointerT<model::ModifyMultisigCosignersNotification<1>>
-	CreateModifyMultisigMaxCosignersValidator(const model::BlockChainConfiguration& config);
+	CreateModifyMultisigMaxCosignersValidator(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to modify multisig new cosigner notifications and validates that:
 	/// - the multisig depth is at most \a maxMultisigDepth
 	/// - no multisig loops are created
 	stateful::NotificationValidatorPointerT<model::ModifyMultisigNewCosignerNotification<1>>
-	CreateModifyMultisigLoopAndLevelValidator(const model::BlockChainConfiguration& config);
+	CreateModifyMultisigLoopAndLevelValidator(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to modify multisig settings notifications and validates that:
 	/// - new min removal and min approval are greater than 0

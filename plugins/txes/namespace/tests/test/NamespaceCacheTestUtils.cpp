@@ -52,7 +52,7 @@ namespace catapult { namespace test {
 	}
 
 	void AssertCacheContents(const cache::NamespaceCache& cache, std::initializer_list<NamespaceId::ValueType> expectedIds) {
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		AssertCacheContentsT(*view, expectedIds);
 	}
 

@@ -24,7 +24,6 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
-#include "catapult/config/LocalNodeConfigurationHolder.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/Casting.h"
@@ -54,13 +53,11 @@ namespace catapult { namespace consumers {
 		public:
 			SyncState() = default;
 
-			SyncState(cache::CatapultCache& cache, state::CatapultState& state,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+			SyncState(cache::CatapultCache& cache, state::CatapultState& state)
 					: m_pOriginalCache(&cache)
 					, m_pOriginalState(&state)
 					, m_pCacheDelta(std::make_unique<cache::CatapultCacheDelta>(cache.createDelta()))
 					, m_stateCopy(state)
-					, m_pConfigDelta(pConfigHolder->CreateDelta())
 			{}
 
 		public:
@@ -103,8 +100,6 @@ namespace catapult { namespace consumers {
 				m_pCacheDelta.reset(); // release the delta after commit so that the UT updater can acquire a lock
 
 				*m_pOriginalState = m_stateCopy;
-
-				m_pConfigDelta->Commit();
 			}
 
 		private:
@@ -115,7 +110,6 @@ namespace catapult { namespace consumers {
 			std::shared_ptr<const model::BlockElement> m_pCommonBlockElement;
 			model::ChainScore m_scoreDelta;
 			TransactionInfos m_removedTransactionInfos;
-			std::unique_ptr<config::LocalNodeConfigurationHolder::LocalNodeConfigurationHolderDelta> m_pConfigDelta;
 		};
 
 		class BlockChainSyncConsumer {
@@ -125,14 +119,12 @@ namespace catapult { namespace consumers {
 					state::CatapultState& state,
 					io::BlockStorageCache& storage,
 					uint32_t maxRollbackBlocks,
-					const BlockChainSyncHandlers& handlers,
-					const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+					const BlockChainSyncHandlers& handlers)
 					: m_cache(cache)
 					, m_state(state)
 					, m_storage(storage)
 					, m_maxRollbackBlocks(maxRollbackBlocks)
 					, m_handlers(handlers)
-					, m_pConfigHolder(pConfigHolder)
 			{}
 
 		public:
@@ -180,7 +172,7 @@ namespace catapult { namespace consumers {
 					return Abort(Failure_Consumer_Remote_Chain_Mismatched_Difficulties);
 
 				// 4. unwind to the common block height and calculate the local chain score
-				syncState = SyncState(m_cache, m_state, m_pConfigHolder);
+				syncState = SyncState(m_cache, m_state);
 				auto commonBlockHeight = peerStartHeight - Height(1);
 				auto observerState = syncState.observerState();
 				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, observerState);
@@ -289,7 +281,6 @@ namespace catapult { namespace consumers {
 			io::BlockStorageCache& m_storage;
 			uint32_t m_maxRollbackBlocks;
 			BlockChainSyncHandlers m_handlers;
-			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		};
 	}
 
@@ -298,8 +289,7 @@ namespace catapult { namespace consumers {
 			state::CatapultState& state,
 			io::BlockStorageCache& storage,
 			uint32_t maxRollbackBlocks,
-			const BlockChainSyncHandlers& handlers,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return BlockChainSyncConsumer(cache, state, storage, maxRollbackBlocks, handlers, pConfigHolder);
+			const BlockChainSyncHandlers& handlers) {
+		return BlockChainSyncConsumer(cache, state, storage, maxRollbackBlocks, handlers);
 	}
 }}

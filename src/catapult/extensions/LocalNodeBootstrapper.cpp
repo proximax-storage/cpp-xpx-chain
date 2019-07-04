@@ -35,15 +35,15 @@ namespace catapult { namespace extensions {
 			, m_pMultiServicePool(std::make_unique<thread::MultiServicePool>(
 					servicePoolName,
 					thread::MultiServicePool::DefaultPoolConcurrency(),
-					m_pConfigHolder->Config().Node.ShouldUseSingleThreadPool
+					m_pConfigHolder->Config(Height{0}).Node.ShouldUseSingleThreadPool
 							? thread::MultiServicePool::IsolatedPoolMode::Disabled
 							: thread::MultiServicePool::IsolatedPoolMode::Enabled))
-			, m_subscriptionManager(m_pConfigHolder->Config())
-			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config()))
+			, m_subscriptionManager(m_pConfigHolder->Config(Height{0}))
+			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config(Height{0})))
 	{}
 
 	const config::LocalNodeConfiguration& LocalNodeBootstrapper::config() const {
-		return m_pConfigHolder->Config();
+		return m_pConfigHolder->Config(Height{0});
 	}
 
 	const std::string& LocalNodeBootstrapper::resourcesPath() const {

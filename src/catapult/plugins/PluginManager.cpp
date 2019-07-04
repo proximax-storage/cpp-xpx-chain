@@ -30,8 +30,8 @@ namespace catapult { namespace plugins {
 
 	// region config
 
-	const model::BlockChainConfiguration& PluginManager::config() const {
-		return m_pConfigHolder->Config().BlockChain;
+	const model::BlockChainConfiguration& PluginManager::config(const Height& height) const {
+		return m_pConfigHolder->Config(height).BlockChain;
 	}
 
 	const std::shared_ptr<config::LocalNodeConfigurationHolder>& PluginManager::configHolder() const {
@@ -49,7 +49,7 @@ namespace catapult { namespace plugins {
 		return cache::CacheConfiguration(
 				(boost::filesystem::path(m_storageConfig.CacheDatabaseDirectory) / name).generic_string(),
 				m_storageConfig.MaxCacheDatabaseWriteBatchSize,
-				config().ShouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
+				config(Height{0}).ShouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
 	}
 
 	// endregion
@@ -219,7 +219,7 @@ namespace catapult { namespace plugins {
 	// region publisher
 
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
-		return model::CreateNotificationPublisher(m_transactionRegistry, model::GetUnresolvedCurrencyMosaicId(config()), mode);
+		return model::CreateNotificationPublisher(m_transactionRegistry, model::GetUnresolvedCurrencyMosaicId(config(Height{0})), mode);
 	}
 
 	// endregion

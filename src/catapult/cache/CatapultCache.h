@@ -71,6 +71,8 @@ namespace catapult { namespace cache {
 		/// Commits all pending changes to the underlying storage and sets the cache height to \a height.
 		void commit(Height height);
 
+		Height height() const;
+
 	public:
 		/// Gets cache storages for all subcaches.
 		std::vector<std::unique_ptr<const CacheStorage>> storages() const;

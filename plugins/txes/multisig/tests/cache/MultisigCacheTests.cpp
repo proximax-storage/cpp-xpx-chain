@@ -95,17 +95,17 @@ namespace catapult { namespace cache {
 		// - insert single account key
 		{
 
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(state::MultisigEntry(keys[0]));
 			cache.commit();
 		}
 
 		// Sanity:
-		EXPECT_EQ(1u, cache.createView()->size());
+		EXPECT_EQ(1u, cache.createView(Height{0})->size());
 
 		// Act: add links
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto multisigIter = delta->find(keys[0]);
 			auto& entry = multisigIter.get();
 			entry.cosignatories().insert(keys[1]);
@@ -114,7 +114,7 @@ namespace catapult { namespace cache {
 		}
 
 		// Assert:
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		auto multisigIter = view->find(keys[0]);
 		const auto& entry = multisigIter.get();
 		EXPECT_EQ(utils::SortedKeySet({ keys[1] }), entry.cosignatories());

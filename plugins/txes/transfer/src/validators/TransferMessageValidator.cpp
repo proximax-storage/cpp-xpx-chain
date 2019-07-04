@@ -26,8 +26,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::TransferMessageNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(TransferMessage, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATELESS_VALIDATOR(TransferMessage, [&blockChainConfig](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(TransferMessage, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(TransferMessage, [&pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::TransferConfiguration>("catapult.plugins.transfer");
 			return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
 		});

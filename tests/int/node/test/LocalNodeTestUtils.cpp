@@ -99,7 +99,7 @@ namespace catapult { namespace test {
 		PrepareLocalNodeConfiguration(config, AddSimplePartnerPluginExtensions, nodeFlag);
 
 		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(config);
+		pConfigHolder->SetConfig(Height{0}, config);
 
 		const auto& resourcesPath = dataDirectory + "/resources";
 		auto pBootstrapper = std::make_unique<extensions::LocalNodeBootstrapper>(pConfigHolder, resourcesPath, "Partner");

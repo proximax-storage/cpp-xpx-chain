@@ -34,7 +34,7 @@ namespace catapult { namespace handlers {
 			if (!pRequest)
 				return;
 
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			std::vector<tree::TreeNode> path;
 			view->tryLookup(pRequest->Key, path);
 

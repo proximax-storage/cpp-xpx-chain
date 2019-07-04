@@ -53,7 +53,7 @@ namespace catapult { namespace filechain {
 		public:
 			explicit TestContext(const std::shared_ptr<plugins::PluginManager>& pPluginManager, const std::string& dataDirectory)
 					: m_pPluginManager(pPluginManager)
-					, m_localNodeState(m_pPluginManager->config(), dataDirectory, m_pPluginManager->createCache())
+					, m_localNodeState(m_pPluginManager->config(Height{0}), dataDirectory, m_pPluginManager->createCache())
 					, m_pBlockChainStorage(CreateFileBlockChainStorage())
 			{}
 
@@ -75,7 +75,7 @@ namespace catapult { namespace filechain {
 			}
 
 			auto cacheView() const {
-				return m_localNodeState.cref().Cache.createView();
+				return m_localNodeState.cref().Cache.createView(cache);
 			}
 
 			auto score() const {
@@ -93,7 +93,7 @@ namespace catapult { namespace filechain {
 
 			void save() const {
 				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				m_pBlockChainStorage->saveToStorage(pConfigHolder, m_localNodeState.cref());
+				m_pBlockChainStorage->saveToStorage(m_localNodeState.cref());
 			}
 
 		public:

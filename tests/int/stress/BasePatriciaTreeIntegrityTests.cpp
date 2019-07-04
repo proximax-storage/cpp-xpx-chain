@@ -47,17 +47,17 @@ namespace catapult { namespace cache {
 			return std::make_pair(accountState, address == accountState.Address);
 		}
 
-		auto CreateConfig() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
 			config.ImportanceGrouping = 543;
 			config.MinHarvesterBalance = Amount(1000);
 			config.CurrencyMosaicId = MosaicId(0xE329'AD1C'BE7F'C60D);
 			config.HarvestingMosaicId = MosaicId(2222);
-			return config;
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			return pConfigHolder;
 		}
-
-		auto Default_Config = CreateConfig();
 
 		template<typename TSerializer>
 		void AssertAccountStateMerkleRootIsCalculatedCorrectly(
@@ -66,7 +66,7 @@ namespace catapult { namespace cache {
 			// Arrange: create a db-backed account state cache
 			test::TempDirectoryGuard dbDirGuard;
 			CacheConfiguration cacheConfig(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Enabled);
-			AccountStateCache cache(cacheConfig, Default_Config);
+			AccountStateCache cache(cacheConfig, CreateConfigHolder());
 
 			// - load all test accounts into the delta
 			std::pair<Hash256, bool> deltaMerkleRootPair;
@@ -172,7 +172,7 @@ namespace catapult { namespace cache {
 			CATAPULT_LOG(debug) << "creating patricia tree enabled cache";
 			test::TempDirectoryGuard dbDirGuard;
 			CacheConfiguration cacheConfig(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Enabled);
-			AccountStateCache cache(cacheConfig, Default_Config);
+			AccountStateCache cache(cacheConfig, CreateConfigHolder());
 
 			// - load all test accounts into the delta
 			for (auto i = 0u; i < numBatches; ++i) {

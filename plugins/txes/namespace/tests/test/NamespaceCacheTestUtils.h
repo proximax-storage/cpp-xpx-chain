@@ -38,7 +38,9 @@ namespace catapult { namespace test {
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(gracePeriodDuration.unwrap());
 			const_cast<model::BlockChainConfiguration&>(blockChainConfig).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
-			auto options = cache::NamespaceCacheTypes::Options{ blockChainConfig };
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto options = cache::NamespaceCacheTypes::Options{ pConfigHolder };
 			subCaches[cacheId] = MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(options);
 			return cache::CatapultCache(std::move(subCaches));
 		}

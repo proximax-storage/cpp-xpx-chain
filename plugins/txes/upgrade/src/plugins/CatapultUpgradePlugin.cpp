@@ -26,15 +26,20 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("UPGRADE C"), [&cache]() {
-				return cache.sub<cache::CatapultUpgradeCache>().createView()->size();
+				return cache.sub<cache::CatapultUpgradeCache>().createView(cache.height())->size();
 			});
 		});
 
-		const auto& config = manager.config();
-		manager.addStatefulValidatorHook([&config](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreatePluginConfigValidator());
+		});
+
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateCatapultUpgradeSignerValidator())
-				.add(validators::CreateCatapultUpgradeValidator(config))
+				.add(validators::CreateCatapultUpgradeValidator(pConfigHolder))
 				.add(validators::CreateCatapultVersionValidator());
 		});
 

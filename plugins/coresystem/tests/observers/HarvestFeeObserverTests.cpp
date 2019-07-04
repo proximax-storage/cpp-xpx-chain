@@ -29,7 +29,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS HarvestFeeObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	// region traits
 
@@ -88,7 +88,7 @@ namespace catapult { namespace observers {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
-			auto pObserver = CreateHarvestFeeObserver(config);
+			auto pObserver = CreateHarvestFeeObserver(std::make_shared<config::LocalNodeConfigurationHolder>());
 
 			// Act + Assert:
 			action(context, *pObserver);
@@ -169,7 +169,7 @@ namespace catapult { namespace observers {
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-			auto pObserver = CreateHarvestFeeObserver(config);
+			auto pObserver = CreateHarvestFeeObserver(std::make_shared<config::LocalNodeConfigurationHolder>());
 
 			auto signerPublicKey = test::GenerateRandomData<Key_Size>();
 			auto accountStateIter = RemoteAccountTraits::AddAccount(accountStateCache, signerPublicKey, Height(1));

@@ -25,13 +25,48 @@ namespace catapult { namespace cache {
 		using Serializer = CatapultConfigCacheDescriptor::Serializer;
 	};
 
-	using CatapultConfigSingleSetCacheTypesAdapter =
-		SingleSetAndPatriciaTreeCacheTypesAdapter<CatapultConfigCacheTypes::PrimaryTypes, CatapultConfigPatriciaTree>;
-
-	struct CatapultConfigBaseSetDeltaPointers : public CatapultConfigSingleSetCacheTypesAdapter::BaseSetDeltaPointers {
+	struct CatapultConfigBaseSetDeltaPointers {
+		CatapultConfigCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
+		CatapultConfigCacheTypes::HeightTypes::BaseSetDeltaPointerType pHeights;
+		std::shared_ptr<CatapultConfigPatriciaTree::DeltaType> pPatriciaTree;
 	};
 
-	struct CatapultConfigBaseSets : public CatapultConfigSingleSetCacheTypesAdapter::BaseSets<CatapultConfigBaseSetDeltaPointers> {
-		using CatapultConfigSingleSetCacheTypesAdapter::BaseSets<CatapultConfigBaseSetDeltaPointers>::BaseSets;
+	struct CatapultConfigBaseSets : public CacheDatabaseMixin {
+	public:
+		/// Indicates the set is not ordered.
+		using IsOrderedSet = std::false_type;
+
+	public:
+		explicit CatapultConfigBaseSets(const CacheConfiguration& config)
+				: CacheDatabaseMixin(config, { "default", "heights" })
+				, Primary(GetContainerMode(config), database(), 0)
+				, Heights(GetContainerMode(config), database(), 1)
+				, PatriciaTree(hasPatriciaTreeSupport(), database(), 2)
+		{}
+
+	public:
+		CatapultConfigCacheTypes::PrimaryTypes::BaseSetType Primary;
+		CatapultConfigCacheTypes::HeightTypes::BaseSetType Heights;
+		CachePatriciaTree<CatapultConfigPatriciaTree> PatriciaTree;
+
+	public:
+		CatapultConfigBaseSetDeltaPointers rebase() {
+			return { Primary.rebase(), Heights.rebase(), PatriciaTree.rebase() };
+		}
+
+		CatapultConfigBaseSetDeltaPointers rebaseDetached() const {
+			return {
+				Primary.rebaseDetached(),
+				Heights.rebaseDetached(),
+				PatriciaTree.rebaseDetached()
+			};
+		}
+
+		void commit() {
+			Primary.commit();
+			Heights.commit(deltaset::PruningBoundary<Height>());
+			PatriciaTree.commit();
+			flush();
+		}
 	};
 }}

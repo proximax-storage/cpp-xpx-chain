@@ -32,7 +32,6 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterAccountLinkSubsystem(manager);
 

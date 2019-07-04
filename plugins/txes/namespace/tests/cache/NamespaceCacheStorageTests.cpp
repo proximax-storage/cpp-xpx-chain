@@ -28,18 +28,19 @@ namespace catapult { namespace cache {
 #define TEST_CLASS NamespaceCacheStorageTests
 
 	namespace {
-		auto CreateBlockChainConfiguration() {
+		auto CreateConfigHolder() {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(100);
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
-			return blockChainConfig;
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			return pConfigHolder;
 		}
-		auto Default_Config = CreateBlockChainConfiguration();
 
 		auto DefaultCacheOptions() {
-			return NamespaceCacheTypes::Options{ Default_Config };
+			return NamespaceCacheTypes::Options{ CreateConfigHolder() };
 		}
 
 		void LoadInto(io::InputStream& inputStream, NamespaceCacheDelta& delta) {

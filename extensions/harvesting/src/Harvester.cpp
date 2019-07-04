@@ -89,7 +89,7 @@ namespace catapult { namespace harvesting {
 
 		const auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
 		chain::BlockHitPredicate hitPredicate(m_config, [&accountStateCache](const auto& key, auto height) {
-			auto lockedCacheView = accountStateCache.createView();
+			auto lockedCacheView = accountStateCache.createView(height);
 			cache::ReadOnlyAccountStateCache readOnlyCache(*lockedCacheView);
 			cache::ImportanceView view(readOnlyCache);
 			return view.getAccountImportanceOrDefault(key, height);

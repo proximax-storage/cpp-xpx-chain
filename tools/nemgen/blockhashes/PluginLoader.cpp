@@ -19,6 +19,7 @@
 **/
 
 #include "PluginLoader.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/plugins/PluginLoader.h"
 
 namespace catapult { namespace tools { namespace nemgen {
@@ -33,7 +34,7 @@ namespace catapult { namespace tools { namespace nemgen {
 	}
 
 	PluginLoader::PluginLoader(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
-			: m_pluginManager(pConfigHolder, CreateStorageConfiguration(pConfigHolder->Config()))
+			: m_pluginManager(pConfigHolder, CreateStorageConfiguration(pConfigHolder->Config(Height{0})))
 	{}
 
 	plugins::PluginManager& PluginLoader::manager() {
@@ -46,11 +47,11 @@ namespace catapult { namespace tools { namespace nemgen {
 			loadPlugin(pluginName);
 
 		// custom plugins
-		for (const auto& pair : m_pluginManager.configHolder()->Config().BlockChain.Plugins)
+		for (const auto& pair : m_pluginManager.configHolder()->Config(Height{0}).BlockChain.Plugins)
 			loadPlugin(pair.first);
 	}
 
 	void PluginLoader::loadPlugin(const std::string& pluginName) {
-		LoadPluginByName(m_pluginManager, m_pluginModules, m_pluginManager.configHolder()->Config().User.PluginsDirectory, pluginName);
+		LoadPluginByName(m_pluginManager, m_pluginModules, m_pluginManager.configHolder()->Config(Height{0}).User.PluginsDirectory, pluginName);
 	}
 }}}

@@ -20,7 +20,8 @@
 
 #pragma once
 #include "Results.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/config/HashLockConfiguration.h"
 #include "src/model/HashLockNotifications.h"
@@ -29,12 +30,12 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to hash lock notifications and validates that:
 	/// - lock duration is at most \a maxHashLockDuration
-	DECLARE_STATELESS_VALIDATOR(HashLockDuration, model::HashLockDurationNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(HashLockDuration, model::HashLockDurationNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to hash lock mosaic notifications and validates that:
 	/// - mosaic id is \a currencyMosaicId
 	/// - mosaic amount is equal to \a lockedFundsPerAggregate
-	DECLARE_STATELESS_VALIDATOR(HashLockMosaic, model::HashLockMosaicNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(HashLockMosaic, model::HashLockMosaicNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to hash lock notifications and validates that:
 	/// - attached hash is not present in hash lock info cache

@@ -41,7 +41,7 @@ namespace catapult { namespace plugins {
 			for (const auto& name : pluginNames) {
 				PluginModules modules;
 				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(config);
+				pConfigHolder->SetBlockChainConfig(Height{0}, config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				CATAPULT_LOG(debug) << "loading plugin with name: " << name;
 
@@ -75,7 +75,6 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			PluginModules modules;
 			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act + Assert:
@@ -124,7 +123,7 @@ namespace catapult { namespace plugins {
 			// - create the manager
 			PluginModules modules;
 			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act:

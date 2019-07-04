@@ -30,7 +30,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS SnapshotCleanUpObserverTests
 
-		DEFINE_COMMON_OBSERVER_TESTS(SnapshotCleanUp, model::BlockChainConfiguration::Uninitialized())
+		DEFINE_COMMON_OBSERVER_TESTS(SnapshotCleanUp, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 		const uint64_t Effective_Balance_Range = 10;
 		const uint64_t Max_Rollback_Blocks = 1;
@@ -42,10 +42,12 @@ namespace catapult { namespace observers {
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.ImportanceGrouping = Effective_Balance_Range;
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(Height{0}, config);
 
 				test::AccountObserverTestContext context(mode, contextHeight, config);
 
-				auto pObserver = CreateSnapshotCleanUpObserver(config);
+				auto pObserver = CreateSnapshotCleanUpObserver(pConfigHolder);
 
 				auto signer = test::GenerateRandomData<Key_Size>();
 				for (auto i = 0u; i < Effective_Balance_Range + Max_Rollback_Blocks + 1; ++i) {

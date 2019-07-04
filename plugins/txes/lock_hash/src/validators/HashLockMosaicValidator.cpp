@@ -26,8 +26,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::HashLockMosaicNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(HashLockMosaic, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATELESS_VALIDATOR(HashLockMosaic, ([&blockChainConfig](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(HashLockMosaic, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(HashLockMosaic, ([&pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::HashLockConfiguration>("catapult.plugins.lockhash");
 			if (pluginConfig.LockedFundsPerAggregate != notification.Mosaic.Amount)
 				return Failure_LockHash_Invalid_Mosaic_Amount;

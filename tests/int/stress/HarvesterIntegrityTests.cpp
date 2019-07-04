@@ -70,7 +70,9 @@ namespace catapult { namespace harvesting {
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			test::CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(config);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 

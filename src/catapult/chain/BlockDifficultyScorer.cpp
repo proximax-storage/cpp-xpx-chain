@@ -95,7 +95,7 @@ namespace catapult { namespace chain {
 	}
 
 	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache, const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config) {
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		return CalculateDifficulty(*view, nextBlockInfo, config);
 	}
 
@@ -104,7 +104,7 @@ namespace catapult { namespace chain {
 			const state::BlockDifficultyInfo& nextBlockInfo,
 			const model::BlockChainConfiguration& config,
 			Difficulty& difficulty) {
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		if (!view->contains(state::BlockDifficultyInfo(nextBlockInfo.BlockHeight - Height(1))))
 			return false;
 

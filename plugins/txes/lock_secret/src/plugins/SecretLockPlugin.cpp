@@ -43,34 +43,31 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("SECRETLOCK C"), [&cache]() {
-				return cache.sub<cache::SecretLockInfoCache>().createView()->size();
+				return cache.sub<cache::SecretLockInfoCache>().createView(cache.height())->size();
 			});
 		});
 
-		const auto& config = manager.config();
-		manager.addStatelessValidatorHook([&config](auto& builder) {
-			// secret lock validators
-			builder.add(validators::CreateSecretLockDurationValidator(config));
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(validators::CreateSecretLockHashAlgorithmValidator());
-
-			// proof secret
-			builder.add(validators::CreateProofSecretValidator(config));
 		});
 
-		manager.addStatefulValidatorHook([](auto& builder) {
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
 			builder
+				.add(validators::CreateSecretLockDurationValidator(pConfigHolder))
+				.add(validators::CreateProofSecretValidator(pConfigHolder))
 				.add(validators::CreateSecretLockCacheUniqueValidator())
 				.add(validators::CreateProofValidator());
 		});
 
-		manager.addObserverHook([&config](auto& builder) {
+		manager.addObserverHook([&pConfigHolder](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockSecret_Expired;
 			builder
 				.add(observers::CreateSecretLockObserver())
 				.add(observers::CreateExpiredSecretLockInfoObserver())
 				.add(observers::CreateProofObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::SecretLockInfoCache>("SecretLockInfo", expiryReceiptType))
-				.add(observers::CreateCacheBlockPruningObserver<cache::SecretLockInfoCache>("SecretLockInfo", 1, config));
+				.add(observers::CreateCacheBlockPruningObserver<cache::SecretLockInfoCache>("SecretLockInfo", 1, pConfigHolder));
 		});
 	}
 }}

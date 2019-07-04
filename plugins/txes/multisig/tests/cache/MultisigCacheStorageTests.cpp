@@ -42,13 +42,13 @@ namespace catapult { namespace cache {
 		// Act:
 		MultisigCache cache(CacheConfiguration{});
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			MultisigCacheStorage::LoadInto(originalEntry, *delta);
 			cache.commit();
 		}
 
 		// Assert: the cache contains the value
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		EXPECT_EQ(1u, view->size());
 		ASSERT_TRUE(view->contains(originalEntry.key()));
 		const auto& loadedEntry = view->find(originalEntry.key()).get();

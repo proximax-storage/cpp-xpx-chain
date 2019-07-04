@@ -62,7 +62,7 @@ namespace catapult { namespace timesync {
 				const ImportanceAwareNodeSelector& selector,
 				const ionet::NodeContainer& nodes,
 				Height height) {
-			auto view = cache.createView();
+			auto view = cache.createView(height);
 			cache::ImportanceView importanceView(view->asReadOnly());
 			auto selectedNodes = selector.selectNodes(importanceView, nodes.view(), height);
 			CATAPULT_LOG(debug) << "timesync: number of selected nodes: " << selectedNodes.size();
@@ -134,7 +134,7 @@ namespace catapult { namespace timesync {
 				CATAPULT_LOG(debug) << "timesync: number of retrieved samples: " << samples.size();
 
 				// calculate new offset and update state
-				auto view = cache.createView();
+				auto view = cache.createView(height);
 				auto offset = timeSynchronizer.calculateTimeOffset(*view, height, std::move(samples), timeSyncState.nodeAge());
 				timeSyncState.update(offset);
 

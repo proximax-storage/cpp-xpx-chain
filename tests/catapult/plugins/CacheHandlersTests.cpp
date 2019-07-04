@@ -47,7 +47,6 @@ namespace catapult { namespace plugins {
 		void RunHandlerRegistrationTest(TAction action) {
 			// Arrange:
 			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
 			PluginManager pluginManager(pConfigHolder, StorageConfiguration());
 			pluginManager.addCacheSupport<test::SimpleCacheStorageTraits>(std::make_unique<CacheDescriptor::CacheType>());
 			auto cache = pluginManager.createCache();

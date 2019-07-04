@@ -26,7 +26,7 @@ namespace catapult { namespace cache {
 		// write version
 		io::Write32(output, 1);
 
-		auto view = cache().createView();
+		auto view = cache().createView(Height{0});
 		const auto& highValueAddresses = view->highValueAddresses();
 		io::Write64(output, highValueAddresses.size());
 		for (const auto& address : highValueAddresses)
@@ -69,7 +69,7 @@ namespace catapult { namespace cache {
 
 	AccountStateCacheSubCachePlugin::AccountStateCacheSubCachePlugin(
 			const CacheConfiguration& config,
-			const model::BlockChainConfiguration& blockChainConfig)
-			: BaseAccountStateCacheSubCachePlugin(std::make_unique<AccountStateCache>(config, blockChainConfig))
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+			: BaseAccountStateCacheSubCachePlugin(std::make_unique<AccountStateCache>(config, pConfigHolder))
 	{}
 }}

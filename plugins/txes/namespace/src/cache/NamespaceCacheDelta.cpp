@@ -54,13 +54,14 @@ namespace catapult { namespace cache {
 			, m_pHistoryById(namespaceSets.pPrimary)
 			, m_pNamespaceById(namespaceSets.pFlatMap)
 			, m_pRootNamespaceIdsByExpiryHeight(namespaceSets.pHeightGrouping)
-			, m_blockChainConfig(options.BlockChainConfig)
+			, m_pConfigHolder(options.ConfigHolderPtr)
 	{}
 
 	void BasicNamespaceCacheDelta::insert(const state::RootNamespace& ns) {
 		// register the namespace for expiration at the end of its lifetime (if its lifetime changes later, it will not be pruned)
-		const auto& pluginConfig = m_blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
-		auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(m_blockChainConfig.BlockGenerationTargetTime);
+		const auto& blockChainConfig = m_pConfigHolder->Config(height()).BlockChain;
+		const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+		auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
 		auto nsLifetimeWithGracePeriod = state::NamespaceLifetime(ns.lifetime().Start, ns.lifetime().End, gracePeriodDuration);
 		AddIdentifierWithGroup(*m_pRootNamespaceIdsByExpiryHeight, nsLifetimeWithGracePeriod.GracePeriodEnd, ns.id());
 

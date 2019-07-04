@@ -66,7 +66,7 @@ namespace catapult { namespace test {
 	}
 
 	void AssertCacheContents(const cache::MosaicCache& cache, std::initializer_list<MosaicId::ValueType> expectedIds) {
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		AssertCacheContentsT(*view, expectedIds);
 	}
 

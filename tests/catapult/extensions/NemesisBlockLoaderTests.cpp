@@ -137,7 +137,7 @@ namespace catapult { namespace extensions {
 			// enable Publish_Transfers (MockTransaction Publish XORs recipient address, so XOR address resolver is required
 			// for proper roundtripping or else test will fail)
 			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
 			plugins::PluginManager manager(pConfigHolder, plugins::StorageConfiguration());
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin(mocks::PluginOptionFlags::Publish_Transfers));
 
@@ -154,12 +154,14 @@ namespace catapult { namespace extensions {
 
 		std::unique_ptr<const observers::NotificationObserver> CreateObserver(const model::BlockChainConfiguration& config) {
 			// use real coresystem observers to create accounts, update balances and add harvest receipt
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
 			observers::DemuxObserverBuilder builder;
 			builder
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(config));
+				.add(observers::CreateHarvestFeeObserver(pConfigHolder));
 			return builder.build();
 		}
 

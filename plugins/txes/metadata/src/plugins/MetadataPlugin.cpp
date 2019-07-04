@@ -29,23 +29,23 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("METADATA C"), [&cache]() {
-				return cache.sub<cache::MetadataCache>().createView()->size();
+				return cache.sub<cache::MetadataCache>().createView(cache.height())->size();
 			});
 		});
 
-		const auto& config = manager.config();
-		manager.addStatelessValidatorHook([&config](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateMetadataTypeValidator())
-				.add(validators::CreateMetadataFieldModificationValidator(config));
+				.add(validators::CreateMetadataTypeValidator());
 		});
 
-		manager.addStatefulValidatorHook([&config](auto& builder) {
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
 			builder
+				.add(validators::CreateMetadataFieldModificationValidator(pConfigHolder))
 				.add(validators::CreateModifyAddressMetadataValidator())
 				.add(validators::CreateModifyMosaicMetadataValidator())
 				.add(validators::CreateModifyNamespaceMetadataValidator())
-				.add(validators::CreateMetadataModificationsValidator(config));
+				.add(validators::CreateMetadataModificationsValidator(pConfigHolder));
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -55,9 +55,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateNamespaceMetadataValueModificationObserver());
 		});
 
-		manager.addObserverHook([&config](auto& builder) {
+		manager.addObserverHook([&pConfigHolder](auto& builder) {
 			builder
-				.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1, config));
+				.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1, pConfigHolder));
 		});
 	}
 }}

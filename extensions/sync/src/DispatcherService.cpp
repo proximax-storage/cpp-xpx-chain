@@ -204,8 +204,7 @@ namespace catapult { namespace sync {
 						m_state.state(),
 						m_state.storage(),
 						m_state.config().BlockChain.MaxRollbackBlocks,
-						CreateBlockChainSyncHandlers(m_state, rollbackInfo),
-						m_state.pluginManager().configHolder()));
+						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
 
 				disruptorConsumers.push_back(CreateNewBlockConsumer(m_state.hooks().newBlockSink(), InputSource::Local));
 				return CreateConsumerDispatcher(

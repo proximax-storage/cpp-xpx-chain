@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS AddressValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Address, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(Address, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
@@ -41,7 +41,7 @@ namespace catapult { namespace validators {
 			auto cache = test::CreateEmptyCatapultCache(config);
 
 			model::AccountAddressNotification<notificationVersion> notification(test::UnresolveXor(address));
-			auto pValidator = CreateAddressValidator(config);
+			auto pValidator = CreateAddressValidator(std::make_shared<config::LocalNodeConfigurationHolder>());
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

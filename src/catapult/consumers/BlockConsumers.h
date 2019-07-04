@@ -77,8 +77,7 @@ namespace catapult { namespace consumers {
 			state::CatapultState& state,
 			io::BlockStorageCache& storage,
 			uint32_t maxRollbackBlocks,
-			const BlockChainSyncHandlers& handlers,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+			const BlockChainSyncHandlers& handlers);
 
 	/// Prototype for a function that is called with a new block.
 	using NewBlockSink = consumer<const std::shared_ptr<const model::Block>&>;

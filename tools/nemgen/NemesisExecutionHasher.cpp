@@ -20,7 +20,7 @@
 
 #include "NemesisExecutionHasher.h"
 #include "blockhashes/NemesisBlockHashesCalculator.h"
-#include "catapult/config/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/Elements.h"
 #include "catapult/utils/HexFormatter.h"
 #include <boost/filesystem.hpp>
@@ -61,17 +61,17 @@ namespace catapult { namespace tools { namespace nemgen {
 			const model::BlockElement& blockElement,
 			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			CacheDatabaseCleanupMode databaseCleanupMode) {
-		if (!pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage || !pConfigHolder->Config().BlockChain.ShouldEnableVerifiableState)
+		if (!pConfigHolder->Config(Height{1}).Node.ShouldUseCacheDatabaseStorage || !pConfigHolder->Config(Height{1}).BlockChain.ShouldEnableVerifiableState)
 			CATAPULT_LOG(warning) << "cache database storage and verifiable state must both be enabled to calculate state hash";
 
 		// in purge mode, clean up the data directory after each execution
 		// (cache database is hardcoded to "statedb" so entire data directory must be temporary)
 		std::unique_ptr<TempDirectoryGuard> pDatabaseGuard;
 		if (CacheDatabaseCleanupMode::Purge == databaseCleanupMode) {
-			if (boost::filesystem::exists(pConfigHolder->Config().User.DataDirectory))
-				CATAPULT_THROW_INVALID_ARGUMENT_1("temporary data directory must not exist", pConfigHolder->Config().User.DataDirectory);
+			if (boost::filesystem::exists(pConfigHolder->Config(Height{1}).User.DataDirectory))
+				CATAPULT_THROW_INVALID_ARGUMENT_1("temporary data directory must not exist", pConfigHolder->Config(Height{1}).User.DataDirectory);
 
-			auto temporaryDirectory = (boost::filesystem::path(pConfigHolder->Config().User.DataDirectory)).generic_string();
+			auto temporaryDirectory = (boost::filesystem::path(pConfigHolder->Config(Height{1}).User.DataDirectory)).generic_string();
 			pDatabaseGuard = std::make_unique<TempDirectoryGuard>(temporaryDirectory);
 		}
 

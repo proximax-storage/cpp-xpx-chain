@@ -35,7 +35,7 @@ namespace catapult { namespace plugins {
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(config);
+				pConfigHolder->SetBlockChainConfig(Height{0}, config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterTransferSubsystem(manager);
 

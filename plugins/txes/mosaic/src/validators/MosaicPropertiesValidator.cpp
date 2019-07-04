@@ -51,11 +51,12 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATELESS_VALIDATOR(MosaicProperties, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATELESS_VALIDATOR(MosaicProperties, ([&blockChainConfig](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicProperties, ([&pConfigHolder](const auto& notification, const auto& context) {
 			if (!IsValidFlags(notification.PropertiesHeader.Flags))
 				return Failure_Mosaic_Invalid_Flags;
 
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
 			if (notification.PropertiesHeader.Divisibility > pluginConfig.MaxMosaicDivisibility)
 				return Failure_Mosaic_Invalid_Divisibility;

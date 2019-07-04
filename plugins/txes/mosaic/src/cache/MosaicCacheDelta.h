@@ -48,7 +48,8 @@ namespace catapult { namespace cache {
 			, public MosaicCacheDeltaMixins::BasicInsertRemove
 			, public MosaicCacheDeltaMixins::Touch
 			, public MosaicCacheDeltaMixins::DeltaElements
-			, public MosaicCacheDeltaMixins::Enable {
+			, public MosaicCacheDeltaMixins::Enable
+			, public MosaicCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = MosaicCacheTypes::CacheReadOnlyType;
 

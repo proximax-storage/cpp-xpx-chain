@@ -21,7 +21,7 @@
 #include "catapult/consumers/BlockConsumers.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/config/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/ChainScore.h"
 #include "tests/catapult/consumers/test/ConsumerInputFactory.h"
@@ -286,9 +286,7 @@ namespace catapult { namespace consumers {
 					return TransactionsChange(changeInfo);
 				};
 
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-
-				Consumer = CreateBlockChainSyncConsumer(Cache, State, Storage, Max_Rollback_Blocks, handlers, pConfigHolder);
+				Consumer = CreateBlockChainSyncConsumer(Cache, State, Storage, Max_Rollback_Blocks, handlers);
 			}
 
 		public:

@@ -47,21 +47,21 @@ namespace catapult { namespace cache {
 		}
 
 	public:
-		std::unique_ptr<const SubCacheView> createView() const override {
-			return std::make_unique<const SubCacheViewAdapter<decltype(m_pCache->createView())>>(
-					m_pCache->createView(),
+		std::unique_ptr<const SubCacheView> createView(const Height& height) const override {
+			return std::make_unique<const SubCacheViewAdapter<decltype(m_pCache->createView(height))>>(
+					m_pCache->createView(height),
 					makeSubCacheViewIdentifier(SubCacheViewType::View));
 		}
 
-		std::unique_ptr<SubCacheView> createDelta() override {
-			return std::make_unique<SubCacheViewAdapter<decltype(m_pCache->createDelta())>>(
-					m_pCache->createDelta(),
+		std::unique_ptr<SubCacheView> createDelta(const Height& height) override {
+			return std::make_unique<SubCacheViewAdapter<decltype(m_pCache->createDelta(height))>>(
+					m_pCache->createDelta(height),
 					makeSubCacheViewIdentifier(SubCacheViewType::Delta));
 		}
 
-		std::unique_ptr<DetachedSubCacheView> createDetachedDelta() const override {
-			return std::make_unique<DetachedSubCacheViewAdapter<decltype(m_pCache->createDetachedDelta())>>(
-					m_pCache->createDetachedDelta(),
+		std::unique_ptr<DetachedSubCacheView> createDetachedDelta(const Height& height) const override {
+			return std::make_unique<DetachedSubCacheViewAdapter<decltype(m_pCache->createDetachedDelta(height))>>(
+					m_pCache->createDetachedDelta(height),
 					makeSubCacheViewIdentifier(SubCacheViewType::DetachedDelta));
 		}
 
@@ -98,7 +98,7 @@ namespace catapult { namespace cache {
 
 	private:
 		static bool IsCacheStorageSupported(const TCache& cache) {
-			return !!cache.createView()->tryMakeIterableView();
+			return !!cache.createView(Height{0})->tryMakeIterableView();
 		}
 
 	private:

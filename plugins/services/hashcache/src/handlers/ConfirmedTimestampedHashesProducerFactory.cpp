@@ -62,7 +62,7 @@ namespace catapult { namespace handlers {
 
 	ConfirmedTimestampedHashesProducerFactory CreateConfirmedTimestampedHashesProducerFactory(const cache::HashCache& hashCache) {
 		return [&hashCache](const auto& timestampedHashes) {
-			return Producer(hashCache.createView(), timestampedHashes);
+			return Producer(hashCache.createView(Height{0}), timestampedHashes);
 		};
 	}
 }}

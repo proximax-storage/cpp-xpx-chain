@@ -138,7 +138,7 @@ namespace catapult { namespace local {
 
 				// only save to storage if boot succeeded
 				if (m_isBooted)
-					m_pBlockChainStorage->saveToStorage(m_pluginManager.configHolder(), stateCref());
+					m_pBlockChainStorage->saveToStorage(stateCref());
 			}
 
 		public:

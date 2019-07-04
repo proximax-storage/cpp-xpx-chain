@@ -31,7 +31,6 @@ namespace catapult { namespace cache {
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
-		auto Default_BlockChain_Config = model::BlockChainConfiguration::Uninitialized();
 
 		std::vector<Address> AddAccountsWithBalances(AccountStateCache& cache, const std::vector<Amount>& balances) {
 			auto delta = cache.createDelta();
@@ -54,7 +53,9 @@ namespace catapult { namespace cache {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.MinHarvesterBalance = minHighValueAccountBalance;
 			blockChainConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			AccountStateCache cache(CacheConfiguration(), blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			auto balances = { Amount(1'000'000), Amount(500'000), Amount(750'000), Amount(1'250'000) };
@@ -116,7 +117,7 @@ namespace catapult { namespace cache {
 		void RunSummaryLoadTest(size_t numAccounts) {
 			// Arrange:
 			auto config = CacheConfiguration();
-			AccountStateCache cache(config, Default_BlockChain_Config);
+			AccountStateCache cache(config, std::make_shared<config::LocalNodeConfigurationHolder>());
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			size_t numUpdateAddresses = 2 * numAccounts;
@@ -169,7 +170,7 @@ namespace catapult { namespace cache {
 			class PluginType : public AccountStateCacheSubCachePlugin {
 			public:
 				explicit PluginType(const CacheConfiguration& config)
-						: AccountStateCacheSubCachePlugin(config, Default_BlockChain_Config)
+						: AccountStateCacheSubCachePlugin(config, std::make_shared<config::LocalNodeConfigurationHolder>())
 				{}
 			};
 		};

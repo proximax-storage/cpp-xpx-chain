@@ -24,7 +24,8 @@ namespace catapult { namespace cache {
 			, public CatapultConfigCacheViewMixins::Iteration
 			, public CatapultConfigCacheViewMixins::ConstAccessor
 			, public CatapultConfigCacheViewMixins::PatriciaTreeView
-			, public CatapultConfigCacheViewMixins::Enable {
+			, public CatapultConfigCacheViewMixins::Enable
+			, public CatapultConfigCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = CatapultConfigCacheTypes::CacheReadOnlyType;
 
@@ -36,7 +37,36 @@ namespace catapult { namespace cache {
 				, CatapultConfigCacheViewMixins::Iteration(catapultConfigSets.Primary)
 				, CatapultConfigCacheViewMixins::ConstAccessor(catapultConfigSets.Primary)
 				, CatapultConfigCacheViewMixins::PatriciaTreeView(catapultConfigSets.PatriciaTree.get())
+				, m_catapultConfigHeights(catapultConfigSets.Heights)
 		{}
+
+	public:
+		using CatapultConfigCacheViewMixins::ConstAccessor::find;
+
+	public:
+		Height FindConfigHeightAt(const Height& height) const {
+			if (!height.unwrap())
+				return height;
+
+			auto iterableView = MakeIterableView(m_catapultConfigHeights);
+			auto iter = std::lower_bound(iterableView.begin(), iterableView.end(), height);
+			if (iter == iterableView.end()) {
+				if (iter == iterableView.begin())
+					return Height{0};
+				iter--;
+			} else {
+				if (*iter > height) {
+					if (iter == iterableView.begin())
+						return Height{0};
+					iter--;
+				}
+			}
+
+			return *iter;
+		}
+
+	private:
+		const CatapultConfigCacheTypes::HeightTypes::BaseSetType& m_catapultConfigHeights;
 	};
 
 	/// View on top of the catapult config cache.

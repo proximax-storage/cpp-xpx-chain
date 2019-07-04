@@ -45,7 +45,7 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("CONTRACT C"), [&cache]() {
-				return cache.sub<cache::ContractCache>().createView()->size();
+				return cache.sub<cache::ContractCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -54,12 +54,13 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("REPUTATION C"), [&cache]() {
-				return cache.sub<cache::ReputationCache>().createView()->size();
+				return cache.sub<cache::ReputationCache>().createView(cache.height())->size();
 			});
 		});
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
+					.add(validators::CreatePluginConfigValidator())
 					.add(validators::CreateModifyContractCustomersValidator())
 					.add(validators::CreateModifyContractExecutorsValidator())
 					.add(validators::CreateModifyContractVerifiersValidator());
@@ -73,8 +74,8 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateModifyContractDurationValidator());
 		});
 
-		manager.addObserverHook([&config = manager.config()](auto& builder) {
-			builder.add(observers::CreateModifyContractObserver(config));
+		manager.addObserverHook([&pConfigHolder = manager.configHolder()](auto& builder) {
+			builder.add(observers::CreateModifyContractObserver(pConfigHolder));
 			builder.add(observers::CreateReputationUpdateObserver());
 		});
 	}

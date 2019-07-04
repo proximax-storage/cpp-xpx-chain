@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS SecretLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
@@ -41,7 +41,9 @@ namespace catapult { namespace validators {
 				pluginConfig.MaxSecretLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
 				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 				blockChainConfig.SetPluginConfiguration("catapult.plugins.locksecret", pluginConfig);
-				return CreateSecretLockDurationValidator(blockChainConfig);
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+				return CreateSecretLockDurationValidator(pConfigHolder);
 			}
 		};
 	}

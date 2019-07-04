@@ -246,22 +246,23 @@ namespace catapult { namespace cache {
 	CatapultCacheView CatapultCache::createView() const {
 		// acquire a height reader lock to ensure the view is composed of consistent subcache views
 		auto pCacheHeightView = m_pCacheHeight->view();
-		auto subViews = MapSubCaches<const SubCacheView>(m_subCaches, [](const auto& pSubCache) { return pSubCache->createView(); });
+		auto subViews = MapSubCaches<const SubCacheView>(m_subCaches, [&pCacheHeightView](const auto& pSubCache) { return pSubCache->createView(pCacheHeightView.get()); });
 		return CatapultCacheView(std::move(pCacheHeightView), std::move(subViews));
 	}
 
 	CatapultCacheDelta CatapultCache::createDelta() {
 		// since only one subcache delta is allowed outstanding at a time and an outstanding delta is required for commit,
 		// subcache deltas will always be consistent
-		auto subViews = MapSubCaches<SubCacheView>(m_subCaches, [](const auto& pSubCache) { return pSubCache->createDelta(); });
+		auto pCacheHeightView = m_pCacheHeight->view();
+		auto subViews = MapSubCaches<SubCacheView>(m_subCaches, [&pCacheHeightView](const auto& pSubCache) { return pSubCache->createDelta(pCacheHeightView.get()); });
 		return CatapultCacheDelta(std::move(subViews));
 	}
 
 	CatapultCacheDetachableDelta CatapultCache::createDetachableDelta() const {
 		// acquire a height reader lock to ensure the delta is composed of consistent subcache deltas
 		auto pCacheHeightView = m_pCacheHeight->view();
-		auto detachedSubViews = MapSubCaches<DetachedSubCacheView>(m_subCaches, [](const auto& pSubCache) {
-			return pSubCache->createDetachedDelta();
+		auto detachedSubViews = MapSubCaches<DetachedSubCacheView>(m_subCaches, [&pCacheHeightView](const auto& pSubCache) {
+			return pSubCache->createDetachedDelta(pCacheHeightView.get());
 		});
 		return CatapultCacheDetachableDelta(std::move(pCacheHeightView), std::move(detachedSubViews));
 	}
@@ -277,6 +278,10 @@ namespace catapult { namespace cache {
 
 		// finally, update the cache height
 		cacheHeightModifier.set(height);
+	}
+
+	Height CatapultCache::height() const {
+		return m_pCacheHeight->view().get();
 	}
 
 	std::vector<std::unique_ptr<const CacheStorage>> CatapultCache::storages() const {

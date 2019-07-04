@@ -52,7 +52,7 @@ namespace catapult { namespace local {
 		auto hexPrivateKey = test::GenerateRandomHexString(2 * Key_Size);
 		auto config = CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL");
 		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
+		pConfigHolder->SetConfig(Height{0}, CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
 		extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		// Act:
@@ -72,7 +72,7 @@ namespace catapult { namespace local {
 		// Arrange:
 		auto hexPrivateKey = test::GenerateRandomHexString(2 * Key_Size);
 		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
+		pConfigHolder->SetConfig(Height{0}, CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
 		extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		auto keys = test::GenerateRandomDataVector<Key>(3);
@@ -113,7 +113,7 @@ namespace catapult { namespace local {
 					<< ", " << peerHostSize << ", " << peerNameSize;
 
 			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(CreateLocalNodeConfiguration(bootKey, std::string(localHostSize, 'm'), std::string(localNameSize, 'l')));
+			pConfigHolder->SetConfig(Height{0}, CreateLocalNodeConfiguration(bootKey, std::string(localHostSize, 'm'), std::string(localNameSize, 'l')));
 			extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 			auto peerEndpoint = ionet::NodeEndpoint{ std::string(peerHostSize, 'q'), 1234 };

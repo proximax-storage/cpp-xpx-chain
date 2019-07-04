@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 
 	constexpr uint8_t MaxFields = 5;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		const Address Raw_Data = test::GenerateRandomData<Address_Decoded_Size>();
@@ -51,14 +51,15 @@ namespace catapult { namespace validators {
 				const Hash256 & metadataId,
 				const std::vector<Modification> modifications) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = test::MetadataCacheFactory::Create(config);
-			PopulateCache(cache, initValues);
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
 			pluginConfig.MaxFields = MaxFields;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
-			auto pValidator = CreateMetadataModificationsValidator(blockChainConfig);
+			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
+			PopulateCache(cache, initValues);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pValidator = CreateMetadataModificationsValidator(pConfigHolder);
 
 			uint32_t sizeOfBuffer = 0;
 

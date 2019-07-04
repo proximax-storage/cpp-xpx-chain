@@ -400,18 +400,18 @@ namespace catapult { namespace test {
 
 	public:
 		/// Returns a locked view based on this cache.
-		CacheViewType createView() const {
+		CacheViewType createView(const Height&) const {
 			return CacheViewType(m_mode, m_state);
 		}
 
 		/// Returns a locked cache delta based on this cache.
-		CacheDeltaType createDelta() {
+		CacheDeltaType createDelta(const Height&) {
 			return CacheDeltaType(m_mode, m_state);
 		}
 
 		/// Returns a lockable cache delta based on this cache but without the ability
 		/// to commit any changes to the original cache.
-		CacheDeltaType createDetachedDelta() const {
+		CacheDeltaType createDetachedDelta(const Height&) const {
 			return CacheDeltaType(m_mode, m_state);
 		}
 

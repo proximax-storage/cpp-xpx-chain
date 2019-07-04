@@ -43,7 +43,7 @@ namespace catapult { namespace plugins {
 				}}));
 
 				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(config);
+				pConfigHolder->SetBlockChainConfig(Height{0}, config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterMultisigSubsystem(manager);
 

@@ -153,7 +153,7 @@ namespace catapult { namespace test {
 		/// Boots a new local node around \a config.
 		std::unique_ptr<local::BootedLocalNode> boot(config::LocalNodeConfiguration&& config) const {
 			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(config);
+			pConfigHolder->SetConfig(Height{0}, config);
 			auto pBootstrapper = std::make_unique<extensions::LocalNodeBootstrapper>(
 				pConfigHolder,
 				resourcesDirectory(),

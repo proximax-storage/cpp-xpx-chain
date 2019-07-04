@@ -50,6 +50,7 @@ namespace catapult { namespace cache {
 		using PatriciaTreeDelta = AddressMixins::PatriciaTreeDelta;
 		using DeltaElements = AddressMixins::DeltaElements;
 		using Enable = AddressMixins::Enable;
+		using Height = KeyMixins::Height;
 
 		// no mutable key accessor because address-to-key pairs are immutable
 	};
@@ -66,7 +67,8 @@ namespace catapult { namespace cache {
 			, public AccountStateCacheDeltaMixins::MutableAccessorKey
 			, public AccountStateCacheDeltaMixins::PatriciaTreeDelta
 			, public AccountStateCacheDeltaMixins::DeltaElements
-			, public AccountStateCacheDeltaMixins::Enable {
+			, public AccountStateCacheDeltaMixins::Enable
+			, public AccountStateCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 
@@ -104,6 +106,9 @@ namespace catapult { namespace cache {
 
 		/// Gets the harvesting mosaic id.
 		MosaicId harvestingMosaicId() const;
+
+		/// Gets the currency mosaic id.
+		MosaicId currencyMosaicId() const;
 
 	public:
 		/// If not present, adds an account to the cache at given height (\a addressHeight) using \a address.
@@ -146,6 +151,8 @@ namespace catapult { namespace cache {
 
 		void remove(const Address& address, Height height);
 		void remove(const Key& publicKey, Height height);
+
+		model::BlockChainConfiguration blockChainConfig() const;
 
 	private:
 		// height is first component for a nicer equals

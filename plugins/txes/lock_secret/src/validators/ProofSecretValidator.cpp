@@ -37,11 +37,12 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATELESS_VALIDATOR(ProofSecret, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATELESS_VALIDATOR(ProofSecret, [&blockChainConfig](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(ProofSecret, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(ProofSecret, [&pConfigHolder](const auto& notification, const auto& context) {
 			if (!SupportedHash(notification.HashAlgorithm))
 				return Failure_LockSecret_Hash_Not_Implemented;
 
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::SecretLockConfiguration>("catapult.plugins.locksecret");
 			if (notification.Proof.Size < pluginConfig.MinProofSize || notification.Proof.Size > pluginConfig.MaxProofSize)
 				return Failure_LockSecret_Proof_Size_Out_Of_Bounds;

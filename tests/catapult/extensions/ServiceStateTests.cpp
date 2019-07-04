@@ -59,7 +59,7 @@ namespace catapult { namespace extensions {
 
 		std::vector<utils::DiagnosticCounter> counters;
 		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(config.BlockChain);
+		pConfigHolder->SetBlockChainConfig(Height{0}, config.BlockChain);
 		plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
 		thread::MultiServicePool pool("test", 1);
 

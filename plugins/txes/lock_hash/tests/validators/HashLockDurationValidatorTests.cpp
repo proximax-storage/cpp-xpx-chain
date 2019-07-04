@@ -26,10 +26,9 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		struct HashTraits {
 		public:
 			using NotificationType = model::HashLockDurationNotification<1>;
@@ -38,9 +37,12 @@ namespace catapult { namespace validators {
 			static auto CreateValidator(BlockDuration maxDuration) {
 				auto pluginConfig = config::HashLockConfiguration::Uninitialized();
 				pluginConfig.MaxHashLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
+				auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 				blockChainConfig.SetPluginConfiguration("catapult.plugins.lockhash", pluginConfig);
-				return CreateHashLockDurationValidator(blockChainConfig);
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+				return CreateHashLockDurationValidator(pConfigHolder);
 			}
 		};
 	}

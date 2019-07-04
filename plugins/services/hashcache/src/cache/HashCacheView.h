@@ -24,6 +24,7 @@
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlySimpleCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -36,7 +37,8 @@ namespace catapult { namespace cache {
 			, public HashCacheViewMixins::Size
 			, public HashCacheViewMixins::Contains
 			, public HashCacheViewMixins::Iteration
-			, public HashCacheViewMixins::Enable {
+			, public HashCacheViewMixins::Enable
+			, public HashCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = HashCacheTypes::CacheReadOnlyType;
 
@@ -46,17 +48,17 @@ namespace catapult { namespace cache {
 				: HashCacheViewMixins::Size(hashSets.Primary)
 				, HashCacheViewMixins::Contains(hashSets.Primary)
 				, HashCacheViewMixins::Iteration(hashSets.Primary)
-				, m_config(options.Config)
+				, m_pConfigHolder(options.ConfigHolderPtr)
 		{}
 
 	public:
 		/// Gets the retention time for the cache.
 		utils::TimeSpan retentionTime() const {
-			return CalculateTransactionCacheDuration(m_config);
+			return CalculateTransactionCacheDuration(m_pConfigHolder->Config(height()).BlockChain);
 		}
 
 	private:
-		const model::BlockChainConfiguration& m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the hash cache.

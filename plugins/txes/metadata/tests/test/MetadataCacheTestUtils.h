@@ -26,13 +26,15 @@ namespace catapult { namespace test {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::MosaicCache::Id + 1);
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
 
 			subCaches[cache::MetadataCache::Id] =
 					MakeSubCachePlugin<cache::MetadataCache, cache::MetadataCacheStorage>();
 			subCaches[cache::MosaicCache::Id] =
 					MakeSubCachePlugin<cache::MosaicCache, cache::MosaicCacheStorage>();
 			subCaches[cache::NamespaceCache::Id] =
-					MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(cache::NamespaceCacheTypes::Options{ blockChainConfig });
+					MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(cache::NamespaceCacheTypes::Options{ pConfigHolder });
 			return subCaches;
 		}
 

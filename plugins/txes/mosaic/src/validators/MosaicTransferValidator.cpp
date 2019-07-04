@@ -47,8 +47,9 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATEFUL_VALIDATOR(MosaicTransfer, [blockChainConfig](const auto& notification, const auto& context) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicTransfer, [pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
 			// 0. allow currency mosaic id
 			if (currencyMosaicId == notification.MosaicId)

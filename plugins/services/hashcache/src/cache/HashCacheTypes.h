@@ -21,7 +21,6 @@
 #pragma once
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/state/TimestampedHash.h"
 #include "catapult/utils/TimeSpan.h"
 
@@ -37,6 +36,7 @@ namespace catapult {
 		template<typename TCache, typename TCacheDelta, typename TKey>
 		class ReadOnlySimpleCache;
 	}
+	namespace config { class LocalNodeConfigurationHolder; }
 }
 
 namespace catapult { namespace cache {
@@ -70,8 +70,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// Blockchain configuration.
-			const model::BlockChainConfiguration& Config;
+			/// Catapult configuration holder.
+			std::shared_ptr<config::LocalNodeConfigurationHolder> ConfigHolderPtr;
 		};
 	};
 }}

@@ -21,7 +21,7 @@
 #include "AggregateTransactionPlugin.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
-#include "catapult/config/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
 

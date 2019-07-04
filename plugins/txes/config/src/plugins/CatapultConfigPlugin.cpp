@@ -26,7 +26,7 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("CONFIG C"), [&cache]() {
-				return cache.sub<cache::CatapultConfigCache>().createView()->size();
+				return cache.sub<cache::CatapultConfigCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -36,10 +36,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateCatapultConfigValidator(manager));
 		});
 
-		manager.addObserverHook([&manager](auto& builder) {
+		manager.addObserverHook([](auto& builder) {
 			builder
-				.add(observers::CreateCatapultConfigObserver())
-				.add(observers::CreateCatapultConfigApplyObserver(manager));
+				.add(observers::CreateCatapultConfigObserver());
 		});
 	}
 }}

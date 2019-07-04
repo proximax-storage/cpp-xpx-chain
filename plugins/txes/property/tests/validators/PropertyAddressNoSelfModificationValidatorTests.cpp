@@ -22,6 +22,7 @@
 #include "src/validators/Validators.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/model/Address.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -29,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PropertyAddressNoSelfModificationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -43,10 +44,13 @@ namespace catapult { namespace validators {
 			model::ModifyAddressPropertyValueNotification_v1 notification(signer, model::PropertyType::Address, modification);
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
-			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(blockChainConfig);
+			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

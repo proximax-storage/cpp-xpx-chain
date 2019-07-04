@@ -21,7 +21,7 @@
 #pragma once
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
-#include "catapult/config/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/TransactionPlugin.h"
@@ -80,7 +80,7 @@ namespace catapult { namespace plugins {
 		// region config
 
 		/// Gets the block chain configuration.
-		const model::BlockChainConfiguration& config() const;
+		const model::BlockChainConfiguration& config(const Height& height) const;
 
 		/// Gets the block chain configuration.
 		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;

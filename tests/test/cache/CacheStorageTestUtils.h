@@ -66,13 +66,13 @@ namespace catapult { namespace test {
 				// Act:
 				typename TTraits::CacheType cache;
 				{
-					auto delta = cache.createDelta();
+					auto delta = cache.createDelta(Height{0});
 					TTraits::StorageType::LoadInto(TTraits::StorageType::Load(inputStream), *delta);
 					cache.commit();
 				}
 
 				// Assert:
-				auto view = cache.createView();
+				auto view = cache.createView(Height{0});
 				EXPECT_EQ(1u, view->size());
 
 				// - cache only supports contains, so return original value iff it is contained

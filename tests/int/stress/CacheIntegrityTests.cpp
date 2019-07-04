@@ -37,7 +37,7 @@ namespace catapult { namespace cache {
 	namespace {
 		constexpr auto Transferable_Mosaic_Id = MosaicId(1234);
 
-		auto CreateConfig() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
 			config.ImportanceGrouping = 359;
@@ -46,10 +46,10 @@ namespace catapult { namespace cache {
 			config.HarvestingMosaicId = MosaicId(2222);
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(0);
 			config.MaxRollbackBlocks = 0;
-			return config;
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			return pConfigHolder;
 		}
-
-		auto Default_Config = CreateConfig();
 
 		size_t GetNumIterations() {
 			return test::GetStressIterationCount() ? 20'000 : 1'000;
@@ -72,7 +72,7 @@ namespace catapult { namespace cache {
 		void RunMultithreadedReadWriteTest(size_t numReaders) {
 			// Arrange:
 			// - note that there can only ever be a single writer at a time since only one copy can be outstanding at once
-			AccountStateCache cache(CacheConfiguration(), Default_Config);
+			AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 			std::vector<Amount> sums(numReaders);
 
 			// Act: set up reader thread(s) that sum up all account balances
@@ -139,7 +139,7 @@ namespace catapult { namespace cache {
 
 	NO_STRESS_TEST(TEST_CLASS, CanAddManyAccounts) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), Default_Config);
+		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		{
 			auto delta = cache.createDelta();
 
@@ -271,7 +271,7 @@ namespace catapult { namespace cache {
 		// - numOperations: how many operations are done for the test
 		auto initialCount = test::GetStressIterationCount() ? 50'000'000u : 100'000u;
 		auto numOperations = test::GetStressIterationCount() ? 20'000u : 100'000u;
-		cache::HashCache cache(CacheConfiguration(), Default_Config);
+		cache::HashCache cache(CacheConfiguration(), CreateConfigHolder());
 
 		auto samples = CreateSamples(numOperations, test::Random);
 		PopulateCache(cache, initialCount, test::Random);
@@ -295,7 +295,7 @@ namespace catapult { namespace cache {
 		test::TempDirectoryGuard dbDirGuard;
 		CacheConfiguration config(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Disabled);
 
-		HashCache cache(config, Default_Config);
+		HashCache cache(config, CreateConfigHolder());
 		{
 			auto delta = cache.createDelta();
 
@@ -403,7 +403,7 @@ namespace catapult { namespace cache {
 	NO_STRESS_TEST(TEST_CLASS, AccountStateCachePerformance) {
 		// Arrange:
 		constexpr size_t Num_Operations = 100'000;
-		AccountStateCache cache(CacheConfiguration(), Default_Config);
+		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 
 		auto addresses = CreateAddresses(Num_Operations, test::Random);
 		auto keys = CreateKeys(Num_Operations, test::Random);

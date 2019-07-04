@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicTransferValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicTransfer, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicTransfer, std::make_shared<config::LocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Currency_Mosaic_Id = UnresolvedMosaicId(2345);
@@ -69,7 +69,9 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			auto pValidator = CreateMosaicTransferValidator(blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pValidator = CreateMosaicTransferValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
