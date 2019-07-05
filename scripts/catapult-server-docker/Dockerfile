@@ -134,7 +134,7 @@ RUN cd /catapult \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
-    extension.filechain \
+    extension.filespooling \
     extension.harvesting \
     extension.hashcache \
     extension.mongo \
@@ -151,12 +151,15 @@ RUN cd /catapult \
     extension.zeromq \
 # Tools
     catapult.tools.address \
+    catapult.tools.benchmark \
     catapult.tools.health \
     catapult.tools.nemgen \
+    catapult.tools.nemgen.blockhashes \
     catapult.tools.network \
+    catapult.tools.statusgen \
 # Catapult
     catapult.server \
-    -j4
+    -j 4
 
 # script for copying required libs to temporary folder /deps
 RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps

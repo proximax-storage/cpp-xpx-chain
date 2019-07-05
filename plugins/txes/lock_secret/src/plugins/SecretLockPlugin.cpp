@@ -52,6 +52,7 @@ namespace catapult { namespace plugins {
 			// secret lock validators
 			builder.add(validators::CreateSecretLockDurationValidator(config));
 			builder.add(validators::CreateSecretLockHashAlgorithmValidator());
+			builder.add(validators::CreatePluginConfigValidator());
 
 			// proof secret
 			builder.add(validators::CreateProofSecretValidator(config));

@@ -17,7 +17,8 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamCatapultConfigTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder
 				<< "applyHeightDelta" << ToInt64(transaction.ApplyHeightDelta)
-				<< "blockChainConfig" << std::string((const char*)transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize);
+				<< "blockChainConfig" << std::string((const char*)transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize)
+				<< "supportedEntityVersions" << std::string((const char*)transaction.SupportedEntityVersionsPtr(), transaction.SupportedEntityVersionsSize);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(CatapultConfig, StreamCatapultConfigTransaction)

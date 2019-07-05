@@ -8,18 +8,5 @@
 #include "src/config/PropertyConfiguration.h"
 
 namespace catapult { namespace validators {
-
-	using Notification = model::PluginConfigNotification<1>;
-
-	DEFINE_STATELESS_VALIDATOR(PluginConfig, [](const auto& notification) {
-		if (notification.Name == PLUGIN_NAME(property)) {
-			try {
-				(void)config::PropertyConfiguration::LoadFromBag(notification.Bag);
-			} catch (...) {
-				return Failure_Property_Plugin_Config_Malformed;
-			}
-		}
-
-		return ValidationResult::Success;
-	});
+	DEFINE_PLUGIN_CONFIG_VALIDATOR(property, Property, 1)
 }}

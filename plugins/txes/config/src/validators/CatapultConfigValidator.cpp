@@ -16,9 +16,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::CatapultConfigNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(plugins::PluginManager& pluginManager) {
+	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(const plugins::PluginManager& pluginManager) {
 		return MAKE_STATEFUL_VALIDATOR(CatapultConfig, ([&pluginManager](const Notification& notification, const ValidatorContext& context) {
-			const auto& pluginConfig = pluginManager.config().GetPluginConfiguration<config::CatapultConfigConfiguration>("catapult.plugins.config");
+			const auto& pluginConfig = pluginManager.config().GetPluginConfiguration<config::CatapultConfigConfiguration>(PLUGIN_NAME(config));
 			if (notification.BlockChainConfigSize > pluginConfig.MaxBlockChainConfigSize.bytes32())
 				return Failure_CatapultConfig_BlockChain_Config_Too_Large;
 
