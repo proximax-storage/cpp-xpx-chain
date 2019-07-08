@@ -350,7 +350,7 @@ namespace catapult { namespace consumers {
 			model::WeakEntityInfos entityInfos;
 			for (const auto& element : elements) {
 				if (indexes.cend() != indexes.find(index++))
-					entityInfos.emplace_back(element.Transaction, element.EntityHash);
+					entityInfos.emplace_back(element.Transaction, element.EntityHash, Height{0});
 			}
 
 			return entityInfos;

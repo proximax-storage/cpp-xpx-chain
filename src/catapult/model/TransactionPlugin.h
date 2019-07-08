@@ -63,7 +63,7 @@ namespace catapult { namespace model {
 	class EmbeddedTransactionPlugin : public TransactionPluginT<EmbeddedTransaction> {
 	public:
 		/// Sends all notifications from \a transaction to \a sub.
-		virtual void publish(const EmbeddedTransaction& transaction, NotificationSubscriber& sub) const = 0;
+		virtual void publish(const WeakEntityInfoT<EmbeddedTransaction>& transactionInfo, NotificationSubscriber& sub) const = 0;
 	};
 
 	/// A transaction plugin.

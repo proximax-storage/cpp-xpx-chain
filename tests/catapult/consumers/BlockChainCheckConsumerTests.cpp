@@ -24,6 +24,7 @@
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace consumers {
@@ -34,7 +35,11 @@ namespace catapult { namespace consumers {
 		constexpr uint32_t Test_Block_Chain_Limit = 20;
 
 		disruptor::ConstBlockConsumer CreateDefaultBlockChainCheckConsumer() {
-			return CreateBlockChainCheckConsumer(Test_Block_Chain_Limit, utils::TimeSpan::FromHours(1), []() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxBlockFutureTime = utils::TimeSpan::FromHours(1);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return CreateBlockChainCheckConsumer(Test_Block_Chain_Limit, pConfigHolder, []() {
 				return Timestamp(100);
 			});
 		}
@@ -93,7 +98,11 @@ namespace catapult { namespace consumers {
 			// Arrange:
 			auto elements = test::CreateBlockElements(chainSize);
 			test::LinkBlocks(Height(12), elements);
-			auto consumer = CreateBlockChainCheckConsumer(Test_Block_Chain_Limit, maxBlockFutureTime, [currentTime]() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxBlockFutureTime = maxBlockFutureTime;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			auto consumer = CreateBlockChainCheckConsumer(Test_Block_Chain_Limit, pConfigHolder, [currentTime]() {
 				return currentTime;
 			});
 

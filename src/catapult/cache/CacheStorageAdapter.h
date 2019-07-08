@@ -40,8 +40,9 @@ namespace catapult { namespace cache {
 		}
 
 	public:
-		void saveAll(io::OutputStream& output) const override {
-			auto view = m_cache.createView(Height{0});
+		void saveAll(io::OutputStream& output, const Height& height) const override {
+			io::Write(output, height);
+			auto view = m_cache.createView(height);
 			io::Write64(output, view->size());
 
 			auto pIterableView = view->tryMakeIterableView();
@@ -52,7 +53,8 @@ namespace catapult { namespace cache {
 		}
 
 		void loadAll(io::InputStream& input, size_t batchSize) override {
-			auto delta = m_cache.createDelta(Height{0});
+			auto height = io::Read<Height>(input);
+			auto delta = m_cache.createDelta(height);
 
 			ChunkedDataLoader<TStorageTraits> loader(input);
 			while (loader.hasNext()) {

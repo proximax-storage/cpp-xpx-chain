@@ -20,6 +20,7 @@
 
 #include "catapult/extensions/LocalNodeBootstrapper.h"
 #include "catapult/plugins/PluginExceptions.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
@@ -32,7 +33,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateBootstrapper) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 		pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
 		const_cast<uint32_t&>(pConfigHolder->Config(Height{0}).BlockChain.BlockPruneInterval) = 15;
 		const_cast<bool&>(pConfigHolder->Config(Height{0}).Node.ShouldUseCacheDatabaseStorage) = true;
@@ -42,7 +43,7 @@ namespace catapult { namespace extensions {
 		LocalNodeBootstrapper bootstrapper(pConfigHolder, "resources path", "bootstrapper");
 
 		// Assert: compare BlockPruneInterval as a sentinel value because the bootstrapper copies the config
-		EXPECT_EQ(15u, bootstrapper.config().BlockChain.BlockPruneInterval);
+		EXPECT_EQ(15u, bootstrapper.config(Height{0}).BlockChain.BlockPruneInterval);
 
 		const auto& pluginManager = bootstrapper.pluginManager();
 		EXPECT_EQ(15u, pluginManager.config(Height{0}).BlockPruneInterval);
@@ -71,7 +72,7 @@ namespace catapult { namespace extensions {
 		template<typename TAction>
 		void RunExtensionsTest(const std::string& directory, const std::string& name, TAction action) {
 			// Arrange:
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
 			const_cast<config::UserConfiguration&>(pConfigHolder->Config(Height{0}).User).PluginsDirectory = directory;
 			const_cast<config::NodeConfiguration&>(pConfigHolder->Config(Height{0}).Node).Extensions = { name };
@@ -149,7 +150,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodes) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 		pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
 		LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
@@ -182,7 +183,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodesFromPath) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 		pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
 		LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 

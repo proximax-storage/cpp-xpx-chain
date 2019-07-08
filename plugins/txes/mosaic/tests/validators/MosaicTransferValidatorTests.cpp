@@ -22,6 +22,7 @@
 #include "src/validators/Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/MosaicTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -31,7 +32,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicTransferValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicTransfer, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicTransfer, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Currency_Mosaic_Id = UnresolvedMosaicId(2345);
@@ -69,8 +70,8 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateMosaicTransferValidator(pConfigHolder);
 
 			// Act:

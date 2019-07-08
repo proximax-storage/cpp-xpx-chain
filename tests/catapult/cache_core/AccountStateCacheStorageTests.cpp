@@ -22,6 +22,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
@@ -37,8 +38,8 @@ namespace catapult { namespace cache {
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = test::Default_Currency_Mosaic_Id;
 			config.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			return pConfigHolder;
 		}
 	}

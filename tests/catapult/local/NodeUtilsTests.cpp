@@ -21,6 +21,7 @@
 #include "catapult/local/NodeUtils.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/LocalNodeBootstrapper.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -51,7 +52,7 @@ namespace catapult { namespace local {
 		// Arrange:
 		auto hexPrivateKey = test::GenerateRandomHexString(2 * Key_Size);
 		auto config = CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL");
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 		pConfigHolder->SetConfig(Height{0}, CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
 		extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
@@ -71,7 +72,7 @@ namespace catapult { namespace local {
 	TEST(TEST_CLASS, SeedNodeContainerAddsLocalAndStaticNodes) {
 		// Arrange:
 		auto hexPrivateKey = test::GenerateRandomHexString(2 * Key_Size);
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 		pConfigHolder->SetConfig(Height{0}, CreateLocalNodeConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
 		extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
@@ -112,7 +113,7 @@ namespace catapult { namespace local {
 					<< "seed with lengths: " << localHostSize << ", " << localNameSize
 					<< ", " << peerHostSize << ", " << peerNameSize;
 
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetConfig(Height{0}, CreateLocalNodeConfiguration(bootKey, std::string(localHostSize, 'm'), std::string(localNameSize, 'l')));
 			extensions::LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 

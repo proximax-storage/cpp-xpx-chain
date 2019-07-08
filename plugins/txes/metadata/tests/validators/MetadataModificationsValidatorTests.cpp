@@ -9,6 +9,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "src/state/MetadataUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MetadataCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -19,7 +20,7 @@ namespace catapult { namespace validators {
 
 	constexpr uint8_t MaxFields = 5;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		const Address Raw_Data = test::GenerateRandomData<Address_Decoded_Size>();
@@ -57,8 +58,8 @@ namespace catapult { namespace validators {
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
 			PopulateCache(cache, initValues);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateMetadataModificationsValidator(pConfigHolder);
 
 			uint32_t sizeOfBuffer = 0;

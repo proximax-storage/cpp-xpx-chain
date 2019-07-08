@@ -52,7 +52,7 @@ namespace catapult { namespace syncsource {
 				return cache.view().unknownTransactions(minFeeMultiplier, shortHashes);
 			};
 
-			SetConfig(config.BlocksHandlerConfig, state.config().Node);
+			SetConfig(config.BlocksHandlerConfig, state.config(Height{0}).Node);
 			return config;
 		}
 

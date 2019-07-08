@@ -26,6 +26,7 @@ namespace catapult { namespace plugins {
 	PluginManager::PluginManager(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const StorageConfiguration& storageConfig)
 			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
+			, m_shouldEnableVerifiableState(config(Height{0}).ShouldEnableVerifiableState)
 	{}
 
 	// region config
@@ -49,7 +50,15 @@ namespace catapult { namespace plugins {
 		return cache::CacheConfiguration(
 				(boost::filesystem::path(m_storageConfig.CacheDatabaseDirectory) / name).generic_string(),
 				m_storageConfig.MaxCacheDatabaseWriteBatchSize,
-				config(Height{0}).ShouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
+				m_shouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
+	}
+
+	void PluginManager::setShouldEnableVerifiableState(bool shouldEnableVerifiableState) {
+		m_shouldEnableVerifiableState = shouldEnableVerifiableState;
+	}
+
+	bool PluginManager::shouldEnableVerifiableState() const {
+		return m_shouldEnableVerifiableState;
 	}
 
 	// endregion
@@ -219,7 +228,7 @@ namespace catapult { namespace plugins {
 	// region publisher
 
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
-		return model::CreateNotificationPublisher(m_transactionRegistry, model::GetUnresolvedCurrencyMosaicId(config(Height{0})), mode);
+		return model::CreateNotificationPublisher(m_transactionRegistry, configHolder(), mode);
 	}
 
 	// endregion

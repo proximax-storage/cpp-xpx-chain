@@ -28,6 +28,7 @@
 #include "tests/test/core/HashTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/TestHarness.h"
 
 using namespace catapult::model;
@@ -57,7 +58,6 @@ namespace catapult { namespace chain {
 			auto config = ChainSynchronizerConfiguration();
 			config.MaxBlocksPerSyncAttempt = 4 * 100;
 			config.MaxChainBytesPerSyncAttempt = utils::FileSize::FromKilobytes(8 * 512).bytes32();
-			config.MaxRollbackBlocks = 360;
 			return config;
 		}
 
@@ -75,14 +75,17 @@ namespace catapult { namespace chain {
 					const ChainScore& remoteScore,
 					const HashRange& localHashes,
 					const HashRange& remoteHashes,
-					std::unique_ptr<Block>&& pRemoteLastBlock)
+					std::unique_ptr<Block>&& pRemoteLastBlock,
+					uint32_t maxRollbackBlocks = 360)
 					: LocalScore(localScore)
 					, LocalHashes(HashRange::CopyRange(localHashes))
 					, pIo(std::make_shared<MockPacketIo>())
 					, pChainApi(std::make_shared<MockChainApi>(remoteScore, std::move(pRemoteLastBlock), remoteHashes))
 					, BlockRangeConsumerCalls(0)
 					, Config(CreateConfiguration())
-			{}
+					, pTestState(std::make_shared<test::ServiceTestState>()) {
+				const_cast<uint32_t&>(pTestState->state().config(Height{0}).BlockChain.MaxRollbackBlocks) = maxRollbackBlocks;
+			}
 
 			void assertNoCalls() const {
 				EXPECT_EQ(0u, BlockRangeConsumerCalls);
@@ -96,6 +99,7 @@ namespace catapult { namespace chain {
 			std::vector<Key> BlockRangeSourcePublicKeys;
 			ChainSynchronizerConfiguration Config;
 			disruptor::ProcessingCompleteFunc ProcessingComplete;
+			std::shared_ptr<test::ServiceTestState> pTestState;
 		};
 
 		enum class ConsumerMode { Normal, Full };
@@ -111,7 +115,7 @@ namespace catapult { namespace chain {
 				return ConsumerMode::Normal == mode ? context.BlockRangeConsumerCalls : 0;
 			};
 
-			return CreateChainSynchronizer(pLocal, context.Config, blockRangeConsumer);
+			return CreateChainSynchronizer(pLocal, context.Config, context.pTestState->state(), blockRangeConsumer);
 		}
 
 		void AssertSync(const TestContext& context, size_t numBlockConsumerCalls) {
@@ -192,9 +196,9 @@ namespace catapult { namespace chain {
 					ChainScore(11),
 					localHashes,
 					remoteHashes,
-					test::GenerateVerifiableBlockAtHeight(Default_Height));
+					test::GenerateVerifiableBlockAtHeight(Default_Height),
+					9);
 			context.pChainApi->setNumBlocksPerBlocksFromRequest({ 2 });
-			context.Config.MaxRollbackBlocks = 9;
 			context.Config.MaxBlocksPerSyncAttempt = 5;
 			context.Config.MaxChainBytesPerSyncAttempt = 23;
 			return context;
@@ -351,9 +355,9 @@ namespace catapult { namespace chain {
 					ChainScoreRelation::RemoteBetter == relation ? ChainScore(11) : ChainScore(10),
 					localHashes,
 					remoteHashes,
-					test::GenerateVerifiableBlockAtHeight(Default_Height));
+					test::GenerateVerifiableBlockAtHeight(Default_Height),
+					9);
 			context.pChainApi->setNumBlocksPerBlocksFromRequest({ 2 });
-			context.Config.MaxRollbackBlocks = 9;
 			return context;
 		}
 

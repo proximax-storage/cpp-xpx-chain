@@ -19,17 +19,19 @@
 **/
 
 #pragma once
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/plugins.h"
 #include "catapult/types.h"
 #include <memory>
 
-namespace catapult { namespace model { class TransactionPlugin; } }
+namespace catapult {
+	namespace config { class LocalNodeConfigurationHolder; }
+	namespace model { class TransactionPlugin; }
+}
 
 namespace catapult { namespace plugins {
 
 	/// Mosaic rental fee configuration.
-	struct MosaicRentalFeeConfiguration : public model::PluginConfiguration {
+	struct MosaicRentalFeeConfiguration {
 		/// Public key of the rental fee sink account.
 		Key SinkPublicKey;
 
@@ -48,5 +50,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a mosaic definition transaction plugin given the (\a config).
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateMosaicDefinitionTransactionPlugin(const model::BlockChainConfiguration& config);
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicDefinitionTransactionPlugin(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 }}

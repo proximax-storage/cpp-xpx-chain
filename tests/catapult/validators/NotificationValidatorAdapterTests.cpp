@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/validators/NotificationValidatorAdapter.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -31,7 +32,7 @@ namespace catapult { namespace validators {
 	namespace {
 		ValidationResult ValidateEntity(const stateless::EntityValidator& validator, const model::VerifiableEntity& entity) {
 			Hash256 hash;
-			return validator.validate(model::WeakEntityInfo(entity, hash));
+			return validator.validate(model::WeakEntityInfo(entity, hash, Height{0}));
 		}
 
 		class MockNotificationValidator : public stateless::NotificationValidator {
@@ -85,7 +86,7 @@ namespace catapult { namespace validators {
 			const auto& validator = *pValidator;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId());
+			auto pPublisher = model::CreateNotificationPublisher(registry, std::make_shared<config::MockLocalNodeConfigurationHolder>());
 			NotificationValidatorAdapter adapter(std::move(pValidator), std::move(pPublisher));
 
 			// Act + Assert:

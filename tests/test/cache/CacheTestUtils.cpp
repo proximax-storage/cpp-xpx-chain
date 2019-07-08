@@ -25,6 +25,7 @@
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
@@ -55,7 +56,7 @@ namespace catapult { namespace test {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches) {
 		using namespace cache;
 
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config(Height{0}).BlockChain) = config;
 
 		subCaches[AccountStateCache::Id] = MakeSubCachePluginWithCacheConfiguration<AccountStateCache, AccountStateCacheStorage>(

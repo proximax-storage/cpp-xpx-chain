@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/utils/NonCopyable.h"
+#include <string>
 
 namespace catapult {
 	namespace extensions {
@@ -27,6 +28,10 @@ namespace catapult {
 		struct LocalNodeStateRef;
 	}
 	namespace plugins { class PluginManager; }
+	namespace cache {
+		class CatapultCache;
+		struct SupplementalData;
+	}
 }
 
 namespace catapult { namespace extensions {
@@ -42,5 +47,8 @@ namespace catapult { namespace extensions {
 
 		/// Saves all in memory state from \a stateRef to storage.
 		virtual void saveToStorage(const LocalNodeStateConstRef& stateRef) = 0;
+
+		/// Loads blockchain state into \a cache and \a supplementalData from \a dataDirectory.
+		virtual bool loadState(const std::string& dataDirectory, cache::CatapultCache& cache, cache::SupplementalData& supplementalData) = 0;
 	};
 }}

@@ -48,7 +48,7 @@ namespace catapult { namespace cache {
 				size_t value,
 				test::SimpleCacheViewMode mode) {
 			auto pCache = std::make_unique<SimpleCacheT<TViewExtension, TDeltaExtension>>(mode);
-			auto delta = pCache->createDelta();
+			auto delta = pCache->createDelta(Height{0});
 			for (auto i = 0u; i < value; ++i)
 				delta->increment();
 
@@ -120,7 +120,7 @@ namespace catapult { namespace cache {
 
 		// Assert:
 		ASSERT_TRUE(!!pCache);
-		EXPECT_EQ(5u, pCache->createView()->id());
+		EXPECT_EQ(5u, pCache->createView(Height{0})->id());
 	}
 
 	TEST(TEST_CLASS, CanAccessTypedCacheReference) {
@@ -162,7 +162,7 @@ namespace catapult { namespace cache {
 		SimpleCachePluginAdapter adapter(CreateSimpleCacheWithValue(5));
 
 		// Act:
-		auto pView = adapter.createView();
+		auto pView = adapter.createView(Height{0});
 
 		// Assert:
 		AssertView<test::SimpleCacheView>(pView, 5, SubCacheViewType::View);
@@ -173,7 +173,7 @@ namespace catapult { namespace cache {
 		SimpleCachePluginAdapter adapter(CreateSimpleCacheWithValue(5));
 
 		// Act:
-		auto pDelta = adapter.createDelta();
+		auto pDelta = adapter.createDelta(Height{0});
 
 		// Assert:
 		AssertView<test::SimpleCacheDelta>(pDelta, 5, SubCacheViewType::Delta);
@@ -190,7 +190,7 @@ namespace catapult { namespace cache {
 			auto pCache = CreateSimpleCacheWithValue(5);
 
 			SimpleCachePluginAdapter adapter(std::move(pCache));
-			auto pView = adapter.createDelta();
+			auto pView = adapter.createDelta(Height{0});
 
 			// Act + Assert:
 			action(*pView);
@@ -200,10 +200,10 @@ namespace catapult { namespace cache {
 		void RunTestForMerkleRootSupportedAndEnabled(TAction action) {
 			// Arrange:
 			auto pCache = CreateSimpleCacheWithValue(5, test::SimpleCacheViewMode::Merkle_Root);
-			auto expectedMerkleRoot = pCache->createView()->tryGetMerkleRoot().first;
+			auto expectedMerkleRoot = pCache->createView(Height{0})->tryGetMerkleRoot().first;
 
 			SimpleCachePluginAdapter adapter(std::move(pCache));
-			auto pView = adapter.createDelta();
+			auto pView = adapter.createDelta(Height{0});
 
 			// Act + Assert:
 			action(*pView, expectedMerkleRoot);
@@ -213,10 +213,10 @@ namespace catapult { namespace cache {
 		void RunTestForMerkleRootSupportedAndEnabledView(TAction action) {
 			// Arrange:
 			auto pCache = CreateSimpleCacheWithValue(5, test::SimpleCacheViewMode::Merkle_Root);
-			auto expectedMerkleRoot = pCache->createView()->tryGetMerkleRoot().first;
+			auto expectedMerkleRoot = pCache->createView(Height{0})->tryGetMerkleRoot().first;
 
 			SimpleCachePluginAdapter adapter(std::move(pCache));
-			auto pView = adapter.createView();
+			auto pView = adapter.createView(Height{0});
 
 			// Act + Assert:
 			action(*pView, expectedMerkleRoot);
@@ -229,7 +229,7 @@ namespace catapult { namespace cache {
 			auto pCache = CreateSimpleCacheWithValueT<CacheViewExtension, CacheViewExtension>(5, test::SimpleCacheViewMode::Merkle_Root);
 
 			SimpleCachePluginAdapterT<CacheViewExtension, CacheViewExtension> adapter(std::move(pCache));
-			auto pView = adapter.createDelta();
+			auto pView = adapter.createDelta(Height{0});
 
 			// Act + Assert:
 			action(*pView);
@@ -423,14 +423,14 @@ namespace catapult { namespace cache {
 		SimpleCachePluginAdapter adapter(CreateSimpleCacheWithValue(5));
 
 		// Act:
-		auto pDetachedDelta = adapter.createDetachedDelta();
+		auto pDetachedDelta = adapter.createDetachedDelta(Height{0});
 		ASSERT_TRUE(!!pDetachedDelta);
 	}
 
 	TEST(TEST_CLASS, CanAccessDeltaViewViaDetachedDelta) {
 		// Arrange:
 		SimpleCachePluginAdapter adapter(CreateSimpleCacheWithValue(5));
-		auto pDetachedDelta = adapter.createDetachedDelta();
+		auto pDetachedDelta = adapter.createDetachedDelta(Height{0});
 		ASSERT_TRUE(!!pDetachedDelta);
 
 		// Act:
@@ -443,12 +443,12 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CannotAccessDeltaViewViaOutdatedDetachedDelta) {
 		// Arrange:
 		SimpleCachePluginAdapter adapter(CreateSimpleCacheWithValue(5));
-		auto pDetachedDelta = adapter.createDetachedDelta();
+		auto pDetachedDelta = adapter.createDetachedDelta(Height{0});
 		ASSERT_TRUE(!!pDetachedDelta);
 
 		{
 			// - commit a change
-			auto pDelta = adapter.createDelta();
+			auto pDelta = adapter.createDelta(Height{0});
 			auto pDeltaRaw = static_cast<test::SimpleCacheDelta*>(pDelta->get());
 			pDeltaRaw->increment();
 			adapter.commit();
@@ -469,13 +469,13 @@ namespace catapult { namespace cache {
 		// Arrange:
 		SimpleCachePluginAdapter adapter(CreateSimpleCacheWithValue(5));
 		{
-			auto pDelta = adapter.createDelta();
+			auto pDelta = adapter.createDelta(Height{0});
 			auto pDeltaRaw = static_cast<test::SimpleCacheDelta*>(pDelta->get());
 			pDeltaRaw->increment();
 		}
 
 		// Act:
-		auto pView = adapter.createView();
+		auto pView = adapter.createView(Height{0});
 
 		// Assert: the increment above was discarded
 		AssertView<test::SimpleCacheView>(pView, 5, SubCacheViewType::View);
@@ -485,14 +485,14 @@ namespace catapult { namespace cache {
 		// Arrange:
 		SimpleCachePluginAdapter adapter(CreateSimpleCacheWithValue(5));
 		{
-			auto pDelta = adapter.createDelta();
+			auto pDelta = adapter.createDelta(Height{0});
 			auto pDeltaRaw = static_cast<test::SimpleCacheDelta*>(pDelta->get());
 			pDeltaRaw->increment();
 			adapter.commit();
 		}
 
 		// Act:
-		auto pView = adapter.createView();
+		auto pView = adapter.createView(Height{0});
 
 		// Assert: the increment above was committed
 		AssertView<test::SimpleCacheView>(pView, 6, SubCacheViewType::View);
@@ -534,7 +534,7 @@ namespace catapult { namespace cache {
 		mocks::MockMemoryStream stream("", buffer);
 
 		// Act:
-		pCacheStorage->saveAll(stream);
+		pCacheStorage->saveAll(stream, Height{0});
 
 		// Assert:
 		ASSERT_EQ(6 * sizeof(uint64_t), buffer.size());
@@ -565,7 +565,7 @@ namespace catapult { namespace cache {
 		pCacheStorage->loadAll(stream, 2);
 
 		// Assert:
-		auto pView = adapter.createView();
+		auto pView = adapter.createView(Height{0});
 		AssertView<test::SimpleCacheView>(pView, 3, SubCacheViewType::View);
 	}
 
@@ -580,16 +580,16 @@ namespace catapult { namespace cache {
 			{}
 
 		public:
-			auto createView() const {
-				return ViewProxy<const SubCacheView, test::SimpleCacheView>(m_cache.createView());
+			auto createView(const Height& height) const {
+				return ViewProxy<const SubCacheView, test::SimpleCacheView>(m_cache.createView(height));
 			}
 
-			auto createDelta() {
-				return ViewProxy<SubCacheView, test::SimpleCacheDelta>(m_cache.createDelta());
+			auto createDelta(const Height& height) {
+				return ViewProxy<SubCacheView, test::SimpleCacheDelta>(m_cache.createDelta(height));
 			}
 
-			auto createDetachedDelta() const {
-				return DetachedDeltaProxy(m_cache.createDetachedDelta());
+			auto createDetachedDelta(const Height& height) const {
+				return DetachedDeltaProxy(m_cache.createDetachedDelta(height));
 			}
 
 			void commit() {

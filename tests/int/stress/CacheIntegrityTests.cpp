@@ -25,6 +25,7 @@
 #include "catapult/utils/SpinLock.h"
 #include "tests/int/stress/test/StressThreadLogger.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -46,8 +47,8 @@ namespace catapult { namespace cache {
 			config.HarvestingMosaicId = MosaicId(2222);
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(0);
 			config.MaxRollbackBlocks = 0;
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			return pConfigHolder;
 		}
 
@@ -86,7 +87,7 @@ namespace catapult { namespace cache {
 
 						while (true) {
 							auto key = GetKeyFromId(i);
-							auto view = cache.createView();
+							auto view = cache.createView(Height{0});
 							auto accountStateIter = view->find(key);
 							if (!accountStateIter.tryGet())
 								continue;
@@ -102,7 +103,7 @@ namespace catapult { namespace cache {
 			threads.create_thread([&] {
 				test::StressThreadLogger logger("writer thread");
 
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				for (auto i = 0u; i < GetNumIterations(); ++i) {
 					logger.notifyIteration(i, GetNumIterations());
 
@@ -119,7 +120,7 @@ namespace catapult { namespace cache {
 			threads.join_all();
 
 			// Assert: all accounts were added to the cache and the reader(s) calculated the correct sum
-			EXPECT_EQ(GetNumIterations(), cache.createView()->size());
+			EXPECT_EQ(GetNumIterations(), cache.createView(Height{0})->size());
 
 			auto expectedSum = Amount(GetNumIterations() * (GetNumIterations() - 1) / 2u * 100'000);
 			for (const auto& sum : sums)
@@ -141,7 +142,7 @@ namespace catapult { namespace cache {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Act:
 			test::StressThreadLogger logger("main thread");
@@ -158,7 +159,7 @@ namespace catapult { namespace cache {
 		}
 
 		// Assert:
-		EXPECT_EQ(GetNumStressAccounts(), cache.createView()->size());
+		EXPECT_EQ(GetNumStressAccounts(), cache.createView(Height{0})->size());
 	}
 
 	// region hash cache performance
@@ -211,7 +212,7 @@ namespace catapult { namespace cache {
 		}
 
 		void PopulateCache(HashCache& cache, size_t count, const Generator& generator) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto i = 0u; i < count; ++i) {
 				auto hash = GenerateRandomHash(generator);
 				Timestamp timestamp(i);
@@ -224,7 +225,7 @@ namespace catapult { namespace cache {
 		}
 
 		uint64_t InsertTest(const Samples& samples, size_t count, HashCache& cache) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			Stopwatch stopwatch(count, "insert value");
 			uint64_t value = 0;
@@ -238,7 +239,7 @@ namespace catapult { namespace cache {
 		}
 
 		uint64_t ContainsTest(const Samples& samples, size_t count, const HashCache& cache) {
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 
 			Stopwatch stopwatch(count, "contains value");
 			uint64_t value = 0;
@@ -251,7 +252,7 @@ namespace catapult { namespace cache {
 		}
 
 		int64_t RemoveTest(const Samples& samples, size_t count, HashCache& cache) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			Stopwatch stopwatch(count, "remove value");
 			int64_t value = 0;
@@ -297,7 +298,7 @@ namespace catapult { namespace cache {
 
 		HashCache cache(config, CreateConfigHolder());
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			Stopwatch stopwatch(entriesCount, "rocks-based insert");
 			for (auto i = 0u; i < entriesCount; ++i)
@@ -307,11 +308,11 @@ namespace catapult { namespace cache {
 		}
 
 		// Sanity:
-		EXPECT_EQ(entriesCount, cache.createView()->size());
+		EXPECT_EQ(entriesCount, cache.createView(Height{0})->size());
 
 		// Act: prune entries below specified value
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// + 1 hour (3600 sec) min retention time
 			Stopwatch stopwatch(pruneCount, "rocks-based prune");
@@ -320,7 +321,7 @@ namespace catapult { namespace cache {
 		}
 
 		// Assert:
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		EXPECT_EQ(entriesCount - pruneCount, view->size());
 
 		Stopwatch stopwatch(entriesCount, "rocks-based contains");
@@ -378,7 +379,7 @@ namespace catapult { namespace cache {
 
 		template<typename TEntities>
 		uint64_t InsertAccounts(const TEntities& entities, size_t count, AccountStateCache& cache, const char* message) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			Stopwatch stopwatch(count, message);
 			uint64_t value = 0;
@@ -413,7 +414,7 @@ namespace catapult { namespace cache {
 		value += InsertAccounts(addresses, Num_Operations, cache);
 
 		// Assert:
-		EXPECT_EQ(2 * Num_Operations, cache.createView()->size());
+		EXPECT_EQ(2 * Num_Operations, cache.createView(Height{0})->size());
 	}
 
 	// endregion

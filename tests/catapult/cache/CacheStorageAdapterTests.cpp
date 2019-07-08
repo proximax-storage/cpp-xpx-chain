@@ -84,12 +84,12 @@ namespace catapult { namespace cache {
 			}
 
 		public:
-			std::unique_ptr<ViewAdapter> createView() const {
+			std::unique_ptr<ViewAdapter> createView(const Height&) const {
 				++m_counts.NumCreateViewCalls;
 				return std::make_unique<ViewAdapter>(m_entries);
 			}
 
-			std::vector<TestEntry>* createDelta() {
+			std::vector<TestEntry>* createDelta(const Height&) {
 				++m_counts.NumCreateDeltaCalls;
 				return &m_entries;
 			}
@@ -138,7 +138,7 @@ namespace catapult { namespace cache {
 			mocks::MockMemoryStream stream("", buffer);
 
 			// Act:
-			storage.saveAll(stream);
+			storage.saveAll(stream, Height{0});
 
 			// Assert:
 			EXPECT_EQ(1u, cache.counts().NumCreateViewCalls);

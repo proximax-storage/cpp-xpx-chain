@@ -229,6 +229,9 @@ namespace catapult { namespace test {
 			return m_id;
 		}
 
+		void setHeight(const Height&)
+		{}
+
 	public:
 		/// Gets the size.
 		size_t size() const {
@@ -326,6 +329,9 @@ namespace catapult { namespace test {
 		void increment() {
 			++m_id;
 		}
+
+		void setHeight(const Height&)
+		{}
 
 	public:
 		/// Finds the cache value identified by \a id.

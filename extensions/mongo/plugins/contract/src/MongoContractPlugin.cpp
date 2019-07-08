@@ -32,9 +32,9 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoReputationCacheStorage(
 			manager.createDatabaseConnection(),
 			manager.mongoContext().bulkWriter(),
-			manager.chainConfig().Network.Identifier));
+			manager.configHolder()));
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoContractCacheStorage(
 			manager.createDatabaseConnection(),
 			manager.mongoContext().bulkWriter(),
-			manager.chainConfig().Network.Identifier));
+			manager.configHolder()));
 }

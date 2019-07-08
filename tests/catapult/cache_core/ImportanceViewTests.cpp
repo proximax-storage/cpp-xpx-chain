@@ -23,6 +23,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/NetworkInfo.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 using catapult::model::ImportanceHeight;
@@ -45,8 +46,8 @@ namespace catapult { namespace cache {
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = MosaicId(1111);
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			return pConfigHolder;
 		}
 
@@ -96,7 +97,7 @@ namespace catapult { namespace cache {
 				AccountStateCache& cache,
 				const Key& publicKey,
 				Amount balance = Amount(0)) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto accountStateIter = TTraits::AddAccount(*delta, publicKey, Height(100));
 			auto& accountState = accountStateIter.get();
 			accountState.Balances.credit(Harvesting_Mosaic_Id, balance, Height(100));
@@ -283,7 +284,7 @@ namespace catapult { namespace cache {
 			auto pCache = CreateAccountStateCache();
 
 			{
-				auto delta = pCache->createDelta();
+				auto delta = pCache->createDelta(Height{0});
 				auto accountStateIter = RemoteAccountTraits::AddAccount(*delta, publicKey, Height(100));
 				mutator(accountStateIter.get());
 				pCache->commit();

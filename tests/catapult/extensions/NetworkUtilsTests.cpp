@@ -64,7 +64,6 @@ namespace catapult { namespace extensions {
 		auto settings = GetConnectionSettings(config);
 
 		// Assert:
-		EXPECT_EQ(static_cast<model::NetworkIdentifier>(7), settings.NetworkIdentifier);
 		EXPECT_EQ(utils::TimeSpan::FromSeconds(11), settings.Timeout);
 		EXPECT_EQ(utils::FileSize::FromBytes(512), settings.SocketWorkingBufferSize);
 		EXPECT_EQ(987u, settings.SocketWorkingBufferSensitivity);

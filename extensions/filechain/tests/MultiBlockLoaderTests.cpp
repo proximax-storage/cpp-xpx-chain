@@ -27,6 +27,7 @@
 #include "filechain/tests/test/FilechainTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/BlockStateHash.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -166,7 +167,7 @@ namespace catapult { namespace filechain {
 		};
 
 		auto CreateConfigHolder() {
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			return pConfigHolder;
 		}
 

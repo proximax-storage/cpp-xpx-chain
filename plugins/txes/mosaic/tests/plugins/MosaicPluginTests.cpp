@@ -22,6 +22,7 @@
 #include "src/plugins/MosaicPlugin.h"
 #include "src/cache/MosaicCache.h"
 #include "src/model/MosaicEntityType.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -52,8 +53,8 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(Height{0}, config);
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterMosaicSubsystem(manager);
 

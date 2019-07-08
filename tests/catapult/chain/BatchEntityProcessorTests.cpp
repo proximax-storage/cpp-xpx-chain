@@ -169,7 +169,7 @@ namespace catapult { namespace chain {
 			// - map to entity infos (use the entity itself as its fake hash since we know it will be alive)
 			model::WeakEntityInfos entityInfos;
 			for (auto i = 0u; i < entities.size(); ++i)
-				entityInfos.push_back(model::WeakEntityInfo(*entities[i], reinterpret_cast<const Hash256&>(*entities[i])));
+				entityInfos.push_back(model::WeakEntityInfo(*entities[i], reinterpret_cast<const Hash256&>(*entities[i]), Height{0}));
 
 			return entityInfos;
 		}

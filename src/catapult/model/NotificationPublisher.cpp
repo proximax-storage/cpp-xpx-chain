@@ -24,6 +24,7 @@
 #include "FeeUtils.h"
 #include "NotificationSubscriber.h"
 #include "TransactionPlugin.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace model {
 
@@ -35,9 +36,9 @@ namespace catapult { namespace model {
 
 		class BasicNotificationPublisher : public NotificationPublisher {
 		public:
-			BasicNotificationPublisher(const TransactionRegistry& transactionRegistry, UnresolvedMosaicId feeMosaicId)
+			BasicNotificationPublisher(const TransactionRegistry& transactionRegistry, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 					: m_transactionRegistry(transactionRegistry)
-					, m_feeMosaicId(feeMosaicId)
+					, m_pConfigHolder(pConfigHolder)
 			{}
 
 		public:
@@ -127,7 +128,7 @@ namespace catapult { namespace model {
 				auto fee = pBlockHeader ? CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction) : transaction.MaxFee;
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
-				sub.notify(BalanceDebitNotification<1>(transaction.Signer, m_feeMosaicId, fee));
+				sub.notify(BalanceDebitNotification<1>(transaction.Signer, model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->Config(pBlockHeader->Height).BlockChain), fee));
 
 				// raise a signature notification
 				sub.notify(SignatureNotification<1>(transaction.Signer, transaction.Signature, plugin.dataBuffer(transaction)));
@@ -135,7 +136,7 @@ namespace catapult { namespace model {
 
 		private:
 			const TransactionRegistry& m_transactionRegistry;
-			UnresolvedMosaicId m_feeMosaicId;
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
 		};
 
 		class CustomNotificationPublisher : public NotificationPublisher {
@@ -151,12 +152,12 @@ namespace catapult { namespace model {
 				if (BasicEntityType::Transaction != ToBasicEntityType(entityInfo.type()))
 					return;
 
-				return publish(static_cast<const Transaction&>(entityInfo.entity()), entityInfo.hash(), sub);
+				return publish(static_cast<const Transaction&>(entityInfo.entity()), entityInfo.hash(), entityInfo.associatedHeight(), sub);
 			}
 
-			void publish(const Transaction& transaction, const Hash256& hash, NotificationSubscriber& sub) const {
+			void publish(const Transaction& transaction, const Hash256& hash, const Height& associatedHeight, NotificationSubscriber& sub) const {
 				const auto& plugin = *m_transactionRegistry.findPlugin(transaction.Type);
-				plugin.publish(WeakEntityInfoT<Transaction>(transaction, hash), sub);
+				plugin.publish(WeakEntityInfoT<Transaction>(transaction, hash, associatedHeight), sub);
 			}
 
 		private:
@@ -165,8 +166,8 @@ namespace catapult { namespace model {
 
 		class AllNotificationPublisher : public NotificationPublisher {
 		public:
-			AllNotificationPublisher(const TransactionRegistry& transactionRegistry, UnresolvedMosaicId feeMosaicId)
-					: m_basicPublisher(transactionRegistry, feeMosaicId)
+			AllNotificationPublisher(const TransactionRegistry& transactionRegistry, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+					: m_basicPublisher(transactionRegistry, pConfigHolder)
 					, m_customPublisher(transactionRegistry)
 			{}
 
@@ -184,17 +185,17 @@ namespace catapult { namespace model {
 
 	std::unique_ptr<NotificationPublisher> CreateNotificationPublisher(
 			const TransactionRegistry& transactionRegistry,
-			UnresolvedMosaicId feeMosaicId,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			PublicationMode mode) {
 		switch (mode) {
 		case PublicationMode::Basic:
-			return std::make_unique<BasicNotificationPublisher>(transactionRegistry, feeMosaicId);
+			return std::make_unique<BasicNotificationPublisher>(transactionRegistry, pConfigHolder);
 
 		case PublicationMode::Custom:
 			return std::make_unique<CustomNotificationPublisher>(transactionRegistry);
 
 		default:
-			return std::make_unique<AllNotificationPublisher>(transactionRegistry, feeMosaicId);
+			return std::make_unique<AllNotificationPublisher>(transactionRegistry, pConfigHolder);
 		}
 	}
 }}

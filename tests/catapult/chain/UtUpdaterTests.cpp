@@ -425,7 +425,7 @@ namespace catapult { namespace chain {
 			std::vector<model::TransactionInfo> UtInfos;
 			std::vector<const model::VerifiableEntity*> Entities;
 			std::vector<Hash256> Hashes;
-			std::vector<model::WeakEntityInfo> EntityInfos;
+			model::WeakEntityInfos EntityInfos;
 		};
 
 		std::vector<UtUpdater::TransactionSource> CreateRevertedAndExistingSources(size_t numReverted, size_t numExisting) {
@@ -435,7 +435,7 @@ namespace catapult { namespace chain {
 		}
 
 		model::WeakEntityInfo CreateEntityInfoAt(const TransactionData& data, size_t index) {
-			return model::WeakEntityInfo(*data.Entities[index], data.UtInfos[index].EntityHash);
+			return model::WeakEntityInfo(*data.Entities[index], data.UtInfos[index].EntityHash, Height{0});
 		}
 
 		TransactionData CreateTransactionData(size_t count, size_t start = 0) {

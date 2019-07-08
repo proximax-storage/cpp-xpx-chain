@@ -22,6 +22,7 @@
 #include "src/validators/Validators.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/model/Address.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -30,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PropertyAddressNoSelfModificationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -45,8 +46,8 @@ namespace catapult { namespace validators {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(pConfigHolder);
 
 			// Act:

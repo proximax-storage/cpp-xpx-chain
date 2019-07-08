@@ -24,6 +24,7 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/Casting.h"
@@ -118,12 +119,12 @@ namespace catapult { namespace consumers {
 					cache::CatapultCache& cache,
 					state::CatapultState& state,
 					io::BlockStorageCache& storage,
-					uint32_t maxRollbackBlocks,
+					const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 					const BlockChainSyncHandlers& handlers)
 					: m_cache(cache)
 					, m_state(state)
 					, m_storage(storage)
-					, m_maxRollbackBlocks(maxRollbackBlocks)
+					, m_pConfigHolder(pConfigHolder)
 					, m_handlers(handlers)
 			{}
 
@@ -163,7 +164,7 @@ namespace catapult { namespace consumers {
 
 				// 2. check that the remote chain is not too far behind the current chain
 				auto heightDifference = static_cast<int64_t>((localChainHeight - peerStartHeight).unwrap());
-				if (heightDifference > m_maxRollbackBlocks)
+				if (heightDifference > m_pConfigHolder->Config(localChainHeight).BlockChain.MaxRollbackBlocks)
 					return Abort(Failure_Consumer_Remote_Chain_Too_Far_Behind);
 
 				// 3. check difficulties against difficulties in cache
@@ -216,6 +217,7 @@ namespace catapult { namespace consumers {
 				auto height = localChainHeight;
 				std::shared_ptr<const model::BlockElement> pChildBlockElement;
 				while (true) {
+					observerState.Cache.setHeight(height);
 					auto pParentBlockElement = storage.loadBlockElement(height);
 					if (pChildBlockElement) {
 						result.Score += model::ChainScore(chain::CalculateScore(pParentBlockElement->Block, pChildBlockElement->Block));
@@ -279,7 +281,7 @@ namespace catapult { namespace consumers {
 			cache::CatapultCache& m_cache;
 			state::CatapultState& m_state;
 			io::BlockStorageCache& m_storage;
-			uint32_t m_maxRollbackBlocks;
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
 			BlockChainSyncHandlers m_handlers;
 		};
 	}
@@ -288,8 +290,8 @@ namespace catapult { namespace consumers {
 			cache::CatapultCache& cache,
 			state::CatapultState& state,
 			io::BlockStorageCache& storage,
-			uint32_t maxRollbackBlocks,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			const BlockChainSyncHandlers& handlers) {
-		return BlockChainSyncConsumer(cache, state, storage, maxRollbackBlocks, handlers);
+		return BlockChainSyncConsumer(cache, state, storage, pConfigHolder, handlers);
 	}
 }}

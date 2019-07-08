@@ -21,6 +21,7 @@
 #include "src/cache/PropertyCacheStorage.h"
 #include "src/cache/PropertyCache.h"
 #include "src/model/PropertyTypes.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/AccountPropertiesTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -32,8 +33,8 @@ namespace catapult { namespace cache {
 		// Arrange:
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(blockChainConfig);
 		state::AccountProperties originalAccountProperties(test::GenerateRandomData<Address_Decoded_Size>());
 		auto& property = originalAccountProperties.property(model::PropertyType::Address);
 		for (auto i = 0u; i < 3; ++i)

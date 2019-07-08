@@ -27,6 +27,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace sync {
@@ -146,11 +147,14 @@ namespace catapult { namespace sync {
 			pTransaction->Type = transactionType;
 			pTransaction->MaxFee = Amount(2'000'000);
 
+			auto serviceState = test::ServiceTestState();
+			serviceState.state().pluginManager().configHolder()->SetConfig(Height{0}, config);
+
 			// Sanity:
 			EXPECT_EQ(cacheSize, utCacheModifier.size());
 
 			// Act:
-			auto isThrottled = CreateUtUpdaterThrottle(config)(model::TransactionInfo(pTransaction), throttleContext);
+			auto isThrottled = CreateUtUpdaterThrottle(serviceState.state())(model::TransactionInfo(pTransaction), throttleContext);
 
 			// Assert:
 			EXPECT_EQ(expectedIsThrottled, isThrottled)

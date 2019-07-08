@@ -21,6 +21,7 @@
 #include "src/validators/Validators.h"
 #include "catapult/model/Address.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS AddressValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Address, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(Address, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
@@ -41,7 +42,7 @@ namespace catapult { namespace validators {
 			auto cache = test::CreateEmptyCatapultCache(config);
 
 			model::AccountAddressNotification<notificationVersion> notification(test::UnresolveXor(address));
-			auto pValidator = CreateAddressValidator(std::make_shared<config::LocalNodeConfigurationHolder>());
+			auto pValidator = CreateAddressValidator(std::make_shared<config::MockLocalNodeConfigurationHolder>());
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

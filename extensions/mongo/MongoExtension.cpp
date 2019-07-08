@@ -100,9 +100,9 @@ namespace catapult { namespace mongo {
 					std::shared_ptr<thread::IoThreadPool>(pBulkWriterPool.get(), [](const auto*) {}));
 
 			// create transaction registry
-			const auto& config = bootstrapper.config();
+			const auto& config = bootstrapper.config(Height{0});
 			auto pMongoContext = std::make_shared<MongoStorageContext>(dbUri, dbName, pMongoBulkWriter);
-			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext, config.BlockChain);
+			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext, bootstrapper.configHolder());
 			auto pTransactionRegistry = CreateTransactionRegistry(pPluginManager, config.User.PluginsDirectory, dbConfig.Plugins);
 
 			// create mongo chain score provider and mongo (cache) storage

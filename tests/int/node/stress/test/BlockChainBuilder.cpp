@@ -26,6 +26,7 @@
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/io/FileBlockStorage.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "tests/test/nodeps/MijinConstants.h"
@@ -234,7 +235,9 @@ namespace catapult { namespace test {
 	}
 
 	crypto::KeyPair BlockChainBuilder::findSigner(const model::PreviousBlockContext& context, Timestamp timestamp, Difficulty difficulty) {
-		chain::BlockHitPredicate hitPredicate(m_config, [](const auto&, auto) {
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(m_config);
+		chain::BlockHitPredicate hitPredicate(pConfigHolder, [](const auto&, auto) {
 			// to simplfy tests, just return a constant importance
 			return Importance(8'999'999'998'000'000);
 		});

@@ -39,11 +39,8 @@ namespace catapult { namespace eventsource {
 
 		thread::Task CreateAgePeersTask(extensions::ServiceState& state, net::ConnectionContainer& connectionContainer) {
 			auto settings = extensions::SelectorSettings(
-					state.cache(),
-					state.config().BlockChain.TotalChainImportance,
-					state.nodes(),
-					Service_Id,
-					state.config().Node.IncomingConnections);
+					state,
+					Service_Id);
 			auto task = extensions::CreateAgePeersTask(settings, connectionContainer);
 			task.Name += " for service Api Writers";
 			return task;
@@ -62,10 +59,10 @@ namespace catapult { namespace eventsource {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				const auto& config = state.config();
+				const auto& config = state.config(Height{0});
 				auto connectionSettings = extensions::GetConnectionSettings(config);
 				auto pServiceGroup = state.pool().pushServiceGroup("api");
-				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings);
+				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
 				auto& acceptor = *pWriters;
 				extensions::BootServer(*pServiceGroup, config.Node.ApiPort, Service_Id, config, state.nodeSubscriber(), [&acceptor](
 						const auto& socketInfo,

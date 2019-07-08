@@ -266,6 +266,6 @@ namespace catapult { namespace chain {
 		}
 
 		// Sanity: the original cache was not modified at all
-		EXPECT_EQ(0u, cache.sub<cache::AccountStateCache>().createView()->size());
+		EXPECT_EQ(0u, cache.sub<cache::AccountStateCache>().createView(Height{0})->size());
 	}
 }}

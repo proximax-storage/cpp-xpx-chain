@@ -162,6 +162,10 @@ namespace catapult { namespace cache {
 				return m_view->enabled();
 			}
 
+			void setHeight(const Height& height) override {
+				return m_view->setHeight(height);
+			}
+
 		private:
 			enum class MerkleRootType { Unsupported, Supported };
 			using UnsupportedMerkleRootFlag = std::integral_constant<MerkleRootType, MerkleRootType::Unsupported>;

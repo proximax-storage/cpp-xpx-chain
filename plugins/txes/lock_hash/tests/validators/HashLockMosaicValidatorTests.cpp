@@ -19,6 +19,7 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -27,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockMosaicValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
@@ -46,8 +47,8 @@ namespace catapult { namespace validators {
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.lockhash", pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateHashLockMosaicValidator(pConfigHolder);
 
 			// Act:

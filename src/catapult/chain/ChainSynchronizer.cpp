@@ -21,6 +21,7 @@
 #include "ChainSynchronizer.h"
 #include "CompareChains.h"
 #include "catapult/api/RemoteChainApi.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/utils/SpinLock.h"
@@ -233,9 +234,10 @@ namespace catapult { namespace chain {
 			explicit DefaultChainSynchronizer(
 					const std::shared_ptr<const api::ChainApi>& pLocalChainApi,
 					const ChainSynchronizerConfiguration& config,
+					extensions::ServiceState& state,
 					const CompletionAwareBlockRangeConsumerFunc& blockRangeConsumer)
 					: m_pLocalChainApi(pLocalChainApi)
-					, m_compareChainOptions(config.MaxBlocksPerSyncAttempt, config.MaxRollbackBlocks)
+					, m_state(state)
 					, m_blocksFromOptions(config.MaxBlocksPerSyncAttempt, config.MaxChainBytesPerSyncAttempt)
 					, m_pUnprocessedElements(std::make_shared<UnprocessedElements>(
 							blockRangeConsumer,
@@ -267,8 +269,9 @@ namespace catapult { namespace chain {
 			// in case that there are no unprocessed elements in the disruptor, we do a normal synchronization round
 			// else we bypass chain comparison and expand the existing chain part by pulling more blocks
 			thread::future<CompareChainsResult> compareChains(const RemoteApiType& remoteChainApi) {
+				const auto& config = m_state.config(m_state.cache().height());
 				if (m_pUnprocessedElements->empty())
-					return CompareChains(*m_pLocalChainApi, remoteChainApi, m_compareChainOptions);
+					return CompareChains(*m_pLocalChainApi, remoteChainApi, CompareChainsOptions(config.Node.MaxBlocksPerSyncAttempt, config.BlockChain.MaxRollbackBlocks));
 
 				CompareChainsResult result;
 				result.Code = ChainComparisonCode::Remote_Is_Not_Synced;
@@ -303,7 +306,7 @@ namespace catapult { namespace chain {
 
 		private:
 			std::shared_ptr<const api::ChainApi> m_pLocalChainApi;
-			CompareChainsOptions m_compareChainOptions;
+			extensions::ServiceState& m_state;
 			api::BlocksFromOptions m_blocksFromOptions;
 			std::shared_ptr<UnprocessedElements> m_pUnprocessedElements;
 		};
@@ -312,8 +315,9 @@ namespace catapult { namespace chain {
 	RemoteNodeSynchronizer<api::RemoteChainApi> CreateChainSynchronizer(
 			const std::shared_ptr<const api::ChainApi>& pLocalChainApi,
 			const ChainSynchronizerConfiguration& config,
+			extensions::ServiceState& state,
 			const CompletionAwareBlockRangeConsumerFunc& blockRangeConsumer) {
-		auto pSynchronizer = std::make_shared<DefaultChainSynchronizer>(pLocalChainApi, config, blockRangeConsumer);
+		auto pSynchronizer = std::make_shared<DefaultChainSynchronizer>(pLocalChainApi, config, state, blockRangeConsumer);
 		return CreateRemoteNodeSynchronizer(pSynchronizer);
 	}
 }}

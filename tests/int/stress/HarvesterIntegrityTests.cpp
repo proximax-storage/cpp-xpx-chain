@@ -31,6 +31,7 @@
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -70,8 +71,8 @@ namespace catapult { namespace harvesting {
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			test::CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -173,7 +174,7 @@ namespace catapult { namespace harvesting {
 						m_pPluginManager->createObserver(),
 						m_pPluginManager->createNotificationPublisher());
 				auto observerContext = observers::ObserverContext(observerState, Height(1), notifyMode, resolverContext);
-				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash), observerContext);
+				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height{0}), observerContext);
 				m_cache.commit(Height(1));
 			}
 

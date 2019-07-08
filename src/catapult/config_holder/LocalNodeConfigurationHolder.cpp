@@ -37,6 +37,12 @@ namespace catapult { namespace config {
 		return m_catapultConfigs.at(Height{0});
 	}
 
+	void LocalNodeConfigurationHolder::SetConfig(const Height& height, const LocalNodeConfiguration& config) {
+		if (m_catapultConfigs.count(height))
+			m_catapultConfigs.erase(height);
+		m_catapultConfigs.insert({ height, config });
+	}
+
 	LocalNodeConfiguration& LocalNodeConfigurationHolder::Config(const Height& height) {
 		if (m_catapultConfigs.count(height))
 			return m_catapultConfigs.at(height);
@@ -46,12 +52,9 @@ namespace catapult { namespace config {
 		if (m_catapultConfigs.count(height))
 			return m_catapultConfigs.at(height);
 
-		LocalNodeConfiguration config{
-			model::BlockChainConfiguration::Uninitialized(),
-			NodeConfiguration::Uninitialized(),
-			LoggingConfiguration::Uninitialized(),
-			UserConfiguration::Uninitialized(),
-			SupportedEntityVersions()};
+		auto iter = std::lower_bound(m_catapultConfigs.begin(), m_catapultConfigs.end(), configHeight,
+			[](const auto& pair, const auto& height) { return pair.first < height; });
+		LocalNodeConfiguration config((iter--)->second);
 
 		auto entry = configCache.find(configHeight).get();
 
@@ -73,18 +76,5 @@ namespace catapult { namespace config {
 		m_catapultConfigs.insert({ configHeight, config });
 
 		return m_catapultConfigs.at(configHeight);
-	}
-
-	void LocalNodeConfigurationHolder::SetConfig(const Height& height, const LocalNodeConfiguration& config) {
-		if (m_catapultConfigs.count(height))
-			m_catapultConfigs.erase(height);
-		m_catapultConfigs.insert({ height, config });
-	}
-	void LocalNodeConfigurationHolder::SetBlockChainConfig(const Height& height, const model::BlockChainConfiguration& config) {
-		const_cast<model::BlockChainConfiguration&>(m_catapultConfigs.at(height).BlockChain) = config;
-	}
-
-	void LocalNodeConfigurationHolder::SetCache(cache::CatapultCache* pCache) {
-		m_pCache = pCache;
 	}
 }}

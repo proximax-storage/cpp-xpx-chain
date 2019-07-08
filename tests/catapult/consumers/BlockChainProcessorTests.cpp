@@ -28,6 +28,7 @@
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
 
@@ -200,6 +201,8 @@ namespace catapult { namespace consumers {
 		public:
 			explicit ProcessorTestContext(ReceiptValidationMode receiptValidationMode = ReceiptValidationMode::Disabled)
 					: BlockHitPredicateFactory(BlockHitPredicate) {
+				auto& config = const_cast<model::BlockChainConfiguration&>(ServiceState.state().config(Height{0}).BlockChain);
+				config.ShouldEnableVerifiableReceipts = (receiptValidationMode == ReceiptValidationMode::Enabled);
 				Processor = CreateBlockChainProcessor(
 						[this](const auto& cache) {
 							return BlockHitPredicateFactory(cache);
@@ -207,7 +210,7 @@ namespace catapult { namespace consumers {
 						[this](auto height, auto timestamp, const auto& entities, auto& state) {
 							return BatchEntityProcessor(height, timestamp, entities, state);
 						},
-						receiptValidationMode);
+						ServiceState.state());
 			}
 
 		public:
@@ -217,6 +220,7 @@ namespace catapult { namespace consumers {
 			MockBlockHitPredicateFactory BlockHitPredicateFactory;
 			MockBatchEntityProcessor BatchEntityProcessor;
 			BlockChainProcessor Processor;
+			test::ServiceTestState ServiceState;
 
 		public:
 			ValidationResult Process(const model::BlockElement& parentBlockElement, BlockElements& elements) {

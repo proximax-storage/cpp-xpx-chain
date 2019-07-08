@@ -22,6 +22,7 @@
 #include "ConsumerResultFactory.h"
 #include "InputUtils.h"
 #include "catapult/chain/ChainUtils.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
 #include <unordered_set>
@@ -39,10 +40,10 @@ namespace catapult { namespace consumers {
 		public:
 			explicit BlockChainCheckConsumer(
 					uint32_t maxChainSize,
-					const utils::TimeSpan& maxBlockFutureTime,
+					const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 					const chain::TimeSupplier& timeSupplier)
 					: m_maxChainSize(maxChainSize)
-					, m_maxBlockFutureTime(maxBlockFutureTime)
+					, m_pConfigHolder(pConfigHolder)
 					, m_timeSupplier(timeSupplier)
 			{}
 
@@ -54,7 +55,7 @@ namespace catapult { namespace consumers {
 				if (elements.size() > m_maxChainSize)
 					return Abort(Failure_Consumer_Remote_Chain_Too_Many_Blocks);
 
-				if (!isChainTimestampAllowed(elements.back().Block.Timestamp))
+				if (!isChainTimestampAllowed(elements.back().Block))
 					return Abort(Failure_Consumer_Remote_Chain_Too_Far_In_Future);
 
 				utils::HashPointerSet hashes;
@@ -77,21 +78,21 @@ namespace catapult { namespace consumers {
 			}
 
 		private:
-			bool isChainTimestampAllowed(Timestamp chainTimestamp) const {
-				return chainTimestamp <= m_timeSupplier() + m_maxBlockFutureTime;
+			bool isChainTimestampAllowed(const model::Block& block) const {
+				return block.Timestamp <= m_timeSupplier() + m_pConfigHolder->Config(block.Height).BlockChain.MaxBlockFutureTime;
 			}
 
 		private:
 			uint32_t m_maxChainSize;
-			utils::TimeSpan m_maxBlockFutureTime;
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
 			chain::TimeSupplier m_timeSupplier;
 		};
 	}
 
 	disruptor::ConstBlockConsumer CreateBlockChainCheckConsumer(
 			uint32_t maxChainSize,
-			const utils::TimeSpan& maxBlockFutureTime,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			const chain::TimeSupplier& timeSupplier) {
-		return BlockChainCheckConsumer(maxChainSize, maxBlockFutureTime, timeSupplier);
+		return BlockChainCheckConsumer(maxChainSize, pConfigHolder, timeSupplier);
 	}
 }}

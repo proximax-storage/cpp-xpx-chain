@@ -24,6 +24,7 @@
 #include "catapult/model/Address.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/TestHarness.h"
 
@@ -58,7 +59,7 @@ namespace catapult { namespace consumers {
 			}
 
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), model::PublicationMode::Basic);
+			auto pPublisher = model::CreateNotificationPublisher(registry, std::make_shared<config::MockLocalNodeConfigurationHolder>(), model::PublicationMode::Basic);
 			auto input = test::CreateBlockElements(rawBlocks);
 
 			// Act:
@@ -81,7 +82,7 @@ namespace catapult { namespace consumers {
 	TEST(BLOCK_TEST_CLASS, CanProcessZeroEntities) {
 		// Assert:
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), model::PublicationMode::Basic);
+		auto pPublisher = model::CreateNotificationPublisher(registry, std::make_shared<config::MockLocalNodeConfigurationHolder>(), model::PublicationMode::Basic);
 		test::AssertPassthroughForEmptyInput(CreateBlockAddressExtractionConsumer(*pPublisher));
 	}
 
@@ -113,7 +114,7 @@ namespace catapult { namespace consumers {
 		void AssertTransactionAddressesAreExtractedCorrectly(uint32_t numTransactions) {
 			// Arrange:
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), model::PublicationMode::Basic);
+			auto pPublisher = model::CreateNotificationPublisher(registry, std::make_shared<config::MockLocalNodeConfigurationHolder>(), model::PublicationMode::Basic);
 			auto input = test::CreateTransactionElements(numTransactions);
 
 			// Act:
@@ -134,7 +135,7 @@ namespace catapult { namespace consumers {
 	TEST(TRANSACTION_TEST_CLASS, CanProcessZeroEntities) {
 		// Assert:
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId(), model::PublicationMode::Basic);
+		auto pPublisher = model::CreateNotificationPublisher(registry, std::make_shared<config::MockLocalNodeConfigurationHolder>(), model::PublicationMode::Basic);
 		test::AssertPassthroughForEmptyInput(CreateTransactionAddressExtractionConsumer(*pPublisher));
 	}
 

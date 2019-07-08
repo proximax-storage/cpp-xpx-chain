@@ -64,10 +64,12 @@ namespace catapult { namespace harvesting {
 			return options;
 		}
 
-		void PruneUnlockedAccounts(UnlockedAccounts& unlockedAccounts, const cache::CatapultCache& cache, Amount minHarvesterBalance) {
+		void PruneUnlockedAccounts(UnlockedAccounts& unlockedAccounts, const cache::CatapultCache& cache,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 			auto cacheView = cache.createView();
 			auto height = cacheView.height() + Height(1);
 			auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
+			auto minHarvesterBalance = pConfigHolder->Config(height).BlockChain.MinHarvesterBalance;
 			unlockedAccounts.modifier().removeIf([height, minHarvesterBalance, &readOnlyAccountStateCache](const auto& key) {
 				cache::ImportanceView view(readOnlyAccountStateCache);
 				return !view.canHarvest(key, height, minHarvesterBalance);
@@ -76,21 +78,20 @@ namespace catapult { namespace harvesting {
 
 		thread::Task CreateHarvestingTask(extensions::ServiceState& state, UnlockedAccounts& unlockedAccounts) {
 			const auto& cache = state.cache();
-			const auto& blockChainConfig = state.config().BlockChain;
+			const auto& pConfigHolder = state.pluginManager().configHolder();
 			const auto& utCache = state.utCache();
-			auto strategy = state.config().Node.TransactionSelectionStrategy;
+			auto strategy = state.config(Height{0}).Node.TransactionSelectionStrategy;
 			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
-			HarvestingUtFacadeFactory utFacadeFactory(cache, blockChainConfig, executionConfig);
+			HarvestingUtFacadeFactory utFacadeFactory(cache, pConfigHolder, executionConfig);
 
 			auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, utCache);
 			auto pHarvesterTask = std::make_shared<ScheduledHarvesterTask>(
 					CreateHarvesterTaskOptions(state),
-					std::make_unique<Harvester>(cache, blockChainConfig, unlockedAccounts, blockGenerator));
+					std::make_unique<Harvester>(cache, pConfigHolder, unlockedAccounts, blockGenerator));
 
-			auto minHarvesterBalance = blockChainConfig.MinHarvesterBalance;
-			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, minHarvesterBalance]() {
+			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, &pConfigHolder]() {
 				// prune accounts that are not eligible to harvest the next block
-				PruneUnlockedAccounts(unlockedAccounts, cache, minHarvesterBalance);
+				PruneUnlockedAccounts(unlockedAccounts, cache, pConfigHolder);
 
 				// harvest the next block
 				pHarvesterTask->harvest();

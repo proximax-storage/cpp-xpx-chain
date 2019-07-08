@@ -46,7 +46,7 @@ namespace catapult { namespace unbondedpruning {
 	utils::HashSet FindDependentTransactionHashes(
 			const model::TransactionInfo& transactionInfo,
 			const model::NotificationPublisher& notificationPublisher) {
-		model::WeakEntityInfo weakTransactionInfo(*transactionInfo.pEntity, transactionInfo.EntityHash);
+		model::WeakEntityInfo weakTransactionInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height{0});
 		DependentTransactionCollector sub;
 		notificationPublisher.publish(weakTransactionInfo, sub);
 		return sub.hashes();

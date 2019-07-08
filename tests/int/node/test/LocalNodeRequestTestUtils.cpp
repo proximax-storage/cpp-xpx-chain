@@ -25,6 +25,7 @@
 #include "plugins/txes/namespace/src/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "plugins/txes/transfer/src/plugins/TransferTransactionPlugin.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/RealTransactionFactory.h"
 
 namespace catapult { namespace test {
@@ -33,10 +34,10 @@ namespace catapult { namespace test {
 
 	model::TransactionRegistry ExternalSourceConnection::CreateTransactionRegistry() {
 		auto registry = model::TransactionRegistry();
-		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(model::BlockChainConfiguration::Uninitialized()));
+		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(std::make_shared<config::MockLocalNodeConfigurationHolder>()));
 		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
 		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
-		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(model::BlockChainConfiguration::Uninitialized()));
+		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(std::make_shared<config::MockLocalNodeConfigurationHolder>()));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		return registry;
 	}

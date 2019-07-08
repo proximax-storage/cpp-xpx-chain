@@ -22,6 +22,7 @@
 #include "partialtransaction/src/chain/PtValidator.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "catapult/cache/MemoryPtCache.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/utils/MemoryUtils.h"
@@ -31,6 +32,7 @@
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/other/ValidationResultTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -324,6 +326,7 @@ namespace catapult { namespace chain {
 					, m_pValidator(m_pUniqueValidator.get())
 					, m_pPool(test::CreateStartedIoThreadPool())
 					, m_pUpdater(std::make_unique<PtUpdater>(
+							test::CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized()),
 							m_transactionsCache,
 							std::move(m_pUniqueValidator),
 							PtUpdater::CompletedTransactionSink([this](auto&& pTransaction) {

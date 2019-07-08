@@ -22,12 +22,13 @@
 #include "src/validators/Validators.h"
 #include "src/state/SecretLockInfo.h"
 #include "plugins/txes/lock_shared/tests/validators/LockDurationValidatorTests.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace validators {
 
 #define TEST_CLASS SecretLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
@@ -41,8 +42,8 @@ namespace catapult { namespace validators {
 				pluginConfig.MaxSecretLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
 				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 				blockChainConfig.SetPluginConfiguration("catapult.plugins.locksecret", pluginConfig);
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(blockChainConfig);
 				return CreateSecretLockDurationValidator(pConfigHolder);
 			}
 		};

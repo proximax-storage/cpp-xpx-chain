@@ -53,15 +53,18 @@ namespace catapult { namespace mongo { namespace storages {
 					<< finalize);
 
 			auto cursor = blocks.find(filter.view(), options);
-			for (const auto& element : cursor)
-				cacheDelta.insert(mappers::ToDifficultyInfo(element["block"].get_document()));
+			for (const auto& element : cursor) {
+				auto difficultyInfo = mappers::ToDifficultyInfo(element["block"].get_document());
+				cacheDelta.setHeight(difficultyInfo.BlockHeight);
+				cacheDelta.insert(difficultyInfo);
+			}
 		}
 
 		class MongoBlockDifficultyCacheStorage : public ExternalCacheStorageT<cache::BlockDifficultyCache> {
 		public:
-			explicit MongoBlockDifficultyCacheStorage(MongoDatabase&& database, uint64_t difficultyHistorySize)
+			explicit MongoBlockDifficultyCacheStorage(MongoDatabase&& database, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 					: m_database(std::move(database))
-					, m_difficultyHistorySize(difficultyHistorySize)
+					, m_pConfigHolder(pConfigHolder)
 			{}
 
 		private:
@@ -75,7 +78,7 @@ namespace catapult { namespace mongo { namespace storages {
 				if (0u == currentHeight)
 					return;
 
-				auto numDifficulties = std::min(m_difficultyHistorySize, currentHeight);
+				auto numDifficulties = std::min(model::CalculateDifficultyHistorySize(m_pConfigHolder->Config(chainHeight).BlockChain), currentHeight);
 				Height startHeight(currentHeight - numDifficulties + 1);
 
 				CATAPULT_LOG(info) << "Loading difficulties cache, starting at " << startHeight;
@@ -84,13 +87,13 @@ namespace catapult { namespace mongo { namespace storages {
 
 		private:
 			MongoDatabase m_database;
-			uint64_t m_difficultyHistorySize;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		};
 	}
 
 	std::unique_ptr<ExternalCacheStorage> CreateMongoBlockDifficultyCacheStorage(
 			MongoDatabase&& database,
-			uint64_t difficultyHistorySize) {
-		return std::make_unique<MongoBlockDifficultyCacheStorage>(std::move(database), difficultyHistorySize);
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return std::make_unique<MongoBlockDifficultyCacheStorage>(std::move(database), pConfigHolder);
 	}
 }}}

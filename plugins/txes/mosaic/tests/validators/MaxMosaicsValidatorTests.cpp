@@ -22,6 +22,7 @@
 #include "src/config/MosaicConfiguration.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -29,8 +30,8 @@
 
 namespace catapult { namespace validators {
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, std::make_shared<config::LocalNodeConfigurationHolder>())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 #define BALANCE_TRANSFER_TEST_CLASS BalanceTransferMaxMosaicsValidatorTests
 #define SUPPLY_CHANGE_TEST_CLASS SupplyChangeMaxMosaicsValidatorTests
@@ -69,8 +70,8 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(recipient);
 
 			auto config = CreateConfig(maxMosaics);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(pConfigHolder);
 			auto notification = model::BalanceTransferNotification<1>(owner, unresolvedRecipient, mosaicId, amount);
 
@@ -117,8 +118,8 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(owner);
 
 			auto config = CreateConfig(maxMosaics);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(pConfigHolder);
 			auto notification = model::MosaicSupplyChangeNotification<1>(owner, mosaicId, direction, Amount(100));
 

@@ -93,7 +93,7 @@ namespace catapult { namespace partialtransaction {
 		public:
 			explicit TransactionDispatcherBuilder(extensions::ServiceState& state)
 					: m_state(state)
-					, m_nodeConfig(m_state.config().Node)
+					, m_nodeConfig(m_state.config(Height{0}).Node)
 			{}
 
 		public:
@@ -169,7 +169,7 @@ namespace catapult { namespace partialtransaction {
 			locator.registerRootedService("pt.dispatcher.batch", pBatchRangeDispatcher);
 
 			// register hooks
-			const auto& nodeConfig = state.config().Node;
+			const auto& nodeConfig = state.config(Height{0}).Node;
 			auto pRecentHashCache = std::make_shared<RecentHashCache>(
 					state.timeSupplier(),
 					extensions::CreateHashCheckOptions(nodeConfig.ShortLivedCacheTransactionDuration, nodeConfig));
@@ -226,6 +226,7 @@ namespace catapult { namespace partialtransaction {
 
 			auto transactionRangeConsumerFactory = state.hooks().transactionRangeConsumerFactory();
 			return std::make_unique<chain::PtUpdater>(
+					state.cache(),
 					ptCache,
 					std::move(pValidator),
 					[transactionRangeConsumerFactory](auto&& pTransaction) {
@@ -256,7 +257,7 @@ namespace catapult { namespace partialtransaction {
 				TransactionDispatcherBuilder dispatcherBuilder(state);
 				dispatcherBuilder.addHashConsumers(ptCache);
 
-				if (state.config().Node.ShouldPrecomputeTransactionAddresses) {
+				if (state.config(Height{0}).Node.ShouldPrecomputeTransactionAddresses) {
 					auto pPublisher = state.pluginManager().createNotificationPublisher();
 					dispatcherBuilder.addPrecomputedTransactionAddressConsumer(*pPublisher);
 					locator.registerRootedService("pt.notificationPublisher", std::move(pPublisher));

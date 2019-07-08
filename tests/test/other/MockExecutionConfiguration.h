@@ -47,7 +47,7 @@ namespace catapult { namespace test {
 		{}
 
 	public:
-		const model::WeakEntityInfo EntityInfo;
+		const model::WeakEntityInfo EntityInfo{Height{0}};
 		const Hash256 HashCopy;
 	};
 
@@ -249,7 +249,7 @@ namespace catapult { namespace test {
 				: pObserver(std::make_shared<MockAggregateNotificationObserver>())
 				, pValidator(std::make_shared<MockAggregateNotificationValidator>())
 				, pNotificationPublisher(std::make_shared<MockNotificationPublisher>()) {
-			Config.Network.Identifier = Mock_Execution_Configuration_Network_Identifier;
+			Config.NetworkInfoSupplier = [](const Height&) { return model::NetworkInfo( Mock_Execution_Configuration_Network_Identifier, {}, {} ); };
 			Config.pObserver = pObserver;
 			Config.pValidator = pValidator;
 			Config.pNotificationPublisher = pNotificationPublisher;

@@ -20,6 +20,7 @@
 
 #include "partialtransaction/src/chain/JointValidator.h"
 #include "catapult/plugins/PluginManager.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
 #include "tests/TestHarness.h"
 
@@ -46,7 +47,7 @@ namespace catapult { namespace chain {
 		auto Default_Config = CreateBlockChainConfiguration();
 
 		auto CreateConfigHolder() {
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			return pConfigHolder;
 		}
 

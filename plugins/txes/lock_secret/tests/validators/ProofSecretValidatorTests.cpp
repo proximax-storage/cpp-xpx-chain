@@ -23,6 +23,7 @@
 #include "src/config/SecretLockConfiguration.h"
 #include "catapult/crypto/Hashes.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -30,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ProofSecretValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		struct NotificationBuilder {
@@ -67,8 +68,8 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxProofSize = 100;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.locksecret", pluginConfig);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			return pConfigHolder;
 		}
 

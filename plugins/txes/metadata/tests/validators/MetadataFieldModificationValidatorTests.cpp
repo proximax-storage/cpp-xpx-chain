@@ -6,6 +6,7 @@
 
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 #include "plugins/txes/metadata/src/model/MetadataTypes.h"
@@ -17,7 +18,7 @@ namespace catapult { namespace validators {
 	constexpr uint8_t MAX_KEY_SIZE = 5;
 	constexpr uint8_t MAX_VALUE_SIZE = 10;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult,
@@ -34,8 +35,8 @@ namespace catapult { namespace validators {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateMetadataFieldModificationValidator(pConfigHolder);
 
 			// Act:

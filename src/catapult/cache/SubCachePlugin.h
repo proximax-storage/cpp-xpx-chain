@@ -95,6 +95,9 @@ namespace catapult { namespace cache {
 
 		/// Returns \c true if sub cache is enabled.
 		virtual bool enabled() const = 0;
+
+		/// Returns \c true if sub cache is enabled.
+		virtual void setHeight(const Height& height) = 0;
 	};
 
 	/// Detached sub cache view.

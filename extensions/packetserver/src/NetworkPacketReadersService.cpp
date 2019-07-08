@@ -34,11 +34,8 @@ namespace catapult { namespace packetserver {
 
 		thread::Task CreateAgePeersTask(extensions::ServiceState& state, net::ConnectionContainer& connectionContainer) {
 			auto settings = extensions::SelectorSettings(
-					state.cache(),
-					state.config().BlockChain.TotalChainImportance,
-					state.nodes(),
-					Service_Id,
-					state.config().Node.IncomingConnections);
+					state,
+					Service_Id);
 			auto task = extensions::CreateAgePeersTask(settings, connectionContainer);
 			task.Name += " for service Readers";
 			return task;
@@ -57,7 +54,7 @@ namespace catapult { namespace packetserver {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				const auto& config = state.config();
+				const auto& config = state.config(Height{0});
 				auto pServiceGroup = state.pool().pushServiceGroup(Service_Name);
 				auto pReaders = pServiceGroup->pushService(
 						net::CreatePacketReaders,

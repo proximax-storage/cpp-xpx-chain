@@ -86,7 +86,7 @@ namespace catapult { namespace server {
 		version::WriteVersionInformation(std::cout);
 
 		// 1. load and validate the configuration
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
 		auto config = pConfigHolder->LoadConfig(argc, argv);
 		ValidateConfiguration(config);
 

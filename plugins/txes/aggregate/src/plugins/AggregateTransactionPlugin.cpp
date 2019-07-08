@@ -101,7 +101,8 @@ namespace catapult { namespace plugins {
 
 						// - specific sub-transaction notifications
 						//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
-						plugin.publish(subTransaction, sub);
+						WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo{subTransaction, transactionInfo.associatedHeight()};
+						plugin.publish(subTransactionInfo, sub);
 					}
 
 					// publish all cosigner information (as an optimization these are published with the source of the last sub-transaction)

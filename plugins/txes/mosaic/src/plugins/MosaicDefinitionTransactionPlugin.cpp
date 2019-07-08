@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <src/catapult/config_holder/LocalNodeConfigurationHolder.h>
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "src/model/MosaicDefinitionTransaction.h"
 #include "src/model/MosaicNotifications.h"
@@ -48,8 +49,9 @@ namespace catapult { namespace plugins {
 		}
 
 		template<typename TTransaction>
-		auto CreatePublisher(const model::BlockChainConfiguration& blockChainConfig) {
-			return [&blockChainConfig](const TTransaction& transaction, NotificationSubscriber& sub) {
+		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+			return [&pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
+				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(associatedHeight).BlockChain;
 				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
 				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
 				auto config = ToMosaicRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
@@ -82,5 +84,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, CreatePublisher, model::BlockChainConfiguration)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
 }}

@@ -24,6 +24,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/thread/MultiServicePool.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
@@ -58,8 +59,8 @@ namespace catapult { namespace extensions {
 		mocks::MockNodeSubscriber nodeSubscriber;
 
 		std::vector<utils::DiagnosticCounter> counters;
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(Height{0}, config.BlockChain);
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(config.BlockChain);
 		plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
 		thread::MultiServicePool pool("test", 1);
 

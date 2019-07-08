@@ -21,6 +21,7 @@
 #include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -29,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicSupplyChangeAllowedValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Max_Divisible_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
@@ -45,8 +46,8 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxMosaicDivisibleUnits = maxDivisibleUnits;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(pConfigHolder);
 
 			// Act:

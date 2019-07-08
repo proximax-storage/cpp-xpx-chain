@@ -20,6 +20,7 @@
 
 #pragma once
 #include "CacheStorageInclude.h"
+#include "catapult/types.h"
 #include <string>
 
 namespace catapult { namespace cache {
@@ -35,7 +36,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Saves cache data to \a output.
-		virtual void saveAll(io::OutputStream& output) const = 0;
+		virtual void saveAll(io::OutputStream& output, const Height& height) const = 0;
 
 		/// Loads cache data from \a input in batches of \a batchSize.
 		virtual void loadAll(io::InputStream& input, size_t batchSize) = 0;

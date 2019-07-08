@@ -21,13 +21,13 @@
 #include "catapult/consumers/BlockConsumers.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/ChainScore.h"
 #include "tests/catapult/consumers/test/ConsumerInputFactory.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
@@ -285,8 +285,12 @@ namespace catapult { namespace consumers {
 				handlers.TransactionsChange = [this](const auto& changeInfo) {
 					return TransactionsChange(changeInfo);
 				};
+				auto config = model::BlockChainConfiguration::Uninitialized();
+				config.MaxRollbackBlocks = Max_Rollback_Blocks;
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(config);
 
-				Consumer = CreateBlockChainSyncConsumer(Cache, State, Storage, Max_Rollback_Blocks, handlers);
+				Consumer = CreateBlockChainSyncConsumer(Cache, State, Storage, pConfigHolder, handlers);
 			}
 
 		public:
@@ -382,8 +386,8 @@ namespace catapult { namespace consumers {
 				}
 
 				// - the cache was not committed
-				EXPECT_FALSE(Cache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
-				EXPECT_EQ(0u, Cache.sub<cache::BlockDifficultyCache>().createView()->size());
+				EXPECT_FALSE(Cache.sub<cache::AccountStateCache>().createView(Height{0})->contains(Sentinel_Processor_Public_Key));
+				EXPECT_EQ(0u, Cache.sub<cache::BlockDifficultyCache>().createView(Height{0})->size());
 
 				// - no state changes were announced
 				EXPECT_EQ(0u, StateChange.params().size());
@@ -414,10 +418,10 @@ namespace catapult { namespace consumers {
 				}
 
 				// - the cache was committed (add 1 to OriginalBlocks.size() because it does not include the nemesis)
-				EXPECT_TRUE(Cache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
+				EXPECT_TRUE(Cache.sub<cache::AccountStateCache>().createView(Height{0})->contains(Sentinel_Processor_Public_Key));
 				EXPECT_EQ(
 						OriginalBlocks.size() + 1 - inputHeight.unwrap() + 1,
-						Cache.sub<cache::BlockDifficultyCache>().createView()->size());
+						Cache.sub<cache::BlockDifficultyCache>().createView(Height{0})->size());
 				EXPECT_EQ(chainHeight, Cache.createView().height());
 
 				// - the state was changed

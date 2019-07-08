@@ -21,6 +21,7 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/validators/Validators.h"
 #include "src/cache/NamespaceCache.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -30,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RootNamespaceMaxChildrenValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
@@ -63,8 +64,8 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxChildNamespaces = maxChildren;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateRootNamespaceMaxChildrenValidator(pConfigHolder);
 
 			// Act:

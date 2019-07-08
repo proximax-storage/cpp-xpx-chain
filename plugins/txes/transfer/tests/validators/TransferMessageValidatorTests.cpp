@@ -21,6 +21,7 @@
 #include "src/config/TransferConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS TransferMessageValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize) {
@@ -39,8 +40,8 @@ namespace catapult { namespace validators {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.transfer", pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateTransferMessageValidator(pConfigHolder);
 
 			// Act:

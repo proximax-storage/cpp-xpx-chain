@@ -22,6 +22,7 @@
 #include "catapult/model/Block.h"
 #include "catapult/utils/Logging.h"
 #include "tests/TestHarness.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 
 namespace catapult { namespace chain {
@@ -35,6 +36,12 @@ namespace catapult { namespace chain {
 			config.BlockTimeSmoothingFactor = 0;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
 			return config;
+		}
+
+		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
 
 		void SetTimestampSeconds(model::Block& block, uint64_t time) {
@@ -285,16 +292,16 @@ namespace catapult { namespace chain {
 	namespace {
 		struct BlockHitPredicateContext {
 			explicit BlockHitPredicateContext(Importance importance)
-					: Config(CreateConfiguration())
+					: pConfigHolder(CreateConfigHolder(CreateConfiguration()))
 					, Predicate(
-							Config,
+							pConfigHolder,
 							[this, importance](const auto& key, auto height) {
 								ImportanceLookupParams.push_back(std::make_pair(key, height));
 								return importance;
 							})
 			{}
 
-			model::BlockChainConfiguration Config;
+			std::shared_ptr<config::MockLocalNodeConfigurationHolder> pConfigHolder;
 			BlockHitPredicate Predicate;
 			std::vector<std::pair<Key, Height>> ImportanceLookupParams;
 		};
@@ -322,7 +329,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_LT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config));
+		EXPECT_LT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain));
 		EXPECT_TRUE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -347,7 +354,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain);
 		EXPECT_LT(hit, target);
 		EXPECT_TRUE(isHit);
 
@@ -374,7 +381,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_EQ(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config));
+		EXPECT_EQ(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain));
 		EXPECT_FALSE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -404,7 +411,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain);
 		EXPECT_EQ(hit, target);
 		EXPECT_FALSE(isHit);
 
@@ -426,7 +433,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_GT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.Config));
+		EXPECT_GT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain));
 		EXPECT_FALSE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -451,7 +458,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.Config);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain);
 		EXPECT_GT(hit, target);
 		EXPECT_FALSE(isHit);
 

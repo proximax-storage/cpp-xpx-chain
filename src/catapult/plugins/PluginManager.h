@@ -79,10 +79,10 @@ namespace catapult { namespace plugins {
 	public:
 		// region config
 
-		/// Gets the block chain configuration.
+		/// Gets the block chain configuration at \a height.
 		const model::BlockChainConfiguration& config(const Height& height) const;
 
-		/// Gets the block chain configuration.
+		/// Gets the catapult configuration holder.
 		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
 
 		/// Gets the storage configuration.
@@ -90,6 +90,12 @@ namespace catapult { namespace plugins {
 
 		/// Gets the cache configuration for cache with \a name.
 		cache::CacheConfiguration cacheConfig(const std::string& name) const;
+
+		/// Sets whether verifiable state should be enabled or not (\a shouldEnableVerifiableState).
+		void setShouldEnableVerifiableState(bool shouldEnableVerifiableState);
+
+		/// Gets whether verifiable state should be enabled or not.
+		bool shouldEnableVerifiableState() const;
 
 		// endregion
 
@@ -219,6 +225,8 @@ namespace catapult { namespace plugins {
 
 		std::vector<MosaicResolver> m_mosaicResolvers;
 		std::vector<AddressResolver> m_addressResolvers;
+
+		bool m_shouldEnableVerifiableState;
 	};
 }}
 

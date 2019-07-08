@@ -35,6 +35,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the supported entity versions configuration data is malformed.
 	DEFINE_CATAPULT_CONFIG_RESULT(SupportedEntityVersions_Config_Malformed, 7);
 
+	/// Validation failed because the supported entity versions configuration data has no versions of the catapult config transaction.
+	DEFINE_CATAPULT_CONFIG_RESULT(Catapult_Config_Trx_Cannot_Be_Unsupported, 8);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

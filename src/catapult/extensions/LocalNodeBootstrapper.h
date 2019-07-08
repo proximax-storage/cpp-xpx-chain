@@ -41,7 +41,10 @@ namespace catapult { namespace extensions {
 
 	public:
 		/// Gets the configuration.
-		const config::LocalNodeConfiguration& config() const;
+		const config::LocalNodeConfiguration& config(const Height& height) const;
+
+		/// Gets the catapult configuration holder.
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
 
 		/// Gets the resources path.
 		const std::string& resourcesPath() const;
@@ -82,7 +85,7 @@ namespace catapult { namespace extensions {
 	};
 
 	/// Adds static nodes from \a path to \a bootstrapper.
-	void AddStaticNodesFromPath(LocalNodeBootstrapper& bootstrapper, const std::string& path);
+	void AddStaticNodesFromPath(LocalNodeBootstrapper& bootstrapper, const std::string& path, const Height& height);
 }}
 
 /// Entry point for registering a dynamic extension module with \a bootstrapper.

@@ -22,6 +22,7 @@
 #include "catapult/plugins/PluginExceptions.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/utils/ExceptionLogging.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 
@@ -40,8 +41,8 @@ namespace catapult { namespace plugins {
 			// Arrange: ensure module is destroyed after manager
 			for (const auto& name : pluginNames) {
 				PluginModules modules;
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(Height{0}, config);
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				CATAPULT_LOG(debug) << "loading plugin with name: " << name;
 
@@ -74,7 +75,7 @@ namespace catapult { namespace plugins {
 		void AssertCannotLoadUnknownPlugin(const std::string& directory) {
 			// Arrange:
 			PluginModules modules;
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act + Assert:
@@ -122,8 +123,8 @@ namespace catapult { namespace plugins {
 
 			// - create the manager
 			PluginModules modules;
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act:

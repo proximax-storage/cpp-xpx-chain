@@ -22,6 +22,7 @@
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/cache/SimpleCache.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
@@ -277,8 +278,8 @@ namespace catapult { namespace observers {
 		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockPruneInterval = 10;
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			return pConfigHolder;
 		}
 	}

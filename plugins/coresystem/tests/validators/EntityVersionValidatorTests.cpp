@@ -20,6 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -27,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EntityVersionValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr uint8_t Min_Entity_Version = 55;
@@ -35,7 +36,7 @@ namespace catapult { namespace validators {
 		constexpr auto Entity_Type = model::EntityType{1};
 
 		auto CreateLocalNodeConfigurationHolder() {
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			for (uint16_t i = Min_Entity_Version; i <= Max_Entity_Version; ++i)
 				pConfigHolder->Config(Height{0}).SupportedEntityVersions[Entity_Type].emplace(i);
 			return pConfigHolder;

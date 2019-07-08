@@ -143,8 +143,8 @@ namespace catapult { namespace mocks {
 			{}
 
 		public:
-			void publish(const EmbeddedTransaction& transaction, NotificationSubscriber& sub) const override {
-				Publish(static_cast<const EmbeddedMockTransaction&>(transaction), m_options, sub);
+			void publish(const WeakEntityInfoT<EmbeddedTransaction>& transaction, NotificationSubscriber& sub) const override {
+				Publish(static_cast<const EmbeddedMockTransaction&>(transaction.entity()), m_options, sub);
 			}
 
 		private:

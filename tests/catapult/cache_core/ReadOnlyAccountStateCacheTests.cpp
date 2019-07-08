@@ -20,6 +20,7 @@
 
 #include "catapult/cache_core/ReadOnlyAccountStateCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -36,8 +37,8 @@ namespace catapult { namespace cache {
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = MosaicId(1111);
 			config.HarvestingMosaicId = MosaicId(2222);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			return pConfigHolder;
 		}
 	}
@@ -110,14 +111,14 @@ namespace catapult { namespace cache {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		{
-			auto cacheDelta = cache.createDelta();
+			auto cacheDelta = cache.createDelta(Height{0});
 			cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed
 			cache.commit();
 			cacheDelta->addAccount(TTraits::CreateKey(2), Height(123)); // uncommitted
 		}
 
 		// Act:
-		auto cacheView = cache.createView();
+		auto cacheView = cache.createView(Height{0});
 		ReadOnlyAccountStateCache readOnlyCache(*cacheView);
 
 		// Assert:
@@ -130,7 +131,7 @@ namespace catapult { namespace cache {
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyDeltaContainsBothCommittedAndUncommittedElements) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
-		auto cacheDelta = cache.createDelta();
+		auto cacheDelta = cache.createDelta(Height{0});
 		cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed
 		cache.commit();
 		cacheDelta->addAccount(TTraits::CreateKey(2), Height(123)); // uncommitted
@@ -149,14 +150,14 @@ namespace catapult { namespace cache {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		{
-			auto cacheDelta = cache.createDelta();
+			auto cacheDelta = cache.createDelta(Height{0});
 			cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed;
 			cache.commit();
 			cacheDelta->addAccount(TTraits::CreateKey(2), Height(123)); // uncommitted
 		}
 
 		// Act:
-		auto cacheView = cache.createView();
+		auto cacheView = cache.createView(Height{0});
 		ReadOnlyAccountStateCache readOnlyCache(*cacheView);
 
 		// Assert:
@@ -169,7 +170,7 @@ namespace catapult { namespace cache {
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyDeltaCanAccessBothCommittedAndUncommittedElementsViaGet) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
-		auto cacheDelta = cache.createDelta();
+		auto cacheDelta = cache.createDelta(Height{0});
 		cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed
 		cache.commit();
 		cacheDelta->addAccount(TTraits::CreateKey(2), Height(123)); // uncommitted
@@ -188,14 +189,14 @@ namespace catapult { namespace cache {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		{
-			auto cacheDelta = cache.createDelta();
+			auto cacheDelta = cache.createDelta(Height{0});
 			cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed;
 			cache.commit();
 			cacheDelta->addAccount(TTraits::CreateKey(2), Height(123)); // uncommitted
 		}
 
 		// Act:
-		auto cacheView = cache.createView();
+		auto cacheView = cache.createView(Height{0});
 		ReadOnlyAccountStateCache readOnlyCache(*cacheView);
 
 		// Assert:
@@ -208,7 +209,7 @@ namespace catapult { namespace cache {
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyDeltaCanAccessBothCommittedAndUncommittedElementsViaTryGet) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
-		auto cacheDelta = cache.createDelta();
+		auto cacheDelta = cache.createDelta(Height{0});
 		cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed
 		cache.commit();
 		cacheDelta->addAccount(TTraits::CreateKey(2), Height(123)); // uncommitted

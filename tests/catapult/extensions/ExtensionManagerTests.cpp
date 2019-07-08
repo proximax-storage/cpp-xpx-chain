@@ -22,6 +22,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/utils/NetworkTime.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalNodeTestState.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
@@ -159,7 +160,7 @@ namespace catapult { namespace extensions {
 		auto pRegisteredStorage = std::make_unique<UnsupportedBlockChainStorage>();
 		const auto& registeredStorage = *pRegisteredStorage;
 		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 
 		// Act:
 		manager.setBlockChainStorage(std::move(pRegisteredStorage));

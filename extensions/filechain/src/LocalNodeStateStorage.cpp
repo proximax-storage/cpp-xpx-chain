@@ -52,10 +52,10 @@ namespace catapult { namespace filechain {
 			cacheStorage.loadAll(file, Default_Loader_Batch_Size);
 		}
 
-		void SaveCache(const std::string& baseDirectory, const std::string& filename, const cache::CacheStorage& cacheStorage) {
+		void SaveCache(const std::string& baseDirectory, const std::string& filename, const cache::CacheStorage& cacheStorage, const Height& height) {
 			auto path = GetStatePath(baseDirectory, filename);
 			io::BufferedOutputFileStream file(io::RawFile(path.c_str(), io::OpenMode::Read_Write));
-			cacheStorage.saveAll(file);
+			cacheStorage.saveAll(file, height);
 		}
 
 		bool HasSupplementalData(const std::string& baseDirectory) {
@@ -121,7 +121,7 @@ namespace catapult { namespace filechain {
 			CATAPULT_LOG(warning) << "lock file could not be removed and must be removed manually";
 
 		for (const auto& pStorage : cache.storages())
-			SaveCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage);
+			SaveCache(dataDirectory, GetStorageFilename(*pStorage), *pStorage, cache.height());
 
 		{
 			auto path = GetStatePath(dataDirectory, Supplemental_Data_Filename);

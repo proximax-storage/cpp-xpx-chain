@@ -20,6 +20,7 @@
 
 #include "src/observers/Observers.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/AccountObserverTestContext.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
@@ -29,7 +30,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS HarvestFeeObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, std::make_shared<config::LocalNodeConfigurationHolder>())
+	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	// region traits
 
@@ -88,7 +89,7 @@ namespace catapult { namespace observers {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
-			auto pObserver = CreateHarvestFeeObserver(std::make_shared<config::LocalNodeConfigurationHolder>());
+			auto pObserver = CreateHarvestFeeObserver(std::make_shared<config::MockLocalNodeConfigurationHolder>());
 
 			// Act + Assert:
 			action(context, *pObserver);
@@ -169,7 +170,7 @@ namespace catapult { namespace observers {
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-			auto pObserver = CreateHarvestFeeObserver(std::make_shared<config::LocalNodeConfigurationHolder>());
+			auto pObserver = CreateHarvestFeeObserver(std::make_shared<config::MockLocalNodeConfigurationHolder>());
 
 			auto signerPublicKey = test::GenerateRandomData<Key_Size>();
 			auto accountStateIter = RemoteAccountTraits::AddAccount(accountStateCache, signerPublicKey, Height(1));

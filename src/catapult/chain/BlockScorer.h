@@ -24,7 +24,10 @@
 #include <boost/multiprecision/cpp_int.hpp>
 #include <functional>
 
-namespace catapult { namespace model { struct Block; } }
+namespace catapult {
+	namespace config { struct LocalNodeConfigurationHolder; }
+	namespace model { struct Block; }
+}
 
 namespace catapult { namespace chain {
 
@@ -84,7 +87,7 @@ namespace catapult { namespace chain {
 	public:
 		/// Creates a predicate around a block chain configuration (\a config) and an importance lookup function
 		/// (\a importanceLookup).
-		BlockHitPredicate(const model::BlockChainConfiguration& config, const ImportanceLookupFunc& importanceLookup);
+		BlockHitPredicate(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const ImportanceLookupFunc& importanceLookup);
 
 	public:
 		/// Determines if the \a block is a hit given its parent (\a parentBlock) and generation hash (\a generationHash).
@@ -94,7 +97,7 @@ namespace catapult { namespace chain {
 		bool operator()(const BlockHitContext& context) const;
 
 	private:
-		model::BlockChainConfiguration m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		ImportanceLookupFunc m_importanceLookup;
 	};
 }}

@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <plugins/txes/config/src/model/CatapultConfigEntityType.h>
 #include "Validators.h"
 #include "catapult/config/SupportedEntityVersions.h"
 #include "catapult/model/BlockChainConfiguration.h"
@@ -47,7 +48,9 @@ namespace catapult { namespace validators {
 
 			try {
 				std::istringstream configStream{std::string{(const char*)notification.SupportedEntityVersionsPtr, notification.SupportedEntityVersionsSize}};
-				config::LoadSupportedEntityVersions(configStream);
+				auto supportedEntityVersions = config::LoadSupportedEntityVersions(configStream);
+				if (!supportedEntityVersions[model::Entity_Type_Catapult_Config].size())
+					return Failure_CatapultConfig_Catapult_Config_Trx_Cannot_Be_Unsupported;
 			} catch (...) {
 				return Failure_CatapultConfig_SupportedEntityVersions_Config_Malformed;
 			}

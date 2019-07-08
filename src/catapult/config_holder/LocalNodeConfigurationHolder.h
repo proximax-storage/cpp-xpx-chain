@@ -13,7 +13,7 @@ namespace catapult { namespace config {
 
 	class LocalNodeConfigurationHolder {
 	public:
-		LocalNodeConfigurationHolder(cache::CatapultCache* pCache = nullptr);
+		LocalNodeConfigurationHolder(cache::CatapultCache* pCache);
 
 	public:
 		/// Extracts the resources path from the command line arguments.
@@ -21,14 +21,14 @@ namespace catapult { namespace config {
 		static boost::filesystem::path GetResourcesPath(int argc, const char** argv);
 		const LocalNodeConfiguration& LoadConfig(int argc, const char** argv);
 
-		LocalNodeConfiguration& Config(const Height& height);
-
 		void SetConfig(const Height& height, const LocalNodeConfiguration& config);
-		void SetBlockChainConfig(const Height&, const model::BlockChainConfiguration&);
+		virtual LocalNodeConfiguration& Config(const Height& height);
 
-		void SetCache(cache::CatapultCache* pCache);
+		void SetCache(cache::CatapultCache* pCache) {
+			m_pCache = pCache;
+		}
 
-	private:
+	protected:
 		std::map<Height, LocalNodeConfiguration> m_catapultConfigs;
 		cache::CatapultCache* m_pCache;
 	};

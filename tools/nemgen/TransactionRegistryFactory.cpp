@@ -19,7 +19,7 @@
 **/
 
 #include "TransactionRegistryFactory.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
@@ -36,11 +36,20 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", mosaicConfig);
 		blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", namespaceConfig);
+		config::LocalNodeConfiguration config{
+			std::move(blockChainConfig),
+			config::NodeConfiguration::Uninitialized(),
+			config::LoggingConfiguration::Uninitialized(),
+			config::UserConfiguration::Uninitialized(),
+			config::SupportedEntityVersions()
+		};
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
+		pConfigHolder->SetConfig(Height{0}, config);
 		model::TransactionRegistry registry;
 		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
-		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(blockChainConfig));
+		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
-		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(blockChainConfig));
+		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		return registry;
 	}

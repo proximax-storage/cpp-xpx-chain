@@ -32,8 +32,7 @@ namespace catapult { namespace net {
 	public:
 		/// Creates default settings.
 		ConnectionSettings()
-				: NetworkIdentifier(model::NetworkIdentifier::Zero)
-				, Timeout(utils::TimeSpan::FromSeconds(10))
+				: Timeout(utils::TimeSpan::FromSeconds(10))
 				, SocketWorkingBufferSize(utils::FileSize::FromKilobytes(4))
 				, SocketWorkingBufferSensitivity(0) // memory reclamation disabled
 				, MaxPacketDataSize(utils::FileSize::FromMegabytes(100))
@@ -42,9 +41,6 @@ namespace catapult { namespace net {
 		{}
 
 	public:
-		/// Network identifier.
-		model::NetworkIdentifier NetworkIdentifier;
-
 		/// Connection timeout.
 		utils::TimeSpan Timeout;
 

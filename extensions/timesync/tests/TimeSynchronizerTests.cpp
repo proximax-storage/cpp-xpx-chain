@@ -23,6 +23,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
 #include "timesync/tests/test/TimeSynchronizationTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 #include <cmath>
 
@@ -48,7 +49,7 @@ namespace catapult { namespace timesync {
 				cache::AccountStateCache& cache,
 				const TKey& key,
 				Importance importance) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->addAccount(key, Height(1));
 			delta->find(key).get().Balances.credit(Harvesting_Mosaic_Id, Amount(importance.unwrap()), Height(1));
 			cache.commit();
@@ -78,8 +79,8 @@ namespace catapult { namespace timesync {
 			config.MinHarvesterBalance = Amount(1000);
 			config.CurrencyMosaicId = MosaicId(1111);
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			return pConfigHolder;
 		}
 
@@ -109,7 +110,7 @@ namespace catapult { namespace timesync {
 
 		public:
 			TimeOffset calculateTimeOffset(NodeAge nodeAge = NodeAge()) {
-				return m_synchronizer.calculateTimeOffset(*m_cache.createView(), Height(1), std::move(m_samples), nodeAge);
+				return m_synchronizer.calculateTimeOffset(*m_cache.createView(Height{0}), Height(1), std::move(m_samples), nodeAge);
 			}
 
 			void addHighValueAccounts(size_t count) {
@@ -189,7 +190,7 @@ namespace catapult { namespace timesync {
 			TimeSynchronizer synchronizer(aggregateFilter, Total_Chain_Importance, Warning_Threshold_Millis);
 
 			// Act:
-			auto timeOffset = synchronizer.calculateTimeOffset(*cache.createView(), Height(1), std::move(samples), nodeAge);
+			auto timeOffset = synchronizer.calculateTimeOffset(*cache.createView(Height{0}), Height(1), std::move(samples), nodeAge);
 
 			// Assert:
 			EXPECT_EQ(expectedTimeOffset, timeOffset);

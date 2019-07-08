@@ -30,6 +30,7 @@
 #include "catapult/utils/NetworkTime.h"
 #include "LocalTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/core/SchedulerTestUtils.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
@@ -40,7 +41,7 @@ namespace catapult { namespace test {
 
 	namespace {
 		auto CreateConfigHolder(const config::LocalNodeConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetConfig(Height{0}, config);
 			return pConfigHolder;
 		}
@@ -71,7 +72,6 @@ namespace catapult { namespace test {
 				, m_pluginManager(CreateConfigHolder(m_config), plugins::StorageConfiguration())
 				, m_pool("service locator test context", 2)
 				, m_state(
-						m_config,
 						m_nodes,
 						m_catapultCache,
 						m_catapultState,
@@ -96,7 +96,7 @@ namespace catapult { namespace test {
 	public:
 		/// Gets the config.
 		auto& config() const {
-			return m_config;
+			return m_state.config(Height{0});
 		}
 
 		/// Gets the config.

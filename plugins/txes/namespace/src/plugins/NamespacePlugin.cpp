@@ -129,7 +129,7 @@ namespace catapult { namespace plugins {
 
 		void RegisterNamespaceSubsystemOnly(PluginManager& manager) {
 			const auto& pConfigHolder = manager.configHolder();
-			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(manager.config(Height{0})));
+			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 
 			RegisterNamespaceAliasResolvers(manager);
 			manager.addCacheSupport(std::make_unique<cache::NamespaceCacheSubCachePlugin>(

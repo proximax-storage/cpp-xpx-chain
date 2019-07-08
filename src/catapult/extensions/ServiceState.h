@@ -23,6 +23,7 @@
 #include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/net/PacketIoPickerContainer.h"
+#include "catapult/plugins/PluginManager.h"
 #include "catapult/thread/Task.h"
 
 namespace catapult {
@@ -33,7 +34,6 @@ namespace catapult {
 	namespace extensions { class LocalNodeChainScore; }
 	namespace io { class BlockStorageCache; }
 	namespace ionet { class NodeContainer; }
-	namespace plugins { class PluginManager; }
 	namespace state { struct CatapultState; }
 	namespace subscribers {
 		class NodeSubscriber;
@@ -52,7 +52,6 @@ namespace catapult { namespace extensions {
 		/// Creates service state around \a config, \a nodes, \a cache, \a state, \a storage, \a score, \a utCache, \a timeSupplier
 		/// \a transactionStatusSubscriber, \a stateChangeSubscriber, \a nodeSubscriber, \a counters, \a pluginManager and \a pool.
 		ServiceState(
-				const config::LocalNodeConfiguration& config,
 				ionet::NodeContainer& nodes,
 				cache::CatapultCache& cache,
 				state::CatapultState& state,
@@ -66,8 +65,7 @@ namespace catapult { namespace extensions {
 				const std::vector<utils::DiagnosticCounter>& counters,
 				const plugins::PluginManager& pluginManager,
 				thread::MultiServicePool& pool)
-				: m_config(config)
-				, m_nodes(nodes)
+				: m_nodes(nodes)
 				, m_cache(cache)
 				, m_state(state)
 				, m_storage(storage)
@@ -80,13 +78,13 @@ namespace catapult { namespace extensions {
 				, m_counters(counters)
 				, m_pluginManager(pluginManager)
 				, m_pool(pool)
-				, m_packetHandlers(m_config.Node.MaxPacketDataSize.bytes32())
+				, m_packetHandlers(m_pluginManager.configHolder()->Config(Height{0}).Node.MaxPacketDataSize.bytes32())
 		{}
 
 	public:
 		/// Gets the config.
-		const auto& config() const {
-			return m_config;
+		const auto& config(const Height& height) const {
+			return m_pluginManager.configHolder()->Config(height);
 		}
 
 		/// Gets the nodes.
@@ -180,9 +178,13 @@ namespace catapult { namespace extensions {
 			return m_packetIoPickers;
 		}
 
+		/// Gets the network identifier.
+		auto& networkIdentifier() {
+			return config(m_cache.height()).BlockChain.Network.Identifier;
+		}
+
 	private:
 		// references
-		const config::LocalNodeConfiguration& m_config;
 		ionet::NodeContainer& m_nodes;
 		cache::CatapultCache& m_cache;
 		state::CatapultState& m_state;

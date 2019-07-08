@@ -42,7 +42,7 @@ namespace catapult { namespace plugins {
 
 	void RegisterMosaicSubsystem(PluginManager& manager) {
 		const auto& pConfigHolder = manager.configHolder();
-		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(manager.config(Height{0})));
+		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
 
 		manager.addCacheSupport<cache::MosaicCacheStorage>(

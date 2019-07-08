@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/extensions/ServiceState.h"
 #include "constants.h"
 #include "types.h"
 #include "timesync/src/filters/AggregateSynchronizationFilter.h"
@@ -38,7 +39,7 @@ namespace catapult { namespace timesync {
 		/// Creates a time synchronizer around \a filter, \a totalChainImportance and \a warningThresholdMillis.
 		explicit TimeSynchronizer(
 				const filters::AggregateSynchronizationFilter& filter,
-				Importance totalChainImportance,
+				extensions::ServiceState& state,
 				int64_t warningThresholdMillis = Warning_Threshold_Millis);
 
 	public:
@@ -62,7 +63,7 @@ namespace catapult { namespace timesync {
 				double scaling);
 	private:
 		filters::AggregateSynchronizationFilter m_filter;
-		Importance m_totalChainImportance;
+		extensions::ServiceState& m_state;
 		int64_t m_warningThresholdMillis;
 	};
 }}

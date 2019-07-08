@@ -74,9 +74,9 @@ namespace catapult { namespace sync {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				auto connectionSettings = extensions::GetConnectionSettings(state.config());
+				auto connectionSettings = extensions::GetConnectionSettings(state.config(Height{0}));
 				auto pServiceGroup = state.pool().pushServiceGroup(Service_Name);
-				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings);
+				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
 
 				locator.registerService(Service_Name, pWriters);
 				state.packetIoPickers().insert(*pWriters, ionet::NodeRoles::Peer);

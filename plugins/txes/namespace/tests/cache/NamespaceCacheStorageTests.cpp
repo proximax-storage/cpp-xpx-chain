@@ -19,6 +19,7 @@
 **/
 
 #include "src/cache/NamespaceCacheStorage.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/RootNamespaceHistoryLoadTests.h"
 #include "tests/TestHarness.h"
@@ -34,8 +35,8 @@ namespace catapult { namespace cache {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			return pConfigHolder;
 		}
 
@@ -67,7 +68,7 @@ namespace catapult { namespace cache {
 				// Assert:
 				auto options = DefaultCacheOptions();
 				NamespaceCache cache(CacheConfiguration{}, options);
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				EXPECT_THROW(LoadInto(inputStream, *delta), TException);
 			}
 
@@ -78,13 +79,13 @@ namespace catapult { namespace cache {
 				// Act:
 				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				{
-					auto delta = cache.createDelta();
+					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
 					cache.commit();
 				}
 
 				// Assert:
-				auto view = cache.createView();
+				auto view = cache.createView(Height{0});
 				test::AssertCacheSizes(*view, 1, 1, 1);
 
 				ASSERT_TRUE(view->contains(NamespaceId(123)));
@@ -94,7 +95,7 @@ namespace catapult { namespace cache {
 			static void AssertCannotLoadHistoryWithDepthOneOutOfOrderChildren(io::InputStream& inputStream) {
 				// Arrange:
 				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 
 				// Act + Assert:
 				EXPECT_THROW(LoadInto(inputStream, *delta), catapult_invalid_argument);
@@ -107,13 +108,13 @@ namespace catapult { namespace cache {
 				// Act:
 				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				{
-					auto delta = cache.createDelta();
+					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
 					cache.commit();
 				}
 
 				// Assert:
-				auto view = cache.createView();
+				auto view = cache.createView(Height{0});
 				test::AssertCacheSizes(*view, 1, 4, 4);
 
 				ASSERT_TRUE(view->contains(NamespaceId(123)));
@@ -136,14 +137,14 @@ namespace catapult { namespace cache {
 				// Act:
 				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				{
-					auto delta = cache.createDelta();
+					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
 					cache.commit();
 				}
 
 				// Assert:
 				{
-					auto view = cache.createView();
+					auto view = cache.createView(Height{0});
 					test::AssertCacheSizes(*view, 1, 5, 15);
 
 					ASSERT_TRUE(view->contains(NamespaceId(123)));
@@ -162,7 +163,7 @@ namespace catapult { namespace cache {
 				}
 
 				// - check history (one back)
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->remove(NamespaceId(123));
 				test::AssertCacheSizes(*delta, 1, 5, 10);
 				test::AssertRootNamespace(delta->find(NamespaceId(123)).get().root(), owner, Height(222), Height(333), 4);
@@ -182,14 +183,14 @@ namespace catapult { namespace cache {
 				// Act:
 				NamespaceCache cache(CacheConfiguration{}, DefaultCacheOptions());
 				{
-					auto delta = cache.createDelta();
+					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
 					cache.commit();
 				}
 
 				// Assert:
 				{
-					auto view = cache.createView();
+					auto view = cache.createView(Height{0});
 					test::AssertCacheSizes(*view, 1, 2, 7);
 
 					ASSERT_TRUE(view->contains(NamespaceId(123)));
@@ -202,7 +203,7 @@ namespace catapult { namespace cache {
 				}
 
 				// - check history (one back)
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->remove(NamespaceId(123));
 				test::AssertCacheSizes(*delta, 1, 4, 5);
 				test::AssertRootNamespace(delta->find(NamespaceId(123)).get().root(), owner2, Height(222), Height(333), 3);

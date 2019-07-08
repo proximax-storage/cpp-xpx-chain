@@ -42,8 +42,12 @@ namespace catapult { namespace extensions {
 			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config(Height{0})))
 	{}
 
-	const config::LocalNodeConfiguration& LocalNodeBootstrapper::config() const {
-		return m_pConfigHolder->Config(Height{0});
+	const config::LocalNodeConfiguration& LocalNodeBootstrapper::config(const Height& height) const {
+		return m_pConfigHolder->Config(height);
+	}
+
+	const std::shared_ptr<config::LocalNodeConfigurationHolder>& LocalNodeBootstrapper::configHolder() const {
+		return m_pConfigHolder;
 	}
 
 	const std::string& LocalNodeBootstrapper::resourcesPath() const {
@@ -88,8 +92,8 @@ namespace catapult { namespace extensions {
 	}
 
 	void LocalNodeBootstrapper::loadExtensions() {
-		for (const auto& extension : config().Node.Extensions) {
-			m_extensionModules.emplace_back(config().User.PluginsDirectory, extension);
+		for (const auto& extension : config(Height{0}).Node.Extensions) {
+			m_extensionModules.emplace_back(config(Height{0}).User.PluginsDirectory, extension);
 
 			CATAPULT_LOG(info) << "registering dynamic extension " << extension;
 			LoadExtension(m_extensionModules.back(), *this);
@@ -100,8 +104,8 @@ namespace catapult { namespace extensions {
 		m_nodes.insert(m_nodes.end(), nodes.cbegin(), nodes.cend());
 	}
 
-	void AddStaticNodesFromPath(LocalNodeBootstrapper& bootstrapper, const std::string& path) {
-		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config().BlockChain.Network.Identifier);
+	void AddStaticNodesFromPath(LocalNodeBootstrapper& bootstrapper, const std::string& path, const Height& height) {
+		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config(height).BlockChain.Network.Identifier);
 		bootstrapper.addStaticNodes(nodes);
 	}
 }}

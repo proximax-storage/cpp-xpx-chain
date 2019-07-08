@@ -27,6 +27,7 @@
 #include "catapult/model/Address.h"
 #include "filechain/tests/test/FilechainTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/BlockStateHash.h"
 #include "tests/test/local/LocalNodeTestState.h"
 #include "tests/test/local/LocalTestUtils.h"
@@ -75,7 +76,7 @@ namespace catapult { namespace filechain {
 			}
 
 			auto cacheView() const {
-				return m_localNodeState.cref().Cache.createView(cache);
+				return m_localNodeState.cref().Cache.createView();
 			}
 
 			auto score() const {
@@ -92,7 +93,7 @@ namespace catapult { namespace filechain {
 			}
 
 			void save() const {
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				m_pBlockChainStorage->saveToStorage(m_localNodeState.cref());
 			}
 

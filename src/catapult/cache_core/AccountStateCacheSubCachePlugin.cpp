@@ -22,11 +22,11 @@
 
 namespace catapult { namespace cache {
 
-	void AccountStateCacheSummaryCacheStorage::saveAll(io::OutputStream& output) const {
+	void AccountStateCacheSummaryCacheStorage::saveAll(io::OutputStream& output, const Height& height) const {
 		// write version
 		io::Write32(output, 1);
 
-		auto view = cache().createView(Height{0});
+		auto view = cache().createView(height);
 		const auto& highValueAddresses = view->highValueAddresses();
 		io::Write64(output, highValueAddresses.size());
 		for (const auto& address : highValueAddresses)

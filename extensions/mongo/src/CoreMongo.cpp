@@ -30,9 +30,9 @@ namespace catapult { namespace mongo {
 		manager.addStorageSupport(storages::CreateMongoAccountStateCacheStorage(
 				manager.createDatabaseConnection(),
 				manager.mongoContext().bulkWriter(),
-				manager.chainConfig().Network.Identifier));
+				manager.configHolder()));
 		manager.addStorageSupport(storages::CreateMongoBlockDifficultyCacheStorage(
 				manager.createDatabaseConnection(),
-				model::CalculateDifficultyHistorySize(manager.chainConfig())));
+				manager.configHolder()));
 	}
 }}

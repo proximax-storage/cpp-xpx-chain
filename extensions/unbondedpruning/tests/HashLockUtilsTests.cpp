@@ -68,7 +68,7 @@ namespace catapult { namespace unbondedpruning {
 
 			// Assert: publish was called exactly once
 			ASSERT_EQ(1u, publisher.entityInfos().size());
-			EXPECT_EQ(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash), publisher.entityInfos()[0]);
+			EXPECT_EQ(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height{0}), publisher.entityInfos()[0]);
 
 			// - the expected dependent hashes were extracted
 			EXPECT_EQ(numExpectedDependentHashes, dependentHashes.size());

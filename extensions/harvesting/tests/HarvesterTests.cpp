@@ -181,7 +181,7 @@ namespace catapult { namespace harvesting {
 					config
 			);
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-			auto view = accountStateCache.createView();
+			auto view = accountStateCache.createView(Height{0});
 			cache::ReadOnlyAccountStateCache readOnlyCache(*view);
 			cache::ImportanceView importanceView(readOnlyCache);
 			uint64_t hit = chain::CalculateHit(model::CalculateGenerationHash(context.LastBlockElement.GenerationHash, publicKey));

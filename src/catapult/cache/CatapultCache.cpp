@@ -127,7 +127,7 @@ namespace catapult { namespace cache {
 
 	CatapultCacheDelta& CatapultCacheDelta::operator=(CatapultCacheDelta&&) = default;
 
-	StateHashInfo CatapultCacheDelta::calculateStateHash(Height height) const {
+	StateHashInfo CatapultCacheDelta::calculateStateHash(const Height& height) const {
 		return CalculateStateHashInfo(m_subViews, [height](auto& subView) { subView.updateMerkleRoot(height); });
 	}
 
@@ -150,6 +150,11 @@ namespace catapult { namespace cache {
 					merkleRootIndex,
 					subCacheMerkleRoots.size());
 		}
+	}
+
+	void CatapultCacheDelta::setHeight(const Height& height) {
+		for (auto& subView : m_subViews)
+			subView->setHeight(height);
 	}
 
 	ReadOnlyCatapultCache CatapultCacheDelta::toReadOnly() const {

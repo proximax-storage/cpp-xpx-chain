@@ -20,6 +20,7 @@
 
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/utils/Logging.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 #include <cmath>
@@ -47,8 +48,8 @@ namespace catapult { namespace chain {
 		}
 
 		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Height{0}, config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 			return pConfigHolder;
 		}
 	}
@@ -146,7 +147,7 @@ namespace catapult { namespace chain {
 
 	namespace {
 		void PrepareCache(cache::BlockDifficultyCache& cache, size_t numInfos) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto i = 0u; i < numInfos; ++i)
 				delta->insert(Height(i + 1), Timestamp(60'000 * i), Difficulty(1 + NEMESIS_BLOCK_DIFFICULTY * i));
 
@@ -211,7 +212,7 @@ namespace catapult { namespace chain {
 		// Act:
 		auto difficulty1 = TTraits::CalculateDifficulty(cache, nextBlockInfo, config);
 
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		auto difficulty2 = CalculateDifficulty(view->difficultyInfos(Height(count), count), nextBlockInfo, config);
 
 		// Assert:
