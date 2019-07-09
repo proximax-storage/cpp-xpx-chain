@@ -25,7 +25,7 @@
 #include "catapult/model/NetworkInfo.h"
 
 namespace catapult {
-	namespace extensions { struct ServiceState; }
+	namespace extensions { class ServiceState; }
 	namespace ionet { struct NetworkNode; }
 }
 

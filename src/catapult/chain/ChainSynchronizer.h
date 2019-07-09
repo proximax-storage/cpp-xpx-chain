@@ -29,7 +29,7 @@ namespace catapult {
 		class ChainApi;
 		class RemoteChainApi;
 	}
-	namespace extensions { struct ServiceState; }
+	namespace extensions { class ServiceState; }
 }
 
 namespace catapult { namespace chain {

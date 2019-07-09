@@ -20,6 +20,7 @@
 
 #include "nodediscovery/src/NodePingRequestor.h"
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/net/BriefServerRequestorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,14 +29,17 @@ namespace catapult { namespace nodediscovery {
 #define TEST_CLASS NodePingRequestorTests
 
 	namespace {
+		auto Default_Service_State = test::ServiceTestState();
+
 		struct RequestorTestContext : public test::BriefServerRequestorTestContext<NodePingRequestor> {
 		private:
 			using BaseType = test::BriefServerRequestorTestContext<NodePingRequestor>;
 
 		public:
 			explicit RequestorTestContext(const utils::TimeSpan& timeout = utils::TimeSpan::FromMinutes(1))
-					: BaseType(timeout, NodePingResponseCompatibilityChecker(model::NetworkIdentifier::Mijin_Test))
-			{}
+					: BaseType(timeout, NodePingResponseCompatibilityChecker(Default_Service_State.state())) {
+				Default_Service_State.setNetworkIdentifier(model::NetworkIdentifier::Mijin_Test);
+			}
 
 		public:
 			std::shared_ptr<ionet::Packet> createNodePingResponsePacket(ionet::NodeVersion version, const std::string& name) const {

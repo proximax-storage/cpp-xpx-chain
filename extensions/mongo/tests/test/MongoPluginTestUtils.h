@@ -22,6 +22,7 @@
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoStorageContext.h"
 #include "mongo/tests/test/MongoTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 #include <mongocxx/instance.hpp>
 
@@ -36,8 +37,7 @@ namespace catapult { namespace test {
 		//   like creating a mongocxx::pool (via MongoStorageContext)
 		mongocxx::instance::current();
 		mongo::MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr);
-		auto chainConfig = model::BlockChainConfiguration::Uninitialized();
-		mongo::MongoPluginManager manager(mongoContext, chainConfig);
+		mongo::MongoPluginManager manager(mongoContext, std::make_shared<config::MockLocalNodeConfigurationHolder>());
 		registerSubsystem(manager);
 
 		// Act:

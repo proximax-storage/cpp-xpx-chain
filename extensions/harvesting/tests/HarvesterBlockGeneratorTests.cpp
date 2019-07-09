@@ -24,6 +24,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockUtils.h"
 #include "tests/test/cache/UtTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/TestHarness.h"
@@ -37,21 +38,23 @@ namespace catapult { namespace harvesting {
 
 		// region test context
 
-		auto CreateBlockChainConfiguration() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.ShouldEnableVerifiableState = true;
 			config.ShouldEnableVerifiableReceipts = true;
 			config.CurrencyMosaicId = MosaicId(123);
 			config.ImportanceGrouping = 1;
-			return config;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
 
 		class TestContext {
 		public:
 			explicit TestContext(model::TransactionSelectionStrategy strategy)
-					: m_config(CreateBlockChainConfiguration())
-					, m_catapultCache(test::CreateEmptyCatapultCache(m_config, CreateCacheConfiguration(m_dbDirGuard.name())))
-					, m_utFacadeFactory(m_catapultCache, m_config, m_executionConfig.Config)
+					: m_pConfigHolder(CreateConfigHolder())
+					, m_catapultCache(test::CreateEmptyCatapultCache(m_pConfigHolder->Config(Height{0}).BlockChain, CreateCacheConfiguration(m_dbDirGuard.name())))
+					, m_utFacadeFactory(m_catapultCache, m_pConfigHolder, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(0))
 					, m_generator(CreateHarvesterBlockGenerator(strategy, m_utFacadeFactory, *m_pUtCache)) {
 				// add 5 transaction infos to UT cache with multipliers alternating between 10 and 20
@@ -95,7 +98,7 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			model::BlockChainConfiguration m_config;
+			std::shared_ptr<config::MockLocalNodeConfigurationHolder> m_pConfigHolder;
 			cache::CatapultCache m_catapultCache;
 			test::MockExecutionConfiguration m_executionConfig;
 			HarvestingUtFacadeFactory m_utFacadeFactory;

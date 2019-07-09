@@ -135,10 +135,10 @@ namespace catapult { namespace timesync {
 					const model::BlockChainConfiguration& config,
 					const std::vector<TimeSynchronizationSample>& samples,
 					size_t numValidNodes = std::numeric_limits<size_t>::max())
-					: Synchronizer(CreateEmptyAggregateFilter(), Total_Chain_Importance, Warning_Threshold_Millis)
+					: ServiceTestState(CreateCache(config))
+					, Synchronizer(CreateEmptyAggregateFilter(), ServiceTestState.state(), Warning_Threshold_Millis)
 					, TimeSyncConfig{ 5 }
 					, RequestResultFutureSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Remote), numValidNodes)
-					, ServiceTestState(CreateCache(config))
 					, pTimeSyncState(std::make_shared<TimeSynchronizationState>(Default_Threshold))
 					, NetworkTimeSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Local)) {
 				auto& mutableBlockChainConfig = const_cast<model::BlockChainConfiguration&>(ServiceTestState.config().BlockChain);
@@ -146,10 +146,10 @@ namespace catapult { namespace timesync {
 			}
 
 		public:
+			test::ServiceTestState ServiceTestState;
 			TimeSynchronizer Synchronizer;
 			TimeSynchronizationConfiguration TimeSyncConfig;
 			SimpleResultSupplier RequestResultFutureSupplier;
-			test::ServiceTestState ServiceTestState;
 			std::shared_ptr<TimeSynchronizationState> pTimeSyncState;
 			SimpleNetworkTimeSupplier NetworkTimeSupplier;
 		};

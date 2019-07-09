@@ -134,6 +134,12 @@ namespace catapult { namespace test {
 			LoadPluginByName(m_pluginManager, m_modules, directory, name);
 		}
 
+		/// Sets the network identifier.
+		auto& setNetworkIdentifier(const model::NetworkIdentifier& networkIdentifier) {
+			const_cast<model::NetworkIdentifier&>(state().pluginManager().configHolder()->Config(Height{0}).BlockChain.Network.Identifier) = networkIdentifier;
+			return *this;
+		}
+
 	private:
 		config::LocalNodeConfiguration m_config;
 		ionet::NodeContainer m_nodes;

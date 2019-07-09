@@ -537,13 +537,14 @@ namespace catapult { namespace cache {
 		pCacheStorage->saveAll(stream, Height{0});
 
 		// Assert:
-		ASSERT_EQ(6 * sizeof(uint64_t), buffer.size());
+		ASSERT_EQ(7 * sizeof(uint64_t), buffer.size());
 
 		const auto* pData64 = reinterpret_cast<const uint64_t*>(buffer.data());
-		EXPECT_EQ(5u, pData64[0]); // size;
+		EXPECT_EQ(0u, pData64[0]); // height;
+		EXPECT_EQ(5u, pData64[1]); // size;
 
 		for (auto i = 1u; i <= 5; ++i)
-			EXPECT_EQ(i ^ 0xFFFFFFFF'FFFFFFFF, pData64[i]) << "value at " << i;
+			EXPECT_EQ(i ^ 0xFFFFFFFF'FFFFFFFF, pData64[i + 1]) << "value at " << i;
 	}
 
 	TEST(TEST_CLASS, CanDeserializeCacheFromStorage) {
@@ -553,11 +554,12 @@ namespace catapult { namespace cache {
 		ASSERT_TRUE(!!pCacheStorage);
 
 		// - prepare the input
-		std::vector<uint8_t> buffer(4 * sizeof(uint64_t));
+		std::vector<uint8_t> buffer(5 * sizeof(uint64_t));
 		auto* pData64 = reinterpret_cast<uint64_t*>(buffer.data());
-		pData64[0] = 3; // size
+		pData64[0] = 0; // height
+		pData64[1] = 3; // size
 		for (auto i = 1u; i <= 3; ++i)
-			pData64[i] = i ^ 0xFFFFFFFF'FFFFFFFF;
+			pData64[i + 1] = i ^ 0xFFFFFFFF'FFFFFFFF;
 
 		mocks::MockMemoryStream stream("", buffer);
 

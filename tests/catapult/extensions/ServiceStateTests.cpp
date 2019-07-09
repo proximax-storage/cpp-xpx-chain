@@ -60,13 +60,12 @@ namespace catapult { namespace extensions {
 
 		std::vector<utils::DiagnosticCounter> counters;
 		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(config.BlockChain);
+		pConfigHolder->SetConfig(Height{0}, config);
 		plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
 		thread::MultiServicePool pool("test", 1);
 
 		// Act:
 		auto state = ServiceState(
-				config,
 				nodes,
 				catapultCache,
 				catapultState,
@@ -83,7 +82,7 @@ namespace catapult { namespace extensions {
 
 		// Assert:
 		// - check references
-		EXPECT_EQ(&config, &state.config());
+		EXPECT_EQ(&config, &state.config(Height{0}));
 		EXPECT_EQ(&nodes, &state.nodes());
 		EXPECT_EQ(&catapultCache, &state.cache());
 		EXPECT_EQ(&catapultState, &state.state());

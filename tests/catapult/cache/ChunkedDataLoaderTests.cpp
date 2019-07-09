@@ -39,7 +39,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanLoadStorageFromEmptyStream) {
 		// Arrange:
-		auto buffer = CopyEntriesToStreamBuffer({});
+		auto buffer = CopyEntriesToStreamBuffer({}, 0);
 		mocks::MockMemoryStream stream("", buffer);
 		ChunkedDataLoader<TestEntryLoaderTraits> loader(stream);
 
@@ -51,7 +51,7 @@ namespace catapult { namespace cache {
 		void AssertCanLoadAllInOneShot(size_t numEntries, size_t numRequestedEntries) {
 			// Arrange:
 			auto seed = GenerateRandomEntries(numEntries);
-			auto buffer = CopyEntriesToStreamBuffer(seed);
+			auto buffer = CopyEntriesToStreamBuffer(seed, 0);
 			mocks::MockMemoryStream stream("", buffer);
 			ChunkedDataLoader<TestEntryLoaderTraits> loader(stream);
 
@@ -81,7 +81,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanLoadStorageFromNonEmptyStreamInMultipleBatches) {
 		// Arrange:
 		auto seed = GenerateRandomEntries(7);
-		auto buffer = CopyEntriesToStreamBuffer(seed);
+		auto buffer = CopyEntriesToStreamBuffer(seed, 0);
 		mocks::MockMemoryStream stream("", buffer);
 		ChunkedDataLoader<TestEntryLoaderTraits> loader(stream);
 
@@ -108,7 +108,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, ReadingFromEndOfStreamHasNoEffect) {
 		// Arrange:
-		auto buffer = CopyEntriesToStreamBuffer({});
+		auto buffer = CopyEntriesToStreamBuffer({}, 0);
 		mocks::MockMemoryStream stream("", buffer);
 		ChunkedDataLoader<TestEntryLoaderTraits> loader(stream);
 
@@ -131,7 +131,7 @@ namespace catapult { namespace cache {
 		void AssertCannotLoadMalformedStream(const consumer<std::vector<uint8_t>&>& malformBuffer) {
 			// Arrange:
 			auto seed = GenerateRandomEntries(7);
-			auto buffer = CopyEntriesToStreamBuffer(seed);
+			auto buffer = CopyEntriesToStreamBuffer(seed, 0);
 			malformBuffer(buffer);
 
 			mocks::MockMemoryStream stream("", buffer);

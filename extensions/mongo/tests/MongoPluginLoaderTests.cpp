@@ -20,10 +20,10 @@
 
 #include "mongo/src/MongoPluginLoader.h"
 #include "mongo/src/MongoPluginManager.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/plugins/PluginExceptions.h"
 #include "catapult/utils/ExceptionLogging.h"
 #include "mongo/tests/test/MongoTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 #include <mongocxx/instance.hpp>
@@ -43,7 +43,7 @@ namespace catapult { namespace mongo {
 			mongocxx::instance::current();
 			MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr);
 
-			MongoPluginManager manager(mongoContext, model::BlockChainConfiguration::Uninitialized());
+			MongoPluginManager manager(mongoContext, std::make_shared<config::MockLocalNodeConfigurationHolder>());
 
 			// Act + Assert:
 			action(manager);

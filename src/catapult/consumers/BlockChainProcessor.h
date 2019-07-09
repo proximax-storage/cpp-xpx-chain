@@ -27,7 +27,7 @@
 namespace catapult {
 	namespace cache { class ReadOnlyCatapultCache; }
 	namespace chain { struct ObserverState; }
-	namespace extensions { struct ServiceState; }
+	namespace extensions { class ServiceState; }
 }
 
 namespace catapult { namespace consumers {

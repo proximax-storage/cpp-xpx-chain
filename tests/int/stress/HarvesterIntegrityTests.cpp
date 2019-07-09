@@ -65,14 +65,12 @@ namespace catapult { namespace harvesting {
 			return config;
 		}
 
-		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const model::BlockChainConfiguration& config) {
+		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 			auto cacheId = cache::HashCache::Id;
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			test::CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			test::CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config(Height{0}).BlockChain, subCaches);
 			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -84,18 +82,17 @@ namespace catapult { namespace harvesting {
 		class HarvesterTestContext {
 		public:
 			HarvesterTestContext()
-					: m_config(test::CreateLocalNodeConfiguration(CreateConfiguration(), ""))
-					, m_pPluginManager(CreatePluginManager(m_config.BlockChain))
+					: m_pPluginManager(CreatePluginManager(CreateConfiguration()))
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
-					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_config.BlockChain))
+					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_pPluginManager->configHolder()))
 					, m_unlockedAccounts(100) {
 				// create the harvester
 				auto executionConfig = extensions::CreateExecutionConfiguration(*m_pPluginManager);
-				HarvestingUtFacadeFactory utFacadeFactory(m_cache, CreateConfiguration(), executionConfig);
+				HarvestingUtFacadeFactory utFacadeFactory(m_cache, m_pPluginManager->configHolder(), executionConfig);
 
 				auto strategy = model::TransactionSelectionStrategy::Oldest;
 				auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, m_transactionsCache);
-				m_pHarvester = std::make_unique<Harvester>(m_cache, m_config.BlockChain, m_unlockedAccounts, blockGenerator);
+				m_pHarvester = std::make_unique<Harvester>(m_cache, m_pPluginManager->configHolder(), m_unlockedAccounts, blockGenerator);
 			}
 
 		public:
@@ -180,7 +177,6 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			config::LocalNodeConfiguration m_config;
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			cache::MemoryUtCache m_transactionsCache;
 			cache::CatapultCache m_cache;

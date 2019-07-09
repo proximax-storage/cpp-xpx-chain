@@ -27,6 +27,7 @@
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace storages {
@@ -37,6 +38,15 @@ namespace catapult { namespace mongo { namespace storages {
 		constexpr uint64_t Multiple_Blocks_Count = 10;
 		constexpr uint64_t Difficulty_History_Size = 100;
 
+		auto CreateConfigHolder() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxRollbackBlocks = 50;
+			config.MaxDifficultyBlocks = 50;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
+		}
+
 		class TestContext final : public test::PrepareDatabaseMixin {
 		public:
 			explicit TestContext(size_t topHeight)
@@ -44,7 +54,7 @@ namespace catapult { namespace mongo { namespace storages {
 					, m_transactionRegistry(test::CreateDefaultMongoTransactionRegistry())
 					, m_pCacheStorage(CreateMongoBlockDifficultyCacheStorage(
 							m_pMongoContext->createDatabaseConnection(),
-							Difficulty_History_Size))
+							CreateConfigHolder()))
 					, m_pDbStorage(CreateMongoBlockStorage(*m_pMongoContext, m_transactionRegistry, m_receiptRegistry)) {
 				for (auto i = 1u; i <= topHeight; ++i) {
 					auto transactions = test::GenerateRandomTransactions(10);

@@ -21,6 +21,7 @@
 #include "nodediscovery/src/PeersProcessor.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/utils/ArraySet.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -30,6 +31,7 @@ namespace catapult { namespace nodediscovery {
 
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+		auto Default_Service_State = test::ServiceTestState();
 
 		// region MockNodePingRequestInitiator
 
@@ -79,7 +81,7 @@ namespace catapult { namespace nodediscovery {
 
 		struct TestContext {
 		public:
-			TestContext() : Processor(NodeContainer, PingRequestInitiator.ref(), Network_Identifier, CaptureNode(ResponseNodes))
+			TestContext() : Processor(NodeContainer, PingRequestInitiator.ref(), Default_Service_State.setNetworkIdentifier(Network_Identifier).state(), CaptureNode(ResponseNodes))
 			{}
 
 		public:

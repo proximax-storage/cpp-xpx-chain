@@ -151,6 +151,10 @@ namespace catapult { namespace extensions {
 			void saveToStorage(const LocalNodeStateConstRef&) override {
 				CATAPULT_THROW_RUNTIME_ERROR("saveToStorage - not supported in mock");
 			}
+
+			bool loadState(const std::string&, cache::CatapultCache&, cache::SupplementalData&) override {
+				CATAPULT_THROW_RUNTIME_ERROR("loadState - not supported in mock");
+			}
 		};
 	}
 

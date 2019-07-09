@@ -27,6 +27,7 @@
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
@@ -51,20 +52,9 @@ namespace catapult { namespace nodediscovery {
 		constexpr auto Ping_Task_Name = "node discovery ping task";
 		constexpr auto Peers_Task_Name = "node discovery peers task";
 
-		auto CreateConfig() {
-			auto userConfig = config::UserConfiguration::Uninitialized();
-			userConfig.BootKey = test::GenerateRandomHexString(2 * Key_Size);
-			return config::LocalNodeConfiguration{
-				model::BlockChainConfiguration::Uninitialized(),
-				config::NodeConfiguration::Uninitialized(),
-				config::LoggingConfiguration::Uninitialized(),
-				std::move(userConfig)};
-		}
-		auto Default_Config = CreateConfig();
-
 		struct NodeDiscoveryServiceTraits {
 			static auto CreateRegistrar() {
-				return CreateNodeDiscoveryServiceRegistrar(Default_Config);
+				return CreateNodeDiscoveryServiceRegistrar();
 			}
 		};
 
@@ -75,6 +65,14 @@ namespace catapult { namespace nodediscovery {
 				testState().state().hooks().addPacketPayloadSink([&payloads = m_payloads](const auto& payload) {
 					payloads.push_back(payload);
 				});
+
+				auto userConfig = config::UserConfiguration::Uninitialized();
+				userConfig.BootKey = test::GenerateRandomHexString(2 * Key_Size);
+				testState().state().pluginManager().configHolder()->SetConfig(Height{0}, config::LocalNodeConfiguration{
+					model::BlockChainConfiguration::Uninitialized(),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					std::move(userConfig)});
 			}
 
 		public:

@@ -188,7 +188,7 @@ namespace catapult { namespace extensions {
 		LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		// Act:
-		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json");
+		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json", Height{0});
 
 		// Assert:
 		EXPECT_EQ(1u, bootstrapper.staticNodes().size());

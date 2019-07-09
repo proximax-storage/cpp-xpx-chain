@@ -24,6 +24,7 @@
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "mongo/tests/test/mocks/MockReceiptMapper.h"
 #include "mongo/tests/test/mocks/MockTransactionMapper.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/mocks/MockExternalCacheStorage.h"
 #include "tests/TestHarness.h"
 #include <mongocxx/instance.hpp>
@@ -40,8 +41,10 @@ namespace catapult { namespace mongo {
 			//   like creating a mongocxx::pool (via MongoStorageContext)
 			mongocxx::instance::current();
 			MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 
-			MongoPluginManager manager(mongoContext, config);
+			MongoPluginManager manager(mongoContext, pConfigHolder);
 
 			// Act + Assert:
 			action(manager, mongoContext);
@@ -64,7 +67,7 @@ namespace catapult { namespace mongo {
 		RunPluginManagerTest(config, [](const auto& manager, const auto& mongoContext) {
 			// Assert: compare BlockPruneInterval as a sentinel value because the manager copies the config
 			EXPECT_EQ(&mongoContext, &manager.mongoContext());
-			EXPECT_EQ(15u, manager.chainConfig().BlockPruneInterval);
+			EXPECT_EQ(15u, manager.configHolder()->Config(Height{0}).BlockChain.BlockPruneInterval);
 		});
 	}
 

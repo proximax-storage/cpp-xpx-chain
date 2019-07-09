@@ -23,6 +23,7 @@
 #include "catapult/utils/Functional.h"
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -34,6 +35,7 @@ namespace catapult { namespace handlers {
 
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+		auto Default_Service_State = test::ServiceTestState();
 
 		auto CreateNodePushPingPacket(const Key& identityKey, const std::string& host) {
 			return test::CreateNodePushPingPacket(identityKey, ionet::NodeVersion(1234), host, "");
@@ -45,7 +47,8 @@ namespace catapult { namespace handlers {
 			ionet::ServerPacketHandlers handlers;
 			ionet::Node capturedNode;
 			auto numConsumerCalls = 0u;
-			RegisterNodeDiscoveryPushPingHandler(handlers, Network_Identifier, [&capturedNode, &numConsumerCalls](const auto& node) {
+			Default_Service_State.setNetworkIdentifier(model::NetworkIdentifier::Mijin_Test);
+			RegisterNodeDiscoveryPushPingHandler(Default_Service_State.state(), [&capturedNode, &numConsumerCalls](const auto& node) {
 				capturedNode = node;
 				++numConsumerCalls;
 			});
@@ -165,8 +168,9 @@ namespace catapult { namespace handlers {
 			const_cast<config::NodeConfiguration&>(config.Node).Local.Host = "host";
 			const_cast<config::NodeConfiguration&>(config.Node).Local.FriendlyName = "alice";
 			const_cast<config::UserConfiguration&>(config.User).BootKey = test::GenerateRandomHexString(2 * Key_Size);
+			Default_Service_State.state().pluginManager().configHolder()->SetConfig(Height{0}, config);
 			auto pNetworkNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(config)));
-			RegisterNodeDiscoveryPullPingHandler(handlers, config);
+			RegisterNodeDiscoveryPullPingHandler(Default_Service_State.state());
 
 			// - create a valid request
 			auto pPacket = ionet::CreateSharedPacket<ionet::Packet>();

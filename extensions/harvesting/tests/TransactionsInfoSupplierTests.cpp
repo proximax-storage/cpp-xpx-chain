@@ -22,6 +22,7 @@
 #include "harvesting/src/HarvestingUtFacadeFactory.h"
 #include "catapult/cache/MemoryUtCache.h"
 #include "tests/test/cache/UtTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/TestHarness.h"
 
@@ -35,12 +36,13 @@ namespace catapult { namespace harvesting {
 
 		// region test context
 
-		auto CreateBlockChainConfiguration() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.ImportanceGrouping = 1;
-			return config;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
-		auto Default_Config = CreateBlockChainConfiguration();
 
 		void AssertConsistent(const TransactionsInfo& transactionsInfo, const HarvestingUtFacade& facade) {
 			// Assert: transactionsInfo and facade should contain exact same transactions (and hashes)
@@ -56,8 +58,9 @@ namespace catapult { namespace harvesting {
 		class TestContext {
 		public:
 			explicit TestContext(TransactionSelectionStrategy strategy, uint32_t utCacheSize = 0)
-					: m_catapultCache(test::CreateCatapultCacheWithMarkerAccount(Height(7), Default_Config))
-					, m_utFacadeFactory(m_catapultCache, Default_Config, m_executionConfig.Config)
+					: m_pConfigHolder(CreateConfigHolder())
+					, m_catapultCache(test::CreateCatapultCacheWithMarkerAccount(Height(7), m_pConfigHolder->Config(Height{0}).BlockChain))
+					, m_utFacadeFactory(m_catapultCache, m_pConfigHolder, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(utCacheSize))
 					, m_supplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache))
 			{}
@@ -125,6 +128,7 @@ namespace catapult { namespace harvesting {
 			}
 
 		private:
+			std::shared_ptr<config::MockLocalNodeConfigurationHolder> m_pConfigHolder;
 			cache::CatapultCache m_catapultCache;
 			test::MockExecutionConfiguration m_executionConfig;
 			HarvestingUtFacadeFactory m_utFacadeFactory;

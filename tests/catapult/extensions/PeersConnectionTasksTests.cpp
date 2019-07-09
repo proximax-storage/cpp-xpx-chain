@@ -23,6 +23,7 @@
 #include "catapult/ionet/NodeInteractionResult.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -125,17 +126,19 @@ namespace catapult { namespace extensions {
 		template<typename TSettingsFactory>
 		void AssertCanCreateSelectorSettings(ionet::NodeRoles expectedRole, TSettingsFactory settingsFactory) {
 			// Arrange:
-			ionet::NodeContainer container;
+			auto serviceState = test::ServiceTestState();
 			auto unknownKey = test::GenerateRandomData<Key_Size>();
 			auto knownKeyWrongHeight = test::GenerateRandomData<Key_Size>();
 			auto knownKey = test::GenerateRandomData<Key_Size>();
 
-			// -  create and initialize a cache
-			auto blockChainConfiguration = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfiguration.ImportanceGrouping = 1;
-			auto cache = test::CreateEmptyCatapultCache(blockChainConfiguration);
+			// -  initialize a cache
+			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
+			blockChainConfig.ImportanceGrouping = 1;
+			blockChainConfig.TotalChainImportance = Importance(100);
+			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+			nodeConfig.OutgoingConnections = CreateConfiguration();
 			{
-				auto cacheDelta = cache.createDelta();
+				auto cacheDelta = serviceState.state().cache().createDelta();
 				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
 				accountStateCacheDelta.addAccount(knownKeyWrongHeight, Height(1));
 				auto& wrongHeightAccount = accountStateCacheDelta.find(knownKeyWrongHeight).get();
@@ -146,14 +149,14 @@ namespace catapult { namespace extensions {
 				auto& knownKeyAccount = accountStateCacheDelta.find(knownKey).get();
 				knownKeyAccount.Balances.track(test::Default_Currency_Mosaic_Id);
 				knownKeyAccount.Balances.credit(test::Default_Currency_Mosaic_Id, Amount(111), Height(999));
-				cache.commit(Height(1000));
+				serviceState.state().cache().commit(Height(1000));
 			}
 
 			// Act:
-			auto settings = settingsFactory(cache, Importance(100), container, ionet::ServiceIdentifier(4), CreateConfiguration());
+			auto settings = settingsFactory(serviceState.state(), ionet::ServiceIdentifier(4));
 
 			// Assert:
-			EXPECT_EQ(&container, &settings.Nodes);
+			EXPECT_EQ(&serviceState.state().nodes(), &settings.Nodes);
 			EXPECT_EQ(ionet::ServiceIdentifier(4), settings.ServiceId);
 			EXPECT_EQ(expectedRole, settings.RequiredRole);
 			EXPECT_EQ(5u, settings.Config.MaxConnections); // only check one config field as proxy
@@ -167,24 +170,18 @@ namespace catapult { namespace extensions {
 	TEST(TEST_CLASS, CanCreateSelectorSettingsWithRole) {
 		// Assert:
 		AssertCanCreateSelectorSettings(ionet::NodeRoles::Api, [](
-				const auto& cache,
-				auto totalChainImportance,
-				auto& nodes,
-				auto serviceId,
-				const auto& config) {
-			return SelectorSettings(cache, totalChainImportance, nodes, serviceId, ionet::NodeRoles::Api, config);
+			auto& state,
+			auto serviceId) {
+			return SelectorSettings(state, serviceId, ionet::NodeRoles::Api);
 		});
 	}
 
 	TEST(TEST_CLASS, CanCreateSelectorSettingsWithoutRole) {
 		// Assert:
 		AssertCanCreateSelectorSettings(ionet::NodeRoles::None, [](
-				const auto& cache,
-				auto totalChainImportance,
-				auto& nodes,
-				auto serviceId,
-				const auto& config) {
-			return SelectorSettings(cache, totalChainImportance, nodes, serviceId, config);
+				auto& state,
+				auto serviceId) {
+			return SelectorSettings(state, serviceId);
 		});
 	}
 
@@ -194,11 +191,14 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateNodeSelector) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
-		ionet::NodeContainer container;
+		auto serviceState = test::ServiceTestState();
+		auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
+		blockChainConfig.ImportanceGrouping = 1;
+		blockChainConfig.TotalChainImportance = Importance(100);
+		auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+		nodeConfig.OutgoingConnections = CreateConfiguration();
 		auto serviceId = ionet::ServiceIdentifier(1);
-		auto settings = SelectorSettings(cache, Importance(100), container, serviceId, ionet::NodeRoles::Api, CreateConfiguration());
+		auto settings = SelectorSettings(serviceState.state(), serviceId, ionet::NodeRoles::Api);
 		auto selector = CreateNodeSelector(settings);
 
 		// Act:
@@ -211,21 +211,24 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CreateNodeSelectorProvisionsConnectionStatesForRoleCompatibleNodes) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
-		ionet::NodeContainer container;
+		auto serviceState = test::ServiceTestState();
 		auto keys = test::GenerateRandomDataVector<Key>(3);
-		Add(container, keys[0], "bob", ionet::NodeRoles::Api);
-		Add(container, keys[1], "alice", ionet::NodeRoles::Peer);
-		Add(container, keys[2], "charlie", ionet::NodeRoles::Api | ionet::NodeRoles::Peer);
+		Add(serviceState.state().nodes(), keys[0], "bob", ionet::NodeRoles::Api);
+		Add(serviceState.state().nodes(), keys[1], "alice", ionet::NodeRoles::Peer);
+		Add(serviceState.state().nodes(), keys[2], "charlie", ionet::NodeRoles::Api | ionet::NodeRoles::Peer);
+		auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
+		blockChainConfig.ImportanceGrouping = 1;
+		blockChainConfig.TotalChainImportance = Importance(100);
+		auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+		nodeConfig.OutgoingConnections = CreateConfiguration();
 		auto serviceId = ionet::ServiceIdentifier(1);
-		auto settings = SelectorSettings(cache, Importance(100), container, serviceId, ionet::NodeRoles::Api, CreateConfiguration());
+		auto settings = SelectorSettings(serviceState.state(), serviceId, ionet::NodeRoles::Api);
 
 		// Act:
 		CreateNodeSelector(settings);
 
 		// Assert:
-		const auto& view = container.view();
+		const auto& view = serviceState.state().nodes().view();
 		EXPECT_TRUE(!!view.getNodeInfo(keys[0]).getConnectionState(serviceId));
 		EXPECT_FALSE(!!view.getNodeInfo(keys[1]).getConnectionState(serviceId));
 		EXPECT_TRUE(!!view.getNodeInfo(keys[2]).getConnectionState(serviceId));
@@ -237,12 +240,12 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		std::vector<ionet::Node> SeedAlternatingServiceNodes(
-				ionet::NodeContainer& container,
+				test::ServiceTestState& serviceState,
 				uint32_t numNodes,
 				ionet::ServiceIdentifier evenServiceId,
 				ionet::ServiceIdentifier oddServiceId) {
 			std::vector<ionet::Node> nodes;
-			auto modifier = container.modifier();
+			auto modifier = serviceState.state().nodes().modifier();
 			for (auto i = 0u; i < numNodes; ++i) {
 				auto identityKey = test::GenerateRandomData<Key_Size>();
 				auto node = test::CreateNamedNode(identityKey, "node " + std::to_string(i));
@@ -266,14 +269,17 @@ namespace catapult { namespace extensions {
 		}
 
 		void RunConnectPeersTask(
-				ionet::NodeContainer& container,
+				test::ServiceTestState& serviceState,
 				net::PacketWriters& packetWriters,
 				ionet::ServiceIdentifier serviceId,
 				const NodeSelector& selector = NodeSelector()) {
 			// Act:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
-			auto settings = SelectorSettings(cache, Importance(100), container, serviceId, ionet::NodeRoles::Peer, CreateConfiguration());
+			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
+			blockChainConfig.ImportanceGrouping = 1;
+			blockChainConfig.TotalChainImportance = Importance(100);
+			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+			nodeConfig.OutgoingConnections = CreateConfiguration();
+			auto settings = SelectorSettings(serviceState.state(), serviceId, ionet::NodeRoles::Peer);
 			auto task = selector
 					? CreateConnectPeersTask(settings, packetWriters, selector)
 					: CreateConnectPeersTask(settings, packetWriters);
@@ -294,19 +300,19 @@ namespace catapult { namespace extensions {
 		void AssertMatchingServiceNodesAreAged(TRunTask runTask) {
 			// Arrange: prepare a container with alternating matching service nodes
 			auto serviceId = ionet::ServiceIdentifier(3);
-			ionet::NodeContainer container;
-			auto nodes = SeedAlternatingServiceNodes(container, 10, ionet::ServiceIdentifier(9), serviceId);
+			auto serviceState = test::ServiceTestState();
+			auto nodes = SeedAlternatingServiceNodes(serviceState, 10, ionet::ServiceIdentifier(9), serviceId);
 
 			// - indicate 3 / 5 matching service nodes are active
 			mocks::MockPacketWriters writers;
 			ConnectSyncAll(writers, { nodes[1], nodes[5], nodes[7] });
 
 			// Act: run selection that returns neither add nor remove candidates
-			runTask(container, writers, serviceId);
+			runTask(serviceState, writers, serviceId);
 
 			// Assert: nodes associated with service 3 were aged, others were untouched
 			auto i = 0u;
-			auto view = container.view();
+			auto view = serviceState.state().nodes().view();
 			std::vector<uint32_t> expectedAges{ 3, 0, 7, 9, 0 }; // only for matching service 3
 			for (const auto& node : nodes) {
 				auto message = "node at " + std::to_string(i);
@@ -327,8 +333,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, ConnectPeersTask_MatchingServiceNodesAreAged) {
 		// Assert:
-		AssertMatchingServiceNodesAreAged([](auto& container, auto& writers, auto serviceId) {
-			RunConnectPeersTask(container, writers, serviceId);
+		AssertMatchingServiceNodesAreAged([](auto& serviceState, auto& writers, auto serviceId) {
+			RunConnectPeersTask(serviceState, writers, serviceId);
 		});
 	}
 
@@ -341,8 +347,8 @@ namespace catapult { namespace extensions {
 		void AssertRemoveCandidatesAreClosedInWriters(TRunTask runTask) {
 			// Arrange: prepare a container with alternating matching service nodes
 			auto serviceId = ionet::ServiceIdentifier(3);
-			ionet::NodeContainer container;
-			auto nodes = SeedAlternatingServiceNodes(container, 10, ionet::ServiceIdentifier(9), serviceId);
+			auto serviceState = test::ServiceTestState();
+			auto nodes = SeedAlternatingServiceNodes(serviceState, 10, ionet::ServiceIdentifier(9), serviceId);
 
 			// - indicate 3 / 5 matching service nodes are active
 			mocks::MockPacketWriters writers;
@@ -350,13 +356,13 @@ namespace catapult { namespace extensions {
 
 			// Act: run selection that returns remove candidates
 			auto removeCandidates = utils::KeySet{ nodes[1].identityKey(), nodes[9].identityKey() };
-			runTask(container, writers, serviceId, removeCandidates);
+			runTask(serviceState, writers, serviceId, removeCandidates);
 
 			// Assert: remove candidates were removed from writers
 			EXPECT_EQ(removeCandidates, writers.closedNodeIdentities());
 
 			// - removed nodes are still aged if they are active during selection (their ages will be zeroed on next iteration)
-			auto view = container.view();
+			auto view = serviceState.state().nodes().view();
 			EXPECT_EQ(3u, view.getNodeInfo(nodes[1].identityKey()).getConnectionState(serviceId)->Age);
 			EXPECT_EQ(0u, view.getNodeInfo(nodes[9].identityKey()).getConnectionState(serviceId)->Age);
 		}
@@ -364,8 +370,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, ConnectPeersTask_RemoveCandidatesAreClosedInWriters) {
 		// Assert:
-		AssertRemoveCandidatesAreClosedInWriters([](auto& container, auto& writers, auto serviceId, const auto& removeCandidates) {
-			RunConnectPeersTask(container, writers, serviceId, [&removeCandidates]() {
+		AssertRemoveCandidatesAreClosedInWriters([](auto& serviceState, auto& writers, auto serviceId, const auto& removeCandidates) {
+			RunConnectPeersTask(serviceState, writers, serviceId, [&removeCandidates]() {
 				auto result = NodeSelectionResult();
 				result.RemoveCandidates = removeCandidates;
 				return result;
@@ -419,14 +425,14 @@ namespace catapult { namespace extensions {
 	TEST(TEST_CLASS, ConnectPeersTask_AddCandidatesHaveConnectionsInitiatedAndInteractionsUpdated_AllSucceed) {
 		// Arrange: prepare a container with alternating matching service nodes
 		auto serviceId = ionet::ServiceIdentifier(3);
-		ionet::NodeContainer container;
-		auto nodes = SeedAlternatingServiceNodes(container, 12, ionet::ServiceIdentifier(9), serviceId);
+		auto serviceState = test::ServiceTestState();
+		auto nodes = SeedAlternatingServiceNodes(serviceState, 12, ionet::ServiceIdentifier(9), serviceId);
 
 		mocks::MockPacketWriters writers;
 
 		// Act: run selection that returns add candidates
 		auto addCandidates = ionet::NodeSet{ nodes[3], nodes[5], nodes[9] };
-		RunConnectPeersTask(container, writers, serviceId, [&addCandidates]() {
+		RunConnectPeersTask(serviceState, writers, serviceId, [&addCandidates]() {
 			auto result = NodeSelectionResult();
 			result.AddCandidates = addCandidates;
 			return result;
@@ -438,7 +444,7 @@ namespace catapult { namespace extensions {
 		EXPECT_TRUE(IsConnectedNode(writers, nodes[9]));
 
 		// - interactions have been updated appropriately from initial values (7S, 3F)
-		auto view = container.view();
+		auto view = serviceState.state().nodes().view();
 		AssertInteractions(view, nodes[3].identityKey(), 8, 3);
 		AssertInteractions(view, nodes[5].identityKey(), 8, 3);
 		AssertInteractions(view, nodes[9].identityKey(), 8, 3);
@@ -453,10 +459,10 @@ namespace catapult { namespace extensions {
 		// Arrange: prepare a container with alternating matching service nodes and increment consecutive failures for some nodes
 		//          so that those nodes have requisite number of consecutive failures for banning
 		auto serviceId = ionet::ServiceIdentifier(3);
-		ionet::NodeContainer container;
-		auto nodes = SeedAlternatingServiceNodes(container, 12, ionet::ServiceIdentifier(9), serviceId);
-		IncrementNumConsecutiveFailures(container, serviceId, nodes[3].identityKey());
-		IncrementNumConsecutiveFailures(container, serviceId, nodes[9].identityKey());
+		auto serviceState = test::ServiceTestState();
+		auto nodes = SeedAlternatingServiceNodes(serviceState, 12, ionet::ServiceIdentifier(9), serviceId);
+		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[3].identityKey());
+		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[9].identityKey());
 
 		// - trigger some nodes to fail during connection
 		mocks::MockPacketWriters writers;
@@ -465,7 +471,7 @@ namespace catapult { namespace extensions {
 
 		// Act: run selection that returns add candidates
 		auto addCandidates = ionet::NodeSet{ nodes[3], nodes[5], nodes[9] };
-		RunConnectPeersTask(container, writers, serviceId, [&addCandidates]() {
+		RunConnectPeersTask(serviceState, writers, serviceId, [&addCandidates]() {
 			auto result = NodeSelectionResult();
 			result.AddCandidates = addCandidates;
 			return result;
@@ -477,7 +483,7 @@ namespace catapult { namespace extensions {
 		EXPECT_TRUE(IsConnectedNode(writers, nodes[9]));
 
 		// - interactions have been updated appropriately from initial values (7S, 3F)
-		auto view = container.view();
+		auto view = serviceState.state().nodes().view();
 		AssertInteractions(view, nodes[3].identityKey(), 7, 4);
 		AssertInteractions(view, nodes[5].identityKey(), 8, 3);
 		AssertInteractions(view, nodes[9].identityKey(), 7, 4);
@@ -492,11 +498,11 @@ namespace catapult { namespace extensions {
 		// Arrange: prepare a container with alternating matching service nodes and increment consecutive failures fo all nodes
 		//          so that those nodes have requisite number of consecutive failures for banning
 		auto serviceId = ionet::ServiceIdentifier(3);
-		ionet::NodeContainer container;
-		auto nodes = SeedAlternatingServiceNodes(container, 12, ionet::ServiceIdentifier(9), serviceId);
-		IncrementNumConsecutiveFailures(container, serviceId, nodes[3].identityKey());
-		IncrementNumConsecutiveFailures(container, serviceId, nodes[5].identityKey());
-		IncrementNumConsecutiveFailures(container, serviceId, nodes[9].identityKey());
+		auto serviceState = test::ServiceTestState();
+		auto nodes = SeedAlternatingServiceNodes(serviceState, 12, ionet::ServiceIdentifier(9), serviceId);
+		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[3].identityKey());
+		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[5].identityKey());
+		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[9].identityKey());
 
 		// - trigger all nodes to fail during connection
 		mocks::MockPacketWriters writers;
@@ -506,7 +512,7 @@ namespace catapult { namespace extensions {
 
 		// Act: run selection that returns add candidates
 		auto addCandidates = ionet::NodeSet{ nodes[3], nodes[5], nodes[9] };
-		RunConnectPeersTask(container, writers, serviceId, [&addCandidates]() {
+		RunConnectPeersTask(serviceState, writers, serviceId, [&addCandidates]() {
 			auto result = NodeSelectionResult();
 			result.AddCandidates = addCandidates;
 			return result;
@@ -518,7 +524,7 @@ namespace catapult { namespace extensions {
 		EXPECT_TRUE(IsConnectedNode(writers, nodes[9]));
 
 		// - interactions have been updated appropriately from initial values (7S, 3F)
-		auto view = container.view();
+		auto view = serviceState.state().nodes().view();
 		AssertInteractions(view, nodes[3].identityKey(), 7, 4);
 		AssertInteractions(view, nodes[5].identityKey(), 7, 4);
 		AssertInteractions(view, nodes[9].identityKey(), 7, 4);
@@ -535,10 +541,13 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateRemoveOnlyNodeSelector) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
-		ionet::NodeContainer container;
-		auto settings = SelectorSettings(cache, Importance(100), container, ionet::ServiceIdentifier(1), CreateConfiguration());
+		auto serviceState = test::ServiceTestState();
+		auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
+		blockChainConfig.ImportanceGrouping = 1;
+		blockChainConfig.TotalChainImportance = Importance(100);
+		auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+		nodeConfig.OutgoingConnections = CreateConfiguration();
+		auto settings = SelectorSettings(serviceState.state(), ionet::ServiceIdentifier(1));
 		auto selector = CreateRemoveOnlyNodeSelector(settings);
 
 		// Act:
@@ -554,14 +563,19 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		void RunAgePeersTask(
-				ionet::NodeContainer& container,
+				test::ServiceTestState& serviceState,
 				net::PacketWriters& packetWriters,
 				ionet::ServiceIdentifier serviceId,
 				const RemoveOnlyNodeSelector& selector = RemoveOnlyNodeSelector()) {
+			// Arrange:
+			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
+			blockChainConfig.ImportanceGrouping = 1;
+			blockChainConfig.TotalChainImportance = Importance(100);
+			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+			nodeConfig.OutgoingConnections = CreateConfiguration();
+
 			// Act:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
-			auto settings = SelectorSettings(cache, Importance(100), container, serviceId, CreateConfiguration());
+			auto settings = SelectorSettings(serviceState.state(), serviceId);
 			auto task = selector
 					? CreateAgePeersTask(settings, packetWriters, selector)
 					: CreateAgePeersTask(settings, packetWriters);
@@ -575,15 +589,15 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, AgePeersTask_MatchingServiceNodesAreAged) {
 		// Assert:
-		AssertMatchingServiceNodesAreAged([](auto& container, auto& writers, auto serviceId) {
-			RunAgePeersTask(container, writers, serviceId);
+		AssertMatchingServiceNodesAreAged([](auto& serviceState, auto& writers, auto serviceId) {
+			RunAgePeersTask(serviceState, writers, serviceId);
 		});
 	}
 
 	TEST(TEST_CLASS, AgePeersTask_RemoveCandidatesAreClosedInWriters) {
 		// Assert:
-		AssertRemoveCandidatesAreClosedInWriters([](auto& container, auto& writers, auto serviceId, const auto& removeCandidates) {
-			RunAgePeersTask(container, writers, serviceId, [&removeCandidates]() {
+		AssertRemoveCandidatesAreClosedInWriters([](auto& serviceState, auto& writers, auto serviceId, const auto& removeCandidates) {
+			RunAgePeersTask(serviceState, writers, serviceId, [&removeCandidates]() {
 				return removeCandidates;
 			});
 		});
