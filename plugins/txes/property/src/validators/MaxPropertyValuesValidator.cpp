@@ -73,7 +73,7 @@ namespace catapult { namespace validators {
 #define DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE, PROPERTY_VALUE_TYPE) \
 	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) { \
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>; \
-		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [&pConfigHolder]( \
+		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [pConfigHolder]( \
 				const auto& notification, \
 				const auto& context) { \
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain; \

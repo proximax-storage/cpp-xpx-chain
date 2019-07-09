@@ -219,7 +219,7 @@ namespace catapult { namespace mongo { namespace storages {
 	private:
 		MongoDatabase m_database;
 		MongoBulkWriter& m_bulkWriter;
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// A mongo cache storage that persists flat cache data using delete and upsert.
@@ -311,6 +311,6 @@ namespace catapult { namespace mongo { namespace storages {
 	private:
 		MongoDatabase m_database;
 		MongoBulkWriter& m_bulkWriter;
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 }}}

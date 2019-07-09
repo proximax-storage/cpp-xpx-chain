@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 	using Notification = model::BlockNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(EligibleHarvester, [&pConfigHolder](
+		return MAKE_STATEFUL_VALIDATOR(EligibleHarvester, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			cache::ImportanceView view(context.Cache.sub<cache::AccountStateCache>());

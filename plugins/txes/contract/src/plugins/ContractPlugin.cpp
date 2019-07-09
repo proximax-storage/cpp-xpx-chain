@@ -74,7 +74,7 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateModifyContractDurationValidator());
 		});
 
-		manager.addObserverHook([&pConfigHolder = manager.configHolder()](auto& builder) {
+		manager.addObserverHook([pConfigHolder = manager.configHolder()](auto& builder) {
 			builder.add(observers::CreateModifyContractObserver(pConfigHolder));
 			builder.add(observers::CreateReputationUpdateObserver());
 		});

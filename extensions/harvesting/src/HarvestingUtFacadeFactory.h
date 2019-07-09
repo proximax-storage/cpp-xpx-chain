@@ -82,7 +82,7 @@ namespace catapult { namespace harvesting {
 
 	private:
 		const cache::CatapultCache& m_cache;
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		chain::ExecutionConfiguration m_executionConfig;
 	};
 }}

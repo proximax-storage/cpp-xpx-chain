@@ -84,7 +84,7 @@ namespace catapult { namespace consumers {
 
 		private:
 			uint32_t m_maxChainSize;
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 			chain::TimeSupplier m_timeSupplier;
 		};
 	}

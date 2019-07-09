@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 	using Notification = model::ModifyMultisigCosignersNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, [&pConfigHolder](
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			size_t numCosignatories = 0u;

@@ -65,7 +65,7 @@ namespace catapult { namespace observers {
 			size_t interval,
 			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
-		return std::make_unique<ObserverType>(name + "PruningObserver", [interval, &pConfigHolder](const auto&, auto& context) {
+		return std::make_unique<ObserverType>(name + "PruningObserver", [interval, pConfigHolder](const auto&, auto& context) {
 			if (!ShouldPrune(context, interval))
 				return;
 
@@ -87,7 +87,7 @@ namespace catapult { namespace observers {
 			const std::string& name,
 			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
-		return std::make_unique<ObserverType>(name + "PruningObserver", [&pConfigHolder](const auto&, auto& context) {
+		return std::make_unique<ObserverType>(name + "PruningObserver", [pConfigHolder](const auto&, auto& context) {
 			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
 			if (!ShouldPrune(context, config.BlockPruneInterval))
 				return;
@@ -108,7 +108,7 @@ namespace catapult { namespace observers {
 			const std::string& name,
 			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
-		return std::make_unique<ObserverType>(name + "PruningObserver", [&pConfigHolder](const auto& notification, const auto& context) {
+		return std::make_unique<ObserverType>(name + "PruningObserver", [pConfigHolder](const auto& notification, const auto& context) {
 			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
 			if (!ShouldPrune(context, config.BlockPruneInterval))
 				return;

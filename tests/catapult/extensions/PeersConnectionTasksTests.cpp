@@ -126,17 +126,19 @@ namespace catapult { namespace extensions {
 		template<typename TSettingsFactory>
 		void AssertCanCreateSelectorSettings(ionet::NodeRoles expectedRole, TSettingsFactory settingsFactory) {
 			// Arrange:
-			auto serviceState = test::ServiceTestState();
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.ImportanceGrouping = 1;
+			blockChainConfig.TotalChainImportance = Importance(100);
+			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
+			auto serviceState = test::ServiceTestState(std::move(cache));
+			const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain) = blockChainConfig;
+			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+			nodeConfig.OutgoingConnections = CreateConfiguration();
 			auto unknownKey = test::GenerateRandomData<Key_Size>();
 			auto knownKeyWrongHeight = test::GenerateRandomData<Key_Size>();
 			auto knownKey = test::GenerateRandomData<Key_Size>();
 
 			// -  initialize a cache
-			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
-			blockChainConfig.ImportanceGrouping = 1;
-			blockChainConfig.TotalChainImportance = Importance(100);
-			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
-			nodeConfig.OutgoingConnections = CreateConfiguration();
 			{
 				auto cacheDelta = serviceState.state().cache().createDelta();
 				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();

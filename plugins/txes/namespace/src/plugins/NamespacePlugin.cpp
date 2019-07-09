@@ -151,7 +151,7 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateNamespaceTypeValidator());
 			});
 
-			manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
+			manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 				builder
 					.add(validators::CreateNamespaceNameValidator(pConfigHolder))
 					.add(validators::CreateRootNamespaceValidator(pConfigHolder))
@@ -161,7 +161,7 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateRootNamespaceMaxChildrenValidator(pConfigHolder));
 			});
 
-			manager.addObserverHook([&pConfigHolder](auto& builder) {
+			manager.addObserverHook([pConfigHolder](auto& builder) {
 				auto rentalFeeReceiptType = model::Receipt_Type_Namespace_Rental_Fee;
 				auto expiryReceiptType = model::Receipt_Type_Namespace_Expired;
 				builder

@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 	}
 
 	DECLARE_STATEFUL_VALIDATOR(ProofSecret, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(ProofSecret, [&pConfigHolder](const auto& notification, const auto& context) {
+		return MAKE_STATEFUL_VALIDATOR(ProofSecret, [pConfigHolder](const auto& notification, const auto& context) {
 			if (!SupportedHash(notification.HashAlgorithm))
 				return Failure_LockSecret_Hash_Not_Implemented;
 

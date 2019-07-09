@@ -89,7 +89,7 @@ namespace catapult { namespace harvesting {
 					CreateHarvesterTaskOptions(state),
 					std::make_unique<Harvester>(cache, pConfigHolder, unlockedAccounts, blockGenerator));
 
-			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, &pConfigHolder]() {
+			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, pConfigHolder]() {
 				// prune accounts that are not eligible to harvest the next block
 				PruneUnlockedAccounts(unlockedAccounts, cache, pConfigHolder);
 

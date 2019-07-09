@@ -47,6 +47,9 @@ namespace catapult { namespace config {
 		if (m_catapultConfigs.count(height))
 			return m_catapultConfigs.at(height);
 
+		if (!m_pCache)
+			CATAPULT_THROW_INVALID_ARGUMENT("cache pointer is not set");
+
 		auto& configCache = m_pCache->createView().sub<cache::CatapultConfigCache>();
 		auto configHeight = configCache.FindConfigHeightAt(height);
 		if (m_catapultConfigs.count(height))

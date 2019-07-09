@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 	using Notification = model::ModifyMetadataFieldNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(MetadataFieldModification, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(MetadataFieldModification, ([&pConfigHolder](const Notification& notification, const auto& context) {
+		return MAKE_STATEFUL_VALIDATOR(MetadataFieldModification, ([pConfigHolder](const Notification& notification, const auto& context) {
 			if (notification.ModificationType > model::MetadataModificationType::Del) {
 				return Failure_Metadata_Modification_Type_Invalid;
 			}

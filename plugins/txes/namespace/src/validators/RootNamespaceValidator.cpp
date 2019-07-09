@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 	using Notification = model::RootNamespaceNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(RootNamespace, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespace, [&pConfigHolder](const auto& notification, const auto& context) {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespace, [pConfigHolder](const auto& notification, const auto& context) {
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			// note that zero duration is acceptable because it is eternal
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");

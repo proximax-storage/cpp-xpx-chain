@@ -50,7 +50,7 @@ namespace catapult { namespace plugins {
 			builder.add(validators::CreateUniqueTransactionHashValidator());
 		});
 
-		manager.addTransientObserverHook([&pConfigHolder](auto& builder) {
+		manager.addTransientObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateTransactionHashObserver())
 				.add(observers::CreateCacheTimePruningObserver<cache::HashCache>("TransactionHash", pConfigHolder));

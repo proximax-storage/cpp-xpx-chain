@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 	}
 
 	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(MosaicProperties, ([&pConfigHolder](const auto& notification, const auto& context) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicProperties, ([pConfigHolder](const auto& notification, const auto& context) {
 			if (!IsValidFlags(notification.PropertiesHeader.Flags))
 				return Failure_Mosaic_Invalid_Flags;
 

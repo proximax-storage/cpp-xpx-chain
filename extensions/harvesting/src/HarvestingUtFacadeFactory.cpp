@@ -157,7 +157,7 @@ namespace catapult { namespace harvesting {
 
 	private:
 		Timestamp m_blockTime;
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		chain::ExecutionConfiguration m_executionConfig;
 		cache::CatapultCacheDetachableDelta m_cacheDetachableDelta;
 		cache::CatapultCacheDetachedDelta m_cacheDetachedDelta;

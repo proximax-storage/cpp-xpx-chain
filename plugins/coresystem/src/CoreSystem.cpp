@@ -76,7 +76,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
-		manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateEntityVersionValidator(pConfigHolder))
 				.add(validators::CreateMaxTransactionsValidator(pConfigHolder))
@@ -89,7 +89,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateBalanceTransferValidator());
 		});
 
-		manager.addObserverHook([&pConfigHolder](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateSourceChangeObserver())
 				.add(observers::CreateAccountAddressObserver())
@@ -101,7 +101,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateSnapshotCleanUpObserver(pConfigHolder));
 		});
 
-		manager.addTransientObserverHook([&pConfigHolder](auto& builder) {
+		manager.addTransientObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateBlockDifficultyObserver())
 				.add(observers::CreateCacheBlockPruningObserver<cache::BlockDifficultyCache>(

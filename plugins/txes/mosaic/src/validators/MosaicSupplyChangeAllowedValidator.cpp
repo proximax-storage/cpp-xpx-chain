@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 	using Notification = model::MosaicSupplyChangeNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, [&pConfigHolder](
+		return MAKE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			// notice that MosaicChangeAllowedValidator is required to run first, so both mosaic and owning account must exist

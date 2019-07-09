@@ -57,7 +57,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateTransactionTypePropertyModificationValuesValidator());
 		});
 
-		manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreatePropertyAddressNoSelfModificationValidator(pConfigHolder))
 				.add(validators::CreateAddressPropertyRedundantModificationValidator())

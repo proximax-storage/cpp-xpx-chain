@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 	using Notification = model::ModifyMultisigNewCosignerNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, [&pConfigHolder](
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosignedAccounts, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& multisigCache = context.Cache.sub<cache::MultisigCache>();

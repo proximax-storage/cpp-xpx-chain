@@ -88,7 +88,7 @@ namespace catapult { namespace mongo {
 
 	private:
 		MongoStorageContext& m_mongoContext;
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		MongoTransactionRegistry m_transactionRegistry;
 		MongoReceiptRegistry m_receiptRegistry;
 		ExternalCacheStorageBuilder m_storageBuilder;

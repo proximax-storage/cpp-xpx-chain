@@ -46,7 +46,7 @@ namespace catapult { namespace observers {
 	}
 
 	DECLARE_OBSERVER(HarvestFee, model::BlockNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(HarvestFee, model::BlockNotification<1>, ([&pConfigHolder](const auto& notification, auto& context) {
+		return MAKE_OBSERVER(HarvestFee, model::BlockNotification<1>, ([pConfigHolder](const auto& notification, auto& context) {
 			// credit the harvester
 			auto& cache = context.Cache.template sub<cache::AccountStateCache>();
 			auto accountStateIter = cache.find(notification.Signer);

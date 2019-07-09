@@ -88,7 +88,7 @@ namespace catapult { namespace observers {
 	}
 
 	DECLARE_OBSERVER(ModifyContract, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(ModifyContract, Notification, [&pConfigHolder](const auto& notification, const ObserverContext& context) {
+		return MAKE_OBSERVER(ModifyContract, Notification, [pConfigHolder](const auto& notification, const ObserverContext& context) {
 			auto& contractCache = context.Cache.sub<cache::ContractCache>();
 			ContractFacade contractFacade(contractCache, notification.Multisig);
 

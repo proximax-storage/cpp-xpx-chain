@@ -12,7 +12,7 @@ namespace catapult { namespace observers {
 	using Notification = model::BlockNotification<1>;
 
 	DECLARE_OBSERVER(SnapshotCleanUp, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(SnapshotCleanUp, Notification, [&pConfigHolder](const auto&, const ObserverContext& context) {
+		return MAKE_OBSERVER(SnapshotCleanUp, Notification, [pConfigHolder](const auto&, const ObserverContext& context) {
 			if (context.Mode == NotifyMode::Rollback)
 				return;
 

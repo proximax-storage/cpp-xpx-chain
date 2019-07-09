@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 	using Notification = model::ChildNamespaceNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, ([&pConfigHolder](
+		return MAKE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, ([pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();

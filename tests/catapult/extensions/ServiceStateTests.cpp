@@ -82,7 +82,7 @@ namespace catapult { namespace extensions {
 
 		// Assert:
 		// - check references
-		EXPECT_EQ(&config, &state.config(Height{0}));
+		EXPECT_EQ(pConfigHolder.get(), state.pluginManager().configHolder().get());
 		EXPECT_EQ(&nodes, &state.nodes());
 		EXPECT_EQ(&catapultCache, &state.cache());
 		EXPECT_EQ(&catapultState, &state.state());

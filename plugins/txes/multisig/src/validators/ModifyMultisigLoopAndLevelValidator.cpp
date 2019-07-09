@@ -62,7 +62,7 @@ namespace catapult { namespace validators {
 	}
 
 	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [&pConfigHolder](
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [pConfigHolder](
 					const auto& notification,
 					const ValidatorContext& context) {
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;

@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 	using Notification = model::ModifyAddressPropertyValueNotification_v1;
 
 	DECLARE_STATEFUL_VALIDATOR(PropertyAddressNoSelfModification, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(PropertyAddressNoSelfModification, [&pConfigHolder](const auto& notification, const auto& context) {
+		return MAKE_STATEFUL_VALIDATOR(PropertyAddressNoSelfModification, [pConfigHolder](const auto& notification, const auto& context) {
 			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
 			auto address = model::PublicKeyToAddress(notification.Key, config.Network.Identifier);
 			return address != model::ResolverContext().resolve(notification.Modification.Value)

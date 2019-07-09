@@ -61,7 +61,7 @@ namespace catapult { namespace model {
 					return publish(static_cast<const Block&>(entity), sub);
 
 				case BasicEntityType::Transaction:
-					return publish(static_cast<const Transaction&>(entity), entityInfo.hash(), pBlockHeader, sub);
+					return publish(static_cast<const Transaction&>(entity), entityInfo.hash(), pBlockHeader, entityInfo.associatedHeight(), sub);
 
 				default:
 					return;
@@ -118,6 +118,7 @@ namespace catapult { namespace model {
 					const Transaction& transaction,
 					const Hash256& hash,
 					const BlockHeader* pBlockHeader,
+					const Height& height,
 					NotificationSubscriber& sub) const {
 				const auto& plugin = *m_transactionRegistry.findPlugin(transaction.Type);
 
@@ -128,7 +129,7 @@ namespace catapult { namespace model {
 				auto fee = pBlockHeader ? CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction) : transaction.MaxFee;
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
-				sub.notify(BalanceDebitNotification<1>(transaction.Signer, model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->Config(pBlockHeader->Height).BlockChain), fee));
+				sub.notify(BalanceDebitNotification<1>(transaction.Signer, model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->Config(height).BlockChain), fee));
 
 				// raise a signature notification
 				sub.notify(SignatureNotification<1>(transaction.Signer, transaction.Signature, plugin.dataBuffer(transaction)));
@@ -136,7 +137,7 @@ namespace catapult { namespace model {
 
 		private:
 			const TransactionRegistry& m_transactionRegistry;
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		};
 
 		class CustomNotificationPublisher : public NotificationPublisher {

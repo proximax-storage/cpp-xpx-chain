@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 #define DEFINE_LOCK_DURATION_VALIDATOR(NAME, FAILURE_RESULT, PLUGIN_NAME) \
 	DECLARE_STATEFUL_VALIDATOR(NAME##Duration, model::NAME##DurationNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) { \
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<model::NAME##DurationNotification<1>>; \
-		return std::make_unique<ValidatorType>(#NAME "DurationValidator", [&pConfigHolder](const auto& notification, const auto& context) { \
+		return std::make_unique<ValidatorType>(#NAME "DurationValidator", [pConfigHolder](const auto& notification, const auto& context) { \
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain; \
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NAME##Configuration>(PLUGIN_NAME); \
 			auto maxDuration = pluginConfig.Max##NAME##Duration.blocks(blockChainConfig.BlockGenerationTargetTime); \

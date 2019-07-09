@@ -61,7 +61,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			const model::BlockElement& blockElement,
 			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			CacheDatabaseCleanupMode databaseCleanupMode) {
-		if (!pConfigHolder->Config(Height{0}).Node.ShouldUseCacheDatabaseStorage || !pConfigHolder->Config(Height{1}).BlockChain.ShouldEnableVerifiableState)
+		if (!pConfigHolder->Config(Height{0}).Node.ShouldUseCacheDatabaseStorage || !pConfigHolder->Config(Height{0}).BlockChain.ShouldEnableVerifiableState)
 			CATAPULT_LOG(warning) << "cache database storage and verifiable state must both be enabled to calculate state hash";
 
 		// in purge mode, clean up the data directory after each execution

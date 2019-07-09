@@ -39,7 +39,7 @@ namespace catapult { namespace plugins {
 		});
 
 		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateMetadataFieldModificationValidator(pConfigHolder))
 				.add(validators::CreateModifyAddressMetadataValidator())
@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateNamespaceMetadataValueModificationObserver());
 		});
 
-		manager.addObserverHook([&pConfigHolder](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1, pConfigHolder));
 		});

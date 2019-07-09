@@ -52,7 +52,7 @@ namespace catapult { namespace plugins {
 		});
 
 		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateSecretLockDurationValidator(pConfigHolder))
 				.add(validators::CreateProofSecretValidator(pConfigHolder))
@@ -60,7 +60,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateProofValidator());
 		});
 
-		manager.addObserverHook([&pConfigHolder](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockSecret_Expired;
 			builder
 				.add(observers::CreateSecretLockObserver())

@@ -14,7 +14,7 @@ namespace catapult { namespace validators {
 	using Notification = model::CatapultUpgradeVersionNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(CatapultUpgrade, ([&pConfigHolder](const Notification& notification, const ValidatorContext& context) {
+		return MAKE_STATEFUL_VALIDATOR(CatapultUpgrade, ([pConfigHolder](const Notification& notification, const ValidatorContext& context) {
 			auto upgradePeriod = notification.UpgradePeriod.unwrap();
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::CatapultUpgradeConfiguration>("catapult.plugins.upgrade");

@@ -281,7 +281,7 @@ namespace catapult { namespace consumers {
 			cache::CatapultCache& m_cache;
 			state::CatapultState& m_state;
 			io::BlockStorageCache& m_storage;
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& m_pConfigHolder;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 			BlockChainSyncHandlers m_handlers;
 		};
 	}

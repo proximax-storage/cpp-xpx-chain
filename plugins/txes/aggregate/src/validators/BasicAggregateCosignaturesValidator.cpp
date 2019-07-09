@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 	using Notification = model::AggregateCosignaturesNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, ([&pConfigHolder](const auto& notification, const auto& context) {
+		return MAKE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, ([pConfigHolder](const auto& notification, const auto& context) {
 			if (0 == notification.TransactionsCount)
 				return Failure_Aggregate_No_Transactions;
 

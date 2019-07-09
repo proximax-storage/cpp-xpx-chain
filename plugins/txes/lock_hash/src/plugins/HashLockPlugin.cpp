@@ -51,7 +51,7 @@ namespace catapult { namespace plugins {
 		});
 
 		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([&pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateHashLockDurationValidator(pConfigHolder))
 				.add(validators::CreateHashLockMosaicValidator(pConfigHolder))
@@ -59,7 +59,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateHashLockCacheUniqueValidator());
 		});
 
-		manager.addObserverHook([&pConfigHolder](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockHash_Expired;
 			builder
 				.add(observers::CreateHashLockObserver())
