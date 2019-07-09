@@ -37,7 +37,7 @@ namespace catapult { namespace addressextraction {
 			TestContext()
 					: m_pNotificationPublisher(std::make_unique<mocks::MockNotificationPublisher>())
 					, m_notificationPublisher(*m_pNotificationPublisher)
-					, m_extractor(std::move(m_pNotificationPublisher))
+					, m_extractor(std::move(m_pNotificationPublisher), [](){ return model::ExtractorContext(); })
 			{}
 
 		public:

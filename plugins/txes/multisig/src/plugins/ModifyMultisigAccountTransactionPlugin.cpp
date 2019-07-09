@@ -42,10 +42,11 @@ namespace catapult { namespace plugins {
 						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModifications[i].CosignatoryPublicKey));
 						addedCosignatoryKeys.insert(pModifications[i].CosignatoryPublicKey);
 					}
+					// We need to inform user that they are co signers(removed or added)
+					sub.notify(AccountPublicKeyNotification(pModifications[i].CosignatoryPublicKey));
 				}
 
 				sub.notify(ModifyMultisigCosignersNotification(transaction.Signer, transaction.ModificationsCount, pModifications));
-
 			}
 
 			if (!addedCosignatoryKeys.empty())

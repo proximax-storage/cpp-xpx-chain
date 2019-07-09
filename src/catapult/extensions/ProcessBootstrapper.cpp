@@ -76,6 +76,14 @@ namespace catapult { namespace extensions {
 		return m_pluginManager;
 	}
 
+	CacheHolder& ProcessBootstrapper::cacheHolder() {
+		return m_cacheHolder;
+	}
+
+	const CacheHolder& ProcessBootstrapper::cacheHolder() const {
+		return m_cacheHolder;
+	}
+
 	namespace {
 		using RegisterExtensionFunc = void (*)(ProcessBootstrapper&);
 

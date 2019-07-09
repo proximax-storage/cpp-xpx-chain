@@ -24,15 +24,17 @@
 
 namespace catapult { namespace addressextraction {
 
-	AddressExtractor::AddressExtractor(std::unique_ptr<const model::NotificationPublisher>&& pPublisher)
+	AddressExtractor::AddressExtractor(std::unique_ptr<const model::NotificationPublisher>&& pPublisher,
+			const model::ExtractorContextFactoryFunc & extractorFactory)
 			: m_pPublisher(std::move(pPublisher))
+			, m_extractorFactory(extractorFactory)
 	{}
 
 	void AddressExtractor::extract(model::TransactionInfo& transactionInfo) const {
 		if (transactionInfo.OptionalExtractedAddresses)
 			return;
 
-		auto addresses = model::ExtractAddresses(*transactionInfo.pEntity, *m_pPublisher);
+		auto addresses = model::ExtractAddresses(*transactionInfo.pEntity, *m_pPublisher, m_extractorFactory());
 		transactionInfo.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>(std::move(addresses));
 	}
 
@@ -45,7 +47,7 @@ namespace catapult { namespace addressextraction {
 		if (transactionElement.OptionalExtractedAddresses)
 			return;
 
-		auto addresses = model::ExtractAddresses(transactionElement.Transaction, *m_pPublisher);
+		auto addresses = model::ExtractAddresses(transactionElement.Transaction, *m_pPublisher, m_extractorFactory());
 		transactionElement.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>(std::move(addresses));
 	}
 
