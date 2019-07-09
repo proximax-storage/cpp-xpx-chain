@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <plugins/txes/config/src/model/CatapultConfigEntityType.h>
 #include "Validators.h"
 #include "catapult/config/SupportedEntityVersions.h"
 #include "catapult/model/BlockChainConfiguration.h"
@@ -12,14 +11,15 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "src/cache/CatapultConfigCache.h"
 #include "src/config/CatapultConfigConfiguration.h"
+#include "src/model/CatapultConfigEntityType.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::CatapultConfigNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(plugins::PluginManager& pluginManager) {
+	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(const plugins::PluginManager& pluginManager) {
 		return MAKE_STATEFUL_VALIDATOR(CatapultConfig, ([&pluginManager](const Notification& notification, const ValidatorContext& context) {
-			const auto& pluginConfig = pluginManager.config(context.Height).GetPluginConfiguration<config::CatapultConfigConfiguration>("catapult.plugins.config");
+			const auto& pluginConfig = pluginManager.config(context.Height).GetPluginConfiguration<config::CatapultConfigConfiguration>(PLUGIN_NAME(config));
 			if (notification.BlockChainConfigSize > pluginConfig.MaxBlockChainConfigSize.bytes32())
 				return Failure_CatapultConfig_BlockChain_Config_Too_Large;
 

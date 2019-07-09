@@ -83,7 +83,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateNetworkValidator(pConfigHolder))
 				.add(validators::CreateAddressValidator(pConfigHolder))
 				.add(validators::CreateDeadlineValidator(pConfigHolder))
-				.add(validators::CreateNemesisSinkValidator())
+//				We using nemesis account to update the network
+//				.add(validators::CreateNemesisSinkValidator())
 				.add(validators::CreateEligibleHarvesterValidator(pConfigHolder))
 				.add(validators::CreateBalanceDebitValidator())
 				.add(validators::CreateBalanceTransferValidator());

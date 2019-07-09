@@ -48,7 +48,9 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addStatelessValidatorHook([](auto& builder) {
-			builder.add(validators::CreateSecretLockHashAlgorithmValidator());
+			builder
+				.add(validators::CreateSecretLockHashAlgorithmValidator())
+				.add(validators::CreatePluginConfigValidator());
 		});
 
 		const auto& pConfigHolder = manager.configHolder();

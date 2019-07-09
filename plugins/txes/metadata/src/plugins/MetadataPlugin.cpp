@@ -35,7 +35,8 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateMetadataTypeValidator());
+				.add(validators::CreateMetadataTypeValidator())
+				.add(validators::CreatePluginConfigValidator());
 		});
 
 		const auto& pConfigHolder = manager.configHolder();

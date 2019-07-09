@@ -68,7 +68,6 @@ namespace catapult { namespace plugins {
 				return {
 					"AddressValidator",
 					"DeadlineValidator",
-					"NemesisSinkValidator",
 					"EligibleHarvesterValidator",
 					"BalanceDebitValidator",
 					"BalanceTransferValidator"

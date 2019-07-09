@@ -30,6 +30,10 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder.add(validators::CreatePluginConfigValidator());
+		});
+
 		manager.addStatefulValidatorHook([&manager](auto& builder) {
 			builder
 				.add(validators::CreateCatapultConfigSignerValidator())

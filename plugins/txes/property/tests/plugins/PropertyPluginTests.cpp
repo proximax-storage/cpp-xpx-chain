@@ -82,7 +82,8 @@ namespace catapult { namespace plugins {
 					"PropertyAddressNoSelfModificationValidator",
 					"MosaicPropertyModificationTypesValidator",
 					"TransactionTypePropertyModificationTypesValidator",
-					"TransactionTypePropertyModificationValuesValidator"
+					"TransactionTypePropertyModificationValuesValidator",
+					"PluginConfigValidator",
 				};
 			}
 

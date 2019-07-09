@@ -58,7 +58,6 @@ namespace catapult { namespace extensions {
 			"NetworkValidator",
 			"AddressValidator",
 			"DeadlineValidator",
-			"NemesisSinkValidator",
 			"EligibleHarvesterValidator",
 			"BalanceDebitValidator",
 			"BalanceTransferValidator"

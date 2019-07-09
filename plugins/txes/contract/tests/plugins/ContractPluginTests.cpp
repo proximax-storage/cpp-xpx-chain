@@ -80,6 +80,7 @@ namespace catapult { namespace plugins {
 						"ModifyContractCustomersValidator",
 						"ModifyContractExecutorsValidator",
 						"ModifyContractVerifiersValidator",
+						"PluginConfigValidator",
 				};
 			}
 

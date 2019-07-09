@@ -74,7 +74,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "HashLockDurationValidator", "HashLockMosaicValidator" };
+				return { "HashLockDurationValidator", "HashLockMosaicValidator", "PluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {

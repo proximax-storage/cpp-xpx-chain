@@ -74,7 +74,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "ModifyMultisigCosignersValidator" };
+				return { "ModifyMultisigCosignersValidator", "PluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {

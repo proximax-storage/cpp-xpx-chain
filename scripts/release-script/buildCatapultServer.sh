@@ -38,7 +38,7 @@ make \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
-    extension.filechain \
+    extension.filespooling \
     extension.harvesting \
     extension.hashcache \
     extension.mongo \
@@ -55,12 +55,15 @@ make \
     extension.zeromq \
     # Tools
     catapult.tools.address \
+    catapult.tools.benchmark \
     catapult.tools.health \
     catapult.tools.nemgen \
+    catapult.tools.nemgen.blockhashes \
     catapult.tools.network \
+    catapult.tools.statusgen \
     # Catapult
     catapult.server \
-    -j4
+    -j 4
 
 cd ..
 

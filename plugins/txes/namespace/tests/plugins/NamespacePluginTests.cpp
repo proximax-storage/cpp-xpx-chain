@@ -98,7 +98,8 @@ namespace catapult { namespace plugins {
 					"NamespaceTypeValidator",
 					"NamespaceNameValidator",
 					"RootNamespaceValidator",
-					"AliasActionValidator"
+					"AliasActionValidator",
+					"PluginConfigValidator",
 				};
 			}
 

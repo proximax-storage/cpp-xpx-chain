@@ -18,7 +18,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		bson_stream::document builder;
 		auto doc = builder << "catapultConfig" << bson_stream::open_document
 				<< "height" << ToInt64(entry.height())
-				<< "blockChainConfig" << entry.blockChainConfig();
+				<< "blockChainConfig" << entry.blockChainConfig()
+				<< "supportedEntityVersions" << entry.supportedEntityVersions();
 
 		return doc
 				<< bson_stream::close_document
@@ -34,6 +35,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto dbCatapultConfigEntry = document["catapultConfig"];
 		entry.setHeight(Height{static_cast<uint64_t>(dbCatapultConfigEntry["height"].get_int64())});
 		entry.setBlockChainConfig(dbCatapultConfigEntry["blockChainConfig"].get_utf8().value.to_string());
+		entry.setSupportedEntityVersions(dbCatapultConfigEntry["supportedEntityVersions"].get_utf8().value.to_string());
 
 		return entry;
 	}
