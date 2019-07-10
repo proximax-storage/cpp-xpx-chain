@@ -44,10 +44,10 @@ namespace catapult { namespace chain {
 			config.Network.Identifier = Network_Identifier;
 			return config;
 		}
-		auto Default_Config = CreateBlockChainConfiguration();
 
 		auto CreateConfigHolder() {
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(CreateBlockChainConfiguration());
 			return pConfigHolder;
 		}
 
@@ -65,8 +65,9 @@ namespace catapult { namespace chain {
 					, m_statefulName(statefulName)
 					, m_statelessResult(ValidationResult::Success)
 					, m_statefulResult(ValidationResult::Success)
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount(Default_Config))
-					, m_pluginManager(CreateConfigHolder(), plugins::StorageConfiguration()) {
+					, m_pConfigHolder(CreateConfigHolder())
+					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config(Height{0}).BlockChain))
+					, m_pluginManager(m_pConfigHolder, plugins::StorageConfiguration()) {
 				// set custom cache height
 				auto cacheDelta = m_cache.createDelta();
 				m_cache.commit(Cache_Height);
@@ -162,6 +163,7 @@ namespace catapult { namespace chain {
 			ValidationResult m_statelessResult;
 			ValidationResult m_statefulResult;
 
+			std::shared_ptr<config::MockLocalNodeConfigurationHolder> m_pConfigHolder;
 			cache::CatapultCache m_cache;
 			plugins::PluginManager m_pluginManager;
 

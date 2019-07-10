@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 			auto namespaceIter = cache.find(notification.ParentId);
 			const auto& parentEntry = namespaceIter.get();
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
 			return pluginConfig.MaxChildNamespaces <= parentEntry.root().size() ? Failure_Namespace_Max_Children_Exceeded : ValidationResult::Success;
 		}));
 	}

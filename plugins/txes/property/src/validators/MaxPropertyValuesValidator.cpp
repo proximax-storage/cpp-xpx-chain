@@ -77,7 +77,7 @@ namespace catapult { namespace validators {
 				const auto& notification, \
 				const auto& context) { \
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain; \
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::PropertyConfiguration>("catapult.plugins.property"); \
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::PropertyConfiguration>(PLUGIN_NAME(property)); \
 			return Validate<PROPERTY_VALUE_TYPE, NOTIFICATION_TYPE>(pluginConfig.MaxPropertyValues, notification, context); \
 		}); \
 	}

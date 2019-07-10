@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxTransactionsPerAggregate = maxTransactions;
 			pluginConfig.MaxCosignaturesPerAggregate = maxCosignatures;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.aggregate", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
 			return blockChainConfig;
 		}
 	}

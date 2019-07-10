@@ -89,7 +89,9 @@ namespace catapult { namespace observers {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
-			auto pObserver = CreateHarvestFeeObserver(std::make_shared<config::MockLocalNodeConfigurationHolder>());
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			auto pObserver = CreateHarvestFeeObserver(pConfigHolder);
 
 			// Act + Assert:
 			action(context, *pObserver);

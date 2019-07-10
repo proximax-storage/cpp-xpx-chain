@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxNameSize = maxNameSize;
 			pluginConfig.ReservedRootNamespaceNames = reservedRootNamespaceNames;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
 			return blockChainConfig;
 		}
 	}

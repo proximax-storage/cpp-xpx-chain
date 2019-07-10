@@ -61,11 +61,14 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "MaxTransactionsValidator", "NetworkValidator", "EntityVersionValidator", "TransactionFeeValidator" };
+				return { "TransactionFeeValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"EntityVersionValidator",
+					"MaxTransactionsValidator",
+					"NetworkValidator",
 					"AddressValidator",
 					"DeadlineValidator",
 					"EligibleHarvesterValidator",

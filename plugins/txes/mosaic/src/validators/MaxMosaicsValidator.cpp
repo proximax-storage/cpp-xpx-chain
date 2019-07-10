@@ -48,7 +48,7 @@ namespace catapult { namespace validators {
 				return ValidationResult::Success;
 
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
 			return CheckAccount(
 				pluginConfig.MaxMosaicsPerAccount,
 				context.Resolvers.resolve(notification.MosaicId),
@@ -65,7 +65,7 @@ namespace catapult { namespace validators {
 				return ValidationResult::Success;
 
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
 			return CheckAccount(pluginConfig.MaxMosaicsPerAccount, context.Resolvers.resolve(notification.MosaicId), notification.Signer, context);
 		});
 	}

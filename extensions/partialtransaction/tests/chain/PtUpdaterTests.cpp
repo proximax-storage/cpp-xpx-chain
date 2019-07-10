@@ -325,8 +325,9 @@ namespace catapult { namespace chain {
 					, m_pUniqueValidator(std::make_unique<MockPtValidator>())
 					, m_pValidator(m_pUniqueValidator.get())
 					, m_pPool(test::CreateStartedIoThreadPool())
+					, m_cache(test::CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized()))
 					, m_pUpdater(std::make_unique<PtUpdater>(
-							test::CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized()),
+							m_cache,
 							m_transactionsCache,
 							std::move(m_pUniqueValidator),
 							PtUpdater::CompletedTransactionSink([this](auto&& pTransaction) {
@@ -454,6 +455,7 @@ namespace catapult { namespace chain {
 			std::vector<std::unique_ptr<model::Transaction>> m_completedTransactions;
 
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
+			cache::CatapultCache m_cache;
 			std::unique_ptr<PtUpdater> m_pUpdater; // unique_ptr for destroyUpdater
 
 			std::vector<model::TransactionStatus> m_failedTransactionStatuses;

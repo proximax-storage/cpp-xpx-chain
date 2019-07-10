@@ -236,7 +236,7 @@ namespace catapult { namespace local {
 		// - prepare bad config
 		auto badConfig = context.createConfig();
 		const_cast<model::BlockChainConfiguration&>(badConfig.BlockChain).Plugins.emplace(
-				"catapult.plugins.awesome",
+				PLUGIN_NAME(awesome),
 				utils::ConfigurationBag({}));
 
 		// Act + Assert: simulate a boot failure by specifying an incorrect plugin

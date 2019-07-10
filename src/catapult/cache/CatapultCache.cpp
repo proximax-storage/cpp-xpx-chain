@@ -153,8 +153,10 @@ namespace catapult { namespace cache {
 	}
 
 	void CatapultCacheDelta::setHeight(const Height& height) {
-		for (auto& subView : m_subViews)
-			subView->setHeight(height);
+		for (auto& pSubView : m_subViews) {
+			if (!!pSubView)
+				pSubView->setHeight(height);
+		}
 	}
 
 	ReadOnlyCatapultCache CatapultCacheDelta::toReadOnly() const {
@@ -301,6 +303,18 @@ namespace catapult { namespace cache {
 				m_subCaches,
 				[](const auto& pSubCache) { return pSubCache->createStorage(); },
 				false);
+	}
+
+	void CatapultCache::addSubCache(std::unique_ptr<SubCachePlugin> pSubCache) {
+		if (!pSubCache)
+			return;
+
+		auto id = pSubCache->id();
+		m_subCaches.resize(std::max(m_subCaches.size(), id + 1));
+		if (m_subCaches[id])
+			CATAPULT_THROW_INVALID_ARGUMENT_1("subcache has already been registered with id", id);
+
+		m_subCaches[id] = std::move(pSubCache);
 	}
 
 	// endregion

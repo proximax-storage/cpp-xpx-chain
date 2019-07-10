@@ -20,7 +20,7 @@ namespace catapult { namespace validators {
 			}
 
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MetadataConfiguration>("catapult.plugins.metadata");
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MetadataConfiguration>(PLUGIN_NAME(metadata));
 			if (notification.KeySize <= 0 || notification.KeySize > pluginConfig.MaxFieldKeySize) {
 				return Failure_Metadata_Modification_Key_Invalid;
 			}

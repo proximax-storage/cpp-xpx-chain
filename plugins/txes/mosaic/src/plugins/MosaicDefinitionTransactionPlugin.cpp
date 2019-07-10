@@ -26,6 +26,7 @@
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/Address.h"
+#include "catapult/plugins/PluginUtils.h"
 
 using namespace catapult::model;
 
@@ -52,7 +53,7 @@ namespace catapult { namespace plugins {
 		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
 				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(associatedHeight).BlockChain;
-				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
 				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
 				auto config = ToMosaicRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
 

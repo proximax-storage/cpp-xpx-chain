@@ -80,6 +80,10 @@ namespace catapult { namespace cache {
 		/// Gets cache storages for all subcaches.
 		std::vector<std::unique_ptr<CacheStorage>> storages();
 
+	public:
+		/// Adds a subcache.
+		void addSubCache(std::unique_ptr<SubCachePlugin>);
+
 	private:
 		std::unique_ptr<CacheHeight> m_pCacheHeight; // use a unique_ptr to allow fwd declare
 		std::vector<std::unique_ptr<SubCachePlugin>> m_subCaches;

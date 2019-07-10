@@ -52,8 +52,8 @@ namespace catapult { namespace config {
 
 		auto& configCache = m_pCache->createView().sub<cache::CatapultConfigCache>();
 		auto configHeight = configCache.FindConfigHeightAt(height);
-		if (m_catapultConfigs.count(height))
-			return m_catapultConfigs.at(height);
+		if (m_catapultConfigs.count(configHeight))
+			return m_catapultConfigs.at(configHeight);
 
 		auto iter = std::lower_bound(m_catapultConfigs.begin(), m_catapultConfigs.end(), configHeight,
 			[](const auto& pair, const auto& height) { return pair.first < height; });

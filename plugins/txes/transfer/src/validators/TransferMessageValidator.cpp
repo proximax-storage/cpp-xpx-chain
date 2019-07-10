@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(TransferMessage, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(TransferMessage, [pConfigHolder](const auto& notification, const auto& context) {
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::TransferConfiguration>("catapult.plugins.transfer");
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::TransferConfiguration>(PLUGIN_NAME(transfer));
 			return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
 		});
 	}

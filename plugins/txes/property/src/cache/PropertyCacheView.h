@@ -45,7 +45,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a view around \a propertySets and \a blockChainConfig.
-		explicit BasicPropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+		explicit BasicPropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
 				: PropertyCacheViewMixins::Size(propertySets.Primary)
 				, PropertyCacheViewMixins::Contains(propertySets.Primary)
 				, PropertyCacheViewMixins::Iteration(propertySets.Primary)
@@ -68,7 +68,7 @@ namespace catapult { namespace cache {
 	class PropertyCacheView : public ReadOnlyViewSupplier<BasicPropertyCacheView> {
 	public:
 		/// Creates a view around \a propertySets and \a blockChainConfig.
-		explicit PropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+		explicit PropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
 				: ReadOnlyViewSupplier(propertySets, pConfigHolder)
 		{}
 	};

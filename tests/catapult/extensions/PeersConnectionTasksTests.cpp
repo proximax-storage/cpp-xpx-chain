@@ -43,6 +43,21 @@ namespace catapult { namespace extensions {
 		void Add(ionet::NodeContainer& container, const Key& identityKey, const std::string& nodeName, ionet::NodeRoles roles) {
 			container.modifier().add(test::CreateNamedNode(identityKey, nodeName, roles), ionet::NodeSource::Dynamic);
 		}
+
+		auto CreateEmptyCatapultCache() {
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.ImportanceGrouping = 1;
+			blockChainConfig.TotalChainImportance = Importance(100);
+			return test::CreateEmptyCatapultCache(blockChainConfig);
+		}
+
+		auto ConfigureServiceState(test::ServiceTestState& serviceState) {
+			auto &blockChainConfig = const_cast<model::BlockChainConfiguration &>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
+			blockChainConfig.ImportanceGrouping = 1;
+			blockChainConfig.TotalChainImportance = Importance(100);
+			auto &nodeConfig = const_cast<config::NodeConfiguration &>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+			nodeConfig.OutgoingConnections = CreateConfiguration();
+		}
 	}
 
 	// endregion
@@ -126,14 +141,8 @@ namespace catapult { namespace extensions {
 		template<typename TSettingsFactory>
 		void AssertCanCreateSelectorSettings(ionet::NodeRoles expectedRole, TSettingsFactory settingsFactory) {
 			// Arrange:
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.ImportanceGrouping = 1;
-			blockChainConfig.TotalChainImportance = Importance(100);
-			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto serviceState = test::ServiceTestState(std::move(cache));
-			const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain) = blockChainConfig;
-			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
-			nodeConfig.OutgoingConnections = CreateConfiguration();
+			auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+			ConfigureServiceState(serviceState);
 			auto unknownKey = test::GenerateRandomData<Key_Size>();
 			auto knownKeyWrongHeight = test::GenerateRandomData<Key_Size>();
 			auto knownKey = test::GenerateRandomData<Key_Size>();
@@ -193,12 +202,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateNodeSelector) {
 		// Arrange:
-		auto serviceState = test::ServiceTestState();
-		auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
-		blockChainConfig.ImportanceGrouping = 1;
-		blockChainConfig.TotalChainImportance = Importance(100);
-		auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
-		nodeConfig.OutgoingConnections = CreateConfiguration();
+		auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+		ConfigureServiceState(serviceState);
 		auto serviceId = ionet::ServiceIdentifier(1);
 		auto settings = SelectorSettings(serviceState.state(), serviceId, ionet::NodeRoles::Api);
 		auto selector = CreateNodeSelector(settings);
@@ -213,16 +218,13 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CreateNodeSelectorProvisionsConnectionStatesForRoleCompatibleNodes) {
 		// Arrange:
-		auto serviceState = test::ServiceTestState();
+		auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+		ConfigureServiceState(serviceState);
+
 		auto keys = test::GenerateRandomDataVector<Key>(3);
 		Add(serviceState.state().nodes(), keys[0], "bob", ionet::NodeRoles::Api);
 		Add(serviceState.state().nodes(), keys[1], "alice", ionet::NodeRoles::Peer);
 		Add(serviceState.state().nodes(), keys[2], "charlie", ionet::NodeRoles::Api | ionet::NodeRoles::Peer);
-		auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
-		blockChainConfig.ImportanceGrouping = 1;
-		blockChainConfig.TotalChainImportance = Importance(100);
-		auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
-		nodeConfig.OutgoingConnections = CreateConfiguration();
 		auto serviceId = ionet::ServiceIdentifier(1);
 		auto settings = SelectorSettings(serviceState.state(), serviceId, ionet::NodeRoles::Api);
 
@@ -276,11 +278,6 @@ namespace catapult { namespace extensions {
 				ionet::ServiceIdentifier serviceId,
 				const NodeSelector& selector = NodeSelector()) {
 			// Act:
-			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
-			blockChainConfig.ImportanceGrouping = 1;
-			blockChainConfig.TotalChainImportance = Importance(100);
-			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
-			nodeConfig.OutgoingConnections = CreateConfiguration();
 			auto settings = SelectorSettings(serviceState.state(), serviceId, ionet::NodeRoles::Peer);
 			auto task = selector
 					? CreateConnectPeersTask(settings, packetWriters, selector)
@@ -302,7 +299,8 @@ namespace catapult { namespace extensions {
 		void AssertMatchingServiceNodesAreAged(TRunTask runTask) {
 			// Arrange: prepare a container with alternating matching service nodes
 			auto serviceId = ionet::ServiceIdentifier(3);
-			auto serviceState = test::ServiceTestState();
+			auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+			ConfigureServiceState(serviceState);
 			auto nodes = SeedAlternatingServiceNodes(serviceState, 10, ionet::ServiceIdentifier(9), serviceId);
 
 			// - indicate 3 / 5 matching service nodes are active
@@ -349,7 +347,8 @@ namespace catapult { namespace extensions {
 		void AssertRemoveCandidatesAreClosedInWriters(TRunTask runTask) {
 			// Arrange: prepare a container with alternating matching service nodes
 			auto serviceId = ionet::ServiceIdentifier(3);
-			auto serviceState = test::ServiceTestState();
+			auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+			ConfigureServiceState(serviceState);
 			auto nodes = SeedAlternatingServiceNodes(serviceState, 10, ionet::ServiceIdentifier(9), serviceId);
 
 			// - indicate 3 / 5 matching service nodes are active
@@ -427,7 +426,8 @@ namespace catapult { namespace extensions {
 	TEST(TEST_CLASS, ConnectPeersTask_AddCandidatesHaveConnectionsInitiatedAndInteractionsUpdated_AllSucceed) {
 		// Arrange: prepare a container with alternating matching service nodes
 		auto serviceId = ionet::ServiceIdentifier(3);
-		auto serviceState = test::ServiceTestState();
+		auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+		ConfigureServiceState(serviceState);
 		auto nodes = SeedAlternatingServiceNodes(serviceState, 12, ionet::ServiceIdentifier(9), serviceId);
 
 		mocks::MockPacketWriters writers;
@@ -461,7 +461,8 @@ namespace catapult { namespace extensions {
 		// Arrange: prepare a container with alternating matching service nodes and increment consecutive failures for some nodes
 		//          so that those nodes have requisite number of consecutive failures for banning
 		auto serviceId = ionet::ServiceIdentifier(3);
-		auto serviceState = test::ServiceTestState();
+		auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+		ConfigureServiceState(serviceState);
 		auto nodes = SeedAlternatingServiceNodes(serviceState, 12, ionet::ServiceIdentifier(9), serviceId);
 		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[3].identityKey());
 		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[9].identityKey());
@@ -500,7 +501,8 @@ namespace catapult { namespace extensions {
 		// Arrange: prepare a container with alternating matching service nodes and increment consecutive failures fo all nodes
 		//          so that those nodes have requisite number of consecutive failures for banning
 		auto serviceId = ionet::ServiceIdentifier(3);
-		auto serviceState = test::ServiceTestState();
+		auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+		ConfigureServiceState(serviceState);
 		auto nodes = SeedAlternatingServiceNodes(serviceState, 12, ionet::ServiceIdentifier(9), serviceId);
 		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[3].identityKey());
 		IncrementNumConsecutiveFailures(serviceState.state().nodes(), serviceId, nodes[5].identityKey());
@@ -543,12 +545,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateRemoveOnlyNodeSelector) {
 		// Arrange:
-		auto serviceState = test::ServiceTestState();
-		auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
-		blockChainConfig.ImportanceGrouping = 1;
-		blockChainConfig.TotalChainImportance = Importance(100);
-		auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
-		nodeConfig.OutgoingConnections = CreateConfiguration();
+		auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
+		ConfigureServiceState(serviceState);
 		auto settings = SelectorSettings(serviceState.state(), ionet::ServiceIdentifier(1));
 		auto selector = CreateRemoveOnlyNodeSelector(settings);
 
@@ -569,13 +567,6 @@ namespace catapult { namespace extensions {
 				net::PacketWriters& packetWriters,
 				ionet::ServiceIdentifier serviceId,
 				const RemoveOnlyNodeSelector& selector = RemoveOnlyNodeSelector()) {
-			// Arrange:
-			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
-			blockChainConfig.ImportanceGrouping = 1;
-			blockChainConfig.TotalChainImportance = Importance(100);
-			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
-			nodeConfig.OutgoingConnections = CreateConfiguration();
-
 			// Act:
 			auto settings = SelectorSettings(serviceState.state(), serviceId);
 			auto task = selector

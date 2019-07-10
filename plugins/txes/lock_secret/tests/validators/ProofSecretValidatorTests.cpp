@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MinProofSize = 10;
 			pluginConfig.MaxProofSize = 100;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.locksecret", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			return pConfigHolder;

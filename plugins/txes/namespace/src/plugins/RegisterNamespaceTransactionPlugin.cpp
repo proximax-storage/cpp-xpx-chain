@@ -22,11 +22,12 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/constants.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/constants.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/plugins/PluginUtils.h"
 
 using namespace catapult::model;
 
@@ -84,7 +85,7 @@ namespace catapult { namespace plugins {
 			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
 				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(associatedHeight).BlockChain;
 				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
-				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
 				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
 
 				switch (transaction.EntityVersion()) {

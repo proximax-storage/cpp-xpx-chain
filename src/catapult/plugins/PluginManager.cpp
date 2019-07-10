@@ -57,10 +57,6 @@ namespace catapult { namespace plugins {
 		m_shouldEnableVerifiableState = shouldEnableVerifiableState;
 	}
 
-	bool PluginManager::shouldEnableVerifiableState() const {
-		return m_shouldEnableVerifiableState;
-	}
-
 	// endregion
 
 	// region transactions
@@ -83,6 +79,10 @@ namespace catapult { namespace plugins {
 
 	cache::CatapultCache PluginManager::createCache() {
 		return m_cacheBuilder.build();
+	}
+
+	void PluginManager::updateCache(cache::CatapultCache& cache) {
+		m_cacheBuilder.update(cache);
 	}
 
 	// endregion

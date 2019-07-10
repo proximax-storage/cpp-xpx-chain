@@ -43,7 +43,7 @@ namespace catapult { namespace tools { namespace nemgen {
 
 	void PluginLoader::loadAll() {
 		// default plugins
-		for (const auto& pluginName : { "catapult.coresystem", "catapult.plugins.signature" })
+		for (const auto& pluginName : { "catapult.coresystem", PLUGIN_NAME(signature) })
 			loadPlugin(pluginName);
 
 		// custom plugins

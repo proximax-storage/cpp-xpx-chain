@@ -42,7 +42,9 @@ namespace catapult { namespace validators {
 			auto cache = test::CreateEmptyCatapultCache(config);
 
 			model::AccountAddressNotification<notificationVersion> notification(test::UnresolveXor(address));
-			auto pValidator = CreateAddressValidator(std::make_shared<config::MockLocalNodeConfigurationHolder>());
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			auto pValidator = CreateAddressValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

@@ -23,6 +23,7 @@
 #include "src/cache/NamespaceCacheStorage.h"
 #include "src/config/NamespaceConfiguration.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
@@ -38,7 +39,7 @@ namespace catapult { namespace test {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(gracePeriodDuration.unwrap());
 			const_cast<model::BlockChainConfiguration&>(blockChainConfig).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto options = cache::NamespaceCacheTypes::Options{ pConfigHolder };

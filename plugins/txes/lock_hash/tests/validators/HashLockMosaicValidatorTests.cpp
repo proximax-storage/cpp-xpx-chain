@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 			pluginConfig.LockedFundsPerAggregate = requiredBondedAmount;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.lockhash", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);

@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 				pluginConfig.MaxHashLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
 				auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-				blockChainConfig.SetPluginConfiguration("catapult.plugins.lockhash", pluginConfig);
+				blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
 				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(blockChainConfig);
 				return CreateHashLockDurationValidator(pConfigHolder);

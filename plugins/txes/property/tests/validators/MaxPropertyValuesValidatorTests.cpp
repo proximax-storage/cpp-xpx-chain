@@ -97,7 +97,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::PropertyConfiguration::Uninitialized();
 			pluginConfig.MaxPropertyValues = maxPropertyValues;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.property", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(property), pluginConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = TPropertyValueTraits::CreateValidator(pConfigHolder);

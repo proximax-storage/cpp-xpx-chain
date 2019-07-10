@@ -27,7 +27,7 @@
 namespace catapult { namespace cache {
 
 	/// Cache composed of property information.
-	using BasicPropertyCache = BasicCache<PropertyCacheDescriptor, PropertyCacheTypes::BaseSets, const std::shared_ptr<config::LocalNodeConfigurationHolder>&>;
+	using BasicPropertyCache = BasicCache<PropertyCacheDescriptor, PropertyCacheTypes::BaseSets, std::shared_ptr<config::LocalNodeConfigurationHolder>>;
 
 	/// Synchronized cache composed of property information.
 	class PropertyCache : public SynchronizedCache<BasicPropertyCache> {
@@ -36,8 +36,8 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config and \a networkIdentifier.
-		explicit PropertyCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
-				: SynchronizedCache<BasicPropertyCache>(BasicPropertyCache(config, pConfigHolder))
+		explicit PropertyCache(const CacheConfiguration& config, std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
+				: SynchronizedCache<BasicPropertyCache>(BasicPropertyCache(config, std::move(pConfigHolder)))
 		{}
 	};
 }}

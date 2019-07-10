@@ -6,6 +6,7 @@
 
 #include "Observers.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "src/cache/ContractCache.h"
 #include "src/config/ContractConfiguration.h"
 #include "plugins/txes/multisig/src/cache/MultisigCache.h"
@@ -118,7 +119,7 @@ namespace catapult { namespace observers {
 			auto& multisigEntry = multisigCache.find(notification.Multisig).get();
 			float verifierCount = contractFacade.verifierCount();
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::ContractConfiguration>("catapult.plugins.contract");
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::ContractConfiguration>(PLUGIN_NAME(contract));
 			multisigEntry.setMinApproval(ceil(verifierCount * pluginConfig.MinPercentageOfApproval / 100));
 			multisigEntry.setMinRemoval(ceil(verifierCount * pluginConfig.MinPercentageOfRemoval / 100));
 		});

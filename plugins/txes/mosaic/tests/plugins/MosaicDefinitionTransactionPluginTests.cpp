@@ -19,10 +19,11 @@
 **/
 
 #include "src/config/MosaicConfiguration.h"
-#include "src/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "src/model/MosaicDefinitionTransaction.h"
 #include "src/model/MosaicNotifications.h"
+#include "src/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/model/Address.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
@@ -55,7 +56,7 @@ namespace catapult { namespace plugins {
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
 			blockChainConfig.Network.PublicKey = test::GenerateRandomData<Key_Size>();
 			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
 			return blockChainConfig;
 		}
 

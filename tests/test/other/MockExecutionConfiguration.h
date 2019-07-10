@@ -47,7 +47,7 @@ namespace catapult { namespace test {
 		{}
 
 	public:
-		const model::WeakEntityInfo EntityInfo{Height{0}};
+		const model::WeakEntityInfo EntityInfo;
 		const Hash256 HashCopy;
 	};
 

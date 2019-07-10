@@ -7,13 +7,13 @@
 #pragma once
 #include "src/cache/MetadataCache.h"
 #include "src/cache/MetadataCacheStorage.h"
-#include "src/config/NamespaceConfiguration.h"
 #include "plugins/txes/mosaic/src/cache/MosaicCache.h"
 #include "plugins/txes/namespace/src/cache/NamespaceCache.h"
-#include "catapult/model/Address.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
+#include "catapult/model/Address.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
@@ -25,8 +25,6 @@ namespace catapult { namespace test {
 	private:
 		static auto CreateSubCachesWithMetadataCache(const model::BlockChainConfiguration& blockChainConfig) {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::MosaicCache::Id + 1);
-			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
-			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 

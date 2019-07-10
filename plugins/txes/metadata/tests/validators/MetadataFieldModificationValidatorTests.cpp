@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxFieldKeySize = MAX_KEY_SIZE;
 			pluginConfig.MaxFieldValueSize = MAX_VALUE_SIZE;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);

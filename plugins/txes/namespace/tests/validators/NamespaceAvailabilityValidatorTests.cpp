@@ -68,7 +68,7 @@ namespace catapult { namespace validators {
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(Grace_Period_Duration.unwrap());
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateRootNamespaceAvailabilityValidator(pConfigHolder);

@@ -49,7 +49,6 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreatePluginConfigValidator())
 				.add(validators::CreatePropertyTypeValidator())
 				.add(validators::CreateAddressPropertyModificationTypesValidator())
 				.add(validators::CreateMosaicPropertyModificationTypesValidator())

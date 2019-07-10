@@ -23,6 +23,7 @@
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "catapult/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "catapult/plugins/TransferTransactionPlugin.h"
 #include "mosaic/src/config/MosaicConfiguration.h"
@@ -34,8 +35,8 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto mosaicConfig = config::MosaicConfiguration::Uninitialized();
 		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", mosaicConfig);
-		blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", namespaceConfig);
+		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), mosaicConfig);
+		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespaceConfig);
 		config::LocalNodeConfiguration config{
 			std::move(blockChainConfig),
 			config::NodeConfiguration::Uninitialized(),

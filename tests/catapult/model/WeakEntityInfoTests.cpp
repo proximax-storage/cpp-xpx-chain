@@ -67,7 +67,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CanCreateUnsetWeakEntityInfo) {
 		// Act:
-		WeakEntityInfo info{Height{0}};
+		WeakEntityInfo info;
 
 		// Assert:
 		EXPECT_FALSE(info.isSet());
@@ -125,7 +125,7 @@ namespace catapult { namespace model {
 		Hash256 hash;
 		BlockHeader blockHeader;
 
-		WeakEntityInfo info1{Height{0}};
+		WeakEntityInfo info1;
 		WeakEntityInfo info2(entity, hash, blockHeader);
 
 		// Sanity:
@@ -219,7 +219,7 @@ namespace catapult { namespace model {
 				{ "diff-entity", WeakEntityInfo(entity2, hash1, Height{0}) },
 				{ "diff-hash", WeakEntityInfo(entity1, hash2, Height{0}) },
 				{ "diff-both", WeakEntityInfo(entity2, hash2, Height{0}) },
-				{ "unset", WeakEntityInfo(Height{0}) }
+				{ "unset", WeakEntityInfo() }
 			};
 		}
 	}
@@ -236,8 +236,8 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, UnsetInfosAreEqual) {
 		// Arrange:
-		WeakEntityInfo unsetInfo1{Height{0}};
-		WeakEntityInfo unsetInfo2{Height{0}};
+		WeakEntityInfo unsetInfo1;
+		WeakEntityInfo unsetInfo2;
 
 		// Assert:
 		EXPECT_TRUE(unsetInfo1.operator==(unsetInfo2));
@@ -250,7 +250,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CanOutputUnsetEntityInfo) {
 		// Arrange:
-		WeakEntityInfo info{Height{0}};
+		WeakEntityInfo info;
 
 		// Act:
 		auto str = test::ToString(info);

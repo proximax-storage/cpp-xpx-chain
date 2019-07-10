@@ -68,26 +68,25 @@ namespace catapult { namespace local {
 			void boot() {
 				auto& extensionManager = m_pBootstrapper->extensionManager();
 
-				CATAPULT_LOG(info) << "registering system plugins along with config plugin";
-				loadSystemPluginsAndConfig();
+				CATAPULT_LOG(info) << "registering config plugin";
+				loadConfigPlugin();
 
-				CATAPULT_LOG(debug) << "loading config cache";
+				CATAPULT_LOG(debug) << "loading config subcache";
 				m_catapultCache = m_pluginManager.createCache();
 				m_pluginManager.configHolder()->SetCache(&m_catapultCache);
 
 				cache::SupplementalData supplementalData;
-				m_pBlockChainStorage->loadState(m_pluginManager.configHolder()->Config(Height{0}).User.DataDirectory, m_catapultCache, supplementalData);
+				bool isConfigCacheLoaded = m_pBlockChainStorage->loadState(m_pluginManager.configHolder()->Config(Height{0}).User.DataDirectory, m_catapultCache, supplementalData);
 				auto height = m_catapultCache.height();
-				m_pluginManager.setShouldEnableVerifiableState(m_pluginManager.config(height).ShouldEnableVerifiableState);
-				AddStaticNodesFromPath(*m_pBootstrapper, (boost::filesystem::path(m_pBootstrapper->resourcesPath()) / "peers-p2p.json").generic_string(), height);
-				SeedNodeContainer(m_nodes, *m_pBootstrapper);
+				if (isConfigCacheLoaded)
+					m_pluginManager.setShouldEnableVerifiableState(m_pluginManager.config(height).ShouldEnableVerifiableState);
+
 
 				CATAPULT_LOG(info) << "registering other plugins";
 				loadOtherPlugins(height);
 
-				CATAPULT_LOG(debug) << "initializing cache";
-				m_catapultCache = m_pluginManager.createCache();
-				m_pluginManager.configHolder()->SetCache(&m_catapultCache);
+				CATAPULT_LOG(debug) << "adding other subcaches";
+				m_pluginManager.updateCache(m_catapultCache);
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
@@ -96,8 +95,14 @@ namespace catapult { namespace local {
 				extensionManager.preLoadHandler()(m_catapultCache);
 				m_pBlockChainStorage->loadFromStorage(stateRef(), m_pluginManager);
 
+				CATAPULT_LOG(debug) << "adding static nodes";
+				auto peersFile = boost::filesystem::path(m_pBootstrapper->resourcesPath()) / "peers-p2p.json";
+				if (boost::filesystem::exists(peersFile))
+					AddStaticNodesFromPath(*m_pBootstrapper, peersFile.generic_string(), m_catapultCache.height());
+				SeedNodeContainer(m_nodes, *m_pBootstrapper);
+
 				CATAPULT_LOG(debug) << "booting extension services";
-				auto serviceState = extensions::ServiceState(
+				m_pServiceState = std::make_unique<extensions::ServiceState>(
 						m_nodes,
 						m_catapultCache,
 						m_catapultState,
@@ -111,7 +116,7 @@ namespace catapult { namespace local {
 						m_counters,
 						m_pluginManager,
 						m_pBootstrapper->pool());
-				extensionManager.registerServices(m_serviceLocator, serviceState);
+				extensionManager.registerServices(m_serviceLocator, *m_pServiceState);
 				for (const auto& counter : m_serviceLocator.counters())
 					m_counters.push_back(counter);
 
@@ -119,14 +124,14 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			void loadSystemPluginsAndConfig() {
-				for (const auto& pluginName : m_pBootstrapper->extensionManager().systemPluginNames())
-					loadPlugin(pluginName);
-
+			void loadConfigPlugin() {
 				loadPlugin(PLUGIN_NAME(config));
 			}
 
 			void loadOtherPlugins(const Height& height) {
+				for (const auto& pluginName : m_pBootstrapper->extensionManager().systemPluginNames())
+					loadPlugin(pluginName);
+
 				auto plugins = m_pluginManager.config(height).Plugins;
 				plugins.erase(PLUGIN_NAME(config));
 				for (const auto& pair : plugins) {
@@ -199,6 +204,7 @@ namespace catapult { namespace local {
 			std::vector<plugins::PluginModule> m_pluginModules;
 			std::unique_ptr<extensions::LocalNodeBootstrapper> m_pBootstrapper;
 			extensions::ServiceLocator m_serviceLocator;
+			std::unique_ptr<extensions::ServiceState> m_pServiceState;
 
 			std::unique_ptr<extensions::BlockChainStorage> m_pBlockChainStorage;
 			ionet::NodeContainer m_nodes;

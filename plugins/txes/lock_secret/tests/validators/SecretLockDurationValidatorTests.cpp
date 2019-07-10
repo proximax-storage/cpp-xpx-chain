@@ -41,7 +41,7 @@ namespace catapult { namespace validators {
 				auto pluginConfig = config::SecretLockConfiguration::Uninitialized();
 				pluginConfig.MaxSecretLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
 				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-				blockChainConfig.SetPluginConfiguration("catapult.plugins.locksecret", pluginConfig);
+				blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
 				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(blockChainConfig);
 				return CreateSecretLockDurationValidator(pConfigHolder);

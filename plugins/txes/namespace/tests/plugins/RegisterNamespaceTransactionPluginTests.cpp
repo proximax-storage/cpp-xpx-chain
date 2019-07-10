@@ -23,6 +23,7 @@
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
 #include "catapult/model/Address.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/constants.h"
 #include "tests/test/core/AddressTestUtils.h"
@@ -56,7 +57,7 @@ namespace catapult { namespace plugins {
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
 			blockChainConfig.Network.PublicKey = test::GenerateRandomData<Key_Size>();
 			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
 			return blockChainConfig;
 		}
 

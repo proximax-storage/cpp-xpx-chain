@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
 			pluginConfig.MaxMosaicsPerAccount = maxMosaics;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
 			return blockChainConfig;
 		}
 

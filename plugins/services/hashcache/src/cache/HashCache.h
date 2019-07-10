@@ -33,7 +33,7 @@ namespace catapult { namespace cache {
 	/// \note The cache can be pruned according to the retention time.
 	class BasicHashCache : public HashBasicCache {
 	public:
-		/// Creates a cache around \a config with the specified (\a blockChainConfig).
+		/// Creates a cache around \a config with the specified \a pConfigHolder.
 		explicit BasicHashCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				// hash cache should always be excluded from state hash calculation
 				: HashBasicCache(DisablePatriciaTreeStorage(config), HashCacheTypes::Options{ pConfigHolder })
@@ -53,7 +53,7 @@ namespace catapult { namespace cache {
 		DEFINE_CACHE_CONSTANTS(Hash)
 
 	public:
-		/// Creates a cache around \a config with the specified (\a blockChainConfig).
+		/// Creates a cache around \a config with the specified \a pConfigHolder.
 		explicit HashCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				: SynchronizedCache<BasicHashCache>(BasicHashCache(config, pConfigHolder))
 		{}

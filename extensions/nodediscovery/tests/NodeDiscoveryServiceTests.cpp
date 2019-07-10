@@ -66,13 +66,7 @@ namespace catapult { namespace nodediscovery {
 					payloads.push_back(payload);
 				});
 
-				auto userConfig = config::UserConfiguration::Uninitialized();
-				userConfig.BootKey = test::GenerateRandomHexString(2 * Key_Size);
-				testState().state().pluginManager().configHolder()->SetConfig(Height{0}, config::LocalNodeConfiguration{
-					model::BlockChainConfiguration::Uninitialized(),
-					config::NodeConfiguration::Uninitialized(),
-					config::LoggingConfiguration::Uninitialized(),
-					std::move(userConfig)});
+				const_cast<std::string&>(testState().state().pluginManager().configHolder()->Config(Height{0}).User.BootKey) = test::GenerateRandomHexString(2 * Key_Size);
 			}
 
 		public:
@@ -327,6 +321,9 @@ namespace catapult { namespace nodediscovery {
 	TEST(TEST_CLASS, PingTaskBroadcastsLocalNetworkNode) {
 		// Arrange:
 		TestContext context;
+		auto& nodeConfig = const_cast<config::NodeConfiguration&>(context.testState().state().pluginManager().configHolder()->Config(Height{0}).Node);
+		nodeConfig.Local.Host = "";
+		nodeConfig.Local.FriendlyName = "";
 
 		context.boot();
 

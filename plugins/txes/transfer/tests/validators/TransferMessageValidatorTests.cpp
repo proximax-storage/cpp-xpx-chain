@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::TransferConfiguration::Uninitialized();
 			pluginConfig.MaxMessageSize = maxMessageSize;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.transfer", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);

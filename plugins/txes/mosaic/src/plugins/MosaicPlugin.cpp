@@ -57,7 +57,6 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreatePluginConfigValidator())
 				.add(validators::CreateMosaicIdValidator())
 				.add(validators::CreateMosaicSupplyChangeValidator())
 				.add(validators::CreatePluginConfigValidator());

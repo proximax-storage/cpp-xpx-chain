@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
 			pluginConfig.MaxMosaicDivisibleUnits = maxDivisibleUnits;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(pConfigHolder);

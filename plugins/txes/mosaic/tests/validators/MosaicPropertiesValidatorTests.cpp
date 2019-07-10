@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 			}
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
 			return blockChainConfig;
 		}
 		auto Default_Config = CreateConfig(Max_Divisibility, Max_Duration);

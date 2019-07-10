@@ -95,9 +95,8 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
+					"PluginConfigValidator",
 					"NamespaceTypeValidator",
-					"NamespaceNameValidator",
-					"RootNamespaceValidator",
 					"AliasActionValidator",
 					"PluginConfigValidator",
 				};
@@ -105,6 +104,8 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"NamespaceNameValidator",
+					"RootNamespaceValidator",
 					"RootNamespaceAvailabilityValidator",
 					"ChildNamespaceAvailabilityValidator",
 					"RootNamespaceMaxChildrenValidator",

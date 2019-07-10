@@ -67,13 +67,13 @@ namespace catapult { namespace plugins {
             static std::vector<std::string> GetStatelessValidatorNames() {
                 return {
                         "MetadataTypeValidator",
-                        "MetadataFieldModificationValidator",
                         "PluginConfigValidator",
                 };
             }
 
             static std::vector<std::string> GetStatefulValidatorNames() {
                 return {
+						"MetadataFieldModificationValidator",
                         "ModifyAddressMetadataValidator",
                         "ModifyMosaicMetadataValidator",
                         "ModifyNamespaceMetadataValidator",

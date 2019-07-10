@@ -79,7 +79,7 @@ namespace catapult { namespace plugins {
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act + Assert:
-			EXPECT_THROW(LoadPluginByName(manager, modules, directory, "catapult.plugins.awesome"), catapult_invalid_argument);
+			EXPECT_THROW(LoadPluginByName(manager, modules, directory, PLUGIN_NAME(awesome)), catapult_invalid_argument);
 		}
 	}
 

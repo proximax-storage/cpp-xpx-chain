@@ -32,11 +32,11 @@ namespace catapult { namespace model {
 	class WeakEntityInfoT {
 	public:
 		/// Creates an entity info around \a associatedHeight.
-		constexpr WeakEntityInfoT(const Height& associatedHeight = Height{0})
+		constexpr WeakEntityInfoT()
 				: m_pEntity(nullptr)
 				, m_pHash(nullptr)
 				, m_pAssociatedBlockHeader(nullptr)
-				, m_associatedHeight(associatedHeight)
+				, m_associatedHeight(Height{0})
 		{}
 
 		/// Creates an entity info around \a entity and \a associatedHeight.

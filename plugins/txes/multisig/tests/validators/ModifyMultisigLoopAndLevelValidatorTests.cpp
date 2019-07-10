@@ -79,7 +79,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.MaxMultisigDepth = maxMultisigDepth;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.multisig", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateModifyMultisigLoopAndLevelValidator(pConfigHolder);

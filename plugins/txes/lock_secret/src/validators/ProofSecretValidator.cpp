@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 				return Failure_LockSecret_Hash_Not_Implemented;
 
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::SecretLockConfiguration>("catapult.plugins.locksecret");
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::SecretLockConfiguration>(PLUGIN_NAME(locksecret));
 			if (notification.Proof.Size < pluginConfig.MinProofSize || notification.Proof.Size > pluginConfig.MaxProofSize)
 				return Failure_LockSecret_Proof_Size_Out_Of_Bounds;
 

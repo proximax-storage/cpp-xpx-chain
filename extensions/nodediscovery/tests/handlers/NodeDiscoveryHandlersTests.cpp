@@ -35,7 +35,6 @@ namespace catapult { namespace handlers {
 
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
-		auto Default_Service_State = test::ServiceTestState();
 
 		auto CreateNodePushPingPacket(const Key& identityKey, const std::string& host) {
 			return test::CreateNodePushPingPacket(identityKey, ionet::NodeVersion(1234), host, "");
@@ -44,17 +43,17 @@ namespace catapult { namespace handlers {
 		std::pair<ionet::Node, size_t> RegisterAndExecutePushPingHandler(
 				const ionet::Packet& packet,
 				ionet::ServerPacketHandlerContext& context) {
-			ionet::ServerPacketHandlers handlers;
 			ionet::Node capturedNode;
 			auto numConsumerCalls = 0u;
-			Default_Service_State.setNetworkIdentifier(model::NetworkIdentifier::Mijin_Test);
-			RegisterNodeDiscoveryPushPingHandler(Default_Service_State.state(), [&capturedNode, &numConsumerCalls](const auto& node) {
+			auto serviceState = test::ServiceTestState();
+			serviceState.setNetworkIdentifier(Network_Identifier);
+			RegisterNodeDiscoveryPushPingHandler(serviceState.state(), [&capturedNode, &numConsumerCalls](const auto& node) {
 				capturedNode = node;
 				++numConsumerCalls;
 			});
 
 			// Act:
-			EXPECT_TRUE(handlers.process(packet, context));
+			EXPECT_TRUE(serviceState.state().packetHandlers().process(packet, context));
 
 			// Assert:
 			test::AssertNoResponse(context);
@@ -159,18 +158,16 @@ namespace catapult { namespace handlers {
 		template<typename TAssert>
 		void RunPullPingHandlerTest(uint32_t packetExtraSize, TAssert assertFunc) {
 			// Arrange:
-			ionet::ServerPacketHandlers handlers;
-			auto config = config::LocalNodeConfiguration(
-				model::BlockChainConfiguration::Uninitialized(),
-				config::NodeConfiguration::Uninitialized(),
-				config::LoggingConfiguration::Uninitialized(),
-				config::UserConfiguration::Uninitialized());
-			const_cast<config::NodeConfiguration&>(config.Node).Local.Host = "host";
-			const_cast<config::NodeConfiguration&>(config.Node).Local.FriendlyName = "alice";
-			const_cast<config::UserConfiguration&>(config.User).BootKey = test::GenerateRandomHexString(2 * Key_Size);
-			Default_Service_State.state().pluginManager().configHolder()->SetConfig(Height{0}, config);
+			auto serviceState = test::ServiceTestState();
+			auto& config = serviceState.state().pluginManager().configHolder()->Config(Height{0});
+			auto& nodeConfig = const_cast<config::NodeConfiguration&>(config.Node);
+			nodeConfig.Local.Host = "host";
+			nodeConfig.Local.FriendlyName = "alice";
+			auto& userConfig = const_cast<config::UserConfiguration&>(config.User);
+			userConfig.BootKey = test::GenerateRandomHexString(2 * Key_Size);
+
 			auto pNetworkNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(config)));
-			RegisterNodeDiscoveryPullPingHandler(Default_Service_State.state());
+			RegisterNodeDiscoveryPullPingHandler(serviceState.state());
 
 			// - create a valid request
 			auto pPacket = ionet::CreateSharedPacket<ionet::Packet>();
@@ -179,7 +176,7 @@ namespace catapult { namespace handlers {
 
 			// Act:
 			ionet::ServerPacketHandlerContext context({}, "");
-			EXPECT_TRUE(handlers.process(*pPacket, context));
+			EXPECT_TRUE(serviceState.state().packetHandlers().process(*pPacket, context));
 
 			// Assert:
 			assertFunc(*pNetworkNode, context);

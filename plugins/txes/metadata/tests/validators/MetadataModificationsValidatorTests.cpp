@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
 			pluginConfig.MaxFields = MaxFields;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.metadata", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
 			PopulateCache(cache, initValues);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();

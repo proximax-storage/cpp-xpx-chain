@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::AggregateConfiguration::Uninitialized();
 			pluginConfig.EnableStrictCosignatureCheck = true;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.aggregate", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);

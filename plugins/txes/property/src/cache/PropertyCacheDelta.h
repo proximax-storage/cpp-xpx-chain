@@ -51,7 +51,7 @@ namespace catapult { namespace cache {
 		/// Creates a delta around \a propertySets and \a blockChainConfig.
 		explicit BasicPropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+				std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
 				: PropertyCacheDeltaMixins::Size(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::Contains(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::ConstAccessor(*propertySets.pPrimary)
@@ -84,7 +84,7 @@ namespace catapult { namespace cache {
 		/// Creates a delta around \a propertySets and \a blockChainConfig.
 		explicit PropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+				std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
 				: ReadOnlyViewSupplier(propertySets, pConfigHolder)
 		{}
 	};

@@ -94,9 +94,6 @@ namespace catapult { namespace plugins {
 		/// Sets whether verifiable state should be enabled or not (\a shouldEnableVerifiableState).
 		void setShouldEnableVerifiableState(bool shouldEnableVerifiableState);
 
-		/// Gets whether verifiable state should be enabled or not.
-		bool shouldEnableVerifiableState() const;
-
 		// endregion
 
 		// region transactions
@@ -122,6 +119,9 @@ namespace catapult { namespace plugins {
 
 		/// Creates a catapult cache.
 		cache::CatapultCache createCache();
+
+		/// Updates catapult \a cache with newly added subcaches.
+		void updateCache(cache::CatapultCache& cache);
 
 		// endregion
 

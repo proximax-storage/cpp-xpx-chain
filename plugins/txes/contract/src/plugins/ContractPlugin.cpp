@@ -60,7 +60,6 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-					.add(validators::CreatePluginConfigValidator())
 					.add(validators::CreateModifyContractCustomersValidator())
 					.add(validators::CreateModifyContractExecutorsValidator())
 					.add(validators::CreateModifyContractVerifiersValidator())
