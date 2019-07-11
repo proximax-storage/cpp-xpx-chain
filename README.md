@@ -25,8 +25,8 @@ sudo apt-get install docker-compose -y
   cd proximax-catapult-server
   sudo ./scripts/ToolsRealeaseDocker/buildTools.sh
   ```
-  To build a catapult.server image:
+  To build a sirius.bc image:
   ```
-  cd proximax-catapult-server
-  sudo ./scripts/Catapult.serverRealeaseDocker/buildCatapultServer.sh
+  cd cpp-xpx-chain
+  sudo ./scripts/release-script/buildCatapultServer.sh
   ```

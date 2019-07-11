@@ -8,7 +8,7 @@ The changelog format is based on [Keep a Changelog](https://keepachangelog.com/e
 ### Added
 - New catapult.broker process that pushes changes into MongoDB and and ZMQ.
 - New catapult.recovery process that repairs local state after ungraceful termination.
-- catapult.server produces file-backed messages that are consumed by catapult.broker.
+- sirius.bc produces file-backed messages that are consumed by catapult.broker.
 - Inflation support via new config-inflation.properties.
 - Implementation of harvest fee sharing and beneficiary specification.
 
