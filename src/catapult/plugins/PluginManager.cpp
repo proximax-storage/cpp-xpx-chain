@@ -233,9 +233,8 @@ namespace catapult { namespace plugins {
 				auto result = model::ExtractorContext().extract(address);
 
 				for (const auto& extractor : extractors) {
-					for (const auto& extractedAddress : extractor(cache, address)) {
-						result.insert(extractedAddress);
-					}
+					auto extractedAddresses = extractor(cache, address);
+					result.insert(extractedAddresses.begin(), extractedAddresses.end());
 				}
 
 				return result;

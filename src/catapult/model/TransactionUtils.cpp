@@ -40,8 +40,7 @@ namespace catapult { namespace model {
 				if (Core_Register_Account_Address_Notification == notification.Type) {
 					auto addresses = m_extractorContext.extract(
 							static_cast<const AccountAddressNotification &>(notification).Address);
-					for (const auto& address : addresses)
-						m_addresses.insert(address);
+					m_addresses.insert(addresses.begin(), addresses.end());
 
 				} else if (Core_Register_Account_Public_Key_Notification == notification.Type) {
 					auto keys = m_extractorContext.extract(

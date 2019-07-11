@@ -35,9 +35,9 @@ namespace catapult { namespace addressextraction {
 	/// Utility class for extracting addresses.
 	class AddressExtractor {
 	public:
-		/// Creates an extractor around \a pPublisher and \a extractorFactory.
+		/// Creates an extractor around \a pPublisher and \a contextFactory.
 		AddressExtractor(std::unique_ptr<const model::NotificationPublisher>&& pPublisher,
-				const model::ExtractorContextFactoryFunc & extractorFactory);
+				const model::ExtractorContextFactoryFunc & contextFactory);
 
 	public:
 		/// Extracts transaction addresses into \a transactionInfo.
@@ -54,6 +54,6 @@ namespace catapult { namespace addressextraction {
 
 	private:
 		std::unique_ptr<const model::NotificationPublisher> m_pPublisher;
-		model::ExtractorContextFactoryFunc m_extractorFactory;
+		model::ExtractorContextFactoryFunc m_extractorContextFactory;
 	};
 }}

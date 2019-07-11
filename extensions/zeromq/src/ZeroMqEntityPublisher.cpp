@@ -123,10 +123,10 @@ namespace catapult { namespace zeromq {
 	ZeroMqEntityPublisher::ZeroMqEntityPublisher(
 			unsigned short port,
 			std::unique_ptr<model::NotificationPublisher>&& pNotificationPublisher,
-			const model::ExtractorContextFactoryFunc & extractorFactory)
+			const model::ExtractorContextFactoryFunc & contextFactory)
 			: m_pNotificationPublisher(std::move(pNotificationPublisher))
 			, m_pSynchronizedPublisher(std::make_unique<SynchronizedPublisher>(port))
-			, m_extractorFactory(extractorFactory)
+			, m_extractorContextFactory(contextFactory)
 	{}
 
 	ZeroMqEntityPublisher::~ZeroMqEntityPublisher() = default;
@@ -237,7 +237,7 @@ namespace catapult { namespace zeromq {
 
 		const auto& addresses = transactionInfo.OptionalAddresses
 				? *transactionInfo.OptionalAddresses
-				: model::ExtractAddresses(transactionInfo.Transaction, *m_pNotificationPublisher, m_extractorFactory());
+				: model::ExtractAddresses(transactionInfo.Transaction, *m_pNotificationPublisher, m_extractorContextFactory());
 
 		if (addresses.empty())
 			CATAPULT_LOG(warning) << "no addresses are associated with transaction " << transactionInfo.EntityHash;
