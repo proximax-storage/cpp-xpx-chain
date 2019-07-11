@@ -77,26 +77,26 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
-						"ModifyContractCustomersValidator",
-						"ModifyContractExecutorsValidator",
-						"ModifyContractVerifiersValidator",
-						"PluginConfigValidator",
+					"ModifyContractCustomersValidator",
+					"ModifyContractExecutorsValidator",
+					"ModifyContractVerifiersValidator",
+					"PluginConfigValidator",
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-						"ModifyContractInvalidCustomersValidator",
-						"ModifyContractInvalidExecutorsValidator",
-						"ModifyContractInvalidVerifiersValidator",
-						"ModifyContractDurationValidator",
+					"ModifyContractInvalidCustomersValidator",
+					"ModifyContractInvalidExecutorsValidator",
+					"ModifyContractInvalidVerifiersValidator",
+					"ModifyContractDurationValidator",
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
-						"ModifyContractObserver",
-						"ReputationUpdateObserver"
+					"ModifyContractObserver",
+					"ReputationUpdateObserver"
 				};
 			}
 
