@@ -30,7 +30,6 @@ namespace catapult { namespace net {
 		auto settings = ConnectionSettings();
 
 		// Assert:
-		EXPECT_EQ(model::NetworkIdentifier::Zero, settings.NetworkIdentifier);
 		EXPECT_EQ(utils::TimeSpan::FromSeconds(10), settings.Timeout);
 		EXPECT_EQ(utils::FileSize::FromKilobytes(4), settings.SocketWorkingBufferSize);
 		EXPECT_EQ(0u, settings.SocketWorkingBufferSensitivity);

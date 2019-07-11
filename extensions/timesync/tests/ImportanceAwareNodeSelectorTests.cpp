@@ -25,6 +25,7 @@
 #include "catapult/ionet/NodeInfo.h"
 #include "catapult/utils/ArraySet.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -43,7 +44,7 @@ namespace catapult { namespace timesync {
 				cache::AccountStateCache& cache,
 				const std::vector<Key>& keys,
 				const std::vector<Importance>& importances) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto i = 0u; i < keys.size(); ++i) {
 				delta->addAccount(keys[i], Height(1));
 				auto& accountState = delta->find(keys[i]).get();
@@ -63,7 +64,9 @@ namespace catapult { namespace timesync {
 			blockChainConfig.MinHarvesterBalance = maxAmount;
 			blockChainConfig.CurrencyMosaicId = MosaicId(1111);
 			blockChainConfig.HarvestingMosaicId = MosaicId(2222);
-			return std::make_unique<cache::AccountStateCache>(cacheConfig, blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			return std::make_unique<cache::AccountStateCache>(cacheConfig, pConfigHolder);
 		}
 
 		struct SeedNodeContainerOptions {

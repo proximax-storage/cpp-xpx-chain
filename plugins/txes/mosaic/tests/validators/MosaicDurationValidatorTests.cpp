@@ -22,6 +22,7 @@
 #include "src/validators/Validators.h"
 #include "src/cache/MosaicCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -30,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr MosaicId Default_Mosaic_Id = MosaicId(0x1234);
@@ -62,8 +63,10 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxMosaicDuration = utils::BlockSpan::FromHours(123);
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", pluginConfig);
-			auto pValidator = CreateMosaicDurationValidator(blockChainConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pValidator = CreateMosaicDurationValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, height);

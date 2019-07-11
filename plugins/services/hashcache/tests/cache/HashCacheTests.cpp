@@ -21,6 +21,7 @@
 #include "src/cache/HashCache.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -30,18 +31,19 @@ namespace catapult { namespace cache {
 	// region mixin traits based tests
 
 	namespace {
-		auto CreateConfig(uint32_t retentionTimeHours) {
+		auto CreateConfigHolder(uint32_t retentionTimeHours) {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			config.MaxRollbackBlocks = retentionTimeHours * 4 / 5;
-			return config;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
-		auto Default_Config = CreateConfig(5);
 
 		struct HashCacheMixinTraits {
 			class CacheType : public HashCache {
 			public:
-				CacheType() : HashCache(CacheConfiguration(), Default_Config)
+				CacheType() : HashCache(CacheConfiguration(), CreateConfigHolder(5))
 				{}
 			};
 
@@ -83,13 +85,13 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanCreateHashCacheWithCustomRetentionTime) {
 		// Act:
-		auto config = CreateConfig(125);
+		auto config = CreateConfigHolder(125);
 		HashCache cache(CacheConfiguration(), config);
 
 		// Assert:
-		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createView()->retentionTime());
-		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createDelta()->retentionTime());
-		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createDetachedDelta().tryLock()->retentionTime());
+		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createView(Height{0})->retentionTime());
+		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createDelta(Height{0})->retentionTime());
+		EXPECT_EQ(utils::TimeSpan::FromHours(125), cache.createDetachedDelta(Height{0}).tryLock()->retentionTime());
 	}
 
 	// endregion
@@ -98,9 +100,9 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, PruningBoundaryIsInitiallyUnset) {
 		// Arrange:
-		auto config = CreateConfig(125);
-		HashCache cache(CacheConfiguration(), config);
-		auto delta = cache.createDelta();
+		auto pConfigHolder = CreateConfigHolder(125);
+		HashCache cache(CacheConfiguration(), pConfigHolder);
+		auto delta = cache.createDelta(Height{0});
 
 		// Assert:
 		EXPECT_FALSE(delta->pruningBoundary().isSet());
@@ -108,9 +110,9 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, PruneUpdatesPruningBoundary) {
 		// Arrange:
-		auto config = CreateConfig(30);
-		HashCache cache(CacheConfiguration(), config);
-		auto delta = cache.createDelta();
+		auto pConfigHolder = CreateConfigHolder(30);
+		HashCache cache(CacheConfiguration(), pConfigHolder);
+		auto delta = cache.createDelta(Height{0});
 
 		// Act (40 hours):
 		delta->prune(Timestamp(40 * 60 * 60 * 1000));

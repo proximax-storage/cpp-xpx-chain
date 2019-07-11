@@ -26,10 +26,11 @@ namespace catapult { namespace validators {
 
 	using Notification = model::RootNamespaceNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(RootNamespace, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATELESS_VALIDATOR(RootNamespace, [&blockChainConfig](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(RootNamespace, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespace, [pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			// note that zero duration is acceptable because it is eternal
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
 			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
 			return maxDuration < notification.Duration ? Failure_Namespace_Invalid_Duration : ValidationResult::Success;
 		});

@@ -48,12 +48,12 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CannotLoadUnkownPlugin_ExplicitDirectory) {
 		// Assert:
-		AssertCannotLoadPlugin(test::GetExplicitPluginsDirectory(), "catapult.plugins.awesome");
+		AssertCannotLoadPlugin(test::GetExplicitPluginsDirectory(), PLUGIN_NAME(awesome));
 	}
 
 	TEST(TEST_CLASS, CannotLoadUnkownPlugin_ImplicitDirectory) {
 		// Assert:
-		AssertCannotLoadPlugin("", "catapult.plugins.awesome");
+		AssertCannotLoadPlugin("", PLUGIN_NAME(awesome));
 	}
 
 	// endregion

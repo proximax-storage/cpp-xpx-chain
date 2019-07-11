@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/cache/CacheDatabaseMixin.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 #include "catapult/model/NetworkInfo.h"
 #include "catapult/state/AccountState.h"
@@ -77,8 +78,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// BlockChain configuration.
-			const model::BlockChainConfiguration& Config;
+			/// Catapult configuration holder.
+			std::shared_ptr<config::LocalNodeConfigurationHolder> ConfigHolderPtr;
 		};
 
 	// region secondary descriptors

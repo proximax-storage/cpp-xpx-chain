@@ -39,7 +39,8 @@ namespace catapult { namespace cache {
 			, public MosaicCacheViewMixins::ConstAccessor
 			, public MosaicCacheDeltaMixins::PatriciaTreeView
 			, public MosaicCacheViewMixins::ActivePredicate
-			, public MosaicCacheViewMixins::Enable {
+			, public MosaicCacheViewMixins::Enable
+			, public MosaicCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = MosaicCacheTypes::CacheReadOnlyType;
 

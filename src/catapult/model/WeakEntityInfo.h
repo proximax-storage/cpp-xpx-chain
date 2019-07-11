@@ -20,11 +20,10 @@
 
 #pragma once
 #include "VerifiableEntity.h"
+#include "catapult/model/Block.h"
 #include "catapult/utils/HexFormatter.h"
 #include <iosfwd>
 #include <vector>
-
-namespace catapult { namespace model { struct BlockHeader; } }
 
 namespace catapult { namespace model {
 
@@ -32,33 +31,37 @@ namespace catapult { namespace model {
 	template<typename TEntity>
 	class WeakEntityInfoT {
 	public:
-		/// Creates an entity info.
+		/// Creates an entity info around \a associatedHeight.
 		constexpr WeakEntityInfoT()
 				: m_pEntity(nullptr)
 				, m_pHash(nullptr)
 				, m_pAssociatedBlockHeader(nullptr)
+				, m_associatedHeight(Height{0})
 		{}
 
-		/// Creates an entity info around \a entity.
+		/// Creates an entity info around \a entity and \a associatedHeight.
 		/// \note This is an implicit constructor in order to facilitate calling TransactionPlugin::publish without hashes.
-		constexpr WeakEntityInfoT(const TEntity& entity)
+		constexpr WeakEntityInfoT(const TEntity& entity, const Height& associatedHeight)
 				: m_pEntity(&entity)
 				, m_pHash(nullptr)
 				, m_pAssociatedBlockHeader(nullptr)
+				, m_associatedHeight(associatedHeight)
 		{}
 
 		/// Creates an entity info around \a entity and \a hash.
-		constexpr explicit WeakEntityInfoT(const TEntity& entity, const Hash256& hash)
+		constexpr explicit WeakEntityInfoT(const TEntity& entity, const Hash256& hash, const Height& associatedHeight)
 				: m_pEntity(&entity)
 				, m_pHash(&hash)
 				, m_pAssociatedBlockHeader(nullptr)
+				, m_associatedHeight(associatedHeight)
 		{}
 
 		/// Creates an entity info around \a entity, \a hash and \a associatedBlockHeader.
-		constexpr explicit WeakEntityInfoT(const TEntity& entity, const Hash256& hash, const BlockHeader& associatedBlockHeader)
+		constexpr explicit WeakEntityInfoT(const TEntity& entity, const Hash256& hash, const model::BlockHeader& associatedBlockHeader)
 				: m_pEntity(&entity)
 				, m_pHash(&hash)
 				, m_pAssociatedBlockHeader(&associatedBlockHeader)
+				, m_associatedHeight(associatedBlockHeader.Height)
 		{}
 
 	public:
@@ -94,8 +97,13 @@ namespace catapult { namespace model {
 		}
 
 		/// Gets the associated block header.
-		constexpr const BlockHeader& associatedBlockHeader() const {
+		constexpr const model::BlockHeader& associatedBlockHeader() const {
 			return *m_pAssociatedBlockHeader;
+		}
+
+		/// Gets the associated height.
+		constexpr Height associatedHeight() const {
+			return m_associatedHeight;
 		}
 
 	public:
@@ -105,7 +113,7 @@ namespace catapult { namespace model {
 			const auto& typedEntity = static_cast<const TEntityResult&>(entity());
 			return isAssociatedBlockHeaderSet()
 					? WeakEntityInfoT<TEntityResult>(typedEntity, hash(), associatedBlockHeader())
-					: WeakEntityInfoT<TEntityResult>(typedEntity, hash());
+					: WeakEntityInfoT<TEntityResult>(typedEntity, hash(), m_associatedHeight);
 		}
 
 	public:
@@ -122,7 +130,8 @@ namespace catapult { namespace model {
 	private:
 		const TEntity* m_pEntity;
 		const Hash256* m_pHash;
-		const BlockHeader* m_pAssociatedBlockHeader;
+		const model::BlockHeader* m_pAssociatedBlockHeader;
+		Height m_associatedHeight;
 	};
 
 	using WeakEntityInfo = WeakEntityInfoT<VerifiableEntity>;

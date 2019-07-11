@@ -20,6 +20,7 @@
 
 #include "catapult/cache_core/AccountStateCacheSubCachePlugin.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/TestHarness.h"
 
@@ -31,10 +32,9 @@ namespace catapult { namespace cache {
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
-		auto Default_BlockChain_Config = model::BlockChainConfiguration::Uninitialized();
 
 		std::vector<Address> AddAccountsWithBalances(AccountStateCache& cache, const std::vector<Amount>& balances) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			auto addresses = test::GenerateRandomDataVector<Address>(balances.size());
 			for (auto i = 0u; i < balances.size(); ++i) {
@@ -54,7 +54,9 @@ namespace catapult { namespace cache {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.MinHarvesterBalance = minHighValueAccountBalance;
 			blockChainConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			AccountStateCache cache(CacheConfiguration(), blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			auto balances = { Amount(1'000'000), Amount(500'000), Amount(750'000), Amount(1'250'000) };
@@ -64,7 +66,7 @@ namespace catapult { namespace cache {
 			mocks::MockMemoryStream stream("", buffer);
 
 			// Act:
-			storage.saveAll(stream);
+			storage.saveAll(stream, Height{0});
 
 			// Assert: all addresses were saved
 			ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) + numExpectedAccounts * sizeof(Address) +
@@ -116,7 +118,7 @@ namespace catapult { namespace cache {
 		void RunSummaryLoadTest(size_t numAccounts) {
 			// Arrange:
 			auto config = CacheConfiguration();
-			AccountStateCache cache(config, Default_BlockChain_Config);
+			AccountStateCache cache(config, std::make_shared<config::MockLocalNodeConfigurationHolder>());
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			size_t numUpdateAddresses = 2 * numAccounts;
@@ -135,7 +137,7 @@ namespace catapult { namespace cache {
 			storage.loadAll(stream, 0);
 
 			// Assert: all addresses were saved
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(numAccounts, view->highValueAddresses().size());
 			EXPECT_EQ(model::AddressSet(highValueAddresses.cbegin(), highValueAddresses.cend()), view->highValueAddresses());
 			EXPECT_EQ(numUpdateAddresses, view->addressesToUpdate().size());
@@ -169,7 +171,7 @@ namespace catapult { namespace cache {
 			class PluginType : public AccountStateCacheSubCachePlugin {
 			public:
 				explicit PluginType(const CacheConfiguration& config)
-						: AccountStateCacheSubCachePlugin(config, Default_BlockChain_Config)
+						: AccountStateCacheSubCachePlugin(config, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 				{}
 			};
 		};

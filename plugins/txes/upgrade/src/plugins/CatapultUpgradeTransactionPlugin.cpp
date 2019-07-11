@@ -16,7 +16,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1:
 				sub.notify(model::CatapultUpgradeSignerNotification<1>(transaction.Signer));

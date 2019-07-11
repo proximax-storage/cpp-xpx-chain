@@ -20,6 +20,7 @@
 
 #include "catapult/plugins/CacheHandlers.h"
 #include "tests/test/cache/SimpleCache.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
@@ -46,8 +47,7 @@ namespace catapult { namespace plugins {
 		template<typename TAction>
 		void RunHandlerRegistrationTest(TAction action) {
 			// Arrange:
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			PluginManager pluginManager(pConfigHolder, StorageConfiguration());
 			pluginManager.addCacheSupport<test::SimpleCacheStorageTraits>(std::make_unique<CacheDescriptor::CacheType>());
 			auto cache = pluginManager.createCache();

@@ -21,15 +21,15 @@
 #include "src/validators/Validators.h"
 #include "src/state/HashLockInfo.h"
 #include "plugins/txes/lock_shared/tests/validators/LockDurationValidatorTests.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		struct HashTraits {
 		public:
 			using NotificationType = model::HashLockDurationNotification<1>;
@@ -38,9 +38,12 @@ namespace catapult { namespace validators {
 			static auto CreateValidator(BlockDuration maxDuration) {
 				auto pluginConfig = config::HashLockConfiguration::Uninitialized();
 				pluginConfig.MaxHashLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
+				auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-				blockChainConfig.SetPluginConfiguration("catapult.plugins.lockhash", pluginConfig);
-				return CreateHashLockDurationValidator(blockChainConfig);
+				blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+				pConfigHolder->SetBlockChainConfig(blockChainConfig);
+				return CreateHashLockDurationValidator(pConfigHolder);
 			}
 		};
 	}

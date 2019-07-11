@@ -22,7 +22,8 @@
 #include "HashCacheDelta.h"
 #include "HashCacheView.h"
 #include "catapult/cache/BasicCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+
+namespace catapult { namespace config { class LocalNodeConfigurationHolder; } }
 
 namespace catapult { namespace cache {
 
@@ -32,10 +33,10 @@ namespace catapult { namespace cache {
 	/// \note The cache can be pruned according to the retention time.
 	class BasicHashCache : public HashBasicCache {
 	public:
-		/// Creates a cache around \a config with the specified (\a blockChainConfig).
-		explicit BasicHashCache(const CacheConfiguration& config, const model::BlockChainConfiguration& blockChainConfig)
+		/// Creates a cache around \a config with the specified \a pConfigHolder.
+		explicit BasicHashCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				// hash cache should always be excluded from state hash calculation
-				: HashBasicCache(DisablePatriciaTreeStorage(config), HashCacheTypes::Options{ blockChainConfig })
+				: HashBasicCache(DisablePatriciaTreeStorage(config), HashCacheTypes::Options{ pConfigHolder })
 		{}
 
 	private:
@@ -52,9 +53,9 @@ namespace catapult { namespace cache {
 		DEFINE_CACHE_CONSTANTS(Hash)
 
 	public:
-		/// Creates a cache around \a config with the specified (\a blockChainConfig).
-		explicit HashCache(const CacheConfiguration& config, const model::BlockChainConfiguration& blockChainConfig)
-				: SynchronizedCache<BasicHashCache>(BasicHashCache(config, blockChainConfig))
+		/// Creates a cache around \a config with the specified \a pConfigHolder.
+		explicit HashCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+				: SynchronizedCache<BasicHashCache>(BasicHashCache(config, pConfigHolder))
 		{}
 	};
 }}

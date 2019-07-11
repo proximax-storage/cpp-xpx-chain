@@ -26,6 +26,7 @@
 #include "catapult/extensions/LocalNodeBootstrapper.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/local/BasicLocalNode.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -152,8 +153,8 @@ namespace catapult { namespace test {
 
 		/// Boots a new local node around \a config.
 		std::unique_ptr<local::BootedLocalNode> boot(config::LocalNodeConfiguration&& config) const {
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(Height{0}, config);
 			auto pBootstrapper = std::make_unique<extensions::LocalNodeBootstrapper>(
 				pConfigHolder,
 				resourcesDirectory(),

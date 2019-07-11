@@ -229,6 +229,9 @@ namespace catapult { namespace test {
 			return m_id;
 		}
 
+		void setHeight(const Height&)
+		{}
+
 	public:
 		/// Gets the size.
 		size_t size() const {
@@ -327,6 +330,9 @@ namespace catapult { namespace test {
 			++m_id;
 		}
 
+		void setHeight(const Height&)
+		{}
+
 	public:
 		/// Finds the cache value identified by \a id.
 		const_iterator find(size_t id) const {
@@ -400,18 +406,18 @@ namespace catapult { namespace test {
 
 	public:
 		/// Returns a locked view based on this cache.
-		CacheViewType createView() const {
+		CacheViewType createView(const Height&) const {
 			return CacheViewType(m_mode, m_state);
 		}
 
 		/// Returns a locked cache delta based on this cache.
-		CacheDeltaType createDelta() {
+		CacheDeltaType createDelta(const Height&) {
 			return CacheDeltaType(m_mode, m_state);
 		}
 
 		/// Returns a lockable cache delta based on this cache but without the ability
 		/// to commit any changes to the original cache.
-		CacheDeltaType createDetachedDelta() const {
+		CacheDeltaType createDetachedDelta(const Height&) const {
 			return CacheDeltaType(m_mode, m_state);
 		}
 

@@ -22,6 +22,7 @@
 #include "AccountStateCacheDelta.h"
 #include "AccountStateCacheView.h"
 #include "catapult/cache/BasicCache.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -36,17 +37,17 @@ namespace catapult { namespace cache {
 	class BasicAccountStateCache : public AccountStateBasicCache {
 	public:
 		/// Creates a cache around \a config and \a options.
-		explicit BasicAccountStateCache(const CacheConfiguration& config, const model::BlockChainConfiguration& blockChainConfig)
-				: BasicAccountStateCache(config, blockChainConfig, std::make_unique<model::AddressSet>(), std::make_unique<model::AddressSet>())
+		explicit BasicAccountStateCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+				: BasicAccountStateCache(config, pConfigHolder, std::make_unique<model::AddressSet>(), std::make_unique<model::AddressSet>())
 		{}
 
 	private:
 		BasicAccountStateCache(
 				const CacheConfiguration& config,
-				const model::BlockChainConfiguration& blockChainConfig,
+				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 				std::unique_ptr<model::AddressSet>&& pHighValueAddresses,
 				std::unique_ptr<model::AddressSet>&& pAddressesToUpdate)
-				: AccountStateBasicCache(config, AccountStateCacheTypes::Options{ blockChainConfig }, *pHighValueAddresses, *pAddressesToUpdate)
+				: AccountStateBasicCache(config, AccountStateCacheTypes::Options{ pConfigHolder }, *pHighValueAddresses, *pAddressesToUpdate)
 				, m_pHighValueAddresses(std::move(pHighValueAddresses))
 				, m_pAddressesToUpdate(std::move(pAddressesToUpdate))
 		{}
@@ -82,23 +83,23 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config and \a options.
-		AccountStateCache(const CacheConfiguration& config, const model::BlockChainConfiguration& blockChainConfig)
-				: SynchronizedCacheWithInit<BasicAccountStateCache>(BasicAccountStateCache(config, blockChainConfig))
-				, m_config(blockChainConfig)
+		AccountStateCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+				: SynchronizedCacheWithInit<BasicAccountStateCache>(BasicAccountStateCache(config, pConfigHolder))
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_config.Network.Identifier;
+			return m_pConfigHolder->Config(Height{0}).BlockChain.Network.Identifier;
 		}
 
 		/// Gets the network importance grouping.
 		uint64_t importanceGrouping() const {
-			return m_config.ImportanceGrouping;
+			return m_pConfigHolder->Config(Height{0}).BlockChain.ImportanceGrouping;
 		}
 
 	private:
-		const model::BlockChainConfiguration& m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 }}

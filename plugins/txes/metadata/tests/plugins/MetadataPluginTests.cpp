@@ -7,6 +7,7 @@
 #include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/MetadataPlugin.h"
 #include "plugins/txes/metadata/src/model/MetadataEntityType.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -29,7 +30,7 @@ namespace catapult { namespace plugins {
                     }
                 }}));
 
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
                 RegisterMetadataSubsystem(manager);
@@ -65,27 +66,27 @@ namespace catapult { namespace plugins {
 
             static std::vector<std::string> GetStatelessValidatorNames() {
                 return {
-                        "MetadataTypeValidator",
-                        "MetadataFieldModificationValidator",
-                        "PluginConfigValidator",
+					"MetadataTypeValidator",
+					"PluginConfigValidator",
                 };
             }
 
             static std::vector<std::string> GetStatefulValidatorNames() {
                 return {
-                        "ModifyAddressMetadataValidator",
-                        "ModifyMosaicMetadataValidator",
-                        "ModifyNamespaceMetadataValidator",
-                        "MetadataModificationsValidator",
+					"MetadataFieldModificationValidator",
+					"ModifyAddressMetadataValidator",
+					"ModifyMosaicMetadataValidator",
+					"ModifyNamespaceMetadataValidator",
+					"MetadataModificationsValidator",
                 };
             }
 
             static std::vector<std::string> GetObserverNames() {
                 return {
-                        "AddressMetadataValueModificationObserver",
-                        "MosaicMetadataValueModificationObserver",
-                        "NamespaceMetadataValueModificationObserver",
-                        "MetadataPruningObserver"
+					"AddressMetadataValueModificationObserver",
+					"MosaicMetadataValueModificationObserver",
+					"NamespaceMetadataValueModificationObserver",
+					"MetadataPruningObserver"
                 };
             }
 

@@ -20,6 +20,8 @@
 
 #include "src/validators/Validators.h"
 #include "catapult/model/VerifiableEntity.h"
+#include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -27,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NetworkValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Network, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(Network, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
@@ -37,10 +39,13 @@ namespace catapult { namespace validators {
 			model::EntityNotification<1> notification(static_cast<model::NetworkIdentifier>(networkIdentifier), model::EntityType{0}, 0);
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Network_Identifier;
-			auto pValidator = CreateNetworkValidator(config);
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			auto pValidator = CreateNetworkValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "network identifier " << networkIdentifier;

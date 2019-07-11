@@ -22,6 +22,7 @@
 #include "src/cache/NamespaceCache.h"
 #include "src/model/NamespaceConstants.h"
 #include "src/model/NamespaceLifetimeConstraints.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -32,7 +33,7 @@ namespace catapult { namespace validators {
 #define ROOT_TEST_CLASS RootNamespaceAvailabilityValidatorTests
 #define CHILD_TEST_CLASS ChildNamespaceAvailabilityValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 	DEFINE_COMMON_VALIDATOR_TESTS(ChildNamespaceAvailability,)
 
 	namespace {
@@ -67,8 +68,10 @@ namespace catapult { namespace validators {
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(Grace_Period_Duration.unwrap());
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
-			auto pValidator = CreateRootNamespaceAvailabilityValidator(blockChainConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pValidator = CreateRootNamespaceAvailabilityValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, height);

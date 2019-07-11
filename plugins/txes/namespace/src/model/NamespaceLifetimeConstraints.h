@@ -21,6 +21,7 @@
 #pragma once
 #include "NamespaceConstants.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "src/config/NamespaceConfiguration.h"
 
 namespace catapult { namespace model {
@@ -36,7 +37,7 @@ namespace catapult { namespace model {
 	public:
 		/// Maximum lifetime a namespace may have including the grace period.
 		BlockDuration maxNamespaceDuration() {
-			const auto& pluginConfig = m_blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+			const auto& pluginConfig = m_blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
 			auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(m_blockChainConfig.BlockGenerationTargetTime);
 			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(m_blockChainConfig.BlockGenerationTargetTime);
 			return BlockDuration{maxDuration.unwrap() + gracePeriodDuration.unwrap()};

@@ -47,6 +47,7 @@ namespace catapult { namespace cache {
 		using DeltaElements = deltaset::DeltaElementsMixin<TSet>;
 
 		using Enable = EnableMixin;
+		using Height = HeightMixin;
 	};
 
 	/// Grouping of all basic and patricia tree cache mixins for a single set.

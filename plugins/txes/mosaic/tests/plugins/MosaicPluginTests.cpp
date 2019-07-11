@@ -22,6 +22,7 @@
 #include "src/plugins/MosaicPlugin.h"
 #include "src/cache/MosaicCache.h"
 #include "src/model/MosaicEntityType.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -52,7 +53,7 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterMosaicSubsystem(manager);
@@ -87,7 +88,6 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
-					"MosaicPropertiesValidator",
 					"MosaicIdValidator",
 					"MosaicSupplyChangeValidator",
 					"PluginConfigValidator"
@@ -96,6 +96,7 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"MosaicPropertiesValidator",
 					"ProperMosaicValidator",
 					"MosaicAvailabilityValidator",
 					"MosaicDurationValidator",

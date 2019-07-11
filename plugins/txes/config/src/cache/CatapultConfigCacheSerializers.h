@@ -6,7 +6,7 @@
 
 #pragma once
 #include "CatapultConfigCacheTypes.h"
-#include "src/state/CatapultConfigEntrySerializer.h"
+#include "plugins/txes/config/src/state/CatapultConfigEntrySerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
 
 namespace catapult { namespace cache {

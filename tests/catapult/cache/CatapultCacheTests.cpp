@@ -425,7 +425,7 @@ namespace catapult { namespace cache {
 			for (const auto& pStorage : const_cast<const CatapultCache&>(cache).storages()) {
 				std::vector<uint8_t> buffer;
 				mocks::MockMemoryStream stream("", buffer);
-				pStorage->saveAll(stream);
+				pStorage->saveAll(stream, cache.height());
 				serializedSubCaches.push_back(buffer);
 			}
 		}
@@ -471,7 +471,7 @@ namespace catapult { namespace cache {
 			for (const auto& pStorage : const_cast<const CatapultCache&>(cache).storages()) {
 				std::vector<uint8_t> buffer;
 				mocks::MockMemoryStream stream("", buffer);
-				pStorage->saveAll(stream);
+				pStorage->saveAll(stream, cache.height());
 				serializedSubCaches.push_back(buffer);
 			}
 		}
@@ -502,15 +502,15 @@ namespace catapult { namespace cache {
 			{}
 
 		public:
-			auto createView() const {
+			auto createView(const Height&) const {
 				return ViewProxy<CatapultCacheView, test::SimpleCacheView>(m_cache.createView());
 			}
 
-			auto createDelta() {
+			auto createDelta(const Height&) {
 				return ViewProxy<CatapultCacheDelta, test::SimpleCacheDelta>(m_cache.createDelta());
 			}
 
-			auto createDetachedDelta() const {
+			auto createDetachedDelta(const Height&) const {
 				auto cacheDetachableDelta = m_cache.createDetachableDelta();
 				return DetachedDeltaProxy(cacheDetachableDelta.detach());
 			}

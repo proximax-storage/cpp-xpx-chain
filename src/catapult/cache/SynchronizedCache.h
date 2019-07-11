@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/types.h"
 #include "catapult/utils/NonCopyable.h"
 #include "catapult/utils/SpinReaderWriterLock.h"
 #include <boost/optional.hpp>
@@ -214,14 +215,14 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Returns a locked cache view based on this cache.
-		LockedCacheView<CacheViewType> createView() const {
+		LockedCacheView<CacheViewType> createView(const Height& height) const {
 			auto readLock = m_lock.acquireReader();
-			return LockedCacheView<CacheViewType>(m_cache.createView(), std::move(readLock));
+			return LockedCacheView<CacheViewType>(m_cache.createView(height), std::move(readLock));
 		}
 
 		/// Returns a locked cache delta based on this cache.
 		/// \note Changes to an attached delta can be committed by calling commit.
-		LockedCacheDelta<CacheDeltaType> createDelta() {
+		LockedCacheDelta<CacheDeltaType> createDelta(const Height& height) {
 			auto readLock = m_lock.acquireReader();
 
 			// notice that this is not a foolproof check since multiple threads could create multiple deltas at the same time
@@ -229,7 +230,7 @@ namespace catapult { namespace cache {
 			if (m_pWeakDeltaPair.lock())
 				CATAPULT_THROW_RUNTIME_ERROR("only a single attached delta of a cache is allowed at a time");
 
-			auto delta = m_cache.createDelta();
+			auto delta = m_cache.createDelta(height);
 			auto pPair = std::make_shared<detail::CacheViewReadLockPair<CacheDeltaType>>(std::move(delta), std::move(readLock));
 			m_pWeakDeltaPair = pPair;
 			return LockedCacheDelta<CacheDeltaType>(pPair);
@@ -237,9 +238,9 @@ namespace catapult { namespace cache {
 
 		/// Returns a lockable cache delta based on this cache but without the ability
 		/// to commit any changes to the original cache.
-		LockableCacheDelta<CacheDeltaType> createDetachedDelta() const {
+		LockableCacheDelta<CacheDeltaType> createDetachedDelta(const Height& height) const {
 			auto readLock = m_lock.acquireReader();
-			auto delta = m_cache.createDetachedDelta();
+			auto delta = m_cache.createDetachedDelta(height);
 			return LockableCacheDelta<CacheDeltaType>(std::move(delta), m_commitCounter, m_lock);
 		}
 

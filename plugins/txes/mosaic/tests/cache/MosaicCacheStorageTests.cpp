@@ -36,13 +36,13 @@ namespace catapult { namespace cache {
 		// Act:
 		MosaicCache cache(CacheConfiguration{});
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			MosaicCacheStorage::LoadInto(originalEntry, *delta);
 			cache.commit();
 		}
 
 		// Assert: the cache contains the value
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		EXPECT_EQ(1u, view->size());
 		ASSERT_TRUE(view->contains(originalEntry.mosaicId()));
 		const auto& loadedEntry = view->find(originalEntry.mosaicId()).get();

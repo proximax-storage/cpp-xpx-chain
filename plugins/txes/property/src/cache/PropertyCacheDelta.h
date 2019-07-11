@@ -23,8 +23,8 @@
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/NetworkInfo.h"
 
 namespace catapult { namespace cache {
@@ -42,7 +42,8 @@ namespace catapult { namespace cache {
 			, public PropertyCacheDeltaMixins::PatriciaTreeDelta
 			, public PropertyCacheDeltaMixins::BasicInsertRemove
 			, public PropertyCacheDeltaMixins::DeltaElements
-			, public PropertyCacheDeltaMixins::Enable {
+			, public PropertyCacheDeltaMixins::Enable
+			, public PropertyCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 
@@ -50,7 +51,7 @@ namespace catapult { namespace cache {
 		/// Creates a delta around \a propertySets and \a blockChainConfig.
 		explicit BasicPropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
-				const model::BlockChainConfiguration& blockChainConfig)
+				std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
 				: PropertyCacheDeltaMixins::Size(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::Contains(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::ConstAccessor(*propertySets.pPrimary)
@@ -59,7 +60,7 @@ namespace catapult { namespace cache {
 				, PropertyCacheDeltaMixins::BasicInsertRemove(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::DeltaElements(*propertySets.pPrimary)
 				, m_pPropertyEntries(propertySets.pPrimary)
-				, m_blockChainConfig(blockChainConfig)
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
@@ -69,12 +70,12 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_blockChainConfig.Network.Identifier;
+			return m_pConfigHolder->Config(height()).BlockChain.Network.Identifier;
 		}
 
 	private:
 		PropertyCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pPropertyEntries;
-		const model::BlockChainConfiguration& m_blockChainConfig;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the property cache.
@@ -83,8 +84,8 @@ namespace catapult { namespace cache {
 		/// Creates a delta around \a propertySets and \a blockChainConfig.
 		explicit PropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
-				const model::BlockChainConfiguration& blockChainConfig)
-				: ReadOnlyViewSupplier(propertySets, blockChainConfig)
+				std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(propertySets, pConfigHolder)
 		{}
 	};
 }}

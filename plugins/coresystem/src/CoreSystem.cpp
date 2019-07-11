@@ -37,17 +37,17 @@ namespace catapult { namespace plugins {
 			using namespace catapult::cache;
 
 			auto cacheConfig = manager.cacheConfig(AccountStateCache::Name);
-			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, manager.config()));
+			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, manager.configHolder()));
 
 			using CacheHandlers = CacheHandlers<cache::AccountStateCacheDescriptor>;
 			CacheHandlers::Register<model::FacilityCode::Core>(manager);
 
 			manager.addDiagnosticCounterHook([](auto& counters, const CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("ACNTST C"), [&cache]() {
-					return cache.sub<AccountStateCache>().createView()->size();
+					return cache.sub<AccountStateCache>().createView(cache.height())->size();
 				});
 				counters.emplace_back(utils::DiagnosticCounterId("ACNTST C HVA"), [&cache]() {
-					return cache.sub<AccountStateCache>().createView()->highValueAddresses().size();
+					return cache.sub<AccountStateCache>().createView(cache.height())->highValueAddresses().size();
 				});
 			});
 		}
@@ -55,59 +55,59 @@ namespace catapult { namespace plugins {
 		void AddBlockDifficultyCache(PluginManager& manager) {
 			using namespace catapult::cache;
 
-			manager.addCacheSupport<BlockDifficultyCacheStorage>(std::make_unique<BlockDifficultyCache>(manager.config()));
+			manager.addCacheSupport<BlockDifficultyCacheStorage>(std::make_unique<BlockDifficultyCache>(manager.configHolder()));
 
 			manager.addDiagnosticCounterHook([](auto& counters, const CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("BLKDIF C"), [&cache]() {
-					return cache.sub<BlockDifficultyCache>().createView()->size();
+					return cache.sub<BlockDifficultyCache>().createView(cache.height())->size();
 				});
 			});
 		}
 	}
 
 	void RegisterCoreSystem(PluginManager& manager) {
-		const auto& config = manager.config();
+		const auto& pConfigHolder = manager.configHolder();
 
 		AddAccountStateCache(manager);
 		AddBlockDifficultyCache(manager);
 
-		manager.addStatelessValidatorHook([&config, &pConfigHolder = manager.configHolder()](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateMaxTransactionsValidator(config))
-				.add(validators::CreateNetworkValidator(config))
-				.add(validators::CreateEntityVersionValidator(pConfigHolder))
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
-		manager.addStatefulValidatorHook([&config](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
-				.add(validators::CreateAddressValidator(config))
-				.add(validators::CreateDeadlineValidator(config))
+				.add(validators::CreateEntityVersionValidator(pConfigHolder))
+				.add(validators::CreateMaxTransactionsValidator(pConfigHolder))
+				.add(validators::CreateNetworkValidator(pConfigHolder))
+				.add(validators::CreateAddressValidator(pConfigHolder))
+				.add(validators::CreateDeadlineValidator(pConfigHolder))
 //				We using nemesis account to update the network
 //				.add(validators::CreateNemesisSinkValidator())
-				.add(validators::CreateEligibleHarvesterValidator(config))
+				.add(validators::CreateEligibleHarvesterValidator(pConfigHolder))
 				.add(validators::CreateBalanceDebitValidator())
 				.add(validators::CreateBalanceTransferValidator());
 		});
 
-		manager.addObserverHook([&config](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateSourceChangeObserver())
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceDebitObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(config))
+				.add(observers::CreateHarvestFeeObserver(pConfigHolder))
 				.add(observers::CreateTotalTransactionsObserver())
-				.add(observers::CreateSnapshotCleanUpObserver(config));
+				.add(observers::CreateSnapshotCleanUpObserver(pConfigHolder));
 		});
 
-		manager.addTransientObserverHook([&config](auto& builder) {
+		manager.addTransientObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateBlockDifficultyObserver())
 				.add(observers::CreateCacheBlockPruningObserver<cache::BlockDifficultyCache>(
 						"BlockDifficulty",
-						config));
+						pConfigHolder));
 		});
 	}
 }}

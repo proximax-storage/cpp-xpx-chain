@@ -26,13 +26,13 @@ namespace catapult { namespace cache {
 		// Act:
 		MetadataCache cache(CacheConfiguration{});
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			MetadataCacheStorage::LoadInto(originalMetadataEntry, *delta);
 			cache.commit();
 		}
 
 		// Assert: the cache contains the value
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		EXPECT_EQ(1u, view->size());
 		ASSERT_TRUE(view->contains(originalMetadataEntry.metadataId()));
 		const auto& loadedMetadataEntry = view->find(originalMetadataEntry.metadataId()).get();

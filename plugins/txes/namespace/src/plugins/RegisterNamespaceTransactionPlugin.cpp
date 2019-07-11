@@ -22,10 +22,12 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/constants.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/constants.h"
+#include "catapult/plugins/PluginUtils.h"
 
 using namespace catapult::model;
 
@@ -79,10 +81,11 @@ namespace catapult { namespace plugins {
 		}
 
 		template<typename TTransaction>
-		auto CreatePublisher(const model::BlockChainConfiguration& blockChainConfig) {
-			return [&blockChainConfig](const TTransaction& transaction, NotificationSubscriber& sub) {
+		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
+				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(associatedHeight).BlockChain;
 				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
-				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>("catapult.plugins.namespace");
+				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
 				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
 
 				switch (transaction.EntityVersion()) {
@@ -120,5 +123,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, CreatePublisher, model::BlockChainConfiguration)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
 }}

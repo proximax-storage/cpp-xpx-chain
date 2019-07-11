@@ -25,7 +25,7 @@
 #include "NemesisExecutionHasher.h"
 #include "tools/ToolConfigurationUtils.h"
 #include "catapult/io/RawFile.h"
-#include "catapult/config/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
@@ -66,8 +66,8 @@ namespace catapult { namespace tools { namespace nemgen {
 			int run(const Options& options) override {
 				// 1. load config
 				auto config = LoadConfiguration(m_resourcesPath);
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetConfig(config);
+				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
+				pConfigHolder->SetConfig(Height{0}, config);
 				auto nemesisConfig = LoadNemesisConfiguration(m_nemesisPropertiesFilePath);
 				if (!LogAndValidateNemesisConfiguration(nemesisConfig))
 					return -1;

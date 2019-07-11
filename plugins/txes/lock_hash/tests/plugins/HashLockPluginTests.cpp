@@ -21,6 +21,7 @@
 #include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/HashLockPlugin.h"
 #include "src/model/HashLockEntityType.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -42,7 +43,7 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterHashLockSubsystem(manager);
@@ -73,11 +74,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "HashLockDurationValidator", "HashLockMosaicValidator", "PluginConfigValidator" };
+				return { "PluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return { "AggregateHashPresentValidator", "HashLockCacheUniqueValidator" };
+				return { "HashLockDurationValidator", "HashLockMosaicValidator", "AggregateHashPresentValidator", "HashLockCacheUniqueValidator" };
 			}
 
 			static std::vector<std::string> GetObserverNames() {

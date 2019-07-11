@@ -27,6 +27,7 @@
 namespace catapult {
 	namespace cache { class ReadOnlyCatapultCache; }
 	namespace chain { struct ObserverState; }
+	namespace extensions { class ServiceState; }
 }
 
 namespace catapult { namespace consumers {
@@ -34,13 +35,9 @@ namespace catapult { namespace consumers {
 	/// A tuple composed of a block, a hash and a generation hash.
 	class WeakBlockInfo : public model::WeakEntityInfoT<model::Block> {
 	public:
-			/// Creates a block info.
-			constexpr WeakBlockInfo() : m_pGenerationHash(nullptr)
-			{}
-
 			/// Creates a block info around \a blockElement.
 			constexpr explicit WeakBlockInfo(const model::BlockElement& blockElement)
-					: WeakEntityInfoT(blockElement.Block, blockElement.EntityHash)
+					: WeakEntityInfoT(blockElement.Block, blockElement.EntityHash, blockElement.Block.Height)
 					, m_pGenerationHash(&blockElement.GenerationHash)
 			{}
 
@@ -77,9 +74,9 @@ namespace catapult { namespace consumers {
 	};
 
 	/// Creates a block chain processor around the specified block hit predicate factory (\a blockHitPredicateFactory)
-	/// and batch entity processor (\a batchEntityProcessor) with \a receiptValidationMode.
+	/// and batch entity processor (\a batchEntityProcessor) with \a state.
 	BlockChainProcessor CreateBlockChainProcessor(
 			const BlockHitPredicateFactory& blockHitPredicateFactory,
 			const chain::BatchEntityProcessor& batchEntityProcessor,
-			ReceiptValidationMode receiptValidationMode);
+			extensions::ServiceState& state);
 }}

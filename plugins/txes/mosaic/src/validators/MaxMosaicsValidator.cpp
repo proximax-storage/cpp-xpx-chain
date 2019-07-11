@@ -40,14 +40,15 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(const model::BlockChainConfiguration& blockChainConfig) {
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<model::BalanceTransferNotification<1>>;
 		auto name = "MaxMosaicsBalanceTransferValidator";
-		return std::make_unique<ValidatorType>(name, [&blockChainConfig](const auto& notification, const auto& context) {
+		return std::make_unique<ValidatorType>(name, [pConfigHolder](const auto& notification, const auto& context) {
 			if (Amount() == notification.Amount)
 				return ValidationResult::Success;
 
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
 			return CheckAccount(
 				pluginConfig.MaxMosaicsPerAccount,
 				context.Resolvers.resolve(notification.MosaicId),
@@ -56,14 +57,15 @@ namespace catapult { namespace validators {
 		});
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)(const model::BlockChainConfiguration& blockChainConfig) {
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<model::MosaicSupplyChangeNotification<1>>;
 		auto name = "MaxMosaicsSupplyChangeValidator";
-		return std::make_unique<ValidatorType>(name, [&blockChainConfig](const auto& notification, const auto& context) {
+		return std::make_unique<ValidatorType>(name, [pConfigHolder](const auto& notification, const auto& context) {
 			if (model::MosaicSupplyChangeDirection::Decrease == notification.Direction)
 				return ValidationResult::Success;
 
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
 			return CheckAccount(pluginConfig.MaxMosaicsPerAccount, context.Resolvers.resolve(notification.MosaicId), notification.Signer, context);
 		});
 	}

@@ -22,16 +22,18 @@
 #include "src/cache/HashCacheStorage.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
 	/// Cache factory for creating a catapult cache composed of only the hash cache.
 	struct HashCacheFactory {
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
+		static cache::CatapultCache Create(const model::BlockChainConfiguration&) {
 			auto cacheId = cache::HashCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			subCaches[cacheId] = MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 	};

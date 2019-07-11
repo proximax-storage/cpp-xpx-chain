@@ -38,12 +38,9 @@ namespace catapult { namespace partialtransaction {
 
 		thread::Task CreateConnectPeersTask(extensions::ServiceState& state, net::PacketWriters& packetWriters) {
 			auto settings = extensions::SelectorSettings(
-					state.cache(),
-					state.config().BlockChain.TotalChainImportance,
-					state.nodes(),
+					state,
 					Service_Id,
-					ionet::NodeRoles::Api,
-					state.config().Node.OutgoingConnections);
+					ionet::NodeRoles::Api);
 			auto task = extensions::CreateConnectPeersTask(settings, packetWriters);
 			task.Name += " for service Pt";
 			return task;
@@ -83,9 +80,9 @@ namespace catapult { namespace partialtransaction {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				auto connectionSettings = extensions::GetConnectionSettings(state.config());
+				auto connectionSettings = extensions::GetConnectionSettings(state.config(Height{0}));
 				auto pServiceGroup = state.pool().pushServiceGroup("partial");
-				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings);
+				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
 
 				locator.registerService(Service_Name, pWriters);
 				state.packetIoPickers().insert(*pWriters, ionet::NodeRoles::Api);

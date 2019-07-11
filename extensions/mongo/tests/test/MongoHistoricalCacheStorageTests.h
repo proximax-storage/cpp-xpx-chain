@@ -371,7 +371,7 @@ namespace catapult { namespace test {
 		static auto GetCacheContents(const cache::CatapultCache& cache) {
 			std::vector<ElementType> contents;
 			const auto& subCache = cache.sub<CacheType>();
-			auto view = subCache.createView();
+			auto view = subCache.createView(Height{0});
 			auto pIterableView = view->tryMakeIterableView();
 			for (const auto& pair : *pIterableView) {
 				auto historyIndex = 0u;

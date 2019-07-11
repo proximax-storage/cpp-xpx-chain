@@ -22,10 +22,14 @@
 #include "mongo/src/ExternalCacheStorage.h"
 #include <memory>
 
-namespace catapult { namespace mongo { class MongoDatabase; } }
+namespace catapult {
+	namespace config { class LocalNodeConfigurationHolder; }
+	namespace mongo { class MongoDatabase; }
+}
 
 namespace catapult { namespace mongo { namespace storages {
 
 	/// Creates a mongo block difficulty cache storage around \a database and \a difficultyHistorySize.
-	std::unique_ptr<ExternalCacheStorage> CreateMongoBlockDifficultyCacheStorage(MongoDatabase&& database, uint64_t difficultyHistorySize);
+	std::unique_ptr<ExternalCacheStorage> CreateMongoBlockDifficultyCacheStorage(
+		MongoDatabase&& database, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 }}}

@@ -26,7 +26,8 @@ namespace catapult { namespace cache {
 			, public CatapultConfigCacheDeltaMixins::PatriciaTreeDelta
 			, public CatapultConfigCacheDeltaMixins::BasicInsertRemove
 			, public CatapultConfigCacheDeltaMixins::DeltaElements
-			, public CatapultConfigCacheDeltaMixins::Enable {
+			, public CatapultConfigCacheDeltaMixins::Enable
+			, public CatapultConfigCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = CatapultConfigCacheTypes::CacheReadOnlyType;
 
@@ -41,14 +42,31 @@ namespace catapult { namespace cache {
 				, CatapultConfigCacheDeltaMixins::BasicInsertRemove(*catapultConfigSets.pPrimary)
 				, CatapultConfigCacheDeltaMixins::DeltaElements(*catapultConfigSets.pPrimary)
 				, m_pCatapultConfigEntries(catapultConfigSets.pPrimary)
+				, m_pCatapultConfigHeights(catapultConfigSets.pHeights)
 		{}
 
 	public:
 		using CatapultConfigCacheDeltaMixins::ConstAccessor::find;
 		using CatapultConfigCacheDeltaMixins::MutableAccessor::find;
 
+	public:
+		/// Inserts the catapult config \a entry into the cache.
+		void insert(const state::CatapultConfigEntry& entry) {
+			CatapultConfigCacheDeltaMixins::BasicInsertRemove::insert(entry);
+			if (!m_pCatapultConfigHeights->contains(entry.height()))
+				m_pCatapultConfigHeights->insert(entry.height());
+		}
+
+		/// Removes the catapult config \a entry into the cache.
+		void remove(const Height& height) {
+			CatapultConfigCacheDeltaMixins::BasicInsertRemove::remove(height);
+			if (m_pCatapultConfigHeights->contains(height))
+				m_pCatapultConfigHeights->remove(height);
+		}
+
 	private:
 		CatapultConfigCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pCatapultConfigEntries;
+		CatapultConfigCacheTypes::HeightTypes::BaseSetDeltaPointerType m_pCatapultConfigHeights;
 	};
 
 	/// Delta on top of the catapult config cache.

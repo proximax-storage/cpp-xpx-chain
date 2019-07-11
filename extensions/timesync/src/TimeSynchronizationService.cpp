@@ -79,7 +79,7 @@ namespace catapult { namespace timesync {
 				};
 
 				// register services
-				auto connectionSettings = extensions::GetConnectionSettings(state.config());
+				auto connectionSettings = extensions::GetConnectionSettings(state.config(Height{0}));
 				auto pServiceGroup = state.pool().pushServiceGroup(Service_Group);
 				auto pNodeNetworkTimeRequestor = pServiceGroup->pushService(
 						CreateNodeNetworkTimeRequestor,
@@ -90,7 +90,7 @@ namespace catapult { namespace timesync {
 
 				auto pTimeSynchronizer = std::make_shared<TimeSynchronizer>(
 						filters::AggregateSynchronizationFilter(filters),
-						state.config().BlockChain.TotalChainImportance);
+						state);
 				locator.registerRootedService(Synchronizer_Service_Name, pTimeSynchronizer);
 
 				locator.registerRootedService(State_Service_Name, m_pTimeSyncState);
@@ -107,8 +107,7 @@ namespace catapult { namespace timesync {
 						m_timeSyncConfig,
 						sampleSupplier,
 						state,
-						*m_pTimeSyncState,
-						state.timeSupplier()));
+						*m_pTimeSyncState));
 			}
 
 		private:

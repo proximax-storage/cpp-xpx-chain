@@ -26,12 +26,13 @@ namespace catapult { namespace plugins {
 	PluginManager::PluginManager(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const StorageConfiguration& storageConfig)
 			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
+			, m_shouldEnableVerifiableState(config(Height{0}).ShouldEnableVerifiableState)
 	{}
 
 	// region config
 
-	const model::BlockChainConfiguration& PluginManager::config() const {
-		return m_pConfigHolder->Config().BlockChain;
+	const model::BlockChainConfiguration& PluginManager::config(const Height& height) const {
+		return m_pConfigHolder->Config(height).BlockChain;
 	}
 
 	const std::shared_ptr<config::LocalNodeConfigurationHolder>& PluginManager::configHolder() const {
@@ -49,7 +50,11 @@ namespace catapult { namespace plugins {
 		return cache::CacheConfiguration(
 				(boost::filesystem::path(m_storageConfig.CacheDatabaseDirectory) / name).generic_string(),
 				m_storageConfig.MaxCacheDatabaseWriteBatchSize,
-				config().ShouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
+				m_shouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
+	}
+
+	void PluginManager::setShouldEnableVerifiableState(bool shouldEnableVerifiableState) {
+		m_shouldEnableVerifiableState = shouldEnableVerifiableState;
 	}
 
 	// endregion
@@ -74,6 +79,10 @@ namespace catapult { namespace plugins {
 
 	cache::CatapultCache PluginManager::createCache() {
 		return m_cacheBuilder.build();
+	}
+
+	void PluginManager::updateCache(cache::CatapultCache& cache) {
+		m_cacheBuilder.update(cache);
 	}
 
 	// endregion
@@ -219,7 +228,7 @@ namespace catapult { namespace plugins {
 	// region publisher
 
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
-		return model::CreateNotificationPublisher(m_transactionRegistry, model::GetUnresolvedCurrencyMosaicId(config()), mode);
+		return model::CreateNotificationPublisher(m_transactionRegistry, configHolder(), mode);
 	}
 
 	// endregion

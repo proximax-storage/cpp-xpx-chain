@@ -52,6 +52,22 @@ namespace catapult { namespace test {
 
 			return pStorage;
 		}
+
+		/// Creates storage for a chain with \a numBlocks variable sized blocks.
+		static void FillStorage(io::BlockStorageCache& storage, size_t numBlocks) {
+			// storage already contains nemesis block (height 1)
+			auto storageModifier = storage.modifier();
+			for (auto i = 2u; i <= numBlocks; ++i) {
+				auto size = GetBlockSizeAtHeight(Height(i));
+				std::vector<uint8_t> buffer(size);
+				auto pBlock = reinterpret_cast<model::Block*>(buffer.data());
+				pBlock->Size = size;
+				pBlock->Height = Height(i);
+				pBlock->Difficulty = Difficulty::Min() + Difficulty::Unclamped(1000 + i);
+				pBlock->TransactionsPtr()->Size = size - sizeof(model::BlockHeader);
+				storageModifier.saveBlock(test::BlockToBlockElement(*pBlock, test::GenerateRandomData<Hash256_Size>()));
+			}
+		}
 	};
 
 	/// A container of height request handler tests.

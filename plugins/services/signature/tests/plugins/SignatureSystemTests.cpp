@@ -19,6 +19,7 @@
 **/
 
 #include "src/plugins/SignatureSystem.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -30,8 +31,7 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterSignatureSystem(manager);
 

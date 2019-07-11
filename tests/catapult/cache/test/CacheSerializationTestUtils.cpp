@@ -43,11 +43,11 @@ namespace catapult { namespace test {
 		return GenerateRandomDataVector<CacheSerializationTestEntry>(count);
 	}
 
-	std::vector<uint8_t> CopyCacheSerializationTestEntriesToStreamBuffer(const std::vector<CacheSerializationTestEntry>& entries) {
-		auto numHeaderBytes = sizeof(uint64_t);
+	std::vector<uint8_t> CopyCacheSerializationTestEntriesToStreamBuffer(const std::vector<CacheSerializationTestEntry>& entries, size_t extraHeaderBytes) {
+		auto numHeaderBytes = sizeof(uint64_t) + extraHeaderBytes;
 		uint64_t numBytes = numHeaderBytes + entries.size() * sizeof(CacheSerializationTestEntry);
 		std::vector<uint8_t> buffer(numBytes);
-		reinterpret_cast<uint64_t&>(*buffer.data()) = entries.size();
+		reinterpret_cast<uint64_t&>(*(buffer.data() + extraHeaderBytes)) = entries.size();
 		std::memcpy(buffer.data() + numHeaderBytes, entries.data(), numBytes - numHeaderBytes);
 		return buffer;
 	}

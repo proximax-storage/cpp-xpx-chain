@@ -21,6 +21,7 @@
 #include <plugins/txes/multisig/src/config/MultisigConfiguration.h>
 #include "src/config/MultisigConfiguration.h"
 #include "src/validators/Validators.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/MultisigTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -30,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigLoopAndLevelValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigLoopAndLevel, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigLoopAndLevel, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Num_Network_Accounts = 14 + 4 + 2; // last two keys are unassigned (and not in multisig cache)
@@ -78,8 +79,10 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.MaxMultisigDepth = maxMultisigDepth;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.multisig", pluginConfig);
-			auto pValidator = CreateModifyMultisigLoopAndLevelValidator(blockChainConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pValidator = CreateModifyMultisigLoopAndLevelValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

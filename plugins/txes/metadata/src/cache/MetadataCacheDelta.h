@@ -27,6 +27,7 @@ namespace catapult { namespace cache {
 		using ConstAccessor = PrimaryMixins::MutableAccessor;
 		using DeltaElements = PrimaryMixins::DeltaElements;
 		using Enable = PrimaryMixins::Enable;
+		using Height = PrimaryMixins::Height;
 	};
 
 	/// Basic delta on top of the metadata cache.
@@ -38,7 +39,8 @@ namespace catapult { namespace cache {
 			, public MetadataCacheDeltaMixins::ConstAccessor
 			, public MetadataCacheDeltaMixins::MutableAccessor
 			, public MetadataCacheDeltaMixins::DeltaElements
-			, public MetadataCacheDeltaMixins::Enable {
+			, public MetadataCacheDeltaMixins::Enable
+			, public MetadataCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = MetadataCacheTypes::CacheReadOnlyType;
 		using CollectedIds = std::unordered_set<Hash256, utils::ArrayHasher<Hash256>>;

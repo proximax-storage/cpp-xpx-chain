@@ -21,6 +21,7 @@
 #include "MerkleHandlers.h"
 #include "HeightRequestProcessor.h"
 #include "catapult/api/ChainPackets.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 
@@ -31,9 +32,13 @@ namespace catapult { namespace handlers {
 			return model::HashRange::CopyFixed(reinterpret_cast<const uint8_t*>(hashes.data()), hashes.size());
 		}
 
-		auto CreateSubCacheMerkleRootsHandler(const io::BlockStorageCache& storage) {
-			return [&storage](const auto& packet, auto& context) {
+		auto CreateSubCacheMerkleRootsHandler(extensions::ServiceState& state) {
+			return [&state](const auto& packet, auto& context) {
+				if (!state.pluginManager().configHolder()->Config(state.cache().height()).BlockChain.ShouldEnableVerifiableState)
+					return;
+
 				using RequestType = api::HeightPacket<ionet::PacketType::Sub_Cache_Merkle_Roots>;
+				const auto& storage = state.storage();
 				auto storageView = storage.view();
 				auto info = HeightRequestProcessor<RequestType>::Process(storageView, packet, context, false);
 				if (!info.pRequest)
@@ -48,7 +53,7 @@ namespace catapult { namespace handlers {
 		}
 	}
 
-	void RegisterSubCacheMerkleRootsHandler(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
-		handlers.registerHandler(ionet::PacketType::Sub_Cache_Merkle_Roots, CreateSubCacheMerkleRootsHandler(storage));
+	void RegisterSubCacheMerkleRootsHandler(extensions::ServiceState& state) {
+		state.packetHandlers().registerHandler(ionet::PacketType::Sub_Cache_Merkle_Roots, CreateSubCacheMerkleRootsHandler(state));
 	}
 }}

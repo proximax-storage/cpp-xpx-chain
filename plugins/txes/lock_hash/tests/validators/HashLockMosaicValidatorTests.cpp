@@ -19,6 +19,8 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -26,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockMosaicValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
@@ -43,11 +45,14 @@ namespace catapult { namespace validators {
 			pluginConfig.LockedFundsPerAggregate = requiredBondedAmount;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.lockhash", pluginConfig);
-			auto pValidator = CreateHashLockMosaicValidator(blockChainConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
+			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pValidator = CreateHashLockMosaicValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "notification with id " << mosaicId << " and amount " << bondedAmount;

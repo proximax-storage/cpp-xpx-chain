@@ -21,6 +21,7 @@
 #include "FileBlockChainStorage.h"
 #include "LocalNodeStateStorage.h"
 #include "MultiBlockLoader.h"
+#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/SupplementalData.h"
 #include "catapult/config/LocalNodeConfiguration.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
@@ -39,15 +40,18 @@ namespace catapult { namespace filechain {
 
 		class FileBlockChainStorage : public extensions::BlockChainStorage {
 		public:
-			void loadFromStorage(const extensions::LocalNodeStateRef& stateRef, const plugins::PluginManager& pluginManager) override {
-				cache::SupplementalData supplementalData;
-				bool isStateLoaded = false;
+			bool loadState(const std::string& dataDirectory, cache::CatapultCache& cache, cache::SupplementalData& supplementalData) override {
 				try {
-					isStateLoaded = LoadState(stateRef.Config.User.DataDirectory, stateRef.Cache, supplementalData, pluginManager.configHolder());
+					return LoadState(dataDirectory, cache, supplementalData);
 				} catch (...) {
 					CATAPULT_LOG(error) << "error when loading state, remove state directories and start again";
 					throw;
 				}
+			}
+
+			void loadFromStorage(const extensions::LocalNodeStateRef& stateRef, const plugins::PluginManager& pluginManager) override {
+				cache::SupplementalData supplementalData;
+				bool isStateLoaded = loadState(stateRef.Config.User.DataDirectory, stateRef.Cache, supplementalData);
 
 				// if state is not present, load full chain from storage
 				auto storageHeight = stateRef.Storage.view().chainHeight();
@@ -158,8 +162,8 @@ namespace catapult { namespace filechain {
 			}
 
 		public:
-			void saveToStorage(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const extensions::LocalNodeStateConstRef& stateRef) override {
-				SaveState(stateRef.Config.User.DataDirectory, stateRef.Cache, { stateRef.State, stateRef.Score.get() }, pConfigHolder);
+			void saveToStorage(const extensions::LocalNodeStateConstRef& stateRef) override {
+				SaveState(stateRef.Config.User.DataDirectory, stateRef.Cache, { stateRef.State, stateRef.Score.get() });
 			}
 		};
 	}

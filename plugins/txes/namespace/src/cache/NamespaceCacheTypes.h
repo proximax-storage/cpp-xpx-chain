@@ -24,8 +24,8 @@
 #include "src/state/RootNamespaceHistory.h"
 #include "catapult/cache/CacheDatabaseMixin.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/IdentifierGroup.h"
 
@@ -86,8 +86,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// Blockchain configuration.
-			const model::BlockChainConfiguration& BlockChainConfig;
+			/// Catapult configuration holder.
+			std::shared_ptr<config::LocalNodeConfigurationHolder> ConfigHolderPtr;
 		};
 
 	// region secondary descriptors

@@ -24,6 +24,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
@@ -38,14 +39,16 @@ namespace catapult { namespace harvesting {
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
-		model::BlockChainConfiguration CreateConfiguration() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
 			config.MaxDifficultyBlocks = 60;
 			config.ImportanceGrouping = 123;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
-			return config;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
 
 		struct TaskOptionsWithCounters : ScheduledHarvesterTaskOptions {
@@ -123,19 +126,19 @@ namespace catapult { namespace harvesting {
 
 		struct HarvesterContext {
 			HarvesterContext(const model::Block& lastBlock)
-					: Config(CreateConfiguration())
-					, Cache(test::CreateEmptyCatapultCache(Config))
+					: pConfigHolder(CreateConfigHolder())
+					, Cache(test::CreateEmptyCatapultCache(pConfigHolder->Config(Height{0}).BlockChain))
 					, Accounts(1) {
 				AddDifficultyInfo(Cache, lastBlock);
 			}
 
-			model::BlockChainConfiguration Config;
+			std::shared_ptr<config::MockLocalNodeConfigurationHolder> pConfigHolder;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
 		};
 
 		auto CreateHarvester(HarvesterContext& context) {
-			return std::make_unique<Harvester>(context.Cache, context.Config, context.Accounts, [](const auto& blockHeader, auto) {
+			return std::make_unique<Harvester>(context.Cache, context.pConfigHolder, context.Accounts, [](const auto& blockHeader, auto) {
 				auto pBlock = std::make_unique<model::Block>();
 				std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
 				return pBlock;

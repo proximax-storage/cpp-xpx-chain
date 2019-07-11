@@ -25,6 +25,7 @@ namespace catapult { namespace cache {
 		using ConstAccessor = PrimaryMixins::ConstAccessor;
 		using PatriciaTreeView = PrimaryMixins::PatriciaTreeView;
 		using Enable = PrimaryMixins::Enable;
+		using Height = PrimaryMixins::Height;
 	};
 
 	/// Basic view on top of the metadata cache.
@@ -35,7 +36,8 @@ namespace catapult { namespace cache {
 			, public MetadataCacheViewMixins::Iteration
 			, public MetadataCacheViewMixins::ConstAccessor
 			, public MetadataCacheViewMixins::PatriciaTreeView
-			, public MetadataCacheViewMixins::Enable {
+			, public MetadataCacheViewMixins::Enable
+			, public MetadataCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = MetadataCacheTypes::CacheReadOnlyType;
 

@@ -27,7 +27,7 @@ namespace catapult { namespace nodediscovery {
 	namespace {
 		void RegisterExtension(extensions::LocalNodeBootstrapper& bootstrapper) {
 			// register service(s)
-			bootstrapper.extensionManager().addServiceRegistrar(CreateNodeDiscoveryServiceRegistrar(bootstrapper.config()));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateNodeDiscoveryServiceRegistrar());
 		}
 	}
 }}

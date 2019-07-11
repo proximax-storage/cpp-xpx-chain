@@ -21,6 +21,7 @@
 #include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/TransferPlugin.h"
 #include "plugins/txes/transfer/src/model/TransferEntityType.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -34,7 +35,7 @@ namespace catapult { namespace plugins {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterTransferSubsystem(manager);
@@ -49,7 +50,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "TransferMessageValidator", "TransferMosaicsValidator", "PluginConfigValidator" };
+				return { "TransferMosaicsValidator", "PluginConfigValidator" };
+			}
+
+			static std::vector<std::string> GetStatefulValidatorNames() {
+				return { "TransferMessageValidator" };
 			}
 		};
 	}

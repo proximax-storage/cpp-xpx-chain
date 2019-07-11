@@ -378,7 +378,7 @@ namespace catapult { namespace plugins {
 			auto aggregateDataHash = test::GenerateRandomData<Hash256_Size>();
 
 			// Act:
-			test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash), sub);
+			test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 			// Assert: the plugin only raises signature notifications for explicit cosigners
 			//         (the signature notification for the signer is raised as part of normal processing)

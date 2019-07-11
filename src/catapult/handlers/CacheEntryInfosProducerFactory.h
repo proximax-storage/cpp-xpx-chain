@@ -102,7 +102,7 @@ namespace catapult { namespace handlers {
 	public:
 		/// Creates a cache entry infos producer for a range of keys (\a ids).
 		CacheEntryInfoProducer<KeyType> operator()(const model::EntityRange<KeyType>& ids) const {
-			return Producer(m_cache.createView(), ids);
+			return Producer(m_cache.createView(Height{0}), ids);
 		}
 
 	private:

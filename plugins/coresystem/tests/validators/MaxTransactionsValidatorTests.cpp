@@ -19,6 +19,8 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -27,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxTransactionsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactions, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactions, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr uint32_t Max_Transactions = 10;
@@ -39,10 +41,13 @@ namespace catapult { namespace validators {
 			notification.NumTransactions = numTransactions;
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.MaxTransactionsPerBlock = Max_Transactions;
-			auto pValidator = CreateMaxTransactionsValidator(config);
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			auto pValidator = CreateMaxTransactionsValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

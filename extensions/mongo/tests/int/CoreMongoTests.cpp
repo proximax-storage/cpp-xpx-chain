@@ -21,6 +21,7 @@
 #include "mongo/src/CoreMongo.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/tests/test/MongoTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo {
@@ -31,7 +32,7 @@ namespace catapult { namespace mongo {
 		// Arrange:
 		test::PrepareDatabase(test::DatabaseName());
 		MongoStorageContext mongoContext(test::DefaultDbUri(), test::DatabaseName(), nullptr);
-		MongoPluginManager manager(mongoContext, model::BlockChainConfiguration::Uninitialized());
+		MongoPluginManager manager(mongoContext, std::make_shared<config::MockLocalNodeConfigurationHolder>());
 
 		// Act:
 		RegisterCoreMongoSystem(manager);

@@ -35,7 +35,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoSecretLockInfoCacheStorage(
 			manager.createDatabaseConnection(),
 			manager.mongoContext().bulkWriter(),
-			manager.chainConfig().Network.Identifier));
+			manager.configHolder()));
 
 	// receipt support
 	manager.addReceiptSupport(catapult::mongo::CreateBalanceChangeReceiptMongoPlugin(catapult::model::Receipt_Type_LockSecret_Created));

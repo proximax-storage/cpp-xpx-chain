@@ -31,9 +31,9 @@ namespace catapult { namespace cache {
 		test::SimpleCacheT<0> cache0;
 		test::SimpleCacheT<2> cache2;
 		std::vector<const void*> subViews{
-			&cache0.createView()->asReadOnly(),
+			&cache0.createView(Height{0})->asReadOnly(),
 			nullptr,
-			&cache2.createView()->asReadOnly()
+			&cache2.createView(Height{0})->asReadOnly()
 		};
 
 		// Act:

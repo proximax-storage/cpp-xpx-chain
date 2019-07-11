@@ -6,6 +6,7 @@
 
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "tests/test/MetadataCacheTestUtils.h"
@@ -52,11 +53,13 @@ namespace catapult { namespace validators {
 				const NamespaceId& metadataId,
 				Key signer) {
 			// Arrange:
-			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
-			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(100);
+			auto namespacePluginConfig = config::NamespaceConfiguration::Uninitialized();
+			namespacePluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(100);
+			auto metadataPluginConfig = config::MetadataConfiguration::Uninitialized();
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespacePluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), metadataPluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
 			PopulateCache(cache);
 			auto pValidator = CreateModifyNamespaceMetadataValidator();

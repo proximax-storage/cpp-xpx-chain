@@ -20,6 +20,7 @@
 
 #include "catapult/extensions/LocalNodeBootstrapper.h"
 #include "catapult/plugins/PluginExceptions.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
@@ -32,20 +33,20 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateBootstrapper) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
-		const_cast<uint32_t&>(pConfigHolder->Config().BlockChain.BlockPruneInterval) = 15;
-		const_cast<bool&>(pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage) = true;
-		const_cast<std::string&>(pConfigHolder->Config().User.DataDirectory) = "base_data_dir";
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
+		const_cast<uint32_t&>(pConfigHolder->Config(Height{0}).BlockChain.BlockPruneInterval) = 15;
+		const_cast<bool&>(pConfigHolder->Config(Height{0}).Node.ShouldUseCacheDatabaseStorage) = true;
+		const_cast<std::string&>(pConfigHolder->Config(Height{0}).User.DataDirectory) = "base_data_dir";
 
 		// Act:
 		LocalNodeBootstrapper bootstrapper(pConfigHolder, "resources path", "bootstrapper");
 
 		// Assert: compare BlockPruneInterval as a sentinel value because the bootstrapper copies the config
-		EXPECT_EQ(15u, bootstrapper.config().BlockChain.BlockPruneInterval);
+		EXPECT_EQ(15u, bootstrapper.config(Height{0}).BlockChain.BlockPruneInterval);
 
 		const auto& pluginManager = bootstrapper.pluginManager();
-		EXPECT_EQ(15u, pluginManager.config().BlockPruneInterval);
+		EXPECT_EQ(15u, pluginManager.config(Height{0}).BlockPruneInterval);
 		EXPECT_TRUE(pluginManager.storageConfig().PreferCacheDatabase);
 		EXPECT_EQ("base_data_dir/statedb", pluginManager.storageConfig().CacheDatabaseDirectory);
 
@@ -71,10 +72,10 @@ namespace catapult { namespace extensions {
 		template<typename TAction>
 		void RunExtensionsTest(const std::string& directory, const std::string& name, TAction action) {
 			// Arrange:
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
-			const_cast<config::UserConfiguration&>(pConfigHolder->Config().User).PluginsDirectory = directory;
-			const_cast<config::NodeConfiguration&>(pConfigHolder->Config().Node).Extensions = { name };
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
+			const_cast<config::UserConfiguration&>(pConfigHolder->Config(Height{0}).User).PluginsDirectory = directory;
+			const_cast<config::NodeConfiguration&>(pConfigHolder->Config(Height{0}).Node).Extensions = { name };
 			LocalNodeBootstrapper bootstrapper(pConfigHolder, "resources path", "bootstrapper");
 
 			// Act + Assert:
@@ -149,8 +150,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodes) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
 		LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		// - add five nodes
@@ -182,12 +183,12 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodesFromPath) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(test::CreateUninitializedLocalNodeConfiguration());
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
 		LocalNodeBootstrapper bootstrapper(pConfigHolder, "", "bootstrapper");
 
 		// Act:
-		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json");
+		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json", Height{0});
 
 		// Assert:
 		EXPECT_EQ(1u, bootstrapper.staticNodes().size());

@@ -23,6 +23,7 @@
 #include "src/model/NamespaceEntityType.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/plugins/PluginUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -58,7 +59,7 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterNamespaceSubsystem(manager);
@@ -94,9 +95,8 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
+					"PluginConfigValidator",
 					"NamespaceTypeValidator",
-					"NamespaceNameValidator",
-					"RootNamespaceValidator",
 					"AliasActionValidator",
 					"PluginConfigValidator",
 				};
@@ -104,6 +104,8 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"NamespaceNameValidator",
+					"RootNamespaceValidator",
 					"RootNamespaceAvailabilityValidator",
 					"ChildNamespaceAvailabilityValidator",
 					"RootNamespaceMaxChildrenValidator",

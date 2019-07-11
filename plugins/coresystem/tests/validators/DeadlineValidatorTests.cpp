@@ -22,6 +22,7 @@
 #include "catapult/model/VerifiableEntity.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -30,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS DeadlineValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		const auto Block_Time = Timestamp(8888);
@@ -45,7 +46,9 @@ namespace catapult { namespace validators {
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
 			auto context = ValidatorContext(Height(123), Block_Time, model::NetworkInfo(), resolverContext, readOnlyCache);
-			auto pValidator = CreateDeadlineValidator(config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			auto pValidator = CreateDeadlineValidator(pConfigHolder);
 
 			model::TransactionNotification<1> notification(Key(), Hash256(), model::EntityType(), deadline);
 

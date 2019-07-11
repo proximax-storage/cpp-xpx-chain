@@ -27,6 +27,7 @@
 
 namespace catapult {
 	namespace crypto { class KeyPair; }
+	namespace extensions { class ServiceState; }
 	namespace ionet {
 		class Node;
 		class PacketSocket;
@@ -65,10 +66,11 @@ namespace catapult { namespace net {
 		virtual void shutdown() = 0;
 	};
 
-	/// Creates a packet writers container for a server with a key pair of \a keyPair using \a pPool and configured with
+	/// Creates a packet writers container for a server with a key pair of \a keyPair using \a pPool and \a state and configured with
 	/// \a settings.
 	std::shared_ptr<PacketWriters> CreatePacketWriters(
 			const std::shared_ptr<thread::IoThreadPool>& pPool,
 			const crypto::KeyPair& keyPair,
-			const ConnectionSettings& settings);
+			const ConnectionSettings& settings,
+			extensions::ServiceState& state);
 }}

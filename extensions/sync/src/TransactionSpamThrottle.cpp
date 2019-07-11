@@ -23,6 +23,7 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/model/Transaction.h"
 #include <cmath>
 
@@ -50,21 +51,27 @@ namespace catapult { namespace sync {
 			using TransactionSource = chain::UtUpdater::TransactionSource;
 
 		public:
-			explicit TransactionSpamThrottle(const SpamThrottleConfiguration& config, const predicate<const model::Transaction&>& isBonded)
-					: m_config(config)
+			explicit TransactionSpamThrottle(extensions::ServiceState& state, const predicate<const model::Transaction&>& isBonded)
+					: m_state(state)
 					, m_isBonded(isBonded)
 			{}
 
 		public:
 			bool operator()(const model::TransactionInfo& transactionInfo, const chain::UtUpdater::ThrottleContext& context) const {
 				auto cacheSize = context.TransactionsCache.size();
+				const auto& config = m_state.config(m_state.cache().height());
+				SpamThrottleConfiguration throttleConfig(
+					config.Node.TransactionSpamThrottlingMaxBoostFee,
+					config.BlockChain.TotalChainImportance,
+					config.Node.UnconfirmedTransactionsCacheMaxSize,
+					config.BlockChain.MaxTransactionsPerBlock);
 
 				// always reject if cache is completely full
-				if (cacheSize >= m_config.MaxCacheSize)
+				if (cacheSize >= throttleConfig.MaxCacheSize)
 					return true;
 
 				// do not apply throttle unless cache contains more transactions than can fit in a single block
-				if (m_config.MaxBlockSize > cacheSize)
+				if (throttleConfig.MaxBlockSize > cacheSize)
 					return false;
 
 				// bonded transactions and transactions originating from reverted blocks do not get rejected
@@ -75,20 +82,20 @@ namespace catapult { namespace sync {
 				auto readOnlyAccountStateCache = context.UnconfirmedCatapultCache.sub<cache::AccountStateCache>();
 				cache::ImportanceView importanceView(readOnlyAccountStateCache);
 				auto importance = importanceView.getAccountImportanceOrDefault(signer, context.CacheHeight);
-				auto effectiveImportance = GetEffectiveImportance(transactionInfo.pEntity->MaxFee, importance, m_config);
-				auto maxTransactions = GetMaxTransactions(cacheSize, m_config.MaxCacheSize, effectiveImportance, m_config.TotalImportance);
+				auto effectiveImportance = GetEffectiveImportance(transactionInfo.pEntity->MaxFee, importance, throttleConfig);
+				auto maxTransactions = GetMaxTransactions(cacheSize, throttleConfig.MaxCacheSize, effectiveImportance, throttleConfig.TotalImportance);
 				return context.TransactionsCache.count(signer) >= maxTransactions;
 			}
 
 		private:
-			SpamThrottleConfiguration m_config;
+			extensions::ServiceState& m_state;
 			predicate<const model::Transaction&> m_isBonded;
 		};
 	}
 
 	chain::UtUpdater::Throttle CreateTransactionSpamThrottle(
-			const SpamThrottleConfiguration& config,
+			extensions::ServiceState& state,
 			const predicate<const model::Transaction&>& isBonded) {
-		return TransactionSpamThrottle(config, isBonded);
+		return TransactionSpamThrottle(state, isBonded);
 	}
 }}

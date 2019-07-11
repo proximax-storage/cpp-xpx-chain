@@ -54,7 +54,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverInsertsHashIntoCacheInModeCommit) {
 		// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::BlockChainConfiguration::Uninitialized();
 		ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 		auto pObserver = CreateTransactionHashObserver();
 

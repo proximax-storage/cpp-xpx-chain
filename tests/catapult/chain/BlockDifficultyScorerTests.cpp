@@ -20,6 +20,7 @@
 
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/utils/Logging.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 #include <cmath>
@@ -44,6 +45,12 @@ namespace catapult { namespace chain {
 			config.MaxDifficultyBlocks = 3;
 			config.BlockTimeSmoothingFactor = 3000;
 			return config;
+		}
+
+		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
 	}
 
@@ -140,7 +147,7 @@ namespace catapult { namespace chain {
 
 	namespace {
 		void PrepareCache(cache::BlockDifficultyCache& cache, size_t numInfos) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto i = 0u; i < numInfos; ++i)
 				delta->insert(Height(i + 1), Timestamp(60'000 * i), Difficulty(1 + NEMESIS_BLOCK_DIFFICULTY * i));
 
@@ -194,7 +201,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto count = 10u;
 		auto config = CreateConfiguration();
-		cache::BlockDifficultyCache cache(config);
+		cache::BlockDifficultyCache cache(CreateConfigHolder(config));
 		PrepareCache(cache, count);
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 1),
@@ -205,7 +212,7 @@ namespace catapult { namespace chain {
 		// Act:
 		auto difficulty1 = TTraits::CalculateDifficulty(cache, nextBlockInfo, config);
 
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		auto difficulty2 = CalculateDifficulty(view->difficultyInfos(Height(count), count), nextBlockInfo, config);
 
 		// Assert:
@@ -216,7 +223,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto count = 10u;
 		auto config = CreateConfiguration();
-		cache::BlockDifficultyCache cache(config);
+		cache::BlockDifficultyCache cache(CreateConfigHolder(config));
 		PrepareCache(cache, count);
 		config.MaxDifficultyBlocks = 3;
 		state::BlockDifficultyInfo nextBlockInfo(
@@ -236,7 +243,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto count = 10u;
 		auto config = CreateConfiguration();
-		cache::BlockDifficultyCache cache(config);
+		cache::BlockDifficultyCache cache(CreateConfigHolder(config));
 		PrepareCache(cache, count);
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 2),

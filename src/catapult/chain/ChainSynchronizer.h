@@ -29,7 +29,7 @@ namespace catapult {
 		class ChainApi;
 		class RemoteChainApi;
 	}
-	namespace model { struct BlockChainConfiguration; }
+	namespace extensions { class ServiceState; }
 }
 
 namespace catapult { namespace chain {
@@ -49,9 +49,6 @@ namespace catapult { namespace chain {
 
 		/// Maximum chain bytes per sync attempt.
 		uint32_t MaxChainBytesPerSyncAttempt;
-
-		/// Maximum number of blocks that can be rolled back.
-		uint32_t MaxRollbackBlocks;
 	};
 
 	/// Creates a chain synchronizer around the specified local chain api (\a pLocalChainApi), a block chain \a config and
@@ -59,5 +56,6 @@ namespace catapult { namespace chain {
 	RemoteNodeSynchronizer<api::RemoteChainApi> CreateChainSynchronizer(
 			const std::shared_ptr<const api::ChainApi>& pLocalChainApi,
 			const ChainSynchronizerConfiguration& config,
+			extensions::ServiceState& state,
 			const CompletionAwareBlockRangeConsumerFunc& blockRangeConsumer);
 }}

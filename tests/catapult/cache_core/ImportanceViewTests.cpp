@@ -23,6 +23,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/NetworkInfo.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 using catapult::model::ImportanceHeight;
@@ -36,22 +37,23 @@ namespace catapult { namespace cache {
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
-		auto CreateConfig() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			config.Network.Identifier = Network_Identifier;
 			config.ImportanceGrouping = 123;
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = MosaicId(1111);
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			return config;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
-
-		auto Default_BlockChain_Config = CreateConfig();
 
 		struct AddressTraits {
 			static auto AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
-				auto address = model::PublicKeyToAddress(publicKey, Default_BlockChain_Config.Network.Identifier);
+				auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
 				delta.addAccount(address, height);
 				return delta.find(address);
 			}
@@ -95,7 +97,7 @@ namespace catapult { namespace cache {
 				AccountStateCache& cache,
 				const Key& publicKey,
 				Amount balance = Amount(0)) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto accountStateIter = TTraits::AddAccount(*delta, publicKey, Height(100));
 			auto& accountState = accountStateIter.get();
 			accountState.Balances.credit(Harvesting_Mosaic_Id, balance, Height(100));
@@ -103,7 +105,7 @@ namespace catapult { namespace cache {
 		}
 
 		auto CreateAccountStateCache() {
-			return std::make_unique<AccountStateCache>(CacheConfiguration(), Default_BlockChain_Config);
+			return std::make_unique<AccountStateCache>(CacheConfiguration(), CreateConfigHolder());
 		}
 	}
 
@@ -282,7 +284,7 @@ namespace catapult { namespace cache {
 			auto pCache = CreateAccountStateCache();
 
 			{
-				auto delta = pCache->createDelta();
+				auto delta = pCache->createDelta(Height{0});
 				auto accountStateIter = RemoteAccountTraits::AddAccount(*delta, publicKey, Height(100));
 				mutator(accountStateIter.get());
 				pCache->commit();

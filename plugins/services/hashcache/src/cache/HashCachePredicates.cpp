@@ -26,6 +26,6 @@ namespace catapult { namespace cache {
 
 	bool HashCacheContains(const CatapultCache& cache, Timestamp timestamp, const Hash256& hash) {
 		const auto& hashCache = cache.sub<HashCache>();
-		return hashCache.createView()->contains(state::TimestampedHash(timestamp, hash));
+		return hashCache.createView(Height{0})->contains(state::TimestampedHash(timestamp, hash));
 	}
 }}

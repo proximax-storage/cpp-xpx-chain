@@ -38,37 +38,38 @@ namespace catapult { namespace cache {
 			, public PropertyCacheViewMixins::Iteration
 			, public PropertyCacheViewMixins::ConstAccessor
 			, public PropertyCacheViewMixins::PatriciaTreeView
-			, public PropertyCacheViewMixins::Enable {
+			, public PropertyCacheViewMixins::Enable
+			, public PropertyCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 
 	public:
 		/// Creates a view around \a propertySets and \a blockChainConfig.
-		explicit BasicPropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, const model::BlockChainConfiguration& blockChainConfig)
+		explicit BasicPropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
 				: PropertyCacheViewMixins::Size(propertySets.Primary)
 				, PropertyCacheViewMixins::Contains(propertySets.Primary)
 				, PropertyCacheViewMixins::Iteration(propertySets.Primary)
 				, PropertyCacheViewMixins::ConstAccessor(propertySets.Primary)
 				, PropertyCacheViewMixins::PatriciaTreeView(propertySets.PatriciaTree.get())
-				, m_blockChainConfig(blockChainConfig)
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_blockChainConfig.Network.Identifier;
+			return m_pConfigHolder->Config(height()).BlockChain.Network.Identifier;
 		}
 
 	private:
-		const model::BlockChainConfiguration& m_blockChainConfig;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the property cache.
 	class PropertyCacheView : public ReadOnlyViewSupplier<BasicPropertyCacheView> {
 	public:
 		/// Creates a view around \a propertySets and \a blockChainConfig.
-		explicit PropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, const model::BlockChainConfiguration& blockChainConfig)
-				: ReadOnlyViewSupplier(propertySets, blockChainConfig)
+		explicit PropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(propertySets, pConfigHolder)
 		{}
 	};
 }}

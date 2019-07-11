@@ -41,31 +41,31 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("HASHLOCK C"), [&cache]() {
-				return cache.sub<cache::HashLockInfoCache>().createView()->size();
+				return cache.sub<cache::HashLockInfoCache>().createView(cache.height())->size();
 			});
 		});
 
-		const auto& config = manager.config();
-		manager.addStatelessValidatorHook([&config](auto& builder) {
-			// hash lock validators
-			builder.add(validators::CreateHashLockDurationValidator(config));
-			builder.add(validators::CreateHashLockMosaicValidator(config));
-			builder.add(validators::CreatePluginConfigValidator());
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreatePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([](auto& builder) {
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
+				.add(validators::CreateHashLockDurationValidator(pConfigHolder))
+				.add(validators::CreateHashLockMosaicValidator(pConfigHolder))
 				.add(validators::CreateAggregateHashPresentValidator())
 				.add(validators::CreateHashLockCacheUniqueValidator());
 		});
 
-		manager.addObserverHook([&config](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockHash_Expired;
 			builder
 				.add(observers::CreateHashLockObserver())
 				.add(observers::CreateExpiredHashLockInfoObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::HashLockInfoCache>("HashLockInfo", expiryReceiptType))
-				.add(observers::CreateCacheBlockPruningObserver<cache::HashLockInfoCache>("HashLockInfo", 1, config))
+				.add(observers::CreateCacheBlockPruningObserver<cache::HashLockInfoCache>("HashLockInfo", 1, pConfigHolder))
 				.add(observers::CreateCompletedAggregateObserver());
 		});
 	}

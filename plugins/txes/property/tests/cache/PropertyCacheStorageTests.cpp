@@ -21,6 +21,7 @@
 #include "src/cache/PropertyCacheStorage.h"
 #include "src/cache/PropertyCache.h"
 #include "src/model/PropertyTypes.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/AccountPropertiesTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -32,6 +33,8 @@ namespace catapult { namespace cache {
 		// Arrange:
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(blockChainConfig);
 		state::AccountProperties originalAccountProperties(test::GenerateRandomData<Address_Decoded_Size>());
 		auto& property = originalAccountProperties.property(model::PropertyType::Address);
 		for (auto i = 0u; i < 3; ++i)
@@ -41,15 +44,15 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(3u, originalAccountProperties.property<Address>(model::PropertyType::Address).size());
 
 		// Act:
-		PropertyCache cache(CacheConfiguration{}, blockChainConfig);
+		PropertyCache cache(CacheConfiguration{}, pConfigHolder);
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			PropertyCacheStorage::LoadInto(originalAccountProperties, *delta);
 			cache.commit();
 		}
 
 		// Assert: the cache contains the value
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		EXPECT_EQ(1u, view->size());
 		ASSERT_TRUE(view->contains(originalAccountProperties.address()));
 		const auto& loadedAccountProperties = view->find(originalAccountProperties.address()).get();

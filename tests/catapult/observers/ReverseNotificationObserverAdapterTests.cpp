@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/observers/ReverseNotificationObserverAdapter.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
@@ -32,7 +33,7 @@ namespace catapult { namespace observers {
 	namespace {
 		void ObserveEntity(const EntityObserver& observer, const model::VerifiableEntity& entity, test::ObserverTestContext& context) {
 			Hash256 hash;
-			observer.notify(model::WeakEntityInfo(entity, hash), context.observerContext());
+			observer.notify(model::WeakEntityInfo(entity, hash, Height{0}), context.observerContext());
 		}
 
 		template<typename TRunTestFunc>
@@ -42,7 +43,7 @@ namespace catapult { namespace observers {
 			const auto& observer = *pObserver;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId());
+			auto pPublisher = model::CreateNotificationPublisher(registry, std::make_shared<config::MockLocalNodeConfigurationHolder>());
 			ReverseNotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 			// Act + Assert:

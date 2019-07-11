@@ -33,11 +33,11 @@ namespace catapult { namespace harvesting {
 	/// A class that creates new blocks.
 	class Harvester {
 	public:
-		/// Creates a harvester around a catapult \a cache, a block chain \a config, an unlocked accounts set (\a unlockedAccounts)
+		/// Creates a harvester around a catapult \a cache, \a pConfigHolder, an unlocked accounts set (\a unlockedAccounts)
 		/// and \a blockGenerator used to customize block generation.
 		explicit Harvester(
 				const cache::CatapultCache& cache,
-				const model::BlockChainConfiguration& config,
+				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 				const UnlockedAccounts& unlockedAccounts,
 				const BlockGenerator& blockGenerator);
 
@@ -48,7 +48,7 @@ namespace catapult { namespace harvesting {
 
 	private:
 		const cache::CatapultCache& m_cache;
-		const model::BlockChainConfiguration m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		const UnlockedAccounts& m_unlockedAccounts;
 		BlockGenerator m_blockGenerator;
 	};

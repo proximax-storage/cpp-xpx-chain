@@ -5,8 +5,9 @@
 **/
 
 #pragma once
-#include "src/state/CatapultConfigEntry.h"
+#include "plugins/txes/config/src/state/CatapultConfigEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
+#include "catapult/cache/IdentifierSerializer.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"
 
@@ -56,9 +57,25 @@ namespace catapult { namespace cache {
 
 	/// Catapult config cache types.
 	struct CatapultConfigCacheTypes {
-		using PrimaryTypes = MutableUnorderedMapAdapter<CatapultConfigCacheDescriptor, utils::BaseValueHasher<Height>>;
-
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicCatapultConfigCacheView, BasicCatapultConfigCacheDelta, const Height&, state::CatapultConfigEntry>;
+
+		// region secondary descriptors
+
+		struct HeightTypesDescriptor {
+		public:
+			using ValueType = Height;
+			using Serializer = IdentifierSerializer<HeightTypesDescriptor>;
+
+		public:
+			static auto GetKeyFromValue(const ValueType& height) {
+				return height;
+			}
+		};
+
+		// endregion
+
+		using PrimaryTypes = MutableUnorderedMapAdapter<CatapultConfigCacheDescriptor, utils::BaseValueHasher<Height>>;
+		using HeightTypes = MutableOrderedMemorySetAdapter<HeightTypesDescriptor>;
 
 		using BaseSetDeltaPointers = CatapultConfigBaseSetDeltaPointers;
 		using BaseSets = CatapultConfigBaseSets;

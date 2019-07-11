@@ -48,7 +48,7 @@ namespace catapult { namespace test {
 
 		auto i = 0u;
 		for (const auto& entity : m_container)
-			entities.push_back(model::WeakEntityInfo(entity, m_hashes[i++]));
+			entities.push_back(model::WeakEntityInfo(entity, m_hashes[i++], Height{0}));
 
 		return entities;
 	}

@@ -29,8 +29,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::MosaicSupplyChangeNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, [&blockChainConfig](
+	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			// notice that MosaicChangeAllowedValidator is required to run first, so both mosaic and owning account must exist
@@ -54,7 +54,8 @@ namespace catapult { namespace validators {
 			// check that new supply does not overflow and is not too large
 			auto initialSupply = entry.supply();
 			auto newSupply = entry.supply() + notification.Delta;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>("catapult.plugins.mosaic");
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
 			return newSupply < initialSupply || newSupply > pluginConfig.MaxMosaicDivisibleUnits
 					? Failure_Mosaic_Supply_Exceeded
 					: ValidationResult::Success;

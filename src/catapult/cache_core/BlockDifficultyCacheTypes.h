@@ -21,7 +21,7 @@
 #pragma once
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/state/BlockDifficultyInfo.h"
 
 namespace catapult {
@@ -69,8 +69,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// Blockchain configuration.
-			const model::BlockChainConfiguration& Config;
+			/// Catapult configuration holder.
+			std::shared_ptr<config::LocalNodeConfigurationHolder> ConfigHolderPtr;
 		};
 	};
 

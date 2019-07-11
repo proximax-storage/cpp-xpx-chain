@@ -36,13 +36,13 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		auto GetMosaicView(const cache::CatapultCache& cache) {
-			return cache.sub<cache::MosaicCache>().createView();
+			return cache.sub<cache::MosaicCache>().createView(cache.height());
 		}
 	}
 
 	void RegisterMosaicSubsystem(PluginManager& manager) {
-		const auto& config = manager.config();
-		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(config));
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
 
 		manager.addCacheSupport<cache::MosaicCacheStorage>(
@@ -55,24 +55,24 @@ namespace catapult { namespace plugins {
 			counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C"), [&cache]() { return GetMosaicView(cache)->size(); });
 		});
 
-		manager.addStatelessValidatorHook([&config](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateMosaicPropertiesValidator(config))
 				.add(validators::CreateMosaicIdValidator())
 				.add(validators::CreateMosaicSupplyChangeValidator())
 				.add(validators::CreatePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([&config](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
+				.add(validators::CreateMosaicPropertiesValidator(pConfigHolder))
 				.add(validators::CreateProperMosaicValidator())
 				.add(validators::CreateMosaicAvailabilityValidator())
-				.add(validators::CreateMosaicDurationValidator(config))
-				.add(validators::CreateMosaicTransferValidator(config))
-				.add(validators::CreateMaxMosaicsBalanceTransferValidator(config))
-				.add(validators::CreateMaxMosaicsSupplyChangeValidator(config))
+				.add(validators::CreateMosaicDurationValidator(pConfigHolder))
+				.add(validators::CreateMosaicTransferValidator(pConfigHolder))
+				.add(validators::CreateMaxMosaicsBalanceTransferValidator(pConfigHolder))
+				.add(validators::CreateMaxMosaicsSupplyChangeValidator(pConfigHolder))
 				// note that the following validator depends on MosaicChangeAllowedValidator
-				.add(validators::CreateMosaicSupplyChangeAllowedValidator(config));
+				.add(validators::CreateMosaicSupplyChangeAllowedValidator(pConfigHolder));
 		});
 
 		manager.addObserverHook([](auto& builder) {

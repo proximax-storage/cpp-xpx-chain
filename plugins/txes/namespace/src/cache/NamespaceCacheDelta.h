@@ -28,6 +28,8 @@
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 
+namespace catapult { namespace config { class LocalNodeConfigurationHolder; } }
+
 namespace catapult { namespace cache {
 
 	/// Mixins used by the namespace delta view.
@@ -51,6 +53,7 @@ namespace catapult { namespace cache {
 			NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaType>;
 
 		using Enable = PrimaryMixins::Enable;
+		using Height = PrimaryMixins::Height;
 	};
 
 	/// Basic delta on top of the namespace cache.
@@ -63,7 +66,8 @@ namespace catapult { namespace cache {
 			, public NamespaceCacheDeltaMixins::DeltaElements
 			, public NamespaceCacheDeltaMixins::NamespaceDeepSize
 			, public NamespaceCacheDeltaMixins::NamespaceLookup
-			, public NamespaceCacheDeltaMixins::Enable {
+			, public NamespaceCacheDeltaMixins::Enable
+			, public NamespaceCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = NamespaceCacheTypes::CacheReadOnlyType;
 		using CollectedIds = std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>>;
@@ -99,7 +103,7 @@ namespace catapult { namespace cache {
 		NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pHistoryById;
 		NamespaceCacheTypes::NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaPointerType m_pNamespaceById;
 		NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRootNamespaceIdsByExpiryHeight;
-		const model::BlockChainConfiguration& m_blockChainConfig;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the namespace cache.

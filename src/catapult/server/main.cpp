@@ -28,7 +28,6 @@ int main(int argc, const char** argv) {
 		// create bootstrapper
 		auto resourcesPath = config::LocalNodeConfigurationHolder::GetResourcesPath(argc, argv).generic_string();
 		auto pBootstrapper = std::make_unique<extensions::LocalNodeBootstrapper>(pConfigHolder, resourcesPath, "server");
-		AddStaticNodesFromPath(*pBootstrapper, (boost::filesystem::path(resourcesPath) / "peers-p2p.json").generic_string());
 
 		// register extension(s)
 		pBootstrapper->loadExtensions();

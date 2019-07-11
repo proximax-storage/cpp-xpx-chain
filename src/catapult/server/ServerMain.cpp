@@ -21,7 +21,7 @@
 #include "ServerMain.h"
 #include "Signals.h"
 #include "catapult/config/LocalNodeConfiguration.h"
-#include "catapult/config/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/config/ValidateConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
@@ -69,7 +69,7 @@ namespace catapult { namespace server {
 		// endregion
 
 		void Run(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const CreateLocalNodeFunc& createLocalNode) {
-			auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey);
+			auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config(Height{0}).User.BootKey);
 
 			CATAPULT_LOG(info) << "booting local node with public key " << crypto::FormatKey(keyPair.publicKey());
 			auto pLocalNode = createLocalNode(pConfigHolder, keyPair);
@@ -86,7 +86,7 @@ namespace catapult { namespace server {
 		version::WriteVersionInformation(std::cout);
 
 		// 1. load and validate the configuration
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
 		auto config = pConfigHolder->LoadConfig(argc, argv);
 		ValidateConfiguration(config);
 

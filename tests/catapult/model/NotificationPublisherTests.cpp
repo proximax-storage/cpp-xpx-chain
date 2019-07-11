@@ -20,6 +20,7 @@
 
 #include "catapult/model/NotificationPublisher.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
@@ -42,11 +43,14 @@ namespace catapult { namespace model {
 			mocks::MockNotificationSubscriber sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, mode);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.CurrencyMosaicId = MosaicId(Currency_Mosaic_Id.unwrap());
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(config);
+			auto pPub = CreateNotificationPublisher(registry, pConfigHolder, mode);
 
 			// Act:
 			auto hash = test::GenerateRandomData<Key_Size>();
-			pPub->publish(WeakEntityInfo(entity, hash), sub);
+			pPub->publish(WeakEntityInfo(entity, hash, Height{0}), sub);
 
 			// Assert:
 			assertSub(sub);
@@ -63,7 +67,10 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.CurrencyMosaicId = MosaicId(Currency_Mosaic_Id.unwrap());
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(config);
+			auto pPub = CreateNotificationPublisher(registry, pConfigHolder);
 
 			// Act:
 			pPub->publish(entityInfo, sub);
@@ -76,7 +83,7 @@ namespace catapult { namespace model {
 		template<typename TNotification, typename TEntity, typename TAssertNotification>
 		void PublishOne(const TEntity& entity, const Hash256& hash, TAssertNotification assertNotification) {
 			// Act:
-			PublishOne<TNotification>(WeakEntityInfo(entity, hash), assertNotification);
+			PublishOne<TNotification>(WeakEntityInfo(entity, hash, Height{0}), assertNotification);
 		}
 
 		template<typename TNotification, typename TEntity, typename TAssertNotification>

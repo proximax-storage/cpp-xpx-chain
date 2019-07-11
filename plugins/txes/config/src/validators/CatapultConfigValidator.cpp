@@ -11,6 +11,7 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "src/cache/CatapultConfigCache.h"
 #include "src/config/CatapultConfigConfiguration.h"
+#include "src/model/CatapultConfigEntityType.h"
 
 namespace catapult { namespace validators {
 
@@ -18,7 +19,7 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(CatapultConfig, Notification)(const plugins::PluginManager& pluginManager) {
 		return MAKE_STATEFUL_VALIDATOR(CatapultConfig, ([&pluginManager](const Notification& notification, const ValidatorContext& context) {
-			const auto& pluginConfig = pluginManager.config().GetPluginConfiguration<config::CatapultConfigConfiguration>(PLUGIN_NAME(config));
+			const auto& pluginConfig = pluginManager.config(context.Height).GetPluginConfiguration<config::CatapultConfigConfiguration>(PLUGIN_NAME(config));
 			if (notification.BlockChainConfigSize > pluginConfig.MaxBlockChainConfigSize.bytes32())
 				return Failure_CatapultConfig_BlockChain_Config_Too_Large;
 
@@ -47,7 +48,9 @@ namespace catapult { namespace validators {
 
 			try {
 				std::istringstream configStream{std::string{(const char*)notification.SupportedEntityVersionsPtr, notification.SupportedEntityVersionsSize}};
-				config::LoadSupportedEntityVersions(configStream);
+				auto supportedEntityVersions = config::LoadSupportedEntityVersions(configStream);
+				if (!supportedEntityVersions[model::Entity_Type_Catapult_Config].size())
+					return Failure_CatapultConfig_Catapult_Config_Trx_Cannot_Be_Unsupported;
 			} catch (...) {
 				return Failure_CatapultConfig_SupportedEntityVersions_Config_Malformed;
 			}

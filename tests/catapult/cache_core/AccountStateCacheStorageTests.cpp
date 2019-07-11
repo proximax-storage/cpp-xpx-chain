@@ -22,6 +22,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
@@ -30,34 +31,35 @@ namespace catapult { namespace cache {
 #define TEST_CLASS AccountStateCacheStorageTests
 
 	namespace {
-		auto CreateConfig() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
 			config.ImportanceGrouping = 543;
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = test::Default_Currency_Mosaic_Id;
 			config.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
-			return config;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
-
-		auto Default_Config = CreateConfig();
 	}
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange: create a random value to insert
 		state::AccountState originalAccountState(test::GenerateRandomAddress(), Height(111));
 		test::RandomFillAccountData(0, originalAccountState, 123, 123);
+		auto pConfigHolder = CreateConfigHolder();
 
 		// Act:
-		AccountStateCache cache(CacheConfiguration(), Default_Config);
+		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			AccountStateCacheStorage::LoadInto(originalAccountState, *delta);
 			cache.commit();
 		}
 
 		// Assert: the cache contains the value
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		EXPECT_EQ(1u, view->size());
 		ASSERT_TRUE(view->contains(originalAccountState.Address));
 		const auto& loadedAccountState = view->find(originalAccountState.Address).get();
@@ -67,7 +69,7 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(123u, loadedAccountState.Balances.snapshots().size());
 
 		// - cache automatically optimizes added account state, so update to match expected
-		originalAccountState.Balances.optimize(Default_Config.CurrencyMosaicId);
+		originalAccountState.Balances.optimize(pConfigHolder->Config(Height{0}).BlockChain.CurrencyMosaicId);
 		test::AssertEqual(originalAccountState, loadedAccountState);
 	}
 }}

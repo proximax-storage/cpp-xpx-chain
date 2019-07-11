@@ -22,6 +22,7 @@
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -30,17 +31,18 @@ namespace catapult { namespace cache {
 	// region mixin traits based tests
 
 	namespace {
-		auto CreateBlockChainConfig(model::NetworkIdentifier networkIdentifier) {
+		auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier) {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.Network.Identifier = networkIdentifier;
-			return blockChainConfig;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			return pConfigHolder;
 		}
-		auto Default_Config = CreateBlockChainConfig(model::NetworkIdentifier::Zero);
 
 		struct PropertyCacheMixinTraits {
 			class CacheType : public PropertyCache {
 			public:
-				CacheType() : PropertyCache(CacheConfiguration(), Default_Config)
+				CacheType() : PropertyCache(CacheConfiguration(), CreateConfigHolder(model::NetworkIdentifier::Zero))
 				{}
 			};
 
@@ -96,13 +98,12 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		auto config = CreateBlockChainConfig(networkIdentifier);
-		PropertyCache cache(CacheConfiguration(), config);
+		PropertyCache cache(CacheConfiguration(), CreateConfigHolder(networkIdentifier));
 
 		// Act + Assert:
-		EXPECT_EQ(networkIdentifier, cache.createView()->networkIdentifier());
-		EXPECT_EQ(networkIdentifier, cache.createDelta()->networkIdentifier());
-		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta().tryLock()->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createView(Height{0})->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createDelta(Height{0})->networkIdentifier());
+		EXPECT_EQ(networkIdentifier, cache.createDetachedDelta(Height{0}).tryLock()->networkIdentifier());
 	}
 
 	// endregion

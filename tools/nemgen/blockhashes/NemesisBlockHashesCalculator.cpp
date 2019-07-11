@@ -39,6 +39,7 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		// 3. prepare observer state
 		auto cache = pluginManager.createCache();
+		pConfigHolder->SetCache(&cache);
 		auto cacheDetachableDelta = cache.createDetachableDelta();
 		auto cacheDetachedDelta = cacheDetachableDelta.detach();
 		auto pCacheDelta = cacheDetachedDelta.tryLock();
@@ -53,7 +54,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		// 5. execute block
 		chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, observerState });
 		auto cacheStateHashInfo = pCacheDelta->calculateStateHash(blockElement.Block.Height);
-		auto blockReceiptsHash = pConfigHolder->Config().BlockChain.ShouldEnableVerifiableReceipts
+		auto blockReceiptsHash = pConfigHolder->Config(blockElement.Block.Height).BlockChain.ShouldEnableVerifiableReceipts
 				? model::CalculateMerkleHash(*blockStatementBuilder.build())
 				: Hash256();
 

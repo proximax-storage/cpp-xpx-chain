@@ -21,6 +21,7 @@
 #include "BasicLocalNode.h"
 #include "MemoryCounters.h"
 #include "NodeUtils.h"
+#include "catapult/cache/SupplementalData.h"
 #include "catapult/extensions/ConfigurationUtils.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateRef.h"
@@ -48,18 +49,16 @@ namespace catapult { namespace local {
 					: m_pBootstrapper(std::move(pBootstrapper))
 					, m_serviceLocator(keyPair)
 					, m_pBlockChainStorage(m_pBootstrapper->extensionManager().createBlockChainStorage())
-					, m_config(m_pBootstrapper->config())
-					, m_nodes(m_config.Node.MaxTrackedNodes, m_pBootstrapper->extensionManager().networkTimeSupplier())
+					, m_nodes(m_pBootstrapper->config(Height{0}).Node.MaxTrackedNodes, m_pBootstrapper->extensionManager().networkTimeSupplier())
 					, m_catapultCache({}) // note that subcaches are added in boot
 					, m_storage(m_pBootstrapper->subscriptionManager().createBlockStorage())
-					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(extensions::GetUtCacheOptions(m_config.Node)))
+					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(extensions::GetUtCacheOptions(m_pBootstrapper->config(Height{0}).Node)))
 					, m_pTransactionStatusSubscriber(m_pBootstrapper->subscriptionManager().createTransactionStatusSubscriber())
 					, m_pStateChangeSubscriber(m_pBootstrapper->subscriptionManager().createStateChangeSubscriber())
 					, m_pNodeSubscriber(CreateNodeSubscriber(m_pBootstrapper->subscriptionManager(), m_nodes))
 					, m_pluginManager(m_pBootstrapper->pluginManager())
-					, m_isBooted(false) {
-				SeedNodeContainer(m_nodes, *m_pBootstrapper);
-			}
+					, m_isBooted(false)
+			{}
 
 			~BasicLocalNode() override {
 				shutdown();
@@ -69,11 +68,25 @@ namespace catapult { namespace local {
 			void boot() {
 				auto& extensionManager = m_pBootstrapper->extensionManager();
 
-				CATAPULT_LOG(info) << "registering system plugins";
-				loadPlugins();
+				CATAPULT_LOG(info) << "registering config plugin";
+				loadConfigPlugin();
 
-				CATAPULT_LOG(debug) << "initializing cache";
+				CATAPULT_LOG(debug) << "loading config subcache";
 				m_catapultCache = m_pluginManager.createCache();
+				m_pluginManager.configHolder()->SetCache(&m_catapultCache);
+
+				cache::SupplementalData supplementalData;
+				bool isConfigCacheLoaded = m_pBlockChainStorage->loadState(m_pluginManager.configHolder()->Config(Height{0}).User.DataDirectory, m_catapultCache, supplementalData);
+				auto height = m_catapultCache.height();
+				if (isConfigCacheLoaded)
+					m_pluginManager.setShouldEnableVerifiableState(m_pluginManager.config(height).ShouldEnableVerifiableState);
+
+
+				CATAPULT_LOG(info) << "registering other plugins";
+				loadOtherPlugins(height);
+
+				CATAPULT_LOG(debug) << "adding other subcaches";
+				m_pluginManager.updateCache(m_catapultCache);
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
@@ -82,9 +95,14 @@ namespace catapult { namespace local {
 				extensionManager.preLoadHandler()(m_catapultCache);
 				m_pBlockChainStorage->loadFromStorage(stateRef(), m_pluginManager);
 
+				CATAPULT_LOG(debug) << "adding static nodes";
+				auto peersFile = boost::filesystem::path(m_pBootstrapper->resourcesPath()) / "peers-p2p.json";
+				if (boost::filesystem::exists(peersFile))
+					AddStaticNodesFromPath(*m_pBootstrapper, peersFile.generic_string(), m_catapultCache.height());
+				SeedNodeContainer(m_nodes, *m_pBootstrapper);
+
 				CATAPULT_LOG(debug) << "booting extension services";
-				auto serviceState = extensions::ServiceState(
-						m_config,
+				m_pServiceState = std::make_unique<extensions::ServiceState>(
 						m_nodes,
 						m_catapultCache,
 						m_catapultState,
@@ -98,7 +116,7 @@ namespace catapult { namespace local {
 						m_counters,
 						m_pluginManager,
 						m_pBootstrapper->pool());
-				extensionManager.registerServices(m_serviceLocator, serviceState);
+				extensionManager.registerServices(m_serviceLocator, *m_pServiceState);
 				for (const auto& counter : m_serviceLocator.counters())
 					m_counters.push_back(counter);
 
@@ -106,16 +124,23 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			void loadPlugins() {
+			void loadConfigPlugin() {
+				loadPlugin(PLUGIN_NAME(config));
+			}
+
+			void loadOtherPlugins(const Height& height) {
 				for (const auto& pluginName : m_pBootstrapper->extensionManager().systemPluginNames())
 					loadPlugin(pluginName);
 
-				for (const auto& pair : m_config.BlockChain.Plugins)
+				auto plugins = m_pluginManager.config(height).Plugins;
+				plugins.erase(PLUGIN_NAME(config));
+				for (const auto& pair : plugins) {
 					loadPlugin(pair.first);
+				}
 			}
 
 			void loadPlugin(const std::string& pluginName) {
-				LoadPluginByName(m_pluginManager, m_pluginModules, m_config.User.PluginsDirectory, pluginName);
+				LoadPluginByName(m_pluginManager, m_pluginModules, m_pluginManager.configHolder()->Config(Height{0}).User.PluginsDirectory, pluginName);
 			}
 
 			void registerCounters() {
@@ -138,7 +163,7 @@ namespace catapult { namespace local {
 
 				// only save to storage if boot succeeded
 				if (m_isBooted)
-					m_pBlockChainStorage->saveToStorage(m_pluginManager.configHolder(), stateCref());
+					m_pBlockChainStorage->saveToStorage(stateCref());
 			}
 
 		public:
@@ -165,11 +190,13 @@ namespace catapult { namespace local {
 
 		private:
 			extensions::LocalNodeStateConstRef stateCref() const {
-				return extensions::LocalNodeStateConstRef(m_config, m_catapultState, m_catapultCache, m_storage, m_score);
+				const auto& config = m_pluginManager.configHolder()->Config(m_catapultCache.height());
+				return extensions::LocalNodeStateConstRef(config, m_catapultState, m_catapultCache, m_storage, m_score);
 			}
 
 			extensions::LocalNodeStateRef stateRef() {
-				return extensions::LocalNodeStateRef(m_config, m_catapultState, m_catapultCache, m_storage, m_score);
+				const auto& config = m_pluginManager.configHolder()->Config(m_catapultCache.height());
+				return extensions::LocalNodeStateRef(config, m_catapultState, m_catapultCache, m_storage, m_score);
 			}
 
 		private:
@@ -177,9 +204,9 @@ namespace catapult { namespace local {
 			std::vector<plugins::PluginModule> m_pluginModules;
 			std::unique_ptr<extensions::LocalNodeBootstrapper> m_pBootstrapper;
 			extensions::ServiceLocator m_serviceLocator;
+			std::unique_ptr<extensions::ServiceState> m_pServiceState;
 
 			std::unique_ptr<extensions::BlockChainStorage> m_pBlockChainStorage;
-			const config::LocalNodeConfiguration& m_config;
 			ionet::NodeContainer m_nodes;
 
 			cache::CatapultCache m_catapultCache;

@@ -44,7 +44,7 @@ namespace catapult { namespace model {
 		template<typename TTransaction, typename TDerivedTransaction, typename TPlugin>
 		class BasicTransactionPluginT : public TPlugin {
 		private:
-			using PublishFunc = consumer<const TDerivedTransaction&, NotificationSubscriber&>;
+			using PublishFunc = consumer<const TDerivedTransaction&, const Height&, NotificationSubscriber&>;
 
 		public:
 			explicit BasicTransactionPluginT(const PublishFunc& publishFunc) : m_publishFunc(publishFunc)
@@ -65,8 +65,8 @@ namespace catapult { namespace model {
 			}
 
 		protected:
-			void publishImpl(const TTransaction& transaction, NotificationSubscriber& sub) const {
-				m_publishFunc(static_cast<const TDerivedTransaction&>(transaction), sub);
+			void publishImpl(const WeakEntityInfoT<TTransaction>& transactionInfo, NotificationSubscriber& sub) const {
+				m_publishFunc(static_cast<const TDerivedTransaction&>(transactionInfo.entity()), transactionInfo.associatedHeight(), sub);
 			}
 
 		private:
@@ -85,8 +85,8 @@ namespace catapult { namespace model {
 			{}
 
 		public:
-			void publish(const EmbeddedTransaction& transaction, NotificationSubscriber& sub) const override {
-				BaseType::publishImpl(transaction, sub);
+			void publish(const WeakEntityInfoT<EmbeddedTransaction>& transactionInfo, NotificationSubscriber& sub) const override {
+				BaseType::publishImpl(transactionInfo, sub);
 			}
 		};
 
@@ -104,7 +104,7 @@ namespace catapult { namespace model {
 
 		public:
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
-				BaseType::publishImpl(transactionInfo.entity(), sub);
+				BaseType::publishImpl(transactionInfo, sub);
 			}
 
 			RawBuffer dataBuffer(const Transaction& transaction) const override {

@@ -25,8 +25,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::EntityNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(Network, Notification)(const model::BlockChainConfiguration& config) {
-		return MAKE_STATELESS_VALIDATOR(Network, [&config](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(Network, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(Network, [pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
 			return config.Network.Identifier == notification.NetworkIdentifier ? ValidationResult::Success : Failure_Core_Wrong_Network;
 		});
 	}

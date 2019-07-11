@@ -20,6 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "src/config/MultisigConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -28,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigMaxCosignedAccountsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosignedAccounts, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosignedAccounts, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		void AssertValidationResult(
@@ -57,8 +58,10 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.MaxCosignedAccountsPerAccount = maxCosignedAccountsPerAccount;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.multisig", pluginConfig);
-			auto pValidator = CreateModifyMultisigMaxCosignedAccountsValidator(blockChainConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pValidator = CreateModifyMultisigMaxCosignedAccountsValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

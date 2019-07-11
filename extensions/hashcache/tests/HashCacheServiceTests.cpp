@@ -21,6 +21,7 @@
 #include "hashcache/src/HashCacheService.h"
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/TestHarness.h"
@@ -48,7 +49,9 @@ namespace catapult { namespace hashcache {
 		cache::CatapultCache CreateCache(const model::BlockChainConfiguration& config) {
 			auto cacheId = cache::HashCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 

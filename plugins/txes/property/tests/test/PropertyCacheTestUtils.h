@@ -25,6 +25,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
@@ -35,7 +36,9 @@ namespace catapult { namespace test {
 			auto cacheId = cache::PropertyCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			const_cast<model::BlockChainConfiguration&>(config).Network.Identifier = model::NetworkIdentifier::Zero;
-			subCaches[cacheId] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			subCaches[cacheId] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(pConfigHolder);
 			return subCaches;
 		}
 

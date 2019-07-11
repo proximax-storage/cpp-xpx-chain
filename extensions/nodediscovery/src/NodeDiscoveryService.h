@@ -26,7 +26,7 @@ namespace catapult { namespace ionet { struct NetworkNode; } }
 
 namespace catapult { namespace nodediscovery {
 
-	/// Creates a registrar for a node discovery service around \a config.
+	/// Creates a registrar for a node discovery service.
 	/// \note This service is responsible for allowing nodes to discover each other.
-	DECLARE_SERVICE_REGISTRAR(NodeDiscovery)(const config::LocalNodeConfiguration& config);
+	DECLARE_SERVICE_REGISTRAR(NodeDiscovery)();
 }}

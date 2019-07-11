@@ -38,9 +38,9 @@ namespace catapult { namespace cache {
 
 		void AssertAreEqual(const std::vector<TestEntry>& entries, const std::vector<uint8_t>& buffer) {
 			// Assert:
-			ASSERT_EQ(sizeof(uint64_t) + entries.size() * sizeof(TestEntry), buffer.size());
-			EXPECT_EQ(entries.size(), reinterpret_cast<const uint64_t&>(*buffer.data()));
-			EXPECT_EQ_MEMORY(entries.data(), buffer.data() + sizeof(uint64_t), entries.size() * sizeof(TestEntry));
+			ASSERT_EQ(2 * sizeof(uint64_t) + entries.size() * sizeof(TestEntry), buffer.size());
+			EXPECT_EQ(entries.size(), *(reinterpret_cast<const uint64_t*>(buffer.data()) + 1));
+			EXPECT_EQ_MEMORY(entries.data(), buffer.data() + 2 * sizeof(uint64_t), entries.size() * sizeof(TestEntry));
 		}
 
 		// region VectorToCacheAdapter
@@ -84,12 +84,12 @@ namespace catapult { namespace cache {
 			}
 
 		public:
-			std::unique_ptr<ViewAdapter> createView() const {
+			std::unique_ptr<ViewAdapter> createView(const Height&) const {
 				++m_counts.NumCreateViewCalls;
 				return std::make_unique<ViewAdapter>(m_entries);
 			}
 
-			std::vector<TestEntry>* createDelta() {
+			std::vector<TestEntry>* createDelta(const Height&) {
 				++m_counts.NumCreateDeltaCalls;
 				return &m_entries;
 			}
@@ -138,7 +138,7 @@ namespace catapult { namespace cache {
 			mocks::MockMemoryStream stream("", buffer);
 
 			// Act:
-			storage.saveAll(stream);
+			storage.saveAll(stream, Height{0});
 
 			// Assert:
 			EXPECT_EQ(1u, cache.counts().NumCreateViewCalls);
@@ -146,7 +146,7 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(0u, cache.counts().NumCommitCalls);
 
 			AssertAreEqual(seed, buffer);
-			EXPECT_EQ(numEntries, reinterpret_cast<uint64_t&>(*buffer.data()));
+			EXPECT_EQ(numEntries, *(reinterpret_cast<const uint64_t*>(buffer.data()) + 1));
 			EXPECT_EQ(1u, stream.numFlushes());
 		}
 	}
@@ -169,7 +169,7 @@ namespace catapult { namespace cache {
 			CacheStorageAdapter<VectorToCacheAdapter, TestEntryStorageTraits> storage(cache);
 
 			auto seed = GenerateRandomEntries(numEntries);
-			auto buffer = CopyEntriesToStreamBuffer(seed);
+			auto buffer = CopyEntriesToStreamBuffer(seed, sizeof(uint64_t));
 			mocks::MockMemoryStream stream("", buffer);
 
 			// Act:

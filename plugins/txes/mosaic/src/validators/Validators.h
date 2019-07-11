@@ -21,8 +21,9 @@
 #pragma once
 #include "Results.h"
 #include "src/model/MosaicNotifications.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/Notifications.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
 
@@ -44,7 +45,7 @@ namespace catapult { namespace validators {
 	/// - definition has divisibility no greater than \a maxDivisibility
 	/// - mosaic duration has a value not larger than \a maxMosaicDuration
 	/// - optional mosaic properties are sorted, known and not duplicative
-	DECLARE_STATELESS_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to mosaic nonce notifications and validates that:
 	/// - mosaic id is the expected id generated from signer and nonce
@@ -56,7 +57,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to mosaic definition notifications and validates that:
 	/// - the resulting mosaic duration is not larger than \a maxMosaicDuration and there was no overflow
-	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, model::MosaicDefinitionNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, model::MosaicDefinitionNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
 
@@ -70,18 +71,18 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - transferred mosaic is active and is transferable
 	/// - as an optimization, special currency mosaic (\a currencyMosaicId) transfers are always allowed
-	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, model::BalanceTransferNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, model::BalanceTransferNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the affected mosaic has mutable supply
 	/// - decrease does not cause owner amount to become negative
 	/// - increase does not cause total divisible units to exceed \a maxDivisibleUnits
 	/// \note This validator is dependent on MosaicChangeAllowedValidator.
-	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the account changing the supply does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
 
@@ -89,7 +90,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - the recipient does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(const model::BlockChainConfiguration& config);
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
 

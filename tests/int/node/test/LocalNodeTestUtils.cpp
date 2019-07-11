@@ -21,6 +21,7 @@
 #include "LocalNodeTestUtils.h"
 #include "catapult/extensions/LocalNodeBootstrapper.h"
 #include "catapult/local/BasicLocalNode.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
@@ -98,8 +99,8 @@ namespace catapult { namespace test {
 		// make additional configuration modifications
 		PrepareLocalNodeConfiguration(config, AddSimplePartnerPluginExtensions, nodeFlag);
 
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(config);
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(Height{0}, config);
 
 		const auto& resourcesPath = dataDirectory + "/resources";
 		auto pBootstrapper = std::make_unique<extensions::LocalNodeBootstrapper>(pConfigHolder, resourcesPath, "Partner");

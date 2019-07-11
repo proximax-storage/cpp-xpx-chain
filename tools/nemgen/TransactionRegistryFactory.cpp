@@ -19,10 +19,11 @@
 **/
 
 #include "TransactionRegistryFactory.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "catapult/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "catapult/plugins/TransferTransactionPlugin.h"
 #include "mosaic/src/config/MosaicConfiguration.h"
@@ -34,13 +35,22 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto mosaicConfig = config::MosaicConfiguration::Uninitialized();
 		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		blockChainConfig.SetPluginConfiguration("catapult.plugins.mosaic", mosaicConfig);
-		blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", namespaceConfig);
+		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), mosaicConfig);
+		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespaceConfig);
+		config::LocalNodeConfiguration config{
+			std::move(blockChainConfig),
+			config::NodeConfiguration::Uninitialized(),
+			config::LoggingConfiguration::Uninitialized(),
+			config::UserConfiguration::Uninitialized(),
+			config::SupportedEntityVersions()
+		};
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
+		pConfigHolder->SetConfig(Height{0}, config);
 		model::TransactionRegistry registry;
 		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
-		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(blockChainConfig));
+		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
-		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(blockChainConfig));
+		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		return registry;
 	}

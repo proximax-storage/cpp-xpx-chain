@@ -52,7 +52,7 @@ namespace catapult { namespace consumers {
 			if (disruptor::ConsumerResultSeverity::Success != element.ResultSeverity)
 				continue;
 
-			entityInfos.emplace_back(element.Transaction, element.EntityHash);
+			entityInfos.emplace_back(element.Transaction, element.EntityHash, Height{0});
 			entityInfoElementIndexes.push_back(index - 1);
 		}
 	}

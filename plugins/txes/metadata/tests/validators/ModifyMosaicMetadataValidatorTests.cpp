@@ -41,6 +41,8 @@ namespace catapult { namespace validators {
 				Key signer) {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			const_cast<model::BlockChainConfiguration&>(config).SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(config);
 			PopulateCache(cache);
 			auto pValidator = CreateModifyMosaicMetadataValidator();

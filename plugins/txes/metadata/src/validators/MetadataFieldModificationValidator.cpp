@@ -13,13 +13,14 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMetadataFieldNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(MetadataFieldModification, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATELESS_VALIDATOR(MetadataFieldModification, ([&blockChainConfig](const Notification& notification) {
+	DECLARE_STATEFUL_VALIDATOR(MetadataFieldModification, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(MetadataFieldModification, ([pConfigHolder](const Notification& notification, const auto& context) {
 			if (notification.ModificationType > model::MetadataModificationType::Del) {
 				return Failure_Metadata_Modification_Type_Invalid;
 			}
 
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MetadataConfiguration>("catapult.plugins.metadata");
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MetadataConfiguration>(PLUGIN_NAME(metadata));
 			if (notification.KeySize <= 0 || notification.KeySize > pluginConfig.MaxFieldKeySize) {
 				return Failure_Metadata_Modification_Key_Invalid;
 			}

@@ -23,6 +23,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/PropertyCacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -30,9 +31,9 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxPropertyValuesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxAddressPropertyValues, model::BlockChainConfiguration::Uninitialized())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicPropertyValues, model::BlockChainConfiguration::Uninitialized())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactionTypePropertyValues, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxAddressPropertyValues, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicPropertyValues, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactionTypePropertyValues, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -96,8 +97,10 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::PropertyConfiguration::Uninitialized();
 			pluginConfig.MaxPropertyValues = maxPropertyValues;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.property", pluginConfig);
-			auto pValidator = TPropertyValueTraits::CreateValidator(blockChainConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(property), pluginConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pValidator = TPropertyValueTraits::CreateValidator(pConfigHolder);
 
 			using UnresolvedValueType = typename TPropertyValueTraits::UnresolvedValueType;
 			auto notification = test::CreateNotification<TPropertyValueTraits, UnresolvedValueType>(key, modifications);

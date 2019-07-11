@@ -19,6 +19,7 @@
 **/
 
 #include "HashCacheDelta.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -27,11 +28,11 @@ namespace catapult { namespace cache {
 			, HashCacheDeltaMixins::Contains(*hashSets.pPrimary)
 			, HashCacheDeltaMixins::BasicInsertRemove(*hashSets.pPrimary)
 			, m_pOrderedDelta(hashSets.pPrimary)
-			, m_config(options.Config)
+			, m_pConfigHolder(options.ConfigHolderPtr)
 	{}
 
 	utils::TimeSpan BasicHashCacheDelta::retentionTime() const {
-		return CalculateTransactionCacheDuration(m_config);
+		return CalculateTransactionCacheDuration(m_pConfigHolder->Config(height()).BlockChain);
 	}
 
 	deltaset::PruningBoundary<BasicHashCacheDelta::ValueType> BasicHashCacheDelta::pruningBoundary() const {

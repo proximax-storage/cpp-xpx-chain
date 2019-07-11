@@ -34,43 +34,43 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateMosaicPropertyTransactionPlugin());
 		manager.addTransactionSupport(CreateTransactionTypePropertyTransactionPlugin());
 
-		const auto& config = manager.config();
+		const auto& pConfigHolder = manager.configHolder();
 		manager.addCacheSupport<cache::PropertyCacheStorage>(
-				std::make_unique<cache::PropertyCache>(manager.cacheConfig(cache::PropertyCache::Name), config));
+				std::make_unique<cache::PropertyCache>(manager.cacheConfig(cache::PropertyCache::Name), pConfigHolder));
 
 		using CacheHandlers = CacheHandlers<cache::PropertyCacheDescriptor>;
 		CacheHandlers::Register<model::FacilityCode::Property>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("PROPERTY C"), [&cache]() {
-				return cache.sub<cache::PropertyCache>().createView()->size();
+				return cache.sub<cache::PropertyCache>().createView(cache.height())->size();
 			});
 		});
 
-		manager.addStatelessValidatorHook([&config](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreatePropertyTypeValidator())
 				.add(validators::CreateAddressPropertyModificationTypesValidator())
-				.add(validators::CreatePropertyAddressNoSelfModificationValidator(config))
 				.add(validators::CreateMosaicPropertyModificationTypesValidator())
 				.add(validators::CreateTransactionTypePropertyModificationTypesValidator())
 				.add(validators::CreateTransactionTypePropertyModificationValuesValidator())
 				.add(validators::CreatePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([&config](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
+				.add(validators::CreatePropertyAddressNoSelfModificationValidator(pConfigHolder))
 				.add(validators::CreateAddressPropertyRedundantModificationValidator())
 				.add(validators::CreateAddressPropertyValueModificationValidator())
-				.add(validators::CreateMaxAddressPropertyValuesValidator(config))
+				.add(validators::CreateMaxAddressPropertyValuesValidator(pConfigHolder))
 				.add(validators::CreateAddressInteractionValidator())
 				.add(validators::CreateMosaicPropertyRedundantModificationValidator())
 				.add(validators::CreateMosaicPropertyValueModificationValidator())
-				.add(validators::CreateMaxMosaicPropertyValuesValidator(config))
+				.add(validators::CreateMaxMosaicPropertyValuesValidator(pConfigHolder))
 				.add(validators::CreateMosaicRecipientValidator())
 				.add(validators::CreateTransactionTypePropertyRedundantModificationValidator())
 				.add(validators::CreateTransactionTypePropertyValueModificationValidator())
-				.add(validators::CreateMaxTransactionTypePropertyValuesValidator(config))
+				.add(validators::CreateMaxTransactionTypePropertyValuesValidator(pConfigHolder))
 				.add(validators::CreateTransactionTypeValidator())
 				.add(validators::CreateTransactionTypeNoSelfBlockingValidator());
 		});

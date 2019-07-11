@@ -21,6 +21,7 @@
 #include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/SecretLockPlugin.h"
 #include "src/model/SecretLockEntityType.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -43,7 +44,7 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				pConfigHolder->SetBlockChainConfig(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterSecretLockSubsystem(manager);
@@ -74,11 +75,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "SecretLockDurationValidator", "SecretLockHashAlgorithmValidator", "PluginConfigValidator", "ProofSecretValidator" };
+				return { "SecretLockHashAlgorithmValidator", "PluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return { "SecretLockCacheUniqueValidator", "ProofValidator" };
+				return { "SecretLockDurationValidator", "ProofSecretValidator", "SecretLockCacheUniqueValidator", "ProofValidator" };
 			}
 
 			static std::vector<std::string> GetObserverNames() {

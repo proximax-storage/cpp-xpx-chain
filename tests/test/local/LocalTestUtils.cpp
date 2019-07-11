@@ -24,6 +24,7 @@
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/plugins/PluginLoader.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
@@ -307,7 +308,7 @@ namespace catapult { namespace test {
 				const model::BlockChainConfiguration& config,
 				const plugins::StorageConfiguration& storageConfig) {
 			std::vector<plugins::PluginModule> modules;
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(config);
 			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig);
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");

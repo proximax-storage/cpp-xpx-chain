@@ -127,7 +127,7 @@ namespace catapult { namespace cache {
 
 	CatapultCacheDelta& CatapultCacheDelta::operator=(CatapultCacheDelta&&) = default;
 
-	StateHashInfo CatapultCacheDelta::calculateStateHash(Height height) const {
+	StateHashInfo CatapultCacheDelta::calculateStateHash(const Height& height) const {
 		return CalculateStateHashInfo(m_subViews, [height](auto& subView) { subView.updateMerkleRoot(height); });
 	}
 
@@ -149,6 +149,13 @@ namespace catapult { namespace cache {
 					"wrong number of sub cache merkle roots were passed (expected, actual)",
 					merkleRootIndex,
 					subCacheMerkleRoots.size());
+		}
+	}
+
+	void CatapultCacheDelta::setHeight(const Height& height) {
+		for (auto& pSubView : m_subViews) {
+			if (!!pSubView)
+				pSubView->setHeight(height);
 		}
 	}
 
@@ -246,22 +253,23 @@ namespace catapult { namespace cache {
 	CatapultCacheView CatapultCache::createView() const {
 		// acquire a height reader lock to ensure the view is composed of consistent subcache views
 		auto pCacheHeightView = m_pCacheHeight->view();
-		auto subViews = MapSubCaches<const SubCacheView>(m_subCaches, [](const auto& pSubCache) { return pSubCache->createView(); });
+		auto subViews = MapSubCaches<const SubCacheView>(m_subCaches, [&pCacheHeightView](const auto& pSubCache) { return pSubCache->createView(pCacheHeightView.get()); });
 		return CatapultCacheView(std::move(pCacheHeightView), std::move(subViews));
 	}
 
 	CatapultCacheDelta CatapultCache::createDelta() {
 		// since only one subcache delta is allowed outstanding at a time and an outstanding delta is required for commit,
 		// subcache deltas will always be consistent
-		auto subViews = MapSubCaches<SubCacheView>(m_subCaches, [](const auto& pSubCache) { return pSubCache->createDelta(); });
+		auto pCacheHeightView = m_pCacheHeight->view();
+		auto subViews = MapSubCaches<SubCacheView>(m_subCaches, [&pCacheHeightView](const auto& pSubCache) { return pSubCache->createDelta(pCacheHeightView.get()); });
 		return CatapultCacheDelta(std::move(subViews));
 	}
 
 	CatapultCacheDetachableDelta CatapultCache::createDetachableDelta() const {
 		// acquire a height reader lock to ensure the delta is composed of consistent subcache deltas
 		auto pCacheHeightView = m_pCacheHeight->view();
-		auto detachedSubViews = MapSubCaches<DetachedSubCacheView>(m_subCaches, [](const auto& pSubCache) {
-			return pSubCache->createDetachedDelta();
+		auto detachedSubViews = MapSubCaches<DetachedSubCacheView>(m_subCaches, [&pCacheHeightView](const auto& pSubCache) {
+			return pSubCache->createDetachedDelta(pCacheHeightView.get());
 		});
 		return CatapultCacheDetachableDelta(std::move(pCacheHeightView), std::move(detachedSubViews));
 	}
@@ -279,6 +287,10 @@ namespace catapult { namespace cache {
 		cacheHeightModifier.set(height);
 	}
 
+	Height CatapultCache::height() const {
+		return m_pCacheHeight->view().get();
+	}
+
 	std::vector<std::unique_ptr<const CacheStorage>> CatapultCache::storages() const {
 		return MapSubCaches<const CacheStorage>(
 				m_subCaches,
@@ -291,6 +303,18 @@ namespace catapult { namespace cache {
 				m_subCaches,
 				[](const auto& pSubCache) { return pSubCache->createStorage(); },
 				false);
+	}
+
+	void CatapultCache::addSubCache(std::unique_ptr<SubCachePlugin> pSubCache) {
+		if (!pSubCache)
+			return;
+
+		auto id = pSubCache->id();
+		m_subCaches.resize(std::max(m_subCaches.size(), id + 1));
+		if (m_subCaches[id])
+			CATAPULT_THROW_INVALID_ARGUMENT_1("subcache has already been registered with id", id);
+
+		m_subCaches[id] = std::move(pSubCache);
 	}
 
 	// endregion

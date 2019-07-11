@@ -20,19 +20,20 @@
 
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 
 	namespace {
-		auto CreateConfig() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.MaxRollbackBlocks = 100;
 			config.MaxDifficultyBlocks = 745;
-			return config;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
-
-		auto Default_Config = CreateConfig();
 
 		struct BlockDifficultyCacheStorageTraits{
 			using ValueType = state::BlockDifficultyInfo;
@@ -42,7 +43,7 @@ namespace catapult { namespace cache {
 			using StorageType = BlockDifficultyCacheStorage;
 			class CacheType : public BlockDifficultyCache {
 			public:
-				CacheType() : BlockDifficultyCache(Default_Config)
+				CacheType() : BlockDifficultyCache(CreateConfigHolder())
 				{}
 			};
 

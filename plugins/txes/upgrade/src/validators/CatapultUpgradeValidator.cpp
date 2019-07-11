@@ -13,10 +13,11 @@ namespace catapult { namespace validators {
 
 	using Notification = model::CatapultUpgradeVersionNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATEFUL_VALIDATOR(CatapultUpgrade, ([&blockChainConfig](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(CatapultUpgrade, ([pConfigHolder](const Notification& notification, const ValidatorContext& context) {
 			auto upgradePeriod = notification.UpgradePeriod.unwrap();
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::CatapultUpgradeConfiguration>("catapult.plugins.upgrade");
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::CatapultUpgradeConfiguration>(PLUGIN_NAME(upgrade));
 			if (pluginConfig.MinUpgradePeriod.unwrap() > upgradePeriod)
 				return Failure_CatapultUpgrade_Upgrade_Period_Too_Low;
 

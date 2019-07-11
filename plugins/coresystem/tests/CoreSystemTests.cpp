@@ -19,6 +19,7 @@
 **/
 
 #include "src/CoreSystem.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -30,8 +31,7 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(model::BlockChainConfiguration::Uninitialized());
+				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterCoreSystem(manager);
 
@@ -61,11 +61,14 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "MaxTransactionsValidator", "NetworkValidator", "EntityVersionValidator", "TransactionFeeValidator" };
+				return { "TransactionFeeValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"EntityVersionValidator",
+					"MaxTransactionsValidator",
+					"NetworkValidator",
 					"AddressValidator",
 					"DeadlineValidator",
 					"EligibleHarvesterValidator",

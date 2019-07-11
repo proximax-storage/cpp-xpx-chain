@@ -125,17 +125,17 @@ namespace catapult { namespace plugins {
 		}
 
 		auto GetNamespaceView(const cache::CatapultCache& cache) {
-			return cache.sub<cache::NamespaceCache>().createView();
+			return cache.sub<cache::NamespaceCache>().createView(cache.height());
 		}
 
 		void RegisterNamespaceSubsystemOnly(PluginManager& manager) {
-			const auto& config = manager.config();
-			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(config));
+			const auto& pConfigHolder = manager.configHolder();
+			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 
 			RegisterNamespaceAliasResolvers(manager);
 			manager.addCacheSupport(std::make_unique<cache::NamespaceCacheSubCachePlugin>(
 					manager.cacheConfig(cache::NamespaceCache::Name),
-					cache::NamespaceCacheTypes::Options{ config }));
+					cache::NamespaceCacheTypes::Options{ pConfigHolder }));
 
 			using CacheHandlers = CacheHandlers<cache::NamespaceCacheDescriptor>;
 			CacheHandlers::Register<model::FacilityCode::Namespace>(manager);
@@ -146,22 +146,23 @@ namespace catapult { namespace plugins {
 				counters.emplace_back(utils::DiagnosticCounterId("NS C DS"), [&cache]() { return GetNamespaceView(cache)->deepSize(); });
 			});
 
-			manager.addStatelessValidatorHook([&config](auto& builder) {
+			manager.addStatelessValidatorHook([](auto& builder) {
 				builder
-					.add(validators::CreateNamespaceTypeValidator())
-					.add(validators::CreateNamespaceNameValidator(config))
-					.add(validators::CreateRootNamespaceValidator(config));
+					.add(validators::CreatePluginConfigValidator())
+					.add(validators::CreateNamespaceTypeValidator());
 			});
 
-			manager.addStatefulValidatorHook([&config](auto& builder) {
+			manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 				builder
-					.add(validators::CreateRootNamespaceAvailabilityValidator(config))
+					.add(validators::CreateNamespaceNameValidator(pConfigHolder))
+					.add(validators::CreateRootNamespaceValidator(pConfigHolder))
+					.add(validators::CreateRootNamespaceAvailabilityValidator(pConfigHolder))
 					// note that the following validator needs to run before the RootNamespaceMaxChildrenValidator
 					.add(validators::CreateChildNamespaceAvailabilityValidator())
-					.add(validators::CreateRootNamespaceMaxChildrenValidator(config));
+					.add(validators::CreateRootNamespaceMaxChildrenValidator(pConfigHolder));
 			});
 
-			manager.addObserverHook([&config](auto& builder) {
+			manager.addObserverHook([pConfigHolder](auto& builder) {
 				auto rentalFeeReceiptType = model::Receipt_Type_Namespace_Rental_Fee;
 				auto expiryReceiptType = model::Receipt_Type_Namespace_Expired;
 				builder
@@ -169,7 +170,7 @@ namespace catapult { namespace plugins {
 					.add(observers::CreateChildNamespaceObserver())
 					.add(observers::CreateRentalFeeObserver<model::NamespaceRentalFeeNotification<1>>("Namespace", rentalFeeReceiptType))
 					.add(observers::CreateCacheBlockTouchObserver<cache::NamespaceCache>("Namespace", expiryReceiptType))
-					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1, config));
+					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1, pConfigHolder));
 			});
 		}
 

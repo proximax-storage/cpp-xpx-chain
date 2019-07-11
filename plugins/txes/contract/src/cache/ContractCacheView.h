@@ -38,7 +38,8 @@ namespace catapult { namespace cache {
 			, public ContractCacheViewMixins::Iteration
 			, public ContractCacheViewMixins::ConstAccessor
 			, public ContractCacheViewMixins::PatriciaTreeView
-			, public ContractCacheViewMixins::Enable {
+			, public ContractCacheViewMixins::Enable
+			, public ContractCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = ContractCacheTypes::CacheReadOnlyType;
 

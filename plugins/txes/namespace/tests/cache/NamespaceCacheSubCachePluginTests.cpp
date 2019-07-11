@@ -18,8 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/cache/NamespaceCacheSubCachePlugin.h"
 #include "src/config/NamespaceConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
@@ -30,18 +32,19 @@ namespace catapult { namespace cache {
 #define TEST_CLASS NamespaceCacheSubCachePluginTests
 
 	namespace {
-		auto CreateBlockChainConfiguration() {
+		auto CreateConfigHolder() {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(0);
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration("catapult.plugins.namespace", pluginConfig);
-			return blockChainConfig;
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			return pConfigHolder;
 		}
-		auto Default_Config = CreateBlockChainConfiguration();
 
 		auto DefaultCacheOptions() {
-			return NamespaceCacheTypes::Options{ Default_Config };
+			return NamespaceCacheTypes::Options{ CreateConfigHolder() };
 		}
 	}
 
@@ -54,7 +57,7 @@ namespace catapult { namespace cache {
 		NamespaceCacheSummaryCacheStorage storage(cache);
 		{
 			// - insert root with 2 children, then renew root
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto owner = test::CreateRandomOwner();
 			state::RootNamespace root(NamespaceId(123), owner, test::CreateLifetime(234, 321));
 			delta->insert(root);
@@ -69,7 +72,7 @@ namespace catapult { namespace cache {
 		mocks::MockMemoryStream stream("", buffer);
 
 		// Act:
-		storage.saveAll(stream);
+		storage.saveAll(stream, Height{0});
 
 		// Assert: all sizes were saved
 		ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) * 2, buffer.size());
@@ -100,7 +103,7 @@ namespace catapult { namespace cache {
 			storage.loadAll(stream, 0);
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(7u, view->activeSize());
 			EXPECT_EQ(11u, view->deepSize());
 		}

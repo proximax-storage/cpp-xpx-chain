@@ -24,6 +24,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/thread/MultiServicePool.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
@@ -58,14 +59,13 @@ namespace catapult { namespace extensions {
 		mocks::MockNodeSubscriber nodeSubscriber;
 
 		std::vector<utils::DiagnosticCounter> counters;
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(config.BlockChain);
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetConfig(Height{0}, config);
 		plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
 		thread::MultiServicePool pool("test", 1);
 
 		// Act:
 		auto state = ServiceState(
-				config,
 				nodes,
 				catapultCache,
 				catapultState,
@@ -82,7 +82,7 @@ namespace catapult { namespace extensions {
 
 		// Assert:
 		// - check references
-		EXPECT_EQ(&config, &state.config());
+		EXPECT_EQ(pConfigHolder.get(), state.pluginManager().configHolder().get());
 		EXPECT_EQ(&nodes, &state.nodes());
 		EXPECT_EQ(&catapultCache, &state.cache());
 		EXPECT_EQ(&catapultState, &state.state());

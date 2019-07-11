@@ -23,6 +23,7 @@
 #include "catapult/utils/HexParser.h"
 #include "catapult/utils/StackTimer.h"
 #include "tests/int/stress/test/InputDependentTest.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 
@@ -47,17 +48,17 @@ namespace catapult { namespace cache {
 			return std::make_pair(accountState, address == accountState.Address);
 		}
 
-		auto CreateConfig() {
+		auto CreateConfigHolder() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
 			config.ImportanceGrouping = 543;
 			config.MinHarvesterBalance = Amount(1000);
 			config.CurrencyMosaicId = MosaicId(0xE329'AD1C'BE7F'C60D);
 			config.HarvestingMosaicId = MosaicId(2222);
-			return config;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			return pConfigHolder;
 		}
-
-		auto Default_Config = CreateConfig();
 
 		template<typename TSerializer>
 		void AssertAccountStateMerkleRootIsCalculatedCorrectly(
@@ -66,12 +67,12 @@ namespace catapult { namespace cache {
 			// Arrange: create a db-backed account state cache
 			test::TempDirectoryGuard dbDirGuard;
 			CacheConfiguration cacheConfig(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Enabled);
-			AccountStateCache cache(cacheConfig, Default_Config);
+			AccountStateCache cache(cacheConfig, CreateConfigHolder());
 
 			// - load all test accounts into the delta
 			std::pair<Hash256, bool> deltaMerkleRootPair;
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				test::RunInputDependentTest(sourceFilename, ParseAccount<TSerializer>, [&delta](const auto& accountState) {
 					delta->addAccount(accountState);
 				});
@@ -83,7 +84,7 @@ namespace catapult { namespace cache {
 			}
 
 			// Act: calculate the committed state hash from the view
-			auto committedMerkleRootPair = cache.createView()->tryGetMerkleRoot();
+			auto committedMerkleRootPair = cache.createView(Height{0})->tryGetMerkleRoot();
 
 			// Assert: merkle root should be enabled
 			EXPECT_TRUE(deltaMerkleRootPair.second);
@@ -172,14 +173,14 @@ namespace catapult { namespace cache {
 			CATAPULT_LOG(debug) << "creating patricia tree enabled cache";
 			test::TempDirectoryGuard dbDirGuard;
 			CacheConfiguration cacheConfig(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Enabled);
-			AccountStateCache cache(cacheConfig, Default_Config);
+			AccountStateCache cache(cacheConfig, CreateConfigHolder());
 
 			// - load all test accounts into the delta
 			for (auto i = 0u; i < numBatches; ++i) {
 				std::vector<Address> addresses(GetNumStressAccounts() / numBatches);
 				test::FillWithRandomData({ reinterpret_cast<uint8_t*>(addresses.data()), addresses.size() * sizeof(Address) });
 
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				RunTimedStressAction("adding accounts", [&delta, &addresses]() {
 					for (const auto& address : addresses)
 						delta->addAccount(address, Height(1));
@@ -196,7 +197,7 @@ namespace catapult { namespace cache {
 			}
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(GetNumStressAccounts(), view->size());
 
 			auto merkleRootPair = view->tryGetMerkleRoot();

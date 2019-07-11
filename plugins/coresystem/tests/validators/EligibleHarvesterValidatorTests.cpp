@@ -24,6 +24,7 @@
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -32,7 +33,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EligibleHarvesterValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, model::BlockChainConfiguration::Uninitialized())
+	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
@@ -64,8 +65,10 @@ namespace catapult { namespace validators {
 		auto key = test::GenerateRandomData<Key_Size>();
 		auto height = Height(1000);
 		AddAccount(cache, key, Amount(9999));
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		pConfigHolder->SetBlockChainConfig(config);
 
-		auto pValidator = CreateEligibleHarvesterValidator(config);
+		auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
 
 		auto signer = test::GenerateRandomData<Key_Size>();
 		auto notification = test::CreateBlockNotification(signer);
@@ -89,8 +92,10 @@ namespace catapult { namespace validators {
 			auto key = test::GenerateRandomData<Key_Size>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
 			AddAccount(cache, key, initialBalance);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
 
-			auto pValidator = CreateEligibleHarvesterValidator(config);
+			auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
 			auto notification = test::CreateBlockNotification(key);
 
 			// Act:

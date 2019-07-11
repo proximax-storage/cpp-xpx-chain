@@ -38,8 +38,8 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [&blockChainConfig](
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
@@ -60,6 +60,7 @@ namespace catapult { namespace validators {
 			if (!root.lifetime().isActiveOrGracePeriod(height))
 				return ValidationResult::Success;
 
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			model::NamespaceLifetimeConstraints constraints(blockChainConfig);
 			auto newLifetimeEnd = root.lifetime().End + ToHeight(notification.Duration);
 			auto maxLifetimeEnd = height + ToHeight(constraints.maxNamespaceDuration());

@@ -123,7 +123,7 @@ namespace catapult { namespace mongo {
 				MongoNemesisBlockPreparer nemesisBlockPreparer(
 						m_mongoStorage,
 						m_externalCacheStorage,
-						m_pPluginManager->config(),
+						m_pPluginManager->config(Height{0}),
 						m_sourceStorage,
 						*m_pPluginManager);
 

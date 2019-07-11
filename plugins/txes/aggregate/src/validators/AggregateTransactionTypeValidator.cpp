@@ -12,9 +12,10 @@ namespace catapult { namespace validators {
 
 	using Notification = model::AggregateTransactionTypeNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(AggregateTransactionType, Notification)(const model::BlockChainConfiguration& blockChainConfig) {
-		return MAKE_STATELESS_VALIDATOR(AggregateTransactionType, ([&blockChainConfig](const auto& notification) {
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>("catapult.plugins.aggregate");
+	DECLARE_STATEFUL_VALIDATOR(AggregateTransactionType, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(AggregateTransactionType, ([pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME(aggregate));
 			if (notification.Type == model::Entity_Type_Aggregate_Bonded && !pluginConfig.EnableBondedAggregateSupport)
 				return Failure_Aggregate_Bonded_Not_Enabled;
 

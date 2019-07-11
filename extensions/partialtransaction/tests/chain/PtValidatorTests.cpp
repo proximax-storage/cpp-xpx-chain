@@ -24,6 +24,7 @@
 #include "catapult/model/WeakCosignedTransactionInfo.h"
 #include "catapult/plugins/PluginManager.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
 #include "tests/TestHarness.h"
 
@@ -84,7 +85,7 @@ namespace catapult { namespace chain {
 		};
 
 		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>();
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(config);
 			return pConfigHolder;
 		}
@@ -185,7 +186,7 @@ namespace catapult { namespace chain {
 			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
 			auto pTransaction = mocks::CreateMockTransaction(0);
 			auto transactionHash = test::GenerateRandomData<Hash256_Size>();
-			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash));
+			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash, Height{0}));
 
 			// Assert: when valid, raw result should always be success (even when validatorResult is suppressed failure)
 			EXPECT_EQ(isValid, result.Normalized);
@@ -279,7 +280,7 @@ namespace catapult { namespace chain {
 			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
 			auto pTransaction = mocks::CreateMockTransaction(0);
 			auto transactionHash = test::GenerateRandomData<Hash256_Size>();
-			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash));
+			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash, Height{0}));
 
 			// Assert:
 			EXPECT_FALSE(result.Normalized);

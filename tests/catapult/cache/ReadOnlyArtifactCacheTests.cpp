@@ -34,7 +34,7 @@ namespace catapult { namespace cache {
 			// Arrange:
 			test::SimpleCache cache;
 			{
-				auto cacheDelta = cache.createDelta();
+				auto cacheDelta = cache.createDelta(Height{0});
 				cacheDelta->increment(); // committed
 				cacheDelta->increment();
 				cache.commit();
@@ -43,7 +43,7 @@ namespace catapult { namespace cache {
 			}
 
 			// Act:
-			auto cacheView = cache.createView();
+			auto cacheView = cache.createView(Height{0});
 			ReadOnlyArtifactCacheType readOnlyCache(*cacheView);
 
 			// Assert:
@@ -55,7 +55,7 @@ namespace catapult { namespace cache {
 		void RunReadOnlyDeltaTest(TAssertFunc assertFunc) {
 			// Arrange:
 			test::SimpleCache cache;
-			auto cacheDelta = cache.createDelta();
+			auto cacheDelta = cache.createDelta(Height{0});
 			cacheDelta->increment(); // committed
 			cacheDelta->increment();
 			cache.commit();

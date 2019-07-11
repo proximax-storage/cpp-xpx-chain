@@ -71,12 +71,18 @@ namespace catapult { namespace cache {
 		/// Commits all pending changes to the underlying storage and sets the cache height to \a height.
 		void commit(Height height);
 
+		Height height() const;
+
 	public:
 		/// Gets cache storages for all subcaches.
 		std::vector<std::unique_ptr<const CacheStorage>> storages() const;
 
 		/// Gets cache storages for all subcaches.
 		std::vector<std::unique_ptr<CacheStorage>> storages();
+
+	public:
+		/// Adds a subcache.
+		void addSubCache(std::unique_ptr<SubCachePlugin>);
 
 	private:
 		std::unique_ptr<CacheHeight> m_pCacheHeight; // use a unique_ptr to allow fwd declare

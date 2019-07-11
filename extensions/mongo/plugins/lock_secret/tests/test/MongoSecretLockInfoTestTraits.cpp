@@ -20,6 +20,7 @@
 
 #include "MongoSecretLockInfoTestTraits.h"
 #include "mongo/src/MongoStorageContext.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -34,9 +35,10 @@ namespace catapult { namespace test {
 
 	std::unique_ptr<mongo::ExternalCacheStorage> MongoSecretLockInfoTestTraits::CreateMongoCacheStorage(
 			mongo::MongoStorageContext& context) {
+		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 		return mongo::plugins::CreateMongoSecretLockInfoCacheStorage(
 				context.createDatabaseConnection(),
 				context.bulkWriter(),
-				model::NetworkIdentifier());
+				pConfigHolder);
 	}
 }}

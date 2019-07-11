@@ -26,6 +26,7 @@
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/TimeSpan.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace chain {
@@ -139,9 +140,11 @@ namespace catapult { namespace chain {
 				Height maxHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
 				const model::BlockChainConfiguration& config) {
-			auto pCache = std::make_unique<cache::BlockDifficultyCache>(config);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetBlockChainConfig(config);
+			auto pCache = std::make_unique<cache::BlockDifficultyCache>(pConfigHolder);
 			{
-				auto delta = pCache->createDelta();
+				auto delta = pCache->createDelta(Height{0});
 				state::BlockDifficultyInfo baseInfo(Height(1));
 				baseInfo.BlockDifficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
 				delta->insert(baseInfo);
@@ -151,7 +154,7 @@ namespace catapult { namespace chain {
 			for (auto height = Height(2); height <= maxHeight; height = height + Height(1)) {
 				state::BlockDifficultyInfo nextBlockInfo(height, CalculateTimestamp(height, timeBetweenBlocks), Difficulty(0));
 				nextBlockInfo.BlockDifficulty = CalculateDifficulty(*pCache, nextBlockInfo, config);
-				auto delta = pCache->createDelta();
+				auto delta = pCache->createDelta(Height{0});
 				delta->insert(nextBlockInfo);
 				pCache->commit();
 			}
@@ -169,7 +172,7 @@ namespace catapult { namespace chain {
 			using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
 
 			std::vector<std::unique_ptr<model::Block>> blocks;
-			auto infos = cache.createView()->difficultyInfos(startHeight - Height(1), config.MaxDifficultyBlocks);
+			auto infos = cache.createView(Height{0})->difficultyInfos(startHeight - Height(1), config.MaxDifficultyBlocks);
 
 			DifficultySet difficulties;
 			difficulties.insert(infos.begin(), infos.end());
@@ -272,7 +275,7 @@ namespace catapult { namespace chain {
 			auto pCache = SeedBlockDifficultyCache(chainHeight, utils::TimeSpan::FromMilliseconds(18000), config);
 			DifficultySet set;
 			{
-				auto view = pCache->createView();
+				auto view = pCache->createView(Height{0});
 				auto range = view->difficultyInfos(chainHeight - Height(1), view->size());
 				set.insert(range.begin(), range.end());
 			}

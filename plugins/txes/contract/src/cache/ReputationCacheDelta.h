@@ -40,7 +40,8 @@ namespace catapult { namespace cache {
 			, public ReputationCacheDeltaMixins::PatriciaTreeDelta
 			, public ReputationCacheDeltaMixins::BasicInsertRemove
 			, public ReputationCacheDeltaMixins::DeltaElements
-			, public ReputationCacheDeltaMixins::Enable {
+			, public ReputationCacheDeltaMixins::Enable
+			, public ReputationCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = ReputationCacheTypes::CacheReadOnlyType;
 

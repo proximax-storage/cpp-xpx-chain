@@ -19,6 +19,8 @@
 **/
 
 #pragma once
+
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -52,11 +54,17 @@ namespace catapult { namespace validators {
 
 		static void AssertDurationValidator(ValidationResult expectedResult, BlockDuration notificationDuration) {
 			// Arrange:
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cacheView = cache.createView();
+			auto readOnlyCache = cacheView.toReadOnly();
+			auto resolverContext = test::CreateResolverContextXor();
+			auto context = ValidatorContext(Height(123), Timestamp(8888), model::NetworkInfo(), resolverContext, readOnlyCache);
 			typename TTraits::NotificationType notification(notificationDuration);
 			auto pValidator = TTraits::CreateValidator(MaxDuration());
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "duration " << notification.Duration;

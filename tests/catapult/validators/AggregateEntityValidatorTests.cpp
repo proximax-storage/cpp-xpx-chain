@@ -66,7 +66,7 @@ namespace catapult { namespace validators {
 			auto context = test::CreateValidatorContext(Height(123), cacheView.toReadOnly());
 			auto dispatcher = [&entity](const auto&, const auto& validationFunctions) {
 				Hash256 hash;
-				auto entityInfo = model::WeakEntityInfoT<model::VerifiableEntity>(entity, hash);
+				auto entityInfo = model::WeakEntityInfoT<model::VerifiableEntity>(entity, hash, Height{0});
 
 				// Act: just invoke every validation function once
 				auto i = 0u;
