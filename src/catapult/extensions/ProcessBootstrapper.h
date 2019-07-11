@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "CacheHolder.h"
 #include "ExtensionManager.h"
 #include "catapult/config/CatapultConfiguration.h"
 #include "catapult/plugins/PluginManager.h"
@@ -74,6 +75,12 @@ namespace catapult { namespace extensions {
 		/// Gets the plugin manager.
 		plugins::PluginManager& pluginManager();
 
+		/// Gets the cache holder.
+		CacheHolder& cacheHolder();
+
+		/// Gets the const cache holder.
+		const CacheHolder& cacheHolder() const;
+
 	public:
 		/// Loads all configured extensions.
 		void loadExtensions();
@@ -92,6 +99,7 @@ namespace catapult { namespace extensions {
 		subscribers::SubscriptionManager m_subscriptionManager;
 		plugins::PluginManager m_pluginManager;
 		std::vector<ionet::Node> m_nodes;
+		CacheHolder m_cacheHolder;
 	};
 
 	/// Adds static nodes from \a path to \a bootstrapper.

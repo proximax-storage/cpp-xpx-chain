@@ -218,6 +218,44 @@ namespace catapult { namespace plugins {
 		return model::ResolverContext(bindResolverToCache(mosaicResolver), bindResolverToCache(addressResolver));
 	}
 
+	void PluginManager::addAddressesExtractor(const AddressesExtractor& extractor) {
+		m_addressesExtractors.push_back(extractor);
+	}
+
+	void PluginManager::addPublicKeysExtractor(const PublicKeysExtractor& extractor) {
+		m_publicKeysExtractors.push_back(extractor);
+	}
+
+	namespace {
+		template<typename TExtractors>
+		auto BuildExtractor(const TExtractors& extractors) {
+			return [extractors](const auto& cache, const auto& address) {
+				auto result = model::ExtractorContext().extract(address);
+
+				for (const auto& extractor : extractors) {
+					auto extractedAddresses = extractor(cache, address);
+					result.insert(extractedAddresses.begin(), extractedAddresses.end());
+				}
+
+				return result;
+			};
+		}
+	}
+
+	model::ExtractorContext PluginManager::createExtractorContext(const cache::CatapultCache& cache) const {
+		auto addressesExtractors = BuildExtractor(m_addressesExtractors);
+		auto publicKeysExtractors = BuildExtractor(m_publicKeysExtractors);
+
+		auto bindExtractorToCache = [&cache](const auto& extractor) {
+			return [&cache, extractor](const auto& address) {
+				auto view = cache.createView();
+				return extractor(view.toReadOnly(), address);
+			};
+		};
+
+		return model::ExtractorContext(bindExtractorToCache(addressesExtractors), bindExtractorToCache(publicKeysExtractors));
+	}
+
 	// endregion
 
 	// region publisher

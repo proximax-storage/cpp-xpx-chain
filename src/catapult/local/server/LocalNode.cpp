@@ -48,11 +48,11 @@ namespace catapult { namespace local {
 
 		std::unique_ptr<subscribers::StateChangeSubscriber> CreateStateChangeSubscriber(
 				subscribers::SubscriptionManager& subscriptionManager,
-				const cache::CatapultCache& catapultCache,
+				const extensions::CacheHolder& cacheHolder,
 				const config::CatapultDataDirectory& dataDirectory) {
 			subscriptionManager.addStateChangeSubscriber(CreateFileStateChangeStorage(
 					std::make_unique<io::FileQueueWriter>(dataDirectory.spoolDir("state_change").str(), "index_server.dat"),
-					[&catapultCache]() { return catapultCache.changesStorages(); }));
+					[&cacheHolder]() { return cacheHolder.cache().changesStorages(); }));
 			return subscriptionManager.createStateChangeSubscriber();
 		}
 
@@ -71,7 +71,7 @@ namespace catapult { namespace local {
 					, m_config(m_pBootstrapper->config())
 					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_config.User.DataDirectory))
 					, m_nodes(m_config.Node.MaxTrackedNodes, m_pBootstrapper->extensionManager().networkTimeSupplier())
-					, m_catapultCache({}) // note that sub caches are added in boot
+					, m_cacheHolder(m_pBootstrapper->cacheHolder()) // note that sub caches are added in boot
 					, m_storage(
 							m_pBootstrapper->subscriptionManager().createBlockStorage(m_pBlockChangeSubscriber),
 							CreateStagingBlockStorage(m_dataDirectory))
@@ -79,7 +79,7 @@ namespace catapult { namespace local {
 					, m_pTransactionStatusSubscriber(m_pBootstrapper->subscriptionManager().createTransactionStatusSubscriber())
 					, m_pStateChangeSubscriber(CreateStateChangeSubscriber(
 							m_pBootstrapper->subscriptionManager(),
-							m_catapultCache,
+							m_cacheHolder,
 							m_dataDirectory))
 					, m_pNodeSubscriber(CreateNodeSubscriber(m_pBootstrapper->subscriptionManager(), m_nodes))
 					, m_pluginManager(m_pBootstrapper->pluginManager())
@@ -97,7 +97,7 @@ namespace catapult { namespace local {
 				m_pluginModules = LoadAllPlugins(*m_pBootstrapper);
 
 				CATAPULT_LOG(debug) << "initializing cache";
-				m_catapultCache = m_pluginManager.createCache();
+				m_cacheHolder.cache() = m_pluginManager.createCache();
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
@@ -111,7 +111,7 @@ namespace catapult { namespace local {
 				auto serviceState = extensions::ServiceState(
 						m_config,
 						m_nodes,
-						m_catapultCache,
+						m_cacheHolder.cache(),
 						m_catapultState,
 						m_storage,
 						m_score,
@@ -142,7 +142,7 @@ namespace catapult { namespace local {
 					return state.NumTotalTransactions;
 				});
 
-				m_pluginManager.addDiagnosticCounters(m_counters, m_catapultCache); // add cache counters
+				m_pluginManager.addDiagnosticCounters(m_counters, m_cacheHolder.cache()); // add cache counters
 				m_counters.emplace_back(utils::DiagnosticCounterId("UT CACHE"), [&source = *m_pUtCache]() {
 					return source.view().size();
 				});
@@ -153,7 +153,7 @@ namespace catapult { namespace local {
 				if (extensions::HasSerializedState(m_dataDirectory.dir("state")))
 					return false;
 
-				NemesisBlockNotifier notifier(m_config.BlockChain, m_catapultCache, m_storage, m_pluginManager);
+				NemesisBlockNotifier notifier(m_config.BlockChain, m_cacheHolder.cache(), m_storage, m_pluginManager);
 
 				if (m_pBlockChangeSubscriber)
 					notifier.raise(*m_pBlockChangeSubscriber);
@@ -195,12 +195,12 @@ namespace catapult { namespace local {
 					return;
 
 				constexpr auto SaveStateToDirectoryWithCheckpointing = extensions::SaveStateToDirectoryWithCheckpointing;
-				SaveStateToDirectoryWithCheckpointing(m_dataDirectory, m_config.Node, m_catapultCache, m_catapultState, m_score.get());
+				SaveStateToDirectoryWithCheckpointing(m_dataDirectory, m_config.Node, m_cacheHolder.cache(), m_catapultState, m_score.get());
 			}
 
 		public:
 			const cache::CatapultCache& cache() const override {
-				return m_catapultCache;
+				return m_cacheHolder.cache();
 			}
 
 			model::ChainScore score() const override {
@@ -222,7 +222,7 @@ namespace catapult { namespace local {
 
 		private:
 			extensions::LocalNodeStateRef stateRef() {
-				return extensions::LocalNodeStateRef(m_config, m_catapultState, m_catapultCache, m_storage, m_score);
+				return extensions::LocalNodeStateRef(m_config, m_catapultState, m_cacheHolder.cache(), m_storage, m_score);
 			}
 
 		private:
@@ -236,7 +236,7 @@ namespace catapult { namespace local {
 			config::CatapultDataDirectory m_dataDirectory;
 			ionet::NodeContainer m_nodes;
 
-			cache::CatapultCache m_catapultCache;
+			extensions::CacheHolder& m_cacheHolder;
 			state::CatapultState m_catapultState;
 			io::BlockStorageCache m_storage;
 			extensions::LocalNodeChainScore m_score;

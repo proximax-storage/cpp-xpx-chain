@@ -40,7 +40,7 @@ namespace catapult { namespace test {
 				: m_subscriberFactory(subscriberFactory)
 				, m_pNotificationPublisher(std::make_unique<mocks::MockNotificationPublisher>())
 				, m_notificationPublisher(*m_pNotificationPublisher)
-				, m_extractor(std::move(m_pNotificationPublisher))
+				, m_extractor(std::move(m_pNotificationPublisher), [](){ return model::ExtractorContext(); })
 		{}
 
 	public:
