@@ -23,6 +23,7 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
 #include "timesync/tests/test/TimeSynchronizationTestUtils.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/TestHarness.h"
 #include <cmath>
@@ -186,7 +187,7 @@ namespace catapult { namespace timesync {
 			filters::AggregateSynchronizationFilter aggregateFilter({});
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
-			auto state = test::ServiceTestState();
+			auto state = test::ServiceTestState(test::CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized()));
 			ConfigureServiceState(state);
 			auto& cache = const_cast<cache::AccountStateCache&>(state.cache().sub<cache::AccountStateCache>());
 			auto singleAccountImportance = Importance(Total_Chain_Importance.unwrap() / numSamples);

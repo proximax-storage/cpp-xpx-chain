@@ -160,8 +160,7 @@ namespace catapult { namespace timesync {
 					context.TimeSyncConfig,
 					context.RequestResultFutureSupplier,
 					context.ServiceTestState.state(),
-					*context.pTimeSyncState,
-					context.NetworkTimeSupplier);
+					*context.pTimeSyncState);
 		}
 	}
 

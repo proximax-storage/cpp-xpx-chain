@@ -7,9 +7,8 @@
 #pragma once
 #include "plugins/txes/config/src/state/CatapultConfigEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
-#include "catapult/cache/IdentifierGroupSerializer.h"
+#include "catapult/cache/IdentifierSerializer.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
-#include "catapult/utils/IdentifierGroup.h"
 #include "catapult/utils/Hashers.h"
 
 namespace catapult {
@@ -56,39 +55,6 @@ namespace catapult { namespace cache {
 		}
 	};
 
-	template<typename TDescriptor>
-	class HeightSerializer {
-	private:
-		using ValueType = typename TDescriptor::ValueType;
-
-	public:
-		/// Serializes \a value to string.
-		static std::string SerializeValue(const ValueType& value) {
-			io::StringOutputStream output(sizeof(VersionType) + sizeof(ValueType));
-
-			// write version
-			io::Write32(output, 1);
-
-			io::Write(output, value);
-
-			return output.str();
-		}
-
-		/// Deserializes value from \a buffer.
-		static ValueType DeserializeValue(const RawBuffer& buffer) {
-			io::BufferInputStreamAdapter<RawBuffer> input(buffer);
-
-			// read version
-			VersionType version = io::Read32(input);
-			if (version > 1)
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of height", version);
-
-			ValueType value = io::Read<Height>(input);
-
-			return value;
-		}
-	};
-
 	/// Catapult config cache types.
 	struct CatapultConfigCacheTypes {
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicCatapultConfigCacheView, BasicCatapultConfigCacheDelta, const Height&, state::CatapultConfigEntry>;
@@ -98,7 +64,7 @@ namespace catapult { namespace cache {
 		struct HeightTypesDescriptor {
 		public:
 			using ValueType = Height;
-			using Serializer = HeightSerializer<HeightTypesDescriptor>;
+			using Serializer = IdentifierSerializer<HeightTypesDescriptor>;
 
 		public:
 			static auto GetKeyFromValue(const ValueType& height) {

@@ -114,18 +114,17 @@ namespace catapult { namespace timesync {
 			const TimeSynchronizationConfiguration& timeSyncConfig,
 			const TimeSyncResultSupplier& resultSupplier,
 			const extensions::ServiceState& state,
-			TimeSynchronizationState& timeSyncState,
-			const NetworkTimeSupplier& networkTimeSupplier) {
-		return thread::CreateNamedTask("time synchronization task", [&]() {
-			auto selector = CreateImportanceAwareNodeSelector(timeSyncConfig, state.config(state.cache().height()));
-			auto height = state.storage().view().chainHeight();
+			TimeSynchronizationState& timeSyncState) {
+		return thread::CreateNamedTask("time synchronization task", [&, resultSupplier]() {;
+			auto height = state.cache().height();
+			auto selector = CreateImportanceAwareNodeSelector(timeSyncConfig, state.config(height));
 
 			// select nodes
 			const auto& cache = state.cache().sub<cache::AccountStateCache>();
 			auto selectedNodes = SelectNodes(cache, selector, state.nodes(), height);
 
 			// retrieve samples from selected nodes
-			auto samplesFuture = RetrieveSamples(selectedNodes, resultSupplier, networkTimeSupplier);
+			auto samplesFuture = RetrieveSamples(selectedNodes, resultSupplier, state.timeSupplier());
 			return samplesFuture.then([&timeSynchronizer, &timeSyncState, &cache, height](auto&& future) {
 				auto samples = future.get();
 				CATAPULT_LOG(debug) << "timesync: number of retrieved samples: " << samples.size();

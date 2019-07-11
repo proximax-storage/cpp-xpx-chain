@@ -217,7 +217,6 @@ namespace catapult { namespace consumers {
 				auto height = localChainHeight;
 				std::shared_ptr<const model::BlockElement> pChildBlockElement;
 				while (true) {
-					observerState.Cache.setHeight(height);
 					auto pParentBlockElement = storage.loadBlockElement(height);
 					if (pChildBlockElement) {
 						result.Score += model::ChainScore(chain::CalculateScore(pParentBlockElement->Block, pChildBlockElement->Block));

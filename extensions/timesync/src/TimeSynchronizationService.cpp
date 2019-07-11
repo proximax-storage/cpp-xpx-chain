@@ -107,8 +107,7 @@ namespace catapult { namespace timesync {
 						m_timeSyncConfig,
 						sampleSupplier,
 						state,
-						*m_pTimeSyncState,
-						state.timeSupplier()));
+						*m_pTimeSyncState));
 			}
 
 		private:

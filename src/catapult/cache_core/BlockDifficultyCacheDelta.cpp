@@ -61,7 +61,7 @@ namespace catapult { namespace cache {
 	}
 
 	void BasicBlockDifficultyCacheDelta::prune(Height height) {
-		auto difficultyHistorySize = CalculateDifficultyHistorySize(m_pConfigHolder->Config(this->height()).BlockChain);
+		auto difficultyHistorySize = CalculateDifficultyHistorySize(m_pConfigHolder->Config(height).BlockChain);
 		auto heightDifference = Height(difficultyHistorySize);
 		if (height > heightDifference)
 			m_pruningBoundary = deltaset::PruningBoundary<ValueType>(ValueType(height - heightDifference));
