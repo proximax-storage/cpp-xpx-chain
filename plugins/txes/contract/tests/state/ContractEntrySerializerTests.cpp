@@ -22,7 +22,7 @@ namespace catapult { namespace state {
 		class TestContext {
 		public:
 			explicit TestContext(size_t numAccounts = 10)
-					: m_stream("", m_buffer)
+					: m_stream(m_buffer)
 					, m_accountKeys(test::GenerateKeys(numAccounts))
 			{}
 
@@ -40,11 +40,11 @@ namespace catapult { namespace state {
 				state::ContractEntry entry(m_accountKeys[mainAccountId]);
 				entry.setDuration(BlockDuration(mainAccountId + 20));
 				entry.setStart(Height(mainAccountId + 12));
-				entry.pushHash(test::GenerateRandomData<Hash256_Size>(), entry.start());
-				entry.pushHash(test::GenerateRandomData<Hash256_Size>(), entry.start() + Height(1));
-				entry.customers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
-				entry.executors() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
-				entry.verifiers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
+				entry.pushHash(test::GenerateRandomByteArray<Hash256>(), entry.start());
+				entry.pushHash(test::GenerateRandomByteArray<Hash256>(), entry.start() + Height(1));
+				entry.customers() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
+				entry.executors() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
+				entry.verifiers() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
 
 				return entry;
 			}
@@ -224,7 +224,7 @@ namespace catapult { namespace state {
 			auto buffer = CreateEntryBuffer(originalEntry, version);
 
 			// Act:
-			state::ContractEntry result(test::GenerateRandomData<Key_Size>());
+			state::ContractEntry result(test::GenerateRandomByteArray<Key>());
 			test::RunLoadValueTest<ContractEntrySerializer>(buffer, result);
 
 			// Assert:

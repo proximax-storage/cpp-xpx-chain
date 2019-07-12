@@ -48,7 +48,7 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	TEST(TEST_CLASS, ShouldPruneReturnsTrueIfConditionsAreMet) {
+	TEST(TEST_CLASS, ShouldPruneReturnsTrueWhenConditionsAreMet) {
 		// Assert:
 		AssertPruningPredicate(Height(1), NotifyMode::Commit, 1, true);
 		AssertPruningPredicate(Height(20), NotifyMode::Commit, 1, true);
@@ -67,7 +67,7 @@ namespace catapult { namespace observers {
 		AssertPruningPredicate(Height(50), NotifyMode::Rollback, 25, false);
 	}
 
-	TEST(TEST_CLASS, ShouldPruneReturnsFalseIfHeightIsNotDivisibleByPruneInterval) {
+	TEST(TEST_CLASS, ShouldPruneReturnsFalseWhenHeightIsNotDivisibleByPruneInterval) {
 		// Assert:
 		AssertPruningPredicate(Height(20), NotifyMode::Commit, 3, false);
 		AssertPruningPredicate(Height(20), NotifyMode::Commit, 6, false);
@@ -221,6 +221,14 @@ namespace catapult { namespace observers {
 
 		using PruningObserver = NotificationObserverT<model::BlockNotification<1>>;
 
+		void NotifyBlock(const PruningObserver& observer, ObserverContext& context, Timestamp timestamp) {
+			observer.notify(model::BlockNotification(Key(), Key(), timestamp, Difficulty(), 1, 1), context);
+		}
+
+		void NotifyBlock(const PruningObserver& observer, ObserverContext& context) {
+			NotifyBlock(observer, context, Timestamp());
+		}
+
 		void AssertNoPruning(const PruningObserver& observer, NotifyMode mode, Height height) {
 			// Arrange:
 			auto cache = CreateSimpleCatapultCache();
@@ -229,7 +237,7 @@ namespace catapult { namespace observers {
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
 
 			// Act:
-			observer.notify(model::BlockNotification<1>(Key(), Timestamp(), Difficulty()), context);
+			NotifyBlock(observer, context);
 			const auto& subCache = cache.sub<PrunableCache>();
 
 			// Assert:
@@ -247,7 +255,7 @@ namespace catapult { namespace observers {
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
 
 			// Act:
-			observer.notify(model::BlockNotification<1>(Key(), Timestamp(), Difficulty()), context);
+			NotifyBlock(observer, context);
 			const auto& subCache = cache.sub<PrunableCache>();
 
 			// Assert:
@@ -265,7 +273,7 @@ namespace catapult { namespace observers {
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
 
 			// Act:
-			observer.notify(model::BlockNotification<1>(Key(), timestamp, Difficulty()), context);
+			NotifyBlock(observer, context, timestamp);
 			const auto& subCache = cache.sub<PrunableCache>();
 
 			// Assert:
@@ -424,7 +432,7 @@ namespace catapult { namespace observers {
 			ObserverContext context({ cacheDelta, state, statementBuilder }, height, mode, model::ResolverContext());
 
 			// Act:
-			observer.notify(model::BlockNotification<1>(Key(), Timestamp(), Difficulty()), context);
+			NotifyBlock(observer, context);
 			const auto& subCache = cache.sub<PrunableCache>();
 
 			// Assert:

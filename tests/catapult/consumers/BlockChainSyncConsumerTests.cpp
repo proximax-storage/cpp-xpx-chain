@@ -27,6 +27,7 @@
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
@@ -47,12 +48,36 @@ namespace catapult { namespace consumers {
 		constexpr auto Max_Rollback_Blocks = 25u;
 		constexpr model::ImportanceHeight Initial_Last_Recalculation_Height(1234);
 		constexpr model::ImportanceHeight Modified_Last_Recalculation_Height(7777);
-		const Key Sentinel_Processor_Public_Key = test::GenerateRandomData<Key_Size>();
+		const Key Sentinel_Processor_Public_Key = test::GenerateRandomByteArray<Key>();
 		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
 
 		constexpr model::ImportanceHeight AddImportanceHeight(model::ImportanceHeight lhs, model::ImportanceHeight::ValueType rhs) {
 			return model::ImportanceHeight(lhs.unwrap() + rhs);
 		}
+
+		// region RaisableErrorSource
+
+		class RaisableErrorSource {
+		public:
+			RaisableErrorSource() : m_shouldRaiseError(false)
+			{}
+
+		public:
+			void setError() {
+				m_shouldRaiseError = true;
+			}
+
+		protected:
+			void raise(const std::string& source) const {
+				if (m_shouldRaiseError)
+					CATAPULT_THROW_RUNTIME_ERROR(("raising error from " + source).c_str());
+			}
+
+		private:
+			bool m_shouldRaiseError;
+		};
+
+		// endregion
 
 		// region MockDifficultyChecker
 
@@ -95,7 +120,7 @@ namespace catapult { namespace consumers {
 		struct UndoBlockParams {
 		public:
 			UndoBlockParams(const model::BlockElement& blockElement, observers::ObserverState& state, UndoBlockType undoBlockType)
-					: pBlock(test::CopyBlock(blockElement.Block))
+					: pBlock(test::CopyEntity(blockElement.Block))
 					, UndoBlockType(undoBlockType)
 					, LastRecalculationHeight(state.State.LastRecalculationHeight)
 					, IsPassedMarkedCache(test::IsMarkedCache(state.Cache))
@@ -135,7 +160,7 @@ namespace catapult { namespace consumers {
 		struct ProcessorParams {
 		public:
 			ProcessorParams(const WeakBlockInfo& parentBlockInfo, const BlockElements& elements, observers::ObserverState& state)
-					: pParentBlock(test::CopyBlock(parentBlockInfo.entity()))
+					: pParentBlock(test::CopyEntity(parentBlockInfo.entity()))
 					, ParentHash(parentBlockInfo.hash())
 					, pElements(&elements)
 					, LastRecalculationHeight(state.State.LastRecalculationHeight)
@@ -190,24 +215,61 @@ namespace catapult { namespace consumers {
 
 		struct StateChangeParams {
 		public:
-			StateChangeParams(const StateChangeInfo& changeInfo)
+			StateChangeParams(const subscribers::StateChangeInfo& changeInfo)
 					: ScoreDelta(changeInfo.ScoreDelta)
 					// all processing should have occurred before the state change notification,
 					// so the sentinel account should have been added
-					, IsPassedMarkedCache(changeInfo.CacheDelta.sub<cache::AccountStateCache>().contains(Sentinel_Processor_Public_Key))
+					, IsPassedProcessedCache(HasMarkedChanges(changeInfo.CacheChanges))
 					, Height(changeInfo.Height)
 			{}
 
 		public:
 			model::ChainScore ScoreDelta;
-			bool IsPassedMarkedCache;
+			bool IsPassedProcessedCache;
+			catapult::Height Height;
+
+		private:
+			static bool HasMarkedChanges(const cache::CacheChanges& changes) {
+				auto addedAccountStates = changes.sub<cache::AccountStateCache>().addedElements();
+				return std::any_of(addedAccountStates.cbegin(), addedAccountStates.cend(), [](const auto* pAccountState) {
+					return Sentinel_Processor_Public_Key == pAccountState->PublicKey;
+				});
+			}
+		};
+
+		class MockStateChange : public test::ParamsCapture<StateChangeParams>, public RaisableErrorSource {
+		public:
+			void operator()(const subscribers::StateChangeInfo& changeInfo) const {
+				raise("MockStateChange");
+				const_cast<MockStateChange*>(this)->push(changeInfo);
+			}
+		};
+
+		// endregion
+
+		// region MockPreStateWritten
+
+		struct PreStateWrittenParams {
+		public:
+			PreStateWrittenParams(const cache::CatapultCacheDelta& cacheDelta, const state::CatapultState& catapultState, Height height)
+					// all processing should have occurred before the pre state written notification,
+					// so the sentinel account should have been added
+					: IsPassedProcessedCache(cacheDelta.sub<cache::AccountStateCache>().contains(Sentinel_Processor_Public_Key))
+					, CatapultState(catapultState)
+					, Height(height)
+			{}
+
+		public:
+			bool IsPassedProcessedCache;
+			state::CatapultState CatapultState;
 			catapult::Height Height;
 		};
 
-		class MockStateChange : public test::ParamsCapture<StateChangeParams> {
+		class MockPreStateWritten : public test::ParamsCapture<PreStateWrittenParams>, public RaisableErrorSource {
 		public:
-			void operator()(const StateChangeInfo& changeInfo) const {
-				const_cast<MockStateChange*>(this)->push(changeInfo);
+			void operator()(const cache::CatapultCacheDelta& cacheDelta, const state::CatapultState& catapultState, Height height) const {
+				raise("MockPreStateWritten");
+				const_cast<MockPreStateWritten*>(this)->push(cacheDelta, catapultState, height);
 			}
 		};
 
@@ -256,17 +318,61 @@ namespace catapult { namespace consumers {
 
 		// endregion
 
+		// region MockCommitStep
+
+		class MockCommitStep : public test::ParamsCapture<CommitOperationStep> {
+		public:
+			void operator()(CommitOperationStep step) const {
+				const_cast<MockCommitStep*>(this)->push(step);
+			}
+		};
+
+		// endregion
+
+		// region test utils
+
 		void SetBlockHeight(model::Block& block, Height height) {
 			block.Timestamp = Timestamp(height.unwrap() * 1000);
 			block.Difficulty = Difficulty(16);
 			block.Height = height;
 		}
 
+		std::vector<InputSource> GetAllInputSources() {
+			return { InputSource::Unknown, InputSource::Local, InputSource::Remote_Pull, InputSource::Remote_Push };
+		}
+
+		void LogInputSource(InputSource source) {
+			CATAPULT_LOG(debug) << "source " << source;
+		}
+
+		ConsumerInput CreateInput(Height startHeight, uint32_t numBlocks, InputSource source = InputSource::Remote_Pull) {
+			auto input = test::CreateConsumerInputWithBlocks(numBlocks, source);
+			auto nextHeight = startHeight;
+			for (const auto& element : input.blocks()) {
+				SetBlockHeight(const_cast<model::Block&>(element.Block), nextHeight);
+				nextHeight = nextHeight + Height(1);
+			}
+
+			return input;
+		}
+
+		// endregion
+
+		// region ConsumerTestContext
+
 		struct ConsumerTestContext {
 		public:
 			ConsumerTestContext()
+					: ConsumerTestContext(
+							std::make_unique<mocks::MockMemoryBlockStorage>(),
+							std::make_unique<mocks::MockMemoryBlockStorage>())
+			{}
+
+			explicit ConsumerTestContext(
+					std::unique_ptr<io::BlockStorage>&& pStorage,
+					std::unique_ptr<io::PrunableBlockStorage>&& pStagingStorage)
 					: Cache(test::CreateCatapultCacheWithMarkerAccount(Default_Config))
-					, Storage(std::make_unique<mocks::MockMemoryBlockStorage>()) {
+					, Storage(std::move(pStorage), std::move(pStagingStorage)) {
 				State.LastRecalculationHeight = Initial_Last_Recalculation_Height;
 
 				BlockChainSyncHandlers handlers;
@@ -282,8 +388,14 @@ namespace catapult { namespace consumers {
 				handlers.StateChange = [this](const auto& changeInfo) {
 					return StateChange(changeInfo);
 				};
+				handlers.PreStateWritten = [this](const auto& cacheDelta, const auto& catapultState, auto height) {
+					return PreStateWritten(cacheDelta, catapultState, height);
+				};
 				handlers.TransactionsChange = [this](const auto& changeInfo) {
 					return TransactionsChange(changeInfo);
+				};
+				handlers.CommitStep = [this](auto step) {
+					return CommitStep(step);
 				};
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
@@ -303,7 +415,9 @@ namespace catapult { namespace consumers {
 			MockUndoBlock UndoBlock;
 			MockProcessor Processor;
 			MockStateChange StateChange;
+			MockPreStateWritten PreStateWritten;
 			MockTransactionsChange TransactionsChange;
+			MockCommitStep CommitStep;
 
 			disruptor::DisruptorConsumer Consumer;
 
@@ -317,17 +431,19 @@ namespace catapult { namespace consumers {
 					height = height + Height(1);
 
 					auto transactions = test::GenerateRandomTransactions(numTransactionsPerBlock);
-					auto pBlock = test::GenerateRandomBlockWithTransactions(transactions);
+					auto pBlock = test::GenerateBlockWithTransactions(transactions);
 					SetBlockHeight(*pBlock, height);
 
 					// - seed with random tx hashes
 					auto blockElement = test::BlockToBlockElement(*pBlock);
 					for (auto& transactionElement : blockElement.Transactions)
-						transactionElement.EntityHash = test::GenerateRandomData<Hash256_Size>();
+						transactionElement.EntityHash = test::GenerateRandomByteArray<Hash256>();
 
 					storageModifier.saveBlock(blockElement);
 					OriginalBlocks.push_back(std::move(pBlock));
 				}
+
+				storageModifier.commit();
 			}
 
 		public:
@@ -391,12 +507,16 @@ namespace catapult { namespace consumers {
 
 				// - no state changes were announced
 				EXPECT_EQ(0u, StateChange.params().size());
+				EXPECT_EQ(0u, PreStateWritten.params().size());
+
+				// - the state was not changed
+				EXPECT_EQ(Initial_Last_Recalculation_Height, State.LastRecalculationHeight);
 
 				// - no transaction changes were announced
 				EXPECT_EQ(0u, TransactionsChange.params().size());
 
-				// - the state was not changed
-				EXPECT_EQ(Initial_Last_Recalculation_Height, State.LastRecalculationHeight);
+				// - no commit steps were announced
+				EXPECT_EQ(0u, CommitStep.params().size());
 			}
 
 			void assertStored(const ConsumerInput& input, const model::ChainScore& expectedScoreDelta) {
@@ -407,8 +527,7 @@ namespace catapult { namespace consumers {
 				ASSERT_EQ(inputHeight + Height(input.blocks().size() - 1), chainHeight);
 				for (auto height = inputHeight; height <= chainHeight; height = height + Height(1)) {
 					auto pStorageBlock = storageView.loadBlock(height);
-					EXPECT_EQ(input.blocks()[(height - inputHeight).unwrap()].Block, *pStorageBlock)
-							<< "at height " << height;
+					EXPECT_EQ(input.blocks()[(height - inputHeight).unwrap()].Block, *pStorageBlock) << "at height " << height;
 				}
 
 				// - non conflicting original blocks should still be in storage
@@ -424,21 +543,38 @@ namespace catapult { namespace consumers {
 						Cache.sub<cache::BlockDifficultyCache>().createView(Height{0})->size());
 				EXPECT_EQ(chainHeight, Cache.createView().height());
 
-				// - the state was changed
+				// - state changes were announced
 				ASSERT_EQ(1u, StateChange.params().size());
 				const auto& stateChangeParams = StateChange.params()[0];
 				EXPECT_EQ(expectedScoreDelta, stateChangeParams.ScoreDelta);
-				EXPECT_TRUE(stateChangeParams.IsPassedMarkedCache);
+				EXPECT_TRUE(stateChangeParams.IsPassedProcessedCache);
 				EXPECT_EQ(chainHeight, stateChangeParams.Height);
+
+				// - pre state written checkpoint was announced
+				ASSERT_EQ(1u, PreStateWritten.params().size());
+				const auto& preStateWrittenParams = PreStateWritten.params()[0];
+				EXPECT_TRUE(preStateWrittenParams.IsPassedProcessedCache);
+				EXPECT_EQ(Modified_Last_Recalculation_Height, preStateWrittenParams.CatapultState.LastRecalculationHeight);
+				EXPECT_EQ(chainHeight, preStateWrittenParams.Height);
+
+				// - the state was actually changed
+				EXPECT_EQ(Modified_Last_Recalculation_Height, State.LastRecalculationHeight);
 
 				// - transaction changes were announced
 				EXPECT_EQ(1u, TransactionsChange.params().size());
 
-				// - the state was changed
-				EXPECT_EQ(Modified_Last_Recalculation_Height, State.LastRecalculationHeight);
+				// - commit steps were announced
+				ASSERT_EQ(3u, CommitStep.params().size());
+				EXPECT_EQ(CommitOperationStep::Blocks_Written, CommitStep.params()[0]);
+				EXPECT_EQ(CommitOperationStep::State_Written, CommitStep.params()[1]);
+				EXPECT_EQ(CommitOperationStep::All_Updated, CommitStep.params()[2]);
 			}
 		};
+
+		// endregion
 	}
+
+	// region basic
 
 	TEST(TEST_CLASS, CanProcessZeroEntities) {
 		// Arrange:
@@ -448,26 +584,11 @@ namespace catapult { namespace consumers {
 		test::AssertPassthroughForEmptyInput(context.Consumer);
 	}
 
+	// endregion
+
+	// region height check
+
 	namespace {
-		std::vector<InputSource> GetAllInputSources() {
-			return { InputSource::Unknown, InputSource::Local, InputSource::Remote_Pull, InputSource::Remote_Push };
-		}
-
-		void LogInputSource(InputSource source) {
-			CATAPULT_LOG(debug) << "source " << source;
-		}
-
-		ConsumerInput CreateInput(Height startHeight, uint32_t numBlocks, InputSource source = InputSource::Remote_Pull) {
-			auto input = test::CreateConsumerInputWithBlocks(numBlocks, source);
-			auto nextHeight = startHeight;
-			for (const auto& element : input.blocks()) {
-				SetBlockHeight(const_cast<model::Block&>(element.Block), nextHeight);
-				nextHeight = nextHeight + Height(1);
-			}
-
-			return input;
-		}
-
 		void AssertInvalidHeightWithResult(
 				Height localHeight,
 				Height remoteHeight,
@@ -508,8 +629,6 @@ namespace catapult { namespace consumers {
 			EXPECT_EQ(1u, context.DifficultyChecker.params().size());
 		}
 	}
-
-	// region height check
 
 	TEST(TEST_CLASS, RemoteChainWithHeightLessThanTwoIsRejected) {
 		// Assert:
@@ -780,7 +899,7 @@ namespace catapult { namespace consumers {
 		public:
 			void addRandom(size_t elementIndex, size_t numTransactions) {
 				for (auto i = 0u; i < numTransactions; ++i)
-					add(elementIndex, test::GenerateRandomTransaction(), test::GenerateRandomData<Hash256_Size>());
+					add(elementIndex, test::GenerateRandomTransaction(), test::GenerateRandomByteArray<Hash256>());
 			}
 
 			void addFromStorage(size_t elementIndex, const io::BlockStorageCache& storage, Height height, size_t txIndex) {
@@ -791,7 +910,7 @@ namespace catapult { namespace consumers {
 					if (i++ != txIndex)
 						continue;
 
-					add(elementIndex, test::CopyTransaction(transactionElement.Transaction), transactionElement.EntityHash);
+					add(elementIndex, test::CopyEntity(transactionElement.Transaction), transactionElement.EntityHash);
 					break;
 				}
 			}
@@ -960,9 +1079,80 @@ namespace catapult { namespace consumers {
 		// Assert: the input generation hashes were updated
 		uint8_t i = 8;
 		for (const auto& blockElement : input.blocks()) {
-			Hash256 expectedGenerationHash{ { i++ } };
+			GenerationHash expectedGenerationHash{ { i++ } };
 			EXPECT_EQ(expectedGenerationHash, blockElement.GenerationHash) << "generation hash at " << i;
 		}
+	}
+
+	// endregion
+
+	// region step notification
+
+	namespace {
+		class ErrorAwareBlockStorage : public mocks::MockMemoryBlockStorage, public RaisableErrorSource {
+		public:
+			void dropBlocksAfter(Height height) override {
+				MockMemoryBlockStorage::dropBlocksAfter(height);
+				raise("ErrorAwareBlockStorage::dropBlocksAfter");
+			}
+		};
+	}
+
+	TEST(TEST_CLASS, CommitStepsAreCorrectWhenWritingBlocksFails) {
+		// Arrange:
+		auto pBlockStorage = std::make_unique<ErrorAwareBlockStorage>();
+		auto* pBlockStorageRaw = pBlockStorage.get();
+
+		ConsumerTestContext context(std::make_unique<ErrorAwareBlockStorage>(), std::move(pBlockStorage));
+		context.seedStorage(Height(7));
+		auto input = CreateInput(Height(6), 4);
+
+		// - simulate block writing failure
+		pBlockStorageRaw->setError();
+
+		// Act:
+		EXPECT_THROW(context.Consumer(input), catapult_runtime_error);
+
+		// Assert:
+		EXPECT_EQ(0u, context.CommitStep.params().size());
+	}
+
+	TEST(TEST_CLASS, CommitStepsAreCorrectWhenWritingStateFails) {
+		// Arrange:
+		ConsumerTestContext context;
+		context.seedStorage(Height(7));
+		auto input = CreateInput(Height(6), 4);
+
+		// - simulate state writing failure
+		context.PreStateWritten.setError();
+
+		// Act:
+		EXPECT_THROW(context.Consumer(input), catapult_runtime_error);
+
+		// Assert:
+		ASSERT_EQ(1u, context.CommitStep.params().size());
+		EXPECT_EQ(CommitOperationStep::Blocks_Written, context.CommitStep.params()[0]);
+	}
+
+	TEST(TEST_CLASS, CommitStepsAreCorrectWhenUpdatingFails) {
+		// Arrange:
+		auto pBlockStorage = std::make_unique<ErrorAwareBlockStorage>();
+		auto* pBlockStorageRaw = pBlockStorage.get();
+
+		ConsumerTestContext context(std::move(pBlockStorage), std::make_unique<ErrorAwareBlockStorage>());
+		context.seedStorage(Height(7));
+		auto input = CreateInput(Height(6), 4);
+
+		// - simulate block updating failure
+		pBlockStorageRaw->setError();
+
+		// Act:
+		EXPECT_THROW(context.Consumer(input), catapult_runtime_error);
+
+		// Assert:
+		ASSERT_EQ(2u, context.CommitStep.params().size());
+		EXPECT_EQ(CommitOperationStep::Blocks_Written, context.CommitStep.params()[0]);
+		EXPECT_EQ(CommitOperationStep::State_Written, context.CommitStep.params()[1]);
 	}
 
 	// endregion

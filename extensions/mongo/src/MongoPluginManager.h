@@ -39,18 +39,13 @@ namespace catapult { namespace mongo {
 
 	public:
 		/// Gets the mongo storage context.
-		const MongoStorageContext& mongoContext() const {
+		MongoStorageContext& mongoContext() const {
 			return m_mongoContext;
 		}
 
-		/// Gets the block chain configuration.
+		/// Gets the configuration holder.
 		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const {
 			return m_pConfigHolder;
-		}
-
-		/// Creates a mongo database connection.
-		MongoDatabase createDatabaseConnection() {
-			return m_mongoContext.createDatabaseConnection();
 		}
 
 	public:

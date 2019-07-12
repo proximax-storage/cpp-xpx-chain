@@ -1,21 +1,7 @@
 /**
-*** Copyright (c) 2018-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
-***
-*** This file is part of Catapult.
-***
-*** Catapult is free software: you can redistribute it and/or modify
-*** it under the terms of the GNU Lesser General Public License as published by
-*** the Free Software Foundation, either version 3 of the License, or
-*** (at your option) any later version.
-***
-*** Catapult is distributed in the hope that it will be useful,
-*** but WITHOUT ANY WARRANTY; without even the implied warranty of
-*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*** GNU Lesser General Public License for more details.
-***
-*** You should have received a copy of the GNU Lesser General Public License
-*** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
+*** Copyright 2018 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
 **/
 
 #include "catapult/utils/MemoryUtils.h"
@@ -38,11 +24,11 @@ namespace catapult { namespace plugins {
 	namespace {
 		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 3);
 
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract, 3, 3)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract, 3, 3,)
 
 		CosignatoryModification GenerateModification(int index) {
 			return { ((index % 2) ? CosignatoryModificationType::Del : CosignatoryModificationType::Add),
-				 test::GenerateRandomData<Key_Size>() };
+				 test::GenerateRandomByteArray<Key>() };
 		}
 
 		template<typename TTraits>
@@ -76,7 +62,7 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Modify_Contract)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_Modify_Contract)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
@@ -134,12 +120,12 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3, false);
 		auto* pModification = pTransaction->ExecutorModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
 		pModification = pTransaction->VerifierModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
 
 		// Assert:
 		AssertNumNotifications<TTraits>(3, *pTransaction);
@@ -168,8 +154,8 @@ namespace catapult { namespace plugins {
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
 		pTransaction->DurationDelta = 1000;
-		pTransaction->Signer = test::GenerateRandomData<Key_Size>();
-		pTransaction->Hash = test::GenerateRandomData<Hash256_Size>();
+		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
+		pTransaction->Hash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -250,9 +236,9 @@ namespace catapult { namespace plugins {
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3, false);
 		auto* pModification = pTransaction->VerifierModificationsPtr();
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
-		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomData<Key_Size>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
+		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
@@ -333,7 +319,7 @@ namespace catapult { namespace plugins {
 			auto modificationTypes = GenerateRandomModificationTypeSequence(numAddModifications, numDelModifications);
 			auto* pModification = pTransaction->VerifierModificationsPtr();
 			for (auto modificationType : modificationTypes)
-				*pModification++ = { modificationType, test::GenerateRandomData<Key_Size>() };
+				*pModification++ = { modificationType, test::GenerateRandomByteArray<Key>() };
 
 			// Act:
 			test::PublishTransaction(*pPlugin, *pTransaction, sub);

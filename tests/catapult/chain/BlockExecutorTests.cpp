@@ -140,7 +140,7 @@ namespace catapult { namespace chain {
 		auto cache = test::CreateEmptyCatapultCache(config);
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
-		auto pBlock = test::GenerateBlockWithTransactionsAtHeight(0, Height(10));
+		auto pBlock = test::GenerateBlockWithTransactions(0, Height(10));
 		SetVersions(*pBlock, 22);
 
 		state::CatapultState catapultState;
@@ -163,7 +163,7 @@ namespace catapult { namespace chain {
 		auto cache = test::CreateEmptyCatapultCache(config);
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
-		auto pBlock = test::GenerateBlockWithTransactionsAtHeight(7, Height(10));
+		auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
 		SetVersions(*pBlock, 22);
 
 		state::CatapultState catapultState;
@@ -186,7 +186,7 @@ namespace catapult { namespace chain {
 		auto cache = test::CreateEmptyCatapultCache(config);
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
-		auto pBlock = test::GenerateBlockWithTransactionsAtHeight(7, Height(10));
+		auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
 
 		state::CatapultState catapultState;
 		observers::ObserverState state(delta, catapultState);
@@ -206,8 +206,8 @@ namespace catapult { namespace chain {
 		auto cache = test::CreateEmptyCatapultCache(config);
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
-		auto pBlock1 = test::GenerateBlockWithTransactionsAtHeight(5, Height(10));
-		auto pBlock2 = test::GenerateBlockWithTransactionsAtHeight(3, Height(25));
+		auto pBlock1 = test::GenerateBlockWithTransactions(5, Height(10));
+		auto pBlock2 = test::GenerateBlockWithTransactions(3, Height(25));
 		SetVersions(*pBlock1, 22);
 		SetVersions(*pBlock2, 79);
 
@@ -238,7 +238,7 @@ namespace catapult { namespace chain {
 		auto config = model::BlockChainConfiguration::Uninitialized();
 		auto cache = test::CreateEmptyCatapultCache(config);
 		mocks::MockEntityObserver observer;
-		auto pBlock = test::GenerateBlockWithTransactionsAtHeight(1, Height(1));
+		auto pBlock = test::GenerateBlockWithTransactions(1, Height(1));
 
 		{
 			auto delta = cache.createDelta();

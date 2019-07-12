@@ -20,10 +20,11 @@
 
 #include "harvesting/src/TransactionsInfoSupplier.h"
 #include "harvesting/src/HarvestingUtFacadeFactory.h"
-#include "catapult/cache/MemoryUtCache.h"
+#include "catapult/cache_tx/MemoryUtCache.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
@@ -37,10 +38,15 @@ namespace catapult { namespace harvesting {
 		// region test context
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ImportanceGrouping = 1;
+			test::MutableCatapultConfiguration config;
+
+			config.BlockChain.ImportanceGrouping = 1;
+
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 2;
+
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			pConfigHolder->SetBlockChainConfig(config.ToConst());
 			return pConfigHolder;
 		}
 
@@ -187,12 +193,12 @@ namespace catapult { namespace harvesting {
 		}
 	}
 
-	STRATEGY_BASED_TEST(SupplierReturnsNoTransactionInfosIfCacheIsEmpty) {
+	STRATEGY_BASED_TEST(SupplierReturnsNoTransactionInfosWhenCacheIsEmpty) {
 		// Assert:
 		AssertEmptySupplierResults(Strategy, 0, 3);
 	}
 
-	STRATEGY_BASED_TEST(SupplierReturnsNoTransactionInfosIfZeroInfosAreRequested) {
+	STRATEGY_BASED_TEST(SupplierReturnsNoTransactionInfosWhenZeroInfosAreRequested) {
 		// Assert:
 		AssertEmptySupplierResults(Strategy, 10, 0);
 	}

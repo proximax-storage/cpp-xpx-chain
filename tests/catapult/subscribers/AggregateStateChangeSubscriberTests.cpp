@@ -19,7 +19,7 @@
 **/
 
 #include "catapult/subscribers/AggregateStateChangeSubscriber.h"
-#include "catapult/consumers/StateChangeInfo.h"
+#include "catapult/subscribers/StateChangeInfo.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/ChainScore.h"
 #include "tests/catapult/subscribers/test/AggregateSubscriberTestContext.h"
@@ -74,10 +74,10 @@ namespace catapult { namespace subscribers {
 		// Arrange:
 		class MockStateChangeSubscriber : public UnsupportedStateChangeSubscriber {
 		public:
-			std::vector<const consumers::StateChangeInfo*> StateChangeInfos;
+			std::vector<const StateChangeInfo*> StateChangeInfos;
 
 		public:
-			void notifyStateChange(const consumers::StateChangeInfo& info) override {
+			void notifyStateChange(const StateChangeInfo& info) override {
 				StateChangeInfos.push_back(&info);
 			}
 		};
@@ -88,7 +88,7 @@ namespace catapult { namespace subscribers {
 		auto cache = test::CreateEmptyCatapultCache(config);
 		auto cacheDelta = cache.createDelta();
 		model::ChainScore scoreDelta;
-		consumers::StateChangeInfo stateChangeInfo(cacheDelta, scoreDelta, Height(444));
+		StateChangeInfo stateChangeInfo{ cache::CacheChanges(cacheDelta), scoreDelta, Height(444) };
 
 		// Sanity:
 		EXPECT_EQ(3u, context.subscribers().size());

@@ -20,7 +20,7 @@
 
 #pragma once
 #include "ServerHooks.h"
-#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/CatapultConfiguration.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/net/PacketIoPickerContainer.h"
 #include "catapult/plugins/PluginManager.h"

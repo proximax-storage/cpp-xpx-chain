@@ -39,7 +39,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS RegisterNamespaceTransactionPluginTests
 
 	namespace {
-		TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(RegisterNamespace, std::shared_ptr<config::LocalNodeConfigurationHolder>, 2, 2)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(RegisterNamespace, std::shared_ptr<config::LocalNodeConfigurationHolder>, 2, 2,)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
@@ -80,6 +80,8 @@ namespace catapult { namespace plugins {
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(
 			TEST_CLASS,
+			,
+			,
 			Entity_Type_Register_Namespace,
 			std::make_shared<config::MockLocalNodeConfigurationHolder>(CreateBlockChainConfiguration(CreateNamespaceConfiguration(Amount(0), Amount(0)))))
 

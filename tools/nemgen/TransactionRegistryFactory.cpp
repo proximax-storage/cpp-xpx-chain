@@ -37,7 +37,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), mosaicConfig);
 		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespaceConfig);
-		config::LocalNodeConfiguration config{
+		config::CatapultConfiguration config{
 			std::move(blockChainConfig),
 			config::NodeConfiguration::Uninitialized(),
 			config::LoggingConfiguration::Uninitialized(),

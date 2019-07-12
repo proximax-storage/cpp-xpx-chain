@@ -22,6 +22,7 @@
 #include "catapult/plugins/PluginManager.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
 
 using namespace catapult::validators;
@@ -204,7 +205,7 @@ namespace catapult { namespace chain {
 			auto pValidator = context.create();
 
 			// Act:
-			model::AccountPublicKeyNotification<1> notification(test::GenerateRandomData<Key_Size>());
+			model::AccountPublicKeyNotification<1> notification(test::GenerateRandomByteArray<Key>());
 			auto result = pValidator->validate(notification);
 
 			// Assert:
@@ -240,7 +241,7 @@ namespace catapult { namespace chain {
 		auto pValidator = context.create();
 
 		// Act:
-		model::AccountPublicKeyNotification<1> notification(test::GenerateRandomData<Key_Size>());
+		model::AccountPublicKeyNotification<1> notification(test::GenerateRandomByteArray<Key>());
 		auto result = pValidator->validate(notification);
 
 		// Assert:
@@ -256,7 +257,7 @@ namespace catapult { namespace chain {
 		auto pValidator = context.create(FailureMode::Suppress);
 
 		// Act:
-		model::AccountPublicKeyNotification<1> notification(test::GenerateRandomData<Key_Size>());
+		model::AccountPublicKeyNotification<1> notification(test::GenerateRandomByteArray<Key>());
 		auto result = pValidator->validate(notification);
 
 		// Assert: the failures were suppressed

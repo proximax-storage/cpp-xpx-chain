@@ -25,20 +25,14 @@
 
 namespace catapult { namespace test {
 
-	void MongoHashLockInfoTestTraits::SetKey(ValueType& lockInfo, const KeyType& key) {
-		lockInfo.Hash = key;
-	}
-
 	cache::CatapultCache MongoHashLockInfoTestTraits::CreateCatapultCache() {
 		return HashLockInfoCacheFactory::Create();
 	}
 
 	std::unique_ptr<mongo::ExternalCacheStorage> MongoHashLockInfoTestTraits::CreateMongoCacheStorage(
 			mongo::MongoStorageContext& context) {
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 		return mongo::plugins::CreateMongoHashLockInfoCacheStorage(
-				context.createDatabaseConnection(),
-				context.bulkWriter(),
-				pConfigHolder);
+				context,
+				std::make_shared<config::MockLocalNodeConfigurationHolder>());
 	}
 }}

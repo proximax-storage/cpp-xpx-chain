@@ -305,6 +305,13 @@ namespace catapult { namespace cache {
 				false);
 	}
 
+	std::vector<std::unique_ptr<const CacheChangesStorage>> CatapultCache::changesStorages() const {
+		return MapSubCaches<const CacheChangesStorage>(
+				m_subCaches,
+				[](const auto& pSubCache) { return pSubCache->createChangesStorage(); },
+				false);
+	}
+
 	void CatapultCache::addSubCache(std::unique_ptr<SubCachePlugin> pSubCache) {
 		if (!pSubCache)
 			return;

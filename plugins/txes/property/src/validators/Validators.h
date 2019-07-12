@@ -22,7 +22,6 @@
 #include "Results.h"
 #include "src/model/PropertyNotifications.h"
 #include "catapult/config_holder/LocalNodeConfigurationHolder.h"
-#include "catapult/utils/UnresolvedAddress.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 

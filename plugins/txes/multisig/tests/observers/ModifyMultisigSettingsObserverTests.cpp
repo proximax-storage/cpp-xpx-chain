@@ -86,7 +86,7 @@ namespace catapult { namespace observers {
 
 			static void AssertTestWithSettings(const TestSettings& removal, const TestSettings& approval) {
 				// Arrange:
-				auto signer = test::GenerateRandomData<Key_Size>();
+				auto signer = test::GenerateRandomByteArray<Key>();
 				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
 				auto config = model::BlockChainConfiguration::Uninitialized();
 
@@ -106,7 +106,7 @@ namespace catapult { namespace observers {
 
 			static void AssertTestWithSettings(const TestSettings& removal, const TestSettings& approval) {
 				// Arrange:
-				auto signer = test::GenerateRandomData<Key_Size>();
+				auto signer = test::GenerateRandomByteArray<Key>();
 				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
 				auto config = model::BlockChainConfiguration::Uninitialized();
 
@@ -121,28 +121,13 @@ namespace catapult { namespace observers {
 		};
 	}
 
+	// region traits based tests
+
 #define NOTIFY_MODE_BASED_TRAITS(TEST_NAME) \
 	template<typename TTraits> void TEST_NAME(); \
 	TEST(TEST_CLASS, TEST_NAME##_Commit) { TEST_NAME<CommitTraits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_Rollback) { TEST_NAME<RollbackTraits>(); } \
 	template<typename TTraits> void TEST_NAME()
-
-	NOTIFY_MODE_BASED_TRAITS(ObserverIgnoresNotificationIfAccountIsUnknown) {
-		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
-		auto notification = CreateNotification(signer, 0, 0);
-
-		auto pObserver = CreateModifyMultisigSettingsObserver();
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		ObserverTestContext context(TTraits::Mode, Height(777), config);
-
-		// Act: observer does not throw
-		test::ObserveNotification(*pObserver, notification, context);
-
-		// Assert: cache was not altered
-		const auto& multisigCache = context.cache().sub<cache::MultisigCache>();
-		EXPECT_EQ(0u, multisigCache.size());
-	}
 
 	NOTIFY_MODE_BASED_TRAITS(ZeroDeltaDoesNotChangeSettings) {
 		// Assert:
@@ -163,4 +148,54 @@ namespace catapult { namespace observers {
 		// Assert: note: that's something that settings validator checks
 		TTraits::AssertTestWithSettings({ 124, 254, 126 }, { 128, 0, -128 });
 	}
+
+	// endregion
+
+	// region notify mode specific tests
+
+	TEST(TEST_CLASS, ObserverIgnoresNotificationWhenAccountIsUnknown_ModeCommit) {
+		// Arrange:
+		auto signer = test::GenerateRandomByteArray<Key>();
+		auto notification = CreateNotification(signer, -1, -2);
+
+		auto pObserver = CreateModifyMultisigSettingsObserver();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(NotifyMode::Commit, Height(777), config);
+
+		// Act: observer does not throw
+		test::ObserveNotification(*pObserver, notification, context);
+
+		// Assert: cache was not altered
+		const auto& multisigCache = context.cache().sub<cache::MultisigCache>();
+		EXPECT_EQ(0u, multisigCache.size());
+	}
+
+	TEST(TEST_CLASS, ObserverAddsUnknownAccountToCacheAndProcessesDeltas_ModeRollback) {
+		// Arrange:
+		auto signer = test::GenerateRandomByteArray<Key>();
+		auto notification = CreateNotification(signer, -1, -2);
+
+		auto pObserver = CreateModifyMultisigSettingsObserver();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(NotifyMode::Rollback, Height(777), config);
+
+		// Act:
+		test::ObserveNotification(*pObserver, notification, context);
+
+		// Assert:
+		const auto& multisigCache = context.cache().sub<cache::MultisigCache>();
+		EXPECT_EQ(1u, multisigCache.size());
+
+		auto multisigIter = multisigCache.find(signer);
+		ASSERT_TRUE(!!multisigIter.tryGet());
+
+		const auto& multisigEntry = multisigIter.get();
+		EXPECT_EQ(signer, multisigEntry.key());
+		EXPECT_EQ(2u, multisigEntry.minApproval());
+		EXPECT_EQ(1u, multisigEntry.minRemoval());
+		EXPECT_TRUE(multisigEntry.cosignatories().empty());
+		EXPECT_TRUE(multisigEntry.multisigAccounts().empty());
+	}
+
+	// endregion
 }}

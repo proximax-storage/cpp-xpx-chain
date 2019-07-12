@@ -22,8 +22,6 @@
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/plugins/PluginModule.h"
 
-namespace catapult { namespace config { class LocalNodeConfiguration; } }
-
 namespace catapult { namespace tools { namespace nemgen {
 
 	/// Loads plugins into a plugin manager.

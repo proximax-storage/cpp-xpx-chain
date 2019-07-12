@@ -47,7 +47,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		/// State hash.
 		Hash256 StateHash;
 
-		/// Textual summary including subcache hashes.
+		/// Textual summary including sub cache hashes.
 		std::string Summary;
 	};
 

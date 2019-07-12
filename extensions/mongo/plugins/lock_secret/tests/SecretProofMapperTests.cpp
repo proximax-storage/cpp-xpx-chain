@@ -30,10 +30,10 @@ namespace catapult { namespace mongo { namespace plugins {
 #define TEST_CLASS SecretProofMapperTests
 
 	namespace {
-		DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(SecretProof)
+		DEFINE_MONGO_TRANSACTION_PLUGIN_TEST_TRAITS_NO_ADAPT(SecretProof,)
 	}
 
-	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, model::Entity_Type_Secret_Proof)
+	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , model::Entity_Type_Secret_Proof)
 
 	// region streamTransaction
 
@@ -48,13 +48,15 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto view = builder.view();
 
 		// Assert:
-		EXPECT_EQ(3u, test::GetFieldCount(view));
+		EXPECT_EQ(4u, test::GetFieldCount(view));
 		EXPECT_EQ(utils::to_underlying_type(pTransaction->HashAlgorithm), test::GetUint8(view, "hashAlgorithm"));
 		EXPECT_EQ(pTransaction->Secret, test::GetHashValue(view, "secret"));
 
 		const auto* pProof = pTransaction->ProofPtr();
 		const auto* pDbProof = test::GetBinary(view, "proof");
 		EXPECT_EQ(test::ToHexString(pProof, pTransaction->ProofSize), test::ToHexString(pDbProof, pTransaction->ProofSize));
+
+		EXPECT_EQ(extensions::CopyToAddress(pTransaction->Recipient), test::GetAddressValue(view, "recipient"));
 	}
 
 	// endregion

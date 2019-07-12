@@ -33,17 +33,17 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
-		constexpr auto Max_Divisible_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
+		constexpr auto Max_Atomic_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
 
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
 				Height height,
 				const model::MosaicSupplyChangeNotification<1>& notification,
-				Amount maxDivisibleUnits = Max_Divisible_Units) {
+				Amount maxAtomicUnits = Max_Atomic_Units) {
 			// Arrange:
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
-			pluginConfig.MaxMosaicDivisibleUnits = maxDivisibleUnits;
+			pluginConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection direction) {
 			// Arrange:
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
@@ -110,7 +110,7 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply(model::MosaicSupplyChangeDirection direction) {
 			// Arrange:
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
@@ -138,7 +138,7 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertDecreaseValidationResult(ValidationResult expectedResult, Amount mosaicSupply, Amount ownerSupply, Amount delta) {
 			// Arrange:
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto direction = model::MosaicSupplyChangeDirection::Decrease;
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
 
@@ -172,9 +172,9 @@ namespace catapult { namespace validators {
 	// region increase
 
 	namespace {
-		void AssertIncreaseValidationResult(ValidationResult expectedResult, Amount maxDivisibleUnits, Amount mosaicSupply, Amount delta) {
+		void AssertIncreaseValidationResult(ValidationResult expectedResult, Amount maxAtomicUnits, Amount mosaicSupply, Amount delta) {
 			// Arrange:
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto direction = model::MosaicSupplyChangeDirection::Increase;
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
 
@@ -182,30 +182,30 @@ namespace catapult { namespace validators {
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, Amount(111));
 
 			// Assert:
-			AssertValidationResult(expectedResult, cache, Height(100), notification, maxDivisibleUnits);
+			AssertValidationResult(expectedResult, cache, Height(100), notification, maxAtomicUnits);
 		}
 	}
 
-	TEST(TEST_CLASS, CanIncreaseMutableSupplyToLessThanDivisibleUnits) {
+	TEST(TEST_CLASS, CanIncreaseMutableSupplyToLessThanAtomicUnits) {
 		// Assert:
 		AssertIncreaseValidationResult(ValidationResult::Success, Amount(900), Amount(500), Amount(300));
 		AssertIncreaseValidationResult(ValidationResult::Success, Amount(900), Amount(500), Amount(399));
 	}
 
-	TEST(TEST_CLASS, CanIncreaseMutableSupplyToExactlyDivisibleUnits) {
+	TEST(TEST_CLASS, CanIncreaseMutableSupplyToExactlyAtomicUnits) {
 		// Assert:
 		AssertIncreaseValidationResult(ValidationResult::Success, Amount(900), Amount(500), Amount(400));
 	}
 
-	TEST(TEST_CLASS, CannotIncreaseMutableSupplyToGreaterThanDivisibleUnits) {
+	TEST(TEST_CLASS, CannotIncreaseMutableSupplyToGreaterThanAtomicUnits) {
 		// Assert:
 		AssertIncreaseValidationResult(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Amount(401));
 		AssertIncreaseValidationResult(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Amount(500));
 	}
 
-	TEST(TEST_CLASS, CannotIncreaseMutableSupplyIfOverflowIsDetected) {
+	TEST(TEST_CLASS, CannotIncreaseMutableSupplyWhenOverflowIsDetected) {
 		// Assert:
-		AssertIncreaseValidationResult(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Max_Divisible_Units);
+		AssertIncreaseValidationResult(Failure_Mosaic_Supply_Exceeded, Amount(900), Amount(500), Max_Atomic_Units);
 	}
 
 	// endregion

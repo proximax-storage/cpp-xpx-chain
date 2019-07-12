@@ -33,10 +33,10 @@ namespace catapult { namespace observers {
 	namespace {
 		using SourceChangeType = model::SourceChangeNotification<1>::SourceChangeType;
 
-		void AssertRollbackDoesNotChangeObserverSource(SourceChangeType changeType) {
+		void AssertRollbackDoesNotChangeObserverSource(SourceChangeType primaryChangeType, SourceChangeType secondaryChangeType) {
 			// Arrange:
 			auto pObserver = CreateSourceChangeObserver();
-			auto notification = model::SourceChangeNotification<1>(10, 5, changeType);
+			auto notification = model::SourceChangeNotification<1>(primaryChangeType, 10, secondaryChangeType, 5);
 
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			test::ObserverTestContext context(NotifyMode::Rollback, Height{444}, config);
@@ -52,14 +52,24 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	TEST(TEST_CLASS, RollbackRelativeDoesNotChangeObserverSource) {
+	TEST(TEST_CLASS, RollbackRelativeRelativeDoesNotChangeObserverSource) {
 		// Assert:
-		AssertRollbackDoesNotChangeObserverSource(SourceChangeType::Relative);
+		AssertRollbackDoesNotChangeObserverSource(SourceChangeType::Relative, SourceChangeType::Relative);
 	}
 
-	TEST(TEST_CLASS, RollbackAbsoluteDoesNotChangeObserverSource) {
+	TEST(TEST_CLASS, RollbackAbsoluteRelativeDoesNotChangeObserverSource) {
 		// Assert:
-		AssertRollbackDoesNotChangeObserverSource(SourceChangeType::Absolute);
+		AssertRollbackDoesNotChangeObserverSource(SourceChangeType::Absolute, SourceChangeType::Relative);
+	}
+
+	TEST(TEST_CLASS, RollbackRelativeAbsoluteDoesNotChangeObserverSource) {
+		// Assert:
+		AssertRollbackDoesNotChangeObserverSource(SourceChangeType::Relative, SourceChangeType::Absolute);
+	}
+
+	TEST(TEST_CLASS, RollbackAbsoluteAbsoluteDoesNotChangeObserverSource) {
+		// Assert:
+		AssertRollbackDoesNotChangeObserverSource(SourceChangeType::Absolute, SourceChangeType::Absolute);
 	}
 
 	// endregion
@@ -67,10 +77,13 @@ namespace catapult { namespace observers {
 	// region commit
 
 	namespace {
-		void AssertCommitChangesObserverSource(SourceChangeType changeType, const model::ReceiptSource& expectedSource) {
+		void AssertCommitChangesObserverSource(
+				SourceChangeType primaryChangeType,
+				SourceChangeType secondaryChangeType,
+				const model::ReceiptSource& expectedSource) {
 			// Arrange:
 			auto pObserver = CreateSourceChangeObserver();
-			auto notification = model::SourceChangeNotification<1>(10, 5, changeType);
+			auto notification = model::SourceChangeNotification<1>(primaryChangeType, 10, secondaryChangeType, 5);
 
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
@@ -86,14 +99,24 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	TEST(TEST_CLASS, CommitRelativeChangesObserverSource) {
+	TEST(TEST_CLASS, CommitRelativeRelativeChangesObserverSource) {
 		// Assert:
-		AssertCommitChangesObserverSource(SourceChangeType::Relative, { 15 + 10, 22 + 5 });
+		AssertCommitChangesObserverSource(SourceChangeType::Relative, SourceChangeType::Relative, { 15 + 10, 22 + 5 });
 	}
 
-	TEST(TEST_CLASS, CommitAbsoluteChangesObserverSource) {
+	TEST(TEST_CLASS, CommitAbsoluteRelativeChangesObserverSource) {
 		// Assert:
-		AssertCommitChangesObserverSource(SourceChangeType::Absolute, { 10, 5 });
+		AssertCommitChangesObserverSource(SourceChangeType::Absolute, SourceChangeType::Relative, { 10, 22 + 5 });
+	}
+
+	TEST(TEST_CLASS, CommitRelativeAbsoluteChangesObserverSource) {
+		// Assert:
+		AssertCommitChangesObserverSource(SourceChangeType::Relative, SourceChangeType::Absolute, { 15 + 10, 5 });
+	}
+
+	TEST(TEST_CLASS, CommitAbsoluteAbsoluteChangesObserverSource) {
+		// Assert:
+		AssertCommitChangesObserverSource(SourceChangeType::Absolute, SourceChangeType::Absolute, { 10, 5 });
 	}
 
 	// endregion

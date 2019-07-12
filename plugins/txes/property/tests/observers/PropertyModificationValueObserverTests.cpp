@@ -104,7 +104,7 @@ namespace catapult { namespace observers {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			ObserverTestContext context(notifyMode, Height{444}, config);
 			auto values = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numInitialValues);
-			auto key = test::GenerateRandomData<Key_Size>();
+			auto key = test::GenerateRandomByteArray<Key>();
 			test::PopulateCache<TPropertyValueTraits, TOperationTraits>(context.cache(), key, values);
 
 			auto modification = modificationFactory(values);
@@ -140,9 +140,9 @@ namespace catapult { namespace observers {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			ObserverTestContext context(notifyMode, Height{444}, config);
-			auto filteredAddress = test::GenerateRandomData<Address_Decoded_Size>();
+			auto filteredAddress = test::GenerateRandomByteArray<Address>();
 			auto unresolvedFilteredAddress = AddressPropertyTraits::Unresolve(filteredAddress);
-			auto key = test::GenerateRandomData<Key_Size>();
+			auto key = test::GenerateRandomByteArray<Key>();
 			auto& propertyCacheDelta = context.cache().sub<cache::PropertyCache>();
 			auto accountAddress = model::PublicKeyToAddress(key, model::NetworkIdentifier::Zero);
 			propertyCacheDelta.insert(state::AccountProperties(accountAddress));

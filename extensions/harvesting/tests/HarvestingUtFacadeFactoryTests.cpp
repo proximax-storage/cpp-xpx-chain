@@ -25,6 +25,7 @@
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
@@ -44,7 +45,7 @@ namespace catapult { namespace harvesting {
 
 		// endregion
 
-		// region CreateBlockChainConfiguration
+		// region CreateConfiguration
 
 		enum class StateVerifyOptions { None = 0, State = 1, Receipts = 2, All = 3 };
 
@@ -52,18 +53,25 @@ namespace catapult { namespace harvesting {
 			return utils::to_underlying_type(testedFlag) == (utils::to_underlying_type(testedFlag) & utils::to_underlying_type(value));
 		}
 
-		auto CreateBlockChainConfiguration(StateVerifyOptions verifyOptions = StateVerifyOptions::None) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			config.ShouldEnableVerifiableState = HasFlag(StateVerifyOptions::State, verifyOptions);
-			config.ShouldEnableVerifiableReceipts = HasFlag(StateVerifyOptions::Receipts, verifyOptions);
-			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.ImportanceGrouping = 4;
-			config.MaxTransactionLifetime = utils::TimeSpan::FromHours(24);
-			config.MinHarvesterBalance = Amount(1000);
-			config.BlockPruneInterval = 10;
-			return config;
+		auto CreateConfiguration(StateVerifyOptions verifyOptions = StateVerifyOptions::None) {
+			test::MutableCatapultConfiguration config;
+
+			config.BlockChain.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			config.BlockChain.ShouldEnableVerifiableState = HasFlag(StateVerifyOptions::State, verifyOptions);
+			config.BlockChain.ShouldEnableVerifiableReceipts = HasFlag(StateVerifyOptions::Receipts, verifyOptions);
+			config.BlockChain.CurrencyMosaicId = Currency_Mosaic_Id;
+			config.BlockChain.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.BlockChain.ImportanceGrouping = 4;
+			config.BlockChain.MaxTransactionLifetime = utils::TimeSpan::FromHours(24);
+			config.BlockChain.MinHarvesterBalance = Amount(1000);
+			config.BlockChain.BlockPruneInterval = 10;
+			config.BlockChain.GreedDelta = 0.5;
+			config.BlockChain.GreedExponent = 2.0;
+
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 1;
+
+			return config.ToConst();
 		}
 
 		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
@@ -81,7 +89,7 @@ namespace catapult { namespace harvesting {
 			// Arrange: create factory and facade
 			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 			test::MockExecutionConfiguration executionConfig;
-			HarvestingUtFacadeFactory factory(catapultCache, CreateConfigHolder(CreateBlockChainConfiguration()), executionConfig.Config);
+			HarvestingUtFacadeFactory factory(catapultCache, CreateConfigHolder(CreateConfiguration()), executionConfig.Config);
 
 			auto pFacade = factory.create(Default_Time);
 			ASSERT_TRUE(!!pFacade);
@@ -102,7 +110,7 @@ namespace catapult { namespace harvesting {
 			// - create factory and facade
 			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 			test::MockExecutionConfiguration executionConfig;
-			HarvestingUtFacadeFactory factory(catapultCache, CreateConfigHolder(CreateBlockChainConfiguration()), executionConfig.Config);
+			HarvestingUtFacadeFactory factory(catapultCache, CreateConfigHolder(CreateConfiguration()), executionConfig.Config);
 
 			auto pFacade = factory.create(Default_Time);
 			ASSERT_TRUE(!!pFacade);
@@ -390,6 +398,8 @@ namespace catapult { namespace harvesting {
 			pBlockHeader->FeeMultiplier = BlockFeeMultiplier();
 			pBlockHeader->BlockReceiptsHash = Hash256();
 			pBlockHeader->StateHash = Hash256();
+			pBlockHeader->FeeInterest = 1;
+			pBlockHeader->FeeInterestDenominator = 1;
 			return pBlockHeader;
 		}
 	}
@@ -521,7 +531,7 @@ namespace catapult { namespace harvesting {
 	namespace {
 		struct FacadeTestContext {
 		public:
-			FacadeTestContext(const model::BlockChainConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
+			FacadeTestContext(const config::CatapultConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
 					: m_pConfigHolder(CreateConfigHolder(config))
 					, m_executionConfig(executionConfig)
 					, m_cache(test::CreateEmptyCatapultCache(config, CreateCacheConfiguration(m_dbDirGuard.name()))) {
@@ -642,7 +652,7 @@ namespace catapult { namespace harvesting {
 			// Arrange: prepare context
 			test::MockExecutionConfiguration executionConfig;
 			executionConfig.pObserver->enableReceiptGeneration();
-			FacadeTestContext context(CreateBlockChainConfiguration(verifyOptions), executionConfig.Config);
+			FacadeTestContext context(CreateConfiguration(verifyOptions), executionConfig.Config);
 
 			auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
 			pBlockHeader->FeeMultiplier = BlockFeeMultiplier(1);
@@ -718,7 +728,7 @@ namespace catapult { namespace harvesting {
 		test::MockExecutionConfiguration executionConfig;
 		executionConfig.pObserver->enableReceiptGeneration();
 		executionConfig.pObserver->enableRollbackEmulation();
-		FacadeTestContext context(CreateBlockChainConfiguration(StateVerifyOptions::All), executionConfig.Config);
+		FacadeTestContext context(CreateConfiguration(StateVerifyOptions::All), executionConfig.Config);
 
 		auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
 		pBlockHeader->FeeMultiplier = BlockFeeMultiplier(1);

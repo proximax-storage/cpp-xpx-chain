@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 			return pConfigHolder;
 		}
 
-		struct HashCacheStorageTraits{
+		struct HashCacheStorageTraits {
 			using ValueType = state::TimestampedHash;
 			static constexpr auto Value_Size = sizeof(Timestamp) + sizeof(ValueType::HashType);
 			static constexpr auto Serialized_Value_Size = sizeof(VersionType) + Value_Size;
@@ -47,10 +47,8 @@ namespace catapult { namespace cache {
 				{}
 			};
 
-			static auto CreateRandomValue() {
-				ValueType originalValue;
-				test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&originalValue), Value_Size });
-				return originalValue;
+			static auto CreateValue(uint8_t id) {
+				return ValueType(Timestamp(id), Hash256{ { id } });
 			}
 		};
 	}

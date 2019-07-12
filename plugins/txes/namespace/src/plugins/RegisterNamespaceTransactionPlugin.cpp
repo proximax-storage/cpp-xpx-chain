@@ -123,5 +123,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, Default, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
 }}

@@ -19,7 +19,7 @@
 **/
 
 #include "nodediscovery/src/NodeDiscoveryService.h"
-#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/CatapultConfiguration.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/ServerConnector.h"
@@ -175,7 +175,7 @@ namespace catapult { namespace nodediscovery {
 		TestContext context;
 		context.boot();
 
-		auto identityKey = test::GenerateRandomData<Key_Size>();
+		auto identityKey = test::GenerateRandomByteArray<Key>();
 		auto pPacket = CreateNodePushPingPacket(identityKey, "alice.com", "the GREAT");
 
 		// Act:
@@ -213,7 +213,7 @@ namespace catapult { namespace nodediscovery {
 		reinterpret_cast<ionet::NetworkNode&>(*pRequestPacket->Data()).Port = test::GetLocalHostPort();
 
 		// Act:
-		ionet::ServerPacketHandlerContext handlerContext(test::GenerateRandomData<Key_Size>(), std::string());
+		ionet::ServerPacketHandlerContext handlerContext(test::GenerateRandomByteArray<Key>(), std::string());
 		const auto& handlers = context.testState().state().packetHandlers();
 		handlers.process(*pRequestPacket, handlerContext);
 
@@ -251,7 +251,7 @@ namespace catapult { namespace nodediscovery {
 		reinterpret_cast<ionet::NetworkNode&>(*pRequestPacket->Data()).Port = test::GetLocalHostPort();
 
 		// Act:
-		ionet::ServerPacketHandlerContext handlerContext(test::GenerateRandomData<Key_Size>(), std::string());
+		ionet::ServerPacketHandlerContext handlerContext(test::GenerateRandomByteArray<Key>(), std::string());
 		const auto& handlers = context.testState().state().packetHandlers();
 		handlers.process(*pRequestPacket, handlerContext);
 
@@ -286,7 +286,7 @@ namespace catapult { namespace nodediscovery {
 		reinterpret_cast<ionet::NetworkNode&>(*pRequestPacket->Data()).Port = test::GetLocalHostPort();
 
 		// Act:
-		ionet::ServerPacketHandlerContext handlerContext(test::GenerateRandomData<Key_Size>(), std::string());
+		ionet::ServerPacketHandlerContext handlerContext(test::GenerateRandomByteArray<Key>(), std::string());
 		const auto& handlers = context.testState().state().packetHandlers();
 		handlers.process(*pRequestPacket, handlerContext);
 
@@ -377,7 +377,7 @@ namespace catapult { namespace nodediscovery {
 			// - ensure the packet lifetime is extended by the task callback by
 			//  (1) simulating its removal from writers after being returned by pickOne
 			//  (2) delaying all io operations
-			auto nodeIdentity = test::GenerateRandomData<Key_Size>();
+			auto nodeIdentity = test::GenerateRandomByteArray<Key>();
 			mocks::PickOneAwareMockPacketWriters picker(mocks::PickOneAwareMockPacketWriters::SetPacketIoBehavior::Use_Once);
 			pPacketIo->setDelay(utils::TimeSpan::FromMilliseconds(500));
 			picker.setPacketIo(std::move(pPacketIo));

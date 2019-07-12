@@ -19,14 +19,14 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
 		state::ContractEntry CreateContractEntry() {
-			state::ContractEntry entry(test::GenerateRandomData<Key_Size>());
-			entry.customers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
-			entry.executors() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
-			entry.verifiers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
+			state::ContractEntry entry(test::GenerateRandomByteArray<Key>());
+			entry.customers() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
+			entry.executors() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
+			entry.verifiers() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
 			entry.setStart(Height(12));
 			entry.setDuration(BlockDuration(12));
-			entry.pushHash(test::GenerateRandomData<Key_Size>(), Height(12));
-			entry.pushHash(test::GenerateRandomData<Key_Size>(), Height(13));
+			entry.pushHash(test::GenerateRandomByteArray<Hash256>(), Height(12));
+			entry.pushHash(test::GenerateRandomByteArray<Hash256>(), Height(13));
 
 			return entry;
 		}
@@ -35,7 +35,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	TEST(TEST_CLASS, CanMapContractEntry_ModelToDbModel) {
 		// Arrange:
 		auto entry = CreateContractEntry();
-		auto address = test::GenerateRandomData<Address_Decoded_Size>();
+		auto address = test::GenerateRandomByteArray<Address>();
 
 		// Act:
 		auto document = ToDbModel(entry, address);
@@ -62,7 +62,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	TEST(TEST_CLASS, CanMapContractEntry_DbModelToModel) {
 		// Arrange:
-		auto address = test::GenerateRandomData<Address_Decoded_Size>();
+		auto address = test::GenerateRandomByteArray<Address>();
 		auto dbContractEntry = CreateDbContractEntry(address);
 
 		// Act:

@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/extensions/NemesisBlockLoader.h"
+#include "sdk/src/extensions/BlockExtensions.h"
 #include "plugins/coresystem/src/observers/Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
@@ -27,6 +28,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BalanceTransfers.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
@@ -34,6 +36,7 @@
 #include "tests/test/local/LocalNodeTestState.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 
 namespace catapult { namespace extensions {
 
@@ -42,9 +45,8 @@ namespace catapult { namespace extensions {
 	namespace {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
-		// loader doesn't do anything with currency mosaic, but it does with harvesting mosaic
-		// harvesting mosaic transfers need to be tested for correct behavior
-		// currency mosaic is effectively handled the same as any "other" mosaic
+		// currency and harvesting mosaic transfers need to be tested for correct behavior
+		constexpr auto Currency_Mosaic_Id = MosaicId(3456);
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
 		// region create/set nemesis block
@@ -52,6 +54,12 @@ namespace catapult { namespace extensions {
 		struct BlockSignerPair {
 			std::unique_ptr<crypto::KeyPair> pSigner;
 			std::unique_ptr<model::Block> pBlock;
+		};
+
+		struct NemesisOptions {
+			Importance TotalChainImportance;
+			Amount InitialCurrencyAtomicUnits;
+			extensions::StateHashVerification StateHashVerification = StateHashVerification::Enabled;
 		};
 
 		BlockSignerPair CreateNemesisBlock(const std::vector<test::BalanceTransfers>& transferGroups) {
@@ -72,6 +80,8 @@ namespace catapult { namespace extensions {
 			}
 
 			blockSignerPair.pBlock = CreateBlock(model::PreviousBlockContext(), Network_Identifier, nemesisPublicKey, transactions);
+			blockSignerPair.pBlock->FeeInterest = 1;
+			blockSignerPair.pBlock->FeeInterestDenominator = 1;
 			return blockSignerPair;
 		}
 
@@ -82,13 +92,12 @@ namespace catapult { namespace extensions {
 				const BlockSignerPair& blockSignerPair,
 				const model::NetworkInfo& network,
 				NemesisBlockModification modification) {
-			// note that this trick only works for MockMemoryBlockStorage, which allows the nemesis block to be dropped
 			auto pNemesisBlockElement = storage.view().loadBlockElement(Height(1));
 			auto storageModifier = storage.modifier();
 			storageModifier.dropBlocksAfter(Height(0));
 
 			// copy and prepare the block
-			auto pModifiedBlock = test::CopyBlock(*blockSignerPair.pBlock);
+			auto pModifiedBlock = test::CopyEntity(*blockSignerPair.pBlock);
 
 			// 1. modify the block signer if requested
 			if (NemesisBlockModification::Public_Key == modification)
@@ -107,14 +116,19 @@ namespace catapult { namespace extensions {
 			if (NemesisBlockModification::Signature == modification)
 				test::FillWithRandomData(pModifiedBlock->Signature);
 			else
-				test::SignBlock(*blockSignerPair.pSigner, *pModifiedBlock);
+				extensions::BlockExtensions(pNemesisBlockElement->GenerationHash).signFullBlock(*blockSignerPair.pSigner, *pModifiedBlock);
 
 			storageModifier.saveBlock(modifiedNemesisBlockElement);
+			storageModifier.commit();
 		}
 
 		// endregion
 
 		// region utils
+
+		model::Mosaic MakeCurrencyMosaic(Amount::ValueType amount) {
+			return { Currency_Mosaic_Id, Amount(amount) };
+		}
 
 		model::Mosaic MakeHarvestingMosaic(Amount amount) {
 			return { Harvesting_Mosaic_Id, amount };
@@ -124,13 +138,16 @@ namespace catapult { namespace extensions {
 			return MakeHarvestingMosaic(Amount(amount));
 		}
 
-		model::BlockChainConfiguration CreateDefaultConfiguration(const model::Block& nemesisBlock, Importance totalChainImportance) {
+		model::BlockChainConfiguration CreateDefaultConfiguration(const model::Block& nemesisBlock, const NemesisOptions& nemesisOptions) {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Network_Identifier;
 			config.Network.PublicKey = nemesisBlock.Signer;
 			test::FillWithRandomData(config.Network.GenerationHash);
+			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.TotalChainImportance = totalChainImportance;
+			config.InitialCurrencyAtomicUnits = nemesisOptions.InitialCurrencyAtomicUnits;
+			config.MaxMosaicAtomicUnits = Amount(15'000'000);
+			config.TotalChainImportance = nemesisOptions.TotalChainImportance;
 			return config;
 		}
 
@@ -141,6 +158,9 @@ namespace catapult { namespace extensions {
 			pConfigHolder->SetBlockChainConfig(config);
 			plugins::PluginManager manager(pConfigHolder, plugins::StorageConfiguration());
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin(mocks::PluginOptionFlags::Publish_Transfers));
+			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin(
+					static_cast<model::EntityType>(0xFFFE),
+					mocks::PluginOptionFlags::Not_Top_Level));
 
 			manager.addMosaicResolver([](const auto&, const auto& unresolved, auto& resolved) {
 				resolved = test::CreateResolverContextXor().resolve(unresolved);
@@ -162,7 +182,7 @@ namespace catapult { namespace extensions {
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(pConfigHolder));
+				.add(observers::CreateHarvestFeeObserver(pConfigHolder, model::InflationCalculator()));
 			return builder.build();
 		}
 
@@ -180,11 +200,10 @@ namespace catapult { namespace extensions {
 		template<typename TTraits, typename TAssertAccountStateCache>
 		void RunLoadNemesisBlockTest(
 				const BlockSignerPair& nemesisBlockSignerPair,
-				Importance totalChainImportance,
-				StateHashVerification stateHashVerification,
+				const NemesisOptions& nemesisOptions,
 				TAssertAccountStateCache assertAccountStateCache) {
 			// Arrange: create the state
-			auto config = CreateDefaultConfiguration(*nemesisBlockSignerPair.pBlock, totalChainImportance);
+			auto config = CreateDefaultConfiguration(*nemesisBlockSignerPair.pBlock, nemesisOptions);
 			test::LocalNodeTestState state(config);
 			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
 
@@ -195,7 +214,7 @@ namespace catapult { namespace extensions {
 				NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver(config));
 
 				// Act:
-				TTraits::Execute(loader, state.ref(), stateHashVerification);
+				TTraits::Execute(loader, state.ref(), nemesisOptions.StateHashVerification);
 
 				// Assert:
 				TTraits::Assert(cacheDelta, assertAccountStateCache);
@@ -210,11 +229,8 @@ namespace catapult { namespace extensions {
 				const BlockSignerPair& nemesisBlockSignerPair,
 				Importance totalChainImportance,
 				TAssertAccountStateCache assertAccountStateCache) {
-			RunLoadNemesisBlockTest<TTraits>(
-					nemesisBlockSignerPair,
-					totalChainImportance,
-					StateHashVerification::Enabled,
-					assertAccountStateCache);
+			NemesisOptions nemesisOptions{ totalChainImportance, Amount() };
+			RunLoadNemesisBlockTest<TTraits>(nemesisBlockSignerPair, nemesisOptions, assertAccountStateCache);
 		}
 
 		enum class NemesisBlockVerifyOptions { None, State, Receipts };
@@ -222,14 +238,14 @@ namespace catapult { namespace extensions {
 		template<typename TTraits, typename TException = catapult_invalid_argument>
 		void AssertLoadNemesisBlockFailure(
 				const BlockSignerPair& nemesisBlockSignerPair,
-				Importance totalChainImportance,
+				const NemesisOptions& nemesisOptions,
 				NemesisBlockModification modification = NemesisBlockModification::None,
 				NemesisBlockVerifyOptions verifyOptions = NemesisBlockVerifyOptions::None) {
 			// Arrange:
 			bool enableVerifiableState = NemesisBlockVerifyOptions::State == verifyOptions;
 
 			// - create the state
-			auto config = CreateDefaultConfiguration(*nemesisBlockSignerPair.pBlock, totalChainImportance);
+			auto config = CreateDefaultConfiguration(*nemesisBlockSignerPair.pBlock, nemesisOptions);
 			config.ShouldEnableVerifiableReceipts = NemesisBlockVerifyOptions::Receipts == verifyOptions;
 
 			auto cacheConfig = cache::CacheConfiguration();
@@ -248,15 +264,27 @@ namespace catapult { namespace extensions {
 				NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver(config));
 
 				// Act + Assert:
-				EXPECT_THROW(TTraits::Execute(loader, state.ref(), StateHashVerification::Enabled), TException);
+				EXPECT_THROW(TTraits::Execute(loader, state.ref(), StateHashVerification::Enabled), TException)
+						<< "total chain importance " << nemesisOptions.TotalChainImportance
+						<< ", initial currency atomic units " << nemesisOptions.InitialCurrencyAtomicUnits;
 			}
 
 			// Sanity:
-			auto cacheStateHash = state.cref().Cache.createView().calculateStateHash().StateHash;
+			auto cacheStateHash = state.ref().Cache.createView().calculateStateHash().StateHash;
 			if (enableVerifiableState)
 				EXPECT_NE(Hash256(), cacheStateHash);
 			else
 				EXPECT_EQ(Hash256(), cacheStateHash);
+		}
+
+		template<typename TTraits, typename TException = catapult_invalid_argument>
+		void AssertLoadNemesisBlockFailure(
+				const BlockSignerPair& nemesisBlockSignerPair,
+				Importance totalChainImportance,
+				NemesisBlockModification modification = NemesisBlockModification::None,
+				NemesisBlockVerifyOptions verifyOptions = NemesisBlockVerifyOptions::None) {
+			NemesisOptions nemesisOptions{ totalChainImportance, Amount() };
+			AssertLoadNemesisBlockFailure<TTraits, TException>(nemesisBlockSignerPair, nemesisOptions, modification, verifyOptions);
 		}
 
 		// endregion
@@ -393,17 +421,18 @@ namespace catapult { namespace extensions {
 		});
 	}
 
-	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_MultipleHeterogeneousMosaicTransfers) {
+	TRAITS_BASED_TEST(CanLoadValidNemesisBlock_MultipleHeterogeneousMosaicTransfersIncludingCurrencyMosaic) {
 		// Arrange: create a valid nemesis block with multiple mosaic transactions
 		auto nemesisBlockSignerPair = CreateNemesisBlock({
 			{ MakeHarvestingMosaic(1234), { MosaicId(123), Amount(111) }, { MosaicId(444), Amount(222) } },
-			{ { MosaicId(123), Amount(987) } },
+			{ MakeCurrencyMosaic(987) },
 			{ { MosaicId(333), Amount(213) }, { MosaicId(444), Amount(123) }, { MosaicId(333), Amount(217) } }
 		});
 		const auto& nemesisBlock = *nemesisBlockSignerPair.pBlock;
 
 		// Act:
-		RunLoadNemesisBlockTest<TTraits>(nemesisBlockSignerPair, Importance(1234), [&nemesisBlock](const auto& accountStateCache) {
+		NemesisOptions nemesisOptions{ Importance(1234), Amount(987) };
+		RunLoadNemesisBlockTest<TTraits>(nemesisBlockSignerPair, nemesisOptions, [&nemesisBlock](const auto& accountStateCache) {
 			// Assert:
 			EXPECT_EQ(4u, accountStateCache.size());
 			test::AssertBalances(accountStateCache, nemesisBlock.Signer, {});
@@ -412,7 +441,7 @@ namespace catapult { namespace extensions {
 				{ MosaicId(123), Amount(111) },
 				{ MosaicId(444), Amount(222) }
 			});
-			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 1), { { MosaicId(123), Amount(987) } });
+			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 1), { MakeCurrencyMosaic(987) });
 			test::AssertBalances(accountStateCache, GetTransactionRecipient(nemesisBlock, 2), {
 				{ MosaicId(333), Amount(213 + 217) },
 				{ MosaicId(444), Amount(123) }
@@ -438,8 +467,8 @@ namespace catapult { namespace extensions {
 		test::FillWithRandomData(nemesisBlock.StateHash);
 
 		// Act:
-		RunLoadNemesisBlockTest<TTraits>(nemesisBlockSignerPair, Importance(1234), StateHashVerification::Disabled, [&nemesisBlock](
-				const auto& accountStateCache) {
+		NemesisOptions nemesisOptions{ Importance(1234), Amount(), StateHashVerification::Disabled };
+		RunLoadNemesisBlockTest<TTraits>(nemesisBlockSignerPair, nemesisOptions, [&nemesisBlock](const auto& accountStateCache) {
 			// Assert:
 			EXPECT_EQ(2u, accountStateCache.size());
 			test::AssertBalances(accountStateCache, nemesisBlock.Signer, {});
@@ -454,7 +483,8 @@ namespace catapult { namespace extensions {
 
 		// - create the state (with verifiable state enabled)
 		test::TempDirectoryGuard dbDirGuard;
-		auto config = CreateDefaultConfiguration(nemesisBlock, Importance(1234));
+		NemesisOptions nemesisOptions{ Importance(1234), Amount() };
+		auto config = CreateDefaultConfiguration(nemesisBlock, nemesisOptions);
 		auto cacheConfig = cache::CacheConfiguration(dbDirGuard.name(), utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 		auto cache = test::CreateEmptyCatapultCache(config, cacheConfig);
 		{
@@ -504,7 +534,8 @@ namespace catapult { namespace extensions {
 		auto& nemesisBlock = *nemesisBlockSignerPair.pBlock;
 
 		// - create the state (with verifiable receipts enabled)
-		auto config = CreateDefaultConfiguration(nemesisBlock, Importance(1234));
+		NemesisOptions nemesisOptions{ Importance(1234), Amount() };
+		auto config = CreateDefaultConfiguration(nemesisBlock, nemesisOptions);
 		config.ShouldEnableVerifiableReceipts = true;
 		config.CurrencyMosaicId = Harvesting_Mosaic_Id;
 		auto cache = test::CreateEmptyCatapultCache(config);
@@ -595,6 +626,25 @@ namespace catapult { namespace extensions {
 
 	// region failure - balance
 
+	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithTotalChainCurrencyTooSmall) {
+		// Arrange: create a valid nemesis block
+		auto nemesisBlockSignerPair = CreateNemesisBlock({ { MakeHarvestingMosaic(1234), MakeCurrencyMosaic(1234) } });
+
+		// Act: pass in an incompatible total chain currency
+		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, { Importance(1234), Amount(1233) });
+		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, { Importance(1234), Amount(617) });
+	}
+
+	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithTotalChainCurrencyTooLarge) {
+		// Arrange: create a valid nemesis block
+		auto nemesisBlockSignerPair = CreateNemesisBlock({ { MakeHarvestingMosaic(1234), MakeCurrencyMosaic(1234) } });
+
+		// Act: pass in an incompatible total chain currency
+		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, { Importance(1234), Amount(1235) });
+		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, { Importance(1234), Amount(2468) });
+		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, { Importance(1234), Amount(12340) });
+	}
+
 	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithTotalChainImportanceTooSmall) {
 		// Arrange: create a valid nemesis block with a single (mosaic) transaction
 		auto nemesisBlockSignerPair = CreateNemesisBlock({ { MakeHarvestingMosaic(1234) } });
@@ -612,6 +662,14 @@ namespace catapult { namespace extensions {
 		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, Importance(1235));
 		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, Importance(2468));
 		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, Importance(12340));
+	}
+
+	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithTotalMosaicSupplyExceedingMaxAtomicUnits) {
+		// Arrange: create an invalid nemesis block, max atomic units is 15'000'000
+		auto nemesisBlockSignerPair = CreateNemesisBlock({ { MakeHarvestingMosaic(1234), { MosaicId(345), Amount(15'000'001) } } });
+
+		// Act:
+		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, { Importance(1234), Amount(0) });
 	}
 
 	// endregion
@@ -649,17 +707,44 @@ namespace catapult { namespace extensions {
 
 	// region failure - transactions
 
-	TRAITS_BASED_TEST(CannotLoadNemesisBlockContainingUnknownTransactions) {
-		// Arrange: create a valid nemesis block with multiple mosaic transactions but make the second transaction type unknown
-		//          so that none of its transfers are processed
-		auto nemesisBlockSignerPair = CreateNemesisBlock({
-			{ MakeHarvestingMosaic(1234) },
-			{ MakeHarvestingMosaic(123), MakeHarvestingMosaic(213) },
-			{ MakeHarvestingMosaic(987) }
-		});
+	namespace {
+		template<typename TTraits>
+		void AssertInvalidTransactionType(model::EntityType invalidTransactionType) {
+			// Arrange: create a valid nemesis block with multiple mosaic transactions but make the second transaction type invalid
+			//          so that none of its transfers are processed
+			auto nemesisBlockSignerPair = CreateNemesisBlock({
+				{ MakeHarvestingMosaic(1234) },
+				{ MakeHarvestingMosaic(123), MakeHarvestingMosaic(213) },
+				{ MakeHarvestingMosaic(987) }
+			});
 
-		// - only MockTransaction::Entity_Type type is registered
-		(++nemesisBlockSignerPair.pBlock->Transactions().begin())->Type = static_cast<model::EntityType>(0xFFFF);
+			(++nemesisBlockSignerPair.pBlock->Transactions().begin())->Type = invalidTransactionType;
+
+			// Act:
+			AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, Importance(1234));
+		}
+	}
+
+	TRAITS_BASED_TEST(CannotLoadNemesisBlockContainingUnknownTransactions) {
+		// Assert: 0xFFFF is not registered
+		AssertInvalidTransactionType<TTraits>(static_cast<model::EntityType>(0xFFFF));
+	}
+
+	TRAITS_BASED_TEST(CannotLoadNemesisBlockContainingNonTopLevelTransactions) {
+		// Assert: 0xFFFE does not have top-level support
+		AssertInvalidTransactionType<TTraits>(static_cast<model::EntityType>(0xFFFE));
+	}
+
+	// endregion
+
+	// region failure - fee multiplier
+
+	TRAITS_BASED_TEST(CannotLoadNemesisBlockWithNonZeroFeeMultiplier) {
+		// Arrange: create a valid nemesis block with a single (mosaic) transaction
+		auto nemesisBlockSignerPair = CreateNemesisBlock({ { MakeHarvestingMosaic(1234) } });
+
+		// - use non-zero block fee multiplier
+		nemesisBlockSignerPair.pBlock->FeeMultiplier = BlockFeeMultiplier(12);
 
 		// Act:
 		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, Importance(1234));

@@ -28,7 +28,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, KeyAddressPairSerializer_CanSerializeValue) {
 		// Arrange:
-		auto pair = std::make_pair(test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Address_Decoded_Size>());
+		auto pair = std::make_pair(test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Address>());
 
 		// Act:
 		auto result = KeyAddressPairSerializer::SerializeValue(pair);
@@ -41,7 +41,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, KeyAddressPairSerializer_CanDeserializeValue) {
 		// Arrange:
-		auto buffer = test::GenerateRandomData<sizeof(VersionType) + Key_Size + Address_Decoded_Size>();
+		auto buffer = test::GenerateRandomArray<sizeof(VersionType) + Key_Size + Address_Decoded_Size>();
 		VersionType version{1};
 		memcpy(buffer.data(), &version, sizeof(VersionType));
 

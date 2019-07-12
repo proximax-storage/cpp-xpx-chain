@@ -22,13 +22,17 @@
 
 namespace catapult { namespace cache {
 
-	void NamespaceCacheSummaryCacheStorage::saveAll(io::OutputStream& output, const Height& height) const {
+	void NamespaceCacheSummaryCacheStorage::saveAll(const CatapultCacheView&, io::OutputStream&) const {
+		CATAPULT_THROW_INVALID_ARGUMENT("NamespaceCacheSummaryCacheStorage does not support saveAll");
+	}
+
+	void NamespaceCacheSummaryCacheStorage::saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output, const Height& height) const {
 		// write version
 		io::Write32(output, 1);
 
-		auto view = cache().createView(height);
-		io::Write64(output, view->activeSize());
-		io::Write64(output, view->deepSize());
+		const auto& delta = cacheDelta.sub<NamespaceCache>(height);
+		io::Write64(output, delta.activeSize());
+		io::Write64(output, delta.deepSize());
 		output.flush();
 	}
 

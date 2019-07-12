@@ -20,13 +20,14 @@
 
 #include "harvesting/src/HarvesterBlockGenerator.h"
 #include "harvesting/src/HarvestingUtFacadeFactory.h"
-#include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/model/BlockUtils.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
@@ -39,14 +40,18 @@ namespace catapult { namespace harvesting {
 		// region test context
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ShouldEnableVerifiableState = true;
-			config.ShouldEnableVerifiableReceipts = true;
-			config.CurrencyMosaicId = MosaicId(123);
-			config.ImportanceGrouping = 1;
+			test::MutableCatapultConfiguration config;
+
+			config.BlockChain.ShouldEnableVerifiableState = true;
+			config.BlockChain.ShouldEnableVerifiableReceipts = true;
+			config.BlockChain.CurrencyMosaicId = MosaicId(123);
+			config.BlockChain.ImportanceGrouping = 1;
+
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 1;
+
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
+			pConfigHolder->SetConfig(Height{0}, config.ToConst());
 		}
 
 		class TestContext {
@@ -58,15 +63,15 @@ namespace catapult { namespace harvesting {
 					, m_pUtCache(test::CreateSeededMemoryUtCache(0))
 					, m_generator(CreateHarvesterBlockGenerator(strategy, m_utFacadeFactory, *m_pUtCache)) {
 				// add 5 transaction infos to UT cache with multipliers alternating between 10 and 20
-				auto transactionInfos = test::CreateTransactionInfosFromSizeMultiplierPairs({
+				m_transactionInfos = test::CreateTransactionInfosFromSizeMultiplierPairs({
 					{ 201, 200 }, { 202, 100 }, { 203, 200 }, { 204, 100 }, { 205, 200 }
 				});
-				test::AddAll(*m_pUtCache, transactionInfos);
+				test::AddAll(*m_pUtCache, m_transactionInfos);
 
 				// add accounts to cache for fix up support
 				auto cacheDelta = m_catapultCache.createDelta();
 				auto& accountStateCache = cacheDelta.sub<cache::AccountStateCache>();
-				for (const auto& transactionInfo : transactionInfos)
+				for (const auto& transactionInfo : m_transactionInfos)
 					accountStateCache.addAccount(transactionInfo.pEntity->Signer, Cache_Height);
 
 				// force state hash recalculation and commit
@@ -77,6 +82,24 @@ namespace catapult { namespace harvesting {
 		public:
 			const Hash256& initialStateHash() const {
 				return m_initialStateHash;
+			}
+
+			Hash256 calculateExpectedStateHash(const std::vector<Amount>& transactionSignerBalances) const {
+				if (m_transactionInfos.size() != transactionSignerBalances.size())
+					CATAPULT_THROW_INVALID_ARGUMENT("unexpected number of transaction signer balances");
+
+				auto cacheDetachableDelta = m_catapultCache.createDetachableDelta();
+				auto cacheDetachedDelta = cacheDetachableDelta.detach();
+				auto pCacheDelta = cacheDetachedDelta.tryLock();
+				auto& accountStateCacheDelta = pCacheDelta->sub<cache::AccountStateCache>();
+
+				for (auto i = 0u; i < transactionSignerBalances.size(); ++i) {
+					auto balance = transactionSignerBalances[i];
+					const auto& signer = m_transactionInfos[i].pEntity->Signer;
+					accountStateCacheDelta.find(signer).get().Balances.credit(m_config.BlockChain.CurrencyMosaicId, balance);
+				}
+
+				return pCacheDelta->calculateStateHash(Cache_Height).StateHash;
 			}
 
 		public:
@@ -105,6 +128,7 @@ namespace catapult { namespace harvesting {
 			std::unique_ptr<cache::MemoryUtCache> m_pUtCache;
 			BlockGenerator m_generator;
 
+			std::vector<model::TransactionInfo> m_transactionInfos;
 			Hash256 m_initialStateHash;
 		};
 
@@ -173,6 +197,7 @@ namespace catapult { namespace harvesting {
 
 		auto i = 0u;
 		for (const auto& transaction : pBlock->Transactions()) {
+			// - transactions are uniquely identified in this test by size
 			EXPECT_EQ(201u + i, transaction.Size) << "transaction at " << i;
 			++i;
 		}
@@ -184,6 +209,12 @@ namespace catapult { namespace harvesting {
 		// - state changes but no receipts generated
 		EXPECT_NE(context.initialStateHash(), pBlock->StateHash);
 		EXPECT_EQ(Hash256(), pBlock->BlockReceiptsHash);
+
+		// - first 4 transactions are included in generated block and, of those, even transactions have surpluses
+		//   that should be explicitly be credited
+		//   (since MockExecutionConfiguration is used, no observers will cause any additional state changes)
+		std::vector<Amount> expectedSurpluses{ Amount(201 * 10), Amount(0), Amount(203 * 10), Amount(0), Amount(0) };
+		EXPECT_EQ(context.calculateExpectedStateHash(expectedSurpluses), pBlock->StateHash);
 	}
 
 	// endregion

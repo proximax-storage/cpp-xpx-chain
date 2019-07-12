@@ -23,6 +23,13 @@
 #include "catapult/types.h"
 #include <string>
 
+namespace catapult {
+	namespace cache {
+		class CatapultCacheDelta;
+		class CatapultCacheView;
+	}
+}
+
 namespace catapult { namespace cache {
 
 	/// Interface for loading and saving cache data.
@@ -35,8 +42,11 @@ namespace catapult { namespace cache {
 		virtual const std::string& name() const = 0;
 
 	public:
-		/// Saves cache data to \a output.
-		virtual void saveAll(io::OutputStream& output, const Height& height) const = 0;
+		/// Saves cache data from \a cacheView to \a output.
+		virtual void saveAll(const CatapultCacheView& cacheView, io::OutputStream& output) const = 0;
+
+		/// Saves cache (summary) data from \a cacheDelta to \a output.
+		virtual void saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output, const Height& height) const = 0;
 
 		/// Loads cache data from \a input in batches of \a batchSize.
 		virtual void loadAll(io::InputStream& input, size_t batchSize) = 0;

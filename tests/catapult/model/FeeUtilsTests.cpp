@@ -35,7 +35,7 @@ namespace catapult { namespace model {
 			transaction.Size = size;
 
 			// Act:
-			auto fee = CalculateTransactionFee(multiplier, transaction);
+			auto fee = CalculateTransactionFee(multiplier, transaction, 1, 1);
 
 			// Assert:
 			EXPECT_EQ(expectedFee, fee) << "size = " << size << ", multiplier = " << multiplier;

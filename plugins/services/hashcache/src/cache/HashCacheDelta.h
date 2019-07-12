@@ -35,6 +35,7 @@ namespace catapult { namespace cache {
 			, public HashCacheDeltaMixins::Size
 			, public HashCacheDeltaMixins::Contains
 			, public HashCacheDeltaMixins::BasicInsertRemove
+				, public HashCacheDeltaMixins::DeltaElements
 			, public HashCacheDeltaMixins::Enable
 			, public HashCacheDeltaMixins::Height {
 	public:

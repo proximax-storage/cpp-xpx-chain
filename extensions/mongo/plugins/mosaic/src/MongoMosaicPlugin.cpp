@@ -34,12 +34,10 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoMosaicCacheStorage(
-			manager.createDatabaseConnection(),
-			manager.mongoContext().bulkWriter(),
+			manager.mongoContext(),
 			manager.configHolder()));
 
 	// receipt support
 	manager.addReceiptSupport(catapult::mongo::plugins::CreateMosaicExpiryReceiptMongoPlugin());
-	manager.addReceiptSupport(catapult::mongo::CreateBalanceTransferReceiptMongoPlugin(catapult::model::Receipt_Type_Mosaic_Levy));
 	manager.addReceiptSupport(catapult::mongo::CreateBalanceTransferReceiptMongoPlugin(catapult::model::Receipt_Type_Mosaic_Rental_Fee));
 }

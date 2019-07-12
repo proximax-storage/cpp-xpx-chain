@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateNemesisSinkValidator();
 			auto context = test::CreateValidatorContext(Height(height), networkInfo, readOnlyCache);
 
-			auto signature = test::GenerateRandomData<Signature_Size>();
+			auto signature = test::GenerateRandomByteArray<Signature>();
 			model::SignatureNotification<1> notification(signer, signature, {});
 
 			// Act:
@@ -63,7 +63,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidatingEntityNotSignedByTheNemesisAccount) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// Sanity:
 		EXPECT_NE(GetNemesisAccount().publicKey(), signer);

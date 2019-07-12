@@ -103,7 +103,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverAddsNamespaceOnCommit_Root) {
 		// Arrange: create a new root namespace with a finite duration
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateRootNotification(signer, NamespaceId(25));
 		notification.Duration = BlockDuration(1100);
 
@@ -120,7 +120,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverAddsNamespaceOnCommit_RootEternal) {
 		// Arrange: create a new root namespace with an eternal duration
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateRootNotification(signer, NamespaceId(25));
 		notification.Duration = Eternal_Artifact_Duration;
 
@@ -161,7 +161,7 @@ namespace catapult { namespace observers {
 		// Arrange:
 		for (auto height : { Height(75), Height(122), Height(122 + Grace_Period_Duration) }) {
 			// - create a root namespace with a finite duration
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = CreateRootNotification(signer, NamespaceId(25));
 			notification.Duration = BlockDuration(1100);
 
@@ -181,7 +181,7 @@ namespace catapult { namespace observers {
 		// Arrange:
 		for (auto height : { Height(123 + Grace_Period_Duration), Height(250) }) {
 			// - create a root namespace with a finite duration
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = CreateRootNotification(signer, NamespaceId(25));
 			notification.Duration = BlockDuration(1100);
 
@@ -223,7 +223,7 @@ namespace catapult { namespace observers {
 		// Arrange:
 		for (auto height : { Height(75), Height(122), Height(122 + Grace_Period_Duration) }) {
 			// - create a root namespace with a finite duration
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = CreateRootNotification(signer, NamespaceId(25));
 			notification.Duration = BlockDuration(1100);
 
@@ -243,7 +243,7 @@ namespace catapult { namespace observers {
 		// Arrange:
 		for (auto height : { Height(123 + Grace_Period_Duration), Height(250) }) {
 			// - create a root namespace with a finite duration
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = CreateRootNotification(signer, NamespaceId(25));
 			notification.Duration = BlockDuration(1100);
 
@@ -265,7 +265,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverRemovesNamespaceOnRollback_Root) {
 		// Arrange: create a root namespace for removal
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateRootNotification(signer, NamespaceId(25));
 
 		// Act: remove it

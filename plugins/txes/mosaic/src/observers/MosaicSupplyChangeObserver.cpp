@@ -45,10 +45,10 @@ namespace catapult { namespace observers {
 		auto mosaicIter = cache.find(mosaicId);
 		auto& entry = mosaicIter.get();
 		if (ShouldIncrease(context.Mode, notification.Direction)) {
-			accountState.Balances.credit(mosaicId, notification.Delta);
+			accountState.Balances.credit(mosaicId, notification.Delta, context.Height);
 			entry.increaseSupply(notification.Delta);
 		} else {
-			accountState.Balances.debit(mosaicId, notification.Delta);
+			accountState.Balances.debit(mosaicId, notification.Delta, context.Height);
 			entry.decreaseSupply(notification.Delta);
 		}
 	});

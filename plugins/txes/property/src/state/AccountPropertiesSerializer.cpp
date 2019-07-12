@@ -28,7 +28,7 @@ namespace catapult { namespace state {
 		// write version
 		io::Write32(output, 1);
 
-		io::Write(output, accountProperties.address());
+		output.write(accountProperties.address());
 
 		io::Write64(output, accountProperties.size());
 		for (const auto& pair : accountProperties) {

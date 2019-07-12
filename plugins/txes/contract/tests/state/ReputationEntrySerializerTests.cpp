@@ -21,7 +21,7 @@ namespace catapult { namespace state {
 		class TestContext {
 		public:
 			explicit TestContext(size_t numAccounts = 10)
-					: m_stream("", m_buffer)
+					: m_stream(m_buffer)
 					, m_accountKeys(test::GenerateKeys(numAccounts))
 			{}
 
@@ -152,7 +152,7 @@ namespace catapult { namespace state {
 			auto buffer = CreateBuffer(originalEntry, version);
 
 			// Act:
-			state::ReputationEntry result(test::GenerateRandomData<Key_Size>());
+			state::ReputationEntry result(test::GenerateRandomByteArray<Key>());
 			test::RunLoadValueTest<ReputationEntrySerializer>(buffer, result);
 
 			// Assert:

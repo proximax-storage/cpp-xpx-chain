@@ -25,6 +25,7 @@
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/AccountStateCacheSubCachePlugin.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
+#include "catapult/cache_core/BlockDifficultyCacheSubCachePlugin.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -90,14 +91,15 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateBalanceTransferValidator());
 		});
 
-		manager.addObserverHook([pConfigHolder](auto& builder) {
+		const auto& calculator = manager.inflationConfig().InflationCalculator;
+		manager.addObserverHook([&pConfigHolder, &calculator](auto& builder) {
 			builder
 				.add(observers::CreateSourceChangeObserver())
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceDebitObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(pConfigHolder))
+				.add(observers::CreateHarvestFeeObserver(pConfigHolder, calculator))
 				.add(observers::CreateTotalTransactionsObserver())
 				.add(observers::CreateSnapshotCleanUpObserver(pConfigHolder));
 		});

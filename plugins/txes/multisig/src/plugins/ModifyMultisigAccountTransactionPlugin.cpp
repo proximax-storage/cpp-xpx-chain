@@ -64,5 +64,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(ModifyMultisigAccount, Only_Embeddable, Publish)
 }}

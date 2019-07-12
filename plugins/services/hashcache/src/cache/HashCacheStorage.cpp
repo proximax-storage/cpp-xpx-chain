@@ -29,7 +29,7 @@ namespace catapult { namespace cache {
 		io::Write32(output, 1);
 
 		io::Write(output, timestampedHash.Time);
-		io::Write(output, timestampedHash.Hash);
+		output.write(timestampedHash.Hash);
 	}
 
 	state::TimestampedHash HashCacheStorage::Load(io::InputStream& input) {
@@ -40,11 +40,7 @@ namespace catapult { namespace cache {
 
 		state::TimestampedHash timestampedHash;
 		io::Read(input, timestampedHash.Time);
-		io::Read(input, timestampedHash.Hash);
+		input.read(timestampedHash.Hash);
 		return timestampedHash;
-	}
-
-	void HashCacheStorage::LoadInto(const ValueType& timestampedHash, DestinationType& cacheDelta) {
-		cacheDelta.insert(timestampedHash);
 	}
 }}

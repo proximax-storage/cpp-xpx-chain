@@ -21,9 +21,9 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS MetadataTransactionPluginTests
 
     namespace {
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(AddressMetadata, 1, 1, AddressMetadata)
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(MosaicMetadata, 1, 1, MosaicMetadata)
-        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS_WITH_PREFIXED_TRAITS(NamespaceMetadata, 1, 1, NamespaceMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AddressMetadata, 1, 1, AddressMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicMetadata, 1, 1, MosaicMetadata)
+        DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(NamespaceMetadata, 1, 1, NamespaceMetadata)
 
         template<typename TTransaction, typename TTransactionTraits>
         struct AddressTraits : public TTransactionTraits {
@@ -218,9 +218,9 @@ namespace catapult { namespace plugins {
         // endregion
     };
 
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Address, _Address, model::Entity_Type_Address_Metadata)
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Mosaic, _Mosaic, model::Entity_Type_Mosaic_Metadata)
-    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS_WITH_PREFIXED_TRAITS(TEST_CLASS, Namespace, _Namespace, model::Entity_Type_Namespace_Metadata)
+    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Address, _Address, model::Entity_Type_Address_Metadata)
+    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Mosaic, _Mosaic, model::Entity_Type_Mosaic_Metadata)
+    DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Namespace, _Namespace, model::Entity_Type_Namespace_Metadata)
 
 #define MAKE_METADATA_TRANSACTION_PLUGIN_TEST(TRAITS_PREFIX, TEST_POSTFIX, TEST_NAME) \
 	TEST(TEST_CLASS, TEST_NAME##_Regular##TEST_POSTFIX) { \

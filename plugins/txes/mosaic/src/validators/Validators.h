@@ -76,7 +76,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the affected mosaic has mutable supply
 	/// - decrease does not cause owner amount to become negative
-	/// - increase does not cause total divisible units to exceed \a maxDivisibleUnits
+	/// - increase does not cause total atomic units to exceed max atomic units
 	/// \note This validator is dependent on MosaicChangeAllowedValidator.
 	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 

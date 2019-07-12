@@ -22,6 +22,7 @@
 #include "src/cache/NamespaceCacheSubCachePlugin.h"
 #include "src/config/NamespaceConfiguration.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
@@ -50,44 +51,69 @@ namespace catapult { namespace cache {
 
 	// region NamespaceCacheSummaryCacheStorage
 
-	TEST(TEST_CLASS, CanSaveActiveAndDeepSize) {
+	namespace {
+		template<typename TAction>
+		void RunCacheStorageTest(TAction action) {
+			// Arrange:
+			auto config = CacheConfiguration();
+			NamespaceCache cache(config, DefaultCacheOptions());
+			NamespaceCacheSummaryCacheStorage storage(cache);
+
+			// Act + Assert:
+			action(storage, cache);
+		}
+	}
+
+	TEST(TEST_CLASS, CannotSaveAll) {
 		// Arrange:
-		auto config = CacheConfiguration();
-		NamespaceCache cache(config, DefaultCacheOptions());
-		NamespaceCacheSummaryCacheStorage storage(cache);
-		{
+		RunCacheStorageTest([](const auto& storage, const auto&) {
+			auto catapultCache = test::NamespaceCacheFactory::Create();
+			auto cacheView = catapultCache.createView();
+
+			std::vector<uint8_t> buffer;
+			mocks::MockMemoryStream stream(buffer);
+
+			// Act + Assert:
+			EXPECT_THROW(storage.saveAll(cacheView, stream), catapult_invalid_argument);
+		});
+	}
+
+	TEST(TEST_CLASS, CanSaveSummary) {
+		// Arrange:
+		RunCacheStorageTest([](const auto& storage, const auto&) {
+			auto catapultCache = test::NamespaceCacheFactory::Create();
 			// - insert root with 2 children, then renew root
-			auto delta = cache.createDelta(Height{0});
+			auto cacheDelta = catapultCache.createDelta(Height{0});
+			auto& delta = cacheDelta.sub<NamespaceCache>();
 			auto owner = test::CreateRandomOwner();
 			state::RootNamespace root(NamespaceId(123), owner, test::CreateLifetime(234, 321));
-			delta->insert(root);
-			delta->insert(state::Namespace(test::CreatePath({ 123, 127 })));
-			delta->insert(state::Namespace(test::CreatePath({ 123, 128 })));
+			delta.insert(root);
+			delta.insert(state::Namespace(test::CreatePath({ 123, 127 })));
+			delta.insert(state::Namespace(test::CreatePath({ 123, 128 })));
 			state::RootNamespace renewedRoot(NamespaceId(123), owner, test::CreateLifetime(345, 456));
-			delta->insert(renewedRoot);
-			cache.commit();
-		}
+			delta.insert(renewedRoot);
 
-		std::vector<uint8_t> buffer;
-		mocks::MockMemoryStream stream("", buffer);
+			std::vector<uint8_t> buffer;
+			mocks::MockMemoryStream stream(buffer);
 
-		// Act:
-		storage.saveAll(stream, Height{0});
+			// Act:
+			storage.saveSummary(cacheDelta, stream, Height{0});
 
-		// Assert: all sizes were saved
-		ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) * 2, buffer.size());
+			// Assert: all sizes were saved
+			ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) * 2, buffer.size());
 
-		auto activeSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType)));
-		auto deepSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType) + sizeof(uint64_t)));
-		EXPECT_EQ(3u, activeSize);
-		EXPECT_EQ(6u, deepSize);
+			auto activeSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType)));
+			auto deepSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType) + sizeof(uint64_t)));
+			EXPECT_EQ(3u, activeSize);
+			EXPECT_EQ(6u, deepSize);
 
-		// - there was a single flush
-		EXPECT_EQ(1u, stream.numFlushes());
+			// - there was a single flush
+			EXPECT_EQ(1u, stream.numFlushes());
+		});
 	}
 
 	namespace {
-		void AssertCanLoadActiveAndDeepSize(VersionType version) {
+		void CanLoadSummary(VersionType version) {
 			// Arrange:
 			auto config = CacheConfiguration();
 			NamespaceCache cache(config, DefaultCacheOptions());
@@ -109,8 +135,8 @@ namespace catapult { namespace cache {
 		}
 	}
 
-	TEST(TEST_CLASS, CanLoadActiveAndDeepSize_v1) {
-		AssertCanLoadActiveAndDeepSize(1);
+	TEST(TEST_CLASS, CanLoadSummary_v1) {
+		CanLoadSummary(1);
 	}
 
 	// endregion

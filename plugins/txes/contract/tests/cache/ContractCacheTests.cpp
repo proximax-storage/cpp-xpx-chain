@@ -44,7 +44,7 @@ namespace catapult { namespace cache {
 			}
 		};
 
-		struct ContractEntryModificationPolicy {
+		struct ContractEntryModificationPolicy : public test::DeltaRemoveInsertModificationPolicy {
 			static void Modify(ContractCacheDelta& delta, const state::ContractEntry& entry) {
 				auto& entryFromCache = delta.find(entry.key()).get();
 				entryFromCache.setStart(entryFromCache.start() + Height(1));
@@ -75,7 +75,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, InteractionValuesCanBeChangedLater) {
 		// Arrange:
 		ContractCacheMixinTraits::CacheType cache;
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 
 		// - insert single account key
 		{

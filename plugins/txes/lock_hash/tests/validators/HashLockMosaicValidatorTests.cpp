@@ -31,20 +31,16 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
-		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
+		constexpr MosaicId Currency_Mosaic_Id(1234);
 
-		void AssertValidationResult(
-				ValidationResult expectedResult,
-				UnresolvedMosaicId mosaicId,
-				Amount bondedAmount,
-				Amount requiredBondedAmount) {
+		void AssertValidationResult(ValidationResult expectedResult, MosaicId mosaicId, Amount bondedAmount, Amount requiredBondedAmount) {
 			// Arrange:
-			model::UnresolvedMosaic mosaic{ mosaicId, bondedAmount };
+			model::UnresolvedMosaic mosaic{ test::UnresolveXor(mosaicId), bondedAmount };
 			auto notification = model::HashLockMosaicNotification<1>(mosaic);
 			auto pluginConfig = config::HashLockConfiguration::Uninitialized();
 			pluginConfig.LockedFundsPerAggregate = requiredBondedAmount;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
+			blockChainConfig.CurrencyMosaicId = Currency_Mosaic_Id;
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
@@ -66,13 +62,13 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithInvalidMosaicId) {
 		// Assert:
-		auto mosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
+		auto mosaicId = test::GenerateRandomValue<MosaicId>();
 		AssertValidationResult(Failure_LockHash_Invalid_Mosaic_Id, mosaicId, Amount(500), Amount(500));
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithInvalidAmount) {
 		// Assert:
 		for (auto amount : { 0ull, 1ull, 10ull, 100ull, 499ull, 501ull, 1000ull })
-			AssertValidationResult(Failure_LockHash_Invalid_Mosaic_Amount, UnresolvedMosaicId(123), Amount(amount), Amount(500));
+			AssertValidationResult(Failure_LockHash_Invalid_Mosaic_Amount, MosaicId(123), Amount(amount), Amount(500));
 	}
 }}

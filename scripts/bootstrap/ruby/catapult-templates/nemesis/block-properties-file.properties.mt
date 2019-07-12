@@ -36,7 +36,6 @@ supply = {{xpx.supply}}
 
 isTransferable = true
 isSupplyMutable = false
-isLevyMutable = false
 
 [distribution>cat:currency]
 {{#xpx.distribution}}
@@ -50,7 +49,6 @@ supply = {{xpx.supply}}
 
 isTransferable = true
 isSupplyMutable = true
-isLevyMutable = false
 
 [distribution>cat:storage]
 {{#xpx.distribution}}

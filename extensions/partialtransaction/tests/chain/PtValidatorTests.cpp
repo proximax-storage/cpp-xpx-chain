@@ -26,6 +26,7 @@
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
 
 using namespace catapult::validators;
@@ -45,15 +46,15 @@ namespace catapult { namespace chain {
 
 		enum class ValidatorType { Stateful, Stateless };
 
-		class ValidatorResultOptions {
+		class ValidationResultOptions {
 		public:
-			ValidatorResultOptions(ValidationResult result)
+			ValidationResultOptions(ValidationResult result)
 					: m_result(result)
 					, m_errorType(ValidatorType::Stateful)
 					, m_triggerOnSpecificNotificationType(false)
 			{}
 
-			ValidatorResultOptions(ValidatorType errorType, model::NotificationType triggerType)
+			ValidationResultOptions(ValidatorType errorType, model::NotificationType triggerType)
 					: m_result(ValidationResult::Failure)
 					, m_errorType(errorType)
 					, m_triggerOnSpecificNotificationType(true)
@@ -92,7 +93,7 @@ namespace catapult { namespace chain {
 
 		class TestContext {
 		public:
-			explicit TestContext(const ValidatorResultOptions& options, const model::BlockChainConfiguration& config)
+			explicit TestContext(const ValidationResultOptions& options, const model::BlockChainConfiguration& config)
 					: m_cache(test::CreateEmptyCatapultCache(config))
 					, m_pluginManager(CreateConfigHolder(config), plugins::StorageConfiguration()) {
 				// Arrange: register mock support (for validatePartial)
@@ -174,23 +175,23 @@ namespace catapult { namespace chain {
 
 		template<typename TNotificationTypesConsumer>
 		void RunValidatePartialTest(
-				const ValidatorResultOptions& validatorResultOptions,
+				const ValidationResultOptions& validationResultOptions,
 				bool isValid,
 				TNotificationTypesConsumer notificationTypesConsumer) {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			TestContext context(validatorResultOptions, config);
+			TestContext context(validationResultOptions, config);
 			const auto& validator = context.validator();
 			const auto& notificationValidator = context.subValidatorAt(0); // partial
 
 			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
 			auto pTransaction = mocks::CreateMockTransaction(0);
-			auto transactionHash = test::GenerateRandomData<Hash256_Size>();
+			auto transactionHash = test::GenerateRandomByteArray<Hash256>();
 			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash, Height{0}));
 
-			// Assert: when valid, raw result should always be success (even when validatorResult is suppressed failure)
+			// Assert: when valid, raw result should always be success (even when validationResult is suppressed failure)
 			EXPECT_EQ(isValid, result.Normalized);
-			EXPECT_EQ(isValid ? ValidationResult::Success : validatorResultOptions.result(), result.Raw);
+			EXPECT_EQ(isValid ? ValidationResult::Success : validationResultOptions.result(), result.Raw);
 
 			// - short circuiting on failure
 			notificationTypesConsumer(notificationValidator.notificationTypes());
@@ -204,17 +205,18 @@ namespace catapult { namespace chain {
 				ValidateTransactionNotifications(notificationValidator.params(), transactionHash, pTransaction->Deadline, "basic");
 		}
 
-		void RunValidatePartialTest(const ValidatorResultOptions& validatorResultOptions, const ValidatePartialResult& expectedResult) {
+		void RunValidatePartialTest(const ValidationResultOptions& validationResultOptions, const ValidatePartialResult& expectedResult) {
 			// Arrange:
-			RunValidatePartialTest(validatorResultOptions, expectedResult.IsValid, [&expectedResult](const auto& notificationTypes) {
+			RunValidatePartialTest(validationResultOptions, expectedResult.IsValid, [&expectedResult](const auto& notificationTypes) {
 				// Assert:
 				if (!expectedResult.IsShortCircuited) {
-					ASSERT_EQ(5u, notificationTypes.size());
+					ASSERT_EQ(6u, notificationTypes.size());
 					EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
 					EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
-					EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[2]);
-					EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[3]);
-					EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[4]);
+					EXPECT_EQ(model::Core_Transaction_Deadline_v1_Notification, notificationTypes[2]);
+					EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[3]);
+					EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[4]);
+					EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[5]);
 				} else {
 					ASSERT_EQ(1u, notificationTypes.size());
 					EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
@@ -250,7 +252,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, ValidatePartialMapsBasicStatefulFailureToFalse) {
 		// Arrange:
-		auto options = ValidatorResultOptions{ ValidatorType::Stateful, model::Core_Transaction_v1_Notification };
+		auto options = ValidationResultOptions{ ValidatorType::Stateful, model::Core_Transaction_v1_Notification };
 		RunValidatePartialTest(options, false, [](const auto& notificationTypes) {
 			// Assert:
 			ASSERT_EQ(2u, notificationTypes.size());
@@ -270,21 +272,21 @@ namespace catapult { namespace chain {
 				model::NotificationType notificationType,
 				TNotificationTypesConsumer notificationTypesConsumer) {
 			// Arrange:
-			ValidatorResultOptions validatorResultOptions{ ValidatorType::Stateless, notificationType };
+			ValidationResultOptions validationResultOptions{ ValidatorType::Stateless, notificationType };
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			TestContext context(validatorResultOptions, config);
+			TestContext context(validationResultOptions, config);
 			const auto& validator = context.validator();
 			const auto& basicNotificationValidator = context.subStatelessValidatorAt(0); // partial (basic)
 			const auto& customNotificationValidator = context.subStatelessValidatorAt(1); // partial (custom)
 
 			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
 			auto pTransaction = mocks::CreateMockTransaction(0);
-			auto transactionHash = test::GenerateRandomData<Hash256_Size>();
+			auto transactionHash = test::GenerateRandomByteArray<Hash256>();
 			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash, Height{0}));
 
 			// Assert:
 			EXPECT_FALSE(result.Normalized);
-			EXPECT_EQ(validatorResultOptions.result(), result.Raw);
+			EXPECT_EQ(validationResultOptions.result(), result.Raw);
 
 			// - merge notification types from both validators
 			auto allNotificationTypes = basicNotificationValidator.notificationTypes();
@@ -311,13 +313,14 @@ namespace catapult { namespace chain {
 		// Arrange:
 		RunInvalidStatelessValidatePartialTest(mocks::Mock_Validator_1_Notification, [](const auto& notificationTypes) {
 			// Assert:
-			ASSERT_EQ(6u, notificationTypes.size());
+			ASSERT_EQ(7u, notificationTypes.size());
 			EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
 			EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
-			EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[2]);
-			EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[3]);
-			EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[4]);
-			EXPECT_EQ(mocks::Mock_Validator_1_Notification, notificationTypes[5]);
+			EXPECT_EQ(model::Core_Transaction_Deadline_v1_Notification, notificationTypes[2]);
+			EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[3]);
+			EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[4]);
+			EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[5]);
+			EXPECT_EQ(mocks::Mock_Validator_1_Notification, notificationTypes[6]);
 		});
 	}
 
@@ -335,10 +338,10 @@ namespace catapult { namespace chain {
 			return test::CreateAggregateTransaction(numTransactions).pTransaction;
 		}
 
-		void RunValidateCosignersTest(ValidationResult validatorResult, const ValidateCosignersResult& expectedResult) {
+		void RunValidateCosignersTest(ValidationResult validationResult, const ValidateCosignersResult& expectedResult) {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
-			TestContext context(validatorResult, config);
+			TestContext context(validationResult, config);
 			const auto& validator = context.validator();
 			const auto& notificationValidator = context.subValidatorAt(1); // cosigners
 
@@ -349,7 +352,7 @@ namespace catapult { namespace chain {
 
 			// Assert:
 			EXPECT_EQ(expectedResult.Result, result.Normalized);
-			EXPECT_EQ(validatorResult, result.Raw);
+			EXPECT_EQ(validationResult, result.Raw);
 
 			// - short circuiting on failure
 			const auto& notificationTypes = notificationValidator.notificationTypes();

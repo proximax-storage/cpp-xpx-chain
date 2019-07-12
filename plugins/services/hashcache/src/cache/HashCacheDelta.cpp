@@ -27,6 +27,7 @@ namespace catapult { namespace cache {
 			: HashCacheDeltaMixins::Size(*hashSets.pPrimary)
 			, HashCacheDeltaMixins::Contains(*hashSets.pPrimary)
 			, HashCacheDeltaMixins::BasicInsertRemove(*hashSets.pPrimary)
+			, HashCacheDeltaMixins::DeltaElements(*hashSets.pPrimary)
 			, m_pOrderedDelta(hashSets.pPrimary)
 			, m_pConfigHolder(options.ConfigHolderPtr)
 	{}

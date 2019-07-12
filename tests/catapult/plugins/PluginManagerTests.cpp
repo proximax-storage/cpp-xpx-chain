@@ -55,12 +55,18 @@ namespace catapult { namespace plugins {
 		auto storageConfig = StorageConfiguration();
 		storageConfig.CacheDatabaseDirectory = "abc";
 
-		// Act:
-		PluginManager manager(pConfigHolder, storageConfig);
+		auto inflationConfig = config::InflationConfiguration::Uninitialized();
+		inflationConfig.InflationCalculator.add(Height(123), Amount(234));
 
-		// Assert: compare BlockPruneInterval and CacheDatabaseDirectory as sentinel values because the manager copies the configs
+		// Act:
+		PluginManager manager(pConfigHolder, storageConfig, inflationConfig);
+
+		// Assert: compare BlockPruneInterval, CacheDatabaseDirectory and InflationCalculator as sentinel values
+		//         because the manager copies the configs
 		EXPECT_EQ(15u, manager.config(Height{0}).BlockPruneInterval);
 		EXPECT_EQ("abc", manager.storageConfig().CacheDatabaseDirectory);
+		EXPECT_EQ(1u, manager.inflationConfig().InflationCalculator.size());
+		EXPECT_TRUE(manager.inflationConfig().InflationCalculator.contains(Height(123), Amount(234)));
 	}
 
 	TEST(TEST_CLASS, CanCreateCacheConfiguration) {
@@ -80,7 +86,10 @@ namespace catapult { namespace plugins {
 		};
 
 		// Act:
-		PluginManager manager(pConfigHolder, storageConfig);
+		PluginManager manager(
+				pConfigHolder,
+				storageConfig,
+				config::InflationConfiguration::Uninitialized());
 
 		// Assert: cache configuration is constructed appropriately
 		assertCacheConfiguration(manager.cacheConfig("foo"), "abc/foo");
@@ -335,7 +344,7 @@ namespace catapult { namespace plugins {
 			auto pValidator = suppress
 					? manager.createStatelessValidator([](auto) { return true; })
 					: manager.createStatelessValidator();
-			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomData<Key_Size>());
+			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomByteArray<Key>());
 			return pValidator->validate(notification);
 		}
 	}
@@ -399,7 +408,7 @@ namespace catapult { namespace plugins {
 			auto pValidator = suppress
 					? manager.createStatefulValidator([](auto) { return true; })
 					: manager.createStatefulValidator();
-			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomData<Key_Size>());
+			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomByteArray<Key>());
 			auto cache = cache::CatapultCache({});
 			auto context = test::CreateValidatorContext(Height(123), cache.createView().toReadOnly());
 			return pValidator->validate(notification, context);
@@ -548,7 +557,7 @@ namespace catapult { namespace plugins {
 				manager.addAddressResolver([increment, result](const auto& cache, const auto& unresolved, auto& resolved) {
 					// read from cache to ensure it is correct one
 					auto subCacheSize = cache.template sub<test::SimpleCacheT<2>>().size();
-					resolved = Address{ { static_cast<uint8_t>(unresolved[0].Byte + increment + subCacheSize) } };
+					resolved = Address{ { static_cast<uint8_t>(unresolved[0] + increment + subCacheSize) } };
 					return result;
 				});
 			}
@@ -564,7 +573,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TUnresolved>
 		auto Resolve(PluginManager& manager, const TUnresolved& unresolved) {
-			// Arrange: add a subcache with size one
+			// Arrange: add a sub cache with size one
 			AddSubCachePluginWithId<2>(manager);
 
 			auto cache = manager.createCache();
@@ -667,15 +676,15 @@ namespace catapult { namespace plugins {
 	}
 
 	TEST(TEST_CLASS, CanCreateDefaultNotificationPublisher) {
-		// Assert: 7 basic and 1 custom notifications should be raised
-		AssertCanCreateNotificationPublisher(7u + 1, [](const auto& manager) {
+		// Assert: 8 basic and 1 custom notifications should be raised
+		AssertCanCreateNotificationPublisher(8u + 1, [](const auto& manager) {
 			return manager.createNotificationPublisher();
 		});
 	}
 
 	TEST(TEST_CLASS, CanCreateCustomNotificationPublisher) {
-		// Assert: 7 basic notifications should be raised
-		AssertCanCreateNotificationPublisher(7u, [](const auto& manager) {
+		// Assert: 8 basic notifications should be raised
+		AssertCanCreateNotificationPublisher(8u, [](const auto& manager) {
 			return manager.createNotificationPublisher(model::PublicationMode::Basic);
 		});
 	}

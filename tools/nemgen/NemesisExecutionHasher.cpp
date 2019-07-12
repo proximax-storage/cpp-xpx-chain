@@ -47,11 +47,11 @@ namespace catapult { namespace tools { namespace nemgen {
 		std::string Format(const BlockExecutionHashesInfo& blockExecutionHashesInfo) {
 			std::ostringstream out;
 			out
-					<< "       State Hash: " << utils::HexFormat(blockExecutionHashesInfo.StateHash) << std::endl
+					<< "       State Hash: " << blockExecutionHashesInfo.StateHash << std::endl
 					<< "--- Components (" << blockExecutionHashesInfo.SubCacheMerkleRoots.size() << ") ---" << std::endl;
 
 			for (const auto& subCacheMerkleRoot : blockExecutionHashesInfo.SubCacheMerkleRoots)
-				out << " + " << utils::HexFormat(subCacheMerkleRoot) << std::endl;
+				out << " + " << subCacheMerkleRoot << std::endl;
 
 			return out.str();
 		}
@@ -80,9 +80,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		std::ostringstream out;
 		out
 				<< "           Height: " << blockElement.Block.Height << std::endl
-				<< "  Generation Hash: " << utils::HexFormat(blockElement.GenerationHash) << std::endl
-				<< "Transactions Hash: " << utils::HexFormat(blockElement.Block.BlockTransactionsHash) << std::endl
-				<< "    Receipts Hash: " << utils::HexFormat(blockExecutionHashesInfo.ReceiptsHash) << std::endl
+				<< "  Generation Hash: " << blockElement.GenerationHash << std::endl
+				<< "Transactions Hash: " << blockElement.Block.BlockTransactionsHash << std::endl
+				<< "    Receipts Hash: " << blockExecutionHashesInfo.ReceiptsHash << std::endl
 				<< Format(blockExecutionHashesInfo);
 
 		return { blockExecutionHashesInfo.ReceiptsHash, blockExecutionHashesInfo.StateHash, out.str() };

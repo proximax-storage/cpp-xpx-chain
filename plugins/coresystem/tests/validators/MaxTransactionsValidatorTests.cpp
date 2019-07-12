@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, uint32_t numTransactions) {
 			// Arrange:
-			auto signer = test::GenerateRandomData<Key_Size>();
+			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = test::CreateBlockNotification(signer);
 			notification.NumTransactions = numTransactions;
 			auto config = model::BlockChainConfiguration::Uninitialized();

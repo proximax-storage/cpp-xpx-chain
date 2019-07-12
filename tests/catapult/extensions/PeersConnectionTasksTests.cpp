@@ -143,9 +143,9 @@ namespace catapult { namespace extensions {
 			// Arrange:
 			auto serviceState = test::ServiceTestState(CreateEmptyCatapultCache());
 			ConfigureServiceState(serviceState);
-			auto unknownKey = test::GenerateRandomData<Key_Size>();
-			auto knownKeyWrongHeight = test::GenerateRandomData<Key_Size>();
-			auto knownKey = test::GenerateRandomData<Key_Size>();
+			auto unknownKey = test::GenerateRandomByteArray<Key>();
+			auto knownKeyWrongHeight = test::GenerateRandomByteArray<Key>();
+			auto knownKey = test::GenerateRandomByteArray<Key>();
 
 			// -  initialize a cache
 			{
@@ -251,7 +251,7 @@ namespace catapult { namespace extensions {
 			std::vector<ionet::Node> nodes;
 			auto modifier = serviceState.state().nodes().modifier();
 			for (auto i = 0u; i < numNodes; ++i) {
-				auto identityKey = test::GenerateRandomData<Key_Size>();
+				auto identityKey = test::GenerateRandomByteArray<Key>();
 				auto node = test::CreateNamedNode(identityKey, "node " + std::to_string(i));
 				modifier.add(node, ionet::NodeSource::Dynamic);
 				nodes.push_back(node);

@@ -25,7 +25,7 @@
 namespace catapult { namespace tools { namespace nemgen {
 
 	namespace {
-		plugins::StorageConfiguration CreateStorageConfiguration(const config::LocalNodeConfiguration& config) {
+		plugins::StorageConfiguration CreateStorageConfiguration(const config::CatapultConfiguration& config) {
 			plugins::StorageConfiguration storageConfig;
 			storageConfig.PreferCacheDatabase = config.Node.ShouldUseCacheDatabaseStorage;
 			storageConfig.CacheDatabaseDirectory = (boost::filesystem::path(config.User.DataDirectory) / "statedb").generic_string();

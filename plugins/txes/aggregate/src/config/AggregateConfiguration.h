@@ -19,8 +19,8 @@
 **/
 
 #pragma once
-#include <stdint.h>
 #include "catapult/model/PluginConfiguration.h"
+#include "catapult/utils/TimeSpan.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
@@ -42,6 +42,9 @@ namespace catapult { namespace config {
 		/// \c true if bonded aggregates should be allowed.
 		/// \c false if bonded aggregates should be rejected.
 		bool EnableBondedAggregateSupport;
+
+		/// Maximum lifetime a bonded transaction can have before it expires.
+		utils::TimeSpan MaxBondedTransactionLifetime;
 
 	private:
 		AggregateConfiguration() = default;

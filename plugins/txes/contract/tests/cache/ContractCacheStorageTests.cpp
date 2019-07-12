@@ -14,14 +14,14 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange: create a random value to insert
-		state::ContractEntry originalEntry(test::GenerateRandomData<Key_Size>());
+		state::ContractEntry originalEntry(test::GenerateRandomByteArray<Key>());
 		originalEntry.setDuration(BlockDuration(20));
 		originalEntry.setStart(Height(12));
-		originalEntry.pushHash(test::GenerateRandomData<Hash256_Size>(), Height(12));
-		originalEntry.pushHash(test::GenerateRandomData<Hash256_Size>(), Height(13));
-		originalEntry.executors() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
-		originalEntry.customers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
-		originalEntry.verifiers() = { test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>(), test::GenerateRandomData<Key_Size>() };
+		originalEntry.pushHash(test::GenerateRandomByteArray<Hash256>(), Height(12));
+		originalEntry.pushHash(test::GenerateRandomByteArray<Hash256>(), Height(13));
+		originalEntry.executors() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
+		originalEntry.customers() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
+		originalEntry.verifiers() = { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Key>() };
 
 		// Act:
 		ContractCache cache(CacheConfiguration{});

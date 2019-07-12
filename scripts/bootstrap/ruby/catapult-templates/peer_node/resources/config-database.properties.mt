@@ -7,6 +7,7 @@ shouldPruneFileStorage = true
 
 [plugins]
 
+catapult.mongo.plugins.accountlink = true
 catapult.mongo.plugins.aggregate = true
 catapult.mongo.plugins.config = true
 catapult.mongo.plugins.contract = true

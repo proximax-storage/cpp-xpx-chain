@@ -62,7 +62,7 @@ namespace catapult { namespace validators {
 		auto config = model::BlockChainConfiguration::Uninitialized();
 		config.MinHarvesterBalance = Amount(1234);
 		auto cache = CreateEmptyCatapultCache(config);
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto height = Height(1000);
 		AddAccount(cache, key, Amount(9999));
 		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
@@ -70,7 +70,7 @@ namespace catapult { namespace validators {
 
 		auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
 
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = test::CreateBlockNotification(signer);
 
 		// Act:
@@ -89,7 +89,7 @@ namespace catapult { namespace validators {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.MinHarvesterBalance = Amount(1234);
 			auto cache = CreateEmptyCatapultCache(config);
-			auto key = test::GenerateRandomData<Key_Size>();
+			auto key = test::GenerateRandomByteArray<Key>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
 			AddAccount(cache, key, initialBalance);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();

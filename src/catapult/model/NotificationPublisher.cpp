@@ -75,12 +75,12 @@ namespace catapult { namespace model {
 				switch (basicEntityType) {
 				case BasicEntityType::Block:
 					// set block source to zero (source ids are 1-based)
-					sub.notify(Notification(0, 0, Notification::SourceChangeType::Absolute));
+					sub.notify(Notification(Notification::SourceChangeType::Absolute, 0, Notification::SourceChangeType::Absolute, 0));
 					break;
 
 				case BasicEntityType::Transaction:
 					// set transaction source (source ids are 1-based)
-					sub.notify(Notification(1, 0, Notification::SourceChangeType::Relative));
+					sub.notify(Notification(Notification::SourceChangeType::Relative, 1, Notification::SourceChangeType::Absolute, 0));
 					break;
 
 				default:
@@ -92,11 +92,15 @@ namespace catapult { namespace model {
 				// raise an entity notification
 				switch (block.EntityVersion()) {
 				case 3: {
+					// raise an account public key notification
+					if (Key() != block.Beneficiary)
+						sub.notify(AccountPublicKeyNotification(block.Beneficiary));
+
 					sub.notify(EntityNotification<1>(block.Network(), block.Type, block.EntityVersion()));
 
 					// raise a block notification
 					auto blockTransactionsInfo = CalculateBlockTransactionsInfo(block);
-					BlockNotification<1> blockNotification(block.Signer, block.Timestamp, block.Difficulty);
+					BlockNotification<1> blockNotification(block.Signer, block.Beneficiary, block.Timestamp, block.Difficulty, block.FeeInterest, block.FeeInterestDenominator);
 					blockNotification.NumTransactions = blockTransactionsInfo.Count;
 					blockNotification.TotalFee = blockTransactionsInfo.TotalFee;
 
@@ -126,13 +130,20 @@ namespace catapult { namespace model {
 				sub.notify(EntityNotification<1>(transaction.Network(), transaction.Type, transaction.EntityVersion()));
 
 				// raise transaction notifications
-				auto fee = pBlockHeader ? CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction) : transaction.MaxFee;
+				auto fee = pBlockHeader ?
+					CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction, pBlockHeader->FeeInterest, pBlockHeader->FeeInterestDenominator)
+					: transaction.MaxFee;
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
+				sub.notify(TransactionDeadlineNotification(transaction.Deadline, attributes.MaxLifetime));
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->Config(height).BlockChain), fee));
 
 				// raise a signature notification
-				sub.notify(SignatureNotification<1>(transaction.Signer, transaction.Signature, plugin.dataBuffer(transaction)));
+				sub.notify(SignatureNotification<1>(
+						transaction.Signer,
+						transaction.Signature,
+						plugin.dataBuffer(transaction),
+						SignatureNotification::ReplayProtectionMode::Enabled));
 			}
 
 		private:

@@ -17,9 +17,8 @@ mkdir -p $WORK_DIR/addresses
 if [ ! -f $formatted_address_path ] ;
 then
     bash -c "$WORK_DIR/bin/catapult.tools.address --generate=$num_addresses -n mijin-test > $raw_addresses_path"
+    ash -c "$PATH_TO_BOOTSTRAP/ruby/bin/store-addresses-if-needed.rb $WORK_DIR/addresses/raw-addresses.txt $WORK_DIR/addresses/addresses.yaml"
 fi
-
-ash -c "$PATH_TO_BOOTSTRAP/ruby/bin/store-addresses-if-needed.rb $WORK_DIR/addresses/raw-addresses.txt $WORK_DIR/addresses/addresses.yaml"
 
 mkdir -p $WORK_DIR/config-build
 mkdir -p $WORK_DIR/nemesis

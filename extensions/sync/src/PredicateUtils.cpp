@@ -20,7 +20,7 @@
 
 #include "PredicateUtils.h"
 #include "TransactionSpamThrottle.h"
-#include "catapult/cache/UtCache.h"
+#include "catapult/cache_tx/UtCache.h"
 #include "catapult/extensions/ServiceState.h"
 
 namespace catapult { namespace sync {

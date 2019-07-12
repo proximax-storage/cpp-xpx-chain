@@ -25,6 +25,7 @@
 #include "NotificationType.h"
 #include "catapult/utils/ArraySet.h"
 #include "catapult/utils/ConfigurationBag.h"
+#include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
 #include <vector>
 
@@ -102,7 +103,7 @@ namespace catapult { namespace model {
 	struct BasicBalanceNotification : public Notification {
 	public:
 		/// Creates a notification around \a sender, \a mosaicId and \a amount.
-		explicit BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, Amount amount)
+		BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, Amount amount)
 				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 				, Sender(sender)
 				, MosaicId(mosaicId)
@@ -132,7 +133,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
-		explicit BalanceTransferNotification(
+		BalanceTransferNotification(
 				const Key& sender,
 				const UnresolvedAddress& recipient,
 				UnresolvedMosaicId mosaicId,
@@ -176,7 +177,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates an entity notification around \a networkIdentifier, \a minVersion, \a maxVersion and \a entityVersion.
-		explicit EntityNotification(
+		EntityNotification(
 				model::NetworkIdentifier networkIdentifier,
 				model::EntityType entityType,
                 VersionType entityVersion)
@@ -212,18 +213,29 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Core_Block_v1_Notification;
 
 	public:
-		/// Creates a block notification around \a signer, \a timestamp and \a difficulty.
-		explicit BlockNotification(const Key& signer, Timestamp timestamp, Difficulty difficulty)
+		/// Creates a block notification around \a signer, \a beneficiary, \a timestamp and \a difficulty.
+		 BlockNotification(
+			const Key& signer,
+			const Key& beneficiary,Timestamp timestamp,
+			Difficulty difficulty,
+			uint32_t feeInterest,
+			uint32_t feeInterestDenominator)
 				: Notification(Notification_Type, sizeof(BlockNotification<1>))
 				, Signer(signer)
+				, Beneficiary(beneficiary)
 				, Timestamp(timestamp)
 				, Difficulty(difficulty)
 				, NumTransactions(0)
+				, FeeInterest(feeInterest)
+				, FeeInterestDenominator(feeInterestDenominator)
 		{}
 
 	public:
 		/// Block signer.
 		const Key& Signer;
+
+		/// Beneficiary.
+		const Key& Beneficiary;
 
 		/// Block timestamp.
 		catapult::Timestamp Timestamp;
@@ -236,6 +248,12 @@ namespace catapult { namespace model {
 
 		/// Number of block transactions.
 		uint32_t NumTransactions;
+
+		/// The part of the transaction fee harvester is willing to get.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
 	};
 
 	// endregion
@@ -254,7 +272,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a transaction notification around \a signer, \a transactionHash, \a transactionType and \a deadline.
-		explicit TransactionNotification(const Key& signer, const Hash256& transactionHash, EntityType transactionType, Timestamp deadline)
+		TransactionNotification(const Key& signer, const Hash256& transactionHash, EntityType transactionType, Timestamp deadline)
 				: Notification(Notification_Type, sizeof(TransactionNotification<1>))
 				, Signer(signer)
 				, TransactionHash(transactionHash)
@@ -276,6 +294,29 @@ namespace catapult { namespace model {
 		Timestamp Deadline;
 	};
 
+	/// Notifies the arrival of a transaction deadline.
+	struct TransactionDeadlineNotification : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Transaction_Deadline_Notification;
+
+	public:
+		/// Creates a transaction deadline notification around \a deadline and \a maxLifetime.
+		TransactionDeadlineNotification(Timestamp deadline, utils::TimeSpan maxLifetime)
+				: Notification(Notification_Type, sizeof(TransactionDeadlineNotification))
+				, Deadline(deadline)
+				, MaxLifetime(maxLifetime)
+		{}
+
+	public:
+		/// Transaction deadline.
+		Timestamp Deadline;
+
+		/// Custom maximum transaction lifetime.
+		/// \note If \c 0, default network-specific maximum will be used.
+		utils::TimeSpan MaxLifetime;
+	};
+
 	/// Notifies the arrival of a transaction fee.
 	template<VersionType version>
 	struct TransactionFeeNotification;
@@ -288,7 +329,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a transaction fee notification around \a transactionSize, \a fee and \a maxFee.
-		explicit TransactionFeeNotification(uint32_t transactionSize, Amount fee, Amount maxFee)
+		TransactionFeeNotification(uint32_t transactionSize, Amount fee, Amount maxFee)
 				: Notification(Notification_Type, sizeof(TransactionFeeNotification<1>))
 				, TransactionSize(transactionSize)
 				, Fee(fee)
@@ -317,16 +358,25 @@ namespace catapult { namespace model {
 	template<>
 	struct SignatureNotification<1> : public Notification {
 	public:
+		/// Replay protection modes.
+		enum class ReplayProtectionMode { Enabled, Disabled };
+	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Signature_v1_Notification;
 
 	public:
-		/// Creates a signature notification around \a signer, \a signature and \a data.
-		explicit SignatureNotification(const Key& signer, const Signature& signature, const RawBuffer& data)
+		/// Creates a signature notification around \a signer, \a signature and \a data with optional replay protection mode
+		/// (\a dataReplayProtectionMode) applied to data.
+		SignatureNotification(
+				const Key& signer,
+				const Signature& signature,
+				const RawBuffer& data,
+				ReplayProtectionMode dataReplayProtectionMode = ReplayProtectionMode::Disabled)
 				: Notification(Notification_Type, sizeof(SignatureNotification<1>))
 				, Signer(signer)
 				, Signature(signature)
 				, Data(data)
+				, DataReplayProtectionMode(dataReplayProtectionMode)
 		{}
 
 	public:
@@ -338,6 +388,9 @@ namespace catapult { namespace model {
 
 		/// Signed data.
 		RawBuffer Data;
+
+		/// Replay protection mode applied to data.
+		ReplayProtectionMode DataReplayProtectionMode;
 	};
 
 	// endregion
@@ -408,7 +461,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer and \a mosaicId.
-		explicit MosaicRequiredNotification(const Key& signer, MosaicId mosaicId)
+		MosaicRequiredNotification(const Key& signer, MosaicId mosaicId)
 				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<1>))
 				, Signer(signer)
 				, MosaicId(mosaicId)
@@ -416,7 +469,7 @@ namespace catapult { namespace model {
 		{}
 
 		/// Creates a notification around \a signer and \a mosaicId.
-		explicit MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId)
+		MosaicRequiredNotification(const Key& signer, UnresolvedMosaicId mosaicId)
 				: Notification(Notification_Type, sizeof(MosaicRequiredNotification<1>))
 				, Signer(signer)
 				, UnresolvedMosaicId(mosaicId)
@@ -456,23 +509,31 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Core_Source_Change_v1_Notification;
 
 	public:
-		/// Creates a notification around \a primaryId, \a secondaryId and \a changeType.
-		explicit SourceChangeNotification(uint32_t primaryId, uint32_t secondaryId, SourceChangeType changeType)
+		/// Creates a notification around \a primaryChangeType, \a primaryId, \a secondaryChangeType and \a secondaryId.
+		SourceChangeNotification(
+				SourceChangeType primaryChangeType,
+				uint32_t primaryId,
+				SourceChangeType secondaryChangeType,
+				uint32_t secondaryId)
 				: Notification(Notification_Type, sizeof(SourceChangeNotification<1>))
+				, PrimaryChangeType(primaryChangeType)
 				, PrimaryId(primaryId)
+				, SecondaryChangeType(secondaryChangeType)
 				, SecondaryId(secondaryId)
-				, ChangeType(changeType)
 		{}
 
 	public:
+		/// Type of primary source change.
+		SourceChangeType PrimaryChangeType;
+
 		/// Primary source (e.g. index within block).
 		uint32_t PrimaryId;
 
+		/// Type of secondary source change.
+		SourceChangeType SecondaryChangeType;
+
 		/// Secondary source (e.g. index within aggregate).
 		uint32_t SecondaryId;
-
-		/// Type of source change.
-		SourceChangeType ChangeType;
 	};
 
 	// endregion

@@ -80,7 +80,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenChangingDurationFromEternalToNonEternal) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateNotification(signer, BlockDuration(123));
 
 		// - seed the cache
@@ -93,7 +93,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenChangingDurationFromNonEternalToEternal) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateNotification(signer, BlockDuration());
 
 		// - seed the cache
@@ -106,7 +106,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenResultingDurationExceedsMaxDuration) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
 		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
@@ -120,7 +120,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenOverflowHappens) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateNotification(signer, BlockDuration(std::numeric_limits<uint64_t>::max() - 90));
 
 		// - seed the cache
@@ -137,7 +137,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenMosaicIsUnknown) {
 		// Arrange: although max duration is 123, it still should pass (MosaicPropertiesValidator checks for max duration)
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateNotification(signer, BlockDuration(124));
 
 		// - seed the cache
@@ -149,7 +149,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenMosaicIsKnownAndNewDurationIsAcceptable_NonEternal) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
 		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
@@ -163,7 +163,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenMosaicIsKnownAndNewDurationIsAcceptable_Eternal) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
 		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());

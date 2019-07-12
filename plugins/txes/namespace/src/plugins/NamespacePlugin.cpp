@@ -106,7 +106,7 @@ namespace catapult { namespace plugins {
 			});
 
 			manager.addAddressResolver([](const auto&, const auto& unresolved, auto& resolved) {
-				if (0 == (1 & unresolved[0].Byte)) {
+				if (0 == (1 & unresolved[0])) {
 					resolved = model::ResolverContext().resolve(unresolved);
 					return true;
 				}
@@ -157,6 +157,7 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateNamespaceNameValidator(pConfigHolder))
 					.add(validators::CreateRootNamespaceValidator(pConfigHolder))
 					.add(validators::CreateRootNamespaceAvailabilityValidator(pConfigHolder))
+					.add(validators::CreateNamespaceDurationOverflowValidator(pConfigHolder))
 					// note that the following validator needs to run before the RootNamespaceMaxChildrenValidator
 					.add(validators::CreateChildNamespaceAvailabilityValidator())
 					.add(validators::CreateRootNamespaceMaxChildrenValidator(pConfigHolder));

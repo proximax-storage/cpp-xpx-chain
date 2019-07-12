@@ -56,7 +56,7 @@ namespace catapult { namespace validators {
 			auto newSupply = entry.supply() + notification.Delta;
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
-			return newSupply < initialSupply || newSupply > pluginConfig.MaxMosaicDivisibleUnits
+			return newSupply < initialSupply || newSupply > pluginConfig.MaxMosaicAtomicUnits
 					? Failure_Mosaic_Supply_Exceeded
 					: ValidationResult::Success;
 		});

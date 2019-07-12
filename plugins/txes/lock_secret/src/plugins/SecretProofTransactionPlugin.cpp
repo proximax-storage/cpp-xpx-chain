@@ -38,7 +38,11 @@ namespace catapult { namespace plugins {
 					transaction.HashAlgorithm,
 					transaction.Secret,
 					{ transaction.ProofPtr(), transaction.ProofSize }));
-				sub.notify(ProofPublicationNotification<1>(transaction.Signer, transaction.HashAlgorithm, transaction.Secret));
+				sub.notify(ProofPublicationNotification<1>(
+					transaction.Signer,
+					transaction.HashAlgorithm,
+					transaction.Secret,
+					transaction.Recipient));
 				break;
 
 			default:
@@ -47,5 +51,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(SecretProof, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(SecretProof, Default, Publish)
 }}

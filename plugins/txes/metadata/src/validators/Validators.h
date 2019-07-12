@@ -10,7 +10,6 @@
 #include "Results.h"
 #include "plugins/txes/metadata/src/model/MetadataNotifications.h"
 #include "catapult/config_holder/LocalNodeConfigurationHolder.h"
-#include "catapult/utils/UnresolvedAddress.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 

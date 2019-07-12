@@ -83,7 +83,7 @@ namespace catapult { namespace validators {
 			auto initialValues = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numInitialValues);
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			auto cache = test::PropertyCacheFactory::Create(config);
-			auto key = test::GenerateRandomData<Key_Size>();
+			auto key = test::GenerateRandomByteArray<Key>();
 			test::PopulateCache<TPropertyValueTraits>(cache, key, initialValues);
 			std::vector<model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>> modifications;
 			for (auto i = 0u; i < std::max(numAddModifications, numDelModifications); ++i) {

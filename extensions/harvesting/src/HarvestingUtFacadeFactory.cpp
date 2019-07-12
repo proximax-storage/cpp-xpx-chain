@@ -21,7 +21,6 @@
 #include "HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/ProcessingNotificationSubscriber.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/FeeUtils.h"
 
@@ -64,11 +63,14 @@ namespace catapult { namespace harvesting {
 
 			// 1. stitch block
 			auto pBlock = model::StitchBlock(blockHeader, transactions);
+			pBlock->FeeInterest = m_config.Node.FeeInterest;
+			pBlock->FeeInterestDenominator = m_config.Node.FeeInterestDenominator;
 
 			// 2. add back fee surpluses to accounts (skip cache lookup if no surplus)
 			auto& accountStateCache = m_pCacheDelta->sub<cache::AccountStateCache>();
 			for (const auto& transaction : pBlock->Transactions()) {
-				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(blockHeader.FeeMultiplier, transaction);
+				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(
+					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
 				if (Amount(0) != surplus)
 					accountStateCache.find(transaction.Signer).get().Balances.credit(blockChainConfig.CurrencyMosaicId, surplus);
 			}

@@ -38,10 +38,7 @@ namespace catapult { namespace test {
 		public:
 			CacheStorageWrapper()
 					: m_pMongoContext(CreateDefaultMongoStorageContext(DatabaseName()))
-					, m_pCacheStorage(TTraits::CreateCacheStorage(
-							m_pMongoContext->createDatabaseConnection(),
-							m_pMongoContext->bulkWriter(),
-							CreateConfigHolder(TTraits::Network_Id)))
+					, m_pCacheStorage(TTraits::CreateCacheStorage(*m_pMongoContext, CreateConfigHolder(TTraits::Network_Id)))
 			{}
 
 		public:

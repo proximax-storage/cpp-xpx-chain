@@ -19,18 +19,19 @@
 **/
 
 #include "DispatcherService.h"
+#include "DispatcherSyncHandlers.h"
 #include "PredicateUtils.h"
 #include "RollbackInfo.h"
-#include "catapult/cache/MemoryUtCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_core/ImportanceView.h"
+#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/chain/UtUpdater.h"
-#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/consumers/AuditConsumer.h"
 #include "catapult/consumers/BlockConsumers.h"
 #include "catapult/consumers/ConsumerUtils.h"
@@ -66,14 +67,14 @@ namespace catapult { namespace sync {
 		ConsumerDispatcherOptions CreateBlockConsumerDispatcherOptions(const config::NodeConfiguration& config) {
 			auto options = ConsumerDispatcherOptions("block dispatcher", config.BlockDisruptorSize);
 			options.ElementTraceInterval = config.BlockElementTraceInterval;
-			options.ShouldThrowIfFull = config.ShouldAbortWhenDispatcherIsFull;
+			options.ShouldThrowWhenFull = config.ShouldAbortWhenDispatcherIsFull;
 			return options;
 		}
 
 		ConsumerDispatcherOptions CreateTransactionConsumerDispatcherOptions(const config::NodeConfiguration& config) {
 			auto options = ConsumerDispatcherOptions("transaction dispatcher", config.TransactionDisruptorSize);
 			options.ElementTraceInterval = config.TransactionElementTraceInterval;
-			options.ShouldThrowIfFull = config.ShouldAbortWhenDispatcherIsFull;
+			options.ShouldThrowWhenFull = config.ShouldAbortWhenDispatcherIsFull;
 			return options;
 		}
 
@@ -161,7 +162,14 @@ namespace catapult { namespace sync {
 				rollbackInfo.save();
 			};
 
+			auto dataDirectory = config::CatapultDataDirectory(state.config().User.DataDirectory);
+			syncHandlers.PreStateWritten = [](const auto&, const auto&, auto) {};
 			syncHandlers.TransactionsChange = state.hooks().transactionsChangeHandler();
+			syncHandlers.CommitStep = CreateCommitStepHandler(dataDirectory);
+
+			if (state.config().Node.ShouldUseCacheDatabaseStorage)
+				AddSupplementalDataResiliency(syncHandlers, dataDirectory, state.cache(), state.score());
+
 			return syncHandlers;
 		}
 
@@ -174,14 +182,12 @@ namespace catapult { namespace sync {
 
 		public:
 			void addHashConsumers() {
-				m_consumers.push_back(CreateBlockHashCalculatorConsumer(m_state.pluginManager().transactionRegistry()));
+				m_consumers.push_back(CreateBlockHashCalculatorConsumer(
+						m_state.config().BlockChain.Network.GenerationHash,
+						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateBlockHashCheckConsumer(
-					m_state.timeSupplier(),
-					extensions::CreateHashCheckOptions(m_nodeConfig.ShortLivedCacheBlockDuration, m_nodeConfig)));
-			}
-
-			void addPrecomputedTransactionAddressConsumer(const model::NotificationPublisher& publisher) {
-				m_consumers.push_back(CreateBlockAddressExtractionConsumer(publisher));
+						m_state.timeSupplier(),
+						extensions::CreateHashCheckOptions(m_nodeConfig.ShortLivedCacheBlockDuration, m_nodeConfig)));
 			}
 
 			std::shared_ptr<ConsumerDispatcher> build(
@@ -203,6 +209,9 @@ namespace catapult { namespace sync {
 						m_state.storage(),
 						m_state.pluginManager().configHolder(),
 						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
+
+				if (m_state.config(Height{0}).Node.ShouldEnableAutoSyncCleanup)
+					disruptorConsumers.push_back(CreateBlockChainSyncCleanupConsumer(m_state.config().User.DataDirectory));
 
 				disruptorConsumers.push_back(CreateNewBlockConsumer(m_state.hooks().newBlockSink(), InputSource::Local));
 				return CreateConsumerDispatcher(
@@ -251,15 +260,13 @@ namespace catapult { namespace sync {
 
 		public:
 			void addHashConsumers() {
-				m_consumers.push_back(CreateTransactionHashCalculatorConsumer(m_state.pluginManager().transactionRegistry()));
+				m_consumers.push_back(CreateTransactionHashCalculatorConsumer(
+						m_state.config(Height{0}).BlockChain.Network.GenerationHash,
+						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateTransactionHashCheckConsumer(
 						m_state.timeSupplier(),
 						extensions::CreateHashCheckOptions(m_nodeConfig.ShortLivedCacheTransactionDuration, m_nodeConfig),
 						m_state.hooks().knownHashPredicate(m_state.utCache())));
-			}
-
-			void addPrecomputedTransactionAddressConsumer(const model::NotificationPublisher& publisher) {
-				m_consumers.push_back(CreateTransactionAddressExtractionConsumer(publisher));
 			}
 
 			std::shared_ptr<ConsumerDispatcher> build(
@@ -319,7 +326,7 @@ namespace catapult { namespace sync {
 			auto pUtUpdater = std::make_shared<chain::UtUpdater>(
 					state.utCache(),
 					state.cache(),
-					state.config(Height{0}).Node.MinFeeMultiplier,
+					state.config(Height{0}).Node,
 					extensions::CreateExecutionConfiguration(state.pluginManager()),
 					state.timeSupplier(),
 					extensions::SubscriberToSink(state.transactionStatusSubscriber()),
@@ -385,14 +392,7 @@ namespace catapult { namespace sync {
 				TransactionDispatcherBuilder transactionDispatcherBuilder(state);
 				transactionDispatcherBuilder.addHashConsumers();
 
-				if (state.config(Height{0}).Node.ShouldPrecomputeTransactionAddresses) {
-					auto pPublisher = state.pluginManager().createNotificationPublisher();
-					blockDispatcherBuilder.addPrecomputedTransactionAddressConsumer(*pPublisher);
-					transactionDispatcherBuilder.addPrecomputedTransactionAddressConsumer(*pPublisher);
-					locator.registerRootedService("dispatcher.notificationPublisher", std::move(pPublisher));
-				}
-
-				auto pRollbackInfo = CreateAndRegisterRollbackService(locator, state.timeSupplier(), state);
+				auto pRollbackInfo = CreateAndRegisterRollbackService(locator, state.timeSupplier(), state.config().BlockChain);
 				auto pBlockDispatcher = blockDispatcherBuilder.build(pValidatorPool, *pRollbackInfo);
 				RegisterBlockDispatcherService(pBlockDispatcher, *pServiceGroup, locator, state);
 

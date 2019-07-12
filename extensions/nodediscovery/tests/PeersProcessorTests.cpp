@@ -154,11 +154,11 @@ namespace catapult { namespace nodediscovery {
 		// Arrange:
 		TestContext context;
 
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto candidateNode = test::CreateNamedNode(key, "candidate");
 
 		// - configure the ping response node to have a different key
-		context.PingRequestInitiator.setResponseNode(key, test::CreateNamedNode(test::GenerateRandomData<Key_Size>(), "response"));
+		context.PingRequestInitiator.setResponseNode(key, test::CreateNamedNode(test::GenerateRandomByteArray<Key>(), "response"));
 
 		// Act: process candidate node
 		context.Processor.process(ionet::NodeSet{ candidateNode });
@@ -172,7 +172,7 @@ namespace catapult { namespace nodediscovery {
 		// Arrange:
 		TestContext context;
 
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto candidateNode = test::CreateNamedNode(key, "candidate");
 
 		// - configure the ping response node to have a different network (processor is configured with Mijin_Test)
@@ -190,7 +190,7 @@ namespace catapult { namespace nodediscovery {
 		// Arrange:
 		TestContext context;
 
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto candidateNode = ionet::Node(key, { "alice.com", 987 }, CreateNamedMetadata("candidate"));
 
 		// - create a different (but compatible response node)
@@ -214,7 +214,7 @@ namespace catapult { namespace nodediscovery {
 		// Arrange:
 		TestContext context;
 
-		auto key = test::GenerateRandomData<Key_Size>();
+		auto key = test::GenerateRandomByteArray<Key>();
 		auto candidateNode = ionet::Node(key, { "alice.com", 987 }, CreateNamedMetadata("candidate"));
 
 		// - create a different (but compatible response node)

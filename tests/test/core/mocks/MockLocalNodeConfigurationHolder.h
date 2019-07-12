@@ -21,7 +21,7 @@ namespace catapult { namespace config {
 		}
 
 	public:
-		LocalNodeConfiguration& Config(const Height&) override {
+		CatapultConfiguration& Config(const Height&) override {
 			return m_catapultConfigs.at(Height{0});
 		}
 

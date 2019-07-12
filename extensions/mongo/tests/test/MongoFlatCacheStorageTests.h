@@ -20,6 +20,7 @@
 
 #pragma once
 #include "MongoCacheStorageTestUtils.h"
+#include "catapult/cache/CatapultCache.h"
 
 namespace catapult { namespace test {
 
@@ -40,13 +41,12 @@ namespace catapult { namespace test {
 		static void AssertSaveHasNoEffectWhenThereAreNoPendingChanges() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = TTraits::CreateCache(config);
+			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 			cache.commit(Height());
 
 			// Act:
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 
 			// Assert:
 			EXPECT_EQ(0u, GetCollectionSize());
@@ -55,14 +55,13 @@ namespace catapult { namespace test {
 		static void AssertAddedElementIsSavedToStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = TTraits::CreateCache(config);
+			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with a single element
 			auto originalElement = TTraits::GenerateRandomElement(11);
 			TTraits::Add(delta, originalElement);
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 			cache.commit(Height());
 
 			// Sanity:
@@ -72,7 +71,7 @@ namespace catapult { namespace test {
 			// Act:
 			auto newElement = TTraits::GenerateRandomElement(54321);
 			TTraits::Add(delta, newElement);
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 
 			// Sanity:
 			EXPECT_EQ(1u, GetDelta(delta).addedElements().size());
@@ -85,14 +84,13 @@ namespace catapult { namespace test {
 		static void AssertModifiedElementIsSavedToStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = TTraits::CreateCache(config);
+			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with a single element
 			auto element = TTraits::GenerateRandomElement(11);
 			TTraits::Add(delta, element);
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 			cache.commit(Height());
 
 			// Sanity:
@@ -101,7 +99,7 @@ namespace catapult { namespace test {
 
 			// Act:
 			TTraits::Mutate(delta, element);
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 
 			// Sanity:
 			EXPECT_EQ(1u, GetDelta(delta).modifiedElements().size());
@@ -114,8 +112,7 @@ namespace catapult { namespace test {
 		static void AssertDeletedElementIsRemovedFromStorage() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = TTraits::CreateCache(config);
+			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
 			// - prepare the cache with two elements
@@ -123,7 +120,7 @@ namespace catapult { namespace test {
 			auto element2 = TTraits::GenerateRandomElement(12);
 			TTraits::Add(delta, element1);
 			TTraits::Add(delta, element2);
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 			cache.commit(Height());
 
 			// Sanity:
@@ -132,7 +129,7 @@ namespace catapult { namespace test {
 
 			// Act:
 			TTraits::Remove(delta, element2);
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 
 			// Sanity:
 			EXPECT_EQ(1u, GetDelta(delta).removedElements().size());
@@ -145,8 +142,7 @@ namespace catapult { namespace test {
 		static void AssertCanSaveMultipleElements() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = TTraits::CreateCache(config);
+			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
 			// Act:
@@ -156,7 +152,7 @@ namespace catapult { namespace test {
 				TTraits::Add(delta, elements.back());
 			}
 
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 			cache.commit(Height());
 
 			// Assert:
@@ -167,8 +163,7 @@ namespace catapult { namespace test {
 		static void AssertCanAddAndModifyAndDeleteMultipleElements() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = TTraits::CreateCache(config);
+			auto cache = TTraits::CreateCache();
 			auto delta = cache.createDelta();
 
 			// - seed 100 elements
@@ -178,7 +173,7 @@ namespace catapult { namespace test {
 				TTraits::Add(delta, elements.back());
 			}
 
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 			cache.commit(Height());
 
 			// Act: drop some and modify some
@@ -204,7 +199,7 @@ namespace catapult { namespace test {
 				}
 			}
 
-			storage.get().saveDelta(delta);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 
 			// Sanity:
 			EXPECT_NE(0u, numRemoved);
@@ -216,45 +211,36 @@ namespace catapult { namespace test {
 			AssertDbContents(expected);
 		}
 
-		static void AssertCanLoadFromEmptyDatabase() {
+		static void AssertElementsBothAddedAndRemovedAreIgnored() {
 			// Arrange:
 			CacheStorageWrapper storage;
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = TTraits::CreateCache(config);
+			auto cache = TTraits::CreateCache();
+			std::vector<ElementType> elements;
 
-			// Act:
-			storage.get().loadAll(cache, Height(1));
-			auto contents = GetCacheContents(cache);
-
-			// Assert:
-			EXPECT_EQ(0u, GetCollectionSize());
-		}
-
-		static void AssertCanLoadFromNonEmptyDatabase() {
-			// Arrange:
-			CacheStorageWrapper storage;
-			auto config = model::BlockChainConfiguration::Uninitialized();
-
-			// - seed the database with 100 elements
 			{
-				auto cache1 = TTraits::CreateCache(config);
-				auto delta1 = cache1.createDelta();
-				for (auto i = 0u; i < 100; ++i)
-					TTraits::Add(delta1, TTraits::GenerateRandomElement(i));
+				auto delta = cache.createDelta();
 
-				storage.get().saveDelta(delta1);
+				// - seed a few elements
+				for (auto i = 0u; i < 5; ++i) {
+					elements.push_back(TTraits::GenerateRandomElement(i));
+					TTraits::Add(delta, elements.back());
+				}
+
+				storage.get().saveDelta(cache::CacheChanges(delta));
+				cache.commit(Height());
+
+				// Sanity:
+				AssertDbContents(elements);
 			}
 
-			// Sanity:
-			EXPECT_EQ(100u, GetCollectionSize());
+			// Act: add and then remove an element
+			auto element = TTraits::GenerateRandomElement(10);
+			auto delta = cache.createDelta();
+			TTraits::Add(delta, element);
+			TTraits::Remove(delta, element);
+			storage.get().saveDelta(cache::CacheChanges(delta));
 
-			// Act: load into a second cache
-			auto cache2 = TTraits::CreateCache(config);
-			storage.get().loadAll(cache2, Height(1));
-			auto elements = GetCacheContents(cache2);
-
-			// Assert:
-			EXPECT_EQ(100u, elements.size());
+			// Assert: the db collection did not change
 			AssertDbContents(elements);
 		}
 
@@ -282,7 +268,5 @@ namespace catapult { namespace test {
 	\
 	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, CanSaveMultipleElements) \
 	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, CanAddAndModifyAndDeleteMultipleElements) \
-	\
-	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, CanLoadFromEmptyDatabase) \
-	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, CanLoadFromNonEmptyDatabase)
+	MAKE_FLAT_CACHE_STORAGE_TEST(TRAITS_NAME, POSTFIX, ElementsBothAddedAndRemovedAreIgnored)
 }}

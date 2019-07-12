@@ -24,24 +24,24 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransactionNotification<1>;
+	using Notification = model::TransactionDeadlineNotification<1>;
 
 	namespace {
 		auto ValidateTransactionDeadline(Timestamp timestamp, Timestamp deadline, const utils::TimeSpan& maxTransactionLifetime) {
 			if (timestamp > deadline)
 				return Failure_Core_Past_Deadline;
 
-			if (deadline > timestamp + maxTransactionLifetime)
-				return Failure_Core_Future_Deadline;
-
-			return ValidationResult::Success;
+			return deadline > timestamp + maxTransactionLifetime ? Failure_Core_Future_Deadline : ValidationResult::Success;
 		}
 	}
 
 	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(Deadline, [pConfigHolder](const auto& notification, const auto& context) {
 			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
-			return ValidateTransactionDeadline(context.BlockTime, notification.Deadline, config.MaxTransactionLifetime);
+			return ValidateTransactionDeadline(
+				context.BlockTime,
+				notification.Deadline,
+				utils::TimeSpan() == notification.MaxLifetime ? config.MaxTransactionLifetime : notification.MaxLifetime);
 		});
 	}
 }}

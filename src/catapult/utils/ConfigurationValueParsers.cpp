@@ -23,6 +23,7 @@
 #include "FileSize.h"
 #include "HexParser.h"
 #include "TimeSpan.h"
+#include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace utils {
 
@@ -170,6 +171,20 @@ namespace catapult { namespace utils {
 
 	// endregion
 
+	// region floating point
+
+	bool TryParseValue(const std::string& str, double& parsedValue) {
+		try {
+			parsedValue = boost::lexical_cast<double>(str);
+		} catch (...) {
+			return false;
+		}
+
+		return true;
+	}
+
+	// endregion
+
 	// region custom types
 
 	namespace {
@@ -201,6 +216,10 @@ namespace catapult { namespace utils {
 	bool TryParseValue(const std::string& str, BlockFeeMultiplier& parsedValue) {
 		auto factory = [](auto raw) { return BlockFeeMultiplier(raw); };
 		return TryParseCustomUnsignedIntDecimalValue<BlockFeeMultiplier::ValueType>(factory, str, parsedValue);
+	}
+
+	bool TryParseValue(const std::string& str, Height& parsedValue) {
+		return TryParseCustomUnsignedIntDecimalValue<Height::ValueType>([](auto raw) { return Height(raw); }, str, parsedValue);
 	}
 
 	bool TryParseValue(const std::string& str, Importance& parsedValue) {
@@ -281,15 +300,30 @@ namespace catapult { namespace utils {
 
 	// endregion
 
-	// region key
+	// region byte array
+
+	namespace {
+		template<typename TByteArray>
+		bool TryParseByteArray(const std::string& str, TByteArray& parsedValue) {
+			TByteArray array;
+			if (!TryParseHexStringIntoContainer(str.data(), str.size(), array))
+				return false;
+
+			parsedValue = array;
+			return true;
+		}
+	}
 
 	bool TryParseValue(const std::string& str, Key& parsedValue) {
-		Key key;
-		if (!TryParseHexStringIntoContainer(str.data(), str.size(), key))
-			return false;
+		return TryParseByteArray(str, parsedValue);
+	}
 
-		parsedValue = key;
-		return true;
+	bool TryParseValue(const std::string& str, Hash256& parsedValue) {
+		return TryParseByteArray(str, parsedValue);
+	}
+
+	bool TryParseValue(const std::string& str, GenerationHash& parsedValue) {
+		return TryParseByteArray(str, parsedValue);
 	}
 
 	// endregion

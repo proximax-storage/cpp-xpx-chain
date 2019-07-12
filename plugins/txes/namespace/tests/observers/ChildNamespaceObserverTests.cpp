@@ -73,7 +73,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverAddsNamespaceOnCommit_ChildRootParent) {
 		// Arrange: create a child namespace with a root parent
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateChildNotification(signer, NamespaceId(25), NamespaceId(37));
 
 		// Act: add it
@@ -95,7 +95,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverAddsNamespaceOnCommit_ChildNonRootParent) {
 		// Arrange: create a child namespace with a non-root parent
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateChildNotification(signer, NamespaceId(36), NamespaceId(49));
 
 		// Act: add it
@@ -121,7 +121,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverRemovesNamespaceOnRollback_ChildRootParent) {
 		// Arrange: create a child namespace with a root parent for removal
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateChildNotification(signer, NamespaceId(25), NamespaceId(36));
 
 		// Act: remove it
@@ -147,7 +147,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverRemovesNamespaceOnRollback_ChildNonRootParent) {
 		// Arrange: create a child namespace with a non-root parent for removal
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateChildNotification(signer, NamespaceId(36), NamespaceId(49));
 
 		// Act: remove it

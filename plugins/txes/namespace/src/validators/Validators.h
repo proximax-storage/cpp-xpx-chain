@@ -49,12 +49,16 @@ namespace catapult { namespace validators {
 	/// - the namespace is available and can be created or renewed given \a maxNamespaceDuration
 	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
-	/// A validator implementation that applies to child register namespace transactions and validates that:
-	/// - the namespace is available and can be created
+	/// A validator implementation that applies to root namespace notifications and validates that:
+	/// - namespace duration is acceptable given \a maxNamespaceDuration
+	DECLARE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, model::RootNamespaceNotification)(BlockDuration maxNamespaceDuration);
+
+	/// A validator implementation that applies to child namespace notifications and validates that:
+	/// - namespace is available and can be created
 	DECLARE_STATEFUL_VALIDATOR(ChildNamespaceAvailability, model::ChildNamespaceNotification<1>)();
 
-	/// A validator implementation that applies to child register namespace transactions and validates that:
-	/// - the maximum number of children (\a maxChildren) for a root namespace is not exceeded
+	/// A validator implementation that applies to child namespace notifications and validates that:
+	/// - maximum number of children (\a maxChildren) for a root namespace is not exceeded
 	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, model::ChildNamespaceNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to alias owner notifications and validates that:

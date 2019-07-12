@@ -161,7 +161,7 @@ namespace catapult { namespace net {
 				if (m_writers.end() == iter)
 					return false;
 
-				CATAPULT_LOG(debug) << "closing connection to " << utils::HexFormat(identityKey);
+				CATAPULT_LOG(debug) << "closing connection to " << identityKey;
 				iter->pSocket->close();
 				remove(iter);
 				return true;

@@ -20,6 +20,7 @@
 
 #include "Validators.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "src/config/HashLockConfiguration.h"
 
 namespace catapult { namespace validators {
@@ -33,8 +34,10 @@ namespace catapult { namespace validators {
 			if (pluginConfig.LockedFundsPerAggregate != notification.Mosaic.Amount)
 				return Failure_LockHash_Invalid_Mosaic_Amount;
 
-			auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
-			return currencyMosaicId != notification.Mosaic.MosaicId ? Failure_LockHash_Invalid_Mosaic_Id : ValidationResult::Success;
+			auto currencyMosaicId = context.Resolvers.resolve(model::GetUnresolvedCurrencyMosaicId(blockChainConfig));
+			return currencyMosaicId != context.Resolvers.resolve(notification.Mosaic.MosaicId)
+					? Failure_LockHash_Invalid_Mosaic_Id
+					: ValidationResult::Success;
 		}));
 	}
 }}

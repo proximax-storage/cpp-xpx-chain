@@ -53,5 +53,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(SecretLock, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(SecretLock, Default, Publish)
 }}

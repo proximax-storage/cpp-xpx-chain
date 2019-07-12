@@ -21,7 +21,6 @@
 #pragma once
 
 #include "Results.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/validators/ValidatorContext.h"
@@ -64,6 +63,10 @@ namespace catapult { namespace validators {
 	/// - the block does not contain more than \a maxTransactions transactions
 	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, model::BlockNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
+	/// A validator implementation that applies to all block notifications and validates that:
+	/// - the block has valid FeeInterest and FeeInterestDenominator
+	DECLARE_STATELESS_VALIDATOR(Greed, model::BlockNotification)();
+
 	// endregion
 
 	// region Transaction
@@ -71,7 +74,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all transaction notifications and validates that:
 	/// - the transaction deadline is no later than the block timestamp
 	/// - the transaction deadline is no more than \a maxTransactionLifetime past the block timestamp
-	DECLARE_STATEFUL_VALIDATOR(Deadline, model::TransactionNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(Deadline, model::TransactionDeadlineNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - the sending account has enough funds

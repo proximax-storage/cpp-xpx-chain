@@ -221,8 +221,8 @@ namespace catapult { namespace chain {
 	TEST(TEST_CLASS, CanUndoMultipleNotificationsWithVaryingSizesAndChannels) {
 		// Arrange:
 		TestContext context;
-		auto signer = test::GenerateRandomData<Key_Size>();
-		auto hash = test::GenerateRandomData<Hash256_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
+		auto hash = test::GenerateRandomByteArray<Hash256>();
 		auto notification1 = model::AccountPublicKeyNotification<1>(signer);
 		auto notification2 = test::CreateNotification(Notification_Type_All);
 		auto notification3 = model::EntityNotification<1>(model::NetworkIdentifier::Mijin_Test, model::EntityType{0}, 0);

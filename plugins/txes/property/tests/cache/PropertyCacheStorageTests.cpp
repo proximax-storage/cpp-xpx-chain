@@ -21,43 +21,39 @@
 #include "src/cache/PropertyCacheStorage.h"
 #include "src/cache/PropertyCache.h"
 #include "src/model/PropertyTypes.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/AccountPropertiesTestUtils.h"
+#include "tests/test/cache/CacheStorageTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 
-#define TEST_CLASS PropertyCacheStorageTests
+	namespace {
+		struct PropertyCacheStorageTraits {
+			using StorageType = PropertyCacheStorage;
+			class CacheType : public PropertyCache {
+			public:
+				CacheType() : PropertyCache(CacheConfiguration(), static_cast<model::NetworkIdentifier>(12))
+				{}
+			};
 
-	TEST(TEST_CLASS, CanLoadValueIntoCache) {
-		// Arrange:
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(blockChainConfig);
-		state::AccountProperties originalAccountProperties(test::GenerateRandomData<Address_Decoded_Size>());
-		auto& property = originalAccountProperties.property(model::PropertyType::Address);
-		for (auto i = 0u; i < 3; ++i)
-			property.allow({ model::PropertyModificationType::Add, test::GenerateRandomVector(Address_Decoded_Size) });
+			static auto CreateId(uint8_t id) {
+				return Address{ { id } };
+			}
 
-		// Sanity:
-		EXPECT_EQ(3u, originalAccountProperties.property<Address>(model::PropertyType::Address).size());
+			static auto CreateValue(const Address& address) {
+				state::AccountProperties accountProperties(address);
+				auto& property = accountProperties.property(model::PropertyType::Address);
+				for (auto i = 0u; i < 3; ++i)
+					property.allow({ model::PropertyModificationType::Add, test::GenerateRandomVector(Address_Decoded_Size) });
 
-		// Act:
-		PropertyCache cache(CacheConfiguration{}, pConfigHolder);
-		{
-			auto delta = cache.createDelta(Height{0});
-			PropertyCacheStorage::LoadInto(originalAccountProperties, *delta);
-			cache.commit();
-		}
+				return accountProperties;
+			}
 
-		// Assert: the cache contains the value
-		auto view = cache.createView(Height{0});
-		EXPECT_EQ(1u, view->size());
-		ASSERT_TRUE(view->contains(originalAccountProperties.address()));
-		const auto& loadedAccountProperties = view->find(originalAccountProperties.address()).get();
-
-		// - the loaded cache value is correct
-		test::AssertEqual(originalAccountProperties, loadedAccountProperties);
+			static void AssertEqual(const state::AccountProperties& lhs, const state::AccountProperties& rhs) {
+				test::AssertEqual(lhs, rhs);
+			}
+		};
 	}
+
+	DEFINE_BASIC_INSERT_REMOVE_CACHE_STORAGE_TESTS(PropertyCacheStorageTests, PropertyCacheStorageTraits)
 }}

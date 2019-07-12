@@ -85,5 +85,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, Default, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
 }}

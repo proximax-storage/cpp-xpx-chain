@@ -16,7 +16,7 @@ namespace catapult { namespace config {
 
 	LocalNodeConfigurationHolder::LocalNodeConfigurationHolder(cache::CatapultCache* pCache)
 			: m_pCache(pCache) {
-		auto config = LocalNodeConfiguration{
+		auto config = CatapultConfiguration{
 			model::BlockChainConfiguration::Uninitialized(),
 			NodeConfiguration::Uninitialized(),
 			LoggingConfiguration::Uninitialized(),
@@ -29,21 +29,21 @@ namespace catapult { namespace config {
 		return boost::filesystem::path(argc > 1 ? argv[1] : "..") / "resources";
 	}
 
-	const LocalNodeConfiguration& LocalNodeConfigurationHolder::LoadConfig(int argc, const char** argv) {
+	const CatapultConfiguration& LocalNodeConfigurationHolder::LoadConfig(int argc, const char** argv) {
 		auto resourcesPath = GetResourcesPath(argc, argv);
 		std::cout << "loading resources from " << resourcesPath << std::endl;
-		SetConfig(Height{0}, config::LocalNodeConfiguration::LoadFromPath(resourcesPath));
+		SetConfig(Height{0}, config::CatapultConfiguration::LoadFromPath(resourcesPath));
 
 		return m_catapultConfigs.at(Height{0});
 	}
 
-	void LocalNodeConfigurationHolder::SetConfig(const Height& height, const LocalNodeConfiguration& config) {
+	void LocalNodeConfigurationHolder::SetConfig(const Height& height, const CatapultConfiguration& config) {
 		if (m_catapultConfigs.count(height))
 			m_catapultConfigs.erase(height);
 		m_catapultConfigs.insert({ height, config });
 	}
 
-	LocalNodeConfiguration& LocalNodeConfigurationHolder::Config(const Height& height) {
+	CatapultConfiguration& LocalNodeConfigurationHolder::Config(const Height& height) {
 		if (m_catapultConfigs.count(height))
 			return m_catapultConfigs.at(height);
 
@@ -57,7 +57,7 @@ namespace catapult { namespace config {
 
 		auto iter = std::lower_bound(m_catapultConfigs.begin(), m_catapultConfigs.end(), configHeight,
 			[](const auto& pair, const auto& height) { return pair.first < height; });
-		LocalNodeConfiguration config((iter--)->second);
+		CatapultConfiguration config((iter--)->second);
 
 		auto entry = configCache.find(configHeight).get();
 

@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "catapult/config/LocalNodeConfiguration.h"
+#include "catapult/config/CatapultConfiguration.h"
 
 namespace catapult { namespace cache { class CatapultCache; } }
 
@@ -19,17 +19,17 @@ namespace catapult { namespace config {
 		/// Extracts the resources path from the command line arguments.
 		/// \a argc commmand line arguments are accessible via \a argv.
 		static boost::filesystem::path GetResourcesPath(int argc, const char** argv);
-		const LocalNodeConfiguration& LoadConfig(int argc, const char** argv);
+		const CatapultConfiguration& LoadConfig(int argc, const char** argv);
 
-		void SetConfig(const Height& height, const LocalNodeConfiguration& config);
-		virtual LocalNodeConfiguration& Config(const Height& height);
+		void SetConfig(const Height& height, const CatapultConfiguration& config);
+		virtual CatapultConfiguration& Config(const Height& height);
 
 		void SetCache(cache::CatapultCache* pCache) {
 			m_pCache = pCache;
 		}
 
 	protected:
-		std::map<Height, LocalNodeConfiguration> m_catapultConfigs;
+		std::map<Height, CatapultConfiguration> m_catapultConfigs;
 		cache::CatapultCache* m_pCache;
 	};
 }}

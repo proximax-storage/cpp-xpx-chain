@@ -37,7 +37,7 @@ namespace catapult { namespace validators {
 			static constexpr auto Default_Namespace_Id = NamespaceId(123);
 
 			static auto CreateDefaultRootNamespace() {
-				auto owner = test::GenerateRandomData<Key_Size>();
+				auto owner = test::GenerateRandomByteArray<Key>();
 				return state::RootNamespace(Default_Namespace_Id, owner, test::CreateLifetime(10, 20));
 			}
 
@@ -70,11 +70,11 @@ namespace catapult { namespace validators {
 				auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 				// Assert:
-				EXPECT_EQ(expectedResult, result) << utils::HexFormat(notification.AliasedData);
+				EXPECT_EQ(expectedResult, result) << notification.AliasedData;
 			}
 
 		public:
-			static void AssertSuccessIfActionIsNotUnlink() {
+			static void AssertSuccessWhenActionIsNotUnlink() {
 				// Arrange:
 				auto notification = CreateNotification(model::AliasAction::Link);
 
@@ -82,7 +82,7 @@ namespace catapult { namespace validators {
 				RunUnlinkValidatorTest(validators::ValidationResult::Success, notification, [](const auto&) {});
 			}
 
-			static void AssertFailureIfNamespaceIsUnknown() {
+			static void AssertFailureWhenNamespaceIsUnknown() {
 				// Arrange:
 				auto notification = CreateNotification();
 
@@ -90,7 +90,7 @@ namespace catapult { namespace validators {
 				RunUnlinkValidatorTest(validators::Failure_Namespace_Alias_Namespace_Unknown, notification, [](const auto&) {});
 			}
 
-			static void AssertFailureIfNamespaceDoesNotHaveAlias() {
+			static void AssertFailureWhenNamespaceDoesNotHaveAlias() {
 				// Arrange:
 				auto notification = CreateNotification();
 
@@ -100,7 +100,7 @@ namespace catapult { namespace validators {
 				});
 			}
 
-			static void AssertFailureIfAliasedTypeMismatch() {
+			static void AssertFailureWhenAliasedTypeMismatch() {
 				// Arrange:
 				auto notification = CreateNotification();
 
@@ -111,7 +111,7 @@ namespace catapult { namespace validators {
 				});
 			}
 
-			static void AssertFailureIfAliasedDataMismatch() {
+			static void AssertFailureWhenAliasedDataMismatch() {
 				// Arrange:
 				auto notification = CreateNotification();
 
@@ -122,7 +122,7 @@ namespace catapult { namespace validators {
 				});
 			}
 
-			static void AssertSuccessIfAliasedTypeAndDataMatch() {
+			static void AssertSuccessWhenAliasedTypeAndDataMatch() {
 				// Arrange:
 				auto notification = CreateNotification();
 
@@ -139,12 +139,12 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, TEST_NAME) { UnlinkAliasedDataConsistencyValidatorTests<TRAITS_NAME>::Assert##TEST_NAME(); }
 
 #define DEFINE_ALIAS_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, TRAITS_NAME) \
-	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, SuccessIfActionIsNotUnlink) \
-	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, FailureIfNamespaceIsUnknown) \
-	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, FailureIfNamespaceDoesNotHaveAlias) \
-	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, FailureIfAliasedTypeMismatch) \
-	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, FailureIfAliasedDataMismatch) \
-	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, SuccessIfAliasedTypeAndDataMatch)
+	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, SuccessWhenActionIsNotUnlink) \
+	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, FailureWhenNamespaceIsUnknown) \
+	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, FailureWhenNamespaceDoesNotHaveAlias) \
+	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, FailureWhenAliasedTypeMismatch) \
+	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, FailureWhenAliasedDataMismatch) \
+	MAKE_UNLINK_VALIDATOR_TEST(TEST_CLASS, TRAITS_NAME, SuccessWhenAliasedTypeAndDataMatch)
 
 	// region unlink aliased address consistency validator tests
 

@@ -23,7 +23,7 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
-		const Address Raw_Data = test::GenerateRandomData<Address_Decoded_Size>();
+		const Address Raw_Data = test::GenerateRandomByteArray<Address>();
 		const model::MetadataType Metadata_Type = model::MetadataType::Address;
 		const Hash256 Metadata_Id = state::GetHash(state::ToVector(Raw_Data), Metadata_Type);
 
@@ -124,7 +124,7 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 			ValidationResult::Success,
 			{},
-			test::GenerateRandomData<Hash256_Size>(),
+			test::GenerateRandomByteArray<Hash256>(),
 			{
 				{ "Hello1", "World", model::MetadataModificationType::Add },
 				{ "Hello2", "World", model::MetadataModificationType::Add },
@@ -140,7 +140,7 @@ namespace catapult { namespace validators {
 				{ "Hello-1", "World", Height(0) },
 				{ "Hello0", "World", Height(0) },
 			},
-			test::GenerateRandomData<Hash256_Size>(),
+			test::GenerateRandomByteArray<Hash256>(),
 			{
 				{ "Hello1", "World", model::MetadataModificationType::Add },
 				{ "Hello2", "World", model::MetadataModificationType::Add },
@@ -154,7 +154,7 @@ namespace catapult { namespace validators {
 			ValidationResult::Success,
 			{
 			},
-			test::GenerateRandomData<Hash256_Size>(),
+			test::GenerateRandomByteArray<Hash256>(),
 			{
 				{ "Hello1", "World", model::MetadataModificationType::Add },
 				{ "Hello2", "World", model::MetadataModificationType::Add },
@@ -170,7 +170,7 @@ namespace catapult { namespace validators {
 			Failure_Metadata_Too_Much_Keys,
 			{
 			},
-			test::GenerateRandomData<Hash256_Size>(),
+			test::GenerateRandomByteArray<Hash256>(),
 			{
 				{ "Hello1", "World", model::MetadataModificationType::Add },
 				{ "Hello2", "World", model::MetadataModificationType::Add },
@@ -307,7 +307,7 @@ namespace catapult { namespace validators {
 			Failure_Metadata_Remove_Not_Existing_Key,
 			{
 			},
-			test::GenerateRandomData<Hash256_Size>(),
+			test::GenerateRandomByteArray<Hash256>(),
 			{
 				{ "Hello1", "", model::MetadataModificationType::Del },
 			});

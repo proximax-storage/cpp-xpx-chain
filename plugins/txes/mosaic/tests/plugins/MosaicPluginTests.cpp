@@ -41,12 +41,8 @@ namespace catapult { namespace plugins {
 					"",
 					{
 						{ "maxMosaicsPerAccount", "0" },
-
 						{ "maxMosaicDuration", "0h" },
-
-						{ "isMosaicLevyUpdateAllowed", "false" },
 						{ "maxMosaicDivisibility", "0" },
-						{ "maxMosaicDivisibleUnits", "0" },
 
 						{ "mosaicRentalFeeSinkPublicKey", "0000000000000000000000000000000000000000000000000000000000000000" },
 						{ "mosaicRentalFee", "0" }

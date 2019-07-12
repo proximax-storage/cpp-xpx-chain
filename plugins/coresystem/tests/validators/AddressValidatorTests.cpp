@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
-			EXPECT_EQ(expectedResult, result) << "address " << utils::HexFormat(address);
+			EXPECT_EQ(expectedResult, result) << "address " << address;
 		}
 	}
 
@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenAddressIsCompatibleWithNetwork) {
 		// Arrange:
-		auto address = PublicKeyToAddress(test::GenerateRandomData<Key_Size>(), Network_Identifier);
+		auto address = PublicKeyToAddress(test::GenerateRandomByteArray<Key>(), Network_Identifier);
 
 		// Assert:
 		AssertValidationResult<1>(ValidationResult::Success, address);
@@ -66,7 +66,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenAddressHasInvalidChecksum) {
 		// Arrange:
-		auto address = PublicKeyToAddress(test::GenerateRandomData<Key_Size>(), Network_Identifier);
+		auto address = PublicKeyToAddress(test::GenerateRandomByteArray<Key>(), Network_Identifier);
 		address[Address_Decoded_Size / 2] ^= 0xFF;
 
 		// Assert:
@@ -75,7 +75,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenAddressIsIncompatibleWithNetwork) {
 		// Arrange:
-		auto address = PublicKeyToAddress(test::GenerateRandomData<Key_Size>(), model::NetworkIdentifier::Mijin_Test);
+		auto address = PublicKeyToAddress(test::GenerateRandomByteArray<Key>(), model::NetworkIdentifier::Mijin_Test);
 
 		// Assert:
 		AssertValidationResult<1>(Failure_Core_Invalid_Address, address);

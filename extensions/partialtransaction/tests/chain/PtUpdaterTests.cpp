@@ -21,7 +21,7 @@
 #include "partialtransaction/src/chain/PtUpdater.h"
 #include "partialtransaction/src/chain/PtValidator.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
-#include "catapult/cache/MemoryPtCache.h"
+#include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/thread/FutureUtils.h"
@@ -29,6 +29,7 @@
 #include "catapult/utils/SpinLock.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
@@ -211,7 +212,7 @@ namespace catapult { namespace chain {
 			Result<bool> validatePartial(const model::WeakEntityInfoT<model::Transaction>& transactionInfo) const override {
 				utils::SpinLockGuard guard(m_lock);
 				++m_numValidatePartialCalls;
-				m_transactions.push_back(test::CopyTransaction(transactionInfo.entity()));
+				m_transactions.push_back(test::CopyEntity(transactionInfo.entity()));
 				m_transactionHashes.push_back(transactionInfo.hash());
 				return { Validate_Partial_Raw_Result, m_validatePartialResult };
 			}
@@ -221,7 +222,7 @@ namespace catapult { namespace chain {
 				{
 					utils::SpinLockGuard guard(m_lock);
 					++m_numValidateCosignersCalls;
-					m_transactions.push_back(test::CopyTransaction(transactionInfo.transaction()));
+					m_transactions.push_back(test::CopyEntity(transactionInfo.transaction()));
 
 					// there shouldn't be any duplicate cosigners
 					m_numLastCosigners = transactionInfo.cosignatures().size();
@@ -401,7 +402,7 @@ namespace catapult { namespace chain {
 
 				auto expectedCosignaturesMap = test::ToMap(cosignatures);
 				for (const auto& cosignature : transactionInfoFromCache.cosignatures()) {
-					auto message = "cosigner " + test::ToHexString(cosignature.Signer);
+					auto message = "cosigner " + test::ToString(cosignature.Signer);
 
 					auto iter = expectedCosignaturesMap.find(cosignature.Signer);
 					ASSERT_NE(expectedCosignaturesMap.cend(), iter) << message;
@@ -1293,7 +1294,7 @@ namespace catapult { namespace chain {
 
 	// region threading
 
-	TEST(TEST_CLASS, FuturesAreFulfilledEvenIfUpdaterIsDestroyed) {
+	TEST(TEST_CLASS, FuturesAreFulfilledEvenWhenUpdaterIsDestroyed) {
 		// Arrange:
 		UpdaterTestContext context;
 		auto pTransaction = CreateRandomAggregateTransaction(3);
@@ -1302,7 +1303,7 @@ namespace catapult { namespace chain {
 
 		// Act: start async operations and destroy the updater
 		auto future1 = context.updater().update(transactionInfo);
-		auto future2 = context.updater().update(test::GenerateValidCosignature(test::GenerateRandomData<Hash256_Size>()));
+		auto future2 = context.updater().update(test::GenerateValidCosignature(test::GenerateRandomByteArray<Hash256>()));
 		context.destroyUpdater();
 
 		// - wait for operations to complete

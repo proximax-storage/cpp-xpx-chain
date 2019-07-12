@@ -111,7 +111,7 @@ namespace catapult { namespace validators {
 
 		void AssertMosaicsTest(ValidationResult expectedResult, UnresolvedMosaicId mosaicId) {
 			// Arrange:
-			auto owner = test::GenerateRandomData<Key_Size>();
+			auto owner = test::GenerateRandomByteArray<Key>();
 			auto notification = model::BalanceTransferNotification<1>(owner, UnresolvedAddress(), mosaicId, Amount(123));
 
 			auto config = model::BlockChainConfiguration::Uninitialized();
@@ -141,7 +141,7 @@ namespace catapult { namespace validators {
 
 		void AssertNonTransferableMosaicsTest(ValidationResult expectedResult, uint8_t notificationFlags) {
 			// Arrange:
-			auto owner = test::GenerateRandomData<Key_Size>();
+			auto owner = test::GenerateRandomByteArray<Key>();
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			auto cache = CreateAndSeedCache(owner, model::MosaicFlags::None, config);
 

@@ -41,10 +41,10 @@ namespace catapult {
 		struct NamespaceFlatMapTypesSerializer;
 		struct NamespaceHeightGroupingSerializer;
 		class NamespacePatriciaTree;
-		struct NamespaceRootHistoryPrimarySerializer;
 
 		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
+		struct RootNamespaceHistoryPrimarySerializer;
 	}
 }
 
@@ -65,7 +65,7 @@ namespace catapult { namespace cache {
 		using CacheDeltaType = NamespaceCacheDelta;
 		using CacheViewType = NamespaceCacheView;
 
-		using Serializer = NamespaceRootHistoryPrimarySerializer;
+		using Serializer = RootNamespaceHistoryPrimarySerializer;
 		using PatriciaTree = NamespacePatriciaTree;
 
 	public:

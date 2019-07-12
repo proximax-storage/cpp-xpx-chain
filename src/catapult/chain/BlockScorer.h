@@ -34,7 +34,7 @@ namespace catapult { namespace chain {
 	using BlockTarget = boost::multiprecision::uint256_t;
 
 	/// Calculates the hit for a \a generationHash.
-	uint64_t CalculateHit(const Hash256& generationHash);
+	uint64_t CalculateHit(const GenerationHash& generationHash);
 
 	/// Calculates the score of \a currentBlock with parent \a parentBlock.
 	uint64_t CalculateScore(const model::Block& parentBlock, const model::Block& currentBlock);
@@ -45,7 +45,9 @@ namespace catapult { namespace chain {
 			const utils::TimeSpan& timeSpan,
 			Difficulty difficulty,
 			Importance signerImportance,
-			const model::BlockChainConfiguration& config);
+			const model::BlockChainConfiguration& config,
+			uint32_t feeInterest,
+			uint32_t feeInterestDenominator);
 
 	/// Calculates the target of \a currentBlock with parent \a parentBlock and effective signer importance
 	/// of \a signerImportance for the block chain described by \a config.
@@ -64,7 +66,7 @@ namespace catapult { namespace chain {
 
 	public:
 		/// Generation hash.
-		Hash256 GenerationHash;
+		catapult::GenerationHash GenerationHash;
 
 		/// Time since the last block.
 		utils::TimeSpan ElapsedTime;
@@ -77,6 +79,14 @@ namespace catapult { namespace chain {
 
 		/// Block height.
 		catapult::Height Height;
+
+		/// The part of the transaction fee harvester is willing to get.
+		/// From 0 up to FeeInterestDenominator. The customer gets
+		/// (FeeInterest / FeeInterestDenominator)'th part of the maximum transaction fee.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
 	};
 
 	/// Predicate used to determine if a block is a hit or not.
@@ -91,7 +101,7 @@ namespace catapult { namespace chain {
 
 	public:
 		/// Determines if the \a block is a hit given its parent (\a parentBlock) and generation hash (\a generationHash).
-		bool operator()(const model::Block& parentBlock, const model::Block& block, const Hash256& generationHash) const;
+		bool operator()(const model::Block& parentBlock, const model::Block& block, const GenerationHash& generationHash) const;
 
 		/// Determines if the specified \a context is a hit.
 		bool operator()(const BlockHitContext& context) const;

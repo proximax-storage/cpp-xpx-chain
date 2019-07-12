@@ -50,7 +50,7 @@ namespace catapult { namespace observers {
 
 				auto pObserver = CreateSnapshotCleanUpObserver(pConfigHolder);
 
-				auto signer = test::GenerateRandomData<Key_Size>();
+				auto signer = test::GenerateRandomByteArray<Key>();
 				for (auto i = 0u; i < Effective_Balance_Range + Max_Rollback_Blocks + 1; ++i) {
 					context.setAccountBalance<Key>(signer, Amount(1), Height(i + 1));
 				}

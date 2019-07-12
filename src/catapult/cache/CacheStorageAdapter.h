@@ -20,7 +20,9 @@
 
 #pragma once
 #include "CacheStorage.h"
+#include "CatapultCacheView.h"
 #include "ChunkedDataLoader.h"
+#include "catapult/exceptions.h"
 
 namespace catapult { namespace cache {
 
@@ -40,16 +42,20 @@ namespace catapult { namespace cache {
 		}
 
 	public:
-		void saveAll(io::OutputStream& output, const Height& height) const override {
+		void saveAll(const CatapultCacheView& cacheView, io::OutputStream& output, const Height& height) const override {
 			io::Write(output, height);
-			auto view = m_cache.createView(height);
-			io::Write64(output, view->size());
+			const auto& view = cacheView.sub<TCache>();
+			io::Write64(output, view.size());
 
-			auto pIterableView = view->tryMakeIterableView();
+			auto pIterableView = view.tryMakeIterableView();
 			for (const auto& element : *pIterableView)
 				SaveValue(element, output);
 
 			output.flush();
+		}
+
+		void saveSummary(const CatapultCacheDelta&, io::OutputStream&) const override {
+			CATAPULT_THROW_INVALID_ARGUMENT("CacheStorageAdapter does not support saveSummary");
 		}
 
 		void loadAll(io::InputStream& input, size_t batchSize) override {

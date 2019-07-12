@@ -53,10 +53,10 @@ namespace catapult { namespace plugins {
 			auto cache = pluginManager.createCache();
 
 			// Act:
-			CacheHandlers<CacheDescriptor>::Register<static_cast<model::FacilityCode>(123)>(pluginManager);
+			CacheHandlers<CacheDescriptor>::Register<static_cast<model::FacilityCode>(123)>(manager);
 
 			// Assert:
-			action(pluginManager, cache);
+			action(manager, cache);
 		}
 	}
 

@@ -34,10 +34,11 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, std::make_shared<config::MockLocalNodeConfigurationHolder>())
 
 	namespace {
-		const auto Block_Time = Timestamp(8888);
+		constexpr auto Block_Time = Timestamp(8888);
 		const auto Max_Transaction_Lifetime = []() { return utils::TimeSpan::FromHours(2); }();
+		constexpr auto TimeSpanFromHours = utils::TimeSpan::FromHours;
 
-		void AssertValidationResult(ValidationResult expectedResult, Timestamp deadline) {
+		void AssertValidationResult(ValidationResult expectedResult, Timestamp deadline, const utils::TimeSpan& maxCustomLifetime) {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.MaxTransactionLifetime = Max_Transaction_Lifetime;
@@ -50,56 +51,50 @@ namespace catapult { namespace validators {
 			pConfigHolder->SetBlockChainConfig(config);
 			auto pValidator = CreateDeadlineValidator(pConfigHolder);
 
-			model::TransactionNotification<1> notification(Key(), Hash256(), model::EntityType(), deadline);
+			model::TransactionDeadlineNotification notification(deadline, maxCustomLifetime);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
-			EXPECT_EQ(expectedResult, result);
+			EXPECT_EQ(expectedResult, result) << "deadline " << deadline << ", maxCustomLifetime " << maxCustomLifetime;
 		}
 	}
 
 	// region basic tests
 
-	TEST(TEST_CLASS, SuccessWhenTransactionDeadlineIsValid) {
-		// Arrange:
-		auto deadline = Block_Time + utils::TimeSpan::FromHours(1);
-
+	TEST(TEST_CLASS, FailureWhenTransactionDeadlineIsLessThanBlockTime) {
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, deadline);
-	}
-
-	TEST(TEST_CLASS, SuccessWhenTransactionDeadlineIsEqualToTimestampPlusLifetime) {
-		// Arrange:
-		auto deadline = Block_Time + utils::TimeSpan::FromHours(2);
-
-		// Assert:
-		AssertValidationResult(ValidationResult::Success, deadline);
+		for (auto i = 0u; i < 4; ++i)
+			AssertValidationResult(Failure_Core_Past_Deadline, Block_Time - Timestamp(1), TimeSpanFromHours(i));
 	}
 
 	TEST(TEST_CLASS, SuccessWhenTransactionDeadlineIsEqualToBlockTime) {
-		// Arrange:
-		auto deadline = Block_Time;
-
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, deadline);
+		for (auto i = 0u; i < 4; ++i)
+			AssertValidationResult(ValidationResult::Success, Block_Time, TimeSpanFromHours(i));
 	}
 
-	TEST(TEST_CLASS, FailureWhenTransactionDeadlineIsLessThanBlockTime) {
-		// Arrange:
-		auto deadline = Timestamp(Block_Time.unwrap() - 1);
-
+	TEST(TEST_CLASS, SuccessWhenTransactionDeadlineIsValid) {
 		// Assert:
-		AssertValidationResult(Failure_Core_Past_Deadline, deadline);
+		for (auto i = 0u; i < 4; ++i)
+			AssertValidationResult(ValidationResult::Success, Block_Time + utils::TimeSpan::FromMinutes(30), TimeSpanFromHours(i));
 	}
 
-	TEST(TEST_CLASS, FailureWhenTransactionDeadlineIsLargerThanBlockTimePlusLifetime) {
-		// Arrange:
-		auto deadline = Block_Time + utils::TimeSpan::FromHours(3);
-
+	TEST(TEST_CLASS, SuccessWhenTransactionDeadlineIsEqualToBlockTimePlusLifetime) {
 		// Assert:
-		AssertValidationResult(Failure_Core_Future_Deadline, deadline);
+		AssertValidationResult(ValidationResult::Success, Block_Time + TimeSpanFromHours(2), utils::TimeSpan());
+
+		for (auto i = 1u; i < 4; ++i)
+			AssertValidationResult(ValidationResult::Success, Block_Time + TimeSpanFromHours(i), TimeSpanFromHours(i));
+	}
+
+	TEST(TEST_CLASS, FailureWhenTransactionDeadlineIsGreaterThanBlockTimePlusLifetime) {
+		// Assert:
+		AssertValidationResult(Failure_Core_Future_Deadline, Block_Time + TimeSpanFromHours(3), utils::TimeSpan());
+
+		for (auto i = 1u; i < 4; ++i)
+			AssertValidationResult(Failure_Core_Future_Deadline, Block_Time + TimeSpanFromHours(i + 1), TimeSpanFromHours(i));
 	}
 
 	// endregion

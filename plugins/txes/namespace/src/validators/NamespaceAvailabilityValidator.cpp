@@ -60,13 +60,6 @@ namespace catapult { namespace validators {
 			if (!root.lifetime().isActiveOrGracePeriod(height))
 				return ValidationResult::Success;
 
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			model::NamespaceLifetimeConstraints constraints(blockChainConfig);
-			auto newLifetimeEnd = root.lifetime().End + ToHeight(notification.Duration);
-			auto maxLifetimeEnd = height + ToHeight(constraints.maxNamespaceDuration());
-			if (newLifetimeEnd > maxLifetimeEnd)
-				return Failure_Namespace_Invalid_Duration;
-
 			return root.owner() == notification.Signer ? ValidationResult::Success : Failure_Namespace_Owner_Conflict;
 		});
 	}

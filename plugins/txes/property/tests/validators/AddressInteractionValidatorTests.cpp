@@ -108,7 +108,7 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(FailureWhenDestinationIsKnownAndSourceIsNotContainedInValues_Allow) {
 		// Arrange:
-		auto sourceKey = test::GenerateRandomData<Key_Size>();
+		auto sourceKey = test::GenerateRandomByteArray<Key>();
 		auto values = test::GenerateRandomDataVector<Key>(3);
 		CacheContents cacheContents{ { sourceKey, values } };
 
@@ -116,14 +116,14 @@ namespace catapult { namespace validators {
 		AssertValidationResult<test::AllowTraits>(
 				Failure_Property_Signer_Address_Interaction_Not_Allowed,
 				cacheContents,
-				test::GenerateRandomData<Key_Size>(),
+				test::GenerateRandomByteArray<Key>(),
 				TTraits::ParticipantsByAddress({ sourceKey }),
 				TTraits::ParticipantsByKey({ sourceKey }));
 	}
 
 	TRAITS_BASED_TEST(FailureWhenDestinationIsKnownAndSourceIsContainedInValues_Block) {
 		// Arrange:
-		auto sourceKey = test::GenerateRandomData<Key_Size>();
+		auto sourceKey = test::GenerateRandomByteArray<Key>();
 		auto values = test::GenerateRandomDataVector<Key>(3);
 		CacheContents cacheContents{ { sourceKey, values } };
 
@@ -144,7 +144,7 @@ namespace catapult { namespace validators {
 		template<typename TOperationTraits, typename TTraits>
 		void AssertSuccessWhenDestinationAddressIsNotKnown() {
 			// Arrange:
-			auto sourceKey = test::GenerateRandomData<Key_Size>();
+			auto sourceKey = test::GenerateRandomByteArray<Key>();
 			auto values = test::GenerateRandomDataVector<Key>(3);
 			CacheContents cacheContents{ { sourceKey, values } };
 
@@ -153,8 +153,8 @@ namespace catapult { namespace validators {
 					ValidationResult::Success,
 					cacheContents,
 					values[1],
-					TTraits::ParticipantsByAddress({ test::GenerateRandomData<Key_Size>() }),
-					TTraits::ParticipantsByKey({ test::GenerateRandomData<Key_Size>() }));
+					TTraits::ParticipantsByAddress({ test::GenerateRandomByteArray<Key>() }),
+					TTraits::ParticipantsByKey({ test::GenerateRandomByteArray<Key>() }));
 		}
 	}
 
@@ -172,14 +172,14 @@ namespace catapult { namespace validators {
 		template<typename TOperationTraits, typename TTraits>
 		void AssertSuccessWhenValuesAreEmpty() {
 			// Arrange:
-			auto sourceKey = test::GenerateRandomData<Key_Size>();
+			auto sourceKey = test::GenerateRandomByteArray<Key>();
 			CacheContents cacheContents{ { sourceKey, {} } };
 
 			// Act:
 			AssertValidationResult<TOperationTraits>(
 					ValidationResult::Success,
 					cacheContents,
-					test::GenerateRandomData<Key_Size>(),
+					test::GenerateRandomByteArray<Key>(),
 					TTraits::ParticipantsByAddress({ sourceKey }),
 					TTraits::ParticipantsByKey({ sourceKey }));
 		}
@@ -197,7 +197,7 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(SuccessWhenSourceEqualsDestination_Allow) {
 		// Arrange: source is not an allowed value
-		auto sourceKey = test::GenerateRandomData<Key_Size>();
+		auto sourceKey = test::GenerateRandomByteArray<Key>();
 		CacheContents cacheContents{ { sourceKey, {} } };
 
 		// Act:
@@ -211,7 +211,7 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(SuccessWhenSourceEqualsDestination_Block) {
 		// Arrange: source is a blocked value
-		auto sourceKey = test::GenerateRandomData<Key_Size>();
+		auto sourceKey = test::GenerateRandomByteArray<Key>();
 		CacheContents cacheContents{ { sourceKey, { sourceKey } } };
 
 		// Act:
@@ -225,7 +225,7 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(SuccessWhenAllConditionsAreMet_Allow) {
 		// Arrange:
-		auto sourceKey = test::GenerateRandomData<Key_Size>();
+		auto sourceKey = test::GenerateRandomByteArray<Key>();
 		auto values = test::GenerateRandomDataVector<Key>(3);
 		CacheContents cacheContents{ { sourceKey, values } };
 
@@ -240,7 +240,7 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(SuccessWhenAllConditionsAreMet_Block) {
 		// Arrange:
-		auto sourceKey = test::GenerateRandomData<Key_Size>();
+		auto sourceKey = test::GenerateRandomByteArray<Key>();
 		auto values = test::GenerateRandomDataVector<Key>(3);
 		CacheContents cacheContents{ { sourceKey, values } };
 
@@ -248,7 +248,7 @@ namespace catapult { namespace validators {
 		AssertValidationResult<test::BlockTraits>(
 				ValidationResult::Success,
 				cacheContents,
-				test::GenerateRandomData<Key_Size>(),
+				test::GenerateRandomByteArray<Key>(),
 				TTraits::ParticipantsByAddress({ sourceKey }),
 				TTraits::ParticipantsByKey({ sourceKey }));
 	}

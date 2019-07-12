@@ -56,11 +56,6 @@ namespace catapult { namespace plugins {
 						: std::numeric_limits<uint64_t>::max();
 			}
 
-			SupportedVersions supportedVersions() const override {
-				auto version = AggregateTransaction::Current_Version;
-				return { version, version };
-			}
-
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
 				const auto& aggregate = CastToDerivedType(transactionInfo.entity());
 
@@ -78,10 +73,11 @@ namespace catapult { namespace plugins {
 							numCosignatures,
 							aggregate.CosignaturesPtr()));
 
-					// publish all sub-transaction information
-					for (const auto& subTransaction : aggregate.Transactions()) {
-						// - change source
-						sub.notify(SourceChangeNotification<1>(0, 1, SourceChangeNotification<1>::SourceChangeType::Relative));
+				// publish all sub-transaction information
+				for (const auto& subTransaction : aggregate.Transactions()) {
+					// - change source
+					constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
+					sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
 
 						// - signers and entity
 						sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));
@@ -146,6 +142,10 @@ namespace catapult { namespace plugins {
 				return buffers;
 			}
 
+			bool supportsTopLevel() const override {
+				return true;
+			}
+
 			bool supportsEmbedding() const override {
 				return false;
 			}
@@ -156,7 +156,7 @@ namespace catapult { namespace plugins {
 
 		private:
 			const TransactionRegistry& m_transactionRegistry;
-			model::EntityType m_transactionType;
+			EntityType m_transactionType;
 		};
 	}
 

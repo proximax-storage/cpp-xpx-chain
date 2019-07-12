@@ -20,6 +20,7 @@
 
 #include "NamespaceCacheDelta.h"
 #include "src/config/NamespaceConfiguration.h"
+#include "catapult/cache/IdentifierGroupCacheUtils.h"
 #include "catapult/plugins/PluginUtils.h"
 #include "catapult/utils/Casting.h"
 #include <numeric>
@@ -139,6 +140,10 @@ namespace catapult { namespace cache {
 		// make a copy of the current root and remove it
 		auto removedRoot = pHistory->back();
 		pHistory->pop_back();
+
+		// remove the height based entry
+		RemoveIdentifierWithGroup(*m_pRootNamespaceIdsByExpiryHeight, removedRoot.lifetime().GracePeriodEnd, id);
+
 		if (pHistory->empty()) {
 			// note that the last root in the history is always empty when getting removed
 			m_pHistoryById->remove(id);

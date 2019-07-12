@@ -202,6 +202,7 @@ namespace catapult { namespace cache {
 	template<typename TCache>
 	class SynchronizedCache {
 	public:
+		using CacheValueType = typename TCache::CacheValueType;
 		using CacheViewType = typename TCache::CacheViewType;
 		using CacheDeltaType = typename TCache::CacheDeltaType;
 		using CacheReadOnlyType = typename TCache::CacheReadOnlyType;

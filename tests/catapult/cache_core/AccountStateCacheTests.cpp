@@ -77,7 +77,7 @@ namespace catapult { namespace cache {
 			static constexpr auto Default_Height = Height(432);
 
 			static Type GenerateAccountId() {
-				return test::GenerateRandomData<Key_Size>();
+				return test::GenerateRandomByteArray<Key>();
 			}
 
 			template<typename TCache>
@@ -200,7 +200,7 @@ namespace catapult { namespace cache {
 
 		// custom modification policy is needed because double insert can be noop (e.g. double address insert)
 		template<typename TTraits>
-		struct AccountStateModificationPolicy {
+		struct AccountStateCacheDeltaModificationPolicy : public test:: DeltaInsertModificationPolicy {
 			static void Modify(DeltaProxy<TTraits>& delta, const state::AccountState& accountState) {
 				auto& accountStateFromCache = delta.find(TTraits::ToKey(accountState)).get();
 				accountStateFromCache.Balances.credit(Harvesting_Mosaic_Id, Amount(1), accountStateFromCache.AddressHeight + Height(1));
@@ -217,7 +217,7 @@ namespace catapult { namespace cache {
 	DEFINE_CACHE_ACCESSOR_TESTS(TRAITS, DeltaAccessor, MutableAccessor, _DeltaMutable##SUFFIX) \
 	DEFINE_CACHE_ACCESSOR_TESTS(TRAITS, DeltaAccessor, ConstAccessor, _DeltaConst##SUFFIX) \
 	\
-	DEFINE_DELTA_ELEMENTS_MIXIN_CUSTOM_TESTS(TRAITS, AccountStateModificationPolicy<TRAITS::IdTraits>, _Delta##SUFFIX)
+	DEFINE_DELTA_ELEMENTS_MIXIN_CUSTOM_TESTS(TRAITS, AccountStateCacheDeltaModificationPolicy<TRAITS::IdTraits>, _Delta##SUFFIX)
 
 	DEFINE_ACCOUNT_STATE_CACHE_TESTS(AccountStateMixinTraits<AddressTraits>, _Address)
 
@@ -669,7 +669,7 @@ namespace catapult { namespace cache {
 
 	// region queueRemove / commitRemovals
 
-	ID_BASED_TEST(Remove_RemovesExistingAccountIfHeightMatches) {
+	ID_BASED_TEST(Remove_RemovesExistingAccountWhenHeightMatches) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		auto accountId = AddRandomAccount<TTraits>(cache);
@@ -687,7 +687,7 @@ namespace catapult { namespace cache {
 		EXPECT_FALSE(!!utils::as_const(delta)->find(accountId).tryGet());
 	}
 
-	ID_BASED_TEST(Remove_DoesNotRemovesExistingAccountIfHeightDoesNotMatch) {
+	ID_BASED_TEST(Remove_DoesNotRemovesExistingAccountWhenHeightDoesNotMatch) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		auto delta = cache.createDelta(Height{0});
@@ -707,7 +707,7 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(&expectedAccount, TTraits::Find(*delta, accountId).tryGet());
 	}
 
-	ID_BASED_TEST(Remove_CanBeCalledOnNonExistingAccount) {
+	ID_BASED_TEST(Remove_CanBeCalledOnNonexistentAccount) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		DefaultFillCache(cache, 10);
@@ -744,7 +744,7 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(&expectedAccount, TTraits::Find(*delta, accountId).tryGet());
 	}
 
-	ID_BASED_TEST(CommitRemovals_DoesNothingIfNoRemovalsHaveBeenQueued) {
+	ID_BASED_TEST(CommitRemovals_DoesNothingWhenNoRemovalsHaveBeenQueued) {
 		// Arrange:
 		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
 		auto delta = cache.createDelta(Height{0});
@@ -847,19 +847,19 @@ namespace catapult { namespace cache {
 		}
 	}
 
-	TEST(TEST_CLASS, MixedState_Remove_ByKeyRemovesOnlyPublicKeyIfHeightMatches) {
+	TEST(TEST_CLASS, MixedState_Remove_ByKeyRemovesOnlyPublicKeyWhenHeightMatches) {
 		AssertRemoveByKeyAtHeight(PublicKeyTraits::Default_Height);
 	}
 
-	TEST(TEST_CLASS, MixedState_Remove_ByKeyDoesNotRemoveIfHeightDoesNotMatch) {
+	TEST(TEST_CLASS, MixedState_Remove_ByKeyDoesNotRemoveWhenHeightDoesNotMatch) {
 		AssertRemoveByKeyAtHeight(PublicKeyTraits::Default_Height + Height(1));
 	}
 
-	TEST(TEST_CLASS, MixedState_Remove_ByAddressRemovesAnAccountIfHeightMatches) {
+	TEST(TEST_CLASS, MixedState_Remove_ByAddressRemovesAnAccountWhenHeightMatches) {
 		AssertRemoveByAddressAtHeight(AddressTraits::Default_Height);
 	}
 
-	TEST(TEST_CLASS, MixedState_Remove_ByAddressDoesNotRemoveIfHeightDoesNotMatch) {
+	TEST(TEST_CLASS, MixedState_Remove_ByAddressDoesNotRemoveWhenHeightDoesNotMatch) {
 		AssertRemoveByAddressAtHeight(AddressTraits::Default_Height + Height(1));
 	}
 

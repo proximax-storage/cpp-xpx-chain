@@ -23,9 +23,13 @@
 
 namespace catapult { namespace plugins {
 
-	PluginManager::PluginManager(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const StorageConfiguration& storageConfig)
+	PluginManager::PluginManager(
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const StorageConfiguration& storageConfig,
+			const config::InflationConfiguration& inflationConfig)
 			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
+			, m_inflationConfig(inflationConfig)
 			, m_shouldEnableVerifiableState(config(Height{0}).ShouldEnableVerifiableState)
 	{}
 
@@ -41,6 +45,10 @@ namespace catapult { namespace plugins {
 
 	const StorageConfiguration& PluginManager::storageConfig() const {
 		return m_storageConfig;
+	}
+
+	const config::InflationConfiguration& PluginManager::inflationConfig() const {
+		return m_inflationConfig;
 	}
 
 	cache::CacheConfiguration PluginManager::cacheConfig(const std::string& name) const {

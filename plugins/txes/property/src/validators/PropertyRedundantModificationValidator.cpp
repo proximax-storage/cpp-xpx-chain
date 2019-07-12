@@ -71,7 +71,7 @@ namespace catapult { namespace validators {
 			AddressPropertyRedundantModification,
 			model::ModifyAddressPropertyNotification_v1,
 			UnresolvedAddress,
-			utils::UnresolvedAddressHasher)
+			utils::ArrayHasher<UnresolvedAddress>)
 	DEFINE_PROPERTY_REDUNDANT_MODIFICATION_VALIDATOR(
 			MosaicPropertyRedundantModification,
 			model::ModifyMosaicPropertyNotification_v1,

@@ -22,17 +22,21 @@
 
 namespace catapult { namespace cache {
 
-	void AccountStateCacheSummaryCacheStorage::saveAll(io::OutputStream& output, const Height& height) const {
+	void AccountStateCacheSummaryCacheStorage::saveAll(const CatapultCacheView&, io::OutputStream&) const {
+		CATAPULT_THROW_INVALID_ARGUMENT("AccountStateCacheSummaryCacheStorage does not support saveAll");
+	}
+
+	void AccountStateCacheSummaryCacheStorage::saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output, const Height& height) const {
 		// write version
 		io::Write32(output, 1);
 
-		auto view = cache().createView(height);
-		const auto& highValueAddresses = view->highValueAddresses();
+		const auto& delta = cacheDelta.sub<AccountStateCache>(height);
+		const auto& highValueAddresses = delta.highValueAddresses();
 		io::Write64(output, highValueAddresses.size());
 		for (const auto& address : highValueAddresses)
 			output.write(address);
 
-		const auto& addressesToUpdate = view->addressesToUpdate();
+		const auto& addressesToUpdate = delta.updatedAddresses();
 		io::Write64(output, addressesToUpdate.size());
 		for (const auto& address : addressesToUpdate)
 			output.write(address);

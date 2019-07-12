@@ -24,21 +24,19 @@ namespace catapult { namespace mongo { namespace plugins {
             std::vector<uint8_t> buffer;
             switch (type) {
                 case model::MetadataType::Address: {
-                    auto pubKey = test::GenerateRandomData<Key_Size>();
+                    auto pubKey = test::GenerateRandomByteArray<Key>();
                     auto address = model::PublicKeyToAddress(pubKey, Network_Identifier);
                     std::copy(address.begin(), address.end(), std::back_inserter(buffer));
                     break;
                 }
 
                 case model::MetadataType::MosaicId: {
-                    auto data = test::GenerateRandomData<sizeof(UnresolvedMosaicId)>();
-                    buffer = std::vector<uint8_t>(data.cbegin(), data.cend());
+					buffer = test::GenerateRandomVector(sizeof(UnresolvedMosaicId));
                     break;
                 }
 
                 case model::MetadataType::NamespaceId: {
-                    auto data = test::GenerateRandomData<sizeof(NamespaceId)>();
-                    buffer = std::vector<uint8_t>(data.cbegin(), data.cend());
+					buffer = test::GenerateRandomVector(sizeof(NamespaceId));
                     break;
                 }
             }

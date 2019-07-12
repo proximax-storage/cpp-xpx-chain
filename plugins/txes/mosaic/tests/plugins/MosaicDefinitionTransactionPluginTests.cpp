@@ -39,7 +39,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS MosaicDefinitionTransactionPluginTests
 
 	namespace {
-		TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::LocalNodeConfigurationHolder>, 3, 3)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::LocalNodeConfigurationHolder>, 3, 3,)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
@@ -68,7 +68,10 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, Entity_Type_Mosaic_Definition,
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(
+			TEST_CLASS,
+			,
+			,Entity_Type_Mosaic_Definition,
 		std::make_shared<config::MockLocalNodeConfigurationHolder>(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0)))))
 
 	PLUGIN_TEST(CanCalculateSize) {

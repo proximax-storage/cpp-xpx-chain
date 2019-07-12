@@ -20,7 +20,6 @@
 
 #include "src/observers/Observers.h"
 #include "src/cache/MosaicCache.h"
-#include "src/state/MosaicLevy.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
@@ -95,9 +94,8 @@ namespace catapult { namespace observers {
 			EXPECT_EQ(expectedRevision, definition.revision());
 			EXPECT_EQ(expectedProperties, definition.properties());
 
-			// - supply + levy
+			// - supply
 			EXPECT_EQ(Amount(), entry.supply());
-			EXPECT_FALSE(entry.hasLevy());
 		}
 	}
 
@@ -105,7 +103,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverAddsMosaicOnCommit) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateDefaultNotification(signer);
 
 		// Act: add it
@@ -120,7 +118,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverOverwritesMosaicOnCommit) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateDefaultNotification(signer);
 
 		// Act: add it
@@ -154,7 +152,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverRemovesMosaicOnRollbackWhenObserverDefinitionCounterIsEqualToOne) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateDefaultNotification(signer);
 		auto seedMosaics = [](auto& mosaicCacheDelta) { AddTwoMosaics(mosaicCacheDelta, 1); };
 
@@ -171,7 +169,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverDoesNotRemoveMosaicOnRollbackWhenDefinitionCounterIsGreaterThanOne) {
 		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
+		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = CreateDefaultNotification(signer);
 		auto seedMosaics = [](auto& mosaicCacheDelta) { AddTwoMosaics(mosaicCacheDelta, 2); };
 
@@ -190,30 +188,6 @@ namespace catapult { namespace observers {
 			// - duration was subtracted
 			AssertDefaultMosaic(mosaicCacheDelta, signer, Seed_Height, 1, model::MosaicProperties::FromValues({ { 1, 2, 20 } }));
 		});
-	}
-
-	// endregion
-
-	// region levy
-
-	TEST(TEST_CLASS, ObserverThrowsWhenOverwritingMosaicWithLevy) {
-		// Arrange:
-		auto signer = test::GenerateRandomData<Key_Size>();
-		auto notification = CreateDefaultNotification(signer);
-
-		auto pObserver = CreateMosaicDefinitionObserver();
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto context = ObserverTestContext(NotifyMode::Commit, Seed_Height, config);
-		auto& mosaicCacheDelta = context.cache().sub<cache::MosaicCache>();
-		auto definition = state::MosaicDefinition(Seed_Height, signer, 1, model::MosaicProperties::FromValues({ { 1, 2, 20 } }));
-		auto entry = state::MosaicEntry(Default_Mosaic_Id, definition);
-		auto address = test::GenerateRandomData<Address_Decoded_Size>();
-		auto pLevy = std::make_unique<state::MosaicLevy>(Default_Mosaic_Id, address, std::vector<state::MosaicLevyRule>());
-		entry.setLevy(std::move(pLevy));
-		mosaicCacheDelta.insert(entry);
-
-		// Act + Assert:
-		EXPECT_THROW(test::ObserveNotification(*pObserver, notification, context), catapult_runtime_error);
 	}
 
 	// endregion
