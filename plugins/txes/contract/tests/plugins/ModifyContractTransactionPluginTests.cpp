@@ -128,7 +128,7 @@ namespace catapult { namespace plugins {
 		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
 
 		// Assert:
-		AssertNumNotifications<TTraits>(3, *pTransaction);
+		AssertNumNotifications<TTraits>(3 + 3, *pTransaction);
 	}
 
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotificationsWhenAddModificationsArePresent) {
@@ -136,10 +136,13 @@ namespace catapult { namespace plugins {
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
 
 		// Assert:
-		AssertNumNotifications<TTraits>(6, *pTransaction, [](const auto& sub) {
+		AssertNumNotifications<TTraits>(6 + 3, *pTransaction, [](const auto& sub) {
 			// - multisig modify new cosigner notifications must be the first raised notifications
 			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[0]);
-			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[1]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[2]);
+			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[3]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[4]);
 		});
 	}
 
@@ -244,7 +247,7 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(3u, sub.numNotifications());
+		ASSERT_EQ(3u + 3u, sub.numNotifications());
 		ASSERT_EQ(0u, sub.numMatchingNotifications());
 	}
 

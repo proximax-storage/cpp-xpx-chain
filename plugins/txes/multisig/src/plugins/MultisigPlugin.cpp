@@ -29,6 +29,22 @@
 
 namespace catapult { namespace plugins {
 
+	namespace {
+		void extractCosigners(const cache::MultisigCache::CacheReadOnlyType& cache, const Key& publicKey, model::PublicKeySet& result) {
+			if (!cache.contains(publicKey)) {
+				return;
+			}
+
+			auto multisigIter = cache.find(publicKey);
+			const auto& multisigEntry = multisigIter.get();
+
+			for (const auto& cosignatoryPublicKey : multisigEntry.cosignatories()) {
+				result.insert(cosignatoryPublicKey);
+				extractCosigners(cache, cosignatoryPublicKey, result);
+			}
+		}
+	}
+
 	void RegisterMultisigSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateModifyMultisigAccountTransactionPlugin());
 
@@ -42,6 +58,14 @@ namespace catapult { namespace plugins {
 			counters.emplace_back(utils::DiagnosticCounterId("MULTISIG C"), [&cache]() {
 				return cache.sub<cache::MultisigCache>().createView(cache.height())->size();
 			});
+		});
+
+		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
+			auto multisigCache = cache.template sub<cache::MultisigCache>();
+			auto result = model::PublicKeySet{ key };
+			extractCosigners(multisigCache, key, result);
+
+			return result;
 		});
 
 		manager.addStatelessValidatorHook([](auto& builder) {

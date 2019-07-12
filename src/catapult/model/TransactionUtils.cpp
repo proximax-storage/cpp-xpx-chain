@@ -30,15 +30,24 @@ namespace catapult { namespace model {
 	namespace {
 		class AddressCollector : public NotificationSubscriber {
 		public:
-			explicit AddressCollector(NetworkIdentifier networkIdentifier) : m_networkIdentifier(networkIdentifier)
+			explicit AddressCollector(NetworkIdentifier networkIdentifier, const ExtractorContext& extractorContext)
+			: m_networkIdentifier(networkIdentifier)
+			, m_extractorContext(extractorContext)
 			{}
 
 		public:
 			void notify(const Notification& notification) override {
-				if (Core_Register_Account_Address_v1_Notification == notification.Type)
-					m_addresses.insert(static_cast<const AccountAddressNotification<1>&>(notification).Address);
-				else if (Core_Register_Account_Public_Key_v1_Notification == notification.Type)
-					m_addresses.insert(toAddress(static_cast<const AccountPublicKeyNotification<1>&>(notification).PublicKey));
+				if (Core_Register_Account_Address_v1_Notification == notification.Type) {
+					auto addresses = m_extractorContext.extract(
+							static_cast<const AccountAddressNotification <1>&>(notification).Address);
+					m_addresses.insert(addresses.begin(), addresses.end());
+
+				} else if (Core_Register_Account_Public_Key_v1_Notification == notification.Type) {
+					auto keys = m_extractorContext.extract(
+							static_cast<const AccountPublicKeyNotification <1>&>(notification).PublicKey);
+					for (const auto& key : keys)
+						m_addresses.insert(toAddress(key));
+				}
 			}
 
 		public:
@@ -58,12 +67,14 @@ namespace catapult { namespace model {
 		private:
 			NetworkIdentifier m_networkIdentifier;
 			UnresolvedAddressSet m_addresses;
+			const ExtractorContext& m_extractorContext;
 		};
 	}
 
-	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const NotificationPublisher& notificationPublisher) {
+	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction,
+			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext) {
 		WeakEntityInfo weakInfo(transaction, Height{0});
-		AddressCollector sub(NetworkIdentifier(weakInfo.entity().Network()));
+		AddressCollector sub(NetworkIdentifier(weakInfo.entity().Network()), extractorContext);
 		notificationPublisher.publish(weakInfo, sub);
 		return sub.addresses();
 	}

@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/model/NotificationPublisher.h"
+#include "catapult/model/ExtractorContext.h"
 #include "catapult/functions.h"
 #include <zmq_addon.hpp>
 
@@ -72,8 +73,9 @@ namespace catapult { namespace zeromq {
 	/// A zeromq entity publisher.
 	class ZeroMqEntityPublisher {
 	public:
-		/// Creates a zeromq entity publisher around \a port and \a pNotificationPublisher.
-		explicit ZeroMqEntityPublisher(unsigned short port, std::unique_ptr<model::NotificationPublisher>&& pNotificationPublisher);
+		/// Creates a zeromq entity publisher around \a port, \a pNotificationPublisher and \a contextFactory.
+		explicit ZeroMqEntityPublisher(unsigned short port,
+				std::unique_ptr<model::NotificationPublisher>&& pNotificationPublisher, const model::ExtractorContextFactoryFunc& contextFactory);
 
 		~ZeroMqEntityPublisher();
 
@@ -114,5 +116,6 @@ namespace catapult { namespace zeromq {
 		class SynchronizedPublisher;
 		std::unique_ptr<model::NotificationPublisher> m_pNotificationPublisher;
 		std::unique_ptr<SynchronizedPublisher> m_pSynchronizedPublisher;
+		model::ExtractorContextFactoryFunc m_extractorContextFactory;
 	};
 }}

@@ -43,6 +43,9 @@ namespace catapult { namespace model {
 	/// Unordered set of unresolved addresses.
 	using UnresolvedAddressSet = std::unordered_set<UnresolvedAddress, utils::ArrayHasher<UnresolvedAddress>>;
 
+	/// Unordered set of public keys.
+	using PublicKeySet = std::unordered_set<Key, utils::ArrayHasher<Key>>;
+
 	/// Unordered set of transaction infos.
 	using TransactionInfosSet = std::unordered_set<
 		TransactionInfo,

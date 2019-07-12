@@ -21,9 +21,11 @@
 #pragma once
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
+#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/config/InflationConfiguration.h"
 #include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
+#include "catapult/model/ExtractorContext.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/DemuxObserverBuilder.h"
@@ -70,6 +72,11 @@ namespace catapult { namespace plugins {
 		using AggregateResolver = std::function<TResolved (const cache::ReadOnlyCatapultCache&, const TUnresolved&)>;
 		using AggregateMosaicResolver = AggregateResolver<UnresolvedMosaicId, MosaicId>;
 		using AggregateAddressResolver = AggregateResolver<UnresolvedAddress, Address>;
+
+		template<typename TExtractingOut, typename TExtractingIn>
+		using Extractor = std::function<TExtractingOut (const cache::ReadOnlyCatapultCache&, const TExtractingIn&)>;
+		using AddressesExtractor = Extractor<model::UnresolvedAddressSet, UnresolvedAddress>;
+		using PublicKeysExtractor = Extractor<model::PublicKeySet , Key>;
 
 		using PublisherPointer = std::unique_ptr<model::NotificationPublisher>;
 
@@ -207,6 +214,15 @@ namespace catapult { namespace plugins {
 		/// Creates a resolver context given \a cache.
 		model::ResolverContext createResolverContext(const cache::ReadOnlyCatapultCache& cache) const;
 
+		/// Adds an addresses \a extractor.
+		void addAddressesExtractor(const AddressesExtractor& extractor);
+
+		/// Adds a public keys \a extractor.
+		void addPublicKeysExtractor(const PublicKeysExtractor& extractor);
+
+		/// Creates a extractor context given \a cache.
+		model::ExtractorContext createExtractorContext(const cache::CatapultCache& cache) const;
+
 		// endregion
 
 		// region publisher
@@ -233,6 +249,8 @@ namespace catapult { namespace plugins {
 
 		std::vector<MosaicResolver> m_mosaicResolvers;
 		std::vector<AddressResolver> m_addressResolvers;
+		std::vector<AddressesExtractor> m_addressesExtractors;
+		std::vector<PublicKeysExtractor> m_publicKeysExtractors;
 
 		bool m_shouldEnableVerifiableState;
 	};
