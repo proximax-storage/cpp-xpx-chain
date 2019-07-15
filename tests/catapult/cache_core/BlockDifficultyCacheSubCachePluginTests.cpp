@@ -63,6 +63,7 @@ namespace catapult { namespace cache {
 			std::vector<uint8_t> bufferAll;
 			mocks::MockMemoryStream streamAll(bufferAll);
 			storage.saveAll(catapultCache.createView(), streamAll);
+			bufferAll.erase(bufferAll.begin(), bufferAll.begin() + sizeof(uint64_t));
 
 			// - serialize via saveSummary
 			std::vector<uint8_t> bufferSummary;
