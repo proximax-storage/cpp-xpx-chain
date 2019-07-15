@@ -147,9 +147,15 @@ RUN cd /catapult \
     extension.transactionsink \
     extension.unbondedpruning \
     extension.zeromq \
-# Catapult
-    sirius.bc \
-    -j 4
+# Tools
+    catapult.tools.address \
+    catapult.tools.benchmark \
+    catapult.tools.health \
+    catapult.tools.nemgen \
+    catapult.tools.nemgen.blockhashes \
+    catapult.tools.network \
+    catapult.tools.statusgen \
+    -j4
 
 # script for copying required libs to temporary folder /deps
 RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
