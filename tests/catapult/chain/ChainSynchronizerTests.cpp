@@ -81,7 +81,6 @@ namespace catapult { namespace chain {
 				auto config = ChainSynchronizerConfiguration();
 				config.MaxBlocksPerSyncAttempt = 4 * 100;
 				config.MaxChainBytesPerSyncAttempt = utils::FileSize::FromKilobytes(8 * 512).bytes32();
-				config.MaxRollbackBlocks = 360;
 				return config;
 			}
 

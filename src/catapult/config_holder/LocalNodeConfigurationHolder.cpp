@@ -21,6 +21,8 @@ namespace catapult { namespace config {
 			NodeConfiguration::Uninitialized(),
 			LoggingConfiguration::Uninitialized(),
 			UserConfiguration::Uninitialized(),
+			ExtensionsConfiguration::Uninitialized(),
+			InflationConfiguration::Uninitialized(),
 			SupportedEntityVersions()};
 		m_catapultConfigs.insert({ Height{0}, config });
 	}
@@ -29,10 +31,10 @@ namespace catapult { namespace config {
 		return boost::filesystem::path(argc > 1 ? argv[1] : "..") / "resources";
 	}
 
-	const CatapultConfiguration& LocalNodeConfigurationHolder::LoadConfig(int argc, const char** argv) {
+	const CatapultConfiguration& LocalNodeConfigurationHolder::LoadConfig(int argc, const char** argv, const std::string& extensionsHost) {
 		auto resourcesPath = GetResourcesPath(argc, argv);
 		std::cout << "loading resources from " << resourcesPath << std::endl;
-		SetConfig(Height{0}, config::CatapultConfiguration::LoadFromPath(resourcesPath));
+		SetConfig(Height{0}, config::CatapultConfiguration::LoadFromPath(resourcesPath, extensionsHost));
 
 		return m_catapultConfigs.at(Height{0});
 	}

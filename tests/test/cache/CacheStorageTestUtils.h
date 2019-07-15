@@ -107,7 +107,7 @@ namespace catapult { namespace test {
 		}
 
 	public:
-		static void AssertCanPurgeExistingValueFromCache() {
+		static void AssertCanPurgeExistingValueFromCache(VersionType) {
 			// Arrange:
 			auto originalValue = TTraits::CreateValue(112);
 			auto otherValue = TTraits::CreateValue(111);
@@ -115,29 +115,29 @@ namespace catapult { namespace test {
 			// - add two values one of which will be purged
 			typename TTraits::CacheType cache;
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->insert(otherValue);
 				delta->insert(originalValue);
 				cache.commit();
 			}
 
 			// Sanity:
-			EXPECT_TRUE(cache.createView()->contains(originalValue));
-			EXPECT_TRUE(cache.createView()->contains(otherValue));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(originalValue));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(otherValue));
 
 			// Act:
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				TTraits::StorageType::Purge(originalValue, *delta);
 				cache.commit();
 			}
 
 			// Assert:
-			EXPECT_FALSE(cache.createView()->contains(originalValue));
-			EXPECT_TRUE(cache.createView()->contains(otherValue));
+			EXPECT_FALSE(cache.createView(Height{0})->contains(originalValue));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(otherValue));
 		}
 
-		static void AssertCanPurgeNonexistentValueFromCache() {
+		static void AssertCanPurgeNonexistentValueFromCache(VersionType) {
 			// Arrange:
 			auto originalValue = TTraits::CreateValue(112);
 			auto otherValue = TTraits::CreateValue(111);
@@ -145,25 +145,25 @@ namespace catapult { namespace test {
 			// - add one value that will not be purged
 			typename TTraits::CacheType cache;
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->insert(otherValue);
 				cache.commit();
 			}
 
 			// Sanity:
-			EXPECT_FALSE(cache.createView()->contains(originalValue));
-			EXPECT_TRUE(cache.createView()->contains(otherValue));
+			EXPECT_FALSE(cache.createView(Height{0})->contains(originalValue));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(otherValue));
 
 			// Act:
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				TTraits::StorageType::Purge(originalValue, *delta);
 				cache.commit();
 			}
 
 			// Assert:
-			EXPECT_FALSE(cache.createView()->contains(originalValue));
-			EXPECT_TRUE(cache.createView()->contains(otherValue));
+			EXPECT_FALSE(cache.createView(Height{0})->contains(originalValue));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(otherValue));
 		}
 	};
 
@@ -174,8 +174,8 @@ namespace catapult { namespace test {
 	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanSaveValue, VERSION) \
 	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanLoadValueViaLoad, VERSION) \
 	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanLoadValueViaLoadInto, VERSION) \
-	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanPurgeExistingValueFromCache) \
-	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanPurgeNonexistentValueFromCache)
+	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanPurgeExistingValueFromCache, VERSION) \
+	MAKE_CONTAINS_ONLY_CACHE_STORAGE_TEST(TEST_CLASS, TRAITS, CanPurgeNonexistentValueFromCache, VERSION)
 
 	// endregion
 
@@ -192,13 +192,13 @@ namespace catapult { namespace test {
 			// Act:
 			typename TTraits::CacheType cache;
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				TTraits::StorageType::LoadInto(originalValue, *delta);
 				cache.commit();
 			}
 
 			// Assert: the cache contains the value
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(1u, view->size());
 			ASSERT_TRUE(view->contains(TTraits::CreateId(148)));
 
@@ -214,26 +214,26 @@ namespace catapult { namespace test {
 
 			typename TTraits::CacheType cache;
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				TTraits::StorageType::LoadInto(originalValue, *delta);
 				TTraits::StorageType::LoadInto(otherValue, *delta);
 				cache.commit();
 			}
 
 			// Sanity:
-			EXPECT_TRUE(cache.createView()->contains(TTraits::CreateId(148)));
-			EXPECT_TRUE(cache.createView()->contains(TTraits::CreateId(200)));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(TTraits::CreateId(148)));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(TTraits::CreateId(200)));
 
 			// Act:
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				TTraits::StorageType::Purge(originalValue, *delta);
 				cache.commit();
 			}
 
 			// Assert:
-			EXPECT_FALSE(cache.createView()->contains(TTraits::CreateId(148)));
-			EXPECT_TRUE(cache.createView()->contains(TTraits::CreateId(200)));
+			EXPECT_FALSE(cache.createView(Height{0})->contains(TTraits::CreateId(148)));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(TTraits::CreateId(200)));
 		}
 
 		static void AssertCanPurgeNonexistentValueFromCache() {
@@ -244,25 +244,25 @@ namespace catapult { namespace test {
 			// - add one value that will not be purged
 			typename TTraits::CacheType cache;
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				TTraits::StorageType::LoadInto(otherValue, *delta);
 				cache.commit();
 			}
 
 			// Sanity:
-			EXPECT_FALSE(cache.createView()->contains(TTraits::CreateId(148)));
-			EXPECT_TRUE(cache.createView()->contains(TTraits::CreateId(200)));
+			EXPECT_FALSE(cache.createView(Height{0})->contains(TTraits::CreateId(148)));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(TTraits::CreateId(200)));
 
 			// Act:
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				TTraits::StorageType::Purge(originalValue, *delta);
 				cache.commit();
 			}
 
 			// Assert:
-			EXPECT_FALSE(cache.createView()->contains(TTraits::CreateId(148)));
-			EXPECT_TRUE(cache.createView()->contains(TTraits::CreateId(200)));
+			EXPECT_FALSE(cache.createView(Height{0})->contains(TTraits::CreateId(148)));
+			EXPECT_TRUE(cache.createView(Height{0})->contains(TTraits::CreateId(200)));
 		}
 	};
 

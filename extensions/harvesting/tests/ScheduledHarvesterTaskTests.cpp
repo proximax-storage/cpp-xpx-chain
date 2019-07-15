@@ -53,7 +53,7 @@ namespace catapult { namespace harvesting {
 			config.Node.FeeInterestDenominator = 2;
 
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config.ToConst());
+			pConfigHolder->SetConfig(Height{0}, config.ToConst());
 			return pConfigHolder;
 		}
 
@@ -144,7 +144,7 @@ namespace catapult { namespace harvesting {
 		};
 
 		auto CreateHarvester(HarvesterContext& context) {
-			return std::make_unique<Harvester>(context.Cache, context.pConfigHolder, context.Accounts, [](const auto& blockHeader, auto) {
+			return std::make_unique<Harvester>(context.Cache, context.pConfigHolder, Key(), context.Accounts, [](const auto& blockHeader, auto) {
 				auto pBlock = std::make_unique<model::Block>();
 				std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
 				return pBlock;

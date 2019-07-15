@@ -97,7 +97,7 @@ namespace catapult { namespace process {
 
 		// 1. load and validate the configuration
 		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
-		auto config = pConfigHolder->LoadConfig(argc, argv, host);
+		const auto& config = pConfigHolder->LoadConfig(argc, argv, host);
 		ValidateConfiguration(config);
 
 		// 2. initialize logging

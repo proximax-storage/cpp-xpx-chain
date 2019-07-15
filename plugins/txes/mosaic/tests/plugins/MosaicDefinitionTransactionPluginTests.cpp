@@ -46,7 +46,7 @@ namespace catapult { namespace plugins {
 
 		auto CreateMosaicConfiguration(Amount fee) {
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
-			pluginConfig.MosaicRentalFeeSinkPublicKey = test::GenerateRandomData<Key_Size>();
+			pluginConfig.MosaicRentalFeeSinkPublicKey = test::GenerateRandomByteArray<Key>();
 			pluginConfig.MosaicRentalFee = fee;
 			return pluginConfig;
 		}
@@ -54,7 +54,7 @@ namespace catapult { namespace plugins {
 		auto CreateBlockChainConfiguration(config::MosaicConfiguration pluginConfig) {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			blockChainConfig.Network.PublicKey = test::GenerateRandomData<Key_Size>();
+			blockChainConfig.Network.PublicKey = test::GenerateRandomByteArray<Key>();
 			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
 			return blockChainConfig;

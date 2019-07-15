@@ -28,5 +28,9 @@ namespace catapult { namespace config {
 		void SetBlockChainConfig(const model::BlockChainConfiguration& config) {
 			const_cast<model::BlockChainConfiguration&>(m_catapultConfigs.at(Height{0}).BlockChain) = config;
 		}
+
+		void SetInflationConfig(const config::InflationConfiguration& config) {
+			const_cast<config::InflationConfiguration&>(m_catapultConfigs.at(Height{0}).Inflation) = config;
+		}
 	};
 }}

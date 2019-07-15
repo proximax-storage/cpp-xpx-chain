@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 			pConfigHolder->SetBlockChainConfig(config);
 			auto pValidator = CreateDeadlineValidator(pConfigHolder);
 
-			model::TransactionDeadlineNotification notification(deadline, maxCustomLifetime);
+			model::TransactionDeadlineNotification<1> notification(deadline, maxCustomLifetime);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);

@@ -33,7 +33,7 @@ namespace catapult { namespace cache {
 	public:
 		void saveAll(const CatapultCacheView& cacheView, io::OutputStream& output) const override;
 
-		void saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output, const Height& height) const override;
+		void saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output) const override;
 
 		void loadAll(io::InputStream& input, size_t) override;
 	};

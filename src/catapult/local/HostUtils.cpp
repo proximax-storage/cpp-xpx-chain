@@ -28,9 +28,7 @@ namespace catapult { namespace local {
 		class BootstrapperPluginLoader {
 		public:
 			explicit BootstrapperPluginLoader(extensions::ProcessBootstrapper& bootstrapper)
-					: m_config(bootstrapper.config())
-					, m_extensionManager(bootstrapper.extensionManager())
-					, m_pluginManager(bootstrapper.pluginManager())
+					: m_bootstrapper(bootstrapper)
 			{}
 
 		public:
@@ -40,22 +38,21 @@ namespace catapult { namespace local {
 
 		public:
 			void loadAll() {
-				for (const auto& pluginName : m_extensionManager.systemPluginNames())
+				for (const auto& pluginName : m_bootstrapper.extensionManager().systemPluginNames())
 					loadOne(pluginName);
 
-				for (const auto& pair : m_config.BlockChain.Plugins)
+				for (const auto& pair : m_bootstrapper.pluginManager().config(Height{0}).Plugins)
 					loadOne(pair.first);
 			}
 
 		private:
 			void loadOne(const std::string& pluginName) {
-				LoadPluginByName(m_pluginManager, m_pluginModules, m_config.User.PluginsDirectory, pluginName);
+				auto& pluginManager = m_bootstrapper.pluginManager();
+				LoadPluginByName(pluginManager, m_pluginModules, pluginManager.configHolder()->Config(Height{0}).User.PluginsDirectory, pluginName);
 			}
 
 		private:
-			const config::CatapultConfiguration& m_config;
-			const extensions::ExtensionManager& m_extensionManager;
-			plugins::PluginManager& m_pluginManager;
+			extensions::ProcessBootstrapper& m_bootstrapper;
 
 			std::vector<plugins::PluginModule> m_pluginModules;
 		};

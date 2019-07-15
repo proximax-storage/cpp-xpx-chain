@@ -305,16 +305,15 @@ namespace catapult { namespace test {
 
 	namespace {
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager(
-				const model::BlockChainConfiguration& config,
-				const plugins::StorageConfiguration& storageConfig,
-				const config::InflationConfiguration& inflationConfig) {
+				const config::CatapultConfiguration& config,
+				const plugins::StorageConfiguration& storageConfig) {
 			std::vector<plugins::PluginModule> modules;
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig, inflationConfig);
+			pConfigHolder->SetConfig(Height{0}, config);
+			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig);
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");
 
-			for (const auto& pair : config.Plugins)
+			for (const auto& pair : config.BlockChain.Plugins)
 				LoadPluginByName(*pPluginManager, modules, "", pair.first);
 
 			return std::shared_ptr<plugins::PluginManager>(
@@ -326,13 +325,21 @@ namespace catapult { namespace test {
 				}
 			);
 		}
+
+		std::shared_ptr<plugins::PluginManager> CreatePluginManager(
+				const model::BlockChainConfiguration& blockChainConfig,
+				const plugins::StorageConfiguration& storageConfig) {
+			test::MutableCatapultConfiguration config;
+			config.BlockChain = blockChainConfig;
+			return CreatePluginManager(config.ToConst(), storageConfig);
+		}
 	}
 
 	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const model::BlockChainConfiguration& config) {
-		return CreatePluginManager(config, plugins::StorageConfiguration(), config::InflationConfiguration::Uninitialized());
+		return CreatePluginManager(config, plugins::StorageConfiguration());
 	}
 
 	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const config::CatapultConfiguration& config) {
-		return CreatePluginManager(config.BlockChain, extensions::CreateStorageConfiguration(config), config.Inflation);
+		return CreatePluginManager(config, extensions::CreateStorageConfiguration(config));
 	}
 }}

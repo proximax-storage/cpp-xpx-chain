@@ -8,7 +8,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BlockNotification;
+	using Notification = model::BlockNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(Greed, Notification)() {
 		return MAKE_STATELESS_VALIDATOR(MaxTransactions, [](const auto& notification) {

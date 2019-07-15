@@ -59,12 +59,12 @@ namespace catapult { namespace harvesting {
 		}
 
 		std::unique_ptr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
-			const auto& blockChainConfig = config();
+			const auto& config = this->config();
 
 			// 1. stitch block
 			auto pBlock = model::StitchBlock(blockHeader, transactions);
-			pBlock->FeeInterest = m_config.Node.FeeInterest;
-			pBlock->FeeInterestDenominator = m_config.Node.FeeInterestDenominator;
+			pBlock->FeeInterest = config.Node.FeeInterest;
+			pBlock->FeeInterestDenominator = config.Node.FeeInterestDenominator;
 
 			// 2. add back fee surpluses to accounts (skip cache lookup if no surplus)
 			auto& accountStateCache = m_pCacheDelta->sub<cache::AccountStateCache>();
@@ -72,7 +72,7 @@ namespace catapult { namespace harvesting {
 				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(
 					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
 				if (Amount(0) != surplus)
-					accountStateCache.find(transaction.Signer).get().Balances.credit(blockChainConfig.CurrencyMosaicId, surplus);
+					accountStateCache.find(transaction.Signer).get().Balances.credit(config.BlockChain.CurrencyMosaicId, surplus);
 			}
 
 			// 3. execute block (using zero hash)
@@ -80,11 +80,11 @@ namespace catapult { namespace harvesting {
 				return nullptr;
 
 			// 4. update block fields
-			pBlock->StateHash = blockChainConfig.ShouldEnableVerifiableState
+			pBlock->StateHash = config.BlockChain.ShouldEnableVerifiableState
 					? m_pCacheDelta->calculateStateHash(height()).StateHash
 					: Hash256();
 
-			pBlock->BlockReceiptsHash = blockChainConfig.ShouldEnableVerifiableReceipts
+			pBlock->BlockReceiptsHash = config.BlockChain.ShouldEnableVerifiableReceipts
 					? model::CalculateMerkleHash(*m_blockStatementBuilder.build())
 					: Hash256();
 
@@ -101,7 +101,7 @@ namespace catapult { namespace harvesting {
 		bool process(const Processor& processor) {
 			// 1. prepare state
 			auto catapultState = state::CatapultState();
-			const auto& blockChainConfig = config();
+			const auto& blockChainConfig = config().BlockChain;
 			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), blockChainConfig.ImportanceGrouping);
 			auto observerState = blockChainConfig.ShouldEnableVerifiableReceipts
 					? observers::ObserverState(*m_pCacheDelta, catapultState, m_blockStatementBuilder)
@@ -153,8 +153,8 @@ namespace catapult { namespace harvesting {
 			});
 		}
 
-		const model::BlockChainConfiguration& config() {
-			return m_pConfigHolder->Config(height()).BlockChain;
+		const config::CatapultConfiguration& config() {
+			return m_pConfigHolder->Config(height());
 		}
 
 	private:

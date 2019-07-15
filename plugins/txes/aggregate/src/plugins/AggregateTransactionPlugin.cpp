@@ -19,11 +19,13 @@
 **/
 
 #include "AggregateTransactionPlugin.h"
+#include "src/config/AggregateConfiguration.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
 #include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
+#include "catapult/plugins/PluginUtils.h"
 
 using namespace catapult::model;
 
@@ -38,14 +40,23 @@ namespace catapult { namespace plugins {
 		public:
 			AggregateTransactionPlugin(
 				const TransactionRegistry& transactionRegistry,
-				model::EntityType transactionType)
+				model::EntityType transactionType,
+				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 					: m_transactionRegistry(transactionRegistry)
 					, m_transactionType(transactionType)
+					, m_pConfigHolder(pConfigHolder)
 			{}
 
 		public:
 			EntityType type() const override {
 				return m_transactionType;
+			}
+
+			TransactionAttributes attributes(const Height& height) const override {
+				auto version = AggregateTransaction::Current_Version;
+				const model::BlockChainConfiguration& blockChainConfig = m_pConfigHolder->Config(height).BlockChain;
+				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME(aggregate));
+				return { version, version, pluginConfig.MaxBondedTransactionLifetime };
 			}
 
 			uint64_t calculateRealSize(const Transaction& transaction) const override {
@@ -156,13 +167,15 @@ namespace catapult { namespace plugins {
 
 		private:
 			const TransactionRegistry& m_transactionRegistry;
-			EntityType m_transactionType;
+			model::EntityType m_transactionType;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		};
 	}
 
 	std::unique_ptr<TransactionPlugin> CreateAggregateTransactionPlugin(
 			const TransactionRegistry& transactionRegistry,
-			model::EntityType transactionType) {
-		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType);
+			model::EntityType transactionType,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType, pConfigHolder);
 	}
 }}

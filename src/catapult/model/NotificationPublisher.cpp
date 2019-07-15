@@ -94,7 +94,7 @@ namespace catapult { namespace model {
 				case 3: {
 					// raise an account public key notification
 					if (Key() != block.Beneficiary)
-						sub.notify(AccountPublicKeyNotification(block.Beneficiary));
+						sub.notify(AccountPublicKeyNotification<1>(block.Beneficiary));
 
 					sub.notify(EntityNotification<1>(block.Network(), block.Type, block.EntityVersion()));
 
@@ -125,6 +125,7 @@ namespace catapult { namespace model {
 					const Height& height,
 					NotificationSubscriber& sub) const {
 				const auto& plugin = *m_transactionRegistry.findPlugin(transaction.Type);
+				auto attributes = plugin.attributes(height);
 
 				// raise an entity notification
 				sub.notify(EntityNotification<1>(transaction.Network(), transaction.Type, transaction.EntityVersion()));
@@ -134,7 +135,7 @@ namespace catapult { namespace model {
 					CalculateTransactionFee(pBlockHeader->FeeMultiplier, transaction, pBlockHeader->FeeInterest, pBlockHeader->FeeInterestDenominator)
 					: transaction.MaxFee;
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
-				sub.notify(TransactionDeadlineNotification(transaction.Deadline, attributes.MaxLifetime));
+				sub.notify(TransactionDeadlineNotification<1>(transaction.Deadline, attributes.MaxLifetime));
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
 				sub.notify(BalanceDebitNotification<1>(transaction.Signer, model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->Config(height).BlockChain), fee));
 
@@ -143,7 +144,7 @@ namespace catapult { namespace model {
 						transaction.Signer,
 						transaction.Signature,
 						plugin.dataBuffer(transaction),
-						SignatureNotification::ReplayProtectionMode::Enabled));
+						SignatureNotification<1>::ReplayProtectionMode::Enabled));
 			}
 
 		private:

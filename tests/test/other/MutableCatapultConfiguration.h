@@ -34,6 +34,7 @@ namespace catapult { namespace test {
 				, User(config::UserConfiguration::Uninitialized())
 				, Extensions(config::ExtensionsConfiguration::Uninitialized())
 				, Inflation(config::InflationConfiguration::Uninitialized())
+				, SupportedEntityVersions()
 		{}
 
 	public:
@@ -55,6 +56,9 @@ namespace catapult { namespace test {
 		/// Inflation configuration.
 		config::InflationConfiguration Inflation;
 
+		/// Supported entity versions.
+		config::SupportedEntityVersions SupportedEntityVersions;
+
 	public:
 		/// Converts this mutable configuration to a const configuration.
 		config::CatapultConfiguration ToConst() {
@@ -64,7 +68,8 @@ namespace catapult { namespace test {
 					std::move(Logging),
 					std::move(User),
 					std::move(Extensions),
-					std::move(Inflation));
+					std::move(Inflation),
+					std::move(SupportedEntityVersions));
 		}
 	};
 }}

@@ -74,9 +74,9 @@ namespace catapult { namespace harvesting {
 			return config.ToConst();
 		}
 
-		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
+		auto CreateConfigHolder(const config::CatapultConfiguration& config) {
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			pConfigHolder->SetConfig(Height{0}, config);
 			return pConfigHolder;
 		}
 
@@ -534,7 +534,7 @@ namespace catapult { namespace harvesting {
 			FacadeTestContext(const config::CatapultConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
 					: m_pConfigHolder(CreateConfigHolder(config))
 					, m_executionConfig(executionConfig)
-					, m_cache(test::CreateEmptyCatapultCache(config, CreateCacheConfiguration(m_dbDirGuard.name()))) {
+					, m_cache(test::CreateEmptyCatapultCache(config.BlockChain, CreateCacheConfiguration(m_dbDirGuard.name()))) {
 				test::AddMarkerAccount(m_cache);
 				setCacheHeight(Default_Height);
 			}

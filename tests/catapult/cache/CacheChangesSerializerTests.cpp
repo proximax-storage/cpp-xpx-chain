@@ -185,7 +185,7 @@ namespace catapult { namespace cache {
 		test::ByteVectorCacheChanges changes;
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{0}));
 
 		// Assert:
 		ASSERT_EQ(3u * sizeof(uint64_t), buffer.size());
@@ -203,7 +203,7 @@ namespace catapult { namespace cache {
 		changes.Added.push_back(test::GenerateRandomVector(14));
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{0}));
 
 		// Assert:
 		ASSERT_EQ(5u * sizeof(uint64_t) + 21 + 14, buffer.size());
@@ -223,7 +223,7 @@ namespace catapult { namespace cache {
 		changes.Removed.push_back(test::GenerateRandomVector(14));
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{0}));
 
 		// Assert:
 		ASSERT_EQ(5u * sizeof(uint64_t) + 21 + 14, buffer.size());
@@ -243,7 +243,7 @@ namespace catapult { namespace cache {
 		changes.Copied.push_back(test::GenerateRandomVector(14));
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{0}));
 
 		// Assert:
 		ASSERT_EQ(5u * sizeof(uint64_t) + 21 + 14, buffer.size());
@@ -267,7 +267,7 @@ namespace catapult { namespace cache {
 		changes.Copied.push_back(test::GenerateRandomVector(14));
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{0}));
 
 		// Assert:
 		ASSERT_EQ(9u * sizeof(uint64_t) + 3 * 21 + 2 * 14 + 17, buffer.size());

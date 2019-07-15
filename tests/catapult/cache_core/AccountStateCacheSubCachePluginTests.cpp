@@ -58,10 +58,6 @@ namespace catapult { namespace cache {
 			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.MinHarvesterBalance = minHighValueAccountBalance;
-			blockChainConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
-
 			// Act + Assert:
 			action(storage, blockChainConfig, cache);
 		}
@@ -84,18 +80,18 @@ namespace catapult { namespace cache {
 				mocks::MockMemoryStream stream(buffer);
 
 				// Act:
-				storage.saveSummary(cacheDelta, stream, Height{0});
+				storage.saveSummary(cacheDelta, stream);
 
 				// Assert: all addresses were saved
 				ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) + numExpectedAccounts * sizeof(Address) +
 						  sizeof(uint64_t) + addresses.size() * sizeof(Address), buffer.size());
 
-			auto numAddresses = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType)));
-			EXPECT_EQ(numExpectedAccounts, numAddresses);
+				auto numAddresses = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType)));
+				EXPECT_EQ(numExpectedAccounts, numAddresses);
 
-			model::AddressSet savedAddresses;
-			for (auto i = 0u; i < numAddresses; ++i)
-				savedAddresses.insert(reinterpret_cast<Address&>(*(buffer.data() + sizeof(VersionType) + sizeof(uint64_t) + i * sizeof(Address))));
+				model::AddressSet savedAddresses;
+				for (auto i = 0u; i < numAddresses; ++i)
+					savedAddresses.insert(reinterpret_cast<Address&>(*(buffer.data() + sizeof(VersionType) + sizeof(uint64_t) + i * sizeof(Address))));
 
 				checkAddresses(addresses, savedAddresses);
 

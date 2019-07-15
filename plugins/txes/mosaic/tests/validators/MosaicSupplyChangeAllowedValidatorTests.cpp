@@ -20,7 +20,6 @@
 
 #include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -42,10 +41,8 @@ namespace catapult { namespace validators {
 				const model::MosaicSupplyChangeNotification<1>& notification,
 				Amount maxAtomicUnits = Max_Atomic_Units) {
 			// Arrange:
-			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
-			pluginConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			blockChainConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetBlockChainConfig(blockChainConfig);
 			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(pConfigHolder);

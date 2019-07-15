@@ -46,7 +46,7 @@ namespace catapult { namespace plugins {
 
 		auto CreateNamespaceConfiguration(Amount rootFeePerBlock, Amount childFee) {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
-			pluginConfig.NamespaceRentalFeeSinkPublicKey = test::GenerateRandomData<Key_Size>();
+			pluginConfig.NamespaceRentalFeeSinkPublicKey = test::GenerateRandomByteArray<Key>();
 			pluginConfig.RootNamespaceRentalFeePerBlock = rootFeePerBlock;
 			pluginConfig.ChildNamespaceRentalFee = childFee;
 			return pluginConfig;
@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 		auto CreateBlockChainConfiguration(const config::NamespaceConfiguration& pluginConfig) {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			blockChainConfig.Network.PublicKey = test::GenerateRandomData<Key_Size>();
+			blockChainConfig.Network.PublicKey = test::GenerateRandomByteArray<Key>();
 			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
 			return blockChainConfig;

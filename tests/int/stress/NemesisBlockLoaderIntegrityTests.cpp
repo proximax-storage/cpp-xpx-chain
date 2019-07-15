@@ -54,7 +54,7 @@ namespace catapult { namespace extensions {
 			test::AddNemesisPluginExtensions(blockChainConfig);
 
 			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(blockChainConfig);
-			test::LocalNodeTestState localNodeState(pPluginManager->config(), tempDir.name(), pPluginManager->createCache());
+			test::LocalNodeTestState localNodeState(pPluginManager->config(Height{0}), tempDir.name(), pPluginManager->createCache());
 
 			{
 				auto cacheDelta = localNodeState.ref().Cache.createDelta();

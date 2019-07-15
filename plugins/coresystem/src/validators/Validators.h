@@ -65,7 +65,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block has valid FeeInterest and FeeInterestDenominator
-	DECLARE_STATELESS_VALIDATOR(Greed, model::BlockNotification)();
+	DECLARE_STATELESS_VALIDATOR(Greed, model::BlockNotification<1>)();
 
 	// endregion
 

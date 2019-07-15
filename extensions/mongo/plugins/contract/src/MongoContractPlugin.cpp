@@ -16,7 +16,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoReputationCacheStorage(
-			manager.mongoContext()
+			manager.mongoContext(),
 			manager.configHolder()));
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoContractCacheStorage(
 			manager.mongoContext(),

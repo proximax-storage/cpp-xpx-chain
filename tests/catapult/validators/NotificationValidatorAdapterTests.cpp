@@ -114,7 +114,7 @@ namespace catapult { namespace validators {
 			ASSERT_EQ(6u + 4u, validator.notificationTypes().size());
 			EXPECT_EQ(model::Core_Entity_v1_Notification, validator.notificationTypes()[0]);
 			EXPECT_EQ(model::Core_Transaction_v1_Notification, validator.notificationTypes()[1]);
-			EXPECT_EQ(model::Core_Transaction_Deadline_Notification, validator.notificationTypes()[2]);
+			EXPECT_EQ(model::Core_Transaction_Deadline_v1_Notification, validator.notificationTypes()[2]);
 			EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, validator.notificationTypes()[3]);
 			EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, validator.notificationTypes()[4]);
 			EXPECT_EQ(model::Core_Signature_v1_Notification, validator.notificationTypes()[5]);

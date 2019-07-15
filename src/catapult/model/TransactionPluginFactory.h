@@ -65,7 +65,7 @@ namespace catapult { namespace model {
 				return TDerivedTransaction::Entity_Type;
 			}
 
-			TransactionAttributes attributes() const override {
+			TransactionAttributes attributes(const Height&) const override {
 				auto version = TDerivedTransaction::Current_Version;
 				return { version, version, utils::TimeSpan() };
 			}

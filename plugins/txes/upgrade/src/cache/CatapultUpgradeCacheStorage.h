@@ -13,7 +13,7 @@ namespace catapult { namespace cache {
 
 	/// Policy for saving and loading catapult upgrade cache data.
 	struct CatapultUpgradeCacheStorage
-			: public CacheStorageFromDescriptor<CatapultUpgradeCacheDescriptor>
+			: public CacheStorageForBasicInsertRemoveCache<CatapultUpgradeCacheDescriptor>
 			, public state::CatapultUpgradeEntrySerializer {
 		/// Loads \a entry into \a cacheDelta.
 		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);

@@ -21,7 +21,9 @@
 #include "catapult/cache_core/BlockDifficultyCacheSubCachePlugin.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -31,6 +33,14 @@ namespace catapult { namespace cache {
 	// region BlockDifficultyCacheSummaryCacheStorage - saveAll / saveSummary
 
 	namespace {
+		auto CreateConfigHolder() {
+			test::MutableCatapultConfiguration config;
+			config.BlockChain.MaxDifficultyBlocks = 111;
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(Height{0}, config.ToConst());
+			return pConfigHolder;
+		}
+
 		void RunSaveConsistencyTest(size_t numValues) {
 			// Arrange:
 			auto catapultCache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
@@ -46,7 +56,7 @@ namespace catapult { namespace cache {
 				EXPECT_EQ(numValues, delta.size());
 			}
 
-			cache::BlockDifficultyCache cache(111);
+			cache::BlockDifficultyCache cache(CreateConfigHolder());
 			cache::BlockDifficultyCacheSummaryCacheStorage storage(cache);
 
 			// Act: serialize via saveAll
@@ -85,7 +95,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanCreateCacheStorageViaPlugin) {
 		// Arrange:
-		BlockDifficultyCacheSubCachePlugin plugin(111);
+		BlockDifficultyCacheSubCachePlugin plugin(CreateConfigHolder());
 
 		// Act:
 		auto pStorage = plugin.createStorage();

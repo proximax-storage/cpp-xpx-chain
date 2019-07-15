@@ -72,7 +72,9 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		ProcessBootstrapper CreateBootstrapper(const config::CatapultConfiguration& config) {
-			return ProcessBootstrapper(config, "resources path", ProcessDisposition::Production, "bootstrapper");
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			pConfigHolder->SetConfig(Height{0}, config);
+			return ProcessBootstrapper(pConfigHolder, "resources path", ProcessDisposition::Production, "bootstrapper");
 		}
 
 		template<typename TAction>
@@ -81,9 +83,7 @@ namespace catapult { namespace extensions {
 			test::MutableCatapultConfiguration config;
 			config.User.PluginsDirectory = directory;
 			config.Extensions.Names = { name };
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config.ToConst());
-			auto bootstrapper = CreateBootstrapper(pConfigHolder);
+			auto bootstrapper = CreateBootstrapper(config.ToConst());
 
 			// Act + Assert:
 			action(bootstrapper);
@@ -157,9 +157,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodes) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
-		auto bootstrapper = CreateBootstrapper(pConfigHolder);
+		auto bootstrapper = CreateBootstrapper(test::CreateUninitializedCatapultConfiguration());
 
 		// - add five nodes
 		std::vector<ionet::Node> nodes1{
@@ -190,9 +188,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodesFromPath) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedLocalNodeConfiguration());
-auto bootstrapper = CreateBootstrapper(pConfigHolder);
+		auto bootstrapper = CreateBootstrapper(test::CreateUninitializedCatapultConfiguration());
 
 		// Act:
 		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json", Height{0});

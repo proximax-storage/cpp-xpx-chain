@@ -216,7 +216,8 @@ namespace catapult { namespace model {
 		/// Creates a block notification around \a signer, \a beneficiary, \a timestamp and \a difficulty.
 		 BlockNotification(
 			const Key& signer,
-			const Key& beneficiary,Timestamp timestamp,
+			const Key& beneficiary,
+			Timestamp timestamp,
 			Difficulty difficulty,
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator)
@@ -295,15 +296,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notifies the arrival of a transaction deadline.
-	struct TransactionDeadlineNotification : public Notification {
+	template<VersionType version>
+	struct TransactionDeadlineNotification;
+
+	template<>
+	struct TransactionDeadlineNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Transaction_Deadline_Notification;
+		static constexpr auto Notification_Type = Core_Transaction_Deadline_v1_Notification;
 
 	public:
 		/// Creates a transaction deadline notification around \a deadline and \a maxLifetime.
 		TransactionDeadlineNotification(Timestamp deadline, utils::TimeSpan maxLifetime)
-				: Notification(Notification_Type, sizeof(TransactionDeadlineNotification))
+				: Notification(Notification_Type, sizeof(TransactionDeadlineNotification<1>))
 				, Deadline(deadline)
 				, MaxLifetime(maxLifetime)
 		{}

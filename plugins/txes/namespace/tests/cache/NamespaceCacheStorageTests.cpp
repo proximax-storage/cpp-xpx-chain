@@ -61,7 +61,7 @@ namespace catapult { namespace cache {
 		struct SharedTraits {
 			class CacheType : public NamespaceCache {
 			public:
-				CacheType() : NamespaceCache(CacheConfiguration(), NamespaceCacheTypes::Options{ BlockDuration(100) })
+				CacheType() : NamespaceCache(CacheConfiguration(), NamespaceCacheTypes::Options{ CreateConfigHolder() })
 				{}
 			};
 
@@ -77,7 +77,7 @@ namespace catapult { namespace cache {
 			static void AssertCannotLoad(io::InputStream& inputStream) {
 				// Assert:
 				auto options = DefaultCacheOptions();
-				CacheType cache(CacheConfiguration{}, options);
+				CacheType cache;
 				auto delta = cache.createDelta(Height{0});
 				EXPECT_THROW(LoadInto(inputStream, *delta), TException);
 			}
@@ -86,13 +86,13 @@ namespace catapult { namespace cache {
 				// Act:
 				CacheType cache;
 				{
-					auto delta = cache.createDelta();
+					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
 					cache.commit();
 				}
 
 				// Assert:
-				auto view = cache.createView();
+				auto view = cache.createView(Height{0});
 				test::AssertCacheSizes(*view, 0, 0, 0);
 			}
 
@@ -101,7 +101,7 @@ namespace catapult { namespace cache {
 					const Key& owner,
 					const state::NamespaceAlias& alias) {
 				// Act:
-				CacheType cache(CacheConfiguration{}, DefaultCacheOptions());
+				CacheType cache;
 				{
 					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
@@ -118,7 +118,7 @@ namespace catapult { namespace cache {
 
 			static void AssertCannotLoadHistoryWithDepthOneOutOfOrderChildren(io::InputStream& inputStream) {
 				// Arrange:
-				CacheType cache(CacheConfiguration{}, DefaultCacheOptions());
+				CacheType cache;
 				auto delta = cache.createDelta(Height{0});
 
 				// Act + Assert:
@@ -130,7 +130,7 @@ namespace catapult { namespace cache {
 					const Key& owner,
 					const std::vector<state::NamespaceAlias>& aliases) {
 				// Act:
-				CacheType cache(CacheConfiguration{}, DefaultCacheOptions());
+				CacheType cache;
 				{
 					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
@@ -159,7 +159,7 @@ namespace catapult { namespace cache {
 					const Key& owner,
 					const std::vector<state::NamespaceAlias>& aliases) {
 				// Act:
-				CacheType cache(CacheConfiguration{}, DefaultCacheOptions());
+				CacheType cache;
 				{
 					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
@@ -205,7 +205,7 @@ namespace catapult { namespace cache {
 					const Key& owner3,
 					const std::vector<state::NamespaceAlias>& aliases) {
 				// Act:
-				CacheType cache(CacheConfiguration{}, DefaultCacheOptions());
+				CacheType cache;
 				{
 					auto delta = cache.createDelta(Height{0});
 					LoadInto(inputStream, *delta);
@@ -266,7 +266,7 @@ namespace catapult { namespace cache {
 				auto history = SeedCache(cache, inputStream);
 
 				// Sanity:
-				test::AssertCacheSizes(*cache.createView(), 2, 2, 2);
+				test::AssertCacheSizes(*cache.createView(Height{0}), 2, 2, 2);
 
 				// Act + Assert:
 				RunPurgeTest(cache, history);
@@ -281,7 +281,7 @@ namespace catapult { namespace cache {
 				auto history = SeedCache(cache, inputStream);
 
 				// Sanity:
-				test::AssertCacheSizes(*cache.createView(), 2, 5, 5);
+				test::AssertCacheSizes(*cache.createView(Height{0}), 2, 5, 5);
 
 				// Act + Assert:
 				RunPurgeTest(cache, history);
@@ -296,7 +296,7 @@ namespace catapult { namespace cache {
 				auto history = SeedCache(cache, inputStream);
 
 				// Sanity:
-				test::AssertCacheSizes(*cache.createView(), 2, 6, 16);
+				test::AssertCacheSizes(*cache.createView(Height{0}), 2, 6, 16);
 
 				// Act + Assert:
 				RunPurgeTest(cache, history);
@@ -313,7 +313,7 @@ namespace catapult { namespace cache {
 				auto history = SeedCache(cache, inputStream);
 
 				// Sanity:
-				test::AssertCacheSizes(*cache.createView(), 2, 3, 8);
+				test::AssertCacheSizes(*cache.createView(Height{0}), 2, 3, 8);
 
 				// Act + Assert:
 				RunPurgeTest(cache, history);
@@ -324,7 +324,7 @@ namespace catapult { namespace cache {
 				// Arrange: add two histories one of which will be purged
 				auto history = NamespaceCacheStorage::Load(inputStream);
 				{
-					auto delta = cache.createDelta();
+					auto delta = cache.createDelta(Height{0});
 					auto owner = test::GenerateRandomByteArray<Key>();
 					delta->insert(state::RootNamespace(NamespaceId(987), owner, test::CreateLifetime(100, 200)));
 					NamespaceCacheStorage::LoadInto(history, *delta);
@@ -336,18 +336,18 @@ namespace catapult { namespace cache {
 
 			static void RunPurgeTest(CacheType& cache, const state::RootNamespaceHistory& history) {
 				// Sanity:
-				EXPECT_TRUE(cache.createView()->contains(history.id()));
-				EXPECT_TRUE(cache.createView()->contains(NamespaceId(987)));
+				EXPECT_TRUE(cache.createView(Height{0})->contains(history.id()));
+				EXPECT_TRUE(cache.createView(Height{0})->contains(NamespaceId(987)));
 
 				// Act:
 				{
-					auto delta = cache.createDelta();
+					auto delta = cache.createDelta(Height{0});
 					NamespaceCacheStorage::Purge(history, *delta);
 					cache.commit();
 				}
 
 				// Assert:
-				auto view = cache.createView();
+				auto view = cache.createView(Height{0});
 				test::AssertCacheSizes(*view, 1, 1, 1);
 				EXPECT_FALSE(view->contains(history.id()));
 				EXPECT_TRUE(view->contains(NamespaceId(987)));
@@ -359,25 +359,25 @@ namespace catapult { namespace cache {
 		// Arrange: add one value that will not be purged
 		PurgeTraits::CacheType cache;
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(state::RootNamespace(NamespaceId(987), test::GenerateRandomByteArray<Key>(), test::CreateLifetime(100, 200)));
 			cache.commit();
 		}
 
 		// Sanity:
-		test::AssertCacheSizes(*cache.createView(), 1, 1, 1);
-		EXPECT_FALSE(cache.createView()->contains(NamespaceId(123)));
-		EXPECT_TRUE(cache.createView()->contains(NamespaceId(987)));
+		test::AssertCacheSizes(*cache.createView(Height{0}), 1, 1, 1);
+		EXPECT_FALSE(cache.createView(Height{0})->contains(NamespaceId(123)));
+		EXPECT_TRUE(cache.createView(Height{0})->contains(NamespaceId(987)));
 
 		// Act:
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			NamespaceCacheStorage::Purge(state::RootNamespaceHistory(NamespaceId(123)), *delta);
 			cache.commit();
 		}
 
 		// Assert:
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		test::AssertCacheSizes(*view, 1, 1, 1);
 		EXPECT_FALSE(view->contains(NamespaceId(123)));
 		EXPECT_TRUE(view->contains(NamespaceId(987)));
@@ -385,22 +385,22 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanPurgeHistoryWithDepthOneWithoutChildren) {
 		// Assert:
-		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthOneWithoutChildren();
+		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthOneWithoutChildren(VersionType{1});
 	}
 
 	TEST(TEST_CLASS, CanPurgeHistoryWithDepthOneWithChildren) {
 		// Assert:
-		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthOneWithChildren();
+		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthOneWithChildren(VersionType{1});
 	}
 
 	TEST(TEST_CLASS, CanPurgeHistoryWithDepthGreaterThanOneSameOwner) {
 		// Assert:
-		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthGreaterThanOneSameOwner();
+		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthGreaterThanOneSameOwner(VersionType{1});
 	}
 
 	TEST(TEST_CLASS, CanPurgeHistoryWithDepthGreaterThanOneDifferentOwner) {
 		// Assert:
-		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthGreaterThanOneDifferentOwner();
+		test::RootNamespaceHistoryLoadTests<PurgeTraits>::AssertCanLoadHistoryWithDepthGreaterThanOneDifferentOwner(VersionType{1});
 	}
 
 	// endregion

@@ -988,7 +988,7 @@ namespace catapult { namespace cache {
 		NamespaceCacheMixinTraits::CacheType cache;
 		auto owner = test::CreateRandomOwner();
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			PopulateCache(delta, owner);
 
 			// Sanity:
@@ -1001,14 +1001,14 @@ namespace catapult { namespace cache {
 
 		{
 			// Act: remove namespace with id 5
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->remove(NamespaceId(5));
 			cache.commit();
 		}
 
 		// Act: reinsert namespace with id 5 and expiry height 123
 		// - note that the new expiry height has to be lower so that pruning will see an expired root at height 321 + Grace_Period_Duration
-		auto delta = cache.createDelta();
+		auto delta = cache.createDelta(Height{0});
 		auto newOwner = test::CreateRandomOwner();
 		delta->insert(state::RootNamespace(NamespaceId(5), newOwner, test::CreateLifetime(100, 123)));
 
@@ -1025,7 +1025,7 @@ namespace catapult { namespace cache {
 		NamespaceCacheMixinTraits::CacheType cache;
 		auto owner = test::CreateRandomOwner();
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			PopulateCache(delta, owner);
 
 			// Sanity:
@@ -1038,34 +1038,34 @@ namespace catapult { namespace cache {
 
 		// Act: renew namespace with id 5 and expiry height 432
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(state::RootNamespace(NamespaceId(5), owner, test::CreateLifetime(325, 432)));
 			cache.commit();
 		}
 
 		{
 			// - remove namespace with id 5
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->remove(NamespaceId(5));
 			cache.commit();
 		}
 
 		{
 			// - renew namespace with id 5 and expiry height 345
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(state::RootNamespace(NamespaceId(5), owner, test::CreateLifetime(325, 345)));
 			cache.commit();
 		}
 
 		{
 			// - prune at height 321
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->prune(Height(321 + Grace_Period_Duration));
 			cache.commit();
 		}
 
 		// Sanity:
-		auto delta = cache.createDelta();
+		auto delta = cache.createDelta(Height{0});
 		EXPECT_EQ(Height(345), delta->find(NamespaceId(5)).get().root().lifetime().End);
 
 		// Assert: if the height based map would contain an entry at height 432 + Grace_Period_Duration, then the last root
@@ -1215,7 +1215,7 @@ namespace catapult { namespace cache {
 		auto owner = test::CreateRandomOwner();
 		NamespaceCacheMixinTraits::CacheType cache;
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(state::RootNamespace(NamespaceId(5), owner, test::CreateLifetime(100, 120)));
 			delta->insert(state::RootNamespace(NamespaceId(5), owner, test::CreateLifetime(120, 121)));
 			delta->insert(state::RootNamespace(NamespaceId(6), owner, test::CreateLifetime(100, 120)));
@@ -1227,7 +1227,7 @@ namespace catapult { namespace cache {
 
 		NamespaceIds prunedIds;
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Sanity:
 			test::AssertCacheSizes(*delta, 3, 3, 6);

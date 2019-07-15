@@ -81,11 +81,10 @@ namespace catapult { namespace plugins {
 		using PublisherPointer = std::unique_ptr<model::NotificationPublisher>;
 
 	public:
-		/// Creates a new plugin manager around \a config, \a storageConfig and \a inflationConfig.
+		/// Creates a new plugin manager around \a config and \a storageConfig.
 		PluginManager(
 				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
-				const StorageConfiguration& storageConfig,
-				const config::InflationConfiguration& inflationConfig);
+				const StorageConfiguration& storageConfig);
 
 	public:
 		// region config
@@ -235,7 +234,6 @@ namespace catapult { namespace plugins {
 	private:
 		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
-		config::InflationConfiguration m_inflationConfig;
 		model::TransactionRegistry m_transactionRegistry;
 		cache::CatapultCacheBuilder m_cacheBuilder;
 

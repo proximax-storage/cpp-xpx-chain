@@ -33,14 +33,18 @@ namespace catapult { namespace cache {
 #define TEST_CLASS NamespaceCacheSubCachePluginTests
 
 	namespace {
-		auto CreateConfigHolder() {
+		auto CreateConfig() {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(0);
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			return blockChainConfig;
+		}
+
+		auto CreateConfigHolder() {
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			pConfigHolder->SetBlockChainConfig(CreateConfig());
 			return pConfigHolder;
 		}
 
@@ -67,7 +71,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CannotSaveAll) {
 		// Arrange:
 		RunCacheStorageTest([](const auto& storage, const auto&) {
-			auto catapultCache = test::NamespaceCacheFactory::Create();
+			auto catapultCache = test::NamespaceCacheFactory::Create(CreateConfig(), BlockDuration{0});
 			auto cacheView = catapultCache.createView();
 
 			std::vector<uint8_t> buffer;
@@ -81,9 +85,9 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanSaveSummary) {
 		// Arrange:
 		RunCacheStorageTest([](const auto& storage, const auto&) {
-			auto catapultCache = test::NamespaceCacheFactory::Create();
+			auto catapultCache = test::NamespaceCacheFactory::Create(CreateConfig(), BlockDuration{0});
 			// - insert root with 2 children, then renew root
-			auto cacheDelta = catapultCache.createDelta(Height{0});
+			auto cacheDelta = catapultCache.createDelta();
 			auto& delta = cacheDelta.sub<NamespaceCache>();
 			auto owner = test::CreateRandomOwner();
 			state::RootNamespace root(NamespaceId(123), owner, test::CreateLifetime(234, 321));
@@ -97,7 +101,7 @@ namespace catapult { namespace cache {
 			mocks::MockMemoryStream stream(buffer);
 
 			// Act:
-			storage.saveSummary(cacheDelta, stream, Height{0});
+			storage.saveSummary(cacheDelta, stream);
 
 			// Assert: all sizes were saved
 			ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) * 2, buffer.size());
@@ -120,7 +124,7 @@ namespace catapult { namespace cache {
 			NamespaceCacheSummaryCacheStorage storage(cache);
 
 			std::vector<uint8_t> buffer;
-			mocks::MockMemoryStream stream("", buffer);
+			mocks::MockMemoryStream stream(buffer);
 			io::Write32(stream, version);
 			io::Write64(stream, 7);
 			io::Write64(stream, 11);

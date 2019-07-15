@@ -57,8 +57,8 @@ namespace catapult { namespace model {
 		/// Gets the transaction entity type.
 		virtual EntityType type() const = 0;
 
-		/// Gets transaction dependent attributes.
-		virtual TransactionAttributes attributes() const = 0;
+		/// Gets transaction dependent attributes at \a height.
+		virtual TransactionAttributes attributes(const Height& height) const = 0;
 
 		/// Calculates the real size of \a transaction.
 		virtual uint64_t calculateRealSize(const TTransaction& transaction) const = 0;

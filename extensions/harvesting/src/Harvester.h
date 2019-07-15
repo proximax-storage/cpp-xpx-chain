@@ -22,7 +22,7 @@
 #include "HarvesterBlockGenerator.h"
 #include "UnlockedAccounts.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/Elements.h"
 #include "catapult/model/EntityInfo.h"
 

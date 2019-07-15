@@ -21,7 +21,7 @@
 #include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/AggregatePlugin.h"
 #include "src/model/AggregateEntityType.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -48,9 +48,7 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(config);
-				PluginManager manager(pConfigHolder, StorageConfiguration());
+				auto manager = test::CreatePluginManager(config);
 				RegisterAggregateSubsystem(manager);
 
 				// Act:

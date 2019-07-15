@@ -42,6 +42,8 @@ namespace catapult { namespace tools { namespace nemgen {
 			config::NodeConfiguration::Uninitialized(),
 			config::LoggingConfiguration::Uninitialized(),
 			config::UserConfiguration::Uninitialized(),
+			config::ExtensionsConfiguration::Uninitialized(),
+			config::InflationConfiguration::Uninitialized(),
 			config::SupportedEntityVersions()
 		};
 		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);

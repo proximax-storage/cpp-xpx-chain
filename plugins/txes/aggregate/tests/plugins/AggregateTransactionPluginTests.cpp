@@ -24,6 +24,7 @@
 #include "src/model/AggregateTransaction.h"
 #include "catapult/model/Address.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/LocalTestUtils.h"
@@ -94,6 +95,15 @@ namespace catapult { namespace plugins {
 			wrapper.pTransaction = std::move(pTransaction);
 			return wrapper;
 		}
+
+		auto CreateConfigHolder() {
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			return pConfigHolder;
+		}
+
+		std::unique_ptr<model::TransactionPlugin> CreateTransactionPlugin(const model::TransactionRegistry& registry) {
+			return CreateAggregateTransactionPlugin(registry, Entity_Type, CreateConfigHolder());
+		}
 	}
 
 	// endregion
@@ -103,7 +113,7 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, CanCreatePlugin) {
 		// Act:
 		TransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 
 		// Assert:
 		EXPECT_EQ(Entity_Type, pPlugin->type());
@@ -112,7 +122,7 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, PluginSupportsTopLevel) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 
 		// Act + Assert:
 		EXPECT_TRUE(pPlugin->supportsTopLevel());
@@ -121,7 +131,7 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, PluginDoesNotSupportEmbedding) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 
 		// Act + Assert:
 		EXPECT_FALSE(pPlugin->supportsEmbedding());
@@ -135,10 +145,10 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, AttributesReturnsCorrectValuesWhenConfiguredWithDefaultMaxLifetime) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 
 		// Act:
-		auto attributes = pPlugin->attributes();
+		auto attributes = pPlugin->attributes(Height{0});
 
 		// Assert:
 		EXPECT_EQ(2u, attributes.MinVersion);
@@ -151,10 +161,10 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, AttributesReturnsCorrectValuesWhenConfiguredWithCustomMaxLifetime) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, utils::TimeSpan::FromMinutes(1234), Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 
 		// Act:
-		auto attributes = pPlugin->attributes();
+		auto attributes = pPlugin->attributes(Height{0});
 
 		// Assert:
 		EXPECT_EQ(2u, attributes.MinVersion);
@@ -170,7 +180,7 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, CanCalculateSizeWhenAllSubTransactionsAreSupported) {
 		// Arrange:
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(3, 4);
 
 		// Act:
@@ -183,7 +193,7 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, CannotCalculateSizeWhenAnySubTransactionIsNotSupported) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(3, 4);
 
 		// Act:
@@ -201,7 +211,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(0, 0);
 
 		// Act:
@@ -221,7 +231,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
 
 		// Act:
@@ -285,7 +295,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
 
 		// Act:
@@ -305,7 +315,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<SourceChangeNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
 
 		// Act:
@@ -332,7 +342,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<EntityNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
 
 		// Act:
@@ -360,7 +370,7 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<AggregateEmbeddedTransactionNotification<1>> sub;
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+			auto pPlugin = CreateTransactionPlugin(registry);
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures);
 
 			// Act:
@@ -399,7 +409,7 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			mocks::MockTypedNotificationSubscriber<SignatureNotification<1>> sub;
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+			auto pPlugin = CreateTransactionPlugin(registry);
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures);
 
 			auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
@@ -423,7 +433,7 @@ namespace catapult { namespace plugins {
 				EXPECT_EQ(Hash256_Size, notification.Data.Size) << message;
 
 				// - notifications should not have replay protection because they represent cosignatures
-				EXPECT_EQ(SignatureNotification::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+				EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 			}
 		}
 	}
@@ -446,7 +456,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(0, 0);
 
 		// Act:
@@ -466,7 +476,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
-		auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
 
 		// Act:
@@ -490,7 +500,7 @@ namespace catapult { namespace plugins {
 		void AssertCanExtractDataBufferFromAggregate(uint8_t numTransactions, uint8_t numCosignatures) {
 			// Arrange:
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+			auto pPlugin = CreateTransactionPlugin(registry);
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures);
 
 			const auto* pAggregateDataStart = test::AsVoidPointer(&wrapper.pTransaction->Version);
@@ -524,7 +534,7 @@ namespace catapult { namespace plugins {
 		void AssertCanExtractMerkleSupplementaryBuffersFromAggregate(uint8_t numTransactions, uint8_t numCosignatures) {
 			// Arrange:
 			auto registry = mocks::CreateDefaultTransactionRegistry();
-			auto pPlugin = CreateAggregateTransactionPlugin(registry, Entity_Type);
+			auto pPlugin = CreateTransactionPlugin(registry);
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures);
 
 			// Act:

@@ -20,6 +20,7 @@
 
 #pragma once
 #include "ByteVectorCacheChanges.h"
+#include "catapult/cache/CacheMixins.h"
 #include "catapult/cache/SynchronizedCache.h"
 #include "catapult/deltaset/DeltaElementsMixin.h"
 #include "catapult/exceptions.h"
@@ -39,7 +40,9 @@ namespace catapult { namespace test {
 		using Breadcrumbs = std::vector<std::pair<std::vector<uint8_t>, std::vector<OperationType>>>;
 
 		// stub out view-required size, tryMakeIterableView and asReadOnly functions
-		struct CacheViewType {
+		struct CacheViewType
+				: public cache::EnableMixin
+				, public cache::HeightMixin {
 			size_t size() const {
 				return 0;
 			}
@@ -82,15 +85,15 @@ namespace catapult { namespace test {
 		{}
 
 	public:
-		CacheViewType createView() const {
+		CacheViewType createView(const Height&) const {
 			CATAPULT_THROW_RUNTIME_ERROR("createView - not supported");
 		}
 
-		CacheDeltaType createDelta() {
+		CacheDeltaType createDelta(const Height&) {
 			return CacheDeltaType(m_deltas, m_breadcrumbs);
 		}
 
-		CacheDeltaType createDetachedDelta() const {
+		CacheDeltaType createDetachedDelta(const Height&) const {
 			CATAPULT_THROW_RUNTIME_ERROR("createDetachedDelta - not supported");
 		}
 

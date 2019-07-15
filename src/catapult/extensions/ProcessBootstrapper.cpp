@@ -41,14 +41,14 @@ namespace catapult { namespace extensions {
 							? thread::MultiServicePool::IsolatedPoolMode::Disabled
 							: thread::MultiServicePool::IsolatedPoolMode::Enabled))
 			, m_subscriptionManager(m_pConfigHolder->Config(Height{0}))
-			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config(Height{0})), m_config.Inflation)
+			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config(Height{0})))
 	{}
 
 	const config::CatapultConfiguration& ProcessBootstrapper::config(const Height& height) const {
 		return m_pConfigHolder->Config(height);
 	}
 
-	const std::shared_ptr<config::LocalNodeConfigurationHolder>& LocalNodeBootstrapper::configHolder() const {
+	const std::shared_ptr<config::LocalNodeConfigurationHolder>& ProcessBootstrapper::configHolder() const {
 		return m_pConfigHolder;
 	}
 

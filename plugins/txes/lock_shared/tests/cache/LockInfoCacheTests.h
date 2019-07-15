@@ -125,22 +125,22 @@ namespace catapult { namespace cache {
 			PopulateCache(cache, lockInfos);
 
 			// Sanity:
-			EXPECT_EQ(Num_Default_Entries, cache.createView()->size());
-			EXPECT_TRUE(cache.createView()->contains(TLockInfoTraits::ToKey(lockInfos[1])));
+			EXPECT_EQ(Num_Default_Entries, cache.createView(Height{0})->size());
+			EXPECT_TRUE(cache.createView(Height{0})->contains(TLockInfoTraits::ToKey(lockInfos[1])));
 
 			// Act: remove unused lock at height 20
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->remove(TLockInfoTraits::ToKey(lockInfos[1]));
 				cache.commit();
 			}
 
 			// Sanity:
-			EXPECT_FALSE(cache.createView()->contains(TLockInfoTraits::ToKey(lockInfos[1])));
+			EXPECT_FALSE(cache.createView(Height{0})->contains(TLockInfoTraits::ToKey(lockInfos[1])));
 
 			// - reinsert lock at height 25
 			lockInfos[1].Height = Height(25);
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(lockInfos[1]);
 			cache.commit();
 

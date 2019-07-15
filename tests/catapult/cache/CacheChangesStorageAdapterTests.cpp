@@ -158,7 +158,7 @@ namespace catapult { namespace cache {
 		test::ByteVectorCacheDeltas deltas;
 		test::DeltasAwareCache<0> cache(deltas, breadcrumbs);
 		StorageAdapter adapter(cache);
-		adapter.apply(cacheChanges);
+		adapter.apply(cacheChanges, Height{0});
 
 		// Assert:
 		ASSERT_EQ(6u, breadcrumbs.size());

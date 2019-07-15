@@ -69,7 +69,7 @@ namespace catapult { namespace test {
 				, m_catapultCache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>(), std::make_unique<mocks::MockMemoryBlockStorage>())
 				, m_pUtCache(CreateUtCacheProxy())
-				, m_pluginManager(CreateConfigHolder(m_config), plugins::StorageConfiguration(), m_config.Inflation)
+				, m_pluginManager(CreateConfigHolder(m_config), plugins::StorageConfiguration())
 				, m_pool("service locator test context", 2)
 				, m_state(
 						m_nodes,

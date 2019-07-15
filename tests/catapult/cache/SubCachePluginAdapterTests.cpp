@@ -542,7 +542,7 @@ namespace catapult { namespace cache {
 		// Act:
 		std::vector<uint8_t> buffer;
 		mocks::MockMemoryStream stream(buffer);
-		pCacheStorage->saveAll(cacheView, stream, Height{0});
+		pCacheStorage->saveAll(cacheView, stream);
 
 		// Assert:
 		ASSERT_EQ(7 * sizeof(uint64_t), buffer.size());

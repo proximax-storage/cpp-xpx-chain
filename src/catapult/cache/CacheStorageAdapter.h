@@ -42,8 +42,8 @@ namespace catapult { namespace cache {
 		}
 
 	public:
-		void saveAll(const CatapultCacheView& cacheView, io::OutputStream& output, const Height& height) const override {
-			io::Write(output, height);
+		void saveAll(const CatapultCacheView& cacheView, io::OutputStream& output) const override {
+			io::Write(output, cacheView.height());
 			const auto& view = cacheView.sub<TCache>();
 			io::Write64(output, view.size());
 

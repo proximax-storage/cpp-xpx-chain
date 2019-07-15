@@ -121,7 +121,7 @@ namespace catapult { namespace mocks {
 				return m_type;
 			}
 
-			TransactionAttributes attributes() const override {
+			TransactionAttributes attributes(const Height&) const override {
 				return { 0x02, 0xFE, utils::TimeSpan::FromMilliseconds(0xEEEE'EEEE'EEEE'1234) };
 			}
 

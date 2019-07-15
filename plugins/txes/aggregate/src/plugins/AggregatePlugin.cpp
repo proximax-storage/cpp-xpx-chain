@@ -31,14 +31,14 @@ namespace catapult { namespace plugins {
 		// configure the aggregate to allow all registered transactions that support embedding
 		// (this works because the transaction registry is held by reference)
 		const auto& transactionRegistry = manager.transactionRegistry();
-		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Complete));
-		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded));
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Complete, pConfigHolder));
+		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded, pConfigHolder));
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(validators::CreatePluginConfigValidator());
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
 		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateBasicAggregateCosignaturesValidator(pConfigHolder))

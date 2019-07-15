@@ -336,6 +336,10 @@ namespace catapult { namespace test {
 		void setHeight(const Height&)
 		{}
 
+		Height height() const {
+			return Height{0};
+		}
+
 	public:
 		/// Finds the cache value identified by \a id.
 		const_iterator find(uint64_t id) const {

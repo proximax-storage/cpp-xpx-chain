@@ -41,8 +41,6 @@ namespace catapult { namespace chain {
 			return test::GetStressIterationCount() ? 5'000 : 250;
 		}
 
-		auto Default_Config = test::CreateLocalNodeBlockChainConfiguration();
-
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
 			auto config = test::CreatePrototypicalBlockChainConfiguration();
 			config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
@@ -64,7 +62,7 @@ namespace catapult { namespace chain {
 			UpdaterTestContext()
 					: m_pPluginManager(CreatePluginManager())
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount(Default_Config))
+					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pPluginManager->configHolder()->Config(Height{0}).BlockChain))
 					, m_updater(
 							m_transactionsCache,
 							m_cache,

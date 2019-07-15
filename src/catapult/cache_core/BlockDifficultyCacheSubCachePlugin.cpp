@@ -33,9 +33,9 @@ namespace catapult { namespace cache {
 		output.flush();
 	}
 
-	BlockDifficultyCacheSubCachePlugin::BlockDifficultyCacheSubCachePlugin(uint64_t difficultyHistorySize)
+	BlockDifficultyCacheSubCachePlugin::BlockDifficultyCacheSubCachePlugin(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 			: SubCachePluginAdapter<BlockDifficultyCache, BlockDifficultyCacheStorage>(
-					std::make_unique<BlockDifficultyCache>(difficultyHistorySize))
+					std::make_unique<BlockDifficultyCache>(pConfigHolder))
 	{}
 
 	std::unique_ptr<CacheStorage> BlockDifficultyCacheSubCachePlugin::createStorage() {

@@ -26,11 +26,11 @@ namespace catapult { namespace cache {
 		CATAPULT_THROW_INVALID_ARGUMENT("AccountStateCacheSummaryCacheStorage does not support saveAll");
 	}
 
-	void AccountStateCacheSummaryCacheStorage::saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output, const Height& height) const {
+	void AccountStateCacheSummaryCacheStorage::saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output) const {
 		// write version
 		io::Write32(output, 1);
 
-		const auto& delta = cacheDelta.sub<AccountStateCache>(height);
+		const auto& delta = cacheDelta.sub<AccountStateCache>();
 		const auto& highValueAddresses = delta.highValueAddresses();
 		io::Write64(output, highValueAddresses.size());
 		for (const auto& address : highValueAddresses)

@@ -19,7 +19,7 @@ namespace catapult { namespace config {
 		/// Extracts the resources path from the command line arguments.
 		/// \a argc commmand line arguments are accessible via \a argv.
 		static boost::filesystem::path GetResourcesPath(int argc, const char** argv);
-		const CatapultConfiguration& LoadConfig(int argc, const char** argv);
+		const CatapultConfiguration& LoadConfig(int argc, const char** argv, const std::string& extensionsHost);
 
 		void SetConfig(const Height& height, const CatapultConfiguration& config);
 		virtual CatapultConfiguration& Config(const Height& height);

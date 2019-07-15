@@ -41,7 +41,7 @@ namespace catapult { namespace mongo {
 			mongocxx::instance::current();
 			MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr, MongoErrorPolicy::Mode::Strict);
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config(Height{0}).BlockChain).Network.dentifier = networkIdentifier;
+			const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config(Height{0}).BlockChain).Network.Identifier = networkIdentifier;
 
 			MongoPluginManager manager(mongoContext, pConfigHolder);
 

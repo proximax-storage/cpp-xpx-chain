@@ -36,7 +36,7 @@ namespace catapult { namespace cache {
 				// do nothing
 			}
 
-			void saveSummary(const CatapultCacheDelta&, io::OutputStream&, const Height&) const override {
+			void saveSummary(const CatapultCacheDelta&, io::OutputStream&) const override {
 				// do nothing
 			}
 

@@ -188,7 +188,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin(std::forward<TArgs>(args)...);
 
 			// Act:
-			auto attributes = pPlugin->attributes();
+			auto attributes = pPlugin->attributes(Height{0});
 
 			// Assert:
 			EXPECT_EQ(TTraits::Min_Supported_Version, attributes.MinVersion);

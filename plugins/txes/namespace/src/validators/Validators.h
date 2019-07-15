@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to root namespace notifications and validates that:
 	/// - namespace duration is acceptable given \a maxNamespaceDuration
-	DECLARE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, model::RootNamespaceNotification)(BlockDuration maxNamespaceDuration);
+	DECLARE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to child namespace notifications and validates that:
 	/// - namespace is available and can be created

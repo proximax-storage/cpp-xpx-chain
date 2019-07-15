@@ -24,14 +24,14 @@ namespace catapult { namespace state {
 
 	void HashLockInfoExtendedDataSerializer::Save(const HashLockInfo& lockInfo, io::OutputStream& output) {
 		// write version
-		output.write32(1);
+		io::Write32(output, 1);
 
 		output.write(lockInfo.Hash);
 	}
 
 	void HashLockInfoExtendedDataSerializer::Load(io::InputStream& input, HashLockInfo& lockInfo) {
 		// read version
-		VersionType version = input.read32();
+		VersionType version = io::Read32(input);
 		if (version > 1)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of HashLockInfo", version);
 

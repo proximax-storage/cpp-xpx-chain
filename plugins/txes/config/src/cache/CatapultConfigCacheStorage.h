@@ -13,7 +13,7 @@ namespace catapult { namespace cache {
 
 	/// Policy for saving and loading catapult config cache data.
 	struct CatapultConfigCacheStorage
-			: public CacheStorageFromDescriptor<CatapultConfigCacheDescriptor>
+			: public CacheStorageForBasicInsertRemoveCache<CatapultConfigCacheDescriptor>
 			, public state::CatapultConfigEntrySerializer {
 		/// Loads \a entry into \a cacheDelta.
 		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);

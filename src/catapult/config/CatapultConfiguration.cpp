@@ -69,8 +69,8 @@ namespace catapult { namespace config {
 				LoadIniConfiguration<LoggingConfiguration>(resourcesPath / HostQualify("logging", extensionsHost)),
 				LoadIniConfiguration<UserConfiguration>(resourcesPath / Qualify("user")),
 				LoadIniConfiguration<ExtensionsConfiguration>(resourcesPath / HostQualify("extensions", extensionsHost)),
-				LoadIniConfiguration<InflationConfiguration>(resourcesPath / Qualify("inflation"),
-				LoadSupportedEntityVersions(resourcesPath / "supported-entities.json")));
+				LoadIniConfiguration<InflationConfiguration>(resourcesPath / Qualify("inflation")),
+				LoadSupportedEntityVersions(resourcesPath / "supported-entities.json"));
 	}
 
 	// endregion

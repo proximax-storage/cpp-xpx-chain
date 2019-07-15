@@ -103,7 +103,7 @@ namespace catapult { namespace mongo { namespace storages {
 
 	public:
 		/// Creates a cache storage around \a storageContext and \a networkIdentifier.
-		MongoHistoricalCacheStorage(MongoStorageContext& storageContext, model::NetworkIdentifier networkIdentifier)
+		MongoHistoricalCacheStorage(MongoStorageContext& storageContext, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				: m_database(storageContext.createDatabaseConnection())
 				, m_errorPolicy(storageContext.createCollectionErrorPolicy(TCacheTraits::Collection_Name))
 				, m_bulkWriter(storageContext.bulkWriter())
@@ -127,7 +127,7 @@ namespace catapult { namespace mongo { namespace storages {
 
 			// 3. insert new elements and modified elements into db
 			modifiedElements.insert(addedElements.cbegin(), addedElements.cend());
-			insertAll(modifiedElements, cache.height());
+			insertAll(modifiedElements, changes.height());
 		}
 
 	private:
@@ -208,7 +208,7 @@ namespace catapult { namespace mongo { namespace storages {
 
 	public:
 		/// Creates a cache storage around \a storageContext and \a networkIdentifier.
-		MongoFlatCacheStorage(MongoStorageContext& storageContext, model::NetworkIdentifier networkIdentifier)
+		MongoFlatCacheStorage(MongoStorageContext& storageContext, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				: m_database(storageContext.createDatabaseConnection())
 				, m_errorPolicy(storageContext.createCollectionErrorPolicy(TCacheTraits::Collection_Name))
 				, m_bulkWriter(storageContext.bulkWriter())
@@ -229,7 +229,7 @@ namespace catapult { namespace mongo { namespace storages {
 
 			// 3. upsert new elements and modified elements into db
 			modifiedElements.insert(addedElements.cbegin(), addedElements.cend());
-			upsertAll(modifiedElements, cache.height());
+			upsertAll(modifiedElements, changes.height());
 		}
 
 	private:

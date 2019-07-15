@@ -23,7 +23,6 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/model/BlockChainConfiguration.h"
-#include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
 
@@ -55,8 +54,7 @@ namespace catapult { namespace validators {
 			auto initialSupply = entry.supply();
 			auto newSupply = entry.supply() + notification.Delta;
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
-			return newSupply < initialSupply || newSupply > pluginConfig.MaxMosaicAtomicUnits
+			return newSupply < initialSupply || newSupply > blockChainConfig.MaxMosaicAtomicUnits
 					? Failure_Mosaic_Supply_Exceeded
 					: ValidationResult::Success;
 		});

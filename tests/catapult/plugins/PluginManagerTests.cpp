@@ -55,11 +55,11 @@ namespace catapult { namespace plugins {
 		auto storageConfig = StorageConfiguration();
 		storageConfig.CacheDatabaseDirectory = "abc";
 
-		auto inflationConfig = config::InflationConfiguration::Uninitialized();
+		auto inflationConfig = const_cast<config::InflationConfiguration&>(pConfigHolder->Config(Height{0}).Inflation);
 		inflationConfig.InflationCalculator.add(Height(123), Amount(234));
 
 		// Act:
-		PluginManager manager(pConfigHolder, storageConfig, inflationConfig);
+		PluginManager manager(pConfigHolder, storageConfig);
 
 		// Assert: compare BlockPruneInterval, CacheDatabaseDirectory and InflationCalculator as sentinel values
 		//         because the manager copies the configs
@@ -88,8 +88,7 @@ namespace catapult { namespace plugins {
 		// Act:
 		PluginManager manager(
 				pConfigHolder,
-				storageConfig,
-				config::InflationConfiguration::Uninitialized());
+				storageConfig);
 
 		// Assert: cache configuration is constructed appropriately
 		assertCacheConfiguration(manager.cacheConfig("foo"), "abc/foo");

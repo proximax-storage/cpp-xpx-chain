@@ -46,7 +46,7 @@ namespace catapult { namespace filespooling {
 
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
 			// register subscribers
-			FileQueueFactory factory(bootstrapper.config().User.DataDirectory);
+			FileQueueFactory factory(bootstrapper.config(Height{0}).User.DataDirectory);
 			auto& subscriptionManager = bootstrapper.subscriptionManager();
 			subscriptionManager.addBlockChangeSubscriber(CreateFileBlockChangeStorage(factory.create("block_change")));
 			subscriptionManager.addUtChangeSubscriber(CreateFileUtChangeStorage(factory.create("unconfirmed_transactions_change")));

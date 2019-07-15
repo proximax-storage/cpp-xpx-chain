@@ -20,7 +20,7 @@
 
 #include "src/plugins/AccountLinkPlugin.h"
 #include "src/model/AccountLinkEntityType.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -32,8 +32,7 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-				PluginManager manager(pConfigHolder, StorageConfiguration());
+				auto manager = test::CreatePluginManager();
 				RegisterAccountLinkSubsystem(manager);
 
 				// Act:

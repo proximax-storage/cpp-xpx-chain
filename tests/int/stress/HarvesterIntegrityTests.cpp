@@ -31,12 +31,12 @@
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -52,22 +52,13 @@ namespace catapult { namespace harvesting {
 
 		// region test factories
 
-		std::shared_ptr<plugins::PluginManager> CreatePluginManager(const model::BlockChainConfiguration& config) {
-			// include memory hash cache system to better trigger the race condition under test
-			auto config = test::CreatePrototypicalBlockChainConfiguration();
-			config.MinHarvesterBalance = Amount(500'000);
-			config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
-			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
-			plugins::RegisterMemoryHashCacheSystem(*pPluginManager);
-			return pPluginManager;
-		}
-
 		auto CreateConfiguration() {
 			test::MutableCatapultConfiguration config;
 
 			config.BlockChain = test::CreatePrototypicalBlockChainConfiguration();
 			config.BlockChain.MinHarvesterBalance = Amount(500'000);
 			config.BlockChain.ShouldEnableVerifiableState = true;
+			config.BlockChain.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
@@ -92,7 +83,7 @@ namespace catapult { namespace harvesting {
 		class HarvesterTestContext {
 		public:
 			HarvesterTestContext()
-					: m_pPluginManager(CreatePluginManager(CreateConfiguration()))
+					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateConfiguration()))
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
 					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_pPluginManager->configHolder()))
 					, m_unlockedAccounts(100) {

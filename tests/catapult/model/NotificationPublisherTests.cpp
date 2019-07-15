@@ -105,7 +105,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(0u, notification.PrimaryId);
 			EXPECT_EQ(0u, notification.SecondaryId);
 			EXPECT_EQ(SourceChangeNotification<1>::SourceChangeType::Absolute, notification.PrimaryChangeType);
-			EXPECT_EQ(SourceChangeNotification::SourceChangeType::Absolute, notification.SecondaryChangeType);
+			EXPECT_EQ(SourceChangeNotification<1>::SourceChangeType::Absolute, notification.SecondaryChangeType);
 		});
 	}
 
@@ -172,7 +172,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(block.Signature, notification.Signature);
 			EXPECT_EQ(test::AsVoidPointer(&block.Version), test::AsVoidPointer(notification.Data.pData));
 			EXPECT_EQ(sizeof(BlockHeader) - VerifiableEntity::Header_Size, notification.Data.Size);
-			EXPECT_EQ(SignatureNotification::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
+			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Disabled, notification.DataReplayProtectionMode);
 		});
 	}
 
@@ -249,7 +249,7 @@ namespace catapult { namespace model {
 			ASSERT_EQ(6u, sub.numNotifications());
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[0]);
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
-			EXPECT_EQ(Core_Register_Account_Public_Key_Notification, sub.notificationTypes()[2]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[2]);
 			EXPECT_EQ(Core_Entity_v1_Notification, sub.notificationTypes()[3]);
 			EXPECT_EQ(Core_Block_v1_Notification, sub.notificationTypes()[4]);
 			EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[5]);
@@ -281,7 +281,7 @@ namespace catapult { namespace model {
 			EXPECT_EQ(1u, notification.PrimaryId);
 			EXPECT_EQ(0u, notification.SecondaryId);
 			EXPECT_EQ(SourceChangeNotification<1>::SourceChangeType::Relative, notification.PrimaryChangeType);
-			EXPECT_EQ(SourceChangeNotification::SourceChangeType::Absolute, notification.SecondaryChangeType);
+			EXPECT_EQ(SourceChangeNotification<1>::SourceChangeType::Absolute, notification.SecondaryChangeType);
 		});
 	}
 
@@ -331,7 +331,7 @@ namespace catapult { namespace model {
 			// - notice that mock plugin is configured with PluginOptionFlags::Custom_Buffers so dataBuffer() contains only data payload
 			EXPECT_EQ(test::AsVoidPointer(&transaction + 1), test::AsVoidPointer(notification.Data.pData));
 			EXPECT_EQ(12u, notification.Data.Size);
-			EXPECT_EQ(SignatureNotification::ReplayProtectionMode::Enabled, notification.DataReplayProtectionMode);
+			EXPECT_EQ(SignatureNotification<1>::ReplayProtectionMode::Enabled, notification.DataReplayProtectionMode);
 		});
 	}
 
@@ -358,7 +358,7 @@ namespace catapult { namespace model {
 		pTransaction->Deadline = Timestamp(454);
 
 		// Act:
-		PublishOne<TransactionDeadlineNotification>(*pTransaction, [](const auto& notification) {
+		PublishOne<TransactionDeadlineNotification<1>>(*pTransaction, [](const auto& notification) {
 			// Assert:
 			EXPECT_EQ(Timestamp(454), notification.Deadline);
 			EXPECT_EQ(utils::TimeSpan::FromMilliseconds(0xEEEE'EEEE'EEEE'1234), notification.MaxLifetime); // from MockTransaction

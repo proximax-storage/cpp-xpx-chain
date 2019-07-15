@@ -101,7 +101,7 @@ namespace catapult { namespace state {
 
 		// Assert:
 		ASSERT_EQ(sizeof(MosaicEntryHeader), buffer.size());
-		AssertEntryHeader(buffer, MosaicId(123), Amount(111), Height(888), definition.owner(), 5, 17);
+		AssertEntryHeader(buffer, VersionType{1}, MosaicId(123), Amount(111), Height(888), definition.owner(), 5, 17);
 	}
 
 	// endregion
@@ -142,7 +142,7 @@ namespace catapult { namespace state {
 		// Arrange:
 		auto owner = test::GenerateRandomByteArray<Key>();
 		std::vector<uint8_t> buffer(sizeof(MosaicEntryHeader));
-		reinterpret_cast<MosaicEntryHeader&>(buffer[0]) = { MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } } };
+		reinterpret_cast<MosaicEntryHeader&>(buffer[0]) = { VersionType{1}, MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } } };
 		mocks::MockMemoryStream stream(buffer);
 
 		// Act:
@@ -150,10 +150,6 @@ namespace catapult { namespace state {
 
 		// Assert:
 		AssertMosaicEntry(entry, MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } });
-	}
-
-	TEST(TEST_CLASS, CanLoadEntryWithoutMosaicLevy_v1) {
-		AssertCanLoadEntryWithoutMosaicLevy(1);
 	}
 
 	// endregion

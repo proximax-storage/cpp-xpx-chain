@@ -124,7 +124,7 @@ namespace catapult { namespace model {
 	DEFINE_CORE_NOTIFICATION(Plugin_Config_v1, 0x000D, Validator);
 
 	/// Transaction deadline was received.
-	DEFINE_CORE_NOTIFICATION(Transaction_Deadline, 0x000D, Validator);
+	DEFINE_CORE_NOTIFICATION(Transaction_Deadline_v1, 0x000D, Validator);
 
 #undef DEFINE_CORE_NOTIFICATION
 

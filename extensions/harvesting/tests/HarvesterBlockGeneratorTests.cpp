@@ -52,6 +52,7 @@ namespace catapult { namespace harvesting {
 
 			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
 			pConfigHolder->SetConfig(Height{0}, config.ToConst());
+			return pConfigHolder;
 		}
 
 		class TestContext {
@@ -96,7 +97,7 @@ namespace catapult { namespace harvesting {
 				for (auto i = 0u; i < transactionSignerBalances.size(); ++i) {
 					auto balance = transactionSignerBalances[i];
 					const auto& signer = m_transactionInfos[i].pEntity->Signer;
-					accountStateCacheDelta.find(signer).get().Balances.credit(m_config.BlockChain.CurrencyMosaicId, balance);
+					accountStateCacheDelta.find(signer).get().Balances.credit(m_pConfigHolder->Config(Height{0}).BlockChain.CurrencyMosaicId, balance);
 				}
 
 				return pCacheDelta->calculateStateHash(Cache_Height).StateHash;

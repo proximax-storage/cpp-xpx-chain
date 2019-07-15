@@ -55,7 +55,7 @@ namespace catapult { namespace cache {
 		};
 	}
 
-	DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(TEST_CLASS, BlockDifficultyCacheStorageTraits)
+	DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(TEST_CLASS, BlockDifficultyCacheStorageTraits, 1)
 
 	TEST(TEST_CLASS, CanPurgeValueWhenValuesWithLargerHeightsArePresent) {
 		// Arrange: seed the cache with some values

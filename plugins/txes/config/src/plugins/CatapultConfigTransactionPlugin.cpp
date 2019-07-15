@@ -34,5 +34,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(CatapultConfig, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(CatapultConfig, Default, Publish)
 }}

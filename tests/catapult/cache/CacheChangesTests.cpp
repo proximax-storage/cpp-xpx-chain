@@ -69,7 +69,7 @@ namespace catapult { namespace cache {
 		deltaset::DeltaElementsMixin<VectorCacheDeltas> cacheDelta(deltas);
 
 		// Act:
-		VectorSingleCacheChanges cacheChanges(cacheDelta);
+		VectorSingleCacheChanges cacheChanges(cacheDelta, Height{0});
 		auto result = cacheChanges.addedElements();
 
 		// Assert:
@@ -84,7 +84,7 @@ namespace catapult { namespace cache {
 		deltaset::DeltaElementsMixin<VectorCacheDeltas> cacheDelta(deltas);
 
 		// Act:
-		VectorSingleCacheChanges cacheChanges(cacheDelta);
+		VectorSingleCacheChanges cacheChanges(cacheDelta, Height{0});
 		auto result = cacheChanges.modifiedElements();
 
 		// Assert:
@@ -99,7 +99,7 @@ namespace catapult { namespace cache {
 		deltaset::DeltaElementsMixin<VectorCacheDeltas> cacheDelta(deltas);
 
 		// Act:
-		VectorSingleCacheChanges cacheChanges(cacheDelta);
+		VectorSingleCacheChanges cacheChanges(cacheDelta, Height{0});
 		auto result = cacheChanges.removedElements();
 
 		// Assert:
@@ -117,7 +117,7 @@ namespace catapult { namespace cache {
 		SeedRandom(memoryCacheChanges, 2, 3, 4);
 
 		// Act:
-		VectorSingleCacheChanges cacheChanges(memoryCacheChanges);
+		VectorSingleCacheChanges cacheChanges(memoryCacheChanges, Height{0});
 		auto result = cacheChanges.addedElements();
 
 		// Assert:
@@ -132,7 +132,7 @@ namespace catapult { namespace cache {
 		SeedRandom(memoryCacheChanges, 2, 3, 4);
 
 		// Act:
-		VectorSingleCacheChanges cacheChanges(memoryCacheChanges);
+		VectorSingleCacheChanges cacheChanges(memoryCacheChanges, Height{0});
 		auto result = cacheChanges.modifiedElements();
 
 		// Assert:
@@ -147,7 +147,7 @@ namespace catapult { namespace cache {
 		SeedRandom(memoryCacheChanges, 2, 3, 4);
 
 		// Act:
-		VectorSingleCacheChanges cacheChanges(memoryCacheChanges);
+		VectorSingleCacheChanges cacheChanges(memoryCacheChanges, Height{0});
 		auto result = cacheChanges.removedElements();
 
 		// Assert:

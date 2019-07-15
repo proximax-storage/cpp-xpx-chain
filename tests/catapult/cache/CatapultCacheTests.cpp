@@ -427,7 +427,7 @@ namespace catapult { namespace cache {
 			for (const auto& pStorage : storages) {
 				std::vector<uint8_t> buffer;
 				mocks::MockMemoryStream stream(buffer);
-				pStorage->saveAll(view, stream, cache.height());
+				pStorage->saveAll(view, stream);
 				serializedSubCaches.push_back(buffer);
 			}
 		}
@@ -475,7 +475,7 @@ namespace catapult { namespace cache {
 			for (const auto& pStorage : storages) {
 				std::vector<uint8_t> buffer;
 				mocks::MockMemoryStream stream(buffer);
-				pStorage->saveAll(view, stream, cache.height());
+				pStorage->saveAll(view, stream);
 				serializedSubCaches.push_back(buffer);
 			}
 		}

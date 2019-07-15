@@ -136,8 +136,8 @@ namespace catapult { namespace cache {
 			}
 
 		public:
-			std::unique_ptr<const SubCacheView> createView() const override {
-				return std::make_unique<VectorToCacheAdapterSubCacheView>(m_cache.createView());
+			std::unique_ptr<const SubCacheView> createView(const Height& height) const override {
+				return std::make_unique<VectorToCacheAdapterSubCacheView>(m_cache.createView(height));
 			}
 
 		private:
@@ -192,7 +192,7 @@ namespace catapult { namespace cache {
 			mocks::MockMemoryStream stream(buffer);
 
 			// Act:
-			storage.saveAll(cacheView, stream, Height{0});
+			storage.saveAll(cacheView, stream);
 
 			// Assert:
 			EXPECT_EQ(1u, typedCache.counts().NumCreateViewCalls);

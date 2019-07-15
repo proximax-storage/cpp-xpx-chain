@@ -67,6 +67,15 @@ namespace catapult { namespace test {
 		const void* asReadOnly() const override {
 			CATAPULT_THROW_RUNTIME_ERROR("asReadOnly is not supported");
 		}
+
+		[[noreturn]]
+		bool enabled() const override {
+			CATAPULT_THROW_RUNTIME_ERROR("enabled is not supported");
+		}
+
+		void setHeight(const Height&) override {
+			CATAPULT_THROW_RUNTIME_ERROR("setHeight is not supported");
+		}
 	};
 
 	// endregion
@@ -92,17 +101,17 @@ namespace catapult { namespace test {
 
 	public:
 		[[noreturn]]
-		std::unique_ptr<const cache::SubCacheView> createView() const override {
+		std::unique_ptr<const cache::SubCacheView> createView(const Height&) const override {
 			CATAPULT_THROW_RUNTIME_ERROR("createView is not supported");
 		}
 
 		[[noreturn]]
-		std::unique_ptr<cache::SubCacheView> createDelta() override {
+		std::unique_ptr<cache::SubCacheView> createDelta(const Height&) override {
 			CATAPULT_THROW_RUNTIME_ERROR("createDelta is not supported");
 		}
 
 		[[noreturn]]
-		std::unique_ptr<cache::DetachedSubCacheView> createDetachedDelta() const override {
+		std::unique_ptr<cache::DetachedSubCacheView> createDetachedDelta(const Height&) const override {
 			CATAPULT_THROW_RUNTIME_ERROR("createDetachedDelta is not supported");
 		}
 

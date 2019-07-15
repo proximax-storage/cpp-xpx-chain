@@ -162,12 +162,12 @@ namespace catapult { namespace sync {
 				rollbackInfo.save();
 			};
 
-			auto dataDirectory = config::CatapultDataDirectory(state.config().User.DataDirectory);
+			auto dataDirectory = config::CatapultDataDirectory(state.config(Height{0}).User.DataDirectory);
 			syncHandlers.PreStateWritten = [](const auto&, const auto&, auto) {};
 			syncHandlers.TransactionsChange = state.hooks().transactionsChangeHandler();
 			syncHandlers.CommitStep = CreateCommitStepHandler(dataDirectory);
 
-			if (state.config().Node.ShouldUseCacheDatabaseStorage)
+			if (state.config(Height{0}).Node.ShouldUseCacheDatabaseStorage)
 				AddSupplementalDataResiliency(syncHandlers, dataDirectory, state.cache(), state.score());
 
 			return syncHandlers;
@@ -183,7 +183,7 @@ namespace catapult { namespace sync {
 		public:
 			void addHashConsumers() {
 				m_consumers.push_back(CreateBlockHashCalculatorConsumer(
-						m_state.config().BlockChain.Network.GenerationHash,
+						m_state.config(Height{0}).BlockChain.Network.GenerationHash,
 						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateBlockHashCheckConsumer(
 						m_state.timeSupplier(),
@@ -211,7 +211,7 @@ namespace catapult { namespace sync {
 						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
 
 				if (m_state.config(Height{0}).Node.ShouldEnableAutoSyncCleanup)
-					disruptorConsumers.push_back(CreateBlockChainSyncCleanupConsumer(m_state.config().User.DataDirectory));
+					disruptorConsumers.push_back(CreateBlockChainSyncCleanupConsumer(m_state.config(Height{0}).User.DataDirectory));
 
 				disruptorConsumers.push_back(CreateNewBlockConsumer(m_state.hooks().newBlockSink(), InputSource::Local));
 				return CreateConsumerDispatcher(
@@ -392,7 +392,7 @@ namespace catapult { namespace sync {
 				TransactionDispatcherBuilder transactionDispatcherBuilder(state);
 				transactionDispatcherBuilder.addHashConsumers();
 
-				auto pRollbackInfo = CreateAndRegisterRollbackService(locator, state.timeSupplier(), state.config().BlockChain);
+				auto pRollbackInfo = CreateAndRegisterRollbackService(locator, state.timeSupplier(), state);
 				auto pBlockDispatcher = blockDispatcherBuilder.build(pValidatorPool, *pRollbackInfo);
 				RegisterBlockDispatcherService(pBlockDispatcher, *pServiceGroup, locator, state);
 
