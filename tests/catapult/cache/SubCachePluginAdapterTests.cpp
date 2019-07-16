@@ -600,6 +600,7 @@ namespace catapult { namespace cache {
 
 		// - create cache changes (simple cache id is 3)
 		auto pSubCacheChanges = std::make_unique<MemoryCacheChangesT<uint64_t>>();
+		pSubCacheChanges->Height = Height{3};
 		pSubCacheChanges->Added = { 1, 16 };
 		pSubCacheChanges->Removed = { 9, 25, 36 };
 		pSubCacheChanges->Copied = { 4 };
@@ -616,18 +617,19 @@ namespace catapult { namespace cache {
 		mocks::MockMemoryStream stream(buffer);
 		pCacheChangesStorage->saveAll(changes, stream);
 
-		ASSERT_EQ(9 * sizeof(uint64_t), buffer.size());
+		ASSERT_EQ(10 * sizeof(uint64_t), buffer.size());
 		const auto* pData64 = reinterpret_cast<const uint64_t*>(buffer.data());
 
 		// - header
-		EXPECT_EQ(2u, pData64[0]);
-		EXPECT_EQ(3u, pData64[1]);
-		EXPECT_EQ(1u, pData64[2]);
+		EXPECT_EQ(3u, pData64[0]);
+		EXPECT_EQ(2u, pData64[1]);
+		EXPECT_EQ(3u, pData64[2]);
+		EXPECT_EQ(1u, pData64[3]);
 
 		// values
-		EXPECT_EQ(XorAll({ 1, 16 }), std::unordered_set<uint64_t>({ pData64[3], pData64[4] }));
-		EXPECT_EQ(XorAll({ 9, 25, 36 }), std::unordered_set<uint64_t>({ pData64[5], pData64[6], pData64[7] }));
-		EXPECT_EQ(XorAll({ 4 }), std::unordered_set<uint64_t>({ pData64[8] }));
+		EXPECT_EQ(XorAll({ 1, 16 }), std::unordered_set<uint64_t>({ pData64[4], pData64[5] }));
+		EXPECT_EQ(XorAll({ 9, 25, 36 }), std::unordered_set<uint64_t>({ pData64[6], pData64[7], pData64[8] }));
+		EXPECT_EQ(XorAll({ 4 }), std::unordered_set<uint64_t>({ pData64[9] }));
 	}
 
 	TEST(TEST_CLASS, CanDeserializeCacheChangesFromStream) {
@@ -637,8 +639,9 @@ namespace catapult { namespace cache {
 		ASSERT_TRUE(!!pCacheChangesStorage);
 
 		// - prepare the input
-		std::vector<uint8_t> buffer(9 * sizeof(uint64_t));
+		std::vector<uint8_t> buffer(10 * sizeof(uint64_t));
 		auto* pData64 = reinterpret_cast<uint64_t*>(buffer.data());
+		*pData64++ = 4; // Height
 		for (auto value : std::initializer_list<uint64_t>{ 2, 3, 1 })
 			*pData64++ = value;
 
@@ -651,6 +654,7 @@ namespace catapult { namespace cache {
 		const auto& changes = static_cast<const MemoryCacheChangesT<uint64_t>&>(*pChangesVoid);
 
 		// Assert:
+		EXPECT_EQ(Height{4u}, changes.Height);
 		EXPECT_EQ(2u, changes.Added.size());
 		EXPECT_EQ(3u, changes.Removed.size());
 		EXPECT_EQ(1u, changes.Copied.size());

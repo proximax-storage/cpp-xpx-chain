@@ -34,29 +34,6 @@ namespace catapult { namespace test {
 		}
 
 		/// Creates storage for a chain with \a numBlocks variable sized blocks.
-		static std::unique_ptr<io::BlockStorageCache> CreateStorage(size_t numBlocks) {
-			auto pStorage = std::make_unique<io::BlockStorageCache>(
-					std::make_unique<mocks::MockMemoryBlockStorage>(),
-					std::make_unique<mocks::MockMemoryBlockStorage>());
-
-			// storage already contains nemesis block (height 1)
-			auto storageModifier = pStorage->modifier();
-			for (auto i = 2u; i <= numBlocks; ++i) {
-				auto size = GetBlockSizeAtHeight(Height(i));
-				std::vector<uint8_t> buffer(size);
-				auto pBlock = reinterpret_cast<model::Block*>(buffer.data());
-				pBlock->Size = size;
-				pBlock->Height = Height(i);
-				pBlock->Difficulty = Difficulty::Min() + Difficulty::Unclamped(1000 + i);
-				pBlock->TransactionsPtr()->Size = size - sizeof(model::BlockHeader);
-				storageModifier.saveBlock(test::BlockToBlockElement(*pBlock, test::GenerateRandomByteArray<Hash256>()));
-			}
-
-			storageModifier.commit();
-			return pStorage;
-		}
-
-		/// Creates storage for a chain with \a numBlocks variable sized blocks.
 		static void FillStorage(io::BlockStorageCache& storage, size_t numBlocks) {
 			// storage already contains nemesis block (height 1)
 			auto storageModifier = storage.modifier();
@@ -70,6 +47,17 @@ namespace catapult { namespace test {
 				pBlock->TransactionsPtr()->Size = size - sizeof(model::BlockHeader);
 				storageModifier.saveBlock(test::BlockToBlockElement(*pBlock, test::GenerateRandomByteArray<Hash256>()));
 			}
+
+			storageModifier.commit();
+		}
+
+		/// Creates storage for a chain with \a numBlocks variable sized blocks.
+		static std::unique_ptr<io::BlockStorageCache> CreateStorage(size_t numBlocks) {
+			auto pStorage = std::make_unique<io::BlockStorageCache>(
+					std::make_unique<mocks::MockMemoryBlockStorage>(),
+					std::make_unique<mocks::MockMemoryBlockStorage>());
+			FillStorage(*pStorage, numBlocks);
+			return pStorage;
 		}
 	};
 

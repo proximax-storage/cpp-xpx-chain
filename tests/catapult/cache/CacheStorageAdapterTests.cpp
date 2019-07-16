@@ -41,7 +41,7 @@ namespace catapult { namespace cache {
 		void AssertAreEqual(const std::vector<TestEntry>& entries, const std::vector<uint8_t>& buffer) {
 			// Assert:
 			ASSERT_EQ(2 * sizeof(uint64_t) + entries.size() * sizeof(TestEntry), buffer.size());
-			EXPECT_EQ(entries.size(), *(reinterpret_cast<const uint64_t*>(buffer[0]) + 1));
+			EXPECT_EQ(entries.size(), *(reinterpret_cast<const uint64_t*>(buffer.data()) + 1));
 			EXPECT_EQ_MEMORY(entries.data(), buffer.data() + 2 * sizeof(uint64_t), entries.size() * sizeof(TestEntry));
 		}
 
@@ -200,7 +200,7 @@ namespace catapult { namespace cache {
 			EXPECT_EQ(0u, typedCache.counts().NumCommitCalls);
 
 			AssertAreEqual(seed, buffer);
-			EXPECT_EQ(numEntries, *(reinterpret_cast<const uint64_t*>(buffer[0]) + 1));
+			EXPECT_EQ(numEntries, *(reinterpret_cast<const uint64_t*>(buffer.data()) + 1));
 			EXPECT_EQ(1u, stream.numFlushes());
 		}
 	}

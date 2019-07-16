@@ -534,7 +534,7 @@ namespace catapult { namespace extensions {
 		auto& nemesisBlock = *nemesisBlockSignerPair.pBlock;
 
 		// - create the state (with verifiable receipts enabled)
-		NemesisOptions nemesisOptions{ Importance(1234), Amount() };
+		NemesisOptions nemesisOptions{ Importance(1234), Amount(1234) };
 		auto config = CreateDefaultConfiguration(nemesisBlock, nemesisOptions);
 		config.ShouldEnableVerifiableReceipts = true;
 		config.CurrencyMosaicId = Harvesting_Mosaic_Id;
