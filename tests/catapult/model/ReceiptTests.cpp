@@ -121,7 +121,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(InflationReceipt));
-		EXPECT_EQ(8u + 16, sizeof(InflationReceipt));
+		EXPECT_EQ(10u + 16, sizeof(InflationReceipt));
 	}
 
 	TEST(TEST_CLASS, CanCreateInflationReceipt) {
