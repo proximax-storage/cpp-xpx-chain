@@ -60,16 +60,31 @@ namespace catapult { namespace test {
 
 		/// Creates the test state around \a cache and \a timeSupplier.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
-				: ServiceTestState(std::move(cache), CreatePrototypicalCatapultConfiguration(), timeSupplier)
+				: ServiceTestState(std::move(cache), CreateConfigHolder(CreatePrototypicalCatapultConfiguration()), timeSupplier)
+		{}
+
+		/// Creates the test state around \a cache and \a config.
+		explicit ServiceTestState(cache::CatapultCache&& cache, const config::CatapultConfiguration& config)
+				: ServiceTestState(std::move(cache), CreateConfigHolder(config), &utils::NetworkTime)
+		{}
+
+		/// Creates the test state around \a cache, \a config and \a configHolder.
+		explicit ServiceTestState(cache::CatapultCache&& cache, const config::CatapultConfiguration& config, const supplier<Timestamp>& timeSupplier)
+				: ServiceTestState(std::move(cache), CreateConfigHolder(config), timeSupplier)
+		{}
+
+		/// Creates the test state around \a cache and \a configHolder.
+		explicit ServiceTestState(cache::CatapultCache&& cache, const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder)
+				: ServiceTestState(std::move(cache), configHolder, &utils::NetworkTime)
 		{}
 
 		/// Creates the test state around \a cache, \a config and \a timeSupplier.
-		explicit ServiceTestState(cache::CatapultCache&& cache, const config::CatapultConfiguration& config, const supplier<Timestamp>& timeSupplier)
-				: m_config(config)
+		explicit ServiceTestState(cache::CatapultCache&& cache, const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder, const supplier<Timestamp>& timeSupplier)
+				: pConfigHolder(configHolder)
 				, m_catapultCache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>(), std::make_unique<mocks::MockMemoryBlockStorage>())
 				, m_pUtCache(CreateUtCacheProxy())
-				, m_pluginManager(CreateConfigHolder(m_config), plugins::StorageConfiguration())
+				, m_pluginManager(pConfigHolder, plugins::StorageConfiguration())
 				, m_pool("service locator test context", 2)
 				, m_state(
 						m_nodes,
@@ -99,8 +114,13 @@ namespace catapult { namespace test {
 			return m_state.config(Height{0});
 		}
 
-		/// Gets the config.
+		/// Gets the cache const.
 		auto& cache() const {
+			return m_catapultCache;
+		}
+
+		/// Gets the cache.
+		auto& cache() {
 			return m_catapultCache;
 		}
 
@@ -141,7 +161,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		config::CatapultConfiguration m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder;
 		ionet::NodeContainer m_nodes;
 		cache::CatapultCache m_catapultCache;
 		state::CatapultState m_catapultState;
@@ -179,15 +199,15 @@ namespace catapult { namespace test {
 		/// Creates the test context around \a cache and \a timeSupplier.
 		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
 				: m_keyPair(GenerateKeyPair())
-				, m_locator(m_keyPair)
 				, m_testState(std::move(cache), timeSupplier)
+				, m_locator(m_keyPair)
 		{}
 
 		/// Creates the test context around \a cache and \a timeSupplier.
 		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, const config::CatapultConfiguration& config)
 				: m_keyPair(GenerateKeyPair())
-				, m_locator(m_keyPair)
 				, m_testState(std::move(cache), config, &utils::NetworkTime)
+				, m_locator(m_keyPair)
 		{}
 
 	public:
@@ -248,9 +268,9 @@ namespace catapult { namespace test {
 
 	private:
 		crypto::KeyPair m_keyPair;
-		extensions::ServiceLocator m_locator;
-
 		ServiceTestState m_testState;
+
+		extensions::ServiceLocator m_locator;
 	};
 
 	/// Extracts a task named \a taskName from \a context, which is expected to contain \a numExpectedTasks tasks,

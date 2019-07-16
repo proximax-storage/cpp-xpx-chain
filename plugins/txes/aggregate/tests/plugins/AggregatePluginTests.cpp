@@ -54,42 +54,27 @@ namespace catapult { namespace plugins {
 				// Act:
 				action(manager);
 			}
-		};
 
-		// notice that the transaction types and stateless validators are config-dependent
-
-		struct AggregatePluginTraits : public BasicAggregatePluginTraits<false, false> {
-		public:
-			static std::vector<model::EntityType> GetTransactionTypes() {
-				return { model::Entity_Type_Aggregate_Complete };
+			static std::vector<std::string> GetStatefulValidatorNames() {
+				return { "BasicAggregateCosignaturesValidator", "StrictAggregateCosignaturesValidator", "AggregateTransactionTypeValidator" };
 			}
 
-			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "BasicAggregateCosignaturesValidator" };
-			}
-		};
-
-		struct StrictAggregatePluginTraits : public BasicAggregatePluginTraits<true, false> {
-		public:
-			static std::vector<model::EntityType> GetTransactionTypes() {
-				return { model::Entity_Type_Aggregate_Complete };
-			}
-
-			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "BasicAggregateCosignaturesValidator", "StrictAggregateCosignaturesValidator" };
-			}
-		};
-
-		struct BondedAggregatePluginTraits : public BasicAggregatePluginTraits<false, true> {
-		public:
 			static std::vector<model::EntityType> GetTransactionTypes() {
 				return { model::Entity_Type_Aggregate_Complete, model::Entity_Type_Aggregate_Bonded };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "BasicAggregateCosignaturesValidator" };
+				return { "PluginConfigValidator" };
 			}
 		};
+
+		// notice that the transaction types and stateless validators are config-dependent
+
+		struct AggregatePluginTraits : public BasicAggregatePluginTraits<false, false> {};
+
+		struct StrictAggregatePluginTraits : public BasicAggregatePluginTraits<true, false> {};
+
+		struct BondedAggregatePluginTraits : public BasicAggregatePluginTraits<false, true> {};
 	}
 
 	DEFINE_PLUGIN_TESTS(AggregatePluginTests, AggregatePluginTraits)

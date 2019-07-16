@@ -37,7 +37,6 @@ namespace catapult { namespace timesync {
 		constexpr auto Total_Chain_Importance = Importance(1'000'000'000);
 		constexpr model::NetworkIdentifier Default_Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
-		auto Default_Service_State = test::ServiceTestState();
 
 		filters::SynchronizationFilter CreateSynchronizationFilter(size_t& numFilterCalls) {
 			return [&numFilterCalls](const auto&, auto) {
@@ -74,15 +73,26 @@ namespace catapult { namespace timesync {
 			return addresses;
 		}
 
-		auto& ConfigureServiceState(test::ServiceTestState& state) {
-			auto& config = const_cast<model::BlockChainConfiguration&>(state.pluginManager().configHolder()->Config(Height{0}).BlockChain);
+		auto CreateBlockchainConfig() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Default_Network_Identifier;
 			config.ImportanceGrouping = 234;
 			config.MinHarvesterBalance = Amount(1000);
 			config.CurrencyMosaicId = MosaicId(1111);
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.TotalChainImportance = Total_Chain_Importance;
-			return state;
+			return config;
+		}
+
+		auto CreateConfig() {
+			return config::CatapultConfiguration{
+					CreateBlockchainConfig(),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					config::UserConfiguration::Uninitialized(),
+					config::ExtensionsConfiguration::Uninitialized(),
+					config::InflationConfiguration::Uninitialized(),
+			};
 		}
 
 		enum class KeyType { Address, PublicKey, };
@@ -93,8 +103,9 @@ namespace catapult { namespace timesync {
 					const std::vector<std::pair<int64_t, uint64_t>>& offsetsAndRawImportances,
 					const std::vector<filters::SynchronizationFilter>& filters = {},
 					KeyType keyType = KeyType::PublicKey)
-					: m_state()
-					, m_cache(cache::CacheConfiguration(), ConfigureServiceState(m_state).pluginManager().configHolder())
+					: m_configHolder(test::CreateConfigHolder(CreateConfig()))
+					, m_state(test::CreateCatapultCacheWithMarkerAccount(m_configHolder->Config(Height(0)).BlockChain), m_configHolder)
+					, m_cache(const_cast<cache::AccountStateCache&>(m_state.cache().sub<cache::AccountStateCache>()))
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), m_state.state(), Warning_Threshold_Millis) {
 				std::vector<Importance> importances;
 				for (const auto& offsetAndRawImportance : offsetsAndRawImportances) {
@@ -121,8 +132,9 @@ namespace catapult { namespace timesync {
 			}
 
 		private:
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_configHolder;
 			test::ServiceTestState m_state;
-			cache::AccountStateCache m_cache;
+			cache::AccountStateCache& m_cache;
 			TimeSynchronizer m_synchronizer;
 			TimeSynchronizationSamples m_samples;
 		};
@@ -187,8 +199,8 @@ namespace catapult { namespace timesync {
 			filters::AggregateSynchronizationFilter aggregateFilter({});
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
-			auto state = test::ServiceTestState(test::CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized()));
-			ConfigureServiceState(state);
+			auto configHolder = test::CreateConfigHolder(CreateConfig());
+			test::ServiceTestState state(test::CreateCatapultCacheWithMarkerAccount(configHolder->Config(Height(0)).BlockChain), configHolder);
 			auto& cache = const_cast<cache::AccountStateCache&>(state.cache().sub<cache::AccountStateCache>());
 			auto singleAccountImportance = Importance(Total_Chain_Importance.unwrap() / numSamples);
 			SeedAccountStateCache(cache, keys, std::vector<Importance>(numSamples, singleAccountImportance));

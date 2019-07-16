@@ -49,10 +49,10 @@ namespace catapult { namespace validators {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(options.GracePeriodDuration.unwrap());
-			const_cast<model::BlockChainConfiguration&>(blockChainConfig).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(options.MaxDuration.unwrap());
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(blockChainConfig);
 
 			auto cache = test::NamespaceCacheFactory::Create(blockChainConfig, options.GracePeriodDuration);
 			{
@@ -208,13 +208,13 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, CanRenewRootNamespaceBeforeGracePeriodExpirationMaxDuration) {
 		// Arrange: [MaxDuration + GracePeriodDuration + Height == Max]
 		TestOptions options;
-		options.MaxDuration = BlockDuration(std::numeric_limits<uint64_t>::max() - 25 - 16);
+		options.MaxDuration = BlockDuration((std::numeric_limits<uint64_t>::max() - 25 - 16) / utils::TimeSpan::FromHours(1).millis());
 		options.GracePeriodDuration = BlockDuration(25);
 		options.Height = Height(16);
 
 		// Act: try to renew / extend a root that has not yet exceeded its grace period with a maximum duration
 		//      [lifetime.End(20) + Duration == Max]
-		auto duration = BlockDuration(std::numeric_limits<uint64_t>::max() - 20);
+		auto duration = BlockDuration((std::numeric_limits<uint64_t>::max() - 20) / utils::TimeSpan::FromHours(1).millis());
 		auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(25), duration);
 		RunRootTest(ValidationResult::Success, notification, options);
 	}
@@ -222,13 +222,13 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, CanRenewRootNamespaceBeforeGracePeriodExpirationMaxDurationMaxLifetimeOverflow) {
 		// Arrange: [MaxDuration + GracePeriodDuration + Height > Max]
 		TestOptions options;
-		options.MaxDuration = BlockDuration(std::numeric_limits<uint64_t>::max() - 25);
+		options.MaxDuration = BlockDuration((std::numeric_limits<uint64_t>::max() - 25) / utils::TimeSpan::FromHours(1).millis());
 		options.GracePeriodDuration = BlockDuration(25);
 		options.Height = Height(16);
 
 		// Act: try to renew / extend a root that has not yet exceeded its grace period with a maximum duration
 		//      [lifetime.End(20) + Duration == Max]
-		auto duration = BlockDuration(std::numeric_limits<uint64_t>::max() - 20);
+		auto duration = BlockDuration((std::numeric_limits<uint64_t>::max() - 20) / utils::TimeSpan::FromHours(1).millis());
 		auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(25), duration);
 		RunRootTest(ValidationResult::Success, notification, options);
 	}

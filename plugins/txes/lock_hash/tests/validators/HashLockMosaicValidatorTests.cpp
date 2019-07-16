@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, MosaicId mosaicId, Amount bondedAmount, Amount requiredBondedAmount) {
 			// Arrange:
-			model::UnresolvedMosaic mosaic{ test::UnresolveXor(mosaicId), bondedAmount };
+			model::UnresolvedMosaic mosaic{ UnresolvedMosaicId{ mosaicId.unwrap() }, bondedAmount };
 			auto notification = model::HashLockMosaicNotification<1>(mosaic);
 			auto pluginConfig = config::HashLockConfiguration::Uninitialized();
 			pluginConfig.LockedFundsPerAggregate = requiredBondedAmount;

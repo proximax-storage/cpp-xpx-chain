@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/AggregateConfiguration.h"
 #include "src/plugins/AggregateTransactionPlugin.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/AggregateNotifications.h"
@@ -96,13 +97,17 @@ namespace catapult { namespace plugins {
 			return wrapper;
 		}
 
-		auto CreateConfigHolder() {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto CreateConfigHolder(const utils::TimeSpan& time) {
+			auto blockchainConfig = model::BlockChainConfiguration::Uninitialized();
+			auto aggregateConfig = config::AggregateConfiguration::Uninitialized();
+			aggregateConfig.MaxBondedTransactionLifetime = time;
+			blockchainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), aggregateConfig);
+			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(blockchainConfig);
 			return pConfigHolder;
 		}
 
-		std::unique_ptr<model::TransactionPlugin> CreateTransactionPlugin(const model::TransactionRegistry& registry) {
-			return CreateAggregateTransactionPlugin(registry, Entity_Type, CreateConfigHolder());
+		std::unique_ptr<model::TransactionPlugin> CreateTransactionPlugin(const model::TransactionRegistry& registry, utils::TimeSpan time = utils::TimeSpan{}) {
+			return CreateAggregateTransactionPlugin(registry, Entity_Type, CreateConfigHolder(time));
 		}
 	}
 
@@ -161,7 +166,7 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, AttributesReturnsCorrectValuesWhenConfiguredWithCustomMaxLifetime) {
 		// Arrange:
 		TransactionRegistry registry;
-		auto pPlugin = CreateTransactionPlugin(registry);
+		auto pPlugin = CreateTransactionPlugin(registry, utils::TimeSpan::FromMinutes(1234));
 
 		// Act:
 		auto attributes = pPlugin->attributes(Height{0});
