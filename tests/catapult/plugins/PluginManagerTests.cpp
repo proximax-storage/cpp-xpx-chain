@@ -27,6 +27,7 @@
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -47,16 +48,14 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateManager) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		config.BlockPruneInterval = 15;
+		test::MutableCatapultConfiguration config;
+		config.BlockChain.BlockPruneInterval = 15;
+		config.Inflation.InflationCalculator.add(Height(123), Amount(234));
 		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(config);
+		pConfigHolder->SetConfig(Height{0}, config.ToConst());
 
 		auto storageConfig = StorageConfiguration();
 		storageConfig.CacheDatabaseDirectory = "abc";
-
-		auto inflationConfig = const_cast<config::InflationConfiguration&>(pConfigHolder->Config(Height{0}).Inflation);
-		inflationConfig.InflationCalculator.add(Height(123), Amount(234));
 
 		// Act:
 		PluginManager manager(pConfigHolder, storageConfig);
