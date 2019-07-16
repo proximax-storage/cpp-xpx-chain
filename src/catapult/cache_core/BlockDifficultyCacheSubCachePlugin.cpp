@@ -24,6 +24,7 @@ namespace catapult { namespace cache {
 
 	void BlockDifficultyCacheSummaryCacheStorage::saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output) const {
 		const auto& delta = cacheDelta.sub<BlockDifficultyCache>();
+		io::Write(output, delta.height());
 		io::Write64(output, delta.size());
 
 		auto pIterableView = delta.tryMakeIterableView();

@@ -251,7 +251,7 @@ namespace catapult { namespace extensions {
 					blockChainConfig,
 					stateDirectory.str(),
 					test::CoreSystemCacheFactory::Create(blockChainConfig));
-			auto pluginManager = test::CreatePluginManager();
+			auto pluginManager = test::CreatePluginManager(blockChainConfig);
 			auto heights = LoadStateFromDirectory(stateDirectory, loadedState.ref(), pluginManager);
 
 			// Assert:
