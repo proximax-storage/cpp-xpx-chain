@@ -41,8 +41,7 @@ namespace catapult { namespace plugins {
 			// Arrange: ensure module is destroyed after manager
 			for (const auto& name : pluginNames) {
 				PluginModules modules;
-				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(config);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 				PluginManager manager(pConfigHolder, StorageConfiguration());
 				CATAPULT_LOG(debug) << "loading plugin with name: " << name;
 
@@ -75,7 +74,7 @@ namespace catapult { namespace plugins {
 		void AssertCannotLoadUnknownPlugin(const std::string& directory) {
 			// Arrange:
 			PluginModules modules;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act + Assert:
@@ -123,8 +122,7 @@ namespace catapult { namespace plugins {
 
 			// - create the manager
 			PluginModules modules;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act:

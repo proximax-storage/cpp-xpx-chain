@@ -34,8 +34,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateBootstrapper) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(Height{0}, test::CreateUninitializedCatapultConfiguration());
+		auto pConfigHolder = config::CreateMockConfigurationHolder(test::CreateUninitializedCatapultConfiguration());
 		const_cast<uint32_t&>(pConfigHolder->Config(Height{0}).BlockChain.BlockPruneInterval) = 15;
 		const_cast<bool&>(pConfigHolder->Config(Height{0}).Node.ShouldUseCacheDatabaseStorage) = true;
 		const_cast<std::string&>(pConfigHolder->Config(Height{0}).User.DataDirectory) = "base_data_dir";
@@ -72,8 +71,7 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		ProcessBootstrapper CreateBootstrapper(const config::CatapultConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			return ProcessBootstrapper(pConfigHolder, "resources path", ProcessDisposition::Production, "bootstrapper");
 		}
 

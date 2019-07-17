@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RootNamespaceMaxChildrenValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, config::CreateMockConfigurationHolder())
 
 	namespace {
 		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
@@ -64,8 +64,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxChildNamespaces = maxChildren;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateRootNamespaceMaxChildrenValidator(pConfigHolder);
 
 			// Act:

@@ -38,12 +38,6 @@ namespace catapult { namespace chain {
 			return config;
 		}
 
-		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
-		}
-
 		void SetTimestampSeconds(model::Block& block, uint64_t time) {
 			block.Timestamp = Timestamp(time * 1'000);
 		}
@@ -294,7 +288,7 @@ namespace catapult { namespace chain {
 	namespace {
 		struct BlockHitPredicateContext {
 			explicit BlockHitPredicateContext(Importance importance)
-					: pConfigHolder(CreateConfigHolder(CreateConfiguration()))
+					: pConfigHolder(config::CreateMockConfigurationHolder(CreateConfiguration()))
 					, Predicate(
 							pConfigHolder,
 							[this, importance](const auto& key, auto height) {
@@ -303,7 +297,7 @@ namespace catapult { namespace chain {
 							})
 			{}
 
-			std::shared_ptr<config::MockLocalNodeConfigurationHolder> pConfigHolder;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder;
 			BlockHitPredicate Predicate;
 			std::vector<std::pair<Key, Height>> ImportanceLookupParams;
 		};

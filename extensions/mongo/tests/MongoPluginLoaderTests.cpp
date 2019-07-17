@@ -43,7 +43,7 @@ namespace catapult { namespace mongo {
 			mongocxx::instance::current();
 			MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr, MongoErrorPolicy::Mode::Strict);
 
-			MongoPluginManager manager(mongoContext, std::make_shared<config::MockLocalNodeConfigurationHolder>());
+			MongoPluginManager manager(mongoContext, config::CreateMockConfigurationHolder());
 
 			// Act + Assert:
 			action(manager);

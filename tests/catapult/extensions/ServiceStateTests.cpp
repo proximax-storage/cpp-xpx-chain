@@ -62,8 +62,7 @@ namespace catapult { namespace extensions {
 		mocks::MockNodeSubscriber nodeSubscriber;
 
 		std::vector<utils::DiagnosticCounter> counters;
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(Height{0}, config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 		plugins::PluginManager pluginManager(pConfigHolder, plugins::StorageConfiguration());
 		thread::MultiServicePool pool("test", 1);
 

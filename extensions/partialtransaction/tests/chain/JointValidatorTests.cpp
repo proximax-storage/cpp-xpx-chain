@@ -46,12 +46,6 @@ namespace catapult { namespace chain {
 			return config;
 		}
 
-		auto CreateConfigHolder() {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(CreateBlockChainConfiguration());
-			return pConfigHolder;
-		}
-
 		class TestContext {
 		private:
 			using StatelessValidatorPointer = std::unique_ptr<mocks::MockCapturingStatelessNotificationValidator>;
@@ -66,7 +60,7 @@ namespace catapult { namespace chain {
 					, m_statefulName(statefulName)
 					, m_statelessResult(ValidationResult::Success)
 					, m_statefulResult(ValidationResult::Success)
-					, m_pConfigHolder(CreateConfigHolder())
+					, m_pConfigHolder(config::CreateMockConfigurationHolder(CreateBlockChainConfiguration()))
 					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config(Height{0}).BlockChain))
 					, m_pluginManager(m_pConfigHolder, plugins::StorageConfiguration()) {
 				// set custom cache height
@@ -164,7 +158,7 @@ namespace catapult { namespace chain {
 			ValidationResult m_statelessResult;
 			ValidationResult m_statefulResult;
 
-			std::shared_ptr<config::MockLocalNodeConfigurationHolder> m_pConfigHolder;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 			cache::CatapultCache m_cache;
 			plugins::PluginManager m_pluginManager;
 

@@ -46,12 +46,6 @@ namespace catapult { namespace chain {
 			config.BlockTimeSmoothingFactor = 3000;
 			return config;
 		}
-
-		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
-		}
 	}
 
 	namespace {
@@ -201,7 +195,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto count = 10u;
 		auto config = CreateConfiguration();
-		cache::BlockDifficultyCache cache(CreateConfigHolder(config));
+		cache::BlockDifficultyCache cache(config::CreateMockConfigurationHolder(config));
 		PrepareCache(cache, count);
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 1),
@@ -223,7 +217,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto count = 10u;
 		auto config = CreateConfiguration();
-		cache::BlockDifficultyCache cache(CreateConfigHolder(config));
+		cache::BlockDifficultyCache cache(config::CreateMockConfigurationHolder(config));
 		PrepareCache(cache, count);
 		config.MaxDifficultyBlocks = 3;
 		state::BlockDifficultyInfo nextBlockInfo(
@@ -243,7 +237,7 @@ namespace catapult { namespace chain {
 		// Arrange:
 		auto count = 10u;
 		auto config = CreateConfiguration();
-		cache::BlockDifficultyCache cache(CreateConfigHolder(config));
+		cache::BlockDifficultyCache cache(config::CreateMockConfigurationHolder(config));
 		PrepareCache(cache, count);
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 2),

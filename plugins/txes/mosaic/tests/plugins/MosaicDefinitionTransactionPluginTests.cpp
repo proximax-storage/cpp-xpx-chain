@@ -72,11 +72,11 @@ namespace catapult { namespace plugins {
 			TEST_CLASS,
 			,
 			,Entity_Type_Mosaic_Definition,
-		std::make_shared<config::MockLocalNodeConfigurationHolder>(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0)))))
+		config::CreateMockConfigurationHolder(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0)))))
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0))));
+		auto pConfigHolder = config::CreateMockConfigurationHolder(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0))));
 		auto pPlugin = TTraits::CreatePlugin(pConfigHolder);
 
 		typename TTraits::TransactionType transaction;
@@ -96,7 +96,7 @@ namespace catapult { namespace plugins {
 		mocks::MockNotificationSubscriber sub;
 		auto pluginConfig = CreateMosaicConfiguration(Amount(0));
 		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto pPlugin = TTraits::CreatePlugin(std::make_shared<config::MockLocalNodeConfigurationHolder>(blockChainConfig));
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -132,7 +132,7 @@ namespace catapult { namespace plugins {
 			test::FillWithRandomData(transaction.Signer);
 			if (isSignerExempt)
 				transaction.Signer = blockChainConfig.Network.PublicKey;
-			auto pPlugin = TTraits::CreatePlugin(std::make_shared<config::MockLocalNodeConfigurationHolder>(blockChainConfig));
+			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
 
 			// Act:
 			test::PublishTransaction(*pPlugin, transaction, sub);
@@ -255,7 +255,7 @@ namespace catapult { namespace plugins {
 		auto pluginConfig = CreateMosaicConfiguration(Default_Rental_Fee);
 		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
 		auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-		auto pPlugin = TTraits::CreatePlugin(std::make_shared<config::MockLocalNodeConfigurationHolder>(blockChainConfig));
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
 
 		auto pTransaction = CreateTransactionWithProperties<TTraits>(1);
 		FillDefaultTransactionData(*pTransaction);
@@ -278,7 +278,7 @@ namespace catapult { namespace plugins {
 		auto pluginConfig = CreateMosaicConfiguration(Default_Rental_Fee);
 		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
 		auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-		auto pPlugin = TTraits::CreatePlugin(std::make_shared<config::MockLocalNodeConfigurationHolder>(blockChainConfig));
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
 
 		auto pTransaction = CreateTransactionWithProperties<TTraits>(0);
 		FillDefaultTransactionData(*pTransaction);

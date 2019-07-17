@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 #define ROOT_TEST_CLASS RootNamespaceAvailabilityValidatorTests
 #define CHILD_TEST_CLASS ChildNamespaceAvailabilityValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, config::CreateMockConfigurationHolder())
 	DEFINE_COMMON_VALIDATOR_TESTS(ChildNamespaceAvailability,)
 
 	namespace {
@@ -69,8 +69,7 @@ namespace catapult { namespace validators {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateRootNamespaceAvailabilityValidator(pConfigHolder);
 
 			// Act:

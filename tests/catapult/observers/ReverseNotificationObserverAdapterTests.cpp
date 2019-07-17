@@ -43,7 +43,7 @@ namespace catapult { namespace observers {
 			const auto& observer = *pObserver;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, std::make_shared<config::MockLocalNodeConfigurationHolder>());
+			auto pPublisher = model::CreateNotificationPublisher(registry, config::CreateMockConfigurationHolder());
 			ReverseNotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 			// Act + Assert:

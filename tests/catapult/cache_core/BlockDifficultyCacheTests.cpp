@@ -38,9 +38,7 @@ namespace catapult { namespace cache {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.MaxRollbackBlocks = maxRollbackBlocks;
 			config.MaxDifficultyBlocks = 200;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config);
 		}
 	}
 

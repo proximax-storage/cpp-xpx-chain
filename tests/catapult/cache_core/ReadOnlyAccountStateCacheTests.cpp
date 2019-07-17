@@ -37,9 +37,7 @@ namespace catapult { namespace cache {
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = MosaicId(1111);
 			config.HarvestingMosaicId = MosaicId(2222);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config);
 		}
 	}
 

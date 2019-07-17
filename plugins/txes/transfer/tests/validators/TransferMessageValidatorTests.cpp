@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS TransferMessageValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, config::CreateMockConfigurationHolder())
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize) {
@@ -40,8 +40,7 @@ namespace catapult { namespace validators {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateTransferMessageValidator(pConfigHolder);
 
 			// Act:

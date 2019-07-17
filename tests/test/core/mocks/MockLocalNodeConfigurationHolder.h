@@ -13,24 +13,15 @@ namespace catapult { namespace config {
 
 	class MockLocalNodeConfigurationHolder : public LocalNodeConfigurationHolder {
 	public:
-		MockLocalNodeConfigurationHolder() : LocalNodeConfigurationHolder(nullptr)
-		{}
-
-		MockLocalNodeConfigurationHolder(const model::BlockChainConfiguration& config) : LocalNodeConfigurationHolder(nullptr) {
-			SetBlockChainConfig(config);
-		}
+		MockLocalNodeConfigurationHolder();
+		MockLocalNodeConfigurationHolder(const model::BlockChainConfiguration& config);
+		MockLocalNodeConfigurationHolder(const CatapultConfiguration& config);
 
 	public:
-		CatapultConfiguration& Config(const Height&) override {
-			return m_catapultConfigs.at(Height{0});
-		}
-
-		void SetBlockChainConfig(const model::BlockChainConfiguration& config) {
-			const_cast<model::BlockChainConfiguration&>(m_catapultConfigs.at(Height{0}).BlockChain) = config;
-		}
-
-		void SetInflationConfig(const config::InflationConfiguration& config) {
-			const_cast<config::InflationConfiguration&>(m_catapultConfigs.at(Height{0}).Inflation) = config;
-		}
+		CatapultConfiguration& Config(const Height&) override;
 	};
+
+	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder();
+	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder(const model::BlockChainConfiguration& config);
+	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder(const CatapultConfiguration& config);
 }}

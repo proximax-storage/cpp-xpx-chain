@@ -85,17 +85,11 @@ namespace catapult { namespace chain {
 			model::NotificationType m_triggerType;
 		};
 
-		auto CreateConfigHolder(const model::BlockChainConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
-		}
-
 		class TestContext {
 		public:
 			explicit TestContext(const ValidationResultOptions& options, const model::BlockChainConfiguration& config)
 					: m_cache(test::CreateEmptyCatapultCache(config))
-					, m_pluginManager(CreateConfigHolder(config), plugins::StorageConfiguration()) {
+					, m_pluginManager(config::CreateMockConfigurationHolder(config), plugins::StorageConfiguration()) {
 				// Arrange: register mock support (for validatePartial)
 				auto pluginOptionFlags = mocks::PluginOptionFlags::Publish_Custom_Notifications;
 				m_pluginManager.addTransactionSupport(mocks::CreateMockTransactionPlugin(pluginOptionFlags));

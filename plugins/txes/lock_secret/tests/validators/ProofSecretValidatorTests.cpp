@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ProofSecretValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, config::CreateMockConfigurationHolder())
 
 	namespace {
 		struct NotificationBuilder {
@@ -68,9 +68,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxProofSize = 100;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(blockChainConfig);
 		}
 
 		void AssertFailureIfHashAlgorithmIsNotSupported(model::LockHashAlgorithm lockHashAlgorithm) {

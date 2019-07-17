@@ -52,7 +52,7 @@ namespace catapult { namespace handlers {
 
 		auto CreateCacheWithAlternatingHashes(const TimestampedHashes& timestampedHashes) {
 			// only insert every second timestamped hash into the cache
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			auto pCache = std::make_unique<cache::HashCache>(cache::CacheConfiguration(), pConfigHolder);
 			auto delta = pCache->createDelta(Height{0});
 			auto i = 0u;

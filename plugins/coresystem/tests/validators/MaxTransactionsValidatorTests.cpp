@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxTransactionsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactions, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactions, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr uint32_t Max_Transactions = 10;
@@ -42,8 +42,7 @@ namespace catapult { namespace validators {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.MaxTransactionsPerBlock = Max_Transactions;
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMaxTransactionsValidator(pConfigHolder);
 
 			// Act:

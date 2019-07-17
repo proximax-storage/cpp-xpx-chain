@@ -37,7 +37,7 @@ namespace catapult { namespace test {
 		//   like creating a mongocxx::pool (via MongoStorageContext)
 		mongocxx::instance::current();
 		mongo::MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr, mongo::MongoErrorPolicy::Mode::Strict);
-		mongo::MongoPluginManager manager(mongoContext, std::make_shared<config::MockLocalNodeConfigurationHolder>());
+		mongo::MongoPluginManager manager(mongoContext, config::CreateMockConfigurationHolder());
 		registerSubsystem(manager);
 
 		// Act:

@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NetworkValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Network, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(Network, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
@@ -40,8 +40,7 @@ namespace catapult { namespace validators {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Network_Identifier;
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateNetworkValidator(pConfigHolder);
 
 			// Act:

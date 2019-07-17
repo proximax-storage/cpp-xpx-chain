@@ -42,14 +42,8 @@ namespace catapult { namespace cache {
 			return blockChainConfig;
 		}
 
-		auto CreateConfigHolder() {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(CreateConfig());
-			return pConfigHolder;
-		}
-
 		auto DefaultCacheOptions() {
-			return NamespaceCacheTypes::Options{ CreateConfigHolder() };
+			return NamespaceCacheTypes::Options{ config::CreateMockConfigurationHolder(CreateConfig()) };
 		}
 	}
 

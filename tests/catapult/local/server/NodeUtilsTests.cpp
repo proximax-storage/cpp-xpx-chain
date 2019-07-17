@@ -34,8 +34,7 @@ namespace catapult { namespace local {
 
 	namespace {
 		auto CreateBootstrapper(const config::CatapultConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			return extensions::ProcessBootstrapper(pConfigHolder, "", extensions::ProcessDisposition::Production, "bootstrapper");
 		}
 

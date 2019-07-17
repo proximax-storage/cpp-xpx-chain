@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS BasicAggregateCosignaturesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(BasicAggregateCosignatures, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(BasicAggregateCosignatures, config::CreateMockConfigurationHolder())
 
 	namespace {
 		auto GenerateRandomCosignatures(uint8_t numCosignatures) {
@@ -55,8 +55,7 @@ namespace catapult { namespace validators {
 			model::AggregateCosignaturesNotification<1> notification(signer, numTransactions, nullptr, 0, nullptr);
 			auto config = CreateConfig(maxTransactions, std::numeric_limits<uint8_t>::max());
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
 
 			// Act:
@@ -101,8 +100,7 @@ namespace catapult { namespace validators {
 			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, numCosignatures, cosignatures.data());
 			auto config = CreateConfig(std::numeric_limits<uint32_t>::max(), maxCosignatures);
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
 
 			// Act:
@@ -152,8 +150,7 @@ namespace catapult { namespace validators {
 				std::numeric_limits<uint32_t>::max(),
 				std::numeric_limits<uint8_t>::max());
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
 
 			// Act:

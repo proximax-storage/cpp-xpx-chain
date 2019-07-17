@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigLoopAndLevelValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigLoopAndLevel, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigLoopAndLevel, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Num_Network_Accounts = 14 + 4 + 2; // last two keys are unassigned (and not in multisig cache)
@@ -80,8 +80,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxMultisigDepth = maxMultisigDepth;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateModifyMultisigLoopAndLevelValidator(pConfigHolder);
 
 			// Act:

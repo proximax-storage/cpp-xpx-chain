@@ -36,9 +36,7 @@ namespace catapult { namespace cache {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			config.MaxRollbackBlocks = retentionTimeHours * 4 / 5;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config);
 		}
 
 		struct HashCacheMixinTraits {

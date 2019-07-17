@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 			const auto& validator = *pValidator;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, std::make_shared<config::MockLocalNodeConfigurationHolder>());
+			auto pPublisher = model::CreateNotificationPublisher(registry, config::CreateMockConfigurationHolder());
 			NotificationValidatorAdapter adapter(std::move(pValidator), std::move(pPublisher));
 
 			// Act + Assert:

@@ -25,8 +25,7 @@ namespace catapult { namespace test {
 	private:
 		static auto CreateSubCachesWithMetadataCache(const model::BlockChainConfiguration& blockChainConfig) {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::MosaicCache::Id + 1);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 
 			subCaches[cache::MetadataCache::Id] =
 					MakeSubCachePlugin<cache::MetadataCache, cache::MetadataCacheStorage>();

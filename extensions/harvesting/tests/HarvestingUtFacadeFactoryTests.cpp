@@ -74,12 +74,6 @@ namespace catapult { namespace harvesting {
 			return config.ToConst();
 		}
 
-		auto CreateConfigHolder(const config::CatapultConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config);
-			return pConfigHolder;
-		}
-
 		// endregion
 
 		// region RunUtFacadeTest / AssertEmpty
@@ -89,7 +83,7 @@ namespace catapult { namespace harvesting {
 			// Arrange: create factory and facade
 			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 			test::MockExecutionConfiguration executionConfig;
-			HarvestingUtFacadeFactory factory(catapultCache, CreateConfigHolder(CreateConfiguration()), executionConfig.Config);
+			HarvestingUtFacadeFactory factory(catapultCache, config::CreateMockConfigurationHolder(CreateConfiguration()), executionConfig.Config);
 
 			auto pFacade = factory.create(Default_Time);
 			ASSERT_TRUE(!!pFacade);
@@ -110,7 +104,7 @@ namespace catapult { namespace harvesting {
 			// - create factory and facade
 			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 			test::MockExecutionConfiguration executionConfig;
-			HarvestingUtFacadeFactory factory(catapultCache, CreateConfigHolder(CreateConfiguration()), executionConfig.Config);
+			HarvestingUtFacadeFactory factory(catapultCache, config::CreateMockConfigurationHolder(CreateConfiguration()), executionConfig.Config);
 
 			auto pFacade = factory.create(Default_Time);
 			ASSERT_TRUE(!!pFacade);
@@ -532,7 +526,7 @@ namespace catapult { namespace harvesting {
 		struct FacadeTestContext {
 		public:
 			FacadeTestContext(const config::CatapultConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
-					: m_pConfigHolder(CreateConfigHolder(config))
+					: m_pConfigHolder(config::CreateMockConfigurationHolder(config))
 					, m_executionConfig(executionConfig)
 					, m_cache(test::CreateEmptyCatapultCache(config.BlockChain, CreateCacheConfiguration(m_dbDirGuard.name()))) {
 				test::AddMarkerAccount(m_cache);
@@ -593,7 +587,7 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			std::shared_ptr<config::MockLocalNodeConfigurationHolder> m_pConfigHolder;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 			chain::ExecutionConfiguration m_executionConfig;
 			cache::CatapultCache m_cache;
 		};

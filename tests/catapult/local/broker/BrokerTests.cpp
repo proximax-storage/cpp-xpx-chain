@@ -42,8 +42,7 @@ namespace catapult { namespace local {
 	public:
 		void boot() {
 			auto config = test::CreatePrototypicalCatapultConfiguration(dataDirectory().rootDir().str());
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
 					pConfigHolder,
 					resourcesDirectory(),

@@ -291,9 +291,7 @@ namespace catapult { namespace extensions {
 			config.BlockChain.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.BlockChain.MaxDifficultyBlocks = 111;
 
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config.ToConst());
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		cache::CatapultCache CreateCacheWithRealCoreSystemPlugins(const std::string& databaseDirectory) {

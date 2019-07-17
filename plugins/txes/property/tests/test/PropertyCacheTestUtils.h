@@ -36,8 +36,7 @@ namespace catapult { namespace test {
 			auto cacheId = cache::PropertyCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			const_cast<model::BlockChainConfiguration&>(config).Network.Identifier = model::NetworkIdentifier::Zero;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			subCaches[cacheId] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(pConfigHolder);
 			return subCaches;
 		}

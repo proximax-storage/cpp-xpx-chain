@@ -39,14 +39,6 @@
 
 namespace catapult { namespace test {
 
-	namespace {
-		auto CreateConfigHolder(const config::CatapultConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config);
-			return pConfigHolder;
-		}
-	}
-
 	/// Wrapper around ServiceState.
 	class ServiceTestState {
 	public:
@@ -60,17 +52,17 @@ namespace catapult { namespace test {
 
 		/// Creates the test state around \a cache and \a timeSupplier.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
-				: ServiceTestState(std::move(cache), CreateConfigHolder(CreatePrototypicalCatapultConfiguration()), timeSupplier)
+				: ServiceTestState(std::move(cache), config::CreateMockConfigurationHolder(CreatePrototypicalCatapultConfiguration()), timeSupplier)
 		{}
 
 		/// Creates the test state around \a cache and \a config.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const config::CatapultConfiguration& config)
-				: ServiceTestState(std::move(cache), CreateConfigHolder(config), &utils::NetworkTime)
+				: ServiceTestState(std::move(cache), config::CreateMockConfigurationHolder(config), &utils::NetworkTime)
 		{}
 
 		/// Creates the test state around \a cache, \a config and \a configHolder.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const config::CatapultConfiguration& config, const supplier<Timestamp>& timeSupplier)
-				: ServiceTestState(std::move(cache), CreateConfigHolder(config), timeSupplier)
+				: ServiceTestState(std::move(cache), config::CreateMockConfigurationHolder(config), timeSupplier)
 		{}
 
 		/// Creates the test state around \a cache and \a configHolder.

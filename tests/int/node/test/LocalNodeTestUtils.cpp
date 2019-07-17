@@ -98,8 +98,7 @@ namespace catapult { namespace test {
 		// make additional configuration modifications
 		PrepareCatapultConfiguration(config, AddSimplePartnerPluginExtensions, nodeFlag);
 
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(Height{0}, config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
 		const auto& resourcesPath = config.User.DataDirectory + "/resources";
 		auto disposition = extensions::ProcessDisposition::Production;

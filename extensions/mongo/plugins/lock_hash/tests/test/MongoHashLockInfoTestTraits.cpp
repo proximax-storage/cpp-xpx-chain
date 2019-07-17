@@ -33,6 +33,6 @@ namespace catapult { namespace test {
 			mongo::MongoStorageContext& context) {
 		return mongo::plugins::CreateMongoHashLockInfoCacheStorage(
 				context,
-				std::make_shared<config::MockLocalNodeConfigurationHolder>());
+				config::CreateMockConfigurationHolder());
 	}
 }}

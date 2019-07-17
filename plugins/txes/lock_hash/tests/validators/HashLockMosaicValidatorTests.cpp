@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockMosaicValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr MosaicId Currency_Mosaic_Id(1234);
@@ -43,8 +43,7 @@ namespace catapult { namespace validators {
 			blockChainConfig.CurrencyMosaicId = Currency_Mosaic_Id;
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateHashLockMosaicValidator(pConfigHolder);
 
 			// Act:

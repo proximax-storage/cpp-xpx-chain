@@ -123,7 +123,7 @@ namespace catapult { namespace test {
 				: m_registry(mocks::CreateDefaultTransactionRegistry())
 				, m_pZeroMqEntityPublisher(std::make_shared<zeromq::ZeroMqEntityPublisher>(
 						GetDefaultLocalHostZmqPort(),
-						model::CreateNotificationPublisher(m_registry, std::make_shared<config::MockLocalNodeConfigurationHolder>()),
+						model::CreateNotificationPublisher(m_registry, config::CreateMockConfigurationHolder()),
 						[](){ return model::ExtractorContext(); }))
 				, m_zmqSocket(m_zmqContext, ZMQ_SUB) {
 			m_zmqSocket.setsockopt(ZMQ_RCVTIMEO, 10);
@@ -216,7 +216,7 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a message queue context using the supplied subscriber creator (\a subscriberCreator).
 		explicit MqContextT(const SubscriberCreator& subscriberCreator)
-				: m_pNotificationPublisher(model::CreateNotificationPublisher(registry(), std::make_shared<config::MockLocalNodeConfigurationHolder>()))
+				: m_pNotificationPublisher(model::CreateNotificationPublisher(registry(), config::CreateMockConfigurationHolder()))
 				, m_pZeroMqSubscriber(subscriberCreator(publisher()))
 		{}
 

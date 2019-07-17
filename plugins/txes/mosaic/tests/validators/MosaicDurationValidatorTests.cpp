@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr MosaicId Default_Mosaic_Id = MosaicId(0x1234);
@@ -64,8 +64,7 @@ namespace catapult { namespace validators {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateMosaicDurationValidator(pConfigHolder);
 
 			// Act:

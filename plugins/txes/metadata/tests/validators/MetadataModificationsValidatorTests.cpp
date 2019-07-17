@@ -20,7 +20,7 @@ namespace catapult { namespace validators {
 
 	constexpr uint8_t MaxFields = 5;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, config::CreateMockConfigurationHolder())
 
 	namespace {
 		const Address Raw_Data = test::GenerateRandomByteArray<Address>();
@@ -58,8 +58,7 @@ namespace catapult { namespace validators {
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
 			PopulateCache(cache, initValues);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateMetadataModificationsValidator(pConfigHolder);
 
 			uint32_t sizeOfBuffer = 0;

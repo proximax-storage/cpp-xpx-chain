@@ -36,9 +36,7 @@ namespace catapult { namespace cache {
 		auto CreateConfigHolder() {
 			test::MutableCatapultConfiguration config;
 			config.BlockChain.MaxDifficultyBlocks = 111;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config.ToConst());
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		void RunSaveConsistencyTest(size_t numValues) {

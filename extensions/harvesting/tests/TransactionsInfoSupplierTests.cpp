@@ -45,9 +45,7 @@ namespace catapult { namespace harvesting {
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
 
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config.ToConst());
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		void AssertConsistent(const TransactionsInfo& transactionsInfo, const HarvestingUtFacade& facade) {
@@ -134,7 +132,7 @@ namespace catapult { namespace harvesting {
 			}
 
 		private:
-			std::shared_ptr<config::MockLocalNodeConfigurationHolder> m_pConfigHolder;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 			cache::CatapultCache m_catapultCache;
 			test::MockExecutionConfiguration m_executionConfig;
 			HarvestingUtFacadeFactory m_utFacadeFactory;

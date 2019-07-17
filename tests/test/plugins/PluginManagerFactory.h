@@ -26,8 +26,7 @@ namespace catapult { namespace test {
 
 	/// Creates a plugin manager around \a config.
 	inline plugins::PluginManager CreatePluginManager(const model::BlockChainConfiguration& config) {
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 		return plugins::PluginManager(pConfigHolder, plugins::StorageConfiguration());
 	}
 

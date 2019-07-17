@@ -140,8 +140,7 @@ namespace catapult { namespace chain {
 				Height maxHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
 				const model::BlockChainConfiguration& config) {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pCache = std::make_unique<cache::BlockDifficultyCache>(pConfigHolder);
 			{
 				auto delta = pCache->createDelta(Height{0});

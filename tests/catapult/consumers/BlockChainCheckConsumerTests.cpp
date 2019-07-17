@@ -37,8 +37,7 @@ namespace catapult { namespace consumers {
 		disruptor::ConstBlockConsumer CreateDefaultBlockChainCheckConsumer() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.MaxBlockFutureTime = utils::TimeSpan::FromHours(1);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			return CreateBlockChainCheckConsumer(Test_Block_Chain_Limit, pConfigHolder, []() {
 				return Timestamp(100);
 			});
@@ -100,8 +99,7 @@ namespace catapult { namespace consumers {
 			test::LinkBlocks(Height(12), elements);
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.MaxBlockFutureTime = maxBlockFutureTime;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto consumer = CreateBlockChainCheckConsumer(Test_Block_Chain_Limit, pConfigHolder, [currentTime]() {
 				return currentTime;
 			});

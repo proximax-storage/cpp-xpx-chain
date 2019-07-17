@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NamespaceDurationOverflowValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceDurationOverflow, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceDurationOverflow, config::CreateMockConfigurationHolder())
 
 	namespace {
 		// region test utils
@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(options.MaxDuration.unwrap());
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 
 			auto cache = test::NamespaceCacheFactory::Create(blockChainConfig, options.GracePeriodDuration);
 			{

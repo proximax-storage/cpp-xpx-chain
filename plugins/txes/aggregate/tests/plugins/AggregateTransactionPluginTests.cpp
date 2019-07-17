@@ -102,8 +102,7 @@ namespace catapult { namespace plugins {
 			auto aggregateConfig = config::AggregateConfiguration::Uninitialized();
 			aggregateConfig.MaxBondedTransactionLifetime = time;
 			blockchainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), aggregateConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(blockchainConfig);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(blockchainConfig);
 		}
 
 		std::unique_ptr<model::TransactionPlugin> CreateTransactionPlugin(const model::TransactionRegistry& registry, utils::TimeSpan time = utils::TimeSpan{}) {

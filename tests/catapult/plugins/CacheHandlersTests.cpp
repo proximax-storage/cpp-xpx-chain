@@ -47,7 +47,7 @@ namespace catapult { namespace plugins {
 		template<typename TAction>
 		void RunHandlerRegistrationTest(TAction action) {
 			// Arrange:
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			PluginManager pluginManager(pConfigHolder, StorageConfiguration());
 			pluginManager.addCacheSupport<test::SimpleCacheStorageTraits>(std::make_unique<CacheDescriptor::CacheType>());
 			auto cache = pluginManager.createCache();

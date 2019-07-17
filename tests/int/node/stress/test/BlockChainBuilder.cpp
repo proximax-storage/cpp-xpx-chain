@@ -181,8 +181,7 @@ namespace catapult { namespace test {
 			const model::PreviousBlockContext& context,
 			Timestamp timestamp,
 			Difficulty difficulty) {
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(m_config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(m_config);
 		chain::BlockHitPredicate hitPredicate(pConfigHolder, [](const auto&, auto) {
 			// to simplfy tests, just return a constant importance
 			return Importance(8'999'999'998'000'000);

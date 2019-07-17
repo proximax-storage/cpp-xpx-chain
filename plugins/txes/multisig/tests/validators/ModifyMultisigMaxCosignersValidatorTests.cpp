@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigMaxCosignersValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosigners, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosigners, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Add = model::CosignatoryModificationType::Add;
@@ -70,8 +70,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxCosignersPerAccount = maxCosignersPerAccount;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateModifyMultisigMaxCosignersValidator(pConfigHolder);
 
 			// Act:

@@ -34,9 +34,7 @@ namespace catapult { namespace cache {
 		auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier) {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.Network.Identifier = networkIdentifier;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(blockChainConfig);
 		}
 
 		struct PropertyCacheMixinTraits {

@@ -147,16 +147,11 @@ namespace catapult { namespace local {
 			});
 		}
 
-		auto CreateConfigHolder() {
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			return pConfigHolder;
-		}
-
 		class LoadBlockChainTestContext {
 		public:
 			LoadBlockChainTestContext()
 					: m_state(Default_Config)
-					, m_pluginManager(CreateConfigHolder(), plugins::StorageConfiguration()) {
+					, m_pluginManager(config::CreateMockConfigurationHolder(), plugins::StorageConfiguration()) {
 				AddXorResolvers(m_pluginManager);
 			}
 

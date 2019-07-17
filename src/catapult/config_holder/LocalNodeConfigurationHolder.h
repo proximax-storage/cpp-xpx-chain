@@ -14,6 +14,7 @@ namespace catapult { namespace config {
 	class LocalNodeConfigurationHolder {
 	public:
 		LocalNodeConfigurationHolder(cache::CatapultCache* pCache);
+		virtual ~LocalNodeConfigurationHolder() {}
 
 	public:
 		/// Extracts the resources path from the command line arguments.

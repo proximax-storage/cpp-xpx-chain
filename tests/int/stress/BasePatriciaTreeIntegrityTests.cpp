@@ -55,9 +55,7 @@ namespace catapult { namespace cache {
 			config.MinHarvesterBalance = Amount(1000);
 			config.CurrencyMosaicId = MosaicId(0xE329'AD1C'BE7F'C60D);
 			config.HarvestingMosaicId = MosaicId(2222);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config);
 		}
 
 		template<typename TSerializer>

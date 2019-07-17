@@ -182,8 +182,7 @@ namespace catapult { namespace test {
 				const consumer<extensions::ProcessBootstrapper&>& configure) {
 			prepareCatapultConfiguration(config);
 
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
 					pConfigHolder,
 					resourcesDirectory(),

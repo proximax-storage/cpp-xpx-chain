@@ -308,8 +308,7 @@ namespace catapult { namespace test {
 				const config::CatapultConfiguration& config,
 				const plugins::StorageConfiguration& storageConfig) {
 			std::vector<plugins::PluginModule> modules;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig);
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");
 

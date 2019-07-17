@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EligibleHarvesterValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
@@ -65,8 +65,7 @@ namespace catapult { namespace validators {
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto height = Height(1000);
 		AddAccount(cache, key, Amount(9999));
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
 		auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
 
@@ -92,8 +91,7 @@ namespace catapult { namespace validators {
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
 			AddAccount(cache, key, initialBalance);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
 			auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
 			auto notification = test::CreateBlockNotification(key);

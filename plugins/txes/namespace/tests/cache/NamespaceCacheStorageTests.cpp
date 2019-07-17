@@ -37,9 +37,7 @@ namespace catapult { namespace cache {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(blockChainConfig);
 		}
 
 		auto DefaultCacheOptions() {

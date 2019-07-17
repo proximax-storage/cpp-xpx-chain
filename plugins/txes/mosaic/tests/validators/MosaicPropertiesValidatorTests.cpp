@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicPropertiesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicProperties, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicProperties, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Max_Divisibility = std::numeric_limits<uint8_t>::max();
@@ -59,8 +59,7 @@ namespace catapult { namespace validators {
 		void AssertFlagsResult(ValidationResult expectedResult, model::MosaicFlags flags) {
 			// Arrange:
 			auto cache = test::CreateEmptyCatapultCache(Default_Config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Default_Config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
 			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
 			model::MosaicPropertiesHeader header{};
 			header.Flags = flags;
@@ -95,8 +94,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(maxDivisibility, Max_Duration);
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
 			model::MosaicPropertiesHeader header{};
 			header.Divisibility = divisibility;
@@ -137,8 +135,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(Max_Divisibility, BlockDuration(maxDuration));
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
 			model::MosaicPropertiesHeader header{};
 			header.Count = 1;
@@ -181,8 +178,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenValidatingMosaicWithNoOptionalProperties) {
 		// Arrange:
 		auto cache = test::CreateEmptyCatapultCache(Default_Config);
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(Default_Config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
 		auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
 		model::MosaicPropertiesHeader header{};
 		header.Count = 0;
@@ -198,8 +194,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenValidatingMosaicWithDurationOptionalProperty) {
 		// Arrange:
 		auto cache = test::CreateEmptyCatapultCache(Default_Config);
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(Default_Config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
 		auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
 		model::MosaicPropertiesHeader header{};
 		header.Count = 1;
@@ -219,8 +214,7 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult = Failure_Mosaic_Invalid_Property) {
 			// Arrange: create a transaction with a single property
 			auto cache = test::CreateEmptyCatapultCache(Default_Config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Default_Config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
 			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
 			model::MosaicPropertiesHeader header{};
 			header.Count = 1;
@@ -258,8 +252,7 @@ namespace catapult { namespace validators {
 			// Arrange: indicate the transaction contains extra properties
 			//          (validator will reject the transaction before dereferencing the extra properties)
 			auto cache = test::CreateEmptyCatapultCache(Default_Config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(Default_Config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
 			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
 			model::MosaicPropertiesHeader header{};
 			header.Count = count;

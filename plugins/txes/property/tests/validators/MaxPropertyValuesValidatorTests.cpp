@@ -31,9 +31,9 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxPropertyValuesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxAddressPropertyValues, std::make_shared<config::MockLocalNodeConfigurationHolder>())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicPropertyValues, std::make_shared<config::MockLocalNodeConfigurationHolder>())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactionTypePropertyValues, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxAddressPropertyValues, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicPropertyValues, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactionTypePropertyValues, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -98,8 +98,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxPropertyValues = maxPropertyValues;
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(property), pluginConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = TPropertyValueTraits::CreateValidator(pConfigHolder);
 
 			using UnresolvedValueType = typename TPropertyValueTraits::UnresolvedValueType;

@@ -51,8 +51,7 @@ namespace catapult { namespace plugins {
 		test::MutableCatapultConfiguration config;
 		config.BlockChain.BlockPruneInterval = 15;
 		config.Inflation.InflationCalculator.add(Height(123), Amount(234));
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetConfig(Height{0}, config.ToConst());
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
 
 		auto storageConfig = StorageConfiguration();
 		storageConfig.CacheDatabaseDirectory = "abc";
@@ -70,7 +69,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateCacheConfiguration) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 
 		auto storageConfig = StorageConfiguration();
 		storageConfig.PreferCacheDatabase = true;
@@ -100,7 +99,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomTransactions) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
@@ -142,7 +141,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomCaches) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
@@ -159,7 +158,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomCachePlugins) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
@@ -195,7 +194,7 @@ namespace catapult { namespace plugins {
 		template<typename THandlerTraits>
 		void AssertCanRegisterCustomHandlers() {
 			// Arrange:
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act:
@@ -258,7 +257,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomDiagnosticCounters) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
@@ -319,7 +318,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterStatelessValidators) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
@@ -349,7 +348,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatelessValidatorWithNoSuppressedFailureFiltering) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
@@ -364,7 +363,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatelessValidatorWithCustomSuppressedFailureFiltering) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
@@ -383,7 +382,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterStatefulValidators) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
@@ -415,7 +414,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatefulValidatorWithNoSuppressedFailureFiltering) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
@@ -430,7 +429,7 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatefulValidatorWithCustomSuppressedFailureFiltering) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
@@ -473,7 +472,7 @@ namespace catapult { namespace plugins {
 		template<typename TAction>
 		void RunObserverTest(TAction action) {
 			// Arrange:
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 			manager.addObserverHook([](auto& builder) {
 				builder.add(CreateNamedObserver("alpha"));
@@ -587,7 +586,7 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateDefaultResolver) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
@@ -599,7 +598,7 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverAroundMatchingResolver) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, true);
 
@@ -612,7 +611,7 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverAroundNonMatchingResolver) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, false);
 
@@ -625,7 +624,7 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverThatOnlyExecutesFirstMatchingResolver) {
 		// Arrange:
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
 		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, false);
 		TTraits::AddResolver(manager, 2, true); // second one should match
@@ -650,8 +649,7 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin());
 

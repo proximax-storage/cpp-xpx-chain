@@ -18,7 +18,7 @@ namespace catapult { namespace validators {
 	constexpr uint8_t MAX_KEY_SIZE = 5;
 	constexpr uint8_t MAX_VALUE_SIZE = 10;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification, config::CreateMockConfigurationHolder())
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult,
@@ -35,8 +35,7 @@ namespace catapult { namespace validators {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
 			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateMetadataFieldModificationValidator(pConfigHolder);
 
 			// Act:

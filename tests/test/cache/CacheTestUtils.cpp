@@ -56,7 +56,7 @@ namespace catapult { namespace test {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches) {
 		using namespace cache;
 
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 		subCaches[AccountStateCache::Id] = MakeSubCachePluginWithCacheConfiguration<AccountStateCache, AccountStateCacheStorage>(
 				cacheConfig,
 				pConfigHolder);

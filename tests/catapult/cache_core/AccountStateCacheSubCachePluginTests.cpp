@@ -53,8 +53,7 @@ namespace catapult { namespace cache {
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.MinHarvesterBalance = minHighValueAccountBalance;
 			blockChainConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
@@ -147,7 +146,7 @@ namespace catapult { namespace cache {
 		void RunSummaryLoadTest(size_t numAccounts) {
 			// Arrange:
 			auto config = CacheConfiguration();
-			AccountStateCache cache(config, std::make_shared<config::MockLocalNodeConfigurationHolder>());
+			AccountStateCache cache(config, config::CreateMockConfigurationHolder());
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			size_t numUpdateAddresses = 2 * numAccounts;
@@ -200,7 +199,7 @@ namespace catapult { namespace cache {
 			class PluginType : public AccountStateCacheSubCachePlugin {
 			public:
 				explicit PluginType(const CacheConfiguration& config)
-						: AccountStateCacheSubCachePlugin(config, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+						: AccountStateCacheSubCachePlugin(config, config::CreateMockConfigurationHolder())
 				{}
 			};
 		};

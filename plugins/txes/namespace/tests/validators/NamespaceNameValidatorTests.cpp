@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NamespaceNameValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceName, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceName, config::CreateMockConfigurationHolder())
 
 	namespace {
 		model::NamespaceNameNotification<1> CreateNamespaceNameNotification(uint8_t nameSize, const uint8_t* pName) {
@@ -56,8 +56,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(maxNameSize, {});
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
 			auto name = std::string(nameSize, 'a');
 			auto notification = CreateNamespaceNameNotification(nameSize, reinterpret_cast<const uint8_t*>(name.data()));
@@ -102,8 +101,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(static_cast<uint8_t>(name.size()), {});
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
 			auto notification = CreateNamespaceNameNotification(
 					static_cast<uint8_t>(name.size()),
@@ -137,8 +135,7 @@ namespace catapult { namespace validators {
 		// Arrange: note that CreateNamespaceNameNotification creates proper id
 		auto config = CreateConfig(100, {});
 		auto cache = test::CreateEmptyCatapultCache(config);
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 		auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
 		auto name = std::string(10, 'a');
 		auto notification = CreateNamespaceNameNotification(
@@ -156,8 +153,7 @@ namespace catapult { namespace validators {
 		// Arrange: corrupt the id
 		auto config = CreateConfig(100, {});
 		auto cache = test::CreateEmptyCatapultCache(config);
-		auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-		pConfigHolder->SetBlockChainConfig(config);
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 		auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
 		auto name = std::string(10, 'a');
 		auto notification = CreateNamespaceNameNotification(
@@ -200,8 +196,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(20, { "foo", "foobar" });
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
 			auto notification = createNotification(name);
 

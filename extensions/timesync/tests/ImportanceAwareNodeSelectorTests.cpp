@@ -64,8 +64,7 @@ namespace catapult { namespace timesync {
 			blockChainConfig.MinHarvesterBalance = maxAmount;
 			blockChainConfig.CurrencyMosaicId = MosaicId(1111);
 			blockChainConfig.HarvestingMosaicId = MosaicId(2222);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			return std::make_unique<cache::AccountStateCache>(cacheConfig, pConfigHolder);
 		}
 

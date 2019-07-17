@@ -219,8 +219,7 @@ namespace catapult { namespace chain {
 		uint64_t CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(const model::BlockChainConfiguration& config) {
 			// Arrange: set up test importances
 			auto importances = CreateDoublingImportances();
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
 			// - set up chain
 			BlockHitPredicate predicate(pConfigHolder, [&importances](const auto& signerKey, auto) {

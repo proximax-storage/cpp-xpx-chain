@@ -30,8 +30,8 @@
 
 namespace catapult { namespace validators {
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, std::make_shared<config::MockLocalNodeConfigurationHolder>())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, config::CreateMockConfigurationHolder())
 
 #define BALANCE_TRANSFER_TEST_CLASS BalanceTransferMaxMosaicsValidatorTests
 #define SUPPLY_CHANGE_TEST_CLASS SupplyChangeMaxMosaicsValidatorTests
@@ -70,8 +70,7 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(recipient);
 
 			auto config = CreateConfig(maxMosaics);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(pConfigHolder);
 			auto notification = model::BalanceTransferNotification<1>(owner, unresolvedRecipient, mosaicId, amount);
 
@@ -118,8 +117,7 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache(owner);
 
 			auto config = CreateConfig(maxMosaics);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(pConfigHolder);
 			auto notification = model::MosaicSupplyChangeNotification<1>(owner, mosaicId, direction, Amount(100));
 

@@ -47,9 +47,7 @@ namespace catapult { namespace cache {
 			config.HarvestingMosaicId = MosaicId(2222);
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(0);
 			config.MaxRollbackBlocks = 0;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config);
 		}
 
 		size_t GetNumIterations() {

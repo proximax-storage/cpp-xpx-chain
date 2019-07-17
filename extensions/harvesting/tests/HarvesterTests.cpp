@@ -147,8 +147,7 @@ namespace catapult { namespace harvesting {
 			std::unique_ptr<Harvester> CreateHarvester(
 					const config::CatapultConfiguration& config,
 					const BlockGenerator& blockGenerator) {
-				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-				pConfigHolder->SetConfig(Height{0}, config);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 				return std::make_unique<Harvester>(Cache, pConfigHolder, Beneficiary, *pUnlockedAccounts, blockGenerator);
 			}
 

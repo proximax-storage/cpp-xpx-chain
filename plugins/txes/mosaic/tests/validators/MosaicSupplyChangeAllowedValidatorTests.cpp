@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicSupplyChangeAllowedValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Max_Atomic_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
@@ -43,8 +43,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
 			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(pConfigHolder);
 
 			// Act:

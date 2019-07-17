@@ -45,7 +45,7 @@ namespace catapult { namespace model {
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.CurrencyMosaicId = MosaicId(Currency_Mosaic_Id.unwrap());
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pPub = CreateNotificationPublisher(registry, pConfigHolder, mode);
 
 			// Act:
@@ -69,7 +69,7 @@ namespace catapult { namespace model {
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.CurrencyMosaicId = MosaicId(Currency_Mosaic_Id.unwrap());
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pPub = CreateNotificationPublisher(registry, pConfigHolder);
 
 			// Act:

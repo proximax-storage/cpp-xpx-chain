@@ -399,8 +399,7 @@ namespace catapult { namespace consumers {
 				};
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
-				auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-				pConfigHolder->SetBlockChainConfig(config);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
 				Consumer = CreateBlockChainSyncConsumer(Cache, State, Storage, pConfigHolder, handlers);
 			}

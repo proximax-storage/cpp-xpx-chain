@@ -52,9 +52,7 @@ namespace catapult { namespace harvesting {
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
 
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetConfig(Height{0}, config.ToConst());
-			return pConfigHolder;
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		struct TaskOptionsWithCounters : ScheduledHarvesterTaskOptions {
@@ -138,7 +136,7 @@ namespace catapult { namespace harvesting {
 				AddDifficultyInfo(Cache, lastBlock);
 			}
 
-			std::shared_ptr<config::MockLocalNodeConfigurationHolder> pConfigHolder;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
 		};

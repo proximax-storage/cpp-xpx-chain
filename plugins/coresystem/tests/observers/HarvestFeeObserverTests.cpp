@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS HarvestFeeObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, std::make_shared<config::MockLocalNodeConfigurationHolder>(), model::InflationCalculator())
+	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, config::CreateMockConfigurationHolder(), model::InflationCalculator())
 
 	// region traits
 
@@ -108,8 +108,7 @@ namespace catapult { namespace observers {
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			config.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
 			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pObserver = CreateHarvestFeeObserver(pConfigHolder, calculator);
 
 			// Act + Assert:
@@ -491,7 +490,7 @@ namespace catapult { namespace observers {
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-			auto pObserver = CreateHarvestFeeObserver(std::make_shared<config::MockLocalNodeConfigurationHolder>(), model::InflationCalculator());
+			auto pObserver = CreateHarvestFeeObserver(config::CreateMockConfigurationHolder(), model::InflationCalculator());
 
 			auto signerPublicKey = test::GenerateRandomByteArray<Key>();
 			auto accountStateIter = RemoteAccountTraits::AddAccount(accountStateCache, signerPublicKey, Height(1));

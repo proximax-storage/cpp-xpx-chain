@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS DeadlineValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, std::make_shared<config::MockLocalNodeConfigurationHolder>())
+	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Block_Time = Timestamp(8888);
@@ -47,8 +47,7 @@ namespace catapult { namespace validators {
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
 			auto context = ValidatorContext(Height(123), Block_Time, model::NetworkInfo(), resolverContext, readOnlyCache);
-			auto pConfigHolder = std::make_shared<config::MockLocalNodeConfigurationHolder>();
-			pConfigHolder->SetBlockChainConfig(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateDeadlineValidator(pConfigHolder);
 
 			model::TransactionDeadlineNotification<1> notification(deadline, maxCustomLifetime);
