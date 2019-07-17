@@ -56,7 +56,7 @@ namespace catapult { namespace plugins {
 		void AddBlockDifficultyCache(PluginManager& manager) {
 			using namespace catapult::cache;
 
-			manager.addCacheSupport<BlockDifficultyCacheStorage>(std::make_unique<BlockDifficultyCache>(manager.configHolder()));
+			manager.addCacheSupport(std::make_unique<BlockDifficultyCacheSubCachePlugin>(manager.configHolder()));
 
 			manager.addDiagnosticCounterHook([](auto& counters, const CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("BLKDIF C"), [&cache]() {
