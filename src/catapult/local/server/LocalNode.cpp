@@ -96,6 +96,7 @@ namespace catapult { namespace local {
 
 				CATAPULT_LOG(debug) << "initializing cache";
 				m_cacheHolder.cache() = m_pluginManager.createCache();
+				m_pluginManager.configHolder()->SetCache(&m_cacheHolder.cache());
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();

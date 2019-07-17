@@ -119,6 +119,7 @@ namespace catapult { namespace local {
 
 				CATAPULT_LOG(debug) << "initializing cache";
 				m_catapultCache = m_pluginManager.createCache();
+				m_pluginManager.configHolder()->SetCache(&m_catapultCache);
 
 				utils::StackLogger stackLogger("running recovery operations", utils::LogLevel::Info);
 				recover();
