@@ -51,7 +51,7 @@ namespace catapult { namespace cache {
 			return CatapultCache(std::move(m_subCaches));
 		}
 
-		/// Builds a catapult cache.
+		/// Updates a catapult cache with newly added sub caches.
 		void update(CatapultCache& cache) {
 			for (auto& pSubCache : m_subCaches)
 				cache.addSubCache(std::move(pSubCache));

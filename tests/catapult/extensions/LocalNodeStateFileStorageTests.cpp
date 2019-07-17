@@ -302,6 +302,7 @@ namespace catapult { namespace extensions {
 			auto pConfigHolder = CreateConfigHolder();
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches;
+			subCaches.push_back(nullptr);
 			subCaches.push_back(std::make_unique<cache::AccountStateCacheSubCachePlugin>(cacheConfig, pConfigHolder));
 			subCaches.push_back(std::make_unique<cache::BlockDifficultyCacheSubCachePlugin>(pConfigHolder));
 			return cache::CatapultCache(std::move(subCaches));

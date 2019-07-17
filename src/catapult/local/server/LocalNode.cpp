@@ -35,7 +35,6 @@
 #include "catapult/io/FileQueue.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/local/HostUtils.h"
-#include "catapult/plugins/PluginLoader.h"
 #include "catapult/utils/StackLogger.h"
 
 namespace catapult { namespace local {
@@ -92,28 +91,11 @@ namespace catapult { namespace local {
 
 		public:
 			void boot() {
-				auto& extensionManager = m_pBootstrapper->extensionManager();
-
-				CATAPULT_LOG(info) << "registering config plugin";
-				loadConfigPlugin();
+				CATAPULT_LOG(info) << "registering system plugins";
+				m_pluginModules = LoadAllPlugins(*m_pBootstrapper);
 
 				CATAPULT_LOG(debug) << "initializing cache";
 				m_cacheHolder.cache() = m_pluginManager.createCache();
-
-				CATAPULT_LOG(debug) << "loading config subcache";
-				m_pluginManager.configHolder()->SetCache(&m_cacheHolder.cache());
-
-//				cache::SupplementalData supplementalData;
-//				bool isConfigCacheLoaded = m_pBlockChainStorage->loadState(m_pluginManager.configHolder()->Config(Height{0}).User.DataDirectory, m_cacheHolder.cache(), supplementalData);
-				auto height = m_cacheHolder.cache().height();
-//				if (isConfigCacheLoaded)
-//					m_pluginManager.setShouldEnableVerifiableState(m_pluginManager.config(height).ShouldEnableVerifiableState);
-
-				CATAPULT_LOG(info) << "registering other plugins";
-				loadOtherPlugins(height);
-
-				CATAPULT_LOG(debug) << "adding other subcaches";
-				m_pluginManager.updateCache(m_cacheHolder.cache());
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
@@ -129,6 +111,7 @@ namespace catapult { namespace local {
 				SeedNodeContainer(m_nodes, *m_pBootstrapper);
 
 				CATAPULT_LOG(debug) << "booting extension services";
+				auto& extensionManager = m_pBootstrapper->extensionManager();
 				m_pServiceState = std::make_unique<extensions::ServiceState>(
 						m_nodes,
 						m_cacheHolder.cache(),
@@ -156,25 +139,6 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			void loadConfigPlugin() {
-				loadPlugin(PLUGIN_NAME(config));
-			}
-
-			void loadOtherPlugins(const Height& height) {
-				for (const auto& pluginName : m_pBootstrapper->extensionManager().systemPluginNames())
-					loadPlugin(pluginName);
-
-				auto plugins = m_pluginManager.config(height).Plugins;
-				plugins.erase(PLUGIN_NAME(config));
-				for (const auto& pair : plugins) {
-					loadPlugin(pair.first);
-				}
-			}
-
-			void loadPlugin(const std::string& pluginName) {
-				LoadPluginByName(m_pluginManager, m_pluginModules, m_pluginManager.configHolder()->Config(Height{0}).User.PluginsDirectory, pluginName);
-			}
-
 			void registerCounters() {
 				AddMemoryCounters(m_counters);
 				m_counters.emplace_back(utils::DiagnosticCounterId("TOT CONF TXES"), [&state = m_catapultState]() {
@@ -260,7 +224,7 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			config::CatapultConfiguration config() {
+			const config::CatapultConfiguration& config() {
 				return m_pluginManager.configHolder()->Config(m_cacheHolder.cache().height());
 			}
 			extensions::LocalNodeStateRef stateRef() {

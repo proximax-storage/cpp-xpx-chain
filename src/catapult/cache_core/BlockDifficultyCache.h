@@ -34,7 +34,7 @@ namespace catapult { namespace cache {
 	/// \note The ordering of the elements is solely done by comparing the block height contained in the element.
 	class BasicBlockDifficultyCache : public BlockDifficultyBasicCache {
 	public:
-		/// Creates a cache with the specified \a config.
+		/// Creates a cache with the specified \a pConfigHolder.
 		explicit BasicBlockDifficultyCache(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				// block difficulty cache must always be an in-memory cache
 				: BlockDifficultyBasicCache(CacheConfiguration(), BlockDifficultyCacheTypes::Options{ pConfigHolder })
@@ -47,7 +47,7 @@ namespace catapult { namespace cache {
 		DEFINE_CACHE_CONSTANTS(BlockDifficulty)
 
 	public:
-		/// Creates a cache with the specified \a config.
+		/// Creates a cache with the specified \a pConfigHolder.
 		explicit BlockDifficultyCache(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				: SynchronizedCache<BasicBlockDifficultyCache>(BasicBlockDifficultyCache(pConfigHolder))
 		{}

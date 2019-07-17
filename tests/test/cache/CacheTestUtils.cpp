@@ -39,7 +39,7 @@ namespace catapult { namespace test {
 	// region CoreSystemCacheFactory
 
 	cache::CatapultCache CoreSystemCacheFactory::Create(const model::BlockChainConfiguration& config) {
-		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(2);
+		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(3);
 		CreateSubCaches(config, subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
@@ -73,7 +73,7 @@ namespace catapult { namespace test {
 	cache::CatapultCache CreateEmptyCatapultCache(
 			const model::BlockChainConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig) {
-		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(2);
+		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(3);
 		CoreSystemCacheFactory::CreateSubCaches(config, cacheConfig, subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
