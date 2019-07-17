@@ -26,16 +26,14 @@ namespace catapult { namespace config {
 	}
 
 	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder() {
-		return config::CreateMockConfigurationHolder();
+		return std::make_shared<MockLocalNodeConfigurationHolder>();
 	}
 
 	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder(const model::BlockChainConfiguration& config) {
-		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-		return pConfigHolder;
+		return std::make_shared<MockLocalNodeConfigurationHolder>(config);
 	}
 
 	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder(const CatapultConfiguration& config) {
-		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-		return pConfigHolder;
+		return std::make_shared<MockLocalNodeConfigurationHolder>(config);
 	}
 }}
