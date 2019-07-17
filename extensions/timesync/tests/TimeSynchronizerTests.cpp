@@ -103,7 +103,7 @@ namespace catapult { namespace timesync {
 					const std::vector<std::pair<int64_t, uint64_t>>& offsetsAndRawImportances,
 					const std::vector<filters::SynchronizationFilter>& filters = {},
 					KeyType keyType = KeyType::PublicKey)
-					: m_configHolder(test::CreateConfigHolder(CreateConfig()))
+					: m_configHolder(config::CreateMockConfigurationHolder(CreateConfig()))
 					, m_state(test::CreateCatapultCacheWithMarkerAccount(m_configHolder->Config(Height(0)).BlockChain), m_configHolder)
 					, m_cache(const_cast<cache::AccountStateCache&>(m_state.cache().sub<cache::AccountStateCache>()))
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), m_state.state(), Warning_Threshold_Millis) {
@@ -199,7 +199,7 @@ namespace catapult { namespace timesync {
 			filters::AggregateSynchronizationFilter aggregateFilter({});
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
-			auto configHolder = test::CreateConfigHolder(CreateConfig());
+			auto configHolder = config::CreateMockConfigurationHolder(CreateConfig());
 			test::ServiceTestState state(test::CreateCatapultCacheWithMarkerAccount(configHolder->Config(Height(0)).BlockChain), configHolder);
 			auto& cache = const_cast<cache::AccountStateCache&>(state.cache().sub<cache::AccountStateCache>());
 			auto singleAccountImportance = Importance(Total_Chain_Importance.unwrap() / numSamples);
