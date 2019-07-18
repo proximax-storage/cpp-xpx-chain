@@ -202,6 +202,10 @@ namespace catapult { namespace test {
 				, m_locator(m_keyPair)
 		{}
 
+		virtual ~ServiceLocatorTestContext() {
+			shutdown();
+		}
+
 	public:
 		/// Gets the value of the counter named \a counterName.
 		uint64_t counter(const std::string& counterName) const {
