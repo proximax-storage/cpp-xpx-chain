@@ -62,19 +62,15 @@ namespace catapult { namespace handlers {
 			}
 
 			static void Register(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage) {
-				m_pServiceState = std::make_unique<test::ServiceTestState>();
-				EnableVerifiableState(*m_pServiceState);
-				CopyStorage(storage, m_pServiceState->state().storage());
-				RegisterSubCacheMerkleRootsHandler(m_pServiceState->state());
-				handlers = m_pServiceState->state().packetHandlers();
+				static std::unique_ptr<test::ServiceTestState> pServiceState;
+				pServiceState = std::make_unique<test::ServiceTestState>();
+				EnableVerifiableState(*pServiceState);
+				CopyStorage(storage, pServiceState->state().storage());
+				RegisterSubCacheMerkleRootsHandler(pServiceState->state());
+				handlers = pServiceState->state().packetHandlers();
 			}
-
-		private:
-			static std::unique_ptr<test::ServiceTestState> m_pServiceState;
 		};
 	}
-
-	std::unique_ptr<test::ServiceTestState> SubCacheMerkleRootsHandlerTraits::m_pServiceState = nullptr;
 
 	DEFINE_HEIGHT_REQUEST_HANDLER_TESTS(SubCacheMerkleRootsHandlerTraits, SubCacheMerkleRootsHandler)
 

@@ -300,6 +300,8 @@ namespace catapult { namespace local {
 			// Arrange:
 			test::TempDirectoryGuard tempDataDirectory;
 			auto config = test::CreateStateHashEnabledCatapultConfiguration(tempDataDirectory.name());
+			const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = false;
+			const_cast<model::BlockChainConfiguration&>(config.BlockChain).Plugins.erase(PLUGIN_NAME(hashcache));
 			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
 			auto observerFactory = [&pluginManager = *pPluginManager](const auto&) { return pluginManager.createObserver(); };
 
