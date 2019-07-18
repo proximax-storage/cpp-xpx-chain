@@ -79,7 +79,7 @@ namespace catapult { namespace test {
 			auto pBlock = model::CreateBlock(context, Network_Identifier, signer.publicKey(), model::Transactions());
 			pBlock->Timestamp = context.Timestamp + Timestamp(60000);
 			pBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
-			pBlock->Version = MakeVersion(Network_Identifier, 3);
+			pBlock->Version = MakeVersion(Network_Identifier, model::BlockHeader::Current_Version);
 			pBlock->FeeInterest = 1;
 			pBlock->FeeInterestDenominator = 2;
 			extensions::BlockExtensions(GetDefaultGenerationHash()).signFullBlock(signer, *pBlock);

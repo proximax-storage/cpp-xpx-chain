@@ -33,7 +33,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS PropertyTransactionPluginTests
 
 	namespace {
-		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AddressProperty, 1, 1, AddressProperty)
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(MosaicProperty, 1, 1, MosaicProperty)

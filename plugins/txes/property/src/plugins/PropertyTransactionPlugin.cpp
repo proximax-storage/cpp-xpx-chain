@@ -58,7 +58,7 @@ namespace catapult { namespace plugins {
 			template<typename TTransaction>
 			static void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
-				case 2: {
+				case 1: {
 					sub.notify(PropertyTypeNotification<1>(transaction.PropertyType));
 					sub.notify(CreatePropertyModificationsNotification<TTransaction>(transaction));
 
@@ -75,7 +75,7 @@ namespace catapult { namespace plugins {
 				}
 
 				default:
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of RegisterNamespaceTransaction", transaction.EntityVersion());
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of PropertyTransaction", transaction.EntityVersion());
 				}
 			}
 
