@@ -239,9 +239,8 @@ namespace catapult { namespace local {
 				prepareSavedStorage(config);
 
 				test::AddRecoveryPluginExtensions(const_cast<config::ExtensionsConfiguration&>(config.Extensions));
-				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 				auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
-						pConfigHolder,
+						config::CreateMockConfigurationHolder(config),
 						resourcesDirectory(),
 						extensions::ProcessDisposition::Recovery,
 						"RecoveryOrchestratorTests");
