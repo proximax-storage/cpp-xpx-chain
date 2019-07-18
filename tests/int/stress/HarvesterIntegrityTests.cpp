@@ -63,6 +63,8 @@ namespace catapult { namespace harvesting {
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
 
+			config.SupportedEntityVersions = test::CreateSupportedEntityVersions();
+
 			return config.ToConst();
 		}
 
@@ -174,6 +176,7 @@ namespace catapult { namespace harvesting {
 						m_pPluginManager->createNotificationPublisher());
 				auto observerContext = observers::ObserverContext(observerState, Height(1), notifyMode, resolverContext);
 				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height{0}), observerContext);
+				cacheDelta.sub<cache::HashCache>().insert(state::TimestampedHash(transactionInfo.pEntity->Deadline, transactionInfo.EntityHash));
 				m_cache.commit(Height(1));
 			}
 
