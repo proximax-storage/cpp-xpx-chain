@@ -239,6 +239,14 @@ namespace catapult { namespace local {
 				prepareSavedStorage(config);
 
 				test::AddRecoveryPluginExtensions(const_cast<config::ExtensionsConfiguration&>(config.Extensions));
+				// TODO: investigate an issue with mock config holder crached in destructor on orchestrator assert when
+				// local variable passed to bootstrapper instead of temporary object.
+//				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+//				auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
+//						pConfigHolder,
+//						resourcesDirectory(),
+//						extensions::ProcessDisposition::Recovery,
+//						"RecoveryOrchestratorTests");
 				auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
 						config::CreateMockConfigurationHolder(config),
 						resourcesDirectory(),
