@@ -333,9 +333,7 @@ namespace catapult { namespace test {
 				const plugins::StorageConfiguration& storageConfig) {
 			test::MutableCatapultConfiguration config;
 			config.BlockChain = blockChainConfig;
-			config.SupportedEntityVersions = {
-					{ model::Entity_Type_Transfer, { model::TransferTransaction::Current_Version } },
-			};
+			config.SupportedEntityVersions = test::CreateSupportedEntityVersions();
 			return CreatePluginManager(config.ToConst(), storageConfig);
 		}
 	}
