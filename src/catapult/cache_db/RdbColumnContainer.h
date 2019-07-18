@@ -78,6 +78,9 @@ namespace catapult { namespace cache {
 		/// Finds element with \a key, storing result in \a iterator.
 		void find(const RawBuffer& key, RdbDataIterator& iterator) const;
 
+		/// Finds first element with <= \a key, storing result in \a iterator.
+		void findLowerOrEqual(const RawBuffer& key, RdbDataIterator& iterator) const;
+
 		/// Inserts element with \a key and \a value.
 		void insert(const RawBuffer& key, const std::string& value);
 

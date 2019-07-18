@@ -84,6 +84,13 @@ namespace catapult { namespace deltaset {
 			return m_elements.cend() != iter ? FindConstIterator(std::move(iter)) : FindConstIterator();
 		}
 
+		/// Searches for \a key or previous key in this set.
+		/// Returns a pointer to the matching element if it is found or \c nullptr if it is not found.
+		FindConstIterator findLowerOrEqual(const KeyType& key) const {
+			auto iter = m_elements.findLowerOrEqual(key);
+			return m_elements.cend() != iter ? FindConstIterator(std::move(iter)) : FindConstIterator();
+		}
+
 		/// Searches for \a key in this set.
 		/// Returns \c true if it is found or \c false if it is not found.
 		bool contains(const KeyType& key) const {

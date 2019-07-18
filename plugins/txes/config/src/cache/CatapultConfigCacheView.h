@@ -48,21 +48,12 @@ namespace catapult { namespace cache {
 			if (!height.unwrap())
 				return height;
 
-			auto iterableView = MakeIterableView(m_catapultConfigHeights);
-			auto iter = std::lower_bound(iterableView.begin(), iterableView.end(), height);
-			if (iter == iterableView.end()) {
-				if (iter == iterableView.begin())
-					return Height{0};
-				iter--;
-			} else {
-				if (*iter > height) {
-					if (iter == iterableView.begin())
-						return Height{0};
-					iter--;
-				}
+			auto iter = m_catapultConfigHeights.findLowerOrEqual(height);
+			if (!iter.get()) {
+				return Height{0};
 			}
 
-			return *iter;
+			return *iter.get();
 		}
 
 	private:

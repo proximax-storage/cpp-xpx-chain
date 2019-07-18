@@ -154,6 +154,21 @@ namespace catapult { namespace deltaset {
 					: ConditionalIterator(m_pContainer2->find(key), MemoryFlag());
 		}
 
+		/// Searches for \a key or previous key in this set.
+		ConditionalIterator findLowerOrEqual(const typename TKeyTraits::KeyType& key) const {
+			if (m_pContainer1) {
+				return ConditionalIterator(m_pContainer1->findLowerOrEqual(key), StorageFlag());
+			} else {
+				auto iter = m_pContainer2->lower_bound(key);
+
+				if (iter != m_pContainer2->end() && *iter != key) {
+					--iter;
+				}
+
+				return ConditionalIterator(std::move(iter), MemoryFlag());
+			}
+		}
+
 	public:
 		/// Applies all changes in \a deltas to the underlying container.
 		void update(const DeltaElements<MemorySetType>& deltas) {

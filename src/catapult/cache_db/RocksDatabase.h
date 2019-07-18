@@ -135,6 +135,9 @@ namespace catapult { namespace cache {
 		/// Gets \a key from \a columnId returning data in \a result.
 		void get(size_t columnId, const rocksdb::Slice& key, RdbDataIterator& result);
 
+		/// Gets the first data \a result by <= \a key from \a columnId.
+		void getLowerOrEqual(size_t columnId, const rocksdb::Slice& key, RdbDataIterator& result);
+
 		/// Puts \a value with \a key in \a columnId.
 		void put(size_t columnId, const rocksdb::Slice& key, const std::string& value);
 
