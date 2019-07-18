@@ -59,24 +59,34 @@ namespace catapult { namespace config {
 
 		auto iter = std::lower_bound(m_catapultConfigs.begin(), m_catapultConfigs.end(), configHeight,
 			[](const auto& pair, const auto& height) { return pair.first < height; });
-		CatapultConfiguration config((iter--)->second);
 
 		auto entry = configCache.find(configHeight).get();
 
+		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		if (entry.blockChainConfig().empty()) {
-			const_cast<model::BlockChainConfiguration&>(config.BlockChain) = Config(configHeight - Height{1}).BlockChain;
+			blockChainConfig = Config(configHeight - Height{1}).BlockChain;
 		} else {
 			std::istringstream input(entry.blockChainConfig());
-			auto bag = utils::ConfigurationBag::FromStream(input);
-			const_cast<model::BlockChainConfiguration&>(config.BlockChain) = model::BlockChainConfiguration::LoadFromBag(bag);
+			blockChainConfig = model::BlockChainConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(input));
 		}
 
+		config::SupportedEntityVersions supportedEntityVersions;
 		if (entry.supportedEntityVersions().empty()) {
-			const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = Config(configHeight - Height{1}).SupportedEntityVersions;
+			supportedEntityVersions = Config(configHeight - Height{1}).SupportedEntityVersions;
 		} else {
 			std::istringstream input(entry.supportedEntityVersions());
-			const_cast<config::SupportedEntityVersions&>(config.SupportedEntityVersions) = LoadSupportedEntityVersions(input);
+			supportedEntityVersions = LoadSupportedEntityVersions(input);
 		}
+
+		auto config = CatapultConfiguration(
+			blockChainConfig,
+			iter->second.Node,
+			iter->second.Logging,
+			iter->second.User,
+			iter->second.Extensions,
+			iter->second.Inflation,
+			supportedEntityVersions
+		);
 
 		m_catapultConfigs.insert({ configHeight, config });
 

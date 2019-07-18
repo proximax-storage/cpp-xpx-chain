@@ -28,7 +28,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateExecutionConfiguration) {
 		// Act:
-		auto config = CreateExecutionConfiguration(*test::CreateDefaultPluginManagerWithRealPlugins());
+		auto pPlugin = test::CreateDefaultPluginManagerWithRealPlugins();
+		auto config = CreateExecutionConfiguration(*pPlugin);
 
 		// Assert:
 		EXPECT_EQ(model::NetworkIdentifier::Mijin_Test, config.NetworkInfoSupplier(Height{0}).Identifier);
@@ -48,7 +49,9 @@ namespace catapult { namespace extensions {
 			"TotalTransactionsObserver",
 			"SnapshotCleanUpObserver",
 			"BlockDifficultyObserver",
-			"BlockDifficultyPruningObserver"
+			"BlockDifficultyPruningObserver",
+			"TransactionHashObserver",
+			"TransactionHashPruningObserver"
 		};
 		EXPECT_EQ(expectedObserverNames, config.pObserver->names());
 
@@ -60,7 +63,8 @@ namespace catapult { namespace extensions {
 			"DeadlineValidator",
 			"EligibleHarvesterValidator",
 			"BalanceDebitValidator",
-			"BalanceTransferValidator"
+			"BalanceTransferValidator",
+			"UniqueTransactionHashValidator"
 		};
 		EXPECT_EQ(expectedValidatorNames, config.pValidator->names());
 	}

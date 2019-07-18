@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 		auto CreateLocalNodeConfigurationHolder() {
 			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			for (uint16_t i = Min_Entity_Version; i <= Max_Entity_Version; ++i)
-				pConfigHolder->Config(Height{0}).SupportedEntityVersions[Entity_Type].emplace(i);
+				const_cast<config::SupportedEntityVersions&>(pConfigHolder->Config(Height{0}).SupportedEntityVersions)[Entity_Type].emplace(i);
 			return pConfigHolder;
 		}
 

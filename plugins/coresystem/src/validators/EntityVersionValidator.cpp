@@ -27,9 +27,13 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(EntityVersion, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(EntityVersion, [pConfigHolder](const auto& notification, const auto& context) {
-			const auto& supportedVersions = pConfigHolder->Config(context.Height).SupportedEntityVersions[notification.EntityType];
-			auto iter = supportedVersions.find(notification.EntityVersion);
-			return (iter == supportedVersions.end())
+			auto entityIter = pConfigHolder->Config(context.Height).SupportedEntityVersions.find(notification.EntityType);
+
+			if (entityIter == pConfigHolder->Config(context.Height).SupportedEntityVersions.end()) {
+				return Failure_Core_Invalid_Version;
+			}
+			auto iter = entityIter->second.find(notification.EntityVersion);
+			return (iter == entityIter->second.end())
 				   ? Failure_Core_Invalid_Version
 				   : ValidationResult::Success;
 		});

@@ -53,17 +53,15 @@ namespace catapult { namespace harvesting {
 		// region test factories
 
 		auto CreateConfiguration() {
-			test::MutableCatapultConfiguration config;
+			auto blockChainConfig = test::CreatePrototypicalBlockChainConfiguration();
+			blockChainConfig.MinHarvesterBalance = Amount(500'000);
+			blockChainConfig.ShouldEnableVerifiableState = true;
+			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 
-			config.BlockChain = test::CreatePrototypicalBlockChainConfiguration();
-			config.BlockChain.MinHarvesterBalance = Amount(500'000);
-			config.BlockChain.ShouldEnableVerifiableState = true;
-			config.BlockChain.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			auto config = test::CreatePrototypicalCatapultConfiguration(std::move(blockChainConfig), "");
+			const_cast<config::NodeConfiguration&>(config.Node).FeeInterestDenominator = 2;
 
-			config.Node.FeeInterest = 1;
-			config.Node.FeeInterestDenominator = 2;
-
-			return config.ToConst();
+			return config;
 		}
 
 		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {

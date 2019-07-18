@@ -37,6 +37,17 @@ namespace catapult { namespace config {
 		/// Creates a catapult configuration around \a blockChainConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
 		/// \a extensionsConfig, \a inflationConfig and \a supportedEntityVersions.
 		CatapultConfiguration(
+				const model::BlockChainConfiguration& blockChainConfig,
+				const NodeConfiguration& nodeConfig,
+				const LoggingConfiguration& loggingConfig,
+				const UserConfiguration& userConfig,
+				const ExtensionsConfiguration& extensionsConfig,
+				const InflationConfiguration& inflationConfig,
+				const SupportedEntityVersions& supportedEntityVersions = config::SupportedEntityVersions());
+
+		/// Creates a catapult configuration around \a blockChainConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
+		/// \a extensionsConfig, \a inflationConfig and \a supportedEntityVersions.
+		CatapultConfiguration(
 				model::BlockChainConfiguration&& blockChainConfig,
 				NodeConfiguration&& nodeConfig,
 				LoggingConfiguration&& loggingConfig,
@@ -65,7 +76,7 @@ namespace catapult { namespace config {
 		const InflationConfiguration Inflation;
 
 		/// Supported entity versions.
-		config::SupportedEntityVersions SupportedEntityVersions;
+		const config::SupportedEntityVersions SupportedEntityVersions;
 
 	public:
 		/// Loads a catapult configuration from \a resourcesPath given the specified extensions host (\a extensionsHost).

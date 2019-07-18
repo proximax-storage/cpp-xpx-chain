@@ -44,6 +44,23 @@ namespace catapult { namespace config {
 	}
 
 	CatapultConfiguration::CatapultConfiguration(
+			const model::BlockChainConfiguration& blockChainConfig,
+			const NodeConfiguration& nodeConfig,
+			const LoggingConfiguration& loggingConfig,
+			const UserConfiguration& userConfig,
+			const ExtensionsConfiguration& extensionsConfig,
+			const InflationConfiguration& inflationConfig,
+			const config::SupportedEntityVersions& supportedEntityVersions)
+			: BlockChain(blockChainConfig)
+			, Node(nodeConfig)
+			, Logging(loggingConfig)
+			, User(userConfig)
+			, Extensions(extensionsConfig)
+			, Inflation(inflationConfig)
+			, SupportedEntityVersions(supportedEntityVersions)
+	{}
+
+	CatapultConfiguration::CatapultConfiguration(
 			model::BlockChainConfiguration&& blockChainConfig,
 			NodeConfiguration&& nodeConfig,
 			LoggingConfiguration&& loggingConfig,

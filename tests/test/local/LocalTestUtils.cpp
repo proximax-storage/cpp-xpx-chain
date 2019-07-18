@@ -24,6 +24,8 @@
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/plugins/PluginLoader.h"
+#include "plugins/txes/transfer/src/model/TransferEntityType.h"
+#include "plugins/txes/transfer/src/model/TransferTransaction.h"
 #include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
@@ -311,6 +313,7 @@ namespace catapult { namespace test {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig);
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");
+			LoadPluginByName(*pPluginManager, modules, "", "catapult.plugins.hashcache");
 
 			for (const auto& pair : config.BlockChain.Plugins)
 				LoadPluginByName(*pPluginManager, modules, "", pair.first);
@@ -330,6 +333,9 @@ namespace catapult { namespace test {
 				const plugins::StorageConfiguration& storageConfig) {
 			test::MutableCatapultConfiguration config;
 			config.BlockChain = blockChainConfig;
+			config.SupportedEntityVersions = {
+					{ model::Entity_Type_Transfer, { model::TransferTransaction::Current_Version } },
+			};
 			return CreatePluginManager(config.ToConst(), storageConfig);
 		}
 	}

@@ -62,7 +62,7 @@ namespace catapult { namespace chain {
 			UpdaterTestContext()
 					: m_pPluginManager(CreatePluginManager())
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pPluginManager->configHolder()->Config(Height{0}).BlockChain))
+					, m_cache(m_pPluginManager->createCache())
 					, m_updater(
 							m_transactionsCache,
 							m_cache,

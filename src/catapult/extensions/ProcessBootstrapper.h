@@ -44,7 +44,7 @@ namespace catapult { namespace extensions {
 	public:
 		/// Creates a process bootstrapper around \a pConfigHolder, \a resourcesPath, \a disposition and \a servicePoolName.
 		ProcessBootstrapper(
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 				const std::string& resourcesPath,
 				ProcessDisposition disposition,
 				const std::string& servicePoolName);
