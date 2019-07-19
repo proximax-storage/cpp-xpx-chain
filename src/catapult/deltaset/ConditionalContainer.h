@@ -162,7 +162,7 @@ namespace catapult { namespace deltaset {
 				auto iter = m_pContainer2->lower_bound(key);
 
 				if (iter != m_pContainer2->end() && *iter != key) {
-					--iter;
+					iter = (iter == m_pContainer2->begin()) ? m_pContainer2->end() : --iter;
 				}
 
 				return ConditionalIterator(std::move(iter), MemoryFlag());
