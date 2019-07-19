@@ -5,7 +5,7 @@ cd _build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" ..
 
 make publish
-# First we build extensions which catapult.server required during runtime
+# First we build extensions which sirius.bc required during runtime
 make \
     # Required extensions
     catapult.mongo.plugins.accountlink \
@@ -62,13 +62,13 @@ make \
     catapult.tools.network \
     catapult.tools.statusgen \
     # Catapult
-    catapult.server \
+    sirius.bc \
     -j 4
 
 cd ..
 
 # Now we want to create a docker image,
-# so we need to create it with shared libs which is required by catapult.server and extensions
+# so we need to create it with shared libs which is required by sirius.bc and extensions
 mkdir ./temp
 # We copy all libs to temp folder
 ./scripts/release-script/copyDeps.sh ./_build/bin/ ./temp

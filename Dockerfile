@@ -6,8 +6,8 @@ COPY ./deps /
 # copy executables
 COPY ./_build/bin /catapult/bin
 
-# catapult.server as the entry point
-ENTRYPOINT ["/catapult/bin/catapult.server"]
+# sirius.bc as the entry point
+ENTRYPOINT ["/catapult/bin/sirius.bc"]
 
 # set the config directory by default
 CMD ["/catapultconfig"]
