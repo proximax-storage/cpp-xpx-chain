@@ -37,7 +37,7 @@ namespace catapult { namespace local {
 
 		Hash256 GetComponentStateHash(const test::PeerLocalNodeTestContext& context) {
 			auto subCacheMerkleRoots = context.localNode().cache().createView().calculateStateHash().SubCacheMerkleRoots;
-			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[3]; // { AccountState, Namespace, Mosaic, *Property* }
+			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[4]; // { Config, AccountState, Namespace, Mosaic, *Property* }
 		}
 
 		void AssertPropertyCount(const local::LocalNode& localNode, size_t numExpectedProperties) {

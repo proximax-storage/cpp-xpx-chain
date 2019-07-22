@@ -20,6 +20,7 @@
 
 #include "TransactionRegistryFactory.h"
 #include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/plugins/CatapultConfigTransactionPlugin.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
@@ -54,6 +55,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
 		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
+		registry.registerPlugin(plugins::CreateCatapultConfigTransactionPlugin());
 		return registry;
 	}
 }}}

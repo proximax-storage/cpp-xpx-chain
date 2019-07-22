@@ -8,6 +8,7 @@ catapult_executable(${TARGET_NAME})
 target_link_libraries(${TARGET_NAME}
 	${TARGET_NAME}.blockhashes
 	catapult.tools
+	catapult.plugins.config
 	catapult.plugins.mosaic
 	catapult.plugins.namespace
 	catapult.plugins.transfer

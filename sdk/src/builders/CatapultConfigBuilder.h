@@ -25,8 +25,17 @@ namespace catapult { namespace builders {
 		/// Sets the \a durationDelta of the contract.
 		void setApplyHeightDelta(const BlockDuration& applyHeightDelta);
 
+		/// Loads and sets the blockchain configuration from \a file.
+		void setBlockChainConfig(const std::string& file);
+
 		/// Sets the blockchain configuration to \a blockChainConfig.
 		void setBlockChainConfig(const RawBuffer& blockChainConfig);
+
+		/// Loads and sets the entity versions configuration from \a file.
+		void setSupportedVersionsConfig(const std::string& file);
+
+		/// Sets the supported the entity versions configuration to \a supportedVersionsConfig.
+		void setSupportedVersionsConfig(const RawBuffer& supportedVersionsConfig);
 
 	public:
 		/// Builds a new modify multisig account transaction.
@@ -42,5 +51,6 @@ namespace catapult { namespace builders {
 	private:
 		BlockDuration m_applyHeightDelta;
 		std::vector<uint8_t> m_blockChainConfig;
+		std::vector<uint8_t> m_supportedVersionsConfig;
 	};
 }}
