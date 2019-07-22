@@ -76,7 +76,7 @@ namespace catapult { namespace tools { namespace nemgen {
 				auto databaseCleanupMode = options["useTemporaryCacheDatabase"].as<bool>()
 						? CacheDatabaseCleanupMode::Purge
 						: CacheDatabaseCleanupMode::None;
-				auto pBlock = CreateNemesisBlock(nemesisConfig);
+				auto pBlock = CreateNemesisBlock(nemesisConfig, m_resourcesPath);
 				auto blockElement = CreateNemesisBlockElement(nemesisConfig, *pBlock);
 				auto executionHashesDescriptor = CalculateAndLogNemesisExecutionHashes(blockElement, pConfigHolder, databaseCleanupMode);
 				if (!options["no-summary"].as<bool>()) {

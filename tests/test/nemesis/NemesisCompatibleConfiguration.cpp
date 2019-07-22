@@ -55,6 +55,10 @@ namespace catapult { namespace test {
 
 			{ "maxChildNamespaces", "100" }
 		} } }));
+		config.Plugins.emplace(PLUGIN_NAME(config), utils::ConfigurationBag({ { "", {
+			{ "maxBlockChainConfigSize", "1MB" },
+			{ "maxSupportedEntityVersionsSize", "1MB" },
+		} } }));
 	}
 
 	namespace {
