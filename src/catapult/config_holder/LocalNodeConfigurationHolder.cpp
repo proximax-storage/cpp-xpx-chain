@@ -65,12 +65,10 @@ namespace catapult { namespace config {
 
 		auto configCache = m_pCache->sub<cache::CatapultConfigCache>().createView(m_pCache->height());
 		auto configHeight = configCache->FindConfigHeightAt(height);
+
 		if (m_catapultConfigs.count(configHeight)) {
 			return insertConfigAtHeight(m_catapultConfigs, height, m_catapultConfigs.at(configHeight));
 		}
-
-		auto iter = std::lower_bound(m_catapultConfigs.begin(), m_catapultConfigs.end(), configHeight,
-			[](const auto& pair, const auto& height) { return pair.first < height; });
 
 		auto entry = configCache->find(configHeight).get();
 
@@ -90,6 +88,7 @@ namespace catapult { namespace config {
 			supportedEntityVersions = LoadSupportedEntityVersions(input);
 		}
 
+		auto iter = m_catapultConfigs.begin();
 		auto config = CatapultConfiguration(
 			blockChainConfig,
 			iter->second.Node,
