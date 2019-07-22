@@ -119,6 +119,8 @@ namespace catapult { namespace cache {
 					auto iter = this->lower_bound(key);
 
 					if (iter != this->end() && *iter != key) {
+						if (iter == this->begin())
+							return this->end();
 						--iter;
 					}
 
