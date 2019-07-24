@@ -47,7 +47,7 @@ namespace catapult { namespace unbondedpruning {
 					for (const auto& transactionInfo : changeInfo.RevertedTransactionInfos) {
 						auto dependentHashes = FindDependentTransactionHashes(transactionInfo, *pNotificationPublisher);
 						for (const auto& hash : dependentHashes)
-							eventHandler({ hash, extensions::TransactionEvent::Dependency_Removed });
+							eventHandler({ hash, transactionInfo.AssociatedHeight, extensions::TransactionEvent::Dependency_Removed });
 					}
 				});
 			}

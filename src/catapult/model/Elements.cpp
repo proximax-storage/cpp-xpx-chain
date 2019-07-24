@@ -96,14 +96,15 @@ namespace catapult { namespace model {
 		for (const auto& transactionElement : pBlockElement->Transactions) {
 			// tie the lifetime of the transaction to the block element
 			auto pTransaction = std::shared_ptr<const Transaction>(&transactionElement.Transaction, [pBlockElement](const auto*) {});
-			transactionInfos.push_back(MakeTransactionInfo(pTransaction, transactionElement));
+			transactionInfos.push_back(MakeTransactionInfo(pTransaction, transactionElement, pBlockElement->Block.Height));
 		}
 	}
 
 	TransactionInfo MakeTransactionInfo(
 			const std::shared_ptr<const Transaction>& pTransaction,
-			const TransactionElement& transactionElement) {
-		TransactionInfo transactionInfo(pTransaction, transactionElement.EntityHash);
+			const TransactionElement& transactionElement,
+			const Height& height) {
+		TransactionInfo transactionInfo(pTransaction, transactionElement.EntityHash, height);
 		transactionInfo.MerkleComponentHash = transactionElement.MerkleComponentHash;
 		transactionInfo.OptionalExtractedAddresses = transactionElement.OptionalExtractedAddresses;
 		return transactionInfo;

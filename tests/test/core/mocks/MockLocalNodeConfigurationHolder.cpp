@@ -25,6 +25,14 @@ namespace catapult { namespace config {
 		return m_catapultConfigs.at(Height{0});
 	}
 
+	CatapultConfiguration& MockLocalNodeConfigurationHolder::Config() {
+		return m_catapultConfigs.at(Height{0});
+	}
+
+	CatapultConfiguration& MockLocalNodeConfigurationHolder::ConfigAtHeightOrDefault(const Height&) {
+		return m_catapultConfigs.at(Height{0});
+	}
+
 	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder() {
 		return std::make_shared<MockLocalNodeConfigurationHolder>();
 	}

@@ -22,8 +22,17 @@ namespace catapult { namespace config {
 		static boost::filesystem::path GetResourcesPath(int argc, const char** argv);
 		const CatapultConfiguration& LoadConfig(int argc, const char** argv, const std::string& extensionsHost);
 
+		/// Set \a config at \a height
 		void SetConfig(const Height& height, const CatapultConfiguration& config);
+
+		/// Get \a config at \a height
 		virtual CatapultConfiguration& Config(const Height& height);
+
+		/// Get latest available config
+		virtual CatapultConfiguration& Config();
+
+		/// Get config at \a height or latest available config
+		virtual CatapultConfiguration& ConfigAtHeightOrDefault(const Height& height);
 
 		void SetCache(cache::CatapultCache* pCache) {
 			m_pCache = pCache;

@@ -176,7 +176,7 @@ namespace catapult { namespace sync {
 				else
 					chain::TryCalculateDifficulty(testState().state().cache().sub<cache::BlockDifficultyCache>(),
 						state::BlockDifficultyInfo(height, timestamp, m_pLastBlock->Difficulty),
-						testState().state().config(Height{0}).BlockChain, m_pLastBlock->Difficulty);
+						testState().state().config().BlockChain, m_pLastBlock->Difficulty);
 				SignBlockHeader(signer, *m_pLastBlock);
 
 				auto blockElement = test::BlockToBlockElement(*m_pLastBlock);
@@ -216,7 +216,7 @@ namespace catapult { namespace sync {
 			previousBlockContext.BlockHeight = Height{1};
 			for (auto height = Height{1u}; height <= endHeight; height = height + Height{1u}) {
 				auto timestamp = Timestamp{height.unwrap() *
-					localContext.testState().state().config(Height{0}).BlockChain.BlockGenerationTargetTime.millis()};
+					localContext.testState().state().config().BlockChain.BlockGenerationTargetTime.millis()};
 				const auto& signer = height.unwrap() % 2 ?
 					Nemesis_Account_Key_Pair : Special_Account_Key_Pair;
 				test::ConstTransactions transactions{};
@@ -269,7 +269,7 @@ namespace catapult { namespace sync {
 				api::CreateLocalChainApi(
 					state.storage(),
 					[]() { return model::ChainScore{1000u}; }),
-				CreateChainSynchronizerConfiguration(state.config(Height{0})),
+				CreateChainSynchronizerConfiguration(state.config()),
 				state,
 				blockRangeConsumerWrapper);
 

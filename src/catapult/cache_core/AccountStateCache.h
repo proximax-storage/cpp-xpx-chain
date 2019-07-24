@@ -91,12 +91,12 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_pConfigHolder->Config(Height{0}).BlockChain.Network.Identifier;
+			return m_pConfigHolder->Config().BlockChain.Network.Identifier;
 		}
 
 		/// Gets the network importance grouping.
 		uint64_t importanceGrouping() const {
-			return m_pConfigHolder->Config(Height{0}).BlockChain.ImportanceGrouping;
+			return m_pConfigHolder->Config().BlockChain.ImportanceGrouping;
 		}
 
 	private:

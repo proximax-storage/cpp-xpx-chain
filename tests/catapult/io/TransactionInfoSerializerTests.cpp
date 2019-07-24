@@ -36,16 +36,20 @@ namespace catapult { namespace io {
 		void AssertCanReadTransactionInfo(uint64_t addressCount, const model::UnresolvedAddressSet& addresses) {
 			// Arrange:
 			auto entityHash = test::GenerateRandomByteArray<Hash256>();
+			uint64_t height = 123;
 			auto merkleComponentHash = test::GenerateRandomByteArray<Hash256>();
 			auto pTransaction = test::GenerateRandomTransactionWithSize(140);
 
-			std::vector<uint8_t> buffer(2 * Hash256_Size + sizeof(uint64_t) + addresses.size() * Address_Decoded_Size + 140);
+			std::vector<uint8_t> buffer(2 * Hash256_Size + 2 * sizeof(uint64_t) + addresses.size() * Address_Decoded_Size + 140);
 			auto offset = 0u;
 			std::memcpy(buffer.data() + offset, &entityHash, Hash256_Size);
 			offset += Hash256_Size;
 
 			std::memcpy(buffer.data() + offset, &merkleComponentHash, Hash256_Size);
 			offset += Hash256_Size;
+
+			std::memcpy(buffer.data() + offset, &height, sizeof(height));
+			offset += sizeof(height);
 
 			std::memcpy(buffer.data() + offset, &addressCount, sizeof(uint64_t));
 			offset += sizeof(uint64_t);
@@ -65,6 +69,7 @@ namespace catapult { namespace io {
 			// Assert:
 			EXPECT_EQ(entityHash, transactionInfo.EntityHash);
 			EXPECT_EQ(merkleComponentHash, transactionInfo.MerkleComponentHash);
+			EXPECT_EQ(Height(height), transactionInfo.AssociatedHeight);
 
 			if (std::numeric_limits<uint64_t>::max() == addressCount) {
 				EXPECT_FALSE(!!transactionInfo.OptionalExtractedAddresses);
@@ -103,7 +108,7 @@ namespace catapult { namespace io {
 
 	namespace {
 		model::TransactionInfo CreateTransactionInfoWithSize(uint32_t entitySize) {
-			auto transactionInfo = model::TransactionInfo(test::GenerateRandomTransactionWithSize(entitySize));
+			auto transactionInfo = model::TransactionInfo(test::GenerateRandomTransactionWithSize(entitySize), Height(123));
 			test::FillWithRandomData(transactionInfo.EntityHash);
 			test::FillWithRandomData(transactionInfo.MerkleComponentHash);
 			return transactionInfo;
@@ -123,7 +128,7 @@ namespace catapult { namespace io {
 			WriteTransactionInfo(outputStream, transactionInfo);
 
 			// Assert:
-			auto expectedSize = 2u * Hash256_Size + sizeof(uint64_t) + expectedAddressSize + 123;
+			auto expectedSize = 2u * Hash256_Size + 2 * sizeof(uint64_t) + expectedAddressSize + 123;
 			ASSERT_EQ(expectedSize, buffer.size());
 
 			auto offset = 0u;
@@ -132,6 +137,9 @@ namespace catapult { namespace io {
 
 			EXPECT_EQ(transactionInfo.MerkleComponentHash, reinterpret_cast<const Hash256&>(buffer[offset]));
 			offset += Hash256_Size;
+
+			ASSERT_EQ(transactionInfo.AssociatedHeight.unwrap(), reinterpret_cast<uint64_t&>(buffer[offset]));
+			offset += sizeof(uint64_t);
 
 			ASSERT_EQ(expectedAddressCount, reinterpret_cast<uint64_t&>(buffer[offset]));
 			offset += sizeof(uint64_t);

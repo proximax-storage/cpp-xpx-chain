@@ -45,7 +45,8 @@ namespace catapult { namespace cache {
 
 			static model::TransactionInfo ToTransactionInfo(const TransactionInfoType& transactionInfo) {
 				// the PtCache does not support merkle component hashes, so pass in a zeroed out merkle component hash
-				model::TransactionInfo transactionInfoWithMerkleHash(transactionInfo.pEntity, transactionInfo.EntityHash);
+				// partial transaction are not related to block, so height is zero
+				model::TransactionInfo transactionInfoWithMerkleHash(transactionInfo.pEntity, transactionInfo.EntityHash, Height());
 				transactionInfoWithMerkleHash.OptionalExtractedAddresses = transactionInfo.OptionalExtractedAddresses;
 				transactionInfoWithMerkleHash.MerkleComponentHash = Hash256();
 				return transactionInfoWithMerkleHash;

@@ -41,7 +41,7 @@ namespace catapult { namespace mongo {
 			mongocxx::instance::current();
 			MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr, MongoErrorPolicy::Mode::Strict);
 			auto pConfigHolder = config::CreateMockConfigurationHolder();
-			const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config(Height{0}).BlockChain).Network.Identifier = networkIdentifier;
+			const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).Network.Identifier = networkIdentifier;
 
 			MongoPluginManager manager(mongoContext, pConfigHolder);
 
@@ -64,7 +64,7 @@ namespace catapult { namespace mongo {
 		RunPluginManagerTest(static_cast<model::NetworkIdentifier>(17), [](const auto& manager, const auto& mongoContext) {
 			// Assert:
 			EXPECT_EQ(&mongoContext, &manager.mongoContext());
-			EXPECT_EQ(static_cast<model::NetworkIdentifier>(17), manager.configHolder()->Config(Height{0}).BlockChain.Network.Identifier);
+			EXPECT_EQ(static_cast<model::NetworkIdentifier>(17), manager.configHolder()->Config().BlockChain.Network.Identifier);
 		});
 	}
 

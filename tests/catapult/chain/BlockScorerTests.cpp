@@ -327,7 +327,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_LT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain));
+		EXPECT_LT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().BlockChain));
 		EXPECT_TRUE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -352,7 +352,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain, 1, 2);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().BlockChain, 1, 2);
 		EXPECT_LT(hit, target);
 		EXPECT_TRUE(isHit);
 
@@ -379,7 +379,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_EQ(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain));
+		EXPECT_EQ(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().BlockChain));
 		EXPECT_FALSE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -409,7 +409,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain, 1, 2);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().BlockChain, 1, 2);
 		EXPECT_EQ(hit, target);
 		EXPECT_FALSE(isHit);
 
@@ -431,7 +431,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_GT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain));
+		EXPECT_GT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().BlockChain));
 		EXPECT_FALSE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -456,7 +456,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config(Height{0}).BlockChain, 1, 2);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().BlockChain, 1, 2);
 		EXPECT_GT(hit, target);
 		EXPECT_FALSE(isHit);
 

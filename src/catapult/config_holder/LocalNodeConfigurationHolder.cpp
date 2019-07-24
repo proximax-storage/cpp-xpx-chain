@@ -15,7 +15,7 @@
 namespace catapult { namespace config {
 
 	namespace {
-		CatapultConfiguration& insertConfigAtHeight(std::map<Height, CatapultConfiguration>& configs, const Height& height, const CatapultConfiguration& config) {
+		CatapultConfiguration& insertConfigAtHeight(std::map<Height, CatapultConfiguration>& configs, const Height& height, CatapultConfiguration config) {
 			while (configs.size() > configs.begin()->second.BlockChain.MaxRollbackBlocks) {
 				configs.erase(configs.begin());
 			}
@@ -70,6 +70,9 @@ namespace catapult { namespace config {
 			return insertConfigAtHeight(m_catapultConfigs, height, m_catapultConfigs.at(configHeight));
 		}
 
+		if (configHeight.unwrap() == 0)
+			CATAPULT_THROW_INVALID_ARGUMENT_1("didn't find available config at height ", height);
+
 		auto entry = configCache->find(configHeight).get();
 
 		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
@@ -100,5 +103,15 @@ namespace catapult { namespace config {
 		);
 
 		return insertConfigAtHeight(m_catapultConfigs, height, config);
+	}
+
+	CatapultConfiguration& LocalNodeConfigurationHolder::Config() {
+		return Config(m_pCache != NULL ? m_pCache->height() : Height(0));
+	}
+
+	CatapultConfiguration& LocalNodeConfigurationHolder::ConfigAtHeightOrDefault(const Height& height) {
+		if (height.unwrap() == 0)
+			return Config();
+		return Config(height);
 	}
 }}

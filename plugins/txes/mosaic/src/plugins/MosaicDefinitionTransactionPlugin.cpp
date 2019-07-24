@@ -52,7 +52,7 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
-				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(associatedHeight).BlockChain;
+				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->ConfigAtHeightOrDefault(associatedHeight).BlockChain;
 				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
 				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
 				auto config = ToMosaicRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);

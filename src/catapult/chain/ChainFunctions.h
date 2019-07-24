@@ -30,7 +30,7 @@ namespace catapult {
 namespace catapult { namespace chain {
 
 	/// Indicates a transaction with the specified hash failed validation.
-	using FailedTransactionSink = consumer<const model::Transaction&, const Hash256&, validators::ValidationResult>;
+	using FailedTransactionSink = consumer<const model::Transaction&, const Height&, const Hash256&, validators::ValidationResult>;
 
 	/// Predicate for determining if a hash is known.
 	using KnownHashPredicate = predicate<Timestamp, const Hash256&>;

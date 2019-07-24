@@ -159,7 +159,7 @@ namespace catapult { namespace handlers {
 		void RunPullPingHandlerTest(uint32_t packetExtraSize, TAssert assertFunc) {
 			// Arrange:
 			auto serviceState = test::ServiceTestState();
-			auto& config = serviceState.state().pluginManager().configHolder()->Config(Height{0});
+			auto& config = serviceState.state().pluginManager().configHolder()->Config();
 			auto& nodeConfig = const_cast<config::NodeConfiguration&>(config.Node);
 			nodeConfig.Local.Host = "host";
 			nodeConfig.Local.FriendlyName = "alice";

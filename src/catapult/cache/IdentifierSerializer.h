@@ -42,5 +42,10 @@ namespace catapult { namespace cache {
 
 			return value;
 		}
+
+		/// Converts \a key to pruning boundary.
+		static uint64_t KeyToBoundary(const ValueType& key) {
+			return TDescriptor::KeyToBoundary(key);
+		}
 	};
 }}

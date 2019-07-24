@@ -438,7 +438,7 @@ namespace catapult { namespace partialtransaction {
 		auto ExtractTransactionPayload(const model::TransactionRange& range) {
 			std::vector<model::TransactionInfo> transactionInfos;
 			for (const auto& transaction : range)
-				transactionInfos.push_back(model::TransactionInfo(std::shared_ptr<const model::Transaction>(&transaction, [](auto) {})));
+				transactionInfos.push_back(model::TransactionInfo(std::shared_ptr<const model::Transaction>(&transaction, [](auto) {}), Height()));
 
 			return ionet::CreateBroadcastPayload(transactionInfos, ionet::PacketType::Push_Partial_Transactions);
 		}

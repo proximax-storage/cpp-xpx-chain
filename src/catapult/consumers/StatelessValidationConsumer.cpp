@@ -81,7 +81,7 @@ namespace catapult { namespace consumers {
 		return MakeConsumer(pValidator, [pValidationPolicy, failedTransactionSink](auto& elements, auto dispatch) {
 			model::WeakEntityInfos entityInfos;
 			std::vector<size_t> entityInfoElementIndexes;
-			ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes);
+			ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes, Height());
 
 			auto results = dispatch(AsAllFunction(*pValidationPolicy), entityInfos);
 			auto numSkippedElements = 0u;
@@ -101,7 +101,7 @@ namespace catapult { namespace consumers {
 				// only forward failure (not neutral) results
 				if (IsValidationResultFailure(result)) {
 					element.ResultSeverity = disruptor::ConsumerResultSeverity::Failure;
-					failedTransactionSink(element.Transaction, element.EntityHash, result);
+					failedTransactionSink(element.Transaction, Height(), element.EntityHash, result);
 				}
 			}
 

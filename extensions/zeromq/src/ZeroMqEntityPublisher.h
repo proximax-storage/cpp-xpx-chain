@@ -90,13 +90,13 @@ namespace catapult { namespace zeromq {
 		void publishTransaction(TransactionMarker topicMarker, const model::TransactionElement& transactionElement, Height height);
 
 		/// Publishes a transaction using \a topicMarker, \a transactionInfo and \a height.
-		void publishTransaction(TransactionMarker topicMarker, const model::TransactionInfo& transactionInfo, Height height);
+		void publishTransaction(TransactionMarker topicMarker, const model::TransactionInfo& transactionInfo);
 
 		/// Publishes a transaction hash using \a topicMarker and \a transactionInfo.
 		void publishTransactionHash(TransactionMarker topicMarker, const model::TransactionInfo& transactionInfo);
 
 		/// Publishes a transaction status composed of \a transaction, \a hash and \a status.
-		void publishTransactionStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status);
+		void publishTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status);
 
 		/// Publishes a cosignature composed of transaction info (\a parentTransactionInfo), \a signer and \a signature.
 		void publishCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const Signature& signature);
@@ -105,7 +105,7 @@ namespace catapult { namespace zeromq {
 		struct WeakTransactionInfo;
 		using MessagePayloadBuilder = consumer<zmq::multipart_t&>;
 
-		void publishTransaction(TransactionMarker topicMarker, const WeakTransactionInfo& transactionInfo, Height height);
+		void publishTransaction(TransactionMarker topicMarker, const WeakTransactionInfo& transactionInfo);
 		void publish(
 				const std::string& topicName,
 				TransactionMarker topicMarker,

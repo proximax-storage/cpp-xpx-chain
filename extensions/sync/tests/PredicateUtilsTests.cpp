@@ -149,7 +149,7 @@ namespace catapult { namespace sync {
 			EXPECT_EQ(cacheSize, utCacheModifier.size());
 
 			// Act:
-			auto isThrottled = CreateUtUpdaterThrottle(serviceState.state())(model::TransactionInfo(pTransaction), throttleContext);
+			auto isThrottled = CreateUtUpdaterThrottle(serviceState.state())(model::TransactionInfo(pTransaction, serviceState.state().cache().height()), throttleContext);
 
 			// Assert:
 			EXPECT_EQ(expectedIsThrottled, isThrottled)

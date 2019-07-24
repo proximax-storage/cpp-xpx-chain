@@ -37,15 +37,19 @@ namespace catapult { namespace extensions {
 			, m_pMultiServicePool(std::make_unique<thread::MultiServicePool>(
 					servicePoolName,
 					thread::MultiServicePool::DefaultPoolConcurrency(),
-					m_pConfigHolder->Config(Height{0}).Node.ShouldUseSingleThreadPool
+					m_pConfigHolder->Config().Node.ShouldUseSingleThreadPool
 							? thread::MultiServicePool::IsolatedPoolMode::Disabled
 							: thread::MultiServicePool::IsolatedPoolMode::Enabled))
-			, m_subscriptionManager(m_pConfigHolder->Config(Height{0}))
-			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config(Height{0})))
+			, m_subscriptionManager(m_pConfigHolder->Config())
+			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config()))
 	{}
 
 	const config::CatapultConfiguration& ProcessBootstrapper::config(const Height& height) const {
 		return m_pConfigHolder->Config(height);
+	}
+
+	const config::CatapultConfiguration& ProcessBootstrapper::config() const {
+		return m_pConfigHolder->Config();
 	}
 
 	const std::shared_ptr<config::LocalNodeConfigurationHolder>& ProcessBootstrapper::configHolder() const {
@@ -106,8 +110,8 @@ namespace catapult { namespace extensions {
 	}
 
 	void ProcessBootstrapper::loadExtensions() {
-		for (const auto& extension : config(Height{0}).Extensions.Names) {
-			m_extensionModules.emplace_back(config(Height{0}).User.PluginsDirectory, extension);
+		for (const auto& extension : config().Extensions.Names) {
+			m_extensionModules.emplace_back(config().User.PluginsDirectory, extension);
 
 			CATAPULT_LOG(info) << "registering dynamic extension " << extension;
 			LoadExtension(m_extensionModules.back(), *this);

@@ -45,7 +45,7 @@ namespace catapult { namespace cache {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(19);
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config(Height{0}).BlockChain).Network.Identifier = networkIdentifier;
+		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).Network.Identifier = networkIdentifier;
 		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:
@@ -56,7 +56,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, ImportanceGroupingIsExposed) {
 		// Arrange:
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config(Height{0}).BlockChain).ImportanceGrouping = 123;
+		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).ImportanceGrouping = 123;
 		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:
@@ -67,7 +67,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, HarvestingMosaicIdIsExposed) {
 		// Arrange:
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config(Height{0}).BlockChain).HarvestingMosaicId = MosaicId(11229988);
+		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).HarvestingMosaicId = MosaicId(11229988);
 		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:

@@ -78,13 +78,18 @@ namespace catapult { namespace extensions {
 				, m_counters(counters)
 				, m_pluginManager(pluginManager)
 				, m_pool(pool)
-				, m_packetHandlers(m_pluginManager.configHolder()->Config(Height{0}).Node.MaxPacketDataSize.bytes32())
+				, m_packetHandlers(m_pluginManager.configHolder()->Config().Node.MaxPacketDataSize.bytes32())
 		{}
 
 	public:
 		/// Gets the config.
 		const auto& config(const Height& height) const {
 			return m_pluginManager.configHolder()->Config(height);
+		}
+
+		/// Gets the config.
+		const auto& config() const {
+			return m_pluginManager.configHolder()->Config();
 		}
 
 		/// Gets the nodes.

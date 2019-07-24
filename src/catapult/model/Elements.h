@@ -95,8 +95,9 @@ namespace catapult { namespace model {
 	/// such that each transaction will extend the lifetime of the owning block element.
 	void ExtractTransactionInfos(std::vector<TransactionInfo>& transactionInfos, const std::shared_ptr<const BlockElement>& pBlockElement);
 
-	/// Makes a transaction info by merging \a pTransaction and \a transactionElement.
+	/// Makes a transaction info by merging \a pTransaction and \a transactionElement at \a height.
 	TransactionInfo MakeTransactionInfo(
 			const std::shared_ptr<const Transaction>& pTransaction,
-			const TransactionElement& transactionElement);
+			const TransactionElement& transactionElement,
+			const Height& height);
 }}

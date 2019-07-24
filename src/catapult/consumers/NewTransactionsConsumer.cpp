@@ -53,7 +53,8 @@ namespace catapult { namespace consumers {
 				auto numFailures = 0u;
 				for (const auto& element : input.transactions()) {
 					if (disruptor::ConsumerResultSeverity::Success == element.ResultSeverity) {
-						transactionInfos.emplace_back(model::MakeTransactionInfo(transactions[i], element));
+						// it is free transaction and they is not associated with block, so the height is zero
+						transactionInfos.emplace_back(model::MakeTransactionInfo(transactions[i], element, Height()));
 						++numSuccesses;
 					} else if (disruptor::ConsumerResultSeverity::Failure == element.ResultSeverity) {
 						++numFailures;

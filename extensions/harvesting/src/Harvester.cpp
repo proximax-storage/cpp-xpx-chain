@@ -91,8 +91,8 @@ namespace catapult { namespace harvesting {
 		hitContext.ElapsedTime = context.BlockTime;
 		hitContext.Difficulty = context.Difficulty;
 		hitContext.Height = context.Height;
-		hitContext.FeeInterest = m_pConfigHolder->Config(Height{0}).Node.FeeInterest;
-		hitContext.FeeInterestDenominator = m_pConfigHolder->Config(Height{0}).Node.FeeInterestDenominator;
+		hitContext.FeeInterest = m_pConfigHolder->Config().Node.FeeInterest;
+		hitContext.FeeInterestDenominator = m_pConfigHolder->Config().Node.FeeInterestDenominator;
 
 		const auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
 		chain::BlockHitPredicate hitPredicate(m_pConfigHolder, [&accountStateCache](const auto& key, auto height) {

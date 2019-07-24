@@ -73,7 +73,7 @@ namespace catapult { namespace sync {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				auto connectionSettings = extensions::GetConnectionSettings(state.config(Height{0}));
+				auto connectionSettings = extensions::GetConnectionSettings(state.config());
 				auto pServiceGroup = state.pool().pushServiceGroup(Service_Name);
 				auto pWriters = pServiceGroup->pushService(net::CreatePacketWriters, locator.keyPair(), connectionSettings, state);
 

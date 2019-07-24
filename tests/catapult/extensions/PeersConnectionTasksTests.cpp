@@ -52,10 +52,10 @@ namespace catapult { namespace extensions {
 		}
 
 		auto ConfigureServiceState(test::ServiceTestState& serviceState) {
-			auto &blockChainConfig = const_cast<model::BlockChainConfiguration &>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).BlockChain);
+			auto &blockChainConfig = const_cast<model::BlockChainConfiguration &>(serviceState.state().pluginManager().configHolder()->Config().BlockChain);
 			blockChainConfig.ImportanceGrouping = 1;
 			blockChainConfig.TotalChainImportance = Importance(100);
-			auto &nodeConfig = const_cast<config::NodeConfiguration &>(serviceState.state().pluginManager().configHolder()->Config(Height{0}).Node);
+			auto &nodeConfig = const_cast<config::NodeConfiguration &>(serviceState.state().pluginManager().configHolder()->Config().Node);
 			nodeConfig.OutgoingConnections = CreateConfiguration();
 		}
 	}
