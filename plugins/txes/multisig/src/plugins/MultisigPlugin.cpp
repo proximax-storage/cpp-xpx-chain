@@ -71,7 +71,7 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateModifyMultisigCosignersValidator())
-				.add(validators::CreatePluginConfigValidator());
+				.add(validators::CreateMultisigPluginConfigValidator());
 		});
 
 		const auto& pConfigHolder = manager.configHolder();

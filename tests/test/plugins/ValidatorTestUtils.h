@@ -19,9 +19,10 @@
 **/
 
 #pragma once
-#include "catapult/cache/CatapultCache.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/validators/NotificationValidator.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 
 namespace catapult { namespace test {
@@ -83,4 +84,43 @@ namespace catapult { namespace test {
 		auto pValidator = Create##NAME##Validator(__VA_ARGS__); \
 		EXPECT_EQ(#NAME "Validator", pValidator->name()); \
 	}
+
+	// region plugin config validator tests
+
+	namespace {
+		template<typename TTraits, VersionType version>
+		void AssertPluginConfig(const std::string& pluginName, const utils::ConfigurationBag& bag, validators::ValidationResult expectedResult) {
+			// Arrange:
+			auto pValidator = TTraits::CreatePluginConfigValidator();
+			model::PluginConfigNotification<version> notification(pluginName, bag);
+
+			// Act:
+			auto result = ValidateNotification(*pValidator, notification);
+
+			// Assert:
+			EXPECT_EQ(expectedResult, result);
+		}
+
+	}
+
+	/// Asserts success on valid plugin config.
+	template<typename TTraits, VersionType version>
+	void AssertValidPluginConfig(const std::string& pluginName, validators::ValidationResult expectedResult) {
+		AssertPluginConfig<TTraits, version>(pluginName, TTraits::GetValidConfigBag(), expectedResult);
+	}
+
+	/// Asserts failure on invalid plugin config.
+	template<typename TTraits, VersionType version>
+	void AssertInvalidPluginConfig(const std::string& pluginName, validators::ValidationResult expectedResult) {
+		AssertPluginConfig<TTraits, version>(pluginName, TTraits::GetInvalidConfigBag(), expectedResult);
+	}
+
+	// endregion
+
+#define MAKE_PLUGIN_CONFIG_VALIDATOR_TEST(TEST_CLASS, TEST_TRAITS, VERSION, PLUGIN_SUFFIX, TEST_NAME, EXPECTED_RESULT) \
+	TEST(TEST_CLASS, TEST_NAME) { test::Assert##TEST_NAME<TEST_TRAITS, VERSION>("catapult.plugins." #PLUGIN_SUFFIX, EXPECTED_RESULT); }
+
+#define DEFINE_PLUGIN_CONFIG_VALIDATOR_TESTS(TEST_CLASS, TEST_TRAITS, VERSION, PLUGIN_SUFFIX, CONFIG_NAME) \
+	MAKE_PLUGIN_CONFIG_VALIDATOR_TEST(TEST_CLASS, TEST_TRAITS, VERSION, PLUGIN_SUFFIX, ValidPluginConfig, validators::ValidationResult::Success) \
+	MAKE_PLUGIN_CONFIG_VALIDATOR_TEST(TEST_CLASS, TEST_TRAITS, VERSION, PLUGIN_SUFFIX, InvalidPluginConfig, Failure_##CONFIG_NAME##_Plugin_Config_Malformed)
 }}

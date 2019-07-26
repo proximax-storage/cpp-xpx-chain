@@ -48,7 +48,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "TransferMosaicsValidator", "PluginConfigValidator" };
+				return { "TransferMosaicsValidator", "TransferPluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
