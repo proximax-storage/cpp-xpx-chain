@@ -53,6 +53,9 @@ namespace catapult { namespace extensions {
 		/// Gets the configuration.
 		const config::CatapultConfiguration& config(const Height& height) const;
 
+		/// Gets the latest available configuration.
+		const config::CatapultConfiguration& config() const;
+
 		/// Gets the catapult configuration holder.
 		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
 

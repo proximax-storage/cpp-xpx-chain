@@ -69,7 +69,7 @@ namespace catapult { namespace harvesting {
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			test::CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config(Height{0}).BlockChain, subCaches);
+			test::CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config().BlockChain, subCaches);
 			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -148,7 +148,7 @@ namespace catapult { namespace harvesting {
 					pTransaction->Deadline = deadline;
 
 					auto transactionHash = model::CalculateHash(*pTransaction, test::GetNemesisGenerationHash());
-					model::TransactionInfo transactionInfo(std::move(pTransaction), transactionHash);
+					model::TransactionInfo transactionInfo(std::move(pTransaction), transactionHash, Height());
 					m_transactionsCache.modifier().add(std::move(transactionInfo));
 				}
 
@@ -171,7 +171,7 @@ namespace catapult { namespace harvesting {
 						m_pPluginManager->createObserver(),
 						m_pPluginManager->createNotificationPublisher());
 				auto observerContext = observers::ObserverContext(observerState, Height(1), notifyMode, resolverContext);
-				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height{0}), observerContext);
+				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height(1)), observerContext);
 				m_cache.commit(Height(1));
 			}
 
@@ -207,7 +207,7 @@ namespace catapult { namespace harvesting {
 					auto utCacheView = context.transactionsCache().view();
 					auto pTransaction = utCacheView.unknownTransactions(BlockFeeMultiplier(0), utils::ShortHashesSet(), 1, 1)[0];
 					auto transactionHash = model::CalculateHash(*pTransaction, test::GetNemesisGenerationHash());
-					nextTransactionInfo = model::TransactionInfo(std::move(pTransaction), transactionHash);
+					nextTransactionInfo = model::TransactionInfo(std::move(pTransaction), transactionHash, Height());
 				}
 
 				// 2. simulate application

@@ -36,15 +36,19 @@ namespace catapult { namespace extensions {
 	/// Data associated with a transaction event.
 	struct TransactionEventData {
 	public:
-		/// Creates transaction event data around \a transactionHash and \a event.
-		TransactionEventData(const Hash256& transactionHash, TransactionEvent event)
+		/// Creates transaction event data around \a transactionHash, \a height and \a event.
+		TransactionEventData(const Hash256& transactionHash, const Height& height, TransactionEvent event)
 				: TransactionHash(transactionHash)
+				, AssociatedHeight(height)
 				, Event(event)
 		{}
 
 	public:
 		/// Transaction hash.
 		const Hash256& TransactionHash;
+
+		/// Associated with transaction height.
+		const Height& AssociatedHeight;
 
 		/// Transaction event.
 		TransactionEvent Event;

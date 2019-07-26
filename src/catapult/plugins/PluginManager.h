@@ -92,6 +92,9 @@ namespace catapult { namespace plugins {
 		/// Gets the block chain configuration at \a height.
 		const model::BlockChainConfiguration& config(const Height& height) const;
 
+		/// Gets the latest available block chain configuration.
+		const model::BlockChainConfiguration& config() const;
+
 		/// Gets the catapult configuration holder.
 		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
 

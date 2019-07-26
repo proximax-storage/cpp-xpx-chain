@@ -32,8 +32,8 @@ namespace catapult { namespace subscribers {
 		virtual ~TransactionStatusSubscriber() = default;
 
 	public:
-		/// Indicates \a transaction with \a hash completed with \a status.
-		virtual void notifyStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) = 0;
+		/// Indicates \a transaction with \a hash completed with \a status at \a height.
+		virtual void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) = 0;
 
 		/// Flushes all queued data.
 		virtual void flush() = 0;

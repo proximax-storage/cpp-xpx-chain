@@ -48,7 +48,7 @@ namespace catapult { namespace nodediscovery {
 
 		thread::Task CreatePeersTask(extensions::ServiceState& state, const handlers::NodesConsumer& nodesConsumer) {
 			BatchPeersRequestor requestor(state.packetIoPickers(), nodesConsumer);
-			return thread::CreateNamedTask("node discovery peers task", [&config = state.config(Height{0}), &nodes = state.nodes(), requestor]() {
+			return thread::CreateNamedTask("node discovery peers task", [config = state.config(), &nodes = state.nodes(), requestor]() {
 				return requestor.findPeersOfPeers(config.Node.SyncTimeout).then([&nodes](auto&& future) {
 					auto results = future.get();
 					for (const auto& result : results)

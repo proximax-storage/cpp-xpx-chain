@@ -137,7 +137,11 @@ namespace catapult { namespace model {
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionDeadlineNotification<1>(transaction.Deadline, attributes.MaxLifetime));
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
-				sub.notify(BalanceDebitNotification<1>(transaction.Signer, model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->Config(height).BlockChain), fee));
+				sub.notify(BalanceDebitNotification<1>(
+					transaction.Signer,
+					model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->ConfigAtHeightOrLatest(height).BlockChain),
+					fee)
+				);
 
 				// raise a signature notification
 				sub.notify(SignatureNotification<1>(

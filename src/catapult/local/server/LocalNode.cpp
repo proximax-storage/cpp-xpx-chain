@@ -68,13 +68,13 @@ namespace catapult { namespace local {
 			DefaultLocalNode(std::unique_ptr<extensions::ProcessBootstrapper>&& pBootstrapper, const crypto::KeyPair& keyPair)
 					: m_pBootstrapper(std::move(pBootstrapper))
 					, m_serviceLocator(keyPair)
-					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_pBootstrapper->config(Height{0}).User.DataDirectory))
-					, m_nodes(m_pBootstrapper->config(Height{0}).Node.MaxTrackedNodes, m_pBootstrapper->extensionManager().networkTimeSupplier())
+					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_pBootstrapper->config().User.DataDirectory))
+					, m_nodes(m_pBootstrapper->config().Node.MaxTrackedNodes, m_pBootstrapper->extensionManager().networkTimeSupplier())
 					, m_cacheHolder(m_pBootstrapper->cacheHolder()) // note that sub caches are added in boot
 					, m_storage(
 							m_pBootstrapper->subscriptionManager().createBlockStorage(m_pBlockChangeSubscriber),
 							CreateStagingBlockStorage(m_dataDirectory))
-					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(extensions::GetUtCacheOptions(m_pBootstrapper->config(Height{0}).Node)))
+					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(extensions::GetUtCacheOptions(m_pBootstrapper->config().Node)))
 					, m_pTransactionStatusSubscriber(m_pBootstrapper->subscriptionManager().createTransactionStatusSubscriber())
 					, m_pStateChangeSubscriber(CreateStateChangeSubscriber(
 							m_pBootstrapper->subscriptionManager(),

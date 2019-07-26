@@ -94,7 +94,7 @@ namespace catapult { namespace model {
 			MockNotificationPublisher notificationPublisher(mode);
 
 			// Act:
-			auto addresses = ExtractAddresses(*pTransaction, notificationPublisher, model::ExtractorContext());
+			auto addresses = ExtractAddresses(*pTransaction, Height(), notificationPublisher, model::ExtractorContext());
 
 			// Assert:
 			EXPECT_EQ(2u, addresses.size());
@@ -122,7 +122,7 @@ namespace catapult { namespace model {
 		MockNotificationPublisher notificationPublisher(MockNotificationPublisher::Mode::Other);
 
 		// Act:
-		auto addresses = ExtractAddresses(*pTransaction, notificationPublisher, model::ExtractorContext());
+		auto addresses = ExtractAddresses(*pTransaction, Height(), notificationPublisher, model::ExtractorContext());
 
 		// Assert:
 		EXPECT_TRUE(addresses.empty());

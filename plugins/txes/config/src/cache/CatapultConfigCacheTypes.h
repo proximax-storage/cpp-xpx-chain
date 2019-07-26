@@ -64,11 +64,22 @@ namespace catapult { namespace cache {
 		struct HeightTypesDescriptor {
 		public:
 			using ValueType = Height;
+			using KeyType = Height;
 			using Serializer = IdentifierSerializer<HeightTypesDescriptor>;
+
+			// cache types
+			using CacheType = CatapultConfigCache;
+			using CacheDeltaType = CatapultConfigCacheDelta;
+			using CacheViewType = CatapultConfigCacheView;
 
 		public:
 			static auto GetKeyFromValue(const ValueType& height) {
 				return height;
+			}
+
+			/// Converts \a height to pruning boundary.
+			static uint64_t KeyToBoundary(const ValueType& height) {
+				return height.unwrap();
 			}
 		};
 

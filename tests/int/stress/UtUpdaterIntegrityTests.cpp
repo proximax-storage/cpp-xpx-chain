@@ -70,7 +70,7 @@ namespace catapult { namespace chain {
 							CreateConfiguration(),
 							extensions::CreateExecutionConfiguration(*m_pPluginManager),
 							[]() { return Default_Time; },
-							[](const auto&, const auto&, auto) {},
+							[](const auto&, const auto&, const auto&, auto) {},
 							[](const auto&, const auto&) { return false; })
 			{}
 
@@ -121,7 +121,7 @@ namespace catapult { namespace chain {
 				auto pTransaction = test::CreateTransferTransaction(senderKeyPair, recipient, Amount(1));
 				pTransaction->MaxFee = Amount(0);
 				pTransaction->Deadline = Default_Time + Timestamp(1);
-				model::TransactionInfo transactionInfo(std::move(pTransaction), test::GenerateRandomByteArray<Hash256>());
+				model::TransactionInfo transactionInfo(std::move(pTransaction), test::GenerateRandomByteArray<Hash256>(), Height());
 
 				std::vector<model::TransactionInfo> transactionInfos;
 				transactionInfos.emplace_back(std::move(transactionInfo));

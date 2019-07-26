@@ -35,9 +35,9 @@ namespace catapult { namespace extensions {
 	TEST(TEST_CLASS, CanCreateBootstrapper) {
 		// Arrange:
 		auto pConfigHolder = config::CreateMockConfigurationHolder(test::CreateUninitializedCatapultConfiguration());
-		const_cast<uint32_t&>(pConfigHolder->Config(Height{0}).BlockChain.BlockPruneInterval) = 15;
-		const_cast<bool&>(pConfigHolder->Config(Height{0}).Node.ShouldUseCacheDatabaseStorage) = true;
-		const_cast<std::string&>(pConfigHolder->Config(Height{0}).User.DataDirectory) = "base_data_dir";
+		const_cast<uint32_t&>(pConfigHolder->Config().BlockChain.BlockPruneInterval) = 15;
+		const_cast<bool&>(pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage) = true;
+		const_cast<std::string&>(pConfigHolder->Config().User.DataDirectory) = "base_data_dir";
 
 		// Act:
 		ProcessBootstrapper bootstrapper(pConfigHolder, "resources path", ProcessDisposition::Recovery, "bootstrapper");

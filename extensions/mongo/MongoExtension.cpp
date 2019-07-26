@@ -98,7 +98,7 @@ namespace catapult { namespace mongo {
 					std::shared_ptr<thread::IoThreadPool>(pBulkWriterPool.get(), [](const auto*) {}));
 
 			// create transaction registry
-			const auto& config = bootstrapper.config(Height{0});
+			const auto& config = bootstrapper.config();
 			auto mongoErrorPolicyMode = extensions::ProcessDisposition::Recovery == bootstrapper.disposition()
 					? MongoErrorPolicy::Mode::Idempotent
 					: MongoErrorPolicy::Mode::Strict;

@@ -122,6 +122,10 @@ namespace catapult { namespace cache {
 						if (iter == this->begin())
 							return this->end();
 						--iter;
+					} else if (iter == this->end()) {
+						if (!this->empty()) {
+							--iter;
+						}
 					}
 
 					return iter;

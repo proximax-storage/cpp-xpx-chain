@@ -41,14 +41,14 @@ namespace catapult { namespace local {
 				for (const auto& pluginName : m_bootstrapper.extensionManager().systemPluginNames())
 					loadOne(pluginName);
 
-				for (const auto& pair : m_bootstrapper.pluginManager().config(Height{0}).Plugins)
+				for (const auto& pair : m_bootstrapper.pluginManager().config().Plugins)
 					loadOne(pair.first);
 			}
 
 		private:
 			void loadOne(const std::string& pluginName) {
 				auto& pluginManager = m_bootstrapper.pluginManager();
-				LoadPluginByName(pluginManager, m_pluginModules, pluginManager.configHolder()->Config(Height{0}).User.PluginsDirectory, pluginName);
+				LoadPluginByName(pluginManager, m_pluginModules, pluginManager.configHolder()->Config().User.PluginsDirectory, pluginName);
 			}
 
 		private:

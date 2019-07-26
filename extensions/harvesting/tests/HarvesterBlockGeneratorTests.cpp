@@ -57,7 +57,7 @@ namespace catapult { namespace harvesting {
 		public:
 			explicit TestContext(model::TransactionSelectionStrategy strategy)
 					: m_pConfigHolder(CreateConfigHolder())
-					, m_catapultCache(test::CreateEmptyCatapultCache(m_pConfigHolder->Config(Height{0}).BlockChain, CreateCacheConfiguration(m_dbDirGuard.name())))
+					, m_catapultCache(test::CreateEmptyCatapultCache(m_pConfigHolder->Config().BlockChain, CreateCacheConfiguration(m_dbDirGuard.name())))
 					, m_utFacadeFactory(m_catapultCache, m_pConfigHolder, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(0))
 					, m_generator(CreateHarvesterBlockGenerator(strategy, m_utFacadeFactory, *m_pUtCache)) {
@@ -95,7 +95,7 @@ namespace catapult { namespace harvesting {
 				for (auto i = 0u; i < transactionSignerBalances.size(); ++i) {
 					auto balance = transactionSignerBalances[i];
 					const auto& signer = m_transactionInfos[i].pEntity->Signer;
-					accountStateCacheDelta.find(signer).get().Balances.credit(m_pConfigHolder->Config(Height{0}).BlockChain.CurrencyMosaicId, balance);
+					accountStateCacheDelta.find(signer).get().Balances.credit(m_pConfigHolder->Config().BlockChain.CurrencyMosaicId, balance);
 				}
 
 				return pCacheDelta->calculateStateHash(Cache_Height).StateHash;

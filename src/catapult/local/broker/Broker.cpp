@@ -39,7 +39,7 @@ namespace catapult { namespace local {
 		public:
 			explicit DefaultBroker(std::unique_ptr<extensions::ProcessBootstrapper>&& pBootstrapper)
 					: m_pBootstrapper(std::move(pBootstrapper))
-					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_pBootstrapper->config(Height{0}).User.DataDirectory))
+					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_pBootstrapper->config().User.DataDirectory))
 					, m_catapultCache({}) // note that sub caches are added in boot
 					, m_pBlockChangeSubscriber(m_pBootstrapper->subscriptionManager().createBlockChangeSubscriber())
 					, m_pUtChangeSubscriber(m_pBootstrapper->subscriptionManager().createUtChangeSubscriber())

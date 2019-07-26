@@ -55,7 +55,7 @@ namespace catapult { namespace extensions {
 			: Nodes(state.nodes())
 			, ServiceId(serviceId)
 			, RequiredRole(requiredRole)
-			, Config(state.config(Height{0}).Node.OutgoingConnections)
+			, Config(state.config().Node.OutgoingConnections)
 			, ImportanceRetriever([&state](const auto& publicKey) {
 				auto cacheView = state.cache().createView();
 				const auto& accountStateCache = cacheView.sub<cache::AccountStateCache>();

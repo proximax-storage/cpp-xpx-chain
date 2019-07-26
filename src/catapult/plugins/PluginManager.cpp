@@ -28,13 +28,17 @@ namespace catapult { namespace plugins {
 			const StorageConfiguration& storageConfig)
 			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
-			, m_shouldEnableVerifiableState(config(Height{0}).ShouldEnableVerifiableState)
+			, m_shouldEnableVerifiableState(config().ShouldEnableVerifiableState)
 	{}
 
 	// region config
 
 	const model::BlockChainConfiguration& PluginManager::config(const Height& height) const {
 		return m_pConfigHolder->Config(height).BlockChain;
+	}
+
+	const model::BlockChainConfiguration& PluginManager::config() const {
+		return m_pConfigHolder->Config().BlockChain;
 	}
 
 	const std::shared_ptr<config::LocalNodeConfigurationHolder>& PluginManager::configHolder() const {
@@ -46,7 +50,7 @@ namespace catapult { namespace plugins {
 	}
 
 	const config::InflationConfiguration& PluginManager::inflationConfig() const {
-		return m_pConfigHolder->Config(Height{0}).Inflation;
+		return m_pConfigHolder->Config().Inflation;
 	}
 
 	cache::CacheConfiguration PluginManager::cacheConfig(const std::string& name) const {

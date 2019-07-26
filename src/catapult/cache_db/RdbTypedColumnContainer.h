@@ -126,6 +126,13 @@ namespace catapult { namespace cache {
 			return iter;
 		}
 
+		/// Finds the first element with <= \a key. Returns cend() if any <= \a key has not been found.
+		const_iterator findLowerOrEqual(const KeyType& key) const {
+			const_iterator iter;
+			TContainer::findLowerOrEqual(SerializeKey(key), iter.dbIterator());
+			return iter;
+		}
+
 		/// Prunes elements with keys smaller than \a key. Returns number of pruned elements.
 		size_t prune(const KeyType& key) {
 			return TContainer::prune(TDescriptor::Serializer::KeyToBoundary(key));

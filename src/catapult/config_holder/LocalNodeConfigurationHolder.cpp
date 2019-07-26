@@ -15,13 +15,16 @@
 namespace catapult { namespace config {
 
 	namespace {
-		CatapultConfiguration& insertConfigAtHeight(std::map<Height, CatapultConfiguration>& configs, const Height& height, const CatapultConfiguration& config) {
-			while (configs.size() > configs.begin()->second.BlockChain.MaxRollbackBlocks) {
+		CatapultConfiguration& insertConfigAtHeight(
+				std::map<Height, std::shared_ptr<CatapultConfiguration>>& configs,
+				const Height& height,
+				std::shared_ptr<CatapultConfiguration> config) {
+			while (!configs.empty() && configs.size() > configs.begin()->second->BlockChain.MaxRollbackBlocks) {
 				configs.erase(configs.begin());
 			}
 			configs.insert({ height, config });
 
-			return configs.at(height);
+			return *configs.at(height);
 		}
 	}
 
@@ -35,7 +38,7 @@ namespace catapult { namespace config {
 			ExtensionsConfiguration::Uninitialized(),
 			InflationConfiguration::Uninitialized(),
 			SupportedEntityVersions()};
-		insertConfigAtHeight(m_catapultConfigs, Height{0}, config);
+		insertConfigAtHeight(m_catapultConfigs, Height{0}, std::make_shared<CatapultConfiguration>(config));
 	}
 
 	boost::filesystem::path LocalNodeConfigurationHolder::GetResourcesPath(int argc, const char** argv) {
@@ -47,18 +50,18 @@ namespace catapult { namespace config {
 		std::cout << "loading resources from " << resourcesPath << std::endl;
 		SetConfig(Height{0}, config::CatapultConfiguration::LoadFromPath(resourcesPath, extensionsHost));
 
-		return m_catapultConfigs.at(Height{0});
+		return *m_catapultConfigs.at(Height{0});
 	}
 
 	void LocalNodeConfigurationHolder::SetConfig(const Height& height, const CatapultConfiguration& config) {
 		if (m_catapultConfigs.count(height))
 			m_catapultConfigs.erase(height);
-		insertConfigAtHeight(m_catapultConfigs, height, config);
+		insertConfigAtHeight(m_catapultConfigs, height, std::make_shared<CatapultConfiguration>(config));
 	}
 
 	CatapultConfiguration& LocalNodeConfigurationHolder::Config(const Height& height) {
 		if (m_catapultConfigs.count(height))
-			return m_catapultConfigs.at(height);
+			return *m_catapultConfigs.at(height);
 
 		if (!m_pCache)
 			CATAPULT_THROW_INVALID_ARGUMENT("cache pointer is not set");
@@ -69,6 +72,9 @@ namespace catapult { namespace config {
 		if (m_catapultConfigs.count(configHeight)) {
 			return insertConfigAtHeight(m_catapultConfigs, height, m_catapultConfigs.at(configHeight));
 		}
+
+		if (configHeight.unwrap() == 0)
+			CATAPULT_THROW_INVALID_ARGUMENT_1("didn't find available config at height ", height);
 
 		auto entry = configCache->find(configHeight).get();
 
@@ -91,14 +97,27 @@ namespace catapult { namespace config {
 		auto iter = m_catapultConfigs.begin();
 		auto config = CatapultConfiguration(
 			blockChainConfig,
-			iter->second.Node,
-			iter->second.Logging,
-			iter->second.User,
-			iter->second.Extensions,
-			iter->second.Inflation,
+			iter->second->Node,
+			iter->second->Logging,
+			iter->second->User,
+			iter->second->Extensions,
+			iter->second->Inflation,
 			supportedEntityVersions
 		);
 
-		return insertConfigAtHeight(m_catapultConfigs, height, config);
+		if (configHeight != height)
+			insertConfigAtHeight(m_catapultConfigs, configHeight, std::make_shared<CatapultConfiguration>(config));
+
+		return insertConfigAtHeight(m_catapultConfigs, height, std::make_shared<CatapultConfiguration>(config));
+	}
+
+	CatapultConfiguration& LocalNodeConfigurationHolder::Config() {
+		return Config(m_pCache != NULL ? m_pCache->height() : Height(0));
+	}
+
+	CatapultConfiguration& LocalNodeConfigurationHolder::ConfigAtHeightOrLatest(const Height& height) {
+		if (height == HEIGHT_OF_LATEST_CONFIG)
+			return Config();
+		return Config(height);
 	}
 }}

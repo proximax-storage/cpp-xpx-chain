@@ -9,6 +9,7 @@
 #include "CatapultConfigPlugin.h"
 #include "src/cache/CatapultConfigCache.h"
 #include "src/cache/CatapultConfigCacheStorage.h"
+#include "src/cache/CatapultConfigCacheSubCachePlugin.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/CatapultConfigTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -18,8 +19,7 @@ namespace catapult { namespace plugins {
 	void RegisterCatapultConfigSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateCatapultConfigTransactionPlugin());
 
-		manager.addCacheSupport<cache::CatapultConfigCacheStorage>(
-			std::make_unique<cache::CatapultConfigCache>(manager.cacheConfig(cache::CatapultConfigCache::Name)));
+		manager.addCacheSupport(std::make_unique<cache::CatapultConfigCacheSubCachePlugin>(manager.cacheConfig(cache::CatapultConfigCache::Name)));
 
 		using CacheHandlersCatapultConfig = CacheHandlers<cache::CatapultConfigCacheDescriptor>;
 		CacheHandlersCatapultConfig::Register<model::FacilityCode::CatapultConfig>(manager);

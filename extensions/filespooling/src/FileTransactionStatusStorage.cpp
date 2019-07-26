@@ -33,11 +33,12 @@ namespace catapult { namespace filespooling {
 			{}
 
 		public:
-			void notifyStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) override {
+			void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
 				// synchronize access because notifyStatus can be called concurrently
 				utils::SpinLockGuard guard(m_lock);
 
 				m_pOutputStream->write(hash);
+				io::Write64(*m_pOutputStream, height.unwrap());
 				io::Write32(*m_pOutputStream, status);
 				io::WriteEntity(*m_pOutputStream, transaction);
 			}

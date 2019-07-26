@@ -151,7 +151,7 @@ namespace catapult { namespace chain {
 
 				if (throttle(utInfo, transactionSource, applyState, readOnlyCache)) {
 					CATAPULT_LOG(warning) << "dropping transaction " << entityHash << " due to throttle";
-					m_failedTransactionSink(entity, entityHash, Failure_Chain_Unconfirmed_Cache_Too_Full);
+					m_failedTransactionSink(entity, effectiveHeight, entityHash, Failure_Chain_Unconfirmed_Cache_Too_Full);
 					continue;
 				}
 
@@ -171,7 +171,7 @@ namespace catapult { namespace chain {
 
 					// only forward failure (not neutral) results
 					if (IsValidationResultFailure(sub.result()))
-						m_failedTransactionSink(entity, entityHash, sub.result());
+						m_failedTransactionSink(entity, effectiveHeight, entityHash, sub.result());
 
 					sub.undo();
 					applyState.Modifier.remove(entityHash);

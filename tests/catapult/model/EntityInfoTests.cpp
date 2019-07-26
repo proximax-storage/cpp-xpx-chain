@@ -143,67 +143,82 @@ namespace catapult { namespace model {
 
 	// region transaction
 
-	namespace {
-		struct DetachedTransactionInfoTraits {
-			using TransactionInfoType = DetachedTransactionInfo;
-
-			static void AssertEmpty(const TransactionInfoType&) {
-				// no additional fields to check
-			}
-		};
-
-		struct TransactionInfoTraits {
-			using TransactionInfoType = TransactionInfo;
-
-			static void AssertEmpty(const TransactionInfoType& transactionInfo) {
-				// Assert: check merkle component hash
-				EXPECT_EQ(Hash256(), transactionInfo.MerkleComponentHash);
-			}
-		};
-	}
-
-#define TRANSACTION_INFO_TEST(TEST_NAME) \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Detached) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<DetachedTransactionInfoTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<TransactionInfoTraits>(); } \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
-
-	TRANSACTION_INFO_TEST(CanCreateDefaultTransactionInfo) {
+	TEST(TEST_CLASS, CanCreateDefaultTransactionInfo_Detached) {
 		// Act:
-		typename TTraits::TransactionInfoType transactionInfo;
+		DetachedTransactionInfo transactionInfo;
 
 		// Assert: notice that hash(es) are not zero-initialized by default constructor
 		EXPECT_FALSE(!!transactionInfo.pEntity);
 		EXPECT_FALSE(!!transactionInfo.OptionalExtractedAddresses);
 	}
 
-	TRANSACTION_INFO_TEST(CanCreateTransactionInfoWithoutHash) {
+	TEST(TEST_CLASS, CanCreateTransactionInfoWithoutHash_Detached) {
 		// Arrange:
 		auto pTransaction = utils::UniqueToShared(test::GenerateRandomTransaction());
 
 		// Act:
-		typename TTraits::TransactionInfoType transactionInfo(pTransaction);
+		DetachedTransactionInfo transactionInfo(pTransaction);
 
 		// Assert:
 		EXPECT_EQ(pTransaction.get(), transactionInfo.pEntity.get());
 		EXPECT_EQ(Hash256(), transactionInfo.EntityHash);
 		EXPECT_FALSE(!!transactionInfo.OptionalExtractedAddresses);
-		TTraits::AssertEmpty(transactionInfo);
 	}
 
-	TRANSACTION_INFO_TEST(CanCreateTransactionInfoWithHash) {
+	TEST(TEST_CLASS, CanCreateTransactionInfoWithHash_Detached) {
 		// Arrange:
 		auto pTransaction = utils::UniqueToShared(test::GenerateRandomTransaction());
 		auto entityHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
-		typename TTraits::TransactionInfoType transactionInfo(pTransaction, entityHash);
+		DetachedTransactionInfo transactionInfo(pTransaction, entityHash);
 
 		// Assert:
 		EXPECT_EQ(pTransaction.get(), transactionInfo.pEntity.get());
 		EXPECT_EQ(entityHash, transactionInfo.EntityHash);
 		EXPECT_FALSE(!!transactionInfo.OptionalExtractedAddresses);
-		TTraits::AssertEmpty(transactionInfo);
+	}
+
+	TEST(TEST_CLASS, CanCreateDefaultTransactionInfo) {
+		// Act:
+		TransactionInfo transactionInfo;
+
+		// Assert: notice that hash(es) are not zero-initialized by default constructor
+		EXPECT_FALSE(!!transactionInfo.pEntity);
+		EXPECT_FALSE(!!transactionInfo.OptionalExtractedAddresses);
+	}
+
+	TEST(TEST_CLASS, CanCreateTransactionInfoWithoutHash) {
+		// Arrange:
+		auto pTransaction = utils::UniqueToShared(test::GenerateRandomTransaction());
+
+		// Act:
+		TransactionInfo transactionInfo(pTransaction, Height(123));
+
+		// Assert:
+		EXPECT_EQ(pTransaction.get(), transactionInfo.pEntity.get());
+		EXPECT_EQ(Hash256(), transactionInfo.EntityHash);
+		EXPECT_FALSE(!!transactionInfo.OptionalExtractedAddresses);
+		// Assert: check merkle component hash
+		EXPECT_EQ(Hash256(), transactionInfo.MerkleComponentHash);
+		EXPECT_EQ(Height(123), transactionInfo.AssociatedHeight);
+	}
+
+	TEST(TEST_CLASS, CanCreateTransactionInfoWithHash) {
+		// Arrange:
+		auto pTransaction = utils::UniqueToShared(test::GenerateRandomTransaction());
+		auto entityHash = test::GenerateRandomByteArray<Hash256>();
+
+		// Act:
+		TransactionInfo transactionInfo(pTransaction, entityHash, Height(123));
+
+		// Assert:
+		EXPECT_EQ(pTransaction.get(), transactionInfo.pEntity.get());
+		EXPECT_EQ(entityHash, transactionInfo.EntityHash);
+		EXPECT_FALSE(!!transactionInfo.OptionalExtractedAddresses);
+		// Assert: check merkle component hash
+		EXPECT_EQ(Hash256(), transactionInfo.MerkleComponentHash);
+		EXPECT_EQ(Height(123), transactionInfo.AssociatedHeight);
 	}
 
 	TEST(TEST_CLASS, CanCopyDetachedTransactionInfo) {
@@ -236,8 +251,9 @@ namespace catapult { namespace model {
 		auto entityHash = test::GenerateRandomByteArray<Hash256>();
 		auto pExtractedAddresses = std::make_shared<UnresolvedAddressSet>();
 		auto merkleComponentHash = test::GenerateRandomByteArray<Hash256>();
+		auto height = Height(123);
 
-		TransactionInfo transactionInfo(pTransaction, entityHash);
+		TransactionInfo transactionInfo(pTransaction, entityHash, height);
 		transactionInfo.OptionalExtractedAddresses = pExtractedAddresses;
 		transactionInfo.MerkleComponentHash = merkleComponentHash;
 
@@ -250,12 +266,14 @@ namespace catapult { namespace model {
 		EXPECT_EQ(entityHash, transactionInfo.EntityHash);
 		EXPECT_EQ(pExtractedAddresses.get(), transactionInfo.OptionalExtractedAddresses.get());
 		EXPECT_EQ(merkleComponentHash, transactionInfo.MerkleComponentHash);
+		EXPECT_EQ(height, transactionInfo.AssociatedHeight);
 
 		// - copied info has correct values
 		EXPECT_EQ(pTransaction.get(), transactionInfoCopy.pEntity.get());
 		EXPECT_EQ(entityHash, transactionInfoCopy.EntityHash);
 		EXPECT_EQ(pExtractedAddresses.get(), transactionInfoCopy.OptionalExtractedAddresses.get());
 		EXPECT_EQ(merkleComponentHash, transactionInfoCopy.MerkleComponentHash);
+		EXPECT_EQ(height, transactionInfoCopy.AssociatedHeight);
 	}
 
 	// endregion

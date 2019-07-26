@@ -45,7 +45,7 @@ namespace catapult { namespace sync {
 	}
 
 	chain::UtUpdater::Throttle CreateUtUpdaterThrottle(extensions::ServiceState& state) {
-		const auto& config = state.config(Height{0});
+		const auto& config = state.config();
 
 		return config.Node.ShouldEnableTransactionSpamThrottling
 				? CreateTransactionSpamThrottle(state, IsBondedTransaction)

@@ -109,7 +109,7 @@ namespace catapult { namespace subscribers {
 			}
 
 			static void Notify(TransactionStatusSubscriber& subscriber) {
-				subscriber.notifyStatus(*test::GenerateRandomTransaction(), test::GenerateRandomByteArray<Hash256>(), 123);
+				subscriber.notifyStatus(*test::GenerateRandomTransaction(), Height(), test::GenerateRandomByteArray<Hash256>(), 123);
 			}
 		};
 

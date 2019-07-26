@@ -43,7 +43,7 @@ namespace catapult { namespace test {
 	template<UnsupportedFlushBehavior FlushBehavior>
 	class UnsupportedTransactionStatusSubscriber : public subscribers::TransactionStatusSubscriber {
 	public:
-		void notifyStatus(const model::Transaction&, const Hash256&, uint32_t) override {
+		void notifyStatus(const model::Transaction&, const Height&, const Hash256&, uint32_t) override {
 			CATAPULT_THROW_RUNTIME_ERROR("notifyStatus - not supported in mock");
 		}
 

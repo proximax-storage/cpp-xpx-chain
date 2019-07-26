@@ -92,13 +92,13 @@ namespace catapult { namespace partialtransaction {
 		public:
 			explicit TransactionDispatcherBuilder(extensions::ServiceState& state)
 					: m_state(state)
-					, m_nodeConfig(m_state.config(Height{0}).Node)
+					, m_nodeConfig(m_state.config().Node)
 			{}
 
 		public:
 			void addHashConsumers(const cache::MemoryPtCacheProxy& ptCache) {
 				m_consumers.push_back(CreateTransactionHashCalculatorConsumer(
-						m_state.config(Height{0}).BlockChain.Network.GenerationHash,
+						m_state.config().BlockChain.Network.GenerationHash,
 						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateTransactionHashCheckConsumer(
 						m_state.timeSupplier(),
@@ -124,7 +124,7 @@ namespace catapult { namespace partialtransaction {
 
 		private:
 			extensions::ServiceState& m_state;
-			const config::NodeConfiguration& m_nodeConfig;
+			config::NodeConfiguration m_nodeConfig;
 			std::vector<TransactionConsumer> m_consumers;
 		};
 
@@ -166,7 +166,7 @@ namespace catapult { namespace partialtransaction {
 			locator.registerRootedService("pt.dispatcher.batch", pBatchRangeDispatcher);
 
 			// register hooks
-			const auto& nodeConfig = state.config(Height{0}).Node;
+			const auto& nodeConfig = state.config().Node;
 			auto pRecentHashCache = std::make_shared<RecentHashCache>(
 					state.timeSupplier(),
 					extensions::CreateHashCheckOptions(nodeConfig.ShortLivedCacheTransactionDuration, nodeConfig));
