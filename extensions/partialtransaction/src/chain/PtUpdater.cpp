@@ -292,11 +292,12 @@ namespace catapult { namespace chain {
 		}
 
 		bool isValid(const model::Transaction& transaction, const Hash256& aggregateHash) const {
-			auto result = m_pValidator->validatePartial(model::WeakEntityInfoT<model::Transaction>(transaction, aggregateHash, m_catapultCache.height()));
+			auto height = m_catapultCache.height();
+			auto result = m_pValidator->validatePartial(model::WeakEntityInfoT<model::Transaction>(transaction, aggregateHash, height));
 			if (result.Normalized)
 				return true;
 
-			m_failedTransactionSink(transaction, m_catapultCache.height(), aggregateHash, result.Raw);
+			m_failedTransactionSink(transaction, height, aggregateHash, result.Raw);
 			return false;
 		}
 

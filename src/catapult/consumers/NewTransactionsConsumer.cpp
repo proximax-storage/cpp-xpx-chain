@@ -20,6 +20,7 @@
 
 #include "TransactionConsumers.h"
 #include "ConsumerResultFactory.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace consumers {
 
@@ -54,7 +55,7 @@ namespace catapult { namespace consumers {
 				for (const auto& element : input.transactions()) {
 					if (disruptor::ConsumerResultSeverity::Success == element.ResultSeverity) {
 						// it is free transaction and they is not associated with block, so the height is zero
-						transactionInfos.emplace_back(model::MakeTransactionInfo(transactions[i], element, Height()));
+						transactionInfos.emplace_back(model::MakeTransactionInfo(transactions[i], element, config::HEIGHT_OF_LATEST_CONFIG));
 						++numSuccesses;
 					} else if (disruptor::ConsumerResultSeverity::Failure == element.ResultSeverity) {
 						++numFailures;

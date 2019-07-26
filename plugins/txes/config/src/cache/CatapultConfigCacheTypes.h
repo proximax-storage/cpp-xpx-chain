@@ -86,7 +86,7 @@ namespace catapult { namespace cache {
 		// endregion
 
 		using PrimaryTypes = MutableUnorderedMapAdapter<CatapultConfigCacheDescriptor, utils::BaseValueHasher<Height>>;
-		using HeightTypes = MutableOrderedSetAdapter<HeightTypesDescriptor>;
+		using HeightTypes = MutableOrderedMemorySetAdapter<HeightTypesDescriptor>;
 
 		using BaseSetDeltaPointers = CatapultConfigBaseSetDeltaPointers;
 		using BaseSets = CatapultConfigBaseSets;

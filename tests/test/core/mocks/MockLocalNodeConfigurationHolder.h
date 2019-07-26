@@ -20,7 +20,7 @@ namespace catapult { namespace config {
 	public:
 		CatapultConfiguration& Config(const Height&) override;
 		CatapultConfiguration& Config() override;
-		CatapultConfiguration& ConfigAtHeightOrDefault(const Height&) override;
+		CatapultConfiguration& ConfigAtHeightOrLatest(const Height&) override;
 	};
 
 	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder();

@@ -70,7 +70,7 @@ namespace catapult { namespace partialtransaction {
 					auto prunedInfos = modifier.prune(timeSupplier());
 					for (const auto& prunedInfo : prunedInfos)
 						// prunedInfo is not associated with block, so height is current height of blockchain
-						transactionStatusSubscriber.notifyStatus(*prunedInfo.pEntity, Height(), prunedInfo.EntityHash, pruneStatus);
+						transactionStatusSubscriber.notifyStatus(*prunedInfo.pEntity, config::HEIGHT_OF_LATEST_CONFIG, prunedInfo.EntityHash, pruneStatus);
 				});
 
 				state.hooks().addTransactionEventHandler([&ptCache, &transactionStatusSubscriber](const auto& eventData) {

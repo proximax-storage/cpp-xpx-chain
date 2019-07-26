@@ -36,7 +36,7 @@ namespace catapult { namespace cache {
 			// read version
 			VersionType version = io::Read32(input);
 			if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of identifier", version);
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of identifier", version);
 
 			auto value = io::Read<ValueType>(input);
 

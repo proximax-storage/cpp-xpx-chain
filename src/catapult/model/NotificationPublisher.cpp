@@ -139,7 +139,7 @@ namespace catapult { namespace model {
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
 				sub.notify(BalanceDebitNotification<1>(
 					transaction.Signer,
-					model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->ConfigAtHeightOrDefault(height).BlockChain),
+					model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->ConfigAtHeightOrLatest(height).BlockChain),
 					fee)
 				);
 
