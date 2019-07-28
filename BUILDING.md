@@ -137,12 +137,12 @@ make
 sudo make install
 ```
 
-CATAPULT
+Sirius-Chain
 ---
 
 ```sh
-git clone https://github.com/nemtech/catapult-server.git
-cd catapult-server
+git clone https://github.com/proximax-storage/cpp-xpx-chain.git
+cd cpp-xpx-chain
 
 mkdir _build && cd _build
 cmake -DBOOST_ROOT=~/boost-build-1.69.0 -DCMAKE_BUILD_TYPE=Release -G Ninja ..
@@ -335,13 +335,13 @@ msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 ALL_BUILD.vcxproj
 msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 INSTALL.vcxproj
 ```
 
-CATAPULT
+Sirius-Chain
 ---
 
 full cmake:
 ```bat
-git clone https://github.com/nemtech/catapult-server.git catapult-server.git
-cd catapult-server.git
+git clone https://github.com/proximax-storage/cpp-xpx-chain.git cpp-xpx-chain.git
+cd cpp-xpx-chain.git
 
 mkdir _build && cd _build
 cmake -G "Visual Studio 15 2017 Win64" \
