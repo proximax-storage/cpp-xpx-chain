@@ -34,10 +34,10 @@ namespace catapult { namespace config {
 	}
 
 	const CatapultConfiguration& LocalNodeConfigurationHolder::LoadConfig(int argc, const char** argv, const std::string& extensionsHost) {
-		std::lock_guard<std::mutex> guard(m_mutex);
 		auto resourcesPath = GetResourcesPath(argc, argv);
 		std::cout << "loading resources from " << resourcesPath << std::endl;
-		return m_catapultConfigs.insert(Height(0), config::CatapultConfiguration::LoadFromPath(resourcesPath, extensionsHost));
+		SetConfig(Height(0), config::CatapultConfiguration::LoadFromPath(resourcesPath, extensionsHost));
+		return m_catapultConfigs.get(Height(0));
 	}
 
 	void LocalNodeConfigurationHolder::SetConfig(const Height& height, const CatapultConfiguration& config) {
@@ -52,15 +52,18 @@ namespace catapult { namespace config {
 		if (m_catapultConfigs.contains(height))
 			return m_catapultConfigs.get(height);
 
+		// While we are loading nemesis block, config from cache is not ready, so let's use initial config
+		if (height.unwrap() == 1)
+			return m_catapultConfigs.get(Height(0));
+
 		if (!m_pCache)
 			CATAPULT_THROW_INVALID_ARGUMENT("cache pointer is not set");
 
 		auto configCache = m_pCache->sub<cache::CatapultConfigCache>().createView(m_pCache->height());
 		auto configHeight = configCache->FindConfigHeightAt(height);
 
-		if (m_catapultConfigs.contains(configHeight)) {
+		if (m_catapultConfigs.contains(configHeight))
 			return m_catapultConfigs.insertRef(height, configHeight);
-		}
 
 		if (configHeight.unwrap() == 0)
 			CATAPULT_THROW_INVALID_ARGUMENT_1("didn't find available config at height ", height);
