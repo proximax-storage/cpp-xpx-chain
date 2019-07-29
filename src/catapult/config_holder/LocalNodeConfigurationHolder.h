@@ -6,6 +6,8 @@
 
 #pragma once
 #include "catapult/config/CatapultConfiguration.h"
+#include "ConfigTreeCache.h"
+#include <mutex>
 
 namespace catapult { namespace cache { class CatapultCache; } }
 
@@ -22,6 +24,7 @@ namespace catapult { namespace config {
 		/// Extracts the resources path from the command line arguments.
 		/// \a argc commmand line arguments are accessible via \a argv.
 		static boost::filesystem::path GetResourcesPath(int argc, const char** argv);
+
 		const CatapultConfiguration& LoadConfig(int argc, const char** argv, const std::string& extensionsHost);
 
 		/// Set \a config at \a height
@@ -41,7 +44,8 @@ namespace catapult { namespace config {
 		}
 
 	protected:
-		std::map<Height, std::shared_ptr<CatapultConfiguration>> m_catapultConfigs;
+		ConfigTreeCache m_catapultConfigs;
 		cache::CatapultCache* m_pCache;
+		std::mutex m_mutex;
 	};
 }}

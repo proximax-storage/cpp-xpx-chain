@@ -29,7 +29,7 @@ namespace catapult { namespace cache {
 		// read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of namespace cache summary", version);
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of catapult config cache summary", version);
 
 		auto heightsSize = io::Read64(input);
 		std::set<Height> heights;
