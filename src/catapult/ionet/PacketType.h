@@ -128,6 +128,9 @@ namespace catapult { namespace ionet {
 	/* Metadata state path has been requested by a client. */ \
 	ENUM_VALUE(Metadata_State_Path, FACILITY_BASED_CODE(800, Metadata)) \
 	\
+	/* Catapult config state path has been requested by a client. */ \
+	ENUM_VALUE(Catapult_Config_State_Path, FACILITY_BASED_CODE(800, CatapultConfig)) \
+	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
 	/* Request for the current diagnostic counter values. */ \
@@ -170,7 +173,10 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Contract_Infos, FACILITY_BASED_CODE(1200, Contract)) \
 	\
 	/* Metadata infos have been requested by a client. */ \
-	ENUM_VALUE(Metadata_Infos, FACILITY_BASED_CODE(1200, Metadata))
+	ENUM_VALUE(Metadata_Infos, FACILITY_BASED_CODE(1200, Metadata)) \
+	\
+	/* Catapult config infos have been requested by a client. */ \
+	ENUM_VALUE(Catapult_Config_Infos, FACILITY_BASED_CODE(1200, CatapultConfig))
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

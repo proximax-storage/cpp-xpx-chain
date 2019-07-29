@@ -37,65 +37,7 @@ namespace catapult { namespace test {
 
 	namespace {
 		constexpr auto Local_Node_Private_Key = "4A236D9F894CF0C4FC8C042DB5DB41CCF35118B7B220163E5B4BC1872C1CD618";
-
-		void SetConnectionsSubConfiguration(config::NodeConfiguration::ConnectionsSubConfiguration& config) {
-			config.MaxConnections = 25;
-			config.MaxConnectionAge = 10;
-			config.MaxConnectionBanAge = 100;
-			config.NumConsecutiveFailuresBeforeBanning = 100;
-		}
-
-		config::NodeConfiguration CreateNodeConfiguration() {
-			auto config = config::NodeConfiguration::Uninitialized();
-			config.Port = GetLocalHostPort();
-			config.ApiPort = GetLocalHostPort() + 1;
-			config.ShouldAllowAddressReuse = true;
-
-			config.MaxBlocksPerSyncAttempt = 4 * 100;
-			config.MaxChainBytesPerSyncAttempt = utils::FileSize::FromKilobytes(8 * 512);
-
-			config.ShortLivedCacheMaxSize = 10;
-
-			config.FeeInterest = 1;
-			config.FeeInterestDenominator = 1;
-
-			config.UnconfirmedTransactionsCacheMaxSize = 100;
-
-			config.ConnectTimeout = utils::TimeSpan::FromSeconds(10);
-			config.SyncTimeout = utils::TimeSpan::FromSeconds(10);
-
-			config.SocketWorkingBufferSize = utils::FileSize::FromKilobytes(4);
-			config.MaxPacketDataSize = utils::FileSize::FromMegabytes(100);
-
-			config.BlockDisruptorSize = 4 * 1024;
-			config.TransactionDisruptorSize = 16 * 1024;
-
-			config.OutgoingSecurityMode = ionet::ConnectionSecurityMode::None;
-			config.IncomingSecurityModes = ionet::ConnectionSecurityMode::None;
-
-			config.MaxCacheDatabaseWriteBatchSize = utils::FileSize::FromMegabytes(5);
-			config.MaxTrackedNodes = 5'000;
-
-			config.Local.Host = "127.0.0.1";
-			config.Local.FriendlyName = "LOCAL";
-			config.Local.Roles = ionet::NodeRoles::Peer;
-
-			SetConnectionsSubConfiguration(config.OutgoingConnections);
-
-			SetConnectionsSubConfiguration(config.IncomingConnections);
-			config.IncomingConnections.BacklogSize = 100;
-			return config;
-		}
-
-		void SetNetwork(model::NetworkInfo& network) {
-			network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			network.PublicKey = crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key).publicKey();
-			network.GenerationHash = GetNemesisGenerationHash();
-		}
-	}
-
-	config::SupportedEntityVersions CreateSupportedEntityVersions() {
-		std::string supportedVersions(
+		constexpr auto supportedVersions =
 			"{\n"
 			"\t\"entities\": [\n"
 			"\t\t{\n"
@@ -219,7 +161,65 @@ namespace catapult { namespace test {
 			"\t\t\t\"supportedVersions\": [2]\n"
 			"\t\t}\n"
 			"\t]\n"
-			"}");
+			"}";
+
+		void SetConnectionsSubConfiguration(config::NodeConfiguration::ConnectionsSubConfiguration& config) {
+			config.MaxConnections = 25;
+			config.MaxConnectionAge = 10;
+			config.MaxConnectionBanAge = 100;
+			config.NumConsecutiveFailuresBeforeBanning = 100;
+		}
+
+		config::NodeConfiguration CreateNodeConfiguration() {
+			auto config = config::NodeConfiguration::Uninitialized();
+			config.Port = GetLocalHostPort();
+			config.ApiPort = GetLocalHostPort() + 1;
+			config.ShouldAllowAddressReuse = true;
+
+			config.MaxBlocksPerSyncAttempt = 4 * 100;
+			config.MaxChainBytesPerSyncAttempt = utils::FileSize::FromKilobytes(8 * 512);
+
+			config.ShortLivedCacheMaxSize = 10;
+
+			config.FeeInterest = 1;
+			config.FeeInterestDenominator = 1;
+
+			config.UnconfirmedTransactionsCacheMaxSize = 100;
+
+			config.ConnectTimeout = utils::TimeSpan::FromSeconds(10);
+			config.SyncTimeout = utils::TimeSpan::FromSeconds(10);
+
+			config.SocketWorkingBufferSize = utils::FileSize::FromKilobytes(4);
+			config.MaxPacketDataSize = utils::FileSize::FromMegabytes(100);
+
+			config.BlockDisruptorSize = 4 * 1024;
+			config.TransactionDisruptorSize = 16 * 1024;
+
+			config.OutgoingSecurityMode = ionet::ConnectionSecurityMode::None;
+			config.IncomingSecurityModes = ionet::ConnectionSecurityMode::None;
+
+			config.MaxCacheDatabaseWriteBatchSize = utils::FileSize::FromMegabytes(5);
+			config.MaxTrackedNodes = 5'000;
+
+			config.Local.Host = "127.0.0.1";
+			config.Local.FriendlyName = "LOCAL";
+			config.Local.Roles = ionet::NodeRoles::Peer;
+
+			SetConnectionsSubConfiguration(config.OutgoingConnections);
+
+			SetConnectionsSubConfiguration(config.IncomingConnections);
+			config.IncomingConnections.BacklogSize = 100;
+			return config;
+		}
+
+		void SetNetwork(model::NetworkInfo& network) {
+			network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			network.PublicKey = crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key).publicKey();
+			network.GenerationHash = GetNemesisGenerationHash();
+		}
+	}
+
+	config::SupportedEntityVersions CreateSupportedEntityVersions() {
 		std::istringstream inputStream(supportedVersions);
 		return config::LoadSupportedEntityVersions(inputStream);
 	}
@@ -344,5 +344,9 @@ namespace catapult { namespace test {
 
 	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const config::CatapultConfiguration& config) {
 		return CreatePluginManager(config, extensions::CreateStorageConfiguration(config));
+	}
+
+	std::string GetSupportedEntityVersionsString() {
+		return supportedVersions;
 	}
 }}
