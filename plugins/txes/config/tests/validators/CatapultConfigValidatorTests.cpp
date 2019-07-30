@@ -124,8 +124,8 @@ namespace catapult { namespace validators {
 			auto cache = test::CreateEmptyCatapultCache<test::CatapultConfigCacheFactory>(model::BlockChainConfiguration::Uninitialized());
 			if (seedConfigCache) {
 				auto delta = cache.createDelta();
-				auto& congigCacheDelta = delta.sub<cache::CatapultConfigCache>();
-				congigCacheDelta.insert(state::CatapultConfigEntry(Height(1), "BlockChainConfig", "SupportedEntityVersionsConfig"));
+				auto& configCacheDelta = delta.sub<cache::CatapultConfigCache>();
+				configCacheDelta.insert(state::CatapultConfigEntry(Height(1), "BlockChainConfig", "SupportedEntityVersionsConfig"));
 				cache.commit(Height(1));
 			}
 			AssertValidationResult(expectedResult, blockChainConfig, supportedEntityVersions, pPluginManager, cache);

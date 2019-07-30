@@ -120,7 +120,6 @@ namespace catapult { namespace state {
 			auto entrySize = ENTRY_SIZE(entry.blockChainConfig().size(), entry.supportedEntityVersions().size());
 			std::vector<uint8_t> buffer(entrySize);
 
-			// - start / duration
 			auto* pData = buffer.data();
 			memcpy(pData, &version, sizeof(VersionType));
 			pData += sizeof(VersionType);
