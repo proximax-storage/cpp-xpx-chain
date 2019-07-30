@@ -5,18 +5,18 @@
 **/
 
 #include "mongo/tests/test/MongoPluginTestUtils.h"
-#include "plugins/txes/config/src/model/CatapultConfigEntityType.h"
+#include "plugins/txes/upgrade/src/model/CatapultUpgradeEntityType.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		struct MongoCatapultConfigPluginTraits {
+		struct MongoCatapultUpgradePluginTraits {
 		public:
 			static constexpr auto RegisterSubsystem = RegisterMongoSubsystem;
 
 			static std::vector<model::EntityType> GetTransactionTypes() {
-				return { model::Entity_Type_Catapult_Config };
+				return { model::Entity_Type_Catapult_Upgrade };
 			}
 
 			static std::vector<model::ReceiptType> GetReceiptTypes() {
@@ -24,10 +24,10 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static std::string GetStorageName() {
-				return "{ CatapultConfigCache }";
+				return "{ CatapultUpgradeCache }";
 			}
 		};
 	}
 
-	DEFINE_MONGO_PLUGIN_TESTS(MongoCatapultConfigPluginTests, MongoCatapultConfigPluginTraits)
+	DEFINE_MONGO_PLUGIN_TESTS(MongoCatapultUpgradePluginTests, MongoCatapultUpgradePluginTraits)
 }}}

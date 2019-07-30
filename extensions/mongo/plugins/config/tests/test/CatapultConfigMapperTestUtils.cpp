@@ -6,7 +6,6 @@
 
 #include "CatapultConfigMapperTestUtils.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {

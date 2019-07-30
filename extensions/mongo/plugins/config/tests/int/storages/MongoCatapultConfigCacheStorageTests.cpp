@@ -1,12 +1,11 @@
 /**
-*** Copyright 2018 ProximaX Limited. All rights reserved.
+*** Copyright 2019 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
 
 #include "src/storages/MongoCatapultConfigCacheStorage.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "catapult/model/Address.h"
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "plugins/txes/config/tests/test/CatapultConfigTestUtils.h"
