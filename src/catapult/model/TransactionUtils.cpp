@@ -37,14 +37,14 @@ namespace catapult { namespace model {
 
 		public:
 			void notify(const Notification& notification) override {
-				if (Core_Register_Account_Address_Notification == notification.Type) {
+				if (Core_Register_Account_Address_v1_Notification == notification.Type) {
 					auto addresses = m_extractorContext.extract(
-							static_cast<const AccountAddressNotification &>(notification).Address);
+							static_cast<const AccountAddressNotification <1>&>(notification).Address);
 					m_addresses.insert(addresses.begin(), addresses.end());
 
-				} else if (Core_Register_Account_Public_Key_Notification == notification.Type) {
+				} else if (Core_Register_Account_Public_Key_v1_Notification == notification.Type) {
 					auto keys = m_extractorContext.extract(
-							static_cast<const AccountPublicKeyNotification &>(notification).PublicKey);
+							static_cast<const AccountPublicKeyNotification <1>&>(notification).PublicKey);
 					for (const auto& key : keys)
 						m_addresses.insert(toAddress(key));
 				}
@@ -71,9 +71,9 @@ namespace catapult { namespace model {
 		};
 	}
 
-	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction,
+	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Height& height,
 			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext) {
-		WeakEntityInfo weakInfo(transaction);
+		WeakEntityInfo weakInfo(transaction, height);
 		AddressCollector sub(NetworkIdentifier(weakInfo.entity().Network()), extractorContext);
 		notificationPublisher.publish(weakInfo, sub);
 		return sub.addresses();

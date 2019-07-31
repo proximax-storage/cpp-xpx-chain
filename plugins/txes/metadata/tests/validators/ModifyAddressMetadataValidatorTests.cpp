@@ -35,10 +35,13 @@ namespace catapult { namespace validators {
 				const UnresolvedAddress& metadataId,
 				Key signer) {
 			// Arrange:
-			auto cache = test::MetadataCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			const_cast<model::BlockChainConfiguration&>(config).SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(config);
 			PopulateCache(cache);
 			auto pValidator = CreateModifyAddressMetadataValidator();
-			auto notification = model::ModifyAddressMetadataNotification(signer, metadataId);
+			auto notification = model::ModifyAddressMetadataNotification_v1(signer, metadataId);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -48,7 +51,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenMetadataIdEquelToSignerAndAccountExist) {
+	TEST(TEST_CLASS, SuccessWhenMetadataIdEqualsToSignerAndAccountExist) {
 		// Act:
 		AssertValidationResult(
 			ValidationResult::Success,
@@ -56,7 +59,7 @@ namespace catapult { namespace validators {
 			Account_Public_Key);
 	}
 
-	TEST(TEST_CLASS, FailueWhenMetadataIdEquelToSignerButAccountNotExist) {
+	TEST(TEST_CLASS, FailueWhenMetadataIdEqualsToSignerButAccountNotExist) {
 		// Arrange:
 		auto publicKey = test::GenerateRandomByteArray<Key>();
 		auto accountAddress	= model::PublicKeyToAddress(publicKey, model::NetworkIdentifier::Zero);
@@ -68,7 +71,7 @@ namespace catapult { namespace validators {
 				publicKey);
 	}
 
-	TEST(TEST_CLASS, FailueWhenMetadataIdNotEquelToSignerButAccountNotExist) {
+	TEST(TEST_CLASS, FailueWhenMetadataIdNotEqualsToSignerButAccountNotExist) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Address_Modification_Not_Permitted,

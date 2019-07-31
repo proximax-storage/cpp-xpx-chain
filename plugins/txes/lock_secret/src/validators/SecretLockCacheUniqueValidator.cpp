@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::SecretLockNotification;
+	using Notification = model::SecretLockNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(SecretLockCacheUnique, [](const auto& notification, const auto& context) {
 		const auto& cache = context.Cache.template sub<cache::SecretLockInfoCache>();

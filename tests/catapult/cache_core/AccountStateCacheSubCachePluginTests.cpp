@@ -22,6 +22,7 @@
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/TestHarness.h"
 
@@ -49,15 +50,12 @@ namespace catapult { namespace cache {
 		template<typename TAction>
 		void RunCacheStorageTest(Amount minHighValueAccountBalance, TAction action) {
 			// Arrange:
-			AccountStateCacheTypes::Options options;
-			options.MinHighValueAccountBalance = minHighValueAccountBalance;
-			options.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			AccountStateCache cache(CacheConfiguration(), options);
-			AccountStateCacheSummaryCacheStorage storage(cache);
-
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 			blockChainConfig.MinHarvesterBalance = minHighValueAccountBalance;
 			blockChainConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
+			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			// Act + Assert:
 			action(storage, blockChainConfig, cache);
@@ -84,15 +82,15 @@ namespace catapult { namespace cache {
 				storage.saveSummary(cacheDelta, stream);
 
 				// Assert: all addresses were saved
-				ASSERT_EQ(sizeof(uint64_t) + numExpectedAccounts * sizeof(Address) +
+				ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) + numExpectedAccounts * sizeof(Address) +
 						  sizeof(uint64_t) + addresses.size() * sizeof(Address), buffer.size());
 
-				auto numAddresses = reinterpret_cast<uint64_t&>(buffer[0]);
+				auto numAddresses = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType)));
 				EXPECT_EQ(numExpectedAccounts, numAddresses);
 
 				model::AddressSet savedAddresses;
 				for (auto i = 0u; i < numAddresses; ++i)
-					savedAddresses.insert(reinterpret_cast<Address&>(buffer[sizeof(uint64_t) + i * sizeof(Address)]));
+					savedAddresses.insert(reinterpret_cast<Address&>(*(buffer.data() + sizeof(VersionType) + sizeof(uint64_t) + i * sizeof(Address))));
 
 				checkAddresses(addresses, savedAddresses);
 
@@ -148,7 +146,7 @@ namespace catapult { namespace cache {
 		void RunSummaryLoadTest(size_t numAccounts) {
 			// Arrange:
 			auto config = CacheConfiguration();
-			AccountStateCache cache(config, AccountStateCacheTypes::Options());
+			AccountStateCache cache(config, config::CreateMockConfigurationHolder());
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			size_t numUpdateAddresses = 2 * numAccounts;
@@ -157,6 +155,7 @@ namespace catapult { namespace cache {
 
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream stream(buffer);
+			io::Write32(stream, 1);
 			io::Write64(stream, numAccounts);
 			stream.write({ reinterpret_cast<const uint8_t*>(highValueAddresses.data()), numAccounts * sizeof(Address) });
 			io::Write64(stream, numUpdateAddresses);
@@ -166,7 +165,7 @@ namespace catapult { namespace cache {
 			storage.loadAll(stream, 0);
 
 			// Assert: all addresses were saved
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(numAccounts, view->highValueAddresses().size());
 			EXPECT_EQ(model::AddressSet(highValueAddresses.cbegin(), highValueAddresses.cend()), view->highValueAddresses());
 			EXPECT_EQ(numUpdateAddresses, view->addressesToUpdate().size());
@@ -200,7 +199,7 @@ namespace catapult { namespace cache {
 			class PluginType : public AccountStateCacheSubCachePlugin {
 			public:
 				explicit PluginType(const CacheConfiguration& config)
-						: AccountStateCacheSubCachePlugin(config, AccountStateCacheTypes::Options())
+						: AccountStateCacheSubCachePlugin(config, config::CreateMockConfigurationHolder())
 				{}
 			};
 		};

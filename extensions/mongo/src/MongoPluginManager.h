@@ -23,7 +23,7 @@
 #include "MongoReceiptPlugin.h"
 #include "MongoStorageContext.h"
 #include "MongoTransactionPlugin.h"
-#include "catapult/model/NetworkInfo.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/plugins.h"
 
 namespace catapult { namespace mongo {
@@ -31,10 +31,10 @@ namespace catapult { namespace mongo {
 	/// A manager for registering mongo plugins.
 	class MongoPluginManager {
 	public:
-		/// Creates a new plugin manager around \a mongoContext and \a networkIdentifier.
-		explicit MongoPluginManager(MongoStorageContext& mongoContext, model::NetworkIdentifier networkIdentifier)
+		/// Creates a new plugin manager around \a mongoContext and \a pConfigHolder.
+		explicit MongoPluginManager(MongoStorageContext& mongoContext, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				: m_mongoContext(mongoContext)
-				, m_networkIdentifier(networkIdentifier)
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
@@ -43,9 +43,9 @@ namespace catapult { namespace mongo {
 			return m_mongoContext;
 		}
 
-		/// Gets the network idenfifier.
-		model::NetworkIdentifier networkIdentifier() const {
-			return m_networkIdentifier;
+		/// Gets the configuration holder.
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const {
+			return m_pConfigHolder;
 		}
 
 	public:
@@ -83,7 +83,7 @@ namespace catapult { namespace mongo {
 
 	private:
 		MongoStorageContext& m_mongoContext;
-		model::NetworkIdentifier m_networkIdentifier;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		MongoTransactionRegistry m_transactionRegistry;
 		MongoReceiptRegistry m_receiptRegistry;
 		ExternalCacheStorageBuilder m_storageBuilder;

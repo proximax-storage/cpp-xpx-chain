@@ -22,6 +22,7 @@
 #include "NemesisConfiguration.h"
 #include "NemesisExecutionHasher.h"
 #include "TransactionRegistryFactory.h"
+#include "catapult/builders/CatapultConfigBuilder.h"
 #include "catapult/builders/MosaicAliasBuilder.h"
 #include "catapult/builders/MosaicDefinitionBuilder.h"
 #include "catapult/builders/MosaicSupplyChangeBuilder.h"
@@ -37,6 +38,7 @@
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/HexParser.h"
+#include "boost/filesystem.hpp"
 
 namespace catapult { namespace tools { namespace nemgen {
 
@@ -149,6 +151,16 @@ namespace catapult { namespace tools { namespace nemgen {
 				signAndAdd(builder.build());
 			}
 
+			void addConfig(const std::string& resourcesPath) {
+				builders::CatapultConfigBuilder builder(m_networkIdentifier, m_signer.publicKey());
+				builder.setApplyHeightDelta(BlockDuration{0});
+				auto resPath = boost::filesystem::path(resourcesPath);
+				builder.setBlockChainConfig((resPath / "resources/config-network.properties").generic_string());
+				builder.setSupportedVersionsConfig((resPath / "resources/supported-entities.json").generic_string());
+
+				signAndAdd(builder.build());
+			}
+
 		public:
 			const model::Transactions& transactions() const {
 				return m_transactions;
@@ -169,7 +181,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		};
 	}
 
-	std::unique_ptr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config) {
+	std::unique_ptr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath) {
 		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
 		NemesisTransactions transactions(config.NetworkIdentifier, config.NemesisGenerationHash, signer);
 
@@ -223,6 +235,8 @@ namespace catapult { namespace tools { namespace nemgen {
 			auto recipient = model::StringToAddress(addressMosaicSeedsPair.first);
 			transactions.addTransfer(nameToMosaicIdMap, recipient, addressMosaicSeedsPair.second);
 		}
+
+		transactions.addConfig(resourcesPath);
 
 		model::PreviousBlockContext context;
 		auto pBlock = model::CreateBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.transactions());

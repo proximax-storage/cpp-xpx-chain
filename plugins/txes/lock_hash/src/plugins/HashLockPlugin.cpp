@@ -20,7 +20,6 @@
 
 #include "HashLockPlugin.h"
 #include "src/cache/HashLockInfoCache.h"
-#include "src/config/HashLockConfiguration.h"
 #include "src/model/HashLockReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/HashLockTransactionPlugin.h"
@@ -42,34 +41,31 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("HASHLOCK C"), [&cache]() {
-				return cache.sub<cache::HashLockInfoCache>().createView()->size();
+				return cache.sub<cache::HashLockInfoCache>().createView(cache.height())->size();
 			});
 		});
 
-		auto config = model::LoadPluginConfiguration<config::HashLockConfiguration>(manager.config(), "catapult.plugins.lockhash");
-		auto blockGenerationTargetTime = manager.config().BlockGenerationTargetTime;
-		auto currencyMosaicId = manager.config().CurrencyMosaicId;
-		manager.addStatelessValidatorHook([config, blockGenerationTargetTime](auto& builder) {
-			// hash lock validators
-			auto maxHashLockDuration = config.MaxHashLockDuration.blocks(blockGenerationTargetTime);
-			builder.add(validators::CreateHashLockDurationValidator(maxHashLockDuration));
-		});
-
-		manager.addStatefulValidatorHook([config, currencyMosaicId](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateAggregateHashPresentValidator())
-				.add(validators::CreateHashLockCacheUniqueValidator())
-				.add(validators::CreateHashLockMosaicValidator(currencyMosaicId, config.LockedFundsPerAggregate));
+				.add(validators::CreatePluginConfigValidator());
 		});
 
-		auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
-		manager.addObserverHook([maxRollbackBlocks](auto& builder) {
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+			builder
+				.add(validators::CreateHashLockDurationValidator(pConfigHolder))
+				.add(validators::CreateHashLockMosaicValidator(pConfigHolder))
+				.add(validators::CreateAggregateHashPresentValidator())
+				.add(validators::CreateHashLockCacheUniqueValidator());
+		});
+
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockHash_Expired;
 			builder
 				.add(observers::CreateHashLockObserver())
 				.add(observers::CreateExpiredHashLockInfoObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::HashLockInfoCache>("HashLockInfo", expiryReceiptType))
-				.add(observers::CreateCacheBlockPruningObserver<cache::HashLockInfoCache>("HashLockInfo", 1, maxRollbackBlocks))
+				.add(observers::CreateCacheBlockPruningObserver<cache::HashLockInfoCache>("HashLockInfo", 1, pConfigHolder))
 				.add(observers::CreateCompletedAggregateObserver());
 		});
 	}

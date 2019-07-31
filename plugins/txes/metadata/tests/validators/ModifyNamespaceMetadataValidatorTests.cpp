@@ -6,6 +6,7 @@
 
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "tests/test/MetadataCacheTestUtils.h"
@@ -52,10 +53,17 @@ namespace catapult { namespace validators {
 				const NamespaceId& metadataId,
 				Key signer) {
 			// Arrange:
-			auto cache = test::MetadataCacheFactory::Create();
+			auto namespacePluginConfig = config::NamespaceConfiguration::Uninitialized();
+			namespacePluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(100);
+			auto metadataPluginConfig = config::MetadataConfiguration::Uninitialized();
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespacePluginConfig);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), metadataPluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
 			PopulateCache(cache);
 			auto pValidator = CreateModifyNamespaceMetadataValidator();
-			auto notification = model::ModifyNamespaceMetadataNotification(signer, metadataId);
+			auto notification = model::ModifyNamespaceMetadataNotification_v1(signer, metadataId);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -65,7 +73,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenNamespaceExistAndOwnerEquel) {
+	TEST(TEST_CLASS, SuccessWhenNamespaceExistsAndOwnerEquals) {
 		// Act:
 		AssertValidationResult(
 			ValidationResult::Success,
@@ -73,7 +81,7 @@ namespace catapult { namespace validators {
 			Namespace_Owner);
 	}
 
-	TEST(TEST_CLASS, FailureWhenNamespaceNotExistAndOwnerEquel) {
+	TEST(TEST_CLASS, FailureWhenNamespaceNotExistAndOwnerEquals) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Is_Not_Exist,
@@ -81,7 +89,7 @@ namespace catapult { namespace validators {
 				Namespace_Owner);
 	}
 
-	TEST(TEST_CLASS, FailueWhenNamespaceExistButOwnerNotEquel) {
+	TEST(TEST_CLASS, FailueWhenNamespaceExistButOwnerNotEqual) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Modification_Not_Permitted,
@@ -89,7 +97,7 @@ namespace catapult { namespace validators {
 				test::GenerateRandomByteArray<Key>());
 	}
 
-	TEST(TEST_CLASS, FailueWhenNamespaceNoExistButOwnerNotEquel) {
+	TEST(TEST_CLASS, FailueWhenNamespaceNoExistButOwnerNotEquals) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Is_Not_Exist,

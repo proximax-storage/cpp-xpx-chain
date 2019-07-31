@@ -23,6 +23,8 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
 #include "timesync/tests/test/TimeSynchronizationTestUtils.h"
+#include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/TestHarness.h"
 #include <cmath>
 
@@ -48,7 +50,7 @@ namespace catapult { namespace timesync {
 				cache::AccountStateCache& cache,
 				const TKey& key,
 				Importance importance) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->addAccount(key, Height(1));
 			delta->find(key).get().Balances.credit(Harvesting_Mosaic_Id, Amount(importance.unwrap()), Height(1));
 			cache.commit();
@@ -71,8 +73,26 @@ namespace catapult { namespace timesync {
 			return addresses;
 		}
 
-		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions() {
-			return { Default_Network_Identifier, 234, Amount(1000), MosaicId(1111), Harvesting_Mosaic_Id };
+		auto CreateBlockchainConfig() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.Network.Identifier = Default_Network_Identifier;
+			config.ImportanceGrouping = 234;
+			config.MinHarvesterBalance = Amount(1000);
+			config.CurrencyMosaicId = MosaicId(1111);
+			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.TotalChainImportance = Total_Chain_Importance;
+			return config;
+		}
+
+		auto CreateConfig() {
+			return config::CatapultConfiguration{
+					CreateBlockchainConfig(),
+					config::NodeConfiguration::Uninitialized(),
+					config::LoggingConfiguration::Uninitialized(),
+					config::UserConfiguration::Uninitialized(),
+					config::ExtensionsConfiguration::Uninitialized(),
+					config::InflationConfiguration::Uninitialized(),
+			};
 		}
 
 		enum class KeyType { Address, PublicKey, };
@@ -83,8 +103,10 @@ namespace catapult { namespace timesync {
 					const std::vector<std::pair<int64_t, uint64_t>>& offsetsAndRawImportances,
 					const std::vector<filters::SynchronizationFilter>& filters = {},
 					KeyType keyType = KeyType::PublicKey)
-					: m_cache(cache::CacheConfiguration(), CreateAccountStateCacheOptions())
-					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), Total_Chain_Importance, Warning_Threshold_Millis) {
+					: m_configHolder(config::CreateMockConfigurationHolder(CreateConfig()))
+					, m_state(test::CreateCatapultCacheWithMarkerAccount(m_configHolder->Config(Height(0)).BlockChain), m_configHolder)
+					, m_cache(const_cast<cache::AccountStateCache&>(m_state.cache().sub<cache::AccountStateCache>()))
+					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), m_state.state(), Warning_Threshold_Millis) {
 				std::vector<Importance> importances;
 				for (const auto& offsetAndRawImportance : offsetsAndRawImportances) {
 					m_samples.emplace(test::CreateTimeSyncSampleWithTimeOffset(offsetAndRawImportance.first));
@@ -101,7 +123,7 @@ namespace catapult { namespace timesync {
 
 		public:
 			TimeOffset calculateTimeOffset(NodeAge nodeAge = NodeAge()) {
-				return m_synchronizer.calculateTimeOffset(*m_cache.createView(), Height(1), std::move(m_samples), nodeAge);
+				return m_synchronizer.calculateTimeOffset(*m_cache.createView(Height{0}), Height(1), std::move(m_samples), nodeAge);
 			}
 
 			void addHighValueAccounts(size_t count) {
@@ -110,7 +132,9 @@ namespace catapult { namespace timesync {
 			}
 
 		private:
-			cache::AccountStateCache m_cache;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_configHolder;
+			test::ServiceTestState m_state;
+			cache::AccountStateCache& m_cache;
 			TimeSynchronizer m_synchronizer;
 			TimeSynchronizationSamples m_samples;
 		};
@@ -175,13 +199,15 @@ namespace catapult { namespace timesync {
 			filters::AggregateSynchronizationFilter aggregateFilter({});
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
-			cache::AccountStateCache cache(cache::CacheConfiguration(), CreateAccountStateCacheOptions());
+			auto configHolder = config::CreateMockConfigurationHolder(CreateConfig());
+			test::ServiceTestState state(test::CreateCatapultCacheWithMarkerAccount(configHolder->Config(Height(0)).BlockChain), configHolder);
+			auto& cache = const_cast<cache::AccountStateCache&>(state.cache().sub<cache::AccountStateCache>());
 			auto singleAccountImportance = Importance(Total_Chain_Importance.unwrap() / numSamples);
 			SeedAccountStateCache(cache, keys, std::vector<Importance>(numSamples, singleAccountImportance));
-			TimeSynchronizer synchronizer(aggregateFilter, Total_Chain_Importance, Warning_Threshold_Millis);
+			TimeSynchronizer synchronizer(aggregateFilter, state.state(), Warning_Threshold_Millis);
 
 			// Act:
-			auto timeOffset = synchronizer.calculateTimeOffset(*cache.createView(), Height(1), std::move(samples), nodeAge);
+			auto timeOffset = synchronizer.calculateTimeOffset(*cache.createView(Height{0}), Height(1), std::move(samples), nodeAge);
 
 			// Assert:
 			EXPECT_EQ(expectedTimeOffset, timeOffset);

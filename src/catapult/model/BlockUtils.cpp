@@ -121,7 +121,7 @@ namespace catapult { namespace model {
 			pBlock->Size = static_cast<uint32_t>(size);
 
 			pBlock->Signer = signerPublicKey;
-			pBlock->Version = MakeVersion(networkIdentifier, 3);
+			pBlock->Version = MakeVersion(networkIdentifier, Block::Current_Version);
 			pBlock->Type = Entity_Type_Block;
 
 			pBlock->Height = context.BlockHeight + Height(1);

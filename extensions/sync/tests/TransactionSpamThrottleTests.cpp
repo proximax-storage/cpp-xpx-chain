@@ -28,6 +28,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 
@@ -64,7 +65,7 @@ namespace catapult { namespace sync {
 		model::TransactionInfo CreateTransactionInfo(const Key& signer, Amount fee = Amount()) {
 			auto pTransaction = test::GenerateRandomTransaction(signer);
 			pTransaction->MaxFee = fee;
-			auto transactionInfo = model::TransactionInfo(std::move(pTransaction));
+			auto transactionInfo = model::TransactionInfo(std::move(pTransaction), Height());
 			test::FillWithRandomData(transactionInfo.EntityHash);
 			return transactionInfo;
 		}
@@ -166,6 +167,15 @@ namespace catapult { namespace sync {
 			return settings;
 		}
 
+		void SetSettings(test::ServiceTestState& serviceState, const SpamThrottleConfiguration& throttleConfig) {
+			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().config(Height{0}).BlockChain);
+			blockChainConfig.TotalChainImportance = throttleConfig.TotalImportance;
+			blockChainConfig.MaxTransactionsPerBlock = throttleConfig.MaxBlockSize;
+			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().config(Height{0}).Node);
+			nodeConfig.TransactionSpamThrottlingMaxBoostFee = throttleConfig.MaxBoostFee;
+			nodeConfig.UnconfirmedTransactionsCacheMaxSize = throttleConfig.MaxCacheSize;
+		}
+
 		// endregion
 
 		void AssertThrottling(const ThrottleTestSettings& settings, bool expectedResult) {
@@ -194,7 +204,9 @@ namespace catapult { namespace sync {
 			};
 			auto throttleContext = context.throttleContext(settings.Source);
 			auto transactionInfo = CreateTransactionInfo(signerPublicKey, settings.Fee);
-			auto filter = CreateTransactionSpamThrottle(settings.ThrottleConfig, isBonded);
+			auto serviceState = test::ServiceTestState();
+			SetSettings(serviceState, settings.ThrottleConfig);
+			auto filter = CreateTransactionSpamThrottle(serviceState.state(), isBonded);
 
 			// Act:
 			auto result = filter(transactionInfo, throttleContext);
@@ -298,7 +310,9 @@ namespace catapult { namespace sync {
 			auto index = 0u;
 			while (!isFiltered && config.MaxCacheSize > context.transactionsCacheModifier().size()) {
 				auto transactionInfo = CreateTransactionInfo(publicKeys[index], settings.Fee);
-				auto filter = CreateTransactionSpamThrottle(config, [](const auto&) { return false; });
+				auto serviceState = test::ServiceTestState();
+				SetSettings(serviceState, config);
+				auto filter = CreateTransactionSpamThrottle(serviceState.state(), [](const auto&) { return false; });
 
 				// Act:
 				isFiltered = filter(transactionInfo, throttleContext);

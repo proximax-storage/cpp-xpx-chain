@@ -64,16 +64,24 @@ namespace catapult { namespace cache {
 			, m_pKeyLookupAdapter(std::move(pKeyLookupAdapter))
 	{}
 
+	model::BlockChainConfiguration BasicAccountStateCacheDelta::blockChainConfig() const {
+		return m_options.ConfigHolderPtr->Config(height()).BlockChain;
+	}
+
 	model::NetworkIdentifier BasicAccountStateCacheDelta::networkIdentifier() const {
-		return m_options.NetworkIdentifier;
+		return blockChainConfig().Network.Identifier;
 	}
 
 	uint64_t BasicAccountStateCacheDelta::importanceGrouping() const {
-		return m_options.ImportanceGrouping;
+		return blockChainConfig().ImportanceGrouping;
 	}
 
 	MosaicId BasicAccountStateCacheDelta::harvestingMosaicId() const {
-		return m_options.HarvestingMosaicId;
+		return blockChainConfig().HarvestingMosaicId;
+	}
+
+	MosaicId BasicAccountStateCacheDelta::currencyMosaicId() const {
+		return blockChainConfig().CurrencyMosaicId;
 	}
 
 	Address BasicAccountStateCacheDelta::getAddress(const Key& publicKey) {
@@ -82,7 +90,7 @@ namespace catapult { namespace cache {
 		if (pPair)
 			return pPair->second;
 
-		auto address = model::PublicKeyToAddress(publicKey, m_options.NetworkIdentifier);
+		auto address = model::PublicKeyToAddress(publicKey, networkIdentifier());
 		m_pKeyToAddress->emplace(publicKey, address);
 		return address;
 	}
@@ -118,8 +126,8 @@ namespace catapult { namespace cache {
 			m_pKeyToAddress->emplace(accountState.PublicKey, accountState.Address);
 
 		m_pStateByAddress->insert(accountState);
-		m_pStateByAddress->find(accountState.Address).get()->Balances.optimize(m_options.CurrencyMosaicId);
-		m_pStateByAddress->find(accountState.Address).get()->Balances.track(m_options.HarvestingMosaicId);
+		m_pStateByAddress->find(accountState.Address).get()->Balances.optimize(currencyMosaicId());
+		m_pStateByAddress->find(accountState.Address).get()->Balances.track(harvestingMosaicId());
 	}
 
 	void BasicAccountStateCacheDelta::remove(const Address& address, Height height) {
@@ -222,8 +230,8 @@ namespace catapult { namespace cache {
 		auto highValueAddresses = m_highValueAddresses;
 
 		// 2. update for changes
-		auto minBalance = m_options.MinHighValueAccountBalance;
-		auto harvestingMosaicId = m_options.HarvestingMosaicId;
+		auto minBalance = blockChainConfig().MinHarvesterBalance;
+		auto harvestingMosaicId = this->harvestingMosaicId();
 		auto hasHighValue = [minBalance, harvestingMosaicId](const auto& accountState) {
 			return accountState.Balances.get(harvestingMosaicId) >= minBalance;
 		};

@@ -26,6 +26,7 @@
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/local/server/LocalNode.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -181,8 +182,9 @@ namespace catapult { namespace test {
 				const consumer<extensions::ProcessBootstrapper&>& configure) {
 			prepareCatapultConfiguration(config);
 
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
-					std::move(config),
+					pConfigHolder,
 					resourcesDirectory(),
 					extensions::ProcessDisposition::Production,
 					"LocalNodeTests");

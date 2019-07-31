@@ -60,7 +60,7 @@ namespace catapult { namespace builders {
 				additionalSize += numCosignatures * sizeof(model::Cosignature);
 				RegularTraits::CheckFields(additionalSize, transaction);
 				EXPECT_EQ(m_signer, transaction.Signer);
-				EXPECT_EQ(0x6202, transaction.Version);
+				EXPECT_EQ(0x62000002, transaction.Version);
 				EXPECT_EQ(type, transaction.Type);
 
 				auto i = 0u;

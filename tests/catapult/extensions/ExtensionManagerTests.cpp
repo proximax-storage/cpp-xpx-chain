@@ -22,6 +22,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/utils/NetworkTime.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalNodeTestState.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
@@ -36,7 +37,7 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		std::vector<std::string> GetDefaultSystemPluginNames() {
-			return { "catapult.coresystem", "catapult.plugins.signature" };
+			return { "catapult.coresystem", PLUGIN_NAME(signature) };
 		}
 	}
 

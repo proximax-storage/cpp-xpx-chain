@@ -25,7 +25,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::ProofPublicationNotification;
+	using Notification = model::ProofPublicationNotification<1>;
 
 	namespace {
 		struct SecretTraits {

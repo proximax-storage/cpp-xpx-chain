@@ -41,6 +41,7 @@ namespace catapult { namespace test {
 		auto entitySize = sizeof(TransactionType);
 		auto pTransaction = utils::MakeUniqueWithSize<typename TTraits::TransactionType>(entitySize);
 		test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), entitySize });
+		pTransaction->Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 		pTransaction->Size = static_cast<uint32_t>(entitySize);
 		return pTransaction;
 	}

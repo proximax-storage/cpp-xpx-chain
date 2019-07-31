@@ -21,6 +21,7 @@
 #include "src/observers/Observers.h"
 #include "catapult/model/InflationCalculator.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/AccountObserverTestContext.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
@@ -30,7 +31,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS HarvestFeeObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, MosaicId(), 0, model::InflationCalculator())
+	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, config::CreateMockConfigurationHolder(), model::InflationCalculator())
 
 	// region traits
 
@@ -103,9 +104,12 @@ namespace catapult { namespace observers {
 				const model::InflationCalculator& calculator,
 				TAction action) {
 			// Arrange:
-			test::AccountObserverTestContext context(notifyMode);
-
-			auto pObserver = CreateHarvestFeeObserver(Currency_Mosaic_Id, harvestBeneficiaryPercentage, calculator);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.CurrencyMosaicId = Currency_Mosaic_Id;
+			config.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
+			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pObserver = CreateHarvestFeeObserver(pConfigHolder, calculator);
 
 			// Act + Assert:
 			action(context, *pObserver);
@@ -482,9 +486,11 @@ namespace catapult { namespace observers {
 		template<typename TMutator>
 		void AssertImproperLink(TMutator mutator) {
 			// Arrange:
-			test::AccountObserverTestContext context(NotifyMode::Commit);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.CurrencyMosaicId = Currency_Mosaic_Id;
+			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-			auto pObserver = CreateHarvestFeeObserver(Currency_Mosaic_Id, 20, model::InflationCalculator());
+			auto pObserver = CreateHarvestFeeObserver(config::CreateMockConfigurationHolder(), model::InflationCalculator());
 
 			auto signerPublicKey = test::GenerateRandomByteArray<Key>();
 			auto accountStateIter = RemoteAccountTraits::AddAccount(accountStateCache, signerPublicKey, Height(1));

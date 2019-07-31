@@ -18,12 +18,16 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/plugins/MosaicDefinitionTransactionPlugin.h"
+#include "src/config/MosaicConfiguration.h"
 #include "src/model/MosaicDefinitionTransaction.h"
 #include "src/model/MosaicNotifications.h"
+#include "src/plugins/MosaicDefinitionTransactionPlugin.h"
+#include "catapult/model/Address.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -35,33 +39,48 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS MosaicDefinitionTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, MosaicRentalFeeConfiguration, 3, 3,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::LocalNodeConfigurationHolder>, 3, 3,)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 
-		MosaicRentalFeeConfiguration CreateRentalFeeConfiguration(Amount fee) {
-			return {
-				test::GenerateRandomByteArray<Key>(),
-				Currency_Mosaic_Id,
-				test::GenerateRandomUnresolvedAddress(),
-				fee,
-				test::GenerateRandomByteArray<Key>()
-			};
+		auto CreateMosaicConfiguration(Amount fee) {
+			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
+			pluginConfig.MosaicRentalFeeSinkPublicKey = test::GenerateRandomByteArray<Key>();
+			pluginConfig.MosaicRentalFee = fee;
+			return pluginConfig;
+		}
+
+		auto CreateBlockChainConfiguration(config::MosaicConfiguration pluginConfig) {
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
+			blockChainConfig.Network.PublicKey = test::GenerateRandomByteArray<Key>();
+			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			return blockChainConfig;
+		}
+
+		auto GetSinkAddress(const config::MosaicConfiguration& pluginConfig, const model::BlockChainConfiguration& blockChainConfig) {
+			auto address = PublicKeyToAddress(pluginConfig.MosaicRentalFeeSinkPublicKey, blockChainConfig.Network.Identifier);
+			UnresolvedAddress sinkAddress;
+			std::memcpy(sinkAddress.data(), address.data(), address.size());
+			return sinkAddress;
 		}
 	}
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(
 			TEST_CLASS,
 			,
-			,
-			Entity_Type_Mosaic_Definition,
-			CreateRentalFeeConfiguration(Amount(0)))
+			,Entity_Type_Mosaic_Definition,
+		config::CreateMockConfigurationHolder(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0)))))
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin(CreateRentalFeeConfiguration(Amount(0)));
+		auto pConfigHolder = config::CreateMockConfigurationHolder(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0))));
+		auto pPlugin = TTraits::CreatePlugin(pConfigHolder);
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.Size = 0;
 		transaction.PropertiesHeader.Count = 2;
 
@@ -75,10 +94,12 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractAccounts) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto config = CreateRentalFeeConfiguration(Amount(0));
-		auto pPlugin = TTraits::CreatePlugin(config);
+		auto pluginConfig = CreateMosaicConfiguration(Amount(0));
+		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.PropertiesHeader.Count = 0;
 		test::FillWithRandomData(transaction.Signer);
 
@@ -90,7 +111,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(0u, sub.numAddresses());
 		EXPECT_EQ(1u, sub.numKeys());
 
-		EXPECT_TRUE(sub.contains(config.SinkPublicKey));
+		EXPECT_TRUE(sub.contains(pluginConfig.MosaicRentalFeeSinkPublicKey));
 	}
 
 	// region balance change
@@ -100,21 +121,24 @@ namespace catapult { namespace plugins {
 		void RunBalanceChangeObserverTest(bool isSignerExempt, TAssertTransfers assertTransfers) {
 			// Arrange:
 			mocks::MockNotificationSubscriber sub;
-			auto config = CreateRentalFeeConfiguration(Amount(987));
-			auto pPlugin = TTraits::CreatePlugin(config);
+			auto pluginConfig = CreateMosaicConfiguration(Amount(987));
+			auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
+			auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
 
 			// - prepare the transaction
 			typename TTraits::TransactionType transaction;
+			transaction.Version = Transaction_Version;
 			transaction.PropertiesHeader.Count = 0;
 			test::FillWithRandomData(transaction.Signer);
 			if (isSignerExempt)
-				transaction.Signer = config.NemesisPublicKey;
+				transaction.Signer = blockChainConfig.Network.PublicKey;
+			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
 
 			// Act:
 			test::PublishTransaction(*pPlugin, transaction, sub);
 
 			// Assert:
-			assertTransfers(sub, transaction.Signer, config.SinkAddress);
+			assertTransfers(sub, transaction.Signer, sinkAddress);
 		}
 	}
 
@@ -149,6 +173,7 @@ namespace catapult { namespace plugins {
 			using TransactionType = typename TTraits::TransactionType;
 			uint32_t entitySize = sizeof(TransactionType) + numProperties * sizeof(MosaicProperty);
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->PropertiesHeader.Count = numProperties;
 			test::FillWithRandomData(pTransaction->Signer);
@@ -217,18 +242,20 @@ namespace catapult { namespace plugins {
 			}
 
 		public:
-			mocks::MockTypedNotificationSubscriber<MosaicNonceNotification> NonceIdSub;
-			mocks::MockTypedNotificationSubscriber<MosaicPropertiesNotification> PropertiesSub;
-			mocks::MockTypedNotificationSubscriber<MosaicDefinitionNotification> DefinitionSub;
-			mocks::MockTypedNotificationSubscriber<MosaicRentalFeeNotification> RentalFeeSub;
+			mocks::MockTypedNotificationSubscriber<MosaicNonceNotification<1>> NonceIdSub;
+			mocks::MockTypedNotificationSubscriber<MosaicPropertiesNotification<1>> PropertiesSub;
+			mocks::MockTypedNotificationSubscriber<MosaicDefinitionNotification<1>> DefinitionSub;
+			mocks::MockTypedNotificationSubscriber<MosaicRentalFeeNotification<1>> RentalFeeSub;
 		};
 	}
 
 	PLUGIN_TEST(CanExtractDefinitionNotificationsWhenOptionalPropertiesArePresent) {
 		// Arrange:
 		MosaicDefinitionTransactionPluginTestContext<TTraits> testContext;
-		auto config = CreateRentalFeeConfiguration(Default_Rental_Fee);
-		auto pPlugin = TTraits::CreatePlugin(config);
+		auto pluginConfig = CreateMosaicConfiguration(Default_Rental_Fee);
+		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
+		auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
 
 		auto pTransaction = CreateTransactionWithProperties<TTraits>(1);
 		FillDefaultTransactionData(*pTransaction);
@@ -242,14 +269,16 @@ namespace catapult { namespace plugins {
 		testContext.AssertMosaicNonceNotification(signer);
 		testContext.AssertOptionalMosaicProperties(pTransaction->PropertiesHeader, *pTransaction->PropertiesPtr());
 		testContext.AssertMosaicDefinitionTransaction(signer, MosaicProperties::FromValues({ { 2, 7, 5 } }));
-		testContext.AssertMosaicRentalFeeNotification(signer, config.SinkAddress);
+		testContext.AssertMosaicRentalFeeNotification(signer, sinkAddress);
 	}
 
 	PLUGIN_TEST(CanExtractDefinitionNotificationsWhenNoOptionalPropertiesArePresent) {
 		// Arrange:
 		MosaicDefinitionTransactionPluginTestContext<TTraits> testContext;
-		auto config = CreateRentalFeeConfiguration(Default_Rental_Fee);
-		auto pPlugin = TTraits::CreatePlugin(config);
+		auto pluginConfig = CreateMosaicConfiguration(Default_Rental_Fee);
+		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
+		auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
 
 		auto pTransaction = CreateTransactionWithProperties<TTraits>(0);
 		FillDefaultTransactionData(*pTransaction);
@@ -262,7 +291,7 @@ namespace catapult { namespace plugins {
 		testContext.AssertMosaicNonceNotification(signer);
 		testContext.AssertNoOptionalMosaicProperties(pTransaction->PropertiesHeader);
 		testContext.AssertMosaicDefinitionTransaction(signer, MosaicProperties::FromValues({ { 2, 7, 0 } }));
-		testContext.AssertMosaicRentalFeeNotification(signer, config.SinkAddress);
+		testContext.AssertMosaicRentalFeeNotification(signer, sinkAddress);
 	}
 
 	// endregion

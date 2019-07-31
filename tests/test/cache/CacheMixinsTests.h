@@ -31,7 +31,7 @@ namespace catapult { namespace test {
 		struct ViewAccessor {
 			template<typename TCache>
 			static auto CreateView(const TCache& cache) {
-				return cache.createView();
+				return cache.createView(Height{0});
 			}
 		};
 
@@ -39,14 +39,14 @@ namespace catapult { namespace test {
 		struct DeltaAccessor {
 			template<typename TCache>
 			static auto CreateView(TCache& cache) {
-				return cache.createDelta();
+				return cache.createDelta(Height{0});
 			}
 		};
 
 		/// Inserts elements with \a ids into \a cache.
 		template<typename TTraits>
 		void InsertMultiple(typename TTraits::CacheType& cache, std::initializer_list<uint8_t> ids) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto id : ids)
 				delta->insert(TTraits::CreateWithId(id));
 
@@ -418,7 +418,7 @@ namespace catapult { namespace test {
 			// Arrange:
 			CacheType cache;
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->insert(TTraits::CreateWithIdAndExpiration(111, Height(111)));
 				delta->insert(TTraits::CreateWithIdAndExpiration(222, Height(123)));
 				delta->insert(TTraits::CreateWithIdAndExpiration(233, Height(222)));
@@ -550,7 +550,7 @@ namespace catapult { namespace test {
 			// Arrange:
 			CacheType cache;
 			SeedCache(cache);
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Act: touch at a height without any identifiers
 			auto expiryIds = delta->touch(Height(150));
@@ -566,7 +566,7 @@ namespace catapult { namespace test {
 			// Arrange:
 			CacheType cache;
 			SeedCache(cache);
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Act: touch at a height with known identifiers
 			auto expiryIds = delta->touch(Height(200));
@@ -582,7 +582,7 @@ namespace catapult { namespace test {
 
 	private:
 		static void SeedCache(CacheType& cache) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(TTraits::CreateWithIdAndExpiration(11, Height(100)));
 			delta->insert(TTraits::CreateWithIdAndExpiration(22, Height(200)));
 			delta->insert(TTraits::CreateWithIdAndExpiration(33, Height(100)));

@@ -23,7 +23,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::SignatureNotification;
+	using Notification = model::SignatureNotification<1>;
 
 	DECLARE_STATELESS_VALIDATOR(Signature, Notification)(const GenerationHash& generationHash) {
 		return MAKE_STATELESS_VALIDATOR(Signature, [generationHash](const auto& notification) {

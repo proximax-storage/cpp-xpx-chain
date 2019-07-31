@@ -71,7 +71,7 @@ namespace catapult { namespace deltaset {
 		template<typename TTraits>
 		struct CacheProxy {
 		public:
-			auto createDelta() {
+			auto createDelta(const Height&) {
 				return std::make_unique<DeltaProxy<TTraits>>(m_set.rebase());
 			}
 

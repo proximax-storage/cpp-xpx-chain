@@ -56,10 +56,13 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Calculates the cache state hash given \a height.
-		StateHashInfo calculateStateHash(Height height) const;
+		StateHashInfo calculateStateHash(const Height& height) const;
 
 		/// Sets the merkle roots for all subcaches (\a subCacheMerkleRoots).
 		void setSubCacheMerkleRoots(const std::vector<Hash256>& subCacheMerkleRoots);
+
+		/// Sets the cache \a height.
+		void setHeight(const Height& height);
 
 	public:
 		/// Creates a read-only view of this delta.

@@ -50,7 +50,7 @@ namespace catapult { namespace observers {
 
 			public:
 				auto notification() {
-					return model::TransactionNotification(m_signer, m_transactionHash, m_entityType, m_deadline);
+					return model::TransactionNotification<1>(m_signer, m_transactionHash, m_entityType, m_deadline);
 				}
 
 				void setType(model::EntityType type) {
@@ -83,7 +83,8 @@ namespace catapult { namespace observers {
 
 		void AssertObserverIgnoresUnknownTransactionType(model::EntityType entityType) {
 			// Arrange: cache is empty
-			ObserverTestContext context(observers::NotifyMode::Commit);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto pObserver = HashTraits::CreateObserver();
 
 			// Act:

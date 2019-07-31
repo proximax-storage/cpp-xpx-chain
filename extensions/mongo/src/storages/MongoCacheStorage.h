@@ -23,6 +23,7 @@
 #include "mongo/src/MongoStorageContext.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/thread/FutureUtils.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include <set>
 #include <unordered_set>
 
@@ -102,11 +103,11 @@ namespace catapult { namespace mongo { namespace storages {
 
 	public:
 		/// Creates a cache storage around \a storageContext and \a networkIdentifier.
-		MongoHistoricalCacheStorage(MongoStorageContext& storageContext, model::NetworkIdentifier networkIdentifier)
+		MongoHistoricalCacheStorage(MongoStorageContext& storageContext, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				: m_database(storageContext.createDatabaseConnection())
 				, m_errorPolicy(storageContext.createCollectionErrorPolicy(TCacheTraits::Collection_Name))
 				, m_bulkWriter(storageContext.bulkWriter())
-				, m_networkIdentifier(networkIdentifier)
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	private:
@@ -126,7 +127,7 @@ namespace catapult { namespace mongo { namespace storages {
 
 			// 3. insert new elements and modified elements into db
 			modifiedElements.insert(addedElements.cbegin(), addedElements.cend());
-			insertAll(modifiedElements);
+			insertAll(modifiedElements, changes.height());
 		}
 
 	private:
@@ -141,13 +142,13 @@ namespace catapult { namespace mongo { namespace storages {
 			m_errorPolicy.checkDeletedAtLeast(ids.size(), BulkWriteResult(deleteResult.get().result()), "removed and modified elements");
 		}
 
-		void insertAll(const ElementContainerType& elements) {
+		void insertAll(const ElementContainerType& elements, const Height& height) {
 			if (elements.empty())
 				return;
 
 			std::vector<typename TCacheTraits::ModelType> allModels;
 			for (const auto* pElement : elements) {
-				auto models = TCacheTraits::MapToMongoModels(*pElement, m_networkIdentifier);
+				auto models = TCacheTraits::MapToMongoModels(*pElement, m_pConfigHolder->Config(height).BlockChain.Network.Identifier);
 				std::move(models.begin(), models.end(), std::back_inserter(allModels));
 			}
 
@@ -193,7 +194,7 @@ namespace catapult { namespace mongo { namespace storages {
 		MongoDatabase m_database;
 		MongoErrorPolicy m_errorPolicy;
 		MongoBulkWriter& m_bulkWriter;
-		model::NetworkIdentifier m_networkIdentifier;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// A mongo cache storage that persists flat cache data using delete and upsert.
@@ -207,11 +208,11 @@ namespace catapult { namespace mongo { namespace storages {
 
 	public:
 		/// Creates a cache storage around \a storageContext and \a networkIdentifier.
-		MongoFlatCacheStorage(MongoStorageContext& storageContext, model::NetworkIdentifier networkIdentifier)
+		MongoFlatCacheStorage(MongoStorageContext& storageContext, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				: m_database(storageContext.createDatabaseConnection())
 				, m_errorPolicy(storageContext.createCollectionErrorPolicy(TCacheTraits::Collection_Name))
 				, m_bulkWriter(storageContext.bulkWriter())
-				, m_networkIdentifier(networkIdentifier)
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	private:
@@ -228,7 +229,7 @@ namespace catapult { namespace mongo { namespace storages {
 
 			// 3. upsert new elements and modified elements into db
 			modifiedElements.insert(addedElements.cbegin(), addedElements.cend());
-			upsertAll(modifiedElements);
+			upsertAll(modifiedElements, changes.height());
 		}
 
 	private:
@@ -241,11 +242,11 @@ namespace catapult { namespace mongo { namespace storages {
 			m_errorPolicy.checkDeleted(elements.size(), aggregateResult, "removed elements");
 		}
 
-		void upsertAll(const ElementContainerType& elements) {
+		void upsertAll(const ElementContainerType& elements, const Height& height) {
 			if (elements.empty())
 				return;
 
-			auto createDocument = [networkIdentifier = m_networkIdentifier](const auto* pModel, auto) {
+			auto createDocument = [networkIdentifier = m_pConfigHolder->Config(height).BlockChain.Network.Identifier](const auto* pModel, auto) {
 				return TCacheTraits::MapToMongoDocument(*pModel, networkIdentifier);
 			};
 			auto upsertResults = m_bulkWriter.bulkUpsert(TCacheTraits::Collection_Name, elements, createDocument, CreateFilter).get();
@@ -268,6 +269,6 @@ namespace catapult { namespace mongo { namespace storages {
 		MongoDatabase m_database;
 		MongoErrorPolicy m_errorPolicy;
 		MongoBulkWriter& m_bulkWriter;
-		model::NetworkIdentifier m_networkIdentifier;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 }}}

@@ -43,7 +43,7 @@ namespace catapult { namespace chain {
 
 				auto readOnlyCache = state.Cache.toReadOnly();
 				auto resolverContext = m_config.ResolverContextFactory(readOnlyCache);
-				auto validatorContext = ValidatorContext(height, timestamp, m_config.Network, resolverContext, readOnlyCache);
+				auto validatorContext = ValidatorContext(height, timestamp, m_config.NetworkInfoSupplier(height), resolverContext, readOnlyCache);
 				auto observerContext = observers::ObserverContext(state, height, observers::NotifyMode::Commit, resolverContext);
 
 				ProcessingNotificationSubscriber sub(*m_config.pValidator, validatorContext, *m_config.pObserver, observerContext);

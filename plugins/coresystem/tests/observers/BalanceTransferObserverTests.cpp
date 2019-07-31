@@ -34,7 +34,8 @@ namespace catapult { namespace observers {
 		template<typename TTraits>
 		void AssertCommitObservation() {
 			// Arrange:
-			test::AccountObserverTestContext context(NotifyMode::Commit);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto pObserver = CreateBalanceTransferObserver();
 
 			auto sender = test::GenerateRandomByteArray<Key>();
@@ -55,7 +56,8 @@ namespace catapult { namespace observers {
 		template<typename TTraits>
 		void AssertRollbackObservation() {
 			// Arrange:
-			test::AccountObserverTestContext context(NotifyMode::Rollback);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			test::AccountObserverTestContext context(NotifyMode::Rollback, Height{444}, config);
 			auto pObserver = CreateBalanceTransferObserver();
 
 			auto sender = test::GenerateRandomByteArray<Key>();
@@ -85,7 +87,7 @@ namespace catapult { namespace observers {
 
 		struct SingleMosaicTraits {
 			static auto CreateNotification(const Key& sender, const UnresolvedAddress& recipient) {
-				return model::BalanceTransferNotification(sender, recipient, test::UnresolveXor(Currency_Mosaic_Id), Amount(234));
+				return model::BalanceTransferNotification<1>(sender, recipient, test::UnresolveXor(Currency_Mosaic_Id), Amount(234));
 			}
 
 			static test::BalanceTransfers GetInitialSenderBalances() {
@@ -115,7 +117,7 @@ namespace catapult { namespace observers {
 	namespace {
 		struct MultipleMosaicTraits {
 			static auto CreateNotification(const Key& sender, const UnresolvedAddress& recipient) {
-				return model::BalanceTransferNotification(sender, recipient, test::UnresolveXor(MosaicId(12)), Amount(234));
+				return model::BalanceTransferNotification<1>(sender, recipient, test::UnresolveXor(MosaicId(12)), Amount(234));
 			}
 
 			static test::BalanceTransfers GetInitialSenderBalances() {

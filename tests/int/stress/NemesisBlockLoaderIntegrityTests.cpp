@@ -43,7 +43,8 @@ namespace catapult { namespace extensions {
 		constexpr auto Num_Nemesis_Accounts = CountOf(test::Mijin_Test_Private_Keys);
 		constexpr auto Num_Nemesis_Namespaces = 3;
 		constexpr auto Num_Nemesis_Mosaics = 2;
-		constexpr auto Num_Nemesis_Transactions = Num_Nemesis_Namespaces + 3 * Num_Nemesis_Mosaics + Num_Nemesis_Accounts;
+		constexpr auto Num_Nemesis_Config = 1;
+		constexpr auto Num_Nemesis_Transactions = Num_Nemesis_Namespaces + 3 * Num_Nemesis_Mosaics + Num_Nemesis_Accounts + Num_Nemesis_Config;
 
 		template<typename TAction>
 		void RunNemesisBlockTest(TAction action) {
@@ -54,7 +55,7 @@ namespace catapult { namespace extensions {
 			test::AddNemesisPluginExtensions(blockChainConfig);
 
 			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(blockChainConfig);
-			test::LocalNodeTestState localNodeState(pPluginManager->config(), tempDir.name(), pPluginManager->createCache());
+			test::LocalNodeTestState localNodeState(pPluginManager->config(Height{0}), tempDir.name(), pPluginManager->createCache());
 
 			{
 				auto cacheDelta = localNodeState.ref().Cache.createDelta();

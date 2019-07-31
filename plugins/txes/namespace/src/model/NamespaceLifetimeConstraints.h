@@ -20,6 +20,9 @@
 
 #pragma once
 #include "NamespaceConstants.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/plugins/PluginUtils.h"
+#include "src/config/NamespaceConfiguration.h"
 
 namespace catapult { namespace model {
 
@@ -27,12 +30,20 @@ namespace catapult { namespace model {
 	struct NamespaceLifetimeConstraints {
 	public:
 		/// Creates constraints around \a maxDuration and \a gracePeriodDuration.
-		constexpr NamespaceLifetimeConstraints(BlockDuration maxDuration, BlockDuration gracePeriodDuration)
-				: MaxNamespaceDuration(maxDuration.unwrap() + gracePeriodDuration.unwrap())
+		constexpr NamespaceLifetimeConstraints(const model::BlockChainConfiguration& blockChainConfig)
+				: m_blockChainConfig(blockChainConfig)
 		{}
 
 	public:
 		/// Maximum lifetime a namespace may have including the grace period.
-		BlockDuration MaxNamespaceDuration;
+		BlockDuration maxNamespaceDuration() {
+			const auto& pluginConfig = m_blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
+			auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(m_blockChainConfig.BlockGenerationTargetTime);
+			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(m_blockChainConfig.BlockGenerationTargetTime);
+			return BlockDuration{maxDuration.unwrap() + gracePeriodDuration.unwrap()};
+		}
+
+	private:
+		const model::BlockChainConfiguration& m_blockChainConfig;
 	};
 }}

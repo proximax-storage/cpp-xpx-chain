@@ -374,17 +374,19 @@ namespace catapult { namespace model {
 		transactionElement.EntityHash = test::GenerateRandomByteArray<Hash256>();
 		transactionElement.MerkleComponentHash = test::GenerateRandomByteArray<Hash256>();
 		transactionElement.OptionalExtractedAddresses = std::make_shared<UnresolvedAddressSet>();
+		Height height(123);
 
 		auto pTransaction2 = utils::UniqueToShared(test::GenerateRandomTransaction());
 
 		// Act:
-		auto transactionInfo = MakeTransactionInfo(pTransaction2, transactionElement);
+		auto transactionInfo = MakeTransactionInfo(pTransaction2, transactionElement, height);
 
 		// Assert:
 		EXPECT_EQ(pTransaction2.get(), transactionInfo.pEntity.get());
 		EXPECT_EQ(transactionElement.EntityHash, transactionInfo.EntityHash);
 		EXPECT_EQ(transactionElement.MerkleComponentHash, transactionInfo.MerkleComponentHash);
 		EXPECT_EQ(transactionElement.OptionalExtractedAddresses.get(), transactionInfo.OptionalExtractedAddresses.get());
+		EXPECT_EQ(height, transactionInfo.AssociatedHeight);
 	}
 
 	// endregion

@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransactionNotification;
+	using Notification = model::TransactionNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(AggregateHashPresent, [](const auto& notification, const auto& context) {
 		if (model::Entity_Type_Aggregate_Bonded != notification.TransactionType)

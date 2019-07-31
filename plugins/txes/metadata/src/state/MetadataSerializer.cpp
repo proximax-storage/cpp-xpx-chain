@@ -15,6 +15,9 @@ namespace catapult { namespace state {
 	// region MetadataSerializer
 
 	void MetadataSerializer::Save(const MetadataEntry& metadataEntry, io::OutputStream& output) {
+		// write version
+		io::Write32(output, 1);
+
 		// write identifying information
 		io::Write8(output, metadataEntry.raw().size());
 		io::Write(output, metadataEntry.raw());
@@ -31,6 +34,11 @@ namespace catapult { namespace state {
 	}
 
 	MetadataEntry MetadataSerializer::Load(io::InputStream& input) {
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MetadataEntry", version);
+
 		uint8_t rawSize = io::Read8(input);
 		std::vector<uint8_t> raw(rawSize);
 		io::Read(input, raw);

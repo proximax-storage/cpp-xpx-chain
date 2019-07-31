@@ -11,7 +11,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MetadataModificationsNotification;
+	using Notification = model::MetadataModificationsNotification<1>;
 
 
 	namespace {
@@ -72,9 +72,11 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, Notification)(const uint8_t& maxFields) {
-		return MAKE_STATEFUL_VALIDATOR(MetadataModifications, [maxFields](const Notification& notification, const ValidatorContext& context){
-			return validate(notification, context, maxFields);
+	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(MetadataModifications, [pConfigHolder](const Notification& notification, const ValidatorContext& context) {
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MetadataConfiguration>(PLUGIN_NAME(metadata));
+			return validate(notification, context, pluginConfig.MaxFields);
 		});
 	}
 }}

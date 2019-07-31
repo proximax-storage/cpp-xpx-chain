@@ -52,7 +52,7 @@ namespace catapult { namespace subscribers {
 				return std::move(pMemoryCacheChanges);
 			}
 
-			void apply(const cache::CacheChanges&) const override {
+			void apply(const cache::CacheChanges&, const Height&) const override {
 				CATAPULT_THROW_INVALID_ARGUMENT("apply - not supported in mock");
 			}
 		};
@@ -63,6 +63,10 @@ namespace catapult { namespace subscribers {
 			struct CacheDeltaType {
 				std::unordered_set<const uint32_t*> addedElements() const {
 					return {};
+				}
+
+				Height height() const {
+					return Height{0};
 				}
 			};
 			using CacheValueType = uint32_t;

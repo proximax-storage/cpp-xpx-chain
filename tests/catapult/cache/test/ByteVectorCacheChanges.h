@@ -34,6 +34,7 @@ namespace catapult { namespace test {
 	/// Creates a copy of \a changes.
 	inline std::unique_ptr<ByteVectorCacheChanges> CopyByteVectorCacheChanges(const ByteVectorCacheChanges& changes) {
 		auto pChangesCopy = std::make_unique<ByteVectorCacheChanges>();
+		pChangesCopy->Height = changes.Height;
 		pChangesCopy->Added = changes.Added;
 		pChangesCopy->Removed = changes.Removed;
 		pChangesCopy->Copied = changes.Copied;

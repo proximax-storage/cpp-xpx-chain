@@ -38,9 +38,9 @@ namespace catapult { namespace cache {
 		auto result = Serializer::SerializeValue(ns);
 
 		// Assert:
-		ASSERT_EQ(sizeof(uint64_t) + sizeof(NamespaceId), result.size());
+		ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) + sizeof(NamespaceId), result.size());
 
-		const auto* pValues = reinterpret_cast<const uint64_t*>(result.data());
+		const auto* pValues = reinterpret_cast<const uint64_t*>(result.data() + sizeof(VersionType));
 		EXPECT_EQ(1u, pValues[0]);
 		EXPECT_EQ(11u, pValues[1]);
 	}
@@ -53,46 +53,52 @@ namespace catapult { namespace cache {
 		auto result = Serializer::SerializeValue(ns);
 
 		// Assert:
-		ASSERT_EQ(sizeof(uint64_t) + 3 * sizeof(NamespaceId), result.size());
+		ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) + 3 * sizeof(NamespaceId), result.size());
 
-		const auto* pValues = reinterpret_cast<const uint64_t*>(result.data());
+		const auto* pValues = reinterpret_cast<const uint64_t*>(result.data() + sizeof(VersionType));
 		EXPECT_EQ(3u, pValues[0]);
 		EXPECT_EQ(11u, pValues[1]);
 		EXPECT_EQ(7u, pValues[2]);
 		EXPECT_EQ(21u, pValues[3]);
 	}
 
-	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializePartialValue) {
-		// Arrange:
-		std::vector<uint8_t> buffer{
-			1, 0, 0, 0, 0, 0, 0, 0, // path elements
-			11, 0, 0, 0, 0, 0, 0, 0 // id
-		};
+	namespace {
+		void AssertFlatMapTypesSerializer_CanDeserializePartialValue(VersionType version) {
+			// Arrange:
+			auto buffer = std::vector<uint64_t>{ 0, 1, 11 };
+			auto* pData = reinterpret_cast<uint8_t*>(buffer.data()) + sizeof(uint64_t) - sizeof(VersionType);
+			memcpy(pData, &version, sizeof(VersionType));
 
-		// Act:
-		auto ns = Serializer::DeserializeValue(buffer);
+			// Act:
+			auto ns = Serializer::DeserializeValue({ pData, sizeof(VersionType) + (buffer.size() - 1) * sizeof(uint64_t) });
 
-		// Assert:
-		ASSERT_EQ(1u, ns.path().size());
-		EXPECT_EQ(NamespaceId(11), ns.path()[0]);
+			// Assert:
+			ASSERT_EQ(1u, ns.path().size());
+			EXPECT_EQ(NamespaceId(11), ns.path()[0]);
+		}
+
+		void AssertFlatMapTypesSerializer_CanDeserializeFullValue(VersionType version) {
+			// Arrange:
+			auto buffer = std::vector<uint64_t>{ 0, 3, 11, 7, 21 };
+			auto* pData = reinterpret_cast<uint8_t*>(buffer.data()) + sizeof(uint64_t) - sizeof(VersionType);
+			memcpy(pData, &version, sizeof(VersionType));
+
+			// Act:
+			auto ns = Serializer::DeserializeValue({ pData, sizeof(VersionType) + (buffer.size() - 1) * sizeof(uint64_t) });
+
+			// Assert:
+			ASSERT_EQ(3u, ns.path().size());
+			EXPECT_EQ(NamespaceId(11), ns.path()[0]);
+			EXPECT_EQ(NamespaceId(7), ns.path()[1]);
+			EXPECT_EQ(NamespaceId(21), ns.path()[2]);
+		}
 	}
 
-	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializeFullValue) {
-		// Arrange:
-		std::vector<uint8_t> buffer{
-			3, 0, 0, 0, 0, 0, 0, 0, // path elements
-			11, 0, 0, 0, 0, 0, 0, 0, // id
-			7, 0, 0, 0, 0, 0, 0, 0, // id
-			21, 0, 0, 0, 0, 0, 0, 0, // id
-		};
+	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializePartialValue_v1) {
+		AssertFlatMapTypesSerializer_CanDeserializePartialValue(1);
+	}
 
-		// Act:
-		auto ns = Serializer::DeserializeValue(buffer);
-
-		// Assert:
-		ASSERT_EQ(3u, ns.path().size());
-		EXPECT_EQ(NamespaceId(11), ns.path()[0]);
-		EXPECT_EQ(NamespaceId(7), ns.path()[1]);
-		EXPECT_EQ(NamespaceId(21), ns.path()[2]);
+	TEST(TEST_CLASS, FlatMapTypesSerializer_CanDeserializeFullValue_v1) {
+		AssertFlatMapTypesSerializer_CanDeserializeFullValue(1);
 	}
 }}

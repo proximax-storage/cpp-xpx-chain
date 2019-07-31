@@ -18,10 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/PropertyConfiguration.h"
 #include "src/validators/Validators.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/PropertyCacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -29,9 +31,9 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxPropertyValuesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxAddressPropertyValues, 5)
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicPropertyValues, 5)
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactionTypePropertyValues, 5)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxAddressPropertyValues, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicPropertyValues, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactionTypePropertyValues, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -40,7 +42,7 @@ namespace catapult { namespace validators {
 		struct AddressPropertyTraits : public test::BaseAddressPropertyTraits {
 			static constexpr auto CreateValidator = CreateMaxAddressPropertyValuesValidator;
 
-			using NotificationType = model::ModifyAddressPropertyNotification;
+			using NotificationType = model::ModifyAddressPropertyNotification_v1;
 
 			static auto ToUnresolved(const ValueType& value) {
 				return extensions::CopyToUnresolvedAddress(value);
@@ -50,7 +52,7 @@ namespace catapult { namespace validators {
 		struct MosaicPropertyTraits : public test::BaseMosaicPropertyTraits {
 			static constexpr auto CreateValidator = CreateMaxMosaicPropertyValuesValidator;
 
-			using NotificationType = model::ModifyMosaicPropertyNotification;
+			using NotificationType = model::ModifyMosaicPropertyNotification_v1;
 
 			static auto ToUnresolved(const ValueType& value) {
 				return extensions::CastToUnresolvedMosaicId(value);
@@ -60,7 +62,7 @@ namespace catapult { namespace validators {
 		struct TransactionTypePropertyTraits : public test::BaseTransactionTypePropertyTraits {
 			static constexpr auto CreateValidator = CreateMaxTransactionTypePropertyValuesValidator;
 
-			using NotificationType = model::ModifyTransactionTypePropertyNotification;
+			using NotificationType = model::ModifyTransactionTypePropertyNotification_v1;
 
 			static auto ToUnresolved(const ValueType& value) {
 				return value;
@@ -79,7 +81,8 @@ namespace catapult { namespace validators {
 
 			// Arrange:
 			auto initialValues = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numInitialValues);
-			auto cache = test::PropertyCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::PropertyCacheFactory::Create(config);
 			auto key = test::GenerateRandomByteArray<Key>();
 			test::PopulateCache<TPropertyValueTraits>(cache, key, initialValues);
 			std::vector<model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>> modifications;
@@ -91,7 +94,12 @@ namespace catapult { namespace validators {
 					modifications.push_back({ Del, TPropertyValueTraits::ToUnresolved(initialValues[i]) });
 			}
 
-			auto pValidator = TPropertyValueTraits::CreateValidator(maxPropertyValues);
+			auto pluginConfig = config::PropertyConfiguration::Uninitialized();
+			pluginConfig.MaxPropertyValues = maxPropertyValues;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(property), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pValidator = TPropertyValueTraits::CreateValidator(pConfigHolder);
 
 			using UnresolvedValueType = typename TPropertyValueTraits::UnresolvedValueType;
 			auto notification = test::CreateNotification<TPropertyValueTraits, UnresolvedValueType>(key, modifications);

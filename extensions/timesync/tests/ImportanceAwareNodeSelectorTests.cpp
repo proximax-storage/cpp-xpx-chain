@@ -25,6 +25,7 @@
 #include "catapult/ionet/NodeInfo.h"
 #include "catapult/utils/ArraySet.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -43,7 +44,7 @@ namespace catapult { namespace timesync {
 				cache::AccountStateCache& cache,
 				const std::vector<Key>& keys,
 				const std::vector<Importance>& importances) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto i = 0u; i < keys.size(); ++i) {
 				delta->addAccount(keys[i], Height(1));
 				auto& accountState = delta->find(keys[i]).get();
@@ -56,10 +57,15 @@ namespace catapult { namespace timesync {
 
 		auto CreateAccountStateCache() {
 			auto cacheConfig = cache::CacheConfiguration();
-			auto networkIdentifier = model::NetworkIdentifier::Mijin_Test;
 			auto maxAmount = Amount(std::numeric_limits<Amount::ValueType>::max());
-			cache::AccountStateCacheTypes::Options options{ networkIdentifier, 234, maxAmount, MosaicId(1111), MosaicId(2222) };
-			return std::make_unique<cache::AccountStateCache>(cacheConfig, options);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			blockChainConfig.ImportanceGrouping = 234;
+			blockChainConfig.MinHarvesterBalance = maxAmount;
+			blockChainConfig.CurrencyMosaicId = MosaicId(1111);
+			blockChainConfig.HarvestingMosaicId = MosaicId(2222);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			return std::make_unique<cache::AccountStateCache>(cacheConfig, pConfigHolder);
 		}
 
 		struct SeedNodeContainerOptions {

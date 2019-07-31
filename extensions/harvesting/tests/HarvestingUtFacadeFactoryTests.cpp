@@ -21,6 +21,7 @@
 #include "harvesting/src/HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
@@ -39,6 +40,8 @@ namespace catapult { namespace harvesting {
 
 		constexpr auto Currency_Mosaic_Id = MosaicId(1234);
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
 
 		// endregion
 
@@ -64,7 +67,7 @@ namespace catapult { namespace harvesting {
 			config.BlockChain.BlockPruneInterval = 10;
 			config.BlockChain.GreedDelta = 0.5;
 			config.BlockChain.GreedExponent = 2.0;
-			
+
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 1;
 
@@ -78,9 +81,9 @@ namespace catapult { namespace harvesting {
 		template<typename TAction>
 		void RunUtFacadeTest(TAction action) {
 			// Arrange: create factory and facade
-			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height);
+			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 			test::MockExecutionConfiguration executionConfig;
-			HarvestingUtFacadeFactory factory(catapultCache, CreateConfiguration(), executionConfig.Config);
+			HarvestingUtFacadeFactory factory(catapultCache, config::CreateMockConfigurationHolder(CreateConfiguration()), executionConfig.Config);
 
 			auto pFacade = factory.create(Default_Time);
 			ASSERT_TRUE(!!pFacade);
@@ -99,9 +102,9 @@ namespace catapult { namespace harvesting {
 			auto transactionInfos = test::CreateTransactionInfosFromSizeMultiplierPairs(sizeMultiplierPairs);
 
 			// - create factory and facade
-			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height);
+			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 			test::MockExecutionConfiguration executionConfig;
-			HarvestingUtFacadeFactory factory(catapultCache, CreateConfiguration(), executionConfig.Config);
+			HarvestingUtFacadeFactory factory(catapultCache, config::CreateMockConfigurationHolder(CreateConfiguration()), executionConfig.Config);
 
 			auto pFacade = factory.create(Default_Time);
 			ASSERT_TRUE(!!pFacade);
@@ -523,9 +526,9 @@ namespace catapult { namespace harvesting {
 		struct FacadeTestContext {
 		public:
 			FacadeTestContext(const config::CatapultConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
-					: m_config(config)
+					: m_pConfigHolder(config::CreateMockConfigurationHolder(config))
 					, m_executionConfig(executionConfig)
-					, m_cache(test::CreateEmptyCatapultCache(m_config.BlockChain, CreateCacheConfiguration(m_dbDirGuard.name()))) {
+					, m_cache(test::CreateEmptyCatapultCache(config.BlockChain, CreateCacheConfiguration(m_dbDirGuard.name()))) {
 				test::AddMarkerAccount(m_cache);
 				setCacheHeight(Default_Height);
 			}
@@ -562,7 +565,7 @@ namespace catapult { namespace harvesting {
 					const model::BlockHeader& blockHeader,
 					const std::vector<model::TransactionInfo>& transactionInfos,
 					size_t numUnapplies = 0) const {
-				HarvestingUtFacadeFactory factory(m_cache, m_config, m_executionConfig);
+				HarvestingUtFacadeFactory factory(m_cache, m_pConfigHolder, m_executionConfig);
 
 				auto pFacade = factory.create(Default_Time);
 				if (!pFacade)
@@ -584,7 +587,7 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			config::CatapultConfiguration m_config;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 			chain::ExecutionConfiguration m_executionConfig;
 			cache::CatapultCache m_cache;
 		};

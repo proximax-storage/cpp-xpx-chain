@@ -20,19 +20,28 @@
 
 #include "src/cache/HashCacheStorage.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 
 	namespace {
+		auto CreateConfigHolder() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(2);
+			config.MaxRollbackBlocks = 768;
+			return config::CreateMockConfigurationHolder(config);
+		}
+
 		struct HashCacheStorageTraits {
 			using ValueType = state::TimestampedHash;
 			static constexpr auto Value_Size = sizeof(Timestamp) + sizeof(ValueType::HashType);
+			static constexpr auto Serialized_Value_Size = sizeof(VersionType) + Value_Size;
 
 			using StorageType = HashCacheStorage;
 			class CacheType : public HashCache {
 			public:
-				CacheType() : HashCache(CacheConfiguration(), utils::TimeSpan::FromHours(32))
+				CacheType() : HashCache(CacheConfiguration(), CreateConfigHolder())
 				{}
 			};
 
@@ -42,5 +51,5 @@ namespace catapult { namespace cache {
 		};
 	}
 
-	DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(HashCacheStorageTests, HashCacheStorageTraits)
+	DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(HashCacheStorageTests, HashCacheStorageTraits, 1)
 }}

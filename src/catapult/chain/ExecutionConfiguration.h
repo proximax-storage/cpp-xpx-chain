@@ -29,14 +29,15 @@ namespace catapult { namespace chain {
 	/// Configuration for executing entities.
 	struct ExecutionConfiguration {
 	private:
+		using NetworkInfoSupplierFunc = std::function<model::NetworkInfo (const Height& height)>;
 		using ObserverPointer = std::shared_ptr<const observers::AggregateNotificationObserver>;
 		using ValidatorPointer = std::shared_ptr<const validators::stateful::AggregateNotificationValidator>;
 		using PublisherPointer = std::shared_ptr<const model::NotificationPublisher>;
 		using ResolverContextFactoryFunc = std::function<model::ResolverContext (const cache::ReadOnlyCatapultCache&)>;
 
 	public:
-		/// Network info.
-		model::NetworkInfo Network;
+		/// Network info supplier.
+		NetworkInfoSupplierFunc NetworkInfoSupplier;
 
 		/// Observer.
 		ObserverPointer pObserver;

@@ -124,7 +124,7 @@ namespace catapult { namespace partialtransaction {
 
 		private:
 			extensions::ServiceState& m_state;
-			const config::NodeConfiguration& m_nodeConfig;
+			config::NodeConfiguration m_nodeConfig;
 			std::vector<TransactionConsumer> m_consumers;
 		};
 
@@ -223,6 +223,7 @@ namespace catapult { namespace partialtransaction {
 
 			auto transactionRangeConsumerFactory = state.hooks().transactionRangeConsumerFactory();
 			return std::make_unique<chain::PtUpdater>(
+					state.cache(),
 					ptCache,
 					std::move(pValidator),
 					[transactionRangeConsumerFactory](auto&& pTransaction) {

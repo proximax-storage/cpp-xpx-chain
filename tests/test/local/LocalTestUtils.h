@@ -58,6 +58,9 @@ namespace catapult { namespace test {
 	/// Creates an uninitialized catapult configuration.
 	config::CatapultConfiguration CreateUninitializedCatapultConfiguration();
 
+	/// Creates a supported entity versions configuration.
+	config::SupportedEntityVersions CreateSupportedEntityVersions();
+
 	/// Creates a prototypical catapult configuration that is safe to use in local tests.
 	config::CatapultConfiguration CreatePrototypicalCatapultConfiguration();
 

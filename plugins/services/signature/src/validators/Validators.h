@@ -26,5 +26,5 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all signature notifications and validates that:
 	/// - signatures are valid given \a generationHash
-	DECLARE_STATELESS_VALIDATOR(Signature, model::SignatureNotification)(const GenerationHash& generationHash);
+	DECLARE_STATELESS_VALIDATOR(Signature, model::SignatureNotification<1>)(const GenerationHash& generationHash);
 }}

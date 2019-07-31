@@ -23,7 +23,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::ModifyMultisigSettingsNotification;
+	using Notification = model::ModifyMultisigSettingsNotification<1>;
 
 	namespace {
 		constexpr uint8_t AddDelta(uint8_t value, int8_t delta) {

@@ -21,6 +21,7 @@
 #include "src/validators/Validators.h"
 #include "catapult/model/Address.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,17 +29,21 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS AddressValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Address, static_cast<model::NetworkIdentifier>(123))
+	DEFINE_COMMON_VALIDATOR_TESTS(Address, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
 
+		template<VersionType notificationVersion>
 		void AssertValidationResult(ValidationResult expectedResult, const Address& address) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.Network.Identifier = Network_Identifier;
+			auto cache = test::CreateEmptyCatapultCache(config);
 
-			model::AccountAddressNotification notification(test::UnresolveXor(address));
-			auto pValidator = CreateAddressValidator(Network_Identifier);
+			model::AccountAddressNotification<notificationVersion> notification(test::UnresolveXor(address));
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pValidator = CreateAddressValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -55,7 +60,7 @@ namespace catapult { namespace validators {
 		auto address = PublicKeyToAddress(test::GenerateRandomByteArray<Key>(), Network_Identifier);
 
 		// Assert:
-		AssertValidationResult(ValidationResult::Success, address);
+		AssertValidationResult<1>(ValidationResult::Success, address);
 	}
 
 	TEST(TEST_CLASS, FailureWhenAddressHasInvalidChecksum) {
@@ -64,7 +69,7 @@ namespace catapult { namespace validators {
 		address[Address_Decoded_Size / 2] ^= 0xFF;
 
 		// Assert:
-		AssertValidationResult(Failure_Core_Invalid_Address, address);
+		AssertValidationResult<1>(Failure_Core_Invalid_Address, address);
 	}
 
 	TEST(TEST_CLASS, FailureWhenAddressIsIncompatibleWithNetwork) {
@@ -72,7 +77,7 @@ namespace catapult { namespace validators {
 		auto address = PublicKeyToAddress(test::GenerateRandomByteArray<Key>(), model::NetworkIdentifier::Mijin_Test);
 
 		// Assert:
-		AssertValidationResult(Failure_Core_Invalid_Address, address);
+		AssertValidationResult<1>(Failure_Core_Invalid_Address, address);
 	}
 
 	// endregion

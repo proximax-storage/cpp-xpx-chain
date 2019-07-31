@@ -18,8 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/NamespaceConfiguration.h"
 #include "src/validators/Validators.h"
 #include "src/cache/NamespaceCache.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -29,11 +31,13 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RootNamespaceMaxChildrenValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, 123)
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, config::CreateMockConfigurationHolder())
 
 	namespace {
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		auto CreateAndSeedCache() {
-			auto cache = test::NamespaceCacheFactory::Create();
+			auto cache = test::NamespaceCacheFactory::Create(Default_Config);
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
@@ -53,10 +57,15 @@ namespace catapult { namespace validators {
 			return cache;
 		}
 
-		void RunTest(ValidationResult expectedResult, const model::ChildNamespaceNotification& notification, uint16_t maxChildren) {
+		void RunTest(ValidationResult expectedResult, const model::ChildNamespaceNotification<1>& notification, uint16_t maxChildren) {
 			// Arrange:
 			auto cache = CreateAndSeedCache();
-			auto pValidator = CreateRootNamespaceMaxChildrenValidator(maxChildren);
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.MaxChildNamespaces = maxChildren;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pValidator = CreateRootNamespaceMaxChildrenValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -68,7 +77,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenMaxChildrenIsExceeded) {
 		// Act: root with id 25 has 3 children
-		auto notification = model::ChildNamespaceNotification(Key(), NamespaceId(26), NamespaceId(25));
+		auto notification = model::ChildNamespaceNotification<1>(Key(), NamespaceId(26), NamespaceId(25));
 		RunTest(Failure_Namespace_Max_Children_Exceeded, notification, 1);
 		RunTest(Failure_Namespace_Max_Children_Exceeded, notification, 2);
 		RunTest(Failure_Namespace_Max_Children_Exceeded, notification, 3);
@@ -76,7 +85,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenMaxChildrenIsNotExceeded) {
 		// Act: root with id 25 has 3 children
-		auto notification = model::ChildNamespaceNotification(Key(), NamespaceId(26), NamespaceId(25));
+		auto notification = model::ChildNamespaceNotification<1>(Key(), NamespaceId(26), NamespaceId(25));
 		RunTest(ValidationResult::Success, notification, 4);
 		RunTest(ValidationResult::Success, notification, 5);
 		RunTest(ValidationResult::Success, notification, 123);

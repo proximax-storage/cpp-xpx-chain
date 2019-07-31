@@ -26,7 +26,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::TransactionNotification;
+	using Notification = model::TransactionNotification<1>;
 
 	namespace {
 		struct HashTraits {

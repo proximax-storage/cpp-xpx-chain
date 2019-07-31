@@ -83,11 +83,12 @@ namespace catapult { namespace validators {
 				const model::UnresolvedAddressSet& participantsByAddress,
 				const utils::KeySet& participantsByKey) {
 			// Arrange:
-			auto cache = test::PropertyCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::PropertyCacheFactory::Create(config);
 			PopulateCache<TOperationTraits>(cache, cacheContents);
 			auto pValidator = CreateAddressInteractionValidator();
 			auto entityType = static_cast<model::EntityType>(0x4123);
-			auto notification = model::AddressInteractionNotification(source, entityType, participantsByAddress, participantsByKey);
+			auto notification = model::AddressInteractionNotification<1>(source, entityType, participantsByAddress, participantsByKey);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

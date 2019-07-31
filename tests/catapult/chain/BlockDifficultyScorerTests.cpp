@@ -20,6 +20,7 @@
 
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/utils/Logging.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 #include <cmath>
@@ -40,6 +41,7 @@ namespace catapult { namespace chain {
 		model::BlockChainConfiguration CreateConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+			config.MaxRollbackBlocks = 7;
 			config.MaxDifficultyBlocks = 3;
 			config.BlockTimeSmoothingFactor = 3000;
 			return config;
@@ -139,7 +141,7 @@ namespace catapult { namespace chain {
 
 	namespace {
 		void PrepareCache(cache::BlockDifficultyCache& cache, size_t numInfos) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (auto i = 0u; i < numInfos; ++i)
 				delta->insert(Height(i + 1), Timestamp(60'000 * i), Difficulty(1 + NEMESIS_BLOCK_DIFFICULTY * i));
 
@@ -192,9 +194,9 @@ namespace catapult { namespace chain {
 	CACHE_OVERLOAD_TRAITS_BASED_TEST(DifferentOverloadsYieldSameResult) {
 		// Arrange:
 		auto count = 10u;
-		cache::BlockDifficultyCache cache(count);
-		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
+		cache::BlockDifficultyCache cache(config::CreateMockConfigurationHolder(config));
+		PrepareCache(cache, count);
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 1),
 				Timestamp(60'000 * count),
@@ -204,7 +206,7 @@ namespace catapult { namespace chain {
 		// Act:
 		auto difficulty1 = TTraits::CalculateDifficulty(cache, nextBlockInfo, config);
 
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		auto difficulty2 = CalculateDifficulty(view->difficultyInfos(Height(count), count), nextBlockInfo, config);
 
 		// Assert:
@@ -214,9 +216,9 @@ namespace catapult { namespace chain {
 	CACHE_OVERLOAD_TRAITS_BASED_TEST(MaxDifficultyBlocksInConfigIsRespected) {
 		// Arrange:
 		auto count = 10u;
-		cache::BlockDifficultyCache cache(count);
-		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
+		cache::BlockDifficultyCache cache(config::CreateMockConfigurationHolder(config));
+		PrepareCache(cache, count);
 		config.MaxDifficultyBlocks = 3;
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 1),
@@ -234,9 +236,9 @@ namespace catapult { namespace chain {
 	CACHE_OVERLOAD_TRAITS_BASED_TEST(CannotCalculateDifficultyIfStartingHeightIsNotInCache) {
 		// Arrange:
 		auto count = 10u;
-		cache::BlockDifficultyCache cache(count);
-		PrepareCache(cache, count);
 		auto config = CreateConfiguration();
+		cache::BlockDifficultyCache cache(config::CreateMockConfigurationHolder(config));
+		PrepareCache(cache, count);
 		state::BlockDifficultyInfo nextBlockInfo(
 				Height(count + 2),
 				Timestamp(60'000 * count),

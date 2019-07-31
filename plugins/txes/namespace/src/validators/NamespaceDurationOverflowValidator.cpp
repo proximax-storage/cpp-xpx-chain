@@ -20,12 +20,13 @@
 
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
+#include "src/model/NamespaceLifetimeConstraints.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/constants.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::RootNamespaceNotification;
+	using Notification = model::RootNamespaceNotification<1>;
 
 	namespace {
 		constexpr Height ToHeight(BlockDuration duration) {
@@ -41,8 +42,8 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, Notification)(BlockDuration maxNamespaceDuration) {
-		return MAKE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, [maxNamespaceDuration](
+	DECLARE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
@@ -64,7 +65,8 @@ namespace catapult { namespace validators {
 				return Failure_Namespace_Invalid_Duration;
 
 			auto newLifetimeEnd = root.lifetime().End + ToHeight(notification.Duration);
-			auto maxLifetimeEnd = CalculateMaxLifetimeEnd(height, maxNamespaceDuration);
+			model::NamespaceLifetimeConstraints constraints(pConfigHolder->Config(context.Height).BlockChain);
+			auto maxLifetimeEnd = CalculateMaxLifetimeEnd(height, constraints.maxNamespaceDuration());
 			if (newLifetimeEnd > maxLifetimeEnd)
 				return Failure_Namespace_Invalid_Duration;
 

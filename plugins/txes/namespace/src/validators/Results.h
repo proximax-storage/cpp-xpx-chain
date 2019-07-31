@@ -48,6 +48,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the id is not the expected id generated from signer and nonce.
 	DEFINE_NAMESPACE_RESULT(Id_Mismatch, 6);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_NAMESPACE_RESULT(Plugin_Config_Malformed, 7);
+
 	// endregion
 
 	// region namespace

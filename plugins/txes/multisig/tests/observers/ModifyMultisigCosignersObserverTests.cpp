@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
 		constexpr auto Add = model::CosignatoryModificationType::Add;
 		constexpr auto Del = model::CosignatoryModificationType::Del;
 		using ObserverTestContext = test::ObserverTestContextT<test::MultisigCacheFactory>;
-		using Notification = model::ModifyMultisigCosignersNotification;
+		using Notification = model::ModifyMultisigCosignersNotification<1>;
 		using Modifications = std::vector<model::CosignatoryModification>;
 
 		auto CreateNotification(const Key& signerKey, const std::vector<model::CosignatoryModification>& modifications) {
@@ -185,9 +185,10 @@ namespace catapult { namespace observers {
 					const std::vector<size_t>& finalUnknownAccounts,
 					const std::vector<MultisigDescriptor>& finalMultisigAccounts) {
 
+				auto config = model::BlockChainConfiguration::Uninitialized();
 				RunTest(
 						notification,
-						ObserverTestContext(NotifyMode::Commit, Height(777)),
+						ObserverTestContext(NotifyMode::Commit, Height(777), config),
 						[&keys, &initialUnknownAccounts, &initialMultisigAccounts](auto& cacheFacade) {
 							InitMultisigTest(cacheFacade, keys, initialUnknownAccounts, initialMultisigAccounts);
 						},
@@ -207,9 +208,10 @@ namespace catapult { namespace observers {
 					const std::vector<size_t>& finalUnknownAccounts,
 					const std::vector<MultisigDescriptor>& finalMultisigAccounts) {
 
+				auto config = model::BlockChainConfiguration::Uninitialized();
 				RunTest(
 						notification,
-						ObserverTestContext(NotifyMode::Rollback, Height(777)),
+						ObserverTestContext(NotifyMode::Rollback, Height(777), config),
 						[&keys, &finalUnknownAccounts, &finalMultisigAccounts](auto& cacheFacade) {
 							InitMultisigTest(cacheFacade, keys, finalUnknownAccounts, finalMultisigAccounts);
 						},

@@ -19,22 +19,25 @@
 **/
 
 #include "Validators.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "src/model/NameChecker.h"
 #include "src/model/NamespaceIdGenerator.h"
 #include "catapult/utils/Hashers.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::NamespaceNameNotification;
+	using Notification = model::NamespaceNameNotification<1>;
 	using NameSet = std::unordered_set<std::string>;
 
-	DECLARE_STATELESS_VALIDATOR(NamespaceName, Notification)(uint8_t maxNameSize, const NameSet& reservedRootNamespaceNames) {
-		std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>> reservedRootIds;
-		for (const auto& name : reservedRootNamespaceNames)
-			reservedRootIds.emplace(model::GenerateNamespaceId(Namespace_Base_Id, name));
+	DECLARE_STATEFUL_VALIDATOR(NamespaceName, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(NamespaceName, ([pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
+			std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>> reservedRootIds;
+			for (const auto& name : pluginConfig.ReservedRootNamespaceNames)
+				reservedRootIds.emplace(model::GenerateNamespaceId(Namespace_Base_Id, name));
 
-		return MAKE_STATELESS_VALIDATOR(NamespaceName, ([maxNameSize, reservedRootIds](const auto& notification) {
-			if (maxNameSize < notification.NameSize || !model::IsValidName(notification.NamePtr, notification.NameSize))
+			if (pluginConfig.MaxNameSize < notification.NameSize || !model::IsValidName(notification.NamePtr, notification.NameSize))
 				return Failure_Namespace_Invalid_Name;
 
 			auto name = utils::RawString(reinterpret_cast<const char*>(notification.NamePtr), notification.NameSize);

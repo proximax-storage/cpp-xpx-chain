@@ -33,8 +33,7 @@
 namespace catapult { namespace subscribers {
 
 	SubscriptionManager::SubscriptionManager(const config::CatapultConfiguration& config)
-			: m_config(config)
-			, m_pStorage(std::make_unique<io::FileBlockStorage>(m_config.User.DataDirectory)) {
+			: m_pStorage(std::make_unique<io::FileBlockStorage>(config.User.DataDirectory)) {
 		m_subscriberUsedFlags.fill(false);
 	}
 
@@ -96,10 +95,10 @@ namespace catapult { namespace subscribers {
 	std::unique_ptr<TransactionStatusSubscriber> SubscriptionManager::createTransactionStatusSubscriber() {
 		class LoggingTransactionStatusSubscriber : public TransactionStatusSubscriber {
 		public:
-			void notifyStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) override {
+			void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
 				auto result = validators::ValidationResult(status);
 				CATAPULT_LOG_LEVEL(validators::MapToLogLevel(result))
-						<< "rejected tx " << hash << " due to result " << result
+						<< "rejected tx " << hash << " at height " << height << " due to result " << result
 						<< " (deadline " << transaction.Deadline << ")";
 			}
 

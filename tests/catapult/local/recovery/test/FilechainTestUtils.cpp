@@ -19,6 +19,7 @@
 **/
 
 #include "FilechainTestUtils.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
@@ -29,7 +30,7 @@ namespace catapult { namespace test {
 
 	namespace {
 		void SetBlockChainConfiguration(model::BlockChainConfiguration& config, uint32_t maxDifficultyBlocks) {
-			config.Plugins.emplace("catapult.plugins.hashcache", utils::ConfigurationBag({ { "", { {} } } }));
+			config.Plugins.emplace(PLUGIN_NAME(hashcache), utils::ConfigurationBag({ { "", { {} } } }));
 
 			if (maxDifficultyBlocks > 0)
 				config.MaxDifficultyBlocks = maxDifficultyBlocks;

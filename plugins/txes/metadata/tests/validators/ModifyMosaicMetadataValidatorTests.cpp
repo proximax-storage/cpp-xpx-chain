@@ -40,10 +40,13 @@ namespace catapult { namespace validators {
 				const UnresolvedMosaicId& metadataId,
 				Key signer) {
 			// Arrange:
-			auto cache = test::MetadataCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			const_cast<model::BlockChainConfiguration&>(config).SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(config);
 			PopulateCache(cache);
 			auto pValidator = CreateModifyMosaicMetadataValidator();
-			auto notification = model::ModifyMosaicMetadataNotification(signer, metadataId);
+			auto notification = model::ModifyMosaicMetadataNotification_v1(signer, metadataId);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -53,7 +56,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, SuccessWhenMosaicExistAndOwnerEquel) {
+	TEST(TEST_CLASS, SuccessWhenMosaicExistAndOwnerValid) {
 		// Act:
 		AssertValidationResult(
 			ValidationResult::Success,
@@ -61,7 +64,7 @@ namespace catapult { namespace validators {
 			Mosaic_Owner);
 	}
 
-	TEST(TEST_CLASS, FailureWhenMosaicNotExistAndOwnerEquel) {
+	TEST(TEST_CLASS, FailureWhenMosaicDoesNotExistAndOwnerValid) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Mosaic_Is_Not_Exist,
@@ -69,7 +72,7 @@ namespace catapult { namespace validators {
 				Mosaic_Owner);
 	}
 
-	TEST(TEST_CLASS, FailueWhenMosaicExistButOwnerNotEquel) {
+	TEST(TEST_CLASS, FailureWhenMosaicExistsButOwnerNotValid) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Mosaic_Modification_Not_Permitted,
@@ -77,7 +80,7 @@ namespace catapult { namespace validators {
 				test::GenerateRandomByteArray<Key>());
 	}
 
-	TEST(TEST_CLASS, FailueWhenMosaicNoExistButOwnerNotEquel) {
+	TEST(TEST_CLASS, FailureWhenMosaicDoesNotExistButOwnerNotValid) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Mosaic_Is_Not_Exist,

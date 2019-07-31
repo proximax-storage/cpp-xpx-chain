@@ -24,6 +24,7 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/chain/ChainUtils.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/model/BlockUtils.h"
 
 using namespace catapult::validators;
@@ -57,10 +58,10 @@ namespace catapult { namespace consumers {
 			DefaultBlockChainProcessor(
 					const BlockHitPredicateFactory& blockHitPredicateFactory,
 					const chain::BatchEntityProcessor& batchEntityProcessor,
-					ReceiptValidationMode receiptValidationMode)
+					extensions::ServiceState& state)
 					: m_blockHitPredicateFactory(blockHitPredicateFactory)
 					, m_batchEntityProcessor(batchEntityProcessor)
-					, m_receiptValidationMode(receiptValidationMode)
+					, m_state(state)
 			{}
 
 		public:
@@ -90,9 +91,12 @@ namespace catapult { namespace consumers {
 
 					// 2. validate and observe block
 					model::BlockStatementBuilder blockStatementBuilder;
-					auto blockDependentState = createBlockDependentObserverState(state, blockStatementBuilder);
+					auto receiptValidationMode = m_state.config(element.Block.Height).BlockChain.ShouldEnableVerifiableReceipts ?
+						ReceiptValidationMode::Enabled : ReceiptValidationMode::Disabled;
+					auto blockDependentState = createBlockDependentObserverState(state, blockStatementBuilder, receiptValidationMode);
 
 					const auto& block = element.Block;
+					state.Cache.setHeight(block.Height);
 					auto result = m_batchEntityProcessor(block.Height, block.Timestamp, ExtractEntityInfos(element), blockDependentState);
 					if (!IsValidationResultSuccess(result)) {
 						CATAPULT_LOG(warning) << "batch processing of block " << block.Height << " failed with " << result;
@@ -104,7 +108,7 @@ namespace catapult { namespace consumers {
 						return chain::Failure_Chain_Block_Inconsistent_State_Hash;
 
 					// 4. check receipts hash
-					if (!CheckReceiptsHash(element, blockStatementBuilder, m_receiptValidationMode))
+					if (!CheckReceiptsHash(element, blockStatementBuilder, receiptValidationMode))
 						return chain::Failure_Chain_Block_Inconsistent_Receipts_Hash;
 
 					// 5. set next parent
@@ -118,8 +122,9 @@ namespace catapult { namespace consumers {
 		private:
 			observers::ObserverState createBlockDependentObserverState(
 					observers::ObserverState& state,
-					model::BlockStatementBuilder& blockStatementBuilder) const {
-				return ReceiptValidationMode::Disabled == m_receiptValidationMode
+					model::BlockStatementBuilder& blockStatementBuilder,
+					ReceiptValidationMode receiptValidationMode) const {
+				return ReceiptValidationMode::Disabled == receiptValidationMode
 						? state
 						: observers::ObserverState(state.Cache, state.State, blockStatementBuilder);
 			}
@@ -183,14 +188,14 @@ namespace catapult { namespace consumers {
 		private:
 			BlockHitPredicateFactory m_blockHitPredicateFactory;
 			chain::BatchEntityProcessor m_batchEntityProcessor;
-			ReceiptValidationMode m_receiptValidationMode;
+			extensions::ServiceState& m_state;
 		};
 	}
 
 	BlockChainProcessor CreateBlockChainProcessor(
 			const BlockHitPredicateFactory& blockHitPredicateFactory,
 			const chain::BatchEntityProcessor& batchEntityProcessor,
-			ReceiptValidationMode receiptValidationMode) {
-		return DefaultBlockChainProcessor(blockHitPredicateFactory, batchEntityProcessor, receiptValidationMode);
+			extensions::ServiceState& state) {
+		return DefaultBlockChainProcessor(blockHitPredicateFactory, batchEntityProcessor, state);
 	}
 }}

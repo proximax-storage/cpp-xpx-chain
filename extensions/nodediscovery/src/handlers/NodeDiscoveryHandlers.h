@@ -19,11 +19,15 @@
 **/
 
 #pragma once
+#include "catapult/config/CatapultConfiguration.h"
 #include "catapult/ionet/Node.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/model/NetworkInfo.h"
 
-namespace catapult { namespace ionet { struct NetworkNode; } }
+namespace catapult {
+	namespace extensions { class ServiceState; }
+	namespace ionet { struct NetworkNode; }
+}
 
 namespace catapult { namespace handlers {
 
@@ -36,18 +40,14 @@ namespace catapult { namespace handlers {
 	/// Supplies nodes.
 	using NodesSupplier = supplier<ionet::NodeSet>;
 
-	/// Registers a node discovery push ping handler in \a handlers that forwards node information to \a nodeConsumer given
-	/// the current network identifier (\a networkIdentifier).
+	/// Registers a node discovery push ping handler in handlers in \a state that forwards node information to \a nodeConsumer.
 	void RegisterNodeDiscoveryPushPingHandler(
-			ionet::ServerPacketHandlers& handlers,
-			model::NetworkIdentifier networkIdentifier,
+			extensions::ServiceState& state,
 			const NodeConsumer& nodeConsumer);
 
-	/// Registers a node discovery pull ping handler in \a handlers that responds with \a pLocalNode.
+	/// Registers a node discovery pull ping handler in handlers in \a state that responds with the local node.
 	/// \note shared_ptr is used to avoid copying into packet.
-	void RegisterNodeDiscoveryPullPingHandler(
-			ionet::ServerPacketHandlers& handlers,
-			const std::shared_ptr<const ionet::NetworkNode>& pLocalNode);
+	void RegisterNodeDiscoveryPullPingHandler(extensions::ServiceState& state);
 
 	/// Registers a node discovery push peers handler in \a handlers that forwards received nodes to \a nodesConsumer.
 	void RegisterNodeDiscoveryPushPeersHandler(ionet::ServerPacketHandlers& handlers, const NodesConsumer& nodesConsumer);

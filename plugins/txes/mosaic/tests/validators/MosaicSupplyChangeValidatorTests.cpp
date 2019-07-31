@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, model::MosaicSupplyChangeDirection direction, Amount delta) {
 			// Arrange:
-			model::MosaicSupplyChangeNotification notification(Key(), UnresolvedMosaicId(), direction, delta);
+			model::MosaicSupplyChangeNotification<1> notification(Key(), UnresolvedMosaicId(), direction, delta);
 			auto pValidator = CreateMosaicSupplyChangeValidator();
 
 			// Act:

@@ -30,6 +30,7 @@ namespace catapult { namespace test {
 		uint32_t entitySize = sizeof(TransactionType) + proofSize;
 		auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
 		test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), entitySize });
+		pTransaction->Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
 		pTransaction->Size = entitySize;
 		pTransaction->ProofSize = proofSize;
 		return pTransaction;

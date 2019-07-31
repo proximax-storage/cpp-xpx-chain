@@ -22,6 +22,7 @@ namespace catapult { namespace test {
             entitySize += pModification->Size;
         }
         auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
+		pTransaction->Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
         pTransaction->Size = entitySize;
 
         auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);

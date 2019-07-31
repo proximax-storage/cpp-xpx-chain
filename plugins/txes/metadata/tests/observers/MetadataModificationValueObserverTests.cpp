@@ -33,7 +33,7 @@ namespace catapult { namespace observers {
 
 		struct AddressMetadataTraits {
 			using ValueType = UnresolvedAddress;
-			using Notification = model::ModifyAddressMetadataValueNotification;
+			using Notification = model::ModifyAddressMetadataValueNotification_v1;
 
 			static constexpr auto Metadata_Type = model::MetadataType::Address;
 
@@ -46,7 +46,7 @@ namespace catapult { namespace observers {
 
 		struct MosaicMetadataTraits {
 			using ValueType = UnresolvedMosaicId;
-			using Notification = model::ModifyMosaicMetadataValueNotification;
+			using Notification = model::ModifyMosaicMetadataValueNotification_v1;
 
 			static constexpr auto Metadata_Type = model::MetadataType::MosaicId;
 
@@ -59,7 +59,7 @@ namespace catapult { namespace observers {
 
 		struct NamespaceMetadataTraits  {
 			using ValueType = NamespaceId;
-			using Notification = model::ModifyNamespaceMetadataValueNotification;
+			using Notification = model::ModifyNamespaceMetadataValueNotification_v1;
 
 			static constexpr auto Metadata_Type = model::MetadataType::NamespaceId;
 
@@ -116,7 +116,8 @@ namespace catapult { namespace observers {
 				const std::vector<state::MetadataField>& expectedFields,
 				observers::NotifyMode notifyMode) {
 			// Arrange:
-			ObserverTestContext context(notifyMode, CurrentHeight);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			ObserverTestContext context(notifyMode, CurrentHeight, config);
 
 			PopulateCache<TMetadataValueTraits>(context.cache(), initValues);
 

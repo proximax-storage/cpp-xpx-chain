@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/PluginConfiguration.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -26,7 +27,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Transfer plugin configuration settings.
-	struct TransferConfiguration {
+	struct TransferConfiguration : public model::PluginConfiguration {
 	public:
 		/// Maximum transaction message size.
 		uint16_t MaxMessageSize;

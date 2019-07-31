@@ -161,9 +161,36 @@ namespace catapult { namespace cache {
 		if (status.ok())
 			return;
 
-		// note: this is intentional, in case of not found status will be set via .setFound() above
 		if (!status.IsNotFound())
-			CATAPULT_THROW_DB_KEY_ERROR("could not retrieve value");
+			CATAPULT_THROW_DB_KEY_ERROR("could not retrieve value for get");
+	}
+
+	void RocksDatabase::getLowerOrEqual(size_t columnId, const rocksdb::Slice& key, RdbDataIterator& result) {
+		if (!m_pDb)
+			CATAPULT_THROW_INVALID_ARGUMENT("RocksDatabase has not been initialized");
+
+		auto iterator = m_pDb->NewIterator(rocksdb::ReadOptions(), m_handles[columnId]);
+
+		iterator->SeekForPrev(key);
+
+		auto status = iterator->status();
+		if (status.ok()) {
+			if (iterator->Valid()) {
+				result.storage().PinSelf(iterator->value());
+				result.setFound(true);
+			} else {
+				result.setFound(false);
+			}
+		}
+
+		iterator->Reset();
+		delete iterator;
+
+		if (status.ok())
+			return;
+
+		if (status.IsNotFound())
+			CATAPULT_THROW_DB_KEY_ERROR("could not retrieve value for getLowerOrEqual");
 	}
 
 	void RocksDatabase::put(size_t columnId, const rocksdb::Slice& key, const std::string& value) {

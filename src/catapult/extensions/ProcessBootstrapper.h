@@ -21,7 +21,7 @@
 #pragma once
 #include "CacheHolder.h"
 #include "ExtensionManager.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/plugins/PluginModule.h"
 #include "catapult/subscribers/SubscriptionManager.h"
@@ -42,16 +42,22 @@ namespace catapult { namespace extensions {
 	/// Process bootstrapper.
 	class ProcessBootstrapper {
 	public:
-		/// Creates a process bootstrapper around \a config, \a resourcesPath, \a disposition and \a servicePoolName.
+		/// Creates a process bootstrapper around \a pConfigHolder, \a resourcesPath, \a disposition and \a servicePoolName.
 		ProcessBootstrapper(
-				const config::CatapultConfiguration& config,
+				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 				const std::string& resourcesPath,
 				ProcessDisposition disposition,
 				const std::string& servicePoolName);
 
 	public:
 		/// Gets the configuration.
+		const config::CatapultConfiguration& config(const Height& height) const;
+
+		/// Gets the latest available configuration.
 		const config::CatapultConfiguration& config() const;
+
+		/// Gets the catapult configuration holder.
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
 
 		/// Gets the resources path.
 		const std::string& resourcesPath() const;
@@ -89,7 +95,7 @@ namespace catapult { namespace extensions {
 		void addStaticNodes(const std::vector<ionet::Node>& nodes);
 
 	private:
-		config::CatapultConfiguration m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		std::string m_resourcesPath;
 		ProcessDisposition m_disposition;
 		std::unique_ptr<thread::MultiServicePool> m_pMultiServicePool;
@@ -103,7 +109,7 @@ namespace catapult { namespace extensions {
 	};
 
 	/// Adds static nodes from \a path to \a bootstrapper.
-	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path);
+	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path, const Height& height);
 }}
 
 /// Entry point for registering a dynamic extension module with \a bootstrapper.

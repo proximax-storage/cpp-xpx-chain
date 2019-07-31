@@ -20,7 +20,6 @@
 
 #include "SecretLockPlugin.h"
 #include "src/cache/SecretLockInfoCache.h"
-#include "src/config/SecretLockConfiguration.h"
 #include "src/model/SecretLockReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/SecretLockTransactionPlugin.h"
@@ -44,37 +43,33 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("SECRETLOCK C"), [&cache]() {
-				return cache.sub<cache::SecretLockInfoCache>().createView()->size();
+				return cache.sub<cache::SecretLockInfoCache>().createView(cache.height())->size();
 			});
 		});
 
-		auto config = model::LoadPluginConfiguration<config::SecretLockConfiguration>(manager.config(), "catapult.plugins.locksecret");
-		auto blockGenerationTargetTime = manager.config().BlockGenerationTargetTime;
-		manager.addStatelessValidatorHook([config, blockGenerationTargetTime](auto& builder) {
-			// secret lock validators
-			auto maxSecretLockDuration = config.MaxSecretLockDuration.blocks(blockGenerationTargetTime);
-			builder.add(validators::CreateSecretLockDurationValidator(maxSecretLockDuration));
-			builder.add(validators::CreateSecretLockHashAlgorithmValidator());
-
-			// proof secret
-			builder.add(validators::CreateProofSecretValidator(config.MinProofSize, config.MaxProofSize));
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreateSecretLockHashAlgorithmValidator())
+				.add(validators::CreatePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([](auto& builder) {
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
+				.add(validators::CreateSecretLockDurationValidator(pConfigHolder))
+				.add(validators::CreateProofSecretValidator(pConfigHolder))
 				.add(validators::CreateSecretLockCacheUniqueValidator())
 				.add(validators::CreateProofValidator());
 		});
 
-		auto maxRollbackBlocks = BlockDuration(manager.config().MaxRollbackBlocks);
-		manager.addObserverHook([maxRollbackBlocks](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockSecret_Expired;
 			builder
 				.add(observers::CreateSecretLockObserver())
 				.add(observers::CreateExpiredSecretLockInfoObserver())
 				.add(observers::CreateProofObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::SecretLockInfoCache>("SecretLockInfo", expiryReceiptType))
-				.add(observers::CreateCacheBlockPruningObserver<cache::SecretLockInfoCache>("SecretLockInfo", 1, maxRollbackBlocks));
+				.add(observers::CreateCacheBlockPruningObserver<cache::SecretLockInfoCache>("SecretLockInfo", 1, pConfigHolder));
 		});
 	}
 }}

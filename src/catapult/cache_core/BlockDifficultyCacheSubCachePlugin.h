@@ -38,7 +38,7 @@ namespace catapult { namespace cache {
 	class BlockDifficultyCacheSubCachePlugin : public SubCachePluginAdapter<BlockDifficultyCache, BlockDifficultyCacheStorage> {
 	public:
 		/// Creates a plugin around \a difficultyHistorySize.
-		explicit BlockDifficultyCacheSubCachePlugin(uint64_t difficultyHistorySize);
+		explicit BlockDifficultyCacheSubCachePlugin(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	public:
 		std::unique_ptr<CacheStorage> createStorage() override;

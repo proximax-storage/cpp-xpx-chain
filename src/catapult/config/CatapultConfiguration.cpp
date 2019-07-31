@@ -44,18 +44,37 @@ namespace catapult { namespace config {
 	}
 
 	CatapultConfiguration::CatapultConfiguration(
+			const model::BlockChainConfiguration& blockChainConfig,
+			const NodeConfiguration& nodeConfig,
+			const LoggingConfiguration& loggingConfig,
+			const UserConfiguration& userConfig,
+			const ExtensionsConfiguration& extensionsConfig,
+			const InflationConfiguration& inflationConfig,
+			const config::SupportedEntityVersions& supportedEntityVersions)
+			: BlockChain(blockChainConfig)
+			, Node(nodeConfig)
+			, Logging(loggingConfig)
+			, User(userConfig)
+			, Extensions(extensionsConfig)
+			, Inflation(inflationConfig)
+			, SupportedEntityVersions(supportedEntityVersions)
+	{}
+
+	CatapultConfiguration::CatapultConfiguration(
 			model::BlockChainConfiguration&& blockChainConfig,
 			NodeConfiguration&& nodeConfig,
 			LoggingConfiguration&& loggingConfig,
 			UserConfiguration&& userConfig,
 			ExtensionsConfiguration&& extensionsConfig,
-			InflationConfiguration&& inflationConfig)
+			InflationConfiguration&& inflationConfig,
+			config::SupportedEntityVersions&& supportedEntityVersions)
 			: BlockChain(std::move(blockChainConfig))
 			, Node(std::move(nodeConfig))
 			, Logging(std::move(loggingConfig))
 			, User(std::move(userConfig))
 			, Extensions(std::move(extensionsConfig))
 			, Inflation(std::move(inflationConfig))
+			, SupportedEntityVersions(std::move(supportedEntityVersions))
 	{}
 
 	CatapultConfiguration CatapultConfiguration::LoadFromPath(
@@ -67,7 +86,8 @@ namespace catapult { namespace config {
 				LoadIniConfiguration<LoggingConfiguration>(resourcesPath / HostQualify("logging", extensionsHost)),
 				LoadIniConfiguration<UserConfiguration>(resourcesPath / Qualify("user")),
 				LoadIniConfiguration<ExtensionsConfiguration>(resourcesPath / HostQualify("extensions", extensionsHost)),
-				LoadIniConfiguration<InflationConfiguration>(resourcesPath / Qualify("inflation")));
+				LoadIniConfiguration<InflationConfiguration>(resourcesPath / Qualify("inflation")),
+				LoadSupportedEntityVersions(resourcesPath / "supported-entities.json"));
 	}
 
 	// endregion

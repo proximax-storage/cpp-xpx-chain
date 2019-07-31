@@ -40,9 +40,12 @@ namespace catapult { namespace observers {
 		// region commit
 
 		static void AssertObserverAddsInfoOnCommit() {
+			// Arrange:
+			auto config = model::BlockChainConfiguration::Uninitialized();
+
 			// Act:
 			RunTest(
-					typename TTraits::ObserverTestContext(NotifyMode::Commit, DefaultHeight()),
+					typename TTraits::ObserverTestContext(NotifyMode::Commit, DefaultHeight(), config),
 					[](const auto&, const auto&) {
 					},
 					// Assert: lock info was added to cache
@@ -77,7 +80,8 @@ namespace catapult { namespace observers {
 
 		static void AssertObserverDoesNotOverwriteInfoOnCommit() {
 			// Arrange:
-			typename TTraits::ObserverTestContext context(NotifyMode::Commit, DefaultHeight());
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			typename TTraits::ObserverTestContext context(NotifyMode::Commit, DefaultHeight(), config);
 			typename TTraits::NotificationBuilder notificationBuilder;
 			auto notification = notificationBuilder.notification();
 
@@ -97,20 +101,24 @@ namespace catapult { namespace observers {
 		// region rollback
 
 		static void AssertObserverRemovesInfoOnRollback() {
+			// Arrange:
+			auto config = model::BlockChainConfiguration::Uninitialized();
+
 			// Act:
 			RunTest(
-					typename TTraits::ObserverTestContext(NotifyMode::Rollback, DefaultHeight()),
-					[](auto& lockInfoCacheDelta, const auto& notification) {
-						auto lockInfo = TTraits::GenerateRandomLockInfo(notification);
-						lockInfoCacheDelta.insert(lockInfo);
-					},
-					[](const auto& lockInfoCacheDelta, const auto&, auto& observerContext) {
-						// Assert: lock info was removed
-						EXPECT_EQ(0u, lockInfoCacheDelta.size());
+				typename TTraits::ObserverTestContext(NotifyMode::Rollback, DefaultHeight(), config),
+				[](auto& lockInfoCacheDelta, const auto& notification) {
+					auto lockInfo = TTraits::GenerateRandomLockInfo(notification);
+					lockInfoCacheDelta.insert(lockInfo);
+				},
+				[](const auto& lockInfoCacheDelta, const auto&, auto& observerContext) {
+					// Assert: lock info was removed
+					EXPECT_EQ(0u, lockInfoCacheDelta.size());
 
-						auto pStatement = observerContext.statementBuilder().build();
-						ASSERT_EQ(0u, pStatement->TransactionStatements.size());
-					});
+					auto pStatement = observerContext.statementBuilder().build();
+					ASSERT_EQ(0u, pStatement->TransactionStatements.size());
+				}
+			);
 		}
 
 		// endregion

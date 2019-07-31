@@ -32,6 +32,7 @@ namespace catapult {
 	namespace io { class BlockStorageCache; }
 	namespace model { class TransactionRegistry; }
 	namespace utils { class TimeSpan; }
+	namespace config { class LocalNodeConfigurationHolder; }
 }
 
 namespace catapult { namespace consumers {
@@ -47,11 +48,11 @@ namespace catapult { namespace consumers {
 	disruptor::ConstBlockConsumer CreateBlockHashCheckConsumer(const chain::TimeSupplier& timeSupplier, const HashCheckOptions& options);
 
 	/// Creates a consumer that checks a block chain for internal integrity.
-	/// A valid chain must have no more than \a maxChainSize blocks and end no more than \a maxBlockFutureTime past the current time
+	/// A valid chain must have no more than \a maxChainSize blocks and end no more than max block future time as set in \a pConfigHolder past the current time
 	/// supplied by \a timeSupplier.
 	disruptor::ConstBlockConsumer CreateBlockChainCheckConsumer(
 			uint32_t maxChainSize,
-			const utils::TimeSpan& maxBlockFutureTime,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			const chain::TimeSupplier& timeSupplier);
 
 	/// Predicate for checking whether or not an entity requires validation.
@@ -67,14 +68,15 @@ namespace catapult { namespace consumers {
 
 	/// Creates a consumer that attempts to synchronize a remote chain with the local chain, which is composed of
 	/// state (in \a cache and \a state) and blocks (in \a storage).
-	/// \a maxRollbackBlocks The maximum number of blocks that can be rolled back.
+	/// \a pConfigHolder The catapult config holder.
 	/// \a handlers are used to customize the sync process.
+	/// \a pConfigHolder is used to properly apply catapult configuration changes after the synchronization.
 	/// \note This consumer is non-const because it updates the element generation hashes.
 	disruptor::DisruptorConsumer CreateBlockChainSyncConsumer(
 			cache::CatapultCache& cache,
 			state::CatapultState& state,
 			io::BlockStorageCache& storage,
-			uint32_t maxRollbackBlocks,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			const BlockChainSyncHandlers& handlers);
 
 	/// Creates a consumer that cleans up temporary state produced by the block chain sync consumer given \a dataDirectory.

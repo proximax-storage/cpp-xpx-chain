@@ -19,12 +19,14 @@
 **/
 
 #include "Validators.h"
+#include "src/config/SecretLockConfiguration.h"
 #include "src/model/LockHashUtils.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/validators/ValidatorUtils.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ProofSecretNotification;
+	using Notification = model::ProofSecretNotification<1>;
 
 	namespace {
 		constexpr bool SupportedHash(model::LockHashAlgorithm hashAlgorithm) {
@@ -35,16 +37,18 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATELESS_VALIDATOR(ProofSecret, Notification)(uint16_t minProofSize, uint16_t maxProofSize) {
-		return MAKE_STATELESS_VALIDATOR(ProofSecret, ([minProofSize, maxProofSize](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(ProofSecret, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(ProofSecret, [pConfigHolder](const auto& notification, const auto& context) {
 			if (!SupportedHash(notification.HashAlgorithm))
 				return Failure_LockSecret_Hash_Not_Implemented;
 
-			if (notification.Proof.Size < minProofSize || notification.Proof.Size > maxProofSize)
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::SecretLockConfiguration>(PLUGIN_NAME(locksecret));
+			if (notification.Proof.Size < pluginConfig.MinProofSize || notification.Proof.Size > pluginConfig.MaxProofSize)
 				return Failure_LockSecret_Proof_Size_Out_Of_Bounds;
 
 			auto secret = model::CalculateHash(notification.HashAlgorithm, notification.Proof);
 			return notification.Secret == secret ? ValidationResult::Success : Failure_LockSecret_Secret_Mismatch;
-		}));
+		});
 	}
 }}

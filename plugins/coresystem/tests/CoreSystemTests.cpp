@@ -19,7 +19,7 @@
 **/
 
 #include "src/CoreSystem.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -31,7 +31,8 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto manager = test::CreatePluginManager();
+				auto pConfigHolder = config::CreateMockConfigurationHolder();
+				PluginManager manager(pConfigHolder, StorageConfiguration());
 				RegisterCoreSystem(manager);
 
 				// Act:
@@ -60,14 +61,16 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "MaxTransactionsValidator", "NetworkValidator", "EntityVersionValidator", "TransactionFeeValidator" };
+				return { "TransactionFeeValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"EntityVersionValidator",
+					"MaxTransactionsValidator",
+					"NetworkValidator",
 					"AddressValidator",
 					"DeadlineValidator",
-					"NemesisSinkValidator",
 					"EligibleHarvesterValidator",
 					"BalanceDebitValidator",
 					"BalanceTransferValidator"

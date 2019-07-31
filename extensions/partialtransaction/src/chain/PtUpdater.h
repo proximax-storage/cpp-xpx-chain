@@ -24,7 +24,10 @@
 #include <memory>
 
 namespace catapult {
-	namespace cache { class MemoryPtCacheProxy; }
+	namespace cache {
+		class CatapultCache;
+		class MemoryPtCacheProxy;
+	}
 	namespace chain { class PtValidator; }
 	namespace model {
 		struct DetachedCosignature;
@@ -92,6 +95,7 @@ namespace catapult { namespace chain {
 		/// Creates an updater around \a transactionsCache, \a pValidator, \a completedTransactionSink and \a failedTransactionSink
 		/// using \a pPool for parallelization.
 		PtUpdater(
+				const cache::CatapultCache& cache,
 				cache::MemoryPtCacheProxy& transactionsCache,
 				std::unique_ptr<const PtValidator>&& pValidator,
 				const CompletedTransactionSink& completedTransactionSink,

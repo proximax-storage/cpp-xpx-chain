@@ -5,6 +5,8 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 #include "plugins/txes/metadata/src/model/MetadataTypes.h"
@@ -16,21 +18,28 @@ namespace catapult { namespace validators {
 	constexpr uint8_t MAX_KEY_SIZE = 5;
 	constexpr uint8_t MAX_VALUE_SIZE = 10;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification,MAX_KEY_SIZE,MAX_VALUE_SIZE)
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification, config::CreateMockConfigurationHolder())
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult,
 				model::MetadataModificationType modificationType,
 				const std::string& key, const std::string& value) {
 			// Arrange:
-			model::ModifyMetadataFieldNotification notification(
+			model::ModifyMetadataFieldNotification<1> notification(
 					modificationType,
 					key.size(), key.data(),
 					value.size(), value.data());
-			auto pValidator = CreateMetadataFieldModificationValidator(MAX_KEY_SIZE, MAX_VALUE_SIZE);
+			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			pluginConfig.MaxFieldKeySize = MAX_KEY_SIZE;
+			pluginConfig.MaxFieldValueSize = MAX_VALUE_SIZE;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pValidator = CreateMetadataFieldModificationValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

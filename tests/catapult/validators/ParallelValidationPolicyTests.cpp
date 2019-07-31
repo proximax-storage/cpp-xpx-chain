@@ -373,7 +373,7 @@ namespace catapult { namespace validators {
 			}
 
 		private:
-			mutable std::vector<model::WeakEntityInfo> m_entityInfos;
+			mutable model::WeakEntityInfos m_entityInfos;
 			std::string m_name;
 		};
 

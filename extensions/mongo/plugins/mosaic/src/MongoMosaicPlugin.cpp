@@ -35,7 +35,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoMosaicCacheStorage(
 			manager.mongoContext(),
-			manager.networkIdentifier()));
+			manager.configHolder()));
 
 	// receipt support
 	manager.addReceiptSupport(catapult::mongo::plugins::CreateMosaicExpiryReceiptMongoPlugin());

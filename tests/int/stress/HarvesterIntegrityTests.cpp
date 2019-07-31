@@ -36,6 +36,7 @@
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -51,37 +52,25 @@ namespace catapult { namespace harvesting {
 
 		// region test factories
 
-		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
-			// include memory hash cache system to better trigger the race condition under test
-			auto config = test::CreatePrototypicalBlockChainConfiguration();
-			config.MinHarvesterBalance = Amount(500'000);
-			config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
-			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
-			plugins::RegisterMemoryHashCacheSystem(*pPluginManager);
-			return pPluginManager;
-		}
-
 		auto CreateConfiguration() {
-			test::MutableCatapultConfiguration config;
+			auto blockChainConfig = test::CreatePrototypicalBlockChainConfiguration();
+			blockChainConfig.MinHarvesterBalance = Amount(500'000);
+			blockChainConfig.ShouldEnableVerifiableState = true;
+			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 
-			config.BlockChain = test::CreatePrototypicalBlockChainConfiguration();
-			config.BlockChain.MinHarvesterBalance = Amount(500'000);
-			config.BlockChain.ShouldEnableVerifiableState = true;
+			auto config = test::CreatePrototypicalCatapultConfiguration(std::move(blockChainConfig), "");
+			const_cast<config::NodeConfiguration&>(config.Node).FeeInterestDenominator = 2;
 
-			config.Node.FeeInterest = 1;
-			config.Node.FeeInterestDenominator = 2;
-
-			return config.ToConst();
+			return config;
 		}
 
-		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const model::BlockChainConfiguration& config) {
+		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 			auto cacheId = cache::HashCache::Id;
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			test::CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
-			auto transactionCacheDuration = CalculateTransactionCacheDuration(config);
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(transactionCacheDuration);
+			test::CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config().BlockChain, subCaches);
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 
@@ -92,18 +81,17 @@ namespace catapult { namespace harvesting {
 		class HarvesterTestContext {
 		public:
 			HarvesterTestContext()
-					: m_pPluginManager(CreatePluginManager())
-					, m_config(CreateConfiguration())
+					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateConfiguration()))
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
-					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_config.BlockChain))
+					, m_cache(CreateCatapultCache(m_dbDirGuard.name(), m_pPluginManager->configHolder()))
 					, m_unlockedAccounts(100) {
 				// create the harvester
 				auto executionConfig = extensions::CreateExecutionConfiguration(*m_pPluginManager);
-				HarvestingUtFacadeFactory utFacadeFactory(m_cache, m_config, executionConfig);
+				HarvestingUtFacadeFactory utFacadeFactory(m_cache, m_pPluginManager->configHolder(), executionConfig);
 
 				auto strategy = model::TransactionSelectionStrategy::Oldest;
 				auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, m_transactionsCache);
-				m_pHarvester = std::make_unique<Harvester>(m_cache, m_config, Key(), m_unlockedAccounts, blockGenerator);
+				m_pHarvester = std::make_unique<Harvester>(m_cache, m_pPluginManager->configHolder(), Key(), m_unlockedAccounts, blockGenerator);
 			}
 
 		public:
@@ -160,7 +148,7 @@ namespace catapult { namespace harvesting {
 					pTransaction->Deadline = deadline;
 
 					auto transactionHash = model::CalculateHash(*pTransaction, test::GetNemesisGenerationHash());
-					model::TransactionInfo transactionInfo(std::move(pTransaction), transactionHash);
+					model::TransactionInfo transactionInfo(std::move(pTransaction), transactionHash, Height());
 					m_transactionsCache.modifier().add(std::move(transactionInfo));
 				}
 
@@ -183,14 +171,13 @@ namespace catapult { namespace harvesting {
 						m_pPluginManager->createObserver(),
 						m_pPluginManager->createNotificationPublisher());
 				auto observerContext = observers::ObserverContext(observerState, Height(1), notifyMode, resolverContext);
-				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash), observerContext);
+				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height(1)), observerContext);
 				m_cache.commit(Height(1));
 			}
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
-			config::CatapultConfiguration m_config;
 			cache::MemoryUtCache m_transactionsCache;
 			cache::CatapultCache m_cache;
 			UnlockedAccounts m_unlockedAccounts;
@@ -220,7 +207,7 @@ namespace catapult { namespace harvesting {
 					auto utCacheView = context.transactionsCache().view();
 					auto pTransaction = utCacheView.unknownTransactions(BlockFeeMultiplier(0), utils::ShortHashesSet(), 1, 1)[0];
 					auto transactionHash = model::CalculateHash(*pTransaction, test::GetNemesisGenerationHash());
-					nextTransactionInfo = model::TransactionInfo(std::move(pTransaction), transactionHash);
+					nextTransactionInfo = model::TransactionInfo(std::move(pTransaction), transactionHash, Height());
 				}
 
 				// 2. simulate application

@@ -91,7 +91,7 @@ namespace catapult { namespace builders {
 			// Assert:
 			TTraits::CheckFields(namespaceName.size(), *pTransaction);
 			EXPECT_EQ(signer, pTransaction->Signer);
-			EXPECT_EQ(0x6202, pTransaction->Version);
+			EXPECT_EQ(0x62000002, pTransaction->Version);
 			EXPECT_EQ(model::Entity_Type_Register_Namespace, pTransaction->Type);
 
 			AssertTransactionProperties(expectedProperties, *pTransaction);

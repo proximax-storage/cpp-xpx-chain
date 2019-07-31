@@ -33,6 +33,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(AccountLink, 2, 2,)
+		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 2);
 	}
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS, , , Entity_Type_Account_Link)
@@ -59,9 +60,11 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Link;
+		transaction.Version = 0x2;
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -80,13 +83,15 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractNewRemoteAccount) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<NewRemoteAccountNotification> sub;
+		mocks::MockTypedNotificationSubscriber<NewRemoteAccountNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Link;
+		transaction.Version = 0x2;
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -98,13 +103,15 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractAddressInteraction) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		transaction.Type = static_cast<EntityType>(0x0815);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
+		transaction.Version = 0x2;
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -120,13 +127,15 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractRemoteAccountLink) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<RemoteAccountLinkNotification> sub;
+		mocks::MockTypedNotificationSubscriber<RemoteAccountLinkNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Unlink;
+		transaction.Version = 0x2;
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -150,6 +159,7 @@ namespace catapult { namespace plugins {
 
 		typename TTraits::TransactionType transaction;
 		transaction.LinkAction = AccountLinkAction::Link;
+		transaction.Version = 0x2;
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -157,10 +167,10 @@ namespace catapult { namespace plugins {
 		// Assert:
 		const auto& notificationTypes = sub.notificationTypes();
 		ASSERT_EQ(4u, notificationTypes.size());
-		EXPECT_EQ(AccountLink_New_Remote_Account_Notification, notificationTypes[0]);
-		EXPECT_EQ(Core_Register_Account_Public_Key_Notification, notificationTypes[1]);
-		EXPECT_EQ(Core_Address_Interaction_Notification, notificationTypes[2]);
-		EXPECT_EQ(AccountLink_Remote_Notification, notificationTypes[3]);
+		EXPECT_EQ(AccountLink_New_Remote_Account_v1_Notification, notificationTypes[0]);
+		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, notificationTypes[1]);
+		EXPECT_EQ(Core_Address_Interaction_v1_Notification, notificationTypes[2]);
+		EXPECT_EQ(AccountLink_Remote_v1_Notification, notificationTypes[3]);
 	}
 
 	PLUGIN_TEST(CanExtractAllNotificationsWhenAccountLinkActionIsUnlink) {
@@ -170,6 +180,7 @@ namespace catapult { namespace plugins {
 
 		typename TTraits::TransactionType transaction;
 		transaction.LinkAction = AccountLinkAction::Unlink;
+		transaction.Version = 0x2;
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -177,9 +188,9 @@ namespace catapult { namespace plugins {
 		// Assert:
 		const auto& notificationTypes = sub.notificationTypes();
 		ASSERT_EQ(3u, notificationTypes.size());
-		EXPECT_EQ(Core_Register_Account_Public_Key_Notification, notificationTypes[0]);
-		EXPECT_EQ(Core_Address_Interaction_Notification, notificationTypes[1]);
-		EXPECT_EQ(AccountLink_Remote_Notification, notificationTypes[2]);
+		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, notificationTypes[0]);
+		EXPECT_EQ(Core_Address_Interaction_v1_Notification, notificationTypes[1]);
+		EXPECT_EQ(AccountLink_Remote_v1_Notification, notificationTypes[2]);
 	}
 
 	// endregion

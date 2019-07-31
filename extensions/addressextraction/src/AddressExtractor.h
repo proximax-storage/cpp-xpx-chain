@@ -46,8 +46,8 @@ namespace catapult { namespace addressextraction {
 		/// Extracts transaction addresses into \a transactionInfos.
 		void extract(model::TransactionInfosSet& transactionInfos) const;
 
-		/// Extracts transaction addresses into \a transactionElement.
-		void extract(model::TransactionElement& transactionElement) const;
+		/// Extracts transaction addresses at \a height into \a transactionElement.
+		void extract(model::TransactionElement& transactionElement, const Height& height) const;
 
 		/// Extracts transaction addresses into \a blockElement.
 		void extract(model::BlockElement& blockElement) const;

@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransactionDeadlineNotification;
+	using Notification = model::TransactionDeadlineNotification<1>;
 
 	namespace {
 		auto ValidateTransactionDeadline(Timestamp timestamp, Timestamp deadline, const utils::TimeSpan& maxTransactionLifetime) {
@@ -35,12 +35,13 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)(const utils::TimeSpan& maxTransactionLifetime) {
-		return MAKE_STATEFUL_VALIDATOR(Deadline, [maxTransactionLifetime](const auto& notification, const auto& context) {
+	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(Deadline, [pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
 			return ValidateTransactionDeadline(
-					context.BlockTime,
-					notification.Deadline,
-					utils::TimeSpan() == notification.MaxLifetime ? maxTransactionLifetime : notification.MaxLifetime);
+				context.BlockTime,
+				notification.Deadline,
+				utils::TimeSpan() == notification.MaxLifetime ? config.MaxTransactionLifetime : notification.MaxLifetime);
 		});
 	}
 }}

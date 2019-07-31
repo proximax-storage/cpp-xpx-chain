@@ -23,7 +23,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::PropertyTypeNotification;
+	using Notification = model::PropertyTypeNotification<1>;
 
 	namespace {
 		bool IsValidPropertyType(model::PropertyType propertyType) {

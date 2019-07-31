@@ -25,6 +25,7 @@
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
@@ -33,22 +34,12 @@ namespace catapult { namespace test {
 		Key GetSentinelCachePublicKey() {
 			return { { 0xFF, 0xFF, 0xFF, 0xFF } };
 		}
-
-		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions(const model::BlockChainConfiguration& config) {
-			return {
-				config.Network.Identifier,
-				config.ImportanceGrouping,
-				config.MinHarvesterBalance,
-				config.CurrencyMosaicId,
-				config.HarvestingMosaicId
-			};
-		}
 	}
 
 	// region CoreSystemCacheFactory
 
 	cache::CatapultCache CoreSystemCacheFactory::Create(const model::BlockChainConfiguration& config) {
-		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(2);
+		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(3);
 		CreateSubCaches(config, subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
@@ -65,19 +56,15 @@ namespace catapult { namespace test {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches) {
 		using namespace cache;
 
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 		subCaches[AccountStateCache::Id] = MakeSubCachePluginWithCacheConfiguration<AccountStateCache, AccountStateCacheStorage>(
 				cacheConfig,
-				CreateAccountStateCacheOptions(config));
+				pConfigHolder);
 
-		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(
-				CalculateDifficultyHistorySize(config));
+		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(pConfigHolder);
 	}
 
 	// endregion
-
-	cache::CatapultCache CreateEmptyCatapultCache() {
-		return CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized());
-	}
 
 	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
 		return CreateEmptyCatapultCache<CoreSystemCacheFactory>(config);
@@ -86,17 +73,17 @@ namespace catapult { namespace test {
 	cache::CatapultCache CreateEmptyCatapultCache(
 			const model::BlockChainConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig) {
-		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(2);
+		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(3);
 		CoreSystemCacheFactory::CreateSubCaches(config, cacheConfig, subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
 
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount() {
-		return CreateCatapultCacheWithMarkerAccount(Height(0));
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::BlockChainConfiguration& config) {
+		return CreateCatapultCacheWithMarkerAccount(Height(0), config);
 	}
 
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height) {
-		auto cache = CreateEmptyCatapultCache();
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::BlockChainConfiguration& config) {
+		auto cache = CreateEmptyCatapultCache(config);
 		AddMarkerAccount(cache);
 
 		auto delta = cache.createDelta();

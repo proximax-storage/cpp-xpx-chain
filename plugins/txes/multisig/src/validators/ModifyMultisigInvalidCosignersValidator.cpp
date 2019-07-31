@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyMultisigCosignersNotification;
+	using Notification = model::ModifyMultisigCosignersNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(ModifyMultisigInvalidCosigners, [](const auto& notification, const ValidatorContext& context) {
 		const auto& multisigCache = context.Cache.sub<cache::MultisigCache>();

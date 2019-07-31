@@ -34,13 +34,9 @@ namespace catapult { namespace test {
 		}
 
 		/// Creates storage for a chain with \a numBlocks variable sized blocks.
-		static std::unique_ptr<io::BlockStorageCache> CreateStorage(size_t numBlocks) {
-			auto pStorage = std::make_unique<io::BlockStorageCache>(
-					std::make_unique<mocks::MockMemoryBlockStorage>(),
-					std::make_unique<mocks::MockMemoryBlockStorage>());
-
+		static void FillStorage(io::BlockStorageCache& storage, size_t numBlocks) {
 			// storage already contains nemesis block (height 1)
-			auto storageModifier = pStorage->modifier();
+			auto storageModifier = storage.modifier();
 			for (auto i = 2u; i <= numBlocks; ++i) {
 				auto size = GetBlockSizeAtHeight(Height(i));
 				std::vector<uint8_t> buffer(size);
@@ -53,6 +49,14 @@ namespace catapult { namespace test {
 			}
 
 			storageModifier.commit();
+		}
+
+		/// Creates storage for a chain with \a numBlocks variable sized blocks.
+		static std::unique_ptr<io::BlockStorageCache> CreateStorage(size_t numBlocks) {
+			auto pStorage = std::make_unique<io::BlockStorageCache>(
+					std::make_unique<mocks::MockMemoryBlockStorage>(),
+					std::make_unique<mocks::MockMemoryBlockStorage>());
+			FillStorage(*pStorage, numBlocks);
 			return pStorage;
 		}
 	};

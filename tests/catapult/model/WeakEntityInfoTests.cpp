@@ -80,7 +80,7 @@ namespace catapult { namespace model {
 		VerifiableEntity entity;
 
 		// Act:
-		WeakEntityInfo info(entity);
+		WeakEntityInfo info(entity, Height{0});
 
 		// Assert:
 		ASSERT_TRUE(info.isSet());
@@ -96,7 +96,7 @@ namespace catapult { namespace model {
 		Hash256 hash;
 
 		// Act:
-		WeakEntityInfo info(entity, hash);
+		WeakEntityInfo info(entity, hash, Height{0});
 
 		// Assert:
 		AssertAreEqual(info, entity, hash, "info");
@@ -150,7 +150,7 @@ namespace catapult { namespace model {
 		entity.Type = static_cast<EntityType>(0x5432);
 
 		// Act:
-		WeakEntityInfo info(entity, hash);
+		WeakEntityInfo info(entity, hash, Height{0});
 
 		// Assert:
 		EXPECT_EQ(static_cast<EntityType>(0x5432), info.type());
@@ -164,7 +164,7 @@ namespace catapult { namespace model {
 		// Arrange:
 		Block block;
 		Hash256 hash;
-		WeakEntityInfo info(block, hash);
+		WeakEntityInfo info(block, hash, Height{0});
 
 		// Act:
 		auto blockInfo = info.cast<Block>();
@@ -212,13 +212,13 @@ namespace catapult { namespace model {
 			BlockHeader blockHeader;
 
 			return {
-				{ "default", WeakEntityInfo(entity1, hash1) },
-				{ "copy", WeakEntityInfo(entity1, hash1) },
+				{ "default", WeakEntityInfo(entity1, hash1, Height{0}) },
+				{ "copy", WeakEntityInfo(entity1, hash1, Height{0}) },
 				{ "diff-block-header", WeakEntityInfo(entity1, hash1, blockHeader) },
 
-				{ "diff-entity", WeakEntityInfo(entity2, hash1) },
-				{ "diff-hash", WeakEntityInfo(entity1, hash2) },
-				{ "diff-both", WeakEntityInfo(entity2, hash2) },
+				{ "diff-entity", WeakEntityInfo(entity2, hash1, Height{0}) },
+				{ "diff-hash", WeakEntityInfo(entity1, hash2, Height{0}) },
+				{ "diff-both", WeakEntityInfo(entity2, hash2, Height{0}) },
 				{ "unset", WeakEntityInfo() }
 			};
 		}
@@ -267,7 +267,7 @@ namespace catapult { namespace model {
 		entity.Version = MakeVersion(NetworkIdentifier::Zero, 2);
 
 		Hash256 hash = test::ToArray<Hash256_Size>("C5D2460186F7233C927E7DB2DCC703C0E500B653CA82273B7BFAD8045D85A470");
-		WeakEntityInfo info(entity, hash);
+		WeakEntityInfo info(entity, hash, Height{0});
 
 		// Act:
 		auto str = test::ToString(info);

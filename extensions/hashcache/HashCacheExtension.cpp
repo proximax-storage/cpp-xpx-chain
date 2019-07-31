@@ -28,7 +28,7 @@ namespace catapult { namespace hashcache {
 			auto& extensionManager = bootstrapper.extensionManager();
 
 			// register hash cache
-			extensionManager.registerSystemPlugin("catapult.plugins.hashcache");
+			extensionManager.registerSystemPlugin(PLUGIN_NAME(hashcache));
 			extensionManager.addServiceRegistrar(CreateHashCacheServiceRegistrar());
 		}
 	}

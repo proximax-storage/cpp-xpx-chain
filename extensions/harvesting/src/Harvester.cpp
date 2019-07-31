@@ -68,12 +68,12 @@ namespace catapult { namespace harvesting {
 
 	Harvester::Harvester(
 			const cache::CatapultCache& cache,
-			const config::CatapultConfiguration& config,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			const Key& beneficiary,
 			const UnlockedAccounts& unlockedAccounts,
 			const BlockGenerator& blockGenerator)
 			: m_cache(cache)
-			, m_config(config)
+			, m_pConfigHolder(pConfigHolder)
 			, m_beneficiary(beneficiary)
 			, m_unlockedAccounts(unlockedAccounts)
 			, m_blockGenerator(blockGenerator)
@@ -81,7 +81,8 @@ namespace catapult { namespace harvesting {
 
 	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
 		NextBlockContext context(lastBlockElement, timestamp);
-		if (!context.tryCalculateDifficulty(m_cache.sub<cache::BlockDifficultyCache>(), m_config.BlockChain)) {
+		const auto& config = m_pConfigHolder->Config(context.Height);
+		if (!context.tryCalculateDifficulty(m_cache.sub<cache::BlockDifficultyCache>(), config.BlockChain)) {
 			CATAPULT_LOG(debug) << "skipping harvest attempt due to error calculating difficulty";
 			return nullptr;
 		}
@@ -90,12 +91,12 @@ namespace catapult { namespace harvesting {
 		hitContext.ElapsedTime = context.BlockTime;
 		hitContext.Difficulty = context.Difficulty;
 		hitContext.Height = context.Height;
-		hitContext.FeeInterest = m_config.Node.FeeInterest;
-		hitContext.FeeInterestDenominator = m_config.Node.FeeInterestDenominator;
+		hitContext.FeeInterest = config.Node.FeeInterest;
+		hitContext.FeeInterestDenominator = config.Node.FeeInterestDenominator;
 
 		const auto& accountStateCache = m_cache.sub<cache::AccountStateCache>();
-		chain::BlockHitPredicate hitPredicate(m_config.BlockChain, [&accountStateCache](const auto& key, auto height) {
-			auto lockedCacheView = accountStateCache.createView();
+		chain::BlockHitPredicate hitPredicate(m_pConfigHolder, [&accountStateCache](const auto& key, auto height) {
+			auto lockedCacheView = accountStateCache.createView(height);
 			cache::ReadOnlyAccountStateCache readOnlyCache(*lockedCacheView);
 			cache::ImportanceView view(readOnlyCache);
 			return view.getAccountImportanceOrDefault(key, height);
@@ -117,9 +118,8 @@ namespace catapult { namespace harvesting {
 			return nullptr;
 
 		utils::StackLogger stackLogger("generating candidate block", utils::LogLevel::Debug);
-		auto networkIdentifier = m_config.BlockChain.Network.Identifier;
-		auto pBlockHeader = CreateUnsignedBlockHeader(context, networkIdentifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
-		auto pBlock = m_blockGenerator(*pBlockHeader, m_config.BlockChain.MaxTransactionsPerBlock);
+		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.BlockChain.Network.Identifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
+		auto pBlock = m_blockGenerator(*pBlockHeader, config.BlockChain.MaxTransactionsPerBlock);
 		if (pBlock)
 			SignBlockHeader(*pHarvesterKeyPair, *pBlock);
 

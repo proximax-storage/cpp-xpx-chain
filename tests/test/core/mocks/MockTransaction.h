@@ -91,7 +91,7 @@ namespace catapult { namespace mocks {
 	public:
 		static constexpr auto Entity_Type = static_cast<model::EntityType>(0x4FFF);
 
-		static constexpr uint8_t Current_Version = 0xFF;
+		static constexpr VersionType Current_Version = 0xFF;
 
 	public:
 		/// Binary layout for a variable data header.

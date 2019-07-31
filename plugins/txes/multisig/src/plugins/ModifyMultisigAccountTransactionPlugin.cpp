@@ -31,29 +31,38 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			// 1. cosig changes
-			utils::KeySet addedCosignatoryKeys;
-			if (0 < transaction.ModificationsCount) {
-				// raise new cosigner notifications first because they are used for multisig loop detection
-				const auto* pModifications = transaction.ModificationsPtr();
-				for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
-					if (model::CosignatoryModificationType::Add == pModifications[i].ModificationType) {
-						sub.notify(ModifyMultisigNewCosignerNotification(transaction.Signer, pModifications[i].CosignatoryPublicKey));
-						addedCosignatoryKeys.insert(pModifications[i].CosignatoryPublicKey);
-					}
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			switch (transaction.EntityVersion()) {
+			case 3: {
+				// 1. cosig changes
+				utils::KeySet addedCosignatoryKeys;
+				if (0 < transaction.ModificationsCount) {
+					// raise new cosigner notifications first because they are used for multisig loop detection
+					const auto* pModifications = transaction.ModificationsPtr();
+					for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
+						if (model::CosignatoryModificationType::Add == pModifications[i].ModificationType) {
+							sub.notify(ModifyMultisigNewCosignerNotification<1>(transaction.Signer, pModifications[i].CosignatoryPublicKey));
+							addedCosignatoryKeys.insert(pModifications[i].CosignatoryPublicKey);
+						}
 					// We need to inform user that they are co signers(removed or added)
-					sub.notify(AccountPublicKeyNotification(pModifications[i].CosignatoryPublicKey));
+					sub.notify(AccountPublicKeyNotification<1>(pModifications[i].CosignatoryPublicKey));
 				}
 
-				sub.notify(ModifyMultisigCosignersNotification(transaction.Signer, transaction.ModificationsCount, pModifications));
+					sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, transaction.ModificationsCount, pModifications));
+
+				}
+
+				if (!addedCosignatoryKeys.empty())
+					sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, addedCosignatoryKeys));
+
+				// 2. setting changes
+				sub.notify(ModifyMultisigSettingsNotification<1>(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));
+				break;
 			}
 
-			if (!addedCosignatoryKeys.empty())
-				sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {}, addedCosignatoryKeys));
-
-			// 2. setting changes
-			sub.notify(ModifyMultisigSettingsNotification(transaction.Signer, transaction.MinRemovalDelta, transaction.MinApprovalDelta));
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ModifyMultisigAccountTransaction", transaction.EntityVersion());
+			}
 		}
 	}
 

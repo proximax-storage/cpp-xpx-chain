@@ -24,11 +24,12 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyAddressPropertyValueNotification;
+	using Notification = model::ModifyAddressPropertyValueNotification_v1;
 
-	DECLARE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, Notification)(model::NetworkIdentifier networkIdentifier) {
-		return MAKE_STATELESS_VALIDATOR(PropertyAddressNoSelfModification, [networkIdentifier](const auto& notification) {
-			auto address = model::PublicKeyToAddress(notification.Key, networkIdentifier);
+	DECLARE_STATEFUL_VALIDATOR(PropertyAddressNoSelfModification, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(PropertyAddressNoSelfModification, [pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
+			auto address = model::PublicKeyToAddress(notification.Key, config.Network.Identifier);
 			return address != model::ResolverContext().resolve(notification.Modification.Value)
 					? ValidationResult::Success
 					: Failure_Property_Modification_Address_Invalid;

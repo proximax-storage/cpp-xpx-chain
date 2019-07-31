@@ -21,6 +21,7 @@
 #include "hashcache/src/HashCacheService.h"
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/TestHarness.h"
@@ -45,18 +46,19 @@ namespace catapult { namespace hashcache {
 	}
 
 	namespace {
-		cache::CatapultCache CreateCache() {
+		cache::CatapultCache CreateCache(const model::BlockChainConfiguration& config) {
 			auto cacheId = cache::HashCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			auto retentionTime = CalculateTransactionCacheDuration(model::BlockChainConfiguration::Uninitialized());
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(retentionTime);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 
 		template<typename TAction>
 		void RunHashCacheTest(TAction action) {
 			// Arrange:
-			TestContext context(CreateCache());
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(CreateCache(config));
 			context.boot();
 
 			auto& cache = context.testState().state().cache();

@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 			}
 
 			static auto CreateNotification(EnumType value) {
-				return model::SecretLockHashAlgorithmNotification(value);
+				return model::SecretLockHashAlgorithmNotification<1>(value);
 			}
 		};
 	}

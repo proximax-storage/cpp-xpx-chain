@@ -46,14 +46,17 @@ namespace catapult { namespace model {
 			// plugin entity types
 			#include "plugins/txes/account_link/src/model/AccountLinkEntityType.h"
 			#include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
+			#include "plugins/txes/config/src/model/CatapultConfigEntityType.h"
 			#include "plugins/txes/lock_hash/src/model/HashLockEntityType.h"
 			#include "plugins/txes/lock_secret/src/model/SecretLockEntityType.h"
+			#include "plugins/txes/metadata/src/model/MetadataEntityType.h"
 			#include "plugins/txes/mosaic/src/model/MosaicEntityType.h"
 			#include "plugins/txes/multisig/src/model/MultisigEntityType.h"
 			#include "plugins/txes/contract/src/model/ContractEntityType.h"
 			#include "plugins/txes/namespace/src/model/NamespaceEntityType.h"
 			#include "plugins/txes/property/src/model/PropertyEntityType.h"
 			#include "plugins/txes/transfer/src/model/TransferEntityType.h"
+			#include "plugins/txes/upgrade/src/model/CatapultUpgradeEntityType.h"
 			}
 
 			return nullptr;

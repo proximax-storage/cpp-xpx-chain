@@ -28,6 +28,11 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
+    namespace {
+        constexpr VersionType ENTITY_VERSION_MASK = VersionType(~VersionType{0}) >> (sizeof(NetworkIdentifier) * CHAR_BIT);
+        constexpr uint8_t NETWORK_IDENTIFIER_SHIFT = (sizeof(VersionType) - sizeof(NetworkIdentifier)) * CHAR_BIT;
+    }
+
 	/// Binary layout for an entity body.
 	template<typename THeader>
 	struct EntityBody : public THeader {
@@ -36,26 +41,26 @@ namespace catapult { namespace model {
 		Key Signer;
 
 		/// Entity version.
-		uint16_t Version;
+        VersionType Version;
 
 		/// Entity type.
 		EntityType Type;
 
 		/// Returns network of an entity, as defined in NetworkInfoTraits.
 		NetworkIdentifier Network() const {
-			return static_cast<NetworkIdentifier>(Version >> 8);
+			return static_cast<NetworkIdentifier>(Version >> NETWORK_IDENTIFIER_SHIFT);
 		}
 
 		/// Returns version of an entity.
-		uint8_t EntityVersion() const {
-			return static_cast<uint8_t>(Version & 0xFF);
+        VersionType EntityVersion() const {
+			return static_cast<VersionType>(Version & ENTITY_VERSION_MASK);
 		}
 	};
 
 #pragma pack(pop)
 
 	/// Creates a version field out of given entity \a version and \a networkIdentifier.
-	constexpr uint16_t MakeVersion(NetworkIdentifier networkIdentifier, uint8_t version) noexcept {
-		return static_cast<uint16_t>(utils::to_underlying_type(networkIdentifier) << 8 | version);
+	constexpr VersionType MakeVersion(NetworkIdentifier networkIdentifier, VersionType version) noexcept {
+		return static_cast<VersionType>(utils::to_underlying_type(networkIdentifier)) << NETWORK_IDENTIFIER_SHIFT | version;
 	}
 }}

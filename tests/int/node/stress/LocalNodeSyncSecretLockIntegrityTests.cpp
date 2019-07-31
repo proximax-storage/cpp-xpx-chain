@@ -43,7 +43,7 @@ namespace catapult { namespace local {
 		}
 
 		Hash256 GetComponentStateHash(const test::PeerLocalNodeTestContext& context) {
-			return GetComponentStateHash(context, 3); // { AccountState, Namespace, Mosaic, *SecretLock* }
+			return GetComponentStateHash(context, 4); // { Config, AccountState, Namespace, Mosaic, *SecretLock* }
 		}
 
 		struct SecretLockTuple {
@@ -547,15 +547,15 @@ namespace catapult { namespace local {
 				for (auto i = 0u; i < 8; ++i)
 					allBlocks.push_back(pushBlockAndWait(builder3, Height(6u + i)));
 
-				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 0));
+				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 1));
 
 				// Act: add a single block, secret lock should not expire
 				allBlocks.push_back(pushBlockAndWait(builder3, Height(14)));
-				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 0));
+				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 1));
 
 				// - add another block, secret lock will expire
 				allBlocks.push_back(pushBlockAndWait(builder3, Height(15)));
-				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 0));
+				stateHashes.emplace_back(GetStateHash(m_context), GetComponentStateHash(m_context, 1));
 
 				return stateHashes;
 			}

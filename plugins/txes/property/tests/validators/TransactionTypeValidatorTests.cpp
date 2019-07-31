@@ -56,10 +56,11 @@ namespace catapult { namespace validators {
 				const Key& signer,
 				const model::EntityType& transactionType) {
 			// Arrange:
-			auto cache = test::PropertyCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::PropertyCacheFactory::Create(config);
 			PopulateCache<TOperationTraits>(cache, accountAddress, rawValues);
 			auto pValidator = CreateTransactionTypeValidator();
-			auto notification = model::TransactionNotification(signer, Hash256(), transactionType, Timestamp(123));
+			auto notification = model::TransactionNotification<1>(signer, Hash256(), transactionType, Timestamp(123));
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

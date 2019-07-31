@@ -25,6 +25,7 @@
 #include "NodeConfiguration.h"
 #include "PeersConfiguration.h"
 #include "UserConfiguration.h"
+#include "SupportedEntityVersions.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include <boost/filesystem/path.hpp>
 
@@ -34,14 +35,26 @@ namespace catapult { namespace config {
 	class CatapultConfiguration {
 	public:
 		/// Creates a catapult configuration around \a blockChainConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
-		/// \a extensionsConfig and \a inflationConfig.
+		/// \a extensionsConfig, \a inflationConfig and \a supportedEntityVersions.
+		CatapultConfiguration(
+				const model::BlockChainConfiguration& blockChainConfig,
+				const NodeConfiguration& nodeConfig,
+				const LoggingConfiguration& loggingConfig,
+				const UserConfiguration& userConfig,
+				const ExtensionsConfiguration& extensionsConfig,
+				const InflationConfiguration& inflationConfig,
+				const SupportedEntityVersions& supportedEntityVersions = config::SupportedEntityVersions());
+
+		/// Creates a catapult configuration around \a blockChainConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
+		/// \a extensionsConfig, \a inflationConfig and \a supportedEntityVersions.
 		CatapultConfiguration(
 				model::BlockChainConfiguration&& blockChainConfig,
 				NodeConfiguration&& nodeConfig,
 				LoggingConfiguration&& loggingConfig,
 				UserConfiguration&& userConfig,
 				ExtensionsConfiguration&& extensionsConfig,
-				InflationConfiguration&& inflationConfig);
+				InflationConfiguration&& inflationConfig,
+				SupportedEntityVersions&& supportedEntityVersions = config::SupportedEntityVersions());
 
 	public:
 		/// Block chain configuration.
@@ -61,6 +74,9 @@ namespace catapult { namespace config {
 
 		/// Inflation configuration.
 		const InflationConfiguration Inflation;
+
+		/// Supported entity versions.
+		const config::SupportedEntityVersions SupportedEntityVersions;
 
 	public:
 		/// Loads a catapult configuration from \a resourcesPath given the specified extensions host (\a extensionsHost).

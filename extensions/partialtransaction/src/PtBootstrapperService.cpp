@@ -69,7 +69,8 @@ namespace catapult { namespace partialtransaction {
 					auto pruneStatus = utils::to_underlying_type(extensions::Failure_Extension_Partial_Transaction_Cache_Prune);
 					auto prunedInfos = modifier.prune(timeSupplier());
 					for (const auto& prunedInfo : prunedInfos)
-						transactionStatusSubscriber.notifyStatus(*prunedInfo.pEntity, prunedInfo.EntityHash, pruneStatus);
+						// prunedInfo is not associated with block, so height is current height of blockchain
+						transactionStatusSubscriber.notifyStatus(*prunedInfo.pEntity, config::HEIGHT_OF_LATEST_CONFIG, prunedInfo.EntityHash, pruneStatus);
 				});
 
 				state.hooks().addTransactionEventHandler([&ptCache, &transactionStatusSubscriber](const auto& eventData) {
@@ -80,7 +81,7 @@ namespace catapult { namespace partialtransaction {
 					auto removedInfo = ptCache.modifier().remove(eventData.TransactionHash);
 					if (removedInfo) {
 						auto status = utils::to_underlying_type(extensions::Failure_Extension_Partial_Transaction_Dependency_Removed);
-						transactionStatusSubscriber.notifyStatus(*removedInfo.pEntity, removedInfo.EntityHash, status);
+						transactionStatusSubscriber.notifyStatus(*removedInfo.pEntity, eventData.AssociatedHeight, removedInfo.EntityHash, status);
 					}
 				});
 			}

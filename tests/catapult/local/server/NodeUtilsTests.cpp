@@ -21,6 +21,7 @@
 #include "catapult/local/server/NodeUtils.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
@@ -33,7 +34,8 @@ namespace catapult { namespace local {
 
 	namespace {
 		auto CreateBootstrapper(const config::CatapultConfiguration& config) {
-			return extensions::ProcessBootstrapper(config, "", extensions::ProcessDisposition::Production, "bootstrapper");
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			return extensions::ProcessBootstrapper(pConfigHolder, "", extensions::ProcessDisposition::Production, "bootstrapper");
 		}
 
 		auto CreateCatapultConfiguration(const std::string& bootKey, const std::string& host, const std::string& name) {

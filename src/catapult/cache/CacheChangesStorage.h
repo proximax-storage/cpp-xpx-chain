@@ -42,7 +42,7 @@ namespace catapult { namespace cache {
 		/// Loads cache changes from \a input.
 		virtual std::unique_ptr<const MemoryCacheChanges> loadAll(io::InputStream& input) const = 0;
 
-		/// Applies cache \a changes to the underlying cache.
-		virtual void apply(const CacheChanges& changes) const = 0;
+		/// Applies cache \a changes to the underlying cache at \a height.
+		virtual void apply(const CacheChanges& changes, const Height& height) const = 0;
 	};
 }}

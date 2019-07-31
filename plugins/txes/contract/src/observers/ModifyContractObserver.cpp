@@ -5,6 +5,8 @@
 **/
 
 #include "Observers.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "src/cache/ContractCache.h"
 #include "src/config/ContractConfiguration.h"
 #include "plugins/txes/multisig/src/cache/MultisigCache.h"
@@ -12,7 +14,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::ModifyContractNotification;
+	using Notification = model::ModifyContractNotification<1>;
 
 	namespace {
 		auto GetContractEntry(cache::ContractCacheDelta& contractCache, const Key& key) {
@@ -86,8 +88,8 @@ namespace catapult { namespace observers {
 		};
 	}
 
-	DECLARE_OBSERVER(ModifyContract, Notification)(config::ContractConfiguration config) {
-		return MAKE_OBSERVER(ModifyContract, Notification, [config](const auto& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(ModifyContract, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_OBSERVER(ModifyContract, Notification, [pConfigHolder](const auto& notification, const ObserverContext& context) {
 			auto& contractCache = context.Cache.sub<cache::ContractCache>();
 			ContractFacade contractFacade(contractCache, notification.Multisig);
 
@@ -116,8 +118,10 @@ namespace catapult { namespace observers {
 			auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
 			auto& multisigEntry = multisigCache.find(notification.Multisig).get();
 			float verifierCount = contractFacade.verifierCount();
-			multisigEntry.setMinApproval(ceil(verifierCount * config.MinPercentageOfApproval / 100));
-			multisigEntry.setMinRemoval(ceil(verifierCount * config.MinPercentageOfRemoval / 100));
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::ContractConfiguration>(PLUGIN_NAME(contract));
+			multisigEntry.setMinApproval(ceil(verifierCount * pluginConfig.MinPercentageOfApproval / 100));
+			multisigEntry.setMinRemoval(ceil(verifierCount * pluginConfig.MinPercentageOfRemoval / 100));
 		});
 	}
 }}

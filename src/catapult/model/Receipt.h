@@ -30,7 +30,7 @@ namespace catapult { namespace model {
 	/// Binary layout for a receipt entity.
 	struct Receipt : public SizePrefixedEntity {
 		/// Receipt version.
-		uint16_t Version;
+        VersionType Version;
 
 		/// Receipt type.
 		ReceiptType Type;
@@ -134,7 +134,7 @@ namespace catapult { namespace model {
 /// Defines constants for a receipt with \a TYPE and \a VERSION.
 #define DEFINE_RECEIPT_CONSTANTS(TYPE, VERSION) \
 	/* Receipt format version. */ \
-	static constexpr uint8_t Current_Version = VERSION; \
+	static constexpr VersionType Current_Version = VERSION; \
 	/* Receipt type. */ \
 	static constexpr ReceiptType Receipt_Type = TYPE;
 }}

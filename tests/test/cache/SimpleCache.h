@@ -119,6 +119,12 @@ namespace catapult { namespace test {
 		/// Creates a view extension.
 		explicit SimpleCacheDisabledMerkleRootViewExtension(SimpleCacheViewMode, const SimpleCacheState&)
 		{}
+
+	public:
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
+		}
 	};
 
 	/// A view extension that represents a default cache that supports merkle roots.
@@ -150,6 +156,11 @@ namespace catapult { namespace test {
 		/// \note This is just a placeholder and not implemented.
 		std::pair<Hash256, bool> tryLookup(const uint64_t&, std::vector<tree::TreeNode>&) const {
 			return std::make_pair(Hash256(), false);
+		}
+
+		/// Returns \c true if cache is enabled.
+		bool enabled() const {
+			return true;
 		}
 
 	private:
@@ -220,6 +231,9 @@ namespace catapult { namespace test {
 		uint64_t id() const {
 			return m_id;
 		}
+
+		void setHeight(const Height&)
+		{}
 
 	public:
 		/// Gets the size.
@@ -319,6 +333,13 @@ namespace catapult { namespace test {
 			++m_id;
 		}
 
+		void setHeight(const Height&)
+		{}
+
+		Height height() const {
+			return Height{0};
+		}
+
 	public:
 		/// Finds the cache value identified by \a id.
 		const_iterator find(uint64_t id) const {
@@ -416,18 +437,18 @@ namespace catapult { namespace test {
 
 	public:
 		/// Returns a locked view based on this cache.
-		CacheViewType createView() const {
+		CacheViewType createView(const Height&) const {
 			return CacheViewType(m_mode, m_state);
 		}
 
 		/// Returns a locked cache delta based on this cache.
-		CacheDeltaType createDelta() {
+		CacheDeltaType createDelta(const Height&) {
 			return CacheDeltaType(m_mode, m_state);
 		}
 
 		/// Returns a lockable cache delta based on this cache but without the ability
 		/// to commit any changes to the original cache.
-		CacheDeltaType createDetachedDelta() const {
+		CacheDeltaType createDetachedDelta(const Height&) const {
 			return CacheDeltaType(m_mode, m_state);
 		}
 

@@ -29,6 +29,7 @@
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
+#include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/net/SocketTestUtils.h"
 
@@ -40,9 +41,10 @@ namespace catapult { namespace net {
 
 	namespace {
 		const auto Default_Timeout = []() { return utils::TimeSpan::FromMinutes(1); }();
+		auto Default_Service_State = test::ServiceTestState();
 
 		auto CreateDefaultPacketWriters() {
-			return CreatePacketWriters(test::CreateStartedIoThreadPool(), test::GenerateKeyPair(), ConnectionSettings());
+			return CreatePacketWriters(test::CreateStartedIoThreadPool(), test::GenerateKeyPair(), ConnectionSettings(), Default_Service_State.state());
 		}
 
 		void EmptyReadCallback(ionet::SocketOperationCode, const ionet::Packet*)
@@ -57,7 +59,7 @@ namespace catapult { namespace net {
 					: ServerKeyPair(test::GenerateKeyPair())
 					, pPool(test::CreateStartedIoThreadPool())
 					, IoContext(pPool->ioContext())
-					, pWriters(CreatePacketWriters(pPool, ServerKeyPair, ConnectionSettings())) {
+					, pWriters(CreatePacketWriters(pPool, ServerKeyPair, ConnectionSettings(), Default_Service_State.state())) {
 				for (auto i = 0u; i < numClientKeyPairs; ++i)
 					ClientKeyPairs.push_back(test::GenerateKeyPair());
 			}

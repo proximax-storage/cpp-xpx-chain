@@ -42,7 +42,8 @@ namespace catapult { namespace config {
 			"config-logging-server.properties",
 			"config-network.properties",
 			"config-node.properties",
-			"config-user.properties"
+			"config-user.properties",
+			"supported-entities.json"
 		};
 
 		void AssertDefaultBlockChainConfiguration(const model::BlockChainConfiguration& config) {

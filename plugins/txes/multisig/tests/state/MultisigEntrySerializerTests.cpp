@@ -93,8 +93,10 @@ namespace catapult { namespace state {
 				EXPECT_CONTAINS(keys, expectedKey);
 		}
 
-		void AssertEntryBuffer(const MultisigEntry& entry, const uint8_t* pData, size_t expectedSize) {
+		void AssertEntryBuffer(const MultisigEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
 			const auto* pExpectedEnd = pData + expectedSize;
+			EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
+			pData += sizeof(VersionType);
 			EXPECT_EQ(entry.minApproval(), pData[0]);
 			EXPECT_EQ(entry.minRemoval(), pData[1]);
 			pData += 2;
@@ -111,36 +113,44 @@ namespace catapult { namespace state {
 
 			EXPECT_EQ(pExpectedEnd, pData);
 		}
+
+		void AssertCanSaveSingleEntryWithNeitherCosignersNorMultisigAccounts(VersionType version) {
+			// Arrange:
+			TestContext context;
+			auto entry = context.createEntry(0, 0, 0);
+
+			// Act:
+			MultisigEntrySerializer::Save(entry, context.outputStream());
+
+			// Assert:
+			auto expectedSize = sizeof(VersionType) + sizeof(uint8_t) * 2 + sizeof(Key) + 2 * sizeof(uint64_t);
+			ASSERT_EQ(expectedSize, context.buffer().size());
+			AssertEntryBuffer(entry, context.buffer().data(), expectedSize, version);
+		}
+
+		void AssertCanSaveSingleEntry(VersionType version) {
+			// Arrange:
+			TestContext context;
+			auto entry = context.createEntry(0, 3, 4);
+
+			// Act:
+			MultisigEntrySerializer::Save(entry, context.outputStream());
+
+			// Assert:
+			auto expectedSize = sizeof(VersionType) + sizeof(uint8_t) * 2 + sizeof(Key) + 2 * sizeof(uint64_t) + 3 * sizeof(Key) + 4 * sizeof(Key);
+			ASSERT_EQ(expectedSize, context.buffer().size());
+			AssertEntryBuffer(entry, context.buffer().data(), expectedSize, version);
+		}
 	}
 
 	// region Save
 
-	TEST(TEST_CLASS, CanSaveSingleEntryWithNeitherCosignersNorMultisigAccounts) {
-		// Arrange:
-		TestContext context;
-		auto entry = context.createEntry(0, 0, 0);
-
-		// Act:
-		MultisigEntrySerializer::Save(entry, context.outputStream());
-
-		// Assert:
-		auto expectedSize = sizeof(uint8_t) * 2 + sizeof(Key) + 2 * sizeof(uint64_t);
-		ASSERT_EQ(expectedSize, context.buffer().size());
-		AssertEntryBuffer(entry, context.buffer().data(), expectedSize);
+	TEST(TEST_CLASS, CanSaveSingleEntryWithNeitherCosignersNorMultisigAccounts_v1) {
+		AssertCanSaveSingleEntryWithNeitherCosignersNorMultisigAccounts(1);
 	}
 
-	TEST(TEST_CLASS, CanSaveSingleEntry) {
-		// Arrange:
-		TestContext context;
-		auto entry = context.createEntry(0, 3, 4);
-
-		// Act:
-		MultisigEntrySerializer::Save(entry, context.outputStream());
-
-		// Assert:
-		auto expectedSize = sizeof(uint8_t) * 2 + sizeof(Key) + 2 * sizeof(uint64_t) + 3 * sizeof(Key) + 4 * sizeof(Key);
-		ASSERT_EQ(expectedSize, context.buffer().size());
-		AssertEntryBuffer(entry, context.buffer().data(), expectedSize);
+	TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
+		AssertCanSaveSingleEntry(1);
 	}
 
 	namespace {
@@ -162,7 +172,7 @@ namespace catapult { namespace state {
 			}
 
 			static constexpr size_t GetKeyStartBufferOffset() {
-				return 2u * sizeof(uint8_t) + Key_Size;
+				return sizeof(VersionType) + 2u * sizeof(uint8_t) + Key_Size;
 			}
 		};
 
@@ -174,7 +184,7 @@ namespace catapult { namespace state {
 			}
 
 			static constexpr size_t GetKeyStartBufferOffset() {
-				return 2u * sizeof(uint8_t) + Key_Size + sizeof(uint64_t);
+				return sizeof(VersionType) + 2u * sizeof(uint8_t) + Key_Size + sizeof(uint64_t);
 			}
 		};
 	}
@@ -203,19 +213,24 @@ namespace catapult { namespace state {
 			pData += Key_Size * keySet.size();
 		}
 
-		std::vector<uint8_t> CreateBuffer(const MultisigEntry& entry) {
+		std::vector<uint8_t> CreateBuffer(const MultisigEntry& entry, VersionType version) {
 			// minApproval / minRemoval / key / cosignatories / multisigAccounts
 			size_t cosignatoriesSize = entry.cosignatories().size();
 			size_t multisigAccountsSize = entry.multisigAccounts().size();
-			size_t bufferSize = 1 + 1 + Key_Size + 2 * sizeof(uint64_t) + Key_Size * (cosignatoriesSize + multisigAccountsSize);
+			size_t bufferSize = sizeof(VersionType) + 1 + 1 + Key_Size + 2 * sizeof(uint64_t) + Key_Size * (cosignatoriesSize + multisigAccountsSize);
 			std::vector<uint8_t> buffer(bufferSize);
 
+			// - version
+			auto* pData = buffer.data();
+			memcpy(pData, &version, sizeof(VersionType));
+			pData += sizeof(VersionType);
+
 			// - minApproval / minRemoval
-			buffer[0] = entry.minApproval();
-			buffer[1] = entry.minRemoval();
+			pData[0] = entry.minApproval();
+			pData[1] = entry.minRemoval();
+			pData += 2;
 
 			// - multisig account key
-			auto* pData = buffer.data() + 2;
 			memcpy(pData, entry.key().data(), Key_Size);
 			pData += Key_Size;
 
@@ -232,11 +247,11 @@ namespace catapult { namespace state {
 			return buffer;
 		}
 
-		void AssertCanLoadSingleEntry(size_t numCosignatories, size_t numMultisigAccounts) {
+		void AssertCanLoadSingleEntry(size_t numCosignatories, size_t numMultisigAccounts, VersionType version) {
 			// Arrange:
 			TestContext context;
 			auto originalEntry = context.createEntry(0, numCosignatories, numMultisigAccounts);
-			auto buffer = CreateBuffer(originalEntry);
+			auto buffer = CreateBuffer(originalEntry, version);
 
 			// Act:
 			MultisigEntry result(test::GenerateRandomByteArray<Key>());
@@ -247,20 +262,20 @@ namespace catapult { namespace state {
 		}
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleEntryWithNeitherCosignatoriesNorMultisigAccounts) {
-		AssertCanLoadSingleEntry(0, 0);
+	TEST(TEST_CLASS, CanLoadSingleEntryWithNeitherCosignatoriesNorMultisigAccounts_v1) {
+		AssertCanLoadSingleEntry(0, 0, 1);
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleEntryWithCosignatoriesButWithoutMultisigAccounts) {
-		AssertCanLoadSingleEntry(5, 0);
+	TEST(TEST_CLASS, CanLoadSingleEntryWithCosignatoriesButWithoutMultisigAccounts_v1) {
+		AssertCanLoadSingleEntry(5, 0, 1);
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleEntryWithoutCosignatoriesButWithMultisigAccounts) {
-		AssertCanLoadSingleEntry(0, 5);
+	TEST(TEST_CLASS, CanLoadSingleEntryWithoutCosignatoriesButWithMultisigAccounts_v1) {
+		AssertCanLoadSingleEntry(0, 5, 1);
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleEntryWithCosignatoriesAndMultisigAccounts) {
-		AssertCanLoadSingleEntry(3, 4);
+	TEST(TEST_CLASS, CanLoadSingleEntryWithCosignatoriesAndMultisigAccounts_v1) {
+		AssertCanLoadSingleEntry(3, 4, 1);
 	}
 
 	// endregion

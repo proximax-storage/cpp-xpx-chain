@@ -26,7 +26,7 @@ namespace catapult { namespace extensions {
 
 	chain::ExecutionConfiguration CreateExecutionConfiguration(const plugins::PluginManager& pluginManager) {
 		chain::ExecutionConfiguration executionConfig;
-		executionConfig.Network = pluginManager.config().Network;
+		executionConfig.NetworkInfoSupplier = [&pluginManager](const Height& height) { return pluginManager.config(height).Network; };
 		executionConfig.pObserver = pluginManager.createObserver();
 		executionConfig.pValidator = pluginManager.createStatefulValidator();
 		executionConfig.pNotificationPublisher = pluginManager.createNotificationPublisher();

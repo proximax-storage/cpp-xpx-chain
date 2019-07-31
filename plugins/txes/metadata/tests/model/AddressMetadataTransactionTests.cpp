@@ -36,7 +36,7 @@ namespace catapult { namespace model {
         void AssertTransactionHasExpectedProperties() {
             // Assert:
             EXPECT_EQ(Entity_Type_Address_Metadata, static_cast<EntityType>(T::Entity_Type));
-            EXPECT_EQ(1u, static_cast<uint8_t>(T::Current_Version));
+            EXPECT_EQ(1u, static_cast<VersionType>(T::Current_Version));
         }
     }
 
@@ -142,7 +142,7 @@ namespace catapult { namespace model {
         auto realSize = TransactionType::CalculateRealSize(*pTransaction);
 
         // Assert:
-        EXPECT_EQ(191u, realSize);
+        EXPECT_EQ(193u, realSize);
     }
 
     // endregion

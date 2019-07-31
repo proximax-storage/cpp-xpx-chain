@@ -41,7 +41,7 @@ namespace catapult { namespace chain {
 				const cache::BlockDifficultyCache& cache,
 				Height height,
 				const model::BlockChainConfiguration& config) {
-			auto view = cache.createView();
+			auto view = cache.createView(config::HEIGHT_OF_LATEST_CONFIG);
 			auto range = view->difficultyInfos(height, config.MaxDifficultyBlocks);
 
 			DifficultySet set;

@@ -103,7 +103,7 @@ namespace catapult { namespace sync {
 
 		// region MockReceiptBlockObserver
 
-		class MockReceiptBlockObserver : public observers::NotificationObserverT<model::BlockNotification> {
+		class MockReceiptBlockObserver : public observers::NotificationObserverT<model::BlockNotification<1>> {
 		public:
 			MockReceiptBlockObserver() : m_name("MockReceiptBlockObserver")
 			{}
@@ -113,7 +113,7 @@ namespace catapult { namespace sync {
 				return m_name;
 			}
 
-			void notify(const model::BlockNotification& notification, observers::ObserverContext& context) const override {
+			void notify(const model::BlockNotification<1>& notification, observers::ObserverContext& context) const override {
 				model::Receipt receipt{};
 				receipt.Size = sizeof(model::Receipt);
 				receipt.Type = static_cast<model::ReceiptType>(notification.Timestamp.unwrap());
@@ -174,32 +174,32 @@ namespace catapult { namespace sync {
 
 				// add transaction validators to emulate transaction validation failures
 				pluginManager.addStatelessValidatorHook([&result = m_transactionValidationResults.Stateless](auto& builder) {
-					auto pValidator = std::make_unique<mocks::MockStatelessNotificationValidatorT<model::TransactionNotification>>();
+					auto pValidator = std::make_unique<mocks::MockStatelessNotificationValidatorT<model::TransactionNotification<1>>>();
 					pValidator->setResult(result);
-					builder.template add<model::TransactionNotification>(std::move(pValidator));
+					builder.template add<model::TransactionNotification<1>>(std::move(pValidator));
 				});
 				pluginManager.addStatefulValidatorHook([&result = m_transactionValidationResults.Stateful](auto& builder) {
-					auto pValidator = std::make_unique<mocks::MockNotificationValidatorT<model::TransactionNotification>>();
+					auto pValidator = std::make_unique<mocks::MockNotificationValidatorT<model::TransactionNotification<1>>>();
 					pValidator->setResult(result);
-					builder.template add<model::TransactionNotification>(std::move(pValidator));
+					builder.template add<model::TransactionNotification<1>>(std::move(pValidator));
 				});
 
 				// add block validators to emulate block validation failures
 				pluginManager.addStatelessValidatorHook([&result = m_blockValidationResults.Stateless](auto& builder) {
-					auto pValidator = std::make_unique<mocks::MockStatelessNotificationValidatorT<model::BlockNotification>>();
+					auto pValidator = std::make_unique<mocks::MockStatelessNotificationValidatorT<model::BlockNotification<1>>>();
 					pValidator->setResult(result);
-					builder.template add<model::BlockNotification>(std::move(pValidator));
+					builder.template add<model::BlockNotification<1>>(std::move(pValidator));
 				});
 				pluginManager.addStatefulValidatorHook([this, &result = m_blockValidationResults.Stateful](auto& builder) {
-					auto pValidator = std::make_unique<mocks::MockNotificationValidatorT<model::BlockNotification>>();
+					auto pValidator = std::make_unique<mocks::MockNotificationValidatorT<model::BlockNotification<1>>>();
 					pValidator->setResult(result);
 					m_pStatefulBlockValidator = pValidator.get();
-					builder.template add<model::BlockNotification>(std::move(pValidator));
+					builder.template add<model::BlockNotification<1>>(std::move(pValidator));
 				});
 
 				// add receipt block observer to make sure block receipts hash checks are wired up properly
 				pluginManager.addObserverHook([](auto& builder) {
-					builder.template add<model::BlockNotification>(std::make_unique<MockReceiptBlockObserver>());
+					builder.template add<model::BlockNotification<1>>(std::make_unique<MockReceiptBlockObserver>());
 				});
 			}
 
@@ -255,7 +255,7 @@ namespace catapult { namespace sync {
 
 			// stateful block validator needs to be captured in order to allow custom rollback tests,
 			// which require validator to return different results on demand
-			mocks::MockNotificationValidatorT<model::BlockNotification>* m_pStatefulBlockValidator;
+			mocks::MockNotificationValidatorT<model::BlockNotification<1>>* m_pStatefulBlockValidator;
 		};
 
 		// endregion

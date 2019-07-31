@@ -18,9 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/PropertyConfiguration.h"
 #include "src/validators/Validators.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/model/Address.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PropertyAddressNoSelfModificationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, model::NetworkIdentifier::Zero)
+	DEFINE_COMMON_VALIDATOR_TESTS(PropertyAddressNoSelfModification, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -39,11 +42,15 @@ namespace catapult { namespace validators {
 				const Key& signer,
 				const model::PropertyModification<UnresolvedAddress>& modification) {
 			// Arrange:
-			model::ModifyAddressPropertyValueNotification notification(signer, model::PropertyType::Address, modification);
-			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(model::NetworkIdentifier::Zero);
+			model::ModifyAddressPropertyValueNotification_v1 notification(signer, model::PropertyType::Address, modification);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
+			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

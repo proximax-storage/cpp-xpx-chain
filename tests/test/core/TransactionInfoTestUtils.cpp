@@ -28,7 +28,7 @@ namespace catapult { namespace test {
 	// region create (single)
 
 	model::TransactionInfo CreateRandomTransactionInfo() {
-		auto transactionInfo = model::TransactionInfo(GenerateRandomTransaction());
+		auto transactionInfo = model::TransactionInfo(GenerateRandomTransaction(), Height());
 		FillWithRandomData(transactionInfo.EntityHash);
 		FillWithRandomData(transactionInfo.MerkleComponentHash);
 		transactionInfo.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>();
@@ -38,7 +38,7 @@ namespace catapult { namespace test {
 	model::TransactionInfo CreateTransactionInfoWithDeadline(size_t deadline) {
 		auto pTransaction = GenerateRandomTransaction();
 		pTransaction->Deadline = Timestamp(deadline);
-		auto transactionInfo = model::TransactionInfo(std::move(pTransaction));
+		auto transactionInfo = model::TransactionInfo(std::move(pTransaction), Height());
 		FillWithRandomData(transactionInfo.EntityHash);
 		FillWithRandomData(transactionInfo.MerkleComponentHash);
 		transactionInfo.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>();
@@ -67,7 +67,7 @@ namespace catapult { namespace test {
 		for (const auto& pair: sizeMultiplierPairs) {
 			auto pTransaction = GenerateRandomTransactionWithSize(pair.first);
 			pTransaction->MaxFee = Amount(pair.first * pair.second / 10);
-			transactionInfos.push_back(model::TransactionInfo(std::move(pTransaction)));
+			transactionInfos.push_back(model::TransactionInfo(std::move(pTransaction), Height()));
 
 			// give each info a unique entity hash so that they can all be added to a UT cache
 			FillWithRandomData(transactionInfos.back().EntityHash);

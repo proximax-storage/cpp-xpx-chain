@@ -19,13 +19,14 @@
 **/
 
 #include "RollbackInfo.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/model/Elements.h"
 
 namespace catapult { namespace sync {
 
-	RollbackInfo::RollbackInfo(const chain::TimeSupplier& timeSupplier, const utils::TimeSpan& recentStatsTimeSpan)
+	RollbackInfo::RollbackInfo(const chain::TimeSupplier& timeSupplier, extensions::ServiceState& state)
 			: m_timeSupplier(timeSupplier)
-			, m_recentStatsTimeSpan(recentStatsTimeSpan)
+			, m_state(state)
 			, m_currentRollbackSize(0)
 	{}
 
@@ -54,7 +55,9 @@ namespace catapult { namespace sync {
 	}
 
 	void RollbackInfo::prune() {
-		auto threshold = utils::SubtractNonNegative(m_timeSupplier(), m_recentStatsTimeSpan);
+		auto rollbackDurationFull = CalculateFullRollbackDuration(m_state.config(m_state.cache().height()).BlockChain);
+		auto recentStatsTimeSpan = utils::TimeSpan::FromMilliseconds(rollbackDurationFull.millis() / 2);
+		auto threshold = utils::SubtractNonNegative(m_timeSupplier(), recentStatsTimeSpan);
 
 		m_committed.prune(threshold);
 		m_ignored.prune(threshold);

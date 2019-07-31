@@ -19,8 +19,10 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "src/config/MosaicConfiguration.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -28,8 +30,8 @@
 
 namespace catapult { namespace validators {
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, 123)
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, 123)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, config::CreateMockConfigurationHolder())
 
 #define BALANCE_TRANSFER_TEST_CLASS BalanceTransferMaxMosaicsValidatorTests
 #define SUPPLY_CHANGE_TEST_CLASS SupplyChangeMaxMosaicsValidatorTests
@@ -52,6 +54,14 @@ namespace catapult { namespace validators {
 			return cache;
 		}
 
+		auto CreateConfig(uint16_t maxMosaics) {
+			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
+			pluginConfig.MaxMosaicsPerAccount = maxMosaics;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			return blockChainConfig;
+		}
+
 		void RunBalanceTransferTest(ValidationResult expectedResult, uint16_t maxMosaics, UnresolvedMosaicId mosaicId, Amount amount) {
 			// Arrange:
 			auto owner = test::GenerateRandomByteArray<Key>();
@@ -59,8 +69,10 @@ namespace catapult { namespace validators {
 			auto unresolvedRecipient = test::UnresolveXor(recipient);
 			auto cache = CreateAndSeedCache(recipient);
 
-			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(maxMosaics);
-			auto notification = model::BalanceTransferNotification(owner, unresolvedRecipient, mosaicId, amount);
+			auto config = CreateConfig(maxMosaics);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(pConfigHolder);
+			auto notification = model::BalanceTransferNotification<1>(owner, unresolvedRecipient, mosaicId, amount);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -104,8 +116,10 @@ namespace catapult { namespace validators {
 			auto owner = test::GenerateRandomByteArray<Key>();
 			auto cache = CreateAndSeedCache(owner);
 
-			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(maxMosaics);
-			auto notification = model::MosaicSupplyChangeNotification(owner, mosaicId, direction, Amount(100));
+			auto config = CreateConfig(maxMosaics);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(pConfigHolder);
+			auto notification = model::MosaicSupplyChangeNotification<1>(owner, mosaicId, direction, Amount(100));
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

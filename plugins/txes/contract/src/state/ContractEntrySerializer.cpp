@@ -6,6 +6,7 @@
 
 #include "ContractEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
+#include "catapult/exceptions.h"
 
 namespace catapult { namespace state {
 
@@ -26,6 +27,9 @@ namespace catapult { namespace state {
 	}
 
 	void ContractEntrySerializer::Save(const ContractEntry& entry, io::OutputStream& output) {
+		// write version
+		io::Write32(output, 1);
+
 		io::Write64(output, entry.start().unwrap());
 		io::Write64(output, entry.duration().unwrap());
 		io::Write(output, entry.key());
@@ -57,6 +61,11 @@ namespace catapult { namespace state {
 	}
 
 	ContractEntry ContractEntrySerializer::Load(io::InputStream& input) {
+		// read version
+		VersionType version = io::Read32(input);
+		if (version > 1)
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ContractEntry", version);
+
 		auto start = Height{io::Read64(input)};
 		auto duration = BlockDuration{io::Read64(input)};
 		Key key;

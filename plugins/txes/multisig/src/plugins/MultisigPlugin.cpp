@@ -21,7 +21,6 @@
 #include "MultisigPlugin.h"
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheStorage.h"
-#include "src/config/MultisigConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -57,7 +56,7 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("MULTISIG C"), [&cache]() {
-				return cache.sub<cache::MultisigCache>().createView()->size();
+				return cache.sub<cache::MultisigCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -70,19 +69,21 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addStatelessValidatorHook([](auto& builder) {
-			builder.add(validators::CreateModifyMultisigCosignersValidator());
+			builder
+				.add(validators::CreateModifyMultisigCosignersValidator())
+				.add(validators::CreatePluginConfigValidator());
 		});
 
-		auto config = model::LoadPluginConfiguration<config::MultisigConfiguration>(manager.config(), "catapult.plugins.multisig");
-		manager.addStatefulValidatorHook([config](auto& builder) {
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateMultisigPermittedOperationValidator())
-				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator(config.MaxCosignedAccountsPerAccount))
-				.add(validators::CreateModifyMultisigMaxCosignersValidator(config.MaxCosignersPerAccount))
+				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator(pConfigHolder))
+				.add(validators::CreateModifyMultisigMaxCosignersValidator(pConfigHolder))
 				.add(validators::CreateModifyMultisigInvalidCosignersValidator())
 				.add(validators::CreateModifyMultisigInvalidSettingsValidator())
 				// notice that ModifyMultisigLoopAndLevelValidator must be called before multisig aggregate validators
-				.add(validators::CreateModifyMultisigLoopAndLevelValidator(config.MaxMultisigDepth))
+				.add(validators::CreateModifyMultisigLoopAndLevelValidator(pConfigHolder))
 				// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
 				.add(validators::CreateMultisigAggregateEligibleCosignersValidator())
 				.add(validators::CreateMultisigAggregateSufficientCosignersValidator());

@@ -22,6 +22,7 @@
 #include "catapult/crypto/Hashes.h"
 #include "catapult/model/Block.h"
 #include "catapult/utils/Logging.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -218,9 +219,10 @@ namespace catapult { namespace chain {
 		uint64_t CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(const model::BlockChainConfiguration& config) {
 			// Arrange: set up test importances
 			auto importances = CreateDoublingImportances();
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
 			// - set up chain
-			BlockHitPredicate predicate(config, [&importances](const auto& signerKey, auto) {
+			BlockHitPredicate predicate(pConfigHolder, [&importances](const auto& signerKey, auto) {
 				auto iter = std::find_if(importances.cbegin(), importances.cend(), [&signerKey](const auto& pGroup) {
 					return pGroup->Signer == signerKey;
 				});

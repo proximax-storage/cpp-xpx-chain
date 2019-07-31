@@ -25,7 +25,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::HashLockNotification;
+	using Notification = model::HashLockNotification<1>;
 
 	namespace {
 		auto CreateLockInfo(const Key& account, MosaicId mosaicId, Height endHeight, const Notification& notification) {

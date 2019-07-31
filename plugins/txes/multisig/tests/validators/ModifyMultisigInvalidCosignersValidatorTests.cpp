@@ -36,14 +36,14 @@ namespace catapult { namespace validators {
 		using Modifications = std::vector<model::CosignatoryModification>;
 
 		auto CreateNotification(const Key& signer, const std::vector<model::CosignatoryModification>& modifications) {
-			return model::ModifyMultisigCosignersNotification(signer, static_cast<uint8_t>(modifications.size()), modifications.data());
+			return model::ModifyMultisigCosignersNotification<1>(signer, static_cast<uint8_t>(modifications.size()), modifications.data());
 		}
 
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
 				Height height,
-				const model::ModifyMultisigCosignersNotification& notification) {
+				const model::ModifyMultisigCosignersNotification<1>& notification) {
 			// Arrange:
 			auto pValidator = CreateModifyMultisigInvalidCosignersValidator();
 

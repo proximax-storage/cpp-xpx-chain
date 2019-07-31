@@ -30,9 +30,16 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(MosaicRequiredNotification(transaction.Signer, transaction.MosaicId));
-			sub.notify(MosaicSupplyChangeNotification(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			switch (transaction.EntityVersion()) {
+			case 2:
+				sub.notify(MosaicRequiredNotification<1>(transaction.Signer, transaction.MosaicId));
+				sub.notify(MosaicSupplyChangeNotification<1>(transaction.Signer, transaction.MosaicId, transaction.Direction, transaction.Delta));
+				break;
+
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MosaicSupplyChangeTransaction", transaction.EntityVersion());
+			}
 		}
 	}
 

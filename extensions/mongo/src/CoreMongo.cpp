@@ -28,7 +28,7 @@ namespace catapult { namespace mongo {
 
 	void RegisterCoreMongoSystem(MongoPluginManager& manager) {
 		// cache storage support
-		manager.addStorageSupport(storages::CreateMongoAccountStateCacheStorage(manager.mongoContext(), manager.networkIdentifier()));
+		manager.addStorageSupport(storages::CreateMongoAccountStateCacheStorage(manager.mongoContext(), manager.configHolder()));
 
 		// receipt support
 		manager.addReceiptSupport(CreateBalanceChangeReceiptMongoPlugin(model::Receipt_Type_Harvest_Fee));

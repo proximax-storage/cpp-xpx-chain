@@ -69,6 +69,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the transaction type is not allowed to be initiated by the signer.
 	DEFINE_PROPERTY_RESULT(Transaction_Type_Not_Allowed, 13);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_PROPERTY_RESULT(Plugin_Config_Malformed, 14);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

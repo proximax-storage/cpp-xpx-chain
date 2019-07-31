@@ -309,7 +309,7 @@ namespace catapult { namespace cache {
 		std::vector<model::TransactionInfo> CreateTransactionInfos(const Key& signer, size_t count) {
 			std::vector<model::TransactionInfo> transactionInfos;
 			for (auto i = 0u; i < count; ++i) {
-				auto transactionInfo = model::TransactionInfo(test::GenerateRandomTransaction(signer));
+				auto transactionInfo = model::TransactionInfo(test::GenerateRandomTransaction(signer), Height());
 				test::FillWithRandomData(transactionInfo.EntityHash);
 				transactionInfos.push_back(std::move(transactionInfo));
 			}

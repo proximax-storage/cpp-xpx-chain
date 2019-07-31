@@ -44,6 +44,8 @@ namespace catapult { namespace cache {
 
 		/// Copied elements.
 		std::vector<TValue> Copied;
+
+		catapult::Height Height;
 	};
 
 	// endregion
@@ -62,15 +64,17 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates changes around \a cacheDelta.
-		explicit SingleCacheChangesT(const TCacheDelta& cacheDelta)
+		explicit SingleCacheChangesT(const TCacheDelta& cacheDelta, const Height& height)
 				: m_pCacheDelta(&cacheDelta)
 				, m_pMemoryCacheChanges(nullptr)
+				, m_height(height)
 		{}
 
 		/// Creates changes around \a memoryCacheChanges.
-		explicit SingleCacheChangesT(const MemoryCacheChangesT<TValue>& memoryCacheChanges)
+		explicit SingleCacheChangesT(const MemoryCacheChangesT<TValue>& memoryCacheChanges, const Height& height)
 				: m_pCacheDelta(nullptr)
 				, m_pMemoryCacheChanges(&memoryCacheChanges)
+				, m_height(height)
 		{}
 
 	public:
@@ -89,6 +93,11 @@ namespace catapult { namespace cache {
 			return m_pCacheDelta ? m_pCacheDelta->removedElements() : CollectAllPointers(m_pMemoryCacheChanges->Removed);
 		}
 
+		/// Gets the height of the cache change.
+		Height height() const {
+			return m_height;
+		}
+
 	private:
 		static PointerContainer CollectAllPointers(const std::vector<TValue>& values) {
 			PointerContainer pointers;
@@ -101,6 +110,7 @@ namespace catapult { namespace cache {
 	private:
 		const TCacheDelta* m_pCacheDelta;
 		const MemoryCacheChangesT<TValue>* m_pMemoryCacheChanges;
+		Height m_height;
 	};
 
 	// endregion
@@ -129,11 +139,14 @@ namespace catapult { namespace cache {
 		template<typename TCache>
 		auto sub() const {
 			using SubCacheChanges = SingleCacheChangesT<typename TCache::CacheDeltaType, typename TCache::CacheValueType>;
-			if (m_pCacheDelta)
-				return SubCacheChanges(m_pCacheDelta->sub<TCache>());
+			if (m_pCacheDelta) {
+				const auto& subCacheDelta = m_pCacheDelta->sub<TCache>();
+				return SubCacheChanges(subCacheDelta, subCacheDelta.height());
+			}
 
 			using TypedMemoryCacheChanges = MemoryCacheChangesT<typename TCache::CacheValueType>;
-			return SubCacheChanges(*static_cast<const TypedMemoryCacheChanges*>(m_memoryCacheChangesContainer[TCache::Id].get()));
+			const auto& memoryCacheChanges = *static_cast<const TypedMemoryCacheChanges*>(m_memoryCacheChangesContainer[TCache::Id].get());
+			return SubCacheChanges(memoryCacheChanges, memoryCacheChanges.Height);
 		}
 
 	private:

@@ -99,8 +99,7 @@ namespace catapult { namespace local {
 		public:
 			explicit DefaultRecoveryOrchestrator(std::unique_ptr<extensions::ProcessBootstrapper>&& pBootstrapper)
 					: m_pBootstrapper(std::move(pBootstrapper))
-					, m_config(m_pBootstrapper->config())
-					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_config.User.DataDirectory))
+					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_pBootstrapper->config().User.DataDirectory))
 					, m_catapultCache({}) // note that sub caches are added in boot
 					, m_pBlockStorage(m_pBootstrapper->subscriptionManager().createBlockStorage(m_pBlockChangeSubscriber))
 					, m_storage(CreateReadOnlyStorageAdapter(*m_pBlockStorage), CreateStagingBlockStorage(m_dataDirectory))
@@ -120,6 +119,7 @@ namespace catapult { namespace local {
 
 				CATAPULT_LOG(debug) << "initializing cache";
 				m_catapultCache = m_pluginManager.createCache();
+				m_pluginManager.configHolder()->SetCache(&m_catapultCache);
 
 				utils::StackLogger stackLogger("running recovery operations", utils::LogLevel::Info);
 				recover();
@@ -218,7 +218,7 @@ namespace catapult { namespace local {
 		private:
 			void saveStateToDisk() {
 				constexpr auto SaveStateToDirectoryWithCheckpointing = extensions::SaveStateToDirectoryWithCheckpointing;
-				SaveStateToDirectoryWithCheckpointing(m_dataDirectory, m_config.Node, m_catapultCache, m_catapultState, m_score.get());
+				SaveStateToDirectoryWithCheckpointing(m_dataDirectory, m_pBootstrapper->config().Node, m_catapultCache, m_catapultState, m_score.get());
 			}
 
 		public:
@@ -228,7 +228,7 @@ namespace catapult { namespace local {
 
 		private:
 			extensions::LocalNodeStateRef stateRef() {
-				return extensions::LocalNodeStateRef(m_config, m_catapultState, m_catapultCache, m_storage, m_score);
+				return extensions::LocalNodeStateRef(m_pBootstrapper->config(), m_catapultState, m_catapultCache, m_storage, m_score);
 			}
 
 		private:
@@ -237,7 +237,6 @@ namespace catapult { namespace local {
 			std::unique_ptr<extensions::ProcessBootstrapper> m_pBootstrapper;
 
 			io::BlockChangeSubscriber* m_pBlockChangeSubscriber;
-			const config::CatapultConfiguration& m_config;
 			config::CatapultDataDirectory m_dataDirectory;
 
 			cache::CatapultCache m_catapultCache;

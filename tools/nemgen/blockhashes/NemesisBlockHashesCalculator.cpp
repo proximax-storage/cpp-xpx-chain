@@ -22,16 +22,15 @@
 #include "PluginLoader.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
-#include "catapult/config/CatapultConfiguration.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	BlockExecutionHashesInfo CalculateNemesisBlockExecutionHashes(
 			const model::BlockElement& blockElement,
-			const config::CatapultConfiguration& config) {
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		// 1. load all plugins
-		PluginLoader pluginLoader(config);
+		PluginLoader pluginLoader(pConfigHolder);
 		pluginLoader.loadAll();
 		auto& pluginManager = pluginLoader.manager();
 
@@ -40,6 +39,7 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		// 3. prepare observer state
 		auto cache = pluginManager.createCache();
+		pConfigHolder->SetCache(&cache);
 		auto cacheDetachableDelta = cache.createDetachableDelta();
 		auto cacheDetachedDelta = cacheDetachableDelta.detach();
 		auto pCacheDelta = cacheDetachedDelta.tryLock();
@@ -54,7 +54,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		// 5. execute block
 		chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, observerState });
 		auto cacheStateHashInfo = pCacheDelta->calculateStateHash(blockElement.Block.Height);
-		auto blockReceiptsHash = config.BlockChain.ShouldEnableVerifiableReceipts
+		auto blockReceiptsHash = pConfigHolder->Config(blockElement.Block.Height).BlockChain.ShouldEnableVerifiableReceipts
 				? model::CalculateMerkleHash(*blockStatementBuilder.build())
 				: Hash256();
 

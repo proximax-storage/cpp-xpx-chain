@@ -17,46 +17,50 @@ namespace catapult { namespace model {
 #define DEFINE_METADATA_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Metadata, DESCRIPTION, CODE)
 
 	/// Metadata type.
-	DEFINE_METADATA_NOTIFICATION(Type, 0x0001, Validator);
+	DEFINE_METADATA_NOTIFICATION(Type_v1, 0x0001, Validator);
 
 	/// Metadata type.
-	DEFINE_METADATA_NOTIFICATION(Field_Modification, 0x0002, Validator);
+	DEFINE_METADATA_NOTIFICATION(Field_Modification_v1, 0x0002, Validator);
 
 	/// Metadata modifications.
-	DEFINE_METADATA_NOTIFICATION(Modifications, 0x0003, Validator);
+	DEFINE_METADATA_NOTIFICATION(Modifications_v1, 0x0003, Validator);
 
 	/// Address metadata modification.
-	DEFINE_METADATA_NOTIFICATION(Address_Modification, 0x0010, Observer);
+	DEFINE_METADATA_NOTIFICATION(Address_Modification_v1, 0x0010, Observer);
 
 	/// Mosaic metadata modification.
-	DEFINE_METADATA_NOTIFICATION(Mosaic_Modification, 0x0011, Observer);
+	DEFINE_METADATA_NOTIFICATION(Mosaic_Modification_v1, 0x0011, Observer);
 
 	/// Namespace metadata modification.
-	DEFINE_METADATA_NOTIFICATION(Namespace_Modification, 0x0012, Observer);
+	DEFINE_METADATA_NOTIFICATION(Namespace_Modification_v1, 0x0012, Observer);
 
 	/// Address metadata modifications.
-	DEFINE_METADATA_NOTIFICATION(Address_Modifications, 0x0020, Validator);
+	DEFINE_METADATA_NOTIFICATION(Address_Modifications_v1, 0x0020, Validator);
 
 	/// Mosaic metadata modifications.
-	DEFINE_METADATA_NOTIFICATION(Mosaic_Modifications, 0x0021, Validator);
+	DEFINE_METADATA_NOTIFICATION(Mosaic_Modifications_v1, 0x0021, Validator);
 
 	/// Namespace metadata modifications.
-	DEFINE_METADATA_NOTIFICATION(Namespace_Modifications, 0x0022, Validator);
+	DEFINE_METADATA_NOTIFICATION(Namespace_Modifications_v1, 0x0022, Validator);
 
 #undef DEFINE_METADATA_NOTIFICATION
 
 	// endregion
 
 	/// Notification of a metadata type.
-	struct MetadataTypeNotification : public Notification {
+	template<VersionType version>
+	struct MetadataTypeNotification;
+
+	template<>
+	struct MetadataTypeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_Type_Notification;
+		static constexpr auto Notification_Type = Metadata_Type_v1_Notification;
 
 	public:
 		/// Creates a notification around \a metadataType.
 		explicit MetadataTypeNotification(model::MetadataType metadataType)
-				: Notification(Notification_Type, sizeof(MetadataTypeNotification))
+				: Notification(Notification_Type, sizeof(MetadataTypeNotification<1>))
 				, MetadataType(metadataType)
 		{}
 
@@ -66,16 +70,20 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a metadata modifications.
-	struct MetadataModificationsNotification : public Notification {
+	template<VersionType version>
+	struct MetadataModificationsNotification;
+
+	template<>
+	struct MetadataModificationsNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_Modifications_Notification;
+		static constexpr auto Notification_Type = Metadata_Modifications_v1_Notification;
 		using MetadataModifications = std::vector<const model::MetadataModification*>;
 
 	public:
 		/// Creates a notification around \a metadataType.
 		explicit MetadataModificationsNotification(const Hash256& metadataId, const MetadataModifications& modifications)
-				: Notification(Notification_Type, sizeof(MetadataModificationsNotification))
+				: Notification(Notification_Type, sizeof(MetadataModificationsNotification<1>))
 				, MetadataId(metadataId)
 				, Modifications(modifications)
 		{}
@@ -89,10 +97,14 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a metadata field modification.
-	struct ModifyMetadataFieldNotification : public Notification {
+	template<VersionType version>
+	struct ModifyMetadataFieldNotification;
+
+	template<>
+	struct ModifyMetadataFieldNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Metadata_Field_Modification_Notification;
+		static constexpr auto Notification_Type = Metadata_Field_Modification_v1_Notification;
 
 	public:
 		/// Creates a notification around \a modificationType, \a key and \a value.
@@ -103,7 +115,7 @@ namespace catapult { namespace model {
 				const uint16_t& valueSize,
 				const char* valuePtr)
 				: ModifyMetadataFieldNotification(
-				Notification_Type, sizeof(ModifyMetadataFieldNotification),
+				Notification_Type, sizeof(ModifyMetadataFieldNotification<1>),
 				metadataModificationType,
 				keySize, keyPtr,
 				valueSize, valuePtr)
@@ -144,8 +156,11 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a metadata value modification.
+	template<typename TMetadataId, NotificationType Metadata_Notification_Type, VersionType version>
+	struct ModifyMetadataValueNotification;
+
 	template<typename TMetadataId, NotificationType Metadata_Notification_Type>
-	struct ModifyMetadataValueNotification : public ModifyMetadataFieldNotification {
+	struct ModifyMetadataValueNotification<TMetadataId, Metadata_Notification_Type, 1> : public ModifyMetadataFieldNotification<1> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Metadata_Notification_Type;
@@ -161,7 +176,7 @@ namespace catapult { namespace model {
 				const uint16_t& valueSize,
 				const char* valuePtr)
 				: ModifyMetadataFieldNotification(
-						Notification_Type, sizeof(ModifyMetadataValueNotification),
+						Notification_Type, sizeof(ModifyMetadataValueNotification<TMetadataId, Metadata_Notification_Type, 1>),
 						metadataModificationType,
 						keySize, keyPtr,
 						valueSize, valuePtr)
@@ -177,16 +192,19 @@ namespace catapult { namespace model {
 		model::MetadataType MetadataType;
 	};
 
-	using ModifyAddressMetadataValueNotification =
-		ModifyMetadataValueNotification<UnresolvedAddress, Metadata_Address_Modification_Notification>;
-	using ModifyMosaicMetadataValueNotification =
-		ModifyMetadataValueNotification<UnresolvedMosaicId, Metadata_Mosaic_Modification_Notification>;
-	using ModifyNamespaceMetadataValueNotification =
-		ModifyMetadataValueNotification<NamespaceId, Metadata_Namespace_Modification_Notification>;
+	using ModifyAddressMetadataValueNotification_v1 =
+		ModifyMetadataValueNotification<UnresolvedAddress, Metadata_Address_Modification_v1_Notification, 1>;
+	using ModifyMosaicMetadataValueNotification_v1 =
+		ModifyMetadataValueNotification<UnresolvedMosaicId, Metadata_Mosaic_Modification_v1_Notification, 1>;
+	using ModifyNamespaceMetadataValueNotification_v1 =
+		ModifyMetadataValueNotification<NamespaceId, Metadata_Namespace_Modification_v1_Notification, 1>;
 
 	/// Notification of a metadata modification.
+	template<typename TMetadataId, NotificationType Metadata_Notification_Type, VersionType version>
+	struct ModifyMetadataNotification;
+
 	template<typename TMetadataId, NotificationType Metadata_Notification_Type>
-	struct ModifyMetadataNotification : public Notification {
+	struct ModifyMetadataNotification<TMetadataId, Metadata_Notification_Type, 1> : public Notification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Metadata_Notification_Type;
@@ -196,7 +214,7 @@ namespace catapult { namespace model {
 		explicit ModifyMetadataNotification(
 				const Key& signer,
 				const TMetadataId& metadataId)
-				: Notification(Notification_Type, sizeof(ModifyMetadataNotification))
+				: Notification(Notification_Type, sizeof(ModifyMetadataNotification<TMetadataId, Metadata_Notification_Type, 1>))
 				, Signer(signer)
 				, MetadataId(metadataId)
 		{}
@@ -209,7 +227,7 @@ namespace catapult { namespace model {
 		TMetadataId MetadataId;
 	};
 
-	using ModifyAddressMetadataNotification = ModifyMetadataNotification<UnresolvedAddress, Metadata_Address_Modifications_Notification>;
-	using ModifyMosaicMetadataNotification = ModifyMetadataNotification<UnresolvedMosaicId, Metadata_Mosaic_Modifications_Notification>;
-	using ModifyNamespaceMetadataNotification = ModifyMetadataNotification<NamespaceId, Metadata_Namespace_Modifications_Notification>;
+	using ModifyAddressMetadataNotification_v1 = ModifyMetadataNotification<UnresolvedAddress, Metadata_Address_Modifications_v1_Notification, 1>;
+	using ModifyMosaicMetadataNotification_v1 = ModifyMetadataNotification<UnresolvedMosaicId, Metadata_Mosaic_Modifications_v1_Notification, 1>;
+	using ModifyNamespaceMetadataNotification_v1 = ModifyMetadataNotification<NamespaceId, Metadata_Namespace_Modifications_v1_Notification, 1>;
 }}

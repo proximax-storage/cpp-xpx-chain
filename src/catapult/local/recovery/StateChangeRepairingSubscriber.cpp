@@ -43,7 +43,7 @@ namespace catapult { namespace local {
 				const auto& cacheChanges = stateChangeInfo.CacheChanges;
 				auto changesStorages = m_cache.changesStorages();
 				for (const auto& pStorage : changesStorages)
-					pStorage->apply(cacheChanges);
+					pStorage->apply(cacheChanges, stateChangeInfo.Height);
 
 				auto delta = m_cache.createDelta();
 				m_cache.commit(stateChangeInfo.Height);

@@ -26,7 +26,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransactionNotification;
+	using Notification = model::TransactionNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(TransactionType, [](const auto& notification, const ValidatorContext& context) {
 		AccountPropertyView view(context.Cache);

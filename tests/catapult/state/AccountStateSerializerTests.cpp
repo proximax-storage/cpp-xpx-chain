@@ -67,7 +67,7 @@ namespace catapult { namespace state {
 #pragma pack(pop)
 
 		size_t CalculatePackedSize(const AccountState& accountState) {
-			return sizeof(AccountStateHeader) + sizeof(HistoricalSnapshotsHeader)
+			return sizeof(VersionType) + sizeof(AccountStateHeader) + sizeof(HistoricalSnapshotsHeader)
 					+ accountState.Balances.size() * sizeof(model::Mosaic)
 					+ accountState.Balances.snapshots().size() * sizeof(model::BalanceSnapshot);
 		}
@@ -121,6 +121,11 @@ namespace catapult { namespace state {
 			header.MosaicsCount = static_cast<uint16_t>(accountState.Balances.size());
 
 			auto* pData = buffer.data();
+
+			VersionType version{1};
+			std::memcpy(pData, &version, sizeof(VersionType));
+			pData += sizeof(VersionType);
+
 			std::memcpy(pData, &header, sizeof(AccountStateHeader));
 			pData += sizeof(AccountStateHeader);
 
@@ -224,7 +229,7 @@ namespace catapult { namespace state {
 			// Assert:
 			ASSERT_EQ(CalculatePackedSize(originalAccountState) - TTraits::bufferPaddingSize(originalAccountState), buffer.size());
 
-			const auto& savedAccountStateHeader = reinterpret_cast<const AccountStateHeader&>(*buffer.data());
+			const auto& savedAccountStateHeader = reinterpret_cast<const AccountStateHeader&>(*(buffer.data() + sizeof(VersionType)));
 			EXPECT_EQ(numMosaics, savedAccountStateHeader.MosaicsCount);
 			action(originalAccountState, savedAccountStateHeader);
 

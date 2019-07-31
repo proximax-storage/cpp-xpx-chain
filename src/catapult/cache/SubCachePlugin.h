@@ -93,6 +93,12 @@ namespace catapult { namespace cache {
 
 		/// Returns a read-only view of this view.
 		virtual const void* asReadOnly() const = 0;
+
+		/// Returns \c true if sub cache is enabled.
+		virtual bool enabled() const = 0;
+
+		/// Returns \c true if sub cache is enabled.
+		virtual void setHeight(const Height& height) = 0;
 	};
 
 	/// Detached sub cache view.
@@ -124,15 +130,15 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Returns a locked cache view based on this cache.
-		virtual std::unique_ptr<const SubCacheView> createView() const = 0;
+		virtual std::unique_ptr<const SubCacheView> createView(const Height& height) const = 0;
 
 		/// Returns a locked cache delta based on this cache.
 		/// \note Changes to an attached delta can be committed by calling commit.
-		virtual std::unique_ptr<SubCacheView> createDelta() = 0;
+		virtual std::unique_ptr<SubCacheView> createDelta(const Height& height) = 0;
 
 		/// Returns a lockable cache delta based on this cache but without the ability
 		/// to commit any changes to the original cache.
-		virtual std::unique_ptr<DetachedSubCacheView> createDetachedDelta() const = 0;
+		virtual std::unique_ptr<DetachedSubCacheView> createDetachedDelta(const Height& height) const = 0;
 
 		/// Commits all pending changes to the underlying storage.
 		virtual void commit() = 0;

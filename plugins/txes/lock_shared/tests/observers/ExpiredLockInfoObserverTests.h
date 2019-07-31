@@ -80,11 +80,11 @@ namespace catapult { namespace observers {
 			using ObserverTestContext = typename TTraits::ObserverTestContext;
 
 		public:
-			TestContext(Height height, NotifyMode mode, const model::Mosaic& seedMosaic)
+			TestContext(Height height, NotifyMode mode, const model::Mosaic& seedMosaic, const model::BlockChainConfiguration& config)
 					: m_height(height)
 					, m_mode(mode)
 					, m_seedMosaic(seedMosaic)
-					, m_observerContext(m_mode, m_height)
+					, m_observerContext(m_mode, m_height, config)
 			{}
 
 		public:
@@ -175,7 +175,8 @@ namespace catapult { namespace observers {
 		static void AssertObserverDoesNothingWhenNoLockInfoExpired(NotifyMode mode) {
 			// Arrange:
 			auto seedMosaic = model::Mosaic{ Lock_Mosaic_Id, Initial_Balance };
-			TestContext context(Height(55), mode, seedMosaic);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(Height(55), mode, seedMosaic, config);
 			auto blockSigner = context.addBlockSigner();
 
 			// - expiry heights are 10, 20, ..., 100
@@ -197,7 +198,8 @@ namespace catapult { namespace observers {
 		static void AssertObserverTransfersMosaics(NotifyMode mode, size_t numExpiringLockInfos) {
 			// Arrange:
 			auto seedMosaic = model::Mosaic{ Lock_Mosaic_Id, Initial_Balance };
-			TestContext context(Height(55), mode, seedMosaic);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(Height(55), mode, seedMosaic, config);
 			auto blockSigner = context.addBlockSigner();
 
 			// - expiry heights are 10, 20, ..., 100

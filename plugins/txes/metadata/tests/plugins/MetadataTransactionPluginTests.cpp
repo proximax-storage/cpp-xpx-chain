@@ -28,8 +28,8 @@ namespace catapult { namespace plugins {
         template<typename TTransaction, typename TTransactionTraits>
         struct AddressTraits : public TTransactionTraits {
             using TransactionType = TTransaction;
-            using ModifyMetadataNotification = model::ModifyAddressMetadataNotification;
-            using ModifyMetadataValueNotification = model::ModifyAddressMetadataValueNotification;
+            using ModifyMetadataNotification = model::ModifyAddressMetadataNotification_v1;
+            using ModifyMetadataValueNotification = model::ModifyAddressMetadataValueNotification_v1;
         };
 
         using AddressRegularTraits = AddressTraits<model::AddressMetadataTransaction, AddressMetadataRegularTraits>;
@@ -38,8 +38,8 @@ namespace catapult { namespace plugins {
         template<typename TTransaction, typename TTransactionTraits>
         struct MosaicTraits : public TTransactionTraits {
             using TransactionType = TTransaction;
-            using ModifyMetadataNotification = model::ModifyMosaicMetadataNotification;
-            using ModifyMetadataValueNotification = model::ModifyMosaicMetadataValueNotification;
+            using ModifyMetadataNotification = model::ModifyMosaicMetadataNotification_v1;
+            using ModifyMetadataValueNotification = model::ModifyMosaicMetadataValueNotification_v1;
         };
 
         using MosaicRegularTraits = MosaicTraits<model::MosaicMetadataTransaction, MosaicMetadataRegularTraits>;
@@ -48,8 +48,8 @@ namespace catapult { namespace plugins {
         template<typename TTransaction, typename TTransactionTraits>
         struct NamespaceTraits : public TTransactionTraits {
             using TransactionType = TTransaction;
-            using ModifyMetadataNotification = model::ModifyNamespaceMetadataNotification;
-            using ModifyMetadataValueNotification = model::ModifyNamespaceMetadataValueNotification;
+            using ModifyMetadataNotification = model::ModifyNamespaceMetadataNotification_v1;
+            using ModifyMetadataValueNotification = model::ModifyNamespaceMetadataValueNotification_v1;
         };
 
         using NamespaceRegularTraits = NamespaceTraits<model::NamespaceMetadataTransaction, NamespaceMetadataRegularTraits>;
@@ -83,7 +83,7 @@ namespace catapult { namespace plugins {
 
         static void AssertCanPublishMetadataTypeNotification() {
             // Arrange:
-            mocks::MockTypedNotificationSubscriber<model::MetadataTypeNotification> sub;
+            mocks::MockTypedNotificationSubscriber<model::MetadataTypeNotification<1>> sub;
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({});
@@ -124,7 +124,7 @@ namespace catapult { namespace plugins {
 
         static void AssertCanPublishMetadataModificationsNotification() {
             // Arrange:
-            mocks::MockTypedNotificationSubscriber<model::MetadataModificationsNotification> sub;
+            mocks::MockTypedNotificationSubscriber<model::MetadataModificationsNotification<1>> sub;
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({
@@ -151,7 +151,7 @@ namespace catapult { namespace plugins {
 
         static void AssertCanPublishModifyMetadataFieldNotification() {
             // Arrange:
-            mocks::MockTypedNotificationSubscriber<model::ModifyMetadataFieldNotification> sub;
+            mocks::MockTypedNotificationSubscriber<model::ModifyMetadataFieldNotification<1>> sub;
             auto pPlugin = TTraits::CreatePlugin();
 
             auto pTransaction = test::CreateTransaction<typename TTraits::TransactionType>({

@@ -22,6 +22,7 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeInteractionResult.h"
 #include "catapult/net/PacketWriters.h"
 #include "catapult/thread/FutureUtils.h"
@@ -48,35 +49,29 @@ namespace catapult { namespace extensions {
 	// region SelectorSettings
 
 	SelectorSettings::SelectorSettings(
-			const cache::CatapultCache& cache,
-			Importance totalChainImportance,
-			ionet::NodeContainer& nodes,
+			extensions::ServiceState& state,
 			ionet::ServiceIdentifier serviceId,
-			ionet::NodeRoles requiredRole,
-			const config::NodeConfiguration::ConnectionsSubConfiguration& config)
-			: Nodes(nodes)
+			ionet::NodeRoles requiredRole)
+			: Nodes(state.nodes())
 			, ServiceId(serviceId)
 			, RequiredRole(requiredRole)
-			, Config(config)
-			, ImportanceRetriever([totalChainImportance, &cache](const auto& publicKey) {
-				auto cacheView = cache.createView();
+			, Config(state.config().Node.OutgoingConnections)
+			, ImportanceRetriever([&state](const auto& publicKey) {
+				auto cacheView = state.cache().createView();
 				const auto& accountStateCache = cacheView.sub<cache::AccountStateCache>();
 				cache::ReadOnlyAccountStateCache readOnlyAccountStateCache(accountStateCache);
 				cache::ImportanceView importanceView(readOnlyAccountStateCache);
 				return ImportanceDescriptor{
 					importanceView.getAccountImportanceOrDefault(publicKey, cacheView.height()),
-					totalChainImportance
+					state.config(state.cache().height()).BlockChain.TotalChainImportance
 				};
 			})
 	{}
 
 	SelectorSettings::SelectorSettings(
-			const cache::CatapultCache& cache,
-			Importance totalChainImportance,
-			ionet::NodeContainer& nodes,
-			ionet::ServiceIdentifier serviceId,
-			const config::NodeConfiguration::ConnectionsSubConfiguration& config)
-			: SelectorSettings(cache, totalChainImportance, nodes, serviceId, ionet::NodeRoles::None, config)
+			extensions::ServiceState& state,
+			ionet::ServiceIdentifier serviceId)
+			: SelectorSettings(state, serviceId, ionet::NodeRoles::None)
 	{}
 
 	// endregion

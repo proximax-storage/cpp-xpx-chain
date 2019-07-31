@@ -69,17 +69,17 @@ namespace catapult { namespace validators {
 
 	DEFINE_PROPERTY_REDUNDANT_MODIFICATION_VALIDATOR(
 			AddressPropertyRedundantModification,
-			model::ModifyAddressPropertyNotification,
+			model::ModifyAddressPropertyNotification_v1,
 			UnresolvedAddress,
 			utils::ArrayHasher<UnresolvedAddress>)
 	DEFINE_PROPERTY_REDUNDANT_MODIFICATION_VALIDATOR(
 			MosaicPropertyRedundantModification,
-			model::ModifyMosaicPropertyNotification,
+			model::ModifyMosaicPropertyNotification_v1,
 			UnresolvedMosaicId,
 			utils::BaseValueHasher<UnresolvedMosaicId>)
 	DEFINE_PROPERTY_REDUNDANT_MODIFICATION_VALIDATOR(
 			TransactionTypePropertyRedundantModification,
-			model::ModifyTransactionTypePropertyNotification,
+			model::ModifyTransactionTypePropertyNotification_v1,
 			model::EntityType,
 			std::hash<model::EntityType>)
 }}

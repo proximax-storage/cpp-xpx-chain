@@ -19,12 +19,16 @@
 **/
 
 #pragma once
+
+#include <src/catapult/model/BlockChainConfiguration.h>
 #include "NamespaceBaseSets.h"
 #include "NamespaceCacheMixins.h"
 #include "NamespaceCacheSerializers.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+
+namespace catapult { namespace config { class LocalNodeConfigurationHolder; } }
 
 namespace catapult { namespace cache {
 
@@ -47,6 +51,9 @@ namespace catapult { namespace cache {
 		using NamespaceLookup = NamespaceLookupMixin<
 			NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaType,
 			NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaType>;
+
+		using Enable = PrimaryMixins::Enable;
+		using Height = PrimaryMixins::Height;
 	};
 
 	/// Basic delta on top of the namespace cache.
@@ -58,7 +65,9 @@ namespace catapult { namespace cache {
 			, public NamespaceCacheDeltaMixins::Touch
 			, public NamespaceCacheDeltaMixins::DeltaElements
 			, public NamespaceCacheDeltaMixins::NamespaceDeepSize
-			, public NamespaceCacheDeltaMixins::NamespaceLookup {
+			, public NamespaceCacheDeltaMixins::NamespaceLookup
+			, public NamespaceCacheDeltaMixins::Enable
+			, public NamespaceCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = NamespaceCacheTypes::CacheReadOnlyType;
 		using CollectedIds = std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>>;
@@ -94,7 +103,7 @@ namespace catapult { namespace cache {
 		NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pHistoryById;
 		NamespaceCacheTypes::NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaPointerType m_pNamespaceById;
 		NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRootNamespaceIdsByExpiryHeight;
-		BlockDuration m_gracePeriodDuration;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the namespace cache.

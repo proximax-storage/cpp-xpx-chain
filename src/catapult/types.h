@@ -24,6 +24,7 @@
 #include "utils/RawBuffer.h"
 #include <array>
 #include <limits>
+#include <unordered_set>
 
 namespace catapult {
 
@@ -117,4 +118,13 @@ namespace catapult {
 	constexpr size_t CountOf(T const (&)[N]) noexcept {
 		return N;
 	}
+
+	// Network type (8 bit) + entity type (24 bit).
+	using VersionType = uint32_t;
+
+	/// Version set.
+	using VersionSet = std::unordered_set<VersionType>;
+
+	struct CatapultVersion_tag {};
+	using CatapultVersion = utils::BaseValue<uint64_t, CatapultVersion_tag>;
 }

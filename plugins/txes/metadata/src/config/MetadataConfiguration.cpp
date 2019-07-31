@@ -25,7 +25,7 @@ namespace catapult { namespace config {
 
 #undef LOAD_METADATA
 
-		utils::VerifyBagSizeLte(bag, 3);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);
 		return config;
 	}
 }}

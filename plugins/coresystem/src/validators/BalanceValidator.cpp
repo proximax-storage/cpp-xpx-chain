@@ -25,8 +25,8 @@
 
 namespace catapult { namespace validators {
 
-	using BalanceTransferNotification = model::BalanceTransferNotification;
-	using BalanceDebitNotification = model::BalanceDebitNotification;
+	using BalanceTransferNotification = model::BalanceTransferNotification<1>;
+	using BalanceDebitNotification = model::BalanceDebitNotification<1>;
 
 	namespace {
 		bool FindAccountBalance(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey, MosaicId mosaicId, Amount& amount) {

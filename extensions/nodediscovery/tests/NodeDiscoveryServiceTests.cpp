@@ -19,6 +19,7 @@
 **/
 
 #include "nodediscovery/src/NodeDiscoveryService.h"
+#include "catapult/config/CatapultConfiguration.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/ServerConnector.h"
@@ -26,6 +27,7 @@
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
@@ -50,22 +52,9 @@ namespace catapult { namespace nodediscovery {
 		constexpr auto Ping_Task_Name = "node discovery ping task";
 		constexpr auto Peers_Task_Name = "node discovery peers task";
 
-		auto CreateLocalNetworkNode() {
-			auto pNetworkNode = std::make_shared<ionet::NetworkNode>();
-			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pNetworkNode.get()), sizeof(ionet::NetworkNode) });
-			pNetworkNode->Size = sizeof(ionet::NetworkNode);
-			pNetworkNode->HostSize = 0;
-			pNetworkNode->FriendlyNameSize = 0;
-			return pNetworkNode;
-		}
-
 		struct NodeDiscoveryServiceTraits {
-			static auto CreateRegistrar(const std::shared_ptr<const ionet::NetworkNode>& pLocalNetworkNode) {
-				return CreateNodeDiscoveryServiceRegistrar(pLocalNetworkNode);
-			}
-
 			static auto CreateRegistrar() {
-				return CreateRegistrar(CreateLocalNetworkNode());
+				return CreateNodeDiscoveryServiceRegistrar();
 			}
 		};
 
@@ -76,6 +65,8 @@ namespace catapult { namespace nodediscovery {
 				testState().state().hooks().addPacketPayloadSink([&payloads = m_payloads](const auto& payload) {
 					payloads.push_back(payload);
 				});
+
+				const_cast<std::string&>(testState().state().pluginManager().configHolder()->Config().User.BootKey) = test::GenerateRandomHexString(2 * Key_Size);
 			}
 
 		public:
@@ -330,12 +321,14 @@ namespace catapult { namespace nodediscovery {
 	TEST(TEST_CLASS, PingTaskBroadcastsLocalNetworkNode) {
 		// Arrange:
 		TestContext context;
+		auto& nodeConfig = const_cast<config::NodeConfiguration&>(context.testState().state().pluginManager().configHolder()->Config().Node);
+		nodeConfig.Local.Host = "";
+		nodeConfig.Local.FriendlyName = "";
 
-		auto pLocalNetworkNode = CreateLocalNetworkNode();
-		context.boot(pLocalNetworkNode);
+		context.boot();
 
 		const auto& payloads = context.payloads();
-		test::RunTaskTestPostBoot(context, Num_Expected_Tasks, Ping_Task_Name, [&payloads, &node = *pLocalNetworkNode](const auto& task) {
+		test::RunTaskTestPostBoot(context, Num_Expected_Tasks, Ping_Task_Name, [&payloads](const auto& task) {
 			// Act:
 			auto result = task.Callback().get();
 
@@ -352,7 +345,6 @@ namespace catapult { namespace nodediscovery {
 
 			const auto& buffer = payload.buffers()[0];
 			ASSERT_EQ(sizeof(ionet::NetworkNode), buffer.Size);
-			EXPECT_EQ_MEMORY(&node, buffer.pData, buffer.Size);
 		});
 	}
 

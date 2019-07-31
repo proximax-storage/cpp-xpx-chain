@@ -83,7 +83,7 @@ namespace catapult { namespace mocks {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& mockTransaction, PluginOptionFlags options, NotificationSubscriber& sub) {
-			sub.notify(AccountPublicKeyNotification(mockTransaction.Recipient));
+			sub.notify(AccountPublicKeyNotification<1>(mockTransaction.Recipient));
 
 			if (IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Custom_Notifications)) {
 				sub.notify(test::CreateNotification(Mock_Observer_1_Notification));
@@ -104,7 +104,7 @@ namespace catapult { namespace mocks {
 				// forcibly XOR recipient even though PublicKeyToAddress always returns resolved address
 				// in order to force tests to use XOR resolver context with Publish_Transfers
 				auto recipient = PublicKeyToAddress(mockTransaction.Recipient, NetworkIdentifier::Mijin_Test);
-				sub.notify(BalanceTransferNotification(sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount));
+				sub.notify(BalanceTransferNotification<1>(sender, test::UnresolveXor(recipient), pMosaics[i].MosaicId, pMosaics[i].Amount));
 			}
 		}
 
@@ -121,7 +121,7 @@ namespace catapult { namespace mocks {
 				return m_type;
 			}
 
-			TransactionAttributes attributes() const override {
+			TransactionAttributes attributes(const Height&) const override {
 				return { 0x02, 0xFE, utils::TimeSpan::FromMilliseconds(0xEEEE'EEEE'EEEE'1234) };
 			}
 
@@ -143,8 +143,8 @@ namespace catapult { namespace mocks {
 			{}
 
 		public:
-			void publish(const EmbeddedTransaction& transaction, NotificationSubscriber& sub) const override {
-				Publish(static_cast<const EmbeddedMockTransaction&>(transaction), m_options, sub);
+			void publish(const WeakEntityInfoT<EmbeddedTransaction>& transaction, NotificationSubscriber& sub) const override {
+				Publish(static_cast<const EmbeddedMockTransaction&>(transaction.entity()), m_options, sub);
 			}
 
 		private:

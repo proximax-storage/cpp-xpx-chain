@@ -80,17 +80,17 @@ namespace catapult { namespace cache {
 		// - insert single account key
 		{
 
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(state::ReputationEntry(key));
 			cache.commit();
 		}
 
 		// Sanity:
-		EXPECT_EQ(1u, cache.createView()->size());
+		EXPECT_EQ(1u, cache.createView(Height{0})->size());
 
 		// Act:
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto& entry = delta->find(key).get();
 			entry.incrementPositiveInteractions();
 			entry.incrementNegativeInteractions();
@@ -98,7 +98,7 @@ namespace catapult { namespace cache {
 		}
 
 		// Assert:
-		auto view = cache.createView();
+		auto view = cache.createView(Height{0});
 		const auto& entry = view->find(key).get();
 		EXPECT_EQ(1u, entry.positiveInteractions().unwrap());
 		EXPECT_EQ(1u, entry.negativeInteractions().unwrap());

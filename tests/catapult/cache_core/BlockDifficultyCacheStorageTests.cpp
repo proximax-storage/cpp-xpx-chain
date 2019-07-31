@@ -20,6 +20,7 @@
 
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -27,14 +28,22 @@ namespace catapult { namespace cache {
 #define TEST_CLASS BlockDifficultyCacheStorageTests
 
 	namespace {
+		auto CreateConfigHolder() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxRollbackBlocks = 100;
+			config.MaxDifficultyBlocks = 745;
+			return config::CreateMockConfigurationHolder(config);
+		}
+
 		struct BlockDifficultyCacheStorageTraits {
 			using ValueType = state::BlockDifficultyInfo;
 			static constexpr auto Value_Size = sizeof(Height) + sizeof(Timestamp) + sizeof(Difficulty);
+			static constexpr auto Serialized_Value_Size = sizeof(VersionType) + Value_Size;
 
 			using StorageType = BlockDifficultyCacheStorage;
 			class CacheType : public BlockDifficultyCache {
 			public:
-				CacheType() : BlockDifficultyCache(845)
+				CacheType() : BlockDifficultyCache(CreateConfigHolder())
 				{}
 			};
 
@@ -44,14 +53,14 @@ namespace catapult { namespace cache {
 		};
 	}
 
-	DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(TEST_CLASS, BlockDifficultyCacheStorageTraits)
+	DEFINE_CONTAINS_ONLY_CACHE_STORAGE_TESTS(TEST_CLASS, BlockDifficultyCacheStorageTraits, 1)
 
 	TEST(TEST_CLASS, CanPurgeValueWhenValuesWithLargerHeightsArePresent) {
 		// Arrange: seed the cache with some values
 		static constexpr auto CreateValue = BlockDifficultyCacheStorageTraits::CreateValue;
 		BlockDifficultyCacheStorageTraits::CacheType cache;
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (uint8_t i = 1; 10 >= i; ++i)
 				delta->insert(CreateValue(i));
 
@@ -59,10 +68,10 @@ namespace catapult { namespace cache {
 		}
 
 		// Sanity:
-		EXPECT_EQ(10u, cache.createView()->size());
+		EXPECT_EQ(10u, cache.createView(Height{0})->size());
 
 		// Act:
-		auto delta = cache.createDelta();
+		auto delta = cache.createDelta(Height{0});
 		BlockDifficultyCacheStorageTraits::StorageType::Purge(CreateValue(7), *delta);
 
 		// Assert:

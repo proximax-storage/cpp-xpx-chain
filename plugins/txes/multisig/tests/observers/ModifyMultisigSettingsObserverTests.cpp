@@ -32,7 +32,7 @@ namespace catapult { namespace observers {
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::MultisigCacheFactory>;
-		using Notification = model::ModifyMultisigSettingsNotification;
+		using Notification = model::ModifyMultisigSettingsNotification<1>;
 
 		auto CreateNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta) {
 			return Notification(signer, minRemovalDelta, minApprovalDelta);
@@ -88,10 +88,11 @@ namespace catapult { namespace observers {
 				// Arrange:
 				auto signer = test::GenerateRandomByteArray<Key>();
 				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
+				auto config = model::BlockChainConfiguration::Uninitialized();
 
 				// Act + Assert:
 				RunTest(
-						ObserverTestContext(Mode, Height(777)),
+						ObserverTestContext(Mode, Height(777), config),
 						signer,
 						{ removal.Current, approval.Current },
 						notification,
@@ -107,10 +108,11 @@ namespace catapult { namespace observers {
 				// Arrange:
 				auto signer = test::GenerateRandomByteArray<Key>();
 				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
+				auto config = model::BlockChainConfiguration::Uninitialized();
 
 				// Act + Assert:
 				RunTest(
-						ObserverTestContext(Mode, Height(777)),
+						ObserverTestContext(Mode, Height(777), config),
 						signer,
 						{ removal.Expected, approval.Expected },
 						notification,
@@ -157,7 +159,8 @@ namespace catapult { namespace observers {
 		auto notification = CreateNotification(signer, -1, -2);
 
 		auto pObserver = CreateModifyMultisigSettingsObserver();
-		ObserverTestContext context(NotifyMode::Commit, Height(777));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(NotifyMode::Commit, Height(777), config);
 
 		// Act: observer does not throw
 		test::ObserveNotification(*pObserver, notification, context);
@@ -173,7 +176,8 @@ namespace catapult { namespace observers {
 		auto notification = CreateNotification(signer, -1, -2);
 
 		auto pObserver = CreateModifyMultisigSettingsObserver();
-		ObserverTestContext context(NotifyMode::Rollback, Height(777));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(NotifyMode::Rollback, Height(777), config);
 
 		// Act:
 		test::ObserveNotification(*pObserver, notification, context);

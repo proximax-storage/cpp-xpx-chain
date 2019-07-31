@@ -30,23 +30,27 @@ namespace catapult { namespace model {
 #define DEFINE_MULTISIG_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Multisig, DESCRIPTION, CODE)
 
 	/// Multisig account cosigners were modified.
-	DEFINE_MULTISIG_NOTIFICATION(Modify_Cosigners, 0x0001, All);
+	DEFINE_MULTISIG_NOTIFICATION(Modify_Cosigners_v1, 0x0001, All);
 
 	/// A cosigner was added to a multisig account.
-	DEFINE_MULTISIG_NOTIFICATION(Modify_New_Cosigner, 0x0002, Validator);
+	DEFINE_MULTISIG_NOTIFICATION(Modify_New_Cosigner_v1, 0x0002, Validator);
 
 	/// Multisig account settings were modified.
-	DEFINE_MULTISIG_NOTIFICATION(Modify_Settings, 0x1001, All);
+	DEFINE_MULTISIG_NOTIFICATION(Modify_Settings_v1, 0x1001, All);
 
 #undef DEFINE_MULTISIG_NOTIFICATION
 
 	// endregion
 
 	/// Notification of a multisig cosigners modification.
-	struct ModifyMultisigCosignersNotification : public Notification {
+	template<VersionType version>
+	struct ModifyMultisigCosignersNotification;
+
+	template<>
+	struct ModifyMultisigCosignersNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Multisig_Modify_Cosigners_Notification;
+		static constexpr auto Notification_Type = Multisig_Modify_Cosigners_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a modificationsCount and \a pModifications.
@@ -54,7 +58,7 @@ namespace catapult { namespace model {
 				const Key& signer,
 				uint8_t modificationsCount,
 				const CosignatoryModification* pModifications)
-				: Notification(Notification_Type, sizeof(ModifyMultisigCosignersNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigCosignersNotification<1>))
 				, Signer(signer)
 				, ModificationsCount(modificationsCount)
 				, ModificationsPtr(pModifications)
@@ -72,15 +76,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a new cosigner.
-	struct ModifyMultisigNewCosignerNotification : public Notification {
+	template<VersionType version>
+	struct ModifyMultisigNewCosignerNotification;
+
+	template<>
+	struct ModifyMultisigNewCosignerNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Multisig_Modify_New_Cosigner_Notification;
+		static constexpr auto Notification_Type = Multisig_Modify_New_Cosigner_v1_Notification;
 
 	public:
 		/// Creates a notification around \a multisigAccountKey and \a cosignatoryKey.
 		explicit ModifyMultisigNewCosignerNotification(const Key& multisigAccountKey, const Key& cosignatoryKey)
-				: Notification(Notification_Type, sizeof(ModifyMultisigNewCosignerNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigNewCosignerNotification<1>))
 				, MultisigAccountKey(multisigAccountKey)
 				, CosignatoryKey(cosignatoryKey)
 		{}
@@ -94,15 +102,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a multisig settings modification.
-	struct ModifyMultisigSettingsNotification : public Notification {
+	template<VersionType version>
+	struct ModifyMultisigSettingsNotification;
+
+	template<>
+	struct ModifyMultisigSettingsNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Multisig_Modify_Settings_Notification;
+		static constexpr auto Notification_Type = Multisig_Modify_Settings_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a minRemovalDelta and \a minApprovalDelta.
 		explicit ModifyMultisigSettingsNotification(const Key& signer, int8_t minRemovalDelta, int8_t minApprovalDelta)
-				: Notification(Notification_Type, sizeof(ModifyMultisigSettingsNotification))
+				: Notification(Notification_Type, sizeof(ModifyMultisigSettingsNotification<1>))
 				, Signer(signer)
 				, MinRemovalDelta(minRemovalDelta)
 				, MinApprovalDelta(minApprovalDelta)

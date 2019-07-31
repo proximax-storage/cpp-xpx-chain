@@ -70,6 +70,10 @@ namespace catapult { namespace cache {
 				{}
 
 			public:
+				void setHeight(const Height&)
+				{}
+
+			public:
 				const TBaseSet& Set;
 				int Tag;
 			};
@@ -92,6 +96,9 @@ namespace catapult { namespace cache {
 				auto pruningBoundary() const {
 					return deltaset::PruningBoundary<std::string>();
 				}
+
+				void setHeight(const Height&)
+				{}
 
 			public:
 				DeltaPointerType pDelta;
@@ -122,8 +129,8 @@ namespace catapult { namespace cache {
 		TestCache cache;
 
 		// Act:
-		auto view1 = cache.createView();
-		auto view2 = cache.createView();
+		auto view1 = cache.createView(Height{0});
+		auto view2 = cache.createView(Height{0});
 
 		// Assert:
 		EXPECT_EQ(&view1.Set, &view2.Set);
@@ -134,7 +141,7 @@ namespace catapult { namespace cache {
 		TestCache cache;
 
 		// Act:
-		auto delta = cache.createDelta();
+		auto delta = cache.createDelta(Height{0});
 
 		// Assert:
 		EXPECT_TRUE(!!delta.pDelta);
@@ -145,8 +152,8 @@ namespace catapult { namespace cache {
 		TestCache cache;
 
 		// Act:
-		auto delta1 = cache.createDetachedDelta();
-		auto delta2 = cache.createDetachedDelta();
+		auto delta1 = cache.createDetachedDelta(Height{0});
+		auto delta2 = cache.createDetachedDelta(Height{0});
 
 		// Assert:
 		EXPECT_TRUE(!!delta1.pDelta);
@@ -163,8 +170,8 @@ namespace catapult { namespace cache {
 		TestCacheWithOptions cache(CacheConfiguration(), 17);
 
 		// Act:
-		auto view1 = cache.createView();
-		auto view2 = cache.createView();
+		auto view1 = cache.createView(Height{0});
+		auto view2 = cache.createView(Height{0});
 
 		// Assert:
 		EXPECT_EQ(&view1.Set, &view2.Set);
@@ -178,7 +185,7 @@ namespace catapult { namespace cache {
 		TestCacheWithOptions cache(CacheConfiguration(), 17);
 
 		// Act:
-		auto delta = cache.createDelta();
+		auto delta = cache.createDelta(Height{0});
 
 		// Assert:
 		EXPECT_TRUE(!!delta.pDelta);
@@ -191,8 +198,8 @@ namespace catapult { namespace cache {
 		TestCacheWithOptions cache(CacheConfiguration(), 17);
 
 		// Act:
-		auto delta1 = cache.createDetachedDelta();
-		auto delta2 = cache.createDetachedDelta();
+		auto delta1 = cache.createDetachedDelta(Height{0});
+		auto delta2 = cache.createDetachedDelta(Height{0});
 
 		// Assert:
 		EXPECT_TRUE(!!delta1.pDelta);
@@ -218,7 +225,7 @@ namespace catapult { namespace cache {
 		TCache cache;
 
 		// Act:
-		auto delta = cache.createDelta();
+		auto delta = cache.createDelta(Height{0});
 
 		// Assert: no exception
 		cache.commit(delta);
@@ -229,7 +236,7 @@ namespace catapult { namespace cache {
 		TCache cache;
 
 		// Act:
-		auto delta = cache.createDetachedDelta();
+		auto delta = cache.createDetachedDelta(Height{0});
 
 		// Assert:
 		EXPECT_THROW(cache.commit(delta), catapult_runtime_error);

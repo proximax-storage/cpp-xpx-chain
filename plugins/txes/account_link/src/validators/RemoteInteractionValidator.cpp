@@ -27,7 +27,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AddressInteractionNotification;
+	using Notification = model::AddressInteractionNotification<1>;
 
 	namespace {
 		Address GetResolvedKey(const UnresolvedAddress& address, const model::ResolverContext& resolvers) {

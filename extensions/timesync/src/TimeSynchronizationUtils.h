@@ -57,6 +57,5 @@ namespace catapult { namespace timesync {
 			const TimeSynchronizationConfiguration& timeSyncConfig,
 			const TimeSyncResultSupplier& resultSupplier,
 			const extensions::ServiceState& state,
-			TimeSynchronizationState& timeSyncState,
-			const extensions::ExtensionManager::NetworkTimeSupplier& networkTimeSupplier);
+			TimeSynchronizationState& timeSyncState);
 }}

@@ -23,7 +23,9 @@ namespace catapult { namespace cache {
 			, public ReputationCacheViewMixins::Contains
 			, public ReputationCacheViewMixins::Iteration
 			, public ReputationCacheViewMixins::ConstAccessor
-			, public ReputationCacheViewMixins::PatriciaTreeView {
+			, public ReputationCacheViewMixins::PatriciaTreeView
+			, public ReputationCacheViewMixins::Enable
+			, public ReputationCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = ReputationCacheTypes::CacheReadOnlyType;
 

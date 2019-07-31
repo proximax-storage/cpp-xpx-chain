@@ -17,19 +17,19 @@ cppFile =
 binDirectory = ../seed/mijin-test
 
 [namespaces]
-cat = true
-cat.currency = true
-cat.storage = true
+prx = true
+prx.xpx = true
+prx.storage = true
 
-[namespace>cat]
+[namespace>prx]
 
 duration = 0
 
 [mosaics]
-cat:currency = true
-cat:storage = true
+prx:xpx = true
+prx:storage = true
 
-[mosaic>cat:currency]
+[mosaic>prx:xpx]
 divisibility = 6
 duration = 0
 supply = {{xpx.supply}}
@@ -37,12 +37,12 @@ supply = {{xpx.supply}}
 isTransferable = true
 isSupplyMutable = false
 
-[distribution>cat:currency]
+[distribution>prx:xpx]
 {{#xpx.distribution}}
 {{address}} = {{amount}}
 {{/xpx.distribution}}
 
-[mosaic>cat:storage]
+[mosaic>prx:storage]
 divisibility = 6
 duration = 0
 supply = {{xpx.supply}}
@@ -50,7 +50,7 @@ supply = {{xpx.supply}}
 isTransferable = true
 isSupplyMutable = true
 
-[distribution>cat:storage]
+[distribution>prx:storage]
 {{#xpx.distribution}}
 {{address}} = {{amount}}
 {{/xpx.distribution}}

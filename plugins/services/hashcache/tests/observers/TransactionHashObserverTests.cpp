@@ -47,14 +47,15 @@ namespace catapult { namespace observers {
 			return state::TimestampedHash(deadline, hash);
 		}
 
-		model::TransactionNotification MakeNotification(Timestamp deadline, const Hash256& hash) {
-			return model::TransactionNotification(Key(), hash, model::EntityType(), deadline);
+		model::TransactionNotification<1> MakeNotification(Timestamp deadline, const Hash256& hash) {
+			return model::TransactionNotification<1>(Key(), hash, model::EntityType(), deadline);
 		}
 	}
 
 	TEST(TEST_CLASS, ObserverInsertsHashIntoCacheInModeCommit) {
 		// Arrange:
-		ObserverTestContext context(NotifyMode::Commit);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 		auto pObserver = CreateTransactionHashObserver();
 
 		auto deadline = test::GenerateRandomValue<Timestamp>();
@@ -78,7 +79,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverRemovesHashFromCacheInModeRollback) {
 		// Arrange:
-		ObserverTestContext context(NotifyMode::Rollback);
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		ObserverTestContext context(NotifyMode::Rollback, Height{444}, config);
 		auto pObserver = CreateTransactionHashObserver();
 
 		auto deadline = test::GenerateRandomValue<Timestamp>();

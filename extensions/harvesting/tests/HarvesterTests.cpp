@@ -31,6 +31,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/test/other/MutableCatapultConfiguration.h"
@@ -146,7 +147,8 @@ namespace catapult { namespace harvesting {
 			std::unique_ptr<Harvester> CreateHarvester(
 					const config::CatapultConfiguration& config,
 					const BlockGenerator& blockGenerator) {
-				return std::make_unique<Harvester>(Cache, config, Beneficiary, *pUnlockedAccounts, blockGenerator);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+				return std::make_unique<Harvester>(Cache, pConfigHolder, Beneficiary, *pUnlockedAccounts, blockGenerator);
 			}
 
 		private:
@@ -194,7 +196,7 @@ namespace catapult { namespace harvesting {
 					context.Config.BlockChain
 			);
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-			auto view = accountStateCache.createView();
+			auto view = accountStateCache.createView(Height{0});
 			cache::ReadOnlyAccountStateCache readOnlyCache(*view);
 			cache::ImportanceView importanceView(readOnlyCache);
 			uint64_t hit = chain::CalculateHit(model::CalculateGenerationHash(context.LastBlockElement.GenerationHash, publicKey));

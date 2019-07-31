@@ -33,20 +33,20 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(MosaicAvailability,)
 
 	namespace {
-		model::MosaicDefinitionNotification CreateNotification(
+		model::MosaicDefinitionNotification<1> CreateNotification(
 				const Key& signer,
 				MosaicId id,
 				uint8_t divisibility,
 				BlockDuration duration) {
 			auto properties = model::MosaicProperties::FromValues({ { 0, divisibility, duration.unwrap() } });
-			return model::MosaicDefinitionNotification(signer, id, properties);
+			return model::MosaicDefinitionNotification<1>(signer, id, properties);
 		}
 
-		model::MosaicDefinitionNotification CreateNotification(const Key& signer, MosaicId id, BlockDuration duration) {
+		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, MosaicId id, BlockDuration duration) {
 			return CreateNotification(signer, id, 0, duration);
 		}
 
-		model::MosaicDefinitionNotification CreateNotification(const Key& signer, MosaicId id) {
+		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, MosaicId id) {
 			return CreateNotification(signer, id, 0, Eternal_Artifact_Duration);
 		}
 
@@ -54,7 +54,7 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
 				Height height,
-				const model::MosaicDefinitionNotification& notification) {
+				const model::MosaicDefinitionNotification<1>& notification) {
 			// Arrange:
 			auto pValidator = CreateMosaicAvailabilityValidator();
 

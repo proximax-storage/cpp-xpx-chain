@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ProofPublicationNotification;
+	using Notification = model::ProofPublicationNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(Proof, [](const auto& notification, const auto& context) {
 		const auto& cache = context.Cache.template sub<cache::SecretLockInfoCache>();

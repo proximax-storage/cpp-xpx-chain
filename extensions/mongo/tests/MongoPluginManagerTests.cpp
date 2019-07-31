@@ -24,6 +24,7 @@
 #include "mongo/tests/test/mocks/MockExternalCacheStorage.h"
 #include "mongo/tests/test/mocks/MockReceiptMapper.h"
 #include "mongo/tests/test/mocks/MockTransactionMapper.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 #include <mongocxx/instance.hpp>
 
@@ -39,8 +40,10 @@ namespace catapult { namespace mongo {
 			//   like creating a mongocxx::pool (via MongoStorageContext)
 			mongocxx::instance::current();
 			MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr, MongoErrorPolicy::Mode::Strict);
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
+			const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).Network.Identifier = networkIdentifier;
 
-			MongoPluginManager manager(mongoContext, networkIdentifier);
+			MongoPluginManager manager(mongoContext, pConfigHolder);
 
 			// Act + Assert:
 			action(manager, mongoContext);
@@ -61,7 +64,7 @@ namespace catapult { namespace mongo {
 		RunPluginManagerTest(static_cast<model::NetworkIdentifier>(17), [](const auto& manager, const auto& mongoContext) {
 			// Assert:
 			EXPECT_EQ(&mongoContext, &manager.mongoContext());
-			EXPECT_EQ(static_cast<model::NetworkIdentifier>(17), manager.networkIdentifier());
+			EXPECT_EQ(static_cast<model::NetworkIdentifier>(17), manager.configHolder()->Config().BlockChain.Network.Identifier);
 		});
 	}
 

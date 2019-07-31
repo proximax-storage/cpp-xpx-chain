@@ -31,8 +31,8 @@ namespace catapult { namespace observers {
 	namespace {
 		constexpr size_t Current_Height = 10;
 
-		model::BlockNotification CreateBlockNotification(uint32_t numTransactions) {
-			auto notification = model::BlockNotification(Key(), Key(), Timestamp(), Difficulty(), 1, 1);
+		model::BlockNotification<1> CreateBlockNotification(uint32_t numTransactions) {
+			auto notification = model::BlockNotification<1>(Key(), Key(), Timestamp(), Difficulty(), 1, 1);
 			notification.NumTransactions = numTransactions;
 			return notification;
 		}
@@ -40,7 +40,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverIncrementsTotalNumberOfTransactionsInModeCommit) {
 		// Arrange:
-		test::ObserverTestContext context(NotifyMode::Commit, Height(Current_Height + 1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::ObserverTestContext context(NotifyMode::Commit, Height(Current_Height + 1), config);
 		context.state().NumTotalTransactions = 123;
 		auto pObserver = CreateTotalTransactionsObserver();
 		auto notification = CreateBlockNotification(1123);
@@ -54,7 +55,8 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, ObserverDecrementsTotalNumberOfTransactionsInModeRollback) {
 		// Arrange:
-		test::ObserverTestContext context(NotifyMode::Rollback, Height(Current_Height + 1));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		test::ObserverTestContext context(NotifyMode::Rollback, Height(Current_Height + 1), config);
 		context.state().NumTotalTransactions = 1246;
 		auto pObserver = CreateTotalTransactionsObserver();
 		auto notification = CreateBlockNotification(1123);

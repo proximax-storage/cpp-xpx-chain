@@ -37,10 +37,10 @@ namespace catapult { namespace model {
 	/// Transaction dependent attributes.
 	struct TransactionAttributes {
 		/// Minimum supported version.
-		uint8_t MinVersion;
+        VersionType MinVersion;
 
 		/// Maximum supported version.
-		uint8_t MaxVersion;
+        VersionType MaxVersion;
 
 		/// Maximum transaction lifetime (optional).
 		/// \note If \c 0, default network-specific maximum will be used.
@@ -57,8 +57,8 @@ namespace catapult { namespace model {
 		/// Gets the transaction entity type.
 		virtual EntityType type() const = 0;
 
-		/// Gets transaction dependent attributes.
-		virtual TransactionAttributes attributes() const = 0;
+		/// Gets transaction dependent attributes at \a height.
+		virtual TransactionAttributes attributes(const Height& height) const = 0;
 
 		/// Calculates the real size of \a transaction.
 		virtual uint64_t calculateRealSize(const TTransaction& transaction) const = 0;
@@ -68,7 +68,7 @@ namespace catapult { namespace model {
 	class EmbeddedTransactionPlugin : public TransactionPluginT<EmbeddedTransaction> {
 	public:
 		/// Sends all notifications from \a transaction to \a sub.
-		virtual void publish(const EmbeddedTransaction& transaction, NotificationSubscriber& sub) const = 0;
+		virtual void publish(const WeakEntityInfoT<EmbeddedTransaction>& transactionInfo, NotificationSubscriber& sub) const = 0;
 	};
 
 	/// A transaction plugin.

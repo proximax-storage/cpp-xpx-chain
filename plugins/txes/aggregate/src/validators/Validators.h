@@ -21,6 +21,8 @@
 #pragma once
 #include "Results.h"
 #include "src/model/AggregateNotifications.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
@@ -29,11 +31,17 @@ namespace catapult { namespace validators {
 	/// - the number of transactions does not exceed \a maxTransactions
 	/// - the number of implicit and explicit cosignatures does not exceed \a maxCosignatures
 	/// - there are no redundant cosigners
-	DECLARE_STATELESS_VALIDATOR(BasicAggregateCosignatures, model::AggregateCosignaturesNotification)(
-			uint32_t maxTransactions,
-			uint8_t maxCosignatures);
+	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, model::AggregateCosignaturesNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
 	/// - the set of component signers is equal to the set of cosigners
-	DECLARE_STATELESS_VALIDATOR(StrictAggregateCosignatures, model::AggregateCosignaturesNotification)();
+	DECLARE_STATEFUL_VALIDATOR(StrictAggregateCosignatures, model::AggregateCosignaturesNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
+
+	/// A validator implementation that applies to aggregate transaction entity types notifications and validates that:
+	/// - aggregate bonded transaction is enabled
+	DECLARE_STATEFUL_VALIDATOR(AggregateTransactionType, model::AggregateTransactionTypeNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 }}

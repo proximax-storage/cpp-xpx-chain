@@ -106,6 +106,7 @@ RUN cd /catapult \
 # Required extensions
     catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
+    catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
@@ -115,8 +116,10 @@ RUN cd /catapult \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
+    catapult.mongo.plugins.upgrade \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
+    catapult.plugins.config \
     catapult.plugins.contract \
     catapult.plugins.hashcache \
     catapult.plugins.hashcache.cache \
@@ -129,6 +132,7 @@ RUN cd /catapult \
     catapult.plugins.property \
     catapult.plugins.signature \
     catapult.plugins.transfer \
+    catapult.plugins.upgrade \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
@@ -147,6 +151,9 @@ RUN cd /catapult \
     extension.transactionsink \
     extension.unbondedpruning \
     extension.zeromq \
+    -j 4
+
+RUN cd /catapult/_build && make \
 # Catapult
     sirius.bc \
     -j 4

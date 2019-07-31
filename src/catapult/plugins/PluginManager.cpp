@@ -24,18 +24,25 @@
 namespace catapult { namespace plugins {
 
 	PluginManager::PluginManager(
-			const model::BlockChainConfiguration& config,
-			const StorageConfiguration& storageConfig,
-			const config::InflationConfiguration& inflationConfig)
-			: m_config(config)
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const StorageConfiguration& storageConfig)
+			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
-			, m_inflationConfig(inflationConfig)
+			, m_shouldEnableVerifiableState(config().ShouldEnableVerifiableState)
 	{}
 
 	// region config
 
+	const model::BlockChainConfiguration& PluginManager::config(const Height& height) const {
+		return m_pConfigHolder->Config(height).BlockChain;
+	}
+
 	const model::BlockChainConfiguration& PluginManager::config() const {
-		return m_config;
+		return m_pConfigHolder->Config().BlockChain;
+	}
+
+	const std::shared_ptr<config::LocalNodeConfigurationHolder>& PluginManager::configHolder() const {
+		return m_pConfigHolder;
 	}
 
 	const StorageConfiguration& PluginManager::storageConfig() const {
@@ -43,7 +50,7 @@ namespace catapult { namespace plugins {
 	}
 
 	const config::InflationConfiguration& PluginManager::inflationConfig() const {
-		return m_inflationConfig;
+		return m_pConfigHolder->Config().Inflation;
 	}
 
 	cache::CacheConfiguration PluginManager::cacheConfig(const std::string& name) const {
@@ -53,7 +60,11 @@ namespace catapult { namespace plugins {
 		return cache::CacheConfiguration(
 				(boost::filesystem::path(m_storageConfig.CacheDatabaseDirectory) / name).generic_string(),
 				m_storageConfig.MaxCacheDatabaseWriteBatchSize,
-				m_config.ShouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
+				m_shouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
+	}
+
+	void PluginManager::setShouldEnableVerifiableState(bool shouldEnableVerifiableState) {
+		m_shouldEnableVerifiableState = shouldEnableVerifiableState;
 	}
 
 	// endregion
@@ -78,6 +89,10 @@ namespace catapult { namespace plugins {
 
 	cache::CatapultCache PluginManager::createCache() {
 		return m_cacheBuilder.build();
+	}
+
+	void PluginManager::updateCache(cache::CatapultCache& cache) {
+		m_cacheBuilder.update(cache);
 	}
 
 	// endregion
@@ -261,7 +276,7 @@ namespace catapult { namespace plugins {
 	// region publisher
 
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
-		return model::CreateNotificationPublisher(m_transactionRegistry, model::GetUnresolvedCurrencyMosaicId(m_config), mode);
+		return model::CreateNotificationPublisher(m_transactionRegistry, configHolder(), mode);
 	}
 
 	// endregion

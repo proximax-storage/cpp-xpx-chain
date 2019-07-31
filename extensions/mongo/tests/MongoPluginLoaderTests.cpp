@@ -23,6 +23,7 @@
 #include "catapult/plugins/PluginExceptions.h"
 #include "catapult/utils/ExceptionLogging.h"
 #include "mongo/tests/test/MongoTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 #include <mongocxx/instance.hpp>
@@ -42,7 +43,7 @@ namespace catapult { namespace mongo {
 			mongocxx::instance::current();
 			MongoStorageContext mongoContext(test::DefaultDbUri(), "", nullptr, MongoErrorPolicy::Mode::Strict);
 
-			MongoPluginManager manager(mongoContext, model::NetworkIdentifier::Zero);
+			MongoPluginManager manager(mongoContext, config::CreateMockConfigurationHolder());
 
 			// Act + Assert:
 			action(manager);

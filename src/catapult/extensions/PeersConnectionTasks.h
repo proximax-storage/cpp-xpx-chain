@@ -27,6 +27,7 @@
 
 namespace catapult {
 	namespace cache { class CatapultCache; }
+	namespace extensions { class ServiceState; }
 	namespace net {
 		class ConnectionContainer;
 		class PacketWriters;
@@ -53,22 +54,16 @@ namespace catapult { namespace extensions {
 	/// Settings used to initialize a selector task.
 	struct SelectorSettings {
 	public:
-		/// Creates settings around \a cache, \a totalChainImportance, \a nodes, \a serviceId, \a requiredRole and \a config.
+		/// Creates settings around \a state, \a serviceId and \a requiredRole.
 		SelectorSettings(
-				const cache::CatapultCache& cache,
-				Importance totalChainImportance,
-				ionet::NodeContainer& nodes,
+				extensions::ServiceState& state,
 				ionet::ServiceIdentifier serviceId,
-				ionet::NodeRoles requiredRole,
-				const config::NodeConfiguration::ConnectionsSubConfiguration& config);
+				ionet::NodeRoles requiredRole);
 
-		/// Creates settings around \a cache, \a totalChainImportance, \a nodes, \a serviceId and \a config.
+		/// Creates settings around \a state and \a serviceId.
 		SelectorSettings(
-				const cache::CatapultCache& cache,
-				Importance totalChainImportance,
-				ionet::NodeContainer& nodes,
-				ionet::ServiceIdentifier serviceId,
-				const config::NodeConfiguration::ConnectionsSubConfiguration& config);
+				extensions::ServiceState& state,
+				ionet::ServiceIdentifier serviceId);
 
 	public:
 		/// Container of nodes from which to select.

@@ -20,7 +20,7 @@ greedExponent = 2
 
 # maxTransactionLifetime / blockGenerationTargetTime
 importanceGrouping = 5760
-maxRollbackBlocks = 360
+maxRollbackBlocks = 5
 maxDifficultyBlocks = 3
 
 maxTransactionLifetime = 24h
@@ -49,6 +49,11 @@ enableStrictCosignatureCheck = false
 enableBondedAggregateSupport = true
 
 maxBondedTransactionLifetime = 48h
+
+[plugin:catapult.plugins.config]
+
+maxBlockChainConfigSize = 1MB
+maxSupportedEntityVersionsSize = 1MB
 
 [plugin:catapult.plugins.contract]
 
@@ -110,3 +115,7 @@ maxPropertyValues = 512
 [plugin:catapult.plugins.transfer]
 
 maxMessageSize = 1024
+
+[plugin:catapult.plugins.upgrade]
+
+minUpgradePeriod = 360

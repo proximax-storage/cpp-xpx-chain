@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 		struct HashCacheTraits {
 		public:
 			using DescriptorType = test::BasicHashLockInfoTestTraits;
-			using NotificationType = model::HashLockNotification;
+			using NotificationType = model::HashLockNotification<1>;
 			using NotificationBuilder = test::HashLockNotificationBuilder;
 			using CacheFactory = test::HashLockInfoCacheFactory;
 

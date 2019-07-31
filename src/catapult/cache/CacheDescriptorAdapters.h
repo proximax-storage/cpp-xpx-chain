@@ -108,11 +108,28 @@ namespace catapult { namespace cache {
 		struct OrderedMemorySetAdapter {
 		private:
 			using ElementType = std::remove_const_t<typename TElementTraits::ElementType>;
+			using OrderedSet = deltaset::detail::OrderedSetType<TElementTraits>;
 
-			class StorageSetType : public deltaset::detail::OrderedSetType<TElementTraits> {
+			class StorageSetType : public OrderedSet {
 			public:
 				StorageSetType(CacheDatabase&, size_t)
 				{}
+
+				typename OrderedSet::const_iterator findLowerOrEqual(const typename TElementTraits::ElementType& key) const {
+					auto iter = this->lower_bound(key);
+
+					if (iter != this->end() && *iter != key) {
+						if (iter == this->begin())
+							return this->end();
+						--iter;
+					} else if (iter == this->end()) {
+						if (!this->empty()) {
+							--iter;
+						}
+					}
+
+					return iter;
+				}
 			};
 
 			using MemorySetType = std::set<ElementType>;

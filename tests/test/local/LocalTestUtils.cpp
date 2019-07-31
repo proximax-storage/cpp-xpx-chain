@@ -24,6 +24,9 @@
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/plugins/PluginLoader.h"
+#include "plugins/txes/transfer/src/model/TransferEntityType.h"
+#include "plugins/txes/transfer/src/model/TransferTransaction.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
@@ -91,6 +94,136 @@ namespace catapult { namespace test {
 		}
 	}
 
+	config::SupportedEntityVersions CreateSupportedEntityVersions() {
+		std::string supportedVersions(
+			"{\n"
+			"\t\"entities\": [\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Block\",\n"
+			"\t\t\t\"type\": \"33091\",\n"
+			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Nemesis_Block\",\n"
+			"\t\t\t\"type\": \"32835\",\n"
+			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Address_Metadata\",\n"
+			"\t\t\t\"type\": \"16701\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Mosaic_Metadata\",\n"
+			"\t\t\t\"type\": \"16957\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Namespace_Metadata\",\n"
+			"\t\t\t\"type\": \"17213\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Catapult_Upgrade\",\n"
+			"\t\t\t\"type\": \"16728\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Modify_Multisig_Account\",\n"
+			"\t\t\t\"type\": \"16725\",\n"
+			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Hash_Lock\",\n"
+			"\t\t\t\"type\": \"16712\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Catapult_Config\",\n"
+			"\t\t\t\"type\": \"16729\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Register_Namespace\",\n"
+			"\t\t\t\"type\": \"16718\",\n"
+			"\t\t\t\"supportedVersions\": [2]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Alias_Address\",\n"
+			"\t\t\t\"type\": \"16974\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Alias_Mosaic\",\n"
+			"\t\t\t\"type\": \"17230\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Transfer\",\n"
+			"\t\t\t\"type\": \"16724\",\n"
+			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Secret_Proof\",\n"
+			"\t\t\t\"type\": \"16978\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Secret_Lock\",\n"
+			"\t\t\t\"type\": \"16722\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Modify_Contract\",\n"
+			"\t\t\t\"type\": \"16727\",\n"
+			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Address_Property\",\n"
+			"\t\t\t\"type\": \"16720\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Mosaic_Property\",\n"
+			"\t\t\t\"type\": \"16976\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Transaction_Type_Property\",\n"
+			"\t\t\t\"type\": \"17232\",\n"
+			"\t\t\t\"supportedVersions\": [1]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Aggregate_Complete\",\n"
+			"\t\t\t\"type\": \"16705\",\n"
+			"\t\t\t\"supportedVersions\": [2]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Aggregate_Bonded\",\n"
+			"\t\t\t\"type\": \"16961\",\n"
+			"\t\t\t\"supportedVersions\": [2]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Mosaic_Definition\",\n"
+			"\t\t\t\"type\": \"16717\",\n"
+			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Mosaic_Supply_Change\",\n"
+			"\t\t\t\"type\": \"16973\",\n"
+			"\t\t\t\"supportedVersions\": [2]\n"
+			"\t\t},\n"
+			"\t\t{\n"
+			"\t\t\t\"name\": \"Account_Link\",\n"
+			"\t\t\t\"type\": \"16716\",\n"
+			"\t\t\t\"supportedVersions\": [2]\n"
+			"\t\t}\n"
+			"\t]\n"
+			"}");
+		std::istringstream inputStream(supportedVersions);
+		return config::LoadSupportedEntityVersions(inputStream);
+	}
+
 	crypto::KeyPair LoadServerKeyPair() {
 		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::FromString(Local_Node_Private_Key));
 	}
@@ -149,6 +282,7 @@ namespace catapult { namespace test {
 
 		config.User.BootKey = Local_Node_Private_Key;
 		config.User.DataDirectory = dataDirectory;
+		config.SupportedEntityVersions = CreateSupportedEntityVersions();
 		return config.ToConst();
 	}
 
@@ -173,31 +307,42 @@ namespace catapult { namespace test {
 
 	namespace {
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager(
-				const model::BlockChainConfiguration& config,
-				const plugins::StorageConfiguration& storageConfig,
-				const config::InflationConfiguration& inflationConfig) {
+				const config::CatapultConfiguration& config,
+				const plugins::StorageConfiguration& storageConfig) {
 			std::vector<plugins::PluginModule> modules;
-			auto pPluginManager = std::make_shared<plugins::PluginManager>(config, storageConfig, inflationConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig);
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");
+			LoadPluginByName(*pPluginManager, modules, "", "catapult.plugins.hashcache");
 
-			for (const auto& pair : config.Plugins)
+			for (const auto& pair : config.BlockChain.Plugins)
 				LoadPluginByName(*pPluginManager, modules, "", pair.first);
 
 			return std::shared_ptr<plugins::PluginManager>(
-					pPluginManager.get(),
-					[pPluginManager, modules = std::move(modules)](const auto*) mutable {
-						// destroy the modules after the plugin manager
-						pPluginManager.reset();
-						modules.clear();
-					});
+				pPluginManager.get(),
+				[pPluginManager, modules = std::move(modules)](const auto*) mutable {
+					// destroy the modules after the plugin manager
+					pPluginManager.reset();
+					modules.clear();
+				}
+			);
+		}
+
+		std::shared_ptr<plugins::PluginManager> CreatePluginManager(
+				const model::BlockChainConfiguration& blockChainConfig,
+				const plugins::StorageConfiguration& storageConfig) {
+			test::MutableCatapultConfiguration config;
+			config.BlockChain = blockChainConfig;
+			config.SupportedEntityVersions = test::CreateSupportedEntityVersions();
+			return CreatePluginManager(config.ToConst(), storageConfig);
 		}
 	}
 
 	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const model::BlockChainConfiguration& config) {
-		return CreatePluginManager(config, plugins::StorageConfiguration(), config::InflationConfiguration::Uninitialized());
+		return CreatePluginManager(config, plugins::StorageConfiguration());
 	}
 
 	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const config::CatapultConfiguration& config) {
-		return CreatePluginManager(config.BlockChain, extensions::CreateStorageConfiguration(config), config.Inflation);
+		return CreatePluginManager(config, extensions::CreateStorageConfiguration(config));
 	}
 }}

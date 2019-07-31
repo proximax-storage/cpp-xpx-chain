@@ -20,7 +20,7 @@
 
 #include "catapult/plugins/CacheHandlers.h"
 #include "tests/test/cache/SimpleCache.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
@@ -47,15 +47,16 @@ namespace catapult { namespace plugins {
 		template<typename TAction>
 		void RunHandlerRegistrationTest(TAction action) {
 			// Arrange:
-			auto manager = test::CreatePluginManager();
-			manager.addCacheSupport<test::SimpleCacheStorageTraits>(std::make_unique<CacheDescriptor::CacheType>());
-			auto cache = manager.createCache();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
+			PluginManager pluginManager(pConfigHolder, StorageConfiguration());
+			pluginManager.addCacheSupport<test::SimpleCacheStorageTraits>(std::make_unique<CacheDescriptor::CacheType>());
+			auto cache = pluginManager.createCache();
 
 			// Act:
-			CacheHandlers<CacheDescriptor>::Register<static_cast<model::FacilityCode>(123)>(manager);
+			CacheHandlers<CacheDescriptor>::Register<static_cast<model::FacilityCode>(123)>(pluginManager);
 
 			// Assert:
-			action(manager, cache);
+			action(pluginManager, cache);
 		}
 	}
 

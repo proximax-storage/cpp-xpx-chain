@@ -20,6 +20,7 @@
 
 #pragma once
 #include "version_inc.h"
+#include "catapult/types.h"
 #include <iosfwd>
 
 #define STRINGIFY2(STR) #STR
@@ -40,6 +41,13 @@
 #define CATAPULT_COPYRIGHT "Copyright (c) Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp."
 
 namespace catapult { namespace version {
+
+	constexpr CatapultVersion CatapultVersion = catapult::CatapultVersion{
+		uint64_t{CATAPULT_VERSION_MAJOR}	<< 48 |
+		uint64_t{CATAPULT_VERSION_MINOR}	<< 32 |
+		uint64_t{CATAPULT_VERSION_REVISION}	<< 16 |
+		uint64_t{CATAPULT_VERSION_BUILD}
+	};
 
 	/// Writes custom version information to \a out.
 	void WriteVersionInformation(std::ostream& out);

@@ -49,21 +49,28 @@ namespace catapult { namespace chain {
 		// publish aggregate notifications
 		const auto& aggregate = CoerceToAggregate(transactionInfo.transaction());
 		auto numCosignatures = transactionInfo.cosignatures().size();
-		sub.notify(model::AggregateCosignaturesNotification(
-				aggregate.Signer,
-				static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
-				aggregate.TransactionsPtr(),
-				numCosignatures,
-				transactionInfo.cosignatures().data()));
-
-		// publish all sub-transaction information
-		for (const auto& subTransaction : aggregate.Transactions()) {
-			// - generic sub-transaction notification
-			sub.notify(model::AggregateEmbeddedTransactionNotification(
+		switch (aggregate.EntityVersion()) {
+		case 2:
+			sub.notify(model::AggregateCosignaturesNotification<1>(
 					aggregate.Signer,
-					subTransaction,
+					static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
+					aggregate.TransactionsPtr(),
 					numCosignatures,
 					transactionInfo.cosignatures().data()));
+
+			// publish all sub-transaction information
+			for (const auto& subTransaction : aggregate.Transactions()) {
+				// - generic sub-transaction notification
+				sub.notify(model::AggregateEmbeddedTransactionNotification<1>(
+						aggregate.Signer,
+						subTransaction,
+						numCosignatures,
+						transactionInfo.cosignatures().data()));
+			}
+			break;
+
+		default:
+			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AggregateTransaction", aggregate.EntityVersion());
 		}
 	}
 }}

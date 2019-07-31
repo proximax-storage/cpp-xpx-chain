@@ -20,6 +20,7 @@
 
 #pragma once
 #include "CacheStorageInclude.h"
+#include "catapult/types.h"
 #include <string>
 
 namespace catapult {

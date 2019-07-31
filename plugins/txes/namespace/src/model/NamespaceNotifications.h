@@ -31,29 +31,33 @@ namespace catapult { namespace model {
 #define DEFINE_NAMESPACE_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Namespace, DESCRIPTION, CODE)
 
 	/// Namespace name was provided.
-	DEFINE_NAMESPACE_NOTIFICATION(Name, 0x0011, Validator);
+	DEFINE_NAMESPACE_NOTIFICATION(Name_v1, 0x0011, Validator);
 
 	/// Namespace was registered.
-	DEFINE_NAMESPACE_NOTIFICATION(Registration, 0x0012, Validator);
+	DEFINE_NAMESPACE_NOTIFICATION(Registration_v1, 0x0012, Validator);
 
 	/// Root namespace was registered.
-	DEFINE_NAMESPACE_NOTIFICATION(Root_Registration, 0x0021, All);
+	DEFINE_NAMESPACE_NOTIFICATION(Root_Registration_v1, 0x0021, All);
 
 	/// Child namespace was registered.
-	DEFINE_NAMESPACE_NOTIFICATION(Child_Registration, 0x0022, All);
+	DEFINE_NAMESPACE_NOTIFICATION(Child_Registration_v1, 0x0022, All);
 
 	/// Namespace rental fee has been sent.
-	DEFINE_NAMESPACE_NOTIFICATION(Rental_Fee, 0x0030, Observer);
+	DEFINE_NAMESPACE_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
 
 #undef DEFINE_NAMESPACE_NOTIFICATION
 
 	// endregion
 
 	/// Notification of a namespace name.
-	struct NamespaceNameNotification : public Notification {
+	template<VersionType version>
+	struct NamespaceNameNotification;
+
+	template<>
+	struct NamespaceNameNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Name_Notification;
+		static constexpr auto Notification_Type = Namespace_Name_v1_Notification;
 
 	public:
 		/// Creates a notification around \a nameSize and \a pName given \a namespaceId and \a parentId.
@@ -62,7 +66,7 @@ namespace catapult { namespace model {
 				catapult::NamespaceId parentId,
 				uint8_t nameSize,
 				const uint8_t* pName)
-				: Notification(Notification_Type, sizeof(NamespaceNameNotification))
+				: Notification(Notification_Type, sizeof(NamespaceNameNotification<1>))
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)
 				, NameSize(nameSize)
@@ -84,15 +88,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a namespace registration.
-	struct NamespaceNotification : public Notification {
+	template<VersionType version>
+	struct NamespaceNotification;
+
+	template<>
+	struct NamespaceNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Registration_Notification;
+		static constexpr auto Notification_Type = Namespace_Registration_v1_Notification;
 
 	public:
 		/// Creates a notification around \a namespaceType.
 		explicit NamespaceNotification(model::NamespaceType namespaceType)
-				: Notification(Notification_Type, sizeof(NamespaceNotification))
+				: Notification(Notification_Type, sizeof(NamespaceNotification<1>))
 				, NamespaceType(namespaceType)
 		{}
 
@@ -102,15 +110,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a root namespace registration.
-	struct RootNamespaceNotification : public Notification {
+	template<VersionType version>
+	struct RootNamespaceNotification;
+
+	template<>
+	struct RootNamespaceNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Root_Registration_Notification;
+		static constexpr auto Notification_Type = Namespace_Root_Registration_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a namespaceId and \a duration.
 		explicit RootNamespaceNotification(const Key& signer, NamespaceId namespaceId, BlockDuration duration)
-				: Notification(Notification_Type, sizeof(RootNamespaceNotification))
+				: Notification(Notification_Type, sizeof(RootNamespaceNotification<1>))
 				, Signer(signer)
 				, NamespaceId(namespaceId)
 				, Duration(duration)
@@ -128,15 +140,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a child namespace registration.
-	struct ChildNamespaceNotification : public Notification {
+	template<VersionType version>
+	struct ChildNamespaceNotification;
+
+	template<>
+	struct ChildNamespaceNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Child_Registration_Notification;
+		static constexpr auto Notification_Type = Namespace_Child_Registration_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a namespaceId and \a parentId.
 		explicit ChildNamespaceNotification(const Key& signer, NamespaceId namespaceId, NamespaceId parentId)
-				: Notification(Notification_Type, sizeof(ChildNamespaceNotification))
+				: Notification(Notification_Type, sizeof(ChildNamespaceNotification<1>))
 				, Signer(signer)
 				, NamespaceId(namespaceId)
 				, ParentId(parentId)
@@ -156,10 +172,14 @@ namespace catapult { namespace model {
 	// region rental fee
 
 	/// Notification of a namespace rental fee.
-	struct NamespaceRentalFeeNotification : public BasicBalanceNotification<NamespaceRentalFeeNotification> {
+	template<VersionType version>
+	struct NamespaceRentalFeeNotification;
+
+	template<>
+	struct NamespaceRentalFeeNotification<1> : public BasicBalanceNotification<NamespaceRentalFeeNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Namespace_Rental_Fee_Notification;
+		static constexpr auto Notification_Type = Namespace_Rental_Fee_v1_Notification;
 
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.

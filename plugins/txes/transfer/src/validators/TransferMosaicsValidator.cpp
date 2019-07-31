@@ -22,7 +22,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransferMosaicsNotification;
+	using Notification = model::TransferMosaicsNotification<1>;
 
 	DEFINE_STATELESS_VALIDATOR(TransferMosaics, [](const auto& notification) {
 		// check strict ordering of mosaics

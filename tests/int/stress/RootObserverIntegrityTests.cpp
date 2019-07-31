@@ -66,7 +66,8 @@ namespace catapult { namespace extensions {
 		class TestContext {
 		public:
 			explicit TestContext(uint32_t numAccounts)
-					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateBlockChainConfiguration(numAccounts)))
+					: m_config(CreateBlockChainConfiguration(numAccounts))
+					, m_pPluginManager(test::CreatePluginManagerWithRealPlugins(m_config))
 					, m_cache(m_pPluginManager->createCache())
 					, m_specialAccountKey(test::GenerateRandomByteArray<Key>()) {
 				// register mock transaction plugin so that BalanceTransferNotifications are produced and observed
@@ -97,7 +98,7 @@ namespace catapult { namespace extensions {
 			void zeroBalances(uint8_t startAccountId, uint8_t numAccounts, Height height) {
 				auto& transactions = m_heightToTransactions[height];
 
-				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView();
+				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView(Height{0});
 				for (uint8_t i = startAccountId; i < startAccountId + numAccounts; ++i) {
 					const auto& accountState = accountStateCacheView->find(Key{ { i } }).get();
 					auto pTransaction = mocks::CreateTransactionWithFeeAndTransfers(Amount(), {
@@ -113,7 +114,7 @@ namespace catapult { namespace extensions {
 			void moveBalance(uint8_t accountId1, uint8_t accountId2, Height height) {
 				auto& transactions = m_heightToTransactions[height];
 
-				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView();
+				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView(Height{0});
 				const auto& accountState1 = accountStateCacheView->find(Key{ { accountId1 } }).get();
 				auto pTransaction = mocks::CreateTransactionWithFeeAndTransfers(Amount(), {
 					{ test::UnresolveXor(Harvesting_Mosaic_Id), accountState1.Balances.get(Harvesting_Mosaic_Id) }
@@ -184,7 +185,7 @@ namespace catapult { namespace extensions {
 			};
 
 			void assertRemovedAccounts(uint8_t startAccountId, uint8_t numAccounts) {
-				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView();
+				auto accountStateCacheView = m_cache.sub<cache::AccountStateCache>().createView(Height{0});
 				for (uint8_t i = startAccountId; i < startAccountId + numAccounts; ++i)
 					EXPECT_FALSE(accountStateCacheView->contains(Key{ { i } })) << "balance for account " << static_cast<int>(i);
 			}
@@ -244,6 +245,7 @@ namespace catapult { namespace extensions {
 			}
 
 		private:
+			model::BlockChainConfiguration m_config;
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			cache::CatapultCache m_cache;
 			state::CatapultState m_state;

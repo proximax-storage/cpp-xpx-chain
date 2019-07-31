@@ -22,11 +22,12 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BlockNotification;
+	using Notification = model::BlockNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(MaxTransactions, Notification)(uint32_t maxTransactions) {
-		return MAKE_STATELESS_VALIDATOR(MaxTransactions, [maxTransactions](const auto& notification) {
-			return notification.NumTransactions <= maxTransactions
+	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(MaxTransactions, [pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
+			return notification.NumTransactions <= config.MaxTransactionsPerBlock
 					? ValidationResult::Success
 					: Failure_Core_Too_Many_Transactions;
 		});

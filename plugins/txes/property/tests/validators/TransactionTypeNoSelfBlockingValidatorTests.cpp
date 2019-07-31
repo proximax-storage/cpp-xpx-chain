@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(TransactionTypeNoSelfBlocking,)
 
 	namespace {
-		using Notification = model::ModifyTransactionTypePropertyValueNotification;
+		using Notification = model::ModifyTransactionTypePropertyValueNotification_v1;
 
 		constexpr auto Add = model::PropertyModificationType::Add;
 		constexpr auto Del = model::PropertyModificationType::Del;
@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 		constexpr auto Failure_Result = Failure_Property_Modification_Not_Allowed;
 
 		struct TransactionTypePropertyTraits : public test::BaseTransactionTypePropertyTraits {
-			using NotificationType = model::ModifyTransactionTypePropertyValueNotification;
+			using NotificationType = model::ModifyTransactionTypePropertyValueNotification_v1;
 		};
 
 		auto RandomValue() {
@@ -80,7 +80,8 @@ namespace catapult { namespace validators {
 				const Key& seedKey,
 				const Notification& notification) {
 			// Arrange:
-			auto cache = test::PropertyCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::PropertyCacheFactory::Create(config);
 			switch (cacheSeed) {
 			case CacheSeed::No:
 				break;

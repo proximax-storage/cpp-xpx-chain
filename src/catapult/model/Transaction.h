@@ -49,7 +49,7 @@ namespace catapult { namespace model {
 /// Defines constants for a transaction with \a TYPE and \a VERSION.
 #define DEFINE_TRANSACTION_CONSTANTS(TYPE, VERSION) \
 	/* Transaction format version. */ \
-	static constexpr uint8_t Current_Version = VERSION; \
+	static constexpr VersionType Current_Version = VERSION; \
 	/* Transaction type. */ \
 	static constexpr EntityType Entity_Type = TYPE;
 

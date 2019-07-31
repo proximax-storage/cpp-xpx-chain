@@ -10,7 +10,6 @@
 #include "src/cache/ContractCacheStorage.h"
 #include "src/cache/ReputationCache.h"
 #include "src/cache/ReputationCacheStorage.h"
-#include "src/config/ContractConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ModifyContractTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -20,7 +19,6 @@ namespace catapult { namespace plugins {
 
 	void RegisterContractSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateModifyContractTransactionPlugin());
-		auto config = model::LoadPluginConfiguration<config::ContractConfiguration>(manager.config(), "catapult.plugins.contract");
 
 		manager.addCacheSupport<cache::ContractCacheStorage>(
 			std::make_unique<cache::ContractCache>(manager.cacheConfig(cache::ContractCache::Name)));
@@ -33,7 +31,7 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("CONTRACT C"), [&cache]() {
-				return cache.sub<cache::ContractCache>().createView()->size();
+				return cache.sub<cache::ContractCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -42,7 +40,7 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("REPUTATION C"), [&cache]() {
-				return cache.sub<cache::ReputationCache>().createView()->size();
+				return cache.sub<cache::ReputationCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -50,7 +48,8 @@ namespace catapult { namespace plugins {
 			builder
 					.add(validators::CreateModifyContractCustomersValidator())
 					.add(validators::CreateModifyContractExecutorsValidator())
-					.add(validators::CreateModifyContractVerifiersValidator());
+					.add(validators::CreateModifyContractVerifiersValidator())
+					.add(validators::CreatePluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
@@ -61,8 +60,8 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateModifyContractDurationValidator());
 		});
 
-		manager.addObserverHook([config](auto& builder) {
-			builder.add(observers::CreateModifyContractObserver(config));
+		manager.addObserverHook([pConfigHolder = manager.configHolder()](auto& builder) {
+			builder.add(observers::CreateModifyContractObserver(pConfigHolder));
 			builder.add(observers::CreateReputationUpdateObserver());
 		});
 	}

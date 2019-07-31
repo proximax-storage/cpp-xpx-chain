@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AliasedAddressNotification;
+	using Notification = model::AliasedAddressNotification_v1;
 
 	DEFINE_STATEFUL_VALIDATOR(AddressAlias, [](const auto& notification, const auto& context) {
 		const auto& accountStateCache = context.Cache.template sub<cache::AccountStateCache>();

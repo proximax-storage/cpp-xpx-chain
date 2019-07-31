@@ -50,7 +50,9 @@ namespace catapult { namespace cache {
 			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::BasicInsertRemove
 			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::Touch
 			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::Pruning
-			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::DeltaElements {
+			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::DeltaElements
+			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::Enable
+			, public LockInfoCacheDeltaMixins<TDescriptor, TCacheTypes>::Height {
 	public:
 		using ReadOnlyView = typename TCacheTypes::CacheReadOnlyType;
 

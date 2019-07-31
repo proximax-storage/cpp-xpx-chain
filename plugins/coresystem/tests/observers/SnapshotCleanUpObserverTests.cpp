@@ -20,6 +20,7 @@
 
 #include "src/observers/Observers.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/plugins/AccountObserverTestContext.h"
@@ -30,7 +31,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS SnapshotCleanUpObserverTests
 
-		DEFINE_COMMON_OBSERVER_TESTS(SnapshotCleanUp, model::BlockChainConfiguration::Uninitialized())
+		DEFINE_COMMON_OBSERVER_TESTS(SnapshotCleanUp, config::CreateMockConfigurationHolder())
 
 		const uint64_t Effective_Balance_Range = 10;
 		const uint64_t Max_Rollback_Blocks = 1;
@@ -39,15 +40,14 @@ namespace catapult { namespace observers {
 			void AssertCleanUpSnapshots(Height contextHeight, uint64_t expectedSizeOfSnapshots,
 										observers::NotifyMode mode = observers::NotifyMode::Commit) {
 				// Arrange:
-				test::AccountObserverTestContext context(
-						mode,
-						contextHeight
-				);
-
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.ImportanceGrouping = Effective_Balance_Range;
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
-				auto pObserver = CreateSnapshotCleanUpObserver(config);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+
+				test::AccountObserverTestContext context(mode, contextHeight, config);
+
+				auto pObserver = CreateSnapshotCleanUpObserver(pConfigHolder);
 
 				auto signer = test::GenerateRandomByteArray<Key>();
 				for (auto i = 0u; i < Effective_Balance_Range + Max_Rollback_Blocks + 1; ++i) {

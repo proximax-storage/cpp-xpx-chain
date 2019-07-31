@@ -20,10 +20,12 @@
 
 #include "Validators.h"
 #include "catapult/constants.h"
+#include "catapult/model/BlockChainConfiguration.h"
+#include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicPropertiesNotification;
+	using Notification = model::MosaicPropertiesNotification<1>;
 
 	namespace {
 		constexpr bool IsValidFlags(model::MosaicFlags flags) {
@@ -49,14 +51,17 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATELESS_VALIDATOR(MosaicProperties, Notification)(uint8_t maxDivisibility, BlockDuration maxMosaicDuration) {
-		return MAKE_STATELESS_VALIDATOR(MosaicProperties, ([maxDivisibility, maxMosaicDuration](const auto& notification) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicProperties, ([pConfigHolder](const auto& notification, const auto& context) {
 			if (!IsValidFlags(notification.PropertiesHeader.Flags))
 				return Failure_Mosaic_Invalid_Flags;
 
-			if (notification.PropertiesHeader.Divisibility > maxDivisibility)
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
+			if (notification.PropertiesHeader.Divisibility > pluginConfig.MaxMosaicDivisibility)
 				return Failure_Mosaic_Invalid_Divisibility;
 
+			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
 			return CheckOptionalProperties(notification, maxMosaicDuration);
 		}));
 	}

@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/TransferPlugin.h"
 #include "plugins/txes/transfer/src/model/TransferEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
@@ -33,7 +34,7 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+				config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 				auto manager = test::CreatePluginManager(config);
 				RegisterTransferSubsystem(manager);
 
@@ -47,7 +48,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "TransferMessageValidator", "TransferMosaicsValidator" };
+				return { "TransferMosaicsValidator", "PluginConfigValidator" };
+			}
+
+			static std::vector<std::string> GetStatefulValidatorNames() {
+				return { "TransferMessageValidator" };
 			}
 		};
 	}

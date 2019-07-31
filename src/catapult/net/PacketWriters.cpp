@@ -21,6 +21,7 @@
 #include "PacketWriters.h"
 #include "ClientConnector.h"
 #include "ServerConnector.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/thread/TimedCallback.h"
@@ -258,11 +259,12 @@ namespace catapult { namespace net {
 			DefaultPacketWriters(
 					const std::shared_ptr<thread::IoThreadPool>& pPool,
 					const crypto::KeyPair& keyPair,
-					const ConnectionSettings& settings)
+					const ConnectionSettings& settings,
+					extensions::ServiceState& state)
 					: m_pPool(pPool)
 					, m_pClientConnector(CreateClientConnector(m_pPool, keyPair, settings))
 					, m_pServerConnector(CreateServerConnector(m_pPool, keyPair, settings))
-					, m_networkIdentifier(settings.NetworkIdentifier)
+					, m_state(state)
 			{}
 
 		public:
@@ -380,7 +382,7 @@ namespace catapult { namespace net {
 			bool addWriter(const Key& key, const SocketPointer& pSocket) {
 				// this is for supporting eventsource extension where api writers register to receive pushed data
 				// endpoint and metadata are unimportant because only key-based filtering is required
-				auto node = ionet::Node(key, ionet::NodeEndpoint(), ionet::NodeMetadata(m_networkIdentifier));
+				auto node = ionet::Node(key, ionet::NodeEndpoint(), ionet::NodeMetadata(m_state.networkIdentifier()));
 				return addWriter(node, pSocket);
 			}
 
@@ -417,7 +419,7 @@ namespace catapult { namespace net {
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
 			std::shared_ptr<ClientConnector> m_pClientConnector;
 			std::shared_ptr<ServerConnector> m_pServerConnector;
-			model::NetworkIdentifier m_networkIdentifier;
+			extensions::ServiceState& m_state;
 			WriterContainer m_writers;
 		};
 	}
@@ -425,7 +427,8 @@ namespace catapult { namespace net {
 	std::shared_ptr<PacketWriters> CreatePacketWriters(
 			const std::shared_ptr<thread::IoThreadPool>& pPool,
 			const crypto::KeyPair& keyPair,
-			const ConnectionSettings& settings) {
-		return std::make_shared<DefaultPacketWriters>(pPool, keyPair, settings);
+			const ConnectionSettings& settings,
+			extensions::ServiceState& state) {
+		return std::make_shared<DefaultPacketWriters>(pPool, keyPair, settings, state);
 	}
 }}

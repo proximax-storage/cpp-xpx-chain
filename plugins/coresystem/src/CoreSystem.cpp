@@ -34,93 +34,82 @@
 namespace catapult { namespace plugins {
 
 	namespace {
-		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions(const model::BlockChainConfiguration& config) {
-			return {
-				config.Network.Identifier,
-				config.ImportanceGrouping,
-				config.MinHarvesterBalance,
-				config.CurrencyMosaicId,
-				config.HarvestingMosaicId
-			};
-		}
-
-		void AddAccountStateCache(PluginManager& manager, const model::BlockChainConfiguration& config) {
+		void AddAccountStateCache(PluginManager& manager) {
 			using namespace catapult::cache;
 
 			auto cacheConfig = manager.cacheConfig(AccountStateCache::Name);
-			auto cacheOptions = CreateAccountStateCacheOptions(config);
-			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, cacheOptions));
+			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, manager.configHolder()));
 
 			using CacheHandlers = CacheHandlers<cache::AccountStateCacheDescriptor>;
 			CacheHandlers::Register<model::FacilityCode::Core>(manager);
 
 			manager.addDiagnosticCounterHook([](auto& counters, const CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("ACNTST C"), [&cache]() {
-					return cache.sub<AccountStateCache>().createView()->size();
+					return cache.sub<AccountStateCache>().createView(cache.height())->size();
 				});
 				counters.emplace_back(utils::DiagnosticCounterId("ACNTST C HVA"), [&cache]() {
-					return cache.sub<AccountStateCache>().createView()->highValueAddresses().size();
+					return cache.sub<AccountStateCache>().createView(cache.height())->highValueAddresses().size();
 				});
 			});
 		}
 
-		void AddBlockDifficultyCache(PluginManager& manager, const model::BlockChainConfiguration& config) {
+		void AddBlockDifficultyCache(PluginManager& manager) {
 			using namespace catapult::cache;
 
-			manager.addCacheSupport(std::make_unique<BlockDifficultyCacheSubCachePlugin>(CalculateDifficultyHistorySize(config)));
+			manager.addCacheSupport(std::make_unique<BlockDifficultyCacheSubCachePlugin>(manager.configHolder()));
 
 			manager.addDiagnosticCounterHook([](auto& counters, const CatapultCache& cache) {
 				counters.emplace_back(utils::DiagnosticCounterId("BLKDIF C"), [&cache]() {
-					return cache.sub<BlockDifficultyCache>().createView()->size();
+					return cache.sub<BlockDifficultyCache>().createView(cache.height())->size();
 				});
 			});
 		}
 	}
 
 	void RegisterCoreSystem(PluginManager& manager) {
-		const auto& config = manager.config();
+		const auto& pConfigHolder = manager.configHolder();
 
-		AddAccountStateCache(manager, config);
-		AddBlockDifficultyCache(manager, config);
+		AddAccountStateCache(manager);
+		AddBlockDifficultyCache(manager);
 
-		manager.addStatelessValidatorHook([&config](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateMaxTransactionsValidator(config.MaxTransactionsPerBlock))
-				.add(validators::CreateNetworkValidator(config.Network.Identifier))
-				.add(validators::CreateEntityVersionValidator())
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
-		manager.addStatefulValidatorHook([&config](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
-				.add(validators::CreateAddressValidator(config.Network.Identifier))
-				.add(validators::CreateDeadlineValidator(config.MaxTransactionLifetime))
-				.add(validators::CreateNemesisSinkValidator())
-				.add(validators::CreateEligibleHarvesterValidator(config.MinHarvesterBalance))
+				.add(validators::CreateEntityVersionValidator(pConfigHolder))
+				.add(validators::CreateMaxTransactionsValidator(pConfigHolder))
+				.add(validators::CreateNetworkValidator(pConfigHolder))
+				.add(validators::CreateAddressValidator(pConfigHolder))
+				.add(validators::CreateDeadlineValidator(pConfigHolder))
+//				We using nemesis account to update the network
+//				.add(validators::CreateNemesisSinkValidator())
+				.add(validators::CreateEligibleHarvesterValidator(pConfigHolder))
 				.add(validators::CreateBalanceDebitValidator())
 				.add(validators::CreateBalanceTransferValidator());
 		});
 
 		const auto& calculator = manager.inflationConfig().InflationCalculator;
-		manager.addObserverHook([&config, &calculator](auto& builder) {
+		manager.addObserverHook([&pConfigHolder, &calculator](auto& builder) {
 			builder
 				.add(observers::CreateSourceChangeObserver())
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceDebitObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(config.CurrencyMosaicId, config.HarvestBeneficiaryPercentage, calculator))
+				.add(observers::CreateHarvestFeeObserver(pConfigHolder, calculator))
 				.add(observers::CreateTotalTransactionsObserver())
-				.add(observers::CreateSnapshotCleanUpObserver(config));
+				.add(observers::CreateSnapshotCleanUpObserver(pConfigHolder));
 		});
 
-		manager.addTransientObserverHook([&config](auto& builder) {
+		manager.addTransientObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateBlockDifficultyObserver())
 				.add(observers::CreateCacheBlockPruningObserver<cache::BlockDifficultyCache>(
 						"BlockDifficulty",
-						config.BlockPruneInterval,
-						BlockDuration()));
+						pConfigHolder));
 		});
 	}
 }}

@@ -21,7 +21,9 @@
 #pragma once
 #include "Results.h"
 #include "src/model/MosaicNotifications.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/Notifications.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
 
@@ -32,7 +34,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to mosaic required notifications and validates that:
 	/// - mosaic exists and is active
 	/// - mosaic owner matches requesting signer
-	DECLARE_STATEFUL_VALIDATOR(ProperMosaic, model::MosaicRequiredNotification)();
+	DECLARE_STATEFUL_VALIDATOR(ProperMosaic, model::MosaicRequiredNotification<1>)();
 
 	// endregion
 
@@ -43,21 +45,19 @@ namespace catapult { namespace validators {
 	/// - definition has divisibility no greater than \a maxDivisibility
 	/// - mosaic duration has a value not larger than \a maxMosaicDuration
 	/// - optional mosaic properties are sorted, known and not duplicative
-	DECLARE_STATELESS_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification)(
-			uint8_t maxDivisibility,
-			BlockDuration maxMosaicDuration);
+	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to mosaic nonce notifications and validates that:
 	/// - mosaic id is the expected id generated from signer and nonce
-	DECLARE_STATELESS_VALIDATOR(MosaicId, model::MosaicNonceNotification)();
+	DECLARE_STATELESS_VALIDATOR(MosaicId, model::MosaicNonceNotification<1>)();
 
 	/// A validator implementation that applies to mosaic definition notifications and validates that:
 	/// - the mosaic is available and can be created or modified
-	DECLARE_STATEFUL_VALIDATOR(MosaicAvailability, model::MosaicDefinitionNotification)();
+	DECLARE_STATEFUL_VALIDATOR(MosaicAvailability, model::MosaicDefinitionNotification<1>)();
 
 	/// A validator implementation that applies to mosaic definition notifications and validates that:
 	/// - the resulting mosaic duration is not larger than \a maxMosaicDuration and there was no overflow
-	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, model::MosaicDefinitionNotification)(BlockDuration maxMosaicDuration);
+	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, model::MosaicDefinitionNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
 
@@ -66,23 +66,23 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - direction has a valid value
 	/// - delta amount is non-zero
-	DECLARE_STATELESS_VALIDATOR(MosaicSupplyChange, model::MosaicSupplyChangeNotification)();
+	DECLARE_STATELESS_VALIDATOR(MosaicSupplyChange, model::MosaicSupplyChangeNotification<1>)();
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - transferred mosaic is active and is transferable
 	/// - as an optimization, special currency mosaic (\a currencyMosaicId) transfers are always allowed
-	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, model::BalanceTransferNotification)(UnresolvedMosaicId currencyMosaicId);
+	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, model::BalanceTransferNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the affected mosaic has mutable supply
 	/// - decrease does not cause owner amount to become negative
-	/// - increase does not cause total atomic units to exceed \a maxAtomicUnits
+	/// - increase does not cause total atomic units to exceed max atomic units
 	/// \note This validator is dependent on MosaicChangeAllowedValidator.
-	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification)(Amount maxAtomicUnits);
+	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the account changing the supply does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification)(uint16_t maxMosaics);
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
 
@@ -90,7 +90,11 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - the recipient does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification)(uint16_t maxMosaics);
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(PluginConfig, model::PluginConfigNotification<1>)();
 }}

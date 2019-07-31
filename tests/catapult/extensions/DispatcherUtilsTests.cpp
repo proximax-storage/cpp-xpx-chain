@@ -57,6 +57,7 @@ namespace catapult { namespace extensions {
 		// Act:
 		SubscriberToSink(subscriber)(
 				*transactionInfo.pEntity,
+				Height(),
 				transactionInfo.EntityHash,
 				static_cast<validators::ValidationResult>(97531));
 

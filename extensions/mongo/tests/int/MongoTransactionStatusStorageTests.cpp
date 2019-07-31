@@ -80,7 +80,7 @@ namespace catapult { namespace mongo {
 			}
 
 			void saveTransactionStatus(const model::TransactionStatus& status) {
-				m_pSubscriber->notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), status.Hash, status.Status);
+				m_pSubscriber->notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), Height(), status.Hash, status.Status);
 				m_pSubscriber->flush();
 			}
 
@@ -175,7 +175,7 @@ namespace catapult { namespace mongo {
 		TransactionStatusSubscriberContext context(Num_Transaction_Statuses);
 		auto& transactionStatuses = context.statuses();
 		for (const auto& status : transactionStatuses)
-			context.subscriber().notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), status.Hash, status.Status);
+			context.subscriber().notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), Height(), status.Hash, status.Status);
 
 		// Sanity:
 		test::AssertCollectionSize(Collection_Name, 0);

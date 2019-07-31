@@ -22,6 +22,7 @@
 #include "partialtransaction/src/chain/PtValidator.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/utils/MemoryUtils.h"
@@ -32,6 +33,7 @@
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
+#include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/other/ValidationResultTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -324,13 +326,15 @@ namespace catapult { namespace chain {
 					, m_pUniqueValidator(std::make_unique<MockPtValidator>())
 					, m_pValidator(m_pUniqueValidator.get())
 					, m_pPool(test::CreateStartedIoThreadPool())
+					, m_cache(test::CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized()))
 					, m_pUpdater(std::make_unique<PtUpdater>(
+							m_cache,
 							m_transactionsCache,
 							std::move(m_pUniqueValidator),
 							PtUpdater::CompletedTransactionSink([this](auto&& pTransaction) {
 								m_completedTransactions.push_back(std::move(pTransaction));
 							}),
-							[this](const auto& transaction, const auto& hash, auto result) {
+							[this](const auto& transaction, const Height&, const auto& hash, auto result) {
 								// notice that transaction.Deadline is used as transaction marker
 								m_failedTransactionStatuses.emplace_back(hash, utils::to_underlying_type(result), transaction.Deadline);
 							},
@@ -452,6 +456,7 @@ namespace catapult { namespace chain {
 			std::vector<std::unique_ptr<model::Transaction>> m_completedTransactions;
 
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
+			cache::CatapultCache m_cache;
 			std::unique_ptr<PtUpdater> m_pUpdater; // unique_ptr for destroyUpdater
 
 			std::vector<model::TransactionStatus> m_failedTransactionStatuses;

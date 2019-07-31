@@ -25,10 +25,13 @@ namespace catapult { namespace validators {
 
 /// Defines a lock duration validator with name \a VALIDATOR_NAME for notification \a NOTIFICATION_TYPE
 /// that returns \a FAILURE_RESULT on failure.
-#define DEFINE_LOCK_DURATION_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE, FAILURE_RESULT) \
-	DECLARE_STATELESS_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(BlockDuration maxDuration) { \
-		using ValidatorType = stateless::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>; \
-		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [maxDuration](const auto& notification) { \
+#define DEFINE_LOCK_DURATION_VALIDATOR(NAME, FAILURE_RESULT, PLUGIN_NAME) \
+	DECLARE_STATEFUL_VALIDATOR(NAME##Duration, model::NAME##DurationNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) { \
+		using ValidatorType = stateful::FunctionalNotificationValidatorT<model::NAME##DurationNotification<1>>; \
+		return std::make_unique<ValidatorType>(#NAME "DurationValidator", [pConfigHolder](const auto& notification, const auto& context) { \
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain; \
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NAME##Configuration>(PLUGIN_NAME); \
+			auto maxDuration = pluginConfig.Max##NAME##Duration.blocks(blockChainConfig.BlockGenerationTargetTime); \
 			return BlockDuration(0) != notification.Duration && notification.Duration <= maxDuration \
 					? ValidationResult::Success \
 					: FAILURE_RESULT; \

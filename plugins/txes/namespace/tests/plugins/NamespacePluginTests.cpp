@@ -22,6 +22,7 @@
 #include "src/cache/NamespaceCache.h"
 #include "src/model/NamespaceEntityType.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
@@ -42,7 +43,7 @@ namespace catapult { namespace plugins {
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(1);
 				config.BlockPruneInterval = 150;
-				config.Plugins.emplace("catapult.plugins.namespace", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(namespace), utils::ConfigurationBag({{
 					"",
 					{
 						{ "maxNameSize", "0" },
@@ -92,15 +93,17 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
+					"PluginConfigValidator",
 					"NamespaceTypeValidator",
-					"NamespaceNameValidator",
-					"RootNamespaceValidator",
-					"AliasActionValidator"
+					"AliasActionValidator",
+					"PluginConfigValidator",
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"NamespaceNameValidator",
+					"RootNamespaceValidator",
 					"RootNamespaceAvailabilityValidator",
 					"NamespaceDurationOverflowValidator",
 					"ChildNamespaceAvailabilityValidator",

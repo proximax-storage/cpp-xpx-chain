@@ -19,9 +19,10 @@
 **/
 
 #include "Validators.h"
+#include "src/config/HashLockConfiguration.h"
 #include "plugins/txes/lock_shared/src/validators/LockDurationValidator.h"
 
 namespace catapult { namespace validators {
 
-	DEFINE_LOCK_DURATION_VALIDATOR(HashLockDuration, model::HashLockDurationNotification, Failure_LockHash_Invalid_Duration)
+	DEFINE_LOCK_DURATION_VALIDATOR(HashLock, Failure_LockHash_Invalid_Duration, PLUGIN_NAME(lockhash))
 }}

@@ -26,7 +26,7 @@
 namespace catapult { namespace observers {
 
 	namespace {
-		using Notification = model::BlockNotification;
+		using Notification = model::BlockNotification<1>;
 
 		void ApplyFee(
 				state::AccountState& accountState,
@@ -72,14 +72,14 @@ namespace catapult { namespace observers {
 	}
 
 	DECLARE_OBSERVER(HarvestFee, Notification)(
-			MosaicId currencyMosaicId,
-			uint8_t harvestBeneficiaryPercentage,
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			const model::InflationCalculator& calculator) {
-		auto mosaicId = currencyMosaicId;
-		auto percentage = harvestBeneficiaryPercentage;
-		return MAKE_OBSERVER(HarvestFee, Notification, ([mosaicId, percentage, calculator](const auto& notification, auto& context) {
+		return MAKE_OBSERVER(HarvestFee, Notification, ([pConfigHolder, calculator](const auto& notification, auto& context) {
 			auto inflationAmount = calculator.getSpotAmount(context.Height);
 			auto totalAmount = notification.TotalFee + inflationAmount;
+			auto config = pConfigHolder->Config(context.Height).BlockChain;
+			auto percentage = config.HarvestBeneficiaryPercentage;
+			auto mosaicId = config.CurrencyMosaicId;
 			auto beneficiaryAmount = ShouldShareFees(notification.Signer, notification.Beneficiary, percentage)
 					? Amount(totalAmount.unwrap() * percentage / 100)
 					: Amount();

@@ -18,24 +18,32 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/SecretLockConfiguration.h"
 #include "src/validators/Validators.h"
 #include "src/state/SecretLockInfo.h"
 #include "plugins/txes/lock_shared/tests/validators/LockDurationValidatorTests.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace validators {
 
 #define TEST_CLASS SecretLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration, BlockDuration(0))
+	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration, config::CreateMockConfigurationHolder())
 
 	namespace {
+		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
 		struct SecretTraits {
 		public:
-			using NotificationType = model::SecretLockDurationNotification;
+			using NotificationType = model::SecretLockDurationNotification<1>;
 			static constexpr auto Failure_Result = Failure_LockSecret_Invalid_Duration;
 
 			static auto CreateValidator(BlockDuration maxDuration) {
-				return CreateSecretLockDurationValidator(maxDuration);
+				auto pluginConfig = config::SecretLockConfiguration::Uninitialized();
+				pluginConfig.MaxSecretLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
+				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+				blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+				return CreateSecretLockDurationValidator(pConfigHolder);
 			}
 		};
 	}

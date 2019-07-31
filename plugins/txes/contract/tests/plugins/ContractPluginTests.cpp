@@ -4,8 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/ContractPlugin.h"
 #include "plugins/txes/contract/src/model/ContractEntityType.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -18,7 +20,7 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace("catapult.plugins.contract", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(contract), utils::ConfigurationBag({{
 					"",
 					{
 						{ "minPercentageOfApproval", "100" },
@@ -26,7 +28,7 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-				PluginManager manager(config, StorageConfiguration(), config::InflationConfiguration::Uninitialized());
+				auto manager = test::CreatePluginManager(config);
 				RegisterContractSubsystem(manager);
 
 				// Act:
@@ -59,25 +61,26 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
-						"ModifyContractCustomersValidator",
-						"ModifyContractExecutorsValidator",
-						"ModifyContractVerifiersValidator",
+					"ModifyContractCustomersValidator",
+					"ModifyContractExecutorsValidator",
+					"ModifyContractVerifiersValidator",
+					"PluginConfigValidator",
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-						"ModifyContractInvalidCustomersValidator",
-						"ModifyContractInvalidExecutorsValidator",
-						"ModifyContractInvalidVerifiersValidator",
-						"ModifyContractDurationValidator",
+					"ModifyContractInvalidCustomersValidator",
+					"ModifyContractInvalidExecutorsValidator",
+					"ModifyContractInvalidVerifiersValidator",
+					"ModifyContractDurationValidator",
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
-						"ModifyContractObserver",
-						"ReputationUpdateObserver"
+					"ModifyContractObserver",
+					"ReputationUpdateObserver"
 				};
 			}
 

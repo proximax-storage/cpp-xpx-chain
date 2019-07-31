@@ -34,6 +34,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because mosaics are out of order.
 	DEFINE_TRANSFER_RESULT(Out_Of_Order_Mosaics, 200);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_TRANSFER_RESULT(Plugin_Config_Malformed, 7);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

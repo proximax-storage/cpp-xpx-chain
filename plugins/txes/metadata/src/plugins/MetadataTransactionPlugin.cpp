@@ -19,50 +19,57 @@ namespace catapult { namespace plugins {
 
     namespace {
         struct AddressTraits {
-            using ModifyMetadataNotification = ModifyAddressMetadataNotification;
-            using ModifyMetadataValueNotification = ModifyAddressMetadataValueNotification;
+            using ModifyMetadataNotification = ModifyAddressMetadataNotification_v1;
+            using ModifyMetadataValueNotification = ModifyAddressMetadataValueNotification_v1;
         };
 
         struct MosaicTraits {
-            using ModifyMetadataNotification = ModifyMosaicMetadataNotification ;
-            using ModifyMetadataValueNotification = ModifyMosaicMetadataValueNotification;
+            using ModifyMetadataNotification = ModifyMosaicMetadataNotification_v1 ;
+            using ModifyMetadataValueNotification = ModifyMosaicMetadataValueNotification_v1;
         };
 
         struct NamespaceTraits {
-            using ModifyMetadataNotification = ModifyNamespaceMetadataNotification ;
-            using ModifyMetadataValueNotification = ModifyNamespaceMetadataValueNotification;
+            using ModifyMetadataNotification = ModifyNamespaceMetadataNotification_v1 ;
+            using ModifyMetadataValueNotification = ModifyNamespaceMetadataValueNotification_v1;
         };
 
         template<typename TTraits>
         class Publisher {
         public:
             template<typename TTransaction>
-            static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-                sub.notify(MetadataTypeNotification(transaction.MetadataType));
-                sub.notify(CreateMetadataModificationsNotification<TTransaction>(transaction));
+            static void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 1: {
+					sub.notify(MetadataTypeNotification<1>(transaction.MetadataType));
+					sub.notify(CreateMetadataModificationsNotification<TTransaction>(transaction));
 
-                std::vector<const model::MetadataModification*> modifications;
+					std::vector<const model::MetadataModification*> modifications;
+					for (const auto& modification : transaction.Transactions())
+						modifications.emplace_back(&modification);
 
-                for (const auto& modification : transaction.Transactions())
-                    modifications.emplace_back(&modification);
+					if (!modifications.empty())
+						sub.notify(MetadataModificationsNotification<1>(
+							state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
+							modifications));
 
-                if (!modifications.empty())
-                    sub.notify(MetadataModificationsNotification(
-                        state::GetHash(state::ToVector(transaction.MetadataId), transaction.MetadataType),
-                        modifications));
+					for (const auto& modification : transaction.Transactions()) {
+						sub.notify(ModifyMetadataFieldNotification<1>(
+							modification.ModificationType,
+							modification.KeySize, modification.KeyPtr(),
+							modification.ValueSize, modification.ValuePtr()));
 
-                for (const auto& modification : transaction.Transactions()) {
-                    sub.notify(ModifyMetadataFieldNotification(
-                        modification.ModificationType,
-                        modification.KeySize, modification.KeyPtr(),
-                        modification.ValueSize, modification.ValuePtr()));
+						sub.notify(typename TTraits::ModifyMetadataValueNotification(
+							transaction.MetadataId, transaction.MetadataType,
+							modification.ModificationType,
+							modification.KeySize, modification.KeyPtr(),
+							modification.ValueSize, modification.ValuePtr()));
+					}
+					break;
+				}
 
-                    sub.notify(typename TTraits::ModifyMetadataValueNotification(
-                        transaction.MetadataId, transaction.MetadataType,
-                        modification.ModificationType,
-                        modification.KeySize, modification.KeyPtr(),
-                        modification.ValueSize, modification.ValuePtr()));
-                }
+				default:
+					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MetadataTransaction", transaction.EntityVersion());
+				}
             }
 
         private:

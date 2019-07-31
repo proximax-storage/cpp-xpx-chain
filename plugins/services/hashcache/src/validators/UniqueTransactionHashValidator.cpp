@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransactionNotification;
+	using Notification = model::TransactionNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(UniqueTransactionHash, [](const auto& notification, const ValidatorContext& context) {
 		const auto& hashCache = context.Cache.sub<cache::HashCache>();

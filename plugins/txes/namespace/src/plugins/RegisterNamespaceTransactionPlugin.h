@@ -23,7 +23,10 @@
 #include "catapult/types.h"
 #include <memory>
 
-namespace catapult { namespace model { class TransactionPlugin; } }
+namespace catapult {
+	namespace config { class LocalNodeConfigurationHolder; }
+	namespace model { class TransactionPlugin; }
+}
 
 namespace catapult { namespace plugins {
 
@@ -50,5 +53,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a register namespace transaction plugin given the rental fee configuration (\a config).
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateRegisterNamespaceTransactionPlugin(const NamespaceRentalFeeConfiguration& config);
+	std::unique_ptr<model::TransactionPlugin> CreateRegisterNamespaceTransactionPlugin(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 }}

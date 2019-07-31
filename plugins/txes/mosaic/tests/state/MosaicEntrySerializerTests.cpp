@@ -32,6 +32,7 @@ namespace catapult { namespace state {
 
 	namespace {
 		struct MosaicEntryHeader {
+			VersionType Version;
 			catapult::MosaicId MosaicId;
 			Amount Supply;
 			catapult::Height Height;
@@ -62,6 +63,7 @@ namespace catapult { namespace state {
 
 		void AssertEntryHeader(
 				const std::vector<uint8_t>& buffer,
+				VersionType version,
 				MosaicId mosaicId,
 				Amount supply,
 				Height height,
@@ -72,6 +74,7 @@ namespace catapult { namespace state {
 			const auto& entryHeader = reinterpret_cast<const MosaicEntryHeader&>(buffer[0]);
 
 			// - id and supply
+			EXPECT_EQ(version, entryHeader.Version) << message;
 			EXPECT_EQ(mosaicId, entryHeader.MosaicId) << message;
 			EXPECT_EQ(supply, entryHeader.Supply) << message;
 
@@ -98,7 +101,7 @@ namespace catapult { namespace state {
 
 		// Assert:
 		ASSERT_EQ(sizeof(MosaicEntryHeader), buffer.size());
-		AssertEntryHeader(buffer, MosaicId(123), Amount(111), Height(888), definition.owner(), 5, 17);
+		AssertEntryHeader(buffer, VersionType{1}, MosaicId(123), Amount(111), Height(888), definition.owner(), 5, 17);
 	}
 
 	// endregion
@@ -139,7 +142,7 @@ namespace catapult { namespace state {
 		// Arrange:
 		auto owner = test::GenerateRandomByteArray<Key>();
 		std::vector<uint8_t> buffer(sizeof(MosaicEntryHeader));
-		reinterpret_cast<MosaicEntryHeader&>(buffer[0]) = { MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } } };
+		reinterpret_cast<MosaicEntryHeader&>(buffer[0]) = { VersionType{1}, MosaicId(123), Amount(786), Height(222), owner, 5, { { 9, 8, 7 } } };
 		mocks::MockMemoryStream stream(buffer);
 
 		// Act:

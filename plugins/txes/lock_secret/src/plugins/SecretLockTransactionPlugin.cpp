@@ -30,19 +30,26 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(AccountAddressNotification(transaction.Recipient));
-			sub.notify(SecretLockDurationNotification(transaction.Duration));
-			sub.notify(SecretLockHashAlgorithmNotification(transaction.HashAlgorithm));
-			sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, { transaction.Recipient }));
-			sub.notify(BalanceDebitNotification(transaction.Signer, transaction.Mosaic.MosaicId, transaction.Mosaic.Amount));
-			sub.notify(SecretLockNotification(
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			switch (transaction.EntityVersion()) {
+			case 1:
+				sub.notify(AccountAddressNotification<1>(transaction.Recipient));
+				sub.notify(SecretLockDurationNotification<1>(transaction.Duration));
+				sub.notify(SecretLockHashAlgorithmNotification<1>(transaction.HashAlgorithm));
+				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {transaction.Recipient}));
+				sub.notify(BalanceDebitNotification<1>(transaction.Signer, transaction.Mosaic.MosaicId, transaction.Mosaic.Amount));
+				sub.notify(SecretLockNotification<1>(
 					transaction.Signer,
 					transaction.Mosaic,
 					transaction.Duration,
 					transaction.HashAlgorithm,
 					transaction.Secret,
 					transaction.Recipient));
+				break;
+
+			default:
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of SecretLockTransaction", transaction.EntityVersion());
+			}
 		}
 	}
 
