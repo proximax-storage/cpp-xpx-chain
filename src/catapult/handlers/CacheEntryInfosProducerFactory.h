@@ -22,6 +22,7 @@
 #include "BasicProducer.h"
 #include "HandlerTypes.h"
 #include "catapult/cache/SynchronizedCache.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/CacheEntryInfo.h"
 #include "catapult/utils/MemoryUtils.h"
 
@@ -102,7 +103,7 @@ namespace catapult { namespace handlers {
 	public:
 		/// Creates a cache entry infos producer for a range of keys (\a ids).
 		CacheEntryInfoProducer<KeyType> operator()(const model::EntityRange<KeyType>& ids) const {
-			return Producer(m_cache.createView(Height{0}), ids);
+			return Producer(m_cache.createView(config::HEIGHT_OF_LATEST_CONFIG), ids);
 		}
 
 	private:

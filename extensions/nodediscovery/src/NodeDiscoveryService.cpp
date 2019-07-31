@@ -40,7 +40,7 @@ namespace catapult { namespace nodediscovery {
 
 		thread::Task CreatePingTask(extensions::ServiceState& state) {
 			return thread::CreateNamedTask("node discovery ping task", [packetPayloadSink = state.hooks().packetPayloadSink(), &state]() {
-				auto pLocalNetworkNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(state.config(state.cache().height()))));
+				auto pLocalNetworkNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(state.config())));
 				packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Node_Discovery_Push_Ping, pLocalNetworkNode));
 				return thread::make_ready_future(thread::TaskResult::Continue);
 			});

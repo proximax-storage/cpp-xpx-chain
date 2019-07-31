@@ -20,6 +20,7 @@
 
 #pragma once
 #include "VerifiableEntity.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/Block.h"
 #include "catapult/utils/HexFormatter.h"
 #include <iosfwd>
@@ -36,7 +37,7 @@ namespace catapult { namespace model {
 				: m_pEntity(nullptr)
 				, m_pHash(nullptr)
 				, m_pAssociatedBlockHeader(nullptr)
-				, m_associatedHeight(Height{0})
+				, m_associatedHeight(config::HEIGHT_OF_LATEST_CONFIG)
 		{}
 
 		/// Creates an entity info around \a entity and \a associatedHeight.

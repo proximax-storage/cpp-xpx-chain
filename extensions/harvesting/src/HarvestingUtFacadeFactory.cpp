@@ -72,7 +72,7 @@ namespace catapult { namespace harvesting {
 				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(
 					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
 				if (Amount(0) != surplus)
-					accountStateCache.find(transaction.Signer).get().Balances.credit(config.BlockChain.CurrencyMosaicId, surplus);
+					accountStateCache.find(transaction.Signer).get().Balances.credit(config.BlockChain.CurrencyMosaicId, surplus, blockHeader.Height);
 			}
 
 			// 3. execute block (using zero hash)
