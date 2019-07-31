@@ -95,7 +95,7 @@ namespace catapult { namespace chain {
 	}
 
 	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache, const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config) {
-		auto view = cache.createView(config::HEIGHT_OF_LATEST_CONFIG);
+		auto view = cache.createView(nextBlockInfo.BlockHeight);
 		return CalculateDifficulty(*view, nextBlockInfo, config);
 	}
 
