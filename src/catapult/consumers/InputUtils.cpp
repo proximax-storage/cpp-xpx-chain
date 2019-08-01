@@ -45,14 +45,15 @@ namespace catapult { namespace consumers {
 	void ExtractEntityInfos(
 			const TransactionElements& elements,
 			model::WeakEntityInfos& entityInfos,
-			std::vector<size_t>& entityInfoElementIndexes) {
+			std::vector<size_t>& entityInfoElementIndexes,
+			const Height& height) {
 		auto index = 0u;
 		for (const auto& element : elements) {
 			++index;
 			if (disruptor::ConsumerResultSeverity::Success != element.ResultSeverity)
 				continue;
 
-			entityInfos.emplace_back(element.Transaction, element.EntityHash, Height{0});
+			entityInfos.emplace_back(element.Transaction, element.EntityHash, height);
 			entityInfoElementIndexes.push_back(index - 1);
 		}
 	}

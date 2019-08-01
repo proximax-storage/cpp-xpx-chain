@@ -57,7 +57,7 @@ namespace catapult { namespace sync {
 		auto Default_Service_State = test::ServiceTestState();
 
 		auto CreateDefaultRollbackInfo() {
-			auto config = const_cast<model::BlockChainConfiguration&>(Default_Service_State.state().config(Height{0}).BlockChain);
+			auto config = const_cast<model::BlockChainConfiguration&>(Default_Service_State.state().config().BlockChain);
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 			config.MaxRollbackBlocks = 40;
 			return RollbackInfo(CreateTimeSupplier({ 1 }), Default_Service_State.state());
@@ -228,7 +228,7 @@ namespace catapult { namespace sync {
 			std::vector<Timestamp::ValueType> times(14, 1);
 			times.push_back(10);
 			auto serviceState = test::ServiceTestState();
-			auto& config = const_cast<model::BlockChainConfiguration&>(serviceState.state().config(Height{0}).BlockChain);
+			auto& config = const_cast<model::BlockChainConfiguration&>(serviceState.state().config().BlockChain);
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMilliseconds(5);
 			config.MaxRollbackBlocks = 2;
 			RollbackInfo info(CreateTimeSupplier(times), serviceState.state());

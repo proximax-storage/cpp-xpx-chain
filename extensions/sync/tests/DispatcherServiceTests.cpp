@@ -159,7 +159,7 @@ namespace catapult { namespace sync {
 					, m_pStatefulBlockValidator(nullptr) {
 				// override data directory
 				auto& state = testState().state();
-				const_cast<std::string&>(state.config(Height{0}).User.DataDirectory) = m_tempDir.name();
+				const_cast<std::string&>(state.config().User.DataDirectory) = m_tempDir.name();
 
 				// initialize the cache
 				InitializeCatapultCacheForDispatcherTests(state.cache(), GetBlockSignerKeyPair());

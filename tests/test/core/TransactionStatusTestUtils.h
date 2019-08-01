@@ -33,6 +33,9 @@ namespace catapult { namespace test {
 		/// Transaction hash.
 		Hash256 Hash;
 
+		/// Transaction height.
+		Height AssociatedHeight;
+
 		/// Transaction status.
 		uint32_t Status;
 	};

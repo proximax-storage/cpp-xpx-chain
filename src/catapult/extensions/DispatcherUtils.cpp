@@ -35,8 +35,8 @@ namespace catapult { namespace extensions {
 	}
 
 	chain::FailedTransactionSink SubscriberToSink(subscribers::TransactionStatusSubscriber& subscriber) {
-		return [&subscriber](const auto& transaction, const auto& hash, auto result) {
-			subscriber.notifyStatus(transaction, hash, utils::to_underlying_type(result));
+		return [&subscriber](const auto& transaction, const Height& height, const auto& hash, auto result) {
+			subscriber.notifyStatus(transaction, height, hash, utils::to_underlying_type(result));
 		};
 	}
 

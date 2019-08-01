@@ -81,7 +81,7 @@ namespace catapult { namespace ionet {
 	namespace {
 		model::TransactionInfo CreateRandomTransactionInfo() {
 			auto pTransaction = std::shared_ptr<model::Transaction>(test::GenerateRandomTransaction());
-			return model::TransactionInfo(pTransaction);
+			return model::TransactionInfo(pTransaction, Height());
 		}
 	}
 

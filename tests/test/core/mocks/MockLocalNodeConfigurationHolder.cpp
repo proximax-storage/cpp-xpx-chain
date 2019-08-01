@@ -13,7 +13,7 @@ namespace catapult { namespace config {
 
 	MockLocalNodeConfigurationHolder::MockLocalNodeConfigurationHolder(const model::BlockChainConfiguration& config)
 			: LocalNodeConfigurationHolder(nullptr) {
-		const_cast<model::BlockChainConfiguration&>(m_catapultConfigs.at(Height{0}).BlockChain) = config;
+		const_cast<model::BlockChainConfiguration&>(m_catapultConfigs.get(Height{0}).BlockChain) = config;
 	}
 
 	MockLocalNodeConfigurationHolder::MockLocalNodeConfigurationHolder(const CatapultConfiguration& config)
@@ -22,7 +22,15 @@ namespace catapult { namespace config {
 	}
 
 	CatapultConfiguration& MockLocalNodeConfigurationHolder::Config(const Height&) {
-		return m_catapultConfigs.at(Height{0});
+		return m_catapultConfigs.get(Height{0});
+	}
+
+	CatapultConfiguration& MockLocalNodeConfigurationHolder::Config() {
+		return m_catapultConfigs.get(Height{0});
+	}
+
+	CatapultConfiguration& MockLocalNodeConfigurationHolder::ConfigAtHeightOrLatest(const Height&) {
+		return m_catapultConfigs.get(Height{0});
 	}
 
 	std::shared_ptr<LocalNodeConfigurationHolder> CreateMockConfigurationHolder() {

@@ -65,7 +65,7 @@ namespace catapult { namespace sync {
 		model::TransactionInfo CreateTransactionInfo(const Key& signer, Amount fee = Amount()) {
 			auto pTransaction = test::GenerateRandomTransaction(signer);
 			pTransaction->MaxFee = fee;
-			auto transactionInfo = model::TransactionInfo(std::move(pTransaction));
+			auto transactionInfo = model::TransactionInfo(std::move(pTransaction), Height());
 			test::FillWithRandomData(transactionInfo.EntityHash);
 			return transactionInfo;
 		}

@@ -80,7 +80,7 @@ namespace catapult { namespace harvesting {
 			const auto& cache = state.cache();
 			const auto& pConfigHolder = state.pluginManager().configHolder();
 			const auto& utCache = state.utCache();
-			auto strategy = state.config(Height{0}).Node.TransactionSelectionStrategy;
+			auto strategy = state.config().Node.TransactionSelectionStrategy;
 			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
 			HarvestingUtFacadeFactory utFacadeFactory(cache, pConfigHolder, executionConfig);
 

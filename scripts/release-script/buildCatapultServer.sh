@@ -10,6 +10,7 @@ make \
     # Required extensions
     catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
+    catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
@@ -19,6 +20,7 @@ make \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
+    catapult.mongo.plugins.upgrade \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
     catapult.plugins.config \

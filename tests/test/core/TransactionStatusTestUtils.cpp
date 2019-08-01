@@ -30,11 +30,13 @@ namespace catapult { namespace test {
 		notification.pTransaction = GenerateRandomTransactionWithSize(transactionSize);
 		FillWithRandomData(notification.Hash);
 		notification.Status = static_cast<uint32_t>(Random());
+		notification.AssociatedHeight = Height(static_cast<uint64_t>(Random()));
 		return notification;
 	}
 
 	void WriteTransactionStatusNotification(io::OutputStream& outputStream, const TransactionStatusNotification& notification) {
 		outputStream.write(notification.Hash);
+		io::Write64(outputStream, notification.AssociatedHeight.unwrap());
 		io::Write32(outputStream, notification.Status);
 		io::WriteEntity(outputStream, *notification.pTransaction);
 	}

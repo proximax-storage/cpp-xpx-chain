@@ -48,7 +48,7 @@ namespace catapult { namespace local {
 		for (const auto& node : bootstrapper.staticNodes())
 			ValidateAndAddNode(modifier, node, ionet::NodeSource::Static);
 
-		ValidateAndAddNode(modifier, config::ToLocalNode(bootstrapper.config(Height{0})), ionet::NodeSource::Local);
+		ValidateAndAddNode(modifier, config::ToLocalNode(bootstrapper.config()), ionet::NodeSource::Local);
 	}
 
 	// endregion

@@ -31,12 +31,13 @@ namespace catapult { namespace mocks {
 	/// Transaction status subscriber status params.
 	struct TransactionStatusSubscriberStatusParams {
 	public:
-		/// Creates params around \a transaction, \a hash and \a status.
-		explicit TransactionStatusSubscriberStatusParams(const model::Transaction& transaction, const Hash256& hash, uint32_t status)
+		/// Creates params around \a transaction, \a height, \a hash and \a status.
+		explicit TransactionStatusSubscriberStatusParams(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status)
 				: Transaction(transaction)
 				, pTransactionCopy(test::CopyEntity(transaction))
 				, Hash(hash)
 				, HashCopy(hash)
+				, AssociatedHeight(height)
 				, Status(status)
 		{}
 
@@ -52,6 +53,9 @@ namespace catapult { namespace mocks {
 
 		/// Copy of the transaction hash.
 		Hash256 HashCopy;
+
+		/// Associated with transaction height.
+		Height AssociatedHeight;
 
 		/// Transaction status.
 		uint32_t Status;
@@ -80,8 +84,8 @@ namespace catapult { namespace mocks {
 		}
 
 	public:
-		void notifyStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) override {
-			push(transaction, hash, status);
+		void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
+			push(transaction, height, hash, status);
 			++m_numNotifies;
 		}
 

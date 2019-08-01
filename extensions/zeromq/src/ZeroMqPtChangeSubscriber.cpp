@@ -32,7 +32,7 @@ namespace catapult { namespace zeromq {
 		public:
 			void notifyAddPartials(const TransactionInfos& transactionInfos) override {
 				for (const auto& transactionInfo : transactionInfos)
-					m_publisher.publishTransaction(TransactionMarker::Partial_Transaction_Add_Marker, transactionInfo, Height());
+					m_publisher.publishTransaction(TransactionMarker::Partial_Transaction_Add_Marker, transactionInfo);
 			}
 
 			void notifyAddCosignature(

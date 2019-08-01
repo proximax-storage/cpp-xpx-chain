@@ -37,8 +37,8 @@ namespace catapult { namespace zeromq {
 #define TEST_CLASS ZeroMqEntityPublisherTests
 
 	namespace {
-		model::TransactionInfo ToTransactionInfo(std::unique_ptr<mocks::MockTransaction>&& pTransaction) {
-			model::TransactionInfo transactionInfo(std::move(pTransaction));
+		model::TransactionInfo ToTransactionInfo(std::unique_ptr<mocks::MockTransaction>&& pTransaction, const Height& height) {
+			model::TransactionInfo transactionInfo(std::move(pTransaction), height);
 			transactionInfo.EntityHash = test::GenerateRandomByteArray<Hash256>();
 			transactionInfo.MerkleComponentHash = test::GenerateRandomByteArray<Hash256>();
 			return transactionInfo;
@@ -61,8 +61,8 @@ namespace catapult { namespace zeromq {
 				publisher().publishDropBlocks(height);
 			}
 
-			void publishTransaction(TransactionMarker topicMarker, const model::TransactionInfo& transactionInfo, Height height) {
-				publisher().publishTransaction(topicMarker, transactionInfo, height);
+			void publishTransaction(TransactionMarker topicMarker, const model::TransactionInfo& transactionInfo) {
+				publisher().publishTransaction(topicMarker, transactionInfo);
 			}
 
 			void publishTransaction(TransactionMarker topicMarker, const model::TransactionElement& transactionElement, Height height) {
@@ -73,8 +73,8 @@ namespace catapult { namespace zeromq {
 				publisher().publishTransactionHash(topicMarker, transactionInfo);
 			}
 
-			void publishTransactionStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) {
-				publisher().publishTransactionStatus(transaction, hash, status);
+			void publishTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) {
+				publisher().publishTransactionStatus(transaction, height, hash, status);
 			}
 
 			void publishCosignature(const model::TransactionInfo& parentTransactionInfo, const Key& signer, const Signature& signature) {
@@ -153,13 +153,13 @@ namespace catapult { namespace zeromq {
 		void AssertCanPublishTransactionInfo(TAddressesGenerator generateAddresses) {
 			// Arrange:
 			EntityPublisherContext context;
-			auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0));
 			Height height(123);
+			auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0), height);
 			auto addresses = generateAddresses(transactionInfo);
 			context.subscribeAll(Marker, addresses);
 
 			// Act:
-			context.publishTransaction(Marker, transactionInfo, height);
+			context.publishTransaction(Marker, transactionInfo);
 
 			// Assert:
 			auto& zmqSocket = context.zmqSocket();
@@ -225,14 +225,14 @@ namespace catapult { namespace zeromq {
 		auto pTransaction = mocks::CreateMockTransaction(0);
 		auto recipientAddress = model::PublicKeyToAddress(pTransaction->Recipient, model::NetworkIdentifier(pTransaction->Network()));
 		auto unresolvedRecipientAddress = extensions::CopyToUnresolvedAddress(recipientAddress);
-		auto transactionInfo = ToTransactionInfo(std::move(pTransaction));
 		Height height(123);
+		auto transactionInfo = ToTransactionInfo(std::move(pTransaction), height);
 
 		// - only subscribe to the recipient address (and not to other addresses like the sender)
 		context.subscribeAll(Marker, { unresolvedRecipientAddress });
 
 		// Act:
-		context.publishTransaction(Marker, transactionInfo, height);
+		context.publishTransaction(Marker, transactionInfo);
 
 		// Assert:
 		zmq::multipart_t message;
@@ -249,8 +249,8 @@ namespace catapult { namespace zeromq {
 	TEST(TEST_CLASS, PublishTransactionDeliversNoMessagesWhenNoAddressesAreAssociatedWithTransaction) {
 		// Arrange:
 		EntityPublisherContext context;
-		auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0));
 		Height height(123);
+		auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0), height);
 		auto addresses = test::ExtractAddresses(test::ToMockTransaction(*transactionInfo.pEntity));
 		context.subscribeAll(Marker, addresses);
 
@@ -258,7 +258,7 @@ namespace catapult { namespace zeromq {
 		transactionInfo.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>();
 
 		// Act:
-		context.publishTransaction(Marker, transactionInfo, height);
+		context.publishTransaction(Marker, transactionInfo);
 
 		// Assert: no messages are pending
 		test::AssertNoPendingMessages(context.zmqSocket());
@@ -274,7 +274,7 @@ namespace catapult { namespace zeromq {
 			// Arrange:
 			EntityPublisherContext context;
 			auto pTransaction = mocks::CreateMockTransaction(0);
-			auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0));
+			auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0), Height());
 			auto addresses = generateAddresses(transactionInfo);
 			context.subscribeAll(Marker, addresses);
 
@@ -318,7 +318,7 @@ namespace catapult { namespace zeromq {
 		context.subscribeAll(marker, addresses);
 
 		// Act:
-		context.publishTransactionStatus(*pTransaction, hash, 123);
+		context.publishTransactionStatus(*pTransaction, Height(), hash, 123);
 
 		// Assert:
 		model::TransactionStatus expectedTransactionStatus(hash, 123, pTransaction->Deadline);
@@ -334,7 +334,7 @@ namespace catapult { namespace zeromq {
 	TEST(TEST_CLASS, CanPublishCosignature) {
 		// Arrange:
 		EntityPublisherContext context;
-		auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0));
+		auto transactionInfo = ToTransactionInfo(mocks::CreateMockTransaction(0), Height());
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto signature = test::GenerateRandomByteArray<Signature>();
 		auto addresses = test::ExtractAddresses(test::ToMockTransaction(*transactionInfo.pEntity));

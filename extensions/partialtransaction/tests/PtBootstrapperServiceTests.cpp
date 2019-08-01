@@ -290,7 +290,7 @@ namespace catapult { namespace partialtransaction {
 		// Act:
 		AssertTransactionEventHandlerIsNoOp([](const auto& handler, const auto& matchingEntityHash) {
 			// Act: call the handler with a mismatched event
-			handler({ matchingEntityHash, static_cast<extensions::TransactionEvent>(0xFE) });
+			handler({ matchingEntityHash, Height(), static_cast<extensions::TransactionEvent>(0xFE) });
 		});
 	}
 
@@ -298,7 +298,7 @@ namespace catapult { namespace partialtransaction {
 		// Act:
 		AssertTransactionEventHandlerIsNoOp([](const auto& handler, const auto&) {
 			// Act: call the handler with a hash not in the cache
-			handler({ test::GenerateRandomByteArray<Hash256>(), extensions::TransactionEvent::Dependency_Removed });
+			handler({ test::GenerateRandomByteArray<Hash256>(), Height(), extensions::TransactionEvent::Dependency_Removed });
 		});
 	}
 
@@ -315,8 +315,8 @@ namespace catapult { namespace partialtransaction {
 
 		// Act: trigger removal of two transactions
 		auto handler = context.testState().state().hooks().transactionEventHandler();
-		handler({ transactionInfos[1].EntityHash, extensions::TransactionEvent::Dependency_Removed });
-		handler({ transactionInfos[4].EntityHash, static_cast<extensions::TransactionEvent>(0xFF) });
+		handler({ transactionInfos[1].EntityHash, Height(), extensions::TransactionEvent::Dependency_Removed });
+		handler({ transactionInfos[4].EntityHash, Height(), static_cast<extensions::TransactionEvent>(0xFF) });
 
 		// Assert:
 		auto view = ptCache.view();

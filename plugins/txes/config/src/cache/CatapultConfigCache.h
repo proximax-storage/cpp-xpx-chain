@@ -12,16 +12,34 @@
 namespace catapult { namespace cache {
 
 	/// Cache composed of catapult config information.
-	using BasicCatapultConfigCache = BasicCache<CatapultConfigCacheDescriptor, CatapultConfigCacheTypes::BaseSets>;
+	using CatapultConfigBasicCache = BasicCache<CatapultConfigCacheDescriptor, CatapultConfigCacheTypes::BaseSets>;
+
+	/// Cache composed of catapult config information.
+	class BasicCatapultConfigCache : public CatapultConfigBasicCache {
+	public:
+		/// Creates a cache.
+		explicit BasicCatapultConfigCache(const CacheConfiguration& config)
+				: CatapultConfigBasicCache(config)
+		{}
+
+	public:
+		/// Initializes the cache with \a heights.
+		void init(const std::set<Height>& heights) {
+			auto delta = createDelta(Height());
+			for (const auto& height : heights)
+				delta.insertHeight(height);
+			commit(delta);
+		}
+	};
 
 	/// Synchronized cache composed of catapult config information.
-	class CatapultConfigCache : public SynchronizedCache<BasicCatapultConfigCache> {
+	class CatapultConfigCache : public SynchronizedCacheWithInit<BasicCatapultConfigCache> {
 	public:
 		DEFINE_CACHE_CONSTANTS(CatapultConfig)
 
 	public:
 		/// Creates a cache around \a config.
-		explicit CatapultConfigCache(const CacheConfiguration& config) : SynchronizedCache<BasicCatapultConfigCache>(BasicCatapultConfigCache(config))
+		explicit CatapultConfigCache(const CacheConfiguration& config) : SynchronizedCacheWithInit<BasicCatapultConfigCache>(BasicCatapultConfigCache(config))
 		{}
 	};
 }}

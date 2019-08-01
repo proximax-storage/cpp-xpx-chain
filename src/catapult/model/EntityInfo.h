@@ -107,20 +107,21 @@ namespace catapult { namespace model {
 		TransactionInfo() = default;
 
 		/// Creates a transaction info around \a pTransaction without any metadata.
-		explicit TransactionInfo(const std::shared_ptr<const Transaction>& pTransaction)
-				: TransactionInfo(pTransaction, Hash256())
+		explicit TransactionInfo(const std::shared_ptr<const Transaction>& pTransaction, const Height& height)
+				: TransactionInfo(pTransaction, Hash256(), height)
 		{}
 
 		/// Creates a transaction info around \a pTransaction and its associated metadata (\a hash).
-		explicit TransactionInfo(const std::shared_ptr<const Transaction>& pTransaction, const Hash256& hash)
+		explicit TransactionInfo(const std::shared_ptr<const Transaction>& pTransaction, const Hash256& hash, const Height& height)
 				: DetachedTransactionInfo(pTransaction, hash)
 				, MerkleComponentHash()
+				, AssociatedHeight(height)
 		{}
 
 	public:
 		/// Creates a (shallow) copy of this info.
 		TransactionInfo copy() const {
-			auto transactionInfo = TransactionInfo(pEntity, EntityHash);
+			auto transactionInfo = TransactionInfo(pEntity, EntityHash, AssociatedHeight);
 			transactionInfo.OptionalExtractedAddresses = OptionalExtractedAddresses;
 			transactionInfo.MerkleComponentHash = MerkleComponentHash;
 			return transactionInfo;
@@ -129,5 +130,9 @@ namespace catapult { namespace model {
 	public:
 		/// Modified hash that should be used as a hash in the merkle tree.
 		Hash256 MerkleComponentHash;
+
+		/// Associated height of transaction.
+		/// \note If this height is zero, it means that transaction is not related to block and associated height is current height of blockchain.
+		Height AssociatedHeight;
 	};
 }}

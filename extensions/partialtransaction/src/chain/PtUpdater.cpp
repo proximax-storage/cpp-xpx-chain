@@ -138,7 +138,6 @@ namespace catapult { namespace chain {
 
 	private:
 		struct TransactionUpdateContext {
-			const cache::CatapultCache& Cache;
 			std::shared_ptr<const model::AggregateTransaction> pAggregateTransaction;
 			Hash256 AggregateHash;
 			DetachedCosignatures Cosignatures;
@@ -167,7 +166,6 @@ namespace catapult { namespace chain {
 			auto updateFuture = pPromise->get_future();
 
 			TransactionUpdateContext updateContext{
-				m_catapultCache,
 				pAggregateTransaction,
 				aggregateHash,
 				std::move(cosignatures),
@@ -186,7 +184,7 @@ namespace catapult { namespace chain {
 		thread::future<TransactionUpdateResult> updateImpl(const TransactionUpdateContext& updateContext) {
 			const auto& aggregateHash = updateContext.AggregateHash;
 			auto pAggregateTransactionWithoutCosignatures = RemoveCosignatures(updateContext.pAggregateTransaction);
-			if (!isValid(*pAggregateTransactionWithoutCosignatures, aggregateHash, updateContext.Cache.height()))
+			if (!isValid(*pAggregateTransactionWithoutCosignatures, aggregateHash))
 				return thread::make_ready_future(TransactionUpdateResult{ TransactionUpdateResult::UpdateType::Invalid, 0 });
 
 			// notice that the merkle component hash is not stored in the pt cache
@@ -293,12 +291,13 @@ namespace catapult { namespace chain {
 			return CosignatureUpdateResult::Added_Complete;
 		}
 
-		bool isValid(const model::Transaction& transaction, const Hash256& aggregateHash, const Height& height) const {
+		bool isValid(const model::Transaction& transaction, const Hash256& aggregateHash) const {
+			auto height = m_catapultCache.height();
 			auto result = m_pValidator->validatePartial(model::WeakEntityInfoT<model::Transaction>(transaction, aggregateHash, height));
 			if (result.Normalized)
 				return true;
 
-			m_failedTransactionSink(transaction, aggregateHash, result.Raw);
+			m_failedTransactionSink(transaction, height, aggregateHash, result.Raw);
 			return false;
 		}
 
@@ -323,7 +322,7 @@ namespace catapult { namespace chain {
 				// if there was an unexpected error, purge the entire transaction
 				// failures are independent of cosignatures, so subsequent validateCosigners calls should never result in failures
 				if (CosignersValidationResult::Failure == validateAllResult.Normalized)
-					m_failedTransactionSink(transactionInfoFromCache.transaction(), cosignature.ParentHash, validateAllResult.Raw);
+					m_failedTransactionSink(transactionInfoFromCache.transaction(), m_catapultCache.height(), cosignature.ParentHash, validateAllResult.Raw);
 
 				return CheckEligibilityResult(validateAllResult.Normalized);
 			}

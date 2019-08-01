@@ -37,7 +37,7 @@ namespace catapult { namespace extensions {
 			net::PacketIoPicker& packetIoPicker,
 			const extensions::ServiceState& state,
 			const std::string& taskName) {
-		auto syncTimeout = state.config(Height{0}).Node.SyncTimeout;
+		auto syncTimeout = state.config().Node.SyncTimeout;
 		chain::RemoteApiForwarder forwarder(packetIoPicker, state.pluginManager().transactionRegistry(), syncTimeout, taskName);
 
 		auto syncHandler = [&nodes = state.nodes()](auto&& future) {

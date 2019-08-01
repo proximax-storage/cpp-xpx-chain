@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/ionet/Packet.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/tree/PatriciaTreeSerializer.h"
@@ -34,7 +35,7 @@ namespace catapult { namespace handlers {
 			if (!pRequest)
 				return;
 
-			auto view = cache.createView(Height{0});
+			auto view = cache.createView(config::HEIGHT_OF_LATEST_CONFIG);
 			std::vector<tree::TreeNode> path;
 			view->tryLookup(pRequest->Key, path);
 

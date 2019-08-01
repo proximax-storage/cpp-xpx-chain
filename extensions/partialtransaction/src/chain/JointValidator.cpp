@@ -43,7 +43,7 @@ namespace catapult { namespace chain {
 					const ValidationResultPredicate& isSuppressedFailure)
 					: m_cache(cache)
 					, m_timeSupplier(timeSupplier)
-					, m_network(pluginManager.config(Height{0}).Network)
+					, m_network(pluginManager.config().Network)
 					, m_pStatelessValidator(pluginManager.createStatelessValidator(isSuppressedFailure))
 					, m_pStatefulValidator(pluginManager.createStatefulValidator(isSuppressedFailure))
 					, m_resolverContextFactory([&pluginManager](const auto& readOnlyCache) {

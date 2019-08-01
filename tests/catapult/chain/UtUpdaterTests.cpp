@@ -134,7 +134,7 @@ namespace catapult { namespace chain {
 							CreateConfiguration(minFeeMultiplier),
 							m_executionConfig.Config,
 							[]() { return Default_Time; },
-							[this](const auto& transaction, const auto& hash, auto result) {
+							[this](const auto& transaction, const Height&, const auto& hash, auto result) {
 								// notice that transaction.Deadline is used as transaction marker
 								m_failedTransactionStatuses.emplace_back(hash, utils::to_underlying_type(result), transaction.Deadline);
 							},

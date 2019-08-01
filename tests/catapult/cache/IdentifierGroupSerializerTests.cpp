@@ -91,7 +91,9 @@ namespace catapult { namespace cache {
 		auto value = Serializer::DeserializeValue(ToRawBuffer(buffer));
 
 		// Assert:
-		EXPECT_EQ(reinterpret_cast<const Timestamp&>(buffer[1]), value.key());
+		Timestamp timestamp;
+		memcpy(&timestamp, buffer.data() + 1, sizeof(Timestamp));
+		EXPECT_EQ(timestamp, value.key());
 		EXPECT_EQ(0u, value.size());
 		EXPECT_TRUE(value.empty());
 	}

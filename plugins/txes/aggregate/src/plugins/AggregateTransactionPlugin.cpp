@@ -54,7 +54,7 @@ namespace catapult { namespace plugins {
 
 			TransactionAttributes attributes(const Height& height) const override {
 				auto version = AggregateTransaction::Current_Version;
-				const model::BlockChainConfiguration& blockChainConfig = m_pConfigHolder->Config(height).BlockChain;
+				const model::BlockChainConfiguration& blockChainConfig = m_pConfigHolder->ConfigAtHeightOrLatest(height).BlockChain;
 				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME(aggregate));
 				return { version, version, pluginConfig.MaxBondedTransactionLifetime };
 			}

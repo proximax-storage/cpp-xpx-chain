@@ -86,8 +86,10 @@ namespace catapult { namespace cache {
 			m_set.commit(delta.pruningBoundary());
 		}
 
-	private:
+	protected:
 		TBaseSet m_set;
+
+	private:
 		std::tuple<TSubViewArgs...> m_subViewArgs;
 	};
 }}

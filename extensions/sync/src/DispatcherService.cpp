@@ -94,7 +94,7 @@ namespace catapult { namespace sync {
 			};
 
 			// if enabled, add an audit consumer before all other consumers
-			const auto& config = state.config(Height{0});
+			const auto& config = state.config();
 			if (config.Node.ShouldAuditDispatcherInputs) {
 				auto auditPath = boost::filesystem::path(config.User.DataDirectory) / "audit" / std::string(options.DispatcherName);
 				auditPath /= std::to_string(state.timeSupplier()().unwrap());
@@ -162,12 +162,12 @@ namespace catapult { namespace sync {
 				rollbackInfo.save();
 			};
 
-			auto dataDirectory = config::CatapultDataDirectory(state.config(Height{0}).User.DataDirectory);
+			auto dataDirectory = config::CatapultDataDirectory(state.config().User.DataDirectory);
 			syncHandlers.PreStateWritten = [](const auto&, const auto&, auto) {};
 			syncHandlers.TransactionsChange = state.hooks().transactionsChangeHandler();
 			syncHandlers.CommitStep = CreateCommitStepHandler(dataDirectory);
 
-			if (state.config(Height{0}).Node.ShouldUseCacheDatabaseStorage)
+			if (state.config().Node.ShouldUseCacheDatabaseStorage)
 				AddSupplementalDataResiliency(syncHandlers, dataDirectory, state.cache(), state.score());
 
 			return syncHandlers;
@@ -177,13 +177,13 @@ namespace catapult { namespace sync {
 		public:
 			explicit BlockDispatcherBuilder(extensions::ServiceState& state)
 					: m_state(state)
-					, m_nodeConfig(m_state.config(Height{0}).Node)
+					, m_nodeConfig(m_state.config().Node)
 			{}
 
 		public:
 			void addHashConsumers() {
 				m_consumers.push_back(CreateBlockHashCalculatorConsumer(
-						m_state.config(Height{0}).BlockChain.Network.GenerationHash,
+						m_state.config().BlockChain.Network.GenerationHash,
 						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateBlockHashCheckConsumer(
 						m_state.timeSupplier(),
@@ -210,8 +210,8 @@ namespace catapult { namespace sync {
 						m_state.pluginManager().configHolder(),
 						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
 
-				if (m_state.config(Height{0}).Node.ShouldEnableAutoSyncCleanup)
-					disruptorConsumers.push_back(CreateBlockChainSyncCleanupConsumer(m_state.config(Height{0}).User.DataDirectory));
+				if (m_state.config().Node.ShouldEnableAutoSyncCleanup)
+					disruptorConsumers.push_back(CreateBlockChainSyncCleanupConsumer(m_state.config().User.DataDirectory));
 
 				disruptorConsumers.push_back(CreateNewBlockConsumer(m_state.hooks().newBlockSink(), InputSource::Local));
 				return CreateConsumerDispatcher(
@@ -222,7 +222,7 @@ namespace catapult { namespace sync {
 
 		private:
 			extensions::ServiceState& m_state;
-			const config::NodeConfiguration& m_nodeConfig;
+			config::NodeConfiguration m_nodeConfig;
 			std::vector<BlockConsumer> m_consumers;
 		};
 
@@ -255,13 +255,13 @@ namespace catapult { namespace sync {
 		public:
 			explicit TransactionDispatcherBuilder(extensions::ServiceState& state)
 					: m_state(state)
-					, m_nodeConfig(m_state.config(Height{0}).Node)
+					, m_nodeConfig(m_state.config().Node)
 			{}
 
 		public:
 			void addHashConsumers() {
 				m_consumers.push_back(CreateTransactionHashCalculatorConsumer(
-						m_state.config(Height{0}).BlockChain.Network.GenerationHash,
+						m_state.config().BlockChain.Network.GenerationHash,
 						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateTransactionHashCheckConsumer(
 						m_state.timeSupplier(),
@@ -296,7 +296,7 @@ namespace catapult { namespace sync {
 
 		private:
 			extensions::ServiceState& m_state;
-			const config::NodeConfiguration& m_nodeConfig;
+			config::NodeConfiguration m_nodeConfig;
 			std::vector<TransactionConsumer> m_consumers;
 		};
 
@@ -326,7 +326,7 @@ namespace catapult { namespace sync {
 			auto pUtUpdater = std::make_shared<chain::UtUpdater>(
 					state.utCache(),
 					state.cache(),
-					state.config(Height{0}).Node,
+					state.config().Node,
 					extensions::CreateExecutionConfiguration(state.pluginManager()),
 					state.timeSupplier(),
 					extensions::SubscriberToSink(state.transactionStatusSubscriber()),

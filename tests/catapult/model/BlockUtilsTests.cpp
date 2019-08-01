@@ -41,7 +41,7 @@ namespace catapult { namespace model {
 				for (auto i = 0u; i < numTransactions; ++i) {
 					auto entityHash = test::GenerateRandomByteArray<Hash256>();
 					auto merkleComponentHash = test::GenerateRandomByteArray<Hash256>();
-					TransactionInfos.emplace_back(test::GenerateRandomTransaction(), entityHash);
+					TransactionInfos.emplace_back(test::GenerateRandomTransaction(), entityHash, Height());
 					TransactionInfos.back().MerkleComponentHash = merkleComponentHash;
 					TransactionInfoPointers.push_back(&TransactionInfos.back());
 
@@ -145,7 +145,7 @@ namespace catapult { namespace model {
 		std::vector<const TransactionInfo*> transactionInfoPointers;
 		for (const auto& seedHash : seedHashes) {
 			// - notice that only MerkleComponentHash should be used in calculation
-			transactionInfos.emplace_back(test::GenerateRandomTransaction(), test::GenerateRandomByteArray<Hash256>());
+			transactionInfos.emplace_back(test::GenerateRandomTransaction(), test::GenerateRandomByteArray<Hash256>(), Height());
 			transactionInfos.back().MerkleComponentHash = seedHash;
 			transactionInfoPointers.push_back(&transactionInfos.back());
 		}

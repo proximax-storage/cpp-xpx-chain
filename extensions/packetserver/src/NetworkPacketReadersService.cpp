@@ -53,7 +53,7 @@ namespace catapult { namespace packetserver {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				const auto& config = state.config(Height{0});
+				const auto& config = state.config();
 				auto pServiceGroup = state.pool().pushServiceGroup(Service_Name);
 				auto pReaders = pServiceGroup->pushService(
 						net::CreatePacketReaders,

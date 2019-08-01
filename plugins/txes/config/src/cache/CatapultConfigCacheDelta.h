@@ -42,7 +42,8 @@ namespace catapult { namespace cache {
 				, CatapultConfigCacheDeltaMixins::BasicInsertRemove(*catapultConfigSets.pPrimary)
 				, CatapultConfigCacheDeltaMixins::DeltaElements(*catapultConfigSets.pPrimary)
 				, m_pCatapultConfigEntries(catapultConfigSets.pPrimary)
-				, m_pCatapultConfigHeights(catapultConfigSets.pHeights)
+				, m_pDeltaHeights(catapultConfigSets.pDeltaHeights)
+				, m_PrimaryHeights(catapultConfigSets.PrimaryHeights)
 		{}
 
 	public:
@@ -53,20 +54,46 @@ namespace catapult { namespace cache {
 		/// Inserts the catapult config \a entry into the cache.
 		void insert(const state::CatapultConfigEntry& entry) {
 			CatapultConfigCacheDeltaMixins::BasicInsertRemove::insert(entry);
-			if (!m_pCatapultConfigHeights->contains(entry.height()))
-				m_pCatapultConfigHeights->insert(entry.height());
+			insertHeight(entry.height());
+		}
+
+		/// Inserts the \a height of catapult config into the cache.
+		void insertHeight(const Height& height) {
+			if (!m_pDeltaHeights->contains(height))
+				m_pDeltaHeights->insert(height);
 		}
 
 		/// Removes the catapult config \a entry into the cache.
 		void remove(const Height& height) {
 			CatapultConfigCacheDeltaMixins::BasicInsertRemove::remove(height);
-			if (m_pCatapultConfigHeights->contains(height))
-				m_pCatapultConfigHeights->remove(height);
+			if (m_pDeltaHeights->contains(height))
+				m_pDeltaHeights->remove(height);
+		}
+
+		/// Returns heights available after commit
+		std::set<Height> heights() const {
+			std::set<Height> result;
+			for (const auto& height : deltaset::MakeIterableView(m_PrimaryHeights)) {
+				result.insert(height);
+			}
+
+			auto deltas = m_pDeltaHeights->deltas();
+
+			for (const auto& height : deltas.Added) {
+				result.insert(height);
+			}
+
+			for (const auto& height : deltas.Removed) {
+				result.erase(height);
+			}
+
+			return result;
 		}
 
 	private:
 		CatapultConfigCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pCatapultConfigEntries;
-		CatapultConfigCacheTypes::HeightTypes::BaseSetDeltaPointerType m_pCatapultConfigHeights;
+		CatapultConfigCacheTypes::HeightTypes::BaseSetDeltaPointerType m_pDeltaHeights;
+		const CatapultConfigCacheTypes::HeightTypes::BaseSetType& m_PrimaryHeights;
 	};
 
 	/// Delta on top of the catapult config cache.

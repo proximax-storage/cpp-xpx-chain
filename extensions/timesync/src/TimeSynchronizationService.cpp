@@ -79,7 +79,7 @@ namespace catapult { namespace timesync {
 				};
 
 				// register services
-				auto connectionSettings = extensions::GetConnectionSettings(state.config(Height{0}));
+				auto connectionSettings = extensions::GetConnectionSettings(state.config());
 				auto pServiceGroup = state.pool().pushServiceGroup(Service_Group);
 				auto pNodeNetworkTimeRequestor = pServiceGroup->pushService(
 						CreateNodeNetworkTimeRequestor,

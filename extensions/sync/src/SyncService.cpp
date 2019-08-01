@@ -56,7 +56,7 @@ namespace catapult { namespace sync {
 		}
 
 		thread::Task CreateSynchronizerTask(extensions::ServiceState& state, net::PacketWriters& packetWriters) {
-			const auto& config = state.config(Height{0});
+			const auto& config = state.config();
 			auto chainSynchronizer = chain::CreateChainSynchronizer(
 					api::CreateLocalChainApi(state.storage(), [&score = state.score()]() {
 						return score.get();
@@ -78,7 +78,7 @@ namespace catapult { namespace sync {
 
 		thread::Task CreatePullUtTask(const extensions::ServiceState& state, net::PacketWriters& packetWriters) {
 			auto utSynchronizer = chain::CreateUtSynchronizer(
-					state.config(Height{0}).Node.MinFeeMultiplier,
+					state.config().Node.MinFeeMultiplier,
 					[&cache = state.utCache()]() { return cache.view().shortHashes(); },
 					state.hooks().transactionRangeConsumerFactory()(Sync_Source));
 

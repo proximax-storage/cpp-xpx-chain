@@ -46,7 +46,7 @@ namespace catapult { namespace subscribers {
 		EXPECT_EQ(3u, context.subscribers().size());
 
 		// Act:
-		context.aggregate().notifyStatus(*pTransaction, hash, 123);
+		context.aggregate().notifyStatus(*pTransaction, Height(), hash, 123);
 
 		// Assert:
 		auto i = 0u;

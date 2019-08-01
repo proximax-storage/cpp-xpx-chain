@@ -61,7 +61,7 @@ namespace catapult { namespace chain {
 					, m_statelessResult(ValidationResult::Success)
 					, m_statefulResult(ValidationResult::Success)
 					, m_pConfigHolder(config::CreateMockConfigurationHolder(CreateBlockChainConfiguration()))
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config(Height{0}).BlockChain))
+					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config().BlockChain))
 					, m_pluginManager(m_pConfigHolder, plugins::StorageConfiguration()) {
 				// set custom cache height
 				auto cacheDelta = m_cache.createDelta();

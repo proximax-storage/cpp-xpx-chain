@@ -27,6 +27,7 @@ namespace catapult { namespace io {
 	void ReadTransactionInfo(InputStream& inputStream, model::TransactionInfo& transactionInfo) {
 		inputStream.read(transactionInfo.EntityHash);
 		inputStream.read(transactionInfo.MerkleComponentHash);
+		transactionInfo.AssociatedHeight = Height(Read64(inputStream));
 
 		auto numAddresses = Read64(inputStream);
 		if (std::numeric_limits<uint64_t>::max() != numAddresses) {
@@ -46,6 +47,7 @@ namespace catapult { namespace io {
 	void WriteTransactionInfo(OutputStream& outputStream, const model::TransactionInfo& transactionInfo) {
 		outputStream.write(transactionInfo.EntityHash);
 		outputStream.write(transactionInfo.MerkleComponentHash);
+		Write64(outputStream, transactionInfo.AssociatedHeight.unwrap());
 
 		if (transactionInfo.OptionalExtractedAddresses) {
 			Write64(outputStream, transactionInfo.OptionalExtractedAddresses->size());

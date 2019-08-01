@@ -20,6 +20,7 @@
 
 #include "HashLockUtils.h"
 #include "plugins/txes/lock_hash/src/model/HashLockNotifications.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/NotificationSubscriber.h"
 
@@ -46,7 +47,7 @@ namespace catapult { namespace unbondedpruning {
 	utils::HashSet FindDependentTransactionHashes(
 			const model::TransactionInfo& transactionInfo,
 			const model::NotificationPublisher& notificationPublisher) {
-		model::WeakEntityInfo weakTransactionInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height{0});
+		model::WeakEntityInfo weakTransactionInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, config::HEIGHT_OF_LATEST_CONFIG);
 		DependentTransactionCollector sub;
 		notificationPublisher.publish(weakTransactionInfo, sub);
 		return sub.hashes();

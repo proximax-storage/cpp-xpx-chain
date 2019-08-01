@@ -27,7 +27,8 @@ namespace catapult { namespace cache {
 
 	struct CatapultConfigBaseSetDeltaPointers {
 		CatapultConfigCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
-		CatapultConfigCacheTypes::HeightTypes::BaseSetDeltaPointerType pHeights;
+		CatapultConfigCacheTypes::HeightTypes::BaseSetDeltaPointerType pDeltaHeights;
+		const CatapultConfigCacheTypes::HeightTypes::BaseSetType& PrimaryHeights;
 		std::shared_ptr<CatapultConfigPatriciaTree::DeltaType> pPatriciaTree;
 	};
 
@@ -38,10 +39,10 @@ namespace catapult { namespace cache {
 
 	public:
 		explicit CatapultConfigBaseSets(const CacheConfiguration& config)
-				: CacheDatabaseMixin(config, { "default", "heights" })
+				: CacheDatabaseMixin(config, { "default" })
 				, Primary(GetContainerMode(config), database(), 0)
-				, Heights(GetContainerMode(config), database(), 1)
-				, PatriciaTree(hasPatriciaTreeSupport(), database(), 2)
+				, Heights(deltaset::ConditionalContainerMode::Memory, database(), -1)
+				, PatriciaTree(hasPatriciaTreeSupport(), database(), 1)
 		{}
 
 	public:
@@ -51,13 +52,14 @@ namespace catapult { namespace cache {
 
 	public:
 		CatapultConfigBaseSetDeltaPointers rebase() {
-			return { Primary.rebase(), Heights.rebase(), PatriciaTree.rebase() };
+			return { Primary.rebase(), Heights.rebase(), Heights, PatriciaTree.rebase() };
 		}
 
 		CatapultConfigBaseSetDeltaPointers rebaseDetached() const {
 			return {
 				Primary.rebaseDetached(),
 				Heights.rebaseDetached(),
+				Heights,
 				PatriciaTree.rebaseDetached()
 			};
 		}

@@ -61,7 +61,7 @@ namespace catapult { namespace plugins {
 
 		// Assert: compare BlockPruneInterval, CacheDatabaseDirectory and InflationCalculator as sentinel values
 		//         because the manager copies the configs
-		EXPECT_EQ(15u, manager.config(Height{0}).BlockPruneInterval);
+		EXPECT_EQ(15u, manager.config().BlockPruneInterval);
 		EXPECT_EQ("abc", manager.storageConfig().CacheDatabaseDirectory);
 		EXPECT_EQ(1u, manager.inflationConfig().InflationCalculator.size());
 		EXPECT_TRUE(manager.inflationConfig().InflationCalculator.contains(Height(123), Amount(234)));

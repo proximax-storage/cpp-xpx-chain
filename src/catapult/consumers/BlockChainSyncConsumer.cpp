@@ -282,7 +282,7 @@ namespace catapult { namespace consumers {
 				auto revertedTransactionInfos = CollectRevertedTransactionInfos(
 						peerTransactionHashes,
 						syncState.detachRemovedTransactionInfos());
-				m_handlers.TransactionsChange({ peerTransactionHashes, revertedTransactionInfos });
+				m_handlers.TransactionsChange(TransactionsChangeInfo{ peerTransactionHashes, revertedTransactionInfos });
 			}
 
 		private:
