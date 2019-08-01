@@ -9,7 +9,6 @@
 #include "plugins/txes/contract/src/model/ContractNotifications.h"
 #include "src/plugins/ModifyContractTransactionPlugin.h"
 #include "src/model/ModifyContractTransaction.h"
-#include "src/model/ContractNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"

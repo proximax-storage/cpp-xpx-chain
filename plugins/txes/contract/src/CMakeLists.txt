@@ -4,4 +4,4 @@ set(PLUGIN_BASE_NAME catapult.plugins.contract)
 
 include_directories(${PROJECT_SOURCE_DIR}/plugins/txes/multisig)
 catapult_tx_plugin_src(${PLUGIN_BASE_NAME})
-target_link_libraries(${PLUGIN_BASE_NAME} catapult.plugins.multisig)
+target_link_libraries(${PLUGIN_BASE_NAME}.deps catapult.plugins.multisig.deps)
