@@ -5,8 +5,8 @@
 **/
 
 #pragma once
-#include "src/cache/CatapultConfigCache.h"
-#include "src/cache/CatapultConfigCacheStorage.h"
+#include "plugins/txes/config/src/cache/CatapultConfigCache.h"
+#include "plugins/txes/config/src/cache/CatapultConfigCacheStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
 
 namespace catapult { namespace cache { class CatapultCacheDelta; } }
