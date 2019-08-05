@@ -22,7 +22,6 @@
 #include "extensions/harvesting/src/HarvesterBlockGenerator.h"
 #include "extensions/harvesting/src/HarvestingUtFacadeFactory.h"
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
-#include "plugins/services/hashcache/src/plugins/MemoryHashCacheSystem.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"

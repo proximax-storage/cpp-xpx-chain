@@ -7,7 +7,6 @@
 #include "LocalNodeConfigurationHolder.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/exceptions.h"
-#include "catapult/io/PodIoUtils.h"
 #include "catapult/io/Stream.h"
 #include "plugins/txes/config/src/cache/CatapultConfigCache.h"
 #include <fstream>
@@ -66,7 +65,7 @@ namespace catapult { namespace config {
 			return m_catapultConfigs.insertRef(height, configHeight);
 
 		if (configHeight.unwrap() == 0)
-			CATAPULT_THROW_INVALID_ARGUMENT_1("didn't find available config at height ", height);
+			CATAPULT_THROW_INVALID_ARGUMENT_1("failed to find config at height ", height);
 
 		auto entry = configCache->find(configHeight).get();
 
