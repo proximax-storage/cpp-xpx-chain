@@ -31,6 +31,25 @@ namespace catapult { namespace validators {
 	namespace {
 		enum class OperationType { Normal, Removal, Max };
 
+		void extractCosigners(const cache::MultisigCache::CacheReadOnlyType& cache, const Key& publicKey, utils::KeySet& result) {
+			if (!cache.contains(publicKey)) {
+				result.insert(publicKey);
+				return;
+			}
+
+			auto multisigIter = cache.find(publicKey);
+			const auto& multisigEntry = multisigIter.get();
+
+			if (multisigEntry.cosignatories().empty()) {
+				result.insert(publicKey);
+				return;
+			}
+
+			for (const auto& cosignatoryPublicKey : multisigEntry.cosignatories()) {
+				extractCosigners(cache, cosignatoryPublicKey, result);
+			}
+		}
+
 		OperationType GetOperationType(const model::EmbeddedTransaction& transaction) {
 			if (model::Entity_Type_Modify_Multisig_Account != transaction.Type)
 				return OperationType::Normal;
@@ -64,7 +83,7 @@ namespace catapult { namespace validators {
 					: OperationType::Removal == operationType ? multisigEntry.minRemoval() : multisigEntry.minApproval();
 		}
 
-		utils::KeySet GetRequiredCosignerPublicKeys(const model::EmbeddedTransaction& transaction) {
+		utils::KeySet GetRequiredCosignerPublicKeys(const cache::MultisigCache::CacheReadOnlyType& multisigCache, const model::EmbeddedTransaction& transaction) {
 			utils::KeySet requiredCosignerPublicKeys;
 			requiredCosignerPublicKeys.insert(transaction.Signer);
 			if (model::Entity_Type_Modify_Multisig_Account != transaction.Type)
@@ -74,7 +93,7 @@ namespace catapult { namespace validators {
 			const auto* pModification = modifyMultisig.ModificationsPtr();
 			for (auto i = 0u; i < modifyMultisig.ModificationsCount; ++i) {
 				if (model::CosignatoryModificationType::Add == pModification->ModificationType)
-					requiredCosignerPublicKeys.insert(pModification->CosignatoryPublicKey);
+					extractCosigners(multisigCache, pModification->CosignatoryPublicKey, requiredCosignerPublicKeys);
 
 				++pModification;
 			}
@@ -96,7 +115,7 @@ namespace catapult { namespace validators {
 
 		public:
 			bool hasSufficientCosigners() {
-				auto requiredPublicKeys = GetRequiredCosignerPublicKeys(m_notification.Transaction);
+				auto requiredPublicKeys = GetRequiredCosignerPublicKeys(m_multisigCache, m_notification.Transaction);
 				auto operationType = GetOperationType(m_notification.Transaction);
 				return std::all_of(requiredPublicKeys.cbegin(), requiredPublicKeys.cend(), [this, operationType](const auto& publicKey) {
 					return this->isSatisfied(publicKey, operationType);

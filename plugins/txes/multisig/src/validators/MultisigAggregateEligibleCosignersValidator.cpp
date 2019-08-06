@@ -93,7 +93,7 @@ namespace catapult { namespace validators {
 				const auto* pModification = transaction.ModificationsPtr();
 				for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
 					if (model::CosignatoryModificationType::Add == pModification->ModificationType)
-						markEligible(pModification->CosignatoryPublicKey);
+						findEligibleCosigners(pModification->CosignatoryPublicKey);
 
 					++pModification;
 				}
