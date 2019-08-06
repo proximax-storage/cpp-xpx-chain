@@ -66,7 +66,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureFutureCatapultVersionTooLow) {
 		// Assert:
 		AssertValidationResult(
-			Failure_CatapultUpgrade_Invalid_Future_Catapult_Version,
+			Failure_CatapultUpgrade_Catapult_Version_Lower_Than_Current,
 			10,
 			10,
 			0);

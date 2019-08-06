@@ -14,7 +14,11 @@ namespace catapult { namespace config {
 	private:
 		struct ConfigRoot {
 			CatapultConfiguration Config;
-			std::set<Height> RefHeights;
+			std::set<Height> Children;
+		};
+
+		struct ConfigLeaf {
+			ConfigRoot& Parent;
 		};
 
 	public:
@@ -42,9 +46,10 @@ namespace catapult { namespace config {
 			if (iter == m_configs.end())
 				CATAPULT_THROW_INVALID_ARGUMENT_1("failed to insert reference because config doesn't exist at height", configHeight);
 
-			cleanupRefs(iter->second);
-			m_references.insert({refHeight, iter->second.Config });
-			iter->second.RefHeights.insert(refHeight);
+			auto& root = iter->second;
+			cleanupRefs(root);
+			m_references.emplace(refHeight, ConfigLeaf{ root });
+			root.Children.insert(refHeight);
 
 			return iter->second.Config;
 		}
@@ -52,6 +57,7 @@ namespace catapult { namespace config {
 		void erase(const Height& height) {
 			auto iterRef = m_references.find(height);
 			if (iterRef != m_references.end()) {
+				iterRef->second.Parent.Children.erase(height);
 				m_references.erase(iterRef);
 				return;
 			}
@@ -66,7 +72,7 @@ namespace catapult { namespace config {
 		CatapultConfiguration& get(const Height& height) {
 			auto iterRef = m_references.find(height);
 			if (iterRef != m_references.end())
-				return iterRef->second;
+				return iterRef->second.Parent.Config;
 
 			auto iter = m_configs.find(height);
 			if (iter != m_configs.end())
@@ -81,9 +87,9 @@ namespace catapult { namespace config {
 		}
 
 		inline void cleanupRefs(ConfigRoot& root, uint64_t size) {
-			while (root.RefHeights.size() > size) {
-				m_references.erase(*root.RefHeights.begin());
-				root.RefHeights.erase(root.RefHeights.begin());
+			while (root.Children.size() > size) {
+				m_references.erase(*root.Children.begin());
+				root.Children.erase(root.Children.begin());
 			}
 		}
 
@@ -92,6 +98,6 @@ namespace catapult { namespace config {
 		std::map<Height, ConfigRoot> m_configs;
 
 		/// Pair height of ref and reference on config
-		std::map<Height, CatapultConfiguration&> m_references;
+		std::map<Height, ConfigLeaf> m_references;
 	};
 }}
