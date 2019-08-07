@@ -45,8 +45,8 @@ namespace catapult { namespace model {
 
 		template<typename T>
 		static auto* SupportedEntityVersionsPtrT(T& transaction) {
-			auto* pBlockChainStart = BlockChainConfigPtrT(transaction);
-			return transaction.SupportedEntityVersionsSize && pBlockChainStart ? pBlockChainStart + transaction.BlockChainConfigSize : nullptr;
+			auto* pPayloadStart = THeader::PayloadStart(transaction);
+			return transaction.SupportedEntityVersionsSize && pPayloadStart ? pPayloadStart + transaction.BlockChainConfigSize : nullptr;
 		}
 
 		// Calculates the real size of a catapult config \a transaction.
