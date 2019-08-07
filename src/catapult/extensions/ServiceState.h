@@ -185,7 +185,7 @@ namespace catapult { namespace extensions {
 
 		/// Gets the network identifier.
 		auto& networkIdentifier() {
-			return config(m_cache.height()).BlockChain.Network.Identifier;
+			return config().BlockChain.Network.Identifier;
 		}
 
 	private:

@@ -59,7 +59,7 @@ namespace catapult { namespace sync {
 		public:
 			bool operator()(const model::TransactionInfo& transactionInfo, const chain::UtUpdater::ThrottleContext& context) const {
 				auto cacheSize = context.TransactionsCache.size();
-				const auto& config = m_state.config(m_state.cache().height());
+				const auto& config = m_state.config(context.CacheHeight);
 				SpamThrottleConfiguration throttleConfig(
 					config.Node.TransactionSpamThrottlingMaxBoostFee,
 					config.BlockChain.TotalChainImportance,

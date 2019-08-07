@@ -32,9 +32,9 @@ socketWorkingBufferSize = 512KB
 socketWorkingBufferSensitivity = 100
 maxPacketDataSize = 150MB
 
-blockDisruptorSize = 4096
+blockDisruptorSize = 16384
 blockElementTraceInterval = 1
-transactionDisruptorSize = 16384
+transactionDisruptorSize = 65536
 transactionElementTraceInterval = 10
 
 shouldAbortWhenDispatcherIsFull = true

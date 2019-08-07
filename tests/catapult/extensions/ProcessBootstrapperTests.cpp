@@ -189,7 +189,7 @@ namespace catapult { namespace extensions {
 		auto bootstrapper = CreateBootstrapper(test::CreateUninitializedCatapultConfiguration());
 
 		// Act:
-		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json", Height{0});
+		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json");
 
 		// Assert:
 		EXPECT_EQ(1u, bootstrapper.staticNodes().size());

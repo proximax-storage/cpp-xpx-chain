@@ -61,7 +61,7 @@ namespace catapult { namespace handlers {
 			if (!IsPacketValid(packet, ionet::PacketType::Node_Discovery_Pull_Ping))
 				return;
 
-			auto pLocalNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(state.config(state.cache().height()))));
+			auto pLocalNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(state.config())));
 			context.response(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Node_Discovery_Pull_Ping, pLocalNode));
 		});
 	}

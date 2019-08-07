@@ -109,7 +109,7 @@ namespace catapult { namespace extensions {
 	};
 
 	/// Adds static nodes from \a path to \a bootstrapper.
-	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path, const Height& height);
+	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path);
 }}
 
 /// Entry point for registering a dynamic extension module with \a bootstrapper.

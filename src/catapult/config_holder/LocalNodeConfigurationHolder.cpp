@@ -58,7 +58,7 @@ namespace catapult { namespace config {
 		if (!m_pCache)
 			CATAPULT_THROW_INVALID_ARGUMENT("cache pointer is not set");
 
-		auto configCache = m_pCache->sub<cache::CatapultConfigCache>().createView(m_pCache->height());
+		auto configCache = m_pCache->sub<cache::CatapultConfigCache>().createView(height);
 		auto configHeight = configCache->FindConfigHeightAt(height);
 
 		if (m_catapultConfigs.contains(configHeight))
@@ -96,7 +96,7 @@ namespace catapult { namespace config {
 	}
 
 	CatapultConfiguration& LocalNodeConfigurationHolder::Config() {
-		return Config(m_pCache != NULL ? m_pCache->height() : Height(0));
+		return Config(m_pCache != NULL ? m_pCache->configHeight() : Height(0));
 	}
 
 	CatapultConfiguration& LocalNodeConfigurationHolder::ConfigAtHeightOrLatest(const Height& height) {
