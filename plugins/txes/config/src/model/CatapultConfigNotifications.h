@@ -59,8 +59,8 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a applyHeightDelta, \a blockChainConfigSize, \a blockChainConfigPtr,
 		/// \a supportedEntityVersionsSize and \a supportedEntityVersionsPtr
-		CatapultConfigNotification(const BlockDuration& applyHeightDelta, uint32_t blockChainConfigSize, const uint8_t* blockChainConfigPtr,
-				uint32_t supportedEntityVersionsSize, const uint8_t* supportedEntityVersionsPtr)
+		CatapultConfigNotification(const BlockDuration& applyHeightDelta, uint16_t blockChainConfigSize, const uint8_t* blockChainConfigPtr,
+				uint16_t supportedEntityVersionsSize, const uint8_t* supportedEntityVersionsPtr)
 			: Notification(Notification_Type, sizeof(CatapultConfigNotification<1>))
 			, ApplyHeightDelta(applyHeightDelta)
 			, BlockChainConfigSize(blockChainConfigSize)
@@ -74,13 +74,13 @@ namespace catapult { namespace model {
 		BlockDuration ApplyHeightDelta;
 
 		/// Blockchain configuration size in bytes.
-		uint32_t BlockChainConfigSize;
+		uint16_t BlockChainConfigSize;
 
 		/// Blockchain configuration data pointer.
 		const uint8_t* BlockChainConfigPtr;
 
 		/// Supported entity versions configuration size in bytes.
-		uint32_t SupportedEntityVersionsSize;
+		uint16_t SupportedEntityVersionsSize;
 
 		/// Supported entity versions configuration data pointer.
 		const uint8_t* SupportedEntityVersionsPtr;

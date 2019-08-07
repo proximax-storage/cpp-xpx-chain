@@ -45,7 +45,6 @@ namespace catapult { namespace plugins {
 
 			manager.addStatelessValidatorHook([](auto& builder) {
 				builder.add(validators::CreateAliasActionValidator());
-				builder.add(validators::CreatePluginConfigValidator());
 			});
 
 			manager.addStatefulValidatorHook([](auto& builder) {
@@ -148,7 +147,7 @@ namespace catapult { namespace plugins {
 
 			manager.addStatelessValidatorHook([](auto& builder) {
 				builder
-					.add(validators::CreatePluginConfigValidator())
+					.add(validators::CreateNamespacePluginConfigValidator())
 					.add(validators::CreateNamespaceTypeValidator());
 			});
 

@@ -23,11 +23,14 @@ namespace catapult { namespace validators {
 	/// Validation failed because the upgrade already in-progress.
 	DEFINE_CATAPULT_UPGRADE_RESULT(Redundant, 3);
 
-	/// Validation failed because catapult version is invalid.
-	DEFINE_CATAPULT_UPGRADE_RESULT(Invalid_Catapult_Version, 4);
+	/// Validation failed because the current catapult version is invalid.
+	DEFINE_CATAPULT_UPGRADE_RESULT(Invalid_Current_Catapult_Version, 4);
 
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_CATAPULT_UPGRADE_RESULT(Plugin_Config_Malformed, 5);
+
+	/// Validation failed because the catapult version is lower than the current one.
+	DEFINE_CATAPULT_UPGRADE_RESULT(Catapult_Version_Lower_Than_Current, 6);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

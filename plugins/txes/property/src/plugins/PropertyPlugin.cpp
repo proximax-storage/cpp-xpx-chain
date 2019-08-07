@@ -54,7 +54,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMosaicPropertyModificationTypesValidator())
 				.add(validators::CreateTransactionTypePropertyModificationTypesValidator())
 				.add(validators::CreateTransactionTypePropertyModificationValuesValidator())
-				.add(validators::CreatePluginConfigValidator());
+				.add(validators::CreatePropertyPluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {

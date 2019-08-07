@@ -36,7 +36,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateAggregateTransactionPlugin(transactionRegistry, model::Entity_Type_Aggregate_Bonded, pConfigHolder));
 
 		manager.addStatelessValidatorHook([](auto& builder) {
-			builder.add(validators::CreatePluginConfigValidator());
+			builder.add(validators::CreateAggregatePluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {

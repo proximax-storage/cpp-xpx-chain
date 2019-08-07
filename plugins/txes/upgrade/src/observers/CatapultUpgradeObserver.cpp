@@ -18,7 +18,8 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Commit == context.Mode) {
 				cache.insert(state::CatapultUpgradeEntry(height, notification.Version));
 			} else {
-				cache.remove(height);
+				if (cache.contains(height))
+					cache.remove(height);
 			}
 		});
 	}

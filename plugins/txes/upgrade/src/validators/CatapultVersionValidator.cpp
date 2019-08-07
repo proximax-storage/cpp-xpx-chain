@@ -18,7 +18,7 @@ namespace catapult { namespace validators {
 		const auto& cache = context.Cache.sub<cache::CatapultUpgradeCache>();
 		const auto& entry = cache.find(context.Height).tryGet();
 		if (entry && entry->catapultVersion() > version::CatapultVersion)
-			return Failure_CatapultUpgrade_Invalid_Catapult_Version;
+			return Failure_CatapultUpgrade_Invalid_Current_Catapult_Version;
 
 		return ValidationResult::Success;
 	});

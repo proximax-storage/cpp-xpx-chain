@@ -84,7 +84,7 @@ namespace catapult { namespace plugins {
 				return {
 					"MosaicIdValidator",
 					"MosaicSupplyChangeValidator",
-					"PluginConfigValidator"
+					"MosaicPluginConfigValidator"
 				};
 			}
 

@@ -4,4 +4,4 @@ set(PLUGIN_DEPS_FOLDERS cache config model state observers validators)
 
 include_directories(.)
 add_subdirectory(src)
-#add_subdirectory(tests)
+add_subdirectory(tests)

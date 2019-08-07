@@ -20,7 +20,8 @@ namespace catapult { namespace observers {
 					std::string((const char*)notification.BlockChainConfigPtr, notification.BlockChainConfigSize),
 					std::string((const char*)notification.SupportedEntityVersionsPtr, notification.SupportedEntityVersionsSize)));
 			} else {
-				cache.remove(height);
+				if (cache.contains(height))
+					cache.remove(height);
 			}
 		});
 	}

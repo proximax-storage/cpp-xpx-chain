@@ -12,7 +12,7 @@ namespace catapult { namespace plugins {
 
 #define DEFINE_PLUGIN_CONFIG_VALIDATOR_WITH_FAILURE(PLUGIN_SUFFIX, CONFIG_NAME, FAILURE_NAME, VERSION) \
 	using Notification = model::PluginConfigNotification<VERSION>;  \
-	DEFINE_STATELESS_VALIDATOR(PluginConfig, [](const auto& notification) {  \
+	DEFINE_STATELESS_VALIDATOR(CONFIG_NAME##PluginConfig, [](const auto& notification) {  \
 		if (notification.Name == PLUGIN_NAME(PLUGIN_SUFFIX)) {  \
 			try {  \
 				(void)config::CONFIG_NAME##Configuration::LoadFromBag(notification.Bag);  \

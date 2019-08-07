@@ -73,7 +73,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "SecretLockHashAlgorithmValidator", "PluginConfigValidator" };
+				return { "SecretLockHashAlgorithmValidator", "SecretLockPluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {

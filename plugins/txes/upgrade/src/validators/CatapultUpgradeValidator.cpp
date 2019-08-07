@@ -6,6 +6,7 @@
 
 #include "Validators.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "catapult/version/version.h"
 #include "src/cache/CatapultUpgradeCache.h"
 #include "src/config/CatapultUpgradeConfiguration.h"
 
@@ -15,6 +16,9 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(CatapultUpgrade, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(CatapultUpgrade, ([pConfigHolder](const Notification& notification, const ValidatorContext& context) {
+			if (notification.Version <= version::CatapultVersion)
+				return Failure_CatapultUpgrade_Catapult_Version_Lower_Than_Current;
+
 			auto upgradePeriod = notification.UpgradePeriod.unwrap();
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::CatapultUpgradeConfiguration>(PLUGIN_NAME(upgrade));

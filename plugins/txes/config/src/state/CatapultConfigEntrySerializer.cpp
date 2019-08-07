@@ -17,11 +17,11 @@ namespace catapult { namespace state {
 		io::Write64(output, entry.height().unwrap());
 
 		const auto& blockChainConfig = entry.blockChainConfig();
-		io::Write32(output, blockChainConfig.size());
+		io::Write16(output, blockChainConfig.size());
 		io::Write(output, RawBuffer((const uint8_t*)blockChainConfig.data(), blockChainConfig.size()));
 
 		const auto& supportedEntityVersions = entry.supportedEntityVersions();
-		io::Write32(output, supportedEntityVersions.size());
+		io::Write16(output, supportedEntityVersions.size());
 		io::Write(output, RawBuffer((const uint8_t*)supportedEntityVersions.data(), supportedEntityVersions.size()));
 	}
 
@@ -34,12 +34,12 @@ namespace catapult { namespace state {
 		auto height = Height{io::Read64(input)};
 
 		std::string blockChainConfig;
-		uint32_t blockChainConfigSize = io::Read32(input);
+		uint16_t blockChainConfigSize = io::Read16(input);
 		blockChainConfig.resize(blockChainConfigSize);
 		io::Read(input, MutableRawBuffer((uint8_t*)blockChainConfig.data(), blockChainConfig.size()));
 
 		std::string supportedEntityVersions;
-		uint32_t supportedEntityVersionsSize = io::Read32(input);
+		uint16_t supportedEntityVersionsSize = io::Read16(input);
 		supportedEntityVersions.resize(supportedEntityVersionsSize);
 		io::Read(input, MutableRawBuffer((uint8_t*)supportedEntityVersions.data(), supportedEntityVersions.size()));
 

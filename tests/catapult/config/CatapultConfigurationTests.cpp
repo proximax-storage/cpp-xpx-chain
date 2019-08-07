@@ -194,6 +194,11 @@ namespace catapult { namespace config {
 			EXPECT_TRUE(config.InflationCalculator.contains(Height(1), Amount(100)));
 			EXPECT_TRUE(config.InflationCalculator.contains(Height(10000), Amount()));
 		}
+
+		void AssertDefaultSupportedEntityVersions(const SupportedEntityVersions& config) {
+			// Assert:
+			EXPECT_EQ(24u, config.size());
+		}
 	}
 
 	TEST(TEST_CLASS, CannotLoadConfigWhenAnyConfigFileIsMissing) {
@@ -255,6 +260,7 @@ namespace catapult { namespace config {
 			"extension.timesync", "extension.transactionsink", "extension.unbondedpruning"
 		});
 		AssertDefaultInflationConfiguration(config.Inflation);
+		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 
 	TEST(TEST_CLASS, CanLoadConfigFromResourcesDirectoryWithBrokerExtensions) {
@@ -271,6 +277,7 @@ namespace catapult { namespace config {
 			"extension.hashcache"
 		});
 		AssertDefaultInflationConfiguration(config.Inflation);
+		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 
 	TEST(TEST_CLASS, CanLoadConfigFromResourcesDirectoryWithRecoveryExtensions) {
@@ -284,6 +291,7 @@ namespace catapult { namespace config {
 		AssertDefaultUserConfiguration(config.User);
 		AssertDefaultExtensionsConfiguration(config.Extensions, { "extension.hashcache" });
 		AssertDefaultInflationConfiguration(config.Inflation);
+		AssertDefaultSupportedEntityVersions(config.SupportedEntityVersions);
 	}
 
 	// endregion
