@@ -38,6 +38,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the supported entity versions configuration data has no versions of the catapult config transaction.
 	DEFINE_CATAPULT_CONFIG_RESULT(Catapult_Config_Trx_Cannot_Be_Unsupported, 8);
 
+	/// Validation failed because some plugin config missing.
+	DEFINE_CATAPULT_CONFIG_RESULT(Plugin_Config_Missing, 9);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
