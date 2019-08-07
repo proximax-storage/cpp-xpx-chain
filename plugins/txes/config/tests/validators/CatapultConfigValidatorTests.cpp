@@ -69,20 +69,22 @@ namespace catapult { namespace validators {
 			"maxSupportedEntityVersionsSize = 1MB\n"
 		};
 
+		std::string blockChainConfigWithPlugin{commonBlockChainProperties + pluginConfigs};
+
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager(uint64_t maxBlockChainConfigSizeMb, uint64_t maxSupportedEntityVersionsSizeMb) {
 			test::MutableCatapultConfiguration config;
 			auto pluginConfig = config::CatapultConfigConfiguration::Uninitialized();
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
 			pluginConfig.MaxSupportedEntityVersionsSize = utils::FileSize::FromMegabytes(maxSupportedEntityVersionsSizeMb);
 			config.BlockChain.SetPluginConfiguration(PLUGIN_NAME(config), pluginConfig);
+			config.BlockChain.Plugins.emplace(PLUGIN_NAME(config), utils::ConfigurationBag({}));
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
 			return std::make_shared<plugins::PluginManager>(pConfigHolder, plugins::StorageConfiguration());
 		}
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(uint64_t maxBlockChainConfigSizeMb, uint64_t maxSupportedEntityVersionsSizeMb) {
 			test::MutableCatapultConfiguration config;
-			auto blockChainConfig = commonBlockChainProperties + pluginConfigs;
-			std::istringstream input(blockChainConfig);
+			std::istringstream input(blockChainConfigWithPlugin);
 			config.BlockChain = model::BlockChainConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(input));
 			auto pluginConfig = config::CatapultConfigConfiguration::Uninitialized();
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
@@ -147,7 +149,7 @@ namespace catapult { namespace validators {
 		// Assert:
 		RunTest(
 			Failure_CatapultConfig_BlockChain_Config_Too_Large,
-			commonBlockChainProperties,
+			blockChainConfigWithPlugin,
 			test::GetSupportedEntityVersionsString(),
 			0,
 			1);
@@ -157,7 +159,7 @@ namespace catapult { namespace validators {
 		// Assert:
 		RunTest(
 			Failure_CatapultConfig_SupportedEntityVersions_Config_Too_Large,
-			commonBlockChainProperties,
+			blockChainConfigWithPlugin,
 			test::GetSupportedEntityVersionsString(),
 			1,
 			0);
@@ -167,7 +169,7 @@ namespace catapult { namespace validators {
 		// Assert:
 		RunTest(
 			Failure_CatapultConfig_Config_Redundant,
-			commonBlockChainProperties,
+			blockChainConfigWithPlugin,
 			test::GetSupportedEntityVersionsString(),
 			1,
 			1,
@@ -179,6 +181,14 @@ namespace catapult { namespace validators {
 		RunTest(
 			Failure_CatapultConfig_BlockChain_Config_Malformed,
 			"invalidConfig",
+			test::GetSupportedEntityVersionsString());
+	}
+
+	TEST(TEST_CLASS, FailureWhenPluginConfigMissing) {
+		// Assert:
+		RunTest(
+			Failure_CatapultConfig_Plugin_Config_Missing,
+			commonBlockChainProperties,
 			test::GetSupportedEntityVersionsString());
 	}
 
@@ -197,7 +207,7 @@ namespace catapult { namespace validators {
 		// Assert:
 		RunTest(
 			Failure_CatapultConfig_Catapult_Config_Trx_Cannot_Be_Unsupported,
-			commonBlockChainProperties,
+			blockChainConfigWithPlugin,
 			"{\n"
 			"\t\"entities\": [\n"
 			"\t\t{\n"
@@ -223,16 +233,15 @@ namespace catapult { namespace validators {
 		// Assert:
 		RunTest(
 			Failure_CatapultConfig_SupportedEntityVersions_Config_Malformed,
-			commonBlockChainProperties,
+			blockChainConfigWithPlugin,
 			"invalidConfig");
 	}
 
 	TEST(TEST_CLASS, Success) {
 		// Assert:
-		auto blockChainConfig = commonBlockChainProperties + pluginConfigs;
 		RunTestWithRealPlugins(
 			ValidationResult::Success,
-			blockChainConfig,
+			blockChainConfigWithPlugin,
 			test::GetSupportedEntityVersionsString());
 	}
 }}
