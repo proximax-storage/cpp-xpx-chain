@@ -109,7 +109,7 @@ namespace catapult { namespace extensions {
 		}
 
 		StateHeights heights;
-		heights.Cache = stateRef.Cache.createView().height();
+		heights.Cache = stateRef.Cache.height();
 		heights.Storage = stateRef.Storage.view().chainHeight();
 		return heights;
 	}
@@ -200,8 +200,8 @@ namespace catapult { namespace extensions {
 		LocalNodeStateSerializer serializer(dataDirectory.dir("state.tmp"));
 
 		if (nodeConfig.ShouldUseCacheDatabaseStorage) {
-			auto storages = const_cast<const cache::CatapultCache&>(cache).storages();
-			auto height = cache.createView().height();
+			auto storages = cache.storages();
+			auto height = cache.height();
 
 			auto cacheDetachableDelta = cache.createDetachableDelta();
 			auto cacheDetachedDelta = cacheDetachableDelta.detach();

@@ -240,7 +240,8 @@ namespace catapult { namespace cache {
 	}
 
 	CatapultCache::CatapultCache(std::vector<std::unique_ptr<SubCachePlugin>>&& subCaches)
-			: m_pCacheHeight(std::make_unique<CacheHeight>())
+			: m_pConfigHeight(std::make_unique<CacheHeight>())
+			, m_pCacheHeight(std::make_unique<CacheHeight>())
 			, m_subCaches(std::move(subCaches))
 	{}
 
@@ -277,6 +278,8 @@ namespace catapult { namespace cache {
 	void CatapultCache::commit(Height height) {
 		// use the height writer lock to lock the entire cache during commit
 		auto cacheHeightModifier = m_pCacheHeight->modifier();
+		// Updates height of config before commit
+		m_pConfigHeight->modifier().set(height);
 
 		for (const auto& pSubCache : m_subCaches) {
 			if (pSubCache)
@@ -289,6 +292,10 @@ namespace catapult { namespace cache {
 
 	Height CatapultCache::height() const {
 		return m_pCacheHeight->view().get();
+	}
+
+	Height CatapultCache::configHeight() const {
+		return m_pConfigHeight->view().get();
 	}
 
 	std::vector<std::unique_ptr<const CacheStorage>> CatapultCache::storages() const {

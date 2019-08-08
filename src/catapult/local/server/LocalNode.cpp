@@ -108,7 +108,7 @@ namespace catapult { namespace local {
 				CATAPULT_LOG(debug) << "adding static nodes";
 				auto peersFile = boost::filesystem::path(m_pBootstrapper->resourcesPath()) / "peers-p2p.json";
 				if (boost::filesystem::exists(peersFile))
-					AddStaticNodesFromPath(*m_pBootstrapper, peersFile.generic_string(), m_cacheHolder.cache().height());
+					AddStaticNodesFromPath(*m_pBootstrapper, peersFile.generic_string());
 				SeedNodeContainer(m_nodes, *m_pBootstrapper);
 
 				CATAPULT_LOG(debug) << "booting extension services";
@@ -226,7 +226,7 @@ namespace catapult { namespace local {
 
 		private:
 			const config::CatapultConfiguration& config() {
-				return m_pluginManager.configHolder()->Config(m_cacheHolder.cache().height());
+				return m_pluginManager.configHolder()->Config();
 			}
 			extensions::LocalNodeStateRef stateRef() {
 				return extensions::LocalNodeStateRef(config(), m_catapultState, m_cacheHolder.cache(), m_storage, m_score);

@@ -88,7 +88,7 @@ namespace catapult { namespace nodediscovery {
 				auto pushNodeConsumer = CreatePushNodeConsumer(state);
 
 				// register services
-				auto connectionSettings = extensions::GetConnectionSettings(state.config(state.cache().height()));
+				auto connectionSettings = extensions::GetConnectionSettings(state.config());
 				auto pServiceGroup = state.pool().pushServiceGroup("node_discovery");
 				auto pNodePingRequestor = pServiceGroup->pushService(
 						CreateNodePingRequestor,

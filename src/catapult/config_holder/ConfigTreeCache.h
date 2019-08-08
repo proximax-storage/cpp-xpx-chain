@@ -26,7 +26,7 @@ namespace catapult { namespace config {
 
 	public:
 		bool contains(const Height& height) const {
-			return m_references.count(height) || m_configs.count(height);
+			return m_references.count(height) > 0 || m_configs.count(height) > 0;
 		}
 
 		CatapultConfiguration& insert(const Height& height, const CatapultConfiguration& config) {
@@ -45,6 +45,9 @@ namespace catapult { namespace config {
 			auto iter = m_configs.find(configHeight);
 			if (iter == m_configs.end())
 				CATAPULT_THROW_INVALID_ARGUMENT_1("failed to insert reference because config doesn't exist at height", configHeight);
+
+			if (m_references.count(refHeight))
+				CATAPULT_THROW_INVALID_ARGUMENT_1("failed to insert reference because reference already exist at height", refHeight);
 
 			auto& root = iter->second;
 			cleanupRefs(root);

@@ -44,7 +44,8 @@ namespace catapult { namespace filespooling {
 			}
 
 			void flush() override {
-				// access does not need to be synchronized because flush cannot be called concurrently with notifyStatus
+				// synchronize access because flush can be called concurrently by block and transaction dispatchers
+				utils::SpinLockGuard guard(m_lock);
 				m_pOutputStream->flush();
 			}
 

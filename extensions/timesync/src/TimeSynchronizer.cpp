@@ -38,8 +38,8 @@ namespace catapult { namespace timesync {
 			return std::max(std::exp(-Coupling_Decay_Strength * ageToUse) * Coupling_Start, Coupling_Minimum);
 		}
 
-		auto GetTotalChainImportance(extensions::ServiceState& state) {
-			return state.config(state.cache().height()).BlockChain.TotalChainImportance;
+		auto GetTotalChainImportance(extensions::ServiceState& state, const Height& height) {
+			return state.config(height).BlockChain.TotalChainImportance;
 		}
 	}
 
@@ -72,7 +72,7 @@ namespace catapult { namespace timesync {
 
 		auto highValueAddressesSize = accountStateCacheView.highValueAddresses().size();
 		auto viewPercentage = static_cast<double>(samples.size()) / highValueAddressesSize;
-		auto importancePercentage = static_cast<double>(cumulativeImportance) / GetTotalChainImportance(m_state).unwrap();
+		auto importancePercentage = static_cast<double>(cumulativeImportance) / GetTotalChainImportance(m_state, height).unwrap();
 		auto scaling = importancePercentage > viewPercentage ? 1.0 / importancePercentage : 1.0 / viewPercentage;
 		auto sum = sumScaledOffsets(importanceView, height, samples, scaling);
 		return TimeOffset(static_cast<int64_t>(GetCoupling(nodeAge) * sum));
@@ -92,7 +92,7 @@ namespace catapult { namespace timesync {
 			Height height,
 			const TimeSynchronizationSamples& samples,
 			double scaling) {
-		auto totalChainImportance = GetTotalChainImportance(m_state).unwrap();
+		auto totalChainImportance = GetTotalChainImportance(m_state, height).unwrap();
 		auto warningThresholdMillis = m_warningThresholdMillis;
 		return utils::Sum(samples, [&importanceView, height, scaling, totalChainImportance, warningThresholdMillis](const auto& sample) {
 			int64_t offset = sample.timeOffsetToRemote();

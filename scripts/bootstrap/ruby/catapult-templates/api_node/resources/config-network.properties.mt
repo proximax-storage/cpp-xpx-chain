@@ -20,7 +20,7 @@ greedExponent = 2
 
 # maxTransactionLifetime / blockGenerationTargetTime
 importanceGrouping = 5760
-maxRollbackBlocks = 5
+maxRollbackBlocks = 360
 maxDifficultyBlocks = 3
 
 maxTransactionLifetime = 24h

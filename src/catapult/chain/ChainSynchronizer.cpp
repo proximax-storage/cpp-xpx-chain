@@ -266,7 +266,7 @@ namespace catapult { namespace chain {
 			// in case that there are no unprocessed elements in the disruptor, we do a normal synchronization round
 			// else we bypass chain comparison and expand the existing chain part by pulling more blocks
 			thread::future<CompareChainsResult> compareChains(const RemoteApiType& remoteChainApi) {
-				const auto& config = m_state.config(m_state.cache().height());
+				const auto& config = m_state.config();
 				if (m_pUnprocessedElements->empty())
 					return CompareChains(*m_pLocalChainApi, remoteChainApi, CompareChainsOptions(config.Node.MaxBlocksPerSyncAttempt, config.BlockChain.MaxRollbackBlocks));
 

@@ -74,6 +74,8 @@ namespace catapult { namespace cache {
 
 		Height height() const;
 
+		Height configHeight() const;
+
 	public:
 		/// Gets cache storages for all sub caches.
 		std::vector<std::unique_ptr<const CacheStorage>> storages() const;
@@ -89,6 +91,7 @@ namespace catapult { namespace cache {
 		void addSubCache(std::unique_ptr<SubCachePlugin>);
 
 	private:
+		std::unique_ptr<CacheHeight> m_pConfigHeight; // use a unique_ptr to allow fwd declare
 		std::unique_ptr<CacheHeight> m_pCacheHeight; // use a unique_ptr to allow fwd declare
 		std::vector<std::unique_ptr<SubCachePlugin>> m_subCaches;
 	};

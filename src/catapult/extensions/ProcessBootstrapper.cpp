@@ -122,8 +122,8 @@ namespace catapult { namespace extensions {
 		m_nodes.insert(m_nodes.end(), nodes.cbegin(), nodes.cend());
 	}
 
-	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path, const Height& height) {
-		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config(height).BlockChain.Network.Identifier);
+	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path) {
+		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config().BlockChain.Network.Identifier);
 		bootstrapper.addStaticNodes(nodes);
 	}
 }}
