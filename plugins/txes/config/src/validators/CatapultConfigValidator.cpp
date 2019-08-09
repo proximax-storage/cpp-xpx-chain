@@ -28,7 +28,8 @@ namespace catapult { namespace validators {
 				return Failure_CatapultConfig_SupportedEntityVersions_Config_Too_Large;
 
 			const auto& cache = context.Cache.sub<cache::CatapultConfigCache>();
-			if (cache.find(context.Height).tryGet())
+			auto height = Height{context.Height.unwrap() + notification.ApplyHeightDelta.unwrap()};
+			if (cache.find(height).tryGet())
 				return Failure_CatapultConfig_Config_Redundant;
 
 			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
