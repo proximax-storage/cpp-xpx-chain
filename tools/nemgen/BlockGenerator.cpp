@@ -23,13 +23,14 @@
 #include "NemesisExecutionHasher.h"
 #include "TransactionRegistryFactory.h"
 #include "catapult/builders/CatapultConfigBuilder.h"
+#include "catapult/builders/CatapultUpgradeBuilder.h"
 #include "catapult/builders/MosaicAliasBuilder.h"
 #include "catapult/builders/MosaicDefinitionBuilder.h"
 #include "catapult/builders/MosaicSupplyChangeBuilder.h"
 #include "catapult/builders/RegisterNamespaceBuilder.h"
 #include "catapult/builders/TransferBuilder.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/crypto/KeyUtils.h"
+//#include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/BlockExtensions.h"
 #include "catapult/extensions/ConversionExtensions.h"
 #include "catapult/extensions/IdGenerator.h"
@@ -38,6 +39,7 @@
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/HexParser.h"
+#include "catapult/version/version.h"
 #include "boost/filesystem.hpp"
 
 namespace catapult { namespace tools { namespace nemgen {
@@ -161,6 +163,14 @@ namespace catapult { namespace tools { namespace nemgen {
 				signAndAdd(builder.build());
 			}
 
+			void addUpgrade() {
+				builders::CatapultUpgradeBuilder builder(m_networkIdentifier, m_signer.publicKey());
+				builder.setUpgradePeriod(BlockDuration{0});
+				builder.setNewCatapultVersion(version::CatapultVersion);
+
+				signAndAdd(builder.build());
+			}
+
 		public:
 			const model::Transactions& transactions() const {
 				return m_transactions;
@@ -237,6 +247,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		}
 
 		transactions.addConfig(resourcesPath);
+		transactions.addUpgrade();
 
 		model::PreviousBlockContext context;
 		auto pBlock = model::CreateBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.transactions());
