@@ -114,7 +114,7 @@ namespace catapult { namespace model {
 				}
 
 				default:
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of Block", block.EntityVersion());
+					CATAPULT_LOG(debug) << "invalid version of Block: " << block.EntityVersion();
 				}
 			}
 

@@ -70,7 +70,7 @@ namespace catapult { namespace chain {
 			break;
 
 		default:
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of AggregateTransaction", aggregate.EntityVersion());
+			CATAPULT_LOG(debug) << "invalid version of AggregateTransaction: " << aggregate.EntityVersion();
 		}
 	}
 }}

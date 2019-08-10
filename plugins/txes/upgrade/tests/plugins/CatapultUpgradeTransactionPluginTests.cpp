@@ -52,18 +52,22 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(sizeof(typename TTraits::TransactionType), realSize);
 	}
 
-	PLUGIN_TEST(ThrowsWhenTransactionVersionIsInvalid) {
+	// region publish - basic
+
+	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
-		typename TTraits::TransactionType transaction;
-		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
 		mocks::MockNotificationSubscriber sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
-		// Act + Assert:
-		EXPECT_THROW(test::PublishTransaction(*pPlugin, transaction, sub), catapult_runtime_error);
-	}
+		typename TTraits::TransactionType transaction;
+		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
 
-	// region publish - basic
+		// Act:
+		test::PublishTransaction(*pPlugin, transaction, sub);
+
+		// Assert:
+		ASSERT_EQ(0, sub.numNotifications());
+	}
 
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
 		// Arrange:

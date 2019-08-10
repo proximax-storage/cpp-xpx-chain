@@ -24,7 +24,7 @@ namespace catapult { namespace plugins {
 				break;
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of CatapultUpgradeTransaction", transaction.EntityVersion());
+				CATAPULT_LOG(debug) << "invalid version of CatapultUpgradeTransaction: " << transaction.EntityVersion();
 			}
 		}
 	}
