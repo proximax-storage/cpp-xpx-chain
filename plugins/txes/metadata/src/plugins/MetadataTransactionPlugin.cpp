@@ -68,7 +68,7 @@ namespace catapult { namespace plugins {
 				}
 
 				default:
-					CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of MetadataTransaction", transaction.EntityVersion());
+					CATAPULT_LOG(debug) << "invalid version of MetadataTransaction: " << transaction.EntityVersion();
 				}
             }
 

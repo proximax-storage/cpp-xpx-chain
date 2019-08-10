@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 			}
 
 			default:
-				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of TransferTransaction", transaction.EntityVersion());
+				CATAPULT_LOG(debug) << "invalid version of TransferTransaction: " << transaction.EntityVersion();
 			}
 		}
 	}
