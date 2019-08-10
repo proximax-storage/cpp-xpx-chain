@@ -44,7 +44,8 @@ namespace catapult { namespace extensions {
 		constexpr auto Num_Nemesis_Namespaces = 3;
 		constexpr auto Num_Nemesis_Mosaics = 2;
 		constexpr auto Num_Nemesis_Config = 1;
-		constexpr auto Num_Nemesis_Transactions = Num_Nemesis_Namespaces + 3 * Num_Nemesis_Mosaics + Num_Nemesis_Accounts + Num_Nemesis_Config;
+		constexpr auto Num_Nemesis_Upgrade = 1;
+		constexpr auto Num_Nemesis_Transactions = Num_Nemesis_Namespaces + 3 * Num_Nemesis_Mosaics + Num_Nemesis_Accounts + Num_Nemesis_Config + Num_Nemesis_Upgrade;
 
 		template<typename TAction>
 		void RunNemesisBlockTest(TAction action) {

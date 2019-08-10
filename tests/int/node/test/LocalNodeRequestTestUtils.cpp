@@ -21,6 +21,7 @@
 #include "LocalNodeRequestTestUtils.h"
 #include "sdk/src/extensions/BlockExtensions.h"
 #include "plugins/txes/config/src/plugins/CatapultConfigTransactionPlugin.h"
+#include "plugins/txes/upgrade/src/plugins/CatapultUpgradeTransactionPlugin.h"
 #include "plugins/txes/mosaic/src/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "plugins/txes/mosaic/src/plugins/MosaicSupplyChangeTransactionPlugin.h"
 #include "plugins/txes/namespace/src/plugins/MosaicAliasTransactionPlugin.h"
@@ -42,6 +43,7 @@ namespace catapult { namespace test {
 		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(config::CreateMockConfigurationHolder()));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		registry.registerPlugin(plugins::CreateCatapultConfigTransactionPlugin());
+		registry.registerPlugin(plugins::CreateCatapultUpgradeTransactionPlugin());
 		return registry;
 	}
 

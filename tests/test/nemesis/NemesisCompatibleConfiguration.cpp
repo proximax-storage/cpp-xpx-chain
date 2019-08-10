@@ -59,6 +59,9 @@ namespace catapult { namespace test {
 			{ "maxBlockChainConfigSize", "1MB" },
 			{ "maxSupportedEntityVersionsSize", "1MB" },
 		} } }));
+		config.Plugins.emplace(PLUGIN_NAME(upgrade), utils::ConfigurationBag({ { "", {
+			{ "minUpgradePeriod", "360" },
+		} } }));
 	}
 
 	namespace {
