@@ -21,19 +21,27 @@
 #pragma once
 #include "src/cache/NamespaceCache.h"
 #include "src/cache/NamespaceCacheStorage.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
 	/// Cache factory for creating a catapult cache composed of only the namespace cache.
 	struct NamespaceCacheFactory {
 		/// Creates an empty catapult cache around \a gracePeriodDuration.
-		static cache::CatapultCache Create(BlockDuration gracePeriodDuration = BlockDuration(10)) {
+		static cache::CatapultCache Create(const model::BlockChainConfiguration& blockChainConfig, BlockDuration gracePeriodDuration) {
 			auto cacheId = cache::NamespaceCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 
-			auto options = cache::NamespaceCacheTypes::Options{ gracePeriodDuration };
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(gracePeriodDuration.unwrap());
+			const_cast<model::BlockChainConfiguration&>(blockChainConfig).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			const_cast<model::BlockChainConfiguration&>(blockChainConfig).SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto options = cache::NamespaceCacheTypes::Options{ pConfigHolder };
 			subCaches[cacheId] = MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(options);
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -42,8 +50,8 @@ namespace catapult { namespace test {
 		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
 			auto configIter = config.Plugins.find("namespace::ex");
 			return config.Plugins.cend() != configIter
-					? Create(BlockDuration(configIter->second.get<uint64_t>({ "", "gracePeriodDuration" })))
-					: Create();
+					? Create(config, BlockDuration(configIter->second.get<uint64_t>({ "", "gracePeriodDuration" })))
+					: Create(config, BlockDuration(10));
 		}
 	};
 

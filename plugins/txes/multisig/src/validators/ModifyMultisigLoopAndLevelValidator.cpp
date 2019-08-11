@@ -21,11 +21,12 @@
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheUtils.h"
+#include "src/config/MultisigConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyMultisigNewCosignerNotification;
+	using Notification = model::ModifyMultisigNewCosignerNotification<1>;
 
 	namespace {
 		class LoopAndLevelChecker {
@@ -60,11 +61,13 @@ namespace catapult { namespace validators {
 		};
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, Notification)(uint8_t maxMultisigDepth) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [maxMultisigDepth](
+	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [pConfigHolder](
 					const auto& notification,
 					const ValidatorContext& context) {
-			auto checker = LoopAndLevelChecker(context.Cache.sub<cache::MultisigCache>(), maxMultisigDepth);
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME(multisig));
+			auto checker = LoopAndLevelChecker(context.Cache.sub<cache::MultisigCache>(), pluginConfig.MaxMultisigDepth);
 			return checker.validate(notification.MultisigAccountKey, notification.CosignatoryKey);
 		});
 	}

@@ -17,7 +17,7 @@ namespace catapult { namespace state {
 #define TEST_CLASS ReputationEntrySerializerTests
 
 	namespace {
-		constexpr auto Entry_Size = sizeof(uint64_t) * 2 + sizeof(Key);
+		constexpr auto Entry_Size = sizeof(VersionType) + sizeof(uint64_t) * 2 + sizeof(Key);
 		class TestContext {
 		public:
 			explicit TestContext(size_t numAccounts = 10)
@@ -55,8 +55,10 @@ namespace catapult { namespace state {
 			return key;
 		}
 
-		void AssertEntryBuffer(const state::ReputationEntry& entry, const uint8_t* pData, size_t expectedSize) {
+		void AssertEntryBuffer(const state::ReputationEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
 			const auto* pExpectedEnd = pData + expectedSize;
+			EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
+			pData += sizeof(VersionType);
 			EXPECT_EQ(entry.positiveInteractions().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.negativeInteractions().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
@@ -74,39 +76,47 @@ namespace catapult { namespace state {
 			EXPECT_EQ(expectedEntry.negativeInteractions(), entry.negativeInteractions());
 			EXPECT_EQ(expectedEntry.key(), entry.key());
 		}
+
+		void AssertCanSaveSingleEntry(VersionType version) {
+			// Arrange:
+			TestContext context;
+			auto entry = context.createEntry(0);
+
+			// Act:
+			ReputationEntrySerializer::Save(entry, context.outputStream());
+
+			// Assert:
+			ASSERT_EQ(Entry_Size, context.buffer().size());
+			AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
+		}
+
+		void AssertCanSaveMultipleEntries(VersionType version) {
+			// Arrange:
+			TestContext context(20);
+			auto entry1 = context.createEntry(0);
+			auto entry2 = context.createEntry(10);
+
+			// Act:
+			ReputationEntrySerializer::Save(entry1, context.outputStream());
+			ReputationEntrySerializer::Save(entry2, context.outputStream());
+
+			// Assert:
+			ASSERT_EQ(2 * Entry_Size, context.buffer().size());
+			const auto* pBuffer1 = context.buffer().data();
+			const auto* pBuffer2 = pBuffer1 + Entry_Size;
+			AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
+			AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
+		}
 	}
 
 	// region Save
 
-	TEST(TEST_CLASS, CanSaveSingleEntry) {
-		// Arrange:
-		TestContext context;
-		auto entry = context.createEntry(0);
-
-		// Act:
-		ReputationEntrySerializer::Save(entry, context.outputStream());
-
-		// Assert:
-		ASSERT_EQ(Entry_Size, context.buffer().size());
-		AssertEntryBuffer(entry, context.buffer().data(), Entry_Size);
+	TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
+		AssertCanSaveSingleEntry(1);
 	}
 
-	TEST(TEST_CLASS, CanSaveMultipleEntries) {
-		// Arrange:
-		TestContext context(20);
-		auto entry1 = context.createEntry(0);
-		auto entry2 = context.createEntry(10);
-
-		// Act:
-		ReputationEntrySerializer::Save(entry1, context.outputStream());
-		ReputationEntrySerializer::Save(entry2, context.outputStream());
-
-		// Assert:
-		ASSERT_EQ(2 * Entry_Size, context.buffer().size());
-		const auto* pBuffer1 = context.buffer().data();
-		const auto* pBuffer2 = pBuffer1 + Entry_Size;
-		AssertEntryBuffer(entry1, pBuffer1, Entry_Size);
-		AssertEntryBuffer(entry2, pBuffer2, Entry_Size);
+	TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
+		AssertCanSaveMultipleEntries(1);
 	}
 
 	// endregion
@@ -114,12 +124,14 @@ namespace catapult { namespace state {
 	// region Load
 
 	namespace {
-		std::vector<uint8_t> CreateBuffer(const state::ReputationEntry& entry) {
+		std::vector<uint8_t> CreateBuffer(const state::ReputationEntry& entry, VersionType version) {
 			// positiveInteractions / negativeInteractions / key
 			std::vector<uint8_t> buffer(Entry_Size);
 
 			// - positiveInteractions / negativeInteractions
 			auto* pData = buffer.data();
+			memcpy(pData, &version, sizeof(VersionType));
+			pData += sizeof(VersionType);
 			auto positiveInteractions = entry.positiveInteractions().unwrap();
 			memcpy(pData, &positiveInteractions, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
@@ -133,11 +145,11 @@ namespace catapult { namespace state {
 			return buffer;
 		}
 
-		void AssertCanLoadSingleEntry() {
+		void AssertCanLoadSingleEntry(VersionType version) {
 			// Arrange:
 			TestContext context;
 			auto originalEntry = context.createEntry(0);
-			auto buffer = CreateBuffer(originalEntry);
+			auto buffer = CreateBuffer(originalEntry, version);
 
 			// Act:
 			state::ReputationEntry result(test::GenerateRandomByteArray<Key>());
@@ -148,8 +160,8 @@ namespace catapult { namespace state {
 		}
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleEntry) {
-		AssertCanLoadSingleEntry();
+	TEST(TEST_CLASS, CanLoadSingleEntry_v1) {
+		AssertCanLoadSingleEntry(1);
 	}
 
 	// endregion

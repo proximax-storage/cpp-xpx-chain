@@ -10,7 +10,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyContractNotification;
+	using Notification = model::ModifyContractNotification<1>;
 
 	namespace {
 		constexpr bool IsValidModificationType(model::CosignatoryModificationType type) {

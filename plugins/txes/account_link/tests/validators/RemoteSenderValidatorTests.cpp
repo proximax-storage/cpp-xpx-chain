@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
 
 			auto pValidator = CreateRemoteSenderValidator();
 			auto entityType = static_cast<model::EntityType>(0x4201);
-			auto notification = model::TransactionNotification(notificationKey, Hash256(), entityType, Timestamp());
+			auto notification = model::TransactionNotification<1>(notificationKey, Hash256(), entityType, Timestamp());
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

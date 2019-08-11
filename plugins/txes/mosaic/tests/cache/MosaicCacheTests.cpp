@@ -116,7 +116,7 @@ namespace catapult { namespace cache {
 		// Arrange: populate cache with some entries and insert eternal mosaic
 		MosaicCacheMixinTraits::CacheType cache;
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			PopulateCache(delta);
 			delta->insert(MosaicCacheMixinTraits::CreateWithId(15));
 
@@ -129,20 +129,20 @@ namespace catapult { namespace cache {
 
 		{
 			// Act: remove mosaic with id 15
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->remove(MosaicId(15));
 			cache.commit();
 		}
 
 		// Assert:
-		EXPECT_FALSE(cache.createView()->contains(MosaicId(15)));
+		EXPECT_FALSE(cache.createView(Height{0})->contains(MosaicId(15)));
 	}
 
 	TEST(TEST_CLASS, RemoveAndReinsertAddsNewEntryInHeightBasedMap) {
 		// Arrange: populate cache with some entries and insert mosaic with id 15 and expiry height 123
 		MosaicCacheMixinTraits::CacheType cache;
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			PopulateCache(delta);
 			delta->insert(MosaicCacheMixinTraits::CreateWithIdAndExpiration(15, Height(123)));
 
@@ -155,13 +155,13 @@ namespace catapult { namespace cache {
 
 		{
 			// Act: remove mosaic with id 15
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->remove(MosaicId(15));
 			cache.commit();
 		}
 
 		// Act: reinsert mosaic with id 15 and expiry height 234
-		auto delta = cache.createDelta();
+		auto delta = cache.createDelta(Height{0});
 		delta->insert(MosaicCacheMixinTraits::CreateWithIdAndExpiration(15, Height(234)));
 
 		// Assert: height based entry at height 234 was added

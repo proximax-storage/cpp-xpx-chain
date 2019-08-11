@@ -21,6 +21,7 @@
 #include "LocalNodeTestUtils.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "tests/test/local/NetworkTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
@@ -97,9 +98,11 @@ namespace catapult { namespace test {
 		// make additional configuration modifications
 		PrepareCatapultConfiguration(config, AddSimplePartnerPluginExtensions, nodeFlag);
 
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+
 		const auto& resourcesPath = config.User.DataDirectory + "/resources";
 		auto disposition = extensions::ProcessDisposition::Production;
-		auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(std::move(config), resourcesPath, disposition, "Partner");
+		auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(pConfigHolder, resourcesPath, disposition, "Partner");
 		pBootstrapper->loadExtensions();
 
 		return local::CreateLocalNode(keyPair, std::move(pBootstrapper));

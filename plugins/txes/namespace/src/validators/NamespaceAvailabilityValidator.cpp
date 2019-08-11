@@ -20,38 +20,47 @@
 
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
+#include "src/model/NamespaceLifetimeConstraints.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/constants.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::RootNamespaceNotification;
+	using Notification = model::RootNamespaceNotification<1>;
 
 	namespace {
 		constexpr bool IsEternal(const state::NamespaceLifetime& lifetime) {
 			return Height(std::numeric_limits<Height::ValueType>::max()) == lifetime.End;
 		}
+
+		constexpr Height ToHeight(BlockDuration duration) {
+			return Height(duration.unwrap());
+		}
 	}
 
-	DEFINE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [](const auto& notification, const ValidatorContext& context) {
-		const auto& cache = context.Cache.sub<cache::NamespaceCache>();
-		auto height = context.Height;
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [pConfigHolder](
+				const auto& notification,
+				const ValidatorContext& context) {
+			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
+			auto height = context.Height;
 
-		if (Height(1) != height && Eternal_Artifact_Duration == notification.Duration)
-			return Failure_Namespace_Eternal_After_Nemesis_Block;
+			if (Height(1) != height && Eternal_Artifact_Duration == notification.Duration)
+				return Failure_Namespace_Eternal_After_Nemesis_Block;
 
-		if (!cache.contains(notification.NamespaceId))
-			return ValidationResult::Success;
+			if (!cache.contains(notification.NamespaceId))
+				return ValidationResult::Success;
 
-		auto namespaceIter = cache.find(notification.NamespaceId);
-		const auto& root = namespaceIter.get().root();
-		if (IsEternal(root.lifetime()) || Eternal_Artifact_Duration == notification.Duration)
-			return Failure_Namespace_Invalid_Duration;
+			auto namespaceIter = cache.find(notification.NamespaceId);
+			const auto& root = namespaceIter.get().root();
+			if (IsEternal(root.lifetime()) || Eternal_Artifact_Duration == notification.Duration)
+				return Failure_Namespace_Invalid_Duration;
 
-		// if grace period after expiration has passed, any signer can claim the namespace
-		if (!root.lifetime().isActiveOrGracePeriod(height))
-			return ValidationResult::Success;
+			// if grace period after expiration has passed, any signer can claim the namespace
+			if (!root.lifetime().isActiveOrGracePeriod(height))
+				return ValidationResult::Success;
 
-		return root.owner() == notification.Signer ? ValidationResult::Success : Failure_Namespace_Owner_Conflict;
-	});
+			return root.owner() == notification.Signer ? ValidationResult::Success : Failure_Namespace_Owner_Conflict;
+		});
+	}
 }}

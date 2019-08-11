@@ -25,7 +25,9 @@ namespace catapult { namespace cache {
 			, public ReputationCacheDeltaMixins::MutableAccessor
 			, public ReputationCacheDeltaMixins::PatriciaTreeDelta
 			, public ReputationCacheDeltaMixins::BasicInsertRemove
-			, public ReputationCacheDeltaMixins::DeltaElements {
+			, public ReputationCacheDeltaMixins::DeltaElements
+			, public ReputationCacheDeltaMixins::Enable
+			, public ReputationCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = ReputationCacheTypes::CacheReadOnlyType;
 

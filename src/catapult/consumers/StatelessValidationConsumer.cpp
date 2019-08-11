@@ -24,6 +24,7 @@
 #include "TransactionConsumers.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "catapult/validators/AggregateValidationResult.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace consumers {
 
@@ -81,7 +82,7 @@ namespace catapult { namespace consumers {
 		return MakeConsumer(pValidator, [pValidationPolicy, failedTransactionSink](auto& elements, auto dispatch) {
 			model::WeakEntityInfos entityInfos;
 			std::vector<size_t> entityInfoElementIndexes;
-			ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes);
+			ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes, config::HEIGHT_OF_LATEST_CONFIG);
 
 			auto results = dispatch(AsAllFunction(*pValidationPolicy), entityInfos);
 			auto numSkippedElements = 0u;
@@ -101,7 +102,7 @@ namespace catapult { namespace consumers {
 				// only forward failure (not neutral) results
 				if (IsValidationResultFailure(result)) {
 					element.ResultSeverity = disruptor::ConsumerResultSeverity::Failure;
-					failedTransactionSink(element.Transaction, element.EntityHash, result);
+					failedTransactionSink(element.Transaction, config::HEIGHT_OF_LATEST_CONFIG, element.EntityHash, result);
 				}
 			}
 

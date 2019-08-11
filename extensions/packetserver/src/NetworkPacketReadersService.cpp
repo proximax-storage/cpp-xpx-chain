@@ -33,11 +33,8 @@ namespace catapult { namespace packetserver {
 
 		thread::Task CreateAgePeersTask(extensions::ServiceState& state, net::ConnectionContainer& connectionContainer) {
 			auto settings = extensions::SelectorSettings(
-					state.cache(),
-					state.config().BlockChain.TotalChainImportance,
-					state.nodes(),
-					Service_Id,
-					state.config().Node.IncomingConnections);
+					state,
+					Service_Id);
 			auto task = extensions::CreateAgePeersTask(settings, connectionContainer);
 			task.Name += " for service Readers";
 			return task;

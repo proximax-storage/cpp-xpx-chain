@@ -21,11 +21,14 @@
 #pragma once
 #include "catapult/ionet/PacketHandlers.h"
 
-namespace catapult { namespace io { class BlockStorageCache; } }
+namespace catapult {
+	namespace extensions { class ServiceState; }
+	namespace io { class BlockStorageCache; }
+}
 
 namespace catapult { namespace handlers {
 
 	/// Registers a sub cache merkle roots handler in \a handlers that responds with the sub cache merkle roots at a specified height
 	/// from \a storage.
-	void RegisterSubCacheMerkleRootsHandler(ionet::ServerPacketHandlers& handlers, const io::BlockStorageCache& storage);
+	void RegisterSubCacheMerkleRootsHandler(extensions::ServiceState& state);
 }}

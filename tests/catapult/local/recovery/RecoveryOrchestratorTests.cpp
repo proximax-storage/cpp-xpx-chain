@@ -30,6 +30,7 @@
 #include "tests/catapult/local/recovery/test/FilechainTestUtils.h"
 #include "tests/test/core/BlockStorageTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/core/TransactionStatusTestUtils.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -238,8 +239,16 @@ namespace catapult { namespace local {
 				prepareSavedStorage(config);
 
 				test::AddRecoveryPluginExtensions(const_cast<config::ExtensionsConfiguration&>(config.Extensions));
+				// TODO: investigate an issue with mock config holder crached in destructor on orchestrator assert when
+				// local variable passed to bootstrapper instead of temporary object.
+//				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+//				auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
+//						pConfigHolder,
+//						resourcesDirectory(),
+//						extensions::ProcessDisposition::Recovery,
+//						"RecoveryOrchestratorTests");
 				auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
-						std::move(config),
+						config::CreateMockConfigurationHolder(config),
 						resourcesDirectory(),
 						extensions::ProcessDisposition::Recovery,
 						"RecoveryOrchestratorTests");

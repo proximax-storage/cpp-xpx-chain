@@ -22,6 +22,7 @@
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/cache/SimpleCache.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
@@ -33,7 +34,8 @@ namespace catapult { namespace observers {
 	namespace {
 		void AssertPruningPredicate(Height height, NotifyMode mode, size_t pruneInterval, bool expectedResult) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
@@ -159,11 +161,11 @@ namespace catapult { namespace observers {
 			{}
 
 		public:
-			CacheDeltaType createDelta() {
+			CacheDeltaType createDelta(const Height&) {
 				return PrunableCacheDelta(m_pruneHeights, m_pruneTimes, m_touchHeights);
 			}
 
-			CacheDeltaType createDetachedDelta() const {
+			CacheDeltaType createDetachedDelta(const Height&) const {
 				CATAPULT_THROW_RUNTIME_ERROR("createDetachedDelta - not supported");
 			}
 
@@ -217,10 +219,10 @@ namespace catapult { namespace observers {
 			return out.str();
 		}
 
-		using PruningObserver = NotificationObserverT<model::BlockNotification>;
+		using PruningObserver = NotificationObserverT<model::BlockNotification<1>>;
 
 		void NotifyBlock(const PruningObserver& observer, ObserverContext& context, Timestamp timestamp) {
-			observer.notify(model::BlockNotification(Key(), Key(), timestamp, Difficulty(), 1, 1), context);
+			observer.notify(model::BlockNotification<1>(Key(), Key(), timestamp, Difficulty(), 1, 1), context);
 		}
 
 		void NotifyBlock(const PruningObserver& observer, ObserverContext& context) {
@@ -279,6 +281,12 @@ namespace catapult { namespace observers {
 			EXPECT_TRUE(subCache.pruneHeights().empty()) << message;
 			EXPECT_EQ(std::vector<Timestamp>({ timestamp }), subCache.pruneTimes()) << message;
 			EXPECT_TRUE(subCache.touchHeights().empty()) << message;
+		}
+
+		auto CreateConfigHolder() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.BlockPruneInterval = 10;
+			return config::CreateMockConfigurationHolder(config);
 		}
 	}
 
@@ -358,7 +366,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverIsCreatedWithCorrectName) {
 		// Act:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", 10);
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", CreateConfigHolder());
 
 		// Assert:
 		EXPECT_EQ("FooPruningObserver", pObserver->name());
@@ -366,7 +374,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverSkipsPruningWhenModeIsRollback) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", 10);
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", CreateConfigHolder());
 
 		// Act + Assert:
 		auto mode = NotifyMode::Rollback;
@@ -381,7 +389,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverSkipsPruningWhenHeightIsNotDivisibleByPruneInterval) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", 10);
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", CreateConfigHolder());
 
 		// Act + Assert:
 		auto mode = NotifyMode::Commit;
@@ -393,7 +401,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverPrunesWhenHeightIsDivisibleByPruneInterval) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", 10);
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", CreateConfigHolder());
 
 		// Act + Assert:
 		auto mode = NotifyMode::Commit;

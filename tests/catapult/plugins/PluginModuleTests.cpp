@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/plugins/PluginModule.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 
@@ -27,7 +28,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS PluginModuleTests
 
 	namespace {
-		constexpr auto Valid_Plugin_Name = "catapult.plugins.transfer";
+		constexpr auto Valid_Plugin_Name = PLUGIN_NAME(transfer);
 		constexpr auto Valid_Symbol_Name = "RegisterSubsystem";
 	}
 
@@ -47,12 +48,12 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CannotLoadUnkownPlugin_ExplicitDirectory) {
 		// Assert:
-		AssertCannotLoadPlugin(test::GetExplicitPluginsDirectory(), "catapult.plugins.awesome");
+		AssertCannotLoadPlugin(test::GetExplicitPluginsDirectory(), PLUGIN_NAME(awesome));
 	}
 
 	TEST(TEST_CLASS, CannotLoadUnkownPlugin_ImplicitDirectory) {
 		// Assert:
-		AssertCannotLoadPlugin("", "catapult.plugins.awesome");
+		AssertCannotLoadPlugin("", PLUGIN_NAME(awesome));
 	}
 
 	// endregion

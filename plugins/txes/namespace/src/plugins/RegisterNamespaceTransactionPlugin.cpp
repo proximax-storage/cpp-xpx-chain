@@ -19,11 +19,15 @@
 **/
 
 #include "RegisterNamespaceTransactionPlugin.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/constants.h"
+#include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/constants.h"
+#include "catapult/plugins/PluginUtils.h"
 
 using namespace catapult::model;
 
@@ -35,52 +39,89 @@ namespace catapult { namespace plugins {
 				const NamespaceRentalFeeConfiguration& config,
 				const TTransaction& transaction,
 				NotificationSubscriber& sub) {
-			// a. exempt the nemesis account
-			if (config.NemesisPublicKey == transaction.Signer)
-				return;
-
 			auto rentalFee = config.ChildFee;
-			if (transaction.IsRootRegistration()) {
-				// b. don't charge fees for eternal namespaces
-				if (Eternal_Artifact_Duration == transaction.Duration)
+			switch (transaction.EntityVersion()) {
+			case 2:
+				// a. exempt the nemesis account
+				if (config.NemesisPublicKey == transaction.Signer)
 					return;
 
-				rentalFee = Amount(config.RootFeePerBlock.unwrap() * transaction.Duration.unwrap());
-			}
+				if (transaction.IsRootRegistration()) {
+					// b. don't charge fees for eternal namespaces
+					if (Eternal_Artifact_Duration == transaction.Duration)
+						return;
 
-			sub.notify(BalanceTransferNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
-			sub.notify(NamespaceRentalFeeNotification(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
+					rentalFee = Amount(config.RootFeePerBlock.unwrap() * transaction.Duration.unwrap());
+				}
+
+				sub.notify(BalanceTransferNotification<1>(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
+				sub.notify(NamespaceRentalFeeNotification<1>(transaction.Signer, config.SinkAddress, config.CurrencyMosaicId, rentalFee));
+				break;
+
+			default:
+				CATAPULT_LOG(debug) << "invalid version of RegisterNamespaceTransaction: " << transaction.EntityVersion();
+			}
+		}
+
+		NamespaceRentalFeeConfiguration ToNamespaceRentalFeeConfiguration(
+			const model::NetworkInfo& network,
+			UnresolvedMosaicId currencyMosaicId,
+			const config::NamespaceConfiguration& config) {
+			NamespaceRentalFeeConfiguration rentalFeeConfig;
+			rentalFeeConfig.SinkPublicKey = config.NamespaceRentalFeeSinkPublicKey;
+			rentalFeeConfig.CurrencyMosaicId = currencyMosaicId;
+			rentalFeeConfig.RootFeePerBlock = config.RootNamespaceRentalFeePerBlock;
+			rentalFeeConfig.ChildFee = config.ChildNamespaceRentalFee;
+			rentalFeeConfig.NemesisPublicKey = network.PublicKey;
+
+			// sink address is already resolved but needs to be passed as unresolved into notification
+			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, network.Identifier);
+			std::memcpy(rentalFeeConfig.SinkAddress.data(), sinkAddress.data(), sinkAddress.size());
+			return rentalFeeConfig;
 		}
 
 		template<typename TTransaction>
-		auto CreatePublisher(const NamespaceRentalFeeConfiguration& config) {
-			return [config](const TTransaction& transaction, NotificationSubscriber& sub) {
-				// 1. sink account notification
-				sub.notify(AccountPublicKeyNotification(config.SinkPublicKey));
+		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
+				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight).BlockChain;
+				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
+				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
+				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
 
-				// 2. rental fee charge
-				PublishBalanceTransfer(config, transaction, sub);
+				switch (transaction.EntityVersion()) {
+				case 2: {
+					// 1. sink account notification
+					sub.notify(AccountPublicKeyNotification<1>(rentalFeeConfig.SinkPublicKey));
 
-				// 3. registration notifications
-				sub.notify(NamespaceNotification(transaction.NamespaceType));
-				auto parentId = Namespace_Base_Id;
-				if (transaction.IsRootRegistration()) {
-					using Notification = RootNamespaceNotification;
-					sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.Duration));
-				} else {
-					using Notification = ChildNamespaceNotification;
-					sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.ParentId));
-					parentId = transaction.ParentId;
-				}
+					// 2. rental fee charge
+					PublishBalanceTransfer(rentalFeeConfig, transaction, sub);
 
-				sub.notify(NamespaceNameNotification(
+					// 3. registration notifications
+					sub.notify(NamespaceNotification<1>(transaction.NamespaceType));
+					auto parentId = Namespace_Base_Id;
+					if (transaction.IsRootRegistration()) {
+						using Notification = RootNamespaceNotification<1>;
+						sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.Duration));
+					} else {
+						using Notification = ChildNamespaceNotification<1>;
+						sub.notify(Notification(transaction.Signer, transaction.NamespaceId, transaction.ParentId));
+						parentId = transaction.ParentId;
+					}
+
+					sub.notify(NamespaceNameNotification<1>(
 						transaction.NamespaceId,
 						parentId,
 						transaction.NamespaceNameSize,
 						transaction.NamePtr()));
+					break;
+				}
+
+				default:
+					CATAPULT_LOG(debug) << "invalid version of RegisterNamespaceTransaction: " << transaction.EntityVersion();
+				}
 			};
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, Default, CreatePublisher, NamespaceRentalFeeConfiguration)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, Default, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
 }}

@@ -63,7 +63,8 @@ namespace catapult { namespace validators {
 		template<typename TAction>
 		void RunTest(const PopulateOptions& options, TAction action) {
 			// Arrange:
-			auto cache = test::PropertyCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::PropertyCacheFactory::Create(config);
 			auto address = PopulateCache(options, cache);
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();

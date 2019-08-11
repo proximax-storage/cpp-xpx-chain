@@ -31,14 +31,15 @@ namespace catapult { namespace observers {
 	// region rollback
 
 	namespace {
-		using SourceChangeType = model::SourceChangeNotification::SourceChangeType;
+		using SourceChangeType = model::SourceChangeNotification<1>::SourceChangeType;
 
 		void AssertRollbackDoesNotChangeObserverSource(SourceChangeType primaryChangeType, SourceChangeType secondaryChangeType) {
 			// Arrange:
 			auto pObserver = CreateSourceChangeObserver();
-			auto notification = model::SourceChangeNotification(primaryChangeType, 10, secondaryChangeType, 5);
+			auto notification = model::SourceChangeNotification<1>(primaryChangeType, 10, secondaryChangeType, 5);
 
-			test::ObserverTestContext context(NotifyMode::Rollback);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			test::ObserverTestContext context(NotifyMode::Rollback, Height{444}, config);
 			context.statementBuilder().setSource({ 15, 22 });
 
 			// Act:
@@ -82,9 +83,10 @@ namespace catapult { namespace observers {
 				const model::ReceiptSource& expectedSource) {
 			// Arrange:
 			auto pObserver = CreateSourceChangeObserver();
-			auto notification = model::SourceChangeNotification(primaryChangeType, 10, secondaryChangeType, 5);
+			auto notification = model::SourceChangeNotification<1>(primaryChangeType, 10, secondaryChangeType, 5);
 
-			test::ObserverTestContext context(NotifyMode::Commit);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			context.statementBuilder().setSource({ 15, 22 });
 
 			// Act:

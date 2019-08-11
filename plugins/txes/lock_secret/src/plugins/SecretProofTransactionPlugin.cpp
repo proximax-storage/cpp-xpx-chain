@@ -30,17 +30,24 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			sub.notify(SecretLockHashAlgorithmNotification(transaction.HashAlgorithm));
-			sub.notify(ProofSecretNotification(
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			switch (transaction.EntityVersion()) {
+			case 1:
+				sub.notify(SecretLockHashAlgorithmNotification<1>(transaction.HashAlgorithm));
+				sub.notify(ProofSecretNotification<1>(
 					transaction.HashAlgorithm,
 					transaction.Secret,
 					{ transaction.ProofPtr(), transaction.ProofSize }));
-			sub.notify(ProofPublicationNotification(
+				sub.notify(ProofPublicationNotification<1>(
 					transaction.Signer,
 					transaction.HashAlgorithm,
 					transaction.Secret,
 					transaction.Recipient));
+				break;
+
+			default:
+					CATAPULT_LOG(debug) << "invalid version of SecretProofTransaction: " << transaction.EntityVersion();
+			}
 		}
 	}
 

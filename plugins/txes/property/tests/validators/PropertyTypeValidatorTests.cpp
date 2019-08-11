@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, model::PropertyType propertyType) {
 			// Arrange:
-			model::PropertyTypeNotification notification(propertyType);
+			model::PropertyTypeNotification<1> notification(propertyType);
 			auto pValidator = CreatePropertyTypeValidator();
 
 			// Act:

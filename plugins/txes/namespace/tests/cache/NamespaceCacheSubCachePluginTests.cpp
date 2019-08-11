@@ -18,7 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/cache/NamespaceCacheSubCachePlugin.h"
+#include "src/config/NamespaceConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
@@ -29,6 +32,21 @@ namespace catapult { namespace cache {
 
 #define TEST_CLASS NamespaceCacheSubCachePluginTests
 
+	namespace {
+		auto CreateConfig() {
+			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
+			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(0);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			return blockChainConfig;
+		}
+
+		auto DefaultCacheOptions() {
+			return NamespaceCacheTypes::Options{ config::CreateMockConfigurationHolder(CreateConfig()) };
+		}
+	}
+
 	// region NamespaceCacheSummaryCacheStorage
 
 	namespace {
@@ -36,7 +54,7 @@ namespace catapult { namespace cache {
 		void RunCacheStorageTest(TAction action) {
 			// Arrange:
 			auto config = CacheConfiguration();
-			NamespaceCache cache(config, NamespaceCacheTypes::Options());
+			NamespaceCache cache(config, DefaultCacheOptions());
 			NamespaceCacheSummaryCacheStorage storage(cache);
 
 			// Act + Assert:
@@ -47,7 +65,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CannotSaveAll) {
 		// Arrange:
 		RunCacheStorageTest([](const auto& storage, const auto&) {
-			auto catapultCache = test::NamespaceCacheFactory::Create();
+			auto catapultCache = test::NamespaceCacheFactory::Create(CreateConfig(), BlockDuration{0});
 			auto cacheView = catapultCache.createView();
 
 			std::vector<uint8_t> buffer;
@@ -61,8 +79,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanSaveSummary) {
 		// Arrange:
 		RunCacheStorageTest([](const auto& storage, const auto&) {
-			auto catapultCache = test::NamespaceCacheFactory::Create();
-
+			auto catapultCache = test::NamespaceCacheFactory::Create(CreateConfig(), BlockDuration{0});
 			// - insert root with 2 children, then renew root
 			auto cacheDelta = catapultCache.createDelta();
 			auto& delta = cacheDelta.sub<NamespaceCache>();
@@ -81,10 +98,10 @@ namespace catapult { namespace cache {
 			storage.saveSummary(cacheDelta, stream);
 
 			// Assert: all sizes were saved
-			ASSERT_EQ(sizeof(uint64_t) * 2, buffer.size());
+			ASSERT_EQ(sizeof(VersionType) + sizeof(uint64_t) * 2, buffer.size());
 
-			auto activeSize = reinterpret_cast<uint64_t&>(buffer[0]);
-			auto deepSize = reinterpret_cast<uint64_t&>(buffer[sizeof(uint64_t)]);
+			auto activeSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType)));
+			auto deepSize = reinterpret_cast<uint64_t&>(*(buffer.data() + sizeof(VersionType) + sizeof(uint64_t)));
 			EXPECT_EQ(3u, activeSize);
 			EXPECT_EQ(6u, deepSize);
 
@@ -93,11 +110,16 @@ namespace catapult { namespace cache {
 		});
 	}
 
-	TEST(TEST_CLASS, CanLoadSummary) {
-		// Arrange:
-		RunCacheStorageTest([](auto& storage, const auto& cache) {
+	namespace {
+		void CanLoadSummary(VersionType version) {
+			// Arrange:
+			auto config = CacheConfiguration();
+			NamespaceCache cache(config, DefaultCacheOptions());
+			NamespaceCacheSummaryCacheStorage storage(cache);
+
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream stream(buffer);
+			io::Write32(stream, version);
 			io::Write64(stream, 7);
 			io::Write64(stream, 11);
 
@@ -105,10 +127,14 @@ namespace catapult { namespace cache {
 			storage.loadAll(stream, 0);
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(7u, view->activeSize());
 			EXPECT_EQ(11u, view->deepSize());
-		});
+		}
+	}
+
+	TEST(TEST_CLASS, CanLoadSummary_v1) {
+		CanLoadSummary(1);
 	}
 
 	// endregion
@@ -122,7 +148,7 @@ namespace catapult { namespace cache {
 			class PluginType : public NamespaceCacheSubCachePlugin {
 			public:
 				explicit PluginType(const CacheConfiguration& config)
-						: NamespaceCacheSubCachePlugin(config, NamespaceCacheTypes::Options())
+						: NamespaceCacheSubCachePlugin(config, DefaultCacheOptions())
 				{}
 			};
 		};

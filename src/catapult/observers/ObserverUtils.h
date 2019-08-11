@@ -21,6 +21,7 @@
 #pragma once
 #include "ObserverContext.h"
 #include "ObserverTypes.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace observers {
 
@@ -38,11 +39,11 @@ namespace catapult { namespace observers {
 	/// Creates a block-based cache pruning observer with \a name that runs every \a interval blocks
 	/// with the specified grace period (\a gracePeriod).
 	template<typename TCache>
-	NotificationObserverPointerT<model::BlockNotification> CreateCacheBlockPruningObserver(
-			const std::string& name,
-			size_t interval,
-			BlockDuration gracePeriod) {
-		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification>;
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
+		const std::string& name,
+		size_t interval,
+		BlockDuration gracePeriod) {
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
 		return std::make_unique<ObserverType>(name + "PruningObserver", [interval, gracePeriod](const auto&, auto& context) {
 			if (!ShouldPrune(context, interval))
 				return;
@@ -56,12 +57,60 @@ namespace catapult { namespace observers {
 		});
 	}
 
+	/// Creates a block-based cache pruning observer with \a name that runs every \a interval blocks
+	/// with the grace period equals to maximum rollback blocks as specified in (\a config).
+	template<typename TCache>
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
+			const std::string& name,
+			size_t interval,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
+		return std::make_unique<ObserverType>(name + "PruningObserver", [interval, pConfigHolder](const auto&, auto& context) {
+			if (!ShouldPrune(context, interval))
+				return;
+
+			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
+			auto gracePeriod = BlockDuration(config.MaxRollbackBlocks);
+			if (context.Height.unwrap() <= gracePeriod.unwrap())
+				return;
+
+			auto pruneHeight = Height(context.Height.unwrap() - gracePeriod.unwrap());
+			auto& cache = context.Cache.template sub<TCache>();
+			cache.prune(pruneHeight);
+		});
+	}
+
+	/// Creates a block-based cache pruning observer with \a name that runs every BlockPruneInterval
+	/// as specified in (\a config).
+	template<typename TCache>
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
+			const std::string& name,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
+		return std::make_unique<ObserverType>(name + "PruningObserver", [pConfigHolder](const auto&, auto& context) {
+			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
+			if (!ShouldPrune(context, config.BlockPruneInterval))
+				return;
+
+			auto gracePeriod = BlockDuration{};
+			if (context.Height.unwrap() <= gracePeriod.unwrap())
+				return;
+
+			auto pruneHeight = Height(context.Height.unwrap() - gracePeriod.unwrap());
+			auto& cache = context.Cache.template sub<TCache>();
+			cache.prune(pruneHeight);
+		});
+	}
+
 	/// Creates a time-based cache pruning observer with \a name that runs every \a interval blocks.
 	template<typename TCache>
-	NotificationObserverPointerT<model::BlockNotification> CreateCacheTimePruningObserver(const std::string& name, size_t interval) {
-		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification>;
-		return std::make_unique<ObserverType>(name + "PruningObserver", [interval](const auto& notification, const auto& context) {
-			if (!ShouldPrune(context, interval))
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheTimePruningObserver(
+			const std::string& name,
+			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
+		return std::make_unique<ObserverType>(name + "PruningObserver", [pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
+			if (!ShouldPrune(context, config.BlockPruneInterval))
 				return;
 
 			auto& cache = context.Cache.template sub<TCache>();
@@ -72,10 +121,10 @@ namespace catapult { namespace observers {
 	/// Creates a block-based cache touch observer with \a name that touches the cache at every block height
 	/// and creates a receipt of type \a receiptType for all deactivating elements.
 	template<typename TCache>
-	NotificationObserverPointerT<model::BlockNotification> CreateCacheBlockTouchObserver(
+	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockTouchObserver(
 			const std::string& name,
 			model::ReceiptType receiptType) {
-		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification>;
+		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
 		return std::make_unique<ObserverType>(name + "TouchObserver", [receiptType](const auto&, auto& context) {
 			auto& cache = context.Cache.template sub<TCache>();
 			auto expiryIds = cache.touch(context.Height);

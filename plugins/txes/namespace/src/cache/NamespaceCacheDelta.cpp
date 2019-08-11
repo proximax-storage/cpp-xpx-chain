@@ -19,7 +19,9 @@
 **/
 
 #include "NamespaceCacheDelta.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "catapult/cache/IdentifierGroupCacheUtils.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "catapult/utils/Casting.h"
 #include <numeric>
 #include <unordered_set>
@@ -54,12 +56,15 @@ namespace catapult { namespace cache {
 			, m_pHistoryById(namespaceSets.pPrimary)
 			, m_pNamespaceById(namespaceSets.pFlatMap)
 			, m_pRootNamespaceIdsByExpiryHeight(namespaceSets.pHeightGrouping)
-			, m_gracePeriodDuration(options.GracePeriodDuration)
+			, m_pConfigHolder(options.ConfigHolderPtr)
 	{}
 
 	void BasicNamespaceCacheDelta::insert(const state::RootNamespace& ns) {
 		// register the namespace for expiration at the end of its lifetime (if its lifetime changes later, it will not be pruned)
-		auto nsLifetimeWithGracePeriod = state::NamespaceLifetime(ns.lifetime().Start, ns.lifetime().End, m_gracePeriodDuration);
+		const auto& blockChainConfig = m_pConfigHolder->Config(height()).BlockChain;
+		const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
+		auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
+		auto nsLifetimeWithGracePeriod = state::NamespaceLifetime(ns.lifetime().Start, ns.lifetime().End, gracePeriodDuration);
 		AddIdentifierWithGroup(*m_pRootNamespaceIdsByExpiryHeight, nsLifetimeWithGracePeriod.GracePeriodEnd, ns.id());
 
 		auto historyIter = m_pHistoryById->find(ns.id());

@@ -22,7 +22,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(TotalTransactions, model::BlockNotification, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(TotalTransactions, model::BlockNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		if (NotifyMode::Commit == context.Mode)
 			context.State.NumTotalTransactions += notification.NumTransactions;
 		else

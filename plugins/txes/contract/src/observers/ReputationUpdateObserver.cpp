@@ -9,7 +9,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::ReputationUpdateNotification;
+	using Notification = model::ReputationUpdateNotification<1>;
 
 	namespace {
 		class AccountReputationFacade {

@@ -20,6 +20,7 @@
 
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/cache/CatapultCache.h"
+#include "catapult/model/BlockChainConfiguration.h"
 #include "tests/catapult/validators/test/AggregateValidatorTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -37,7 +38,8 @@ namespace catapult { namespace validators {
 
 		public:
 			ValidationResult validate(uint8_t notificationId) {
-				auto cache = test::CreateEmptyCatapultCache();
+				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto cache = test::CreateEmptyCatapultCache(config);
 				return test::ValidateNotification<model::Notification>(*pDemuxValidator, test::TaggedNotification(notificationId), cache);
 			}
 		};
@@ -213,16 +215,17 @@ namespace catapult { namespace validators {
 			Breadcrumbs breadcrumbs;
 			stateful::DemuxValidatorBuilder builder;
 
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 
 			builder
-				.add(CreateBreadcrumbValidator<model::AccountPublicKeyNotification>(breadcrumbs, "alpha"))
-				.add(CreateBreadcrumbValidator<model::AccountAddressNotification>(breadcrumbs, "OMEGA"))
+				.add(CreateBreadcrumbValidator<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))
+				.add(CreateBreadcrumbValidator<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
 				.add(CreateBreadcrumbValidator(breadcrumbs, "zEtA"));
 			auto pValidator = builder.build([](auto) { return false; });
 
 			// Act:
-			auto notification = model::AccountPublicKeyNotification(Key());
+			auto notification = model::AccountPublicKeyNotification<1>(Key());
 			prepareNotification(notification);
 			auto result = test::ValidateNotification<model::Notification>(*pValidator, notification, cache);
 

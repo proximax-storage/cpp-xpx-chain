@@ -33,8 +33,8 @@ namespace catapult { namespace subscribers {
 		using BasicAggregateSubscriber<TTransactionStatusSubscriber>::BasicAggregateSubscriber;
 
 	public:
-		void notifyStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) override {
-			this->forEach([&transaction, &hash, status](auto& subscriber) { subscriber.notifyStatus(transaction, hash, status); });
+		void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
+			this->forEach([&transaction, &height, &hash, status](auto& subscriber) { subscriber.notifyStatus(transaction, height, hash, status); });
 		}
 
 		void flush() override {

@@ -27,25 +27,33 @@
 namespace catapult { namespace extensions {
 
 	ProcessBootstrapper::ProcessBootstrapper(
-			const config::CatapultConfiguration& config,
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
 			const std::string& resourcesPath,
 			ProcessDisposition disposition,
 			const std::string& servicePoolName)
-			: m_config(std::move(config))
+			: m_pConfigHolder(pConfigHolder)
 			, m_resourcesPath(resourcesPath)
 			, m_disposition(disposition)
 			, m_pMultiServicePool(std::make_unique<thread::MultiServicePool>(
 					servicePoolName,
 					thread::MultiServicePool::DefaultPoolConcurrency(),
-					m_config.Node.ShouldUseSingleThreadPool
+					m_pConfigHolder->Config().Node.ShouldUseSingleThreadPool
 							? thread::MultiServicePool::IsolatedPoolMode::Disabled
 							: thread::MultiServicePool::IsolatedPoolMode::Enabled))
-			, m_subscriptionManager(config)
-			, m_pluginManager(m_config.BlockChain, CreateStorageConfiguration(config), m_config.Inflation)
+			, m_subscriptionManager(m_pConfigHolder->Config())
+			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config()))
 	{}
 
+	const config::CatapultConfiguration& ProcessBootstrapper::config(const Height& height) const {
+		return m_pConfigHolder->Config(height);
+	}
+
 	const config::CatapultConfiguration& ProcessBootstrapper::config() const {
-		return m_config;
+		return m_pConfigHolder->Config();
+	}
+
+	const std::shared_ptr<config::LocalNodeConfigurationHolder>& ProcessBootstrapper::configHolder() const {
+		return m_pConfigHolder;
 	}
 
 	const std::string& ProcessBootstrapper::resourcesPath() const {
@@ -76,6 +84,14 @@ namespace catapult { namespace extensions {
 		return m_pluginManager;
 	}
 
+	CacheHolder& ProcessBootstrapper::cacheHolder() {
+		return m_cacheHolder;
+	}
+
+	const CacheHolder& ProcessBootstrapper::cacheHolder() const {
+		return m_cacheHolder;
+	}
+
 	namespace {
 		using RegisterExtensionFunc = void (*)(ProcessBootstrapper&);
 
@@ -94,8 +110,8 @@ namespace catapult { namespace extensions {
 	}
 
 	void ProcessBootstrapper::loadExtensions() {
-		for (const auto& extension : m_config.Extensions.Names) {
-			m_extensionModules.emplace_back(m_config.User.PluginsDirectory, extension);
+		for (const auto& extension : config().Extensions.Names) {
+			m_extensionModules.emplace_back(config().User.PluginsDirectory, extension);
 
 			CATAPULT_LOG(info) << "registering dynamic extension " << extension;
 			LoadExtension(m_extensionModules.back(), *this);

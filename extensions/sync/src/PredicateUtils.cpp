@@ -21,7 +21,7 @@
 #include "PredicateUtils.h"
 #include "TransactionSpamThrottle.h"
 #include "catapult/cache_tx/UtCache.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/extensions/ServiceState.h"
 
 namespace catapult { namespace sync {
 
@@ -44,15 +44,11 @@ namespace catapult { namespace sync {
 		}
 	}
 
-	chain::UtUpdater::Throttle CreateUtUpdaterThrottle(const config::CatapultConfiguration& config) {
-		SpamThrottleConfiguration throttleConfig(
-				config.Node.TransactionSpamThrottlingMaxBoostFee,
-				config.BlockChain.TotalChainImportance,
-				config.Node.UnconfirmedTransactionsCacheMaxSize,
-				config.BlockChain.MaxTransactionsPerBlock);
+	chain::UtUpdater::Throttle CreateUtUpdaterThrottle(extensions::ServiceState& state) {
+		const auto& config = state.config();
 
 		return config.Node.ShouldEnableTransactionSpamThrottling
-				? CreateTransactionSpamThrottle(throttleConfig, IsBondedTransaction)
-				: CreateDefaultUtUpdaterThrottle(throttleConfig.MaxCacheSize);
+				? CreateTransactionSpamThrottle(state, IsBondedTransaction)
+				: CreateDefaultUtUpdaterThrottle(config.Node.UnconfirmedTransactionsCacheMaxSize);
 	}
 }}

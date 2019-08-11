@@ -51,7 +51,7 @@ namespace catapult { namespace observers {
 		};
 
 		struct AddressTraits {
-			using NotificationType = model::AliasedAddressNotification;
+			using NotificationType = model::AliasedAddressNotification_v1;
 			using AliasType = Address;
 
 			static auto CreateObserver() {
@@ -60,7 +60,7 @@ namespace catapult { namespace observers {
 		};
 
 		struct MosaicIdTraits {
-			using NotificationType = model::AliasedMosaicIdNotification;
+			using NotificationType = model::AliasedMosaicIdNotification_v1;
 			using AliasType = MosaicId;
 
 			static auto CreateObserver() {
@@ -83,6 +83,7 @@ namespace catapult { namespace observers {
 
 	namespace {
 		static constexpr auto Default_Namespace_Id = NamespaceId(123);
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
 
 		template<typename TTraits, typename TSeedCacheFunc, typename TCheckCacheFunc>
 		void RunTest(
@@ -134,7 +135,7 @@ namespace catapult { namespace observers {
 		// Act:
 		RunTest<TTraits>(
 				notification,
-				ObserverTestContext(TDirectionTraits::Notify_Mode, Height(888)),
+				ObserverTestContext(TDirectionTraits::Notify_Mode, Height(888), Default_Config),
 				SeedCacheWithoutLink,
 				[&notification](const auto& namespaceCacheDelta, auto namespaceId) {
 					/// Assert: validate alias that namespace should have
@@ -157,7 +158,7 @@ namespace catapult { namespace observers {
 		// Act:
 		RunTest<TTraits>(
 				notification,
-				ObserverTestContext(TDirectionTraits::Notify_Mode, Height(888)),
+				ObserverTestContext(TDirectionTraits::Notify_Mode, Height(888), Default_Config),
 				SeedCacheWithLink<TTraits>,
 				[](const auto& namespaceCacheDelta, auto namespaceId) {
 					/// Assert: alias does not exist anymore

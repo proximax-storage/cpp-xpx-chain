@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(ValidationResult expectedResult, const std::vector<uint16_t>& rawValues) {
 			// Arrange:
 			auto modifications = CreateModifications(rawValues);
-			model::ModifyTransactionTypePropertyNotification notification(
+			model::ModifyTransactionTypePropertyNotification_v1 notification(
 					test::GenerateRandomByteArray<Key>(),
 					model::PropertyType::TransactionType,
 					static_cast<uint8_t>(modifications.size()),

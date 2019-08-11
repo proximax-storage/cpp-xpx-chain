@@ -22,6 +22,7 @@
 #include "src/cache/HashCache.h"
 #include "catapult/utils/TimeSpan.h"
 #include "tests/test/core/EntityTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace handlers {
@@ -51,8 +52,9 @@ namespace catapult { namespace handlers {
 
 		auto CreateCacheWithAlternatingHashes(const TimestampedHashes& timestampedHashes) {
 			// only insert every second timestamped hash into the cache
-			auto pCache = std::make_unique<cache::HashCache>(cache::CacheConfiguration(), utils::TimeSpan::FromHours(1));
-			auto delta = pCache->createDelta();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
+			auto pCache = std::make_unique<cache::HashCache>(cache::CacheConfiguration(), pConfigHolder);
+			auto delta = pCache->createDelta(Height{0});
 			auto i = 0u;
 			for (auto timestampedHash : timestampedHashes)
 				if (0 == i++ % 2)

@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 		struct AddressPropertyTraits : public test::BaseAddressPropertyTraits {
 			static constexpr auto CreateValidator = CreateAddressPropertyValueModificationValidator;
 
-			using NotificationType = model::ModifyAddressPropertyValueNotification;
+			using NotificationType = model::ModifyAddressPropertyValueNotification_v1;
 
 			static UnresolvedValueType ToUnresolved(const ValueType& value) {
 				return extensions::CopyToUnresolvedAddress(value);
@@ -49,7 +49,7 @@ namespace catapult { namespace validators {
 		struct MosaicPropertyTraits : public test::BaseMosaicPropertyTraits {
 			static constexpr auto CreateValidator = CreateMosaicPropertyValueModificationValidator;
 
-			using NotificationType = model::ModifyMosaicPropertyValueNotification;
+			using NotificationType = model::ModifyMosaicPropertyValueNotification_v1;
 
 			static UnresolvedValueType ToUnresolved(const ValueType& value) {
 				return extensions::CastToUnresolvedMosaicId(value);
@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 		struct TransactionTypePropertyTraits : public test::BaseTransactionTypePropertyTraits {
 			static constexpr auto CreateValidator = CreateTransactionTypePropertyValueModificationValidator;
 
-			using NotificationType = model::ModifyTransactionTypePropertyValueNotification;
+			using NotificationType = model::ModifyTransactionTypePropertyValueNotification_v1;
 
 			static UnresolvedValueType ToUnresolved(const ValueType& value) {
 				return value;
@@ -118,7 +118,8 @@ namespace catapult { namespace validators {
 				TCreateNotification createNotification,
 				TModificationFactory modificationFactory) {
 			// Arrange:
-			auto cache = test::PropertyCacheFactory::Create();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::PropertyCacheFactory::Create(config);
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto values = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numValues);
 			test::PopulateCache<TPropertyValueTraits, TOperationTraits>(cache, key, values);

@@ -20,10 +20,10 @@ namespace catapult { namespace observers {
 		constexpr auto Add = model::CosignatoryModificationType::Add;
 		constexpr auto Del = model::CosignatoryModificationType::Del;
 		using ObserverTestContext = test::ObserverTestContextT<test::ReputationCacheFactory>;
-		using Notification = model::ReputationUpdateNotification;
+		using Notification = model::ReputationUpdateNotification<1>;
 		using Modifications = std::vector<model::CosignatoryModification>;
 
-		std::unique_ptr<model::ReputationUpdateNotification> CreateNotification(const std::vector<model::CosignatoryModification>& modifications) {
+		std::unique_ptr<model::ReputationUpdateNotification<1>> CreateNotification(const std::vector<model::CosignatoryModification>& modifications) {
 			std::vector<const model::CosignatoryModification*> modificationPtrs;
 
 			for (auto i = 0u; i < modifications.size(); ++i) {
@@ -47,7 +47,8 @@ namespace catapult { namespace observers {
 				const std::vector<ReputationValues> initialValues,
 				const std::vector<ReputationValues>& expectedValues) {
 			// Arrange:
-			ObserverTestContext context{mode, Height(777)};
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			ObserverTestContext context(mode, Height(777), config);
 			auto pObserver = CreateReputationUpdateObserver();
 
 			// - seed the cache

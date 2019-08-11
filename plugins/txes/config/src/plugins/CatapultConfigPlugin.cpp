@@ -1,0 +1,53 @@
+/**
+*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "catapult/plugins/CacheHandlers.h"
+#include "catapult/plugins/PluginManager.h"
+#include "CatapultConfigPlugin.h"
+#include "src/cache/CatapultConfigCache.h"
+#include "src/cache/CatapultConfigCacheStorage.h"
+#include "src/cache/CatapultConfigCacheSubCachePlugin.h"
+#include "src/observers/Observers.h"
+#include "src/plugins/CatapultConfigTransactionPlugin.h"
+#include "src/validators/Validators.h"
+
+namespace catapult { namespace plugins {
+
+	void RegisterCatapultConfigSubsystem(PluginManager& manager) {
+		manager.addTransactionSupport(CreateCatapultConfigTransactionPlugin());
+
+		manager.addCacheSupport(std::make_unique<cache::CatapultConfigCacheSubCachePlugin>(manager.cacheConfig(cache::CatapultConfigCache::Name)));
+
+		using CacheHandlersCatapultConfig = CacheHandlers<cache::CatapultConfigCacheDescriptor>;
+		CacheHandlersCatapultConfig::Register<model::FacilityCode::CatapultConfig>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("CONFIG C"), [&cache]() {
+				return cache.sub<cache::CatapultConfigCache>().createView(cache.height())->size();
+			});
+		});
+
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder.add(validators::CreateCatapultConfigPluginConfigValidator());
+		});
+
+		manager.addStatefulValidatorHook([&manager](auto& builder) {
+			builder
+				.add(validators::CreateCatapultConfigSignerValidator())
+				.add(validators::CreateCatapultConfigValidator(manager));
+		});
+
+		manager.addObserverHook([](auto& builder) {
+			builder
+				.add(observers::CreateCatapultConfigObserver());
+		});
+	}
+}}
+
+extern "C" PLUGIN_API
+void RegisterSubsystem(catapult::plugins::PluginManager& manager) {
+	catapult::plugins::RegisterCatapultConfigSubsystem(manager);
+}

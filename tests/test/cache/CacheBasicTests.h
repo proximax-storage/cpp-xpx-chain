@@ -39,7 +39,7 @@ namespace catapult { namespace test {
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
 
 			// Act:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 
 			// Assert:
 			AssertDefaultCacheContents(*view);
@@ -51,7 +51,7 @@ namespace catapult { namespace test {
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
 
 			// Act + Assert:
-			auto createView = [&cache](const auto&) { return cache.createView(); };
+			auto createView = [&cache](const auto&) { return cache.createView(Height{0}); };
 			test::CanCreateSubObjectOnMultipleThreads(cache, createView, [](const auto& view) {
 				AssertDefaultCacheContents(*view);
 			});
@@ -63,9 +63,9 @@ namespace catapult { namespace test {
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
 
 			// Act + Assert:
-			auto createView = [&cache]() { return cache.createView(); };
+			auto createView = [&cache]() { return cache.createView(Height{0}); };
 			test::AssertExclusiveLocks(createView, [&cache]() {
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				return cache.commit();
 			});
 		}
@@ -80,7 +80,7 @@ namespace catapult { namespace test {
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
 
 			// Act:
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Assert:
 			AssertDefaultCacheContents(*delta);
@@ -92,14 +92,14 @@ namespace catapult { namespace test {
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
 
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 
 				// Act + Assert:
-				EXPECT_THROW(cache.createDelta(), catapult_runtime_error);
+				EXPECT_THROW(cache.createDelta(Height{0}), catapult_runtime_error);
 			}
 
 			// Act: cache delta went out of scope, another delta is allowed
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Assert:
 			AssertDefaultCacheContents(*delta);
@@ -115,7 +115,7 @@ namespace catapult { namespace test {
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
 
 			// Act:
-			auto lockableDelta = cache.createDetachedDelta();
+			auto lockableDelta = cache.createDetachedDelta(Height{0});
 
 			// Assert:
 			AssertDefaultCacheContents(*lockableDelta.tryLock());
@@ -125,11 +125,11 @@ namespace catapult { namespace test {
 			// Arrange:
 			CacheType cache;
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
-			std::vector<decltype(cache.createDetachedDelta())> deltas;
+			std::vector<decltype(cache.createDetachedDelta(Height{0}))> deltas;
 
 			// Act:
 			for (auto i = 0u; i < 10; ++i)
-				deltas.push_back(cache.createDetachedDelta());
+				deltas.push_back(cache.createDetachedDelta(Height{0}));
 
 			// Assert:
 			for (auto& lockableDelta : deltas)
@@ -145,8 +145,8 @@ namespace catapult { namespace test {
 			CacheType cache;
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
 
-			using LockableCacheDeltaType = decltype(cache.createDetachedDelta());
-			using LockedCacheDeltaType = decltype(cache.createDetachedDelta().tryLock());
+			using LockableCacheDeltaType = decltype(cache.createDetachedDelta(Height{0}));
+			using LockedCacheDeltaType = decltype(cache.createDetachedDelta(Height{0}).tryLock());
 
 			struct DetachedDeltaGuard {
 			public:
@@ -161,9 +161,9 @@ namespace catapult { namespace test {
 			};
 
 			// Assert:
-			auto createDetachedDelta = [&cache]() { return DetachedDeltaGuard(cache.createDetachedDelta()); };
+			auto createDetachedDelta = [&cache]() { return DetachedDeltaGuard(cache.createDetachedDelta(Height{0})); };
 			test::AssertExclusiveLocks(createDetachedDelta, [&cache]() {
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				return cache.commit();
 			});
 		}
@@ -173,9 +173,9 @@ namespace catapult { namespace test {
 			CacheType cache;
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
 
-			auto detachedDelta = cache.createDetachedDelta();
+			auto detachedDelta = cache.createDetachedDelta(Height{0});
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 
 				// Sanity:
 				std::thread([&detachedDelta]() {
@@ -210,19 +210,19 @@ namespace catapult { namespace test {
 
 			// Act:
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				cache.commit();
 			}
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			AssertDefaultCacheContents(*view);
 		}
 
 		static void AssertCommitThrowsWhenOnlyDetachedDeltasAreOutstanding() {
 			// Arrange:
 			CacheType cache;
-			auto lockableDelta = cache.createDetachedDelta();
+			auto lockableDelta = cache.createDetachedDelta(Height{0});
 
 			// Act + Assert:
 			EXPECT_THROW(cache.commit(), catapult_runtime_error);
@@ -236,7 +236,7 @@ namespace catapult { namespace test {
 			// Arrange:
 			CacheType cache;
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 
 			// Act:
 			auto readOnlyView = view->asReadOnly();
@@ -249,7 +249,7 @@ namespace catapult { namespace test {
 			// Arrange:
 			CacheType cache;
 			detail::InsertMultiple<TTraits>(cache, { 1, 2, 3 });
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Act:
 			auto readOnlyView = delta->asReadOnly();
@@ -277,7 +277,7 @@ namespace catapult { namespace test {
 			// - remove three and add one
 			auto element2 = TTraits::CreateWithId(2);
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->remove(TTraits::MakeId(4));
 				delta->remove(TTraits::MakeId(3));
 				delta->remove(TTraits::MakeId(2));
@@ -290,7 +290,7 @@ namespace catapult { namespace test {
 			}
 
 			// Assert:
-			auto view = cache.createView();
+			auto view = cache.createView(Height{0});
 			EXPECT_EQ(2u, view->size());
 			EXPECT_TRUE(view->contains(TTraits::MakeId(1)));
 			EXPECT_TRUE(view->contains(TTraits::MakeId(2)));

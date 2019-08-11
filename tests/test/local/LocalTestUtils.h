@@ -58,6 +58,9 @@ namespace catapult { namespace test {
 	/// Creates an uninitialized catapult configuration.
 	config::CatapultConfiguration CreateUninitializedCatapultConfiguration();
 
+	/// Creates a supported entity versions configuration.
+	config::SupportedEntityVersions CreateSupportedEntityVersions();
+
 	/// Creates a prototypical catapult configuration that is safe to use in local tests.
 	config::CatapultConfiguration CreatePrototypicalCatapultConfiguration();
 
@@ -85,4 +88,7 @@ namespace catapult { namespace test {
 	/// Creates a plugin manager around \a config.
 	/// \note This overload is the only overload that allows state verification.
 	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const config::CatapultConfiguration& config);
+
+	/// Gets supported entity version serialized configuration.
+	std::string GetSupportedEntityVersionsString();
 }}

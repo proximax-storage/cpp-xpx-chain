@@ -29,28 +29,32 @@ namespace catapult { namespace model {
 #define DEFINE_LOCKHASH_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, LockHash, DESCRIPTION, CODE)
 
 	/// Lock hash duration.
-	DEFINE_LOCKHASH_NOTIFICATION(Hash_Duration, 0x0001, Validator);
+	DEFINE_LOCKHASH_NOTIFICATION(Hash_Duration_v1, 0x0001, Validator);
 
 	/// Lock mosaic.
-	DEFINE_LOCKHASH_NOTIFICATION(Mosaic, 0x0002, Validator);
+	DEFINE_LOCKHASH_NOTIFICATION(Mosaic_v1, 0x0002, Validator);
 
 	/// Lock hash.
-	DEFINE_LOCKHASH_NOTIFICATION(Hash, 0x0003, All);
+	DEFINE_LOCKHASH_NOTIFICATION(Hash_v1, 0x0003, All);
 
 #undef DEFINE_LOCKHASH_NOTIFICATION
 
 	// endregion
 
 	/// Notification of a hash lock mosaic.
-	struct HashLockMosaicNotification : public Notification {
+	template<VersionType version>
+	struct HashLockMosaicNotification;
+
+	template<>
+	struct HashLockMosaicNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockHash_Mosaic_Notification;
+		static constexpr auto Notification_Type = LockHash_Mosaic_v1_Notification;
 
 	public:
 		/// Creates a notification around \a mosaic.
 		explicit HashLockMosaicNotification(UnresolvedMosaic mosaic)
-				: Notification(Notification_Type, sizeof(HashLockMosaicNotification))
+				: Notification(Notification_Type, sizeof(HashLockMosaicNotification<1>))
 				, Mosaic(mosaic)
 		{}
 
@@ -60,20 +64,28 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a hash lock duration.
-	struct HashLockDurationNotification : public BaseLockDurationNotification<HashLockDurationNotification> {
+	template<VersionType version>
+	struct HashLockDurationNotification;
+
+	template<>
+	struct HashLockDurationNotification<1> : public BaseLockDurationNotification<HashLockDurationNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockHash_Hash_Duration_Notification;
+		static constexpr auto Notification_Type = LockHash_Hash_Duration_v1_Notification;
 
 	public:
-		using BaseLockDurationNotification<HashLockDurationNotification>::BaseLockDurationNotification;
+		using BaseLockDurationNotification<HashLockDurationNotification<1>>::BaseLockDurationNotification;
 	};
 
 	/// Notification of a hash lock.
-	struct HashLockNotification : public BaseLockNotification<HashLockNotification> {
+	template<VersionType version>
+	struct HashLockNotification;
+
+	template<>
+	struct HashLockNotification<1> : public BaseLockNotification<HashLockNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockHash_Hash_Notification;
+		static constexpr auto Notification_Type = LockHash_Hash_v1_Notification;
 
 	public:
 		/// Creates hash lock notification around \a signer, \a mosaic, \a duration and \a hash.

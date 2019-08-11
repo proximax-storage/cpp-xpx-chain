@@ -97,20 +97,23 @@ namespace catapult { namespace zeromq {
 				, EntityHash(transactionInfo.EntityHash)
 				, MerkleComponentHash(transactionInfo.MerkleComponentHash)
 				, OptionalAddresses(transactionInfo.OptionalExtractedAddresses.get())
+				, AssociatedHeight(transactionInfo.AssociatedHeight)
 		{}
 
-		explicit WeakTransactionInfo(const model::TransactionElement& element)
+		explicit WeakTransactionInfo(const model::TransactionElement& element, const Height& height)
 				: Transaction(element.Transaction)
 				, EntityHash(element.EntityHash)
 				, MerkleComponentHash(element.MerkleComponentHash)
 				, OptionalAddresses(element.OptionalExtractedAddresses.get())
+				, AssociatedHeight(height)
 		{}
 
-		explicit WeakTransactionInfo(const model::Transaction& transaction, const Hash256& hash)
+		explicit WeakTransactionInfo(const model::Transaction& transaction, const Hash256& hash, const Height& height)
 				: Transaction(transaction)
 				, EntityHash(hash)
 				, MerkleComponentHash(hash)
 				, OptionalAddresses(nullptr)
+				, AssociatedHeight(height)
 		{}
 
 	public:
@@ -118,13 +121,16 @@ namespace catapult { namespace zeromq {
 		const Hash256& EntityHash;
 		const Hash256& MerkleComponentHash;
 		const model::UnresolvedAddressSet* OptionalAddresses;
+		const Height& AssociatedHeight;
 	};
 
 	ZeroMqEntityPublisher::ZeroMqEntityPublisher(
 			unsigned short port,
-			std::unique_ptr<model::NotificationPublisher>&& pNotificationPublisher)
+			std::unique_ptr<model::NotificationPublisher>&& pNotificationPublisher,
+			const model::ExtractorContextFactoryFunc & contextFactory)
 			: m_pNotificationPublisher(std::move(pNotificationPublisher))
 			, m_pSynchronizedPublisher(std::make_unique<SynchronizedPublisher>(port))
+			, m_extractorContextFactory(contextFactory)
 	{}
 
 	ZeroMqEntityPublisher::~ZeroMqEntityPublisher() = default;
@@ -177,14 +183,13 @@ namespace catapult { namespace zeromq {
 			TransactionMarker topicMarker,
 			const model::TransactionElement& transactionElement,
 			Height height) {
-		publishTransaction(topicMarker, WeakTransactionInfo(transactionElement), height);
+		publishTransaction(topicMarker, WeakTransactionInfo(transactionElement, height));
 	}
 
 	void ZeroMqEntityPublisher::publishTransaction(
 			TransactionMarker topicMarker,
-			const model::TransactionInfo& transactionInfo,
-			Height height) {
-		publishTransaction(topicMarker, WeakTransactionInfo(transactionInfo), height);
+			const model::TransactionInfo& transactionInfo) {
+		publishTransaction(topicMarker, WeakTransactionInfo(transactionInfo));
 	}
 
 	void ZeroMqEntityPublisher::publishTransactionHash(TransactionMarker topicMarker, const model::TransactionInfo& transactionInfo) {
@@ -196,21 +201,20 @@ namespace catapult { namespace zeromq {
 
 	void ZeroMqEntityPublisher::publishTransaction(
 			TransactionMarker topicMarker,
-			const WeakTransactionInfo& transactionInfo,
-			Height height) {
-		publish("transaction", topicMarker, transactionInfo, [&transactionInfo, height](auto& multipart) {
+			const WeakTransactionInfo& transactionInfo) {
+		publish("transaction", topicMarker, transactionInfo, [&transactionInfo](auto& multipart) {
 			const auto& transaction = transactionInfo.Transaction;
 			multipart.addmem(static_cast<const void*>(&transaction), transaction.Size);
 			multipart.addmem(static_cast<const void*>(&transactionInfo.EntityHash), Hash256_Size);
 			multipart.addmem(static_cast<const void*>(&transactionInfo.MerkleComponentHash), Hash256_Size);
-			multipart.addtyp(height);
+			multipart.addtyp(transactionInfo.AssociatedHeight);
 		});
 	}
 
-	void ZeroMqEntityPublisher::publishTransactionStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) {
+	void ZeroMqEntityPublisher::publishTransactionStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) {
 		auto topicMarker = TransactionMarker::Transaction_Status_Marker;
 		model::TransactionStatus transactionStatus(hash, status, transaction.Deadline);
-		publish("transaction status", topicMarker, WeakTransactionInfo(transaction, hash), [&transactionStatus](auto& multipart) {
+		publish("transaction status", topicMarker, WeakTransactionInfo(transaction, hash, height), [&transactionStatus](auto& multipart) {
 			multipart.addmem(static_cast<const void*>(&transactionStatus), sizeof(transactionStatus));
 		});
 	}
@@ -235,7 +239,7 @@ namespace catapult { namespace zeromq {
 
 		const auto& addresses = transactionInfo.OptionalAddresses
 				? *transactionInfo.OptionalAddresses
-				: model::ExtractAddresses(transactionInfo.Transaction, *m_pNotificationPublisher);
+				: model::ExtractAddresses(transactionInfo.Transaction, transactionInfo.AssociatedHeight, *m_pNotificationPublisher, m_extractorContextFactory());
 
 		if (addresses.empty())
 			CATAPULT_LOG(warning) << "no addresses are associated with transaction " << transactionInfo.EntityHash;

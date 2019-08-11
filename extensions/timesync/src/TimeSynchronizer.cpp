@@ -37,14 +37,18 @@ namespace catapult { namespace timesync {
 			auto ageToUse = std::max<int64_t>(nodeAge.unwrap() - filters::Start_Decay_After_Round, 0);
 			return std::max(std::exp(-Coupling_Decay_Strength * ageToUse) * Coupling_Start, Coupling_Minimum);
 		}
+
+		auto GetTotalChainImportance(extensions::ServiceState& state, const Height& height) {
+			return state.config(height).BlockChain.TotalChainImportance;
+		}
 	}
 
 	TimeSynchronizer::TimeSynchronizer(
 			const filters::AggregateSynchronizationFilter& filter,
-			Importance totalChainImportance,
+			extensions::ServiceState& state,
 			int64_t warningThresholdMillis)
 			: m_filter(filter)
-			, m_totalChainImportance(totalChainImportance)
+			, m_state(state)
 			, m_warningThresholdMillis(warningThresholdMillis)
 	{}
 
@@ -68,7 +72,7 @@ namespace catapult { namespace timesync {
 
 		auto highValueAddressesSize = accountStateCacheView.highValueAddresses().size();
 		auto viewPercentage = static_cast<double>(samples.size()) / highValueAddressesSize;
-		auto importancePercentage = static_cast<double>(cumulativeImportance) / m_totalChainImportance.unwrap();
+		auto importancePercentage = static_cast<double>(cumulativeImportance) / GetTotalChainImportance(m_state, height).unwrap();
 		auto scaling = importancePercentage > viewPercentage ? 1.0 / importancePercentage : 1.0 / viewPercentage;
 		auto sum = sumScaledOffsets(importanceView, height, samples, scaling);
 		return TimeOffset(static_cast<int64_t>(GetCoupling(nodeAge) * sum));
@@ -88,7 +92,7 @@ namespace catapult { namespace timesync {
 			Height height,
 			const TimeSynchronizationSamples& samples,
 			double scaling) {
-		auto totalChainImportance = m_totalChainImportance.unwrap();
+		auto totalChainImportance = GetTotalChainImportance(m_state, height).unwrap();
 		auto warningThresholdMillis = m_warningThresholdMillis;
 		return utils::Sum(samples, [&importanceView, height, scaling, totalChainImportance, warningThresholdMillis](const auto& sample) {
 			int64_t offset = sample.timeOffsetToRemote();

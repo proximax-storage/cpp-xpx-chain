@@ -57,7 +57,7 @@ namespace catapult { namespace validators {
 			AddLink(cache, mainAccountKey, remoteAccountKey, accountType);
 
 			auto pValidator = CreateAccountLinkAvailabilityValidator();
-			auto notification = model::RemoteAccountLinkNotification(mainAccountKey, remoteAccountKey, linkAction);
+			auto notification = model::RemoteAccountLinkNotification<1>(mainAccountKey, remoteAccountKey, linkAction);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -135,7 +135,7 @@ namespace catapult { namespace validators {
 		auto pValidator = CreateAccountLinkAvailabilityValidator();
 		auto notificationRemoteKey = test::GenerateRandomByteArray<Key>();
 		auto unlinkAction = model::AccountLinkAction::Unlink;
-		auto notification = model::RemoteAccountLinkNotification(mainAccountKey, notificationRemoteKey, unlinkAction);
+		auto notification = model::RemoteAccountLinkNotification<1>(mainAccountKey, notificationRemoteKey, unlinkAction);
 
 		// Act:
 		auto result = test::ValidateNotification(*pValidator, notification, cache);

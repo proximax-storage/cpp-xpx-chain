@@ -37,7 +37,7 @@ namespace catapult { namespace addressextraction {
 			TestContext()
 					: m_pNotificationPublisher(std::make_unique<mocks::MockNotificationPublisher>())
 					, m_notificationPublisher(*m_pNotificationPublisher)
-					, m_extractor(std::move(m_pNotificationPublisher))
+					, m_extractor(std::move(m_pNotificationPublisher), [](){ return model::ExtractorContext(); })
 			{}
 
 		public:
@@ -137,7 +137,7 @@ namespace catapult { namespace addressextraction {
 		transactionElement.OptionalExtractedAddresses = nullptr;
 
 		// Act:
-		context.extractor().extract(transactionElement);
+		context.extractor().extract(transactionElement, Height());
 
 		// Assert:
 		EXPECT_EQ(1u, context.publisher().numPublishCalls());
@@ -154,7 +154,7 @@ namespace catapult { namespace addressextraction {
 		transactionElement.OptionalExtractedAddresses = pAddresses;
 
 		// Act:
-		context.extractor().extract(transactionElement);
+		context.extractor().extract(transactionElement, Height());
 
 		// Assert:
 		EXPECT_EQ(0u, context.publisher().numPublishCalls());

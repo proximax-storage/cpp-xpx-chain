@@ -30,15 +30,21 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-			if (AccountLinkAction::Link == transaction.LinkAction) {
-				// NewRemoteAccountNotification must be raised before AccountPublicKeyNotification because the latter adds account to cache
-				sub.notify(NewRemoteAccountNotification(transaction.RemoteAccountKey));
-			}
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+			switch (transaction.EntityVersion()) {
+			case 2:
+				if (AccountLinkAction::Link == transaction.LinkAction) {
+					// NewRemoteAccountNotification must be raised before AccountPublicKeyNotification because the latter adds account to cache
+					sub.notify(NewRemoteAccountNotification<1>(transaction.RemoteAccountKey));
+				}
+				sub.notify(AccountPublicKeyNotification<1>(transaction.RemoteAccountKey));
+				sub.notify(AddressInteractionNotification<1>(transaction.Signer, transaction.Type, {}, { transaction.RemoteAccountKey }));
+				sub.notify(RemoteAccountLinkNotification<1>(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
+				break;
 
-			sub.notify(AccountPublicKeyNotification(transaction.RemoteAccountKey));
-			sub.notify(AddressInteractionNotification(transaction.Signer, transaction.Type, {}, { transaction.RemoteAccountKey }));
-			sub.notify(RemoteAccountLinkNotification(transaction.Signer, transaction.RemoteAccountKey, transaction.LinkAction));
+			default:
+				CATAPULT_LOG(debug) << "invalid version of AccountLinkTransaction: " << transaction.EntityVersion();
+			}
 		}
 	}
 

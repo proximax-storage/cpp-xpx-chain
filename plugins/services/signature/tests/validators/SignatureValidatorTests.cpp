@@ -31,12 +31,12 @@ namespace catapult { namespace validators {
 #define TEST_CLASS SignatureValidatorTests
 
 	namespace {
-		using ReplayProtectionMode = model::SignatureNotification::ReplayProtectionMode;
+		using ReplayProtectionMode = model::SignatureNotification<1>::ReplayProtectionMode;
 
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const GenerationHash& generationHash,
-				const model::SignatureNotification& notification) {
+				const model::SignatureNotification<1>& notification) {
 			// Arrange:
 			auto pValidator = CreateSignatureValidator(generationHash);
 
@@ -77,7 +77,7 @@ namespace catapult { namespace validators {
 	ALL_REPLAY_PROTECTION_MODES_TEST(SuccessWhenValidatingValidSignature) {
 		// Arrange:
 		TestContext context(Mode);
-		model::SignatureNotification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
+		model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
 
 		// Assert:
 		AssertValidationResult(ValidationResult::Success, context.GenerationHash, notification);
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 	ALL_REPLAY_PROTECTION_MODES_TEST(FailureWhenSignatureIsAltered) {
 		// Arrange:
 		TestContext context(Mode);
-		model::SignatureNotification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
+		model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
 
 		context.Signature[0] ^= 0xFF;
 
@@ -97,7 +97,7 @@ namespace catapult { namespace validators {
 	ALL_REPLAY_PROTECTION_MODES_TEST(FailureWhenDataIsAltered) {
 		// Arrange:
 		TestContext context(Mode);
-		model::SignatureNotification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
+		model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, Mode);
 
 		context.DataBuffer[10] ^= 0xFF;
 
@@ -109,7 +109,7 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto mode = ReplayProtectionMode::Enabled;
 		TestContext context(mode);
-		model::SignatureNotification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, mode);
+		model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, mode);
 
 		context.GenerationHash[2] ^= 0xFF;
 
@@ -121,7 +121,7 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto mode = ReplayProtectionMode::Disabled;
 		TestContext context(mode);
-		model::SignatureNotification notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, mode);
+		model::SignatureNotification<1> notification(context.SignerKeyPair.publicKey(), context.Signature, context.DataBuffer, mode);
 
 		context.GenerationHash[2] ^= 0xFF;
 

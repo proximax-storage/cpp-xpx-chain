@@ -22,6 +22,7 @@
 #include "PtValidator.h"
 #include "partialtransaction/src/PtUtils.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
+#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/thread/FutureUtils.h"
@@ -121,12 +122,14 @@ namespace catapult { namespace chain {
 	class PtUpdater::Impl final : public std::enable_shared_from_this<PtUpdater::Impl> {
 	public:
 		Impl(
+				const cache::CatapultCache& cache,
 				cache::MemoryPtCacheProxy& transactionsCache,
 				std::unique_ptr<const PtValidator>&& pValidator,
 				const CompletedTransactionSink& completedTransactionSink,
 				const FailedTransactionSink& failedTransactionSink,
 				const std::shared_ptr<thread::IoThreadPool>& pPool)
-				: m_transactionsCache(transactionsCache)
+				: m_catapultCache(cache)
+				, m_transactionsCache(transactionsCache)
 				, m_pValidator(std::move(pValidator))
 				, m_completedTransactionSink(completedTransactionSink)
 				, m_failedTransactionSink(failedTransactionSink)
@@ -162,11 +165,12 @@ namespace catapult { namespace chain {
 			auto pPromise = std::make_shared<thread::promise<TransactionUpdateResult>>(); // needs to be copyable to pass to post
 			auto updateFuture = pPromise->get_future();
 
-			TransactionUpdateContext updateContext;
-			updateContext.pAggregateTransaction = pAggregateTransaction;
-			updateContext.AggregateHash = aggregateHash;
-			updateContext.Cosignatures = std::move(cosignatures);
-			updateContext.pExtractedAddresses = transactionInfo.OptionalExtractedAddresses;
+			TransactionUpdateContext updateContext{
+				pAggregateTransaction,
+				aggregateHash,
+				std::move(cosignatures),
+				transactionInfo.OptionalExtractedAddresses
+			};
 			boost::asio::post(m_pPool->ioContext(), [pThis = shared_from_this(), updateContext, pPromise{std::move(pPromise)}]() {
 				pThis->updateImpl(updateContext).then([pPromise](auto&& resultFuture) {
 					pPromise->set_value(resultFuture.get());
@@ -288,11 +292,12 @@ namespace catapult { namespace chain {
 		}
 
 		bool isValid(const model::Transaction& transaction, const Hash256& aggregateHash) const {
-			auto result = m_pValidator->validatePartial(model::WeakEntityInfoT<model::Transaction>(transaction, aggregateHash));
+			auto height = m_catapultCache.height();
+			auto result = m_pValidator->validatePartial(model::WeakEntityInfoT<model::Transaction>(transaction, aggregateHash, height));
 			if (result.Normalized)
 				return true;
 
-			m_failedTransactionSink(transaction, aggregateHash, result.Raw);
+			m_failedTransactionSink(transaction, height, aggregateHash, result.Raw);
 			return false;
 		}
 
@@ -317,7 +322,7 @@ namespace catapult { namespace chain {
 				// if there was an unexpected error, purge the entire transaction
 				// failures are independent of cosignatures, so subsequent validateCosigners calls should never result in failures
 				if (CosignersValidationResult::Failure == validateAllResult.Normalized)
-					m_failedTransactionSink(transactionInfoFromCache.transaction(), cosignature.ParentHash, validateAllResult.Raw);
+					m_failedTransactionSink(transactionInfoFromCache.transaction(), m_catapultCache.height(), cosignature.ParentHash, validateAllResult.Raw);
 
 				return CheckEligibilityResult(validateAllResult.Normalized);
 			}
@@ -386,6 +391,7 @@ namespace catapult { namespace chain {
 		}
 
 	private:
+		const cache::CatapultCache& m_catapultCache;
 		cache::MemoryPtCacheProxy& m_transactionsCache;
 		std::unique_ptr<const PtValidator> m_pValidator;
 		CompletedTransactionSink m_completedTransactionSink;
@@ -394,12 +400,14 @@ namespace catapult { namespace chain {
 	};
 
 	PtUpdater::PtUpdater(
+			const cache::CatapultCache& cache,
 			cache::MemoryPtCacheProxy& transactionsCache,
 			std::unique_ptr<const PtValidator>&& pValidator,
 			const CompletedTransactionSink& completedTransactionSink,
 			const FailedTransactionSink& failedTransactionSink,
 			const std::shared_ptr<thread::IoThreadPool>& pPool)
 			: m_pImpl(std::make_shared<Impl>(
+					cache,
 					transactionsCache,
 					std::move(pValidator),
 					completedTransactionSink,

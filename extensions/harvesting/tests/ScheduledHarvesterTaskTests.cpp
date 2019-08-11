@@ -24,6 +24,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
@@ -39,7 +40,7 @@ namespace catapult { namespace harvesting {
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
-		auto CreateConfiguration() {
+		auto CreateConfigHolder() {
 			test::MutableCatapultConfiguration config;
 
 			config.BlockChain.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
@@ -51,7 +52,7 @@ namespace catapult { namespace harvesting {
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
 
-			return config.ToConst();
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		struct TaskOptionsWithCounters : ScheduledHarvesterTaskOptions {
@@ -129,19 +130,19 @@ namespace catapult { namespace harvesting {
 
 		struct HarvesterContext {
 			HarvesterContext(const model::Block& lastBlock)
-					: Config(CreateConfiguration())
-					, Cache(test::CreateEmptyCatapultCache(Config.BlockChain))
+					: pConfigHolder(CreateConfigHolder())
+					, Cache(test::CreateEmptyCatapultCache(pConfigHolder->Config().BlockChain))
 					, Accounts(1) {
 				AddDifficultyInfo(Cache, lastBlock);
 			}
 
-			config::CatapultConfiguration Config;
+			std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
 		};
 
 		auto CreateHarvester(HarvesterContext& context) {
-			return std::make_unique<Harvester>(context.Cache, context.Config, Key(), context.Accounts, [](const auto& blockHeader, auto) {
+			return std::make_unique<Harvester>(context.Cache, context.pConfigHolder, Key(), context.Accounts, [](const auto& blockHeader, auto) {
 				auto pBlock = std::make_unique<model::Block>();
 				std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
 				return pBlock;

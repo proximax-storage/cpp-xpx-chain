@@ -30,20 +30,20 @@ namespace catapult { namespace test {
 	}
 
 	/// Creates a placeholder block notification.
-	inline model::BlockNotification CreateBlockNotification() {
+	inline model::BlockNotification<1> CreateBlockNotification() {
 		// notice that notification Signer and Beneficiary will be garbage after this returns
-		return model::BlockNotification(Key(), Key(), Timestamp(), Difficulty(), 1, 1);
+		return model::BlockNotification<1>(Key(), Key(), Timestamp(), Difficulty(), 1, 1);
 	}
 
 	/// Creates a block notification around \a signer.
-	inline model::BlockNotification CreateBlockNotification(const Key& signer) {
+	inline model::BlockNotification<1> CreateBlockNotification(const Key& signer) {
 		// notice that notification Beneficiary will be garbage after this returns
-		return model::BlockNotification(signer, Key(), Timestamp(), Difficulty(), 1, 1);
+		return model::BlockNotification<1>(signer, Key(), Timestamp(), Difficulty(), 1, 1);
 	}
 
 	/// Creates a block notification around \a signer and \a beneficiary.
-	inline model::BlockNotification CreateBlockNotification(const Key& signer, const Key& beneficiary) {
-		return model::BlockNotification(signer, beneficiary, Timestamp(), Difficulty(), 1, 1);
+	inline model::BlockNotification<1> CreateBlockNotification(const Key& signer, const Key& beneficiary) {
+		return model::BlockNotification<1>(signer, beneficiary, Timestamp(), Difficulty(), 1, 1);
 	}
 
 	/// Casts \a notification to a derived notification type.

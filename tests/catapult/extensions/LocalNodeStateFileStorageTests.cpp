@@ -33,11 +33,13 @@
 #include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalNodeTestState.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
 
@@ -249,7 +251,7 @@ namespace catapult { namespace extensions {
 					blockChainConfig,
 					stateDirectory.str(),
 					test::CoreSystemCacheFactory::Create(blockChainConfig));
-			auto pluginManager = test::CreatePluginManager();
+			auto pluginManager = test::CreatePluginManager(blockChainConfig);
 			auto heights = LoadStateFromDirectory(stateDirectory, loadedState.ref(), pluginManager);
 
 			// Assert:
@@ -281,17 +283,26 @@ namespace catapult { namespace extensions {
 	// region LoadStateFromDirectory / LocalNodeStateSerializer (CatapultCacheDelta)
 
 	namespace {
+		auto CreateConfigHolder() {
+			test::MutableCatapultConfiguration config;
+
+			config.BlockChain.MinHarvesterBalance = Amount(1);
+			config.BlockChain.ImportanceGrouping = 1;
+			config.BlockChain.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.BlockChain.MaxDifficultyBlocks = 111;
+
+			return config::CreateMockConfigurationHolder(config.ToConst());
+		}
+
 		cache::CatapultCache CreateCacheWithRealCoreSystemPlugins(const std::string& databaseDirectory) {
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
-			cache::AccountStateCacheTypes::Options options;
-			options.MinHighValueAccountBalance = Amount(1);
-			options.ImportanceGrouping = 1;
-			options.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			auto pConfigHolder = CreateConfigHolder();
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches;
-			subCaches.push_back(std::make_unique<cache::AccountStateCacheSubCachePlugin>(cacheConfig, options));
-			subCaches.push_back(std::make_unique<cache::BlockDifficultyCacheSubCachePlugin>(111));
+			subCaches.push_back(nullptr);
+			subCaches.push_back(std::make_unique<cache::AccountStateCacheSubCachePlugin>(cacheConfig, pConfigHolder));
+			subCaches.push_back(std::make_unique<cache::BlockDifficultyCacheSubCachePlugin>(pConfigHolder));
 			return cache::CatapultCache(std::move(subCaches));
 		}
 

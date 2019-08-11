@@ -100,7 +100,7 @@ namespace catapult { namespace extensions {
 
 			static auto CreateConsumerInput() {
 				// dangling references are ok because the struct fields are not accessed
-				return TransactionEventData({}, TransactionEvent::Dependency_Removed);
+				return TransactionEventData({}, Height(), TransactionEvent::Dependency_Removed);
 			}
 		};
 	}

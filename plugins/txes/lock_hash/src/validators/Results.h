@@ -47,6 +47,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because duration is too long.
 	DEFINE_LOCKHASH_RESULT(Invalid_Duration, 6);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_LOCKHASH_RESULT(Plugin_Config_Malformed, 7);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

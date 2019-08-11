@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "tests/test/cache/CacheTestUtils.h"
@@ -59,12 +60,13 @@ namespace catapult { namespace validators {
 
 		void Validate(const stateful::AggregateEntityValidator& validator, const model::VerifiableEntity& entity) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
 			auto context = test::CreateValidatorContext(Height(123), cacheView.toReadOnly());
 			auto dispatcher = [&entity](const auto&, const auto& validationFunctions) {
 				Hash256 hash;
-				auto entityInfo = model::WeakEntityInfoT<model::VerifiableEntity>(entity, hash);
+				auto entityInfo = model::WeakEntityInfoT<model::VerifiableEntity>(entity, hash, Height{0});
 
 				// Act: just invoke every validation function once
 				auto i = 0u;

@@ -18,19 +18,25 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <src/catapult/validators/ValidatorContext.h>
 #include "Validators.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::EntityNotification;
+	using Notification = model::EntityNotification<1>;
 
-	namespace {
-		auto ValidateEntityVersion(const Notification& notification) {
-			return notification.EntityVersion > notification.MaxVersion || notification.EntityVersion < notification.MinVersion
-					? Failure_Core_Invalid_Version
-					: ValidationResult::Success;
-		}
+	DECLARE_STATEFUL_VALIDATOR(EntityVersion, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(EntityVersion, [pConfigHolder](const auto& notification, const auto& context) {
+			const auto& supportedVersions = pConfigHolder->Config(context.Height).SupportedEntityVersions;
+			auto entityIter = supportedVersions.find(notification.EntityType);
+
+			if (entityIter == supportedVersions.end()) {
+				return Failure_Core_Invalid_Version;
+			}
+			auto iter = entityIter->second.find(notification.EntityVersion);
+			return (iter == entityIter->second.end())
+				   ? Failure_Core_Invalid_Version
+				   : ValidationResult::Success;
+		});
 	}
-
-	DEFINE_STATELESS_VALIDATOR(EntityVersion, ValidateEntityVersion)
 }}

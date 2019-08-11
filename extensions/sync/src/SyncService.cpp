@@ -40,12 +40,9 @@ namespace catapult { namespace sync {
 
 		thread::Task CreateConnectPeersTask(extensions::ServiceState& state, net::PacketWriters& packetWriters) {
 			auto settings = extensions::SelectorSettings(
-					state.cache(),
-					state.config().BlockChain.TotalChainImportance,
-					state.nodes(),
+					state,
 					Service_Id,
-					ionet::NodeRoles::Peer,
-					state.config().Node.OutgoingConnections);
+					ionet::NodeRoles::Peer);
 			auto task = extensions::CreateConnectPeersTask(settings, packetWriters);
 			task.Name += " for service Sync";
 			return task;
@@ -55,17 +52,17 @@ namespace catapult { namespace sync {
 			chain::ChainSynchronizerConfiguration chainSynchronizerConfig;
 			chainSynchronizerConfig.MaxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
 			chainSynchronizerConfig.MaxChainBytesPerSyncAttempt = config.Node.MaxChainBytesPerSyncAttempt.bytes32();
-			chainSynchronizerConfig.MaxRollbackBlocks = config.BlockChain.MaxRollbackBlocks;
 			return chainSynchronizerConfig;
 		}
 
-		thread::Task CreateSynchronizerTask(const extensions::ServiceState& state, net::PacketWriters& packetWriters) {
+		thread::Task CreateSynchronizerTask(extensions::ServiceState& state, net::PacketWriters& packetWriters) {
 			const auto& config = state.config();
 			auto chainSynchronizer = chain::CreateChainSynchronizer(
 					api::CreateLocalChainApi(state.storage(), [&score = state.score()]() {
 						return score.get();
 					}),
 					CreateChainSynchronizerConfiguration(config),
+					state,
 					state.hooks().completionAwareBlockRangeConsumerFactory()(Sync_Source));
 
 			thread::Task task;

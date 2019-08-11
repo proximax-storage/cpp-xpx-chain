@@ -26,6 +26,7 @@
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -43,7 +44,7 @@ namespace catapult { namespace chain {
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
 			auto config = test::CreatePrototypicalBlockChainConfiguration();
-			config.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 			return test::CreatePluginManagerWithRealPlugins(config);
 		}
 
@@ -62,14 +63,14 @@ namespace catapult { namespace chain {
 			UpdaterTestContext()
 					: m_pPluginManager(CreatePluginManager())
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, GetNumIterations() * 2))
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount())
+					, m_cache(m_pPluginManager->createCache())
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
 							CreateConfiguration(),
 							extensions::CreateExecutionConfiguration(*m_pPluginManager),
 							[]() { return Default_Time; },
-							[](const auto&, const auto&, auto) {},
+							[](const auto&, const auto&, const auto&, auto) {},
 							[](const auto&, const auto&) { return false; })
 			{}
 
@@ -120,7 +121,7 @@ namespace catapult { namespace chain {
 				auto pTransaction = test::CreateTransferTransaction(senderKeyPair, recipient, Amount(1));
 				pTransaction->MaxFee = Amount(0);
 				pTransaction->Deadline = Default_Time + Timestamp(1);
-				model::TransactionInfo transactionInfo(std::move(pTransaction), test::GenerateRandomByteArray<Hash256>());
+				model::TransactionInfo transactionInfo(std::move(pTransaction), test::GenerateRandomByteArray<Hash256>(), Height());
 
 				std::vector<model::TransactionInfo> transactionInfos;
 				transactionInfos.emplace_back(std::move(transactionInfo));

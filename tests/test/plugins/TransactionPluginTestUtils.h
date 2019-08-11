@@ -39,9 +39,27 @@ namespace catapult { namespace test {
 	}
 
 	/// Publishes \a transaction notifications to \a sub using \a plugin.
-	template<typename TTransactionPlugin, typename TTransaction>
-	void PublishTransaction(const TTransactionPlugin& plugin, const TTransaction& transaction, model::NotificationSubscriber& sub) {
-		plugin.publish(transaction, sub);
+	template<typename TTransactionPlugin>
+	void PublishTransaction(const TTransactionPlugin& plugin, const model::Transaction& transaction, model::NotificationSubscriber& sub) {
+		plugin.publish(model::WeakEntityInfoT<model::Transaction>(transaction, Height{0}), sub);
+	}
+
+	/// Publishes embedded \a transaction notifications to \a sub using \a plugin.
+	template<typename TTransactionPlugin>
+	void PublishTransaction(const TTransactionPlugin& plugin, const model::EmbeddedTransaction& transaction, model::NotificationSubscriber& sub) {
+		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(transaction, Height{0}), sub);
+	}
+
+	/// Publishes \a transactionInfo to \a sub using \a plugin.
+	template<typename TTransactionPlugin>
+	void PublishTransaction(const TTransactionPlugin& plugin, const model::WeakEntityInfoT<model::Transaction>& transactionInfo, model::NotificationSubscriber& sub) {
+		plugin.publish(transactionInfo, sub);
+	}
+
+	/// Publishes \a transactionInfo to \a sub using \a plugin.
+	template<typename TTransactionPlugin>
+	void PublishTransaction(const TTransactionPlugin& plugin, const model::WeakEntityInfoT<model::EmbeddedTransaction>& transactionInfo, model::NotificationSubscriber& sub) {
+		plugin.publish(transactionInfo, sub);
 	}
 
 	// endregion
@@ -170,7 +188,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin(std::forward<TArgs>(args)...);
 
 			// Act:
-			auto attributes = pPlugin->attributes();
+			auto attributes = pPlugin->attributes(Height{0});
 
 			// Assert:
 			EXPECT_EQ(TTraits::Min_Supported_Version, attributes.MinVersion);

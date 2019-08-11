@@ -31,12 +31,12 @@ namespace catapult { namespace model {
 		// Arrange:
 		auto expectedSize =
 				sizeof(uint32_t) // size
-				+ sizeof(uint16_t) // version
+				+ sizeof(uint32_t) // version
 				+ sizeof(uint16_t); // type
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(Receipt));
-		EXPECT_EQ(8u, sizeof(Receipt));
+		EXPECT_EQ(10u, sizeof(Receipt));
 	}
 
 	// endregion
@@ -54,7 +54,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(BalanceTransferReceipt));
-		EXPECT_EQ(8u + 73, sizeof(BalanceTransferReceipt));
+		EXPECT_EQ(10u + 73, sizeof(BalanceTransferReceipt));
 	}
 
 	TEST(TEST_CLASS, CanCreateBalanceTransferReceipt) {
@@ -89,7 +89,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(BalanceChangeReceipt));
-		EXPECT_EQ(8u + 48, sizeof(BalanceChangeReceipt));
+		EXPECT_EQ(10u + 48, sizeof(BalanceChangeReceipt));
 	}
 
 	TEST(TEST_CLASS, CanCreateBalanceChangeReceipt) {
@@ -121,7 +121,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(InflationReceipt));
-		EXPECT_EQ(8u + 16, sizeof(InflationReceipt));
+		EXPECT_EQ(10u + 16, sizeof(InflationReceipt));
 	}
 
 	TEST(TEST_CLASS, CanCreateInflationReceipt) {
@@ -148,7 +148,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(ArtifactExpiryReceipt<uint64_t>));
-		EXPECT_EQ(8u + 8, sizeof(ArtifactExpiryReceipt<uint64_t>));
+		EXPECT_EQ(10u + 8, sizeof(ArtifactExpiryReceipt<uint64_t>));
 	}
 
 	TEST(TEST_CLASS, CanCreateArtifactExpiryReceipt) {

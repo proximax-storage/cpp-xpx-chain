@@ -49,4 +49,9 @@ namespace catapult { namespace tools {
 	inline auto OptionsSwitch() {
 		return boost::program_options::bool_switch();
 	}
+
+	/// Helper wrapper to simplify defining toggle values where \a value is used as storage.
+	inline auto OptionsSwitch(bool& value) {
+		return boost::program_options::bool_switch(&value);
+	}
 }}

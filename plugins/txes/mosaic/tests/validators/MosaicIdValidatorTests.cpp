@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto pValidator = CreateMosaicIdValidator();
-		auto notification = model::MosaicNonceNotification(signer, MosaicNonce(), MosaicId());
+		auto notification = model::MosaicNonceNotification<1>(signer, MosaicNonce(), MosaicId());
 
 		// Act:
 		auto result = test::ValidateNotification(*pValidator, notification);
@@ -49,7 +49,7 @@ namespace catapult { namespace validators {
 		auto CreateMosaicNonceIdNotification(const Key& signer) {
 			auto nonce = test::GenerateRandomValue<MosaicNonce>();
 			auto mosaicId = model::GenerateMosaicId(signer, nonce);
-			return model::MosaicNonceNotification(signer, nonce, mosaicId);
+			return model::MosaicNonceNotification<1>(signer, nonce, mosaicId);
 		}
 	}
 

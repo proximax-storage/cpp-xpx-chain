@@ -48,7 +48,7 @@ namespace catapult { namespace local {
 				CATAPULT_THROW_INVALID_ARGUMENT("loadAll - not supported in mock");
 			}
 
-			void apply(const cache::CacheChanges&) const override {
+			void apply(const cache::CacheChanges&, const Height&) const override {
 				CATAPULT_THROW_INVALID_ARGUMENT("apply - not supported in mock");
 			}
 

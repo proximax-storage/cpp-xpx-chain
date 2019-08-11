@@ -30,44 +30,52 @@ namespace catapult { namespace model {
 #define DEFINE_LOCKSECRET_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, LockSecret, DESCRIPTION, CODE)
 
 	/// Lock secret duration.
-	DEFINE_LOCKSECRET_NOTIFICATION(Secret_Duration, 0x0001, Validator);
+	DEFINE_LOCKSECRET_NOTIFICATION(Secret_Duration_v1, 0x0001, Validator);
 
 	/// Lock hash algorithm.
-	DEFINE_LOCKSECRET_NOTIFICATION(Hash_Algorithm, 0x0002, Validator);
+	DEFINE_LOCKSECRET_NOTIFICATION(Hash_Algorithm_v1, 0x0002, Validator);
 
 	/// Lock secret.
-	DEFINE_LOCKSECRET_NOTIFICATION(Secret, 0x0003, All);
+	DEFINE_LOCKSECRET_NOTIFICATION(Secret_v1, 0x0003, All);
 
 	/// Proof and secret.
-	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Secret, 0x0004, Validator);
+	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Secret_v1, 0x0004, Validator);
 
 	/// Proof publication.
-	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Publication, 0x0005, All);
+	DEFINE_LOCKSECRET_NOTIFICATION(Proof_Publication_v1, 0x0005, All);
 
 #undef DEFINE_LOCKSECRET_NOTIFICATION
 
 	// endregion
 
 	/// Notification of a secret lock duration
-	struct SecretLockDurationNotification : public BaseLockDurationNotification<SecretLockDurationNotification> {
+	template<VersionType version>
+	struct SecretLockDurationNotification;
+
+	template<>
+	struct SecretLockDurationNotification<1> : public BaseLockDurationNotification<SecretLockDurationNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Secret_Duration_Notification;
+		static constexpr auto Notification_Type = LockSecret_Secret_Duration_v1_Notification;
 
 	public:
-		using BaseLockDurationNotification<SecretLockDurationNotification>::BaseLockDurationNotification;
+		using BaseLockDurationNotification<SecretLockDurationNotification<1>>::BaseLockDurationNotification;
 	};
 
 	/// Notification of a secret lock hash algorithm.
-	struct SecretLockHashAlgorithmNotification : public Notification {
+	template<VersionType version>
+	struct SecretLockHashAlgorithmNotification;
+
+	template<>
+	struct SecretLockHashAlgorithmNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Hash_Algorithm_Notification;
+		static constexpr auto Notification_Type = LockSecret_Hash_Algorithm_v1_Notification;
 
 	public:
 		/// Creates secret lock hash algorithm notification around \a hashAlgorithm.
 		SecretLockHashAlgorithmNotification(LockHashAlgorithm hashAlgorithm)
-				: Notification(Notification_Type, sizeof(SecretLockHashAlgorithmNotification))
+				: Notification(Notification_Type, sizeof(SecretLockHashAlgorithmNotification<1>))
 				, HashAlgorithm(hashAlgorithm)
 		{}
 
@@ -77,10 +85,14 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a secret lock.
-	struct SecretLockNotification : public BaseLockNotification<SecretLockNotification> {
+	template<VersionType version>
+	struct SecretLockNotification;
+
+	template<>
+	struct SecretLockNotification<1> : public BaseLockNotification<SecretLockNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Secret_Notification;
+		static constexpr auto Notification_Type = LockSecret_Secret_v1_Notification;
 
 	public:
 		/// Creates secret lock notification around \a signer, \a mosaic, \a duration, \a hashAlgorithm, \a secret and \a recipient.
@@ -109,15 +121,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a secret and its proof.
-	struct ProofSecretNotification : public Notification {
+	template<VersionType version>
+	struct ProofSecretNotification;
+
+	template<>
+	struct ProofSecretNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Proof_Secret_Notification;
+		static constexpr auto Notification_Type = LockSecret_Proof_Secret_v1_Notification;
 
 	public:
 		/// Creates proof secret notification around \a hashAlgorithm, \a secret and \a proof.
 		ProofSecretNotification(LockHashAlgorithm hashAlgorithm, const Hash256& secret, const RawBuffer& proof)
-				: Notification(Notification_Type, sizeof(ProofSecretNotification))
+				: Notification(Notification_Type, sizeof(ProofSecretNotification<1>))
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)
 				, Proof(proof)
@@ -135,10 +151,14 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a proof publication.
-	struct ProofPublicationNotification : public Notification {
+	template<VersionType version>
+	struct ProofPublicationNotification;
+
+	template<>
+	struct ProofPublicationNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = LockSecret_Proof_Publication_Notification;
+		static constexpr auto Notification_Type = LockSecret_Proof_Publication_v1_Notification;
 
 	public:
 		/// Creates proof publication notification around \a signer, \a hashAlgorithm, \a secret and \a recipient.
@@ -147,7 +167,7 @@ namespace catapult { namespace model {
 				LockHashAlgorithm hashAlgorithm,
 				const Hash256& secret,
 				const UnresolvedAddress& recipient)
-				: Notification(Notification_Type, sizeof(ProofPublicationNotification))
+				: Notification(Notification_Type, sizeof(ProofPublicationNotification<1>))
 				, Signer(signer)
 				, HashAlgorithm(hashAlgorithm)
 				, Secret(secret)

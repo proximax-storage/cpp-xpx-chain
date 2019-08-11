@@ -26,7 +26,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::AddressInteractionNotification;
+	using Notification = model::AddressInteractionNotification<1>;
 	using CacheReadOnlyType = typename cache::PropertyCacheTypes::CacheReadOnlyType;
 
 	namespace {

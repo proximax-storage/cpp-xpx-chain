@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/model/PluginConfiguration.h"
 #include "catapult/utils/TimeSpan.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -26,7 +27,7 @@ namespace catapult { namespace utils { class ConfigurationBag; } }
 namespace catapult { namespace config {
 
 	/// Aggregate plugin configuration settings.
-	struct AggregateConfiguration {
+	struct AggregateConfiguration : public model::PluginConfiguration {
 	public:
 		/// Maximum number of transactions per aggregate.
 		uint32_t MaxTransactionsPerAggregate;

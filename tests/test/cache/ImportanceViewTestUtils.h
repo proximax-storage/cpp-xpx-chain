@@ -29,7 +29,7 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a wrapper around \a cache.
 		explicit ImportanceViewWrapper(const cache::AccountStateCache& cache)
-				: m_cacheView(cache.createView())
+				: m_cacheView(cache.createView(Height{0}))
 				, m_readOnlyCache(*m_cacheView)
 				, m_view(m_readOnlyCache)
 		{}

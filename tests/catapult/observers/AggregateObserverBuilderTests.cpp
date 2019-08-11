@@ -36,7 +36,8 @@ namespace catapult { namespace observers {
 
 		public:
 			void notify(uint8_t notificationId, NotifyMode mode) {
-				auto cache = test::CreateEmptyCatapultCache();
+				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto cache = test::CreateEmptyCatapultCache(config);
 				auto cacheDelta = cache.createDelta();
 				state::CatapultState state;
 				auto context = test::CreateObserverContext(cacheDelta, state, Height(123), mode);

@@ -22,6 +22,7 @@
 #include "MongoTestUtils.h"
 #include "mongo/src/MongoStorageContext.h"
 #include "mongo/src/ExternalCacheStorage.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
@@ -37,12 +38,19 @@ namespace catapult { namespace test {
 		public:
 			CacheStorageWrapper()
 					: m_pMongoContext(CreateDefaultMongoStorageContext(DatabaseName()))
-					, m_pCacheStorage(TTraits::CreateCacheStorage(*m_pMongoContext, TTraits::Network_Id))
+					, m_pCacheStorage(TTraits::CreateCacheStorage(*m_pMongoContext, CreateConfigHolder(TTraits::Network_Id)))
 			{}
 
 		public:
 			mongo::ExternalCacheStorage& get() {
 				return *m_pCacheStorage;
+			}
+
+		private:
+			auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier) {
+				auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+				blockChainConfig.Network.Identifier = networkIdentifier;
+				return config::CreateMockConfigurationHolder(blockChainConfig);
 			}
 
 		private:

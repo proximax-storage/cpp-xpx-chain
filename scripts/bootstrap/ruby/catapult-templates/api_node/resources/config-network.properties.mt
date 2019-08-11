@@ -50,6 +50,11 @@ enableBondedAggregateSupport = true
 
 maxBondedTransactionLifetime = 48h
 
+[plugin:catapult.plugins.config]
+
+maxBlockChainConfigSize = 1MB
+maxSupportedEntityVersionsSize = 1MB
+
 [plugin:catapult.plugins.contract]
 
 minPercentageOfApproval = 100
@@ -110,3 +115,7 @@ maxPropertyValues = 512
 [plugin:catapult.plugins.transfer]
 
 maxMessageSize = 1024
+
+[plugin:catapult.plugins.upgrade]
+
+minUpgradePeriod = 360

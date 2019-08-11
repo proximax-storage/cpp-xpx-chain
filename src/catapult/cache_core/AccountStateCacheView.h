@@ -47,6 +47,8 @@ namespace catapult { namespace cache {
 		using ConstAccessorAddress = AddressMixins::ConstAccessor;
 		using ConstAccessorKey = KeyMixins::ConstAccessor;
 		using PatriciaTreeView = AddressMixins::PatriciaTreeView;
+		using Enable = AddressMixins::Enable;
+		using Height = KeyMixins::Height;
 	};
 
 	/// Basic view on top of the account state cache.
@@ -58,7 +60,9 @@ namespace catapult { namespace cache {
 			, public AccountStateCacheViewMixins::Iteration
 			, public AccountStateCacheViewMixins::ConstAccessorAddress
 			, public AccountStateCacheViewMixins::ConstAccessorKey
-			, public AccountStateCacheViewMixins::PatriciaTreeView {
+			, public AccountStateCacheViewMixins::PatriciaTreeView
+			, public AccountStateCacheViewMixins::Enable
+			, public AccountStateCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = ReadOnlyAccountStateCache;
 
@@ -101,6 +105,9 @@ namespace catapult { namespace cache {
 
 		/// Gets all addresses that we need to clean up.
 		const model::AddressSet& addressesToUpdate() const;
+
+	private:
+		model::BlockChainConfiguration blockChainConfig() const;
 
 	private:
 		const AccountStateCacheTypes::Options& m_options;

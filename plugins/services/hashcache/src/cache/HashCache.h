@@ -23,6 +23,8 @@
 #include "HashCacheView.h"
 #include "catapult/cache/BasicCache.h"
 
+namespace catapult { namespace config { class LocalNodeConfigurationHolder; } }
+
 namespace catapult { namespace cache {
 
 	using HashBasicCache = BasicCache<HashCacheDescriptor, HashCacheTypes::BaseSets, HashCacheTypes::Options>;
@@ -31,10 +33,10 @@ namespace catapult { namespace cache {
 	/// \note The cache can be pruned according to the retention time.
 	class BasicHashCache : public HashBasicCache {
 	public:
-		/// Creates a cache around \a config with the specified retention time (\a retentionTime).
-		explicit BasicHashCache(const CacheConfiguration& config, const utils::TimeSpan& retentionTime)
+		/// Creates a cache around \a config with the specified \a pConfigHolder.
+		explicit BasicHashCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 				// hash cache should always be excluded from state hash calculation
-				: HashBasicCache(DisablePatriciaTreeStorage(config), HashCacheTypes::Options{ retentionTime })
+				: HashBasicCache(DisablePatriciaTreeStorage(config), HashCacheTypes::Options{ pConfigHolder })
 		{}
 
 	private:
@@ -51,9 +53,9 @@ namespace catapult { namespace cache {
 		DEFINE_CACHE_CONSTANTS(Hash)
 
 	public:
-		/// Creates a cache around \a config with the specified retention time (\a retentionTime).
-		explicit HashCache(const CacheConfiguration& config, const utils::TimeSpan& retentionTime)
-				: SynchronizedCache<BasicHashCache>(BasicHashCache(config, retentionTime))
+		/// Creates a cache around \a config with the specified \a pConfigHolder.
+		explicit HashCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+				: SynchronizedCache<BasicHashCache>(BasicHashCache(config, pConfigHolder))
 		{}
 	};
 }}

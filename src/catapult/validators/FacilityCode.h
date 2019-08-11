@@ -30,6 +30,7 @@ namespace catapult { namespace validators {
 	enum class FacilityCode : uint8_t {
 		COPY_FACILITY_CODE(AccountLink),
 		COPY_FACILITY_CODE(Aggregate),
+		COPY_FACILITY_CODE(CatapultConfig),
         COPY_FACILITY_CODE(Contract),
 		COPY_FACILITY_CODE(Core),
 		COPY_FACILITY_CODE(LockHash),
@@ -40,6 +41,7 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(Namespace),
 		COPY_FACILITY_CODE(Property),
 		COPY_FACILITY_CODE(Transfer),
+		COPY_FACILITY_CODE(CatapultUpgrade),
 
 		/// Chain facility code.
 		Chain = 0xFF,

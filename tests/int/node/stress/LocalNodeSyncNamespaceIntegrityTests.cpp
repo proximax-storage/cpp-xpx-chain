@@ -36,7 +36,7 @@ namespace catapult { namespace local {
 
 		Hash256 GetComponentStateHash(const test::PeerLocalNodeTestContext& context) {
 			auto subCacheMerkleRoots = context.localNode().cache().createView().calculateStateHash().SubCacheMerkleRoots;
-			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[1]; // { AccountState, *Namespace*, Mosaic }
+			return subCacheMerkleRoots.empty() ? Hash256() : subCacheMerkleRoots[2]; // { Config, AccountState, *Namespace*, Mosaic }
 		}
 
 		template<typename TTestContext>

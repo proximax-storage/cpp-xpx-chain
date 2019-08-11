@@ -21,7 +21,6 @@
 #include "MultisigPlugin.h"
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheStorage.h"
-#include "src/config/MultisigConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -29,6 +28,22 @@
 #include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
+
+	namespace {
+		void extractCosigners(const cache::MultisigCache::CacheReadOnlyType& cache, const Key& publicKey, model::PublicKeySet& result) {
+			if (!cache.contains(publicKey)) {
+				return;
+			}
+
+			auto multisigIter = cache.find(publicKey);
+			const auto& multisigEntry = multisigIter.get();
+
+			for (const auto& cosignatoryPublicKey : multisigEntry.cosignatories()) {
+				result.insert(cosignatoryPublicKey);
+				extractCosigners(cache, cosignatoryPublicKey, result);
+			}
+		}
+	}
 
 	void RegisterMultisigSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateModifyMultisigAccountTransactionPlugin());
@@ -41,24 +56,34 @@ namespace catapult { namespace plugins {
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("MULTISIG C"), [&cache]() {
-				return cache.sub<cache::MultisigCache>().createView()->size();
+				return cache.sub<cache::MultisigCache>().createView(cache.height())->size();
 			});
 		});
 
-		manager.addStatelessValidatorHook([](auto& builder) {
-			builder.add(validators::CreateModifyMultisigCosignersValidator());
+		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
+			auto multisigCache = cache.template sub<cache::MultisigCache>();
+			auto result = model::PublicKeySet{ key };
+			extractCosigners(multisigCache, key, result);
+
+			return result;
 		});
 
-		auto config = model::LoadPluginConfiguration<config::MultisigConfiguration>(manager.config(), "catapult.plugins.multisig");
-		manager.addStatefulValidatorHook([config](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreateModifyMultisigCosignersValidator())
+				.add(validators::CreateMultisigPluginConfigValidator());
+		});
+
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateMultisigPermittedOperationValidator())
-				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator(config.MaxCosignedAccountsPerAccount))
-				.add(validators::CreateModifyMultisigMaxCosignersValidator(config.MaxCosignersPerAccount))
+				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator(pConfigHolder))
+				.add(validators::CreateModifyMultisigMaxCosignersValidator(pConfigHolder))
 				.add(validators::CreateModifyMultisigInvalidCosignersValidator())
 				.add(validators::CreateModifyMultisigInvalidSettingsValidator())
 				// notice that ModifyMultisigLoopAndLevelValidator must be called before multisig aggregate validators
-				.add(validators::CreateModifyMultisigLoopAndLevelValidator(config.MaxMultisigDepth))
+				.add(validators::CreateModifyMultisigLoopAndLevelValidator(pConfigHolder))
 				// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
 				.add(validators::CreateMultisigAggregateEligibleCosignersValidator())
 				.add(validators::CreateMultisigAggregateSufficientCosignersValidator());

@@ -28,6 +28,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
@@ -48,6 +49,7 @@ namespace catapult { namespace consumers {
 		constexpr model::ImportanceHeight Initial_Last_Recalculation_Height(1234);
 		constexpr model::ImportanceHeight Modified_Last_Recalculation_Height(7777);
 		const Key Sentinel_Processor_Public_Key = test::GenerateRandomByteArray<Key>();
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
 
 		constexpr model::ImportanceHeight AddImportanceHeight(model::ImportanceHeight lhs, model::ImportanceHeight::ValueType rhs) {
 			return model::ImportanceHeight(lhs.unwrap() + rhs);
@@ -369,7 +371,7 @@ namespace catapult { namespace consumers {
 			explicit ConsumerTestContext(
 					std::unique_ptr<io::BlockStorage>&& pStorage,
 					std::unique_ptr<io::PrunableBlockStorage>&& pStagingStorage)
-					: Cache(test::CreateCatapultCacheWithMarkerAccount())
+					: Cache(test::CreateCatapultCacheWithMarkerAccount(Default_Config))
 					, Storage(std::move(pStorage), std::move(pStagingStorage)) {
 				State.LastRecalculationHeight = Initial_Last_Recalculation_Height;
 
@@ -395,8 +397,11 @@ namespace catapult { namespace consumers {
 				handlers.CommitStep = [this](auto step) {
 					return CommitStep(step);
 				};
+				auto config = model::BlockChainConfiguration::Uninitialized();
+				config.MaxRollbackBlocks = Max_Rollback_Blocks;
+				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-				Consumer = CreateBlockChainSyncConsumer(Cache, State, Storage, Max_Rollback_Blocks, handlers);
+				Consumer = CreateBlockChainSyncConsumer(Cache, State, Storage, pConfigHolder, handlers);
 			}
 
 		public:
@@ -496,8 +501,8 @@ namespace catapult { namespace consumers {
 				}
 
 				// - the cache was not committed
-				EXPECT_FALSE(Cache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
-				EXPECT_EQ(0u, Cache.sub<cache::BlockDifficultyCache>().createView()->size());
+				EXPECT_FALSE(Cache.sub<cache::AccountStateCache>().createView(Height{0})->contains(Sentinel_Processor_Public_Key));
+				EXPECT_EQ(0u, Cache.sub<cache::BlockDifficultyCache>().createView(Height{0})->size());
 
 				// - no state changes were announced
 				EXPECT_EQ(0u, StateChange.params().size());
@@ -531,10 +536,10 @@ namespace catapult { namespace consumers {
 				}
 
 				// - the cache was committed (add 1 to OriginalBlocks.size() because it does not include the nemesis)
-				EXPECT_TRUE(Cache.sub<cache::AccountStateCache>().createView()->contains(Sentinel_Processor_Public_Key));
+				EXPECT_TRUE(Cache.sub<cache::AccountStateCache>().createView(Height{0})->contains(Sentinel_Processor_Public_Key));
 				EXPECT_EQ(
 						OriginalBlocks.size() + 1 - inputHeight.unwrap() + 1,
-						Cache.sub<cache::BlockDifficultyCache>().createView()->size());
+						Cache.sub<cache::BlockDifficultyCache>().createView(Height{0})->size());
 				EXPECT_EQ(chainHeight, Cache.createView().height());
 
 				// - state changes were announced

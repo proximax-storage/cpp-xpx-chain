@@ -24,7 +24,9 @@
 #include "tests/test/cache/CacheStorageTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -34,19 +36,23 @@ namespace catapult { namespace cache {
 	namespace {
 		struct AccountStateCacheStorageTraits {
 		private:
-			static constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
-				model::NetworkIdentifier::Mijin_Test,
-				543,
-				Amount(std::numeric_limits<Amount::ValueType>::max()),
-				test::Default_Currency_Mosaic_Id,
-				test::Default_Harvesting_Mosaic_Id
-			};
+			static auto CreateConfigHolder() {
+				test::MutableCatapultConfiguration config;
+
+				config.BlockChain.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+				config.BlockChain.ImportanceGrouping = 543;
+				config.BlockChain.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
+				config.BlockChain.CurrencyMosaicId = test::Default_Currency_Mosaic_Id;
+				config.BlockChain.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
+
+				return config::CreateMockConfigurationHolder(config.ToConst());
+			}
 
 		public:
 			using StorageType = AccountStateCacheStorage;
 			class CacheType : public AccountStateCache {
 			public:
-				CacheType() : AccountStateCache(CacheConfiguration(), Default_Cache_Options)
+				CacheType() : AccountStateCache(CacheConfiguration(), CreateConfigHolder())
 				{}
 			};
 
@@ -62,7 +68,7 @@ namespace catapult { namespace cache {
 
 			static void AssertEqual(state::AccountState& lhs, const state::AccountState& rhs) {
 				// Arrange: cache automatically optimizes added account state, so update to match expected
-				lhs.Balances.optimize(Default_Cache_Options.CurrencyMosaicId);
+				lhs.Balances.optimize(test::Default_Currency_Mosaic_Id);
 
 				// Assert: the loaded cache value is correct
 				EXPECT_EQ(123u, rhs.Balances.size());
@@ -90,16 +96,16 @@ namespace catapult { namespace cache {
 		// - add two accounts one of which will be purged
 		AccountStateCacheStorageTraits::CacheType cache;
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->addAccount(address, Height(111));
 			delta->addAccount(otherAddress, Height(111));
 			cache.commit();
 		}
 
 		// Sanity:
-		EXPECT_TRUE(cache.createView()->contains(address));
-		EXPECT_FALSE(cache.createView()->contains(publicKey));
-		EXPECT_TRUE(cache.createView()->contains(otherAddress));
+		EXPECT_TRUE(cache.createView(Height{0})->contains(address));
+		EXPECT_FALSE(cache.createView(Height{0})->contains(publicKey));
+		EXPECT_TRUE(cache.createView(Height{0})->contains(otherAddress));
 
 		// Act:
 		{
@@ -107,15 +113,15 @@ namespace catapult { namespace cache {
 			accountState.PublicKey = publicKey;
 			accountState.PublicKeyHeight = Height(224);
 
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			AccountStateCacheStorageTraits::StorageType::Purge(accountState, *delta);
 			cache.commit();
 		}
 
 		// Assert:
-		EXPECT_FALSE(cache.createView()->contains(address));
-		EXPECT_FALSE(cache.createView()->contains(publicKey));
-		EXPECT_TRUE(cache.createView()->contains(otherAddress));
+		EXPECT_FALSE(cache.createView(Height{0})->contains(address));
+		EXPECT_FALSE(cache.createView(Height{0})->contains(publicKey));
+		EXPECT_TRUE(cache.createView(Height{0})->contains(otherAddress));
 	}
 
 	TEST(TEST_CLASS, CanPurgeValueWithAddressAndPublicKeyFromCache) {
@@ -127,7 +133,7 @@ namespace catapult { namespace cache {
 		// - add two accounts one of which will be purged
 		AccountStateCacheStorageTraits::CacheType cache;
 		{
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->addAccount(address, Height(111));
 			delta->addAccount(publicKey, Height(224));
 			delta->addAccount(otherAddress, Height(111));
@@ -135,9 +141,9 @@ namespace catapult { namespace cache {
 		}
 
 		// Sanity:
-		EXPECT_TRUE(cache.createView()->contains(address));
-		EXPECT_TRUE(cache.createView()->contains(publicKey));
-		EXPECT_TRUE(cache.createView()->contains(otherAddress));
+		EXPECT_TRUE(cache.createView(Height{0})->contains(address));
+		EXPECT_TRUE(cache.createView(Height{0})->contains(publicKey));
+		EXPECT_TRUE(cache.createView(Height{0})->contains(otherAddress));
 
 		// Act:
 		{
@@ -145,14 +151,14 @@ namespace catapult { namespace cache {
 			accountState.PublicKey = publicKey;
 			accountState.PublicKeyHeight = Height(224);
 
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			AccountStateCacheStorageTraits::StorageType::Purge(accountState, *delta);
 			cache.commit();
 		}
 
 		// Assert:
-		EXPECT_FALSE(cache.createView()->contains(address));
-		EXPECT_FALSE(cache.createView()->contains(publicKey));
-		EXPECT_TRUE(cache.createView()->contains(otherAddress));
+		EXPECT_FALSE(cache.createView(Height{0})->contains(address));
+		EXPECT_FALSE(cache.createView(Height{0})->contains(publicKey));
+		EXPECT_TRUE(cache.createView(Height{0})->contains(otherAddress));
 	}
 }}

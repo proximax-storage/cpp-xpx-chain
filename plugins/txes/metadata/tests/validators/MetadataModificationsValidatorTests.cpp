@@ -9,6 +9,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "src/state/MetadataUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MetadataCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -19,7 +20,7 @@ namespace catapult { namespace validators {
 
 	constexpr uint8_t MaxFields = 5;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications,MaxFields)
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, config::CreateMockConfigurationHolder())
 
 	namespace {
 		const Address Raw_Data = test::GenerateRandomByteArray<Address>();
@@ -51,9 +52,14 @@ namespace catapult { namespace validators {
 				const Hash256 & metadataId,
 				const std::vector<Modification> modifications) {
 			// Arrange:
-			auto cache = test::MetadataCacheFactory::Create();
+			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
+			pluginConfig.MaxFields = MaxFields;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
 			PopulateCache(cache, initValues);
-			auto pValidator = CreateMetadataModificationsValidator(MaxFields);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pValidator = CreateMetadataModificationsValidator(pConfigHolder);
 
 			uint32_t sizeOfBuffer = 0;
 
@@ -78,7 +84,7 @@ namespace catapult { namespace validators {
 				pointers.emplace_back(pModifications);
 			}
 
-			auto notification = model::MetadataModificationsNotification(metadataId, pointers);
+			auto notification = model::MetadataModificationsNotification<1>(metadataId, pointers);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -208,7 +214,7 @@ namespace catapult { namespace validators {
 			});
 	}
 
-	TEST(TEST_CLASS, FailureModifications_AddNewFields_WhereTwoModificationsAreEquel) {
+	TEST(TEST_CLASS, FailureModifications_AddNewFields_WhereTwoModificationsAreEqual) {
 		// Act:
 		AssertValidationResult(
 			Failure_Metadata_Modification_Key_Redundant,
@@ -224,7 +230,7 @@ namespace catapult { namespace validators {
 			});
 	}
 
-	TEST(TEST_CLASS, FailureModifications_AddNewFields_ToExistingAccount_WhereModificationEquelToFiledOfAccount) {
+	TEST(TEST_CLASS, FailureModifications_AddNewFields_ToExistingAccount_WhereModificationEqualsToFiledOfAccount) {
 		// Act:
 		AssertValidationResult(
 			Failure_Metadata_Modification_Value_Redundant,
@@ -240,7 +246,7 @@ namespace catapult { namespace validators {
 			});
 	}
 
-	TEST(TEST_CLASS, SuccessModifications_AddNewFields_ToExistingAccount_WhereModificationEquelToFiledOfAccount_ButAnotherValue) {
+	TEST(TEST_CLASS, SuccessModifications_AddNewFields_ToExistingAccount_WhereModificationEqualsToFiledOfAccount_ButAnotherValue) {
 		// Act:
 		AssertValidationResult(
 			ValidationResult::Success,

@@ -106,6 +106,7 @@ RUN cd /catapult \
 # Required extensions
     catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
+    catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
@@ -115,8 +116,10 @@ RUN cd /catapult \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
+    catapult.mongo.plugins.upgrade \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
+    catapult.plugins.config \
     catapult.plugins.contract \
     catapult.plugins.hashcache \
     catapult.plugins.hashcache.cache \
@@ -129,10 +132,11 @@ RUN cd /catapult \
     catapult.plugins.property \
     catapult.plugins.signature \
     catapult.plugins.transfer \
+    catapult.plugins.upgrade \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
-    extension.filechain \
+    extension.filespooling \
     extension.harvesting \
     extension.hashcache \
     extension.mongo \
@@ -147,14 +151,12 @@ RUN cd /catapult \
     extension.transactionsink \
     extension.unbondedpruning \
     extension.zeromq \
-# Tools
-    catapult.tools.address \
-    catapult.tools.health \
-    catapult.tools.nemgen \
-    catapult.tools.network \
+    -j 4
+
+RUN cd /catapult/_build && make \
 # Catapult
-    catapult.server \
-    -j4
+    sirius.bc \
+    -j 4
 
 # script for copying required libs to temporary folder /deps
 RUN /catapult/scripts/release-script/copyDeps.sh /catapult/_build/bin/ /deps
@@ -170,8 +172,8 @@ COPY --from=0 /deps /
 # copy executables
 COPY --from=0 /catapult/_build/bin /catapult/bin
 
-# catapult.server as the entry point
-ENTRYPOINT ["/catapult/bin/catapult.server"]
+# sirius.bc as the entry point
+ENTRYPOINT ["/catapult/bin/sirius.bc"]
 
 # set the config directory by default
 CMD ["/catapultconfig"]

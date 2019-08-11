@@ -42,19 +42,19 @@ namespace catapult { namespace observers {
 		struct AddressPropertyTraits : public test::BaseAddressPropertyTraits {
 			static constexpr auto CreateObserver = CreateAddressPropertyValueModificationObserver;
 
-			using NotificationType = model::ModifyAddressPropertyValueNotification;
+			using NotificationType = model::ModifyAddressPropertyValueNotification_v1;
 		};
 
 		struct MosaicPropertyTraits : public test::BaseMosaicPropertyTraits {
 			static constexpr auto CreateObserver = CreateMosaicPropertyValueModificationObserver;
 
-			using NotificationType = model::ModifyMosaicPropertyValueNotification;
+			using NotificationType = model::ModifyMosaicPropertyValueNotification_v1;
 		};
 
 		struct TransactionTypePropertyTraits : public test::BaseTransactionTypePropertyTraits {
 			static constexpr auto CreateObserver = CreateTransactionTypePropertyValueModificationObserver;
 
-			using NotificationType = model::ModifyTransactionTypePropertyValueNotification;
+			using NotificationType = model::ModifyTransactionTypePropertyValueNotification_v1;
 		};
 
 		bool IsInsert(NotifyMode notifyMode, model::PropertyModificationType modificationType) {
@@ -101,7 +101,8 @@ namespace catapult { namespace observers {
 				bool shouldContainCacheEntry,
 				TModificationFactory modificationFactory) {
 			// Arrange:
-			ObserverTestContext context(notifyMode);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			ObserverTestContext context(notifyMode, Height{444}, config);
 			auto values = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numInitialValues);
 			auto key = test::GenerateRandomByteArray<Key>();
 			test::PopulateCache<TPropertyValueTraits, TOperationTraits>(context.cache(), key, values);
@@ -137,7 +138,8 @@ namespace catapult { namespace observers {
 		template<typename TOperationTraits>
 		void AssertObserverDoesNotRemoveNonEmptyAccountProperties(NotifyMode notifyMode) {
 			// Arrange:
-			ObserverTestContext context(notifyMode);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			ObserverTestContext context(notifyMode, Height{444}, config);
 			auto filteredAddress = test::GenerateRandomByteArray<Address>();
 			auto unresolvedFilteredAddress = AddressPropertyTraits::Unresolve(filteredAddress);
 			auto key = test::GenerateRandomByteArray<Key>();
@@ -152,7 +154,7 @@ namespace catapult { namespace observers {
 			auto modificationType = NotifyMode::Commit == notifyMode ? Del : Add;
 			auto modification = model::PropertyModification<UnresolvedAddress>{ modificationType, unresolvedFilteredAddress };
 			auto completeType = TOperationTraits::CompletePropertyType(model::PropertyType::Address);
-			model::ModifyAddressPropertyValueNotification notification{ key, completeType, modification };
+			model::ModifyAddressPropertyValueNotification_v1 notification{ key, completeType, modification };
 			auto pObserver = CreateAddressPropertyValueModificationObserver();
 
 			// Act: cache entry is not removed, address property is empty but mosaic property is not

@@ -24,6 +24,7 @@
 #include "catapult/model/WeakCosignedTransactionInfo.h"
 #include "catapult/plugins/PluginManager.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
@@ -86,9 +87,9 @@ namespace catapult { namespace chain {
 
 		class TestContext {
 		public:
-			explicit TestContext(const ValidationResultOptions& options)
-					: m_cache(test::CreateEmptyCatapultCache())
-					, m_pluginManager(test::CreatePluginManager()) {
+			explicit TestContext(const ValidationResultOptions& options, const model::BlockChainConfiguration& config)
+					: m_cache(test::CreateEmptyCatapultCache(config))
+					, m_pluginManager(config::CreateMockConfigurationHolder(config), plugins::StorageConfiguration()) {
 				// Arrange: register mock support (for validatePartial)
 				auto pluginOptionFlags = mocks::PluginOptionFlags::Publish_Custom_Notifications;
 				m_pluginManager.addTransactionSupport(mocks::CreateMockTransactionPlugin(pluginOptionFlags));
@@ -172,14 +173,15 @@ namespace catapult { namespace chain {
 				bool isValid,
 				TNotificationTypesConsumer notificationTypesConsumer) {
 			// Arrange:
-			TestContext context(validationResultOptions);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(validationResultOptions, config);
 			const auto& validator = context.validator();
 			const auto& notificationValidator = context.subValidatorAt(0); // partial
 
 			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
 			auto pTransaction = mocks::CreateMockTransaction(0);
 			auto transactionHash = test::GenerateRandomByteArray<Hash256>();
-			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash));
+			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash, Height{0}));
 
 			// Assert: when valid, raw result should always be success (even when validationResult is suppressed failure)
 			EXPECT_EQ(isValid, result.Normalized);
@@ -203,15 +205,15 @@ namespace catapult { namespace chain {
 				// Assert:
 				if (!expectedResult.IsShortCircuited) {
 					ASSERT_EQ(6u, notificationTypes.size());
-					EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
-					EXPECT_EQ(model::Core_Transaction_Notification, notificationTypes[1]);
-					EXPECT_EQ(model::Core_Transaction_Deadline_Notification, notificationTypes[2]);
-					EXPECT_EQ(model::Core_Transaction_Fee_Notification, notificationTypes[3]);
-					EXPECT_EQ(model::Core_Balance_Debit_Notification, notificationTypes[4]);
-					EXPECT_EQ(model::Core_Signature_Notification, notificationTypes[5]);
+					EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
+					EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
+					EXPECT_EQ(model::Core_Transaction_Deadline_v1_Notification, notificationTypes[2]);
+					EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[3]);
+					EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[4]);
+					EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[5]);
 				} else {
 					ASSERT_EQ(1u, notificationTypes.size());
-					EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
+					EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
 				}
 			});
 		}
@@ -244,12 +246,12 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, ValidatePartialMapsBasicStatefulFailureToFalse) {
 		// Arrange:
-		auto options = ValidationResultOptions{ ValidatorType::Stateful, model::Core_Transaction_Notification };
+		auto options = ValidationResultOptions{ ValidatorType::Stateful, model::Core_Transaction_v1_Notification };
 		RunValidatePartialTest(options, false, [](const auto& notificationTypes) {
 			// Assert:
 			ASSERT_EQ(2u, notificationTypes.size());
-			EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
-			EXPECT_EQ(model::Core_Transaction_Notification, notificationTypes[1]);
+			EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
+			EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
 		});
 	}
 
@@ -265,7 +267,8 @@ namespace catapult { namespace chain {
 				TNotificationTypesConsumer notificationTypesConsumer) {
 			// Arrange:
 			ValidationResultOptions validationResultOptions{ ValidatorType::Stateless, notificationType };
-			TestContext context(validationResultOptions);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(validationResultOptions, config);
 			const auto& validator = context.validator();
 			const auto& basicNotificationValidator = context.subStatelessValidatorAt(0); // partial (basic)
 			const auto& customNotificationValidator = context.subStatelessValidatorAt(1); // partial (custom)
@@ -273,7 +276,7 @@ namespace catapult { namespace chain {
 			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
 			auto pTransaction = mocks::CreateMockTransaction(0);
 			auto transactionHash = test::GenerateRandomByteArray<Hash256>();
-			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash));
+			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash, Height{0}));
 
 			// Assert:
 			EXPECT_FALSE(result.Normalized);
@@ -292,11 +295,11 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, ValidatePartialMapsBasicStatelessFailureToFalse) {
 		// Arrange:
-		RunInvalidStatelessValidatePartialTest(model::Core_Transaction_Notification, [](const auto& notificationTypes) {
+		RunInvalidStatelessValidatePartialTest(model::Core_Transaction_v1_Notification, [](const auto& notificationTypes) {
 			// Assert:
 			ASSERT_EQ(2u, notificationTypes.size());
-			EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
-			EXPECT_EQ(model::Core_Transaction_Notification, notificationTypes[1]);
+			EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
+			EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
 		});
 	}
 
@@ -305,12 +308,12 @@ namespace catapult { namespace chain {
 		RunInvalidStatelessValidatePartialTest(mocks::Mock_Validator_1_Notification, [](const auto& notificationTypes) {
 			// Assert:
 			ASSERT_EQ(7u, notificationTypes.size());
-			EXPECT_EQ(model::Core_Entity_Notification, notificationTypes[0]);
-			EXPECT_EQ(model::Core_Transaction_Notification, notificationTypes[1]);
-			EXPECT_EQ(model::Core_Transaction_Deadline_Notification, notificationTypes[2]);
-			EXPECT_EQ(model::Core_Transaction_Fee_Notification, notificationTypes[3]);
-			EXPECT_EQ(model::Core_Balance_Debit_Notification, notificationTypes[4]);
-			EXPECT_EQ(model::Core_Signature_Notification, notificationTypes[5]);
+			EXPECT_EQ(model::Core_Entity_v1_Notification, notificationTypes[0]);
+			EXPECT_EQ(model::Core_Transaction_v1_Notification, notificationTypes[1]);
+			EXPECT_EQ(model::Core_Transaction_Deadline_v1_Notification, notificationTypes[2]);
+			EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, notificationTypes[3]);
+			EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, notificationTypes[4]);
+			EXPECT_EQ(model::Core_Signature_v1_Notification, notificationTypes[5]);
 			EXPECT_EQ(mocks::Mock_Validator_1_Notification, notificationTypes[6]);
 		});
 	}
@@ -331,7 +334,8 @@ namespace catapult { namespace chain {
 
 		void RunValidateCosignersTest(ValidationResult validationResult, const ValidateCosignersResult& expectedResult) {
 			// Arrange:
-			TestContext context(validationResult);
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			TestContext context(validationResult, config);
 			const auto& validator = context.validator();
 			const auto& notificationValidator = context.subValidatorAt(1); // cosigners
 
@@ -348,12 +352,12 @@ namespace catapult { namespace chain {
 			const auto& notificationTypes = notificationValidator.notificationTypes();
 			if (!expectedResult.IsShortCircuited) {
 				ASSERT_EQ(3u, notificationTypes.size());
-				EXPECT_EQ(model::Aggregate_Cosignatures_Notification, notificationTypes[0]);
-				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_Notification, notificationTypes[1]);
-				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_Notification, notificationTypes[2]);
+				EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
+				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[1]);
+				EXPECT_EQ(model::Aggregate_EmbeddedTransaction_v1_Notification, notificationTypes[2]);
 			} else {
 				ASSERT_EQ(1u, notificationTypes.size());
-				EXPECT_EQ(model::Aggregate_Cosignatures_Notification, notificationTypes[0]);
+				EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
 			}
 
 			// - correct timestamp was passed to validator

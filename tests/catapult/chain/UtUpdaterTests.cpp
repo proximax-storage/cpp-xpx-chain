@@ -39,6 +39,8 @@ namespace catapult { namespace chain {
 		constexpr auto Default_Height = Height(17);
 		constexpr auto Default_Time = Timestamp(987);
 
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		ValidationResult Modify(ValidationResult result) {
 			// used to modify a ValidationResult while preserving its severity
 			return static_cast<ValidationResult>(utils::to_underlying_type(result) ^ 0xFF);
@@ -52,7 +54,7 @@ namespace catapult { namespace chain {
 		}
 
 		auto CreateCacheWithDefaultHeight() {
-			return test::CreateCatapultCacheWithMarkerAccount(Default_Height);
+			return test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
 		}
 
 		auto CreateConfiguration(const BlockFeeMultiplier& minFeeMultiplier) {
@@ -132,7 +134,7 @@ namespace catapult { namespace chain {
 							CreateConfiguration(minFeeMultiplier),
 							m_executionConfig.Config,
 							[]() { return Default_Time; },
-							[this](const auto& transaction, const auto& hash, auto result) {
+							[this](const auto& transaction, const Height&, const auto& hash, auto result) {
 								// notice that transaction.Deadline is used as transaction marker
 								m_failedTransactionStatuses.emplace_back(hash, utils::to_underlying_type(result), transaction.Deadline);
 							},
@@ -431,7 +433,7 @@ namespace catapult { namespace chain {
 			std::vector<model::TransactionInfo> UtInfos;
 			std::vector<const model::VerifiableEntity*> Entities;
 			std::vector<Hash256> Hashes;
-			std::vector<model::WeakEntityInfo> EntityInfos;
+			model::WeakEntityInfos EntityInfos;
 		};
 
 		std::vector<UtUpdater::TransactionSource> CreateRevertedAndExistingSources(size_t numReverted, size_t numExisting) {
@@ -441,7 +443,7 @@ namespace catapult { namespace chain {
 		}
 
 		model::WeakEntityInfo CreateEntityInfoAt(const TransactionData& data, size_t index) {
-			return model::WeakEntityInfo(*data.Entities[index], data.UtInfos[index].EntityHash);
+			return model::WeakEntityInfo(*data.Entities[index], data.UtInfos[index].EntityHash, Height{0});
 		}
 
 		TransactionData CreateTransactionData(size_t count, size_t start = 0) {

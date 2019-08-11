@@ -111,31 +111,29 @@ namespace catapult { namespace sync {
 
 		// region block
 
-		ReceiptValidationMode GetReceiptValidationMode(const model::BlockChainConfiguration& blockChainConfig) {
-			return blockChainConfig.ShouldEnableVerifiableReceipts ? ReceiptValidationMode::Enabled : ReceiptValidationMode::Disabled;
-		}
-
 		BlockChainProcessor CreateSyncProcessor(
-				const model::BlockChainConfiguration& blockChainConfig,
+				extensions::ServiceState& state,
 				const chain::ExecutionConfiguration& executionConfig) {
-			BlockHitPredicateFactory blockHitPredicateFactory = [&blockChainConfig](const cache::ReadOnlyCatapultCache& cache) {
+			BlockHitPredicateFactory blockHitPredicateFactory = [&state](const cache::ReadOnlyCatapultCache& cache) {
 				cache::ImportanceView view(cache.sub<cache::AccountStateCache>());
-				return chain::BlockHitPredicate(blockChainConfig, [view](const auto& publicKey, auto height) {
+				return chain::BlockHitPredicate(state.pluginManager().configHolder(), [view](const auto& publicKey, auto height) {
 					return view.getAccountImportanceOrDefault(publicKey, height);
 				});
 			};
 			return CreateBlockChainProcessor(
 					blockHitPredicateFactory,
 					chain::CreateBatchEntityProcessor(executionConfig),
-					GetReceiptValidationMode(blockChainConfig));
+					state);
 		}
 
 		BlockChainSyncHandlers CreateBlockChainSyncHandlers(extensions::ServiceState& state, RollbackInfo& rollbackInfo) {
-			const auto& blockChainConfig = state.config().BlockChain;
 			const auto& pluginManager = state.pluginManager();
 
 			BlockChainSyncHandlers syncHandlers;
-			syncHandlers.DifficultyChecker = [&rollbackInfo, blockChainConfig](const auto& blocks, const cache::CatapultCache& cache) {
+			syncHandlers.DifficultyChecker = [&rollbackInfo, &state](const auto& blocks, const cache::CatapultCache& cache) {
+				if (!blocks.size())
+					return true;
+				const auto& blockChainConfig = state.config(blocks.back()->Height).BlockChain;
 				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, blockChainConfig);
 				rollbackInfo.reset();
 				return blocks.size() == result;
@@ -151,7 +149,7 @@ namespace catapult { namespace sync {
 				auto resolverContext = pluginManager.createResolverContext(readOnlyCache);
 				UndoBlock(blockElement, { *pUndoObserver, resolverContext, observerState }, undoBlockType);
 			};
-			syncHandlers.Processor = CreateSyncProcessor(blockChainConfig, extensions::CreateExecutionConfiguration(pluginManager));
+			syncHandlers.Processor = CreateSyncProcessor(state, extensions::CreateExecutionConfiguration(pluginManager));
 
 			syncHandlers.StateChange = [&rollbackInfo, &localScore = state.score(), &subscriber = state.stateChangeSubscriber()](
 					const auto& changeInfo) {
@@ -197,7 +195,7 @@ namespace catapult { namespace sync {
 					RollbackInfo& rollbackInfo) {
 				m_consumers.push_back(CreateBlockChainCheckConsumer(
 						m_nodeConfig.MaxBlocksPerSyncAttempt,
-						m_state.config().BlockChain.MaxBlockFutureTime,
+						m_state.pluginManager().configHolder(),
 						m_state.timeSupplier()));
 				m_consumers.push_back(CreateBlockStatelessValidationConsumer(
 						extensions::CreateStatelessValidator(m_state.pluginManager()),
@@ -209,7 +207,7 @@ namespace catapult { namespace sync {
 						m_state.cache(),
 						m_state.state(),
 						m_state.storage(),
-						m_state.config().BlockChain.MaxRollbackBlocks,
+						m_state.pluginManager().configHolder(),
 						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
 
 				if (m_state.config().Node.ShouldEnableAutoSyncCleanup)
@@ -224,7 +222,7 @@ namespace catapult { namespace sync {
 
 		private:
 			extensions::ServiceState& m_state;
-			const config::NodeConfiguration& m_nodeConfig;
+			config::NodeConfiguration m_nodeConfig;
 			std::vector<BlockConsumer> m_consumers;
 		};
 
@@ -298,7 +296,7 @@ namespace catapult { namespace sync {
 
 		private:
 			extensions::ServiceState& m_state;
-			const config::NodeConfiguration& m_nodeConfig;
+			config::NodeConfiguration m_nodeConfig;
 			std::vector<TransactionConsumer> m_consumers;
 		};
 
@@ -332,7 +330,7 @@ namespace catapult { namespace sync {
 					extensions::CreateExecutionConfiguration(state.pluginManager()),
 					state.timeSupplier(),
 					extensions::SubscriberToSink(state.transactionStatusSubscriber()),
-					CreateUtUpdaterThrottle(state.config()));
+					CreateUtUpdaterThrottle(state));
 			locator.registerRootedService("dispatcher.utUpdater", pUtUpdater);
 
 			auto& utUpdater = *pUtUpdater;
@@ -346,10 +344,8 @@ namespace catapult { namespace sync {
 		auto CreateAndRegisterRollbackService(
 				extensions::ServiceLocator& locator,
 				const chain::TimeSupplier& timeSupplier,
-				const model::BlockChainConfiguration& config) {
-			auto rollbackDurationFull = CalculateFullRollbackDuration(config);
-			auto rollbackDurationHalf = utils::TimeSpan::FromMilliseconds(rollbackDurationFull.millis() / 2);
-			auto pRollbackInfo = std::make_shared<RollbackInfo>(timeSupplier, rollbackDurationHalf);
+				extensions::ServiceState& state) {
+			auto pRollbackInfo = std::make_shared<RollbackInfo>(timeSupplier, state);
 			locator.registerRootedService("rollbacks", pRollbackInfo);
 			return pRollbackInfo;
 		}
@@ -396,7 +392,7 @@ namespace catapult { namespace sync {
 				TransactionDispatcherBuilder transactionDispatcherBuilder(state);
 				transactionDispatcherBuilder.addHashConsumers();
 
-				auto pRollbackInfo = CreateAndRegisterRollbackService(locator, state.timeSupplier(), state.config().BlockChain);
+				auto pRollbackInfo = CreateAndRegisterRollbackService(locator, state.timeSupplier(), state);
 				auto pBlockDispatcher = blockDispatcherBuilder.build(pValidatorPool, *pRollbackInfo);
 				RegisterBlockDispatcherService(pBlockDispatcher, *pServiceGroup, locator, state);
 

@@ -34,20 +34,22 @@ namespace catapult { namespace cache {
 		auto result = KeyAddressPairSerializer::SerializeValue(pair);
 
 		// Assert:
-		ASSERT_EQ(Key_Size + Address_Decoded_Size, result.size());
-		EXPECT_EQ(pair.first, reinterpret_cast<const Key&>(result[0]));
-		EXPECT_EQ(pair.second, reinterpret_cast<const Address&>(result[Key_Size]));
+		ASSERT_EQ(sizeof(VersionType) + Key_Size + Address_Decoded_Size, result.size());
+		EXPECT_EQ(pair.first, reinterpret_cast<const Key&>(*(result.data() + sizeof(VersionType))));
+		EXPECT_EQ(pair.second, reinterpret_cast<const Address&>(*(result.data() + sizeof(VersionType) + Key_Size)));
 	}
 
 	TEST(TEST_CLASS, KeyAddressPairSerializer_CanDeserializeValue) {
 		// Arrange:
-		auto buffer = test::GenerateRandomArray<Key_Size + Address_Decoded_Size>();
+		auto buffer = test::GenerateRandomArray<sizeof(VersionType) + Key_Size + Address_Decoded_Size>();
+		VersionType version{1};
+		memcpy(buffer.data(), &version, sizeof(VersionType));
 
 		// Act:
 		auto pair = KeyAddressPairSerializer::DeserializeValue(buffer);
 
 		// Assert:
-		EXPECT_EQ(reinterpret_cast<const Key&>(buffer[0]), pair.first);
-		EXPECT_EQ(reinterpret_cast<const Address&>(buffer[Key_Size]), pair.second);
+		EXPECT_EQ(reinterpret_cast<const Key&>(*(buffer.data() + sizeof(VersionType))), pair.first);
+		EXPECT_EQ(reinterpret_cast<const Address&>(*(buffer.data() + sizeof(VersionType) + Key_Size)), pair.second);
 	}
 }}

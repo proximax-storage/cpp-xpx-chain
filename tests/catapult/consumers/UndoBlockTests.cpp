@@ -77,7 +77,8 @@ namespace catapult { namespace consumers {
 		template<typename TAction>
 		void RunStateHashDisabledTest(TAction action) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto delta = cache.createDelta();
 			mocks::MockEntityObserver observer;
 			auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));

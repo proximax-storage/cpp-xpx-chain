@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/model/ContainerTypes.h"
+#include "catapult/model/ExtractorContext.h"
 #include "catapult/model/NotificationPublisher.h"
 
 namespace catapult {
@@ -34,8 +35,9 @@ namespace catapult { namespace addressextraction {
 	/// Utility class for extracting addresses.
 	class AddressExtractor {
 	public:
-		/// Creates an extractor around \a pPublisher.
-		explicit AddressExtractor(std::unique_ptr<const model::NotificationPublisher>&& pPublisher);
+		/// Creates an extractor around \a pPublisher and \a contextFactory.
+		AddressExtractor(std::unique_ptr<const model::NotificationPublisher>&& pPublisher,
+				const model::ExtractorContextFactoryFunc & contextFactory);
 
 	public:
 		/// Extracts transaction addresses into \a transactionInfo.
@@ -44,13 +46,14 @@ namespace catapult { namespace addressextraction {
 		/// Extracts transaction addresses into \a transactionInfos.
 		void extract(model::TransactionInfosSet& transactionInfos) const;
 
-		/// Extracts transaction addresses into \a transactionElement.
-		void extract(model::TransactionElement& transactionElement) const;
+		/// Extracts transaction addresses at \a height into \a transactionElement.
+		void extract(model::TransactionElement& transactionElement, const Height& height) const;
 
 		/// Extracts transaction addresses into \a blockElement.
 		void extract(model::BlockElement& blockElement) const;
 
 	private:
 		std::unique_ptr<const model::NotificationPublisher> m_pPublisher;
+		model::ExtractorContextFactoryFunc m_extractorContextFactory;
 	};
 }}

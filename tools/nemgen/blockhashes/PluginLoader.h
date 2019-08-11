@@ -22,15 +22,13 @@
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/plugins/PluginModule.h"
 
-namespace catapult { namespace config { class CatapultConfiguration; } }
-
 namespace catapult { namespace tools { namespace nemgen {
 
 	/// Loads plugins into a plugin manager.
 	class PluginLoader {
 	public:
 		/// Creates a loader around \a config.
-		explicit PluginLoader(const config::CatapultConfiguration& config);
+		explicit PluginLoader(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	public:
 		/// Gets the plugin manager.
@@ -44,7 +42,6 @@ namespace catapult { namespace tools { namespace nemgen {
 		void loadPlugin(const std::string& pluginName);
 
 	private:
-		const config::CatapultConfiguration& m_config;
 		std::vector<plugins::PluginModule> m_pluginModules;
 		plugins::PluginManager m_pluginManager;
 	};

@@ -20,13 +20,15 @@
 
 #include "NodePingRequestor.h"
 
+namespace catapult { namespace extensions { class ServiceState; } }
+
 namespace catapult { namespace nodediscovery {
 
 	std::shared_ptr<NodePingRequestor> CreateNodePingRequestor(
 			const std::shared_ptr<thread::IoThreadPool>& pPool,
 			const crypto::KeyPair& keyPair,
 			const net::ConnectionSettings& settings,
-			model::NetworkIdentifier networkIdentifier) {
-		return std::make_shared<NodePingRequestor>(pPool, keyPair, settings, NodePingResponseCompatibilityChecker(networkIdentifier));
+			extensions::ServiceState& state) {
+		return std::make_shared<NodePingRequestor>(pPool, keyPair, settings, NodePingResponseCompatibilityChecker(state));
 	}
 }}

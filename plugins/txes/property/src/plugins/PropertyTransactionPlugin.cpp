@@ -34,40 +34,48 @@ namespace catapult { namespace plugins {
 		struct AddressTraits {
 			using UnresolvedValueType = UnresolvedAddress;
 			using ResolvedValueType = Address;
-			using ModifyPropertyNotification = ModifyAddressPropertyNotification;
-			using ModifyPropertyValueNotification = ModifyAddressPropertyValueNotification;
+			using ModifyPropertyNotification = ModifyAddressPropertyNotification_v1;
+			using ModifyPropertyValueNotification = ModifyAddressPropertyValueNotification_v1;
 		};
 
 		struct MosaicTraits {
 			using UnresolvedValueType = UnresolvedMosaicId;
 			using ResolvedValueType = MosaicId;
-			using ModifyPropertyNotification = ModifyMosaicPropertyNotification;
-			using ModifyPropertyValueNotification = ModifyMosaicPropertyValueNotification;
+			using ModifyPropertyNotification = ModifyMosaicPropertyNotification_v1;
+			using ModifyPropertyValueNotification = ModifyMosaicPropertyValueNotification_v1;
 		};
 
 		struct TransactionTypeTraits {
 			using UnresolvedValueType = model::EntityType;
 			using ResolvedValueType = model::EntityType;
-			using ModifyPropertyNotification = ModifyTransactionTypePropertyNotification;
-			using ModifyPropertyValueNotification = ModifyTransactionTypePropertyValueNotification;
+			using ModifyPropertyNotification = ModifyTransactionTypePropertyNotification_v1;
+			using ModifyPropertyValueNotification = ModifyTransactionTypePropertyValueNotification_v1;
 		};
 
 		template<typename TTraits>
 		class Publisher {
 		public:
 			template<typename TTransaction>
-			static void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
-				sub.notify(PropertyTypeNotification(transaction.PropertyType));
-				sub.notify(CreatePropertyModificationsNotification<TTransaction>(transaction));
+			static void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
+				switch (transaction.EntityVersion()) {
+				case 1: {
+					sub.notify(PropertyTypeNotification<1>(transaction.PropertyType));
+					sub.notify(CreatePropertyModificationsNotification<TTransaction>(transaction));
 
-				using ValueNotification = typename TTraits::ModifyPropertyValueNotification;
-				const auto* pModifications = transaction.ModificationsPtr();
-				for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
-					PropertyModification<typename TTraits::UnresolvedValueType> modification{
-						pModifications[i].ModificationType,
-						pModifications[i].Value
-					};
-					sub.notify(ValueNotification(transaction.Signer, transaction.PropertyType, modification));
+					using ValueNotification = typename TTraits::ModifyPropertyValueNotification;
+					const auto* pModifications = transaction.ModificationsPtr();
+					for (auto i = 0u; i < transaction.ModificationsCount; ++i) {
+						PropertyModification<typename TTraits::UnresolvedValueType> modification{
+							pModifications[i].ModificationType,
+							pModifications[i].Value
+						};
+						sub.notify(ValueNotification(transaction.Signer, transaction.PropertyType, modification));
+					}
+					break;
+				}
+
+				default:
+					CATAPULT_LOG(debug) << "invalid version of PropertyTransaction: " << transaction.EntityVersion();
 				}
 			}
 

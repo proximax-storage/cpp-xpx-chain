@@ -20,12 +20,13 @@
 
 #pragma once
 #include "catapult/extensions/ServiceRegistrar.h"
+#include "catapult/config/CatapultConfiguration.h"
 
 namespace catapult { namespace ionet { struct NetworkNode; } }
 
 namespace catapult { namespace nodediscovery {
 
-	/// Creates a registrar for a node discovery service around \a pLocalNetworkNode.
+	/// Creates a registrar for a node discovery service.
 	/// \note This service is responsible for allowing nodes to discover each other.
-	DECLARE_SERVICE_REGISTRAR(NodeDiscovery)(const std::shared_ptr<const ionet::NetworkNode>& pLocalNetworkNode);
+	DECLARE_SERVICE_REGISTRAR(NodeDiscovery)();
 }}

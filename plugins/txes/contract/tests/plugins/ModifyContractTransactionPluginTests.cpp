@@ -9,7 +9,6 @@
 #include "plugins/txes/contract/src/model/ContractNotifications.h"
 #include "src/plugins/ModifyContractTransactionPlugin.h"
 #include "src/model/ModifyContractTransaction.h"
-#include "src/model/ContractNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -22,6 +21,8 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS ModifyContractTransactionPluginTests
 
 	namespace {
+		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 3);
+
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(ModifyContract, 3, 3,)
 
 		CosignatoryModification GenerateModification(int index) {
@@ -41,6 +42,7 @@ namespace catapult { namespace plugins {
 				+ executorModificationCount * sizeof(CosignatoryModification)
 				+ verifierModificationCount * sizeof(CosignatoryModification);
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->CustomerModificationCount = customerModificationCount;
 			pTransaction->ExecutorModificationCount = executorModificationCount;
@@ -125,7 +127,7 @@ namespace catapult { namespace plugins {
 		*pModification++ = { CosignatoryModificationType::Del, test::GenerateRandomByteArray<Key>() };
 
 		// Assert:
-		AssertNumNotifications<TTraits>(3, *pTransaction);
+		AssertNumNotifications<TTraits>(3 + 3, *pTransaction);
 	}
 
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotificationsWhenAddModificationsArePresent) {
@@ -133,10 +135,13 @@ namespace catapult { namespace plugins {
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
 
 		// Assert:
-		AssertNumNotifications<TTraits>(6, *pTransaction, [](const auto& sub) {
+		AssertNumNotifications<TTraits>(6 + 3, *pTransaction, [](const auto& sub) {
 			// - multisig modify new cosigner notifications must be the first raised notifications
-			EXPECT_EQ(Multisig_Modify_New_Cosigner_Notification, sub.notificationTypes()[0]);
-			EXPECT_EQ(Multisig_Modify_New_Cosigner_Notification, sub.notificationTypes()[1]);
+			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[0]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[2]);
+			EXPECT_EQ(Multisig_Modify_New_Cosigner_v1_Notification, sub.notificationTypes()[3]);
+			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[4]);
 		});
 	}
 
@@ -146,7 +151,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishModifyContractNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyContractNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyContractNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
@@ -171,7 +176,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishCosignersNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
@@ -189,7 +194,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(NoCosignersNotificationIfNoModificationIsPresent) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
@@ -208,7 +213,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishNewCosignerNotificationForEachAddVerifierModification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
@@ -228,7 +233,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(NoNewCosignerNotificationsIfNoAddModificationsArePresent) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigNewCosignerNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3, false);
@@ -241,7 +246,7 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(3u, sub.numNotifications());
+		ASSERT_EQ(3u + 3u, sub.numNotifications());
 		ASSERT_EQ(0u, sub.numMatchingNotifications());
 	}
 
@@ -251,7 +256,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishReputationUpdateNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(3, 2, 3);
@@ -267,7 +272,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(NoReputationUpdateNotificationIfNoModificationIsPresent) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification> sub;
+		mocks::MockTypedNotificationSubscriber<ReputationUpdateNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithModifications<TTraits>(0, 0, 0, false);
@@ -308,7 +313,7 @@ namespace catapult { namespace plugins {
 		template<typename TTraits>
 		void AssertAddressInteractionNotifications(size_t numAddModifications, size_t numDelModifications) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<AddressInteractionNotification> sub;
+			mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
 			auto pPlugin = TTraits::CreatePlugin();
 
 			auto numModifications = static_cast<uint8_t>(numAddModifications + numDelModifications);

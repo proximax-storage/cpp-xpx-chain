@@ -76,14 +76,15 @@ namespace catapult { namespace observers {
 
 	ACCOUNT_LINK_OBSERVER_TEST(ObserverCreatesLink) {
 		// Arrange:
-		auto context = ObserverTestContext(TTraits::Notify_Mode, Height(888));
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto context = ObserverTestContext(TTraits::Notify_Mode, Height(888), config);
 		RunTwoAccountTest(context.cache().sub<cache::AccountStateCache>(), [&context](
 				const auto& mainAccountState,
 				const auto& remoteAccountState) {
 			auto mainAccountKey = mainAccountState.PublicKey;
 			auto remoteAccountKey = remoteAccountState.PublicKey;
 
-			auto notification = model::RemoteAccountLinkNotification(mainAccountKey, remoteAccountKey, TTraits::Create_Link);
+			auto notification = model::RemoteAccountLinkNotification<1>(mainAccountKey, remoteAccountKey, TTraits::Create_Link);
 			auto pObserver = CreateAccountLinkObserver();
 
 			// Act:
@@ -100,8 +101,9 @@ namespace catapult { namespace observers {
 
 	ACCOUNT_LINK_OBSERVER_TEST(ObserverRemovesLink) {
 		// Arrange:
-		auto context = ObserverTestContext(TTraits::Notify_Mode, Height(888));
-		RunTwoAccountTest(context.cache().sub<cache::AccountStateCache>(), [&context](auto& mainAccountState, auto& remoteAccountState) {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto context = ObserverTestContext(TTraits::Notify_Mode, Height(888), config);
+			RunTwoAccountTest(context.cache().sub<cache::AccountStateCache>(), [&context](auto& mainAccountState, auto& remoteAccountState) {
 			auto mainAccountKey = mainAccountState.PublicKey;
 			auto remoteAccountKey = remoteAccountState.PublicKey;
 
@@ -111,7 +113,7 @@ namespace catapult { namespace observers {
 			remoteAccountState.LinkedAccountKey = mainAccountKey;
 			remoteAccountState.AccountType = state::AccountType::Remote;
 
-			auto notification = model::RemoteAccountLinkNotification(mainAccountKey, remoteAccountKey, TTraits::Remove_Link);
+			auto notification = model::RemoteAccountLinkNotification<1>(mainAccountKey, remoteAccountKey, TTraits::Remove_Link);
 			auto pObserver = CreateAccountLinkObserver();
 
 			// Act:

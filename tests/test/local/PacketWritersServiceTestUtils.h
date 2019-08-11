@@ -53,7 +53,7 @@ namespace catapult { namespace test {
 
 		static EntityType CreateEntity() {
 			EntityType transactionInfos;
-			transactionInfos.push_back(model::TransactionInfo(GenerateRandomTransaction()));
+			transactionInfos.push_back(model::TransactionInfo(GenerateRandomTransaction(), Height()));
 			return transactionInfos;
 		}
 

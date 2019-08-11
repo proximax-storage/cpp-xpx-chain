@@ -21,6 +21,8 @@
 #pragma once
 #include "catapult/chain/UtUpdater.h"
 
+namespace catapult { namespace extensions { class ServiceState; } }
+
 namespace catapult { namespace sync {
 
 	/// Spam throttle configuration.
@@ -58,6 +60,6 @@ namespace catapult { namespace sync {
 	/// Creates a throttle using \a config to filter out transactions that are considered to be spam.
 	/// \a isBonded indicates whether a transaction is bonded or not.
 	chain::UtUpdater::Throttle CreateTransactionSpamThrottle(
-			const SpamThrottleConfiguration& config,
+			extensions::ServiceState& state,
 			const predicate<const model::Transaction&>& isBonded);
 }}

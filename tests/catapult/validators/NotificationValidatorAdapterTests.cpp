@@ -19,6 +19,7 @@
 **/
 
 #include "catapult/validators/NotificationValidatorAdapter.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -31,7 +32,7 @@ namespace catapult { namespace validators {
 	namespace {
 		ValidationResult ValidateEntity(const stateless::EntityValidator& validator, const model::VerifiableEntity& entity) {
 			Hash256 hash;
-			return validator.validate(model::WeakEntityInfo(entity, hash));
+			return validator.validate(model::WeakEntityInfo(entity, hash, Height{0}));
 		}
 
 		class MockNotificationValidator : public stateless::NotificationValidator {
@@ -51,8 +52,8 @@ namespace catapult { namespace validators {
 				++m_numValidateCalls;
 				m_notificationTypes.push_back(notification.Type);
 
-				if (model::Core_Signature_Notification == notification.Type)
-					m_signerKeys.push_back(static_cast<const model::SignatureNotification&>(notification).Signer);
+				if (model::Core_Signature_v1_Notification == notification.Type)
+					m_signerKeys.push_back(static_cast<const model::SignatureNotification<1>&>(notification).Signer);
 
 				return m_result;
 			}
@@ -85,7 +86,7 @@ namespace catapult { namespace validators {
 			const auto& validator = *pValidator;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId());
+			auto pPublisher = model::CreateNotificationPublisher(registry, config::CreateMockConfigurationHolder());
 			NotificationValidatorAdapter adapter(std::move(pValidator), std::move(pPublisher));
 
 			// Act + Assert:
@@ -111,12 +112,12 @@ namespace catapult { namespace validators {
 			// Assert: the mock transaction plugin sends additional public key notification and 6 custom notifications
 			//         (notice that only 4/6 are raised on validator channel)
 			ASSERT_EQ(6u + 4u, validator.notificationTypes().size());
-			EXPECT_EQ(model::Core_Entity_Notification, validator.notificationTypes()[0]);
-			EXPECT_EQ(model::Core_Transaction_Notification, validator.notificationTypes()[1]);
-			EXPECT_EQ(model::Core_Transaction_Deadline_Notification, validator.notificationTypes()[2]);
-			EXPECT_EQ(model::Core_Transaction_Fee_Notification, validator.notificationTypes()[3]);
-			EXPECT_EQ(model::Core_Balance_Debit_Notification, validator.notificationTypes()[4]);
-			EXPECT_EQ(model::Core_Signature_Notification, validator.notificationTypes()[5]);
+			EXPECT_EQ(model::Core_Entity_v1_Notification, validator.notificationTypes()[0]);
+			EXPECT_EQ(model::Core_Transaction_v1_Notification, validator.notificationTypes()[1]);
+			EXPECT_EQ(model::Core_Transaction_Deadline_v1_Notification, validator.notificationTypes()[2]);
+			EXPECT_EQ(model::Core_Transaction_Fee_v1_Notification, validator.notificationTypes()[3]);
+			EXPECT_EQ(model::Core_Balance_Debit_v1_Notification, validator.notificationTypes()[4]);
+			EXPECT_EQ(model::Core_Signature_v1_Notification, validator.notificationTypes()[5]);
 
 			// - mock transaction notifications
 			EXPECT_EQ(mocks::Mock_Validator_1_Notification, validator.notificationTypes()[6]);

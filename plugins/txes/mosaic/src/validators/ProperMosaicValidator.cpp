@@ -24,7 +24,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicRequiredNotification;
+	using Notification = model::MosaicRequiredNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(ProperMosaic, [](const auto& notification, const ValidatorContext& context) {
 		auto view = ActiveMosaicView(context.Cache);

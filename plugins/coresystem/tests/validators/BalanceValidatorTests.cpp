@@ -39,6 +39,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		constexpr auto Currency_Mosaic_Id = MosaicId(1234);
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
 
 		// region traits
 
@@ -70,7 +71,7 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
-				const model::BalanceTransferNotification& notification) {
+				const model::BalanceTransferNotification<1>& notification) {
 			// Act:
 			auto result = TTraits::Validate(notification, cache);
 
@@ -79,18 +80,18 @@ namespace catapult { namespace validators {
 		}
 
 		struct TransferTraits {
-			static ValidationResult Validate(const model::BalanceTransferNotification& notification, const cache::CatapultCache& cache) {
+			static ValidationResult Validate(const model::BalanceTransferNotification<1>& notification, const cache::CatapultCache& cache) {
 				auto pValidator = CreateBalanceTransferValidator();
 				return test::ValidateNotification(*pValidator, notification, cache);
 			}
 		};
 
 		struct ReserveTraits {
-			static ValidationResult Validate(const model::BalanceTransferNotification& notification, const cache::CatapultCache& cache) {
+			static ValidationResult Validate(const model::BalanceTransferNotification<1>& notification, const cache::CatapultCache& cache) {
 				auto pValidator = CreateBalanceDebitValidator();
 
 				// - map transfer notification to a reserve notification
-				auto reserveNotification = model::BalanceDebitNotification(
+				auto reserveNotification = model::BalanceDebitNotification<1>(
 						notification.Sender,
 						notification.MosaicId,
 						notification.Amount);
@@ -134,8 +135,8 @@ namespace catapult { namespace validators {
 		// Arrange: do not register the signer with the cache
 		auto sender = test::GenerateRandomByteArray<Key>();
 		auto recipient = test::GenerateRandomUnresolvedAddress();
-		auto notification = model::BalanceTransferNotification(sender, recipient, test::UnresolveXor(Currency_Mosaic_Id), Amount(0));
-		auto cache = test::CreateEmptyCatapultCache();
+		auto notification = model::BalanceTransferNotification<1>(sender, recipient, test::UnresolveXor(Currency_Mosaic_Id), Amount(0));
+		auto cache = test::CreateEmptyCatapultCache(Default_Config);
 
 		// Assert:
 		AssertValidationResult<TValidatorTraits>(Failure_Core_Insufficient_Balance, cache, notification);
@@ -145,8 +146,8 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto sender = test::GenerateRandomByteArray<Key>();
 		auto recipient = test::GenerateRandomUnresolvedAddress();
-		auto notification = model::BalanceTransferNotification(sender, recipient, test::UnresolveXor(Currency_Mosaic_Id), Amount(234));
-		auto cache = test::CreateCache(sender, { { Currency_Mosaic_Id, TTraits::Adjust(Amount(234)) } });
+		auto notification = model::BalanceTransferNotification<1>(sender, recipient, test::UnresolveXor(Currency_Mosaic_Id), Amount(234));
+		auto cache = test::CreateCache(sender, { { Currency_Mosaic_Id, TTraits::Adjust(Amount(234)) } }, Default_Config);
 
 		// Assert:
 		AssertValidationResult<TValidatorTraits>(TTraits::Expected_Result, cache, notification);
@@ -156,10 +157,10 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto sender = test::GenerateRandomByteArray<Key>();
 		auto recipient = test::GenerateRandomUnresolvedAddress();
-		auto notification = model::BalanceTransferNotification(sender, recipient, test::UnresolveXor(Currency_Mosaic_Id), Amount(234));
+		auto notification = model::BalanceTransferNotification<1>(sender, recipient, test::UnresolveXor(Currency_Mosaic_Id), Amount(234));
 
 		// - seed the sender by address
-		auto cache = test::CreateEmptyCatapultCache();
+		auto cache = test::CreateEmptyCatapultCache(Default_Config);
 		auto senderAddress = model::PublicKeyToAddress(sender, cache.sub<cache::AccountStateCache>().networkIdentifier());
 		{
 			auto delta = cache.createDelta();
@@ -175,8 +176,8 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto sender = test::GenerateRandomByteArray<Key>();
 		auto recipient = test::GenerateRandomUnresolvedAddress();
-		auto notification = model::BalanceTransferNotification(sender, recipient, test::UnresolveXor(MosaicId(12)), Amount(234));
-		auto cache = test::CreateCache(sender, { { MosaicId(12), TTraits::Adjust(Amount(234)) } });
+		auto notification = model::BalanceTransferNotification<1>(sender, recipient, test::UnresolveXor(MosaicId(12)), Amount(234));
+		auto cache = test::CreateCache(sender, { { MosaicId(12), TTraits::Adjust(Amount(234)) } }, Default_Config);
 
 		// Assert:
 		AssertValidationResult<TValidatorTraits>(TTraits::Expected_Result, cache, notification);

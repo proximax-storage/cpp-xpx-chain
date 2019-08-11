@@ -25,7 +25,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(ExpiredSecretLockInfo, model::BlockNotification, [](const auto&, auto& context) {
+	DEFINE_OBSERVER(ExpiredSecretLockInfo, model::BlockNotification<1>, [](const auto&, auto& context) {
 		ExpiredLockInfoObserver<cache::SecretLockInfoCache>(context, [](const auto& lockInfo) { return lockInfo.Account; });
 	});
 }}

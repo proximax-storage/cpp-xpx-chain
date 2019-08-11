@@ -46,7 +46,7 @@ namespace catapult { namespace unbondedpruning {
 
 				// raise one hash lock notification for each dependent hash
 				for (const auto& hash : m_dependentHashes)
-					sub.notify(model::HashLockNotification(Key(), model::UnresolvedMosaic(), BlockDuration(), hash));
+					sub.notify(model::HashLockNotification<1>(Key(), model::UnresolvedMosaic(), BlockDuration(), hash));
 
 				// if there are no dependent hashes, don't raise any notifications
 			}
@@ -68,7 +68,7 @@ namespace catapult { namespace unbondedpruning {
 
 			// Assert: publish was called exactly once
 			ASSERT_EQ(1u, publisher.entityInfos().size());
-			EXPECT_EQ(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash), publisher.entityInfos()[0]);
+			EXPECT_EQ(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height{0}), publisher.entityInfos()[0]);
 
 			// - the expected dependent hashes were extracted
 			EXPECT_EQ(numExpectedDependentHashes, dependentHashes.size());

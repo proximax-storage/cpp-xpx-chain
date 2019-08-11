@@ -19,6 +19,8 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -26,19 +28,33 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EntityVersionValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion,)
+	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr uint8_t Min_Entity_Version = 55;
 		constexpr uint8_t Max_Entity_Version = 77;
+		constexpr auto Entity_Type = model::EntityType{1};
+
+		auto CreateLocalNodeConfigurationHolder() {
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
+			for (uint16_t i = Min_Entity_Version; i <= Max_Entity_Version; ++i)
+				const_cast<config::SupportedEntityVersions&>(pConfigHolder->Config().SupportedEntityVersions)[Entity_Type].emplace(i);
+			return pConfigHolder;
+		}
 
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t version) {
 			// Arrange:
-			model::EntityNotification notification(model::NetworkIdentifier::Zero, version, Min_Entity_Version, Max_Entity_Version);
-			auto pValidator = CreateEntityVersionValidator();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cacheView = cache.createView();
+			auto readOnlyCache = cacheView.toReadOnly();
+			auto resolverContext = test::CreateResolverContextXor();
+			auto context = ValidatorContext(Height(123), Timestamp(8888), model::NetworkInfo(), resolverContext, readOnlyCache);
+			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, Entity_Type, version);
+			auto pValidator = CreateEntityVersionValidator(CreateLocalNodeConfigurationHolder());
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, context);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "entity version " << static_cast<uint16_t>(version);
@@ -63,18 +79,6 @@ namespace catapult { namespace validators {
 		// Assert:
 		for (uint8_t version = Min_Entity_Version; version <= Max_Entity_Version; ++version)
 			AssertValidationResult(ValidationResult::Success, version);
-	}
-
-	TEST(TEST_CLASS, SuccessWhenEntityMatchesBounds) {
-		// Arrange:
-		model::EntityNotification notification(model::NetworkIdentifier::Zero, 5, 5, 5);
-		auto pValidator = CreateEntityVersionValidator();
-
-		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification);
-
-		// Assert:
-		EXPECT_EQ(ValidationResult::Success, result);
 	}
 
 	// endregion

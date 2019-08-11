@@ -47,6 +47,7 @@ namespace catapult { namespace io {
 				for (auto i = 0u; i < GetNumIterations(); ++i) {
 					IndexFile indexFile(tempFile.name(), LockMode::None);
 					operation(indexFile, i);
+					test::Sleep(1);
 				}
 			});
 
@@ -63,6 +64,7 @@ namespace catapult { namespace io {
 
 					sum += value;
 					lastValue = value;
+					test::Sleep(1);
 				}
 			});
 

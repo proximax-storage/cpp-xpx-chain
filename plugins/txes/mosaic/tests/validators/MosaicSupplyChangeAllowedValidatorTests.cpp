@@ -18,8 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -28,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicSupplyChangeAllowedValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, Amount())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Max_Atomic_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
@@ -37,10 +38,13 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
 				Height height,
-				const model::MosaicSupplyChangeNotification& notification,
+				const model::MosaicSupplyChangeNotification<1>& notification,
 				Amount maxAtomicUnits = Max_Atomic_Units) {
 			// Arrange:
-			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(maxAtomicUnits);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
@@ -79,7 +83,7 @@ namespace catapult { namespace validators {
 		void AssertCanChangeImmutableSupplyWhenOwnerHasCompleteSupply(model::MosaicSupplyChangeDirection direction) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
-			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
+			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(500), model::MosaicFlags::None);
@@ -103,7 +107,7 @@ namespace catapult { namespace validators {
 		void AssertCannotChangeImmutableSupplyWhenOwnerHasPartialSupply(model::MosaicSupplyChangeDirection direction) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
-			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
+			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(499), model::MosaicFlags::None);
@@ -132,7 +136,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto direction = model::MosaicSupplyChangeDirection::Decrease;
-			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
+			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, ownerSupply);
@@ -168,7 +172,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto direction = model::MosaicSupplyChangeDirection::Increase;
-			auto notification = model::MosaicSupplyChangeNotification(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
+			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
 
 			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, Amount(111));

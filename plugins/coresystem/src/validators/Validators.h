@@ -19,8 +19,11 @@
 **/
 
 #pragma once
+
 #include "Results.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/utils/TimeSpan.h"
+#include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
 namespace catapult { namespace validators {
@@ -29,7 +32,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all account address notifications and validates that:
 	/// - the address is valid and targets the expected network (\a networkIdentifier)
-	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification)(model::NetworkIdentifier networkIdentifier);
+	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
 
@@ -37,15 +40,15 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all signature notifications and validates that:
 	/// - nemesis account signatures are not allowed after the nemesis block
-	DECLARE_STATEFUL_VALIDATOR(NemesisSink, model::SignatureNotification)();
+	DECLARE_STATEFUL_VALIDATOR(NemesisSink, model::SignatureNotification<1>)();
 
 	/// A validator implementation that applies to all entity notifications and validates that:
 	/// - the entity targets the expected network (\a networkIdentifier)
-	DECLARE_STATELESS_VALIDATOR(Network, model::EntityNotification)(model::NetworkIdentifier networkIdentifier);
+	DECLARE_STATEFUL_VALIDATOR(Network, model::EntityNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to entity notifications and validates that:
 	/// - the entity version is within supported range.
-	DECLARE_STATELESS_VALIDATOR(EntityVersion, model::EntityNotification)();
+	DECLARE_STATEFUL_VALIDATOR(EntityVersion, model::EntityNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	// endregion
 
@@ -54,15 +57,15 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block signer was eligible to create the block given the minimum balance required to harvest a block
 	///   (\a minHarvesterBalance)
-	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, model::BlockNotification)(Amount minHarvesterBalance);
+	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, model::BlockNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block does not contain more than \a maxTransactions transactions
-	DECLARE_STATELESS_VALIDATOR(MaxTransactions, model::BlockNotification)(uint32_t maxTransactions);
+	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, model::BlockNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block has valid FeeInterest and FeeInterestDenominator
-	DECLARE_STATELESS_VALIDATOR(Greed, model::BlockNotification)();
+	DECLARE_STATELESS_VALIDATOR(Greed, model::BlockNotification<1>)();
 
 	// endregion
 
@@ -71,20 +74,20 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all transaction notifications and validates that:
 	/// - the transaction deadline is no later than the block timestamp
 	/// - the transaction deadline is no more than \a maxTransactionLifetime past the block timestamp
-	DECLARE_STATEFUL_VALIDATOR(Deadline, model::TransactionDeadlineNotification)(const utils::TimeSpan& maxTransactionLifetime);
+	DECLARE_STATEFUL_VALIDATOR(Deadline, model::TransactionDeadlineNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - the sending account has enough funds
-	DECLARE_STATEFUL_VALIDATOR(BalanceTransfer, model::BalanceTransferNotification)();
+	DECLARE_STATEFUL_VALIDATOR(BalanceTransfer, model::BalanceTransferNotification<1>)();
 
 	/// A validator implementation that applies to all balance debit notifications and validates that:
 	/// - the sending account has enough funds
-	DECLARE_STATEFUL_VALIDATOR(BalanceDebit, model::BalanceDebitNotification)();
+	DECLARE_STATEFUL_VALIDATOR(BalanceDebit, model::BalanceDebitNotification<1>)();
 
 	/// A validator implementation that applies to all transaction fee notifications and validates that:
 	/// - fee is no greater than max fee
 	/// - max fee multiplier does not overflow 32-bit value
-	DECLARE_STATELESS_VALIDATOR(TransactionFee, model::TransactionFeeNotification)();
+	DECLARE_STATELESS_VALIDATOR(TransactionFee, model::TransactionFeeNotification<1>)();
 
 	// endregion
 }}

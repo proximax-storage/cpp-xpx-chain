@@ -39,7 +39,9 @@ namespace catapult { namespace cache {
 			, public MultisigCacheDeltaMixins::MutableAccessor
 			, public MultisigCacheDeltaMixins::PatriciaTreeDelta
 			, public MultisigCacheDeltaMixins::BasicInsertRemove
-			, public MultisigCacheDeltaMixins::DeltaElements {
+			, public MultisigCacheDeltaMixins::DeltaElements
+			, public MultisigCacheDeltaMixins::Enable
+			, public MultisigCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = MultisigCacheTypes::CacheReadOnlyType;
 

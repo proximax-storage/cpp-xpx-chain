@@ -33,13 +33,13 @@ namespace catapult { namespace model {
 		auto expectedSize =
 				sizeof(uint32_t) // size
 				+ sizeof(Signature) // signature
-				+ sizeof(uint16_t) // version
+				+ sizeof(uint32_t) // version
 				+ sizeof(uint16_t) // entity type
 				+ sizeof(Key); // signer
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(VerifiableEntity));
-		EXPECT_EQ(104u, sizeof(VerifiableEntity));
+		EXPECT_EQ(106u, sizeof(VerifiableEntity));
 	}
 
 	// region insertion operator

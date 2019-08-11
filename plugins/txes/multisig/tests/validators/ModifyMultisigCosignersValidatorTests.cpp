@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(ValidationResult expectedResult, const std::vector<model::CosignatoryModification>& modifications) {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
-			model::ModifyMultisigCosignersNotification notification(
+			model::ModifyMultisigCosignersNotification<1> notification(
 					signer,
 					static_cast<uint8_t>(modifications.size()),
 					modifications.data());

@@ -18,7 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/AggregateConfiguration.h"
 #include "src/validators/Validators.h"
+#include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -26,11 +29,20 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS BasicAggregateCosignaturesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(BasicAggregateCosignatures, 0, 0)
+	DEFINE_COMMON_VALIDATOR_TESTS(BasicAggregateCosignatures, config::CreateMockConfigurationHolder())
 
 	namespace {
 		auto GenerateRandomCosignatures(uint8_t numCosignatures) {
 			return test::GenerateRandomDataVector<model::Cosignature>(numCosignatures);
+		}
+
+		auto CreateConfig(uint32_t maxTransactions, uint8_t maxCosignatures) {
+			auto pluginConfig = config::AggregateConfiguration::Uninitialized();
+			pluginConfig.MaxTransactionsPerAggregate = maxTransactions;
+			pluginConfig.MaxCosignaturesPerAggregate = maxCosignatures;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
+			return blockChainConfig;
 		}
 	}
 
@@ -40,11 +52,14 @@ namespace catapult { namespace validators {
 		void AssertMaxTransactionsValidationResult(ValidationResult expectedResult, uint32_t numTransactions, uint32_t maxTransactions) {
 			// Arrange: notice that transaction data is not actually checked
 			auto signer = test::GenerateRandomByteArray<Key>();
-			model::AggregateCosignaturesNotification notification(signer, numTransactions, nullptr, 0, nullptr);
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(maxTransactions, std::numeric_limits<uint8_t>::max());
+			model::AggregateCosignaturesNotification<1> notification(signer, numTransactions, nullptr, 0, nullptr);
+			auto config = CreateConfig(maxTransactions, std::numeric_limits<uint8_t>::max());
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "txes " << numTransactions << ", max " << maxTransactions;
@@ -82,11 +97,14 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto cosignatures = GenerateRandomCosignatures(numCosignatures);
-			model::AggregateCosignaturesNotification notification(signer, 3, nullptr, numCosignatures, cosignatures.data());
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(std::numeric_limits<uint32_t>::max(), maxCosignatures);
+			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, numCosignatures, cosignatures.data());
+			auto config = CreateConfig(std::numeric_limits<uint32_t>::max(), maxCosignatures);
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)
@@ -127,13 +145,16 @@ namespace catapult { namespace validators {
 				const Key& signer,
 				const std::vector<model::Cosignature>& cosignatures) {
 			// Arrange:
-			model::AggregateCosignaturesNotification notification(signer, 3, nullptr, cosignatures.size(), cosignatures.data());
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(
-					std::numeric_limits<uint32_t>::max(),
-					std::numeric_limits<uint8_t>::max());
+			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, cosignatures.size(), cosignatures.data());
+			auto config = CreateConfig(
+				std::numeric_limits<uint32_t>::max(),
+				std::numeric_limits<uint8_t>::max());
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

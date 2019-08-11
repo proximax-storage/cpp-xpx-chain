@@ -23,7 +23,10 @@
 #include "catapult/types.h"
 #include <memory>
 
-namespace catapult { namespace model { class TransactionPlugin; } }
+namespace catapult {
+	namespace config { class LocalNodeConfigurationHolder; }
+	namespace model { class TransactionPlugin; }
+}
 
 namespace catapult { namespace plugins {
 
@@ -45,7 +48,7 @@ namespace catapult { namespace plugins {
 		Key NemesisPublicKey;
 	};
 
-	/// Creates a mosaic definition transaction plugin given the rental fee configuration (\a config).
+	/// Creates a mosaic definition transaction plugin given the (\a config).
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateMosaicDefinitionTransactionPlugin(const MosaicRentalFeeConfiguration& config);
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicDefinitionTransactionPlugin(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 }}

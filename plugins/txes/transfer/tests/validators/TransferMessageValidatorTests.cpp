@@ -18,7 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/TransferConfiguration.h"
 #include "src/validators/Validators.h"
+#include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -26,16 +29,22 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS TransferMessageValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, 0)
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, config::CreateMockConfigurationHolder())
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize) {
 			// Arrange:
-			auto notification = model::TransferMessageNotification(messageSize);
-			auto pValidator = CreateTransferMessageValidator(maxMessageSize);
+			auto notification = model::TransferMessageNotification<1>(messageSize);
+			auto pluginConfig = config::TransferConfiguration::Uninitialized();
+			pluginConfig.MaxMessageSize = maxMessageSize;
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
+			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pValidator = CreateTransferMessageValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

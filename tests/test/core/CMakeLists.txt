@@ -5,4 +5,5 @@ target_link_libraries(
 	tests.catapult.test.core
 	tests.catapult.test.nodeps
 	${CORE_CATAPULT_LIBS}
-	catapult.sdk)
+	catapult.sdk
+	catapult.config_holder)

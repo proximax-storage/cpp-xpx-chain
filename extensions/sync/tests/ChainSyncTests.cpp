@@ -37,6 +37,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "extensions/sync/src/DispatcherService.h"
 #include "MockRemoteChainApi.h"
 #include "sdk/src/builders/TransferBuilder.h"
@@ -64,7 +65,6 @@ namespace catapult { namespace sync {
 			chain::ChainSynchronizerConfiguration chainSynchronizerConfig;
 			chainSynchronizerConfig.MaxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
 			chainSynchronizerConfig.MaxChainBytesPerSyncAttempt = config.Node.MaxChainBytesPerSyncAttempt.bytes32();
-			chainSynchronizerConfig.MaxRollbackBlocks = config.BlockChain.MaxRollbackBlocks;
 			return chainSynchronizerConfig;
 		}
 
@@ -80,7 +80,7 @@ namespace catapult { namespace sync {
 			blockChainConfig.BlockPruneInterval = 360u;
 			blockChainConfig.GreedDelta = 0.5;
 			blockChainConfig.GreedExponent = 2.0;
-			blockChainConfig.Plugins.emplace("catapult.plugins.transfer", utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
 
 			auto nodeConfig = config::NodeConfiguration::Uninitialized();
 			nodeConfig.MaxBlocksPerSyncAttempt = 30u;
@@ -96,7 +96,8 @@ namespace catapult { namespace sync {
 					config::LoggingConfiguration::Uninitialized(),
 					config::UserConfiguration::Uninitialized(),
 					config::ExtensionsConfiguration::Uninitialized(),
-					config::InflationConfiguration::Uninitialized()
+					config::InflationConfiguration::Uninitialized(),
+					test::CreateSupportedEntityVersions()
 			};
 		}
 
@@ -254,7 +255,6 @@ namespace catapult { namespace sync {
 				TestContext& remoteContext,
 				disruptor::ConsumerCompletionResult& consumerResult) {
 			auto& state = localContext.testState().state();
-			const auto& config = state.config();
 
 			auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
 			auto blockRangeConsumerWrapper = [&blockRangeConsumer, &consumerResult](auto&& range, const auto& processingComplete) {
@@ -269,7 +269,8 @@ namespace catapult { namespace sync {
 				api::CreateLocalChainApi(
 					state.storage(),
 					[]() { return model::ChainScore{1000u}; }),
-				CreateChainSynchronizerConfiguration(config),
+				CreateChainSynchronizerConfiguration(state.config()),
+				state,
 				blockRangeConsumerWrapper);
 
 			extensions::LocalNodeChainScore remoteChainScore{model::ChainScore{2000u}};

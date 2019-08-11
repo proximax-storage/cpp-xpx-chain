@@ -21,9 +21,11 @@
 #pragma once
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
+#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/config/InflationConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/ExtractorContext.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/DemuxObserverBuilder.h"
@@ -32,6 +34,7 @@
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/plugins.h"
+#include "PluginUtils.h"
 
 namespace catapult { namespace plugins {
 
@@ -70,20 +73,30 @@ namespace catapult { namespace plugins {
 		using AggregateMosaicResolver = AggregateResolver<UnresolvedMosaicId, MosaicId>;
 		using AggregateAddressResolver = AggregateResolver<UnresolvedAddress, Address>;
 
+		template<typename TExtractingOut, typename TExtractingIn>
+		using Extractor = std::function<TExtractingOut (const cache::ReadOnlyCatapultCache&, const TExtractingIn&)>;
+		using AddressesExtractor = Extractor<model::UnresolvedAddressSet, UnresolvedAddress>;
+		using PublicKeysExtractor = Extractor<model::PublicKeySet , Key>;
+
 		using PublisherPointer = std::unique_ptr<model::NotificationPublisher>;
 
 	public:
-		/// Creates a new plugin manager around \a config, \a storageConfig and \a inflationConfig.
+		/// Creates a new plugin manager around \a config and \a storageConfig.
 		PluginManager(
-				const model::BlockChainConfiguration& config,
-				const StorageConfiguration& storageConfig,
-				const config::InflationConfiguration& inflationConfig);
+				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const StorageConfiguration& storageConfig);
 
 	public:
 		// region config
 
-		/// Gets the block chain configuration.
+		/// Gets the block chain configuration at \a height.
+		const model::BlockChainConfiguration& config(const Height& height) const;
+
+		/// Gets the latest available block chain configuration.
 		const model::BlockChainConfiguration& config() const;
+
+		/// Gets the catapult configuration holder.
+		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
 
 		/// Gets the storage configuration.
 		const StorageConfiguration& storageConfig() const;
@@ -93,6 +106,9 @@ namespace catapult { namespace plugins {
 
 		/// Gets the inflation configuration.
 		const config::InflationConfiguration& inflationConfig() const;
+
+		/// Sets whether verifiable state should be enabled or not (\a shouldEnableVerifiableState).
+		void setShouldEnableVerifiableState(bool shouldEnableVerifiableState);
 
 		// endregion
 
@@ -119,6 +135,9 @@ namespace catapult { namespace plugins {
 
 		/// Creates a catapult cache.
 		cache::CatapultCache createCache();
+
+		/// Updates catapult \a cache with newly added subcaches.
+		void updateCache(cache::CatapultCache& cache);
 
 		// endregion
 
@@ -197,6 +216,15 @@ namespace catapult { namespace plugins {
 		/// Creates a resolver context given \a cache.
 		model::ResolverContext createResolverContext(const cache::ReadOnlyCatapultCache& cache) const;
 
+		/// Adds an addresses \a extractor.
+		void addAddressesExtractor(const AddressesExtractor& extractor);
+
+		/// Adds a public keys \a extractor.
+		void addPublicKeysExtractor(const PublicKeysExtractor& extractor);
+
+		/// Creates a extractor context given \a cache.
+		model::ExtractorContext createExtractorContext(const cache::CatapultCache& cache) const;
+
 		// endregion
 
 		// region publisher
@@ -207,9 +235,8 @@ namespace catapult { namespace plugins {
 		// endregion
 
 	private:
-		model::BlockChainConfiguration m_config;
+		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
-		config::InflationConfiguration m_inflationConfig;
 		model::TransactionRegistry m_transactionRegistry;
 		cache::CatapultCacheBuilder m_cacheBuilder;
 
@@ -223,6 +250,10 @@ namespace catapult { namespace plugins {
 
 		std::vector<MosaicResolver> m_mosaicResolvers;
 		std::vector<AddressResolver> m_addressResolvers;
+		std::vector<AddressesExtractor> m_addressesExtractors;
+		std::vector<PublicKeysExtractor> m_publicKeysExtractors;
+
+		bool m_shouldEnableVerifiableState;
 	};
 }}
 

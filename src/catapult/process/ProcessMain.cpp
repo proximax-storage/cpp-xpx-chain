@@ -20,7 +20,7 @@
 
 #include "ProcessMain.h"
 #include "Signals.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/config/ValidateConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
@@ -35,12 +35,6 @@ namespace catapult { namespace process {
 
 	namespace {
 		// region initialization utils
-
-		config::CatapultConfiguration LoadConfiguration(int argc, const char** argv, const std::string& extensionsHost) {
-			auto resourcesPath = GetResourcesPath(argc, argv);
-			std::cout << "loading resources from " << resourcesPath << std::endl;
-			return config::CatapultConfiguration::LoadFromPath(resourcesPath, extensionsHost);
-		}
 
 		std::unique_ptr<utils::LogFilter> CreateLogFilter(const config::BasicLoggerConfiguration& config) {
 			auto pFilter = std::make_unique<utils::LogFilter>(config.Level);
@@ -73,11 +67,11 @@ namespace catapult { namespace process {
 
 		// endregion
 
-		void Run(config::CatapultConfiguration&& config, ProcessOptions processOptions, const CreateProcessHost& createProcessHost) {
-			auto keyPair = crypto::KeyPair::FromString(config.User.BootKey);
+		void Run(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, ProcessOptions processOptions, const CreateProcessHost& createProcessHost) {
+			auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey);
 
 			CATAPULT_LOG(info) << "booting process with public key " << crypto::FormatKey(keyPair.publicKey());
-			auto pProcessHost = createProcessHost(std::move(config), keyPair);
+			auto pProcessHost = createProcessHost(pConfigHolder, keyPair);
 
 			if (ProcessOptions::Exit_After_Termination_Signal == processOptions)
 				WaitForTerminationSignal();
@@ -85,10 +79,6 @@ namespace catapult { namespace process {
 			CATAPULT_LOG(info) << "shutting down process";
 			pProcessHost.reset();
 		}
-	}
-
-	boost::filesystem::path GetResourcesPath(int argc, const char** argv) {
-		return boost::filesystem::path(argc > 1 ? argv[1] : "..") / "resources";
 	}
 
 	int ProcessMain(int argc, const char** argv, const std::string& host, const CreateProcessHost& createProcessHost) {
@@ -106,7 +96,8 @@ namespace catapult { namespace process {
 		version::WriteVersionInformation(std::cout);
 
 		// 1. load and validate the configuration
-		auto config = LoadConfiguration(argc, argv, host);
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
+		const auto& config = pConfigHolder->LoadConfig(argc, argv, host);
 		ValidateConfiguration(config);
 
 		// 2. initialize logging
@@ -122,7 +113,7 @@ namespace catapult { namespace process {
 		}
 
 		// 4. run the server
-		Run(std::move(config), processOptions, createProcessHost);
+		Run(pConfigHolder, processOptions, createProcessHost);
 		return 0;
 	}
 }}

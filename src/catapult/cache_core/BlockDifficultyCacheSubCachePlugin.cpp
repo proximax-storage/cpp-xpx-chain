@@ -24,6 +24,7 @@ namespace catapult { namespace cache {
 
 	void BlockDifficultyCacheSummaryCacheStorage::saveSummary(const CatapultCacheDelta& cacheDelta, io::OutputStream& output) const {
 		const auto& delta = cacheDelta.sub<BlockDifficultyCache>();
+		io::Write(output, delta.height());
 		io::Write64(output, delta.size());
 
 		auto pIterableView = delta.tryMakeIterableView();
@@ -33,9 +34,9 @@ namespace catapult { namespace cache {
 		output.flush();
 	}
 
-	BlockDifficultyCacheSubCachePlugin::BlockDifficultyCacheSubCachePlugin(uint64_t difficultyHistorySize)
+	BlockDifficultyCacheSubCachePlugin::BlockDifficultyCacheSubCachePlugin(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
 			: SubCachePluginAdapter<BlockDifficultyCache, BlockDifficultyCacheStorage>(
-					std::make_unique<BlockDifficultyCache>(difficultyHistorySize))
+					std::make_unique<BlockDifficultyCache>(pConfigHolder))
 	{}
 
 	std::unique_ptr<CacheStorage> BlockDifficultyCacheSubCachePlugin::createStorage() {

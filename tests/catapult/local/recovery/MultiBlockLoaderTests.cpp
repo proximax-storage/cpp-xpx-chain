@@ -27,6 +27,7 @@
 #include "tests/catapult/local/recovery/test/FilechainTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/BlockStateHash.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -133,6 +134,8 @@ namespace catapult { namespace local {
 	// region LoadBlockChain
 
 	namespace {
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		void AddXorResolvers(plugins::PluginManager& pluginManager) {
 			pluginManager.addMosaicResolver([](const auto&, const auto& unresolved, auto& resolved) {
 				resolved = test::CreateResolverContextXor().resolve(unresolved);
@@ -146,7 +149,9 @@ namespace catapult { namespace local {
 
 		class LoadBlockChainTestContext {
 		public:
-			LoadBlockChainTestContext() : m_pluginManager(test::CreatePluginManager()) {
+			LoadBlockChainTestContext()
+					: m_state(Default_Config)
+					, m_pluginManager(config::CreateMockConfigurationHolder(), plugins::StorageConfiguration()) {
 				AddXorResolvers(m_pluginManager);
 			}
 
@@ -295,10 +300,12 @@ namespace catapult { namespace local {
 			// Arrange:
 			test::TempDirectoryGuard tempDataDirectory;
 			auto config = test::CreateStateHashEnabledCatapultConfiguration(tempDataDirectory.name());
+			const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = false;
+			const_cast<model::BlockChainConfiguration&>(config.BlockChain).Plugins.erase(PLUGIN_NAME(hashcache));
 			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
 			auto observerFactory = [&pluginManager = *pPluginManager](const auto&) { return pluginManager.createObserver(); };
 
-			auto blockChainConfig = pPluginManager->config();
+			auto blockChainConfig = pPluginManager->config(Height{0});
 			auto localNodeConfig = test::CreatePrototypicalCatapultConfiguration(std::move(blockChainConfig), tempDataDirectory.name());
 
 			auto cache = pPluginManager->createCache();

@@ -36,11 +36,14 @@ namespace catapult { namespace plugins {
 	namespace {
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(Transfer, 3, 3,)
 
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
+
 		template<typename TTraits>
 		auto CreateTransactionWithMosaics(uint8_t numMosaics, uint16_t messageSize = 0) {
 			using TransactionType = typename TTraits::TransactionType;
 			uint32_t entitySize = sizeof(TransactionType) + numMosaics * sizeof(Mosaic) + messageSize;
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
 			pTransaction->MessageSize = messageSize;
 			pTransaction->MosaicsCount = numMosaics;
@@ -74,6 +77,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.MessageSize = 0;
 		transaction.MosaicsCount = 0;
 		test::FillWithRandomData(transaction.Signer);
@@ -92,10 +96,11 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractAddressInteraction) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification> sub;
+		mocks::MockTypedNotificationSubscriber<AddressInteractionNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Version = Transaction_Version;
 		transaction.MessageSize = 0;
 		transaction.MosaicsCount = 0;
 		test::FillWithRandomData(transaction.Signer);
@@ -134,7 +139,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractSingleTransfer) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		mocks::MockTypedNotificationSubscriber<TransferMosaicsNotification> mosaicsSub;
+		mocks::MockTypedNotificationSubscriber<TransferMosaicsNotification<1>> mosaicsSub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithMosaics<TTraits>(1);
@@ -157,7 +162,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanExtractMultipleTransfers) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		mocks::MockTypedNotificationSubscriber<TransferMosaicsNotification> mosaicsSub;
+		mocks::MockTypedNotificationSubscriber<TransferMosaicsNotification<1>> mosaicsSub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithMosaics<TTraits>(3);
@@ -186,7 +191,7 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanExtractMessage) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<TransferMessageNotification> sub;
+		mocks::MockTypedNotificationSubscriber<TransferMessageNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		auto pTransaction = CreateTransactionWithMosaics<TTraits>(0, 17);

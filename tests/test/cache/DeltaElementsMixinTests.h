@@ -59,7 +59,7 @@ namespace catapult { namespace test {
 		static void AssertInitiallyNoElementsAreMarkedAsAddedOrModifiedOrRemoved() {
 			// Arrange:
 			CacheType cache;
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Assert:
 			AssertMarkedElements(*delta, {}, {}, {});
@@ -68,7 +68,7 @@ namespace catapult { namespace test {
 		static void AssertAddedElementsAreMarkedAsAdded() {
 			// Arrange:
 			CacheType cache;
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 
 			// Act:
 			delta->insert(TTraits::CreateWithId(123));
@@ -80,7 +80,7 @@ namespace catapult { namespace test {
 		static void AssertModifiedElementsAreMarkedAsModified() {
 			// Arrange:
 			CacheType cache;
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(TTraits::CreateWithId(123));
 			cache.commit();
 
@@ -94,7 +94,7 @@ namespace catapult { namespace test {
 		static void AssertRemovedElementsAreMarkedAsRemoved() {
 			// Arrange:
 			CacheType cache;
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(TTraits::CreateWithId(123));
 			cache.commit();
 
@@ -108,7 +108,7 @@ namespace catapult { namespace test {
 		static void AssertMultipleMarkedElementsCanBeTracked() {
 			// Arrange:
 			CacheType cache;
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (uint8_t i = 100; i < 110; ++i)
 				delta->insert(TTraits::CreateWithId(i));
 

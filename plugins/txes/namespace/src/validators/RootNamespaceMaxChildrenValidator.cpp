@@ -20,20 +20,23 @@
 
 #include "Validators.h"
 #include "src/cache/NamespaceCache.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ChildNamespaceNotification;
+	using Notification = model::ChildNamespaceNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, Notification)(uint16_t maxChildren) {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, ([maxChildren](
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, ([pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 			auto namespaceIter = cache.find(notification.ParentId);
 			const auto& parentEntry = namespaceIter.get();
-			return maxChildren <= parentEntry.root().size() ? Failure_Namespace_Max_Children_Exceeded : ValidationResult::Success;
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
+			return pluginConfig.MaxChildNamespaces <= parentEntry.root().size() ? Failure_Namespace_Max_Children_Exceeded : ValidationResult::Success;
 		}));
 	}
 }}

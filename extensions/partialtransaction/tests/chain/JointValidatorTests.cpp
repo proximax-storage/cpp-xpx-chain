@@ -20,6 +20,7 @@
 
 #include "partialtransaction/src/chain/JointValidator.h"
 #include "catapult/plugins/PluginManager.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
@@ -39,7 +40,7 @@ namespace catapult { namespace chain {
 
 		enum class FailureMode { Default, Suppress };
 
-		model::BlockChainConfiguration CreateConfiguration() {
+		model::BlockChainConfiguration CreateBlockChainConfiguration() {
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.Network.Identifier = Network_Identifier;
 			return config;
@@ -59,8 +60,9 @@ namespace catapult { namespace chain {
 					, m_statefulName(statefulName)
 					, m_statelessResult(ValidationResult::Success)
 					, m_statefulResult(ValidationResult::Success)
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount())
-					, m_pluginManager(test::CreatePluginManager(CreateConfiguration())) {
+					, m_pConfigHolder(config::CreateMockConfigurationHolder(CreateBlockChainConfiguration()))
+					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config().BlockChain))
+					, m_pluginManager(m_pConfigHolder, plugins::StorageConfiguration()) {
 				// set custom cache height
 				auto cacheDelta = m_cache.createDelta();
 				m_cache.commit(Cache_Height);
@@ -156,6 +158,7 @@ namespace catapult { namespace chain {
 			ValidationResult m_statelessResult;
 			ValidationResult m_statefulResult;
 
+			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
 			cache::CatapultCache m_cache;
 			plugins::PluginManager m_pluginManager;
 
@@ -196,7 +199,7 @@ namespace catapult { namespace chain {
 			auto pValidator = context.create();
 
 			// Act:
-			model::AccountPublicKeyNotification notification(test::GenerateRandomByteArray<Key>());
+			model::AccountPublicKeyNotification<1> notification(test::GenerateRandomByteArray<Key>());
 			auto result = pValidator->validate(notification);
 
 			// Assert:
@@ -232,7 +235,7 @@ namespace catapult { namespace chain {
 		auto pValidator = context.create();
 
 		// Act:
-		model::AccountPublicKeyNotification notification(test::GenerateRandomByteArray<Key>());
+		model::AccountPublicKeyNotification<1> notification(test::GenerateRandomByteArray<Key>());
 		auto result = pValidator->validate(notification);
 
 		// Assert:
@@ -248,7 +251,7 @@ namespace catapult { namespace chain {
 		auto pValidator = context.create(FailureMode::Suppress);
 
 		// Act:
-		model::AccountPublicKeyNotification notification(test::GenerateRandomByteArray<Key>());
+		model::AccountPublicKeyNotification<1> notification(test::GenerateRandomByteArray<Key>());
 		auto result = pValidator->validate(notification);
 
 		// Assert: the failures were suppressed

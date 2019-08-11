@@ -24,7 +24,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::MosaicSupplyChangeNotification;
+	using Notification = model::MosaicSupplyChangeNotification<1>;
 
 	namespace {
 		constexpr bool ShouldIncrease(NotifyMode mode, model::MosaicSupplyChangeDirection direction) {

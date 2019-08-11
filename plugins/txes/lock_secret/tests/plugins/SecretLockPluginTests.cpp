@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/SecretLockPlugin.h"
 #include "src/model/SecretLockEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
@@ -34,7 +35,7 @@ namespace catapult { namespace plugins {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(1);
-				config.Plugins.emplace("catapult.plugins.locksecret", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(locksecret), utils::ConfigurationBag({{
 					"",
 					{
 						{ "maxSecretLockDuration", "30d" },
@@ -72,11 +73,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "SecretLockDurationValidator", "SecretLockHashAlgorithmValidator", "ProofSecretValidator" };
+				return { "SecretLockHashAlgorithmValidator", "SecretLockPluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return { "SecretLockCacheUniqueValidator", "ProofValidator" };
+				return { "SecretLockDurationValidator", "ProofSecretValidator", "SecretLockCacheUniqueValidator", "ProofValidator" };
 			}
 
 			static std::vector<std::string> GetObserverNames() {

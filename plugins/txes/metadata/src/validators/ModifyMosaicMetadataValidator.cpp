@@ -10,7 +10,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::ModifyMosaicMetadataNotification;
+	using Notification = model::ModifyMosaicMetadataNotification_v1;
 
 	DEFINE_STATEFUL_VALIDATOR(ModifyMosaicMetadata, [](const auto& notification, const ValidatorContext& context) {
 		const auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();

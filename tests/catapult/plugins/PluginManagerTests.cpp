@@ -23,10 +23,11 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/model/Address.h"
 #include "tests/test/cache/SimpleCache.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
+#include "tests/test/other/MutableCatapultConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -47,17 +48,16 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateManager) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		config.BlockPruneInterval = 15;
+		test::MutableCatapultConfiguration config;
+		config.BlockChain.BlockPruneInterval = 15;
+		config.Inflation.InflationCalculator.add(Height(123), Amount(234));
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
 
 		auto storageConfig = StorageConfiguration();
 		storageConfig.CacheDatabaseDirectory = "abc";
 
-		auto inflationConfig = config::InflationConfiguration::Uninitialized();
-		inflationConfig.InflationCalculator.add(Height(123), Amount(234));
-
 		// Act:
-		PluginManager manager(config, storageConfig, inflationConfig);
+		PluginManager manager(pConfigHolder, storageConfig);
 
 		// Assert: compare BlockPruneInterval, CacheDatabaseDirectory and InflationCalculator as sentinel values
 		//         because the manager copies the configs
@@ -69,6 +69,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateCacheConfiguration) {
 		// Arrange:
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+
 		auto storageConfig = StorageConfiguration();
 		storageConfig.PreferCacheDatabase = true;
 		storageConfig.CacheDatabaseDirectory = "abc";
@@ -83,9 +85,8 @@ namespace catapult { namespace plugins {
 
 		// Act:
 		PluginManager manager(
-				model::BlockChainConfiguration::Uninitialized(),
-				storageConfig,
-				config::InflationConfiguration::Uninitialized());
+				pConfigHolder,
+				storageConfig);
 
 		// Assert: cache configuration is constructed appropriately
 		assertCacheConfiguration(manager.cacheConfig("foo"), "abc/foo");
@@ -98,7 +99,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomTransactions) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		for (auto i : { 7, 9, 4 })
@@ -139,24 +141,25 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomCaches) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		AddSubCacheWithId<7>(manager);
-		AddSubCacheWithId<9>(manager);
-		AddSubCacheWithId<4>(manager);
+		AddSubCacheWithId<9>(manager);AddSubCacheWithId<4>(manager);
 		auto cache = manager.createCache();
 
 		// Assert:
 		EXPECT_EQ(3u, cache.storages().size());
-		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<7>>().createView()->size());
-		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<9>>().createView()->size());
-		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<4>>().createView()->size());
+		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<7>>().createView(Height{0})->size());
+		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<9>>().createView(Height{0})->size());
+		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<4>>().createView(Height{0})->size());
 	}
 
 	TEST(TEST_CLASS, CanRegisterCustomCachePlugins) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		AddSubCachePluginWithId<7>(manager);
@@ -166,9 +169,9 @@ namespace catapult { namespace plugins {
 
 		// Assert:
 		EXPECT_EQ(3u, cache.storages().size());
-		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<7>>().createView()->size());
-		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<9>>().createView()->size());
-		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<4>>().createView()->size());
+		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<7>>().createView(Height{0})->size());
+		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<9>>().createView(Height{0})->size());
+		EXPECT_EQ(0u, cache.sub<test::SimpleCacheT<4>>().createView(Height{0})->size());
 	}
 
 	// endregion
@@ -191,7 +194,8 @@ namespace catapult { namespace plugins {
 		template<typename THandlerTraits>
 		void AssertCanRegisterCustomHandlers() {
 			// Arrange:
-			auto manager = test::CreatePluginManager();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
+			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act:
 			THandlerTraits::AddHandlerHook(manager, [](auto& handlers, const auto&) {
@@ -253,7 +257,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterCustomDiagnosticCounters) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		manager.addDiagnosticCounterHook([](auto& counters, const auto&) {
@@ -313,7 +318,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterStatelessValidators) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
 			builder.add(CreateNamedStatelessValidator("beta"));
@@ -335,14 +341,15 @@ namespace catapult { namespace plugins {
 			auto pValidator = suppress
 					? manager.createStatelessValidator([](auto) { return true; })
 					: manager.createStatelessValidator();
-			auto notification = model::AccountPublicKeyNotification(test::GenerateRandomByteArray<Key>());
+			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomByteArray<Key>());
 			return pValidator->validate(notification);
 		}
 	}
 
 	TEST(TEST_CLASS, CanCreateStatelessValidatorWithNoSuppressedFailureFiltering) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
 		});
@@ -356,7 +363,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatelessValidatorWithCustomSuppressedFailureFiltering) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatelessValidator("alpha"));
 		});
@@ -374,7 +382,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanRegisterStatefulValidators) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
 			builder.add(CreateNamedStatefulValidator("beta"));
@@ -396,7 +405,7 @@ namespace catapult { namespace plugins {
 			auto pValidator = suppress
 					? manager.createStatefulValidator([](auto) { return true; })
 					: manager.createStatefulValidator();
-			auto notification = model::AccountPublicKeyNotification(test::GenerateRandomByteArray<Key>());
+			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomByteArray<Key>());
 			auto cache = cache::CatapultCache({});
 			auto context = test::CreateValidatorContext(Height(123), cache.createView().toReadOnly());
 			return pValidator->validate(notification, context);
@@ -405,7 +414,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatefulValidatorWithNoSuppressedFailureFiltering) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
 		});
@@ -419,7 +429,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateStatefulValidatorWithCustomSuppressedFailureFiltering) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder.add(CreateNamedStatefulValidator("alpha"));
 		});
@@ -461,7 +472,8 @@ namespace catapult { namespace plugins {
 		template<typename TAction>
 		void RunObserverTest(TAction action) {
 			// Arrange:
-			auto manager = test::CreatePluginManager();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
+			PluginManager manager(pConfigHolder, StorageConfiguration());
 			manager.addObserverHook([](auto& builder) {
 				builder.add(CreateNamedObserver("alpha"));
 				builder.add(CreateNamedObserver("beta"));
@@ -574,7 +586,8 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateDefaultResolver) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 
 		// Act:
 		auto result = Resolve(manager, TTraits::CreateUnresolved(123));
@@ -585,7 +598,8 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverAroundMatchingResolver) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, true);
 
 		// Act:
@@ -597,7 +611,8 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverAroundNonMatchingResolver) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, false);
 
 		// Act:
@@ -609,7 +624,8 @@ namespace catapult { namespace plugins {
 
 	RESOLVER_TRAITS_BASED_TEST(CanCreateCustomResolverThatOnlyExecutesFirstMatchingResolver) {
 		// Arrange:
-		auto manager = test::CreatePluginManager();
+		auto pConfigHolder = config::CreateMockConfigurationHolder();
+		PluginManager manager(pConfigHolder, StorageConfiguration());
 		TTraits::AddResolver(manager, 1, false);
 		TTraits::AddResolver(manager, 2, true); // second one should match
 		TTraits::AddResolver(manager, 3, true);
@@ -633,17 +649,18 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			auto config = model::BlockChainConfiguration::Uninitialized();
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			PluginManager manager = test::CreatePluginManager(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			PluginManager manager(pConfigHolder, StorageConfiguration());
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin());
 
 			auto pTransaction = mocks::CreateMockTransaction(0);
 			mocks::MockNotificationSubscriber subscriber;
-			mocks::MockTypedNotificationSubscriber<model::BalanceDebitNotification> feeSubscriber;
+			mocks::MockTypedNotificationSubscriber<model::BalanceDebitNotification<1>> feeSubscriber;
 
 			// Act: create a publisher and publish a transaction
 			auto pPublisher = publisherFactory(manager);
-			pPublisher->publish(*pTransaction, subscriber);
-			pPublisher->publish(*pTransaction, feeSubscriber);
+			pPublisher->publish(model::WeakEntityInfo(*pTransaction, Height{0}), subscriber);
+			pPublisher->publish(model::WeakEntityInfo(*pTransaction, Height{0}), feeSubscriber);
 
 			// Assert: all expected notifications were raised
 			EXPECT_EQ(expectedNumNotifications, subscriber.notificationTypes().size());

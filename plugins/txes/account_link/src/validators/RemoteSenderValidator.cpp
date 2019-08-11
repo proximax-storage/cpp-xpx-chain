@@ -25,7 +25,7 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransactionNotification;
+	using Notification = model::TransactionNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(RemoteSender, [](const auto& notification, const auto& context) {
 		const auto& cache = context.Cache.template sub<cache::AccountStateCache>();

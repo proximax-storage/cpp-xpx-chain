@@ -32,8 +32,8 @@ namespace catapult { namespace zeromq {
 			{}
 
 		public:
-			void notifyStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) override {
-				m_publisher.publishTransactionStatus(transaction, hash, status);
+			void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) override {
+				m_publisher.publishTransactionStatus(transaction, height, hash, status);
 			}
 
 			void flush() override {

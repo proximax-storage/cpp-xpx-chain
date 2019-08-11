@@ -108,7 +108,7 @@ namespace catapult { namespace consumers {
 		// Act:
 		model::WeakEntityInfos entityInfos;
 		std::vector<size_t> entityInfoElementIndexes;
-		ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes);
+		ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes, Height{0});
 
 		// Assert:
 		EXPECT_EQ(std::vector<size_t>({ 0, 1, 2, 3, 4 }), entityInfoElementIndexes);
@@ -134,7 +134,7 @@ namespace catapult { namespace consumers {
 		// Act:
 		model::WeakEntityInfos entityInfos;
 		std::vector<size_t> entityInfoElementIndexes;
-		ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes);
+		ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes, Height{0});
 
 		// Assert:
 		EXPECT_TRUE(entityInfoElementIndexes.empty());
@@ -152,7 +152,7 @@ namespace catapult { namespace consumers {
 		// Act:
 		model::WeakEntityInfos entityInfos;
 		std::vector<size_t> entityInfoElementIndexes;
-		ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes);
+		ExtractEntityInfos(elements, entityInfos, entityInfoElementIndexes, Height{0});
 
 		// Assert:
 		EXPECT_EQ(std::vector<size_t>({ 1, 4 }), entityInfoElementIndexes);

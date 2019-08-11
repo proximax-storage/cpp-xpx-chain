@@ -46,6 +46,7 @@ namespace catapult { namespace chain {
 		model::WeakEntityInfos entityInfos;
 		model::ExtractEntityInfos(blockElement, entityInfos);
 
+		executionContext.State.Cache.setHeight(blockElement.Block.Height);
 		auto context = CreateObserverContext(executionContext, blockElement.Block.Height, observers::NotifyMode::Commit);
 		ObserveAll(executionContext.Observer, context, entityInfos);
 	}
@@ -55,6 +56,7 @@ namespace catapult { namespace chain {
 		model::ExtractEntityInfos(blockElement, entityInfos);
 		std::reverse(entityInfos.begin(), entityInfos.end());
 
+		executionContext.State.Cache.setHeight(blockElement.Block.Height);
 		auto context = CreateObserverContext(executionContext, blockElement.Block.Height, observers::NotifyMode::Rollback);
 		ObserveAll(executionContext.Observer, context, entityInfos);
 

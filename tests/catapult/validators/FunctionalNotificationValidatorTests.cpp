@@ -26,7 +26,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS FunctionalNotificationValidatorTests
 
-	using NotificationType = model::AccountPublicKeyNotification;
+	using NotificationType = model::AccountPublicKeyNotification<1>;
 
 	TEST(TEST_CLASS, HasCorrectName) {
 		// Act:
@@ -62,7 +62,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto publicKey = test::GenerateRandomByteArray<Key>();
-		model::AccountPublicKeyNotification notification(publicKey);
+		NotificationType notification(publicKey);
 		auto result = validator.validate(notification, 7);
 
 		// Assert:

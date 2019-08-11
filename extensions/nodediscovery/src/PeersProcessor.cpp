@@ -27,11 +27,11 @@ namespace catapult { namespace nodediscovery {
 	PeersProcessor::PeersProcessor(
 			const ionet::NodeContainer& nodeContainer,
 			const NodePingRequestInitiator& pingRequestInitiator,
-			model::NetworkIdentifier networkIdentifier,
+			extensions::ServiceState& state,
 			const NodeConsumer& newPartnerNodeConsumer)
 			: m_nodeContainer(nodeContainer)
 			, m_pingRequestInitiator(pingRequestInitiator)
-			, m_networkIdentifier(networkIdentifier)
+			, m_state(state)
 			, m_newPartnerNodeConsumer(newPartnerNodeConsumer)
 	{}
 
@@ -43,7 +43,7 @@ namespace catapult { namespace nodediscovery {
 	}
 
 	void PeersProcessor::process(const ionet::Node& candidateNode) const {
-		auto networkIdentifier = m_networkIdentifier;
+		auto networkIdentifier = m_state.networkIdentifier();
 		auto newPartnerNodeConsumer = m_newPartnerNodeConsumer;
 		m_pingRequestInitiator(candidateNode, [candidateNode, networkIdentifier, newPartnerNodeConsumer](
 				auto result,

@@ -34,6 +34,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanSaveTypedChanges) {
 		// Arrange: seed random data
 		test::ByteVectorCacheChanges subCacheChanges;
+		subCacheChanges.Height = Height{5};
 		subCacheChanges.Added.push_back(test::GenerateRandomVector(21));
 		subCacheChanges.Removed.push_back(test::GenerateRandomVector(21));
 		subCacheChanges.Removed.push_back(test::GenerateRandomVector(14));
@@ -56,9 +57,10 @@ namespace catapult { namespace cache {
 		adapter.saveAll(cacheChanges, outputStream);
 
 		// Assert:
-		ASSERT_EQ(9u * sizeof(uint64_t) + 3 * 21 + 2 * 14 + 17, buffer.size());
+		ASSERT_EQ(10u * sizeof(uint64_t) + 3 * 21 + 2 * 14 + 17, buffer.size());
 
 		test::ByteVectorBufferReader reader(buffer);
+		ASSERT_EQ(5u, reader.read64());
 		ASSERT_EQ(1u, reader.read64());
 		ASSERT_EQ(3u, reader.read64());
 		ASSERT_EQ(2u, reader.read64());
@@ -76,6 +78,7 @@ namespace catapult { namespace cache {
 		// Arrange:
 		std::vector<uint8_t> buffer;
 		test::ByteVectorBufferWriter writer(buffer);
+		writer.write64(10);
 		writer.write64(1);
 		writer.write64(3);
 		writer.write64(2);
@@ -87,7 +90,7 @@ namespace catapult { namespace cache {
 		auto copied2 = writer.writeBuffer(44);
 
 		// Sanity:
-		ASSERT_EQ(9u * sizeof(uint64_t) + 3 * 12 + 2 * 44 + 23, buffer.size());
+		ASSERT_EQ(10u * sizeof(uint64_t) + 3 * 12 + 2 * 44 + 23, buffer.size());
 
 		// Act:
 		mocks::MockMemoryStream inputStream(buffer);
@@ -99,6 +102,7 @@ namespace catapult { namespace cache {
 		const auto& changes = static_cast<const test::ByteVectorCacheChanges&>(*pChangesVoid);
 
 		// Assert:
+		EXPECT_EQ(Height{10u}, changes.Height);
 		EXPECT_EQ(1u, changes.Added.size());
 		EXPECT_EQ(3u, changes.Removed.size());
 		EXPECT_EQ(2u, changes.Copied.size());
@@ -158,7 +162,7 @@ namespace catapult { namespace cache {
 		test::ByteVectorCacheDeltas deltas;
 		test::DeltasAwareCache<0> cache(deltas, breadcrumbs);
 		StorageAdapter adapter(cache);
-		adapter.apply(cacheChanges);
+		adapter.apply(cacheChanges, Height{0});
 
 		// Assert:
 		ASSERT_EQ(6u, breadcrumbs.size());

@@ -43,8 +43,8 @@ namespace catapult { namespace cache {
 			return std::move(pMemoryCacheChanges);
 		}
 
-		void apply(const CacheChanges& changes) const override {
-			auto delta = m_cache.createDelta();
+		void apply(const CacheChanges& changes, const Height& height) const override {
+			auto delta = m_cache.createDelta(height);
 
 			auto subCacheChanges = changes.sub<TCache>();
 			for (const auto* pAdded : subCacheChanges.addedElements()) {

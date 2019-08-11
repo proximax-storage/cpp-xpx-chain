@@ -20,6 +20,8 @@
 
 #pragma once
 #include "ContainerTypes.h"
+#include "ExtractorContext.h"
+#include <functional>
 
 namespace catapult {
 	namespace model {
@@ -29,7 +31,7 @@ namespace catapult {
 }
 
 namespace catapult { namespace model {
-
-	/// Extracts all addresses that are involved in \a transaction using \a notificationPublisher.
-	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const NotificationPublisher& notificationPublisher);
+	/// Extracts all addresses that are involved in \a transaction at \a height using \a notificationPublisher and \a extractorContext.
+	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Height& height,
+			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext);
 }}

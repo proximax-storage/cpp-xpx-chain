@@ -89,7 +89,8 @@ namespace catapult { namespace mongo {
 			const auto& dbName = dbConfig.DatabaseName;
 
 			// create mongo writer
-			auto numWriterThreads = std::min(std::thread::hardware_concurrency(), dbConfig.MaxWriterThreads);
+			// keep the minimum high enough in order to avoid deadlock while waiting for mongo operations due to blocking io threads
+			auto numWriterThreads = std::max(4u, std::min(std::thread::hardware_concurrency(), dbConfig.MaxWriterThreads));
 			auto pBulkWriterPool = bootstrapper.pool().pushIsolatedPool("bulk writer", numWriterThreads);
 			auto pMongoBulkWriter = MongoBulkWriter::Create(
 					dbUri,
@@ -103,7 +104,7 @@ namespace catapult { namespace mongo {
 					? MongoErrorPolicy::Mode::Idempotent
 					: MongoErrorPolicy::Mode::Strict;
 			auto pMongoContext = std::make_shared<MongoStorageContext>(dbUri, dbName, pMongoBulkWriter, mongoErrorPolicyMode);
-			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext, config.BlockChain.Network.Identifier);
+			auto pPluginManager = std::make_shared<MongoPluginManager>(*pMongoContext, bootstrapper.configHolder());
 			auto pTransactionRegistry = CreateTransactionRegistry(pPluginManager, config.User.PluginsDirectory, dbConfig.Plugins);
 
 			// create mongo chain score provider and mongo (cache) storage

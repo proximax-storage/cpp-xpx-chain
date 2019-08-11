@@ -122,7 +122,7 @@ namespace catapult { namespace chain {
 			// note that the validator and observer context height is one larger than the chain height
 			// since the validation and observation has to be for the *next* block
 			auto effectiveHeight = m_detachedCatapultCache.height() + Height(1);
-			const auto& network = m_executionConfig.Network;
+			const auto& network = m_executionConfig.NetworkInfoSupplier(effectiveHeight);
 			auto resolverContext = m_executionConfig.ResolverContextFactory(readOnlyCache);
 			auto validatorContext = ValidatorContext(effectiveHeight, currentTime, network, resolverContext, readOnlyCache);
 
@@ -151,7 +151,7 @@ namespace catapult { namespace chain {
 
 				if (throttle(utInfo, transactionSource, applyState, readOnlyCache)) {
 					CATAPULT_LOG(warning) << "dropping transaction " << entityHash << " due to throttle";
-					m_failedTransactionSink(entity, entityHash, Failure_Chain_Unconfirmed_Cache_Too_Full);
+					m_failedTransactionSink(entity, effectiveHeight, entityHash, Failure_Chain_Unconfirmed_Cache_Too_Full);
 					continue;
 				}
 
@@ -163,7 +163,7 @@ namespace catapult { namespace chain {
 				const auto& observer = *m_executionConfig.pObserver;
 				ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext);
 				sub.enableUndo();
-				auto entityInfo = model::WeakEntityInfo(entity, entityHash);
+				auto entityInfo = model::WeakEntityInfo(entity, entityHash, effectiveHeight);
 				m_executionConfig.pNotificationPublisher->publish(entityInfo, sub);
 				if (!IsValidationResultSuccess(sub.result())) {
 					CATAPULT_LOG_LEVEL(validators::MapToLogLevel(sub.result()))
@@ -171,7 +171,7 @@ namespace catapult { namespace chain {
 
 					// only forward failure (not neutral) results
 					if (IsValidationResultFailure(sub.result()))
-						m_failedTransactionSink(entity, entityHash, sub.result());
+						m_failedTransactionSink(entity, effectiveHeight, entityHash, sub.result());
 
 					sub.undo();
 					applyState.Modifier.remove(entityHash);

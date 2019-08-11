@@ -37,6 +37,10 @@ namespace catapult { namespace cache {
 				RdbColumnContainer::find(key, iterator);
 			}
 
+			void findLowerOrEqual(const RawBuffer& key, RdbDataIterator& iterator) const {
+				RdbColumnContainer::findLowerOrEqual(key, iterator);
+			}
+
 			void insert(const RawBuffer& key, const std::string& value) {
 				RdbColumnContainer::insert(key, value);
 			}
@@ -121,6 +125,10 @@ namespace catapult { namespace cache {
 		void AssertElementValue(const TContainer& container, const TKey& key, const std::string& value) {
 			RdbDataIterator iter;
 			container.find(key, iter);
+			test::AssertIteratorValue(value, iter);
+
+			iter = RdbDataIterator();
+			container.findLowerOrEqual(key, iter);
 			test::AssertIteratorValue(value, iter);
 		}
 	}
@@ -254,6 +262,65 @@ namespace catapult { namespace cache {
 		RdbDataIterator iter;
 		container.find(key, iter);
 		test::AssertIteratorValue("1234567890", iter);
+	}
+
+	TEST(TEST_CLASS, InsertForwardsToPut_findLowerOrEqual) {
+		// Arrange:
+		std::array<uint8_t, 1> key1 = { 1 };
+		std::array<uint8_t, 1> middleKey = { 5 };
+		std::array<uint8_t, 1> key2 = { 10 };
+		test::RdbTestContext context(DefaultSettings());
+		TestColumnContainer container(context.database(), 0);
+
+		// Act:
+		container.insert(key2, "10");
+		container.insert(key1, "1");
+
+		// Assert:
+		RdbDataIterator iter;
+		container.findLowerOrEqual(key2, iter);
+		test::AssertIteratorValue("10", iter);
+
+		iter = RdbDataIterator();
+		container.findLowerOrEqual(key1, iter);
+		test::AssertIteratorValue("1", iter);
+
+		iter = RdbDataIterator();
+		container.findLowerOrEqual(middleKey, iter);
+		test::AssertIteratorValue("1", iter);
+	}
+
+	TEST(TEST_CLASS, InsertForwardsToPut_findLowerOrEqual_NoLowerElement) {
+		// Arrange:
+		std::array<uint8_t, 1> middleKey = { 5 };
+		std::array<uint8_t, 1> key1 = { 10 };
+		test::RdbTestContext context(DefaultSettings());
+		TestColumnContainer container(context.database(), 0);
+
+		// Act:
+		container.insert(key1, "10");
+
+		// Assert:
+		RdbDataIterator iter;
+		container.findLowerOrEqual(key1, iter);
+		test::AssertIteratorValue("10", iter);
+
+		iter = RdbDataIterator();
+		container.findLowerOrEqual(middleKey, iter);
+		EXPECT_EQ(RdbDataIterator::End(), iter);
+	}
+
+	TEST(TEST_CLASS, FindLowerOrEqual_Empty) {
+		// Arrange:
+		std::array<uint8_t, 1> key1 = { 5 };
+		test::RdbTestContext context(DefaultSettings());
+		TestColumnContainer container(context.database(), 0);
+
+
+		// Assert:
+		RdbDataIterator iter;
+		container.findLowerOrEqual(key1, iter);
+		EXPECT_EQ(RdbDataIterator::End(), iter);
 	}
 
 	TEST(TEST_CLASS, InsertForwardsToPut_Batched) {

@@ -41,11 +41,11 @@ namespace catapult { namespace model {
 
 	Hash256 TransactionStatement::hash() const {
 		// prepend receipt header to statement
-		auto version = static_cast<uint16_t>(1);
+		auto version = static_cast<uint32_t>(1);
 		auto type = Receipt_Type_Transaction_Group;
 
 		crypto::Sha3_256_Builder hashBuilder;
-		hashBuilder.update({ reinterpret_cast<const uint8_t*>(&version), sizeof(uint16_t) });
+		hashBuilder.update({ reinterpret_cast<const uint8_t*>(&version), sizeof(uint32_t) });
 		hashBuilder.update({ reinterpret_cast<const uint8_t*>(&type), sizeof(ReceiptType) });
 		hashBuilder.update({ reinterpret_cast<const uint8_t*>(&m_source), sizeof(ReceiptSource) });
 

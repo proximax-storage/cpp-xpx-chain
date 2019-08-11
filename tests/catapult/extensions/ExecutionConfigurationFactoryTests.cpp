@@ -28,10 +28,11 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateExecutionConfiguration) {
 		// Act:
-		auto config = CreateExecutionConfiguration(*test::CreateDefaultPluginManagerWithRealPlugins());
+		auto pPlugin = test::CreateDefaultPluginManagerWithRealPlugins();
+		auto config = CreateExecutionConfiguration(*pPlugin);
 
 		// Assert:
-		EXPECT_EQ(model::NetworkIdentifier::Mijin_Test, config.Network.Identifier);
+		EXPECT_EQ(model::NetworkIdentifier::Mijin_Test, config.NetworkInfoSupplier(Height{0}).Identifier);
 		EXPECT_TRUE(!!config.pObserver);
 		EXPECT_TRUE(!!config.pValidator);
 		EXPECT_TRUE(!!config.pNotificationPublisher);
@@ -48,17 +49,22 @@ namespace catapult { namespace extensions {
 			"TotalTransactionsObserver",
 			"SnapshotCleanUpObserver",
 			"BlockDifficultyObserver",
-			"BlockDifficultyPruningObserver"
+			"BlockDifficultyPruningObserver",
+			"TransactionHashObserver",
+			"TransactionHashPruningObserver"
 		};
 		EXPECT_EQ(expectedObserverNames, config.pObserver->names());
 
 		std::vector<std::string> expectedValidatorNames{
+			"EntityVersionValidator",
+			"MaxTransactionsValidator",
+			"NetworkValidator",
 			"AddressValidator",
 			"DeadlineValidator",
-			"NemesisSinkValidator",
 			"EligibleHarvesterValidator",
 			"BalanceDebitValidator",
-			"BalanceTransferValidator"
+			"BalanceTransferValidator",
+			"UniqueTransactionHashValidator"
 		};
 		EXPECT_EQ(expectedValidatorNames, config.pValidator->names());
 	}

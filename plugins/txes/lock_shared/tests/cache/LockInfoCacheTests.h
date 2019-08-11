@@ -94,7 +94,7 @@ namespace catapult { namespace cache {
 		static void PopulateCache(
 				typename TLockInfoTraits::CacheType& cache,
 				const std::vector<typename TLockInfoTraits::ValueType>& lockInfos) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			for (const auto& lockInfo : lockInfos)
 				delta->insert(lockInfo);
 
@@ -125,22 +125,22 @@ namespace catapult { namespace cache {
 			PopulateCache(cache, lockInfos);
 
 			// Sanity:
-			EXPECT_EQ(Num_Default_Entries, cache.createView()->size());
-			EXPECT_TRUE(cache.createView()->contains(TLockInfoTraits::ToKey(lockInfos[1])));
+			EXPECT_EQ(Num_Default_Entries, cache.createView(Height{0})->size());
+			EXPECT_TRUE(cache.createView(Height{0})->contains(TLockInfoTraits::ToKey(lockInfos[1])));
 
 			// Act: remove unused lock at height 20
 			{
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				delta->remove(TLockInfoTraits::ToKey(lockInfos[1]));
 				cache.commit();
 			}
 
 			// Sanity:
-			EXPECT_FALSE(cache.createView()->contains(TLockInfoTraits::ToKey(lockInfos[1])));
+			EXPECT_FALSE(cache.createView(Height{0})->contains(TLockInfoTraits::ToKey(lockInfos[1])));
 
 			// - reinsert lock at height 25
 			lockInfos[1].Height = Height(25);
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(lockInfos[1]);
 			cache.commit();
 
@@ -156,7 +156,7 @@ namespace catapult { namespace cache {
 		static void AssertOnlyUnusedValuesAreTouched() {
 			// Arrange:
 			typename CacheTraits::CacheType cache;
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			delta->insert(CacheTraits::CreateWithIdAndExpiration(11, Height(100)));
 			delta->insert(CacheTraits::CreateWithIdAndExpiration(22, Height(200)));
 			delta->insert(CacheTraits::CreateWithIdAndExpiration(33, Height(100)));
@@ -186,10 +186,10 @@ namespace catapult { namespace cache {
 			PopulateCache(cache, lockInfos);
 
 			// Sanity:
-			EXPECT_EQ(Num_Default_Entries, cache.createView()->size());
+			EXPECT_EQ(Num_Default_Entries, cache.createView(Height{0})->size());
 
 			// Act: no lock expired at height 15
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto expiredLockInfoKeys = CollectUnusedExpiredLockKeys(*delta, Height(15));
 
 			// Assert:
@@ -203,10 +203,10 @@ namespace catapult { namespace cache {
 			PopulateCache(cache, lockInfos);
 
 			// Sanity:
-			EXPECT_EQ(Num_Default_Entries, cache.createView()->size());
+			EXPECT_EQ(Num_Default_Entries, cache.createView(Height{0})->size());
 
 			// Act: locks at height 10, 30, ..., 90 are used
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto expiredLockInfoKeys = CollectUnusedExpiredLockKeys(*delta, Height(30));
 
 			// Assert:
@@ -240,10 +240,10 @@ namespace catapult { namespace cache {
 			PopulateCache(cache, lockInfos);
 
 			// Sanity:
-			EXPECT_EQ(Num_Default_Entries, cache.createView()->size());
+			EXPECT_EQ(Num_Default_Entries, cache.createView(Height{0})->size());
 
 			// Act: locks at height 20, 40, ..., 100 are unused
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto expiredLockInfoKeys = CollectUnusedExpiredLockKeys(*delta, Height(40));
 
 			// Assert:
@@ -258,7 +258,7 @@ namespace catapult { namespace cache {
 			PopulateCache(cache, lockInfos);
 			{
 				// add another two lock infos that expire at height 40
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				for (auto i = 0u; i < 2; ++i) {
 					lockInfos.push_back(TLockInfoTraits::CreateLockInfo(Height(40)));
 					delta->insert(lockInfos.back());
@@ -268,10 +268,10 @@ namespace catapult { namespace cache {
 			}
 
 			// Sanity:
-			EXPECT_EQ(Num_Default_Entries + 2, cache.createView()->size());
+			EXPECT_EQ(Num_Default_Entries + 2, cache.createView(Height{0})->size());
 
 			// Act:
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto expiredLockInfoKeys = CollectUnusedExpiredLockKeys(*delta, Height(40));
 
 			// Assert:
@@ -286,7 +286,7 @@ namespace catapult { namespace cache {
 			PopulateCache(cache, lockInfos);
 			{
 				// add another four lock infos that expire at height 40, two of which are used
-				auto delta = cache.createDelta();
+				auto delta = cache.createDelta(Height{0});
 				for (auto i = 0u; i < 4; ++i) {
 					auto lockInfo = TLockInfoTraits::CreateLockInfo(Height(40));
 					if (1 == i % 2)
@@ -300,10 +300,10 @@ namespace catapult { namespace cache {
 			}
 
 			// Sanity:
-			EXPECT_EQ(Num_Default_Entries + 4, cache.createView()->size());
+			EXPECT_EQ(Num_Default_Entries + 4, cache.createView(Height{0})->size());
 
 			// Act:
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto expiredLockInfoKeys = CollectUnusedExpiredLockKeys(*delta, Height(40));
 
 			// Assert:

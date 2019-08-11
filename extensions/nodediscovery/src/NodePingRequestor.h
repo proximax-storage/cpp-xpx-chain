@@ -21,6 +21,7 @@
 #pragma once
 #include "NodePingUtils.h"
 #include "nodediscovery/src/api/RemoteNodeApi.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/net/BriefServerRequestor.h"
 
 namespace catapult { namespace nodediscovery {
@@ -28,15 +29,15 @@ namespace catapult { namespace nodediscovery {
 	/// Node ping response compatibility checker.
 	class NodePingResponseCompatibilityChecker {
 	public:
-		/// Creates a checker around \a networkIdentifier.
-		explicit NodePingResponseCompatibilityChecker(model::NetworkIdentifier networkIdentifier)
-				: m_networkIdentifier(networkIdentifier)
+		/// Creates a checker around \a state.
+		explicit NodePingResponseCompatibilityChecker(extensions::ServiceState& state)
+				: m_state(state)
 		{}
 
 	public:
 		/// Returns \a true if \a requestNode and \a responseNode are compatible nodes.
 		bool isResponseCompatible(const ionet::Node& requestNode, const ionet::Node& responseNode) const {
-			if (IsNodeCompatible(responseNode, m_networkIdentifier, requestNode.identityKey()))
+			if (IsNodeCompatible(responseNode, m_state.networkIdentifier(), requestNode.identityKey()))
 				return true;
 
 			CATAPULT_LOG(warning) << "rejecting incompatible partner node '" << responseNode << "'";
@@ -44,7 +45,7 @@ namespace catapult { namespace nodediscovery {
 		}
 
 	private:
-		model::NetworkIdentifier m_networkIdentifier;
+		extensions::ServiceState& m_state;
 	};
 
 	/// Node ping request policy.
@@ -61,11 +62,11 @@ namespace catapult { namespace nodediscovery {
 	/// A brief server requestor for requesting node ping information.
 	using NodePingRequestor = net::BriefServerRequestor<NodePingRequestPolicy, NodePingResponseCompatibilityChecker>;
 
-	/// Creates a node ping requestor for a server with a key pair of \a keyPair and a network identified by \a networkIdentifier
+	/// Creates a node ping requestor for a server with a key pair of \a keyPair and \a state
 	/// using \a pPool and configured with \a settings.
 	std::shared_ptr<NodePingRequestor> CreateNodePingRequestor(
 			const std::shared_ptr<thread::IoThreadPool>& pPool,
 			const crypto::KeyPair& keyPair,
 			const net::ConnectionSettings& settings,
-			model::NetworkIdentifier networkIdentifier);
+			extensions::ServiceState& state);
 }}

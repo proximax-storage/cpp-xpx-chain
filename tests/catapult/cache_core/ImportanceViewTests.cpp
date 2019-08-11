@@ -23,6 +23,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/NetworkInfo.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 using catapult::model::ImportanceHeight;
@@ -36,18 +37,21 @@ namespace catapult { namespace cache {
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
-		constexpr auto Default_Cache_Options = AccountStateCacheTypes::Options{
-			model::NetworkIdentifier::Mijin_Test,
-			123,
-			Amount(std::numeric_limits<Amount::ValueType>::max()),
-			MosaicId(1111),
-			Harvesting_Mosaic_Id
-		};
+		auto CreateConfigHolder() {
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.Network.Identifier = Network_Identifier;
+			config.ImportanceGrouping = 123;
+			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
+			config.CurrencyMosaicId = MosaicId(1111);
+			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			return config::CreateMockConfigurationHolder(config);
+		}
 
 		struct AddressTraits {
 			static auto AddAccount(AccountStateCacheDelta& delta, const Key& publicKey, Height height) {
-				auto address = model::PublicKeyToAddress(publicKey, Default_Cache_Options.NetworkIdentifier);
+				auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
 				delta.addAccount(address, height);
 				return delta.find(address);
 			}
@@ -91,7 +95,7 @@ namespace catapult { namespace cache {
 				AccountStateCache& cache,
 				const Key& publicKey,
 				Amount balance = Amount(0)) {
-			auto delta = cache.createDelta();
+			auto delta = cache.createDelta(Height{0});
 			auto accountStateIter = TTraits::AddAccount(*delta, publicKey, Height(100));
 			auto& accountState = accountStateIter.get();
 			accountState.Balances.credit(Harvesting_Mosaic_Id, balance, Height(100));
@@ -99,7 +103,7 @@ namespace catapult { namespace cache {
 		}
 
 		auto CreateAccountStateCache() {
-			return std::make_unique<AccountStateCache>(CacheConfiguration(), Default_Cache_Options);
+			return std::make_unique<AccountStateCache>(CacheConfiguration(), CreateConfigHolder());
 		}
 	}
 
@@ -278,7 +282,7 @@ namespace catapult { namespace cache {
 			auto pCache = CreateAccountStateCache();
 
 			{
-				auto delta = pCache->createDelta();
+				auto delta = pCache->createDelta(Height{0});
 				auto accountStateIter = RemoteAccountTraits::AddAccount(*delta, publicKey, Height(100));
 				mutator(accountStateIter.get());
 				pCache->commit();

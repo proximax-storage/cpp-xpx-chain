@@ -4,8 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/MetadataPlugin.h"
 #include "plugins/txes/metadata/src/model/MetadataEntityType.h"
+#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -18,7 +20,7 @@ namespace catapult { namespace plugins {
             static void RunTestAfterRegistration(TAction action) {
                 // Arrange:
                 auto config = model::BlockChainConfiguration::Uninitialized();
-                config.Plugins.emplace("catapult.plugins.metadata", utils::ConfigurationBag({
+                config.Plugins.emplace(PLUGIN_NAME(metadata), utils::ConfigurationBag({
                 {
                     "",
                     {
@@ -28,7 +30,7 @@ namespace catapult { namespace plugins {
                     }
                 }}));
 
-                PluginManager manager(config, StorageConfiguration(), config::InflationConfiguration::Uninitialized());
+				auto manager = test::CreatePluginManager(config);
                 RegisterMetadataSubsystem(manager);
 
                 // Act:
@@ -62,26 +64,27 @@ namespace catapult { namespace plugins {
 
             static std::vector<std::string> GetStatelessValidatorNames() {
                 return {
-                        "MetadataTypeValidator",
-                        "MetadataFieldModificationValidator",
+					"MetadataTypeValidator",
+					"MetadataPluginConfigValidator",
                 };
             }
 
             static std::vector<std::string> GetStatefulValidatorNames() {
                 return {
-                        "ModifyAddressMetadataValidator",
-                        "ModifyMosaicMetadataValidator",
-                        "ModifyNamespaceMetadataValidator",
-                        "MetadataModificationsValidator",
+					"MetadataFieldModificationValidator",
+					"ModifyAddressMetadataValidator",
+					"ModifyMosaicMetadataValidator",
+					"ModifyNamespaceMetadataValidator",
+					"MetadataModificationsValidator",
                 };
             }
 
             static std::vector<std::string> GetObserverNames() {
                 return {
-                        "AddressMetadataValueModificationObserver",
-                        "MosaicMetadataValueModificationObserver",
-                        "NamespaceMetadataValueModificationObserver",
-                        "MetadataPruningObserver"
+					"AddressMetadataValueModificationObserver",
+					"MosaicMetadataValueModificationObserver",
+					"NamespaceMetadataValueModificationObserver",
+					"MetadataPruningObserver"
                 };
             }
 

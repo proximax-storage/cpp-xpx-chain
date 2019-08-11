@@ -71,6 +71,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because an operation is not permitted by a multisig account.
 	DEFINE_MULTISIG_RESULT(Operation_Not_Permitted_By_Account, 0x0800);
 
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_MULTISIG_RESULT(Plugin_Config_Malformed, 14);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

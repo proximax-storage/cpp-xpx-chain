@@ -223,10 +223,10 @@ namespace catapult { namespace chain {
 		TestContext context;
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto hash = test::GenerateRandomByteArray<Hash256>();
-		auto notification1 = model::AccountPublicKeyNotification(signer);
+		auto notification1 = model::AccountPublicKeyNotification<1>(signer);
 		auto notification2 = test::CreateNotification(Notification_Type_All);
-		auto notification3 = model::EntityNotification(model::NetworkIdentifier::Mijin_Test, 0, 0, 0);
-		auto notification4 = model::TransactionNotification(signer, hash, static_cast<model::EntityType>(22), Timestamp(11));
+		auto notification3 = model::EntityNotification<1>(model::NetworkIdentifier::Mijin_Test, model::EntityType{0}, 0);
+		auto notification4 = model::TransactionNotification<1>(signer, hash, static_cast<model::EntityType>(22), Timestamp(11));
 
 		// - process notifications
 		context.sub().notify(notification1);
@@ -242,7 +242,7 @@ namespace catapult { namespace chain {
 		// - notice that notification1 is observer-only
 		// - notice that notification3 is validator-only
 		context.assertUndoObserverCalls({
-			model::Core_Transaction_Notification, Notification_Type_All, model::Core_Register_Account_Public_Key_Notification
+			model::Core_Transaction_v1_Notification, Notification_Type_All, model::Core_Register_Account_Public_Key_v1_Notification
 		});
 
 		// - check data integrity

@@ -31,7 +31,7 @@ namespace catapult { namespace mocks {
 			return mocks::MockTransaction::Entity_Type;
 		}
 
-		model::TransactionAttributes attributes() const override {
+		model::TransactionAttributes attributes(const Height&) const override {
 			CATAPULT_THROW_RUNTIME_ERROR("attributes - not implemented in mock");
 		}
 

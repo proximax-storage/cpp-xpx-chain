@@ -44,6 +44,9 @@ namespace catapult { namespace cache {
 		using NamespaceLookup = NamespaceLookupMixin<
 			NamespaceCacheTypes::PrimaryTypes::BaseSetType,
 			NamespaceCacheTypes::FlatMapTypes::BaseSetType>;
+
+		using Enable = PrimaryMixins::Enable;
+		using Height = PrimaryMixins::Height;
 	};
 
 	/// Basic view on top of the namespace cache.
@@ -54,7 +57,9 @@ namespace catapult { namespace cache {
 			, public NamespaceCacheViewMixins::Iteration
 			, public NamespaceCacheViewMixins::PatriciaTreeView
 			, public NamespaceCacheViewMixins::NamespaceDeepSize
-			, public NamespaceCacheViewMixins::NamespaceLookup {
+			, public NamespaceCacheViewMixins::NamespaceLookup
+			, public NamespaceCacheViewMixins::Enable
+			, public NamespaceCacheViewMixins::Height {
 	public:
 		using ReadOnlyView = NamespaceCacheTypes::CacheReadOnlyType;
 

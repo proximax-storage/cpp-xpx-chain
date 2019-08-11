@@ -22,8 +22,8 @@
 #include "catapult/plugins/PluginExceptions.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/utils/ExceptionLogging.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
@@ -31,7 +31,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS PluginLoaderTests
 
 	namespace {
-		constexpr auto Known_Plugin_Name = "catapult.plugins.transfer";
+		constexpr auto Known_Plugin_Name = PLUGIN_NAME(transfer);
 
 		void AssertCanLoadPlugins(
 				const std::string& directory,
@@ -41,7 +41,8 @@ namespace catapult { namespace plugins {
 			// Arrange: ensure module is destroyed after manager
 			for (const auto& name : pluginNames) {
 				PluginModules modules;
-				auto manager = test::CreatePluginManager(config);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+				PluginManager manager(pConfigHolder, StorageConfiguration());
 				CATAPULT_LOG(debug) << "loading plugin with name: " << name;
 
 				// Act:
@@ -73,10 +74,11 @@ namespace catapult { namespace plugins {
 		void AssertCannotLoadUnknownPlugin(const std::string& directory) {
 			// Arrange:
 			PluginModules modules;
-			auto manager = test::CreatePluginManager();
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
+			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act + Assert:
-			EXPECT_THROW(LoadPluginByName(manager, modules, directory, "catapult.plugins.awesome"), catapult_invalid_argument);
+			EXPECT_THROW(LoadPluginByName(manager, modules, directory, PLUGIN_NAME(awesome)), catapult_invalid_argument);
 		}
 	}
 
@@ -120,7 +122,8 @@ namespace catapult { namespace plugins {
 
 			// - create the manager
 			PluginModules modules;
-			auto manager = test::CreatePluginManager(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			PluginManager manager(pConfigHolder, StorageConfiguration());
 
 			// Act:
 			LoadPluginByName(manager, modules, "", Known_Plugin_Name);
@@ -130,6 +133,6 @@ namespace catapult { namespace plugins {
 		}
 
 		// Assert:
-		EXPECT_TRUE(isExceptionHandled);
+		EXPECT_FALSE(isExceptionHandled);
 	}
 }}

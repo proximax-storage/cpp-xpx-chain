@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/cache/CacheDatabaseMixin.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 #include "catapult/model/NetworkInfo.h"
 #include "catapult/state/AccountState.h"
@@ -77,20 +78,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// Network identifier.
-			model::NetworkIdentifier NetworkIdentifier;
-
-			/// Importance grouping.
-			uint64_t ImportanceGrouping;
-
-			/// Minimum high value account balance.
-			Amount MinHighValueAccountBalance;
-
-			/// Mosaic id used as primary chain currency.
-			MosaicId CurrencyMosaicId;
-
-			/// Mosaic id used to provide harvesting ability.
-			MosaicId HarvestingMosaicId;
+			/// Catapult configuration holder.
+			std::shared_ptr<config::LocalNodeConfigurationHolder> ConfigHolderPtr;
 		};
 
 	// region secondary descriptors

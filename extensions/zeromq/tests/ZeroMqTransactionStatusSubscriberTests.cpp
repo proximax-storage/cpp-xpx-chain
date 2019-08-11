@@ -43,8 +43,8 @@ namespace catapult { namespace zeromq {
 			{}
 
 		public:
-			void notifyStatus(const model::Transaction& transaction, const Hash256& hash, uint32_t status) {
-				subscriber().notifyStatus(transaction, hash, status);
+			void notifyStatus(const model::Transaction& transaction, const Height& height, const Hash256& hash, uint32_t status) {
+				subscriber().notifyStatus(transaction, height, hash, status);
 			}
 
 			void flush() {
@@ -73,7 +73,7 @@ namespace catapult { namespace zeromq {
 		auto pTransaction = test::GenerateTransactionWithDeadline(Timestamp(123));
 
 		// Act:
-		context.notifyStatus(*pTransaction, test::GenerateRandomByteArray<Hash256>(), 123);
+		context.notifyStatus(*pTransaction, Height(), test::GenerateRandomByteArray<Hash256>(), 123);
 
 		// Assert:
 		test::AssertNoPendingMessages(context.zmqSocket());
@@ -104,7 +104,7 @@ namespace catapult { namespace zeromq {
 		context.subscribeAll(Marker, addresses);
 
 		// Act:
-		context.notifyStatus(*transactionInfos[0].pEntity, transactionInfos[0].EntityHash, 123);
+		context.notifyStatus(*transactionInfos[0].pEntity, Height(), transactionInfos[0].EntityHash, 123);
 
 		// Assert:
 		model::TransactionStatus transactionStatus(transactionInfos[0].EntityHash, 123, transactionInfos[0].pEntity->Deadline);
@@ -124,7 +124,7 @@ namespace catapult { namespace zeromq {
 		// Act:
 		auto i = 0u;
 		for (const auto& transactionInfo : transactionInfos)
-			context.notifyStatus(*transactionInfo.pEntity, transactionInfo.EntityHash, i++);
+			context.notifyStatus(*transactionInfo.pEntity, Height(), transactionInfo.EntityHash, i++);
 
 		// Assert:
 		i = 0u;

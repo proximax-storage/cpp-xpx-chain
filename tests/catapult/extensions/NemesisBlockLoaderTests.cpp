@@ -30,6 +30,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -150,12 +151,11 @@ namespace catapult { namespace extensions {
 			return config;
 		}
 
-		plugins::PluginManager CreatePluginManager() {
+		plugins::PluginManager CreatePluginManager(const model::BlockChainConfiguration& config) {
 			// enable Publish_Transfers (MockTransaction Publish XORs recipient address, so XOR address resolver is required
 			// for proper roundtripping or else test will fail)
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			auto manager = test::CreatePluginManager(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			plugins::PluginManager manager(pConfigHolder, plugins::StorageConfiguration());
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin(mocks::PluginOptionFlags::Publish_Transfers));
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin(
 					static_cast<model::EntityType>(0xFFFE),
@@ -172,14 +172,15 @@ namespace catapult { namespace extensions {
 			return manager;
 		}
 
-		std::unique_ptr<const observers::NotificationObserver> CreateObserver() {
+		std::unique_ptr<const observers::NotificationObserver> CreateObserver(const model::BlockChainConfiguration& config) {
 			// use real coresystem observers to create accounts, update balances and add harvest receipt
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			observers::DemuxObserverBuilder builder;
 			builder
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(Harvesting_Mosaic_Id, 20, model::InflationCalculator()));
+				.add(observers::CreateHarvestFeeObserver(pConfigHolder, model::InflationCalculator()));
 			return builder.build();
 		}
 
@@ -205,10 +206,10 @@ namespace catapult { namespace extensions {
 			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
 
 			// - create the publisher, observer and loader
-			auto pluginManager = CreatePluginManager();
+			auto pluginManager = CreatePluginManager(config);
 			{
 				auto cacheDelta = state.ref().Cache.createDelta();
-				NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver());
+				NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver(config));
 
 				// Act:
 				TTraits::Execute(loader, state.ref(), nemesisOptions.StateHashVerification);
@@ -256,9 +257,9 @@ namespace catapult { namespace extensions {
 
 			{
 				// - create the publisher, observer and loader
-				auto pluginManager = CreatePluginManager();
+				auto pluginManager = CreatePluginManager(config);
 				auto cacheDelta = state.ref().Cache.createDelta();
-				NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver());
+				NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver(config));
 
 				// Act + Assert:
 				EXPECT_THROW(TTraits::Execute(loader, state.ref(), StateHashVerification::Enabled), TException)
@@ -505,9 +506,9 @@ namespace catapult { namespace extensions {
 		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
 
 		// - create the publisher, observer and loader
-		auto pluginManager = CreatePluginManager();
+		auto pluginManager = CreatePluginManager(config);
 		auto cacheDelta = state.ref().Cache.createDelta();
-		NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver());
+		NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver(config));
 
 		// Act:
 		TTraits::Execute(loader, state.ref(), StateHashVerification::Enabled);
@@ -531,9 +532,10 @@ namespace catapult { namespace extensions {
 		auto& nemesisBlock = *nemesisBlockSignerPair.pBlock;
 
 		// - create the state (with verifiable receipts enabled)
-		NemesisOptions nemesisOptions{ Importance(1234), Amount() };
+		NemesisOptions nemesisOptions{ Importance(1234), Amount(1234) };
 		auto config = CreateDefaultConfiguration(nemesisBlock, nemesisOptions);
 		config.ShouldEnableVerifiableReceipts = true;
+		config.CurrencyMosaicId = Harvesting_Mosaic_Id;
 		auto cache = test::CreateEmptyCatapultCache(config);
 		{
 			// - calculate the expected receipts hash
@@ -560,9 +562,9 @@ namespace catapult { namespace extensions {
 		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
 
 		// - create the publisher, observer and loader
-		auto pluginManager = CreatePluginManager();
+		auto pluginManager = CreatePluginManager(config);
 		auto cacheDelta = state.ref().Cache.createDelta();
-		NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver());
+		NemesisBlockLoader loader(cacheDelta, pluginManager, CreateObserver(config));
 
 		// Act:
 		TTraits::Execute(loader, state.ref(), StateHashVerification::Enabled);
@@ -677,7 +679,7 @@ namespace catapult { namespace extensions {
 		auto nemesisBlockSignerPair = CreateNemesisBlock({ { MakeHarvestingMosaic(1234) } });
 
 		// - use the wrong network
-		nemesisBlockSignerPair.pBlock->Version ^= 0xFF00;
+		nemesisBlockSignerPair.pBlock->Version ^= 0xFF000000;
 
 		// Act:
 		AssertLoadNemesisBlockFailure<TTraits>(nemesisBlockSignerPair, Importance(1234));

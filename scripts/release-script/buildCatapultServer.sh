@@ -5,11 +5,12 @@ cd _build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" ..
 
 make publish
-# First we build extensions which catapult.server required during runtime
+# First we build extensions which sirius.bc required during runtime
 make \
     # Required extensions
     catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
+    catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
@@ -19,8 +20,10 @@ make \
     catapult.mongo.plugins.namespace \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
+    catapult.mongo.plugins.upgrade \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
+    catapult.plugins.config \
     catapult.plugins.contract \
     catapult.plugins.hashcache \
     catapult.plugins.hashcache.cache \
@@ -33,10 +36,11 @@ make \
     catapult.plugins.property \
     catapult.plugins.signature \
     catapult.plugins.transfer \
+    catapult.plugins.upgrade \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
-    extension.filechain \
+    extension.filespooling \
     extension.harvesting \
     extension.hashcache \
     extension.mongo \
@@ -53,17 +57,20 @@ make \
     extension.zeromq \
     # Tools
     catapult.tools.address \
+    catapult.tools.benchmark \
     catapult.tools.health \
     catapult.tools.nemgen \
+    catapult.tools.nemgen.blockhashes \
     catapult.tools.network \
+    catapult.tools.statusgen \
     # Catapult
-    catapult.server \
-    -j4
+    sirius.bc \
+    -j 4
 
 cd ..
 
 # Now we want to create a docker image,
-# so we need to create it with shared libs which is required by catapult.server and extensions
+# so we need to create it with shared libs which is required by sirius.bc and extensions
 mkdir ./temp
 # We copy all libs to temp folder
 ./scripts/release-script/copyDeps.sh ./_build/bin/ ./temp

@@ -32,7 +32,7 @@ namespace catapult { namespace zeromq {
 		public:
 			void notifyAdds(const TransactionInfos& transactionInfos) override {
 				for (const auto& transactionInfo : transactionInfos)
-					m_publisher.publishTransaction(TransactionMarker::Unconfirmed_Transaction_Add_Marker, transactionInfo, Height());
+					m_publisher.publishTransaction(TransactionMarker::Unconfirmed_Transaction_Add_Marker, transactionInfo);
 			}
 
 			void notifyRemoves(const TransactionInfos& transactionInfos) override {

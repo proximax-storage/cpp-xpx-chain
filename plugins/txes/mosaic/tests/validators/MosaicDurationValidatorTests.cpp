@@ -18,9 +18,11 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
 #include "src/cache/MosaicCache.h"
 #include "catapult/model/BlockChainConfiguration.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -29,14 +31,14 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, BlockDuration(123))
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr MosaicId Default_Mosaic_Id = MosaicId(0x1234);
 
-		model::MosaicDefinitionNotification CreateNotification(const Key& signer, BlockDuration duration) {
+		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, BlockDuration duration) {
 			auto properties = model::MosaicProperties::FromValues({ { 1, 2, duration.unwrap() } });
-			return model::MosaicDefinitionNotification(signer, Default_Mosaic_Id, properties);
+			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties);
 		}
 
 		void AddMosaic(cache::CatapultCache& cache, const Key& owner, BlockDuration duration) {
@@ -54,10 +56,16 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
-				const model::MosaicDefinitionNotification& notification,
+				const model::MosaicDefinitionNotification<1>& notification,
 				Height height = Height(50)) {
 			// Arrange:
-			auto pValidator = CreateMosaicDurationValidator(BlockDuration(123));
+			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
+			pluginConfig.MaxMosaicDuration = utils::BlockSpan::FromHours(123);
+			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pValidator = CreateMosaicDurationValidator(pConfigHolder);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, height);

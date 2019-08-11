@@ -42,14 +42,14 @@ namespace catapult { namespace validators {
 
 	DEFINE_PROPERTY_MODIFICATION_TYPE_VALIDATOR(
 			AddressPropertyModificationTypes,
-			model::ModifyAddressPropertyNotification,
+			model::ModifyAddressPropertyNotification_v1,
 			UnresolvedAddress)
 	DEFINE_PROPERTY_MODIFICATION_TYPE_VALIDATOR(
 			MosaicPropertyModificationTypes,
-			model::ModifyMosaicPropertyNotification,
+			model::ModifyMosaicPropertyNotification_v1,
 			UnresolvedMosaicId)
 	DEFINE_PROPERTY_MODIFICATION_TYPE_VALIDATOR(
 			TransactionTypePropertyModificationTypes,
-			model::ModifyTransactionTypePropertyNotification,
+			model::ModifyTransactionTypePropertyNotification_v1,
 			model::EntityType)
 }}

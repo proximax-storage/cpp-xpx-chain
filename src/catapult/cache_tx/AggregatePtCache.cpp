@@ -21,6 +21,7 @@
 #include "AggregatePtCache.h"
 #include "BasicAggregateTransactionsCache.h"
 #include "PtChangeSubscriber.h"
+#include "src/catapult/config_holder/LocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -45,7 +46,8 @@ namespace catapult { namespace cache {
 
 			static model::TransactionInfo ToTransactionInfo(const TransactionInfoType& transactionInfo) {
 				// the PtCache does not support merkle component hashes, so pass in a zeroed out merkle component hash
-				model::TransactionInfo transactionInfoWithMerkleHash(transactionInfo.pEntity, transactionInfo.EntityHash);
+				// partial transaction are not related to block, so height is zero
+				model::TransactionInfo transactionInfoWithMerkleHash(transactionInfo.pEntity, transactionInfo.EntityHash, config::HEIGHT_OF_LATEST_CONFIG);
 				transactionInfoWithMerkleHash.OptionalExtractedAddresses = transactionInfo.OptionalExtractedAddresses;
 				transactionInfoWithMerkleHash.MerkleComponentHash = Hash256();
 				return transactionInfoWithMerkleHash;

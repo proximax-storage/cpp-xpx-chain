@@ -32,19 +32,19 @@ namespace catapult { namespace model {
 #define DEFINE_MOSAIC_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Mosaic, DESCRIPTION, CODE)
 
 	/// Mosaic properties were provided.
-	DEFINE_MOSAIC_NOTIFICATION(Properties, 0x0012, Validator);
+	DEFINE_MOSAIC_NOTIFICATION(Properties_v1, 0x0012, Validator);
 
 	/// Mosaic was defined.
-	DEFINE_MOSAIC_NOTIFICATION(Definition, 0x0013, All);
+	DEFINE_MOSAIC_NOTIFICATION(Definition_v1, 0x0013, All);
 
 	/// Mosaic nonce and id were provided.
-	DEFINE_MOSAIC_NOTIFICATION(Nonce, 0x0014, Validator);
+	DEFINE_MOSAIC_NOTIFICATION(Nonce_v1, 0x0014, Validator);
 
 	/// Mosaic supply was changed.
-	DEFINE_MOSAIC_NOTIFICATION(Supply_Change, 0x0022, All);
+	DEFINE_MOSAIC_NOTIFICATION(Supply_Change_v1, 0x0022, All);
 
 	/// Mosaic rental fee has been sent.
-	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee, 0x0030, Observer);
+	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
 
 #undef DEFINE_MOSAIC_NOTIFICATION
 
@@ -54,15 +54,19 @@ namespace catapult { namespace model {
 
 	/// Notification of mosaic properties.
 	/// \note This is required due to potentially lossy conversion from raw properties to MosaicProperties.
-	struct MosaicPropertiesNotification : public Notification {
+	template<VersionType version>
+	struct MosaicPropertiesNotification;
+
+	template<>
+	struct MosaicPropertiesNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Properties_Notification;
+		static constexpr auto Notification_Type = Mosaic_Properties_v1_Notification;
 
 	public:
 		/// Creates a notification around \a propertiesHeader and \a pProperties.
 		explicit MosaicPropertiesNotification(const MosaicPropertiesHeader& propertiesHeader, const MosaicProperty* pProperties)
-				: Notification(Notification_Type, sizeof(MosaicPropertiesNotification))
+				: Notification(Notification_Type, sizeof(MosaicPropertiesNotification<1>))
 				, PropertiesHeader(propertiesHeader)
 				, PropertiesPtr(pProperties)
 		{}
@@ -76,15 +80,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a mosaic definition.
-	struct MosaicDefinitionNotification : public Notification {
+	template<VersionType version>
+	struct MosaicDefinitionNotification;
+
+	template<>
+	struct MosaicDefinitionNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Definition_Notification;
+		static constexpr auto Notification_Type = Mosaic_Definition_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicId and \a properties.
 		explicit MosaicDefinitionNotification(const Key& signer, MosaicId mosaicId, const MosaicProperties& properties)
-				: Notification(Notification_Type, sizeof(MosaicDefinitionNotification))
+				: Notification(Notification_Type, sizeof(MosaicDefinitionNotification<1>))
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, Properties(properties)
@@ -102,15 +110,19 @@ namespace catapult { namespace model {
 	};
 
 	/// Notification of a mosaic nonce and id.
-	struct MosaicNonceNotification : public Notification {
+	template<VersionType version>
+	struct MosaicNonceNotification;
+
+	template<>
+	struct MosaicNonceNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Nonce_Notification;
+		static constexpr auto Notification_Type = Mosaic_Nonce_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicNonce and \a mosaicId.
 		explicit MosaicNonceNotification(const Key& signer, MosaicNonce mosaicNonce, catapult::MosaicId mosaicId)
-				: Notification(Notification_Type, sizeof(MosaicNonceNotification))
+				: Notification(Notification_Type, sizeof(MosaicNonceNotification<1>))
 				, Signer(signer)
 				, MosaicNonce(mosaicNonce)
 				, MosaicId(mosaicId)
@@ -132,15 +144,19 @@ namespace catapult { namespace model {
 	// region change
 
 	/// Notification of a mosaic supply change.
-	struct MosaicSupplyChangeNotification : public Notification {
+	template<VersionType version>
+	struct MosaicSupplyChangeNotification;
+
+	template<>
+	struct MosaicSupplyChangeNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Supply_Change_Notification;
+		static constexpr auto Notification_Type = Mosaic_Supply_Change_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicId, \a direction and \a delta.
 		MosaicSupplyChangeNotification(const Key& signer, UnresolvedMosaicId mosaicId, MosaicSupplyChangeDirection direction, Amount delta)
-				: Notification(Notification_Type, sizeof(MosaicSupplyChangeNotification))
+				: Notification(Notification_Type, sizeof(MosaicSupplyChangeNotification<1>))
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, Direction(direction)
@@ -166,10 +182,14 @@ namespace catapult { namespace model {
 	// region rental fee
 
 	/// Notification of a mosaic rental fee.
-	struct MosaicRentalFeeNotification : public BasicBalanceNotification<MosaicRentalFeeNotification> {
+	template<VersionType version>
+	struct MosaicRentalFeeNotification;
+
+	template<>
+	struct MosaicRentalFeeNotification<1> : public BasicBalanceNotification<MosaicRentalFeeNotification<1>> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Rental_Fee_Notification;
+		static constexpr auto Notification_Type = Mosaic_Rental_Fee_v1_Notification;
 
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.

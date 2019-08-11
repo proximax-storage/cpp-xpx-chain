@@ -24,6 +24,7 @@
 #include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -32,16 +33,15 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EligibleHarvesterValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, Amount(1234))
+	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 		constexpr auto Importance_Grouping = 234u;
 
-		auto CreateEmptyCatapultCache() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.ImportanceGrouping = Importance_Grouping;
+		auto CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
+			const_cast<model::BlockChainConfiguration&>(config).HarvestingMosaicId = Harvesting_Mosaic_Id;
+			const_cast<model::BlockChainConfiguration&>(config).ImportanceGrouping = Importance_Grouping;
 			return test::CreateEmptyCatapultCache(config);
 		}
 
@@ -59,12 +59,15 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureIfAccountIsUnknown) {
 		// Arrange:
-		auto cache = CreateEmptyCatapultCache();
+		auto config = model::BlockChainConfiguration::Uninitialized();
+		config.MinHarvesterBalance = Amount(1234);
+		auto cache = CreateEmptyCatapultCache(config);
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto height = Height(1000);
 		AddAccount(cache, key, Amount(9999));
+		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-		auto pValidator = CreateEligibleHarvesterValidator(Amount(1234));
+		auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
 
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = test::CreateBlockNotification(signer);
@@ -82,12 +85,15 @@ namespace catapult { namespace validators {
 				int64_t minBalanceDelta,
 				Height blockHeight) {
 			// Arrange:
-			auto cache = CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MinHarvesterBalance = Amount(1234);
+			auto cache = CreateEmptyCatapultCache(config);
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
 			AddAccount(cache, key, initialBalance);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-			auto pValidator = CreateEligibleHarvesterValidator(Amount(1234));
+			auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
 			auto notification = test::CreateBlockNotification(key);
 
 			// Act:

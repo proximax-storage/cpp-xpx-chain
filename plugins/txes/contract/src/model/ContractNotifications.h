@@ -14,15 +14,19 @@ namespace catapult { namespace model {
 	// region reputation notification types
 
 	/// Defines a reputation notification type.
-	DEFINE_NOTIFICATION_TYPE(Observer, Reputation, Update, 0x0001);
+	DEFINE_NOTIFICATION_TYPE(Observer, Reputation, Update_v1, 0x0001);
 
 	// endregion
 
 	/// Notification of a reputation update.
-	struct ReputationUpdateNotification : public Notification {
+	template<VersionType version>
+	struct ReputationUpdateNotification;
+
+	template<>
+	struct ReputationUpdateNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Reputation_Update_Notification;
+		static constexpr auto Notification_Type = Reputation_Update_v1_Notification;
 
 	private:
 		/// Creates a notification around \a signer, \a modificationCount and \a pModifications.
@@ -32,15 +36,15 @@ namespace catapult { namespace model {
 		{}
 
 		uint8_t* ModificationsStart() {
-			return reinterpret_cast<uint8_t*>(this) + sizeof(ReputationUpdateNotification);
+			return reinterpret_cast<uint8_t*>(this) + sizeof(ReputationUpdateNotification<1>);
 		}
 
 		const void* ModificationsStart() const {
-			return reinterpret_cast<const uint8_t*>(this) + sizeof(ReputationUpdateNotification);
+			return reinterpret_cast<const uint8_t*>(this) + sizeof(ReputationUpdateNotification<1>);
 		}
 
 		static size_t HeaderSize() {
-			return sizeof(ReputationUpdateNotification);
+			return sizeof(ReputationUpdateNotification<1>);
 		}
 
 		static size_t BodySize(const std::vector<const CosignatoryModification*>& modifications) {
@@ -62,8 +66,8 @@ namespace catapult { namespace model {
 			return reinterpret_cast<const CosignatoryModification* const *>(ModificationsStart());
 		}
 
-		static std::unique_ptr<ReputationUpdateNotification> CreateReputationUpdateNotification(const std::vector<const CosignatoryModification*>& modifications) {
-			auto smart_ptr = utils::MakeUniqueWithSize<ReputationUpdateNotification>(RealSize(modifications));
+		static std::unique_ptr<ReputationUpdateNotification<1>> CreateReputationUpdateNotification(const std::vector<const CosignatoryModification*>& modifications) {
+			auto smart_ptr = utils::MakeUniqueWithSize<ReputationUpdateNotification<1>>(RealSize(modifications));
 			auto& notification = *smart_ptr.get();
 			notification.Type = Notification_Type;
 			notification.Size = RealSize(modifications);
@@ -79,15 +83,19 @@ namespace catapult { namespace model {
 	// region contract notification types
 
 	/// Defines a contract notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Contract, Modify, 0x0002);
+	DEFINE_NOTIFICATION_TYPE(All, Contract, Modify_v1, 0x0002);
 
 	// endregion
 
 	/// Notification of a contract update.
-	struct ModifyContractNotification : public Notification {
+	template<VersionType version>
+	struct ModifyContractNotification;
+
+	template<>
+	struct ModifyContractNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Contract_Modify_Notification;
+		static constexpr auto Notification_Type = Contract_Modify_v1_Notification;
 
 	public:
 		/// Creates a notification around \a signer, \a modificationCount and \a pModifications.
@@ -101,7 +109,7 @@ namespace catapult { namespace model {
 			const CosignatoryModification* pExecutorModifications,
 			const uint8_t& verifierModificationCount,
 			const CosignatoryModification* pVerifierModifications)
-			: Notification(Notification_Type, sizeof(ModifyContractNotification))
+			: Notification(Notification_Type, sizeof(ModifyContractNotification<1>))
 			, DurationDelta(durationDelta)
 			, Multisig(multisig)
 			, Hash(hash)

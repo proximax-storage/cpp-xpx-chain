@@ -30,7 +30,8 @@ namespace catapult { namespace cache {
 	// region ReadCacheChanges
 
 	namespace {
-		void WriteHeader(test::ByteVectorBufferWriter& writer, uint64_t numAdded, uint64_t numRemoved, uint64_t numCopied) {
+		void WriteHeader(test::ByteVectorBufferWriter& writer, uint64_t height, uint64_t numAdded, uint64_t numRemoved, uint64_t numCopied) {
+			writer.write64(height);
 			writer.write64(numAdded);
 			writer.write64(numRemoved);
 			writer.write64(numCopied);
@@ -47,16 +48,17 @@ namespace catapult { namespace cache {
 		// Arrange:
 		std::vector<uint8_t> buffer;
 		test::ByteVectorBufferWriter writer(buffer);
-		WriteHeader(writer, 0, 0, 0);
+		WriteHeader(writer, 1, 0, 0, 0);
 
 		// Sanity:
-		ASSERT_EQ(3u * sizeof(uint64_t), buffer.size());
+		ASSERT_EQ(4u * sizeof(uint64_t), buffer.size());
 
 		// Act:
 		test::ByteVectorCacheChanges changes;
 		ReadFromBuffer(buffer, changes);
 
 		// Assert:
+		EXPECT_EQ(Height{1u}, changes.Height);
 		EXPECT_EQ(0u, changes.Added.size());
 		EXPECT_EQ(0u, changes.Removed.size());
 		EXPECT_EQ(0u, changes.Copied.size());
@@ -66,18 +68,19 @@ namespace catapult { namespace cache {
 		// Arrange:
 		std::vector<uint8_t> buffer;
 		test::ByteVectorBufferWriter writer(buffer);
-		WriteHeader(writer, 2, 0, 0);
+		WriteHeader(writer, 2, 2, 0, 0);
 		auto added1 = writer.writeBuffer(12);
 		auto added2 = writer.writeBuffer(44);
 
 		// Sanity:
-		ASSERT_EQ(5u * sizeof(uint64_t) + 12 + 44, buffer.size());
+		ASSERT_EQ(6u * sizeof(uint64_t) + 12 + 44, buffer.size());
 
 		// Act:
 		test::ByteVectorCacheChanges changes;
 		ReadFromBuffer(buffer, changes);
 
 		// Assert:
+		EXPECT_EQ(Height{2u}, changes.Height);
 		ASSERT_EQ(2u, changes.Added.size());
 		EXPECT_EQ(0u, changes.Removed.size());
 		EXPECT_EQ(0u, changes.Copied.size());
@@ -90,18 +93,19 @@ namespace catapult { namespace cache {
 		// Arrange:
 		std::vector<uint8_t> buffer;
 		test::ByteVectorBufferWriter writer(buffer);
-		WriteHeader(writer, 0, 2, 0);
+		WriteHeader(writer, 3, 0, 2, 0);
 		auto removed1 = writer.writeBuffer(12);
 		auto removed2 = writer.writeBuffer(44);
 
 		// Sanity:
-		ASSERT_EQ(5u * sizeof(uint64_t) + 12 + 44, buffer.size());
+		ASSERT_EQ(6u * sizeof(uint64_t) + 12 + 44, buffer.size());
 
 		// Act:
 		test::ByteVectorCacheChanges changes;
 		ReadFromBuffer(buffer, changes);
 
 		// Assert:
+		EXPECT_EQ(Height{3u}, changes.Height);
 		EXPECT_EQ(0u, changes.Added.size());
 		ASSERT_EQ(2u, changes.Removed.size());
 		EXPECT_EQ(0u, changes.Copied.size());
@@ -114,18 +118,19 @@ namespace catapult { namespace cache {
 		// Arrange:
 		std::vector<uint8_t> buffer;
 		test::ByteVectorBufferWriter writer(buffer);
-		WriteHeader(writer, 0, 0, 2);
+		WriteHeader(writer, 4, 0, 0, 2);
 		auto copied1 = writer.writeBuffer(12);
 		auto copied2 = writer.writeBuffer(44);
 
 		// Sanity:
-		ASSERT_EQ(5u * sizeof(uint64_t) + 12 + 44, buffer.size());
+		ASSERT_EQ(6u * sizeof(uint64_t) + 12 + 44, buffer.size());
 
 		// Act:
 		test::ByteVectorCacheChanges changes;
 		ReadFromBuffer(buffer, changes);
 
 		// Assert:
+		EXPECT_EQ(Height{4u}, changes.Height);
 		EXPECT_EQ(0u, changes.Added.size());
 		EXPECT_EQ(0u, changes.Removed.size());
 		ASSERT_EQ(2u, changes.Copied.size());
@@ -138,7 +143,7 @@ namespace catapult { namespace cache {
 		// Arrange:
 		std::vector<uint8_t> buffer;
 		test::ByteVectorBufferWriter writer(buffer);
-		WriteHeader(writer, 1, 3, 2);
+		WriteHeader(writer, 5, 1, 3, 2);
 		auto added1 = writer.writeBuffer(12);
 		auto removed1 = writer.writeBuffer(12);
 		auto removed2 = writer.writeBuffer(44);
@@ -147,13 +152,14 @@ namespace catapult { namespace cache {
 		auto copied2 = writer.writeBuffer(44);
 
 		// Sanity:
-		ASSERT_EQ(9u * sizeof(uint64_t) + 3 * 12 + 2 * 44 + 23, buffer.size());
+		ASSERT_EQ(10u * sizeof(uint64_t) + 3 * 12 + 2 * 44 + 23, buffer.size());
 
 		// Act:
 		test::ByteVectorCacheChanges changes;
 		ReadFromBuffer(buffer, changes);
 
 		// Assert:
+		EXPECT_EQ(Height{5u}, changes.Height);
 		ASSERT_EQ(1u, changes.Added.size());
 		ASSERT_EQ(3u, changes.Removed.size());
 		ASSERT_EQ(2u, changes.Copied.size());
@@ -185,12 +191,13 @@ namespace catapult { namespace cache {
 		test::ByteVectorCacheChanges changes;
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{1}));
 
 		// Assert:
-		ASSERT_EQ(3u * sizeof(uint64_t), buffer.size());
+		ASSERT_EQ(4u * sizeof(uint64_t), buffer.size());
 
 		test::ByteVectorBufferReader reader(buffer);
+		EXPECT_EQ(1u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
@@ -203,12 +210,13 @@ namespace catapult { namespace cache {
 		changes.Added.push_back(test::GenerateRandomVector(14));
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{2}));
 
 		// Assert:
-		ASSERT_EQ(5u * sizeof(uint64_t) + 21 + 14, buffer.size());
+		ASSERT_EQ(6u * sizeof(uint64_t) + 21 + 14, buffer.size());
 
 		test::ByteVectorBufferReader reader(buffer);
+		ASSERT_EQ(2u, reader.read64());
 		ASSERT_EQ(2u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
@@ -223,12 +231,13 @@ namespace catapult { namespace cache {
 		changes.Removed.push_back(test::GenerateRandomVector(14));
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{3}));
 
 		// Assert:
-		ASSERT_EQ(5u * sizeof(uint64_t) + 21 + 14, buffer.size());
+		ASSERT_EQ(6u * sizeof(uint64_t) + 21 + 14, buffer.size());
 
 		test::ByteVectorBufferReader reader(buffer);
+		EXPECT_EQ(3u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
 		ASSERT_EQ(2u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
@@ -243,12 +252,13 @@ namespace catapult { namespace cache {
 		changes.Copied.push_back(test::GenerateRandomVector(14));
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{4}));
 
 		// Assert:
-		ASSERT_EQ(5u * sizeof(uint64_t) + 21 + 14, buffer.size());
+		ASSERT_EQ(6u * sizeof(uint64_t) + 21 + 14, buffer.size());
 
 		test::ByteVectorBufferReader reader(buffer);
+		EXPECT_EQ(4u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
 		EXPECT_EQ(0u, reader.read64());
 		ASSERT_EQ(2u, reader.read64());
@@ -267,12 +277,13 @@ namespace catapult { namespace cache {
 		changes.Copied.push_back(test::GenerateRandomVector(14));
 
 		// Act:
-		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes));
+		auto buffer = WriteToBuffer(test::ByteVectorSingleCacheChanges(changes, Height{5}));
 
 		// Assert:
-		ASSERT_EQ(9u * sizeof(uint64_t) + 3 * 21 + 2 * 14 + 17, buffer.size());
+		ASSERT_EQ(10u * sizeof(uint64_t) + 3 * 21 + 2 * 14 + 17, buffer.size());
 
 		test::ByteVectorBufferReader reader(buffer);
+		ASSERT_EQ(5u, reader.read64());
 		ASSERT_EQ(1u, reader.read64());
 		ASSERT_EQ(3u, reader.read64());
 		ASSERT_EQ(2u, reader.read64());

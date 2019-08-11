@@ -38,10 +38,9 @@ namespace catapult { namespace nodediscovery {
 		constexpr auto Service_Name = "nd.ping_requestor";
 		using ConstNetworkNodePointer = std::shared_ptr<const ionet::NetworkNode>;
 
-		thread::Task CreatePingTask(
-				const extensions::PacketPayloadSink& packetPayloadSink,
-				const ConstNetworkNodePointer& pLocalNetworkNode) {
-			return thread::CreateNamedTask("node discovery ping task", [packetPayloadSink, pLocalNetworkNode]() {
+		thread::Task CreatePingTask(extensions::ServiceState& state) {
+			return thread::CreateNamedTask("node discovery ping task", [packetPayloadSink = state.hooks().packetPayloadSink(), &state]() {
+				auto pLocalNetworkNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(state.config())));
 				packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Node_Discovery_Push_Ping, pLocalNetworkNode));
 				return thread::make_ready_future(thread::TaskResult::Continue);
 			});
@@ -49,7 +48,7 @@ namespace catapult { namespace nodediscovery {
 
 		thread::Task CreatePeersTask(extensions::ServiceState& state, const handlers::NodesConsumer& nodesConsumer) {
 			BatchPeersRequestor requestor(state.packetIoPickers(), nodesConsumer);
-			return thread::CreateNamedTask("node discovery peers task", [&config = state.config(), &nodes = state.nodes(), requestor]() {
+			return thread::CreateNamedTask("node discovery peers task", [config = state.config(), &nodes = state.nodes(), requestor]() {
 				return requestor.findPeersOfPeers(config.Node.SyncTimeout).then([&nodes](auto&& future) {
 					auto results = future.get();
 					for (const auto& result : results)
@@ -68,11 +67,6 @@ namespace catapult { namespace nodediscovery {
 
 		class NodeDiscoveryServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
-			explicit NodeDiscoveryServiceRegistrar(const ConstNetworkNodePointer& pLocalNetworkNode)
-					: m_pLocalNetworkNode(pLocalNetworkNode)
-			{}
-
-		public:
 			extensions::ServiceRegistrarInfo info() const override {
 				return { "NodeDiscovery", extensions::ServiceRegistrarPhase::Post_Packet_Io_Pickers };
 			}
@@ -90,8 +84,6 @@ namespace catapult { namespace nodediscovery {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				auto networkIdentifier = state.config().BlockChain.Network.Identifier;
-
 				// create callbacks
 				auto pushNodeConsumer = CreatePushNodeConsumer(state);
 
@@ -102,20 +94,20 @@ namespace catapult { namespace nodediscovery {
 						CreateNodePingRequestor,
 						locator.keyPair(),
 						connectionSettings,
-						networkIdentifier);
+						state);
 
 				locator.registerService(Service_Name, pNodePingRequestor);
 
 				// set handlers
 				auto& nodeContainer = state.nodes();
 				auto& pingRequestor = *pNodePingRequestor;
-				handlers::RegisterNodeDiscoveryPushPingHandler(state.packetHandlers(), networkIdentifier, pushNodeConsumer);
-				handlers::RegisterNodeDiscoveryPullPingHandler(state.packetHandlers(), m_pLocalNetworkNode);
+				handlers::RegisterNodeDiscoveryPushPingHandler(state, pushNodeConsumer);
+				handlers::RegisterNodeDiscoveryPullPingHandler(state);
 
 				auto pingRequestInitiator = [&pingRequestor](const auto& node, const auto& callback) {
 					return pingRequestor.beginRequest(node, callback);
 				};
-				PeersProcessor peersProcessor(nodeContainer, pingRequestInitiator, networkIdentifier, pushNodeConsumer);
+				PeersProcessor peersProcessor(nodeContainer, pingRequestInitiator, state, pushNodeConsumer);
 				auto pushPeersHandler = [peersProcessor](const auto& candidateNodes) {
 					peersProcessor.process(candidateNodes);
 				};
@@ -125,16 +117,13 @@ namespace catapult { namespace nodediscovery {
 				});
 
 				// add task
-				state.tasks().push_back(CreatePingTask(state.hooks().packetPayloadSink(), m_pLocalNetworkNode));
+				state.tasks().push_back(CreatePingTask(state));
 				state.tasks().push_back(CreatePeersTask(state, pushPeersHandler));
 			}
-
-		private:
-			ConstNetworkNodePointer m_pLocalNetworkNode;
 		};
 	}
 
-	DECLARE_SERVICE_REGISTRAR(NodeDiscovery)(const ConstNetworkNodePointer& pLocalNetworkNode) {
-		return std::make_unique<NodeDiscoveryServiceRegistrar>(pLocalNetworkNode);
+	DECLARE_SERVICE_REGISTRAR(NodeDiscovery)() {
+		return std::make_unique<NodeDiscoveryServiceRegistrar>();
 	}
 }}

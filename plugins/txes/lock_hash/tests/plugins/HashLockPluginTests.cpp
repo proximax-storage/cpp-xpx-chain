@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/HashLockPlugin.h"
 #include "src/model/HashLockEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
@@ -34,7 +35,7 @@ namespace catapult { namespace plugins {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
 				config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(1);
-				config.Plugins.emplace("catapult.plugins.lockhash", utils::ConfigurationBag({{
+				config.Plugins.emplace(PLUGIN_NAME(lockhash), utils::ConfigurationBag({{
 					"",
 					{
 						{ "lockedFundsPerAggregate", "10'000'000" },
@@ -71,11 +72,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "HashLockDurationValidator" };
+				return { "HashLockPluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return { "AggregateHashPresentValidator", "HashLockCacheUniqueValidator", "HashLockMosaicValidator" };
+				return { "HashLockDurationValidator", "HashLockMosaicValidator", "AggregateHashPresentValidator", "HashLockCacheUniqueValidator" };
 			}
 
 			static std::vector<std::string> GetObserverNames() {

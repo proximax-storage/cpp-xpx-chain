@@ -19,23 +19,45 @@
 **/
 
 #include "TransactionRegistryFactory.h"
+#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/plugins/CatapultConfigTransactionPlugin.h"
+#include "catapult/plugins/CatapultUpgradeTransactionPlugin.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
+#include "catapult/plugins/PluginUtils.h"
 #include "catapult/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "catapult/plugins/TransferTransactionPlugin.h"
+#include "mosaic/src/config/MosaicConfiguration.h"
+#include "namespace/src/config/NamespaceConfiguration.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	model::TransactionRegistry CreateTransactionRegistry() {
-		plugins::MosaicRentalFeeConfiguration mosaicConfig;
-		plugins::NamespaceRentalFeeConfiguration namespaceConfig;
+		auto mosaicConfig = config::MosaicConfiguration::Uninitialized();
+		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
+		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), mosaicConfig);
+		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespaceConfig);
+		config::CatapultConfiguration config{
+			std::move(blockChainConfig),
+			config::NodeConfiguration::Uninitialized(),
+			config::LoggingConfiguration::Uninitialized(),
+			config::UserConfiguration::Uninitialized(),
+			config::ExtensionsConfiguration::Uninitialized(),
+			config::InflationConfiguration::Uninitialized(),
+			config::SupportedEntityVersions()
+		};
+		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
+		pConfigHolder->SetConfig(Height{0}, config);
 		model::TransactionRegistry registry;
 		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
-		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(mosaicConfig));
+		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
-		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(namespaceConfig));
+		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
+		registry.registerPlugin(plugins::CreateCatapultConfigTransactionPlugin());
+		registry.registerPlugin(plugins::CreateCatapultUpgradeTransactionPlugin());
 		return registry;
 	}
 }}}

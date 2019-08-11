@@ -22,6 +22,7 @@
 #include "catapult/model/VerifiableEntity.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -30,22 +31,26 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS DeadlineValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, utils::TimeSpan::FromSeconds(14))
+	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Block_Time = Timestamp(8888);
+		const auto Max_Transaction_Lifetime = []() { return utils::TimeSpan::FromHours(2); }();
 		constexpr auto TimeSpanFromHours = utils::TimeSpan::FromHours;
 
 		void AssertValidationResult(ValidationResult expectedResult, Timestamp deadline, const utils::TimeSpan& maxCustomLifetime) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			config.MaxTransactionLifetime = Max_Transaction_Lifetime;
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
 			auto context = ValidatorContext(Height(123), Block_Time, model::NetworkInfo(), resolverContext, readOnlyCache);
-			auto pValidator = CreateDeadlineValidator(TimeSpanFromHours(2));
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pValidator = CreateDeadlineValidator(pConfigHolder);
 
-			model::TransactionDeadlineNotification notification(deadline, maxCustomLifetime);
+			model::TransactionDeadlineNotification<1> notification(deadline, maxCustomLifetime);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);

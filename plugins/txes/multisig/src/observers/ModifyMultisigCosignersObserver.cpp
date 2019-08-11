@@ -24,7 +24,7 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::ModifyMultisigCosignersNotification;
+	using Notification = model::ModifyMultisigCosignersNotification<1>;
 
 	DEFINE_OBSERVER(ModifyMultisigCosigners, Notification, [](const auto& notification, const ObserverContext& context) {
 		auto& multisigCache = context.Cache.sub<cache::MultisigCache>();

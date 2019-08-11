@@ -20,6 +20,7 @@
 
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/plugins/PluginExceptions.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MutableCatapultConfiguration.h"
@@ -33,19 +34,19 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateBootstrapper) {
 		// Arrange:
-		auto config = test::CreateUninitializedCatapultConfiguration();
-		const_cast<uint32_t&>(config.BlockChain.BlockPruneInterval) = 15;
-		const_cast<bool&>(config.Node.ShouldUseCacheDatabaseStorage) = true;
-		const_cast<std::string&>(config.User.DataDirectory) = "base_data_dir";
+		auto pConfigHolder = config::CreateMockConfigurationHolder(test::CreateUninitializedCatapultConfiguration());
+		const_cast<uint32_t&>(pConfigHolder->Config().BlockChain.BlockPruneInterval) = 15;
+		const_cast<bool&>(pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage) = true;
+		const_cast<std::string&>(pConfigHolder->Config().User.DataDirectory) = "base_data_dir";
 
 		// Act:
-		ProcessBootstrapper bootstrapper(config, "resources path", ProcessDisposition::Recovery, "bootstrapper");
+		ProcessBootstrapper bootstrapper(pConfigHolder, "resources path", ProcessDisposition::Recovery, "bootstrapper");
 
 		// Assert: compare BlockPruneInterval as a sentinel value because the bootstrapper copies the config
-		EXPECT_EQ(15u, bootstrapper.config().BlockChain.BlockPruneInterval);
+		EXPECT_EQ(15u, bootstrapper.config(Height{0}).BlockChain.BlockPruneInterval);
 
 		const auto& pluginManager = bootstrapper.pluginManager();
-		EXPECT_EQ(15u, pluginManager.config().BlockPruneInterval);
+		EXPECT_EQ(15u, pluginManager.config(Height{0}).BlockPruneInterval);
 		EXPECT_TRUE(pluginManager.storageConfig().PreferCacheDatabase);
 		EXPECT_EQ("base_data_dir/statedb", pluginManager.storageConfig().CacheDatabaseDirectory);
 
@@ -70,7 +71,8 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		ProcessBootstrapper CreateBootstrapper(const config::CatapultConfiguration& config) {
-			return ProcessBootstrapper(config, "resources path", ProcessDisposition::Production, "bootstrapper");
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			return ProcessBootstrapper(pConfigHolder, "resources path", ProcessDisposition::Production, "bootstrapper");
 		}
 
 		template<typename TAction>

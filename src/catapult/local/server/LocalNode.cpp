@@ -48,11 +48,11 @@ namespace catapult { namespace local {
 
 		std::unique_ptr<subscribers::StateChangeSubscriber> CreateStateChangeSubscriber(
 				subscribers::SubscriptionManager& subscriptionManager,
-				const cache::CatapultCache& catapultCache,
+				const extensions::CacheHolder& cacheHolder,
 				const config::CatapultDataDirectory& dataDirectory) {
 			subscriptionManager.addStateChangeSubscriber(CreateFileStateChangeStorage(
 					std::make_unique<io::FileQueueWriter>(dataDirectory.spoolDir("state_change").str(), "index_server.dat"),
-					[&catapultCache]() { return catapultCache.changesStorages(); }));
+					[&cacheHolder]() { return cacheHolder.cache().changesStorages(); }));
 			return subscriptionManager.createStateChangeSubscriber();
 		}
 
@@ -68,24 +68,22 @@ namespace catapult { namespace local {
 			DefaultLocalNode(std::unique_ptr<extensions::ProcessBootstrapper>&& pBootstrapper, const crypto::KeyPair& keyPair)
 					: m_pBootstrapper(std::move(pBootstrapper))
 					, m_serviceLocator(keyPair)
-					, m_config(m_pBootstrapper->config())
-					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_config.User.DataDirectory))
-					, m_nodes(m_config.Node.MaxTrackedNodes, m_pBootstrapper->extensionManager().networkTimeSupplier())
-					, m_catapultCache({}) // note that sub caches are added in boot
+					, m_dataDirectory(config::CatapultDataDirectoryPreparer::Prepare(m_pBootstrapper->config().User.DataDirectory))
+					, m_nodes(m_pBootstrapper->config().Node.MaxTrackedNodes, m_pBootstrapper->extensionManager().networkTimeSupplier())
+					, m_cacheHolder(m_pBootstrapper->cacheHolder()) // note that sub caches are added in boot
 					, m_storage(
 							m_pBootstrapper->subscriptionManager().createBlockStorage(m_pBlockChangeSubscriber),
 							CreateStagingBlockStorage(m_dataDirectory))
-					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(extensions::GetUtCacheOptions(m_config.Node)))
+					, m_pUtCache(m_pBootstrapper->subscriptionManager().createUtCache(extensions::GetUtCacheOptions(m_pBootstrapper->config().Node)))
 					, m_pTransactionStatusSubscriber(m_pBootstrapper->subscriptionManager().createTransactionStatusSubscriber())
 					, m_pStateChangeSubscriber(CreateStateChangeSubscriber(
 							m_pBootstrapper->subscriptionManager(),
-							m_catapultCache,
+							m_cacheHolder,
 							m_dataDirectory))
 					, m_pNodeSubscriber(CreateNodeSubscriber(m_pBootstrapper->subscriptionManager(), m_nodes))
 					, m_pluginManager(m_pBootstrapper->pluginManager())
-					, m_isBooted(false) {
-				SeedNodeContainer(m_nodes, *m_pBootstrapper);
-			}
+					, m_isBooted(false)
+			{}
 
 			~DefaultLocalNode() override {
 				shutdown();
@@ -97,7 +95,8 @@ namespace catapult { namespace local {
 				m_pluginModules = LoadAllPlugins(*m_pBootstrapper);
 
 				CATAPULT_LOG(debug) << "initializing cache";
-				m_catapultCache = m_pluginManager.createCache();
+				m_cacheHolder.cache() = m_pluginManager.createCache();
+				m_pluginManager.configHolder()->SetCache(&m_cacheHolder.cache());
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
@@ -106,12 +105,17 @@ namespace catapult { namespace local {
 				auto isFirstBoot = executeAndNotifyNemesis();
 				loadStateFromDisk();
 
+				CATAPULT_LOG(debug) << "adding static nodes";
+				auto peersFile = boost::filesystem::path(m_pBootstrapper->resourcesPath()) / "peers-p2p.json";
+				if (boost::filesystem::exists(peersFile))
+					AddStaticNodesFromPath(*m_pBootstrapper, peersFile.generic_string());
+				SeedNodeContainer(m_nodes, *m_pBootstrapper);
+
 				CATAPULT_LOG(debug) << "booting extension services";
 				auto& extensionManager = m_pBootstrapper->extensionManager();
-				auto serviceState = extensions::ServiceState(
-						m_config,
+				m_pServiceState = std::make_unique<extensions::ServiceState>(
 						m_nodes,
-						m_catapultCache,
+						m_cacheHolder.cache(),
 						m_catapultState,
 						m_storage,
 						m_score,
@@ -123,7 +127,7 @@ namespace catapult { namespace local {
 						m_counters,
 						m_pluginManager,
 						m_pBootstrapper->pool());
-				extensionManager.registerServices(m_serviceLocator, serviceState);
+				extensionManager.registerServices(m_serviceLocator, *m_pServiceState);
 				for (const auto& counter : m_serviceLocator.counters())
 					m_counters.push_back(counter);
 
@@ -142,7 +146,7 @@ namespace catapult { namespace local {
 					return state.NumTotalTransactions;
 				});
 
-				m_pluginManager.addDiagnosticCounters(m_counters, m_catapultCache); // add cache counters
+				m_pluginManager.addDiagnosticCounters(m_counters, m_cacheHolder.cache()); // add cache counters
 				m_counters.emplace_back(utils::DiagnosticCounterId("UT CACHE"), [&source = *m_pUtCache]() {
 					return source.view().size();
 				});
@@ -153,7 +157,7 @@ namespace catapult { namespace local {
 				if (extensions::HasSerializedState(m_dataDirectory.dir("state")))
 					return false;
 
-				NemesisBlockNotifier notifier(m_config.BlockChain, m_catapultCache, m_storage, m_pluginManager);
+				NemesisBlockNotifier notifier(config().BlockChain, m_cacheHolder.cache(), m_storage, m_pluginManager);
 
 				if (m_pBlockChangeSubscriber)
 					notifier.raise(*m_pBlockChangeSubscriber);
@@ -161,7 +165,7 @@ namespace catapult { namespace local {
 				notifier.raise(*m_pStateChangeSubscriber);
 
 				// skip next *two* messages because subscriber creates two files during raise (score change and state change)
-				if (m_config.Node.ShouldEnableAutoSyncCleanup)
+				if (config().Node.ShouldEnableAutoSyncCleanup)
 					io::FileQueueReader(m_dataDirectory.spoolDir("state_change").str(), "index_server_r.dat", "index_server.dat").skip(2);
 
 				return true;
@@ -195,12 +199,12 @@ namespace catapult { namespace local {
 					return;
 
 				constexpr auto SaveStateToDirectoryWithCheckpointing = extensions::SaveStateToDirectoryWithCheckpointing;
-				SaveStateToDirectoryWithCheckpointing(m_dataDirectory, m_config.Node, m_catapultCache, m_catapultState, m_score.get());
+				SaveStateToDirectoryWithCheckpointing(m_dataDirectory, config().Node, m_cacheHolder.cache(), m_catapultState, m_score.get());
 			}
 
 		public:
 			const cache::CatapultCache& cache() const override {
-				return m_catapultCache;
+				return m_cacheHolder.cache();
 			}
 
 			model::ChainScore score() const override {
@@ -221,8 +225,11 @@ namespace catapult { namespace local {
 			}
 
 		private:
+			const config::CatapultConfiguration& config() {
+				return m_pluginManager.configHolder()->Config();
+			}
 			extensions::LocalNodeStateRef stateRef() {
-				return extensions::LocalNodeStateRef(m_config, m_catapultState, m_catapultCache, m_storage, m_score);
+				return extensions::LocalNodeStateRef(config(), m_catapultState, m_cacheHolder.cache(), m_storage, m_score);
 			}
 
 		private:
@@ -230,13 +237,13 @@ namespace catapult { namespace local {
 			std::vector<plugins::PluginModule> m_pluginModules;
 			std::unique_ptr<extensions::ProcessBootstrapper> m_pBootstrapper;
 			extensions::ServiceLocator m_serviceLocator;
+			std::unique_ptr<extensions::ServiceState> m_pServiceState;
 
 			io::BlockChangeSubscriber* m_pBlockChangeSubscriber;
-			const config::CatapultConfiguration& m_config;
 			config::CatapultDataDirectory m_dataDirectory;
 			ionet::NodeContainer m_nodes;
 
-			cache::CatapultCache m_catapultCache;
+			extensions::CacheHolder& m_cacheHolder;
 			state::CatapultState m_catapultState;
 			io::BlockStorageCache m_storage;
 			extensions::LocalNodeChainScore m_score;

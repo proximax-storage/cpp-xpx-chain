@@ -20,6 +20,7 @@
 
 #include "NodeDiscoveryHandlers.h"
 #include "nodediscovery/src/NodePingUtils.h"
+#include "catapult/extensions/ServiceState.h"
 #include "catapult/handlers/BasicProducer.h"
 #include "catapult/handlers/HandlerFactory.h"
 #include "catapult/ionet/NetworkNode.h"
@@ -29,17 +30,16 @@
 namespace catapult { namespace handlers {
 
 	void RegisterNodeDiscoveryPushPingHandler(
-			ionet::ServerPacketHandlers& handlers,
-			model::NetworkIdentifier networkIdentifier,
+			extensions::ServiceState& state,
 			const NodeConsumer& nodeConsumer) {
-		handlers.registerHandler(ionet::PacketType::Node_Discovery_Push_Ping, [networkIdentifier, nodeConsumer](
+		state.packetHandlers().registerHandler(ionet::PacketType::Node_Discovery_Push_Ping, [&state, nodeConsumer](
 				const auto& packet,
 				const auto& context) {
 			ionet::Node node;
 			if (!nodediscovery::TryParseNodePacket(packet, node))
 				return;
 
-			if (!nodediscovery::IsNodeCompatible(node, networkIdentifier, context.key())) {
+			if (!nodediscovery::IsNodeCompatible(node, state.networkIdentifier(), context.key())) {
 				CATAPULT_LOG(warning)
 						<< "ignoring ping packet for incompatible node (identity = "
 						<< node.identityKey() << ", network = " << node.metadata().NetworkIdentifier << ")";
@@ -56,13 +56,12 @@ namespace catapult { namespace handlers {
 		});
 	}
 
-	void RegisterNodeDiscoveryPullPingHandler(
-			ionet::ServerPacketHandlers& handlers,
-			const std::shared_ptr<const ionet::NetworkNode>& pLocalNode) {
-		handlers.registerHandler(ionet::PacketType::Node_Discovery_Pull_Ping, [pLocalNode](const auto& packet, auto& context) {
+	void RegisterNodeDiscoveryPullPingHandler(extensions::ServiceState& state) {
+		state.packetHandlers().registerHandler(ionet::PacketType::Node_Discovery_Pull_Ping, [&state](const auto& packet, auto& context) {
 			if (!IsPacketValid(packet, ionet::PacketType::Node_Discovery_Pull_Ping))
 				return;
 
+			auto pLocalNode = utils::UniqueToShared(ionet::PackNode(config::ToLocalNode(state.config())));
 			context.response(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Node_Discovery_Pull_Ping, pLocalNode));
 		});
 	}

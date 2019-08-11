@@ -306,7 +306,7 @@ namespace catapult { namespace consumers {
 					, Consumer(CreateTransactionStatelessValidationConsumer(
 							pValidator,
 							pPolicy,
-							[this](const auto& transaction, const auto& hash, auto result) {
+							[this](const auto& transaction, const Height&, const auto& hash, auto result) {
 								// notice that transaction.Deadline is used as transaction marker
 								FailedTransactionStatuses.emplace_back(hash, utils::to_underlying_type(result), transaction.Deadline);
 							}))
@@ -350,7 +350,7 @@ namespace catapult { namespace consumers {
 			model::WeakEntityInfos entityInfos;
 			for (const auto& element : elements) {
 				if (indexes.cend() != indexes.find(index++))
-					entityInfos.emplace_back(element.Transaction, element.EntityHash);
+					entityInfos.emplace_back(element.Transaction, element.EntityHash, Height{0});
 			}
 
 			return entityInfos;

@@ -32,13 +32,14 @@ namespace catapult { namespace model {
 		constexpr auto Mock_Transaction_Type = static_cast<EntityType>(0x4FFF);
 
 		template<typename TTransaction>
-		void Publish(const TTransaction& transaction, NotificationSubscriber& sub) {
+		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			// raise a notification dependent on the transaction data
 			sub.notify(test::CreateBlockNotification(transaction.Signer));
 		}
 
 		template<TransactionPluginFactoryOptions Options>
 		struct RegularTraits {
+			using PluginTransactionType = Transaction;
 			using TransactionType = mocks::MockTransaction;
 			static constexpr auto Min_Supported_Version = TransactionType::Current_Version;
 			static constexpr auto Max_Supported_Version = TransactionType::Current_Version;
@@ -55,6 +56,7 @@ namespace catapult { namespace model {
 
 		template<TransactionPluginFactoryOptions Options>
 		struct EmbeddedTraits {
+			using PluginTransactionType = EmbeddedTransaction;
 			using TransactionType = mocks::EmbeddedMockTransaction;
 			static constexpr auto Min_Supported_Version = TransactionType::Current_Version;
 			static constexpr auto Max_Supported_Version = TransactionType::Current_Version;
@@ -93,10 +95,10 @@ namespace catapult { namespace model {
 
 		typename TTraits::TransactionType transaction;
 		test::FillWithRandomData(transaction.Signer);
-		mocks::MockTypedNotificationSubscriber<BlockNotification> sub;
+		mocks::MockTypedNotificationSubscriber<BlockNotification<1>> sub;
 
 		// Act:
-		pPlugin->publish(transaction, sub);
+		pPlugin->publish(WeakEntityInfoT<typename TTraits::PluginTransactionType>(transaction, Height{0}), sub);
 
 		// Assert:
 		EXPECT_EQ(1u, sub.numNotifications());

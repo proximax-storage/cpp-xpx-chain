@@ -34,14 +34,14 @@ namespace catapult { namespace observers {
 		constexpr auto Default_Mosaic_Id = MosaicId(345);
 		constexpr auto Default_Amount = Amount(123);
 
-		struct MockRentalFeeNotification : public model::BalanceTransferNotification {
+		struct MockRentalFeeNotification : public model::BalanceTransferNotification<1> {
 		public:
 			MockRentalFeeNotification(
 					const Key& sender,
 					const UnresolvedAddress& recipient,
 					UnresolvedMosaicId mosaicId,
 					catapult::Amount amount)
-					: BalanceTransferNotification(sender, recipient, mosaicId, amount) {
+					: BalanceTransferNotification<1>(sender, recipient, mosaicId, amount) {
 				// override type
 				Type = Mock_Notification;
 			}
@@ -63,7 +63,8 @@ namespace catapult { namespace observers {
 					test::UnresolveXor(Default_Mosaic_Id),
 					Default_Amount);
 
-			ObserverTestContext context(mode, Height(888));
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			ObserverTestContext context(mode, Height(888), config);
 
 			// Act:
 			test::ObserveNotification(*pObserver, notification, context);

@@ -19,14 +19,18 @@
 **/
 
 #include "Validators.h"
+#include "src/config/TransferConfiguration.h"
+#include "src/config/TransferConfiguration.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::TransferMessageNotification;
+	using Notification = model::TransferMessageNotification<1>;
 
-	DECLARE_STATELESS_VALIDATOR(TransferMessage, Notification)(uint16_t maxMessageSize) {
-		return MAKE_STATELESS_VALIDATOR(TransferMessage, [maxMessageSize](const auto& notification) {
-			return notification.MessageSize > maxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
+	DECLARE_STATEFUL_VALIDATOR(TransferMessage, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(TransferMessage, [pConfigHolder](const auto& notification, const auto& context) {
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::TransferConfiguration>(PLUGIN_NAME(transfer));
+			return notification.MessageSize > pluginConfig.MaxMessageSize ? Failure_Transfer_Message_Too_Large : ValidationResult::Success;
 		});
 	}
 }}

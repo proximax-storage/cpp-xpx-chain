@@ -21,7 +21,6 @@
 #include "PropertyPlugin.h"
 #include "src/cache/PropertyCache.h"
 #include "src/cache/PropertyCacheStorage.h"
-#include "src/config/PropertyConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/PropertyTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -35,43 +34,43 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateMosaicPropertyTransactionPlugin());
 		manager.addTransactionSupport(CreateTransactionTypePropertyTransactionPlugin());
 
-		auto networkIdentifier = manager.config().Network.Identifier;
+		const auto& pConfigHolder = manager.configHolder();
 		manager.addCacheSupport<cache::PropertyCacheStorage>(
-				std::make_unique<cache::PropertyCache>(manager.cacheConfig(cache::PropertyCache::Name), networkIdentifier));
+				std::make_unique<cache::PropertyCache>(manager.cacheConfig(cache::PropertyCache::Name), pConfigHolder));
 
 		using CacheHandlers = CacheHandlers<cache::PropertyCacheDescriptor>;
 		CacheHandlers::Register<model::FacilityCode::Property>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("PROPERTY C"), [&cache]() {
-				return cache.sub<cache::PropertyCache>().createView()->size();
+				return cache.sub<cache::PropertyCache>().createView(cache.height())->size();
 			});
 		});
 
-		manager.addStatelessValidatorHook([networkIdentifier](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreatePropertyTypeValidator())
 				.add(validators::CreateAddressPropertyModificationTypesValidator())
-				.add(validators::CreatePropertyAddressNoSelfModificationValidator(networkIdentifier))
 				.add(validators::CreateMosaicPropertyModificationTypesValidator())
 				.add(validators::CreateTransactionTypePropertyModificationTypesValidator())
-				.add(validators::CreateTransactionTypePropertyModificationValuesValidator());
+				.add(validators::CreateTransactionTypePropertyModificationValuesValidator())
+				.add(validators::CreatePropertyPluginConfigValidator());
 		});
 
-		auto config = model::LoadPluginConfiguration<config::PropertyConfiguration>(manager.config(), "catapult.plugins.property");
-		manager.addStatefulValidatorHook([maxPropertyValues = config.MaxPropertyValues](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
+				.add(validators::CreatePropertyAddressNoSelfModificationValidator(pConfigHolder))
 				.add(validators::CreateAddressPropertyRedundantModificationValidator())
 				.add(validators::CreateAddressPropertyValueModificationValidator())
-				.add(validators::CreateMaxAddressPropertyValuesValidator(maxPropertyValues))
+				.add(validators::CreateMaxAddressPropertyValuesValidator(pConfigHolder))
 				.add(validators::CreateAddressInteractionValidator())
 				.add(validators::CreateMosaicPropertyRedundantModificationValidator())
 				.add(validators::CreateMosaicPropertyValueModificationValidator())
-				.add(validators::CreateMaxMosaicPropertyValuesValidator(maxPropertyValues))
+				.add(validators::CreateMaxMosaicPropertyValuesValidator(pConfigHolder))
 				.add(validators::CreateMosaicRecipientValidator())
 				.add(validators::CreateTransactionTypePropertyRedundantModificationValidator())
 				.add(validators::CreateTransactionTypePropertyValueModificationValidator())
-				.add(validators::CreateMaxTransactionTypePropertyValuesValidator(maxPropertyValues))
+				.add(validators::CreateMaxTransactionTypePropertyValuesValidator(pConfigHolder))
 				.add(validators::CreateTransactionTypeValidator())
 				.add(validators::CreateTransactionTypeNoSelfBlockingValidator());
 		});

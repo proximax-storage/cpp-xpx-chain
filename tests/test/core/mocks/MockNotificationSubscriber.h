@@ -34,12 +34,12 @@ namespace catapult { namespace mocks {
 			m_notificationTypes.push_back(notification.Type);
 
 			// use if/else instead of switch to work around VS warning
-			if (model::Core_Register_Account_Address_Notification == notification.Type)
-				m_addresses.push_back(test::CastToDerivedNotification<model::AccountAddressNotification>(notification).Address);
-			else if (model::Core_Register_Account_Public_Key_Notification == notification.Type)
-				m_keys.push_back(test::CastToDerivedNotification<model::AccountPublicKeyNotification>(notification).PublicKey);
-			else if (model::Core_Balance_Transfer_Notification == notification.Type)
-				addTransfer(test::CastToDerivedNotification<model::BalanceTransferNotification>(notification));
+			if (model::Core_Register_Account_Address_v1_Notification == notification.Type)
+				m_addresses.push_back(test::CastToDerivedNotification<model::AccountAddressNotification<1>>(notification).Address);
+			else if (model::Core_Register_Account_Public_Key_v1_Notification == notification.Type)
+				m_keys.push_back(test::CastToDerivedNotification<model::AccountPublicKeyNotification<1>>(notification).PublicKey);
+			else if (model::Core_Balance_Transfer_v1_Notification == notification.Type)
+				addTransfer(test::CastToDerivedNotification<model::BalanceTransferNotification<1>>(notification));
 		}
 
 	public:
@@ -75,7 +75,7 @@ namespace catapult { namespace mocks {
 		}
 
 	private:
-		void addTransfer(const model::BalanceTransferNotification& notification) {
+		void addTransfer(const model::BalanceTransferNotification<1>& notification) {
 			CATAPULT_LOG(debug) << "visited " << notification.MosaicId << " transfer of " << notification.Amount << " units";
 			m_transfers.push_back(Transfer(notification));
 		}
@@ -100,7 +100,7 @@ namespace catapult { namespace mocks {
 	private:
 		struct Transfer {
 		public:
-			explicit Transfer(const model::BalanceTransferNotification& notification)
+			explicit Transfer(const model::BalanceTransferNotification<1>& notification)
 					: Transfer(notification.Sender, notification.Recipient, notification.MosaicId, notification.Amount)
 			{}
 

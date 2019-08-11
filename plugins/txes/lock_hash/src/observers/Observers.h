@@ -27,14 +27,14 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by hash lock notifications and:
 	/// - adds/removes hash lock info to/from hash lock info cache
-	DECLARE_OBSERVER(HashLock, model::HashLockNotification)();
+	DECLARE_OBSERVER(HashLock, model::HashLockNotification<1>)();
 
 	/// Observes hashes of completed, bonded aggregate transactions and:
 	/// - credits/debits lock owner
 	/// - marks proper hash lock as used/unused
-	DECLARE_OBSERVER(CompletedAggregate, model::TransactionNotification)();
+	DECLARE_OBSERVER(CompletedAggregate, model::TransactionNotification<1>)();
 
 	/// Observes block notifications and triggers handling of expired hash lock infos, including:
 	/// - crediting the block signer the mosaics given in the lock info
-	DECLARE_OBSERVER(ExpiredHashLockInfo, model::BlockNotification)();
+	DECLARE_OBSERVER(ExpiredHashLockInfo, model::BlockNotification<1>)();
 }}

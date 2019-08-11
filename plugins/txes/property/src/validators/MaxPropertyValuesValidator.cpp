@@ -20,6 +20,7 @@
 
 #include "Validators.h"
 #include "src/cache/PropertyCache.h"
+#include "src/config/PropertyConfiguration.h"
 #include "catapult/model/Address.h"
 #include "catapult/validators/ValidatorContext.h"
 
@@ -70,19 +71,18 @@ namespace catapult { namespace validators {
 	}
 
 #define DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE, PROPERTY_VALUE_TYPE) \
-	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(uint16_t maxPropertyValues) { \
+	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) { \
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>; \
-		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [maxPropertyValues]( \
+		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [pConfigHolder]( \
 				const auto& notification, \
 				const auto& context) { \
-			return Validate<PROPERTY_VALUE_TYPE, NOTIFICATION_TYPE>(maxPropertyValues, notification, context); \
+			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain; \
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::PropertyConfiguration>(PLUGIN_NAME(property)); \
+			return Validate<PROPERTY_VALUE_TYPE, NOTIFICATION_TYPE>(pluginConfig.MaxPropertyValues, notification, context); \
 		}); \
 	}
 
-	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxAddressPropertyValues, model::ModifyAddressPropertyNotification, UnresolvedAddress)
-	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxMosaicPropertyValues, model::ModifyMosaicPropertyNotification, UnresolvedMosaicId)
-	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(
-			MaxTransactionTypePropertyValues,
-			model::ModifyTransactionTypePropertyNotification,
-			model::EntityType)
+	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxAddressPropertyValues, model::ModifyAddressPropertyNotification_v1, UnresolvedAddress)
+	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxMosaicPropertyValues, model::ModifyMosaicPropertyNotification_v1, UnresolvedMosaicId)
+	DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(MaxTransactionTypePropertyValues, model::ModifyTransactionTypePropertyNotification_v1, model::EntityType)
 }}

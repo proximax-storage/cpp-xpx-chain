@@ -25,6 +25,8 @@
 #include "catapult/types.h"
 #include <vector>
 
+namespace catapult { namespace extensions { class ServiceState; } }
+
 namespace catapult { namespace sync {
 
 	/// Rollback results.
@@ -39,8 +41,8 @@ namespace catapult { namespace sync {
 	/// Container for both committed and ignored rollback statistics.
 	class RollbackInfo {
 	public:
-		/// Creates a container around \a timeSupplier with recent stats span (\a recentStatsTimeSpan).
-		explicit RollbackInfo(const chain::TimeSupplier& timeSupplier, const utils::TimeSpan& recentStatsTimeSpan);
+		/// Creates a container around \a timeSupplier with recent stats span (calculated with \a state).
+		explicit RollbackInfo(const chain::TimeSupplier& timeSupplier, extensions::ServiceState& state);
 
 	public:
 		/// Returns rollback counter for result (\a rollbackResult) and counter type (\a rollbackCounterType).
@@ -61,7 +63,7 @@ namespace catapult { namespace sync {
 
 	private:
 		chain::TimeSupplier m_timeSupplier;
-		const utils::TimeSpan m_recentStatsTimeSpan;
+		extensions::ServiceState& m_state;
 		size_t m_currentRollbackSize;
 
 		RollbackStats m_committed;

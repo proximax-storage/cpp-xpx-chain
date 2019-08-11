@@ -26,13 +26,13 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by modify address property value notifications and:
 	/// - adds / deletes property address value to / from cache
-	DECLARE_OBSERVER(AddressPropertyValueModification, model::ModifyAddressPropertyValueNotification)();
+	DECLARE_OBSERVER(AddressPropertyValueModification, model::ModifyAddressPropertyValueNotification_v1)();
 
 	/// Observes changes triggered by modify mosaic property value notifications and:
 	/// - adds / deletes property mosaic value to / from cache
-	DECLARE_OBSERVER(MosaicPropertyValueModification, model::ModifyMosaicPropertyValueNotification)();
+	DECLARE_OBSERVER(MosaicPropertyValueModification, model::ModifyMosaicPropertyValueNotification_v1)();
 
 	/// Observes changes triggered by modify transaction type property value notifications and:
 	/// - adds / deletes property transaction type value to / from cache
-	DECLARE_OBSERVER(TransactionTypePropertyValueModification, model::ModifyTransactionTypePropertyValueNotification)();
+	DECLARE_OBSERVER(TransactionTypePropertyValueModification, model::ModifyTransactionTypePropertyValueNotification_v1)();
 }}

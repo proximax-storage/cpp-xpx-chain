@@ -42,7 +42,8 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, const Key& signer, Height::ValueType height) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache();
+			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			model::NetworkInfo networkInfo(model::NetworkIdentifier::Zero, GetNemesisAccount().publicKey(), {});
@@ -50,7 +51,7 @@ namespace catapult { namespace validators {
 			auto context = test::CreateValidatorContext(Height(height), networkInfo, readOnlyCache);
 
 			auto signature = test::GenerateRandomByteArray<Signature>();
-			model::SignatureNotification notification(signer, signature, {});
+			model::SignatureNotification<1> notification(signer, signature, {});
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);

@@ -60,5 +60,5 @@ namespace catapult { namespace test {
 	std::vector<CacheSerializationTestEntry> GenerateRandomCacheSerializationTestEntries(size_t count);
 
 	/// Copies cache serialization test \a entries to a buffer.
-	std::vector<uint8_t> CopyCacheSerializationTestEntriesToStreamBuffer(const std::vector<CacheSerializationTestEntry>& entries);
+	std::vector<uint8_t> CopyCacheSerializationTestEntriesToStreamBuffer(const std::vector<CacheSerializationTestEntry>& entries, size_t extraHeaderBytes);
 }}

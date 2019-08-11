@@ -29,8 +29,9 @@ namespace catapult { namespace subscribers {
 	void ReadNextTransactionStatus(io::InputStream& inputStream, TransactionStatusSubscriber& subscriber) {
 		Hash256 hash;
 		inputStream.read(hash);
+		auto height = Height(io::Read64(inputStream));
 		auto status = io::Read32(inputStream);
 		auto pTransaction = io::ReadEntity<model::Transaction>(inputStream);
-		subscriber.notifyStatus(*pTransaction, hash, status);
+		subscriber.notifyStatus(*pTransaction, height, hash, status);
 	}
 }}

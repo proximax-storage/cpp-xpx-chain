@@ -21,21 +21,28 @@
 #include "src/validators/Validators.h"
 #include "src/state/HashLockInfo.h"
 #include "plugins/txes/lock_shared/tests/validators/LockDurationValidatorTests.h"
+#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 
 namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, BlockDuration(0))
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, config::CreateMockConfigurationHolder())
 
 	namespace {
 		struct HashTraits {
 		public:
-			using NotificationType = model::HashLockDurationNotification;
+			using NotificationType = model::HashLockDurationNotification<1>;
 			static constexpr auto Failure_Result = Failure_LockHash_Invalid_Duration;
 
 			static auto CreateValidator(BlockDuration maxDuration) {
-				return CreateHashLockDurationValidator(maxDuration);
+				auto pluginConfig = config::HashLockConfiguration::Uninitialized();
+				pluginConfig.MaxHashLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
+				auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+				blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+				return CreateHashLockDurationValidator(pConfigHolder);
 			}
 		};
 	}

@@ -27,6 +27,8 @@
 namespace catapult { namespace validators {
 
 	namespace {
+		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+
 		template<typename TTraits>
 		class UnlinkAliasedDataConsistencyValidatorTests {
 		private:
@@ -47,7 +49,7 @@ namespace catapult { namespace validators {
 
 			template<typename TSeedCacheFunc>
 			static auto CreateAndSeedCache(TSeedCacheFunc seedCache) {
-				auto cache = test::NamespaceCacheFactory::Create();
+				auto cache = test::NamespaceCacheFactory::Create(Default_Config);
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
 				seedCache(namespaceCacheDelta);
@@ -149,7 +151,7 @@ namespace catapult { namespace validators {
 	namespace {
 		struct AddressTraits {
 		public:
-			using NotificationType = model::AliasedAddressNotification;
+			using NotificationType = model::AliasedAddressNotification_v1;
 			using AliasType = Address;
 			using InvalidAliasType = MosaicId;
 
@@ -170,7 +172,7 @@ namespace catapult { namespace validators {
 	namespace {
 		struct MosaicIdTraits {
 		public:
-			using NotificationType = model::AliasedMosaicIdNotification;
+			using NotificationType = model::AliasedMosaicIdNotification_v1;
 			using AliasType = MosaicId;
 			using InvalidAliasType = Address;
 
