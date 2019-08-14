@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 					(BlockDuration() == currentDuration && BlockDuration() != delta) ||
 					(BlockDuration() != currentDuration && BlockDuration() == delta);
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
 			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
 			return isIncompatibleChange || maxMosaicDuration < resultingDuration || resultingDuration < currentDuration
 					? Failure_Mosaic_Invalid_Duration

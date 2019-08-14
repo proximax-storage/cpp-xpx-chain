@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 			}
 
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME(multisig));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME_HASH(multisig));
 			return numCosignatories > pluginConfig.MaxCosignersPerAccount ? Failure_Multisig_Modify_Max_Cosigners : ValidationResult::Success;
 		});
 	}

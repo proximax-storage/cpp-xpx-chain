@@ -57,7 +57,7 @@ namespace catapult { namespace validators {
 				return Failure_Mosaic_Invalid_Flags;
 
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME(mosaic));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
 			if (notification.PropertiesHeader.Divisibility > pluginConfig.MaxMosaicDivisibility)
 				return Failure_Mosaic_Invalid_Divisibility;
 
