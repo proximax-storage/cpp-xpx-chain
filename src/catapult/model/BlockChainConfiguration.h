@@ -24,6 +24,7 @@
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/FileSize.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
 #include <unordered_map>
@@ -106,7 +107,7 @@ namespace catapult { namespace model {
 
 	private:
 		/// Map of plugin configurations.
-		mutable std::unordered_map<std::string, std::shared_ptr<PluginConfiguration>> PluginConfigs;
+		mutable std::unordered_map<uint32_t, std::shared_ptr<PluginConfiguration>> PluginConfigs;
 
 	private:
 		BlockChainConfiguration() = default;
@@ -128,19 +129,39 @@ namespace catapult { namespace model {
 			return T::LoadFromBag(iter->second);
 		}
 
+		/// Loads plugin configuration for plugin with \a pluginNameHash.
+		template<typename T>
+		T LoadPluginConfiguration(const uint32_t& pluginNameHash) const {
+			decltype(Plugins.begin()) iter;
+			for (const auto& plugin : Plugins)
+				if (HASH(plugin.first.c_str()) == pluginNameHash)
+					iter = Plugins.find(plugin.first);
+
+			if (Plugins.cend() == iter)
+				CATAPULT_THROW_AND_LOG_1(utils::property_not_found_error, "plugin configuration not found for hash", pluginNameHash);
+
+			return T::LoadFromBag(iter->second);
+		}
+
 		/// Sets \a config of plugin named \a pluginName.
 		template<typename T>
 		void SetPluginConfiguration(const std::string& pluginName, const T& config) {
-			PluginConfigs[pluginName] = std::make_shared<T>(config);
+			PluginConfigs[HASH(pluginName.c_str())] = std::make_shared<T>(config);
 		}
 
-		/// Returns plugin configuration for plugin named \a pluginName.
+		/// Sets \a config of plugin with \a pluginNameHash.
 		template<typename T>
-		const T& GetPluginConfiguration(const std::string& pluginName) const {
-			auto iter = PluginConfigs.find(pluginName);
+		void SetPluginConfiguration(const uint32_t& pluginNameHash, const T& config) {
+			PluginConfigs[pluginNameHash] = std::make_shared<T>(config);
+		}
+
+		/// Returns plugin configuration for plugin with \a pluginNameHash.
+		template<typename T>
+		const T& GetPluginConfiguration(const uint32_t& pluginNameHash) const {
+			auto iter = PluginConfigs.find(pluginNameHash);
 			if (PluginConfigs.cend() == iter) {
-				const_cast<BlockChainConfiguration*>(this)->SetPluginConfiguration<T>(pluginName, LoadPluginConfiguration<T>(pluginName));
-				iter = PluginConfigs.find(pluginName);
+				const_cast<BlockChainConfiguration*>(this)->SetPluginConfiguration<T>(pluginNameHash, LoadPluginConfiguration<T>(pluginNameHash));
+				iter = PluginConfigs.find(pluginNameHash);
 			}
 
 			return *dynamic_cast<const T*>(iter->second.get());

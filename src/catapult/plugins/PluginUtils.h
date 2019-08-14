@@ -6,9 +6,12 @@
 
 #pragma once
 
+#include "catapult/utils/Hashers.h"
+
 namespace catapult { namespace plugins {
 
 #define PLUGIN_NAME(PLUGIN) ("catapult.plugins." #PLUGIN)
+#define PLUGIN_NAME_HASH(PLUGIN) HASH(PLUGIN_NAME(PLUGIN))
 
 #define DEFINE_PLUGIN_CONFIG_VALIDATOR_WITH_FAILURE(PLUGIN_SUFFIX, CONFIG_NAME, FAILURE_NAME, VERSION) \
 	using Notification = model::PluginConfigNotification<VERSION>;  \

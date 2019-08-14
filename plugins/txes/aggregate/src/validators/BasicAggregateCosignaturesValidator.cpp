@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 				return Failure_Aggregate_No_Transactions;
 
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME(aggregate));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
 			if (pluginConfig.MaxTransactionsPerAggregate < notification.TransactionsCount)
 				return Failure_Aggregate_Too_Many_Transactions;
 

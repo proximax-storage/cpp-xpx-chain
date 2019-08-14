@@ -21,7 +21,7 @@ namespace catapult { namespace validators {
 
 			auto upgradePeriod = notification.UpgradePeriod.unwrap();
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::CatapultUpgradeConfiguration>(PLUGIN_NAME(upgrade));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::CatapultUpgradeConfiguration>(PLUGIN_NAME_HASH(upgrade));
 			if (pluginConfig.MinUpgradePeriod.unwrap() > upgradePeriod)
 				return Failure_CatapultUpgrade_Upgrade_Period_Too_Low;
 

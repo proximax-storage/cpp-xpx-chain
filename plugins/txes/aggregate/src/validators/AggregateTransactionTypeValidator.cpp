@@ -15,7 +15,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(AggregateTransactionType, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(AggregateTransactionType, ([pConfigHolder](const auto& notification, const auto& context) {
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME(aggregate));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
 			if (notification.Type == model::Entity_Type_Aggregate_Bonded && !pluginConfig.EnableBondedAggregateSupport)
 				return Failure_Aggregate_Bonded_Not_Enabled;
 
