@@ -24,5 +24,5 @@
 
 namespace catapult { namespace validators {
 
-	DEFINE_LOCK_DURATION_VALIDATOR(HashLock, Failure_LockHash_Invalid_Duration, PLUGIN_NAME(lockhash))
+	DEFINE_LOCK_DURATION_VALIDATOR(HashLock, Failure_LockHash_Invalid_Duration, PLUGIN_NAME_HASH(lockhash))
 }}

@@ -119,7 +119,7 @@ namespace catapult { namespace observers {
 			auto& multisigEntry = multisigCache.find(notification.Multisig).get();
 			float verifierCount = contractFacade.verifierCount();
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::ContractConfiguration>(PLUGIN_NAME(contract));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::ContractConfiguration>(PLUGIN_NAME_HASH(contract));
 			multisigEntry.setMinApproval(ceil(verifierCount * pluginConfig.MinPercentageOfApproval / 100));
 			multisigEntry.setMinRemoval(ceil(verifierCount * pluginConfig.MinPercentageOfRemoval / 100));
 		});

@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 		return MAKE_STATEFUL_VALIDATOR(RootNamespace, [pConfigHolder](const auto& notification, const auto& context) {
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
 			// note that zero duration is acceptable because it is eternal
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME(namespace));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
 			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
 			return maxDuration < notification.Duration ? Failure_Namespace_Invalid_Duration : ValidationResult::Success;
 		});

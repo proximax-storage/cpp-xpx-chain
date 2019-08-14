@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 			auto multisigIter = multisigCache.find(notification.CosignatoryKey);
 			const auto& cosignatoryEntry = multisigIter.get();
 			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME(multisig));
+			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME_HASH(multisig));
 			return cosignatoryEntry.multisigAccounts().size() >= pluginConfig.MaxCosignedAccountsPerAccount
 					? Failure_Multisig_Modify_Max_Cosigned_Accounts
 					: ValidationResult::Success;
