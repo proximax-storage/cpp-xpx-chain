@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(TransferMessage, model::TransferMessageNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to transfer mosaics notifications and validates that:
-	/// - mosaics are ordered, and mosaics have maximum count \a maxMosaicsSize
+	/// - mosaics are ordered, and mosaics have maximum count \a maxMosaicsSize, and mosaic amount is greater than zero.
 	DECLARE_STATEFUL_VALIDATOR(TransferMosaics, model::TransferMosaicsNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to plugin config notification and validates that:

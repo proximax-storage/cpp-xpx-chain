@@ -77,7 +77,6 @@ unique_ptr<model::Transaction> generateTransferTransaction(const GenerationHash&
 	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Private_Test;
 
 	builders::TransferBuilder builder(networkIdentifier, signer.publicKey());
-//	builder.addMosaic(model::UnresolvedMosaic{ UnresolvedMosaicId(options.Token), Amount(options.Amount) });
 	builder.setRecipient(test::GenerateRandomUnresolvedAddress(networkIdentifier));
 	string message = "Hello "+ to_string(std::mt19937()());
 	builder.setMessage(RawBuffer((const uint8_t* )message.data(), message.size()));
@@ -218,7 +217,6 @@ int main(int argc, const char** argv) {
 		sock.set_option(ip::tcp::no_delay(false));
 		sock.set_option(socket_base::keep_alive(true));
 		sock.set_option(socket_base::reuse_address(true));
-	//	sock.set_option(socket_base::linger(true, 30));
 		ip::tcp::endpoint endpoint(ip::address::from_string(options.Host), options.Port);
 		sock.connect(endpoint);
 		sendRest(hash, sock, options);
