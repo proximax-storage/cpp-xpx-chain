@@ -33,7 +33,7 @@ namespace catapult { namespace test {
 	}
 
 	void AddNemesisPluginExtensions(model::BlockChainConfiguration& config) {
-		config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+		config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 		config.Plugins.emplace(PLUGIN_NAME(mosaic), utils::ConfigurationBag({ { "", {
 			{ "maxMosaicsPerAccount", "123" },
 			{ "maxMosaicDuration", "456d" },

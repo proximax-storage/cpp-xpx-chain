@@ -25,6 +25,7 @@ namespace catapult { namespace validators {
 					"",
 					{
 						{ "maxMessageSize", "1024" },
+						{ "maxMosaicsSize", "512" },
 					}
 				}});
 			}

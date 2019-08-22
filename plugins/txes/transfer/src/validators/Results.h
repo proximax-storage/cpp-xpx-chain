@@ -37,6 +37,12 @@ namespace catapult { namespace validators {
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_TRANSFER_RESULT(Plugin_Config_Malformed, 7);
 
+	/// Validation failed because transaction contains a lot of mosaics.
+	DEFINE_TRANSFER_RESULT(Too_Many_Mosaics, 8);
+
+	/// Validation failed because transaction contains a lot of mosaics.
+	DEFINE_TRANSFER_RESULT(Invalid_Amount, 9);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -31,6 +31,8 @@ namespace catapult { namespace config {
 	public:
 		/// Maximum transaction message size.
 		uint16_t MaxMessageSize;
+		/// Maximum transaction mosaics size.
+		uint16_t MaxMosaicsSize;
 
 	private:
 		TransferConfiguration() = default;

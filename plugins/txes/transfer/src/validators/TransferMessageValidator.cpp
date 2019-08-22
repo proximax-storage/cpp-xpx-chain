@@ -20,7 +20,6 @@
 
 #include "Validators.h"
 #include "src/config/TransferConfiguration.h"
-#include "src/config/TransferConfiguration.h"
 
 namespace catapult { namespace validators {
 
