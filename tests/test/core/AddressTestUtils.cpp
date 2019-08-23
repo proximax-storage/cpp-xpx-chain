@@ -46,6 +46,10 @@ namespace catapult { namespace test {
 		return extensions::CopyToUnresolvedAddress(GenerateRandomAddress());
 	}
 
+	UnresolvedAddress GenerateRandomUnresolvedAddress(model::NetworkIdentifier networkIdentifier) {
+		return extensions::CopyToUnresolvedAddress(GenerateRandomAddress(networkIdentifier));
+	}
+
 	std::shared_ptr<model::UnresolvedAddressSet> GenerateRandomUnresolvedAddressSetPointer(size_t count) {
 		auto pAddresses = std::make_shared<model::UnresolvedAddressSet>();
 		for (auto i = 0u; i < count; ++i)

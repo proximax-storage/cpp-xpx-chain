@@ -24,13 +24,13 @@
 #include "catapult/utils/Casting.h"
 #include "catapult/utils/HexFormatter.h"
 #include "catapult/utils/Logging.h"
-#include <random>
+#include <boost/random/random_device.hpp>
 
 namespace catapult { namespace net {
 
 	namespace {
 		void GenerateRandomChallenge(Challenge& challenge) {
-			std::random_device generator;
+			boost::random_device generator;
 			std::generate_n(challenge.begin(), challenge.size(), [&generator]() { return static_cast<uint8_t>(generator()); });
 		}
 

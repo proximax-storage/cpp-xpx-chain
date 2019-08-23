@@ -44,7 +44,7 @@ namespace catapult { namespace chain {
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
 			auto config = test::CreatePrototypicalBlockChainConfiguration();
-			config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 			return test::CreatePluginManagerWithRealPlugins(config);
 		}
 

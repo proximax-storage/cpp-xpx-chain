@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
 				auto config = model::BlockChainConfiguration::Uninitialized();
-				config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+				config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 				auto manager = test::CreatePluginManager(config);
 				RegisterTransferSubsystem(manager);
 
@@ -48,11 +48,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "TransferMosaicsValidator", "TransferPluginConfigValidator" };
+				return { "TransferPluginConfigValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
-				return { "TransferMessageValidator" };
+				return { "TransferMessageValidator", "TransferMosaicsValidator" };
 			}
 		};
 	}

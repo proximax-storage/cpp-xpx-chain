@@ -55,7 +55,7 @@ namespace catapult { namespace harvesting {
 			auto blockChainConfig = test::CreatePrototypicalBlockChainConfiguration();
 			blockChainConfig.MinHarvesterBalance = Amount(500'000);
 			blockChainConfig.ShouldEnableVerifiableState = true;
-			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 
 			auto config = test::CreatePrototypicalCatapultConfiguration(std::move(blockChainConfig), "");
 			const_cast<config::NodeConfiguration&>(config.Node).FeeInterestDenominator = 2;

@@ -80,7 +80,7 @@ namespace catapult { namespace sync {
 			blockChainConfig.BlockPruneInterval = 360u;
 			blockChainConfig.GreedDelta = 0.5;
 			blockChainConfig.GreedExponent = 2.0;
-			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 
 			auto nodeConfig = config::NodeConfiguration::Uninitialized();
 			nodeConfig.MaxBlocksPerSyncAttempt = 30u;

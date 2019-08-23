@@ -25,6 +25,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/utils/Logging.h"
 #include "catapult/exceptions.h"
+#include <boost/random/random_device.hpp>
 #include <iostream>
 #include <random>
 #include <string>
@@ -43,7 +44,7 @@ namespace catapult { namespace tools { namespace address {
 
 		class HighEntropySource {
 		public:
-			HighEntropySource() : m_pRd(std::make_shared<std::random_device>())
+			HighEntropySource() : m_pRd(std::make_shared<boost::random_device>())
 			{}
 
 		public:
@@ -52,7 +53,7 @@ namespace catapult { namespace tools { namespace address {
 			}
 
 		private:
-			std::shared_ptr<std::random_device> m_pRd; // shared_ptr because entropy source needs to be copyable
+			std::shared_ptr<boost::random_device> m_pRd; // shared_ptr because entropy source needs to be copyable
 		};
 
 		// endregion

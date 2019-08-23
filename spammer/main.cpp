@@ -1,21 +1,7 @@
 /**
-*** Copyright (c) 2018-present,
-*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
-***
-*** This file is part of Catapult.
-***
-*** Catapult is free software: you can redistribute it and/or modify
-*** it under the terms of the GNU Lesser General Public License as published by
-*** the Free Software Foundation, either version 3 of the License, or
-*** (at your option) any later version.
-***
-*** Catapult is distributed in the hope that it will be useful,
-*** but WITHOUT ANY WARRANTY; without even the implied warranty of
-*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
-*** GNU Lesser General Public License for more details.
-***
-*** You should have received a copy of the GNU Lesser General Public License
-*** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
+*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
 **/
 
 #include "catapult/builders/TransferBuilder.h"
@@ -27,19 +13,21 @@
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/Mosaic.h"
-#include "catapult/utils/RawBuffer.h"
 #include "catapult/net/VerifyPeer.h"
 #include "catapult/utils/FileSize.h"
+#include "catapult/utils/HexParser.h"
 #include "catapult/utils/NetworkTime.h"
 #include "catapult/utils/RawBuffer.h"
+#include "catapult/utils/RawBuffer.h"
 #include "SpammerOptions.h"
-#include "tests/test/nodeps/Random.h"
 #include "tests/test/core/AddressTestUtils.h"
+#include "tests/test/nodeps/Random.h"
 #include <boost/asio.hpp>
 #include <boost/program_options.hpp>
 #include <chrono>
 #include <iomanip>
 #include <iostream>
+#include <random>
 #include <thread>
 
 using namespace std;
@@ -58,10 +46,7 @@ int parseArguments(int argc, const char** argv, SpammerOptions& options) {
 			("rate", value<int>(&options.Rate)->default_value(1), "Rate transactions per second")
 			("mode", value<string>(&options.Mode)->default_value("rest"), "Mode of connection: {rest, node}")
 			("apiNodePublicKey", value<string>(&options.ApiNodePublicKey)->default_value(""), "Public key of api node")
-			("restPrivateKey", value<string>(&options.RestPrivateKey)->default_value(""), "Private key verify connection to api node")
-			("privateKeys", value<vector<string>>(&options.privateKeys)->composing(), "Private keys of accounts with tokens")
-			("token", value<uint64_t>(&options.Token)->default_value(0x0DC6'7FBE'1CAD'29E3), "Tokens that you want to transfer")
-			("value", value<uint64_t>(&options.Amount)->default_value(1), "Amount of tokens that you want to transfer");
+			("generationHash", value<string>(&options.GenerationHash)->default_value(""), "Generation hash of network");
 
 	variables_map vm;
 	store(parse_command_line(argc, argv, desc), vm);
@@ -75,20 +60,31 @@ int parseArguments(int argc, const char** argv, SpammerOptions& options) {
 	return 0;
 }
 
-unique_ptr<model::Transaction> generateTransferTransaction(const crypto::KeyPair& signer, const SpammerOptions& options) {
+uint8_t RandomByte() {
+	std::random_device rd;
+	std::mt19937_64 gen;
+	auto seed = (static_cast<uint64_t>(rd()) << 32) | rd();
+	gen.seed(seed);
+	return static_cast<uint8_t>(gen());
+}
 
-	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Mijin_Test;
+crypto::KeyPair GenerateRandomKeyPair() {
+	return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte));
+}
+
+unique_ptr<model::Transaction> generateTransferTransaction(const GenerationHash& hash) {
+	auto signer = GenerateRandomKeyPair();
+	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Private_Test;
 
 	builders::TransferBuilder builder(networkIdentifier, signer.publicKey());
-	builder.addMosaic(model::UnresolvedMosaic{ UnresolvedMosaicId(options.Token), Amount(options.Amount) });
-	builder.setRecipient(test::GenerateRandomUnresolvedAddress());
-	string message = "Hello world "+ to_string(rand());
+	builder.setRecipient(test::GenerateRandomUnresolvedAddress(networkIdentifier));
+	string message = "Hello "+ to_string(std::mt19937()());
 	builder.setMessage(RawBuffer((const uint8_t* )message.data(), message.size()));
 
 	unique_ptr<model::Transaction> transaction = builder.build();
 	transaction->Deadline = Timestamp(60 * 60 * 1000 + utils::NetworkTime().unwrap());
 	transaction->Type = model::Entity_Type_Transfer;
-	extensions::TransactionExtensions(test::GenerateRandomByteArray<GenerationHash>()).sign(signer, *transaction);
+	extensions::TransactionExtensions(hash).sign(signer, *transaction);
 
 	return transaction;
 }
@@ -97,10 +93,9 @@ int sended = 0, got = 0;
 char buf[1024];
 bool init = true;
 
-void sendRest(const vector<crypto::KeyPair>& signers, boost::asio::ip::tcp::socket& sock, const SpammerOptions& options){
-
+void sendRest(const GenerationHash& hash, boost::asio::ip::tcp::socket& sock, const SpammerOptions& options){
 	// Generate transaction
-	auto pTransaction = generateTransferTransaction(signers[rand() % signers.size()], options);
+	auto pTransaction = generateTransferTransaction(hash);
 
 	auto pPacket = ionet::PacketPayloadFactory::FromEntity(
 			ionet::PacketType::Push_Transactions,
@@ -152,7 +147,7 @@ void sendRest(const vector<crypto::KeyPair>& signers, boost::asio::ip::tcp::sock
 		}
 		if (init) {
 			init = false;
-			sendRest(signers, sock, options);
+			sendRest(hash, sock, options);
 		}
 	});
 
@@ -164,12 +159,12 @@ void sendRest(const vector<crypto::KeyPair>& signers, boost::asio::ip::tcp::sock
 	if (!init && sended < options.Total) {
 		thread([&](){
 			usleep(1000000 / options.Rate);
-			sendRest(signers, sock, options);
+			sendRest(hash, sock, options);
 		}).detach();
 	}
 }
 
-void sendApi(const shared_ptr<ionet::PacketIo>& pConnectedSocket, const vector<crypto::KeyPair>& signers, const SpammerOptions& options) {
+void sendApi(const shared_ptr<ionet::PacketIo>& pConnectedSocket, const GenerationHash& hash, const SpammerOptions& options) {
 
 	if (sended >= options.Total) {
 		return;
@@ -182,27 +177,26 @@ void sendApi(const shared_ptr<ionet::PacketIo>& pConnectedSocket, const vector<c
 		cout << sended << endl;
 	}
 	// Generate transaction
-	auto pTransaction = generateTransferTransaction(signers[rand() % signers.size()], options);
+	auto pTransaction = generateTransferTransaction(hash);
 
 	auto pPacket = ionet::PacketPayloadFactory::FromEntity(
 			ionet::PacketType::Push_Transactions,
 			std::shared_ptr<model::Transaction>(std::move(pTransaction))
 	);
 
-	pConnectedSocket->write(pPacket, [pConnectedSocket, &signers, &options](auto code){
+	pConnectedSocket->write(pPacket, [pConnectedSocket, &options, &hash](auto code){
 		usleep(1000000 / options.Rate);
 
 		if (code != catapult::ionet::SocketOperationCode::Success) {
 			cout << code << endl;
 		}
 
-		sendApi(pConnectedSocket, signers, options);
+		sendApi(pConnectedSocket, hash, options);
 		++got;
 	});
 }
 
 int main(int argc, const char** argv) {
-
 	SpammerOptions options;
 	srand(time(0));
 
@@ -211,11 +205,7 @@ int main(int argc, const char** argv) {
 	}
 
 	cout << fixed << setprecision(4);
-
-	vector<crypto::KeyPair> signers;
-	for (auto& privateKey : options.privateKeys) {
-		signers.push_back(crypto::KeyPair::FromString(privateKey));
-	}
+	GenerationHash hash = utils::ParseByteArray<GenerationHash>(options.GenerationHash);
 
 	using namespace boost::asio;
 
@@ -227,16 +217,15 @@ int main(int argc, const char** argv) {
 		sock.set_option(ip::tcp::no_delay(false));
 		sock.set_option(socket_base::keep_alive(true));
 		sock.set_option(socket_base::reuse_address(true));
-	//	sock.set_option(socket_base::linger(true, 30));
 		ip::tcp::endpoint endpoint(ip::address::from_string(options.Host), options.Port);
 		sock.connect(endpoint);
-		sendRest(signers, sock, options);
+		sendRest(hash, sock, options);
 
 		io_service::work some_work(svc);
 		svc.run();
 	} else if (options.Mode == "node") {
 
-		crypto::KeyPair keyPair = crypto::KeyPair::FromString(options.RestPrivateKey);
+		crypto::KeyPair keyPair = GenerateRandomKeyPair();
 		net::VerifiedPeerInfo serverPeerInfo;
 		serverPeerInfo.PublicKey = crypto::ParseKey(options.ApiNodePublicKey);
 		serverPeerInfo.SecurityMode = ionet::ConnectionSecurityMode::None;
@@ -255,8 +244,8 @@ int main(int argc, const char** argv) {
 				packetSocketOptions,
 				endpoint,
 				[&](auto, const shared_ptr<ionet::PacketIo>& pConnectedSocket) {
-					net::VerifyServer(pConnectedSocket, serverPeerInfo, keyPair, [pConnectedSocket, &signers, &options](auto, const auto&) {
-						sendApi(pConnectedSocket, signers, options);
+					net::VerifyServer(pConnectedSocket, serverPeerInfo, keyPair, [pConnectedSocket, &options, &hash](auto, const auto&) {
+						sendApi(pConnectedSocket, hash, options);
 					});
 				});
 

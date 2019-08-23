@@ -33,7 +33,8 @@ namespace catapult { namespace config {
 					{
 						"",
 						{
-							{ "maxMessageSize", "859" }
+							{ "maxMessageSize", "859" },
+							{ "maxMosaicsSize", "512" },
 						}
 					}
 				};
@@ -46,11 +47,13 @@ namespace catapult { namespace config {
 			static void AssertZero(const TransferConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(0u, config.MaxMessageSize);
+				EXPECT_EQ(0u, config.MaxMosaicsSize);
 			}
 
 			static void AssertCustom(const TransferConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(859u, config.MaxMessageSize);
+				EXPECT_EQ(512u, config.MaxMosaicsSize);
 			}
 		};
 	}

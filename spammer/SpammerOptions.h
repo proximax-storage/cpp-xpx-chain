@@ -17,11 +17,8 @@ public:
 	int Rate;
 	string Mode;
 	int Total;
-	vector<string> privateKeys;
 	string ApiNodePublicKey;
-	string RestPrivateKey;
-	uint64_t Token;
-	uint64_t Amount;
+	string GenerationHash;
 };
 
 #endif //CATAPULT_SERVER_SPAMMEROPTIONS_H
