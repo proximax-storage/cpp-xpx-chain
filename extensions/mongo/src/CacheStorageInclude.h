@@ -24,7 +24,7 @@
 #include <memory>
 
 namespace catapult {
-	namespace config { class LocalNodeConfigurationHolder; }
+	namespace config { class BlockchainConfigurationHolder; }
 	namespace mongo { class MongoStorageContext; }
 }
 
@@ -32,7 +32,7 @@ namespace catapult {
 #define DECLARE_MONGO_CACHE_STORAGE(NAME) \
 	std::unique_ptr<mongo::ExternalCacheStorage> CreateMongo##NAME##CacheStorage( \
 			mongo::MongoStorageContext& storageContext, \
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) \
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) \
 
 /// Defines a mongo cache storage with \a NAME and \a STORAGE_TYPE using \a TRAITS_NAME.
 #define DEFINE_MONGO_CACHE_STORAGE(NAME, STORAGE_TYPE, TRAITS_NAME) \

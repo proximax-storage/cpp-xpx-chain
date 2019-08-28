@@ -20,7 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "src/model/NamespaceConstants.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -46,15 +46,15 @@ namespace catapult { namespace validators {
 				const model::RootNamespaceNotification<1>& notification,
 				const TestOptions& options) {
 			// Arrange:
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(options.GracePeriodDuration.unwrap());
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(options.MaxDuration.unwrap());
-			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 
-			auto cache = test::NamespaceCacheFactory::Create(blockChainConfig, options.GracePeriodDuration);
+			auto cache = test::NamespaceCacheFactory::Create(networkConfig, options.GracePeriodDuration);
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();

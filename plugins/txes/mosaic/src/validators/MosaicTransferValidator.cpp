@@ -24,7 +24,7 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/validators/ValidatorContext.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
@@ -47,10 +47,10 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(MosaicTransfer, [pConfigHolder](const auto& notification, const auto& context) {
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(networkConfig);
 			// 0. allow currency mosaic id
 			if (currencyMosaicId == notification.MosaicId)
 				return ValidationResult::Success;

@@ -19,10 +19,10 @@
 **/
 
 #include "catapult/cache_core/AccountStateCacheSubCachePlugin.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/TestHarness.h"
 
@@ -50,15 +50,15 @@ namespace catapult { namespace cache {
 		template<typename TAction>
 		void RunCacheStorageTest(Amount minHighValueAccountBalance, TAction action) {
 			// Arrange:
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.MinHarvesterBalance = minHighValueAccountBalance;
-			blockChainConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.MinHarvesterBalance = minHighValueAccountBalance;
+			networkConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			// Act + Assert:
-			action(storage, blockChainConfig, cache);
+			action(storage, networkConfig, cache);
 		}
 
 		template<typename TAction>
@@ -66,9 +66,9 @@ namespace catapult { namespace cache {
 			// Arrange:
 			RunCacheStorageTest(minHighValueAccountBalance, [numExpectedAccounts, checkAddresses](
 					const auto& storage,
-					const auto& blockChainConfig,
+					const auto& networkConfig,
 					const auto&) {
-				auto catapultCache = test::CoreSystemCacheFactory::Create(blockChainConfig);
+				auto catapultCache = test::CoreSystemCacheFactory::Create(networkConfig);
 				auto cacheDelta = catapultCache.createDelta();
 				auto& delta = cacheDelta.template sub<AccountStateCache>();
 				auto balances = { Amount(1'000'000), Amount(500'000), Amount(750'000), Amount(1'250'000) };
@@ -102,8 +102,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CannotSaveAll) {
 		// Arrange:
-		RunCacheStorageTest(Amount(2'000'000), [](const auto& storage, const auto& blockChainConfig, const auto&) {
-			auto catapultCache = test::CoreSystemCacheFactory::Create(blockChainConfig);
+		RunCacheStorageTest(Amount(2'000'000), [](const auto& storage, const auto& networkConfig, const auto&) {
+			auto catapultCache = test::CoreSystemCacheFactory::Create(networkConfig);
 			auto cacheView = catapultCache.createView();
 
 			std::vector<uint8_t> buffer;

@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
 		template<typename TTraits>
 		void AssertCommitObservation() {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto pObserver = CreateBalanceDebitObserver();
 
@@ -53,7 +53,7 @@ namespace catapult { namespace observers {
 		template<typename TTraits>
 		void AssertRollbackObservation() {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			test::ObserverTestContext context(NotifyMode::Rollback, Height{444}, config);
 			auto pObserver = CreateBalanceDebitObserver();
 

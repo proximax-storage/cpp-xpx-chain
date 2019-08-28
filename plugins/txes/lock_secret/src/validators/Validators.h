@@ -21,7 +21,7 @@
 #pragma once
 #include "Results.h"
 #include "src/model/SecretLockNotifications.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to secret lock notifications and validates that:
 	/// - lock duration is at most \a maxSecretLockDuration
-	DECLARE_STATEFUL_VALIDATOR(SecretLockDuration, model::SecretLockDurationNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(SecretLockDuration, model::SecretLockDurationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to secret lock hash algorithm notifications and validates that:
 	/// - hash algorithm is valid
@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 	/// - hash algorithm is supported
 	/// - proof size is within inclusive bounds of \a minProofSize and \a maxProofSize
 	/// - hash of proof matches secret
-	DECLARE_STATEFUL_VALIDATOR(ProofSecret, model::ProofSecretNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(ProofSecret, model::ProofSecretNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to proof notifications and validates that:
 	/// - secret obtained from proof is present in cache

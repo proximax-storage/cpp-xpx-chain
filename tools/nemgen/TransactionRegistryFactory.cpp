@@ -19,9 +19,9 @@
 **/
 
 #include "TransactionRegistryFactory.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
-#include "catapult/plugins/CatapultConfigTransactionPlugin.h"
-#include "catapult/plugins/CatapultUpgradeTransactionPlugin.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "catapult/plugins/NetworkConfigTransactionPlugin.h"
+#include "catapult/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
@@ -36,11 +36,11 @@ namespace catapult { namespace tools { namespace nemgen {
 	model::TransactionRegistry CreateTransactionRegistry() {
 		auto mosaicConfig = config::MosaicConfiguration::Uninitialized();
 		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), mosaicConfig);
-		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespaceConfig);
-		config::CatapultConfiguration config{
-			std::move(blockChainConfig),
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
+		networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), mosaicConfig);
+		networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespaceConfig);
+		config::BlockchainConfiguration config{
+			std::move(networkConfig),
 			config::NodeConfiguration::Uninitialized(),
 			config::LoggingConfiguration::Uninitialized(),
 			config::UserConfiguration::Uninitialized(),
@@ -48,7 +48,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			config::InflationConfiguration::Uninitialized(),
 			config::SupportedEntityVersions()
 		};
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
+		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(nullptr);
 		pConfigHolder->SetConfig(Height{0}, config);
 		model::TransactionRegistry registry;
 		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
@@ -56,8 +56,8 @@ namespace catapult { namespace tools { namespace nemgen {
 		registry.registerPlugin(plugins::CreateMosaicSupplyChangeTransactionPlugin());
 		registry.registerPlugin(plugins::CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
-		registry.registerPlugin(plugins::CreateCatapultConfigTransactionPlugin());
-		registry.registerPlugin(plugins::CreateCatapultUpgradeTransactionPlugin());
+		registry.registerPlugin(plugins::CreateNetworkConfigTransactionPlugin());
+		registry.registerPlugin(plugins::CreateBlockchainUpgradeTransactionPlugin());
 		return registry;
 	}
 }}}

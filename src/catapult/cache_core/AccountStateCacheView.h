@@ -107,7 +107,7 @@ namespace catapult { namespace cache {
 		const model::AddressSet& addressesToUpdate() const;
 
 	private:
-		model::BlockChainConfiguration blockChainConfig() const;
+		model::NetworkConfiguration networkConfig() const;
 
 	private:
 		const AccountStateCacheTypes::Options& m_options;

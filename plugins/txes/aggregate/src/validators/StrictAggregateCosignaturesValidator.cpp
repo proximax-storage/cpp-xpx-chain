@@ -34,10 +34,10 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(StrictAggregateCosignatures, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(StrictAggregateCosignatures, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(StrictAggregateCosignatures, ([pConfigHolder](const auto& notification, const auto& context) {
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
 			if (!pluginConfig.EnableStrictCosignatureCheck)
 				return ValidationResult::Success;
 

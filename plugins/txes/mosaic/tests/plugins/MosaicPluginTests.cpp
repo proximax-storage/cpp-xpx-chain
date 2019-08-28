@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto config = model::NetworkConfiguration::Uninitialized();
 				config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(1);
 				config.BlockPruneInterval = 150;
 				config.Plugins.emplace(PLUGIN_NAME(mosaic), utils::ConfigurationBag({{

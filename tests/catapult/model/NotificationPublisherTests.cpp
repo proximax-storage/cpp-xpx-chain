@@ -20,7 +20,7 @@
 
 #include "catapult/model/NotificationPublisher.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
@@ -43,7 +43,7 @@ namespace catapult { namespace model {
 			mocks::MockNotificationSubscriber sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.CurrencyMosaicId = MosaicId(Currency_Mosaic_Id.unwrap());
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pPub = CreateNotificationPublisher(registry, pConfigHolder, mode);
@@ -67,7 +67,7 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.CurrencyMosaicId = MosaicId(Currency_Mosaic_Id.unwrap());
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pPub = CreateNotificationPublisher(registry, pConfigHolder);

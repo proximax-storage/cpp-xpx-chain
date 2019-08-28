@@ -55,7 +55,7 @@ namespace catapult { namespace sync {
 	}
 
 	void RollbackInfo::prune() {
-		auto rollbackDurationFull = CalculateFullRollbackDuration(m_state.config().BlockChain);
+		auto rollbackDurationFull = CalculateFullRollbackDuration(m_state.config().Network);
 		auto recentStatsTimeSpan = utils::TimeSpan::FromMilliseconds(rollbackDurationFull.millis() / 2);
 		auto threshold = utils::SubtractNonNegative(m_timeSupplier(), recentStatsTimeSpan);
 

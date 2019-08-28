@@ -152,7 +152,7 @@ namespace catapult { namespace cache {
 		void remove(const Address& address, Height height);
 		void remove(const Key& publicKey, Height height);
 
-		model::BlockChainConfiguration blockChainConfig() const;
+		model::NetworkConfiguration networkConfig() const;
 
 	private:
 		// height is first component for a nicer equals

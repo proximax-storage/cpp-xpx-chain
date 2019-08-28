@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/core/BalanceTransfers.h"
 #include <memory>
 
@@ -42,5 +42,5 @@ namespace catapult { namespace test {
 	void SetCacheBalances(cache::CatapultCache& cache, const Key& publicKey, const BalanceTransfers& transfers);
 
 	/// Creates a cache and seeds \a publicKey account with \a transfers.
-	cache::CatapultCache CreateCache(const Key& publicKey, const BalanceTransfers& transfers, const model::BlockChainConfiguration& config);
+	cache::CatapultCache CreateCache(const Key& publicKey, const BalanceTransfers& transfers, const model::NetworkConfiguration& config);
 }}

@@ -22,7 +22,7 @@
 #include "src/validators/Validators.h"
 #include "src/state/SecretLockInfo.h"
 #include "plugins/txes/lock_shared/tests/validators/LockDurationValidatorTests.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace validators {
 
@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration, config::CreateMockConfigurationHolder())
 
 	namespace {
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
 		struct SecretTraits {
 		public:
 			using NotificationType = model::SecretLockDurationNotification<1>;
@@ -40,9 +40,9 @@ namespace catapult { namespace validators {
 			static auto CreateValidator(BlockDuration maxDuration) {
 				auto pluginConfig = config::SecretLockConfiguration::Uninitialized();
 				pluginConfig.MaxSecretLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
-				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-				blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
-				auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+				networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+				networkConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 				return CreateSecretLockDurationValidator(pConfigHolder);
 			}
 		};

@@ -20,16 +20,16 @@
 
 #pragma once
 #include "src/cache/HashCacheStorage.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
 	/// Cache factory for creating a catapult cache composed of only the hash cache.
 	struct HashCacheFactory {
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration&) {
+		static cache::CatapultCache Create(const model::NetworkConfiguration&) {
 			auto cacheId = cache::HashCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder();

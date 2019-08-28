@@ -19,7 +19,7 @@
 **/
 
 #include "src/cache/NamespaceCacheStorage.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/RootNamespaceHistoryLoadTests.h"
 #include "tests/TestHarness.h"
@@ -34,10 +34,10 @@ namespace catapult { namespace cache {
 		auto CreateConfigHolder() {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(100);
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			return config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			return config::CreateMockConfigurationHolder(networkConfig);
 		}
 
 		auto DefaultCacheOptions() {

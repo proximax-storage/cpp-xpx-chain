@@ -41,7 +41,7 @@ namespace catapult { namespace observers {
 
 		static void AssertObserverAddsInfoOnCommit() {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 
 			// Act:
 			RunTest(
@@ -80,7 +80,7 @@ namespace catapult { namespace observers {
 
 		static void AssertObserverDoesNotOverwriteInfoOnCommit() {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			typename TTraits::ObserverTestContext context(NotifyMode::Commit, DefaultHeight(), config);
 			typename TTraits::NotificationBuilder notificationBuilder;
 			auto notification = notificationBuilder.notification();
@@ -102,7 +102,7 @@ namespace catapult { namespace observers {
 
 		static void AssertObserverRemovesInfoOnRollback() {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 
 			// Act:
 			RunTest(

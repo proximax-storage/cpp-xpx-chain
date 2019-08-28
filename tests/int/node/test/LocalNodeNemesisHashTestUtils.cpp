@@ -102,7 +102,7 @@ namespace catapult { namespace test {
 		});
 	}
 
-	void SetNemesisStateHash(const std::string& destination, const config::CatapultConfiguration& config) {
+	void SetNemesisStateHash(const std::string& destination, const config::BlockchainConfiguration& config) {
 		// calculate the state hash (default nemesis block has zeroed state hash)
 		ModifyNemesis(destination, [&config](auto& nemesisBlock, const auto& nemesisBlockElement) {
 			nemesisBlock.StateHash = CalculateNemesisStateHash(nemesisBlockElement, config);

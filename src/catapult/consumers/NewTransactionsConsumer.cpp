@@ -20,7 +20,7 @@
 
 #include "TransactionConsumers.h"
 #include "ConsumerResultFactory.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace consumers {
 

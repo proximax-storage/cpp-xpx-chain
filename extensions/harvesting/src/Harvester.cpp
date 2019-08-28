@@ -48,7 +48,7 @@ namespace catapult { namespace harvesting {
 			catapult::Difficulty Difficulty;
 
 		public:
-			bool tryCalculateDifficulty(const cache::BlockDifficultyCache& cache, const model::BlockChainConfiguration& config) {
+			bool tryCalculateDifficulty(const cache::BlockDifficultyCache& cache, const model::NetworkConfiguration& config) {
 				return chain::TryCalculateDifficulty(cache, state::BlockDifficultyInfo(Height, Timestamp, Difficulty), config, Difficulty);
 			}
 		};
@@ -68,7 +68,7 @@ namespace catapult { namespace harvesting {
 
 	Harvester::Harvester(
 			const cache::CatapultCache& cache,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const Key& beneficiary,
 			const UnlockedAccounts& unlockedAccounts,
 			const BlockGenerator& blockGenerator)
@@ -82,7 +82,7 @@ namespace catapult { namespace harvesting {
 	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
 		NextBlockContext context(lastBlockElement, timestamp);
 		const auto& config = m_pConfigHolder->Config(context.Height);
-		if (!context.tryCalculateDifficulty(m_cache.sub<cache::BlockDifficultyCache>(), config.BlockChain)) {
+		if (!context.tryCalculateDifficulty(m_cache.sub<cache::BlockDifficultyCache>(), config.Network)) {
 			CATAPULT_LOG(debug) << "skipping harvest attempt due to error calculating difficulty";
 			return nullptr;
 		}
@@ -118,8 +118,8 @@ namespace catapult { namespace harvesting {
 			return nullptr;
 
 		utils::StackLogger stackLogger("generating candidate block", utils::LogLevel::Debug);
-		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.BlockChain.Network.Identifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
-		auto pBlock = m_blockGenerator(*pBlockHeader, config.BlockChain.MaxTransactionsPerBlock);
+		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.Network.Info.Identifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
+		auto pBlock = m_blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock);
 		if (pBlock)
 			SignBlockHeader(*pHarvesterKeyPair, *pBlock);
 

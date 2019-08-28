@@ -19,7 +19,7 @@
 **/
 
 #include "HashCacheDelta.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -33,7 +33,7 @@ namespace catapult { namespace cache {
 	{}
 
 	utils::TimeSpan BasicHashCacheDelta::retentionTime() const {
-		return CalculateTransactionCacheDuration(m_pConfigHolder->Config(height()).BlockChain);
+		return CalculateTransactionCacheDuration(m_pConfigHolder->Config(height()).Network);
 	}
 
 	deltaset::PruningBoundary<BasicHashCacheDelta::ValueType> BasicHashCacheDelta::pruningBoundary() const {

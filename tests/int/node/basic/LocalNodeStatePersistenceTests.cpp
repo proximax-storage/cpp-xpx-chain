@@ -127,7 +127,7 @@ namespace catapult { namespace local {
 
 		// - prepare bad config
 		auto badConfig = context.createConfig();
-		const_cast<model::BlockChainConfiguration&>(badConfig.BlockChain).Plugins.emplace(
+		const_cast<model::NetworkConfiguration&>(badConfig.Network).Plugins.emplace(
 				"catapult.plugins.awesome",
 				utils::ConfigurationBag({}));
 

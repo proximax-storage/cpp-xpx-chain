@@ -20,20 +20,20 @@
 
 #include "Validators.h"
 #include "catapult/utils/ArraySet.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "src/config/AggregateConfiguration.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::AggregateCosignaturesNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, ([pConfigHolder](const auto& notification, const auto& context) {
 			if (0 == notification.TransactionsCount)
 				return Failure_Aggregate_No_Transactions;
 
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
 			if (pluginConfig.MaxTransactionsPerAggregate < notification.TransactionsCount)
 				return Failure_Aggregate_Too_Many_Transactions;
 

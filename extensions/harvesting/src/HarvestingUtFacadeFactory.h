@@ -32,7 +32,7 @@ namespace catapult { namespace harvesting {
 		HarvestingUtFacade(
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const chain::ExecutionConfiguration& executionConfig);
 
 		/// Destroys the facade.
@@ -72,7 +72,7 @@ namespace catapult { namespace harvesting {
 		/// Creates a factory around \a cache, \a pConfigHolder and \a executionConfig.
 		HarvestingUtFacadeFactory(
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const chain::ExecutionConfiguration& executionConfig);
 
 	public:
@@ -81,7 +81,7 @@ namespace catapult { namespace harvesting {
 
 	private:
 		const cache::CatapultCache& m_cache;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		chain::ExecutionConfiguration m_executionConfig;
 	};
 }}

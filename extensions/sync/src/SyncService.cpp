@@ -25,7 +25,7 @@
 #include "catapult/api/RemoteTransactionApi.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/chain/UtSynchronizer.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/extensions/SynchronizerTaskCallbacks.h"
@@ -48,7 +48,7 @@ namespace catapult { namespace sync {
 			return task;
 		}
 
-		chain::ChainSynchronizerConfiguration CreateChainSynchronizerConfiguration(const config::CatapultConfiguration& config) {
+		chain::ChainSynchronizerConfiguration CreateChainSynchronizerConfiguration(const config::BlockchainConfiguration& config) {
 			chain::ChainSynchronizerConfiguration chainSynchronizerConfig;
 			chainSynchronizerConfig.MaxBlocksPerSyncAttempt = config.Node.MaxBlocksPerSyncAttempt;
 			chainSynchronizerConfig.MaxChainBytesPerSyncAttempt = config.Node.MaxChainBytesPerSyncAttempt.bytes32();

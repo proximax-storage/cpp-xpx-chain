@@ -74,7 +74,7 @@ namespace catapult { namespace sync {
 
 		cache::CatapultCache CreateCatapultCacheForDispatcherTests() {
 			// importance grouping must be non-zero
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.ImportanceGrouping = 1;
 
 			// create the cache
@@ -272,7 +272,7 @@ namespace catapult { namespace sync {
 			pBlock->Difficulty = chain::CalculateDifficulty(
 					testContext.testState().cache().sub<cache::BlockDifficultyCache>(),
 					state::BlockDifficultyInfo(*pBlock),
-					testContext.testState().config().BlockChain
+					testContext.testState().config().Network
 			);
 			pBlock->FeeInterest = 1;
 			pBlock->FeeInterestDenominator = 2;
@@ -428,8 +428,8 @@ namespace catapult { namespace sync {
 		template<typename THandler>
 		void AssertCanConsumeBlockRange(bool shouldEnableVerifiableReceipts, model::AnnotatedBlockRange&& range, TestContext& context, THandler handler) {
 			// Arrange:
-			const auto& blockChainConfig = context.testState().config().BlockChain;
-			const_cast<model::BlockChainConfiguration&>(blockChainConfig).ShouldEnableVerifiableReceipts = shouldEnableVerifiableReceipts;
+			const auto& networkConfig = context.testState().config().Network;
+			const_cast<model::NetworkConfiguration&>(networkConfig).ShouldEnableVerifiableReceipts = shouldEnableVerifiableReceipts;
 
 			context.boot();
 			auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
@@ -669,7 +669,7 @@ namespace catapult { namespace sync {
 		pBetterBlock->Difficulty = chain::CalculateDifficulty(
 				context.testState().cache().sub<cache::BlockDifficultyCache>(),
 				state::BlockDifficultyInfo(*pBetterBlock),
-				context.testState().config().BlockChain
+				context.testState().config().Network
 		);
 
 		factory(test::CreateEntityRange({ pBetterBlock.get() }));
@@ -703,7 +703,7 @@ namespace catapult { namespace sync {
 		pBetterBlock->Difficulty = chain::CalculateDifficulty(
 				context.testState().cache().sub<cache::BlockDifficultyCache>(),
 				state::BlockDifficultyInfo(*pBetterBlock),
-				context.testState().config().BlockChain
+				context.testState().config().Network
 		);
 		context.setStatefulBlockValidationResult(ValidationResult::Failure);
 
@@ -715,7 +715,7 @@ namespace catapult { namespace sync {
 		pBetterBlock->Difficulty = chain::CalculateDifficulty(
 				context.testState().cache().sub<cache::BlockDifficultyCache>(),
 				state::BlockDifficultyInfo(*pBetterBlock),
-				context.testState().config().BlockChain
+				context.testState().config().Network
 		);
 		context.setStatefulBlockValidationResult(ValidationResult::Success);
 
@@ -922,7 +922,7 @@ namespace catapult { namespace sync {
 			nodeConfig.ShouldEnableTransactionSpamThrottling = enableFiltering;
 			nodeConfig.TransactionSpamThrottlingMaxBoostFee = Amount(10'000'000);
 			nodeConfig.UnconfirmedTransactionsCacheMaxSize = maxCacheSize;
-			const_cast<uint32_t&>(config.BlockChain.MaxTransactionsPerBlock) = maxCacheSize / 2;
+			const_cast<uint32_t&>(config.Network.MaxTransactionsPerBlock) = maxCacheSize / 2;
 
 			// - boot the service
 			context.boot();

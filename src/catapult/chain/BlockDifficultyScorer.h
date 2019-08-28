@@ -20,7 +20,7 @@
 
 #pragma once
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/types.h"
 
 namespace catapult { namespace chain {
@@ -28,18 +28,18 @@ namespace catapult { namespace chain {
 	/// Calculates the block difficulty given the past \a difficultyInfos and \a nextBlockInfo for the
 	/// block chain described by \a config.
 	Difficulty CalculateDifficulty(const cache::DifficultyInfoRange& difficultyInfos,
-			const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config);
+			const state::BlockDifficultyInfo& nextBlockInfo, const model::NetworkConfiguration& config);
 
 	/// Calculates the block difficulty for the block chain described by \a config
 	/// given the block difficulty \a cache and \a nextBlockInfo.
 	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache,
-			const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config);
+			const state::BlockDifficultyInfo& nextBlockInfo, const model::NetworkConfiguration& config);
 
 	/// Calculates the block difficulty into \a difficulty for the block chain described by
 	/// \a config given the block difficulty \a cache and \a nextBlockInfo.
 	bool TryCalculateDifficulty(
 			const cache::BlockDifficultyCache& cache,
 			const state::BlockDifficultyInfo& nextBlockInfo,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			Difficulty& difficulty);
 }}

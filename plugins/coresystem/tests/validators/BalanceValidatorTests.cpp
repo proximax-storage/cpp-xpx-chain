@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		constexpr auto Currency_Mosaic_Id = MosaicId(1234);
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		// region traits
 

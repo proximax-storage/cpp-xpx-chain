@@ -50,9 +50,9 @@ namespace catapult { namespace extensions {
 			return Amount(GetTotalChainImportance(numAccounts).unwrap() * 1'000'000);
 		}
 
-		model::BlockChainConfiguration CreateBlockChainConfiguration(uint32_t numAccounts) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+		model::NetworkConfiguration CreateNetworkConfiguration(uint32_t numAccounts) {
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.MaxDifficultyBlocks = 4;
 			config.MaxRollbackBlocks = 124;
@@ -66,7 +66,7 @@ namespace catapult { namespace extensions {
 		class TestContext {
 		public:
 			explicit TestContext(uint32_t numAccounts)
-					: m_config(CreateBlockChainConfiguration(numAccounts))
+					: m_config(CreateNetworkConfiguration(numAccounts))
 					, m_pPluginManager(test::CreatePluginManagerWithRealPlugins(m_config))
 					, m_cache(m_pPluginManager->createCache())
 					, m_specialAccountKey(test::GenerateRandomByteArray<Key>()) {
@@ -245,7 +245,7 @@ namespace catapult { namespace extensions {
 			}
 
 		private:
-			model::BlockChainConfiguration m_config;
+			model::NetworkConfiguration m_config;
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			cache::CatapultCache m_cache;
 			state::CatapultState m_state;

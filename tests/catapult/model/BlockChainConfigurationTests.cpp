@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/ConfigurationUtils.h"
 #include "catapult/utils/HexParser.h"
@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 		constexpr auto Nemesis_Generation_Hash = "CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230";
 
 		struct BlockChainConfigurationTraits {
-			using ConfigurationType = BlockChainConfiguration;
+			using ConfigurationType = NetworkConfiguration;
 
 			static utils::ConfigurationBag::ValuesContainer CreateProperties() {
 				return {
@@ -101,11 +101,11 @@ namespace catapult { namespace model {
 				return "network" != section && "chain" != section;
 			}
 
-			static void AssertZero(const BlockChainConfiguration& config) {
+			static void AssertZero(const NetworkConfiguration& config) {
 				// Assert:
-				EXPECT_EQ(NetworkIdentifier::Zero, config.Network.Identifier);
-				EXPECT_EQ(Key(), config.Network.PublicKey);
-				EXPECT_EQ(GenerationHash(), config.Network.GenerationHash);
+				EXPECT_EQ(NetworkIdentifier::Zero, config.Info.Identifier);
+				EXPECT_EQ(Key(), config.Info.PublicKey);
+				EXPECT_EQ(GenerationHash(), config.Info.GenerationHash);
 
 				EXPECT_FALSE(config.ShouldEnableVerifiableState);
 				EXPECT_FALSE(config.ShouldEnableVerifiableReceipts);
@@ -139,11 +139,11 @@ namespace catapult { namespace model {
 				EXPECT_TRUE(config.Plugins.empty());
 			}
 
-			static void AssertCustom(const BlockChainConfiguration& config) {
+			static void AssertCustom(const NetworkConfiguration& config) {
 				// Assert: notice that ParseKey also works for Hash256 because it is the same type as Key
-				EXPECT_EQ(NetworkIdentifier::Public_Test, config.Network.Identifier);
-				EXPECT_EQ(crypto::ParseKey(Nemesis_Public_Key), config.Network.PublicKey);
-				EXPECT_EQ(utils::ParseByteArray<GenerationHash>(Nemesis_Generation_Hash), config.Network.GenerationHash);
+				EXPECT_EQ(NetworkIdentifier::Public_Test, config.Info.Identifier);
+				EXPECT_EQ(crypto::ParseKey(Nemesis_Public_Key), config.Info.PublicKey);
+				EXPECT_EQ(utils::ParseByteArray<GenerationHash>(Nemesis_Generation_Hash), config.Info.GenerationHash);
 
 				EXPECT_TRUE(config.ShouldEnableVerifiableState);
 				EXPECT_TRUE(config.ShouldEnableVerifiableReceipts);
@@ -257,7 +257,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CanGetUnresolvedCurrencyMosaicId) {
 		// Arrange:
-		auto config = BlockChainConfiguration::Uninitialized();
+		auto config = NetworkConfiguration::Uninitialized();
 		config.CurrencyMosaicId = MosaicId(1234);
 
 		// Act + Assert:
@@ -274,7 +274,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, CanCalculateDependentSettingsFromCustomBlockChainConfiguration) {
 		// Arrange:
-		auto config = BlockChainConfiguration::Uninitialized();
+		auto config = NetworkConfiguration::Uninitialized();
 		config.BlockGenerationTargetTime = TimeSpanFromMillis(30'001);
 		config.MaxTransactionLifetime = TimeSpanFromMillis(One_Hour_Ms - 1);
 		config.MaxRollbackBlocks = 600;
@@ -289,7 +289,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, TransactionCacheDurationIncludesBufferTimeOfAtLeastOneHour) {
 		// Arrange:
-		auto config = BlockChainConfiguration::Uninitialized();
+		auto config = NetworkConfiguration::Uninitialized();
 		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(2);
 		config.MaxRollbackBlocks = 20;

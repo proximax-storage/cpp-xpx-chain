@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, const Key& signer, Height::ValueType height) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();

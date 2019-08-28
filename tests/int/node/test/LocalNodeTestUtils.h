@@ -131,21 +131,21 @@ namespace catapult { namespace test {
 
 	/// Boots a local partner node around \a config with \a keyPair and specified \a nodeFlag.
 	std::unique_ptr<local::LocalNode> BootLocalPartnerNode(
-			config::CatapultConfiguration&& config,
+			config::BlockchainConfiguration&& config,
 			const crypto::KeyPair& keyPair,
 			NodeFlag nodeFlag);
 
-	/// Prepares catapult configuration (\a config) by  updating setings to be compatible with \a nodeFlag.
-	void PrepareCatapultConfiguration(config::CatapultConfiguration& config, NodeFlag nodeFlag);
+	/// Prepares blockchain configuration (\a config) by  updating setings to be compatible with \a nodeFlag.
+	void PrepareNetworkConfiguration(config::BlockchainConfiguration& config, NodeFlag nodeFlag);
 
-	/// Prepares catapult configuration (\a config) by adding plugins and extensions (via \a addNodeExtensions)
+	/// Prepares blockchain configuration (\a config) by adding plugins and extensions (via \a addNodeExtensions)
 	/// and updating setings to be compatible with \a nodeFlag.
 	template<typename TAddNodeExtensions>
-	void PrepareCatapultConfiguration(config::CatapultConfiguration& config, TAddNodeExtensions addNodeExtensions, NodeFlag nodeFlag) {
-		PrepareCatapultConfiguration(config, nodeFlag);
+	void PrepareNetworkConfiguration(config::BlockchainConfiguration& config, TAddNodeExtensions addNodeExtensions, NodeFlag nodeFlag) {
+		PrepareNetworkConfiguration(config, nodeFlag);
 
 		// in order for the nemesis block to be processed, at least the transfer plugin needs to be loaded
-		AddNemesisPluginExtensions(const_cast<model::BlockChainConfiguration&>(config.BlockChain));
+		AddNemesisPluginExtensions(const_cast<model::NetworkConfiguration&>(config.Network));
 		addNodeExtensions(const_cast<config::ExtensionsConfiguration&>(config.Extensions));
 	}
 

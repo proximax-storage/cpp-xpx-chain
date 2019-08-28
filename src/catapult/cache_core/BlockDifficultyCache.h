@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 	class BasicBlockDifficultyCache : public BlockDifficultyBasicCache {
 	public:
 		/// Creates a cache with the specified \a pConfigHolder.
-		explicit BasicBlockDifficultyCache(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+		explicit BasicBlockDifficultyCache(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				// block difficulty cache must always be an in-memory cache
 				: BlockDifficultyBasicCache(CacheConfiguration(), BlockDifficultyCacheTypes::Options{ pConfigHolder })
 		{}
@@ -48,7 +48,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache with the specified \a pConfigHolder.
-		explicit BlockDifficultyCache(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+		explicit BlockDifficultyCache(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: SynchronizedCache<BasicBlockDifficultyCache>(BasicBlockDifficultyCache(pConfigHolder))
 		{}
 	};

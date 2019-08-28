@@ -30,7 +30,7 @@ int main(int argc, const char** argv) {
 	using namespace catapult;
 	return process::ProcessMain(argc, argv, Process_Name, [argc, argv](const auto& pConfigHolder, const auto& keyPair) {
 		// create bootstrapper
-		auto resourcesPath = config::LocalNodeConfigurationHolder::GetResourcesPath(argc, argv).generic_string();
+		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(argc, argv).generic_string();
 		auto disposition = extensions::ProcessDisposition::Production;
 		auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(pConfigHolder, resourcesPath, disposition, Process_Name);
 

@@ -23,7 +23,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/NetworkInfo.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 using catapult::model::ImportanceHeight;
@@ -40,8 +40,8 @@ namespace catapult { namespace cache {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = Network_Identifier;
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = Network_Identifier;
 			config.ImportanceGrouping = 123;
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = MosaicId(1111);

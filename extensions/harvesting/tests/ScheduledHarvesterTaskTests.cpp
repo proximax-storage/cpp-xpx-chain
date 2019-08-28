@@ -24,9 +24,9 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 
@@ -41,13 +41,13 @@ namespace catapult { namespace harvesting {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
 		auto CreateConfigHolder() {
-			test::MutableCatapultConfiguration config;
+			test::MutableBlockchainConfiguration config;
 
-			config.BlockChain.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
-			config.BlockChain.BlockTimeSmoothingFactor = 0;
-			config.BlockChain.MaxDifficultyBlocks = 60;
-			config.BlockChain.ImportanceGrouping = 123;
-			config.BlockChain.TotalChainImportance = test::Default_Total_Chain_Importance;
+			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
+			config.Network.BlockTimeSmoothingFactor = 0;
+			config.Network.MaxDifficultyBlocks = 60;
+			config.Network.ImportanceGrouping = 123;
+			config.Network.TotalChainImportance = test::Default_Total_Chain_Importance;
 
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
@@ -131,12 +131,12 @@ namespace catapult { namespace harvesting {
 		struct HarvesterContext {
 			HarvesterContext(const model::Block& lastBlock)
 					: pConfigHolder(CreateConfigHolder())
-					, Cache(test::CreateEmptyCatapultCache(pConfigHolder->Config().BlockChain))
+					, Cache(test::CreateEmptyCatapultCache(pConfigHolder->Config().Network))
 					, Accounts(1) {
 				AddDifficultyInfo(Cache, lastBlock);
 			}
 
-			std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder;
 			cache::CatapultCache Cache;
 			UnlockedAccounts Accounts;
 		};

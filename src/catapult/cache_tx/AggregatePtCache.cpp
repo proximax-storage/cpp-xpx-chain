@@ -21,7 +21,7 @@
 #include "AggregatePtCache.h"
 #include "BasicAggregateTransactionsCache.h"
 #include "PtChangeSubscriber.h"
-#include "src/catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "src/catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 

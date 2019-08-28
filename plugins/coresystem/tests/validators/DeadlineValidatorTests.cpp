@@ -22,7 +22,7 @@
 #include "catapult/model/VerifiableEntity.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, Timestamp deadline, const utils::TimeSpan& maxCustomLifetime) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.MaxTransactionLifetime = Max_Transaction_Lifetime;
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();

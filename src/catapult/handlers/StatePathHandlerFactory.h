@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/ionet/Packet.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/tree/PatriciaTreeSerializer.h"

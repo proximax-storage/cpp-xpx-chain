@@ -29,8 +29,8 @@ namespace catapult { namespace model {
 		AccountLink = 0x4C,
 		/// Aggregate facility code.
 		Aggregate = 0x41,
-		/// Catapult config facility code.
-		CatapultConfig = 0x59,
+		/// Network config facility code.
+		NetworkConfig = 0x59,
 		/// Contract facility code.
 		Contract = 0x57,
 		/// Core facility code.
@@ -53,7 +53,7 @@ namespace catapult { namespace model {
 		Property = 0x50,
 		/// Transfer facility code.
 		Transfer = 0x54,
-		/// Catapult upgrade facility code.
-		CatapultUpgrade = 0x58,
+		/// Blockchain upgrade facility code.
+		BlockchainUpgrade = 0x58,
 	};
 }}

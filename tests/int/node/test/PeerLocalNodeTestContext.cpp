@@ -25,8 +25,8 @@
 namespace catapult { namespace test {
 
 	namespace {
-		void AddAdditionalPlugins(config::CatapultConfiguration& config, NonNemesisTransactionPlugins additionalPlugins) {
-			auto& plugins = const_cast<model::BlockChainConfiguration&>(config.BlockChain).Plugins;
+		void AddAdditionalPlugins(config::BlockchainConfiguration& config, NonNemesisTransactionPlugins additionalPlugins) {
+			auto& plugins = const_cast<model::NetworkConfiguration&>(config.Network).Plugins;
 			if (NonNemesisTransactionPlugins::Lock_Secret == additionalPlugins) {
 				plugins.emplace("catapult.plugins.locksecret", utils::ConfigurationBag({{
 					"",
@@ -52,7 +52,7 @@ namespace catapult { namespace test {
 	PeerLocalNodeTestContext::PeerLocalNodeTestContext(
 			NodeFlag nodeFlag,
 			NonNemesisTransactionPlugins additionalPlugins,
-			const consumer<config::CatapultConfiguration&>& configTransform)
+			const consumer<config::BlockchainConfiguration&>& configTransform)
 			: m_context(
 					nodeFlag | NodeFlag::With_Partner,
 					{ CreateLocalPartnerNode() },
@@ -89,7 +89,7 @@ namespace catapult { namespace test {
 		WaitForLocalNodeHeight(connection, height);
 	}
 
-	config::CatapultConfiguration PeerLocalNodeTestContext::prepareFreshDataDirectory(const std::string& directory) const {
+	config::BlockchainConfiguration PeerLocalNodeTestContext::prepareFreshDataDirectory(const std::string& directory) const {
 		return m_context.prepareFreshDataDirectory(directory);
 	}
 

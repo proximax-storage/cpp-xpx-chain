@@ -27,12 +27,12 @@ namespace catapult { namespace test {
 
 	StateHashCalculator::StateHashCalculator()
 			: m_stateVerificationMode(StateVerificationMode::Disabled)
-			, m_config(CreateUninitializedCatapultConfiguration())
+			, m_config(CreateUninitializedBlockchainConfiguration())
 			, m_catapultCache({})
 			, m_isDirty(false)
 	{}
 
-	StateHashCalculator::StateHashCalculator(const config::CatapultConfiguration& config)
+	StateHashCalculator::StateHashCalculator(const config::BlockchainConfiguration& config)
 			: m_stateVerificationMode(StateVerificationMode::Enabled)
 			, m_config(config)
 			, m_pPluginManager(CreatePluginManagerWithRealPlugins(m_config))
@@ -44,7 +44,7 @@ namespace catapult { namespace test {
 		return m_config.User.DataDirectory;
 	}
 
-	const config::CatapultConfiguration& StateHashCalculator::config() const {
+	const config::BlockchainConfiguration& StateHashCalculator::config() const {
 		return m_config;
 	}
 

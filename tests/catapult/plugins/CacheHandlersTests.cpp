@@ -20,7 +20,7 @@
 
 #include "catapult/plugins/CacheHandlers.h"
 #include "tests/test/cache/SimpleCache.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {

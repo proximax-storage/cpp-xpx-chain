@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/validators/NotificationValidator.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"

@@ -19,7 +19,7 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto config = model::NetworkConfiguration::Uninitialized();
 				config.Plugins.emplace(PLUGIN_NAME(contract), utils::ConfigurationBag({{
 					"",
 					{

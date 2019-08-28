@@ -20,7 +20,7 @@
 
 #pragma once
 #include "NamespaceConstants.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/plugins/PluginUtils.h"
 #include "src/config/NamespaceConfiguration.h"
 
@@ -30,20 +30,20 @@ namespace catapult { namespace model {
 	struct NamespaceLifetimeConstraints {
 	public:
 		/// Creates constraints around \a maxDuration and \a gracePeriodDuration.
-		constexpr NamespaceLifetimeConstraints(const model::BlockChainConfiguration& blockChainConfig)
-				: m_blockChainConfig(blockChainConfig)
+		constexpr NamespaceLifetimeConstraints(const model::NetworkConfiguration& networkConfig)
+				: m_networkConfig(networkConfig)
 		{}
 
 	public:
 		/// Maximum lifetime a namespace may have including the grace period.
 		BlockDuration maxNamespaceDuration() {
-			const auto& pluginConfig = m_blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
-			auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(m_blockChainConfig.BlockGenerationTargetTime);
-			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(m_blockChainConfig.BlockGenerationTargetTime);
+			const auto& pluginConfig = m_networkConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
+			auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(m_networkConfig.BlockGenerationTargetTime);
+			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(m_networkConfig.BlockGenerationTargetTime);
 			return BlockDuration{maxDuration.unwrap() + gracePeriodDuration.unwrap()};
 		}
 
 	private:
-		const model::BlockChainConfiguration& m_blockChainConfig;
+		const model::NetworkConfiguration& m_networkConfig;
 	};
 }}

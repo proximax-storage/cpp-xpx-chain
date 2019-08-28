@@ -21,8 +21,8 @@
 #include "src/validators/Validators.h"
 #include "src/config/MosaicConfiguration.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "catapult/model/NetworkConfiguration.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 	namespace {
 		template<typename TKey>
 		auto CreateAndSeedCache(const TKey& key) {
-			auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
@@ -57,9 +57,9 @@ namespace catapult { namespace validators {
 		auto CreateConfig(uint16_t maxMosaics) {
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
 			pluginConfig.MaxMosaicsPerAccount = maxMosaics;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
-			return blockChainConfig;
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			return networkConfig;
 		}
 
 		void RunBalanceTransferTest(ValidationResult expectedResult, uint16_t maxMosaics, UnresolvedMosaicId mosaicId, Amount amount) {

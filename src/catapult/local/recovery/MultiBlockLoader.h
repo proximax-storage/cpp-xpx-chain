@@ -27,7 +27,7 @@ namespace catapult {
 	namespace extensions { struct LocalNodeStateRef; }
 	namespace model {
 		struct Block;
-		struct BlockChainConfiguration;
+		struct NetworkConfiguration;
 	}
 	namespace plugins { class PluginManager; }
 }
@@ -46,7 +46,7 @@ namespace catapult { namespace local {
 	/// At and after the inflection point, an observer created by \a transientObserverFactory is returned.
 	BlockDependentNotificationObserverFactory CreateBlockDependentNotificationObserverFactory(
 			const model::Block& lastBlock,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const NotificationObserverFactory& transientObserverFactory,
 			const NotificationObserverFactory& permanentObserverFactory);
 

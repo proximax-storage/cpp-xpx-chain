@@ -26,7 +26,7 @@
 #include "catapult/extensions/LocalNodeStateRef.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/Block.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/Elements.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/plugins/PluginManager.h"
@@ -39,7 +39,7 @@ namespace catapult { namespace local {
 	namespace {
 		class SkipTransientStatePredicate {
 		public:
-			SkipTransientStatePredicate(const model::Block& lastBlock, const model::BlockChainConfiguration& config)
+			SkipTransientStatePredicate(const model::Block& lastBlock, const model::NetworkConfiguration& config)
 					: m_inflectionTime(DifferenceOrZero(
 							lastBlock.Timestamp.unwrap(),
 							model::CalculateTransactionCacheDuration(config).millis()))
@@ -65,7 +65,7 @@ namespace catapult { namespace local {
 
 	BlockDependentNotificationObserverFactory CreateBlockDependentNotificationObserverFactory(
 			const model::Block& lastBlock,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const NotificationObserverFactory& transientObserverFactory,
 			const NotificationObserverFactory& permanentObserverFactory) {
 		auto predicate = SkipTransientStatePredicate(lastBlock, config);

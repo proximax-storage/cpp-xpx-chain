@@ -9,7 +9,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "src/state/MetadataUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MetadataCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -54,11 +54,11 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
 			pluginConfig.MaxFields = MaxFields;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(networkConfig);
 			PopulateCache(cache, initValues);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateMetadataModificationsValidator(pConfigHolder);
 
 			uint32_t sizeOfBuffer = 0;

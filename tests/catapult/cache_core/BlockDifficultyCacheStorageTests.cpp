@@ -20,7 +20,7 @@
 
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -29,7 +29,7 @@ namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.MaxRollbackBlocks = 100;
 			config.MaxDifficultyBlocks = 745;
 			return config::CreateMockConfigurationHolder(config);

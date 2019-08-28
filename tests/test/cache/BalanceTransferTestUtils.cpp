@@ -52,7 +52,7 @@ namespace catapult { namespace test {
 		cache.commit(Height());
 	}
 
-	cache::CatapultCache CreateCache(const Key& publicKey, const BalanceTransfers& transfers, const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateCache(const Key& publicKey, const BalanceTransfers& transfers, const model::NetworkConfiguration& config) {
 		auto cache = CreateEmptyCatapultCache(config);
 		SetCacheBalances(cache, publicKey, transfers);
 		return cache;

@@ -21,7 +21,7 @@
 #include "src/observers/Observers.h"
 #include "catapult/model/InflationCalculator.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/AccountObserverTestContext.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
@@ -104,7 +104,7 @@ namespace catapult { namespace observers {
 				const model::InflationCalculator& calculator,
 				TAction action) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			config.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
 			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
@@ -486,7 +486,7 @@ namespace catapult { namespace observers {
 		template<typename TMutator>
 		void AssertImproperLink(TMutator mutator) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();

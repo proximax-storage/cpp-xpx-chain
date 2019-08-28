@@ -33,7 +33,7 @@ namespace catapult { namespace harvesting {
 		Impl(
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const chain::ExecutionConfiguration& executionConfig)
 				: m_blockTime(blockTime)
 				, m_pConfigHolder(pConfigHolder)
@@ -72,7 +72,7 @@ namespace catapult { namespace harvesting {
 				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(
 					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
 				if (Amount(0) != surplus)
-					accountStateCache.find(transaction.Signer).get().Balances.credit(config.BlockChain.CurrencyMosaicId, surplus, blockHeader.Height);
+					accountStateCache.find(transaction.Signer).get().Balances.credit(config.Network.CurrencyMosaicId, surplus, blockHeader.Height);
 			}
 
 			// 3. execute block (using zero hash)
@@ -80,11 +80,11 @@ namespace catapult { namespace harvesting {
 				return nullptr;
 
 			// 4. update block fields
-			pBlock->StateHash = config.BlockChain.ShouldEnableVerifiableState
+			pBlock->StateHash = config.Network.ShouldEnableVerifiableState
 					? m_pCacheDelta->calculateStateHash(height()).StateHash
 					: Hash256();
 
-			pBlock->BlockReceiptsHash = config.BlockChain.ShouldEnableVerifiableReceipts
+			pBlock->BlockReceiptsHash = config.Network.ShouldEnableVerifiableReceipts
 					? model::CalculateMerkleHash(*m_blockStatementBuilder.build())
 					: Hash256();
 
@@ -101,9 +101,9 @@ namespace catapult { namespace harvesting {
 		bool process(const Processor& processor) {
 			// 1. prepare state
 			auto catapultState = state::CatapultState();
-			const auto& blockChainConfig = config().BlockChain;
-			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), blockChainConfig.ImportanceGrouping);
-			auto observerState = blockChainConfig.ShouldEnableVerifiableReceipts
+			const auto& networkConfig = config().Network;
+			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), networkConfig.ImportanceGrouping);
+			auto observerState = networkConfig.ShouldEnableVerifiableReceipts
 					? observers::ObserverState(*m_pCacheDelta, catapultState, m_blockStatementBuilder)
 					: observers::ObserverState(*m_pCacheDelta, catapultState);
 
@@ -153,13 +153,13 @@ namespace catapult { namespace harvesting {
 			});
 		}
 
-		const config::CatapultConfiguration& config() {
+		const config::BlockchainConfiguration& config() {
 			return m_pConfigHolder->Config(height());
 		}
 
 	private:
 		Timestamp m_blockTime;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		chain::ExecutionConfiguration m_executionConfig;
 		cache::CatapultCacheDetachableDelta m_cacheDetachableDelta;
 		cache::CatapultCacheDetachedDelta m_cacheDetachedDelta;
@@ -174,7 +174,7 @@ namespace catapult { namespace harvesting {
 	HarvestingUtFacade::HarvestingUtFacade(
 			Timestamp blockTime,
 			const cache::CatapultCache& cache,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const chain::ExecutionConfiguration& executionConfig)
 			: m_pImpl(std::make_unique<Impl>(blockTime, cache, pConfigHolder, executionConfig))
 	{}
@@ -228,7 +228,7 @@ namespace catapult { namespace harvesting {
 
 	HarvestingUtFacadeFactory::HarvestingUtFacadeFactory(
 			const cache::CatapultCache& cache,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const chain::ExecutionConfiguration& executionConfig)
 			: m_cache(cache)
 			, m_pConfigHolder(pConfigHolder)

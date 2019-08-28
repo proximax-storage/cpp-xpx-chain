@@ -40,7 +40,7 @@ namespace catapult { namespace local {
 		class TestContext {
 		public:
 			explicit TestContext(uint32_t numBlocks)
-					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateBlockChainConfiguration()))
+					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateNetworkConfiguration()))
 					, m_cache(m_pPluginManager->createCache())
 					, m_pStorage(mocks::CreateMemoryBlockStorageCache(numBlocks))
 					, m_notifier(m_pPluginManager->config(Height{0}), m_cache, *m_pStorage, *m_pPluginManager)
@@ -59,8 +59,8 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			static model::BlockChainConfiguration CreateBlockChainConfiguration() {
-				return test::CreateCatapultConfigurationWithNemesisPluginExtensions("").BlockChain;
+			static model::NetworkConfiguration CreateNetworkConfiguration() {
+				return test::CreateBlockchainConfigurationWithNemesisPluginExtensions("").Network;
 			}
 
 		private:

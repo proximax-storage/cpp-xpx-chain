@@ -27,7 +27,7 @@
 namespace catapult { namespace validators {
 
 	namespace {
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		template<typename TTraits>
 		class UnlinkAliasedDataConsistencyValidatorTests {

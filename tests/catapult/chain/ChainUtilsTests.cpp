@@ -22,11 +22,11 @@
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/TimeSpan.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace chain {
@@ -139,7 +139,7 @@ namespace catapult { namespace chain {
 		std::unique_ptr<cache::BlockDifficultyCache> SeedBlockDifficultyCache(
 				Height maxHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
-				const model::BlockChainConfiguration& config) {
+				const model::NetworkConfiguration& config) {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pCache = std::make_unique<cache::BlockDifficultyCache>(pConfigHolder);
 			{
@@ -166,7 +166,7 @@ namespace catapult { namespace chain {
 				const utils::TimeSpan& timeBetweenBlocks,
 				uint32_t numBlocks,
 				const cache::BlockDifficultyCache& cache,
-				const model::BlockChainConfiguration& config) {
+				const model::NetworkConfiguration& config) {
 
 			using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
 
@@ -206,8 +206,8 @@ namespace catapult { namespace chain {
 			return blockPointers;
 		}
 
-		model::BlockChainConfiguration CreateConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+		model::NetworkConfiguration CreateConfiguration() {
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.MaxDifficultyBlocks = 60;
 			return config;

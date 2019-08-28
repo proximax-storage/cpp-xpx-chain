@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/TestHarness.h"
@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, CanCreateValidatorContextAroundHeightAndNetworkAndCache) {
 		// Act:
 		auto networkInfo = model::NetworkInfo(static_cast<model::NetworkIdentifier>(0xAD), {}, {});
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		auto cache = test::CreateEmptyCatapultCache(config);
 		auto cacheView = cache.createView();
 		auto readOnlyCache = cacheView.toReadOnly();

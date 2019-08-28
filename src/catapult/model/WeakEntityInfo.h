@@ -20,7 +20,7 @@
 
 #pragma once
 #include "VerifiableEntity.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/Block.h"
 #include "catapult/utils/HexFormatter.h"
 #include <iosfwd>

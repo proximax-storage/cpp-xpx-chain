@@ -11,8 +11,8 @@
 namespace catapult { namespace validators {
 
 #endif
-/// Defines a catapult config validation result with \a DESCRIPTION and \a CODE.
-#define DEFINE_CATAPULT_CONFIG_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, CatapultConfig, DESCRIPTION, CODE, None)
+/// Defines a network config validation result with \a DESCRIPTION and \a CODE.
+#define DEFINE_CATAPULT_CONFIG_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, NetworkConfig, DESCRIPTION, CODE, None)
 
 	/// Validation failed because the signer is not nemesis account.
 	DEFINE_CATAPULT_CONFIG_RESULT(Invalid_Signer, 1);
@@ -35,8 +35,8 @@ namespace catapult { namespace validators {
 	/// Validation failed because the supported entity versions configuration data is malformed.
 	DEFINE_CATAPULT_CONFIG_RESULT(SupportedEntityVersions_Config_Malformed, 7);
 
-	/// Validation failed because the supported entity versions configuration data has no versions of the catapult config transaction.
-	DEFINE_CATAPULT_CONFIG_RESULT(Catapult_Config_Trx_Cannot_Be_Unsupported, 8);
+	/// Validation failed because the supported entity versions configuration data has no versions of the network config transaction.
+	DEFINE_CATAPULT_CONFIG_RESULT(Network_Config_Trx_Cannot_Be_Unsupported, 8);
 
 	/// Validation failed because some plugin config missing.
 	DEFINE_CATAPULT_CONFIG_RESULT(Plugin_Config_Missing, 9);

@@ -23,7 +23,7 @@
 #include "catapult/utils/HexParser.h"
 #include "catapult/utils/StackTimer.h"
 #include "tests/int/stress/test/InputDependentTest.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 
@@ -49,8 +49,8 @@ namespace catapult { namespace cache {
 		}
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
 			config.ImportanceGrouping = 543;
 			config.MinHarvesterBalance = Amount(1000);
 			config.CurrencyMosaicId = MosaicId(0xE329'AD1C'BE7F'C60D);

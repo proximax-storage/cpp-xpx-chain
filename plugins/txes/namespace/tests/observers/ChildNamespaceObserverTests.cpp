@@ -77,7 +77,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateChildNotification(signer, NamespaceId(25), NamespaceId(37));
 
 		// Act: add it
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		RunChildTest(
 				notification,
 				ObserverTestContext(NotifyMode::Commit, Height{444}, config),
@@ -99,7 +99,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateChildNotification(signer, NamespaceId(36), NamespaceId(49));
 
 		// Act: add it
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		RunChildTest(
 				notification,
 				ObserverTestContext(NotifyMode::Commit, Height{444}, config),
@@ -125,7 +125,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateChildNotification(signer, NamespaceId(25), NamespaceId(36));
 
 		// Act: remove it
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		RunChildTest(
 				notification,
 				ObserverTestContext(NotifyMode::Rollback, Height{444}, config),
@@ -151,7 +151,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateChildNotification(signer, NamespaceId(36), NamespaceId(49));
 
 		// Act: remove it
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		RunChildTest(
 				notification,
 				ObserverTestContext(NotifyMode::Rollback, Height{444}, config),

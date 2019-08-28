@@ -34,7 +34,7 @@ namespace catapult { namespace test {
 		/// Creates a test context around \a additionalPlugins and \a configTransform.
 		explicit StateHashDisabledTestContext(
 				NonNemesisTransactionPlugins additionalPlugins = NonNemesisTransactionPlugins::None,
-				const consumer<config::CatapultConfiguration&>& configTransform = [](const auto&) {});
+				const consumer<config::BlockchainConfiguration&>& configTransform = [](const auto&) {});
 
 	public:
 		/// Creates a state hash calculator.
@@ -47,7 +47,7 @@ namespace catapult { namespace test {
 		/// Creates a test context around \a additionalPlugins and \a configTransform.
 		explicit StateHashEnabledTestContext(
 				NonNemesisTransactionPlugins additionalPlugins = NonNemesisTransactionPlugins::None,
-				const consumer<config::CatapultConfiguration&>& configTransform = [](const auto&) {});
+				const consumer<config::BlockchainConfiguration&>& configTransform = [](const auto&) {});
 
 	public:
 		/// Creates a state hash calculator.

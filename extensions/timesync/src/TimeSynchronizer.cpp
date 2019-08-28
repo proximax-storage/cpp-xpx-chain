@@ -39,7 +39,7 @@ namespace catapult { namespace timesync {
 		}
 
 		auto GetTotalChainImportance(extensions::ServiceState& state, const Height& height) {
-			return state.config(height).BlockChain.TotalChainImportance;
+			return state.config(height).Network.TotalChainImportance;
 		}
 	}
 

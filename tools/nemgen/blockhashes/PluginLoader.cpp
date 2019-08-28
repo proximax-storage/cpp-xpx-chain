@@ -19,13 +19,13 @@
 **/
 
 #include "PluginLoader.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/plugins/PluginLoader.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 
 	namespace {
-		plugins::StorageConfiguration CreateStorageConfiguration(const config::CatapultConfiguration& config) {
+		plugins::StorageConfiguration CreateStorageConfiguration(const config::BlockchainConfiguration& config) {
 			plugins::StorageConfiguration storageConfig;
 			storageConfig.PreferCacheDatabase = config.Node.ShouldUseCacheDatabaseStorage;
 			storageConfig.CacheDatabaseDirectory = (boost::filesystem::path(config.User.DataDirectory) / "statedb").generic_string();
@@ -33,7 +33,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		}
 	}
 
-	PluginLoader::PluginLoader(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+	PluginLoader::PluginLoader(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 			: m_pluginManager(pConfigHolder, CreateStorageConfiguration(pConfigHolder->Config()))
 	{}
 
@@ -47,7 +47,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			loadPlugin(pluginName);
 
 		// custom plugins
-		for (const auto& pair : m_pluginManager.configHolder()->Config().BlockChain.Plugins)
+		for (const auto& pair : m_pluginManager.configHolder()->Config().Network.Plugins)
 			loadPlugin(pair.first);
 	}
 

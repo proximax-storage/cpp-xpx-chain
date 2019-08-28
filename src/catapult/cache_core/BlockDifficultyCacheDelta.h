@@ -23,7 +23,7 @@
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlySimpleCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 
 namespace catapult { namespace cache {
@@ -87,7 +87,7 @@ namespace catapult { namespace cache {
 
 	private:
 		BlockDifficultyCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pOrderedDelta;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		Height m_startHeight;
 		deltaset::PruningBoundary<ValueType> m_pruningBoundary;
 	};

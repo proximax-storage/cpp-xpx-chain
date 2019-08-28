@@ -20,7 +20,7 @@
 
 #pragma once
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/state/AccountState.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
@@ -32,14 +32,14 @@ namespace catapult { namespace test {
 	class ObserverTestContextT {
 	public:
 		/// Creates a test context around \a mode, \a height and \a config.
-		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const model::BlockChainConfiguration& config)
+		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const model::NetworkConfiguration& config)
 				: m_cache(TCacheFactory::Create(config))
 				, m_cacheDelta(m_cache.createDelta())
 				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, height, mode, CreateResolverContextXor())
 		{}
 
 		/// Creates a test context around \a mode, \a height and \a config.
-		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const model::BlockChainConfiguration& config, BlockDuration gracePeriodDuration)
+		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const model::NetworkConfiguration& config, BlockDuration gracePeriodDuration)
 				: m_cache(TCacheFactory::Create(config, gracePeriodDuration))
 				, m_cacheDelta(m_cache.createDelta())
 				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, height, mode, CreateResolverContextXor())

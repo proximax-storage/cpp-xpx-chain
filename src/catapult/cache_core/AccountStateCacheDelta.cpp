@@ -64,24 +64,24 @@ namespace catapult { namespace cache {
 			, m_pKeyLookupAdapter(std::move(pKeyLookupAdapter))
 	{}
 
-	model::BlockChainConfiguration BasicAccountStateCacheDelta::blockChainConfig() const {
-		return m_options.ConfigHolderPtr->Config(height()).BlockChain;
+	model::NetworkConfiguration BasicAccountStateCacheDelta::networkConfig() const {
+		return m_options.ConfigHolderPtr->Config(height()).Network;
 	}
 
 	model::NetworkIdentifier BasicAccountStateCacheDelta::networkIdentifier() const {
-		return blockChainConfig().Network.Identifier;
+		return networkConfig().Info.Identifier;
 	}
 
 	uint64_t BasicAccountStateCacheDelta::importanceGrouping() const {
-		return blockChainConfig().ImportanceGrouping;
+		return networkConfig().ImportanceGrouping;
 	}
 
 	MosaicId BasicAccountStateCacheDelta::harvestingMosaicId() const {
-		return blockChainConfig().HarvestingMosaicId;
+		return networkConfig().HarvestingMosaicId;
 	}
 
 	MosaicId BasicAccountStateCacheDelta::currencyMosaicId() const {
-		return blockChainConfig().CurrencyMosaicId;
+		return networkConfig().CurrencyMosaicId;
 	}
 
 	Address BasicAccountStateCacheDelta::getAddress(const Key& publicKey) {
@@ -230,7 +230,7 @@ namespace catapult { namespace cache {
 		auto highValueAddresses = m_highValueAddresses;
 
 		// 2. update for changes
-		auto minBalance = blockChainConfig().MinHarvesterBalance;
+		auto minBalance = networkConfig().MinHarvesterBalance;
 		auto harvestingMosaicId = this->harvestingMosaicId();
 		auto hasHighValue = [minBalance, harvestingMosaicId](const auto& accountState) {
 			return accountState.Balances.get(harvestingMosaicId) >= minBalance;

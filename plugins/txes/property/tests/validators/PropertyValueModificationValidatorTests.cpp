@@ -118,7 +118,7 @@ namespace catapult { namespace validators {
 				TCreateNotification createNotification,
 				TModificationFactory modificationFactory) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			auto cache = test::PropertyCacheFactory::Create(config);
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto values = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numValues);

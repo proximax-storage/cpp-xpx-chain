@@ -83,7 +83,7 @@ namespace catapult { namespace observers {
 
 	namespace {
 		static constexpr auto Default_Namespace_Id = NamespaceId(123);
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		template<typename TTraits, typename TSeedCacheFunc, typename TCheckCacheFunc>
 		void RunTest(

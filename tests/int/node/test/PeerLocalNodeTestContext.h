@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 		explicit PeerLocalNodeTestContext(
 				NodeFlag nodeFlag = NodeFlag::Regular,
 				NonNemesisTransactionPlugins additionalPlugins = NonNemesisTransactionPlugins::None,
-				const consumer<config::CatapultConfiguration&>& configTransform = [](const auto&) {});
+				const consumer<config::BlockchainConfiguration&>& configTransform = [](const auto&) {});
 
 	public:
 		/// Gets the primary (first) local node.
@@ -65,7 +65,7 @@ namespace catapult { namespace test {
 		void waitForHeight(Height height) const;
 
 		/// Prepares a fresh data \a directory and returns corresponding configuration.
-		config::CatapultConfiguration prepareFreshDataDirectory(const std::string& directory) const;
+		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory) const;
 
 	public:
 		/// Asserts that node has a single reader connection.

@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 				const UnresolvedAddress& recipient,
 				UnresolvedMosaicId mosaicId) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			auto cache = test::PropertyCacheFactory::Create(config);
 			PopulateCache<TOperationTraits>(cache, accountAddress, mosaicIds);
 			auto pValidator = CreateMosaicRecipientValidator();

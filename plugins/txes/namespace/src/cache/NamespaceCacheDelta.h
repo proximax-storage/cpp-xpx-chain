@@ -20,7 +20,7 @@
 
 #pragma once
 
-#include <src/catapult/model/BlockChainConfiguration.h>
+#include <src/catapult/model/NetworkConfiguration.h>
 #include "NamespaceBaseSets.h"
 #include "NamespaceCacheMixins.h"
 #include "NamespaceCacheSerializers.h"
@@ -28,7 +28,7 @@
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 
-namespace catapult { namespace config { class LocalNodeConfigurationHolder; } }
+namespace catapult { namespace config { class BlockchainConfigurationHolder; } }
 
 namespace catapult { namespace cache {
 
@@ -103,7 +103,7 @@ namespace catapult { namespace cache {
 		NamespaceCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pHistoryById;
 		NamespaceCacheTypes::NamespaceCacheTypes::FlatMapTypes::BaseSetDeltaPointerType m_pNamespaceById;
 		NamespaceCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRootNamespaceIdsByExpiryHeight;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the namespace cache.

@@ -32,16 +32,16 @@ namespace catapult { namespace test {
 	/// Cache factory for creating a catapult cache composed of all core sub caches.
 	struct CoreSystemCacheFactory {
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config);
+		static cache::CatapultCache Create(const model::NetworkConfiguration& config);
 
 		/// Adds all core sub caches initialized with \a config to \a subCaches.
 		static void CreateSubCaches(
-				const model::BlockChainConfiguration& config,
+				const model::NetworkConfiguration& config,
 				std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches);
 
 		/// Adds all core sub caches initialized with \a config and \a cacheConfig to \a subCaches.
 		static void CreateSubCaches(
-				const model::BlockChainConfiguration& config,
+				const model::NetworkConfiguration& config,
 				const cache::CacheConfiguration& cacheConfig,
 				std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches);
 	};
@@ -68,24 +68,24 @@ namespace catapult { namespace test {
 	}
 
 	/// Creates an empty catapult cache around \a config.
-	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config);
+	cache::CatapultCache CreateEmptyCatapultCache(const model::NetworkConfiguration& config);
 
 	/// Creates an empty catapult cache around \a config and \a cacheConfig.
 	cache::CatapultCache CreateEmptyCatapultCache(
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig);
 
 	/// Creates an empty catapult cache around \a config.
 	template<typename TCacheFactory>
-	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateEmptyCatapultCache(const model::NetworkConfiguration& config) {
 		return TCacheFactory::Create(config);
 	}
 
 	/// Creates a catapult cache with a marker account.
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::BlockChainConfiguration& config);
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::NetworkConfiguration& config);
 
 	/// Creates a catapult cache with a marker account and a specified \a height.
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::BlockChainConfiguration& config);
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::NetworkConfiguration& config);
 
 	/// Adds a marker account to \a cache.
 	void AddMarkerAccount(cache::CatapultCache& cache);

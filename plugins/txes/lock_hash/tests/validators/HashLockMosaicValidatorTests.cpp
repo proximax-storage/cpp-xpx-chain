@@ -19,7 +19,7 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -39,11 +39,11 @@ namespace catapult { namespace validators {
 			auto notification = model::HashLockMosaicNotification<1>(mosaic);
 			auto pluginConfig = config::HashLockConfiguration::Uninitialized();
 			pluginConfig.LockedFundsPerAggregate = requiredBondedAmount;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.CurrencyMosaicId = Currency_Mosaic_Id;
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
-			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.CurrencyMosaicId = Currency_Mosaic_Id;
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
+			auto cache = test::CreateEmptyCatapultCache(networkConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateHashLockMosaicValidator(pConfigHolder);
 
 			// Act:

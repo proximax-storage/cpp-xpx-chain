@@ -21,7 +21,7 @@
 #include "src/config/AggregateConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -40,9 +40,9 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::AggregateConfiguration::Uninitialized();
 			pluginConfig.MaxTransactionsPerAggregate = maxTransactions;
 			pluginConfig.MaxCosignaturesPerAggregate = maxCosignatures;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
-			return blockChainConfig;
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
+			return networkConfig;
 		}
 	}
 

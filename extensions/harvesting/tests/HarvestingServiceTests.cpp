@@ -87,13 +87,13 @@ namespace catapult { namespace harvesting {
 
 		public:
 			void setMinHarvesterBalance(Amount balance) {
-				const_cast<model::BlockChainConfiguration&>(testState().state().config().BlockChain).MinHarvesterBalance = balance;
+				const_cast<model::NetworkConfiguration&>(testState().state().config().Network).MinHarvesterBalance = balance;
 			}
 
 			void enableVerifiableState() {
 				auto& config = testState().state().config();
 				const_cast<bool&>(config.Node.ShouldUseCacheDatabaseStorage) = true;
-				const_cast<bool&>(config.BlockChain.ShouldEnableVerifiableState) = true;
+				const_cast<bool&>(config.Network.ShouldEnableVerifiableState) = true;
 			}
 
 		public:
@@ -196,7 +196,7 @@ namespace catapult { namespace harvesting {
 				const Key& publicKey,
 				Amount balance) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.ImportanceGrouping = Importance_Grouping;
 			auto cache = test::CreateEmptyCatapultCache(config, cacheConfig);

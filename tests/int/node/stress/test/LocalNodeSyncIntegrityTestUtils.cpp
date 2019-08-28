@@ -34,7 +34,7 @@ namespace catapult { namespace test {
 
 	StateHashDisabledTestContext::StateHashDisabledTestContext(
 			NonNemesisTransactionPlugins additionalPlugins,
-			const consumer<config::CatapultConfiguration&>& configTransform)
+			const consumer<config::BlockchainConfiguration&>& configTransform)
 			: PeerLocalNodeTestContext(NodeFlag::Regular, additionalPlugins, configTransform)
 	{}
 
@@ -44,7 +44,7 @@ namespace catapult { namespace test {
 
 	StateHashEnabledTestContext::StateHashEnabledTestContext(
 			NonNemesisTransactionPlugins additionalPlugins,
-			const consumer<config::CatapultConfiguration&>& configTransform)
+			const consumer<config::BlockchainConfiguration&>& configTransform)
 			: PeerLocalNodeTestContext(NodeFlag::Verify_State, additionalPlugins, configTransform)
 			, m_stateHashCalculationDir(State_Hash_Directory) // isolated directory used for state hash calculation
 	{}

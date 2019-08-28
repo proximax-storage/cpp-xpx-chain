@@ -21,7 +21,7 @@
 #include "src/validators/Validators.h"
 #include "catapult/model/VerifiableEntity.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -37,8 +37,8 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t networkIdentifier) {
 			// Arrange:
 			model::EntityNotification<1> notification(static_cast<model::NetworkIdentifier>(networkIdentifier), model::EntityType{0}, 0);
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = Network_Identifier;
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = Network_Identifier;
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateNetworkValidator(pConfigHolder);

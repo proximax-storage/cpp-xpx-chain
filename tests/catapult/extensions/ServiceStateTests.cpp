@@ -24,7 +24,7 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/thread/MultiServicePool.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
@@ -39,7 +39,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateServiceState) {
 		// Arrange:
-		auto config = test::CreateUninitializedCatapultConfiguration();
+		auto config = test::CreateUninitializedBlockchainConfiguration();
 		const_cast<utils::FileSize&>(config.Node.MaxPacketDataSize) = utils::FileSize::FromKilobytes(1234);
 
 		ionet::NodeContainer nodes;

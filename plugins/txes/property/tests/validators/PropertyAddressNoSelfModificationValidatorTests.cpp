@@ -22,7 +22,7 @@
 #include "src/validators/Validators.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/model/Address.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -43,10 +43,10 @@ namespace catapult { namespace validators {
 				const model::PropertyModification<UnresolvedAddress>& modification) {
 			// Arrange:
 			model::ModifyAddressPropertyValueNotification_v1 notification(signer, model::PropertyType::Address, modification);
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Zero;
-			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.Info.Identifier = model::NetworkIdentifier::Zero;
+			auto cache = test::CreateEmptyCatapultCache(networkConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreatePropertyAddressNoSelfModificationValidator(pConfigHolder);
 
 			// Act:
