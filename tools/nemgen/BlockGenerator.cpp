@@ -22,8 +22,8 @@
 #include "NemesisConfiguration.h"
 #include "NemesisExecutionHasher.h"
 #include "TransactionRegistryFactory.h"
-#include "catapult/builders/CatapultConfigBuilder.h"
-#include "catapult/builders/CatapultUpgradeBuilder.h"
+#include "catapult/builders/NetworkConfigBuilder.h"
+#include "catapult/builders/BlockchainUpgradeBuilder.h"
 #include "catapult/builders/MosaicAliasBuilder.h"
 #include "catapult/builders/MosaicDefinitionBuilder.h"
 #include "catapult/builders/MosaicSupplyChangeBuilder.h"
@@ -153,7 +153,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			}
 
 			void addConfig(const std::string& resourcesPath) {
-				builders::CatapultConfigBuilder builder(m_networkIdentifier, m_signer.publicKey());
+				builders::NetworkConfigBuilder builder(m_networkIdentifier, m_signer.publicKey());
 				builder.setApplyHeightDelta(BlockDuration{0});
 				auto resPath = boost::filesystem::path(resourcesPath);
 				builder.setBlockChainConfig((resPath / "resources/config-network.properties").generic_string());
@@ -163,9 +163,9 @@ namespace catapult { namespace tools { namespace nemgen {
 			}
 
 			void addUpgrade() {
-				builders::CatapultUpgradeBuilder builder(m_networkIdentifier, m_signer.publicKey());
+				builders::BlockchainUpgradeBuilder builder(m_networkIdentifier, m_signer.publicKey());
 				builder.setUpgradePeriod(BlockDuration{0});
-				builder.setNewCatapultVersion(version::CatapultVersion);
+				builder.setNewBlockchainVersion(version::BlockchainVersion);
 
 				signAndAdd(builder.build());
 			}

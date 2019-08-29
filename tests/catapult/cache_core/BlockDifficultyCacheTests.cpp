@@ -22,7 +22,7 @@
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include <vector>
 
 namespace catapult { namespace cache {
@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 		}
 
 		auto CreateConfigHolder(uint32_t maxRollbackBlocks = 100) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.MaxRollbackBlocks = maxRollbackBlocks;
 			config.MaxDifficultyBlocks = 200;
 			return config::CreateMockConfigurationHolder(config);

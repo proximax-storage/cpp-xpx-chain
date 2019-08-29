@@ -24,7 +24,7 @@
 #include "FeeUtils.h"
 #include "NotificationSubscriber.h"
 #include "TransactionPlugin.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace model {
 
@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 
 		class BasicNotificationPublisher : public NotificationPublisher {
 		public:
-			BasicNotificationPublisher(const TransactionRegistry& transactionRegistry, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+			BasicNotificationPublisher(const TransactionRegistry& transactionRegistry, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 					: m_transactionRegistry(transactionRegistry)
 					, m_pConfigHolder(pConfigHolder)
 			{}
@@ -139,7 +139,7 @@ namespace catapult { namespace model {
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
 				sub.notify(BalanceDebitNotification<1>(
 					transaction.Signer,
-					model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->ConfigAtHeightOrLatest(height).BlockChain),
+					model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->ConfigAtHeightOrLatest(height).Network),
 					fee)
 				);
 
@@ -153,7 +153,7 @@ namespace catapult { namespace model {
 
 		private:
 			const TransactionRegistry& m_transactionRegistry;
-			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		};
 
 		class CustomNotificationPublisher : public NotificationPublisher {
@@ -183,7 +183,7 @@ namespace catapult { namespace model {
 
 		class AllNotificationPublisher : public NotificationPublisher {
 		public:
-			AllNotificationPublisher(const TransactionRegistry& transactionRegistry, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+			AllNotificationPublisher(const TransactionRegistry& transactionRegistry, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 					: m_basicPublisher(transactionRegistry, pConfigHolder)
 					, m_customPublisher(transactionRegistry)
 			{}
@@ -202,7 +202,7 @@ namespace catapult { namespace model {
 
 	std::unique_ptr<NotificationPublisher> CreateNotificationPublisher(
 			const TransactionRegistry& transactionRegistry,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			PublicationMode mode) {
 		switch (mode) {
 		case PublicationMode::Basic:

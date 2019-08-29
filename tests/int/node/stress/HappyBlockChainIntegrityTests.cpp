@@ -72,15 +72,15 @@ namespace catapult { namespace local {
 			return nodes;
 		}
 
-		void UpdateBlockChainConfiguration(model::BlockChainConfiguration& blockChainConfig) {
-			blockChainConfig.ImportanceGrouping = Max_Rollback_Blocks / 2 + 1;
-			blockChainConfig.MaxRollbackBlocks = Max_Rollback_Blocks;
-			blockChainConfig.MaxDifficultyBlocks = 4;
-			blockChainConfig.GreedDelta = 0.5;
-			blockChainConfig.GreedExponent = 2.0;
+		void UpdateBlockChainConfiguration(model::NetworkConfiguration& networkConfig) {
+			networkConfig.ImportanceGrouping = Max_Rollback_Blocks / 2 + 1;
+			networkConfig.MaxRollbackBlocks = Max_Rollback_Blocks;
+			networkConfig.MaxDifficultyBlocks = 4;
+			networkConfig.GreedDelta = 0.5;
+			networkConfig.GreedExponent = 2.0;
 		}
 
-		void UpdateConfigurationForNode(config::CatapultConfiguration& config, uint32_t id) {
+		void UpdateConfigurationForNode(config::BlockchainConfiguration& config, uint32_t id) {
 			// 1. give each node its own ports
 			auto port = GetPortForNode(id);
 			auto& nodeConfig = const_cast<config::NodeConfiguration&>(config.Node);
@@ -90,7 +90,7 @@ namespace catapult { namespace local {
 			nodeConfig.FeeInterestDenominator = 2;
 
 			// 2. specify custom network settings
-			UpdateBlockChainConfiguration(const_cast<model::BlockChainConfiguration&>(config.BlockChain));
+			UpdateBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(config.Network));
 
 			// 3. give each node its own key
 			auto& userConfig = const_cast<config::UserConfiguration&>(config.User);
@@ -146,10 +146,10 @@ namespace catapult { namespace local {
 				transactionsBuilder.addTransfer(0, recipientId, Amount(1'000'000));
 			}
 
-			auto blockChainConfig = test::CreatePrototypicalBlockChainConfiguration();
-			UpdateBlockChainConfiguration(blockChainConfig);
+			auto networkConfig = test::CreatePrototypicalBlockChainConfiguration();
+			UpdateBlockChainConfiguration(networkConfig);
 
-			test::BlockChainBuilder builder(accounts, stateHashCalculator, blockChainConfig, resourcesPath);
+			test::BlockChainBuilder builder(accounts, stateHashCalculator, networkConfig, resourcesPath);
 			builder.setBlockTimeInterval(blockTimeInterval);
 			builder.setBlockReceiptsHashCalculator(blockReceiptsHashCalculator);
 			auto blocks = builder.asBlockChain(transactionsBuilder);

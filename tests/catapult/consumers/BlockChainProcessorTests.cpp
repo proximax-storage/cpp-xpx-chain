@@ -198,13 +198,13 @@ namespace catapult { namespace consumers {
 
 		// region ProcessorTestContext
 
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		struct ProcessorTestContext {
 		public:
 			explicit ProcessorTestContext(ReceiptValidationMode receiptValidationMode = ReceiptValidationMode::Disabled)
 					: BlockHitPredicateFactory(BlockHitPredicate) {
-				auto& config = const_cast<model::BlockChainConfiguration&>(ServiceState.state().config(Height{0}).BlockChain);
+				auto& config = const_cast<model::NetworkConfiguration&>(ServiceState.state().config(Height{0}).Network);
 				config.ShouldEnableVerifiableReceipts = (receiptValidationMode == ReceiptValidationMode::Enabled);
 				Processor = CreateBlockChainProcessor(
 						[this](const auto& cache) {

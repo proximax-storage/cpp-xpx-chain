@@ -28,7 +28,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
@@ -49,7 +49,7 @@ namespace catapult { namespace consumers {
 		constexpr model::ImportanceHeight Initial_Last_Recalculation_Height(1234);
 		constexpr model::ImportanceHeight Modified_Last_Recalculation_Height(7777);
 		const Key Sentinel_Processor_Public_Key = test::GenerateRandomByteArray<Key>();
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		constexpr model::ImportanceHeight AddImportanceHeight(model::ImportanceHeight lhs, model::ImportanceHeight::ValueType rhs) {
 			return model::ImportanceHeight(lhs.unwrap() + rhs);
@@ -397,7 +397,7 @@ namespace catapult { namespace consumers {
 				handlers.CommitStep = [this](auto step) {
 					return CommitStep(step);
 				};
-				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto config = model::NetworkConfiguration::Uninitialized();
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
 				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 

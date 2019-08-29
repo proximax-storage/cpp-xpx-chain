@@ -36,7 +36,7 @@ namespace catapult {
 		template<typename TCache, typename TCacheDelta, typename TKey>
 		class ReadOnlySimpleCache;
 	}
-	namespace config { class LocalNodeConfigurationHolder; }
+	namespace config { class BlockchainConfigurationHolder; }
 }
 
 namespace catapult { namespace cache {
@@ -70,8 +70,8 @@ namespace catapult { namespace cache {
 
 		/// Custom sub view options.
 		struct Options {
-			/// Catapult configuration holder.
-			std::shared_ptr<config::LocalNodeConfigurationHolder> ConfigHolderPtr;
+			/// Blockchain configuration holder.
+			std::shared_ptr<config::BlockchainConfigurationHolder> ConfigHolderPtr;
 		};
 	};
 }}

@@ -20,7 +20,7 @@
 
 #include "partialtransaction/src/chain/JointValidator.h"
 #include "catapult/plugins/PluginManager.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
@@ -40,9 +40,9 @@ namespace catapult { namespace chain {
 
 		enum class FailureMode { Default, Suppress };
 
-		model::BlockChainConfiguration CreateBlockChainConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = Network_Identifier;
+		model::NetworkConfiguration CreateNetworkConfiguration() {
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = Network_Identifier;
 			return config;
 		}
 
@@ -60,8 +60,8 @@ namespace catapult { namespace chain {
 					, m_statefulName(statefulName)
 					, m_statelessResult(ValidationResult::Success)
 					, m_statefulResult(ValidationResult::Success)
-					, m_pConfigHolder(config::CreateMockConfigurationHolder(CreateBlockChainConfiguration()))
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config().BlockChain))
+					, m_pConfigHolder(config::CreateMockConfigurationHolder(CreateNetworkConfiguration()))
+					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config().Network))
 					, m_pluginManager(m_pConfigHolder, plugins::StorageConfiguration()) {
 				// set custom cache height
 				auto cacheDelta = m_cache.createDelta();
@@ -158,7 +158,7 @@ namespace catapult { namespace chain {
 			ValidationResult m_statelessResult;
 			ValidationResult m_statefulResult;
 
-			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 			cache::CatapultCache m_cache;
 			plugins::PluginManager m_pluginManager;
 

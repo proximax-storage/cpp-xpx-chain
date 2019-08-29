@@ -19,7 +19,7 @@
 **/
 
 #include "catapult/observers/NotificationObserverAdapter.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
@@ -62,7 +62,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ExtractsAndForwardsNotificationsFromEntity) {
 		// Arrange:
 		RunTest([](const auto& adapter, const auto& observer) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 
 			// Act:
@@ -94,7 +94,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ForwardsObserverContexts) {
 		// Arrange:
 		RunTest([](const auto& adapter, const auto& observer) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 
 			// Act:
@@ -119,7 +119,7 @@ namespace catapult { namespace observers {
 		NotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 		auto pTransaction = mocks::CreateMockTransaction(0);
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 
 		// Act:

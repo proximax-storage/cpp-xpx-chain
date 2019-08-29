@@ -1,0 +1,29 @@
+/**
+*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#pragma once
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
+
+namespace catapult { namespace cache { class CatapultCache; } }
+
+namespace catapult { namespace config {
+
+	class MockBlockchainConfigurationHolder : public BlockchainConfigurationHolder {
+	public:
+		MockBlockchainConfigurationHolder();
+		MockBlockchainConfigurationHolder(const model::NetworkConfiguration& config);
+		MockBlockchainConfigurationHolder(const BlockchainConfiguration& config);
+
+	public:
+		BlockchainConfiguration& Config(const Height&) override;
+		BlockchainConfiguration& Config() override;
+		BlockchainConfiguration& ConfigAtHeightOrLatest(const Height&) override;
+	};
+
+	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder();
+	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder(const model::NetworkConfiguration& config);
+	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder(const BlockchainConfiguration& config);
+}}

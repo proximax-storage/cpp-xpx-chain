@@ -30,7 +30,7 @@
 #include "catapult/io/FileBlockStorage.h"
 #include "catapult/utils/Casting.h"
 
-namespace catapult { namespace config { class CatapultConfiguration; } }
+namespace catapult { namespace config { class BlockchainConfiguration; } }
 
 namespace catapult { namespace subscribers {
 
@@ -38,7 +38,7 @@ namespace catapult { namespace subscribers {
 	class SubscriptionManager {
 	public:
 		/// Creates a new subscription manager around \a config.
-		explicit SubscriptionManager(const config::CatapultConfiguration& config);
+		explicit SubscriptionManager(const config::BlockchainConfiguration& config);
 
 	public:
 		/// Gets the underlying file storage.

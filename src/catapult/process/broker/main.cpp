@@ -25,9 +25,9 @@
 namespace {
 	constexpr auto Process_Name = "broker";
 
-	void OptimizeConfigurationForBroker(catapult::config::CatapultConfiguration& config) {
+	void OptimizeConfigurationForBroker(catapult::config::BlockchainConfiguration& config) {
 		// fixup config for broker-specific optimizations
-		const_cast<bool&>(config.BlockChain.ShouldEnableVerifiableState) = false;
+		const_cast<bool&>(config.Network.ShouldEnableVerifiableState) = false;
 
 		const_cast<bool&>(config.Node.ShouldUseSingleThreadPool) = false;
 		const_cast<bool&>(config.Node.ShouldUseCacheDatabaseStorage) = false;
@@ -39,7 +39,7 @@ int main(int argc, const char** argv) {
 	return process::ProcessMain(argc, argv, Process_Name, [argc, argv](const auto& pConfigHolder, const auto&) {
 		// create bootstrapper
 		OptimizeConfigurationForBroker(pConfigHolder->Config());
-		auto resourcesPath = config::LocalNodeConfigurationHolder::GetResourcesPath(argc, argv).generic_string();
+		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(argc, argv).generic_string();
 		auto disposition = extensions::ProcessDisposition::Production;
 		auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(pConfigHolder, resourcesPath, disposition, Process_Name);
 

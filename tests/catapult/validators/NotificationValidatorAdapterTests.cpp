@@ -19,7 +19,7 @@
 **/
 
 #include "catapult/validators/NotificationValidatorAdapter.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

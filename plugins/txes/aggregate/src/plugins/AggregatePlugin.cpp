@@ -23,7 +23,7 @@
 #include "src/model/AggregateEntityType.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 
 namespace catapult { namespace plugins {
 

@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include <random>
 
@@ -27,11 +27,11 @@ namespace catapult { namespace model { struct Block; } }
 
 namespace catapult { namespace test {
 
-	/// Creates a catapult configuration around \a maxDifficultyBlocks and \a dataDirectory.
-	config::CatapultConfiguration CreateFileChainCatapultConfiguration(uint32_t maxDifficultyBlocks, const std::string& dataDirectory);
+	/// Creates a blockchain configuration around \a maxDifficultyBlocks and \a dataDirectory.
+	config::BlockchainConfiguration CreateFileChainBlockchainConfiguration(uint32_t maxDifficultyBlocks, const std::string& dataDirectory);
 
-	/// Creates a state hash enabled catapult configuration around \a dataDirectory.
-	config::CatapultConfiguration CreateStateHashEnabledCatapultConfiguration(const std::string& dataDirectory);
+	/// Creates a state hash enabled blockchain configuration around \a dataDirectory.
+	config::BlockchainConfiguration CreateStateHashEnabledBlockchainConfiguration(const std::string& dataDirectory);
 
 	/// Returns test nemesis block key pairs.
 	std::vector<crypto::KeyPair> GetNemesisKeyPairs();

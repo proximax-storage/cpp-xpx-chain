@@ -22,7 +22,7 @@
 #include "catapult/utils/ConfigurationBag.h"
 #include "tests/TestHarness.h"
 
-namespace catapult { namespace model { struct BlockChainConfiguration; } }
+namespace catapult { namespace model { struct NetworkConfiguration; } }
 
 namespace catapult { namespace test {
 

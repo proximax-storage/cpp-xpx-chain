@@ -20,7 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -53,7 +53,7 @@ namespace catapult { namespace validators {
 			auto mainAccountKey = test::GenerateRandomByteArray<Key>();
 			auto remoteAccountKey = test::GenerateRandomByteArray<Key>();
 
-			auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 			AddLink(cache, mainAccountKey, remoteAccountKey, accountType);
 
 			auto pValidator = CreateAccountLinkAvailabilityValidator();
@@ -128,7 +128,7 @@ namespace catapult { namespace validators {
 		auto mainAccountKey = test::GenerateRandomByteArray<Key>();
 		auto remoteAccountKey = test::GenerateRandomByteArray<Key>();
 
-		auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 		AddLink(cache, mainAccountKey, remoteAccountKey, state::AccountType::Main);
 
 		// - the notification remote account key does not match the state remote account key

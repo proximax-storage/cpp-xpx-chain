@@ -27,7 +27,7 @@
 namespace catapult { namespace extensions {
 
 	ProcessBootstrapper::ProcessBootstrapper(
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const std::string& resourcesPath,
 			ProcessDisposition disposition,
 			const std::string& servicePoolName)
@@ -44,15 +44,15 @@ namespace catapult { namespace extensions {
 			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config()))
 	{}
 
-	const config::CatapultConfiguration& ProcessBootstrapper::config(const Height& height) const {
+	const config::BlockchainConfiguration& ProcessBootstrapper::config(const Height& height) const {
 		return m_pConfigHolder->Config(height);
 	}
 
-	const config::CatapultConfiguration& ProcessBootstrapper::config() const {
+	const config::BlockchainConfiguration& ProcessBootstrapper::config() const {
 		return m_pConfigHolder->Config();
 	}
 
-	const std::shared_ptr<config::LocalNodeConfigurationHolder>& ProcessBootstrapper::configHolder() const {
+	const std::shared_ptr<config::BlockchainConfigurationHolder>& ProcessBootstrapper::configHolder() const {
 		return m_pConfigHolder;
 	}
 
@@ -123,7 +123,7 @@ namespace catapult { namespace extensions {
 	}
 
 	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path) {
-		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config().BlockChain.Network.Identifier);
+		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config().Network.Info.Identifier);
 		bootstrapper.addStaticNodes(nodes);
 	}
 }}

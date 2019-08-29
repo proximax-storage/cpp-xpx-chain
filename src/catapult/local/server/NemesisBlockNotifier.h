@@ -28,7 +28,7 @@ namespace catapult {
 		class BlockStorageCache;
 	}
 	namespace model {
-		struct BlockChainConfiguration;
+		struct NetworkConfiguration;
 		struct BlockElement;
 	}
 	namespace plugins { class PluginManager; }
@@ -42,7 +42,7 @@ namespace catapult { namespace local {
 	public:
 		/// Creates a notifier around \a config, \a cache, \a storage and \a pluginManager.
 		NemesisBlockNotifier(
-				const model::BlockChainConfiguration& config,
+				const model::NetworkConfiguration& config,
 				const cache::CatapultCache& cache,
 				const io::BlockStorageCache& storage,
 				const plugins::PluginManager& pluginManager);
@@ -58,7 +58,7 @@ namespace catapult { namespace local {
 		void raise(const consumer<model::BlockElement>& action);
 
 	private:
-		const model::BlockChainConfiguration& m_config;
+		const model::NetworkConfiguration& m_config;
 		const cache::CatapultCache& m_cache;
 		const io::BlockStorageCache& m_storage;
 		const plugins::PluginManager& m_pluginManager;

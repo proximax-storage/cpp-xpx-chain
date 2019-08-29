@@ -20,7 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 		constexpr uint8_t Max_Entity_Version = 77;
 		constexpr auto Entity_Type = model::EntityType{1};
 
-		auto CreateLocalNodeConfigurationHolder() {
+		auto CreateBlockchainConfigurationHolder() {
 			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			for (uint16_t i = Min_Entity_Version; i <= Max_Entity_Version; ++i)
 				const_cast<config::SupportedEntityVersions&>(pConfigHolder->Config().SupportedEntityVersions)[Entity_Type].emplace(i);
@@ -44,14 +44,14 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t version) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
 			auto context = ValidatorContext(Height(123), Timestamp(8888), model::NetworkInfo(), resolverContext, readOnlyCache);
 			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, Entity_Type, version);
-			auto pValidator = CreateEntityVersionValidator(CreateLocalNodeConfigurationHolder());
+			auto pValidator = CreateEntityVersionValidator(CreateBlockchainConfigurationHolder());
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);

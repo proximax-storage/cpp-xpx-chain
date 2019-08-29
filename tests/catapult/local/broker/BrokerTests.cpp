@@ -22,7 +22,7 @@
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/subscribers/SubscriberOperationTypes.h"
 #include "tests/catapult/local/broker/test/BrokerTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/MessageIngestionTestContext.h"
 #include "tests/TestHarness.h"
@@ -41,7 +41,7 @@ namespace catapult { namespace local {
 
 	public:
 		void boot() {
-			auto config = test::CreatePrototypicalCatapultConfiguration(dataDirectory().rootDir().str());
+			auto config = test::CreatePrototypicalBlockchainConfiguration(dataDirectory().rootDir().str());
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
 					pConfigHolder,

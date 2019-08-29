@@ -19,13 +19,13 @@
 **/
 
 #pragma once
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include <string>
 
 namespace catapult { namespace test {
 
 	/// Adds configuration for all plugins required by the default nemesis block to \a config.
-	void AddNemesisPluginExtensions(model::BlockChainConfiguration& config);
+	void AddNemesisPluginExtensions(model::NetworkConfiguration& config);
 
 	/// Adds configuration for all extensions required by api nodes to \a config.
 	void AddApiPluginExtensions(config::ExtensionsConfiguration& config);
@@ -39,7 +39,7 @@ namespace catapult { namespace test {
 	/// Adds configuration for all extensions required by recovery process to \a config.
 	void AddRecoveryPluginExtensions(config::ExtensionsConfiguration& config);
 
-	/// Creates a test catapult configuration with a storage in the specified directory (\a dataDirectory)
+	/// Creates a test blockchain configuration with a storage in the specified directory (\a dataDirectory)
 	/// that includes configuration for all plugins required by the default nemesis block.
-	config::CatapultConfiguration CreateCatapultConfigurationWithNemesisPluginExtensions(const std::string& dataDirectory);
+	config::BlockchainConfiguration CreateBlockchainConfigurationWithNemesisPluginExtensions(const std::string& dataDirectory);
 }}

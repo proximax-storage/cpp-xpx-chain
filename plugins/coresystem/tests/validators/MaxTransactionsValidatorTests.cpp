@@ -20,7 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = test::CreateBlockNotification(signer);
 			notification.NumTransactions = numTransactions;
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.MaxTransactionsPerBlock = Max_Transactions;
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);

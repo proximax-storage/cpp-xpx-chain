@@ -22,7 +22,7 @@
 #include "partialtransaction/src/chain/PtValidator.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/utils/MemoryUtils.h"
@@ -326,7 +326,7 @@ namespace catapult { namespace chain {
 					, m_pUniqueValidator(std::make_unique<MockPtValidator>())
 					, m_pValidator(m_pUniqueValidator.get())
 					, m_pPool(test::CreateStartedIoThreadPool())
-					, m_cache(test::CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized()))
+					, m_cache(test::CreateEmptyCatapultCache(model::NetworkConfiguration::Uninitialized()))
 					, m_pUpdater(std::make_unique<PtUpdater>(
 							m_cache,
 							m_transactionsCache,

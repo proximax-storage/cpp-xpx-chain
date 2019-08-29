@@ -22,7 +22,7 @@
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -33,7 +33,7 @@ namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateConfigHolder(uint32_t retentionTimeHours) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			config.MaxRollbackBlocks = retentionTimeHours * 4 / 5;
 			return config::CreateMockConfigurationHolder(config);

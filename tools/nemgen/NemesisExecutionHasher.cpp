@@ -20,7 +20,7 @@
 
 #include "NemesisExecutionHasher.h"
 #include "blockhashes/NemesisBlockHashesCalculator.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/Elements.h"
 #include "catapult/utils/HexFormatter.h"
 #include <boost/filesystem.hpp>
@@ -59,9 +59,9 @@ namespace catapult { namespace tools { namespace nemgen {
 
 	NemesisExecutionHashesDescriptor CalculateAndLogNemesisExecutionHashes(
 			const model::BlockElement& blockElement,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			CacheDatabaseCleanupMode databaseCleanupMode) {
-		if (!pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage || !pConfigHolder->Config().BlockChain.ShouldEnableVerifiableState)
+		if (!pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage || !pConfigHolder->Config().Network.ShouldEnableVerifiableState)
 			CATAPULT_LOG(warning) << "cache database storage and verifiable state must both be enabled to calculate state hash";
 
 		// in purge mode, clean up the data directory after each execution

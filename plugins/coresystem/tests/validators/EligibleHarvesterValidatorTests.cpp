@@ -21,10 +21,10 @@
 #include "src/validators/Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Block.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -39,9 +39,9 @@ namespace catapult { namespace validators {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 		constexpr auto Importance_Grouping = 234u;
 
-		auto CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
-			const_cast<model::BlockChainConfiguration&>(config).HarvestingMosaicId = Harvesting_Mosaic_Id;
-			const_cast<model::BlockChainConfiguration&>(config).ImportanceGrouping = Importance_Grouping;
+		auto CreateEmptyCatapultCache(const model::NetworkConfiguration& config) {
+			const_cast<model::NetworkConfiguration&>(config).HarvestingMosaicId = Harvesting_Mosaic_Id;
+			const_cast<model::NetworkConfiguration&>(config).ImportanceGrouping = Importance_Grouping;
 			return test::CreateEmptyCatapultCache(config);
 		}
 
@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureIfAccountIsUnknown) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		config.MinHarvesterBalance = Amount(1234);
 		auto cache = CreateEmptyCatapultCache(config);
 		auto key = test::GenerateRandomByteArray<Key>();
@@ -85,7 +85,7 @@ namespace catapult { namespace validators {
 				int64_t minBalanceDelta,
 				Height blockHeight) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.MinHarvesterBalance = Amount(1234);
 			auto cache = CreateEmptyCatapultCache(config);
 			auto key = test::GenerateRandomByteArray<Key>();

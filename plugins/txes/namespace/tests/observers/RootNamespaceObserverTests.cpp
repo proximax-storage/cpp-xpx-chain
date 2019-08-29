@@ -33,7 +33,7 @@ namespace catapult { namespace observers {
 	namespace {
 		constexpr auto Grace_Period_Duration = 7u;
 
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		using ObserverTestContext = test::ObserverTestContextT<test::NamespaceCacheFactory>;
 

@@ -22,12 +22,12 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/TestHarness.h"
 
@@ -99,11 +99,11 @@ namespace catapult { namespace sync {
 			uint32_t MaxBlockSize;
 		};
 
-		config::CatapultConfiguration CreateCatapultConfigurationFromSettings(const ThrottleTestSettings& settings) {
-			test::MutableCatapultConfiguration config;
-			config.BlockChain.TotalChainImportance = Importance(1'000'000'000);
-			config.BlockChain.MaxTransactionsPerBlock = settings.MaxBlockSize;
-			config.BlockChain.ImportanceGrouping = 1;
+		config::BlockchainConfiguration CreateBlockchainConfigurationFromSettings(const ThrottleTestSettings& settings) {
+			test::MutableBlockchainConfiguration config;
+			config.Network.TotalChainImportance = Importance(1'000'000'000);
+			config.Network.MaxTransactionsPerBlock = settings.MaxBlockSize;
+			config.Network.ImportanceGrouping = 1;
 
 			config.Node.ShouldEnableTransactionSpamThrottling = settings.ShouldEnableTransactionSpamThrottling;
 			config.Node.TransactionSpamThrottlingMaxBoostFee = Amount(10'000'000);
@@ -123,10 +123,10 @@ namespace catapult { namespace sync {
 				uint32_t cacheSize,
 				model::EntityType transactionType = Normal_Transaction_Type) {
 			// Arrange:
-			auto config = CreateCatapultConfigurationFromSettings(settings);
+			auto config = CreateBlockchainConfigurationFromSettings(settings);
 
 			// - create a read only catapult cache (importance grouping needs to be nonzero)
-			auto catapultCache = test::CreateEmptyCatapultCache(config.BlockChain);
+			auto catapultCache = test::CreateEmptyCatapultCache(config.Network);
 			auto catapultCacheView = catapultCache.createView();
 			auto readOnlyCatapultCache = catapultCacheView.toReadOnly();
 

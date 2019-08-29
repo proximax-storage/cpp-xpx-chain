@@ -37,7 +37,7 @@ namespace catapult { namespace chain {
 	Difficulty CalculateDifficulty(
 			const cache::DifficultyInfoRange& difficultyInfos,
 			const state::BlockDifficultyInfo& nextBlockInfo,
-			const model::BlockChainConfiguration& config) {
+			const model::NetworkConfiguration& config) {
 		// note that difficultyInfos is sorted by both heights and timestamps, so the first info has the smallest
 		// height and earliest timestamp and the last info has the largest height and latest timestamp
 		size_t historySize = std::distance(difficultyInfos.begin(), difficultyInfos.end());
@@ -88,13 +88,13 @@ namespace catapult { namespace chain {
 		Difficulty CalculateDifficulty(
 				const cache::BlockDifficultyCacheView& view,
 				const state::BlockDifficultyInfo& nextBlockInfo,
-				const model::BlockChainConfiguration& config) {
+				const model::NetworkConfiguration& config) {
 			auto infos = view.difficultyInfos(nextBlockInfo.BlockHeight - Height(1), config.MaxDifficultyBlocks);
 			return chain::CalculateDifficulty(infos, nextBlockInfo, config);
 		}
 	}
 
-	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache, const state::BlockDifficultyInfo& nextBlockInfo, const model::BlockChainConfiguration& config) {
+	Difficulty CalculateDifficulty(const cache::BlockDifficultyCache& cache, const state::BlockDifficultyInfo& nextBlockInfo, const model::NetworkConfiguration& config) {
 		auto view = cache.createView(nextBlockInfo.BlockHeight);
 		return CalculateDifficulty(*view, nextBlockInfo, config);
 	}
@@ -102,7 +102,7 @@ namespace catapult { namespace chain {
 	bool TryCalculateDifficulty(
 			const cache::BlockDifficultyCache& cache,
 			const state::BlockDifficultyInfo& nextBlockInfo,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			Difficulty& difficulty) {
 		auto view = cache.createView(config::HEIGHT_OF_LATEST_CONFIG);
 		if (!view->contains(state::BlockDifficultyInfo(nextBlockInfo.BlockHeight - Height(1))))

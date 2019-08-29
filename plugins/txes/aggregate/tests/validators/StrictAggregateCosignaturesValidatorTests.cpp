@@ -21,7 +21,7 @@
 #include "src/config/AggregateConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -54,10 +54,10 @@ namespace catapult { namespace validators {
 
 			auto pluginConfig = config::AggregateConfiguration::Uninitialized();
 			pluginConfig.EnableStrictCosignatureCheck = true;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
-			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
+			auto cache = test::CreateEmptyCatapultCache(networkConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateStrictAggregateCosignaturesValidator(pConfigHolder);
 
 			// Act:

@@ -42,7 +42,7 @@ namespace catapult { namespace handlers {
 
 		void EnableVerifiableState(test::ServiceTestState& serviceState) {
 			auto state = serviceState.state();
-			const_cast<bool&>(state.pluginManager().configHolder()->Config(state.cache().height()).BlockChain.ShouldEnableVerifiableState) = true;
+			const_cast<bool&>(state.pluginManager().configHolder()->Config(state.cache().height()).Network.ShouldEnableVerifiableState) = true;
 		}
 	}
 

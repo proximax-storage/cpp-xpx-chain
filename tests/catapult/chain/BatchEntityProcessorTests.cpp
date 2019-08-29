@@ -32,9 +32,9 @@ namespace catapult { namespace chain {
 	namespace {
 		class ProcessorTestContext {
 		public:
-			ProcessorTestContext(const model::BlockChainConfiguration& blockChainConfig)
+			ProcessorTestContext(const model::NetworkConfiguration& networkConfig)
 				: m_processor(CreateBatchEntityProcessor(m_executionConfig.Config))
-				, m_blockChainConfig(blockChainConfig)
+				, m_networkConfig(networkConfig)
 			{}
 
 		public:
@@ -48,7 +48,7 @@ namespace catapult { namespace chain {
 
 		public:
 			ValidationResult process(Height height, Timestamp timestamp, const model::WeakEntityInfos& entityInfos) {
-				auto cache = test::CreateCatapultCacheWithMarkerAccount(m_blockChainConfig);
+				auto cache = test::CreateCatapultCacheWithMarkerAccount(m_networkConfig);
 				auto delta = cache.createDelta();
 				auto observerState = observers::ObserverState(delta, m_state);
 				return m_processor(height, timestamp, entityInfos, observerState);
@@ -155,7 +155,7 @@ namespace catapult { namespace chain {
 			test::MockExecutionConfiguration m_executionConfig;
 			state::CatapultState m_state;
 			BatchEntityProcessor m_processor;
-			const model::BlockChainConfiguration& m_blockChainConfig;
+			const model::NetworkConfiguration& m_networkConfig;
 		};
 
 		model::WeakEntityInfos ExtractEntityInfosFromBlock(const model::Block& block) {
@@ -177,7 +177,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanProcessZeroEntities) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		ProcessorTestContext context{config};
 		model::WeakEntityInfos entityInfos;
 
@@ -191,7 +191,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanProcessSingleEntity) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		ProcessorTestContext context{config};
 		auto pBlock = test::GenerateBlockWithTransactions(0);
 		auto entityInfos = ExtractEntityInfosFromBlock(*pBlock);
@@ -208,7 +208,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanProcessMultipleEntities) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		ProcessorTestContext context{config};
 		auto pBlock = test::GenerateBlockWithTransactions(3);
 		auto entityInfos = ExtractEntityInfosFromBlock(*pBlock);
@@ -232,7 +232,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, CanReuseProcessor) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		ProcessorTestContext context{config};
 		auto pBlock1 = test::GenerateBlockWithTransactions(0);
 		auto pBlock2 = test::GenerateBlockWithTransactions(0);
@@ -261,7 +261,7 @@ namespace catapult { namespace chain {
 
 	SHORT_CIRCUIT_TRAITS_BASED_TEST(ExecuteShortCircuitsOnSingleEntityStatefulValidation) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		ProcessorTestContext context{config};
 		context.setValidationResult(TResult, 2);
 		auto pBlock = test::GenerateBlockWithTransactions(3);

@@ -25,7 +25,7 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/BlockExecutor.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/NotificationPublisher.h"
@@ -155,7 +155,7 @@ namespace catapult { namespace extensions {
 		auto pNemesisBlockElement = storageView.loadBlockElement(Height(1));
 
 		// 2. execute the nemesis block
-		execute(stateRef.Config.BlockChain, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
+		execute(stateRef.Config.Network, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
 	}
 
 	void NemesisBlockLoader::executeAndCommit(const LocalNodeStateRef& stateRef, StateHashVerification stateHashVerification) {
@@ -166,7 +166,7 @@ namespace catapult { namespace extensions {
 		stateRef.Cache.commit(Height(1));
 	}
 
-	void NemesisBlockLoader::execute(const model::BlockChainConfiguration& config, const model::BlockElement& nemesisBlockElement) {
+	void NemesisBlockLoader::execute(const model::NetworkConfiguration& config, const model::BlockElement& nemesisBlockElement) {
 		auto catapultState = state::CatapultState();
 		execute(config, nemesisBlockElement, catapultState, StateHashVerification::Enabled, Verbosity::Off);
 	}
@@ -194,7 +194,7 @@ namespace catapult { namespace extensions {
 	}
 
 	void NemesisBlockLoader::execute(
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const model::BlockElement& nemesisBlockElement,
 			state::CatapultState& catapultState,
 			StateHashVerification stateHashVerification,
@@ -203,7 +203,7 @@ namespace catapult { namespace extensions {
 		if (Verbosity::On == verbosity)
 			LogNemesisBlockInfo(nemesisBlockElement);
 
-		CheckNemesisBlockInfo(nemesisBlockElement, config.Network);
+		CheckNemesisBlockInfo(nemesisBlockElement, config.Info);
 		CheckNemesisBlockTransactionTypes(nemesisBlockElement.Block, m_pluginManager.transactionRegistry());
 		CheckNemesisBlockFeeMultiplier(nemesisBlockElement.Block);
 

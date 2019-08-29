@@ -22,7 +22,7 @@
 #include "src/config/AggregateConfiguration.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/plugins/PluginUtils.h"
@@ -41,7 +41,7 @@ namespace catapult { namespace plugins {
 			AggregateTransactionPlugin(
 				const TransactionRegistry& transactionRegistry,
 				model::EntityType transactionType,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 					: m_transactionRegistry(transactionRegistry)
 					, m_transactionType(transactionType)
 					, m_pConfigHolder(pConfigHolder)
@@ -54,8 +54,8 @@ namespace catapult { namespace plugins {
 
 			TransactionAttributes attributes(const Height& height) const override {
 				auto version = AggregateTransaction::Current_Version;
-				const model::BlockChainConfiguration& blockChainConfig = m_pConfigHolder->ConfigAtHeightOrLatest(height).BlockChain;
-				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
+				const model::NetworkConfiguration& networkConfig = m_pConfigHolder->ConfigAtHeightOrLatest(height).Network;
+				const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
 				return { version, version, pluginConfig.MaxBondedTransactionLifetime };
 			}
 
@@ -168,14 +168,14 @@ namespace catapult { namespace plugins {
 		private:
 			const TransactionRegistry& m_transactionRegistry;
 			model::EntityType m_transactionType;
-			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		};
 	}
 
 	std::unique_ptr<TransactionPlugin> CreateAggregateTransactionPlugin(
 			const TransactionRegistry& transactionRegistry,
 			model::EntityType transactionType,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType, pConfigHolder);
 	}
 }}

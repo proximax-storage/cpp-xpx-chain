@@ -30,16 +30,16 @@
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/io/IndexFile.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/LocalNodeTestState.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
 
@@ -172,10 +172,10 @@ namespace catapult { namespace extensions {
 		// Arrange: seed and save the cache state (real plugin manager is needed to execute nemesis)
 		test::TempDirectoryGuard tempDir;
 		auto stateDirectory = config::CatapultDirectory(tempDir.name() + "/zstate");
-		auto blockChainConfig = test::CreateCatapultConfigurationWithNemesisPluginExtensions("").BlockChain;
+		auto networkConfig = test::CreateBlockchainConfigurationWithNemesisPluginExtensions("").Network;
 
 		{
-			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(blockChainConfig);
+			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(networkConfig);
 			auto originalCache = pPluginManager->createCache();
 			PrepareAndSaveCompleteState(stateDirectory, originalCache);
 		}
@@ -184,8 +184,8 @@ namespace catapult { namespace extensions {
 		ASSERT_TRUE(boost::filesystem::remove(stateDirectory.file("supplemental.dat")));
 
 		// Act: load the state
-		auto pPluginManager = test::CreatePluginManagerWithRealPlugins(blockChainConfig);
-		test::LocalNodeTestState loadedState(blockChainConfig, stateDirectory.str(), pPluginManager->createCache());
+		auto pPluginManager = test::CreatePluginManagerWithRealPlugins(networkConfig);
+		test::LocalNodeTestState loadedState(networkConfig, stateDirectory.str(), pPluginManager->createCache());
 		auto heights = LoadStateFromDirectory(stateDirectory, loadedState.ref(), *pPluginManager);
 
 		// Assert:
@@ -236,9 +236,9 @@ namespace catapult { namespace extensions {
 			// Arrange: seed and save the cache state with rocks disabled
 			test::TempDirectoryGuard tempDir;
 			auto stateDirectory = config::CatapultDirectory(tempDir.name() + "/zstate");
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
-			auto originalCache = test::CoreSystemCacheFactory::Create(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
+			auto originalCache = test::CoreSystemCacheFactory::Create(networkConfig);
 
 			// - run additional preparation
 			prepare(stateDirectory);
@@ -248,10 +248,10 @@ namespace catapult { namespace extensions {
 
 			// Act: load the state
 			test::LocalNodeTestState loadedState(
-					blockChainConfig,
+					networkConfig,
 					stateDirectory.str(),
-					test::CoreSystemCacheFactory::Create(blockChainConfig));
-			auto pluginManager = test::CreatePluginManager(blockChainConfig);
+					test::CoreSystemCacheFactory::Create(networkConfig));
+			auto pluginManager = test::CreatePluginManager(networkConfig);
 			auto heights = LoadStateFromDirectory(stateDirectory, loadedState.ref(), pluginManager);
 
 			// Assert:
@@ -284,12 +284,12 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		auto CreateConfigHolder() {
-			test::MutableCatapultConfiguration config;
+			test::MutableBlockchainConfiguration config;
 
-			config.BlockChain.MinHarvesterBalance = Amount(1);
-			config.BlockChain.ImportanceGrouping = 1;
-			config.BlockChain.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.BlockChain.MaxDifficultyBlocks = 111;
+			config.Network.MinHarvesterBalance = Amount(1);
+			config.Network.ImportanceGrouping = 1;
+			config.Network.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.Network.MaxDifficultyBlocks = 111;
 
 			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
@@ -311,7 +311,7 @@ namespace catapult { namespace extensions {
 			// Arrange: seed and save the cache state with rocks enabled
 			test::TempDirectoryGuard tempDir;
 			auto stateDirectory = config::CatapultDirectory(tempDir.name() + "/zstate");
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			auto originalCache = CreateCacheWithRealCoreSystemPlugins(tempDir.name() + "/db");
 
 			// - run additional preparation
@@ -322,7 +322,7 @@ namespace catapult { namespace extensions {
 
 			// Act: load the state
 			test::LocalNodeTestState loadedState(
-					blockChainConfig,
+					networkConfig,
 					stateDirectory.str(),
 					CreateCacheWithRealCoreSystemPlugins(tempDir.name() + "/db2"));
 			auto pluginManager = test::CreatePluginManager();
@@ -417,8 +417,8 @@ namespace catapult { namespace extensions {
 		nodeConfig.ShouldUseCacheDatabaseStorage = true;
 
 		// - seed the cache state with rocks disabled
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		auto catapultCache = test::CoreSystemCacheFactory::Create(blockChainConfig);
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
+		auto catapultCache = test::CoreSystemCacheFactory::Create(networkConfig);
 		RandomSeedCache(catapultCache);
 
 		auto supplementalData = CreateDeterministicSupplementalData();
@@ -441,8 +441,8 @@ namespace catapult { namespace extensions {
 		nodeConfig.ShouldUseCacheDatabaseStorage = false;
 
 		// - seed the cache state with rocks disabled
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		auto catapultCache = test::CoreSystemCacheFactory::Create(blockChainConfig);
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
+		auto catapultCache = test::CoreSystemCacheFactory::Create(networkConfig);
 		RandomSeedCache(catapultCache);
 
 		auto supplementalData = CreateDeterministicSupplementalData();
@@ -468,8 +468,8 @@ namespace catapult { namespace extensions {
 		nodeConfig.ShouldUseCacheDatabaseStorage = false;
 
 		// - seed the cache state with rocks disabled
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		auto catapultCache = test::CoreSystemCacheFactory::Create(blockChainConfig);
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
+		auto catapultCache = test::CoreSystemCacheFactory::Create(networkConfig);
 		RandomSeedCache(catapultCache);
 
 		auto supplementalData = CreateDeterministicSupplementalData();

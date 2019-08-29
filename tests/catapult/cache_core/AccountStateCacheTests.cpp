@@ -26,7 +26,7 @@
 #include "tests/test/cache/DeltaElementsMixinTests.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -41,8 +41,8 @@ namespace catapult { namespace cache {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = Network_Identifier;
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = Network_Identifier;
 			config.ImportanceGrouping = 543;
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
@@ -306,7 +306,7 @@ namespace catapult { namespace cache {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(17);
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).Network.Identifier = networkIdentifier;
+		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).Info.Identifier = networkIdentifier;
 		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:
@@ -317,7 +317,7 @@ namespace catapult { namespace cache {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).Network.Identifier = networkIdentifier;
+		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).Info.Identifier = networkIdentifier;
 		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:
@@ -333,7 +333,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheExposesImportanceGrouping) {
 		// Arrange:
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).ImportanceGrouping = 10;
+		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).ImportanceGrouping = 10;
 		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:
@@ -343,7 +343,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeHarvestingMosaicId) {
 		// Arrange:
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).HarvestingMosaicId = MosaicId(11229988);
+		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).HarvestingMosaicId = MosaicId(11229988);
 		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:
@@ -618,7 +618,7 @@ namespace catapult { namespace cache {
 			// Arrange:
 			auto accountState = CreateAccountStateWithRandomAddressAndPublicKey();
 			auto pConfigHolder = CreateConfigHolder();
-			accountState.Balances.track(pConfigHolder->Config().BlockChain.HarvestingMosaicId);
+			accountState.Balances.track(pConfigHolder->Config().Network.HarvestingMosaicId);
 			accountState.Balances.addSnapshot({ Amount(777), Height(123)});
 
 			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
@@ -1021,7 +1021,7 @@ namespace catapult { namespace cache {
 		void RunHighValueAddressesTest(const std::vector<Amount>& balances, TDeltaAction deltaAction, TViewAction viewAction) {
 			// Arrange: set min balance to 1M
 			auto pConfigHolder = CreateConfigHolder();
-			const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).MinHarvesterBalance = Amount(1'000'000);
+			const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).MinHarvesterBalance = Amount(1'000'000);
 			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
 
 			// - prepare delta with requested accounts

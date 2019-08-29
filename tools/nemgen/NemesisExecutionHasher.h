@@ -24,7 +24,7 @@
 #include <memory>
 
 namespace catapult {
-	namespace config { class LocalNodeConfigurationHolder; }
+	namespace config { class BlockchainConfigurationHolder; }
 	namespace model { struct BlockElement; }
 }
 
@@ -55,6 +55,6 @@ namespace catapult { namespace tools { namespace nemgen {
 	/// for network configured with \a config with specified cache database cleanup mode (\a databaseCleanupMode).
 	NemesisExecutionHashesDescriptor CalculateAndLogNemesisExecutionHashes(
 			const model::BlockElement& blockElement,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			CacheDatabaseCleanupMode databaseCleanupMode);
 }}}

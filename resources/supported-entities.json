@@ -26,7 +26,7 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "Catapult_Upgrade",
+			"name": "BlockChain_Upgrade",
 			"type": "16728",
 			"supportedVersions": [1]
 		},
@@ -41,7 +41,7 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "Catapult_Config",
+			"name": "Network_Config",
 			"type": "16729",
 			"supportedVersions": [1]
 		},

@@ -30,7 +30,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -138,11 +138,11 @@ namespace catapult { namespace extensions {
 			return MakeHarvestingMosaic(Amount(amount));
 		}
 
-		model::BlockChainConfiguration CreateDefaultConfiguration(const model::Block& nemesisBlock, const NemesisOptions& nemesisOptions) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = Network_Identifier;
-			config.Network.PublicKey = nemesisBlock.Signer;
-			test::FillWithRandomData(config.Network.GenerationHash);
+		model::NetworkConfiguration CreateDefaultConfiguration(const model::Block& nemesisBlock, const NemesisOptions& nemesisOptions) {
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = Network_Identifier;
+			config.Info.PublicKey = nemesisBlock.Signer;
+			test::FillWithRandomData(config.Info.GenerationHash);
 			config.CurrencyMosaicId = Currency_Mosaic_Id;
 			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.InitialCurrencyAtomicUnits = nemesisOptions.InitialCurrencyAtomicUnits;
@@ -151,7 +151,7 @@ namespace catapult { namespace extensions {
 			return config;
 		}
 
-		plugins::PluginManager CreatePluginManager(const model::BlockChainConfiguration& config) {
+		plugins::PluginManager CreatePluginManager(const model::NetworkConfiguration& config) {
 			// enable Publish_Transfers (MockTransaction Publish XORs recipient address, so XOR address resolver is required
 			// for proper roundtripping or else test will fail)
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -172,7 +172,7 @@ namespace catapult { namespace extensions {
 			return manager;
 		}
 
-		std::unique_ptr<const observers::NotificationObserver> CreateObserver(const model::BlockChainConfiguration& config) {
+		std::unique_ptr<const observers::NotificationObserver> CreateObserver(const model::NetworkConfiguration& config) {
 			// use real coresystem observers to create accounts, update balances and add harvest receipt
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			observers::DemuxObserverBuilder builder;
@@ -203,7 +203,7 @@ namespace catapult { namespace extensions {
 			// Arrange: create the state
 			auto config = CreateDefaultConfiguration(*nemesisBlockSignerPair.pBlock, nemesisOptions);
 			test::LocalNodeTestState state(config);
-			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
+			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Info, NemesisBlockModification::None);
 
 			// - create the publisher, observer and loader
 			auto pluginManager = CreatePluginManager(config);
@@ -253,7 +253,7 @@ namespace catapult { namespace extensions {
 
 			auto cache = test::CreateEmptyCatapultCache(config, cacheConfig);
 			test::LocalNodeTestState state(config, "", std::move(cache));
-			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, modification);
+			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Info, modification);
 
 			{
 				// - create the publisher, observer and loader
@@ -339,7 +339,7 @@ namespace catapult { namespace extensions {
 		struct ExecuteDefaultStateTraits {
 			static void Execute(NemesisBlockLoader& loader, const LocalNodeStateRef& stateRef, StateHashVerification) {
 				auto pNemesisBlockElement = stateRef.Storage.view().loadBlockElement(Height(1));
-				loader.execute(stateRef.Config.BlockChain, *pNemesisBlockElement);
+				loader.execute(stateRef.Config.Network, *pNemesisBlockElement);
 			}
 
 			template<typename TAssertAccountStateCache>
@@ -503,7 +503,7 @@ namespace catapult { namespace extensions {
 
 		test::LocalNodeTestState state(config, "", std::move(cache));
 
-		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
+		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Info, NemesisBlockModification::None);
 
 		// - create the publisher, observer and loader
 		auto pluginManager = CreatePluginManager(config);
@@ -559,7 +559,7 @@ namespace catapult { namespace extensions {
 
 		test::LocalNodeTestState state(config, "", std::move(cache));
 
-		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
+		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Info, NemesisBlockModification::None);
 
 		// - create the publisher, observer and loader
 		auto pluginManager = CreatePluginManager(config);

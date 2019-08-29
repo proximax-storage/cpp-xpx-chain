@@ -30,10 +30,10 @@ namespace catapult { namespace model {
 		auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 		pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(123);
 		pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(234);
-		auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-		blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-		blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-		NamespaceLifetimeConstraints constraints(blockChainConfig);
+		auto networkConfig = model::NetworkConfiguration::Uninitialized();
+		networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+		networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+		NamespaceLifetimeConstraints constraints(networkConfig);
 
 		// Assert:
 		EXPECT_EQ(BlockDuration(123 + 234), constraints.maxNamespaceDuration());

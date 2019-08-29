@@ -24,7 +24,7 @@
 #include <memory>
 
 namespace catapult {
-	namespace config { class LocalNodeConfigurationHolder; }
+	namespace config { class BlockchainConfigurationHolder; }
 	namespace crypto { class KeyPair; }
 }
 
@@ -41,7 +41,7 @@ namespace catapult { namespace process {
 
 	/// Prototype for creating a process host.
 	/// \note Return value is a shared_ptr because unique_ptr of void is not allowed.
-	using CreateProcessHost = std::function<std::shared_ptr<void> (const std::shared_ptr<config::LocalNodeConfigurationHolder>&, const crypto::KeyPair&)>;
+	using CreateProcessHost = std::function<std::shared_ptr<void> (const std::shared_ptr<config::BlockchainConfigurationHolder>&, const crypto::KeyPair&)>;
 
 	/// Main entry point for a catapult process named \a host with default process options.
 	/// \a argc commmand line arguments are accessible via \a argv.

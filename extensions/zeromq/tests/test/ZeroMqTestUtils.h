@@ -26,7 +26,7 @@
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/TestHarness.h"
 #include <unordered_set>

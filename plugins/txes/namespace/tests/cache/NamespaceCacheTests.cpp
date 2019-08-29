@@ -39,10 +39,10 @@ namespace catapult { namespace cache {
 		auto CreateConfigHolder() {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(Grace_Period_Duration);
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			return config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			return config::CreateMockConfigurationHolder(networkConfig);
 		}
 
 		auto Default_Cache_Options = NamespaceCacheTypes::Options{ CreateConfigHolder() };

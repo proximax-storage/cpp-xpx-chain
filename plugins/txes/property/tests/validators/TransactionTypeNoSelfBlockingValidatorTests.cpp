@@ -80,7 +80,7 @@ namespace catapult { namespace validators {
 				const Key& seedKey,
 				const Notification& notification) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			auto cache = test::PropertyCacheFactory::Create(config);
 			switch (cacheSeed) {
 			case CacheSeed::No:

@@ -24,7 +24,7 @@
 #include "TransactionConsumers.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "catapult/validators/AggregateValidationResult.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace consumers {
 

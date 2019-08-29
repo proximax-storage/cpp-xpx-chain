@@ -20,7 +20,7 @@
 
 #include "catapult/chain/ChainSynchronizer.h"
 #include "catapult/api/RemoteChainApi.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/ChainScore.h"
 #include "catapult/model/EntityRange.h"
@@ -68,7 +68,7 @@ namespace catapult { namespace chain {
 					, BlockRangeConsumerCalls(0)
 					, Config(CreateConfiguration())
 					, pTestState(std::make_shared<test::ServiceTestState>()) {
-				const_cast<uint32_t&>(pTestState->state().config(Height{0}).BlockChain.MaxRollbackBlocks) = maxRollbackBlocks;
+				const_cast<uint32_t&>(pTestState->state().config(Height{0}).Network.MaxRollbackBlocks) = maxRollbackBlocks;
 			}
 
 		public:

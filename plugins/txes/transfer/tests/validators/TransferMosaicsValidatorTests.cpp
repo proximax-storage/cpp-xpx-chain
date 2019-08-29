@@ -21,7 +21,7 @@
 #include "src/config/TransferConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
@@ -38,10 +38,10 @@ namespace catapult { namespace validators {
 			model::TransferMosaicsNotification<1> notification(static_cast<uint8_t>(mosaics.size()), mosaics.data());
 			auto pluginConfig = config::TransferConfiguration::Uninitialized();
 			pluginConfig.MaxMosaicsSize = maxMosaicsSize;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
-			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
+			auto cache = test::CreateEmptyCatapultCache(networkConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateTransferMosaicsValidator(pConfigHolder);
 
 			// Act:
@@ -97,7 +97,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithOneMosaicZeroAmount) {
 		// Assert:
-		AssertValidationResult(Failure_Transfer_Invalid_Amount, { { UnresolvedMosaicId(71), Amount(0) } }, 1);
+		AssertValidationResult(Failure_Transfer_Zero_Amount, { { UnresolvedMosaicId(71), Amount(0) } }, 1);
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithTwoMosaicsWhenMaxMosaicsSizeIsOne) {

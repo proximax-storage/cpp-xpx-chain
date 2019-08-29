@@ -27,12 +27,12 @@
 #include "AggregateUtChangeSubscriber.h"
 #include "catapult/cache_tx/AggregatePtCache.h"
 #include "catapult/cache_tx/AggregateUtCache.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/io/AggregateBlockStorage.h"
 
 namespace catapult { namespace subscribers {
 
-	SubscriptionManager::SubscriptionManager(const config::CatapultConfiguration& config)
+	SubscriptionManager::SubscriptionManager(const config::BlockchainConfiguration& config)
 			: m_pStorage(std::make_unique<io::FileBlockStorage>(config.User.DataDirectory)) {
 		m_subscriberUsedFlags.fill(false);
 	}

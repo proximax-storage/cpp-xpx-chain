@@ -26,7 +26,7 @@
 #include "catapult/cache_core/AccountStateCacheSubCachePlugin.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheSubCachePlugin.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"

@@ -54,7 +54,7 @@ namespace catapult { namespace validators {
 
 		static void AssertDurationValidator(ValidationResult expectedResult, BlockDuration notificationDuration) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();

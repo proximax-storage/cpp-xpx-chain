@@ -22,7 +22,7 @@
 #include "Results.h"
 #include "src/model/AliasNotifications.h"
 #include "src/model/NamespaceNotifications.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include <unordered_set>
@@ -38,20 +38,20 @@ namespace catapult { namespace validators {
 	/// - namespace name consists only of allowed characters
 	/// - for root namespaces, name is not in \a reservedRootNamespaceNames
 	/// - for child namespaces, the parent id is not an id that can be generated from \a reservedRootNamespaceNames
-	DECLARE_STATEFUL_VALIDATOR(NamespaceName, model::NamespaceNameNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(NamespaceName, model::NamespaceNameNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to root namespace notifications and validates that:
 	/// - namespace duration is less than or equal to \a maxDuration for root namespace
 	/// - namespace duration is zero for child namespace
-	DECLARE_STATEFUL_VALIDATOR(RootNamespace, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(RootNamespace, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to root register namespace transactions and validates that:
 	/// - the namespace is available and can be created or renewed given \a maxNamespaceDuration
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to root namespace notifications and validates that:
 	/// - namespace duration is acceptable given \a maxNamespaceDuration
-	DECLARE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(NamespaceDurationOverflow, model::RootNamespaceNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to child namespace notifications and validates that:
 	/// - namespace is available and can be created
@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to child namespace notifications and validates that:
 	/// - maximum number of children (\a maxChildren) for a root namespace is not exceeded
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, model::ChildNamespaceNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, model::ChildNamespaceNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to alias owner notifications and validates that:
 	/// - alias action is valid

@@ -28,7 +28,7 @@ namespace catapult { namespace tools { namespace nemgen {
 
 	BlockExecutionHashesInfo CalculateNemesisBlockExecutionHashes(
 			const model::BlockElement& blockElement,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		// 1. load all plugins
 		PluginLoader pluginLoader(pConfigHolder);
 		pluginLoader.loadAll();
@@ -54,7 +54,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		// 5. execute block
 		chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, observerState });
 		auto cacheStateHashInfo = pCacheDelta->calculateStateHash(blockElement.Block.Height);
-		auto blockReceiptsHash = pConfigHolder->Config(blockElement.Block.Height).BlockChain.ShouldEnableVerifiableReceipts
+		auto blockReceiptsHash = pConfigHolder->Config(blockElement.Block.Height).Network.ShouldEnableVerifiableReceipts
 				? model::CalculateMerkleHash(*blockStatementBuilder.build())
 				: Hash256();
 

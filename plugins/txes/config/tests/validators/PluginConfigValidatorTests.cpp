@@ -12,12 +12,12 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PluginConfigValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(CatapultConfigPluginConfig,)
+	DEFINE_COMMON_VALIDATOR_TESTS(NetworkConfigPluginConfig,)
 
 	namespace {
 		struct PluginConfigTraits {
 			static auto CreatePluginConfigValidator() {
-				return validators::CreateCatapultConfigPluginConfigValidator();
+				return validators::CreateNetworkConfigPluginConfigValidator();
 			}
 
 			static auto GetValidConfigBag() {
@@ -41,5 +41,5 @@ namespace catapult { namespace validators {
 		};
 	}
 
-	DEFINE_PLUGIN_CONFIG_VALIDATOR_TESTS(TEST_CLASS, PluginConfigTraits, 1, config, CatapultConfig)
+	DEFINE_PLUGIN_CONFIG_VALIDATOR_TESTS(TEST_CLASS, PluginConfigTraits, 1, config, NetworkConfig)
 }}

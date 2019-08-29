@@ -20,10 +20,10 @@
 
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/plugins/PluginExceptions.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
@@ -34,8 +34,8 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateBootstrapper) {
 		// Arrange:
-		auto pConfigHolder = config::CreateMockConfigurationHolder(test::CreateUninitializedCatapultConfiguration());
-		const_cast<uint32_t&>(pConfigHolder->Config().BlockChain.BlockPruneInterval) = 15;
+		auto pConfigHolder = config::CreateMockConfigurationHolder(test::CreateUninitializedBlockchainConfiguration());
+		const_cast<uint32_t&>(pConfigHolder->Config().Network.BlockPruneInterval) = 15;
 		const_cast<bool&>(pConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage) = true;
 		const_cast<std::string&>(pConfigHolder->Config().User.DataDirectory) = "base_data_dir";
 
@@ -43,7 +43,7 @@ namespace catapult { namespace extensions {
 		ProcessBootstrapper bootstrapper(pConfigHolder, "resources path", ProcessDisposition::Recovery, "bootstrapper");
 
 		// Assert: compare BlockPruneInterval as a sentinel value because the bootstrapper copies the config
-		EXPECT_EQ(15u, bootstrapper.config(Height{0}).BlockChain.BlockPruneInterval);
+		EXPECT_EQ(15u, bootstrapper.config(Height{0}).Network.BlockPruneInterval);
 
 		const auto& pluginManager = bootstrapper.pluginManager();
 		EXPECT_EQ(15u, pluginManager.config(Height{0}).BlockPruneInterval);
@@ -70,7 +70,7 @@ namespace catapult { namespace extensions {
 	// region loadExtensions
 
 	namespace {
-		ProcessBootstrapper CreateBootstrapper(const config::CatapultConfiguration& config) {
+		ProcessBootstrapper CreateBootstrapper(const config::BlockchainConfiguration& config) {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			return ProcessBootstrapper(pConfigHolder, "resources path", ProcessDisposition::Production, "bootstrapper");
 		}
@@ -78,7 +78,7 @@ namespace catapult { namespace extensions {
 		template<typename TAction>
 		void RunExtensionsTest(const std::string& directory, const std::string& name, TAction action) {
 			// Arrange:
-			test::MutableCatapultConfiguration config;
+			test::MutableBlockchainConfiguration config;
 			config.User.PluginsDirectory = directory;
 			config.Extensions.Names = { name };
 			auto bootstrapper = CreateBootstrapper(config.ToConst());
@@ -155,7 +155,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodes) {
 		// Arrange:
-		auto bootstrapper = CreateBootstrapper(test::CreateUninitializedCatapultConfiguration());
+		auto bootstrapper = CreateBootstrapper(test::CreateUninitializedBlockchainConfiguration());
 
 		// - add five nodes
 		std::vector<ionet::Node> nodes1{
@@ -186,7 +186,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanAddStaticNodesFromPath) {
 		// Arrange:
-		auto bootstrapper = CreateBootstrapper(test::CreateUninitializedCatapultConfiguration());
+		auto bootstrapper = CreateBootstrapper(test::CreateUninitializedBlockchainConfiguration());
 
 		// Act:
 		AddStaticNodesFromPath(bootstrapper, "../resources/peers-p2p.json");

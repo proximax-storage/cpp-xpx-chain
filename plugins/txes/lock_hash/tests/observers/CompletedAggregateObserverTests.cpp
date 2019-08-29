@@ -83,7 +83,7 @@ namespace catapult { namespace observers {
 
 		void AssertObserverIgnoresUnknownTransactionType(model::EntityType entityType) {
 			// Arrange: cache is empty
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto pObserver = HashTraits::CreateObserver();
 

@@ -24,7 +24,7 @@
 namespace catapult { namespace plugins {
 
 	PluginManager::PluginManager(
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const StorageConfiguration& storageConfig)
 			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
@@ -33,15 +33,15 @@ namespace catapult { namespace plugins {
 
 	// region config
 
-	const model::BlockChainConfiguration& PluginManager::config(const Height& height) const {
-		return m_pConfigHolder->Config(height).BlockChain;
+	const model::NetworkConfiguration& PluginManager::config(const Height& height) const {
+		return m_pConfigHolder->Config(height).Network;
 	}
 
-	const model::BlockChainConfiguration& PluginManager::config() const {
-		return m_pConfigHolder->Config().BlockChain;
+	const model::NetworkConfiguration& PluginManager::config() const {
+		return m_pConfigHolder->Config().Network;
 	}
 
-	const std::shared_ptr<config::LocalNodeConfigurationHolder>& PluginManager::configHolder() const {
+	const std::shared_ptr<config::BlockchainConfigurationHolder>& PluginManager::configHolder() const {
 		return m_pConfigHolder;
 	}
 

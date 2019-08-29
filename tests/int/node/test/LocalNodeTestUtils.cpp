@@ -21,7 +21,7 @@
 #include "LocalNodeTestUtils.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "tests/test/local/NetworkTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
@@ -88,7 +88,7 @@ namespace catapult { namespace test {
 	}
 
 	std::unique_ptr<local::LocalNode> BootLocalPartnerNode(
-			config::CatapultConfiguration&& config,
+			config::BlockchainConfiguration&& config,
 			const crypto::KeyPair& keyPair,
 			NodeFlag nodeFlag) {
 		// partner node is a P2P node on offset ports
@@ -96,7 +96,7 @@ namespace catapult { namespace test {
 		const_cast<uint16_t&>(config.Node.ApiPort) += 10;
 
 		// make additional configuration modifications
-		PrepareCatapultConfiguration(config, AddSimplePartnerPluginExtensions, nodeFlag);
+		PrepareNetworkConfiguration(config, AddSimplePartnerPluginExtensions, nodeFlag);
 
 		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
@@ -108,15 +108,15 @@ namespace catapult { namespace test {
 		return local::CreateLocalNode(keyPair, std::move(pBootstrapper));
 	}
 
-	void PrepareCatapultConfiguration(config::CatapultConfiguration& config, NodeFlag nodeFlag) {
+	void PrepareNetworkConfiguration(config::BlockchainConfiguration& config, NodeFlag nodeFlag) {
 		if (HasFlag(NodeFlag::Cache_Database_Storage, nodeFlag))
 			const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = true;
 
 		if (HasFlag(NodeFlag::Verify_Receipts, nodeFlag))
-			const_cast<model::BlockChainConfiguration&>(config.BlockChain).ShouldEnableVerifiableReceipts = true;
+			const_cast<model::NetworkConfiguration&>(config.Network).ShouldEnableVerifiableReceipts = true;
 
 		if (HasFlag(NodeFlag::Verify_State, nodeFlag))
-			const_cast<model::BlockChainConfiguration&>(config.BlockChain).ShouldEnableVerifiableState = true;
+			const_cast<model::NetworkConfiguration&>(config.Network).ShouldEnableVerifiableState = true;
 
 		if (HasFlag(NodeFlag::Auto_Sync_Cleanup, nodeFlag))
 			const_cast<config::NodeConfiguration&>(config.Node).ShouldEnableAutoSyncCleanup = true;

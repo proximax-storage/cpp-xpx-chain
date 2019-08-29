@@ -29,7 +29,7 @@
 
 namespace catapult { namespace test {
 
-	Hash256 CalculateNemesisStateHash(const model::BlockElement& blockElement, const config::CatapultConfiguration& config) {
+	Hash256 CalculateNemesisStateHash(const model::BlockElement& blockElement, const config::BlockchainConfiguration& config) {
 		auto pPluginManager = CreatePluginManagerWithRealPlugins(config);
 
 		auto cache = pPluginManager->createCache();

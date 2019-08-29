@@ -44,8 +44,8 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a view around \a propertySets and \a blockChainConfig.
-		explicit BasicPropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
+		/// Creates a view around \a propertySets and \a networkConfig.
+		explicit BasicPropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: PropertyCacheViewMixins::Size(propertySets.Primary)
 				, PropertyCacheViewMixins::Contains(propertySets.Primary)
 				, PropertyCacheViewMixins::Iteration(propertySets.Primary)
@@ -57,18 +57,18 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_pConfigHolder->Config(height()).BlockChain.Network.Identifier;
+			return m_pConfigHolder->Config(height()).Network.Info.Identifier;
 		}
 
 	private:
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the property cache.
 	class PropertyCacheView : public ReadOnlyViewSupplier<BasicPropertyCacheView> {
 	public:
-		/// Creates a view around \a propertySets and \a blockChainConfig.
-		explicit PropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
+		/// Creates a view around \a propertySets and \a networkConfig.
+		explicit PropertyCacheView(const PropertyCacheTypes::BaseSets& propertySets, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: ReadOnlyViewSupplier(propertySets, pConfigHolder)
 		{}
 	};

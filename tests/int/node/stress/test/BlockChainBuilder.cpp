@@ -24,7 +24,7 @@
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/io/FileBlockStorage.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
@@ -42,14 +42,14 @@ namespace catapult { namespace test {
 	BlockChainBuilder::BlockChainBuilder(
 			const Accounts& accounts,
 			StateHashCalculator& stateHashCalculator,
-			const model::BlockChainConfiguration& config)
+			const model::NetworkConfiguration& config)
 			: BlockChainBuilder(accounts, stateHashCalculator, config, stateHashCalculator.dataDirectory())
 	{}
 
 	BlockChainBuilder::BlockChainBuilder(
 			const Accounts& accounts,
 			StateHashCalculator& stateHashCalculator,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const std::string& resourcesPath)
 			: BlockChainBuilder(accounts, stateHashCalculator, config, resourcesPath, false)
 	{}
@@ -57,7 +57,7 @@ namespace catapult { namespace test {
 	BlockChainBuilder::BlockChainBuilder(
 			const Accounts& accounts,
 			StateHashCalculator& stateHashCalculator,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const std::string& resourcesPath,
 			bool isChained)
 			: m_pAccounts(&accounts)

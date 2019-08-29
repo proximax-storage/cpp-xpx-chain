@@ -24,8 +24,8 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
-#include "catapult/model/BlockChainConfiguration.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "catapult/model/NetworkConfiguration.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
@@ -38,20 +38,20 @@ namespace catapult { namespace test {
 
 	// region CoreSystemCacheFactory
 
-	cache::CatapultCache CoreSystemCacheFactory::Create(const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CoreSystemCacheFactory::Create(const model::NetworkConfiguration& config) {
 		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(3);
 		CreateSubCaches(config, subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
 
 	void CoreSystemCacheFactory::CreateSubCaches(
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches) {
 		CreateSubCaches(config, cache::CacheConfiguration(), subCaches);
 	}
 
 	void CoreSystemCacheFactory::CreateSubCaches(
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig,
 			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches) {
 		using namespace cache;
@@ -66,23 +66,23 @@ namespace catapult { namespace test {
 
 	// endregion
 
-	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateEmptyCatapultCache(const model::NetworkConfiguration& config) {
 		return CreateEmptyCatapultCache<CoreSystemCacheFactory>(config);
 	}
 
 	cache::CatapultCache CreateEmptyCatapultCache(
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig) {
 		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(3);
 		CoreSystemCacheFactory::CreateSubCaches(config, cacheConfig, subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
 
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::NetworkConfiguration& config) {
 		return CreateCatapultCacheWithMarkerAccount(Height(0), config);
 	}
 
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::NetworkConfiguration& config) {
 		auto cache = CreateEmptyCatapultCache(config);
 		AddMarkerAccount(cache);
 

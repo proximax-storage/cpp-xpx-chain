@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/ionet/Node.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/model/NetworkInfo.h"

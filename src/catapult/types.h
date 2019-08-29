@@ -125,6 +125,6 @@ namespace catapult {
 	/// Version set.
 	using VersionSet = std::unordered_set<VersionType>;
 
-	struct CatapultVersion_tag {};
-	using CatapultVersion = utils::BaseValue<uint64_t, CatapultVersion_tag>;
+	struct BlockchainVersion_tag {};
+	using BlockchainVersion = utils::BaseValue<uint64_t, BlockchainVersion_tag>;
 }

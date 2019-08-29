@@ -22,12 +22,12 @@
 #include "PropertyCacheDelta.h"
 #include "PropertyCacheView.h"
 #include "catapult/cache/BasicCache.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
 	/// Cache composed of property information.
-	using BasicPropertyCache = BasicCache<PropertyCacheDescriptor, PropertyCacheTypes::BaseSets, std::shared_ptr<config::LocalNodeConfigurationHolder>>;
+	using BasicPropertyCache = BasicCache<PropertyCacheDescriptor, PropertyCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
 
 	/// Synchronized cache composed of property information.
 	class PropertyCache : public SynchronizedCache<BasicPropertyCache> {
@@ -36,7 +36,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config and \a networkIdentifier.
-		explicit PropertyCache(const CacheConfiguration& config, std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
+		explicit PropertyCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: SynchronizedCache<BasicPropertyCache>(BasicPropertyCache(config, std::move(pConfigHolder)))
 		{}
 	};

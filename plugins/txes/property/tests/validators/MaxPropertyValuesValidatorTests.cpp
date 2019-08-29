@@ -23,7 +23,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/PropertyCacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -81,7 +81,7 @@ namespace catapult { namespace validators {
 
 			// Arrange:
 			auto initialValues = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numInitialValues);
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			auto cache = test::PropertyCacheFactory::Create(config);
 			auto key = test::GenerateRandomByteArray<Key>();
 			test::PopulateCache<TPropertyValueTraits>(cache, key, initialValues);
@@ -96,9 +96,9 @@ namespace catapult { namespace validators {
 
 			auto pluginConfig = config::PropertyConfiguration::Uninitialized();
 			pluginConfig.MaxPropertyValues = maxPropertyValues;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(property), pluginConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(property), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = TPropertyValueTraits::CreateValidator(pConfigHolder);
 
 			using UnresolvedValueType = typename TPropertyValueTraits::UnresolvedValueType;

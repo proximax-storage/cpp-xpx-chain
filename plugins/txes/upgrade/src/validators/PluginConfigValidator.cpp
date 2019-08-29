@@ -5,8 +5,8 @@
 **/
 
 #include "Validators.h"
-#include "src/config/CatapultUpgradeConfiguration.h"
+#include "src/config/BlockchainUpgradeConfiguration.h"
 
 namespace catapult { namespace validators {
-	DEFINE_PLUGIN_CONFIG_VALIDATOR(upgrade, CatapultUpgrade, 1)
+	DEFINE_PLUGIN_CONFIG_VALIDATOR(upgrade, BlockchainUpgrade, 1)
 }}

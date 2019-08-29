@@ -22,7 +22,7 @@
 #include "BasicProducer.h"
 #include "HandlerTypes.h"
 #include "catapult/cache/SynchronizedCache.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/CacheEntryInfo.h"
 #include "catapult/utils/MemoryUtils.h"
 

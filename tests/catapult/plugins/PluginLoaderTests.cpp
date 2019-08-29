@@ -22,7 +22,7 @@
 #include "catapult/plugins/PluginExceptions.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/utils/ExceptionLogging.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 
@@ -35,7 +35,7 @@ namespace catapult { namespace plugins {
 
 		void AssertCanLoadPlugins(
 				const std::string& directory,
-				const model::BlockChainConfiguration& config,
+				const model::NetworkConfiguration& config,
 				bool isDynamicModule,
 				const std::vector<std::string>& pluginNames) {
 			// Arrange: ensure module is destroyed after manager
@@ -59,12 +59,12 @@ namespace catapult { namespace plugins {
 
 		void AssertCanLoadKnownStaticallyLinkedPlugins(const std::string& directory) {
 			// Assert:
-			AssertCanLoadPlugins(directory, model::BlockChainConfiguration::Uninitialized(), false, { "catapult.coresystem" });
+			AssertCanLoadPlugins(directory, model::NetworkConfiguration::Uninitialized(), false, { "catapult.coresystem" });
 		}
 
 		void AssertCanLoadKnownDynamicallyLinkedPlugins(const std::string& directory) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.Plugins.emplace(Known_Plugin_Name, utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 
 			// Assert:
@@ -117,7 +117,7 @@ namespace catapult { namespace plugins {
 		bool isExceptionHandled = false;
 		try {
 			// - prepare insufficient configuration
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.Plugins.emplace(Known_Plugin_Name, utils::ConfigurationBag({{ "", { { "maxMessageSizeX", "0" }, { "maxMosaicsSize", "512" } } }}));
 
 			// - create the manager

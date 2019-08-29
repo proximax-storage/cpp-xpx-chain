@@ -20,9 +20,9 @@
 
 #include "src/observers/Observers.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/plugins/AccountObserverTestContext.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
@@ -40,7 +40,7 @@ namespace catapult { namespace observers {
 			void AssertCleanUpSnapshots(Height contextHeight, uint64_t expectedSizeOfSnapshots,
 										observers::NotifyMode mode = observers::NotifyMode::Commit) {
 				// Arrange:
-				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto config = model::NetworkConfiguration::Uninitialized();
 				config.ImportanceGrouping = Effective_Balance_Range;
 				config.MaxRollbackBlocks = Max_Rollback_Blocks;
 				auto pConfigHolder = config::CreateMockConfigurationHolder(config);

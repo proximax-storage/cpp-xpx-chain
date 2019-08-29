@@ -21,7 +21,7 @@
 #pragma once
 #include "CacheHolder.h"
 #include "ExtensionManager.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/plugins/PluginModule.h"
 #include "catapult/subscribers/SubscriptionManager.h"
@@ -44,20 +44,20 @@ namespace catapult { namespace extensions {
 	public:
 		/// Creates a process bootstrapper around \a pConfigHolder, \a resourcesPath, \a disposition and \a servicePoolName.
 		ProcessBootstrapper(
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const std::string& resourcesPath,
 				ProcessDisposition disposition,
 				const std::string& servicePoolName);
 
 	public:
 		/// Gets the configuration.
-		const config::CatapultConfiguration& config(const Height& height) const;
+		const config::BlockchainConfiguration& config(const Height& height) const;
 
 		/// Gets the latest available configuration.
-		const config::CatapultConfiguration& config() const;
+		const config::BlockchainConfiguration& config() const;
 
-		/// Gets the catapult configuration holder.
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
+		/// Gets the network configuration holder.
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder() const;
 
 		/// Gets the resources path.
 		const std::string& resourcesPath() const;
@@ -95,7 +95,7 @@ namespace catapult { namespace extensions {
 		void addStaticNodes(const std::vector<ionet::Node>& nodes);
 
 	private:
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		std::string m_resourcesPath;
 		ProcessDisposition m_disposition;
 		std::unique_ptr<thread::MultiServicePool> m_pMultiServicePool;

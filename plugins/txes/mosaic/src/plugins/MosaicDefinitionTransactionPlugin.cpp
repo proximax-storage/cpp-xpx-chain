@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <src/catapult/config_holder/LocalNodeConfigurationHolder.h>
+#include <src/catapult/config_holder/BlockchainConfigurationHolder.h>
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "src/model/MosaicDefinitionTransaction.h"
 #include "src/model/MosaicNotifications.h"
@@ -50,12 +50,12 @@ namespace catapult { namespace plugins {
 		}
 
 		template<typename TTransaction>
-		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
-				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight).BlockChain;
-				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
-				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
-				auto config = ToMosaicRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
+				const model::NetworkConfiguration& networkConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight).Network;
+				const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
+				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(networkConfig);
+				auto config = ToMosaicRentalFeeConfiguration(networkConfig.Info, currencyMosaicId, pluginConfig);
 
 				switch (transaction.EntityVersion()) {
 				case 3:
@@ -85,5 +85,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, Default, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
 }}

@@ -24,7 +24,7 @@
 #include "catapult/model/WeakCosignedTransactionInfo.h"
 #include "catapult/plugins/PluginManager.h"
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
@@ -87,7 +87,7 @@ namespace catapult { namespace chain {
 
 		class TestContext {
 		public:
-			explicit TestContext(const ValidationResultOptions& options, const model::BlockChainConfiguration& config)
+			explicit TestContext(const ValidationResultOptions& options, const model::NetworkConfiguration& config)
 					: m_cache(test::CreateEmptyCatapultCache(config))
 					, m_pluginManager(config::CreateMockConfigurationHolder(config), plugins::StorageConfiguration()) {
 				// Arrange: register mock support (for validatePartial)
@@ -173,7 +173,7 @@ namespace catapult { namespace chain {
 				bool isValid,
 				TNotificationTypesConsumer notificationTypesConsumer) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			TestContext context(validationResultOptions, config);
 			const auto& validator = context.validator();
 			const auto& notificationValidator = context.subValidatorAt(0); // partial
@@ -267,7 +267,7 @@ namespace catapult { namespace chain {
 				TNotificationTypesConsumer notificationTypesConsumer) {
 			// Arrange:
 			ValidationResultOptions validationResultOptions{ ValidatorType::Stateless, notificationType };
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			TestContext context(validationResultOptions, config);
 			const auto& validator = context.validator();
 			const auto& basicNotificationValidator = context.subStatelessValidatorAt(0); // partial (basic)
@@ -334,7 +334,7 @@ namespace catapult { namespace chain {
 
 		void RunValidateCosignersTest(ValidationResult validationResult, const ValidateCosignersResult& expectedResult) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			TestContext context(validationResult, config);
 			const auto& validator = context.validator();
 			const auto& notificationValidator = context.subValidatorAt(1); // cosigners

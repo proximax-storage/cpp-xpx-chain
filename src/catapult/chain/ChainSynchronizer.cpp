@@ -22,7 +22,7 @@
 #include "CompareChains.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/utils/SpinLock.h"
 #include <queue>
@@ -268,7 +268,7 @@ namespace catapult { namespace chain {
 			thread::future<CompareChainsResult> compareChains(const RemoteApiType& remoteChainApi) {
 				const auto& config = m_state.config();
 				if (m_pUnprocessedElements->empty())
-					return CompareChains(*m_pLocalChainApi, remoteChainApi, CompareChainsOptions(config.Node.MaxBlocksPerSyncAttempt, config.BlockChain.MaxRollbackBlocks));
+					return CompareChains(*m_pLocalChainApi, remoteChainApi, CompareChainsOptions(config.Node.MaxBlocksPerSyncAttempt, config.Network.MaxRollbackBlocks));
 
 				CompareChainsResult result;
 				result.Code = ChainComparisonCode::Remote_Is_Not_Synced;

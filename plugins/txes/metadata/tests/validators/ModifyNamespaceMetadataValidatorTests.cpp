@@ -56,11 +56,11 @@ namespace catapult { namespace validators {
 			auto namespacePluginConfig = config::NamespaceConfiguration::Uninitialized();
 			namespacePluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(100);
 			auto metadataPluginConfig = config::MetadataConfiguration::Uninitialized();
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespacePluginConfig);
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), metadataPluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespacePluginConfig);
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), metadataPluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(networkConfig);
 			PopulateCache(cache);
 			auto pValidator = CreateModifyNamespaceMetadataValidator();
 			auto notification = model::ModifyNamespaceMetadataNotification_v1(signer, metadataId);

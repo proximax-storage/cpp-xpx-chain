@@ -30,7 +30,7 @@ namespace catapult { namespace test {
 
 	struct LocalNodeTestState::Impl {
 	public:
-		explicit Impl(config::CatapultConfiguration&& config, cache::CatapultCache&& cache)
+		explicit Impl(config::BlockchainConfiguration&& config, cache::CatapultCache&& cache)
 				: m_config(std::move(config))
 				, m_cache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>(), std::make_unique<mocks::MockMemoryBlockStorage>())
@@ -42,31 +42,31 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		config::CatapultConfiguration m_config;
+		config::BlockchainConfiguration m_config;
 		state::CatapultState m_state;
 		cache::CatapultCache m_cache;
 		io::BlockStorageCache m_storage;
 		extensions::LocalNodeChainScore m_score;
 	};
 
-	LocalNodeTestState::LocalNodeTestState(const model::BlockChainConfiguration& config)
+	LocalNodeTestState::LocalNodeTestState(const model::NetworkConfiguration& config)
 			: LocalNodeTestState(config, "", CreateEmptyCatapultCache(config))
 	{}
 
-	LocalNodeTestState::LocalNodeTestState(const model::BlockChainConfiguration& config, const std::string& userDataDirectory)
+	LocalNodeTestState::LocalNodeTestState(const model::NetworkConfiguration& config, const std::string& userDataDirectory)
 			: LocalNodeTestState(config, userDataDirectory, CreateEmptyCatapultCache(config))
 	{}
 
 	LocalNodeTestState::LocalNodeTestState(cache::CatapultCache&& cache)
-			: m_pImpl(std::make_unique<Impl>(CreatePrototypicalCatapultConfiguration(), std::move(cache)))
+			: m_pImpl(std::make_unique<Impl>(CreatePrototypicalBlockchainConfiguration(), std::move(cache)))
 	{}
 
 	LocalNodeTestState::LocalNodeTestState(
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const std::string& userDataDirectory,
 			cache::CatapultCache&& cache)
 			: m_pImpl(std::make_unique<Impl>(
-					CreatePrototypicalCatapultConfiguration(model::BlockChainConfiguration(config), userDataDirectory),
+					CreatePrototypicalBlockchainConfiguration(model::NetworkConfiguration(config), userDataDirectory),
 					std::move(cache)))
 	{}
 

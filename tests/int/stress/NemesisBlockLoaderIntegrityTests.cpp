@@ -52,10 +52,10 @@ namespace catapult { namespace extensions {
 			// Arrange:
 			test::TempDirectoryGuard tempDir;
 
-			auto blockChainConfig = test::CreatePrototypicalBlockChainConfiguration();
-			test::AddNemesisPluginExtensions(blockChainConfig);
+			auto networkConfig = test::CreatePrototypicalBlockChainConfiguration();
+			test::AddNemesisPluginExtensions(networkConfig);
 
-			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(blockChainConfig);
+			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(networkConfig);
 			test::LocalNodeTestState localNodeState(pPluginManager->config(Height{0}), tempDir.name(), pPluginManager->createCache());
 
 			{

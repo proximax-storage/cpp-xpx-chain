@@ -25,7 +25,7 @@
 #include "catapult/utils/SpinLock.h"
 #include "tests/int/stress/test/StressThreadLogger.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -39,8 +39,8 @@ namespace catapult { namespace cache {
 		constexpr auto Transferable_Mosaic_Id = MosaicId(1234);
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
 			config.ImportanceGrouping = 359;
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = MosaicId(1111);

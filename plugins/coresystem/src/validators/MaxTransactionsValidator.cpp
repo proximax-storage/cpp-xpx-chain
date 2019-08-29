@@ -24,9 +24,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(MaxTransactions, [pConfigHolder](const auto& notification, const auto& context) {
-			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
+			const model::NetworkConfiguration& config = pConfigHolder->Config(context.Height).Network;
 			return notification.NumTransactions <= config.MaxTransactionsPerBlock
 					? ValidationResult::Success
 					: Failure_Core_Too_Many_Transactions;

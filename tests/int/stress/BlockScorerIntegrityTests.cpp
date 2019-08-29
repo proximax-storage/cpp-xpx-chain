@@ -22,7 +22,7 @@
 #include "catapult/crypto/Hashes.h"
 #include "catapult/model/Block.h"
 #include "catapult/utils/Logging.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -59,8 +59,8 @@ namespace catapult { namespace chain {
 			size_t MaxAverageDeviation;
 		};
 
-		model::BlockChainConfiguration CreateConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+		model::NetworkConfiguration CreateConfiguration() {
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 			config.BlockTimeSmoothingFactor = 0;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
@@ -216,7 +216,7 @@ namespace catapult { namespace chain {
 			return averageDeviation;
 		}
 
-		uint64_t CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(const model::BlockChainConfiguration& config) {
+		uint64_t CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(const model::NetworkConfiguration& config) {
 			// Arrange: set up test importances
 			auto importances = CreateDoublingImportances();
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -260,7 +260,7 @@ namespace catapult { namespace chain {
 			return CalculateLinearlyCorrelatedHitCountAndImportanceAverageDeviation(importances);
 		}
 
-		void AssertHitProbabilityIsLinearlyCorrelatedWithImportance(const model::BlockChainConfiguration& config) {
+		void AssertHitProbabilityIsLinearlyCorrelatedWithImportance(const model::NetworkConfiguration& config) {
 			// Arrange: non-deterministic because operation is probabilistic
 			test::RunNonDeterministicTest("hit probability and importance correlation", [&config]() {
 				// Assert:

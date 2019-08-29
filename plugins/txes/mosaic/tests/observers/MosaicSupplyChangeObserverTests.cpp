@@ -51,7 +51,7 @@ namespace catapult { namespace observers {
 			model::MosaicSupplyChangeNotification<1> notification(signer, test::UnresolveXor(Default_Mosaic_Id), direction, delta);
 
 			// - initialize cache with a mosaic supply
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			ObserverTestContext context(mode, Height(888), config);
 			test::AddMosaic(context.cache(), Default_Mosaic_Id, Height(7), Eternal_Artifact_Duration, initialSupply);
 			test::AddMosaicOwner(context.cache(), Default_Mosaic_Id, signer, initialOwnerSupply);

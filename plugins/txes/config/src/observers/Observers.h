@@ -5,11 +5,11 @@
 **/
 
 #pragma once
-#include "src/model/CatapultConfigNotifications.h"
+#include "src/model/NetworkConfigNotifications.h"
 #include "catapult/observers/ObserverTypes.h"
 
 namespace catapult { namespace observers {
 
-	/// Observes changes triggered by catapult config notifications
-	DECLARE_OBSERVER(CatapultConfig, model::CatapultConfigNotification<1>)();
+	/// Observes changes triggered by network config notifications
+	DECLARE_OBSERVER(NetworkConfig, model::NetworkConfigNotification<1>)();
 }}

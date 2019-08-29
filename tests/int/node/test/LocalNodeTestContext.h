@@ -26,7 +26,7 @@
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/local/server/LocalNode.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -63,7 +63,7 @@ namespace catapult { namespace test {
 		LocalNodeTestContext(
 				NodeFlag nodeFlag,
 				const std::vector<ionet::Node>& nodes,
-				const consumer<config::CatapultConfiguration&>& configTransform,
+				const consumer<config::BlockchainConfiguration&>& configTransform,
 				const std::string& tempDirPostfix)
 				: m_nodeFlag(nodeFlag)
 				, m_nodes(nodes)
@@ -78,7 +78,7 @@ namespace catapult { namespace test {
 				initializeDataDirectory(m_partnerTempDir.name());
 
 				// need to call configTransform first so that partner node loads all required transaction plugins
-				auto config = CreatePrototypicalCatapultConfiguration(m_partnerTempDir.name());
+				auto config = CreatePrototypicalBlockchainConfiguration(m_partnerTempDir.name());
 				m_configTransform(config);
 				m_pLocalPartnerNode = BootLocalPartnerNode(std::move(config), m_partnerServerKeyPair, nodeFlag);
 			}
@@ -96,8 +96,8 @@ namespace catapult { namespace test {
 				SetNemesisReceiptsHash(directory);
 
 			if (HasFlag(NodeFlag::Verify_State, m_nodeFlag)) {
-				auto config = CreatePrototypicalCatapultConfiguration(directory);
-				prepareCatapultConfiguration(config);
+				auto config = CreatePrototypicalBlockchainConfiguration(directory);
+				prepareNetworkConfiguration(config);
 
 				SetNemesisStateHash(directory, config);
 			}
@@ -133,17 +133,17 @@ namespace catapult { namespace test {
 		}
 
 	public:
-		/// Creates a copy of the default catapult configuration.
-		config::CatapultConfiguration createConfig() const {
-			return CreatePrototypicalCatapultConfiguration(m_tempDir.name());
+		/// Creates a copy of the default blockchain configuration.
+		config::BlockchainConfiguration createConfig() const {
+			return CreatePrototypicalBlockchainConfiguration(m_tempDir.name());
 		}
 
 		/// Prepares a fresh data \a directory and returns corresponding configuration.
-		config::CatapultConfiguration prepareFreshDataDirectory(const std::string& directory) const {
+		config::BlockchainConfiguration prepareFreshDataDirectory(const std::string& directory) const {
 			initializeDataDirectory(directory);
 
-			auto config = CreatePrototypicalCatapultConfiguration(directory);
-			prepareCatapultConfiguration(config);
+			auto config = CreatePrototypicalBlockchainConfiguration(directory);
+			prepareNetworkConfiguration(config);
 			return config;
 		}
 
@@ -158,7 +158,7 @@ namespace catapult { namespace test {
 		}
 
 		/// Boots a new local node around \a config.
-		std::unique_ptr<local::LocalNode> boot(config::CatapultConfiguration&& config) {
+		std::unique_ptr<local::LocalNode> boot(config::BlockchainConfiguration&& config) {
 			return boot(std::move(config), [](const auto&) {});
 		}
 
@@ -178,9 +178,9 @@ namespace catapult { namespace test {
 
 	private:
 		std::unique_ptr<local::LocalNode> boot(
-				config::CatapultConfiguration&& config,
+				config::BlockchainConfiguration&& config,
 				const consumer<extensions::ProcessBootstrapper&>& configure) {
-			prepareCatapultConfiguration(config);
+			prepareNetworkConfiguration(config);
 
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
@@ -200,14 +200,14 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		void prepareCatapultConfiguration(config::CatapultConfiguration& config) const {
-			PrepareCatapultConfiguration(config, TTraits::AddPluginExtensions, m_nodeFlag);
+		void prepareNetworkConfiguration(config::BlockchainConfiguration& config) const {
+			PrepareNetworkConfiguration(config, TTraits::AddPluginExtensions, m_nodeFlag);
 			m_configTransform(config);
 		}
 
 		crypto::KeyPair loadServerKeyPair() const {
-			// can pass empty string to CreateCatapultConfiguration because this config is only being used to get boot key
-			auto config = CreatePrototypicalCatapultConfiguration("");
+			// can pass empty string to CreateBlockchainConfiguration because this config is only being used to get boot key
+			auto config = CreatePrototypicalBlockchainConfiguration("");
 			m_configTransform(config);
 			return crypto::KeyPair::FromString(config.User.BootKey);
 		}
@@ -266,7 +266,7 @@ namespace catapult { namespace test {
 	private:
 		NodeFlag m_nodeFlag;
 		std::vector<ionet::Node> m_nodes;
-		consumer<config::CatapultConfiguration&> m_configTransform;
+		consumer<config::BlockchainConfiguration&> m_configTransform;
 		crypto::KeyPair m_serverKeyPair;
 		crypto::KeyPair m_partnerServerKeyPair;
 		TempDirectoryGuard m_tempDir;

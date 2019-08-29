@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		constexpr auto Default_Namespace_Id = NamespaceId(123);
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		template<typename TSeedCacheFunc>
 		auto CreateAndSeedCache(TSeedCacheFunc seedCache) {

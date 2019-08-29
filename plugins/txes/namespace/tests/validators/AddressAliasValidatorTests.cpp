@@ -20,7 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 	namespace {
 		template<typename TKey>
 		auto CreateAndSeedCache(const TKey& key) {
-			auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();

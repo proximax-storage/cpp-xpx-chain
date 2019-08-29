@@ -19,7 +19,7 @@
 **/
 
 #pragma once
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/plugins/PluginManager.h"
 #include "tests/test/core/AddressTestUtils.h"
@@ -53,24 +53,24 @@ namespace catapult { namespace test {
 	crypto::KeyPair LoadServerKeyPair();
 
 	/// Creates a prototypical block chain configuration that is safe to use in local tests.
-	model::BlockChainConfiguration CreatePrototypicalBlockChainConfiguration();
+	model::NetworkConfiguration CreatePrototypicalBlockChainConfiguration();
 
-	/// Creates an uninitialized catapult configuration.
-	config::CatapultConfiguration CreateUninitializedCatapultConfiguration();
+	/// Creates an uninitialized blockchain configuration.
+	config::BlockchainConfiguration CreateUninitializedBlockchainConfiguration();
 
 	/// Creates a supported entity versions configuration.
 	config::SupportedEntityVersions CreateSupportedEntityVersions();
 
-	/// Creates a prototypical catapult configuration that is safe to use in local tests.
-	config::CatapultConfiguration CreatePrototypicalCatapultConfiguration();
+	/// Creates a prototypical blockchain configuration that is safe to use in local tests.
+	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration();
 
-	/// Creates a test catapult configuration with a storage in the specified directory (\a dataDirectory).
-	config::CatapultConfiguration CreatePrototypicalCatapultConfiguration(const std::string& dataDirectory);
+	/// Creates a test blockchain configuration with a storage in the specified directory (\a dataDirectory).
+	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration(const std::string& dataDirectory);
 
-	/// Creates a test catapult configuration according to the supplied configuration (\a blockChainConfig)
+	/// Creates a test blockchain configuration according to the supplied configuration (\a networkConfig)
 	/// with a storage in the specified directory (\a dataDirectory).
-	config::CatapultConfiguration CreatePrototypicalCatapultConfiguration(
-			model::BlockChainConfiguration&& blockChainConfig,
+	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration(
+			model::NetworkConfiguration&& networkConfig,
 			const std::string& dataDirectory);
 
 	/// Creates a default unconfirmed transactions cache.
@@ -83,11 +83,11 @@ namespace catapult { namespace test {
 	std::shared_ptr<plugins::PluginManager> CreateDefaultPluginManagerWithRealPlugins();
 
 	/// Creates a plugin manager around \a config.
-	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const model::BlockChainConfiguration& config);
+	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const model::NetworkConfiguration& config);
 
 	/// Creates a plugin manager around \a config.
 	/// \note This overload is the only overload that allows state verification.
-	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const config::CatapultConfiguration& config);
+	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const config::BlockchainConfiguration& config);
 
 	/// Gets supported entity version serialized configuration.
 	std::string GetSupportedEntityVersionsString();

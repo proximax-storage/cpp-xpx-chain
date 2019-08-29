@@ -26,7 +26,7 @@
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>

@@ -561,9 +561,9 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			static void ConfigTransform(config::CatapultConfiguration& config) {
+			static void ConfigTransform(config::BlockchainConfiguration& config) {
 				// with importance grouping 1 the account state cache would change with every block, which is unwanted in the test
-				const_cast<model::BlockChainConfiguration&>(config.BlockChain).ImportanceGrouping = 100;
+				const_cast<model::NetworkConfiguration&>(config.Network).ImportanceGrouping = 100;
 			}
 
 		private:

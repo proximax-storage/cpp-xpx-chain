@@ -58,13 +58,13 @@ namespace catapult { namespace timesync {
 
 		constexpr uint64_t Default_Threshold = 85;
 
-		cache::CatapultCache CreateCache(Importance totalChainImportance, const model::BlockChainConfiguration& config) {
-			const_cast<model::BlockChainConfiguration&>(config).ImportanceGrouping = 123;
-			const_cast<model::BlockChainConfiguration&>(config).TotalChainImportance = totalChainImportance;
+		cache::CatapultCache CreateCache(Importance totalChainImportance, const model::NetworkConfiguration& config) {
+			const_cast<model::NetworkConfiguration&>(config).ImportanceGrouping = 123;
+			const_cast<model::NetworkConfiguration&>(config).TotalChainImportance = totalChainImportance;
 			return test::CoreSystemCacheFactory::Create(config);
 		}
 
-		cache::CatapultCache CreateCache(const model::BlockChainConfiguration& config) {
+		cache::CatapultCache CreateCache(const model::NetworkConfiguration& config) {
 			return CreateCache(Importance(), config);
 		}
 
@@ -93,7 +93,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, CanBootService) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		TestContext context(CreateCache(config));
 
 		// Act:
@@ -115,7 +115,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, CanShutdownService) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		TestContext context(CreateCache(config));
 		context.boot();
 
@@ -138,7 +138,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, PacketHandlersAreRegistered) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		TestContext context(CreateCache(config));
 
 		// Act:
@@ -152,7 +152,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TasksAreRegistered) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		TestContext context(CreateCache(config));
 
 		// Act:
@@ -168,7 +168,7 @@ namespace catapult { namespace timesync {
 		// Arrange:
 		auto pTimeSyncState = std::make_shared<TimeSynchronizationState>(100);
 		pTimeSyncState->update(TimeOffset(500));
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		TestContext context(CreateCache(config), [&timeSyncState = *pTimeSyncState]() {
 			return timeSyncState.networkTime();
 		});
@@ -217,7 +217,7 @@ namespace catapult { namespace timesync {
 		void AssertStateChange(int64_t remoteOffset, ResponseType responseType, Amount balance, TAssertState assertState) {
 			// Arrange: prepare account state cache
 			auto keyPair = test::GenerateKeyPair();
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			auto cache = CreateCache(Total_Chain_Importance, config);
 			{
 				auto cacheDelta = cache.createDelta();
@@ -242,8 +242,8 @@ namespace catapult { namespace timesync {
 
 			// - prepare context
 			TestContext context(std::move(cache), timeSupplier);
-			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(context.testState().config().BlockChain);
-			blockChainConfig.TotalChainImportance = Total_Chain_Importance;
+			auto& networkConfig = const_cast<model::NetworkConfiguration&>(context.testState().config().Network);
+			networkConfig.TotalChainImportance = Total_Chain_Importance;
 			test::AddNode(context.testState().state().nodes(), keyPair.publicKey(), "alice");
 			auto pTimeSyncState = std::make_shared<TimeSynchronizationState>(Default_Threshold);
 			context.boot(pTimeSyncState);

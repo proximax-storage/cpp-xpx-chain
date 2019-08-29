@@ -25,7 +25,7 @@
 #include "src/model/AggregateTransaction.h"
 #include "catapult/model/Address.h"
 #include "catapult/utils/MemoryUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/LocalTestUtils.h"
@@ -98,7 +98,7 @@ namespace catapult { namespace plugins {
 		}
 
 		auto CreateConfigHolder(const utils::TimeSpan& time) {
-			auto blockchainConfig = model::BlockChainConfiguration::Uninitialized();
+			auto blockchainConfig = model::NetworkConfiguration::Uninitialized();
 			auto aggregateConfig = config::AggregateConfiguration::Uninitialized();
 			aggregateConfig.MaxBondedTransactionLifetime = time;
 			blockchainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), aggregateConfig);

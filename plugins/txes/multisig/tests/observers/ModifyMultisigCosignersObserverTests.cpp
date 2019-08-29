@@ -185,7 +185,7 @@ namespace catapult { namespace observers {
 					const std::vector<size_t>& finalUnknownAccounts,
 					const std::vector<MultisigDescriptor>& finalMultisigAccounts) {
 
-				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto config = model::NetworkConfiguration::Uninitialized();
 				RunTest(
 						notification,
 						ObserverTestContext(NotifyMode::Commit, Height(777), config),
@@ -208,7 +208,7 @@ namespace catapult { namespace observers {
 					const std::vector<size_t>& finalUnknownAccounts,
 					const std::vector<MultisigDescriptor>& finalMultisigAccounts) {
 
-				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto config = model::NetworkConfiguration::Uninitialized();
 				RunTest(
 						notification,
 						ObserverTestContext(NotifyMode::Rollback, Height(777), config),

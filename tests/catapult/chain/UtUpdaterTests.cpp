@@ -39,7 +39,7 @@ namespace catapult { namespace chain {
 		constexpr auto Default_Height = Height(17);
 		constexpr auto Default_Time = Timestamp(987);
 
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		ValidationResult Modify(ValidationResult result) {
 			// used to modify a ValidationResult while preserving its severity

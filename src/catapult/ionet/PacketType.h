@@ -128,11 +128,11 @@ namespace catapult { namespace ionet {
 	/* Metadata state path has been requested by a client. */ \
 	ENUM_VALUE(Metadata_State_Path, FACILITY_BASED_CODE(800, Metadata)) \
 	\
-	/* Catapult config state path has been requested by a client. */ \
-	ENUM_VALUE(Catapult_Config_State_Path, FACILITY_BASED_CODE(800, CatapultConfig)) \
+	/* Network config state path has been requested by a client. */ \
+	ENUM_VALUE(Network_Config_State_Path, FACILITY_BASED_CODE(800, NetworkConfig)) \
 	\
-	/* Catapult upgrade state path has been requested by a client. */ \
-	ENUM_VALUE(Catapult_Upgrade_State_Path, FACILITY_BASED_CODE(800, CatapultUpgrade)) \
+	/* Blockchain upgrade state path has been requested by a client. */ \
+	ENUM_VALUE(Blockchain_Upgrade_State_Path, FACILITY_BASED_CODE(800, BlockchainUpgrade)) \
 	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
@@ -178,11 +178,11 @@ namespace catapult { namespace ionet {
 	/* Metadata infos have been requested by a client. */ \
 	ENUM_VALUE(Metadata_Infos, FACILITY_BASED_CODE(1200, Metadata)) \
 	\
-	/* Catapult config infos have been requested by a client. */ \
-	ENUM_VALUE(Catapult_Config_Infos, FACILITY_BASED_CODE(1200, CatapultConfig)) \
+	/* Network config infos have been requested by a client. */ \
+	ENUM_VALUE(Network_Config_Infos, FACILITY_BASED_CODE(1200, NetworkConfig)) \
 	\
-	/* Catapult upgrade infos have been requested by a client. */ \
-	ENUM_VALUE(Catapult_Upgrade_Infos, FACILITY_BASED_CODE(1200, CatapultUpgrade))
+	/* Blockchain upgrade infos have been requested by a client. */ \
+	ENUM_VALUE(Blockchain_Upgrade_Infos, FACILITY_BASED_CODE(1200, BlockchainUpgrade))
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

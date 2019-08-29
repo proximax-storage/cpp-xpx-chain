@@ -20,7 +20,7 @@
 
 #include "catapult/cache_core/ReadOnlyAccountStateCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -31,8 +31,8 @@ namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
+			auto config = model::NetworkConfiguration::Uninitialized();
+			config.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
 			config.ImportanceGrouping = 543;
 			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 			config.CurrencyMosaicId = MosaicId(1111);
@@ -45,7 +45,7 @@ namespace catapult { namespace cache {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(19);
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).Network.Identifier = networkIdentifier;
+		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).Info.Identifier = networkIdentifier;
 		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:
@@ -56,7 +56,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, ImportanceGroupingIsExposed) {
 		// Arrange:
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).ImportanceGrouping = 123;
+		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).ImportanceGrouping = 123;
 		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:
@@ -67,7 +67,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, HarvestingMosaicIdIsExposed) {
 		// Arrange:
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).HarvestingMosaicId = MosaicId(11229988);
+		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).HarvestingMosaicId = MosaicId(11229988);
 		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
 
 		// Act + Assert:

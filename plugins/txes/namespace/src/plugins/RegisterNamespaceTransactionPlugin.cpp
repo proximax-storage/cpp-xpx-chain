@@ -22,7 +22,7 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/constants.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
@@ -81,12 +81,12 @@ namespace catapult { namespace plugins {
 		}
 
 		template<typename TTransaction>
-		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
-				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight).BlockChain;
-				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
-				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
-				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
+				const model::NetworkConfiguration& networkConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight).Network;
+				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(networkConfig);
+				const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
+				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(networkConfig.Info, currencyMosaicId, pluginConfig);
 
 				switch (transaction.EntityVersion()) {
 				case 2: {
@@ -123,5 +123,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, Default, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
 }}

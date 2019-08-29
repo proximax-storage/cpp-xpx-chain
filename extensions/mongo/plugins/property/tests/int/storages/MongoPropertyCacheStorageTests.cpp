@@ -49,7 +49,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			static constexpr auto Network_Id = static_cast<model::NetworkIdentifier>(0x5A);
 			static constexpr auto CreateCacheStorage = CreateMongoPropertyCacheStorage;
 
-			static cache::CatapultCache CreateCache(const model::BlockChainConfiguration& config) {
+			static cache::CatapultCache CreateCache(const model::NetworkConfiguration& config) {
 				return test::PropertyCacheFactory::Create(config);
 			}
 

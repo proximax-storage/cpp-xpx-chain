@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include <set>
 
 namespace catapult { namespace config {
@@ -13,7 +13,7 @@ namespace catapult { namespace config {
 	class ConfigTreeCache {
 	private:
 		struct ConfigRoot {
-			CatapultConfiguration Config;
+			BlockchainConfiguration Config;
 			std::set<Height> Children;
 		};
 
@@ -29,7 +29,7 @@ namespace catapult { namespace config {
 			return m_references.count(height) > 0 || m_configs.count(height) > 0;
 		}
 
-		CatapultConfiguration& insert(const Height& height, const CatapultConfiguration& config) {
+		BlockchainConfiguration& insert(const Height& height, const BlockchainConfiguration& config) {
 			if (m_configs.count(height))
 				CATAPULT_THROW_INVALID_ARGUMENT_1("duplicate config at height", height);
 
@@ -38,7 +38,7 @@ namespace catapult { namespace config {
 			return m_configs.at(height).Config;
 		}
 
-		CatapultConfiguration& insertRef(const Height& refHeight, const Height& configHeight) {
+		BlockchainConfiguration& insertRef(const Height& refHeight, const Height& configHeight) {
 			if (refHeight == configHeight)
 				CATAPULT_THROW_INVALID_ARGUMENT_1("reference is not allowed at the same height", configHeight);
 
@@ -72,7 +72,7 @@ namespace catapult { namespace config {
 			}
 		}
 
-		CatapultConfiguration& get(const Height& height) {
+		BlockchainConfiguration& get(const Height& height) {
 			auto iterRef = m_references.find(height);
 			if (iterRef != m_references.end())
 				return iterRef->second.Parent.Config;
@@ -86,7 +86,7 @@ namespace catapult { namespace config {
 
 	private:
 		void cleanupRefs(ConfigRoot& root) {
-			cleanupRefs(root, root.Config.BlockChain.MaxRollbackBlocks);
+			cleanupRefs(root, root.Config.Network.MaxRollbackBlocks);
 		}
 
 		inline void cleanupRefs(ConfigRoot& root, uint64_t size) {

@@ -42,7 +42,7 @@
 
 namespace catapult { namespace version {
 
-	constexpr CatapultVersion CatapultVersion = catapult::CatapultVersion{
+	constexpr BlockchainVersion BlockchainVersion = catapult::BlockchainVersion{
 		uint64_t{CATAPULT_VERSION_MAJOR}	<< 48 |
 		uint64_t{CATAPULT_VERSION_MINOR}	<< 32 |
 		uint64_t{CATAPULT_VERSION_REVISION}	<< 16 |

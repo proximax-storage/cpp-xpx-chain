@@ -27,7 +27,7 @@
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
@@ -39,7 +39,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS MosaicDefinitionTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::LocalNodeConfigurationHolder>, 3, 3,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::BlockchainConfigurationHolder>, 3, 3,)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
@@ -51,17 +51,17 @@ namespace catapult { namespace plugins {
 			return pluginConfig;
 		}
 
-		auto CreateBlockChainConfiguration(config::MosaicConfiguration pluginConfig) {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			blockChainConfig.Network.PublicKey = test::GenerateRandomByteArray<Key>();
-			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
-			return blockChainConfig;
+		auto CreateNetworkConfiguration(config::MosaicConfiguration pluginConfig) {
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
+			networkConfig.Info.PublicKey = test::GenerateRandomByteArray<Key>();
+			networkConfig.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			return networkConfig;
 		}
 
-		auto GetSinkAddress(const config::MosaicConfiguration& pluginConfig, const model::BlockChainConfiguration& blockChainConfig) {
-			auto address = PublicKeyToAddress(pluginConfig.MosaicRentalFeeSinkPublicKey, blockChainConfig.Network.Identifier);
+		auto GetSinkAddress(const config::MosaicConfiguration& pluginConfig, const model::NetworkConfiguration& networkConfig) {
+			auto address = PublicKeyToAddress(pluginConfig.MosaicRentalFeeSinkPublicKey, networkConfig.Info.Identifier);
 			UnresolvedAddress sinkAddress;
 			std::memcpy(sinkAddress.data(), address.data(), address.size());
 			return sinkAddress;
@@ -72,11 +72,11 @@ namespace catapult { namespace plugins {
 			TEST_CLASS,
 			,
 			,Entity_Type_Mosaic_Definition,
-		config::CreateMockConfigurationHolder(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0)))))
+		config::CreateMockConfigurationHolder(CreateNetworkConfiguration(CreateMosaicConfiguration(Amount(0)))))
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pConfigHolder = config::CreateMockConfigurationHolder(CreateBlockChainConfiguration(CreateMosaicConfiguration(Amount(0))));
+		auto pConfigHolder = config::CreateMockConfigurationHolder(CreateNetworkConfiguration(CreateMosaicConfiguration(Amount(0))));
 		auto pPlugin = TTraits::CreatePlugin(pConfigHolder);
 
 		typename TTraits::TransactionType transaction;
@@ -95,8 +95,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
 		auto pluginConfig = CreateMosaicConfiguration(Amount(0));
-		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+		auto networkConfig = CreateNetworkConfiguration(pluginConfig);
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(networkConfig));
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -122,8 +122,8 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			mocks::MockNotificationSubscriber sub;
 			auto pluginConfig = CreateMosaicConfiguration(Amount(987));
-			auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-			auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
+			auto networkConfig = CreateNetworkConfiguration(pluginConfig);
+			auto sinkAddress = GetSinkAddress(pluginConfig, networkConfig);
 
 			// - prepare the transaction
 			typename TTraits::TransactionType transaction;
@@ -131,8 +131,8 @@ namespace catapult { namespace plugins {
 			transaction.PropertiesHeader.Count = 0;
 			test::FillWithRandomData(transaction.Signer);
 			if (isSignerExempt)
-				transaction.Signer = blockChainConfig.Network.PublicKey;
-			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+				transaction.Signer = networkConfig.Info.PublicKey;
+			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(networkConfig));
 
 			// Act:
 			test::PublishTransaction(*pPlugin, transaction, sub);
@@ -253,9 +253,9 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		MosaicDefinitionTransactionPluginTestContext<TTraits> testContext;
 		auto pluginConfig = CreateMosaicConfiguration(Default_Rental_Fee);
-		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+		auto networkConfig = CreateNetworkConfiguration(pluginConfig);
+		auto sinkAddress = GetSinkAddress(pluginConfig, networkConfig);
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(networkConfig));
 
 		auto pTransaction = CreateTransactionWithProperties<TTraits>(1);
 		FillDefaultTransactionData(*pTransaction);
@@ -276,9 +276,9 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		MosaicDefinitionTransactionPluginTestContext<TTraits> testContext;
 		auto pluginConfig = CreateMosaicConfiguration(Default_Rental_Fee);
-		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+		auto networkConfig = CreateNetworkConfiguration(pluginConfig);
+		auto sinkAddress = GetSinkAddress(pluginConfig, networkConfig);
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(networkConfig));
 
 		auto pTransaction = CreateTransactionWithProperties<TTraits>(0);
 		FillDefaultTransactionData(*pTransaction);

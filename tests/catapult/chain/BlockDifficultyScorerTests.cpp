@@ -20,7 +20,7 @@
 
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/utils/Logging.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 #include <cmath>
@@ -38,8 +38,8 @@ namespace catapult { namespace chain {
 			return cache::DifficultyInfoRange(set.cbegin(), set.cend());
 		}
 
-		model::BlockChainConfiguration CreateConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+		model::NetworkConfiguration CreateConfiguration() {
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.MaxRollbackBlocks = 7;
 			config.MaxDifficultyBlocks = 3;
@@ -152,14 +152,14 @@ namespace catapult { namespace chain {
 			static Difficulty CalculateDifficulty(
 					const cache::BlockDifficultyCache& cache,
 					state::BlockDifficultyInfo nextBlockInfo,
-					const model::BlockChainConfiguration& config) {
+					const model::NetworkConfiguration& config) {
 				return chain::CalculateDifficulty(cache, nextBlockInfo, config);
 			}
 
 			static void AssertDifficultyCalculationFailure(
 					const cache::BlockDifficultyCache& cache,
 					state::BlockDifficultyInfo nextBlockInfo,
-					const model::BlockChainConfiguration& config) {
+					const model::NetworkConfiguration& config) {
 				// Act + Assert:
 				EXPECT_THROW(chain::CalculateDifficulty(cache, nextBlockInfo, config), catapult_invalid_argument);
 			}
@@ -169,7 +169,7 @@ namespace catapult { namespace chain {
 			static Difficulty CalculateDifficulty(
 					const cache::BlockDifficultyCache& cache,
 					state::BlockDifficultyInfo nextBlockInfo,
-					const model::BlockChainConfiguration& config) {
+					const model::NetworkConfiguration& config) {
 				Difficulty difficulty;
 				EXPECT_TRUE(TryCalculateDifficulty(cache, nextBlockInfo, config, difficulty));
 				return difficulty;
@@ -178,7 +178,7 @@ namespace catapult { namespace chain {
 			static void AssertDifficultyCalculationFailure(
 					const cache::BlockDifficultyCache& cache,
 					state::BlockDifficultyInfo nextBlockInfo,
-					const model::BlockChainConfiguration& config) {
+					const model::NetworkConfiguration& config) {
 				Difficulty difficulty;
 				EXPECT_FALSE(TryCalculateDifficulty(cache, nextBlockInfo, config, difficulty));
 			}

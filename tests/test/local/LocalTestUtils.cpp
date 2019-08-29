@@ -26,12 +26,12 @@
 #include "catapult/plugins/PluginLoader.h"
 #include "plugins/txes/transfer/src/model/TransferEntityType.h"
 #include "plugins/txes/transfer/src/model/TransferTransaction.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -66,7 +66,7 @@ namespace catapult { namespace test {
 			"\t\t\t\"supportedVersions\": [1]\n"
 			"\t\t},\n"
 			"\t\t{\n"
-			"\t\t\t\"name\": \"Catapult_Upgrade\",\n"
+			"\t\t\t\"name\": \"BlockChain_Upgrade\",\n"
 			"\t\t\t\"type\": \"16728\",\n"
 			"\t\t\t\"supportedVersions\": [1]\n"
 			"\t\t},\n"
@@ -81,7 +81,7 @@ namespace catapult { namespace test {
 			"\t\t\t\"supportedVersions\": [1]\n"
 			"\t\t},\n"
 			"\t\t{\n"
-			"\t\t\t\"name\": \"Catapult_Config\",\n"
+			"\t\t\t\"name\": \"Network_Config\",\n"
 			"\t\t\t\"type\": \"16729\",\n"
 			"\t\t\t\"supportedVersions\": [1]\n"
 			"\t\t},\n"
@@ -228,9 +228,9 @@ namespace catapult { namespace test {
 		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::FromString(Local_Node_Private_Key));
 	}
 
-	model::BlockChainConfiguration CreatePrototypicalBlockChainConfiguration() {
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		SetNetwork(config.Network);
+	model::NetworkConfiguration CreatePrototypicalBlockChainConfiguration() {
+		auto config = model::NetworkConfiguration::Uninitialized();
+		SetNetwork(config.Info);
 
 		config.CurrencyMosaicId = Default_Currency_Mosaic_Id;
 		config.HarvestingMosaicId = Default_Harvesting_Mosaic_Id;
@@ -257,27 +257,27 @@ namespace catapult { namespace test {
 		return config;
 	}
 
-	config::CatapultConfiguration CreateUninitializedCatapultConfiguration() {
-		MutableCatapultConfiguration config;
-		config.BlockChain.ImportanceGrouping = 1;
-		config.BlockChain.MaxRollbackBlocks = 0;
+	config::BlockchainConfiguration CreateUninitializedBlockchainConfiguration() {
+		MutableBlockchainConfiguration config;
+		config.Network.ImportanceGrouping = 1;
+		config.Network.MaxRollbackBlocks = 0;
 		config.User.BootKey = Local_Node_Private_Key;
 		return config.ToConst();
 	}
 
-	config::CatapultConfiguration CreatePrototypicalCatapultConfiguration() {
-		return CreatePrototypicalCatapultConfiguration(""); // create the configuration without a valid data directory
+	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration() {
+		return CreatePrototypicalBlockchainConfiguration(""); // create the configuration without a valid data directory
 	}
 
-	config::CatapultConfiguration CreatePrototypicalCatapultConfiguration(const std::string& dataDirectory) {
-		return CreatePrototypicalCatapultConfiguration(CreatePrototypicalBlockChainConfiguration(), dataDirectory);
+	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration(const std::string& dataDirectory) {
+		return CreatePrototypicalBlockchainConfiguration(CreatePrototypicalBlockChainConfiguration(), dataDirectory);
 	}
 
-	config::CatapultConfiguration CreatePrototypicalCatapultConfiguration(
-			model::BlockChainConfiguration&& blockChainConfig,
+	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration(
+			model::NetworkConfiguration&& networkConfig,
 			const std::string& dataDirectory) {
-		MutableCatapultConfiguration config;
-		config.BlockChain = std::move(blockChainConfig);
+		MutableBlockchainConfiguration config;
+		config.Network = std::move(networkConfig);
 		config.Node = CreateNodeConfiguration();
 
 		config.User.BootKey = Local_Node_Private_Key;
@@ -295,8 +295,8 @@ namespace catapult { namespace test {
 	}
 
 	std::shared_ptr<plugins::PluginManager> CreateDefaultPluginManagerWithRealPlugins() {
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		SetNetwork(config.Network);
+		auto config = model::NetworkConfiguration::Uninitialized();
+		SetNetwork(config.Info);
 		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
 		config.ImportanceGrouping = 123;
 		config.MaxDifficultyBlocks = 123;
@@ -307,7 +307,7 @@ namespace catapult { namespace test {
 
 	namespace {
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager(
-				const config::CatapultConfiguration& config,
+				const config::BlockchainConfiguration& config,
 				const plugins::StorageConfiguration& storageConfig) {
 			std::vector<plugins::PluginModule> modules;
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -315,7 +315,7 @@ namespace catapult { namespace test {
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.plugins.hashcache");
 
-			for (const auto& pair : config.BlockChain.Plugins)
+			for (const auto& pair : config.Network.Plugins)
 				LoadPluginByName(*pPluginManager, modules, "", pair.first);
 
 			return std::shared_ptr<plugins::PluginManager>(
@@ -329,20 +329,20 @@ namespace catapult { namespace test {
 		}
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager(
-				const model::BlockChainConfiguration& blockChainConfig,
+				const model::NetworkConfiguration& networkConfig,
 				const plugins::StorageConfiguration& storageConfig) {
-			test::MutableCatapultConfiguration config;
-			config.BlockChain = blockChainConfig;
+			test::MutableBlockchainConfiguration config;
+			config.Network = networkConfig;
 			config.SupportedEntityVersions = test::CreateSupportedEntityVersions();
 			return CreatePluginManager(config.ToConst(), storageConfig);
 		}
 	}
 
-	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const model::BlockChainConfiguration& config) {
+	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const model::NetworkConfiguration& config) {
 		return CreatePluginManager(config, plugins::StorageConfiguration());
 	}
 
-	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const config::CatapultConfiguration& config) {
+	std::shared_ptr<plugins::PluginManager> CreatePluginManagerWithRealPlugins(const config::BlockchainConfiguration& config) {
 		return CreatePluginManager(config, extensions::CreateStorageConfiguration(config));
 	}
 

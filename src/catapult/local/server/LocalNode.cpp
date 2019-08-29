@@ -157,7 +157,7 @@ namespace catapult { namespace local {
 				if (extensions::HasSerializedState(m_dataDirectory.dir("state")))
 					return false;
 
-				NemesisBlockNotifier notifier(config().BlockChain, m_cacheHolder.cache(), m_storage, m_pluginManager);
+				NemesisBlockNotifier notifier(config().Network, m_cacheHolder.cache(), m_storage, m_pluginManager);
 
 				if (m_pBlockChangeSubscriber)
 					notifier.raise(*m_pBlockChangeSubscriber);
@@ -225,7 +225,7 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			const config::CatapultConfiguration& config() {
+			const config::BlockchainConfiguration& config() {
 				return m_pluginManager.configHolder()->Config();
 			}
 			extensions::LocalNodeStateRef stateRef() {

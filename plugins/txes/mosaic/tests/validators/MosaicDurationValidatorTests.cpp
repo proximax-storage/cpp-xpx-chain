@@ -21,8 +21,8 @@
 #include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
 #include "src/cache/MosaicCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "catapult/model/NetworkConfiguration.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -61,10 +61,10 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
 			pluginConfig.MaxMosaicDuration = utils::BlockSpan::FromHours(123);
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateMosaicDurationValidator(pConfigHolder);
 
 			// Act:
@@ -83,7 +83,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, BlockDuration(123));
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 		AddEternalMosaic(cache, signer);
 
 		// Assert:
@@ -96,7 +96,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, BlockDuration());
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 		AddMosaic(cache, signer, BlockDuration(123));
 
 		// Assert:
@@ -108,7 +108,7 @@ namespace catapult { namespace validators {
 		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 		AddMosaic(cache, signer, BlockDuration(100));
 
 		// Assert: max duration is 123
@@ -123,7 +123,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, BlockDuration(std::numeric_limits<uint64_t>::max() - 90));
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 		AddMosaic(cache, signer, BlockDuration(100));
 
 		// Assert:
@@ -140,7 +140,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, BlockDuration(124));
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 
 		// Assert:
 		AssertValidationResult(ValidationResult::Success, cache, notification);
@@ -151,7 +151,7 @@ namespace catapult { namespace validators {
 		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 		AddMosaic(cache, signer, BlockDuration(100));
 
 		// Assert:
@@ -165,7 +165,7 @@ namespace catapult { namespace validators {
 		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
 		AddEternalMosaic(cache, signer);
 
 		// Assert:

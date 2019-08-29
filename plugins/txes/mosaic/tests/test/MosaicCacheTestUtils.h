@@ -21,7 +21,7 @@
 #pragma once
 #include "src/cache/MosaicCache.h"
 #include "src/cache/MosaicCacheStorage.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 
 namespace catapult { namespace test {
@@ -43,7 +43,7 @@ namespace catapult { namespace test {
 		}
 
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
+		static cache::CatapultCache Create(const model::NetworkConfiguration& config) {
 			auto subCaches = CreateSubCachesWithMosaicCache();
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));

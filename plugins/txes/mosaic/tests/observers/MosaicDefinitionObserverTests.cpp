@@ -107,7 +107,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateDefaultNotification(signer);
 
 		// Act: add it
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		auto context = ObserverTestContext(NotifyMode::Commit, Height(888), config);
 		RunTest(notification, std::move(context), SeedCacheEmpty, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was added
@@ -122,7 +122,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateDefaultNotification(signer);
 
 		// Act: add it
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		auto context = ObserverTestContext(NotifyMode::Commit, Height(888), config);
 		RunTest(notification, std::move(context), SeedCacheWithDefaultMosaic, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic definition was changed
@@ -157,7 +157,7 @@ namespace catapult { namespace observers {
 		auto seedMosaics = [](auto& mosaicCacheDelta) { AddTwoMosaics(mosaicCacheDelta, 1); };
 
 		// Act: remove it
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height, config);
 		RunTest(notification, std::move(context), seedMosaics, [](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was removed
@@ -174,7 +174,7 @@ namespace catapult { namespace observers {
 		auto seedMosaics = [](auto& mosaicCacheDelta) { AddTwoMosaics(mosaicCacheDelta, 2); };
 
 		// Act: remove it
-		auto config = model::BlockChainConfiguration::Uninitialized();
+		auto config = model::NetworkConfiguration::Uninitialized();
 		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height, config);
 		RunTest(notification, std::move(context), seedMosaics, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was removed

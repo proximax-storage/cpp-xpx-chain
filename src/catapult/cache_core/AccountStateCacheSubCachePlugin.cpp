@@ -73,7 +73,7 @@ namespace catapult { namespace cache {
 
 	AccountStateCacheSubCachePlugin::AccountStateCacheSubCachePlugin(
 			const CacheConfiguration& config,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 			: BaseAccountStateCacheSubCachePlugin(std::make_unique<AccountStateCache>(config, pConfigHolder))
 	{}
 }}

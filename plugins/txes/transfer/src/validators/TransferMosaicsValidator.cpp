@@ -25,10 +25,10 @@ namespace catapult { namespace validators {
 
 	using Notification = model::TransferMosaicsNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(TransferMosaics, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(TransferMosaics, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(TransferMosaics, [pConfigHolder](const auto& notification, const auto& context) {
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::TransferConfiguration>(PLUGIN_NAME_HASH(transfer));
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::TransferConfiguration>(PLUGIN_NAME_HASH(transfer));
 
 			// check strict ordering of mosaics
 			if (1 > notification.MosaicsCount)
@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 					return Failure_Transfer_Out_Of_Order_Mosaics;
 
 				if (1 > pMosaics[i].Amount.unwrap())
-					return Failure_Transfer_Invalid_Amount;
+					return Failure_Transfer_Zero_Amount;
 
 				lastMosaicId = currentMosaicId;
 			}
