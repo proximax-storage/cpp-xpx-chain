@@ -11,7 +11,7 @@ namespace catapult { namespace model {
 	/// Plugin configuration base class.
 	struct PluginConfiguration {
 	public:
-		virtual ~PluginConfiguration(){};
+		virtual ~PluginConfiguration(){}
 
 	public:
 		/// Returns number of common plugin properties.

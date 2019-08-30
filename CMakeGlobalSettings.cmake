@@ -13,11 +13,6 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/bin)
 set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/lib)
 
-### set boost settings
-add_definitions(-DBOOST_ALL_DYN_LINK)
-set(Boost_USE_STATIC_LIBS OFF)
-set(Boost_USE_MULTITHREADED ON)
-set(Boost_USE_STATIC_RUNTIME OFF)
 
 ### set custom diagnostics
 if(ENABLE_CATAPULT_DIAGNOSTICS)
@@ -348,7 +343,7 @@ function(catapult_test_executable TARGET_NAME)
 	catapult_executable(${TARGET_NAME} ${ARGN})
 	add_test(NAME ${TARGET_NAME} WORKING_DIRECTORY ${CMAKE_BINARY_DIR} COMMAND ${TARGET_NAME})
 
-	target_link_libraries(${TARGET_NAME} ${GTEST_LIBRARIES})
+	target_link_libraries(${TARGET_NAME} GTest::gtest)
 
 	if (ENABLE_CODE_COVERAGE)
 		message(STATUS "Enabling code coverage for ${TARGET_NAME}")

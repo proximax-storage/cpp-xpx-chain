@@ -1,9 +1,35 @@
 cmake_minimum_required(VERSION 3.2)
+
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif(CCACHE_FOUND)
+
+set(
+	CMAKE_TOOLCHAIN_FILE
+	"${CMAKE_SOURCE_DIR}/cmake/toolchain.cmake"
+	CACHE
+	FILEPATH
+	"Default toolchain"
+)
+
+include("cmake/Hunter/init.cmake")
+HunterGate(
+		URL "https://github.com/cpp-pm/hunter/archive/v0.23.213.tar.gz"
+		SHA1 "f7dece30a8fd9e82d9342a55df8bf22c21a2760c"
+		FILEPATH ${CMAKE_SOURCE_DIR}/cmake/Hunter/config.cmake
+)
+
 project(catapult_server)
 include(CMakeGlobalSettings.cmake)
 option(ENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_EXPORT_COMPILE_COMMANDS          ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE        ON)
+set_property(GLOBAL PROPERTY USE_FOLDERS   ON)
+
+include(cmake/dependencies.cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
@@ -11,35 +37,12 @@ message(STATUS "CATAPULT_VERSION_DESCRIPTION: ${CATAPULT_VERSION_DESCRIPTION}")
 message(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
-message(STATUS "BOOST_ROOT: $ENV{BOOST_ROOT}")
 
 set(CORE_CATAPULT_LIBS catapult.io catapult.ionet catapult.model catapult.thread catapult.utils)
 
-### setup boost
-find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
-include_directories(SYSTEM ${Boost_INCLUDE_DIR})
-
-### setup rocksdb
-message("--- locating rocksdb dependencies ---")
-if (WIN32)
-	find_package(RocksDB REQUIRED)
-else()
-	find_path(ROCKSDB_ROOT_DIR NAMES include/rocksdb/db.h)
-	find_library(ROCKSDB_LIBRARIES NAMES rocksdb HINTS ${ROCKSDB_ROOT_DIR})
-	find_path(ROCKSDB_INCLUDE_DIR NAMES rocksdb/db.h HINTS ${ROCKSDB_ROOT_DIR}/include)
-
-	message("rocksdb   lib: ${ROCKSDB_LIBRARIES}")
-	message("rocksdb   inc: ${ROCKSDB_INCLUDE_DIR}")
-endif()
-
 # used to add rocksdb dependencies to a target
 function(catapult_add_rocksdb_dependencies TARGET_NAME)
-	if (WIN32)
-		target_link_libraries(${TARGET_NAME} RocksDB::rocksdb)
-	else()
-		include_directories(SYSTEM ${ROCKSDB_INCLUDE_DIR})
-		target_link_libraries(${TARGET_NAME} ${ROCKSDB_LIBRARIES})
-	endif()
+	target_link_libraries(${TARGET_NAME} RocksDB::rocksdb)
 endfunction()
 
 ### add source directories
