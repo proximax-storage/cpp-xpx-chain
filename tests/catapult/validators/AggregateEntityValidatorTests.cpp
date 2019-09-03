@@ -60,8 +60,7 @@ namespace catapult { namespace validators {
 
 		void Validate(const stateful::AggregateEntityValidator& validator, const model::VerifiableEntity& entity) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto context = test::CreateValidatorContext(Height(123), cacheView.toReadOnly());
 			auto dispatcher = [&entity](const auto&, const auto& validationFunctions) {

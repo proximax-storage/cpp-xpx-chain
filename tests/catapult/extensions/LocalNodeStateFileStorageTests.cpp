@@ -172,10 +172,10 @@ namespace catapult { namespace extensions {
 		// Arrange: seed and save the cache state (real plugin manager is needed to execute nemesis)
 		test::TempDirectoryGuard tempDir;
 		auto stateDirectory = config::CatapultDirectory(tempDir.name() + "/zstate");
-		auto networkConfig = test::CreateBlockchainConfigurationWithNemesisPluginExtensions("").Network;
+		auto config = test::CreateBlockchainConfigurationWithNemesisPluginExtensions("");
 
 		{
-			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(networkConfig);
+			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
 			auto originalCache = pPluginManager->createCache();
 			PrepareAndSaveCompleteState(stateDirectory, originalCache);
 		}
@@ -184,8 +184,9 @@ namespace catapult { namespace extensions {
 		ASSERT_TRUE(boost::filesystem::remove(stateDirectory.file("supplemental.dat")));
 
 		// Act: load the state
-		auto pPluginManager = test::CreatePluginManagerWithRealPlugins(networkConfig);
-		test::LocalNodeTestState loadedState(networkConfig, stateDirectory.str(), pPluginManager->createCache());
+		auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
+		const_cast<std::string&>(config.User.DataDirectory) = stateDirectory.str();
+		test::LocalNodeTestState loadedState(config, pPluginManager->createCache());
 		auto heights = LoadStateFromDirectory(stateDirectory, loadedState.ref(), *pPluginManager);
 
 		// Assert:
@@ -236,9 +237,11 @@ namespace catapult { namespace extensions {
 			// Arrange: seed and save the cache state with rocks disabled
 			test::TempDirectoryGuard tempDir;
 			auto stateDirectory = config::CatapultDirectory(tempDir.name() + "/zstate");
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
-			auto originalCache = test::CoreSystemCacheFactory::Create(networkConfig);
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Immutable.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
+			auto config = mutableConfig.ToConst();
+			const auto& networkConfig = config.Network;
+			auto originalCache = test::CoreSystemCacheFactory::Create(config);
 
 			// - run additional preparation
 			prepare(stateDirectory);
@@ -250,7 +253,7 @@ namespace catapult { namespace extensions {
 			test::LocalNodeTestState loadedState(
 					networkConfig,
 					stateDirectory.str(),
-					test::CoreSystemCacheFactory::Create(networkConfig));
+					test::CoreSystemCacheFactory::Create(config));
 			auto pluginManager = test::CreatePluginManager(networkConfig);
 			auto heights = LoadStateFromDirectory(stateDirectory, loadedState.ref(), pluginManager);
 
@@ -285,12 +288,9 @@ namespace catapult { namespace extensions {
 	namespace {
 		auto CreateConfigHolder() {
 			test::MutableBlockchainConfiguration config;
-
 			config.Network.MinHarvesterBalance = Amount(1);
 			config.Network.ImportanceGrouping = 1;
-			config.Network.HarvestingMosaicId = Harvesting_Mosaic_Id;
 			config.Network.MaxDifficultyBlocks = 111;
-
 			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
@@ -298,10 +298,13 @@ namespace catapult { namespace extensions {
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			auto pConfigHolder = CreateConfigHolder();
+			cache::AccountStateCacheTypes::Options options;
+			options.ConfigHolderPtr = pConfigHolder;
+			options.HarvestingMosaicId = Harvesting_Mosaic_Id;
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches;
 			subCaches.push_back(nullptr);
-			subCaches.push_back(std::make_unique<cache::AccountStateCacheSubCachePlugin>(cacheConfig, pConfigHolder));
+			subCaches.push_back(std::make_unique<cache::AccountStateCacheSubCachePlugin>(cacheConfig, options));
 			subCaches.push_back(std::make_unique<cache::BlockDifficultyCacheSubCachePlugin>(pConfigHolder));
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -417,8 +420,7 @@ namespace catapult { namespace extensions {
 		nodeConfig.ShouldUseCacheDatabaseStorage = true;
 
 		// - seed the cache state with rocks disabled
-		auto networkConfig = model::NetworkConfiguration::Uninitialized();
-		auto catapultCache = test::CoreSystemCacheFactory::Create(networkConfig);
+		auto catapultCache = test::CoreSystemCacheFactory::Create();
 		RandomSeedCache(catapultCache);
 
 		auto supplementalData = CreateDeterministicSupplementalData();
@@ -441,8 +443,7 @@ namespace catapult { namespace extensions {
 		nodeConfig.ShouldUseCacheDatabaseStorage = false;
 
 		// - seed the cache state with rocks disabled
-		auto networkConfig = model::NetworkConfiguration::Uninitialized();
-		auto catapultCache = test::CoreSystemCacheFactory::Create(networkConfig);
+		auto catapultCache = test::CoreSystemCacheFactory::Create();
 		RandomSeedCache(catapultCache);
 
 		auto supplementalData = CreateDeterministicSupplementalData();
@@ -468,8 +469,7 @@ namespace catapult { namespace extensions {
 		nodeConfig.ShouldUseCacheDatabaseStorage = false;
 
 		// - seed the cache state with rocks disabled
-		auto networkConfig = model::NetworkConfiguration::Uninitialized();
-		auto catapultCache = test::CoreSystemCacheFactory::Create(networkConfig);
+		auto catapultCache = test::CoreSystemCacheFactory::Create();
 		RandomSeedCache(catapultCache);
 
 		auto supplementalData = CreateDeterministicSupplementalData();

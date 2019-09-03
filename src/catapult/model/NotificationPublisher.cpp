@@ -24,7 +24,6 @@
 #include "FeeUtils.h"
 #include "NotificationSubscriber.h"
 #include "TransactionPlugin.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace model {
 
@@ -36,9 +35,9 @@ namespace catapult { namespace model {
 
 		class BasicNotificationPublisher : public NotificationPublisher {
 		public:
-			BasicNotificationPublisher(const TransactionRegistry& transactionRegistry, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
+			BasicNotificationPublisher(const TransactionRegistry& transactionRegistry, UnresolvedMosaicId feeMosaicId)
 					: m_transactionRegistry(transactionRegistry)
-					, m_pConfigHolder(pConfigHolder)
+					, m_feeMosaicId(feeMosaicId)
 			{}
 
 		public:
@@ -137,11 +136,7 @@ namespace catapult { namespace model {
 				sub.notify(TransactionNotification<1>(transaction.Signer, hash, transaction.Type, transaction.Deadline));
 				sub.notify(TransactionDeadlineNotification<1>(transaction.Deadline, attributes.MaxLifetime));
 				sub.notify(TransactionFeeNotification<1>(transaction.Size, fee, transaction.MaxFee));
-				sub.notify(BalanceDebitNotification<1>(
-					transaction.Signer,
-					model::GetUnresolvedCurrencyMosaicId(m_pConfigHolder->ConfigAtHeightOrLatest(height).Network),
-					fee)
-				);
+				sub.notify(BalanceDebitNotification<1>(transaction.Signer, m_feeMosaicId, fee));
 
 				// raise a signature notification
 				sub.notify(SignatureNotification<1>(
@@ -153,7 +148,7 @@ namespace catapult { namespace model {
 
 		private:
 			const TransactionRegistry& m_transactionRegistry;
-			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+			UnresolvedMosaicId m_feeMosaicId;
 		};
 
 		class CustomNotificationPublisher : public NotificationPublisher {
@@ -183,8 +178,8 @@ namespace catapult { namespace model {
 
 		class AllNotificationPublisher : public NotificationPublisher {
 		public:
-			AllNotificationPublisher(const TransactionRegistry& transactionRegistry, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
-					: m_basicPublisher(transactionRegistry, pConfigHolder)
+			AllNotificationPublisher(const TransactionRegistry& transactionRegistry, UnresolvedMosaicId feeMosaicId)
+					: m_basicPublisher(transactionRegistry, feeMosaicId)
 					, m_customPublisher(transactionRegistry)
 			{}
 
@@ -202,17 +197,17 @@ namespace catapult { namespace model {
 
 	std::unique_ptr<NotificationPublisher> CreateNotificationPublisher(
 			const TransactionRegistry& transactionRegistry,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			UnresolvedMosaicId feeMosaicId,
 			PublicationMode mode) {
 		switch (mode) {
 		case PublicationMode::Basic:
-			return std::make_unique<BasicNotificationPublisher>(transactionRegistry, pConfigHolder);
+			return std::make_unique<BasicNotificationPublisher>(transactionRegistry, feeMosaicId);
 
 		case PublicationMode::Custom:
 			return std::make_unique<CustomNotificationPublisher>(transactionRegistry);
 
 		default:
-			return std::make_unique<AllNotificationPublisher>(transactionRegistry, pConfigHolder);
+			return std::make_unique<AllNotificationPublisher>(transactionRegistry, feeMosaicId);
 		}
 	}
 }}

@@ -45,6 +45,12 @@ namespace catapult { namespace test {
 			const std::string& userDataDirectory,
 			cache::CatapultCache&& cache);
 
+		/// Creates default state around \a config.
+		explicit LocalNodeTestState(const config::BlockchainConfiguration& config);
+
+		/// Creates default state around \a config and \a cache.
+		explicit LocalNodeTestState(const config::BlockchainConfiguration& config, cache::CatapultCache&& cache);
+
 		/// Destroys the state.
 		~LocalNodeTestState();
 

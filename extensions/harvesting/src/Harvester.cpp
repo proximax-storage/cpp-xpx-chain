@@ -118,7 +118,7 @@ namespace catapult { namespace harvesting {
 			return nullptr;
 
 		utils::StackLogger stackLogger("generating candidate block", utils::LogLevel::Debug);
-		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.Network.Info.Identifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
+		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.Immutable.NetworkIdentifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
 		auto pBlock = m_blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock);
 		if (pBlock)
 			SignBlockHeader(*pHarvesterKeyPair, *pBlock);

@@ -123,7 +123,7 @@ namespace catapult { namespace extensions {
 	}
 
 	void AddStaticNodesFromPath(ProcessBootstrapper& bootstrapper, const std::string& path) {
-		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config().Network.Info.Identifier);
+		auto nodes = config::LoadPeersFromPath(path, bootstrapper.config().Immutable.NetworkIdentifier);
 		bootstrapper.addStaticNodes(nodes);
 	}
 }}

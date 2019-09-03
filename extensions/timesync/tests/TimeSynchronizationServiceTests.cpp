@@ -36,6 +36,7 @@
 #include "tests/test/net/SocketTestUtils.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace timesync {
@@ -58,14 +59,15 @@ namespace catapult { namespace timesync {
 
 		constexpr uint64_t Default_Threshold = 85;
 
-		cache::CatapultCache CreateCache(Importance totalChainImportance, const model::NetworkConfiguration& config) {
-			const_cast<model::NetworkConfiguration&>(config).ImportanceGrouping = 123;
-			const_cast<model::NetworkConfiguration&>(config).TotalChainImportance = totalChainImportance;
-			return test::CoreSystemCacheFactory::Create(config);
+		cache::CatapultCache CreateCache(Importance totalChainImportance) {
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 123;
+			config.Network.TotalChainImportance = totalChainImportance;
+			return test::CoreSystemCacheFactory::Create(config.ToConst());
 		}
 
-		cache::CatapultCache CreateCache(const model::NetworkConfiguration& config) {
-			return CreateCache(Importance(), config);
+		cache::CatapultCache CreateCache() {
+			return CreateCache(Importance());
 		}
 
 		struct TimeSynchronizationServiceTraits {
@@ -93,8 +95,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, CanBootService) {
 		// Arrange:
-		auto config = model::NetworkConfiguration::Uninitialized();
-		TestContext context(CreateCache(config));
+		TestContext context(CreateCache());
 
 		// Act:
 		context.boot();
@@ -115,8 +116,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, CanShutdownService) {
 		// Arrange:
-		auto config = model::NetworkConfiguration::Uninitialized();
-		TestContext context(CreateCache(config));
+		TestContext context(CreateCache());
 		context.boot();
 
 		// Act:
@@ -138,8 +138,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, PacketHandlersAreRegistered) {
 		// Arrange:
-		auto config = model::NetworkConfiguration::Uninitialized();
-		TestContext context(CreateCache(config));
+		TestContext context(CreateCache());
 
 		// Act:
 		context.boot();
@@ -152,8 +151,7 @@ namespace catapult { namespace timesync {
 
 	TEST(TEST_CLASS, TasksAreRegistered) {
 		// Arrange:
-		auto config = model::NetworkConfiguration::Uninitialized();
-		TestContext context(CreateCache(config));
+		TestContext context(CreateCache());
 
 		// Act:
 		context.boot();
@@ -168,8 +166,7 @@ namespace catapult { namespace timesync {
 		// Arrange:
 		auto pTimeSyncState = std::make_shared<TimeSynchronizationState>(100);
 		pTimeSyncState->update(TimeOffset(500));
-		auto config = model::NetworkConfiguration::Uninitialized();
-		TestContext context(CreateCache(config), [&timeSyncState = *pTimeSyncState]() {
+		TestContext context(CreateCache(), [&timeSyncState = *pTimeSyncState]() {
 			return timeSyncState.networkTime();
 		});
 		context.boot();
@@ -217,8 +214,7 @@ namespace catapult { namespace timesync {
 		void AssertStateChange(int64_t remoteOffset, ResponseType responseType, Amount balance, TAssertState assertState) {
 			// Arrange: prepare account state cache
 			auto keyPair = test::GenerateKeyPair();
-			auto config = model::NetworkConfiguration::Uninitialized();
-			auto cache = CreateCache(Total_Chain_Importance, config);
+			auto cache = CreateCache(Total_Chain_Importance);
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& accountCache = cacheDelta.sub<cache::AccountStateCache>();

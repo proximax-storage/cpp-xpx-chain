@@ -83,7 +83,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, BlockDuration(123));
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddEternalMosaic(cache, signer);
 
 		// Assert:
@@ -96,7 +96,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, BlockDuration());
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddMosaic(cache, signer, BlockDuration(123));
 
 		// Assert:
@@ -108,7 +108,7 @@ namespace catapult { namespace validators {
 		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddMosaic(cache, signer, BlockDuration(100));
 
 		// Assert: max duration is 123
@@ -123,7 +123,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, BlockDuration(std::numeric_limits<uint64_t>::max() - 90));
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddMosaic(cache, signer, BlockDuration(100));
 
 		// Assert:
@@ -140,7 +140,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, BlockDuration(124));
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 
 		// Assert:
 		AssertValidationResult(ValidationResult::Success, cache, notification);
@@ -151,7 +151,7 @@ namespace catapult { namespace validators {
 		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddMosaic(cache, signer, BlockDuration(100));
 
 		// Assert:
@@ -165,7 +165,7 @@ namespace catapult { namespace validators {
 		auto signer = test::GenerateRandomByteArray<Key>();
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddEternalMosaic(cache, signer);
 
 		// Assert:

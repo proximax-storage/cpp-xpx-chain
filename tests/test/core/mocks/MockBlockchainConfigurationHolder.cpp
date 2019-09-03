@@ -5,15 +5,20 @@
 **/
 
 #include "MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace config {
 
-	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder() : BlockchainConfigurationHolder(nullptr)
-	{}
-
-	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const model::NetworkConfiguration& config)
+	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder()
 			: BlockchainConfigurationHolder(nullptr) {
-		const_cast<model::NetworkConfiguration&>(m_networkConfigs.get(Height{0}).Network) = config;
+		SetConfig(Height{0}, test::MutableBlockchainConfiguration().ToConst());
+	}
+
+	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const model::NetworkConfiguration& networkConfig)
+			: BlockchainConfigurationHolder(nullptr) {
+		test::MutableBlockchainConfiguration config;
+		config.Network = networkConfig;
+		SetConfig(Height{0}, config.ToConst());
 	}
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const BlockchainConfiguration& config)

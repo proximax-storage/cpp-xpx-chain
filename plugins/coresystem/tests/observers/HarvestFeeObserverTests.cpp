@@ -104,9 +104,10 @@ namespace catapult { namespace observers {
 				const model::InflationCalculator& calculator,
 				TAction action) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			config.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			mutableConfig.Network.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
+			auto config = mutableConfig.ToConst();
 			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pObserver = CreateHarvestFeeObserver(pConfigHolder, calculator);
@@ -486,11 +487,12 @@ namespace catapult { namespace observers {
 		template<typename TMutator>
 		void AssertImproperLink(TMutator mutator) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.CurrencyMosaicId = Currency_Mosaic_Id;
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			auto config = mutableConfig.ToConst();
 			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-			auto pObserver = CreateHarvestFeeObserver(config::CreateMockConfigurationHolder(), model::InflationCalculator());
+			auto pObserver = CreateHarvestFeeObserver(config::CreateMockConfigurationHolder(config), model::InflationCalculator());
 
 			auto signerPublicKey = test::GenerateRandomByteArray<Key>();
 			auto accountStateIter = RemoteAccountTraits::AddAccount(accountStateCache, signerPublicKey, Height(1));

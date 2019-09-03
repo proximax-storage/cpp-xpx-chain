@@ -113,10 +113,10 @@ namespace catapult { namespace test {
 			const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = true;
 
 		if (HasFlag(NodeFlag::Verify_Receipts, nodeFlag))
-			const_cast<model::NetworkConfiguration&>(config.Network).ShouldEnableVerifiableReceipts = true;
+			const_cast<config::ImmutableConfiguration&>(config.Immutable).ShouldEnableVerifiableReceipts = true;
 
 		if (HasFlag(NodeFlag::Verify_State, nodeFlag))
-			const_cast<model::NetworkConfiguration&>(config.Network).ShouldEnableVerifiableState = true;
+			const_cast<config::ImmutableConfiguration&>(config.Immutable).ShouldEnableVerifiableState = true;
 
 		if (HasFlag(NodeFlag::Auto_Sync_Cleanup, nodeFlag))
 			const_cast<config::NodeConfiguration&>(config.Node).ShouldEnableAutoSyncCleanup = true;

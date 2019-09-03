@@ -34,10 +34,8 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, config::CreateMockConfigurationHolder())
 
 	namespace {
-		auto Default_Config = model::NetworkConfiguration::Uninitialized();
-
 		auto CreateAndSeedCache() {
-			auto cache = test::NamespaceCacheFactory::Create(Default_Config);
+			auto cache = test::NamespaceCacheFactory::Create();
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();

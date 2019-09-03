@@ -27,8 +27,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			static constexpr auto Network_Id = static_cast<model::NetworkIdentifier>(0x5A);
 			static constexpr auto CreateCacheStorage = CreateMongoNetworkConfigCacheStorage;
 
-			static cache::CatapultCache CreateCache(const model::NetworkConfiguration& config) {
-				return test::NetworkConfigCacheFactory::Create(config);
+			static cache::CatapultCache CreateCache() {
+				return test::NetworkConfigCacheFactory::Create();
 			}
 
 			static ModelType GenerateRandomElement(uint32_t id) {

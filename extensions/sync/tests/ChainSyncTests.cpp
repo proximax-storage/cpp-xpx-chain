@@ -20,8 +20,6 @@
 
 #include "catapult/api/LocalChainApi.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/AccountStateCacheStorage.h"
-#include "catapult/cache_core/BlockDifficultyCacheStorage.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/ChainResults.h"
@@ -29,9 +27,7 @@
 #include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/consumers/ConsumerResults.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
-#include "catapult/extensions/PluginUtils.h"
 #include "catapult/extensions/ServerHooks.h"
-#include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/ionet/NodeInteractionResult.h"
 #include "catapult/model/Address.h"
@@ -45,11 +41,11 @@
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace sync {
 
@@ -69,36 +65,31 @@ namespace catapult { namespace sync {
 		}
 
 		config::BlockchainConfiguration CreateBlockchainConfiguration() {
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
-			networkConfig.MaxRollbackBlocks = 5u;
-			networkConfig.ImportanceGrouping = 10u;
-			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15u);
-			networkConfig.BlockTimeSmoothingFactor = 3000u;
-			networkConfig.MaxBlockFutureTime = utils::TimeSpan::FromSeconds(10u);
-			networkConfig.MaxDifficultyBlocks = 4u;
-			networkConfig.BlockPruneInterval = 360u;
-			networkConfig.GreedDelta = 0.5;
-			networkConfig.GreedExponent = 2.0;
-			networkConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
+			test::MutableBlockchainConfiguration config;
 
-			auto nodeConfig = config::NodeConfiguration::Uninitialized();
-			nodeConfig.MaxBlocksPerSyncAttempt = 30u;
-			nodeConfig.MaxChainBytesPerSyncAttempt = utils::FileSize::FromMegabytes(1u);
-			nodeConfig.BlockDisruptorSize = 4096u;
-			nodeConfig.TransactionDisruptorSize = 16384u;
-			nodeConfig.FeeInterest = 1u;
-			nodeConfig.FeeInterestDenominator = 1u;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
 
-			return config::BlockchainConfiguration{
-					std::move(networkConfig),
-					std::move(nodeConfig),
-					config::LoggingConfiguration::Uninitialized(),
-					config::UserConfiguration::Uninitialized(),
-					config::ExtensionsConfiguration::Uninitialized(),
-					config::InflationConfiguration::Uninitialized(),
-					test::CreateSupportedEntityVersions()
-			};
+			config.Network.MaxRollbackBlocks = 5u;
+			config.Network.ImportanceGrouping = 10u;
+			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15u);
+			config.Network.BlockTimeSmoothingFactor = 3000u;
+			config.Network.MaxBlockFutureTime = utils::TimeSpan::FromSeconds(10u);
+			config.Network.MaxDifficultyBlocks = 4u;
+			config.Network.BlockPruneInterval = 360u;
+			config.Network.GreedDelta = 0.5;
+			config.Network.GreedExponent = 2.0;
+			config.Network.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
+
+			config.Node.MaxBlocksPerSyncAttempt = 30u;
+			config.Node.MaxChainBytesPerSyncAttempt = utils::FileSize::FromMegabytes(1u);
+			config.Node.BlockDisruptorSize = 4096u;
+			config.Node.TransactionDisruptorSize = 16384u;
+			config.Node.FeeInterest = 1u;
+			config.Node.FeeInterestDenominator = 1u;
+
+			config.SupportedEntityVersions = test::CreateSupportedEntityVersions();
+
+			return config.ToConst();
 		}
 
 		struct DispatcherServiceTraits {
@@ -111,7 +102,7 @@ namespace catapult { namespace sync {
 
 		public:
 			TestContext(const config::BlockchainConfiguration& config, uint64_t initialBalance)
-				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.Network), config) {
+				: BaseType(test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config), config) {
 
 				testState().loadPluginByName("", "catapult.coresystem");
 				for (const auto& pair : config.Network.Plugins)
@@ -230,13 +221,13 @@ namespace catapult { namespace sync {
 			return previousBlockContext;
 		}
 
-		test::ConstTransactions CreateSpecialTransaction(const model::NetworkConfiguration& config, uint64_t initialBalance) {
+		test::ConstTransactions CreateSpecialTransaction(model::NetworkIdentifier networkIdentifier, uint64_t initialBalance) {
 			auto nemesisAccountAddress = model::PublicKeyToAddress(
 				Nemesis_Account_Key_Pair.publicKey(),
-				config.Info.Identifier);
+				networkIdentifier);
 
 			builders::TransferBuilder builder(
-				config.Info.Identifier,
+				networkIdentifier,
 				Special_Account_Key_Pair.publicKey() /* signer */
 			);
 			builder.setRecipient(extensions::CopyToUnresolvedAddress(nemesisAccountAddress));
@@ -302,7 +293,7 @@ namespace catapult { namespace sync {
 
 			auto previousBlockContext = PopulateCommonBlocks(localContext, remoteContext, commonHeight);
 
-			auto localTransactions = CreateSpecialTransaction(config.Network, initialBalance);
+			auto localTransactions = CreateSpecialTransaction(config.Immutable.NetworkIdentifier, initialBalance);
 			localContext.createBlocks(
 				localEndHeight,
 				Timestamp(config.Network.BlockGenerationTargetTime.millis()),

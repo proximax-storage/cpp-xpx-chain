@@ -22,6 +22,7 @@
 #include "catapult/plugins/PluginManager.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
 
@@ -40,10 +41,10 @@ namespace catapult { namespace chain {
 
 		enum class FailureMode { Default, Suppress };
 
-		model::NetworkConfiguration CreateNetworkConfiguration() {
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.Info.Identifier = Network_Identifier;
-			return config;
+		auto CreateConfigHolder() {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = Network_Identifier;
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		class TestContext {
@@ -60,8 +61,8 @@ namespace catapult { namespace chain {
 					, m_statefulName(statefulName)
 					, m_statelessResult(ValidationResult::Success)
 					, m_statefulResult(ValidationResult::Success)
-					, m_pConfigHolder(config::CreateMockConfigurationHolder(CreateNetworkConfiguration()))
-					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config().Network))
+					, m_pConfigHolder(CreateConfigHolder())
+					, m_cache(test::CreateCatapultCacheWithMarkerAccount(m_pConfigHolder->Config()))
 					, m_pluginManager(m_pConfigHolder, plugins::StorageConfiguration()) {
 				// set custom cache height
 				auto cacheDelta = m_cache.createDelta();

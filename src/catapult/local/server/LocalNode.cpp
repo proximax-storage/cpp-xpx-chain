@@ -157,7 +157,7 @@ namespace catapult { namespace local {
 				if (extensions::HasSerializedState(m_dataDirectory.dir("state")))
 					return false;
 
-				NemesisBlockNotifier notifier(config().Network, m_cacheHolder.cache(), m_storage, m_pluginManager);
+				NemesisBlockNotifier notifier(config(), m_cacheHolder.cache(), m_storage, m_pluginManager);
 
 				if (m_pBlockChangeSubscriber)
 					notifier.raise(*m_pBlockChangeSubscriber);

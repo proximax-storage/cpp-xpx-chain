@@ -54,7 +54,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		// 5. execute block
 		chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, observerState });
 		auto cacheStateHashInfo = pCacheDelta->calculateStateHash(blockElement.Block.Height);
-		auto blockReceiptsHash = pConfigHolder->Config(blockElement.Block.Height).Network.ShouldEnableVerifiableReceipts
+		auto blockReceiptsHash = pluginManager.immutableConfig().ShouldEnableVerifiableReceipts
 				? model::CalculateMerkleHash(*blockStatementBuilder.build())
 				: Hash256();
 

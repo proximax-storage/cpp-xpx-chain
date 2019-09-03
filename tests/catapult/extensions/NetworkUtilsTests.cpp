@@ -32,7 +32,7 @@ namespace catapult { namespace extensions {
 	namespace {
 		auto CreateBlockchainConfiguration() {
 			test::MutableBlockchainConfiguration config;
-			config.Network.Info.Identifier = static_cast<model::NetworkIdentifier>(7);
+			config.Immutable.NetworkIdentifier = static_cast<model::NetworkIdentifier>(7);
 
 			config.Node.ConnectTimeout = utils::TimeSpan::FromSeconds(11);
 			config.Node.SocketWorkingBufferSize = utils::FileSize::FromBytes(512);

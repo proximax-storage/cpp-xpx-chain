@@ -107,8 +107,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateDefaultNotification(signer);
 
 		// Act: add it
-		auto config = model::NetworkConfiguration::Uninitialized();
-		auto context = ObserverTestContext(NotifyMode::Commit, Height(888), config);
+		auto context = ObserverTestContext(NotifyMode::Commit, Height(888));
 		RunTest(notification, std::move(context), SeedCacheEmpty, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was added
 			EXPECT_EQ(1u, mosaicCacheDelta.size());
@@ -122,8 +121,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateDefaultNotification(signer);
 
 		// Act: add it
-		auto config = model::NetworkConfiguration::Uninitialized();
-		auto context = ObserverTestContext(NotifyMode::Commit, Height(888), config);
+		auto context = ObserverTestContext(NotifyMode::Commit, Height(888));
 		RunTest(notification, std::move(context), SeedCacheWithDefaultMosaic, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic definition was changed
 			// - height did not change
@@ -157,8 +155,7 @@ namespace catapult { namespace observers {
 		auto seedMosaics = [](auto& mosaicCacheDelta) { AddTwoMosaics(mosaicCacheDelta, 1); };
 
 		// Act: remove it
-		auto config = model::NetworkConfiguration::Uninitialized();
-		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height, config);
+		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height);
 		RunTest(notification, std::move(context), seedMosaics, [](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was removed
 			EXPECT_EQ(1u, mosaicCacheDelta.size());
@@ -174,8 +171,7 @@ namespace catapult { namespace observers {
 		auto seedMosaics = [](auto& mosaicCacheDelta) { AddTwoMosaics(mosaicCacheDelta, 2); };
 
 		// Act: remove it
-		auto config = model::NetworkConfiguration::Uninitialized();
-		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height, config);
+		auto context = ObserverTestContext(NotifyMode::Rollback, Seed_Height);
 		RunTest(notification, std::move(context), seedMosaics, [&signer](const auto& mosaicCacheDelta) {
 			// Assert: the mosaic was removed
 			EXPECT_EQ(2u, mosaicCacheDelta.size());

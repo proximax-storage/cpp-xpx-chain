@@ -148,7 +148,7 @@ namespace catapult { namespace test {
 
 		/// Sets the network identifier.
 		auto& setNetworkIdentifier(const model::NetworkIdentifier& networkIdentifier) {
-			const_cast<model::NetworkIdentifier&>(state().pluginManager().configHolder()->Config().Network.Info.Identifier) = networkIdentifier;
+			const_cast<model::NetworkIdentifier&>(state().pluginManager().configHolder()->Config().Immutable.NetworkIdentifier) = networkIdentifier;
 			return *this;
 		}
 

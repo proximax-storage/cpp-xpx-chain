@@ -22,6 +22,7 @@
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -38,11 +39,12 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(maxDuration);
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto cache = test::CreateEmptyCatapultCache(networkConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto config = mutableConfig.ToConst();
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateRootNamespaceValidator(pConfigHolder);
 			auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(), BlockDuration(duration));
 

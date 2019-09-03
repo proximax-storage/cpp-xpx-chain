@@ -27,8 +27,8 @@
 #include "tests/test/cache/ImportanceViewTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
-#include "tests/test/nodeps/Waits.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/other/NodeSelectorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -58,14 +58,12 @@ namespace catapult { namespace timesync {
 		auto CreateAccountStateCache() {
 			auto cacheConfig = cache::CacheConfiguration();
 			auto maxAmount = Amount(std::numeric_limits<Amount::ValueType>::max());
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
-			networkConfig.ImportanceGrouping = 234;
-			networkConfig.MinHarvesterBalance = maxAmount;
-			networkConfig.CurrencyMosaicId = MosaicId(1111);
-			networkConfig.HarvestingMosaicId = MosaicId(2222);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			return std::make_unique<cache::AccountStateCache>(cacheConfig, pConfigHolder);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 234;
+			config.Network.MinHarvesterBalance = maxAmount;
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
+			return std::make_unique<cache::AccountStateCache>(cacheConfig, cache::AccountStateCacheTypes::Options{
+				pConfigHolder, model::NetworkIdentifier::Mijin_Test, MosaicId(1111), MosaicId(2222) });
 		}
 
 		struct SeedNodeContainerOptions {

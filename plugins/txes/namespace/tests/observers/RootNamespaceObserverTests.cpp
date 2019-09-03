@@ -33,8 +33,6 @@ namespace catapult { namespace observers {
 	namespace {
 		constexpr auto Grace_Period_Duration = 7u;
 
-		auto Default_Config = model::NetworkConfiguration::Uninitialized();
-
 		using ObserverTestContext = test::ObserverTestContextT<test::NamespaceCacheFactory>;
 
 		model::RootNamespaceNotification<1> CreateRootNotification(const Key& signer, NamespaceId id) {
@@ -110,7 +108,7 @@ namespace catapult { namespace observers {
 		// Act: add it
 		RunRootTest(
 				notification,
-				ObserverTestContext(NotifyMode::Commit, Height(777), Default_Config),
+				ObserverTestContext(NotifyMode::Commit, Height(777)),
 				SeedCacheEmpty,
 				[&signer](auto& namespaceCacheDelta) {
 					// Assert: the root was added
@@ -127,7 +125,7 @@ namespace catapult { namespace observers {
 		// Act: add it (note that adding eternal namespaces after nemesis is prevented by a validator)
 		RunRootTest(
 				notification,
-				ObserverTestContext(NotifyMode::Commit, Height(777), Default_Config),
+				ObserverTestContext(NotifyMode::Commit, Height(777)),
 				SeedCacheEmpty,
 				[&signer](auto& namespaceCacheDelta) {
 					// Assert: the root was added
@@ -168,7 +166,7 @@ namespace catapult { namespace observers {
 			// Act: renew it before its expiry
 			RunRootTest(
 					notification,
-					ObserverTestContext(NotifyMode::Commit, height, Default_Config),
+					ObserverTestContext(NotifyMode::Commit, height),
 					SeedCacheWithRoot25TreeSigner(signer),
 					[&signer](auto& namespaceCacheDelta) {
 						// Assert: the root was renewed - [initial start, initial end + duration)
@@ -188,7 +186,7 @@ namespace catapult { namespace observers {
 			// Act: renew it after its expiry
 			RunRootTest(
 					notification,
-					ObserverTestContext(NotifyMode::Commit, height, Default_Config, BlockDuration(Grace_Period_Duration)),
+					ObserverTestContext(NotifyMode::Commit, height, BlockDuration(Grace_Period_Duration)),
 					SeedCacheWithRoot25TreeSigner(signer),
 					[height, &signer](auto& namespaceCacheDelta) {
 						// Assert: the root was renewed - [block height, block height + duration)
@@ -230,7 +228,7 @@ namespace catapult { namespace observers {
 			// Act: change owner before its expiry (this is prevented by a validator)
 			RunRootTest(
 					notification,
-					ObserverTestContext(NotifyMode::Commit, height, Default_Config),
+					ObserverTestContext(NotifyMode::Commit, height),
 					SeedCacheWithRoot25TreeSigner(test::CreateRandomOwner()),
 					[height, &signer](auto& namespaceCacheDelta) {
 						// Assert: the root was renewed - [block height, block height + duration)
@@ -250,7 +248,7 @@ namespace catapult { namespace observers {
 			// Act: change owner after its expiry
 			RunRootTest(
 					notification,
-					ObserverTestContext(NotifyMode::Commit, height, Default_Config),
+					ObserverTestContext(NotifyMode::Commit, height),
 					SeedCacheWithRoot25TreeSigner(test::CreateRandomOwner()),
 					[height, &signer](auto& namespaceCacheDelta) {
 						// Assert: the root was renewed - [block height, block height + duration)
@@ -271,7 +269,7 @@ namespace catapult { namespace observers {
 		// Act: remove it
 		RunRootTest(
 				notification,
-				ObserverTestContext(NotifyMode::Rollback, Height{444}, Default_Config),
+				ObserverTestContext(NotifyMode::Rollback, Height{444}),
 				[&signer](auto& namespaceCacheDelta) {
 					// Arrange: create a cache with { 25, 26 }
 					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, test::CreateLifetime(10, 20)));

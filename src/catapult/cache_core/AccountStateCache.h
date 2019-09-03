@@ -37,17 +37,17 @@ namespace catapult { namespace cache {
 	class BasicAccountStateCache : public AccountStateBasicCache {
 	public:
 		/// Creates a cache around \a config and \a options.
-		explicit BasicAccountStateCache(const CacheConfiguration& config, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
-				: BasicAccountStateCache(config, pConfigHolder, std::make_unique<model::AddressSet>(), std::make_unique<model::AddressSet>())
+		explicit BasicAccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
+				: BasicAccountStateCache(config, options, std::make_unique<model::AddressSet>(), std::make_unique<model::AddressSet>())
 		{}
 
 	private:
 		BasicAccountStateCache(
 				const CacheConfiguration& config,
-				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+				const AccountStateCacheTypes::Options& options,
 				std::unique_ptr<model::AddressSet>&& pHighValueAddresses,
 				std::unique_ptr<model::AddressSet>&& pAddressesToUpdate)
-				: AccountStateBasicCache(config, AccountStateCacheTypes::Options{ pConfigHolder }, *pHighValueAddresses, *pAddressesToUpdate)
+				: AccountStateBasicCache(config, AccountStateCacheTypes::Options(options), *pHighValueAddresses, *pAddressesToUpdate)
 				, m_pHighValueAddresses(std::move(pHighValueAddresses))
 				, m_pAddressesToUpdate(std::move(pAddressesToUpdate))
 		{}
@@ -83,15 +83,16 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config and \a options.
-		AccountStateCache(const CacheConfiguration& config, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
-				: SynchronizedCacheWithInit<BasicAccountStateCache>(BasicAccountStateCache(config, pConfigHolder))
-				, m_pConfigHolder(pConfigHolder)
+		AccountStateCache(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options)
+				: SynchronizedCacheWithInit<BasicAccountStateCache>(BasicAccountStateCache(config, options))
+				, m_pConfigHolder(options.ConfigHolderPtr)
+				, m_networkIdentifier(options.NetworkIdentifier)
 		{}
 
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_pConfigHolder->Config().Network.Info.Identifier;
+			return m_networkIdentifier;
 		}
 
 		/// Gets the network importance grouping.
@@ -101,5 +102,6 @@ namespace catapult { namespace cache {
 
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+		model::NetworkIdentifier m_networkIdentifier;
 	};
 }}

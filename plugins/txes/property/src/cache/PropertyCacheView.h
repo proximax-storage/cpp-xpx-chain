@@ -57,7 +57,7 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_pConfigHolder->Config(height()).Network.Info.Identifier;
+			return m_pConfigHolder->Config(height()).Immutable.NetworkIdentifier;
 		}
 
 	private:

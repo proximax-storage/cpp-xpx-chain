@@ -91,7 +91,7 @@ namespace catapult { namespace consumers {
 
 					// 2. validate and observe block
 					model::BlockStatementBuilder blockStatementBuilder;
-					auto receiptValidationMode = m_state.config(element.Block.Height).Network.ShouldEnableVerifiableReceipts ?
+					auto receiptValidationMode = m_state.pluginManager().immutableConfig().ShouldEnableVerifiableReceipts ?
 						ReceiptValidationMode::Enabled : ReceiptValidationMode::Disabled;
 					auto blockDependentState = createBlockDependentObserverState(state, blockStatementBuilder, receiptValidationMode);
 

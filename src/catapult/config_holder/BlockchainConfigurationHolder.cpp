@@ -16,6 +16,7 @@ namespace catapult { namespace config {
 	BlockchainConfigurationHolder::BlockchainConfigurationHolder(cache::CatapultCache* pCache)
 			: m_pCache(pCache) {
 		auto config = BlockchainConfiguration{
+			ImmutableConfiguration::Uninitialized(),
 			model::NetworkConfiguration::Uninitialized(),
 			NodeConfiguration::Uninitialized(),
 			LoggingConfiguration::Uninitialized(),
@@ -78,6 +79,7 @@ namespace catapult { namespace config {
 
 		const auto& baseConfig = m_networkConfigs.get(Height(0));
 		auto config = BlockchainConfiguration(
+			baseConfig.Immutable,
 			networkConfig,
 			baseConfig.Node,
 			baseConfig.Logging,

@@ -54,12 +54,11 @@ namespace catapult { namespace validators {
 
 		static void AssertDurationValidator(ValidationResult expectedResult, BlockDuration notificationDuration) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
-			auto context = ValidatorContext(Height(123), Timestamp(8888), model::NetworkInfo(), resolverContext, readOnlyCache);
+			auto context = ValidatorContext(Height(123), Timestamp(8888), model::NetworkIdentifier::Zero, model::NetworkInfo(), resolverContext, readOnlyCache);
 			typename TTraits::NotificationType notification(notificationDuration);
 			auto pValidator = TTraits::CreateValidator(MaxDuration());
 

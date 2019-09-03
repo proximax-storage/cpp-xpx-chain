@@ -185,7 +185,7 @@ namespace catapult { namespace extensions {
 
 		/// Gets the network identifier.
 		auto& networkIdentifier() {
-			return config().Network.Info.Identifier;
+			return config().Immutable.NetworkIdentifier;
 		}
 
 	private:

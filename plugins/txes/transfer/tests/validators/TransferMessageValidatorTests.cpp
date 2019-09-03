@@ -22,6 +22,7 @@
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -37,10 +38,11 @@ namespace catapult { namespace validators {
 			auto notification = model::TransferMessageNotification<1>(messageSize);
 			auto pluginConfig = config::TransferConfiguration::Uninitialized();
 			pluginConfig.MaxMessageSize = maxMessageSize;
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
-			auto cache = test::CreateEmptyCatapultCache(networkConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
+			auto config = mutableConfig.ToConst();
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateTransferMessageValidator(pConfigHolder);
 
 			// Act:

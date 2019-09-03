@@ -122,9 +122,10 @@ namespace catapult { namespace chain {
 			// note that the validator and observer context height is one larger than the chain height
 			// since the validation and observation has to be for the *next* block
 			auto effectiveHeight = m_detachedCatapultCache.height() + Height(1);
+			auto networkIdentifier = m_executionConfig.NetworkIdentifier;
 			const auto& network = m_executionConfig.NetworkInfoSupplier(effectiveHeight);
 			auto resolverContext = m_executionConfig.ResolverContextFactory(readOnlyCache);
-			auto validatorContext = ValidatorContext(effectiveHeight, currentTime, network, resolverContext, readOnlyCache);
+			auto validatorContext = ValidatorContext(effectiveHeight, currentTime, networkIdentifier, network, resolverContext, readOnlyCache);
 
 			// note that the "real" state is currently only required by block observers, so a dummy state can be used
 			auto& cache = applyState.UnconfirmedCatapultCache;

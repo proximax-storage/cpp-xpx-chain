@@ -27,15 +27,14 @@
 
 namespace catapult { namespace model {
 
-#define TEST_CLASS BlockChainConfigurationTests
+#define TEST_CLASS NetworkConfigurationTests
 
 	// region loading
 
 	namespace {
 		constexpr auto Nemesis_Public_Key = "C738E237C98760FA72726BA13DC2A1E3C13FA67DE26AF09742E972EE4EE45E1C";
-		constexpr auto Nemesis_Generation_Hash = "CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230";
 
-		struct BlockChainConfigurationTraits {
+		struct NetworkConfigurationTraits {
 			using ConfigurationType = NetworkConfiguration;
 
 			static utils::ConfigurationBag::ValuesContainer CreateProperties() {
@@ -43,20 +42,12 @@ namespace catapult { namespace model {
 					{
 						"network",
 						{
-							{ "identifier", "public-test" },
 							{ "publicKey", Nemesis_Public_Key },
-							{ "generationHash", Nemesis_Generation_Hash }
 						}
 					},
 					{
 						"chain",
 						{
-							{ "shouldEnableVerifiableState", "true" },
-							{ "shouldEnableVerifiableReceipts", "true" },
-
-							{ "currencyMosaicId", "0x1234'AAAA" },
-							{ "harvestingMosaicId", "0x9876'BBBB" },
-
 							{ "blockGenerationTargetTime", "10m" },
 							{ "blockTimeSmoothingFactor", "765" },
 
@@ -70,7 +61,6 @@ namespace catapult { namespace model {
 							{ "maxTransactionLifetime", "30m" },
 							{ "maxBlockFutureTime", "21m" },
 
-							{ "initialCurrencyAtomicUnits", "77'000'000'000" },
 							{ "maxMosaicAtomicUnits", "66'000'000'000" },
 
 							{ "totalChainImportance", "88'000'000'000" },
@@ -103,15 +93,7 @@ namespace catapult { namespace model {
 
 			static void AssertZero(const NetworkConfiguration& config) {
 				// Assert:
-				EXPECT_EQ(NetworkIdentifier::Zero, config.Info.Identifier);
 				EXPECT_EQ(Key(), config.Info.PublicKey);
-				EXPECT_EQ(GenerationHash(), config.Info.GenerationHash);
-
-				EXPECT_FALSE(config.ShouldEnableVerifiableState);
-				EXPECT_FALSE(config.ShouldEnableVerifiableReceipts);
-
-				EXPECT_EQ(MosaicId(), config.CurrencyMosaicId);
-				EXPECT_EQ(MosaicId(), config.HarvestingMosaicId);
 
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.BlockGenerationTargetTime);
 				EXPECT_EQ(0u, config.BlockTimeSmoothingFactor);
@@ -126,7 +108,6 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MaxTransactionLifetime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MaxBlockFutureTime);
 
-				EXPECT_EQ(Amount(0), config.InitialCurrencyAtomicUnits);
 				EXPECT_EQ(Amount(0), config.MaxMosaicAtomicUnits);
 
 				EXPECT_EQ(Importance(0), config.TotalChainImportance);
@@ -141,15 +122,7 @@ namespace catapult { namespace model {
 
 			static void AssertCustom(const NetworkConfiguration& config) {
 				// Assert: notice that ParseKey also works for Hash256 because it is the same type as Key
-				EXPECT_EQ(NetworkIdentifier::Public_Test, config.Info.Identifier);
 				EXPECT_EQ(crypto::ParseKey(Nemesis_Public_Key), config.Info.PublicKey);
-				EXPECT_EQ(utils::ParseByteArray<GenerationHash>(Nemesis_Generation_Hash), config.Info.GenerationHash);
-
-				EXPECT_TRUE(config.ShouldEnableVerifiableState);
-				EXPECT_TRUE(config.ShouldEnableVerifiableReceipts);
-
-				EXPECT_EQ(MosaicId(0x1234'AAAA), config.CurrencyMosaicId);
-				EXPECT_EQ(MosaicId(0x9876'BBBB), config.HarvestingMosaicId);
 
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(10), config.BlockGenerationTargetTime);
 				EXPECT_EQ(765u, config.BlockTimeSmoothingFactor);
@@ -164,7 +137,6 @@ namespace catapult { namespace model {
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(30), config.MaxTransactionLifetime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(21), config.MaxBlockFutureTime);
 
-				EXPECT_EQ(Amount(77'000'000'000), config.InitialCurrencyAtomicUnits);
 				EXPECT_EQ(Amount(66'000'000'000), config.MaxMosaicAtomicUnits);
 
 				EXPECT_EQ(Importance(88'000'000'000), config.TotalChainImportance);
@@ -187,24 +159,12 @@ namespace catapult { namespace model {
 		};
 	}
 
-	DEFINE_CONFIGURATION_TESTS(TEST_CLASS, BlockChain)
-
-	TEST(TEST_CLASS, CannotLoadBlockChainConfigurationWithInvalidNetwork) {
-		// Arrange: set an unknown network in the container
-		using Traits = BlockChainConfigurationTraits;
-		auto container = Traits::CreateProperties();
-		auto& networkProperties = container["network"];
-		auto hasIdentifierKey = [](const auto& pair) { return "identifier" == pair.first; };
-		std::find_if(networkProperties.begin(), networkProperties.end(), hasIdentifierKey)->second = "foonet";
-
-		// Act + Assert:
-		EXPECT_THROW(Traits::ConfigurationType::LoadFromBag(std::move(container)), utils::property_malformed_error);
-	}
+	DEFINE_CONFIGURATION_TESTS(TEST_CLASS, Network)
 
 	namespace {
 		void AssertCannotLoadWithSection(const std::string& section) {
 			// Arrange:
-			using Traits = BlockChainConfigurationTraits;
+			using Traits = NetworkConfigurationTraits;
 			CATAPULT_LOG(debug) << "attempting to load configuration with extra section '" << section << "'";
 
 			// - create the properties and add the desired section
@@ -232,7 +192,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, ParseSucceedsWhenPluginSectionNameContainsValidPluginName) {
 		// Arrange:
-		using Traits = BlockChainConfigurationTraits;
+		using Traits = NetworkConfigurationTraits;
 		auto validPluginNames = { "a", "j", "z", ".", "zeta", "some.long.name" };
 		for (const auto& pluginName : validPluginNames) {
 			CATAPULT_LOG(debug) << "attempting to load configuration with plugin named " << pluginName;
@@ -255,15 +215,6 @@ namespace catapult { namespace model {
 
 	// region calculated properties
 
-	TEST(TEST_CLASS, CanGetUnresolvedCurrencyMosaicId) {
-		// Arrange:
-		auto config = NetworkConfiguration::Uninitialized();
-		config.CurrencyMosaicId = MosaicId(1234);
-
-		// Act + Assert:
-		EXPECT_EQ(UnresolvedMosaicId(1234), GetUnresolvedCurrencyMosaicId(config));
-	}
-
 	namespace {
 		const uint64_t One_Hour_Ms = []() { return utils::TimeSpan::FromHours(1).millis(); }();
 
@@ -272,7 +223,7 @@ namespace catapult { namespace model {
 		}
 	}
 
-	TEST(TEST_CLASS, CanCalculateDependentSettingsFromCustomBlockChainConfiguration) {
+	TEST(TEST_CLASS, CanCalculateDependentSettingsFromCustomNetworkConfiguration) {
 		// Arrange:
 		auto config = NetworkConfiguration::Uninitialized();
 		config.BlockGenerationTargetTime = TimeSpanFromMillis(30'001);
@@ -325,7 +276,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, LoadPluginConfigurationSucceedsWhenPluginConfigurationIsPresent) {
 		// Arrange:
-		using Traits = BlockChainConfigurationTraits;
+		using Traits = NetworkConfigurationTraits;
 		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties());
 
 		// Act:
@@ -338,7 +289,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, LoadPluginConfigurationFailsWhenPluginConfigurationIsNotPresent) {
 		// Arrange:
-		using Traits = BlockChainConfigurationTraits;
+		using Traits = NetworkConfigurationTraits;
 		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties());
 
 		// Act + Assert:

@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(TransactionType, [](const auto& notification, const ValidatorContext& context) {
 		AccountPropertyView view(context.Cache);
-		if (!view.initialize(model::PublicKeyToAddress(notification.Signer, context.Network.Identifier)))
+		if (!view.initialize(model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier)))
 			return ValidationResult::Success;
 
 		auto isTransferAllowed = view.isAllowed(model::PropertyType::TransactionType, notification.TransactionType);

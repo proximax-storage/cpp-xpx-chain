@@ -21,7 +21,6 @@
 #include "src/validators/Validators.h"
 #include "catapult/model/Address.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -29,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS AddressValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Address, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(Address, static_cast<model::NetworkIdentifier>(123))
 
 	namespace {
 		constexpr auto Network_Identifier = static_cast<model::NetworkIdentifier>(123);
@@ -37,13 +36,10 @@ namespace catapult { namespace validators {
 		template<VersionType notificationVersion>
 		void AssertValidationResult(ValidationResult expectedResult, const Address& address) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.Info.Identifier = Network_Identifier;
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 
 			model::AccountAddressNotification<notificationVersion> notification(test::UnresolveXor(address));
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateAddressValidator(pConfigHolder);
+			auto pValidator = CreateAddressValidator(Network_Identifier);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);

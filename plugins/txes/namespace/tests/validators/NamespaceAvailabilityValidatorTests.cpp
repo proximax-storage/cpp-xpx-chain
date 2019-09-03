@@ -40,11 +40,10 @@ namespace catapult { namespace validators {
 		constexpr BlockDuration Max_Duration(105);
 		constexpr BlockDuration Default_Duration(10);
 		constexpr BlockDuration Grace_Period_Duration(25);
-		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		template<typename TSeedCacheFunc>
 		auto CreateAndSeedCache(TSeedCacheFunc seedCache) {
-			auto cache = test::NamespaceCacheFactory::Create(Default_Config, Grace_Period_Duration);
+			auto cache = test::NamespaceCacheFactory::Create(Grace_Period_Duration);
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();

@@ -26,10 +26,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::AccountAddressNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(Address, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(Address, [pConfigHolder](const auto& notification, const auto& context) {
-			const model::NetworkConfiguration& config = pConfigHolder->Config(context.Height).Network;
-			auto isValidAddress = IsValidAddress(context.Resolvers.resolve(notification.Address), config.Info.Identifier);
+	DECLARE_STATEFUL_VALIDATOR(Address, Notification)(model::NetworkIdentifier networkIdentifier) {
+		return MAKE_STATEFUL_VALIDATOR(Address, [networkIdentifier](const auto& notification, const auto& context) {
+			auto isValidAddress = IsValidAddress(context.Resolvers.resolve(notification.Address), networkIdentifier);
 			return isValidAddress ? ValidationResult::Success : Failure_Core_Invalid_Address;
 		});
 	}

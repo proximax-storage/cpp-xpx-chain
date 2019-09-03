@@ -15,8 +15,8 @@ namespace catapult { namespace test {
 
 	/// Cache factory for creating a catapult cache composed of only the config cache.
 	struct BlockchainUpgradeCacheFactory {
-		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::NetworkConfiguration&) {
+		/// Creates an empty catapult cache.
+		static cache::CatapultCache Create() {
 			auto cacheId = cache::BlockchainUpgradeCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 			subCaches[cacheId] = test::MakeSubCachePlugin<cache::BlockchainUpgradeCache, cache::BlockchainUpgradeCacheStorage>();

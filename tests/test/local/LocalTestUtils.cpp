@@ -20,11 +20,9 @@
 
 #include "LocalTestUtils.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
-#include "catapult/chain/UtUpdater.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/plugins/PluginLoader.h"
-#include "plugins/txes/transfer/src/model/TransferEntityType.h"
 #include "plugins/txes/transfer/src/model/TransferTransaction.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
@@ -170,6 +168,16 @@ namespace catapult { namespace test {
 			config.NumConsecutiveFailuresBeforeBanning = 100;
 		}
 
+		config::ImmutableConfiguration CreateImmutableConfiguration() {
+			auto config = config::ImmutableConfiguration::Uninitialized();
+			config.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+			config.GenerationHash = GetNemesisGenerationHash();
+			config.CurrencyMosaicId = Default_Currency_Mosaic_Id;
+			config.HarvestingMosaicId = Default_Harvesting_Mosaic_Id;
+			config.InitialCurrencyAtomicUnits = Amount(8'999'999'998'000'000);
+			return config;
+		}
+
 		config::NodeConfiguration CreateNodeConfiguration() {
 			auto config = config::NodeConfiguration::Uninitialized();
 			config.Port = GetLocalHostPort();
@@ -213,9 +221,7 @@ namespace catapult { namespace test {
 		}
 
 		void SetNetwork(model::NetworkInfo& network) {
-			network.Identifier = model::NetworkIdentifier::Mijin_Test;
 			network.PublicKey = crypto::KeyPair::FromString(Mijin_Test_Nemesis_Private_Key).publicKey();
-			network.GenerationHash = GetNemesisGenerationHash();
 		}
 	}
 
@@ -228,12 +234,9 @@ namespace catapult { namespace test {
 		return crypto::KeyPair::FromPrivate(crypto::PrivateKey::FromString(Local_Node_Private_Key));
 	}
 
-	model::NetworkConfiguration CreatePrototypicalBlockChainConfiguration() {
+	model::NetworkConfiguration CreatePrototypicalNetworkConfiguration() {
 		auto config = model::NetworkConfiguration::Uninitialized();
 		SetNetwork(config.Info);
-
-		config.CurrencyMosaicId = Default_Currency_Mosaic_Id;
-		config.HarvestingMosaicId = Default_Harvesting_Mosaic_Id;
 
 		config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 		config.BlockTimeSmoothingFactor = 10'000;
@@ -243,7 +246,6 @@ namespace catapult { namespace test {
 		config.MaxRollbackBlocks = 10;
 		config.MaxDifficultyBlocks = 60;
 
-		config.InitialCurrencyAtomicUnits = Amount(8'999'999'998'000'000);
 		config.MaxMosaicAtomicUnits = Amount(9'000'000'000'000'000);
 
 		config.TotalChainImportance = Importance(8'999'999'998'000'000);
@@ -270,13 +272,14 @@ namespace catapult { namespace test {
 	}
 
 	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration(const std::string& dataDirectory) {
-		return CreatePrototypicalBlockchainConfiguration(CreatePrototypicalBlockChainConfiguration(), dataDirectory);
+		return CreatePrototypicalBlockchainConfiguration(CreatePrototypicalNetworkConfiguration(), dataDirectory);
 	}
 
 	config::BlockchainConfiguration CreatePrototypicalBlockchainConfiguration(
 			model::NetworkConfiguration&& networkConfig,
 			const std::string& dataDirectory) {
 		MutableBlockchainConfiguration config;
+		config.Immutable = CreateImmutableConfiguration();
 		config.Network = std::move(networkConfig);
 		config.Node = CreateNodeConfiguration();
 
@@ -295,14 +298,16 @@ namespace catapult { namespace test {
 	}
 
 	std::shared_ptr<plugins::PluginManager> CreateDefaultPluginManagerWithRealPlugins() {
-		auto config = model::NetworkConfiguration::Uninitialized();
-		SetNetwork(config.Info);
-		config.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
-		config.ImportanceGrouping = 123;
-		config.MaxDifficultyBlocks = 123;
-		config.TotalChainImportance = Importance(15);
-		config.BlockPruneInterval = 360;
-		return CreatePluginManagerWithRealPlugins(config);
+		test::MutableBlockchainConfiguration config;
+		config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+		config.Immutable.GenerationHash = GetNemesisGenerationHash();
+		SetNetwork(config.Network.Info);
+		config.Network.MaxTransactionLifetime = utils::TimeSpan::FromHours(1);
+		config.Network.ImportanceGrouping = 123;
+		config.Network.MaxDifficultyBlocks = 123;
+		config.Network.TotalChainImportance = Importance(15);
+		config.Network.BlockPruneInterval = 360;
+		return CreatePluginManagerWithRealPlugins(config.ToConst());
 	}
 
 	namespace {

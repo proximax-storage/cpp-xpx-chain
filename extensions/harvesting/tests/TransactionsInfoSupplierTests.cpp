@@ -63,7 +63,7 @@ namespace catapult { namespace harvesting {
 		public:
 			explicit TestContext(TransactionSelectionStrategy strategy, uint32_t utCacheSize = 0)
 					: m_pConfigHolder(CreateConfigHolder())
-					, m_catapultCache(test::CreateCatapultCacheWithMarkerAccount(Height(7), m_pConfigHolder->Config().Network))
+					, m_catapultCache(test::CreateCatapultCacheWithMarkerAccount(Height(7), m_pConfigHolder->Config()))
 					, m_utFacadeFactory(m_catapultCache, m_pConfigHolder, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(utCacheSize))
 					, m_supplier(CreateTransactionsInfoSupplier(strategy, *m_pUtCache))

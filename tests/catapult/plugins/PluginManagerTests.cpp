@@ -21,7 +21,6 @@
 #include "catapult/plugins/PluginManager.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/model/Address.h"
 #include "tests/test/cache/SimpleCache.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
@@ -647,9 +646,9 @@ namespace catapult { namespace plugins {
 		template<typename TPublisherFactory>
 		void AssertCanCreateNotificationPublisher(size_t expectedNumNotifications, TPublisherFactory publisherFactory) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin());
 

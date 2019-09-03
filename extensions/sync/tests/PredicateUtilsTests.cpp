@@ -126,7 +126,7 @@ namespace catapult { namespace sync {
 			auto config = CreateBlockchainConfigurationFromSettings(settings);
 
 			// - create a read only catapult cache (importance grouping needs to be nonzero)
-			auto catapultCache = test::CreateEmptyCatapultCache(config.Network);
+			auto catapultCache = test::CreateEmptyCatapultCache(config);
 			auto catapultCacheView = catapultCache.createView();
 			auto readOnlyCatapultCache = catapultCacheView.toReadOnly();
 

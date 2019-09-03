@@ -107,9 +107,6 @@ namespace catapult { namespace cache {
 		/// Gets the harvesting mosaic id.
 		MosaicId harvestingMosaicId() const;
 
-		/// Gets the currency mosaic id.
-		MosaicId currencyMosaicId() const;
-
 	public:
 		/// If not present, adds an account to the cache at given height (\a addressHeight) using \a address.
 		void addAccount(const Address& address, Height addressHeight);

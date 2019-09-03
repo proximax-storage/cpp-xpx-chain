@@ -26,7 +26,7 @@ namespace catapult { namespace test {
 
 	namespace {
 		model::NetworkConfiguration CreateNetworkConfiguration() {
-			auto config = CreatePrototypicalBlockChainConfiguration();
+			auto config = CreatePrototypicalNetworkConfiguration();
 			AddNemesisPluginExtensions(config);
 			return config;
 		}

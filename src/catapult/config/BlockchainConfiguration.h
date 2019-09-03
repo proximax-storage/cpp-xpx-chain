@@ -20,12 +20,13 @@
 
 #pragma once
 #include "ExtensionsConfiguration.h"
+#include "ImmutableConfiguration.h"
 #include "InflationConfiguration.h"
 #include "LoggingConfiguration.h"
 #include "NodeConfiguration.h"
 #include "PeersConfiguration.h"
-#include "UserConfiguration.h"
 #include "SupportedEntityVersions.h"
+#include "UserConfiguration.h"
 #include "catapult/model/NetworkConfiguration.h"
 #include <boost/filesystem/path.hpp>
 
@@ -34,9 +35,10 @@ namespace catapult { namespace config {
 	/// Comprehensive configuration for a catapult process.
 	class BlockchainConfiguration {
 	public:
-		/// Creates a blockchain configuration around \a networkConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
+		/// Creates a blockchain configuration around \a immutableConfig, \a networkConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
 		/// \a extensionsConfig, \a inflationConfig and \a supportedEntityVersions.
 		BlockchainConfiguration(
+				const ImmutableConfiguration& immutableConfig,
 				const model::NetworkConfiguration& networkConfig,
 				const NodeConfiguration& nodeConfig,
 				const LoggingConfiguration& loggingConfig,
@@ -45,9 +47,10 @@ namespace catapult { namespace config {
 				const InflationConfiguration& inflationConfig,
 				const SupportedEntityVersions& supportedEntityVersions = config::SupportedEntityVersions());
 
-		/// Creates a blockchain configuration around \a networkConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
+		/// Creates a blockchain configuration around \a immutableConfig, \a networkConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
 		/// \a extensionsConfig, \a inflationConfig and \a supportedEntityVersions.
 		BlockchainConfiguration(
+				ImmutableConfiguration&& immutableConfig,
 				model::NetworkConfiguration&& networkConfig,
 				NodeConfiguration&& nodeConfig,
 				LoggingConfiguration&& loggingConfig,
@@ -57,6 +60,9 @@ namespace catapult { namespace config {
 				SupportedEntityVersions&& supportedEntityVersions = config::SupportedEntityVersions());
 
 	public:
+		/// Immutable network configuration.
+		const ImmutableConfiguration Immutable;
+
 		/// Network configuration.
 		const model::NetworkConfiguration Network;
 

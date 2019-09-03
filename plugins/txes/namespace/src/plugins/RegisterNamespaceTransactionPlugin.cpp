@@ -64,6 +64,7 @@ namespace catapult { namespace plugins {
 		}
 
 		NamespaceRentalFeeConfiguration ToNamespaceRentalFeeConfiguration(
+			model::NetworkIdentifier networkIdentifier,
 			const model::NetworkInfo& network,
 			UnresolvedMosaicId currencyMosaicId,
 			const config::NamespaceConfiguration& config) {
@@ -75,7 +76,7 @@ namespace catapult { namespace plugins {
 			rentalFeeConfig.NemesisPublicKey = network.PublicKey;
 
 			// sink address is already resolved but needs to be passed as unresolved into notification
-			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, network.Identifier);
+			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, networkIdentifier);
 			std::memcpy(rentalFeeConfig.SinkAddress.data(), sinkAddress.data(), sinkAddress.size());
 			return rentalFeeConfig;
 		}
@@ -83,10 +84,12 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
-				const model::NetworkConfiguration& networkConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight).Network;
-				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(networkConfig);
+				auto& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
+				const model::NetworkConfiguration& networkConfig = blockChainConfig.Network;
+				const auto& immutableConfig = blockChainConfig.Immutable;
+				auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(immutableConfig);
 				const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
-				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(networkConfig.Info, currencyMosaicId, pluginConfig);
+				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(immutableConfig.NetworkIdentifier, networkConfig.Info, currencyMosaicId, pluginConfig);
 
 				switch (transaction.EntityVersion()) {
 				case 2: {

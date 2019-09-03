@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 				const model::UnresolvedAddressSet& participantsByAddress,
 				const utils::KeySet& participantsByKey) {
 			// Arrange:
-			auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create();
 			AddAccount(cache, accountKey, accountType);
 			for (const auto& key : additionalCacheKeys)
 				AddAccount(cache, key, state::AccountType::Main);

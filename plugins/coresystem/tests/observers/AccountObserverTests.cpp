@@ -78,8 +78,7 @@ namespace catapult { namespace observers {
 
 	ACCOUNT_KEY_TEST(AccountObserverAddsAccountOnCommit, 1) {
 		// Arrange:
-		auto config = model::NetworkConfiguration::Uninitialized();
-		test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
+		test::AccountObserverTestContext context(NotifyMode::Commit, Height{444});
 		auto pObserver = TTraits::CreateObserver();
 
 		auto key = TTraits::CreateKey();
@@ -95,8 +94,7 @@ namespace catapult { namespace observers {
 
 	ACCOUNT_KEY_TEST(SubsequentNotificationsDoNotInvalidatePointers, 1) {
 		// Arrange:
-		auto config = model::NetworkConfiguration::Uninitialized();
-		test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
+		test::AccountObserverTestContext context(NotifyMode::Commit, Height{444});
 		auto pObserver = TTraits::CreateObserver();
 
 		auto key = TTraits::CreateKey();
@@ -128,8 +126,7 @@ namespace catapult { namespace observers {
 			auto key = TTraits::CreateKey();
 
 			state::CatapultState state;
-			auto config = model::NetworkConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheDelta = cache.createDelta();
 
 			// - commit

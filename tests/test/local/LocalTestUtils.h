@@ -53,7 +53,7 @@ namespace catapult { namespace test {
 	crypto::KeyPair LoadServerKeyPair();
 
 	/// Creates a prototypical block chain configuration that is safe to use in local tests.
-	model::NetworkConfiguration CreatePrototypicalBlockChainConfiguration();
+	model::NetworkConfiguration CreatePrototypicalNetworkConfiguration();
 
 	/// Creates an uninitialized blockchain configuration.
 	config::BlockchainConfiguration CreateUninitializedBlockchainConfiguration();

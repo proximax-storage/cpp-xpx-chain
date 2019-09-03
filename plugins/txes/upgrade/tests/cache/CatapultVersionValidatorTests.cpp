@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 			uint64_t nextBlockchainVersion,
 			bool seedCache) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache<test::BlockchainUpgradeCacheFactory>(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::CreateEmptyCatapultCache<test::BlockchainUpgradeCacheFactory>();
 			if (seedCache) {
 				auto delta = cache.createDelta();
 				auto& upgradeCacheDelta = delta.sub<cache::BlockchainUpgradeCache>();

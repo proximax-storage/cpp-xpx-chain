@@ -26,7 +26,6 @@
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
 #include "catapult/types.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/TestHarness.h"
 #include <unordered_set>
@@ -123,7 +122,7 @@ namespace catapult { namespace test {
 				: m_registry(mocks::CreateDefaultTransactionRegistry())
 				, m_pZeroMqEntityPublisher(std::make_shared<zeromq::ZeroMqEntityPublisher>(
 						GetDefaultLocalHostZmqPort(),
-						model::CreateNotificationPublisher(m_registry, config::CreateMockConfigurationHolder()),
+						model::CreateNotificationPublisher(m_registry, UnresolvedMosaicId()),
 						[](){ return model::ExtractorContext(); }))
 				, m_zmqSocket(m_zmqContext, ZMQ_SUB) {
 			m_zmqSocket.setsockopt(ZMQ_RCVTIMEO, 10);
@@ -216,7 +215,7 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a message queue context using the supplied subscriber creator (\a subscriberCreator).
 		explicit MqContextT(const SubscriberCreator& subscriberCreator)
-				: m_pNotificationPublisher(model::CreateNotificationPublisher(registry(), config::CreateMockConfigurationHolder()))
+				: m_pNotificationPublisher(model::CreateNotificationPublisher(registry(), UnresolvedMosaicId()))
 				, m_pZeroMqSubscriber(subscriberCreator(publisher()))
 		{}
 

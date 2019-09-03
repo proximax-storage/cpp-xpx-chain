@@ -75,6 +75,7 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
+					"PropertyAddressNoSelfModificationValidator",
 					"PropertyTypeValidator",
 					"AddressPropertyModificationTypesValidator",
 					"MosaicPropertyModificationTypesValidator",
@@ -86,7 +87,6 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"PropertyAddressNoSelfModificationValidator",
 					"AddressPropertyRedundantModificationValidator",
 					"AddressPropertyValueModificationValidator",
 					"MaxAddressPropertyValuesValidator",

@@ -1,5 +1,5 @@
 # properties for nemesis block compatible with catapult signature scheme used in tests
-# for proper generation, update following config-network properties:
+# for proper generation, update following config-immutable properties:
 # - shouldEnableVerifiableState = false
 # - shouldEnableVerifiableReceipts = false
 

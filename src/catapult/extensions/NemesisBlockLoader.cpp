@@ -23,7 +23,6 @@
 #include "NemesisFundingObserver.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
-#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/crypto/Signer.h"
@@ -76,18 +75,19 @@ namespace catapult { namespace extensions {
 			CATAPULT_LOG(info) << out.str();
 		}
 
-		void CheckNemesisBlockInfo(const model::BlockElement& blockElement, const model::NetworkInfo& expectedNetwork) {
+		void CheckNemesisBlockInfo(const model::BlockElement& blockElement, const model::NetworkInfo& expectedNetwork,
+				model::NetworkIdentifier expectedNetworkId, const GenerationHash& expectedGenerationHash) {
 			auto networkId = blockElement.Block.Network();
 			const auto& publicKey = blockElement.Block.Signer;
 			const auto& generationHash = blockElement.GenerationHash;
 
-			if (expectedNetwork.Identifier != networkId)
+			if (expectedNetworkId != networkId)
 				CATAPULT_THROW_INVALID_ARGUMENT_1("nemesis network id does not match network", networkId);
 
 			if (expectedNetwork.PublicKey != publicKey)
 				CATAPULT_THROW_INVALID_ARGUMENT_1("nemesis public key does not match network", publicKey);
 
-			if (expectedNetwork.GenerationHash != generationHash)
+			if (expectedGenerationHash != generationHash)
 				CATAPULT_THROW_INVALID_ARGUMENT_1("nemesis generation hash does not match network", generationHash);
 		}
 
@@ -155,7 +155,7 @@ namespace catapult { namespace extensions {
 		auto pNemesisBlockElement = storageView.loadBlockElement(Height(1));
 
 		// 2. execute the nemesis block
-		execute(stateRef.Config.Network, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
+		execute(stateRef.Config, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
 	}
 
 	void NemesisBlockLoader::executeAndCommit(const LocalNodeStateRef& stateRef, StateHashVerification stateHashVerification) {
@@ -166,7 +166,7 @@ namespace catapult { namespace extensions {
 		stateRef.Cache.commit(Height(1));
 	}
 
-	void NemesisBlockLoader::execute(const model::NetworkConfiguration& config, const model::BlockElement& nemesisBlockElement) {
+	void NemesisBlockLoader::execute(const config::BlockchainConfiguration& config, const model::BlockElement& nemesisBlockElement) {
 		auto catapultState = state::CatapultState();
 		execute(config, nemesisBlockElement, catapultState, StateHashVerification::Enabled, Verbosity::Off);
 	}
@@ -194,7 +194,7 @@ namespace catapult { namespace extensions {
 	}
 
 	void NemesisBlockLoader::execute(
-			const model::NetworkConfiguration& config,
+			const config::BlockchainConfiguration& config,
 			const model::BlockElement& nemesisBlockElement,
 			state::CatapultState& catapultState,
 			StateHashVerification stateHashVerification,
@@ -203,7 +203,7 @@ namespace catapult { namespace extensions {
 		if (Verbosity::On == verbosity)
 			LogNemesisBlockInfo(nemesisBlockElement);
 
-		CheckNemesisBlockInfo(nemesisBlockElement, config.Info);
+		CheckNemesisBlockInfo(nemesisBlockElement, config.Network.Info, config.Immutable.NetworkIdentifier, config.Immutable.GenerationHash);
 		CheckNemesisBlockTransactionTypes(nemesisBlockElement.Block, m_pluginManager.transactionRegistry());
 		CheckNemesisBlockFeeMultiplier(nemesisBlockElement.Block);
 
@@ -215,24 +215,24 @@ namespace catapult { namespace extensions {
 		auto readOnlyCache = m_cacheDelta.toReadOnly();
 		auto resolverContext = m_pluginManager.createResolverContext(readOnlyCache);
 		auto blockStatementBuilder = model::BlockStatementBuilder();
-		auto observerState = config.ShouldEnableVerifiableReceipts
+		auto observerState = config.Immutable.ShouldEnableVerifiableReceipts
 				? observers::ObserverState(m_cacheDelta, catapultState, blockStatementBuilder)
 				: observers::ObserverState(m_cacheDelta, catapultState);
 		chain::ExecuteBlock(nemesisBlockElement, { *m_pObserver, resolverContext, observerState });
 
 		// 4. check the funded balances are reasonable
 		if (Verbosity::On == verbosity)
-			LogNemesisBalances(config.CurrencyMosaicId, config.HarvestingMosaicId, m_nemesisFundingState.TotalFundedMosaics);
+			LogNemesisBalances(config.Immutable.CurrencyMosaicId, config.Immutable.HarvestingMosaicId, m_nemesisFundingState.TotalFundedMosaics);
 
 		CheckImportanceAndBalanceConsistency(
-				config.TotalChainImportance,
-				m_nemesisFundingState.TotalFundedMosaics.get(config.HarvestingMosaicId));
+				config.Network.TotalChainImportance,
+				m_nemesisFundingState.TotalFundedMosaics.get(config.Immutable.HarvestingMosaicId));
 
 		CheckInitialCurrencyAtomicUnits(
-				config.InitialCurrencyAtomicUnits,
-				m_nemesisFundingState.TotalFundedMosaics.get(config.CurrencyMosaicId));
+				config.Immutable.InitialCurrencyAtomicUnits,
+				m_nemesisFundingState.TotalFundedMosaics.get(config.Immutable.CurrencyMosaicId));
 
-		CheckMaxMosaicAtomicUnits(m_nemesisFundingState.TotalFundedMosaics, config.MaxMosaicAtomicUnits);
+		CheckMaxMosaicAtomicUnits(m_nemesisFundingState.TotalFundedMosaics, config.Network.MaxMosaicAtomicUnits);
 
 		// 5. check the hashes
 		auto blockReceiptsHash = model::CalculateMerkleHash(*blockStatementBuilder.build());

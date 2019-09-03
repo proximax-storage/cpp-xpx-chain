@@ -9,6 +9,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "tests/test/MetadataCacheTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -35,10 +36,10 @@ namespace catapult { namespace validators {
 				const UnresolvedAddress& metadataId,
 				Key signer) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
+			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
-			const_cast<model::NetworkConfiguration&>(config).SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(config);
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
 			auto pValidator = CreateModifyAddressMetadataValidator();
 			auto notification = model::ModifyAddressMetadataNotification_v1(signer, metadataId);

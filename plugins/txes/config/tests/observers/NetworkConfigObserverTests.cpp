@@ -42,8 +42,7 @@ namespace catapult { namespace observers {
 				bool entryExists,
 				const NetworkConfigValues& expectedValues) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			ObserverTestContext context(mode, expectedValues.Height, config);
+			ObserverTestContext context(mode, expectedValues.Height);
 			auto pObserver = CreateNetworkConfigObserver();
 
 			// Act:

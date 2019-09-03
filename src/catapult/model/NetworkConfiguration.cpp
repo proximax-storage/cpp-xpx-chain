@@ -42,19 +42,11 @@ namespace catapult { namespace model {
 
 #define LOAD_NETWORK_PROPERTY(NAME) utils::LoadIniProperty(bag, "network", #NAME, config.Info.NAME)
 
-		LOAD_NETWORK_PROPERTY(Identifier);
 		LOAD_NETWORK_PROPERTY(PublicKey);
-		LOAD_NETWORK_PROPERTY(GenerationHash);
 
 #undef LOAD_NETWORK_PROPERTY
 
 #define LOAD_CHAIN_PROPERTY(NAME) utils::LoadIniProperty(bag, "chain", #NAME, config.NAME)
-
-		LOAD_CHAIN_PROPERTY(ShouldEnableVerifiableState);
-		LOAD_CHAIN_PROPERTY(ShouldEnableVerifiableReceipts);
-
-		LOAD_CHAIN_PROPERTY(CurrencyMosaicId);
-		LOAD_CHAIN_PROPERTY(HarvestingMosaicId);
 
 		LOAD_CHAIN_PROPERTY(BlockGenerationTargetTime);
 		LOAD_CHAIN_PROPERTY(BlockTimeSmoothingFactor);
@@ -69,7 +61,6 @@ namespace catapult { namespace model {
 		LOAD_CHAIN_PROPERTY(MaxTransactionLifetime);
 		LOAD_CHAIN_PROPERTY(MaxBlockFutureTime);
 
-		LOAD_CHAIN_PROPERTY(InitialCurrencyAtomicUnits);
 		LOAD_CHAIN_PROPERTY(MaxMosaicAtomicUnits);
 
 		LOAD_CHAIN_PROPERTY(TotalChainImportance);
@@ -96,17 +87,13 @@ namespace catapult { namespace model {
 			numPluginProperties += iter->second.size();
 		}
 
-		utils::VerifyBagSizeLte(bag, 23 + numPluginProperties);
+		utils::VerifyBagSizeLte(bag, 16 + numPluginProperties);
 		return config;
 	}
 
 	// endregion
 
 	// region utils
-
-	UnresolvedMosaicId GetUnresolvedCurrencyMosaicId(const NetworkConfiguration& config) {
-		return UnresolvedMosaicId(config.CurrencyMosaicId.unwrap());
-	}
 
 	utils::TimeSpan CalculateFullRollbackDuration(const NetworkConfiguration& config) {
 		return utils::TimeSpan::FromMilliseconds(config.BlockGenerationTargetTime.millis() * config.MaxRollbackBlocks);

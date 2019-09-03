@@ -33,6 +33,7 @@ namespace catapult { namespace harvesting {
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+				const config::BlockchainConfiguration& config,
 				const chain::ExecutionConfiguration& executionConfig);
 
 		/// Destroys the facade.
@@ -82,6 +83,7 @@ namespace catapult { namespace harvesting {
 	private:
 		const cache::CatapultCache& m_cache;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+		config::BlockchainConfiguration m_config;
 		chain::ExecutionConfiguration m_executionConfig;
 	};
 }}

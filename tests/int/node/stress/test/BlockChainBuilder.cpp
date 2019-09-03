@@ -36,7 +36,7 @@ namespace catapult { namespace test {
 	}
 
 	BlockChainBuilder::BlockChainBuilder(const Accounts& accounts, StateHashCalculator& stateHashCalculator)
-			: BlockChainBuilder(accounts, stateHashCalculator, CreatePrototypicalBlockChainConfiguration())
+			: BlockChainBuilder(accounts, stateHashCalculator, CreatePrototypicalNetworkConfiguration())
 	{}
 
 	BlockChainBuilder::BlockChainBuilder(

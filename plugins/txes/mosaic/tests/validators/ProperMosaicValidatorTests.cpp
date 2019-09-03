@@ -57,7 +57,7 @@ namespace catapult { namespace validators {
 			model::MosaicRequiredNotification<1> notification(transactionSigner, affectedMosaicId);
 
 			// - create the validator context
-			auto cache = test::MosaicCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::MosaicCacheFactory::Create();
 			auto delta = cache.createDelta();
 			test::AddMosaic(delta, ResolvedMosaicTraits::Default_Id, Height(50), BlockDuration(100), artifactOwner);
 			cache.commit(Height());

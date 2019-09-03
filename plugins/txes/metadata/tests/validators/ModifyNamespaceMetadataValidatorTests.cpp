@@ -53,14 +53,14 @@ namespace catapult { namespace validators {
 				const NamespaceId& metadataId,
 				Key signer) {
 			// Arrange:
+			test::MutableBlockchainConfiguration config;
+			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			auto namespacePluginConfig = config::NamespaceConfiguration::Uninitialized();
 			namespacePluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(100);
 			auto metadataPluginConfig = config::MetadataConfiguration::Uninitialized();
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespacePluginConfig);
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), metadataPluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(networkConfig);
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), namespacePluginConfig);
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), metadataPluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
 			auto pValidator = CreateModifyNamespaceMetadataValidator();
 			auto notification = model::ModifyNamespaceMetadataNotification_v1(signer, metadataId);
@@ -89,7 +89,7 @@ namespace catapult { namespace validators {
 				Namespace_Owner);
 	}
 
-	TEST(TEST_CLASS, FailueWhenNamespaceExistButOwnerNotEqual) {
+	TEST(TEST_CLASS, FailureWhenNamespaceExistButOwnerNotEqual) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Modification_Not_Permitted,
@@ -97,7 +97,7 @@ namespace catapult { namespace validators {
 				test::GenerateRandomByteArray<Key>());
 	}
 
-	TEST(TEST_CLASS, FailueWhenNamespaceNoExistButOwnerNotEquals) {
+	TEST(TEST_CLASS, FailureWhenNamespaceNoExistButOwnerNotEquals) {
 		// Act:
 		AssertValidationResult(
 				Failure_Metadata_Namespace_Is_Not_Exist,

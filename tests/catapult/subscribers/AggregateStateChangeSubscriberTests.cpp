@@ -84,8 +84,7 @@ namespace catapult { namespace subscribers {
 
 		TestContext<MockStateChangeSubscriber> context;
 
-		auto config = model::NetworkConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
+		auto cache = test::CreateEmptyCatapultCache();
 		auto cacheDelta = cache.createDelta();
 		model::ChainScore scoreDelta;
 		StateChangeInfo stateChangeInfo{ cache::CacheChanges(cacheDelta), scoreDelta, Height(444) };

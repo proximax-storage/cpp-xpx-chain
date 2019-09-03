@@ -163,7 +163,7 @@ namespace catapult { namespace config {
 		namespace {
 			auto CreateBlockchainConfiguration(uint64_t initialCurrencyAtomicUnits, const std::vector<InflationEntry>& inflationEntries) {
 				auto mutableConfig = CreateMutableBlockchainConfiguration();
-				mutableConfig.Network.InitialCurrencyAtomicUnits = Amount(initialCurrencyAtomicUnits);
+				mutableConfig.Immutable.InitialCurrencyAtomicUnits = Amount(initialCurrencyAtomicUnits);
 
 				model::InflationCalculator calculator;
 				for (const auto& inflationEntry : inflationEntries)

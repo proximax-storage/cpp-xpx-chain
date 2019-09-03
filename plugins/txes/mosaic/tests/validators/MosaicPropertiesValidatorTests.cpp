@@ -23,6 +23,7 @@
 #include "catapult/constants.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -49,10 +50,10 @@ namespace catapult { namespace validators {
 			} else {
 				pluginConfig.MaxMosaicDuration = utils::BlockSpan::FromHours(maxMosaicDuration.unwrap());
 			}
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
-			return networkConfig;
+			test::MutableBlockchainConfiguration config;
+			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			return config.ToConst();
 		}
 		auto Default_Config = CreateConfig(Max_Divisibility, Max_Duration);
 

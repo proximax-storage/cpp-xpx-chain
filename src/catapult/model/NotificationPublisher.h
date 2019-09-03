@@ -26,7 +26,6 @@ namespace catapult {
 		class NotificationSubscriber;
 		class TransactionRegistry;
 	}
-	namespace config { class BlockchainConfigurationHolder; }
 }
 
 namespace catapult { namespace model {
@@ -57,6 +56,6 @@ namespace catapult { namespace model {
 	/// fee mosaic id (\a feeMosaicId).
 	std::unique_ptr<NotificationPublisher> CreateNotificationPublisher(
 			const TransactionRegistry& transactionRegistry,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			UnresolvedMosaicId feeMosaicId,
 			PublicationMode mode = PublicationMode::All);
 }}

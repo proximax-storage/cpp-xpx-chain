@@ -24,6 +24,7 @@
 #include "catapult/model/NetworkInfo.h"
 #include "tests/test/cache/ImportanceViewTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 using catapult::model::ImportanceHeight;
@@ -40,13 +41,10 @@ namespace catapult { namespace cache {
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
 		auto CreateConfigHolder() {
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.Info.Identifier = Network_Identifier;
-			config.ImportanceGrouping = 123;
-			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
-			config.CurrencyMosaicId = MosaicId(1111);
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			return config::CreateMockConfigurationHolder(config);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 123;
+			config.Network.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		struct AddressTraits {
@@ -103,7 +101,8 @@ namespace catapult { namespace cache {
 		}
 
 		auto CreateAccountStateCache() {
-			return std::make_unique<AccountStateCache>(CacheConfiguration(), CreateConfigHolder());
+			return std::make_unique<AccountStateCache>(CacheConfiguration(), AccountStateCacheTypes::Options{
+				CreateConfigHolder(), Network_Identifier, MosaicId(1111), Harvesting_Mosaic_Id });
 		}
 	}
 

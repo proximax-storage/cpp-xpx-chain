@@ -21,8 +21,6 @@
 #include "BlockchainConfiguration.h"
 #include "ConfigurationFileLoader.h"
 #include "catapult/crypto/KeyPair.h"
-#include "catapult/utils/ConfigurationBag.h"
-#include "catapult/utils/ConfigurationUtils.h"
 #include <boost/filesystem.hpp>
 
 namespace catapult { namespace config {
@@ -44,6 +42,7 @@ namespace catapult { namespace config {
 	}
 
 	BlockchainConfiguration::BlockchainConfiguration(
+			const ImmutableConfiguration& immutableConfig,
 			const model::NetworkConfiguration& networkConfig,
 			const NodeConfiguration& nodeConfig,
 			const LoggingConfiguration& loggingConfig,
@@ -51,7 +50,8 @@ namespace catapult { namespace config {
 			const ExtensionsConfiguration& extensionsConfig,
 			const InflationConfiguration& inflationConfig,
 			const config::SupportedEntityVersions& supportedEntityVersions)
-			: Network(networkConfig)
+			: Immutable(immutableConfig)
+			, Network(networkConfig)
 			, Node(nodeConfig)
 			, Logging(loggingConfig)
 			, User(userConfig)
@@ -61,6 +61,7 @@ namespace catapult { namespace config {
 	{}
 
 	BlockchainConfiguration::BlockchainConfiguration(
+			ImmutableConfiguration&& immutableConfig,
 			model::NetworkConfiguration&& networkConfig,
 			NodeConfiguration&& nodeConfig,
 			LoggingConfiguration&& loggingConfig,
@@ -68,7 +69,8 @@ namespace catapult { namespace config {
 			ExtensionsConfiguration&& extensionsConfig,
 			InflationConfiguration&& inflationConfig,
 			config::SupportedEntityVersions&& supportedEntityVersions)
-			: Network(std::move(networkConfig))
+			: Immutable(std::move(immutableConfig))
+			, Network(std::move(networkConfig))
 			, Node(std::move(nodeConfig))
 			, Logging(std::move(loggingConfig))
 			, User(std::move(userConfig))
@@ -81,6 +83,7 @@ namespace catapult { namespace config {
 			const boost::filesystem::path& resourcesPath,
 			const std::string& extensionsHost) {
 		return BlockchainConfiguration(
+				LoadIniConfiguration<ImmutableConfiguration>(resourcesPath / Qualify("immutable")),
 				LoadIniConfiguration<model::NetworkConfiguration>(resourcesPath / Qualify("network")),
 				LoadIniConfiguration<NodeConfiguration>(resourcesPath / Qualify("node")),
 				LoadIniConfiguration<LoggingConfiguration>(resourcesPath / HostQualify("logging", extensionsHost)),
@@ -101,7 +104,7 @@ namespace catapult { namespace config {
 		endpoint.Host = localNodeConfig.Host;
 		endpoint.Port = config.Node.Port;
 
-		auto metadata = ionet::NodeMetadata(config.Network.Info.Identifier);
+		auto metadata = ionet::NodeMetadata(config.Immutable.NetworkIdentifier);
 		metadata.Name = localNodeConfig.FriendlyName;
 		metadata.Version = ionet::NodeVersion(localNodeConfig.Version);
 		metadata.Roles = localNodeConfig.Roles;

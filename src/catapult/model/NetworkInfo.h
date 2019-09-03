@@ -60,26 +60,17 @@ namespace catapult { namespace model {
 	struct NetworkInfo {
 	public:
 		/// Creates a default, uninitialized network info.
-		constexpr NetworkInfo() : NetworkInfo(NetworkIdentifier::Zero, {}, {})
+		constexpr NetworkInfo() : NetworkInfo(Key())
 		{}
 
-		/// Creates a network info around a network \a identifier, a nemesis public key (\a publicKey)
-		/// and a nemesis generation hash (\a generationHash).
-		constexpr NetworkInfo(NetworkIdentifier identifier, const Key& publicKey, const GenerationHash& generationHash)
-				: Identifier(identifier)
-				, PublicKey(publicKey)
-				, GenerationHash(generationHash)
+		/// Creates a network info around a nemesis public key (\a publicKey).
+		constexpr NetworkInfo(const Key& publicKey)
+				: PublicKey(publicKey)
 		{}
 
 	public:
-		/// Network identifier.
-		NetworkIdentifier Identifier;
-
 		/// Nemesis public key.
 		Key PublicKey;
-
-		/// Nemesis generation hash.
-		catapult::GenerationHash GenerationHash;
 	};
 
 	/// Tries to parse \a networkName into a network identifier (\a networkIdentifier).

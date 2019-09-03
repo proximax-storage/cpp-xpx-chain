@@ -42,8 +42,7 @@ namespace catapult { namespace validators {
 
 		public:
 			ValidationResult validate(uint8_t notificationId) {
-				auto config = model::NetworkConfiguration::Uninitialized();
-				auto cache = test::CreateEmptyCatapultCache(config);
+				auto cache = test::CreateEmptyCatapultCache();
 				return test::ValidateNotification(*pAggregateValidator, test::TaggedNotification(notificationId), cache);
 			}
 		};

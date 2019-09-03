@@ -32,14 +32,15 @@ namespace catapult { namespace test {
 	/// Creates a validator context around a \a height, \a network and \a cache.
 	inline validators::ValidatorContext CreateValidatorContext(
 			Height height,
+			model::NetworkIdentifier networkIdentifier,
 			const model::NetworkInfo& network,
 			const cache::ReadOnlyCatapultCache& cache) {
-		return validators::ValidatorContext(height, Timestamp(0), network, CreateResolverContextXor(), cache);
+		return validators::ValidatorContext(height, Timestamp(0), networkIdentifier, network, CreateResolverContextXor(), cache);
 	}
 
 	/// Creates a validator context around a \a height and \a cache.
 	inline validators::ValidatorContext CreateValidatorContext(Height height, const cache::ReadOnlyCatapultCache& cache) {
-		return CreateValidatorContext(height, model::NetworkInfo(), cache);
+		return CreateValidatorContext(height, model::NetworkIdentifier::Zero, model::NetworkInfo(), cache);
 	}
 
 	// endregion

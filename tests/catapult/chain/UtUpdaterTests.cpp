@@ -25,7 +25,6 @@
 #include "catapult/model/FeeUtils.h"
 #include "catapult/model/TransactionStatus.h"
 #include "tests/test/cache/UtTestUtils.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/TestHarness.h"
 
@@ -38,8 +37,6 @@ namespace catapult { namespace chain {
 	namespace {
 		constexpr auto Default_Height = Height(17);
 		constexpr auto Default_Time = Timestamp(987);
-
-		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		ValidationResult Modify(ValidationResult result) {
 			// used to modify a ValidationResult while preserving its severity
@@ -54,7 +51,7 @@ namespace catapult { namespace chain {
 		}
 
 		auto CreateCacheWithDefaultHeight() {
-			return test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
+			return test::CreateCatapultCacheWithMarkerAccount(Default_Height);
 		}
 
 		auto CreateConfiguration(const BlockFeeMultiplier& minFeeMultiplier) {
