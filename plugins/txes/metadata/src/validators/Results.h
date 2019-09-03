@@ -45,20 +45,26 @@ namespace catapult { namespace validators {
 	/// Validation failed because a modification of namespace is not permitted.
 	DEFINE_METADATA_RESULT(Namespace_Modification_Not_Permitted, 18);
 
-	/// Validation failed because address is not exist.
-	DEFINE_METADATA_RESULT(Address_Is_Not_Exist, 21);
+	/// Validation failed because address is not found.
+	DEFINE_METADATA_RESULT(Address_Not_Found, 21);
 
-	/// Validation failed because mosaic is not exist.
-	DEFINE_METADATA_RESULT(Mosaic_Is_Not_Exist, 22);
+	/// Validation failed because mosaic is not found.
+	DEFINE_METADATA_RESULT(Mosaic_Not_Found, 22);
 
-	/// Validation failed because namespace is not exist.
-	DEFINE_METADATA_RESULT(Namespace_Is_Not_Exist, 23);
+	/// Validation failed because namespace is not found.
+	DEFINE_METADATA_RESULT(Namespace_Not_Found, 23);
 
 	/// Validation failed because metadata contains to much keys.
 	DEFINE_METADATA_RESULT(Too_Much_Keys, 30);
 
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_METADATA_RESULT(Plugin_Config_Malformed, 31);
+
+	/// Validation failed because mosaic id is malformed.
+	DEFINE_METADATA_RESULT(MosaicId_Malformed, 32);
+
+	/// Validation failed because namespace id is malformed.
+	DEFINE_METADATA_RESULT(NamespaceId_Malformed, 33);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
