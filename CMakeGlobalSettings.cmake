@@ -202,7 +202,20 @@ function(catapult_target TARGET_NAME)
 	set_property(TARGET ${TARGET_NAME} PROPERTY CXX_STANDARD 17)
 
 	# indicate boost as a dependency
-	target_link_libraries(${TARGET_NAME} ${Boost_LIBRARIES})
+	target_link_libraries(${TARGET_NAME}
+        Boost::boost # headers
+        Boost::atomic
+        Boost::system
+        Boost::date_time
+        Boost::regex
+        Boost::timer
+        Boost::chrono
+        Boost::log
+        Boost::thread
+        Boost::filesystem
+        Boost::program_options
+        Boost::random
+	)
 
 	# copy boost shared libraries
 	foreach(BOOST_COMPONENT ATOMIC SYSTEM DATE_TIME REGEX TIMER CHRONO LOG THREAD FILESYSTEM PROGRAM_OPTIONS)
@@ -338,7 +351,6 @@ endfunction()
 # used to define a catapult test executable
 function(catapult_test_executable TARGET_NAME)
 	find_package(GTest REQUIRED)
-	include_directories(SYSTEM ${GTEST_INCLUDE_DIR})
 
 	catapult_executable(${TARGET_NAME} ${ARGN})
 	add_test(NAME ${TARGET_NAME} WORKING_DIRECTORY ${CMAKE_BINARY_DIR} COMMAND ${TARGET_NAME})

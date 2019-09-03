@@ -16,9 +16,9 @@ set(
 
 include("cmake/Hunter/init.cmake")
 HunterGate(
-		URL "https://github.com/cpp-pm/hunter/archive/v0.23.213.tar.gz"
-		SHA1 "f7dece30a8fd9e82d9342a55df8bf22c21a2760c"
-		FILEPATH ${CMAKE_SOURCE_DIR}/cmake/Hunter/config.cmake
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.213.tar.gz"
+    SHA1 "f7dece30a8fd9e82d9342a55df8bf22c21a2760c"
+    FILEPATH ${CMAKE_SOURCE_DIR}/cmake/Hunter/config.cmake
 )
 
 project(catapult_server)

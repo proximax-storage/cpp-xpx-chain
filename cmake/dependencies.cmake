@@ -1,7 +1,6 @@
 ### setup boost
 hunter_add_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random)
 find_package(Boost CONFIG COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
-include_directories(SYSTEM ${Boost_INCLUDE_DIRS})
 
 ### setup gtest
 hunter_add_package(GTest)
