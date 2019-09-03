@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 					auto it = accountStateCache.find(address);
 
 					if (!it.tryGet())
-						return Failure_Metadata_Address_Is_Not_Exist;
+						return Failure_Metadata_Address_Not_Found;
 				}
 
 				return ValidationResult::Success;

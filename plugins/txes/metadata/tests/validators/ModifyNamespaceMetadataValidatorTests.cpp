@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
@@ -20,10 +18,14 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(ModifyNamespaceMetadata,)
 
 	namespace {
+		constexpr NamespaceId CreateValidNamespaceId(uint64_t value) {
+			return NamespaceId((1ull << 63) | value);
+		}
+
 		const Key Namespace_Owner = test::GenerateRandomByteArray<Key>();
-		constexpr NamespaceId Root_Namespace_Id = NamespaceId(25);
-		constexpr NamespaceId Child_Namespace_Id = NamespaceId(36);
-		constexpr NamespaceId Child_Child_Namespace_Id = NamespaceId(49);
+		constexpr NamespaceId Root_Namespace_Id = CreateValidNamespaceId(25);
+		constexpr NamespaceId Child_Namespace_Id = CreateValidNamespaceId(36);
+		constexpr NamespaceId Child_Child_Namespace_Id = CreateValidNamespaceId(49);
 
 		state::Namespace::Path CreatePath(const std::vector<NamespaceId::ValueType>& ids) {
 			state::Namespace::Path path;
@@ -81,27 +83,35 @@ namespace catapult { namespace validators {
 			Namespace_Owner);
 	}
 
+	TEST(TEST_CLASS, FailureWhenNamespaceIdMalformed) {
+		// Act:
+		AssertValidationResult(
+			Failure_Metadata_NamespaceId_Malformed,
+			NamespaceId(1), // high bit not set
+			Namespace_Owner);
+	}
+
 	TEST(TEST_CLASS, FailureWhenNamespaceNotExistAndOwnerEquals) {
 		// Act:
 		AssertValidationResult(
-				Failure_Metadata_Namespace_Is_Not_Exist,
-				NamespaceId(3),
-				Namespace_Owner);
+			Failure_Metadata_Namespace_Not_Found,
+			CreateValidNamespaceId(3),
+			Namespace_Owner);
 	}
 
 	TEST(TEST_CLASS, FailureWhenNamespaceExistButOwnerNotEqual) {
 		// Act:
 		AssertValidationResult(
-				Failure_Metadata_Namespace_Modification_Not_Permitted,
-				Root_Namespace_Id,
-				test::GenerateRandomByteArray<Key>());
+			Failure_Metadata_Namespace_Modification_Not_Permitted,
+			Root_Namespace_Id,
+			test::GenerateRandomByteArray<Key>());
 	}
 
 	TEST(TEST_CLASS, FailureWhenNamespaceNoExistButOwnerNotEquals) {
 		// Act:
 		AssertValidationResult(
-				Failure_Metadata_Namespace_Is_Not_Exist,
-				NamespaceId(3),
-				test::GenerateRandomByteArray<Key>());
+			Failure_Metadata_Namespace_Not_Found,
+			CreateValidNamespaceId(3),
+			test::GenerateRandomByteArray<Key>());
 	}
 }}

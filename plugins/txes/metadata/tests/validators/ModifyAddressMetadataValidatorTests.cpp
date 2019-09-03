@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
 
 		// Act:
 		AssertValidationResult(
-				Failure_Metadata_Address_Is_Not_Exist,
+				Failure_Metadata_Address_Not_Found,
 				extensions::CopyToUnresolvedAddress(accountAddress),
 				publicKey);
 	}
