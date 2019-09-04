@@ -31,7 +31,6 @@ sudo apt-get install docker-compose -y
 ## Sanitizers
 
 Sanitizers are compiler flags, that inject verification code into binary. [Detailed](https://github.com/google/sanitizers).
-Once can build PromimaX with one of sanitizers enabled.
 
 ```
 # 1. do a clean build with one of sanitizers enabled
