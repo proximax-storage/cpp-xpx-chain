@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 project(catapult_server)
 include(CMakeGlobalSettings.cmake)
 option(ENABLE_CODE_COVERAGE "Enable code coverage" OFF)
+option(SANITIZE_ADDRESS "Enable address sanitizer" OFF)
+option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
+option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
