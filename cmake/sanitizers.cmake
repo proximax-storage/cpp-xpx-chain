@@ -4,11 +4,11 @@ if(SANITIZE_ADDRESS OR SANITIZE_THREAD OR SANITIZE_UNDEFINED)
     find_program(CMAKE_CXX_COMPILER g++-7)
 
     if(NOT CMAKE_C_COMPILER)
-        message(FATAL_ERROR "gcc-8 not found")
+        message(FATAL_ERROR "gcc-7 not found")
     endif()
 
     if(NOT CMAKE_CXX_COMPILER)
-        message(FATAL_ERROR "g++-8 not found")
+        message(FATAL_ERROR "g++-7 not found")
     endif()
 
     set(
