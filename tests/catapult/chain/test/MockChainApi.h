@@ -82,7 +82,7 @@ namespace catapult { namespace mocks {
 		}
 
 		/// Adds a block (\a pBlock) to the block map.
-		void addBlock(std::unique_ptr<model::Block>&& pBlock) {
+		void addBlock(model::UniqueEntityPtr<model::Block>&& pBlock) {
 			auto height = pBlock->Height;
 			m_blocks.emplace(height, std::move(pBlock));
 		}
@@ -184,7 +184,7 @@ namespace catapult { namespace mocks {
 		}
 
 		model::BlockRange createRange(Height startHeight, size_t numBlocks) const {
-			std::vector<std::unique_ptr<const model::Block>> blocks;
+			std::vector<model::UniqueEntityPtr<const model::Block>> blocks;
 			std::vector<const model::Block*> rawBlocks;
 			for (auto i = 0u; i < numBlocks; ++i) {
 				blocks.push_back(test::GenerateBlockWithTransactions(0, startHeight + Height(i)));

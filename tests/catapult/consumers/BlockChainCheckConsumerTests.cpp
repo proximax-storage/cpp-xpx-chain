@@ -139,7 +139,7 @@ namespace catapult { namespace consumers {
 	// region duplicate transactions
 
 	namespace {
-		std::unique_ptr<model::Block> CreateBlockFromTransactions(
+		model::UniqueEntityPtr<model::Block> CreateBlockFromTransactions(
 				const test::ConstTransactions& transactions,
 				const std::vector<size_t>& transactionIndexes) {
 			test::ConstTransactions transactionsCopy;

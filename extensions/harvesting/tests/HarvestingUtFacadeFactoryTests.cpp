@@ -383,7 +383,7 @@ namespace catapult { namespace harvesting {
 	// region commit - validation
 
 	namespace {
-		std::unique_ptr<model::BlockHeader> CreateBlockHeaderWithHeight(Height height) {
+		auto CreateBlockHeaderWithHeight(Height height) {
 			auto pBlockHeader = std::make_unique<model::BlockHeader>();
 			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pBlockHeader.get()), sizeof(model::BlockHeader) });
 			pBlockHeader->Size = sizeof(model::BlockHeader);
@@ -560,7 +560,7 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			std::unique_ptr<model::Block> generate(
+			model::UniqueEntityPtr<model::Block> generate(
 					const model::BlockHeader& blockHeader,
 					const std::vector<model::TransactionInfo>& transactionInfos,
 					size_t numUnapplies = 0) const {

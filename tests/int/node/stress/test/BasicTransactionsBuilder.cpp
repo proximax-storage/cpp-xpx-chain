@@ -44,7 +44,7 @@ namespace catapult { namespace test {
 		return m_transactionDescriptorPairs.size();
 	}
 
-	std::unique_ptr<model::Transaction> BasicTransactionsBuilder::generateAt(size_t index, Timestamp deadline) const {
+	model::UniqueEntityPtr<model::Transaction> BasicTransactionsBuilder::generateAt(size_t index, Timestamp deadline) const {
 		const auto& pair = m_transactionDescriptorPairs[index];
 		auto pTransaction = generate(pair.first, pair.second, deadline);
 		if (pTransaction)
@@ -97,7 +97,7 @@ namespace catapult { namespace test {
 		}
 	}
 
-	std::unique_ptr<model::Transaction> BasicTransactionsBuilder::createTransfer(
+	model::UniqueEntityPtr<model::Transaction> BasicTransactionsBuilder::createTransfer(
 			const TransferDescriptor& descriptor,
 			Timestamp deadline) const {
 		const auto& senderKeyPair = m_accounts.getKeyPair(descriptor.SenderId);
@@ -111,8 +111,8 @@ namespace catapult { namespace test {
 
 	// endregion
 
-	std::unique_ptr<model::Transaction> BasicTransactionsBuilder::SignWithDeadline(
-			std::unique_ptr<model::Transaction>&& pTransaction,
+	model::UniqueEntityPtr<model::Transaction> BasicTransactionsBuilder::SignWithDeadline(
+			model::UniqueEntityPtr<model::Transaction>&& pTransaction,
 			const crypto::KeyPair& signerKeyPair,
 			Timestamp deadline) {
 		pTransaction->Deadline = deadline;

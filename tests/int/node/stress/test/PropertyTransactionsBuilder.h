@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 
 	private:
 		// BasicTransactionsBuilder
-		std::unique_ptr<model::Transaction> generate(
+		model::UniqueEntityPtr<model::Transaction> generate(
 				uint32_t descriptorType,
 				const std::shared_ptr<const void>& pDescriptor,
 				Timestamp deadline) const override;
@@ -55,7 +55,7 @@ namespace catapult { namespace test {
 		void addAddressUnblockProperty(size_t senderId, size_t partnerId);
 
 	private:
-		std::unique_ptr<model::Transaction> createAddressPropertyTransaction(
+		model::UniqueEntityPtr<model::Transaction> createAddressPropertyTransaction(
 				const PropertyAddressBlockDescriptor& descriptor,
 				Timestamp deadline) const;
 

@@ -75,7 +75,7 @@ namespace catapult { namespace harvesting {
 			return accountStates;
 		}
 
-		std::unique_ptr<model::Block> CreateBlock() {
+		model::UniqueEntityPtr<model::Block> CreateBlock() {
 			// the created block needs to have height 1 to be able to add it to the block difficulty cache
 			auto pBlock = test::GenerateEmptyRandomBlock();
 			pBlock->Height = Height(1);
@@ -138,7 +138,7 @@ namespace catapult { namespace harvesting {
 
 			std::unique_ptr<Harvester> CreateHarvester(const config::BlockchainConfiguration& config) {
 				return CreateHarvester(config, [](const auto& blockHeader, auto) {
-					auto pBlock = std::make_unique<model::Block>();
+					auto pBlock = utils::MakeUniqueWithSize<model::Block>(sizeof(model::Block));
 					std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
 					return pBlock;
 				});

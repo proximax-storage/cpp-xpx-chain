@@ -40,7 +40,7 @@ namespace catapult { namespace builders {
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> NetworkConfigBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> NetworkConfigBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto pTransaction = createTransaction<TransactionType>(sizeof(TransactionType) + m_networkConfig.size() + m_supportedVersionsConfig.size());
 
@@ -56,11 +56,11 @@ namespace catapult { namespace builders {
 		return pTransaction;
 	}
 
-	std::unique_ptr<NetworkConfigBuilder::Transaction> NetworkConfigBuilder::build() const {
+	model::UniqueEntityPtr<NetworkConfigBuilder::Transaction> NetworkConfigBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<NetworkConfigBuilder::EmbeddedTransaction> NetworkConfigBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<NetworkConfigBuilder::EmbeddedTransaction> NetworkConfigBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 }}

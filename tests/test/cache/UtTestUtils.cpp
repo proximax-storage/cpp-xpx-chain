@@ -57,8 +57,8 @@ namespace catapult { namespace test {
 		return rawDeadlines;
 	}
 
-	std::vector<std::unique_ptr<const model::Transaction>> ExtractTransactions(const cache::MemoryUtCache& cache, size_t count) {
-		std::vector<std::unique_ptr<const model::Transaction>> transactions;
+	std::vector<model::UniqueEntityPtr<const model::Transaction>> ExtractTransactions(const cache::MemoryUtCache& cache, size_t count) {
+		std::vector<model::UniqueEntityPtr<const model::Transaction>> transactions;
 
 		auto view = cache.view();
 		if (0 != count) {

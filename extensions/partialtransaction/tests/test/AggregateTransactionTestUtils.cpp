@@ -31,7 +31,7 @@ namespace catapult { namespace test {
 		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
 	}
 
-	std::unique_ptr<model::AggregateTransaction> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {
+	model::UniqueEntityPtr<model::AggregateTransaction> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {
 		uint32_t size = sizeof(model::AggregateTransaction) + 124 + numCosignatures * sizeof(model::Cosignature);
 		auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction>(size);
 		FillWithRandomData({ reinterpret_cast<uint8_t*>(pTransaction.get()), size });
@@ -87,7 +87,7 @@ namespace catapult { namespace test {
 		return wrapper;
 	}
 
-	std::unique_ptr<model::Transaction> StripCosignatures(const model::AggregateTransaction& aggregateTransaction) {
+	model::UniqueEntityPtr<model::Transaction> StripCosignatures(const model::AggregateTransaction& aggregateTransaction) {
 		auto pTransactionWithoutCosignatures = CopyEntity(aggregateTransaction);
 		uint32_t cosignaturesSize = static_cast<uint32_t>(aggregateTransaction.CosignaturesCount()) * sizeof(model::Cosignature);
 		pTransactionWithoutCosignatures->Size -= cosignaturesSize;

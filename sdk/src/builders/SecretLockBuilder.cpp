@@ -51,16 +51,16 @@ namespace catapult { namespace builders {
 		m_recipient = recipient;
 	}
 
-	std::unique_ptr<SecretLockBuilder::Transaction> SecretLockBuilder::build() const {
+	model::UniqueEntityPtr<SecretLockBuilder::Transaction> SecretLockBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<SecretLockBuilder::EmbeddedTransaction> SecretLockBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<SecretLockBuilder::EmbeddedTransaction> SecretLockBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> SecretLockBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> SecretLockBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		auto pTransaction = createTransaction<TransactionType>(size);

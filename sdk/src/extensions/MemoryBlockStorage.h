@@ -35,7 +35,7 @@ namespace catapult { namespace extensions {
 	public:
 		/// Creates a memory-based block storage around \a nemesisBlockElement.
 		explicit MemoryBlockStorage(const model::BlockElement& nemesisBlockElement);
-
+		~MemoryBlockStorage() override = default;
 	public:
 		// LightBlockStorage
 		Height chainHeight() const override;

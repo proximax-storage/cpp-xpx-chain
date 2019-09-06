@@ -50,7 +50,7 @@ namespace catapult { namespace chain {
 					: TestContext(localScore, remoteScore, {}, {}, test::GenerateBlockWithTransactions(0, Default_Height))
 			{}
 
-			TestContext(const ChainScore& localScore, const ChainScore& remoteScore, std::unique_ptr<Block>&& pRemoteLastBlock)
+			TestContext(const ChainScore& localScore, const ChainScore& remoteScore, model::UniqueEntityPtr<Block>&& pRemoteLastBlock)
 					: TestContext(localScore, remoteScore, {}, {}, std::move(pRemoteLastBlock))
 			{}
 
@@ -59,7 +59,7 @@ namespace catapult { namespace chain {
 					const ChainScore& remoteScore,
 					const HashRange& localHashes,
 					const HashRange& remoteHashes,
-					std::unique_ptr<Block>&& pRemoteLastBlock,
+					model::UniqueEntityPtr<Block>&& pRemoteLastBlock,
 					uint32_t maxRollbackBlocks = 360)
 					: LocalScore(localScore)
 					, LocalHashes(HashRange::CopyRange(localHashes))
@@ -175,7 +175,7 @@ namespace catapult { namespace chain {
 	// region chain synchronization - compare chains (failed)
 
 	namespace {
-		void AssertFailedInteraction(ChainScore localScore, ChainScore remoteScore, std::unique_ptr<Block>&& pRemoteLastBlock) {
+		void AssertFailedInteraction(ChainScore localScore, ChainScore remoteScore, model::UniqueEntityPtr<Block>&& pRemoteLastBlock) {
 			// Arrange:
 			TestContext context(localScore, remoteScore, std::move(pRemoteLastBlock));
 			auto synchronizer = CreateSynchronizer(context);

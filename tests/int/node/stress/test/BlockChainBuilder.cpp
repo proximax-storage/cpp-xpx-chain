@@ -116,7 +116,7 @@ namespace catapult { namespace test {
 		return builder;
 	}
 
-	std::unique_ptr<model::Block> BlockChainBuilder::asSingleBlock(const TransactionsGenerator& transactionsGenerator) {
+	model::UniqueEntityPtr<model::Block> BlockChainBuilder::asSingleBlock(const TransactionsGenerator& transactionsGenerator) {
 		model::PreviousBlockContext context(*m_pParentBlockElement);
 		pushDifficulty(m_pParentBlockElement->Block);
 
@@ -154,7 +154,7 @@ namespace catapult { namespace test {
 			m_difficulties.erase(m_difficulties.cbegin());
 	}
 
-	std::unique_ptr<model::Block> BlockChainBuilder::createBlock(
+	model::UniqueEntityPtr<model::Block> BlockChainBuilder::createBlock(
 			const model::PreviousBlockContext& context,
 			Timestamp timestamp,
 			const model::Transactions& transactions) {

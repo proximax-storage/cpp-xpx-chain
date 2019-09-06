@@ -50,7 +50,7 @@ namespace catapult { namespace test {
 
 	private:
 		// BasicTransactionsBuilder
-		std::unique_ptr<model::Transaction> generate(
+		model::UniqueEntityPtr<model::Transaction> generate(
 				uint32_t descriptorType,
 				const std::shared_ptr<const void>& pDescriptor,
 				Timestamp deadline) const override;
@@ -71,9 +71,9 @@ namespace catapult { namespace test {
 		void addSecretProof(size_t senderId, size_t recipientId, const std::vector<uint8_t>& proof);
 
 	private:
-		std::unique_ptr<model::Transaction> createSecretLock(const SecretLockDescriptor& descriptor, Timestamp deadline) const;
+		model::UniqueEntityPtr<model::Transaction> createSecretLock(const SecretLockDescriptor& descriptor, Timestamp deadline) const;
 
-		std::unique_ptr<model::Transaction> createSecretProof(const SecretProofDescriptor& descriptor, Timestamp deadline) const;
+		model::UniqueEntityPtr<model::Transaction> createSecretProof(const SecretProofDescriptor& descriptor, Timestamp deadline) const;
 
 	private:
 		enum class DescriptorType { Secret_Lock = 1, Secret_Proof };

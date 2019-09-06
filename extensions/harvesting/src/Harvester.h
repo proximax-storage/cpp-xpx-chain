@@ -45,7 +45,7 @@ namespace catapult { namespace harvesting {
 	public:
 		/// Creates the best block (if any) harvested by any unlocked account.
 		/// Created block will have \a lastBlockElement as parent and \a timestamp as timestamp.
-		std::unique_ptr<model::Block> harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp);
+		model::UniqueEntityPtr<model::Block> harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp);
 
 	private:
 		const cache::CatapultCache& m_cache;

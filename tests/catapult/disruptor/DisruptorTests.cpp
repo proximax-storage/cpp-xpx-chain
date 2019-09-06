@@ -33,7 +33,7 @@ namespace catapult { namespace disruptor {
 	namespace {
 		DisruptorElementId PushBlock(
 				Disruptor& disruptor,
-				std::unique_ptr<model::Block>&& pBlock,
+				model::UniqueEntityPtr<model::Block>&& pBlock,
 				const ProcessingCompleteFunc& processingComplete = [](auto, auto) {}) {
 			return disruptor.add(ConsumerInput(model::BlockRange::FromEntity(std::move(pBlock))), processingComplete);
 		}

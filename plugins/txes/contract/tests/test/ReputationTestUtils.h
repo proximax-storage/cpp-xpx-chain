@@ -7,6 +7,7 @@
 #pragma once
 #include "src/model/ModifyContractTransaction.h"
 #include "catapult/model/Cosignature.h"
+#include "catapult/model/EntityPtr.h"
 #include "catapult/utils/HexFormatter.h"
 #include "tests/TestHarness.h"
 
@@ -18,7 +19,7 @@ namespace catapult { namespace test {
 	std::vector<Key> GenerateKeys(size_t count);
 
 	/// Creates a modify contract transaction from \a signer with \a modificationTypes.
-	std::unique_ptr<model::EmbeddedModifyContractTransaction> CreateModifyContractTransaction(
+	model::UniqueEntityPtr<model::EmbeddedModifyContractTransaction> CreateModifyContractTransaction(
 			const Key& signer,
 			const std::vector<model::CosignatoryModificationType>& modificationTypes);
 

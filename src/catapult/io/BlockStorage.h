@@ -49,6 +49,8 @@ namespace catapult { namespace io {
 	/// Interface for saving and loading blocks.
 	class BlockStorage : public LightBlockStorage {
 	public:
+		~BlockStorage() override = default;
+
 		/// Returns the block at \a height.
 		virtual std::shared_ptr<const model::Block> loadBlock(Height height) const = 0;
 
@@ -62,6 +64,8 @@ namespace catapult { namespace io {
 	/// Interface that allows saving, loading and pruning blocks.
 	class PrunableBlockStorage : public BlockStorage {
 	public:
+		~PrunableBlockStorage() override = default;
+
 		/// Purges all blocks from storage.
 		virtual void purge() = 0;
 	};

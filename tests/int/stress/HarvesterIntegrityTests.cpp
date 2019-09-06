@@ -107,7 +107,7 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			std::unique_ptr<model::Block> createLastBlock() {
+			model::UniqueEntityPtr<model::Block> createLastBlock() {
 				// create fake nemesis block
 				auto pLastBlock = test::GenerateEmptyRandomBlock();
 				pLastBlock->Height = Height(1);

@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/model/Transaction.h"
+#include "catapult/model/EntityPtr.h"
 
 namespace catapult { namespace io { class OutputStream; } }
 
@@ -28,7 +29,7 @@ namespace catapult { namespace test {
 	/// Represents a transaction status notification.
 	struct TransactionStatusNotification {
 		/// Transaction.
-		std::unique_ptr<model::Transaction> pTransaction;
+		model::UniqueEntityPtr<model::Transaction> pTransaction;
 
 		/// Transaction hash.
 		Hash256 Hash;

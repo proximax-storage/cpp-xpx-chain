@@ -36,16 +36,16 @@ namespace catapult { namespace builders {
 		m_linkAction = linkAction;
 	}
 
-	std::unique_ptr<AccountLinkBuilder::Transaction> AccountLinkBuilder::build() const {
+	model::UniqueEntityPtr<AccountLinkBuilder::Transaction> AccountLinkBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<AccountLinkBuilder::EmbeddedTransaction> AccountLinkBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<AccountLinkBuilder::EmbeddedTransaction> AccountLinkBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> AccountLinkBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> AccountLinkBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		auto pTransaction = createTransaction<TransactionType>(size);

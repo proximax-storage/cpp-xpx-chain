@@ -30,6 +30,8 @@ namespace catapult { namespace api {
 
 		class LocalChainApi : public ChainApi {
 		public:
+			~LocalChainApi() override = default;
+
 			LocalChainApi(const io::BlockStorageCache& storage, const model::ChainScoreSupplier& chainScoreSupplier)
 					: m_storage(storage)
 					, m_chainScoreSupplier(chainScoreSupplier)

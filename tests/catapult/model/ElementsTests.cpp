@@ -50,7 +50,7 @@ namespace catapult { namespace model {
 			}
 
 		private:
-			std::vector<std::unique_ptr<Block>> m_blocks;
+			std::vector<model::UniqueEntityPtr<Block>> m_blocks;
 			std::vector<BlockElement> m_elements;
 		};
 
@@ -335,7 +335,7 @@ namespace catapult { namespace model {
 
 	TEST(TEST_CLASS, ExtractTransactionInfosAppendsToDestinationVector) {
 		// Arrange: create blocks with transactions
-		using Blocks = std::vector<std::unique_ptr<Block>>;
+		using Blocks = std::vector<model::UniqueEntityPtr<Block>>;
 		constexpr auto Num_Transactions = 5u;
 		constexpr auto Num_Blocks = 3u;
 		Blocks blocks;

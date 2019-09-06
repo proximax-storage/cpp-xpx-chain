@@ -66,7 +66,7 @@ namespace catapult { namespace local {
 			auto nemesisKeyPairs = test::GetNemesisKeyPairs();
 
 			// dummy nemesis, just to make score calculations easier
-			auto pParentBlock = std::make_unique<model::Block>();
+			auto pParentBlock = utils::MakeUniqueWithSize<model::Block>(sizeof(model::Block));
 			pParentBlock->Timestamp = Timestamp();
 
 			io::FileBlockStorage storage(dataDirectory.str());

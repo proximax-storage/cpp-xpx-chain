@@ -46,7 +46,7 @@ namespace catapult { namespace plugins {
 		constexpr auto Transaction_Version = MakeVersion(NetworkIdentifier::Mijin_Test, 2);
 
 		struct AggregateTransactionWrapper {
-			std::unique_ptr<AggregateTransaction> pTransaction;
+			model::UniqueEntityPtr<AggregateTransaction> pTransaction;
 			std::vector<const mocks::EmbeddedMockTransaction*> SubTransactions;
 			std::vector<Key> SubTransactionSigners;
 			std::vector<Key> SubTransactionRecipients;

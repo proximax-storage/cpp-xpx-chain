@@ -20,6 +20,7 @@
 
 #include "NetworkNode.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/model/EntityPtr.h"
 
 namespace catapult { namespace ionet {
 
@@ -29,7 +30,7 @@ namespace catapult { namespace ionet {
 		}
 	}
 
-	std::unique_ptr<NetworkNode> PackNode(const Node& node) {
+	model::UniqueEntityPtr<NetworkNode> PackNode(const Node& node) {
 		const auto& endpoint = node.endpoint();
 		const auto& metadata = node.metadata();
 

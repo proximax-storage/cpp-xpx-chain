@@ -153,7 +153,7 @@ namespace catapult { namespace model {
 	namespace {
 		const char* Default_Key = "default";
 
-		std::unique_ptr<SizePrefixedEntity> CreateSizePrefixedEntity(const std::vector<uint8_t>& payload) {
+		model::UniqueEntityPtr<SizePrefixedEntity> CreateSizePrefixedEntity(const std::vector<uint8_t>& payload) {
 			auto numSizeBytes = sizeof(SizePrefixedEntity::Size);
 			auto entitySize = numSizeBytes + payload.size();
 			auto pEntity = utils::MakeUniqueWithSize<SizePrefixedEntity>(entitySize);
@@ -175,8 +175,8 @@ namespace catapult { namespace model {
 			return copy;
 		}
 
-		std::unordered_map<std::string, std::unique_ptr<SizePrefixedEntity>> GenerateEqualityInstanceMap() {
-			std::unordered_map<std::string, std::unique_ptr<SizePrefixedEntity>> map;
+		std::unordered_map<std::string, model::UniqueEntityPtr<SizePrefixedEntity>> GenerateEqualityInstanceMap() {
+			std::unordered_map<std::string, model::UniqueEntityPtr<SizePrefixedEntity>> map;
 			auto payload = test::GenerateRandomVector(123);
 
 			map.emplace(Default_Key, CreateSizePrefixedEntity(payload));

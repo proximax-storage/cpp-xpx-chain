@@ -53,7 +53,7 @@ namespace catapult { namespace extensions {
 
 		struct BlockSignerPair {
 			std::unique_ptr<crypto::KeyPair> pSigner;
-			std::unique_ptr<model::Block> pBlock;
+			model::UniqueEntityPtr<model::Block> pBlock;
 		};
 
 		struct NemesisOptions {

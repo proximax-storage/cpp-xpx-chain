@@ -41,7 +41,7 @@ namespace catapult { namespace test {
 
 	// region generate
 
-	std::unique_ptr<model::Transaction> SecretLockTransactionsBuilder::generate(
+	model::UniqueEntityPtr<model::Transaction> SecretLockTransactionsBuilder::generate(
 			uint32_t descriptorType,
 			const std::shared_ptr<const void>& pDescriptor,
 			Timestamp deadline) const {
@@ -87,7 +87,7 @@ namespace catapult { namespace test {
 		add(DescriptorType::Secret_Proof, descriptor);
 	}
 
-	std::unique_ptr<model::Transaction> SecretLockTransactionsBuilder::createSecretLock(
+	model::UniqueEntityPtr<model::Transaction> SecretLockTransactionsBuilder::createSecretLock(
 			const SecretLockDescriptor& descriptor,
 			Timestamp deadline) const {
 		const auto& senderKeyPair = accounts().getKeyPair(descriptor.SenderId);
@@ -104,7 +104,7 @@ namespace catapult { namespace test {
 		return SignWithDeadline(std::move(pTransaction), senderKeyPair, deadline);
 	}
 
-	std::unique_ptr<model::Transaction> SecretLockTransactionsBuilder::createSecretProof(
+	model::UniqueEntityPtr<model::Transaction> SecretLockTransactionsBuilder::createSecretProof(
 			const SecretProofDescriptor& descriptor,
 			Timestamp deadline) const {
 		const auto& senderKeyPair = accounts().getKeyPair(descriptor.SenderId);

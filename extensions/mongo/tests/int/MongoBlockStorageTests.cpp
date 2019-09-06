@@ -315,7 +315,7 @@ namespace catapult { namespace mongo {
 			blockElement.OptionalStatement = pBlockStatement;
 		}
 
-		std::unique_ptr<model::Block> PrepareDbAndBlock(const BlockElementCounts& blockElementCounts) {
+		model::UniqueEntityPtr<model::Block> PrepareDbAndBlock(const BlockElementCounts& blockElementCounts) {
 			// Arrange:
 			test::PrepareDatabase(test::DatabaseName());
 			auto pBlock = test::GenerateBlockWithTransactions(blockElementCounts.NumTransactions);
@@ -362,7 +362,7 @@ namespace catapult { namespace mongo {
 			}
 
 		private:
-			std::vector<std::unique_ptr<model::Block>> m_blocks;
+			std::vector<model::UniqueEntityPtr<model::Block>> m_blocks;
 			std::vector<model::BlockElement> m_blockElements;
 			std::shared_ptr<io::LightBlockStorage> m_pStorage;
 		};

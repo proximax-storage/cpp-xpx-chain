@@ -21,7 +21,7 @@ namespace catapult { namespace builders {
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> BlockchainUpgradeBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> BlockchainUpgradeBuilder::buildImpl() const {
 		// 1. allocate
 		auto pTransaction = createTransaction<TransactionType>(sizeof(TransactionType));
 
@@ -32,11 +32,11 @@ namespace catapult { namespace builders {
 		return pTransaction;
 	}
 
-	std::unique_ptr<BlockchainUpgradeBuilder::Transaction> BlockchainUpgradeBuilder::build() const {
+	model::UniqueEntityPtr<BlockchainUpgradeBuilder::Transaction> BlockchainUpgradeBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<BlockchainUpgradeBuilder::EmbeddedTransaction> BlockchainUpgradeBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<BlockchainUpgradeBuilder::EmbeddedTransaction> BlockchainUpgradeBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 }}

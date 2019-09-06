@@ -72,7 +72,7 @@ crypto::KeyPair GenerateRandomKeyPair() {
 	return crypto::KeyPair::FromPrivate(crypto::PrivateKey::Generate(RandomByte));
 }
 
-unique_ptr<model::Transaction> generateTransferTransaction(const GenerationHash& hash) {
+model::UniqueEntityPtr<model::Transaction> generateTransferTransaction(const GenerationHash& hash) {
 	auto signer = GenerateRandomKeyPair();
 	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Private_Test;
 
@@ -81,7 +81,7 @@ unique_ptr<model::Transaction> generateTransferTransaction(const GenerationHash&
 	string message = "Hello "+ to_string(std::mt19937()());
 	builder.setMessage(RawBuffer((const uint8_t* )message.data(), message.size()));
 
-	unique_ptr<model::Transaction> transaction = builder.build();
+	model::UniqueEntityPtr<model::Transaction> transaction = builder.build();
 	transaction->Deadline = Timestamp(60 * 60 * 1000 + utils::NetworkTime().unwrap());
 	transaction->Type = model::Entity_Type_Transfer;
 	extensions::TransactionExtensions(hash).sign(signer, *transaction);

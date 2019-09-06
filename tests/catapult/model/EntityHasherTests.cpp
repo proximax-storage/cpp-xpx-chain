@@ -35,7 +35,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		struct BlockTraits {
-			static std::unique_ptr<Block> Generate() {
+			static model::UniqueEntityPtr<Block> Generate() {
 				return test::GenerateBlockWithTransactions(7, Height(7));
 			}
 
@@ -45,7 +45,7 @@ namespace catapult { namespace model {
 		};
 
 		struct TransactionTraits {
-			static std::unique_ptr<Transaction> Generate() {
+			static model::UniqueEntityPtr<Transaction> Generate() {
 				return test::GenerateRandomTransaction();
 			}
 

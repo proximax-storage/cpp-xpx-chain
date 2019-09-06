@@ -65,7 +65,7 @@ namespace catapult { namespace model {
 			return IsSizeValid(transaction, registry);
 		}
 
-		std::unique_ptr<Transaction> CreateMockTransaction(uint32_t delta) {
+		model::UniqueEntityPtr<Transaction> CreateMockTransaction(uint32_t delta) {
 			auto pTransaction = mocks::CreateMockTransaction(7);
 			pTransaction->Size += delta;
 			return std::move(pTransaction);

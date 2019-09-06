@@ -36,16 +36,16 @@ namespace catapult { namespace builders {
 		m_modifications.push_back(modification);
 	}
 
-	std::unique_ptr<MosaicPropertyBuilder::Transaction> MosaicPropertyBuilder::build() const {
+	model::UniqueEntityPtr<MosaicPropertyBuilder::Transaction> MosaicPropertyBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<MosaicPropertyBuilder::EmbeddedTransaction> MosaicPropertyBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<MosaicPropertyBuilder::EmbeddedTransaction> MosaicPropertyBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> MosaicPropertyBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> MosaicPropertyBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		size += m_modifications.size() * sizeof(model::MosaicPropertyModification);

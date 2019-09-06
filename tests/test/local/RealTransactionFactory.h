@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/model/EntityPtr.h"
 #include <memory>
 #include <vector>
 
@@ -34,31 +35,31 @@ namespace catapult { namespace test {
 	// they are in local test utils because non-local tests should be using MockTransaction
 
 	/// Creates basic unsigned transfer transaction with specified \a signerPublicKey, \a recipient and \a amount.
-	std::unique_ptr<model::Transaction> CreateUnsignedTransferTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateUnsignedTransferTransaction(
 			const Key& signerPublicKey,
 			const UnresolvedAddress& recipient,
 			Amount amount);
 
 	/// Creates basic signed transfer transaction with \a signer, \a recipient and \a amount.
-	std::unique_ptr<model::Transaction> CreateTransferTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateTransferTransaction(
 			const crypto::KeyPair& signer,
 			const UnresolvedAddress& recipient,
 			Amount amount);
 
 	/// Creates basic signed transfer transaction with \a signer, \a recipientPublicKey and \a amount.
-	std::unique_ptr<model::Transaction> CreateTransferTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateTransferTransaction(
 			const crypto::KeyPair& signer,
 			const Key& recipientPublicKey,
 			Amount amount);
 
 	/// Creates signed root register namespace transaction with \a signer, \a name and \a duration.
-	std::unique_ptr<model::Transaction> CreateRegisterRootNamespaceTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateRegisterRootNamespaceTransaction(
 			const crypto::KeyPair& signer,
 			const std::string& name,
 			BlockDuration duration);
 
 	/// Creates a signed root address alias transaction with \a signer, root namespace \a name and \a address.
-	std::unique_ptr<model::Transaction> CreateRootAddressAliasTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateRootAddressAliasTransaction(
 			const crypto::KeyPair& signer,
 			const std::string& name,
 			const Address& address);

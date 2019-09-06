@@ -37,7 +37,7 @@ namespace catapult { namespace test {
 
 	// region generate
 
-	std::unique_ptr<model::Transaction> PropertyTransactionsBuilder::generate(
+	model::UniqueEntityPtr<model::Transaction> PropertyTransactionsBuilder::generate(
 			uint32_t descriptorType,
 			const std::shared_ptr<const void>& pDescriptor,
 			Timestamp deadline) const {
@@ -63,7 +63,7 @@ namespace catapult { namespace test {
 		add(DescriptorType::Property_Address_Block, descriptor);
 	}
 
-	std::unique_ptr<model::Transaction> PropertyTransactionsBuilder::createAddressPropertyTransaction(
+	model::UniqueEntityPtr<model::Transaction> PropertyTransactionsBuilder::createAddressPropertyTransaction(
 			const PropertyAddressBlockDescriptor& descriptor,
 			Timestamp deadline) const {
 		const auto& senderKeyPair = accounts().getKeyPair(descriptor.SenderId);

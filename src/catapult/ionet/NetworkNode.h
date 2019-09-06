@@ -20,6 +20,7 @@
 
 #pragma once
 #include "Node.h"
+#include "catapult/model/EntityPtr.h"
 #include <memory>
 
 namespace catapult { namespace ionet {
@@ -65,7 +66,7 @@ namespace catapult { namespace ionet {
 #pragma pack(pop)
 
 	/// Packs a \a node model into a network node.
-	std::unique_ptr<NetworkNode> PackNode(const Node& node);
+	model::UniqueEntityPtr<NetworkNode> PackNode(const Node& node);
 
 	/// Unpacks a network node (\a networkNode) into a node model.
 	Node UnpackNode(const NetworkNode& networkNode);

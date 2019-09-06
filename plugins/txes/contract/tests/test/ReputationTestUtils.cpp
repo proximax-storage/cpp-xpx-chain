@@ -16,7 +16,7 @@ namespace catapult { namespace test {
 		return test::GenerateRandomDataVector<Key>(count);
 	}
 
-	std::unique_ptr<model::EmbeddedModifyContractTransaction> CreateModifyContractTransaction(
+	model::UniqueEntityPtr<model::EmbeddedModifyContractTransaction> CreateModifyContractTransaction(
 			const Key& signer,
 			const std::vector<model::CosignatoryModificationType>& modificationTypes) {
 		using TransactionType = model::EmbeddedModifyContractTransaction;

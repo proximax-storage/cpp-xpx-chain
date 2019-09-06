@@ -41,16 +41,16 @@ namespace catapult { namespace builders {
 		m_hash = hash;
 	}
 
-	std::unique_ptr<HashLockBuilder::Transaction> HashLockBuilder::build() const {
+	model::UniqueEntityPtr<HashLockBuilder::Transaction> HashLockBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<HashLockBuilder::EmbeddedTransaction> HashLockBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<HashLockBuilder::EmbeddedTransaction> HashLockBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> HashLockBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> HashLockBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		auto pTransaction = createTransaction<TransactionType>(size);

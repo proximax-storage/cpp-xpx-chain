@@ -311,7 +311,7 @@ namespace catapult { namespace chain {
 			mutable size_t m_numValidatePartialCalls;
 			mutable size_t m_numValidateCosignersCalls;
 			mutable size_t m_numLastCosigners;
-			mutable std::vector<std::unique_ptr<model::Transaction>> m_transactions;
+			mutable std::vector<model::UniqueEntityPtr<model::Transaction>> m_transactions;
 			mutable std::vector<Hash256> m_transactionHashes;
 		};
 
@@ -453,7 +453,7 @@ namespace catapult { namespace chain {
 
 			std::unique_ptr<MockPtValidator> m_pUniqueValidator; // moved into m_pUpdater
 			MockPtValidator* m_pValidator;
-			std::vector<std::unique_ptr<model::Transaction>> m_completedTransactions;
+			std::vector<model::UniqueEntityPtr<model::Transaction>> m_completedTransactions;
 
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
 			cache::CatapultCache m_cache;

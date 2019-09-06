@@ -281,7 +281,7 @@ namespace catapult { namespace local {
 			auto recipients = GenerateDeterministicAddresses(numRecipientAccounts);
 
 			size_t recipientIndex = 0;
-			std::vector<std::unique_ptr<model::Block>> blocks;
+			std::vector<model::UniqueEntityPtr<model::Block>> blocks;
 			for (auto height = 2u; height <= maxHeight; ++height)
 				blocks.push_back(test::CreateBlock(nemesisKeyPairs, recipients[recipientIndex++], rnd, height).pBlock);
 

@@ -60,7 +60,7 @@ namespace catapult { namespace harvesting {
 			m_blockStatementBuilder.popSource();
 		}
 
-		std::unique_ptr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
+		model::UniqueEntityPtr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
 			// 1. stitch block
 			auto pBlock = model::StitchBlock(blockHeader, transactions);
 			pBlock->FeeInterest = m_config.Node.FeeInterest;

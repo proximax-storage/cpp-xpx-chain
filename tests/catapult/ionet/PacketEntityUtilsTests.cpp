@@ -138,11 +138,11 @@ namespace catapult { namespace ionet {
 				return Extract(packet, test::DefaultSizeCheck<model::Block>);
 			}
 
-			static bool IsEmpty(const std::unique_ptr<model::Block>& pBlock) {
+			static bool IsEmpty(const model::UniqueEntityPtr<model::Block>& pBlock) {
 				return !pBlock;
 			}
 
-			static void Unwrap(const std::unique_ptr<model::Block>& pBlock, const model::Block*& pBlockOut) {
+			static void Unwrap(const model::UniqueEntityPtr<model::Block>& pBlock, const model::Block*& pBlockOut) {
 				ASSERT_TRUE(!!pBlock);
 				pBlockOut = pBlock.get();
 			}

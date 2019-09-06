@@ -31,7 +31,7 @@ namespace catapult { namespace io {
 
 	namespace {
 		struct ReadTestContext {
-			std::unique_ptr<model::Block> pBlock;
+			model::UniqueEntityPtr<model::Block> pBlock;
 			std::vector<Hash256> Hashes;
 			std::vector<uint8_t> Buffer;
 			catapult::GenerationHash GenerationHash;
@@ -169,7 +169,7 @@ namespace catapult { namespace io {
 
 	namespace {
 		struct WriteTestContext {
-			std::unique_ptr<model::Block> pBlock;
+			model::UniqueEntityPtr<model::Block> pBlock;
 			std::vector<Hash256> Hashes;
 			std::unique_ptr<model::BlockElement> pBlockElement;
 		};

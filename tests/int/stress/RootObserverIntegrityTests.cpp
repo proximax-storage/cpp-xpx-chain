@@ -224,7 +224,7 @@ namespace catapult { namespace extensions {
 				cache.commit(Height());
 			}
 
-			std::unique_ptr<model::Block> createBlock(Height height) {
+			model::UniqueEntityPtr<model::Block> createBlock(Height height) {
 				// if there are transactions, add them to the block
 				auto transactionsIter = m_heightToTransactions.find(height);
 				auto pBlock = m_heightToTransactions.end() == transactionsIter

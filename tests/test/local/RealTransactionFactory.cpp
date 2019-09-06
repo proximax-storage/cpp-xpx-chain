@@ -45,7 +45,7 @@ namespace catapult { namespace test {
 	// region transfer transaction
 
 	namespace {
-		std::unique_ptr<model::Transaction> CreateUnsignedTransferTransaction(
+		model::UniqueEntityPtr<model::Transaction> CreateUnsignedTransferTransaction(
 				const Key& signerPublicKey,
 				const UnresolvedAddress& recipient,
 				const std::vector<uint8_t>& message,
@@ -66,7 +66,7 @@ namespace catapult { namespace test {
 		}
 	}
 
-	std::unique_ptr<model::Transaction> CreateUnsignedTransferTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateUnsignedTransferTransaction(
 			const Key& signerPublicKey,
 			const UnresolvedAddress& recipient,
 			Amount amount) {
@@ -74,7 +74,7 @@ namespace catapult { namespace test {
 		return CreateUnsignedTransferTransaction(signerPublicKey, recipient, {}, { { mosaicId, amount } });
 	}
 
-	std::unique_ptr<model::Transaction> CreateTransferTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateTransferTransaction(
 			const crypto::KeyPair& signer,
 			const UnresolvedAddress& recipient,
 			Amount amount) {
@@ -83,7 +83,7 @@ namespace catapult { namespace test {
 		return pTransaction;
 	}
 
-	std::unique_ptr<model::Transaction> CreateTransferTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateTransferTransaction(
 			const crypto::KeyPair& signer,
 			const Key& recipientPublicKey,
 			Amount amount) {
@@ -95,7 +95,7 @@ namespace catapult { namespace test {
 
 	// region namespace transactions
 
-	std::unique_ptr<model::Transaction> CreateRegisterRootNamespaceTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateRegisterRootNamespaceTransaction(
 			const crypto::KeyPair& signer,
 			const std::string& name,
 			BlockDuration duration) {
@@ -108,7 +108,7 @@ namespace catapult { namespace test {
 		return std::move(pTransaction);
 	}
 
-	std::unique_ptr<model::Transaction> CreateRootAddressAliasTransaction(
+	model::UniqueEntityPtr<model::Transaction> CreateRootAddressAliasTransaction(
 			const crypto::KeyPair& signer,
 			const std::string& name,
 			const Address& address) {

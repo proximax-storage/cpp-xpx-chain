@@ -79,7 +79,7 @@ namespace catapult { namespace test {
 
 	public:
 		/// Builds a single block with transactions from \a transactionsGenerator.
-		std::unique_ptr<model::Block> asSingleBlock(const TransactionsGenerator& transactionsGenerator);
+		model::UniqueEntityPtr<model::Block> asSingleBlock(const TransactionsGenerator& transactionsGenerator);
 
 		/// Builds a block chain with transactions from \a transactionsGenerator.
 		Blocks asBlockChain(const TransactionsGenerator& transactionsGenerator);
@@ -87,7 +87,7 @@ namespace catapult { namespace test {
 	private:
 		void pushDifficulty(const model::Block& block);
 
-		std::unique_ptr<model::Block> createBlock(
+		model::UniqueEntityPtr<model::Block> createBlock(
 				const model::PreviousBlockContext& context,
 				Timestamp timestamp,
 				const model::Transactions& transactions);

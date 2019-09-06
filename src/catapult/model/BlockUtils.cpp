@@ -110,7 +110,7 @@ namespace catapult { namespace model {
 		}
 
 		template<typename TContainer>
-		std::unique_ptr<Block> CreateBlockT(
+		UniqueEntityPtr<Block> CreateBlockT(
 				const PreviousBlockContext& context,
 				NetworkIdentifier networkIdentifier,
 				const Key& signerPublicKey,
@@ -135,7 +135,7 @@ namespace catapult { namespace model {
 		}
 	}
 
-	std::unique_ptr<Block> CreateBlock(
+	UniqueEntityPtr<Block> CreateBlock(
 			const PreviousBlockContext& context,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
@@ -143,7 +143,7 @@ namespace catapult { namespace model {
 		return CreateBlockT(context, networkIdentifier, signerPublicKey, transactions);
 	}
 
-	std::unique_ptr<Block> StitchBlock(const BlockHeader& blockHeader, const Transactions& transactions) {
+	UniqueEntityPtr<Block> StitchBlock(const BlockHeader& blockHeader, const Transactions& transactions) {
 		auto size = sizeof(BlockHeader) + CalculateTotalSize(transactions);
 		auto pBlock = utils::MakeUniqueWithSize<Block>(size);
 		std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(BlockHeader));
