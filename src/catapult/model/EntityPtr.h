@@ -9,16 +9,16 @@ namespace catapult { namespace model {
 	 * Custom deleter type for Entity classes, allocated with MakeUniqueWithSize.
 	 */
 	template <typename T>
-	struct UniqueEntityPtrDeleter {
+	struct EntityPtrDeleter {
 		void operator()(T* t) {
 			::operator delete(const_cast<void*>(reinterpret_cast<const void*>(t)));
 		}
 
 		// implicit cast operator, which enables implicit transformations from
-		// unique_ptr<T, UniqueEntityPtrDeleter<T>> to unique_ptr<V, UniqueEntityPtrDeleter<V>>
+		// unique_ptr<T, EntityPtrDeleter<T>> to unique_ptr<V, EntityPtrDeleter<V>>
 		template <typename V>
-		operator UniqueEntityPtrDeleter<V>(){
-			return UniqueEntityPtrDeleter<V>();
+		operator EntityPtrDeleter<V>(){
+			return EntityPtrDeleter<V>();
 		}
 	};
 
@@ -26,7 +26,7 @@ namespace catapult { namespace model {
 	 * Alias to unique ptr with custom deleter.
 	 */
 	template <typename T>
-	using UniqueEntityPtr = std::unique_ptr<T, UniqueEntityPtrDeleter<T>>;
+	using UniqueEntityPtr = std::unique_ptr<T, EntityPtrDeleter<T>>;
 
 }}
 

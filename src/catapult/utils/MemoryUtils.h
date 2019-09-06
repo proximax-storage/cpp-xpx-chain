@@ -40,7 +40,7 @@ namespace catapult { namespace utils {
 		if (size < sizeof(T))
 			CATAPULT_THROW_INVALID_ARGUMENT("size is insufficient");
 
-		return std::shared_ptr<T>(reinterpret_cast<T*>(::operator new(size)));
+		return std::shared_ptr<T>(reinterpret_cast<T*>(::operator new(size)), model::EntityPtrDeleter<T>{});
 	}
 
 	/// Converts a unique \a pointer to a shared pointer of the same type.
