@@ -19,6 +19,8 @@
 **/
 
 #include "TimeSynchronizationService.h"
+
+#include <utility>
 #include "NodeNetworkTimeRequestor.h"
 #include "TimeSynchronizationConfiguration.h"
 #include "TimeSynchronizationState.h"
@@ -44,9 +46,9 @@ namespace catapult { namespace timesync {
 		public:
 			explicit TimeSynchronizationServiceRegistrar(
 					const TimeSynchronizationConfiguration& timeSyncConfig,
-					const std::shared_ptr<TimeSynchronizationState>& pTimeSyncState)
+					std::shared_ptr<TimeSynchronizationState>  pTimeSyncState)
 					: m_timeSyncConfig(timeSyncConfig)
-					, m_pTimeSyncState(pTimeSyncState)
+					, m_pTimeSyncState(std::move(pTimeSyncState))
 			{}
 
 		public:
