@@ -27,12 +27,12 @@ namespace catapult {
 	namespace cache { class CatapultCacheDelta; }
 	namespace extensions { struct LocalNodeStateRef; }
 	namespace model {
-		struct NetworkConfiguration;
 		struct BlockElement;
 		class NotificationPublisher;
 	}
 	namespace plugins { class PluginManager; }
 	namespace state { struct CatapultState; }
+	namespace config { class BlockchainConfiguration; }
 }
 
 namespace catapult { namespace extensions {
@@ -68,13 +68,13 @@ namespace catapult { namespace extensions {
 		/// Executes the nemesis block (\a nemesisBlockElement), applies all changes to cache delta and checks consistency
 		/// against \a config.
 		/// \note Execution uses a default catapult state.
-		void execute(const model::NetworkConfiguration& config, const model::BlockElement& nemesisBlockElement);
+		void execute(const config::BlockchainConfiguration& config, const model::BlockElement& nemesisBlockElement);
 
 	private:
 		enum class Verbosity { Off, On };
 
 		void execute(
-				const model::NetworkConfiguration& config,
+				const config::BlockchainConfiguration& config,
 				const model::BlockElement& nemesisBlockElement,
 				state::CatapultState& catapultState,
 				StateHashVerification stateHashVerification,

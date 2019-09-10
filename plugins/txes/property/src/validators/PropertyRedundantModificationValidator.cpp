@@ -54,7 +54,7 @@ namespace catapult { namespace validators {
 			if (modificationsInfo.HasRedundantModification)
 				return Failure_Property_Modification_Redundant;
 
-			auto address = model::PublicKeyToAddress(notification.Key, context.Network.Identifier);
+			auto address = model::PublicKeyToAddress(notification.Key, context.NetworkIdentifier);
 			const auto& cache = context.Cache.template sub<cache::PropertyCache>();
 			return modificationsInfo.HasDeleteModification && !cache.contains(address)
 					? Failure_Property_Modification_Not_Allowed

@@ -44,13 +44,14 @@ namespace catapult { namespace config {
 
 		void ValidateConfiguration(
 				const model::NetworkConfiguration& networkConfig,
+				const config::ImmutableConfiguration& immutableConfig,
 				const config::InflationConfiguration& inflationConfig) {
 			auto totalInflation = inflationConfig.InflationCalculator.sumAll();
 			if (!totalInflation.second)
 				CATAPULT_THROW_VALIDATION_ERROR("total currency inflation could not be calculated");
 
-			auto totalCurrency = networkConfig.InitialCurrencyAtomicUnits + totalInflation.first;
-			if (networkConfig.InitialCurrencyAtomicUnits > totalCurrency || totalCurrency > networkConfig.MaxMosaicAtomicUnits)
+			auto totalCurrency = immutableConfig.InitialCurrencyAtomicUnits + totalInflation.first;
+			if (immutableConfig.InitialCurrencyAtomicUnits > totalCurrency || totalCurrency > networkConfig.MaxMosaicAtomicUnits)
 				CATAPULT_THROW_VALIDATION_ERROR("sum of InitialCurrencyAtomicUnits and inflation must not exceed MaxMosaicAtomicUnits");
 		}
 
@@ -66,7 +67,7 @@ namespace catapult { namespace config {
 	void ValidateConfiguration(const BlockchainConfiguration& config) {
 		ValidateConfiguration(config.User);
 		ValidateConfiguration(config.Network);
-		ValidateConfiguration(config.Network, config.Inflation);
+		ValidateConfiguration(config.Network, config.Immutable, config.Inflation);
 		ValidateConfiguration(config.Node);
 	}
 

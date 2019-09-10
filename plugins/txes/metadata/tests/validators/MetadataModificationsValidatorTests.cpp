@@ -52,13 +52,14 @@ namespace catapult { namespace validators {
 				const Hash256 & metadataId,
 				const std::vector<Modification> modifications) {
 			// Arrange:
+			test::MutableBlockchainConfiguration mutableConfig;
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
 			pluginConfig.MaxFields = MaxFields;
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(networkConfig);
+			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto config = mutableConfig.ToConst();
+			auto cache = test::MetadataCacheFactory::Create(config);
 			PopulateCache(cache, initValues);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMetadataModificationsValidator(pConfigHolder);
 
 			uint32_t sizeOfBuffer = 0;

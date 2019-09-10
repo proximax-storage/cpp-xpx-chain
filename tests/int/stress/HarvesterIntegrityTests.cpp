@@ -52,13 +52,13 @@ namespace catapult { namespace harvesting {
 		// region test factories
 
 		auto CreateConfiguration() {
-			auto networkConfig = test::CreatePrototypicalBlockChainConfiguration();
+			auto networkConfig = test::CreatePrototypicalNetworkConfiguration();
 			networkConfig.MinHarvesterBalance = Amount(500'000);
-			networkConfig.ShouldEnableVerifiableState = true;
 			networkConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 
 			auto config = test::CreatePrototypicalBlockchainConfiguration(std::move(networkConfig), "");
 			const_cast<config::NodeConfiguration&>(config.Node).FeeInterestDenominator = 2;
+			const_cast<config::ImmutableConfiguration&>(config.Immutable).ShouldEnableVerifiableState = true;
 
 			return config;
 		}
@@ -68,7 +68,7 @@ namespace catapult { namespace harvesting {
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			test::CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config().Network, subCaches);
+			test::CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config(), subCaches);
 			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}

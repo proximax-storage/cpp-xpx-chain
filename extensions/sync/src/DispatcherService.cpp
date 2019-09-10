@@ -183,7 +183,7 @@ namespace catapult { namespace sync {
 		public:
 			void addHashConsumers() {
 				m_consumers.push_back(CreateBlockHashCalculatorConsumer(
-						m_state.config().Network.Info.GenerationHash,
+						m_state.config().Immutable.GenerationHash,
 						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateBlockHashCheckConsumer(
 						m_state.timeSupplier(),
@@ -261,7 +261,7 @@ namespace catapult { namespace sync {
 		public:
 			void addHashConsumers() {
 				m_consumers.push_back(CreateTransactionHashCalculatorConsumer(
-						m_state.config().Network.Info.GenerationHash,
+						m_state.config().Immutable.GenerationHash,
 						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateTransactionHashCheckConsumer(
 						m_state.timeSupplier(),

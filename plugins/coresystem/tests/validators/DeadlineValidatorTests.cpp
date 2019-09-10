@@ -24,6 +24,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/TransactionTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -40,13 +41,14 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, Timestamp deadline, const utils::TimeSpan& maxCustomLifetime) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.MaxTransactionLifetime = Max_Transaction_Lifetime;
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Network.MaxTransactionLifetime = Max_Transaction_Lifetime;
+			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
-			auto context = ValidatorContext(Height(123), Block_Time, model::NetworkInfo(), resolverContext, readOnlyCache);
+			auto context = ValidatorContext(Height(123), Block_Time, model::NetworkIdentifier::Mijin_Test, model::NetworkInfo(), resolverContext, readOnlyCache);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateDeadlineValidator(pConfigHolder);
 

@@ -20,10 +20,10 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(const Key& signer, const Key& networkKey, const ValidationResult& expectedResult) {
 			// Arrange:
 			auto notification = model::NetworkConfigSignerNotification<1>(signer);
-			auto cache = test::CreateEmptyCatapultCache(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
-			auto context = test::CreateValidatorContext(Height(), model::NetworkInfo(model::NetworkIdentifier::Mijin_Test, networkKey, GenerationHash()), readOnlyCache);
+			auto context = test::CreateValidatorContext(Height(), model::NetworkIdentifier::Mijin_Test, model::NetworkInfo(networkKey), readOnlyCache);
 			auto pValidator = CreateNetworkConfigSignerValidator();
 
 			// Act:

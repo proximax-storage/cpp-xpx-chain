@@ -39,7 +39,7 @@ namespace catapult { namespace validators {
 	namespace {
 		template<typename TKey>
 		auto CreateAndSeedCache(const TKey& key) {
-			auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create();
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();

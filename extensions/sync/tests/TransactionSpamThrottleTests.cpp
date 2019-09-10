@@ -23,13 +23,13 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/ImportanceHeight.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace sync {
@@ -40,9 +40,9 @@ namespace catapult { namespace sync {
 		using TransactionSource = chain::UtUpdater::TransactionSource;
 
 		cache::CatapultCache CreateCatapultCacheWithImportanceGrouping(uint64_t importanceGrouping) {
-			auto networkConfiguration = model::NetworkConfiguration::Uninitialized();
-			networkConfiguration.ImportanceGrouping = importanceGrouping;
-			return test::CreateEmptyCatapultCache(networkConfiguration);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = importanceGrouping;
+			return test::CreateEmptyCatapultCache(config.ToConst());
 		}
 
 		Key AddAccount(cache::AccountStateCacheDelta& delta, Importance importance) {

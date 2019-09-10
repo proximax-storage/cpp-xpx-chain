@@ -80,6 +80,15 @@ namespace catapult { namespace cache {
 		struct Options {
 			/// Blockchain configuration holder.
 			std::shared_ptr<config::BlockchainConfigurationHolder> ConfigHolderPtr;
+
+			/// Network identifier.
+			model::NetworkIdentifier NetworkIdentifier;
+
+			/// Mosaic id used as primary chain currency.
+			MosaicId CurrencyMosaicId;
+
+			/// Mosaic id used to provide harvesting ability.
+			MosaicId HarvestingMosaicId;
 		};
 
 	// region secondary descriptors

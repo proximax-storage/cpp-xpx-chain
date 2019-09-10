@@ -53,7 +53,7 @@ namespace catapult { namespace validators {
 			auto mainAccountKey = test::GenerateRandomByteArray<Key>();
 			auto remoteAccountKey = test::GenerateRandomByteArray<Key>();
 
-			auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create();
 			AddLink(cache, mainAccountKey, remoteAccountKey, accountType);
 
 			auto pValidator = CreateAccountLinkAvailabilityValidator();
@@ -128,7 +128,7 @@ namespace catapult { namespace validators {
 		auto mainAccountKey = test::GenerateRandomByteArray<Key>();
 		auto remoteAccountKey = test::GenerateRandomByteArray<Key>();
 
-		auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::CoreSystemCacheFactory::Create();
 		AddLink(cache, mainAccountKey, remoteAccountKey, state::AccountType::Main);
 
 		// - the notification remote account key does not match the state remote account key

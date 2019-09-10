@@ -75,7 +75,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			NotificationBuilder notificationBuilder(lockHashAlgorithm);
 			auto pConfigHolder = CreateConfigHolder();
-			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config().Network);
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
 			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:
@@ -98,7 +98,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenSecretDoesNotMatchProof) {
 		NotificationBuilder notificationBuilder;
 		auto pConfigHolder = CreateConfigHolder();
-		auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config().Network);
+		auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
 		auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 		// Act:
@@ -114,7 +114,7 @@ namespace catapult { namespace validators {
 			NotificationBuilder notificationBuilder(algorithm);
 			notificationBuilder.setValidHash();
 			auto pConfigHolder = CreateConfigHolder();
-			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config().Network);
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
 			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:
@@ -152,7 +152,7 @@ namespace catapult { namespace validators {
 			notificationBuilder.setProofSize(proofSize);
 			notificationBuilder.setValidHash();
 			auto pConfigHolder = CreateConfigHolder();
-			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config().Network);
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
 			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:

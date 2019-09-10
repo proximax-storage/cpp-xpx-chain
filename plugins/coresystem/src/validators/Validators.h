@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all account address notifications and validates that:
 	/// - the address is valid and targets the expected network (\a networkIdentifier)
-	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(Address, model::AccountAddressNotification<1>)(model::NetworkIdentifier networkIdentifier);
 
 	// endregion
 
@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all entity notifications and validates that:
 	/// - the entity targets the expected network (\a networkIdentifier)
-	DECLARE_STATEFUL_VALIDATOR(Network, model::EntityNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATELESS_VALIDATOR(Network, model::EntityNotification<1>)(model::NetworkIdentifier networkIdentifier);
 
 	/// A validator implementation that applies to entity notifications and validates that:
 	/// - the entity version is within supported range.

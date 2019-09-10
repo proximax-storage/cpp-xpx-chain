@@ -21,6 +21,7 @@
 #include "catapult/cache_core/ReadOnlyAccountStateCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -31,22 +32,24 @@ namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateConfigHolder() {
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
-			config.ImportanceGrouping = 543;
-			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
-			config.CurrencyMosaicId = MosaicId(1111);
-			config.HarvestingMosaicId = MosaicId(2222);
-			return config::CreateMockConfigurationHolder(config);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 543;
+			config.Network.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
+			return config::CreateMockConfigurationHolder(config.ToConst());
+		}
+
+		auto DefaultOptions() {
+			return AccountStateCacheTypes::Options{
+				CreateConfigHolder(), model::NetworkIdentifier::Mijin_Test, MosaicId(1111), MosaicId(2222) };
 		}
 	}
 
 	TEST(TEST_CLASS, NetworkIdentifierIsExposed) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(19);
-		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).Info.Identifier = networkIdentifier;
-		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
+		auto options = DefaultOptions();
+		options.NetworkIdentifier = networkIdentifier;
+		AccountStateCache originalCache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, ReadOnlyAccountStateCache(*originalCache.createView(Height{0})).networkIdentifier());
@@ -57,7 +60,9 @@ namespace catapult { namespace cache {
 		// Arrange:
 		auto pConfigHolder = CreateConfigHolder();
 		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).ImportanceGrouping = 123;
-		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
+		auto options = DefaultOptions();
+		options.ConfigHolderPtr = pConfigHolder;
+		AccountStateCache originalCache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(123u, ReadOnlyAccountStateCache(*originalCache.createView(Height{0})).importanceGrouping());
@@ -66,9 +71,9 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, HarvestingMosaicIdIsExposed) {
 		// Arrange:
-		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).HarvestingMosaicId = MosaicId(11229988);
-		AccountStateCache originalCache(CacheConfiguration(), pConfigHolder);
+		auto options = DefaultOptions();
+		options.HarvestingMosaicId = MosaicId(11229988);
+		AccountStateCache originalCache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(MosaicId(11229988), ReadOnlyAccountStateCache(*originalCache.createView(Height{0})).harvestingMosaicId());
@@ -107,7 +112,7 @@ namespace catapult { namespace cache {
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyViewOnlyContainsCommittedElements) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			auto cacheDelta = cache.createDelta(Height{0});
 			cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed
@@ -128,7 +133,7 @@ namespace catapult { namespace cache {
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyDeltaContainsBothCommittedAndUncommittedElements) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto cacheDelta = cache.createDelta(Height{0});
 		cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed
 		cache.commit();
@@ -146,7 +151,7 @@ namespace catapult { namespace cache {
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyViewOnlyCanAccessCommittedElementsViaGet) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			auto cacheDelta = cache.createDelta(Height{0});
 			cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed;
@@ -167,7 +172,7 @@ namespace catapult { namespace cache {
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyDeltaCanAccessBothCommittedAndUncommittedElementsViaGet) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto cacheDelta = cache.createDelta(Height{0});
 		cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed
 		cache.commit();
@@ -185,7 +190,7 @@ namespace catapult { namespace cache {
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyViewOnlyCanAccessCommittedElementsViaTryGet) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			auto cacheDelta = cache.createDelta(Height{0});
 			cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed;
@@ -206,7 +211,7 @@ namespace catapult { namespace cache {
 
 	ACCOUNT_KEY_BASED_TEST(ReadOnlyDeltaCanAccessBothCommittedAndUncommittedElementsViaTryGet) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto cacheDelta = cache.createDelta(Height{0});
 		cacheDelta->addAccount(TTraits::CreateKey(1), Height(123)); // committed
 		cache.commit();

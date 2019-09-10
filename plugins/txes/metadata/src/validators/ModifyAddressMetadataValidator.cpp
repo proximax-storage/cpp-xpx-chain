@@ -21,7 +21,7 @@ namespace catapult { namespace validators {
 		}
 		namespace {
 			ValidationResult validate(const Notification& notification, const ValidatorContext& context) {
-				auto address = model::PublicKeyToAddress(notification.Signer, context.Network.Identifier);
+				auto address = model::PublicKeyToAddress(notification.Signer, context.NetworkIdentifier);
 
 				if (address != CopyToAddress(notification.MetadataId))
 					return Failure_Metadata_Address_Modification_Not_Permitted;

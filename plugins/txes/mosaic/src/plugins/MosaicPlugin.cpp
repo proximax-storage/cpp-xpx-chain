@@ -23,7 +23,6 @@
 #include "MosaicSupplyChangeTransactionPlugin.h"
 #include "src/cache/MosaicCache.h"
 #include "src/cache/MosaicCacheStorage.h"
-#include "src/config/MosaicConfiguration.h"
 #include "src/model/MosaicReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
@@ -62,13 +61,14 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMosaicPluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(manager.immutableConfig());
+		manager.addStatefulValidatorHook([pConfigHolder, currencyMosaicId](auto& builder) {
 			builder
 				.add(validators::CreateMosaicPropertiesValidator(pConfigHolder))
 				.add(validators::CreateProperMosaicValidator())
 				.add(validators::CreateMosaicAvailabilityValidator())
 				.add(validators::CreateMosaicDurationValidator(pConfigHolder))
-				.add(validators::CreateMosaicTransferValidator(pConfigHolder))
+				.add(validators::CreateMosaicTransferValidator(currencyMosaicId))
 				.add(validators::CreateMaxMosaicsBalanceTransferValidator(pConfigHolder))
 				.add(validators::CreateMaxMosaicsSupplyChangeValidator(pConfigHolder))
 				// note that the following validator depends on MosaicChangeAllowedValidator

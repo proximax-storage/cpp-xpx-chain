@@ -23,7 +23,6 @@
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/nodeps/Filesystem.h"
-#include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/filesystem.hpp>
@@ -40,19 +39,19 @@ namespace catapult { namespace config {
 			"config-extensions-server.properties",
 			"config-inflation.properties",
 			"config-logging-server.properties",
+			"config-immutable.properties",
 			"config-network.properties",
 			"config-node.properties",
 			"config-user.properties",
 			"supported-entities.json"
 		};
 
-		void AssertDefaultBlockChainConfiguration(const model::NetworkConfiguration& config) {
+		void AssertDefaultImmutableConfiguration(const config::ImmutableConfiguration& config) {
 			// Assert:
-			EXPECT_EQ(model::NetworkIdentifier::Mijin_Test, config.Info.Identifier);
-			EXPECT_EQ(crypto::ParseKey("B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF"), config.Info.PublicKey);
+			EXPECT_EQ(model::NetworkIdentifier::Mijin_Test, config.NetworkIdentifier);
 			EXPECT_EQ(
 					utils::ParseByteArray<GenerationHash>("57F7DA205008026C776CB6AED843393F04CD458E0AA2D9F1D5F31A402072B2D6"),
-					config.Info.GenerationHash);
+					config.GenerationHash);
 
 			EXPECT_TRUE(config.ShouldEnableVerifiableState);
 			EXPECT_TRUE(config.ShouldEnableVerifiableReceipts);
@@ -61,6 +60,13 @@ namespace catapult { namespace config {
 			// config files contain mosaic ids when SIGNATURE_SCHEME_NIS1 is disabled
 			EXPECT_EQ(MosaicId(0x0DC6'7FBE'1CAD'29E3), config.CurrencyMosaicId);
 			EXPECT_EQ(MosaicId(0x0DC6'7FBE'1CAD'29E3), config.HarvestingMosaicId);
+
+			EXPECT_EQ(Amount(8'999'999'998'000'000), config.InitialCurrencyAtomicUnits);
+		}
+
+		void AssertDefaultNetworkConfiguration(const model::NetworkConfiguration& config) {
+			// Assert:
+			EXPECT_EQ(crypto::ParseKey("B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF"), config.Info.PublicKey);
 
 			EXPECT_EQ(utils::TimeSpan::FromSeconds(15), config.BlockGenerationTargetTime);
 			EXPECT_EQ(3000u, config.BlockTimeSmoothingFactor);
@@ -72,7 +78,6 @@ namespace catapult { namespace config {
 			EXPECT_EQ(utils::TimeSpan::FromHours(24), config.MaxTransactionLifetime);
 			EXPECT_EQ(utils::TimeSpan::FromSeconds(10), config.MaxBlockFutureTime);
 
-			EXPECT_EQ(Amount(8'999'999'998'000'000), config.InitialCurrencyAtomicUnits);
 			EXPECT_EQ(Amount(9'000'000'000'000'000), config.MaxMosaicAtomicUnits);
 
 			EXPECT_EQ(Importance(8'999'999'998'000'000), config.TotalChainImportance);
@@ -249,7 +254,8 @@ namespace catapult { namespace config {
 		auto config = BlockchainConfiguration::LoadFromPath(Resources_Path, "server");
 
 		// Assert:
-		AssertDefaultBlockChainConfiguration(config.Network);
+		AssertDefaultImmutableConfiguration(config.Immutable);
+		AssertDefaultNetworkConfiguration(config.Network);
 		AssertDefaultNodeConfiguration(config.Node);
 		AssertDefaultLoggingConfiguration(config.Logging, "catapult_server%4N.log");
 		AssertDefaultUserConfiguration(config.User);
@@ -268,7 +274,8 @@ namespace catapult { namespace config {
 		auto config = BlockchainConfiguration::LoadFromPath(Resources_Path, "broker");
 
 		// Assert:
-		AssertDefaultBlockChainConfiguration(config.Network);
+		AssertDefaultImmutableConfiguration(config.Immutable);
+		AssertDefaultNetworkConfiguration(config.Network);
 		AssertDefaultNodeConfiguration(config.Node);
 		AssertDefaultLoggingConfiguration(config.Logging, "catapult_broker%4N.log");
 		AssertDefaultUserConfiguration(config.User);
@@ -285,7 +292,8 @@ namespace catapult { namespace config {
 		auto config = BlockchainConfiguration::LoadFromPath(Resources_Path, "recovery");
 
 		// Assert:
-		AssertDefaultBlockChainConfiguration(config.Network);
+		AssertDefaultImmutableConfiguration(config.Immutable);
+		AssertDefaultNetworkConfiguration(config.Network);
 		AssertDefaultNodeConfiguration(config.Node);
 		AssertDefaultLoggingConfiguration(config.Logging, "catapult_recovery%4N.log", utils::LogLevel::Debug);
 		AssertDefaultUserConfiguration(config.User);
@@ -301,7 +309,7 @@ namespace catapult { namespace config {
 	namespace {
 		auto CreateBlockchainConfiguration(const std::string& privateKeyString) {
 			test::MutableBlockchainConfiguration config;
-			config.Network.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
 
 			config.Node.Port = 9876;
 			config.Node.Local.Host = "alice.com";

@@ -5,10 +5,10 @@
 **/
 
 #pragma once
-#include "catapult/model/NetworkConfiguration.h"
 #include "plugins/txes/contract/src/cache/ReputationCache.h"
 #include "plugins/txes/contract/src/cache/ReputationCacheStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -25,11 +25,11 @@ namespace catapult { namespace test {
 	public:
 		/// Creates an empty catapult cache around default configuration.
 		static cache::CatapultCache Create() {
-			return Create(model::NetworkConfiguration::Uninitialized());
+			return Create(test::MutableBlockchainConfiguration().ToConst());
 		}
 
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::NetworkConfiguration& config) {
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
 			auto subCaches = CreateSubCachesWithReputationCache();
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));

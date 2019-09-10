@@ -81,8 +81,7 @@ namespace catapult { namespace validators {
 
 			// Arrange:
 			auto initialValues = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numInitialValues);
-			auto config = model::NetworkConfiguration::Uninitialized();
-			auto cache = test::PropertyCacheFactory::Create(config);
+			auto cache = test::PropertyCacheFactory::Create();
 			auto key = test::GenerateRandomByteArray<Key>();
 			test::PopulateCache<TPropertyValueTraits>(cache, key, initialValues);
 			std::vector<model::PropertyModification<typename TPropertyValueTraits::UnresolvedValueType>> modifications;

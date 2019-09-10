@@ -25,8 +25,17 @@
 #include "catapult/state/CatapultState.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace test {
+
+	namespace {
+		auto CreateEmptyCatapultCache(const model::NetworkConfiguration& networkConfig) {
+			test::MutableBlockchainConfiguration config;
+			config.Network = networkConfig;
+			return test::CreateEmptyCatapultCache(config.ToConst());
+		}
+	}
 
 	struct LocalNodeTestState::Impl {
 	public:
@@ -68,6 +77,14 @@ namespace catapult { namespace test {
 			: m_pImpl(std::make_unique<Impl>(
 					CreatePrototypicalBlockchainConfiguration(model::NetworkConfiguration(config), userDataDirectory),
 					std::move(cache)))
+	{}
+
+	LocalNodeTestState::LocalNodeTestState(const config::BlockchainConfiguration& config)
+			: m_pImpl(std::make_unique<Impl>(config::BlockchainConfiguration(config), CreateEmptyCatapultCache(config)))
+	{}
+
+	LocalNodeTestState::LocalNodeTestState(const config::BlockchainConfiguration& config, cache::CatapultCache&& cache)
+			: m_pImpl(std::make_unique<Impl>(config::BlockchainConfiguration(config), std::move(cache)))
 	{}
 
 	LocalNodeTestState::~LocalNodeTestState() = default;

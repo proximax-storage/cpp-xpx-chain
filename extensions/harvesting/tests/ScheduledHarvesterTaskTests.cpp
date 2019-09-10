@@ -131,7 +131,7 @@ namespace catapult { namespace harvesting {
 		struct HarvesterContext {
 			HarvesterContext(const model::Block& lastBlock)
 					: pConfigHolder(CreateConfigHolder())
-					, Cache(test::CreateEmptyCatapultCache(pConfigHolder->Config().Network))
+					, Cache(test::CreateEmptyCatapultCache(pConfigHolder->Config()))
 					, Accounts(1) {
 				AddDifficultyInfo(Cache, lastBlock);
 			}

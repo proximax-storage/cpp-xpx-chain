@@ -107,6 +107,9 @@ namespace catapult { namespace plugins {
 		/// Gets the inflation configuration.
 		const config::InflationConfiguration& inflationConfig() const;
 
+		/// Gets the immutable network configuration.
+		const config::ImmutableConfiguration& immutableConfig() const;
+
 		/// Sets whether verifiable state should be enabled or not (\a shouldEnableVerifiableState).
 		void setShouldEnableVerifiableState(bool shouldEnableVerifiableState);
 

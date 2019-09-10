@@ -27,6 +27,7 @@
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
 #include <random>
@@ -39,15 +40,17 @@ namespace catapult { namespace cache {
 		constexpr auto Transferable_Mosaic_Id = MosaicId(1234);
 
 		auto CreateConfigHolder() {
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
-			config.ImportanceGrouping = 359;
-			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
-			config.CurrencyMosaicId = MosaicId(1111);
-			config.HarvestingMosaicId = MosaicId(2222);
-			config.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(0);
-			config.MaxRollbackBlocks = 0;
-			return config::CreateMockConfigurationHolder(config);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 359;
+			config.Network.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
+			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(0);
+			config.Network.MaxRollbackBlocks = 0;
+			return config::CreateMockConfigurationHolder(config.ToConst());
+		}
+
+		auto DefaultOptions() {
+			return AccountStateCacheTypes::Options{
+				CreateConfigHolder(), model::NetworkIdentifier::Mijin_Test, MosaicId(1111), MosaicId(2222) };
 		}
 
 		size_t GetNumIterations() {
@@ -71,7 +74,7 @@ namespace catapult { namespace cache {
 		void RunMultithreadedReadWriteTest(size_t numReaders) {
 			// Arrange:
 			// - note that there can only ever be a single writer at a time since only one copy can be outstanding at once
-			AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+			AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 			std::vector<Amount> sums(numReaders);
 
 			// Act: set up reader thread(s) that sum up all account balances
@@ -138,7 +141,7 @@ namespace catapult { namespace cache {
 
 	NO_STRESS_TEST(TEST_CLASS, CanAddManyAccounts) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			auto delta = cache.createDelta(Height{0});
 
@@ -402,7 +405,7 @@ namespace catapult { namespace cache {
 	NO_STRESS_TEST(TEST_CLASS, AccountStateCachePerformance) {
 		// Arrange:
 		constexpr size_t Num_Operations = 100'000;
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 
 		auto addresses = CreateAddresses(Num_Operations, test::Random);
 		auto keys = CreateKeys(Num_Operations, test::Random);

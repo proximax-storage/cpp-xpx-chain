@@ -28,7 +28,8 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a mutable blockchain configuration.
 		MutableBlockchainConfiguration()
-				: Network(model::NetworkConfiguration::Uninitialized())
+				: Immutable(config::ImmutableConfiguration::Uninitialized())
+				, Network(model::NetworkConfiguration::Uninitialized())
 				, Node(config::NodeConfiguration::Uninitialized())
 				, Logging(config::LoggingConfiguration::Uninitialized())
 				, User(config::UserConfiguration::Uninitialized())
@@ -38,6 +39,9 @@ namespace catapult { namespace test {
 		{}
 
 	public:
+		/// Immutable network configuration.
+		config::ImmutableConfiguration Immutable;
+
 		/// Network configuration.
 		model::NetworkConfiguration Network;
 
@@ -63,6 +67,7 @@ namespace catapult { namespace test {
 		/// Converts this mutable configuration to a const configuration.
 		config::BlockchainConfiguration ToConst() {
 			return config::BlockchainConfiguration(
+					std::move(Immutable),
 					std::move(Network),
 					std::move(Node),
 					std::move(Logging),

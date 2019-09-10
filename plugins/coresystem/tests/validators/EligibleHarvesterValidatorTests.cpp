@@ -26,6 +26,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -39,9 +40,9 @@ namespace catapult { namespace validators {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 		constexpr auto Importance_Grouping = 234u;
 
-		auto CreateEmptyCatapultCache(const model::NetworkConfiguration& config) {
-			const_cast<model::NetworkConfiguration&>(config).HarvestingMosaicId = Harvesting_Mosaic_Id;
-			const_cast<model::NetworkConfiguration&>(config).ImportanceGrouping = Importance_Grouping;
+		auto CreateEmptyCatapultCache(const config::BlockchainConfiguration& config) {
+			const_cast<config::ImmutableConfiguration&>(config.Immutable).HarvestingMosaicId = Harvesting_Mosaic_Id;
+			const_cast<model::NetworkConfiguration&>(config.Network).ImportanceGrouping = Importance_Grouping;
 			return test::CreateEmptyCatapultCache(config);
 		}
 
@@ -59,8 +60,9 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureIfAccountIsUnknown) {
 		// Arrange:
-		auto config = model::NetworkConfiguration::Uninitialized();
-		config.MinHarvesterBalance = Amount(1234);
+		test::MutableBlockchainConfiguration mutableConfig;
+		mutableConfig.Network.MinHarvesterBalance = Amount(1234);
+		auto config = mutableConfig.ToConst();
 		auto cache = CreateEmptyCatapultCache(config);
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto height = Height(1000);
@@ -85,8 +87,9 @@ namespace catapult { namespace validators {
 				int64_t minBalanceDelta,
 				Height blockHeight) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.MinHarvesterBalance = Amount(1234);
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Network.MinHarvesterBalance = Amount(1234);
+			auto config = mutableConfig.ToConst();
 			auto cache = CreateEmptyCatapultCache(config);
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));

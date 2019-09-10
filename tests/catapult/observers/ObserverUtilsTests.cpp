@@ -34,8 +34,7 @@ namespace catapult { namespace observers {
 	namespace {
 		void AssertPruningPredicate(Height height, NotifyMode mode, size_t pruneInterval, bool expectedResult) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());

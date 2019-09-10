@@ -22,36 +22,46 @@
 #include "src/cache/NamespaceCache.h"
 #include "src/cache/NamespaceCacheStorage.h"
 #include "src/config/NamespaceConfiguration.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/plugins/PluginUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace test {
 
 	/// Cache factory for creating a catapult cache composed of only the namespace cache.
 	struct NamespaceCacheFactory {
-		/// Creates an empty catapult cache around \a gracePeriodDuration.
-		static cache::CatapultCache Create(const model::NetworkConfiguration& networkConfig, BlockDuration gracePeriodDuration) {
+		/// Creates an empty catapult cache around \a config and \a gracePeriodDuration.
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config, BlockDuration gracePeriodDuration) {
 			auto cacheId = cache::NamespaceCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(gracePeriodDuration.unwrap());
-			const_cast<model::NetworkConfiguration&>(networkConfig).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			const_cast<model::NetworkConfiguration&>(networkConfig).SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
+			const_cast<model::NetworkConfiguration&>(config.Network).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			const_cast<model::NetworkConfiguration&>(config.Network).SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto options = cache::NamespaceCacheTypes::Options{ pConfigHolder };
 			subCaches[cacheId] = MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(options);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::NetworkConfiguration& config) {
-			auto configIter = config.Plugins.find("namespace::ex");
-			return config.Plugins.cend() != configIter
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+			auto configIter = config.Network.Plugins.find("namespace::ex");
+			return config.Network.Plugins.cend() != configIter
 					? Create(config, BlockDuration(configIter->second.get<uint64_t>({ "", "gracePeriodDuration" })))
 					: Create(config, BlockDuration(10));
+		}
+
+		/// Creates an empty catapult cache around \a gracePeriodDuration.
+		static cache::CatapultCache Create(BlockDuration gracePeriodDuration) {
+			return Create(test::MutableBlockchainConfiguration().ToConst(), gracePeriodDuration);
+		}
+
+		/// Creates an empty catapult cache.
+		static cache::CatapultCache Create() {
+			return Create(test::MutableBlockchainConfiguration().ToConst());
 		}
 	};
 

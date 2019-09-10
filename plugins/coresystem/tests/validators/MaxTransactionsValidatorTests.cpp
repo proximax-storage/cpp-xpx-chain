@@ -22,6 +22,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -39,8 +40,9 @@ namespace catapult { namespace validators {
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = test::CreateBlockNotification(signer);
 			notification.NumTransactions = numTransactions;
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.MaxTransactionsPerBlock = Max_Transactions;
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Network.MaxTransactionsPerBlock = Max_Transactions;
+			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMaxTransactionsValidator(pConfigHolder);

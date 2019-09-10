@@ -146,7 +146,7 @@ namespace catapult { namespace local {
 				transactionsBuilder.addTransfer(0, recipientId, Amount(1'000'000));
 			}
 
-			auto networkConfig = test::CreatePrototypicalBlockChainConfiguration();
+			auto networkConfig = test::CreatePrototypicalNetworkConfiguration();
 			UpdateBlockChainConfiguration(networkConfig);
 
 			test::BlockChainBuilder builder(accounts, stateHashCalculator, networkConfig, resourcesPath);

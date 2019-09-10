@@ -40,12 +40,9 @@ namespace catapult { namespace observers {
 		// region commit
 
 		static void AssertObserverAddsInfoOnCommit() {
-			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-
 			// Act:
 			RunTest(
-					typename TTraits::ObserverTestContext(NotifyMode::Commit, DefaultHeight(), config),
+					typename TTraits::ObserverTestContext(NotifyMode::Commit, DefaultHeight()),
 					[](const auto&, const auto&) {
 					},
 					// Assert: lock info was added to cache
@@ -80,8 +77,7 @@ namespace catapult { namespace observers {
 
 		static void AssertObserverDoesNotOverwriteInfoOnCommit() {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			typename TTraits::ObserverTestContext context(NotifyMode::Commit, DefaultHeight(), config);
+			typename TTraits::ObserverTestContext context(NotifyMode::Commit, DefaultHeight());
 			typename TTraits::NotificationBuilder notificationBuilder;
 			auto notification = notificationBuilder.notification();
 
@@ -101,12 +97,9 @@ namespace catapult { namespace observers {
 		// region rollback
 
 		static void AssertObserverRemovesInfoOnRollback() {
-			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-
 			// Act:
 			RunTest(
-				typename TTraits::ObserverTestContext(NotifyMode::Rollback, DefaultHeight(), config),
+				typename TTraits::ObserverTestContext(NotifyMode::Rollback, DefaultHeight()),
 				[](auto& lockInfoCacheDelta, const auto& notification) {
 					auto lockInfo = TTraits::GenerateRandomLockInfo(notification);
 					lockInfoCacheDelta.insert(lockInfo);

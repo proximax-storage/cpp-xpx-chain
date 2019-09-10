@@ -249,7 +249,8 @@ namespace catapult { namespace test {
 				: pObserver(std::make_shared<MockAggregateNotificationObserver>())
 				, pValidator(std::make_shared<MockAggregateNotificationValidator>())
 				, pNotificationPublisher(std::make_shared<MockNotificationPublisher>()) {
-			Config.NetworkInfoSupplier = [](const Height&) { return model::NetworkInfo( Mock_Execution_Configuration_Network_Identifier, {}, {} ); };
+			Config.NetworkIdentifier = Mock_Execution_Configuration_Network_Identifier;
+			Config.NetworkInfoSupplier = [](const Height&) { return model::NetworkInfo( {} ); };
 			Config.pObserver = pObserver;
 			Config.pValidator = pValidator;
 			Config.pNotificationPublisher = pNotificationPublisher;
@@ -320,7 +321,7 @@ namespace catapult { namespace test {
 				// - context (use resolver call to implicitly test creation of ResolverContext)
 				EXPECT_EQ(expectedHeight, params.Context.Height) << message;
 				EXPECT_EQ(expectedBlockTime, params.Context.BlockTime) << message;
-				EXPECT_EQ(Mock_Execution_Configuration_Network_Identifier, params.Context.Network.Identifier) << message;
+				EXPECT_EQ(Mock_Execution_Configuration_Network_Identifier, params.Context.NetworkIdentifier) << message;
 				EXPECT_EQ(MosaicId(22), params.Context.Resolvers.resolve(UnresolvedMosaicId(11))) << message;
 
 				// - cache contents + sequence (NumDifficultyInfos is incremented by each observer call)

@@ -41,7 +41,7 @@ namespace catapult { namespace cache {
 
 		void RunSaveConsistencyTest(size_t numValues) {
 			// Arrange:
-			auto catapultCache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+			auto catapultCache = test::CoreSystemCacheFactory::Create();
 			{
 				auto cacheDelta = catapultCache.createDelta();
 				auto& delta = cacheDelta.sub<BlockDifficultyCache>();

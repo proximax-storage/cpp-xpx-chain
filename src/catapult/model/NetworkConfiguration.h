@@ -38,18 +38,6 @@ namespace catapult { namespace model {
 		/// Block chain network info.
 		NetworkInfo Info;
 
-		/// \c true if block chain should calculate state hashes so that state is fully verifiable at each block.
-		bool ShouldEnableVerifiableState;
-
-		/// \c true if block chain should calculate receipts so that state changes are fully verifiable at each block.
-		bool ShouldEnableVerifiableReceipts;
-
-		/// Mosaic id used as primary chain currency.
-		MosaicId CurrencyMosaicId;
-
-		/// Mosaic id used to provide harvesting ability.
-		MosaicId HarvestingMosaicId;
-
 		/// Targeted time between blocks.
 		utils::TimeSpan BlockGenerationTargetTime;
 
@@ -80,9 +68,6 @@ namespace catapult { namespace model {
 
 		/// Maximum future time of a block that can be accepted.
 		utils::TimeSpan MaxBlockFutureTime;
-
-		/// Initial currency atomic units available in the network.
-		Amount InitialCurrencyAtomicUnits;
 
 		/// Maximum atomic units (total-supply * 10 ^ divisibility) of a mosaic allowed in the network.
 		Amount MaxMosaicAtomicUnits;
@@ -167,9 +152,6 @@ namespace catapult { namespace model {
 			return *dynamic_cast<const T*>(iter->second.get());
 		}
 	};
-
-	/// Gets unresolved currency mosaic id from \a config.
-	UnresolvedMosaicId GetUnresolvedCurrencyMosaicId(const NetworkConfiguration& config);
 
 	/// Calculates the duration of a full rollback for the block chain described by \a config.
 	utils::TimeSpan CalculateFullRollbackDuration(const NetworkConfiguration& config);

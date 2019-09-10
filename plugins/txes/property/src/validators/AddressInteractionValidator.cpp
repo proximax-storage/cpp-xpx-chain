@@ -40,7 +40,7 @@ namespace catapult { namespace validators {
 	}
 
 	DEFINE_STATEFUL_VALIDATOR(AddressInteraction, [](const auto& notification, const ValidatorContext& context) {
-		auto networkIdentifier = context.Network.Identifier;
+		auto networkIdentifier = context.NetworkIdentifier;
 		auto sourceAddress = model::PublicKeyToAddress(notification.Source, networkIdentifier);
 		for (const auto& address : notification.ParticipantsByAddress) {
 			if (!IsInteractionAllowed(context.Cache, sourceAddress, context.Resolvers.resolve(address)))

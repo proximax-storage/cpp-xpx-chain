@@ -46,10 +46,10 @@ namespace catapult { namespace hashcache {
 	}
 
 	namespace {
-		cache::CatapultCache CreateCache(const model::NetworkConfiguration& config) {
+		cache::CatapultCache CreateCache() {
 			auto cacheId = cache::HashCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
 			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -57,8 +57,7 @@ namespace catapult { namespace hashcache {
 		template<typename TAction>
 		void RunHashCacheTest(TAction action) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			TestContext context(CreateCache(config));
+			TestContext context(CreateCache());
 			context.boot();
 
 			auto& cache = context.testState().state().cache();

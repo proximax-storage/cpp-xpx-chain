@@ -25,17 +25,9 @@ namespace catapult { namespace validators {
 		std::string commonBlockChainProperties{
 			"[network]\n"
 			"\n"
-			"identifier = mijin-test\n"
 			"publicKey = B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF\n"
-			"generationHash = 57F7DA205008026C776CB6AED843393F04CD458E0AA2D9F1D5F31A402072B2D6\n"
 			"\n"
 			"[chain]\n"
-			"\n"
-			"shouldEnableVerifiableState = true\n"
-			"shouldEnableVerifiableReceipts = true\n"
-			"\n"
-			"currencyMosaicId = 0x0DC6'7FBE'1CAD'29E3\n"
-			"harvestingMosaicId = 0x0DC6'7FBE'1CAD'29E3\n"
 			"\n"
 			"blockGenerationTargetTime = 15s\n"
 			"blockTimeSmoothingFactor = 3000\n"
@@ -43,7 +35,6 @@ namespace catapult { namespace validators {
 			"greedDelta = 0.5\n"
 			"greedExponent = 2\n"
 			"\n"
-			"# maxTransactionLifetime / blockGenerationTargetTime\n"
 			"importanceGrouping = 5760\n"
 			"maxRollbackBlocks = 360\n"
 			"maxDifficultyBlocks = 3\n"
@@ -51,7 +42,6 @@ namespace catapult { namespace validators {
 			"maxTransactionLifetime = 24h\n"
 			"maxBlockFutureTime = 10s\n"
 			"\n"
-			"initialCurrencyAtomicUnits = 8'999'999'998'000'000\n"
 			"maxMosaicAtomicUnits = 9'000'000'000'000'000\n"
 			"\n"
 			"totalChainImportance = 8'999'999'998'000'000\n"
@@ -123,7 +113,7 @@ namespace catapult { namespace validators {
 				uint64_t maxSupportedEntityVersionsSizeMb = 1,
 				bool seedConfigCache = false) {
 			auto pPluginManager = CreatePluginManager(maxBlockChainConfigSizeMb, maxSupportedEntityVersionsSizeMb);
-			auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
 			if (seedConfigCache) {
 				auto delta = cache.createDelta();
 				auto& configCacheDelta = delta.sub<cache::NetworkConfigCache>();

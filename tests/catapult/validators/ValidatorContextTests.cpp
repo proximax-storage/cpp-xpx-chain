@@ -37,17 +37,16 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, CanCreateValidatorContextAroundHeightAndNetworkAndCache) {
 		// Act:
-		auto networkInfo = model::NetworkInfo(static_cast<model::NetworkIdentifier>(0xAD), {}, {});
-		auto config = model::NetworkConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
+		auto networkInfo = model::NetworkInfo({});
+		auto cache = test::CreateEmptyCatapultCache();
 		auto cacheView = cache.createView();
 		auto readOnlyCache = cacheView.toReadOnly();
-		auto context = ValidatorContext(Height(1234), Timestamp(987), networkInfo, CreateResolverContext(), readOnlyCache);
+		auto context = ValidatorContext(Height(1234), Timestamp(987), static_cast<model::NetworkIdentifier>(0xAD), networkInfo, CreateResolverContext(), readOnlyCache);
 
 		// Assert:
 		EXPECT_EQ(Height(1234), context.Height);
 		EXPECT_EQ(Timestamp(987), context.BlockTime);
-		EXPECT_EQ(static_cast<model::NetworkIdentifier>(0xAD), context.Network.Identifier);
+		EXPECT_EQ(static_cast<model::NetworkIdentifier>(0xAD), context.NetworkIdentifier);
 		EXPECT_EQ(&readOnlyCache, &context.Cache);
 
 		// - resolvers are copied into context and wired up correctly

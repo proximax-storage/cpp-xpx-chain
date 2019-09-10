@@ -38,10 +38,10 @@ namespace catapult { namespace validators {
 				const UnresolvedMosaicId& metadataId,
 				Key signer) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
+			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
-			const_cast<model::NetworkConfiguration&>(config).SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(config);
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
 			auto pValidator = CreateModifyMosaicMetadataValidator();
 			auto notification = model::ModifyMosaicMetadataNotification_v1(signer, metadataId);

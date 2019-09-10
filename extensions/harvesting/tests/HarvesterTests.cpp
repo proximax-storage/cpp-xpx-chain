@@ -29,7 +29,6 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
@@ -90,7 +89,8 @@ namespace catapult { namespace harvesting {
 		auto CreateConfiguration() {
 			test::MutableBlockchainConfiguration config;
 
-			config.Network.Info.Identifier = Network_Identifier;
+			config.Immutable.NetworkIdentifier = Network_Identifier;
+
 			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
 			config.Network.BlockTimeSmoothingFactor = 0;
 			config.Network.MaxDifficultyBlocks = 60;
@@ -113,7 +113,7 @@ namespace catapult { namespace harvesting {
 		public:
 			HarvesterContext()
 					: Config(CreateConfiguration())
-					, Cache(test::CreateEmptyCatapultCache(Config.Network))
+					, Cache(test::CreateEmptyCatapultCache(Config))
 					, KeyPairs(CreateKeyPairs(Num_Accounts))
 					, Beneficiary(test::GenerateRandomByteArray<Key>())
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts))

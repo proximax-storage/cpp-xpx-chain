@@ -148,7 +148,7 @@ namespace catapult { namespace mongo { namespace storages {
 
 			std::vector<typename TCacheTraits::ModelType> allModels;
 			for (const auto* pElement : elements) {
-				auto models = TCacheTraits::MapToMongoModels(*pElement, m_pConfigHolder->Config(height).Network.Info.Identifier);
+				auto models = TCacheTraits::MapToMongoModels(*pElement, m_pConfigHolder->Config(height).Immutable.NetworkIdentifier);
 				std::move(models.begin(), models.end(), std::back_inserter(allModels));
 			}
 
@@ -246,7 +246,7 @@ namespace catapult { namespace mongo { namespace storages {
 			if (elements.empty())
 				return;
 
-			auto createDocument = [networkIdentifier = m_pConfigHolder->Config(height).Network.Info.Identifier](const auto* pModel, auto) {
+			auto createDocument = [networkIdentifier = m_pConfigHolder->Config(height).Immutable.NetworkIdentifier](const auto* pModel, auto) {
 				return TCacheTraits::MapToMongoDocument(*pModel, networkIdentifier);
 			};
 			auto upsertResults = m_bulkWriter.bulkUpsert(TCacheTraits::Collection_Name, elements, createDocument, CreateFilter).get();

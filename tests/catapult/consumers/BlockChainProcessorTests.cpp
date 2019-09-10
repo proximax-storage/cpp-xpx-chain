@@ -20,7 +20,6 @@
 
 #include "catapult/consumers/BlockChainProcessor.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
-#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/consumers/InputUtils.h"
@@ -30,6 +29,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/ParamsCapture.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 using namespace catapult::validators;
@@ -198,13 +198,11 @@ namespace catapult { namespace consumers {
 
 		// region ProcessorTestContext
 
-		auto Default_Config = model::NetworkConfiguration::Uninitialized();
-
 		struct ProcessorTestContext {
 		public:
 			explicit ProcessorTestContext(ReceiptValidationMode receiptValidationMode = ReceiptValidationMode::Disabled)
 					: BlockHitPredicateFactory(BlockHitPredicate) {
-				auto& config = const_cast<model::NetworkConfiguration&>(ServiceState.state().config(Height{0}).Network);
+				auto& config = const_cast<config::ImmutableConfiguration&>(ServiceState.state().config().Immutable);
 				config.ShouldEnableVerifiableReceipts = (receiptValidationMode == ReceiptValidationMode::Enabled);
 				Processor = CreateBlockChainProcessor(
 						[this](const auto& cache) {
@@ -227,7 +225,7 @@ namespace catapult { namespace consumers {
 
 		public:
 			ValidationResult Process(const model::BlockElement& parentBlockElement, BlockElements& elements) {
-				auto cache = test::CreateCatapultCacheWithMarkerAccount(Default_Config);
+				auto cache = test::CreateCatapultCacheWithMarkerAccount();
 				auto delta = cache.createDelta();
 				auto observerState = observers::ObserverState(delta, State);
 

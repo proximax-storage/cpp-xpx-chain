@@ -44,8 +44,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				return lockInfo.CompositeHash;
 			}
 
-			static cache::CatapultCache CreateCache(const model::NetworkConfiguration& config) {
-				return test::SecretLockInfoCacheFactory::Create(config);
+			static cache::CatapultCache CreateCache() {
+				return test::SecretLockInfoCacheFactory::Create();
 			}
 
 			static ModelType GenerateRandomElement(uint32_t id) {

@@ -40,6 +40,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), mosaicConfig);
 		networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespaceConfig);
 		config::BlockchainConfiguration config{
+			config::ImmutableConfiguration::Uninitialized(),
 			std::move(networkConfig),
 			config::NodeConfiguration::Uninitialized(),
 			config::LoggingConfiguration::Uninitialized(),

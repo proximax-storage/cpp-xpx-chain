@@ -26,6 +26,7 @@
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -34,12 +35,12 @@ namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateConfig() {
+			test::MutableBlockchainConfiguration config;
+			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(0);
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			return networkConfig;
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			return config.ToConst();
 		}
 
 		auto DefaultCacheOptions() {

@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 
 	namespace {
 		cache::CatapultCache CreateCache(const Key& publicKey, state::AccountType accountType) {
-			auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create();
 			auto cacheDelta = cache.createDelta();
 			auto& accountStateCacheDelta = cacheDelta.sub<cache::AccountStateCache>();
 			accountStateCacheDelta.addAccount(publicKey, Height(1));
@@ -82,7 +82,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SucceedsWhenAccountDoesNotExist) {
 		// Arrange:
 		auto publicKey = test::GenerateRandomByteArray<Key>();
-		auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+		auto cache = test::CoreSystemCacheFactory::Create();
 
 		// Act + Assert:
 		AssertValidation(ValidationResult::Success, cache, publicKey);

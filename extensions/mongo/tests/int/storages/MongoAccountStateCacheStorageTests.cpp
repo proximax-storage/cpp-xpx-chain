@@ -27,6 +27,7 @@
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
@@ -46,9 +47,10 @@ namespace catapult { namespace mongo { namespace storages {
 			static constexpr auto Network_Id = static_cast<model::NetworkIdentifier>(0x5A);
 			static constexpr auto CreateCacheStorage = CreateMongoAccountStateCacheStorage;
 
-			static cache::CatapultCache CreateCache(const model::NetworkConfiguration& chainConfig) {
-				const_cast<model::NetworkConfiguration&>(chainConfig).Info.Identifier = model::NetworkIdentifier::Mijin_Test;
-				return test::CreateEmptyCatapultCache(chainConfig);
+			static cache::CatapultCache CreateCache() {
+				test::MutableBlockchainConfiguration config;
+				config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+				return test::CreateEmptyCatapultCache(config.ToConst());
 			}
 
 			static ModelType GenerateRandomElement(uint32_t id) {

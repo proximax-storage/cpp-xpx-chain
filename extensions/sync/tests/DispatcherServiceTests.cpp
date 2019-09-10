@@ -26,7 +26,6 @@
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/io/IndexFile.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/plugins/PluginLoader.h"
 #include "catapult/utils/NetworkTime.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
@@ -38,6 +37,7 @@
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/filesystem.hpp>
 
@@ -74,11 +74,11 @@ namespace catapult { namespace sync {
 
 		cache::CatapultCache CreateCatapultCacheForDispatcherTests() {
 			// importance grouping must be non-zero
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.ImportanceGrouping = 1;
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 1;
 
 			// create the cache
-			return test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config);
+			return test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.ToConst());
 		}
 
 		void InitializeCatapultCacheForDispatcherTests(cache::CatapultCache& cache, const crypto::KeyPair& signer) {
@@ -428,8 +428,7 @@ namespace catapult { namespace sync {
 		template<typename THandler>
 		void AssertCanConsumeBlockRange(bool shouldEnableVerifiableReceipts, model::AnnotatedBlockRange&& range, TestContext& context, THandler handler) {
 			// Arrange:
-			const auto& networkConfig = context.testState().config().Network;
-			const_cast<model::NetworkConfiguration&>(networkConfig).ShouldEnableVerifiableReceipts = shouldEnableVerifiableReceipts;
+			const_cast<bool&>(context.testState().config().Immutable.ShouldEnableVerifiableReceipts) = shouldEnableVerifiableReceipts;
 
 			context.boot();
 			auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);

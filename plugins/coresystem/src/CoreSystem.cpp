@@ -34,11 +34,23 @@
 namespace catapult { namespace plugins {
 
 	namespace {
+		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions(PluginManager& manager) {
+			const auto& pConfigHolder = manager.configHolder();
+			const auto& config = pConfigHolder->Config().Immutable;
+			return {
+				pConfigHolder,
+				config.NetworkIdentifier,
+				config.CurrencyMosaicId,
+				config.HarvestingMosaicId
+			};
+		}
+
 		void AddAccountStateCache(PluginManager& manager) {
 			using namespace catapult::cache;
 
 			auto cacheConfig = manager.cacheConfig(AccountStateCache::Name);
-			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, manager.configHolder()));
+			auto cacheOptions = CreateAccountStateCacheOptions(manager);
+			manager.addCacheSupport(std::make_unique<AccountStateCacheSubCachePlugin>(cacheConfig, cacheOptions));
 
 			using CacheHandlers = CacheHandlers<cache::AccountStateCacheDescriptor>;
 			CacheHandlers::Register<model::FacilityCode::Core>(manager);
@@ -72,17 +84,18 @@ namespace catapult { namespace plugins {
 		AddAccountStateCache(manager);
 		AddBlockDifficultyCache(manager);
 
-		manager.addStatelessValidatorHook([](auto& builder) {
+		auto networkIdentifier = pConfigHolder->Config().Immutable.NetworkIdentifier;
+		manager.addStatelessValidatorHook([networkIdentifier](auto& builder) {
 			builder
+				.add(validators::CreateNetworkValidator(networkIdentifier))
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder, networkIdentifier](auto& builder) {
 			builder
 				.add(validators::CreateEntityVersionValidator(pConfigHolder))
 				.add(validators::CreateMaxTransactionsValidator(pConfigHolder))
-				.add(validators::CreateNetworkValidator(pConfigHolder))
-				.add(validators::CreateAddressValidator(pConfigHolder))
+				.add(validators::CreateAddressValidator(networkIdentifier))
 				.add(validators::CreateDeadlineValidator(pConfigHolder))
 //				We using nemesis account to update the network
 //				.add(validators::CreateNemesisSinkValidator())

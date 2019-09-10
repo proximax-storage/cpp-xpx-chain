@@ -326,7 +326,7 @@ namespace catapult { namespace chain {
 					, m_pUniqueValidator(std::make_unique<MockPtValidator>())
 					, m_pValidator(m_pUniqueValidator.get())
 					, m_pPool(test::CreateStartedIoThreadPool())
-					, m_cache(test::CreateEmptyCatapultCache(model::NetworkConfiguration::Uninitialized()))
+					, m_cache(test::CreateEmptyCatapultCache())
 					, m_pUpdater(std::make_unique<PtUpdater>(
 							m_cache,
 							m_transactionsCache,

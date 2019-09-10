@@ -1,16 +1,8 @@
 [network]
 
-identifier = {{network_identifier}}
 publicKey = {{network_public_key}}
-generationHash = {{network_generation_hash}}
 
 [chain]
-
-shouldEnableVerifiableState = true
-shouldEnableVerifiableReceipts = true
-
-currencyMosaicId = 0x0DC6'7FBE'1CAD'29E3
-harvestingMosaicId = 0x0DC6'7FBE'1CAD'29E3
 
 blockGenerationTargetTime = 15s
 blockTimeSmoothingFactor = 3000
@@ -18,7 +10,6 @@ blockTimeSmoothingFactor = 3000
 greedDelta = 0.5
 greedExponent = 2
 
-# maxTransactionLifetime / blockGenerationTargetTime
 importanceGrouping = 5760
 maxRollbackBlocks = 360
 maxDifficultyBlocks = 3
@@ -26,7 +17,6 @@ maxDifficultyBlocks = 3
 maxTransactionLifetime = 24h
 maxBlockFutureTime = 10s
 
-initialCurrencyAtomicUnits = 8'999'999'998'000'000
 maxMosaicAtomicUnits = 9'000'000'000'000'000
 
 totalChainImportance = 8'999'999'998'000'000

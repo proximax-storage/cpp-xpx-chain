@@ -44,12 +44,11 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, uint8_t version) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
-			auto context = ValidatorContext(Height(123), Timestamp(8888), model::NetworkInfo(), resolverContext, readOnlyCache);
+			auto context = ValidatorContext(Height(123), Timestamp(8888), model::NetworkIdentifier::Zero, model::NetworkInfo(), resolverContext, readOnlyCache);
 			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, Entity_Type, version);
 			auto pValidator = CreateEntityVersionValidator(CreateBlockchainConfigurationHolder());
 

@@ -116,8 +116,7 @@ namespace catapult { namespace observers {
 				const std::vector<state::MetadataField>& expectedFields,
 				observers::NotifyMode notifyMode) {
 			// Arrange:
-			auto config = model::NetworkConfiguration::Uninitialized();
-			ObserverTestContext context(notifyMode, CurrentHeight, config);
+			ObserverTestContext context(notifyMode, CurrentHeight);
 
 			PopulateCache<TMetadataValueTraits>(context.cache(), initValues);
 

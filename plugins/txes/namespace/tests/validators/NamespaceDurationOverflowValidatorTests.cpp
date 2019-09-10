@@ -46,15 +46,16 @@ namespace catapult { namespace validators {
 				const model::RootNamespaceNotification<1>& notification,
 				const TestOptions& options) {
 			// Arrange:
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			test::MutableBlockchainConfiguration mutableConfig;
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(options.GracePeriodDuration.unwrap());
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(options.MaxDuration.unwrap());
-			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
+			mutableConfig.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto config = mutableConfig.ToConst();
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-			auto cache = test::NamespaceCacheFactory::Create(networkConfig, options.GracePeriodDuration);
+			auto cache = test::NamespaceCacheFactory::Create(config, options.GracePeriodDuration);
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();

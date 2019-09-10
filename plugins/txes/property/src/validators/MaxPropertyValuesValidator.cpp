@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 			if (maxPropertyValues < notification.ModificationsCount)
 				return Failure_Property_Modification_Count_Exceeded;
 
-			auto address = model::PublicKeyToAddress(notification.Key, context.Network.Identifier);
+			auto address = model::PublicKeyToAddress(notification.Key, context.NetworkIdentifier);
 			const auto* pModifications = notification.ModificationsPtr;
 			const auto& cache = context.Cache.template sub<cache::PropertyCache>();
 			if (!cache.contains(address))

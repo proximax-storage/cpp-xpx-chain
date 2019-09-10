@@ -45,6 +45,6 @@ namespace catapult { namespace cache {
 	class AccountStateCacheSubCachePlugin : public BaseAccountStateCacheSubCachePlugin {
 	public:
 		/// Creates a plugin around \a config and \a options.
-		AccountStateCacheSubCachePlugin(const CacheConfiguration& config, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+		AccountStateCacheSubCachePlugin(const CacheConfiguration& config, const AccountStateCacheTypes::Options& options);
 	};
 }}

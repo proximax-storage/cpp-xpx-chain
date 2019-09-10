@@ -40,9 +40,10 @@ namespace catapult { namespace observers {
 			void AssertCleanUpSnapshots(Height contextHeight, uint64_t expectedSizeOfSnapshots,
 										observers::NotifyMode mode = observers::NotifyMode::Commit) {
 				// Arrange:
-				auto config = model::NetworkConfiguration::Uninitialized();
-				config.ImportanceGrouping = Effective_Balance_Range;
-				config.MaxRollbackBlocks = Max_Rollback_Blocks;
+				test::MutableBlockchainConfiguration mutableConfig;
+				mutableConfig.Network.ImportanceGrouping = Effective_Balance_Range;
+				mutableConfig.Network.MaxRollbackBlocks = Max_Rollback_Blocks;
+				auto config = mutableConfig.ToConst();
 				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
 				test::AccountObserverTestContext context(mode, contextHeight, config);

@@ -38,13 +38,8 @@ namespace catapult { namespace cache {
 		private:
 			static auto CreateConfigHolder() {
 				test::MutableBlockchainConfiguration config;
-
-				config.Network.Info.Identifier = model::NetworkIdentifier::Mijin_Test;
 				config.Network.ImportanceGrouping = 543;
 				config.Network.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
-				config.Network.CurrencyMosaicId = test::Default_Currency_Mosaic_Id;
-				config.Network.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
-
 				return config::CreateMockConfigurationHolder(config.ToConst());
 			}
 
@@ -52,7 +47,12 @@ namespace catapult { namespace cache {
 			using StorageType = AccountStateCacheStorage;
 			class CacheType : public AccountStateCache {
 			public:
-				CacheType() : AccountStateCache(CacheConfiguration(), CreateConfigHolder())
+				CacheType() : AccountStateCache(CacheConfiguration(), AccountStateCacheTypes::Options{
+						CreateConfigHolder(),
+						model::NetworkIdentifier::Mijin_Test,
+						test::Default_Currency_Mosaic_Id,
+						test::Default_Harvesting_Mosaic_Id
+					})
 				{}
 			};
 

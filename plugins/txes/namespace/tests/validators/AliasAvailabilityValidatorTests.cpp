@@ -36,11 +36,10 @@ namespace catapult { namespace validators {
 
 	namespace {
 		constexpr auto Default_Namespace_Id = NamespaceId(123);
-		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		template<typename TSeedCacheFunc>
 		auto CreateAndSeedCache(TSeedCacheFunc seedCache) {
-			auto cache = test::NamespaceCacheFactory::Create(Default_Config);
+			auto cache = test::NamespaceCacheFactory::Create();
 			auto cacheDelta = cache.createDelta();
 			auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
 			seedCache(namespaceCacheDelta);

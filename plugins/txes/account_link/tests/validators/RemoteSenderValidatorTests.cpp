@@ -50,7 +50,7 @@ namespace catapult { namespace validators {
 				state::AccountType accountType,
 				const Key& notificationKey) {
 			// Arrange:
-			auto cache = test::CoreSystemCacheFactory::Create(model::NetworkConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create();
 			AddAccount(cache, accountKey, accountType);
 
 			auto pValidator = CreateRemoteSenderValidator();

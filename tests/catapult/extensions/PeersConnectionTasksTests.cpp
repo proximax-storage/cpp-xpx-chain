@@ -20,13 +20,12 @@
 
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/ionet/NodeInteractionResult.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
@@ -45,10 +44,10 @@ namespace catapult { namespace extensions {
 		}
 
 		auto CreateEmptyCatapultCache() {
-			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.ImportanceGrouping = 1;
-			networkConfig.TotalChainImportance = Importance(100);
-			return test::CreateEmptyCatapultCache(networkConfig);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 1;
+			config.Network.TotalChainImportance = Importance(100);
+			return test::CreateEmptyCatapultCache(config.ToConst());
 		}
 
 		auto ConfigureServiceState(test::ServiceTestState& serviceState) {

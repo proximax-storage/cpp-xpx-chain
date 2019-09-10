@@ -49,7 +49,7 @@ namespace catapult { namespace test {
 	config::BlockchainConfiguration CreateStateHashEnabledBlockchainConfiguration(const std::string& dataDirectory) {
 		auto config = CreateFileChainBlockchainConfiguration(0, dataDirectory);
 		const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = true;
-		const_cast<model::NetworkConfiguration&>(config.Network).ShouldEnableVerifiableState = true;
+		const_cast<config::ImmutableConfiguration&>(config.Immutable).ShouldEnableVerifiableState = true;
 		return config;
 	}
 
