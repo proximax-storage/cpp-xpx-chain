@@ -211,7 +211,7 @@ namespace catapult { namespace harvesting {
 		m_transactionInfos.pop_back();
 	}
 
-	std::unique_ptr<model::Block> HarvestingUtFacade::commit(const model::BlockHeader& blockHeader) {
+	model::UniqueEntityPtr<model::Block> HarvestingUtFacade::commit(const model::BlockHeader& blockHeader) {
 		if (height() != blockHeader.Height)
 			CATAPULT_THROW_RUNTIME_ERROR("commit block header is inconsistent with facade state");
 
