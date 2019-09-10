@@ -57,7 +57,7 @@ namespace catapult { namespace io {
 
 			size_t i = 0;
 			for (const auto& transaction : blockElement.Block.Transactions()) {
-				blockElement.Transactions.push_back(model::TransactionElement(transaction));
+				blockElement.Transactions.emplace_back(transaction);
 				blockElement.Transactions.back().EntityHash = hashes[i++];
 				blockElement.Transactions.back().MerkleComponentHash = hashes[i++];
 			}
