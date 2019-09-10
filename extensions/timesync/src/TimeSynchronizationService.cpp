@@ -19,8 +19,6 @@
 **/
 
 #include "TimeSynchronizationService.h"
-
-#include <utility>
 #include "NodeNetworkTimeRequestor.h"
 #include "TimeSynchronizationConfiguration.h"
 #include "TimeSynchronizationState.h"
