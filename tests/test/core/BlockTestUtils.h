@@ -63,22 +63,22 @@ namespace catapult { namespace test {
 	// region Block factory functions
 
 	/// Generates an empty block with random signer and no transactions.
-	std::unique_ptr<model::Block> GenerateEmptyRandomBlock();
+	model::UniqueEntityPtr<model::Block> GenerateEmptyRandomBlock();
 
 	/// Generates a block with random signer and \a transactions.
-	std::unique_ptr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions);
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions);
 
 	/// Generates a block with a given \a signer and \a transactions.
-	std::unique_ptr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const TestBlockTransactions& transactions);
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const TestBlockTransactions& transactions);
 
 	/// Generates a block with \a numTransactions transactions at \a height.
-	std::unique_ptr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height);
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height);
 
 	/// Generates a block with \a numTransactions transactions at \a height and \a timestamp.
-	std::unique_ptr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height, Timestamp timestamp);
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height, Timestamp timestamp);
 
 	/// Generates a predefined block, i.e. this function will always return the same block.
-	std::unique_ptr<model::Block> GenerateDeterministicBlock();
+	model::UniqueEntityPtr<model::Block> GenerateDeterministicBlock();
 
 	// endregion
 

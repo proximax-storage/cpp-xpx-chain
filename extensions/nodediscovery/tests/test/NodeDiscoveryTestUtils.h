@@ -27,12 +27,12 @@ namespace catapult { namespace ionet { struct Packet; } }
 namespace catapult { namespace test {
 
 	/// Creates a random network node with \a host and \a name.
-	std::unique_ptr<ionet::NetworkNode> CreateNetworkNode(const std::string& host, const std::string& name);
+	model::UniqueEntityPtr<ionet::NetworkNode> CreateNetworkNode(const std::string& host, const std::string& name);
 
 	/// Packs all node models (\a nodes) into a vector of network nodes.
 	template<typename TNodeContainer>
-	std::vector<std::unique_ptr<ionet::NetworkNode>> PackAllNodes(const TNodeContainer& nodes) {
-		std::vector<std::unique_ptr<ionet::NetworkNode>> networkNodes;
+	std::vector<model::UniqueEntityPtr<ionet::NetworkNode>> PackAllNodes(const TNodeContainer& nodes) {
+		std::vector<model::UniqueEntityPtr<ionet::NetworkNode>> networkNodes;
 		for (const auto& node : nodes)
 			networkNodes.push_back(ionet::PackNode(node));
 

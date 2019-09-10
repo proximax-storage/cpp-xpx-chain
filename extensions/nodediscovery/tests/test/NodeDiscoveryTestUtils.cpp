@@ -25,7 +25,7 @@
 
 namespace catapult { namespace test {
 
-	std::unique_ptr<ionet::NetworkNode> CreateNetworkNode(const std::string& host, const std::string& name) {
+	model::UniqueEntityPtr<ionet::NetworkNode> CreateNetworkNode(const std::string& host, const std::string& name) {
 		auto hostSize = static_cast<uint8_t>(host.size());
 		auto nameSize = static_cast<uint8_t>(name.size());
 		uint32_t size = sizeof(ionet::NetworkNode) + hostSize + nameSize;

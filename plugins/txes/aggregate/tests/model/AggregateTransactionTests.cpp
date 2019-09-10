@@ -55,7 +55,7 @@ namespace catapult { namespace model {
 	namespace {
 		using EmbeddedTransactionType = mocks::EmbeddedMockTransaction;
 
-		std::unique_ptr<AggregateTransaction> CreateAggregateTransaction(
+		auto CreateAggregateTransaction(
 				uint32_t extraSize,
 				std::initializer_list<uint16_t> attachmentExtraSizes) {
 			uint32_t size = sizeof(AggregateTransaction) + extraSize;

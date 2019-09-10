@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/utils/Logging.h"
+#include "catapult/model/EntityPtr.h"
 #include "tests/TestHarness.h"
 #include <functional>
 #include <memory>
@@ -74,9 +75,9 @@ namespace catapult { namespace test {
 	template<typename TEntity>
 	void AssertOperatorEqualReturnsTrueForEqualObjects(
 			const std::string& defaultKey,
-			const std::unordered_map<std::string, std::unique_ptr<TEntity>>& descToEntityMap,
+			const std::unordered_map<std::string, model::UniqueEntityPtr<TEntity>>& descToEntityMap,
 			const std::unordered_set<std::string>& equalityTags) {
-		AssertEqualReturnsTrueForEqualObjects<std::unique_ptr<TEntity>>(
+		AssertEqualReturnsTrueForEqualObjects<model::UniqueEntityPtr<TEntity>>(
 				defaultKey,
 				descToEntityMap,
 				equalityTags,
@@ -129,9 +130,9 @@ namespace catapult { namespace test {
 	template<typename TEntity>
 	void AssertOperatorNotEqualReturnsTrueForUnequalObjects(
 			const std::string& defaultKey,
-			const std::unordered_map<std::string, std::unique_ptr<TEntity>>& descToEntityMap,
+			const std::unordered_map<std::string, model::UniqueEntityPtr<TEntity>>& descToEntityMap,
 			const std::unordered_set<std::string>& equalityTags) {
-		AssertNotEqualReturnsTrueForUnequalObjects<std::unique_ptr<TEntity>>(
+		AssertNotEqualReturnsTrueForUnequalObjects<model::UniqueEntityPtr<TEntity>>(
 				defaultKey,
 				descToEntityMap,
 				equalityTags,

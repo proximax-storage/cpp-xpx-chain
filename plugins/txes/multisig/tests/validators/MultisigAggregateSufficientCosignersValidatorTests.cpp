@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 			EXPECT_EQ(expectedResult, result);
 		}
 
-		std::unique_ptr<model::EmbeddedTransaction> CreateEmbeddedTransaction(const Key& signer) {
+		auto CreateEmbeddedTransaction(const Key& signer) {
 			auto pTransaction = std::make_unique<model::EmbeddedTransaction>();
 			pTransaction->Signer = signer;
 			return pTransaction;

@@ -36,7 +36,7 @@ namespace catapult { namespace chain {
 	// region IsChainLink
 
 	namespace {
-		std::unique_ptr<model::Block> GenerateBlockAtHeight(Height height, Timestamp timestamp) {
+		model::UniqueEntityPtr<model::Block> GenerateBlockAtHeight(Height height, Timestamp timestamp) {
 			auto pBlock = test::GenerateBlockWithTransactions(0, height);
 			pBlock->Timestamp = timestamp;
 			return pBlock;
@@ -161,7 +161,7 @@ namespace catapult { namespace chain {
 			return pCache;
 		}
 
-		std::vector<std::unique_ptr<model::Block>> GenerateBlocks(
+		std::vector<model::UniqueEntityPtr<model::Block>> GenerateBlocks(
 				Height startHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
 				uint32_t numBlocks,
@@ -170,7 +170,7 @@ namespace catapult { namespace chain {
 
 			using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
 
-			std::vector<std::unique_ptr<model::Block>> blocks;
+			std::vector<model::UniqueEntityPtr<model::Block>> blocks;
 			auto infos = cache.createView(Height{0})->difficultyInfos(startHeight - Height(1), config.MaxDifficultyBlocks);
 
 			DifficultySet difficulties;
@@ -198,7 +198,7 @@ namespace catapult { namespace chain {
 			return blocks;
 		}
 
-		std::vector<const model::Block*> Unwrap(const std::vector<std::unique_ptr<model::Block>>& blocks) {
+		std::vector<const model::Block*> Unwrap(const std::vector<model::UniqueEntityPtr<model::Block>>& blocks) {
 			std::vector<const model::Block*> blockPointers;
 			for (const auto& pBlock : blocks)
 				blockPointers.push_back(pBlock.get());
@@ -361,7 +361,7 @@ namespace catapult { namespace chain {
 	// region CalculatePartialChainScore
 
 	namespace {
-		std::unique_ptr<model::Block> CreateBlock(Timestamp timestamp, Difficulty difficulty) {
+		auto CreateBlock(Timestamp timestamp, Difficulty difficulty) {
 			auto pBlock = std::make_unique<model::Block>();
 			pBlock->Timestamp = timestamp;
 			pBlock->Difficulty = difficulty;

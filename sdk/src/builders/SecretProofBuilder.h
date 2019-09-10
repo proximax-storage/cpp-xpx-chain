@@ -50,14 +50,14 @@ namespace catapult { namespace builders {
 
 	public:
 		/// Builds a new secret proof transaction.
-		std::unique_ptr<Transaction> build() const;
+		model::UniqueEntityPtr<Transaction> build() const;
 
 		/// Builds a new embedded secret proof transaction.
-		std::unique_ptr<EmbeddedTransaction> buildEmbedded() const;
+		model::UniqueEntityPtr<EmbeddedTransaction> buildEmbedded() const;
 
 	private:
 		template<typename TTransaction>
-		std::unique_ptr<TTransaction> buildImpl() const;
+		model::UniqueEntityPtr<TTransaction> buildImpl() const;
 
 	private:
 		model::LockHashAlgorithm m_hashAlgorithm;

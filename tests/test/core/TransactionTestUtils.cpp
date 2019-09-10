@@ -35,18 +35,18 @@ namespace catapult { namespace test {
 		return utils::ParseByteArray<GenerationHash>("AAAABBBBCCCCDDDDEEEEFFFFAAAABBBBCCCCDDDDEEEEFFFFAAAABBBBCCCCDDDD");
 	}
 
-	std::unique_ptr<model::Transaction> GenerateRandomTransaction() {
+	model::UniqueEntityPtr<model::Transaction> GenerateRandomTransaction() {
 		return GenerateRandomTransaction(GetDefaultGenerationHash());
 	}
 
-	std::unique_ptr<model::Transaction> GenerateRandomTransaction(const GenerationHash& generationHash) {
+	model::UniqueEntityPtr<model::Transaction> GenerateRandomTransaction(const GenerationHash& generationHash) {
 		auto signer = GenerateKeyPair();
 		auto pTransaction = GenerateRandomTransaction(signer.publicKey());
 		extensions::TransactionExtensions(generationHash).sign(signer, *pTransaction);
 		return pTransaction;
 	}
 
-	std::unique_ptr<model::Transaction> GenerateRandomTransaction(const Key& signer) {
+	model::UniqueEntityPtr<model::Transaction> GenerateRandomTransaction(const Key& signer) {
 		auto pTransaction = mocks::CreateMockTransaction(12);
 		pTransaction->Signer = signer;
 		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
@@ -69,7 +69,7 @@ namespace catapult { namespace test {
 		return constTransactions;
 	}
 
-	std::unique_ptr<model::Transaction> GenerateRandomTransactionWithSize(size_t entitySize) {
+	model::UniqueEntityPtr<model::Transaction> GenerateRandomTransactionWithSize(size_t entitySize) {
 		auto pEntity = utils::MakeUniqueWithSize<model::Transaction>(entitySize);
 		FillWithRandomData(MutableRawBuffer{ reinterpret_cast<uint8_t*>(pEntity.get()), entitySize });
 		pEntity->Size = static_cast<uint32_t>(entitySize);
@@ -77,13 +77,13 @@ namespace catapult { namespace test {
 		return pEntity;
 	}
 
-	std::unique_ptr<model::Transaction> GenerateTransactionWithDeadline(Timestamp deadline) {
+	model::UniqueEntityPtr<model::Transaction> GenerateTransactionWithDeadline(Timestamp deadline) {
 		auto pTransaction = GenerateRandomTransaction();
 		pTransaction->Deadline = deadline;
 		return pTransaction;
 	}
 
-	std::unique_ptr<model::Transaction> GenerateDeterministicTransaction() {
+	model::UniqueEntityPtr<model::Transaction> GenerateDeterministicTransaction() {
 		auto keyPair = crypto::KeyPair::FromString("4C730B716552D60D276D24EABD60CAB3BF15BC6824937A510639CEB08BC77821");
 
 		auto pTransaction = mocks::CreateMockTransaction(sizeof(uint64_t));

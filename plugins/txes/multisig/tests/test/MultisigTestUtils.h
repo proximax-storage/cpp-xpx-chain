@@ -21,6 +21,7 @@
 #pragma once
 #include "src/model/ModifyMultisigAccountTransaction.h"
 #include "catapult/model/Cosignature.h"
+#include "catapult/model/EntityPtr.h"
 #include "catapult/utils/HexFormatter.h"
 #include "tests/TestHarness.h"
 
@@ -56,7 +57,7 @@ namespace catapult { namespace test {
 	std::vector<model::Cosignature> GenerateCosignaturesFromCosigners(const std::vector<Key>& cosigners);
 
 	/// Creates a modify multisig account transaction from \a signer with \a modificationTypes.
-	std::unique_ptr<model::EmbeddedModifyMultisigAccountTransaction> CreateModifyMultisigAccountTransaction(
+	model::UniqueEntityPtr<model::EmbeddedModifyMultisigAccountTransaction> CreateModifyMultisigAccountTransaction(
 			const Key& signer,
 			const std::vector<model::CosignatoryModificationType>& modificationTypes);
 

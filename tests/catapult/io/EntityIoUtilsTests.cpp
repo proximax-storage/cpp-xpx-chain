@@ -31,7 +31,7 @@ namespace catapult { namespace io {
 			uint64_t Value;
 		};
 
-		std::unique_ptr<CustomEntity> CreateRandomEntity(uint32_t size) {
+		auto CreateRandomEntity(uint32_t size) {
 			auto pEntity = utils::MakeUniqueWithSize<CustomEntity>(size);
 			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pEntity.get()), size });
 			pEntity->Size = size;

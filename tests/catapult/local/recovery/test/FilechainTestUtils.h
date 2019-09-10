@@ -40,7 +40,7 @@ namespace catapult { namespace test {
 	struct BlockWithAttributes {
 	public:
 		/// Block.
-		std::unique_ptr<model::Block> pBlock;
+		model::UniqueEntityPtr<model::Block> pBlock;
 
 		/// Ids of senders
 		std::vector<size_t> SenderIds;

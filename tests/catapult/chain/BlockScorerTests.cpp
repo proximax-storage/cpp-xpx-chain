@@ -302,7 +302,7 @@ namespace catapult { namespace chain {
 			std::vector<std::pair<Key, Height>> ImportanceLookupParams;
 		};
 
-		std::unique_ptr<model::Block> CreateBlock(Height height, uint32_t timestampSeconds, uint32_t difficulty) {
+		auto CreateBlock(Height height, uint32_t timestampSeconds, uint32_t difficulty) {
 			auto pBlock = std::make_unique<model::Block>();
 			pBlock->Signer = test::GenerateRandomByteArray<Key>();
 			pBlock->Height = height;

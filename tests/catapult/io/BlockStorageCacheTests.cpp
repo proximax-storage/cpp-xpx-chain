@@ -304,7 +304,7 @@ namespace catapult { namespace io {
 
 	namespace {
 		auto GenerateBlockElements(size_t numBlockElements) {
-			std::vector<std::unique_ptr<model::Block>> blocks;
+			std::vector<model::UniqueEntityPtr<model::Block>> blocks;
 			std::vector<model::BlockElement> blockElements;
 			for (auto i = 0u; i < numBlockElements; ++i) {
 				blocks.push_back(test::GenerateBlockWithTransactions(0, Height(Delegation_Chain_Size + 1 + i)));
@@ -386,7 +386,7 @@ namespace catapult { namespace io {
 		constexpr size_t Num_Block_Elements = 3;
 		auto pStorage = mocks::CreateMemoryBlockStorage(Delegation_Chain_Size);
 		BlockStorageCache cache(std::move(pStorage), mocks::CreateMemoryBlockStorage(0));
-		std::vector<std::unique_ptr<model::Block>> blocks;
+		std::vector<model::UniqueEntityPtr<model::Block>> blocks;
 		std::vector<model::BlockElement> blockElements;
 		for (auto i = 0u; i < Num_Block_Elements; ++i) {
 			blocks.push_back(test::GenerateBlockWithTransactions(0, Height(Delegation_Chain_Size + i + 1)));

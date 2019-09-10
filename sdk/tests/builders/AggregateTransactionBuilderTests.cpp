@@ -74,7 +74,7 @@ namespace catapult { namespace builders {
 		private:
 			const model::NetworkIdentifier m_networkId;
 			const Key m_signer;
-			std::vector<std::unique_ptr<mocks::EmbeddedMockTransaction>> m_pTransactions;
+			std::vector<model::UniqueEntityPtr<mocks::EmbeddedMockTransaction>> m_pTransactions;
 		};
 
 		void AssertAggregateBuilderTransaction(size_t numTransactions) {

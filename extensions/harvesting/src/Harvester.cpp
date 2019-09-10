@@ -53,7 +53,7 @@ namespace catapult { namespace harvesting {
 			}
 		};
 
-		std::unique_ptr<model::Block> CreateUnsignedBlockHeader(
+		model::UniqueEntityPtr<model::Block> CreateUnsignedBlockHeader(
 				const NextBlockContext& context,
 				model::NetworkIdentifier networkIdentifier,
 				const Key& signer,
@@ -79,7 +79,7 @@ namespace catapult { namespace harvesting {
 			, m_blockGenerator(blockGenerator)
 	{}
 
-	std::unique_ptr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
+	model::UniqueEntityPtr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
 		NextBlockContext context(lastBlockElement, timestamp);
 		const auto& config = m_pConfigHolder->Config(context.Height);
 		if (!context.tryCalculateDifficulty(m_cache.sub<cache::BlockDifficultyCache>(), config.Network)) {

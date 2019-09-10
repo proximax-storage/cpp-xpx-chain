@@ -64,7 +64,7 @@ namespace catapult { namespace model {
 	// region data pointers
 
 	namespace {
-		std::unique_ptr<AddressPropertyTransaction> GenerateAddressPropertyTransaction(uint8_t modificationsCount) {
+		auto GenerateAddressPropertyTransaction(uint8_t modificationsCount) {
 			uint32_t entitySize = sizeof(AddressPropertyTransaction) + modificationsCount * sizeof(PropertyModification<Address>);
 			auto pTransaction = utils::MakeUniqueWithSize<AddressPropertyTransaction>(entitySize);
 			pTransaction->Size = entitySize;

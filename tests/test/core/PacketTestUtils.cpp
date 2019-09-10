@@ -71,7 +71,7 @@ namespace catapult { namespace test {
 		});
 	}
 
-	std::unique_ptr<ionet::Packet> BufferToPacket(const ionet::ByteBuffer& buffer) {
+	model::UniqueEntityPtr<ionet::Packet> BufferToPacket(const ionet::ByteBuffer& buffer) {
 		auto pPacket = utils::MakeUniqueWithSize<ionet::Packet>(buffer.size());
 		std::memcpy(static_cast<void*>(pPacket.get()), buffer.data(), buffer.size());
 		return pPacket;

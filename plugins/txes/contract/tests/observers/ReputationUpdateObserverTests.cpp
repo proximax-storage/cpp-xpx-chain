@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
 		using Notification = model::ReputationUpdateNotification<1>;
 		using Modifications = std::vector<model::CosignatoryModification>;
 
-		std::unique_ptr<model::ReputationUpdateNotification<1>> CreateNotification(const std::vector<model::CosignatoryModification>& modifications) {
+		model::UniqueEntityPtr<model::ReputationUpdateNotification<1>> CreateNotification(const std::vector<model::CosignatoryModification>& modifications) {
 			std::vector<const model::CosignatoryModification*> modificationPtrs;
 
 			for (auto i = 0u; i < modifications.size(); ++i) {

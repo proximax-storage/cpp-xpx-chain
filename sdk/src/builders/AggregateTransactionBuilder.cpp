@@ -35,7 +35,7 @@ namespace catapult { namespace builders {
 		m_pTransactions.push_back(std::move(pTransaction));
 	}
 
-	std::unique_ptr<TransactionType> AggregateTransactionBuilder::build() const {
+	model::UniqueEntityPtr<TransactionType> AggregateTransactionBuilder::build() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto payloadSize = utils::Sum(m_pTransactions, [](const auto& pEmbeddedTransaction) { return pEmbeddedTransaction->Size; });
 		auto size = sizeof(TransactionType) + payloadSize;
@@ -65,7 +65,7 @@ namespace catapult { namespace builders {
 
 	AggregateCosignatureAppender::AggregateCosignatureAppender(
 			const GenerationHash& generationHash,
-			std::unique_ptr<TransactionType>&& pAggregateTransaction)
+			model::UniqueEntityPtr<TransactionType>&& pAggregateTransaction)
 			: m_generationHash(generationHash)
 			, m_pAggregateTransaction(std::move(pAggregateTransaction))
 	{}
@@ -84,7 +84,7 @@ namespace catapult { namespace builders {
 		m_cosignatures.push_back(cosignature);
 	}
 
-	std::unique_ptr<TransactionType> AggregateCosignatureAppender::build() const {
+	model::UniqueEntityPtr<TransactionType> AggregateCosignatureAppender::build() const {
 		auto cosignaturesSize = sizeof(model::Cosignature) * m_cosignatures.size();
 		auto size = m_pAggregateTransaction->Size + static_cast<uint32_t>(cosignaturesSize);
 		auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(size);

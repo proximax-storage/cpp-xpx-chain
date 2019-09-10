@@ -53,12 +53,12 @@ namespace catapult { namespace model {
 	// region test utils
 
 	namespace {
-		std::unique_ptr<Block> CreateBlockWithTransactions(size_t numTransactions = 3) {
+		model::UniqueEntityPtr<Block> CreateBlockWithTransactions(size_t numTransactions = 3) {
 			auto transactions = test::GenerateRandomTransactions(numTransactions);
 			return test::GenerateBlockWithTransactions(transactions);
 		}
 
-		std::unique_ptr<Block> CreateBlockWithReportedSize(uint32_t size) {
+		model::UniqueEntityPtr<Block> CreateBlockWithReportedSize(uint32_t size) {
 			auto pBlock = CreateBlockWithTransactions();
 			pBlock->Size = size;
 			return pBlock;

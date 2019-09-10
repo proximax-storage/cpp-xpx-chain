@@ -64,7 +64,7 @@ namespace catapult { namespace builders {
 
 	protected:
 		template<typename TTransaction>
-		std::unique_ptr<TTransaction> createTransaction(size_t size) const {
+		model::UniqueEntityPtr<TTransaction> createTransaction(size_t size) const {
 			auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(size);
 			std::memset(static_cast<void*>(pTransaction.get()), 0, sizeof(TTransaction));
 

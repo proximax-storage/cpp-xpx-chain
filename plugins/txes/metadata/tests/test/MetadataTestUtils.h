@@ -7,16 +7,18 @@
 #pragma once
 #include "src/model/MetadataTypes.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/model/EntityPtr.h"
+
 
 namespace catapult { namespace test {
 
     /// Generates a metadata modification with \a type, \a keySize and \a valueSize.
-    std::unique_ptr<model::MetadataModification> CreateModification(
+    model::UniqueEntityPtr<model::MetadataModification> CreateModification(
         model::MetadataModificationType type, uint8_t keySize, uint16_t valueSize);
 
     /// Creates a metadata transaction with \a modifications.
     template<typename TTransaction>
-    std::unique_ptr<TTransaction> CreateTransaction(std::initializer_list<model::MetadataModification*> modifications) {
+	model::UniqueEntityPtr<TTransaction> CreateTransaction(std::initializer_list<model::MetadataModification*> modifications) {
         uint32_t entitySize = sizeof(TTransaction);
         for (auto pModification : modifications) {
             entitySize += pModification->Size;

@@ -41,16 +41,16 @@ namespace catapult { namespace builders {
 		m_mosaicId = mosaicId;
 	}
 
-	std::unique_ptr<MosaicAliasBuilder::Transaction> MosaicAliasBuilder::build() const {
+	model::UniqueEntityPtr<MosaicAliasBuilder::Transaction> MosaicAliasBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<MosaicAliasBuilder::EmbeddedTransaction> MosaicAliasBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<MosaicAliasBuilder::EmbeddedTransaction> MosaicAliasBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> MosaicAliasBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> MosaicAliasBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		auto pTransaction = createTransaction<TransactionType>(size);

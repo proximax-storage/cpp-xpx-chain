@@ -22,13 +22,14 @@
 #include "PodIoUtils.h"
 #include "Stream.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/model/EntityPtr.h"
 
 namespace catapult { namespace io {
 
 	// region ReadBlockElement
 
 	namespace {
-		std::shared_ptr<model::BlockElement> ReadBlockElementImpl(InputStream& inputStream) {
+		auto ReadBlockElementImpl(InputStream& inputStream) {
 			// allocate memory for both the element and the block in one shot (Block data is appended)
 			auto size = Read32(inputStream);
 			auto pData = utils::MakeUniqueWithSize<uint8_t>(sizeof(model::BlockElement) + size);
@@ -40,7 +41,7 @@ namespace catapult { namespace io {
 
 			// create the block element and transfer ownership from pData to pBlockElement
 			auto pBlockElementRaw = new (pData.get()) model::BlockElement(*reinterpret_cast<model::Block*>(pBlockData));
-			auto pBlockElement = std::shared_ptr<model::BlockElement>(pBlockElementRaw);
+			auto pBlockElement = std::shared_ptr<model::BlockElement>(pBlockElementRaw, model::EntityPtrDeleter<model::BlockElement>{});
 			pData.release();
 
 			// read metadata
@@ -56,7 +57,7 @@ namespace catapult { namespace io {
 
 			size_t i = 0;
 			for (const auto& transaction : blockElement.Block.Transactions()) {
-				blockElement.Transactions.push_back(model::TransactionElement(transaction));
+				blockElement.Transactions.emplace_back(transaction);
 				blockElement.Transactions.back().EntityHash = hashes[i++];
 				blockElement.Transactions.back().MerkleComponentHash = hashes[i++];
 			}

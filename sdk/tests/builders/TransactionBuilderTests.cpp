@@ -49,7 +49,7 @@ namespace catapult { namespace builders {
 			{}
 
 		public:
-			std::unique_ptr<mocks::MockTransaction> build() const {
+			model::UniqueEntityPtr<mocks::MockTransaction> build() const {
 				auto pTransaction = createTransaction<mocks::MockTransaction>(sizeof(mocks::MockTransaction) + Additional_Data_Size);
 
 				// 1. set sizes upfront, so that pointers are calculated correctly

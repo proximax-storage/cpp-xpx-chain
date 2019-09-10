@@ -176,7 +176,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			}
 
 		private:
-			void signAndAdd(std::unique_ptr<model::Transaction>&& pTransaction) {
+			void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction) {
 				pTransaction->Deadline = Timestamp(1);
 				extensions::TransactionExtensions(m_generationHash).sign(m_signer, *pTransaction);
 				m_transactions.push_back(std::move(pTransaction));
@@ -190,7 +190,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		};
 	}
 
-	std::unique_ptr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath) {
+	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath) {
 		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
 		NemesisTransactions transactions(config.NetworkIdentifier, config.NemesisGenerationHash, signer);
 

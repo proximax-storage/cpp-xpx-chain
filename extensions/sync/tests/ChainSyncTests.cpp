@@ -196,7 +196,7 @@ namespace catapult { namespace sync {
 			}
 
 		private:
-			std::unique_ptr<model::Block> m_pLastBlock;
+			model::UniqueEntityPtr<model::Block> m_pLastBlock;
 		};
 
 		model::PreviousBlockContext PopulateCommonBlocks(

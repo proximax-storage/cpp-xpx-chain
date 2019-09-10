@@ -79,7 +79,7 @@ namespace catapult { namespace model {
 	}
 
 	namespace {
-		std::unique_ptr<EmbeddedTransaction> CreateMockEmbeddedTransaction(uint32_t delta) {
+		model::UniqueEntityPtr<EmbeddedTransaction> CreateMockEmbeddedTransaction(uint32_t delta) {
 			auto pTransaction = mocks::CreateEmbeddedMockTransaction(7);
 			pTransaction->Size += delta;
 			return std::move(pTransaction);

@@ -21,6 +21,7 @@
 #pragma once
 #include "Receipt.h"
 #include "ReceiptSource.h"
+#include "EntityPtr.h"
 
 namespace catapult { namespace model {
 
@@ -49,6 +50,6 @@ namespace catapult { namespace model {
 
 	private:
 		ReceiptSource m_source;
-		std::vector<std::unique_ptr<Receipt>> m_receipts;
+		std::vector<UniqueEntityPtr<Receipt>> m_receipts;
 	};
 }}

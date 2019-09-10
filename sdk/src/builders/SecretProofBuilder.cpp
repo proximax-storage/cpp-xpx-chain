@@ -53,16 +53,16 @@ namespace catapult { namespace builders {
 		m_proof.assign(proof.pData, proof.pData + proof.Size);
 	}
 
-	std::unique_ptr<SecretProofBuilder::Transaction> SecretProofBuilder::build() const {
+	model::UniqueEntityPtr<SecretProofBuilder::Transaction> SecretProofBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<SecretProofBuilder::EmbeddedTransaction> SecretProofBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<SecretProofBuilder::EmbeddedTransaction> SecretProofBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> SecretProofBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> SecretProofBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		size += m_proof.size();

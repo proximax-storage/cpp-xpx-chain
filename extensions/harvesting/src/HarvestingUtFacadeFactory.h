@@ -57,7 +57,7 @@ namespace catapult { namespace harvesting {
 		void unapply();
 
 		/// Commits all transactions into a block with specified seed header (\a blockHeader).
-		std::unique_ptr<model::Block> commit(const model::BlockHeader& blockHeader);
+		model::UniqueEntityPtr<model::Block> commit(const model::BlockHeader& blockHeader);
 
 	private:
 		class Impl;

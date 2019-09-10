@@ -37,7 +37,7 @@ namespace catapult { namespace zeromq {
 #define TEST_CLASS ZeroMqEntityPublisherTests
 
 	namespace {
-		model::TransactionInfo ToTransactionInfo(std::unique_ptr<mocks::MockTransaction>&& pTransaction, const Height& height) {
+		model::TransactionInfo ToTransactionInfo(model::UniqueEntityPtr<mocks::MockTransaction>&& pTransaction, const Height& height) {
 			model::TransactionInfo transactionInfo(std::move(pTransaction), height);
 			transactionInfo.EntityHash = test::GenerateRandomByteArray<Hash256>();
 			transactionInfo.MerkleComponentHash = test::GenerateRandomByteArray<Hash256>();

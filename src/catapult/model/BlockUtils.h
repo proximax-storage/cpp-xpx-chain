@@ -103,14 +103,14 @@ namespace catapult { namespace model {
 
 	/// Creates an unsigned Block given a \a context, signer public key (\a signerPublicKey) and \a transactions
 	/// for a network with identifier \a networkIdentifier.
-	std::unique_ptr<Block> CreateBlock(
+	UniqueEntityPtr<Block> CreateBlock(
 			const PreviousBlockContext& context,
 			NetworkIdentifier networkIdentifier,
 			const Key& signerPublicKey,
 			const Transactions& transactions);
 
 	/// Creates a new block by stitching together \a blockHeader and \a transactions.
-	std::unique_ptr<Block> StitchBlock(const BlockHeader& blockHeader, const Transactions& transactions);
+	UniqueEntityPtr<Block> StitchBlock(const BlockHeader& blockHeader, const Transactions& transactions);
 
 	// endregion
 }}

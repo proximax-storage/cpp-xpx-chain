@@ -24,7 +24,7 @@
 
 namespace catapult { namespace partialtransaction {
 
-	std::unique_ptr<model::Transaction> StitchAggregate(const model::WeakCosignedTransactionInfo& transactionInfo) {
+	model::UniqueEntityPtr<model::Transaction> StitchAggregate(const model::WeakCosignedTransactionInfo& transactionInfo) {
 		uint32_t size = transactionInfo.transaction().Size
 				+ sizeof(model::Cosignature) * static_cast<uint32_t>(transactionInfo.cosignatures().size());
 		auto pTransactionWithCosignatures = utils::MakeUniqueWithSize<model::AggregateTransaction>(size);

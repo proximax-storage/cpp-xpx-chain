@@ -170,7 +170,7 @@ namespace catapult { namespace model {
 	}
 
 	namespace {
-		std::unique_ptr<Block> GenerateBlockWithTransactionSizes(const std::vector<Amount>& fees) {
+		model::UniqueEntityPtr<Block> GenerateBlockWithTransactionSizes(const std::vector<Amount>& fees) {
 			test::ConstTransactions transactions;
 			for (auto fee : fees) {
 				auto pTransaction = test::GenerateRandomTransactionWithSize(fee.unwrap());

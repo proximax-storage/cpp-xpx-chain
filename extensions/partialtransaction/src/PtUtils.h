@@ -26,7 +26,7 @@
 namespace catapult { namespace partialtransaction {
 
 	/// Stitches a weak cosigned transaction \a info into a full aggregate transaction.
-	std::unique_ptr<model::Transaction> StitchAggregate(const model::WeakCosignedTransactionInfo& transactionInfo);
+	model::UniqueEntityPtr<model::Transaction> StitchAggregate(const model::WeakCosignedTransactionInfo& transactionInfo);
 
 	/// Splits up cosigned transaction infos (\a transactionInfos) and forwards transactions as a single range
 	/// to \a transactionRangeConsumer and cosignatures individually to \a cosignatureConsumer.

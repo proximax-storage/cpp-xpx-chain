@@ -173,7 +173,7 @@ namespace catapult { namespace ionet {
 	// region UnpackNode
 
 	namespace {
-		std::unique_ptr<NetworkNode> CreateNodeForUnpackTests(const std::string& host, const std::string& name) {
+		auto CreateNodeForUnpackTests(const std::string& host, const std::string& name) {
 			return PackNode(CreateNodeForPackTests(host, name));
 		}
 

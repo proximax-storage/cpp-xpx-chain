@@ -20,17 +20,18 @@
 
 #pragma once
 #include "catapult/exceptions.h"
+#include "catapult/model/EntityPtr.h"
 #include <memory>
 
 namespace catapult { namespace utils {
 
 	/// Creates a unique pointer of the specified type with custom \a size.
 	template<typename T>
-	std::unique_ptr<T> MakeUniqueWithSize(size_t size) {
+	model::UniqueEntityPtr<T> MakeUniqueWithSize(size_t size) {
 		if (size < sizeof(T))
 			CATAPULT_THROW_INVALID_ARGUMENT("size is insufficient");
 
-		return std::unique_ptr<T>(reinterpret_cast<T*>(::operator new(size)));
+		return model::UniqueEntityPtr<T>(static_cast<T*>(::operator new(size)));
 	}
 
 	/// Creates a shared pointer of the specified type with custom \a size.
@@ -39,12 +40,12 @@ namespace catapult { namespace utils {
 		if (size < sizeof(T))
 			CATAPULT_THROW_INVALID_ARGUMENT("size is insufficient");
 
-		return std::shared_ptr<T>(reinterpret_cast<T*>(::operator new(size)));
+		return std::shared_ptr<T>(reinterpret_cast<T*>(::operator new(size)), model::EntityPtrDeleter<T>{});
 	}
 
 	/// Converts a unique \a pointer to a shared pointer of the same type.
-	template<typename T>
-	std::shared_ptr<T> UniqueToShared(std::unique_ptr<T>&& pointer) {
+	template<typename T, typename Deleter>
+	std::shared_ptr<T> UniqueToShared(std::unique_ptr<T, Deleter>&& pointer) {
 		return std::move(pointer);
 	}
 }}

@@ -34,13 +34,13 @@ namespace catapult { namespace io {
 
 		struct BlockElementWithBlock {
 		public:
-			BlockElementWithBlock(std::unique_ptr<model::Block>&& pSourceBlock, model::BlockElement&& blockElement)
+			BlockElementWithBlock(model::UniqueEntityPtr<model::Block>&& pSourceBlock, model::BlockElement&& blockElement)
 					: pBlock(std::move(pSourceBlock))
 					, BlockElement(std::move(blockElement))
 			{}
 
 		public:
-			std::unique_ptr<model::Block> pBlock;
+			model::UniqueEntityPtr<model::Block> pBlock;
 			model::BlockElement BlockElement;
 		};
 

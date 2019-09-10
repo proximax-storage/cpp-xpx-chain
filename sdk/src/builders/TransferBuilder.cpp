@@ -50,16 +50,16 @@ namespace catapult { namespace builders {
 		});
 	}
 
-	std::unique_ptr<TransferBuilder::Transaction> TransferBuilder::build() const {
+	model::UniqueEntityPtr<TransferBuilder::Transaction> TransferBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<TransferBuilder::EmbeddedTransaction> TransferBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<TransferBuilder::EmbeddedTransaction> TransferBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> TransferBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> TransferBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		size += m_message.size();

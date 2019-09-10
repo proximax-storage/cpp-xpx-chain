@@ -43,7 +43,7 @@ namespace catapult { namespace test {
 
 	private:
 		// BasicTransactionsBuilder
-		std::unique_ptr<model::Transaction> generate(
+		model::UniqueEntityPtr<model::Transaction> generate(
 				uint32_t descriptorType,
 				const std::shared_ptr<const void>& pDescriptor,
 				Timestamp deadline) const override;
@@ -54,9 +54,9 @@ namespace catapult { namespace test {
 		void addNamespace(size_t ownerId, const std::string& name, BlockDuration duration, size_t aliasId = 0);
 
 	private:
-		std::unique_ptr<model::Transaction> createRegisterNamespace(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
+		model::UniqueEntityPtr<model::Transaction> createRegisterNamespace(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
 
-		std::unique_ptr<model::Transaction> createAddressAlias(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
+		model::UniqueEntityPtr<model::Transaction> createAddressAlias(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
 
 	private:
 		enum class DescriptorType { Namespace = 1, Alias };

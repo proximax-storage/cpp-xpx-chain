@@ -62,7 +62,7 @@ namespace catapult { namespace model {
 	// region data pointers
 
 	namespace {
-		std::unique_ptr<RegisterNamespaceTransaction> GenerateRegisterNamespaceWithName(uint8_t nameSize) {
+		model::UniqueEntityPtr<RegisterNamespaceTransaction> GenerateRegisterNamespaceWithName(uint8_t nameSize) {
 			uint32_t entitySize = sizeof(RegisterNamespaceTransaction) + nameSize;
 			auto pTransaction = utils::MakeUniqueWithSize<RegisterNamespaceTransaction>(entitySize);
 			pTransaction->Size = entitySize;
@@ -89,7 +89,7 @@ namespace catapult { namespace model {
 	// region IsRoot / IsChild
 
 	namespace {
-		std::unique_ptr<RegisterNamespaceTransaction> GenerateRegisterNamespaceWithNamespaceType(NamespaceType namespaceType) {
+		auto GenerateRegisterNamespaceWithNamespaceType(NamespaceType namespaceType) {
 			auto pTransaction = GenerateRegisterNamespaceWithName(10);
 			pTransaction->NamespaceType = namespaceType;
 			return pTransaction;
