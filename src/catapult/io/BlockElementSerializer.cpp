@@ -30,19 +30,15 @@ namespace catapult { namespace io {
 
 	namespace {
 		auto ReadBlockElementImpl(InputStream& inputStream) {
-			// allocate memory for both the element and the block in one shot (Block data is appended)
 			auto size = Read32(inputStream);
-			auto pData = utils::MakeUniqueWithSize<uint8_t>(sizeof(model::BlockElement) + size);
 
-			// read the block data
-			auto pBlockData = pData.get() + sizeof(model::BlockElement);
-			reinterpret_cast<uint32_t&>(*pBlockData) = size;
-			inputStream.read({ pBlockData + sizeof(uint32_t), size - sizeof(uint32_t) });
+			// read block
+			auto pBlock = utils::MakeSharedWithSize<model::Block>(size);
+			reinterpret_cast<uint32_t&>(*pBlock) = size;
+			inputStream.read({ reinterpret_cast<uint8_t*>(pBlock.get()) + sizeof(uint32_t), size - sizeof(uint32_t) });
 
-			// create the block element and transfer ownership from pData to pBlockElement
-			auto pBlockElementRaw = new (pData.get()) model::BlockElement(*reinterpret_cast<model::Block*>(pBlockData));
-			auto pBlockElement = std::shared_ptr<model::BlockElement>(pBlockElementRaw, model::EntityPtrDeleter<model::BlockElement>{});
-			pData.release();
+			// create the block element
+			auto pBlockElement = std::make_shared<model::BlockElement>(std::move(pBlock));
 
 			// read metadata
 			inputStream.read(pBlockElement->EntityHash);
