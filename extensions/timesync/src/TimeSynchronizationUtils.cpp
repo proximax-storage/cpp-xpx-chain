@@ -115,7 +115,7 @@ namespace catapult { namespace timesync {
 			const TimeSyncResultSupplier& resultSupplier,
 			const extensions::ServiceState& state,
 			TimeSynchronizationState& timeSyncState) {
-		return thread::CreateNamedTask("time synchronization task", [&, resultSupplier]() {;
+		return thread::CreateNamedTask("time synchronization task", [&, timeSyncConfig, resultSupplier]() {;
 			auto height = state.cache().height();
 			auto selector = CreateImportanceAwareNodeSelector(timeSyncConfig, state.config(height));
 
