@@ -46,14 +46,14 @@ namespace catapult { namespace timesync {
 				ionet::ServiceIdentifier serviceId,
 				uint8_t maxNodes,
 				Importance minImportance,
-				const NodeSelector& selector);
+				NodeSelector  selector);
 
 	public:
 		/// Selects nodes from \a nodeContainerView that have a minimum importance at \a height according to \a importanceView.
 		ionet::NodeSet selectNodes(
 				const cache::ImportanceView& importanceView,
 				const ionet::NodeContainerView& nodeContainerView,
-				Height height) const;
+				const Height& height) const;
 
 	private:
 		std::pair<bool, Importance> isCandidate(
