@@ -309,7 +309,7 @@ namespace catapult { namespace chain {
 
 			mutable utils::SpinLock m_lock;
 			mutable size_t m_numValidatePartialCalls;
-			mutable size_t m_numValidateCosignersCalls;
+			mutable std::atomic<size_t> m_numValidateCosignersCalls;
 			mutable size_t m_numLastCosigners;
 			mutable std::vector<model::UniqueEntityPtr<model::Transaction>> m_transactions;
 			mutable std::vector<Hash256> m_transactionHashes;

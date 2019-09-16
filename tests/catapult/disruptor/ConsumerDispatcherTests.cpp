@@ -340,7 +340,7 @@ namespace catapult { namespace disruptor {
 		auto expectedHeights = GetExpectedHeights(ranges);
 
 		std::vector<Heights> collectedHeights;
-		auto numInspectorCalls = 0u;
+		std::atomic<size_t> numInspectorCalls = 0u;
 		ConsumerDispatcher dispatcher(
 				Test_Dispatcher_Options,
 				{ CreateConsumer(collectedHeights) },
@@ -348,7 +348,7 @@ namespace catapult { namespace disruptor {
 
 		// Act: push single element
 		ProcessAll(dispatcher, std::move(ranges));
-		WAIT_FOR_ONE_EXPR(numInspectorCalls);
+		WAIT_FOR_ONE_EXPR((size_t)numInspectorCalls);
 		// - pause is here, to let both the consumer and inspector continue for a bit more,
 		//   in case if it would still be running and there'd be bug in implementation
 		test::Pause();

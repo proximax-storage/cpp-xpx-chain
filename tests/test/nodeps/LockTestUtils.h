@@ -198,7 +198,7 @@ namespace catapult { namespace test {
 	template<typename TAcquireFirstLockFunc, typename TAcquireSecondLockFunc>
 	void AssertExclusiveLocks(TAcquireFirstLockFunc acquireFirstLock, TAcquireSecondLockFunc acquireSecondLock) {
 		// Arrange: get the first lock
-		int flag = 0;
+		std::atomic<int> flag = 0;
 		{
 			auto lock1 = acquireFirstLock();
 

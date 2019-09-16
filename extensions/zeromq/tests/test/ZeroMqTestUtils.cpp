@@ -130,7 +130,7 @@ namespace catapult { namespace test {
 			const zmq::multipart_t& message,
 			const std::vector<uint8_t>& topic,
 			const model::TransactionInfo& transactionInfo,
-			Height height) {
+			const Height& height) {
 		ASSERT_EQ(5u, message.size());
 
 		const auto& transaction = *transactionInfo.pEntity;
@@ -177,7 +177,7 @@ namespace catapult { namespace test {
 
 		// Assert: each address should get a message
 		auto addressesCopy = addresses;
-		for (auto i = 0u; i < addresses.size(); ++i) {
+		for (size_t i = 0u; i < addresses.size(); ++i) {
 			ZmqReceive(message, zmqSocket);
 
 			const auto* pAddressData = reinterpret_cast<const uint8_t*>(message[0].data()) + 1;
