@@ -250,7 +250,7 @@ namespace catapult { namespace test {
 				, pValidator(std::make_shared<MockAggregateNotificationValidator>())
 				, pNotificationPublisher(std::make_shared<MockNotificationPublisher>()) {
 			Config.NetworkIdentifier = Mock_Execution_Configuration_Network_Identifier;
-			Config.NetworkInfoSupplier = [](const Height&) { return model::NetworkInfo( {} ); };
+			Config.NetworkInfoSupplier = [](const Height&) { return model::NetworkInfo(); };
 			Config.pObserver = pObserver;
 			Config.pValidator = pValidator;
 			Config.pNotificationPublisher = pNotificationPublisher;
@@ -277,8 +277,8 @@ namespace catapult { namespace test {
 		static void AssertObserverContexts(
 				const MockAggregateNotificationObserver& observer,
 				size_t numInitialCacheDifficultyInfos,
-				Height expectedHeight,
-				model::ImportanceHeight expectedImportanceHeight,
+				const Height& expectedHeight,
+				const model::ImportanceHeight& expectedImportanceHeight,
 				const predicate<size_t>& isRollbackExecution) {
 			// Assert:
 			size_t i = 0;
@@ -309,8 +309,8 @@ namespace catapult { namespace test {
 		static void AssertValidatorContexts(
 				const MockAggregateNotificationValidator& validator,
 				const std::vector<size_t>& expectedNumDifficultyInfos,
-				Height expectedHeight,
-				Timestamp expectedBlockTime) {
+				const Height& expectedHeight,
+				const Timestamp& expectedBlockTime) {
 			// Assert:
 			ASSERT_EQ(expectedNumDifficultyInfos.size(), validator.params().size());
 

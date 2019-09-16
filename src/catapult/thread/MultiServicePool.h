@@ -252,7 +252,7 @@ namespace catapult { namespace thread {
 		std::string m_name;
 		IsolatedPoolMode m_isolatedPoolMode;
 		size_t m_numTotalIsolatedPoolThreads;
-		size_t m_numServiceGroups;
+		std::atomic<size_t> m_numServiceGroups;
 		std::shared_ptr<thread::IoThreadPool> m_pPool;
 		std::vector<std::shared_ptr<ServiceGroup>> m_serviceGroups;
 		std::vector<action> m_shutdownFunctions;

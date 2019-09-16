@@ -487,7 +487,7 @@ namespace catapult { namespace cache {
 		template<typename TBlockedOperationFunc>
 		void AssertCommitBlocksOperation(TBlockedOperationFunc blockedOperationFunc) {
 			// Arrange: create the cache and start a (long) commit operation
-			auto flag = 0u;
+			std::atomic<int> flag = 0u;
 			CommitLockGuard commitLockGuard;
 			auto& cache = commitLockGuard.cache();
 
@@ -515,7 +515,7 @@ namespace catapult { namespace cache {
 			// - [C] spawn another thread to attempt the blocked operation
 			threads.createThread("blocked operation", [&flag, &cache, blockedOperationFunc]() {
 				// - wait for the lock to be acquired by [B]
-				WAIT_FOR_ONE_EXPR(flag); // waits for [A]
+				WAIT_FOR_ONE_EXPR((int)flag); // waits for [A]
 
 				// - run the blocked operation
 				blockedOperationFunc(cache); // waits for [main]
@@ -526,7 +526,7 @@ namespace catapult { namespace cache {
 
 			// Act: wait for the value to change and then pause
 			CATAPULT_LOG(debug) << "test thread waiting for flag";
-			WAIT_FOR_ONE_EXPR(flag); // waits for [A]
+			WAIT_FOR_ONE_EXPR((int)flag); // waits for [A]
 
 			// - wait a bit to see if flag changes
 			test::Pause();
@@ -538,7 +538,7 @@ namespace catapult { namespace cache {
 			commitLockGuard.reset(); // signals [B (releases lock), C (acquires lock)]
 
 			// - wait for the flag value to change
-			WAIT_FOR_VALUE_EXPR(2u, flag); // waits for [C]
+			WAIT_FOR_VALUE_EXPR(2u, (int)flag); // waits for [C]
 
 			// Assert: [C] acquired the (second) lock
 			EXPECT_EQ(2u, flag);

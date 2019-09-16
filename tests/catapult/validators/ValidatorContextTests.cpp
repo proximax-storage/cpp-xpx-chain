@@ -37,7 +37,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, CanCreateValidatorContextAroundHeightAndNetworkAndCache) {
 		// Act:
-		auto networkInfo = model::NetworkInfo({});
+		model::NetworkInfo networkInfo{};
 		auto cache = test::CreateEmptyCatapultCache();
 		auto cacheView = cache.createView();
 		auto readOnlyCache = cacheView.toReadOnly();

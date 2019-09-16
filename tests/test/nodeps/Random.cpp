@@ -20,6 +20,7 @@
 
 #include "Random.h"
 #include <random>
+#include <mutex>
 
 namespace catapult { namespace test {
 
@@ -52,10 +53,14 @@ namespace catapult { namespace test {
 			}
 
 			uint64_t operator()() {
+				std::lock_guard<std::mutex> lock(m_mutex);
+				// this call mutates generator, so
+				// we need to have serialized access to operator()
 				return m_gen();
 			}
 
 		private:
+			std::mutex m_mutex;
 			std::mt19937_64 m_gen;
 		};
 	}

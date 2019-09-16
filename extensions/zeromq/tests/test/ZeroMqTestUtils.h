@@ -86,7 +86,7 @@ namespace catapult { namespace test {
 			const zmq::multipart_t& message,
 			const std::vector<uint8_t>& topic,
 			const model::TransactionInfo& transactionInfo,
-			Height height);
+			const Height& height);
 
 	/// Asserts that the given \a message has \a topic as first part and matches the data in \a hash.
 	void AssertTransactionHashMessage(const zmq::multipart_t& message, const std::vector<uint8_t>& topic, const Hash256& hash);

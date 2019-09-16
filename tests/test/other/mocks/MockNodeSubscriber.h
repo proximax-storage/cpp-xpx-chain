@@ -47,7 +47,7 @@ namespace catapult { namespace mocks {
 		/// Creates params around \a identityKey and \a serviceId.
 		explicit NodeSubscriberIncomingNodeParams(const Key& identityKey, ionet::ServiceIdentifier serviceId)
 				: IdentityKey(identityKey)
-				, ServiceId(serviceId)
+				, ServiceId(std::move(serviceId))
 		{}
 
 	public:

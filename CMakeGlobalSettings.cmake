@@ -89,9 +89,8 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 	# - Wno-switch-enum: do not require enum switch statements to list every value (this setting is also incompatible with GCC warnings)
 	# - Wno-weak-vtables: vtables are emitted in all translsation units for virtual classes with no out-of-line virtual method definitions
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-		-stdlib=libc++ \
-		-Weverything \
 		-Werror \
+		-fbracket-depth=1024 \
 		-Wno-c++98-compat \
 		-Wno-c++98-compat-pedantic \
 		-Wno-disabled-macro-expansion \

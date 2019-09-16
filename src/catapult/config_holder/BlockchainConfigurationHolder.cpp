@@ -98,7 +98,7 @@ namespace catapult { namespace config {
 	}
 
 	BlockchainConfiguration& BlockchainConfigurationHolder::Config() {
-		return Config(m_pCache != NULL ? m_pCache->configHeight() : Height(0));
+		return Config(m_pCache != nullptr ? m_pCache->configHeight() : Height(0));
 	}
 
 	BlockchainConfiguration& BlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height& height) {

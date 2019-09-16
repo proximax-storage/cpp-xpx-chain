@@ -1,35 +1,3 @@
-# sanitizers should be executed with gcc-7
-if(SANITIZE_ADDRESS OR SANITIZE_THREAD OR SANITIZE_UNDEFINED)
-    find_program(CMAKE_C_COMPILER gcc-7)
-    find_program(CMAKE_CXX_COMPILER g++-7)
-
-    if(NOT CMAKE_C_COMPILER)
-        message(FATAL_ERROR "gcc-7 not found")
-    endif()
-
-    if(NOT CMAKE_CXX_COMPILER)
-        message(FATAL_ERROR "g++-7 not found")
-    endif()
-
-    set(
-        CMAKE_C_COMPILER
-        "${CMAKE_C_COMPILER}"
-        CACHE
-        STRING
-        "C compiler"
-        FORCE
-    )
-
-    set(
-        CMAKE_CXX_COMPILER
-        "${CMAKE_CXX_COMPILER}"
-        CACHE
-        STRING
-        "C++ compiler"
-        FORCE
-    )
-endif()
-
 # only one of them can be enabled simultaneously
 if(SANITIZE_ADDRESS)
     message(STATUS "SANITIZE_ADDRESS enabled")

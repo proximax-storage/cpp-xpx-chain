@@ -52,6 +52,7 @@ namespace catapult { namespace mocks {
 	public:
 		/// Sets the result of validate to \a result.
 		void setResult(validators::ValidationResult result) {
+			std::lock_guard<std::mutex> lock(m_mutex);
 			m_result = result;
 		}
 
@@ -63,6 +64,7 @@ namespace catapult { namespace mocks {
 		}
 
 	private:
+		mutable std::mutex m_mutex;
 		validators::ValidationResult m_result;
 		bool m_triggerOnSpecificType;
 		model::NotificationType m_triggerType;
