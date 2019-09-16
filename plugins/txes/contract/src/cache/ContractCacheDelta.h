@@ -48,6 +48,15 @@ namespace catapult { namespace cache {
 		using ContractCacheDeltaMixins::ConstAccessor::find;
 		using ContractCacheDeltaMixins::MutableAccessor::find;
 
+		void setEnabled(bool) {
+		}
+
+		/// Disable the cache.
+		/// TODO: remove the contract plugin.
+		bool enabled() const {
+			return false;
+		}
+
 	private:
 		ContractCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pContractEntries;
 	};

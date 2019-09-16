@@ -60,6 +60,8 @@ namespace catapult { namespace config {
 			// config files contain mosaic ids when SIGNATURE_SCHEME_NIS1 is disabled
 			EXPECT_EQ(MosaicId(0x0DC6'7FBE'1CAD'29E3), config.CurrencyMosaicId);
 			EXPECT_EQ(MosaicId(0x0DC6'7FBE'1CAD'29E3), config.HarvestingMosaicId);
+			EXPECT_EQ(MosaicId(0xBFFB'42A1'9116'BDF6), config.StorageMosaicId);
+			EXPECT_EQ(MosaicId(0x77E4'90CC'9B2A'F6F6), config.StreamingMosaicId);
 
 			EXPECT_EQ(Amount(8'999'999'998'000'000), config.InitialCurrencyAtomicUnits);
 		}
@@ -202,7 +204,7 @@ namespace catapult { namespace config {
 
 		void AssertDefaultSupportedEntityVersions(const SupportedEntityVersions& config) {
 			// Assert:
-			EXPECT_EQ(24u, config.size());
+			EXPECT_EQ(23u, config.size());
 		}
 	}
 

@@ -117,6 +117,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
     catapult.mongo.plugins.upgrade \
+    catapult.mongo.plugins.service \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
     catapult.plugins.config \
@@ -133,6 +134,7 @@ RUN cd /catapult \
     catapult.plugins.signature \
     catapult.plugins.transfer \
     catapult.plugins.upgrade \
+    catapult.plugins.service \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \

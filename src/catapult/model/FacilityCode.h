@@ -55,5 +55,7 @@ namespace catapult { namespace model {
 		Transfer = 0x54,
 		/// Blockchain upgrade facility code.
 		BlockchainUpgrade = 0x58,
+		/// Service facility code.
+		Service = 0x5A,
 	};
 }}

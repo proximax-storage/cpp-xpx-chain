@@ -48,6 +48,15 @@ namespace catapult { namespace cache {
 		using ReputationCacheDeltaMixins::ConstAccessor::find;
 		using ReputationCacheDeltaMixins::MutableAccessor::find;
 
+		void setEnabled(bool) {
+		}
+
+		/// Disable the cache.
+		/// TODO: remove the contract plugin.
+		bool enabled() const {
+			return false;
+		}
+
 	private:
 		ReputationCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pReputationEntries;
 	};

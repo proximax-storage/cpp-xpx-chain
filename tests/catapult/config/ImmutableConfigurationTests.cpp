@@ -36,6 +36,8 @@ namespace catapult { namespace config {
 
 							{ "currencyMosaicId", "0x1234'AAAA" },
 							{ "harvestingMosaicId", "0x9876'BBBB" },
+							{ "storageMosaicId", "0x4321'AAAA" },
+							{ "streamingMosaicId", "0x6789'BBBB" },
 
 							{ "initialCurrencyAtomicUnits", "77'000'000'000" },
 						}
@@ -57,6 +59,8 @@ namespace catapult { namespace config {
 
 				EXPECT_EQ(MosaicId(), config.CurrencyMosaicId);
 				EXPECT_EQ(MosaicId(), config.HarvestingMosaicId);
+				EXPECT_EQ(MosaicId(), config.StorageMosaicId);
+				EXPECT_EQ(MosaicId(), config.StreamingMosaicId);
 
 				EXPECT_EQ(Amount(0), config.InitialCurrencyAtomicUnits);
 			}
@@ -71,6 +75,8 @@ namespace catapult { namespace config {
 
 				EXPECT_EQ(MosaicId(0x1234'AAAA), config.CurrencyMosaicId);
 				EXPECT_EQ(MosaicId(0x9876'BBBB), config.HarvestingMosaicId);
+				EXPECT_EQ(MosaicId(0x4321'AAAA), config.StorageMosaicId);
+				EXPECT_EQ(MosaicId(0x6789'BBBB), config.StreamingMosaicId);
 
 				EXPECT_EQ(Amount(77'000'000'000), config.InitialCurrencyAtomicUnits);
 			}
