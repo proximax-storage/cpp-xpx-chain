@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "catapult/version/version.h"
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "src/cache/BlockchainUpgradeCacheStorage.h"
 #include "src/config/BlockchainUpgradeConfiguration.h"
@@ -12,7 +13,6 @@
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 #include <limits>
-#include <cmake-build-debug/inc/catapult/version/version.h>
 
 namespace catapult { namespace validators {
 
@@ -44,11 +44,11 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, FailureWhenCurrentBlockchainVersionInvalid) {
+	TEST(TEST_CLASS, FailureWhenCurrentBlockchainVersionTooLow) {
 		// Assert:
 		AssertValidationResult(
 			Failure_BlockchainUpgrade_Invalid_Current_Version,
-			version::CurrentBlockchainVersion.unwrap() - 1,
+			std::numeric_limits<uint64_t>::max(),
 			true);
 	}
 
@@ -64,7 +64,7 @@ namespace catapult { namespace validators {
 		// Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
-			version::CurrentBlockchainVersion.unwrap(),
+			0,
 			true);
 	}
 }}
