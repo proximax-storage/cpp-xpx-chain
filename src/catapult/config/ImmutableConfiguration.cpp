@@ -29,12 +29,14 @@ namespace catapult { namespace config {
 
 		LOAD_IMMUTABLE_PROPERTY(CurrencyMosaicId);
 		LOAD_IMMUTABLE_PROPERTY(HarvestingMosaicId);
+		LOAD_IMMUTABLE_PROPERTY(StorageMosaicId);
+		LOAD_IMMUTABLE_PROPERTY(StreamingMosaicId);
 
 		LOAD_IMMUTABLE_PROPERTY(InitialCurrencyAtomicUnits);
 
 #undef LOAD_IMMUTABLE_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 7);
+		utils::VerifyBagSizeLte(bag, 9);
 		return config;
 	}
 

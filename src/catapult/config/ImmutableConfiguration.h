@@ -32,6 +32,12 @@ namespace catapult { namespace config {
 		/// Mosaic id used to provide harvesting ability.
 		MosaicId HarvestingMosaicId;
 
+		/// Mosaic id used to provide storage ability.
+		MosaicId StorageMosaicId;
+
+		/// Mosaic id used to provide streaming ability.
+		MosaicId StreamingMosaicId;
+
 		/// Initial currency atomic units available in the network.
 		Amount InitialCurrencyAtomicUnits;
 

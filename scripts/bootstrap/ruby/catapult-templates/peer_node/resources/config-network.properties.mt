@@ -110,3 +110,8 @@ maxMosaicsSize = 512
 [plugin:catapult.plugins.upgrade]
 
 minUpgradePeriod = 360
+
+[plugin:catapult.plugins.service]
+
+minPercentageOfApproval = 100
+minPercentageOfRemoval = 66

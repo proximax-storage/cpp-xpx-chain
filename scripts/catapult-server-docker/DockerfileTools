@@ -108,6 +108,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.aggregate \
     catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
+    catapult.mongo.plugins.service \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.metadata \
@@ -133,6 +134,7 @@ RUN cd /catapult \
     catapult.plugins.signature \
     catapult.plugins.transfer \
     catapult.plugins.upgrade \
+    catapult.plugins.service \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
