@@ -34,7 +34,7 @@ namespace catapult { namespace io {
 
 			// read block
 			auto pBlock = utils::MakeSharedWithSize<model::Block>(size);
-			reinterpret_cast<uint32_t&>(*pBlock) = size;
+			pBlock->Size = size;
 			inputStream.read({ reinterpret_cast<uint8_t*>(pBlock.get()) + sizeof(uint32_t), size - sizeof(uint32_t) });
 
 			// create the block element

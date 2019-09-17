@@ -104,7 +104,7 @@ namespace catapult { namespace chain {
 			const state::BlockDifficultyInfo& nextBlockInfo,
 			const model::NetworkConfiguration& config,
 			Difficulty& difficulty) {
-		auto view = cache.createView(config::HEIGHT_OF_LATEST_CONFIG);
+		auto view = cache.createView(nextBlockInfo.BlockHeight);
 		if (!view->contains(state::BlockDifficultyInfo(nextBlockInfo.BlockHeight - Height(1))))
 			return false;
 
