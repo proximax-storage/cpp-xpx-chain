@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 		std::vector<const void*> ExtractReadOnlyViews(const TSubCacheViews& subViews) {
 			std::vector<const void*> readOnlyViews;
 			for (const auto& pSubView : subViews) {
-				if (!pSubView && pSubView->enabled()) {
+				if (!pSubView || !pSubView->enabled()) {
 					readOnlyViews.push_back(nullptr);
 					continue;
 				}
