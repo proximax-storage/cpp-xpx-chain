@@ -25,6 +25,25 @@
 
 namespace catapult { namespace mocks {
 
+	template <typename T>
+	struct SyncVector: public std::vector<T> {
+		using base = std::vector<T>;
+		using base::base; // inherit constructors
+
+		template <typename... Args>
+		auto push_back(Args&&... args) {
+			std::lock_guard<std::mutex> lock(Mutex);
+			return base::push_back(std::forward<decltype(args)...>(args...));
+		}
+
+		auto size() const {
+			std::lock_guard<std::mutex> lock(Mutex);
+			return base::size();
+		}
+
+		mutable std::mutex Mutex;
+	};
+
 	/// Base of mock notification validators.
 	class BasicMockNotificationValidator {
 	protected:
@@ -46,13 +65,12 @@ namespace catapult { namespace mocks {
 			m_notificationTypes.push_back(notificationType);
 			return m_triggerOnSpecificType && m_triggerType != notificationType
 					? validators::ValidationResult::Success
-					: m_result;
+					: (validators::ValidationResult)m_result;
 		}
 
 	public:
 		/// Sets the result of validate to \a result.
 		void setResult(validators::ValidationResult result) {
-			std::lock_guard<std::mutex> lock(m_mutex);
 			m_result = result;
 		}
 
@@ -64,11 +82,10 @@ namespace catapult { namespace mocks {
 		}
 
 	private:
-		mutable std::mutex m_mutex;
-		validators::ValidationResult m_result;
+		std::atomic<validators::ValidationResult> m_result;
 		bool m_triggerOnSpecificType;
 		model::NotificationType m_triggerType;
-		mutable std::vector<model::NotificationType> m_notificationTypes;
+		mutable SyncVector<model::NotificationType> m_notificationTypes;
 	};
 
 	/// Mock stateless notification validator that captures information about observed notifications.
@@ -92,13 +109,13 @@ namespace catapult { namespace mocks {
 
 		validators::ValidationResult validate(const TNotification& notification) const override {
 			// stateless validators need to be threadsafe, so guard getResultForType, which is not
-			utils::SpinLockGuard guard(m_lock);
+			std::lock_guard<std::mutex> guard(m_mutex);
 			return getResultForType(notification.Type);
 		}
 
 	private:
 		std::string m_name;
-		mutable utils::SpinLock m_lock;
+		mutable std::mutex m_mutex;
 	};
 
 	/// Mock stateful notification validator that captures information about observed notifications and contexts.

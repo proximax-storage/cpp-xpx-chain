@@ -22,6 +22,7 @@
 #include "AggregateValidationResult.h"
 #include "ValidatorTypes.h"
 #include "catapult/utils/NamedObject.h"
+#include <utility>
 #include <vector>
 
 namespace catapult { namespace validators {
@@ -51,9 +52,9 @@ namespace catapult { namespace validators {
 		public:
 			explicit DefaultAggregateNotificationValidator(
 					NotificationValidatorPointerVector&& validators,
-					const ValidationResultPredicate& isSuppressedFailure)
+					ValidationResultPredicate isSuppressedFailure)
 					: m_validators(std::move(validators))
-					, m_isSuppressedFailure(isSuppressedFailure)
+					, m_isSuppressedFailure(std::move(isSuppressedFailure))
 					, m_name(utils::ReduceNames(utils::ExtractNames(m_validators)))
 			{}
 
