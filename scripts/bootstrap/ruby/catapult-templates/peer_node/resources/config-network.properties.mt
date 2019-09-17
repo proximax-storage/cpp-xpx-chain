@@ -8,7 +8,7 @@ blockGenerationTargetTime = 15s
 blockTimeSmoothingFactor = 3000
 
 greedDelta = 0.5
-greedExponent = 3
+greedExponent = 3.2
 
 importanceGrouping = 5760
 maxRollbackBlocks = 360
