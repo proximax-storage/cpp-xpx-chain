@@ -17,7 +17,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(BlockchainVersion, [](const auto&, const ValidatorContext& context) {
 		const auto& cache = context.Cache.sub<cache::BlockchainUpgradeCache>();
 		const auto& entry = cache.find(context.Height).tryGet();
-		if (entry && entry->blockChainVersion() > version::BlockchainVersion)
+		if (entry && entry->blockChainVersion() != version::CurrentBlockchainVersion)
 			return Failure_BlockchainUpgrade_Invalid_Current_Version;
 
 		return ValidationResult::Success;

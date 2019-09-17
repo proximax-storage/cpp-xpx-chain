@@ -83,7 +83,7 @@ namespace catapult { namespace config {
 			EXPECT_EQ(Amount(9'000'000'000'000'000), config.MaxMosaicAtomicUnits);
 
 			EXPECT_EQ(Importance(8'999'999'998'000'000), config.TotalChainImportance);
-			EXPECT_EQ(Amount(1'000'000'000'000), config.MinHarvesterBalance);
+			EXPECT_EQ(Amount(100'000'000'000), config.MinHarvesterBalance);
 			EXPECT_EQ(10u, config.HarvestBeneficiaryPercentage);
 
 			EXPECT_EQ(360u, config.BlockPruneInterval);

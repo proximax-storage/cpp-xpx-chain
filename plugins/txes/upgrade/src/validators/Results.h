@@ -29,9 +29,6 @@ namespace catapult { namespace validators {
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_CATAPULT_UPGRADE_RESULT(Plugin_Config_Malformed, 5);
 
-	/// Validation failed because the blockchain version is lower than the current one.
-	DEFINE_CATAPULT_UPGRADE_RESULT(Version_Lower_Than_Current, 6);
-
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

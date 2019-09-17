@@ -12,6 +12,7 @@
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 #include <limits>
+#include <cmake-build-debug/inc/catapult/version/version.h>
 
 namespace catapult { namespace validators {
 
@@ -43,11 +44,11 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, FailureWhenCurrentBlockchainVersionTooLow) {
+	TEST(TEST_CLASS, FailureWhenCurrentBlockchainVersionInvalid) {
 		// Assert:
 		AssertValidationResult(
 			Failure_BlockchainUpgrade_Invalid_Current_Version,
-			std::numeric_limits<uint64_t>::max(),
+			version::CurrentBlockchainVersion.unwrap() - 1,
 			true);
 	}
 
@@ -63,7 +64,7 @@ namespace catapult { namespace validators {
 		// Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
-			0,
+			version::CurrentBlockchainVersion.unwrap(),
 			true);
 	}
 }}
