@@ -42,7 +42,7 @@ namespace catapult { namespace sync {
 	class RollbackInfo {
 	public:
 		/// Creates a container around \a timeSupplier with recent stats span (calculated with \a state).
-		explicit RollbackInfo(const chain::TimeSupplier& timeSupplier, extensions::ServiceState& state);
+		explicit RollbackInfo(chain::TimeSupplier  timeSupplier, extensions::ServiceState& state);
 
 	public:
 		/// Returns rollback counter for result (\a rollbackResult) and counter type (\a rollbackCounterType).

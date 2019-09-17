@@ -27,6 +27,14 @@ namespace catapult { namespace sync {
 			, m_longestRollback(0)
 	{}
 
+	RollbackStats::RollbackStats(const RollbackStats& other) {
+		// std::atomic has no copy constructor, so here
+		// we atomically load from old atomic, and then load into new one
+		m_totalRollbacks = (size_t)other.m_totalRollbacks;
+		m_rollbackSizes = other.m_rollbackSizes;
+		m_longestRollback = other.m_longestRollback;
+	}
+
 	uint64_t RollbackStats::total(RollbackCounterType rollbackCounterType) const {
 		switch (rollbackCounterType) {
 			case RollbackCounterType::All:
@@ -46,12 +54,12 @@ namespace catapult { namespace sync {
 		if (0 == rollbackSize)
 			return;
 
-		m_rollbackSizes.push_back({ timestamp, rollbackSize });
+		m_rollbackSizes.push_back({ std::move(timestamp), rollbackSize });
 		m_longestRollback = std::max<uint64_t>(m_longestRollback, rollbackSize);
 		++m_totalRollbacks;
 	}
 
-	void RollbackStats::prune(Timestamp threshold) {
+	void RollbackStats::prune(const Timestamp& threshold) {
 		auto iter = m_rollbackSizes.begin();
 		while (iter != m_rollbackSizes.end()) {
 			if (iter->Timestamp > threshold)
