@@ -385,24 +385,23 @@ namespace catapult { namespace config {
 		// Arrange:
 		auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
 		BlockchainConfigurationHolder testee(&cache);
-		uint64_t iterationCount = 1000;
+		uint64_t dummy = 0x3ae6ca;
 		test::MutableBlockchainConfiguration mutableConfig;
+		std::promise<int> promise;
+		std::future<int> future = promise.get_future();
 
 		// Act:
 		boost::thread_group threads;
-		threads.create_thread([&testee, iterationCount, &mutableConfig] {
-			for (uint64_t i = 0; i < iterationCount; ++i) {
-				mutableConfig.Network.ImportanceGrouping = i;
-				testee.SetConfig(Height{777}, mutableConfig.ToConst());
-			}
+		threads.create_thread([&promise, &testee, dummy, &mutableConfig] {
+		  	mutableConfig.Network.ImportanceGrouping = dummy;
+		  	testee.SetConfig(Height{777}, mutableConfig.ToConst());
+		  	promise.set_value(dummy);
 		});
 
-		threads.create_thread([&testee, iterationCount] {
-			for (;;) {
-				auto& config = testee.Config(Height{777});
-				if (config.Network.ImportanceGrouping == (iterationCount - 1))
-					break;
-			}
+		threads.create_thread([&future, &testee] {
+		  	auto dummy = future.get(); // wait until the other thread set value to this future
+		  	auto& config = testee.Config(Height{777});
+		  	ASSERT_EQ(dummy, config.Network.ImportanceGrouping);
 		});
 
 		// - wait for all threads
