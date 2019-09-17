@@ -129,7 +129,7 @@ namespace catapult { namespace ionet {
 
 			// these will be synchronized because they are modified by callbacks that execute on the
 			// underlying socket's strand
-			size_t m_numOutstandingOperations;
+			std::atomic<size_t> m_numOutstandingOperations;
 			size_t m_state;
 		};
 

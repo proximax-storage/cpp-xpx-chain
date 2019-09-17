@@ -62,9 +62,9 @@ namespace catapult { namespace sync {
 				const auto& config = m_state.config(context.CacheHeight);
 				SpamThrottleConfiguration throttleConfig(
 					config.Node.TransactionSpamThrottlingMaxBoostFee,
-					config.BlockChain.TotalChainImportance,
+					config.Network.TotalChainImportance,
 					config.Node.UnconfirmedTransactionsCacheMaxSize,
-					config.BlockChain.MaxTransactionsPerBlock);
+					config.Network.MaxTransactionsPerBlock);
 
 				// always reject if cache is completely full
 				if (cacheSize >= throttleConfig.MaxCacheSize)

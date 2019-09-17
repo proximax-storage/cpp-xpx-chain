@@ -36,16 +36,16 @@ namespace catapult { namespace builders {
 		m_modifications.push_back(modification);
 	}
 
-	std::unique_ptr<AddressPropertyBuilder::Transaction> AddressPropertyBuilder::build() const {
+	model::UniqueEntityPtr<AddressPropertyBuilder::Transaction> AddressPropertyBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<AddressPropertyBuilder::EmbeddedTransaction> AddressPropertyBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<AddressPropertyBuilder::EmbeddedTransaction> AddressPropertyBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> AddressPropertyBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> AddressPropertyBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		size += m_modifications.size() * sizeof(model::AddressPropertyModification);

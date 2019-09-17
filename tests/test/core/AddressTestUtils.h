@@ -42,6 +42,9 @@ namespace catapult { namespace test {
 	/// Generates a random (unresolved) address.
 	UnresolvedAddress GenerateRandomUnresolvedAddress();
 
+	/// Generates a random (unresolved) address for a given network with id (\a networkIdentifier).
+	UnresolvedAddress GenerateRandomUnresolvedAddress(model::NetworkIdentifier networkIdentifier);
+
 	/// Generates a random set of \a count (unresolved) addresses.
 	std::shared_ptr<model::UnresolvedAddressSet> GenerateRandomUnresolvedAddressSetPointer(size_t count);
 }}

@@ -24,7 +24,7 @@
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlySimpleCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -54,11 +54,11 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets the retention time for the cache.
 		utils::TimeSpan retentionTime() const {
-			return CalculateTransactionCacheDuration(m_pConfigHolder->Config(height()).BlockChain);
+			return CalculateTransactionCacheDuration(m_pConfigHolder->Config(height()).Network);
 		}
 
 	private:
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the hash cache.

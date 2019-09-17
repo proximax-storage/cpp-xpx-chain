@@ -23,7 +23,7 @@
 #include "MongoReceiptPlugin.h"
 #include "MongoStorageContext.h"
 #include "MongoTransactionPlugin.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/plugins.h"
 
 namespace catapult { namespace mongo {
@@ -32,7 +32,7 @@ namespace catapult { namespace mongo {
 	class MongoPluginManager {
 	public:
 		/// Creates a new plugin manager around \a mongoContext and \a pConfigHolder.
-		explicit MongoPluginManager(MongoStorageContext& mongoContext, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+		explicit MongoPluginManager(MongoStorageContext& mongoContext, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: m_mongoContext(mongoContext)
 				, m_pConfigHolder(pConfigHolder)
 		{}
@@ -44,7 +44,7 @@ namespace catapult { namespace mongo {
 		}
 
 		/// Gets the configuration holder.
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const {
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder() const {
 			return m_pConfigHolder;
 		}
 
@@ -83,7 +83,7 @@ namespace catapult { namespace mongo {
 
 	private:
 		MongoStorageContext& m_mongoContext;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		MongoTransactionRegistry m_transactionRegistry;
 		MongoReceiptRegistry m_receiptRegistry;
 		ExternalCacheStorageBuilder m_storageBuilder;

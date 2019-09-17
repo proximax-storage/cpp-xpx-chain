@@ -45,14 +45,14 @@ namespace catapult { namespace builders {
 
 	public:
 		/// Builds a new mosaic property transaction.
-		std::unique_ptr<Transaction> build() const;
+		model::UniqueEntityPtr<Transaction> build() const;
 
 		/// Builds a new embedded mosaic property transaction.
-		std::unique_ptr<EmbeddedTransaction> buildEmbedded() const;
+		model::UniqueEntityPtr<EmbeddedTransaction> buildEmbedded() const;
 
 	private:
 		template<typename TTransaction>
-		std::unique_ptr<TTransaction> buildImpl() const;
+		model::UniqueEntityPtr<TTransaction> buildImpl() const;
 
 	private:
 		model::PropertyType m_propertyType;

@@ -38,8 +38,7 @@ namespace catapult { namespace observers {
 			auto pObserver = CreateSourceChangeObserver();
 			auto notification = model::SourceChangeNotification<1>(primaryChangeType, 10, secondaryChangeType, 5);
 
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			test::ObserverTestContext context(NotifyMode::Rollback, Height{444}, config);
+			test::ObserverTestContext context(NotifyMode::Rollback, Height{444});
 			context.statementBuilder().setSource({ 15, 22 });
 
 			// Act:
@@ -85,8 +84,7 @@ namespace catapult { namespace observers {
 			auto pObserver = CreateSourceChangeObserver();
 			auto notification = model::SourceChangeNotification<1>(primaryChangeType, 10, secondaryChangeType, 5);
 
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
+			test::ObserverTestContext context(NotifyMode::Commit, Height{444});
 			context.statementBuilder().setSource({ 15, 22 });
 
 			// Act:

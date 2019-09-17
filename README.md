@@ -27,3 +27,20 @@ sudo apt-get install docker-compose -y
   cd cpp-xpx-chain
   sudo ./scripts/Catapult.serverRealeaseDocker/buildCatapultServer.sh
   ```
+
+## Sanitizers
+
+Sanitizers are compiler flags, that inject verification code into binary. [Detailed](https://github.com/google/sanitizers).
+
+```
+# 1. do a clean build with one of sanitizers enabled
+cmake .. -DSANITIZE_ADDRESS=ON    # enables address & memory leak sanitizers
+cmake .. -DSANITIZE_THREAD=ON     # enables thread sanitizer
+cmake .. -DSANITIZE_UNDEFINED=ON  # enables undefined behavior sanitizer
+# 2. build
+make
+# 3. run binary OR tests
+ctest
+```
+
+If binary contains errors, it will fail with detailed stacktrace.

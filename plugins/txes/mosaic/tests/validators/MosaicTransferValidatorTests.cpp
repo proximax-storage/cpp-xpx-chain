@@ -18,11 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/MosaicTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -32,13 +29,13 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicTransferValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicTransfer, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicTransfer, UnresolvedMosaicId())
 
 	namespace {
 		constexpr auto Currency_Mosaic_Id = UnresolvedMosaicId(2345);
 
-		auto CreateCache(const model::BlockChainConfiguration& config) {
-			return test::MosaicCacheFactory::Create(config);
+		auto CreateCache() {
+			return test::MosaicCacheFactory::Create();
 		}
 
 		model::MosaicProperties CreateMosaicProperties(model::MosaicFlags flags) {
@@ -68,10 +65,7 @@ namespace catapult { namespace validators {
 				const cache::CatapultCache& cache,
 				const model::BalanceTransferNotification<1>& notification) {
 			// Arrange:
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
-			auto pValidator = CreateMosaicTransferValidator(pConfigHolder);
+			auto pValidator = CreateMosaicTransferValidator(Currency_Mosaic_Id);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -84,8 +78,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenValidatingCurrencyMosaicTransfer) {
 		// Arrange:
 		auto notification = model::BalanceTransferNotification<1>(Key(), UnresolvedAddress(), Currency_Mosaic_Id, Amount(123));
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = CreateCache(config);
+		auto cache = CreateCache();
 
 		// Assert:
 		AssertValidationResult(ValidationResult::Success, cache, notification);
@@ -95,9 +88,9 @@ namespace catapult { namespace validators {
 		constexpr MosaicId Valid_Mosaic_Id(222);
 		constexpr UnresolvedMosaicId Unresolved_Unknown_Mosaic_Id(444);
 
-		auto CreateAndSeedCache(const Key& owner, model::MosaicFlags flags, const model::BlockChainConfiguration& config) {
+		auto CreateAndSeedCache(const Key& owner, model::MosaicFlags flags) {
 			// Arrange:
-			auto cache = CreateCache(config);
+			auto cache = CreateCache();
 			auto validMosaicEntry = CreateMosaicEntry(Valid_Mosaic_Id, owner, flags);
 			SeedCacheWithMosaic(cache, validMosaicEntry);
 
@@ -113,8 +106,7 @@ namespace catapult { namespace validators {
 			auto owner = test::GenerateRandomByteArray<Key>();
 			auto notification = model::BalanceTransferNotification<1>(owner, UnresolvedAddress(), mosaicId, Amount(123));
 
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = CreateAndSeedCache(owner, model::MosaicFlags::Transferable, config);
+			auto cache = CreateAndSeedCache(owner, model::MosaicFlags::Transferable);
 
 			// Assert:
 			AssertValidationResult(expectedResult, cache, notification);
@@ -141,8 +133,7 @@ namespace catapult { namespace validators {
 		void AssertNonTransferableMosaicsTest(ValidationResult expectedResult, uint8_t notificationFlags) {
 			// Arrange:
 			auto owner = test::GenerateRandomByteArray<Key>();
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = CreateAndSeedCache(owner, model::MosaicFlags::None, config);
+			auto cache = CreateAndSeedCache(owner, model::MosaicFlags::None);
 
 			// - notice that BalanceTransferNotification holds references to sender + recipient
 			Key sender;

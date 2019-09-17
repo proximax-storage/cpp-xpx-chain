@@ -28,6 +28,7 @@
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/LocalTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 
@@ -50,23 +51,23 @@ namespace catapult { namespace extensions {
 			return Amount(GetTotalChainImportance(numAccounts).unwrap() * 1'000'000);
 		}
 
-		model::BlockChainConfiguration CreateBlockChainConfiguration(uint32_t numAccounts) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.MaxDifficultyBlocks = 4;
-			config.MaxRollbackBlocks = 124;
-			config.BlockPruneInterval = 360;
-			config.TotalChainImportance = GetTotalChainImportance(numAccounts);
-			config.MinHarvesterBalance = Amount(1'000'000);
-			config.ImportanceGrouping = Importance_Grouping;
-			return config;
+		auto CreateConfiguration(uint32_t numAccounts) {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+			config.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.Network.MaxDifficultyBlocks = 4;
+			config.Network.MaxRollbackBlocks = 124;
+			config.Network.BlockPruneInterval = 360;
+			config.Network.TotalChainImportance = GetTotalChainImportance(numAccounts);
+			config.Network.MinHarvesterBalance = Amount(1'000'000);
+			config.Network.ImportanceGrouping = Importance_Grouping;
+			return config.ToConst();
 		}
 
 		class TestContext {
 		public:
 			explicit TestContext(uint32_t numAccounts)
-					: m_config(CreateBlockChainConfiguration(numAccounts))
+					: m_config(CreateConfiguration(numAccounts))
 					, m_pPluginManager(test::CreatePluginManagerWithRealPlugins(m_config))
 					, m_cache(m_pPluginManager->createCache())
 					, m_specialAccountKey(test::GenerateRandomByteArray<Key>()) {
@@ -223,7 +224,7 @@ namespace catapult { namespace extensions {
 				cache.commit(Height());
 			}
 
-			std::unique_ptr<model::Block> createBlock(Height height) {
+			model::UniqueEntityPtr<model::Block> createBlock(Height height) {
 				// if there are transactions, add them to the block
 				auto transactionsIter = m_heightToTransactions.find(height);
 				auto pBlock = m_heightToTransactions.end() == transactionsIter
@@ -245,7 +246,7 @@ namespace catapult { namespace extensions {
 			}
 
 		private:
-			model::BlockChainConfiguration m_config;
+			config::BlockchainConfiguration m_config;
 			std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 			cache::CatapultCache m_cache;
 			state::CatapultState m_state;

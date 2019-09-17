@@ -24,24 +24,24 @@
 namespace catapult { namespace plugins {
 
 	PluginManager::PluginManager(
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const StorageConfiguration& storageConfig)
 			: m_pConfigHolder(pConfigHolder)
 			, m_storageConfig(storageConfig)
-			, m_shouldEnableVerifiableState(config().ShouldEnableVerifiableState)
+			, m_shouldEnableVerifiableState(immutableConfig().ShouldEnableVerifiableState)
 	{}
 
 	// region config
 
-	const model::BlockChainConfiguration& PluginManager::config(const Height& height) const {
-		return m_pConfigHolder->Config(height).BlockChain;
+	const model::NetworkConfiguration& PluginManager::config(const Height& height) const {
+		return m_pConfigHolder->Config(height).Network;
 	}
 
-	const model::BlockChainConfiguration& PluginManager::config() const {
-		return m_pConfigHolder->Config().BlockChain;
+	const model::NetworkConfiguration& PluginManager::config() const {
+		return m_pConfigHolder->Config().Network;
 	}
 
-	const std::shared_ptr<config::LocalNodeConfigurationHolder>& PluginManager::configHolder() const {
+	const std::shared_ptr<config::BlockchainConfigurationHolder>& PluginManager::configHolder() const {
 		return m_pConfigHolder;
 	}
 
@@ -51,6 +51,10 @@ namespace catapult { namespace plugins {
 
 	const config::InflationConfiguration& PluginManager::inflationConfig() const {
 		return m_pConfigHolder->Config().Inflation;
+	}
+
+	const config::ImmutableConfiguration& PluginManager::immutableConfig() const {
+		return m_pConfigHolder->Config().Immutable;
 	}
 
 	cache::CacheConfiguration PluginManager::cacheConfig(const std::string& name) const {
@@ -276,7 +280,7 @@ namespace catapult { namespace plugins {
 	// region publisher
 
 	PluginManager::PublisherPointer PluginManager::createNotificationPublisher(model::PublicationMode mode) const {
-		return model::CreateNotificationPublisher(m_transactionRegistry, configHolder(), mode);
+		return model::CreateNotificationPublisher(m_transactionRegistry, config::GetUnresolvedCurrencyMosaicId(immutableConfig()), mode);
 	}
 
 	// endregion

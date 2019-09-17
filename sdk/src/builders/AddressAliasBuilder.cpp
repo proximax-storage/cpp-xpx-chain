@@ -41,16 +41,16 @@ namespace catapult { namespace builders {
 		m_address = address;
 	}
 
-	std::unique_ptr<AddressAliasBuilder::Transaction> AddressAliasBuilder::build() const {
+	model::UniqueEntityPtr<AddressAliasBuilder::Transaction> AddressAliasBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<AddressAliasBuilder::EmbeddedTransaction> AddressAliasBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<AddressAliasBuilder::EmbeddedTransaction> AddressAliasBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> AddressAliasBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> AddressAliasBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		auto pTransaction = createTransaction<TransactionType>(size);

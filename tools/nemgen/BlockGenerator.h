@@ -35,7 +35,7 @@ namespace catapult {
 namespace catapult { namespace tools { namespace nemgen {
 
 	/// Creates a nemesis block according to \a config.
-	std::unique_ptr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath);
+	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath);
 
 	/// Updates nemesis \a block according to \a config with \a executionHashesDescriptor.
 	Hash256 UpdateNemesisBlock(

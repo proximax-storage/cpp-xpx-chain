@@ -22,6 +22,7 @@
 #include "AddressTestUtils.h"
 #include "catapult/model/Cosignature.h"
 #include "catapult/model/RangeTypes.h"
+#include "catapult/model/EntityPtr.h"
 #include "tests/TestHarness.h"
 #include <memory>
 #include <vector>
@@ -42,13 +43,13 @@ namespace catapult { namespace test {
 	GenerationHash GetDefaultGenerationHash();
 
 	/// Generates a transaction with random data.
-	std::unique_ptr<model::Transaction> GenerateRandomTransaction();
+	model::UniqueEntityPtr<model::Transaction> GenerateRandomTransaction();
 
 	/// Generates a transaction for a network with specified generation hash (\a generationHash).
-	std::unique_ptr<model::Transaction> GenerateRandomTransaction(const GenerationHash& generationHash);
+	model::UniqueEntityPtr<model::Transaction> GenerateRandomTransaction(const GenerationHash& generationHash);
 
 	/// Generates a transaction with random data around \a signer.
-	std::unique_ptr<model::Transaction> GenerateRandomTransaction(const Key& signer);
+	model::UniqueEntityPtr<model::Transaction> GenerateRandomTransaction(const Key& signer);
 
 	/// Generates \a count transactions with random data.
 	MutableTransactions GenerateRandomTransactions(size_t count);
@@ -57,13 +58,13 @@ namespace catapult { namespace test {
 	ConstTransactions MakeConst(const MutableTransactions& transactions);
 
 	/// Generates a random transaction with size \a entitySize.
-	std::unique_ptr<model::Transaction> GenerateRandomTransactionWithSize(size_t entitySize);
+	model::UniqueEntityPtr<model::Transaction> GenerateRandomTransactionWithSize(size_t entitySize);
 
 	/// Generates a transaction with \a deadline.
-	std::unique_ptr<model::Transaction> GenerateTransactionWithDeadline(Timestamp deadline);
+	model::UniqueEntityPtr<model::Transaction> GenerateTransactionWithDeadline(Timestamp deadline);
 
 	/// Generates a predefined transaction, i.e. this function will always return the same transaction.
-	std::unique_ptr<model::Transaction> GenerateDeterministicTransaction();
+	model::UniqueEntityPtr<model::Transaction> GenerateDeterministicTransaction();
 
 	/// Policy for creating a transaction.
 	struct TransactionPolicy {

@@ -22,6 +22,7 @@
 #include "PodIoUtils.h"
 #include "catapult/model/SizePrefixedEntity.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/model/EntityPtr.h"
 #include <memory>
 
 namespace catapult { namespace io {
@@ -34,7 +35,7 @@ namespace catapult { namespace io {
 
 	/// Reads size prefixed entity from \a input.
 	template<typename TEntity, typename TIo>
-	std::unique_ptr<TEntity> ReadEntity(TIo& input) {
+	model::UniqueEntityPtr<TEntity> ReadEntity(TIo& input) {
 		auto entitySize = Read32(input);
 		auto pEntity = utils::MakeUniqueWithSize<TEntity>(entitySize);
 		input.read({ reinterpret_cast<uint8_t*>(pEntity.get()) + sizeof(uint32_t), entitySize - sizeof(uint32_t) });

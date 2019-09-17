@@ -66,7 +66,7 @@ namespace catapult { namespace model {
 			return reinterpret_cast<const CosignatoryModification* const *>(ModificationsStart());
 		}
 
-		static std::unique_ptr<ReputationUpdateNotification<1>> CreateReputationUpdateNotification(const std::vector<const CosignatoryModification*>& modifications) {
+		static auto CreateReputationUpdateNotification(const std::vector<const CosignatoryModification*>& modifications) {
 			auto smart_ptr = utils::MakeUniqueWithSize<ReputationUpdateNotification<1>>(RealSize(modifications));
 			auto& notification = *smart_ptr.get();
 			notification.Type = Notification_Type;

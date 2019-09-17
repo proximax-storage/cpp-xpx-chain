@@ -20,7 +20,7 @@
 
 #pragma once
 #include "ServerHooks.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/net/PacketIoPickerContainer.h"
 #include "catapult/plugins/PluginManager.h"
@@ -185,7 +185,7 @@ namespace catapult { namespace extensions {
 
 		/// Gets the network identifier.
 		auto& networkIdentifier() {
-			return config().BlockChain.Network.Identifier;
+			return config().Immutable.NetworkIdentifier;
 		}
 
 	private:

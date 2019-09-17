@@ -20,7 +20,7 @@
 
 #include "ProcessMain.h"
 #include "Signals.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/config/ValidateConfiguration.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
@@ -67,7 +67,7 @@ namespace catapult { namespace process {
 
 		// endregion
 
-		void Run(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, ProcessOptions processOptions, const CreateProcessHost& createProcessHost) {
+		void Run(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, ProcessOptions processOptions, const CreateProcessHost& createProcessHost) {
 			auto keyPair = crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey);
 
 			CATAPULT_LOG(info) << "booting process with public key " << crypto::FormatKey(keyPair.publicKey());
@@ -96,7 +96,7 @@ namespace catapult { namespace process {
 		version::WriteVersionInformation(std::cout);
 
 		// 1. load and validate the configuration
-		auto pConfigHolder = std::make_shared<config::LocalNodeConfigurationHolder>(nullptr);
+		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(nullptr);
 		const auto& config = pConfigHolder->LoadConfig(argc, argv, host);
 		ValidateConfiguration(config);
 

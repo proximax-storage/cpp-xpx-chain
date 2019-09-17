@@ -18,26 +18,36 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "src/config/TransferConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 
 #define TEST_CLASS TransferMosaicsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(TransferMosaics,)
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMosaics, config::CreateMockConfigurationHolder())
 
 	namespace {
 		constexpr auto Success_Result = ValidationResult::Success;
 
-		void AssertValidationResult(ValidationResult expectedResult, const std::vector<model::UnresolvedMosaic>& mosaics) {
+		void AssertValidationResult(ValidationResult expectedResult, const std::vector<model::UnresolvedMosaic>& mosaics, const uint16_t& maxMosaicsSize) {
 			// Arrange:
 			model::TransferMosaicsNotification<1> notification(static_cast<uint8_t>(mosaics.size()), mosaics.data());
-			auto pValidator = CreateTransferMosaicsValidator();
+			auto pluginConfig = config::TransferConfiguration::Uninitialized();
+			pluginConfig.MaxMosaicsSize = maxMosaicsSize;
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
+			auto config = mutableConfig.ToConst();
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto pValidator = CreateTransferMosaicsValidator(pConfigHolder);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification);
+			auto result = test::ValidateNotification(*pValidator, notification, cache);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
@@ -46,43 +56,60 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithZeroMosaics) {
 		// Assert:
-		AssertValidationResult(Success_Result, {});
+		AssertValidationResult(Success_Result, {}, 1);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithOneMosaic) {
 		// Assert:
-		AssertValidationResult(Success_Result, { { UnresolvedMosaicId(71), Amount(5) } });
+		AssertValidationResult(Success_Result, { { UnresolvedMosaicId(71), Amount(5) } }, 1);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenValidatingNotificationWithMultipleOrderedMosaics) {
 		// Assert:
 		AssertValidationResult(
-				Success_Result,
-				{ { UnresolvedMosaicId(71), Amount(5) }, { UnresolvedMosaicId(182), Amount(4) }, { UnresolvedMosaicId(200), Amount(1) } });
+			Success_Result,
+			{ { UnresolvedMosaicId(71), Amount(5) }, { UnresolvedMosaicId(182), Amount(4) }, { UnresolvedMosaicId(200), Amount(1) } }, 3);
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithMultipleOutOfOrderMosaics) {
 		// Assert:
 		// - first and second are out of order
 		AssertValidationResult(
-				Failure_Transfer_Out_Of_Order_Mosaics,
-				{ { UnresolvedMosaicId(200), Amount(5) }, { UnresolvedMosaicId(71), Amount(1) }, { UnresolvedMosaicId(182), Amount(4) } });
+			Failure_Transfer_Out_Of_Order_Mosaics,
+			{ { UnresolvedMosaicId(200), Amount(5) }, { UnresolvedMosaicId(71), Amount(1) }, { UnresolvedMosaicId(182), Amount(4) } }, 3);
 
 		// - second and third are out of order
 		AssertValidationResult(
-				Failure_Transfer_Out_Of_Order_Mosaics,
-				{ { UnresolvedMosaicId(71), Amount(5) }, { UnresolvedMosaicId(200), Amount(1) }, { UnresolvedMosaicId(182), Amount(4) } });
+			Failure_Transfer_Out_Of_Order_Mosaics,
+			{ { UnresolvedMosaicId(71), Amount(5) }, { UnresolvedMosaicId(200), Amount(1) }, { UnresolvedMosaicId(182), Amount(4) } }, 3);
 	}
 
 	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithMultipleTransfersOfSameMosaic) {
 		// Assert: create a transaction with multiple (in order) transfers for the same mosaic
 		AssertValidationResult(
-				Failure_Transfer_Out_Of_Order_Mosaics,
-				{
-					{ UnresolvedMosaicId(71), Amount(5) },
-					{ UnresolvedMosaicId(182), Amount(4) },
-					{ UnresolvedMosaicId(182), Amount(4) },
-					{ UnresolvedMosaicId(200), Amount(1) }
-				});
+			Failure_Transfer_Out_Of_Order_Mosaics,
+			{
+				{ UnresolvedMosaicId(71), Amount(5) },
+				{ UnresolvedMosaicId(182), Amount(4) },
+				{ UnresolvedMosaicId(182), Amount(4) },
+				{ UnresolvedMosaicId(200), Amount(1) }
+			},
+			4);
+	}
+
+	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithOneMosaicZeroAmount) {
+		// Assert:
+		AssertValidationResult(Failure_Transfer_Zero_Amount, { { UnresolvedMosaicId(71), Amount(0) } }, 1);
+	}
+
+	TEST(TEST_CLASS, FailureWhenValidatingNotificationWithTwoMosaicsWhenMaxMosaicsSizeIsOne) {
+		// Assert:
+		AssertValidationResult(
+			Failure_Transfer_Too_Many_Mosaics,
+			{
+				{ UnresolvedMosaicId(200), Amount(5) },
+				{ UnresolvedMosaicId(71), Amount(1) }
+			},
+			1);
 	}
 }}

@@ -23,7 +23,7 @@
 #include "src/config/SecretLockConfiguration.h"
 #include "catapult/crypto/Hashes.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -66,16 +66,16 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::SecretLockConfiguration::Uninitialized();
 			pluginConfig.MinProofSize = 10;
 			pluginConfig.MaxProofSize = 100;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
-			return config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
+			return config::CreateMockConfigurationHolder(networkConfig);
 		}
 
 		void AssertFailureIfHashAlgorithmIsNotSupported(model::LockHashAlgorithm lockHashAlgorithm) {
 			// Arrange:
 			NotificationBuilder notificationBuilder(lockHashAlgorithm);
 			auto pConfigHolder = CreateConfigHolder();
-			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config().BlockChain);
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
 			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:
@@ -98,7 +98,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenSecretDoesNotMatchProof) {
 		NotificationBuilder notificationBuilder;
 		auto pConfigHolder = CreateConfigHolder();
-		auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config().BlockChain);
+		auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
 		auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 		// Act:
@@ -114,7 +114,7 @@ namespace catapult { namespace validators {
 			NotificationBuilder notificationBuilder(algorithm);
 			notificationBuilder.setValidHash();
 			auto pConfigHolder = CreateConfigHolder();
-			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config().BlockChain);
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
 			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:
@@ -152,7 +152,7 @@ namespace catapult { namespace validators {
 			notificationBuilder.setProofSize(proofSize);
 			notificationBuilder.setValidHash();
 			auto pConfigHolder = CreateConfigHolder();
-			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config().BlockChain);
+			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
 			auto pValidator = CreateProofSecretValidator(pConfigHolder);
 
 			// Act:

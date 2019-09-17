@@ -29,10 +29,10 @@ namespace catapult { namespace validators {
 	using Notification = model::NamespaceNameNotification<1>;
 	using NameSet = std::unordered_set<std::string>;
 
-	DECLARE_STATEFUL_VALIDATOR(NamespaceName, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(NamespaceName, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(NamespaceName, ([pConfigHolder](const auto& notification, const auto& context) {
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
 			std::unordered_set<NamespaceId, utils::BaseValueHasher<NamespaceId>> reservedRootIds;
 			for (const auto& name : pluginConfig.ReservedRootNamespaceNames)
 				reservedRootIds.emplace(model::GenerateNamespaceId(Namespace_Base_Id, name));

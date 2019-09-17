@@ -26,7 +26,6 @@
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/io/IndexFile.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/plugins/PluginLoader.h"
 #include "catapult/utils/NetworkTime.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
@@ -38,6 +37,7 @@
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/filesystem.hpp>
 
@@ -74,11 +74,11 @@ namespace catapult { namespace sync {
 
 		cache::CatapultCache CreateCatapultCacheForDispatcherTests() {
 			// importance grouping must be non-zero
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ImportanceGrouping = 1;
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 1;
 
 			// create the cache
-			return test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config);
+			return test::CreateEmptyCatapultCache<test::CoreSystemCacheFactory>(config.ToConst());
 		}
 
 		void InitializeCatapultCacheForDispatcherTests(cache::CatapultCache& cache, const crypto::KeyPair& signer) {
@@ -272,7 +272,7 @@ namespace catapult { namespace sync {
 			pBlock->Difficulty = chain::CalculateDifficulty(
 					testContext.testState().cache().sub<cache::BlockDifficultyCache>(),
 					state::BlockDifficultyInfo(*pBlock),
-					testContext.testState().config().BlockChain
+					testContext.testState().config().Network
 			);
 			pBlock->FeeInterest = 1;
 			pBlock->FeeInterestDenominator = 2;
@@ -428,8 +428,7 @@ namespace catapult { namespace sync {
 		template<typename THandler>
 		void AssertCanConsumeBlockRange(bool shouldEnableVerifiableReceipts, model::AnnotatedBlockRange&& range, TestContext& context, THandler handler) {
 			// Arrange:
-			const auto& blockChainConfig = context.testState().config().BlockChain;
-			const_cast<model::BlockChainConfiguration&>(blockChainConfig).ShouldEnableVerifiableReceipts = shouldEnableVerifiableReceipts;
+			const_cast<bool&>(context.testState().config().Immutable.ShouldEnableVerifiableReceipts) = shouldEnableVerifiableReceipts;
 
 			context.boot();
 			auto factory = context.testState().state().hooks().blockRangeConsumerFactory()(disruptor::InputSource::Local);
@@ -669,7 +668,7 @@ namespace catapult { namespace sync {
 		pBetterBlock->Difficulty = chain::CalculateDifficulty(
 				context.testState().cache().sub<cache::BlockDifficultyCache>(),
 				state::BlockDifficultyInfo(*pBetterBlock),
-				context.testState().config().BlockChain
+				context.testState().config().Network
 		);
 
 		factory(test::CreateEntityRange({ pBetterBlock.get() }));
@@ -703,7 +702,7 @@ namespace catapult { namespace sync {
 		pBetterBlock->Difficulty = chain::CalculateDifficulty(
 				context.testState().cache().sub<cache::BlockDifficultyCache>(),
 				state::BlockDifficultyInfo(*pBetterBlock),
-				context.testState().config().BlockChain
+				context.testState().config().Network
 		);
 		context.setStatefulBlockValidationResult(ValidationResult::Failure);
 
@@ -715,7 +714,7 @@ namespace catapult { namespace sync {
 		pBetterBlock->Difficulty = chain::CalculateDifficulty(
 				context.testState().cache().sub<cache::BlockDifficultyCache>(),
 				state::BlockDifficultyInfo(*pBetterBlock),
-				context.testState().config().BlockChain
+				context.testState().config().Network
 		);
 		context.setStatefulBlockValidationResult(ValidationResult::Success);
 
@@ -922,7 +921,7 @@ namespace catapult { namespace sync {
 			nodeConfig.ShouldEnableTransactionSpamThrottling = enableFiltering;
 			nodeConfig.TransactionSpamThrottlingMaxBoostFee = Amount(10'000'000);
 			nodeConfig.UnconfirmedTransactionsCacheMaxSize = maxCacheSize;
-			const_cast<uint32_t&>(config.BlockChain.MaxTransactionsPerBlock) = maxCacheSize / 2;
+			const_cast<uint32_t&>(config.Network.MaxTransactionsPerBlock) = maxCacheSize / 2;
 
 			// - boot the service
 			context.boot();

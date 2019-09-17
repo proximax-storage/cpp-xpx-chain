@@ -19,7 +19,7 @@
 **/
 
 #include "src/CoreSystem.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/plugins/PluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -61,14 +61,13 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
-				return { "TransactionFeeValidator" };
+				return { "NetworkValidator", "TransactionFeeValidator" };
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
 					"EntityVersionValidator",
 					"MaxTransactionsValidator",
-					"NetworkValidator",
 					"AddressValidator",
 					"DeadlineValidator",
 					"EligibleHarvesterValidator",

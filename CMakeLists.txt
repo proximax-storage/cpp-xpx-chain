@@ -2,6 +2,9 @@ cmake_minimum_required(VERSION 3.2)
 project(catapult_server)
 include(CMakeGlobalSettings.cmake)
 option(ENABLE_CODE_COVERAGE "Enable code coverage" OFF)
+option(SANITIZE_ADDRESS "Enable address sanitizer" OFF)
+option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
+option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
@@ -16,7 +19,7 @@ message(STATUS "BOOST_ROOT: $ENV{BOOST_ROOT}")
 set(CORE_CATAPULT_LIBS catapult.io catapult.ionet catapult.model catapult.thread catapult.utils)
 
 ### setup boost
-find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options REQUIRED)
+find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 ### setup rocksdb

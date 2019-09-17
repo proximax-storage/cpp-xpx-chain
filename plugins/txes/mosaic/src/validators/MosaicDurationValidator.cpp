@@ -21,14 +21,14 @@
 #include "Validators.h"
 #include "src/cache/MosaicCache.h"
 #include "catapult/validators/ValidatorContext.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::MosaicDefinitionNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(MosaicDuration, [pConfigHolder](const auto& notification, const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::MosaicCache>();
 
@@ -44,9 +44,9 @@ namespace catapult { namespace validators {
 			auto isIncompatibleChange =
 					(BlockDuration() == currentDuration && BlockDuration() != delta) ||
 					(BlockDuration() != currentDuration && BlockDuration() == delta);
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
-			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(blockChainConfig.BlockGenerationTargetTime);
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
+			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(networkConfig.BlockGenerationTargetTime);
 			return isIncompatibleChange || maxMosaicDuration < resultingDuration || resultingDuration < currentDuration
 					? Failure_Mosaic_Invalid_Duration
 					: ValidationResult::Success;

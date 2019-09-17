@@ -47,7 +47,7 @@ namespace catapult { namespace model {
 			return header.Size - sizeof(ContainerHeader);
 		}
 
-		std::unique_ptr<Container> CreateContainer(uint32_t extraSize, std::initializer_list<uint32_t> attachmentExtraSizes) {
+		model::UniqueEntityPtr<Container> CreateContainer(uint32_t extraSize, std::initializer_list<uint32_t> attachmentExtraSizes) {
 			uint32_t size = sizeof(ContainerHeader) + extraSize;
 			for (auto attachmentExtraSize : attachmentExtraSizes)
 				size += sizeof(ContainerComponent) + attachmentExtraSize;

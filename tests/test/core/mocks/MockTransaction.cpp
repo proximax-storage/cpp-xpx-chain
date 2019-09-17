@@ -32,7 +32,7 @@ namespace catapult { namespace mocks {
 
 	namespace {
 		template<typename TMockTransaction>
-		std::unique_ptr<TMockTransaction> CreateMockTransactionT(uint16_t dataSize) {
+		model::UniqueEntityPtr<TMockTransaction> CreateMockTransactionT(uint16_t dataSize) {
 			uint32_t entitySize = sizeof(TMockTransaction) + dataSize;
 			auto pTransaction = utils::MakeUniqueWithSize<TMockTransaction>(entitySize);
 
@@ -44,15 +44,15 @@ namespace catapult { namespace mocks {
 		}
 	}
 
-	std::unique_ptr<MockTransaction> CreateMockTransaction(uint16_t dataSize) {
+	model::UniqueEntityPtr<MockTransaction> CreateMockTransaction(uint16_t dataSize) {
 		return CreateMockTransactionT<MockTransaction>(dataSize);
 	}
 
-	std::unique_ptr<EmbeddedMockTransaction> CreateEmbeddedMockTransaction(uint16_t dataSize) {
+	model::UniqueEntityPtr<EmbeddedMockTransaction> CreateEmbeddedMockTransaction(uint16_t dataSize) {
 		return CreateMockTransactionT<EmbeddedMockTransaction>(dataSize);
 	}
 
-	std::unique_ptr<mocks::MockTransaction> CreateTransactionWithFeeAndTransfers(
+	model::UniqueEntityPtr<mocks::MockTransaction> CreateTransactionWithFeeAndTransfers(
 			Amount fee,
 			const std::vector<model::UnresolvedMosaic>& transfers) {
 		auto pTransaction = mocks::CreateMockTransaction(static_cast<uint16_t>(transfers.size() * sizeof(Mosaic)));
@@ -68,7 +68,7 @@ namespace catapult { namespace mocks {
 		return pTransaction;
 	}
 
-	std::unique_ptr<MockTransaction> CreateMockTransactionWithSignerAndRecipient(const Key& signer, const Key& recipient) {
+	model::UniqueEntityPtr<MockTransaction> CreateMockTransactionWithSignerAndRecipient(const Key& signer, const Key& recipient) {
 		auto pTransaction = CreateMockTransactionT<MockTransaction>(0);
 		pTransaction->Signer = signer;
 		pTransaction->Recipient = recipient;

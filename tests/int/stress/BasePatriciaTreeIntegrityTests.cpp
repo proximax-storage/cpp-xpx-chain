@@ -23,8 +23,9 @@
 #include "catapult/utils/HexParser.h"
 #include "catapult/utils/StackTimer.h"
 #include "tests/int/stress/test/InputDependentTest.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -49,13 +50,15 @@ namespace catapult { namespace cache {
 		}
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			config.ImportanceGrouping = 543;
-			config.MinHarvesterBalance = Amount(1000);
-			config.CurrencyMosaicId = MosaicId(0xE329'AD1C'BE7F'C60D);
-			config.HarvestingMosaicId = MosaicId(2222);
-			return config::CreateMockConfigurationHolder(config);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 543;
+			config.Network.MinHarvesterBalance = Amount(1000);
+			return config::CreateMockConfigurationHolder(config.ToConst());
+		}
+
+		auto DefaultOptions() {
+			return AccountStateCacheTypes::Options{
+				CreateConfigHolder(), model::NetworkIdentifier::Mijin_Test, MosaicId(0xE329'AD1C'BE7F'C60D), MosaicId(2222) };
 		}
 
 		template<typename TSerializer>
@@ -65,7 +68,7 @@ namespace catapult { namespace cache {
 			// Arrange: create a db-backed account state cache
 			test::TempDirectoryGuard dbDirGuard;
 			CacheConfiguration cacheConfig(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Enabled);
-			AccountStateCache cache(cacheConfig, CreateConfigHolder());
+			AccountStateCache cache(cacheConfig, DefaultOptions());
 
 			// - load all test accounts into the delta
 			std::pair<Hash256, bool> deltaMerkleRootPair;
@@ -171,7 +174,7 @@ namespace catapult { namespace cache {
 			CATAPULT_LOG(debug) << "creating patricia tree enabled cache";
 			test::TempDirectoryGuard dbDirGuard;
 			CacheConfiguration cacheConfig(dbDirGuard.name(), utils::FileSize::FromMegabytes(5), PatriciaTreeStorageMode::Enabled);
-			AccountStateCache cache(cacheConfig, CreateConfigHolder());
+			AccountStateCache cache(cacheConfig, DefaultOptions());
 
 			// - load all test accounts into the delta
 			for (auto i = 0u; i < numBatches; ++i) {

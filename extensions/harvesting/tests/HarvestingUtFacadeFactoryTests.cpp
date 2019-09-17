@@ -21,11 +21,11 @@
 #include "harvesting/src/HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
@@ -41,8 +41,6 @@ namespace catapult { namespace harvesting {
 		constexpr auto Currency_Mosaic_Id = MosaicId(1234);
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
-
 		// endregion
 
 		// region CreateConfiguration
@@ -54,19 +52,20 @@ namespace catapult { namespace harvesting {
 		}
 
 		auto CreateConfiguration(StateVerifyOptions verifyOptions = StateVerifyOptions::None) {
-			test::MutableCatapultConfiguration config;
+			test::MutableBlockchainConfiguration config;
 
-			config.BlockChain.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			config.BlockChain.ShouldEnableVerifiableState = HasFlag(StateVerifyOptions::State, verifyOptions);
-			config.BlockChain.ShouldEnableVerifiableReceipts = HasFlag(StateVerifyOptions::Receipts, verifyOptions);
-			config.BlockChain.CurrencyMosaicId = Currency_Mosaic_Id;
-			config.BlockChain.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.BlockChain.ImportanceGrouping = 4;
-			config.BlockChain.MaxTransactionLifetime = utils::TimeSpan::FromHours(24);
-			config.BlockChain.MinHarvesterBalance = Amount(1000);
-			config.BlockChain.BlockPruneInterval = 10;
-			config.BlockChain.GreedDelta = 0.5;
-			config.BlockChain.GreedExponent = 2.0;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+			config.Immutable.ShouldEnableVerifiableState = HasFlag(StateVerifyOptions::State, verifyOptions);
+			config.Immutable.ShouldEnableVerifiableReceipts = HasFlag(StateVerifyOptions::Receipts, verifyOptions);
+			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			config.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
+
+			config.Network.ImportanceGrouping = 4;
+			config.Network.MaxTransactionLifetime = utils::TimeSpan::FromHours(24);
+			config.Network.MinHarvesterBalance = Amount(1000);
+			config.Network.BlockPruneInterval = 10;
+			config.Network.GreedDelta = 0.5;
+			config.Network.GreedExponent = 2.0;
 
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 1;
@@ -81,7 +80,7 @@ namespace catapult { namespace harvesting {
 		template<typename TAction>
 		void RunUtFacadeTest(TAction action) {
 			// Arrange: create factory and facade
-			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
+			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height);
 			test::MockExecutionConfiguration executionConfig;
 			HarvestingUtFacadeFactory factory(catapultCache, config::CreateMockConfigurationHolder(CreateConfiguration()), executionConfig.Config);
 
@@ -102,7 +101,7 @@ namespace catapult { namespace harvesting {
 			auto transactionInfos = test::CreateTransactionInfosFromSizeMultiplierPairs(sizeMultiplierPairs);
 
 			// - create factory and facade
-			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height, Default_Config);
+			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height);
 			test::MockExecutionConfiguration executionConfig;
 			HarvestingUtFacadeFactory factory(catapultCache, config::CreateMockConfigurationHolder(CreateConfiguration()), executionConfig.Config);
 
@@ -384,7 +383,7 @@ namespace catapult { namespace harvesting {
 	// region commit - validation
 
 	namespace {
-		std::unique_ptr<model::BlockHeader> CreateBlockHeaderWithHeight(Height height) {
+		auto CreateBlockHeaderWithHeight(Height height) {
 			auto pBlockHeader = std::make_unique<model::BlockHeader>();
 			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(pBlockHeader.get()), sizeof(model::BlockHeader) });
 			pBlockHeader->Size = sizeof(model::BlockHeader);
@@ -525,10 +524,10 @@ namespace catapult { namespace harvesting {
 	namespace {
 		struct FacadeTestContext {
 		public:
-			FacadeTestContext(const config::CatapultConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
+			FacadeTestContext(const config::BlockchainConfiguration& config, const chain::ExecutionConfiguration& executionConfig)
 					: m_pConfigHolder(config::CreateMockConfigurationHolder(config))
 					, m_executionConfig(executionConfig)
-					, m_cache(test::CreateEmptyCatapultCache(config.BlockChain, CreateCacheConfiguration(m_dbDirGuard.name()))) {
+					, m_cache(test::CreateEmptyCatapultCache(config, CreateCacheConfiguration(m_dbDirGuard.name()))) {
 				test::AddMarkerAccount(m_cache);
 				setCacheHeight(Default_Height);
 			}
@@ -561,7 +560,7 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			std::unique_ptr<model::Block> generate(
+			model::UniqueEntityPtr<model::Block> generate(
 					const model::BlockHeader& blockHeader,
 					const std::vector<model::TransactionInfo>& transactionInfos,
 					size_t numUnapplies = 0) const {
@@ -587,7 +586,7 @@ namespace catapult { namespace harvesting {
 
 		private:
 			test::TempDirectoryGuard m_dbDirGuard;
-			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 			chain::ExecutionConfiguration m_executionConfig;
 			cache::CatapultCache m_cache;
 		};

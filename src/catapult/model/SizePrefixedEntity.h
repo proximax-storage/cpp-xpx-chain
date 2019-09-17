@@ -20,7 +20,7 @@
 
 #pragma once
 #include "catapult/utils/NonCopyable.h"
-#include <stdint.h>
+#include <cstdint>
 
 namespace catapult { namespace model {
 

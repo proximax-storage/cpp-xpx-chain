@@ -22,8 +22,8 @@
 #include "NemesisConfiguration.h"
 #include "NemesisExecutionHasher.h"
 #include "TransactionRegistryFactory.h"
-#include "catapult/builders/CatapultConfigBuilder.h"
-#include "catapult/builders/CatapultUpgradeBuilder.h"
+#include "catapult/builders/NetworkConfigBuilder.h"
+#include "catapult/builders/BlockchainUpgradeBuilder.h"
 #include "catapult/builders/MosaicAliasBuilder.h"
 #include "catapult/builders/MosaicDefinitionBuilder.h"
 #include "catapult/builders/MosaicSupplyChangeBuilder.h"
@@ -153,7 +153,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			}
 
 			void addConfig(const std::string& resourcesPath) {
-				builders::CatapultConfigBuilder builder(m_networkIdentifier, m_signer.publicKey());
+				builders::NetworkConfigBuilder builder(m_networkIdentifier, m_signer.publicKey());
 				builder.setApplyHeightDelta(BlockDuration{0});
 				auto resPath = boost::filesystem::path(resourcesPath);
 				builder.setBlockChainConfig((resPath / "resources/config-network.properties").generic_string());
@@ -163,9 +163,9 @@ namespace catapult { namespace tools { namespace nemgen {
 			}
 
 			void addUpgrade() {
-				builders::CatapultUpgradeBuilder builder(m_networkIdentifier, m_signer.publicKey());
+				builders::BlockchainUpgradeBuilder builder(m_networkIdentifier, m_signer.publicKey());
 				builder.setUpgradePeriod(BlockDuration{0});
-				builder.setNewCatapultVersion(version::CatapultVersion);
+				builder.setNewBlockchainVersion(version::BlockchainVersion);
 
 				signAndAdd(builder.build());
 			}
@@ -176,7 +176,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			}
 
 		private:
-			void signAndAdd(std::unique_ptr<model::Transaction>&& pTransaction) {
+			void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction) {
 				pTransaction->Deadline = Timestamp(1);
 				extensions::TransactionExtensions(m_generationHash).sign(m_signer, *pTransaction);
 				m_transactions.push_back(std::move(pTransaction));
@@ -190,7 +190,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		};
 	}
 
-	std::unique_ptr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath) {
+	model::UniqueEntityPtr<model::Block> CreateNemesisBlock(const NemesisConfiguration& config, const std::string& resourcesPath) {
 		auto signer = crypto::KeyPair::FromString(config.NemesisSignerPrivateKey);
 		NemesisTransactions transactions(config.NetworkIdentifier, config.NemesisGenerationHash, signer);
 

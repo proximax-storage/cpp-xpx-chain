@@ -42,7 +42,7 @@ namespace catapult { namespace test {
 
 	/// Creates a copy of a verifiable \a entity.
 	template<typename T>
-	std::unique_ptr<T> CopyEntity(const T& entity) {
+	model::UniqueEntityPtr<T> CopyEntity(const T& entity) {
 		auto pEntity = utils::MakeUniqueWithSize<T>(entity.Size);
 		std::memcpy(static_cast<void*>(pEntity.get()), &entity, entity.Size);
 		return pEntity;

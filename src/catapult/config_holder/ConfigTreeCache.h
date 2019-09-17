@@ -5,15 +5,16 @@
 **/
 
 #pragma once
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include <set>
+#include <mutex>
 
 namespace catapult { namespace config {
 
 	class ConfigTreeCache {
 	private:
 		struct ConfigRoot {
-			CatapultConfiguration Config;
+			BlockchainConfiguration Config;
 			std::set<Height> Children;
 		};
 
@@ -25,68 +26,19 @@ namespace catapult { namespace config {
 		explicit ConfigTreeCache() = default;
 
 	public:
-		bool contains(const Height& height) const {
-			return m_references.count(height) > 0 || m_configs.count(height) > 0;
-		}
+		bool contains(const Height& height) const;
 
-		CatapultConfiguration& insert(const Height& height, const CatapultConfiguration& config) {
-			if (m_configs.count(height))
-				CATAPULT_THROW_INVALID_ARGUMENT_1("duplicate config at height", height);
+		BlockchainConfiguration& insert(const Height& height, const BlockchainConfiguration& config);
 
-			m_configs.emplace(height, ConfigRoot{ config , {} });
+		BlockchainConfiguration& insertRef(const Height& refHeight, const Height& configHeight);
 
-			return m_configs.at(height).Config;
-		}
+		void erase(const Height& height);
 
-		CatapultConfiguration& insertRef(const Height& refHeight, const Height& configHeight) {
-			if (refHeight == configHeight)
-				CATAPULT_THROW_INVALID_ARGUMENT_1("reference is not allowed at the same height", configHeight);
-
-			auto iter = m_configs.find(configHeight);
-			if (iter == m_configs.end())
-				CATAPULT_THROW_INVALID_ARGUMENT_1("failed to insert reference because config doesn't exist at height", configHeight);
-
-			if (m_references.count(refHeight))
-				CATAPULT_THROW_INVALID_ARGUMENT_1("failed to insert reference because reference already exist at height", refHeight);
-
-			auto& root = iter->second;
-			cleanupRefs(root);
-			m_references.emplace(refHeight, ConfigLeaf{ root });
-			root.Children.insert(refHeight);
-
-			return iter->second.Config;
-		}
-
-		void erase(const Height& height) {
-			auto iterRef = m_references.find(height);
-			if (iterRef != m_references.end()) {
-				iterRef->second.Parent.Children.erase(height);
-				m_references.erase(iterRef);
-				return;
-			}
-
-			auto iter = m_configs.find(height);
-			if (iter != m_configs.end()) {
-				cleanupRefs(iter->second, 0);
-				m_configs.erase(iter);
-			}
-		}
-
-		CatapultConfiguration& get(const Height& height) {
-			auto iterRef = m_references.find(height);
-			if (iterRef != m_references.end())
-				return iterRef->second.Parent.Config;
-
-			auto iter = m_configs.find(height);
-			if (iter != m_configs.end())
-				return iter->second.Config;
-
-			CATAPULT_THROW_INVALID_ARGUMENT_1("config doesn't exist at height", height);
-		}
+		BlockchainConfiguration& get(const Height& height);
 
 	private:
 		void cleanupRefs(ConfigRoot& root) {
-			cleanupRefs(root, root.Config.BlockChain.MaxRollbackBlocks);
+			cleanupRefs(root, root.Config.Network.MaxRollbackBlocks);
 		}
 
 		inline void cleanupRefs(ConfigRoot& root, uint64_t size) {

@@ -29,12 +29,11 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/nodeps/Waits.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include "catapult/constants.h"
 
@@ -76,7 +75,7 @@ namespace catapult { namespace harvesting {
 			return accountStates;
 		}
 
-		std::unique_ptr<model::Block> CreateBlock() {
+		model::UniqueEntityPtr<model::Block> CreateBlock() {
 			// the created block needs to have height 1 to be able to add it to the block difficulty cache
 			auto pBlock = test::GenerateEmptyRandomBlock();
 			pBlock->Height = Height(1);
@@ -88,16 +87,17 @@ namespace catapult { namespace harvesting {
 		}
 
 		auto CreateConfiguration() {
-			test::MutableCatapultConfiguration config;
+			test::MutableBlockchainConfiguration config;
 
-			config.BlockChain.Network.Identifier = Network_Identifier;
-			config.BlockChain.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
-			config.BlockChain.BlockTimeSmoothingFactor = 0;
-			config.BlockChain.MaxDifficultyBlocks = 60;
-			config.BlockChain.ImportanceGrouping = 123;
-			config.BlockChain.TotalChainImportance = test::Default_Total_Chain_Importance;
-			config.BlockChain.GreedDelta = 0.5;
-			config.BlockChain.GreedExponent = 2.0;
+			config.Immutable.NetworkIdentifier = Network_Identifier;
+
+			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15);
+			config.Network.BlockTimeSmoothingFactor = 0;
+			config.Network.MaxDifficultyBlocks = 60;
+			config.Network.ImportanceGrouping = 123;
+			config.Network.TotalChainImportance = test::Default_Total_Chain_Importance;
+			config.Network.GreedDelta = 0.5;
+			config.Network.GreedExponent = 2.0;
 
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 2;
@@ -113,7 +113,7 @@ namespace catapult { namespace harvesting {
 		public:
 			HarvesterContext()
 					: Config(CreateConfiguration())
-					, Cache(test::CreateEmptyCatapultCache(Config.BlockChain))
+					, Cache(test::CreateEmptyCatapultCache(Config))
 					, KeyPairs(CreateKeyPairs(Num_Accounts))
 					, Beneficiary(test::GenerateRandomByteArray<Key>())
 					, pUnlockedAccounts(std::make_unique<UnlockedAccounts>(Num_Accounts))
@@ -136,16 +136,16 @@ namespace catapult { namespace harvesting {
 				return CreateHarvester(Config);
 			}
 
-			std::unique_ptr<Harvester> CreateHarvester(const config::CatapultConfiguration& config) {
+			std::unique_ptr<Harvester> CreateHarvester(const config::BlockchainConfiguration& config) {
 				return CreateHarvester(config, [](const auto& blockHeader, auto) {
-					auto pBlock = std::make_unique<model::Block>();
+					auto pBlock = utils::MakeUniqueWithSize<model::Block>(sizeof(model::Block));
 					std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
 					return pBlock;
 				});
 			}
 
 			std::unique_ptr<Harvester> CreateHarvester(
-					const config::CatapultConfiguration& config,
+					const config::BlockchainConfiguration& config,
 					const BlockGenerator& blockGenerator) {
 				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 				return std::make_unique<Harvester>(Cache, pConfigHolder, Beneficiary, *pUnlockedAccounts, blockGenerator);
@@ -159,7 +159,7 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			config::CatapultConfiguration Config;
+			config::BlockchainConfiguration Config;
 			cache::CatapultCache Cache;
 			std::vector<KeyPair> KeyPairs;
 			Key Beneficiary;
@@ -193,7 +193,7 @@ namespace catapult { namespace harvesting {
 			auto difficulty = chain::CalculateDifficulty(
 					context.Cache.sub<cache::BlockDifficultyCache>(),
 					state::BlockDifficultyInfo(pLastBlock->Height + Height(1), pLastBlock->Timestamp, Difficulty()),
-					context.Config.BlockChain
+					context.Config.Network
 			);
 			const auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto view = accountStateCache.createView(Height{0});
@@ -204,7 +204,7 @@ namespace catapult { namespace harvesting {
 					utils::TimeSpan::FromMilliseconds(1000),
 					difficulty,
 					importanceView.getAccountImportanceOrDefault(publicKey, pLastBlock->Height),
-					context.Config.BlockChain,
+					context.Config.Network,
 					1, 2));
 			uint64_t seconds = hit / referenceTarget;
 			return Timestamp((seconds + 1) * 1000);
@@ -252,7 +252,7 @@ namespace catapult { namespace harvesting {
 		// Arrange:
 		HarvesterContext context;
 		auto pHarvester = context.CreateHarvester();
-		auto numBlocks = context.Config.BlockChain.MaxDifficultyBlocks + 10;
+		auto numBlocks = context.Config.Network.MaxDifficultyBlocks + 10;
 
 		// - seed the block difficulty cache (it already has an entry for height 1)
 		{
@@ -384,7 +384,7 @@ namespace catapult { namespace harvesting {
 			EXPECT_EQ(bestKey, pBlock->Signer);
 			EXPECT_EQ(model::CalculateHash(*context.pLastBlock), pBlock->PreviousBlockHash);
 			EXPECT_TRUE(model::VerifyBlockHeaderSignature(*pBlock));
-			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, state::BlockDifficultyInfo(*pBlock), context.Config.BlockChain), pBlock->Difficulty);
+			EXPECT_EQ(chain::CalculateDifficulty(difficultyCache, state::BlockDifficultyInfo(*pBlock), context.Config.Network), pBlock->Difficulty);
 			EXPECT_EQ(model::MakeVersion(Network_Identifier, 3), pBlock->Version);
 			EXPECT_EQ(model::Entity_Type_Block, pBlock->Type);
 			EXPECT_TRUE(model::IsSizeValid(*pBlock, model::TransactionRegistry()));
@@ -408,7 +408,7 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, HarvestDelegatesToBlockGenerator) {
 		// Arrange:
 		HarvesterContext context;
-		const_cast<uint32_t&>(context.Config.BlockChain.MaxTransactionsPerBlock) = 123;
+		const_cast<uint32_t&>(context.Config.Network.MaxTransactionsPerBlock) = 123;
 		std::vector<std::pair<Key, uint32_t>> capturedParams;
 		auto pHarvester = context.CreateHarvester(context.Config, [&capturedParams](const auto& blockHeader, auto maxTransactionsPerBlock) {
 			capturedParams.emplace_back(blockHeader.Signer, maxTransactionsPerBlock);
@@ -436,7 +436,7 @@ namespace catapult { namespace harvesting {
 	TEST(TEST_CLASS, HarvestReturnsNullptrWhenBlockGeneratorFails) {
 		// Arrange:
 		HarvesterContext context;
-		const_cast<uint32_t&>(context.Config.BlockChain.MaxTransactionsPerBlock) = 123;
+		const_cast<uint32_t&>(context.Config.Network.MaxTransactionsPerBlock) = 123;
 		std::vector<std::pair<Key, uint32_t>> capturedParams;
 		auto pHarvester = context.CreateHarvester(context.Config, [&capturedParams](const auto& blockHeader, auto maxTransactionsPerBlock) {
 			capturedParams.emplace_back(blockHeader.Signer, maxTransactionsPerBlock);

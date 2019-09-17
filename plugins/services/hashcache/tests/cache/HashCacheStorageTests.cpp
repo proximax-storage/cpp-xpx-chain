@@ -20,14 +20,14 @@
 
 #include "src/cache/HashCacheStorage.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMinutes(2);
 			config.MaxRollbackBlocks = 768;
 			return config::CreateMockConfigurationHolder(config);

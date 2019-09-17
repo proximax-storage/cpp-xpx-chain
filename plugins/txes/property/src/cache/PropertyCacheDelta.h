@@ -23,7 +23,7 @@
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 #include "catapult/model/NetworkInfo.h"
 
@@ -48,10 +48,10 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a delta around \a propertySets and \a blockChainConfig.
+		/// Creates a delta around \a propertySets and \a pConfigHolder.
 		explicit BasicPropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
-				std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
+				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: PropertyCacheDeltaMixins::Size(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::Contains(*propertySets.pPrimary)
 				, PropertyCacheDeltaMixins::ConstAccessor(*propertySets.pPrimary)
@@ -70,21 +70,21 @@ namespace catapult { namespace cache {
 	public:
 		/// Gets the network identifier.
 		model::NetworkIdentifier networkIdentifier() const {
-			return m_pConfigHolder->Config(height()).BlockChain.Network.Identifier;
+			return m_pConfigHolder->Config(height()).Immutable.NetworkIdentifier;
 		}
 
 	private:
 		PropertyCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pPropertyEntries;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the property cache.
 	class PropertyCacheDelta : public ReadOnlyViewSupplier<BasicPropertyCacheDelta> {
 	public:
-		/// Creates a delta around \a propertySets and \a blockChainConfig.
+		/// Creates a delta around \a propertySets and \a pConfigHolder.
 		explicit PropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
-				std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder)
+				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: ReadOnlyViewSupplier(propertySets, pConfigHolder)
 		{}
 	};

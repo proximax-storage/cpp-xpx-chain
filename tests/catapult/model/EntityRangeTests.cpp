@@ -54,7 +54,7 @@ namespace catapult { namespace model {
 			return value;
 		}
 
-		const auto& DerefValue(const std::unique_ptr<Block>& pBlock) {
+		const auto& DerefValue(const model::UniqueEntityPtr<Block>& pBlock) {
 			return *pBlock;
 		}
 
@@ -553,7 +553,7 @@ namespace catapult { namespace model {
 	}
 
 	namespace {
-		void AssertMultiBlockRange(const std::vector<std::unique_ptr<Block>>& expectedBlocks, const BlockRange& range) {
+		void AssertMultiBlockRange(const std::vector<model::UniqueEntityPtr<Block>>& expectedBlocks, const BlockRange& range) {
 			// Assert:
 			EXPECT_FALSE(range.empty());
 			ASSERT_EQ(expectedBlocks.size(), range.size());
@@ -569,7 +569,7 @@ namespace catapult { namespace model {
 		template<typename TFunc>
 		void RunHeterogeneousMergeRangesTest(TFunc func) {
 			// Arrange: merge all types of ranges (single-buffer, single-entity, multi-buffer)
-			std::vector<std::unique_ptr<Block>> blocks;
+			std::vector<model::UniqueEntityPtr<Block>> blocks;
 			for (auto i = 0u; i < 6; ++i)
 				blocks.push_back(test::GenerateEmptyRandomBlock());
 

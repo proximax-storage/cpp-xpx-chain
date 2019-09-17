@@ -23,13 +23,13 @@
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "catapult/model/ImportanceHeight.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace sync {
@@ -40,9 +40,9 @@ namespace catapult { namespace sync {
 		using TransactionSource = chain::UtUpdater::TransactionSource;
 
 		cache::CatapultCache CreateCatapultCacheWithImportanceGrouping(uint64_t importanceGrouping) {
-			auto blockChainConfiguration = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfiguration.ImportanceGrouping = importanceGrouping;
-			return test::CreateEmptyCatapultCache(blockChainConfiguration);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = importanceGrouping;
+			return test::CreateEmptyCatapultCache(config.ToConst());
 		}
 
 		Key AddAccount(cache::AccountStateCacheDelta& delta, Importance importance) {
@@ -168,9 +168,9 @@ namespace catapult { namespace sync {
 		}
 
 		void SetSettings(test::ServiceTestState& serviceState, const SpamThrottleConfiguration& throttleConfig) {
-			auto& blockChainConfig = const_cast<model::BlockChainConfiguration&>(serviceState.state().config(Height{0}).BlockChain);
-			blockChainConfig.TotalChainImportance = throttleConfig.TotalImportance;
-			blockChainConfig.MaxTransactionsPerBlock = throttleConfig.MaxBlockSize;
+			auto& networkConfig = const_cast<model::NetworkConfiguration&>(serviceState.state().config(Height{0}).Network);
+			networkConfig.TotalChainImportance = throttleConfig.TotalImportance;
+			networkConfig.MaxTransactionsPerBlock = throttleConfig.MaxBlockSize;
 			auto& nodeConfig = const_cast<config::NodeConfiguration&>(serviceState.state().config(Height{0}).Node);
 			nodeConfig.TransactionSpamThrottlingMaxBoostFee = throttleConfig.MaxBoostFee;
 			nodeConfig.UnconfirmedTransactionsCacheMaxSize = throttleConfig.MaxCacheSize;

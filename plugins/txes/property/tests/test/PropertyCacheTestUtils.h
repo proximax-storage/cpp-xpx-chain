@@ -23,27 +23,32 @@
 #include "src/cache/PropertyCache.h"
 #include "src/cache/PropertyCacheStorage.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace test {
 
 	/// Cache factory for creating a catapult cache composed of property cache and core caches.
 	struct PropertyCacheFactory {
 	private:
-		static auto CreateSubCachesWithPropertyCache(const model::BlockChainConfiguration& config) {
+		static auto CreateSubCachesWithPropertyCache(const config::BlockchainConfiguration& config) {
 			auto cacheId = cache::PropertyCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			const_cast<model::BlockChainConfiguration&>(config).Network.Identifier = model::NetworkIdentifier::Zero;
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			subCaches[cacheId] = MakeSubCachePlugin<cache::PropertyCache, cache::PropertyCacheStorage>(pConfigHolder);
 			return subCaches;
 		}
 
 	public:
+		/// Creates an empty catapult cache around default configuration.
+		static cache::CatapultCache Create() {
+			return Create(test::MutableBlockchainConfiguration().ToConst());
+		}
+
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
 			auto subCaches = CreateSubCachesWithPropertyCache(config);
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));

@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "src/config/ContractConfiguration.h"
 #include "src/model/ContractNotifications.h"
 #include "catapult/observers/ObserverTypes.h"
@@ -13,7 +13,7 @@
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by update contract notifications
-	DECLARE_OBSERVER(ModifyContract, model::ModifyContractNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_OBSERVER(ModifyContract, model::ModifyContractNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// Observes changes triggered by update reputation notifications
 	DECLARE_OBSERVER(ReputationUpdate, model::ReputationUpdateNotification<1>)();

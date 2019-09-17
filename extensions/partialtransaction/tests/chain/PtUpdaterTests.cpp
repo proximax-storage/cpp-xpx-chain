@@ -22,7 +22,7 @@
 #include "partialtransaction/src/chain/PtValidator.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "catapult/cache_tx/MemoryPtCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/utils/MemoryUtils.h"
@@ -309,9 +309,9 @@ namespace catapult { namespace chain {
 
 			mutable utils::SpinLock m_lock;
 			mutable size_t m_numValidatePartialCalls;
-			mutable size_t m_numValidateCosignersCalls;
+			mutable std::atomic<size_t> m_numValidateCosignersCalls;
 			mutable size_t m_numLastCosigners;
-			mutable std::vector<std::unique_ptr<model::Transaction>> m_transactions;
+			mutable std::vector<model::UniqueEntityPtr<model::Transaction>> m_transactions;
 			mutable std::vector<Hash256> m_transactionHashes;
 		};
 
@@ -326,7 +326,7 @@ namespace catapult { namespace chain {
 					, m_pUniqueValidator(std::make_unique<MockPtValidator>())
 					, m_pValidator(m_pUniqueValidator.get())
 					, m_pPool(test::CreateStartedIoThreadPool())
-					, m_cache(test::CreateEmptyCatapultCache(model::BlockChainConfiguration::Uninitialized()))
+					, m_cache(test::CreateEmptyCatapultCache())
 					, m_pUpdater(std::make_unique<PtUpdater>(
 							m_cache,
 							m_transactionsCache,
@@ -453,7 +453,7 @@ namespace catapult { namespace chain {
 
 			std::unique_ptr<MockPtValidator> m_pUniqueValidator; // moved into m_pUpdater
 			MockPtValidator* m_pValidator;
-			std::vector<std::unique_ptr<model::Transaction>> m_completedTransactions;
+			std::vector<model::UniqueEntityPtr<model::Transaction>> m_completedTransactions;
 
 			std::shared_ptr<thread::IoThreadPool> m_pPool;
 			cache::CatapultCache m_cache;

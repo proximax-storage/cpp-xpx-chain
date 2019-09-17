@@ -58,20 +58,20 @@ namespace catapult { namespace cache {
 			, m_pKeyLookupAdapter(std::move(pKeyLookupAdapter))
 	{}
 
-	model::BlockChainConfiguration BasicAccountStateCacheView::blockChainConfig() const {
-		return m_options.ConfigHolderPtr->Config(height()).BlockChain;
+	model::NetworkConfiguration BasicAccountStateCacheView::networkConfig() const {
+		return m_options.ConfigHolderPtr->Config(height()).Network;
 	}
 
 	model::NetworkIdentifier BasicAccountStateCacheView::networkIdentifier() const {
-		return blockChainConfig().Network.Identifier;
+		return m_options.NetworkIdentifier;
 	}
 
 	uint64_t BasicAccountStateCacheView::importanceGrouping() const {
-		return blockChainConfig().ImportanceGrouping;
+		return networkConfig().ImportanceGrouping;
 	}
 
 	MosaicId BasicAccountStateCacheView::harvestingMosaicId() const {
-		return blockChainConfig().HarvestingMosaicId;
+		return m_options.HarvestingMosaicId;
 	}
 
 	const model::AddressSet& BasicAccountStateCacheView::highValueAddresses() const {

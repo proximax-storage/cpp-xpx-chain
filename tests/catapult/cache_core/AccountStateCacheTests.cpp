@@ -26,7 +26,8 @@
 #include "tests/test/cache/DeltaElementsMixinTests.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -41,13 +42,15 @@ namespace catapult { namespace cache {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = Network_Identifier;
-			config.ImportanceGrouping = 543;
-			config.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
-			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			return config::CreateMockConfigurationHolder(config);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 543;
+			config.Network.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
+			return config::CreateMockConfigurationHolder(config.ToConst());
+		}
+
+		auto DefaultOptions() {
+			return AccountStateCacheTypes::Options{
+				CreateConfigHolder(), Network_Identifier, Currency_Mosaic_Id, Harvesting_Mosaic_Id };
 		}
 
 		struct AddressTraits {
@@ -156,7 +159,7 @@ namespace catapult { namespace cache {
 		template<typename TTraits>
 		struct CacheProxy : public AccountStateCache {
 		public:
-			CacheProxy() : AccountStateCache(CacheConfiguration(), CreateConfigHolder())
+			CacheProxy() : AccountStateCache(CacheConfiguration(), DefaultOptions())
 			{}
 
 		public:
@@ -305,9 +308,9 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheExposesNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(17);
-		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).Network.Identifier = networkIdentifier;
-		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
+		auto options = DefaultOptions();
+		options.NetworkIdentifier = networkIdentifier;
+		AccountStateCache cache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.networkIdentifier());
@@ -316,9 +319,9 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheWrappersExposeNetworkIdentifier) {
 		// Arrange:
 		auto networkIdentifier = static_cast<model::NetworkIdentifier>(18);
-		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).Network.Identifier = networkIdentifier;
-		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
+		auto options = DefaultOptions();
+		options.NetworkIdentifier = networkIdentifier;
+		AccountStateCache cache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(networkIdentifier, cache.createView(Height{0})->networkIdentifier());
@@ -333,8 +336,10 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CacheExposesImportanceGrouping) {
 		// Arrange:
 		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).ImportanceGrouping = 10;
-		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
+		const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).ImportanceGrouping = 10;
+		auto options = DefaultOptions();
+		options.ConfigHolderPtr = pConfigHolder;
+		AccountStateCache cache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(10, cache.importanceGrouping());
@@ -342,9 +347,9 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CacheWrappersExposeHarvestingMosaicId) {
 		// Arrange:
-		auto pConfigHolder = CreateConfigHolder();
-		const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).HarvestingMosaicId = MosaicId(11229988);
-		AccountStateCache cache(CacheConfiguration(), pConfigHolder);
+		auto options = DefaultOptions();
+		options.HarvestingMosaicId = MosaicId(11229988);
+		AccountStateCache cache(CacheConfiguration(), options);
 
 		// Act + Assert:
 		EXPECT_EQ(MosaicId(11229988), cache.createView(Height{0})->harvestingMosaicId());
@@ -361,7 +366,7 @@ namespace catapult { namespace cache {
 		auto publicKey = GenerateRandomPublicKey();
 		auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
 
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			auto delta = cache.createDelta(Height{0});
 			delta->addAccount(address, Height());
@@ -383,7 +388,7 @@ namespace catapult { namespace cache {
 		auto publicKey = GenerateRandomPublicKey();
 		auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
 
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		delta->addAccount(address, Height());
 		cache.commit();
@@ -410,7 +415,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(AddAccountChangesSizeOfCache) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		DefaultFillCache(cache, 10);
 		auto delta = cache.createDelta(Height{0});
 		auto accountId = TTraits::GenerateAccountId();
@@ -425,7 +430,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(AddAccountAutomaticallyOptimizesCurrencyMosaicAccess) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto accountId = TTraits::GenerateAccountId();
 
@@ -439,7 +444,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(SubsequentAddAccountHasNoEffect) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto accountId = TTraits::GenerateAccountId();
 		delta->addAccount(accountId, TTraits::Default_Height);
@@ -458,7 +463,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, SubsequentAddAddressDoesNotMarkAccountAsDirty) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto address = AddressTraits::GenerateAccountId();
 		delta->addAccount(address, Height(1230));
@@ -480,7 +485,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, SubsequentAddPublicKeyDoesNotMarkAccountWithPublicKeyAsDirty) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto publicKey = GenerateRandomPublicKey();
 		delta->addAccount(publicKey, Height(1230));
@@ -502,7 +507,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, SubsequentAddPublicKeyDoesMarkAccountWithoutPublicKeyAsDirty) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto publicKey = GenerateRandomPublicKey();
 		auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
@@ -525,7 +530,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, SubsequentAddAccountStateDoesNotMarkAccountAsDirty) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto address = AddressTraits::GenerateAccountId();
 		delta->addAccount(address, Height(1230));
@@ -553,7 +558,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, AddAccountAutomaticallyOptimizesCurrencyMosaicAccess) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto accountState = CreateAccountStateWithMismatchedAddressAndPublicKey();
 
@@ -570,7 +575,7 @@ namespace catapult { namespace cache {
 		auto accountState = CreateAccountStateWithMismatchedAddressAndPublicKey();
 		accountState.PublicKeyHeight = Height(0);
 
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 
 		// Act:
@@ -592,7 +597,7 @@ namespace catapult { namespace cache {
 	TEST(TEST_CLASS, CanAddAccountViaAccountStateWithPublicKey) {
 		// Arrange: note that public key height is not 0
 		auto accountState = CreateAccountStateWithMismatchedAddressAndPublicKey();
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 
 		// Act:
@@ -617,11 +622,10 @@ namespace catapult { namespace cache {
 		void AssertAddAccountViaStateDoesNotOverrideKnownAccounts(TAdd add) {
 			// Arrange:
 			auto accountState = CreateAccountStateWithRandomAddressAndPublicKey();
-			auto pConfigHolder = CreateConfigHolder();
-			accountState.Balances.track(pConfigHolder->Config().BlockChain.HarvestingMosaicId);
+			accountState.Balances.track(Harvesting_Mosaic_Id);
 			accountState.Balances.addSnapshot({ Amount(777), Height(123)});
 
-			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
+			AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 			auto delta = cache.createDelta(Height{0});
 
 			// Act: add the state using add and set importance to 123
@@ -669,7 +673,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(Remove_RemovesExistingAccountWhenHeightMatches) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto accountId = AddRandomAccount<TTraits>(cache);
 		auto delta = cache.createDelta(Height{0});
 
@@ -687,7 +691,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(Remove_DoesNotRemovesExistingAccountWhenHeightDoesNotMatch) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto accountId = TTraits::GenerateAccountId();
 		delta->addAccount(accountId, TTraits::Default_Height);
@@ -707,7 +711,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(Remove_CanBeCalledOnNonexistentAccount) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		DefaultFillCache(cache, 10);
 		auto delta = cache.createDelta(Height{0});
 		auto accountId = TTraits::GenerateAccountId();
@@ -725,7 +729,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(Remove_QueuesRemovalButDoesNotRemoveImmediately) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		auto accountId = TTraits::GenerateAccountId();
 		delta->addAccount(accountId, TTraits::Default_Height);
@@ -744,7 +748,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(CommitRemovals_DoesNothingWhenNoRemovalsHaveBeenQueued) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		delta->addAccount(TTraits::GenerateAccountId(), TTraits::Default_Height);
 
@@ -757,7 +761,7 @@ namespace catapult { namespace cache {
 
 	ID_BASED_TEST(CommitRemovals_CanCommitQueuedRemovalsOfMultipleAccounts) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 
 		// Act: add 5 (0..4) accounts and queue removals of two (1, 3)
@@ -803,7 +807,7 @@ namespace catapult { namespace cache {
 			auto publicKey = GenerateRandomPublicKey();
 			auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
 
-			AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+			AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 			auto delta = cache.createDelta(Height{0});
 			AddAccountToCacheDelta<AddressTraits>(*delta, address, Amount(1234));
 			AddAccountToCacheDelta<PublicKeyTraits>(*delta, publicKey, Amount());
@@ -825,7 +829,7 @@ namespace catapult { namespace cache {
 			auto publicKey = GenerateRandomPublicKey();
 			auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
 
-			AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+			AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 			auto delta = cache.createDelta(Height{0});
 			AddAccountToCacheDelta<AddressTraits>(*delta, address, Amount(1234));
 			AddAccountToCacheDelta<PublicKeyTraits>(*delta, publicKey, Amount());
@@ -866,7 +870,7 @@ namespace catapult { namespace cache {
 		auto publicKey = GenerateRandomPublicKey();
 		auto address = model::PublicKeyToAddress(publicKey, Network_Identifier);
 
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 		AddAccountToCacheDelta<AddressTraits>(*delta, address, Amount(1234));
 		AddAccountToCacheDelta<PublicKeyTraits>(*delta, publicKey, Amount());
@@ -959,7 +963,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAccessAllAccountsThroughFindByAddress) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 
 		// Assert:
@@ -970,7 +974,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAccessAllAccountsThroughFindConstByAddress) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 
 		// Assert:
@@ -981,7 +985,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAccessAllAccountsThroughFindByPublicKey) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 
 		// Assert:
@@ -992,7 +996,7 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanAccessAllAccountsThroughFindConstByPublicKey) {
 		// Arrange:
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		auto delta = cache.createDelta(Height{0});
 
 		// Assert:
@@ -1021,8 +1025,10 @@ namespace catapult { namespace cache {
 		void RunHighValueAddressesTest(const std::vector<Amount>& balances, TDeltaAction deltaAction, TViewAction viewAction) {
 			// Arrange: set min balance to 1M
 			auto pConfigHolder = CreateConfigHolder();
-			const_cast<model::BlockChainConfiguration&>(pConfigHolder->Config().BlockChain).MinHarvesterBalance = Amount(1'000'000);
-			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
+			const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network).MinHarvesterBalance = Amount(1'000'000);
+			auto options = DefaultOptions();
+			options.ConfigHolderPtr = pConfigHolder;
+			AccountStateCache cache(CacheConfiguration(), options);
 
 			// - prepare delta with requested accounts
 			std::vector<Address> addresses;
@@ -1150,7 +1156,7 @@ namespace catapult { namespace cache {
 	}
 
 	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveOneSnapshot) {
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			// - prepare delta
 			auto delta = cache.createDelta(Height{0});
@@ -1164,7 +1170,7 @@ namespace catapult { namespace cache {
 	}
 
 	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveZeroSnapshot_HeightZero) {
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			// - prepare delta
 			auto delta = cache.createDelta(Height{0});
@@ -1178,7 +1184,7 @@ namespace catapult { namespace cache {
 	}
 
 	TEST(TEST_CLASS, UpdatedAddressesEachAccountHaveZeroSnapshot_NotXpxMosaic) {
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			// - prepare delta
 			auto delta = cache.createDelta(Height{0});
@@ -1192,7 +1198,7 @@ namespace catapult { namespace cache {
 	}
 
 	TEST(TEST_CLASS, UpdatedAddressesModifyAccountToAddSnapshots) {
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			// - prepare delta
 			auto delta = cache.createDelta(Height{0});
@@ -1212,7 +1218,7 @@ namespace catapult { namespace cache {
 	}
 
 	TEST(TEST_CLASS, UpdatedAddressesRemoveAccountWithoutSnapshots) {
-		AccountStateCache cache(CacheConfiguration(), CreateConfigHolder());
+		AccountStateCache cache(CacheConfiguration(), DefaultOptions());
 		{
 			// - prepare delta
 			auto delta = cache.createDelta(Height{0});

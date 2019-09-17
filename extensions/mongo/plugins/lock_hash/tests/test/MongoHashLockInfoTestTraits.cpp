@@ -20,7 +20,7 @@
 
 #include "MongoHashLockInfoTestTraits.h"
 #include "mongo/src/MongoStorageContext.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {

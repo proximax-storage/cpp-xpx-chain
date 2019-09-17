@@ -30,7 +30,7 @@
 #include "tests/catapult/local/recovery/test/FilechainTestUtils.h"
 #include "tests/test/core/BlockStorageTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/core/TransactionStatusTestUtils.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -66,7 +66,7 @@ namespace catapult { namespace local {
 			auto nemesisKeyPairs = test::GetNemesisKeyPairs();
 
 			// dummy nemesis, just to make score calculations easier
-			auto pParentBlock = std::make_unique<model::Block>();
+			auto pParentBlock = utils::MakeUniqueWithSize<model::Block>(sizeof(model::Block));
 			pParentBlock->Timestamp = Timestamp();
 
 			io::FileBlockStorage storage(dataDirectory.str());
@@ -228,7 +228,7 @@ namespace catapult { namespace local {
 
 		public:
 			void boot() {
-				auto config = test::CreateCatapultConfigurationWithNemesisPluginExtensions(dataDirectory().rootDir().str());
+				auto config = test::CreateBlockchainConfigurationWithNemesisPluginExtensions(dataDirectory().rootDir().str());
 				const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = m_useCacheDatabaseStorage;
 
 				// seed the data directory at most once
@@ -271,7 +271,7 @@ namespace catapult { namespace local {
 			}
 
 		private:
-			void prepareSavedStorage(const config::CatapultConfiguration& config) {
+			void prepareSavedStorage(const config::BlockchainConfiguration& config) {
 				m_blockScores = PrepareRandomBlocks(dataDirectory().rootDir(), m_storageHeight.unwrap() - 1);
 				CATAPULT_LOG(debug) << "storage prepared";
 

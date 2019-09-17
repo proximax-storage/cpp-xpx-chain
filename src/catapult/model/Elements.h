@@ -58,6 +58,8 @@ namespace catapult { namespace model {
 		explicit BlockElement(const model::Block& block) : Block(block)
 		{}
 
+		explicit BlockElement(std::shared_ptr<model::Block> block): Block(*block), m_pOwnedBlock(std::move(block)) {}
+
 	public:
 		/// Block entity.
 		const model::Block& Block;
@@ -77,6 +79,9 @@ namespace catapult { namespace model {
 		/// Optional block statement.
 		/// \note shared_ptr for optionality and copyability (BlockStatement is move only).
 		std::shared_ptr<const BlockStatement> OptionalStatement;
+
+	private:
+		std::shared_ptr<model::Block> m_pOwnedBlock;
 	};
 
 	/// Predicate for evaluating a timestamp, a hash and an entity type.

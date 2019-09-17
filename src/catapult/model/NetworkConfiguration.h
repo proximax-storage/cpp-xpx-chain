@@ -1,0 +1,173 @@
+/**
+*** Copyright (c) 2016-present,
+*** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
+***
+*** This file is part of Catapult.
+***
+*** Catapult is free software: you can redistribute it and/or modify
+*** it under the terms of the GNU Lesser General Public License as published by
+*** the Free Software Foundation, either version 3 of the License, or
+*** (at your option) any later version.
+***
+*** Catapult is distributed in the hope that it will be useful,
+*** but WITHOUT ANY WARRANTY; without even the implied warranty of
+*** MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+*** GNU Lesser General Public License for more details.
+***
+*** You should have received a copy of the GNU Lesser General Public License
+*** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
+**/
+
+#pragma once
+#include "NetworkInfo.h"
+#include "PluginConfiguration.h"
+#include "catapult/utils/ConfigurationBag.h"
+#include "catapult/utils/FileSize.h"
+#include "catapult/utils/MemoryUtils.h"
+#include "catapult/utils/Hashers.h"
+#include "catapult/utils/TimeSpan.h"
+#include "catapult/types.h"
+#include <unordered_map>
+#include <stdint.h>
+
+namespace catapult { namespace model {
+
+	/// Network configuration settings.
+	struct NetworkConfiguration {
+	public:
+		/// Block chain network info.
+		NetworkInfo Info;
+
+		/// Targeted time between blocks.
+		utils::TimeSpan BlockGenerationTargetTime;
+
+		/// Smoothing factor in thousandths.
+		/// If this value is non-zero, the network will be biased in favor of evenly spaced blocks.
+		/// \note A higher value makes the network more biased.
+		/// \note This can lower security because it will increase the influence of time relative to importance.
+		uint32_t BlockTimeSmoothingFactor;
+
+		/// Greed smoothing parameter.
+		double GreedDelta;
+
+		/// Greed exponent parameter.
+		double GreedExponent;
+
+		/// Number of blocks that should be treated as a group for importance purposes.
+		/// \note Importances will only be calculated at blocks that are multiples of this grouping number.
+		uint64_t ImportanceGrouping;
+
+		/// Maximum number of blocks that can be rolled back.
+		uint32_t MaxRollbackBlocks;
+
+		/// Maximum number of blocks to use in a difficulty calculation.
+		uint32_t MaxDifficultyBlocks;
+
+		/// Maximum lifetime a transaction can have before it expires.
+		utils::TimeSpan MaxTransactionLifetime;
+
+		/// Maximum future time of a block that can be accepted.
+		utils::TimeSpan MaxBlockFutureTime;
+
+		/// Maximum atomic units (total-supply * 10 ^ divisibility) of a mosaic allowed in the network.
+		Amount MaxMosaicAtomicUnits;
+
+		/// Total whole importance units available in the network.
+		Importance TotalChainImportance;
+
+		/// Minimum number of harvesting mosaic atomic units needed for an account to be eligible for harvesting.
+		Amount MinHarvesterBalance;
+
+		/// Percentage of the harvested fee that is collected by the beneficiary account.
+		uint8_t HarvestBeneficiaryPercentage;
+
+		/// Number of blocks between cache pruning.
+		uint32_t BlockPruneInterval;
+
+		/// Maximum number of transactions per block.
+		uint32_t MaxTransactionsPerBlock;
+
+		/// Unparsed map of plugin configuration bags.
+		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
+
+	private:
+		/// Map of plugin configurations.
+		mutable std::unordered_map<uint32_t, std::shared_ptr<PluginConfiguration>> PluginConfigs;
+
+	private:
+		NetworkConfiguration() = default;
+
+	public:
+		/// Creates an uninitialized block chain configuration.
+		static NetworkConfiguration Uninitialized();
+
+		/// Loads a block chain configuration from \a bag.
+		static NetworkConfiguration LoadFromBag(const utils::ConfigurationBag& bag);
+
+		/// Loads plugin configuration for plugin named \a pluginName.
+		template<typename T>
+		T LoadPluginConfiguration(const std::string& pluginName) const {
+			auto iter = Plugins.find(pluginName);
+			if (Plugins.cend() == iter)
+				CATAPULT_THROW_AND_LOG_1(utils::property_not_found_error, "plugin configuration not found", pluginName);
+
+			return T::LoadFromBag(iter->second);
+		}
+
+		/// Loads plugin configuration for plugin with \a pluginNameHash.
+		template<typename T>
+		T LoadPluginConfiguration(const uint32_t& pluginNameHash) const {
+			decltype(Plugins.begin()) iter;
+			for (const auto& plugin : Plugins)
+				if (HASH(plugin.first.c_str()) == pluginNameHash)
+					iter = Plugins.find(plugin.first);
+
+			if (Plugins.cend() == iter)
+				CATAPULT_THROW_AND_LOG_1(utils::property_not_found_error, "plugin configuration not found for hash", pluginNameHash);
+
+			return T::LoadFromBag(iter->second);
+		}
+
+		/// Sets \a config of plugin named \a pluginName.
+		template<typename T>
+		void SetPluginConfiguration(const std::string& pluginName, const T& config) {
+			PluginConfigs[HASH(pluginName.c_str())] = std::make_shared<T>(config);
+		}
+
+		/// Sets \a config of plugin with \a pluginNameHash.
+		template<typename T>
+		void SetPluginConfiguration(const uint32_t& pluginNameHash, const T& config) {
+			PluginConfigs[pluginNameHash] = std::make_shared<T>(config);
+		}
+
+		/// Returns plugin configuration for plugin with \a pluginNameHash.
+		template<typename T>
+		const T& GetPluginConfiguration(const uint32_t& pluginNameHash) const {
+			auto iter = PluginConfigs.find(pluginNameHash);
+			if (PluginConfigs.cend() == iter) {
+				const_cast<NetworkConfiguration*>(this)->SetPluginConfiguration<T>(pluginNameHash, LoadPluginConfiguration<T>(pluginNameHash));
+				iter = PluginConfigs.find(pluginNameHash);
+			}
+
+			return *dynamic_cast<const T*>(iter->second.get());
+		}
+	};
+
+	/// Calculates the duration of a full rollback for the block chain described by \a config.
+	utils::TimeSpan CalculateFullRollbackDuration(const NetworkConfiguration& config);
+
+	/// Calculates the duration of the rollback variability buffer for the block chain described by \a config.
+	utils::TimeSpan CalculateRollbackVariabilityBufferDuration(const NetworkConfiguration& config);
+
+	/// Calculates the duration of time that expired transactions should be cached for the block chain described by \a config.
+	utils::TimeSpan CalculateTransactionCacheDuration(const NetworkConfiguration& config);
+
+	/// Calculates the number of historical difficulties to cache in memory for the block chain described by \a config.
+	uint64_t CalculateDifficultyHistorySize(const NetworkConfiguration& config);
+
+	/// Loads plugin configuration for plugin named \a pluginName from \a config.
+	template<typename T>
+	T LoadPluginConfiguration(const NetworkConfiguration& config, const std::string& pluginName) {
+		return config.LoadPluginConfiguration<T>(pluginName);
+	}
+}}

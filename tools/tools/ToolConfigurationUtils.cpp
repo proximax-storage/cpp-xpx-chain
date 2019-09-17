@@ -23,11 +23,11 @@
 
 namespace catapult { namespace tools {
 
-	config::CatapultConfiguration LoadConfiguration(const std::string& resourcesPathStr) {
+	config::BlockchainConfiguration LoadConfiguration(const std::string& resourcesPathStr) {
 		boost::filesystem::path resourcesPath = resourcesPathStr;
 		resourcesPath /= "resources";
 		std::cout << "loading resources from " << resourcesPath << std::endl;
-		return config::CatapultConfiguration::LoadFromPath(resourcesPath, "server");
+		return config::BlockchainConfiguration::LoadFromPath(resourcesPath, "server");
 	}
 
 	std::vector<ionet::Node> LoadOptionalApiPeers(const std::string& resourcesPath, model::NetworkIdentifier networkIdentifier) {

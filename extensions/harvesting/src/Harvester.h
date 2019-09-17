@@ -22,7 +22,7 @@
 #include "HarvesterBlockGenerator.h"
 #include "UnlockedAccounts.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/Elements.h"
 #include "catapult/model/EntityInfo.h"
 
@@ -37,7 +37,7 @@ namespace catapult { namespace harvesting {
 		/// an unlocked accounts set (\a unlockedAccounts) and \a blockGenerator used to customize block generation.
 		explicit Harvester(
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const Key& beneficiary,
 				const UnlockedAccounts& unlockedAccounts,
 				const BlockGenerator& blockGenerator);
@@ -45,11 +45,11 @@ namespace catapult { namespace harvesting {
 	public:
 		/// Creates the best block (if any) harvested by any unlocked account.
 		/// Created block will have \a lastBlockElement as parent and \a timestamp as timestamp.
-		std::unique_ptr<model::Block> harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp);
+		model::UniqueEntityPtr<model::Block> harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp);
 
 	private:
 		const cache::CatapultCache& m_cache;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		const Key m_beneficiary;
 		const UnlockedAccounts& m_unlockedAccounts;
 		BlockGenerator m_blockGenerator;

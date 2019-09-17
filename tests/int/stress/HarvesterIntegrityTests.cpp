@@ -36,7 +36,7 @@
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
 
@@ -52,23 +52,23 @@ namespace catapult { namespace harvesting {
 		// region test factories
 
 		auto CreateConfiguration() {
-			auto blockChainConfig = test::CreatePrototypicalBlockChainConfiguration();
-			blockChainConfig.MinHarvesterBalance = Amount(500'000);
-			blockChainConfig.ShouldEnableVerifiableState = true;
-			blockChainConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			auto networkConfig = test::CreatePrototypicalNetworkConfiguration();
+			networkConfig.MinHarvesterBalance = Amount(500'000);
+			networkConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 
-			auto config = test::CreatePrototypicalCatapultConfiguration(std::move(blockChainConfig), "");
+			auto config = test::CreatePrototypicalBlockchainConfiguration(std::move(networkConfig), "");
 			const_cast<config::NodeConfiguration&>(config.Node).FeeInterestDenominator = 2;
+			const_cast<config::ImmutableConfiguration&>(config.Immutable).ShouldEnableVerifiableState = true;
 
 			return config;
 		}
 
-		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		cache::CatapultCache CreateCatapultCache(const std::string& databaseDirectory, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 			auto cacheId = cache::HashCache::Id;
 			auto cacheConfig = cache::CacheConfiguration(databaseDirectory, utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			test::CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config().BlockChain, subCaches);
+			test::CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config(), subCaches);
 			subCaches[cacheId] = test::MakeSubCachePlugin<cache::HashCache, cache::HashCacheStorage>(pConfigHolder);
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -107,7 +107,7 @@ namespace catapult { namespace harvesting {
 			}
 
 		public:
-			std::unique_ptr<model::Block> createLastBlock() {
+			model::UniqueEntityPtr<model::Block> createLastBlock() {
 				// create fake nemesis block
 				auto pLastBlock = test::GenerateEmptyRandomBlock();
 				pLastBlock->Height = Height(1);

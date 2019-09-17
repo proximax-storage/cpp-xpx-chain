@@ -20,7 +20,7 @@
 
 #include "catapult/validators/AggregateValidatorBuilder.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/catapult/validators/test/AggregateValidatorTestUtils.h"
 #include "tests/test/other/ValidationResultTestUtils.h"
 #include "tests/TestHarness.h"
@@ -42,8 +42,7 @@ namespace catapult { namespace validators {
 
 		public:
 			ValidationResult validate(uint8_t notificationId) {
-				auto config = model::BlockChainConfiguration::Uninitialized();
-				auto cache = test::CreateEmptyCatapultCache(config);
+				auto cache = test::CreateEmptyCatapultCache();
 				return test::ValidateNotification(*pAggregateValidator, test::TaggedNotification(notificationId), cache);
 			}
 		};

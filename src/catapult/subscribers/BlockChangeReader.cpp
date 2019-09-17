@@ -35,7 +35,7 @@ namespace catapult { namespace subscribers {
 			if (0 != io::Read8(inputStream)) {
 				auto pStatement = std::make_shared<model::BlockStatement>();
 				io::ReadBlockStatement(inputStream, *pStatement);
-				pBlockElement->OptionalStatement = pStatement;
+				pBlockElement->OptionalStatement = pStatement; // TODO(warchant): cyclic reference?
 			}
 
 			subscriber.notifyBlock(*pBlockElement);

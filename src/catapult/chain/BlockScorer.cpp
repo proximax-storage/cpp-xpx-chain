@@ -21,7 +21,7 @@
 #include "BlockScorer.h"
 #include "catapult/model/Block.h"
 #include "catapult/model/ImportanceHeight.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/utils/IntegerMath.h"
 
 namespace catapult { namespace chain {
@@ -53,7 +53,7 @@ namespace catapult { namespace chain {
 			const utils::TimeSpan& timeSpan,
 			Difficulty difficulty,
 			Importance signerImportance,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator) {
 		double target(difficulty.unwrap());
@@ -72,7 +72,7 @@ namespace catapult { namespace chain {
 			const model::Block& parentBlock,
 			const model::Block& currentBlock,
 			Importance signerImportance,
-			const model::BlockChainConfiguration& config) {
+			const model::NetworkConfiguration& config) {
 		if (currentBlock.Timestamp <= parentBlock.Timestamp)
 			return BlockTarget(0);
 
@@ -80,7 +80,7 @@ namespace catapult { namespace chain {
 		return CalculateTarget(timeDiff, currentBlock.Difficulty, signerImportance, config, currentBlock.FeeInterest, currentBlock.FeeInterestDenominator);
 	}
 
-	BlockHitPredicate::BlockHitPredicate(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const ImportanceLookupFunc& importanceLookup)
+	BlockHitPredicate::BlockHitPredicate(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const ImportanceLookupFunc& importanceLookup)
 			: m_pConfigHolder(pConfigHolder)
 			, m_importanceLookup(importanceLookup)
 	{}
@@ -88,7 +88,7 @@ namespace catapult { namespace chain {
 	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const GenerationHash& generationHash) const {
 		auto importance = m_importanceLookup(block.Signer, block.Height);
 		auto hit = CalculateHit(generationHash);
-		auto target = CalculateTarget(parentBlock, block, importance, m_pConfigHolder->Config(block.Height).BlockChain);
+		auto target = CalculateTarget(parentBlock, block, importance, m_pConfigHolder->Config(block.Height).Network);
 		return hit < target;
 	}
 
@@ -99,7 +99,7 @@ namespace catapult { namespace chain {
 			context.ElapsedTime,
 			context.Difficulty,
 			importance,
-			m_pConfigHolder->Config(context.Height).BlockChain,
+			m_pConfigHolder->Config(context.Height).Network,
 			context.FeeInterest,
 			context.FeeInterestDenominator);
 		return hit < target;

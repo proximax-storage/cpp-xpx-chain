@@ -34,7 +34,7 @@ namespace catapult { namespace handlers {
 
 		auto CreateSubCacheMerkleRootsHandler(extensions::ServiceState& state) {
 			return [&state](const auto& packet, auto& context) {
-				if (!state.pluginManager().configHolder()->Config().BlockChain.ShouldEnableVerifiableState)
+				if (!state.pluginManager().immutableConfig().ShouldEnableVerifiableState)
 					return;
 
 				using RequestType = api::HeightPacket<ionet::PacketType::Sub_Cache_Merkle_Roots>;

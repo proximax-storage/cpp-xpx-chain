@@ -27,6 +27,8 @@ namespace catapult { namespace mocks {
 	/// A mock memory-based block storage that loads and saves blocks in memory.
 	class MockMemoryBlockStorage : public extensions::MemoryBlockStorage {
 	public:
+		~MockMemoryBlockStorage() override = default;
+
 		/// Creates a mock memory-based block storage.
 		MockMemoryBlockStorage();
 	};

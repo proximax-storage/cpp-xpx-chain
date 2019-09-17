@@ -46,7 +46,7 @@ namespace catapult { namespace test {
 	public:
 		// TransactionsGenerator
 		size_t size() const override;
-		std::unique_ptr<model::Transaction> generateAt(size_t index, Timestamp deadline) const override;
+		model::UniqueEntityPtr<model::Transaction> generateAt(size_t index, Timestamp deadline) const override;
 
 	public:
 		/// Adds a transfer from \a senderId to \a recipientId for amount \a transferAmount.
@@ -72,13 +72,13 @@ namespace catapult { namespace test {
 
 	private:
 		/// Generates transaction with specified \a deadline given descriptor (\a pDescriptor) and descriptor type (\a descriptorType).
-		virtual std::unique_ptr<model::Transaction> generate(
+		virtual model::UniqueEntityPtr<model::Transaction> generate(
 				uint32_t descriptorType,
 				const std::shared_ptr<const void>& pDescriptor,
 				Timestamp deadline) const = 0;
 
 	private:
-		std::unique_ptr<model::Transaction> createTransfer(const TransferDescriptor& descriptor, Timestamp deadline) const;
+		model::UniqueEntityPtr<model::Transaction> createTransfer(const TransferDescriptor& descriptor, Timestamp deadline) const;
 
 	protected:
 		/// Casts \a pVoid to a descriptor.
@@ -88,8 +88,8 @@ namespace catapult { namespace test {
 		}
 
 		/// Signs \a pTransaction with \a signerKeyPair and sets specified transaction \a deadline.
-		static std::unique_ptr<model::Transaction> SignWithDeadline(
-				std::unique_ptr<model::Transaction>&& pTransaction,
+		static model::UniqueEntityPtr<model::Transaction> SignWithDeadline(
+				model::UniqueEntityPtr<model::Transaction>&& pTransaction,
 				const crypto::KeyPair& signerKeyPair,
 				Timestamp deadline);
 

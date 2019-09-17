@@ -21,7 +21,7 @@
 #include "src/validators/Validators.h"
 #include "src/config/MultisigConfiguration.h"
 #include "catapult/utils/Functional.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -68,9 +68,9 @@ namespace catapult { namespace validators {
 					modifications.data());
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.MaxCosignersPerAccount = maxCosignersPerAccount;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateModifyMultisigMaxCosignersValidator(pConfigHolder);
 
 			// Act:

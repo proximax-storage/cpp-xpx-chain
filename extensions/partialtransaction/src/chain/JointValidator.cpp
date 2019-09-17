@@ -43,7 +43,7 @@ namespace catapult { namespace chain {
 					const ValidationResultPredicate& isSuppressedFailure)
 					: m_cache(cache)
 					, m_timeSupplier(timeSupplier)
-					, m_network(pluginManager.config().Network)
+					, m_pConfigHolder(pluginManager.configHolder())
 					, m_pStatelessValidator(pluginManager.createStatelessValidator(isSuppressedFailure))
 					, m_pStatefulValidator(pluginManager.createStatefulValidator(isSuppressedFailure))
 					, m_resolverContextFactory([&pluginManager](const auto& readOnlyCache) {
@@ -76,14 +76,15 @@ namespace catapult { namespace chain {
 				auto cacheView = m_cache.createView();
 				auto readOnlyCache = cacheView.toReadOnly();
 				auto resolverContext = m_resolverContextFactory(readOnlyCache);
-				auto validatorContext = ValidatorContext(cacheView.height(), m_timeSupplier(), m_network, resolverContext, readOnlyCache);
+				auto config = m_pConfigHolder->Config();
+				auto validatorContext = ValidatorContext(cacheView.height(), m_timeSupplier(), config.Immutable.NetworkIdentifier, config.Network.Info, resolverContext, readOnlyCache);
 				return m_pStatefulValidator->validate(notification, validatorContext);
 			}
 
 		private:
 			const cache::CatapultCache& m_cache;
 			TimeSupplier m_timeSupplier;
-			model::NetworkInfo m_network;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 			std::unique_ptr<const stateless::NotificationValidator> m_pStatelessValidator;
 			std::unique_ptr<const stateful::NotificationValidator> m_pStatefulValidator;
 			std::function<model::ResolverContext (const cache::ReadOnlyCatapultCache&)> m_resolverContextFactory;

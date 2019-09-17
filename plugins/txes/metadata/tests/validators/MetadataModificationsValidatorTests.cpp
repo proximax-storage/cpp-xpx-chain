@@ -9,7 +9,7 @@
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "src/state/MetadataUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MetadataCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -52,13 +52,14 @@ namespace catapult { namespace validators {
 				const Hash256 & metadataId,
 				const std::vector<Modification> modifications) {
 			// Arrange:
+			test::MutableBlockchainConfiguration mutableConfig;
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
 			pluginConfig.MaxFields = MaxFields;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(blockChainConfig);
+			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto config = mutableConfig.ToConst();
+			auto cache = test::MetadataCacheFactory::Create(config);
 			PopulateCache(cache, initValues);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMetadataModificationsValidator(pConfigHolder);
 
 			uint32_t sizeOfBuffer = 0;

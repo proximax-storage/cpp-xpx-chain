@@ -20,7 +20,7 @@
 
 #pragma once
 #include "catapult/extensions/ServiceRegistrar.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 
 namespace catapult { namespace ionet { struct NetworkNode; } }
 

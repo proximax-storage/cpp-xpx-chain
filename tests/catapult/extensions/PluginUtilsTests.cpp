@@ -19,10 +19,10 @@
 **/
 
 #include "catapult/extensions/PluginUtils.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "tests/test/local/LocalTestUtils.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace extensions {
 
@@ -30,7 +30,7 @@ namespace catapult { namespace extensions {
 
 	TEST(TEST_CLASS, CanCreateStorageConfiguration) {
 		// Arrange:
-		test::MutableCatapultConfiguration config;
+		test::MutableBlockchainConfiguration config;
 		config.Node.ShouldUseCacheDatabaseStorage = true;
 		config.Node.MaxCacheDatabaseWriteBatchSize = utils::FileSize::FromKilobytes(123);
 		config.User.DataDirectory = "foo_bar";

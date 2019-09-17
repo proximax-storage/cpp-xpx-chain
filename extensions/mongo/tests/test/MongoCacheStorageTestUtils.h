@@ -22,7 +22,8 @@
 #include "MongoTestUtils.h"
 #include "mongo/src/MongoStorageContext.h"
 #include "mongo/src/ExternalCacheStorage.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -48,9 +49,9 @@ namespace catapult { namespace test {
 
 		private:
 			auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier) {
-				auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-				blockChainConfig.Network.Identifier = networkIdentifier;
-				return config::CreateMockConfigurationHolder(blockChainConfig);
+				test::MutableBlockchainConfiguration config;
+				config.Immutable.NetworkIdentifier = networkIdentifier;
+				return config::CreateMockConfigurationHolder(config.ToConst());
 			}
 
 		private:

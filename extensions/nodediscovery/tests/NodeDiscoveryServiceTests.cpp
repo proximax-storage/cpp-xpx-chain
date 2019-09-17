@@ -19,7 +19,7 @@
 **/
 
 #include "nodediscovery/src/NodeDiscoveryService.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/ServerConnector.h"
@@ -27,7 +27,7 @@
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"

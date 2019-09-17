@@ -65,11 +65,11 @@ namespace catapult { namespace harvesting {
 		}
 
 		void PruneUnlockedAccounts(UnlockedAccounts& unlockedAccounts, const cache::CatapultCache& cache,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 			auto cacheView = cache.createView();
 			auto height = cacheView.height() + Height(1);
 			auto readOnlyAccountStateCache = cache::ReadOnlyAccountStateCache(cacheView.sub<cache::AccountStateCache>());
-			auto minHarvesterBalance = pConfigHolder->Config(height).BlockChain.MinHarvesterBalance;
+			auto minHarvesterBalance = pConfigHolder->Config(height).Network.MinHarvesterBalance;
 			unlockedAccounts.modifier().removeIf([height, minHarvesterBalance, &readOnlyAccountStateCache](const auto& key) {
 				cache::ImportanceView view(readOnlyAccountStateCache);
 				return !view.canHarvest(key, height, minHarvesterBalance);

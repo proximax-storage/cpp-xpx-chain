@@ -12,10 +12,11 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/plugins/PluginUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -23,9 +24,9 @@ namespace catapult { namespace test {
 	/// Cache factory for creating a catapult cache composed of account cache and core caches.
 	struct MetadataCacheFactory {
 	private:
-		static auto CreateSubCachesWithMetadataCache(const model::BlockChainConfiguration& blockChainConfig) {
+		static auto CreateSubCachesWithMetadataCache(const config::BlockchainConfiguration& config) {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::MosaicCache::Id + 1);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
 			subCaches[cache::MetadataCache::Id] =
 					MakeSubCachePlugin<cache::MetadataCache, cache::MetadataCacheStorage>();
@@ -37,8 +38,13 @@ namespace catapult { namespace test {
 		}
 
 	public:
+		/// Creates an empty catapult cache.
+		static cache::CatapultCache Create() {
+			return Create(test::MutableBlockchainConfiguration().ToConst());
+		}
+
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
 			auto subCaches = CreateSubCachesWithMetadataCache(config);
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));

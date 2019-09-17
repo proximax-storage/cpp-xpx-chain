@@ -68,6 +68,7 @@ namespace catapult { namespace thread {
 
 		public:
 			void shutdown() {
+				std::lock_guard<std::mutex> lock(m_mutex);
 				// since clearing dependencies unblocks shutdown of pool, first push shutdown id into vector
 				m_shutdownIds.push_back(m_id);
 				m_dependencies.clear();
@@ -78,6 +79,7 @@ namespace catapult { namespace thread {
 			}
 
 		private:
+			std::mutex m_mutex;
 			std::string m_threadPoolTag;
 			size_t m_id;
 			ShutdownIds& m_shutdownIds;

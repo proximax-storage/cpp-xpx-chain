@@ -50,16 +50,16 @@ namespace catapult { namespace builders {
 		});
 	}
 
-	std::unique_ptr<MosaicDefinitionBuilder::Transaction> MosaicDefinitionBuilder::build() const {
+	model::UniqueEntityPtr<MosaicDefinitionBuilder::Transaction> MosaicDefinitionBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<MosaicDefinitionBuilder::EmbeddedTransaction> MosaicDefinitionBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<MosaicDefinitionBuilder::EmbeddedTransaction> MosaicDefinitionBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> MosaicDefinitionBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> MosaicDefinitionBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		size += m_properties.size() * sizeof(model::MosaicProperty);

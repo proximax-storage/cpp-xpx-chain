@@ -21,7 +21,7 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/validators/Validators.h"
 #include "src/cache/NamespaceCache.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/NamespaceCacheTestUtils.h"
 #include "tests/test/NamespaceTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -34,10 +34,8 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, config::CreateMockConfigurationHolder())
 
 	namespace {
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
-
 		auto CreateAndSeedCache() {
-			auto cache = test::NamespaceCacheFactory::Create(Default_Config);
+			auto cache = test::NamespaceCacheFactory::Create();
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
@@ -62,9 +60,9 @@ namespace catapult { namespace validators {
 			auto cache = CreateAndSeedCache();
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxChildNamespaces = maxChildren;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateRootNamespaceMaxChildrenValidator(pConfigHolder);
 
 			// Act:

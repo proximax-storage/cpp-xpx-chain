@@ -32,7 +32,8 @@ namespace catapult { namespace harvesting {
 		HarvestingUtFacade(
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+				const config::BlockchainConfiguration& config,
 				const chain::ExecutionConfiguration& executionConfig);
 
 		/// Destroys the facade.
@@ -56,7 +57,7 @@ namespace catapult { namespace harvesting {
 		void unapply();
 
 		/// Commits all transactions into a block with specified seed header (\a blockHeader).
-		std::unique_ptr<model::Block> commit(const model::BlockHeader& blockHeader);
+		model::UniqueEntityPtr<model::Block> commit(const model::BlockHeader& blockHeader);
 
 	private:
 		class Impl;
@@ -72,7 +73,7 @@ namespace catapult { namespace harvesting {
 		/// Creates a factory around \a cache, \a pConfigHolder and \a executionConfig.
 		HarvestingUtFacadeFactory(
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const chain::ExecutionConfiguration& executionConfig);
 
 	public:
@@ -81,7 +82,8 @@ namespace catapult { namespace harvesting {
 
 	private:
 		const cache::CatapultCache& m_cache;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+		config::BlockchainConfiguration m_config;
 		chain::ExecutionConfiguration m_executionConfig;
 	};
 }}

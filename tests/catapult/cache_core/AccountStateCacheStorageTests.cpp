@@ -24,9 +24,9 @@
 #include "tests/test/cache/CacheStorageTestUtils.h"
 #include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -37,14 +37,9 @@ namespace catapult { namespace cache {
 		struct AccountStateCacheStorageTraits {
 		private:
 			static auto CreateConfigHolder() {
-				test::MutableCatapultConfiguration config;
-
-				config.BlockChain.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-				config.BlockChain.ImportanceGrouping = 543;
-				config.BlockChain.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
-				config.BlockChain.CurrencyMosaicId = test::Default_Currency_Mosaic_Id;
-				config.BlockChain.HarvestingMosaicId = test::Default_Harvesting_Mosaic_Id;
-
+				test::MutableBlockchainConfiguration config;
+				config.Network.ImportanceGrouping = 543;
+				config.Network.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
 				return config::CreateMockConfigurationHolder(config.ToConst());
 			}
 
@@ -52,7 +47,12 @@ namespace catapult { namespace cache {
 			using StorageType = AccountStateCacheStorage;
 			class CacheType : public AccountStateCache {
 			public:
-				CacheType() : AccountStateCache(CacheConfiguration(), CreateConfigHolder())
+				CacheType() : AccountStateCache(CacheConfiguration(), AccountStateCacheTypes::Options{
+						CreateConfigHolder(),
+						model::NetworkIdentifier::Mijin_Test,
+						test::Default_Currency_Mosaic_Id,
+						test::Default_Harvesting_Mosaic_Id
+					})
 				{}
 			};
 

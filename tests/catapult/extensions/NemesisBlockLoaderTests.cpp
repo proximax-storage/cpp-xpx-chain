@@ -30,12 +30,12 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/LocalNodeTestState.h"
-#include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 
 namespace catapult { namespace extensions {
@@ -53,7 +53,7 @@ namespace catapult { namespace extensions {
 
 		struct BlockSignerPair {
 			std::unique_ptr<crypto::KeyPair> pSigner;
-			std::unique_ptr<model::Block> pBlock;
+			model::UniqueEntityPtr<model::Block> pBlock;
 		};
 
 		struct NemesisOptions {
@@ -91,6 +91,7 @@ namespace catapult { namespace extensions {
 				io::BlockStorageCache& storage,
 				const BlockSignerPair& blockSignerPair,
 				const model::NetworkInfo& network,
+				const GenerationHash& generationHash,
 				NemesisBlockModification modification) {
 			auto pNemesisBlockElement = storage.view().loadBlockElement(Height(1));
 			auto storageModifier = storage.modifier();
@@ -110,7 +111,7 @@ namespace catapult { namespace extensions {
 			if (NemesisBlockModification::Generation_Hash == modification)
 				test::FillWithRandomData(modifiedNemesisBlockElement.GenerationHash);
 			else
-				modifiedNemesisBlockElement.GenerationHash = network.GenerationHash;
+				modifiedNemesisBlockElement.GenerationHash = generationHash;
 
 			// 3. modify the block signature if requested
 			if (NemesisBlockModification::Signature == modification)
@@ -138,20 +139,22 @@ namespace catapult { namespace extensions {
 			return MakeHarvestingMosaic(Amount(amount));
 		}
 
-		model::BlockChainConfiguration CreateDefaultConfiguration(const model::Block& nemesisBlock, const NemesisOptions& nemesisOptions) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = Network_Identifier;
-			config.Network.PublicKey = nemesisBlock.Signer;
-			test::FillWithRandomData(config.Network.GenerationHash);
-			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.InitialCurrencyAtomicUnits = nemesisOptions.InitialCurrencyAtomicUnits;
-			config.MaxMosaicAtomicUnits = Amount(15'000'000);
-			config.TotalChainImportance = nemesisOptions.TotalChainImportance;
-			return config;
+		auto CreateDefaultConfiguration(const model::Block& nemesisBlock, const NemesisOptions& nemesisOptions) {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = Network_Identifier;
+			test::FillWithRandomData(config.Immutable.GenerationHash);
+			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			config.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.Immutable.InitialCurrencyAtomicUnits = nemesisOptions.InitialCurrencyAtomicUnits;
+			config.Network.ImportanceGrouping = 123;
+			config.Network.MinHarvesterBalance = Amount(std::numeric_limits<Amount::ValueType>::max());
+			config.Network.Info.PublicKey = nemesisBlock.Signer;
+			config.Network.MaxMosaicAtomicUnits = Amount(15'000'000);
+			config.Network.TotalChainImportance = nemesisOptions.TotalChainImportance;
+			return config.ToConst();
 		}
 
-		plugins::PluginManager CreatePluginManager(const model::BlockChainConfiguration& config) {
+		plugins::PluginManager CreatePluginManager(const config::BlockchainConfiguration& config) {
 			// enable Publish_Transfers (MockTransaction Publish XORs recipient address, so XOR address resolver is required
 			// for proper roundtripping or else test will fail)
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -172,7 +175,7 @@ namespace catapult { namespace extensions {
 			return manager;
 		}
 
-		std::unique_ptr<const observers::NotificationObserver> CreateObserver(const model::BlockChainConfiguration& config) {
+		std::unique_ptr<const observers::NotificationObserver> CreateObserver(const config::BlockchainConfiguration& config) {
 			// use real coresystem observers to create accounts, update balances and add harvest receipt
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			observers::DemuxObserverBuilder builder;
@@ -203,7 +206,7 @@ namespace catapult { namespace extensions {
 			// Arrange: create the state
 			auto config = CreateDefaultConfiguration(*nemesisBlockSignerPair.pBlock, nemesisOptions);
 			test::LocalNodeTestState state(config);
-			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
+			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network.Info, config.Immutable.GenerationHash, NemesisBlockModification::None);
 
 			// - create the publisher, observer and loader
 			auto pluginManager = CreatePluginManager(config);
@@ -244,7 +247,7 @@ namespace catapult { namespace extensions {
 
 			// - create the state
 			auto config = CreateDefaultConfiguration(*nemesisBlockSignerPair.pBlock, nemesisOptions);
-			config.ShouldEnableVerifiableReceipts = NemesisBlockVerifyOptions::Receipts == verifyOptions;
+			const_cast<bool&>(config.Immutable.ShouldEnableVerifiableReceipts) = NemesisBlockVerifyOptions::Receipts == verifyOptions;
 
 			auto cacheConfig = cache::CacheConfiguration();
 			test::TempDirectoryGuard dbDirGuard;
@@ -252,8 +255,8 @@ namespace catapult { namespace extensions {
 				cacheConfig = cache::CacheConfiguration(dbDirGuard.name(), utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
 
 			auto cache = test::CreateEmptyCatapultCache(config, cacheConfig);
-			test::LocalNodeTestState state(config, "", std::move(cache));
-			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, modification);
+			test::LocalNodeTestState state(config, std::move(cache));
+			SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network.Info, config.Immutable.GenerationHash, modification);
 
 			{
 				// - create the publisher, observer and loader
@@ -339,7 +342,7 @@ namespace catapult { namespace extensions {
 		struct ExecuteDefaultStateTraits {
 			static void Execute(NemesisBlockLoader& loader, const LocalNodeStateRef& stateRef, StateHashVerification) {
 				auto pNemesisBlockElement = stateRef.Storage.view().loadBlockElement(Height(1));
-				loader.execute(stateRef.Config.BlockChain, *pNemesisBlockElement);
+				loader.execute(stateRef.Config, *pNemesisBlockElement);
 			}
 
 			template<typename TAssertAccountStateCache>
@@ -501,9 +504,9 @@ namespace catapult { namespace extensions {
 			EXPECT_NE(Hash256(), nemesisBlock.StateHash);
 		}
 
-		test::LocalNodeTestState state(config, "", std::move(cache));
+		test::LocalNodeTestState state(config, std::move(cache));
 
-		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
+		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network.Info, config.Immutable.GenerationHash, NemesisBlockModification::None);
 
 		// - create the publisher, observer and loader
 		auto pluginManager = CreatePluginManager(config);
@@ -534,8 +537,8 @@ namespace catapult { namespace extensions {
 		// - create the state (with verifiable receipts enabled)
 		NemesisOptions nemesisOptions{ Importance(1234), Amount(1234) };
 		auto config = CreateDefaultConfiguration(nemesisBlock, nemesisOptions);
-		config.ShouldEnableVerifiableReceipts = true;
-		config.CurrencyMosaicId = Harvesting_Mosaic_Id;
+		const_cast<bool&>(config.Immutable.ShouldEnableVerifiableReceipts) = true;
+		const_cast<MosaicId&>(config.Immutable.CurrencyMosaicId) = Harvesting_Mosaic_Id;
 		auto cache = test::CreateEmptyCatapultCache(config);
 		{
 			// - calculate the expected receipts hash
@@ -557,9 +560,9 @@ namespace catapult { namespace extensions {
 			EXPECT_NE(Hash256(), nemesisBlock.BlockReceiptsHash);
 		}
 
-		test::LocalNodeTestState state(config, "", std::move(cache));
+		test::LocalNodeTestState state(config, std::move(cache));
 
-		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network, NemesisBlockModification::None);
+		SetNemesisBlock(state.ref().Storage, nemesisBlockSignerPair, config.Network.Info, config.Immutable.GenerationHash, NemesisBlockModification::None);
 
 		// - create the publisher, observer and loader
 		auto pluginManager = CreatePluginManager(config);

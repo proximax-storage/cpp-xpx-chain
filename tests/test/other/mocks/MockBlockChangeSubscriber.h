@@ -67,7 +67,7 @@ namespace catapult { namespace mocks {
 
 	private:
 		std::vector<const model::BlockElement*> m_blockElements;
-		std::vector<std::unique_ptr<model::Block>> m_copiedBlocks;
+		std::vector<model::UniqueEntityPtr<model::Block>> m_copiedBlocks;
 		std::vector<std::unique_ptr<model::BlockElement>> m_copiedBlockElements;
 		std::vector<Height> m_dropBlocksAfterHeights;
 	};

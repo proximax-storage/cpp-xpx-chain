@@ -35,11 +35,13 @@ namespace catapult { namespace validators {
 		ValidatorContext(
 				catapult::Height height,
 				Timestamp blockTime,
+				model::NetworkIdentifier networkIdentifier,
 				const model::NetworkInfo& network,
 				const model::ResolverContext& resolvers,
 				const cache::ReadOnlyCatapultCache& cache)
 				: Height(height)
 				, BlockTime(blockTime)
+				, NetworkIdentifier(networkIdentifier)
 				, Network(network)
 				, Resolvers(resolvers)
 				, Cache(cache)
@@ -51,6 +53,9 @@ namespace catapult { namespace validators {
 
 		/// Current block time.
 		const Timestamp BlockTime;
+
+		/// Network identifier.
+		const model::NetworkIdentifier NetworkIdentifier;
 
 		/// Network info.
 		const model::NetworkInfo Network;

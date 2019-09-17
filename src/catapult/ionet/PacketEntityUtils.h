@@ -22,6 +22,7 @@
 #include "Packet.h"
 #include "PacketPayloadParser.h"
 #include "catapult/model/EntityRange.h"
+#include "catapult/model/EntityPtr.h"
 
 namespace catapult { namespace ionet {
 
@@ -58,7 +59,7 @@ namespace catapult { namespace ionet {
 	/// Extracts a single entity from \a packet with a validity check (\a isValid).
 	/// \note If the packet is invalid and/or contains partial or multiple entities, \c nullptr will be returned.
 	template<typename TEntity, typename TIsValidPredicate>
-	std::unique_ptr<TEntity> ExtractEntityFromPacket(const Packet& packet, TIsValidPredicate isValid) {
+	model::UniqueEntityPtr<TEntity> ExtractEntityFromPacket(const Packet& packet, TIsValidPredicate isValid) {
 		auto dataSize = CalculatePacketDataSize(packet);
 		if (!ContainsSingleEntity<TEntity>({ packet.Data(), dataSize }, isValid))
 			return nullptr;

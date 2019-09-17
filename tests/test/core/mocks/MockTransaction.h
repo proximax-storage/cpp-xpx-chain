@@ -140,18 +140,18 @@ namespace catapult { namespace mocks {
 	// endregion
 
 	/// Creates a mock transaction with variable data composed of \a dataSize random bytes.
-	std::unique_ptr<MockTransaction> CreateMockTransaction(uint16_t dataSize);
+	model::UniqueEntityPtr<MockTransaction> CreateMockTransaction(uint16_t dataSize);
 
 	/// Creates an embedded mock transaction with variable data composed of \a dataSize random bytes.
-	std::unique_ptr<EmbeddedMockTransaction> CreateEmbeddedMockTransaction(uint16_t dataSize);
+	model::UniqueEntityPtr<EmbeddedMockTransaction> CreateEmbeddedMockTransaction(uint16_t dataSize);
 
 	/// Creates a mock transaction with a \a fee and \a transfers.
-	std::unique_ptr<mocks::MockTransaction> CreateTransactionWithFeeAndTransfers(
+	model::UniqueEntityPtr<mocks::MockTransaction> CreateTransactionWithFeeAndTransfers(
 			Amount fee,
 			const std::vector<model::UnresolvedMosaic>& transfers);
 
 	/// Creates a mock transaction with \a signer and \a recipient.
-	std::unique_ptr<MockTransaction> CreateMockTransactionWithSignerAndRecipient(const Key& signer, const Key& recipient);
+	model::UniqueEntityPtr<MockTransaction> CreateMockTransactionWithSignerAndRecipient(const Key& signer, const Key& recipient);
 
 	/// Mock transaction plugin options.
 	enum class PluginOptionFlags : uint8_t {

@@ -20,6 +20,7 @@
 
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "tests/test/local/LocalTestUtils.h"
+#include "tests/test/nodeps/MijinConstants.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
@@ -32,7 +33,8 @@ namespace catapult { namespace extensions {
 		auto config = CreateExecutionConfiguration(*pPlugin);
 
 		// Assert:
-		EXPECT_EQ(model::NetworkIdentifier::Mijin_Test, config.NetworkInfoSupplier(Height{0}).Identifier);
+		EXPECT_EQ(model::NetworkIdentifier::Mijin_Test, config.NetworkIdentifier);
+		EXPECT_EQ(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key).publicKey(), config.NetworkInfoSupplier(Height{0}).PublicKey);
 		EXPECT_TRUE(!!config.pObserver);
 		EXPECT_TRUE(!!config.pValidator);
 		EXPECT_TRUE(!!config.pNotificationPublisher);
@@ -58,7 +60,6 @@ namespace catapult { namespace extensions {
 		std::vector<std::string> expectedValidatorNames{
 			"EntityVersionValidator",
 			"MaxTransactionsValidator",
-			"NetworkValidator",
 			"AddressValidator",
 			"DeadlineValidator",
 			"EligibleHarvesterValidator",

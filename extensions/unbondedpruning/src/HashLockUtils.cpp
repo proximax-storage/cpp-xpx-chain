@@ -20,7 +20,7 @@
 
 #include "HashLockUtils.h"
 #include "plugins/txes/lock_hash/src/model/HashLockNotifications.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/NotificationSubscriber.h"
 

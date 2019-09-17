@@ -26,6 +26,7 @@
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
@@ -87,13 +88,13 @@ namespace catapult { namespace harvesting {
 
 		public:
 			void setMinHarvesterBalance(Amount balance) {
-				const_cast<model::BlockChainConfiguration&>(testState().state().config().BlockChain).MinHarvesterBalance = balance;
+				const_cast<model::NetworkConfiguration&>(testState().state().config().Network).MinHarvesterBalance = balance;
 			}
 
 			void enableVerifiableState() {
 				auto& config = testState().state().config();
 				const_cast<bool&>(config.Node.ShouldUseCacheDatabaseStorage) = true;
-				const_cast<bool&>(config.BlockChain.ShouldEnableVerifiableState) = true;
+				const_cast<bool&>(config.Immutable.ShouldEnableVerifiableState) = true;
 			}
 
 		public:
@@ -196,10 +197,10 @@ namespace catapult { namespace harvesting {
 				const Key& publicKey,
 				Amount balance) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.ImportanceGrouping = Importance_Grouping;
-			auto cache = test::CreateEmptyCatapultCache(config, cacheConfig);
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.Network.ImportanceGrouping = Importance_Grouping;
+			auto cache = test::CreateEmptyCatapultCache(config.ToConst(), cacheConfig);
 			auto delta = cache.createDelta();
 
 			// - add an account

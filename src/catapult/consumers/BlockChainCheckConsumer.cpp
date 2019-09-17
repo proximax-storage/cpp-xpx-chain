@@ -22,7 +22,7 @@
 #include "ConsumerResultFactory.h"
 #include "InputUtils.h"
 #include "catapult/chain/ChainUtils.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
 #include <unordered_set>
@@ -40,7 +40,7 @@ namespace catapult { namespace consumers {
 		public:
 			explicit BlockChainCheckConsumer(
 					uint32_t maxChainSize,
-					const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+					const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 					const chain::TimeSupplier& timeSupplier)
 					: m_maxChainSize(maxChainSize)
 					, m_pConfigHolder(pConfigHolder)
@@ -79,19 +79,19 @@ namespace catapult { namespace consumers {
 
 		private:
 			bool isChainTimestampAllowed(const model::Block& block) const {
-				return block.Timestamp <= m_timeSupplier() + m_pConfigHolder->Config(block.Height).BlockChain.MaxBlockFutureTime;
+				return block.Timestamp <= m_timeSupplier() + m_pConfigHolder->Config(block.Height).Network.MaxBlockFutureTime;
 			}
 
 		private:
 			uint32_t m_maxChainSize;
-			std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 			chain::TimeSupplier m_timeSupplier;
 		};
 	}
 
 	disruptor::ConstBlockConsumer CreateBlockChainCheckConsumer(
 			uint32_t maxChainSize,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const chain::TimeSupplier& timeSupplier) {
 		return BlockChainCheckConsumer(maxChainSize, pConfigHolder, timeSupplier);
 	}

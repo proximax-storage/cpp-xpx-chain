@@ -4,36 +4,36 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/CatapultUpgradeCache.h"
-#include "src/cache/CatapultUpgradeCacheStorage.h"
-#include "src/config/CatapultUpgradeConfiguration.h"
+#include "src/cache/BlockchainUpgradeCache.h"
+#include "src/cache/BlockchainUpgradeCacheStorage.h"
+#include "src/config/BlockchainUpgradeConfiguration.h"
 #include "src/validators/Validators.h"
-#include "tests/test/CatapultUpgradeTestUtils.h"
+#include "tests/test/BlockchainUpgradeTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 #include <limits>
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS CatapultVersionValidatorTests
+#define TEST_CLASS BlockchainVersionValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(CatapultVersion,)
+	DEFINE_COMMON_VALIDATOR_TESTS(BlockchainVersion,)
 
 	namespace {
 		void AssertValidationResult(
 			ValidationResult expectedResult,
-			uint64_t nextCatapultVersion,
+			uint64_t nextBlockchainVersion,
 			bool seedCache) {
 			// Arrange:
-			auto cache = test::CreateEmptyCatapultCache<test::CatapultUpgradeCacheFactory>(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::CreateEmptyCatapultCache<test::BlockchainUpgradeCacheFactory>();
 			if (seedCache) {
 				auto delta = cache.createDelta();
-				auto& upgradeCacheDelta = delta.sub<cache::CatapultUpgradeCache>();
-				upgradeCacheDelta.insert(state::CatapultUpgradeEntry(Height(1), CatapultVersion{nextCatapultVersion}));
+				auto& upgradeCacheDelta = delta.sub<cache::BlockchainUpgradeCache>();
+				upgradeCacheDelta.insert(state::BlockchainUpgradeEntry(Height(1), BlockchainVersion{nextBlockchainVersion}));
 				cache.commit(Height(1));
 			}
 			model::BlockNotification<1> notification(Key(), Key(), Timestamp(), Difficulty(), 0, 0);
-			auto pValidator = CreateCatapultVersionValidator();
+			auto pValidator = CreateBlockchainVersionValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, Height(1));
@@ -43,10 +43,10 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, FailureWhenCurrentCatapultVersionTooLow) {
+	TEST(TEST_CLASS, FailureWhenCurrentBlockchainVersionTooLow) {
 		// Assert:
 		AssertValidationResult(
-			Failure_CatapultUpgrade_Invalid_Current_Catapult_Version,
+			Failure_BlockchainUpgrade_Invalid_Current_Version,
 			std::numeric_limits<uint64_t>::max(),
 			true);
 	}
@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 			false);
 	}
 
-	TEST(TEST_CLASS, SuccessWhenCurrentCatapultVersionIsValid) {
+	TEST(TEST_CLASS, SuccessWhenCurrentBlockchainVersionIsValid) {
 		// Assert:
 		AssertValidationResult(
 			ValidationResult::Success,

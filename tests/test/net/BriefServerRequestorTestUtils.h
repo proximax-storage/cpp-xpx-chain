@@ -156,36 +156,40 @@ namespace catapult { namespace test {
 	public:
 		/// Returns \c true if the server is connected.
 		bool hasConnection() const {
-			return !!m_pServerSocket;
+			return !!std::atomic_load(&m_pServerSocket);
 		}
 
 	protected:
-		void prepareValidResponse(const crypto::KeyPair& partnerKeyPair, const std::shared_ptr<ionet::Packet>& pResponsePacket) {
+		void prepareValidResponse(
+				const crypto::KeyPair& partnerKeyPair,
+				const std::shared_ptr<ionet::Packet>& pResponsePacket) {
 			std::shared_ptr<ionet::PacketSocket> pServerSocket;
 			test::SpawnPacketServerWork(
 					m_acceptor,
 					[&partnerKeyPair, pResponsePacket, &pServerSocket = m_pServerSocket](const auto& pSocket) {
-				pServerSocket = pSocket;
-				net::VerifyClient(pSocket, partnerKeyPair, ionet::ConnectionSecurityMode::None, [pResponsePacket, pSocket](
-						auto,
-						const auto&) {
-					// - write the packet
-					pSocket->write(ionet::PacketPayload(pResponsePacket), [](auto) {});
-				});
-			});
+						std::atomic_store(&pServerSocket, pSocket);
+						net::VerifyClient(
+								pSocket,
+								partnerKeyPair,
+								ionet::ConnectionSecurityMode::None,
+								[pResponsePacket, pSocket](auto, const auto&) {
+									// - write the packet
+								  	pSocket->write(ionet::PacketPayload(pResponsePacket), [](auto) {});
+								});
+					});
 		}
 
 	public:
 		/// Spawns server work but does not respond to any request.
 		void prepareNoResponse() {
 			test::SpawnPacketServerWork(m_acceptor, [&pServerSocket = m_pServerSocket](const auto& pSocket) {
-				pServerSocket = pSocket;
+				std::atomic_store(&pServerSocket, pSocket);
 			});
 		}
 
 		/// Closes the socket.
 		void close() {
-			m_pServerSocket->close();
+			std::atomic_load(&m_pServerSocket)->close();
 		}
 
 	private:

@@ -38,6 +38,16 @@ namespace catapult { namespace cache {
 				, ContractCacheViewMixins::ConstAccessor(contractSets.Primary)
 				, ContractCacheViewMixins::PatriciaTreeView(contractSets.PatriciaTree.get())
 		{}
+
+	public:
+		void setEnabled(bool) {
+		}
+
+		/// Disable the cache.
+		/// TODO: remove the contract plugin.
+		bool enabled() const {
+			return false;
+		}
 	};
 
 	/// View on top of the contract cache.

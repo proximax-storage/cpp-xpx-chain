@@ -23,7 +23,7 @@
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/config/InflationConfiguration.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
 #include "catapult/model/ExtractorContext.h"
 #include "catapult/model/NotificationPublisher.h"
@@ -83,20 +83,20 @@ namespace catapult { namespace plugins {
 	public:
 		/// Creates a new plugin manager around \a config and \a storageConfig.
 		PluginManager(
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const StorageConfiguration& storageConfig);
 
 	public:
 		// region config
 
 		/// Gets the block chain configuration at \a height.
-		const model::BlockChainConfiguration& config(const Height& height) const;
+		const model::NetworkConfiguration& config(const Height& height) const;
 
 		/// Gets the latest available block chain configuration.
-		const model::BlockChainConfiguration& config() const;
+		const model::NetworkConfiguration& config() const;
 
-		/// Gets the catapult configuration holder.
-		const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder() const;
+		/// Gets the blockchain configuration holder.
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder() const;
 
 		/// Gets the storage configuration.
 		const StorageConfiguration& storageConfig() const;
@@ -106,6 +106,9 @@ namespace catapult { namespace plugins {
 
 		/// Gets the inflation configuration.
 		const config::InflationConfiguration& inflationConfig() const;
+
+		/// Gets the immutable network configuration.
+		const config::ImmutableConfiguration& immutableConfig() const;
 
 		/// Sets whether verifiable state should be enabled or not (\a shouldEnableVerifiableState).
 		void setShouldEnableVerifiableState(bool shouldEnableVerifiableState);
@@ -235,7 +238,7 @@ namespace catapult { namespace plugins {
 		// endregion
 
 	private:
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
 		model::TransactionRegistry m_transactionRegistry;
 		cache::CatapultCacheBuilder m_cacheBuilder;

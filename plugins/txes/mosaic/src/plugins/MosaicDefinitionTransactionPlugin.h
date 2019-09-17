@@ -24,7 +24,7 @@
 #include <memory>
 
 namespace catapult {
-	namespace config { class LocalNodeConfigurationHolder; }
+	namespace config { class BlockchainConfigurationHolder; }
 	namespace model { class TransactionPlugin; }
 }
 
@@ -50,5 +50,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a mosaic definition transaction plugin given the (\a config).
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateMosaicDefinitionTransactionPlugin(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	std::unique_ptr<model::TransactionPlugin> CreateMosaicDefinitionTransactionPlugin(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 }}

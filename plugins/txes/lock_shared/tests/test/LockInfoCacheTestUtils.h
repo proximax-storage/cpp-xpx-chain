@@ -21,6 +21,7 @@
 #pragma once
 #include "plugins/txes/lock_shared/src/state/LockInfo.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -81,11 +82,11 @@ namespace catapult { namespace test {
 	public:
 		/// Creates an empty catapult cache.
 		static cache::CatapultCache Create() {
-			return cache::CatapultCache(CreateSubCachesWithLockHashCache());
+			return Create(test::MutableBlockchainConfiguration().ToConst());
 		}
 
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config) {
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
 			auto subCaches = CreateSubCachesWithLockHashCache();
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));

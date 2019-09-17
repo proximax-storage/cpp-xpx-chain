@@ -25,6 +25,7 @@
 #include "timesync/tests/test/TimeSynchronizationTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include <cmath>
 
@@ -73,26 +74,15 @@ namespace catapult { namespace timesync {
 			return addresses;
 		}
 
-		auto CreateBlockchainConfig() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.Network.Identifier = Default_Network_Identifier;
-			config.ImportanceGrouping = 234;
-			config.MinHarvesterBalance = Amount(1000);
-			config.CurrencyMosaicId = MosaicId(1111);
-			config.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			config.TotalChainImportance = Total_Chain_Importance;
-			return config;
-		}
-
 		auto CreateConfig() {
-			return config::CatapultConfiguration{
-					CreateBlockchainConfig(),
-					config::NodeConfiguration::Uninitialized(),
-					config::LoggingConfiguration::Uninitialized(),
-					config::UserConfiguration::Uninitialized(),
-					config::ExtensionsConfiguration::Uninitialized(),
-					config::InflationConfiguration::Uninitialized(),
-			};
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+			config.Immutable.CurrencyMosaicId = MosaicId(1111);
+			config.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			config.Network.ImportanceGrouping = 234;
+			config.Network.MinHarvesterBalance = Amount(1000);
+			config.Network.TotalChainImportance = Total_Chain_Importance;
+			return config.ToConst();
 		}
 
 		enum class KeyType { Address, PublicKey, };
@@ -104,7 +94,7 @@ namespace catapult { namespace timesync {
 					const std::vector<filters::SynchronizationFilter>& filters = {},
 					KeyType keyType = KeyType::PublicKey)
 					: m_configHolder(config::CreateMockConfigurationHolder(CreateConfig()))
-					, m_state(test::CreateCatapultCacheWithMarkerAccount(m_configHolder->Config(Height(0)).BlockChain), m_configHolder)
+					, m_state(test::CreateCatapultCacheWithMarkerAccount(m_configHolder->Config(Height(0))), m_configHolder)
 					, m_cache(const_cast<cache::AccountStateCache&>(m_state.cache().sub<cache::AccountStateCache>()))
 					, m_synchronizer(filters::AggregateSynchronizationFilter(filters), m_state.state(), Warning_Threshold_Millis) {
 				std::vector<Importance> importances;
@@ -132,7 +122,7 @@ namespace catapult { namespace timesync {
 			}
 
 		private:
-			std::shared_ptr<config::LocalNodeConfigurationHolder> m_configHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> m_configHolder;
 			test::ServiceTestState m_state;
 			cache::AccountStateCache& m_cache;
 			TimeSynchronizer m_synchronizer;
@@ -200,7 +190,7 @@ namespace catapult { namespace timesync {
 			auto samples = test::CreateTimeSyncSamplesWithIncreasingTimeOffset(1000, numSamples);
 			auto keys = test::ExtractKeys(samples);
 			auto configHolder = config::CreateMockConfigurationHolder(CreateConfig());
-			test::ServiceTestState state(test::CreateCatapultCacheWithMarkerAccount(configHolder->Config(Height(0)).BlockChain), configHolder);
+			test::ServiceTestState state(test::CreateCatapultCacheWithMarkerAccount(configHolder->Config(Height(0))), configHolder);
 			auto& cache = const_cast<cache::AccountStateCache&>(state.cache().sub<cache::AccountStateCache>());
 			auto singleAccountImportance = Importance(Total_Chain_Importance.unwrap() / numSamples);
 			SeedAccountStateCache(cache, keys, std::vector<Importance>(numSamples, singleAccountImportance));

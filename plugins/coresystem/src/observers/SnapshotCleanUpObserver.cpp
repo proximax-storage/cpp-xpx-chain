@@ -11,12 +11,12 @@ namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_OBSERVER(SnapshotCleanUp, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_OBSERVER(SnapshotCleanUp, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_OBSERVER(SnapshotCleanUp, Notification, [pConfigHolder](const auto&, const ObserverContext& context) {
 			if (context.Mode == NotifyMode::Rollback)
 				return;
 
-			const model::BlockChainConfiguration& config = pConfigHolder->Config(context.Height).BlockChain;
+			const model::NetworkConfiguration& config = pConfigHolder->Config(context.Height).Network;
 			if (config.MaxRollbackBlocks != 0 && context.Height.unwrap() % config.MaxRollbackBlocks)
 				return;
 

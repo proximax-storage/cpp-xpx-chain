@@ -22,11 +22,11 @@
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/TimeSpan.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace chain {
@@ -36,7 +36,7 @@ namespace catapult { namespace chain {
 	// region IsChainLink
 
 	namespace {
-		std::unique_ptr<model::Block> GenerateBlockAtHeight(Height height, Timestamp timestamp) {
+		model::UniqueEntityPtr<model::Block> GenerateBlockAtHeight(Height height, Timestamp timestamp) {
 			auto pBlock = test::GenerateBlockWithTransactions(0, height);
 			pBlock->Timestamp = timestamp;
 			return pBlock;
@@ -139,7 +139,7 @@ namespace catapult { namespace chain {
 		std::unique_ptr<cache::BlockDifficultyCache> SeedBlockDifficultyCache(
 				Height maxHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
-				const model::BlockChainConfiguration& config) {
+				const model::NetworkConfiguration& config) {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pCache = std::make_unique<cache::BlockDifficultyCache>(pConfigHolder);
 			{
@@ -161,16 +161,16 @@ namespace catapult { namespace chain {
 			return pCache;
 		}
 
-		std::vector<std::unique_ptr<model::Block>> GenerateBlocks(
+		std::vector<model::UniqueEntityPtr<model::Block>> GenerateBlocks(
 				Height startHeight,
 				const utils::TimeSpan& timeBetweenBlocks,
 				uint32_t numBlocks,
 				const cache::BlockDifficultyCache& cache,
-				const model::BlockChainConfiguration& config) {
+				const model::NetworkConfiguration& config) {
 
 			using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
 
-			std::vector<std::unique_ptr<model::Block>> blocks;
+			std::vector<model::UniqueEntityPtr<model::Block>> blocks;
 			auto infos = cache.createView(Height{0})->difficultyInfos(startHeight - Height(1), config.MaxDifficultyBlocks);
 
 			DifficultySet difficulties;
@@ -198,7 +198,7 @@ namespace catapult { namespace chain {
 			return blocks;
 		}
 
-		std::vector<const model::Block*> Unwrap(const std::vector<std::unique_ptr<model::Block>>& blocks) {
+		std::vector<const model::Block*> Unwrap(const std::vector<model::UniqueEntityPtr<model::Block>>& blocks) {
 			std::vector<const model::Block*> blockPointers;
 			for (const auto& pBlock : blocks)
 				blockPointers.push_back(pBlock.get());
@@ -206,8 +206,8 @@ namespace catapult { namespace chain {
 			return blockPointers;
 		}
 
-		model::BlockChainConfiguration CreateConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+		model::NetworkConfiguration CreateConfiguration() {
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.MaxDifficultyBlocks = 60;
 			return config;
@@ -361,7 +361,7 @@ namespace catapult { namespace chain {
 	// region CalculatePartialChainScore
 
 	namespace {
-		std::unique_ptr<model::Block> CreateBlock(Timestamp timestamp, Difficulty difficulty) {
+		auto CreateBlock(Timestamp timestamp, Difficulty difficulty) {
 			auto pBlock = std::make_unique<model::Block>();
 			pBlock->Timestamp = timestamp;
 			pBlock->Difficulty = difficulty;

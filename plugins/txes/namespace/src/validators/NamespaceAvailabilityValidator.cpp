@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {

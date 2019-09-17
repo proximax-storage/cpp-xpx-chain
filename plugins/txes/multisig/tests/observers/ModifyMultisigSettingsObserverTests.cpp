@@ -88,11 +88,10 @@ namespace catapult { namespace observers {
 				// Arrange:
 				auto signer = test::GenerateRandomByteArray<Key>();
 				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
-				auto config = model::BlockChainConfiguration::Uninitialized();
 
 				// Act + Assert:
 				RunTest(
-						ObserverTestContext(Mode, Height(777), config),
+						ObserverTestContext(Mode, Height(777)),
 						signer,
 						{ removal.Current, approval.Current },
 						notification,
@@ -108,11 +107,10 @@ namespace catapult { namespace observers {
 				// Arrange:
 				auto signer = test::GenerateRandomByteArray<Key>();
 				auto notification = CreateNotification(signer, removal.Delta, approval.Delta);
-				auto config = model::BlockChainConfiguration::Uninitialized();
 
 				// Act + Assert:
 				RunTest(
-						ObserverTestContext(Mode, Height(777), config),
+						ObserverTestContext(Mode, Height(777)),
 						signer,
 						{ removal.Expected, approval.Expected },
 						notification,
@@ -159,8 +157,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateNotification(signer, -1, -2);
 
 		auto pObserver = CreateModifyMultisigSettingsObserver();
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		ObserverTestContext context(NotifyMode::Commit, Height(777), config);
+		ObserverTestContext context(NotifyMode::Commit, Height(777));
 
 		// Act: observer does not throw
 		test::ObserveNotification(*pObserver, notification, context);
@@ -176,8 +173,7 @@ namespace catapult { namespace observers {
 		auto notification = CreateNotification(signer, -1, -2);
 
 		auto pObserver = CreateModifyMultisigSettingsObserver();
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		ObserverTestContext context(NotifyMode::Rollback, Height(777), config);
+		ObserverTestContext context(NotifyMode::Rollback, Height(777));
 
 		// Act:
 		test::ObserveNotification(*pObserver, notification, context);

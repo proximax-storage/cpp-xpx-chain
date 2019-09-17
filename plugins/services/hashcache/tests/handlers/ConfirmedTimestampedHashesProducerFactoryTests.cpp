@@ -22,7 +22,7 @@
 #include "src/cache/HashCache.h"
 #include "catapult/utils/TimeSpan.h"
 #include "tests/test/core/EntityTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace handlers {

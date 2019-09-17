@@ -27,8 +27,9 @@
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/constants.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -39,10 +40,11 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS RegisterNamespaceTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(RegisterNamespace, std::shared_ptr<config::LocalNodeConfigurationHolder>, 2, 2,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(RegisterNamespace, std::shared_ptr<config::BlockchainConfigurationHolder>, 2, 2,)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
-		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+		constexpr auto Transaction_Version = MakeVersion(Network_Identifier, 2);
 
 		auto CreateNamespaceConfiguration(Amount rootFeePerBlock, Amount childFee) {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
@@ -52,17 +54,17 @@ namespace catapult { namespace plugins {
 			return pluginConfig;
 		}
 
-		auto CreateBlockChainConfiguration(const config::NamespaceConfiguration& pluginConfig) {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
-			blockChainConfig.Network.PublicKey = test::GenerateRandomByteArray<Key>();
-			blockChainConfig.Network.Identifier = model::NetworkIdentifier::Mijin_Test;
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			return blockChainConfig;
+		auto CreateConfig(const config::NamespaceConfiguration& pluginConfig) {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = Network_Identifier;
+			config.Immutable.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
+			config.Network.Info.PublicKey = test::GenerateRandomByteArray<Key>();
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			return config.ToConst();
 		}
 
-		auto GetSinkAddress(const config::NamespaceConfiguration& pluginConfig, const model::BlockChainConfiguration& blockChainConfig) {
-			auto address = PublicKeyToAddress(pluginConfig.NamespaceRentalFeeSinkPublicKey, blockChainConfig.Network.Identifier);
+		auto GetSinkAddress(const config::NamespaceConfiguration& pluginConfig) {
+			auto address = PublicKeyToAddress(pluginConfig.NamespaceRentalFeeSinkPublicKey, Network_Identifier);
 			UnresolvedAddress sinkAddress;
 			std::memcpy(sinkAddress.data(), address.data(), address.size());
 			return sinkAddress;
@@ -83,12 +85,12 @@ namespace catapult { namespace plugins {
 			,
 			,
 			Entity_Type_Register_Namespace,
-			config::CreateMockConfigurationHolder(CreateBlockChainConfiguration(CreateNamespaceConfiguration(Amount(0), Amount(0)))))
+			config::CreateMockConfigurationHolder(CreateConfig(CreateNamespaceConfiguration(Amount(0), Amount(0)))))
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
 		auto pConfigHolder = config::CreateMockConfigurationHolder(
-			CreateBlockChainConfiguration(CreateNamespaceConfiguration(Amount(0), Amount(0))));
+			CreateConfig(CreateNamespaceConfiguration(Amount(0), Amount(0))));
 		auto pPlugin = TTraits::CreatePlugin(pConfigHolder);
 
 		typename TTraits::TransactionType transaction;
@@ -106,8 +108,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
 		auto pluginConfig = CreateNamespaceConfiguration(Amount(0), Amount(0));
-		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfig(pluginConfig)));
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = Transaction_Version;
@@ -136,13 +137,13 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			mocks::MockNotificationSubscriber sub;
 			auto pluginConfig = CreateNamespaceConfiguration(Amount(987), Amount(777));
-			auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-			auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+			auto config = CreateConfig(pluginConfig);
+			auto sinkAddress = GetSinkAddress(pluginConfig);
+			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(config));
 
 			// - prepare the transaction
 			if (isSignerExempt)
-				transaction.Signer = blockChainConfig.Network.PublicKey;
+				transaction.Signer = config.Network.Info.PublicKey;
 
 			// Act:
 			test::PublishTransaction(*pPlugin, transaction, sub);
@@ -317,9 +318,8 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		RegisterNamespaceTransactionPluginTestContext<TTraits> testContext;
 		auto pluginConfig = CreateNamespaceConfiguration(Default_Root_Rental_Fee_Per_Block, Default_Child_Rental_Fee);
-		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+		auto sinkAddress = GetSinkAddress(pluginConfig);
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfig(pluginConfig)));
 
 		auto pTransaction = CreateTransactionWithName<TTraits>(12);
 		pTransaction->NamespaceType = NamespaceType::Root;
@@ -345,9 +345,8 @@ namespace catapult { namespace plugins {
 			// Arrange:
 			RegisterNamespaceTransactionPluginTestContext<TTraits> testContext;
 			auto pluginConfig = CreateNamespaceConfiguration(Default_Root_Rental_Fee_Per_Block, Default_Child_Rental_Fee);
-			auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-			auto sinkAddress = GetSinkAddress(pluginConfig, blockChainConfig);
-			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+			auto sinkAddress = GetSinkAddress(pluginConfig);
+			auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfig(pluginConfig)));
 
 			auto pTransaction = CreateTransactionWithName<TTraits>(12);
 			pTransaction->NamespaceType = namespaceType;
@@ -381,8 +380,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<NamespaceNameNotification<1>> nsNameSub;
 		auto pluginConfig = CreateNamespaceConfiguration(Amount(0), Amount(0));
-		auto blockChainConfig = CreateBlockChainConfiguration(pluginConfig);
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(blockChainConfig));
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfig(pluginConfig)));
 
 		auto pTransaction = CreateTransactionWithName<TTraits>(0);
 

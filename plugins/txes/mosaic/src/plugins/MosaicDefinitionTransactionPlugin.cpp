@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <src/catapult/config_holder/LocalNodeConfigurationHolder.h>
+#include <src/catapult/config_holder/BlockchainConfigurationHolder.h>
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "src/model/MosaicDefinitionTransaction.h"
 #include "src/model/MosaicNotifications.h"
@@ -34,6 +34,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		MosaicRentalFeeConfiguration ToMosaicRentalFeeConfiguration(
+			model::NetworkIdentifier networkIdentifier,
 			const model::NetworkInfo& network,
 			UnresolvedMosaicId currencyMosaicId,
 			const config::MosaicConfiguration& config) {
@@ -44,18 +45,20 @@ namespace catapult { namespace plugins {
 			rentalFeeConfig.NemesisPublicKey = network.PublicKey;
 
 			// sink address is already resolved but needs to be passed as unresolved into notification
-			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, network.Identifier);
+			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, networkIdentifier);
 			std::memcpy(rentalFeeConfig.SinkAddress.data(), sinkAddress.data(), sinkAddress.size());
 			return rentalFeeConfig;
 		}
 
 		template<typename TTransaction>
-		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
-				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight).BlockChain;
-				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
-				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
-				auto config = ToMosaicRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
+				auto& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
+				const model::NetworkConfiguration& networkConfig = blockChainConfig.Network;
+				const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
+				const auto& immutableConfig = blockChainConfig.Immutable;
+				auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(immutableConfig);
+				auto config = ToMosaicRentalFeeConfiguration(immutableConfig.NetworkIdentifier, networkConfig.Info, currencyMosaicId, pluginConfig);
 
 				switch (transaction.EntityVersion()) {
 				case 3:
@@ -85,5 +88,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, Default, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(MosaicDefinition, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
 }}

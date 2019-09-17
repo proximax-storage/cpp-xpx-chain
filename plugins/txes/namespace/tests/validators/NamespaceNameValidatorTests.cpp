@@ -22,7 +22,8 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceIdGenerator.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -43,9 +44,9 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNameSize = maxNameSize;
 			pluginConfig.ReservedRootNamespaceNames = reservedRootNamespaceNames;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
-			return blockChainConfig;
+			test::MutableBlockchainConfiguration config;
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			return config.ToConst();
 		}
 	}
 

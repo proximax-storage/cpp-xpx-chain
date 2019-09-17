@@ -22,7 +22,7 @@
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/cache/SimpleCache.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
@@ -34,8 +34,7 @@ namespace catapult { namespace observers {
 	namespace {
 		void AssertPruningPredicate(Height height, NotifyMode mode, size_t pruneInterval, bool expectedResult) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
@@ -284,7 +283,7 @@ namespace catapult { namespace observers {
 		}
 
 		auto CreateConfigHolder() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockPruneInterval = 10;
 			return config::CreateMockConfigurationHolder(config);
 		}

@@ -27,7 +27,7 @@
 namespace catapult { namespace test {
 
 	/// Creates an aggregate transaction with \a numCosignatures cosignatures.
-	std::unique_ptr<model::AggregateTransaction> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures);
+	model::UniqueEntityPtr<model::AggregateTransaction> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures);
 
 	/// Generates a random cosignature for parent hash (\a aggregateHash).
 	model::DetachedCosignature GenerateValidCosignature(const Hash256& aggregateHash);
@@ -41,7 +41,7 @@ namespace catapult { namespace test {
 	/// Wrapper around an aggregate transaction and its component information.
 	struct AggregateTransactionWrapper {
 		/// Aggregate transaction.
-		std::unique_ptr<model::AggregateTransaction> pTransaction;
+		model::UniqueEntityPtr<model::AggregateTransaction> pTransaction;
 
 		/// Sub transactions composing the aggregate transaction.
 		std::vector<const mocks::EmbeddedMockTransaction*> SubTransactions;
@@ -51,7 +51,7 @@ namespace catapult { namespace test {
 	AggregateTransactionWrapper CreateAggregateTransaction(uint8_t numTransactions);
 
 	/// Creates a new transaction based on \a aggregateTransaction that excludes all cosignatures.
-	std::unique_ptr<model::Transaction> StripCosignatures(const model::AggregateTransaction& aggregateTransaction);
+	model::UniqueEntityPtr<model::Transaction> StripCosignatures(const model::AggregateTransaction& aggregateTransaction);
 
 	/// Extracts component parts of \a cosignatures into a map.
 	CosignaturesMap ToMap(const std::vector<model::Cosignature>& cosignatures);

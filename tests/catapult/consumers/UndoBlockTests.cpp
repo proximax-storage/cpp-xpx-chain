@@ -21,7 +21,7 @@
 #include "catapult/consumers/UndoBlock.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/chain/BlockExecutor.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
@@ -77,8 +77,7 @@ namespace catapult { namespace consumers {
 		template<typename TAction>
 		void RunStateHashDisabledTest(TAction action) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 			auto delta = cache.createDelta();
 			mocks::MockEntityObserver observer;
 			auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
@@ -130,9 +129,8 @@ namespace catapult { namespace consumers {
 		void RunStateHashEnabledTest(TAction action) {
 			// Arrange:
 			test::TempDirectoryGuard dbDirGuard;
-			auto config = model::BlockChainConfiguration::Uninitialized();
 			auto cacheConfig = cache::CacheConfiguration(dbDirGuard.name(), utils::FileSize(), cache::PatriciaTreeStorageMode::Enabled);
-			auto cache = test::CreateEmptyCatapultCache(config, cacheConfig);
+			auto cache = test::CreateEmptyCatapultCache(cacheConfig);
 
 			auto delta = cache.createDelta();
 			mocks::MockEntityObserver observer;

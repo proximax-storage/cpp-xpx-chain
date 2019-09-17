@@ -21,7 +21,7 @@
 #include "src/validators/Validators.h"
 #include "src/state/HashLockInfo.h"
 #include "plugins/txes/lock_shared/tests/validators/LockDurationValidatorTests.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace validators {
 
@@ -38,10 +38,10 @@ namespace catapult { namespace validators {
 			static auto CreateValidator(BlockDuration maxDuration) {
 				auto pluginConfig = config::HashLockConfiguration::Uninitialized();
 				pluginConfig.MaxHashLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
-				auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-				blockChainConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-				blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
-				auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+				auto networkConfig = model::NetworkConfiguration::Uninitialized();
+				networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+				networkConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
+				auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 				return CreateHashLockDurationValidator(pConfigHolder);
 			}
 		};

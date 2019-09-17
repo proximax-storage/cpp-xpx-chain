@@ -24,7 +24,7 @@
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/io/FileBlockStorage.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
@@ -36,20 +36,20 @@ namespace catapult { namespace test {
 	}
 
 	BlockChainBuilder::BlockChainBuilder(const Accounts& accounts, StateHashCalculator& stateHashCalculator)
-			: BlockChainBuilder(accounts, stateHashCalculator, CreatePrototypicalBlockChainConfiguration())
+			: BlockChainBuilder(accounts, stateHashCalculator, CreatePrototypicalNetworkConfiguration())
 	{}
 
 	BlockChainBuilder::BlockChainBuilder(
 			const Accounts& accounts,
 			StateHashCalculator& stateHashCalculator,
-			const model::BlockChainConfiguration& config)
+			const model::NetworkConfiguration& config)
 			: BlockChainBuilder(accounts, stateHashCalculator, config, stateHashCalculator.dataDirectory())
 	{}
 
 	BlockChainBuilder::BlockChainBuilder(
 			const Accounts& accounts,
 			StateHashCalculator& stateHashCalculator,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const std::string& resourcesPath)
 			: BlockChainBuilder(accounts, stateHashCalculator, config, resourcesPath, false)
 	{}
@@ -57,7 +57,7 @@ namespace catapult { namespace test {
 	BlockChainBuilder::BlockChainBuilder(
 			const Accounts& accounts,
 			StateHashCalculator& stateHashCalculator,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			const std::string& resourcesPath,
 			bool isChained)
 			: m_pAccounts(&accounts)
@@ -116,7 +116,7 @@ namespace catapult { namespace test {
 		return builder;
 	}
 
-	std::unique_ptr<model::Block> BlockChainBuilder::asSingleBlock(const TransactionsGenerator& transactionsGenerator) {
+	model::UniqueEntityPtr<model::Block> BlockChainBuilder::asSingleBlock(const TransactionsGenerator& transactionsGenerator) {
 		model::PreviousBlockContext context(*m_pParentBlockElement);
 		pushDifficulty(m_pParentBlockElement->Block);
 
@@ -154,7 +154,7 @@ namespace catapult { namespace test {
 			m_difficulties.erase(m_difficulties.cbegin());
 	}
 
-	std::unique_ptr<model::Block> BlockChainBuilder::createBlock(
+	model::UniqueEntityPtr<model::Block> BlockChainBuilder::createBlock(
 			const model::PreviousBlockContext& context,
 			Timestamp timestamp,
 			const model::Transactions& transactions) {

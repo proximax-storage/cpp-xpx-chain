@@ -19,7 +19,7 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -57,7 +57,7 @@ namespace catapult { namespace validators {
 			model::MosaicRequiredNotification<1> notification(transactionSigner, affectedMosaicId);
 
 			// - create the validator context
-			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::MosaicCacheFactory::Create();
 			auto delta = cache.createDelta();
 			test::AddMosaic(delta, ResolvedMosaicTraits::Default_Id, Height(50), BlockDuration(100), artifactOwner);
 			cache.commit(Height());

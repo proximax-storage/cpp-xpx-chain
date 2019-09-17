@@ -27,7 +27,7 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/ionet/NodeContainer.h"
@@ -39,8 +39,8 @@ namespace catapult { namespace timesync {
 
 		ImportanceAwareNodeSelector CreateImportanceAwareNodeSelector(
 				const TimeSynchronizationConfiguration& timeSyncConfig,
-				const config::CatapultConfiguration& config) {
-			auto totalChainImportance = config.BlockChain.TotalChainImportance.unwrap();
+				const config::BlockchainConfiguration& config) {
+			auto totalChainImportance = config.Network.TotalChainImportance.unwrap();
 			auto minImportance = Importance(static_cast<uint64_t>(Required_Minimum_Importance * totalChainImportance));
 			return ImportanceAwareNodeSelector(ionet::ServiceIdentifier(0x53594E43), timeSyncConfig.MaxNodes, minImportance);
 		}
@@ -115,7 +115,7 @@ namespace catapult { namespace timesync {
 			const TimeSyncResultSupplier& resultSupplier,
 			const extensions::ServiceState& state,
 			TimeSynchronizationState& timeSyncState) {
-		return thread::CreateNamedTask("time synchronization task", [&, resultSupplier]() {;
+		return thread::CreateNamedTask("time synchronization task", [&, timeSyncConfig, resultSupplier]() {;
 			auto height = state.cache().height();
 			auto selector = CreateImportanceAwareNodeSelector(timeSyncConfig, state.config(height));
 

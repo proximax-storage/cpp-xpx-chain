@@ -22,7 +22,7 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceNotifications.h"
 #include "src/model/RegisterNamespaceTransaction.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/constants.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
@@ -64,6 +64,7 @@ namespace catapult { namespace plugins {
 		}
 
 		NamespaceRentalFeeConfiguration ToNamespaceRentalFeeConfiguration(
+			model::NetworkIdentifier networkIdentifier,
 			const model::NetworkInfo& network,
 			UnresolvedMosaicId currencyMosaicId,
 			const config::NamespaceConfiguration& config) {
@@ -75,18 +76,20 @@ namespace catapult { namespace plugins {
 			rentalFeeConfig.NemesisPublicKey = network.PublicKey;
 
 			// sink address is already resolved but needs to be passed as unresolved into notification
-			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, network.Identifier);
+			auto sinkAddress = PublicKeyToAddress(rentalFeeConfig.SinkPublicKey, networkIdentifier);
 			std::memcpy(rentalFeeConfig.SinkAddress.data(), sinkAddress.data(), sinkAddress.size());
 			return rentalFeeConfig;
 		}
 
 		template<typename TTransaction>
-		auto CreatePublisher(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 			return [pConfigHolder](const TTransaction& transaction, const Height& associatedHeight, NotificationSubscriber& sub) {
-				const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight).BlockChain;
-				auto currencyMosaicId = model::GetUnresolvedCurrencyMosaicId(blockChainConfig);
-				const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
-				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(blockChainConfig.Network, currencyMosaicId, pluginConfig);
+				auto& blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
+				const model::NetworkConfiguration& networkConfig = blockChainConfig.Network;
+				const auto& immutableConfig = blockChainConfig.Immutable;
+				auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(immutableConfig);
+				const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
+				auto rentalFeeConfig = ToNamespaceRentalFeeConfiguration(immutableConfig.NetworkIdentifier, networkConfig.Info, currencyMosaicId, pluginConfig);
 
 				switch (transaction.EntityVersion()) {
 				case 2: {
@@ -123,5 +126,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, Default, CreatePublisher, std::shared_ptr<config::LocalNodeConfigurationHolder>)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(RegisterNamespace, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
 }}

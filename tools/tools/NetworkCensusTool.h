@@ -56,8 +56,8 @@ namespace catapult { namespace tools {
 
 		int run(const Options&) override final {
 			auto config = LoadConfiguration(m_resourcesPath);
-			auto p2pNodes = LoadPeers(m_resourcesPath, config.BlockChain.Network.Identifier);
-			auto apiNodes = LoadOptionalApiPeers(m_resourcesPath, config.BlockChain.Network.Identifier);
+			auto p2pNodes = LoadPeers(m_resourcesPath, config.Immutable.NetworkIdentifier);
+			auto apiNodes = LoadOptionalApiPeers(m_resourcesPath, config.Immutable.NetworkIdentifier);
 
 			MultiNodeConnector connector;
 			std::vector<NodeInfoFuture> nodeInfoFutures;

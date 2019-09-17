@@ -33,10 +33,12 @@ namespace catapult { namespace harvesting {
 		Impl(
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+				const config::BlockchainConfiguration& config,
 				const chain::ExecutionConfiguration& executionConfig)
 				: m_blockTime(blockTime)
 				, m_pConfigHolder(pConfigHolder)
+				, m_config(config)
 				, m_executionConfig(executionConfig)
 				, m_cacheDetachableDelta(cache.createDetachableDelta())
 				, m_cacheDetachedDelta(m_cacheDetachableDelta.detach())
@@ -58,13 +60,11 @@ namespace catapult { namespace harvesting {
 			m_blockStatementBuilder.popSource();
 		}
 
-		std::unique_ptr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
-			const auto& config = this->config();
-
+		model::UniqueEntityPtr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
 			// 1. stitch block
 			auto pBlock = model::StitchBlock(blockHeader, transactions);
-			pBlock->FeeInterest = config.Node.FeeInterest;
-			pBlock->FeeInterestDenominator = config.Node.FeeInterestDenominator;
+			pBlock->FeeInterest = m_config.Node.FeeInterest;
+			pBlock->FeeInterestDenominator = m_config.Node.FeeInterestDenominator;
 
 			// 2. add back fee surpluses to accounts (skip cache lookup if no surplus)
 			auto& accountStateCache = m_pCacheDelta->sub<cache::AccountStateCache>();
@@ -72,7 +72,7 @@ namespace catapult { namespace harvesting {
 				auto surplus = transaction.MaxFee - model::CalculateTransactionFee(
 					blockHeader.FeeMultiplier, transaction, pBlock->FeeInterest, pBlock->FeeInterestDenominator);
 				if (Amount(0) != surplus)
-					accountStateCache.find(transaction.Signer).get().Balances.credit(config.BlockChain.CurrencyMosaicId, surplus, blockHeader.Height);
+					accountStateCache.find(transaction.Signer).get().Balances.credit(m_config.Immutable.CurrencyMosaicId, surplus, blockHeader.Height);
 			}
 
 			// 3. execute block (using zero hash)
@@ -80,11 +80,11 @@ namespace catapult { namespace harvesting {
 				return nullptr;
 
 			// 4. update block fields
-			pBlock->StateHash = config.BlockChain.ShouldEnableVerifiableState
+			pBlock->StateHash = m_config.Immutable.ShouldEnableVerifiableState
 					? m_pCacheDelta->calculateStateHash(height()).StateHash
 					: Hash256();
 
-			pBlock->BlockReceiptsHash = config.BlockChain.ShouldEnableVerifiableReceipts
+			pBlock->BlockReceiptsHash = m_config.Immutable.ShouldEnableVerifiableReceipts
 					? model::CalculateMerkleHash(*m_blockStatementBuilder.build())
 					: Hash256();
 
@@ -101,19 +101,19 @@ namespace catapult { namespace harvesting {
 		bool process(const Processor& processor) {
 			// 1. prepare state
 			auto catapultState = state::CatapultState();
-			const auto& blockChainConfig = config().BlockChain;
-			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), blockChainConfig.ImportanceGrouping);
-			auto observerState = blockChainConfig.ShouldEnableVerifiableReceipts
+			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), networkConfig().ImportanceGrouping);
+			auto observerState = m_config.Immutable.ShouldEnableVerifiableReceipts
 					? observers::ObserverState(*m_pCacheDelta, catapultState, m_blockStatementBuilder)
 					: observers::ObserverState(*m_pCacheDelta, catapultState);
 
 			// 2. prepare contexts
+			auto networkIdentifier = m_executionConfig.NetworkIdentifier;
 			auto network = m_executionConfig.NetworkInfoSupplier(height());
 			auto readOnlyCache = m_pCacheDelta->toReadOnly();
 			auto notifyMode = observers::NotifyMode::Commit;
 
 			auto resolverContext = m_executionConfig.ResolverContextFactory(readOnlyCache);
-			auto validatorContext = validators::ValidatorContext(height(), m_blockTime, network, resolverContext, readOnlyCache);
+			auto validatorContext = validators::ValidatorContext(height(), m_blockTime, networkIdentifier, network, resolverContext, readOnlyCache);
 			auto observerContext = observers::ObserverContext(observerState, height(), notifyMode, resolverContext);
 
 			const auto& validator = *m_executionConfig.pValidator;
@@ -153,13 +153,14 @@ namespace catapult { namespace harvesting {
 			});
 		}
 
-		const config::CatapultConfiguration& config() {
-			return m_pConfigHolder->Config(height());
+		const model::NetworkConfiguration& networkConfig() {
+			return m_pConfigHolder->Config(height()).Network;
 		}
 
 	private:
 		Timestamp m_blockTime;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+		const config::BlockchainConfiguration& m_config;
 		chain::ExecutionConfiguration m_executionConfig;
 		cache::CatapultCacheDetachableDelta m_cacheDetachableDelta;
 		cache::CatapultCacheDetachedDelta m_cacheDetachedDelta;
@@ -174,9 +175,10 @@ namespace catapult { namespace harvesting {
 	HarvestingUtFacade::HarvestingUtFacade(
 			Timestamp blockTime,
 			const cache::CatapultCache& cache,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			const config::BlockchainConfiguration& config,
 			const chain::ExecutionConfiguration& executionConfig)
-			: m_pImpl(std::make_unique<Impl>(blockTime, cache, pConfigHolder, executionConfig))
+			: m_pImpl(std::make_unique<Impl>(blockTime, cache, pConfigHolder, config, executionConfig))
 	{}
 
 	HarvestingUtFacade::~HarvestingUtFacade() = default;
@@ -209,7 +211,7 @@ namespace catapult { namespace harvesting {
 		m_transactionInfos.pop_back();
 	}
 
-	std::unique_ptr<model::Block> HarvestingUtFacade::commit(const model::BlockHeader& blockHeader) {
+	model::UniqueEntityPtr<model::Block> HarvestingUtFacade::commit(const model::BlockHeader& blockHeader) {
 		if (height() != blockHeader.Height)
 			CATAPULT_THROW_RUNTIME_ERROR("commit block header is inconsistent with facade state");
 
@@ -228,15 +230,16 @@ namespace catapult { namespace harvesting {
 
 	HarvestingUtFacadeFactory::HarvestingUtFacadeFactory(
 			const cache::CatapultCache& cache,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const chain::ExecutionConfiguration& executionConfig)
 			: m_cache(cache)
 			, m_pConfigHolder(pConfigHolder)
+			, m_config(m_pConfigHolder->Config())
 			, m_executionConfig(executionConfig)
 	{}
 
 	std::unique_ptr<HarvestingUtFacade> HarvestingUtFacadeFactory::create(Timestamp blockTime) const {
-		return std::make_unique<HarvestingUtFacade>(blockTime, m_cache, m_pConfigHolder, m_executionConfig);
+		return std::make_unique<HarvestingUtFacade>(blockTime, m_cache, m_pConfigHolder, m_config, m_executionConfig);
 	}
 
 	// endregion

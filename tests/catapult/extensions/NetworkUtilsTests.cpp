@@ -21,7 +21,7 @@
 #include "catapult/extensions/NetworkUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/net/ClientSocket.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/TestHarness.h"
 
@@ -30,9 +30,9 @@ namespace catapult { namespace extensions {
 #define TEST_CLASS NetworkUtilsTests
 
 	namespace {
-		auto CreateCatapultConfiguration() {
-			test::MutableCatapultConfiguration config;
-			config.BlockChain.Network.Identifier = static_cast<model::NetworkIdentifier>(7);
+		auto CreateBlockchainConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = static_cast<model::NetworkIdentifier>(7);
 
 			config.Node.ConnectTimeout = utils::TimeSpan::FromSeconds(11);
 			config.Node.SocketWorkingBufferSize = utils::FileSize::FromBytes(512);
@@ -50,9 +50,9 @@ namespace catapult { namespace extensions {
 
 	// region GetConnectionSettings / UpdateAsyncTcpServerSettings
 
-	TEST(TEST_CLASS, CanExtractConnectionSettingsFromCatapultConfiguration) {
+	TEST(TEST_CLASS, CanExtractConnectionSettingsFromNetworkConfiguration) {
 		// Arrange:
-		auto config = CreateCatapultConfiguration();
+		auto config = CreateBlockchainConfiguration();
 
 		// Act:
 		auto settings = GetConnectionSettings(config);
@@ -67,9 +67,9 @@ namespace catapult { namespace extensions {
 		EXPECT_EQ(static_cast<ionet::ConnectionSecurityMode>(21), settings.IncomingSecurityModes);
 	}
 
-	TEST(TEST_CLASS, CanUpdateAsyncTcpServerSettingsFromCatapultConfiguration) {
+	TEST(TEST_CLASS, CanUpdateAsyncTcpServerSettingsFromNetworkConfiguration) {
 		// Arrange:
-		auto config = CreateCatapultConfiguration();
+		auto config = CreateBlockchainConfiguration();
 		auto settings = net::AsyncTcpServerSettings([](const auto&) {});
 
 		// Act:
@@ -148,7 +148,7 @@ namespace catapult { namespace extensions {
 			auto boot() {
 				// Act:
 				auto& serviceGroup = *m_pool.pushServiceGroup("server");
-				auto config = CreateCatapultConfiguration();
+				auto config = CreateBlockchainConfiguration();
 				auto serviceId = ionet::ServiceIdentifier(123);
 				auto& acceptor = m_acceptor;
 				return BootServer(serviceGroup, test::GetLocalHostPort(), serviceId, config, m_nodeSubscriber, [&acceptor](

@@ -22,7 +22,7 @@
 #include "src/model/AccountLinkTransaction.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 				const model::UnresolvedAddressSet& participantsByAddress,
 				const utils::KeySet& participantsByKey) {
 			// Arrange:
-			auto cache = test::CoreSystemCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::CoreSystemCacheFactory::Create();
 			AddAccount(cache, accountKey, accountType);
 			for (const auto& key : additionalCacheKeys)
 				AddAccount(cache, key, state::AccountType::Main);

@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/observers/ReverseNotificationObserverAdapter.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
@@ -43,7 +42,7 @@ namespace catapult { namespace observers {
 			const auto& observer = *pObserver;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(mocks::PluginOptionFlags::Publish_Custom_Notifications);
-			auto pPublisher = model::CreateNotificationPublisher(registry, config::CreateMockConfigurationHolder());
+			auto pPublisher = model::CreateNotificationPublisher(registry, UnresolvedMosaicId());
 			ReverseNotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 			// Act + Assert:
@@ -62,8 +61,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ExtractsAndForwardsNotificationsFromEntityInReverseOrder) {
 		// Arrange:
 		RunTest([](const auto& adapter, const auto& observer) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
+			test::ObserverTestContext context(NotifyMode::Commit, Height{444});
 
 			// Act:
 			auto pTransaction = mocks::CreateMockTransaction(0);
@@ -94,8 +92,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, ForwardsObserverContexts) {
 		// Arrange:
 		RunTest([](const auto& adapter, const auto& observer) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
+			test::ObserverTestContext context(NotifyMode::Commit, Height{444});
 
 			// Act:
 			auto pTransaction = mocks::CreateMockTransaction(0);
@@ -119,8 +116,7 @@ namespace catapult { namespace observers {
 		ReverseNotificationObserverAdapter adapter(std::move(pObserver), std::move(pPublisher));
 
 		auto pTransaction = mocks::CreateMockTransaction(0);
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		test::ObserverTestContext context(NotifyMode::Commit, Height{444}, config);
+		test::ObserverTestContext context(NotifyMode::Commit, Height{444});
 
 		// Act:
 		ObserveEntity(adapter, *pTransaction, context);

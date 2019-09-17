@@ -22,13 +22,13 @@
 #include "src/cache/MosaicCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/validators/ValidatorContext.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::MosaicSupplyChangeNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
@@ -53,8 +53,8 @@ namespace catapult { namespace validators {
 			// check that new supply does not overflow and is not too large
 			auto initialSupply = entry.supply();
 			auto newSupply = entry.supply() + notification.Delta;
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			return newSupply < initialSupply || newSupply > blockChainConfig.MaxMosaicAtomicUnits
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			return newSupply < initialSupply || newSupply > networkConfig.MaxMosaicAtomicUnits
 					? Failure_Mosaic_Supply_Exceeded
 					: ValidationResult::Success;
 		});

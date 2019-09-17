@@ -29,7 +29,7 @@
 namespace catapult { namespace test {
 
 	namespace {
-		void SetBlockChainConfiguration(model::BlockChainConfiguration& config, uint32_t maxDifficultyBlocks) {
+		void SetBlockChainConfiguration(model::NetworkConfiguration& config, uint32_t maxDifficultyBlocks) {
 			config.Plugins.emplace(PLUGIN_NAME(hashcache), utils::ConfigurationBag({ { "", { {} } } }));
 
 			if (maxDifficultyBlocks > 0)
@@ -40,16 +40,16 @@ namespace catapult { namespace test {
 		}
 	}
 
-	config::CatapultConfiguration CreateFileChainCatapultConfiguration(uint32_t maxDifficultyBlocks, const std::string& dataDirectory) {
-		auto config = test::CreateCatapultConfigurationWithNemesisPluginExtensions(dataDirectory);
-		SetBlockChainConfiguration(const_cast<model::BlockChainConfiguration&>(config.BlockChain), maxDifficultyBlocks);
+	config::BlockchainConfiguration CreateFileChainBlockchainConfiguration(uint32_t maxDifficultyBlocks, const std::string& dataDirectory) {
+		auto config = test::CreateBlockchainConfigurationWithNemesisPluginExtensions(dataDirectory);
+		SetBlockChainConfiguration(const_cast<model::NetworkConfiguration&>(config.Network), maxDifficultyBlocks);
 		return config;
 	}
 
-	config::CatapultConfiguration CreateStateHashEnabledCatapultConfiguration(const std::string& dataDirectory) {
-		auto config = CreateFileChainCatapultConfiguration(0, dataDirectory);
+	config::BlockchainConfiguration CreateStateHashEnabledBlockchainConfiguration(const std::string& dataDirectory) {
+		auto config = CreateFileChainBlockchainConfiguration(0, dataDirectory);
 		const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = true;
-		const_cast<model::BlockChainConfiguration&>(config.BlockChain).ShouldEnableVerifiableState = true;
+		const_cast<config::ImmutableConfiguration&>(config.Immutable).ShouldEnableVerifiableState = true;
 		return config;
 	}
 

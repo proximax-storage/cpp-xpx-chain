@@ -24,9 +24,9 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "catapult/cache_core/BlockDifficultyCacheStorage.h"
-#include "catapult/model/BlockChainConfiguration.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Random.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace test {
 
@@ -34,24 +34,38 @@ namespace catapult { namespace test {
 		Key GetSentinelCachePublicKey() {
 			return { { 0xFF, 0xFF, 0xFF, 0xFF } };
 		}
+
+		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+			const auto& config = pConfigHolder->Config().Immutable;
+			return {
+				pConfigHolder,
+				config.NetworkIdentifier,
+				config.CurrencyMosaicId,
+				config.HarvestingMosaicId
+			};
+		}
 	}
 
 	// region CoreSystemCacheFactory
 
-	cache::CatapultCache CoreSystemCacheFactory::Create(const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CoreSystemCacheFactory::Create() {
+		return Create(test::MutableBlockchainConfiguration().ToConst());
+	}
+
+	cache::CatapultCache CoreSystemCacheFactory::Create(const config::BlockchainConfiguration& config) {
 		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(3);
 		CreateSubCaches(config, subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
 
 	void CoreSystemCacheFactory::CreateSubCaches(
-			const model::BlockChainConfiguration& config,
+			const config::BlockchainConfiguration& config,
 			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches) {
 		CreateSubCaches(config, cache::CacheConfiguration(), subCaches);
 	}
 
 	void CoreSystemCacheFactory::CreateSubCaches(
-			const model::BlockChainConfiguration& config,
+			const config::BlockchainConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig,
 			std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches) {
 		using namespace cache;
@@ -59,30 +73,46 @@ namespace catapult { namespace test {
 		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 		subCaches[AccountStateCache::Id] = MakeSubCachePluginWithCacheConfiguration<AccountStateCache, AccountStateCacheStorage>(
 				cacheConfig,
-				pConfigHolder);
+				CreateAccountStateCacheOptions(pConfigHolder));
 
 		subCaches[BlockDifficultyCache::Id] = MakeConfigurationFreeSubCachePlugin<BlockDifficultyCache, BlockDifficultyCacheStorage>(pConfigHolder);
 	}
 
 	// endregion
 
-	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateEmptyCatapultCache() {
+		return CreateEmptyCatapultCache<CoreSystemCacheFactory>(test::MutableBlockchainConfiguration().ToConst());
+	}
+
+	cache::CatapultCache CreateEmptyCatapultCache(const config::BlockchainConfiguration& config) {
 		return CreateEmptyCatapultCache<CoreSystemCacheFactory>(config);
 	}
 
+	cache::CatapultCache CreateEmptyCatapultCache(const cache::CacheConfiguration& cacheConfig) {
+		return CreateEmptyCatapultCache(test::MutableBlockchainConfiguration().ToConst(), cacheConfig);
+	}
+
 	cache::CatapultCache CreateEmptyCatapultCache(
-			const model::BlockChainConfiguration& config,
+			const config::BlockchainConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig) {
 		std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(3);
 		CoreSystemCacheFactory::CreateSubCaches(config, cacheConfig, subCaches);
 		return cache::CatapultCache(std::move(subCaches));
 	}
 
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount() {
+		return CreateCatapultCacheWithMarkerAccount(Height(0), test::MutableBlockchainConfiguration().ToConst());
+	}
+
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height) {
+		return CreateCatapultCacheWithMarkerAccount(height, test::MutableBlockchainConfiguration().ToConst());
+	}
+
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const config::BlockchainConfiguration& config) {
 		return CreateCatapultCacheWithMarkerAccount(Height(0), config);
 	}
 
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const config::BlockchainConfiguration& config) {
 		auto cache = CreateEmptyCatapultCache(config);
 		AddMarkerAccount(cache);
 

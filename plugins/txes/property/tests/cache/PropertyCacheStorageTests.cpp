@@ -23,16 +23,17 @@
 #include "src/model/PropertyTypes.h"
 #include "tests/test/AccountPropertiesTestUtils.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateConfigHolder() {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.Network.Identifier = model::NetworkIdentifier(12);
-			return config::CreateMockConfigurationHolder(blockChainConfig);
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier(12);
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		struct PropertyCacheStorageTraits {

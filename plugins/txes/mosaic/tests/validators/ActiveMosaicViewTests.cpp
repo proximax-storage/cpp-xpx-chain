@@ -21,7 +21,7 @@
 #include "src/validators/Validators.h"
 #include "src/validators/ActiveMosaicView.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
 
 	TRY_GET_BASED_TEST(CannotGetUnknownMosaic) {
 		// Arrange:
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		auto delta = cache.createDelta();
 		auto readOnlyCache = delta.toReadOnly();
 		auto view = ActiveMosaicView(readOnlyCache);
@@ -69,7 +69,7 @@ namespace catapult { namespace validators {
 
 	TRY_GET_BASED_TEST(CannotGetInactiveMosaic) {
 		// Arrange:
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		auto delta = cache.createDelta();
 		test::AddMosaic(delta, MosaicId(123), Height(50), BlockDuration(100), Amount());
 		cache.commit(Height());
@@ -91,7 +91,7 @@ namespace catapult { namespace validators {
 	template<typename TAction>
 	void RunTestWithActiveMosaic(const Key& owner, TAction action) {
 		// Arrange:
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		auto delta = cache.createDelta();
 		test::AddEternalMosaic(delta, MosaicId(123), Height(50), owner);
 		cache.commit(Height());

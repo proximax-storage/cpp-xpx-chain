@@ -4,8 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/builders/CatapultConfigBuilder.h"
-#include "catapult/builders/CatapultUpgradeBuilder.h"
+#include "catapult/builders/NetworkConfigBuilder.h"
+#include "catapult/builders/BlockchainUpgradeBuilder.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/exceptions.h"
@@ -115,24 +115,24 @@ namespace catapult { namespace tools { namespace upgrade {
 				return pTransaction;
 			}
 
-			std::shared_ptr<model::Transaction> generateBlockChainUpgradeTransaction(model::NetworkIdentifier networkIdentifier, crypto::KeyPair& signer) {
-				builders::CatapultUpgradeBuilder builder(networkIdentifier, signer.publicKey());
+			std::shared_ptr<model::Transaction> generateBlockchainUpgradeTransaction(model::NetworkIdentifier networkIdentifier, crypto::KeyPair& signer) {
+				builders::BlockchainUpgradeBuilder builder(networkIdentifier, signer.publicKey());
 				builder.setUpgradePeriod(BlockDuration{m_upgradeApplyHeightDelta});
 				std::vector<std::string> parts;
 				boost::algorithm::split(parts, m_blockChainVersion, [](char ch) { return ch == '.'; });
-				CatapultVersion version = CatapultVersion{
+				BlockchainVersion version = BlockchainVersion{
 					boost::lexical_cast<uint64_t >(parts[0]) << 48 |
 					boost::lexical_cast<uint64_t >(parts[1]) << 32 |
 					boost::lexical_cast<uint64_t >(parts[2]) << 16 |
 					boost::lexical_cast<uint64_t >(parts[3])
 				};
-				builder.setNewCatapultVersion(version);
+				builder.setNewBlockchainVersion(version);
 
 				return generateTransaction(builder, signer);
 			}
 
 			std::shared_ptr<model::Transaction> generateConfigTransaction(model::NetworkIdentifier networkIdentifier, crypto::KeyPair& signer) {
-				builders::CatapultConfigBuilder builder(networkIdentifier, signer.publicKey());
+				builders::NetworkConfigBuilder builder(networkIdentifier, signer.publicKey());
 				builder.setApplyHeightDelta(BlockDuration{m_configApplyHeightDelta});
 				auto resourcesPath = boost::filesystem::path(m_resourcesPath);
 				builder.setBlockChainConfig((resourcesPath / "config-network.properties").generic_string());
@@ -149,7 +149,7 @@ namespace catapult { namespace tools { namespace upgrade {
 				std::list<std::shared_ptr<model::Transaction>> transactions;
 
 				if (m_blockChainUpgrade) {
-					transactions.push_back(generateBlockChainUpgradeTransaction(networkIdentifier, signer));
+					transactions.push_back(generateBlockchainUpgradeTransaction(networkIdentifier, signer));
 				}
 
 				if (m_configUpdate) {

@@ -32,7 +32,7 @@ namespace catapult { namespace test {
 
 	// region generate
 
-	std::unique_ptr<model::Transaction> TransactionsBuilder::generate(
+	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::generate(
 			uint32_t descriptorType,
 			const std::shared_ptr<const void>& pDescriptor,
 			Timestamp deadline) const {
@@ -59,7 +59,7 @@ namespace catapult { namespace test {
 			add(DescriptorType::Alias, descriptor);
 	}
 
-	std::unique_ptr<model::Transaction> TransactionsBuilder::createRegisterNamespace(
+	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::createRegisterNamespace(
 			const NamespaceDescriptor& descriptor,
 			Timestamp deadline) const {
 		const auto& ownerKeyPair = accounts().getKeyPair(descriptor.OwnerId);
@@ -68,7 +68,7 @@ namespace catapult { namespace test {
 		return SignWithDeadline(std::move(pTransaction), ownerKeyPair, deadline);
 	}
 
-	std::unique_ptr<model::Transaction> TransactionsBuilder::createAddressAlias(
+	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::createAddressAlias(
 			const NamespaceDescriptor& descriptor,
 			Timestamp deadline) const {
 		const auto& ownerKeyPair = accounts().getKeyPair(descriptor.OwnerId);

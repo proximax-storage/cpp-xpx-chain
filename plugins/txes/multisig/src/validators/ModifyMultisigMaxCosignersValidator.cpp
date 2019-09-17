@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMultisigCosignersNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, [pConfigHolder](
 				const auto& notification,
 				const ValidatorContext& context) {
@@ -49,8 +49,8 @@ namespace catapult { namespace validators {
 				++pCosignatoryModification;
 			}
 
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME_HASH(multisig));
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME_HASH(multisig));
 			return numCosignatories > pluginConfig.MaxCosignersPerAccount ? Failure_Multisig_Modify_Max_Cosigners : ValidationResult::Success;
 		});
 	}

@@ -20,7 +20,7 @@
 
 #include "src/validators/Validators.h"
 #include "src/cache/MosaicCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/constants.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
@@ -88,7 +88,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, MosaicId(123));
 
 		// - seed the cache with an unrelated mosaic
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddMosaic(cache, MosaicId(100), Amount(500), signer, Amount(400));
 
 		// Assert:
@@ -105,7 +105,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, MosaicId(123));
 
 		// - seed the cache
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddMosaic(cache, MosaicId(123), Amount(0), signer, Amount(0));
 
 		// Assert: mosaic expires at height 150
@@ -124,7 +124,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, MosaicId(123), BlockDuration(0));
 
 		// - seed the cache with an active mosaic with the same id (notice that added mosaic has duration of 100)
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddEternalMosaic(cache, MosaicId(123), signer);
 
 		// Assert:
@@ -142,7 +142,7 @@ namespace catapult { namespace validators {
 			auto notification = CreateNotification(signer, MosaicId(123), divisibility, BlockDuration(200));
 
 			// - seed the cache with an active mosaic with the same id and zero supply
-			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), Amount(0), signer, Amount(0));
 
 			// Assert:
@@ -166,7 +166,7 @@ namespace catapult { namespace validators {
 		auto notification = CreateNotification(signer, MosaicId(123), BlockDuration(200));
 
 		// - seed the cache with an active mosaic with the same id
-		auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+		auto cache = test::MosaicCacheFactory::Create();
 		AddMosaic(cache, MosaicId(123), Amount(100), signer, Amount(100));
 
 		// Assert:

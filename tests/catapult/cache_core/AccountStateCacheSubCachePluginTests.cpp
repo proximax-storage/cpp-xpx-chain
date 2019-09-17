@@ -19,11 +19,11 @@
 **/
 
 #include "catapult/cache_core/AccountStateCacheSubCachePlugin.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/cache/SummaryAwareCacheStoragePluginTests.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -34,6 +34,16 @@ namespace catapult { namespace cache {
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
+
+		cache::AccountStateCacheTypes::Options CreateAccountStateCacheOptions(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+			const auto& config = pConfigHolder->Config().Immutable;
+			return {
+				pConfigHolder,
+				config.NetworkIdentifier,
+				config.CurrencyMosaicId,
+				config.HarvestingMosaicId
+			};
+		}
 
 		std::vector<Address> AddAccountsWithBalances(AccountStateCacheDelta& delta, const std::vector<Amount>& balances) {
 			auto addresses = test::GenerateRandomDataVector<Address>(balances.size());
@@ -50,15 +60,16 @@ namespace catapult { namespace cache {
 		template<typename TAction>
 		void RunCacheStorageTest(Amount minHighValueAccountBalance, TAction action) {
 			// Arrange:
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.MinHarvesterBalance = minHighValueAccountBalance;
-			blockChainConfig.HarvestingMosaicId = Harvesting_Mosaic_Id;
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
-			AccountStateCache cache(CacheConfiguration(), pConfigHolder);
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Immutable.HarvestingMosaicId = Harvesting_Mosaic_Id;
+			mutableConfig.Network.MinHarvesterBalance = minHighValueAccountBalance;
+			auto config = mutableConfig.ToConst();
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			AccountStateCache cache(CacheConfiguration(), CreateAccountStateCacheOptions(pConfigHolder));
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			// Act + Assert:
-			action(storage, blockChainConfig, cache);
+			action(storage, config, cache);
 		}
 
 		template<typename TAction>
@@ -66,9 +77,9 @@ namespace catapult { namespace cache {
 			// Arrange:
 			RunCacheStorageTest(minHighValueAccountBalance, [numExpectedAccounts, checkAddresses](
 					const auto& storage,
-					const auto& blockChainConfig,
+					const auto& config,
 					const auto&) {
-				auto catapultCache = test::CoreSystemCacheFactory::Create(blockChainConfig);
+				auto catapultCache = test::CoreSystemCacheFactory::Create(config);
 				auto cacheDelta = catapultCache.createDelta();
 				auto& delta = cacheDelta.template sub<AccountStateCache>();
 				auto balances = { Amount(1'000'000), Amount(500'000), Amount(750'000), Amount(1'250'000) };
@@ -102,8 +113,8 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CannotSaveAll) {
 		// Arrange:
-		RunCacheStorageTest(Amount(2'000'000), [](const auto& storage, const auto& blockChainConfig, const auto&) {
-			auto catapultCache = test::CoreSystemCacheFactory::Create(blockChainConfig);
+		RunCacheStorageTest(Amount(2'000'000), [](const auto& storage, const auto& config, const auto&) {
+			auto catapultCache = test::CoreSystemCacheFactory::Create(config);
 			auto cacheView = catapultCache.createView();
 
 			std::vector<uint8_t> buffer;
@@ -146,7 +157,7 @@ namespace catapult { namespace cache {
 		void RunSummaryLoadTest(size_t numAccounts) {
 			// Arrange:
 			auto config = CacheConfiguration();
-			AccountStateCache cache(config, config::CreateMockConfigurationHolder());
+			AccountStateCache cache(config, CreateAccountStateCacheOptions(config::CreateMockConfigurationHolder()));
 			AccountStateCacheSummaryCacheStorage storage(cache);
 
 			size_t numUpdateAddresses = 2 * numAccounts;
@@ -199,7 +210,7 @@ namespace catapult { namespace cache {
 			class PluginType : public AccountStateCacheSubCachePlugin {
 			public:
 				explicit PluginType(const CacheConfiguration& config)
-						: AccountStateCacheSubCachePlugin(config, config::CreateMockConfigurationHolder())
+						: AccountStateCacheSubCachePlugin(config, CreateAccountStateCacheOptions(config::CreateMockConfigurationHolder()))
 				{}
 			};
 		};

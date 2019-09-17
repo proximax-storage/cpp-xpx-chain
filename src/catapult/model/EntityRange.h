@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/utils/NonCopyable.h"
 #include "catapult/exceptions.h"
+#include "catapult/model/EntityPtr.h"
 #include <memory>
 #include <vector>
 
@@ -163,7 +164,7 @@ namespace catapult { namespace model {
 			SingleEntityRange() : SubRange()
 			{}
 
-			explicit SingleEntityRange(std::unique_ptr<TEntity>&& pEntity)
+			explicit SingleEntityRange(model::UniqueEntityPtr<TEntity>&& pEntity)
 					: SubRange(pEntity->Size)
 					, m_pSingleEntity(std::move(pEntity)) {
 				SubRange::entities().push_back(m_pSingleEntity.get());
@@ -289,7 +290,7 @@ namespace catapult { namespace model {
 		}
 
 		/// Creates an entity range around a single entity (\a pEntity).
-		static EntityRange FromEntity(std::unique_ptr<TEntity>&& pEntity) {
+		static EntityRange FromEntity(model::UniqueEntityPtr<TEntity>&& pEntity) {
 			return EntityRange(SingleEntityRange(std::move(pEntity)));
 		}
 

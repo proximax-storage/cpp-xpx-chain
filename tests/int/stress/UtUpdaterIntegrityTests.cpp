@@ -26,7 +26,7 @@
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
@@ -43,8 +43,8 @@ namespace catapult { namespace chain {
 		}
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
-			auto config = test::CreatePrototypicalBlockChainConfiguration();
-			config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+			auto config = test::CreatePrototypicalBlockchainConfiguration();
+			const_cast<model::NetworkConfiguration&>(config.Network).Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 			return test::CreatePluginManagerWithRealPlugins(config);
 		}
 

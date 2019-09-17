@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 				return !(isAllow && isRelevantEntityType);
 
 			size_t numTypedProperties = 0;
-			if (view.initialize(model::PublicKeyToAddress(notification.Key, context.Network.Identifier))) {
+			if (view.initialize(model::PublicKeyToAddress(notification.Key, context.NetworkIdentifier))) {
 				auto typedProperty = view.get<model::EntityType>(model::PropertyType::TransactionType);
 				numTypedProperties = typedProperty.size();
 			}

@@ -27,7 +27,32 @@ namespace catapult { namespace disruptor {
 #define TEST_CLASS BatchRangeDispatcherTests
 
 	namespace {
-		using SourceToRangeMap = std::map<std::pair<InputSource, Key>, model::BlockRange>;
+
+		/// synchronized map on (write) emplace, (read) size, (read) begin/end
+		template<typename K, typename V>
+		struct SyncMap : public std::map<K, V> {
+			virtual ~SyncMap() = default;
+
+			using map = std::map<K, V>;
+
+			// inherit constructors
+			using map::map;
+
+			template<typename... Args>
+			auto emplace(Args&&... args) {
+				std::lock_guard<std::mutex> lock(Mutex);
+				return map::emplace(std::forward<decltype(args)>(args)...);
+			}
+
+			auto size() const {
+				std::lock_guard<std::mutex> lock(Mutex);
+				return map::size();
+			}
+
+			mutable std::mutex Mutex;
+		};
+
+		using SourceToRangeMap = SyncMap<std::pair<InputSource, Key>, model::BlockRange>;
 		using BatchBlockRangeDispatcher = BatchRangeDispatcher<model::AnnotatedBlockRange>;
 
 		template<typename TTestFunc>
@@ -127,6 +152,7 @@ namespace catapult { namespace disruptor {
 				const std::vector<Height::ValueType>& expectedHeights,
 				const Key& expectedSourcePublicKey = Key()) {
 			// Arrange:
+			std::lock_guard<std::mutex> lock(inputs.Mutex);
 			auto iter = inputs.find(std::make_pair(expectedSource, expectedSourcePublicKey));
 			ASSERT_NE(inputs.cend(), iter) << "no entry for " << expectedSource << ", " << expectedSourcePublicKey;
 			const auto& entry = *iter;

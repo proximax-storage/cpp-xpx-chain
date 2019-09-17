@@ -23,7 +23,7 @@
 #include "HashCacheView.h"
 #include "catapult/cache/BasicCache.h"
 
-namespace catapult { namespace config { class LocalNodeConfigurationHolder; } }
+namespace catapult { namespace config { class BlockchainConfigurationHolder; } }
 
 namespace catapult { namespace cache {
 
@@ -34,7 +34,7 @@ namespace catapult { namespace cache {
 	class BasicHashCache : public HashBasicCache {
 	public:
 		/// Creates a cache around \a config with the specified \a pConfigHolder.
-		explicit BasicHashCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+		explicit BasicHashCache(const CacheConfiguration& config, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				// hash cache should always be excluded from state hash calculation
 				: HashBasicCache(DisablePatriciaTreeStorage(config), HashCacheTypes::Options{ pConfigHolder })
 		{}
@@ -54,7 +54,7 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config with the specified \a pConfigHolder.
-		explicit HashCache(const CacheConfiguration& config, const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder)
+		explicit HashCache(const CacheConfiguration& config, const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: SynchronizedCache<BasicHashCache>(BasicHashCache(config, pConfigHolder))
 		{}
 	};

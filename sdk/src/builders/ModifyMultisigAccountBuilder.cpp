@@ -41,16 +41,16 @@ namespace catapult { namespace builders {
 		m_modifications.push_back(modification);
 	}
 
-	std::unique_ptr<ModifyMultisigAccountBuilder::Transaction> ModifyMultisigAccountBuilder::build() const {
+	model::UniqueEntityPtr<ModifyMultisigAccountBuilder::Transaction> ModifyMultisigAccountBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<ModifyMultisigAccountBuilder::EmbeddedTransaction> ModifyMultisigAccountBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<ModifyMultisigAccountBuilder::EmbeddedTransaction> ModifyMultisigAccountBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> ModifyMultisigAccountBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> ModifyMultisigAccountBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType);
 		size += m_modifications.size() * sizeof(model::CosignatoryModification);

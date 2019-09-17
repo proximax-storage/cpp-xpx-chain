@@ -136,8 +136,7 @@ namespace catapult { namespace chain {
 
 	TRAITS_BASED_TEST(CanDispatchSingleBlockWithoutTransactions) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
+		auto cache = test::CreateEmptyCatapultCache();
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
 		auto pBlock = test::GenerateBlockWithTransactions(0, Height(10));
@@ -159,8 +158,7 @@ namespace catapult { namespace chain {
 
 	TRAITS_BASED_TEST(CanDispatchSingleBlockWithTransactions) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
+		auto cache = test::CreateEmptyCatapultCache();
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
 		auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
@@ -182,8 +180,7 @@ namespace catapult { namespace chain {
 
 	TRAITS_BASED_TEST(ProcessPassesAllEntityHashesToObserverWithoutModification) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
+		auto cache = test::CreateEmptyCatapultCache();
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
 		auto pBlock = test::GenerateBlockWithTransactions(7, Height(10));
@@ -202,8 +199,7 @@ namespace catapult { namespace chain {
 
 	TRAITS_BASED_TEST(CanDispatchMultipleBlocksWithTransactions) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
+		auto cache = test::CreateEmptyCatapultCache();
 		auto delta = cache.createDelta();
 		mocks::MockEntityObserver observer;
 		auto pBlock1 = test::GenerateBlockWithTransactions(5, Height(10));
@@ -235,8 +231,7 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, RollbackCommitsAccountRemovals) {
 		// Arrange:
-		auto config = model::BlockChainConfiguration::Uninitialized();
-		auto cache = test::CreateEmptyCatapultCache(config);
+		auto cache = test::CreateEmptyCatapultCache();
 		mocks::MockEntityObserver observer;
 		auto pBlock = test::GenerateBlockWithTransactions(1, Height(1));
 

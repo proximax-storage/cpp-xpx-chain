@@ -1,3 +1,6 @@
+include(cmake/util.cmake)
+include(cmake/sanitizers.cmake)
+
 ### enable testing
 enable_testing()
 
@@ -67,7 +70,7 @@ if(MSVC)
 	add_definitions(-D_SILENCE_CXX17_ALLOCATOR_VOID_DEPRECATION_WARNING)
 elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU")
 	# -Wstrict-aliasing=1 perform most paranoid strict aliasing checks
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wstrict-aliasing=1")
+	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -Werror -Wstrict-aliasing=1 -Wnon-virtual-dtor -Wno-error=uninitialized")
 
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fvisibility=hidden")
 	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fvisibility=hidden")
@@ -86,9 +89,8 @@ elseif("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
 	# - Wno-switch-enum: do not require enum switch statements to list every value (this setting is also incompatible with GCC warnings)
 	# - Wno-weak-vtables: vtables are emitted in all translsation units for virtual classes with no out-of-line virtual method definitions
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} \
-		-stdlib=libc++ \
-		-Weverything \
 		-Werror \
+		-fbracket-depth=1024 \
 		-Wno-c++98-compat \
 		-Wno-c++98-compat-pedantic \
 		-Wno-disabled-macro-expansion \
@@ -118,14 +120,6 @@ if(("${CMAKE_CXX_COMPILER_ID}" MATCHES "GNU") OR ("${CMAKE_CXX_COMPILER_ID}" MAT
 	# use newer runpath for shared libs
 	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--enable-new-dtags")
 	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -Wl,--disable-new-dtags")
-endif()
-
-if(USE_SANITATION)
-	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-
-	set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
-	set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -fno-omit-frame-pointer -fsanitize=address")
 endif()
 
 if(ARCHITECTURE_NAME)

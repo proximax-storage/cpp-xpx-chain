@@ -46,7 +46,7 @@ namespace catapult { namespace builders {
 	}
 
 	template<typename TransactionType>
-	std::unique_ptr<TransactionType> ModifyContractBuilder::buildImpl() const {
+	model::UniqueEntityPtr<TransactionType> ModifyContractBuilder::buildImpl() const {
 		// 1. allocate, zero (header), set model::Transaction fields
 		auto size = sizeof(TransactionType)
 			+ m_customerModifications.size() * sizeof(model::CosignatoryModification)
@@ -71,11 +71,11 @@ namespace catapult { namespace builders {
 		return pTransaction;
 	}
 
-	std::unique_ptr<ModifyContractBuilder::Transaction> ModifyContractBuilder::build() const {
+	model::UniqueEntityPtr<ModifyContractBuilder::Transaction> ModifyContractBuilder::build() const {
 		return buildImpl<Transaction>();
 	}
 
-	std::unique_ptr<ModifyContractBuilder::EmbeddedTransaction> ModifyContractBuilder::buildEmbedded() const {
+	model::UniqueEntityPtr<ModifyContractBuilder::EmbeddedTransaction> ModifyContractBuilder::buildEmbedded() const {
 		return buildImpl<EmbeddedTransaction>();
 	}
 }}

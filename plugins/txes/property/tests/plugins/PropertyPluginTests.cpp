@@ -33,7 +33,7 @@ namespace catapult { namespace plugins {
 			template<typename TAction>
 			static void RunTestAfterRegistration(TAction action) {
 				// Arrange:
-				auto config = model::BlockChainConfiguration::Uninitialized();
+				auto config = model::NetworkConfiguration::Uninitialized();
 				config.Plugins.emplace(PLUGIN_NAME(property), utils::ConfigurationBag({{
 					"",
 					{
@@ -75,6 +75,7 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
+					"PropertyAddressNoSelfModificationValidator",
 					"PropertyTypeValidator",
 					"AddressPropertyModificationTypesValidator",
 					"MosaicPropertyModificationTypesValidator",
@@ -86,7 +87,6 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"PropertyAddressNoSelfModificationValidator",
 					"AddressPropertyRedundantModificationValidator",
 					"AddressPropertyValueModificationValidator",
 					"MaxAddressPropertyValuesValidator",

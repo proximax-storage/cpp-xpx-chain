@@ -30,7 +30,7 @@
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/utils/NetworkTime.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/SchedulerTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
@@ -52,26 +52,26 @@ namespace catapult { namespace test {
 
 		/// Creates the test state around \a cache and \a timeSupplier.
 		explicit ServiceTestState(cache::CatapultCache&& cache, const supplier<Timestamp>& timeSupplier)
-				: ServiceTestState(std::move(cache), config::CreateMockConfigurationHolder(CreatePrototypicalCatapultConfiguration()), timeSupplier)
+				: ServiceTestState(std::move(cache), config::CreateMockConfigurationHolder(CreatePrototypicalBlockchainConfiguration()), timeSupplier)
 		{}
 
 		/// Creates the test state around \a cache and \a config.
-		explicit ServiceTestState(cache::CatapultCache&& cache, const config::CatapultConfiguration& config)
+		explicit ServiceTestState(cache::CatapultCache&& cache, const config::BlockchainConfiguration& config)
 				: ServiceTestState(std::move(cache), config::CreateMockConfigurationHolder(config), &utils::NetworkTime)
 		{}
 
 		/// Creates the test state around \a cache, \a config and \a configHolder.
-		explicit ServiceTestState(cache::CatapultCache&& cache, const config::CatapultConfiguration& config, const supplier<Timestamp>& timeSupplier)
+		explicit ServiceTestState(cache::CatapultCache&& cache, const config::BlockchainConfiguration& config, const supplier<Timestamp>& timeSupplier)
 				: ServiceTestState(std::move(cache), config::CreateMockConfigurationHolder(config), timeSupplier)
 		{}
 
 		/// Creates the test state around \a cache and \a configHolder.
-		explicit ServiceTestState(cache::CatapultCache&& cache, const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder)
+		explicit ServiceTestState(cache::CatapultCache&& cache, const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder)
 				: ServiceTestState(std::move(cache), configHolder, &utils::NetworkTime)
 		{}
 
 		/// Creates the test state around \a cache, \a config and \a timeSupplier.
-		explicit ServiceTestState(cache::CatapultCache&& cache, const std::shared_ptr<config::LocalNodeConfigurationHolder>& configHolder, const supplier<Timestamp>& timeSupplier)
+		explicit ServiceTestState(cache::CatapultCache&& cache, const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder, const supplier<Timestamp>& timeSupplier)
 				: pConfigHolder(configHolder)
 				, m_catapultCache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>(), std::make_unique<mocks::MockMemoryBlockStorage>())
@@ -148,12 +148,12 @@ namespace catapult { namespace test {
 
 		/// Sets the network identifier.
 		auto& setNetworkIdentifier(const model::NetworkIdentifier& networkIdentifier) {
-			const_cast<model::NetworkIdentifier&>(state().pluginManager().configHolder()->Config().BlockChain.Network.Identifier) = networkIdentifier;
+			const_cast<model::NetworkIdentifier&>(state().pluginManager().configHolder()->Config().Immutable.NetworkIdentifier) = networkIdentifier;
 			return *this;
 		}
 
 	private:
-		std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder;
 		ionet::NodeContainer m_nodes;
 		cache::CatapultCache m_catapultCache;
 		state::CatapultState m_catapultState;
@@ -196,7 +196,7 @@ namespace catapult { namespace test {
 		{}
 
 		/// Creates the test context around \a cache and \a timeSupplier.
-		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, const config::CatapultConfiguration& config)
+		explicit ServiceLocatorTestContext(cache::CatapultCache&& cache, const config::BlockchainConfiguration& config)
 				: m_keyPair(GenerateKeyPair())
 				, m_testState(std::move(cache), config, &utils::NetworkTime)
 				, m_locator(m_keyPair)

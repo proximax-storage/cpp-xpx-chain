@@ -12,12 +12,12 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PluginConfigValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(CatapultUpgradePluginConfig,)
+	DEFINE_COMMON_VALIDATOR_TESTS(BlockchainUpgradePluginConfig,)
 
 	namespace {
 		struct PluginConfigTraits {
 			static auto CreatePluginConfigValidator() {
-				return validators::CreateCatapultUpgradePluginConfigValidator();
+				return validators::CreateBlockchainUpgradePluginConfigValidator();
 			}
 
 			static auto GetValidConfigBag() {
@@ -40,5 +40,5 @@ namespace catapult { namespace validators {
 		};
 	}
 
-	DEFINE_PLUGIN_CONFIG_VALIDATOR_TESTS(TEST_CLASS, PluginConfigTraits, 1, upgrade, CatapultUpgrade)
+	DEFINE_PLUGIN_CONFIG_VALIDATOR_TESTS(TEST_CLASS, PluginConfigTraits, 1, upgrade, BlockchainUpgrade)
 }}

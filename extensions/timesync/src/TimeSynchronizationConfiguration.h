@@ -30,7 +30,7 @@ namespace catapult { namespace timesync {
 	struct TimeSynchronizationConfiguration {
 	public:
 		/// Number of nodes that this node should communicate with during time synchronization.
-		uint8_t MaxNodes;
+		uint8_t MaxNodes{};
 
 	private:
 		TimeSynchronizationConfiguration() = default;

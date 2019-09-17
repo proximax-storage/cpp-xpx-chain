@@ -66,8 +66,7 @@ namespace catapult { namespace validators {
 					TPropertyValueTraits::Property_Type,
 					static_cast<uint8_t>(modifications.size()),
 					modifications.data());
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = test::PropertyCacheFactory::Create(config);
+			auto cache = test::PropertyCacheFactory::Create();
 			if (CacheSeed::Yes == cacheSeed) {
 				auto address = model::PublicKeyToAddress(notification.Key, model::NetworkIdentifier::Zero);
 				auto accountProperties = state::AccountProperties(address);

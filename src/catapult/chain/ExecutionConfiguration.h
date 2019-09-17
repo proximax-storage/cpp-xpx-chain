@@ -36,6 +36,9 @@ namespace catapult { namespace chain {
 		using ResolverContextFactoryFunc = std::function<model::ResolverContext (const cache::ReadOnlyCatapultCache&)>;
 
 	public:
+		/// Network identifier.
+		model::NetworkIdentifier NetworkIdentifier;
+
 		/// Network info supplier.
 		NetworkInfoSupplierFunc NetworkInfoSupplier;
 

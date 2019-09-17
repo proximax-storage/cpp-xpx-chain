@@ -23,11 +23,11 @@
 #include "catapult/extensions/NemesisBlockLoader.h"
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/catapult/local/recovery/test/FilechainTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/local/BlockStateHash.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -55,7 +55,7 @@ namespace catapult { namespace local {
 			auto pCurrentBlock = test::GenerateBlockWithTransactions(0, currentBlockHeight, currentBlockTime);
 
 			// - create configuration
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.MaxDifficultyBlocks = 100;
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(2);
 			config.MaxRollbackBlocks = 22;
@@ -134,7 +134,7 @@ namespace catapult { namespace local {
 	// region LoadBlockChain
 
 	namespace {
-		auto Default_Config = model::BlockChainConfiguration::Uninitialized();
+		auto Default_Config = model::NetworkConfiguration::Uninitialized();
 
 		void AddXorResolvers(plugins::PluginManager& pluginManager) {
 			pluginManager.addMosaicResolver([](const auto&, const auto& unresolved, auto& resolved) {
@@ -281,7 +281,7 @@ namespace catapult { namespace local {
 			auto recipients = GenerateDeterministicAddresses(numRecipientAccounts);
 
 			size_t recipientIndex = 0;
-			std::vector<std::unique_ptr<model::Block>> blocks;
+			std::vector<model::UniqueEntityPtr<model::Block>> blocks;
 			for (auto height = 2u; height <= maxHeight; ++height)
 				blocks.push_back(test::CreateBlock(nemesisKeyPairs, recipients[recipientIndex++], rnd, height).pBlock);
 
@@ -299,14 +299,14 @@ namespace catapult { namespace local {
 		void ExecuteWithStorage(io::BlockStorageCache& storage, TAction action) {
 			// Arrange:
 			test::TempDirectoryGuard tempDataDirectory;
-			auto config = test::CreateStateHashEnabledCatapultConfiguration(tempDataDirectory.name());
+			auto config = test::CreateStateHashEnabledBlockchainConfiguration(tempDataDirectory.name());
 			const_cast<config::NodeConfiguration&>(config.Node).ShouldUseCacheDatabaseStorage = false;
-			const_cast<model::BlockChainConfiguration&>(config.BlockChain).Plugins.erase(PLUGIN_NAME(hashcache));
+			const_cast<model::NetworkConfiguration&>(config.Network).Plugins.erase(PLUGIN_NAME(hashcache));
 			auto pPluginManager = test::CreatePluginManagerWithRealPlugins(config);
 			auto observerFactory = [&pluginManager = *pPluginManager](const auto&) { return pluginManager.createObserver(); };
 
-			auto blockChainConfig = pPluginManager->config(Height{0});
-			auto localNodeConfig = test::CreatePrototypicalCatapultConfiguration(std::move(blockChainConfig), tempDataDirectory.name());
+			auto networkConfig = pPluginManager->config(Height{0});
+			auto localNodeConfig = test::CreatePrototypicalBlockchainConfiguration(std::move(networkConfig), tempDataDirectory.name());
 
 			auto cache = pPluginManager->createCache();
 			state::CatapultState state;

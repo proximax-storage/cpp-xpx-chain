@@ -32,11 +32,10 @@ namespace catapult { namespace observers {
 		static void AssertObserverSetsStatusToUsedAndCreditsBalanceOnCommit(Amount initialAmount) {
 			// Arrange:
 			auto lockInfo = TTraits::BasicTraits::CreateLockInfo();
-			auto config = model::BlockChainConfiguration::Uninitialized();
 
 			// Act:
 			RunTest(
-					typename TTraits::ObserverTestContext(NotifyMode::Commit, Height{444}, config),
+					typename TTraits::ObserverTestContext(NotifyMode::Commit, Height{444}),
 					lockInfo,
 					[&lockInfo, initialAmount](auto& cache, auto& accountState) {
 						cache.insert(lockInfo);
@@ -79,11 +78,10 @@ namespace catapult { namespace observers {
 			// Arrange:
 			auto lockInfo = TTraits::BasicTraits::CreateLockInfo();
 			lockInfo.Status = state::LockStatus::Used;
-			auto config = model::BlockChainConfiguration::Uninitialized();
 
 			// Act:
 			RunTest(
-					typename TTraits::ObserverTestContext(NotifyMode::Rollback, Height{444}, config),
+					typename TTraits::ObserverTestContext(NotifyMode::Rollback, Height{444}),
 					lockInfo,
 					[&lockInfo](auto& cache, auto& accountState) {
 						cache.insert(lockInfo);

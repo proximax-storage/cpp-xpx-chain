@@ -4,12 +4,13 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "plugins/txes/metadata/src/model/MetadataTypes.h"
 #include "src/validators/Validators.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
-#include "plugins/txes/metadata/src/model/MetadataTypes.h"
 
 namespace catapult { namespace validators {
 
@@ -32,10 +33,11 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
 			pluginConfig.MaxFieldKeySize = MAX_KEY_SIZE;
 			pluginConfig.MaxFieldValueSize = MAX_VALUE_SIZE;
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
-			auto cache = test::CreateEmptyCatapultCache(blockChainConfig);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto config = mutableConfig.ToConst();
+			auto cache = test::CreateEmptyCatapultCache(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pValidator = CreateMetadataFieldModificationValidator(pConfigHolder);
 
 			// Act:

@@ -20,7 +20,7 @@
 
 #include "catapult/observers/ObserverContext.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {

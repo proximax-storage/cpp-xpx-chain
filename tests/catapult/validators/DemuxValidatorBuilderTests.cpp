@@ -20,7 +20,7 @@
 
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "tests/catapult/validators/test/AggregateValidatorTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -38,8 +38,7 @@ namespace catapult { namespace validators {
 
 		public:
 			ValidationResult validate(uint8_t notificationId) {
-				auto config = model::BlockChainConfiguration::Uninitialized();
-				auto cache = test::CreateEmptyCatapultCache(config);
+				auto cache = test::CreateEmptyCatapultCache();
 				return test::ValidateNotification<model::Notification>(*pDemuxValidator, test::TaggedNotification(notificationId), cache);
 			}
 		};
@@ -215,8 +214,7 @@ namespace catapult { namespace validators {
 			Breadcrumbs breadcrumbs;
 			stateful::DemuxValidatorBuilder builder;
 
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 
 			builder
 				.add(CreateBreadcrumbValidator<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))

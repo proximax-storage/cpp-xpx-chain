@@ -55,28 +55,28 @@ namespace catapult { namespace config {
 		bool ShouldEnableTransactionSpamThrottling;
 
 		/// Maximum fee that will boost a transaction through the spam throttle when spam throttling is enabled.
-		Amount TransactionSpamThrottlingMaxBoostFee;
+		Amount TransactionSpamThrottlingMaxBoostFee{};
 
 		/// Maximum number of blocks per sync attempt.
 		uint32_t MaxBlocksPerSyncAttempt;
 
 		/// Maximum chain bytes per sync attempt.
-		utils::FileSize MaxChainBytesPerSyncAttempt;
+		utils::FileSize MaxChainBytesPerSyncAttempt{};
 
 		/// Duration of a transaction in the short lived cache.
-		utils::TimeSpan ShortLivedCacheTransactionDuration;
+		utils::TimeSpan ShortLivedCacheTransactionDuration{};
 
 		/// Duration of a block in the short lived cache.
-		utils::TimeSpan ShortLivedCacheBlockDuration;
+		utils::TimeSpan ShortLivedCacheBlockDuration{};
 
 		/// Time between short lived cache pruning.
-		utils::TimeSpan ShortLivedCachePruneInterval;
+		utils::TimeSpan ShortLivedCachePruneInterval{};
 
 		/// Maximum size of a short lived cache.
 		uint32_t ShortLivedCacheMaxSize;
 
 		/// Minimum fee multiplier of transactions to propagate and include in blocks.
-		BlockFeeMultiplier MinFeeMultiplier;
+		BlockFeeMultiplier MinFeeMultiplier{};
 
 		/// The part of the transaction fee harvester is willing to get.
 		/// From 0 up to FeeInterestDenominator. The customer gets
@@ -87,29 +87,29 @@ namespace catapult { namespace config {
 		uint32_t FeeInterestDenominator;
 
 		/// Transaction selection strategy used for syncing and harvesting unconfirmed transactions.
-		model::TransactionSelectionStrategy TransactionSelectionStrategy;
+		model::TransactionSelectionStrategy TransactionSelectionStrategy{};
 
 		/// Maximum size of an unconfirmed transactions response.
-		utils::FileSize UnconfirmedTransactionsCacheMaxResponseSize;
+		utils::FileSize UnconfirmedTransactionsCacheMaxResponseSize{};
 
 		/// Maximum size of the unconfirmed transactions cache.
 		uint32_t UnconfirmedTransactionsCacheMaxSize;
 
 		/// Timeout for connecting to a peer.
-		utils::TimeSpan ConnectTimeout;
+		utils::TimeSpan ConnectTimeout{};
 
 		/// Timeout for syncing with a peer.
-		utils::TimeSpan SyncTimeout;
+		utils::TimeSpan SyncTimeout{};
 
 		/// Initial socket working buffer size (socket reads will attempt to read buffers of roughly this size).
-		utils::FileSize SocketWorkingBufferSize;
+		utils::FileSize SocketWorkingBufferSize{};
 
 		/// Socket working buffer sensitivity (lower values will cause memory to be more aggressively reclaimed).
 		/// \note \c 0 will disable memory reclamation.
 		uint32_t SocketWorkingBufferSensitivity;
 
 		/// Maximum packet data size.
-		utils::FileSize MaxPacketDataSize;
+		utils::FileSize MaxPacketDataSize{};
 
 		/// Size of the block disruptor circular buffer.
 		uint32_t BlockDisruptorSize;
@@ -130,13 +130,13 @@ namespace catapult { namespace config {
 		bool ShouldAuditDispatcherInputs;
 
 		/// Security mode of outgoing connections initiated by this node.
-		ionet::ConnectionSecurityMode OutgoingSecurityMode;
+		ionet::ConnectionSecurityMode OutgoingSecurityMode{};
 
 		/// Accepted security modes of incoming connections initiated by other nodes.
-		ionet::ConnectionSecurityMode IncomingSecurityModes;
+		ionet::ConnectionSecurityMode IncomingSecurityModes{};
 
 		/// Maximum cache database write batch size.
-		utils::FileSize MaxCacheDatabaseWriteBatchSize;
+		utils::FileSize MaxCacheDatabaseWriteBatchSize{};
 
 		/// Maximum number of nodes to track in memory.
 		uint32_t MaxTrackedNodes;

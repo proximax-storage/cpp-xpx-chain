@@ -31,6 +31,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include <limits>
 
@@ -120,10 +121,10 @@ namespace catapult { namespace timesync {
 		}
 
 		cache::CatapultCache CreateCache(Importance totalChainImportance) {
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.ImportanceGrouping = 123;
-			config.TotalChainImportance = totalChainImportance;
-			return test::CoreSystemCacheFactory::Create(config);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 123;
+			config.Network.TotalChainImportance = totalChainImportance;
+			return test::CoreSystemCacheFactory::Create(config.ToConst());
 		}
 
 		cache::CatapultCache CreateCache() {
@@ -141,7 +142,7 @@ namespace catapult { namespace timesync {
 					, TimeSyncConfig{ 5 }
 					, RequestResultFutureSupplier(ExtractCommunicationTimestampsContainer(samples, NodeType::Remote), numValidNodes)
 					, pTimeSyncState(std::make_shared<TimeSynchronizationState>(Default_Threshold)) {
-				auto& mutableBlockChainConfig = const_cast<model::BlockChainConfiguration&>(ServiceTestState.config().BlockChain);
+				auto& mutableBlockChainConfig = const_cast<model::NetworkConfiguration&>(ServiceTestState.config().Network);
 				mutableBlockChainConfig.TotalChainImportance = Total_Chain_Importance;
 			}
 

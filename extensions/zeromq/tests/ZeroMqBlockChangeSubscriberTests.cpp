@@ -92,7 +92,7 @@ namespace catapult { namespace zeromq {
 		// Arrange:
 		MqSubscriberContext context;
 		context.subscribe(BlockMarker::Block_Marker);
-		std::vector<std::unique_ptr<model::Block>> blocks;
+		std::vector<model::UniqueEntityPtr<model::Block>> blocks;
 		for (auto i = 0u; i < 3; ++i)
 			blocks.push_back(test::GenerateEmptyRandomBlock());
 

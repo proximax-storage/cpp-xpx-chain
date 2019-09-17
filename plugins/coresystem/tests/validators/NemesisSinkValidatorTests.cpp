@@ -42,13 +42,12 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(ValidationResult expectedResult, const Key& signer, Height::ValueType height) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			auto cache = test::CreateEmptyCatapultCache(config);
+			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
-			model::NetworkInfo networkInfo(model::NetworkIdentifier::Zero, GetNemesisAccount().publicKey(), {});
+			model::NetworkInfo networkInfo(GetNemesisAccount().publicKey());
 			auto pValidator = CreateNemesisSinkValidator();
-			auto context = test::CreateValidatorContext(Height(height), networkInfo, readOnlyCache);
+			auto context = test::CreateValidatorContext(Height(height), model::NetworkIdentifier::Zero, networkInfo, readOnlyCache);
 
 			auto signature = test::GenerateRandomByteArray<Signature>();
 			model::SignatureNotification<1> notification(signer, signature, {});

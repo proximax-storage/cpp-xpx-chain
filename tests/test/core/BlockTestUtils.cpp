@@ -78,7 +78,7 @@ namespace catapult { namespace test {
 			catapult::Timestamp Timestamp;
 		};
 
-		std::unique_ptr<model::Block> GenerateBlock(const TestBlockTransactions& transactions, const TestBlockOptions& options) {
+		model::UniqueEntityPtr<model::Block> GenerateBlock(const TestBlockTransactions& transactions, const TestBlockOptions& options) {
 			model::PreviousBlockContext context;
 			auto pBlock = model::CreateBlock(context, Network_Identifier, options.Signer.publicKey(), transactions.get());
 			RandomizeBlock(*pBlock);
@@ -96,26 +96,26 @@ namespace catapult { namespace test {
 		}
 	}
 
-	std::unique_ptr<model::Block> GenerateEmptyRandomBlock() {
+	model::UniqueEntityPtr<model::Block> GenerateEmptyRandomBlock() {
 		return GenerateBlockWithTransactions(0);
 	}
 
-	std::unique_ptr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions) {
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const TestBlockTransactions& transactions) {
 		return GenerateBlock(transactions, TestBlockOptions(GenerateKeyPair()));
 	}
 
-	std::unique_ptr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const TestBlockTransactions& transactions) {
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(const crypto::KeyPair& signer, const TestBlockTransactions& transactions) {
 		return GenerateBlock(transactions, TestBlockOptions(signer));
 	}
 
-	std::unique_ptr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height) {
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height) {
 		auto signer = GenerateKeyPair();
 		auto blockOptions = TestBlockOptions(signer);
 		blockOptions.Height = height;
 		return GenerateBlock(numTransactions, blockOptions);
 	}
 
-	std::unique_ptr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height, Timestamp timestamp) {
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactions(size_t numTransactions, Height height, Timestamp timestamp) {
 		auto signer = GenerateKeyPair();
 		auto blockOptions = TestBlockOptions(signer);
 		blockOptions.Height = height;
@@ -123,7 +123,7 @@ namespace catapult { namespace test {
 		return GenerateBlock(numTransactions, blockOptions);
 	}
 
-	std::unique_ptr<model::Block> GenerateDeterministicBlock() {
+	model::UniqueEntityPtr<model::Block> GenerateDeterministicBlock() {
 		auto keyPair = crypto::KeyPair::FromString("A41BE076B942D915EA3330B135D35C5A959A2DCC50BBB393C6407984D4A3B564");
 		ConstTransactions transactions;
 		transactions.push_back(GenerateDeterministicTransaction());

@@ -19,26 +19,38 @@
 **/
 
 #include "Validators.h"
+#include "src/config/TransferConfiguration.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::TransferMosaicsNotification<1>;
 
-	DEFINE_STATELESS_VALIDATOR(TransferMosaics, [](const auto& notification) {
-		// check strict ordering of mosaics
-		if (1 >= notification.MosaicsCount)
+	DECLARE_STATEFUL_VALIDATOR(TransferMosaics, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(TransferMosaics, [pConfigHolder](const auto& notification, const auto& context) {
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::TransferConfiguration>(PLUGIN_NAME_HASH(transfer));
+
+			// check strict ordering of mosaics
+			if (1 > notification.MosaicsCount)
+				return ValidationResult::Success;
+
+			if (pluginConfig.MaxMosaicsSize < notification.MosaicsCount)
+				return Failure_Transfer_Too_Many_Mosaics;
+
+			auto pMosaics = notification.MosaicsPtr;
+			UnresolvedMosaicId lastMosaicId;
+			for (auto i = 0u; i < notification.MosaicsCount; ++i) {
+				auto currentMosaicId = pMosaics[i].MosaicId;
+				if (i != 0 && lastMosaicId >= currentMosaicId)
+					return Failure_Transfer_Out_Of_Order_Mosaics;
+
+				if (1 > pMosaics[i].Amount.unwrap())
+					return Failure_Transfer_Zero_Amount;
+
+				lastMosaicId = currentMosaicId;
+			}
+
 			return ValidationResult::Success;
-
-		auto pMosaics = notification.MosaicsPtr;
-		auto lastMosaicId = pMosaics[0].MosaicId;
-		for (auto i = 1u; i < notification.MosaicsCount; ++i) {
-			auto currentMosaicId = pMosaics[i].MosaicId;
-			if (lastMosaicId >= currentMosaicId)
-				return Failure_Transfer_Out_Of_Order_Mosaics;
-
-			lastMosaicId = currentMosaicId;
-		}
-
-		return ValidationResult::Success;
-	});
+		});
+	}
 }}

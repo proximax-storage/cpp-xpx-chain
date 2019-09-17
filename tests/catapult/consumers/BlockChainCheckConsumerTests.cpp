@@ -24,7 +24,7 @@
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace consumers {
@@ -35,7 +35,7 @@ namespace catapult { namespace consumers {
 		constexpr uint32_t Test_Block_Chain_Limit = 20;
 
 		disruptor::ConstBlockConsumer CreateDefaultBlockChainCheckConsumer() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.MaxBlockFutureTime = utils::TimeSpan::FromHours(1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			return CreateBlockChainCheckConsumer(Test_Block_Chain_Limit, pConfigHolder, []() {
@@ -97,7 +97,7 @@ namespace catapult { namespace consumers {
 			// Arrange:
 			auto elements = test::CreateBlockElements(chainSize);
 			test::LinkBlocks(Height(12), elements);
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.MaxBlockFutureTime = maxBlockFutureTime;
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto consumer = CreateBlockChainCheckConsumer(Test_Block_Chain_Limit, pConfigHolder, [currentTime]() {
@@ -139,7 +139,7 @@ namespace catapult { namespace consumers {
 	// region duplicate transactions
 
 	namespace {
-		std::unique_ptr<model::Block> CreateBlockFromTransactions(
+		model::UniqueEntityPtr<model::Block> CreateBlockFromTransactions(
 				const test::ConstTransactions& transactions,
 				const std::vector<size_t>& transactionIndexes) {
 			test::ConstTransactions transactionsCopy;

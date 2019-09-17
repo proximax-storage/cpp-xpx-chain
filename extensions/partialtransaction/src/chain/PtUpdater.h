@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/chain/ChainFunctions.h"
+#include "catapult/model/EntityPtr.h"
 #include "catapult/thread/Future.h"
 #include <memory>
 
@@ -89,7 +90,7 @@ namespace catapult { namespace chain {
 	class PtUpdater {
 	public:
 		/// Sink that is passed completed transactions.
-		using CompletedTransactionSink = consumer<std::unique_ptr<model::Transaction>&&>;
+		using CompletedTransactionSink = consumer<model::UniqueEntityPtr<model::Transaction>&&>;
 
 	public:
 		/// Creates an updater around \a transactionsCache, \a pValidator, \a completedTransactionSink and \a failedTransactionSink

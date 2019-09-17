@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 			if (maxPropertyValues < notification.ModificationsCount)
 				return Failure_Property_Modification_Count_Exceeded;
 
-			auto address = model::PublicKeyToAddress(notification.Key, context.Network.Identifier);
+			auto address = model::PublicKeyToAddress(notification.Key, context.NetworkIdentifier);
 			const auto* pModifications = notification.ModificationsPtr;
 			const auto& cache = context.Cache.template sub<cache::PropertyCache>();
 			if (!cache.contains(address))
@@ -71,13 +71,13 @@ namespace catapult { namespace validators {
 	}
 
 #define DEFINE_PROPERTY_MAX_VALUES_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE, PROPERTY_VALUE_TYPE) \
-	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) { \
+	DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) { \
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>; \
 		return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [pConfigHolder]( \
 				const auto& notification, \
 				const auto& context) { \
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain; \
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::PropertyConfiguration>(PLUGIN_NAME_HASH(property)); \
+			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network; \
+			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::PropertyConfiguration>(PLUGIN_NAME_HASH(property)); \
 			return Validate<PROPERTY_VALUE_TYPE, NOTIFICATION_TYPE>(pluginConfig.MaxPropertyValues, notification, context); \
 		}); \
 	}

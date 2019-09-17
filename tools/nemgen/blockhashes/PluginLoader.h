@@ -28,7 +28,7 @@ namespace catapult { namespace tools { namespace nemgen {
 	class PluginLoader {
 	public:
 		/// Creates a loader around \a config.
-		explicit PluginLoader(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+		explicit PluginLoader(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	public:
 		/// Gets the plugin manager.

@@ -24,7 +24,7 @@
 #include "ReadOnlyCatapultCache.h"
 #include "SubCachePluginAdapter.h"
 #include "catapult/crypto/Hashes.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/NetworkInfo.h"
 #include "catapult/utils/StackLogger.h"
 

@@ -19,13 +19,13 @@
 **/
 
 #pragma once
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/types.h"
 #include <boost/multiprecision/cpp_int.hpp>
 #include <functional>
 
 namespace catapult {
-	namespace config { struct LocalNodeConfigurationHolder; }
+	namespace config { struct BlockchainConfigurationHolder; }
 	namespace model { struct Block; }
 }
 
@@ -45,7 +45,7 @@ namespace catapult { namespace chain {
 			const utils::TimeSpan& timeSpan,
 			Difficulty difficulty,
 			Importance signerImportance,
-			const model::BlockChainConfiguration& config,
+			const model::NetworkConfiguration& config,
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator);
 
@@ -55,7 +55,7 @@ namespace catapult { namespace chain {
 			const model::Block& parentBlock,
 			const model::Block& currentBlock,
 			Importance signerImportance,
-			const model::BlockChainConfiguration& config);
+			const model::NetworkConfiguration& config);
 
 	/// Contextual information for calculating a block hit.
 	struct BlockHitContext {
@@ -97,7 +97,7 @@ namespace catapult { namespace chain {
 	public:
 		/// Creates a predicate around a block chain configuration (\a config) and an importance lookup function
 		/// (\a importanceLookup).
-		BlockHitPredicate(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder, const ImportanceLookupFunc& importanceLookup);
+		BlockHitPredicate(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder, const ImportanceLookupFunc& importanceLookup);
 
 	public:
 		/// Determines if the \a block is a hit given its parent (\a parentBlock) and generation hash (\a generationHash).
@@ -107,7 +107,7 @@ namespace catapult { namespace chain {
 		bool operator()(const BlockHitContext& context) const;
 
 	private:
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		ImportanceLookupFunc m_importanceLookup;
 	};
 }}

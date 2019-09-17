@@ -20,7 +20,7 @@
 
 #pragma once
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/config/CatapultConfiguration.h"
+#include "catapult/config/BlockchainConfiguration.h"
 
 namespace catapult {
 	namespace model { struct Block; }
@@ -39,14 +39,14 @@ namespace catapult { namespace test {
 		StateHashCalculator();
 
 		/// Creates a calculator around \a config that calculates state hashes.
-		explicit StateHashCalculator(const config::CatapultConfiguration& config);
+		explicit StateHashCalculator(const config::BlockchainConfiguration& config);
 
 	public:
 		/// Gets the data directory where intermediate data is output.
 		const std::string& dataDirectory() const;
 
 		/// Gets the configuration.
-		const config::CatapultConfiguration& config() const;
+		const config::BlockchainConfiguration& config() const;
 
 	public:
 		/// Executes \a block and returns the block state hash.
@@ -57,7 +57,7 @@ namespace catapult { namespace test {
 
 	private:
 		StateVerificationMode m_stateVerificationMode;
-		config::CatapultConfiguration m_config;
+		config::BlockchainConfiguration m_config;
 
 		std::shared_ptr<plugins::PluginManager> m_pPluginManager;
 		cache::CatapultCache m_catapultCache;

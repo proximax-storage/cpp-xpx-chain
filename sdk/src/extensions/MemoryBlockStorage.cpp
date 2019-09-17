@@ -61,7 +61,7 @@ namespace catapult { namespace extensions {
 			destElement.MerkleComponentHash = srcElement.MerkleComponentHash;
 		}
 
-		std::unique_ptr<model::Block> CopyBlock(const model::Block& block) {
+		model::UniqueEntityPtr<model::Block> CopyBlock(const model::Block& block) {
 			auto pBlock = utils::MakeUniqueWithSize<model::Block>(block.Size);
 			std::memcpy(static_cast<void*>(pBlock.get()), &block, block.Size);
 			return pBlock;

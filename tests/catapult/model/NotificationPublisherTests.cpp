@@ -20,7 +20,6 @@
 
 #include "catapult/model/NotificationPublisher.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
@@ -43,10 +42,7 @@ namespace catapult { namespace model {
 			mocks::MockNotificationSubscriber sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.CurrencyMosaicId = MosaicId(Currency_Mosaic_Id.unwrap());
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pPub = CreateNotificationPublisher(registry, pConfigHolder, mode);
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id, mode);
 
 			// Act:
 			auto hash = test::GenerateRandomByteArray<Hash256>();
@@ -67,10 +63,7 @@ namespace catapult { namespace model {
 			mocks::MockTypedNotificationSubscriber<TNotification> sub;
 
 			auto registry = mocks::CreateDefaultTransactionRegistry(Plugin_Option_Flags);
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.CurrencyMosaicId = MosaicId(Currency_Mosaic_Id.unwrap());
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pPub = CreateNotificationPublisher(registry, pConfigHolder);
+			auto pPub = CreateNotificationPublisher(registry, Currency_Mosaic_Id);
 
 			// Act:
 			pPub->publish(entityInfo, sub);
@@ -177,7 +170,7 @@ namespace catapult { namespace model {
 	}
 
 	namespace {
-		std::unique_ptr<Block> GenerateBlockWithTransactionSizes(const std::vector<Amount>& fees) {
+		model::UniqueEntityPtr<Block> GenerateBlockWithTransactionSizes(const std::vector<Amount>& fees) {
 			test::ConstTransactions transactions;
 			for (auto fee : fees) {
 				auto pTransaction = test::GenerateRandomTransactionWithSize(fee.unwrap());

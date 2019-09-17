@@ -45,7 +45,7 @@ namespace catapult { namespace mongo {
 		constexpr auto Accounts_Collection_Name = "accounts";
 
 		using AccountStates = std::unordered_set<std::shared_ptr<state::AccountState>>;
-		using Transactions = std::vector<std::unique_ptr<model::Transaction>>;
+		using Transactions = std::vector<model::UniqueEntityPtr<model::Transaction>>;
 		using TransactionElements = std::vector<model::TransactionElement>;
 
 		int32_t GetDefaultEntityCount() {

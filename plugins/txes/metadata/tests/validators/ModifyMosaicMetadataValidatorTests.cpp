@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/AccountStateCacheStorage.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/validators/Validators.h"
 #include "tests/test/MetadataCacheTestUtils.h"
@@ -40,10 +38,10 @@ namespace catapult { namespace validators {
 				const UnresolvedMosaicId& metadataId,
 				Key signer) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
+			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
-			const_cast<model::BlockChainConfiguration&>(config).SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
-			auto cache = test::MetadataCacheFactory::Create(config);
+			config.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
 			auto pValidator = CreateModifyMosaicMetadataValidator();
 			auto notification = model::ModifyMosaicMetadataNotification_v1(signer, metadataId);
@@ -64,10 +62,18 @@ namespace catapult { namespace validators {
 			Mosaic_Owner);
 	}
 
+	TEST(TEST_CLASS, FailureWhenMosaicIdMalformed) {
+		// Act:
+		AssertValidationResult(
+				Failure_Metadata_MosaicId_Malformed,
+				UnresolvedMosaicId(1ull << 63),
+				Mosaic_Owner);
+	}
+
 	TEST(TEST_CLASS, FailureWhenMosaicDoesNotExistAndOwnerValid) {
 		// Act:
 		AssertValidationResult(
-				Failure_Metadata_Mosaic_Is_Not_Exist,
+				Failure_Metadata_Mosaic_Not_Found,
 				UnresolvedMosaicId(4),
 				Mosaic_Owner);
 	}
@@ -83,7 +89,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenMosaicDoesNotExistButOwnerNotValid) {
 		// Act:
 		AssertValidationResult(
-				Failure_Metadata_Mosaic_Is_Not_Exist,
+				Failure_Metadata_Mosaic_Not_Found,
 				UnresolvedMosaicId(4),
 				test::GenerateRandomByteArray<Key>());
 	}

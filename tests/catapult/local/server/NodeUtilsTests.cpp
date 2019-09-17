@@ -21,9 +21,9 @@
 #include "catapult/local/server/NodeUtils.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/net/NodeTestUtils.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
@@ -33,13 +33,13 @@ namespace catapult { namespace local {
 	// region SeedNodeContainer
 
 	namespace {
-		auto CreateBootstrapper(const config::CatapultConfiguration& config) {
+		auto CreateBootstrapper(const config::BlockchainConfiguration& config) {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			return extensions::ProcessBootstrapper(pConfigHolder, "", extensions::ProcessDisposition::Production, "bootstrapper");
 		}
 
-		auto CreateCatapultConfiguration(const std::string& bootKey, const std::string& host, const std::string& name) {
-			test::MutableCatapultConfiguration config;
+		auto CreateBlockchainConfiguration(const std::string& bootKey, const std::string& host, const std::string& name) {
+			test::MutableBlockchainConfiguration config;
 			config.Node.Local.Host = host;
 			config.Node.Local.FriendlyName = name;
 			config.User.BootKey = bootKey;
@@ -50,7 +50,7 @@ namespace catapult { namespace local {
 	TEST(TEST_CLASS, SeedNodeContainerAddsOnlyLocalNodeWhenThereAreNoStaticNodes) {
 		// Arrange:
 		auto hexPrivateKey = test::GenerateRandomHexString(2 * Key_Size);
-		auto bootstrapper = CreateBootstrapper(CreateCatapultConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
+		auto bootstrapper = CreateBootstrapper(CreateBlockchainConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
 
 		// Act:
 		ionet::NodeContainer nodes;
@@ -68,7 +68,7 @@ namespace catapult { namespace local {
 	TEST(TEST_CLASS, SeedNodeContainerAddsLocalAndStaticNodes) {
 		// Arrange:
 		auto hexPrivateKey = test::GenerateRandomHexString(2 * Key_Size);
-		auto bootstrapper = CreateBootstrapper(CreateCatapultConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
+		auto bootstrapper = CreateBootstrapper(CreateBlockchainConfiguration(hexPrivateKey, "127.0.0.1", "LOCAL"));
 
 		auto keys = test::GenerateRandomDataVector<Key>(3);
 		bootstrapper.addStaticNodes({
@@ -107,7 +107,7 @@ namespace catapult { namespace local {
 					<< "seed with lengths: " << localHostSize << ", " << localNameSize
 					<< ", " << peerHostSize << ", " << peerNameSize;
 
-			auto config = CreateCatapultConfiguration(bootKey, std::string(localHostSize, 'm'), std::string(localNameSize, 'l'));
+			auto config = CreateBlockchainConfiguration(bootKey, std::string(localHostSize, 'm'), std::string(localNameSize, 'l'));
 			auto bootstrapper = CreateBootstrapper(config);
 
 			auto peerEndpoint = ionet::NodeEndpoint{ std::string(peerHostSize, 'q'), 1234 };

@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/model/EntityInfo.h"
 #include "catapult/model/EntityRange.h"
+#include "catapult/model/EntityPtr.h"
 #include "catapult/utils/ShortHash.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include <vector>
@@ -48,7 +49,7 @@ namespace catapult { namespace test {
 	std::vector<Timestamp::ValueType> ExtractRawDeadlines(const cache::MemoryUtCache& cache);
 
 	/// Extracts copies of the first \a count transactions stored in \a cache.
-	std::vector<std::unique_ptr<const model::Transaction>> ExtractTransactions(const cache::MemoryUtCache& cache, size_t count);
+	std::vector<model::UniqueEntityPtr<const model::Transaction>> ExtractTransactions(const cache::MemoryUtCache& cache, size_t count);
 
 	/// Extracts pointers to the first \a count transaction infos stored in \a view.
 	std::vector<const model::TransactionInfo*> ExtractTransactionInfos(const cache::MemoryUtCacheView& view, size_t count);

@@ -25,7 +25,7 @@
 namespace catapult { namespace harvesting {
 
 	namespace {
-		std::unique_ptr<model::Block> GenerateBlock(
+		model::UniqueEntityPtr<model::Block> GenerateBlock(
 				HarvestingUtFacade& facade,
 				const model::BlockHeader& originalBlockHeader,
 				const TransactionsInfo& transactionsInfo) {
@@ -52,7 +52,7 @@ namespace catapult { namespace harvesting {
 				CATAPULT_LOG(debug)
 						<< "bypassing state hash calculation because cache height (" << pUtFacade->height() - Height(1)
 						<< ") is inconsistent with block height (" << blockHeader.Height << ")";
-				return std::unique_ptr<model::Block>();
+				return model::UniqueEntityPtr<model::Block>();
 			}
 
 			// 2. select transactions
@@ -62,7 +62,7 @@ namespace catapult { namespace harvesting {
 			auto pBlock = GenerateBlock(*pUtFacade, blockHeader, transactionsInfo);
 			if (!pBlock) {
 				CATAPULT_LOG(warning) << "failed to generate harvested block";
-				return std::unique_ptr<model::Block>();
+				return model::UniqueEntityPtr<model::Block>();
 			}
 
 			return pBlock;

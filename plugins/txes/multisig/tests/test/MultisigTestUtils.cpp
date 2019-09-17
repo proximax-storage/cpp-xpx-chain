@@ -38,7 +38,7 @@ namespace catapult { namespace test {
 		return cosignatures;
 	}
 
-	std::unique_ptr<model::EmbeddedModifyMultisigAccountTransaction> CreateModifyMultisigAccountTransaction(
+	model::UniqueEntityPtr<model::EmbeddedModifyMultisigAccountTransaction> CreateModifyMultisigAccountTransaction(
 			const Key& signer,
 			const std::vector<model::CosignatoryModificationType>& modificationTypes) {
 		using TransactionType = model::EmbeddedModifyMultisigAccountTransaction;

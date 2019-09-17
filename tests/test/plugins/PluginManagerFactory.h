@@ -20,18 +20,18 @@
 
 #pragma once
 #include "catapult/plugins/PluginManager.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace test {
 
 	/// Creates a plugin manager around \a config.
-	inline plugins::PluginManager CreatePluginManager(const model::BlockChainConfiguration& config) {
+	inline plugins::PluginManager CreatePluginManager(const model::NetworkConfiguration& config) {
 		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 		return plugins::PluginManager(pConfigHolder, plugins::StorageConfiguration());
 	}
 
 	/// Creates a default plugin manager.
 	inline plugins::PluginManager CreatePluginManager() {
-		return CreatePluginManager(model::BlockChainConfiguration::Uninitialized());
+		return CreatePluginManager(model::NetworkConfiguration::Uninitialized());
 	}
 }}

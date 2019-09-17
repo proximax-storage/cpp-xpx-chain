@@ -22,7 +22,7 @@
 #include "catapult/model/Block.h"
 #include "catapult/utils/Logging.h"
 #include "tests/TestHarness.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
 
 namespace catapult { namespace chain {
@@ -30,8 +30,8 @@ namespace catapult { namespace chain {
 #define TEST_CLASS BlockScorerTests
 
 	namespace {
-		model::BlockChainConfiguration CreateConfiguration() {
-			auto config = model::BlockChainConfiguration::Uninitialized();
+		model::NetworkConfiguration CreateConfiguration() {
+			auto config = model::NetworkConfiguration::Uninitialized();
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(60);
 			config.BlockTimeSmoothingFactor = 0;
 			config.TotalChainImportance = test::Default_Total_Chain_Importance;
@@ -149,7 +149,7 @@ namespace catapult { namespace chain {
 				uint64_t currentTime,
 				uint64_t importance,
 				uint64_t difficulty = 60,
-				const model::BlockChainConfiguration& config = CreateConfiguration()) {
+				const model::NetworkConfiguration& config = CreateConfiguration()) {
 			// Arrange:
 			auto timeDiff = utils::TimeSpan::FromSeconds(currentTime - parentTime);
 			auto realDifficulty = Difficulty(difficulty);
@@ -163,7 +163,7 @@ namespace catapult { namespace chain {
 				uint64_t currentTime,
 				uint64_t importance,
 				uint64_t difficulty = 60,
-				const model::BlockChainConfiguration& config = CreateConfiguration()) {
+				const model::NetworkConfiguration& config = CreateConfiguration()) {
 			// Arrange:
 			model::Block parent;
 			SetTimestampSeconds(parent, parentTime);
@@ -297,12 +297,12 @@ namespace catapult { namespace chain {
 							})
 			{}
 
-			std::shared_ptr<config::LocalNodeConfigurationHolder> pConfigHolder;
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder;
 			BlockHitPredicate Predicate;
 			std::vector<std::pair<Key, Height>> ImportanceLookupParams;
 		};
 
-		std::unique_ptr<model::Block> CreateBlock(Height height, uint32_t timestampSeconds, uint32_t difficulty) {
+		auto CreateBlock(Height height, uint32_t timestampSeconds, uint32_t difficulty) {
 			auto pBlock = std::make_unique<model::Block>();
 			pBlock->Signer = test::GenerateRandomByteArray<Key>();
 			pBlock->Height = height;
@@ -327,7 +327,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_LT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().BlockChain));
+		EXPECT_LT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().Network));
 		EXPECT_TRUE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -352,7 +352,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().BlockChain, 1, 2);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().Network, 1, 2);
 		EXPECT_LT(hit, target);
 		EXPECT_TRUE(isHit);
 
@@ -379,7 +379,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_EQ(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().BlockChain));
+		EXPECT_EQ(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().Network));
 		EXPECT_FALSE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -409,7 +409,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().BlockChain, 1, 2);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().Network, 1, 2);
 		EXPECT_EQ(hit, target);
 		EXPECT_FALSE(isHit);
 
@@ -431,7 +431,7 @@ namespace catapult { namespace chain {
 		auto isHit = context.Predicate(*pParent, *pCurrent, generationHash);
 
 		// Assert:
-		EXPECT_GT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().BlockChain));
+		EXPECT_GT(CalculateHit(generationHash), CalculateTarget(*pParent, *pCurrent, signerImportance, context.pConfigHolder->Config().Network));
 		EXPECT_FALSE(isHit);
 
 		ASSERT_EQ(1u, context.ImportanceLookupParams.size());
@@ -456,7 +456,7 @@ namespace catapult { namespace chain {
 
 		// Assert:
 		auto hit = CalculateHit(hitContext.GenerationHash);
-		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().BlockChain, 1, 2);
+		auto target = CalculateTarget(hitContext.ElapsedTime, hitContext.Difficulty, signerImportance, context.pConfigHolder->Config().Network, 1, 2);
 		EXPECT_GT(hit, target);
 		EXPECT_FALSE(isHit);
 

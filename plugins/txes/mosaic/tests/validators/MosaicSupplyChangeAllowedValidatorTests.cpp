@@ -20,7 +20,7 @@
 
 #include "src/config/MosaicConfiguration.h"
 #include "src/validators/Validators.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -41,9 +41,9 @@ namespace catapult { namespace validators {
 				const model::MosaicSupplyChangeNotification<1>& notification,
 				Amount maxAtomicUnits = Max_Atomic_Units) {
 			// Arrange:
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
-			auto pConfigHolder = config::CreateMockConfigurationHolder(blockChainConfig);
+			auto networkConfig = model::NetworkConfiguration::Uninitialized();
+			networkConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
+			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(pConfigHolder);
 
 			// Act:
@@ -85,7 +85,7 @@ namespace catapult { namespace validators {
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
-			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(500), model::MosaicFlags::None);
 
 			// Assert:
@@ -109,7 +109,7 @@ namespace catapult { namespace validators {
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, Amount(100));
 
-			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), Amount(500), signer, Amount(499), model::MosaicFlags::None);
 
 			// Assert:
@@ -138,7 +138,7 @@ namespace catapult { namespace validators {
 			auto direction = model::MosaicSupplyChangeDirection::Decrease;
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
 
-			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, ownerSupply);
 
 			// Assert:
@@ -174,7 +174,7 @@ namespace catapult { namespace validators {
 			auto direction = model::MosaicSupplyChangeDirection::Increase;
 			auto notification = model::MosaicSupplyChangeNotification<1>(signer, test::UnresolveXor(MosaicId(123)), direction, delta);
 
-			auto cache = test::MosaicCacheFactory::Create(model::BlockChainConfiguration::Uninitialized());
+			auto cache = test::MosaicCacheFactory::Create();
 			AddMosaic(cache, MosaicId(123), mosaicSupply, signer, Amount(111));
 
 			// Assert:

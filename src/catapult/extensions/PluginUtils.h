@@ -24,14 +24,14 @@
 #include <memory>
 
 namespace catapult {
-	namespace config { class CatapultConfiguration; }
+	namespace config { class BlockchainConfiguration; }
 	namespace observers { class EntityObserver; }
 }
 
 namespace catapult { namespace extensions {
 
 	/// Creates plugin storage configuration from \a config.
-	plugins::StorageConfiguration CreateStorageConfiguration(const config::CatapultConfiguration& config);
+	plugins::StorageConfiguration CreateStorageConfiguration(const config::BlockchainConfiguration& config);
 
 	/// Creates an entity stateless validator using \a pluginManager.
 	std::unique_ptr<const validators::stateless::AggregateEntityValidator> CreateStatelessValidator(const plugins::PluginManager& manager);

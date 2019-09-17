@@ -21,7 +21,7 @@
 #pragma once
 #include "Results.h"
 #include "src/model/TransferNotifications.h"
-#include "catapult/config_holder/LocalNodeConfigurationHolder.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
@@ -29,11 +29,11 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to transfer message notifications and validates that:
 	/// - messages have a maximum message size of \a maxMessageSize
-	DECLARE_STATEFUL_VALIDATOR(TransferMessage, model::TransferMessageNotification<1>)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(TransferMessage, model::TransferMessageNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to transfer mosaics notifications and validates that:
-	/// - mosaics are ordered
-	DECLARE_STATELESS_VALIDATOR(TransferMosaics, model::TransferMosaicsNotification<1>)();
+	/// - mosaics are ordered, and mosaics have maximum count \a maxMosaicsSize, and mosaic amount is greater than zero.
+	DECLARE_STATEFUL_VALIDATOR(TransferMosaics, model::TransferMosaicsNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid

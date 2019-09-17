@@ -19,7 +19,7 @@
 **/
 
 #include "Validators.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "src/config/HashLockConfiguration.h"
 
@@ -27,14 +27,14 @@ namespace catapult { namespace validators {
 
 	using Notification = model::HashLockMosaicNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(HashLockMosaic, Notification)(const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder) {
+	DECLARE_STATEFUL_VALIDATOR(HashLockMosaic, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(HashLockMosaic, ([pConfigHolder](const auto& notification, const auto& context) {
-			const model::BlockChainConfiguration& blockChainConfig = pConfigHolder->Config(context.Height).BlockChain;
-			const auto& pluginConfig = blockChainConfig.GetPluginConfiguration<config::HashLockConfiguration>(PLUGIN_NAME_HASH(lockhash));
+			const config::BlockchainConfiguration& config = pConfigHolder->Config(context.Height);
+			const auto& pluginConfig = config.Network.GetPluginConfiguration<config::HashLockConfiguration>(PLUGIN_NAME_HASH(lockhash));
 			if (pluginConfig.LockedFundsPerAggregate != notification.Mosaic.Amount)
 				return Failure_LockHash_Invalid_Mosaic_Amount;
 
-			auto currencyMosaicId = context.Resolvers.resolve(model::GetUnresolvedCurrencyMosaicId(blockChainConfig));
+			auto currencyMosaicId = context.Resolvers.resolve(config::GetUnresolvedCurrencyMosaicId(config.Immutable));
 			return currencyMosaicId != context.Resolvers.resolve(notification.Mosaic.MosaicId)
 					? Failure_LockHash_Invalid_Mosaic_Id
 					: ValidationResult::Success;

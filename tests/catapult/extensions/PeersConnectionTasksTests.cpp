@@ -20,13 +20,12 @@
 
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/ionet/NodeInteractionResult.h"
-#include "catapult/model/BlockChainConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/test/nodeps/TestConstants.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
@@ -45,16 +44,16 @@ namespace catapult { namespace extensions {
 		}
 
 		auto CreateEmptyCatapultCache() {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.ImportanceGrouping = 1;
-			blockChainConfig.TotalChainImportance = Importance(100);
-			return test::CreateEmptyCatapultCache(blockChainConfig);
+			test::MutableBlockchainConfiguration config;
+			config.Network.ImportanceGrouping = 1;
+			config.Network.TotalChainImportance = Importance(100);
+			return test::CreateEmptyCatapultCache(config.ToConst());
 		}
 
 		auto ConfigureServiceState(test::ServiceTestState& serviceState) {
-			auto &blockChainConfig = const_cast<model::BlockChainConfiguration &>(serviceState.state().pluginManager().configHolder()->Config().BlockChain);
-			blockChainConfig.ImportanceGrouping = 1;
-			blockChainConfig.TotalChainImportance = Importance(100);
+			auto &networkConfig = const_cast<model::NetworkConfiguration &>(serviceState.state().pluginManager().configHolder()->Config().Network);
+			networkConfig.ImportanceGrouping = 1;
+			networkConfig.TotalChainImportance = Importance(100);
 			auto &nodeConfig = const_cast<config::NodeConfiguration &>(serviceState.state().pluginManager().configHolder()->Config().Node);
 			nodeConfig.OutgoingConnections = CreateConfiguration();
 		}

@@ -19,7 +19,7 @@
 **/
 
 #include "ValidateConfiguration.h"
-#include "CatapultConfiguration.h"
+#include "BlockchainConfiguration.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/HexParser.h"
@@ -34,7 +34,7 @@ namespace catapult { namespace config {
 				CATAPULT_THROW_VALIDATION_ERROR("BootKey must be a valid private key");
 		}
 
-		void ValidateConfiguration(const model::BlockChainConfiguration& config) {
+		void ValidateConfiguration(const model::NetworkConfiguration& config) {
 			if (2 * config.ImportanceGrouping <= config.MaxRollbackBlocks)
 				CATAPULT_THROW_VALIDATION_ERROR("ImportanceGrouping must be greater than MaxRollbackBlocks / 2");
 
@@ -43,14 +43,15 @@ namespace catapult { namespace config {
 		}
 
 		void ValidateConfiguration(
-				const model::BlockChainConfiguration& blockChainConfig,
+				const model::NetworkConfiguration& networkConfig,
+				const config::ImmutableConfiguration& immutableConfig,
 				const config::InflationConfiguration& inflationConfig) {
 			auto totalInflation = inflationConfig.InflationCalculator.sumAll();
 			if (!totalInflation.second)
 				CATAPULT_THROW_VALIDATION_ERROR("total currency inflation could not be calculated");
 
-			auto totalCurrency = blockChainConfig.InitialCurrencyAtomicUnits + totalInflation.first;
-			if (blockChainConfig.InitialCurrencyAtomicUnits > totalCurrency || totalCurrency > blockChainConfig.MaxMosaicAtomicUnits)
+			auto totalCurrency = immutableConfig.InitialCurrencyAtomicUnits + totalInflation.first;
+			if (immutableConfig.InitialCurrencyAtomicUnits > totalCurrency || totalCurrency > networkConfig.MaxMosaicAtomicUnits)
 				CATAPULT_THROW_VALIDATION_ERROR("sum of InitialCurrencyAtomicUnits and inflation must not exceed MaxMosaicAtomicUnits");
 		}
 
@@ -63,10 +64,10 @@ namespace catapult { namespace config {
 		}
 	}
 
-	void ValidateConfiguration(const CatapultConfiguration& config) {
+	void ValidateConfiguration(const BlockchainConfiguration& config) {
 		ValidateConfiguration(config.User);
-		ValidateConfiguration(config.BlockChain);
-		ValidateConfiguration(config.BlockChain, config.Inflation);
+		ValidateConfiguration(config.Network);
+		ValidateConfiguration(config.Network, config.Immutable, config.Inflation);
 		ValidateConfiguration(config.Node);
 	}
 

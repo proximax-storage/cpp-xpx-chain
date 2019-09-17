@@ -46,7 +46,7 @@ namespace catapult { namespace mocks {
 		const model::Transaction& Transaction;
 
 		/// Copy of the transaction.
-		std::unique_ptr<model::Transaction> pTransactionCopy;
+		model::UniqueEntityPtr<model::Transaction> pTransactionCopy;
 
 		/// Reference to the transaction hash.
 		const Hash256& Hash;

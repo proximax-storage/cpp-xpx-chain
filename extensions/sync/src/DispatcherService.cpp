@@ -48,7 +48,7 @@
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/ionet/NodeInteractionResult.h"
-#include "catapult/model/BlockChainConfiguration.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/subscribers/StateChangeSubscriber.h"
 #include "catapult/subscribers/TransactionStatusSubscriber.h"
@@ -133,8 +133,8 @@ namespace catapult { namespace sync {
 			syncHandlers.DifficultyChecker = [&rollbackInfo, &state](const auto& blocks, const cache::CatapultCache& cache) {
 				if (!blocks.size())
 					return true;
-				const auto& blockChainConfig = state.config(blocks.back()->Height).BlockChain;
-				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, blockChainConfig);
+				const auto& networkConfig = state.config(blocks.back()->Height).Network;
+				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, networkConfig);
 				rollbackInfo.reset();
 				return blocks.size() == result;
 			};
@@ -183,7 +183,7 @@ namespace catapult { namespace sync {
 		public:
 			void addHashConsumers() {
 				m_consumers.push_back(CreateBlockHashCalculatorConsumer(
-						m_state.config().BlockChain.Network.GenerationHash,
+						m_state.config().Immutable.GenerationHash,
 						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateBlockHashCheckConsumer(
 						m_state.timeSupplier(),
@@ -261,7 +261,7 @@ namespace catapult { namespace sync {
 		public:
 			void addHashConsumers() {
 				m_consumers.push_back(CreateTransactionHashCalculatorConsumer(
-						m_state.config().BlockChain.Network.GenerationHash,
+						m_state.config().Immutable.GenerationHash,
 						m_state.pluginManager().transactionRegistry()));
 				m_consumers.push_back(CreateTransactionHashCheckConsumer(
 						m_state.timeSupplier(),

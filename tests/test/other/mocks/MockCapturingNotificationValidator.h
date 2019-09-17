@@ -93,7 +93,7 @@ namespace catapult { namespace mocks {
 				, TransactionNotificationInfo(notification)
 				, Height(context.Height)
 				, BlockTime(context.BlockTime)
-				, NetworkIdentifier(context.Network.Identifier)
+				, NetworkIdentifier(context.NetworkIdentifier)
 				, IsMarkedCache(test::IsMarkedCache(context.Cache))
 				, ResolvedMosaicIdOne(context.Resolvers.resolve(UnresolvedMosaicId(1)))
 		{}

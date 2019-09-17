@@ -22,7 +22,8 @@
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -32,9 +33,9 @@ namespace catapult { namespace cache {
 
 	namespace {
 		auto CreateConfigHolder(model::NetworkIdentifier networkIdentifier) {
-			auto blockChainConfig = model::BlockChainConfiguration::Uninitialized();
-			blockChainConfig.Network.Identifier = networkIdentifier;
-			return config::CreateMockConfigurationHolder(blockChainConfig);
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = networkIdentifier;
+			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
 		struct PropertyCacheMixinTraits {

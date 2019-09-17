@@ -25,15 +25,15 @@
 namespace catapult { namespace test {
 
 	namespace {
-		model::BlockChainConfiguration CreateBlockChainConfiguration() {
-			auto config = CreatePrototypicalBlockChainConfiguration();
+		model::NetworkConfiguration CreateNetworkConfiguration() {
+			auto config = CreatePrototypicalNetworkConfiguration();
 			AddNemesisPluginExtensions(config);
 			return config;
 		}
 	}
 
-	void AddNemesisPluginExtensions(model::BlockChainConfiguration& config) {
-		config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" } } }}));
+	void AddNemesisPluginExtensions(model::NetworkConfiguration& config) {
+		config.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 		config.Plugins.emplace(PLUGIN_NAME(mosaic), utils::ConfigurationBag({ { "", {
 			{ "maxMosaicsPerAccount", "123" },
 			{ "maxMosaicDuration", "456d" },
@@ -92,7 +92,7 @@ namespace catapult { namespace test {
 		AddPluginExtensions(config, {});
 	}
 
-	config::CatapultConfiguration CreateCatapultConfigurationWithNemesisPluginExtensions(const std::string& dataDirectory) {
-		return CreatePrototypicalCatapultConfiguration(CreateBlockChainConfiguration(), dataDirectory);
+	config::BlockchainConfiguration CreateBlockchainConfigurationWithNemesisPluginExtensions(const std::string& dataDirectory) {
+		return CreatePrototypicalBlockchainConfiguration(CreateNetworkConfiguration(), dataDirectory);
 	}
 }}

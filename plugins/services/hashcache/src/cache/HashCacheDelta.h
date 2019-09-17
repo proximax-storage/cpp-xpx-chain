@@ -59,7 +59,7 @@ namespace catapult { namespace cache {
 
 	private:
 		HashCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pOrderedDelta;
-		std::shared_ptr<config::LocalNodeConfigurationHolder> m_pConfigHolder;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		deltaset::PruningBoundary<ValueType> m_pruningBoundary;
 	};
 

@@ -28,7 +28,7 @@ namespace catapult {
 		class TransactionPlugin;
 		class TransactionRegistry;
 	}
-	namespace config { class LocalNodeConfigurationHolder; }
+	namespace config { class BlockchainConfigurationHolder; }
 }
 
 namespace catapult { namespace plugins {
@@ -38,5 +38,5 @@ namespace catapult { namespace plugins {
 	std::unique_ptr<model::TransactionPlugin> CreateAggregateTransactionPlugin(
 			const model::TransactionRegistry& transactionRegistry,
 			model::EntityType transactionType,
-			const std::shared_ptr<config::LocalNodeConfigurationHolder>& pConfigHolder);
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 }}

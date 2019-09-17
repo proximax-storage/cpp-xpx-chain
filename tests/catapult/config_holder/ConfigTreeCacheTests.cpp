@@ -5,7 +5,7 @@
 **/
 
 #include "catapult/config_holder/ConfigTreeCache.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace config {
@@ -17,21 +17,21 @@ namespace catapult { namespace config {
 	TEST(TEST_CLASS, CanInsertConfig) {
 		// Arrange:
 		ConfigTreeCache testee;
-		test::MutableCatapultConfiguration config;
-		config.BlockChain.ImportanceGrouping = 5;
+		test::MutableBlockchainConfiguration config;
+		config.Network.ImportanceGrouping = 5;
 
 		// Act:
 		auto& result = testee.insert(Height{777}, config.ToConst());
 
 		// Assert:
 		EXPECT_TRUE(testee.contains(Height{777}));
-		EXPECT_EQ(5, result.BlockChain.ImportanceGrouping);
+		EXPECT_EQ(5, result.Network.ImportanceGrouping);
 	}
 
 	TEST(TEST_CLASS, InsertThrowsWhenConfigExistsAtHeight) {
 		// Arrange:
 		ConfigTreeCache testee;
-		test::MutableCatapultConfiguration config;
+		test::MutableBlockchainConfiguration config;
 		testee.insert(Height{777}, config.ToConst());
 		// Sanity
 		EXPECT_TRUE(testee.contains(Height{777}));
@@ -47,8 +47,8 @@ namespace catapult { namespace config {
 	TEST(TEST_CLASS, CanInsertRef) {
 		// Arrange:
 		ConfigTreeCache testee;
-		test::MutableCatapultConfiguration config;
-		config.BlockChain.ImportanceGrouping = 5;
+		test::MutableBlockchainConfiguration config;
+		config.Network.ImportanceGrouping = 5;
 		testee.insert(Height{777}, config.ToConst());
 		// Sanity
 		EXPECT_TRUE(testee.contains(Height{777}));
@@ -58,7 +58,7 @@ namespace catapult { namespace config {
 
 		// Assert:
 		EXPECT_TRUE(testee.contains(Height{555}));
-		EXPECT_EQ(5, result.BlockChain.ImportanceGrouping);
+		EXPECT_EQ(5, result.Network.ImportanceGrouping);
 	}
 
 	TEST(TEST_CLASS, InsertRefThrowsOnRefAtConfigHeight) {
@@ -84,7 +84,7 @@ namespace catapult { namespace config {
 	TEST(TEST_CLASS, CanEraseConfig) {
 		// Arrange:
 		ConfigTreeCache testee;
-		test::MutableCatapultConfiguration config;
+		test::MutableBlockchainConfiguration config;
 		testee.insert(Height{777}, config.ToConst());
 		// Sanity
 		EXPECT_TRUE(testee.contains(Height{777}));
@@ -99,7 +99,7 @@ namespace catapult { namespace config {
 	TEST(TEST_CLASS, CanEraseRef) {
 		// Arrange:
 		ConfigTreeCache testee;
-		test::MutableCatapultConfiguration config;
+		test::MutableBlockchainConfiguration config;
 
 		testee.insert(Height{777}, config.ToConst());
 		// Sanity
@@ -121,8 +121,8 @@ namespace catapult { namespace config {
 	TEST(TEST_CLASS, CanGetConfig) {
 		// Arrange:
 		ConfigTreeCache testee;
-		test::MutableCatapultConfiguration config;
-		config.BlockChain.ImportanceGrouping = 5;
+		test::MutableBlockchainConfiguration config;
+		config.Network.ImportanceGrouping = 5;
 		testee.insert(Height{777}, config.ToConst());
 		// Sanity
 		EXPECT_TRUE(testee.contains(Height{777}));
@@ -131,14 +131,14 @@ namespace catapult { namespace config {
 		auto& result = testee.get(Height{777});
 
 		// Assert:
-		EXPECT_EQ(5, result.BlockChain.ImportanceGrouping);
+		EXPECT_EQ(5, result.Network.ImportanceGrouping);
 	}
 
 	TEST(TEST_CLASS, CanGetRef) {
 		// Arrange:
 		ConfigTreeCache testee;
-		test::MutableCatapultConfiguration config;
-		config.BlockChain.ImportanceGrouping = 5;
+		test::MutableBlockchainConfiguration config;
+		config.Network.ImportanceGrouping = 5;
 
 		testee.insert(Height{777}, config.ToConst());
 		// Sanity
@@ -152,7 +152,7 @@ namespace catapult { namespace config {
 		auto& result = testee.get(Height{555});
 
 		// Assert:
-		EXPECT_EQ(5, result.BlockChain.ImportanceGrouping);
+		EXPECT_EQ(5, result.Network.ImportanceGrouping);
 	}
 
 	TEST(TEST_CLASS, GetThrowsWhenConfigDoesntExistsAtHeight) {

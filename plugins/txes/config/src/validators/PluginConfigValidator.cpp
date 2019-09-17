@@ -5,8 +5,8 @@
 **/
 
 #include "Validators.h"
-#include "src/config/CatapultConfigConfiguration.h"
+#include "src/config/NetworkConfigConfiguration.h"
 
 namespace catapult { namespace validators {
-	DEFINE_PLUGIN_CONFIG_VALIDATOR(config, CatapultConfig, 1)
+	DEFINE_PLUGIN_CONFIG_VALIDATOR(config, NetworkConfig, 1)
 }}

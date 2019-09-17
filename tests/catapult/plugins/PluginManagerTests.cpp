@@ -21,13 +21,12 @@
 #include "catapult/plugins/PluginManager.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/model/Address.h"
 #include "tests/test/cache/SimpleCache.h"
-#include "tests/test/core/mocks/MockLocalNodeConfigurationHolder.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
-#include "tests/test/other/MutableCatapultConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -48,8 +47,8 @@ namespace catapult { namespace plugins {
 
 	TEST(TEST_CLASS, CanCreateManager) {
 		// Arrange:
-		test::MutableCatapultConfiguration config;
-		config.BlockChain.BlockPruneInterval = 15;
+		test::MutableBlockchainConfiguration config;
+		config.Network.BlockPruneInterval = 15;
 		config.Inflation.InflationCalculator.add(Height(123), Amount(234));
 		auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
 
@@ -647,9 +646,9 @@ namespace catapult { namespace plugins {
 		template<typename TPublisherFactory>
 		void AssertCanCreateNotificationPublisher(size_t expectedNumNotifications, TPublisherFactory publisherFactory) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			config.CurrencyMosaicId = Currency_Mosaic_Id;
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
 			PluginManager manager(pConfigHolder, StorageConfiguration());
 			manager.addTransactionSupport(mocks::CreateMockTransactionPlugin());
 

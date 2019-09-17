@@ -77,10 +77,9 @@ namespace catapult { namespace observers {
 		auto notification = CreateChildNotification(signer, NamespaceId(25), NamespaceId(37));
 
 		// Act: add it
-		auto config = model::BlockChainConfiguration::Uninitialized();
 		RunChildTest(
 				notification,
-				ObserverTestContext(NotifyMode::Commit, Height{444}, config),
+				ObserverTestContext(NotifyMode::Commit, Height{444}),
 				SeedCacheWithRoot25TreeSigner(signer),
 				[](auto& namespaceCacheDelta) {
 					// Assert: the child was added
@@ -99,10 +98,9 @@ namespace catapult { namespace observers {
 		auto notification = CreateChildNotification(signer, NamespaceId(36), NamespaceId(49));
 
 		// Act: add it
-		auto config = model::BlockChainConfiguration::Uninitialized();
 		RunChildTest(
 				notification,
-				ObserverTestContext(NotifyMode::Commit, Height{444}, config),
+				ObserverTestContext(NotifyMode::Commit, Height{444}),
 				SeedCacheWithRoot25TreeSigner(signer),
 				[](auto& namespaceCacheDelta) {
 					// Assert: the child was added
@@ -125,10 +123,9 @@ namespace catapult { namespace observers {
 		auto notification = CreateChildNotification(signer, NamespaceId(25), NamespaceId(36));
 
 		// Act: remove it
-		auto config = model::BlockChainConfiguration::Uninitialized();
 		RunChildTest(
 				notification,
-				ObserverTestContext(NotifyMode::Rollback, Height{444}, config),
+				ObserverTestContext(NotifyMode::Rollback, Height{444}),
 				[&signer](auto& namespaceCacheDelta) {
 					// Arrange: create a cache with { 25 } and { 25, 36 }
 					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, test::CreateLifetime(10, 20)));
@@ -151,10 +148,9 @@ namespace catapult { namespace observers {
 		auto notification = CreateChildNotification(signer, NamespaceId(36), NamespaceId(49));
 
 		// Act: remove it
-		auto config = model::BlockChainConfiguration::Uninitialized();
 		RunChildTest(
 				notification,
-				ObserverTestContext(NotifyMode::Rollback, Height{444}, config),
+				ObserverTestContext(NotifyMode::Rollback, Height{444}),
 				[&signer](auto& namespaceCacheDelta) {
 					// Arrange: create a cache with { 25 }, { 25, 36 } and { 25, 36, 49 }
 					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, test::CreateLifetime(10, 20)));

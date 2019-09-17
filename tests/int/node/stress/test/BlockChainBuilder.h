@@ -43,20 +43,20 @@ namespace catapult { namespace test {
 		BlockChainBuilder(
 				const Accounts& accounts,
 				StateHashCalculator& stateHashCalculator,
-				const model::BlockChainConfiguration& config);
+				const model::NetworkConfiguration& config);
 
 		/// Creates a builder around \a accounts, \a stateHashCalculator, \a config and explicit \a resourcesPath.
 		BlockChainBuilder(
 				const Accounts& accounts,
 				StateHashCalculator& stateHashCalculator,
-				const model::BlockChainConfiguration& config,
+				const model::NetworkConfiguration& config,
 				const std::string& resourcesPath);
 
 	private:
 		BlockChainBuilder(
 				const Accounts& accounts,
 				StateHashCalculator& stateHashCalculator,
-				const model::BlockChainConfiguration& config,
+				const model::NetworkConfiguration& config,
 				const std::string& resourcesPath,
 				bool isChained);
 
@@ -79,7 +79,7 @@ namespace catapult { namespace test {
 
 	public:
 		/// Builds a single block with transactions from \a transactionsGenerator.
-		std::unique_ptr<model::Block> asSingleBlock(const TransactionsGenerator& transactionsGenerator);
+		model::UniqueEntityPtr<model::Block> asSingleBlock(const TransactionsGenerator& transactionsGenerator);
 
 		/// Builds a block chain with transactions from \a transactionsGenerator.
 		Blocks asBlockChain(const TransactionsGenerator& transactionsGenerator);
@@ -87,7 +87,7 @@ namespace catapult { namespace test {
 	private:
 		void pushDifficulty(const model::Block& block);
 
-		std::unique_ptr<model::Block> createBlock(
+		model::UniqueEntityPtr<model::Block> createBlock(
 				const model::PreviousBlockContext& context,
 				Timestamp timestamp,
 				const model::Transactions& transactions);
@@ -111,6 +111,6 @@ namespace catapult { namespace test {
 
 		utils::TimeSpan m_blockTimeInterval;
 		BlockReceiptsHashCalculator m_blockReceiptsHashCalculator;
-		model::BlockChainConfiguration m_config;
+		model::NetworkConfiguration m_config;
 	};
 }}

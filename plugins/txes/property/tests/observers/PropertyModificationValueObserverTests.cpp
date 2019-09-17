@@ -101,8 +101,7 @@ namespace catapult { namespace observers {
 				bool shouldContainCacheEntry,
 				TModificationFactory modificationFactory) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			ObserverTestContext context(notifyMode, Height{444}, config);
+			ObserverTestContext context(notifyMode, Height{444});
 			auto values = test::GenerateUniqueRandomDataVector<typename TPropertyValueTraits::ValueType>(numInitialValues);
 			auto key = test::GenerateRandomByteArray<Key>();
 			test::PopulateCache<TPropertyValueTraits, TOperationTraits>(context.cache(), key, values);
@@ -138,8 +137,7 @@ namespace catapult { namespace observers {
 		template<typename TOperationTraits>
 		void AssertObserverDoesNotRemoveNonEmptyAccountProperties(NotifyMode notifyMode) {
 			// Arrange:
-			auto config = model::BlockChainConfiguration::Uninitialized();
-			ObserverTestContext context(notifyMode, Height{444}, config);
+			ObserverTestContext context(notifyMode, Height{444});
 			auto filteredAddress = test::GenerateRandomByteArray<Address>();
 			auto unresolvedFilteredAddress = AddressPropertyTraits::Unresolve(filteredAddress);
 			auto key = test::GenerateRandomByteArray<Key>();

@@ -58,7 +58,7 @@ namespace catapult { namespace test {
 	void AddCopyBuffersHandler(ionet::ServerPacketHandlers& serverHandlers, std::vector<ionet::ByteBuffer>& receivedBuffers);
 
 	/// Copies \a buffer into a dynamically allocated Packet.
-	std::unique_ptr<ionet::Packet> BufferToPacket(const ionet::ByteBuffer& buffer);
+	model::UniqueEntityPtr<ionet::Packet> BufferToPacket(const ionet::ByteBuffer& buffer);
 
 	/// Copies \a buffer into a dynamically allocated PacketPayload.
 	ionet::PacketPayload BufferToPacketPayload(const ionet::ByteBuffer& buffer);

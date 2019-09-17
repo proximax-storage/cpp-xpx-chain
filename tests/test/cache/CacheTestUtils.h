@@ -25,23 +25,29 @@
 #include <memory>
 #include <vector>
 
-namespace catapult { namespace cache { class ReadOnlyCatapultCache; } }
+namespace catapult {
+	namespace cache { class ReadOnlyCatapultCache; }
+	namespace config { class BlockchainConfiguration; }
+}
 
 namespace catapult { namespace test {
 
 	/// Cache factory for creating a catapult cache composed of all core sub caches.
 	struct CoreSystemCacheFactory {
+		/// Creates an empty catapult cache.
+		static cache::CatapultCache Create();
+
 		/// Creates an empty catapult cache around \a config.
-		static cache::CatapultCache Create(const model::BlockChainConfiguration& config);
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config);
 
 		/// Adds all core sub caches initialized with \a config to \a subCaches.
 		static void CreateSubCaches(
-				const model::BlockChainConfiguration& config,
+				const config::BlockchainConfiguration& config,
 				std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches);
 
 		/// Adds all core sub caches initialized with \a config and \a cacheConfig to \a subCaches.
 		static void CreateSubCaches(
-				const model::BlockChainConfiguration& config,
+				const config::BlockchainConfiguration& config,
 				const cache::CacheConfiguration& cacheConfig,
 				std::vector<std::unique_ptr<cache::SubCachePlugin>>& subCaches);
 	};
@@ -67,25 +73,43 @@ namespace catapult { namespace test {
 		return MakeSubCachePluginWithCacheConfiguration<TCache, TStorageTraits>(cache::CacheConfiguration(), std::forward<TArgs>(args)...);
 	}
 
+	/// Creates an empty catapult cache.
+	cache::CatapultCache CreateEmptyCatapultCache();
+
 	/// Creates an empty catapult cache around \a config.
-	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config);
+	cache::CatapultCache CreateEmptyCatapultCache(const config::BlockchainConfiguration& config);
+
+	/// Creates an empty catapult cache around \a cacheConfig.
+	cache::CatapultCache CreateEmptyCatapultCache(const cache::CacheConfiguration& cacheConfig);
 
 	/// Creates an empty catapult cache around \a config and \a cacheConfig.
 	cache::CatapultCache CreateEmptyCatapultCache(
-			const model::BlockChainConfiguration& config,
+			const config::BlockchainConfiguration& config,
 			const cache::CacheConfiguration& cacheConfig);
+
+	/// Creates an empty catapult cache around empty config.
+	template<typename TCacheFactory>
+	cache::CatapultCache CreateEmptyCatapultCache() {
+		return TCacheFactory::Create();
+	}
 
 	/// Creates an empty catapult cache around \a config.
 	template<typename TCacheFactory>
-	cache::CatapultCache CreateEmptyCatapultCache(const model::BlockChainConfiguration& config) {
+	cache::CatapultCache CreateEmptyCatapultCache(const config::BlockchainConfiguration& config) {
 		return TCacheFactory::Create(config);
 	}
 
+	/// Creates a catapult cache with a marker account, empty configuration and zero height.
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount();
+
+	/// Creates a catapult cache with a marker account, empty configuration and a specified \a height.
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height);
+
 	/// Creates a catapult cache with a marker account.
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const model::BlockChainConfiguration& config);
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(const config::BlockchainConfiguration& config);
 
 	/// Creates a catapult cache with a marker account and a specified \a height.
-	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const model::BlockChainConfiguration& config);
+	cache::CatapultCache CreateCatapultCacheWithMarkerAccount(Height height, const config::BlockchainConfiguration& config);
 
 	/// Adds a marker account to \a cache.
 	void AddMarkerAccount(cache::CatapultCache& cache);
