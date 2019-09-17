@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 		std::vector<const void*> ExtractReadOnlyViews(const TSubCacheViews& subViews) {
 			std::vector<const void*> readOnlyViews;
 			for (const auto& pSubView : subViews) {
-				if (!pSubView || !pSubView->enabled()) {
+				if (!pSubView) {
 					readOnlyViews.push_back(nullptr);
 					continue;
 				}
@@ -154,7 +154,7 @@ namespace catapult { namespace cache {
 
 	void CatapultCacheDelta::setHeight(const Height& height) {
 		for (auto& pSubView : m_subViews) {
-			if (!!pSubView && pSubView->enabled())
+			if (!!pSubView)
 				pSubView->setHeight(height);
 		}
 	}
@@ -210,7 +210,7 @@ namespace catapult { namespace cache {
 			}
 
 			auto pSubView = pDetachedSubView->tryLock();
-			if (!pSubView || !pSubView->enabled())
+			if (!pSubView)
 				return nullptr;
 
 			subViews.push_back(std::move(pSubView));
