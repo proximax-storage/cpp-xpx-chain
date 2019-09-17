@@ -6,9 +6,11 @@
 
 #pragma once
 #include "DriveBaseSets.h"
+#include "ServiceCacheTools.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 
 namespace catapult { namespace cache {
@@ -32,8 +34,10 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = DriveCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a delta around \a driveSets.
-		explicit BasicDriveCacheDelta(const DriveCacheTypes::BaseSetDeltaPointers& driveSets)
+		/// Creates a delta around \a driveSets and \a pConfigHolder.
+		explicit BasicDriveCacheDelta(
+			const DriveCacheTypes::BaseSetDeltaPointers& driveSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: DriveCacheDeltaMixins::Size(*driveSets.pPrimary)
 				, DriveCacheDeltaMixins::Contains(*driveSets.pPrimary)
 				, DriveCacheDeltaMixins::ConstAccessor(*driveSets.pPrimary)
@@ -42,22 +46,30 @@ namespace catapult { namespace cache {
 				, DriveCacheDeltaMixins::BasicInsertRemove(*driveSets.pPrimary)
 				, DriveCacheDeltaMixins::DeltaElements(*driveSets.pPrimary)
 				, m_pDriveEntries(driveSets.pPrimary)
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
 		using DriveCacheDeltaMixins::ConstAccessor::find;
 		using DriveCacheDeltaMixins::MutableAccessor::find;
 
+		bool enabled() const {
+			return ServicePluginEnabled(m_pConfigHolder, height());
+		}
+
 	private:
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pDriveEntries;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the drive cache.
 	class DriveCacheDelta : public ReadOnlyViewSupplier<BasicDriveCacheDelta> {
 	public:
-		/// Creates a delta around \a driveSets.
-		explicit DriveCacheDelta(const DriveCacheTypes::BaseSetDeltaPointers& driveSets)
-				: ReadOnlyViewSupplier(driveSets)
+		/// Creates a delta around \a driveSets and \a pConfigHolder.
+		explicit DriveCacheDelta(
+			const DriveCacheTypes::BaseSetDeltaPointers& driveSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(driveSets, pConfigHolder)
 		{}
 	};
 }}

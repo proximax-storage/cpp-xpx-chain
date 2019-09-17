@@ -8,11 +8,12 @@
 #include "FileCacheDelta.h"
 #include "FileCacheView.h"
 #include "catapult/cache/BasicCache.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
 	/// Cache composed of file information.
-	using BasicFileCache = BasicCache<FileCacheDescriptor, FileCacheTypes::BaseSets>;
+	using BasicFileCache = BasicCache<FileCacheDescriptor, FileCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
 
 	/// Synchronized cache composed of file information.
 	class FileCache : public SynchronizedCache<BasicFileCache> {
@@ -21,7 +22,8 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config.
-		explicit FileCache(const CacheConfiguration& config) : SynchronizedCache<BasicFileCache>(BasicFileCache(config))
+		explicit FileCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+			: SynchronizedCache<BasicFileCache>(BasicFileCache(config, std::move(pConfigHolder)))
 		{}
 	};
 }}

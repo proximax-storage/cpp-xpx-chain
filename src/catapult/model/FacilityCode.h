@@ -57,5 +57,9 @@ namespace catapult { namespace model {
 		BlockchainUpgrade = 0x58,
 		/// Service facility code.
 		Service = 0x5A,
+		/// Drive facility code.
+		Drive = 0x5B,
+		/// File facility code.
+		File = 0x5C,
 	};
 }}

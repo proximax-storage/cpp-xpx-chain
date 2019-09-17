@@ -15,6 +15,9 @@ namespace catapult { namespace config {
 	/// Service plugin configuration settings.
 	struct ServiceConfiguration : public model::PluginConfiguration {
 	public:
+		/// Whether the plugin is enabled.
+		bool Enabled;
+
 		/// Minimum percentage of approval.
 		uint8_t MinPercentageOfApproval;
 

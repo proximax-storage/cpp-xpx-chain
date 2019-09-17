@@ -13,5 +13,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a service transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateServiceTransactionPlugin(const model::NetworkIdentifier& networkIdentifier);
+	std::unique_ptr<model::TransactionPlugin> CreateServiceTransactionPlugin(const config::ImmutableConfiguration& config);
 }}
