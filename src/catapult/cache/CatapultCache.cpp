@@ -210,7 +210,7 @@ namespace catapult { namespace cache {
 			}
 
 			auto pSubView = pDetachedSubView->tryLock();
-			if (!pSubView && pSubView->enabled())
+			if (!pSubView || !pSubView->enabled())
 				return nullptr;
 
 			subViews.push_back(std::move(pSubView));
