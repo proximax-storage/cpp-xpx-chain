@@ -9,16 +9,15 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(CopyFile, model::CopyFileNotification<1>, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(MoveFile, model::MoveFileNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& fileCache = context.Cache.sub<cache::FileCache>();
-		auto destinationFileKey = state::MakeDriveFileKey(notification.Destination.Drive, notification.Destination.Hash);
+		auto& fileEntry = fileCache.find(state::MakeDriveFileKey(notification.Source.Drive, notification.Source.Hash)).get();
 		if (NotifyMode::Commit == context.Mode) {
-			state::FileEntry destinationFileEntry(destinationFileKey);
-			destinationFileEntry.setParentKey(state::MakeDriveFileKey(notification.Destination.Drive, notification.Destination.ParentHash));
-			destinationFileEntry.setName(notification.Destination.Name);
-			fileCache.insert(destinationFileEntry);
+			fileEntry.setParentKey(state::MakeDriveFileKey(notification.Destination.Drive, notification.Destination.ParentHash));
+			fileEntry.setName(notification.Destination.Name);
 		} else {
-			fileCache.remove(destinationFileKey);
+			fileEntry.setParentKey(state::MakeDriveFileKey(notification.Source.Drive, notification.Source.ParentHash));
+			fileEntry.setName(notification.Source.Name);
 		}
 	});
 }}

@@ -10,9 +10,9 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MoveFileNotification<1>;
+	using Notification = model::CopyFileNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(MoveFile, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(CopyFile, [](const auto& notification, const ValidatorContext& context) {
 		if (notification.Source.Drive != notification.Destination.Drive)
             return Failure_Service_Desitination_And_Source_Are_From_Different_Drives;
 
