@@ -6,10 +6,12 @@
 
 #pragma once
 #include "FileBaseSets.h"
+#include "ServiceCacheTools.h"
 #include "FileCacheSerializers.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -30,22 +32,31 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = FileCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a view around \a fileSets.
-		explicit BasicFileCacheView(const FileCacheTypes::BaseSets& fileSets)
+		/// Creates a view around \a fileSets and \a pConfigHolder.
+		explicit BasicFileCacheView(const FileCacheTypes::BaseSets& fileSets, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: FileCacheViewMixins::Size(fileSets.Primary)
 				, FileCacheViewMixins::Contains(fileSets.Primary)
 				, FileCacheViewMixins::Iteration(fileSets.Primary)
 				, FileCacheViewMixins::ConstAccessor(fileSets.Primary)
 				, FileCacheViewMixins::PatriciaTreeView(fileSets.PatriciaTree.get())
+				, m_pConfigHolder(pConfigHolder)
 		{}
+
+	public:
+		bool enabled() const {
+			return ServicePluginEnabled(m_pConfigHolder, height());
+		}
+
+	private:
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the file cache.
 	class FileCacheView : public ReadOnlyViewSupplier<BasicFileCacheView> {
 	public:
-		/// Creates a view around \a fileSets.
-		explicit FileCacheView(const FileCacheTypes::BaseSets& fileSets)
-				: ReadOnlyViewSupplier(fileSets)
+		/// Creates a view around \a fileSets and \a pConfigHolder.
+		explicit FileCacheView(const FileCacheTypes::BaseSets& fileSets, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(fileSets, pConfigHolder)
 		{}
 	};
 }}

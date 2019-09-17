@@ -8,6 +8,8 @@
 #include "ServicePlugin.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
+#include "src/cache/FileCache.h"
+#include "src/cache/FileCacheStorage.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ServiceTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -16,18 +18,30 @@
 namespace catapult { namespace plugins {
 
 	void RegisterServiceSubsystem(PluginManager& manager) {
-		auto networkIdentifier = manager.immutableConfig().NetworkIdentifier;
-		manager.addTransactionSupport(CreateServiceTransactionPlugin(networkIdentifier));
+		manager.addTransactionSupport(CreateServiceTransactionPlugin(manager.immutableConfig()));
 
+		const auto& pConfigHolder = manager.configHolder();
 		manager.addCacheSupport<cache::DriveCacheStorage>(
-			std::make_unique<cache::DriveCache>(manager.cacheConfig(cache::DriveCache::Name)));
+			std::make_unique<cache::DriveCache>(manager.cacheConfig(cache::DriveCache::Name), pConfigHolder));
 
-		using CacheHandlersService = CacheHandlers<cache::DriveCacheDescriptor>;
-		CacheHandlersService::Register<model::FacilityCode::Service>(manager);
+		using DriveCacheHandlersService = CacheHandlers<cache::DriveCacheDescriptor>;
+		DriveCacheHandlersService::Register<model::FacilityCode::Drive>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("SERVICE C"), [&cache]() {
+			counters.emplace_back(utils::DiagnosticCounterId("DRIVE C"), [&cache]() {
 				return cache.sub<cache::DriveCache>().createView(cache.height())->size();
+			});
+		});
+
+		manager.addCacheSupport<cache::FileCacheStorage>(
+			std::make_unique<cache::FileCache>(manager.cacheConfig(cache::FileCache::Name), pConfigHolder));
+
+		using FileCacheHandlersService = CacheHandlers<cache::FileCacheDescriptor>;
+		FileCacheHandlersService::Register<model::FacilityCode::File>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("FILE C"), [&cache]() {
+				return cache.sub<cache::FileCache>().createView(cache.height())->size();
 			});
 		});
 

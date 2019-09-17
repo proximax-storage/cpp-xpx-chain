@@ -134,8 +134,11 @@ namespace catapult { namespace ionet {
 	/* Blockchain upgrade state path has been requested by a client. */ \
 	ENUM_VALUE(Blockchain_Upgrade_State_Path, FACILITY_BASED_CODE(800, BlockchainUpgrade)) \
 	\
-	/* Blockchain upgrade state path has been requested by a client. */ \
-	ENUM_VALUE(Service_State_Path, FACILITY_BASED_CODE(800, Service)) \
+	/* Drive state path has been requested by a client. */ \
+	ENUM_VALUE(Drive_State_Path, FACILITY_BASED_CODE(800, Drive)) \
+	\
+	/* File state path has been requested by a client. */ \
+	ENUM_VALUE(File_State_Path, FACILITY_BASED_CODE(800, File)) \
 	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
@@ -187,8 +190,11 @@ namespace catapult { namespace ionet {
 	/* Blockchain upgrade infos have been requested by a client. */ \
 	ENUM_VALUE(Blockchain_Upgrade_Infos, FACILITY_BASED_CODE(1200, BlockchainUpgrade)) \
 	\
-	/* Blockchain upgrade infos have been requested by a client. */ \
-	ENUM_VALUE(Service_Infos, FACILITY_BASED_CODE(1200, Service))
+	/* Drive infos have been requested by a client. */ \
+	ENUM_VALUE(Drive_Infos, FACILITY_BASED_CODE(1200, Drive)) \
+	\
+	/* File infos have been requested by a client. */ \
+	ENUM_VALUE(File_Infos, FACILITY_BASED_CODE(1200, File))
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

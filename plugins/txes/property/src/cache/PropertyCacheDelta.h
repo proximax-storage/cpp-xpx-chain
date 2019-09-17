@@ -48,7 +48,7 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = PropertyCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a delta around \a propertySets and \a networkConfig.
+		/// Creates a delta around \a propertySets and \a pConfigHolder.
 		explicit BasicPropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
 				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
@@ -81,7 +81,7 @@ namespace catapult { namespace cache {
 	/// Delta on top of the property cache.
 	class PropertyCacheDelta : public ReadOnlyViewSupplier<BasicPropertyCacheDelta> {
 	public:
-		/// Creates a delta around \a propertySets and \a networkConfig.
+		/// Creates a delta around \a propertySets and \a pConfigHolder.
 		explicit PropertyCacheDelta(
 				const PropertyCacheTypes::BaseSetDeltaPointers& propertySets,
 				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)

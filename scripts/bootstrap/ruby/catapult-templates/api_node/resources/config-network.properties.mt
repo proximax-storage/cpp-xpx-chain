@@ -113,5 +113,7 @@ minUpgradePeriod = 360
 
 [plugin:catapult.plugins.service]
 
+enabled = false
+
 minPercentageOfApproval = 100
 minPercentageOfRemoval = 66

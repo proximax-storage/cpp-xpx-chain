@@ -6,10 +6,12 @@
 
 #pragma once
 #include "DriveBaseSets.h"
+#include "ServiceCacheTools.h"
 #include "DriveCacheSerializers.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -30,22 +32,31 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = DriveCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a view around \a driveSets.
-		explicit BasicDriveCacheView(const DriveCacheTypes::BaseSets& driveSets)
+		/// Creates a view around \a driveSets and \a pConfigHolder.
+		explicit BasicDriveCacheView(const DriveCacheTypes::BaseSets& driveSets, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: DriveCacheViewMixins::Size(driveSets.Primary)
 				, DriveCacheViewMixins::Contains(driveSets.Primary)
 				, DriveCacheViewMixins::Iteration(driveSets.Primary)
 				, DriveCacheViewMixins::ConstAccessor(driveSets.Primary)
 				, DriveCacheViewMixins::PatriciaTreeView(driveSets.PatriciaTree.get())
+				, m_pConfigHolder(pConfigHolder)
 		{}
+
+	public:
+		bool enabled() const {
+			return ServicePluginEnabled(m_pConfigHolder, height());
+		}
+
+	private:
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the drive cache.
 	class DriveCacheView : public ReadOnlyViewSupplier<BasicDriveCacheView> {
 	public:
-		/// Creates a view around \a driveSets.
-		explicit DriveCacheView(const DriveCacheTypes::BaseSets& driveSets)
-				: ReadOnlyViewSupplier(driveSets)
+		/// Creates a view around \a driveSets and \a pConfigHolder.
+		explicit DriveCacheView(const DriveCacheTypes::BaseSets& driveSets, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(driveSets, pConfigHolder)
 		{}
 	};
 }}

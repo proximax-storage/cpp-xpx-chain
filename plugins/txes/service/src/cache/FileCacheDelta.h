@@ -6,9 +6,11 @@
 
 #pragma once
 #include "FileBaseSets.h"
+#include "ServiceCacheTools.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 
 namespace catapult { namespace cache {
@@ -32,8 +34,10 @@ namespace catapult { namespace cache {
 		using ReadOnlyView = FileCacheTypes::CacheReadOnlyType;
 
 	public:
-		/// Creates a delta around \a fileSets.
-		explicit BasicFileCacheDelta(const FileCacheTypes::BaseSetDeltaPointers& fileSets)
+		/// Creates a delta around \a fileSets and \a pConfigHolder.
+		explicit BasicFileCacheDelta(
+			const FileCacheTypes::BaseSetDeltaPointers& fileSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: FileCacheDeltaMixins::Size(*fileSets.pPrimary)
 				, FileCacheDeltaMixins::Contains(*fileSets.pPrimary)
 				, FileCacheDeltaMixins::ConstAccessor(*fileSets.pPrimary)
@@ -42,22 +46,30 @@ namespace catapult { namespace cache {
 				, FileCacheDeltaMixins::BasicInsertRemove(*fileSets.pPrimary)
 				, FileCacheDeltaMixins::DeltaElements(*fileSets.pPrimary)
 				, m_pFileEntries(fileSets.pPrimary)
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
 		using FileCacheDeltaMixins::ConstAccessor::find;
 		using FileCacheDeltaMixins::MutableAccessor::find;
 
+		bool enabled() const {
+			return ServicePluginEnabled(m_pConfigHolder, height());
+		}
+
 	private:
 		FileCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pFileEntries;
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the file cache.
 	class FileCacheDelta : public ReadOnlyViewSupplier<BasicFileCacheDelta> {
 	public:
-		/// Creates a delta around \a fileSets.
-		explicit FileCacheDelta(const FileCacheTypes::BaseSetDeltaPointers& fileSets)
-				: ReadOnlyViewSupplier(fileSets)
+		/// Creates a delta around \a fileSets and \a pConfigHolder.
+		explicit FileCacheDelta(
+			const FileCacheTypes::BaseSetDeltaPointers& fileSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(fileSets, pConfigHolder)
 		{}
 	};
 }}

@@ -43,6 +43,8 @@ namespace catapult { namespace validators {
 		COPY_FACILITY_CODE(Transfer),
 		COPY_FACILITY_CODE(BlockchainUpgrade),
 		COPY_FACILITY_CODE(Service),
+		COPY_FACILITY_CODE(Drive),
+		COPY_FACILITY_CODE(File),
 
 		/// Chain facility code.
 		Chain = 0xFF,
