@@ -20,6 +20,7 @@
 
 #pragma once
 #include <vector>
+#include <mutex>
 
 namespace catapult { namespace test {
 
@@ -38,6 +39,7 @@ namespace catapult { namespace test {
 	public:
 		/// Clears the captured parameters.
 		void clear() {
+			std::lock_guard<std::mutex> lock(m_mutex);
 			m_params.clear();
 		}
 
@@ -45,10 +47,12 @@ namespace catapult { namespace test {
 		/// Captures \a args.
 		template<typename... TArgs>
 		void push(TArgs&&... args) {
-			m_params.push_back(TParams(std::forward<TArgs>(args)...));
+			std::lock_guard<std::mutex> lock(m_mutex);
+			m_params.emplace_back(std::forward<TArgs>(args)...);
 		}
 
 	private:
+		std::mutex m_mutex;
 		std::vector<TParams> m_params;
 	};
 }}

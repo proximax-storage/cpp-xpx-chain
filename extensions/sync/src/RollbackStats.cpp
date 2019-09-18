@@ -28,11 +28,16 @@ namespace catapult { namespace sync {
 	{}
 
 	RollbackStats::RollbackStats(const RollbackStats& other) {
+		*this = other;
+	}
+
+	RollbackStats& RollbackStats::operator=(const RollbackStats& other){
 		// std::atomic has no copy constructor, so here
-		// we atomically load from old atomic, and then load into new one
+		// we atomically load from old atomic, and then store into new atomic
 		m_totalRollbacks = (size_t)other.m_totalRollbacks;
 		m_rollbackSizes = other.m_rollbackSizes;
 		m_longestRollback = other.m_longestRollback;
+		return *this;
 	}
 
 	uint64_t RollbackStats::total(RollbackCounterType rollbackCounterType) const {

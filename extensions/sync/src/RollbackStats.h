@@ -45,6 +45,8 @@ namespace catapult { namespace sync {
 
 		RollbackStats(const RollbackStats& other);
 
+		RollbackStats& operator=(const RollbackStats& other);
+
 	public:
 		/// Returns statistics for a type (\a rollbackCounterType).
 		uint64_t total(RollbackCounterType rollbackCounterType) const;
