@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "catapult/version/version.h"
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "src/cache/BlockchainUpgradeCacheStorage.h"
 #include "src/config/BlockchainUpgradeConfiguration.h"

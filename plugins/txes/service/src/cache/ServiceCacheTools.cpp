@@ -12,7 +12,11 @@ namespace catapult { namespace cache {
 
 	bool ServicePluginEnabled(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, const Height& height) {
 		const auto& networkConfig = pConfigHolder->Config(height).Network;
-		const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::ServiceConfiguration>(PLUGIN_NAME_HASH(service));
-		return pluginConfig.Enabled;
+		if (networkConfig.Plugins.count(PLUGIN_NAME(service))) {
+            const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::ServiceConfiguration>(PLUGIN_NAME_HASH(service));
+            return pluginConfig.Enabled;
+		}
+
+		return false;
 	}
 }}

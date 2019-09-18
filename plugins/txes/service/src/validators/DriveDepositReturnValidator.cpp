@@ -10,9 +10,9 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::DriveDepositNotification<1>;
+	using Notification = model::DriveDepositReturnNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(DriveDeposit, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(DriveDepositReturn, [](const auto& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		auto driveEntry = driveCache.find(notification.Drive).get();
 		auto& replicatorDepositMap = driveEntry.replicators()[notification.Replicator];

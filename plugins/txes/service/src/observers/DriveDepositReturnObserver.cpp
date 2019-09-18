@@ -13,8 +13,8 @@
 
 namespace catapult { namespace observers {
 
-	DECLARE_OBSERVER(DriveDeposit, model::DriveDepositNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(DriveDeposit, model::DriveDepositNotification<1>, [pConfigHolder](const auto& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(DriveDepositReturn, model::DriveDepositReturnNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+		return MAKE_OBSERVER(DriveDepositReturn, model::DriveDepositReturnNotification<1>, [pConfigHolder](const auto& notification, const ObserverContext& context) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto& driveEntry = driveCache.find(notification.Drive).get();
 			auto& replicatorDepositMap = driveEntry.replicators()[notification.Replicator];

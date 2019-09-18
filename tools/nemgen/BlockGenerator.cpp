@@ -165,7 +165,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			void addUpgrade() {
 				builders::BlockchainUpgradeBuilder builder(m_networkIdentifier, m_signer.publicKey());
 				builder.setUpgradePeriod(BlockDuration{0});
-				builder.setNewBlockchainVersion(version::BlockchainVersion);
+				builder.setNewBlockchainVersion(version::CurrentBlockchainVersion);
 
 				signAndAdd(builder.build());
 			}

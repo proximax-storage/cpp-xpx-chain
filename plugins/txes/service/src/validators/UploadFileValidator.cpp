@@ -10,13 +10,10 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::CreateDirectoryNotification<1>;
+	using Notification = model::UploadFileNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(CreateDirectory, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(UploadFile, [](const auto& notification, const ValidatorContext& context) {
 		const auto& fileCache = context.Cache.sub<cache::FileCache>();
-		if ((notification.File.ParentHash != Hash256()) && !fileCache.contains(state::MakeDriveFileKey(notification.File.Drive, notification.File.ParentHash)))
-            return Failure_Service_Drive_Parent_Directory_Doesnt_Exist;
-
 		if (fileCache.contains(state::MakeDriveFileKey(notification.File.Drive, notification.File.Hash)))
             return Failure_Service_Drive_File_Exists;
 

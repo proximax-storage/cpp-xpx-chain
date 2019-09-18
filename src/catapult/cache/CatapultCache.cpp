@@ -134,7 +134,7 @@ namespace catapult { namespace cache {
 	void CatapultCacheDelta::setSubCacheMerkleRoots(const std::vector<Hash256>& subCacheMerkleRoots) {
 		auto merkleRootIndex = 0u;
 		for (const auto& pSubView : m_subViews) {
-			if (!pSubView || !pSubView->supportsMerkleRoot())
+			if (!pSubView || !pSubView->supportsMerkleRoot() || !pSubView->enabled())
 				continue;
 
 			if (merkleRootIndex == subCacheMerkleRoots.size())

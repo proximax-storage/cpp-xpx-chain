@@ -63,15 +63,6 @@ namespace catapult { namespace validators {
 			std::numeric_limits<uint64_t>::max());
 	}
 
-	TEST(TEST_CLASS, FailureFutureBlockchainVersionTooLow) {
-		// Assert:
-		AssertValidationResult(
-			Failure_BlockchainUpgrade_Version_Lower_Than_Current,
-			10,
-			10,
-			0);
-	}
-
 	TEST(TEST_CLASS, FailureBlockchainUpgradeExistsAtHeight) {
 		// Assert:
 		AssertValidationResult(
