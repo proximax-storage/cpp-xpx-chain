@@ -70,7 +70,7 @@ namespace catapult { namespace thread {
 				return future<TResultType>(pResultState);
 			} else {
 				return then([continuation](auto&& future) {
-					continuation(std::move(future));
+					continuation(std::forward<decltype(future)>(future));
 					return true;
 				});
 			}
@@ -125,7 +125,7 @@ namespace catapult { namespace thread {
 	template<typename T>
 	future<T> make_ready_future(T&& value) {
 		auto pState = std::make_shared<detail::shared_state<T>>();
-		pState->set_value(std::move(value));
+		pState->set_value(std::forward<T>(value));
 		return future<T>(pState);
 	}
 

@@ -22,6 +22,7 @@
 #include "catapult/model/RangeTypes.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/Atomics.h"
+#include "tests/test/nodeps/AtomicVector.h"
 #include "tests/test/nodeps/Functional.h"
 #include "tests/test/other/DisruptorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -362,7 +363,7 @@ namespace catapult { namespace disruptor {
 	}
 
 	namespace {
-		auto CreateCollectingInspector(std::vector<Heights>& heightsCollector, std::vector<CompletionStatus>& statusCollector) {
+		auto CreateCollectingInspector(test::AtomicVector<Heights>& heightsCollector, test::AtomicVector<CompletionStatus>& statusCollector) {
 			return [&](auto& input, const auto& completionResult) {
 				heightsCollector.push_back(BlockElementVectorToHeights(input.blocks()));
 				statusCollector.push_back(completionResult.CompletionStatus);
@@ -375,8 +376,8 @@ namespace catapult { namespace disruptor {
 		auto ranges = test::PrepareRanges(5);
 		auto expectedHeights = GetExpectedHeights(ranges);
 		std::vector<Heights> collectedHeights;
-		std::vector<Heights> inspectedHeights;
-		std::vector<CompletionStatus> inspectedStatuses;
+		test::AtomicVector<Heights> inspectedHeights;
+		test::AtomicVector<CompletionStatus> inspectedStatuses;
 
 		// Act:
 		ConsumerDispatcher dispatcher(
@@ -402,8 +403,8 @@ namespace catapult { namespace disruptor {
 		auto ranges = test::PrepareRanges(5);
 		auto expectedHeights = GetExpectedHeights(ranges);
 		std::vector<Heights> collectedHeights[3];
-		std::vector<Heights> inspectedHeights;
-		std::vector<CompletionStatus> inspectedStatuses;
+		test::AtomicVector<Heights> inspectedHeights;
+		test::AtomicVector<CompletionStatus> inspectedStatuses;
 
 		// Act:
 		ConsumerDispatcher dispatcher(
@@ -475,8 +476,8 @@ namespace catapult { namespace disruptor {
 
 	TEST(TEST_CLASS, MarkedElementsArePassedToInspector) {
 		// Arrange:
-		std::vector<Heights> inspectedHeights;
-		std::vector<CompletionStatus> inspectedStatuses;
+		test::AtomicVector<Heights> inspectedHeights;
+		test::AtomicVector<CompletionStatus> inspectedStatuses;
 		auto ranges = test::PrepareRanges(5);
 		auto height = 0u;
 		for (auto& range : ranges)

@@ -118,6 +118,7 @@ namespace catapult { namespace zeromq {
 	namespace {
 		std::vector<std::shared_ptr<model::Transaction>> CreateTransactions(const std::vector<std::pair<Key, Key>>& pairs) {
 			std::vector<std::shared_ptr<model::Transaction>> transactions;
+			transactions.reserve(pairs.size());
 			for (const auto& pair : pairs)
 				transactions.push_back(mocks::CreateMockTransactionWithSignerAndRecipient(pair.first, pair.second));
 

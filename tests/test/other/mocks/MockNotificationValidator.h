@@ -21,28 +21,9 @@
 #pragma once
 #include "catapult/utils/SpinLock.h"
 #include "catapult/validators/ValidatorTypes.h"
-#include <vector>
+#include "tests/test/nodeps/AtomicVector.h"
 
 namespace catapult { namespace mocks {
-
-	template <typename T>
-	struct SyncVector: public std::vector<T> {
-		using base = std::vector<T>;
-		using base::base; // inherit constructors
-
-		template <typename... Args>
-		auto push_back(Args&&... args) {
-			std::lock_guard<std::mutex> lock(Mutex);
-			return base::push_back(std::forward<decltype(args)...>(args...));
-		}
-
-		auto size() const {
-			std::lock_guard<std::mutex> lock(Mutex);
-			return base::size();
-		}
-
-		mutable std::mutex Mutex;
-	};
 
 	/// Base of mock notification validators.
 	class BasicMockNotificationValidator {
@@ -85,7 +66,7 @@ namespace catapult { namespace mocks {
 		std::atomic<validators::ValidationResult> m_result;
 		bool m_triggerOnSpecificType;
 		model::NotificationType m_triggerType;
-		mutable SyncVector<model::NotificationType> m_notificationTypes;
+		mutable AtomicVector<model::NotificationType> m_notificationTypes;
 	};
 
 	/// Mock stateless notification validator that captures information about observed notifications.
