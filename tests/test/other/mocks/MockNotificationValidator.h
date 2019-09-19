@@ -19,6 +19,8 @@
 **/
 
 #pragma once
+#include <utility>
+
 #include "catapult/utils/SpinLock.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "tests/test/nodeps/AtomicVector.h"
@@ -66,7 +68,7 @@ namespace catapult { namespace mocks {
 		std::atomic<validators::ValidationResult> m_result;
 		bool m_triggerOnSpecificType;
 		model::NotificationType m_triggerType;
-		mutable AtomicVector<model::NotificationType> m_notificationTypes;
+		mutable std::vector<model::NotificationType> m_notificationTypes;
 	};
 
 	/// Mock stateless notification validator that captures information about observed notifications.
@@ -80,7 +82,7 @@ namespace catapult { namespace mocks {
 		{}
 
 		/// Creates a mock validator with \a name.
-		explicit MockStatelessNotificationValidatorT(const std::string& name) : m_name(name)
+		explicit MockStatelessNotificationValidatorT(std::string name) : m_name(std::move(name))
 		{}
 
 	public:
@@ -110,7 +112,7 @@ namespace catapult { namespace mocks {
 		{}
 
 		/// Creates a mock validator with \a name.
-		explicit MockNotificationValidatorT(const std::string& name) : m_name(name)
+		explicit MockNotificationValidatorT(std::string name) : m_name(std::move(name))
 		{}
 
 	public:

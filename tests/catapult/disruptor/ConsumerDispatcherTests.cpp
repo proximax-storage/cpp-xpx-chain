@@ -500,7 +500,7 @@ namespace catapult { namespace disruptor {
 		EXPECT_EQ(expectedHeights, inspectedHeights);
 
 		// - ranges have heights 1-5, where even heights should be aborted
-		auto expectedStatuses = std::vector<CompletionStatus>(5, CompletionStatus::Normal);
+		auto expectedStatuses = test::AtomicVector<CompletionStatus>(5, CompletionStatus::Normal);
 		expectedStatuses[1] = CompletionStatus::Aborted;
 		expectedStatuses[3] = CompletionStatus::Aborted;
 		EXPECT_EQ(expectedStatuses, inspectedStatuses);

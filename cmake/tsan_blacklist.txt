@@ -1,0 +1,5 @@
+# ignore this file
+src:Waits.h
+
+# ignore functions containing TryWaitFor
+fun:*TryWaitFor*

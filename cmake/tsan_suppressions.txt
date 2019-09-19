@@ -1,0 +1,9 @@
+# https://github.com/google/sanitizers/wiki/ThreadSanitizerSuppressions
+
+# ignore these libraries
+race:zmq
+race:cppzmq
+race:rocksdb
+
+# ignore these functions
+race:catapult::test::TryWaitFor
