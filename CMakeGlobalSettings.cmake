@@ -340,7 +340,7 @@ function(catapult_test_executable TARGET_NAME)
 	include_directories(SYSTEM ${GTEST_INCLUDE_DIR})
 
 	catapult_executable(${TARGET_NAME} ${ARGN})
-	set(_ENV "ASAN_OPTIONS=$ENV{ASAN_OPTIONS} TSAN_OPTIONS=$ENV{TSAN_OPTIONS} UBSAN_OPTIONS=$ENV{UBSAN_OPTIONS}")
+	set(_ENV ASAN_OPTIONS=$ENV{ASAN_OPTIONS};TSAN_OPTIONS=$ENV{TSAN_OPTIONS};UBSAN_OPTIONS=$ENV{UBSAN_OPTIONS})
 
 	add_test(
 			NAME ${TARGET_NAME}
@@ -349,8 +349,7 @@ function(catapult_test_executable TARGET_NAME)
 	)
 	# apply env vars set by sanitizers
 	set_tests_properties(${TARGET_NAME} PROPERTIES
-			ENVIRONMENT
-				ASAN_OPTIONS=$ENV{ASAN_OPTIONS};TSAN_OPTIONS=$ENV{TSAN_OPTIONS};UBSAN_OPTIONS=$ENV{UBSAN_OPTIONS}
+			ENVIRONMENT ${_ENV}
 			)
 	target_link_libraries(${TARGET_NAME} ${GTEST_LIBRARIES})
 
