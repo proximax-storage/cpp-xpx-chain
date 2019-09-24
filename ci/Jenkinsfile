@@ -28,8 +28,9 @@ pipeline {
                                 rm -rf _build
                                 mkdir _build 
                                 cd _build
+                                export HUNTER_ROOT=/tmp
                                 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" -DPYTHON_EXECUTABLE=/usr/bin/python3 -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so .. 
-                                    make -j4 publish
+                                make -j4 publish
                                 make -j4
                                 cd ..
                                 ./scripts/release-script/copyDeps.sh _build/bin/ ./deps

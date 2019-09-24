@@ -1,12 +1,33 @@
 cmake_minimum_required(VERSION 3.2)
+
+find_program(CCACHE_FOUND ccache)
+if(CCACHE_FOUND)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_COMPILE ccache)
+	set_property(GLOBAL PROPERTY RULE_LAUNCH_LINK ccache)
+endif(CCACHE_FOUND)
+
+
+include("cmake/Hunter/init.cmake")
+HunterGate(
+    URL "https://github.com/cpp-pm/hunter/archive/v0.23.213.tar.gz"
+    SHA1 "f7dece30a8fd9e82d9342a55df8bf22c21a2760c"
+	LOCAL
+)
+
 project(catapult_server)
 include(CMakeGlobalSettings.cmake)
+option(HUNTER_ENABLED "Enable hunter dependency management" ON)
 option(ENABLE_CODE_COVERAGE "Enable code coverage" OFF)
 option(SANITIZE_ADDRESS "Enable address sanitizer" OFF)
 option(SANITIZE_THREAD "Enable thread sanitizer" OFF)
 option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
 
-set_property(GLOBAL PROPERTY USE_FOLDERS ON)
+set(CMAKE_DEBUG_POSTFIX                    "")
+set(CMAKE_EXPORT_COMPILE_COMMANDS          ON)
+set(CMAKE_POSITION_INDEPENDENT_CODE        ON)
+set_property(GLOBAL PROPERTY USE_FOLDERS   ON)
+
+include(cmake/dependencies.cmake)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
@@ -14,11 +35,11 @@ message(STATUS "CATAPULT_VERSION_DESCRIPTION: ${CATAPULT_VERSION_DESCRIPTION}")
 message(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
 message(STATUS "CMAKE_PREFIX_PATH: ${CMAKE_PREFIX_PATH}")
-message(STATUS "BOOST_ROOT: $ENV{BOOST_ROOT}")
 
 set(CORE_CATAPULT_LIBS catapult.io catapult.ionet catapult.model catapult.thread catapult.utils)
 
 ### setup boost
+hunter_add_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random)
 find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 

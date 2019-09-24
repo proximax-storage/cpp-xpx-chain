@@ -67,14 +67,14 @@ namespace catapult { namespace test {
 		/// Converts this mutable configuration to a const configuration.
 		config::BlockchainConfiguration ToConst() {
 			return config::BlockchainConfiguration(
-					std::move(Immutable),
-					std::move(Network),
-					std::move(Node),
-					std::move(Logging),
-					std::move(User),
-					std::move(Extensions),
-					std::move(Inflation),
-					std::move(SupportedEntityVersions));
+					Immutable,
+					Network,
+					Node,
+					Logging,
+					User,
+					Extensions,
+					Inflation,
+					SupportedEntityVersions);
 		}
 	};
 }}
