@@ -4,7 +4,7 @@ hunter_config(
     rocksdb
     URL https://github.com/facebook/rocksdb/archive/v5.18.3.tar.gz
     SHA1 dfaaff14d447d9c05f3dbcb84ba6640f4590f634
-    CMAKE_ARGS WITH_GFLAGS=0 WITH_TOOLS=0 WITH_TESTS=OFF
+    CMAKE_ARGS WITH_GFLAGS=0 WITH_TOOLS=0 WITH_TESTS=0
 )
 
 
@@ -14,4 +14,5 @@ hunter_config(
 hunter_config(
     Boost
     VERSION 1.69.0-p1
+    CMAKE_ARGS CMAKE_POSITION_INDEPENDENT_CODE=ON
 )
