@@ -1,0 +1,6 @@
+# ignore this file
+src:Waits.h
+src:BlockchainConfigurationHolder.cpp
+
+# ignore functions containing TryWaitFor
+fun:*TryWaitFor*

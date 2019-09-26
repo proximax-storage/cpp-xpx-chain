@@ -363,7 +363,7 @@ namespace catapult { namespace nodediscovery {
 			pPacketIo->queueRead(readCode, [&partnerKey](const auto*) {
 				// - push ping and pull peers packets are compatible, so create the former and change the type
 				auto pPacket = CreateNodePushPingPacket(partnerKey, "127.0.0.1", "alice");
-			reinterpret_cast<ionet::NetworkNode&>(*pPacket->Data()).Port = test::GetLocalHostPort();
+				reinterpret_cast<ionet::NetworkNode&>(*pPacket->Data()).Port = test::GetLocalHostPort();
 				pPacket->Type = ionet::PacketType::Node_Discovery_Pull_Peers;
 				return pPacket;
 			});

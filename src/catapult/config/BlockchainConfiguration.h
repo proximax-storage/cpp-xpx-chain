@@ -38,26 +38,15 @@ namespace catapult { namespace config {
 		/// Creates a blockchain configuration around \a immutableConfig, \a networkConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
 		/// \a extensionsConfig, \a inflationConfig and \a supportedEntityVersions.
 		BlockchainConfiguration(
-				const ImmutableConfiguration& immutableConfig,
-				const model::NetworkConfiguration& networkConfig,
-				const NodeConfiguration& nodeConfig,
-				const LoggingConfiguration& loggingConfig,
-				const UserConfiguration& userConfig,
-				const ExtensionsConfiguration& extensionsConfig,
-				const InflationConfiguration& inflationConfig,
-				const SupportedEntityVersions& supportedEntityVersions = config::SupportedEntityVersions());
+				ImmutableConfiguration immutableConfig,
+				model::NetworkConfiguration networkConfig,
+				NodeConfiguration nodeConfig,
+				LoggingConfiguration loggingConfig,
+				UserConfiguration userConfig,
+				ExtensionsConfiguration extensionsConfig,
+				InflationConfiguration inflationConfig,
+				SupportedEntityVersions supportedEntityVersions = config::SupportedEntityVersions());
 
-		/// Creates a blockchain configuration around \a immutableConfig, \a networkConfig, \a nodeConfig, \a loggingConfig, \a userConfig,
-		/// \a extensionsConfig, \a inflationConfig and \a supportedEntityVersions.
-		BlockchainConfiguration(
-				ImmutableConfiguration&& immutableConfig,
-				model::NetworkConfiguration&& networkConfig,
-				NodeConfiguration&& nodeConfig,
-				LoggingConfiguration&& loggingConfig,
-				UserConfiguration&& userConfig,
-				ExtensionsConfiguration&& extensionsConfig,
-				InflationConfiguration&& inflationConfig,
-				SupportedEntityVersions&& supportedEntityVersions = config::SupportedEntityVersions());
 
 	public:
 		/// Immutable network configuration.

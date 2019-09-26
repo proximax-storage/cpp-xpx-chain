@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/types.h"
 #include <list>
+#include <atomic>
 
 namespace catapult { namespace sync {
 
@@ -42,6 +43,10 @@ namespace catapult { namespace sync {
 		/// Creates rollback statistics container.
 		RollbackStats();
 
+		RollbackStats(const RollbackStats& other);
+
+		RollbackStats& operator=(const RollbackStats& other);
+
 	public:
 		/// Returns statistics for a type (\a rollbackCounterType).
 		uint64_t total(RollbackCounterType rollbackCounterType) const;
@@ -50,16 +55,16 @@ namespace catapult { namespace sync {
 		void add(Timestamp timestamp, size_t rollbackSize);
 
 		/// Prunes statistics below time \a threshold.
-		void prune(Timestamp threshold);
+		void prune(const Timestamp& threshold);
 
 	private:
 		struct RollbackStatsEntry {
 			catapult::Timestamp Timestamp;
-			size_t RollbackSize;
+			size_t RollbackSize{};
 		};
 
 	private:
-		uint64_t m_totalRollbacks;
+		std::atomic<uint64_t> m_totalRollbacks;
 		std::list<RollbackStatsEntry> m_rollbackSizes;
 		uint64_t m_longestRollback;
 	};

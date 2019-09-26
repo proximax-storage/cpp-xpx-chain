@@ -19,9 +19,11 @@
 **/
 
 #pragma once
+#include <utility>
+
 #include "catapult/utils/SpinLock.h"
 #include "catapult/validators/ValidatorTypes.h"
-#include <vector>
+#include "tests/test/nodeps/AtomicVector.h"
 
 namespace catapult { namespace mocks {
 
@@ -46,13 +48,12 @@ namespace catapult { namespace mocks {
 			m_notificationTypes.push_back(notificationType);
 			return m_triggerOnSpecificType && m_triggerType != notificationType
 					? validators::ValidationResult::Success
-					: m_result;
+					: (validators::ValidationResult)m_result;
 		}
 
 	public:
 		/// Sets the result of validate to \a result.
 		void setResult(validators::ValidationResult result) {
-			std::lock_guard<std::mutex> lock(m_mutex);
 			m_result = result;
 		}
 
@@ -64,8 +65,7 @@ namespace catapult { namespace mocks {
 		}
 
 	private:
-		mutable std::mutex m_mutex;
-		validators::ValidationResult m_result;
+		std::atomic<validators::ValidationResult> m_result;
 		bool m_triggerOnSpecificType;
 		model::NotificationType m_triggerType;
 		mutable std::vector<model::NotificationType> m_notificationTypes;
@@ -82,7 +82,7 @@ namespace catapult { namespace mocks {
 		{}
 
 		/// Creates a mock validator with \a name.
-		explicit MockStatelessNotificationValidatorT(const std::string& name) : m_name(name)
+		explicit MockStatelessNotificationValidatorT(std::string name) : m_name(std::move(name))
 		{}
 
 	public:
@@ -92,13 +92,13 @@ namespace catapult { namespace mocks {
 
 		validators::ValidationResult validate(const TNotification& notification) const override {
 			// stateless validators need to be threadsafe, so guard getResultForType, which is not
-			utils::SpinLockGuard guard(m_lock);
+			std::lock_guard<std::mutex> guard(m_mutex);
 			return getResultForType(notification.Type);
 		}
 
 	private:
 		std::string m_name;
-		mutable utils::SpinLock m_lock;
+		mutable std::mutex m_mutex;
 	};
 
 	/// Mock stateful notification validator that captures information about observed notifications and contexts.
@@ -112,7 +112,7 @@ namespace catapult { namespace mocks {
 		{}
 
 		/// Creates a mock validator with \a name.
-		explicit MockNotificationValidatorT(const std::string& name) : m_name(name)
+		explicit MockNotificationValidatorT(std::string name) : m_name(std::move(name))
 		{}
 
 	public:
