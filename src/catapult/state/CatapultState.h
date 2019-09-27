@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/model/ImportanceHeight.h"
+#include <atomic>
 
 namespace catapult { namespace state {
 
@@ -32,11 +33,22 @@ namespace catapult { namespace state {
 				, NumTotalTransactions(0)
 		{}
 
+		CatapultState(const CatapultState& rhs)
+				: LastRecalculationHeight(rhs.LastRecalculationHeight)
+				, NumTotalTransactions(rhs.NumTotalTransactions.load())
+		{}
+
+		CatapultState& operator=(const CatapultState& rhs) {
+			LastRecalculationHeight = rhs.LastRecalculationHeight;
+			NumTotalTransactions = rhs.NumTotalTransactions.load();
+			return *this;
+		}
+
 	public:
 		/// Height at which importances were last recalculated.
 		model::ImportanceHeight LastRecalculationHeight;
 
 		/// Total number of confirmed transactions in chain.
-		uint64_t NumTotalTransactions;
+		std::atomic<uint64_t> NumTotalTransactions;
 	};
 }}
