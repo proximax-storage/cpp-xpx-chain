@@ -382,12 +382,6 @@ namespace catapult { namespace config {
 	// region thread safety
 
 	TEST(TEST_CLASS, ConfigHolderIsThreadSafe) {
-		/// This test contains data race.
-		///
-		/// When thread1 gets *reference* to config on height H, and after this thread2
-		/// sets new config on height N (same height), reference acquired by
-		/// thread1 is invalidated, because object is destroyed.
-
 		// Arrange:
 		auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
 		BlockchainConfigurationHolder testee(&cache);
