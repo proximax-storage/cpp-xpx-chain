@@ -117,12 +117,26 @@ namespace catapult { namespace handlers {
 		// Arrange:
 		auto serviceState = test::ServiceTestState();
 		EnableVerifiableState(serviceState);
-		FillStorage(serviceState.state().storage(), 12);
 		RegisterSubCacheMerkleRootsHandler(serviceState.state());
 
-		// - remove merkle hashes from last block
-		auto pBlockElementFromStorage = serviceState.state().storage().view().loadBlockElement(Height(7));
-		const_cast<model::BlockElement&>(*pBlockElementFromStorage).SubCacheMerkleRoots.clear();
+		{
+			auto storageModifier = serviceState.state().storage().modifier();
+			for (auto i = 2u; i <= 12u; ++i) {
+				auto size = static_cast<uint32_t>(sizeof(model::BlockHeader) + i * 100);
+				std::vector<uint8_t> buffer(size);
+				auto pBlock = reinterpret_cast<model::Block *>(buffer.data());
+				pBlock->Size = size;
+				pBlock->Height = Height(i);
+				pBlock->Difficulty = Difficulty::Min() + Difficulty::Unclamped(1000 + i);
+				pBlock->TransactionsPtr()->Size = size - sizeof(model::BlockHeader);
+				auto blockElement = test::BlockToBlockElement(*pBlock, test::GenerateRandomByteArray<Hash256>());
+				if (i == 7)
+					blockElement.SubCacheMerkleRoots.clear();
+				storageModifier.saveBlock(blockElement);
+			}
+
+			storageModifier.commit();
+		}
 
 		auto pPacket = ionet::CreateSharedPacket<SubCacheMerkleRootsRequestPacket>();
 		pPacket->Height = Height(7);
