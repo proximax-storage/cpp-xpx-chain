@@ -59,7 +59,7 @@ namespace catapult { namespace plugins {
 			config.Immutable.NetworkIdentifier = Network_Identifier;
 			config.Immutable.CurrencyMosaicId = MosaicId{Currency_Mosaic_Id.unwrap()};
 			config.Network.Info.PublicKey = test::GenerateRandomByteArray<Key>();
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			return config.ToConst();
 		}
 

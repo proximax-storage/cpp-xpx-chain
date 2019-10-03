@@ -76,8 +76,8 @@ namespace catapult { namespace chain {
 				auto cacheView = m_cache.createView();
 				auto readOnlyCache = cacheView.toReadOnly();
 				auto resolverContext = m_resolverContextFactory(readOnlyCache);
-				auto config = m_pConfigHolder->Config();
-				auto validatorContext = ValidatorContext(cacheView.height(), m_timeSupplier(), config.Immutable.NetworkIdentifier, config.Network.Info, resolverContext, readOnlyCache);
+				const auto& config = m_pConfigHolder->Config();
+				auto validatorContext = ValidatorContext(config, cacheView.height(), m_timeSupplier(), resolverContext, readOnlyCache);
 				return m_pStatefulValidator->validate(notification, validatorContext);
 			}
 

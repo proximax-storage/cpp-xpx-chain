@@ -81,8 +81,8 @@ namespace catapult { namespace harvesting {
 		void RunUtFacadeTest(TAction action) {
 			// Arrange: create factory and facade
 			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height);
-			test::MockExecutionConfiguration executionConfig;
-			HarvestingUtFacadeFactory factory(catapultCache, config::CreateMockConfigurationHolder(CreateConfiguration()), executionConfig.Config);
+			test::MockExecutionConfiguration executionConfig(CreateConfiguration());
+			HarvestingUtFacadeFactory factory(catapultCache, executionConfig.Config);
 
 			auto pFacade = factory.create(Default_Time);
 			ASSERT_TRUE(!!pFacade);
@@ -102,8 +102,8 @@ namespace catapult { namespace harvesting {
 
 			// - create factory and facade
 			auto catapultCache = test::CreateCatapultCacheWithMarkerAccount(Default_Height);
-			test::MockExecutionConfiguration executionConfig;
-			HarvestingUtFacadeFactory factory(catapultCache, config::CreateMockConfigurationHolder(CreateConfiguration()), executionConfig.Config);
+			test::MockExecutionConfiguration executionConfig(CreateConfiguration());
+			HarvestingUtFacadeFactory factory(catapultCache, executionConfig.Config);
 
 			auto pFacade = factory.create(Default_Time);
 			ASSERT_TRUE(!!pFacade);
@@ -564,7 +564,7 @@ namespace catapult { namespace harvesting {
 					const model::BlockHeader& blockHeader,
 					const std::vector<model::TransactionInfo>& transactionInfos,
 					size_t numUnapplies = 0) const {
-				HarvestingUtFacadeFactory factory(m_cache, m_pConfigHolder, m_executionConfig);
+				HarvestingUtFacadeFactory factory(m_cache, m_executionConfig);
 
 				auto pFacade = factory.create(Default_Time);
 				if (!pFacade)
@@ -643,9 +643,11 @@ namespace catapult { namespace harvesting {
 		template<typename TAssertHashes>
 		void RunEnabledTest(StateVerifyOptions verifyOptions, uint32_t numTransactions, TAssertHashes assertHashes) {
 			// Arrange: prepare context
-			test::MockExecutionConfiguration executionConfig;
+			auto config = CreateConfiguration(verifyOptions);
+
+			test::MockExecutionConfiguration executionConfig(config);
 			executionConfig.pObserver->enableReceiptGeneration();
-			FacadeTestContext context(CreateConfiguration(verifyOptions), executionConfig.Config);
+			FacadeTestContext context(config, executionConfig.Config);
 
 			auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
 			pBlockHeader->FeeMultiplier = BlockFeeMultiplier(1);
@@ -718,10 +720,13 @@ namespace catapult { namespace harvesting {
 
 	TEST(TEST_CLASS, NonZeroHashesAreReturnedWhenVerifiableReceiptsAndStateAreEnabledAfterUnapplyOperation) {
 		// Arrange: prepare context
-		test::MockExecutionConfiguration executionConfig;
-		executionConfig.pObserver->enableReceiptGeneration();
-		executionConfig.pObserver->enableRollbackEmulation();
-		FacadeTestContext context(CreateConfiguration(StateVerifyOptions::All), executionConfig.Config);
+
+		auto config = CreateConfiguration(StateVerifyOptions::All);
+
+        test::MockExecutionConfiguration executionConfig(config);
+        executionConfig.pObserver->enableReceiptGeneration();
+        executionConfig.pObserver->enableRollbackEmulation();
+		FacadeTestContext context(config, executionConfig.Config);
 
 		auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
 		pBlockHeader->FeeMultiplier = BlockFeeMultiplier(1);

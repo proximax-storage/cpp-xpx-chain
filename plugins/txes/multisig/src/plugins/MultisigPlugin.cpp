@@ -21,6 +21,7 @@
 #include "MultisigPlugin.h"
 #include "src/cache/MultisigCache.h"
 #include "src/cache/MultisigCacheStorage.h"
+#include "src/config/MultisigConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -46,6 +47,9 @@ namespace catapult { namespace plugins {
 	}
 
 	void RegisterMultisigSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+            config.template InitPluginConfiguration<config::MultisigConfiguration>();
+		});
 		manager.addTransactionSupport(CreateModifyMultisigAccountTransactionPlugin());
 
 		manager.addCacheSupport<cache::MultisigCacheStorage>(
@@ -74,16 +78,15 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMultisigPluginConfigValidator());
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([pConfigHolder, &transactionRegistry = manager.transactionRegistry()](auto& builder) {
+		manager.addStatefulValidatorHook([&transactionRegistry = manager.transactionRegistry()](auto& builder) {
 			builder
 				.add(validators::CreateMultisigPermittedOperationValidator())
-				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator(pConfigHolder))
-				.add(validators::CreateModifyMultisigMaxCosignersValidator(pConfigHolder))
+				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator())
+				.add(validators::CreateModifyMultisigMaxCosignersValidator())
 				.add(validators::CreateModifyMultisigInvalidCosignersValidator())
 				.add(validators::CreateModifyMultisigInvalidSettingsValidator())
 				// notice that ModifyMultisigLoopAndLevelValidator must be called before multisig aggregate validators
-				.add(validators::CreateModifyMultisigLoopAndLevelValidator(pConfigHolder))
+				.add(validators::CreateModifyMultisigLoopAndLevelValidator())
 				// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
 				.add(validators::CreateMultisigAggregateEligibleCosignersValidator(transactionRegistry))
 				.add(validators::CreateMultisigAggregateSufficientCosignersValidator(transactionRegistry));

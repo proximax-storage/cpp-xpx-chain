@@ -41,7 +41,7 @@ namespace catapult { namespace cache {
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(Grace_Period_Duration);
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
 			return config::CreateMockConfigurationHolder(networkConfig);
 		}
 

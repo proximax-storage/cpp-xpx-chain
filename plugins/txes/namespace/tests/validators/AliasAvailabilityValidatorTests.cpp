@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateAliasAvailabilityValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, Height(200));
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized(), Height(200));
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

@@ -48,18 +48,18 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to modify multisig new cosigner notifications and validates that:
 	/// - the cosignatory is cosigning at most \a maxCosignedAccountsPerAccount
 	stateful::NotificationValidatorPointerT<model::ModifyMultisigNewCosignerNotification<1>>
-	CreateModifyMultisigMaxCosignedAccountsValidator(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	CreateModifyMultisigMaxCosignedAccountsValidator();
 
 	/// A validator implementation that applies to modify multisig cosigners notifications and validates that:
 	/// - the multisig account has at most \a maxCosignersPerAccount cosignatories
 	stateful::NotificationValidatorPointerT<model::ModifyMultisigCosignersNotification<1>>
-	CreateModifyMultisigMaxCosignersValidator(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	CreateModifyMultisigMaxCosignersValidator();
 
 	/// A validator implementation that applies to modify multisig new cosigner notifications and validates that:
 	/// - the multisig depth is at most \a maxMultisigDepth
 	/// - no multisig loops are created
 	stateful::NotificationValidatorPointerT<model::ModifyMultisigNewCosignerNotification<1>>
-	CreateModifyMultisigLoopAndLevelValidator(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	CreateModifyMultisigLoopAndLevelValidator();
 
 	/// A validator implementation that applies to modify multisig settings notifications and validates that:
 	/// - new min removal and min approval are greater than 0

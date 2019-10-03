@@ -62,14 +62,13 @@ namespace catapult { namespace observers {
 	template<typename TCache>
 	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
 			const std::string& name,
-			size_t interval,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+			size_t interval) {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
-		return std::make_unique<ObserverType>(name + "PruningObserver", [interval, pConfigHolder](const auto&, auto& context) {
+		return std::make_unique<ObserverType>(name + "PruningObserver", [interval](const auto&, auto& context) {
 			if (!ShouldPrune(context, interval))
 				return;
 
-			const model::NetworkConfiguration& config = pConfigHolder->Config(context.Height).Network;
+			const model::NetworkConfiguration& config = context.Config.Network;
 			auto gracePeriod = BlockDuration(config.MaxRollbackBlocks);
 			if (context.Height.unwrap() <= gracePeriod.unwrap())
 				return;
@@ -84,11 +83,10 @@ namespace catapult { namespace observers {
 	/// as specified in (\a config).
 	template<typename TCache>
 	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheBlockPruningObserver(
-			const std::string& name,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+			const std::string& name) {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
-		return std::make_unique<ObserverType>(name + "PruningObserver", [pConfigHolder](const auto&, auto& context) {
-			const model::NetworkConfiguration& config = pConfigHolder->Config(context.Height).Network;
+		return std::make_unique<ObserverType>(name + "PruningObserver", [](const auto&, auto& context) {
+			const model::NetworkConfiguration& config = context.Config.Network;
 			if (!ShouldPrune(context, config.BlockPruneInterval))
 				return;
 
@@ -105,11 +103,10 @@ namespace catapult { namespace observers {
 	/// Creates a time-based cache pruning observer with \a name that runs every \a interval blocks.
 	template<typename TCache>
 	NotificationObserverPointerT<model::BlockNotification<1>> CreateCacheTimePruningObserver(
-			const std::string& name,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+			const std::string& name) {
 		using ObserverType = FunctionalNotificationObserverT<model::BlockNotification<1>>;
-		return std::make_unique<ObserverType>(name + "PruningObserver", [pConfigHolder](const auto& notification, const auto& context) {
-			const model::NetworkConfiguration& config = pConfigHolder->Config(context.Height).Network;
+		return std::make_unique<ObserverType>(name + "PruningObserver", [](const auto& notification, const auto& context) {
+			const model::NetworkConfiguration& config = context.Config.Network;
 			if (!ShouldPrune(context, config.BlockPruneInterval))
 				return;
 

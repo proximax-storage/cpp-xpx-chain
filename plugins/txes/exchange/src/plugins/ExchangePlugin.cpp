@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <plugins/txes/exchange/src/config/ExchangeConfiguration.h>
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"
 #include "ExchangePlugin.h"
@@ -18,6 +19,11 @@
 namespace catapult { namespace plugins {
 
 	void RegisterExchangeSubsystem(PluginManager& manager) {
+
+        manager.addPluginInitializer([](auto& config) {
+            config.template InitPluginConfiguration<config::ExchangeConfiguration>();
+        });
+
 		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateExchangeOfferTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateExchangeTransactionPlugin(immutableConfig));

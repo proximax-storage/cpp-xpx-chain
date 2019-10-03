@@ -31,9 +31,9 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxPropertyValuesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxAddressPropertyValues, config::CreateMockConfigurationHolder())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicPropertyValues, config::CreateMockConfigurationHolder())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactionTypePropertyValues, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxAddressPropertyValues)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicPropertyValues)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactionTypePropertyValues)
 
 	namespace {
 		constexpr auto Add = model::PropertyModificationType::Add;
@@ -96,15 +96,15 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::PropertyConfiguration::Uninitialized();
 			pluginConfig.MaxPropertyValues = maxPropertyValues;
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(property), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			auto pValidator = TPropertyValueTraits::CreateValidator(pConfigHolder);
+			auto pValidator = TPropertyValueTraits::CreateValidator();
 
 			using UnresolvedValueType = typename TPropertyValueTraits::UnresolvedValueType;
 			auto notification = test::CreateNotification<TPropertyValueTraits, UnresolvedValueType>(key, modifications);
 
 			// Act:
-			auto result = test::ValidateNotification<typename TPropertyValueTraits::NotificationType>(*pValidator, notification, cache);
+			auto result = test::ValidateNotification<typename TPropertyValueTraits::NotificationType>(*pValidator, notification, cache, pConfigHolder->Config());
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

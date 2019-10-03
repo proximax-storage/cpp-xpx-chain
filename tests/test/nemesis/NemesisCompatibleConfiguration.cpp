@@ -18,9 +18,15 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <plugins/txes/namespace/src/config/NamespaceConfiguration.h>
+#include <plugins/txes/mosaic/src/config/MosaicConfiguration.h>
+#include <plugins/txes/transfer/src/config/TransferConfiguration.h>
+#include <plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h>
+#include <plugins/txes/config/src/config/NetworkConfigConfiguration.h>
 #include "NemesisCompatibleConfiguration.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
+#include "catapult/crypto/KeyUtils.h"
 
 namespace catapult { namespace test {
 
@@ -62,6 +68,12 @@ namespace catapult { namespace test {
 		config.Plugins.emplace(PLUGIN_NAME(upgrade), utils::ConfigurationBag({ { "", {
 			{ "minUpgradePeriod", "360" },
 		} } }));
+
+        config.template InitPluginConfiguration<config::TransferConfiguration>();
+        config.template InitPluginConfiguration<config::MosaicConfiguration>();
+        config.template InitPluginConfiguration<config::NamespaceConfiguration>();
+        config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+        config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
 	}
 
 	namespace {

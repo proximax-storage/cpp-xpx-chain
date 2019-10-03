@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ProofSecretValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(ProofSecret)
 
 	namespace {
 		struct NotificationBuilder {
@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MinProofSize = 10;
 			pluginConfig.MaxProofSize = 100;
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
 			return config::CreateMockConfigurationHolder(networkConfig);
 		}
 
@@ -76,10 +76,10 @@ namespace catapult { namespace validators {
 			NotificationBuilder notificationBuilder(lockHashAlgorithm);
 			auto pConfigHolder = CreateConfigHolder();
 			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
-			auto pValidator = CreateProofSecretValidator(pConfigHolder);
+			auto pValidator = CreateProofSecretValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache);
+			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache, pConfigHolder->Config());
 
 			// Assert:
 			EXPECT_EQ(Failure_LockSecret_Hash_Not_Implemented, result)
@@ -99,10 +99,10 @@ namespace catapult { namespace validators {
 		NotificationBuilder notificationBuilder;
 		auto pConfigHolder = CreateConfigHolder();
 		auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
-		auto pValidator = CreateProofSecretValidator(pConfigHolder);
+		auto pValidator = CreateProofSecretValidator();
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache);
+		auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache, pConfigHolder->Config());
 
 		// Assert:
 		EXPECT_EQ(Failure_LockSecret_Secret_Mismatch, result);
@@ -115,10 +115,10 @@ namespace catapult { namespace validators {
 			notificationBuilder.setValidHash();
 			auto pConfigHolder = CreateConfigHolder();
 			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
-			auto pValidator = CreateProofSecretValidator(pConfigHolder);
+			auto pValidator = CreateProofSecretValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache);
+			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache, pConfigHolder->Config());
 
 			// Assert:
 			EXPECT_EQ(ValidationResult::Success, result);
@@ -153,10 +153,10 @@ namespace catapult { namespace validators {
 			notificationBuilder.setValidHash();
 			auto pConfigHolder = CreateConfigHolder();
 			auto cache = test::CreateEmptyCatapultCache(pConfigHolder->Config());
-			auto pValidator = CreateProofSecretValidator(pConfigHolder);
+			auto pValidator = CreateProofSecretValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache);
+			auto result = test::ValidateNotification(*pValidator, notificationBuilder.notification(), cache, pConfigHolder->Config());
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "proof size: " << proofSize;

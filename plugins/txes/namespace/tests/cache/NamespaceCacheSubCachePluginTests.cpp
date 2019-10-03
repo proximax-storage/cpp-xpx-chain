@@ -39,7 +39,7 @@ namespace catapult { namespace cache {
 			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(0);
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			return config.ToConst();
 		}
 

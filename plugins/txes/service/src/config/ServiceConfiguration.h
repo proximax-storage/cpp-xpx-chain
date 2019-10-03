@@ -18,6 +18,9 @@ namespace catapult { namespace config {
 	    /// Max files on drive at the moment
 	    uint16_t MaxFilesOnDrive;
 
+		DEFINE_CONFIG_CONSTANTS(service)
+
+	public:
 		/// Whether the plugin is enabled.
 		bool Enabled;
 

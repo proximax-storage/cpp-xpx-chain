@@ -68,13 +68,13 @@ namespace catapult { namespace extensions {
 		/// Executes the nemesis block (\a nemesisBlockElement), applies all changes to cache delta and checks consistency
 		/// against \a config.
 		/// \note Execution uses a default catapult state.
-		void execute(const config::BlockchainConfiguration& config, const model::BlockElement& nemesisBlockElement);
+		void execute(const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder, const model::BlockElement& nemesisBlockElement);
 
 	private:
 		enum class Verbosity { Off, On };
 
 		void execute(
-				const config::BlockchainConfiguration& config,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder,
 				const model::BlockElement& nemesisBlockElement,
 				state::CatapultState& catapultState,
 				StateHashVerification stateHashVerification,

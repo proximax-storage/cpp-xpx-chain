@@ -17,7 +17,7 @@ namespace catapult { namespace model {
         NAME##TransactionSupportedVersionSupplier(const model::BlockChainConfiguration& config) : m_config(config) \
         {} \
         const VersionSet& operator()() const { \
-            const auto& pluginConfig = m_config.GetPluginConfiguration<config::CONFIG##Configuration>(PLUGIN); \
+			const auto& pluginConfig = m_config.Network.template GetPluginConfiguration<config::CONFIG##Configuration>(); \
             return pluginConfig.NAME##TransactionSupportedVersions; \
         } \
     private: \

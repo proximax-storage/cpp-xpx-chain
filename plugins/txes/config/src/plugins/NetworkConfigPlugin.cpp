@@ -10,6 +10,7 @@
 #include "src/cache/NetworkConfigCache.h"
 #include "src/cache/NetworkConfigCacheStorage.h"
 #include "src/cache/NetworkConfigCacheSubCachePlugin.h"
+#include "src/config/NetworkConfigConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/NetworkConfigTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -17,6 +18,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterNetworkConfigSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
+		});
 		manager.addTransactionSupport(CreateNetworkConfigTransactionPlugin());
 
 		manager.addCacheSupport(std::make_unique<cache::NetworkConfigCacheSubCachePlugin>(manager.cacheConfig(cache::NetworkConfigCache::Name)));

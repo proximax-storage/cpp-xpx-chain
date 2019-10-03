@@ -29,6 +29,9 @@ namespace catapult { namespace config {
 	/// Property plugin configuration settings.
 	struct PropertyConfiguration : public model::PluginConfiguration {
 	public:
+		DEFINE_CONFIG_CONSTANTS(property)
+
+	public:
 		/// Maximum number of property values.
 		uint16_t MaxPropertyValues;
 

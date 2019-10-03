@@ -9,6 +9,7 @@
 #include "BlockchainUpgradePlugin.h"
 #include "src/cache/BlockchainUpgradeCache.h"
 #include "src/cache/BlockchainUpgradeCacheStorage.h"
+#include "src/config/BlockchainUpgradeConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -16,6 +17,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterBlockchainUpgradeSubsystem(PluginManager& manager) {
+        manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+        });
 		manager.addTransactionSupport(CreateBlockchainUpgradeTransactionPlugin());
 
 		manager.addCacheSupport<cache::BlockchainUpgradeCacheStorage>(
@@ -35,11 +39,10 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateBlockchainUpgradePluginConfigValidator());
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateBlockchainUpgradeSignerValidator())
-				.add(validators::CreateBlockchainUpgradeValidator(pConfigHolder))
+				.add(validators::CreateBlockchainUpgradeValidator())
 				.add(validators::CreateBlockchainVersionValidator());
 		});
 

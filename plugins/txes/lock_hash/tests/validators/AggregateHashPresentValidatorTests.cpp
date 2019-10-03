@@ -60,6 +60,7 @@ namespace catapult { namespace validators {
 					*pValidator,
 					CreateNotification(transactionHash, transactionType),
 					cache,
+                    config::BlockchainConfiguration::Uninitialized(),
 					notificationHeight);
 		}
 	}

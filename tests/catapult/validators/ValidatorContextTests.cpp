@@ -22,6 +22,7 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/TestHarness.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace validators {
 
@@ -34,6 +35,12 @@ namespace catapult { namespace validators {
 					[](const auto& unresolved) { return Address{ { unresolved[0] } }; },
 					[](const auto& unresolved) { return Amount(unresolved); });
 		}
+
+        auto CreateBlockchainConfiguration() {
+            test::MutableBlockchainConfiguration config;
+            config.Immutable.NetworkIdentifier = static_cast<model::NetworkIdentifier>(0xAD);
+            return config.ToConst();
+        }
 	}
 
 	TEST(TEST_CLASS, CanCreateValidatorContextAroundHeightAndNetworkAndCache) {
@@ -42,7 +49,8 @@ namespace catapult { namespace validators {
 		auto cache = test::CreateEmptyCatapultCache();
 		auto cacheView = cache.createView();
 		auto readOnlyCache = cacheView.toReadOnly();
-		auto context = ValidatorContext(Height(1234), Timestamp(987), static_cast<model::NetworkIdentifier>(0xAD), networkInfo, CreateResolverContext(), readOnlyCache);
+		auto config = CreateBlockchainConfiguration();
+		auto context = ValidatorContext(config, Height(1234), Timestamp(987), CreateResolverContext(), readOnlyCache);
 
 		// Assert:
 		EXPECT_EQ(Height(1234), context.Height);

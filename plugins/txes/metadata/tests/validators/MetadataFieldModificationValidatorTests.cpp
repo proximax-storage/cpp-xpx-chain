@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 	constexpr uint8_t MAX_KEY_SIZE = 5;
 	constexpr uint8_t MAX_VALUE_SIZE = 10;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataFieldModification)
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult,
@@ -34,14 +34,13 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxFieldKeySize = MAX_KEY_SIZE;
 			pluginConfig.MaxFieldValueSize = MAX_VALUE_SIZE;
 			test::MutableBlockchainConfiguration mutableConfig;
-			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateMetadataFieldModificationValidator(pConfigHolder);
+			auto pValidator = CreateMetadataFieldModificationValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

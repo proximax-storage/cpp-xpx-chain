@@ -18,6 +18,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterContractSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::ContractConfiguration>();
+		});
 		manager.addTransactionSupport(CreateModifyContractTransactionPlugin());
 
 		manager.addCacheSupport<cache::ContractCacheStorage>(
@@ -60,8 +63,8 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateModifyContractDurationValidator());
 		});
 
-		manager.addObserverHook([pConfigHolder = manager.configHolder()](auto& builder) {
-			builder.add(observers::CreateModifyContractObserver(pConfigHolder));
+		manager.addObserverHook([](auto& builder) {
+			builder.add(observers::CreateModifyContractObserver());
 			builder.add(observers::CreateReputationUpdateObserver());
 		});
 	}

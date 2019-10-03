@@ -155,7 +155,7 @@ namespace catapult { namespace extensions {
 		auto pNemesisBlockElement = storageView.loadBlockElement(Height(1));
 
 		// 2. execute the nemesis block
-		execute(stateRef.Config, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
+		execute(stateRef.ConfigHolder, *pNemesisBlockElement, stateRef.State, stateHashVerification, Verbosity::On);
 	}
 
 	void NemesisBlockLoader::executeAndCommit(const LocalNodeStateRef& stateRef, StateHashVerification stateHashVerification) {
@@ -166,9 +166,9 @@ namespace catapult { namespace extensions {
 		stateRef.Cache.commit(Height(1));
 	}
 
-	void NemesisBlockLoader::execute(const config::BlockchainConfiguration& config, const model::BlockElement& nemesisBlockElement) {
+	void NemesisBlockLoader::execute(const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder, const model::BlockElement& nemesisBlockElement) {
 		auto catapultState = state::CatapultState();
-		execute(config, nemesisBlockElement, catapultState, StateHashVerification::Enabled, Verbosity::Off);
+		execute(configHolder, nemesisBlockElement, catapultState, StateHashVerification::Enabled, Verbosity::Off);
 	}
 
 	namespace {
@@ -194,7 +194,7 @@ namespace catapult { namespace extensions {
 	}
 
 	void NemesisBlockLoader::execute(
-			const config::BlockchainConfiguration& config,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder,
 			const model::BlockElement& nemesisBlockElement,
 			state::CatapultState& catapultState,
 			StateHashVerification stateHashVerification,
@@ -202,6 +202,8 @@ namespace catapult { namespace extensions {
 		// 1. check the nemesis block
 		if (Verbosity::On == verbosity)
 			LogNemesisBlockInfo(nemesisBlockElement);
+
+		const auto& config = configHolder->Config(nemesisBlockElement.Block.Height);
 
 		CheckNemesisBlockInfo(nemesisBlockElement, config.Network.Info, config.Immutable.NetworkIdentifier, config.Immutable.GenerationHash);
 		CheckNemesisBlockTransactionTypes(nemesisBlockElement.Block, m_pluginManager.transactionRegistry());
@@ -218,7 +220,7 @@ namespace catapult { namespace extensions {
 		auto observerState = config.Immutable.ShouldEnableVerifiableReceipts
 				? observers::ObserverState(m_cacheDelta, catapultState, blockStatementBuilder)
 				: observers::ObserverState(m_cacheDelta, catapultState);
-		chain::ExecuteBlock(nemesisBlockElement, { *m_pObserver, resolverContext, observerState });
+		chain::ExecuteBlock(nemesisBlockElement, { *m_pObserver, resolverContext, configHolder, observerState });
 
 		// 4. check the funded balances are reasonable
 		if (Verbosity::On == verbosity)

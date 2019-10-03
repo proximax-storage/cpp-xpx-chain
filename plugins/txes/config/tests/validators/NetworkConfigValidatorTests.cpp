@@ -69,7 +69,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::NetworkConfigConfiguration::Uninitialized();
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
 			pluginConfig.MaxSupportedEntityVersionsSize = utils::FileSize::FromMegabytes(maxSupportedEntityVersionsSizeMb);
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(config), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			config.Network.Plugins.emplace(PLUGIN_NAME(config), utils::ConfigurationBag({}));
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config.ToConst());
 			return std::make_shared<plugins::PluginManager>(pConfigHolder, plugins::StorageConfiguration());
@@ -82,7 +82,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::NetworkConfigConfiguration::Uninitialized();
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
 			pluginConfig.MaxSupportedEntityVersionsSize = utils::FileSize::FromMegabytes(maxSupportedEntityVersionsSizeMb);
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(config), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			return test::CreatePluginManagerWithRealPlugins(config.Network);
 		}
 
@@ -103,7 +103,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateNetworkConfigValidator(*pPluginManager);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, Height(1));
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pPluginManager->configHolder()->Config(), Height(1));
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

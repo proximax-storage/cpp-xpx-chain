@@ -29,7 +29,10 @@ namespace catapult { namespace config {
 
 	/// Namespace plugin configuration settings.
 	struct NamespaceConfiguration : public model::PluginConfiguration {
-	public:
+    public:
+        DEFINE_CONFIG_CONSTANTS(namespace)
+
+    public:
 		/// Maximum namespace and mosaic name size.
 		uint8_t MaxNameSize;
 

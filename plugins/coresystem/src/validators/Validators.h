@@ -48,7 +48,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to entity notifications and validates that:
 	/// - the entity version is within supported range.
-	DECLARE_STATEFUL_VALIDATOR(EntityVersion, model::EntityNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(EntityVersion, model::EntityNotification<1>)();
 
 	// endregion
 
@@ -57,11 +57,11 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block signer was eligible to create the block given the minimum balance required to harvest a block
 	///   (\a minHarvesterBalance)
-	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, model::BlockNotification<1>)();
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block does not contain more than \a maxTransactions transactions
-	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MaxTransactions, model::BlockNotification<1>)();
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block has valid FeeInterest and FeeInterestDenominator
@@ -74,7 +74,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all transaction notifications and validates that:
 	/// - the transaction deadline is no later than the block timestamp
 	/// - the transaction deadline is no more than \a maxTransactionLifetime past the block timestamp
-	DECLARE_STATEFUL_VALIDATOR(Deadline, model::TransactionDeadlineNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(Deadline, model::TransactionDeadlineNotification<1>)();
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - the sending account has enough funds

@@ -31,16 +31,10 @@ namespace catapult { namespace test {
 
 	/// Creates a validator context around a \a height, \a network and \a cache.
 	inline validators::ValidatorContext CreateValidatorContext(
+			const config::BlockchainConfiguration& config,
 			Height height,
-			model::NetworkIdentifier networkIdentifier,
-			const model::NetworkInfo& network,
 			const cache::ReadOnlyCatapultCache& cache) {
-		return validators::ValidatorContext(height, Timestamp(0), networkIdentifier, network, CreateResolverContextXor(), cache);
-	}
-
-	/// Creates a validator context around a \a height and \a cache.
-	inline validators::ValidatorContext CreateValidatorContext(Height height, const cache::ReadOnlyCatapultCache& cache) {
-		return CreateValidatorContext(height, model::NetworkIdentifier::Zero, model::NetworkInfo(), cache);
+		return validators::ValidatorContext(config, height, Timestamp(0), CreateResolverContextXor(), cache);
 	}
 
 	// endregion
@@ -70,10 +64,11 @@ namespace catapult { namespace test {
 			const validators::stateful::NotificationValidatorT<TNotification>& validator,
 			const TNotification& notification,
 			const cache::CatapultCache& cache,
+			const config::BlockchainConfiguration& config = config::BlockchainConfiguration::Uninitialized(),
 			Height height = Height(1)) {
 		auto cacheView = cache.createView();
 		auto readOnlyCache = cacheView.toReadOnly();
-		auto context = CreateValidatorContext(height, readOnlyCache);
+		auto context = CreateValidatorContext(config, height, readOnlyCache);
 		return validator.validate(notification, context);
 	}
 

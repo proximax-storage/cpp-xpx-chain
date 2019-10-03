@@ -311,7 +311,7 @@ namespace catapult { namespace local {
 			auto cache = pPluginManager->createCache();
 			state::CatapultState state;
 			extensions::LocalNodeChainScore score;
-			extensions::LocalNodeStateRef stateRef(localNodeConfig, state, cache, storage, score);
+			extensions::LocalNodeStateRef stateRef(pPluginManager->configHolder(), state, cache, storage, score);
 			ExecuteNemesis(stateRef, *pPluginManager);
 
 			// Act:

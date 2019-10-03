@@ -13,9 +13,9 @@ namespace catapult { namespace observers {
 
     using Notification = model::EndDriveNotification<1>;
 
-    DECLARE_OBSERVER(EndDrive, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-        return MAKE_OBSERVER(EndDrive, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
-            const auto& config = pConfigHolder->Config(context.Height).Immutable;
+    DECLARE_OBSERVER(EndDrive, Notification)() {
+        return MAKE_OBSERVER(EndDrive, Notification, [](const Notification& notification, ObserverContext& context) {
+            const auto& config = context.Config.Immutable;
 
             auto& driveCache = context.Cache.sub<cache::DriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);

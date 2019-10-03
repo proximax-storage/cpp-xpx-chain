@@ -30,6 +30,7 @@
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
+#include <plugins/txes/transfer/src/config/TransferConfiguration.h>
 
 namespace catapult { namespace chain {
 
@@ -44,16 +45,13 @@ namespace catapult { namespace chain {
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
 			auto config = test::CreatePrototypicalBlockchainConfiguration();
-			const_cast<model::NetworkConfiguration&>(config.Network).Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
-			return test::CreatePluginManagerWithRealPlugins(config);
-		}
+			const_cast<model::NetworkConfiguration&>(config.Network).Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", {
+			    { "maxMessageSize", "0" },
+			    { "maxMosaicsSize", "512" },
+			} }}));
+            const_cast<model::NetworkConfiguration&>(config.Network).template InitPluginConfiguration<config::TransferConfiguration>();
 
-		auto CreateConfiguration() {
-			auto config = config::NodeConfiguration::Uninitialized();
-			config.MinFeeMultiplier = BlockFeeMultiplier(0);
-			config.FeeInterest = 1;
-			config.FeeInterestDenominator = 1;
-			return config;
+			return test::CreatePluginManagerWithRealPlugins(config);
 		}
 
 		// region UpdaterTestContext
@@ -67,7 +65,6 @@ namespace catapult { namespace chain {
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
-							CreateConfiguration(),
 							extensions::CreateExecutionConfiguration(*m_pPluginManager),
 							[]() { return Default_Time; },
 							[](const auto&, const auto&, const auto&, auto) {},

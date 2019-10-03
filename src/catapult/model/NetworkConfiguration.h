@@ -26,6 +26,7 @@
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
+#include "catapult/exceptions.h"
 #include "catapult/types.h"
 #include <unordered_map>
 #include <stdint.h>
@@ -96,7 +97,7 @@ namespace catapult { namespace model {
 
 	private:
 		/// Map of plugin configurations.
-		mutable std::unordered_map<uint32_t, std::shared_ptr<PluginConfiguration>> PluginConfigs;
+        mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> pluginConfigs;
 
 	private:
 		NetworkConfiguration() = default;
@@ -108,52 +109,38 @@ namespace catapult { namespace model {
 		/// Loads a block chain configuration from \a bag.
 		static NetworkConfiguration LoadFromBag(const utils::ConfigurationBag& bag);
 
-		/// Loads plugin configuration for plugin named \a pluginName.
+		/// Loads plugin configuration for plugin.
 		template<typename T>
-		T LoadPluginConfiguration(const std::string& pluginName) const {
-			auto iter = Plugins.find(pluginName);
+		T LoadPluginConfiguration() const {
+			auto iter = Plugins.find(T::Name);
 			if (Plugins.cend() == iter)
-				CATAPULT_THROW_AND_LOG_1(utils::property_not_found_error, "plugin configuration not found", pluginName);
+				CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "can't load plugin", std::string(T::Name));
 
 			return T::LoadFromBag(iter->second);
 		}
 
-		/// Loads plugin configuration for plugin with \a pluginNameHash.
+		/// Sets \a config of plugin.
 		template<typename T>
-		T LoadPluginConfiguration(const uint32_t& pluginNameHash) const {
-			decltype(Plugins.begin()) iter;
-			for (const auto& plugin : Plugins)
-				if (HASH(plugin.first.c_str()) == pluginNameHash)
-					iter = Plugins.find(plugin.first);
+		void SetPluginConfiguration(const T& config) {
+            if (T::Id >= pluginConfigs.size())
+                CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "plugin has wrong Id", std::string(T::Name));
 
-			if (Plugins.cend() == iter)
-				CATAPULT_THROW_AND_LOG_1(utils::property_not_found_error, "plugin configuration not found for hash", pluginNameHash);
-
-			return T::LoadFromBag(iter->second);
+			pluginConfigs[T::Id] = std::make_shared<T>(config);
 		}
 
-		/// Sets \a config of plugin named \a pluginName.
+		/// Inits config of plugin with \a pluginNameHash.
 		template<typename T>
-		void SetPluginConfiguration(const std::string& pluginName, const T& config) {
-			PluginConfigs[HASH(pluginName.c_str())] = std::make_shared<T>(config);
-		}
-
-		/// Sets \a config of plugin with \a pluginNameHash.
-		template<typename T>
-		void SetPluginConfiguration(const uint32_t& pluginNameHash, const T& config) {
-			PluginConfigs[pluginNameHash] = std::make_shared<T>(config);
+		void InitPluginConfiguration() {
+			SetPluginConfiguration<T>(LoadPluginConfiguration<T>());
 		}
 
 		/// Returns plugin configuration for plugin with \a pluginNameHash.
 		template<typename T>
-		const T& GetPluginConfiguration(const uint32_t& pluginNameHash) const {
-			auto iter = PluginConfigs.find(pluginNameHash);
-			if (PluginConfigs.cend() == iter) {
-				const_cast<NetworkConfiguration*>(this)->SetPluginConfiguration<T>(pluginNameHash, LoadPluginConfiguration<T>(pluginNameHash));
-				iter = PluginConfigs.find(pluginNameHash);
-			}
+		const T& GetPluginConfiguration() const {
+			if (T::Id >= pluginConfigs.size() || !pluginConfigs[T::Id])
+				CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "plugin configuration not found", std::string(T::Name));
 
-			return *dynamic_cast<const T*>(iter->second.get());
+			return *dynamic_cast<const T*>(pluginConfigs[T::Id].get());
 		}
 	};
 
@@ -171,7 +158,7 @@ namespace catapult { namespace model {
 
 	/// Loads plugin configuration for plugin named \a pluginName from \a config.
 	template<typename T>
-	T LoadPluginConfiguration(const NetworkConfiguration& config, const std::string& pluginName) {
-		return config.LoadPluginConfiguration<T>(pluginName);
+	T LoadPluginConfiguration(const NetworkConfiguration& config) {
+		return config.LoadPluginConfiguration<T>();
 	}
 }}

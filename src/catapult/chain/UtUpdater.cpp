@@ -47,14 +47,12 @@ namespace catapult { namespace chain {
 		Impl(
 				cache::UtCache& transactionsCache,
 				const cache::CatapultCache& confirmedCatapultCache,
-				const config::NodeConfiguration& config,
 				const ExecutionConfiguration& executionConfig,
 				const TimeSupplier& timeSupplier,
 				const FailedTransactionSink& failedTransactionSink,
 				const Throttle& throttle)
 				: m_transactionsCache(transactionsCache)
 				, m_detachedCatapultCache(confirmedCatapultCache)
-				, m_config(config)
 				, m_executionConfig(executionConfig)
 				, m_timeSupplier(timeSupplier)
 				, m_failedTransactionSink(failedTransactionSink)
@@ -122,16 +120,14 @@ namespace catapult { namespace chain {
 			// note that the validator and observer context height is one larger than the chain height
 			// since the validation and observation has to be for the *next* block
 			auto effectiveHeight = m_detachedCatapultCache.height() + Height(1);
-			auto networkIdentifier = m_executionConfig.NetworkIdentifier;
-			const auto& network = m_executionConfig.NetworkInfoSupplier(effectiveHeight);
-			auto minFeeMultiplier = m_executionConfig.MinFeeMultiplierSupplier(effectiveHeight);
 			auto resolverContext = m_executionConfig.ResolverContextFactory(readOnlyCache);
-			auto validatorContext = ValidatorContext(effectiveHeight, currentTime, networkIdentifier, network, resolverContext, readOnlyCache);
+			const auto& config = m_executionConfig.ConfigSupplier(effectiveHeight);
+			auto validatorContext = ValidatorContext(config, effectiveHeight, currentTime, resolverContext, readOnlyCache);
 
 			// note that the "real" state is currently only required by block observers, so a dummy state can be used
 			auto& cache = applyState.UnconfirmedCatapultCache;
 			state::CatapultState dummyState;
-			auto observerContext = ObserverContext({ cache, dummyState }, effectiveHeight, observers::NotifyMode::Commit, resolverContext);
+			auto observerContext = ObserverContext({ cache, dummyState }, config, effectiveHeight, observers::NotifyMode::Commit, resolverContext);
 			for (const auto& utInfo : utInfos) {
 				const auto& entity = *utInfo.pEntity;
 				const auto& entityHash = utInfo.EntityHash;
@@ -139,7 +135,7 @@ namespace catapult { namespace chain {
 				if (!filter(utInfo))
 					continue;
 
-				auto minTransactionFee = model::CalculateTransactionFee(minFeeMultiplier, entity, m_config.FeeInterest, m_config.FeeInterestDenominator);
+				auto minTransactionFee = model::CalculateTransactionFee(config.Node.MinFeeMultiplier, entity, config.Node.FeeInterest, config.Node.FeeInterestDenominator);
 				if (entity.MaxFee < minTransactionFee) {
 					// don't log reverted transactions that could have been included by harvester with lower min fee multiplier
 					if (TransactionSource::New == transactionSource) {
@@ -165,7 +161,7 @@ namespace catapult { namespace chain {
 				const auto& observer = *m_executionConfig.pObserver;
 				ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext);
 				sub.enableUndo();
-				auto entityInfo = model::WeakEntityInfo(entity, entityHash, effectiveHeight);
+				model::WeakEntityInfo entityInfo(entity, entityHash, effectiveHeight);
 				m_executionConfig.pNotificationPublisher->publish(entityInfo, sub);
 				if (!IsValidationResultSuccess(sub.result())) {
 					CATAPULT_LOG_LEVEL(validators::MapToLogLevel(sub.result()))
@@ -198,7 +194,6 @@ namespace catapult { namespace chain {
 	private:
 		cache::UtCache& m_transactionsCache;
 		cache::RelockableDetachedCatapultCache m_detachedCatapultCache;
-		config::NodeConfiguration m_config;
 		ExecutionConfiguration m_executionConfig;
 		TimeSupplier m_timeSupplier;
 		FailedTransactionSink m_failedTransactionSink;
@@ -208,7 +203,6 @@ namespace catapult { namespace chain {
 	UtUpdater::UtUpdater(
 			cache::UtCache& transactionsCache,
 			const cache::CatapultCache& confirmedCatapultCache,
-			const config::NodeConfiguration& config,
 			const ExecutionConfiguration& executionConfig,
 			const TimeSupplier& timeSupplier,
 			const FailedTransactionSink& failedTransactionSink,
@@ -216,7 +210,6 @@ namespace catapult { namespace chain {
 			: m_pImpl(std::make_unique<Impl>(
 					transactionsCache,
 					confirmedCatapultCache,
-					config,
 					executionConfig,
 					timeSupplier,
 					failedTransactionSink,

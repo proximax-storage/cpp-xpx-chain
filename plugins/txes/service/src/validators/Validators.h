@@ -46,13 +46,13 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(Drive, model::DriveNotification<1>)();
 
 	/// A validator check that drive contains not many files
-	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, model::DriveFileSystemNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, model::DriveFileSystemNotification<1>)();
 
 	/// A validator check that exchange from replicators are valid
-	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)();
 
 	/// A validator check that end drive transaction is permitted
-	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)();
 
 	/// A validator implementation that not file and piarticipant redudant, and that upload info is not zero.
 	DECLARE_STATELESS_VALIDATOR(DeleteReward, model::DeleteRewardNotification<1>)();

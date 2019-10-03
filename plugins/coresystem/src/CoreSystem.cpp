@@ -91,21 +91,21 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder, networkIdentifier](auto& builder) {
+		manager.addStatefulValidatorHook([networkIdentifier](auto& builder) {
 			builder
-				.add(validators::CreateEntityVersionValidator(pConfigHolder))
-				.add(validators::CreateMaxTransactionsValidator(pConfigHolder))
+				.add(validators::CreateEntityVersionValidator())
+				.add(validators::CreateMaxTransactionsValidator())
 				.add(validators::CreateAddressValidator(networkIdentifier))
-				.add(validators::CreateDeadlineValidator(pConfigHolder))
+				.add(validators::CreateDeadlineValidator())
 //				We using nemesis account to update the network
 //				.add(validators::CreateNemesisSinkValidator())
-				.add(validators::CreateEligibleHarvesterValidator(pConfigHolder))
+				.add(validators::CreateEligibleHarvesterValidator())
 				.add(validators::CreateBalanceDebitValidator())
 				.add(validators::CreateBalanceTransferValidator());
 		});
 
 		const auto& calculator = manager.inflationConfig().InflationCalculator;
-		manager.addObserverHook([&pConfigHolder, &calculator](auto& builder) {
+		manager.addObserverHook([&calculator](auto& builder) {
 			builder
 				.add(observers::CreateSourceChangeObserver())
 				.add(observers::CreateAccountAddressObserver())
@@ -113,17 +113,15 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateBalanceDebitObserver())
 				.add(observers::CreateBalanceCreditObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(pConfigHolder, calculator))
+				.add(observers::CreateHarvestFeeObserver(calculator))
 				.add(observers::CreateTotalTransactionsObserver())
-				.add(observers::CreateSnapshotCleanUpObserver(pConfigHolder));
+				.add(observers::CreateSnapshotCleanUpObserver());
 		});
 
-		manager.addTransientObserverHook([pConfigHolder](auto& builder) {
+		manager.addTransientObserverHook([](auto& builder) {
 			builder
 				.add(observers::CreateBlockDifficultyObserver())
-				.add(observers::CreateCacheBlockPruningObserver<cache::BlockDifficultyCache>(
-						"BlockDifficulty",
-						pConfigHolder));
+				.add(observers::CreateCacheBlockPruningObserver<cache::BlockDifficultyCache>("BlockDifficulty"));
 		});
 	}
 }}

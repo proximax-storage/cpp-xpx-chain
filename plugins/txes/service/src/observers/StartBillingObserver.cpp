@@ -13,10 +13,10 @@ namespace catapult { namespace observers {
 
     using Notification = model::BalanceCreditNotification<1>;
 
-    DECLARE_OBSERVER(StartBilling, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-        return MAKE_OBSERVER(StartBilling, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
+    DECLARE_OBSERVER(StartBilling, Notification)() {
+        return MAKE_OBSERVER(StartBilling, Notification, [](const Notification& notification, ObserverContext& context) {
             auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
-            auto storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
+            auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 
             if (storageMosaicId != mosaicId)
                 return;

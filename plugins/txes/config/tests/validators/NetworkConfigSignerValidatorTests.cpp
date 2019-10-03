@@ -9,6 +9,7 @@
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/TestHarness.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace validators {
 
@@ -23,7 +24,9 @@ namespace catapult { namespace validators {
 			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
-			auto context = test::CreateValidatorContext(Height(), model::NetworkIdentifier::Mijin_Test, model::NetworkInfo(networkKey), readOnlyCache);
+            test::MutableBlockchainConfiguration config;
+            config.Network.Info.PublicKey = networkKey;
+			auto context = test::CreateValidatorContext(config.ToConst(), Height(), readOnlyCache);
 			auto pValidator = CreateNetworkConfigSignerValidator();
 
 			// Act:

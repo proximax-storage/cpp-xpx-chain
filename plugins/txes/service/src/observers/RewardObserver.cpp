@@ -14,12 +14,12 @@ namespace catapult { namespace observers {
 
 	using Notification = model::RewardNotification<1>;
 
-	DECLARE_OBSERVER(Reward, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(EndBilling, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(Reward, Notification)() {
+		return MAKE_OBSERVER(EndBilling, Notification, [](const Notification& notification, ObserverContext& context) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
-			auto streamingMosaicId = pConfigHolder->Config(context.Height).Immutable.StreamingMosaicId;
+			auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 			const auto& deletedFile = notification.DeletedFile;
 			const auto& fileHash = deletedFile->FileHash;
 

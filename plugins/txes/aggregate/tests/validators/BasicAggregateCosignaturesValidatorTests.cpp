@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS BasicAggregateCosignaturesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(BasicAggregateCosignatures, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(BasicAggregateCosignatures)
 
 	namespace {
 		auto GenerateRandomCosignatures(uint8_t numCosignatures) {
@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxTransactionsPerAggregate = maxTransactions;
 			pluginConfig.MaxCosignaturesPerAggregate = maxCosignatures;
 			test::MutableBlockchainConfiguration config;
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			return config.ToConst();
 		}
 	}
@@ -56,11 +56,10 @@ namespace catapult { namespace validators {
 			model::AggregateCosignaturesNotification<1> notification(signer, numTransactions, nullptr, 0, nullptr);
 			auto config = CreateConfig(maxTransactions, std::numeric_limits<uint8_t>::max());
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
+			auto pValidator = CreateBasicAggregateCosignaturesValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "txes " << numTransactions << ", max " << maxTransactions;
@@ -101,11 +100,10 @@ namespace catapult { namespace validators {
 			model::AggregateCosignaturesNotification<1> notification(signer, 3, nullptr, numCosignatures, cosignatures.data());
 			auto config = CreateConfig(std::numeric_limits<uint32_t>::max(), maxCosignatures);
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
+			auto pValidator = CreateBasicAggregateCosignaturesValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)
@@ -151,11 +149,10 @@ namespace catapult { namespace validators {
 				std::numeric_limits<uint32_t>::max(),
 				std::numeric_limits<uint8_t>::max());
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateBasicAggregateCosignaturesValidator(pConfigHolder);
+			auto pValidator = CreateBasicAggregateCosignaturesValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

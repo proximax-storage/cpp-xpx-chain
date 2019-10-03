@@ -22,6 +22,8 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/TestHarness.h"
+#include "tests/test/local/LocalTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 using namespace catapult::validators;
 
@@ -30,10 +32,38 @@ namespace catapult { namespace chain {
 #define TEST_CLASS BatchEntityProcessorTests
 
 	namespace {
+        config::BlockchainConfiguration CreateBlockchainConfiguration() {
+            test::MutableBlockchainConfiguration config;
+
+            config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+
+            config.Network.MaxRollbackBlocks = 5u;
+            config.Network.ImportanceGrouping = 10u;
+            config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromSeconds(15u);
+            config.Network.BlockTimeSmoothingFactor = 3000u;
+            config.Network.MaxBlockFutureTime = utils::TimeSpan::FromSeconds(10u);
+            config.Network.MaxDifficultyBlocks = 4u;
+            config.Network.BlockPruneInterval = 360u;
+            config.Network.GreedDelta = 0.5;
+            config.Network.GreedExponent = 2.0;
+            config.Network.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
+
+            config.Node.MaxBlocksPerSyncAttempt = 30u;
+            config.Node.MaxChainBytesPerSyncAttempt = utils::FileSize::FromMegabytes(1u);
+            config.Node.BlockDisruptorSize = 4096u;
+            config.Node.TransactionDisruptorSize = 16384u;
+            config.Node.FeeInterest = 1u;
+            config.Node.FeeInterestDenominator = 1u;
+
+            config.SupportedEntityVersions = test::CreateSupportedEntityVersions();
+
+            return config.ToConst();
+        }
 		class ProcessorTestContext {
 		public:
 			ProcessorTestContext()
-				: m_processor(CreateBatchEntityProcessor(m_executionConfig.Config))
+				: m_executionConfig(CreateBlockchainConfiguration())
+				, m_processor(CreateBatchEntityProcessor(m_executionConfig.Config))
 			{}
 
 		public:

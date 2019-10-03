@@ -13,10 +13,10 @@ namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_OBSERVER(EndBilling, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(EndBilling, Notification, [pConfigHolder](const Notification&, ObserverContext& context) {
+	DECLARE_OBSERVER(EndBilling, Notification)() {
+		return MAKE_OBSERVER(EndBilling, Notification, [](const Notification&, ObserverContext& context) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
-			auto storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
+			auto storageMosaicId = context.Config.Immutable.StorageMosaicId;
 
 			driveCache.processBillingDrives(context.Height, [&storageMosaicId, &context](state::DriveEntry& driveEntry) {
 				if (driveEntry.state() != state::DriveState::InProgress)
