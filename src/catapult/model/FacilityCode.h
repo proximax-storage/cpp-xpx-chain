@@ -61,5 +61,7 @@ namespace catapult { namespace model {
 		Drive = 0x5B,
 		/// File facility code.
 		File = 0x5C,
+		// Hello
+		Hello = 0x5D
 	};
 }}
