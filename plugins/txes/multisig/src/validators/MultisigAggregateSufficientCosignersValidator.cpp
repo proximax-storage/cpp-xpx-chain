@@ -86,7 +86,8 @@ namespace catapult { namespace validators {
 		utils::KeySet GetRequiredCosignerPublicKeys(const cache::MultisigCache::CacheReadOnlyType& multisigCache, const model::EmbeddedTransaction& transaction) {
 			utils::KeySet requiredCosignerPublicKeys;
 			requiredCosignerPublicKeys.insert(transaction.Signer);
-			if (model::Entity_Type_Modify_Multisig_Account != transaction.Type)
+			bool disableMultisigCosignersBeforeAdding = true;
+			if (disableMultisigCosignersBeforeAdding && model::Entity_Type_Modify_Multisig_Account != transaction.Type)
 				return requiredCosignerPublicKeys;
 
 			const auto& modifyMultisig = static_cast<const model::EmbeddedModifyMultisigAccountTransaction&>(transaction);
