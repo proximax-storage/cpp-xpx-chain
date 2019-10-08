@@ -497,58 +497,58 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, TEST_NAME##_Success) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ValidationSuccessTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-	COSIGNER_APPROVAL_TEST(CosignatoryApproval_SingleAdd_NotMultisig) {
-		// Assert:
-		AssertCosignatoriesMustApproveTransaction(TTraits::ExpectedResult, { Add }, { AccountPolicy::Regular }, TTraits::MergeKeys);
-	}
-
-	COSIGNER_APPROVAL_TEST(CosignatoryApproval_SingleAdd_Multisig) {
-		// Assert:
-		AssertCosignatoriesMustApproveTransaction(TTraits::ExpectedResult, { Add }, { AccountPolicy::Multisig }, TTraits::MergeKeys);
-	}
-
-	COSIGNER_APPROVAL_TEST(CosignatoryApproval_MultipleAdds_NoneMultisig) {
-		// Assert:
-		AssertCosignatoriesMustApproveTransaction<TTraits>({ AccountPolicy::Regular, AccountPolicy::Regular, AccountPolicy::Regular });
-	}
-
-	COSIGNER_APPROVAL_TEST(CosignatoryApproval_MultipleAdds_SomeMultisig) {
-		// Assert:
-		AssertCosignatoriesMustApproveTransaction<TTraits>({ AccountPolicy::Multisig, AccountPolicy::Regular, AccountPolicy::Multisig });
-	}
-
-	COSIGNER_APPROVAL_TEST(CosignatoryApproval_MultipleAdds_AllMultisig) {
-		// Assert:
-		AssertCosignatoriesMustApproveTransaction<TTraits>({ AccountPolicy::Multisig, AccountPolicy::Multisig, AccountPolicy::Multisig });
-	}
-
-	COSIGNER_APPROVAL_TEST(CosignatoryApproval_AddsAndDelete_SomeMultisig) {
-		// Assert:
-		AssertCosignatoriesMustApproveTransaction(
-				TTraits::ExpectedResult,
-				{ Add, Del, Add },
-				{ AccountPolicy::Multisig, AccountPolicy::Multisig, AccountPolicy::Regular },
-				TTraits::MergeKeys);
-	}
-
-	// endregion
-
-	// region cosignatory approval - failure
-
-	TEST(TEST_CLASS, InsuffientWhenOnlySomeCosignatoriesApprove) {
-		// Assert:
-		AssertCosignatoriesMustApproveTransaction(
-				Failure_Aggregate_Missing_Cosigners,
-				{ Add, Del, Add },
-				{ AccountPolicy::Multisig, AccountPolicy::Multisig, AccountPolicy::Regular },
-				[](const auto& embeddedSignerCosignatories, const auto& requiredCosignatories) {
-					auto cosigners = ValidationSuccessTraits::MergeKeys(embeddedSignerCosignatories, requiredCosignatories);
-					cosigners.erase(--cosigners.cend());
-					return cosigners;
-				});
-	}
-
-	// endregion
+//	COSIGNER_APPROVAL_TEST(CosignatoryApproval_SingleAdd_NotMultisig) {
+//		// Assert:
+//		AssertCosignatoriesMustApproveTransaction(TTraits::ExpectedResult, { Add }, { AccountPolicy::Regular }, TTraits::MergeKeys);
+//	}
+//
+//	COSIGNER_APPROVAL_TEST(CosignatoryApproval_SingleAdd_Multisig) {
+//		// Assert:
+//		AssertCosignatoriesMustApproveTransaction(TTraits::ExpectedResult, { Add }, { AccountPolicy::Multisig }, TTraits::MergeKeys);
+//	}
+//
+//	COSIGNER_APPROVAL_TEST(CosignatoryApproval_MultipleAdds_NoneMultisig) {
+//		// Assert:
+//		AssertCosignatoriesMustApproveTransaction<TTraits>({ AccountPolicy::Regular, AccountPolicy::Regular, AccountPolicy::Regular });
+//	}
+//
+//	COSIGNER_APPROVAL_TEST(CosignatoryApproval_MultipleAdds_SomeMultisig) {
+//		// Assert:
+//		AssertCosignatoriesMustApproveTransaction<TTraits>({ AccountPolicy::Multisig, AccountPolicy::Regular, AccountPolicy::Multisig });
+//	}
+//
+//	COSIGNER_APPROVAL_TEST(CosignatoryApproval_MultipleAdds_AllMultisig) {
+//		// Assert:
+//		AssertCosignatoriesMustApproveTransaction<TTraits>({ AccountPolicy::Multisig, AccountPolicy::Multisig, AccountPolicy::Multisig });
+//	}
+//
+//	COSIGNER_APPROVAL_TEST(CosignatoryApproval_AddsAndDelete_SomeMultisig) {
+//		// Assert:
+//		AssertCosignatoriesMustApproveTransaction(
+//				TTraits::ExpectedResult,
+//				{ Add, Del, Add },
+//				{ AccountPolicy::Multisig, AccountPolicy::Multisig, AccountPolicy::Regular },
+//				TTraits::MergeKeys);
+//	}
+//
+//	// endregion
+//
+//	// region cosignatory approval - failure
+//
+//	TEST(TEST_CLASS, InsuffientWhenOnlySomeCosignatoriesApprove) {
+//		// Assert:
+//		AssertCosignatoriesMustApproveTransaction(
+//				Failure_Aggregate_Missing_Cosigners,
+//				{ Add, Del, Add },
+//				{ AccountPolicy::Multisig, AccountPolicy::Multisig, AccountPolicy::Regular },
+//				[](const auto& embeddedSignerCosignatories, const auto& requiredCosignatories) {
+//					auto cosigners = ValidationSuccessTraits::MergeKeys(embeddedSignerCosignatories, requiredCosignatories);
+//					cosigners.erase(--cosigners.cend());
+//					return cosigners;
+//				});
+//	}
+//
+//	// endregion
 
 	// region cosignatory approval - success
 
