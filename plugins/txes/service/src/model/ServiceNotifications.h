@@ -5,7 +5,6 @@
 **/
 
 #pragma once
-#include "ServiceTransaction.h"
 #include "catapult/model/Notifications.h"
 #include "catapult/utils/MemoryUtils.h"
 

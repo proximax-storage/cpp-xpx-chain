@@ -93,16 +93,16 @@ COPY . /catapult
 
 # Build Catapult Server
 RUN cd /catapult \
-   && rm -rf _build \
-   && mkdir _build && cd _build \
-   && cmake -DCMAKE_BUILD_TYPE=RelWithDebugInfo  \
-    -DCMAKE_CXX_FLAGS="-pthread" \
+    && rm -rf _build \
+    && mkdir _build && cd _build \
+    && cmake -DCMAKE_BUILD_TYPE=Release  \
+    -DCMAKE_CXX_FLAGS="-pthread -O3" \
     -DPYTHON_EXECUTABLE=/usr/bin/python3 \
     -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so \
     -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so \
     .. \
-   && make publish \
-   && make \
+    && make publish \
+    && make \
 # Required extensions
     catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
