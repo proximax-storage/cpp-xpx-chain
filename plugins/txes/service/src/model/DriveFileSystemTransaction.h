@@ -23,9 +23,6 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_DriveFileSystem, 1)
 
 	public:
-		/// Key of drive.
-		Key DriveKey;
-
 		/// A new RootHash of drive.
 		Hash256 RootHash;
 

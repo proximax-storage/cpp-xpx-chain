@@ -86,7 +86,7 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the number of the drive replicas.
-		uint16_t minReplicators() const {
+		uint8_t minReplicators() const {
 			return m_minReplicators;
 		}
 
