@@ -51,7 +51,7 @@ namespace catapult { namespace cache {
 
 		const auto* pData64 = reinterpret_cast<const uint64_t*>(buffer.data());
 		EXPECT_EQ(data.State.LastRecalculationHeight, model::ImportanceHeight(pData64[0]));
-		EXPECT_EQ(data.State.NumTotalTransactions, pData64[1]);
+		EXPECT_EQ(data.State.NumTotalTransactions.load(), pData64[1]);
 		EXPECT_EQ(data.ChainScore, model::ChainScore(pData64[2], pData64[3]));
 		EXPECT_EQ(chainHeight, Height(pData64[4]));
 
@@ -73,7 +73,7 @@ namespace catapult { namespace cache {
 		// Assert:
 		const auto* pData64 = reinterpret_cast<const uint64_t*>(buffer.data());
 		EXPECT_EQ(model::ImportanceHeight(pData64[0]), data.State.LastRecalculationHeight);
-		EXPECT_EQ(pData64[1], data.State.NumTotalTransactions);
+		EXPECT_EQ(pData64[1], data.State.NumTotalTransactions.load());
 		EXPECT_EQ(model::ChainScore(pData64[2], pData64[3]), data.ChainScore);
 		EXPECT_EQ(Height(pData64[4]), chainHeight);
 	}

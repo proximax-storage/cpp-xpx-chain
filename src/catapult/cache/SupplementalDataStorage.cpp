@@ -31,7 +31,7 @@ namespace catapult { namespace cache {
 			CATAPULT_LOG(debug)
 					<< prefix
 					<< " last recalculation height " << supplementalData.State.LastRecalculationHeight
-					<< " total transactions " << supplementalData.State.NumTotalTransactions
+					<< " total transactions " << supplementalData.State.NumTotalTransactions.load()
 					<< " (score = [" << scoreArray[0] << ", " << scoreArray[1] << "]"
 					<< ", height = " << chainHeight << ")";
 		}
@@ -39,7 +39,7 @@ namespace catapult { namespace cache {
 
 	void SaveSupplementalData(const SupplementalData& supplementalData, Height chainHeight, io::OutputStream& output) {
 		io::Write(output, supplementalData.State.LastRecalculationHeight);
-		io::Write64(output, supplementalData.State.NumTotalTransactions);
+		io::Write64(output, supplementalData.State.NumTotalTransactions.load());
 
 		auto scoreArray = supplementalData.ChainScore.toArray();
 		io::Write64(output, scoreArray[0]);

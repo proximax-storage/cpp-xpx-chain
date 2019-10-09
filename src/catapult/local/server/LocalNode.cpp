@@ -143,7 +143,7 @@ namespace catapult { namespace local {
 			void registerCounters() {
 				AddMemoryCounters(m_counters);
 				m_counters.emplace_back(utils::DiagnosticCounterId("TOT CONF TXES"), [&state = m_catapultState]() {
-					return state.NumTotalTransactions;
+					return state.NumTotalTransactions.load();
 				});
 
 				m_pluginManager.addDiagnosticCounters(m_counters, m_cacheHolder.cache()); // add cache counters
