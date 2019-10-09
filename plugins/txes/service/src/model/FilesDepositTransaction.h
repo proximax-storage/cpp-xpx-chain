@@ -6,6 +6,7 @@
 
 #pragma once
 #include "ServiceEntityType.h"
+#include "ServiceTypes.h"
 #include "catapult/model/Transaction.h"
 
 namespace catapult { namespace model {
@@ -16,7 +17,7 @@ namespace catapult { namespace model {
 	template<typename THeader>
 	struct FilesDepositTransactionBody : public THeader {
 	private:
-		using TransactionType = FilesDepositDriveTransactionBody<THeader>;
+		using TransactionType = FilesDepositTransactionBody<THeader>;
 
 	public:
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_FilesDeposit, 1)
@@ -40,7 +41,7 @@ namespace catapult { namespace model {
 	public:
 		// Calculates the real size of a service \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + FilesCount * sizeof(File);
+			return sizeof(TransactionType) + transaction.FilesCount * sizeof(File);
 		}
 	};
 

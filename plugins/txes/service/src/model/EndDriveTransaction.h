@@ -16,14 +16,14 @@ namespace catapult { namespace model {
 	template<typename THeader>
 	struct EndDriveTransactionBody : public THeader {
 	private:
-		using TransactionType = EndDriveDriveTransactionBody<THeader>;
+		using TransactionType = EndDriveTransactionBody<THeader>;
 
 	public:
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_EndDrive, 1)
 
 	public:
 		// Calculates the real size of a service \a transaction.
-		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
+		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 			return sizeof(TransactionType);
 		}
 	};

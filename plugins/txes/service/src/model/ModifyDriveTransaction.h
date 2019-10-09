@@ -42,7 +42,7 @@ namespace catapult { namespace model {
 
 	public:
 		// Calculates the real size of a service \a transaction.
-		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
+		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 			return sizeof(TransactionType);
 		}
 	};

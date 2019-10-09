@@ -16,17 +16,17 @@ namespace catapult { namespace model {
 	template<typename THeader>
 	struct JoinToDriveTransactionBody : public THeader {
 	private:
-		using TransactionType = JoinToDriveDriveTransactionBody<THeader>;
+		using TransactionType = JoinToDriveTransactionBody<THeader>;
 
 	public:
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_JoinToDrive, 1)
 
-        /// Key of drive.
-        Key DriveKey;
+		/// Key of drive.
+		Key DriveKey;
 
 	public:
 		// Calculates the real size of a service \a transaction.
-		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
+		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 			return sizeof(TransactionType);
 		}
 	};
