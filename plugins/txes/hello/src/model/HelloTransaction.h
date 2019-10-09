@@ -25,10 +25,13 @@ namespace catapult { namespace model {
 		/// Number of message displayed
 		uint16_t MessageCount;
 
+		// Transaction Signer public key
+		Key SignerKey;
+
 	public:
 		// Calculates the real size of transfer \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(transaction);
+			return sizeof(transaction);     // might need additional size for Key?
 		}
 	};
 

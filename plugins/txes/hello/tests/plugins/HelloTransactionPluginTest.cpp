@@ -10,6 +10,7 @@
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/TestHarness.h"
+#include "tests/test/HelloTestUtils.h"
 
 using namespace catapult::model;
 
@@ -34,10 +35,12 @@ namespace catapult { namespace plugins {
             // Arrange:
             mocks::MockNotificationSubscriber sub;
             auto pPlugin = TTraits::CreatePlugin();
+            auto key = test::GenerateKeys(1);
 
             typename TTraits::TransactionType transaction;
             transaction.Version = Transaction_Version;  // must set, defined above
             transaction.MessageCount = 5;
+            //transaction.SignerKey = key;                 // operator = not available
 
             // Act:
             test::PublishTransaction(*pPlugin, transaction, sub);

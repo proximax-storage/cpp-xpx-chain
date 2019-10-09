@@ -194,7 +194,14 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Drive_Infos, FACILITY_BASED_CODE(1200, Drive)) \
 	\
 	/* File infos have been requested by a client. */ \
-	ENUM_VALUE(File_Infos, FACILITY_BASED_CODE(1200, File))
+	ENUM_VALUE(File_Infos, FACILITY_BASED_CODE(1200, File)) \
+	\
+	/* Hello have been requested by a client. */ \
+	ENUM_VALUE(Hello_Infos, FACILITY_BASED_CODE(1200, Hello)) \
+    \
+	/* Hello upgrade state path has been requested by a client. */ \
+	ENUM_VALUE(Hello_State_Path, FACILITY_BASED_CODE(800, Hello)) \
+
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

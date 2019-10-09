@@ -5,6 +5,7 @@
 #pragma once
 #include "catapult/model/Mosaic.h"
 #include "catapult/model/Notifications.h"
+#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 
@@ -33,14 +34,18 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a messageSize.
-		explicit HelloMessageCountNotification(uint16_t messageCount)
+		explicit HelloMessageCountNotification(uint16_t messageCount, Key key)
 				: Notification(Notification_Type, sizeof(HelloMessageCountNotification<1>))
 				, MessageCount(messageCount)
+				, SignerKey(key)
 		{}
 
 	public:
 		/// Message size in bytes.
 		uint16_t MessageCount;
+
+		// transaction signer key
+		Key SignerKey;
 	};
 
 }}

@@ -38,6 +38,34 @@ namespace catapult { namespace plugins {
                 static std::vector<std::string> GetStatefulValidatorNames() {
                     return { "HelloMessageCountValidator" };
                 }
+
+                static std::vector<std::string> GetObserverNames() {
+                    return {
+                            "HelloObserver",
+                    };
+                }
+
+                static std::vector<std::string> GetPermanentObserverNames() {
+                    return GetObserverNames();
+                }
+
+                static std::vector<std::string> GetCacheNames() {
+                    return { "HelloCache" };
+                }
+
+                static std::vector<std::string> GetDiagnosticCounterNames() {
+                    return { "HELLO C" };
+                }
+
+                // PacketTypes are defined in src\catapult\ionet\PacketType.h
+                static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
+                    return { ionet::PacketType::Hello_Infos };
+                }
+
+                static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
+                    return { ionet::PacketType::Hello_State_Path };
+                }
+
             };
         }
 

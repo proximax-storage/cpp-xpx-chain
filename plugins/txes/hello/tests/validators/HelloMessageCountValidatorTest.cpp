@@ -10,6 +10,7 @@
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
+#include "tests/test/HelloTestUtils.h"
 
 namespace catapult { namespace validators {
 
@@ -21,7 +22,8 @@ namespace catapult { namespace validators {
         namespace {
             void AssertValidationResult(ValidationResult expectedResult, uint16_t messageCount) {
                 // Arrange:
-                auto notification = model::HelloMessageCountNotification<1>(messageCount);
+                auto key = test::GenerateRandomByteArray<Key>();
+                auto notification = model::HelloMessageCountNotification<1>(messageCount, key);
                 auto pluginConfig = config::HelloConfiguration::Uninitialized();
 
                 // This part simulate config-network.properties.

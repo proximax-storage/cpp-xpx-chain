@@ -24,7 +24,7 @@ namespace catapult { namespace plugins {
                             CATAPULT_LOG(info) << "Hello Plugin " << i;
                         }
 
-                        sub.notify(HelloMessageCountNotification<1>(transaction.MessageCount));
+                        sub.notify(HelloMessageCountNotification<1>(transaction.MessageCount, transaction.SignerKey));
                         break;
                     }
 

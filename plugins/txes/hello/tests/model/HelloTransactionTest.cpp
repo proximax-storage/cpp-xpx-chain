@@ -7,6 +7,7 @@
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/TestHarness.h"
+#include "src/catapult/types.h"
 
 namespace catapult { namespace model {
 
@@ -21,11 +22,11 @@ namespace catapult { namespace model {
             void AssertEntityHasExpectedSize(size_t baseSize) {
                 // Arrange:
                 auto expectedSize = baseSize // base
-                                    + sizeof(uint16_t); // message count
+                                    + sizeof(uint16_t)      // message count
+                                    + Key_Size;             // Keys
 
                 // Assert:
                 EXPECT_EQ(expectedSize, sizeof(T));
-                EXPECT_EQ(baseSize + 2u, sizeof(T));
             }
 
             template<typename T>
