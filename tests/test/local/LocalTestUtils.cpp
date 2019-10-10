@@ -254,6 +254,8 @@ namespace catapult { namespace test {
 		config.BlockPruneInterval = 360;
 		config.MaxTransactionsPerBlock = 200'000;
 
+		config.EnableUnconfirmedTransactionMinFeeValidation = true;
+
 		config.GreedDelta = 0.5;
 		config.GreedExponent = 2.0;
 		return config;

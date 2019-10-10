@@ -23,14 +23,11 @@
 #include "catapult/api/LocalChainApi.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/api/RemoteTransactionApi.h"
-#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/chain/UtSynchronizer.h"
 #include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/extensions/SynchronizerTaskCallbacks.h"
-#include "catapult/thread/FutureUtils.h"
-#include "catapult/utils/MemoryUtils.h"
 
 namespace catapult { namespace sync {
 
@@ -41,8 +38,7 @@ namespace catapult { namespace sync {
 		thread::Task CreateConnectPeersTask(extensions::ServiceState& state, net::PacketWriters& packetWriters) {
 			auto settings = extensions::SelectorSettings(
 					state,
-					Service_Id,
-					ionet::NodeRoles::Peer);
+					Service_Id);
 			auto task = extensions::CreateConnectPeersTask(settings, packetWriters);
 			task.Name += " for service Sync";
 			return task;
@@ -78,7 +74,9 @@ namespace catapult { namespace sync {
 
 		thread::Task CreatePullUtTask(const extensions::ServiceState& state, net::PacketWriters& packetWriters) {
 			auto utSynchronizer = chain::CreateUtSynchronizer(
-					state.config().Node.MinFeeMultiplier,
+					[pConfigHolder = state.pluginManager().configHolder()]() {
+						return config::GetMinFeeMultiplier(pConfigHolder->Config());
+					},
 					[&cache = state.utCache()]() { return cache.view().shortHashes(); },
 					state.hooks().transactionRangeConsumerFactory()(Sync_Source));
 

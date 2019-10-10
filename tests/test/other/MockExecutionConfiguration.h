@@ -245,12 +245,13 @@ namespace catapult { namespace test {
 
 	struct MockExecutionConfiguration {
 	public:
-		MockExecutionConfiguration()
+		MockExecutionConfiguration(BlockFeeMultiplier minFeeMultiplier = BlockFeeMultiplier())
 				: pObserver(std::make_shared<MockAggregateNotificationObserver>())
 				, pValidator(std::make_shared<MockAggregateNotificationValidator>())
 				, pNotificationPublisher(std::make_shared<MockNotificationPublisher>()) {
 			Config.NetworkIdentifier = Mock_Execution_Configuration_Network_Identifier;
 			Config.NetworkInfoSupplier = [](const Height&) { return model::NetworkInfo(); };
+			Config.MinFeeMultiplierSupplier = [minFeeMultiplier](const Height&) { return minFeeMultiplier; };
 			Config.pObserver = pObserver;
 			Config.pValidator = pValidator;
 			Config.pNotificationPublisher = pNotificationPublisher;
