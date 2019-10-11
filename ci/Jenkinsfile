@@ -106,6 +106,29 @@ pipeline {
                 }
             }
         }
+
+        stage('Build and Publish multisig-fix Image') {
+            when {
+                branch 'multisig-fix'  // only run this stage in the develop branch
+            }
+            steps {
+                echo 'Build and Publish Image'
+
+                script {
+                    def newImage = docker.build("${IMAGE}")
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                        newImage.push("multisig-fix-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
+                    }
+                }
+            }
+            post {
+                success {
+                    slackSend channel: '#devops',
+                        color: 'good',
+                        message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${DOCKER_REGISTRY}/${IMAGE}:develop-jenkins-build-${env.BUILD_NUMBER} and ${DOCKER_REGISTRY}/${IMAGE}:develop"
+                }
+            }
+        }
     }
 
     post {
