@@ -87,6 +87,10 @@ namespace catapult { namespace model {
 		/// Maximum number of transactions per block.
 		uint32_t MaxTransactionsPerBlock;
 
+		/// Allows validation of unconfirmed transactions before including it into UT cache
+		/// that transaction fee is not less than the minimum calculated with minFeeMultiplier.
+		bool EnableUnconfirmedTransactionMinFeeValidation;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 

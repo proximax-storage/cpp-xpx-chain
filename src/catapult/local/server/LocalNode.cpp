@@ -109,6 +109,9 @@ namespace catapult { namespace local {
 				auto peersFile = boost::filesystem::path(m_pBootstrapper->resourcesPath()) / "peers-p2p.json";
 				if (boost::filesystem::exists(peersFile))
 					AddStaticNodesFromPath(*m_pBootstrapper, peersFile.generic_string());
+				peersFile = boost::filesystem::path(m_pBootstrapper->resourcesPath()) / "peers-api.json";
+				if (boost::filesystem::exists(peersFile))
+					AddStaticNodesFromPath(*m_pBootstrapper, peersFile.generic_string());
 				SeedNodeContainer(m_nodes, *m_pBootstrapper);
 
 				CATAPULT_LOG(debug) << "booting extension services";

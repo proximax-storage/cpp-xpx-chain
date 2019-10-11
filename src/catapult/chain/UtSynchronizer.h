@@ -30,10 +30,13 @@ namespace catapult { namespace chain {
 	/// Function signature for supplying a range of short hashes.
 	using ShortHashesSupplier = supplier<model::ShortHashRange>;
 
+	/// Function signature for supplying min transaction fee multiplier.
+	using MinFeeMultiplierSupplier = supplier<BlockFeeMultiplier>;
+
 	/// Creates an unconfirmed transactions synchronizer around the specified short hashes supplier (\a shortHashesSupplier)
-	/// and transaction range consumer (\a transactionRangeConsumer) for transactions with fee multipliers at least \a minFeeMultiplier.
+	/// and transaction range consumer (\a transactionRangeConsumer) for transactions with fee multipliers at least provided by \a minFeeMultiplierSupplier.
 	RemoteNodeSynchronizer<api::RemoteTransactionApi> CreateUtSynchronizer(
-			BlockFeeMultiplier minFeeMultiplier,
-			const ShortHashesSupplier& shortHashesSupplier,
-			const handlers::TransactionRangeHandler& transactionRangeConsumer);
+		const MinFeeMultiplierSupplier& minFeeMultiplierSupplier,
+		const ShortHashesSupplier& shortHashesSupplier,
+		const handlers::TransactionRangeHandler& transactionRangeConsumer);
 }}

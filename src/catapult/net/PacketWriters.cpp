@@ -25,7 +25,6 @@
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/thread/TimedCallback.h"
-#include "catapult/utils/HexFormatter.h"
 #include "catapult/utils/ModificationSafeIterableContainer.h"
 #include "catapult/utils/SpinLock.h"
 #include "catapult/utils/ThrottleLogger.h"
