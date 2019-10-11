@@ -70,9 +70,14 @@ namespace catapult { namespace model {
 		LOAD_CHAIN_PROPERTY(BlockPruneInterval);
 		LOAD_CHAIN_PROPERTY(MaxTransactionsPerBlock);
 
-		LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
-
 #undef LOAD_CHAIN_PROPERTY
+
+#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "chain", #NAME, config.NAME)
+
+		config.EnableUnconfirmedTransactionMinFeeValidation = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
+
+#undef TRY_LOAD_CHAIN_PROPERTY
 
 		size_t numPluginProperties = 0;
 		for (const auto& section : bag.sections()) {

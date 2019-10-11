@@ -93,6 +93,10 @@ namespace catapult { namespace model {
 				return "network" != section && "chain" != section;
 			}
 
+			static bool IsPropertyOptional(const std::string& name) {
+				return "enableUnconfirmedTransactionMinFeeValidation" == name;
+			}
+
 			static void AssertZero(const NetworkConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(Key(), config.Info.PublicKey);
@@ -300,6 +304,39 @@ namespace catapult { namespace model {
 
 		// Act + Assert:
 		EXPECT_THROW(LoadPluginConfiguration<BetaConfiguration>(config, "gamma"), utils::property_not_found_error);
+	}
+
+	// endregion
+
+	// region optional properties
+
+	TEST(TEST_CLASS, CanLoadConfigurationFromBagWithAnyMissingOptionalProperty) {
+		// Arrange:
+		for (const auto& sectionPair : NetworkConfigurationTraits::CreateProperties()) {
+			const auto& section = sectionPair.first;
+			if (NetworkConfigurationTraits::IsSectionOptional(section)) {
+				CATAPULT_LOG(debug) << "skipping optional section " << section;
+				continue;
+			}
+
+			for (const auto& namePair : sectionPair.second) {
+				const auto& name = namePair.first;
+				if (!NetworkConfigurationTraits::IsPropertyOptional(name)) {
+					CATAPULT_LOG(debug) << "skipping required property " << name;
+					continue;
+				}
+				CATAPULT_LOG(debug) << "attempting to load configuration without " << section << "::" << name;
+
+				// - copy the properties and remove the desired key
+				auto propertiesCopy = NetworkConfigurationTraits::CreateProperties();
+				auto& sectionProperties = propertiesCopy[section];
+				auto hasNameKey = [&name](const auto& pair) { return name == pair.first; };
+				sectionProperties.erase(std::remove_if(sectionProperties.begin(), sectionProperties.end(), hasNameKey), sectionProperties.end());
+
+				// Assert:
+				NetworkConfigurationTraits::AssertCustom(NetworkConfigurationTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)));
+			}
+		}
 	}
 
 	// endregion
