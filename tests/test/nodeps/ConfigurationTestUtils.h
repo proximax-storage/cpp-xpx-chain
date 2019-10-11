@@ -103,7 +103,7 @@ namespace catapult { namespace test {
 
 	/// Asserts that a configuration cannot be loaded from a bag that contains a missing property.
 	template<typename TTraits>
-	void AssertCannotLoadConfigurationFromBagWithAnyMissingProperty() {
+	void AssertLoadConfigurationFromBagWithMissingProperty() {
 		// Arrange:
 		for (const auto& sectionPair : TTraits::CreateProperties()) {
 			const auto& section = sectionPair.first;
@@ -124,15 +124,19 @@ namespace catapult { namespace test {
 						std::remove_if(sectionProperties.begin(), sectionProperties.end(), hasNameKey),
 						sectionProperties.end());
 
-				// Act + Assert: the load failed
-				EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)), utils::property_not_found_error);
+				// Act + Assert:
+				if (TTraits::IsPropertyOptional(name)) {
+					TTraits::AssertCustom(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)));
+				} else {
+					EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)), utils::property_not_found_error);
+				}
 			}
 		}
 	}
 
 	/// Asserts that a configuration cannot be loaded from a bag that contains an unknown property.
 	template<typename TTraits>
-	void AssertCannotLoadConfigurationFromBagWithAnyUnknownProperty() {
+	void AssertLoadConfigurationFromBagWithUnknownProperty() {
 		// Arrange:
 		for (const auto& sectionPair : TTraits::CreateProperties()) {
 			const auto& section = sectionPair.first;
@@ -147,21 +151,29 @@ namespace catapult { namespace test {
 			auto propertiesCopy = TTraits::CreateProperties();
 			propertiesCopy[section].emplace_back("hidden", "abc");
 
-			// Act + Assert: the load failed
-			EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)), catapult_invalid_argument);
+			// Act + Assert:
+			if (TTraits::SupportsUnknownProperties()) {
+				TTraits::AssertCustom(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)));
+			} else {
+				EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(std::move(propertiesCopy)), catapult_invalid_argument);
+			}
 		}
 	}
 
 	/// Asserts that a configuration cannot be loaded from a bag that contains an unknown section.
 	template<typename TTraits>
-	void AssertCannotLoadConfigurationFromBagWithAnyUnknownSection() {
+	void AssertLoadConfigurationFromBagWithUnknownSection() {
 		// Arrange: add an unknown section
 		auto container = TTraits::CreateProperties();
 		container.insert({ "hidden", { { "foo", "1234" } } });
 		auto bag = utils::ConfigurationBag(std::move(container));
 
 		// Act + Assert:
-		EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(bag), catapult_invalid_argument);
+		if (TTraits::SupportsUnknownProperties()) {
+			TTraits::AssertCustom(TTraits::ConfigurationType::LoadFromBag(bag));
+		} else {
+			EXPECT_THROW(TTraits::ConfigurationType::LoadFromBag(bag), catapult_invalid_argument);
+		}
 	}
 
 	/// Asserts that a configuration loaded from a custom property bag has custom values.
@@ -184,14 +196,14 @@ namespace catapult { namespace test {
 	TEST(TEST_CLASS, CannotLoad##SHORT_NAME##ConfigurationFromEmptyBag) { \
 		test::AssertCannotLoadConfigurationFromEmptyBag<SHORT_NAME##ConfigurationTraits>(); \
 	} \
-	TEST(TEST_CLASS, CannotLoad##SHORT_NAME##ConfigurationFromBagWithAnyMissingProperty) { \
-		test::AssertCannotLoadConfigurationFromBagWithAnyMissingProperty<SHORT_NAME##ConfigurationTraits>(); \
+	TEST(TEST_CLASS, Load##SHORT_NAME##ConfigurationFromBagWithMissingProperty) { \
+		test::AssertLoadConfigurationFromBagWithMissingProperty<SHORT_NAME##ConfigurationTraits>(); \
 	} \
-	TEST(TEST_CLASS, CannotLoad##SHORT_NAME##ConfigurationFromBagWithAnyUnknownProperty) { \
-		test::AssertCannotLoadConfigurationFromBagWithAnyUnknownProperty<SHORT_NAME##ConfigurationTraits>(); \
+	TEST(TEST_CLASS, Load##SHORT_NAME##ConfigurationFromBagWithUnknownProperty) { \
+		test::AssertLoadConfigurationFromBagWithUnknownProperty<SHORT_NAME##ConfigurationTraits>(); \
 	} \
-	TEST(TEST_CLASS, CannotLoad##SHORT_NAME##ConfigurationFromBagWithAnyUnknownSection) { \
-		test::AssertCannotLoadConfigurationFromBagWithAnyUnknownSection<SHORT_NAME##ConfigurationTraits>(); \
+	TEST(TEST_CLASS, Load##SHORT_NAME##ConfigurationFromBagWithUnknownSection) { \
+		test::AssertLoadConfigurationFromBagWithUnknownSection<SHORT_NAME##ConfigurationTraits>(); \
 	} \
 	TEST(TEST_CLASS, CanLoadCustom##SHORT_NAME##ConfigurationFromBag) { \
 		test::AssertCanLoadCustomConfigurationFromBag<SHORT_NAME##ConfigurationTraits>(); \
