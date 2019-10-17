@@ -2,12 +2,12 @@
 *** FOR TRAINING PURPOSES ONLY
 **/
 
+
 #include "src/cache/HelloCache.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
 #include "tests/test/HelloTestUtils.h"
-
 namespace catapult { namespace cache {
 
 #define TEST_CLASS HelloCacheTests
@@ -22,19 +22,19 @@ namespace catapult { namespace cache {
                     {}
                 };
 
-                using IdType = Height;
+                using IdType = Key;
                 using ValueType = state::HelloEntry;
 
                 static uint8_t GetRawId(const IdType& id) {
-                    return utils::checked_cast<uint64_t, uint8_t>(id.unwrap());
+                    return id[0];
                 }
 
                 static IdType GetId(const ValueType& entry) {
-                    return entry.height();
+                    return entry.key();
                 }
 
                 static IdType MakeId(uint8_t id) {
-                    return IdType{ id };
+                    return IdType{ { id } };
                 }
 
                 static ValueType CreateWithId(uint8_t id) {
@@ -44,8 +44,8 @@ namespace catapult { namespace cache {
 
             struct HelloEntryModificationPolicy : public test::DeltaRemoveInsertModificationPolicy {
                 static void Modify(HelloCacheDelta& delta, const state::HelloEntry& entry) {
-                    auto& entryFromCache = delta.find(entry.height()).get();
-                    entryFromCache.setBlockchainVersion(BlockchainVersion{entryFromCache.blockChainVersion().unwrap() + 1u});
+                    auto& entryFromCache = delta.find(entry.key()).get();
+                    entryFromCache.setMessageCount(entry.messageCount());
                 }
             };
         }
@@ -78,26 +78,26 @@ namespace catapult { namespace cache {
             // - insert single account key
             {
 
-                auto delta = cache.createDelta();
+                auto delta = cache.createDelta(Height{1});
                 delta->insert(state::HelloEntry(key[0]));
                 cache.commit();
             }
 
             // Sanity:
-            EXPECT_EQ(1, cache.createView()->size());
+            EXPECT_EQ(1, cache.createView(Height{1})->size());
 
             // Act:
             {
-                auto delta = cache.createDelta();
-                auto& entry = delta->find(key).get();
-                entry->setMessageCount(3);
+                auto delta = cache.createDelta(Height{1});
+                auto& entry = delta->find(key[0]).get();
+                entry.setMessageCount(3);
                 cache.commit();
             }
 
             // Assert:
-            auto view = cache.createView();
-            const auto& entry = view->find(key).get();
-            EXPECT_EQ(3, entry.getMessageCount());
+            auto view = cache.createView(Height{1});
+            const auto& entry = view->find(key[0]).get();
+            EXPECT_EQ(3, entry.messageCount());
         }
 
         // endregion

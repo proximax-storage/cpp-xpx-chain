@@ -7,12 +7,15 @@
 #include "src/cache/HelloCacheStorage.h"
 #include "src/cache/HelloCache.h"
 #include "tests/TestHarness.h"
+#include "tests/test/HelloTestUtils.h"
+#include "src/state/HelloEntry.h"
 
 namespace catapult { namespace cache {
 
 #define TEST_CLASS HelloCacheStorageTests
 
         TEST(TEST_CLASS, CanLoadValueIntoCache) {
+#if 1
             // Arrange: create a random value to insert
             uint16_t count = 10;
             auto key = test::GenerateKeys(1);
@@ -21,18 +24,19 @@ namespace catapult { namespace cache {
 
             // Act:
             HelloCache cache(CacheConfiguration{});
-            auto delta = cache.createDelta();
+            /*8catapult::cache::LockedCacheDelta<catapult::cache::HelloCacheDelta>*/
+            auto delta = cache.createDelta(Height{1});
             HelloCacheStorage::LoadInto(originalEntry, *delta);
             cache.commit();
 
             // Assert: the cache contains the value
-            auto view = cache.createView();
+            auto view = cache.createView(Height{1});
             EXPECT_EQ(1u, view->size());
-            ASSERT_TRUE(view->contains(originalEntry.messageCount()));
-            const auto& loadedEntry = view->find(originalEntry.messageCount());
+            ASSERT_TRUE(view->contains(originalEntry.key()));
+            const auto& loadedEntry = view->find(originalEntry.key()).get();
 
             // - the loaded cache value is correct
             EXPECT_EQ(originalEntry.messageCount(), loadedEntry.messageCount());
-            EXPECT_EQ(originalEntry.key(), loadedEntry.key());
+#endif
         }
     }}

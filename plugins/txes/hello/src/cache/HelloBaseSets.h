@@ -15,7 +15,7 @@ namespace catapult { namespace cache {
         using BasicHelloPatriciaTree = tree::BasePatriciaTree<
                 SerializerHashedKeyEncoder<HelloCacheDescriptor::Serializer>,
                 PatriciaTreeRdbDataSource,
-                utils::BaseValueHasher<Height>>;
+                utils::ArrayHasher<Key>>;
 
         class HelloPatriciaTree : public BasicHelloPatriciaTree {
         public:
