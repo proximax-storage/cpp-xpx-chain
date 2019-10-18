@@ -52,6 +52,10 @@ maxSupportedEntityVersionsSize = 1MB
 minPercentageOfApproval = 100
 minPercentageOfRemoval = 66
 
+[plugin:catapult.plugins.exchange]
+
+dummy = to trigger plugin load
+
 [plugin:catapult.plugins.lockhash]
 
 lockedFundsPerAggregate = 10'000'000

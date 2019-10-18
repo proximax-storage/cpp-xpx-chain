@@ -64,6 +64,9 @@ namespace catapult { namespace observers {
 	/// Observes balance changes triggered by balance debit notifications.
 	DECLARE_OBSERVER(BalanceDebit, model::BalanceDebitNotification<1>)();
 
+	/// Observes balance changes triggered by balance credit notifications.
+	DECLARE_OBSERVER(BalanceCredit, model::BalanceCreditNotification<1>)();
+
 	// endregion
 
 	// region SourceChange
