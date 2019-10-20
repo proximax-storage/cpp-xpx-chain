@@ -138,13 +138,16 @@ namespace catapult { namespace model {
 		}
 	};
 
-	struct MatchedOffer : public Offer {
+	struct ExistingOffer {
 	public:
 		/// The signer of the transaction with matched offer.
 		Key TransactionSigner;
 
 		/// The hash of the transaction with matched offer.
 		utils::ShortHash TransactionHash;
+	};
+
+	struct MatchedOffer : public Offer, public ExistingOffer {
 	};
 
 #pragma pack(pop)

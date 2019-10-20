@@ -44,6 +44,7 @@ namespace catapult { namespace cache {
 		BuyOffer,
 		SellOffer,
 		Deal,
+		OfferDeadline,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

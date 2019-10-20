@@ -15,6 +15,7 @@
 #include "src/cache/SellOfferCacheStorage.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/BuyOfferTransactionPlugin.h"
+#include "src/plugins/RemoveOfferTransactionPlugin.h"
 #include "src/plugins/SellOfferTransactionPlugin.h"
 #include "src/validators/Validators.h"
 
@@ -23,6 +24,7 @@ namespace catapult { namespace plugins {
 	void RegisterExchangeSubsystem(PluginManager& manager) {
 		manager.addTransactionSupport(CreateBuyOfferTransactionPlugin());
 		manager.addTransactionSupport(CreateSellOfferTransactionPlugin());
+		manager.addTransactionSupport(CreateRemoveOfferTransactionPlugin());
 
 		manager.addCacheSupport<cache::BuyOfferCacheStorage>(
 			std::make_unique<cache::BuyOfferCache>(manager.cacheConfig(cache::BuyOfferCache::Name)));
@@ -60,12 +62,23 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addObserverHook([](auto& builder) {
+		manager.addStatefulValidatorHook([config = manager.immutableConfig()](auto& builder) {
+			builder
+				.add(validators::CreateBuyOfferValidator(config))
+				.add(validators::CreateSellOfferValidator(config))
+				.add(validators::CreateMatchedBuyOfferValidator())
+				.add(validators::CreateMatchedSellOfferValidator())
+				.add(validators::CreateRemoveOfferValidator());
+		});
+
+		manager.addObserverHook([&manager](auto& builder) {
 			builder
 				.add(observers::CreateBuyOfferObserver())
 				.add(observers::CreateMatchedBuyOfferObserver())
 				.add(observers::CreateSellOfferObserver())
-				.add(observers::CreateMatchedSellOfferObserver());
+				.add(observers::CreateMatchedSellOfferObserver())
+				.add(observers::CreateRemoveOfferObserver())
+				.add(observers::CreateCleanupOffersObserver(manager));
 		});
 	}
 }}

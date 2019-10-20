@@ -7,15 +7,24 @@
 #pragma once
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/observers/ObserverTypes.h"
+#include "catapult/plugins/PluginManager.h"
 #include "src/cache/DealCache.h"
+#include "src/cache/OfferDeadlineCache.h"
 #include "src/model/ExchangeNotifications.h"
 #include "src/state/OfferEntry.h"
 
 namespace catapult { namespace observers {
 
+	// region offers
+
 	template<typename TNotification, typename TCache, bool BuyOffer>
 	void OfferObserver(const TNotification& notification, const ObserverContext& context) {
 		auto& cache = context.Cache.sub<TCache>();
+		auto& offerDeadlineCache = context.Cache.sub<cache::OfferDeadlineCache>();
+		if (!offerDeadlineCache.contains(Height(0)))
+			offerDeadlineCache.insert(state::OfferDeadlineEntry(Height(0)));
+		state::OfferDeadlineEntry& offerDeadlineEntry = offerDeadlineCache.find(Height(0)).get();
+
 		if (NotifyMode::Commit == context.Mode) {
 			state::OfferEntry entry(notification.TransactionHash, notification.Signer);
 			entry.setDeadline(notification.Deadline);
@@ -29,7 +38,22 @@ namespace catapult { namespace observers {
 				entry.setDeposit(deposit);
 
 			cache.insert(entry);
+
+			if (BuyOffer) {
+				offerDeadlineEntry.buyOfferDeadlines().emplace(notification.Deadline, notification.TransactionHash);
+			} else {
+				offerDeadlineEntry.sellOfferDeadlines().emplace(notification.Deadline, notification.TransactionHash);
+			}
 		} else {
+			auto& offerDeadlines = BuyOffer ? offerDeadlineEntry.buyOfferDeadlines() : offerDeadlineEntry.sellOfferDeadlines();
+			auto range = offerDeadlines.equal_range(notification.Deadline);
+			for (auto iter = range.first; iter != range.second; ++iter) {
+				if (iter->second == notification.TransactionHash) {
+					offerDeadlines.erase(iter);
+					break;
+				}
+			}
+
 			cache.remove(notification.TransactionHash);
 		}
 	}
@@ -39,6 +63,10 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by sell offer notifications
 	DECLARE_OBSERVER(SellOffer, model::SellOfferNotification<1>)();
+
+	// endregion
+
+	// region matched offers
 
 	template<typename TEntry, typename TCache>
 	void CleanupOffers(TEntry& entry, TCache& cache, UnresolvedMosaicId currencyMosaicId, model::NotificationSubscriber& sub) {
@@ -139,4 +167,16 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by matched sell offer notifications
 	DECLARE_OBSERVER(MatchedSellOffer, model::MatchedSellOfferNotification<1>)();
+
+	// endregion
+
+	// region remove offers
+
+	/// Observes changes triggered by remove offer notifications
+	DECLARE_OBSERVER(RemoveOffer, model::RemoveOfferNotification<1>)();
+
+	/// Observes changes triggered by block notifications
+	DECLARE_OBSERVER(CleanupOffers, model::BlockNotification<1>)(plugins::PluginManager& manager);
+
+	// endregion
 }}

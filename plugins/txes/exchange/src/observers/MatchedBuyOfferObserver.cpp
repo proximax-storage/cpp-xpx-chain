@@ -16,4 +16,6 @@ namespace catapult { namespace observers {
 	void MatchedBuyOfferObserver(const Notification& notification, const ObserverContext& context) {
 		MatchedOfferObserver<Notification, cache::BuyOfferCache, cache::SellOfferCache>(notification, context);
 	}
+
+	DEFINE_OBSERVER(MatchedBuyOffer, Notification, MatchedBuyOfferObserver)
 }}

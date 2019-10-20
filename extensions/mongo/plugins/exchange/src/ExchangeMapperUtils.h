@@ -12,20 +12,17 @@ using namespace catapult::mongo::mappers;
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	bson_stream::array_context& StreamOffer(bson_stream::array_context& context, const model::Offer& pOffer);
-
+	void StreamOffer(bson_stream::array_context& context, const model::Offer& pOffer);
 	void StreamOffers(bson_stream::document &builder, const model::Offer* pOffer, size_t numOffers);
-
 	void StreamOffers(bson_stream::document &builder, const state::OfferMap& offers);
-
-	bson_stream::array_context& StreamMatchedOffer(bson_stream::array_context& context, const model::MatchedOffer& offer);
-
+	void StreamMatchedOffer(bson_stream::array_context& context, const model::MatchedOffer& offer);
 	void StreamMatchedOffers(bson_stream::document &builder, const model::Offer* pOffer, size_t numOffers);
+	void ReadOffers(const bsoncxx::array::view& dbOffers, state::OfferMap& offers);
 
 	template<typename TTransaction>
 	void StreamOfferTransaction(bson_stream::document &builder, const TTransaction &transaction) {
 		builder << "deadline" << ToInt64(transaction.Deadline);
 		StreamOffers(builder, transaction.OffersPtr(), transaction.OfferCount);
-		StreamMatchedOffers(builder, transaction.OffersPtr(), transaction.OfferCount);
+		StreamMatchedOffers(builder, transaction.MatchedOffersPtr(), transaction.OfferCount);
 	}
 }}}

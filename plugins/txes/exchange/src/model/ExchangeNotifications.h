@@ -6,7 +6,7 @@
 
 #pragma once
 #include "src/model/Offer.h"
-#include "catapult/model/Notifications.h"
+#include "catapult/model/NotificationSubscriber.h"
 
 namespace catapult { namespace model {
 
@@ -27,6 +27,9 @@ namespace catapult { namespace model {
 	/// Matched sell offer.
 	DEFINE_EXCHANGE_NOTIFICATION(Matched_Sell_Offer_v1, 0x004, All);
 
+	/// Remove offer.
+	DEFINE_EXCHANGE_NOTIFICATION(Matched_Remove_Offer_v1, 0x004, All);
+
 #undef DEFINE_EXCHANGE_NOTIFICATION
 
 	// endregion
@@ -40,7 +43,7 @@ namespace catapult { namespace model {
 				const utils::ShortHash& transactionHash,
 				const Timestamp& deadline,
 				uint8_t offerCount,
-				const model::Offer* pOffers)
+				const Offer* pOffers)
 			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 			, Signer(signer)
 			, TransactionHash(transactionHash)
@@ -63,7 +66,7 @@ namespace catapult { namespace model {
 		uint8_t OfferCount;
 
 		/// Offers to trade.
-		const model::Offer* OffersPtr;
+		const Offer* OffersPtr;
 	};
 
 	/// Notification of a buy offer.
@@ -106,7 +109,7 @@ namespace catapult { namespace model {
 				uint8_t matchedOfferCount,
 				const MatchedOffer* pMatchedOffers,
 				UnresolvedMosaicId currencyMosaicId,
-				model::NotificationSubscriber& subscriber)
+				NotificationSubscriber& subscriber)
 			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 			, Signer(signer)
 			, TransactionHash(transactionHash)
@@ -133,7 +136,7 @@ namespace catapult { namespace model {
 		UnresolvedMosaicId CurrencyMosaicId;
 
 		/// A notification subscriber.
-		model::NotificationSubscriber& Subscriber;
+		NotificationSubscriber& Subscriber;
 	};
 
 	/// Notification of a matched buy offer.
@@ -164,5 +167,47 @@ namespace catapult { namespace model {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Exchange_Matched_Sell_Offer_v1_Notification;
+	};
+
+	/// Notification of a matched sell offer.
+	template<VersionType version>
+	struct RemoveOfferNotification;
+
+	template<>
+	struct RemoveOfferNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Exchange_Matched_Remove_Offer_v1_Notification;
+
+	public:
+		RemoveOfferNotification(
+				const Key& signer,
+				uint8_t buyOfferCount,
+				const utils::ShortHash* pBuyOfferHashes,
+				uint8_t sellOfferCount,
+				const utils::ShortHash* pSellOfferHashes)
+			: Notification(Notification_Type, sizeof(RemoveOfferNotification<1>))
+			, Signer(signer)
+			, BuyOfferCount(buyOfferCount)
+			, BuyOfferHashesPtr(pBuyOfferHashes)
+			, SellOfferCount(sellOfferCount)
+			, SellOfferHashesPtr(pSellOfferHashes)
+		{}
+
+	public:
+		/// Remove offer transaction signer.
+		const Key& Signer;
+
+		/// Buy offer count.
+		uint8_t BuyOfferCount;
+
+		/// Hashes of buy offers to remove.
+		const utils::ShortHash* BuyOfferHashesPtr;
+
+		/// Sell offer count.
+		uint8_t SellOfferCount;
+
+		/// Hashes of sell offers to remove.
+		const utils::ShortHash* SellOfferHashesPtr;
 	};
 }}

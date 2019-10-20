@@ -23,20 +23,30 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Remove_Offer, 1)
 
 	public:
-		uint8_t OfferCount;
+		uint8_t BuyOfferCount;
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(OfferHashes, utils::ShortHash)
+		uint8_t SellOfferCount;
+
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BuyOfferHashes, utils::ShortHash)
+
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(SellOfferHashes, utils::ShortHash)
 
 	private:
 		template<typename T>
-		static auto* OfferHashesPtrT(T& transaction) {
-			return transaction.OfferCount ? THeader::PayloadStart(transaction) : nullptr;
+		static auto* BuyOfferHashesPtrT(T& transaction) {
+			return transaction.BuyOfferCount ? THeader::PayloadStart(transaction) : nullptr;
+		}
+
+		template<typename T>
+		static auto* SellOfferHashesPtrT(T& transaction) {
+			auto* pPayloadStart = THeader::PayloadStart(transaction);
+			return transaction.SellOfferCount && pPayloadStart ? pPayloadStart + transaction.BuyOfferCount * sizeof(utils::ShortHash) : nullptr;
 		}
 
 	public:
 		// Calculates the real size of an exchange transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.OfferCount * sizeof(utils::ShortHash);
+			return sizeof(TransactionType) + (transaction.BuyOfferCount + transaction.SellOfferCount) * sizeof(utils::ShortHash);
 		}
 	};
 

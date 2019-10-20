@@ -9,7 +9,6 @@
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/SellOfferTransaction.h"
 #include "src/model/EmbeddedTransactionHasher.h"
 #include "src/model/ExchangeNotifications.h"
@@ -22,9 +21,10 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-				if (1 == transaction.EntityVersion()) {
+				switch (transaction.EntityVersion()) {
+				case 1: {
 					auto transactionHash = ToShortHash(CalculateHash(transaction, config.GenerationHash));
-					auto currencyMosaicId = extensions::CastToUnresolvedMosaicId(config.CurrencyMosaicId);
+					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 
 					sub.notify(SellOfferNotification<1>(
 						transaction.Signer,
@@ -50,9 +50,10 @@ namespace catapult { namespace plugins {
 						sub.notify(BalanceCreditNotification<1>(transaction.Signer, currencyMosaicId, pMatchedOffer->Cost));
 						sub.notify(BalanceCreditNotification<1>(pMatchedOffer->TransactionSigner, pMatchedOffer->Mosaic.MosaicId, pMatchedOffer->Mosaic.Amount));
 					}
-
-				} else {
-						CATAPULT_LOG(debug) << "invalid version of SellOfferTransaction: " << transaction.EntityVersion();
+					break;
+				}
+				default:
+					CATAPULT_LOG(debug) << "invalid version of SellOfferTransaction: " << transaction.EntityVersion();
 				}
 			};
 		}

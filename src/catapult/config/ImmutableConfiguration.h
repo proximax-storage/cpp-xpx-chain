@@ -38,6 +38,12 @@ namespace catapult { namespace config {
 		/// Mosaic id used to provide streaming ability.
 		MosaicId StreamingMosaicId;
 
+		/// Mosaic id used to provide review ability.
+		MosaicId ReviewMosaicId;
+
+		/// Mosaic id for super contracts.
+		MosaicId SuperContractMosaicId;
+
 		/// Initial currency atomic units available in the network.
 		Amount InitialCurrencyAtomicUnits;
 
@@ -54,4 +60,16 @@ namespace catapult { namespace config {
 
 	/// Gets unresolved currency mosaic id from \a config.
 	UnresolvedMosaicId GetUnresolvedCurrencyMosaicId(const ImmutableConfiguration& config);
+
+	/// Gets unresolved storage mosaic id from \a config.
+	UnresolvedMosaicId GetUnresolvedStorageMosaicId(const ImmutableConfiguration& config);
+
+	/// Gets unresolved streaming mosaic id from \a config.
+	UnresolvedMosaicId GetUnresolvedStreamingMosaicId(const ImmutableConfiguration& config);
+
+	/// Gets unresolved review mosaic id from \a config.
+	UnresolvedMosaicId GetUnresolvedReviewMosaicId(const ImmutableConfiguration& config);
+
+	/// Gets unresolved super contract mosaic id from \a config.
+	UnresolvedMosaicId GetUnresolvedSuperContractMosaicId(const ImmutableConfiguration& config);
 }}

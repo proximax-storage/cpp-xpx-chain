@@ -39,14 +39,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		entry.setDeadline(Timestamp{static_cast<uint64_t>(dbOfferEntry["deadline"].get_int64())});
 		entry.setDeposit(Amount{static_cast<uint64_t>(dbOfferEntry["deposit"].get_int64())});
 
-		auto dbOffers = dbOfferEntry["offers"].get_array().value;
-		for (const auto& dbOffer : dbOffers) {
-			auto mosaicId = UnresolvedMosaicId{static_cast<uint64_t>(dbOffer["mosaicId"].get_int64())};
-			auto mosaicAmount = Amount{static_cast<uint64_t>(dbOffer["mosaicAmount"].get_int64())};
-			auto cost = Amount{static_cast<uint64_t>(dbOffer["mosaicId"].get_int64())};
-
-			entry.offers().emplace(mosaicId, model::Offer{model::UnresolvedMosaic{mosaicId, mosaicAmount}, cost});
-		}
+		ReadOffers(dbOfferEntry["offers"].get_array().value, entry.offers());
 
 		return entry;
 	}

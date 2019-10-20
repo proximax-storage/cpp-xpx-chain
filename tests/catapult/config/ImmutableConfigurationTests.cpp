@@ -38,6 +38,8 @@ namespace catapult { namespace config {
 							{ "harvestingMosaicId", "0x9876'BBBB" },
 							{ "storageMosaicId", "0x4321'AAAA" },
 							{ "streamingMosaicId", "0x6789'BBBB" },
+							{ "reviewMosaicId", "0x4321'CCCC" },
+							{ "superContractMosaicId", "0x6789'DDDD" },
 
 							{ "initialCurrencyAtomicUnits", "77'000'000'000" },
 						}
@@ -108,6 +110,42 @@ namespace catapult { namespace config {
 
 		// Act + Assert:
 		EXPECT_EQ(UnresolvedMosaicId(1234), GetUnresolvedCurrencyMosaicId(config));
+	}
+
+	TEST(TEST_CLASS, CanGetUnresolvedStorageMosaicId) {
+		// Arrange:
+		auto config = ImmutableConfiguration::Uninitialized();
+		config.StorageMosaicId = MosaicId(1234);
+
+		// Act + Assert:
+		EXPECT_EQ(UnresolvedMosaicId(1234), GetUnresolvedStorageMosaicId(config));
+	}
+
+	TEST(TEST_CLASS, CanGetUnresolvedStreamingMosaicId) {
+		// Arrange:
+		auto config = ImmutableConfiguration::Uninitialized();
+		config.StreamingMosaicId = MosaicId(1234);
+
+		// Act + Assert:
+		EXPECT_EQ(UnresolvedMosaicId(1234), GetUnresolvedStreamingMosaicId(config));
+	}
+
+	TEST(TEST_CLASS, CanGetUnresolvedReviewMosaicId) {
+		// Arrange:
+		auto config = ImmutableConfiguration::Uninitialized();
+		config.ReviewMosaicId = MosaicId(1234);
+
+		// Act + Assert:
+		EXPECT_EQ(UnresolvedMosaicId(1234), GetUnresolvedReviewMosaicId(config));
+	}
+
+	TEST(TEST_CLASS, CanGetUnresolvedSuperContractMosaicId) {
+		// Arrange:
+		auto config = ImmutableConfiguration::Uninitialized();
+		config.SuperContractMosaicId = MosaicId(1234);
+
+		// Act + Assert:
+		EXPECT_EQ(UnresolvedMosaicId(1234), GetUnresolvedSuperContractMosaicId(config));
 	}
 
 	// endregion

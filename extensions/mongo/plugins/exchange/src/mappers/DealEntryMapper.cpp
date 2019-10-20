@@ -12,13 +12,12 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		bson_stream::array_context& StreamDeposit(bson_stream::array_context& context, const utils::ShortHash& hash, const Amount& deposit) {
+		void StreamDeposit(bson_stream::array_context& context, const utils::ShortHash& hash, const Amount& deposit) {
 			context
 				<< bson_stream::open_document
 				<< "transactionHash" << ToInt32(hash)
 				<< "deposit" << ToInt64(deposit)
 				<< bson_stream::close_document;
-			return context;
 		}
 
 		void StreamDeposits(bson_stream::document &builder, const state::DealEntry::DepositMap& deposits) {
@@ -60,7 +59,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	bsoncxx::document::value ToDbModel(const state::DealEntry& entry) {
 		bson_stream::document builder;
-		auto doc = builder << "buyOffer" << bson_stream::open_document
+		auto doc = builder << "deal" << bson_stream::open_document
 				<< "transactionHash" << ToInt32(entry.transactionHash())
 				<< "deposit" << ToInt64(entry.deposit());
 		StreamDeposits(builder, entry.deposits());
@@ -77,14 +76,12 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToModel
 
 	namespace {
-		void ReadOffers(const bsoncxx::array::view& dbOffers, state::OfferMap& offers) {
-			for (const auto& dbOffer : dbOffers) {
-				auto doc = dbOffer.get_document().view();
-				auto mosaicId = UnresolvedMosaicId{static_cast<uint64_t>(doc["mosaicId"].get_int64())};
-				auto mosaicAmount = Amount{static_cast<uint64_t>(doc["mosaicAmount"].get_int64())};
-				auto cost = Amount{static_cast<uint64_t>(doc["mosaicId"].get_int64())};
-
-				offers.emplace(mosaicId, model::Offer{model::UnresolvedMosaic{mosaicId, mosaicAmount}, cost});
+		void ReadDeposits(const bsoncxx::array::view& dbDeposits, state::DealEntry::DepositMap& deposits) {
+			for (const auto& dbDeposit : dbDeposits) {
+				auto doc = dbDeposit.get_document().view();
+				auto transactionHash = utils::ShortHash{static_cast<uint32_t>(doc["transactionHash"].get_int32())};
+				auto deposit = Amount{static_cast<uint64_t>(doc["deposit"].get_int64())};
+				deposits.emplace(transactionHash, deposit);
 			}
 		}
 
@@ -100,22 +97,14 @@ namespace catapult { namespace mongo { namespace plugins {
 	}
 
 	state::DealEntry ToDealEntry(const bsoncxx::document::view& document) {
-		auto dbDealEntry = document["buyOffer"];
+		auto dbDealEntry = document["deal"];
 		auto transactionHash = utils::ShortHash{static_cast<uint32_t>(dbDealEntry["transactionHash"].get_int32())};
 		state::DealEntry entry(transactionHash);
 
 		entry.setDeposit(Amount{static_cast<uint64_t>(dbDealEntry["deposit"].get_int64())});
 
-		auto dbDeposits = dbDealEntry["deposits"].get_array().value;
-		for (const auto& dbDeposit : dbDeposits) {
-			transactionHash = utils::ShortHash{static_cast<uint32_t>(dbDealEntry["transactionHash"].get_int32())};
-			auto deposit = Amount{static_cast<uint64_t>(dbDeposit["deposit"].get_int64())};
-
-			entry.deposits().emplace(transactionHash, deposit);
-		}
-
+		ReadDeposits(dbDealEntry["deposits"].get_array().value, entry.deposits());
 		ReadOffers(dbDealEntry["suggestedDeals"].get_array().value, entry.suggestedDeals());
-
 		ReadAcceptedDeals(dbDealEntry["acceptedDeals"].get_array().value, entry.acceptedDeals());
 
 		return entry;
