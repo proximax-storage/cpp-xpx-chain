@@ -15,8 +15,22 @@
 
 namespace catapult { namespace cache {
 
-	/// Mixins used by the drive cache delta.
-	using DriveCacheDeltaMixins = PatriciaTreeCacheMixins<DriveCacheTypes::PrimaryTypes::BaseSetDeltaType, DriveCacheDescriptor>;
+	/// Mixins used by the drive delta view.
+	struct DriveCacheDeltaMixins {
+	private:
+		using PrimaryMixins = PatriciaTreeCacheMixins<DriveCacheTypes::PrimaryTypes::BaseSetDeltaType, DriveCacheDescriptor>;
+
+	public:
+		using Size = PrimaryMixins::Size;
+		using Contains = PrimaryMixins::Contains;
+		using PatriciaTreeDelta = PrimaryMixins::PatriciaTreeDelta;
+		using MutableAccessor = PrimaryMixins::ConstAccessor;
+		using ConstAccessor = PrimaryMixins::MutableAccessor;
+		using DeltaElements = PrimaryMixins::DeltaElements;
+		using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
+		using Enable = PrimaryMixins::Enable;
+		using Height = PrimaryMixins::Height;
+	};
 
 	/// Basic delta on top of the drive cache.
 	class BasicDriveCacheDelta
@@ -46,6 +60,7 @@ namespace catapult { namespace cache {
 				, DriveCacheDeltaMixins::BasicInsertRemove(*driveSets.pPrimary)
 				, DriveCacheDeltaMixins::DeltaElements(*driveSets.pPrimary)
 				, m_pDriveEntries(driveSets.pPrimary)
+				, m_pDriveKeysByExpiryHeight(driveSets.pHeightGrouping)
 				, m_pConfigHolder(pConfigHolder)
 		{}
 
@@ -59,6 +74,7 @@ namespace catapult { namespace cache {
 
 	private:
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pDriveEntries;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pDriveKeysByExpiryHeight;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 

@@ -80,6 +80,10 @@ namespace catapult { namespace mocks {
 		return utils::to_underlying_type(flag) == (utils::to_underlying_type(options) & utils::to_underlying_type(flag));
 	}
 
+	utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedMockTransaction& transaction) {
+		return { Key{ { 1 } }, transaction.Recipient, Key{ { 2 } } };
+	}
+
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& mockTransaction, PluginOptionFlags options, NotificationSubscriber& sub) {
@@ -145,6 +149,10 @@ namespace catapult { namespace mocks {
 		public:
 			void publish(const WeakEntityInfoT<EmbeddedTransaction>& transaction, NotificationSubscriber& sub) const override {
 				Publish(static_cast<const EmbeddedMockTransaction&>(transaction.entity()), m_options, sub);
+			}
+
+			utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction&) const override {
+				return utils::KeySet();
 			}
 
 		private:

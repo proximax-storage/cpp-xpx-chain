@@ -115,5 +115,4 @@ minUpgradePeriod = 360
 
 enabled = false
 
-minPercentageOfApproval = 100
-minPercentageOfRemoval = 66
+maxFilesOnDrive = 32768

@@ -13,7 +13,7 @@ namespace catapult { namespace model {
 #endif
 
 	/// PrepareDrive transaction.
-	DEFINE_TRANSACTION_TYPE(Service, ModifyDrive, 0x1);
+	DEFINE_TRANSACTION_TYPE(Service, PrepareDrive, 0x1);
 
 	/// JoinToDrive transaction.
 	DEFINE_TRANSACTION_TYPE(Service, JoinToDrive, 0x2);
@@ -26,6 +26,12 @@ namespace catapult { namespace model {
 
 	/// EndDrive transaction.
 	DEFINE_TRANSACTION_TYPE(Service, EndDrive, 0x5);
+
+	/// DeleteReward transaction.
+	DEFINE_TRANSACTION_TYPE(Service, DeleteReward, 0x6);
+
+	/// Verification transaction.
+	DEFINE_TRANSACTION_TYPE(Service, Verification, 0x7);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

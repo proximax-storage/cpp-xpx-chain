@@ -10,17 +10,17 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(DriveVerification, model::DriveVerificationNotification<1>, [](const auto& notification, const ObserverContext& context) {
-		auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		auto& driveEntry = driveCache.find(notification.Drive).get();
-		auto& replicatorDepositMap = driveEntry.customers()[notification.Replicator];
-		auto& replicatorDeposit = replicatorDepositMap[Hash256()];
-		if (NotifyMode::Commit == context.Mode) {
-			replicatorDeposit.Amount = Amount{replicatorDeposit.Amount.unwrap() + notification.Deposit.Amount.unwrap()};
-		} else {
-			replicatorDeposit.Amount = Amount{replicatorDeposit.Amount.unwrap() - notification.Deposit.Amount.unwrap()};
-			if (Amount{0} == replicatorDeposit.Amount)
-				replicatorDepositMap.erase(Hash256());
-		}
+	DEFINE_OBSERVER(DriveVerification, model::DriveVerificationNotification<1>, [](const auto&, const ObserverContext&) {
+//		auto& driveCache = context.Cache.sub<cache::DriveCache>();
+//		auto& driveEntry = driveCache.find(notification.Drive).get();
+//		auto& replicatorDepositMap = driveEntry.customers()[notification.Replicator];
+//		auto& replicatorDeposit = replicatorDepositMap[Hash256()];
+//		if (NotifyMode::Commit == context.Mode) {
+//			replicatorDeposit.Amount = Amount{replicatorDeposit.Amount.unwrap() + notification.Deposit.Amount.unwrap()};
+//		} else {
+//			replicatorDeposit.Amount = Amount{replicatorDeposit.Amount.unwrap() - notification.Deposit.Amount.unwrap()};
+//			if (Amount{0} == replicatorDeposit.Amount)
+//				replicatorDepositMap.erase(Hash256());
+//		}
 	});
 }}

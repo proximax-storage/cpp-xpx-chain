@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include <catapult/types.h>
+
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)

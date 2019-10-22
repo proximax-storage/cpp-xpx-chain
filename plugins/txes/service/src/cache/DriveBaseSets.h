@@ -28,10 +28,48 @@ namespace catapult { namespace cache {
 	using DriveSingleSetCacheTypesAdapter =
 		SingleSetAndPatriciaTreeCacheTypesAdapter<DriveCacheTypes::PrimaryTypes, DrivePatriciaTree>;
 
-	struct DriveBaseSetDeltaPointers : public DriveSingleSetCacheTypesAdapter::BaseSetDeltaPointers {
+	struct DriveBaseSetDeltaPointers {
+		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pHeightGrouping;
+		std::shared_ptr<DrivePatriciaTree::DeltaType> pPatriciaTree;
 	};
 
-	struct DriveBaseSets : public DriveSingleSetCacheTypesAdapter::BaseSets<DriveBaseSetDeltaPointers> {
-		using DriveSingleSetCacheTypesAdapter::BaseSets<DriveBaseSetDeltaPointers>::BaseSets;
+	struct DriveBaseSets : public CacheDatabaseMixin {
+	public:
+		/// Indicates the set is not ordered.
+		using IsOrderedSet = std::false_type;
+
+	public:
+		explicit DriveBaseSets(const CacheConfiguration& config)
+				: CacheDatabaseMixin(config, { "default", "height_grouping" })
+				, Primary(GetContainerMode(config), database(), 0)
+				, HeightGrouping(GetContainerMode(config), database(), 1)
+				, PatriciaTree(hasPatriciaTreeSupport(), database(), 2)
+		{}
+
+	public:
+		DriveCacheTypes::PrimaryTypes::BaseSetType Primary;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetType HeightGrouping;
+		CachePatriciaTree<DrivePatriciaTree> PatriciaTree;
+
+	public:
+		DriveBaseSetDeltaPointers rebase() {
+			return { Primary.rebase(), HeightGrouping.rebase(), PatriciaTree.rebase() };
+		}
+
+		DriveBaseSetDeltaPointers rebaseDetached() const {
+			return {
+					Primary.rebaseDetached(),
+					HeightGrouping.rebaseDetached(),
+					PatriciaTree.rebaseDetached()
+			};
+		}
+
+		void commit() {
+			Primary.commit();
+			HeightGrouping.commit();
+			PatriciaTree.commit();
+			flush();
+		}
 	};
 }}

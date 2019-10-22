@@ -6,167 +6,25 @@
 
 #pragma once
 #include "catapult/model/Notifications.h"
+#include "src/model/ServiceTypes.h"
 #include "catapult/utils/MemoryUtils.h"
 
 namespace catapult { namespace model {
 
-	/// Defines a transfer mosaics notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, Transfer_Mosaics_v1, 0x0001);
-
-	/// Defines a drive notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0002);
-
-	/// Defines a replicator notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, Replicator_v1, 0x0003);
-
-	/// Defines a replicator notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, MosaicId_v1, 0x0004);
-
 	/// Defines a prepare drive notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Prepare_Drive_v1, 0x0005);
+	DEFINE_NOTIFICATION_TYPE(All, Service, Prepare_Drive_v1, 0x0001);
 
-	/// Defines a drive prolongation notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Prolongation_v1, 0x0006);
-
-	/// Defines a drive deposit notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Deposit_v1, 0x0007);
+	/// Defines a drive file system notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_File_System_v1, 0x0002);
 
 	/// Defines a drive deposit notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Deposit_Return_v1, 0x0008);
+	DEFINE_NOTIFICATION_TYPE(All, Service, Join_To_Drive_v1, 0x0003);
 
-	/// Defines a drive payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Payment_v1, 0x0009);
-
-	/// Defines a drive file deposit notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, File_Deposit_v1, 0x000A);
-
-	/// Defines a drive file deposit notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, File_Deposit_Return_v1, 0x000B);
-
-	/// Defines a drive file payment notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, File_Payment_v1, 0x000C);
+	/// Defines a drive files deposit notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, Files_Deposit_v1, 0x0004);
 
 	/// Defines a drive verification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Verification_v1, 0x000D);
-
-	/// Defines create drive directory notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Create_Directory_v1, 0x000E);
-
-	/// Defines remove drive directory notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Remove_Directory_v1, 0x000F);
-
-	/// Defines upload drive file notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Upload_File_v1, 0x0010);
-
-	/// Defines delete drive file notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Delete_File_v1, 0x0011);
-
-	/// Defines move drive file notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Move_File_v1, 0x0012);
-
-	/// Defines copy drive file notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Copy_File_v1, 0x0013);
-
-	/// Notification of a mosaic transfer.
-	template<VersionType version>
-	struct TransferMosaicsNotification;
-
-	template<>
-	struct TransferMosaicsNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Transfer_Mosaics_v1_Notification;
-
-	public:
-		/// Creates a notification around \a mosaicsCount and \a pMosaics.
-		explicit TransferMosaicsNotification(DriveActionType actionType, uint8_t mosaicsCount, const UnresolvedMosaic* pMosaics)
-				: Notification(Notification_Type, sizeof(TransferMosaicsNotification<1>))
-				, ActionType(actionType)
-				, MosaicsCount(mosaicsCount)
-				, MosaicsPtr(pMosaics)
-		{}
-
-	public:
-		/// Action type.
-		DriveActionType ActionType;
-
-		/// Number of mosaics.
-		uint8_t MosaicsCount;
-
-		/// Const pointer to the first mosaic.
-		const UnresolvedMosaic* MosaicsPtr;
-	};
-
-	/// Notification of a drive key.
-	template<VersionType version>
-	struct DriveNotification;
-
-	template<>
-	struct DriveNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Drive_v1_Notification;
-
-	public:
-		explicit DriveNotification(const Key& drive)
-			: Notification(Notification_Type, sizeof(DriveNotification<1>))
-			, Drive(drive)
-		{}
-
-	public:
-		/// Public key of the drive multisig account.
-		Key Drive;
-	};
-
-	/// Notification of a replicator key.
-	template<VersionType version>
-	struct ReplicatorNotification;
-
-	template<>
-	struct ReplicatorNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Replicator_v1_Notification;
-
-	public:
-		explicit ReplicatorNotification(const Key& drive, const Key& replicator)
-			: Notification(Notification_Type, sizeof(ReplicatorNotification<1>))
-			, Drive(drive)
-			, Replicator(replicator)
-		{}
-
-	public:
-		/// Public key of the drive multisig account.
-		Key Drive;
-
-		/// Public key of the replicator.
-		Key Replicator;
-	};
-
-	/// Notification of a replicator key.
-	template<VersionType version>
-	struct MosaicIdNotification;
-
-	template<>
-	struct MosaicIdNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_MosaicId_v1_Notification;
-
-	public:
-		explicit MosaicIdNotification(const UnresolvedMosaicId& paidMosaicId, const MosaicId& validMosaicId)
-			: Notification(Notification_Type, sizeof(MosaicIdNotification<1>))
-			, PaidMosaicId(paidMosaicId)
-			, ValidMosaicId(validMosaicId)
-		{}
-
-	public:
-		/// Paid mosaic id.
-		UnresolvedMosaicId PaidMosaicId;
-
-		/// Valid mosaic id.
-		MosaicId ValidMosaicId;
-	};
+	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Verification_v1, 0x0005);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -181,213 +39,188 @@ namespace catapult { namespace model {
 	public:
 		explicit PrepareDriveNotification(
 			const Key& drive,
-			const BlockDuration& duration,
+			const Key& owner,
+            const BlockDuration& duration,
+			const BlockDuration& billingPeriod,
+			const Amount& billingPrice,
 			uint64_t size,
 			uint16_t replicas,
-			const Key& customer,
-			const model::UnresolvedMosaic& deposit)
+			uint8_t minReplicators,
+			uint8_t percentApprovers)
 			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
-			, Drive(drive)
+			, DriveKey(drive)
+			, Owner(owner)
 			, Duration(duration)
-			, Size(size)
+			, BillingPeriod(billingPeriod)
+			, BillingPrice(billingPrice)
+			, DriveSize(size)
 			, Replicas(replicas)
-			, Customer(customer)
-			, Deposit(deposit)
+			, MinReplicators(minReplicators)
+			, PercentApprovers(percentApprovers)
 		{}
 
 	public:
 		/// Public key of the drive multisig account.
-		Key Drive;
+		Key DriveKey;
 
-		/// Relative change of the duration of the drive in blocks.
-		BlockDuration Duration;
+		/// Public key of the drive owner.
+		Key Owner;
+
+        /// Duration of drive.
+        BlockDuration Duration;
+
+		/// Billing period of drive.
+		BlockDuration BillingPeriod;
+
+		/// Billing price of drive in storage units.
+		Amount BillingPrice;
 
 		/// The size of the drive.
-		uint64_t Size;
+		uint64_t DriveSize;
 
 		/// The number of drive replicas.
 		uint16_t Replicas;
 
-		/// Customer public key.
-		Key Customer;
+		/// Minimal count of replicator to send transaction from name of drive.
+		int8_t MinReplicators;
 
-		/// Customer deposit.
-		model::UnresolvedMosaic Deposit;
-	};
-
-	/// Notification of a drive prolongation.
-	template<VersionType version>
-	struct DriveProlongationNotification;
-
-	template<>
-	struct DriveProlongationNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Drive_Prolongation_v1_Notification;
-
-	public:
-		explicit DriveProlongationNotification(
-			const Key& drive,
-			const BlockDuration& duration,
-			const Key& customer,
-			const model::UnresolvedMosaic& deposit)
-			: Notification(Notification_Type, sizeof(DriveProlongationNotification<1>))
-			, Drive(drive)
-			, Duration(duration)
-			, Customer(customer)
-			, Deposit(deposit)
-		{}
-
-	public:
-		/// Public key of the drive multisig account.
-		Key Drive;
-
-		/// Relative change of the duration of the drive in blocks.
-		BlockDuration Duration;
-
-		/// Customer public key.
-		Key Customer;
-
-		/// Customer deposit.
-		model::UnresolvedMosaic Deposit;
+		/// Percent of approves from replicators to apply transaction.
+		int8_t PercentApprovers;
 	};
 
 	/// Notification of a drive deposit.
 	template<VersionType version>
-	struct DriveDepositNotification;
+	struct JoinToDriveNotification;
 
 	template<>
-	struct DriveDepositNotification<1> : public Notification {
+	struct JoinToDriveNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Drive_Deposit_v1_Notification;
+		static constexpr auto Notification_Type = Service_Join_To_Drive_v1_Notification;
 
 	public:
-		explicit DriveDepositNotification(
+		explicit JoinToDriveNotification(
 			const Key& drive,
-			const Key& replicator,
-			const model::UnresolvedMosaic& deposit)
-			: Notification(Notification_Type, sizeof(DriveDepositNotification<1>))
-			, Drive(drive)
+			const Key& replicator)
+			: Notification(Notification_Type, sizeof(JoinToDriveNotification<1>))
+			, DriveKey(drive)
 			, Replicator(replicator)
-			, Deposit(deposit)
 		{}
 
 	public:
 		/// Public key of the drive multisig account.
-		Key Drive;
+		const Key& DriveKey;
 
 		/// Replicator public key.
-		Key Replicator;
+        const Key& Replicator;
+	};
 
-		/// Replicator deposit.
-		model::UnresolvedMosaic Deposit;
+	struct DriveDeposit {
+		const Key& DriveKey;
+	};
+
+	struct FileDeposit {
+		const Key& DriveKey;
+		const Hash256& FileHash;
+	};
+
+	struct FileUpload {
+		const Key& DriveKey;
+		const uint64_t& FileSize;
 	};
 
 	/// Notification of a drive deposit.
 	template<VersionType version>
-	struct DriveDepositReturnNotification;
+	struct DriveFileSystemNotification;
 
 	template<>
-	struct DriveDepositReturnNotification<1> : public Notification {
+	struct DriveFileSystemNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Drive_Deposit_Return_v1_Notification;
+		static constexpr auto Notification_Type = Service_Drive_File_System_v1_Notification;
 
 	public:
-		explicit DriveDepositReturnNotification(
+		explicit DriveFileSystemNotification(
 			const Key& drive,
-			const Key& replicator,
-			const model::UnresolvedMosaic& deposit)
-			: Notification(Notification_Type, sizeof(DriveDepositReturnNotification<1>))
-			, Drive(drive)
-			, Replicator(replicator)
-			, Deposit(deposit)
+			const Key& signer,
+			const Hash256& rootHash,
+			const Hash256& xorRootHash,
+			const uint16_t& addActionsCount,
+			const model::AddAction* addActionsPtr,
+			const uint16_t& removeActionsCount,
+			const model::RemoveAction* removeActionsPtr)
+			: Notification(Notification_Type, sizeof(DriveFileSystemNotification<1>))
+			, DriveKey(drive)
+			, Signer(signer)
+			, RootHash(rootHash)
+			, XorRootHash(xorRootHash)
+			, AddActionsCount(addActionsCount)
+			, AddActionsPtr(addActionsPtr)
+			, RemoveActionsCount(removeActionsCount)
+			, RemoveActionsPtr(removeActionsPtr)
 		{}
 
 	public:
-		/// Public key of the drive multisig account.
-		Key Drive;
+		/// Key of drive.
+		const Key& DriveKey;
 
-		/// Replicator public key.
-		Key Replicator;
+		/// Signer of transaction.
+		const Key& Signer;
 
-		/// Replicator deposit.
-		model::UnresolvedMosaic Deposit;
+		/// A new RootHash of drive.
+		const Hash256& RootHash;
+
+		/// Xor of a new RootHash of drive with previous RootHash.
+		const Hash256& XorRootHash;
+
+		/// Count of add actions.
+		const uint16_t& AddActionsCount;
+
+		/// Actions to add files to drive.
+		const model::AddAction* AddActionsPtr;
+
+		/// Count of remove actions.
+		const uint16_t& RemoveActionsCount;
+
+		/// Actions to remove files from drive.
+		const model::RemoveAction* RemoveActionsPtr;
 	};
 
-	/// Notification of a drive file deposit.
+	/// Notification of a drive files deposit.
 	template<VersionType version>
-	struct FileDepositNotification;
+	struct FilesDepositNotification;
 
 	template<>
-	struct FileDepositNotification<1> : public Notification {
+	struct FilesDepositNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_File_Deposit_v1_Notification;
+		static constexpr auto Notification_Type = Service_Files_Deposit_v1_Notification;
 
 	public:
-		explicit FileDepositNotification(
+		explicit FilesDepositNotification(
 			const Key& drive,
 			const Key& replicator,
-			const model::UnresolvedMosaic& deposit,
-			Hash256 fileHash)
-			: Notification(Notification_Type, sizeof(FileDepositNotification<1>))
-			, Drive(drive)
+			uint16_t filesCount,
+			const File* filesPtr)
+			: Notification(Notification_Type, sizeof(FilesDepositNotification<1>))
+			, DriveKey(drive)
 			, Replicator(replicator)
-			, Deposit(deposit)
-			, FileHash(fileHash)
+			, FilesCount(filesCount)
+			, FilesPtr(filesPtr)
 		{}
 
 	public:
 		/// Public key of the drive multisig account.
-		Key Drive;
+		Key DriveKey;
 
 		/// Replicator public key.
 		Key Replicator;
 
-		/// Replicator deposit.
-		model::UnresolvedMosaic Deposit;
+		/// Files count.
+		uint16_t FilesCount;
 
-		/// File hash.
-		Hash256 FileHash;
-	};
-
-	/// Notification of a drive file deposit.
-	template<VersionType version>
-	struct FileDepositReturnNotification;
-
-	template<>
-	struct FileDepositReturnNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_File_Deposit_Return_v1_Notification;
-
-	public:
-		explicit FileDepositReturnNotification(
-			const Key& drive,
-			const Key& replicator,
-			const model::UnresolvedMosaic& deposit,
-			Hash256 fileHash)
-			: Notification(Notification_Type, sizeof(FileDepositReturnNotification<1>))
-			, Drive(drive)
-			, Replicator(replicator)
-			, Deposit(deposit)
-			, FileHash(fileHash)
-		{}
-
-	public:
-		/// Public key of the drive multisig account.
-		Key Drive;
-
-		/// Replicator public key.
-		Key Replicator;
-
-		/// Replicator deposit.
-		model::UnresolvedMosaic Deposit;
-
-		/// File hash.
-		Hash256 FileHash;
+		/// Files pointer.
+		const File* FilesPtr;
 	};
 
 	/// Notification of a drive verification.
@@ -403,12 +236,10 @@ namespace catapult { namespace model {
 	public:
 		explicit DriveVerificationNotification(
 			const Key& drive,
-			const Key& replicator,
-			const model::UnresolvedMosaic& deposit)
+			const Key& replicator)
 			: Notification(Notification_Type, sizeof(DriveVerificationNotification<1>))
 			, Drive(drive)
 			, Replicator(replicator)
-			, Deposit(deposit)
 		{}
 
 	public:
@@ -417,186 +248,5 @@ namespace catapult { namespace model {
 
 		/// Replicator public key.
 		Key Replicator;
-
-		/// Replicator deposit.
-		model::UnresolvedMosaic Deposit;
-	};
-
-	struct DriveFileData {
-		explicit DriveFileData(const Key& drive, const DriveFile& file)
-			: DriveFileData(drive, file.Hash, file.ParentHash, file.NameSize, file.NamePtr())
-		{}
-
-		explicit DriveFileData(
-				const Key& drive,
-				const Hash256& hash,
-				const Hash256& parentHash,
-				uint8_t nameSize,
-				const uint8_t* namePtr)
-				: Drive(drive)
-				, Hash(hash)
-				, ParentHash(parentHash) {
-			Name.resize(nameSize);
-			memcpy(Name.data(), namePtr, nameSize);
-		}
-
-		/// Public key of the drive multisig account.
-		Key Drive;
-
-		/// Directory hash.
-		Hash256 Hash;
-
-		/// Parent directory hash.
-		Hash256 ParentHash;
-
-		/// Directory name.
-		std::string Name;
-	};
-
-	/// Base class of drive file/directory notifications.
-	struct FileNotification : public Notification {
-		explicit FileNotification(
-			NotificationType type,
-			size_t size,
-			const Key& drive,
-			const DriveFile& file)
-			: Notification(type, size)
-			, File(drive, file)
-		{}
-
-		/// Drive file data.
-		DriveFileData File;
-	};
-
-	/// Notification of a new drive directory.
-	template<VersionType version>
-	struct CreateDirectoryNotification;
-
-	template<>
-	struct CreateDirectoryNotification<1> : public FileNotification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Create_Directory_v1_Notification;
-
-	public:
-		explicit CreateDirectoryNotification(const Key& drive, const DriveFile& file)
-			: FileNotification(Notification_Type, sizeof(CreateDirectoryNotification<1>), drive, file)
-		{}
-	};
-
-	/// Notification of removing drive directory.
-	template<VersionType version>
-	struct RemoveDirectoryNotification;
-
-	template<>
-	struct RemoveDirectoryNotification<1> : public FileNotification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Create_Directory_v1_Notification;
-
-	public:
-		explicit RemoveDirectoryNotification(const Key& drive, const DriveFile& file)
-			: FileNotification(Notification_Type, sizeof(RemoveDirectoryNotification<1>), drive, file)
-		{}
-	};
-
-	/// Notification of uploading drive file.
-	template<VersionType version>
-	struct UploadFileNotification;
-
-	template<>
-	struct UploadFileNotification<1> : public FileNotification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Upload_File_v1_Notification;
-
-	public:
-		explicit UploadFileNotification(const Key& drive, const DriveFile& file)
-			: FileNotification(Notification_Type, sizeof(UploadFileNotification<1>), drive, file)
-		{}
-	};
-
-	/// Notification of downloading drive file.
-	template<VersionType version>
-	struct DownloadFileNotification;
-
-	template<>
-	struct DownloadFileNotification<1> : public FileNotification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Upload_File_v1_Notification;
-
-	public:
-		explicit DownloadFileNotification(const Key& drive, const DriveFile& file)
-			: FileNotification(Notification_Type, sizeof(DownloadFileNotification<1>), drive, file)
-		{}
-	};
-
-	/// Notification of drive file deletion.
-	template<VersionType version>
-	struct DeleteFileNotification;
-
-	template<>
-	struct DeleteFileNotification<1> : public FileNotification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Delete_File_v1_Notification;
-
-	public:
-		explicit DeleteFileNotification(const Key& drive, const DriveFile& file)
-			: FileNotification(Notification_Type, sizeof(DeleteFileNotification<1>), drive, file)
-		{}
-	};
-
-	/// Base class of drive file/directory move/copy notifications.
-	struct FileMoveCopyNotification : public Notification {
-		explicit FileMoveCopyNotification(
-			NotificationType type,
-			size_t size,
-			const Key& drive,
-			const DriveFile& source,
-			const DriveFile& destination)
-			: Notification(type, size)
-			, Source(drive, source)
-			, Destination(drive, destination)
-		{}
-
-		/// Source drive file data.
-		DriveFileData Source;
-
-		/// Destination drive file data.
-		DriveFileData Destination;
-	};
-
-	/// Notification of drive file deletion.
-	template<VersionType version>
-	struct MoveFileNotification;
-
-	template<>
-	struct MoveFileNotification<1> : public FileMoveCopyNotification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Copy_File_v1_Notification;
-
-	public:
-		explicit MoveFileNotification(const Key& drive, const DriveFile& source, const DriveFile& destination)
-			: FileMoveCopyNotification(Notification_Type, sizeof(MoveFileNotification<1>), drive, source, destination)
-		{}
-	};
-
-	/// Notification of drive file deletion.
-	template<VersionType version>
-	struct CopyFileNotification;
-
-	template<>
-	struct CopyFileNotification<1> : public FileMoveCopyNotification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Copy_File_v1_Notification;
-
-	public:
-		explicit CopyFileNotification(const Key& drive, const DriveFile& source, const DriveFile& destination)
-			: FileMoveCopyNotification(Notification_Type, sizeof(CopyFileNotification<1>), drive, source, destination)
-		{}
 	};
 }}

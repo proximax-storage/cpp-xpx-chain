@@ -77,6 +77,26 @@ namespace catapult {
 	struct Amount_tag {};
 	using Amount = utils::BaseValue<uint64_t, Amount_tag>;
 
+	enum UnresolvedAmountType : uint8_t {
+	    Default,
+	    DriveDeposit,
+	    FileDeposit,
+	    FileUpload
+	};
+
+	struct UnresolvedAmount : public Amount {
+		/// Creates unresolved amount from \a value, \a type and \a data.
+		constexpr explicit UnresolvedAmount(uint64_t value = 0, const UnresolvedAmountType& type = UnresolvedAmountType::Default, uint8_t* data = nullptr)
+		: Amount(value)
+		, Type(type)
+		, Data(data)
+		{}
+
+	public:
+		UnresolvedAmountType Type;
+		uint8_t* Data;
+	};
+
 	struct MosaicId_tag {};
 	using MosaicId = utils::BaseValue<uint64_t, MosaicId_tag>;
 

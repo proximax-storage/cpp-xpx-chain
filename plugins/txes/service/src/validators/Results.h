@@ -14,77 +14,56 @@ namespace catapult { namespace validators {
 /// Defines a drive validation result with \a DESCRIPTION and \a CODE.
 #define DEFINE_SERVICE_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Service, DESCRIPTION, CODE, None)
 
-	/// Validation failed because the drive key is not a multisig.
-	DEFINE_SERVICE_RESULT(Drive_Key_Is_Not_Multisig, 1);
+	/// Drive duration is not divide on billing period.
+	DEFINE_SERVICE_RESULT(Drive_Duration_Is_Not_Divide_On_BillingPeriod, 1);
+
+	/// Percent approvers is not in range 0 - 100.
+	DEFINE_SERVICE_RESULT(Wrong_Percent_Approvers, 2);
+
+	/// Minimal count of replicators to start the contract more than count of replicas.
+	DEFINE_SERVICE_RESULT(Min_Replicators_More_Than_Relicas, 3);
+
+    /// Validation failed because drive duration is zero.
+    DEFINE_SERVICE_RESULT(Drive_Invalid_Duration, 4);
+
+    /// Validation failed because size is zero.
+    DEFINE_SERVICE_RESULT(Drive_Invalid_Size, 5);
+
+    /// Validation failed because count of replicas is zero.
+    DEFINE_SERVICE_RESULT(Drive_Invalid_Replicas, 6);
+
+    /// Validation failed because duration is zero.
+    DEFINE_SERVICE_RESULT(Drive_Invalid_Min_Replicators, 7);
 
 	/// Validation failed because the drive already exists.
-	DEFINE_SERVICE_RESULT(Drive_Alredy_Exists, 2);
-
-	/// Validation failed because the drive doesn't exist.
-	DEFINE_SERVICE_RESULT(Drive_Doesnt_Exist, 3);
-
-	/// Validation failed because drive duration is zero.
-	DEFINE_SERVICE_RESULT(Drive_Invalid_Duration, 4);
-
-	/// Validation failed because drive prolongation duration is zero.
-	DEFINE_SERVICE_RESULT(Drive_Invalid_Prolongation_Duration, 5);
-
-	/// Validation failed because duration is invalid.
-	DEFINE_SERVICE_RESULT(Drive_Invalid_Size, 6);
-
-	/// Validation failed because duration is invalid.
-	DEFINE_SERVICE_RESULT(Drive_Invalid_Replicas, 7);
+	DEFINE_SERVICE_RESULT(Drive_Alredy_Exists, 8);
 
 	/// Validation failed because plugin configuration data is malformed.
-	DEFINE_SERVICE_RESULT(Plugin_Config_Malformed, 8);
+	DEFINE_SERVICE_RESULT(Plugin_Config_Malformed, 9);
 
-	/// Validation failed because a single mosaic is not single.
-	DEFINE_SERVICE_RESULT(Multiple_Mosaics, 9);
+	/// Validation failed because operation is not permitted for drive account.
+	DEFINE_SERVICE_RESULT(Operation_Is_Not_Permitted, 10);
 
-	/// Validation failed because mosaic amount is zero.
-	DEFINE_SERVICE_RESULT(Zero_Amount, 10);
+	/// Validation failed because the drive is not exist.
+	DEFINE_SERVICE_RESULT(Drive_It_Not_Exist, 11);
 
-	/// Validation failed because drive deposit is too small.
-	DEFINE_SERVICE_RESULT(Drive_Deposit_Too_Small, 11);
+	/// Validation failed because the replicator already connected to drive.
+	DEFINE_SERVICE_RESULT(Replicator_Already_Connected_To_Drive, 12);
 
-	/// Validation failed because drive deposit is already returned.
-	DEFINE_SERVICE_RESULT(Drive_Deposit_Already_Returned, 12);
+	/// Validation failed because the root hash of transaction is not equal to root hash of drive in db.
+	DEFINE_SERVICE_RESULT(Root_Hash_Is_Not_Equal, 13);
 
-	/// Validation failed because returned drive deposit is invalid.
-	DEFINE_SERVICE_RESULT(Returned_Drive_Deposit_Invalid, 13);
+	/// Validation failed because the drive already contains file with the same hash.
+	DEFINE_SERVICE_RESULT(File_Hash_Redudant, 14);
 
-	/// Validation failed because returned drive deposit is invalid.
-	DEFINE_SERVICE_RESULT(Returned_File_Deposit_Invalid, 14);
+	/// Validation failed because the drive doesn't contain file to remove.
+	DEFINE_SERVICE_RESULT(File_Is_Not_Exist, 15);
 
-	/// Validation failed because file deposit is already returned.
-	DEFINE_SERVICE_RESULT(File_Deposit_Already_Returned, 15);
+	/// Validation failed because the drive contains to many files.
+	DEFINE_SERVICE_RESULT(Too_Many_Files_On_Drive, 16);
 
 	/// Validation failed because a drive replicator is not registered.
-	DEFINE_SERVICE_RESULT(Drive_Replicator_Not_Registered, 16);
-
-	/// Validation failed because a drive directory already exists.
-	DEFINE_SERVICE_RESULT(Drive_Directory_Exists, 17);
-
-	/// Validation failed because a drive directory doesn't  exist.
-	DEFINE_SERVICE_RESULT(Drive_Directory_Doesnt_Exist, 18);
-
-	/// Validation failed because a drive parent directory doesn't  exist.
-	DEFINE_SERVICE_RESULT(Drive_Parent_Directory_Doesnt_Exist, 19);
-
-	/// Validation failed because a drive file already exists.
-	DEFINE_SERVICE_RESULT(Drive_File_Exists, 20);
-
-	/// Validation failed because a drive file doesn't exist.
-	DEFINE_SERVICE_RESULT(Drive_File_Doesnt_Exist, 21);
-
-	/// Validation failed because destination file and source file are from different drives.
-	DEFINE_SERVICE_RESULT(Desitination_And_Source_Are_From_Different_Drives, 22);
-
-	/// Validation failed because destination file and source file have different hash.
-	DEFINE_SERVICE_RESULT(Desitination_And_Source_Have_Different_Hash, 23);
-
-	/// Validation failed because not mosaic is not valid.
-	DEFINE_SERVICE_RESULT(Invalid_Mosaic, 24);
+	DEFINE_SERVICE_RESULT(Drive_Replicator_Not_Registered, 17);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

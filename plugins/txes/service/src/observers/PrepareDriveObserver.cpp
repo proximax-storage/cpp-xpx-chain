@@ -5,7 +5,6 @@
 **/
 
 #include "Observers.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "src/cache/DriveCache.h"
 
 namespace catapult { namespace observers {
@@ -13,18 +12,19 @@ namespace catapult { namespace observers {
 	DEFINE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		if (NotifyMode::Commit == context.Mode) {
-			state::DriveEntry driveEntry(notification.Drive);
-			driveEntry.setStart(context.Height);
+			state::DriveEntry driveEntry(notification.DriveKey);
+			driveEntry.setOwner(notification.Owner);
 			driveEntry.setDuration(notification.Duration);
-			driveEntry.setSize(notification.Size);
+			driveEntry.setBillingPeriod(notification.BillingPeriod);
+			driveEntry.setBillingPrice(notification.BillingPrice);
+			driveEntry.setSize(notification.DriveSize);
 			driveEntry.setReplicas(notification.Replicas);
-			state::DepositMap depositMap;
-			depositMap.emplace(Hash256(), notification.Deposit);
-			driveEntry.customers().emplace(notification.Customer, depositMap);
+			driveEntry.setMinReplicators(notification.MinReplicators);
+			driveEntry.setMinApprovers(notification.PercentApprovers);
 			driveCache.insert(driveEntry);
 		} else {
-			if (driveCache.contains(notification.Drive))
-				driveCache.remove(notification.Drive);
+			if (driveCache.contains(notification.DriveKey))
+				driveCache.remove(notification.DriveKey);
 		}
 	});
 }}

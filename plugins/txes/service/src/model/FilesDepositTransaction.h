@@ -13,7 +13,7 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-	/// Binary layout for a join to drive transaction body.
+	/// Binary layout for a file deposit transaction body.
 	template<typename THeader>
 	struct FilesDepositTransactionBody : public THeader {
 	private:

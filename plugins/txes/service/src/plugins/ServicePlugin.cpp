@@ -8,19 +8,68 @@
 #include "ServicePlugin.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
-#include "src/cache/FileCache.h"
-#include "src/cache/FileCacheStorage.h"
+#include "src/model/ServiceNotifications.h"
 #include "src/observers/Observers.h"
-#include "src/plugins/ServiceTransactionPlugin.h"
+#include "src/plugins/DriveFileSystemTransactionPlugin.h"
+#include "src/plugins/FilesDepositTransactionPlugin.h"
+#include "src/plugins/JoinToDriveTransactionPlugin.h"
+#include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/validators/Validators.h"
+#include "src/utils/ServiceUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
 
 namespace catapult { namespace plugins {
 
 	void RegisterServiceSubsystem(PluginManager& manager) {
-		manager.addTransactionSupport(CreateServiceTransactionPlugin(manager.immutableConfig()));
+        const auto& pConfigHolder = manager.configHolder();
+        manager.addTransactionSupport(CreatePrepareDriveTransactionPlugin());
+		manager.addTransactionSupport(CreateDriveFileSystemTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateFilesDepositTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateJoinToDriveTransactionPlugin(pConfigHolder));
 
-		const auto& pConfigHolder = manager.configHolder();
+        manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+            const auto& driveCache = cache.template sub<cache::DriveCache>();
+            switch (unresolved.Type) {
+            	case UnresolvedAmountType::DriveDeposit: {
+					const auto &driveKey = reinterpret_cast<model::DriveDeposit*>(unresolved.Data)->DriveKey;
+
+					if (driveCache.contains(driveKey)) {
+						resolved = utils::CalculateDriveDeposit(driveCache.find(driveKey).get());
+						return true;
+					}
+					break;
+				}
+				case UnresolvedAmountType::FileDeposit: {
+					auto fileDeposit = reinterpret_cast<model::FileDeposit*>(unresolved.Data);
+
+					if (driveCache.contains(fileDeposit->DriveKey)) {
+						const auto& driveEntry = driveCache.find(fileDeposit->DriveKey).get();
+
+						if (driveEntry.files().count(fileDeposit->FileHash)) {
+							resolved = utils::CalculateFileDeposit(driveEntry, fileDeposit->FileHash);
+							return true;
+						}
+					}
+					break;
+				}
+				case UnresolvedAmountType::FileUpload: {
+					auto fileUpload = reinterpret_cast<model::FileUpload*>(unresolved.Data);
+
+					if (driveCache.contains(fileUpload->DriveKey)) {
+						const auto& driveEntry = driveCache.find(fileUpload->DriveKey).get();
+
+						resolved = utils::CalculateFileUpload(driveEntry, fileUpload->FileSize);
+						return true;
+					}
+					break;
+				}
+				default:
+					break;
+            }
+
+            return false;
+        });
+
 		manager.addCacheSupport<cache::DriveCacheStorage>(
 			std::make_unique<cache::DriveCache>(manager.cacheConfig(cache::DriveCache::Name), pConfigHolder));
 
@@ -33,56 +82,30 @@ namespace catapult { namespace plugins {
 			});
 		});
 
-		manager.addCacheSupport<cache::FileCacheStorage>(
-			std::make_unique<cache::FileCache>(manager.cacheConfig(cache::FileCache::Name), pConfigHolder));
-
-		using FileCacheHandlersService = CacheHandlers<cache::FileCacheDescriptor>;
-		FileCacheHandlersService::Register<model::FacilityCode::File>(manager);
-
-		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("FILE C"), [&cache]() {
-				return cache.sub<cache::FileCache>().createView(cache.height())->size();
-			});
-		});
-
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-					.add(validators::CreateTransferMosaicsValidator())
-					.add(validators::CreateMosaicIdValidator())
-					.add(validators::CreateDriveProlongationValidator())
+					.add(validators::CreatePrepareDriveArgumentsValidator())
 					.add(validators::CreateServicePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder = manager.configHolder()](auto& builder) {
 			builder
-					.add(validators::CreateDriveValidator())
-					.add(validators::CreateReplicatorValidator())
-					.add(validators::CreatePrepareDriveValidator())
-					.add(validators::CreateDriveDepositValidator())
-					.add(validators::CreateDriveDepositReturnValidator())
-					.add(validators::CreateFileDepositReturnValidator())
-					.add(validators::CreateCreateDirectoryValidator())
-					.add(validators::CreateRemoveDirectoryValidator())
-					.add(validators::CreateUploadFileValidator())
-					.add(validators::CreateDownloadFileValidator())
-					.add(validators::CreateDeleteFileValidator())
-					.add(validators::CreateMoveFileValidator())
-					.add(validators::CreateCopyFileValidator());
+					.add(validators::CreateDrivePermittedOperationValidator())
+					.add(validators::CreateFilesDepositValidator())
+					.add(validators::CreateJoinToDriveValidator())
+					.add(validators::CreatePrepareDrivePermissionValidator())
+					.add(validators::CreateDriveFileSystemValidator())
+					// CreateMaxFilesOnDriveValidator must be after CreateDriveFileSystemValidator
+					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder));
 		});
 
 		manager.addObserverHook([pConfigHolder = manager.configHolder()](auto& builder) {
 			builder
 					.add(observers::CreatePrepareDriveObserver())
-					.add(observers::CreateDriveProlongationObserver())
-					.add(observers::CreateDriveDepositObserver(pConfigHolder))
-					.add(observers::CreateFileDepositObserver())
 					.add(observers::CreateDriveVerificationObserver())
-					.add(observers::CreateCreateDirectoryObserver())
-					.add(observers::CreateRemoveDirectoryObserver())
-					.add(observers::CreateUploadFileObserver())
-					.add(observers::CreateDeleteFileObserver())
-					.add(observers::CreateMoveFileObserver())
-					.add(observers::CreateCopyFileObserver());
+					.add(observers::CreateDriveFileSystemObserver())
+					.add(observers::CreateFilesDepositObserver())
+					.add(observers::CreateJoinToDriveObserver());
 		});
 	}
 }}

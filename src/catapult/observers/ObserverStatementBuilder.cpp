@@ -56,6 +56,10 @@ namespace catapult { namespace observers {
 			return resolved;
 		};
 
-		return model::ResolverContext(resolveAndCapture, resolveAndCapture);
+		auto resolveAndNotCapture = [resolverContext](const auto& unresolved) {
+			return resolverContext.resolve(unresolved);
+		};
+
+		return model::ResolverContext(resolveAndCapture, resolveAndCapture, resolveAndNotCapture);
 	}
 }}
