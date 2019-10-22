@@ -25,14 +25,44 @@ namespace catapult { namespace cache {
 		using Serializer = OfferCacheDescriptor::Serializer;
 	};
 
-	using OfferSingleSetCacheTypesAdapter =
-		SingleSetAndPatriciaTreeCacheTypesAdapter<OfferCacheTypes::PrimaryTypes, OfferPatriciaTree>;
-
-	struct OfferBaseSetDeltaPointers : public OfferSingleSetCacheTypesAdapter::BaseSetDeltaPointers {
+	struct OfferBaseSetDeltaPointers {
+		OfferCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
 		OfferCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pHeightGrouping;
+		std::shared_ptr<OfferPatriciaTree::DeltaType> pPatriciaTree;
 	};
 
-	struct OfferBaseSets : public OfferSingleSetCacheTypesAdapter::BaseSets<OfferBaseSetDeltaPointers> {
-		using OfferSingleSetCacheTypesAdapter::BaseSets<OfferBaseSetDeltaPointers>::BaseSets;
+	struct OfferBaseSets : public CacheDatabaseMixin {
+	public:
+		/// Indicates the set is not ordered.
+		using IsOrderedSet = std::false_type;
+
+	public:
+		explicit OfferBaseSets(const CacheConfiguration& config)
+				: CacheDatabaseMixin(config, { "default", "key_lookup" })
+				, Primary(GetContainerMode(config), database(), 0)
+				, HeightGrouping(GetContainerMode(config), database(), 1)
+				, PatriciaTree(hasPatriciaTreeSupport(), database(), 2)
+		{}
+
+	public:
+		OfferCacheTypes::PrimaryTypes::BaseSetType Primary;
+		OfferCacheTypes::HeightGroupingTypes::BaseSetType HeightGrouping;
+		CachePatriciaTree<OfferPatriciaTree> PatriciaTree;
+
+	public:
+		OfferBaseSetDeltaPointers rebase() {
+			return { Primary.rebase(), HeightGrouping.rebase(), PatriciaTree.rebase() };
+		}
+
+		OfferBaseSetDeltaPointers rebaseDetached() const {
+			return { Primary.rebaseDetached(), HeightGrouping.rebaseDetached(), PatriciaTree.rebaseDetached() };
+		}
+
+		void commit() {
+			Primary.commit();
+			HeightGrouping.commit();
+			PatriciaTree.commit();
+			flush();
+		}
 	};
 }}
