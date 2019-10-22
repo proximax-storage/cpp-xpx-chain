@@ -7,12 +7,8 @@
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"
 #include "ExchangePlugin.h"
-#include "src/cache/BuyOfferCache.h"
-#include "src/cache/BuyOfferCacheStorage.h"
-#include "src/cache/DealCache.h"
-#include "src/cache/DealCacheStorage.h"
-#include "src/cache/SellOfferCache.h"
-#include "src/cache/SellOfferCacheStorage.h"
+#include "src/cache/OfferCache.h"
+#include "src/cache/OfferCacheStorage.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/BuyOfferTransactionPlugin.h"
 #include "src/plugins/RemoveOfferTransactionPlugin.h"
@@ -26,59 +22,37 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateSellOfferTransactionPlugin());
 		manager.addTransactionSupport(CreateRemoveOfferTransactionPlugin());
 
-		manager.addCacheSupport<cache::BuyOfferCacheStorage>(
-			std::make_unique<cache::BuyOfferCache>(manager.cacheConfig(cache::BuyOfferCache::Name)));
+		auto pConfigHolder = manager.configHolder();
+		manager.addCacheSupport<cache::OfferCacheStorage>(
+			std::make_unique<cache::OfferCache>(manager.cacheConfig(cache::OfferCache::Name), pConfigHolder));
 
-		using CacheHandlersBuyOffer = CacheHandlers<cache::BuyOfferCacheDescriptor>;
-		CacheHandlersBuyOffer::Register<model::FacilityCode::Exchange>(manager);
+		using CacheHandlersOffer = CacheHandlers<cache::OfferCacheDescriptor>;
+		CacheHandlersOffer::Register<model::FacilityCode::Exchange>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("BUYOFFER C"), [&cache]() {
-				return cache.sub<cache::BuyOfferCache>().createView(cache.height())->size();
+			counters.emplace_back(utils::DiagnosticCounterId("OFFER C"), [&cache]() {
+				return cache.sub<cache::OfferCache>().createView(cache.height())->size();
 			});
 		});
 
-		manager.addCacheSupport<cache::SellOfferCacheStorage>(
-			std::make_unique<cache::SellOfferCache>(manager.cacheConfig(cache::SellOfferCache::Name)));
-
-		using CacheHandlersSellOffer = CacheHandlers<cache::SellOfferCacheDescriptor>;
-		CacheHandlersSellOffer::Register<model::FacilityCode::Exchange>(manager);
-
-		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("SELLOFFER C"), [&cache]() {
-				return cache.sub<cache::SellOfferCache>().createView(cache.height())->size();
-			});
-		});
-
-		manager.addCacheSupport<cache::DealCacheStorage>(
-			std::make_unique<cache::DealCache>(manager.cacheConfig(cache::DealCache::Name)));
-
-		using CacheHandlersDeal = CacheHandlers<cache::DealCacheDescriptor>;
-		CacheHandlersDeal::Register<model::FacilityCode::Exchange>(manager);
-
-		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("DEAL C"), [&cache]() {
-				return cache.sub<cache::DealCache>().createView(cache.height())->size();
-			});
-		});
-
-		manager.addStatefulValidatorHook([config = manager.immutableConfig()](auto& builder) {
+		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateBuyOfferValidator(config))
-				.add(validators::CreateSellOfferValidator(config))
-				.add(validators::CreateMatchedBuyOfferValidator())
-				.add(validators::CreateMatchedSellOfferValidator())
+				.add(validators::CreateExchangePluginConfigValidator());
+		});
+
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+			builder
+				.add(validators::CreateOfferValidator(pConfigHolder))
+				.add(validators::CreateMatchedOfferValidator())
 				.add(validators::CreateRemoveOfferValidator());
 		});
 
-		manager.addObserverHook([&manager](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
-				.add(observers::CreateBuyOfferObserver())
-				.add(observers::CreateMatchedBuyOfferObserver())
-				.add(observers::CreateSellOfferObserver())
-				.add(observers::CreateMatchedSellOfferObserver())
+				.add(observers::CreateOfferObserver())
+				.add(observers::CreateMatchedOfferObserver())
 				.add(observers::CreateRemoveOfferObserver())
-				.add(observers::CreateCleanupOffersObserver(manager));
+				.add(observers::CreateCleanupOffersObserver(pConfigHolder));
 		});
 	}
 }}

@@ -26,19 +26,24 @@ namespace catapult { namespace plugins {
 					auto transactionHash = ToShortHash(CalculateHash(transaction, config.GenerationHash));
 					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 
-					sub.notify(BuyOfferNotification<1>(
+					sub.notify(OfferNotification<1>(
 						transaction.Signer,
 						transactionHash,
-						transaction.Deadline,
+						OfferType::Buy,
+						transaction.Duration,
 						transaction.OfferCount,
 						transaction.OffersPtr()));
-					sub.notify(MatchedBuyOfferNotification<1>(
-						transaction.Signer,
-						transactionHash,
-						transaction.MatchedOfferCount,
-						transaction.MatchedOffersPtr(),
-						currencyMosaicId,
-						sub));
+
+					if (transaction.MatchedOfferCount) {
+						sub.notify(MatchedOfferNotification<1>(
+							transaction.Signer,
+							transactionHash,
+							OfferType::Buy,
+							transaction.MatchedOfferCount,
+							transaction.MatchedOffersPtr(),
+							currencyMosaicId,
+							sub));
+					}
 
 					Amount lockAmount(0);
 					auto pOffer = transaction.OffersPtr();
@@ -55,7 +60,7 @@ namespace catapult { namespace plugins {
 					break;
 				}
 				default:
-					CATAPULT_LOG(debug) << "invalid version of BuyOfferTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of OfferTransaction: " << transaction.EntityVersion();
 				}
 			};
 		}

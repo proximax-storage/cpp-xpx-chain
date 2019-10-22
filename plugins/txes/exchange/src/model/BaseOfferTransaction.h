@@ -20,7 +20,7 @@ namespace catapult { namespace model {
 		using TransactionType = BaseOfferTransactionBody<THeader>;
 
 	public:
-		Timestamp Deadline;
+		BlockDuration Duration;
 
 		uint8_t OfferCount;
 

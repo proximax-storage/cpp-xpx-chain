@@ -8,64 +8,33 @@
 #include "catapult/exceptions.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/utils/ShortHash.h"
+#include <cmath>
 
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)
+
+	/// Offer type
+	enum class OfferType : uint8_t {
+		/// Buy offer.
+		Buy,
+
+		/// Sell offer.
+		Sell
+	};
 
 	struct Offer {
 	public:
 		/// Mosaic for exchange.
 		UnresolvedMosaic Mosaic;
 
-		/// Sum of XPX suggested to be paid for remaining mosaic.
+		/// Sum of XPX suggested to be paid for mosaic.
 		Amount Cost;
 
 	private:
 		using AmountValueType = typeof(Amount::ValueType);
 
 	public:
-		Offer& operator+=(const Amount& amount) {
-			if (amount == Amount(0)) {
-				return *this;
-			}
-
-			if (Cost == Amount(0))
-				CATAPULT_THROW_RUNTIME_ERROR("mosaic price is not defined")
-
-			Cost = Cost + cost(amount);
-			Mosaic.Amount = Mosaic.Amount + amount;
-			return *this;
-		}
-
-		Offer& operator-=(const Amount& amount) {
-			if (amount == Amount(0)) {
-				return *this;
-			}
-
-			if (amount > Mosaic.Amount)
-				CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than mosaic amount", amount, Mosaic.Amount)
-
-			if (amount == Mosaic.Amount) {
-				Mosaic.Amount = Amount(0);
-				Cost = Amount(0);
-			} else {
-				Cost = Cost - cost(amount);
-				Mosaic.Amount = Mosaic.Amount - amount;
-			}
-
-			return *this;
-		}
-
-		Offer operator+(const Amount& amount) {
-			Offer offer{Mosaic, Cost};
-			return offer.operator+=(amount);
-		}
-
-		Offer operator-(const Amount& amount) {
-			Offer offer{Mosaic, Cost};
-			return offer.operator-=(amount);
-		}
 
 		Offer& operator+=(const Offer& rhs) {
 			if (rhs.Mosaic.MosaicId != Mosaic.MosaicId)
@@ -133,21 +102,18 @@ namespace catapult { namespace model {
 		}
 
 		Amount cost(const Amount& amount) const {
-			auto cost = static_cast<double>(Mosaic.Amount.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(Cost.unwrap());
+			auto cost = std::ceil(static_cast<double>(Mosaic.Amount.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(Cost.unwrap()));
 			return Amount(static_cast<AmountValueType>(cost));
 		}
 	};
 
-	struct ExistingOffer {
+	struct MatchedOffer : public Offer {
 	public:
 		/// The signer of the transaction with matched offer.
 		Key TransactionSigner;
 
 		/// The hash of the transaction with matched offer.
 		utils::ShortHash TransactionHash;
-	};
-
-	struct MatchedOffer : public Offer, public ExistingOffer {
 	};
 
 #pragma pack(pop)

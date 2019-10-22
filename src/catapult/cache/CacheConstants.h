@@ -41,10 +41,7 @@ namespace catapult { namespace cache {
 		BlockchainUpgrade,
 		Drive,
 		File,
-		BuyOffer,
-		SellOffer,
-		Deal,
-		OfferDeadline,
+		Offer,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

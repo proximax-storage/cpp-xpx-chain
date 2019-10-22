@@ -21,10 +21,8 @@ namespace catapult { namespace plugins {
 			case 1:
 				sub.notify(RemoveOfferNotification<1>(
 					transaction.Signer,
-					transaction.BuyOfferCount,
-					transaction.BuyOfferHashesPtr(),
-					transaction.SellOfferCount,
-					transaction.SellOfferHashesPtr()));
+					transaction.OfferCount,
+					transaction.OfferHashesPtr()));
 				break;
 
 			default:

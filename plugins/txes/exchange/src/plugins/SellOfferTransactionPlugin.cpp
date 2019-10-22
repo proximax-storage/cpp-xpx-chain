@@ -26,19 +26,24 @@ namespace catapult { namespace plugins {
 					auto transactionHash = ToShortHash(CalculateHash(transaction, config.GenerationHash));
 					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 
-					sub.notify(SellOfferNotification<1>(
+					sub.notify(OfferNotification<1>(
 						transaction.Signer,
 						transactionHash,
-						transaction.Deadline,
+						OfferType::Sell,
+						transaction.Duration,
 						transaction.OfferCount,
 						transaction.OffersPtr()));
-					sub.notify(MatchedSellOfferNotification<1>(
-						transaction.Signer,
-						transactionHash,
-						transaction.MatchedOfferCount,
-						transaction.MatchedOffersPtr(),
-						currencyMosaicId,
-						sub));
+
+					if (transaction.MatchedOfferCount) {
+						sub.notify(MatchedOfferNotification<1>(
+							transaction.Signer,
+							transactionHash,
+							OfferType::Sell,
+							transaction.MatchedOfferCount,
+							transaction.MatchedOffersPtr(),
+							currencyMosaicId,
+							sub));
+					}
 
 					auto pOffer = transaction.OffersPtr();
 					for (uint8_t i = 0; i < transaction.OfferCount; ++i, ++pOffer) {

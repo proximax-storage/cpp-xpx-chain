@@ -54,7 +54,8 @@ minPercentageOfRemoval = 66
 
 [plugin:catapult.plugins.exchange]
 
-dummy = to trigger plugin load
+enabled = false
+maxOfferDuration = 57600
 
 [plugin:catapult.plugins.lockhash]
 

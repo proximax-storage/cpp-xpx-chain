@@ -17,16 +17,16 @@ namespace catapult { namespace mongo { namespace plugins {
 			<< bson_stream::close_document;
 	}
 
-	void StreamOffers(bson_stream::document &builder, const model::Offer* pOffer, size_t numOffers) {
-		auto offerArray = builder << "offers" << bson_stream::open_array;
+	void StreamOffers(bson_stream::document &builder, const std::string& arrayName, const model::Offer* pOffer, size_t numOffers) {
+		auto offerArray = builder << arrayName << bson_stream::open_array;
 		for (auto i = 0u; i < numOffers; ++i, ++pOffer) {
 			StreamOffer(offerArray, *pOffer);
 		}
 		offerArray << bson_stream::close_array;
 	}
 
-	void StreamOffers(bson_stream::document &builder, const state::OfferMap& offers) {
-		auto offerArray = builder << "offers" << bson_stream::open_array;
+	void StreamOffers(bson_stream::document &builder, const std::string& arrayName, const state::OfferMap& offers) {
+		auto offerArray = builder << arrayName << bson_stream::open_array;
 		for (const auto& pair : offers) {
 			StreamOffer(offerArray, pair.second);
 		}

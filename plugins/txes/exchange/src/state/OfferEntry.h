@@ -5,17 +5,23 @@
 **/
 
 #pragma once
-#include "ExchangeEntryUtils.h"
+#include "src/model/Offer.h"
+#include <map>
 
 namespace catapult { namespace state {
+
+	using OfferMap = std::map<UnresolvedMosaicId, model::Offer>;
 
 	// Offer entry.
 	class OfferEntry {
 	public:
 		// Creates an exchange entry around \a transactionHash.
-		OfferEntry(const utils::ShortHash& transactionHash, const Key& transactionSigner)
+		OfferEntry(const utils::ShortHash& transactionHash, const Key& transactionSigner, model::OfferType offerType, const Height& deadline)
 			: m_transactionHash(transactionHash)
 			, m_transactionSigner(transactionSigner)
+			, m_offerType(offerType)
+			, m_deadline(deadline)
+			, m_expiryHeight(deadline)
 		{}
 
 	public:
@@ -31,34 +37,24 @@ namespace catapult { namespace state {
 			return m_transactionSigner;
 		}
 
-		/// Gets the offers deadline.
-		const Timestamp& deadline() const {
+		/// Gets the offer type.
+		model::OfferType offerType() const {
+			return m_offerType;
+		}
+
+		/// Gets the offer deadline.
+		const Height& deadline() const {
 			return m_deadline;
 		}
 
-		/// Sets the offers \a deadline.
-		void setDeadline(const Timestamp& deadline) {
-			m_deadline = deadline;
+		/// Gets the height at which to remove the offer.
+		const Height& expiryHeight() const {
+			return m_expiryHeight;
 		}
 
-		/// Gets the deposit for the offers (zero for sell offers).
-		const Amount& deposit() const {
-			return m_deposit;
-		}
-
-		/// Sets the \a deposit.
-		void setDeposit(const Amount& deposit) {
-			m_deposit = deposit;
-		}
-
-		/// Decreases the \a deposit.
-		void decreaseDeposit(const Amount& value) {
-			m_deposit = Amount(m_deposit.unwrap() - value.unwrap());
-		}
-
-		/// Increases the \a deposit.
-		void inreaseDeposit(const Amount& value) {
-			m_deposit = Amount(m_deposit.unwrap() + value.unwrap());
+		/// Sets the offer \a expiryHeight.
+		void setExpiryHeight(const Height& expiryHeight) {
+			m_expiryHeight = expiryHeight;
 		}
 
 		/// Gets the offers.
@@ -71,18 +67,39 @@ namespace catapult { namespace state {
 			return m_offers;
 		}
 
-		/// Removes fulfilled offers.
-		void cleanupOffers() {
-			for (auto iter = m_offers.begin(); iter != m_offers.end();) {
-				iter = (iter->second.Mosaic.Amount == Amount(0)) ? m_offers.erase(iter) : ++iter;
-			}
+		/// Checks whether offers are fulfilled.
+		bool fulfilled() {
+			Amount sum(0);
+			std::for_each(m_offers.begin(), m_offers.end(), [&sum](const auto& pair) {
+				sum = Amount(sum.unwrap() + pair.second.Mosaic.Amount.unwrap());
+			});
+
+			return (Amount(0) == sum);
+		}
+
+		/// Gets the initial offers.
+		OfferMap& initialOffers() {
+			return m_initialOffers;
+		}
+
+		/// Gets the initial offers.
+		const OfferMap& initialOffers() const {
+			return m_initialOffers;
+		}
+
+	public:
+		/// Returns \c true if offer is active at \a height.
+		constexpr bool isActive(catapult::Height height) const {
+			return height < m_expiryHeight;
 		}
 
 	private:
 		utils::ShortHash m_transactionHash;
 		Key m_transactionSigner;
-		Timestamp m_deadline;
-		Amount m_deposit;
+		model::OfferType m_offerType;
+		Height m_deadline;
+		Height m_expiryHeight;
 		OfferMap m_offers;
+		OfferMap m_initialOffers;
 	};
 }}

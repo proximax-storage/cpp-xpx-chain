@@ -15,39 +15,41 @@ namespace catapult { namespace model {
 /// Defines an exchange notification type with \a DESCRIPTION, \a CODE and \a CHANNEL.
 #define DEFINE_EXCHANGE_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Exchange, DESCRIPTION, CODE)
 
-	/// Buy offer.
-	DEFINE_EXCHANGE_NOTIFICATION(Buy_Offer_v1, 0x001, All);
+	/// Offer.
+	DEFINE_EXCHANGE_NOTIFICATION(Offer_v1, 0x001, All);
 
-	/// Sell offer.
-	DEFINE_EXCHANGE_NOTIFICATION(Sell_Offer_v1, 0x002, All);
-
-	/// Matched buy offer.
-	DEFINE_EXCHANGE_NOTIFICATION(Matched_Buy_Offer_v1, 0x003, All);
-
-	/// Matched sell offer.
-	DEFINE_EXCHANGE_NOTIFICATION(Matched_Sell_Offer_v1, 0x004, All);
+	/// Matched offer.
+	DEFINE_EXCHANGE_NOTIFICATION(Matched_Offer_v1, 0x002, All);
 
 	/// Remove offer.
-	DEFINE_EXCHANGE_NOTIFICATION(Matched_Remove_Offer_v1, 0x004, All);
+	DEFINE_EXCHANGE_NOTIFICATION(Matched_Remove_Offer_v1, 0x003, All);
 
 #undef DEFINE_EXCHANGE_NOTIFICATION
 
 	// endregion
 
-	/// A base offer notification.
-	template<typename TDerivedNotification>
-	struct BaseOfferNotification : public Notification {
+	/// Notification of an offer.
+	template<VersionType version>
+	struct OfferNotification;
+
+	template<>
+	struct OfferNotification<1> : public Notification {
 	public:
-		BaseOfferNotification(
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Exchange_Offer_v1_Notification;
+	public:
+		OfferNotification(
 				const Key& signer,
 				const utils::ShortHash& transactionHash,
-				const Timestamp& deadline,
+				OfferType offerType,
+				const BlockDuration& duration,
 				uint8_t offerCount,
 				const Offer* pOffers)
-			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+			: Notification(Notification_Type, sizeof(OfferNotification<1>))
 			, Signer(signer)
 			, TransactionHash(transactionHash)
-			, Deadline(deadline)
+			, OfferType(offerType)
+			, Duration(duration)
 			, OfferCount(offerCount)
 			, OffersPtr(pOffers)
 		{}
@@ -59,8 +61,11 @@ namespace catapult { namespace model {
 		/// Offer transaction hash.
 		const utils::ShortHash& TransactionHash;
 
+		/// The offer type.
+		model::OfferType OfferType;
+
 		/// Offer deadline.
-		const Timestamp& Deadline;
+		const BlockDuration& Duration;
 
 		/// Offer count.
 		uint8_t OfferCount;
@@ -69,50 +74,29 @@ namespace catapult { namespace model {
 		const Offer* OffersPtr;
 	};
 
-	/// Notification of a buy offer.
+	/// Notification of a matched offer.
 	template<VersionType version>
-	struct BuyOfferNotification;
+	struct MatchedOfferNotification;
 
 	template<>
-	struct BuyOfferNotification<1> : public BaseOfferNotification<BuyOfferNotification<1>> {
-	public:
-		using Base = BaseOfferNotification<BuyOfferNotification<1>>;
-		using Base::Base;
-
+	struct MatchedOfferNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Exchange_Buy_Offer_v1_Notification;
-	};
-
-	/// Notification of a sell offer.
-	template<VersionType version>
-	struct SellOfferNotification;
-
-	template<>
-	struct SellOfferNotification<1> : public BaseOfferNotification<SellOfferNotification<1>> {
-	public:
-		using Base = BaseOfferNotification<SellOfferNotification<1>>;
-		using Base::Base;
+		static constexpr auto Notification_Type = Exchange_Matched_Offer_v1_Notification;
 
 	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Exchange_Sell_Offer_v1_Notification;
-	};
-
-	/// A base offer notification.
-	template<typename TDerivedNotification>
-	struct BaseMatchedOfferNotification : public Notification {
-	public:
-		BaseMatchedOfferNotification(
+		MatchedOfferNotification(
 				const Key& signer,
 				const utils::ShortHash& transactionHash,
+				OfferType offerType,
 				uint8_t matchedOfferCount,
 				const MatchedOffer* pMatchedOffers,
 				UnresolvedMosaicId currencyMosaicId,
 				NotificationSubscriber& subscriber)
-			: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
+			: Notification(Notification_Type, sizeof(MatchedOfferNotification<1>))
 			, Signer(signer)
 			, TransactionHash(transactionHash)
+			, OfferType(offerType)
 			, MatchedOfferCount(matchedOfferCount)
 			, MatchedOffersPtr(pMatchedOffers)
 			, CurrencyMosaicId(currencyMosaicId)
@@ -126,6 +110,9 @@ namespace catapult { namespace model {
 		/// Offer transaction hash.
 		const utils::ShortHash& TransactionHash;
 
+		/// The offer type.
+		model::OfferType OfferType;
+
 		/// Number of matched offers.
 		uint8_t MatchedOfferCount;
 
@@ -137,36 +124,6 @@ namespace catapult { namespace model {
 
 		/// A notification subscriber.
 		NotificationSubscriber& Subscriber;
-	};
-
-	/// Notification of a matched buy offer.
-	template<VersionType version>
-	struct MatchedBuyOfferNotification;
-
-	template<>
-	struct MatchedBuyOfferNotification<1> : public BaseMatchedOfferNotification<MatchedBuyOfferNotification<1>> {
-	public:
-		using Base = BaseMatchedOfferNotification<MatchedBuyOfferNotification<1>>;
-		using Base::Base;
-
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Exchange_Matched_Buy_Offer_v1_Notification;
-	};
-
-	/// Notification of a matched sell offer.
-	template<VersionType version>
-	struct MatchedSellOfferNotification;
-
-	template<>
-	struct MatchedSellOfferNotification<1> : public BaseMatchedOfferNotification<MatchedSellOfferNotification<1>> {
-	public:
-		using Base = BaseMatchedOfferNotification<MatchedSellOfferNotification<1>>;
-		using Base::Base;
-
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Exchange_Matched_Sell_Offer_v1_Notification;
 	};
 
 	/// Notification of a matched sell offer.
@@ -182,32 +139,22 @@ namespace catapult { namespace model {
 	public:
 		RemoveOfferNotification(
 				const Key& signer,
-				uint8_t buyOfferCount,
-				const utils::ShortHash* pBuyOfferHashes,
-				uint8_t sellOfferCount,
-				const utils::ShortHash* pSellOfferHashes)
+				uint8_t offerCount,
+				const utils::ShortHash* pOfferHashes)
 			: Notification(Notification_Type, sizeof(RemoveOfferNotification<1>))
 			, Signer(signer)
-			, BuyOfferCount(buyOfferCount)
-			, BuyOfferHashesPtr(pBuyOfferHashes)
-			, SellOfferCount(sellOfferCount)
-			, SellOfferHashesPtr(pSellOfferHashes)
+			, OfferCount(offerCount)
+			, OfferHashesPtr(pOfferHashes)
 		{}
 
 	public:
 		/// Remove offer transaction signer.
 		const Key& Signer;
 
-		/// Buy offer count.
-		uint8_t BuyOfferCount;
+		/// Offer count.
+		uint8_t OfferCount;
 
-		/// Hashes of buy offers to remove.
-		const utils::ShortHash* BuyOfferHashesPtr;
-
-		/// Sell offer count.
-		uint8_t SellOfferCount;
-
-		/// Hashes of sell offers to remove.
-		const utils::ShortHash* SellOfferHashesPtr;
+		/// Hashes of offers to remove.
+		const utils::ShortHash* OfferHashesPtr;
 	};
 }}

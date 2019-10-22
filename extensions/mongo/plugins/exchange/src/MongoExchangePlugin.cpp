@@ -8,10 +8,7 @@
 #include "RemoveOfferMapper.h"
 #include "SellOfferMapper.h"
 #include "mongo/src/MongoPluginManager.h"
-#include "storages/MongoBuyOfferCacheStorage.h"
-#include "storages/MongoDealCacheStorage.h"
-#include "storages/MongoOfferDeadlineCacheStorage.h"
-#include "storages/MongoSellOfferCacheStorage.h"
+#include "storages/MongoOfferCacheStorage.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
@@ -21,16 +18,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateRemoveOfferTransactionMongoPlugin());
 
 	// cache storage support
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoBuyOfferCacheStorage(
-			manager.mongoContext(),
-			manager.configHolder()));
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoSellOfferCacheStorage(
-			manager.mongoContext(),
-			manager.configHolder()));
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDealCacheStorage(
-			manager.mongoContext(),
-			manager.configHolder()));
-	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoOfferDeadlineCacheStorage(
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoOfferCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()));
 }
