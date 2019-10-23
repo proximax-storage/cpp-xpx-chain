@@ -29,8 +29,8 @@ namespace catapult { namespace state {
 
     struct PaymentInformation {
         Key Receiver;
-        Amount PaymentAmount;
-        Height PaymentHeight;
+        catapult::Amount Amount;
+        catapult::Height Height;
     };
 
     struct BillingPeriodDescription {
@@ -75,12 +75,12 @@ namespace catapult { namespace state {
             return End.unwrap() == 0;
         }
 
-        void AddFile(const Hash256& file) {
+        void IncrementUndepositedFileCounter(const Hash256& file) {
             ++FilesWithoutDeposit[file];
         }
 
-        void RemoveFile(const Hash256& file) {
-            auto result = ++FilesWithoutDeposit[file];
+        void DecrementUndepositedFileCounter(const Hash256& file) {
+            auto result = --FilesWithoutDeposit[file];
 
             if (!result)
                 FilesWithoutDeposit.erase(file);
@@ -177,22 +177,22 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the number of the drive replicas.
-		uint8_t replicas() const {
+        uint16_t replicas() const {
 			return m_replicas;
 		}
 
 		/// Sets the number of the drive \a replicas.
-		void setReplicas(uint8_t replicas) {
+		void setReplicas(uint16_t replicas) {
 			m_replicas = replicas;
 		}
 
 		/// Gets the number of the drive replicas.
-		uint8_t minReplicators() const {
+        uint16_t minReplicators() const {
 			return m_minReplicators;
 		}
 
 		/// Sets the number of the drive \a replicators which need for start of drive.
-		void setMinReplicators(uint8_t replicators) {
+		void setMinReplicators(uint16_t replicators) {
 			m_minReplicators = replicators;
 		}
 
@@ -245,8 +245,8 @@ namespace catapult { namespace state {
 		Amount m_billingPrice;
 		std::vector<BillingPeriodDescription> m_billingHistory;
 		uint64_t m_size;
-		uint8_t m_replicas;
-		uint8_t m_minReplicators;
+        uint16_t m_replicas;
+        uint16_t m_minReplicators;
 		// Percent 0-100
 		uint8_t m_minApprovers;
 		FilesMap m_files;

@@ -15,7 +15,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(JoinToDrive, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		if (!driveCache.contains(notification.DriveKey))
-			return Failure_Service_Drive_It_Not_Exist;
+			return Failure_Service_Drive_Does_Not_Exist;
 
 		const auto& drive = driveCache.find(notification.DriveKey).get();
 		if (drive.hasReplicator(notification.Replicator))

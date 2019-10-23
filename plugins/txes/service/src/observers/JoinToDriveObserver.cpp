@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
 			// It is new replicator, so he doesn't have any files
 			for (const auto& file : driveEntry.files())
 				if (file.second.isActive())
-					info.AddFile(file.first);
+					info.IncrementUndepositedFileCounter(file.first);
 
 			driveEntry.replicators().emplace(notification.Replicator, info);
 

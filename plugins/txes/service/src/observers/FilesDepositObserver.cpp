@@ -14,14 +14,14 @@ namespace catapult { namespace observers {
 		auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		auto& driveEntry = driveCache.find(notification.DriveKey).get();
 
-		auto& replicator = driveEntry.replicators()[notification.Replicator];
+		auto& replicator = driveEntry.replicators().at(notification.Replicator);
 
 		auto filesPtr = notification.FilesPtr;
 		for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr) {
 			if (NotifyMode::Commit == context.Mode) {
-                replicator.RemoveFile(filesPtr->FileHash);
+                replicator.DecrementUndepositedFileCounter(filesPtr->FileHash);
 			} else {
-                replicator.AddFile(filesPtr->FileHash);
+                replicator.IncrementUndepositedFileCounter(filesPtr->FileHash);
 			}
 		}
 	});

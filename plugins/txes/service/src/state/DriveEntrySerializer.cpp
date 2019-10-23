@@ -16,8 +16,8 @@ namespace catapult { namespace state {
 			io::Write16(output, payments.size());
 			for (const auto& payment : payments) {
 				io::Write(output, payment.Receiver);
-				io::Write(output, payment.PaymentAmount);
-				io::Write(output, payment.PaymentHeight);
+				io::Write(output, payment.Amount);
+				io::Write(output, payment.Height);
 			}
 		}
 
@@ -26,8 +26,8 @@ namespace catapult { namespace state {
 			while (numPayments--) {
 				PaymentInformation payment;
 				io::Read(input, payment.Receiver);
-				io::Read(input, payment.PaymentAmount);
-				io::Read(input, payment.PaymentHeight);
+				io::Read(input, payment.Amount);
+				io::Read(input, payment.Height);
 
 				payments.emplace_back(payment);
 			}
@@ -155,8 +155,8 @@ namespace catapult { namespace state {
 		SaveBillingHistory(output, driveEntry.billingHistory());
 
 		io::Write64(output, driveEntry.size());
-		io::Write8(output, driveEntry.replicas());
-		io::Write8(output, driveEntry.minReplicators());
+		io::Write16(output, driveEntry.replicas());
+		io::Write16(output, driveEntry.minReplicators());
 		io::Write8(output, driveEntry.minApprovers());
 
 		SaveFiles(output, driveEntry.files());
@@ -190,8 +190,8 @@ namespace catapult { namespace state {
 		LoadBillingHistory(input, entry.billingHistory());
 
 		entry.setSize(io::Read64(input));
-		entry.setReplicas(io::Read8(input));
-		entry.setMinReplicators(io::Read8(input));
+		entry.setReplicas(io::Read16(input));
+		entry.setMinReplicators(io::Read16(input));
 		entry.setMinApprovers(io::Read8(input));
 
 		LoadFiles(input, entry.files());

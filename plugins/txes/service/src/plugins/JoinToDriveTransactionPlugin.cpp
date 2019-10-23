@@ -11,18 +11,13 @@
 #include "src/model/JoinToDriveTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "sdk/src/extensions/ConversionExtensions.h"
 
 using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
 	namespace {
-		UnresolvedAddress CopyToUnresolvedAddress(const Address& address) {
-			UnresolvedAddress dest;
-			std::memcpy(dest.data(), address.data(), address.size());
-			return dest;
-		}
-
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
 			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight,
@@ -48,7 +43,7 @@ namespace catapult { namespace plugins {
 						auto deposit = new model::DriveDeposit{ transaction.DriveKey };
 						sub.notify(BalanceTransferNotification<1>(
 								transaction.Signer,
-								CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, blockChainConfig.Immutable.NetworkIdentifier)),
+								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, blockChainConfig.Immutable.NetworkIdentifier)),
 								UnresolvedMosaicId(blockChainConfig.Immutable.StorageMosaicId.unwrap()),
 								UnresolvedAmount(0, UnresolvedAmountType::DriveDeposit, reinterpret_cast<uint8_t*>(deposit))
 							)

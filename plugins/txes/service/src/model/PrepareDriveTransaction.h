@@ -24,7 +24,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Owner of drive.
-        Key Owner;
+		Key Owner;
 
 		/// Duration of drive.
 		BlockDuration Duration;
@@ -39,13 +39,13 @@ namespace catapult { namespace model {
 		uint64_t DriveSize;
 
 		/// Count of replicas for drive.
-		int8_t Replicas;
+		uint16_t Replicas;
 
 		/// Minimal count of replicator to send transaction from name of drive.
-		int8_t MinReplicators;
+        uint16_t MinReplicators;
 
 		/// Percent of approves from replicators to apply transaction.
-		int8_t PercentApprovers;
+        uint8_t PercentApprovers;
 
 	public:
 		// Calculates the real size of a service \a transaction.

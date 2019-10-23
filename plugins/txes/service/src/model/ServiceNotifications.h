@@ -45,7 +45,7 @@ namespace catapult { namespace model {
 			const Amount& billingPrice,
 			uint64_t size,
 			uint16_t replicas,
-			uint8_t minReplicators,
+			uint16_t minReplicators,
 			uint8_t percentApprovers)
 			: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
 			, DriveKey(drive)
@@ -82,7 +82,7 @@ namespace catapult { namespace model {
 		uint16_t Replicas;
 
 		/// Minimal count of replicator to send transaction from name of drive.
-		int8_t MinReplicators;
+		uint16_t MinReplicators;
 
 		/// Percent of approves from replicators to apply transaction.
 		int8_t PercentApprovers;

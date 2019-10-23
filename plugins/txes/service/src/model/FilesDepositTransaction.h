@@ -35,7 +35,7 @@ namespace catapult { namespace model {
 		template<typename T>
 		static auto* FilesPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return pPayloadStart ? pPayloadStart : nullptr;
+			return transaction.FilesCount ? pPayloadStart : nullptr;
 		}
 
 	public:

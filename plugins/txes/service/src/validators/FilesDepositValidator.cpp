@@ -12,10 +12,10 @@ namespace catapult { namespace validators {
 
 	using Notification = model::FilesDepositNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(FileDepositReturn, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(FilesDeposit, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		if (!driveCache.contains(notification.DriveKey))
-			return Failure_Service_Drive_It_Not_Exist;
+			return Failure_Service_Drive_Does_Not_Exist;
 
 		const auto& driveEntry = driveCache.find(notification.DriveKey).get();
 

@@ -26,7 +26,7 @@ namespace catapult { namespace observers {
                 if (!files.count(addActionsPtr->FileHash)) {
                     state::FileInfo info;
                     info.Size = addActionsPtr->FileSize;
-                    files.insert({ addActionsPtr->FileHash, info });
+                    files.emplace(addActionsPtr->FileHash, info);
                 }
 
                 auto& info = files[addActionsPtr->FileHash];
@@ -34,7 +34,7 @@ namespace catapult { namespace observers {
                 info.Deposit = info.Deposit + utils::CalculateFileUpload(driveEntry, addActionsPtr->FileSize);
 
                 for (auto& replicator : driveEntry.replicators())
-                    replicator.second.AddFile(addActionsPtr->FileHash);
+                    replicator.second.IncrementUndepositedFileCounter(addActionsPtr->FileHash);
             } else {
                 auto& files = driveEntry.files();
                 auto& info = files[addActionsPtr->FileHash];
@@ -49,7 +49,7 @@ namespace catapult { namespace observers {
                 }
 
                 for (auto& replicator : driveEntry.replicators())
-                    replicator.second.RemoveFile(addActionsPtr->FileHash);
+                    replicator.second.DecrementUndepositedFileCounter(addActionsPtr->FileHash);
             }
 		}
 
@@ -61,7 +61,7 @@ namespace catapult { namespace observers {
                 info.Actions.emplace_back(state::DriveAction{ state::DriveActionType::Remove, context.Height });
 
                 for (auto& replicator : driveEntry.replicators())
-                    replicator.second.RemoveFile(removeActionsPtr->FileHash);
+                    replicator.second.DecrementUndepositedFileCounter(removeActionsPtr->FileHash);
             } else {
                 auto& files = driveEntry.files();
                 auto& info = files[removeActionsPtr->FileHash];
@@ -72,7 +72,7 @@ namespace catapult { namespace observers {
                 info.Actions.pop_back();
 
                 for (auto& replicator : driveEntry.replicators())
-                    replicator.second.AddFile(removeActionsPtr->FileHash);
+                    replicator.second.IncrementUndepositedFileCounter(removeActionsPtr->FileHash);
             }
         }
 	});

@@ -20,8 +20,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				array
 						<< bson_stream::open_document
 						<< "receiver" << ToBinary(payment.Receiver)
-						<< "amount" << ToInt64(payment.PaymentAmount)
-						<< "height" << ToInt64(payment.PaymentHeight)
+						<< "amount" << ToInt64(payment.Amount)
+						<< "height" << ToInt64(payment.Height)
 						<< bson_stream::close_document;
 			}
 
@@ -140,8 +140,8 @@ namespace catapult { namespace mongo { namespace plugins {
                 Key receiver;
                 DbBinaryToModelArray(receiver, doc["receiver"].get_binary());
                 payment.Receiver = receiver;
-                payment.PaymentHeight = Height(doc["height"].get_int64());
-                payment.PaymentAmount = Amount(doc["amount"].get_int64());
+                payment.Height = Height(doc["height"].get_int64());
+                payment.Amount = Amount(doc["amount"].get_int64());
                 payments.emplace_back(payment);
 			}
 		}
@@ -185,7 +185,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				ReadPaymentInformation(info.Payments, doc["payments"].get_array().value);
                 ReadFileActions(info.Actions, doc["actions"].get_array().value);
 
-                files.insert({ fileHash, info });
+                files.emplace(fileHash, info);
 			}
 		}
 

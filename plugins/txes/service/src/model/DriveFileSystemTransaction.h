@@ -48,13 +48,13 @@ namespace catapult { namespace model {
 		template<typename T>
 		static auto* AddActionsPtrT(T& transaction) {
 			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return pPayloadStart ? pPayloadStart : nullptr;
+			return transaction.AddActionsCount ? pPayloadStart : nullptr;
 		}
 
 		template<typename T>
 		static auto* RemoveActionsPtrT(T& transaction) {
 			auto* pAddActionsStart = AddActionsPtrT(transaction);
-			return pAddActionsStart ? pAddActionsStart + transaction.AddActionsCount * sizeof(AddAction) : nullptr;
+			return transaction.RemoveActionsCount ? pAddActionsStart + transaction.AddActionsCount * sizeof(AddAction) : nullptr;
 		}
 
 	public:

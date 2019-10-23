@@ -60,6 +60,7 @@ namespace catapult { namespace validators {
 			#include "plugins/txes/namespace/src/validators/Results.h"
 			#include "plugins/txes/property/src/validators/Results.h"
 			#include "plugins/txes/transfer/src/validators/Results.h"
+			#include "plugins/txes/service/src/validators/Results.h"
 			#include "plugins/txes/upgrade/src/validators/Results.h"
 			#include "src/catapult/chain/ChainResults.h"
 			#include "src/catapult/consumers/ConsumerResults.h"
