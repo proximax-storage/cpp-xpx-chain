@@ -44,6 +44,9 @@ namespace catapult { namespace config {
 		/// Mosaic id for super contracts.
 		MosaicId SuperContractMosaicId;
 
+		/// XAR mosaic id.
+		MosaicId XarMosaicId;
+
 		/// Initial currency atomic units available in the network.
 		Amount InitialCurrencyAtomicUnits;
 
@@ -72,4 +75,7 @@ namespace catapult { namespace config {
 
 	/// Gets unresolved super contract mosaic id from \a config.
 	UnresolvedMosaicId GetUnresolvedSuperContractMosaicId(const ImmutableConfiguration& config);
+
+	/// Gets unresolved XAR mosaic id from \a config.
+	UnresolvedMosaicId GetUnresolvedXarMosaicId(const ImmutableConfiguration& config);
 }}

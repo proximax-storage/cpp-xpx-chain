@@ -40,6 +40,7 @@ namespace catapult { namespace config {
 							{ "streamingMosaicId", "0x6789'BBBB" },
 							{ "reviewMosaicId", "0x4321'CCCC" },
 							{ "superContractMosaicId", "0x6789'DDDD" },
+							{ "xarMosaicId", "0x4321'EEEE" },
 
 							{ "initialCurrencyAtomicUnits", "77'000'000'000" },
 						}
@@ -63,6 +64,9 @@ namespace catapult { namespace config {
 				EXPECT_EQ(MosaicId(), config.HarvestingMosaicId);
 				EXPECT_EQ(MosaicId(), config.StorageMosaicId);
 				EXPECT_EQ(MosaicId(), config.StreamingMosaicId);
+				EXPECT_EQ(MosaicId(), config.ReviewMosaicId);
+				EXPECT_EQ(MosaicId(), config.SuperContractMosaicId);
+				EXPECT_EQ(MosaicId(), config.XarMosaicId);
 
 				EXPECT_EQ(Amount(0), config.InitialCurrencyAtomicUnits);
 			}
@@ -79,6 +83,9 @@ namespace catapult { namespace config {
 				EXPECT_EQ(MosaicId(0x9876'BBBB), config.HarvestingMosaicId);
 				EXPECT_EQ(MosaicId(0x4321'AAAA), config.StorageMosaicId);
 				EXPECT_EQ(MosaicId(0x6789'BBBB), config.StreamingMosaicId);
+				EXPECT_EQ(MosaicId(0x4321'CCCC), config.ReviewMosaicId);
+				EXPECT_EQ(MosaicId(0x6789'DDDD), config.SuperContractMosaicId);
+				EXPECT_EQ(MosaicId(0x4321'EEEE), config.XarMosaicId);
 
 				EXPECT_EQ(Amount(77'000'000'000), config.InitialCurrencyAtomicUnits);
 			}
@@ -146,6 +153,15 @@ namespace catapult { namespace config {
 
 		// Act + Assert:
 		EXPECT_EQ(UnresolvedMosaicId(1234), GetUnresolvedSuperContractMosaicId(config));
+	}
+
+	TEST(TEST_CLASS, CanGetUnresolvedXarMosaicId) {
+		// Arrange:
+		auto config = ImmutableConfiguration::Uninitialized();
+		config.XarMosaicId = MosaicId(1234);
+
+		// Act + Assert:
+		EXPECT_EQ(UnresolvedMosaicId(1234), GetUnresolvedXarMosaicId(config));
 	}
 
 	// endregion

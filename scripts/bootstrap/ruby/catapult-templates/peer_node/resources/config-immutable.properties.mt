@@ -12,5 +12,6 @@ storageMosaicId = 0xBFFB'42A1'9116'BDF6
 streamingMosaicId = 0x77E4'90CC'9B2A'F6F6
 reviewMosaicId = 0x77E4'90CC'9B2A'F6F6
 superContractMosaicId = 0x77E4'90CC'9B2A'F6F6
+xarMosaicId = 0x77E4'90CC'9B2A'F6F6
 
 initialCurrencyAtomicUnits = 8'999'999'998'000'000
