@@ -78,7 +78,10 @@ namespace catapult { namespace networkheight {
 				// if the local node's chain is too far behind, some operations like harvesting or
 				// processing of pushed elements should not be allowed
 				// for a public network this should always return true since an evil node could supply a fake chain height
-				state.hooks().setChainSyncedPredicate([&storage = state.storage(), &networkChainHeight = *pNetworkChainHeight]() {
+				state.hooks().setChainSyncedPredicate([&storage = state.storage(), &networkChainHeight = *pNetworkChainHeight,
+						networkIdentifier = state.config().Immutable.NetworkIdentifier]() {
+					if (model::NetworkIdentifier::Public == networkIdentifier)
+						return true;
 					auto storageView = storage.view();
 					return networkChainHeight.load() < storageView.chainHeight().unwrap() + 4;
 				});

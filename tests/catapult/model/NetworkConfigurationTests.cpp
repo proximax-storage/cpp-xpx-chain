@@ -68,7 +68,9 @@ namespace catapult { namespace model {
 							{ "harvestBeneficiaryPercentage", "56" },
 
 							{ "blockPruneInterval", "432" },
-							{ "maxTransactionsPerBlock", "120" }
+							{ "maxTransactionsPerBlock", "120" },
+
+							{ "enableUnconfirmedTransactionMinFeeValidation", "true" },
 						}
 					},
 					{
@@ -87,8 +89,16 @@ namespace catapult { namespace model {
 				};
 			}
 
+			static bool SupportsUnknownProperties() {
+				return true;
+			}
+
 			static bool IsSectionOptional(const std::string& section) {
 				return "network" != section && "chain" != section;
+			}
+
+			static bool IsPropertyOptional(const std::string& name) {
+				return "enableUnconfirmedTransactionMinFeeValidation" == name;
 			}
 
 			static void AssertZero(const NetworkConfiguration& config) {
@@ -116,6 +126,8 @@ namespace catapult { namespace model {
 
 				EXPECT_EQ(0u, config.BlockPruneInterval);
 				EXPECT_EQ(0u, config.MaxTransactionsPerBlock);
+
+				EXPECT_EQ(false, config.EnableUnconfirmedTransactionMinFeeValidation);
 
 				EXPECT_TRUE(config.Plugins.empty());
 			}
@@ -146,6 +158,8 @@ namespace catapult { namespace model {
 				EXPECT_EQ(432u, config.BlockPruneInterval);
 				EXPECT_EQ(120u, config.MaxTransactionsPerBlock);
 
+				EXPECT_EQ(true, config.EnableUnconfirmedTransactionMinFeeValidation);
+
 				EXPECT_EQ(2u, config.Plugins.size());
 				const auto& pluginAlphaBag = config.Plugins.find("alpha")->second;
 				EXPECT_EQ(1u, pluginAlphaBag.size());
@@ -174,13 +188,6 @@ namespace catapult { namespace model {
 			// Act + Assert: the load failed
 			EXPECT_THROW(Traits::ConfigurationType::LoadFromBag(std::move(properties)), catapult_invalid_argument);
 		}
-	}
-
-	TEST(TEST_CLASS, ParseFailsWhenPluginSectionNameIsNotWellFormed) {
-		// Arrange: section name must start with 'plugin:' and have a name
-		auto invalidSectionNames = { "", "plug", "plugina", "plug:a", "plugina:a", "a plugin:", "a plugin:b", "plugin:", " plugin:a" };
-		for (const auto& section : invalidSectionNames)
-			AssertCannotLoadWithSection(section);
 	}
 
 	TEST(TEST_CLASS, ParseFailsWhenPluginSectionNameContainsInvalidPluginName) {

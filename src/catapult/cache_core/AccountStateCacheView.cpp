@@ -58,7 +58,7 @@ namespace catapult { namespace cache {
 			, m_pKeyLookupAdapter(std::move(pKeyLookupAdapter))
 	{}
 
-	model::NetworkConfiguration BasicAccountStateCacheView::networkConfig() const {
+	const model::NetworkConfiguration& BasicAccountStateCacheView::networkConfig() const {
 		return m_options.ConfigHolderPtr->Config(height()).Network;
 	}
 

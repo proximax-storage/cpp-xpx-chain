@@ -22,6 +22,7 @@
 #include "AggregateValidatorBuilder.h"
 #include "ValidatorTypes.h"
 #include <functional>
+#include <utility>
 #include <vector>
 
 namespace catapult { namespace validators {
@@ -67,9 +68,9 @@ namespace catapult { namespace validators {
 		public:
 			ConditionalValidator(
 					NotificationValidatorPointerT<TNotification>&& pValidator,
-					const NotificationValidatorPredicate& predicate)
+					NotificationValidatorPredicate predicate)
 					: m_pValidator(std::move(pValidator))
-					, m_predicate(predicate)
+					, m_predicate(std::move(predicate))
 			{}
 
 		public:

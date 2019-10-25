@@ -21,19 +21,15 @@
 #include "nodediscovery/src/NodeDiscoveryService.h"
 #include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/ionet/NetworkNode.h"
-#include "catapult/ionet/PacketSocket.h"
 #include "catapult/net/ServerConnector.h"
 #include "catapult/net/VerifyPeer.h"
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
-#include "tests/test/core/ThreadPoolTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/net/BriefServerRequestorTestUtils.h"
 #include "tests/test/net/NodeTestUtils.h"
-#include "tests/test/net/SocketTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/TestHarness.h"
 
@@ -81,7 +77,7 @@ namespace catapult { namespace nodediscovery {
 		void AssertNoPushNodeConsumerCalls(TestContext& context) {
 			// Assert: subscriber wasn't called
 			const auto& subscriber = context.testState().nodeSubscriber();
-			EXPECT_EQ(0u, subscriber.nodeParams().params().size());
+			EXPECT_EQ(0u, subscriber.nodeParams().size());
 
 			// - nodes weren't modified
 			auto& nodes = context.testState().state().nodes();
@@ -185,7 +181,7 @@ namespace catapult { namespace nodediscovery {
 
 		// Assert:
 		const auto& subscriber = context.testState().nodeSubscriber();
-		ASSERT_EQ(1u, subscriber.nodeParams().params().size());
+		ASSERT_EQ(1u, subscriber.nodeParams().size());
 
 		const auto& subscriberNode = subscriber.nodeParams().params()[0].NodeCopy;
 		EXPECT_EQ(identityKey, subscriberNode.identityKey());
@@ -223,7 +219,7 @@ namespace catapult { namespace nodediscovery {
 
 		// Assert: subscriber was called with response node (the name is the differentiator)
 		const auto& subscriber = context.testState().nodeSubscriber();
-		ASSERT_EQ(1u, subscriber.nodeParams().params().size());
+		ASSERT_EQ(1u, subscriber.nodeParams().size());
 
 		const auto& subscriberNode = subscriber.nodeParams().params()[0].NodeCopy;
 		EXPECT_EQ(partnerKeyPair.publicKey(), subscriberNode.identityKey());
@@ -260,7 +256,7 @@ namespace catapult { namespace nodediscovery {
 
 		// Assert: subscriber wasn't called
 		const auto& subscriber = context.testState().nodeSubscriber();
-		EXPECT_EQ(0u, subscriber.nodeParams().params().size());
+		EXPECT_EQ(0u, subscriber.nodeParams().size());
 
 		// - nodes weren't modified
 		EXPECT_EQ(1u, nodes.view().size());
@@ -363,7 +359,7 @@ namespace catapult { namespace nodediscovery {
 			pPacketIo->queueRead(readCode, [&partnerKey](const auto*) {
 				// - push ping and pull peers packets are compatible, so create the former and change the type
 				auto pPacket = CreateNodePushPingPacket(partnerKey, "127.0.0.1", "alice");
-			reinterpret_cast<ionet::NetworkNode&>(*pPacket->Data()).Port = test::GetLocalHostPort();
+				reinterpret_cast<ionet::NetworkNode&>(*pPacket->Data()).Port = test::GetLocalHostPort();
 				pPacket->Type = ionet::PacketType::Node_Discovery_Pull_Peers;
 				return pPacket;
 			});
@@ -433,8 +429,8 @@ namespace catapult { namespace nodediscovery {
 		AssertPeersTaskApiAction(code, prepareNodes, [](auto& context, const auto& partnerKey, const auto&) {
 			// - wait for success (task completes when pings are started but not yet completed)
 			const auto& subscriber = context.testState().nodeSubscriber();
-			WAIT_FOR_ONE_EXPR(subscriber.nodeParams().params().size());
-			ASSERT_EQ(1u, subscriber.nodeParams().params().size());
+			WAIT_FOR_ONE_EXPR(subscriber.nodeParams().size());
+			ASSERT_EQ(1u, subscriber.nodeParams().size());
 
 			// Assert: subscriber was called and the name from the response node (the Legend) was used
 			const auto& subscriberNode = subscriber.nodeParams().params()[0].NodeCopy;
@@ -453,8 +449,8 @@ namespace catapult { namespace nodediscovery {
 		AssertPeersTaskApiAction(code, prepareNodes, [](auto& context, const auto&, const auto& nodeIdentity) {
 			// - wait for success (task completes when pings are started but not yet completed)
 			const auto& subscriber = context.testState().nodeSubscriber();
-			WAIT_FOR_ONE_EXPR(subscriber.nodeParams().params().size());
-			ASSERT_EQ(1u, subscriber.nodeParams().params().size());
+			WAIT_FOR_ONE_EXPR(subscriber.nodeParams().size());
+			ASSERT_EQ(1u, subscriber.nodeParams().size());
 
 			// Assert: interactions were updated
 			auto interactions = context.testState().state().nodes().view().getNodeInfo(nodeIdentity).interactions(Timestamp());

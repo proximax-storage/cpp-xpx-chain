@@ -24,8 +24,8 @@
 
 namespace catapult { namespace sync {
 
-	RollbackInfo::RollbackInfo(const chain::TimeSupplier& timeSupplier, extensions::ServiceState& state)
-			: m_timeSupplier(timeSupplier)
+	RollbackInfo::RollbackInfo(chain::TimeSupplier timeSupplier, extensions::ServiceState& state)
+			: m_timeSupplier(std::move(timeSupplier))
 			, m_state(state)
 			, m_currentRollbackSize(0)
 	{}

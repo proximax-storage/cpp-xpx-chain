@@ -51,6 +51,14 @@ namespace catapult { namespace mongo {
 				};
 			}
 
+			static bool SupportsUnknownProperties() {
+				return false;
+			}
+
+			static bool IsPropertyOptional(const std::string&) {
+				return false;
+			}
+
 			static bool IsSectionOptional(const std::string& section) {
 				return "plugins" == section;
 			}

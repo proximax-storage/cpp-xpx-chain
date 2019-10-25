@@ -123,7 +123,8 @@ namespace catapult { namespace chain {
 			explicit UpdaterTestContext(
 					ThrottleMode throttleMode = ThrottleMode::Off,
 					BlockFeeMultiplier minFeeMultiplier = BlockFeeMultiplier())
-					: m_cache(CreateCacheWithDefaultHeight())
+					: m_executionConfig(minFeeMultiplier)
+					, m_cache(CreateCacheWithDefaultHeight())
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, 1000))
 					, m_updater(
 							m_transactionsCache,

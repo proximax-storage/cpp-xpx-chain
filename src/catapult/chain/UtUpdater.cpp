@@ -124,6 +124,7 @@ namespace catapult { namespace chain {
 			auto effectiveHeight = m_detachedCatapultCache.height() + Height(1);
 			auto networkIdentifier = m_executionConfig.NetworkIdentifier;
 			const auto& network = m_executionConfig.NetworkInfoSupplier(effectiveHeight);
+			auto minFeeMultiplier = m_executionConfig.MinFeeMultiplierSupplier(effectiveHeight);
 			auto resolverContext = m_executionConfig.ResolverContextFactory(readOnlyCache);
 			auto validatorContext = ValidatorContext(effectiveHeight, currentTime, networkIdentifier, network, resolverContext, readOnlyCache);
 
@@ -138,7 +139,7 @@ namespace catapult { namespace chain {
 				if (!filter(utInfo))
 					continue;
 
-				auto minTransactionFee = model::CalculateTransactionFee(m_config.MinFeeMultiplier, entity, m_config.FeeInterest, m_config.FeeInterestDenominator);
+				auto minTransactionFee = model::CalculateTransactionFee(minFeeMultiplier, entity, m_config.FeeInterest, m_config.FeeInterestDenominator);
 				if (entity.MaxFee < minTransactionFee) {
 					// don't log reverted transactions that could have been included by harvester with lower min fee multiplier
 					if (TransactionSource::New == transactionSource) {

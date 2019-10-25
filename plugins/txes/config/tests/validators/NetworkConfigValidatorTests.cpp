@@ -50,6 +50,7 @@ namespace catapult { namespace validators {
 			"\n"
 			"blockPruneInterval = 360\n"
 			"maxTransactionsPerBlock = 200'000\n\n"
+			"enableUnconfirmedTransactionMinFeeValidation = true\n\n"
 		};
 
 		std::string pluginConfigs{

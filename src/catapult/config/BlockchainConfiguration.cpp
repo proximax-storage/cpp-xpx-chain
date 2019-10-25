@@ -42,33 +42,14 @@ namespace catapult { namespace config {
 	}
 
 	BlockchainConfiguration::BlockchainConfiguration(
-			const ImmutableConfiguration& immutableConfig,
-			const model::NetworkConfiguration& networkConfig,
-			const NodeConfiguration& nodeConfig,
-			const LoggingConfiguration& loggingConfig,
-			const UserConfiguration& userConfig,
-			const ExtensionsConfiguration& extensionsConfig,
-			const InflationConfiguration& inflationConfig,
-			const config::SupportedEntityVersions& supportedEntityVersions)
-			: Immutable(immutableConfig)
-			, Network(networkConfig)
-			, Node(nodeConfig)
-			, Logging(loggingConfig)
-			, User(userConfig)
-			, Extensions(extensionsConfig)
-			, Inflation(inflationConfig)
-			, SupportedEntityVersions(supportedEntityVersions)
-	{}
-
-	BlockchainConfiguration::BlockchainConfiguration(
-			ImmutableConfiguration&& immutableConfig,
-			model::NetworkConfiguration&& networkConfig,
-			NodeConfiguration&& nodeConfig,
-			LoggingConfiguration&& loggingConfig,
-			UserConfiguration&& userConfig,
-			ExtensionsConfiguration&& extensionsConfig,
-			InflationConfiguration&& inflationConfig,
-			config::SupportedEntityVersions&& supportedEntityVersions)
+			ImmutableConfiguration immutableConfig,
+			model::NetworkConfiguration networkConfig,
+			NodeConfiguration nodeConfig,
+			LoggingConfiguration loggingConfig,
+			UserConfiguration userConfig,
+			ExtensionsConfiguration extensionsConfig,
+			InflationConfiguration inflationConfig,
+			config::SupportedEntityVersions supportedEntityVersions)
 			: Immutable(std::move(immutableConfig))
 			, Network(std::move(networkConfig))
 			, Node(std::move(nodeConfig))
@@ -110,5 +91,9 @@ namespace catapult { namespace config {
 		metadata.Roles = localNodeConfig.Roles;
 
 		return ionet::Node(identityKey, endpoint, metadata);
+	}
+
+	BlockFeeMultiplier GetMinFeeMultiplier(const BlockchainConfiguration& config) {
+		return config.Network.EnableUnconfirmedTransactionMinFeeValidation ? config.Node.MinFeeMultiplier : BlockFeeMultiplier{0};
 	}
 }}

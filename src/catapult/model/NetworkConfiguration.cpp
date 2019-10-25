@@ -72,14 +72,21 @@ namespace catapult { namespace model {
 
 #undef LOAD_CHAIN_PROPERTY
 
+#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "chain", #NAME, config.NAME)
+
+		config.EnableUnconfirmedTransactionMinFeeValidation = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
+
+#undef TRY_LOAD_CHAIN_PROPERTY
+
 		size_t numPluginProperties = 0;
+		std::string prefix("plugin:");
 		for (const auto& section : bag.sections()) {
 			if ("network" == section || "chain" == section)
 				continue;
 
-			std::string prefix("plugin:");
 			if (section.size() <= prefix.size() || 0 != section.find(prefix))
-				CATAPULT_THROW_INVALID_ARGUMENT_1("configuration bag contains unexpected section", section);
+				continue;
 
 			auto pluginName = section.substr(prefix.size());
 			CheckPluginName(pluginName);
@@ -87,7 +94,6 @@ namespace catapult { namespace model {
 			numPluginProperties += iter->second.size();
 		}
 
-		utils::VerifyBagSizeLte(bag, 16 + numPluginProperties);
 		return config;
 	}
 
