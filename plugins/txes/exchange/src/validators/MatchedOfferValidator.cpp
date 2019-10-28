@@ -13,7 +13,7 @@ namespace catapult { namespace validators {
 	using Notification = model::MatchedOfferNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(MatchedOffer, [](const Notification& notification, const ValidatorContext& context) {
-		auto& offerCache = context.Cache.sub<cache::OfferCache>();
+		const auto& offerCache = context.Cache.sub<cache::OfferCache>();
 
 		const auto* pOffer = notification.MatchedOffersPtr;
 		for (uint8_t i = 0; i < notification.MatchedOfferCount; ++i, ++pOffer) {

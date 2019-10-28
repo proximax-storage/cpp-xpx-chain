@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 			const auto& config = pConfigHolder->Config(context.Height);
 			const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
-			if (notification.Signer != context.Network.PublicKey && notification.Duration > pluginConfig.MaxOfferDuration) {
+			if (notification.Duration > pluginConfig.MaxOfferDuration && notification.Signer != context.Network.PublicKey) {
 				return Failure_Exchange_Offer_Duration_Too_Large;
 			}
 
@@ -43,7 +43,7 @@ namespace catapult { namespace validators {
 					return Failure_Exchange_Zero_Price;
 
 				if (!allowedMosaicIds.count(pOffer->Mosaic.MosaicId))
-					return Failure_Exchange_Invalid_Mosaic;
+					return Failure_Exchange_Mosaic_Not_Allowed;
 			}
 
 			return ValidationResult::Success;
