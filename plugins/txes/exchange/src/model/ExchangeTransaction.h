@@ -6,41 +6,41 @@
 
 #pragma once
 #include "ExchangeEntityType.h"
+#include "Offer.h"
 #include "catapult/model/Transaction.h"
-#include "catapult/utils/ShortHash.h"
 
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-	/// Binary layout for a base exchange transaction body.
+	/// Binary layout for an exchange transaction body.
 	template<typename THeader>
-	struct RemoveOfferTransactionBody : public THeader {
+	struct ExchangeTransactionBody : public THeader {
 	private:
-		using TransactionType = RemoveOfferTransactionBody<THeader>;
+		using TransactionType = ExchangeTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Remove_Offer, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Exchange_Offer, 1)
 
 	public:
 		uint8_t OfferCount;
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(OfferHashes, utils::ShortHash)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Offers, MatchedOffer)
 
 	private:
 		template<typename T>
-		static auto* OfferHashesPtrT(T& transaction) {
+		static auto* OffersPtrT(T& transaction) {
 			return transaction.OfferCount ? THeader::PayloadStart(transaction) : nullptr;
 		}
 
 	public:
 		// Calculates the real size of an exchange transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.OfferCount * sizeof(utils::ShortHash);
+			return sizeof(TransactionType) + transaction.OfferCount * sizeof(MatchedOffer);
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(RemoveOffer)
+	DEFINE_EMBEDDABLE_TRANSACTION(Exchange)
 
 #pragma pack(pop)
 }}

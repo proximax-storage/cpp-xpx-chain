@@ -11,14 +11,14 @@
 namespace catapult { namespace model {
 
 #endif
-	/// Buy offer transaction.
-	DEFINE_TRANSACTION_TYPE(Exchange, Buy_Offer, 0x1);
+	/// Exchange offer transaction.
+	DEFINE_TRANSACTION_TYPE(Exchange, Exchange_Offer, 0x1);
 
-	/// Sell offer transaction.
-	DEFINE_TRANSACTION_TYPE(Exchange, Sell_Offer, 0x2);
+	/// Exchange transaction.
+	DEFINE_TRANSACTION_TYPE(Exchange, Exchange, 0x2);
 
-	/// Sell offer transaction.
-	DEFINE_TRANSACTION_TYPE(Exchange, Remove_Offer, 0x3);
+	/// Remove exchange offer transaction.
+	DEFINE_TRANSACTION_TYPE(Exchange, Remove_Exchange_Offer, 0x3);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

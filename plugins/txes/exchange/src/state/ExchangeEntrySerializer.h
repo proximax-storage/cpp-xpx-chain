@@ -5,17 +5,17 @@
 **/
 
 #pragma once
-#include "OfferEntry.h"
+#include "ExchangeEntry.h"
 #include "catapult/io/Stream.h"
 
 namespace catapult { namespace state {
 
 	/// Policy for saving and loading exchange entry data.
-	struct OfferEntrySerializer {
+	struct ExchangeEntrySerializer {
 		/// Saves \a entry to \a output.
-		static void Save(const OfferEntry& entry, io::OutputStream& output);
+		static void Save(const ExchangeEntry& entry, io::OutputStream& output);
 
 		/// Loads a single value from \a input.
-		static OfferEntry Load(io::InputStream& input);
+		static ExchangeEntry Load(io::InputStream& input);
 	};
 }}
