@@ -7,31 +7,32 @@
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"
 #include "ExchangePlugin.h"
-#include "src/cache/OfferCache.h"
-#include "src/cache/OfferCacheStorage.h"
+#include "src/cache/ExchangeCache.h"
+#include "src/cache/ExchangeCacheStorage.h"
 #include "src/observers/Observers.h"
-#include "src/plugins/BuyOfferTransactionPlugin.h"
-#include "src/plugins/RemoveOfferTransactionPlugin.h"
-#include "src/plugins/SellOfferTransactionPlugin.h"
+#include "src/plugins/ExchangeOfferTransactionPlugin.h"
+#include "src/plugins/RemoveExchangeOfferTransactionPlugin.h"
+#include "src/plugins/ExchangeTransactionPlugin.h"
 #include "src/validators/Validators.h"
 
 namespace catapult { namespace plugins {
 
 	void RegisterExchangeSubsystem(PluginManager& manager) {
-		manager.addTransactionSupport(CreateBuyOfferTransactionPlugin());
-		manager.addTransactionSupport(CreateSellOfferTransactionPlugin());
-		manager.addTransactionSupport(CreateRemoveOfferTransactionPlugin());
+		const auto& immutableConfig = manager.immutableConfig();
+		manager.addTransactionSupport(CreateExchangeOfferTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateExchangeTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateRemoveExchangeOfferTransactionPlugin());
 
 		auto pConfigHolder = manager.configHolder();
-		manager.addCacheSupport<cache::OfferCacheStorage>(
-			std::make_unique<cache::OfferCache>(manager.cacheConfig(cache::OfferCache::Name), pConfigHolder));
+		manager.addCacheSupport<cache::ExchangeCacheStorage>(
+			std::make_unique<cache::ExchangeCache>(manager.cacheConfig(cache::ExchangeCache::Name), pConfigHolder));
 
-		using CacheHandlersOffer = CacheHandlers<cache::OfferCacheDescriptor>;
+		using CacheHandlersOffer = CacheHandlers<cache::ExchangeCacheDescriptor>;
 		CacheHandlersOffer::Register<model::FacilityCode::Exchange>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("OFFER C"), [&cache]() {
-				return cache.sub<cache::OfferCache>().createView(cache.height())->size();
+			counters.emplace_back(utils::DiagnosticCounterId("EXCHANGE C"), [&cache]() {
+				return cache.sub<cache::ExchangeCache>().createView(cache.height())->size();
 			});
 		});
 
@@ -50,7 +51,7 @@ namespace catapult { namespace plugins {
 		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateOfferObserver())
-				.add(observers::CreateMatchedOfferObserver())
+				.add(observers::CreateExchangeObserver())
 				.add(observers::CreateRemoveOfferObserver())
 				.add(observers::CreateCleanupOffersObserver(pConfigHolder));
 		});

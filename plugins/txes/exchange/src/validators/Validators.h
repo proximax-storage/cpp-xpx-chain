@@ -14,25 +14,26 @@
 namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to offer notification and validates that:
-	/// - at least one offer is present
+	/// - at least one offer to add is present
 	/// - offer duration does not exceed maximum if transaction signer is not nemesis signer.
 	/// - Mosaic amount is not zero.
 	/// - Mosaic price is not zero.
 	/// - Mosaic is allowed for exchange.
 	DECLARE_STATEFUL_VALIDATOR(Offer, model::OfferNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
-	/// A validator implementation that applies to matched offer notification and validates that:
+	/// A validator implementation that applies to exchange notification and validates that:
+	/// - at least one offer to exchange is present.
+	/// - matched offers are not owned by the exchange signer.
+	/// - account has offers.
 	/// - matched offers exist.
-	/// - matched offers are not expired.
-	/// - matched offers are of valid type.
-	/// - the offer and its matched offers are not announced by the same account.
-	/// - matched offers have required mosaics.
-	/// - matched offers have required mosaic amounts.
 	/// - matched offers have valid mosaic prices.
-	DECLARE_STATEFUL_VALIDATOR(MatchedOffer, model::MatchedOfferNotification<1>)();
+	/// - matched offers are not expired.
+	/// - matched offers have required mosaic amounts.
+	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)();
 
 	/// A validator implementation that applies to remove offer notification and validates that:
-	/// - at least one offer is present.
+	/// - at least one offer to remove is present.
+	/// - account has offers.
 	/// - offers exist.
 	/// - transaction signer owns offers.
 	DECLARE_STATEFUL_VALIDATOR(RemoveOffer, model::RemoveOfferNotification<1>)();

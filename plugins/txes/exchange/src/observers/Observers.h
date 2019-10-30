@@ -5,19 +5,19 @@
 **/
 
 #pragma once
-#include <plugins/txes/exchange/src/cache/OfferCache.h>
+#include <plugins/txes/exchange/src/cache/ExchangeCache.h>
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/observers/ObserverTypes.h"
 #include "src/model/ExchangeNotifications.h"
-#include "src/state/OfferEntry.h"
+#include "src/state/ExchangeEntry.h"
 
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by offer notifications
 	DECLARE_OBSERVER(Offer, model::OfferNotification<1>)();
 
-	/// Observes changes triggered by matched offer notifications
-	DECLARE_OBSERVER(MatchedOffer, model::MatchedOfferNotification<1>)();
+	/// Observes changes triggered by exchange notifications
+	DECLARE_OBSERVER(Exchange, model::ExchangeNotification<1>)();
 
 	/// Observes changes triggered by remove offer notifications
 	DECLARE_OBSERVER(RemoveOffer, model::RemoveOfferNotification<1>)();

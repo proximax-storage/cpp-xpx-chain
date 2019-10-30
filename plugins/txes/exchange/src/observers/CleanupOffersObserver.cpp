@@ -6,18 +6,17 @@
 
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "src/cache/OfferCache.h"
+#include "src/cache/ExchangeCache.h"
 
 namespace catapult { namespace observers {
 
-	void CreditAccount(const Key& recipient, const model::UnresolvedMosaic& mosaic, const ObserverContext& context) {
-		if (Amount(0) == mosaic.Amount)
+	void CreditAccount(const Key& recipient, const MosaicId& mosaicId, const Amount& amount, const ObserverContext& context) {
+		if (Amount(0) == amount)
 			return;
 
 		auto& cache = context.Cache.sub<cache::AccountStateCache>();
 		auto& recipientState = cache.find(recipient).get();
-		auto mosaicId = context.Resolvers.resolve(mosaic.MosaicId);
-		recipientState.Balances.credit(mosaicId, mosaic.Amount, context.Height);
+		recipientState.Balances.credit(mosaicId, amount, context.Height);
 	}
 
 	using Notification = model::BlockNotification<1>;
@@ -32,21 +31,20 @@ namespace catapult { namespace observers {
 			if (context.Height.unwrap() <= maxRollbackBlocks)
 				return;
 
-			auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config.Immutable);
-			auto& offerCache = context.Cache.sub<cache::OfferCache>();
+			auto currencyMosaicId = context.Resolvers.resolve(config::GetUnresolvedCurrencyMosaicId(config.Immutable));
+			auto& offerCache = context.Cache.sub<cache::ExchangeCache>();
 			auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
-			auto expiredOfferHashes = offerCache.touch(pruneHeight);
-			for (const auto& hash : expiredOfferHashes) {
-				state::OfferEntry& offerEntry = offerCache.find(hash).get();
-				if (offerEntry.offerType() == model::OfferType::Buy) {
-					model::UnresolvedMosaic mosaic{currencyMosaicId, Amount(0)};
-					for (const auto& pair : offerEntry.offers())
-						mosaic.Amount = Amount(mosaic.Amount.unwrap() + pair.second.Cost.unwrap());
-					CreditAccount(offerEntry.transactionSigner(), mosaic, context);
-				} else {
-					for (const auto& pair : offerEntry.offers())
-						CreditAccount(offerEntry.transactionSigner(), pair.second.Mosaic, context);
-				}
+			auto expiredOfferKeys = offerCache.touch(pruneHeight);
+			for (const auto& key : expiredOfferKeys) {
+				state::ExchangeEntry& entry = offerCache.find(key).get();
+
+				Amount xpxAmount(0);
+				for (const auto& pair : entry.buyOffers())
+					xpxAmount = xpxAmount + pair.second.ResidualCost;
+				CreditAccount(entry.owner(), currencyMosaicId, xpxAmount, context);
+
+				for (const auto& pair : entry.sellOffers())
+					CreditAccount(entry.owner(), pair.first, pair.second.Amount, context);
 			}
 			offerCache.prune(pruneHeight);
 		}))

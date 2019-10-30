@@ -29,13 +29,14 @@ namespace catapult { namespace validators {
 
 			const auto& config = pConfigHolder->Config(context.Height);
 			const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
-			if (notification.Duration > pluginConfig.MaxOfferDuration && notification.Signer != context.Network.PublicKey) {
-				return Failure_Exchange_Offer_Duration_Too_Large;
-			}
 
 			auto allowedMosaicIds = GetAllowedMosaicIds(config.Immutable);
 			const model::Offer* pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
+				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Signer != context.Network.PublicKey) {
+					return Failure_Exchange_Offer_Duration_Too_Large;
+				}
+
 				if (pOffer->Mosaic.Amount == Amount(0))
 					return Failure_Exchange_Zero_Amount;
 

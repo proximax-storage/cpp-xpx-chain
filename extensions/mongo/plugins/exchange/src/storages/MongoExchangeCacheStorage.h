@@ -9,6 +9,6 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	/// Creates a mongo deal cache storage around \a database, \a bulkWriter and \a networkIdentifier.
-	DECLARE_MONGO_CACHE_STORAGE(Offer);
+	/// Creates a mongo exchange cache storage around \a database, \a bulkWriter and \a networkIdentifier.
+	DECLARE_MONGO_CACHE_STORAGE(Exchange);
 }}}

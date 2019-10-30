@@ -4,12 +4,12 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "OfferCacheStorage.h"
-#include "OfferCacheDelta.h"
+#include "ExchangeCacheStorage.h"
+#include "ExchangeCacheDelta.h"
 
 namespace catapult { namespace cache {
 
-	void OfferCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
+	void ExchangeCacheStorage::LoadInto(const ValueType& entry, DestinationType& cacheDelta) {
 		cacheDelta.insert(entry);
 	}
 }}

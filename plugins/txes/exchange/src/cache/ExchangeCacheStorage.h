@@ -5,16 +5,16 @@
 **/
 
 #pragma once
-#include "OfferCacheTypes.h"
-#include "src/state/OfferEntrySerializer.h"
+#include "ExchangeCacheTypes.h"
+#include "src/state/ExchangeEntrySerializer.h"
 #include "catapult/cache/CacheStorageInclude.h"
 
 namespace catapult { namespace cache {
 
-	/// Policy for saving and loading offer cache data.
-	struct OfferCacheStorage
-			: public CacheStorageForBasicInsertRemoveCache<OfferCacheDescriptor>
-			, public state::OfferEntrySerializer {
+	/// Policy for saving and loading exchange cache data.
+	struct ExchangeCacheStorage
+			: public CacheStorageForBasicInsertRemoveCache<ExchangeCacheDescriptor>
+			, public state::ExchangeEntrySerializer {
 		/// Loads \a entry into \a cacheDelta.
 		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);
 	};

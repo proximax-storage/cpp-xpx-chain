@@ -4,22 +4,22 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "MongoOfferCacheStorage.h"
-#include "src/mappers/OfferEntryMapper.h"
+#include "MongoExchangeCacheStorage.h"
+#include "src/mappers/ExchangeEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
-#include "plugins/txes/exchange/src/cache/OfferCache.h"
+#include "plugins/txes/exchange/src/cache/ExchangeCache.h"
 
 using namespace bsoncxx::builder::stream;
 
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		struct OfferCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::OfferCacheDescriptor> {
-			static constexpr const char* Collection_Name = "offers";
-			static constexpr const char* Id_Property_Name = "offer.transactionHash";
+		struct ExchangeCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::ExchangeCacheDescriptor> {
+			static constexpr const char* Collection_Name = "exchanges";
+			static constexpr const char* Id_Property_Name = "exchange.owner";
 
 			static auto MapToMongoId(const KeyType& key) {
-				return mappers::ToInt32(key);
+				return mappers::ToBinary(key);
 			}
 
 			static auto MapToMongoDocument(const ModelType& entry, model::NetworkIdentifier) {
@@ -27,10 +27,10 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static void Insert(CacheDeltaType& cache, const bsoncxx::document::view& document) {
-				cache.insert(ToOfferEntry(document));
+				cache.insert(ToExchangeEntry(document));
 			}
 		};
 	}
 
-	DEFINE_MONGO_FLAT_CACHE_STORAGE(Offer, OfferCacheTraits)
+	DEFINE_MONGO_FLAT_CACHE_STORAGE(Offer, ExchangeCacheTraits)
 }}}

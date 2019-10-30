@@ -5,28 +5,43 @@
 **/
 
 #pragma once
-#include "catapult/types.h"
+#include "catapult/exceptions.h"
+#include "src/model/Offer.h"
 #include <cmath>
 #include <map>
 
 namespace catapult { namespace state {
 
-	struct SellOffer {
+	struct OfferBase {
 	public:
 		catapult::Amount Amount;
 		catapult::Amount InitialAmount;
 		catapult::Amount InitialCost;
 		Height Deadline;
 		Height ExpiryHeight;
+	};
 
+	struct SellOffer : public OfferBase {
 	public:
 		catapult::Amount cost(const catapult::Amount& amount) const {
 			auto cost = std::ceil(static_cast<double>(InitialCost.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(InitialAmount.unwrap()));
 			return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
 		}
+
+		SellOffer& operator+=(const model::MatchedOffer& offer) {
+			Amount = Amount + offer.Mosaic.Amount;
+			return *this;
+		}
+
+		SellOffer& operator-=(const model::MatchedOffer& offer) {
+			if (offer.Mosaic.Amount > Amount)
+				CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than mosaic amount", offer.Mosaic.Amount, Amount)
+			Amount = Amount - offer.Mosaic.Amount;
+			return *this;
+		}
 	};
 
-	struct BuyOffer : SellOffer {
+	struct BuyOffer : public OfferBase {
 	public:
 		catapult::Amount ResidualCost;
 
@@ -35,12 +50,32 @@ namespace catapult { namespace state {
 			auto cost = std::floor(static_cast<double>(InitialCost.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(InitialAmount.unwrap()));
 			return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
 		}
+
+		BuyOffer& operator+=(const model::MatchedOffer& offer) {
+			Amount = Amount + offer.Mosaic.Amount;
+			ResidualCost = ResidualCost + offer.Cost;
+
+			return *this;
+		}
+
+		BuyOffer& operator-=(const model::MatchedOffer& offer) {
+			if (offer.Mosaic.Amount > Amount)
+				CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than mosaic amount", offer.Mosaic.Amount, Amount)
+
+			if (offer.Cost > ResidualCost)
+				CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than residual cost", offer.Cost, ResidualCost)
+
+			Amount = Amount - offer.Mosaic.Amount;
+			ResidualCost = ResidualCost - offer.Cost;
+
+			return *this;
+		}
 	};
 
 	using SellOfferMap = std::map<MosaicId, SellOffer>;
 	using BuyOfferMap = std::map<MosaicId, BuyOffer>;
 
-	// Offer entry.
+	// Exchange entry.
 	class ExchangeEntry {
 	public:
 		// Creates an exchange entry around \a owner.
@@ -76,17 +111,17 @@ namespace catapult { namespace state {
 			return m_buyOffers;
 		}
 
-		/// Checks whether all offers are fulfilled.
-		bool fulfilled() {
-			Amount sum(0);
-			std::for_each(m_sellOffers.begin(), m_sellOffers.end(), [&sum](const auto& pair) {
-				sum = sum + pair.second.Amount;
+		/// Gets the height at which to remove the entry.
+		const Height& expiryHeight() const {
+			Height expiryHeight;
+			std::for_each(m_sellOffers.begin(), m_sellOffers.end(), [&expiryHeight](const auto& pair) {
+				if (expiryHeight < pair.second.ExpiryHeight)
+					expiryHeight = pair.second.ExpiryHeight;
 			});
-			std::for_each(m_buyOffers.begin(), m_buyOffers.end(), [&sum](const auto& pair) {
-				sum = sum + pair.second.Amount;
+			std::for_each(m_buyOffers.begin(), m_buyOffers.end(), [&expiryHeight](const auto& pair) {
+				if (expiryHeight < pair.second.ExpiryHeight)
+					expiryHeight = pair.second.ExpiryHeight;
 			});
-
-			return (Amount(0) == sum);
 		}
 
 	public:

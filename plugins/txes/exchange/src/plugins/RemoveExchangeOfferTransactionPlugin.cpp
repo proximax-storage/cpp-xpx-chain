@@ -4,10 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "RemoveOfferTransactionPlugin.h"
+#include "RemoveExchangeOfferTransactionPlugin.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "src/model/RemoveOfferTransaction.h"
+#include "src/model/RemoveExchangeOfferTransaction.h"
 #include "src/model/ExchangeNotifications.h"
 
 using namespace catapult::model;
@@ -21,8 +21,8 @@ namespace catapult { namespace plugins {
 			case 1:
 				sub.notify(RemoveOfferNotification<1>(
 					transaction.Signer,
-					transaction.OfferCount,
-					transaction.OfferHashesPtr()));
+					transaction.MosaicCount,
+					transaction.MosaicsPtr()));
 				break;
 
 			default:
@@ -31,5 +31,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(RemoveOffer, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(RemoveExchangeOffer, Default, Publish)
 }}

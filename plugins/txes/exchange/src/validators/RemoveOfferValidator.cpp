@@ -6,27 +6,36 @@
 
 #include "Validators.h"
 #include "catapult/validators/ValidatorContext.h"
-#include "src/cache/OfferCache.h"
+#include "src/cache/ExchangeCache.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::RemoveOfferNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(RemoveOffer, [](const Notification& notification, const ValidatorContext& context) {
-		if (notification.OfferCount == 0)
-			return Failure_Exchange_No_Offers;
+		if (notification.MosaicCount == 0)
+			return Failure_Exchange_No_Offered_Mosaics_To_Remove;
 
-		auto& offerCache = context.Cache.sub<cache::OfferCache>();
-		auto pHash = notification.OfferHashesPtr;
-		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pHash) {
-			if (!offerCache.contains(*pHash))
-				return Failure_Exchange_Offer_Doesnt_Exist;
+		auto& cache = context.Cache.sub<cache::ExchangeCache>();
+		if (!cache.contains(notification.Owner))
+			return Failure_Exchange_Account_Doesnt_Have_Any_Offer;
 
-			const auto& offerEntry = offerCache.find(*pHash).get();
-			if (offerEntry.transactionSigner() != notification.Signer)
-				return Failure_Exchange_Offer_Signer_Invalid;
+		const auto& entry = cache.find(notification.Owner).get();
+		auto pMosaic = notification.MosaicsPtr;
+		for (uint8_t i = 0; i < notification.MosaicCount; ++i, ++pMosaic) {
+			auto mosaicId = context.Resolvers.resolve(pMosaic->MosaicId);
+			if (model::OfferType::Buy == pMosaic->OfferType) {
+				if (!entry.buyOffers().count(mosaicId))
+					return Failure_Exchange_Offer_Doesnt_Exist;
+			} else {
+				if (!entry.sellOffers().count(mosaicId))
+					return Failure_Exchange_Offer_Doesnt_Exist;
+			}
 
-			if (offerEntry.expiryHeight() < context.Height)
+			const auto& offer = (model::OfferType::Buy == pMosaic->OfferType) ?
+				dynamic_cast<const state::OfferBase&>(entry.buyOffers().at(mosaicId)) :
+				dynamic_cast<const state::OfferBase&>(entry.sellOffers().at(mosaicId));
+			if (offer.ExpiryHeight < context.Height)
 				return Failure_Exchange_Offer_Already_Removed;
 		}
 

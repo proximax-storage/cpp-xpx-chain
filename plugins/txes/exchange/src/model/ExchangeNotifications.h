@@ -18,7 +18,7 @@ namespace catapult { namespace model {
 	/// Offer.
 	DEFINE_EXCHANGE_NOTIFICATION(Offer_v1, 0x001, All);
 
-	/// Matched offer.
+	/// Exchange.
 	DEFINE_EXCHANGE_NOTIFICATION(v1, 0x002, All);
 
 	/// Remove offer.
@@ -41,40 +41,26 @@ namespace catapult { namespace model {
 		OfferNotification(
 				const Key& owner,
 				const BlockDuration& duration,
-				uint8_t sellOfferCount,
-				const Offer* pSellOffers,
-				uint8_t buyOfferCount,
-				const Offer* pBuyOffers)
+				uint8_t offerCount,
+				const OfferWithDuration* pOffers)
 			: Notification(Notification_Type, sizeof(OfferNotification<1>))
 			, Owner(owner)
-			, Duration(duration)
-			, SellOfferCount(sellOfferCount)
-			, SellOffersPtr(pSellOffers)
-			, BuyOfferCount(buyOfferCount)
-			, BuyOffersPtr(pBuyOffers)
+			, OfferCount(offerCount)
+			, OffersPtr(pOffers)
 		{}
 
 	public:
-		/// Offer transaction owner.
+		/// Offer owner.
 		const Key& Owner;
 
 		/// The offer type.
 		model::OfferType OfferType;
 
-		/// Offer deadline.
-		const BlockDuration& Duration;
+		/// Offer count.
+		uint8_t OfferCount;
 
-		/// Sell offer count.
-		uint8_t SellOfferCount;
-
-		/// Sell offers.
-		const Offer* SellOffersPtr;
-
-		/// Buy offer count.
-		uint8_t BuyOfferCount;
-
-		/// Buy offers.
-		const Offer* BuyOffersPtr;
+		/// Offers.
+		const OfferWithDuration* OffersPtr;
 	};
 
 	/// Notification of an exchange.
@@ -89,34 +75,24 @@ namespace catapult { namespace model {
 
 	public:
 		ExchangeNotification(
-				const Key& owner,
-				uint8_t matchedOfferCount,
-				const MatchedOffer* pMatchedOffers,
-				UnresolvedMosaicId currencyMosaicId,
-				NotificationSubscriber& subscriber)
+				const Key& signer,
+				uint8_t offerCount,
+				const MatchedOffer* pOffers)
 			: Notification(Notification_Type, sizeof(ExchangeNotification<1>))
-			, Owner(owner)
-			, MatchedOfferCount(matchedOfferCount)
-			, MatchedOffersPtr(pMatchedOffers)
-			, CurrencyMosaicId(currencyMosaicId)
-			, Subscriber(subscriber)
+			, Signer(signer)
+			, OfferCount(offerCount)
+			, OffersPtr(pOffers)
 		{}
 
 	public:
-		/// Offer transaction owner.
-		const Key& Owner;
+		/// Transaction signer.
+		const Key& Signer;
 
 		/// Number of matched offers.
-		uint8_t MatchedOfferCount;
+		uint8_t OfferCount;
 
 		/// Matched offers.
-		const MatchedOffer* MatchedOffersPtr;
-
-		/// A notification subscriber.
-		UnresolvedMosaicId CurrencyMosaicId;
-
-		/// A notification subscriber.
-		NotificationSubscriber& Subscriber;
+		const MatchedOffer* OffersPtr;
 	};
 
 	/// Notification of an offer removing.
@@ -133,21 +109,21 @@ namespace catapult { namespace model {
 		RemoveOfferNotification(
 				const Key& owner,
 				uint8_t mosaicCount,
-				const MosaicId* pMosaic)
+				const OfferMosaic* pMosaics)
 			: Notification(Notification_Type, sizeof(RemoveOfferNotification<1>))
 			, Owner(owner)
 			, MosaicCount(mosaicCount)
-			, MosaicPtr(pMosaic)
+			, MosaicsPtr(pMosaics)
 		{}
 
 	public:
-		/// Remove offer transaction owner.
+		/// Offer owner.
 		const Key& Owner;
 
 		/// Mosaic count.
 		uint8_t MosaicCount;
 
-		/// Hashes of offers to remove.
-		const MosaicId* MosaicPtr;
+		/// Mosaic ids of offers to remove.
+		const OfferMosaic* MosaicsPtr;
 	};
 }}

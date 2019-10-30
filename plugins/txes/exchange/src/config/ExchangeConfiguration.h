@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
+#include "catapult/types.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 

@@ -8,22 +8,46 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(Offer, model::OfferNotification<1>, [](const auto& notification, const ObserverContext& context) {
-		auto& cache = context.Cache.sub<cache::OfferCache>();
-		if (NotifyMode::Commit == context.Mode) {
+	namespace {
+		Height GetOfferDeadline(const BlockDuration& duration, const Height& currentHeight) {
 			auto maxDeadline = std::numeric_limits<Height::ValueType>::max();
-			auto duration = notification.Duration.unwrap();
-			auto currentHeight = context.Height.unwrap();
-			auto deadline = (duration < maxDeadline - currentHeight) ? currentHeight + duration : maxDeadline;
-			state::OfferEntry entry(notification.TransactionHash, notification.Signer, notification.OfferType, Height(deadline));
+			return Height((duration.unwrap() < maxDeadline - currentHeight.unwrap()) ? currentHeight.unwrap() + duration.unwrap() : maxDeadline);
+		}
+	}
+
+	DEFINE_OBSERVER(Offer, model::OfferNotification<1>, ([](const auto& notification, const ObserverContext& context) {
+		auto& cache = context.Cache.sub<cache::ExchangeCache>();
+		if (NotifyMode::Commit == context.Mode) {
+			if (!cache.contains(notification.Owner))
+				cache.insert(state::ExchangeEntry(notification.Owner));
+			auto& entry = cache.find(notification.Owner).get();
+
+			const model::OfferWithDuration* pOffer = notification.OffersPtr;
+			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
+				auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
+				auto deadline = GetOfferDeadline(pOffer->Duration, context.Height);
+				state::OfferBase baseOffer{pOffer->Mosaic.Amount, pOffer->Mosaic.Amount, pOffer->Cost, deadline, deadline};
+				if (model::OfferType::Buy == pOffer->Type) {
+					entry.buyOffers().emplace(mosaicId, state::BuyOffer{baseOffer, pOffer->Cost});
+				} else {
+					entry.sellOffers().emplace(mosaicId, state::SellOffer{baseOffer});
+				}
+			}
+		} else {
+			auto& entry = cache.find(notification.Owner).get();
+
 			auto pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
-				entry.initialOffers().emplace(pOffer->Mosaic.MosaicId, *pOffer);
-				entry.offers().emplace(pOffer->Mosaic.MosaicId, *pOffer);
+				auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
+				if (model::OfferType::Buy == pOffer->Type) {
+					entry.buyOffers().erase(mosaicId);
+				} else {
+					entry.sellOffers().erase(mosaicId);
+				}
 			}
-			cache.insert(entry);
-		} else {
-			cache.remove(notification.TransactionHash);
+
+			if (entry.sellOffers().empty() && entry.buyOffers().empty())
+				cache.remove(notification.Owner);
 		}
-	});
+	}));
 }}

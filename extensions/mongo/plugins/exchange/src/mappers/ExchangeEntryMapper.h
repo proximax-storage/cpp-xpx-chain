@@ -6,13 +6,13 @@
 
 #pragma once
 #include "mongo/src/mappers/MapperInclude.h"
-#include "plugins/txes/exchange/src/state/OfferEntry.h"
+#include "plugins/txes/exchange/src/state/ExchangeEntry.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 
 	/// Maps a catapult upgrade \a entry to the corresponding db model value.
-	bsoncxx::document::value ToDbModel(const state::OfferEntry& entry);
+	bsoncxx::document::value ToDbModel(const state::ExchangeEntry& entry);
 
 	/// Maps a database \a document to the corresponding model value.
-	state::OfferEntry ToOfferEntry(const bsoncxx::document::view& document);
+	state::ExchangeEntry ToExchangeEntry(const bsoncxx::document::view& document);
 }}}

@@ -23,32 +23,20 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Exchange_Offer, 1)
 
 	public:
-		BlockDuration Duration;
+		uint8_t OfferCount;
 
-		uint8_t SellOfferCount;
-
-		uint8_t BuyOfferCount;
-
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(SellOffers, Offer)
-
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BuyOffers, Offer)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Offers, OfferWithDuration)
 
 	private:
 		template<typename T>
-		static auto* SellOffersPtrT(T& transaction) {
-			return transaction.SellOfferCount ? THeader::PayloadStart(transaction) : nullptr;
-		}
-
-		template<typename T>
-		static auto* BuyOffersPtrT(T& transaction) {
-			auto* pPayloadStart = THeader::PayloadStart(transaction);
-			return transaction.BuyOfferCount && pPayloadStart ? pPayloadStart + transaction.SellOfferCount * sizeof(Offer) : nullptr;
+		static auto* OffersPtrT(T& transaction) {
+			return transaction.OfferCount ? THeader::PayloadStart(transaction) : nullptr;
 		}
 
 	public:
 		// Calculates the real size of an exchange offer transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + (transaction.SellOfferCount + transaction.BuyOfferCount) * sizeof(Offer);
+			return sizeof(TransactionType) + transaction.OfferCount * sizeof(OfferWithDuration);
 		}
 	};
 

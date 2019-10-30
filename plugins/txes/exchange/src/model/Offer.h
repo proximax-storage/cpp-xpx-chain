@@ -27,12 +27,29 @@ namespace catapult { namespace model {
 
 		/// Sum of XPX suggested to be paid for mosaic.
 		Amount Cost;
+
+		/// Offer type.
+		OfferType Type;
 	};
 
 	struct MatchedOffer : public Offer {
 	public:
 		/// The owner of the matched offer.
 		Key Owner;
+	};
+
+	struct OfferWithDuration : public Offer {
+	public:
+		/// The duration of the offer.
+		BlockDuration Duration;
+	};
+
+	struct OfferMosaic {
+		/// Mosaic id of the offer.
+		UnresolvedMosaicId MosaicId;
+
+		/// Offer type.
+		model::OfferType OfferType;
 	};
 
 #pragma pack(pop)

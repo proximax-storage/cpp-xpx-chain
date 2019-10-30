@@ -12,7 +12,7 @@
 namespace catapult { namespace state {
 
 	namespace {
-		void WriteSellOffer(const MosaicId& mosaicId, const SellOffer& offer, io::OutputStream& output) {
+		void WriteOffer(const MosaicId& mosaicId, const OfferBase& offer, io::OutputStream& output) {
 			io::Write(output, mosaicId);
 			io::Write(output, offer.Amount);
 			io::Write(output, offer.InitialAmount);
@@ -24,14 +24,14 @@ namespace catapult { namespace state {
 		void WriteSellOffers(const SellOfferMap& offers, io::OutputStream& output) {
 			io::Write8(output, utils::checked_cast<size_t, uint8_t>(offers.size()));
 			for (const auto& pair : offers) {
-				WriteSellOffer(pair.first, pair.second, output);
+				WriteOffer(pair.first, pair.second, output);
 			}
 		}
 
 		void WriteBuyOffers(const BuyOfferMap& offers, io::OutputStream& output) {
 			io::Write8(output, utils::checked_cast<size_t, uint8_t>(offers.size()));
 			for (const auto& pair : offers) {
-				WriteSellOffer(pair.first, pair.second, output);
+				WriteOffer(pair.first, pair.second, output);
 				io::Write(output, pair.second.ResidualCost);
 			}
 		}
@@ -48,7 +48,7 @@ namespace catapult { namespace state {
 	}
 
 	namespace {
-		void ReadSellOffer(MosaicId& mosaicId, SellOffer& offer, io::InputStream& input) {
+		void ReadOffer(MosaicId& mosaicId, OfferBase& offer, io::InputStream& input) {
 			mosaicId = io::Read<MosaicId>(input);
 			offer.Amount = io::Read<Amount>(input);
 			offer.InitialAmount = io::Read<Amount>(input);
@@ -62,7 +62,7 @@ namespace catapult { namespace state {
 			for (uint8_t i = 0; i < offerCount; ++i) {
 				MosaicId mosaicId;
 				SellOffer offer;
-				ReadSellOffer(mosaicId, offer, input);
+				ReadOffer(mosaicId, offer, input);
 				offers.emplace(mosaicId, offer);
 			}
 		}
@@ -72,7 +72,7 @@ namespace catapult { namespace state {
 			for (uint8_t i = 0; i < offerCount; ++i) {
 				MosaicId mosaicId;
 				BuyOffer offer;
-				ReadSellOffer(mosaicId, offer, input);
+				ReadOffer(mosaicId, offer, input);
 				offer.ResidualCost = io::Read<Amount>(input);
 				offers.emplace(mosaicId, offer);
 			}

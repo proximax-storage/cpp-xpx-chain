@@ -6,6 +6,7 @@
 
 #pragma once
 #include "ExchangeEntityType.h"
+#include "Offer.h"
 #include "catapult/model/Transaction.h"
 #include "catapult/utils/ShortHash.h"
 
@@ -25,18 +26,18 @@ namespace catapult { namespace model {
 	public:
 		uint8_t MosaicCount;
 
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(OfferHashes, MosaicId)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Mosaics, OfferMosaic)
 
 	private:
 		template<typename T>
-		static auto* OfferHashesPtrT(T& transaction) {
+		static auto* MosaicsPtrT(T& transaction) {
 			return transaction.MosaicCount ? THeader::PayloadStart(transaction) : nullptr;
 		}
 
 	public:
 		// Calculates the real size of a remove exchange offer transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.MosaicCount * sizeof(MosaicId);
+			return sizeof(TransactionType) + transaction.MosaicCount * sizeof(OfferMosaic);
 		}
 	};
 

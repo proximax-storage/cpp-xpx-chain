@@ -12,7 +12,7 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a sell offer transaction plugin.
+	/// Creates a remove exchange offer transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateRemoveOfferTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateRemoveExchangeOfferTransactionPlugin();
 }}

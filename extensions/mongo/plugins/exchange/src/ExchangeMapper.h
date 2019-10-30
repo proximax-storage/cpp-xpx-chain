@@ -9,7 +9,7 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	/// Creates a mongo sell offer transaction plugin.
+	/// Creates a mongo exchange transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<MongoTransactionPlugin> CreateSellOfferTransactionMongoPlugin();
+	std::unique_ptr<MongoTransactionPlugin> CreateExchangeTransactionMongoPlugin();
 }}}
