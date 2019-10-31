@@ -62,6 +62,10 @@ namespace catapult { namespace test {
 		config.Plugins.emplace(PLUGIN_NAME(upgrade), utils::ConfigurationBag({ { "", {
 			{ "minUpgradePeriod", "360" },
 		} } }));
+
+		config.Plugins.emplace(PLUGIN_NAME(hello), utils::ConfigurationBag({ { "", {
+            { "messageCount", "10" },
+        } } }));
 	}
 
 	namespace {

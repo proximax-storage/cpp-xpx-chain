@@ -35,6 +35,11 @@ namespace catapult { namespace test {
 			size_t AddressAliasId; // optional
 		};
 
+		struct HelloDescriptor {
+            size_t SignerIdx;           // index of signer based from list of accounts
+            uint16_t MessageCount;
+		};
+
 		// endregion
 
 	public:
@@ -53,12 +58,16 @@ namespace catapult { namespace test {
 		/// optionally setting an alias for \a aliasId.
 		void addNamespace(size_t ownerId, const std::string& name, BlockDuration duration, size_t aliasId = 0);
 
+        void addHello(size_t senderId, uint16_t messageCount);
+
 	private:
 		model::UniqueEntityPtr<model::Transaction> createRegisterNamespace(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
 
 		model::UniqueEntityPtr<model::Transaction> createAddressAlias(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
 
+		model::UniqueEntityPtr<model::Transaction> createHelloTransaction(const HelloDescriptor& descriptor, Timestamp deadline) const;
+
 	private:
-		enum class DescriptorType { Namespace = 1, Alias };
+		enum class DescriptorType { Namespace = 1, Alias, Hello };
 	};
 }}

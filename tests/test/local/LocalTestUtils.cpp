@@ -157,7 +157,15 @@ namespace catapult { namespace test {
 			"\t\t\t\"name\": \"Account_Link\",\n"
 			"\t\t\t\"type\": \"16716\",\n"
 			"\t\t\t\"supportedVersions\": [2]\n"
-			"\t\t}\n"
+			"\t\t},\n"
+
+		    // if Hello is defined as 0x5D (hex) value is 0x415D
+		    // MakeEntityType in EntityType.h that converts facility code to entity type.
+            "\t\t{\n"
+            "\t\t\t\"name\": \"Hello\",\n"
+            "\t\t\t\"type\": \"16733\",\n"
+            "\t\t\t\"supportedVersions\": [1]\n"
+            "\t\t}\n"
 			"\t]\n"
 			"}";
 

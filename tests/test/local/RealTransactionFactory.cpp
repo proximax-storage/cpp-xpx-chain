@@ -22,6 +22,7 @@
 #include "sdk/src/builders/AddressAliasBuilder.h"
 #include "sdk/src/builders/RegisterNamespaceBuilder.h"
 #include "sdk/src/builders/TransferBuilder.h"
+#include "sdk/src/builders/HelloBuilder.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "plugins/txes/namespace/src/model/NamespaceIdGenerator.h"
@@ -122,5 +123,21 @@ namespace catapult { namespace test {
 		return std::move(pTransaction);
 	}
 
+	// endregion
+
+	// region hello plugin
+    model::UniqueEntityPtr<model::Transaction> CreateHelloTransaction(
+            const crypto::KeyPair& signer,
+            uint16_t messageCount)
+    {
+        builders::HelloBuilder builder(Network_Identifier, signer.publicKey());
+        builder.setMessageCount(messageCount);
+
+        auto pTransfer = builder.build();
+        pTransfer->MaxFee = GenerateRandomValue<Amount>();
+        pTransfer->Deadline = GenerateRandomValue<Timestamp>();
+        return std::move(pTransfer);
+
+    }
 	// endregion
 }}

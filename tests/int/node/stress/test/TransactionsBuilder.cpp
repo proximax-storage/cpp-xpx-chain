@@ -42,7 +42,12 @@ namespace catapult { namespace test {
 
 		case DescriptorType::Alias:
 			return createAddressAlias(CastToDescriptor<NamespaceDescriptor>(pDescriptor), deadline);
+
+		case DescriptorType::Hello:
+            return createHelloTransaction(CastToDescriptor<HelloDescriptor>(pDescriptor), deadline);
 		}
+
+
 
 		return nullptr;
 	}
@@ -77,6 +82,21 @@ namespace catapult { namespace test {
 		auto pTransaction = CreateRootAddressAliasTransaction(ownerKeyPair, descriptor.Name, aliasedAddress);
 		return SignWithDeadline(std::move(pTransaction), ownerKeyPair, deadline);
 	}
+
+
+    void TransactionsBuilder::addHello(size_t senderId, uint16_t messageCount) {
+        auto descriptor = HelloDescriptor{ senderId, messageCount};
+        add(DescriptorType::Hello, descriptor);
+	}
+
+    model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::createHelloTransaction
+        (const HelloDescriptor& descriptor,
+         Timestamp deadline) const {
+        const auto& senderKeyPair = accounts().getKeyPair(descriptor.SignerIdx);
+
+        auto pTransaction = CreateHelloTransaction(senderKeyPair, descriptor.MessageCount);
+        return SignWithDeadline(std::move(pTransaction), senderKeyPair, deadline);
+    }
 
 	// endregion
 }}

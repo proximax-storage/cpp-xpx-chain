@@ -119,6 +119,11 @@
 			"name": "Account_Link",
 			"type": "16716",
 			"supportedVersions": [2]
+		},
+		{
+			"name": "Hello",
+			"type": "16733",
+			"supportedVersions": [1]
 		}
 	]
 }

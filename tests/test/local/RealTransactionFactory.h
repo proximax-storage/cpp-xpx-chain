@@ -63,4 +63,9 @@ namespace catapult { namespace test {
 			const crypto::KeyPair& signer,
 			const std::string& name,
 			const Address& address);
+
+	/// Creates a signed hello transaction with \a signer, and messageCount
+    model::UniqueEntityPtr<model::Transaction> CreateHelloTransaction(
+                const crypto::KeyPair& signer,
+                uint16_t messageCount);
 }}

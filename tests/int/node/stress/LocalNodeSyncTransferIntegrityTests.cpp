@@ -95,6 +95,9 @@ namespace catapult { namespace local {
 			transactionsBuilder.addTransfer(3, 4, Amount(400'000));
 			transactionsBuilder.addTransfer(4, 5, Amount(50'000));
 
+			// add hello transaction to this block
+			transactionsBuilder.addHello(0, 5);
+
 			auto stateHashCalculator = context.createStateHashCalculator();
 			BlockChainBuilder builder(accounts, stateHashCalculator);
 			auto blocks = TTraits::GetBlocks(builder, transactionsBuilder);
