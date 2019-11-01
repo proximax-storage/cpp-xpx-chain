@@ -55,9 +55,6 @@ namespace catapult { namespace cache {
 		/// Inserts \a value into the cache.
 		void insert(const ExchangeCacheDescriptor::ValueType& value);
 
-		/// Removes the value identified by \a key from the cache.
-		void remove(const ExchangeCacheDescriptor::KeyType& key);
-
 		/// Updates expiry height of exchange with \a key from \a currentHeight to \a newHeight.
 		void updateExpiryHeight(const ExchangeCacheDescriptor::KeyType& key, const Height& currentHeight, const Height& newHeight);
 

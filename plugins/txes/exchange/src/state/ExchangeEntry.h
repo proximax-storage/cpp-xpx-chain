@@ -19,6 +19,7 @@ namespace catapult { namespace state {
 		catapult::Amount InitialCost;
 		Height Deadline;
 		Height ExpiryHeight;
+		bool Expired;
 	};
 
 	struct SellOffer : public OfferBase {
@@ -84,6 +85,7 @@ namespace catapult { namespace state {
 		{}
 
 	public:
+		static constexpr Height Invalid_Expiry_Height = Height(0);
 
 	public:
 		/// Gets the owner of the offers.
@@ -111,32 +113,73 @@ namespace catapult { namespace state {
 			return m_buyOffers;
 		}
 
-		/// Gets the height at which to remove the entry.
-		const Height& expiryHeight() const {
-			Height expiryHeight;
+		/// Gets the height of the earliest expiring offer.
+		Height minExpiryHeight() const {
+			if (empty())
+				return Invalid_Expiry_Height;
+
+			Height expiryHeight = Height(std::numeric_limits<Height::ValueType>::max());
 			std::for_each(m_sellOffers.begin(), m_sellOffers.end(), [&expiryHeight](const auto& pair) {
-				if (expiryHeight < pair.second.ExpiryHeight)
+				if (expiryHeight > pair.second.ExpiryHeight)
 					expiryHeight = pair.second.ExpiryHeight;
 			});
 			std::for_each(m_buyOffers.begin(), m_buyOffers.end(), [&expiryHeight](const auto& pair) {
-				if (expiryHeight < pair.second.ExpiryHeight)
+				if (expiryHeight > pair.second.ExpiryHeight)
 					expiryHeight = pair.second.ExpiryHeight;
+			});
+
+			return expiryHeight;
+		}
+
+		/// Marks offers as expired if expiry height is less or equal \a height.
+		void markExpiredOffers(const Height& height) {
+			std::for_each(m_sellOffers.begin(), m_sellOffers.end(), [&height](auto& pair) {
+				pair.second.Expired = (height >= pair.second.ExpiryHeight);
+			});
+			std::for_each(m_buyOffers.begin(), m_buyOffers.end(), [&height](auto& pair) {
+				pair.second.Expired = (height >= pair.second.ExpiryHeight);
 			});
 		}
 
-	public:
-		/// Returns \c true if at least one offer is active at \a height.
-		bool isActive(catapult::Height height) const {
-			for (const auto& pair : m_sellOffers) {
-				if (height < pair.second.ExpiryHeight)
-					return true;
+		bool offerExists(model::OfferType type, const MosaicId& mosaicId) const {
+			if (model::OfferType::Buy == type) {
+				return m_buyOffers.count(mosaicId);
+			} else {
+				return m_sellOffers.count(mosaicId);
 			}
-			for (const auto& pair : m_buyOffers) {
-				if (height < pair.second.ExpiryHeight)
-					return true;
-			}
+		}
 
-			return false;
+		void addOffer(model::OfferType type, const MosaicId& mosaicId, const model::OfferWithDuration* pOffer, const Height& deadline) {
+			state::OfferBase baseOffer{pOffer->Mosaic.Amount, pOffer->Mosaic.Amount, pOffer->Cost, deadline, deadline, false};
+			if (model::OfferType::Buy == type) {
+				m_buyOffers.emplace(mosaicId, state::BuyOffer{baseOffer, pOffer->Cost});
+			} else {
+				m_sellOffers.emplace(mosaicId, state::SellOffer{baseOffer});
+			}
+		}
+
+		void removeOffer(model::OfferType type, const MosaicId& mosaicId) {
+			if (model::OfferType::Buy == type) {
+				m_buyOffers.erase(mosaicId);
+			} else {
+				m_sellOffers.erase(mosaicId);
+			}
+		}
+
+		state::OfferBase& getBaseOffer(model::OfferType type, const MosaicId& mosaicId) {
+			return (model::OfferType::Buy == type) ?
+			   dynamic_cast<state::OfferBase&>(m_buyOffers.at(mosaicId)) :
+			   dynamic_cast<state::OfferBase&>(m_sellOffers.at(mosaicId));
+		}
+
+		bool empty() const {
+			return m_buyOffers.empty() && m_sellOffers.empty();
+		}
+
+	public:
+		/// Returns \c false at least one offer is expiring at \a height.
+		bool isActive(catapult::Height height) const {
+			return height < minExpiryHeight();
 		}
 
 	private:

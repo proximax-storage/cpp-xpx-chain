@@ -40,7 +40,6 @@ namespace catapult { namespace model {
 	public:
 		OfferNotification(
 				const Key& owner,
-				const BlockDuration& duration,
 				uint8_t offerCount,
 				const OfferWithDuration* pOffers)
 			: Notification(Notification_Type, sizeof(OfferNotification<1>))
@@ -52,9 +51,6 @@ namespace catapult { namespace model {
 	public:
 		/// Offer owner.
 		const Key& Owner;
-
-		/// The offer type.
-		model::OfferType OfferType;
 
 		/// Offer count.
 		uint8_t OfferCount;
@@ -108,12 +104,12 @@ namespace catapult { namespace model {
 	public:
 		RemoveOfferNotification(
 				const Key& owner,
-				uint8_t mosaicCount,
-				const OfferMosaic* pMosaics)
+				uint8_t offerCount,
+				const OfferMosaic* pOffers)
 			: Notification(Notification_Type, sizeof(RemoveOfferNotification<1>))
 			, Owner(owner)
-			, MosaicCount(mosaicCount)
-			, MosaicsPtr(pMosaics)
+			, OfferCount(offerCount)
+			, OffersPtr(pOffers)
 		{}
 
 	public:
@@ -121,9 +117,9 @@ namespace catapult { namespace model {
 		const Key& Owner;
 
 		/// Mosaic count.
-		uint8_t MosaicCount;
+		uint8_t OfferCount;
 
 		/// Mosaic ids of offers to remove.
-		const OfferMosaic* MosaicsPtr;
+		const OfferMosaic* OffersPtr;
 	};
 }}

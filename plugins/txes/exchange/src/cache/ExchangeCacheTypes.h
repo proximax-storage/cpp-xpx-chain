@@ -10,7 +10,6 @@
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"
 #include "catapult/utils/IdentifierGroup.h"
-#include "catapult/utils/ShortHash.h"
 
 namespace catapult {
 	namespace cache {

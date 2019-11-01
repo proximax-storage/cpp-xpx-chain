@@ -56,6 +56,13 @@ namespace catapult { namespace validators {
 	/// Validation failed because there is no offered mosaic to remove.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(No_Offered_Mosaics_To_Remove, 14);
 
+	/// Validation failed because there is at least two offers of the same
+	/// type with the same mosaic from the same owner.
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Duplicated_Offer_In_Request, 15);
+
+	/// Validation failed because offer already exists.
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Exists, 16);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

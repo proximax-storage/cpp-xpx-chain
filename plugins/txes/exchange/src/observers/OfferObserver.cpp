@@ -20,34 +20,26 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Commit == context.Mode) {
 			if (!cache.contains(notification.Owner))
 				cache.insert(state::ExchangeEntry(notification.Owner));
-			auto& entry = cache.find(notification.Owner).get();
+			auto iter = cache.find(notification.Owner);
+			auto& entry = iter.get();
+			OfferExpiryUpdater offerExpiryUpdater(cache, entry, false);
 
-			const model::OfferWithDuration* pOffer = notification.OffersPtr;
+			const auto* pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
 				auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
 				auto deadline = GetOfferDeadline(pOffer->Duration, context.Height);
-				state::OfferBase baseOffer{pOffer->Mosaic.Amount, pOffer->Mosaic.Amount, pOffer->Cost, deadline, deadline};
-				if (model::OfferType::Buy == pOffer->Type) {
-					entry.buyOffers().emplace(mosaicId, state::BuyOffer{baseOffer, pOffer->Cost});
-				} else {
-					entry.sellOffers().emplace(mosaicId, state::SellOffer{baseOffer});
-				}
+				entry.addOffer(pOffer->Type, mosaicId, pOffer, deadline);
 			}
 		} else {
-			auto& entry = cache.find(notification.Owner).get();
+			auto iter = cache.find(notification.Owner);
+			auto& entry = iter.get();
+			OfferExpiryUpdater offerExpiryUpdater(cache, entry, true);
 
 			auto pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
 				auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
-				if (model::OfferType::Buy == pOffer->Type) {
-					entry.buyOffers().erase(mosaicId);
-				} else {
-					entry.sellOffers().erase(mosaicId);
-				}
+				entry.removeOffer(pOffer->Type, mosaicId);
 			}
-
-			if (entry.sellOffers().empty() && entry.buyOffers().empty())
-				cache.remove(notification.Owner);
 		}
 	}));
 }}

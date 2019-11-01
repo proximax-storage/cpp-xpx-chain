@@ -5,13 +5,39 @@
 **/
 
 #pragma once
-#include <plugins/txes/exchange/src/cache/ExchangeCache.h>
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/observers/ObserverTypes.h"
+#include "src/cache/ExchangeCache.h"
 #include "src/model/ExchangeNotifications.h"
 #include "src/state/ExchangeEntry.h"
 
 namespace catapult { namespace observers {
+
+	class OfferExpiryUpdater {
+	public:
+		explicit OfferExpiryUpdater(cache::ExchangeCacheDelta& cache, state::ExchangeEntry& entry, bool removeIfEmpty)
+			: m_cache(cache)
+			, m_entry(entry)
+			, m_initialExpiryHeight(m_entry.minExpiryHeight())
+			, m_removeIfEmpty(removeIfEmpty)
+		{}
+
+		~OfferExpiryUpdater() {
+			auto owner = m_entry.owner();
+			m_cache.updateExpiryHeight(owner, m_initialExpiryHeight, m_entry.minExpiryHeight());
+			if (m_removeIfEmpty && m_entry.empty())
+				m_cache.remove(owner);
+		}
+
+		OfferExpiryUpdater(const OfferExpiryUpdater&) = delete;
+		OfferExpiryUpdater& operator=(const OfferExpiryUpdater&) = delete;
+
+	private:
+		cache::ExchangeCacheDelta& m_cache;
+		state::ExchangeEntry& m_entry;
+		Height m_initialExpiryHeight;
+		bool m_removeIfEmpty;
+	};
 
 	/// Observes changes triggered by offer notifications
 	DECLARE_OBSERVER(Offer, model::OfferNotification<1>)();

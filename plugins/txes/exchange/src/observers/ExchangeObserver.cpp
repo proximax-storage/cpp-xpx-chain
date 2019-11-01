@@ -22,18 +22,18 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	DEFINE_OBSERVER(MatchedOffer, model::ExchangeNotification<1>, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(Exchange, model::ExchangeNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& cache = context.Cache.sub<cache::ExchangeCache>();
 		auto pMatchedOffer = notification.OffersPtr;
 		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pMatchedOffer) {
 			auto mosaicId = context.Resolvers.resolve(pMatchedOffer->Mosaic.MosaicId);
-			auto& entry = cache.find(pMatchedOffer->Owner).get();
-			auto expiryHeight = entry.expiryHeight();
+			auto iter = cache.find(pMatchedOffer->Owner);
+			auto& entry = iter.get();
+			OfferExpiryUpdater offerExpiryUpdater(cache, entry, false);
 			auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
 				ModifyOffer(entry.buyOffers(), mosaicId, context.Mode, pMatchedOffer) :
 				ModifyOffer(entry.sellOffers(), mosaicId, context.Mode, pMatchedOffer);
 			offer.ExpiryHeight = (Amount(0) == offer.Amount) ? context.Height : offer.Deadline;
-			cache.updateExpiryHeight(entry.owner(), expiryHeight, entry.expiryHeight());
 		}
 	});
 }}

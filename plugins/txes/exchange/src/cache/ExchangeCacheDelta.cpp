@@ -29,24 +29,19 @@ namespace catapult { namespace cache {
 
 	void BasicExchangeCacheDelta::insert(const ExchangeCacheDescriptor::ValueType& value) {
 		ExchangeCacheDeltaMixins::BasicInsertRemove::insert(value);
-		AddIdentifierWithGroup(*m_pHeightGroupingDelta, value.expiryHeight(), ExchangeCacheDescriptor::GetKeyFromValue(value));
-	}
-
-	void BasicExchangeCacheDelta::remove(const ExchangeCacheDescriptor::KeyType& key) {
-		auto iter = m_pExchangeEntries->find(key);
-		const auto* pExchange = iter.get();
-		if (!!pExchange)
-			RemoveIdentifierWithGroup(*m_pHeightGroupingDelta, pExchange->expiryHeight(), key);
-
-		ExchangeCacheDeltaMixins::BasicInsertRemove::remove(key);
+		auto expiryHeight = value.minExpiryHeight();
+		if (state::ExchangeEntry::Invalid_Expiry_Height != expiryHeight)
+			AddIdentifierWithGroup(*m_pHeightGroupingDelta, expiryHeight, ExchangeCacheDescriptor::GetKeyFromValue(value));
 	}
 
 	void BasicExchangeCacheDelta::updateExpiryHeight(const ExchangeCacheDescriptor::KeyType& key, const Height& currentHeight, const Height& newHeight) {
 		if (currentHeight == newHeight)
 			return;
 
-		RemoveIdentifierWithGroup(*m_pHeightGroupingDelta, currentHeight, key);
-		AddIdentifierWithGroup(*m_pHeightGroupingDelta, newHeight, key);
+		if (state::ExchangeEntry::Invalid_Expiry_Height != currentHeight)
+			RemoveIdentifierWithGroup(*m_pHeightGroupingDelta, currentHeight, key);
+		if (state::ExchangeEntry::Invalid_Expiry_Height != newHeight)
+			AddIdentifierWithGroup(*m_pHeightGroupingDelta, newHeight, key);
 	}
 
 	bool BasicExchangeCacheDelta::enabled() const {

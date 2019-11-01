@@ -24,18 +24,19 @@ namespace catapult { namespace validators {
 		if (notification.OfferCount == 0)
 			return Failure_Exchange_No_Offers;
 
-		const auto& offerCache = context.Cache.sub<cache::ExchangeCache>();
+		const auto& cache = context.Cache.sub<cache::ExchangeCache>();
 
 		const auto* pMatchedOffer = notification.OffersPtr;
 		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pMatchedOffer) {
 			if (pMatchedOffer->Owner == notification.Signer)
 				return Failure_Exchange_Buying_Own_Units_Is_Not_Allowed;
 
-			if (!offerCache.contains(pMatchedOffer->Owner))
+			if (!cache.contains(pMatchedOffer->Owner))
 				return Failure_Exchange_Account_Doesnt_Have_Any_Offer;
 
 			auto mosaicId = context.Resolvers.resolve(pMatchedOffer->Mosaic.MosaicId);
-			const auto& entry = offerCache.find(pMatchedOffer->Owner).get();
+			auto iter = cache.find(pMatchedOffer->Owner);
+			const auto& entry = iter.get();
 
 			if (model::OfferType::Buy == pMatchedOffer->Type) {
 				if (!entry.buyOffers().count(mosaicId))
@@ -52,7 +53,7 @@ namespace catapult { namespace validators {
 			const auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
 				dynamic_cast<const state::OfferBase&>(entry.buyOffers().at(mosaicId)) :
 				dynamic_cast<const state::OfferBase&>(entry.sellOffers().at(mosaicId));
-			if (offer.ExpiryHeight < context.Height)
+			if (offer.ExpiryHeight <= context.Height)
 				return Failure_Exchange_Offer_Expired;
 
 			if (offer.Amount < pMatchedOffer->Mosaic.Amount)

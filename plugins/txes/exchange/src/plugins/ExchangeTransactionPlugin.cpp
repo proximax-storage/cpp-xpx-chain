@@ -6,6 +6,7 @@
 
 #include "ExchangeTransactionPlugin.h"
 #include "catapult/config/ImmutableConfiguration.h"
+#include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "src/model/ExchangeTransaction.h"
@@ -16,30 +17,33 @@ using namespace catapult::model;
 namespace catapult { namespace plugins {
 
 	namespace {
+		UnresolvedAddress CopyToUnresolvedAddress(const Address& source) {
+			UnresolvedAddress dest;
+			std::memcpy(dest.data(), source.data(), source.size());
+			return dest;
+		}
+
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
-					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 					sub.notify(ExchangeNotification<1>(
 						transaction.Signer,
 						transaction.OfferCount,
 						transaction.OffersPtr()));
 
+					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 					auto pOffer = transaction.OffersPtr();
 					for (uint8_t i = 0; i < transaction.OfferCount; ++i, ++pOffer) {
+						auto offerOwnerAddress = CopyToUnresolvedAddress(PublicKeyToAddress(pOffer->Owner, config.NetworkIdentifier));
 						if (model::OfferType::Sell == pOffer->Type) {
-							sub.notify(BalanceDebitNotification<1>(transaction.Signer, currencyMosaicId, pOffer->Cost));
+							sub.notify(BalanceTransferNotification<1>(transaction.Signer, offerOwnerAddress, currencyMosaicId, pOffer->Cost));
+							sub.notify(BalanceCreditNotification<1>(transaction.Signer, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
 						} else {
-							sub.notify(BalanceDebitNotification<1>(transaction.Signer, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
+							sub.notify(BalanceTransferNotification<1>(transaction.Signer, offerOwnerAddress, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
+							sub.notify(BalanceCreditNotification<1>(transaction.Signer, currencyMosaicId, pOffer->Cost));
 						}
-						sub.notify(BalanceCreditNotification<1>(
-							(model::OfferType::Sell == pOffer->Type) ? transaction.Signer : pOffer->Owner,
-							pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
-						sub.notify(BalanceCreditNotification<1>(
-							(model::OfferType::Sell == pOffer->Type) ? pOffer->Owner : transaction.Signer,
-							currencyMosaicId, pOffer->Cost));
 					}
 					break;
 				}

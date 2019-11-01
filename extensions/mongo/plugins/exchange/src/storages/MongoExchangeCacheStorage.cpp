@@ -32,5 +32,5 @@ namespace catapult { namespace mongo { namespace plugins {
 		};
 	}
 
-	DEFINE_MONGO_FLAT_CACHE_STORAGE(Offer, ExchangeCacheTraits)
+	DEFINE_MONGO_FLAT_CACHE_STORAGE(Exchange, ExchangeCacheTraits)
 }}}

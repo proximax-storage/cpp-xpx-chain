@@ -13,18 +13,15 @@ namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(RemoveOffer, Notification, [](const auto& notification, const ObserverContext& context) {
 		auto& cache = context.Cache.sub<cache::ExchangeCache>();
-		auto& entry = cache.find(notification.Owner).get();
-		auto expiryHeight = entry.expiryHeight();
+		auto iter = cache.find(notification.Owner);
+		auto& entry = iter.get();
+		OfferExpiryUpdater offerExpiryUpdater(cache, entry, false);
 
-		auto pMosaic = notification.MosaicsPtr;
-		for (uint8_t i = 0; i < notification.MosaicCount; ++i, ++pMosaic) {
+		auto pMosaic = notification.OffersPtr;
+		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pMosaic) {
 			auto mosaicId = context.Resolvers.resolve(pMosaic->MosaicId);
-			state::OfferBase& offer = (model::OfferType::Sell == pMosaic->OfferType) ?
-				dynamic_cast<state::OfferBase&>(entry.sellOffers().at(mosaicId)) :
-				dynamic_cast<state::OfferBase&>(entry.buyOffers().at(mosaicId));
+			auto& offer = entry.getBaseOffer(pMosaic->OfferType, mosaicId);
 			offer.ExpiryHeight = (NotifyMode::Commit == context.Mode) ? context.Height : offer.Deadline;
 		}
-
-		cache.updateExpiryHeight(notification.Owner, expiryHeight, entry.expiryHeight());
 	});
 }}

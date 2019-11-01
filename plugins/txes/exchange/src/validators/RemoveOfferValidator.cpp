@@ -13,18 +13,19 @@ namespace catapult { namespace validators {
 	using Notification = model::RemoveOfferNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(RemoveOffer, [](const Notification& notification, const ValidatorContext& context) {
-		if (notification.MosaicCount == 0)
+		if (notification.OfferCount == 0)
 			return Failure_Exchange_No_Offered_Mosaics_To_Remove;
 
 		auto& cache = context.Cache.sub<cache::ExchangeCache>();
 		if (!cache.contains(notification.Owner))
 			return Failure_Exchange_Account_Doesnt_Have_Any_Offer;
 
-		const auto& entry = cache.find(notification.Owner).get();
-		auto pMosaic = notification.MosaicsPtr;
-		for (uint8_t i = 0; i < notification.MosaicCount; ++i, ++pMosaic) {
-			auto mosaicId = context.Resolvers.resolve(pMosaic->MosaicId);
-			if (model::OfferType::Buy == pMosaic->OfferType) {
+		auto iter = cache.find(notification.Owner);
+		const auto& entry = iter.get();
+		auto pOffer = notification.OffersPtr;
+		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
+			auto mosaicId = context.Resolvers.resolve(pOffer->MosaicId);
+			if (model::OfferType::Buy == pOffer->OfferType) {
 				if (!entry.buyOffers().count(mosaicId))
 					return Failure_Exchange_Offer_Doesnt_Exist;
 			} else {
@@ -32,10 +33,10 @@ namespace catapult { namespace validators {
 					return Failure_Exchange_Offer_Doesnt_Exist;
 			}
 
-			const auto& offer = (model::OfferType::Buy == pMosaic->OfferType) ?
+			const auto& offer = (model::OfferType::Buy == pOffer->OfferType) ?
 				dynamic_cast<const state::OfferBase&>(entry.buyOffers().at(mosaicId)) :
 				dynamic_cast<const state::OfferBase&>(entry.sellOffers().at(mosaicId));
-			if (offer.ExpiryHeight < context.Height)
+			if (offer.ExpiryHeight <= context.Height)
 				return Failure_Exchange_Offer_Already_Removed;
 		}
 

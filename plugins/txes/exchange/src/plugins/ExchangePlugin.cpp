@@ -44,7 +44,7 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 				.add(validators::CreateOfferValidator(pConfigHolder))
-				.add(validators::CreateMatchedOfferValidator())
+				.add(validators::CreateExchangeValidator())
 				.add(validators::CreateRemoveOfferValidator());
 		});
 

@@ -19,6 +19,7 @@ namespace catapult { namespace state {
 			io::Write(output, offer.InitialCost);
 			io::Write(output, offer.Deadline);
 			io::Write(output, offer.ExpiryHeight);
+			io::Write8(output, offer.Expired);
 		}
 
 		void WriteSellOffers(const SellOfferMap& offers, io::OutputStream& output) {
@@ -55,6 +56,7 @@ namespace catapult { namespace state {
 			offer.InitialCost = io::Read<Amount>(input);
 			offer.Deadline = io::Read<Height>(input);
 			offer.ExpiryHeight = io::Read<Height>(input);
+			offer.Expired = io::Read8(input);
 		}
 
 		void ReadSellOffers(SellOfferMap& offers, io::InputStream& input) {

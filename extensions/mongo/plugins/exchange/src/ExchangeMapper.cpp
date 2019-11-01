@@ -26,7 +26,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 
 		void StreamMatchedOffers(bson_stream::document& builder, const model::MatchedOffer* pOffer, size_t numOffers) {
-			auto offerArray = builder << "matchedOffers" << bson_stream::open_array;
+			auto offerArray = builder << "offers" << bson_stream::open_array;
 			for (auto i = 0u; i < numOffers; ++i, ++pOffer) {
 				StreamMatchedOffer(offerArray, *pOffer);
 			}

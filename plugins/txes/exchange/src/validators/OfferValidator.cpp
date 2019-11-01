@@ -5,6 +5,7 @@
 **/
 
 #include "Validators.h"
+#include "src/cache/ExchangeCache.h"
 #include "src/config/ExchangeConfiguration.h"
 
 namespace catapult { namespace validators {
@@ -27,13 +28,26 @@ namespace catapult { namespace validators {
 			if (notification.OfferCount == 0)
 				return Failure_Exchange_No_Offers;
 
+			auto& cache = context.Cache.sub<cache::ExchangeCache>();
+			auto iter = cache.find(notification.Owner);
+			const auto& entry = iter.get();
+
 			const auto& config = pConfigHolder->Config(context.Height);
 			const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
 
 			auto allowedMosaicIds = GetAllowedMosaicIds(config.Immutable);
-			const model::Offer* pOffer = notification.OffersPtr;
+			std::set<MosaicId> offeredMosaicIds;
+			auto* pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
-				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Signer != context.Network.PublicKey) {
+				auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
+				if (entry.offerExists(pOffer->Type, mosaicId))
+					return Failure_Exchange_Offer_Exists;
+
+				if (!offeredMosaicIds.count(mosaicId))
+					return Failure_Exchange_Duplicated_Offer_In_Request;
+				offeredMosaicIds.insert(mosaicId);
+
+				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Owner != context.Network.PublicKey) {
 					return Failure_Exchange_Offer_Duration_Too_Large;
 				}
 

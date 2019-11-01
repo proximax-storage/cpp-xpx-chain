@@ -14,22 +14,24 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		void StreamOffer(bson_stream::array_context& context, const MosaicId& mosaicId, const state::OfferBase& offer) {
-			context
+		template<typename TDoc>
+		auto StreamOffer(TDoc& context, const MosaicId& mosaicId, const state::OfferBase& offer) {
+			return context
 				<< "mosaicId" << ToInt64(mosaicId)
 				<< "amount" << ToInt64(offer.Amount)
 				<< "initialAmount" << ToInt64(offer.InitialAmount)
 				<< "initialCost" << ToInt64(offer.InitialCost)
 				<< "deadline" << ToInt64(offer.Deadline)
-				<< "expiryHeight" << ToInt64(offer.ExpiryHeight);
+				<< "expiryHeight" << ToInt64(offer.ExpiryHeight)
+				<< "expired" << offer.Expired;
 		}
 
 		void StreamBuyOffers(bson_stream::document& builder, const state::BuyOfferMap& offers) {
 			auto offerArray = builder << "buyOffers" << bson_stream::open_array;
 			for (const auto& pair : offers) {
-				offerArray << bson_stream::open_document;
-				StreamOffer(offerArray, pair.first, pair.second);
-				offerArray
+				auto doc = offerArray << bson_stream::open_document;
+				auto context = StreamOffer(doc, pair.first, pair.second);
+				offerArray = context
 					<< "residualCost" << ToInt64(pair.second.ResidualCost)
 					<< bson_stream::close_document;
 			}
@@ -39,9 +41,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		void StreamSellOffers(bson_stream::document& builder, const state::SellOfferMap& offers) {
 			auto offerArray = builder << "sellOffers" << bson_stream::open_array;
 			for (const auto& pair : offers) {
-				offerArray << bson_stream::open_document;
-				StreamOffer(offerArray, pair.first, pair.second);
-				offerArray << bson_stream::close_document;
+				auto doc = offerArray << bson_stream::open_document;
+				auto context = StreamOffer(doc, pair.first, pair.second);
+				offerArray = context << bson_stream::close_document;
 			}
 			offerArray << bson_stream::close_array;
 		}
@@ -71,6 +73,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			offer.InitialCost = Amount{static_cast<uint64_t>(dbOffer["initialCost"].get_int64())};
 			offer.Deadline = Height{static_cast<uint64_t>(dbOffer["deadline"].get_int64())};
 			offer.ExpiryHeight = Height{static_cast<uint64_t>(dbOffer["expiryHeight"].get_int64())};
+			offer.Expired = dbOffer["expired"].get_bool().value;
 		}
 
 		void ReadBuyOffers(const bsoncxx::array::view& dbOffers, state::BuyOfferMap& offers) {

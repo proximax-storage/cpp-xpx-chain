@@ -14,19 +14,21 @@ using namespace catapult::mongo::mappers;
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		void StreamOfferMosaics(bson_stream::document &builder, const model::OfferMosaic* pMosaic, size_t numOffers) {
-			auto offerArray = builder << "offerMosaics" << bson_stream::open_array;
-			for (auto i = 0u; i < numOffers; ++i, ++pMosaic) {
+		void StreamOffers(bson_stream::document &builder, const model::OfferMosaic* pOffer, size_t numOffers) {
+			auto offerArray = builder << "offers" << bson_stream::open_array;
+			for (auto i = 0u; i < numOffers; ++i, ++pOffer) {
 				offerArray
-					<< "mosaicId" << ToInt64(pMosaic->MosaicId)
-					<< "offerType" << utils::to_underlying_type(pMosaic->OfferType);
+					<< bson_stream::open_document
+					<< "mosaicId" << ToInt64(pOffer->MosaicId)
+					<< "offerType" << utils::to_underlying_type(pOffer->OfferType)
+					<< bson_stream::close_document;
 			}
 			offerArray << bson_stream::close_array;
 		}
 
 		template<typename TTransaction>
 		void StreamRemoveExchangeOfferTransaction(bson_stream::document &builder, const TTransaction &transaction) {
-			StreamOfferMosaics(builder, transaction.MosaicsPtr(), transaction.MosaicCount);
+			StreamOffers(builder, transaction.OffersPtr(), transaction.OfferCount);
 		}
 	}
 
