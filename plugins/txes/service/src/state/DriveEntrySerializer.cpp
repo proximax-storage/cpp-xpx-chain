@@ -157,7 +157,7 @@ namespace catapult { namespace state {
 		io::Write64(output, driveEntry.size());
 		io::Write16(output, driveEntry.replicas());
 		io::Write16(output, driveEntry.minReplicators());
-		io::Write8(output, driveEntry.minApprovers());
+		io::Write8(output, driveEntry.percentApprovers());
 
 		SaveFiles(output, driveEntry.files());
 		SaveReplicators(output, driveEntry.replicators());
@@ -192,7 +192,7 @@ namespace catapult { namespace state {
 		entry.setSize(io::Read64(input));
 		entry.setReplicas(io::Read16(input));
 		entry.setMinReplicators(io::Read16(input));
-		entry.setMinApprovers(io::Read8(input));
+		entry.setPercentApprovers(io::Read8(input));
 
 		LoadFiles(input, entry.files());
 		LoadReplicators(input, entry.replicators());

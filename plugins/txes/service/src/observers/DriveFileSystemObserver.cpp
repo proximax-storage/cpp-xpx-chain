@@ -12,7 +12,9 @@ namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(DriveFileSystem, model::DriveFileSystemNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		auto& driveEntry = driveCache.find(notification.DriveKey).get();
+        auto driveIter = driveCache.find(notification.DriveKey);
+        auto& driveEntry = driveIter.get();
+
 		if (NotifyMode::Commit == context.Mode) {
             driveEntry.setRootHash(notification.RootHash);
 		} else {
@@ -59,9 +61,6 @@ namespace catapult { namespace observers {
                 auto& files = driveEntry.files();
                 auto& info = files[removeActionsPtr->FileHash];
                 info.Actions.emplace_back(state::DriveAction{ state::DriveActionType::Remove, context.Height });
-
-                for (auto& replicator : driveEntry.replicators())
-                    replicator.second.DecrementUndepositedFileCounter(removeActionsPtr->FileHash);
             } else {
                 auto& files = driveEntry.files();
                 auto& info = files[removeActionsPtr->FileHash];
@@ -70,9 +69,6 @@ namespace catapult { namespace observers {
                     CATAPULT_THROW_RUNTIME_ERROR("Got unexpected state during rollback removed file");
 
                 info.Actions.pop_back();
-
-                for (auto& replicator : driveEntry.replicators())
-                    replicator.second.IncrementUndepositedFileCounter(removeActionsPtr->FileHash);
             }
         }
 	});

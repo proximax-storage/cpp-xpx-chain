@@ -12,8 +12,16 @@
 
 namespace catapult { namespace utils {
 
-    Amount CalculateDriveDeposit(const state::DriveEntry& driveEntry);
-    Amount CalculateFileDeposit(const state::DriveEntry& driveEntry, const Hash256& fileHash);
-    Amount CalculateFileUpload(const state::DriveEntry& driveEntry, const uint64_t& size);
+    inline Amount CalculateDriveDeposit(const state::DriveEntry& driveEntry) {
+        return Amount(driveEntry.size());
+    }
+
+    inline Amount CalculateFileDeposit(const state::DriveEntry& driveEntry, const Hash256& fileHash) {
+        return Amount(driveEntry.files().at(fileHash).Size);
+    }
+
+    inline Amount CalculateFileUpload(const state::DriveEntry& driveEntry, const uint64_t& size) {
+        return Amount((driveEntry.replicas() - 1) * size);
+    }
 
 }}

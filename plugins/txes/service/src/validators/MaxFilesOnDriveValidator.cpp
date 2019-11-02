@@ -17,8 +17,10 @@ namespace catapult { namespace validators {
 		return MAKE_STATEFUL_VALIDATOR(MaxFilesOnDrive, [pConfigHolder](
 				const Notification& notification,
 				const ValidatorContext& context) {
-			const auto& cache = context.Cache.sub<cache::DriveCache>();
-			const auto& driveEntry = cache.find(notification.DriveKey).get();
+			const auto& driveCache = context.Cache.sub<cache::DriveCache>();
+
+			auto driveIter = driveCache.find(notification.DriveKey);
+			const auto& driveEntry = driveIter.get();
             const model::NetworkConfiguration& networkConfig = pConfigHolder->ConfigAtHeightOrLatest(context.Height).Network;
             const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::ServiceConfiguration>(PLUGIN_NAME_HASH(service));
 

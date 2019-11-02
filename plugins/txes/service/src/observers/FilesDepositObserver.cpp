@@ -10,9 +10,10 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(FileDeposit, model::FilesDepositNotification<1>, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(FilesDeposit, model::FilesDepositNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		auto& driveEntry = driveCache.find(notification.DriveKey).get();
+		auto driveIter = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIter.get();
 
 		auto& replicator = driveEntry.replicators().at(notification.Replicator);
 

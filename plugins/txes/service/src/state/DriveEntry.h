@@ -52,7 +52,7 @@ namespace catapult { namespace state {
     };
 
 	struct FileInfo {
-		uint64_t Size = 0;
+		uint64_t Size;
         Amount Deposit;
 
 		bool isActive() const {
@@ -197,13 +197,13 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the number of the drive replicators for starting.
-		uint8_t minApprovers() const {
-			return m_minApprovers;
+		uint8_t percentApprovers() const {
+			return m_percentApprovers;
 		}
 
 		/// Sets the number of the drive \a approvers.
-		void setMinApprovers(uint8_t approvers) {
-			m_minApprovers = approvers;
+		void setPercentApprovers(uint8_t approvers) {
+			m_percentApprovers = approvers;
 		}
 
 		/// Gets files.
@@ -248,7 +248,7 @@ namespace catapult { namespace state {
         uint16_t m_replicas;
         uint16_t m_minReplicators;
 		// Percent 0-100
-		uint8_t m_minApprovers;
+		uint8_t m_percentApprovers;
 		FilesMap m_files;
 		ReplicatorsMap m_replicators;
 	};

@@ -17,12 +17,17 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(DrivePermittedOperation, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		if (!driveCache.contains(notification.Signer))
+		if (!driveCache.contains(notification.Transaction.Signer))
 			return ValidationResult::Success;
 
-		std::vector<model::EntityType> allowedTransactions({ model::Entity_Type_DeleteReward, model::Entity_Type_EndDrive, model::Entity_Type_Verification });
+		// TODO: Exchange transaction
+		static std::unordered_set<model::EntityType> allowedTransactions({
+		   model::Entity_Type_DeleteReward,
+		   model::Entity_Type_EndDrive,
+		   model::Entity_Type_Verification,
+		});
 
-		return std::find(allowedTransactions.begin(), allowedTransactions.end(), notification.Transaction.Type) != allowedTransactions.end() ?
+		return allowedTransactions.count(notification.Transaction.Type) ?
 			ValidationResult::Success : Failure_Service_Operation_Is_Not_Permitted;
 	});
 }}

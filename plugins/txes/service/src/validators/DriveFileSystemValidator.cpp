@@ -14,38 +14,49 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(DriveFileSystem, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		if (!driveCache.contains(notification.DriveKey))
-			return Failure_Service_Drive_Does_Not_Exist;
-
-		const auto& driveEntry = driveCache.find(notification.DriveKey).get();
+		auto driveIter = driveCache.find(notification.DriveKey);
+		const auto& driveEntry = driveIter.get();
 
         if (notification.Signer != driveEntry.owner())
             return Failure_Service_Operation_Is_Not_Permitted;
 
+		if (notification.XorRootHash == Hash256())
+			return Failure_Service_Root_No_Changes;
+
 		if ((notification.XorRootHash ^ notification.RootHash) != driveEntry.rootHash())
 			return Failure_Service_Root_Hash_Is_Not_Equal;
 
+		utils::HashSet hashes;
 		auto addActionsPtr = notification.AddActionsPtr;
 		for (auto i = 0u; i < notification.AddActionsCount; ++i, ++addActionsPtr) {
+			hashes.insert(addActionsPtr->FileHash);
             if (driveEntry.files().count(addActionsPtr->FileHash)) {
-                const auto& file = driveEntry.files().find(addActionsPtr->FileHash)->second;
+                const auto& file = driveEntry.files().at(addActionsPtr->FileHash);
 
                 if (file.isActive())
                     return Failure_Service_File_Hash_Redudant;
             }
 		}
 
+		if (hashes.size() != notification.AddActionsCount)
+			return Failure_Service_File_Hash_Redudant;
+
+		hashes.clear();
 		auto removeActionsPtr = notification.RemoveActionsPtr;
 		for (auto i = 0u; i < notification.RemoveActionsCount; ++i, ++removeActionsPtr) {
+			hashes.insert(removeActionsPtr->FileHash);
             if (!driveEntry.files().count(removeActionsPtr->FileHash)) {
                 return Failure_Service_File_Is_Not_Exist;
             } else {
-                const auto& file = driveEntry.files().find(addActionsPtr->FileHash)->second;
+                const auto& file = driveEntry.files().at(removeActionsPtr->FileHash);
 
                 if (!file.isActive())
                     return Failure_Service_File_Is_Not_Exist;
             }
 		}
+
+		if (hashes.size() != notification.RemoveActionsCount)
+			return Failure_Service_File_Hash_Redudant;
 
 		return ValidationResult::Success;
 	});

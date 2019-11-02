@@ -34,7 +34,9 @@ namespace catapult { namespace plugins {
 					const auto &driveKey = reinterpret_cast<model::DriveDeposit*>(unresolved.Data)->DriveKey;
 
 					if (driveCache.contains(driveKey)) {
-						resolved = utils::CalculateDriveDeposit(driveCache.find(driveKey).get());
+                        auto driveIter = driveCache.find(driveKey);
+                        const auto& driveEntry = driveIter.get();
+						resolved = utils::CalculateDriveDeposit(driveEntry);
 						return true;
 					}
 					break;
@@ -43,7 +45,8 @@ namespace catapult { namespace plugins {
 					auto fileDeposit = reinterpret_cast<model::FileDeposit*>(unresolved.Data);
 
 					if (driveCache.contains(fileDeposit->DriveKey)) {
-						const auto& driveEntry = driveCache.find(fileDeposit->DriveKey).get();
+					    auto driveIter = driveCache.find(fileDeposit->DriveKey);
+						const auto& driveEntry = driveIter.get();
 
 						if (driveEntry.files().count(fileDeposit->FileHash)) {
 							resolved = utils::CalculateFileDeposit(driveEntry, fileDeposit->FileHash);
@@ -56,7 +59,8 @@ namespace catapult { namespace plugins {
 					auto fileUpload = reinterpret_cast<model::FileUpload*>(unresolved.Data);
 
 					if (driveCache.contains(fileUpload->DriveKey)) {
-						const auto& driveEntry = driveCache.find(fileUpload->DriveKey).get();
+                        auto driveIter = driveCache.find(fileUpload->DriveKey);
+                        const auto& driveEntry = driveIter.get();
 
 						resolved = utils::CalculateFileUpload(driveEntry, fileUpload->FileSize);
 						return true;
@@ -90,12 +94,12 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([pConfigHolder = manager.configHolder()](auto& builder) {
 			builder
+					.add(validators::CreateDriveValidator())
 					.add(validators::CreateDrivePermittedOperationValidator())
 					.add(validators::CreateFilesDepositValidator())
 					.add(validators::CreateJoinToDriveValidator())
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
-					// CreateMaxFilesOnDriveValidator must be after CreateDriveFileSystemValidator
 					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder));
 		});
 

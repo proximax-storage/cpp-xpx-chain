@@ -115,7 +115,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "size" << static_cast<int64_t>(entry.size())
 				<< "replicas" << entry.replicas()
 				<< "minReplicators" << static_cast<int8_t>(entry.minReplicators())
-				<< "minApprovers" << static_cast<int8_t>(entry.minApprovers());
+				<< "percentApprovers" << static_cast<int8_t>(entry.percentApprovers());
 
 		StreamBillingHistory(builder, entry.billingHistory());
 		StreamFiles(builder, entry.files());
@@ -241,7 +241,7 @@ namespace catapult { namespace mongo { namespace plugins {
         entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
         entry.setReplicas(static_cast<int8_t>(dbDriveEntry["replicas"].get_int32()));
         entry.setMinReplicators(static_cast<int8_t>(dbDriveEntry["minReplicators"].get_int32()));
-        entry.setMinApprovers(static_cast<int8_t>(dbDriveEntry["minApprovers"].get_int32()));
+        entry.setPercentApprovers(static_cast<int8_t>(dbDriveEntry["percentApprovers"].get_int32()));
 
 		ReadBillingHistory(entry.billingHistory(), dbDriveEntry["billingHistory"].get_array().value);
 		ReadFiles(entry.files(), dbDriveEntry["files"].get_array().value);

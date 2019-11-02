@@ -35,11 +35,11 @@ namespace catapult { namespace model {
 		/// Count of add actions.
 		uint16_t AddActionsCount;
 
-		/// Actions to add files to drive.
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(AddActions, AddAction)
-
 		/// Count of remove actions.
 		uint16_t RemoveActionsCount;
+
+		/// Actions to add files to drive.
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(AddActions, AddAction)
 
 		/// Actions to remove files from drive.
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(RemoveActions, RemoveAction)
@@ -53,8 +53,7 @@ namespace catapult { namespace model {
 
 		template<typename T>
 		static auto* RemoveActionsPtrT(T& transaction) {
-			auto* pAddActionsStart = AddActionsPtrT(transaction);
-			return transaction.RemoveActionsCount ? pAddActionsStart + transaction.AddActionsCount * sizeof(AddAction) : nullptr;
+			return transaction.RemoveActionsCount ? THeader::PayloadStart(transaction) + transaction.AddActionsCount * sizeof(AddAction) : nullptr;
 		}
 
 	public:

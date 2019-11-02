@@ -22,6 +22,10 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_EndDrive, 1)
 
 	public:
+		/// Key of drive.
+		Key DriveKey;
+
+	public:
 		// Calculates the real size of a service \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 			return sizeof(TransactionType);

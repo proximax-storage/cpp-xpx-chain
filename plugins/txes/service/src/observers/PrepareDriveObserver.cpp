@@ -13,6 +13,7 @@ namespace catapult { namespace observers {
 		auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		if (NotifyMode::Commit == context.Mode) {
 			state::DriveEntry driveEntry(notification.DriveKey);
+            driveEntry.setState(state::DriveState::NotStarted);
 			driveEntry.setOwner(notification.Owner);
 			driveEntry.setDuration(notification.Duration);
 			driveEntry.setBillingPeriod(notification.BillingPeriod);
@@ -20,7 +21,7 @@ namespace catapult { namespace observers {
 			driveEntry.setSize(notification.DriveSize);
 			driveEntry.setReplicas(notification.Replicas);
 			driveEntry.setMinReplicators(notification.MinReplicators);
-			driveEntry.setMinApprovers(notification.PercentApprovers);
+			driveEntry.setPercentApprovers(notification.PercentApprovers);
 			driveCache.insert(driveEntry);
 		} else {
 			if (driveCache.contains(notification.DriveKey))

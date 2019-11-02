@@ -7,6 +7,7 @@
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include <map>
 
 namespace catapult { namespace validators {
 
@@ -14,20 +15,27 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR(FilesDeposit, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		if (!driveCache.contains(notification.DriveKey))
-			return Failure_Service_Drive_Does_Not_Exist;
+		auto driveIter = driveCache.find(notification.DriveKey);
+		const auto& driveEntry = driveIter.get();
 
-		const auto& driveEntry = driveCache.find(notification.DriveKey).get();
-
-		if (driveEntry.replicators().count(notification.Replicator))
+		if (!driveEntry.replicators().count(notification.Replicator))
             return Failure_Service_Drive_Replicator_Not_Registered;
 
-		const auto& filesWithoutDeposit = driveEntry.replicators().find(notification.Replicator)->second.FilesWithoutDeposit;
+		const auto& filesWithoutDeposit = driveEntry.replicators().at(notification.Replicator).FilesWithoutDeposit;
 
-		auto filesPtr = notification.FilesPtr;
-		for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr)
-			if (!filesWithoutDeposit.count(filesPtr->FileHash))
-				return Failure_Service_File_Is_Not_Exist;
+		({
+			std::map<Hash256, uint16_t> hashes;
+			auto filesPtr = notification.FilesPtr;
+			for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr) {
+				++hashes[filesPtr->FileHash];
+				if (!filesWithoutDeposit.count(filesPtr->FileHash))
+					return Failure_Service_File_Is_Not_Exist;
+			}
+
+			for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr)
+				if (filesWithoutDeposit.at(filesPtr->FileHash) < hashes[filesPtr->FileHash])
+					return Failure_Service_File_Hash_Redudant;
+		});
 
 		return ValidationResult::Success;
 	});

@@ -58,8 +58,6 @@ namespace catapult { namespace model {
 		/// Service facility code.
 		Service = 0x5A,
 		/// Drive facility code.
-		Drive = 0x5B,
-		/// File facility code.
-		File = 0x5C,
+		Drive = 0x5B
 	};
 }}

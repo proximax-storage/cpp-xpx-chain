@@ -24,7 +24,8 @@ namespace catapult { namespace plugins {
 								   NotificationSubscriber &sub) {
 				auto &blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
 				switch (transaction.EntityVersion()) {
-					case 3: {
+					case 1: {
+                        sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 						sub.notify(FilesDepositNotification<1>(
 							transaction.DriveKey,
 							transaction.Signer,

@@ -14,7 +14,8 @@ namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(JoinToDrive, model::JoinToDriveNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		auto& driveEntry = driveCache.find(notification.DriveKey).get();
+		auto driveIter = driveCache.find(notification.DriveKey);
+		auto& driveEntry = driveIter.get();
 		if (NotifyMode::Commit == context.Mode) {
 			state::ReplicatorInfo info;
 			info.Start = context.Height;
@@ -36,9 +37,10 @@ namespace catapult { namespace observers {
 		}
 
         auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
-        auto& multisigEntry = multisigCache.find(notification.DriveKey).get();
-        float cosignatoryCount = driveEntry.replicators().size() + 1;
-        multisigEntry.setMinApproval(ceil(cosignatoryCount * driveEntry.minApprovers() / 100));
-        multisigEntry.setMinRemoval(ceil(cosignatoryCount * driveEntry.minApprovers() / 100));
+		auto multisigIter = multisigCache.find(notification.DriveKey);
+        auto& multisigEntry = multisigIter.get();
+        float cosignatoryCount = driveEntry.replicators().size();
+        multisigEntry.setMinApproval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
+        multisigEntry.setMinRemoval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
 	});
 }}

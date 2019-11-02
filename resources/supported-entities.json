@@ -121,9 +121,24 @@
 			"supportedVersions": [2]
 		},
 		{
-			"name": "Service",
+			"name": "PrepareDrive",
 			"type": "16730",
-			"supportedVersions": []
+			"supportedVersions": [1]
+		},
+		{
+			"name": "JointToDrive",
+			"type": "16986",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "DriveFileSystem",
+			"type": "17242",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "FilesDeposit",
+			"type": "17498",
+			"supportedVersions": [1]
 		}
 	]
 }

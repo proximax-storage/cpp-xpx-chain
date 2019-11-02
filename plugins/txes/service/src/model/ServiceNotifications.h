@@ -26,6 +26,12 @@ namespace catapult { namespace model {
 	/// Defines a drive verification notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Verification_v1, 0x0005);
 
+	/// Defines a drive notification type.
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0006);
+
+	/// Defines a drive state notification type.
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_State_v1, 0x0006);
+
 	/// Notification of a drive prepare.
 	template<VersionType version>
 	struct PrepareDriveNotification;
@@ -238,15 +244,40 @@ namespace catapult { namespace model {
 			const Key& drive,
 			const Key& replicator)
 			: Notification(Notification_Type, sizeof(DriveVerificationNotification<1>))
-			, Drive(drive)
+			, DriveKey(drive)
 			, Replicator(replicator)
 		{}
 
 	public:
 		/// Public key of the drive multisig account.
-		Key Drive;
+		Key DriveKey;
 
 		/// Replicator public key.
 		Key Replicator;
+	};
+
+	/// Notification of a drive.
+	template<VersionType version>
+	struct DriveNotification;
+
+	template<>
+	struct DriveNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_Drive_v1_Notification;
+
+	public:
+		explicit DriveNotification(const Key& drive, const model::EntityType& type)
+			: Notification(Notification_Type, sizeof(DriveNotification<1>))
+			, DriveKey(drive)
+			, TransactionType(type)
+		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Transactions type.
+        model::EntityType TransactionType;
 	};
 }}

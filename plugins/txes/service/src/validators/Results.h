@@ -71,6 +71,12 @@ namespace catapult { namespace validators {
 	/// Validation failed because a drive replicator is not registered.
 	DEFINE_SERVICE_RESULT(Drive_Replicator_Not_Registered, 19);
 
+	/// Validation failed because drive files system transaction doesn't contain changes.
+	DEFINE_SERVICE_RESULT(Root_No_Changes, 20);
+
+    /// Validation failed because the drive already is finished.
+    DEFINE_SERVICE_RESULT(Drive_Already_Is_Finished, 21);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

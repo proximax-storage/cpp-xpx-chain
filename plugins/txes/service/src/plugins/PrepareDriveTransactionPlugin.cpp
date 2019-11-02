@@ -19,7 +19,7 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
-			case 3: {
+			case 1: {
 				sub.notify(ModifyMultisigNewCosignerNotification<1>(transaction.Signer, transaction.Owner));
 				// We need to inform user that he is created drive
 				sub.notify(AccountPublicKeyNotification<1>(transaction.Owner));

@@ -41,6 +41,9 @@ namespace catapult { namespace validators {
 	/// - Added files are new and removed files are exist
 	DECLARE_STATEFUL_VALIDATOR(DriveFileSystem, model::DriveFileSystemNotification<1>)();
 
+	/// A validator check that drive exist and it is not finished
+	DECLARE_STATEFUL_VALIDATOR(Drive, model::DriveNotification<1>)();
+
 	/// A validator check that drive contains not many files
 	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, model::DriveFileSystemNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
