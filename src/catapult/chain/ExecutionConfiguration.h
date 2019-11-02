@@ -30,6 +30,7 @@ namespace catapult { namespace chain {
 	struct ExecutionConfiguration {
 	private:
 		using NetworkInfoSupplierFunc = std::function<model::NetworkInfo (const Height& height)>;
+		using MinFeeMultiplierSupplierFunc = std::function<BlockFeeMultiplier (const Height&)>;
 		using ObserverPointer = std::shared_ptr<const observers::AggregateNotificationObserver>;
 		using ValidatorPointer = std::shared_ptr<const validators::stateful::AggregateNotificationValidator>;
 		using PublisherPointer = std::shared_ptr<const model::NotificationPublisher>;
@@ -41,6 +42,9 @@ namespace catapult { namespace chain {
 
 		/// Network info supplier.
 		NetworkInfoSupplierFunc NetworkInfoSupplier;
+
+		/// Min transaction fee multiplier supplier.
+		MinFeeMultiplierSupplierFunc MinFeeMultiplierSupplier;
 
 		/// Observer.
 		ObserverPointer pObserver;

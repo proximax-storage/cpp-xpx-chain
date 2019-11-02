@@ -176,6 +176,20 @@ namespace catapult { namespace model {
 		using BasicBalanceNotification<BalanceDebitNotification<1>>::BasicBalanceNotification;
 	};
 
+	/// Notifies a balance credit to sender.
+	template<VersionType version>
+	struct BalanceCreditNotification;
+
+	template<>
+	struct BalanceCreditNotification<1> : public BasicBalanceNotification<BalanceCreditNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Balance_Credit_v1_Notification;
+
+	public:
+		using BasicBalanceNotification<BalanceCreditNotification<1>>::BasicBalanceNotification;
+	};
+
 	// endregion
 
 	// region entity

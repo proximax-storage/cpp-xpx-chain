@@ -31,12 +31,15 @@ namespace catapult { namespace config {
 		LOAD_IMMUTABLE_PROPERTY(HarvestingMosaicId);
 		LOAD_IMMUTABLE_PROPERTY(StorageMosaicId);
 		LOAD_IMMUTABLE_PROPERTY(StreamingMosaicId);
+		LOAD_IMMUTABLE_PROPERTY(ReviewMosaicId);
+		LOAD_IMMUTABLE_PROPERTY(SuperContractMosaicId);
+		LOAD_IMMUTABLE_PROPERTY(XarMosaicId);
 
 		LOAD_IMMUTABLE_PROPERTY(InitialCurrencyAtomicUnits);
 
 #undef LOAD_IMMUTABLE_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 9);
+		utils::VerifyBagSizeLte(bag, 12);
 		return config;
 	}
 
@@ -46,6 +49,26 @@ namespace catapult { namespace config {
 
 	UnresolvedMosaicId GetUnresolvedCurrencyMosaicId(const ImmutableConfiguration& config) {
 		return UnresolvedMosaicId(config.CurrencyMosaicId.unwrap());
+	}
+
+	UnresolvedMosaicId GetUnresolvedStorageMosaicId(const ImmutableConfiguration& config) {
+		return UnresolvedMosaicId(config.StorageMosaicId.unwrap());
+	}
+
+	UnresolvedMosaicId GetUnresolvedStreamingMosaicId(const ImmutableConfiguration& config) {
+		return UnresolvedMosaicId(config.StreamingMosaicId.unwrap());
+	}
+
+	UnresolvedMosaicId GetUnresolvedReviewMosaicId(const ImmutableConfiguration& config) {
+		return UnresolvedMosaicId(config.ReviewMosaicId.unwrap());
+	}
+
+	UnresolvedMosaicId GetUnresolvedSuperContractMosaicId(const ImmutableConfiguration& config) {
+		return UnresolvedMosaicId(config.SuperContractMosaicId.unwrap());
+	}
+
+	UnresolvedMosaicId GetUnresolvedXarMosaicId(const ImmutableConfiguration& config) {
+		return UnresolvedMosaicId(config.XarMosaicId.unwrap());
 	}
 
 	// endregion

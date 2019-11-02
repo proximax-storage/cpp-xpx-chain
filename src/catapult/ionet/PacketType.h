@@ -137,6 +137,9 @@ namespace catapult { namespace ionet {
 	/* Drive state path has been requested by a client. */ \
 	ENUM_VALUE(Drive_State_Path, FACILITY_BASED_CODE(800, Drive)) \
 	\
+	/* Exchange state path has been requested by a client. */ \
+	ENUM_VALUE(Exchange_State_Path, FACILITY_BASED_CODE(800, Exchange)) \
+	\
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
 	/* Request for the current diagnostic counter values. */ \
@@ -189,6 +192,9 @@ namespace catapult { namespace ionet {
 	\
 	/* Drive infos have been requested by a client. */ \
 	ENUM_VALUE(Drive_Infos, FACILITY_BASED_CODE(1200, Drive)) \
+	\
+	/* Exchange infos have been requested by a client. */ \
+	ENUM_VALUE(Exchange_Infos, FACILITY_BASED_CODE(1200, Exchange))
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

@@ -49,7 +49,7 @@ namespace catapult { namespace observers {
 		ObserveNotification(*pObserver, notification, context);
 
 		// Assert:
-		EXPECT_EQ(1246u, context.state().NumTotalTransactions);
+		EXPECT_EQ(1246u, context.state().NumTotalTransactions.load());
 	}
 
 	TEST(TEST_CLASS, ObserverDecrementsTotalNumberOfTransactionsInModeRollback) {
@@ -63,6 +63,6 @@ namespace catapult { namespace observers {
 		ObserveNotification(*pObserver, notification, context);
 
 		// Assert:
-		EXPECT_EQ(123u, context.state().NumTotalTransactions);
+		EXPECT_EQ(123u, context.state().NumTotalTransactions.load());
 	}
 }}

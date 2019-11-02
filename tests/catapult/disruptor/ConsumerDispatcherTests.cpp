@@ -252,9 +252,9 @@ namespace catapult { namespace disruptor {
 			});
 		}
 
-		using Heights = std::vector<Height>;
+		using Heights = test::AtomicVector<Height>;
 
-		auto CreateConsumer(std::vector<Heights>& collector) {
+		auto CreateConsumer(test::AtomicVector<Heights>& collector) {
 			return [&](auto& consumerInput) {
 				auto heights = BlockElementVectorToHeights(consumerInput.blocks());
 				collector.push_back(heights);
@@ -318,7 +318,7 @@ namespace catapult { namespace disruptor {
 		auto ranges = test::PrepareRanges(1);
 		auto expectedHeights = GetExpectedHeights(ranges);
 
-		std::vector<Heights> collectedHeights;
+		test::AtomicVector<Heights> collectedHeights;
 		ConsumerDispatcher dispatcher(Test_Dispatcher_Options, { CreateConsumer(collectedHeights) });
 
 		// Act: push single element
@@ -340,7 +340,7 @@ namespace catapult { namespace disruptor {
 		auto ranges = test::PrepareRanges(1);
 		auto expectedHeights = GetExpectedHeights(ranges);
 
-		std::vector<Heights> collectedHeights;
+		test::AtomicVector<Heights> collectedHeights;
 		std::atomic<size_t> numInspectorCalls = 0u;
 		ConsumerDispatcher dispatcher(
 				Test_Dispatcher_Options,
@@ -375,7 +375,7 @@ namespace catapult { namespace disruptor {
 		// Arrange:
 		auto ranges = test::PrepareRanges(5);
 		auto expectedHeights = GetExpectedHeights(ranges);
-		std::vector<Heights> collectedHeights;
+		test::AtomicVector<Heights> collectedHeights;
 		test::AtomicVector<Heights> inspectedHeights;
 		test::AtomicVector<CompletionStatus> inspectedStatuses;
 
@@ -395,14 +395,14 @@ namespace catapult { namespace disruptor {
 		EXPECT_EQ(0u, dispatcher.numActiveElements());
 		EXPECT_EQ(expectedHeights, collectedHeights);
 		EXPECT_EQ(expectedHeights, inspectedHeights);
-		EXPECT_EQ(std::vector<CompletionStatus>(5, CompletionStatus::Normal), inspectedStatuses);
+		EXPECT_EQ(test::AtomicVector<CompletionStatus>(5, CompletionStatus::Normal), inspectedStatuses);
 	}
 
 	TEST(TEST_CLASS, CanConsumeAndInspectAllElementsWithMultipleConsumers) {
 		// Arrange:
 		auto ranges = test::PrepareRanges(5);
 		auto expectedHeights = GetExpectedHeights(ranges);
-		std::vector<Heights> collectedHeights[3];
+		test::AtomicVector<Heights> collectedHeights[3];
 		test::AtomicVector<Heights> inspectedHeights;
 		test::AtomicVector<CompletionStatus> inspectedStatuses;
 
@@ -428,7 +428,7 @@ namespace catapult { namespace disruptor {
 		EXPECT_EQ(expectedHeights, collectedHeights[1]);
 		EXPECT_EQ(expectedHeights, collectedHeights[2]);
 		EXPECT_EQ(expectedHeights, inspectedHeights);
-		EXPECT_EQ(std::vector<CompletionStatus>(5, CompletionStatus::Normal), inspectedStatuses);
+		EXPECT_EQ(test::AtomicVector<CompletionStatus>(5, CompletionStatus::Normal), inspectedStatuses);
 	}
 
 	// endregion
@@ -447,7 +447,7 @@ namespace catapult { namespace disruptor {
 
 	TEST(TEST_CLASS, MarkedElementsAreSkippedByHigherConsumers) {
 		// Arrange:
-		std::vector<Heights> collectedHeights;
+		test::AtomicVector<Heights> collectedHeights;
 		auto ranges = test::PrepareRanges(5);
 		auto height = 0u;
 		for (auto& range : ranges)

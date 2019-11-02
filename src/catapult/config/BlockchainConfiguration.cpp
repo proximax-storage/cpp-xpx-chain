@@ -92,4 +92,8 @@ namespace catapult { namespace config {
 
 		return ionet::Node(identityKey, endpoint, metadata);
 	}
+
+	BlockFeeMultiplier GetMinFeeMultiplier(const BlockchainConfiguration& config) {
+		return config.Network.EnableUnconfirmedTransactionMinFeeValidation ? config.Node.MinFeeMultiplier : BlockFeeMultiplier{0};
+	}
 }}

@@ -86,7 +86,7 @@ namespace catapult { namespace chain {
 			static auto CreateSynchronizer(
 					const ShortHashesSupplier& shortHashesSupplier,
 					const handlers::TransactionRangeHandler& transactionRangeConsumer) {
-				return CreateUtSynchronizer(BlockFeeMultiplier(17), shortHashesSupplier, transactionRangeConsumer);
+				return CreateUtSynchronizer([]() { return BlockFeeMultiplier(17); }, shortHashesSupplier, transactionRangeConsumer);
 			}
 		};
 	}

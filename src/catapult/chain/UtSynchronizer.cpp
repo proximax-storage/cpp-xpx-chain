@@ -32,17 +32,17 @@ namespace catapult { namespace chain {
 
 		public:
 			explicit UtTraits(
-					BlockFeeMultiplier minFeeMultiplier,
+					const MinFeeMultiplierSupplier& minFeeMultiplierSupplier,
 					const ShortHashesSupplier& shortHashesSupplier,
 					const handlers::TransactionRangeHandler& transactionRangeConsumer)
-					: m_minFeeMultiplier(minFeeMultiplier)
+					: m_minFeeMultiplierSupplier(minFeeMultiplierSupplier)
 					, m_shortHashesSupplier(shortHashesSupplier)
 					, m_transactionRangeConsumer(transactionRangeConsumer)
 			{}
 
 		public:
 			thread::future<model::TransactionRange> apiCall(const RemoteApiType& api) const {
-				return api.unconfirmedTransactions(m_minFeeMultiplier, m_shortHashesSupplier());
+				return api.unconfirmedTransactions(m_minFeeMultiplierSupplier(), m_shortHashesSupplier());
 			}
 
 			void consume(model::TransactionRange&& range, const Key& sourcePublicKey) const {
@@ -50,17 +50,17 @@ namespace catapult { namespace chain {
 			}
 
 		private:
-			BlockFeeMultiplier m_minFeeMultiplier;
+			MinFeeMultiplierSupplier m_minFeeMultiplierSupplier;
 			ShortHashesSupplier m_shortHashesSupplier;
 			handlers::TransactionRangeHandler m_transactionRangeConsumer;
 		};
 	}
 
 	RemoteNodeSynchronizer<api::RemoteTransactionApi> CreateUtSynchronizer(
-			BlockFeeMultiplier minFeeMultiplier,
+			const MinFeeMultiplierSupplier& minFeeMultiplierSupplier,
 			const ShortHashesSupplier& shortHashesSupplier,
 			const handlers::TransactionRangeHandler& transactionRangeConsumer) {
-		auto traits = UtTraits(minFeeMultiplier, shortHashesSupplier, transactionRangeConsumer);
+		auto traits = UtTraits(minFeeMultiplierSupplier, shortHashesSupplier, transactionRangeConsumer);
 		auto pSynchronizer = std::make_shared<EntitiesSynchronizer<UtTraits>>(std::move(traits));
 		return CreateRemoteNodeSynchronizer(pSynchronizer);
 	}
