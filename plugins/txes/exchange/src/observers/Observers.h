@@ -15,17 +15,33 @@ namespace catapult { namespace observers {
 
 	class OfferExpiryUpdater {
 	public:
-		explicit OfferExpiryUpdater(cache::ExchangeCacheDelta& cache, state::ExchangeEntry& entry, bool removeIfEmpty)
+		explicit OfferExpiryUpdater(cache::ExchangeCacheDelta& cache, state::ExchangeEntry& entry)
 			: m_cache(cache)
 			, m_entry(entry)
 			, m_initialExpiryHeight(m_entry.minExpiryHeight())
-			, m_removeIfEmpty(removeIfEmpty)
+			, m_initialPruneHeight(m_entry.minPruneHeight())
 		{}
 
 		~OfferExpiryUpdater() {
 			auto owner = m_entry.owner();
-			m_cache.updateExpiryHeight(owner, m_initialExpiryHeight, m_entry.minExpiryHeight());
-			if (m_removeIfEmpty && m_entry.empty())
+			std::set<Height> initialValues{m_initialExpiryHeight, m_initialPruneHeight};
+			auto minExpiryHeight = m_entry.minExpiryHeight();
+			auto minPruneHeight = m_entry.minPruneHeight();
+			std::set<Height> newValues{minExpiryHeight, minPruneHeight};
+
+			if (!newValues.count(m_initialPruneHeight))
+				m_cache.removeExpiryHeight(owner, m_initialPruneHeight);
+
+			if (!newValues.count(m_initialExpiryHeight))
+				m_cache.removeExpiryHeight(owner, m_initialExpiryHeight);
+
+			if (!initialValues.count(minPruneHeight))
+				m_cache.addExpiryHeight(owner, minPruneHeight);
+
+			if (!initialValues.count(minExpiryHeight))
+				m_cache.addExpiryHeight(owner, minExpiryHeight);
+
+			if (m_entry.empty())
 				m_cache.remove(owner);
 		}
 
@@ -36,7 +52,7 @@ namespace catapult { namespace observers {
 		cache::ExchangeCacheDelta& m_cache;
 		state::ExchangeEntry& m_entry;
 		Height m_initialExpiryHeight;
-		bool m_removeIfEmpty;
+		Height m_initialPruneHeight;
 	};
 
 	/// Observes changes triggered by offer notifications

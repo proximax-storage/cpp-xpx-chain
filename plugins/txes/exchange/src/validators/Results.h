@@ -29,9 +29,6 @@ namespace catapult { namespace validators {
 	/// Validation failed because mosaic for exchange is not allowed.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Mosaic_Not_Allowed, 5);
 
-	/// Validation failed because offer has already been removed.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Already_Removed, 6);
-
 	/// Validation failed because to buying own units is not allowed.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Buying_Own_Units_Is_Not_Allowed, 7);
 
@@ -43,9 +40,6 @@ namespace catapult { namespace validators {
 
 		/// Validation failed because the account doesn't have any offer.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Account_Doesnt_Have_Any_Offer, 10);
-
-	/// Validation failed because offer expired.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Expired, 11);
 
 	/// Validation failed because offer duration exceeded maximum.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Duration_Too_Large, 12);

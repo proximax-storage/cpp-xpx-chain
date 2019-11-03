@@ -15,13 +15,15 @@ namespace catapult { namespace observers {
 		auto& cache = context.Cache.sub<cache::ExchangeCache>();
 		auto iter = cache.find(notification.Owner);
 		auto& entry = iter.get();
-		OfferExpiryUpdater offerExpiryUpdater(cache, entry, false);
+		OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 
-		auto pMosaic = notification.OffersPtr;
-		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pMosaic) {
-			auto mosaicId = context.Resolvers.resolve(pMosaic->MosaicId);
-			auto& offer = entry.getBaseOffer(pMosaic->OfferType, mosaicId);
-			offer.ExpiryHeight = (NotifyMode::Commit == context.Mode) ? context.Height : offer.Deadline;
+		auto pOffer = notification.OffersPtr;
+		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
+			auto mosaicId = context.Resolvers.resolve(pOffer->MosaicId);
+			if (NotifyMode::Commit == context.Mode)
+				entry.expireOffer(pOffer->OfferType, mosaicId, context.Height);
+			else
+				entry.unexpireOffer(pOffer->OfferType, mosaicId, context.Height);
 		}
 	});
 }}

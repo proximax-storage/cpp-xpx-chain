@@ -10,14 +10,27 @@
 
 namespace catapult { namespace observers {
 
-	void CreditAccount(const Key& recipient, const MosaicId& mosaicId, const Amount& amount, const ObserverContext& context) {
-		if (Amount(0) == amount)
-			return;
+	namespace {
+		void CreditAccount(const Key &recipient, const MosaicId &mosaicId, const Amount &amount, const ObserverContext &context) {
+			if (Amount(0) == amount)
+				return;
 
-		auto& cache = context.Cache.sub<cache::AccountStateCache>();
-		auto iter = cache.find(recipient);
-		auto& recipientState = iter.get();
-		recipientState.Balances.credit(mosaicId, amount, context.Height);
+			auto &cache = context.Cache.sub<cache::AccountStateCache>();
+			auto iter = cache.find(recipient);
+			auto &recipientState = iter.get();
+			recipientState.Balances.credit(mosaicId, amount, context.Height);
+		}
+
+		template<typename TExpiredOfferMap, typename TOfferMap>
+		void RemoveExpiredOffers(TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
+			if (expiredOffers.count(height)) {
+				auto& expiredOffersAtHeight = expiredOffers.at(height);
+				for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
+					action(iter);
+					iter = expiredOffersAtHeight.erase(iter);
+				}
+			}
+		}
 	}
 
 	using Notification = model::BlockNotification<1>;
@@ -25,11 +38,16 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(CleanupOffers, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_OBSERVER(CleanupOffers, Notification, ([pConfigHolder](const Notification&, const ObserverContext& context) {
 			auto& cache = context.Cache.sub<cache::ExchangeCache>();
-			auto expiringOfferKeys = cache.touch(context.Height);
-			for (const auto& key : expiringOfferKeys) {
+			auto expiringOfferOwners = cache.expiringOfferOwners(context.Height);
+			for (const auto& key : expiringOfferOwners) {
 				auto cacheIter = cache.find(key);
 				auto& entry = cacheIter.get();
-				entry.markExpiredOffers(context.Height);
+				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+				if (NotifyMode::Commit == context.Mode) {
+					entry.expireOffers(context.Height);
+				} else {
+					entry.unexpireOffers(context.Height);
+				}
 			}
 
 			if (NotifyMode::Rollback == context.Mode)
@@ -41,33 +59,21 @@ namespace catapult { namespace observers {
 				return;
 
 			auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
-			auto expiredOfferKeys = cache.touch(pruneHeight);
-			for (const auto& key : expiredOfferKeys) {
+			expiringOfferOwners = cache.expiringOfferOwners(pruneHeight);
+			for (const auto& key : expiringOfferOwners) {
 				auto cacheIter = cache.find(key);
 				auto& entry = cacheIter.get();
-				OfferExpiryUpdater offerExpiryUpdater(cache, entry, true);
+				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 
 				Amount xpxAmount(0);
-				auto& buyOffers = entry.buyOffers();
-				for (auto iter = buyOffers.begin(); iter != buyOffers.end();) {
-					if (iter->second.ExpiryHeight <= pruneHeight) {
-						xpxAmount = xpxAmount + iter->second.ResidualCost;
-						iter = buyOffers.erase(iter);
-					} else {
-						++iter;
-					}
-				}
+				RemoveExpiredOffers<state::ExpiredBuyOfferMap, state::BuyOfferMap>(entry.expiredBuyOffers(), context.Height, [&xpxAmount](const auto& iter) {
+					xpxAmount = xpxAmount + iter->second.ResidualCost;
+				});
 				CreditAccount(entry.owner(), config.Immutable.CurrencyMosaicId, xpxAmount, context);
 
-				auto& sellOffers = entry.sellOffers();
-				for (auto iter = sellOffers.begin(); iter != sellOffers.end();) {
-					if (iter->second.ExpiryHeight <= pruneHeight) {
-						CreditAccount(entry.owner(), iter->first, iter->second.Amount, context);
-						iter = sellOffers.erase(iter);
-					} else {
-						++iter;
-					}
-				}
+				RemoveExpiredOffers<state::ExpiredSellOfferMap, state::SellOfferMap>(entry.expiredSellOffers(), context.Height, [&entry, &context](const auto& iter) {
+					CreditAccount(entry.owner(), iter->first, iter->second.Amount, context);
+				});
 			}
 		}))
 	}

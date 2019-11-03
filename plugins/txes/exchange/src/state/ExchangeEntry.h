@@ -18,8 +18,6 @@ namespace catapult { namespace state {
 		catapult::Amount InitialAmount;
 		catapult::Amount InitialCost;
 		Height Deadline;
-		Height ExpiryHeight;
-		bool Expired;
 	};
 
 	struct SellOffer : public OfferBase {
@@ -75,6 +73,8 @@ namespace catapult { namespace state {
 
 	using SellOfferMap = std::map<MosaicId, SellOffer>;
 	using BuyOfferMap = std::map<MosaicId, BuyOffer>;
+	using ExpiredSellOfferMap = std::map<Height, SellOfferMap>;
+	using ExpiredBuyOfferMap = std::map<Height, BuyOfferMap>;
 
 	// Exchange entry.
 	class ExchangeEntry {
@@ -115,55 +115,128 @@ namespace catapult { namespace state {
 
 		/// Gets the height of the earliest expiring offer.
 		Height minExpiryHeight() const {
-			if (empty())
+			if (m_buyOffers.empty() && m_sellOffers.empty())
 				return Invalid_Expiry_Height;
 
 			Height expiryHeight = Height(std::numeric_limits<Height::ValueType>::max());
-			std::for_each(m_sellOffers.begin(), m_sellOffers.end(), [&expiryHeight](const auto& pair) {
-				if (expiryHeight > pair.second.ExpiryHeight)
-					expiryHeight = pair.second.ExpiryHeight;
+			std::for_each(m_sellOffers.begin(), m_sellOffers.end(), [&expiryHeight](const auto &pair) {
+				if (expiryHeight > pair.second.Deadline)
+					expiryHeight = pair.second.Deadline;
 			});
-			std::for_each(m_buyOffers.begin(), m_buyOffers.end(), [&expiryHeight](const auto& pair) {
-				if (expiryHeight > pair.second.ExpiryHeight)
-					expiryHeight = pair.second.ExpiryHeight;
+			std::for_each(m_buyOffers.begin(), m_buyOffers.end(), [&expiryHeight](const auto &pair) {
+				if (expiryHeight > pair.second.Deadline)
+					expiryHeight = pair.second.Deadline;
 			});
 
 			return expiryHeight;
 		}
 
-		/// Marks offers as expired if expiry height is less or equal \a height.
-		void markExpiredOffers(const Height& height) {
-			std::for_each(m_sellOffers.begin(), m_sellOffers.end(), [&height](auto& pair) {
-				pair.second.Expired = (height >= pair.second.ExpiryHeight);
-			});
-			std::for_each(m_buyOffers.begin(), m_buyOffers.end(), [&height](auto& pair) {
-				pair.second.Expired = (height >= pair.second.ExpiryHeight);
-			});
+		/// Gets the earliest height at which to prune expiring offers.
+		Height minPruneHeight() const {
+			uint8_t expiredBuyOffersFlag = m_expiredBuyOffers.empty() ? 0 : 1;
+			uint8_t expiredSellOffersFlag = m_expiredSellOffers.empty() ? 0 : 2;
+			switch (expiredBuyOffersFlag | expiredSellOffersFlag) {
+				case 0:
+					return Invalid_Expiry_Height;
+				case 1:
+					return m_expiredBuyOffers.begin()->first;
+				case 2:
+					return m_expiredSellOffers.begin()->first;
+				default:
+					return std::min(m_expiredBuyOffers.begin()->first, m_expiredSellOffers.begin()->first);
+			}
+		}
+
+		/// Moves offer of \a type with \a mosaicId to expired offer buffer.
+		void expireOffer(model::OfferType type, const MosaicId& mosaicId, const Height& height) {
+			auto expireFunc = [height, mosaicId](auto& offers, auto& expiredOffers) {
+				auto& offer = offers.at(mosaicId);
+				auto &expiredOffersAtHeight = expiredOffers[height];
+				if (expiredOffersAtHeight.count(mosaicId))
+					CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic already expired at height", mosaicId, height);
+				expiredOffersAtHeight.emplace(mosaicId, offer);
+				offers.erase(mosaicId);
+			};
+			if (model::OfferType::Buy == type)
+				expireFunc(m_buyOffers, m_expiredBuyOffers);
+			else
+				expireFunc(m_sellOffers, m_expiredSellOffers);
+		}
+
+		/// Moves offer of \a type with \a mosaicId back from expired offer buffer.
+		void unexpireOffer(model::OfferType type, const MosaicId& mosaicId, const Height& height) {
+			auto unexpireFunc = [height, mosaicId](auto& offers, auto& expiredOffers) {
+				if (offers.count(mosaicId))
+					CATAPULT_THROW_RUNTIME_ERROR_1("offer with mosaic id exists", mosaicId);
+				auto& expiredOffersAtHeight = expiredOffers.at(height);
+				auto& offer = expiredOffersAtHeight.at(mosaicId);
+				offers.emplace(mosaicId, offer);
+				expiredOffersAtHeight.erase(mosaicId);
+				if (expiredOffersAtHeight.empty())
+					expiredOffers.erase(height);
+			};
+			if (model::OfferType::Buy == type)
+				unexpireFunc(m_buyOffers, m_expiredBuyOffers);
+			else
+				unexpireFunc(m_sellOffers, m_expiredSellOffers);
+		}
+
+		/// Moves offers to expired offer buffer if offer expiry height is equal \a height.
+		void expireOffers(const Height& height) {
+			auto expireFunc = [height](auto& offers, auto& expiredOffers) {
+				for (auto iter = offers.begin(); iter != offers.end();) {
+					if (iter->second.Deadline == height) {
+						auto &expiredOffersAtHeight = expiredOffers[height];
+						if (expiredOffersAtHeight.count(iter->first))
+							CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic id already expired at height", iter->first, height);
+						expiredOffersAtHeight.emplace(iter->first, iter->second);
+						iter = offers.erase(iter);
+					} else {
+						++iter;
+					}
+				}
+			};
+			expireFunc(m_buyOffers, m_expiredBuyOffers);
+			expireFunc(m_sellOffers, m_expiredSellOffers);
+		}
+
+		/// Moves offers back from expired offer buffer if offer expiry height is equal \a height.
+		void unexpireOffers(const Height& height) {
+			auto unexpireFunc = [height](auto& offers, auto& expiredOffers) {
+				if (expiredOffers.count(height)) {
+					auto& expiredOffersAtHeight = expiredOffers.at(height);
+					for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
+						if (offers.count(iter->first))
+							CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic id exists at height", iter->first, height);
+						offers.emplace(iter->first, iter->second);
+						iter = expiredOffersAtHeight.erase(iter);
+					}
+				}
+			};
+			unexpireFunc(m_buyOffers, m_expiredBuyOffers);
+			unexpireFunc(m_sellOffers, m_expiredSellOffers);
 		}
 
 		bool offerExists(model::OfferType type, const MosaicId& mosaicId) const {
-			if (model::OfferType::Buy == type) {
+			if (model::OfferType::Buy == type)
 				return m_buyOffers.count(mosaicId);
-			} else {
+			else
 				return m_sellOffers.count(mosaicId);
-			}
 		}
 
 		void addOffer(model::OfferType type, const MosaicId& mosaicId, const model::OfferWithDuration* pOffer, const Height& deadline) {
-			state::OfferBase baseOffer{pOffer->Mosaic.Amount, pOffer->Mosaic.Amount, pOffer->Cost, deadline, deadline, false};
-			if (model::OfferType::Buy == type) {
+			state::OfferBase baseOffer{pOffer->Mosaic.Amount, pOffer->Mosaic.Amount, pOffer->Cost, deadline};
+			if (model::OfferType::Buy == type)
 				m_buyOffers.emplace(mosaicId, state::BuyOffer{baseOffer, pOffer->Cost});
-			} else {
+			else
 				m_sellOffers.emplace(mosaicId, state::SellOffer{baseOffer});
-			}
 		}
 
 		void removeOffer(model::OfferType type, const MosaicId& mosaicId) {
-			if (model::OfferType::Buy == type) {
+			if (model::OfferType::Buy == type)
 				m_buyOffers.erase(mosaicId);
-			} else {
+			else
 				m_sellOffers.erase(mosaicId);
-			}
 		}
 
 		state::OfferBase& getBaseOffer(model::OfferType type, const MosaicId& mosaicId) {
@@ -173,18 +246,35 @@ namespace catapult { namespace state {
 		}
 
 		bool empty() const {
-			return m_buyOffers.empty() && m_sellOffers.empty();
+			return m_buyOffers.empty() && m_sellOffers.empty() && m_expiredBuyOffers.empty() && m_expiredSellOffers.empty();
 		}
 
 	public:
-		/// Returns \c false at least one offer is expiring at \a height.
-		bool isActive(catapult::Height height) const {
-			return height < minExpiryHeight();
+		/// Gets the expired sell offers.
+		ExpiredSellOfferMap& expiredSellOffers() {
+			return m_expiredSellOffers;
+		}
+
+		/// Gets the expired sell offers.
+		const ExpiredSellOfferMap& expiredSellOffers() const {
+			return m_expiredSellOffers;
+		}
+
+		/// Gets the expired buy offers.
+		ExpiredBuyOfferMap& expiredBuyOffers() {
+			return m_expiredBuyOffers;
+		}
+
+		/// Gets the expired buy offers.
+		const ExpiredBuyOfferMap& expiredBuyOffers() const {
+			return m_expiredBuyOffers;
 		}
 
 	private:
 		Key m_owner;
 		SellOfferMap m_sellOffers;
 		BuyOfferMap m_buyOffers;
+		ExpiredSellOfferMap m_expiredSellOffers;
+		ExpiredBuyOfferMap m_expiredBuyOffers;
 	};
 }}

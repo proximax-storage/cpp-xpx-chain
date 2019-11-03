@@ -22,7 +22,7 @@ namespace catapult { namespace observers {
 				cache.insert(state::ExchangeEntry(notification.Owner));
 			auto iter = cache.find(notification.Owner);
 			auto& entry = iter.get();
-			OfferExpiryUpdater offerExpiryUpdater(cache, entry, false);
+			OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 
 			const auto* pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
@@ -33,7 +33,7 @@ namespace catapult { namespace observers {
 		} else {
 			auto iter = cache.find(notification.Owner);
 			auto& entry = iter.get();
-			OfferExpiryUpdater offerExpiryUpdater(cache, entry, true);
+			OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 
 			auto pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {

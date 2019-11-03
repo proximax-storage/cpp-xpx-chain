@@ -19,7 +19,6 @@ namespace catapult { namespace cache {
 			, ExchangeCacheDeltaMixins::MutableAccessor(*exchangeSets.pPrimary)
 			, ExchangeCacheDeltaMixins::PatriciaTreeDelta(*exchangeSets.pPrimary, exchangeSets.pPatriciaTree)
 			, ExchangeCacheDeltaMixins::BasicInsertRemove(*exchangeSets.pPrimary)
-			, ExchangeCacheDeltaMixins::Touch(*exchangeSets.pPrimary, *exchangeSets.pHeightGrouping)
 			, ExchangeCacheDeltaMixins::Pruning(*exchangeSets.pPrimary, *exchangeSets.pHeightGrouping)
 			, ExchangeCacheDeltaMixins::DeltaElements(*exchangeSets.pPrimary)
 			, m_pExchangeEntries(exchangeSets.pPrimary)
@@ -27,21 +26,19 @@ namespace catapult { namespace cache {
 			, m_pConfigHolder(pConfigHolder)
 	{}
 
-	void BasicExchangeCacheDelta::insert(const ExchangeCacheDescriptor::ValueType& value) {
-		ExchangeCacheDeltaMixins::BasicInsertRemove::insert(value);
-		auto expiryHeight = value.minExpiryHeight();
-		if (state::ExchangeEntry::Invalid_Expiry_Height != expiryHeight)
-			AddIdentifierWithGroup(*m_pHeightGroupingDelta, expiryHeight, ExchangeCacheDescriptor::GetKeyFromValue(value));
+	void BasicExchangeCacheDelta::addExpiryHeight(const ExchangeCacheDescriptor::KeyType& owner, const Height& height) {
+		if (state::ExchangeEntry::Invalid_Expiry_Height != height)
+			AddIdentifierWithGroup(*m_pHeightGroupingDelta, height, owner);
 	}
 
-	void BasicExchangeCacheDelta::updateExpiryHeight(const ExchangeCacheDescriptor::KeyType& key, const Height& currentHeight, const Height& newHeight) {
-		if (currentHeight == newHeight)
-			return;
+	void BasicExchangeCacheDelta::removeExpiryHeight(const ExchangeCacheDescriptor::KeyType& owner, const Height& height) {
+		if (state::ExchangeEntry::Invalid_Expiry_Height != height)
+			RemoveIdentifierWithGroup(*m_pHeightGroupingDelta, height, owner);
+	}
 
-		if (state::ExchangeEntry::Invalid_Expiry_Height != currentHeight)
-			RemoveIdentifierWithGroup(*m_pHeightGroupingDelta, currentHeight, key);
-		if (state::ExchangeEntry::Invalid_Expiry_Height != newHeight)
-			AddIdentifierWithGroup(*m_pHeightGroupingDelta, newHeight, key);
+	/// Touches the cache at \a height and returns identifiers of all deactivating elements.
+	BasicExchangeCacheDelta::OfferOwners BasicExchangeCacheDelta::expiringOfferOwners(Height height) {
+		return GetAllIdentifiersWithGroup(*m_pHeightGroupingDelta, height);
 	}
 
 	bool BasicExchangeCacheDelta::enabled() const {

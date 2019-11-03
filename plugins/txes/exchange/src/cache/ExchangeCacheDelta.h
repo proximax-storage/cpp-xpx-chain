@@ -16,9 +16,6 @@ namespace catapult { namespace cache {
 
 	/// Mixins used by the exchange cache delta.
 	struct ExchangeCacheDeltaMixins : public PatriciaTreeCacheMixins<ExchangeCacheTypes::PrimaryTypes::BaseSetDeltaType, ExchangeCacheDescriptor> {
-		using Touch = HeightBasedTouchMixin<
-			ExchangeCacheTypes::PrimaryTypes::BaseSetDeltaType,
-			ExchangeCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
 		using Pruning = HeightBasedPruningMixin<
 			ExchangeCacheTypes::PrimaryTypes::BaseSetDeltaType,
 			ExchangeCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
@@ -33,13 +30,13 @@ namespace catapult { namespace cache {
 			, public ExchangeCacheDeltaMixins::MutableAccessor
 			, public ExchangeCacheDeltaMixins::PatriciaTreeDelta
 			, public ExchangeCacheDeltaMixins::BasicInsertRemove
-			, public ExchangeCacheDeltaMixins::Touch
 			, public ExchangeCacheDeltaMixins::Pruning
 			, public ExchangeCacheDeltaMixins::DeltaElements
 			, public ExchangeCacheDeltaMixins::Enable
 			, public ExchangeCacheDeltaMixins::Height {
 	public:
 		using ReadOnlyView = ExchangeCacheTypes::CacheReadOnlyType;
+		using OfferOwners = ExchangeCacheTypes::HeightGroupingTypes::BaseSetDeltaType::ElementType::Identifiers;
 
 	public:
 		/// Creates a delta around \a exchangeSets.
@@ -52,11 +49,14 @@ namespace catapult { namespace cache {
 		using ExchangeCacheDeltaMixins::MutableAccessor::find;
 
 	public:
-		/// Inserts \a value into the cache.
-		void insert(const ExchangeCacheDescriptor::ValueType& value);
+		/// Adds offer expiry \a height of \a owner.
+		void addExpiryHeight(const ExchangeCacheDescriptor::KeyType& owner, const Height& height);
 
-		/// Updates expiry height of exchange with \a key from \a currentHeight to \a newHeight.
-		void updateExpiryHeight(const ExchangeCacheDescriptor::KeyType& key, const Height& currentHeight, const Height& newHeight);
+		/// Removes offer expiry \a height of \a owner.
+		void removeExpiryHeight(const ExchangeCacheDescriptor::KeyType& owner, const Height& height);
+
+		/// Returns owners of offers expiring at \a height.
+		OfferOwners expiringOfferOwners(Height height);
 
 		/// Returns \c true if the cache is enabled.
 		bool enabled() const;

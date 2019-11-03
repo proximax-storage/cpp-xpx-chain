@@ -53,11 +53,10 @@ namespace catapult { namespace validators {
 			const auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
 				dynamic_cast<const state::OfferBase&>(entry.buyOffers().at(mosaicId)) :
 				dynamic_cast<const state::OfferBase&>(entry.sellOffers().at(mosaicId));
-			if (offer.ExpiryHeight <= context.Height)
-				return Failure_Exchange_Offer_Expired;
 
 			if (offer.Amount < pMatchedOffer->Mosaic.Amount)
-				return Failure_Exchange_Not_Enough_Units_In_Offer;		}
+				return Failure_Exchange_Not_Enough_Units_In_Offer;
+		}
 
 		return ValidationResult::Success;
 	});
