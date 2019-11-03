@@ -97,4 +97,15 @@ namespace catapult { namespace cache {
 
 		return identifiers;
 	}
+
+	/// Finds identifiers of all values in \a set (with grouped view \a groupedSet) that are deactivating at \a height.
+	template<typename TGroupedSet, typename TGroupingKey, typename TIdentifiers = typename TGroupedSet::ElementType::Identifiers>
+	TIdentifiers GetAllIdentifiersWithGroup(const TGroupedSet& groupedSet, const TGroupingKey& key) {
+		auto groupIter = groupedSet.find(key);
+		const auto* pGroup = groupIter.get();
+		if (!!pGroup)
+			return pGroup->identifiers();
+
+		return {};
+	}
 }}

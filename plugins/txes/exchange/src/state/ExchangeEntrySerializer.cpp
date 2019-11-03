@@ -18,8 +18,6 @@ namespace catapult { namespace state {
 			io::Write(output, offer.InitialAmount);
 			io::Write(output, offer.InitialCost);
 			io::Write(output, offer.Deadline);
-			io::Write(output, offer.ExpiryHeight);
-			io::Write8(output, offer.Expired);
 		}
 
 		void WriteSellOffers(const SellOfferMap& offers, io::OutputStream& output) {
@@ -36,6 +34,22 @@ namespace catapult { namespace state {
 				io::Write(output, pair.second.ResidualCost);
 			}
 		}
+
+		void WriteExpiredSellOffers(const ExpiredSellOfferMap& offers, io::OutputStream& output) {
+			io::Write8(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
+			for (const auto& pair : offers) {
+				io::Write(output, pair.first);
+				WriteSellOffers(pair.second, output);
+			}
+		}
+
+		void WriteExpiredBuyOffers(const ExpiredBuyOfferMap& offers, io::OutputStream& output) {
+			io::Write8(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
+			for (const auto& pair : offers) {
+				io::Write(output, pair.first);
+				WriteBuyOffers(pair.second, output);
+			}
+		}
 	}
 
 	void ExchangeEntrySerializer::Save(const ExchangeEntry& entry, io::OutputStream& output) {
@@ -46,6 +60,9 @@ namespace catapult { namespace state {
 
 		WriteSellOffers(entry.sellOffers(), output);
 		WriteBuyOffers(entry.buyOffers(), output);
+
+		WriteExpiredSellOffers(entry.expiredSellOffers(), output);
+		WriteExpiredBuyOffers(entry.expiredBuyOffers(), output);
 	}
 
 	namespace {
@@ -55,8 +72,6 @@ namespace catapult { namespace state {
 			offer.InitialAmount = io::Read<Amount>(input);
 			offer.InitialCost = io::Read<Amount>(input);
 			offer.Deadline = io::Read<Height>(input);
-			offer.ExpiryHeight = io::Read<Height>(input);
-			offer.Expired = io::Read8(input);
 		}
 
 		void ReadSellOffers(SellOfferMap& offers, io::InputStream& input) {
@@ -79,6 +94,26 @@ namespace catapult { namespace state {
 				offers.emplace(mosaicId, offer);
 			}
 		}
+
+		void ReadExpiredSellOffers(ExpiredSellOfferMap& offers, io::InputStream& input) {
+			auto offerCount = io::Read16(input);
+			for (uint16_t i = 0; i < offerCount; ++i) {
+				auto height = io::Read<Height>(input);
+				SellOfferMap expiredOffers;
+				ReadSellOffers(expiredOffers, input);
+				offers.emplace(height, expiredOffers);
+			}
+		}
+
+		void ReadExpiredBuyOffers(ExpiredBuyOfferMap& offers, io::InputStream& input) {
+			auto offerCount = io::Read16(input);
+			for (uint16_t i = 0; i < offerCount; ++i) {
+				auto height = io::Read<Height>(input);
+				BuyOfferMap expiredOffers;
+				ReadBuyOffers(expiredOffers, input);
+				offers.emplace(height, expiredOffers);
+			}
+		}
 	}
 
 	ExchangeEntry ExchangeEntrySerializer::Load(io::InputStream& input) {
@@ -93,6 +128,9 @@ namespace catapult { namespace state {
 
 		ReadSellOffers(entry.sellOffers(), input);
 		ReadBuyOffers(entry.buyOffers(), input);
+
+		ReadExpiredSellOffers(entry.expiredSellOffers(), input);
+		ReadExpiredBuyOffers(entry.expiredBuyOffers(), input);
 
 		return entry;
 	}

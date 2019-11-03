@@ -32,12 +32,6 @@ namespace catapult { namespace validators {
 				if (!entry.sellOffers().count(mosaicId))
 					return Failure_Exchange_Offer_Doesnt_Exist;
 			}
-
-			const auto& offer = (model::OfferType::Buy == pOffer->OfferType) ?
-				dynamic_cast<const state::OfferBase&>(entry.buyOffers().at(mosaicId)) :
-				dynamic_cast<const state::OfferBase&>(entry.sellOffers().at(mosaicId));
-			if (offer.ExpiryHeight <= context.Height)
-				return Failure_Exchange_Offer_Already_Removed;
 		}
 
 		return ValidationResult::Success;

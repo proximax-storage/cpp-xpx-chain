@@ -29,11 +29,14 @@ namespace catapult { namespace observers {
 			auto mosaicId = context.Resolvers.resolve(pMatchedOffer->Mosaic.MosaicId);
 			auto iter = cache.find(pMatchedOffer->Owner);
 			auto& entry = iter.get();
-			OfferExpiryUpdater offerExpiryUpdater(cache, entry, false);
+			OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 			auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
 				ModifyOffer(entry.buyOffers(), mosaicId, context.Mode, pMatchedOffer) :
 				ModifyOffer(entry.sellOffers(), mosaicId, context.Mode, pMatchedOffer);
-			offer.ExpiryHeight = (Amount(0) == offer.Amount) ? context.Height : offer.Deadline;
+			if (Amount(0) == offer.Amount)
+				entry.expireOffer(pMatchedOffer->Type, mosaicId, context.Height);
+			else
+				entry.unexpireOffer(pMatchedOffer->Type, mosaicId, context.Height);
 		}
 	});
 }}

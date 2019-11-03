@@ -14,26 +14,22 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		template<typename TDoc>
-		auto StreamOffer(TDoc& context, const MosaicId& mosaicId, const state::OfferBase& offer) {
-			return context
+		void StreamOffer(bson_stream::document& builder, const MosaicId& mosaicId, const state::OfferBase& offer) {
+			builder
 				<< "mosaicId" << ToInt64(mosaicId)
 				<< "amount" << ToInt64(offer.Amount)
 				<< "initialAmount" << ToInt64(offer.InitialAmount)
 				<< "initialCost" << ToInt64(offer.InitialCost)
-				<< "deadline" << ToInt64(offer.Deadline)
-				<< "expiryHeight" << ToInt64(offer.ExpiryHeight)
-				<< "expired" << offer.Expired;
+				<< "deadline" << ToInt64(offer.Deadline);
 		}
 
 		void StreamBuyOffers(bson_stream::document& builder, const state::BuyOfferMap& offers) {
 			auto offerArray = builder << "buyOffers" << bson_stream::open_array;
 			for (const auto& pair : offers) {
-				auto doc = offerArray << bson_stream::open_document;
-				auto context = StreamOffer(doc, pair.first, pair.second);
-				offerArray = context
-					<< "residualCost" << ToInt64(pair.second.ResidualCost)
-					<< bson_stream::close_document;
+				bson_stream::document offerBuilder;
+				StreamOffer(offerBuilder, pair.first, pair.second);
+				offerBuilder << "residualCost" << ToInt64(pair.second.ResidualCost);
+				offerArray << offerBuilder;
 			}
 			offerArray << bson_stream::close_array;
 		}
@@ -41,9 +37,31 @@ namespace catapult { namespace mongo { namespace plugins {
 		void StreamSellOffers(bson_stream::document& builder, const state::SellOfferMap& offers) {
 			auto offerArray = builder << "sellOffers" << bson_stream::open_array;
 			for (const auto& pair : offers) {
-				auto doc = offerArray << bson_stream::open_document;
-				auto context = StreamOffer(doc, pair.first, pair.second);
-				offerArray = context << bson_stream::close_document;
+				bson_stream::document offerBuilder;
+				StreamOffer(offerBuilder, pair.first, pair.second);
+				offerArray << offerBuilder;
+			}
+			offerArray << bson_stream::close_array;
+		}
+
+		void StreamExpiredBuyOffers(bson_stream::document& builder, const state::ExpiredBuyOfferMap& offers) {
+			auto offerArray = builder << "expiredBuyOffers" << bson_stream::open_array;
+			for (const auto& pair : offers) {
+				bson_stream::document expiredOfferBuilder;
+				expiredOfferBuilder << "height" << ToInt64(pair.first);
+				StreamBuyOffers(expiredOfferBuilder, pair.second);
+				offerArray << expiredOfferBuilder;
+			}
+			offerArray << bson_stream::close_array;
+		}
+
+		void StreamExpiredSellOffers(bson_stream::document& builder, const state::ExpiredSellOfferMap& offers) {
+			auto offerArray = builder << "expiredSellOffers" << bson_stream::open_array;
+			for (const auto& pair : offers) {
+				bson_stream::document expiredOfferBuilder;
+				expiredOfferBuilder << "height" << ToInt64(pair.first);
+				StreamSellOffers(expiredOfferBuilder, pair.second);
+				offerArray << expiredOfferBuilder;
 			}
 			offerArray << bson_stream::close_array;
 		}
@@ -53,8 +71,12 @@ namespace catapult { namespace mongo { namespace plugins {
 		bson_stream::document builder;
 		auto doc = builder << "exchange" << bson_stream::open_document
 				<< "owner" << ToBinary(entry.owner());
+
 		StreamBuyOffers(builder, entry.buyOffers());
 		StreamSellOffers(builder, entry.sellOffers());
+
+		StreamExpiredBuyOffers(builder, entry.expiredBuyOffers());
+		StreamExpiredSellOffers(builder, entry.expiredSellOffers());
 
 		return doc
 				<< bson_stream::close_document
@@ -72,8 +94,6 @@ namespace catapult { namespace mongo { namespace plugins {
 			offer.InitialAmount = Amount{static_cast<uint64_t>(dbOffer["initialAmount"].get_int64())};
 			offer.InitialCost = Amount{static_cast<uint64_t>(dbOffer["initialCost"].get_int64())};
 			offer.Deadline = Height{static_cast<uint64_t>(dbOffer["deadline"].get_int64())};
-			offer.ExpiryHeight = Height{static_cast<uint64_t>(dbOffer["expiryHeight"].get_int64())};
-			offer.Expired = dbOffer["expired"].get_bool().value;
 		}
 
 		void ReadBuyOffers(const bsoncxx::array::view& dbOffers, state::BuyOfferMap& offers) {
@@ -96,6 +116,26 @@ namespace catapult { namespace mongo { namespace plugins {
 				offers.emplace(mosaicId, state::SellOffer{offer});
 			}
 		}
+
+		void ReadExpiredBuyOffers(const bsoncxx::array::view& dbExpiredOffers, state::ExpiredBuyOfferMap& expiredOffers) {
+			for (const auto& dbExpiredOffer : dbExpiredOffers) {
+				auto doc = dbExpiredOffer.get_document().view();
+				auto height = Height{static_cast<uint64_t>(doc["deadline"].get_int64())};
+				state::BuyOfferMap offers;
+				ReadBuyOffers(doc["buyOffers"].get_array().value, offers);
+				expiredOffers.emplace(height, offers);
+			}
+		}
+
+		void ReadExpiredSellOffers(const bsoncxx::array::view& dbExpiredOffers, state::ExpiredSellOfferMap& expiredOffers) {
+			for (const auto& dbExpiredOffer : dbExpiredOffers) {
+				auto doc = dbExpiredOffer.get_document().view();
+				auto height = Height{static_cast<uint64_t>(doc["deadline"].get_int64())};
+				state::SellOfferMap offers;
+				ReadSellOffers(doc["sellOffers"].get_array().value, offers);
+				expiredOffers.emplace(height, offers);
+			}
+		}
 	}
 
 	state::ExchangeEntry ToExchangeEntry(const bsoncxx::document::view& document) {
@@ -106,6 +146,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		ReadBuyOffers(dbExchangeEntry["buyOffers"].get_array().value, entry.buyOffers());
 		ReadSellOffers(dbExchangeEntry["sellOffers"].get_array().value, entry.sellOffers());
+
+		ReadExpiredBuyOffers(dbExchangeEntry["expiredBuyOffers"].get_array().value, entry.expiredBuyOffers());
+		ReadExpiredSellOffers(dbExchangeEntry["expiredSellOffers"].get_array().value, entry.expiredSellOffers());
 
 		return entry;
 	}
