@@ -36,7 +36,7 @@ namespace catapult { namespace state {
 		}
 
 		void WriteExpiredSellOffers(const ExpiredSellOfferMap& offers, io::OutputStream& output) {
-			io::Write8(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
 			for (const auto& pair : offers) {
 				io::Write(output, pair.first);
 				WriteSellOffers(pair.second, output);
@@ -44,7 +44,7 @@ namespace catapult { namespace state {
 		}
 
 		void WriteExpiredBuyOffers(const ExpiredBuyOfferMap& offers, io::OutputStream& output) {
-			io::Write8(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(offers.size()));
 			for (const auto& pair : offers) {
 				io::Write(output, pair.first);
 				WriteBuyOffers(pair.second, output);

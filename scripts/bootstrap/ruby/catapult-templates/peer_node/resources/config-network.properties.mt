@@ -55,7 +55,10 @@ minPercentageOfRemoval = 66
 [plugin:catapult.plugins.exchange]
 
 enabled = false
+
 maxOfferDuration = 57600
+longOfferKey = B4F12E7C9F6946091E2CB8B6D3A12B50D17CCBBF646386EA27CE2946A7423DCF
+enabledMosaics = 0xBFFB'42A1'9116'BDF6, 0x77E4'90CC'9B2A'F6F6
 
 [plugin:catapult.plugins.lockhash]
 

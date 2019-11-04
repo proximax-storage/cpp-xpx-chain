@@ -18,11 +18,19 @@ namespace catapult { namespace test {
 		};
 	}
 
-	state::ExchangeEntry CreateExchangeEntry(uint8_t offerCount, Key key) {
+	state::ExchangeEntry CreateExchangeEntry(uint8_t offerCount, uint8_t expiredOfferCount, Key key) {
 		state::ExchangeEntry entry(key);
-		for (uint8_t i = 0; i < offerCount; ++i) {
-			entry.buyOffers().emplace(test::GenerateRandomValue<MosaicId>(), state::BuyOffer{test::GenerateOffer(), test::GenerateRandomValue<Amount>()});
-			entry.sellOffers().emplace(test::GenerateRandomValue<MosaicId>(), state::SellOffer{test::GenerateOffer()});
+		for (uint8_t i = 1; i <= offerCount; ++i) {
+			entry.buyOffers().emplace(MosaicId(i), state::BuyOffer{test::GenerateOffer(), test::GenerateRandomValue<Amount>()});
+			entry.sellOffers().emplace(MosaicId(i), state::SellOffer{test::GenerateOffer()});
+		}
+		for (uint8_t i = 1; i <= expiredOfferCount; ++i) {
+			state::BuyOfferMap buyOffers;
+			buyOffers.emplace(MosaicId(i), state::BuyOffer{test::GenerateOffer(), test::GenerateRandomValue<Amount>()});
+			entry.expiredBuyOffers().emplace(Height(i), buyOffers);
+			state::SellOfferMap sellOffers;
+			sellOffers.emplace(MosaicId(i), state::SellOffer{test::GenerateOffer()});
+			entry.expiredSellOffers().emplace(Height(i), sellOffers);
 		}
 		return entry;
 	}

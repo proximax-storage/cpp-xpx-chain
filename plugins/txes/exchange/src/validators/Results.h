@@ -30,32 +30,32 @@ namespace catapult { namespace validators {
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Mosaic_Not_Allowed, 5);
 
 	/// Validation failed because to buying own units is not allowed.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Buying_Own_Units_Is_Not_Allowed, 7);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Buying_Own_Units_Is_Not_Allowed, 6);
 
 	/// Validation failed because there is not enough units in offer.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Not_Enough_Units_In_Offer, 8);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Not_Enough_Units_In_Offer, 7);
 
 	/// Validation failed because price is invalid in offer.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Invalid_Price, 9);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Invalid_Price, 8);
 
 		/// Validation failed because the account doesn't have any offer.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Account_Doesnt_Have_Any_Offer, 10);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Account_Doesnt_Have_Any_Offer, 9);
 
 	/// Validation failed because offer duration exceeded maximum.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Duration_Too_Large, 12);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Duration_Too_Large, 10);
 
 	/// Validation failed because plugin configuration data is malformed.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Plugin_Config_Malformed, 13);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Plugin_Config_Malformed, 11);
 
 	/// Validation failed because there is no offered mosaic to remove.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(No_Offered_Mosaics_To_Remove, 14);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(No_Offered_Mosaics_To_Remove, 12);
 
 	/// Validation failed because there is at least two offers of the same
 	/// type with the same mosaic from the same owner.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Duplicated_Offer_In_Request, 15);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Duplicated_Offer_In_Request, 13);
 
 	/// Validation failed because offer already exists.
-	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Exists, 16);
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Exists, 14);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

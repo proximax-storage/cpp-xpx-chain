@@ -139,6 +139,22 @@
 			"name": "FilesDeposit",
 			"type": "17498",
 			"supportedVersions": [1]
+			"supportedVersions": []
+		},
+		{
+			"name": "exchangeOffer",
+			"type": "16733",
+			"supportedVersions": []
+		},
+		{
+			"name": "exchange",
+			"type": "16989",
+			"supportedVersions": []
+		},
+		{
+			"name": "removeExchangeOffer",
+			"type": "17245",
+			"supportedVersions": []
 		}
 	]
 }
