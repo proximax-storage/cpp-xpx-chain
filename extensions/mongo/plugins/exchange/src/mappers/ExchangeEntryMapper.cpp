@@ -120,7 +120,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		void ReadExpiredBuyOffers(const bsoncxx::array::view& dbExpiredOffers, state::ExpiredBuyOfferMap& expiredOffers) {
 			for (const auto& dbExpiredOffer : dbExpiredOffers) {
 				auto doc = dbExpiredOffer.get_document().view();
-				auto height = Height{static_cast<uint64_t>(doc["deadline"].get_int64())};
+				auto height = Height{static_cast<uint64_t>(doc["height"].get_int64())};
 				state::BuyOfferMap offers;
 				ReadBuyOffers(doc["buyOffers"].get_array().value, offers);
 				expiredOffers.emplace(height, offers);
@@ -130,7 +130,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		void ReadExpiredSellOffers(const bsoncxx::array::view& dbExpiredOffers, state::ExpiredSellOfferMap& expiredOffers) {
 			for (const auto& dbExpiredOffer : dbExpiredOffers) {
 				auto doc = dbExpiredOffer.get_document().view();
-				auto height = Height{static_cast<uint64_t>(doc["deadline"].get_int64())};
+				auto height = Height{static_cast<uint64_t>(doc["height"].get_int64())};
 				state::SellOfferMap offers;
 				ReadSellOffers(doc["sellOffers"].get_array().value, offers);
 				expiredOffers.emplace(height, offers);

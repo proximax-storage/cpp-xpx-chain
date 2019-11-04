@@ -14,7 +14,7 @@ namespace catapult { namespace model {
 	/// Offer type
 	enum class OfferType : uint8_t {
 		/// Buy offer.
-		Buy,
+		Buy = 1,
 
 		/// Sell offer.
 		Sell

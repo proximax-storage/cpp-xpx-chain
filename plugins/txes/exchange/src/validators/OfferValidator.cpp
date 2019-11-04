@@ -10,17 +10,6 @@
 
 namespace catapult { namespace validators {
 
-	namespace {
-		std::set<UnresolvedMosaicId> GetAllowedMosaicIds(const config::ImmutableConfiguration& config) {
-			return {
-				config::GetUnresolvedStorageMosaicId(config),
-				config::GetUnresolvedStreamingMosaicId(config),
-				config::GetUnresolvedReviewMosaicId(config),
-				config::GetUnresolvedSuperContractMosaicId(config)
-			};
-		}
-	}
-
 	using Notification = model::OfferNotification<1>;
 
 	DECLARE_STATEFUL_VALIDATOR(Offer, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
@@ -35,7 +24,7 @@ namespace catapult { namespace validators {
 			const auto& config = pConfigHolder->Config(context.Height);
 			const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
 
-			auto allowedMosaicIds = GetAllowedMosaicIds(config.Immutable);
+			auto allowedMosaicIds = pluginConfig.EnabledMosaics;
 			std::set<MosaicId> offeredMosaicIds;
 			auto* pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
@@ -47,7 +36,7 @@ namespace catapult { namespace validators {
 					return Failure_Exchange_Duplicated_Offer_In_Request;
 				offeredMosaicIds.insert(mosaicId);
 
-				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Owner != context.Network.PublicKey) {
+				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Owner != pluginConfig.LongOfferKey) {
 					return Failure_Exchange_Offer_Duration_Too_Large;
 				}
 
@@ -57,7 +46,7 @@ namespace catapult { namespace validators {
 				if (pOffer->Cost == Amount(0))
 					return Failure_Exchange_Zero_Price;
 
-				if (!allowedMosaicIds.count(pOffer->Mosaic.MosaicId))
+				if (!allowedMosaicIds.count(mosaicId))
 					return Failure_Exchange_Mosaic_Not_Allowed;
 			}
 

@@ -7,6 +7,7 @@
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
 #include "catapult/types.h"
+#include "catapult/utils/Hashers.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
@@ -20,6 +21,13 @@ namespace catapult { namespace config {
 
 		/// Maximum offer duration.
 		BlockDuration MaxOfferDuration;
+
+		/// A public key of the account allowed to set
+		/// offer duration exceeding MaxOfferDuration.
+		Key LongOfferKey;
+
+		/// Mosaic ids enabled for exchange.
+		std::unordered_set<MosaicId, utils::BaseValueHasher<MosaicId>> EnabledMosaics;
 
 	private:
 		ExchangeConfiguration() = default;

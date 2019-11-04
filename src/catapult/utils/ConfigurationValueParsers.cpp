@@ -340,7 +340,7 @@ namespace catapult { namespace utils {
 	// region set
 
 	namespace {
-		std::string Trim(const std::string& str) {
+		std::string Trim(const std::string &str) {
 			constexpr auto Whitespace = " \t";
 			auto startIndex = str.find_first_not_of(Whitespace);
 			if (std::string::npos == startIndex)
@@ -349,35 +349,53 @@ namespace catapult { namespace utils {
 			auto endIndex = str.find_last_not_of(Whitespace);
 			return str.substr(startIndex, endIndex - startIndex + 1);
 		}
-	}
 
-	bool TryParseValue(const std::string& str, std::unordered_set<std::string>& parsedValue) {
-		if (str.empty()) {
-			parsedValue.clear();
+		template<typename TValue>
+		using ValueSupplier = std::function<bool (const std::string&, TValue&)>;
+
+		template<typename TValue, typename TValueHasher>
+		bool TryParseSetValue(const std::string &str, std::unordered_set<TValue, TValueHasher> &parsedValue, const ValueSupplier<TValue>& valueSupplier) {
+			if (str.empty()) {
+				parsedValue.clear();
+				return true;
+			}
+
+			size_t searchIndex = 0;
+			std::unordered_set<TValue, TValueHasher> values;
+			while (true) {
+				auto separatorIndex = str.find(',', searchIndex);
+				auto item = std::string::npos == separatorIndex
+							? str.substr(searchIndex)
+							: str.substr(searchIndex, separatorIndex - searchIndex);
+
+				// don't allow empty values or duplicates
+				TValue value;
+				bool success = valueSupplier(Trim(item), value);
+				if (!success || !values.emplace(value).second)
+					return false;
+
+				if (std::string::npos == separatorIndex)
+					break;
+
+				searchIndex = separatorIndex + 1;
+			}
+
+			parsedValue = std::move(values);
 			return true;
 		}
+	}
 
-		size_t searchIndex = 0;
-		std::unordered_set<std::string> values;
-		while (true) {
-			auto separatorIndex = str.find(',', searchIndex);
-			auto item = std::string::npos == separatorIndex
-					? str.substr(searchIndex)
-					: str.substr(searchIndex, separatorIndex - searchIndex);
+	bool TryParseValue(const std::string& str, std::unordered_set<std::string>& parsedSet) {
+		return TryParseSetValue<std::string>(str, parsedSet, [](const std::string& value, std::string& parsedValue) {
+			parsedValue = value;
+			return true;
+		});
+	}
 
-			// don't allow empty values or duplicates
-			item = Trim(item);
-			if (item.empty() || !values.emplace(item).second)
-				return false;
-
-			if (std::string::npos == separatorIndex)
-				break;
-
-			searchIndex = separatorIndex + 1;
-		}
-
-		parsedValue = std::move(values);
-		return true;
+	bool TryParseValue(const std::string& str, std::unordered_set<MosaicId, utils::BaseValueHasher<MosaicId>>& parsedSet) {
+		return TryParseSetValue<MosaicId>(str, parsedSet, [](const std::string& value, MosaicId& parsedValue) {
+			return TryParseValue(value, parsedValue);
+		});
 	}
 
 	// endregion

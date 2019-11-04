@@ -21,7 +21,7 @@ namespace catapult { namespace test {
 	state::OfferBase GenerateOffer();
 
 	/// Creates test exchange entry.
-	state::ExchangeEntry CreateExchangeEntry(uint8_t offerCount = 5, Key key = test::GenerateRandomByteArray<Key>());
+	state::ExchangeEntry CreateExchangeEntry(uint8_t offerCount = 5, uint8_t expiredOfferCount = 5, Key key = test::GenerateRandomByteArray<Key>());
 
 	/// Verifies that \a offer1 is equivalent to \a offer2.
 	void AssertOffer(const model::Offer& offer1, const model::Offer& offer2);

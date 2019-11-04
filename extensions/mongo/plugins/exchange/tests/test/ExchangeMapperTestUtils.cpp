@@ -39,6 +39,26 @@ namespace catapult { namespace test {
 				AssertOffer(offer, dbOffer);
 			}
 		}
+
+		void AssertExpiredBuyOffers(const state::ExpiredBuyOfferMap& expiredOffers, const bsoncxx::document::view& dbOffers) {
+			ASSERT_EQ(expiredOffers.size(), test::GetFieldCount(dbOffers));
+
+			for (const auto& dbOffer : dbOffers) {
+				auto height = Height{GetUint64(dbOffer, "height")};
+				auto& offers = expiredOffers.at(height);
+				AssertBuyOffers(offers, dbOffer["buyOffers"].get_array().value);
+			}
+		}
+
+		void AssertExpiredSellOffers(const state::ExpiredSellOfferMap& expiredOffers, const bsoncxx::document::view& dbOffers) {
+			ASSERT_EQ(expiredOffers.size(), test::GetFieldCount(dbOffers));
+
+			for (const auto& dbOffer : dbOffers) {
+				auto height = Height{GetUint64(dbOffer, "height")};
+				auto& offers = expiredOffers.at(height);
+				AssertSellOffers(offers, dbOffer["sellOffers"].get_array().value);
+			}
+		}
 	}
 
 	void AssertEqualExchangeData(const state::ExchangeEntry& entry, const bsoncxx::document::view& dbExchangeEntry) {
@@ -48,5 +68,8 @@ namespace catapult { namespace test {
 
 		AssertBuyOffers(entry.buyOffers(), dbExchangeEntry["buyOffers"].get_array().value);
 		AssertSellOffers(entry.sellOffers(), dbExchangeEntry["sellOffers"].get_array().value);
+
+		AssertExpiredBuyOffers(entry.expiredBuyOffers(), dbExchangeEntry["expiredBuyOffers"].get_array().value);
+		AssertExpiredSellOffers(entry.expiredSellOffers(), dbExchangeEntry["expiredSellOffers"].get_array().value);
 	}
 }}

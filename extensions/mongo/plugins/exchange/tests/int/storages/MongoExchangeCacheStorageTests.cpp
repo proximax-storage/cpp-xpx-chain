@@ -33,7 +33,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				Key key;
 				std::memcpy(key.data(), &id, sizeof(id));
 
-				auto entry = test::CreateExchangeEntry(10, key);
+				auto entry = test::CreateExchangeEntry(10, 10, key);
 
 				return entry;
 			}
