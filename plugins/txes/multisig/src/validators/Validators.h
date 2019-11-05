@@ -68,14 +68,16 @@ namespace catapult { namespace validators {
 	CreateModifyMultisigInvalidSettingsValidator();
 
 	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
-	///  - all cosigners are eligible counterparties
-	stateful::NotificationValidatorPointerT<model::AggregateCosignaturesNotification<1>>
-	CreateMultisigAggregateEligibleCosignersValidator();
+	///  - all cosigners are eligible counterparties (using \a transactionRegistry to retrieve custom approval requirements)
+	DECLARE_STATEFUL_VALIDATOR(
+			MultisigAggregateEligibleCosigners,
+			model::AggregateCosignaturesNotification<1>)(const model::TransactionRegistry& transactionRegistry);
 
-	/// A validator implementation that applies to aggregate embeded transaction notifications and validates that:
-	///  - present cosigners are sufficient
-	stateful::NotificationValidatorPointerT<model::AggregateEmbeddedTransactionNotification<1>>
-	CreateMultisigAggregateSufficientCosignersValidator();
+	/// Validator that applies to aggregate embeded transaction notifications and validates that:
+	///  - present cosigners are sufficient (using \a transactionRegistry to retrieve custom approval requirements)
+	DECLARE_STATEFUL_VALIDATOR(
+			MultisigAggregateSufficientCosigners,
+			model::AggregateEmbeddedTransactionNotification<1>)(const model::TransactionRegistry& transactionRegistry);
 
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid

@@ -1,0 +1,72 @@
+/**
+*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "Validators.h"
+#include "src/cache/DriveCache.h"
+#include "catapult/validators/ValidatorContext.h"
+#include "plugins/txes/exchange/src/cache/ExchangeCache.h"
+#include "plugins/txes/exchange/src/config/ExchangeConfiguration.h"
+#include "src/utils/ServiceUtils.h"
+
+namespace catapult { namespace validators {
+
+	using Notification = model::EndDriveNotification<1>;
+
+	DECLARE_STATEFUL_VALIDATOR(EndDrive, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+		return MAKE_STATEFUL_VALIDATOR(EndDrive, [pConfigHolder](const Notification &notification, const ValidatorContext &context) {
+			const auto &driveCache = context.Cache.sub<cache::DriveCache>();
+			auto driveIter = driveCache.find(notification.DriveKey);
+			const auto &driveEntry = driveIter.get();
+
+			if (driveEntry.owner() == notification.Signer) {
+				return ValidationResult::Success;
+			} else if (driveEntry.key() == notification.Signer) {
+				if (driveEntry.processedDuration() >= driveEntry.duration())
+					return ValidationResult::Success;
+
+
+				const auto& config = pConfigHolder->Config(context.Height);
+				const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
+				const auto& defaultOfferPublicKey = pluginConfig.LongOfferKey;
+				const auto& storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
+				const auto& currencyMosaicId = pConfigHolder->Config(context.Height).Immutable.CurrencyMosaicId;
+
+				const auto& exchangeCache = context.Cache.sub<cache::ExchangeCache>();
+				if (!exchangeCache.contains(defaultOfferPublicKey))
+					return Failure_Service_Drive_Cant_Find_Default_Exchange_Offer;
+
+				auto exchangeIter = exchangeCache.find(defaultOfferPublicKey);
+				const auto& exchangeEntry = exchangeIter.get();
+
+				if (!exchangeEntry.sellOffers().count(storageMosaicId))
+					return Failure_Service_Drive_Cant_Find_Default_Exchange_Offer;
+
+				Amount requiredAmount = driveEntry.billingPrice();
+				auto billingBalance = utils::GetBillingBalanceOfDrive(driveEntry, context.Cache, storageMosaicId);
+
+				if (billingBalance >= requiredAmount) {
+					requiredAmount = Amount(1);
+				} else {
+					requiredAmount = requiredAmount - billingBalance;
+				}
+
+				const auto& sellOffer = exchangeEntry.sellOffers().at(storageMosaicId);
+				if (sellOffer.Amount < requiredAmount)
+					return Failure_Service_Drive_Cant_Find_Default_Exchange_Offer;
+
+				const auto& accountCache = context.Cache.sub<cache::AccountStateCache>();
+				auto accountIter = accountCache.find(driveEntry.key());
+				const auto& driveAccount = accountIter.get();
+
+				auto currencyBalance = driveAccount.Balances.get(currencyMosaicId);
+				if (currencyBalance < sellOffer.cost(requiredAmount))
+					return ValidationResult::Success;
+			}
+
+			return Failure_Service_Operation_Is_Not_Permitted;
+		});
+	};
+}}

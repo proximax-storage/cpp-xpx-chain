@@ -37,9 +37,9 @@ namespace catapult { namespace plugins {
 							sub.notify(ModifyMultisigNewCosignerNotification<1>(transaction.Signer, pModification->CosignatoryPublicKey));
 							addedVerifierKeys.insert(pModification->CosignatoryPublicKey);
 						}
-					// We need to inform verifiers that they are co signers(removed or added)
-					sub.notify(AccountPublicKeyNotification<1>(pModification->CosignatoryPublicKey));
-				}
+						// We need to inform verifiers that they are co signers(removed or added)
+						sub.notify(AccountPublicKeyNotification<1>(pModification->CosignatoryPublicKey));
+					}
 
 					sub.notify(ModifyMultisigCosignersNotification<1>(
 						transaction.Signer, transaction.VerifierModificationCount, transaction.VerifierModificationsPtr()));

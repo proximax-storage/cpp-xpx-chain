@@ -31,13 +31,14 @@ namespace catapult { namespace model {
 		using Resolver = std::function<TResolved (const TUnresolved&)>;
 		using MosaicResolver = Resolver<UnresolvedMosaicId, MosaicId>;
 		using AddressResolver = Resolver<UnresolvedAddress, Address>;
+		using AmountResolver = Resolver<UnresolvedAmount, Amount>;
 
 	public:
 		/// Creates a default context.
 		ResolverContext();
 
-		/// Creates a context around \a mosaicResolver and \a addressResolver.
-		ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver);
+		/// Creates a context around \a mosaicResolver, \a addressResolver and \a amountResolver.
+		ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver, const AmountResolver& amountResolver);
 
 	public:
 		/// Resolves mosaic id (\a mosaicId).
@@ -46,8 +47,12 @@ namespace catapult { namespace model {
 		/// Resolves \a address.
 		Address resolve(const UnresolvedAddress& address) const;
 
+		/// Resolves \a amount.
+		Amount resolve(const UnresolvedAmount& amount) const;
+
 	private:
 		MosaicResolver m_mosaicResolver;
 		AddressResolver m_addressResolver;
+		AmountResolver m_amountResolver;
 	};
 }}

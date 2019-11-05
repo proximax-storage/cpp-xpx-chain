@@ -52,7 +52,8 @@ namespace catapult { namespace validators {
 
 			Amount amount;
 			auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
-			return FindAccountBalance(cache, notification.Sender, mosaicId, amount) && amount >= notification.Amount
+			auto amountResolved = context.Resolvers.resolve(notification.Amount);
+			return FindAccountBalance(cache, notification.Sender, mosaicId, amount) && amount >= amountResolved
 					? ValidationResult::Success
 					: Failure_Core_Insufficient_Balance;
 		}

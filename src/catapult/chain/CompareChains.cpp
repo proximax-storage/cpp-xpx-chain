@@ -141,6 +141,9 @@ namespace catapult { namespace chain {
 					Height startingHeight,
 					const model::HashRange& localHashes,
 					const model::HashRange& remoteHashes) {
+				if (localHashes.size() == 0)
+					return ChainComparisonCode::Local_Hashes_Is_Zero;
+
 				auto maxHashesToAnalyze = CalculateMaxHashesToAnalyze(m_options);
 				if (remoteHashes.size() > maxHashesToAnalyze)
 					return ChainComparisonCode::Remote_Returned_Too_Many_Hashes;

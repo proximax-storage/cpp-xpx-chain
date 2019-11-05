@@ -262,6 +262,7 @@ namespace catapult { namespace test {
 				auto isMarkedCache = IsMarkedCache(cache);
 				return model::ResolverContext(
 						[isMarkedCache](const auto& unresolved) { return MosaicId(unresolved.unwrap() * (isMarkedCache ? 2 : 0)); },
+						[](const auto& unresolved) { return model::ResolverContext().resolve(unresolved); },
 						[](const auto& unresolved) { return model::ResolverContext().resolve(unresolved); });
 			};
 		}

@@ -43,7 +43,8 @@ namespace catapult { namespace extensions {
 			auto& senderState = senderIter.get();
 
 			auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
-			fundingState.TotalFundedMosaics.credit(mosaicId, notification.Amount);
+			auto amount = context.Resolvers.resolve(notification.Amount);
+			fundingState.TotalFundedMosaics.credit(mosaicId, amount);
 
 			// if the account state balance is zero when the first transfer is made, implicitly fund the nemesis account
 			// assume that all mosaics are funded in same way (i.e. nemesis cannot have mix of implicitly and explicitly funded mosaics)
@@ -56,7 +57,7 @@ namespace catapult { namespace extensions {
 			if (NemesisFundingType::Explicit == fundingState.FundingType)
 				return;
 
-			senderState.Balances.credit(mosaicId, notification.Amount);
+			senderState.Balances.credit(mosaicId, amount);
 		}));
 	}
 }}

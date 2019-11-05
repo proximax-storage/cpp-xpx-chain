@@ -10,7 +10,7 @@
 
 namespace catapult { namespace state {
 
-	/// Policy for saving and loading service entry data.
+	/// Policy for saving and loading drive entry data.
 	struct DriveEntrySerializer {
 		/// Saves \a entry to \a output.
 		static void Save(const DriveEntry& entry, io::OutputStream& output);

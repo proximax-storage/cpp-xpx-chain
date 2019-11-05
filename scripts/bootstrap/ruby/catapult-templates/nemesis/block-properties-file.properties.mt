@@ -20,6 +20,7 @@ binDirectory = ../seed/mijin-test
 prx = true
 prx.xpx = true
 prx.storage = true
+prx.streaming = true
 
 [namespace>prx]
 
@@ -28,6 +29,7 @@ duration = 0
 [mosaics]
 prx:xpx = true
 prx:storage = true
+prx:streaming = true
 
 [mosaic>prx:xpx]
 divisibility = 6
@@ -43,7 +45,7 @@ isSupplyMutable = false
 {{/xpx.distribution}}
 
 [mosaic>prx:storage]
-divisibility = 6
+divisibility = 0
 duration = 0
 supply = {{xpx.supply}}
 
@@ -51,6 +53,19 @@ isTransferable = true
 isSupplyMutable = true
 
 [distribution>prx:storage]
+{{#xpx.distribution}}
+{{address}} = {{amount}}
+{{/xpx.distribution}}
+
+[mosaic>prx:streaming]
+divisibility = 0
+duration = 0
+supply = {{xpx.supply}}
+
+isTransferable = true
+isSupplyMutable = true
+
+[distribution>prx:streaming]
 {{#xpx.distribution}}
 {{address}} = {{amount}}
 {{/xpx.distribution}}
