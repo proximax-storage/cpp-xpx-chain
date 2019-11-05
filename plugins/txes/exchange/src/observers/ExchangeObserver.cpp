@@ -33,9 +33,9 @@ namespace catapult { namespace observers {
 			auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
 				ModifyOffer(entry.buyOffers(), mosaicId, context.Mode, pMatchedOffer) :
 				ModifyOffer(entry.sellOffers(), mosaicId, context.Mode, pMatchedOffer);
-			if (Amount(0) == offer.Amount)
+			if (context.Mode == NotifyMode::Commit && Amount(0) == offer.Amount)
 				entry.expireOffer(pMatchedOffer->Type, mosaicId, context.Height);
-			else
+			else if (context.Mode == NotifyMode::Rollback && pMatchedOffer->Mosaic.Amount == offer.Amount)
 				entry.unexpireOffer(pMatchedOffer->Type, mosaicId, context.Height);
 		}
 	});

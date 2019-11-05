@@ -21,7 +21,7 @@ namespace catapult { namespace validators {
             return Failure_Service_Operation_Is_Not_Permitted;
 
 		if (notification.XorRootHash == Hash256())
-			return Failure_Service_Root_No_Changes;
+			return Failure_Service_Drive_Root_No_Changes;
 
 		if ((notification.XorRootHash ^ notification.RootHash) != driveEntry.rootHash())
 			return Failure_Service_Root_Hash_Is_Not_Equal;

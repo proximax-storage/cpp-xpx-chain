@@ -10,6 +10,7 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/model/ServiceNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
+#include "plugins/txes/exchange/src/model/ExchangeNotifications.h"
 
 namespace catapult { namespace validators {
 	/// A validator implementation that applies to prepare drive notifications and validates that:
@@ -46,6 +47,12 @@ namespace catapult { namespace validators {
 
 	/// A validator check that drive contains not many files
 	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, model::DriveFileSystemNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+
+	/// A validator check that exchange from replicators are valid
+	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+
+	/// A validator check that end drive transaction is permitted
+	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator check that:
 	/// - Replicator is part of drive

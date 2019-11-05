@@ -25,4 +25,13 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by join to drive notifications.
 	DECLARE_OBSERVER(JoinToDrive, model::JoinToDriveNotification<1>)();
+
+	/// Observes changes triggered by exchange Xpx to SO units.
+	DECLARE_OBSERVER(StartBilling, model::BalanceCreditNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+
+	/// Observes changes triggered at the end of billing period.
+	DECLARE_OBSERVER(EndBilling, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+
+	/// Observes changes triggered by the en drive transaction.
+	DECLARE_OBSERVER(EndDrive, model::EndDriveNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 }}

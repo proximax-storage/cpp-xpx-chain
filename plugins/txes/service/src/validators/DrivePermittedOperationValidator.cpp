@@ -8,6 +8,7 @@
 #include "src/cache/DriveCache.h"
 #include "catapult/model/EntityType.h"
 #include "src/model/ServiceEntityType.h"
+#include "plugins/txes/exchange/src/model/ExchangeTransaction.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/validators/ValidatorContext.h"
 
@@ -20,11 +21,11 @@ namespace catapult { namespace validators {
 		if (!driveCache.contains(notification.Transaction.Signer))
 			return ValidationResult::Success;
 
-		// TODO: Exchange transaction
 		static std::unordered_set<model::EntityType> allowedTransactions({
 		   model::Entity_Type_DeleteReward,
 		   model::Entity_Type_EndDrive,
 		   model::Entity_Type_Verification,
+		   model::Entity_Type_Exchange,
 		});
 
 		return allowedTransactions.count(notification.Transaction.Type) ?

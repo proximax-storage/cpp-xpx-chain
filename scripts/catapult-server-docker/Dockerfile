@@ -160,6 +160,13 @@ RUN cd /catapult \
 RUN cd /catapult/_build && make \
 # Catapult
     sirius.bc \
+    catapult.tools.address \
+    catapult.tools.benchmark \
+    catapult.tools.health \
+    catapult.tools.nemgen \
+    catapult.tools.nemgen.blockhashes \
+    catapult.tools.network \
+    catapult.tools.statusgen \
     -j 4
 
 # script for copying required libs to temporary folder /deps

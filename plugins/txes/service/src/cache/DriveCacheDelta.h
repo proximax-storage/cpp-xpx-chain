@@ -60,7 +60,7 @@ namespace catapult { namespace cache {
 				, DriveCacheDeltaMixins::BasicInsertRemove(*driveSets.pPrimary)
 				, DriveCacheDeltaMixins::DeltaElements(*driveSets.pPrimary)
 				, m_pDriveEntries(driveSets.pPrimary)
-				, m_pDriveKeysByExpiryHeight(driveSets.pHeightGrouping)
+				, m_pMarkedDrivesAtHeight(driveSets.pHeightGrouping)
 				, m_pConfigHolder(pConfigHolder)
 		{}
 
@@ -72,9 +72,45 @@ namespace catapult { namespace cache {
 			return ServicePluginEnabled(m_pConfigHolder, height());
 		}
 
+		void markDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
+			AddIdentifierWithGroup(*m_pMarkedDrivesAtHeight, height, key);
+		}
+
+		void unmarkDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
+			RemoveIdentifierWithGroup(*m_pMarkedDrivesAtHeight, height, key);
+		}
+
+        /// Processes all marked drives
+        void processMarkedDrives(Height height, const consumer<DriveCacheDescriptor::ValueType&>& consumer) {
+            ForEachIdentifierWithGroup(*m_pDriveEntries, *m_pMarkedDrivesAtHeight, height, consumer);
+        }
+
+        void prune(Height height) {
+//            ForEachIdentifierWithGroup(
+//                *m_pDriveEntries,
+//                *m_pMarkedDrivesAtHeight,
+//                height,
+//                [this, height,](auto& history) {
+//                    auto originalSizes = GetNamespaceSizes(history);
+//                    auto removedIds = history.prune(height);
+//                    auto newSizes = GetNamespaceSizes(history);
+//
+//                    collectedIds.insert(removedIds.cbegin(), removedIds.cend());
+//                    for (auto removedId : removedIds)
+//                        m_pNamespaceById->remove(removedId);
+//
+//                    if (history.empty())
+//                        m_pHistoryById->remove(history.id());
+//
+//                    decrementActiveSize(originalSizes.Active - newSizes.Active);
+//                    decrementDeepSize(originalSizes.Deep - newSizes.Deep);
+//                });
+            m_pMarkedDrivesAtHeight->remove(height);
+        }
+
 	private:
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pDriveEntries;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pDriveKeysByExpiryHeight;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pMarkedDrivesAtHeight;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 

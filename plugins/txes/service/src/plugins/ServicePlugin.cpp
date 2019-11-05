@@ -5,6 +5,7 @@
 **/
 
 #include "catapult/plugins/PluginManager.h"
+#include "catapult/observers/ObserverUtils.h"
 #include "ServicePlugin.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
@@ -14,6 +15,7 @@
 #include "src/plugins/FilesDepositTransactionPlugin.h"
 #include "src/plugins/JoinToDriveTransactionPlugin.h"
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
+#include "src/plugins/EndDriveTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/utils/ServiceUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -26,6 +28,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDriveFileSystemTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateFilesDepositTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateJoinToDriveTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateEndDriveTransactionPlugin());
 
         manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
             const auto& driveCache = cache.template sub<cache::DriveCache>();
@@ -95,21 +98,27 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([pConfigHolder = manager.configHolder()](auto& builder) {
 			builder
 					.add(validators::CreateDriveValidator())
+					.add(validators::CreateExchangeValidator(pConfigHolder))
 					.add(validators::CreateDrivePermittedOperationValidator())
 					.add(validators::CreateFilesDepositValidator())
 					.add(validators::CreateJoinToDriveValidator())
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
+					.add(validators::CreateEndDriveValidator(pConfigHolder))
 					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder));
 		});
 
 		manager.addObserverHook([pConfigHolder = manager.configHolder()](auto& builder) {
 			builder
 					.add(observers::CreatePrepareDriveObserver())
-					.add(observers::CreateDriveVerificationObserver())
 					.add(observers::CreateDriveFileSystemObserver())
 					.add(observers::CreateFilesDepositObserver())
-					.add(observers::CreateJoinToDriveObserver());
+					.add(observers::CreateJoinToDriveObserver())
+                    .add(observers::CreateDriveVerificationObserver())
+                    .add(observers::CreateStartBillingObserver(pConfigHolder))
+                    .add(observers::CreateEndBillingObserver(pConfigHolder))
+                    .add(observers::CreateEndDriveObserver(pConfigHolder))
+                    .add(observers::CreateCacheBlockPruningObserver<cache::DriveCache>("Drive", 1, pConfigHolder));
 		});
 	}
 }}

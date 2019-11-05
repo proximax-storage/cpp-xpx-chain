@@ -111,6 +111,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceDebitObserver())
+				.add(observers::CreateBalanceCreditObserver())
 				.add(observers::CreateBalanceTransferObserver())
 				.add(observers::CreateHarvestFeeObserver(pConfigHolder, calculator))
 				.add(observers::CreateTotalTransactionsObserver())

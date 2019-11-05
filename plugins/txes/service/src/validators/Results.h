@@ -72,10 +72,28 @@ namespace catapult { namespace validators {
 	DEFINE_SERVICE_RESULT(Drive_Replicator_Not_Registered, 19);
 
 	/// Validation failed because drive files system transaction doesn't contain changes.
-	DEFINE_SERVICE_RESULT(Root_No_Changes, 20);
+	DEFINE_SERVICE_RESULT(Drive_Root_No_Changes, 20);
 
     /// Validation failed because the drive already is finished.
     DEFINE_SERVICE_RESULT(Drive_Already_Is_Finished, 21);
+
+    /// Validation failed because default exchange offer for Xpx to SO units is not exist.
+    DEFINE_SERVICE_RESULT(Drive_Cant_Find_Default_Exchange_Offer, 22);
+
+    /// Validation failed because default exchange of this mosaic is not allowed(only allowed SO units).
+    DEFINE_SERVICE_RESULT(Exchange_Of_This_Mosaic_Is_Not_Allowed, 23);
+
+    /// Validation failed because drive is not in pending state.
+    DEFINE_SERVICE_RESULT(Drive_Not_In_pending_State, 24);
+
+    /// Validation failed because exchange more SO units than required by drive.
+    DEFINE_SERVICE_RESULT(Exchange_More_Than_Required, 25);
+
+    /// Validation failed because exchange cost of SO units is worse than default cost.
+    DEFINE_SERVICE_RESULT(Exchange_Cost_Is_Worse_Than_Default, 26);
+
+    /// Validation failed because drive processed full duration.
+    DEFINE_SERVICE_RESULT(Drive_Processed_Full_Duration, 27);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

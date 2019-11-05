@@ -13,11 +13,11 @@ namespace catapult { namespace model {
 
 	/// Offer type
 	enum class OfferType : uint8_t {
-		/// Buy offer.
-		Buy = 1,
+        /// Sell offer.
+        Sell,
 
-		/// Sell offer.
-		Sell
+		/// Buy offer.
+		Buy,
 	};
 
 	struct Offer {

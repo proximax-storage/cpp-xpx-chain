@@ -29,8 +29,8 @@ namespace catapult { namespace model {
 	/// Defines a drive notification type.
 	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0006);
 
-	/// Defines a drive state notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_State_v1, 0x0006);
+	/// Defines a end drive notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0007);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -279,5 +279,30 @@ namespace catapult { namespace model {
 
 		/// Transactions type.
         model::EntityType TransactionType;
+	};
+
+	/// Notification of an end drive.
+	template<VersionType version>
+	struct EndDriveNotification;
+
+	template<>
+	struct EndDriveNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_End_Drive_v1_Notification;
+
+	public:
+		explicit EndDriveNotification(const Key& drive, const Key& signer)
+				: Notification(Notification_Type, sizeof(EndDriveNotification<1>))
+				, DriveKey(drive)
+				, Signer(signer)
+		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Public key of the signer.
+		Key Signer;
 	};
 }}

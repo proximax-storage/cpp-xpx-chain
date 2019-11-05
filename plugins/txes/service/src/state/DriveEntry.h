@@ -166,6 +166,17 @@ namespace catapult { namespace state {
 			return m_billingHistory;
 		}
 
+		/// Gets the processed duration of drive.
+		BlockDuration processedDuration() const {
+			BlockDuration temp;
+
+			for (const auto& desc : m_billingHistory)
+				if (!desc.Payments.empty())
+					temp = temp + BlockDuration(desc.End.unwrap() - desc.Start.unwrap());
+
+			return temp;
+		}
+
 		/// Gets the drive size.
 		uint64_t size() const {
 			return m_size;
