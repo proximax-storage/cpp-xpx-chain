@@ -56,7 +56,8 @@ pipeline {
                     s3Delete bucket: 'debian-installer-sirius', path: './'
 
                     echo 'Uploading new files'
-                    s3Upload bucket: 'debian-installer-sirius', acl: 'PublicRead', file: '_build/', sseAlgorithm: 'AES256'
+                    s3Upload bucket: 'debian-installer-sirius', acl: 'PublicRead', file: 'debian-binary.tar.xz', sseAlgorithm: 'AES256'
+//                    s3Upload bucket: 'debian-installer-sirius', acl: 'PublicRead', file: '_build/', sseAlgorithm: 'AES256'
                 }
 
 
