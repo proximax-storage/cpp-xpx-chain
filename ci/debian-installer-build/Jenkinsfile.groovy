@@ -35,7 +35,7 @@ pipeline {
                                 ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
                                 mkdir ../artifact
                                 cp -R ../cpp-xpx-chain/* ../artifact/
-                                cp -R ../artifact .
+                                tar czvf artif.tar.gz ../artifact/
                                 
                             """
                         }
@@ -45,7 +45,7 @@ pipeline {
                 echo 'Leaving container'
 
                 echo 'Compress Artifacts'
-                sh "tar cJfv debian-binary.tar.xz artifact"
+                sh "tar cJfv debian-binary.tar.xz artif.tar.gz"
             }
         }
 
@@ -60,7 +60,7 @@ pipeline {
                     s3Delete bucket: 'debian-installer-sirius', path: './'
 
                     echo 'Uploading new files'
-                    s3Upload bucket: 'debian-installer-sirius', acl: 'PublicRead', file: 'debian-binary.tar.xz', sseAlgorithm: 'AES256'
+                    s3Upload bucket: 'debian-installer-sirius', acl: 'PublicRead', file: 'artif.tar.gz', sseAlgorithm: 'AES256'
 //                    s3Upload bucket: 'debian-installer-sirius', acl: 'PublicRead', file: '_build/', sseAlgorithm: 'AES256'
                 }
 
