@@ -33,6 +33,10 @@ pipeline {
                                 make -j4
                                 cd ..
                                 ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
+                                mkdir ../artifact
+                                cp -R ../cpp-xpx-chain/* ../artifact/
+                                cp -R ../artifact .
+                                
                             """
                         }
                     }
@@ -41,7 +45,7 @@ pipeline {
                 echo 'Leaving container'
 
                 echo 'Compress Artifacts'
-                sh "tar cJfv debian-binary.tar.xz _build"
+                sh "tar cJfv debian-binary.tar.xz artifact"
             }
         }
 
