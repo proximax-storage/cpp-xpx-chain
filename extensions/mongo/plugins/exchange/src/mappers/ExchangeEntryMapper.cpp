@@ -20,7 +20,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "amount" << ToInt64(offer.Amount)
 				<< "initialAmount" << ToInt64(offer.InitialAmount)
 				<< "initialCost" << ToInt64(offer.InitialCost)
-				<< "deadline" << ToInt64(offer.Deadline);
+				<< "deadline" << ToInt64(offer.Deadline)
+				<< "price" << offer.price();
 		}
 
 		void StreamBuyOffers(bson_stream::document& builder, const state::BuyOfferMap& offers) {
@@ -67,10 +68,11 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 	}
 
-	bsoncxx::document::value ToDbModel(const state::ExchangeEntry& entry) {
+	bsoncxx::document::value ToDbModel(const state::ExchangeEntry& entry, const Address& ownerAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "exchange" << bson_stream::open_document
-				<< "owner" << ToBinary(entry.owner());
+				<< "owner" << ToBinary(entry.owner())
+				<< "ownerAddress" << ToBinary(ownerAddress);
 
 		StreamBuyOffers(builder, entry.buyOffers());
 		StreamSellOffers(builder, entry.sellOffers());

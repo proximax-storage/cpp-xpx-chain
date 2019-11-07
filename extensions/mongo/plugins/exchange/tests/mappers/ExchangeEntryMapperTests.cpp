@@ -18,14 +18,15 @@ namespace catapult { namespace mongo { namespace plugins {
 	TEST(TEST_CLASS, CanMapExchangeEntry_ModelToDbModel) {
 		// Arrange:
 		auto entry = test::CreateExchangeEntry();
+		auto address = test::GenerateRandomByteArray<Address>();
 
 		// Act:
-		auto document = ToDbModel(entry);
+		auto document = ToDbModel(entry, address);
 		auto documentView = document.view();
 
 		// Assert:
 		EXPECT_EQ(1u, test::GetFieldCount(documentView));
-		test::AssertEqualExchangeData(entry, documentView["exchange"].get_document().view());
+		test::AssertEqualExchangeData(entry, address, documentView["exchange"].get_document().view());
 	}
 
 	// endregion
@@ -33,14 +34,15 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToExchangeEntry
 
 	namespace {
-		bsoncxx::document::value CreateDbExchangeEntry() {
-			return ToDbModel(test::CreateExchangeEntry());
+		bsoncxx::document::value CreateDbExchangeEntry(const Address& address) {
+			return ToDbModel(test::CreateExchangeEntry(), address);
 		}
 	}
 
 	TEST(TEST_CLASS, CanMapExchangeEntry_DbModelToModel) {
 		// Arrange:
-		auto dbExchangeEntry = CreateDbExchangeEntry();
+		auto address = test::GenerateRandomByteArray<Address>();
+		auto dbExchangeEntry = CreateDbExchangeEntry(address);
 
 		// Act:
 		auto entry = ToExchangeEntry(dbExchangeEntry);
@@ -48,7 +50,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		// Assert:
 		auto view = dbExchangeEntry.view();
 		EXPECT_EQ(1u, test::GetFieldCount(view));
-		test::AssertEqualExchangeData(entry, view["exchange"].get_document().view());
+		test::AssertEqualExchangeData(entry, address, view["exchange"].get_document().view());
 	}
 
 	// endregion

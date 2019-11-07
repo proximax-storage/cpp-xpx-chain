@@ -18,6 +18,14 @@ namespace catapult { namespace state {
 		catapult::Amount InitialAmount;
 		catapult::Amount InitialCost;
 		Height Deadline;
+
+	public:
+		double price() const {
+			if (catapult::Amount(0) > InitialAmount)
+				CATAPULT_THROW_RUNTIME_ERROR("failed to calculate offer price, initial amount is zero");
+
+			return static_cast<double>(InitialCost.unwrap()) / static_cast<double>(InitialAmount.unwrap());
+		}
 	};
 
 	struct SellOffer : public OfferBase {

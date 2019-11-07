@@ -69,6 +69,7 @@
 
 load('mongoAccountPropertiesDbPrepare.js')
 load('mongoContractDbPrepare.js')
+load('mongoExchangeDbPrepare.js')
 load('mongoLockInfoDbPrepare.js')
 load('mongoMetadataDbPrepare.js')
 load('mongoMosaicDbPrepare.js')
@@ -76,4 +77,3 @@ load('mongoMultisigDbPrepare.js')
 load('mongoNamespaceDbPrepare.js')
 load('mongoReputationDbPrepare.js')
 load('mongoServiceDbPrepare.js')
-load('mongoFileDbPrepare.js')

@@ -52,7 +52,7 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreateOfferObserver())
 				.add(observers::CreateExchangeObserver())
-				.add(observers::CreateRemoveOfferObserver())
+				.add(observers::CreateRemoveOfferObserver(pConfigHolder->Config().Immutable.CurrencyMosaicId))
 				.add(observers::CreateCleanupOffersObserver(pConfigHolder));
 		});
 	}

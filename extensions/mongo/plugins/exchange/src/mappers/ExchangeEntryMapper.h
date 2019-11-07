@@ -10,8 +10,8 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	/// Maps a catapult upgrade \a entry to the corresponding db model value.
-	bsoncxx::document::value ToDbModel(const state::ExchangeEntry& entry);
+	/// Maps an exchange \a entry and \a ownerAddress to the corresponding db model value.
+	bsoncxx::document::value ToDbModel(const state::ExchangeEntry& entry, const Address& ownerAddress);
 
 	/// Maps a database \a document to the corresponding model value.
 	state::ExchangeEntry ToExchangeEntry(const bsoncxx::document::view& document);

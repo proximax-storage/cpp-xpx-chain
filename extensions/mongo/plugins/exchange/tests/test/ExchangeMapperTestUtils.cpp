@@ -17,6 +17,7 @@ namespace catapult { namespace test {
 			EXPECT_EQ(offer.InitialAmount.unwrap(), GetUint64(dbOffer, "initialAmount"));
 			EXPECT_EQ(offer.InitialCost.unwrap(), GetUint64(dbOffer, "initialCost"));
 			EXPECT_EQ(offer.Deadline.unwrap(), GetUint64(dbOffer, "deadline"));
+			EXPECT_EQ(offer.price(), dbOffer["price"].get_double());
 		}
 
 		void AssertBuyOffers(const state::BuyOfferMap& offers, const bsoncxx::document::view& dbOffers) {
@@ -61,10 +62,11 @@ namespace catapult { namespace test {
 		}
 	}
 
-	void AssertEqualExchangeData(const state::ExchangeEntry& entry, const bsoncxx::document::view& dbExchangeEntry) {
-		EXPECT_EQ(5u, test::GetFieldCount(dbExchangeEntry));
+	void AssertEqualExchangeData(const state::ExchangeEntry& entry, const Address& address, const bsoncxx::document::view& dbExchangeEntry) {
+		EXPECT_EQ(6u, test::GetFieldCount(dbExchangeEntry));
 
 		EXPECT_EQ(entry.owner(), GetKeyValue(dbExchangeEntry, "owner"));
+		EXPECT_EQ(address, test::GetAddressValue(dbContract, "ownerAddress"));
 
 		AssertBuyOffers(entry.buyOffers(), dbExchangeEntry["buyOffers"].get_array().value);
 		AssertSellOffers(entry.sellOffers(), dbExchangeEntry["sellOffers"].get_array().value);

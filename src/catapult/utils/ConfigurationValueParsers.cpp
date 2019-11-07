@@ -388,7 +388,7 @@ namespace catapult { namespace utils {
 	bool TryParseValue(const std::string& str, std::unordered_set<std::string>& parsedSet) {
 		return TryParseSetValue<std::string>(str, parsedSet, [](const std::string& value, std::string& parsedValue) {
 			parsedValue = value;
-			return true;
+			return !parsedValue.empty();
 		});
 	}
 

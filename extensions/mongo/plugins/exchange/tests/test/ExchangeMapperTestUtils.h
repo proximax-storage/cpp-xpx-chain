@@ -10,6 +10,6 @@
 
 namespace catapult { namespace test {
 
-	/// Verifies that db offer entry (\a dbExchangeEntry) is equivalent to model offer \a entry.
-	void AssertEqualExchangeData(const state::ExchangeEntry& entry, const bsoncxx::document::view& dbExchangeEntry);
+	/// Verifies that db offer entry (\a dbExchangeEntry) is equivalent to model offer \a entry and \a address.
+	void AssertEqualExchangeData(const state::ExchangeEntry& entry, const Address& address, const bsoncxx::document::view& dbExchangeEntry);
 }}
