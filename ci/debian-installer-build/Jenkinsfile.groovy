@@ -34,14 +34,15 @@ pipeline {
                                 cd ..
                                 ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
                                 cd ..
+                                tar cJfv sirius-installer.tar.xz cpp*
                               
                             """
                         }
-                        echo 'Leaving Container'
-
-                        echo 'Compressing Artifacts'
-                        // Creates an XZ compressed archive
-                        sh "tar cJfv sirius-installer.tar.xz cpp* "
+//                        echo 'Leaving Container'
+//
+//                        echo 'Compressing Artifacts'
+//                        // Creates an XZ compressed archive
+//                        sh "tar cJfv sirius-installer.tar.xz cpp* "
                     }
                 }
 
