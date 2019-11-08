@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/exceptions.h"
+#include "catapult/functions.h"
 #include "src/model/Offer.h"
 #include <cmath>
 #include <map>
@@ -20,32 +21,14 @@ namespace catapult { namespace state {
 		Height Deadline;
 
 	public:
-		double price() const {
-			if (catapult::Amount(0) > InitialAmount)
-				CATAPULT_THROW_RUNTIME_ERROR("failed to calculate offer price, initial amount is zero");
-
-			return static_cast<double>(InitialCost.unwrap()) / static_cast<double>(InitialAmount.unwrap());
-		}
+		double price() const;
 	};
 
 	struct SellOffer : public OfferBase {
 	public:
-		catapult::Amount cost(const catapult::Amount& amount) const {
-			auto cost = std::ceil(static_cast<double>(InitialCost.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(InitialAmount.unwrap()));
-			return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
-		}
-
-		SellOffer& operator+=(const model::MatchedOffer& offer) {
-			Amount = Amount + offer.Mosaic.Amount;
-			return *this;
-		}
-
-		SellOffer& operator-=(const model::MatchedOffer& offer) {
-			if (offer.Mosaic.Amount > Amount)
-				CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than mosaic amount", offer.Mosaic.Amount, Amount)
-			Amount = Amount - offer.Mosaic.Amount;
-			return *this;
-		}
+		catapult::Amount cost(const catapult::Amount& amount) const;
+		SellOffer& operator+=(const model::MatchedOffer& offer);
+		SellOffer& operator-=(const model::MatchedOffer& offer);
 	};
 
 	struct BuyOffer : public OfferBase {
@@ -53,30 +36,9 @@ namespace catapult { namespace state {
 		catapult::Amount ResidualCost;
 
 	public:
-		catapult::Amount cost(const catapult::Amount& amount) const {
-			auto cost = std::floor(static_cast<double>(InitialCost.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(InitialAmount.unwrap()));
-			return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
-		}
-
-		BuyOffer& operator+=(const model::MatchedOffer& offer) {
-			Amount = Amount + offer.Mosaic.Amount;
-			ResidualCost = ResidualCost + offer.Cost;
-
-			return *this;
-		}
-
-		BuyOffer& operator-=(const model::MatchedOffer& offer) {
-			if (offer.Mosaic.Amount > Amount)
-				CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than mosaic amount", offer.Mosaic.Amount, Amount)
-
-			if (offer.Cost > ResidualCost)
-				CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than residual cost", offer.Cost, ResidualCost)
-
-			Amount = Amount - offer.Mosaic.Amount;
-			ResidualCost = ResidualCost - offer.Cost;
-
-			return *this;
-		}
+		catapult::Amount cost(const catapult::Amount& amount) const;
+		BuyOffer& operator+=(const model::MatchedOffer& offer);
+		BuyOffer& operator-=(const model::MatchedOffer& offer);
 	};
 
 	using SellOfferMap = std::map<MosaicId, SellOffer>;
@@ -121,141 +83,66 @@ namespace catapult { namespace state {
 			return m_buyOffers;
 		}
 
+	public:
 		/// Gets the height of the earliest expiring offer.
-		Height minExpiryHeight() const {
-			if (m_buyOffers.empty() && m_sellOffers.empty())
-				return Invalid_Expiry_Height;
-
-			Height expiryHeight = Height(std::numeric_limits<Height::ValueType>::max());
-			std::for_each(m_sellOffers.begin(), m_sellOffers.end(), [&expiryHeight](const auto &pair) {
-				if (expiryHeight > pair.second.Deadline)
-					expiryHeight = pair.second.Deadline;
-			});
-			std::for_each(m_buyOffers.begin(), m_buyOffers.end(), [&expiryHeight](const auto &pair) {
-				if (expiryHeight > pair.second.Deadline)
-					expiryHeight = pair.second.Deadline;
-			});
-
-			return expiryHeight;
-		}
+		Height minExpiryHeight() const;
 
 		/// Gets the earliest height at which to prune expiring offers.
-		Height minPruneHeight() const {
-			uint8_t expiredBuyOffersFlag = m_expiredBuyOffers.empty() ? 0 : 1;
-			uint8_t expiredSellOffersFlag = m_expiredSellOffers.empty() ? 0 : 2;
-			switch (expiredBuyOffersFlag | expiredSellOffersFlag) {
-				case 0:
-					return Invalid_Expiry_Height;
-				case 1:
-					return m_expiredBuyOffers.begin()->first;
-				case 2:
-					return m_expiredSellOffers.begin()->first;
-				default:
-					return std::min(m_expiredBuyOffers.begin()->first, m_expiredSellOffers.begin()->first);
+		Height minPruneHeight() const;
+
+		/// Moves offer of \a type with \a mosaicId to expired offer buffer.
+		void expireOffer(model::OfferType type, const MosaicId& mosaicId, const Height& height);
+
+		/// Moves offer of \a type with \a mosaicId back from expired offer buffer.
+		void unexpireOffer(model::OfferType type, const MosaicId& mosaicId, const Height& height);
+
+		/// Moves offers to expired offer buffer if offer expiry height is equal \a height.
+		template<typename TOfferMap, typename TExpiredOfferMap>
+		void expireOffers(TOfferMap& offers, TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
+			for (auto iter = offers.begin(); iter != offers.end();) {
+				if (iter->second.Deadline == height) {
+					auto &expiredOffersAtHeight = expiredOffers[height];
+					if (expiredOffersAtHeight.count(iter->first))
+						CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic id already expired at height", iter->first, height);
+					expiredOffersAtHeight.emplace(iter->first, iter->second);
+					action(iter);
+					iter = offers.erase(iter);
+				} else {
+					++iter;
+				}
 			}
 		}
 
-		/// Moves offer of \a type with \a mosaicId to expired offer buffer.
-		void expireOffer(model::OfferType type, const MosaicId& mosaicId, const Height& height) {
-			auto expireFunc = [height, mosaicId](auto& offers, auto& expiredOffers) {
-				auto& offer = offers.at(mosaicId);
-				auto &expiredOffersAtHeight = expiredOffers[height];
-				if (expiredOffersAtHeight.count(mosaicId))
-					CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic already expired at height", mosaicId, height);
-				expiredOffersAtHeight.emplace(mosaicId, offer);
-				offers.erase(mosaicId);
-			};
-			if (model::OfferType::Buy == type)
-				expireFunc(m_buyOffers, m_expiredBuyOffers);
-			else
-				expireFunc(m_sellOffers, m_expiredSellOffers);
-		}
-
-		/// Moves offer of \a type with \a mosaicId back from expired offer buffer.
-		void unexpireOffer(model::OfferType type, const MosaicId& mosaicId, const Height& height) {
-			auto unexpireFunc = [height, mosaicId](auto& offers, auto& expiredOffers) {
-				if (offers.count(mosaicId))
-					CATAPULT_THROW_RUNTIME_ERROR_1("offer with mosaic id exists", mosaicId);
-				auto& expiredOffersAtHeight = expiredOffers.at(height);
-				auto& offer = expiredOffersAtHeight.at(mosaicId);
-				offers.emplace(mosaicId, offer);
-				expiredOffersAtHeight.erase(mosaicId);
-				if (expiredOffersAtHeight.empty())
-					expiredOffers.erase(height);
-			};
-			if (model::OfferType::Buy == type)
-				unexpireFunc(m_buyOffers, m_expiredBuyOffers);
-			else
-				unexpireFunc(m_sellOffers, m_expiredSellOffers);
-		}
-
-		/// Moves offers to expired offer buffer if offer expiry height is equal \a height.
-		void expireOffers(const Height& height) {
-			auto expireFunc = [height](auto& offers, auto& expiredOffers) {
-				for (auto iter = offers.begin(); iter != offers.end();) {
-					if (iter->second.Deadline == height) {
-						auto &expiredOffersAtHeight = expiredOffers[height];
-						if (expiredOffersAtHeight.count(iter->first))
-							CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic id already expired at height", iter->first, height);
-						expiredOffersAtHeight.emplace(iter->first, iter->second);
-						iter = offers.erase(iter);
-					} else {
-						++iter;
-					}
-				}
-			};
-			expireFunc(m_buyOffers, m_expiredBuyOffers);
-			expireFunc(m_sellOffers, m_expiredSellOffers);
-		}
+		void expireOffers(
+			const Height& height,
+			consumer<const BuyOfferMap::const_iterator&> buyOfferAction,
+			consumer<const SellOfferMap::const_iterator&> sellOfferAction);
 
 		/// Moves offers back from expired offer buffer if offer expiry height is equal \a height.
-		void unexpireOffers(const Height& height) {
-			auto unexpireFunc = [height](auto& offers, auto& expiredOffers) {
-				if (expiredOffers.count(height)) {
-					auto& expiredOffersAtHeight = expiredOffers.at(height);
-					for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
-						if (offers.count(iter->first))
-							CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic id exists at height", iter->first, height);
-						offers.emplace(iter->first, iter->second);
-						iter = expiredOffersAtHeight.erase(iter);
-					}
+		template<typename TOfferMap, typename TExpiredOfferMap>
+		void unexpireOffers(TOfferMap& offers, TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
+			if (expiredOffers.count(height)) {
+				auto& expiredOffersAtHeight = expiredOffers.at(height);
+				for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
+					if (offers.count(iter->first))
+						CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic id exists at height", iter->first, height);
+					offers.emplace(iter->first, iter->second);
+					action(offers.find(iter->first));
+					iter = expiredOffersAtHeight.erase(iter);
 				}
-			};
-			unexpireFunc(m_buyOffers, m_expiredBuyOffers);
-			unexpireFunc(m_sellOffers, m_expiredSellOffers);
+			}
 		}
 
-		bool offerExists(model::OfferType type, const MosaicId& mosaicId) const {
-			if (model::OfferType::Buy == type)
-				return m_buyOffers.count(mosaicId);
-			else
-				return m_sellOffers.count(mosaicId);
-		}
+		void unexpireOffers(
+			const Height& height,
+			consumer<const BuyOfferMap::const_iterator&> buyOfferAction,
+			consumer<const SellOfferMap::const_iterator&> sellOfferAction);
 
-		void addOffer(model::OfferType type, const MosaicId& mosaicId, const model::OfferWithDuration* pOffer, const Height& deadline) {
-			state::OfferBase baseOffer{pOffer->Mosaic.Amount, pOffer->Mosaic.Amount, pOffer->Cost, deadline};
-			if (model::OfferType::Buy == type)
-				m_buyOffers.emplace(mosaicId, state::BuyOffer{baseOffer, pOffer->Cost});
-			else
-				m_sellOffers.emplace(mosaicId, state::SellOffer{baseOffer});
-		}
-
-		void removeOffer(model::OfferType type, const MosaicId& mosaicId) {
-			if (model::OfferType::Buy == type)
-				m_buyOffers.erase(mosaicId);
-			else
-				m_sellOffers.erase(mosaicId);
-		}
-
-		state::OfferBase& getBaseOffer(model::OfferType type, const MosaicId& mosaicId) {
-			return (model::OfferType::Buy == type) ?
-			   dynamic_cast<state::OfferBase&>(m_buyOffers.at(mosaicId)) :
-			   dynamic_cast<state::OfferBase&>(m_sellOffers.at(mosaicId));
-		}
-
-		bool empty() const {
-			return m_buyOffers.empty() && m_sellOffers.empty() && m_expiredBuyOffers.empty() && m_expiredSellOffers.empty();
-		}
+		bool offerExists(model::OfferType type, const MosaicId& mosaicId) const;
+		void addOffer(model::OfferType type, const MosaicId& mosaicId, const model::OfferWithDuration* pOffer, const Height& deadline);
+		void removeOffer(model::OfferType type, const MosaicId& mosaicId);
+		state::OfferBase& getBaseOffer(model::OfferType type, const MosaicId& mosaicId);
+		bool empty() const;
 
 	public:
 		/// Gets the expired sell offers.

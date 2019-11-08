@@ -30,9 +30,11 @@ namespace catapult { namespace validators {
 
 				offeredMosaicIds.insert(mosaicId);
 
-				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Owner != pluginConfig.LongOfferKey) {
+				if (BlockDuration(0) == pOffer->Duration)
+					return Failure_Exchange_Zero_Offer_Duration;
+
+				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Owner != pluginConfig.LongOfferKey)
 					return Failure_Exchange_Offer_Duration_Too_Large;
-				}
 
 				if (pOffer->Mosaic.Amount == Amount(0))
 					return Failure_Exchange_Zero_Amount;

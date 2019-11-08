@@ -5,29 +5,30 @@
 **/
 
 #include "Observers.h"
-#include "catapult/cache_core/AccountStateCache.h"
 #include "src/cache/ExchangeCache.h"
 
 namespace catapult { namespace observers {
 
 	namespace {
-		void CreditAccount(state::ExchangeEntry& entry, model::OfferType offerType, const MosaicId& currencyMosaicId, const MosaicId& unitMosaicId, const ObserverContext &context) {
-			auto amount = (model::OfferType::Buy == offerType) ?
-				entry.buyOffers().at(unitMosaicId).ResidualCost :
-				entry.sellOffers().at(unitMosaicId).Amount;
-			if (Amount(0) != amount) {
-				auto &cache = context.Cache.sub<cache::AccountStateCache>();
-				auto iter = cache.find(entry.owner());
-				auto &recipientState = iter.get();
-				auto mosaicId = (model::OfferType::Buy == offerType) ? currencyMosaicId : unitMosaicId;
-				if (NotifyMode::Commit == context.Mode)
-					recipientState.Balances.credit(mosaicId, amount, context.Height);
-				else
-					recipientState.Balances.debit(mosaicId, amount, context.Height);
+		void CreditAccount(
+				state::ExchangeEntry& entry,
+				model::OfferType offerType,
+				const MosaicId& currencyMosaicId,
+				const MosaicId& unitMosaicId,
+				const ObserverContext &context) {
+			Amount amount;
+			if (model::OfferType::Buy == offerType) {
+				auto& buyOffers = (NotifyMode::Commit == context.Mode) ? entry.buyOffers() : entry.expiredBuyOffers().at(context.Height);
+				amount = buyOffers.at(unitMosaicId).ResidualCost;
+			} else {
+				auto& sellOffers = (NotifyMode::Commit == context.Mode) ? entry.sellOffers() : entry.expiredSellOffers().at(context.Height);
+				amount = sellOffers.at(unitMosaicId).Amount;
 			}
+			auto mosaicId = (model::OfferType::Buy == offerType) ? currencyMosaicId : unitMosaicId;
+			CreditAccount(entry.owner(), mosaicId, amount, context);
 		}
 	}
-	
+
 	using Notification = model::RemoveOfferNotification<1>;
 
 	DECLARE_OBSERVER(RemoveOffer, Notification)(const MosaicId& currencyMosaicId) {

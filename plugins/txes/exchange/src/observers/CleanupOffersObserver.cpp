@@ -11,24 +11,11 @@
 namespace catapult { namespace observers {
 
 	namespace {
-		void CreditAccount(const Key &recipient, const MosaicId &mosaicId, const Amount &amount, const ObserverContext &context) {
-			if (Amount(0) == amount)
-				return;
-
-			auto &cache = context.Cache.sub<cache::AccountStateCache>();
-			auto iter = cache.find(recipient);
-			auto &recipientState = iter.get();
-			recipientState.Balances.credit(mosaicId, amount, context.Height);
-		}
-
-		template<typename TExpiredOfferMap, typename TOfferMap>
-		void RemoveExpiredOffers(TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
+		template<typename TExpiredOfferMap>
+		void RemoveExpiredOffers(TExpiredOfferMap& expiredOffers, const Height& height) {
 			if (expiredOffers.count(height)) {
-				auto& expiredOffersAtHeight = expiredOffers.at(height);
-				for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
-					action(iter);
-					iter = expiredOffersAtHeight.erase(iter);
-				}
+				expiredOffers.at(height).clear();
+				expiredOffers.erase(height);
 			}
 		}
 	}
@@ -37,23 +24,35 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(CleanupOffers, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_OBSERVER(CleanupOffers, Notification, ([pConfigHolder](const Notification&, const ObserverContext& context) {
+			const auto& config = pConfigHolder->Config(context.Height);
+			auto currencyMosaicId = config.Immutable.CurrencyMosaicId;
 			auto& cache = context.Cache.sub<cache::ExchangeCache>();
 			auto expiringOfferOwners = cache.expiringOfferOwners(context.Height);
 			for (const auto& key : expiringOfferOwners) {
 				auto cacheIter = cache.find(key);
 				auto& entry = cacheIter.get();
 				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+
+				Amount xpxAmount(0);
+				auto onBuyOfferExpired = [&xpxAmount](const state::BuyOfferMap::const_iterator& iter) {
+					xpxAmount = xpxAmount + iter->second.ResidualCost;
+				};
+				auto onSellOfferExpired = [&entry, currencyMosaicId, &context](const state::SellOfferMap::const_iterator& iter) {
+					CreditAccount(entry.owner(), iter->first, iter->second.Amount, context);
+				};
+
 				if (NotifyMode::Commit == context.Mode) {
-					entry.expireOffers(context.Height);
+					entry.expireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
 				} else {
-					entry.unexpireOffers(context.Height);
+					entry.unexpireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
 				}
+
+				CreditAccount(entry.owner(), currencyMosaicId, xpxAmount, context);
 			}
 
 			if (NotifyMode::Rollback == context.Mode)
 				return;
 
-			const auto& config = pConfigHolder->Config(context.Height);
 			auto maxRollbackBlocks = config.Network.MaxRollbackBlocks;
 			if (context.Height.unwrap() <= maxRollbackBlocks)
 				return;
@@ -64,16 +63,8 @@ namespace catapult { namespace observers {
 				auto cacheIter = cache.find(key);
 				auto& entry = cacheIter.get();
 				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
-
-				Amount xpxAmount(0);
-				RemoveExpiredOffers<state::ExpiredBuyOfferMap, state::BuyOfferMap>(entry.expiredBuyOffers(), context.Height, [&xpxAmount](const auto& iter) {
-					xpxAmount = xpxAmount + iter->second.ResidualCost;
-				});
-				CreditAccount(entry.owner(), config.Immutable.CurrencyMosaicId, xpxAmount, context);
-
-				RemoveExpiredOffers<state::ExpiredSellOfferMap, state::SellOfferMap>(entry.expiredSellOffers(), context.Height, [&entry, &context](const auto& iter) {
-					CreditAccount(entry.owner(), iter->first, iter->second.Amount, context);
-				});
+				RemoveExpiredOffers(entry.expiredBuyOffers(), pruneHeight);
+				RemoveExpiredOffers(entry.expiredSellOffers(), pruneHeight);
 			}
 		}))
 	}

@@ -9,7 +9,6 @@
 #include "catapult/observers/ObserverTypes.h"
 #include "src/cache/ExchangeCache.h"
 #include "src/model/ExchangeNotifications.h"
-#include "src/state/ExchangeEntry.h"
 
 namespace catapult { namespace observers {
 
@@ -22,29 +21,7 @@ namespace catapult { namespace observers {
 			, m_initialPruneHeight(m_entry.minPruneHeight())
 		{}
 
-		~OfferExpiryUpdater() {
-			auto owner = m_entry.owner();
-			std::set<Height> initialValues{m_initialExpiryHeight, m_initialPruneHeight};
-			auto minExpiryHeight = m_entry.minExpiryHeight();
-			auto minPruneHeight = m_entry.minPruneHeight();
-			std::set<Height> newValues{minExpiryHeight, minPruneHeight};
-
-			if (!newValues.count(m_initialPruneHeight))
-				m_cache.removeExpiryHeight(owner, m_initialPruneHeight);
-
-			if (!newValues.count(m_initialExpiryHeight))
-				m_cache.removeExpiryHeight(owner, m_initialExpiryHeight);
-
-			if (!initialValues.count(minPruneHeight))
-				m_cache.addExpiryHeight(owner, minPruneHeight);
-
-			if (!initialValues.count(minExpiryHeight))
-				m_cache.addExpiryHeight(owner, minExpiryHeight);
-
-			if (m_entry.empty())
-				m_cache.remove(owner);
-		}
-
+		~OfferExpiryUpdater();
 		OfferExpiryUpdater(const OfferExpiryUpdater&) = delete;
 		OfferExpiryUpdater& operator=(const OfferExpiryUpdater&) = delete;
 
@@ -54,6 +31,8 @@ namespace catapult { namespace observers {
 		Height m_initialExpiryHeight;
 		Height m_initialPruneHeight;
 	};
+
+	void CreditAccount(const Key& owner, const MosaicId& mosaicId, const Amount& amount, const ObserverContext &context);
 
 	/// Observes changes triggered by offer notifications
 	DECLARE_OBSERVER(Offer, model::OfferNotification<1>)();
