@@ -16,37 +16,20 @@ namespace catapult { namespace observers {
 		auto minPruneHeight = m_entry.minPruneHeight();
 		std::set<Height> newValues{minExpiryHeight, minPruneHeight};
 
-		CATAPULT_LOG(debug) << "=========================> INITIAL PRUNE HEIGHT  = " << m_initialPruneHeight;
-		CATAPULT_LOG(debug) << "=========================> INITIAL EXPIRY HEIGHT = " << m_initialExpiryHeight;
-		CATAPULT_LOG(debug) << "=========================> CURRENT PRUNE HEIGHT  = " << minPruneHeight;
-		CATAPULT_LOG(debug) << "=========================> CURRENT EXPIRY HEIGHT = " << minExpiryHeight;
-
-		if (!newValues.count(m_initialPruneHeight)) {
-			CATAPULT_LOG(debug) << "=========================> REMOVING EXPIRY HEIGHT = " << m_initialPruneHeight;
+		if (!newValues.count(m_initialPruneHeight))
 			m_cache.removeExpiryHeight(owner, m_initialPruneHeight);
-		}
 
-		if (!newValues.count(m_initialExpiryHeight)) {
-			CATAPULT_LOG(debug) << "=========================> REMOVING EXPIRY HEIGHT = " << m_initialExpiryHeight;
+		if (!newValues.count(m_initialExpiryHeight))
 			m_cache.removeExpiryHeight(owner, m_initialExpiryHeight);
-		}
 
-		if (!initialValues.count(minPruneHeight)) {
-			CATAPULT_LOG(debug) << "=========================> ADDING EXPIRY HEIGHT = " << minPruneHeight;
+		if (!initialValues.count(minPruneHeight))
 			m_cache.addExpiryHeight(owner, minPruneHeight);
-		}
 
-		if (!initialValues.count(minExpiryHeight)) {
-			CATAPULT_LOG(debug) << "=========================> ADDING EXPIRY HEIGHT = " << minExpiryHeight;
+		if (!initialValues.count(minExpiryHeight))
 			m_cache.addExpiryHeight(owner, minExpiryHeight);
-		}
 
-		if (m_entry.empty()) {
-			CATAPULT_LOG(debug) << "=========================> removing ENTRY = " << owner;
+		if (m_entry.empty())
 			m_cache.remove(owner);
-		} else {
-			CATAPULT_LOG(debug) << "=========================> not empty ENTRY = " << owner;
-		}
 	}
 
 	void CreditAccount(const Key& owner, const MosaicId& mosaicId, const Amount& amount, const ObserverContext &context) {
