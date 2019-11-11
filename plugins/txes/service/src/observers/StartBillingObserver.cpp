@@ -14,7 +14,7 @@ namespace catapult { namespace observers {
     using Notification = model::BalanceCreditNotification<1>;
 
     DECLARE_OBSERVER(StartBilling, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-        return MAKE_OBSERVER(StartBilling, Notification, [pConfigHolder](const Notification& notification, const ObserverContext& context) {
+        return MAKE_OBSERVER(StartBilling, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
             auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
             auto storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
 
@@ -32,7 +32,7 @@ namespace catapult { namespace observers {
 
             if (NotifyMode::Commit == context.Mode) {
                 if (driveEntry.state() == state::DriveState::Pending && billingBalance >= driveEntry.billingPrice()) {
-                    driveEntry.setState(state::DriveState::InProgress);
+                    SetDriveState(driveEntry, context, state::DriveState::InProgress);
                     state::BillingPeriodDescription period;
                     period.Start = context.Height;
                     period.End = Height(context.Height.unwrap() + driveEntry.billingPeriod().unwrap());
@@ -41,7 +41,7 @@ namespace catapult { namespace observers {
                 }
             } else {
                 if (driveEntry.state() == state::DriveState::InProgress && billingBalance < driveEntry.billingPrice()) {
-                    driveEntry.setState(state::DriveState::Pending);
+                    SetDriveState(driveEntry, context, state::DriveState::Pending);
 
                     driveCache.unmarkDrive(driveEntry.key(), driveEntry.billingHistory().back().End);
                     if (driveEntry.billingHistory().back().Start != context.Height)

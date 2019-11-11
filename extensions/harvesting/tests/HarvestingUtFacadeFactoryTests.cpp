@@ -616,7 +616,7 @@ namespace catapult { namespace harvesting {
 				model::Receipt receipt{};
 				receipt.Size = sizeof(model::Receipt);
 				receipt.Type = static_cast<model::ReceiptType>(2 * (i + 1));
-				statementBuilder.addReceipt(receipt);
+				statementBuilder.addTransactionReceipt(receipt);
 			}
 
 			return model::CalculateMerkleHash(*statementBuilder.build());

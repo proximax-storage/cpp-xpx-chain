@@ -69,7 +69,7 @@ namespace catapult { namespace observers {
 
 		// Act:
 		builder.setSource({ 12, 11 });
-		builder.addReceipt(receipt);
+		builder.addTransactionReceipt(receipt);
 
 		// Assert: no exception
 	}
@@ -115,7 +115,7 @@ namespace catapult { namespace observers {
 
 		// Act:
 		builder.setSource({ 12, 11 });
-		builder.addReceipt(receipt);
+		builder.addTransactionReceipt(receipt);
 		auto pStatement = blockStatementBuilder.build();
 
 		// Assert:

@@ -20,7 +20,6 @@
 
 #include "ZeroMqEntityPublisher.h"
 #include "PublisherUtils.h"
-#include "catapult/model/Address.h"
 #include "catapult/model/Cosignature.h"
 #include "catapult/model/Elements.h"
 #include "catapult/model/NotificationSubscriber.h"
@@ -154,6 +153,31 @@ namespace catapult { namespace zeromq {
 		multipart.addmem(static_cast<const void*>(&blockElement.Block), sizeof(model::BlockHeader));
 		multipart.addmem(static_cast<const void*>(&blockElement.EntityHash), Hash256_Size);
 		multipart.addmem(static_cast<const void*>(&blockElement.GenerationHash), Hash256_Size);
+
+		if (!!blockElement.OptionalStatement) {
+//			io::SizeCalculatingOutputStream calculator;
+//			WriteBlockStatement(calculator, *blockElement.OptionalStatement);
+//
+//			io::StringOutputStream output(calculator.size());
+//			WriteBlockStatement(calculator, *blockElement.OptionalStatement);
+//			const auto& data = output.str();
+//			multipart.addmem(static_cast<const void*>(data.c_str()), data.size());
+
+			const auto& statements = blockElement.OptionalStatement->PublicKeyStatements;
+			size_t count = statements.size();
+			multipart.addmem(static_cast<const void*>(&count), sizeof(size_t));
+			for (const auto& pair : statements) {
+				multipart.addmem(static_cast<const void*>(&pair.first), sizeof(model::ReceiptSource));
+				const auto& statement = pair.second;
+				count = statement.size();
+				multipart.addmem(static_cast<const void*>(&count), sizeof(size_t));
+				for (auto i = 0u; i < statement.size(); ++i) {
+					const auto& receipt = statement.receiptAt(i);
+					multipart.addmem(static_cast<const void*>(&receipt), sizeof(receipt.Size));
+				}
+			}
+		}
+
 		pMessageGroup->add(std::move(multipart));
 		m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
 	}

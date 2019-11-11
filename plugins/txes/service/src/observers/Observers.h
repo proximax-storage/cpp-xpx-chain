@@ -8,8 +8,12 @@
 #include "catapult/observers/ObserverTypes.h"
 #include "src/config/ServiceConfiguration.h"
 #include "src/model/ServiceNotifications.h"
+#include "src/model/ServiceReceiptType.h"
+#include "src/state/DriveEntry.h"
 
 namespace catapult { namespace observers {
+
+	void SetDriveState(state::DriveEntry& entry, ObserverContext& context, state::DriveState driveState);
 
 	/// Observes changes triggered by prepare drive notifications.
 	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)();

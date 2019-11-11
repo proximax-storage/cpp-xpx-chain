@@ -151,7 +151,7 @@ namespace catapult { namespace test {
 			model::Receipt receipt{};
 			receipt.Size = sizeof(model::Receipt);
 			receipt.Type = static_cast<model::ReceiptType>(2 * breadcrumbId);
-			statementBuilder.addReceipt(receipt);
+			statementBuilder.addTransactionReceipt(receipt);
 		}
 
 	private:

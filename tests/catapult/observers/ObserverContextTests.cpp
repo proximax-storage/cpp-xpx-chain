@@ -85,7 +85,7 @@ namespace catapult { namespace observers {
 			model::Receipt receipt;
 			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&receipt), sizeof(model::Receipt) });
 			receipt.Size = sizeof(model::Receipt);
-			statementBuilder.addReceipt(receipt);
+			statementBuilder.addTransactionReceipt(receipt);
 		}
 
 		void AssertContext(

@@ -31,11 +31,12 @@ namespace catapult { namespace io {
 			return reinterpret_cast<Pointer>(&data);
 		}
 
-		void ReadStatement(InputStream& inputStream, std::map<model::ReceiptSource, model::TransactionStatement>& statements) {
+		template<typename TStatement>
+		void ReadStatement(InputStream& inputStream, std::map<model::ReceiptSource, TStatement>& statements) {
 			model::ReceiptSource key;
 			inputStream.read({ ToBytePointer(key), sizeof(model::ReceiptSource) });
 
-			model::TransactionStatement statement(key);
+			TStatement statement(key);
 			auto numReceipts = Read32(inputStream);
 
 			constexpr auto Header_Size = sizeof(uint32_t);
@@ -82,10 +83,12 @@ namespace catapult { namespace io {
 		ReadStatements(inputStream, blockStatement.TransactionStatements);
 		ReadStatements(inputStream, blockStatement.AddressResolutionStatements);
 		ReadStatements(inputStream, blockStatement.MosaicResolutionStatements);
+		ReadStatements(inputStream, blockStatement.PublicKeyStatements);
 	}
 
 	namespace {
-		void WriteStatement(OutputStream& outputStream, const model::ReceiptSource& key, const model::TransactionStatement& statement) {
+		template<typename TStatement>
+		void WriteStatement(OutputStream& outputStream, const model::ReceiptSource& key, const TStatement& statement) {
 			outputStream.write({ ToBytePointer(key), sizeof(model::ReceiptSource) });
 
 			Write32(outputStream, utils::checked_cast<size_t, uint32_t>(statement.size()));
@@ -118,5 +121,6 @@ namespace catapult { namespace io {
 		WriteStatements(outputStream, blockStatement.TransactionStatements);
 		WriteStatements(outputStream, blockStatement.AddressResolutionStatements);
 		WriteStatements(outputStream, blockStatement.MosaicResolutionStatements);
+		WriteStatements(outputStream, blockStatement.PublicKeyStatements);
 	}
 }}
