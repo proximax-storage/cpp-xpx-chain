@@ -29,7 +29,7 @@
 
 namespace catapult { namespace config {
 
-#define TEST_CLASS NetworkConfigurationTests
+#define TEST_CLASS BlockchainConfigurationTests
 
 	// region BlockchainConfiguration file io
 
@@ -88,6 +88,8 @@ namespace catapult { namespace config {
 
 			EXPECT_EQ(360u, config.BlockPruneInterval);
 			EXPECT_EQ(200'000u, config.MaxTransactionsPerBlock);
+
+			EXPECT_EQ(true, config.EnableUnconfirmedTransactionMinFeeValidation);
 
 			EXPECT_FALSE(config.Plugins.empty());
 		}

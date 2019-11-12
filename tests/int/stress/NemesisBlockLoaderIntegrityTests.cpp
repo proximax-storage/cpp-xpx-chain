@@ -116,7 +116,7 @@ namespace catapult { namespace extensions {
 		// Act:
 		RunNemesisBlockTest([](const auto& stateRef) {
 			// Assert:
-			EXPECT_EQ(Num_Nemesis_Transactions, stateRef.State.NumTotalTransactions);
+			EXPECT_EQ(Num_Nemesis_Transactions, stateRef.State.NumTotalTransactions.load());
 		});
 	}
 

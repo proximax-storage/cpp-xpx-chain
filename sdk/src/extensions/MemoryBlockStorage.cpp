@@ -61,20 +61,20 @@ namespace catapult { namespace extensions {
 			destElement.MerkleComponentHash = srcElement.MerkleComponentHash;
 		}
 
-		model::UniqueEntityPtr<model::Block> CopyBlock(const model::Block& block) {
-			auto pBlock = utils::MakeUniqueWithSize<model::Block>(block.Size);
+		std::shared_ptr<model::Block> CopyBlock(const model::Block& block) {
+			auto pBlock = utils::MakeSharedWithSize<model::Block>(block.Size);
 			std::memcpy(static_cast<void*>(pBlock.get()), &block, block.Size);
 			return pBlock;
 		}
 
-		std::shared_ptr<model::BlockElement> Copy(const model::Block& block, const model::BlockElement& blockElement) {
-			auto pElement = std::make_shared<model::BlockElement>(block);
+		std::shared_ptr<model::BlockElement> Copy(std::shared_ptr<model::Block> pBlock, const model::BlockElement& blockElement) {
+			auto pElement = std::make_shared<model::BlockElement>(pBlock);
 			pElement->EntityHash = blockElement.EntityHash;
 			pElement->GenerationHash = blockElement.GenerationHash;
 			pElement->SubCacheMerkleRoots = blockElement.SubCacheMerkleRoots;
 
 			auto i = 0u;
-			for (const auto& transaction : block.Transactions()) {
+			for (const auto& transaction : pBlock->Transactions()) {
 				pElement->Transactions.emplace_back(model::TransactionElement(transaction));
 				CopyHashes(pElement->Transactions.back(), blockElement.Transactions[i]);
 				++i;
@@ -101,7 +101,7 @@ namespace catapult { namespace extensions {
 		m_blocks[height] = CopyBlock(blockElement.Block);
 
 		// simulate file storage, which stores elements and statements separately
-		m_blockElements[height] = Copy(*m_blocks[height], blockElement);
+		m_blockElements[height] = Copy(CopyBlock(blockElement.Block), blockElement);
 		m_blockStatements[height] = m_blockElements[height]->OptionalStatement;
 		m_blockElements[height]->OptionalStatement.reset();
 
@@ -131,7 +131,7 @@ namespace catapult { namespace extensions {
 		if (m_blocks.end() == iter)
 			ThrowInvalidHeight(height);
 
-		return iter->second;
+		return CopyBlock(*iter->second);
 	}
 
 	std::shared_ptr<const model::BlockElement> MemoryBlockStorage::loadBlockElement(Height height) const {
@@ -140,7 +140,10 @@ namespace catapult { namespace extensions {
 		if (m_blockElements.end() == iter)
 			ThrowInvalidHeight(height);
 
-		return iter->second;
+		auto& blockElement = *iter->second;
+		auto pBlock = CopyBlock(blockElement.Block);
+
+		return Copy(pBlock, blockElement);
 	}
 
 	namespace {
@@ -164,7 +167,10 @@ namespace catapult { namespace extensions {
 
 	std::pair<std::vector<uint8_t>, bool> MemoryBlockStorage::loadBlockStatementData(Height height) const {
 		requireHeight(height, "block statement data");
-		auto pBlockStatement = m_blockStatements.find(height)->second; // throw if not found
+		auto iter = m_blockStatements.find(height);
+		if (m_blockStatements.end() == iter)
+			CATAPULT_THROW_INVALID_ARGUMENT_1("block statement not found at height", height);
+		auto pBlockStatement = iter->second;
 		if (!pBlockStatement)
 			return std::make_pair(std::vector<uint8_t>(), false);
 

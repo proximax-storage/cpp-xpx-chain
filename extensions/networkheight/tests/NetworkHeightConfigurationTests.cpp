@@ -41,6 +41,14 @@ namespace catapult { namespace networkheight {
 				};
 			}
 
+			static bool SupportsUnknownProperties() {
+				return false;
+			}
+
+			static bool IsPropertyOptional(const std::string&) {
+				return false;
+			}
+
 			static bool IsSectionOptional(const std::string&) {
 				return false;
 			}

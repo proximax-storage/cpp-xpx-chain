@@ -81,4 +81,7 @@ namespace catapult { namespace config {
 
 	/// Extracts a node representing the local node from \a config.
 	ionet::Node ToLocalNode(const BlockchainConfiguration& config);
+
+	/// Gets min transaction fee multiplier.
+	BlockFeeMultiplier GetMinFeeMultiplier(const BlockchainConfiguration& config);
 }}

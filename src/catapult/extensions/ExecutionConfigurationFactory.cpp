@@ -28,6 +28,7 @@ namespace catapult { namespace extensions {
 		chain::ExecutionConfiguration executionConfig;
 		executionConfig.NetworkIdentifier = pluginManager.immutableConfig().NetworkIdentifier;
 		executionConfig.NetworkInfoSupplier = [&pluginManager](const Height& height) { return pluginManager.config(height).Info; };
+		executionConfig.MinFeeMultiplierSupplier = [&pluginManager](const Height& height) { return config::GetMinFeeMultiplier(pluginManager.configHolder()->Config(height)); };
 		executionConfig.pObserver = pluginManager.createObserver();
 		executionConfig.pValidator = pluginManager.createStatefulValidator();
 		executionConfig.pNotificationPublisher = pluginManager.createNotificationPublisher();

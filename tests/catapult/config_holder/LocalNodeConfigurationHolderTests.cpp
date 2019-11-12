@@ -45,6 +45,7 @@ namespace catapult { namespace config {
 			"\n"
 			"blockPruneInterval = 360\n"
 			"maxTransactionsPerBlock = 200'000\n\n"
+			"enableUnconfirmedTransactionMinFeeValidation = true\n\n"
 			"[plugin:catapult.plugins.config]\n"
 			"\n"
 			"maxBlockChainConfigSize = 1MB\n"
@@ -382,31 +383,25 @@ namespace catapult { namespace config {
 	// region thread safety
 
 	TEST(TEST_CLASS, ConfigHolderIsThreadSafe) {
-		/// This test contains data race.
-		///
-		/// When thread1 gets *reference* to config on height H, and after this thread2
-		/// sets new config on height N (same height), reference acquired by
-		/// thread1 is invalidated, because object is destroyed.
-
 		// Arrange:
 		auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
 		BlockchainConfigurationHolder testee(&cache);
 		uint64_t iterationCount = 1000;
-		test::MutableBlockchainConfiguration mutableConfig;
 
 		// Act:
 		boost::thread_group threads;
-		threads.create_thread([&testee, iterationCount, &mutableConfig] {
-			for (uint64_t i = 0; i < iterationCount; ++i) {
+		threads.create_thread([&testee, iterationCount] {
+			test::MutableBlockchainConfiguration mutableConfig;
+			for (uint64_t i = 1; i <= iterationCount; ++i) {
 				mutableConfig.Network.ImportanceGrouping = i;
-				testee.SetConfig(Height { 777 }, mutableConfig.ToConst());
+				testee.SetConfig(Height { i }, mutableConfig.ToConst());
 			}
 		});
 
 		threads.create_thread([&testee, iterationCount] {
 			for (;;) {
-				auto& config = testee.Config(Height { 777 });
-				if (config.Network.ImportanceGrouping == (iterationCount - 1))
+				auto& config = testee.Config(Height { iterationCount });
+				if (config.Network.ImportanceGrouping == iterationCount)
 					break;
 			}
 		});

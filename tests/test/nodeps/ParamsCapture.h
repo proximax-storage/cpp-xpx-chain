@@ -33,7 +33,14 @@ namespace catapult { namespace test {
 	public:
 		/// Gets the captured parameters.
 		const std::vector<TParams>& params() const {
+			std::lock_guard<std::mutex> lock(m_mutex);
 			return m_params;
+		}
+
+		/// Gets the number of captured parameters.
+		size_t size() const {
+			std::lock_guard<std::mutex> lock(m_mutex);
+			return m_params.size();
 		}
 
 	public:
@@ -52,7 +59,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
-		std::mutex m_mutex;
+		mutable std::mutex m_mutex;
 		std::vector<TParams> m_params;
 	};
 }}

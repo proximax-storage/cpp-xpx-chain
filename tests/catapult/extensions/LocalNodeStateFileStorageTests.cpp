@@ -129,7 +129,7 @@ namespace catapult { namespace extensions {
 			// - check supplemental data
 			EXPECT_EQ(model::ChainScore(0x1234567890ABCDEF, 0xFEDCBA0987654321), stateRef.Score.get());
 			EXPECT_EQ(model::ImportanceHeight(12345), stateRef.State.LastRecalculationHeight);
-			EXPECT_EQ(7654321u, stateRef.State.NumTotalTransactions);
+			EXPECT_EQ(7654321u, stateRef.State.NumTotalTransactions.load());
 			EXPECT_EQ(Height(54321), stateRef.Cache.createView().height());
 		}
 

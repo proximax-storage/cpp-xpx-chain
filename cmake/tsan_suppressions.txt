@@ -2,12 +2,6 @@
 
 # ignore these libraries
 race:zmq
-race:cppzmq
-race:rocksdb
-
-called_from_lib:libzmq.so
-called_from_lib:libcppzmq.so
-called_from_lib:librocksdb.so
 
 # ignore these functions
 race:catapult::test::TryWaitFor

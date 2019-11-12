@@ -68,7 +68,7 @@ namespace catapult { namespace mocks {
 		std::atomic<validators::ValidationResult> m_result;
 		bool m_triggerOnSpecificType;
 		model::NotificationType m_triggerType;
-		mutable std::vector<model::NotificationType> m_notificationTypes;
+		mutable test::AtomicVector<model::NotificationType> m_notificationTypes;
 	};
 
 	/// Mock stateless notification validator that captures information about observed notifications.
