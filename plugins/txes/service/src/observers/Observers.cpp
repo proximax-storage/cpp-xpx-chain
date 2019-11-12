@@ -9,7 +9,8 @@
 namespace catapult { namespace observers {
 
 	void SetDriveState(state::DriveEntry& entry, ObserverContext& context, state::DriveState driveState) {
-		context.StatementBuilder().addPublicKeyReceipt(model::DriveStateReceipt(model::Receipt_Type_Drive_State, entry.key(), utils::to_underlying_type(driveState)));
+		if (NotifyMode::Commit == context.Mode)
+			context.StatementBuilder().addPublicKeyReceipt(model::DriveStateReceipt(model::Receipt_Type_Drive_State, entry.key(), utils::to_underlying_type(driveState)));
 		entry.setState(driveState);
 	}
 }}
