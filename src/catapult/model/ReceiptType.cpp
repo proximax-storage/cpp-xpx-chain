@@ -43,6 +43,7 @@ namespace catapult { namespace model {
 			CASE_WELL_KNOWN_RECEIPT_TYPE(Harvest_Fee);
 			CASE_WELL_KNOWN_RECEIPT_TYPE(Inflation);
 			CASE_WELL_KNOWN_RECEIPT_TYPE(Transaction_Group);
+			CASE_WELL_KNOWN_RECEIPT_TYPE(Public_Key_Group);
 			CASE_WELL_KNOWN_RECEIPT_TYPE(Address_Alias_Resolution);
 			CASE_WELL_KNOWN_RECEIPT_TYPE(Mosaic_Alias_Resolution);
 
@@ -51,6 +52,7 @@ namespace catapult { namespace model {
 			#include "plugins/txes/lock_secret/src/model/SecretLockReceiptType.h"
 			#include "plugins/txes/mosaic/src/model/MosaicReceiptType.h"
 			#include "plugins/txes/namespace/src/model/NamespaceReceiptType.h"
+			#include "plugins/txes/service/src/model/ServiceReceiptType.h"
 			}
 
 			return nullptr;

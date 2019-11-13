@@ -40,8 +40,11 @@ namespace catapult { namespace model {
 		void popSource();
 
 	public:
-		/// Adds \a receipt to this builder.
-		void addReceipt(const Receipt& receipt);
+		/// Adds a transaction \a receipt to this builder.
+		void addTransactionReceipt(const Receipt& receipt);
+
+		/// Adds a public key \a receipt to this builder.
+		void addPublicKeyReceipt(const Receipt& receipt);
 
 		/// Adds a resolution entry for resolving \a unresolved value to \a resolved value.
 		void addResolution(const UnresolvedAddress& unresolved, const Address& resolved);

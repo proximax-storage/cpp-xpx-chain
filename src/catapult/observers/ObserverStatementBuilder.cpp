@@ -40,11 +40,18 @@ namespace catapult { namespace observers {
 		m_pStatementBuilder->setSource(source);
 	}
 
-	void ObserverStatementBuilder::addReceipt(const model::Receipt& receipt) {
+	void ObserverStatementBuilder::addTransactionReceipt(const model::Receipt& receipt) {
 		if (!m_pStatementBuilder)
 			return;
 
-		m_pStatementBuilder->addReceipt(receipt);
+		m_pStatementBuilder->addTransactionReceipt(receipt);
+	}
+
+	void ObserverStatementBuilder::addPublicKeyReceipt(const model::Receipt& receipt) {
+		if (!m_pStatementBuilder)
+			return;
+
+		m_pStatementBuilder->addPublicKeyReceipt(receipt);
 	}
 
 	model::ResolverContext Bind(const model::ResolverContext& resolverContext, model::BlockStatementBuilder& statementBuilder) {

@@ -7,16 +7,14 @@
 #include "Observers.h"
 #include "src/cache/DriveCache.h"
 #include "catapult/observers/ObserverUtils.h"
-#include "src/utils/ServiceUtils.h"
 #include "CommonDrive.h"
-#include <cmath>
 
 namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 
 	DECLARE_OBSERVER(EndBilling, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(EndBilling, Notification, [pConfigHolder](const Notification&, const ObserverContext& context) {
+		return MAKE_OBSERVER(EndBilling, Notification, [pConfigHolder](const Notification&, ObserverContext& context) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
 
@@ -27,9 +25,9 @@ namespace catapult { namespace observers {
 			    DrivePayment(driveEntry, context, storageMosaicId);
 
                 if (NotifyMode::Commit == context.Mode)
-                    driveEntry.setState(state::DriveState::Pending);
+                    SetDriveState(driveEntry, context, state::DriveState::Pending);
                 else
-                    driveEntry.setState(state::DriveState::InProgress);
+                    SetDriveState(driveEntry, context, state::DriveState::InProgress);
 			});
 		});
 	};

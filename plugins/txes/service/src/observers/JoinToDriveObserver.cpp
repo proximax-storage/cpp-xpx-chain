@@ -12,7 +12,7 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(JoinToDrive, model::JoinToDriveNotification<1>, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(JoinToDrive, model::JoinToDriveNotification<1>, [](const auto& notification, ObserverContext& context) {
 		auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		auto driveIter = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIter.get();
@@ -29,11 +29,11 @@ namespace catapult { namespace observers {
 			driveEntry.replicators().emplace(notification.Replicator, info);
 
 			if (driveEntry.replicators().size() >= driveEntry.minReplicators() && driveEntry.billingHistory().empty())
-                driveEntry.setState(state::DriveState::Pending);
+                SetDriveState(driveEntry, context, state::DriveState::Pending);
 		} else {
 			driveEntry.replicators().erase(notification.Replicator);
             if (driveEntry.replicators().size() < driveEntry.minReplicators() && driveEntry.billingHistory().empty())
-                driveEntry.setState(state::DriveState::NotStarted);
+                SetDriveState(driveEntry, context, state::DriveState::NotStarted);
 		}
 
         auto& multisigCache = context.Cache.sub<cache::MultisigCache>();

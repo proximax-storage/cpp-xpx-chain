@@ -19,37 +19,15 @@
 **/
 
 #pragma once
-#include "Receipt.h"
-#include "ReceiptSource.h"
-#include "EntityPtr.h"
+#ifndef CUSTOM_RECEIPT_TYPE_DEFINITION
+#include "catapult/model/ReceiptType.h"
 
 namespace catapult { namespace model {
 
-	/// Collection of receipts scoped to a transaction.
-	class TransactionStatement {
-	public:
-		/// Creates a statement around \a source.
-		explicit TransactionStatement(const ReceiptSource& source);
+#endif
 
-	public:
-		/// Gets statement source.
-		const ReceiptSource& source() const;
+	DEFINE_RECEIPT_TYPE(Drive, Drive, Drive_State, 1);
 
-		/// Gets the number of attached receipts.
-		size_t size() const;
-
-		/// Gets the receipt at \a index.
-		const Receipt& receiptAt(size_t index) const;
-
-		/// Calculates a unique hash for this statement.
-		Hash256 hash() const;
-
-	public:
-		/// Adds \a receipt to this transaction statement.
-		void addReceipt(const Receipt& receipt);
-
-	private:
-		ReceiptSource m_source;
-		std::vector<UniqueEntityPtr<Receipt>> m_receipts;
-	};
+#ifndef CUSTOM_RECEIPT_TYPE_DEFINITION
 }}
+#endif

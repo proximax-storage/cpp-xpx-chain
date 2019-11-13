@@ -14,7 +14,7 @@ namespace catapult { namespace observers {
     using Notification = model::EndDriveNotification<1>;
 
     DECLARE_OBSERVER(EndDrive, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-        return MAKE_OBSERVER(EndDrive, Notification, [pConfigHolder](const Notification& notification, const ObserverContext& context) {
+        return MAKE_OBSERVER(EndDrive, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
             const auto& config = pConfigHolder->Config(context.Height).Immutable;
 
             auto& driveCache = context.Cache.sub<cache::DriveCache>();
@@ -44,7 +44,7 @@ namespace catapult { namespace observers {
                         info.Actions.emplace_back(state::DriveAction{ state::DriveActionType::Remove, context.Height });
                 }
 
-                driveEntry.setState(state::DriveState::Finished);
+                SetDriveState(driveEntry, context, state::DriveState::Finished);
             } else {
                 for (auto& filePair : driveEntry.files()) {
                     state::FileInfo& info = filePair.second;
@@ -62,10 +62,10 @@ namespace catapult { namespace observers {
                 DrivePayment(driveEntry, context, config.StorageMosaicId);
                 auto expectedEnd = driveEntry.billingHistory().back().Start + Height(driveEntry.billingPeriod().unwrap());
                 if (expectedEnd == driveEntry.billingHistory().back().End)
-                    driveEntry.setState(state::DriveState::Pending);
+                    SetDriveState(driveEntry, context, state::DriveState::Pending);
                 else {
                     driveEntry.billingHistory().back().End = expectedEnd;
-                    driveEntry.setState(state::DriveState::InProgress);
+                    SetDriveState(driveEntry, context, state::DriveState::InProgress);
                 }
             }
         })

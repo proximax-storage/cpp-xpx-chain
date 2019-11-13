@@ -48,6 +48,6 @@ namespace catapult { namespace observers {
 		accountState.Balances.credit(lockInfo.MosaicId, lockInfo.Amount, context.Height);
 
 		model::BalanceChangeReceipt receipt(TTraits::Receipt_Type, accountState.PublicKey, lockInfo.MosaicId, lockInfo.Amount);
-		context.StatementBuilder().addReceipt(receipt);
+		context.StatementBuilder().addTransactionReceipt(receipt);
 	}
 }}

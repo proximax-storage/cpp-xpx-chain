@@ -9,7 +9,9 @@
 #include "JoinToDriveMapper.h"
 #include "FilesDepositMapper.h"
 #include "mongo/src/MongoPluginManager.h"
+#include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoDriveCacheStorage.h"
+#include "plugins/txes/service/src/model/ServiceReceiptType.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
@@ -23,4 +25,6 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
 			manager.mongoContext(),
 			manager.configHolder()));
+
+	manager.addReceiptSupport(catapult::mongo::CreateDriveStateReceiptMongoPlugin(catapult::model::Receipt_Type_Drive_State));
 }

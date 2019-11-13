@@ -9,11 +9,11 @@
 
 namespace catapult { namespace observers {
 
-	DEFINE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>, [](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>, [](const auto& notification, ObserverContext& context) {
 		auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		if (NotifyMode::Commit == context.Mode) {
 			state::DriveEntry driveEntry(notification.DriveKey);
-            driveEntry.setState(state::DriveState::NotStarted);
+            SetDriveState(driveEntry, context, state::DriveState::NotStarted);
 			driveEntry.setOwner(notification.Owner);
 			driveEntry.setDuration(notification.Duration);
 			driveEntry.setBillingPeriod(notification.BillingPeriod);

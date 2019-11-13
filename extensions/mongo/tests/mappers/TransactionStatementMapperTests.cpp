@@ -19,7 +19,7 @@
 **/
 
 #include "mongo/src/mappers/TransactionStatementMapper.h"
-#include "catapult/model/TransactionStatement.h"
+#include "catapult/model/Statement.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoReceiptTestUtils.h"
 #include "mongo/tests/test/mocks/MockReceiptMapper.h"
