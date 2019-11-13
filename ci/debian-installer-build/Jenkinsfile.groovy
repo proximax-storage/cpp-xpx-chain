@@ -49,7 +49,7 @@ pipeline {
                 script {
                     def newImage = docker.build("${IMAGE}")
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}") {
-                        newImage.push("${env.GIT_BRANCH}")
+                        newImage.push("latest")
                         // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
                     }
                 }
@@ -57,4 +57,5 @@ pipeline {
 
         }
 
+        }
     }
