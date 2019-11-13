@@ -11,7 +11,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
-        IMAGE = "proximax-catapult-server"
+        IMAGE = "proximax-catapult-server-toolless"
         BUILD_IMAGE = "catapult-server-build-image:1.0"
     }
 
@@ -33,40 +33,28 @@ pipeline {
                                 make -j4
                                 cd ..
                                 ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
-                                cd ..
-                                tar cJfv sirius-installer.tar.xz cpp*
-                              
+                                rm -rf tools/*
                             """
                         }
-//                        echo 'Leaving Container'
-//
-//                        echo 'Compressing Artifacts'
-//                        // Creates an XZ compressed archive
-//                        sh "tar cJfv sirius-installer.tar.xz cpp* "
                     }
                 }
-
-
             }
         }
 
-        stage('Deploy to Testnet') {
+
+        stage('Build and Publish Release Image') {
 
             steps {
-                echo 'Deploying to S3 temporary bucket'
-
-                echo 'Managing S3'
-                withAWS(credentials: 'jenkins-ecr', region: 'ap-southeast-2') {
-                    echo 'Deleting old files'
-                    s3Delete bucket: 'debian-installer-sirius', path: './'
-
-                    echo 'Uploading new files'
-                    s3Upload bucket: 'debian-installer-sirius', acl: 'PublicRead', file: 'sirius-installer.tar.xz', sseAlgorithm: 'AES256'
-//                    s3Upload bucket: 'debian-installer-sirius', acl: 'PublicRead', file: '_build/', sseAlgorithm: 'AES256'
+                echo 'Build and Publish Image'
+                script {
+                    def newImage = docker.build("${IMAGE}")
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}") {
+                        newImage.push("${env.GIT_BRANCH}")
+                        // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                    }
                 }
-
-
             }
+
         }
+
     }
-}
