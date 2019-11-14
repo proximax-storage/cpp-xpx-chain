@@ -5,6 +5,7 @@
 **/
 
 #include "CommonDrive.h"
+#include "plugins/txes/multisig/src/cache/MultisigCache.h"
 #include <cmath>
 
 namespace catapult { namespace observers {
@@ -77,4 +78,21 @@ namespace catapult { namespace observers {
         }
     }
 
+	void SetDriveState(state::DriveEntry& entry, observers::ObserverContext& context, state::DriveState driveState) {
+		if (entry.state() == driveState)
+			return;
+
+		if (observers::NotifyMode::Commit == context.Mode)
+			context.StatementBuilder().addPublicKeyReceipt(model::DriveStateReceipt(model::Receipt_Type_Drive_State, entry.key(), utils::to_underlying_type(driveState)));
+		entry.setState(driveState);
+	}
+
+	void UpdateDriveMultisigSettings(state::DriveEntry& driveEntry, observers::ObserverContext& context) {
+		auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
+		auto multisigIter = multisigCache.find(driveEntry.key());
+		auto& multisigEntry = multisigIter.get();
+		float cosignatoryCount = driveEntry.replicators().size();
+		multisigEntry.setMinApproval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
+		multisigEntry.setMinRemoval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
+	}
 }}

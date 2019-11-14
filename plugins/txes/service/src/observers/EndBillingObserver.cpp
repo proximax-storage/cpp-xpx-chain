@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "Observers.h"
-#include "src/cache/DriveCache.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "CommonDrive.h"
 
@@ -18,7 +16,7 @@ namespace catapult { namespace observers {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
 
-			driveCache.processMarkedDrives(context.Height, [&storageMosaicId, &context](state::DriveEntry& driveEntry) {
+			driveCache.processEndingDrives(context.Height, [&storageMosaicId, &context](state::DriveEntry& driveEntry) {
 				if (driveEntry.state() != state::DriveState::InProgress)
 					return;
 

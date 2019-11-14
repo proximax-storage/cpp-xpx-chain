@@ -4,10 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "Observers.h"
-#include "catapult/cache_core/AccountStateCache.h"
-#include "src/cache/DriveCache.h"
-#include "src/utils/ServiceUtils.h"
+#include "CommonDrive.h"
 
 namespace catapult { namespace observers {
 
@@ -37,13 +34,13 @@ namespace catapult { namespace observers {
                     period.Start = context.Height;
                     period.End = Height(context.Height.unwrap() + driveEntry.billingPeriod().unwrap());
                     driveEntry.billingHistory().emplace_back(period);
-                    driveCache.markDrive(driveEntry.key(), driveEntry.billingHistory().back().End);
+                    driveCache.setDriveEnd(driveEntry.key(), driveEntry.billingHistory().back().End);
                 }
             } else {
                 if (driveEntry.state() == state::DriveState::InProgress && billingBalance < driveEntry.billingPrice()) {
                     SetDriveState(driveEntry, context, state::DriveState::Pending);
 
-                    driveCache.unmarkDrive(driveEntry.key(), driveEntry.billingHistory().back().End);
+                    driveCache.unsetDriveEnd(driveEntry.key(), driveEntry.billingHistory().back().End);
                     if (driveEntry.billingHistory().back().Start != context.Height)
                         CATAPULT_THROW_RUNTIME_ERROR("Got unexpected state during drive billing rollback");
 

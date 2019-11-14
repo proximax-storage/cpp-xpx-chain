@@ -7,7 +7,7 @@
 #pragma once
 
 #include "Observers.h"
-#include "src/state/DriveEntry.h"
+#include "src/cache/DriveCache.h"
 #include "src/utils/ServiceUtils.h"
 #include "catapult/cache_core/AccountStateCache.h"
 
@@ -16,5 +16,9 @@ namespace catapult { namespace observers {
     void Transfer(state::AccountState& debitState, state::AccountState& creditState, MosaicId mosaicId, Amount amount, Height height);
 
     void DrivePayment(state::DriveEntry& driveEntry, const ObserverContext& context, const MosaicId& storageMosaicId);
+
+	void SetDriveState(state::DriveEntry& entry, ObserverContext& context, state::DriveState driveState);
+
+	void UpdateDriveMultisigSettings(state::DriveEntry& entry, ObserverContext& context);
 
 }}

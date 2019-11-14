@@ -24,7 +24,8 @@ namespace catapult { namespace validators {
 		static std::unordered_set<model::EntityType> allowedTransactions({
 		   model::Entity_Type_DeleteReward,
 		   model::Entity_Type_EndDrive,
-		   model::Entity_Type_Verification,
+		   model::Entity_Type_Start_Drive_Verification,
+		   model::Entity_Type_End_Drive_Verification,
 		   model::Entity_Type_Exchange,
 		});
 

@@ -46,12 +46,12 @@ namespace catapult { namespace validators {
 		for (auto i = 0u; i < notification.RemoveActionsCount; ++i, ++removeActionsPtr) {
 			hashes.insert(removeActionsPtr->FileHash);
             if (!driveEntry.files().count(removeActionsPtr->FileHash)) {
-                return Failure_Service_File_Is_Not_Exist;
+                return Failure_Service_File_Doesnt_Exist;
             } else {
                 const auto& file = driveEntry.files().at(removeActionsPtr->FileHash);
 
                 if (!file.isActive())
-                    return Failure_Service_File_Is_Not_Exist;
+                    return Failure_Service_File_Doesnt_Exist;
             }
 		}
 

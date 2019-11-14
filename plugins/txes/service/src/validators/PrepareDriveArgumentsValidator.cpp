@@ -21,7 +21,7 @@ namespace catapult { namespace validators {
 				return Failure_Service_Drive_Invalid_Billing_Period;
 
 			if (notification.Duration.unwrap() % notification.BillingPeriod.unwrap() != 0)
-				return Failure_Service_Drive_Duration_Is_Not_Divide_On_BillingPeriod;
+				return Failure_Service_Drive_Duration_Is_Not_Multiple_Of_BillingPeriod;
 
 			if (notification.DriveSize <= 0)
 				return Failure_Service_Drive_Invalid_Size;
@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 				return Failure_Service_Drive_Invalid_Min_Replicators;
 
 			if (notification.MinReplicators > notification.Replicas)
-				return Failure_Service_Min_Replicators_More_Than_Relicas;
+				return Failure_Service_Min_Replicators_More_Than_Replicas;
 
 			return ValidationResult::Success;
 		});

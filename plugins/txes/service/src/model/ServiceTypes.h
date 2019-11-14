@@ -5,29 +5,38 @@
 **/
 
 #pragma once
-
-#include <catapult/types.h>
+#include "catapult/types.h"
 
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-    /// Binary layout for a file.
+    /// Binary layout of a file.
     struct File {
     public:
         /// Hash of file.
         Hash256 FileHash;
     };
 
-    /// Binary layout for a remove action.
+    /// Binary layout of a remove action.
     struct RemoveAction : public File {
     };
 
-    /// Binary layout for an add action.
+    /// Binary layout of an add action.
     struct AddAction : public File {
     public:
         /// Size of file.
         uint64_t FileSize;
+    };
+
+    /// Binary layout of failed verification data.
+    struct VerificationFailure {
+    public:
+        /// The replicator that failed verification.
+        Key Replicator;
+
+        /// The hash of the failed block.
+        Hash256 BlockHash;
     };
 
 #pragma pack(pop)

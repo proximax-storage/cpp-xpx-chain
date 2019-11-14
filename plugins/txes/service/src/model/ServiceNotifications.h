@@ -23,14 +23,17 @@ namespace catapult { namespace model {
 	/// Defines a drive files deposit notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Service, Files_Deposit_v1, 0x0004);
 
-	/// Defines a drive verification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Verification_v1, 0x0005);
+	/// Defines a start drive verification notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, Start_Drive_Verification_v1, 0x0005);
+
+	/// Defines an end drive verification notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_Verification_v1, 0x0006);
 
 	/// Defines a drive notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0006);
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0007);
 
 	/// Defines a end drive notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0008);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -231,21 +234,23 @@ namespace catapult { namespace model {
 
 	/// Notification of a drive verification.
 	template<VersionType version>
-	struct DriveVerificationNotification;
+	struct StartDriveVerificationNotification;
 
 	template<>
-	struct DriveVerificationNotification<1> : public Notification {
+	struct StartDriveVerificationNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Drive_Verification_v1_Notification;
+		static constexpr auto Notification_Type = Service_Start_Drive_Verification_v1_Notification;
 
 	public:
-		explicit DriveVerificationNotification(
+		explicit StartDriveVerificationNotification(
 			const Key& drive,
-			const Key& replicator)
-			: Notification(Notification_Type, sizeof(DriveVerificationNotification<1>))
+			const Key& replicator,
+			const Amount& verificationFee)
+			: Notification(Notification_Type, sizeof(StartDriveVerificationNotification<1>))
 			, DriveKey(drive)
 			, Replicator(replicator)
+			, VerificationFee(verificationFee)
 		{}
 
 	public:
@@ -254,6 +259,31 @@ namespace catapult { namespace model {
 
 		/// Replicator public key.
 		Key Replicator;
+
+		/// Verification fee.
+		Amount VerificationFee;
+	};
+
+	/// Notification of a drive verification.
+	template<VersionType version>
+	struct EndDriveVerificationNotification;
+
+	template<>
+	struct EndDriveVerificationNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_End_Drive_Verification_v1_Notification;
+
+	public:
+		explicit EndDriveVerificationNotification(
+			const Key& drive)
+			: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
+			, DriveKey(drive)
+		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
 	};
 
 	/// Notification of a drive.

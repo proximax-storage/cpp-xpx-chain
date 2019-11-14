@@ -30,7 +30,8 @@ namespace catapult { namespace cache {
 
 	struct DriveBaseSetDeltaPointers {
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pHeightGrouping;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pDriveEndHeightGrouping;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pVerificationEndHeightGrouping;
 		std::shared_ptr<DrivePatriciaTree::DeltaType> pPatriciaTree;
 	};
 
@@ -41,33 +42,42 @@ namespace catapult { namespace cache {
 
 	public:
 		explicit DriveBaseSets(const CacheConfiguration& config)
-				: CacheDatabaseMixin(config, { "default", "height_grouping" })
+				: CacheDatabaseMixin(config, { "default", "drive_end_height_grouping", "verification_end_height_grouping" })
 				, Primary(GetContainerMode(config), database(), 0)
-				, HeightGrouping(GetContainerMode(config), database(), 1)
-				, PatriciaTree(hasPatriciaTreeSupport(), database(), 2)
+				, DriveEndHeightGrouping(GetContainerMode(config), database(), 1)
+				, VerificationEndHeightGrouping(GetContainerMode(config), database(), 2)
+				, PatriciaTree(hasPatriciaTreeSupport(), database(), 3)
 		{}
 
 	public:
 		DriveCacheTypes::PrimaryTypes::BaseSetType Primary;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetType HeightGrouping;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetType DriveEndHeightGrouping;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetType VerificationEndHeightGrouping;
 		CachePatriciaTree<DrivePatriciaTree> PatriciaTree;
 
 	public:
 		DriveBaseSetDeltaPointers rebase() {
-			return { Primary.rebase(), HeightGrouping.rebase(), PatriciaTree.rebase() };
+			return {
+				Primary.rebase(),
+				DriveEndHeightGrouping.rebase(),
+				VerificationEndHeightGrouping.rebase(),
+				PatriciaTree.rebase()
+			};
 		}
 
 		DriveBaseSetDeltaPointers rebaseDetached() const {
 			return {
 					Primary.rebaseDetached(),
-					HeightGrouping.rebaseDetached(),
+					DriveEndHeightGrouping.rebaseDetached(),
+					VerificationEndHeightGrouping.rebaseDetached(),
 					PatriciaTree.rebaseDetached()
 			};
 		}
 
 		void commit() {
 			Primary.commit();
-			HeightGrouping.commit();
+			DriveEndHeightGrouping.commit();
+			VerificationEndHeightGrouping.commit();
 			PatriciaTree.commit();
 			flush();
 		}

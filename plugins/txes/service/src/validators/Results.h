@@ -15,13 +15,13 @@ namespace catapult { namespace validators {
 #define DEFINE_SERVICE_RESULT(DESCRIPTION, CODE) DEFINE_VALIDATION_RESULT(Failure, Service, DESCRIPTION, CODE, None)
 
 	/// Drive duration should be multiple of the billing period.
-	DEFINE_SERVICE_RESULT(Drive_Duration_Is_Not_Divide_On_BillingPeriod, 1);
+	DEFINE_SERVICE_RESULT(Drive_Duration_Is_Not_Multiple_Of_BillingPeriod, 1);
 
 	/// Percent approvers is not in range 0 - 100.
 	DEFINE_SERVICE_RESULT(Wrong_Percent_Approvers, 2);
 
 	/// Minimal count of replicators to start the contract more than count of replicas.
-	DEFINE_SERVICE_RESULT(Min_Replicators_More_Than_Relicas, 3);
+	DEFINE_SERVICE_RESULT(Min_Replicators_More_Than_Replicas, 3);
 
     /// Validation failed because drive duration is zero.
     DEFINE_SERVICE_RESULT(Drive_Invalid_Duration, 4);
@@ -63,7 +63,7 @@ namespace catapult { namespace validators {
 	DEFINE_SERVICE_RESULT(File_Hash_Redudant, 16);
 
 	/// Validation failed because the drive doesn't contain file to remove.
-	DEFINE_SERVICE_RESULT(File_Is_Not_Exist, 17);
+	DEFINE_SERVICE_RESULT(File_Doesnt_Exist, 17);
 
 	/// Validation failed because the drive contains to many files.
 	DEFINE_SERVICE_RESULT(Too_Many_Files_On_Drive, 18);
@@ -75,7 +75,7 @@ namespace catapult { namespace validators {
 	DEFINE_SERVICE_RESULT(Drive_Root_No_Changes, 20);
 
     /// Validation failed because the drive already is finished.
-    DEFINE_SERVICE_RESULT(Drive_Already_Is_Finished, 21);
+    DEFINE_SERVICE_RESULT(Drive_Has_Ended, 21);
 
     /// Validation failed because default exchange offer for Xpx to SO units is not exist.
     DEFINE_SERVICE_RESULT(Drive_Cant_Find_Default_Exchange_Offer, 22);
@@ -94,6 +94,18 @@ namespace catapult { namespace validators {
 
     /// Validation failed because drive processed full duration.
     DEFINE_SERVICE_RESULT(Drive_Processed_Full_Duration, 27);
+
+    /// Validation failed because verification fee is less than required.
+    DEFINE_SERVICE_RESULT(Verification_Fee_Less_Than_Required, 28);
+
+    /// Validation failed because verification is already in progress.
+    DEFINE_SERVICE_RESULT(Verification_Already_In_Progress, 29);
+
+    /// Validation failed because verification has not started.
+    DEFINE_SERVICE_RESULT(Verification_Has_Not_Started, 30);
+
+    /// Validation failed because drive is not in progress state.
+    DEFINE_SERVICE_RESULT(Drive_Is_Not_In_Progress, 31);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

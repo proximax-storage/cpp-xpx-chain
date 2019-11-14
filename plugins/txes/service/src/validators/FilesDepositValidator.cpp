@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 			for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr) {
 				++hashes[filesPtr->FileHash];
 				if (!filesWithoutDeposit.count(filesPtr->FileHash))
-					return Failure_Service_File_Is_Not_Exist;
+					return Failure_Service_File_Doesnt_Exist;
 			}
 
 			filesPtr = notification.FilesPtr;

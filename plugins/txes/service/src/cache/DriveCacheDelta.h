@@ -60,7 +60,8 @@ namespace catapult { namespace cache {
 				, DriveCacheDeltaMixins::BasicInsertRemove(*driveSets.pPrimary)
 				, DriveCacheDeltaMixins::DeltaElements(*driveSets.pPrimary)
 				, m_pDriveEntries(driveSets.pPrimary)
-				, m_pMarkedDrivesAtHeight(driveSets.pHeightGrouping)
+				, m_pEndingDrivesAtHeight(driveSets.pDriveEndHeightGrouping)
+				, m_pEndingDriveVerificationsAtHeight(driveSets.pVerificationEndHeightGrouping)
 				, m_pConfigHolder(pConfigHolder)
 		{}
 
@@ -72,23 +73,35 @@ namespace catapult { namespace cache {
 			return ServicePluginEnabled(m_pConfigHolder, height());
 		}
 
-		void markDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
-			AddIdentifierWithGroup(*m_pMarkedDrivesAtHeight, height, key);
+		void setDriveEnd(const DriveCacheDescriptor::KeyType& key, const Height& height) {
+			AddIdentifierWithGroup(*m_pEndingDrivesAtHeight, height, key);
 		}
 
-		void unmarkDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
-			RemoveIdentifierWithGroup(*m_pMarkedDrivesAtHeight, height, key);
+		void unsetDriveEnd(const DriveCacheDescriptor::KeyType& key, const Height& height) {
+			RemoveIdentifierWithGroup(*m_pEndingDrivesAtHeight, height, key);
 		}
 
-        /// Processes all marked drives
-        void processMarkedDrives(Height height, const consumer<DriveCacheDescriptor::ValueType&>& consumer) {
-            ForEachIdentifierWithGroup(*m_pDriveEntries, *m_pMarkedDrivesAtHeight, height, consumer);
+        /// Processes all ending drives
+        void processEndingDrives(Height height, const consumer<DriveCacheDescriptor::ValueType&>& consumer) {
+            ForEachIdentifierWithGroup(*m_pDriveEntries, *m_pEndingDrivesAtHeight, height, consumer);
+        }
+
+		void setDriveVerificationEnd(const DriveCacheDescriptor::KeyType& key, const Height& height) {
+			AddIdentifierWithGroup(*m_pEndingDriveVerificationsAtHeight, height, key);
+		}
+
+		void unsetDriveVerificationEnd(const DriveCacheDescriptor::KeyType& key, const Height& height) {
+			RemoveIdentifierWithGroup(*m_pEndingDriveVerificationsAtHeight, height, key);
+		}
+
+        void processEndingDriveVerifications(Height height, const consumer<DriveCacheDescriptor::ValueType&>& consumer) {
+            ForEachIdentifierWithGroup(*m_pDriveEntries, *m_pEndingDriveVerificationsAtHeight, height, consumer);
         }
 
         void prune(Height height) {
 //            ForEachIdentifierWithGroup(
 //                *m_pDriveEntries,
-//                *m_pMarkedDrivesAtHeight,
+//                *m_pEndingDrivesAtHeight,
 //                height,
 //                [this, height,](auto& history) {
 //                    auto originalSizes = GetNamespaceSizes(history);
@@ -105,12 +118,14 @@ namespace catapult { namespace cache {
 //                    decrementActiveSize(originalSizes.Active - newSizes.Active);
 //                    decrementDeepSize(originalSizes.Deep - newSizes.Deep);
 //                });
-            m_pMarkedDrivesAtHeight->remove(height);
+            m_pEndingDrivesAtHeight->remove(height);
+			m_pEndingDriveVerificationsAtHeight->remove(height);
         }
 
 	private:
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pDriveEntries;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pMarkedDrivesAtHeight;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pEndingDrivesAtHeight;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pEndingDriveVerificationsAtHeight;
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 

@@ -16,6 +16,8 @@
 #include "src/plugins/JoinToDriveTransactionPlugin.h"
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/plugins/EndDriveTransactionPlugin.h"
+#include "src/plugins/StartDriveVerificationTransactionPlugin.h"
+#include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/utils/ServiceUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -29,6 +31,8 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateFilesDepositTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateJoinToDriveTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateEndDriveTransactionPlugin());
+		manager.addTransactionSupport(CreateStartDriveVerificationTransactionPlugin(pConfigHolder->Config().Immutable));
+		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin());
 
         manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
             const auto& driveCache = cache.template sub<cache::DriveCache>();
@@ -95,7 +99,7 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateServicePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder = manager.configHolder()](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
 			builder
 					.add(validators::CreateDriveValidator())
 					.add(validators::CreateExchangeValidator(pConfigHolder))
@@ -105,16 +109,20 @@ namespace catapult { namespace plugins {
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
 					.add(validators::CreateEndDriveValidator(pConfigHolder))
-					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder));
+					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder))
+					.add(validators::CreateStartDriveVerificationValidator(pConfigHolder))
+					.add(validators::CreateEndDriveVerificationValidator(pConfigHolder));
 		});
 
-		manager.addObserverHook([pConfigHolder = manager.configHolder()](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
 					.add(observers::CreatePrepareDriveObserver())
 					.add(observers::CreateDriveFileSystemObserver())
 					.add(observers::CreateFilesDepositObserver())
 					.add(observers::CreateJoinToDriveObserver())
-                    .add(observers::CreateDriveVerificationObserver())
+                    .add(observers::CreateStartDriveVerificationObserver(pConfigHolder))
+                    .add(observers::CreateEndDriveVerificationObserver(pConfigHolder))
+                    .add(observers::CreateExpiredDriveVerificationObserver(pConfigHolder))
                     .add(observers::CreateStartBillingObserver(pConfigHolder))
                     .add(observers::CreateEndBillingObserver(pConfigHolder))
                     .add(observers::CreateEndDriveObserver(pConfigHolder))

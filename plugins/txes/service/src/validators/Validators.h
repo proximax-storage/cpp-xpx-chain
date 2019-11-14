@@ -62,4 +62,17 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(ServicePluginConfig, model::PluginConfigNotification<1>)();
+
+	/// A validator check that:
+	/// - Drive exists
+	/// - Drive is in correct state
+	/// - Replicator is registered to drive
+	/// - Verification fee is not less than the minimum
+	/// - Another verification is not in progress
+	DECLARE_STATEFUL_VALIDATOR(StartDriveVerification, model::StartDriveVerificationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+
+	/// A validator check that:
+	/// - Drive exists
+	/// - Verification is in progress
+	DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 }}

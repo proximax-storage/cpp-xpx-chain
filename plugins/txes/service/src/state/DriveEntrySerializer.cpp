@@ -138,6 +138,27 @@ namespace catapult { namespace state {
 				replicatorsMap.emplace(replicator, info);
 			}
 		}
+
+		void SaveVerificationHistory(io::OutputStream &output, const VerificationMap& verificationHistory) {
+			io::Write8(output, verificationHistory.size());
+			for (const auto& pair : verificationHistory) {
+				io::Write(output, pair.first);
+				io::Write(output, pair.second.Replicator);
+				io::Write(output, pair.second.Fee);
+			}
+		}
+
+		void LoadVerificationHistory(io::InputStream& input, VerificationMap& verificationHistory) {
+			auto numVerificationHistory = io::Read8(input);
+			while (numVerificationHistory--) {
+				Height height(io::Read64(input));
+				Key replicator;
+				io::Read(input, replicator);
+				Amount verificationFee(io::Read64(input));
+
+				verificationHistory.emplace(height, state::VerificationInfo{replicator, verificationFee});
+			}
+		}
 	}
 
 	void DriveEntrySerializer::Save(const DriveEntry& driveEntry, io::OutputStream& output) {
@@ -161,6 +182,7 @@ namespace catapult { namespace state {
 
 		SaveFiles(output, driveEntry.files());
 		SaveReplicators(output, driveEntry.replicators());
+		SaveVerificationHistory(output, driveEntry.verificationHistory());
 	}
 
 	DriveEntry DriveEntrySerializer::Load(io::InputStream& input) {
@@ -196,6 +218,7 @@ namespace catapult { namespace state {
 
 		LoadFiles(input, entry.files());
 		LoadReplicators(input, entry.replicators());
+		LoadVerificationHistory(input, entry.verificationHistory());
 
 		return entry;
 	}

@@ -8,6 +8,8 @@
 #include "DriveFileSystemMapper.h"
 #include "JoinToDriveMapper.h"
 #include "FilesDepositMapper.h"
+#include "StartDriveVerificationMapper.h"
+#include "EndDriveVerificationMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoDriveCacheStorage.h"
@@ -20,6 +22,8 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDriveFileSystemTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateJoinToDriveTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateFilesDepositTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateStartDriveVerificationTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndDriveVerificationTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
