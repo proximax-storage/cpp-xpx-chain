@@ -34,13 +34,13 @@ namespace catapult { namespace observers {
                     period.Start = context.Height;
                     period.End = Height(context.Height.unwrap() + driveEntry.billingPeriod().unwrap());
                     driveEntry.billingHistory().emplace_back(period);
-                    driveCache.setDriveEnd(driveEntry.key(), driveEntry.billingHistory().back().End);
+                    driveCache.addBillingDrive(driveEntry.key(), driveEntry.billingHistory().back().End);
                 }
             } else {
                 if (driveEntry.state() == state::DriveState::InProgress && billingBalance < driveEntry.billingPrice()) {
                     SetDriveState(driveEntry, context, state::DriveState::Pending);
 
-                    driveCache.unsetDriveEnd(driveEntry.key(), driveEntry.billingHistory().back().End);
+                    driveCache.removeBillingDrive(driveEntry.key(), driveEntry.billingHistory().back().End);
                     if (driveEntry.billingHistory().back().Start != context.Height)
                         CATAPULT_THROW_RUNTIME_ERROR("Got unexpected state during drive billing rollback");
 

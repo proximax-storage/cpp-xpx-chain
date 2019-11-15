@@ -16,7 +16,7 @@ namespace catapult { namespace observers {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
 
-			driveCache.processEndingDrives(context.Height, [&storageMosaicId, &context](state::DriveEntry& driveEntry) {
+			driveCache.processBillingDrives(context.Height, [&storageMosaicId, &context](state::DriveEntry& driveEntry) {
 				if (driveEntry.state() != state::DriveState::InProgress)
 					return;
 

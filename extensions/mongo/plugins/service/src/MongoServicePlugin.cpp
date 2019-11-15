@@ -10,6 +10,8 @@
 #include "FilesDepositMapper.h"
 #include "StartDriveVerificationMapper.h"
 #include "EndDriveVerificationMapper.h"
+#include "EndDriveMapper.h"
+#include "DeleteRewardMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoDriveCacheStorage.h"
@@ -24,11 +26,14 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateFilesDepositTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateStartDriveVerificationTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndDriveVerificationTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndDriveTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateDeleteRewardTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
-			manager.mongoContext(),
-			manager.configHolder()));
+		manager.mongoContext(),
+		manager.configHolder()
+	));
 
 	manager.addReceiptSupport(catapult::mongo::CreateDriveStateReceiptMongoPlugin(catapult::model::Receipt_Type_Drive_State));
 }

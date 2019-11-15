@@ -64,9 +64,9 @@ namespace catapult { namespace observers {
                 Transfer(driveAccount, replicatorAccount, storageMosaicId, Amount(reward), context.Height);
 
                 driveEntry.billingHistory().back().Payments.emplace_back(state::PaymentInformation{
-                        replicator,
-                        Amount(reward),
-                        context.Height
+                    replicator,
+                    Amount(reward),
+                    context.Height
                 });
 
                 ++i;

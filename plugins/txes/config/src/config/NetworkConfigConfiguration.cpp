@@ -22,7 +22,7 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(MaxSupportedEntityVersionsSize);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
+//		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
 		return config;
 	}
 }}

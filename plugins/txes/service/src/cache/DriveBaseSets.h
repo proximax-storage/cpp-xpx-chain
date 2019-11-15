@@ -30,8 +30,8 @@ namespace catapult { namespace cache {
 
 	struct DriveBaseSetDeltaPointers {
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pDriveEndHeightGrouping;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pVerificationEndHeightGrouping;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pBillingGrouping;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType pRemoveGrouping;
 		std::shared_ptr<DrivePatriciaTree::DeltaType> pPatriciaTree;
 	};
 
@@ -42,42 +42,37 @@ namespace catapult { namespace cache {
 
 	public:
 		explicit DriveBaseSets(const CacheConfiguration& config)
-				: CacheDatabaseMixin(config, { "default", "drive_end_height_grouping", "verification_end_height_grouping" })
+				: CacheDatabaseMixin(config, { "default", "billing_height_grouping", "remove_height_grouping" })
 				, Primary(GetContainerMode(config), database(), 0)
-				, DriveEndHeightGrouping(GetContainerMode(config), database(), 1)
-				, VerificationEndHeightGrouping(GetContainerMode(config), database(), 2)
+				, BillingGrouping(GetContainerMode(config), database(), 1)
+				, RemoveGrouping(GetContainerMode(config), database(), 2)
 				, PatriciaTree(hasPatriciaTreeSupport(), database(), 3)
 		{}
 
 	public:
 		DriveCacheTypes::PrimaryTypes::BaseSetType Primary;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetType DriveEndHeightGrouping;
-		DriveCacheTypes::HeightGroupingTypes::BaseSetType VerificationEndHeightGrouping;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetType BillingGrouping;
+		DriveCacheTypes::HeightGroupingTypes::BaseSetType RemoveGrouping;
 		CachePatriciaTree<DrivePatriciaTree> PatriciaTree;
 
 	public:
 		DriveBaseSetDeltaPointers rebase() {
-			return {
-				Primary.rebase(),
-				DriveEndHeightGrouping.rebase(),
-				VerificationEndHeightGrouping.rebase(),
-				PatriciaTree.rebase()
-			};
+			return { Primary.rebase(), BillingGrouping.rebase(), RemoveGrouping.rebase(), PatriciaTree.rebase() };
 		}
 
 		DriveBaseSetDeltaPointers rebaseDetached() const {
 			return {
 					Primary.rebaseDetached(),
-					DriveEndHeightGrouping.rebaseDetached(),
-					VerificationEndHeightGrouping.rebaseDetached(),
+					BillingGrouping.rebaseDetached(),
+					RemoveGrouping.rebaseDetached(),
 					PatriciaTree.rebaseDetached()
 			};
 		}
 
 		void commit() {
 			Primary.commit();
-			DriveEndHeightGrouping.commit();
-			VerificationEndHeightGrouping.commit();
+			BillingGrouping.commit();
+			RemoveGrouping.commit();
 			PatriciaTree.commit();
 			flush();
 		}

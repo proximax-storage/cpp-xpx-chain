@@ -14,6 +14,7 @@ namespace catapult { namespace observers {
 			state::DriveEntry driveEntry(notification.DriveKey);
             SetDriveState(driveEntry, context, state::DriveState::NotStarted);
 			driveEntry.setOwner(notification.Owner);
+			driveEntry.setStart(context.Height);
 			driveEntry.setDuration(notification.Duration);
 			driveEntry.setBillingPeriod(notification.BillingPeriod);
 			driveEntry.setBillingPrice(notification.BillingPrice);
