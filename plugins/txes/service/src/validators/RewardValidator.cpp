@@ -18,7 +18,7 @@ namespace catapult { namespace validators {
 		const auto& driveEntry = driveIter.get();
 
 		if (!driveEntry.hasFile(notification.DeletedFile->FileHash))
-		    return Failure_Service_File_Is_Not_Exist;
+		    return Failure_Service_File_Doesnt_Exist;
 
 		if (driveEntry.files().at(notification.DeletedFile->FileHash).Deposit.unwrap() == 0)
 			return Failure_Service_File_Deposit_Is_Zero;
