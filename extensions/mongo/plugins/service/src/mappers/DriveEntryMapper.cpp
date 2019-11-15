@@ -106,6 +106,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto doc = builder << "drive" << bson_stream::open_document
 				<< "multisig" << ToBinary(entry.key())
 				<< "multisigAddress" << ToBinary(accountAddress)
+				<< "start" << ToInt64(entry.start())
+				<< "end" << ToInt64(entry.end())
 				<< "state" << static_cast<int8_t >(entry.state())
 				<< "owner" << ToBinary(entry.owner())
 				<< "rootHash" << ToBinary(entry.rootHash())
@@ -235,6 +237,8 @@ namespace catapult { namespace mongo { namespace plugins {
         DbBinaryToModelArray(rootHash, dbDriveEntry["rootHash"].get_binary());
         entry.setRootHash(rootHash);
 
+        entry.setStart(Height(dbDriveEntry["start"].get_int64()));
+        entry.setEnd(Height(dbDriveEntry["end"].get_int64()));
         entry.setDuration(BlockDuration(dbDriveEntry["duration"].get_int64()));
         entry.setBillingPeriod(BlockDuration(dbDriveEntry["billingPeriod"].get_int64()));
         entry.setBillingPrice(Amount(dbDriveEntry["billingPrice"].get_int64()));

@@ -84,7 +84,7 @@ namespace catapult { namespace validators {
     DEFINE_SERVICE_RESULT(Exchange_Of_This_Mosaic_Is_Not_Allowed, 23);
 
     /// Validation failed because drive is not in pending state.
-    DEFINE_SERVICE_RESULT(Drive_Not_In_pending_State, 24);
+    DEFINE_SERVICE_RESULT(Drive_Not_In_Pending_State, 24);
 
     /// Validation failed because exchange more SO units than required by drive.
     DEFINE_SERVICE_RESULT(Exchange_More_Than_Required, 25);
@@ -94,6 +94,27 @@ namespace catapult { namespace validators {
 
     /// Validation failed because drive processed full duration.
     DEFINE_SERVICE_RESULT(Drive_Processed_Full_Duration, 27);
+
+    /// Validation failed because upload info is zero.
+    DEFINE_SERVICE_RESULT(Zero_Upload_Info, 28);
+
+	/// Validation failed because the participant redudant.
+	DEFINE_SERVICE_RESULT(Participant_Redudant, 29);
+
+	/// Validation failed because the participant is not part of drive.
+	DEFINE_SERVICE_RESULT(Participant_It_Not_Part_Of_Drive, 30);
+
+	/// Validation failed because the replicator didn't put deposit for file.
+	DEFINE_SERVICE_RESULT(Replicator_Didnt_Put_Deposit, 31);
+
+	/// Validation failed because zero deleted files.
+	DEFINE_SERVICE_RESULT(Zero_Deleted_Files, 32);
+
+	/// Validation failed because zero infos.
+	DEFINE_SERVICE_RESULT(Zero_Infos, 33);
+
+	/// Validation failed because file's deposit is zero.
+	DEFINE_SERVICE_RESULT(File_Deposit_Is_Zero, 34);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

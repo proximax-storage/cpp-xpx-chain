@@ -16,6 +16,7 @@
 #include "src/plugins/JoinToDriveTransactionPlugin.h"
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/plugins/EndDriveTransactionPlugin.h"
+#include "src/plugins/DeleteRewardTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/utils/ServiceUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -29,6 +30,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateFilesDepositTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateJoinToDriveTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateEndDriveTransactionPlugin());
+		manager.addTransactionSupport(CreateDeleteRewardTransactionPlugin());
 
         manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
             const auto& driveCache = cache.template sub<cache::DriveCache>();
@@ -92,6 +94,7 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 					.add(validators::CreatePrepareDriveArgumentsValidator())
+					.add(validators::CreateDeleteRewardValidator())
 					.add(validators::CreateServicePluginConfigValidator());
 		});
 
@@ -105,6 +108,7 @@ namespace catapult { namespace plugins {
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
 					.add(validators::CreateEndDriveValidator(pConfigHolder))
+					.add(validators::CreateRewardValidator())
 					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder));
 		});
 
@@ -118,7 +122,8 @@ namespace catapult { namespace plugins {
                     .add(observers::CreateStartBillingObserver(pConfigHolder))
                     .add(observers::CreateEndBillingObserver(pConfigHolder))
                     .add(observers::CreateEndDriveObserver(pConfigHolder))
-                    .add(observers::CreateCacheBlockPruningObserver<cache::DriveCache>("Drive", 1, pConfigHolder));
+                    .add(observers::CreateRewardObserver(pConfigHolder))
+                    .add(observers::CreateDriveCacheBlockPruningObserver(pConfigHolder));
 		});
 	}
 }}

@@ -8,6 +8,7 @@
 #include "catapult/model/Notifications.h"
 #include "src/model/ServiceTypes.h"
 #include "catapult/utils/MemoryUtils.h"
+#include <vector>
 
 namespace catapult { namespace model {
 
@@ -31,6 +32,12 @@ namespace catapult { namespace model {
 
 	/// Defines a end drive notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0007);
+
+	/// Defines a delete reward notification type.
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, DeleteReward_v1, 0x0008);
+
+	/// Defines a delete reward notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, Reward_v1, 0x0009);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -304,5 +311,51 @@ namespace catapult { namespace model {
 
 		/// Public key of the signer.
 		Key Signer;
+	};
+
+	/// Notification of a delete reward.
+	template<VersionType version>
+	struct DeleteRewardNotification;
+
+	template<>
+	struct DeleteRewardNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_DeleteReward_v1_Notification;
+
+	public:
+		explicit DeleteRewardNotification(const std::vector<const model::DeletedFile*>& files)
+				: Notification(Notification_Type, sizeof(DeleteRewardNotification<1>))
+				, DeletedFiles(files)
+		{}
+
+	public:
+		/// Vector of deleted files.
+		const std::vector<const model::DeletedFile*>& DeletedFiles;
+	};
+
+	/// Notification of a reward.
+	template<VersionType version>
+	struct RewardNotification;
+
+	template<>
+	struct RewardNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_Reward_v1_Notification;
+
+	public:
+		explicit RewardNotification(const Key& key, const model::DeletedFile* file)
+				: Notification(Notification_Type, sizeof(RewardNotification<1>))
+				, DriveKey(key)
+				, DeletedFile(file)
+		{}
+
+	public:
+        /// Public key of the drive multisig account.
+        Key DriveKey;
+
+		/// Vector of deleted files.
+		const model::DeletedFile* DeletedFile;
 	};
 }}

@@ -154,26 +154,15 @@ namespace catapult { namespace zeromq {
 		multipart.addmem(static_cast<const void*>(&blockElement.EntityHash), Hash256_Size);
 		multipart.addmem(static_cast<const void*>(&blockElement.GenerationHash), Hash256_Size);
 
-		uint8_t blockStatementPresent = !!blockElement.OptionalStatement;
-		multipart.addtyp(blockStatementPresent);
-		if (blockStatementPresent) {
-			const auto& statements = blockElement.OptionalStatement->PublicKeyStatements;
-			size_t count = statements.size();
-			multipart.addmem(static_cast<const void*>(&count), sizeof(size_t));
-			for (const auto& pair : statements) {
-				multipart.addmem(static_cast<const void*>(&pair.first), sizeof(model::ReceiptSource));
-				const auto& statement = pair.second;
-				count = statement.size();
-				multipart.addmem(static_cast<const void*>(&count), sizeof(size_t));
-				for (auto i = 0u; i < statement.size(); ++i) {
-					const auto& receipt = statement.receiptAt(i);
-					multipart.addmem(static_cast<const void*>(&receipt), sizeof(receipt.Size));
-				}
-			}
-		}
-
 		pMessageGroup->add(std::move(multipart));
 		m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
+
+		if (blockElement.OptionalStatement) {
+			const auto& statements = blockElement.OptionalStatement->PublicKeyStatements;
+			for (const auto& pair : statements) {
+				publishStatement(pair.second, blockElement.Block.Height);
+			}
+		}
 	}
 
 	void ZeroMqEntityPublisher::publishDropBlocks(Height height) {
@@ -246,6 +235,19 @@ namespace catapult { namespace zeromq {
 		publish("detached cosignature", topicMarker, WeakTransactionInfo(parentTransactionInfo), [&detachedCosignature](auto& multipart) {
 			multipart.addmem(static_cast<const void*>(&detachedCosignature), sizeof(detachedCosignature));
 		});
+	}
+
+	void ZeroMqEntityPublisher::publishStatement(const model::PublicKeyStatement& statement, const Height& height) {
+		TransactionMarker topic = TransactionMarker::Receipt_Marker;
+		for (auto i = 0u; i < statement.size(); ++i){
+			auto pMessageGroup = std::make_unique<MessageGroup>(CreateHeightMessageGenerator("publish statement", height));
+			const auto& receipt = statement.receiptAt(i);
+			zmq::multipart_t multipart;
+			multipart.addmem(&topic, sizeof(TransactionMarker));
+			multipart.addmem(&receipt, receipt.Size);
+			pMessageGroup->add(std::move(multipart));
+			m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
+		}
 	}
 
 	void ZeroMqEntityPublisher::publish(

@@ -20,8 +20,12 @@ namespace catapult { namespace observers {
 		auto filesPtr = notification.FilesPtr;
 		for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr) {
 			if (NotifyMode::Commit == context.Mode) {
+				auto& file = driveEntry.files().at(filesPtr->FileHash);
+				file.Deposit = file.Deposit + Amount(file.Size);
                 replicator.DecrementUndepositedFileCounter(filesPtr->FileHash);
 			} else {
+				auto& file = driveEntry.files().at(filesPtr->FileHash);
+				file.Deposit = file.Deposit - Amount(file.Size);
                 replicator.IncrementUndepositedFileCounter(filesPtr->FileHash);
 			}
 		}

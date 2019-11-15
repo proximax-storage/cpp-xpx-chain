@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
             const auto& driveEntry = driveIter.get();
 
             if (driveEntry.state() != state::DriveState::Pending)
-                return Failure_Service_Drive_Not_In_pending_State;
+                return Failure_Service_Drive_Not_In_Pending_State;
 
             if (driveEntry.processedDuration() >= driveEntry.duration())
                 return Failure_Service_Drive_Processed_Full_Duration;

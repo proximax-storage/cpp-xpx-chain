@@ -96,6 +96,26 @@ namespace catapult { namespace state {
 	// Mixin for storing drive details.
 	class DriveMixin {
 	public:
+		/// Sets start \a height of drive.
+		void setStart(const Height& height) {
+			m_start = height;
+		}
+
+		/// Gets start height of drive.
+		const Height& start() const {
+			return m_start;
+		}
+
+		/// Sets end \a height of drive.
+		void setEnd(const Height& height) {
+			m_end = height;
+		}
+
+		/// Gets end height of drive.
+		const Height& end() const {
+			return m_end;
+		}
+
 		/// Gets the state of the drive.
 		DriveState state() const {
 			return m_state;
@@ -248,6 +268,8 @@ namespace catapult { namespace state {
 		}
 
 	private:
+		Height m_start;
+		Height m_end;
 	    DriveState m_state;
         Key m_owner;
         Hash256 m_rootHash;

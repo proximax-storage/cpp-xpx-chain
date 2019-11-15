@@ -141,6 +141,16 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "EndDrive",
+			"type": "17754",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "DeleteReward",
+			"type": "18010",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "exchangeOffer",
 			"type": "16733",
 			"supportedVersions": [1]
