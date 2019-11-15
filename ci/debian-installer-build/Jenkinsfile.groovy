@@ -11,7 +11,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
-        IMAGE = "proximax-catapult-server-toolless"
+        IMAGE = "proximax-sirius-peer-toolless"
         BUILD_IMAGE = "catapult-server-build-image:1.0"
     }
 
