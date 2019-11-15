@@ -20,9 +20,20 @@ namespace catapult { namespace validators {
 				return Failure_Service_Drive_Does_Not_Exist;
 
 			auto driveIter = driveCache.find(notification.DriveKey);
-			const auto &driveEntry = driveIter.get();
-			if (driveEntry.state() != state::DriveState::Verification)
+			const state::DriveEntry& driveEntry = driveIter.get();
+			bool verificationStarted;
+			bool verificationActive;
+			VerificationStatus(driveEntry, context, verificationStarted, verificationActive);
+			if (!verificationStarted)
 					return Failure_Service_Verification_Has_Not_Started;
+			if (!verificationActive)
+					return Failure_Service_Verification_Is_Not_Active;
+
+			auto pFailure = notification.FailuresPtr;
+			for (auto i = 0u; i < notification.FailureCount; ++i, ++pFailure) {
+				if (!driveEntry.replicators().count(pFailure->Replicator))
+					return Failure_Service_Drive_Replicator_Not_Registered;
+			}
 
 			return ValidationResult::Success;
 		});

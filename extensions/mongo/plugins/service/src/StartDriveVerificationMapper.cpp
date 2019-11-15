@@ -16,7 +16,6 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamStartDriveVerificationTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
-		builder << "verificationFee" << ToInt64(transaction.VerificationFee);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(StartDriveVerification, StreamStartDriveVerificationTransaction)

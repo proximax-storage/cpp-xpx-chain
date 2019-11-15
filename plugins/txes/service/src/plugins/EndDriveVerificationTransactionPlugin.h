@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/model/NetworkInfo.h"
 #include "catapult/plugins.h"
 #include <memory>
 
@@ -14,5 +15,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates an end drive verification transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateEndDriveVerificationTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateEndDriveVerificationTransactionPlugin(const model::NetworkIdentifier& networkIdentifier);
 }}

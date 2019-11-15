@@ -20,7 +20,7 @@ namespace catapult { namespace observers {
 				if (driveEntry.state() != state::DriveState::InProgress)
 					return;
 
-			    DrivePayment(driveEntry, context, storageMosaicId);
+			    DrivePayment(driveEntry, context, storageMosaicId, {});
 
                 if (NotifyMode::Commit == context.Mode)
                     SetDriveState(driveEntry, context, state::DriveState::Pending);

@@ -22,8 +22,8 @@ namespace catapult { namespace observers {
         creditState.Balances.credit(mosaicId, amount, height);
     }
 
-    void DrivePayment(state::DriveEntry& driveEntry, const ObserverContext& context, const MosaicId& storageMosaicId) {
-        if (driveEntry.billingHistory().empty() || driveEntry.billingHistory().back().End != context.Height)
+    void DrivePayment(state::DriveEntry& driveEntry, const ObserverContext& context, const MosaicId& storageMosaicId, std::vector<Key> replicators) {
+        if (driveEntry.billingHistory().empty() || (replicators.empty() && driveEntry.billingHistory().back().End != context.Height))
             return;
 
         auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
@@ -35,28 +35,36 @@ namespace catapult { namespace observers {
             uint64_t sumTime = 0;
             uint64_t remains = sum;
 
-            const auto& replicators = driveEntry.replicators();
-
-            for (const auto& replicatorPair : replicators) {
+            for (const auto& replicatorPair : driveEntry.replicators()) {
                 sumTime += Time(driveEntry, replicatorPair.first);
             }
 
-            auto i = 0u;
-            for (const auto& replicatorPair : replicators) {
-                uint64_t time = Time(driveEntry, replicatorPair.first);
-                uint64_t reward = std::floor(double(sum) * time / sumTime);
+            bool fullPayment = replicators.empty() || replicators.size() == driveEntry.replicators().size();
+            if (replicators.empty() ) {
+				replicators.reserve(driveEntry.replicators().size());
+				for (const auto& replicatorPair : driveEntry.replicators()) {
+					replicators.emplace_back(replicatorPair.first);
+				}
+			}
 
-                // The last replicator takes remaining tokens, it is need to resolve the integer division
-                if (i == replicators.size() - 1)
+            auto i = 0u;
+            for (const auto& replicator : replicators) {
+                uint64_t time = Time(driveEntry, replicator);
+                auto share = double(sum) * time / sumTime;
+                uint64_t reward = (i % 2) ? std::ceil(share) : std::floor(share);
+
+                // In the case of full payment for the billing period the last replicator takes remaining tokens.
+                // This is required to resolve rounding errors.
+                if (fullPayment && (i == driveEntry.replicators().size() - 1))
                     reward = remains;
                 remains -= reward;
 
-                auto replicatorIter = accountStateCache.find(replicatorPair.first);
+                auto replicatorIter = accountStateCache.find(replicator);
                 auto& replicatorAccount = replicatorIter.get();
                 Transfer(driveAccount, replicatorAccount, storageMosaicId, Amount(reward), context.Height);
 
                 driveEntry.billingHistory().back().Payments.emplace_back(state::PaymentInformation{
-                        replicatorPair.first,
+                        replicator,
                         Amount(reward),
                         context.Height
                 });
@@ -64,17 +72,24 @@ namespace catapult { namespace observers {
                 ++i;
             }
         } else {
-            auto& last = driveEntry.billingHistory().back();
-            for (const auto& payment : last.Payments) {
+			if (driveEntry.billingHistory().empty())
+				CATAPULT_THROW_RUNTIME_ERROR("unexpected billing history during rollback");
+
+            auto& payments = driveEntry.billingHistory().back().Payments;
+			if (payments.empty() || payments.back().Height != context.Height)
+				CATAPULT_THROW_RUNTIME_ERROR("unexpected payments during rollback");
+
+            while (!payments.empty()) {
+            	const auto& payment = payments.back();
+				if (payment.Height != context.Height)
+					break;
+
                 auto replicatorIter = accountStateCache.find(payment.Receiver);
                 auto& replicatorAccount = replicatorIter.get();
                 Transfer(replicatorAccount, driveAccount, storageMosaicId, payment.Amount, context.Height);
 
-                if (payment.Height != context.Height)
-                    CATAPULT_THROW_RUNTIME_ERROR("Got unexpected state during rollback of billing end");
+				payments.pop_back();
             }
-
-            last.Payments.clear();
         }
     }
 

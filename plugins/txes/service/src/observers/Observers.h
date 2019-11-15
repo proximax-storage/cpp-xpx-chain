@@ -22,14 +22,8 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by files deposit notifications.
 	DECLARE_OBSERVER(FilesDeposit, model::FilesDepositNotification<1>)();
 
-	/// Observes changes triggered by start drive verification notifications.
-	DECLARE_OBSERVER(StartDriveVerification, model::StartDriveVerificationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
-
-	/// Observes changes triggered by end drive verification notifications.
-	DECLARE_OBSERVER(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
-
-	/// Observes changes triggered at the end of verification period.
-	DECLARE_OBSERVER(ExpiredDriveVerification, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	/// Observes changes triggered by drive verification payment notifications.
+	DECLARE_OBSERVER(DriveVerificationPayment, model::DriveVerificationPaymentNotification<1>)(const MosaicId& storageMosaicId);
 
 	/// Observes changes triggered by join to drive notifications.
 	DECLARE_OBSERVER(JoinToDrive, model::JoinToDriveNotification<1>)();

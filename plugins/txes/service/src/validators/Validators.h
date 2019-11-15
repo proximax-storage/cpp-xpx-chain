@@ -9,10 +9,14 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/model/ServiceNotifications.h"
+#include "src/state/DriveEntry.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/exchange/src/model/ExchangeNotifications.h"
 
 namespace catapult { namespace validators {
+
+	void VerificationStatus(const state::DriveEntry& driveEntry, const validators::ValidatorContext& context, bool& started, bool& active);
+
 	/// A validator implementation that applies to prepare drive notifications and validates that:
 	/// - drive duration is not zero
 	/// - drive size is not zero
@@ -66,13 +70,13 @@ namespace catapult { namespace validators {
 	/// A validator check that:
 	/// - Drive exists
 	/// - Drive is in correct state
-	/// - Replicator is registered to drive
-	/// - Verification fee is not less than the minimum
+	/// - Initiator is registered to drive
 	/// - Another verification is not in progress
 	DECLARE_STATEFUL_VALIDATOR(StartDriveVerification, model::StartDriveVerificationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// A validator check that:
 	/// - Drive exists
 	/// - Verification is in progress
+	/// - Failed replicators are registered to drive
 	DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 }}

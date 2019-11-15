@@ -25,9 +25,6 @@ namespace catapult { namespace model {
 		/// Key of drive.
 		Key DriveKey;
 
-		/// Verification fee.
-		Amount VerificationFee;
-
 	public:
 		// Calculates the real size of a service \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {

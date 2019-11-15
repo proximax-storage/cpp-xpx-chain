@@ -26,7 +26,7 @@ namespace catapult { namespace observers {
                 if (driveEntry.state() == state::DriveState::InProgress) {
                     driveEntry.billingHistory().back().End = context.Height;
                 }
-                DrivePayment(driveEntry, context, config.StorageMosaicId);
+                DrivePayment(driveEntry, context, config.StorageMosaicId, {});
 
                 for (const auto& replicatorPair : driveEntry.replicators()) {
                     auto replicatorIter = accountStateCache.find(replicatorPair.first);
@@ -56,7 +56,7 @@ namespace catapult { namespace observers {
                     Transfer(replicatorAccount, driveAccount, config.StorageMosaicId, replicatorPair.second.Deposit, context.Height);
                 }
 
-                DrivePayment(driveEntry, context, config.StorageMosaicId);
+                DrivePayment(driveEntry, context, config.StorageMosaicId, {});
                 auto expectedEnd = driveEntry.billingHistory().back().Start + Height(driveEntry.billingPeriod().unwrap());
                 if (expectedEnd == driveEntry.billingHistory().back().End)
                     SetDriveState(driveEntry, context, state::DriveState::Pending);

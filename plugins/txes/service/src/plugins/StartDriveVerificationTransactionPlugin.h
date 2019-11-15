@@ -6,7 +6,7 @@
 
 #pragma once
 #include "catapult/plugins.h"
-#include "catapult/config/ImmutableConfiguration.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include <memory>
 
 namespace catapult { namespace model { class TransactionPlugin; } }
@@ -15,5 +15,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a start drive verification transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateStartDriveVerificationTransactionPlugin(const config::ImmutableConfiguration& config);
+	std::unique_ptr<model::TransactionPlugin> CreateStartDriveVerificationTransactionPlugin(const std::shared_ptr<config::BlockchainConfigurationHolder>& config);
 }}

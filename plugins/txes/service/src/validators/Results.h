@@ -95,17 +95,23 @@ namespace catapult { namespace validators {
     /// Validation failed because drive processed full duration.
     DEFINE_SERVICE_RESULT(Drive_Processed_Full_Duration, 27);
 
-    /// Validation failed because verification fee is less than required.
-    DEFINE_SERVICE_RESULT(Verification_Fee_Less_Than_Required, 28);
-
     /// Validation failed because verification is already in progress.
-    DEFINE_SERVICE_RESULT(Verification_Already_In_Progress, 29);
+    DEFINE_SERVICE_RESULT(Verification_Already_In_Progress, 28);
 
     /// Validation failed because verification has not started.
-    DEFINE_SERVICE_RESULT(Verification_Has_Not_Started, 30);
+    DEFINE_SERVICE_RESULT(Verification_Has_Not_Started, 29);
+
+    /// Validation failed because verification is not active.
+    DEFINE_SERVICE_RESULT(Verification_Is_Not_Active, 30);
+
+	/// Validation failed because verification has not timed out.
+	DEFINE_SERVICE_RESULT(Verification_Has_Not_Timed_Out, 31);
 
     /// Validation failed because drive is not in progress state.
-    DEFINE_SERVICE_RESULT(Drive_Is_Not_In_Progress, 31);
+    DEFINE_SERVICE_RESULT(Drive_Is_Not_In_Progress, 32);
+
+    /// Validation failed because initiatior of drive verification is not drive owner or replicator.
+    DEFINE_SERVICE_RESULT(Verification_Initiator_Is_Not_Drive_Owner_Or_Replicator, 33);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

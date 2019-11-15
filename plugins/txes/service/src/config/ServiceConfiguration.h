@@ -18,11 +18,8 @@ namespace catapult { namespace config {
 	    /// Max files on drive at the moment
 	    uint16_t MaxFilesOnDrive;
 
-	    /// Min verification fee in streaming units.
-	    Amount MinVerificationFee;
-
-	    /// Payment to replicator that failed verification.
-	    Amount FailedVerificationPayment;
+	    /// Verification fee in streaming units.
+	    Amount VerificationFee;
 
 	    /// Verification duration.
 	    BlockDuration VerificationDuration;

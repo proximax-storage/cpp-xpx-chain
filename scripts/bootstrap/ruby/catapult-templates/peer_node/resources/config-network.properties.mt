@@ -126,6 +126,6 @@ minUpgradePeriod = 360
 enabled = false
 
 maxFilesOnDrive = 32768
-minVerificationFee = 10
+verificationFee = 10
 failedVerificationPayment = 0
 verificationDuration = 240

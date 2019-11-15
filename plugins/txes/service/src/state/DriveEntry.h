@@ -23,9 +23,6 @@ namespace catapult { namespace state {
         /// Drive is active.
         InProgress,
 
-        /// Drive verification is in progress.
-        Verification,
-
         /// Drive is finished.
         Finished
     };
@@ -95,13 +92,6 @@ namespace catapult { namespace state {
 
 	/// The map where key is replicator and value is info.
 	using ReplicatorsMap = std::map<Key, ReplicatorInfo>;
-
-    struct VerificationInfo {
-        Key Replicator;
-        Amount Fee;
-    };
-
-    using VerificationMap = std::map<Height, VerificationInfo>;
 
 	// Mixin for storing drive details.
 	class DriveMixin {
@@ -257,20 +247,6 @@ namespace catapult { namespace state {
 			return m_replicators.end() != m_replicators.find(key);
 		}
 
-		/// Gets the drive verification history.
-		const VerificationMap& verificationHistory() const {
-			return m_verificationHistory;
-		}
-
-		/// Gets the drive verification history.
-		VerificationMap& verificationHistory() {
-			return m_verificationHistory;
-		}
-
-		void pruneVerificatioHistory(const Height& height) {
-			m_verificationHistory.erase(m_verificationHistory.begin(), m_verificationHistory.upper_bound(height));
-		}
-
 	private:
 	    DriveState m_state;
         Key m_owner;
@@ -286,7 +262,6 @@ namespace catapult { namespace state {
 		uint8_t m_percentApprovers;
 		FilesMap m_files;
 		ReplicatorsMap m_replicators;
-		VerificationMap m_verificationHistory;
 	};
 
 	// Drive entry.

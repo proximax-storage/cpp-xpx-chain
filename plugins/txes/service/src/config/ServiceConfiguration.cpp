@@ -19,13 +19,12 @@ namespace catapult { namespace config {
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 		LOAD_PROPERTY(MaxFilesOnDrive);
-		LOAD_PROPERTY(MinVerificationFee);
-		LOAD_PROPERTY(FailedVerificationPayment);
+		LOAD_PROPERTY(VerificationFee);
 		LOAD_PROPERTY(VerificationDuration);
 		LOAD_PROPERTY(Enabled);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 5);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
 		return config;
 	}
 }}

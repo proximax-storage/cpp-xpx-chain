@@ -24,10 +24,13 @@ namespace catapult { namespace model {
 	DEFINE_NOTIFICATION_TYPE(All, Service, Files_Deposit_v1, 0x0004);
 
 	/// Defines a start drive verification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Start_Drive_Verification_v1, 0x0005);
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Start_Drive_Verification_v1, 0x0005);
 
 	/// Defines an end drive verification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_Verification_v1, 0x0006);
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, End_Drive_Verification_v1, 0x0006);
+
+	/// Defines a drive verification payment notification type.
+	DEFINE_NOTIFICATION_TYPE(Observer, Service, Drive_Verification_Payment_v1, 0x0006);
 
 	/// Defines a drive notification type.
 	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0007);
@@ -245,45 +248,81 @@ namespace catapult { namespace model {
 	public:
 		explicit StartDriveVerificationNotification(
 			const Key& drive,
-			const Key& replicator,
-			const Amount& verificationFee)
+			const Key& initiator)
 			: Notification(Notification_Type, sizeof(StartDriveVerificationNotification<1>))
 			, DriveKey(drive)
-			, Replicator(replicator)
-			, VerificationFee(verificationFee)
+			, Initiator(initiator)
 		{}
 
 	public:
 		/// Public key of the drive multisig account.
 		Key DriveKey;
 
-		/// Replicator public key.
-		Key Replicator;
-
-		/// Verification fee.
-		Amount VerificationFee;
+		/// Verification initiator public key.
+		Key Initiator;
 	};
 
-	/// Notification of a drive verification.
+	/// Base notification of an end drive verification.
+	struct BaseEndDriveVerificationNotification : public Notification {
+	public:
+		explicit BaseEndDriveVerificationNotification(
+			NotificationType type,
+			const Key& drive,
+			uint16_t failureCount,
+			const VerificationFailure* pFailures)
+			: Notification(type, sizeof(BaseEndDriveVerificationNotification))
+			, DriveKey(drive)
+			, FailureCount(failureCount)
+			, FailuresPtr(pFailures)
+		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Count of verification failures.
+		uint16_t FailureCount;
+
+		/// Verification failures.
+		const VerificationFailure* FailuresPtr;
+	};
+
+	/// Notification of an end drive verification.
 	template<VersionType version>
 	struct EndDriveVerificationNotification;
 
 	template<>
-	struct EndDriveVerificationNotification<1> : public Notification {
+	struct EndDriveVerificationNotification<1> : public BaseEndDriveVerificationNotification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Service_End_Drive_Verification_v1_Notification;
 
 	public:
 		explicit EndDriveVerificationNotification(
-			const Key& drive)
-			: Notification(Notification_Type, sizeof(EndDriveVerificationNotification<1>))
-			, DriveKey(drive)
+			const Key& drive,
+			uint16_t failureCount,
+			const VerificationFailure* pFailures)
+			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailures)
 		{}
+	};
+
+	/// Notification of a drive verification payment.
+	template<VersionType version>
+	struct DriveVerificationPaymentNotification;
+
+	template<>
+	struct DriveVerificationPaymentNotification<1> : public BaseEndDriveVerificationNotification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_Drive_Verification_Payment_v1_Notification;
 
 	public:
-		/// Public key of the drive multisig account.
-		Key DriveKey;
+		explicit DriveVerificationPaymentNotification(
+			const Key& drive,
+			uint16_t failureCount,
+			const VerificationFailure* pFailures)
+			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailures)
+		{}
 	};
 
 	/// Notification of a drive.

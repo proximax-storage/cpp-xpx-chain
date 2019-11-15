@@ -9,7 +9,6 @@
 #include "catapult/model/EntityType.h"
 #include "src/model/ServiceEntityType.h"
 #include "plugins/txes/exchange/src/model/ExchangeTransaction.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
@@ -24,8 +23,6 @@ namespace catapult { namespace validators {
 		static std::unordered_set<model::EntityType> allowedTransactions({
 		   model::Entity_Type_DeleteReward,
 		   model::Entity_Type_EndDrive,
-		   model::Entity_Type_Start_Drive_Verification,
-		   model::Entity_Type_End_Drive_Verification,
 		   model::Entity_Type_Exchange,
 		});
 

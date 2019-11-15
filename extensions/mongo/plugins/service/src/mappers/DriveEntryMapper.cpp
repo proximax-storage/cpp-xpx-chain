@@ -99,20 +99,6 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			array << bson_stream::close_array;
 		}
-
-		void StreamVerificationHistory(bson_stream::document& builder, const state::VerificationMap& verificationHistory) {
-			auto array = builder << "verificationHistory" << bson_stream::open_array;
-			for (const auto& pair : verificationHistory) {
-				array
-						<< bson_stream::open_document
-						<< "endHeight" << ToInt64(pair.first)
-						<< "replicator" << ToBinary(pair.second.Replicator)
-						<< "fee" << ToInt64(pair.second.Fee)
-						<< bson_stream::close_document;
-			}
-
-			array << bson_stream::close_array;
-		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::DriveEntry& entry, const Address& accountAddress) {
@@ -134,7 +120,6 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamBillingHistory(builder, entry.billingHistory());
 		StreamFiles(builder, entry.files());
 		StreamReplicators(builder, entry.replicators());
-		StreamVerificationHistory(builder, entry.verificationHistory());
 
 		return doc
 				<< bson_stream::close_document
@@ -232,18 +217,6 @@ namespace catapult { namespace mongo { namespace plugins {
                 replicators.insert({ replicator, info });
             }
         }
-
-		void ReadVerificationHistory(state::VerificationMap& verificationHistory, const bsoncxx::array::view& dbVerificationHistory) {
-			for (const auto& dbVerification : dbVerificationHistory) {
-				auto doc = dbVerification.get_document().view();
-
-				auto height = Height(doc["height"].get_int64());
-                Key replicator;
-                DbBinaryToModelArray(replicator, doc["replicator"].get_binary());
-                auto fee = Amount(doc["amount"].get_int64());
-				verificationHistory.emplace(height, state::VerificationInfo{replicator, fee});
-			}
-		}
 	}
 
 	state::DriveEntry ToDriveEntry(const bsoncxx::document::view& document) {
@@ -273,7 +246,6 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadBillingHistory(entry.billingHistory(), dbDriveEntry["billingHistory"].get_array().value);
 		ReadFiles(entry.files(), dbDriveEntry["files"].get_array().value);
 		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
-		ReadVerificationHistory(entry.verificationHistory(), dbDriveEntry["verificationHistory"].get_array().value);
 
 		return entry;
 	}

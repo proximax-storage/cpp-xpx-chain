@@ -21,19 +21,19 @@ namespace catapult { namespace validators {
 
 			auto driveIter = driveCache.find(notification.DriveKey);
 			const auto &driveEntry = driveIter.get();
-			if (driveEntry.state() == state::DriveState::Verification)
-				return Failure_Service_Verification_Already_In_Progress;
-
 			if (driveEntry.state() != state::DriveState::InProgress)
 				return Failure_Service_Drive_Is_Not_In_Progress;
 
-			if (!driveEntry.replicators().count(notification.Replicator))
-				return Failure_Service_Drive_Replicator_Not_Registered;
+			bool verificationStarted;
+			bool verificationActive;
+			VerificationStatus(driveEntry, context, verificationStarted, verificationActive);
+			if (verificationActive)
+				return Failure_Service_Verification_Already_In_Progress;
+			if (verificationStarted)
+				return Failure_Service_Verification_Has_Not_Timed_Out;
 
-			const auto& config = pConfigHolder->Config(context.Height);
-			const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>(PLUGIN_NAME_HASH(service));
-			if (pluginConfig.MinVerificationFee > notification.VerificationFee)
-				return Failure_Service_Verification_Fee_Less_Than_Required;
+			if (driveEntry.owner() != notification.Initiator && !driveEntry.replicators().count(notification.Initiator))
+				return Failure_Service_Verification_Initiator_Is_Not_Drive_Owner_Or_Replicator;
 
 			return ValidationResult::Success;
 		});
