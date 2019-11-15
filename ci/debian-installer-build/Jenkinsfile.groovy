@@ -11,17 +11,17 @@ pipeline {
     environment {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
-        IMAGE = "proximax-sirius-peer-toolless"
+        IMAGE = "proximax-catapult-server"
         BUILD_IMAGE = "catapult-server-build-image:1.0"
     }
 
     stages {
-        stage('Build') {
+        stage ('Build') {
             steps {
                 echo 'Building catapult-server inside a docker'
                 script {
                     def buildImage = docker.image("${BUILD_IMAGE}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}") {
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                         buildImage.inside {
                             sh """
                                 echo 'Building catapult-server'
@@ -33,7 +33,6 @@ pipeline {
                                 make -j4
                                 cd ..
                                 ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
-                                rm -rf tools/*
                             """
                         }
                     }
@@ -41,21 +40,79 @@ pipeline {
             }
         }
 
+        stage('Unit Test') {
+            steps {
+                sh """
+                    echo 'Running unit tests'
+                    # Disable exit on non 0
+                    set +e
+                    cd _build
+                    # pipe to true to prevent exit failure
+                    ctest -T Test --no-compress-output || true
+                """
+            }
+            post {
+                always {
+                    xunit (
+                            thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
+                            tools: [ CTest(pattern: "_build/Testing/**/*.xml") ]
+                    )
+                }
+            }
+        }
 
         stage('Build and Publish Release Image') {
-
+            when {
+                tag "release-*"   // only run these stage in tag release-*
+            }
             steps {
                 echo 'Build and Publish Image'
                 script {
                     def newImage = docker.build("${IMAGE}")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}") {
-                        newImage.push("latest")
-                        // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                        newImage.push("${env.GIT_BRANCH}") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
                     }
                 }
             }
-
+            post {
+                success {
+                    slackSend channel: '#devops',
+                            color: 'good',
+                            message: "Release with Tag *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker image ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}"
+                }
+            }
         }
 
+        stage('Build and Publish Develop Image') {
+            when {
+                branch 'develop'  // only run this stage in the develop branch
+            }
+            steps {
+                echo 'Build and Publish Image'
+
+                script {
+                    def newImage = docker.build("${IMAGE}")
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
+                        newImage.push("develop-jenkins-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
+                        newImage.push("develop") // update Docker image develop
+                    }
+                }
+            }
+            post {
+                success {
+                    slackSend channel: '#devops',
+                            color: 'good',
+                            message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${DOCKER_REGISTRY}/${IMAGE}:develop-jenkins-build-${env.BUILD_NUMBER} and ${DOCKER_REGISTRY}/${IMAGE}:develop"
+                }
+            }
         }
     }
+
+    post {
+        failure {
+            slackSend channel: '#devops',
+                    color: 'bad',
+                    message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
+        }
+    }
+}

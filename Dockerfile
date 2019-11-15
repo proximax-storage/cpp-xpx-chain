@@ -6,6 +6,9 @@ COPY ./deps /
 # copy executables
 COPY ./_build/bin /catapult/bin
 
+# delete the Tools
+RUN rm /catapult/bin/catapult.tools.*
+
 # sirius.bc as the entry point
 ENTRYPOINT ["/catapult/bin/sirius.bc"]
 
