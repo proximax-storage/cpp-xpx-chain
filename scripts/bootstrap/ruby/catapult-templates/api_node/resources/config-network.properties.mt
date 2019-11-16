@@ -54,11 +54,10 @@ minPercentageOfRemoval = 66
 
 [plugin:catapult.plugins.exchange]
 
-enabled = false
+enabled = true
 
 maxOfferDuration = 57600
 longOfferKey = CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE
-enabledMosaics = 0x2651'4E2A'1EF3'3824, 0x6C5D'6875'08AC'9D75
 
 [plugin:catapult.plugins.lockhash]
 
@@ -123,6 +122,6 @@ minUpgradePeriod = 360
 
 [plugin:catapult.plugins.service]
 
-enabled = false
+enabled = true
 
 maxFilesOnDrive = 32768

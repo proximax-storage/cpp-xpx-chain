@@ -26,9 +26,6 @@ namespace catapult { namespace config {
 		/// offer duration exceeding MaxOfferDuration.
 		Key LongOfferKey;
 
-		/// Mosaic ids enabled for exchange.
-		std::unordered_set<MosaicId, utils::BaseValueHasher<MosaicId>> EnabledMosaics;
-
 	private:
 		ExchangeConfiguration() = default;
 

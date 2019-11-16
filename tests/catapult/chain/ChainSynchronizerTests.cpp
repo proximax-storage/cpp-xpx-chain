@@ -47,11 +47,11 @@ namespace catapult { namespace chain {
 		struct TestContext {
 		public:
 			TestContext(const ChainScore& localScore, const ChainScore& remoteScore)
-					: TestContext(localScore, remoteScore, {}, {}, test::GenerateBlockWithTransactions(0, Default_Height))
+					: TestContext(localScore, remoteScore, test::GenerateRandomHashes(1), test::GenerateRandomHashes(1), test::GenerateBlockWithTransactions(0, Default_Height))
 			{}
 
 			TestContext(const ChainScore& localScore, const ChainScore& remoteScore, model::UniqueEntityPtr<Block>&& pRemoteLastBlock)
-					: TestContext(localScore, remoteScore, {}, {}, std::move(pRemoteLastBlock))
+					: TestContext(localScore, remoteScore, test::GenerateRandomHashes(1), test::GenerateRandomHashes(1), std::move(pRemoteLastBlock))
 			{}
 
 			TestContext(

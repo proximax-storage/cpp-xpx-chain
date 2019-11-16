@@ -86,15 +86,24 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		void StreamReplicators(bson_stream::document& builder, const state::ReplicatorsMap & replicators) {
 			auto array = builder << "replicators" << bson_stream::open_array;
+
+			std::map<Height, std::map<Key, const state::ReplicatorInfo*>> sorter;
+
 			for (const auto& replicator : replicators) {
-				bson_stream::document replicatorBuilder;
-                replicatorBuilder
-                        << "replicator" << ToBinary(replicator.first)
-                        << "start" << ToInt64(replicator.second.Start)
-                        << "end" << ToInt64(replicator.second.End)
-                        << "deposit" << ToInt64(replicator.second.Deposit);
-                StreamFilesWithoutDeposit(replicatorBuilder, replicator.second.FilesWithoutDeposit);
-                array << replicatorBuilder;
+				sorter[replicator.second.Start][replicator.first] = &replicator.second;
+			}
+
+			for (const auto& replicatorHeight : sorter) {
+				for (const auto& replicator : replicatorHeight.second) {
+					bson_stream::document replicatorBuilder;
+					replicatorBuilder
+							<< "replicator" << ToBinary(replicator.first)
+							<< "start" << ToInt64(replicator.second->Start)
+							<< "end" << ToInt64(replicator.second->End)
+							<< "deposit" << ToInt64(replicator.second->Deposit);
+					StreamFilesWithoutDeposit(replicatorBuilder, replicator.second->FilesWithoutDeposit);
+					array << replicatorBuilder;
+				}
 			}
 
 			array << bson_stream::close_array;

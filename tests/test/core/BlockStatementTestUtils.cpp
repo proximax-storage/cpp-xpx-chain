@@ -112,6 +112,14 @@ namespace catapult { namespace test {
 			}
 		}
 
+		void AssertStatement(const model::PublicKeyStatement& lhs, const model::PublicKeyStatement& rhs, const std::string& message) {
+			ASSERT_EQ(lhs.size(), rhs.size()) << message;
+			for (auto i = 0u; i < lhs.size(); ++i) {
+				auto receiptMessage = message + " receipt " + std::to_string(i);
+				EXPECT_EQ(lhs.receiptAt(i), rhs.receiptAt(i)) << receiptMessage;
+			}
+		}
+
 		template<typename TStatement>
 		void AssertStatement(const TStatement& lhs, const TStatement& rhs, const std::string& message) {
 			ASSERT_EQ(lhs.size(), rhs.size()) << message;
@@ -142,6 +150,7 @@ namespace catapult { namespace test {
 		AssertStatements(expectedBlockStatement.TransactionStatements, blockStatement.TransactionStatements);
 		AssertStatements(expectedBlockStatement.AddressResolutionStatements, blockStatement.AddressResolutionStatements);
 		AssertStatements(expectedBlockStatement.MosaicResolutionStatements, blockStatement.MosaicResolutionStatements);
+		AssertStatements(expectedBlockStatement.PublicKeyStatements, blockStatement.PublicKeyStatements);
 
 		// Sanity:
 		EXPECT_EQ(model::CalculateMerkleHash(expectedBlockStatement), model::CalculateMerkleHash(blockStatement));

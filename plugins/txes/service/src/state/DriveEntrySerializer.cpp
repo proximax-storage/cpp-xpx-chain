@@ -148,6 +148,8 @@ namespace catapult { namespace state {
 		io::Write8(output, static_cast<uint8_t>(driveEntry.state()));
 		io::Write(output, driveEntry.owner());
 		io::Write(output, driveEntry.rootHash());
+		io::Write(output, driveEntry.start());
+		io::Write(output, driveEntry.end());
 		io::Write(output, driveEntry.duration());
 		io::Write(output, driveEntry.billingPeriod());
 		io::Write(output, driveEntry.billingPrice());
@@ -183,6 +185,8 @@ namespace catapult { namespace state {
 		input.read(rootHash);
 		entry.setRootHash(rootHash);
 
+		entry.setStart(Height(io::Read64(input)));
+		entry.setEnd(Height(io::Read64(input)));
 		entry.setDuration(BlockDuration(io::Read64(input)));
 		entry.setBillingPeriod(BlockDuration(io::Read64(input)));
 		entry.setBillingPrice(Amount(io::Read64(input)));

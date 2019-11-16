@@ -207,8 +207,8 @@ namespace catapult { namespace ionet {
 			using DataType = model::EntityRange<uint32_t>;
 
 			static auto CreateAppendData() {
-				auto buffer = test::GenerateRandomVector(3 * sizeof(uint32_t));
-				return model::EntityRange<uint32_t>::CopyFixed(buffer.data(), 3);
+				auto buffer = test::GenerateRandomVector(4 * sizeof(uint32_t));
+				return model::EntityRange<uint32_t>::CopyFixed(buffer.data(), 4);
 			}
 
 			static uint32_t GetDataSize(const DataType& range) {
@@ -527,7 +527,7 @@ namespace catapult { namespace ionet {
 
 	TEST(TEST_CLASS, CanAppendOverlaidFixedSizeRange) {
 		// Arrange:
-		auto rangeBuffer = test::GenerateRandomVector(3 * sizeof(uint32_t));
+		auto rangeBuffer = test::GenerateRandomVector(4 * sizeof(uint32_t));
 		PacketPayloadBuilder builder(PacketType::Chain_Info);
 		auto range = model::EntityRange<uint32_t>::CopyVariable(rangeBuffer.data(), rangeBuffer.size(), { 2, 6 });
 
@@ -608,8 +608,8 @@ namespace catapult { namespace ionet {
 		// Arrange:
 		PacketPayloadBuilder builder(PacketType::Chain_Info);
 
-		auto rangeBuffer = test::GenerateRandomVector(3 * sizeof(uint32_t));
-		auto valuesBuffer = test::GenerateRandomVector(3 * sizeof(uint32_t));
+		auto rangeBuffer = test::GenerateRandomVector(4 * sizeof(uint32_t));
+		auto valuesBuffer = test::GenerateRandomVector(4 * sizeof(uint32_t));
 		auto pEntity = MakeEntityWithSize(124);
 
 		// Act:
