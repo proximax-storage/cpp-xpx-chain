@@ -608,8 +608,8 @@ namespace catapult { namespace ionet {
 		// Arrange:
 		PacketPayloadBuilder builder(PacketType::Chain_Info);
 
-		auto rangeBuffer = test::GenerateRandomVector(4 * sizeof(uint32_t));
-		auto valuesBuffer = test::GenerateRandomVector(4 * sizeof(uint32_t));
+		auto rangeBuffer = test::GenerateRandomVector(3 * sizeof(uint32_t));
+		auto valuesBuffer = test::GenerateRandomVector(3 * sizeof(uint32_t));
 		auto pEntity = MakeEntityWithSize(124);
 
 		// Act:

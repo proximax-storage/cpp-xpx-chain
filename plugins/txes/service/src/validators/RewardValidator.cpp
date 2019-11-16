@@ -30,10 +30,6 @@ namespace catapult { namespace validators {
 		for (auto i = 0u; i < notification.DeletedFile->InfosCount(); ++i, ++pInfo) {
 		    if (!driveEntry.hasReplicator(pInfo->Participant) && driveEntry.owner() != pInfo->Participant)
 		        return Failure_Service_Participant_It_Not_Part_Of_Drive;
-
-		    if(driveEntry.hasReplicator(pInfo->Participant)
-		       && driveEntry.replicators().at(pInfo->Participant).FilesWithoutDeposit.count(notification.DeletedFile->FileHash))
-		        return Failure_Service_Replicator_Didnt_Put_Deposit;
 		}
 
 		return ValidationResult::Success;

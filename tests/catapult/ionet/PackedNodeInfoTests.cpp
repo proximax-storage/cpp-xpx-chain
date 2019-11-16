@@ -32,7 +32,7 @@ namespace catapult { namespace ionet {
 
 	TEST(TEST_CLASS, PackedConnectionStateHasExpectedSize) {
 		// Arrange:
-		auto expectedSize = sizeof(ServiceIdentifier) + 4 * sizeof(uint32_t);
+		auto expectedSize = sizeof(ServiceIdentifier) + 3 * sizeof(uint32_t);
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(PackedConnectionState));

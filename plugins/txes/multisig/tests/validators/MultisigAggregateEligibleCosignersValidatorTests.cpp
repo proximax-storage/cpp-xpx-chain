@@ -55,7 +55,7 @@ namespace catapult { namespace validators {
 			auto* pTransactions = reinterpret_cast<model::EmbeddedTransaction*>(txBuffer.data());
 			for (auto i = 0u; i < embeddedSigners.size(); ++i) {
 				auto& transaction = pTransactions[i];
-				transaction.Type = static_cast<model::EntityType>(0xFFFF);
+                transaction.Type = mocks::MockTransaction::Entity_Type;
 				transaction.Size = sizeof(model::EmbeddedTransaction);
 				transaction.Signer = embeddedSigners[i];
 			}
