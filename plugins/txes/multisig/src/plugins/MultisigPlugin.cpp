@@ -61,7 +61,7 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
-			auto multisigCache = cache.template sub<cache::MultisigCache>();
+			const auto& multisigCache = cache.template sub<cache::MultisigCache>();
 			auto result = model::PublicKeySet{ key };
 			extractCosigners(multisigCache, key, result);
 

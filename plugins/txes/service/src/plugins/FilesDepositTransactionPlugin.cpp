@@ -32,6 +32,7 @@ namespace catapult { namespace plugins {
 							transaction.FilesCount,
 							transaction.FilesPtr()
 						));
+						sub.notify(AccountPublicKeyNotification<1>(transaction.DriveKey));
 
 						auto filesPtr = transaction.FilesPtr();
 						auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, blockChainConfig.Immutable.NetworkIdentifier));

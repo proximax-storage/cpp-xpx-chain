@@ -18,13 +18,21 @@ namespace catapult { namespace config {
 		ServiceConfiguration config;
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
-		LOAD_PROPERTY(MaxFilesOnDrive);
-		LOAD_PROPERTY(VerificationFee);
-		LOAD_PROPERTY(VerificationDuration);
 		LOAD_PROPERTY(Enabled);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
+#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
+
+        config.MaxFilesOnDrive = 32768;
+        TRY_LOAD_CHAIN_PROPERTY(MaxFilesOnDrive);
+        config.VerificationFee = Amount(10);
+        TRY_LOAD_CHAIN_PROPERTY(VerificationFee);
+        config.VerificationDuration = BlockDuration(240);
+		TRY_LOAD_CHAIN_PROPERTY(VerificationDuration);
+
+#undef TRY_LOAD_CHAIN_PROPERTY
+
+//		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
 		return config;
 	}
 }}

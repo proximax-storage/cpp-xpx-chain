@@ -20,15 +20,6 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 			case 1: {
-				sub.notify(ModifyMultisigNewCosignerNotification<1>(transaction.Signer, transaction.Owner));
-				// We need to inform user that he is created drive
-				sub.notify(AccountPublicKeyNotification<1>(transaction.Owner));
-
-				// TODO: Fix memory leak
-				auto modification = new CosignatoryModification{ model::CosignatoryModificationType::Add, transaction.Owner };
-				sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, 1, modification));
-                sub.notify(ModifyMultisigSettingsNotification<1>(transaction.Signer, 1, 1));
-
 				sub.notify(PrepareDriveNotification<1>(
 					transaction.Signer,
 					transaction.Owner,

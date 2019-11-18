@@ -104,9 +104,6 @@ namespace catapult { namespace validators {
 	/// Validation failed because the participant is not part of drive.
 	DEFINE_SERVICE_RESULT(Participant_It_Not_Part_Of_Drive, 30);
 
-	/// Validation failed because the replicator didn't put deposit for file.
-	DEFINE_SERVICE_RESULT(Replicator_Didnt_Put_Deposit, 31);
-
 	/// Validation failed because zero deleted files.
 	DEFINE_SERVICE_RESULT(Zero_Deleted_Files, 32);
 

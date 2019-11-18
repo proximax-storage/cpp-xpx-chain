@@ -25,6 +25,18 @@
 
 namespace catapult { namespace plugins {
 
+	namespace {
+		void extractOwner(const cache::DriveCache::CacheReadOnlyType& cache, const Key& publicKey, model::PublicKeySet& result) {
+			if (!cache.contains(publicKey)) {
+				return;
+			}
+
+			auto driveIter = cache.find(publicKey);
+			const auto& driveEntry = driveIter.get();
+			result.insert(driveEntry.owner());
+		}
+	}
+
 	void RegisterServiceSubsystem(PluginManager& manager) {
         const auto& pConfigHolder = manager.configHolder();
         const auto& immutableConfig = manager.immutableConfig();
@@ -36,6 +48,14 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDeleteRewardTransactionPlugin());
 		manager.addTransactionSupport(CreateStartDriveVerificationTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig.NetworkIdentifier));
+
+		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
+			const auto& driveCache = cache.template sub<cache::DriveCache>();
+			auto result = model::PublicKeySet{ key };
+			extractOwner(driveCache, key, result);
+
+			return result;
+		});
 
         manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
             const auto& driveCache = cache.template sub<cache::DriveCache>();

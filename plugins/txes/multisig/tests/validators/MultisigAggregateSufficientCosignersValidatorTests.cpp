@@ -63,6 +63,7 @@ namespace catapult { namespace validators {
 
 		auto CreateEmbeddedTransaction(const Key& signer) {
 			auto pTransaction = std::make_unique<model::EmbeddedTransaction>();
+			pTransaction->Type = mocks::MockTransaction::Entity_Type;
 			pTransaction->Signer = signer;
 			return pTransaction;
 		}

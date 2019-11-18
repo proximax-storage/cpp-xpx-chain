@@ -71,6 +71,14 @@ namespace catapult { namespace config {
 				};
 			}
 
+			static bool SupportsUnknownProperties() {
+				return false;
+			}
+
+			static bool IsPropertyOptional(const std::string&) {
+				return false;
+			}
+
 			static bool IsSectionOptional(const std::string& section) {
 				return "console.component.levels" == section || "file.component.levels" == section;
 			}

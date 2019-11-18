@@ -35,6 +35,7 @@ namespace catapult { namespace plugins {
 							transaction.RemoveActionsCount,
 							transaction.RemoveActionsPtr()
 						));
+						sub.notify(AccountPublicKeyNotification<1>(transaction.DriveKey));
 
 						auto addActionsPtr = transaction.AddActionsPtr();
 						auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, blockChainConfig.Immutable.NetworkIdentifier));

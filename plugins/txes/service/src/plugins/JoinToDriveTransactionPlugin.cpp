@@ -28,7 +28,7 @@ namespace catapult { namespace plugins {
 						sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 						sub.notify(ModifyMultisigNewCosignerNotification<1>(transaction.DriveKey, transaction.Signer));
 						// We need to inform user that replicator added to multisig
-						sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
+                        sub.notify(AccountPublicKeyNotification<1>(transaction.DriveKey));
 
 						// TODO: Fix memory leak
 						auto modification = new CosignatoryModification{model::CosignatoryModificationType::Add,

@@ -270,16 +270,16 @@ namespace catapult { namespace state {
 	private:
 		Height m_start;
 		Height m_end;
-	    DriveState m_state;
-        Key m_owner;
-        Hash256 m_rootHash;
+		DriveState m_state;
+		Key m_owner;
+		Hash256 m_rootHash;
 		BlockDuration m_duration;
 		BlockDuration m_billingPeriod;
 		Amount m_billingPrice;
 		std::vector<BillingPeriodDescription> m_billingHistory;
 		uint64_t m_size;
-        uint16_t m_replicas;
-        uint16_t m_minReplicators;
+		uint16_t m_replicas;
+		uint16_t m_minReplicators;
 		// Percent 0-100
 		uint8_t m_percentApprovers;
 		FilesMap m_files;

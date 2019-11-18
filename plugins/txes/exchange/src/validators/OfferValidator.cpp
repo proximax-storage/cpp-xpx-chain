@@ -20,7 +20,6 @@ namespace catapult { namespace validators {
 			const auto& config = pConfigHolder->Config(context.Height);
 			const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
 
-			auto allowedMosaicIds = pluginConfig.EnabledMosaics;
 			std::set<MosaicId> offeredMosaicIds;
 			auto* pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
@@ -42,7 +41,7 @@ namespace catapult { namespace validators {
 				if (pOffer->Cost == Amount(0))
 					return Failure_Exchange_Zero_Price;
 
-				if (!allowedMosaicIds.count(mosaicId))
+				if (mosaicId == config.Immutable.CurrencyMosaicId)
 					return Failure_Exchange_Mosaic_Not_Allowed;
 			}
 
