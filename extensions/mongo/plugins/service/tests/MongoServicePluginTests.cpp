@@ -22,8 +22,6 @@ namespace catapult { namespace mongo { namespace plugins {
 					model::Entity_Type_DriveFileSystem,
 					model::Entity_Type_JoinToDrive,
 					model::Entity_Type_FilesDeposit,
-					model::Entity_Type_Start_Drive_Verification,
-					model::Entity_Type_End_Drive_Verification,
 					model::Entity_Type_EndDrive,
 					model::Entity_Type_DeleteReward,
 				};
