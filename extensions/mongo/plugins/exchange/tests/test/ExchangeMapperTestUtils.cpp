@@ -66,7 +66,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(6u, test::GetFieldCount(dbExchangeEntry));
 
 		EXPECT_EQ(entry.owner(), GetKeyValue(dbExchangeEntry, "owner"));
-		EXPECT_EQ(address, test::GetAddressValue(dbContract, "ownerAddress"));
+		EXPECT_EQ(address, test::GetAddressValue(dbExchangeEntry, "ownerAddress"));
 
 		AssertBuyOffers(entry.buyOffers(), dbExchangeEntry["buyOffers"].get_array().value);
 		AssertSellOffers(entry.sellOffers(), dbExchangeEntry["sellOffers"].get_array().value);

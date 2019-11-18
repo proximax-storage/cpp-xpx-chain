@@ -91,7 +91,7 @@ namespace catapult { namespace model {
 		auto dataBuffer = test::GenerateRandomVector(123);
 
 		// Act + Assert:
-		auto algorithm = static_cast<LockHashAlgorithm>(utils::to_underlying_type(LockHashAlgorithm::Op_Hash_256) + 1);
+		auto algorithm = static_cast<LockHashAlgorithm>(utils::to_underlying_type(LockHashAlgorithm::Op_Internal) + 1);
 		EXPECT_THROW(CalculateHash(algorithm, dataBuffer), catapult_invalid_argument);
 	}
 
