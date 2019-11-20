@@ -266,9 +266,17 @@ namespace catapult { namespace chain {
 			// in case that there are no unprocessed elements in the disruptor, we do a normal synchronization round
 			// else we bypass chain comparison and expand the existing chain part by pulling more blocks
 			thread::future<CompareChainsResult> compareChains(const RemoteApiType& remoteChainApi) {
-				const auto& config = m_state.config();
-				if (m_pUnprocessedElements->empty())
+				if (m_pUnprocessedElements->empty()) {
+					const auto& config = m_state.config();
+					if (config.Node.MaxBlocksPerSyncAttempt + 1 < config.Network.MaxRollbackBlocks) {
+						CompareChainsResult result;
+						result.Code = ChainComparisonCode::Max_Blocks_Per_Sync_Attempt_Is_Less_Than_Max_Rollback_Blocks_Minus_One;
+						result.CommonBlockHeight = Height(0);
+						result.ForkDepth = 0;
+						return thread::make_ready_future(std::move(result));
+					}
 					return CompareChains(*m_pLocalChainApi, remoteChainApi, CompareChainsOptions(config.Node.MaxBlocksPerSyncAttempt, config.Network.MaxRollbackBlocks));
+				}
 
 				CompareChainsResult result;
 				result.Code = ChainComparisonCode::Remote_Is_Not_Synced;
