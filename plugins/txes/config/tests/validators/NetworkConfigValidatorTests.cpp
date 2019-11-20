@@ -14,6 +14,7 @@
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
+#include <boost/algorithm/string/replace.hpp>
 
 namespace catapult { namespace validators {
 
@@ -64,6 +65,7 @@ namespace catapult { namespace validators {
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager(uint64_t maxBlockChainConfigSizeMb, uint64_t maxSupportedEntityVersionsSizeMb) {
 			test::MutableBlockchainConfiguration config;
+			config.Immutable.InitialCurrencyAtomicUnits = Amount(100);
 			auto pluginConfig = config::NetworkConfigConfiguration::Uninitialized();
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
 			pluginConfig.MaxSupportedEntityVersionsSize = utils::FileSize::FromMegabytes(maxSupportedEntityVersionsSizeMb);
@@ -165,6 +167,36 @@ namespace catapult { namespace validators {
 			1,
 			1,
 			true);
+	}
+
+	TEST(TEST_CLASS, FailureWhenImportanceGroupingInvalid) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "importanceGrouping = 5760", "importanceGrouping = 100");
+		// Assert:
+		RunTest(
+			Failure_NetworkConfig_ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks,
+			networkConfig,
+			test::GetSupportedEntityVersionsString());
+	}
+
+	TEST(TEST_CLASS, FailureWhenHarvestBeneficiaryPercentageInvalid) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "harvestBeneficiaryPercentage = 10", "harvestBeneficiaryPercentage = 150");
+		// Assert:
+		RunTest(
+			Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hunderd,
+			networkConfig,
+			test::GetSupportedEntityVersionsString());
+	}
+
+	TEST(TEST_CLASS, FailureWhenMaxMosaicAtomicUnitsInvalid) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "maxMosaicAtomicUnits = 9'000'000'000'000'000", "maxMosaicAtomicUnits = 10");
+		// Assert:
+		RunTest(
+			Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid,
+			networkConfig,
+			test::GetSupportedEntityVersionsString());
 	}
 
 	TEST(TEST_CLASS, FailureWhenBlockChainConfigInvalid) {
