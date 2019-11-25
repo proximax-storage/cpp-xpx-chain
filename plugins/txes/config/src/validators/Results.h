@@ -50,6 +50,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because sum of InitialCurrencyAtomicUnits and inflation exceeds MaxMosaicAtomicUnits.
 	DEFINE_CATAPULT_CONFIG_RESULT(MaxMosaicAtomicUnits_Invalid, 12);
 
+	/// Validation failed because ApplyHeightDelta is zero.
+	DEFINE_CATAPULT_CONFIG_RESULT(ApplyHeightDelta_Zero, 13);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

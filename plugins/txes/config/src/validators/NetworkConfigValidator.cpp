@@ -19,6 +19,9 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(NetworkConfig, Notification)(const plugins::PluginManager& pluginManager) {
 		return MAKE_STATEFUL_VALIDATOR(NetworkConfig, ([&pluginManager](const Notification& notification, const ValidatorContext& context) {
+			if (BlockDuration(0) == notification.ApplyHeightDelta)
+				return Failure_NetworkConfig_ApplyHeightDelta_Zero;
+
 			const auto& currentBlockChainConfig = pluginManager.configHolder()->Config(context.Height);
 			const auto& pluginConfig = currentBlockChainConfig.Network.GetPluginConfiguration<config::NetworkConfigConfiguration>(PLUGIN_NAME_HASH(config));
 			if (notification.BlockChainConfigSize > pluginConfig.MaxBlockChainConfigSize.bytes32())

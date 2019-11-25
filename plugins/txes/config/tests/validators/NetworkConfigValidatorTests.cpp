@@ -91,10 +91,11 @@ namespace catapult { namespace validators {
 				const std::string& networkConfig,
 				const std::string& supportedEntityVersions,
 				std::shared_ptr<plugins::PluginManager> pPluginManager,
-				cache::CatapultCache& cache) {
+				cache::CatapultCache& cache,
+				BlockDuration applyHeightDelta = BlockDuration(10)) {
 			// Arrange:
 			model::NetworkConfigNotification<1> notification(
-				BlockDuration(),
+				applyHeightDelta,
 				networkConfig.size(),
 				reinterpret_cast<const uint8_t*>(networkConfig.data()),
 				supportedEntityVersions.size(),
@@ -114,16 +115,17 @@ namespace catapult { namespace validators {
 				const std::string& supportedEntityVersions,
 				uint64_t maxBlockChainConfigSizeMb = 1,
 				uint64_t maxSupportedEntityVersionsSizeMb = 1,
-				bool seedConfigCache = false) {
+				bool seedConfigCache = false,
+				BlockDuration applyHeightDelta = BlockDuration(10)) {
 			auto pPluginManager = CreatePluginManager(maxBlockChainConfigSizeMb, maxSupportedEntityVersionsSizeMb);
 			auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
 			if (seedConfigCache) {
 				auto delta = cache.createDelta();
 				auto& configCacheDelta = delta.sub<cache::NetworkConfigCache>();
-				configCacheDelta.insert(state::NetworkConfigEntry(Height(1), "BlockChainConfig", "SupportedEntityVersionsConfig"));
+				configCacheDelta.insert(state::NetworkConfigEntry(Height(1 + applyHeightDelta.unwrap()), "BlockChainConfig", "SupportedEntityVersionsConfig"));
 				cache.commit(Height(1));
 			}
-			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache);
+			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache, applyHeightDelta);
 		}
 
 		void RunTestWithRealPlugins(
@@ -136,6 +138,18 @@ namespace catapult { namespace validators {
 			auto cache = pPluginManager->createCache();
 			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache);
 		}
+	}
+
+	TEST(TEST_CLASS, FailureWhenApplyHeightDeltaIsZero) {
+		// Assert:
+		RunTest(
+			Failure_NetworkConfig_ApplyHeightDelta_Zero,
+			networkConfigWithPlugin,
+			test::GetSupportedEntityVersionsString(),
+			1,
+			1,
+			false,
+			BlockDuration(0));
 	}
 
 	TEST(TEST_CLASS, FailureWhenBlockChainConfigTooBig) {
@@ -158,7 +172,7 @@ namespace catapult { namespace validators {
 			0);
 	}
 
-	TEST(TEST_CLASS, FailureNetworkConfigExistsAtHeight) {
+	TEST(TEST_CLASS, FailureWhenNetworkConfigExistsAtHeight) {
 		// Assert:
 		RunTest(
 			Failure_NetworkConfig_Config_Redundant,

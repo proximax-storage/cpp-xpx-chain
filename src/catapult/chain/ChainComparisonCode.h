@@ -43,9 +43,6 @@ namespace catapult { namespace chain {
 	/* Local node has a zero hashes. */ \
 	ENUM_VALUE(Local_Hashes_Is_Zero, 4) \
 	\
-	/* MaxBlocksPerSyncAttempt is less than MaxRollbackBlocks minus one. */ \
-	ENUM_VALUE(Max_Blocks_Per_Sync_Attempt_Is_Less_Than_Max_Rollback_Blocks_Minus_One, 5) \
-	\
 	/* Remote node is too far behind the local node. */ \
 	ENUM_VALUE(Remote_Is_Too_Far_Behind, Remote_Is_Out_Of_Sync_Flag | 1) \
 	\
