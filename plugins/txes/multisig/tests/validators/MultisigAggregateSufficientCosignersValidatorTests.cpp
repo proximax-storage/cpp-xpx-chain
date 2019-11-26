@@ -19,8 +19,11 @@
 **/
 
 #include "src/validators/Validators.h"
+#include "src/plugins/ModifyMultisigAccountTransactionPlugin.h"
+#include "catapult/model/TransactionPlugin.h"
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/MultisigTestUtils.h"
+#include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -28,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MultisigAggregateSufficientCosignersValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MultisigAggregateSufficientCosigners,)
+    DEFINE_COMMON_VALIDATOR_TESTS(MultisigAggregateSufficientCosigners, model::TransactionRegistry())
 
 	namespace {
 		void AssertValidationResult(
@@ -40,9 +43,16 @@ namespace catapult { namespace validators {
 			// Arrange: setup cosignatures
 			auto cosignatures = test::GenerateCosignaturesFromCosigners(cosigners);
 
-			using Notification = model::AggregateEmbeddedTransactionNotification<1>;
+            // - use a registry with mock and multilevel multisig transactions registered
+            //   mock is used to test default behavior
+            //   multilevel multisig is used to test transactions with custom approval requirements
+            model::TransactionRegistry transactionRegistry;
+            transactionRegistry.registerPlugin(mocks::CreateMockTransactionPlugin(mocks::PluginOptionFlags::Not_Top_Level));
+            transactionRegistry.registerPlugin(plugins::CreateModifyMultisigAccountTransactionPlugin());
+
+            using Notification = model::AggregateEmbeddedTransactionNotification<1>;
 			Notification notification(signer, subTransaction, cosignatures.size(), cosignatures.data());
-			auto pValidator = CreateMultisigAggregateSufficientCosignersValidator();
+			auto pValidator = CreateMultisigAggregateSufficientCosignersValidator(transactionRegistry);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache);
@@ -53,6 +63,7 @@ namespace catapult { namespace validators {
 
 		auto CreateEmbeddedTransaction(const Key& signer) {
 			auto pTransaction = std::make_unique<model::EmbeddedTransaction>();
+			pTransaction->Type = mocks::MockTransaction::Entity_Type;
 			pTransaction->Signer = signer;
 			return pTransaction;
 		}

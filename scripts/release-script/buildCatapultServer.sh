@@ -12,6 +12,7 @@ make \
     catapult.mongo.plugins.aggregate \
     catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
+    catapult.mongo.plugins.exchange \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.metadata \
@@ -26,6 +27,7 @@ make \
     catapult.plugins.aggregate \
     catapult.plugins.config \
     catapult.plugins.contract \
+    catapult.plugins.exchange \
     catapult.plugins.hashcache \
     catapult.plugins.hashcache.cache \
     catapult.plugins.lockhash \

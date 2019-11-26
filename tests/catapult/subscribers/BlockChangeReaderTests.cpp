@@ -40,7 +40,7 @@ namespace catapult { namespace subscribers {
 		}
 
 		std::vector<uint8_t> CreateSerializedDataBuffer(const model::Block& block, bool includeStatements) {
-			std::vector<uint8_t> buffer(1 + Empty_Block_Element_Size + 1 + (includeStatements ? 3 * sizeof(uint32_t) : 0), 0);
+			std::vector<uint8_t> buffer(1 + Empty_Block_Element_Size + 1 + (includeStatements ? 4 * sizeof(uint32_t) : 0), 0);
 			buffer[0] = utils::to_underlying_type(BlockChangeOperationType::Block);
 			std::memcpy(&buffer[1], &block, block.Size);
 			buffer[1 + Empty_Block_Element_Size] = includeStatements ? 0xFF : 0;

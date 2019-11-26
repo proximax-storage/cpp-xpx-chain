@@ -26,6 +26,7 @@
 #include "catapult/thread/FutureUtils.h"
 #include "catapult/utils/SpinLock.h"
 #include <queue>
+#include <limits>
 
 namespace catapult { namespace chain {
 
@@ -186,12 +187,19 @@ namespace catapult { namespace chain {
 		}
 
 		NodeInteractionFuture ChainBlocksFrom(
-				const std::function<thread::future<model::BlockRange>(Height)>& futureSupplier,
+				const api::RemoteChainApi& remoteChainApi,
+				api::BlocksFromOptions options,
+				uint32_t maxBlocks,
 				Height height,
 				uint64_t forkDepth,
 				const std::shared_ptr<RangeAggregator>& pRangeAggregator,
 				UnprocessedElements& unprocessedElements) {
-			return thread::compose(futureSupplier(height), [futureSupplier, forkDepth, pRangeAggregator, &unprocessedElements](
+			auto remainingBlocks = maxBlocks - pRangeAggregator->numBlocks();
+			if (options.NumBlocks > remainingBlocks) {
+				options.NumBlocks = remainingBlocks;
+			}
+			auto futureSupplier = CreateFutureSupplier(remoteChainApi, options);
+			return thread::compose(futureSupplier(height), [&remoteChainApi, options, maxBlocks, forkDepth, pRangeAggregator, &unprocessedElements](
 					auto&& blocksFuture) {
 				try {
 					auto range = blocksFuture.get();
@@ -209,11 +217,12 @@ namespace catapult { namespace chain {
 							<< " blocks (heights " << range.cbegin()->Height << " - " << endHeight << ")";
 
 					pRangeAggregator->add(std::move(range));
-					if (forkDepth <= pRangeAggregator->numBlocks())
+					auto numBlocks = pRangeAggregator->numBlocks();
+					if (forkDepth <= numBlocks || maxBlocks <= numBlocks)
 						return CompleteChainBlocksFrom(*pRangeAggregator, unprocessedElements);
 
 					auto nextHeight = endHeight + Height(1);
-					return ChainBlocksFrom(futureSupplier, nextHeight, forkDepth, pRangeAggregator, unprocessedElements);
+					return ChainBlocksFrom(remoteChainApi, options, maxBlocks, nextHeight, forkDepth, pRangeAggregator, unprocessedElements);
 				} catch (const catapult_runtime_error& e) {
 					CATAPULT_LOG(warning) << "exception thrown while requesting blocks: " << e.what();
 					return thread::make_ready_future(ionet::NodeInteractionResultCode::Failure);
@@ -290,15 +299,48 @@ namespace catapult { namespace chain {
 					return thread::make_ready_future(std::move(code));
 				}
 
-				CATAPULT_LOG(debug)
-						<< "pulling blocks from remote with common height " << compareResult.CommonBlockHeight
-						<< " (fork depth = " << compareResult.ForkDepth << ")";
-				return ChainBlocksFrom(
-						CreateFutureSupplier(remoteChainApi, m_blocksFromOptions),
-						compareResult.CommonBlockHeight + Height(1),
-						compareResult.ForkDepth,
-						std::make_shared<RangeAggregator>(remoteChainApi.remotePublicKey()),
-						*m_pUnprocessedElements);
+				auto networkConfigFuture = thread::make_ready_future(model::EntityRange<model::CacheEntryInfo<Height>>());
+				if (m_blocksFromOptions.NumBlocks > 1) {
+					std::vector<Height> heights;
+					for (auto i = 2u; i <= m_blocksFromOptions.NumBlocks; ++i)
+						heights.push_back(compareResult.CommonBlockHeight + Height(i));
+					auto heightRange = model::EntityRange<Height>::CopyFixed(reinterpret_cast<uint8_t*>(heights.data()), heights.size());
+					networkConfigFuture = remoteChainApi.networkConfigs(std::move(heightRange));
+				}
+				return thread::compose(std::move(networkConfigFuture), [this, &remoteChainApi, compareResult](auto&& configFuture) {
+					try {
+						Height configHeight;
+						model::EntityRange<model::CacheEntryInfo<Height>> configEntryRange = configFuture.get();
+						for (auto iter = configEntryRange.cbegin(); iter != configEntryRange.cend(); ++iter) {
+							if (iter->DataSize) {
+								configHeight = iter->Id;
+								break;
+							}
+						}
+
+						auto commonBlockHeight = compareResult.CommonBlockHeight;
+						auto maxBlocks = std::numeric_limits<uint32_t>::max();
+						if (Height(0) != configHeight) {
+							maxBlocks = (configHeight - commonBlockHeight).unwrap() - 1;
+						}
+
+						CATAPULT_LOG(debug)
+								<< "pulling blocks from remote with common height " << commonBlockHeight
+								<< " (fork depth = " << compareResult.ForkDepth << ")";
+
+						return ChainBlocksFrom(
+							remoteChainApi,
+							m_blocksFromOptions,
+							maxBlocks,
+							commonBlockHeight + Height(1),
+							compareResult.ForkDepth,
+							std::make_shared<RangeAggregator>(remoteChainApi.remotePublicKey()),
+							*m_pUnprocessedElements);
+					} catch (const catapult_runtime_error& e) {
+						CATAPULT_LOG(warning) << "exception thrown while requesting network configs: " << e.what();
+						return thread::make_ready_future(ionet::NodeInteractionResultCode::Failure);
+					}
+				});
 			}
 
 		private:

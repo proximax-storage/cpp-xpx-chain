@@ -243,7 +243,7 @@ namespace catapult { namespace local {
 				model::BlockStatementBuilder blockStatementBuilder;
 				auto currencyMosaicId = test::Default_Currency_Mosaic_Id;
 				model::BalanceChangeReceipt receipt(model::Receipt_Type_Harvest_Fee, block.Signer, currencyMosaicId, totalFee);
-				blockStatementBuilder.addReceipt(receipt);
+				blockStatementBuilder.addTransactionReceipt(receipt);
 
 				auto pStatement = blockStatementBuilder.build();
 				return model::CalculateMerkleHash(*pStatement);

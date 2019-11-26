@@ -34,6 +34,9 @@ namespace catapult { namespace test {
 	/// Generates a uint8_t random number.
 	uint8_t RandomByte();
 
+	/// Generates a uint16_t random number.
+	uint16_t Random16();
+
 	/// Generates random array data.
 	template<size_t N>
 	std::array<uint8_t, N> GenerateRandomArray() {

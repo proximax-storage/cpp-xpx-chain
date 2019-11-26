@@ -8,30 +8,146 @@
 #include "catapult/types.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/utils/ArraySet.h"
-#include <vector>
+#include <map>
 
 namespace catapult { namespace state {
 
-	/// The map where key is hash of the deposited file and value is deposit mosaic.
-	/// Empty hash if the deposit is made for the drive.
-	using DepositMap = std::unordered_map<Hash256, model::UnresolvedMosaic, utils::ArrayHasher<Hash256>>;
-	using ContractorDepositMap = std::unordered_map<Key, DepositMap, utils::ArrayHasher<Key>>;
+    /// Drive state.
+    enum class DriveState : uint8_t {
+        /// Drive is not started.
+        NotStarted,
+
+        /// Drive is pending for storage units.
+        Pending,
+
+        /// Drive is active.
+        InProgress,
+
+        /// Drive is finished.
+        Finished
+    };
+
+    struct PaymentInformation {
+        Key Receiver;
+        catapult::Amount Amount;
+        catapult::Height Height;
+    };
+
+    struct BillingPeriodDescription {
+        Height Start;
+        Height End;
+
+        std::vector<PaymentInformation> Payments;
+    };
+
+    /// Drive action.
+    enum class DriveActionType : uint8_t {
+        Add,
+        Remove
+    };
+
+    struct DriveAction {
+        DriveActionType Type;
+        Height ActionHeight;
+    };
+
+	struct FileInfo {
+		uint64_t Size;
+        Amount Deposit;
+
+		bool isActive() const {
+			return Actions.back().Type == DriveActionType::Add;
+		}
+
+		std::vector<DriveAction> Actions;
+        std::vector<PaymentInformation> Payments;
+	};
+
+	/// The map where key is hash of the file and value is file info.
+	using FilesMap = std::map<Hash256, FileInfo>;
+
+	struct ReplicatorInfo {
+		Height Start;
+		Height End;
+		Amount Deposit;
+
+        bool isActive() const {
+            return End.unwrap() == 0;
+        }
+
+        void IncrementUndepositedFileCounter(const Hash256& file) {
+            ++FilesWithoutDeposit[file];
+        }
+
+        void DecrementUndepositedFileCounter(const Hash256& file) {
+            auto result = --FilesWithoutDeposit[file];
+
+            if (!result)
+                FilesWithoutDeposit.erase(file);
+        }
+
+		/// Set of files without deposit
+        std::map<Hash256, uint16_t> FilesWithoutDeposit;
+	};
+
+	/// The map where key is replicator and value is info.
+	using ReplicatorsMap = std::map<Key, ReplicatorInfo>;
 
 	// Mixin for storing drive details.
 	class DriveMixin {
 	public:
-		/// Gets the start height of the drive.
-		Height start() const {
+		/// Sets start \a height of drive.
+		void setStart(const Height& height) {
+			m_start = height;
+		}
+
+		/// Gets start height of drive.
+		const Height& start() const {
 			return m_start;
 		}
 
-		/// Sets the \a start height of the drive.
-		void setStart(const Height& start) {
-			m_start = start;
+		/// Sets end \a height of drive.
+		void setEnd(const Height& height) {
+			m_end = height;
 		}
 
+		/// Gets end height of drive.
+		const Height& end() const {
+			return m_end;
+		}
+
+		/// Gets the state of the drive.
+		DriveState state() const {
+			return m_state;
+		}
+
+		/// Sets the \a state of the drive.
+		void setState(const DriveState& state) {
+			m_state = state;
+		}
+
+        /// Sets \a owner of drive.
+        void setOwner(const Key& owner) {
+            m_owner = owner;
+        }
+
+        /// Gets owner of drive.
+        const Key& owner() const {
+            return m_owner;
+        }
+
+        /// Sets \a rootHash of drive.
+        void setRootHash(const Hash256& rootHash) {
+            m_rootHash = rootHash;
+        }
+
+        /// Gets root hash of drive.
+        const Hash256& rootHash() const {
+            return m_rootHash;
+        }
+
 		/// Gets the duration of the drive in blocks.
-		BlockDuration duration() const {
+		const BlockDuration& duration() const {
 			return m_duration;
 		}
 
@@ -40,18 +156,59 @@ namespace catapult { namespace state {
 			m_duration = duration;
 		}
 
+        /// Gets the billing period of the drive in blocks.
+        const BlockDuration& billingPeriod() const {
+            return m_billingPeriod;
+        }
+
+        /// Sets the \a billingPeriod of the drive in blocks.
+        void setBillingPeriod(const BlockDuration& billingPeriod) {
+            m_billingPeriod = billingPeriod;
+        }
+
+		/// Gets the billing price of the drive in storage units.
+		const Amount& billingPrice() const {
+			return m_billingPrice;
+		}
+
+		/// Sets the \a billingPrice of the drive in storage units.
+		void setBillingPrice(const Amount& billingPrice) {
+            m_billingPrice = billingPrice;
+		}
+
+		/// Gets the drive billing history.
+		const std::vector<BillingPeriodDescription>& billingHistory() const {
+			return m_billingHistory;
+		}
+
+		/// Gets the drive billing history.
+		std::vector<BillingPeriodDescription>& billingHistory() {
+			return m_billingHistory;
+		}
+
+		/// Gets the processed duration of drive.
+		BlockDuration processedDuration() const {
+			BlockDuration temp;
+
+			for (const auto& desc : m_billingHistory)
+				if (!desc.Payments.empty())
+					temp = temp + BlockDuration(desc.End.unwrap() - desc.Start.unwrap());
+
+			return temp;
+		}
+
 		/// Gets the drive size.
-		uint64_t size() const {
+		const uint64_t& size() const {
 			return m_size;
 		}
 
-		/// Sets the drive \a size.
-		void setSize(uint64_t size) {
+		/// Sets the drive size.
+		void setSize(const uint64_t& size) {
 			m_size = size;
 		}
 
 		/// Gets the number of the drive replicas.
-		uint16_t replicas() const {
+        const uint16_t& replicas() const {
 			return m_replicas;
 		}
 
@@ -60,28 +217,48 @@ namespace catapult { namespace state {
 			m_replicas = replicas;
 		}
 
-		/// Gets customer account keys.
-		const ContractorDepositMap& customers() const {
-			return m_customers;
+		/// Gets the number of the drive replicas.
+        const uint16_t& minReplicators() const {
+			return m_minReplicators;
 		}
 
-		/// Gets customer account keys.
-		ContractorDepositMap& customers() {
-			return m_customers;
+		/// Sets the number of the drive \a replicators which need for start of drive.
+		void setMinReplicators(uint16_t replicators) {
+			m_minReplicators = replicators;
 		}
 
-		/// Returns \c true if \a key is a customer.
-		bool hasCustomer(const Key& key) const {
-			return m_customers.end() != m_customers.find(key);
+		/// Gets the number of the drive replicators for starting.
+		const uint8_t& percentApprovers() const {
+			return m_percentApprovers;
+		}
+
+		/// Sets the number of the drive \a approvers.
+		void setPercentApprovers(uint8_t approvers) {
+			m_percentApprovers = approvers;
+		}
+
+		/// Gets files.
+		const FilesMap& files() const {
+			return m_files;
+		}
+
+		/// Gets files.
+		FilesMap& files() {
+			return m_files;
+		}
+
+		/// Returns \c true if drive contains a file with \a hash.
+		bool hasFile(const Hash256& hash) const {
+			return m_files.end() != m_files.find(hash);
 		}
 
 		/// Gets replicator account keys.
-		const ContractorDepositMap& replicators() const {
+		const ReplicatorsMap& replicators() const {
 			return m_replicators;
 		}
 
 		/// Gets replicator account keys.
-		ContractorDepositMap& replicators() {
+		ReplicatorsMap& replicators() {
 			return m_replicators;
 		}
 
@@ -92,11 +269,21 @@ namespace catapult { namespace state {
 
 	private:
 		Height m_start;
+		Height m_end;
+		DriveState m_state;
+		Key m_owner;
+		Hash256 m_rootHash;
 		BlockDuration m_duration;
+		BlockDuration m_billingPeriod;
+		Amount m_billingPrice;
+		std::vector<BillingPeriodDescription> m_billingHistory;
 		uint64_t m_size;
 		uint16_t m_replicas;
-		ContractorDepositMap m_customers;
-		ContractorDepositMap m_replicators;
+		uint16_t m_minReplicators;
+		// Percent 0-100
+		uint8_t m_percentApprovers;
+		FilesMap m_files;
+		ReplicatorsMap m_replicators;
 	};
 
 	// Drive entry.

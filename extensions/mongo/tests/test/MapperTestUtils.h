@@ -101,6 +101,12 @@ namespace catapult { namespace test {
 		return static_cast<size_t>(std::distance(view.cbegin(), view.cend()));
 	}
 
+	/// Returns value \a name from a document (\a doc) as a mosaic id.
+	template<typename TDocument>
+	MosaicId GetMosaicId(const TDocument& doc, const std::string& name) {
+		return MosaicId(GetUint64(doc, name));
+	}
+
 	/// Converts binary field \a name from a document (\a doc) to a hash.
 	template<typename TDocument>
 	Hash256 GetHashValue(const TDocument& doc, const std::string& name) {

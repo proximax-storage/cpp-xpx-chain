@@ -67,7 +67,8 @@ namespace catapult { namespace cache {
 		/// Returns a detachable cache delta based on this cache but without the ability
 		/// to commit any changes to the original cache.
 		/// \note The detachable delta holds a cache reader lock.
-		CatapultCacheDetachableDelta createDetachableDelta() const;
+		/// Sets cache delta height to the current cache height increased by \a heightDelta.
+		CatapultCacheDetachableDelta createDetachableDelta(const Height& heightDelta = Height(0)) const;
 
 		/// Commits all pending changes to the underlying storage and sets the cache height to \a height.
 		void commit(Height height);

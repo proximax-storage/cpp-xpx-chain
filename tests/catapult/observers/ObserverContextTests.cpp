@@ -77,14 +77,15 @@ namespace catapult { namespace observers {
 		model::ResolverContext CreateResolverContext() {
 			return model::ResolverContext(
 					[](const auto& unresolved) { return MosaicId(unresolved.unwrap() * 2); },
-					[](const auto& unresolved) { return Address{ { unresolved[0] } }; });
+					[](const auto& unresolved) { return Address{ { unresolved[0] } }; },
+					[](const auto& unresolved) { return Amount(unresolved); });
 		}
 
 		void AddRandomReceipt(ObserverStatementBuilder& statementBuilder) {
 			model::Receipt receipt;
 			test::FillWithRandomData({ reinterpret_cast<uint8_t*>(&receipt), sizeof(model::Receipt) });
 			receipt.Size = sizeof(model::Receipt);
-			statementBuilder.addReceipt(receipt);
+			statementBuilder.addTransactionReceipt(receipt);
 		}
 
 		void AssertContext(

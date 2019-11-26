@@ -117,7 +117,7 @@ namespace catapult { namespace sync {
 				model::Receipt receipt{};
 				receipt.Size = sizeof(model::Receipt);
 				receipt.Type = static_cast<model::ReceiptType>(notification.Timestamp.unwrap());
-				context.StatementBuilder().addReceipt(receipt);
+				context.StatementBuilder().addTransactionReceipt(receipt);
 			}
 
 		private:
@@ -513,7 +513,7 @@ namespace catapult { namespace sync {
 			receipt.Size = sizeof(model::Receipt);
 			receipt.Type = static_cast<model::ReceiptType>(block.Timestamp.unwrap());
 			model::BlockStatementBuilder blockStatementBuilder;
-			blockStatementBuilder.addReceipt(receipt);
+			blockStatementBuilder.addTransactionReceipt(receipt);
 			block.BlockReceiptsHash = model::CalculateMerkleHash(*blockStatementBuilder.build());
 		}
 	}

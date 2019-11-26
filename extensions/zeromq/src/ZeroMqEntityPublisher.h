@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/ExtractorContext.h"
+#include "catapult/model/Statement.h"
 #include "catapult/functions.h"
 #include <zmq_addon.hpp>
 
@@ -50,6 +51,9 @@ namespace catapult { namespace zeromq {
 	enum class TransactionMarker : uint8_t {
 		/// A confirmed transaction.
 		Transaction_Marker = 0x61, // 'a'
+
+		/// A receipt.
+		Receipt_Marker = 0x62, // 'b'
 
 		/// An added unconfirmed transaction.
 		Unconfirmed_Transaction_Add_Marker = 0x75, // 'u'
@@ -106,6 +110,7 @@ namespace catapult { namespace zeromq {
 		using MessagePayloadBuilder = consumer<zmq::multipart_t&>;
 
 		void publishTransaction(TransactionMarker topicMarker, const WeakTransactionInfo& transactionInfo);
+		void publishStatement(const model::PublicKeyStatement& statement, const Height& height);
 		void publish(
 				const std::string& topicName,
 				TransactionMarker topicMarker,

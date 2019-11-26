@@ -31,7 +31,8 @@ namespace catapult { namespace validators {
 		model::ResolverContext CreateResolverContext() {
 			return model::ResolverContext(
 					[](const auto& unresolved) { return MosaicId(unresolved.unwrap() * 2); },
-					[](const auto& unresolved) { return Address{ { unresolved[0] } }; });
+					[](const auto& unresolved) { return Address{ { unresolved[0] } }; },
+					[](const auto& unresolved) { return Amount(unresolved); });
 		}
 	}
 

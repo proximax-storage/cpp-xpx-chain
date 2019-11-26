@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 		using ValidatorType = stateful::FunctionalNotificationValidatorT<model::BalanceTransferNotification<1>>;
 		auto name = "MaxMosaicsBalanceTransferValidator";
 		return std::make_unique<ValidatorType>(name, [pConfigHolder](const auto& notification, const auto& context) {
-			if (Amount() == notification.Amount)
+			if (Amount() == context.Resolvers.resolve(notification.Amount))
 				return ValidationResult::Success;
 
 			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;

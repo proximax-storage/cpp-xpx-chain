@@ -101,7 +101,7 @@ namespace catapult { namespace mocks {
 		struct Transfer {
 		public:
 			explicit Transfer(const model::BalanceTransferNotification<1>& notification)
-					: Transfer(notification.Sender, notification.Recipient, notification.MosaicId, notification.Amount)
+					: Transfer(notification.Sender, notification.Recipient, notification.MosaicId, catapult::Amount(notification.Amount))
 			{}
 
 			explicit Transfer(const Key& sender, const UnresolvedAddress& recipient, UnresolvedMosaicId mosaicId, Amount amount)

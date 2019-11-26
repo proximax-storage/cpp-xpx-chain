@@ -67,7 +67,7 @@ namespace catapult { namespace test {
 				++transactionIndex;
 			}
 
-			if (2u != primarySourceIds.size())
+			if (3u != primarySourceIds.size())
 				CATAPULT_THROW_INVALID_ARGUMENT_1("nemesis block has unexpected number of mosaic supply changes", primarySourceIds.size());
 
 			return primarySourceIds;
@@ -86,7 +86,7 @@ namespace catapult { namespace test {
 
 			auto feeMosaicId = Default_Currency_Mosaic_Id;
 			model::BalanceChangeReceipt receipt(model::Receipt_Type_Harvest_Fee, nemesisBlock.Signer, feeMosaicId, totalFee);
-			blockStatementBuilder.addReceipt(receipt);
+			blockStatementBuilder.addTransactionReceipt(receipt);
 
 			// 2. add mosaic aliases (supply tx first uses alias, block mosaic order is deterministic)
 			auto aliasFirstUsedPrimarySourceIds = GetMosaicSupplyChangePrimarySourceIds(nemesisBlock);
@@ -95,6 +95,9 @@ namespace catapult { namespace test {
 
 			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[1], 0 });
 			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xFF8918A670A31F3A), Default_Storage_Mosaic_Id);
+
+			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[2], 0 });
+			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xEF77EF3F741EE7EA), Default_Streamin_Mosaic_Id);
 
 			// 3. calculate the block receipts hash
 			auto pStatement = blockStatementBuilder.build();

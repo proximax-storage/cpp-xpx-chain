@@ -30,12 +30,16 @@ namespace catapult { namespace model {
 						Address resolvedAddress;
 						std::memcpy(resolvedAddress.data(), address.data(), address.size());
 						return resolvedAddress;
+					},
+					[](const auto& amount) {
+						return amount;
 					})
 	{}
 
-	ResolverContext::ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver)
+	ResolverContext::ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver, const AmountResolver& amountResolver)
 			: m_mosaicResolver(mosaicResolver)
 			, m_addressResolver(addressResolver)
+			, m_amountResolver(amountResolver)
 	{}
 
 	MosaicId ResolverContext::resolve(UnresolvedMosaicId mosaicId) const {
@@ -44,5 +48,9 @@ namespace catapult { namespace model {
 
 	Address ResolverContext::resolve(const UnresolvedAddress& address) const {
 		return m_addressResolver(address);
+	}
+
+	Amount ResolverContext::resolve(const UnresolvedAmount& amount) const {
+		return m_amountResolver(amount);
 	}
 }}
