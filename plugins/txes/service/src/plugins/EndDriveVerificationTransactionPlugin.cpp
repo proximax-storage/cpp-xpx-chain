@@ -25,9 +25,12 @@ namespace catapult { namespace plugins {
 			return [networkIdentifier](const TTransaction &transaction, const Height&, NotificationSubscriber &sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
+						sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
+
+						auto failureCount = transaction.FailureCount;
 						sub.notify(EndDriveVerificationNotification<1>(
 							transaction.Signer,
-							transaction.FailureCount,
+							failureCount,
 							transaction.FailuresPtr()));
 
 						sub.notify(ProofPublicationNotification<1>(
@@ -36,17 +39,17 @@ namespace catapult { namespace plugins {
 							Hash256(),
 							extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, networkIdentifier))));
 
-						std::vector<CosignatoryModification> modifications;
-						modifications.reserve(transaction.FailureCount);
+						// TODO: Fix memory leak
+						auto pModifications = static_cast<CosignatoryModification*>(::operator new(failureCount * sizeof(CosignatoryModification)));
 						auto pFailure = transaction.FailuresPtr();
-						for (auto i = 0u; i < transaction.FailureCount; ++i, ++pFailure) {
-							modifications.push_back(CosignatoryModification{model::CosignatoryModificationType::Del, pFailure->Replicator});
+						for (auto i = 0u; i < failureCount; ++i, ++pFailure) {
+							pModifications[i] = CosignatoryModification{model::CosignatoryModificationType::Del, pFailure->Replicator};
 						}
-						sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, transaction.FailureCount, modifications.data()));
+						sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, failureCount, pModifications));
 
 						sub.notify(DriveVerificationPaymentNotification<1>(
 							transaction.Signer,
-							transaction.FailureCount,
+							failureCount,
 							transaction.FailuresPtr()));
 
 						break;

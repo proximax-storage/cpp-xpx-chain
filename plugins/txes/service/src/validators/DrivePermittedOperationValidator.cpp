@@ -24,6 +24,7 @@ namespace catapult { namespace validators {
 		   model::Entity_Type_DeleteReward,
 		   model::Entity_Type_EndDrive,
 		   model::Entity_Type_Exchange,
+		   model::Entity_Type_End_Drive_Verification,
 		});
 
 		return allowedTransactions.count(notification.Transaction.Type) ?

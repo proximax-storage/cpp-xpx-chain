@@ -126,5 +126,4 @@ enabled = true
 
 maxFilesOnDrive = 32768
 verificationFee = 10
-failedVerificationPayment = 0
 verificationDuration = 240

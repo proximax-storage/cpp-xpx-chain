@@ -114,7 +114,7 @@ namespace catapult { namespace model {
 		LockHashAlgorithm HashAlgorithm;
 
 		/// Secret.
-		const Hash256& Secret;
+		Hash256 Secret;
 
 		/// Recipient of the locked mosaic.
 		UnresolvedAddress Recipient;
@@ -182,7 +182,7 @@ namespace catapult { namespace model {
 		LockHashAlgorithm HashAlgorithm;
 
 		/// Secret.
-		const Hash256& Secret;
+		Hash256 Secret;
 
 		/// Recipient of the locked mosaic.
 		UnresolvedAddress Recipient;

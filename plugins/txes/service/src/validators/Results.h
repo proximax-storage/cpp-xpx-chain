@@ -128,9 +128,6 @@ namespace catapult { namespace validators {
     /// Validation failed because drive is not in progress state.
     DEFINE_SERVICE_RESULT(Drive_Is_Not_In_Progress, 39);
 
-    /// Validation failed because initiatior of drive verification is not drive owner or replicator.
-    DEFINE_SERVICE_RESULT(Verification_Initiator_Is_Not_Drive_Owner_Or_Replicator, 40);
-
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

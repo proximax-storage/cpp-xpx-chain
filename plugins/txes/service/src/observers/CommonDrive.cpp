@@ -11,9 +11,14 @@
 namespace catapult { namespace observers {
 
     namespace {
-        inline uint64_t Time(const state::DriveEntry& entry, const Key& replicator) {
+        inline uint64_t Time(const state::DriveEntry& entry, const Key& replicatorKey) {
             const auto& last = entry.billingHistory().back();
-            return last.End.unwrap() - std::max(last.Start.unwrap(), entry.replicators().at(replicator).Start.unwrap());
+            const auto& replicator = entry.replicators().at(replicatorKey);
+            auto start = std::max(last.Start.unwrap(), replicator.Start.unwrap());
+            auto end = (Height(0) == replicator.End) ? last.End.unwrap() : std::min(last.End.unwrap(), replicator.End.unwrap());
+            if (end < start)
+            	CATAPULT_THROW_RUNTIME_ERROR_2("invalid replicator time", start, end);
+            return end - start;
         }
     }
 
@@ -50,8 +55,7 @@ namespace catapult { namespace observers {
             auto i = 0u;
             for (const auto& replicator : replicators) {
                 uint64_t time = Time(driveEntry, replicator);
-                auto share = double(sum) * time / sumTime;
-                uint64_t reward = (i % 2) ? std::ceil(share) : std::floor(share);
+                uint64_t reward = std::floor(double(sum) * time / sumTime);
 
                 // In the case of full payment for the billing period the last replicator takes remaining tokens.
                 // This is required to resolve rounding errors.

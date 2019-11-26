@@ -16,9 +16,6 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(StartDriveVerification, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
 		return MAKE_STATEFUL_VALIDATOR(StartDriveVerification, [pConfigHolder](const Notification &notification, const ValidatorContext &context) {
 			const auto& driveCache = context.Cache.sub<cache::DriveCache>();
-			if (!driveCache.contains(notification.DriveKey))
-				return Failure_Service_Drive_Does_Not_Exist;
-
 			auto driveIter = driveCache.find(notification.DriveKey);
 			const auto &driveEntry = driveIter.get();
 			if (driveEntry.state() != state::DriveState::InProgress)
@@ -33,7 +30,7 @@ namespace catapult { namespace validators {
 				return Failure_Service_Verification_Has_Not_Timed_Out;
 
 			if (driveEntry.owner() != notification.Initiator && !driveEntry.replicators().count(notification.Initiator))
-				return Failure_Service_Verification_Initiator_Is_Not_Drive_Owner_Or_Replicator;
+				return Failure_Service_Operation_Is_Not_Permitted;
 
 			return ValidationResult::Success;
 		});

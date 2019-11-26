@@ -71,10 +71,6 @@ namespace catapult { namespace state {
 		Height End;
 		Amount Deposit;
 
-        bool isActive() const {
-            return End.unwrap() == 0;
-        }
-
         void IncrementUndepositedFileCounter(const Hash256& file) {
             ++FilesWithoutDeposit[file];
         }

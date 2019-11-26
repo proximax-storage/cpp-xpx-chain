@@ -25,6 +25,7 @@ namespace catapult { namespace plugins {
 			return [pConfigHolder](const TTransaction &transaction, const Height& associatedHeight, NotificationSubscriber &sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
+						sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 						sub.notify(StartDriveVerificationNotification<1>(
 							transaction.DriveKey,
 							transaction.Signer
