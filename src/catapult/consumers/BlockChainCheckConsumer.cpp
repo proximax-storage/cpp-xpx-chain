@@ -23,8 +23,9 @@
 #include "InputUtils.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/utils/Hashers.h"
 #include "catapult/utils/TimeSpan.h"
+#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include <unordered_set>
 
 namespace catapult { namespace consumers {
@@ -33,6 +34,20 @@ namespace catapult { namespace consumers {
 		namespace {
 			bool IsLink(const model::BlockElement& previousElement, const model::Block& currentBlock) {
 				return chain::IsChainLink(previousElement.Block, previousElement.EntityHash, currentBlock);
+			}
+
+			template<typename TTransaction, typename TDerivedTransaction>
+			bool InvalidNetworkConfigTransaction(const TTransaction& transaction, uint64_t minConfigDelta) {
+				return (model::Entity_Type_Network_Config == transaction.Type &&
+					static_cast<const TDerivedTransaction&>(transaction).ApplyHeightDelta.unwrap() < minConfigDelta);
+			}
+
+			bool InvalidNetworkConfigTransaction(const model::Transaction& transaction, uint64_t minConfigDelta) {
+				return InvalidNetworkConfigTransaction<model::Transaction, model::NetworkConfigTransaction>(transaction, minConfigDelta);
+			}
+
+			bool InvalidEmbeddedNetworkConfigTransaction(const model::EmbeddedTransaction& transaction, uint64_t minConfigDelta) {
+				return InvalidNetworkConfigTransaction<model::EmbeddedTransaction, model::EmbeddedNetworkConfigTransaction>(transaction, minConfigDelta);
 			}
 		}
 
@@ -60,18 +75,34 @@ namespace catapult { namespace consumers {
 
 				utils::HashPointerSet hashes;
 				const model::BlockElement* pPreviousElement = nullptr;
+				auto minConfigDelta = elements.size();
 				for (const auto& element : elements) {
 					// check for a valid chain link
 					if (pPreviousElement && !IsLink(*pPreviousElement, element.Block))
 						return Abort(Failure_Consumer_Remote_Chain_Improper_Link);
 
-					// check for duplicate transactions
 					for (const auto& transactionElement : element.Transactions) {
+						// check for duplicate transactions
 						if (!hashes.insert(&transactionElement.EntityHash).second)
 							return Abort(Failure_Consumer_Remote_Chain_Duplicate_Transactions);
+
+						// check for unexpected network config transactions
+						const auto& transaction = transactionElement.Transaction;
+						auto type = transaction.Type;
+						if (InvalidNetworkConfigTransaction(transaction, minConfigDelta))
+							return Abort(Failure_Consumer_Remote_Chain_Unexpected_Network_Config_Transaction);
+
+						if (model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type) {
+							const auto& aggregate = static_cast<const model::AggregateTransaction&>(transaction);
+							for (const auto& subTransaction : aggregate.Transactions()) {
+								if (InvalidEmbeddedNetworkConfigTransaction(subTransaction, minConfigDelta))
+									return Abort(Failure_Consumer_Remote_Chain_Unexpected_Network_Config_Transaction);
+							}
+						}
 					}
 
 					pPreviousElement = &element;
+					minConfigDelta--;
 				}
 
 				return Continue();

@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/chain/CompareChains.h"
-#include "catapult/model/BlockUtils.h"
 #include "tests/catapult/chain/test/MockChainApi.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/HashTestUtils.h"
@@ -195,7 +194,7 @@ namespace catapult { namespace chain {
 	namespace {
 		void AssertRemoteReturnedTooManyHashes(uint32_t numHashes, uint32_t analyzeLimit, uint32_t rewriteLimit, bool expected) {
 			// Arrange:
-			MockChainApi local(ChainScore(10), Height(numHashes));
+			MockChainApi local(ChainScore(10), Height(numHashes), numHashes - 1);
 			MockChainApi remote(ChainScore(11), Height(numHashes), numHashes);
 			CompareChainsOptions options{ analyzeLimit, rewriteLimit };
 

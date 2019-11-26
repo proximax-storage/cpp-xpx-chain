@@ -51,7 +51,10 @@ namespace catapult { namespace model {
 		Aggregate = 0xE,
 
 		/// Alias resolution.
-		AliasResolution = 0xF
+		AliasResolution = 0xF,
+
+		/// Drive receipt.
+		Drive = 0x6,
 	};
 
 	/// Enumeration of receipt types.
@@ -80,6 +83,9 @@ namespace catapult { namespace model {
 
 	/// Transaction group.
 	DEFINE_RECEIPT_TYPE(Aggregate, Core, Transaction_Group, 1);
+
+	/// Public key group.
+	DEFINE_RECEIPT_TYPE(Aggregate, Core, Public_Key_Group, 2);
 
 	/// Address alias resolution.
 	DEFINE_RECEIPT_TYPE(AliasResolution, Core, Address_Alias_Resolution, 1);

@@ -82,7 +82,7 @@ namespace catapult { namespace filespooling {
 
 			// Assert:
 			EXPECT_EQ(1u, stream.numFlushes());
-			ASSERT_EQ(1u + Empty_Block_Element_Size + 1 + 3 * sizeof(uint32_t), buffer.size());
+			ASSERT_EQ(1u + Empty_Block_Element_Size + 1 + 4 * sizeof(uint32_t), buffer.size());
 
 			auto expectedOperationType = subscribers::BlockChangeOperationType::Block;
 			EXPECT_EQ(expectedOperationType, static_cast<subscribers::BlockChangeOperationType>(buffer[0]));

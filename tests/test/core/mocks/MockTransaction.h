@@ -135,6 +135,9 @@ namespace catapult { namespace mocks {
 
 	DEFINE_EMBEDDABLE_TRANSACTION(Mock)
 
+	/// Extracts public keys of additional accounts that must approve \a transaction.
+	utils::KeySet ExtractAdditionalRequiredCosigners(const mocks::EmbeddedMockTransaction&);
+
 #pragma pack(pop)
 
 	// endregion

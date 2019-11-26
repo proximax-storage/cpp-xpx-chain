@@ -50,6 +50,15 @@ namespace catapult { namespace utils {
 			return *this;
 		}
 
+		ByteArray operator^(const ByteArray& a) const {
+			ByteArray temp;
+
+			for (auto i = 0u; i < this->size(); ++i)
+				temp.m_array[i] = this->m_array[i] ^ a.m_array[i];
+
+			return temp;
+		}
+
 	public:
 		/// Returns the array size.
 		constexpr size_t size() const {

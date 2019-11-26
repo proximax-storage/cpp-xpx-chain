@@ -21,7 +21,8 @@
 #include "MockRemoteChainApi.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/types.h"
-#include "tests/test/core/BlockTestUtils.h"
+#include "catapult/utils/MemoryUtils.h"
+#include "tests/test/core/EntityTestUtils.h"
 
 namespace catapult { namespace mocks {
 
@@ -91,5 +92,9 @@ namespace catapult { namespace mocks {
 
 		auto range = test::CreateEntityRange(rawBlocks);
 		return thread::make_ready_future(std::move(range));
+	}
+
+	thread::future<model::EntityRange<model::CacheEntryInfo<Height>>> MockRemoteChainApi::networkConfigs(model::EntityRange<Height>&&) const {
+		return thread::make_ready_future(model::EntityRange<model::CacheEntryInfo<Height>>());
 	}
 }}

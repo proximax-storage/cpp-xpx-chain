@@ -547,7 +547,7 @@ namespace catapult { namespace extensions {
 			// - harvest receipt added by HarvestFeeObserver
 			auto receiptType = model::Receipt_Type_Harvest_Fee;
 			auto receiptMosaicId = Harvesting_Mosaic_Id;
-			blockStatementBuilder.addReceipt(model::BalanceChangeReceipt(receiptType, nemesisBlock.Signer, receiptMosaicId, Amount()));
+			blockStatementBuilder.addTransactionReceipt(model::BalanceChangeReceipt(receiptType, nemesisBlock.Signer, receiptMosaicId, Amount()));
 
 			// - resolution receipts due to use of CreateResolverContextXor and interaction with MockTransaction
 			auto recipient = PublicKeyToAddress(GetTransactionRecipient(nemesisBlock, 0), model::NetworkIdentifier::Mijin_Test);

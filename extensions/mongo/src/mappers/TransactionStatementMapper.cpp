@@ -20,7 +20,7 @@
 
 #include "TransactionStatementMapper.h"
 #include "ReceiptMapper.h"
-#include "catapult/model/TransactionStatement.h"
+#include "catapult/model/Statement.h"
 
 namespace catapult { namespace mongo { namespace mappers {
 

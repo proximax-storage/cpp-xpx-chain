@@ -37,19 +37,21 @@ namespace catapult { namespace model {
 			AddAll(builder, statement.TransactionStatements);
 			AddAll(builder, statement.AddressResolutionStatements);
 			AddAll(builder, statement.MosaicResolutionStatements);
+			AddAll(builder, statement.PublicKeyStatements);
 
 			builder.final(output);
 		}
 
-		void CopyTransactionStatements(
-				std::map<ReceiptSource, TransactionStatement>& destination,
-				const std::map<ReceiptSource, TransactionStatement>& source,
+		template<typename TStatement>
+		void CopyStatements(
+				std::map<ReceiptSource, TStatement>& destination,
+				const std::map<ReceiptSource, TStatement>& source,
 				uint32_t maxSourcePrimaryId) {
 			for (const auto& pair : source) {
 				if (pair.first.PrimaryId > maxSourcePrimaryId)
 					continue;
 
-				TransactionStatement statement(pair.first);
+				TStatement statement(pair.first);
 				for (auto i = 0u; i < pair.second.size(); ++i)
 					statement.addReceipt(pair.second.receiptAt(i));
 
@@ -95,7 +97,8 @@ namespace catapult { namespace model {
 	size_t CountTotalStatements(const BlockStatement& statement) {
 		return statement.TransactionStatements.size()
 				+ statement.AddressResolutionStatements.size()
-				+ statement.MosaicResolutionStatements.size();
+				+ statement.MosaicResolutionStatements.size()
+				+ statement.PublicKeyStatements.size();
 	}
 
 	void DeepCopyTo(BlockStatement& destination, const BlockStatement& source) {
@@ -103,8 +106,9 @@ namespace catapult { namespace model {
 	}
 
 	void DeepCopyTo(BlockStatement& destination, const BlockStatement& source, uint32_t maxSourcePrimaryId) {
-		CopyTransactionStatements(destination.TransactionStatements, source.TransactionStatements, maxSourcePrimaryId);
+		CopyStatements(destination.TransactionStatements, source.TransactionStatements, maxSourcePrimaryId);
 		CopyResolutionStatements(destination.AddressResolutionStatements, source.AddressResolutionStatements, maxSourcePrimaryId);
 		CopyResolutionStatements(destination.MosaicResolutionStatements, source.MosaicResolutionStatements, maxSourcePrimaryId);
+		CopyStatements(destination.PublicKeyStatements, source.PublicKeyStatements, maxSourcePrimaryId);
 	}
 }}

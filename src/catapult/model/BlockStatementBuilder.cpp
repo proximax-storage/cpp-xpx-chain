@@ -45,17 +45,27 @@ namespace catapult { namespace model {
 		m_pStatement = std::move(pTruncatedStatement);
 	}
 
-	void BlockStatementBuilder::addReceipt(const Receipt& receipt) {
-		auto& statements = m_pStatement->TransactionStatements;
-		auto iter = statements.find(m_activeSource);
-		if (statements.end() == iter) {
-			TransactionStatement statement(m_activeSource);
-			statement.addReceipt(receipt);
-			statements.emplace(m_activeSource, std::move(statement));
-			return;
-		}
+	namespace {
+		template<typename TStatementMap>
+		void addReceipt(TStatementMap &statements, ReceiptSource activeSource, const Receipt &receipt) {
+			auto iter = statements.find(activeSource);
+			if (statements.end() == iter) {
+				typename TStatementMap::mapped_type statement(activeSource);
+				statement.addReceipt(receipt);
+				statements.emplace(activeSource, std::move(statement));
+				return;
+			}
 
-		iter->second.addReceipt(receipt);
+			iter->second.addReceipt(receipt);
+		}
+	}
+
+	void BlockStatementBuilder::addTransactionReceipt(const Receipt& receipt) {
+		addReceipt(m_pStatement->TransactionStatements, m_activeSource, receipt);
+	}
+
+	void BlockStatementBuilder::addPublicKeyReceipt(const Receipt& receipt) {
+		addReceipt(m_pStatement->PublicKeyStatements, m_activeSource, receipt);
 	}
 
 	namespace {

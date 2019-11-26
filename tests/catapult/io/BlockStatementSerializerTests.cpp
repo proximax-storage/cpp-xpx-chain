@@ -139,7 +139,7 @@ namespace catapult { namespace io {
 		void PrepareOnlyHomogenousStatementsTest(bool shouldOrder, TAction action, TSetSizes setSizes) {
 			// Arrange:
 			size_t statementsSize = sizeof(TZeroEntryStatement) + 2 * sizeof(TTwoEntryStatement);
-			std::vector<uint8_t> buffer(3 * sizeof(uint32_t) + statementsSize);
+			std::vector<uint8_t> buffer(4 * sizeof(uint32_t) + statementsSize);
 			test::FillWithRandomData(buffer);
 			auto offset = setSizes(buffer, statementsSize);
 
@@ -168,6 +168,7 @@ namespace catapult { namespace io {
 				reinterpret_cast<uint32_t&>(buffer[0]) = 3;
 				reinterpret_cast<uint32_t&>(buffer[sizeof(uint32_t) + statementsSize]) = 0;
 				reinterpret_cast<uint32_t&>(buffer[2 * sizeof(uint32_t) + statementsSize]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[3 * sizeof(uint32_t) + statementsSize]) = 0;
 				return sizeof(uint32_t);
 			});
 		}
@@ -185,6 +186,7 @@ namespace catapult { namespace io {
 				reinterpret_cast<uint32_t&>(buffer[0]) = 0;
 				reinterpret_cast<uint32_t&>(buffer[sizeof(uint32_t)]) = 3;
 				reinterpret_cast<uint32_t&>(buffer[2 * sizeof(uint32_t) + statementsSize]) = 0;
+				reinterpret_cast<uint32_t&>(buffer[3 * sizeof(uint32_t) + statementsSize]) = 0;
 				return 2 * sizeof(uint32_t);
 			});
 		}
@@ -196,10 +198,11 @@ namespace catapult { namespace io {
 			using TwoEntryStatement = ResolutionStatementWithTwoEntries<UnresolvedMosaicId, MosaicId>;
 
 			// Act + Assert:
-			PrepareOnlyHomogenousStatementsTest<ZeroEntryStatement, TwoEntryStatement>(shouldOrder, action, [](auto& buffer, auto) {
+			PrepareOnlyHomogenousStatementsTest<ZeroEntryStatement, TwoEntryStatement>(shouldOrder, action, [](auto& buffer, auto statementSize) {
 				reinterpret_cast<uint32_t&>(buffer[0]) = 0;
 				reinterpret_cast<uint32_t&>(buffer[sizeof(uint32_t)]) = 0;
 				reinterpret_cast<uint32_t&>(buffer[2 * sizeof(uint32_t)]) = 3;
+				reinterpret_cast<uint32_t&>(buffer[3 * sizeof(uint32_t) + statementSize]) = 0;
 				return 3 * sizeof(uint32_t);
 			});
 		}
@@ -212,14 +215,14 @@ namespace catapult { namespace io {
 			PrepareOnlyTransactionStatementsTest(shouldOrder, [&](auto& blockStatement, const auto& buffer) {
 				aggregateBlockStatement.TransactionStatements = std::move(blockStatement.TransactionStatements);
 
-				aggregateBuffer.resize(buffer.size() - 2 * sizeof(uint32_t));
+				aggregateBuffer.resize(buffer.size() - 3 * sizeof(uint32_t));
 				std::memcpy(aggregateBuffer.data(), buffer.data(), aggregateBuffer.size());
 			});
 			PrepareOnlyAddressResolutionsTest(shouldOrder, [&](auto& blockStatement, const auto& buffer) {
 				aggregateBlockStatement.AddressResolutionStatements = std::move(blockStatement.AddressResolutionStatements);
 
 				auto initialSize = aggregateBuffer.size();
-				auto appendSize = buffer.size() - 2 * sizeof(uint32_t);
+				auto appendSize = buffer.size() - 3 * sizeof(uint32_t);
 				aggregateBuffer.resize(aggregateBuffer.size() + appendSize);
 				std::memcpy(aggregateBuffer.data() + initialSize, buffer.data() + sizeof(uint32_t), appendSize);
 			});
@@ -268,7 +271,7 @@ namespace catapult { namespace io {
 
 	TEST(TEST_CLASS, CanReadBlockStatementWithoutStatements) {
 		// Act + Assert:
-		auto buffer = std::vector<uint8_t>(3 * sizeof(uint32_t), 0);
+		auto buffer = std::vector<uint8_t>(4 * sizeof(uint32_t), 0);
 		AssertRead(model::BlockStatement(), buffer);
 	}
 
@@ -298,7 +301,7 @@ namespace catapult { namespace io {
 
 	TEST(TEST_CLASS, CanWriteBlockStatementWithoutStatements) {
 		// Act + Assert:
-		AssertWrite(model::BlockStatement(), std::vector<uint8_t>(3 * sizeof(uint32_t), 0));
+		AssertWrite(model::BlockStatement(), std::vector<uint8_t>(4 * sizeof(uint32_t), 0));
 	}
 
 	TEST(TEST_CLASS, CanWriteBlockStatementWithOnlyTransactionStatements) {

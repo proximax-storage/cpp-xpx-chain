@@ -149,7 +149,7 @@ namespace catapult { namespace consumers {
 			receipt.Size = sizeof(model::Receipt);
 			receipt.Type = static_cast<model::ReceiptType>(height.unwrap());
 
-			blockStatementBuilder.addReceipt(receipt);
+			blockStatementBuilder.addTransactionReceipt(receipt);
 		}
 
 		class MockBatchEntityProcessor : public test::ParamsCapture<BatchEntityProcessorParams> {

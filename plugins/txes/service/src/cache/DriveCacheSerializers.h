@@ -8,10 +8,14 @@
 #include "DriveCacheTypes.h"
 #include "src/state/DriveEntrySerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
+#include "catapult/cache/IdentifierGroupSerializer.h"
 
 namespace catapult { namespace cache {
 
 	/// Primary serializer for drive cache.
 	struct DriveEntryPrimarySerializer : public CacheSerializerAdapter<state::DriveEntrySerializer, DriveCacheDescriptor>
 	{};
+
+	/// Serializer for metadata cache height grouped elements.
+	struct DriveHeightGroupingSerializer : public IdentifierGroupSerializer<DriveCacheTypes::HeightGroupingTypesDescriptor> {};
 }}

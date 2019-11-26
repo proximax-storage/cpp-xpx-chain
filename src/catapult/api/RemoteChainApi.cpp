@@ -23,6 +23,7 @@
 #include "RemoteApiUtils.h"
 #include "RemoteRequestDispatcher.h"
 #include "catapult/ionet/PacketEntityUtils.h"
+#include "catapult/ionet/PacketPayloadFactory.h"
 
 namespace catapult { namespace api {
 
@@ -115,6 +116,25 @@ namespace catapult { namespace api {
 			}
 		};
 
+		struct NetworkConfigTraits {
+		public:
+			using ResultType = model::EntityRange<model::CacheEntryInfo<Height>>;
+			static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Network_Config_Infos;
+			static constexpr auto Friendly_Name = "network configs";
+
+			static auto CreateRequestPacketPayload(model::EntityRange<Height>&& ids) {
+				return ionet::PacketPayloadFactory::FromFixedSizeRange(Packet_Type, std::move(ids));
+			}
+
+		public:
+			bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
+				result = ionet::ExtractEntitiesFromPacket<model::CacheEntryInfo<Height>>(
+						packet,
+						ionet::IsSizeValid<model::CacheEntryInfo<Height>>);
+				return !result.empty();
+			}
+		};
+
 		// endregion
 
 		class DefaultRemoteChainApi : public RemoteChainApi {
@@ -148,6 +168,10 @@ namespace catapult { namespace api {
 
 			FutureType<BlocksFromTraits> blocksFrom(Height height, const BlocksFromOptions& options) const override {
 				return m_impl.dispatch(BlocksFromTraits(*m_pRegistry), height, options);
+			}
+
+			FutureType<NetworkConfigTraits> networkConfigs(model::EntityRange<Height>&& heights) const override {
+				return m_impl.dispatch(NetworkConfigTraits(), std::move(heights));
 			}
 
 		private:
