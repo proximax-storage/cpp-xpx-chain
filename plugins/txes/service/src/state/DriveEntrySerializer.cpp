@@ -7,6 +7,7 @@
 #include "DriveEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
 #include "catapult/exceptions.h"
+#include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {
 
@@ -65,7 +66,7 @@ namespace catapult { namespace state {
 				const auto& actions = filePair.second.Actions;
 				io::Write16(output, actions.size());
 				for (const auto& action : actions) {
-					io::Write8(output, static_cast<uint8_t>(action.Type));
+					io::Write8(output, utils::to_underlying_type(action.Type));
 					io::Write(output, action.ActionHeight);
 				}
 
@@ -99,7 +100,7 @@ namespace catapult { namespace state {
 		}
 
 		void SaveReplicators(io::OutputStream& output, const state::ReplicatorsMap& replicatorsMap) {
-			io::Write8(output, replicatorsMap.size());
+			io::Write16(output, replicatorsMap.size());
 			for (const auto& replicatorPair : replicatorsMap) {
 				io::Write(output, replicatorPair.first);
 				io::Write(output, replicatorPair.second.Start);
@@ -116,7 +117,7 @@ namespace catapult { namespace state {
 		}
 
 		void LoadReplicators(io::InputStream& input, state::ReplicatorsMap& replicatorsMap) {
-			auto numReplicators = io::Read8(input);
+			auto numReplicators = io::Read16(input);
 			while (numReplicators--) {
 				Key replicator;
 				io::Read(input, replicator);
@@ -145,7 +146,7 @@ namespace catapult { namespace state {
 		io::Write32(output, 1);
 
 		io::Write(output, driveEntry.key());
-		io::Write8(output, static_cast<uint8_t>(driveEntry.state()));
+		io::Write8(output, utils::to_underlying_type(driveEntry.state()));
 		io::Write(output, driveEntry.owner());
 		io::Write(output, driveEntry.rootHash());
 		io::Write(output, driveEntry.start());

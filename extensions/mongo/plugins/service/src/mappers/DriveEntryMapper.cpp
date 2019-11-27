@@ -5,6 +5,7 @@
 **/
 
 #include "DriveEntryMapper.h"
+#include "catapult/utils/Casting.h"
 #include "mongo/src/mappers/MapperUtils.h"
 
 using namespace catapult::mongo::mappers;
@@ -117,7 +118,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "multisigAddress" << ToBinary(accountAddress)
 				<< "start" << ToInt64(entry.start())
 				<< "end" << ToInt64(entry.end())
-				<< "state" << static_cast<int8_t >(entry.state())
+				<< "state" << utils::to_underlying_type(entry.state())
 				<< "owner" << ToBinary(entry.owner())
 				<< "rootHash" << ToBinary(entry.rootHash())
 				<< "duration" << ToInt64(entry.duration())
@@ -125,7 +126,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "billingPrice" << ToInt64(entry.billingPrice())
 				<< "size" << static_cast<int64_t>(entry.size())
 				<< "replicas" << entry.replicas()
-				<< "minReplicators" << static_cast<int8_t>(entry.minReplicators())
+				<< "minReplicators" << static_cast<int16_t>(entry.minReplicators())
 				<< "percentApprovers" << static_cast<int8_t>(entry.percentApprovers());
 
 		StreamBillingHistory(builder, entry.billingHistory());
@@ -207,7 +208,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 Hash256 fileHash;
                 DbBinaryToModelArray(fileHash, doc["fileHash"].get_binary());
 
-                deposits.insert({ fileHash, static_cast<int16_t>(doc["count"].get_int32()) });
+                deposits.insert({ fileHash, static_cast<uint16_t>(doc["count"].get_int32()) });
             }
         }
 
@@ -223,7 +224,7 @@ namespace catapult { namespace mongo { namespace plugins {
                 info.Start = Height(doc["start"].get_int64());
                 info.End = Height(doc["end"].get_int64());
 
-                ReadFilesWithoutDeposit(info.FilesWithoutDeposit, doc["payments"].get_array().value);
+                ReadFilesWithoutDeposit(info.FilesWithoutDeposit, doc["filesWithoutDeposit"].get_array().value);
 
                 replicators.insert({ replicator, info });
             }
@@ -252,9 +253,9 @@ namespace catapult { namespace mongo { namespace plugins {
         entry.setBillingPeriod(BlockDuration(dbDriveEntry["billingPeriod"].get_int64()));
         entry.setBillingPrice(Amount(dbDriveEntry["billingPrice"].get_int64()));
         entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
-        entry.setReplicas(static_cast<int8_t>(dbDriveEntry["replicas"].get_int32()));
-        entry.setMinReplicators(static_cast<int8_t>(dbDriveEntry["minReplicators"].get_int32()));
-        entry.setPercentApprovers(static_cast<int8_t>(dbDriveEntry["percentApprovers"].get_int32()));
+        entry.setReplicas(static_cast<uint16_t>(dbDriveEntry["replicas"].get_int32()));
+        entry.setMinReplicators(static_cast<uint16_t>(dbDriveEntry["minReplicators"].get_int32()));
+        entry.setPercentApprovers(static_cast<uint8_t>(dbDriveEntry["percentApprovers"].get_int32()));
 
 		ReadBillingHistory(entry.billingHistory(), dbDriveEntry["billingHistory"].get_array().value);
 		ReadFiles(entry.files(), dbDriveEntry["files"].get_array().value);

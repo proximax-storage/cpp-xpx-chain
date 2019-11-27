@@ -39,6 +39,7 @@ namespace catapult { namespace mocks {
 			Last_Block,
 			Block_At,
 			Blocks_From,
+			Network_Configs,
 			None
 		};
 
@@ -112,6 +113,11 @@ namespace catapult { namespace mocks {
 					numBlocksPerBlocksFromRequest.cend());
 		}
 
+		/// Sets the \a height the new config.
+		void setConfigHeight(const Height& height) {
+			m_configHeight = height;
+		}
+
 	public:
 		/// Returns the configured chain info and throws if the error entry point is set to Chain_Info.
 		thread::future<api::ChainInfo> chainInfo() const override {
@@ -168,6 +174,27 @@ namespace catapult { namespace mocks {
 			return CreateFutureResponse(createRange(height, numBlocks));
 		}
 
+		thread::future<model::EntityRange<model::CacheEntryInfo<Height>>> networkConfigs(model::EntityRange<Height>&& heights) const override {
+			if (shouldRaiseException(EntryPoint::Network_Configs))
+				return CreateFutureException<model::EntityRange<model::CacheEntryInfo<Height>>>("network configs error has been set");
+
+			std::vector<model::UniqueEntityPtr<model::CacheEntryInfo<Height>>> entries;
+			std::vector<const model::CacheEntryInfo<Height>*> rawEntries;
+			auto iter = heights.cbegin();
+			for (auto i = 0u; iter != heights.cend(); ++i, ++iter) {
+				entries.push_back(utils::MakeUniqueWithSize<model::CacheEntryInfo<Height>>(sizeof(model::CacheEntryInfo<Height>)));
+				auto& pEntry = entries.back();
+				auto height = *iter;
+				pEntry->Id = height;
+				pEntry->DataSize = (height == m_configHeight) ? 1 : 0;
+				pEntry->Size = static_cast<uint32_t>(model::CacheEntryInfo<Height>::CalculateRealSize(*pEntry));
+				rawEntries.push_back(entries[i].get());
+			}
+
+			auto range = test::CreateEntityRange<model::CacheEntryInfo<Height>>(rawEntries);
+			return thread::make_ready_future(std::move(range));
+		}
+
 	private:
 		bool shouldRaiseException(EntryPoint entryPoint) const {
 			return m_errorEntryPoint == entryPoint;
@@ -222,5 +249,6 @@ namespace catapult { namespace mocks {
 		mutable std::list<uint32_t> m_numBlocksPerBlocksFromRequest;
 
 		utils::TimeSpan m_apiDelay;
+		Height m_configHeight;
 	};
 }}
