@@ -19,8 +19,11 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(NetworkConfig, Notification)(const plugins::PluginManager& pluginManager) {
 		return MAKE_STATEFUL_VALIDATOR(NetworkConfig, ([&pluginManager](const Notification& notification, const ValidatorContext& context) {
-			const auto& currentBlockChainConfig = pluginManager.config(context.Height);
-			const auto& pluginConfig = currentBlockChainConfig.GetPluginConfiguration<config::NetworkConfigConfiguration>(PLUGIN_NAME_HASH(config));
+			if (BlockDuration(0) == notification.ApplyHeightDelta)
+				return Failure_NetworkConfig_ApplyHeightDelta_Zero;
+
+			const auto& currentBlockChainConfig = pluginManager.configHolder()->Config(context.Height);
+			const auto& pluginConfig = currentBlockChainConfig.Network.GetPluginConfiguration<config::NetworkConfigConfiguration>(PLUGIN_NAME_HASH(config));
 			if (notification.BlockChainConfigSize > pluginConfig.MaxBlockChainConfigSize.bytes32())
 				return Failure_NetworkConfig_BlockChain_Config_Too_Large;
 
@@ -37,11 +40,22 @@ namespace catapult { namespace validators {
 				std::istringstream configStream{std::string{(const char*)notification.BlockChainConfigPtr, notification.BlockChainConfigSize}};
 				auto bag = utils::ConfigurationBag::FromStream(configStream);
 				networkConfig = model::NetworkConfiguration::LoadFromBag(bag);
+
+				if (2 * networkConfig.ImportanceGrouping <= networkConfig.MaxRollbackBlocks)
+					return Failure_NetworkConfig_ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks;
+
+				if (100u < networkConfig.HarvestBeneficiaryPercentage)
+					return Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hunderd;
+
+				auto totalInflation = currentBlockChainConfig.Inflation.InflationCalculator.sumAll();
+				auto totalCurrency = currentBlockChainConfig.Immutable.InitialCurrencyAtomicUnits + totalInflation.first;
+				if (totalCurrency > networkConfig.MaxMosaicAtomicUnits)
+					return Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid;
 			} catch (...) {
 				return Failure_NetworkConfig_BlockChain_Config_Malformed;
 			}
 
-			for (const auto& pair : currentBlockChainConfig.Plugins) {
+			for (const auto& pair : currentBlockChainConfig.Network.Plugins) {
 				if (!networkConfig.Plugins.count(pair.first))
 					return Failure_NetworkConfig_Plugin_Config_Missing;
 			}

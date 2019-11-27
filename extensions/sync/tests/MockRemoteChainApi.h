@@ -39,6 +39,7 @@ namespace catapult { namespace mocks {
 		thread::future<std::shared_ptr<const model::Block>> blockLast() const override;
 		thread::future<std::shared_ptr<const model::Block>> blockAt(Height height) const override;
 		thread::future<model::BlockRange> blocksFrom(Height height, const api::BlocksFromOptions& options) const override;
+		virtual thread::future<model::EntityRange<model::CacheEntryInfo<Height>>> networkConfigs(model::EntityRange<Height>&& heights) const override;
 
 	private:
 		const io::BlockStorageCache& m_storage;

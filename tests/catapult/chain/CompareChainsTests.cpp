@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/chain/CompareChains.h"
-#include "catapult/model/BlockUtils.h"
 #include "tests/catapult/chain/test/MockChainApi.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/HashTestUtils.h"

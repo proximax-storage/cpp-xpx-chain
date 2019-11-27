@@ -85,7 +85,7 @@ namespace catapult { namespace test {
 	}
 
 	void AddSimplePartnerPluginExtensions(config::ExtensionsConfiguration& config) {
-		AddPluginExtensions(config, { "packetserver", "sync", "syncsource" });
+		AddPluginExtensions(config, { "diagnostics", "packetserver", "sync", "syncsource" });
 	}
 
 	void AddRecoveryPluginExtensions(config::ExtensionsConfiguration& config) {

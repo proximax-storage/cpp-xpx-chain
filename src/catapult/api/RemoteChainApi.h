@@ -21,6 +21,7 @@
 #pragma once
 #include "ChainApi.h"
 #include "RemoteApi.h"
+#include "catapult/model/CacheEntryInfo.h"
 
 namespace catapult {
 	namespace ionet { class PacketIo; }
@@ -66,6 +67,10 @@ namespace catapult { namespace api {
 		/// Gets the blocks starting at \a height with the specified \a options.
 		/// \note An empty range will be returned if remote chain height is less than \a height.
 		virtual thread::future<model::BlockRange> blocksFrom(Height height, const BlocksFromOptions& options) const = 0;
+
+		/// Gets network config entries for all \a heights.
+		virtual thread::future<model::EntityRange<model::CacheEntryInfo<Height>>> networkConfigs(
+				model::EntityRange<Height>&& heights) const = 0;
 	};
 
 	/// Creates a chain api for interacting with a remote node with the specified \a io.

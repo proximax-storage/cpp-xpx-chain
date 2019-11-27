@@ -14,6 +14,7 @@
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
+#include <boost/algorithm/string/replace.hpp>
 
 namespace catapult { namespace validators {
 
@@ -64,6 +65,7 @@ namespace catapult { namespace validators {
 
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager(uint64_t maxBlockChainConfigSizeMb, uint64_t maxSupportedEntityVersionsSizeMb) {
 			test::MutableBlockchainConfiguration config;
+			config.Immutable.InitialCurrencyAtomicUnits = Amount(100);
 			auto pluginConfig = config::NetworkConfigConfiguration::Uninitialized();
 			pluginConfig.MaxBlockChainConfigSize = utils::FileSize::FromMegabytes(maxBlockChainConfigSizeMb);
 			pluginConfig.MaxSupportedEntityVersionsSize = utils::FileSize::FromMegabytes(maxSupportedEntityVersionsSizeMb);
@@ -89,10 +91,11 @@ namespace catapult { namespace validators {
 				const std::string& networkConfig,
 				const std::string& supportedEntityVersions,
 				std::shared_ptr<plugins::PluginManager> pPluginManager,
-				cache::CatapultCache& cache) {
+				cache::CatapultCache& cache,
+				BlockDuration applyHeightDelta = BlockDuration(10)) {
 			// Arrange:
 			model::NetworkConfigNotification<1> notification(
-				BlockDuration(),
+				applyHeightDelta,
 				networkConfig.size(),
 				reinterpret_cast<const uint8_t*>(networkConfig.data()),
 				supportedEntityVersions.size(),
@@ -112,16 +115,17 @@ namespace catapult { namespace validators {
 				const std::string& supportedEntityVersions,
 				uint64_t maxBlockChainConfigSizeMb = 1,
 				uint64_t maxSupportedEntityVersionsSizeMb = 1,
-				bool seedConfigCache = false) {
+				bool seedConfigCache = false,
+				BlockDuration applyHeightDelta = BlockDuration(10)) {
 			auto pPluginManager = CreatePluginManager(maxBlockChainConfigSizeMb, maxSupportedEntityVersionsSizeMb);
 			auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
 			if (seedConfigCache) {
 				auto delta = cache.createDelta();
 				auto& configCacheDelta = delta.sub<cache::NetworkConfigCache>();
-				configCacheDelta.insert(state::NetworkConfigEntry(Height(1), "BlockChainConfig", "SupportedEntityVersionsConfig"));
+				configCacheDelta.insert(state::NetworkConfigEntry(Height(1 + applyHeightDelta.unwrap()), "BlockChainConfig", "SupportedEntityVersionsConfig"));
 				cache.commit(Height(1));
 			}
-			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache);
+			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache, applyHeightDelta);
 		}
 
 		void RunTestWithRealPlugins(
@@ -134,6 +138,18 @@ namespace catapult { namespace validators {
 			auto cache = pPluginManager->createCache();
 			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache);
 		}
+	}
+
+	TEST(TEST_CLASS, FailureWhenApplyHeightDeltaIsZero) {
+		// Assert:
+		RunTest(
+			Failure_NetworkConfig_ApplyHeightDelta_Zero,
+			networkConfigWithPlugin,
+			test::GetSupportedEntityVersionsString(),
+			1,
+			1,
+			false,
+			BlockDuration(0));
 	}
 
 	TEST(TEST_CLASS, FailureWhenBlockChainConfigTooBig) {
@@ -156,7 +172,7 @@ namespace catapult { namespace validators {
 			0);
 	}
 
-	TEST(TEST_CLASS, FailureNetworkConfigExistsAtHeight) {
+	TEST(TEST_CLASS, FailureWhenNetworkConfigExistsAtHeight) {
 		// Assert:
 		RunTest(
 			Failure_NetworkConfig_Config_Redundant,
@@ -165,6 +181,36 @@ namespace catapult { namespace validators {
 			1,
 			1,
 			true);
+	}
+
+	TEST(TEST_CLASS, FailureWhenImportanceGroupingInvalid) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "importanceGrouping = 5760", "importanceGrouping = 100");
+		// Assert:
+		RunTest(
+			Failure_NetworkConfig_ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks,
+			networkConfig,
+			test::GetSupportedEntityVersionsString());
+	}
+
+	TEST(TEST_CLASS, FailureWhenHarvestBeneficiaryPercentageInvalid) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "harvestBeneficiaryPercentage = 10", "harvestBeneficiaryPercentage = 150");
+		// Assert:
+		RunTest(
+			Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hunderd,
+			networkConfig,
+			test::GetSupportedEntityVersionsString());
+	}
+
+	TEST(TEST_CLASS, FailureWhenMaxMosaicAtomicUnitsInvalid) {
+		auto networkConfig = networkConfigWithPlugin;
+		boost::algorithm::replace_first(networkConfig, "maxMosaicAtomicUnits = 9'000'000'000'000'000", "maxMosaicAtomicUnits = 10");
+		// Assert:
+		RunTest(
+			Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid,
+			networkConfig,
+			test::GetSupportedEntityVersionsString());
 	}
 
 	TEST(TEST_CLASS, FailureWhenBlockChainConfigInvalid) {

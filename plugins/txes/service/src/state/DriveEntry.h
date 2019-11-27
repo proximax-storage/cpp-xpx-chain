@@ -143,7 +143,7 @@ namespace catapult { namespace state {
         }
 
 		/// Gets the duration of the drive in blocks.
-		BlockDuration duration() const {
+		const BlockDuration& duration() const {
 			return m_duration;
 		}
 
@@ -153,7 +153,7 @@ namespace catapult { namespace state {
 		}
 
         /// Gets the billing period of the drive in blocks.
-        BlockDuration billingPeriod() const {
+        const BlockDuration& billingPeriod() const {
             return m_billingPeriod;
         }
 
@@ -163,7 +163,7 @@ namespace catapult { namespace state {
         }
 
 		/// Gets the billing price of the drive in storage units.
-		Amount billingPrice() const {
+		const Amount& billingPrice() const {
 			return m_billingPrice;
 		}
 
@@ -194,7 +194,7 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the drive size.
-		uint64_t size() const {
+		const uint64_t& size() const {
 			return m_size;
 		}
 
@@ -204,7 +204,7 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the number of the drive replicas.
-        uint16_t replicas() const {
+        const uint16_t& replicas() const {
 			return m_replicas;
 		}
 
@@ -214,7 +214,7 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the number of the drive replicas.
-        uint16_t minReplicators() const {
+        const uint16_t& minReplicators() const {
 			return m_minReplicators;
 		}
 
@@ -224,7 +224,7 @@ namespace catapult { namespace state {
 		}
 
 		/// Gets the number of the drive replicators for starting.
-		uint8_t percentApprovers() const {
+		const uint8_t& percentApprovers() const {
 			return m_percentApprovers;
 		}
 

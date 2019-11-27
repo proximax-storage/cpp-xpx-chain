@@ -160,6 +160,8 @@ RUN cd /catapult \
 RUN cd /catapult/_build && make \
 # Catapult
     sirius.bc \
+    catapult.broker \
+    catapult.recovery \
     catapult.tools.address \
     catapult.tools.benchmark \
     catapult.tools.health \

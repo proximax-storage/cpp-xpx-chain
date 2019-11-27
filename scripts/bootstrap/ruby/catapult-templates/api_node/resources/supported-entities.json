@@ -126,7 +126,7 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "JointToDrive",
+			"name": "JoinToDrive",
 			"type": "16986",
 			"supportedVersions": [1]
 		},

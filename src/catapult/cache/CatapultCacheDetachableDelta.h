@@ -34,7 +34,8 @@ namespace catapult { namespace cache {
 		/// Creates a detachable cache delta from a cache height view (\a cacheHeightView) and \a detachedSubViews.
 		CatapultCacheDetachableDelta(
 				CacheHeightView&& cacheHeightView,
-				std::vector<std::unique_ptr<DetachedSubCacheView>>&& detachedSubViews);
+				std::vector<std::unique_ptr<DetachedSubCacheView>>&& detachedSubViews,
+				const Height& heightDelta = Height(0));
 
 		/// Destroys the detachable cache delta.
 		~CatapultCacheDetachableDelta();
@@ -53,5 +54,6 @@ namespace catapult { namespace cache {
 	private:
 		std::unique_ptr<const CacheHeightView> m_pCacheHeightView;
 		CatapultCacheDetachedDelta m_detachedDelta;
+		Height m_heightDelta;
 	};
 }}

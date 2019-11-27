@@ -40,14 +40,14 @@ namespace catapult { namespace harvesting {
 				, m_pConfigHolder(pConfigHolder)
 				, m_config(config)
 				, m_executionConfig(executionConfig)
-				, m_cacheDetachableDelta(cache.createDetachableDelta())
+				, m_cacheDetachableDelta(cache.createDetachableDelta(Height(1)))
 				, m_cacheDetachedDelta(m_cacheDetachableDelta.detach())
 				, m_pCacheDelta(m_cacheDetachedDelta.tryLock())
 		{}
 
 	public:
 		Height height() const {
-			return m_cacheDetachableDelta.height() + Height(1);
+			return m_cacheDetachableDelta.height();
 		}
 
 	public:
