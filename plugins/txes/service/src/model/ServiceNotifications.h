@@ -31,19 +31,19 @@ namespace catapult { namespace model {
 	DEFINE_NOTIFICATION_TYPE(Validator, Service, End_Drive_Verification_v1, 0x0006);
 
 	/// Defines a drive verification payment notification type.
-	DEFINE_NOTIFICATION_TYPE(Observer, Service, Drive_Verification_Payment_v1, 0x0006);
+	DEFINE_NOTIFICATION_TYPE(Observer, Service, Drive_Verification_Payment_v1, 0x0007);
 
 	/// Defines a drive notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0008);
 
 	/// Defines a end drive notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0008);
+	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0009);
 
 	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, DeleteReward_v1, 0x0008);
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, DeleteReward_v1, 0x000A);
 
 	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Reward_v1, 0x0009);
+	DEFINE_NOTIFICATION_TYPE(All, Service, Reward_v1, 0x000B);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -134,16 +134,36 @@ namespace catapult { namespace model {
         const Key& Replicator;
 	};
 
-	struct DriveDeposit {
+	struct DriveDeposit : public UnresolvedAmountData {
+	public:
+		DriveDeposit(const Key& driveKey)
+			: DriveKey(driveKey)
+		{}
+
+	public:
 		const Key& DriveKey;
 	};
 
-	struct FileDeposit {
+	struct FileDeposit : public UnresolvedAmountData {
+	public:
+		FileDeposit(const Key& driveKey, const Hash256& fileHash)
+			: DriveKey(driveKey)
+			, FileHash(fileHash)
+		{}
+
+	public:
 		const Key& DriveKey;
 		const Hash256& FileHash;
 	};
 
-	struct FileUpload {
+	struct FileUpload : public UnresolvedAmountData {
+	public:
+		FileUpload(const Key& driveKey, const uint64_t& fileSize)
+			: DriveKey(driveKey)
+			, FileSize(fileSize)
+		{}
+
+	public:
 		const Key& DriveKey;
 		const uint64_t& FileSize;
 	};
@@ -400,7 +420,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Vector of deleted files.
-		const std::vector<const model::DeletedFile*>& DeletedFiles;
+		std::vector<const model::DeletedFile*> DeletedFiles;
 	};
 
 	/// Notification of a reward.

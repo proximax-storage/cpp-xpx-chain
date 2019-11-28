@@ -20,8 +20,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
-			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight,
-								   NotificationSubscriber &sub) {
+			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight, NotificationSubscriber &sub) {
 				auto &blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
 				switch (transaction.EntityVersion()) {
 					case 1: {
@@ -30,23 +29,21 @@ namespace catapult { namespace plugins {
 						// We need to inform user that replicator added to multisig
                         sub.notify(AccountPublicKeyNotification<1>(transaction.DriveKey));
 
-						// TODO: Fix memory leak
-						auto modification = new CosignatoryModification{model::CosignatoryModificationType::Add,
-																		transaction.Signer};
-						sub.notify(ModifyMultisigCosignersNotification<1>(transaction.DriveKey, 1, modification));
+						auto pModification = sub.mempool().malloc(
+							CosignatoryModification{model::CosignatoryModificationType::Add, transaction.Signer});
+						sub.notify(ModifyMultisigCosignersNotification<1>(transaction.DriveKey, 1, pModification));
 
 						sub.notify(JoinToDriveNotification<1>(
 								transaction.DriveKey,
 								transaction.Signer
 						));
 
-						// TODO: Fix memory leak
-						auto deposit = new model::DriveDeposit{ transaction.DriveKey };
+						auto pDeposit = sub.mempool().malloc(model::DriveDeposit(transaction.DriveKey));
 						sub.notify(BalanceTransferNotification<1>(
 								transaction.Signer,
 								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, blockChainConfig.Immutable.NetworkIdentifier)),
 								UnresolvedMosaicId(blockChainConfig.Immutable.StorageMosaicId.unwrap()),
-								UnresolvedAmount(0, UnresolvedAmountType::DriveDeposit, reinterpret_cast<uint8_t*>(deposit))
+								UnresolvedAmount(0, UnresolvedAmountType::DriveDeposit, pDeposit)
 							)
 						);
 						break;

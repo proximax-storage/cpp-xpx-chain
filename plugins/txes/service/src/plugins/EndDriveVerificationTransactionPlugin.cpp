@@ -39,8 +39,7 @@ namespace catapult { namespace plugins {
 							Hash256(),
 							extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, networkIdentifier))));
 
-						// TODO: Fix memory leak
-						auto pModifications = static_cast<CosignatoryModification*>(::operator new(failureCount * sizeof(CosignatoryModification)));
+						auto pModifications = sub.mempool().malloc<CosignatoryModification>(failureCount);
 						auto pFailure = transaction.FailuresPtr();
 						for (auto i = 0u; i < failureCount; ++i, ++pFailure) {
 							pModifications[i] = CosignatoryModification{model::CosignatoryModificationType::Del, pFailure->Replicator};

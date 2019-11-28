@@ -15,7 +15,7 @@ namespace catapult { namespace observers {
 	using Notification = model::RewardNotification<1>;
 
 	DECLARE_OBSERVER(Reward, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(EndBilling, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
+		return MAKE_OBSERVER(Reward, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
