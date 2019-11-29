@@ -23,6 +23,9 @@ namespace catapult { namespace observers {
 				driveEntry.replicators().at(pFailure->Replicator).End = context.Height;
 			}
 
+			if (notification.FailureCount)
+				driveCache.markRemoveDrive(driveEntry.key(), context.Height);
+
 			DrivePayment(driveEntry, context, storageMosaicId, faultyReplicatorKeys);
 			UpdateDriveMultisigSettings(driveEntry, context);
 		})
