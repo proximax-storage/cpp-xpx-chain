@@ -92,11 +92,10 @@ namespace catapult { namespace harvesting {
 		UnlockedAccountsModifier(
 				size_t maxUnlockedAccounts,
 				std::vector<crypto::KeyPair>& keyPairs,
-				utils::SpinReaderWriterLock::ReaderLockGuard&& readLock)
+				utils::SpinReaderWriterLock::WriterLockGuard&& writeLock)
 				: m_maxUnlockedAccounts(maxUnlockedAccounts)
 				, m_keyPairs(keyPairs)
-				, m_readLock(std::move(readLock))
-				, m_writeLock(m_readLock.promoteToWriter())
+                , m_writeLock(std::move(writeLock))
 		{}
 
 	public:
@@ -112,7 +111,6 @@ namespace catapult { namespace harvesting {
 	private:
 		size_t m_maxUnlockedAccounts;
 		std::vector<crypto::KeyPair>& m_keyPairs;
-		utils::SpinReaderWriterLock::ReaderLockGuard m_readLock;
 		utils::SpinReaderWriterLock::WriterLockGuard m_writeLock;
 	};
 
