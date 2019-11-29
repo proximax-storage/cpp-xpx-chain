@@ -31,19 +31,19 @@ namespace catapult { namespace model {
 	DEFINE_NOTIFICATION_TYPE(Validator, Service, End_Drive_Verification_v1, 0x0006);
 
 	/// Defines a drive verification payment notification type.
-	DEFINE_NOTIFICATION_TYPE(Observer, Service, Drive_Verification_Payment_v1, 0x0006);
+	DEFINE_NOTIFICATION_TYPE(Observer, Service, Drive_Verification_Payment_v1, 0x0007);
 
 	/// Defines a drive notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0008);
 
 	/// Defines a end drive notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0008);
+	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0009);
 
 	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, DeleteReward_v1, 0x0008);
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, DeleteReward_v1, 0x000A);
 
 	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Reward_v1, 0x0009);
+	DEFINE_NOTIFICATION_TYPE(All, Service, Reward_v1, 0x000B);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
