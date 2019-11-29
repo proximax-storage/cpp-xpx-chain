@@ -22,6 +22,7 @@
 #include "catapult/exceptions.h"
 #include "catapult/model/EntityPtr.h"
 #include <memory>
+#include <forward_list>
 
 namespace catapult { namespace utils {
 
@@ -48,4 +49,28 @@ namespace catapult { namespace utils {
 	std::shared_ptr<T> UniqueToShared(std::unique_ptr<T, Deleter>&& pointer) {
 		return std::move(pointer);
 	}
+
+	/// A simple memory pool for allocating memory chunks for objects or arrays of objects.
+	/// Note: constructors/destructors are not called on object memory allocation/deallocation.
+	struct Mempool {
+	public:
+		/// Allocates memory sufficient to store \a count of uninitialized objects of the given type.
+		/// Returns pointer the first allocated object.
+		template<typename T>
+		T* malloc(size_t count) {
+			m_allocatedMemory.emplace_front(std::vector<uint8_t>(count * sizeof(T)));
+			return reinterpret_cast<T*>(m_allocatedMemory.front().data());
+		}
+
+		/// Allocates memory sufficient to store an object of the given type and
+		/// copy content of \a obj to the allocated memory.
+		template<typename T>
+		T* malloc(const T& obj) {
+			auto begin = reinterpret_cast<const uint8_t*>(&obj);
+			m_allocatedMemory.emplace_front(std::vector<uint8_t>(begin, begin + sizeof(T)));
+			return reinterpret_cast<T*>(m_allocatedMemory.front().data());
+		}
+	private:
+		std::forward_list<std::vector<uint8_t>> m_allocatedMemory;
+	};
 }}

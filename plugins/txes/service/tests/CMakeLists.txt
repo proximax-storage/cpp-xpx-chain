@@ -4,4 +4,7 @@ add_subdirectory(test)
 
 set(TARGET_NAME tests.catapult.plugins.service)
 
+include_directories(${PROJECT_SOURCE_DIR}/plugins/txes/multisig)
+include_directories(${PROJECT_SOURCE_DIR}/plugins/txes/exchange)
+include_directories(${PROJECT_SOURCE_DIR}/plugins/txes/lock_secret)
 catapult_tx_plugin_tests(${TARGET_NAME})

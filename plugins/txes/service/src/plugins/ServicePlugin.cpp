@@ -5,7 +5,6 @@
 **/
 
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/observers/ObserverUtils.h"
 #include "ServicePlugin.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
@@ -27,13 +26,24 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		void extractOwner(const cache::DriveCache::CacheReadOnlyType& cache, const Key& publicKey, model::PublicKeySet& result) {
-			if (!cache.contains(publicKey)) {
+			if (!cache.contains(publicKey))
 				return;
-			}
 
 			auto driveIter = cache.find(publicKey);
 			const auto& driveEntry = driveIter.get();
 			result.insert(driveEntry.owner());
+		}
+
+		template<typename TUnresolvedData>
+		const TUnresolvedData* castToUnresolvedData(const UnresolvedAmountData* pData) {
+			if (!pData)
+				CATAPULT_THROW_RUNTIME_ERROR("unresolved amount data pointer is null")
+
+			auto pCast = dynamic_cast<const TUnresolvedData*>(pData);
+			if (!pCast)
+				CATAPULT_THROW_RUNTIME_ERROR("unresolved amount data pointer is of unexpected type")
+
+			return pCast;
 		}
 	}
 
@@ -61,7 +71,7 @@ namespace catapult { namespace plugins {
             const auto& driveCache = cache.template sub<cache::DriveCache>();
             switch (unresolved.Type) {
             	case UnresolvedAmountType::DriveDeposit: {
-					const auto &driveKey = reinterpret_cast<model::DriveDeposit*>(unresolved.Data)->DriveKey;
+					const auto &driveKey = castToUnresolvedData<model::DriveDeposit>(unresolved.DataPtr)->DriveKey;
 
 					if (driveCache.contains(driveKey)) {
                         auto driveIter = driveCache.find(driveKey);
@@ -72,7 +82,7 @@ namespace catapult { namespace plugins {
 					break;
 				}
 				case UnresolvedAmountType::FileDeposit: {
-					auto fileDeposit = reinterpret_cast<model::FileDeposit*>(unresolved.Data);
+					auto fileDeposit = castToUnresolvedData<model::FileDeposit>(unresolved.DataPtr);
 
 					if (driveCache.contains(fileDeposit->DriveKey)) {
 					    auto driveIter = driveCache.find(fileDeposit->DriveKey);
@@ -86,7 +96,7 @@ namespace catapult { namespace plugins {
 					break;
 				}
 				case UnresolvedAmountType::FileUpload: {
-					auto fileUpload = reinterpret_cast<model::FileUpload*>(unresolved.Data);
+					auto fileUpload = castToUnresolvedData<model::FileUpload>(unresolved.DataPtr);
 
 					if (driveCache.contains(fileUpload->DriveKey)) {
                         auto driveIter = driveCache.find(fileUpload->DriveKey);

@@ -39,13 +39,12 @@ namespace catapult { namespace plugins {
 						auto streamingMosaicId = UnresolvedMosaicId(blockChainConfig.Immutable.StreamingMosaicId.unwrap());
 
 						for (auto i = 0u; i < transaction.FilesCount; ++i, ++filesPtr) {
-							// TODO: Fix memory leak
-							auto deposit = new model::FileDeposit{ transaction.DriveKey, filesPtr->FileHash };
+							auto pDeposit = sub.mempool().malloc(model::FileDeposit(transaction.DriveKey, filesPtr->FileHash));
 							sub.notify(BalanceTransferNotification<1>(
 								transaction.Signer,
 								driveAddress,
 								streamingMosaicId,
-								UnresolvedAmount(0, UnresolvedAmountType::FileDeposit, reinterpret_cast<uint8_t*>(deposit))
+								UnresolvedAmount(0, UnresolvedAmountType::FileDeposit, pDeposit)
 							));
 						}
 

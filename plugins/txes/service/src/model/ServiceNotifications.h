@@ -134,16 +134,36 @@ namespace catapult { namespace model {
         const Key& Replicator;
 	};
 
-	struct DriveDeposit {
+	struct DriveDeposit : public UnresolvedAmountData {
+	public:
+		DriveDeposit(const Key& driveKey)
+			: DriveKey(driveKey)
+		{}
+
+	public:
 		const Key& DriveKey;
 	};
 
-	struct FileDeposit {
+	struct FileDeposit : public UnresolvedAmountData {
+	public:
+		FileDeposit(const Key& driveKey, const Hash256& fileHash)
+			: DriveKey(driveKey)
+			, FileHash(fileHash)
+		{}
+
+	public:
 		const Key& DriveKey;
 		const Hash256& FileHash;
 	};
 
-	struct FileUpload {
+	struct FileUpload : public UnresolvedAmountData {
+	public:
+		FileUpload(const Key& driveKey, const uint64_t& fileSize)
+			: DriveKey(driveKey)
+			, FileSize(fileSize)
+		{}
+
+	public:
 		const Key& DriveKey;
 		const uint64_t& FileSize;
 	};
@@ -400,7 +420,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Vector of deleted files.
-		const std::vector<const model::DeletedFile*>& DeletedFiles;
+		std::vector<const model::DeletedFile*> DeletedFiles;
 	};
 
 	/// Notification of a reward.
