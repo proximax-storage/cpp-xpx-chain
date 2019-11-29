@@ -115,6 +115,13 @@ namespace catapult { namespace cache {
                     }
                 }
 
+                for (auto iter = replicators.begin(); iter != replicators.end();) {
+                	if (iter->second.End == height)
+                		iter = replicators.erase(iter);
+					else
+						++iter;
+                }
+
                 if (files.empty() && driveEntry.state() >= state::DriveState::Finished && driveEntry.end().unwrap() == 0) {
                 	// We can try to return remaining tokens to owner. but we need to ask researchers about that
 //					auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
