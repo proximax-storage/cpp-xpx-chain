@@ -29,11 +29,11 @@ namespace catapult { namespace validators {
             }
 
             if (keys.size() != pFile->InfosCount())
-                return Failure_Service_Participant_Redudant;
+                return Failure_Service_Participant_Redundant;
         }
 
         if (fileHashes.size() != notification.DeletedFiles.size())
-            return Failure_Service_File_Hash_Redudant;
+            return Failure_Service_File_Hash_Redundant;
 
         return ValidationResult::Success;
     });

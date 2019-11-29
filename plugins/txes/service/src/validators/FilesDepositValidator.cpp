@@ -35,7 +35,7 @@ namespace catapult { namespace validators {
 			filesPtr = notification.FilesPtr;
 			for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr)
 				if (filesWithoutDeposit.at(filesPtr->FileHash) < hashes[filesPtr->FileHash])
-					return Failure_Service_File_Hash_Redudant;
+					return Failure_Service_File_Hash_Redundant;
 		});
 
 		return ValidationResult::Success;

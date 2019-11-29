@@ -34,12 +34,12 @@ namespace catapult { namespace validators {
                 const auto& file = driveEntry.files().at(addActionsPtr->FileHash);
 
                 if (file.isActive())
-                    return Failure_Service_File_Hash_Redudant;
+                    return Failure_Service_File_Hash_Redundant;
             }
 		}
 
 		if (hashes.size() != notification.AddActionsCount)
-			return Failure_Service_File_Hash_Redudant;
+			return Failure_Service_File_Hash_Redundant;
 
 		hashes.clear();
 		auto removeActionsPtr = notification.RemoveActionsPtr;
@@ -56,7 +56,7 @@ namespace catapult { namespace validators {
 		}
 
 		if (hashes.size() != notification.RemoveActionsCount)
-			return Failure_Service_File_Hash_Redudant;
+			return Failure_Service_File_Hash_Redundant;
 
 		return ValidationResult::Success;
 	});

@@ -198,7 +198,7 @@ namespace catapult { namespace validators {
 		boost::algorithm::replace_first(networkConfig, "harvestBeneficiaryPercentage = 10", "harvestBeneficiaryPercentage = 150");
 		// Assert:
 		RunTest(
-			Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hunderd,
+			Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hundred,
 			networkConfig,
 			test::GetSupportedEntityVersionsString());
 	}

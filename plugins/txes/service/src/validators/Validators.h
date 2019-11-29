@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 	/// A validator check that end drive transaction is permitted
 	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
-	/// A validator implementation that not file and piarticipant redudant, and that upload info is not zero.
+	/// A validator implementation that not file and piarticipant redundant, and that upload info is not zero.
 	DECLARE_STATELESS_VALIDATOR(DeleteReward, model::DeleteRewardNotification<1>)();
 
 	/// A validator check that file exsists and replicators are valid(they are part of drive and put deposit for fiel)
