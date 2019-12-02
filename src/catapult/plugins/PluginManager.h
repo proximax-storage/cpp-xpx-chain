@@ -34,6 +34,7 @@
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "catapult/plugins.h"
+#include "catapult/types.h"
 #include "PluginUtils.h"
 
 namespace catapult { namespace plugins {
@@ -67,6 +68,7 @@ namespace catapult { namespace plugins {
 		using Resolver = predicate<const cache::ReadOnlyCatapultCache&, const TUnresolved&, TResolved&>;
 		using MosaicResolver = Resolver<UnresolvedMosaicId, MosaicId>;
 		using AddressResolver = Resolver<UnresolvedAddress, Address>;
+		using AmountResolver = Resolver<catapult::UnresolvedAmount, Amount>;
 
 		template<typename TUnresolved, typename TResolved>
 		using AggregateResolver = std::function<TResolved (const cache::ReadOnlyCatapultCache&, const TUnresolved&)>;
@@ -216,6 +218,9 @@ namespace catapult { namespace plugins {
 		/// Adds an address \a resolver.
 		void addAddressResolver(const AddressResolver& resolver);
 
+		/// Adds an amount \a resolver.
+		void addAmountResolver(const AmountResolver& resolver);
+
 		/// Creates a resolver context given \a cache.
 		model::ResolverContext createResolverContext(const cache::ReadOnlyCatapultCache& cache) const;
 
@@ -253,6 +258,7 @@ namespace catapult { namespace plugins {
 
 		std::vector<MosaicResolver> m_mosaicResolvers;
 		std::vector<AddressResolver> m_addressResolvers;
+		std::vector<AmountResolver> m_amountResolvers;
 		std::vector<AddressesExtractor> m_addressesExtractors;
 		std::vector<PublicKeysExtractor> m_publicKeysExtractors;
 

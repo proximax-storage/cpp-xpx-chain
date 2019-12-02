@@ -126,6 +126,9 @@ namespace catapult { namespace model {
 	/// Transaction change config was received.
 	DEFINE_CORE_NOTIFICATION(Plugin_Config_v1, 0x000F, Validator);
 
+	/// Mosaic was credited to account.
+	DEFINE_CORE_NOTIFICATION(Balance_Credit_v1, 0x000E, All);
+
 #undef DEFINE_CORE_NOTIFICATION
 
 	// endregion

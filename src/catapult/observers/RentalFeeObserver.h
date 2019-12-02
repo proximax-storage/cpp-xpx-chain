@@ -36,8 +36,9 @@ namespace catapult { namespace observers {
 
 			auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
 			auto recipient = context.Resolvers.resolve(notification.Recipient);
-			model::BalanceTransferReceipt receipt(receiptType, notification.Sender, recipient, mosaicId, notification.Amount);
-			context.StatementBuilder().addReceipt(receipt);
+			auto amount = context.Resolvers.resolve(notification.Amount);
+			model::BalanceTransferReceipt receipt(receiptType, notification.Sender, recipient, mosaicId, amount);
+			context.StatementBuilder().addTransactionReceipt(receipt);
 		});
 	}
 }}

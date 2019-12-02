@@ -44,7 +44,7 @@ namespace catapult { namespace observers {
 			// add fee receipt
 			auto receiptType = model::Receipt_Type_Harvest_Fee;
 			model::BalanceChangeReceipt receipt(receiptType, accountState.PublicKey, feeMosaic.MosaicId, feeMosaic.Amount);
-			statementBuilder.addReceipt(receipt);
+			statementBuilder.addTransactionReceipt(receipt);
 		}
 
 		void ApplyFee(const Key& publicKey, const model::Mosaic& feeMosaic, ObserverContext& context) {
@@ -95,7 +95,7 @@ namespace catapult { namespace observers {
 			// add inflation receipt
 			if (Amount() != inflationAmount && NotifyMode::Commit == context.Mode) {
 				model::InflationReceipt receipt(model::Receipt_Type_Inflation, mosaicId, inflationAmount);
-				context.StatementBuilder().addReceipt(receipt);
+				context.StatementBuilder().addTransactionReceipt(receipt);
 			}
 		}));
 	}

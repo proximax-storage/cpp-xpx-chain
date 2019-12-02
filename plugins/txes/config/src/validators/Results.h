@@ -41,6 +41,18 @@ namespace catapult { namespace validators {
 	/// Validation failed because some plugin config missing.
 	DEFINE_CATAPULT_CONFIG_RESULT(Plugin_Config_Missing, 9);
 
+	/// Validation failed because ImportanceGrouping is less or equal half MaxRollbackBlocks.
+	DEFINE_CATAPULT_CONFIG_RESULT(ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks, 10);
+
+	/// Validation failed because HarvestBeneficiaryPercentage exceeds 100.
+	DEFINE_CATAPULT_CONFIG_RESULT(HarvestBeneficiaryPercentage_Exceeds_One_Hunderd, 11);
+
+	/// Validation failed because sum of InitialCurrencyAtomicUnits and inflation exceeds MaxMosaicAtomicUnits.
+	DEFINE_CATAPULT_CONFIG_RESULT(MaxMosaicAtomicUnits_Invalid, 12);
+
+	/// Validation failed because ApplyHeightDelta is zero.
+	DEFINE_CATAPULT_CONFIG_RESULT(ApplyHeightDelta_Zero, 13);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

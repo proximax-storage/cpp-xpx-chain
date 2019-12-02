@@ -20,7 +20,6 @@
 
 #include "ZeroMqEntityPublisher.h"
 #include "PublisherUtils.h"
-#include "catapult/model/Address.h"
 #include "catapult/model/Cosignature.h"
 #include "catapult/model/Elements.h"
 #include "catapult/model/NotificationSubscriber.h"
@@ -154,8 +153,16 @@ namespace catapult { namespace zeromq {
 		multipart.addmem(static_cast<const void*>(&blockElement.Block), sizeof(model::BlockHeader));
 		multipart.addmem(static_cast<const void*>(&blockElement.EntityHash), Hash256_Size);
 		multipart.addmem(static_cast<const void*>(&blockElement.GenerationHash), Hash256_Size);
+
 		pMessageGroup->add(std::move(multipart));
 		m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
+
+		if (blockElement.OptionalStatement) {
+			const auto& statements = blockElement.OptionalStatement->PublicKeyStatements;
+			for (const auto& pair : statements) {
+				publishStatement(pair.second, blockElement.Block.Height);
+			}
+		}
 	}
 
 	void ZeroMqEntityPublisher::publishDropBlocks(Height height) {
@@ -228,6 +235,19 @@ namespace catapult { namespace zeromq {
 		publish("detached cosignature", topicMarker, WeakTransactionInfo(parentTransactionInfo), [&detachedCosignature](auto& multipart) {
 			multipart.addmem(static_cast<const void*>(&detachedCosignature), sizeof(detachedCosignature));
 		});
+	}
+
+	void ZeroMqEntityPublisher::publishStatement(const model::PublicKeyStatement& statement, const Height& height) {
+		TransactionMarker topic = TransactionMarker::Receipt_Marker;
+		for (auto i = 0u; i < statement.size(); ++i){
+			auto pMessageGroup = std::make_unique<MessageGroup>(CreateHeightMessageGenerator("publish statement", height));
+			const auto& receipt = statement.receiptAt(i);
+			zmq::multipart_t multipart;
+			multipart.addmem(&topic, sizeof(TransactionMarker));
+			multipart.addmem(&receipt, receipt.Size);
+			pMessageGroup->add(std::move(multipart));
+			m_pSynchronizedPublisher->queue(std::move(pMessageGroup));
+		}
 	}
 
 	void ZeroMqEntityPublisher::publish(

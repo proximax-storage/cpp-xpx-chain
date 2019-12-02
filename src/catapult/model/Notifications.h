@@ -103,11 +103,16 @@ namespace catapult { namespace model {
 	struct BasicBalanceNotification : public Notification {
 	public:
 		/// Creates a notification around \a sender, \a mosaicId and \a amount.
-		BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, Amount amount)
+		BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, UnresolvedAmount amount)
 				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 				, Sender(sender)
 				, MosaicId(mosaicId)
 				, Amount(amount)
+		{}
+
+		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
+		BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, catapult::Amount amount)
+				: BasicBalanceNotification(sender, mosaicId, UnresolvedAmount(amount.unwrap(), UnresolvedAmountType::Default, nullptr ))
 		{}
 
 	public:
@@ -118,7 +123,7 @@ namespace catapult { namespace model {
 		UnresolvedMosaicId MosaicId;
 
 		/// Amount.
-		catapult::Amount Amount;
+		catapult::UnresolvedAmount Amount;
 	};
 
 	/// Notifies a balance transfer from sender to recipient.
@@ -132,6 +137,16 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Core_Balance_Transfer_v1_Notification;
 
 	public:
+		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a unresolved amount.
+		BalanceTransferNotification(
+				const Key& sender,
+				const UnresolvedAddress& recipient,
+				UnresolvedMosaicId mosaicId,
+				catapult::UnresolvedAmount unresolvedAmount)
+				: BasicBalanceNotification(sender, mosaicId, unresolvedAmount)
+				, Recipient(recipient)
+		{}
+
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
 		BalanceTransferNotification(
 				const Key& sender,
@@ -159,6 +174,20 @@ namespace catapult { namespace model {
 
 	public:
 		using BasicBalanceNotification<BalanceDebitNotification<1>>::BasicBalanceNotification;
+	};
+
+	/// Notifies a balance credit to sender.
+	template<VersionType version>
+	struct BalanceCreditNotification;
+
+	template<>
+	struct BalanceCreditNotification<1> : public BasicBalanceNotification<BalanceCreditNotification<1>> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Balance_Credit_v1_Notification;
+
+	public:
+		using BasicBalanceNotification<BalanceCreditNotification<1>>::BasicBalanceNotification;
 	};
 
 	// endregion

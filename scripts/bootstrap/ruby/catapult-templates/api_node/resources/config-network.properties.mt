@@ -4,8 +4,8 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 15s
-blockTimeSmoothingFactor = 3000
+blockGenerationTargetTime = 3s
+blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
 greedExponent = 3.2
@@ -51,6 +51,13 @@ maxSupportedEntityVersionsSize = 1MB
 
 minPercentageOfApproval = 100
 minPercentageOfRemoval = 66
+
+[plugin:catapult.plugins.exchange]
+
+enabled = true
+
+maxOfferDuration = 57600
+longOfferKey = CFC31B3080B36BC3D59DF4AB936AC72F4DC15CE3C3E1B1EC5EA41415A4C33FEE
 
 [plugin:catapult.plugins.lockhash]
 
@@ -115,7 +122,6 @@ minUpgradePeriod = 360
 
 [plugin:catapult.plugins.service]
 
-enabled = false
+enabled = true
 
-minPercentageOfApproval = 100
-minPercentageOfRemoval = 66
+maxFilesOnDrive = 32768

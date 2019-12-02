@@ -11,32 +11,32 @@
 
 namespace catapult { namespace test {
 
-        // region metadata entry related
+	// region metadata entry related
 
-        namespace {
-            void AssertFields(const std::vector<state::MetadataField>& fields, const bsoncxx::document::view& dbFields) {
-                ASSERT_EQ(fields.size(), test::GetFieldCount(dbFields));
+	namespace {
+		void AssertFields(const std::vector<state::MetadataField>& fields, const bsoncxx::document::view& dbFields) {
+			ASSERT_EQ(fields.size(), test::GetFieldCount(dbFields));
 
-                for (const auto& dbField : dbFields) {
-                    std::string key = dbField["key"].get_utf8().value.to_string();
-                    std::string value = dbField["value"].get_utf8().value.to_string();
-                    auto iter = std::find_if(fields.begin(), fields.end(), [&key, &value](const state::MetadataField& field) {
-                        return (field.MetadataKey == key) && (field.MetadataValue == value);
-                    });
+			for (const auto& dbField : dbFields) {
+				std::string key = dbField["key"].get_utf8().value.to_string();
+				std::string value = dbField["value"].get_utf8().value.to_string();
+				auto iter = std::find_if(fields.begin(), fields.end(), [&key, &value](const state::MetadataField& field) {
+					return (field.MetadataKey == key) && (field.MetadataValue == value);
+				});
 
-                    EXPECT_TRUE(iter != fields.end());
-                }
-            }
-        }
+				EXPECT_TRUE(iter != fields.end());
+			}
+		}
+	}
 
-        void AssertEqualMetadataData(const state::MetadataEntry& entry, const bsoncxx::document::view& dbMetadata) {
-            std::vector<uint8_t> raw;
-            mongo::mappers::DbBinaryToStdContainer(raw, dbMetadata["metadataId"].get_binary());
-            EXPECT_EQ(entry.raw(), raw);
-            EXPECT_EQ(entry.type(), model::MetadataType(GetUint32(dbMetadata, "metadataType")));
+	void AssertEqualMetadataData(const state::MetadataEntry& entry, const bsoncxx::document::view& dbMetadata) {
+		std::vector<uint8_t> raw;
+		mongo::mappers::DbBinaryToStdContainer(raw, dbMetadata["metadataId"].get_binary());
+		EXPECT_EQ(entry.raw(), raw);
+		EXPECT_EQ(entry.type(), model::MetadataType(GetUint32(dbMetadata, "metadataType")));
 
-            AssertFields(entry.fields(), dbMetadata["fields"].get_array().value);
-        }
+		AssertFields(entry.fields(), dbMetadata["fields"].get_array().value);
+	}
 
-        // endregion
-    }}
+	// endregion
+}}

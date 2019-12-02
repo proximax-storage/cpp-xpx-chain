@@ -211,6 +211,10 @@ namespace catapult { namespace plugins {
 		m_addressResolvers.push_back(resolver);
 	}
 
+	void PluginManager::addAmountResolver(const AmountResolver& resolver) {
+		m_amountResolvers.push_back(resolver);
+	}
+
 	namespace {
 		template<typename TResolved, typename TResolvers>
 		auto BuildResolver(const TResolvers& resolvers) {
@@ -229,12 +233,13 @@ namespace catapult { namespace plugins {
 	model::ResolverContext PluginManager::createResolverContext(const cache::ReadOnlyCatapultCache& cache) const {
 		auto mosaicResolver = BuildResolver<MosaicId>(m_mosaicResolvers);
 		auto addressResolver = BuildResolver<Address>(m_addressResolvers);
+		auto amountResolver = BuildResolver<Amount>(m_amountResolvers);
 
 		auto bindResolverToCache = [&cache](const auto& resolver) {
 			return [&cache, resolver](const auto& unresolved) { return resolver(cache, unresolved); };
 		};
 
-		return model::ResolverContext(bindResolverToCache(mosaicResolver), bindResolverToCache(addressResolver));
+		return model::ResolverContext(bindResolverToCache(mosaicResolver), bindResolverToCache(addressResolver), bindResolverToCache(amountResolver));
 	}
 
 	void PluginManager::addAddressesExtractor(const AddressesExtractor& extractor) {

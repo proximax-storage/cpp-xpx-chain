@@ -135,7 +135,7 @@ namespace catapult { namespace observers {
 			// sort expiry ids because receipts must be generated deterministically
 			std::set<typename decltype(expiryIds)::value_type> orderedExpiryIds(expiryIds.cbegin(), expiryIds.cend());
 			for (auto id : orderedExpiryIds)
-				context.StatementBuilder().addReceipt(model::ArtifactExpiryReceipt<decltype(id)>(receiptType, id));
+				context.StatementBuilder().addTransactionReceipt(model::ArtifactExpiryReceipt<decltype(id)>(receiptType, id));
 		});
 	}
 }}

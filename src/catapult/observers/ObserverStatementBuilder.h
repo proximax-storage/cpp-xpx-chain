@@ -41,8 +41,11 @@ namespace catapult { namespace observers {
 		void setSource(const model::ReceiptSource& source);
 
 	public:
-		/// Adds \a receipt to this builder.
-		void addReceipt(const model::Receipt& receipt);
+		/// Adds a transaction \a receipt to this builder.
+		void addTransactionReceipt(const model::Receipt& receipt);
+
+		/// Adds a public key \a receipt to this builder.
+		void addPublicKeyReceipt(const model::Receipt& receipt);
 
 	private:
 		model::BlockStatementBuilder* m_pStatementBuilder;

@@ -144,9 +144,9 @@ namespace catapult { namespace model {
 
 		BlockStatementBuilder builder;
 		builder.setSource({ 12, 11 });
-		builder.addReceipt(receipt1);
-		builder.addReceipt(receipt2);
-		builder.addReceipt(receipt3);
+		builder.addTransactionReceipt(receipt1);
+		builder.addTransactionReceipt(receipt2);
+		builder.addTransactionReceipt(receipt3);
 
 		// Act:
 		auto pStatement = builder.build();
@@ -169,10 +169,10 @@ namespace catapult { namespace model {
 
 		BlockStatementBuilder builder;
 		builder.setSource({ 12, 11 });
-		builder.addReceipt(receipt1);
-		builder.addReceipt(receipt2);
+		builder.addTransactionReceipt(receipt1);
+		builder.addTransactionReceipt(receipt2);
 		builder.setSource({ 14, 0 });
-		builder.addReceipt(receipt3);
+		builder.addTransactionReceipt(receipt3);
 
 		// Act:
 		auto pStatement = builder.build();
@@ -365,15 +365,15 @@ namespace catapult { namespace model {
 
 		BlockStatementBuilder builder;
 		builder.setSource({ 12, 11 });
-		builder.addReceipt(receipt1);
+		builder.addTransactionReceipt(receipt1);
 		builder.addResolution(unresolvedAddress1, resolvedAddress1);
 		builder.addResolution(unresolvedAddress2, resolvedAddress2);
 		builder.addResolution(unresolvedMosaicId1, resolvedMosaicId3);
 		builder.setSource({ 14, 0 });
-		builder.addReceipt(receipt2);
+		builder.addTransactionReceipt(receipt2);
 		builder.addResolution(unresolvedAddress1, resolvedAddress3);
 		builder.setSource({ 14, 1 });
-		builder.addReceipt(receipt3);
+		builder.addTransactionReceipt(receipt3);
 		builder.addResolution(unresolvedMosaicId1, resolvedMosaicId1);
 		builder.addResolution(unresolvedMosaicId2, resolvedMosaicId2);
 
@@ -435,15 +435,15 @@ namespace catapult { namespace model {
 
 		BlockStatementBuilder builder;
 		builder.setSource({ 12, 11 });
-		builder.addReceipt(receipt1);
+		builder.addTransactionReceipt(receipt1);
 		builder.addResolution(unresolvedAddress1, resolvedAddress1);
 		builder.addResolution(unresolvedAddress2, resolvedAddress2);
 		builder.addResolution(unresolvedMosaicId1, resolvedMosaicId3);
 		builder.setSource({ 14, 0 });
-		builder.addReceipt(receipt2);
+		builder.addTransactionReceipt(receipt2);
 		builder.addResolution(unresolvedAddress1, resolvedAddress3);
 		builder.setSource({ 14, 1 });
-		builder.addReceipt(receipt3);
+		builder.addTransactionReceipt(receipt3);
 		builder.addResolution(unresolvedMosaicId1, resolvedMosaicId1);
 		builder.addResolution(unresolvedMosaicId2, resolvedMosaicId2);
 		builder.popSource(); // pop source with primary id 14

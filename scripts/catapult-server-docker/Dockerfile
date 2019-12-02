@@ -93,21 +93,22 @@ COPY . /catapult
 
 # Build Catapult Server
 RUN cd /catapult \
-   && rm -rf _build \
-   && mkdir _build && cd _build \
-   && cmake -DCMAKE_BUILD_TYPE=RelWithDebugInfo  \
-    -DCMAKE_CXX_FLAGS="-pthread" \
+    && rm -rf _build \
+    && mkdir _build && cd _build \
+    && cmake -DCMAKE_BUILD_TYPE=Release  \
+    -DCMAKE_CXX_FLAGS="-pthread -O3" \
     -DPYTHON_EXECUTABLE=/usr/bin/python3 \
     -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so \
     -DMONGOCXX_LIB=/usr/local/lib/libmongocxx.so \
     .. \
-   && make publish \
-   && make \
+    && make publish \
+    && make \
 # Required extensions
     catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
     catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
+    catapult.mongo.plugins.exchange \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.metadata \
@@ -122,6 +123,7 @@ RUN cd /catapult \
     catapult.plugins.aggregate \
     catapult.plugins.config \
     catapult.plugins.contract \
+    catapult.plugins.exchange \
     catapult.plugins.hashcache \
     catapult.plugins.hashcache.cache \
     catapult.plugins.lockhash \
@@ -158,6 +160,15 @@ RUN cd /catapult \
 RUN cd /catapult/_build && make \
 # Catapult
     sirius.bc \
+    catapult.broker \
+    catapult.recovery \
+    catapult.tools.address \
+    catapult.tools.benchmark \
+    catapult.tools.health \
+    catapult.tools.nemgen \
+    catapult.tools.nemgen.blockhashes \
+    catapult.tools.network \
+    catapult.tools.statusgen \
     -j 4
 
 # script for copying required libs to temporary folder /deps
