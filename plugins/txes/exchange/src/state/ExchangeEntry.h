@@ -130,6 +130,7 @@ namespace catapult { namespace state {
 					action(offers.find(iter->first));
 					iter = expiredOffersAtHeight.erase(iter);
 				}
+				expiredOffers.erase(height);
 			}
 		}
 
