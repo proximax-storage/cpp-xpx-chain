@@ -96,43 +96,10 @@ namespace catapult { namespace state {
 		/// Moves offer of \a type with \a mosaicId back from expired offer buffer.
 		void unexpireOffer(model::OfferType type, const MosaicId& mosaicId, const Height& height);
 
-		/// Moves offers to expired offer buffer if offer expiry height is equal \a height.
-		template<typename TOfferMap, typename TExpiredOfferMap>
-		void expireOffers(TOfferMap& offers, TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
-			for (auto iter = offers.begin(); iter != offers.end();) {
-				if (iter->second.Deadline == height) {
-					auto &expiredOffersAtHeight = expiredOffers[height];
-					if (expiredOffersAtHeight.count(iter->first))
-						CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic id already expired at height", iter->first, height);
-					expiredOffersAtHeight.emplace(iter->first, iter->second);
-					action(iter);
-					iter = offers.erase(iter);
-				} else {
-					++iter;
-				}
-			}
-		}
-
 		void expireOffers(
 			const Height& height,
 			consumer<const BuyOfferMap::const_iterator&> buyOfferAction,
 			consumer<const SellOfferMap::const_iterator&> sellOfferAction);
-
-		/// Moves offers back from expired offer buffer if offer expiry height is equal \a height.
-		template<typename TOfferMap, typename TExpiredOfferMap>
-		void unexpireOffers(TOfferMap& offers, TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
-			if (expiredOffers.count(height)) {
-				auto& expiredOffersAtHeight = expiredOffers.at(height);
-				for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
-					if (offers.count(iter->first))
-						CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic id exists at height", iter->first, height);
-					offers.emplace(iter->first, iter->second);
-					action(offers.find(iter->first));
-					iter = expiredOffersAtHeight.erase(iter);
-				}
-				expiredOffers.erase(height);
-			}
-		}
 
 		void unexpireOffers(
 			const Height& height,
@@ -140,7 +107,7 @@ namespace catapult { namespace state {
 			consumer<const SellOfferMap::const_iterator&> sellOfferAction);
 
 		bool offerExists(model::OfferType type, const MosaicId& mosaicId) const;
-		void addOffer(model::OfferType type, const MosaicId& mosaicId, const model::OfferWithDuration* pOffer, const Height& deadline);
+		void addOffer(const MosaicId& mosaicId, const model::OfferWithDuration* pOffer, const Height& deadline);
 		void removeOffer(model::OfferType type, const MosaicId& mosaicId);
 		state::OfferBase& getBaseOffer(model::OfferType type, const MosaicId& mosaicId);
 		bool empty() const;
