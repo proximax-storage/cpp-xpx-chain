@@ -28,46 +28,74 @@ pipeline {
                                 rm -rf _build
                                 mkdir _build 
                                 cd _build
-                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" .. && \
-                                make publish && \
-                                make -j4 -k
+                                cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_CXX_FLAGS="-pthread" .. 
+                                make publish 
+                                make \
+                                catapult.mongo.plugins.accountlink \
+                                catapult.mongo.plugins.aggregate \
+                                catapult.mongo.plugins.config \
+                                catapult.mongo.plugins.contract \
+                                catapult.mongo.plugins.lockhash \
+                                catapult.mongo.plugins.locksecret \
+                                catapult.mongo.plugins.metadata \
+                                catapult.mongo.plugins.mosaic \
+                                catapult.mongo.plugins.multisig \
+                                catapult.mongo.plugins.namespace \
+                                catapult.mongo.plugins.property \
+                                catapult.mongo.plugins.service \
+                                catapult.mongo.plugins.transfer \
+                                catapult.mongo.plugins.upgrade \
+                                catapult.plugins.accountlink \
+                                catapult.plugins.aggregate \
+                                catapult.plugins.config \
+                                catapult.plugins.contract \
+                                catapult.plugins.hashcache \
+                                catapult.plugins.lockhash \
+                                catapult.plugins.locksecret \
+                                catapult.plugins.metadata \
+                                catapult.plugins.mosaic \
+                                catapult.plugins.multisig \
+                                catapult.plugins.namespace \
+                                catapult.plugins.property \
+                                catapult.plugins.service \
+                                catapult.plugins.signature \
+                                catapult.plugins.transfer \
+                                catapult.plugins.upgrade \
+                                extension.addressextraction \
+                                extension.diagnostics \
+                                extension.eventsource \
+                                extension.filespooling \
+                                extension.harvesting \
+                                extension.hashcache \
+                                extension.mongo \
+                                extension.networkheight \
+                                extension.nodediscovery \
+                                extension.packetserver \
+                                extension.partialtransaction \
+                                extension.pluginhandlers \
+                                extension.sync \
+                                extension.syncsource \
+                                extension.timesync \
+                                extension.transactionsink \
+                                extension.unbondedpruning \
+                                extension.zeromq \
+                                sirius.bc \
+                                catapult.broker \
+                                catapult.recovery \
+                                catapult.tools.address \
+                                catapult.tools.benchmark \
+                                catapult.tools.health \
+                                catapult.tools.nemgen \
+                                catapult.tools.network \
+                                catapult.tools.statusgen \
+                                catapult.tools.upgrade \
+                                -j4
                             """    
                         }
                     }
+                    archiveArtifacts "_build/bin/*"
                 }
             }
 		}
-
-        stage('Unit Test') {
-            steps {
-                sh """
-                    echo 'Running unit tests'
-                    # Disable exit on non 0
-                    set +e
-                    cd _build
-                    # pipe to true to prevent exit failure
-                    ctest -T Test --no-compress-output || true
-                """
-            }
-            post {
-                always {
-                    archiveArtifacts "_build/bin/*"
-                    xunit (
-                        thresholds: [ skipped(failureThreshold: '0'), failed(failureThreshold: '0') ],
-                        tools: [ CTest(pattern: "_build/Testing/**/*.xml") ]
-                    )
-                }
-                success {
-                    slackSend channel: '#devops',
-                        color: 'good',
-                        message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\n"
-                }
-                failure {
-                    slackSend channel: '#devops',
-                        color: 'bad',
-                        message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
-                }
-            }
-        }
     }
 }
