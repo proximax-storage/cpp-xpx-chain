@@ -27,12 +27,13 @@ namespace catapult { namespace sync {
 
 #define TEST_CLASS RollbackInfoTests
 
-	namespace {
-		struct Counters {
-			size_t All;
-			size_t Recent;
-			size_t Longest;
-		};
+        namespace {
+           struct Counters {
+           size_t All;
+           size_t Recent;
+           size_t Longest;
+        };
+
         void AddToInfo(RollbackInfoModifier& modifier, size_t numBlocks) {
             for (auto i = 0u; i < numBlocks; ++i)
                 modifier.increment();
@@ -239,8 +240,8 @@ namespace catapult { namespace sync {
 		void AssertOperationPrunesRecentStats(const consumer<RollbackInfoModifier&>& actInfo,
 		        const consumer<const RollbackInfoView&>& assertInfo) {
 			// Arrange: PrepareTestData will call the time supplier 7 + 7 times
-            std::vector<uint32_t> rawTimestamps(14, 1);
-            rawTimestamps.push_back(10);
+			std::vector<uint32_t> rawTimestamps(14, 1);
+			rawTimestamps.push_back(10);
 			auto serviceState = test::ServiceTestState();
 			auto& config = const_cast<model::NetworkConfiguration&>(serviceState.state().config().Network);
 			config.BlockGenerationTargetTime = utils::TimeSpan::FromMilliseconds(5);
