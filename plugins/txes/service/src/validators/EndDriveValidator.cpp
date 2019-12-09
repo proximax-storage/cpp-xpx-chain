@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 					return Failure_Service_Drive_Cant_Find_Default_Exchange_Offer;
 
 				Amount requiredAmount = driveEntry.billingPrice();
-				auto billingBalance = utils::GetBillingBalanceOfDrive(driveEntry, context.Cache, storageMosaicId);
+				auto billingBalance = utils::GetBalanceOfDrive(driveEntry, context.Cache, storageMosaicId);
 
 				if (billingBalance >= requiredAmount) {
 					requiredAmount = Amount(1);

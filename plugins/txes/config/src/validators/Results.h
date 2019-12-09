@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 	DEFINE_CATAPULT_CONFIG_RESULT(ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks, 10);
 
 	/// Validation failed because HarvestBeneficiaryPercentage exceeds 100.
-	DEFINE_CATAPULT_CONFIG_RESULT(HarvestBeneficiaryPercentage_Exceeds_One_Hunderd, 11);
+	DEFINE_CATAPULT_CONFIG_RESULT(HarvestBeneficiaryPercentage_Exceeds_One_Hundred, 11);
 
 	/// Validation failed because sum of InitialCurrencyAtomicUnits and inflation exceeds MaxMosaicAtomicUnits.
 	DEFINE_CATAPULT_CONFIG_RESULT(MaxMosaicAtomicUnits_Invalid, 12);

@@ -25,7 +25,7 @@ namespace catapult { namespace observers {
             auto driveIter = driveCache.find(notification.Sender);
             auto& driveEntry = driveIter.get();
 
-            auto billingBalance = utils::GetBillingBalanceOfDrive(driveEntry, context.Cache, mosaicId);
+            auto billingBalance = utils::GetBalanceOfDrive(driveEntry, context.Cache, mosaicId);
 
             if (NotifyMode::Commit == context.Mode) {
                 if (driveEntry.state() == state::DriveState::Pending && billingBalance >= driveEntry.billingPrice()) {

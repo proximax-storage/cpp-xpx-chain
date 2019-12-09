@@ -13,7 +13,11 @@
 
 namespace catapult { namespace observers {
 
-    void Transfer(state::AccountState& debitState, state::AccountState& creditState, MosaicId mosaicId, Amount amount, Height height);
+    void Transfer(state::AccountState& debitState, state::AccountState& creditState, MosaicId mosaicId, Amount amount, ObserverContext& context);
+
+    void Credit(state::AccountState& creditState, MosaicId mosaicId, Amount amount, ObserverContext& context);
+
+    void Debit(state::AccountState& debitState, MosaicId mosaicId, Amount amount, ObserverContext& context);
 
     void DrivePayment(state::DriveEntry& driveEntry, const ObserverContext& context, const MosaicId& storageMosaicId, std::vector<Key> replicators);
 

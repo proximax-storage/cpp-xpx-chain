@@ -14,8 +14,9 @@ using namespace catapult::mongo::mappers;
 namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
-		void StreamAddActions(bson_stream::document& builder, const std::vector<model::AddAction>& actions) {
-			auto addArray = builder << "addActions" << bson_stream::open_array;
+	    template<typename T>
+		void StreamActions(bson_stream::document& builder, const std::string& actionsName, const std::vector<T>& actions) {
+			auto addArray = builder << actionsName << bson_stream::open_array;
 			for (const auto& action : actions) {
 				addArray << bson_stream::open_document
 						 << "fileHash" << ToBinary(action.FileHash)
@@ -25,17 +26,6 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			addArray << bson_stream::close_array;
 		}
-
-		void StreamRemoveActions(bson_stream::document& builder, const std::vector<model::RemoveAction>& actions) {
-			auto removeArray = builder << "removeActions" << bson_stream::open_array;
-			for (const auto& action : actions) {
-				removeArray << bson_stream::open_document
-						 << "fileHash" << ToBinary(action.FileHash)
-						 << bson_stream::close_document;
-			}
-
-			removeArray << bson_stream::close_array;
-		}
 	}
 
 	template<typename TTransaction>
@@ -43,8 +33,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "driveKey" << ToBinary(transaction.DriveKey);
 		builder << "rootHash" << ToBinary(transaction.RootHash);
 		builder << "xorRootHash" << ToBinary(transaction.XorRootHash);
-		StreamAddActions(builder, std::vector<model::AddAction>(transaction.AddActionsPtr(), transaction.AddActionsPtr() + transaction.AddActionsCount));
-		StreamRemoveActions(builder, std::vector<model::RemoveAction>(transaction.RemoveActionsPtr(), transaction.RemoveActionsPtr() + transaction.RemoveActionsCount));
+		StreamActions(builder, "addActions", std::vector<model::AddAction>(transaction.AddActionsPtr(), transaction.AddActionsPtr() + transaction.AddActionsCount));
+		StreamActions(builder, "removeActions", std::vector<model::RemoveAction>(transaction.RemoveActionsPtr(), transaction.RemoveActionsPtr() + transaction.RemoveActionsCount));
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(DriveFileSystem, StreamDriveFileSystemTransaction)

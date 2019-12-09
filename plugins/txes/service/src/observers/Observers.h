@@ -37,8 +37,8 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by the en drive transaction.
 	DECLARE_OBSERVER(EndDrive, model::EndDriveNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
-	/// Observes changes triggered by delete reward transaction.
-	DECLARE_OBSERVER(Reward, model::RewardNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	/// Observes changes triggered by drive files transaction.
+	DECLARE_OBSERVER(DriveFilesReward, model::DriveFilesRewardNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// Observes changes triggered by block.
 	DECLARE_OBSERVER(DriveCacheBlockPruning, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);

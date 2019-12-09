@@ -6,6 +6,7 @@
 
 #pragma once
 #include "catapult/types.h"
+#include "catapult/exceptions.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/utils/ArraySet.h"
 #include <map>
@@ -40,27 +41,8 @@ namespace catapult { namespace state {
         std::vector<PaymentInformation> Payments;
     };
 
-    /// Drive action.
-    enum class DriveActionType : uint8_t {
-        Add,
-        Remove
-    };
-
-    struct DriveAction {
-        DriveActionType Type;
-        Height ActionHeight;
-    };
-
 	struct FileInfo {
 		uint64_t Size;
-        Amount Deposit;
-
-		bool isActive() const {
-			return Actions.back().Type == DriveActionType::Add;
-		}
-
-		std::vector<DriveAction> Actions;
-        std::vector<PaymentInformation> Payments;
 	};
 
 	/// The map where key is hash of the file and value is file info.
@@ -69,25 +51,37 @@ namespace catapult { namespace state {
 	struct ReplicatorInfo {
 		Height Start;
 		Height End;
-		Amount Deposit;
 
-        void IncrementUndepositedFileCounter(const Hash256& file) {
-            ++FilesWithoutDeposit[file];
+        void AddInactiveUndepositedFile(const Hash256& file, const Height& height) {
+            InactiveFilesWithoutDeposit[file].push_back(height);
         }
 
-        void DecrementUndepositedFileCounter(const Hash256& file) {
-            auto result = --FilesWithoutDeposit[file];
+        void RemoveInactiveUndepositedFile(const Hash256& file, const Height& height) {
+            auto iter = InactiveFilesWithoutDeposit.find(file);
+            if (iter != InactiveFilesWithoutDeposit.end()) {
+                if (!iter->second.empty() && iter->second.back() == height)
+                    iter->second.pop_back();
 
-            if (!result)
-                FilesWithoutDeposit.erase(file);
+                if (iter->second.empty())
+                    InactiveFilesWithoutDeposit.erase(iter);
+            }
         }
 
-		/// Set of files without deposit
-        std::map<Hash256, uint16_t> FilesWithoutDeposit;
+		/// Set of active files without deposit
+		std::set<Hash256> ActiveFilesWithoutDeposit;
+
+		/// Map of inactive files without deposit
+        std::map<Hash256, std::vector<Height>> InactiveFilesWithoutDeposit;
 	};
 
 	/// The map where key is replicator and value is info.
 	using ReplicatorsMap = std::map<Key, ReplicatorInfo>;
+
+	/// The vector of removed replicators.
+	using RemovedReplicators = std::vector<std::pair<Key, ReplicatorInfo>>;
+
+	/// The vector of upload payments.
+	using UploadPayments = std::vector<PaymentInformation>;
 
 	// Mixin for storing drive details.
 	class DriveMixin {
@@ -193,6 +187,16 @@ namespace catapult { namespace state {
 			return temp;
 		}
 
+		/// Gets the drive upload payments.
+		const UploadPayments& uploadPayments() const {
+			return m_uploadPayments;
+		}
+
+		/// Gets the drive upload payments.
+        UploadPayments& uploadPayments() {
+			return m_uploadPayments;
+		}
+
 		/// Gets the drive size.
 		const uint64_t& size() const {
 			return m_size;
@@ -248,14 +252,41 @@ namespace catapult { namespace state {
 			return m_files.end() != m_files.find(hash);
 		}
 
-		/// Gets replicator account keys.
+		/// Gets replicator infos.
 		const ReplicatorsMap& replicators() const {
 			return m_replicators;
 		}
 
-		/// Gets replicator account keys.
+		/// Gets replicator infos.
 		ReplicatorsMap& replicators() {
 			return m_replicators;
+		}
+
+		/// Gets removed replicator infos.
+		const RemovedReplicators& removedReplicators() const {
+			return m_removedReplicators;
+		}
+
+		/// Gets removed replicator infos.
+		RemovedReplicators& removedReplicators() {
+			return m_removedReplicators;
+		}
+
+        void returnReplicator(const Key& key) {
+            if (m_removedReplicators.back().first != key)
+                CATAPULT_THROW_RUNTIME_ERROR("return replicator in wrong direction");
+
+            m_replicators.insert(m_removedReplicators.back());
+            m_removedReplicators.pop_back();
+        }
+
+		void removeReplicator(const Key& key) {
+		    if (!m_replicators.count(key))
+                CATAPULT_THROW_RUNTIME_ERROR("can't remove not existing replicator");
+
+		    auto iter = m_replicators.find(key);
+		    m_removedReplicators.push_back(*iter);
+		    m_replicators.erase(iter);
 		}
 
 		/// Returns \c true if \a key is a replicator.
@@ -280,6 +311,10 @@ namespace catapult { namespace state {
 		uint8_t m_percentApprovers;
 		FilesMap m_files;
 		ReplicatorsMap m_replicators;
+		// We don't remove info about removed replicators, we will store it in separate vector
+		RemovedReplicators m_removedReplicators;
+		// Payments in streaming units. After end of drive and last streaming payment we will store the payment for xpx here.
+		UploadPayments m_uploadPayments;
 	};
 
 	// Drive entry.

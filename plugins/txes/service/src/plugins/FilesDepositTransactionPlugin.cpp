@@ -35,14 +35,12 @@ namespace catapult { namespace plugins {
 						sub.notify(AccountPublicKeyNotification<1>(transaction.DriveKey));
 
 						auto filesPtr = transaction.FilesPtr();
-						auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, blockChainConfig.Immutable.NetworkIdentifier));
 						auto streamingMosaicId = UnresolvedMosaicId(blockChainConfig.Immutable.StreamingMosaicId.unwrap());
 
 						for (auto i = 0u; i < transaction.FilesCount; ++i, ++filesPtr) {
 							auto pDeposit = sub.mempool().malloc(model::FileDeposit(transaction.DriveKey, filesPtr->FileHash));
-							sub.notify(BalanceTransferNotification<1>(
+							sub.notify(BalanceDebitNotification<1>(
 								transaction.Signer,
-								driveAddress,
 								streamingMosaicId,
 								UnresolvedAmount(0, UnresolvedAmountType::FileDeposit, pDeposit)
 							));

@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
     DEFINE_SERVICE_RESULT(Drive_Invalid_Min_Replicators, 9);
 
 	/// Validation failed because the drive already exists.
-	DEFINE_SERVICE_RESULT(Drive_Alredy_Exists, 10);
+	DEFINE_SERVICE_RESULT(Drive_Already_Exists, 10);
 
 	/// Validation failed because plugin configuration data is malformed.
 	DEFINE_SERVICE_RESULT(Plugin_Config_Malformed, 11);
@@ -60,7 +60,7 @@ namespace catapult { namespace validators {
 	DEFINE_SERVICE_RESULT(Root_Hash_Is_Not_Equal, 15);
 
 	/// Validation failed because the drive already contains file with the same hash.
-	DEFINE_SERVICE_RESULT(File_Hash_Redudant, 16);
+	DEFINE_SERVICE_RESULT(File_Hash_Redundant, 16);
 
 	/// Validation failed because the drive doesn't contain file to remove.
 	DEFINE_SERVICE_RESULT(File_Doesnt_Exist, 17);
@@ -98,8 +98,8 @@ namespace catapult { namespace validators {
     /// Validation failed because upload info is zero.
     DEFINE_SERVICE_RESULT(Zero_Upload_Info, 28);
 
-	/// Validation failed because the participant redudant.
-	DEFINE_SERVICE_RESULT(Participant_Redudant, 29);
+	/// Validation failed because the participant redundant.
+	DEFINE_SERVICE_RESULT(Participant_Redundant, 29);
 
 	/// Validation failed because the participant is not part of drive.
 	DEFINE_SERVICE_RESULT(Participant_It_Not_Part_Of_Drive, 30);
@@ -127,6 +127,15 @@ namespace catapult { namespace validators {
 
     /// Validation failed because drive is not in progress state.
     DEFINE_SERVICE_RESULT(Drive_Is_Not_In_Progress, 39);
+
+	/// Validation failed because the replicator has active file without deposit.
+	DEFINE_SERVICE_RESULT(Replicator_Has_Active_File_Without_Deposit, 40);
+
+	/// Validation failed because the remove file not same file size.
+	DEFINE_SERVICE_RESULT(Remove_Files_Not_Same_File_Size, 41);
+
+	/// Validation failed because the drive account doesn't contains streaming tokens.
+	DEFINE_SERVICE_RESULT(Doesnt_Contains_Streaming_Tokens, 42);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

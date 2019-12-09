@@ -39,11 +39,8 @@ namespace catapult { namespace model {
 	/// Defines a end drive notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0009);
 
-	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, DeleteReward_v1, 0x000A);
-
-	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Reward_v1, 0x000B);
+	/// Defines a drive files reward notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, DriveFilesReward_v1, 0x000A);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -402,49 +399,32 @@ namespace catapult { namespace model {
 		Key Signer;
 	};
 
-	/// Notification of a delete reward.
+	/// Notification of a drive files reward.
 	template<VersionType version>
-	struct DeleteRewardNotification;
+	struct DriveFilesRewardNotification;
 
 	template<>
-	struct DeleteRewardNotification<1> : public Notification {
+	struct DriveFilesRewardNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_DeleteReward_v1_Notification;
+		static constexpr auto Notification_Type = Service_DriveFilesReward_v1_Notification;
 
 	public:
-		explicit DeleteRewardNotification(const std::vector<const model::DeletedFile*>& files)
-				: Notification(Notification_Type, sizeof(DeleteRewardNotification<1>))
-				, DeletedFiles(files)
-		{}
-
-	public:
-		/// Vector of deleted files.
-		std::vector<const model::DeletedFile*> DeletedFiles;
-	};
-
-	/// Notification of a reward.
-	template<VersionType version>
-	struct RewardNotification;
-
-	template<>
-	struct RewardNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Reward_v1_Notification;
-
-	public:
-		explicit RewardNotification(const Key& key, const model::DeletedFile* file)
-				: Notification(Notification_Type, sizeof(RewardNotification<1>))
+		explicit DriveFilesRewardNotification(const Key& key, const UploadInfo* ptr, uint32_t count)
+				: Notification(Notification_Type, sizeof(DriveFilesRewardNotification<1>))
 				, DriveKey(key)
-				, DeletedFile(file)
+				, UploadInfoPtr(ptr)
+				, UploadInfosCount(count)
 		{}
 
 	public:
-        /// Public key of the drive multisig account.
-        Key DriveKey;
+		/// Public key of the drive multisig account.
+		Key DriveKey;
 
 		/// Vector of deleted files.
-		const model::DeletedFile* DeletedFile;
+		const UploadInfo* UploadInfoPtr;
+
+		/// Upload infos count
+		uint32_t UploadInfosCount;
 	};
 }}

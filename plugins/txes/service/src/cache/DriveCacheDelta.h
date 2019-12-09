@@ -101,43 +101,6 @@ namespace catapult { namespace cache {
 
         void prune(Height height, observers::ObserverContext&) {
             ForEachIdentifierWithGroup(*m_pDriveEntries, *m_pRemoveAtHeight, height, [&](state::DriveEntry& driveEntry) {
-                state::FilesMap& files = driveEntry.files();
-                state::ReplicatorsMap& replicators = driveEntry.replicators();
-                for (auto iter = files.begin(); iter != files.end();) {
-                    if (iter->second.Deposit.unwrap() == 0 && iter->second.Payments.back().Height == height) {
-                        for(auto& replicator : replicators) {
-                            replicator.second.FilesWithoutDeposit.erase(iter->first);
-                        }
-
-                        iter = files.erase(iter);
-                    } else {
-                        ++iter;
-                    }
-                }
-
-                if (files.empty() && driveEntry.state() >= state::DriveState::Finished && driveEntry.end().unwrap() == 0) {
-                	// We can try to return remaining tokens to owner. but we need to ask researchers about that
-//					auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-//					auto accountIter = accountStateCache.find(driveEntry.key());
-//					state::AccountState& driveAccount = accountIter.get();
-//
-//					auto ownerIter = accountStateCache.find(driveEntry.owner());
-//					state::AccountState& ownerAccount = ownerIter.get();
-//
-//					for (const auto& pair : driveAccount.Balances) {
-//						observers::Transfer(driveAccount, ownerAccount, pair.first, pair.second, context.Height);
-//					}
-//
-//					auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
-//					observers::MultisigAccountFacade multisigAccountFacade(multisigCache, driveEntry.key());
-//					for (const auto& replicator : replicators())
-//						multisigAccountFacade.removeCosignatory(replicator.first);
-//
-//					driveEntry.setEnd(context.Height);
-//					markRemoveDrive(driveEntry.key(), context.Height);
-					driveEntry.setEnd(height);
-                }
-
                 if (driveEntry.end() == height) {
 					m_pDriveEntries->remove(driveEntry.key());
                 }

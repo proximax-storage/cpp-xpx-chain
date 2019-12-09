@@ -22,12 +22,38 @@ namespace catapult { namespace observers {
         }
     }
 
-    void Transfer(state::AccountState& debitState, state::AccountState& creditState, MosaicId mosaicId, Amount amount, Height height) {
-        debitState.Balances.debit(mosaicId, amount, height);
-        creditState.Balances.credit(mosaicId, amount, height);
+    void Transfer(state::AccountState& debitState, state::AccountState& creditState, MosaicId mosaicId, Amount amount, ObserverContext& context) {
+        debitState.Balances.debit(mosaicId, amount, context.Height);
+        creditState.Balances.credit(mosaicId, amount, context.Height);
+
+        if (observers::NotifyMode::Commit == context.Mode) {
+            model::BalanceChangeReceipt receiptCredit(model::Receipt_Type_Drive_Reward_Transfer_Credit, creditState.PublicKey, mosaicId, amount);
+            context.StatementBuilder().addTransactionReceipt(receiptCredit);
+
+            model::BalanceChangeReceipt receiptDebit(model::Receipt_Type_Drive_Reward_Transfer_Debit, debitState.PublicKey, mosaicId, amount);
+            context.StatementBuilder().addTransactionReceipt(receiptDebit);
+        }
     }
 
-    void DrivePayment(state::DriveEntry& driveEntry, const ObserverContext& context, const MosaicId& storageMosaicId, std::vector<Key> replicators) {
+    void Credit(state::AccountState& creditState, MosaicId mosaicId, Amount amount, ObserverContext& context) {
+        creditState.Balances.credit(mosaicId, amount, context.Height);
+
+        if (observers::NotifyMode::Commit == context.Mode) {
+            model::BalanceChangeReceipt receipt(model::Receipt_Type_Drive_Deposit_Credit, creditState.PublicKey, mosaicId, amount);
+            context.StatementBuilder().addTransactionReceipt(receipt);
+        }
+    }
+
+    void Debit(state::AccountState& debitState, MosaicId mosaicId, Amount amount, ObserverContext& context) {
+        debitState.Balances.debit(mosaicId, amount, context.Height);
+
+        if (observers::NotifyMode::Commit == context.Mode) {
+            model::BalanceChangeReceipt receipt(model::Receipt_Type_Drive_Deposit_Debit, debitState.PublicKey, mosaicId, amount);
+            context.StatementBuilder().addTransactionReceipt(receipt);
+        }
+    }
+
+    void DrivePayment(state::DriveEntry& driveEntry, ObserverContext& context, const MosaicId& storageMosaicId, std::vector<Key> replicators) {
         if (driveEntry.billingHistory().empty() || (replicators.empty() && driveEntry.billingHistory().back().End != context.Height))
             return;
 
@@ -36,7 +62,7 @@ namespace catapult { namespace observers {
         auto& driveAccount = accountIter.get();
 
         if (NotifyMode::Commit == context.Mode) {
-            auto sum = utils::GetBillingBalanceOfDrive(driveEntry, context.Cache, storageMosaicId).unwrap();
+            auto sum = utils::GetBalanceOfDrive(driveEntry, context.Cache, storageMosaicId).unwrap();
             uint64_t sumTime = 0;
             uint64_t remains = sum;
 
@@ -65,7 +91,7 @@ namespace catapult { namespace observers {
 
                 auto replicatorIter = accountStateCache.find(replicator);
                 auto& replicatorAccount = replicatorIter.get();
-                Transfer(driveAccount, replicatorAccount, storageMosaicId, Amount(reward), context.Height);
+                Transfer(driveAccount, replicatorAccount, storageMosaicId, Amount(reward), context);
 
                 driveEntry.billingHistory().back().Payments.emplace_back(state::PaymentInformation{
                     replicator,
@@ -90,7 +116,7 @@ namespace catapult { namespace observers {
 
                 auto replicatorIter = accountStateCache.find(payment.Receiver);
                 auto& replicatorAccount = replicatorIter.get();
-                Transfer(replicatorAccount, driveAccount, storageMosaicId, payment.Amount, context.Height);
+                Transfer(replicatorAccount, driveAccount, storageMosaicId, payment.Amount, context);
 
 				payments.pop_back();
             }
