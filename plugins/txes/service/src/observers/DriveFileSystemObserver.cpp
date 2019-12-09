@@ -66,7 +66,7 @@ namespace catapult { namespace observers {
                             replicatorPair.second.ActiveFilesWithoutDeposit.erase(removeActionsPtr->FileHash);
                             replicatorPair.second.AddInactiveUndepositedFile(removeActionsPtr->FileHash, context.Height);
                         } else {
-                            Credit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(driveEntry, removeActionsPtr->FileHash), context);
+                            Credit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(removeActionsPtr->FileSize), context);
                         }
                     } else {
                         if (replicatorPair.second.InactiveFilesWithoutDeposit.count(removeActionsPtr->FileHash)
@@ -74,7 +74,7 @@ namespace catapult { namespace observers {
                             replicatorPair.second.ActiveFilesWithoutDeposit.insert(removeActionsPtr->FileHash);
                             replicatorPair.second.RemoveInactiveUndepositedFile(removeActionsPtr->FileHash, context.Height);
                         } else {
-                            Debit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(driveEntry, removeActionsPtr->FileHash), context);
+                            Debit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(removeActionsPtr->FileSize), context);
                         }
                     }
                 }

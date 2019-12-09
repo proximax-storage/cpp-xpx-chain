@@ -19,6 +19,10 @@ namespace catapult { namespace utils {
         return Amount(driveEntry.size());
     }
 
+    inline Amount CalculateFileDeposit(const uint64_t& size) {
+        return Amount(size);
+    }
+
     inline Amount CalculateFileDeposit(const state::DriveEntry& driveEntry, const Hash256& fileHash) {
         return Amount(driveEntry.files().at(fileHash).Size);
     }

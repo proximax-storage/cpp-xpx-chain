@@ -59,10 +59,7 @@ namespace catapult { namespace mongo { namespace plugins {
         void StreamActiveFilesWithoutDeposit(bson_stream::document& builder, const std::set<Hash256>& activeFilesWithoutDeposit) {
             auto array = builder << "activeFilesWithoutDeposit" << bson_stream::open_array;
             for (const auto& file : activeFilesWithoutDeposit) {
-                array
-                        << bson_stream::open_document
-                        << "fileHash" << ToBinary(file)
-                        << bson_stream::close_document;
+                array << ToBinary(file);
             }
 
             array << bson_stream::close_array;
@@ -191,10 +188,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
         void ReadActiveFilesWithoutDeposit(std::set<Hash256>& deposits, const bsoncxx::array::view& dbFilesWithoutDepositMap) {
             for (const auto& dbDeposit : dbFilesWithoutDepositMap) {
-                auto doc = dbDeposit.get_document().view();
+                auto doc = dbDeposit.get_binary();
 
                 Hash256 fileHash;
-                DbBinaryToModelArray(fileHash, doc["fileHash"].get_binary());
+                DbBinaryToModelArray(fileHash, doc);
 
                 deposits.insert(fileHash);
             }

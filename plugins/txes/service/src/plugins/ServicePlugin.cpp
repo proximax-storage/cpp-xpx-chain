@@ -152,7 +152,7 @@ namespace catapult { namespace plugins {
 		manager.addObserverHook([pConfigHolder, storageMosaicId](auto& builder) {
 			builder
 					.add(observers::CreatePrepareDriveObserver())
-					.add(observers::CreateDriveFileSystemObserver())
+					.add(observers::CreateDriveFileSystemObserver(pConfigHolder))
 					.add(observers::CreateFilesDepositObserver())
 					.add(observers::CreateJoinToDriveObserver())
                     .add(observers::CreateDriveVerificationPaymentObserver(storageMosaicId))

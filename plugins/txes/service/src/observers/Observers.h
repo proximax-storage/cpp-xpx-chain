@@ -17,7 +17,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)();
 
 	/// Observes changes triggered by drive file system notifications.
-	DECLARE_OBSERVER(DriveFileSystem, model::DriveFileSystemNotification<1>)();
+	DECLARE_OBSERVER(DriveFileSystem, model::DriveFileSystemNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
 	/// Observes changes triggered by files deposit notifications.
 	DECLARE_OBSERVER(FilesDeposit, model::FilesDepositNotification<1>)();
