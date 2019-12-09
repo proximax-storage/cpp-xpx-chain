@@ -146,7 +146,7 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "DeleteReward",
+			"name": "DriveFilesReward",
 			"type": "18010",
 			"supportedVersions": [1]
 		},

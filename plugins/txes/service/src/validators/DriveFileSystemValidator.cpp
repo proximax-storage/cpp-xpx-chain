@@ -31,10 +31,7 @@ namespace catapult { namespace validators {
 		for (auto i = 0u; i < notification.AddActionsCount; ++i, ++addActionsPtr) {
 			hashes.insert(addActionsPtr->FileHash);
             if (driveEntry.files().count(addActionsPtr->FileHash)) {
-                const auto& file = driveEntry.files().at(addActionsPtr->FileHash);
-
-                if (file.isActive())
-                    return Failure_Service_File_Hash_Redundant;
+            	return Failure_Service_File_Hash_Redundant;
             }
 		}
 
@@ -46,13 +43,11 @@ namespace catapult { namespace validators {
 		for (auto i = 0u; i < notification.RemoveActionsCount; ++i, ++removeActionsPtr) {
 			hashes.insert(removeActionsPtr->FileHash);
             if (!driveEntry.files().count(removeActionsPtr->FileHash)) {
-                return Failure_Service_File_Doesnt_Exist;
-            } else {
-                const auto& file = driveEntry.files().at(removeActionsPtr->FileHash);
-
-                if (!file.isActive())
-                    return Failure_Service_File_Doesnt_Exist;
+            	return Failure_Service_File_Doesnt_Exist;
             }
+			if (driveEntry.files().at(removeActionsPtr->FileHash).Size != removeActionsPtr->FileSize) {
+				return Failure_Service_Remove_Files_Not_Same_File_Size;
+			}
 		}
 
 		if (hashes.size() != notification.RemoveActionsCount)

@@ -67,11 +67,11 @@ namespace catapult { namespace test {
         return pTransaction;
     }
 
-    /// Creates a delete reward transaction.
+    /// Creates a drive files reward transaction.
     template<typename TTransaction>
-	model::UniqueEntityPtr<TTransaction> CreateDeleteRewardTransaction(size_t numDeletedFiles, size_t numReplicatorInfo) {
+	model::UniqueEntityPtr<TTransaction> CreateDriveFilesRewardTransaction(size_t numDeletedFiles, size_t numReplicatorInfo) {
 		auto deletedFileStructSize = sizeof(model::DeletedFile)  + numReplicatorInfo * sizeof(model::ReplicatorUploadInfo);
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DeleteReward, numDeletedFiles * deletedFileStructSize);
+        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DriveFilesReward, numDeletedFiles * deletedFileStructSize);
 
 		auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
 		for (auto i = 0u; i < numDeletedFiles; ++i) {

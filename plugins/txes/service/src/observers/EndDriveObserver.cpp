@@ -13,14 +13,13 @@ namespace catapult { namespace observers {
     DECLARE_OBSERVER(EndDrive, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
         return MAKE_OBSERVER(EndDrive, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
             const auto& config = pConfigHolder->Config(context.Height).Immutable;
+            auto streamingMosaicId = pConfigHolder->Config(context.Height).Immutable.StreamingMosaicId;
 
             auto& driveCache = context.Cache.sub<cache::DriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);
             auto& driveEntry = driveIter.get();
 
             auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-            auto accountIter = accountStateCache.find(driveEntry.key());
-            auto& driveAccount = accountIter.get();
 
             if (NotifyMode::Commit == context.Mode) {
                 if (driveEntry.state() == state::DriveState::InProgress) {
@@ -28,32 +27,39 @@ namespace catapult { namespace observers {
                 }
                 DrivePayment(driveEntry, context, config.StorageMosaicId, {});
 
-                for (const auto& replicatorPair : driveEntry.replicators()) {
+                for (auto& replicatorPair : driveEntry.replicators()) {
                     auto replicatorIter = accountStateCache.find(replicatorPair.first);
                     auto& replicatorAccount = replicatorIter.get();
 
-                    Transfer(driveAccount, replicatorAccount, config.StorageMosaicId, replicatorPair.second.Deposit, context.Height);
-                }
+                    for (const auto& filePair : driveEntry.files()) {
+                        if (replicatorPair.second.ActiveFilesWithoutDeposit.count(filePair.first)) {
+                            replicatorPair.second.ActiveFilesWithoutDeposit.erase(filePair.first);
+                            replicatorPair.second.AddInactiveUndepositedFile(filePair.first, context.Height);
+                        } else {
+                            Credit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(driveEntry, filePair.first), context);
+                        }
+                    }
 
-                for (auto& filePair : driveEntry.files()) {
-                    state::FileInfo& info = filePair.second;
-                    if (info.Actions.back().Type != state::DriveActionType::Remove || info.Actions.back().ActionHeight == context.Height)
-                        info.Actions.emplace_back(state::DriveAction{ state::DriveActionType::Remove, context.Height });
+                    Credit(replicatorAccount, config.StorageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
                 }
 
                 SetDriveState(driveEntry, context, state::DriveState::Finished);
             } else {
-                for (auto& filePair : driveEntry.files()) {
-                    state::FileInfo& info = filePair.second;
-                    if (info.Actions.back().Type == state::DriveActionType::Remove && info.Actions.back().ActionHeight == context.Height)
-                        info.Actions.pop_back();
-                }
-
-                for (const auto& replicatorPair : driveEntry.replicators()) {
+                for (auto& replicatorPair : driveEntry.replicators()) {
                     auto replicatorIter = accountStateCache.find(replicatorPair.first);
                     auto& replicatorAccount = replicatorIter.get();
 
-                    Transfer(replicatorAccount, driveAccount, config.StorageMosaicId, replicatorPair.second.Deposit, context.Height);
+                    for (const auto& filePair : driveEntry.files()) {
+                        if (replicatorPair.second.InactiveFilesWithoutDeposit.count(filePair.first)
+                            && replicatorPair.second.InactiveFilesWithoutDeposit.at(filePair.first).back() == context.Height) {
+                            replicatorPair.second.ActiveFilesWithoutDeposit.insert(filePair.first);
+                            replicatorPair.second.RemoveInactiveUndepositedFile(filePair.first, context.Height);
+                        } else {
+                            Debit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(driveEntry, filePair.first), context);
+                        }
+                    }
+
+                    Debit(replicatorAccount, config.StorageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
                 }
 
                 DrivePayment(driveEntry, context, config.StorageMosaicId, {});

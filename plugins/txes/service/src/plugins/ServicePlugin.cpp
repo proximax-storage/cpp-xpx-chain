@@ -15,7 +15,7 @@
 #include "src/plugins/JoinToDriveTransactionPlugin.h"
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/plugins/EndDriveTransactionPlugin.h"
-#include "src/plugins/DeleteRewardTransactionPlugin.h"
+#include "src/plugins/DriveFilesRewardTransactionPlugin.h"
 #include "src/plugins/StartDriveVerificationTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -55,7 +55,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateFilesDepositTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateJoinToDriveTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateEndDriveTransactionPlugin());
-		manager.addTransactionSupport(CreateDeleteRewardTransactionPlugin());
+		manager.addTransactionSupport(CreateDriveFilesRewardTransactionPlugin());
 		manager.addTransactionSupport(CreateStartDriveVerificationTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig.NetworkIdentifier));
 
@@ -129,7 +129,6 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 					.add(validators::CreatePrepareDriveArgumentsValidator())
-					.add(validators::CreateDeleteRewardValidator())
 					.add(validators::CreateServicePluginConfigValidator());
 		});
 
@@ -138,12 +137,12 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateDriveValidator())
 					.add(validators::CreateExchangeValidator(pConfigHolder))
 					.add(validators::CreateDrivePermittedOperationValidator())
+                    .add(validators::CreateDriveFilesRewardValidator(pConfigHolder))
 					.add(validators::CreateFilesDepositValidator())
 					.add(validators::CreateJoinToDriveValidator())
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
 					.add(validators::CreateEndDriveValidator(pConfigHolder))
-					.add(validators::CreateRewardValidator())
 					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder))
 					.add(validators::CreateStartDriveVerificationValidator(pConfigHolder))
 					.add(validators::CreateEndDriveVerificationValidator(pConfigHolder));
@@ -160,7 +159,7 @@ namespace catapult { namespace plugins {
                     .add(observers::CreateStartBillingObserver(pConfigHolder))
                     .add(observers::CreateEndBillingObserver(pConfigHolder))
                     .add(observers::CreateEndDriveObserver(pConfigHolder))
-                    .add(observers::CreateRewardObserver(pConfigHolder))
+                    .add(observers::CreateDriveFilesRewardObserver(pConfigHolder))
                     .add(observers::CreateDriveCacheBlockPruningObserver(pConfigHolder));
 		});
 	}

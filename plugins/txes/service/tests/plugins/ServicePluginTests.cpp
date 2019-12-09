@@ -44,7 +44,7 @@ namespace catapult { namespace plugins {
 					model::Entity_Type_DriveFileSystem,
 					model::Entity_Type_FilesDeposit,
 					model::Entity_Type_EndDrive,
-					model::Entity_Type_DeleteReward,
+					model::Entity_Type_DriveFilesReward,
 					model::Entity_Type_Start_Drive_Verification,
 					model::Entity_Type_End_Drive_Verification,
 				};
@@ -69,7 +69,7 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
 					"PrepareDriveArgumentsValidator",
-					"DeleteRewardValidator",
+					"DriveFilesRewardValidator",
 					"ServicePluginConfigValidator",
 				};
 			}

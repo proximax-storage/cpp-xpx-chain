@@ -4,8 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/plugins/DeleteRewardTransactionPlugin.h"
-#include "src/model/DeleteRewardTransaction.h"
+#include "src/plugins/DriveFilesRewardTransactionPlugin.h"
+#include "src/model/DriveFilesRewardTransaction.h"
 #include "src/model/ServiceNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
@@ -16,18 +16,18 @@ using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
-#define TEST_CLASS DeleteRewardTransactionPluginTests
+#define TEST_CLASS DriveFilesRewardTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(DeleteReward, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(DriveFilesReward, 1, 1,)
 
 		template<typename TTraits>
 		auto CreateTransaction() {
-			return test::CreateDeleteRewardTransaction<typename TTraits::TransactionType>(5, 10);
+			return test::CreateDriveFilesRewardTransaction<typename TTraits::TransactionType>(5, 10);
 		}
 	}
 
-	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_DeleteReward)
+	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_DriveFilesReward)
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
@@ -70,7 +70,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(7, sub.numNotifications());
 		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
-		EXPECT_EQ(Service_DeleteReward_v1_Notification, sub.notificationTypes()[1]);
+		EXPECT_EQ(Service_DriveFilesReward_v1_Notification, sub.notificationTypes()[1]);
 		for (auto i = 2u; i < 7; ++i)
 			EXPECT_EQ(Service_Reward_v1_Notification, sub.notificationTypes()[i]);
 	}
@@ -92,16 +92,16 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
-		EXPECT_EQ(Entity_Type_DeleteReward, notification.TransactionType);
+		EXPECT_EQ(Entity_Type_DriveFilesReward, notification.TransactionType);
 	}
 
 	// endregion
 
-	// region publish - delete reward notification
+	// region publish - drive files reward notification
 
-	PLUGIN_TEST(CanPublishDeleteRewardNotification) {
+	PLUGIN_TEST(CanPublishDriveFilesRewardNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<DeleteRewardNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<DriveFilesRewardNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 		auto pTransaction = CreateTransaction<TTraits>();
 
