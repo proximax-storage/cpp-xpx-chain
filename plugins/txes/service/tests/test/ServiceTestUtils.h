@@ -21,10 +21,12 @@ namespace catapult { namespace test {
 		uint16_t billingHistoryCount = 2,
 		uint16_t drivePaymentCount = 2,
 		uint16_t fileCount = 2,
-		uint16_t fileActionCount = 2,
-		uint16_t filePaymentCount = 2,
 		uint16_t replicatorCount = 2,
-		uint16_t fileWithoutDepositCount = 2);
+		uint16_t activeFilesWithoutDepositCount = 2,
+		uint16_t inactiveFilesWithoutDepositCount = 2,
+		uint16_t heightCount = 2,
+		uint16_t removedReplicatorCount = 2,
+		uint16_t uploadPaymentCount = 2);
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.
 	void AssertEqualDriveData(const state::DriveEntry& entry1, const state::DriveEntry& entry2);
@@ -69,21 +71,14 @@ namespace catapult { namespace test {
 
     /// Creates a drive files reward transaction.
     template<typename TTransaction>
-	model::UniqueEntityPtr<TTransaction> CreateDriveFilesRewardTransaction(size_t numDeletedFiles, size_t numReplicatorInfo) {
-		auto deletedFileStructSize = sizeof(model::DeletedFile)  + numReplicatorInfo * sizeof(model::ReplicatorUploadInfo);
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DriveFilesReward, numDeletedFiles * deletedFileStructSize);
+	model::UniqueEntityPtr<TTransaction> CreateDriveFilesRewardTransaction(size_t numUploadInfos) {
+        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DriveFilesReward, numUploadInfos * sizeof(model::UploadInfo));
 
 		auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
-		for (auto i = 0u; i < numDeletedFiles; ++i) {
-			auto pDeletedFile = reinterpret_cast<model::DeletedFile*>(pData);
-			pDeletedFile->FileHash = test::GenerateRandomByteArray<Hash256>();
-			pDeletedFile->Size = deletedFileStructSize;
-			pData = reinterpret_cast<uint8_t*>(pDeletedFile->InfosPtr());
-			for (auto j = 0u; j < numReplicatorInfo; ++j) {
-				model::ReplicatorUploadInfo replicatorInfo{{test::GenerateRandomByteArray<Key>()}, j};
-				memcpy(pData, static_cast<const void*>(&replicatorInfo), sizeof(model::ReplicatorUploadInfo));
-				pData += sizeof(model::ReplicatorUploadInfo);
-			}
+		for (auto i = 0u; i < numUploadInfos; ++i) {
+			auto pDeletedFile = reinterpret_cast<model::UploadInfo*>(pData);
+			pDeletedFile->Participant = test::GenerateRandomByteArray<Key>();
+			pDeletedFile->Uploaded = test::Random();
 		}
 
         return pTransaction;
@@ -102,13 +97,13 @@ namespace catapult { namespace test {
 
         auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
 		for (auto i = 0u; i < numAddActions; ++i) {
-			model::AddAction addAction{{test::GenerateRandomByteArray<Hash256>()}, test::GenerateRandomValue<Amount>().unwrap()};
+			model::AddAction addAction{{test::GenerateRandomByteArray<Hash256>()}, test::Random()};
             memcpy(pData, static_cast<const void*>(&addAction), sizeof(model::AddAction));
             pData += sizeof(model::AddAction);
         }
 
 		for (auto i = 0u; i < numRemoveActions; ++i) {
-			model::RemoveAction removeAction{{test::GenerateRandomByteArray<Hash256>()}};
+			model::RemoveAction removeAction{{{test::GenerateRandomByteArray<Hash256>()}, test::Random()}};
             memcpy(pData, static_cast<const void*>(&removeAction), sizeof(model::RemoveAction));
             pData += sizeof(model::RemoveAction);
         }

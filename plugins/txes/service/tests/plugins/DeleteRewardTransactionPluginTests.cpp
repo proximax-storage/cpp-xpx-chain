@@ -21,9 +21,11 @@ namespace catapult { namespace plugins {
 	namespace {
 		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(DriveFilesReward, 1, 1,)
 
+		constexpr auto Upload_Info_Count = 5u;
+
 		template<typename TTraits>
 		auto CreateTransaction() {
-			return test::CreateDriveFilesRewardTransaction<typename TTraits::TransactionType>(5, 10);
+			return test::CreateDriveFilesRewardTransaction<typename TTraits::TransactionType>(Upload_Info_Count);
 		}
 	}
 
@@ -38,7 +40,7 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 5 * (sizeof(DeletedFile)  + 10 * sizeof(ReplicatorUploadInfo)), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Upload_Info_Count * sizeof(model::UploadInfo), realSize);
 	}
 
 	// region publish - basic
@@ -68,11 +70,9 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(7, sub.numNotifications());
+		ASSERT_EQ(2, sub.numNotifications());
 		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
 		EXPECT_EQ(Service_DriveFilesReward_v1_Notification, sub.notificationTypes()[1]);
-		for (auto i = 2u; i < 7; ++i)
-			EXPECT_EQ(Service_Reward_v1_Notification, sub.notificationTypes()[i]);
 	}
 
 	// endregion
@@ -111,34 +111,10 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		auto pDeletedFile = reinterpret_cast<uint8_t*>(pTransaction->TransactionsPtr());
-		size_t deletedFileSize = sizeof(DeletedFile)  + 10 * sizeof(ReplicatorUploadInfo);
-		for (auto i = 0u; i < 5u; ++i, pDeletedFile += deletedFileSize)
-			EXPECT_EQ_MEMORY(notification.DeletedFiles[i], pDeletedFile, deletedFileSize);
-	}
-
-	// endregion
-
-	// region publish - reward notification
-
-	PLUGIN_TEST(CanPublishRewardNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<RewardNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
-		auto pTransaction = CreateTransaction<TTraits>();
-
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-		// Assert:
-		ASSERT_EQ(5u, sub.numMatchingNotifications());
-		auto pDeletedFile = reinterpret_cast<uint8_t*>(pTransaction->TransactionsPtr());
-		size_t deletedFileSize = sizeof(DeletedFile)  + 10 * sizeof(ReplicatorUploadInfo);
-		for (auto i = 0u; i < 5u; ++i, pDeletedFile += deletedFileSize) {
-			const auto &notification = sub.matchingNotifications()[i];
-			EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
-			EXPECT_EQ(reinterpret_cast<const uint8_t*>(notification.DeletedFile), pDeletedFile);
-			EXPECT_EQ_MEMORY(notification.DeletedFile, pDeletedFile, deletedFileSize);
+		auto pUploadInfo = pTransaction->UploadInfosPtr();
+		for (auto i = 0u; i < Upload_Info_Count; ++i) {
+			EXPECT_EQ(notification.UploadInfoPtr[i].Participant, pUploadInfo[i].Participant);
+			EXPECT_EQ(notification.UploadInfoPtr[i].Uploaded, pUploadInfo[i].Uploaded);
 		}
 	}
 

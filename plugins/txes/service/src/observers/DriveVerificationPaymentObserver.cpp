@@ -12,6 +12,9 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(DriveVerificationPayment, Notification)(const MosaicId& storageMosaicId) {
 		return MAKE_OBSERVER(DriveVerificationPayment, Notification, [storageMosaicId](const auto& notification, ObserverContext& context) {
+			if (!notification.FailureCount)
+				return;
+			
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			state::DriveEntry& driveEntry = driveIter.get();
@@ -26,38 +29,39 @@ namespace catapult { namespace observers {
 				faultyReplicatorKeys.emplace_back(pFailure->Replicator);
 			}
 
-            if (NotifyMode::Commit == context.Mode && notification.FailureCount) {
+            if (NotifyMode::Commit == context.Mode) {
                 pFailure = notification.FailuresPtr;
                 for (auto i = 0u; i < notification.FailureCount; ++i, ++pFailure) {
-                    // We need to set end eight for correct payment calculation. After than we will transfer this replicator to removed replicators
+                    // Set end eight for correct payment calculation. Than the replicator
+                    // will move to the array of removed replicators.
                     driveEntry.replicators().at(pFailure->Replicator).End = context.Height;
 
-                    // Return deposits of failure replicators to drive account
+                    // Add the replicator deposit to the drive account.
                     Credit(driveAccount, storageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
                 }
-            } else if (NotifyMode::Rollback == context.Mode && notification.FailureCount) {
-                pFailure = notification.FailuresPtr + notification.FailureCount - 1;
-                for (int i = notification.FailureCount - 1; i >= 0; --i, --pFailure) {
-                    driveEntry.returnReplicator(pFailure->Replicator);
+            } else if (NotifyMode::Rollback == context.Mode) {
+                for (pFailure = notification.FailuresPtr + notification.FailureCount - 1; pFailure != notification.FailuresPtr; --pFailure) {
+					driveEntry.restoreReplicator(pFailure->Replicator);
                 }
             }
 
 			DrivePayment(driveEntry, context, storageMosaicId, faultyReplicatorKeys);
 
-            if (NotifyMode::Rollback == context.Mode && notification.FailureCount) {
+            if (NotifyMode::Rollback == context.Mode) {
                 pFailure = notification.FailuresPtr;
                 for (auto i = 0u; i < notification.FailureCount; ++i, ++pFailure) {
                     driveEntry.replicators().at(pFailure->Replicator).End = Height(0);
 
-                    // Return deposits of failure replicators to drive account
+                    // Remove the replicator deposit from the drive account.
                     Debit(driveAccount, storageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
                 }
-            } else if (NotifyMode::Commit == context.Mode && notification.FailureCount) {
+            } else if (NotifyMode::Commit == context.Mode) {
                 pFailure = notification.FailuresPtr;
                 for (auto i = 0u; i < notification.FailureCount; ++i, ++pFailure) {
                     driveEntry.removeReplicator(pFailure->Replicator);
                 }
             }
+
 			UpdateDriveMultisigSettings(driveEntry, context);
 		})
 	}

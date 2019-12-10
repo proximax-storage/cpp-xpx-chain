@@ -19,7 +19,7 @@ namespace catapult { namespace observers {
 
     void Debit(state::AccountState& debitState, MosaicId mosaicId, Amount amount, ObserverContext& context);
 
-    void DrivePayment(state::DriveEntry& driveEntry, const ObserverContext& context, const MosaicId& storageMosaicId, std::vector<Key> replicators);
+    void DrivePayment(state::DriveEntry& driveEntry, ObserverContext& context, const MosaicId& storageMosaicId, std::vector<Key> replicators);
 
 	void SetDriveState(state::DriveEntry& entry, ObserverContext& context, state::DriveState driveState);
 

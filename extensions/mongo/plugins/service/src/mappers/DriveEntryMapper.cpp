@@ -19,11 +19,11 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto array = builder << name << bson_stream::open_array;
 			for (const auto& payment : payments) {
 				array
-						<< bson_stream::open_document
-						<< "receiver" << ToBinary(payment.Receiver)
-						<< "amount" << ToInt64(payment.Amount)
-						<< "height" << ToInt64(payment.Height)
-						<< bson_stream::close_document;
+					<< bson_stream::open_document
+					<< "receiver" << ToBinary(payment.Receiver)
+					<< "amount" << ToInt64(payment.Amount)
+					<< "height" << ToInt64(payment.Height)
+					<< bson_stream::close_document;
 			}
 
 			array << bson_stream::close_array;
@@ -34,8 +34,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (const auto& description : billingHistory) {
 				bson_stream::document billingBuilder;
 				billingBuilder
-								<< "start" << ToInt64(description.Start)
-								<< "end" << ToInt64(description.End);
+					<< "start" << ToInt64(description.Start)
+					<< "end" << ToInt64(description.End);
 				StreamPaymentInformation(billingBuilder, "payments", description.Payments);
 				array << billingBuilder;
 			}
@@ -48,8 +48,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (const auto& filePair : files) {
 				bson_stream::document fileBuilder;
                 fileBuilder
-								<< "fileHash" << ToBinary(filePair.first)
-								<< "size" << static_cast<int64_t>(filePair.second.Size);
+					<< "fileHash" << ToBinary(filePair.first)
+					<< "size" << static_cast<int64_t>(filePair.second.Size);
 				array << fileBuilder;
 			}
 
@@ -60,9 +60,9 @@ namespace catapult { namespace mongo { namespace plugins {
             auto array = builder << "activeFilesWithoutDeposit" << bson_stream::open_array;
             for (const auto& file : activeFilesWithoutDeposit) {
                 array
-                        << bson_stream::open_document
-                        << "fileHash" << ToBinary(file)
-                        << bson_stream::close_document;
+					<< bson_stream::open_document
+					<< "fileHash" << ToBinary(file)
+					<< bson_stream::close_document;
             }
 
             array << bson_stream::close_array;
