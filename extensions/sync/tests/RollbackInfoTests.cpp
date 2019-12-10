@@ -27,27 +27,27 @@ namespace catapult { namespace sync {
 
 #define TEST_CLASS RollbackInfoTests
 
-        namespace {
-           struct Counters {
-           size_t All;
-           size_t Recent;
-           size_t Longest;
-        };
+    namespace {
+		struct Counters {
+			size_t All;
+			size_t Recent;
+			size_t Longest;
+		};
 
-        void AddToInfo(RollbackInfoModifier& modifier, size_t numBlocks) {
-            for (auto i = 0u; i < numBlocks; ++i)
-                modifier.increment();
-        }
+		void AddToInfo(RollbackInfoModifier& modifier, size_t numBlocks) {
+			for (auto i = 0u; i < numBlocks; ++i)
+				modifier.increment();
+		}
 
-        void AssertInfo(const Counters& expectedCommitted, const Counters& expectedIgnored, const RollbackInfoView& view) {
-            // Assert:
-            EXPECT_EQ(expectedCommitted.All, view.counter(RollbackResult::Committed, RollbackCounterType::All));
-            EXPECT_EQ(expectedCommitted.Recent, view.counter(RollbackResult::Committed, RollbackCounterType::Recent));
-            EXPECT_EQ(expectedCommitted.Longest, view.counter(RollbackResult::Committed, RollbackCounterType::Longest));
-            EXPECT_EQ(expectedIgnored.All, view.counter(RollbackResult::Ignored, RollbackCounterType::All));
-            EXPECT_EQ(expectedIgnored.Recent, view.counter(RollbackResult::Ignored, RollbackCounterType::Recent));
-            EXPECT_EQ(expectedIgnored.Longest, view.counter(RollbackResult::Ignored, RollbackCounterType::Longest));
-        }
+		void AssertInfo(const Counters& expectedCommitted, const Counters& expectedIgnored, const RollbackInfoView& view) {
+			// Assert:
+			EXPECT_EQ(expectedCommitted.All, view.counter(RollbackResult::Committed, RollbackCounterType::All));
+			EXPECT_EQ(expectedCommitted.Recent, view.counter(RollbackResult::Committed, RollbackCounterType::Recent));
+			EXPECT_EQ(expectedCommitted.Longest, view.counter(RollbackResult::Committed, RollbackCounterType::Longest));
+			EXPECT_EQ(expectedIgnored.All, view.counter(RollbackResult::Ignored, RollbackCounterType::All));
+			EXPECT_EQ(expectedIgnored.Recent, view.counter(RollbackResult::Ignored, RollbackCounterType::Recent));
+			EXPECT_EQ(expectedIgnored.Longest, view.counter(RollbackResult::Ignored, RollbackCounterType::Longest));
+		}
 
 		auto Default_Service_State = test::ServiceTestState();
 
