@@ -57,11 +57,13 @@ namespace catapult { namespace model {
 		explicit ModifyMultisigCosignersNotification(
 				const Key& signer,
 				uint8_t modificationsCount,
-				const CosignatoryModification* pModifications)
+				const CosignatoryModification* pModifications,
+				const bool& allowMultiplyRemove = false)
 				: Notification(Notification_Type, sizeof(ModifyMultisigCosignersNotification<1>))
 				, Signer(signer)
 				, ModificationsCount(modificationsCount)
 				, ModificationsPtr(pModifications)
+				, AllowMultiplyRemove(allowMultiplyRemove)
 		{}
 
 	public:
@@ -73,6 +75,9 @@ namespace catapult { namespace model {
 
 		/// Const pointer to the first modification.
 		const CosignatoryModification* ModificationsPtr;
+
+		/// Allow multiply remove in modifications.
+		bool AllowMultiplyRemove;
 	};
 
 	/// Notification of a new cosigner.

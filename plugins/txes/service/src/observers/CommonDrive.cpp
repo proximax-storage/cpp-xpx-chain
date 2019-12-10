@@ -6,6 +6,7 @@
 
 #include "CommonDrive.h"
 #include "plugins/txes/multisig/src/cache/MultisigCache.h"
+#include "plugins/txes/multisig/src/observers/MultisigAccountFacade.h"
 #include <cmath>
 
 namespace catapult { namespace observers {
@@ -139,5 +140,22 @@ namespace catapult { namespace observers {
 		float cosignatoryCount = driveEntry.replicators().size();
 		multisigEntry.setMinApproval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
 		multisigEntry.setMinRemoval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
+	}
+
+	void RemoveDriveMultisig(state::DriveEntry& driveEntry, observers::ObserverContext& context) {
+		auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
+    	observers::MultisigAccountFacade facade(multisigCache, driveEntry.key());
+
+    	for (const auto& replicatorPair : driveEntry.replicators()) {
+    		if (observers::NotifyMode::Commit == context.Mode) {
+			    facade.removeCosignatory(replicatorPair.first);
+    		} else {
+			    facade.addCosignatory(replicatorPair.first);
+    		}
+    	}
+
+		if (observers::NotifyMode::Rollback == context.Mode) {
+			UpdateDriveMultisigSettings(driveEntry, context);
+		}
 	}
 }}

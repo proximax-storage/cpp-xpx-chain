@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
 			auto pFailure = notification.FailuresPtr;
 			std::vector<Key> faultyReplicatorKeys(notification.FailureCount);
 			for (auto i = 0u; i < notification.FailureCount; ++i, ++pFailure) {
-				faultyReplicatorKeys.emplace_back(pFailure->Replicator);
+				faultyReplicatorKeys[i] = pFailure->Replicator;
 			}
 
             if (NotifyMode::Commit == context.Mode && notification.FailureCount) {
