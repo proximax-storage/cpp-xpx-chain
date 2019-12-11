@@ -169,10 +169,12 @@ namespace catapult { namespace cache {
 
 	CatapultCacheDetachableDelta::CatapultCacheDetachableDelta(
 			CacheHeightView&& cacheHeightView,
-			std::vector<std::unique_ptr<DetachedSubCacheView>>&& detachedSubViews)
+			std::vector<std::unique_ptr<DetachedSubCacheView>>&& detachedSubViews,
+			const Height& heightDelta)
 			// note that CacheHeightView is a unique_ptr to allow CatapultCacheDetachableDelta to be declared without it defined
 			: m_pCacheHeightView(std::make_unique<CacheHeightView>(std::move(cacheHeightView)))
 			, m_detachedDelta(std::move(detachedSubViews))
+			, m_heightDelta(heightDelta)
 	{}
 
 	CatapultCacheDetachableDelta::~CatapultCacheDetachableDelta() = default;
@@ -180,7 +182,7 @@ namespace catapult { namespace cache {
 	CatapultCacheDetachableDelta::CatapultCacheDetachableDelta(CatapultCacheDetachableDelta&&) = default;
 
 	Height CatapultCacheDetachableDelta::height() const {
-		return m_pCacheHeightView->get();
+		return m_pCacheHeightView->get() + m_heightDelta;
 	}
 
 	CatapultCacheDetachedDelta CatapultCacheDetachableDelta::detach() {
@@ -266,13 +268,13 @@ namespace catapult { namespace cache {
 		return CatapultCacheDelta(std::move(subViews));
 	}
 
-	CatapultCacheDetachableDelta CatapultCache::createDetachableDelta() const {
+	CatapultCacheDetachableDelta CatapultCache::createDetachableDelta(const Height& heightDelta) const {
 		// acquire a height reader lock to ensure the delta is composed of consistent subcache deltas
 		auto pCacheHeightView = m_pCacheHeight->view();
-		auto detachedSubViews = MapSubCaches<DetachedSubCacheView>(m_subCaches, [&pCacheHeightView](const auto& pSubCache) {
-			return pSubCache->createDetachedDelta(pCacheHeightView.get());
+		auto detachedSubViews = MapSubCaches<DetachedSubCacheView>(m_subCaches, [&pCacheHeightView, heightDelta](const auto& pSubCache) {
+			return pSubCache->createDetachedDelta(pCacheHeightView.get() + heightDelta);
 		});
-		return CatapultCacheDetachableDelta(std::move(pCacheHeightView), std::move(detachedSubViews));
+		return CatapultCacheDetachableDelta(std::move(pCacheHeightView), std::move(detachedSubViews), heightDelta);
 	}
 
 	void CatapultCache::commit(Height height) {

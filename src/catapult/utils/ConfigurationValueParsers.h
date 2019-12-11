@@ -21,6 +21,7 @@
 #pragma once
 #include "Logging.h"
 #include "catapult/types.h"
+#include "catapult/utils/Hashers.h"
 #include <array>
 #include <unordered_set>
 
@@ -75,6 +76,10 @@ namespace catapult { namespace utils {
 
 	/// Tries to parse \a str into a MosaicId (\a parsedValue).
 	bool TryParseValue(const std::string& str, MosaicId& parsedValue);
+
+	/// Tries to parse \a str into a set of MosaicIds (\a parsedValue).
+	/// \note \a str is expected to be comma separated
+	bool TryParseValue(const std::string& str, std::unordered_set<MosaicId, utils::BaseValueHasher<MosaicId>>& parsedValue);
 
 	/// Tries to parse \a str into a BlockDuration (\a parsedValue).
 	bool TryParseValue(const std::string& str, BlockDuration& parsedValue);

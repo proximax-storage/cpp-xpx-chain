@@ -39,9 +39,10 @@ namespace catapult { namespace observers {
 		auto& recipientState = recipientIter.get();
 
 		auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
+		auto amount = context.Resolvers.resolve(notification.Amount);
 		if (NotifyMode::Commit == context.Mode)
-			Transfer(senderState, recipientState, mosaicId, notification.Amount, context.Height);
+			Transfer(senderState, recipientState, mosaicId, amount, context.Height);
 		else
-			Transfer(recipientState, senderState, mosaicId, notification.Amount, context.Height);
+			Transfer(recipientState, senderState, mosaicId, amount, context.Height);
 	});
 }}

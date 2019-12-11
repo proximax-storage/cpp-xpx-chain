@@ -21,12 +21,10 @@
 #include "catapult/chain/ChainSynchronizer.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/model/NetworkConfiguration.h"
-#include "catapult/model/BlockUtils.h"
 #include "catapult/model/ChainScore.h"
 #include "catapult/model/EntityRange.h"
 #include "tests/catapult/chain/test/MockChainApi.h"
 #include "tests/test/core/HashTestUtils.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/TestHarness.h"
@@ -47,11 +45,11 @@ namespace catapult { namespace chain {
 		struct TestContext {
 		public:
 			TestContext(const ChainScore& localScore, const ChainScore& remoteScore)
-					: TestContext(localScore, remoteScore, {}, {}, test::GenerateBlockWithTransactions(0, Default_Height))
+					: TestContext(localScore, remoteScore, test::GenerateRandomHashes(1), test::GenerateRandomHashes(1), test::GenerateBlockWithTransactions(0, Default_Height))
 			{}
 
 			TestContext(const ChainScore& localScore, const ChainScore& remoteScore, model::UniqueEntityPtr<Block>&& pRemoteLastBlock)
-					: TestContext(localScore, remoteScore, {}, {}, std::move(pRemoteLastBlock))
+					: TestContext(localScore, remoteScore, test::GenerateRandomHashes(1), test::GenerateRandomHashes(1), std::move(pRemoteLastBlock))
 			{}
 
 			TestContext(
@@ -246,14 +244,14 @@ namespace catapult { namespace chain {
 			EXPECT_EQ(23u, params.second.NumBytes);
 		}
 
-		void AssertDefaultMultiplePullRequest(const mocks::MockChainApi& chainApi, const std::vector<Height>& expectedRequestHeights) {
+		void AssertDefaultMultiplePullRequest(const mocks::MockChainApi& chainApi, const std::vector<std::pair<Height, uint32_t>>& expectedRequestHeightsAndNumBlocks) {
 			// Assert:
-			ASSERT_EQ(expectedRequestHeights.size(), chainApi.blocksFromRequests().size());
+			ASSERT_EQ(expectedRequestHeightsAndNumBlocks.size(), chainApi.blocksFromRequests().size());
 
 			auto i = 0u;
 			for (const auto& params : chainApi.blocksFromRequests()) {
-				EXPECT_EQ(expectedRequestHeights[i], params.first) << "height of request " << i;
-				EXPECT_EQ(5u, params.second.NumBlocks) << "NumBlocks of request " << i; // maxBlocksPerSyncAttempt
+				EXPECT_EQ(expectedRequestHeightsAndNumBlocks[i].first, params.first) << "height of request " << i;
+				EXPECT_EQ(expectedRequestHeightsAndNumBlocks[i].second, params.second.NumBlocks) << "NumBlocks of request " << i; // maxBlocksPerSyncAttempt
 				EXPECT_EQ(23u, params.second.NumBytes) << "NumBytes of request " << i;
 				++i;
 			}
@@ -302,7 +300,7 @@ namespace catapult { namespace chain {
 		// Assert:
 		EXPECT_EQ(ionet::NodeInteractionResultCode::Success, code);
 		AssertSync(context, 1);
-		AssertDefaultMultiplePullRequest(*context.pChainApi, { Height(15), Height(17), Height(19) });
+		AssertDefaultMultiplePullRequest(*context.pChainApi, { { Height(15), 5u }, { Height(17), 5u }, { Height(19), 5u } });
 	}
 
 	TEST(TEST_CLASS, NeutralInteractionWhenRemoteDoesNotHaveBlocksAtRequestedHeight) {
@@ -336,7 +334,7 @@ namespace catapult { namespace chain {
 		// Assert:
 		EXPECT_EQ(ionet::NodeInteractionResultCode::Success, code);
 		AssertSync(context, 1);
-		AssertDefaultMultiplePullRequest(*context.pChainApi, { Height(13), Height(15), Height(17) });
+		AssertDefaultMultiplePullRequest(*context.pChainApi, { { Height(13), 5u }, { Height(15), 5u }, { Height(17), 5u } });
 	}
 
 	TEST(TEST_CLASS, FailedInteractionWhenBlocksFromReturnsException) {
@@ -368,6 +366,41 @@ namespace catapult { namespace chain {
 
 		// Cleanup: wait for future to complete
 		future.get();
+	}
+
+	TEST(TEST_CLASS, SuccessfulInteractionWithMultiplePullsWithConfig) {
+		// Arrange:
+		// - last block has height 20, rewrite limit is 9
+		// - common block has height 14 = 20 - 9 + 4 - 1
+		// - new config at height 18
+		// - pulls 3 blocks: first 2 blocks, then 1 block (18 - 14 - 1)
+		auto context = CreateTestContextWithHashes(4, 10, 3);
+		context.pChainApi->setNumBlocksPerBlocksFromRequest({ 2, 1 });
+		context.pChainApi->setConfigHeight(Height(18));
+		auto synchronizer = CreateSynchronizer(context);
+
+		// Act:
+		auto code = synchronizer(*context.pChainApi).get();
+
+		// Assert:
+		EXPECT_EQ(ionet::NodeInteractionResultCode::Success, code);
+		AssertSync(context, 1);
+		AssertDefaultMultiplePullRequest(*context.pChainApi, { { Height(15), 3u }, { Height(17), 1u } });
+	}
+
+	TEST(TEST_CLASS, FailedInteractionWhenNetworkConfigsReturnsException) {
+		// Arrange:
+		auto context = CreateTestContextWithHashes(9, 10);
+		context.pChainApi->setError(MockChainApi::EntryPoint::Network_Configs);
+		auto synchronizer = CreateSynchronizer(context);
+
+		// Act:
+		auto code = synchronizer(*context.pChainApi).get();
+
+		// Assert:
+		EXPECT_EQ(ionet::NodeInteractionResultCode::Failure, code);
+		context.assertNoCalls();
+		ASSERT_EQ(0u, context.pChainApi->blocksFromRequests().size());
 	}
 
 	// endregion

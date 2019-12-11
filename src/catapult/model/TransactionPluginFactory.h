@@ -95,6 +95,18 @@ namespace catapult { namespace model {
 			{}
 
 		public:
+			utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction& transaction) const override {
+				if constexpr (TransactionPluginFactoryOptions::Default == Options) {
+#ifdef _MSC_VER
+					// suppress warning that transaction is unreferenced formal parameter
+					(transaction);
+#endif
+					return utils::KeySet();
+				} else {
+					return ExtractAdditionalRequiredCosigners(static_cast<const TEmbeddedTransaction&>(transaction));
+				}
+			}
+
 			void publish(const WeakEntityInfoT<EmbeddedTransaction>& transactionInfo, NotificationSubscriber& sub) const override {
 				BaseType::publishImpl(transactionInfo, sub);
 			}

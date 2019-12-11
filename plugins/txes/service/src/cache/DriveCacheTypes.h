@@ -8,6 +8,7 @@
 #include "src/state/DriveEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/utils/Hashers.h"
+#include "catapult/utils/IdentifierGroup.h"
 
 namespace catapult {
 	namespace cache {
@@ -20,6 +21,7 @@ namespace catapult {
 		class DriveCacheView;
 		struct DriveEntryPrimarySerializer;
 		class DrivePatriciaTree;
+		struct DriveHeightGroupingSerializer;
 
 		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
@@ -55,7 +57,20 @@ namespace catapult { namespace cache {
 
 	/// Drive cache types.
 	struct DriveCacheTypes {
+		struct HeightGroupingTypesDescriptor {
+		public:
+			using KeyType = Height;
+			using ValueType = utils::IdentifierGroup<Key, Height, utils::ArrayHasher<Key>>;
+			using Serializer = DriveHeightGroupingSerializer;
+
+		public:
+			static auto GetKeyFromValue(const ValueType& identifierGroup) {
+				return identifierGroup.key();
+			}
+		};
+
 		using PrimaryTypes = MutableUnorderedMapAdapter<DriveCacheDescriptor, utils::ArrayHasher<Key>>;
+		using HeightGroupingTypes = MutableUnorderedMapAdapter<HeightGroupingTypesDescriptor, utils::BaseValueHasher<Height>>;
 
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicDriveCacheView, BasicDriveCacheDelta, const Key&, state::DriveEntry>;
 

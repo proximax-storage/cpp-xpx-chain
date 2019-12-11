@@ -42,7 +42,7 @@ namespace catapult { namespace observers {
 
 			auto receiptType = model::Receipt_Type_LockHash_Created;
 			model::BalanceChangeReceipt receipt(receiptType, notification.Signer, mosaicId, notification.Mosaic.Amount);
-			context.StatementBuilder().addReceipt(receipt);
+			context.StatementBuilder().addTransactionReceipt(receipt);
 		} else {
 			cache.remove(notification.Hash);
 		}

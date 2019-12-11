@@ -61,7 +61,7 @@ namespace catapult { namespace plugins {
 		});
 
 		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
-			auto multisigCache = cache.template sub<cache::MultisigCache>();
+			const auto& multisigCache = cache.template sub<cache::MultisigCache>();
 			auto result = model::PublicKeySet{ key };
 			extractCosigners(multisigCache, key, result);
 
@@ -75,7 +75,7 @@ namespace catapult { namespace plugins {
 		});
 
 		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder, &transactionRegistry = manager.transactionRegistry()](auto& builder) {
 			builder
 				.add(validators::CreateMultisigPermittedOperationValidator())
 				.add(validators::CreateModifyMultisigMaxCosignedAccountsValidator(pConfigHolder))
@@ -85,8 +85,8 @@ namespace catapult { namespace plugins {
 				// notice that ModifyMultisigLoopAndLevelValidator must be called before multisig aggregate validators
 				.add(validators::CreateModifyMultisigLoopAndLevelValidator(pConfigHolder))
 				// notice that ineligible cosigners must dominate missing cosigners in order for cosigner aggregation to work
-				.add(validators::CreateMultisigAggregateEligibleCosignersValidator())
-				.add(validators::CreateMultisigAggregateSufficientCosignersValidator());
+				.add(validators::CreateMultisigAggregateEligibleCosignersValidator(transactionRegistry))
+				.add(validators::CreateMultisigAggregateSufficientCosignersValidator(transactionRegistry));
 		});
 
 		manager.addObserverHook([](auto& builder) {

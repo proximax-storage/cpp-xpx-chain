@@ -51,7 +51,8 @@ namespace catapult { namespace model {
 		// Arrange:
 		ResolverContext context(
 				[](auto mosaicId) { return MosaicId(mosaicId.unwrap() + 1); },
-				[](const auto&) { return Address(); });
+				[](const auto&) { return Address(); },
+				[](const auto&) { return Amount(); });
 
 		// Act:
 		auto result = context.resolve(UnresolvedMosaicId(123));
@@ -64,7 +65,8 @@ namespace catapult { namespace model {
 		// Arrange:
 		ResolverContext context(
 				[](const auto&) { return MosaicId(); },
-				[](const auto& address) { return Address{ { static_cast<uint8_t>(address[0] + 1) } }; });
+				[](const auto& address) { return Address{ { static_cast<uint8_t>(address[0] + 1) } }; },
+				[](const auto&) { return Amount(); });
 
 		// Act:
 		auto result = context.resolve(UnresolvedAddress{ { { 123 } } });

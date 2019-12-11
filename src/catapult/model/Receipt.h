@@ -129,6 +129,29 @@ namespace catapult { namespace model {
 		TArtifactId ArtifactId;
 	};
 
+	/// Binary layout for a drive receipt.
+	struct DriveStateReceipt : public Receipt {
+	public:
+		/// Creates a receipt around \a receiptType, \a sender, \a recipient, \a mosaicId and \a amount.
+		DriveStateReceipt(
+			ReceiptType receiptType,
+			const Key& driveKey,
+			uint8_t driveState)
+			: DriveKey(driveKey)
+			, DriveState(driveState) {
+			Size = sizeof(DriveStateReceipt);
+			Version = 1;
+			Type = receiptType;
+		}
+
+	public:
+		/// Drive public key.
+		Key DriveKey;
+
+		/// Drive state.
+		uint8_t DriveState;
+	};
+
 #pragma pack(pop)
 
 /// Defines constants for a receipt with \a TYPE and \a VERSION.

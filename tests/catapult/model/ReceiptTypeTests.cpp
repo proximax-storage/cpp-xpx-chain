@@ -75,6 +75,7 @@ namespace catapult { namespace model {
 		EXPECT_EQ("Harvest_Fee", test::ToString(Receipt_Type_Harvest_Fee));
 		EXPECT_EQ("Inflation", test::ToString(Receipt_Type_Inflation));
 		EXPECT_EQ("Transaction_Group", test::ToString(Receipt_Type_Transaction_Group));
+		EXPECT_EQ("Public_Key_Group", test::ToString(Receipt_Type_Public_Key_Group));
 		EXPECT_EQ("Address_Alias_Resolution", test::ToString(Receipt_Type_Address_Alias_Resolution));
 		EXPECT_EQ("Mosaic_Alias_Resolution", test::ToString(Receipt_Type_Mosaic_Alias_Resolution));
 	}

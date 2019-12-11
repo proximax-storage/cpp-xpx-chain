@@ -20,7 +20,7 @@
 
 #pragma once
 #include "ResolutionStatement.h"
-#include "TransactionStatement.h"
+#include "Statement.h"
 #include <map>
 
 namespace catapult { namespace model {
@@ -35,6 +35,9 @@ namespace catapult { namespace model {
 
 		/// Mosaic resolution statements.
 		std::map<UnresolvedMosaicId, MosaicResolutionStatement> MosaicResolutionStatements;
+
+		/// Transaction statements.
+		std::map<ReceiptSource, PublicKeyStatement> PublicKeyStatements;
 	};
 
 	/// Calculates the merkle hash for \a statement.

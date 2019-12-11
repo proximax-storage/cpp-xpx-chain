@@ -7,15 +7,36 @@
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
 #include "catapult/validators/ValidatorContext.h"
+#include "src/model/DriveFileSystemTransaction.h"
+#include "src/model/FilesDepositTransaction.h"
+#include "src/model/JoinToDriveTransaction.h"
+#include "src/model/EndDriveTransaction.h"
+#include <unordered_set>
 
 namespace catapult { namespace validators {
 
 	using Notification = model::DriveNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(Drive, [](const auto& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(Drive, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
-		if (!driveCache.contains(notification.Drive))
-            return Failure_Service_Drive_Doesnt_Exist;
+		if (!driveCache.contains(notification.DriveKey))
+			return Failure_Service_Drive_Does_Not_Exist;
+
+		// TODO: Add verification type
+		static std::unordered_set<model::EntityType> blockedTransactionAfterFinish({
+		    model::Entity_Type_DriveFileSystem,
+		    model::Entity_Type_FilesDeposit,
+		    model::Entity_Type_JoinToDrive,
+		    model::Entity_Type_EndDrive,
+		});
+
+		if (blockedTransactionAfterFinish.count(notification.TransactionType)) {
+			auto driveIter = driveCache.find(notification.DriveKey);
+			const auto& driveEntry = driveIter.get();
+
+			if (driveEntry.state() >= state::DriveState::Finished)
+				return Failure_Service_Drive_Already_Is_Finished;
+		}
 
 		return ValidationResult::Success;
 	});

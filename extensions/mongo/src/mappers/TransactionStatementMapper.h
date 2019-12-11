@@ -21,9 +21,9 @@
 #pragma once
 #include "MapperInclude.h"
 #include "MapperUtils.h"
+#include "src/catapult/model/Statement.h"
 
 namespace catapult {
-	namespace model { class TransactionStatement; }
 	namespace mongo { class MongoReceiptRegistry; }
 }
 

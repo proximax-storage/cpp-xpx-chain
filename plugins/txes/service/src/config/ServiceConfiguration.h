@@ -15,14 +15,11 @@ namespace catapult { namespace config {
 	/// Service plugin configuration settings.
 	struct ServiceConfiguration : public model::PluginConfiguration {
 	public:
+	    /// Max files on drive at the moment
+	    uint16_t MaxFilesOnDrive;
+
 		/// Whether the plugin is enabled.
 		bool Enabled;
-
-		/// Minimum percentage of approval.
-		uint8_t MinPercentageOfApproval;
-
-		/// Minimum percentage of removal.
-		uint8_t MinPercentageOfRemoval;
 
 	private:
 		ServiceConfiguration() = default;

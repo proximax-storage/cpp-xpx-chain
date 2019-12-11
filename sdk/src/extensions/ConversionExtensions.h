@@ -20,18 +20,36 @@
 
 #pragma once
 #include "catapult/types.h"
+#include <cstring>
 
 namespace catapult { namespace extensions {
 
 	/// Casts \a mosaicId to an unresolved mosaic id.
-	UnresolvedMosaicId CastToUnresolvedMosaicId(MosaicId mosaicId);
+	inline UnresolvedMosaicId CastToUnresolvedMosaicId(MosaicId mosaicId) {
+		return UnresolvedMosaicId(mosaicId.unwrap());
+	}
 
 	/// Casts \a unresolvedMosaicId to a mosaic id.
-	MosaicId CastToMosaicId(UnresolvedMosaicId unresolvedMosaicId);
+	inline MosaicId CastToMosaicId(UnresolvedMosaicId unresolvedMosaicId) {
+		return MosaicId(unresolvedMosaicId.unwrap());
+	}
+
+	namespace {
+		template<typename TDest, typename TSource>
+		TDest Copy(const TSource& source) {
+			TDest dest;
+			std::memcpy(dest.data(), source.data(), source.size());
+			return dest;
+		}
+	}
 
 	/// Copies \a address to an unresolved address.
-	UnresolvedAddress CopyToUnresolvedAddress(const Address& address);
+	inline UnresolvedAddress CopyToUnresolvedAddress(const Address& address) {
+		return Copy<UnresolvedAddress>(address);
+	}
 
 	/// Copies \a unresolvedAddress to an address.
-	Address CopyToAddress(const UnresolvedAddress& unresolvedAddress);
+	inline Address CopyToAddress(const UnresolvedAddress& unresolvedAddress) {
+		return Copy<Address>(unresolvedAddress);
+	}
 }}

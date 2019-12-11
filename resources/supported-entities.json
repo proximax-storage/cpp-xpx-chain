@@ -121,9 +121,49 @@
 			"supportedVersions": [2]
 		},
 		{
-			"name": "Service",
+			"name": "PrepareDrive",
 			"type": "16730",
-			"supportedVersions": []
+			"supportedVersions": [1]
+		},
+		{
+			"name": "JoinToDrive",
+			"type": "16986",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "DriveFileSystem",
+			"type": "17242",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "FilesDeposit",
+			"type": "17498",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "EndDrive",
+			"type": "17754",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "DeleteReward",
+			"type": "18010",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "exchangeOffer",
+			"type": "16733",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "exchange",
+			"type": "16989",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "removeExchangeOffer",
+			"type": "17245",
+			"supportedVersions": [1]
 		}
 	]
 }
