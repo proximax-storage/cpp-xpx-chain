@@ -135,7 +135,7 @@ namespace catapult { namespace sync {
 					return true;
 				const auto& networkConfig = state.config(blocks.back()->Height).Network;
 				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, networkConfig);
-				rollbackInfo.reset();
+				rollbackInfo.modifier().reset();
 				return blocks.size() == result;
 			};
 
@@ -144,7 +144,7 @@ namespace catapult { namespace sync {
 					const auto& blockElement,
 					auto& observerState,
 					auto undoBlockType) {
-				rollbackInfo.increment();
+				rollbackInfo.modifier().increment();
 				auto readOnlyCache = observerState.Cache.toReadOnly();
 				auto resolverContext = pluginManager.createResolverContext(readOnlyCache);
 				UndoBlock(blockElement, { *pUndoObserver, resolverContext, observerState }, undoBlockType);
@@ -159,7 +159,7 @@ namespace catapult { namespace sync {
 				subscriber.notifyScoreChange(localScore.get());
 				subscriber.notifyStateChange(changeInfo);
 
-				rollbackInfo.save();
+				rollbackInfo.modifier().save();
 			};
 
 			auto dataDirectory = config::CatapultDataDirectory(state.config().User.DataDirectory);
@@ -357,7 +357,7 @@ namespace catapult { namespace sync {
 				RollbackCounterType rollbackCounterType) {
 			locator.registerServiceCounter<RollbackInfo>("rollbacks", counterName, [rollbackResult, rollbackCounterType](
 					const auto& rollbackInfo) {
-				return rollbackInfo.counter(rollbackResult, rollbackCounterType);
+				return rollbackInfo.view().counter(rollbackResult, rollbackCounterType);
 			});
 		}
 
