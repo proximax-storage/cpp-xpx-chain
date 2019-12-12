@@ -18,7 +18,7 @@ namespace catapult { namespace validators {
 				return Failure_Service_Drive_Invalid_Billing_Period;
 
 			if (notification.BillingPrice.unwrap() <= 0)
-				return Failure_Service_Drive_Invalid_Billing_Period;
+				return Failure_Service_Drive_Invalid_Billing_Price;
 
 			if (notification.Duration.unwrap() % notification.BillingPeriod.unwrap() != 0)
 				return Failure_Service_Drive_Duration_Is_Not_Multiple_Of_BillingPeriod;

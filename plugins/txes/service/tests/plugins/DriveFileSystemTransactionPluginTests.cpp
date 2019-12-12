@@ -28,6 +28,8 @@ namespace catapult { namespace plugins {
 
 		constexpr UnresolvedMosaicId Streaming_Mosaic_Id(1234);
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
+		constexpr auto Num_Add_Actions = 3u;
+		constexpr auto Num_Remove_Actions = 4u;
 
 		auto CreateConfiguration() {
 			test::MutableBlockchainConfiguration config;
@@ -38,7 +40,7 @@ namespace catapult { namespace plugins {
 
 		template<typename TTraits>
 		auto CreateTransaction() {
-			return test::CreateDriveFileSystemTransaction<typename TTraits::TransactionType>(3, 4);
+			return test::CreateDriveFileSystemTransaction<typename TTraits::TransactionType>(Num_Add_Actions, Num_Remove_Actions);
 		}
 	}
 
@@ -57,7 +59,8 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 3 * sizeof(AddAction) + 4 * sizeof(RemoveAction), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) +
+			Num_Add_Actions * sizeof(AddAction) + Num_Remove_Actions * sizeof(RemoveAction), realSize);
 	}
 
 	// region publish - basic
@@ -87,12 +90,12 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(6, sub.numNotifications());
+		ASSERT_EQ(3u + Num_Add_Actions, sub.numNotifications());
 		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
 		EXPECT_EQ(Service_Drive_File_System_v1_Notification, sub.notificationTypes()[1]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[2]);
-		for (auto i = 3u; i < 6; ++i)
-			EXPECT_EQ(Core_Balance_Transfer_v1_Notification, sub.notificationTypes()[i]);
+		for (auto i = 0u; i < Num_Add_Actions; ++i)
+			EXPECT_EQ(Core_Balance_Transfer_v1_Notification, sub.notificationTypes()[i + 3u]);
 	}
 
 	// endregion
@@ -135,12 +138,12 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->RootHash, notification.RootHash);
 		EXPECT_EQ(pTransaction->XorRootHash, notification.XorRootHash);
-		EXPECT_EQ(3, notification.AddActionsCount);
+		EXPECT_EQ(Num_Add_Actions, notification.AddActionsCount);
 		EXPECT_EQ(pTransaction->AddActionsPtr(), notification.AddActionsPtr);
-		EXPECT_EQ_MEMORY(pTransaction->AddActionsPtr(), notification.AddActionsPtr, 3 * sizeof(AddAction));
-		EXPECT_EQ(4, notification.RemoveActionsCount);
+		EXPECT_EQ_MEMORY(pTransaction->AddActionsPtr(), notification.AddActionsPtr, Num_Add_Actions * sizeof(AddAction));
+		EXPECT_EQ(Num_Remove_Actions, notification.RemoveActionsCount);
 		EXPECT_EQ(pTransaction->RemoveActionsPtr(), notification.RemoveActionsPtr);
-		EXPECT_EQ_MEMORY(pTransaction->RemoveActionsPtr(), notification.RemoveActionsPtr, 4 * sizeof(RemoveAction));
+		EXPECT_EQ_MEMORY(pTransaction->RemoveActionsPtr(), notification.RemoveActionsPtr, Num_Remove_Actions * sizeof(RemoveAction));
 	}
 
 	// endregion
@@ -178,10 +181,10 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(3u, sub.numMatchingNotifications());
+		ASSERT_EQ(Num_Add_Actions, sub.numMatchingNotifications());
 		auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pTransaction->DriveKey, Network_Identifier));
 		auto pAddActions = pTransaction->AddActionsPtr();
-		for (auto i = 0u; i < 3; ++i, ++pAddActions) {
+		for (auto i = 0u; i < Num_Add_Actions; ++i, ++pAddActions) {
 			const auto& notification = sub.matchingNotifications()[i];
 			EXPECT_EQ(pTransaction->Signer, notification.Sender);
 			EXPECT_EQ(driveAddress, notification.Recipient);

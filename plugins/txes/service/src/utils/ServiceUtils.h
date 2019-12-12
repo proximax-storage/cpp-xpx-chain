@@ -32,7 +32,7 @@ namespace catapult { namespace utils {
     }
 
     template<typename TCache>
-    inline Amount GetBalanceOfDrive(const state::DriveEntry& driveEntry, const TCache& cache, const MosaicId& storageMosaicId) {
+    inline Amount GetDriveBalance(const state::DriveEntry& driveEntry, const TCache& cache, const MosaicId& storageMosaicId) {
         const auto& accountCache = cache.template sub<cache::AccountStateCache>();
         auto accountIter = accountCache.find(driveEntry.key());
         const auto& driveAccount = accountIter.get();

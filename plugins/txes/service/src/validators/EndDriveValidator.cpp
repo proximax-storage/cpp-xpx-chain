@@ -45,12 +45,12 @@ namespace catapult { namespace validators {
 					return Failure_Service_Drive_Cant_Find_Default_Exchange_Offer;
 
 				Amount requiredAmount = driveEntry.billingPrice();
-				auto billingBalance = utils::GetBalanceOfDrive(driveEntry, context.Cache, storageMosaicId);
+				auto driveBalance = utils::GetDriveBalance(driveEntry, context.Cache, storageMosaicId);
 
-				if (billingBalance >= requiredAmount) {
+				if (driveBalance >= requiredAmount) {
 					requiredAmount = Amount(1);
 				} else {
-					requiredAmount = requiredAmount - billingBalance;
+					requiredAmount = requiredAmount - driveBalance;
 				}
 
 				const auto& sellOffer = exchangeEntry.sellOffers().at(storageMosaicId);
@@ -63,7 +63,9 @@ namespace catapult { namespace validators {
 
 				auto currencyBalance = driveAccount.Balances.get(currencyMosaicId);
 				if (currencyBalance < sellOffer.cost(requiredAmount))
-					return ValidationResult::Success;
+					return Failure_Service_Insufficient_Currency_Mosaic_Balance;
+
+				return ValidationResult::Success;
 			}
 
 			return Failure_Service_Operation_Is_Not_Permitted;

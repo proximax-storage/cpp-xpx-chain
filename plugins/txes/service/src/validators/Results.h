@@ -102,7 +102,7 @@ namespace catapult { namespace validators {
 	DEFINE_SERVICE_RESULT(Participant_Redundant, 29);
 
 	/// Validation failed because the participant is not part of drive.
-	DEFINE_SERVICE_RESULT(Participant_It_Not_Part_Of_Drive, 30);
+	DEFINE_SERVICE_RESULT(Participant_Is_Not_Registered_To_Drive, 30);
 
 	/// Validation failed because zero deleted files.
 	DEFINE_SERVICE_RESULT(Zero_Deleted_Files, 32);
@@ -135,7 +135,10 @@ namespace catapult { namespace validators {
 	DEFINE_SERVICE_RESULT(Remove_Files_Not_Same_File_Size, 41);
 
 	/// Validation failed because the drive account doesn't contains streaming tokens.
-	DEFINE_SERVICE_RESULT(Doesnt_Contains_Streaming_Tokens, 42);
+	DEFINE_SERVICE_RESULT(Doesnt_Contain_Streaming_Tokens, 42);
+
+	/// Validation failed because the drive account doesn't have enough currency mosaics.
+	DEFINE_SERVICE_RESULT(Insufficient_Currency_Mosaic_Balance, 43);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

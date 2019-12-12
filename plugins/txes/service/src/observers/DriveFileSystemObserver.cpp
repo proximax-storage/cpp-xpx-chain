@@ -10,8 +10,8 @@ namespace catapult { namespace observers {
 
     using Notification = model::DriveFileSystemNotification<1>;
 
-    DECLARE_OBSERVER(DriveFileSystem, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-        return MAKE_OBSERVER(DriveFileSystem, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
+    DECLARE_OBSERVER(DriveFileSystem, Notification)(const MosaicId& streamingMosaicId) {
+        return MAKE_OBSERVER(DriveFileSystem, Notification, [streamingMosaicId](const Notification& notification, ObserverContext& context) {
             auto& driveCache = context.Cache.sub<cache::DriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);
             auto& driveEntry = driveIter.get();
@@ -54,7 +54,6 @@ namespace catapult { namespace observers {
             }
 
             auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
-            auto streamingMosaicId = pConfigHolder->Config(context.Height).Immutable.StreamingMosaicId;
             for (auto& replicatorPair : driveEntry.replicators()) {
                 auto accountIter = accountStateCache.find(replicatorPair.first);
                 auto& replicatorAccount = accountIter.get();

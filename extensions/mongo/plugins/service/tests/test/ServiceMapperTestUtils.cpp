@@ -50,7 +50,7 @@ namespace catapult { namespace test {
 			ASSERT_EQ(files.size(), test::GetFieldCount(dbFiles));
 			for (const auto& dbFile : dbFiles) {
                 Hash256 fileHash;
-                DbBinaryToModelArray(fileHash, dbFile["fileHash"].get_binary());
+                DbBinaryToModelArray(fileHash, dbFile.get_binary());
 				EXPECT_EQ(1, files.count(fileHash));
 			}
         }
@@ -71,6 +71,8 @@ namespace catapult { namespace test {
 
         template<typename T>
         void AssertReplicators(const T& replicators, const bsoncxx::array::view& dbReplicatorsMap) {
+			ASSERT_EQ(replicators.size(), test::GetFieldCount(dbReplicatorsMap));
+
 			state::ReplicatorsMap replicatorMap;
 			for (const auto& replicator : replicators) {
 				replicatorMap.emplace(replicator.first, replicator.second);
@@ -90,7 +92,7 @@ namespace catapult { namespace test {
 	}
 
 	void AssertEqualDriveData(const state::DriveEntry& entry, const Address& address, const bsoncxx::document::view& dbDriveEntry) {
-		EXPECT_EQ(17u, test::GetFieldCount(dbDriveEntry));
+		EXPECT_EQ(19u, test::GetFieldCount(dbDriveEntry));
 
 		EXPECT_EQ(entry.key(), GetKeyValue(dbDriveEntry, "multisig"));
 		EXPECT_EQ(address, test::GetAddressValue(dbDriveEntry, "multisigAddress"));

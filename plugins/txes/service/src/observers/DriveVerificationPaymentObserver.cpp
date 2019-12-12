@@ -14,7 +14,7 @@ namespace catapult { namespace observers {
 		return MAKE_OBSERVER(DriveVerificationPayment, Notification, [storageMosaicId](const auto& notification, ObserverContext& context) {
 			if (!notification.FailureCount)
 				return;
-			
+
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			state::DriveEntry& driveEntry = driveIter.get();
@@ -24,7 +24,8 @@ namespace catapult { namespace observers {
             auto& driveAccount = driveAccountIter.get();
 
 			auto pFailure = notification.FailuresPtr;
-			std::vector<Key> faultyReplicatorKeys(notification.FailureCount);
+			std::vector<Key> faultyReplicatorKeys;
+			faultyReplicatorKeys.reserve(notification.FailureCount);
 			for (auto i = 0u; i < notification.FailureCount; ++i, ++pFailure) {
 				faultyReplicatorKeys.emplace_back(pFailure->Replicator);
 			}
@@ -40,7 +41,7 @@ namespace catapult { namespace observers {
                     Credit(driveAccount, storageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
                 }
             } else if (NotifyMode::Rollback == context.Mode) {
-                for (pFailure = notification.FailuresPtr + notification.FailureCount - 1; pFailure != notification.FailuresPtr; --pFailure) {
+                for (pFailure = notification.FailuresPtr + notification.FailureCount - 1; pFailure >= notification.FailuresPtr; --pFailure) {
 					driveEntry.restoreReplicator(pFailure->Replicator);
                 }
             }

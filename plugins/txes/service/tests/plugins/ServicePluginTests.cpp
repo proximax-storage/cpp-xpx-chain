@@ -69,7 +69,6 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
 					"PrepareDriveArgumentsValidator",
-					"DriveFilesRewardValidator",
 					"ServicePluginConfigValidator",
 				};
 			}
@@ -79,12 +78,12 @@ namespace catapult { namespace plugins {
 					"DriveValidator",
 					"ExchangeValidator",
 					"DrivePermittedOperationValidator",
+					"DriveFilesRewardValidator",
 					"FilesDepositValidator",
 					"JoinToDriveValidator",
 					"PrepareDrivePermissionValidator",
 					"DriveFileSystemValidator",
 					"EndDriveValidator",
-					"RewardValidator",
 					"MaxFilesOnDriveValidator",
 					"StartDriveVerificationValidator",
 					"EndDriveVerificationValidator",
@@ -101,7 +100,7 @@ namespace catapult { namespace plugins {
 					"StartBillingObserver",
 					"EndBillingObserver",
 					"EndDriveObserver",
-					"RewardObserver",
+					"DriveFilesRewardObserver",
 					"DriveCacheBlockPruningObserver",
 				};
 			}

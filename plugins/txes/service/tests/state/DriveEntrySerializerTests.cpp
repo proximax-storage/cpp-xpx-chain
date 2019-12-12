@@ -82,9 +82,9 @@ namespace catapult { namespace state {
 			// region upload payments
 
 			sizeof(uint16_t) + // payment count
-			Drive_Payment_Count * Key_Size + // Receiver
-			Drive_Payment_Count * sizeof(uint64_t) + // Amount
-			Drive_Payment_Count * sizeof(uint64_t); // Height
+			Upload_Payment_Count * Key_Size + // Receiver
+			Upload_Payment_Count * sizeof(uint64_t) + // Amount
+			Upload_Payment_Count * sizeof(uint64_t); // Height
 
 			// end region
 

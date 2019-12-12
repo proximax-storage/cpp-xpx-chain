@@ -8,6 +8,10 @@
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
 #include "src/model/ServiceEntityType.h"
+#include "plugins/txes/exchange/src/cache/ExchangeCache.h"
+#include "plugins/txes/exchange/src/cache/ExchangeCacheStorage.h"
+#include "plugins/txes/lock_secret/src/cache/SecretLockInfoCache.h"
+#include "plugins/txes/multisig/src/cache/MultisigCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Random.h"
@@ -28,17 +32,23 @@ namespace catapult { namespace test {
 		uint16_t removedReplicatorCount = 2,
 		uint16_t uploadPaymentCount = 2);
 
+	state::AccountState CreateAccount(const Key& owner, model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Mijin_Test);
+	void AssertAccount(const state::AccountState& expected, const state::AccountState& actual);
+
 	/// Verifies that \a entry1 is equivalent to \a entry2.
 	void AssertEqualDriveData(const state::DriveEntry& entry1, const state::DriveEntry& entry2);
 
-	/// Cache factory for creating a catapult cache composed of drive cache and core caches.
+	/// Cache factory for creating a catapult cache composed of drive cache, multisig cache and core caches.
 	struct DriveCacheFactory {
 	private:
 		static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
-			auto cacheId = cache::DriveCache::Id;
-			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
+			auto id = std::max(cache::DriveCache::Id, std::max(cache::MultisigCache::Id, std::max(cache::ExchangeCache::Id, cache::SecretLockInfoCache::Id)));
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::DriveCache, cache::DriveCacheStorage>(pConfigHolder);
+			subCaches[cache::DriveCache::Id] = MakeSubCachePlugin<cache::DriveCache, cache::DriveCacheStorage>(pConfigHolder);
+			subCaches[cache::MultisigCache::Id] = MakeSubCachePlugin<cache::MultisigCache, cache::MultisigCacheStorage>();
+			subCaches[cache::ExchangeCache::Id] = MakeSubCachePlugin<cache::ExchangeCache, cache::ExchangeCacheStorage>(pConfigHolder);
+			subCaches[cache::SecretLockInfoCache::Id] = MakeSubCachePlugin<cache::SecretLockInfoCache, cache::SecretLockInfoCacheStorage>();
 			return subCaches;
 		}
 
@@ -73,6 +83,7 @@ namespace catapult { namespace test {
     template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateDriveFilesRewardTransaction(size_t numUploadInfos) {
         auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DriveFilesReward, numUploadInfos * sizeof(model::UploadInfo));
+		pTransaction->UploadInfosCount = numUploadInfos;
 
 		auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
 		for (auto i = 0u; i < numUploadInfos; ++i) {

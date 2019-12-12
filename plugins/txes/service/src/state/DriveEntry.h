@@ -86,6 +86,15 @@ namespace catapult { namespace state {
 	// Mixin for storing drive details.
 	class DriveMixin {
 	public:
+		DriveMixin()
+			: m_state(DriveState::NotStarted)
+			, m_size(0)
+			, m_replicas(0)
+			, m_minReplicators(0)
+			, m_percentApprovers(0)
+		{}
+
+	public:
 		/// Sets start \a height of drive.
 		void setStart(const Height& height) {
 			m_start = height;

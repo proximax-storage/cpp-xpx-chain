@@ -10,11 +10,8 @@ namespace catapult { namespace observers {
 
     using Notification = model::EndDriveNotification<1>;
 
-    DECLARE_OBSERVER(EndDrive, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-        return MAKE_OBSERVER(EndDrive, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
-            const auto& config = pConfigHolder->Config(context.Height).Immutable;
-            auto streamingMosaicId = pConfigHolder->Config(context.Height).Immutable.StreamingMosaicId;
-
+    DECLARE_OBSERVER(EndDrive, Notification)(const config::ImmutableConfiguration& config) {
+        return MAKE_OBSERVER(EndDrive, Notification, [&config](const Notification& notification, ObserverContext& context) {
             auto& driveCache = context.Cache.sub<cache::DriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);
             auto& driveEntry = driveIter.get();
@@ -36,7 +33,7 @@ namespace catapult { namespace observers {
                             replicatorPair.second.ActiveFilesWithoutDeposit.erase(filePair.first);
                             replicatorPair.second.AddInactiveUndepositedFile(filePair.first, context.Height);
                         } else {
-                            Credit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(driveEntry, filePair.first), context);
+                            Credit(replicatorAccount, config.StreamingMosaicId, utils::CalculateFileDeposit(filePair.second.Size), context);
                         }
                     }
 
@@ -55,7 +52,7 @@ namespace catapult { namespace observers {
                             replicatorPair.second.ActiveFilesWithoutDeposit.insert(filePair.first);
                             replicatorPair.second.RemoveInactiveUndepositedFile(filePair.first, context.Height);
                         } else {
-                            Debit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(driveEntry, filePair.first), context);
+                            Debit(replicatorAccount, config.StreamingMosaicId, utils::CalculateFileDeposit(filePair.second.Size), context);
                         }
                     }
 

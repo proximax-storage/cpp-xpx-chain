@@ -5,6 +5,7 @@
 **/
 
 #include "ServiceTestUtils.h"
+#include "catapult/model/Address.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -32,7 +33,8 @@ namespace catapult { namespace test {
 				replicatorInfo.ActiveFilesWithoutDeposit.emplace(test::GenerateRandomByteArray<Hash256>());
 			}
 			for (auto i = 0u; i < inactiveFilesWithoutDepositCount; ++i) {
-				std::vector<Height> heights(heightCount);
+				std::vector<Height> heights;
+				heights.reserve(heightCount);
 				for (auto k = 0u; k < heightCount; ++k)
 					heights.push_back(test::GenerateRandomValue<Height>());
 				replicatorInfo.InactiveFilesWithoutDeposit.emplace(test::GenerateRandomByteArray<Hash256>(), heights);
@@ -106,6 +108,20 @@ namespace catapult { namespace test {
 		}
 
 		return entry;
+	}
+
+	state::AccountState CreateAccount(const Key& owner, model::NetworkIdentifier networkIdentifier) {
+		auto address = model::PublicKeyToAddress(owner, networkIdentifier);
+		state::AccountState account(address, Height(1));
+		account.PublicKey = owner;
+		account.PublicKeyHeight = Height(1);
+		return account;
+	}
+
+	void AssertAccount(const state::AccountState& expected, const state::AccountState& actual) {
+		ASSERT_EQ(expected.Balances.size(), actual.Balances.size());
+		for (auto iter = expected.Balances.begin(); iter != expected.Balances.end(); ++iter)
+			EXPECT_EQ(iter->second, actual.Balances.get(iter->first));
 	}
 
 	template<typename T>

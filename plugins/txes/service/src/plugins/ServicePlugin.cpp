@@ -132,34 +132,33 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateServicePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 			builder
 					.add(validators::CreateDriveValidator())
 					.add(validators::CreateExchangeValidator(pConfigHolder))
 					.add(validators::CreateDrivePermittedOperationValidator())
-                    .add(validators::CreateDriveFilesRewardValidator(pConfigHolder))
+                    .add(validators::CreateDriveFilesRewardValidator(immutableConfig.StreamingMosaicId))
 					.add(validators::CreateFilesDepositValidator())
 					.add(validators::CreateJoinToDriveValidator())
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
 					.add(validators::CreateEndDriveValidator(pConfigHolder))
 					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder))
-					.add(validators::CreateStartDriveVerificationValidator(pConfigHolder))
-					.add(validators::CreateEndDriveVerificationValidator(pConfigHolder));
+					.add(validators::CreateStartDriveVerificationValidator())
+					.add(validators::CreateEndDriveVerificationValidator());
 		});
 
-		auto storageMosaicId = immutableConfig.StorageMosaicId;
-		manager.addObserverHook([pConfigHolder, storageMosaicId](auto& builder) {
+		manager.addObserverHook([pConfigHolder, &immutableConfig](auto& builder) {
 			builder
 					.add(observers::CreatePrepareDriveObserver())
-					.add(observers::CreateDriveFileSystemObserver(pConfigHolder))
+					.add(observers::CreateDriveFileSystemObserver(immutableConfig.StreamingMosaicId))
 					.add(observers::CreateFilesDepositObserver())
 					.add(observers::CreateJoinToDriveObserver())
-                    .add(observers::CreateDriveVerificationPaymentObserver(storageMosaicId))
-                    .add(observers::CreateStartBillingObserver(pConfigHolder))
-                    .add(observers::CreateEndBillingObserver(pConfigHolder))
-                    .add(observers::CreateEndDriveObserver(pConfigHolder))
-                    .add(observers::CreateDriveFilesRewardObserver(pConfigHolder))
+                    .add(observers::CreateDriveVerificationPaymentObserver(immutableConfig.StorageMosaicId))
+                    .add(observers::CreateStartBillingObserver(immutableConfig.StorageMosaicId))
+                    .add(observers::CreateEndBillingObserver(immutableConfig.StorageMosaicId))
+                    .add(observers::CreateEndDriveObserver(immutableConfig))
+                    .add(observers::CreateDriveFilesRewardObserver(immutableConfig))
                     .add(observers::CreateDriveCacheBlockPruningObserver(pConfigHolder));
 		});
 	}

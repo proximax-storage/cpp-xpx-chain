@@ -4,11 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/Address.h"
 #include "src/plugins/JoinToDriveTransactionPlugin.h"
 #include "src/model/JoinToDriveTransaction.h"
 #include "src/model/ServiceNotifications.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "plugins/txes/multisig/src/model/MultisigNotifications.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
@@ -94,7 +92,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[2]);
 		EXPECT_EQ(Multisig_Modify_Cosigners_v1_Notification, sub.notificationTypes()[3]);
 		EXPECT_EQ(Service_Join_To_Drive_v1_Notification, sub.notificationTypes()[4]);
-		EXPECT_EQ(Core_Balance_Transfer_v1_Notification, sub.notificationTypes()[5]);
+		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[5]);
 	}
 
 	// endregion
@@ -201,11 +199,11 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
-	// region publish - balance transfer notification
+	// region publish - balance debit notification
 
-	PLUGIN_TEST(CanPublishBalanceTransferNotification) {
+	PLUGIN_TEST(CanPublishBalanceDebitNotification) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<BalanceTransferNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<BalanceDebitNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
 
 		auto pTransaction = CreateTransaction<TTraits>();
@@ -218,8 +216,6 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Sender);
-		auto driveAddress = extensions::CopyToUnresolvedAddress(model::PublicKeyToAddress(pTransaction->DriveKey, Network_Identifier));
-		EXPECT_EQ(driveAddress, notification.Recipient);
 		EXPECT_EQ(Storage_Mosaic_Id, notification.MosaicId);
 		EXPECT_EQ(0u, notification.Amount.unwrap());
 		EXPECT_EQ(UnresolvedAmountType::DriveDeposit, notification.Amount.Type);
