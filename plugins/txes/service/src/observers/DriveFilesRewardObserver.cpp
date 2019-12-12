@@ -20,7 +20,6 @@ namespace catapult { namespace observers {
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
 			auto streamingMosaicId = config.StreamingMosaicId;
-			auto currencyMosaicId = config.CurrencyMosaicId;
 
 			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto accountIter = accountStateCache.find(driveEntry.key());
@@ -54,42 +53,17 @@ namespace catapult { namespace observers {
 					});
 				}
 
-				// if drive is finished, it is last payment transaction. Now we can remove drive and return remaining xpx to user.
+				// if drive is finished, it is last payment transaction. Now we can remove drive.
 				if (driveEntry.state() >= state::DriveState::Finished) {
 					driveCache.markRemoveDrive(driveEntry.key(), context.Height);
 					driveEntry.setEnd(context.Height);
-
-					auto remainingCurrency = driveAccount.Balances.get(currencyMosaicId);
-					auto ownerIter = accountStateCache.find(driveEntry.owner());
-					auto& ownerAccount = ownerIter.get();
-
-					// We use this payments array for streaming payments, but in case of removed drive we can store the last payment in xpx for drive
-					driveEntry.uploadPayments().emplace_back(state::PaymentInformation{
-						driveEntry.owner(),
-						remainingCurrency,
-						context.Height
-					});
-
-					if (remainingCurrency > Amount(0))
-						Transfer(driveAccount, ownerAccount, currencyMosaicId, remainingCurrency, context);
+					RemoveDriveMultisig(driveEntry, context);
 				}
 			} else {
 				if (driveEntry.state() >= state::DriveState::Finished) {
 					driveCache.unmarkRemoveDrive(driveEntry.key(), context.Height);
 					driveEntry.setEnd(Height(0));
-
-					if (driveEntry.uploadPayments().empty()
-						|| driveEntry.uploadPayments().back().Receiver != driveEntry.owner()
-						|| driveEntry.uploadPayments().back().Height != context.Height)
-						CATAPULT_THROW_RUNTIME_ERROR("rollback owner payment during finished drive");
-
-					auto ownerIter = accountStateCache.find(driveEntry.owner());
-					auto& ownerAccount = ownerIter.get();
-					auto remainingCurrency = driveEntry.uploadPayments().back().Amount;
-					driveEntry.uploadPayments().pop_back();
-
-					if (remainingCurrency > Amount(0))
-						Transfer(ownerAccount, driveAccount, currencyMosaicId, remainingCurrency, context);
+					RemoveDriveMultisig(driveEntry, context);
 				}
 
 				auto& payments = driveEntry.uploadPayments();

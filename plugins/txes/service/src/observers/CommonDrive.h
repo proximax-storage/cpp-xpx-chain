@@ -25,4 +25,6 @@ namespace catapult { namespace observers {
 
 	void UpdateDriveMultisigSettings(state::DriveEntry& entry, ObserverContext& context);
 
+	void RemoveDriveMultisig(state::DriveEntry& driveEntry, observers::ObserverContext& context);
+
 }}

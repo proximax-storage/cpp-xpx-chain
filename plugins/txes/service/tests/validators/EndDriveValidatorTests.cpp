@@ -89,9 +89,23 @@ namespace catapult { namespace validators {
 			driveEntry.owner());
 	}
 
+	TEST(TEST_CLASS, FailureWhenDriveNotInPendingState) {
+		// Arrange:
+		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setDuration(BlockDuration(100));
+		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Service_Drive_Not_In_Pending_State,
+			driveEntry,
+			driveEntry.key());
+	}
+
 	TEST(TEST_CLASS, SuccessWhenDurationPassed) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setState(state::DriveState::Pending);
 		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
 		driveEntry.setDuration(BlockDuration(100));
 		driveEntry.billingHistory().push_back(state::BillingPeriodDescription{ Height(101), Height(1),
@@ -107,6 +121,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenNoDefaultExchangeEntry) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setState(state::DriveState::Pending);
 		driveEntry.setDuration(BlockDuration(100));
 		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
 
@@ -120,6 +135,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenNoDefaultExchangeOffer) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setState(state::DriveState::Pending);
 		driveEntry.setDuration(BlockDuration(100));
 		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
 		state::ExchangeEntry exchangeEntry(Long_Offer_Key);
@@ -135,6 +151,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenDefaultExchangeOfferInsufficient) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setState(state::DriveState::Pending);
 		driveEntry.setDuration(BlockDuration(100));
 		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
 		state::ExchangeEntry exchangeEntry(Long_Offer_Key);
@@ -152,6 +169,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenDriveCurrencyBalanceInsufficient) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setState(state::DriveState::Pending);
 		driveEntry.setDuration(BlockDuration(100));
 		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
 		state::ExchangeEntry exchangeEntry(Long_Offer_Key);
@@ -169,6 +187,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenDriveCurrencyBalanceSufficient) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setState(state::DriveState::Pending);
 		driveEntry.setDuration(BlockDuration(100));
 		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
 		state::ExchangeEntry exchangeEntry(Long_Offer_Key);
@@ -187,6 +206,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenInvalidSigner) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setState(state::DriveState::Pending);
 		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
 
 		// Assert:

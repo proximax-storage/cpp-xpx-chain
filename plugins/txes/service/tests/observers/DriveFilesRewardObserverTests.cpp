@@ -5,6 +5,8 @@
 **/
 
 #include "catapult/cache_core/AccountStateCache.h"
+#include "plugins/txes/multisig/src/cache/MultisigCache.h"
+#include "plugins/txes/multisig/src/observers/MultisigAccountFacade.h"
 #include "src/observers/Observers.h"
 #include "tests/test/ServiceTestUtils.h"
 #include "tests/test/core/NotificationTestUtils.h"
@@ -27,6 +29,7 @@ namespace catapult { namespace observers {
 		constexpr Height Current_Height(10);
 		constexpr Amount Drive_Balance_Streaming(1000);
 		constexpr auto Num_Replicators = 10;
+		constexpr uint8_t Percent_Approvers = 60;
 
 		auto CreateConfig() {
 			auto config = config::ImmutableConfiguration::Uninitialized();
@@ -42,6 +45,7 @@ namespace catapult { namespace observers {
 				std::vector<model::UploadInfo>& uploadInfos) {
 			state::DriveEntry entry(test::GenerateRandomByteArray<Key>());
 			entry.setState(driveState);
+			entry.setPercentApprovers(Percent_Approvers);
 			auto driveAccount = test::CreateAccount(entry.key());
 			driveAccount.Balances.credit(Streaming_Mosaic_Id, Drive_Balance_Streaming);
 			driveAccount.Balances.credit(Currency_Mosaic_Id, driveBalanceCurrency);
@@ -82,10 +86,6 @@ namespace catapult { namespace observers {
 
 			if (driveState >= state::DriveState::Finished) {
 				entry.setEnd(Current_Height);
-				auto remainingCurrency = expectedAccounts.at(entry.key()).Balances.get(Currency_Mosaic_Id);
-				entry.uploadPayments().emplace_back(state::PaymentInformation{ entry.owner(), remainingCurrency, Current_Height });
-				expectedAccounts.at(entry.key()).Balances.debit(Currency_Mosaic_Id, remainingCurrency, Current_Height);
-				expectedAccounts.at(entry.owner()).Balances.credit(Currency_Mosaic_Id, remainingCurrency, Current_Height);
 			}
 
 			return entry;
@@ -93,7 +93,11 @@ namespace catapult { namespace observers {
 
 		struct CacheValues {
 		public:
-			CacheValues() : InitialDriveEntry(Key()), ExpectedDriveEntry(Key())
+			CacheValues()
+				: InitialDriveEntry(Key())
+				, ExpectedDriveEntry(Key())
+				, InitialMultisigEntry(Key())
+				, ExpectedMultisigEntry(Key())
 			{}
 
 		public:
@@ -102,6 +106,8 @@ namespace catapult { namespace observers {
 			std::map<Key, state::AccountState> InitialAccounts;
 			std::map<Key, state::AccountState> ExpectedAccounts;
 			std::vector<model::UploadInfo> UploadInfos;
+			state::MultisigEntry InitialMultisigEntry;
+			state::MultisigEntry ExpectedMultisigEntry;
 		};
 
 		void RunTest(NotifyMode mode, const CacheValues& values) {
@@ -112,11 +118,23 @@ namespace catapult { namespace observers {
 			auto pObserver = CreateDriveFilesRewardObserver(config);
 			auto& driveCache = context.cache().sub<cache::DriveCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
+			auto& multisigCache = context.cache().sub<cache::MultisigCache>();
 
 			// Populate cache.
 			driveCache.insert(values.InitialDriveEntry);
-			for (const auto& initialAccount : values.InitialAccounts) {
+			for (const auto& initialAccount : values.InitialAccounts)
 				accountCache.addAccount(initialAccount.second);
+
+			{
+				observers::MultisigAccountFacade facade(multisigCache, values.InitialMultisigEntry.key());
+				for (const auto &key : values.InitialMultisigEntry.cosignatories())
+					facade.addCosignatory(key);
+			}
+			if (multisigCache.contains(values.InitialMultisigEntry.key())) {
+				auto multisigIter = multisigCache.find(values.InitialMultisigEntry.key());
+				auto& multisigEntry = multisigIter.get();
+				multisigEntry.setMinApproval(values.InitialMultisigEntry.minApproval());
+				multisigEntry.setMinRemoval(values.InitialMultisigEntry.minRemoval());
 			}
 
 			// Act:
@@ -132,6 +150,8 @@ namespace catapult { namespace observers {
 				const auto& actualAccount = accountIter.get();
 				test::AssertAccount(expectedAccount.second, actualAccount);
 			}
+
+			test::AssertMultisig(multisigCache, values.ExpectedMultisigEntry);
 		}
 	}
 
@@ -141,6 +161,8 @@ namespace catapult { namespace observers {
 		values.InitialDriveEntry = CreateInitialDriveEntry(values.InitialAccounts, state::DriveState::InProgress, Amount(100), values.UploadInfos);
 		values.ExpectedAccounts = values.InitialAccounts;
 		values.ExpectedDriveEntry = CreateExpectedDriveEntry(values.InitialDriveEntry, state::DriveState::InProgress, values.UploadInfos, values.ExpectedAccounts);
+		values.InitialMultisigEntry = test::CreateMultisigEntry(values.InitialDriveEntry);
+		values.ExpectedMultisigEntry = values.InitialMultisigEntry;
 
 		// Assert:
 		RunTest(NotifyMode::Commit, values);
@@ -152,6 +174,8 @@ namespace catapult { namespace observers {
 		values.InitialDriveEntry = CreateInitialDriveEntry(values.InitialAccounts, state::DriveState::Finished, Amount(100), values.UploadInfos);
 		values.ExpectedAccounts = values.InitialAccounts;
 		values.ExpectedDriveEntry = CreateExpectedDriveEntry(values.InitialDriveEntry, state::DriveState::Finished, values.UploadInfos, values.ExpectedAccounts);
+		values.InitialMultisigEntry = test::CreateMultisigEntry(values.InitialDriveEntry);
+		values.ExpectedMultisigEntry = state::MultisigEntry(values.InitialMultisigEntry.key());
 
 		// Assert:
 		RunTest(NotifyMode::Commit, values);
@@ -163,6 +187,8 @@ namespace catapult { namespace observers {
 		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.ExpectedAccounts, state::DriveState::InProgress, Amount(100), values.UploadInfos);
 		values.InitialAccounts = values.ExpectedAccounts;
 		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, state::DriveState::InProgress, values.UploadInfos, values.InitialAccounts);
+		values.ExpectedMultisigEntry = test::CreateMultisigEntry(values.ExpectedDriveEntry);
+		values.InitialMultisigEntry = values.ExpectedMultisigEntry;
 
 		// Assert:
 		RunTest(NotifyMode::Rollback, values);
@@ -174,45 +200,11 @@ namespace catapult { namespace observers {
 		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.ExpectedAccounts, state::DriveState::Finished, Amount(100), values.UploadInfos);
 		values.InitialAccounts = values.ExpectedAccounts;
 		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, state::DriveState::Finished, values.UploadInfos, values.InitialAccounts);
+		values.ExpectedMultisigEntry = test::CreateMultisigEntry(values.ExpectedDriveEntry);
+		values.InitialMultisigEntry = state::MultisigEntry(values.ExpectedMultisigEntry.key());
 
 		// Assert:
 		RunTest(NotifyMode::Rollback, values);
-	}
-
-	TEST(TEST_CLASS, DriveFilesReward_Rollback_InvalidOwnerPayment_EmptyPayments) {
-		// Arrange:
-		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.ExpectedAccounts, state::DriveState::Finished, Amount(100), values.UploadInfos);
-		values.InitialAccounts = values.ExpectedAccounts;
-		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, state::DriveState::Finished, values.UploadInfos, values.InitialAccounts);
-		values.InitialDriveEntry.uploadPayments().clear();
-
-		// Assert:
-		EXPECT_THROW(RunTest(NotifyMode::Rollback, values), catapult_runtime_error);
-	}
-
-	TEST(TEST_CLASS, DriveFilesReward_Rollback_InvalidOwnerPayment_WrongKey) {
-		// Arrange:
-		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.ExpectedAccounts, state::DriveState::Finished, Amount(100), values.UploadInfos);
-		values.InitialAccounts = values.ExpectedAccounts;
-		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, state::DriveState::Finished, values.UploadInfos, values.InitialAccounts);
-		values.InitialDriveEntry.uploadPayments().back().Receiver = test::GenerateRandomByteArray<Key>();
-
-		// Assert:
-		EXPECT_THROW(RunTest(NotifyMode::Rollback, values), catapult_runtime_error);
-	}
-
-	TEST(TEST_CLASS, DriveFilesReward_Rollback_InvalidOwnerPayment_WrongHeight) {
-		// Arrange:
-		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.ExpectedAccounts, state::DriveState::Finished, Amount(100), values.UploadInfos);
-		values.InitialAccounts = values.ExpectedAccounts;
-		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, state::DriveState::Finished, values.UploadInfos, values.InitialAccounts);
-		values.InitialDriveEntry.uploadPayments().back().Height = Current_Height + Height(1);
-
-		// Assert:
-		EXPECT_THROW(RunTest(NotifyMode::Rollback, values), catapult_runtime_error);
 	}
 
 	TEST(TEST_CLASS, DriveFilesReward_Rollback_InvalidParticipantPayment_WrongKey) {

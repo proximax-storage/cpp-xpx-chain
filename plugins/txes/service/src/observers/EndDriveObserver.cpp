@@ -15,14 +15,21 @@ namespace catapult { namespace observers {
             auto& driveCache = context.Cache.sub<cache::DriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);
             auto& driveEntry = driveIter.get();
+            auto streamingMosaicId = config.StreamingMosaicId;
+            auto storageMosaicId = config.StorageMosaicId;
+            auto currencyMosaicId = config.CurrencyMosaicId;
 
             auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
+            auto accountIter = accountStateCache.find(driveEntry.key());
+            auto& driveAccount = accountIter.get();
+            auto ownerIter = accountStateCache.find(driveEntry.owner());
+            auto& ownerAccount = ownerIter.get();
 
             if (NotifyMode::Commit == context.Mode) {
                 if (driveEntry.state() == state::DriveState::InProgress) {
                     driveEntry.billingHistory().back().End = context.Height;
                 }
-                DrivePayment(driveEntry, context, config.StorageMosaicId, {});
+                DrivePayment(driveEntry, context, storageMosaicId, {});
 
                 for (auto& replicatorPair : driveEntry.replicators()) {
                     auto replicatorIter = accountStateCache.find(replicatorPair.first);
@@ -33,15 +40,53 @@ namespace catapult { namespace observers {
                             replicatorPair.second.ActiveFilesWithoutDeposit.erase(filePair.first);
                             replicatorPair.second.AddInactiveUndepositedFile(filePair.first, context.Height);
                         } else {
-                            Credit(replicatorAccount, config.StreamingMosaicId, utils::CalculateFileDeposit(filePair.second.Size), context);
+                            Credit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(driveEntry, filePair.first), context);
                         }
                     }
 
-                    Credit(replicatorAccount, config.StorageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
+                    Credit(replicatorAccount, storageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
                 }
 
                 SetDriveState(driveEntry, context, state::DriveState::Finished);
+
+                // We can return remaining xpx to user
+                auto remainingCurrency = driveAccount.Balances.get(currencyMosaicId);
+
+                // We use this payments array for streaming payments, but in case of removed drive we can store the last payment in xpx for drive
+                driveEntry.uploadPayments().emplace_back(state::PaymentInformation{
+                        driveEntry.owner(),
+                        remainingCurrency,
+                        context.Height
+                });
+
+                if (remainingCurrency > Amount(0))
+                    Transfer(driveAccount, ownerAccount, currencyMosaicId, remainingCurrency, context);
+
+                // If streaming amount is zero, it means that DriveFilesReward transaction will not force remove of drive.
+                // So we need to do it now.
+                if (driveAccount.Balances.get(streamingMosaicId) == Amount(0)) {
+                    driveCache.markRemoveDrive(driveEntry.key(), context.Height);
+                    driveEntry.setEnd(context.Height);
+	                RemoveDriveMultisig(driveEntry, context);
+                }
             } else {
+                if (driveAccount.Balances.get(streamingMosaicId) == Amount(0)) {
+                    driveCache.unmarkRemoveDrive(driveEntry.key(), context.Height);
+                    driveEntry.setEnd(Height(0));
+	                RemoveDriveMultisig(driveEntry, context);
+                }
+
+                if (driveEntry.uploadPayments().empty()
+                    || driveEntry.uploadPayments().back().Receiver != driveEntry.owner()
+                    || driveEntry.uploadPayments().back().Height != context.Height)
+                    CATAPULT_THROW_RUNTIME_ERROR("rollback owner payment during finished drive");
+
+                auto remainingCurrency = driveEntry.uploadPayments().back().Amount;
+                driveEntry.uploadPayments().pop_back();
+
+                if (remainingCurrency > Amount(0))
+                    Transfer(ownerAccount, driveAccount, currencyMosaicId, remainingCurrency, context);
+
                 for (auto& replicatorPair : driveEntry.replicators()) {
                     auto replicatorIter = accountStateCache.find(replicatorPair.first);
                     auto& replicatorAccount = replicatorIter.get();
@@ -52,14 +97,14 @@ namespace catapult { namespace observers {
                             replicatorPair.second.ActiveFilesWithoutDeposit.insert(filePair.first);
                             replicatorPair.second.RemoveInactiveUndepositedFile(filePair.first, context.Height);
                         } else {
-                            Debit(replicatorAccount, config.StreamingMosaicId, utils::CalculateFileDeposit(filePair.second.Size), context);
+                            Debit(replicatorAccount, streamingMosaicId, utils::CalculateFileDeposit(driveEntry, filePair.first), context);
                         }
                     }
 
-                    Debit(replicatorAccount, config.StorageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
+                    Debit(replicatorAccount, storageMosaicId, utils::CalculateDriveDeposit(driveEntry), context);
                 }
 
-                DrivePayment(driveEntry, context, config.StorageMosaicId, {});
+                DrivePayment(driveEntry, context, storageMosaicId, {});
                 auto expectedEnd = driveEntry.billingHistory().back().Start + Height(driveEntry.billingPeriod().unwrap());
                 if (expectedEnd == driveEntry.billingHistory().back().End)
                     SetDriveState(driveEntry, context, state::DriveState::Pending);

@@ -35,6 +35,9 @@ namespace catapult { namespace test {
 	state::AccountState CreateAccount(const Key& owner, model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Mijin_Test);
 	void AssertAccount(const state::AccountState& expected, const state::AccountState& actual);
 
+	state::MultisigEntry CreateMultisigEntry(const state::DriveEntry& driveEntry);
+	void AssertMultisig(const cache::MultisigCacheDelta& cache, const state::MultisigEntry& expected);
+
 	/// Verifies that \a entry1 is equivalent to \a entry2.
 	void AssertEqualDriveData(const state::DriveEntry& entry1, const state::DriveEntry& entry2);
 

@@ -6,6 +6,7 @@
 
 #include "ServiceTestUtils.h"
 #include "catapult/model/Address.h"
+#include "plugins/txes/multisig/src/cache/MultisigCache.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -122,6 +123,34 @@ namespace catapult { namespace test {
 		ASSERT_EQ(expected.Balances.size(), actual.Balances.size());
 		for (auto iter = expected.Balances.begin(); iter != expected.Balances.end(); ++iter)
 			EXPECT_EQ(iter->second, actual.Balances.get(iter->first));
+	}
+
+	state::MultisigEntry CreateMultisigEntry(const state::DriveEntry& driveEntry) {
+		state::MultisigEntry multisigEntry(driveEntry.key());
+
+		for (const auto& replicatorPair : driveEntry.replicators()) {
+			multisigEntry.cosignatories().insert(replicatorPair.first);
+		}
+		float cosignatoryCount = driveEntry.replicators().size();
+		uint8_t minCosignatory = ceil(cosignatoryCount * driveEntry.percentApprovers() / 100);
+		multisigEntry.setMinApproval(minCosignatory);
+		multisigEntry.setMinRemoval(minCosignatory);
+
+		return multisigEntry;
+	}
+
+	void AssertMultisig(const cache::MultisigCacheDelta& cache, const state::MultisigEntry& expected) {
+		if (expected.cosignatories().size()) {
+			auto multisigIter = cache.find(expected.key());
+			const auto& actualMultisigEntry = multisigIter.get();
+			ASSERT_EQ(expected.cosignatories().size(), actualMultisigEntry.cosignatories().size());
+			for (const auto& key : expected.cosignatories())
+				EXPECT_EQ(1, actualMultisigEntry.cosignatories().count(key));
+			EXPECT_EQ(expected.minApproval(), actualMultisigEntry.minApproval());
+			EXPECT_EQ(expected.minRemoval(), actualMultisigEntry.minRemoval());
+		} else {
+			EXPECT_FALSE(cache.contains(expected.key()));
+		}
 	}
 
 	template<typename T>

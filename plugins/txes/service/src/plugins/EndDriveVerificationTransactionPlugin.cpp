@@ -44,7 +44,7 @@ namespace catapult { namespace plugins {
 						for (auto i = 0u; i < failureCount; ++i, ++pFailure) {
 							pModifications[i] = CosignatoryModification{model::CosignatoryModificationType::Del, pFailure->Replicator};
 						}
-						sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, failureCount, pModifications));
+						sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, failureCount, pModifications, true /* AllowMultipleRemove */));
 
 						sub.notify(DriveVerificationPaymentNotification<1>(
 							transaction.Signer,

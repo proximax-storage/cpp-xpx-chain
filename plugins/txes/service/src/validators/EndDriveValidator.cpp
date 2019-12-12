@@ -24,9 +24,11 @@ namespace catapult { namespace validators {
 			if (driveEntry.owner() == notification.Signer) {
 				return ValidationResult::Success;
 			} else if (driveEntry.key() == notification.Signer) {
+				if (driveEntry.state() != state::DriveState::Pending)
+					return Failure_Service_Drive_Not_In_Pending_State;
+
 				if (driveEntry.processedDuration() >= driveEntry.duration())
 					return ValidationResult::Success;
-
 
 				const auto& config = pConfigHolder->Config(context.Height);
 				const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));

@@ -168,6 +168,7 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
 		EXPECT_EQ(Num_Failures, notification.ModificationsCount);
+		EXPECT_TRUE(notification.AllowMultipleRemove);
 		auto pFailure = pTransaction->FailuresPtr();
 		auto pModifications = notification.ModificationsPtr;
 		for (auto i = 0u; i < notification.ModificationsCount; ++i, ++pFailure) {
