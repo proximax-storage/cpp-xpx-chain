@@ -17,7 +17,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)();
 
 	/// Observes changes triggered by drive file system notifications.
-	DECLARE_OBSERVER(DriveFileSystem, model::DriveFileSystemNotification<1>)();
+	DECLARE_OBSERVER(DriveFileSystem, model::DriveFileSystemNotification<1>)(const MosaicId& streamingMosaicId);
 
 	/// Observes changes triggered by files deposit notifications.
 	DECLARE_OBSERVER(FilesDeposit, model::FilesDepositNotification<1>)();
@@ -29,16 +29,16 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(JoinToDrive, model::JoinToDriveNotification<1>)();
 
 	/// Observes changes triggered by exchange Xpx to SO units.
-	DECLARE_OBSERVER(StartBilling, model::BalanceCreditNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_OBSERVER(StartBilling, model::BalanceCreditNotification<1>)(const MosaicId& storageMosaicId);
 
 	/// Observes changes triggered at the end of billing period.
-	DECLARE_OBSERVER(EndBilling, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_OBSERVER(EndBilling, model::BlockNotification<1>)(const MosaicId& storageMosaicId);
 
 	/// Observes changes triggered by the en drive transaction.
-	DECLARE_OBSERVER(EndDrive, model::EndDriveNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_OBSERVER(EndDrive, model::EndDriveNotification<1>)(const config::ImmutableConfiguration& config);
 
-	/// Observes changes triggered by delete reward transaction.
-	DECLARE_OBSERVER(Reward, model::RewardNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	/// Observes changes triggered by drive files transaction.
+	DECLARE_OBSERVER(DriveFilesReward, model::DriveFilesRewardNotification<1>)(const config::ImmutableConfiguration& config);
 
 	/// Observes changes triggered by block.
 	DECLARE_OBSERVER(DriveCacheBlockPruning, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);

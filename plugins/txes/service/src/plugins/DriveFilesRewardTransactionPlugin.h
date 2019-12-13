@@ -13,7 +13,7 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a delete reward transaction plugin.
+	/// Creates a drive files reward transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateDeleteRewardTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateDriveFilesRewardTransactionPlugin();
 }}

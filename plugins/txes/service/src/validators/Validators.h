@@ -58,11 +58,8 @@ namespace catapult { namespace validators {
 	/// A validator check that end drive transaction is permitted
 	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 
-	/// A validator implementation that not file and piarticipant redundant, and that upload info is not zero.
-	DECLARE_STATELESS_VALIDATOR(DeleteReward, model::DeleteRewardNotification<1>)();
-
-	/// A validator check that file exsists and replicators are valid(they are part of drive and put deposit for fiel)
-	DECLARE_STATEFUL_VALIDATOR(Reward, model::RewardNotification<1>)();
+	/// A validator check that replicators are valid(they are part of drive and put deposit for active files). That drive contains streaming tokens and drive in pending or finished state
+	DECLARE_STATEFUL_VALIDATOR(DriveFilesReward, model::DriveFilesRewardNotification<1>)(const MosaicId& streamingMosaicId);
 
 	/// A validator check that:
 	/// - Replicator is part of drive
@@ -78,11 +75,11 @@ namespace catapult { namespace validators {
 	/// - Drive is in correct state
 	/// - Initiator is registered to drive
 	/// - Another verification is not in progress
-	DECLARE_STATEFUL_VALIDATOR(StartDriveVerification, model::StartDriveVerificationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(StartDriveVerification, model::StartDriveVerificationNotification<1>)();
 
 	/// A validator check that:
 	/// - Drive exists
 	/// - Verification is in progress
 	/// - Failed replicators are registered to drive
-	DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
 }}

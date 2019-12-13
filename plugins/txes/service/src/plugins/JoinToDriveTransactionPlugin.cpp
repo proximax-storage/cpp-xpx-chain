@@ -39,9 +39,8 @@ namespace catapult { namespace plugins {
 						));
 
 						auto pDeposit = sub.mempool().malloc(model::DriveDeposit(transaction.DriveKey));
-						sub.notify(BalanceTransferNotification<1>(
+						sub.notify(BalanceDebitNotification<1>(
 								transaction.Signer,
-								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, blockChainConfig.Immutable.NetworkIdentifier)),
 								UnresolvedMosaicId(blockChainConfig.Immutable.StorageMosaicId.unwrap()),
 								UnresolvedAmount(0, UnresolvedAmountType::DriveDeposit, pDeposit)
 							)

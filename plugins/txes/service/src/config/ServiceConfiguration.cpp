@@ -32,7 +32,6 @@ namespace catapult { namespace config {
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
-//		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 4);
 		return config;
 	}
 }}

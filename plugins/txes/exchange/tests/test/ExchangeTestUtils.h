@@ -38,6 +38,7 @@ namespace catapult { namespace test {
         uint32_t entitySize = sizeof(TTransaction) + offers.size() * sizeof(TOffer);
         auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
 		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
         pTransaction->Size = entitySize;
 		pTransaction->OfferCount = offers.size();
 

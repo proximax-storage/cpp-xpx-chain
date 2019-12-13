@@ -53,7 +53,8 @@ namespace catapult { namespace model {
 
 		template<typename T>
 		static auto* RemoveActionsPtrT(T& transaction) {
-			return transaction.RemoveActionsCount ? THeader::PayloadStart(transaction) + transaction.AddActionsCount * sizeof(AddAction) : nullptr;
+			auto* pPayloadStart = THeader::PayloadStart(transaction);
+			return transaction.RemoveActionsCount && pPayloadStart ? pPayloadStart + transaction.AddActionsCount * sizeof(AddAction) : nullptr;
 		}
 
 	public:

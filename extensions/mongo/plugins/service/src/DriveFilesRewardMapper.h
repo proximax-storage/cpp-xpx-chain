@@ -9,7 +9,7 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	/// Creates a mongo delete reward transaction plugin.
+	/// Creates a mongo drive files reward transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<MongoTransactionPlugin> CreateDeleteRewardTransactionMongoPlugin();
+	std::unique_ptr<MongoTransactionPlugin> CreateDriveFilesRewardTransactionMongoPlugin();
 }}}

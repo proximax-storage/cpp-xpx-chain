@@ -15,12 +15,10 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Commit == context.Mode) {
 			state::ReplicatorInfo info;
 			info.Start = context.Height;
-			info.Deposit = utils::CalculateDriveDeposit(driveEntry);
 
-			// It is new replicator, so he doesn't have any files
+			// A new replicator haven't made any deposits.
 			for (const auto& file : driveEntry.files())
-				if (file.second.isActive())
-					info.IncrementUndepositedFileCounter(file.first);
+				info.ActiveFilesWithoutDeposit.insert(file.first);
 
 			driveEntry.replicators().emplace(notification.Replicator, info);
 

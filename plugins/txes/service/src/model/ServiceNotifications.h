@@ -39,11 +39,8 @@ namespace catapult { namespace model {
 	/// Defines a end drive notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0009);
 
-	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, DeleteReward_v1, 0x000A);
-
-	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Reward_v1, 0x000B);
+	/// Defines a drive files reward notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, DriveFilesReward_v1, 0x000A);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -104,7 +101,7 @@ namespace catapult { namespace model {
 		uint16_t MinReplicators;
 
 		/// Percent of approves from replicators to apply transaction.
-		int8_t PercentApprovers;
+		uint8_t PercentApprovers;
 	};
 
 	/// Notification of a drive deposit.
@@ -128,10 +125,10 @@ namespace catapult { namespace model {
 
 	public:
 		/// Public key of the drive multisig account.
-		const Key& DriveKey;
+		Key DriveKey;
 
 		/// Replicator public key.
-        const Key& Replicator;
+		Key Replicator;
 	};
 
 	struct DriveDeposit : public UnresolvedAmountData {
@@ -152,8 +149,8 @@ namespace catapult { namespace model {
 		{}
 
 	public:
-		const Key& DriveKey;
-		const Hash256& FileHash;
+		Key DriveKey;
+		Hash256 FileHash;
 	};
 
 	struct FileUpload : public UnresolvedAmountData {
@@ -164,8 +161,8 @@ namespace catapult { namespace model {
 		{}
 
 	public:
-		const Key& DriveKey;
-		const uint64_t& FileSize;
+		Key DriveKey;
+		uint64_t FileSize;
 	};
 
 	/// Notification of a drive deposit.
@@ -201,25 +198,25 @@ namespace catapult { namespace model {
 
 	public:
 		/// Key of drive.
-		const Key& DriveKey;
+		Key DriveKey;
 
 		/// Signer of transaction.
-		const Key& Signer;
+		Key Signer;
 
 		/// A new RootHash of drive.
-		const Hash256& RootHash;
+		Hash256 RootHash;
 
 		/// Xor of a new RootHash of drive with previous RootHash.
-		const Hash256& XorRootHash;
+		Hash256 XorRootHash;
 
 		/// Count of add actions.
-		const uint16_t& AddActionsCount;
+		uint16_t AddActionsCount;
 
 		/// Actions to add files to drive.
 		const model::AddAction* AddActionsPtr;
 
 		/// Count of remove actions.
-		const uint16_t& RemoveActionsCount;
+		uint16_t RemoveActionsCount;
 
 		/// Actions to remove files from drive.
 		const model::RemoveAction* RemoveActionsPtr;
@@ -402,49 +399,32 @@ namespace catapult { namespace model {
 		Key Signer;
 	};
 
-	/// Notification of a delete reward.
+	/// Notification of a drive files reward.
 	template<VersionType version>
-	struct DeleteRewardNotification;
+	struct DriveFilesRewardNotification;
 
 	template<>
-	struct DeleteRewardNotification<1> : public Notification {
+	struct DriveFilesRewardNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_DeleteReward_v1_Notification;
+		static constexpr auto Notification_Type = Service_DriveFilesReward_v1_Notification;
 
 	public:
-		explicit DeleteRewardNotification(const std::vector<const model::DeletedFile*>& files)
-				: Notification(Notification_Type, sizeof(DeleteRewardNotification<1>))
-				, DeletedFiles(files)
-		{}
-
-	public:
-		/// Vector of deleted files.
-		std::vector<const model::DeletedFile*> DeletedFiles;
-	};
-
-	/// Notification of a reward.
-	template<VersionType version>
-	struct RewardNotification;
-
-	template<>
-	struct RewardNotification<1> : public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Reward_v1_Notification;
-
-	public:
-		explicit RewardNotification(const Key& key, const model::DeletedFile* file)
-				: Notification(Notification_Type, sizeof(RewardNotification<1>))
+		explicit DriveFilesRewardNotification(const Key& key, const UploadInfo* ptr, uint32_t count)
+				: Notification(Notification_Type, sizeof(DriveFilesRewardNotification<1>))
 				, DriveKey(key)
-				, DeletedFile(file)
+				, UploadInfoPtr(ptr)
+				, UploadInfosCount(count)
 		{}
 
 	public:
-        /// Public key of the drive multisig account.
-        Key DriveKey;
+		/// Public key of the drive multisig account.
+		Key DriveKey;
 
 		/// Vector of deleted files.
-		const model::DeletedFile* DeletedFile;
+		const UploadInfo* UploadInfoPtr;
+
+		/// Upload infos count
+		uint32_t UploadInfosCount;
 	};
 }}

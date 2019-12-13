@@ -24,9 +24,11 @@ namespace catapult { namespace validators {
 			if (driveEntry.owner() == notification.Signer) {
 				return ValidationResult::Success;
 			} else if (driveEntry.key() == notification.Signer) {
+				if (driveEntry.state() != state::DriveState::Pending)
+					return Failure_Service_Drive_Not_In_Pending_State;
+
 				if (driveEntry.processedDuration() >= driveEntry.duration())
 					return ValidationResult::Success;
-
 
 				const auto& config = pConfigHolder->Config(context.Height);
 				const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
@@ -45,12 +47,12 @@ namespace catapult { namespace validators {
 					return Failure_Service_Drive_Cant_Find_Default_Exchange_Offer;
 
 				Amount requiredAmount = driveEntry.billingPrice();
-				auto billingBalance = utils::GetBillingBalanceOfDrive(driveEntry, context.Cache, storageMosaicId);
+				auto driveBalance = utils::GetDriveBalance(driveEntry, context.Cache, storageMosaicId);
 
-				if (billingBalance >= requiredAmount) {
+				if (driveBalance >= requiredAmount) {
 					requiredAmount = Amount(1);
 				} else {
-					requiredAmount = requiredAmount - billingBalance;
+					requiredAmount = requiredAmount - driveBalance;
 				}
 
 				const auto& sellOffer = exchangeEntry.sellOffers().at(storageMosaicId);

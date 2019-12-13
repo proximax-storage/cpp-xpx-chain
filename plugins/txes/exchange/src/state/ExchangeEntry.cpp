@@ -6,40 +6,57 @@
 
 #include "ExchangeEntry.h"
 #include "catapult/exceptions.h"
+#include "catapult/utils/Casting.h"
 #include <cmath>
 
 namespace catapult { namespace state {
 
 	double OfferBase::price() const {
-		if (catapult::Amount(0) > InitialAmount)
+		if (catapult::Amount(0) == InitialAmount)
 			CATAPULT_THROW_RUNTIME_ERROR("failed to calculate offer price, initial amount is zero");
 
 		return static_cast<double>(InitialCost.unwrap()) / static_cast<double>(InitialAmount.unwrap());
 	}
 
 	catapult::Amount SellOffer::cost(const catapult::Amount& amount) const {
+		if (catapult::Amount(0) == InitialAmount)
+			CATAPULT_THROW_RUNTIME_ERROR("failed to calculate sell offer cost, initial amount is zero");
+
 		auto cost = std::ceil(static_cast<double>(InitialCost.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(InitialAmount.unwrap()));
 		return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
 	}
 
 	SellOffer& SellOffer::operator+=(const model::MatchedOffer& offer) {
+		if (model::OfferType::Sell != offer.Type)
+			CATAPULT_THROW_INVALID_ARGUMENT("(add) matched offer type is not SELL");
+
 		Amount = Amount + offer.Mosaic.Amount;
 		return *this;
 	}
 
 	SellOffer& SellOffer::operator-=(const model::MatchedOffer& offer) {
+		if (model::OfferType::Sell != offer.Type)
+			CATAPULT_THROW_INVALID_ARGUMENT("(subtract) matched offer type is not SELL");
+
 		if (offer.Mosaic.Amount > Amount)
-			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than mosaic amount", offer.Mosaic.Amount, Amount)
+			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than sell offer amount", offer.Mosaic.Amount, Amount)
+
 		Amount = Amount - offer.Mosaic.Amount;
 		return *this;
 	}
 
 	catapult::Amount BuyOffer::cost(const catapult::Amount& amount) const {
+		if (catapult::Amount(0) == InitialAmount)
+			CATAPULT_THROW_RUNTIME_ERROR("failed to calculate buy offer cost, initial amount is zero");
+
 		auto cost = std::floor(static_cast<double>(InitialCost.unwrap()) * static_cast<double>(amount.unwrap()) / static_cast<double>(InitialAmount.unwrap()));
 		return catapult::Amount(static_cast<typeof(Amount::ValueType)>(cost));
 	}
 
 	BuyOffer& BuyOffer::operator+=(const model::MatchedOffer& offer) {
+		if (model::OfferType::Buy != offer.Type)
+			CATAPULT_THROW_INVALID_ARGUMENT("(add) matched offer type is not BUY");
+
 		Amount = Amount + offer.Mosaic.Amount;
 		ResidualCost = ResidualCost + offer.Cost;
 
@@ -47,8 +64,11 @@ namespace catapult { namespace state {
 	}
 
 	BuyOffer& BuyOffer::operator-=(const model::MatchedOffer& offer) {
+		if (model::OfferType::Buy != offer.Type)
+			CATAPULT_THROW_INVALID_ARGUMENT("(subtract) matched offer type is not BUY");
+
 		if (offer.Mosaic.Amount > Amount)
-			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than mosaic amount", offer.Mosaic.Amount, Amount)
+			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than buy offer amount", offer.Mosaic.Amount, Amount)
 
 		if (offer.Cost > ResidualCost)
 			CATAPULT_THROW_INVALID_ARGUMENT_2("subtracting value greater than residual cost", offer.Cost, ResidualCost)
@@ -99,7 +119,7 @@ namespace catapult { namespace state {
 			auto& offer = offers.at(mosaicId);
 			auto &expiredOffersAtHeight = expiredOffers[height];
 			if (expiredOffersAtHeight.count(mosaicId))
-				CATAPULT_THROW_RUNTIME_ERROR_2("offer with mosaic already expired at height", mosaicId, height);
+				CATAPULT_THROW_RUNTIME_ERROR_2("offer already expired at height", mosaicId, height);
 			expiredOffersAtHeight.emplace(mosaicId, offer);
 			offers.erase(mosaicId);
 		};
@@ -113,7 +133,7 @@ namespace catapult { namespace state {
 	void ExchangeEntry::unexpireOffer(model::OfferType type, const MosaicId& mosaicId, const Height& height) {
 		auto unexpireFunc = [height, mosaicId](auto& offers, auto& expiredOffers) {
 			if (offers.count(mosaicId))
-				CATAPULT_THROW_RUNTIME_ERROR_1("offer with mosaic id exists", mosaicId);
+				CATAPULT_THROW_RUNTIME_ERROR_1("offer exists", mosaicId);
 			auto& expiredOffersAtHeight = expiredOffers.at(height);
 			auto& offer = expiredOffersAtHeight.at(mosaicId);
 			offers.emplace(mosaicId, offer);
@@ -127,20 +147,55 @@ namespace catapult { namespace state {
 			unexpireFunc(m_sellOffers, m_expiredSellOffers);
 	}
 
+	namespace {
+		/// Moves offers to expired offer buffer if offer expiry height is equal \a height.
+		template<typename TOfferMap, typename TExpiredOfferMap>
+		void expireOffers(TOfferMap& offers, TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
+			for (auto iter = offers.begin(); iter != offers.end();) {
+				if (iter->second.Deadline == height) {
+					auto &expiredOffersAtHeight = expiredOffers[height];
+					if (expiredOffersAtHeight.count(iter->first))
+						CATAPULT_THROW_RUNTIME_ERROR_2("offer already expired at height", iter->first, height);
+					expiredOffersAtHeight.emplace(iter->first, iter->second);
+					action(iter);
+					iter = offers.erase(iter);
+				} else {
+					++iter;
+				}
+			}
+		}
+
+		/// Moves offers back from expired offer buffer if offer expiry height is equal \a height.
+		template<typename TOfferMap, typename TExpiredOfferMap>
+		void unexpireOffers(TOfferMap& offers, TExpiredOfferMap& expiredOffers, const Height& height, consumer<const typename TOfferMap::const_iterator&> action) {
+			if (expiredOffers.count(height)) {
+				auto& expiredOffersAtHeight = expiredOffers.at(height);
+				for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
+					if (offers.count(iter->first))
+						CATAPULT_THROW_RUNTIME_ERROR_2("offer exists at height", iter->first, height);
+					offers.emplace(iter->first, iter->second);
+					action(offers.find(iter->first));
+					iter = expiredOffersAtHeight.erase(iter);
+				}
+				expiredOffers.erase(height);
+			}
+		}
+	}
+
 	void ExchangeEntry::expireOffers(
 			const Height& height,
 			consumer<const BuyOfferMap::const_iterator&> buyOfferAction,
 			consumer<const SellOfferMap::const_iterator&> sellOfferAction) {
-		expireOffers(m_buyOffers, m_expiredBuyOffers, height, buyOfferAction);
-		expireOffers(m_sellOffers, m_expiredSellOffers, height, sellOfferAction);
+		state::expireOffers(m_buyOffers, m_expiredBuyOffers, height, buyOfferAction);
+		state::expireOffers(m_sellOffers, m_expiredSellOffers, height, sellOfferAction);
 	}
 
 	void ExchangeEntry::unexpireOffers(
 			const Height& height,
 			consumer<const BuyOfferMap::const_iterator&> buyOfferAction,
 			consumer<const SellOfferMap::const_iterator&> sellOfferAction) {
-		unexpireOffers(m_buyOffers, m_expiredBuyOffers, height, buyOfferAction);
-		unexpireOffers(m_sellOffers, m_expiredSellOffers, height, sellOfferAction);
+		state::unexpireOffers(m_buyOffers, m_expiredBuyOffers, height, buyOfferAction);
+		state::unexpireOffers(m_sellOffers, m_expiredSellOffers, height, sellOfferAction);
 	}
 
 	bool ExchangeEntry::offerExists(model::OfferType type, const MosaicId& mosaicId) const {
@@ -150,9 +205,9 @@ namespace catapult { namespace state {
 			return m_sellOffers.count(mosaicId);
 	}
 
-	void ExchangeEntry::addOffer(model::OfferType type, const MosaicId& mosaicId, const model::OfferWithDuration* pOffer, const Height& deadline) {
+	void ExchangeEntry::addOffer(const MosaicId& mosaicId, const model::OfferWithDuration* pOffer, const Height& deadline) {
 		state::OfferBase baseOffer{pOffer->Mosaic.Amount, pOffer->Mosaic.Amount, pOffer->Cost, deadline};
-		if (model::OfferType::Buy == type)
+		if (model::OfferType::Buy == pOffer->Type)
 			m_buyOffers.emplace(mosaicId, state::BuyOffer{baseOffer, pOffer->Cost});
 		else
 			m_sellOffers.emplace(mosaicId, state::SellOffer{baseOffer});
@@ -166,7 +221,11 @@ namespace catapult { namespace state {
 	}
 
 	state::OfferBase& ExchangeEntry::getBaseOffer(model::OfferType type, const MosaicId& mosaicId) {
-		return (model::OfferType::Buy == type) ?
+		bool isBuyOffer = (model::OfferType::Buy == type);
+		if ((isBuyOffer && !m_buyOffers.count(mosaicId)) || (!isBuyOffer && !m_sellOffers.count(mosaicId)))
+			CATAPULT_THROW_INVALID_ARGUMENT_2("offer doesn't exist", type, mosaicId)
+
+		return (isBuyOffer) ?
 		   dynamic_cast<state::OfferBase&>(m_buyOffers.at(mosaicId)) :
 		   dynamic_cast<state::OfferBase&>(m_sellOffers.at(mosaicId));
 	}
