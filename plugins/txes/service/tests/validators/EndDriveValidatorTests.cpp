@@ -42,8 +42,7 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult,
 				state::DriveEntry& driveEntry,
 				const Key& signer,
-				const state::ExchangeEntry* pExchangeEntry = nullptr,
-				const Amount& driveCurrencyBalance = Amount(0)) {
+				const state::ExchangeEntry* pExchangeEntry = nullptr) {
 			// Arrange:
 			Height currentHeight(1);
 			driveEntry.setBillingPrice(Amount(10));
@@ -56,7 +55,6 @@ namespace catapult { namespace validators {
 
 				auto& accountStateCacheDelta = delta.sub<cache::AccountStateCache>();
 				auto driveAccount = test::CreateAccount(driveEntry.key());
-				driveAccount.Balances.credit(Currency_Mosaic_Id, driveCurrencyBalance);
 				accountStateCacheDelta.addAccount(driveAccount);
 
 				if (!!pExchangeEntry) {
@@ -178,29 +176,10 @@ namespace catapult { namespace validators {
 
 		// Assert:
 		AssertValidationResult(
-			Failure_Service_Insufficient_Currency_Mosaic_Balance,
-			driveEntry,
-			driveEntry.key(),
-			&exchangeEntry);
-	}
-
-	TEST(TEST_CLASS, SuccessWhenDriveCurrencyBalanceSufficient) {
-		// Arrange:
-		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-		driveEntry.setState(state::DriveState::Pending);
-		driveEntry.setDuration(BlockDuration(100));
-		driveEntry.setOwner(test::GenerateRandomByteArray<Key>());
-		state::ExchangeEntry exchangeEntry(Long_Offer_Key);
-		exchangeEntry.sellOffers().emplace(Storage_Mosaic_Id,
-			state::SellOffer{ { Amount(10), Amount(10), Amount(10), Height(-1) } });
-
-		// Assert:
-		AssertValidationResult(
 			ValidationResult::Success,
 			driveEntry,
 			driveEntry.key(),
-			&exchangeEntry,
-			Amount(100));
+			&exchangeEntry);
 	}
 
 	TEST(TEST_CLASS, FailureWhenInvalidSigner) {

@@ -137,9 +137,6 @@ namespace catapult { namespace validators {
 	/// Validation failed because the drive account doesn't contains streaming tokens.
 	DEFINE_SERVICE_RESULT(Doesnt_Contain_Streaming_Tokens, 42);
 
-	/// Validation failed because the drive account doesn't have enough currency mosaics.
-	DEFINE_SERVICE_RESULT(Insufficient_Currency_Mosaic_Balance, 43);
-
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

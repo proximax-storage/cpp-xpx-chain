@@ -65,9 +65,7 @@ namespace catapult { namespace validators {
 
 				auto currencyBalance = driveAccount.Balances.get(currencyMosaicId);
 				if (currencyBalance < sellOffer.cost(requiredAmount))
-					return Failure_Service_Insufficient_Currency_Mosaic_Balance;
-
-				return ValidationResult::Success;
+					return ValidationResult::Success;
 			}
 
 			return Failure_Service_Operation_Is_Not_Permitted;
