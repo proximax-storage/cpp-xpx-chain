@@ -27,11 +27,14 @@ namespace catapult { namespace model {
 	/// EndDrive transaction.
 	DEFINE_TRANSACTION_TYPE(Service, EndDrive, 0x5);
 
-	/// DeleteReward transaction.
-	DEFINE_TRANSACTION_TYPE(Service, DeleteReward, 0x6);
+	/// DriveFilesReward transaction.
+	DEFINE_TRANSACTION_TYPE(Service, DriveFilesReward, 0x6);
 
 	/// Verification transaction.
-	DEFINE_TRANSACTION_TYPE(Service, Verification, 0x7);
+	DEFINE_TRANSACTION_TYPE(Service, Start_Drive_Verification, 0x7);
+
+	/// Verification transaction.
+	DEFINE_TRANSACTION_TYPE(Service, End_Drive_Verification, 0x8);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

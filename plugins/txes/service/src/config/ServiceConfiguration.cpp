@@ -25,10 +25,13 @@ namespace catapult { namespace config {
 
         config.MaxFilesOnDrive = 32768;
         TRY_LOAD_CHAIN_PROPERTY(MaxFilesOnDrive);
+        config.VerificationFee = Amount(10);
+        TRY_LOAD_CHAIN_PROPERTY(VerificationFee);
+        config.VerificationDuration = BlockDuration(240);
+		TRY_LOAD_CHAIN_PROPERTY(VerificationDuration);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 
-//		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 2);
 		return config;
 	}
 }}

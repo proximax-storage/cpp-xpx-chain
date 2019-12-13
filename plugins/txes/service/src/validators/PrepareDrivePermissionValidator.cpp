@@ -15,7 +15,7 @@ namespace catapult { namespace validators {
 	DEFINE_STATEFUL_VALIDATOR(PrepareDrivePermission, [](const Notification& notification, const ValidatorContext& context) {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		if (driveCache.contains(notification.DriveKey))
-			return Failure_Service_Drive_Alredy_Exists;
+			return Failure_Service_Drive_Already_Exists;
 
 		return ValidationResult::Success;
 	});

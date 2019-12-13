@@ -89,9 +89,7 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<RemoveOfferNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
-
 		auto pTransaction = CreateTransaction<TTraits>();
-		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);

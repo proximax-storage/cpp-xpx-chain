@@ -5,9 +5,9 @@
 **/
 
 #include "catapult/model/Address.h"
-#include "DeleteRewardTransactionPlugin.h"
+#include "DriveFilesRewardTransactionPlugin.h"
 #include "src/model/ServiceNotifications.h"
-#include "src/model/DeleteRewardTransaction.h"
+#include "src/model/DriveFilesRewardTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 
@@ -21,25 +21,17 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 				case 1: {
 					sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
-
-                    std::vector<const model::DeletedFile*> files;
-                    for (const auto& file : transaction.Transactions())
-                        files.emplace_back(&file);
-
-					sub.notify(DeleteRewardNotification<1>(files));
-                    for (const auto& file : transaction.Transactions()) {
-                        sub.notify(RewardNotification<1>(transaction.Signer, &file));
-                    }
+					sub.notify(DriveFilesRewardNotification<1>(transaction.Signer, transaction.UploadInfosPtr(), transaction.UploadInfosCount));
 
 					break;
 				}
 
 				default:
-					CATAPULT_LOG(debug) << "invalid version of DeleteRewardTransaction: "
+					CATAPULT_LOG(debug) << "invalid version of DriveFilesRewardTransaction: "
 										<< transaction.EntityVersion();
 			}
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(DeleteReward, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(DriveFilesReward, Default, Publish)
 }}

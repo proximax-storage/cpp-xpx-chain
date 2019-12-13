@@ -84,17 +84,28 @@ namespace catapult {
 	    FileUpload
 	};
 
+	struct UnresolvedAmountData {
+		virtual ~UnresolvedAmountData(){}
+	};
+
 	struct UnresolvedAmount : public Amount {
+		/// Creates unresolved amount from \a value.
+		constexpr explicit UnresolvedAmount(uint64_t value = 0)
+		: Amount(value)
+		, Type(UnresolvedAmountType::Default)
+		, DataPtr(nullptr)
+		{}
+
 		/// Creates unresolved amount from \a value, \a type and \a data.
-		constexpr explicit UnresolvedAmount(uint64_t value = 0, const UnresolvedAmountType& type = UnresolvedAmountType::Default, uint8_t* data = nullptr)
+		constexpr explicit UnresolvedAmount(uint64_t value, const UnresolvedAmountType& type, const UnresolvedAmountData* pData)
 		: Amount(value)
 		, Type(type)
-		, Data(data)
+		, DataPtr(pData)
 		{}
 
 	public:
 		UnresolvedAmountType Type;
-		uint8_t* Data;
+		const UnresolvedAmountData* DataPtr;
 	};
 
 	struct MosaicId_tag {};

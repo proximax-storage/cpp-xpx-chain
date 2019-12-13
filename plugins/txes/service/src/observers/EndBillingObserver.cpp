@@ -4,8 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "Observers.h"
-#include "src/cache/DriveCache.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "CommonDrive.h"
 
@@ -13,16 +11,16 @@ namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_OBSERVER(EndBilling, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(EndBilling, Notification, [pConfigHolder](const Notification&, ObserverContext& context) {
+	DECLARE_OBSERVER(EndBilling, Notification)(const MosaicId& storageMosaicId) {
+		return MAKE_OBSERVER(EndBilling, Notification, [storageMosaicId](const Notification&, ObserverContext& context) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
-			auto storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
 
-			driveCache.processBillingDrives(context.Height, [&storageMosaicId, &context](state::DriveEntry& driveEntry) {
-				if (driveEntry.state() != state::DriveState::InProgress)
+			driveCache.processBillingDrives(context.Height, [storageMosaicId, &context](state::DriveEntry& driveEntry) {
+				auto expectedState = (NotifyMode::Commit == context.Mode) ? state::DriveState::InProgress : state::DriveState::Pending;
+				if (driveEntry.state() != expectedState)
 					return;
 
-			    DrivePayment(driveEntry, context, storageMosaicId);
+			    DrivePayment(driveEntry, context, storageMosaicId, {});
 
                 if (NotifyMode::Commit == context.Mode)
                     SetDriveState(driveEntry, context, state::DriveState::Pending);

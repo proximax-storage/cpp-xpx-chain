@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
 				auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
 				auto deadline = GetOfferDeadline(pOffer->Duration, context.Height);
-				entry.addOffer(pOffer->Type, mosaicId, pOffer, deadline);
+				entry.addOffer(mosaicId, pOffer, deadline);
 			}
 		} else {
 			auto iter = cache.find(notification.Owner);

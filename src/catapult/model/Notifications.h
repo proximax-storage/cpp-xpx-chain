@@ -112,7 +112,7 @@ namespace catapult { namespace model {
 
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
 		BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, catapult::Amount amount)
-				: BasicBalanceNotification(sender, mosaicId, UnresolvedAmount(amount.unwrap(), UnresolvedAmountType::Default, nullptr ))
+				: BasicBalanceNotification(sender, mosaicId, UnresolvedAmount(amount.unwrap()))
 		{}
 
 	public:
@@ -123,7 +123,7 @@ namespace catapult { namespace model {
 		UnresolvedMosaicId MosaicId;
 
 		/// Amount.
-		catapult::UnresolvedAmount Amount;
+		UnresolvedAmount Amount;
 	};
 
 	/// Notifies a balance transfer from sender to recipient.

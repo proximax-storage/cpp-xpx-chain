@@ -65,6 +65,12 @@ namespace catapult { namespace test {
 		return utils::checked_cast<int32_t, int8_t>(doc[name].get_int32().value);
 	}
 
+	/// Returns value \a name from a document (\a doc) as an signed 16 bit value.
+	template<typename TDocument>
+	auto GetInt16(const TDocument& doc, const std::string& name) {
+		return utils::checked_cast<int32_t, int16_t>(doc[name].get_int32().value);
+	}
+
 	/// Returns value \a name from a document (\a doc) as an signed 32 bit value.
 	template<typename TDocument>
 	auto GetInt32(const TDocument& doc, const std::string& name) {
@@ -81,6 +87,12 @@ namespace catapult { namespace test {
 	template<typename TDocument>
 	auto GetUint8(const TDocument& doc, const std::string& name) {
 		return utils::checked_cast<int32_t, uint8_t>(doc[name].get_int32().value);
+	}
+
+	/// Returns value \a name from a document (\a doc) as an unsigned 16 bit value.
+	template<typename TDocument>
+	auto GetUint16(const TDocument& doc, const std::string& name) {
+		return utils::checked_cast<int32_t, uint16_t>(doc[name].get_int32().value);
 	}
 
 	/// Returns value \a name from a document (\a doc) as an unsigned 32 bit value.

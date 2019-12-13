@@ -15,18 +15,14 @@ namespace catapult { namespace observers {
 		auto driveIter = driveCache.find(notification.DriveKey);
 		auto& driveEntry = driveIter.get();
 
-		auto& replicator = driveEntry.replicators().at(notification.Replicator);
+		state::ReplicatorInfo& replicator = driveEntry.replicators().at(notification.Replicator);
 
 		auto filesPtr = notification.FilesPtr;
 		for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr) {
 			if (NotifyMode::Commit == context.Mode) {
-				auto& file = driveEntry.files().at(filesPtr->FileHash);
-				file.Deposit = file.Deposit + Amount(file.Size);
-                replicator.DecrementUndepositedFileCounter(filesPtr->FileHash);
+                replicator.ActiveFilesWithoutDeposit.erase(filesPtr->FileHash);
 			} else {
-				auto& file = driveEntry.files().at(filesPtr->FileHash);
-				file.Deposit = file.Deposit - Amount(file.Size);
-                replicator.IncrementUndepositedFileCounter(filesPtr->FileHash);
+                replicator.ActiveFilesWithoutDeposit.insert(filesPtr->FileHash);
 			}
 		}
 	});

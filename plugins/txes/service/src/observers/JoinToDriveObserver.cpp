@@ -4,11 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <cmath>
-#include "Observers.h"
-#include "src/cache/DriveCache.h"
-#include "plugins/txes/multisig/src/cache/MultisigCache.h"
-#include "src/utils/ServiceUtils.h"
+#include "CommonDrive.h"
 
 namespace catapult { namespace observers {
 
@@ -19,12 +15,10 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Commit == context.Mode) {
 			state::ReplicatorInfo info;
 			info.Start = context.Height;
-			info.Deposit = utils::CalculateDriveDeposit(driveEntry);
 
-			// It is new replicator, so he doesn't have any files
+			// A new replicator haven't made any deposits.
 			for (const auto& file : driveEntry.files())
-				if (file.second.isActive())
-					info.IncrementUndepositedFileCounter(file.first);
+				info.ActiveFilesWithoutDeposit.insert(file.first);
 
 			driveEntry.replicators().emplace(notification.Replicator, info);
 
@@ -36,11 +30,6 @@ namespace catapult { namespace observers {
                 SetDriveState(driveEntry, context, state::DriveState::NotStarted);
 		}
 
-        auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
-		auto multisigIter = multisigCache.find(notification.DriveKey);
-        auto& multisigEntry = multisigIter.get();
-        float cosignatoryCount = driveEntry.replicators().size();
-        multisigEntry.setMinApproval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
-        multisigEntry.setMinRemoval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
+		UpdateDriveMultisigSettings(driveEntry, context);
 	});
 }}
