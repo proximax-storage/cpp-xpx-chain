@@ -5,7 +5,6 @@
 **/
 
 #include "PrepareDriveTransactionPlugin.h"
-#include "plugins/txes/multisig/src/model/MultisigNotifications.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/PrepareDriveTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"

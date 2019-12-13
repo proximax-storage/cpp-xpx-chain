@@ -11,18 +11,13 @@
 #include "catapult/model/TransactionPluginFactory.h"
 #include "src/model/ExchangeTransaction.h"
 #include "src/model/ExchangeNotifications.h"
+#include "sdk/src/extensions/ConversionExtensions.h"
 
 using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
 	namespace {
-		UnresolvedAddress CopyToUnresolvedAddress(const Address& source) {
-			UnresolvedAddress dest;
-			std::memcpy(dest.data(), source.data(), source.size());
-			return dest;
-		}
-
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
@@ -36,7 +31,7 @@ namespace catapult { namespace plugins {
 					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
 					auto pOffer = transaction.OffersPtr();
 					for (uint8_t i = 0; i < transaction.OfferCount; ++i, ++pOffer) {
-						auto offerOwnerAddress = CopyToUnresolvedAddress(PublicKeyToAddress(pOffer->Owner, config.NetworkIdentifier));
+						auto offerOwnerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pOffer->Owner, config.NetworkIdentifier));
 						if (model::OfferType::Sell == pOffer->Type) {
 							sub.notify(BalanceTransferNotification<1>(transaction.Signer, offerOwnerAddress, currencyMosaicId, pOffer->Cost));
 							sub.notify(BalanceCreditNotification<1>(transaction.Signer, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));

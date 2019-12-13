@@ -6,7 +6,7 @@
 
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
-#include <stdint.h>
+#include "catapult/types.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
@@ -17,6 +17,12 @@ namespace catapult { namespace config {
 	public:
 	    /// Max files on drive at the moment
 	    uint16_t MaxFilesOnDrive;
+
+	    /// Verification fee in streaming units.
+	    Amount VerificationFee;
+
+	    /// Verification duration.
+	    BlockDuration VerificationDuration;
 
 		/// Whether the plugin is enabled.
 		bool Enabled;

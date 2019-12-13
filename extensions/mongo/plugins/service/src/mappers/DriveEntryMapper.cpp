@@ -15,15 +15,15 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		void StreamPaymentInformation(bson_stream::document& builder, const std::vector<state::PaymentInformation>& payments) {
-			auto array = builder << "payments" << bson_stream::open_array;
+		void StreamPaymentInformation(bson_stream::document& builder, const std::string& name, const std::vector<state::PaymentInformation>& payments) {
+			auto array = builder << name << bson_stream::open_array;
 			for (const auto& payment : payments) {
 				array
-						<< bson_stream::open_document
-						<< "receiver" << ToBinary(payment.Receiver)
-						<< "amount" << ToInt64(payment.Amount)
-						<< "height" << ToInt64(payment.Height)
-						<< bson_stream::close_document;
+					<< bson_stream::open_document
+					<< "receiver" << ToBinary(payment.Receiver)
+					<< "amount" << ToInt64(payment.Amount)
+					<< "height" << ToInt64(payment.Height)
+					<< bson_stream::close_document;
 			}
 
 			array << bson_stream::close_array;
@@ -34,59 +34,58 @@ namespace catapult { namespace mongo { namespace plugins {
 			for (const auto& description : billingHistory) {
 				bson_stream::document billingBuilder;
 				billingBuilder
-								<< "start" << ToInt64(description.Start)
-								<< "end" << ToInt64(description.End);
-				StreamPaymentInformation(billingBuilder, description.Payments);
+					<< "start" << ToInt64(description.Start)
+					<< "end" << ToInt64(description.End);
+				StreamPaymentInformation(billingBuilder, "payments", description.Payments);
 				array << billingBuilder;
 			}
 
 			array << bson_stream::close_array;
 		}
 
-        void StreamFileActions(bson_stream::document& builder, const std::vector<state::DriveAction>& actions) {
-            auto array = builder << "actions" << bson_stream::open_array;
-            for (const auto& action : actions) {
-                array
-                        << bson_stream::open_document
-                        << "type" << static_cast<int8_t>(action.Type)
-                        << "height" << ToInt64(action.ActionHeight)
-                        << bson_stream::close_document;
-            }
-
-            array << bson_stream::close_array;
-        }
-
 		void StreamFiles(bson_stream::document& builder, const state::FilesMap& files) {
 			auto array = builder << "files" << bson_stream::open_array;
 			for (const auto& filePair : files) {
 				bson_stream::document fileBuilder;
                 fileBuilder
-								<< "fileHash" << ToBinary(filePair.first)
-								<< "deposit" << ToInt64(filePair.second.Deposit)
-								<< "size" << static_cast<int64_t>(filePair.second.Size);
-				StreamPaymentInformation(fileBuilder, filePair.second.Payments);
-                StreamFileActions(fileBuilder, filePair.second.Actions);
+					<< "fileHash" << ToBinary(filePair.first)
+					<< "size" << static_cast<int64_t>(filePair.second.Size);
 				array << fileBuilder;
 			}
 
 			array << bson_stream::close_array;
 		}
 
-        void StreamFilesWithoutDeposit(bson_stream::document& builder, const std::map<Hash256, uint16_t>& filesWithoutDeposit) {
-            auto array = builder << "filesWithoutDeposit" << bson_stream::open_array;
-            for (const auto& file : filesWithoutDeposit) {
-                array
-                        << bson_stream::open_document
-                        << "fileHash" << ToBinary(file.first)
-                        << "count" << static_cast<int16_t>(file.second)
-                        << bson_stream::close_document;
+        void StreamActiveFilesWithoutDeposit(bson_stream::document& builder, const std::set<Hash256>& activeFilesWithoutDeposit) {
+            auto array = builder << "activeFilesWithoutDeposit" << bson_stream::open_array;
+            for (const auto& file : activeFilesWithoutDeposit) {
+                array << ToBinary(file);
             }
 
             array << bson_stream::close_array;
         }
 
-		void StreamReplicators(bson_stream::document& builder, const state::ReplicatorsMap & replicators) {
-			auto array = builder << "replicators" << bson_stream::open_array;
+        void StreamInactiveFilesWithoutDeposit(bson_stream::document& builder, const std::map<Hash256, std::vector<Height>>& inactiveFilesWithoutDeposit) {
+            auto array = builder << "inactiveFilesWithoutDeposit" << bson_stream::open_array;
+            for (const auto& filePair : inactiveFilesWithoutDeposit) {
+                bson_stream::document replicatorBuilder;
+                replicatorBuilder
+                    << "fileHash" << ToBinary(filePair.first);
+
+                auto heights = replicatorBuilder << "heights" << bson_stream::open_array;
+                for (const auto& height : filePair.second)
+                    heights << ToInt64(height);
+
+                heights << bson_stream::close_array;
+                array << replicatorBuilder;
+            }
+
+            array << bson_stream::close_array;
+        }
+
+        template<typename T>
+		void StreamReplicators(bson_stream::document& builder, const std::string& name, const T& replicators) {
+			auto array = builder << name << bson_stream::open_array;
 
 			std::map<Height, std::map<Key, const state::ReplicatorInfo*>> sorter;
 
@@ -100,9 +99,9 @@ namespace catapult { namespace mongo { namespace plugins {
 					replicatorBuilder
 							<< "replicator" << ToBinary(replicator.first)
 							<< "start" << ToInt64(replicator.second->Start)
-							<< "end" << ToInt64(replicator.second->End)
-							<< "deposit" << ToInt64(replicator.second->Deposit);
-					StreamFilesWithoutDeposit(replicatorBuilder, replicator.second->FilesWithoutDeposit);
+							<< "end" << ToInt64(replicator.second->End);
+					StreamActiveFilesWithoutDeposit(replicatorBuilder, replicator.second->ActiveFilesWithoutDeposit);
+					StreamInactiveFilesWithoutDeposit(replicatorBuilder, replicator.second->InactiveFilesWithoutDeposit);
 					array << replicatorBuilder;
 				}
 			}
@@ -131,7 +130,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		StreamBillingHistory(builder, entry.billingHistory());
 		StreamFiles(builder, entry.files());
-		StreamReplicators(builder, entry.replicators());
+		StreamReplicators(builder, "replicators", entry.replicators());
+		StreamReplicators(builder, "removedReplicators", entry.removedReplicators());
+		StreamPaymentInformation(builder, "uploadPayments", entry.uploadPayments());
 
 		return doc
 				<< bson_stream::close_document
@@ -171,18 +172,6 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 		}
 
-        void ReadFileActions(std::vector<state::DriveAction>& actions, const bsoncxx::array::view& dbActionsMap) {
-            for (const auto& dbAction : dbActionsMap) {
-                auto doc = dbAction.get_document().view();
-
-                state::DriveAction action;
-                action.Type = static_cast<state::DriveActionType>(static_cast<int8_t>(doc["type"].get_int32()));
-                action.ActionHeight = Height(doc["height"].get_int64());
-
-                actions.emplace_back(action);
-            }
-        }
-
 		void ReadFiles(state::FilesMap& files, const bsoncxx::array::view& dbFilesMap) {
 			for (const auto& dbFile : dbFilesMap) {
 				auto doc = dbFile.get_document().view();
@@ -191,28 +180,50 @@ namespace catapult { namespace mongo { namespace plugins {
                 DbBinaryToModelArray(fileHash, doc["fileHash"].get_binary());
 
                 state::FileInfo info;
-                info.Deposit = Amount(doc["deposit"].get_int64());
                 info.Size = doc["size"].get_int64();
-
-				ReadPaymentInformation(info.Payments, doc["payments"].get_array().value);
-                ReadFileActions(info.Actions, doc["actions"].get_array().value);
 
                 files.emplace(fileHash, info);
 			}
 		}
 
-        void ReadFilesWithoutDeposit(std::map<Hash256, uint16_t>& deposits, const bsoncxx::array::view& dbFilesWithoutDepositMap) {
+        void ReadActiveFilesWithoutDeposit(std::set<Hash256>& deposits, const bsoncxx::array::view& dbFilesWithoutDepositMap) {
+            for (const auto& dbDeposit : dbFilesWithoutDepositMap) {
+                auto doc = dbDeposit.get_binary();
+
+                Hash256 fileHash;
+                DbBinaryToModelArray(fileHash, doc);
+
+                deposits.insert(fileHash);
+            }
+        }
+
+        void ReadInactiveFilesWithoutDeposit(std::map<Hash256, std::vector<Height>>& deposits, const bsoncxx::array::view& dbFilesWithoutDepositMap) {
             for (const auto& dbDeposit : dbFilesWithoutDepositMap) {
                 auto doc = dbDeposit.get_document().view();
 
                 Hash256 fileHash;
                 DbBinaryToModelArray(fileHash, doc["fileHash"].get_binary());
 
-                deposits.insert({ fileHash, static_cast<uint16_t>(doc["count"].get_int32()) });
+                std::vector<Height> heights;
+                for (const auto& dbHeight : doc["heights"].get_array().value)
+                    heights.push_back(Height(dbHeight.get_int64()));
+
+                deposits.insert({ fileHash, heights });
             }
         }
 
-        void ReadReplicators(state::ReplicatorsMap& replicators, const bsoncxx::array::view& dbReplicatorsMap) {
+        template<typename T>
+        void insert(std::vector<T>& replicators, const T& p) {
+            replicators.push_back(p);
+		}
+
+        template<typename T1, typename T2>
+        void insert(std::map<T1, T2>& replicators, const std::pair<T1, T2>& p) {
+            replicators.insert(p);
+		}
+
+        template<typename T>
+        void ReadReplicators(T& replicators, const bsoncxx::array::view& dbReplicatorsMap) {
             for (const auto& dbReplicator : dbReplicatorsMap) {
                 auto doc = dbReplicator.get_document().view();
 
@@ -220,13 +231,13 @@ namespace catapult { namespace mongo { namespace plugins {
                 DbBinaryToModelArray(replicator, doc["replicator"].get_binary());
 
                 state::ReplicatorInfo info;
-                info.Deposit = Amount(doc["deposit"].get_int64());
                 info.Start = Height(doc["start"].get_int64());
                 info.End = Height(doc["end"].get_int64());
 
-                ReadFilesWithoutDeposit(info.FilesWithoutDeposit, doc["filesWithoutDeposit"].get_array().value);
+                ReadActiveFilesWithoutDeposit(info.ActiveFilesWithoutDeposit, doc["activeFilesWithoutDeposit"].get_array().value);
+                ReadInactiveFilesWithoutDeposit(info.InactiveFilesWithoutDeposit, doc["inactiveFilesWithoutDeposit"].get_array().value);
 
-                replicators.insert({ replicator, info });
+                insert(replicators, { replicator, info });
             }
         }
 	}
@@ -260,6 +271,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadBillingHistory(entry.billingHistory(), dbDriveEntry["billingHistory"].get_array().value);
 		ReadFiles(entry.files(), dbDriveEntry["files"].get_array().value);
 		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
+		ReadReplicators(entry.removedReplicators(), dbDriveEntry["removedReplicators"].get_array().value);
+        ReadPaymentInformation(entry.uploadPayments(), dbDriveEntry["uploadPayments"].get_array().value);
 
 		return entry;
 	}

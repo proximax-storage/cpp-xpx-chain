@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "catapult/model/Address.h"
 #include "src/storages/MongoExchangeCacheStorage.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
@@ -65,7 +66,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static void AssertEqual(const ModelType& entry, const bsoncxx::document::view& view) {
-				test::AssertEqualExchangeData(entry, view["exchange"].get_document().view());
+				auto address = model::PublicKeyToAddress(entry.owner(), Network_Id);
+				test::AssertEqualExchangeData(entry, address, view["exchange"].get_document().view());
 			}
 		};
 	}

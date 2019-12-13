@@ -35,6 +35,9 @@ namespace catapult { namespace model {
 		Op_Hash_160,
 
 		/// Input is hashed twice with SHA-256.
-		Op_Hash_256
+		Op_Hash_256,
+
+		/// For internal use only.
+		Op_Internal
 	};
 }}

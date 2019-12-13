@@ -13,19 +13,19 @@ namespace catapult { namespace validators {
 	namespace {
 		template<typename TOffer>
 		bool OfferCostInvalid(TOffer& offer, const model::MatchedOffer* pMatchedOffer) {
-			return ((offer.InitialAmount == pMatchedOffer->Mosaic.Amount) && (offer.InitialCost != pMatchedOffer->Cost)) ||
-				(offer.cost(pMatchedOffer->Mosaic.Amount) != pMatchedOffer->Cost);
+			return (offer.cost(pMatchedOffer->Mosaic.Amount) != pMatchedOffer->Cost);
 		}
 	}
 
 	using Notification = model::ExchangeNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(Exchange, [](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR(Exchange, ([](const Notification& notification, const ValidatorContext& context) {
 		if (notification.OfferCount == 0)
 			return Failure_Exchange_No_Offers;
 
 		const auto& cache = context.Cache.sub<cache::ExchangeCache>();
 
+		std::set<std::pair<Key, MosaicId>> offers;
 		const auto* pMatchedOffer = notification.OffersPtr;
 		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pMatchedOffer) {
 			if (pMatchedOffer->Owner == notification.Signer)
@@ -35,6 +35,11 @@ namespace catapult { namespace validators {
 				return Failure_Exchange_Account_Doesnt_Have_Any_Offer;
 
 			auto mosaicId = context.Resolvers.resolve(pMatchedOffer->Mosaic.MosaicId);
+			std::pair<Key, MosaicId> pair(pMatchedOffer->Owner, mosaicId);
+			if (offers.count(pair))
+				return Failure_Exchange_Duplicated_Offer_In_Request;
+			offers.insert(pair);
+
 			auto iter = cache.find(pMatchedOffer->Owner);
 			const auto& entry = iter.get();
 
@@ -59,5 +64,5 @@ namespace catapult { namespace validators {
 		}
 
 		return ValidationResult::Success;
-	});
+	}));
 }}

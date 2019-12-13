@@ -146,8 +146,18 @@
 			"supportedVersions": [1]
 		},
 		{
-			"name": "DeleteReward",
+			"name": "DriveFilesReward",
 			"type": "18010",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "StartDriveVerification",
+			"type": "18266",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "EndDriveVerification",
+			"type": "18522",
 			"supportedVersions": [1]
 		},
 		{

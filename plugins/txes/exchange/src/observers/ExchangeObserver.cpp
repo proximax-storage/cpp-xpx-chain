@@ -30,13 +30,13 @@ namespace catapult { namespace observers {
 			auto iter = cache.find(pMatchedOffer->Owner);
 			auto& entry = iter.get();
 			OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+			if (context.Mode == NotifyMode::Rollback && !entry.offerExists(pMatchedOffer->Type, mosaicId))
+				entry.unexpireOffer(pMatchedOffer->Type, mosaicId, context.Height);
 			auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
 				ModifyOffer(entry.buyOffers(), mosaicId, context.Mode, pMatchedOffer) :
 				ModifyOffer(entry.sellOffers(), mosaicId, context.Mode, pMatchedOffer);
 			if (context.Mode == NotifyMode::Commit && Amount(0) == offer.Amount)
 				entry.expireOffer(pMatchedOffer->Type, mosaicId, context.Height);
-			else if (context.Mode == NotifyMode::Rollback && pMatchedOffer->Mosaic.Amount == offer.Amount)
-				entry.unexpireOffer(pMatchedOffer->Type, mosaicId, context.Height);
 		}
 	});
 }}

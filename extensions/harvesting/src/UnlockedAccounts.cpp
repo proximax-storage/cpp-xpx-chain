@@ -89,8 +89,8 @@ namespace catapult { namespace harvesting {
 	}
 
 	UnlockedAccountsModifier UnlockedAccounts::modifier() {
-		auto readLock = m_lock.acquireReader();
-		return UnlockedAccountsModifier(m_maxUnlockedAccounts, m_keyPairs, std::move(readLock));
+		auto writeLock  = m_lock.acquireWriter();
+		return UnlockedAccountsModifier(m_maxUnlockedAccounts, m_keyPairs, std::move(writeLock));
 	}
 
 	// endregion
