@@ -101,7 +101,7 @@ namespace catapult { namespace model {
 		uint16_t MinReplicators;
 
 		/// Percent of approves from replicators to apply transaction.
-		int8_t PercentApprovers;
+		uint8_t PercentApprovers;
 	};
 
 	/// Notification of a drive deposit.
@@ -125,10 +125,10 @@ namespace catapult { namespace model {
 
 	public:
 		/// Public key of the drive multisig account.
-		const Key& DriveKey;
+		Key DriveKey;
 
 		/// Replicator public key.
-        const Key& Replicator;
+		Key Replicator;
 	};
 
 	struct DriveDeposit : public UnresolvedAmountData {
@@ -149,8 +149,8 @@ namespace catapult { namespace model {
 		{}
 
 	public:
-		const Key& DriveKey;
-		const Hash256& FileHash;
+		Key DriveKey;
+		Hash256 FileHash;
 	};
 
 	struct FileUpload : public UnresolvedAmountData {
@@ -161,8 +161,8 @@ namespace catapult { namespace model {
 		{}
 
 	public:
-		const Key& DriveKey;
-		const uint64_t& FileSize;
+		Key DriveKey;
+		uint64_t FileSize;
 	};
 
 	/// Notification of a drive deposit.
@@ -198,25 +198,25 @@ namespace catapult { namespace model {
 
 	public:
 		/// Key of drive.
-		const Key& DriveKey;
+		Key DriveKey;
 
 		/// Signer of transaction.
-		const Key& Signer;
+		Key Signer;
 
 		/// A new RootHash of drive.
-		const Hash256& RootHash;
+		Hash256 RootHash;
 
 		/// Xor of a new RootHash of drive with previous RootHash.
-		const Hash256& XorRootHash;
+		Hash256 XorRootHash;
 
 		/// Count of add actions.
-		const uint16_t& AddActionsCount;
+		uint16_t AddActionsCount;
 
 		/// Actions to add files to drive.
 		const model::AddAction* AddActionsPtr;
 
 		/// Count of remove actions.
-		const uint16_t& RemoveActionsCount;
+		uint16_t RemoveActionsCount;
 
 		/// Actions to remove files from drive.
 		const model::RemoveAction* RemoveActionsPtr;

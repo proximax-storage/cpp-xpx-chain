@@ -4,11 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/Address.h"
 #include "src/plugins/FilesDepositTransactionPlugin.h"
 #include "src/model/FilesDepositTransaction.h"
 #include "src/model/ServiceNotifications.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
@@ -28,6 +26,7 @@ namespace catapult { namespace plugins {
 
 		constexpr UnresolvedMosaicId Streaming_Mosaic_Id(1234);
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
+		constexpr auto Num_Files = 3u;
 
 		auto CreateConfiguration() {
 			test::MutableBlockchainConfiguration config;
@@ -38,7 +37,7 @@ namespace catapult { namespace plugins {
 
 		template<typename TTraits>
 		auto CreateTransaction() {
-			return test::CreateFilesDepositTransaction<typename TTraits::TransactionType>(3);
+			return test::CreateFilesDepositTransaction<typename TTraits::TransactionType>(Num_Files);
 		}
 	}
 
@@ -57,7 +56,7 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 3 * sizeof(File), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Num_Files * sizeof(File), realSize);
 	}
 
 	// region publish - basic
@@ -87,12 +86,12 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(6, sub.numNotifications());
+		ASSERT_EQ(3u + Num_Files, sub.numNotifications());
 		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
 		EXPECT_EQ(Service_Files_Deposit_v1_Notification, sub.notificationTypes()[1]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[2]);
-		for (auto i = 3u; i < 6; ++i)
-			EXPECT_EQ(Core_Balance_Transfer_v1_Notification, sub.notificationTypes()[i]);
+		for (auto i = 0u; i < Num_Files; ++i)
+			EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i + 3u]);
 	}
 
 	// endregion
@@ -133,9 +132,9 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Replicator);
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
-		EXPECT_EQ(3, notification.FilesCount);
+		EXPECT_EQ(Num_Files, notification.FilesCount);
 		EXPECT_EQ(pTransaction->FilesPtr(), notification.FilesPtr);
-		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, 3 * sizeof(File));
+		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(File));
 	}
 
 	// endregion
@@ -159,11 +158,11 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
-	// region publish - balance transfer notifications
+	// region publish - balance debit notifications
 
-	PLUGIN_TEST(CanPublishBalanceTransferNotifications) {
+	PLUGIN_TEST(CanPublishBalanceDebitNotifications) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<BalanceTransferNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<BalanceDebitNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
 
 		auto pTransaction = CreateTransaction<TTraits>();
@@ -173,13 +172,11 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(3u, sub.numMatchingNotifications());
-		auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pTransaction->DriveKey, Network_Identifier));
+		ASSERT_EQ(Num_Files, sub.numMatchingNotifications());
 		auto pFile = pTransaction->FilesPtr();
-		for (auto i = 0u; i < 3; ++i, ++pFile) {
+		for (auto i = 0u; i < Num_Files; ++i, ++pFile) {
 			const auto& notification = sub.matchingNotifications()[i];
 			EXPECT_EQ(pTransaction->Signer, notification.Sender);
-			EXPECT_EQ(driveAddress, notification.Recipient);
 			EXPECT_EQ(Streaming_Mosaic_Id, notification.MosaicId);
 			EXPECT_EQ(0u, notification.Amount.unwrap());
 			EXPECT_EQ(UnresolvedAmountType::FileDeposit, notification.Amount.Type);

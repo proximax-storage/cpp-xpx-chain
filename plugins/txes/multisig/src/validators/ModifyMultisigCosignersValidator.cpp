@@ -53,7 +53,7 @@ namespace catapult { namespace validators {
 			accounts.insert(&key);
 		}
 
-		if (1 < removedAccounts.size() && !notification.AllowMultiplyRemove)
+		if (1 < removedAccounts.size() && !notification.AllowMultipleRemove)
 			return Failure_Multisig_Modify_Multiple_Deletes;
 
 		if (notification.ModificationsCount != addedAccounts.size() + removedAccounts.size())

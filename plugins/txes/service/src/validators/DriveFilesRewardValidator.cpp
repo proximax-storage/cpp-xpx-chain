@@ -12,9 +12,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::DriveFilesRewardNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(DriveFilesReward, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(DriveFilesReward, [pConfigHolder](const Notification &notification,
-																		 const ValidatorContext &context) {
+	DECLARE_STATEFUL_VALIDATOR(DriveFilesReward, Notification)(const MosaicId& streamingMosaicId) {
+		return MAKE_STATEFUL_VALIDATOR(DriveFilesReward, [streamingMosaicId](const Notification &notification, const ValidatorContext &context) {
 			const auto &driveCache = context.Cache.sub<cache::DriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			const auto &driveEntry = driveIter.get();
@@ -25,9 +24,8 @@ namespace catapult { namespace validators {
 			if (driveEntry.state() != state::DriveState::Pending && driveEntry.state() != state::DriveState::Finished)
 				return Failure_Service_Drive_Not_In_Pending_State;
 
-			auto streamingMosaicId = pConfigHolder->Config(context.Height).Immutable.StreamingMosaicId;
-			if (utils::GetBalanceOfDrive(driveEntry, context.Cache, streamingMosaicId) == Amount(0))
-				return Failure_Service_Doesnt_Contains_Streaming_Tokens;
+			if (utils::GetDriveBalance(driveEntry, context.Cache, streamingMosaicId) == Amount(0))
+				return Failure_Service_Doesnt_Contain_Streaming_Tokens;
 
 			auto pInfo = notification.UploadInfoPtr;
 			utils::KeySet keys;
@@ -38,7 +36,7 @@ namespace catapult { namespace validators {
 					return Failure_Service_Zero_Upload_Info;
 
 				if (!driveEntry.hasReplicator(pInfo->Participant) && driveEntry.owner() != pInfo->Participant)
-					return Failure_Service_Participant_It_Not_Part_Of_Drive;
+					return Failure_Service_Participant_Is_Not_Registered_To_Drive;
 
 				if (driveEntry.hasReplicator(pInfo->Participant)) {
 					if (driveEntry.replicators().at(pInfo->Participant).ActiveFilesWithoutDeposit.size() > 0)

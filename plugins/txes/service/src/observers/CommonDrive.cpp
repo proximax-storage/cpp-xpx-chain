@@ -63,7 +63,7 @@ namespace catapult { namespace observers {
         auto& driveAccount = accountIter.get();
 
         if (NotifyMode::Commit == context.Mode) {
-            auto sum = utils::GetBalanceOfDrive(driveEntry, context.Cache, storageMosaicId).unwrap();
+            auto sum = utils::GetDriveBalance(driveEntry, context.Cache, storageMosaicId).unwrap();
             uint64_t sumTime = 0;
             uint64_t remains = sum;
 
@@ -138,8 +138,9 @@ namespace catapult { namespace observers {
 		auto multisigIter = multisigCache.find(driveEntry.key());
 		auto& multisigEntry = multisigIter.get();
 		float cosignatoryCount = driveEntry.replicators().size();
-		multisigEntry.setMinApproval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
-		multisigEntry.setMinRemoval(ceil(cosignatoryCount * driveEntry.percentApprovers() / 100));
+		uint8_t minCosignatory = ceil(cosignatoryCount * driveEntry.percentApprovers() / 100);
+		multisigEntry.setMinApproval(minCosignatory);
+		multisigEntry.setMinRemoval(minCosignatory);
 	}
 
 	void RemoveDriveMultisig(state::DriveEntry& driveEntry, observers::ObserverContext& context) {

@@ -29,10 +29,11 @@ namespace catapult { namespace plugins {
 		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(EndDriveVerification, NetworkIdentifier, 1, 1,)
 
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
+		constexpr auto Num_Failures = 3u;
 
 		template<typename TTraits>
 		auto CreateTransaction() {
-			return test::CreateEndDriveVerificationTransaction<typename TTraits::TransactionType>(3);
+			return test::CreateEndDriveVerificationTransaction<typename TTraits::TransactionType>(Num_Failures);
 		}
 	}
 
@@ -47,7 +48,7 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 3 * sizeof(VerificationFailure), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Num_Failures * sizeof(VerificationFailure), realSize);
 	}
 
 	// region publish - basic
@@ -122,8 +123,8 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
-		EXPECT_EQ(3, notification.FailureCount);
-		EXPECT_EQ_MEMORY(pTransaction->FailuresPtr(), notification.FailuresPtr, 3 * sizeof(VerificationFailure));
+		EXPECT_EQ(Num_Failures, notification.FailureCount);
+		EXPECT_EQ_MEMORY(pTransaction->FailuresPtr(), notification.FailuresPtr, Num_Failures * sizeof(VerificationFailure));
 	}
 
 	// endregion
@@ -166,7 +167,8 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
-		EXPECT_EQ(3, notification.ModificationsCount);
+		EXPECT_EQ(Num_Failures, notification.ModificationsCount);
+		EXPECT_TRUE(notification.AllowMultipleRemove);
 		auto pFailure = pTransaction->FailuresPtr();
 		auto pModifications = notification.ModificationsPtr;
 		for (auto i = 0u; i < notification.ModificationsCount; ++i, ++pFailure) {
@@ -192,8 +194,8 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
-		EXPECT_EQ(3, notification.FailureCount);
-		EXPECT_EQ_MEMORY(pTransaction->FailuresPtr(), notification.FailuresPtr, 3 * sizeof(VerificationFailure));
+		EXPECT_EQ(Num_Failures, notification.FailureCount);
+		EXPECT_EQ_MEMORY(pTransaction->FailuresPtr(), notification.FailuresPtr, Num_Failures * sizeof(VerificationFailure));
 	}
 
 	// endregion

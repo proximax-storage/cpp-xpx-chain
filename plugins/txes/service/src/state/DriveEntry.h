@@ -86,6 +86,15 @@ namespace catapult { namespace state {
 	// Mixin for storing drive details.
 	class DriveMixin {
 	public:
+		DriveMixin()
+			: m_state(DriveState::NotStarted)
+			, m_size(0)
+			, m_replicas(0)
+			, m_minReplicators(0)
+			, m_percentApprovers(0)
+		{}
+
+	public:
 		/// Sets start \a height of drive.
 		void setStart(const Height& height) {
 			m_start = height;
@@ -272,9 +281,9 @@ namespace catapult { namespace state {
 			return m_removedReplicators;
 		}
 
-        void returnReplicator(const Key& key) {
+        void restoreReplicator(const Key& key) {
             if (m_removedReplicators.back().first != key)
-                CATAPULT_THROW_RUNTIME_ERROR("return replicator in wrong direction");
+                CATAPULT_THROW_RUNTIME_ERROR_1("failed to restore replicator, wrong key", key);
 
             m_replicators.insert(m_removedReplicators.back());
             m_removedReplicators.pop_back();
@@ -282,7 +291,7 @@ namespace catapult { namespace state {
 
 		void removeReplicator(const Key& key) {
 		    if (!m_replicators.count(key))
-                CATAPULT_THROW_RUNTIME_ERROR("can't remove not existing replicator");
+                CATAPULT_THROW_RUNTIME_ERROR_1("replicator not found, key", key);
 
 		    auto iter = m_replicators.find(key);
 		    m_removedReplicators.push_back(*iter);

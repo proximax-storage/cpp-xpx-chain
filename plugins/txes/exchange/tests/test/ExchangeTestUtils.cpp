@@ -66,12 +66,22 @@ namespace catapult { namespace test {
 				AssertOffer(pair.second, offers2.find(pair.first)->second);
 			}
 		}
+
+		template<typename TExpiredOfferMap>
+		void AssertExpiredOffers(const TExpiredOfferMap& offers1, const TExpiredOfferMap& offers2) {
+			ASSERT_EQ(offers1.size(), offers2.size());
+			for (const auto& pair : offers1) {
+				AssertOffers(pair.second, offers2.find(pair.first)->second);
+			}
+		}
 	}
 
 	void AssertEqualExchangeData(const state::ExchangeEntry& entry1, const state::ExchangeEntry& entry2) {
 		EXPECT_EQ(entry1.owner(), entry2.owner());
 		AssertOffers(entry1.buyOffers(), entry2.buyOffers());
 		AssertOffers(entry1.sellOffers(), entry2.sellOffers());
+		AssertExpiredOffers(entry1.expiredBuyOffers(), entry2.expiredBuyOffers());
+		AssertExpiredOffers(entry1.expiredSellOffers(), entry2.expiredSellOffers());
 	}
 }}
 

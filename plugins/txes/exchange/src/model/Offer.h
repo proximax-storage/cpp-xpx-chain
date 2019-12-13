@@ -20,6 +20,9 @@ namespace catapult { namespace model {
 		Buy,
 	};
 
+	/// Insertion operator for outputting \a type to \a out.
+	std::ostream& operator<<(std::ostream& out, OfferType type);
+
 	struct Offer {
 	public:
 		/// Mosaic for exchange.

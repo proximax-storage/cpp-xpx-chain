@@ -14,19 +14,19 @@ namespace catapult { namespace observers {
 
 	using Notification = model::DriveFilesRewardNotification<1>;
 
-	DECLARE_OBSERVER(DriveFilesReward, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(DriveFilesReward, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
+	DECLARE_OBSERVER(DriveFilesReward, Notification)(const config::ImmutableConfiguration& config) {
+		return MAKE_OBSERVER(DriveFilesReward, Notification, [&config](const Notification& notification, ObserverContext& context) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();
 			auto driveIter = driveCache.find(notification.DriveKey);
 			auto& driveEntry = driveIter.get();
-			auto streamingMosaicId = pConfigHolder->Config(context.Height).Immutable.StreamingMosaicId;
+			auto streamingMosaicId = config.StreamingMosaicId;
 
 			auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 			auto accountIter = accountStateCache.find(driveEntry.key());
 			auto& driveAccount = accountIter.get();
 
 			if (NotifyMode::Commit == context.Mode) {
-				auto sum = utils::GetBalanceOfDrive(driveEntry, context.Cache, streamingMosaicId);
+				auto sum = utils::GetDriveBalance(driveEntry, context.Cache, streamingMosaicId);
 				uint64_t sumUpload = 0;
 
 				auto iter = notification.UploadInfoPtr;
@@ -36,12 +36,11 @@ namespace catapult { namespace observers {
 
 				iter = notification.UploadInfoPtr;
 				for (auto i = 0u; i < notification.UploadInfosCount; ++i, ++iter) {
-					uint64_t uploaded = iter->Uploaded;
-					auto reward = Amount(std::floor(double(sum.unwrap()) * uploaded / sumUpload));
+					auto reward = Amount(std::floor(double(sum.unwrap()) * iter->Uploaded / sumUpload));
 
 					// The last participant takes remaining tokens, it is need to resolve the integer division
 					if (i == notification.UploadInfosCount - 1)
-						reward = utils::GetBalanceOfDrive(driveEntry, context.Cache, streamingMosaicId);
+						reward = utils::GetDriveBalance(driveEntry, context.Cache, streamingMosaicId);
 
 					auto participantIter = accountStateCache.find(iter->Participant);
 					auto& participantAccount = participantIter.get();
@@ -56,16 +55,16 @@ namespace catapult { namespace observers {
 
 				// if drive is finished, it is last payment transaction. Now we can remove drive.
 				if (driveEntry.state() >= state::DriveState::Finished) {
-                    driveCache.markRemoveDrive(driveEntry.key(), context.Height);
-                    driveEntry.setEnd(context.Height);
+					driveCache.markRemoveDrive(driveEntry.key(), context.Height);
+					driveEntry.setEnd(context.Height);
 					RemoveDriveMultisig(driveEntry, context);
 				}
 			} else {
-                if (driveEntry.state() >= state::DriveState::Finished) {
-                    driveCache.unmarkRemoveDrive(driveEntry.key(), context.Height);
-                    driveEntry.setEnd(Height(0));
-	                RemoveDriveMultisig(driveEntry, context);
-                }
+				if (driveEntry.state() >= state::DriveState::Finished) {
+					driveCache.unmarkRemoveDrive(driveEntry.key(), context.Height);
+					driveEntry.setEnd(Height(0));
+					RemoveDriveMultisig(driveEntry, context);
+				}
 
 				auto& payments = driveEntry.uploadPayments();
 				auto iter = notification.UploadInfoPtr + notification.UploadInfosCount - 1;

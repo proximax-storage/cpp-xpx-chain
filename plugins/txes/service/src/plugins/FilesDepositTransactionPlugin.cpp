@@ -6,12 +6,10 @@
 
 #include "catapult/model/Address.h"
 #include "FilesDepositTransactionPlugin.h"
-#include "plugins/txes/multisig/src/model/MultisigNotifications.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/FilesDepositTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 
 using namespace catapult::model;
 
@@ -20,8 +18,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
-			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight,
-								   NotificationSubscriber &sub) {
+			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight, NotificationSubscriber &sub) {
 				auto &blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
 				switch (transaction.EntityVersion()) {
 					case 1: {

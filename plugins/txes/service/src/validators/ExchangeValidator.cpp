@@ -46,11 +46,11 @@ namespace catapult { namespace validators {
                 return Failure_Service_Drive_Cant_Find_Default_Exchange_Offer;
 
             Amount requiredAmount = driveEntry.billingPrice();
-            auto billingBalance = utils::GetBalanceOfDrive(driveEntry, context.Cache, storageMosaicId);
-            if (billingBalance >= requiredAmount) {
+            auto driveBalance = utils::GetDriveBalance(driveEntry, context.Cache, storageMosaicId);
+            if (driveBalance >= requiredAmount) {
                 requiredAmount = Amount(1);
             } else {
-                requiredAmount = requiredAmount - billingBalance;
+                requiredAmount = requiredAmount - driveBalance;
             }
 
             const auto& sellOffer = exchangeEntry.sellOffers().at(storageMosaicId);

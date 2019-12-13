@@ -8,6 +8,10 @@
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
 #include "src/model/ServiceEntityType.h"
+#include "plugins/txes/exchange/src/cache/ExchangeCache.h"
+#include "plugins/txes/exchange/src/cache/ExchangeCacheStorage.h"
+#include "plugins/txes/lock_secret/src/cache/SecretLockInfoCache.h"
+#include "plugins/txes/multisig/src/cache/MultisigCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Random.h"
@@ -21,22 +25,33 @@ namespace catapult { namespace test {
 		uint16_t billingHistoryCount = 2,
 		uint16_t drivePaymentCount = 2,
 		uint16_t fileCount = 2,
-		uint16_t fileActionCount = 2,
-		uint16_t filePaymentCount = 2,
 		uint16_t replicatorCount = 2,
-		uint16_t fileWithoutDepositCount = 2);
+		uint16_t activeFilesWithoutDepositCount = 2,
+		uint16_t inactiveFilesWithoutDepositCount = 2,
+		uint16_t heightCount = 2,
+		uint16_t removedReplicatorCount = 2,
+		uint16_t uploadPaymentCount = 2);
+
+	state::AccountState CreateAccount(const Key& owner, model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Mijin_Test);
+	void AssertAccount(const state::AccountState& expected, const state::AccountState& actual);
+
+	state::MultisigEntry CreateMultisigEntry(const state::DriveEntry& driveEntry);
+	void AssertMultisig(const cache::MultisigCacheDelta& cache, const state::MultisigEntry& expected);
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.
 	void AssertEqualDriveData(const state::DriveEntry& entry1, const state::DriveEntry& entry2);
 
-	/// Cache factory for creating a catapult cache composed of drive cache and core caches.
+	/// Cache factory for creating a catapult cache composed of drive cache, multisig cache and core caches.
 	struct DriveCacheFactory {
 	private:
 		static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
-			auto cacheId = cache::DriveCache::Id;
-			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
+			auto id = std::max(cache::DriveCache::Id, std::max(cache::MultisigCache::Id, std::max(cache::ExchangeCache::Id, cache::SecretLockInfoCache::Id)));
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::DriveCache, cache::DriveCacheStorage>(pConfigHolder);
+			subCaches[cache::DriveCache::Id] = MakeSubCachePlugin<cache::DriveCache, cache::DriveCacheStorage>(pConfigHolder);
+			subCaches[cache::MultisigCache::Id] = MakeSubCachePlugin<cache::MultisigCache, cache::MultisigCacheStorage>();
+			subCaches[cache::ExchangeCache::Id] = MakeSubCachePlugin<cache::ExchangeCache, cache::ExchangeCacheStorage>(pConfigHolder);
+			subCaches[cache::SecretLockInfoCache::Id] = MakeSubCachePlugin<cache::SecretLockInfoCache, cache::SecretLockInfoCacheStorage>();
 			return subCaches;
 		}
 
@@ -69,21 +84,15 @@ namespace catapult { namespace test {
 
     /// Creates a drive files reward transaction.
     template<typename TTransaction>
-	model::UniqueEntityPtr<TTransaction> CreateDriveFilesRewardTransaction(size_t numDeletedFiles, size_t numReplicatorInfo) {
-		auto deletedFileStructSize = sizeof(model::DeletedFile)  + numReplicatorInfo * sizeof(model::ReplicatorUploadInfo);
-        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DriveFilesReward, numDeletedFiles * deletedFileStructSize);
+	model::UniqueEntityPtr<TTransaction> CreateDriveFilesRewardTransaction(size_t numUploadInfos) {
+        auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_DriveFilesReward, numUploadInfos * sizeof(model::UploadInfo));
+		pTransaction->UploadInfosCount = numUploadInfos;
 
 		auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
-		for (auto i = 0u; i < numDeletedFiles; ++i) {
-			auto pDeletedFile = reinterpret_cast<model::DeletedFile*>(pData);
-			pDeletedFile->FileHash = test::GenerateRandomByteArray<Hash256>();
-			pDeletedFile->Size = deletedFileStructSize;
-			pData = reinterpret_cast<uint8_t*>(pDeletedFile->InfosPtr());
-			for (auto j = 0u; j < numReplicatorInfo; ++j) {
-				model::ReplicatorUploadInfo replicatorInfo{{test::GenerateRandomByteArray<Key>()}, j};
-				memcpy(pData, static_cast<const void*>(&replicatorInfo), sizeof(model::ReplicatorUploadInfo));
-				pData += sizeof(model::ReplicatorUploadInfo);
-			}
+		for (auto i = 0u; i < numUploadInfos; ++i) {
+			auto pDeletedFile = reinterpret_cast<model::UploadInfo*>(pData);
+			pDeletedFile->Participant = test::GenerateRandomByteArray<Key>();
+			pDeletedFile->Uploaded = test::Random();
 		}
 
         return pTransaction;
@@ -102,13 +111,13 @@ namespace catapult { namespace test {
 
         auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
 		for (auto i = 0u; i < numAddActions; ++i) {
-			model::AddAction addAction{{test::GenerateRandomByteArray<Hash256>()}, test::GenerateRandomValue<Amount>().unwrap()};
+			model::AddAction addAction{{test::GenerateRandomByteArray<Hash256>()}, test::Random()};
             memcpy(pData, static_cast<const void*>(&addAction), sizeof(model::AddAction));
             pData += sizeof(model::AddAction);
         }
 
 		for (auto i = 0u; i < numRemoveActions; ++i) {
-			model::RemoveAction removeAction{{test::GenerateRandomByteArray<Hash256>()}};
+			model::RemoveAction removeAction{{{test::GenerateRandomByteArray<Hash256>()}, test::Random()}};
             memcpy(pData, static_cast<const void*>(&removeAction), sizeof(model::RemoveAction));
             pData += sizeof(model::RemoveAction);
         }

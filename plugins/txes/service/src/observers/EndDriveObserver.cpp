@@ -10,14 +10,14 @@ namespace catapult { namespace observers {
 
     using Notification = model::EndDriveNotification<1>;
 
-    DECLARE_OBSERVER(EndDrive, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-        return MAKE_OBSERVER(EndDrive, Notification, [pConfigHolder](const Notification& notification, ObserverContext& context) {
+    DECLARE_OBSERVER(EndDrive, Notification)(const config::ImmutableConfiguration& config) {
+        return MAKE_OBSERVER(EndDrive, Notification, [&config](const Notification& notification, ObserverContext& context) {
             auto& driveCache = context.Cache.sub<cache::DriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);
             auto& driveEntry = driveIter.get();
-            auto streamingMosaicId = pConfigHolder->Config(context.Height).Immutable.StreamingMosaicId;
-            auto storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
-            auto currencyMosaicId = pConfigHolder->Config(context.Height).Immutable.CurrencyMosaicId;
+            auto streamingMosaicId = config.StreamingMosaicId;
+            auto storageMosaicId = config.StorageMosaicId;
+            auto currencyMosaicId = config.CurrencyMosaicId;
 
             auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
             auto accountIter = accountStateCache.find(driveEntry.key());
@@ -63,7 +63,7 @@ namespace catapult { namespace observers {
                     Transfer(driveAccount, ownerAccount, currencyMosaicId, remainingCurrency, context);
 
                 // If streaming amount is zero, it means that DriveFilesReward transaction will not force remove of drive.
-                // So we need to do it by self
+                // So we need to do it now.
                 if (driveAccount.Balances.get(streamingMosaicId) == Amount(0)) {
                     driveCache.markRemoveDrive(driveEntry.key(), context.Height);
                     driveEntry.setEnd(context.Height);
