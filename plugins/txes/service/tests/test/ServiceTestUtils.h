@@ -143,16 +143,19 @@ namespace catapult { namespace test {
 
     /// Creates an end drive verification transaction with \a failures.
     template<typename TTransaction>
-	model::UniqueEntityPtr<TTransaction> CreateEndDriveVerificationTransaction(size_t numFailures) {
-		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_End_Drive_Verification,
-			numFailures * sizeof(model::VerificationFailure));
-		pTransaction->FailureCount = numFailures;
+	model::UniqueEntityPtr<TTransaction> CreateEndDriveVerificationTransaction(size_t numFailures, size_t numHashes = 5) {
+		auto failureSize = sizeof(model::VerificationFailure) + numHashes * sizeof(Hash256);
+		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_End_Drive_Verification, numFailures * failureSize);
 
         auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
         for (auto i = 0u; i < numFailures; ++i) {
-			model::VerificationFailure failure{test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>()};
-            memcpy(pData, static_cast<const void*>(&failure), sizeof(model::VerificationFailure));
-            pData += sizeof(model::VerificationFailure);
+			auto pFailure = reinterpret_cast<model::VerificationFailure*>(pData);
+			pFailure->Size = failureSize;
+			pFailure->Replicator = test::GenerateRandomByteArray<Key>();
+			auto* pBlockHashes = reinterpret_cast<Hash256*>(pFailure + 1);
+			for (auto k = 0u; k < numHashes; ++k)
+				pBlockHashes[k] = test::GenerateRandomByteArray<Hash256>();
+            pData += failureSize;
         }
 
         return pTransaction;

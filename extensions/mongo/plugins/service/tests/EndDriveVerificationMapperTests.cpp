@@ -20,14 +20,24 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		template<typename TTransaction>
 		void AssertEqualNonInheritedData(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
-			const auto& failureArray = dbTransaction["verificationFailures"].get_array().value;
-			ASSERT_EQ(transaction.FailureCount, test::GetFieldCount(failureArray));
-			auto failureIter = failureArray.cbegin();
-			const auto* pFailure = transaction.FailuresPtr();
-			for (uint8_t i = 0; i < transaction.FailureCount; ++i, ++pFailure, ++failureIter) {
-				const auto& array = failureIter->get_document().view();
-				EXPECT_EQ(pFailure->Replicator, test::GetKeyValue(array, "replicator"));
-				EXPECT_EQ(pFailure->BlockHash, test::GetHashValue(array, "blockHash"));
+			auto failures = transaction.Transactions();
+			auto failureCount = std::distance(failures.cbegin(), failures.cend());
+			const auto& dbFailureArray = dbTransaction["verificationFailures"].get_array().value;
+			ASSERT_EQ(failureCount, test::GetFieldCount(dbFailureArray));
+			auto failureIter = failures.begin();
+			auto dbFailureIter = dbFailureArray.cbegin();
+			for (; failureIter != failures.end(); ++failureIter, ++dbFailureIter) {
+				const auto& dbFailure = dbFailureIter->get_document().view();
+				EXPECT_EQ(failureIter->Replicator, test::GetKeyValue(dbFailure, "replicator"));
+				const auto& dbBlockHashArray = dbFailure["blockHashes"].get_array().value;
+				ASSERT_EQ(failureIter->BlockHashCount(), test::GetFieldCount(dbBlockHashArray));
+				auto pBlockHashes = failureIter->BlockHashesPtr();
+				auto i = 0u;
+				for (const auto& dbBlockHash : dbBlockHashArray) {
+					Hash256 blockHash;
+					mappers::DbBinaryToModelArray(blockHash, dbBlockHash.get_binary());
+					EXPECT_EQ(pBlockHashes[i++], blockHash);
+				}
 			}
 		}
 

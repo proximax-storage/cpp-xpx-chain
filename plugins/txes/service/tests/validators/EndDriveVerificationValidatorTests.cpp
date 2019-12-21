@@ -42,7 +42,7 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult,
 				const state::DriveEntry& driveEntry,
 				const state::SecretLockInfo& secretLockInfo,
-				const std::vector<model::VerificationFailure>& failures = {}) {
+				const std::vector<Key>& failedReplicators = {}) {
 			// Arrange:
 			Height currentHeight(1);
 			auto cache = test::DriveCacheFactory::Create();
@@ -57,7 +57,7 @@ namespace catapult { namespace validators {
 
 				cache.commit(currentHeight);
 			}
-			Notification notification(driveEntry.key(), failures.size(), failures.data());
+			Notification notification(driveEntry.key(), failedReplicators.size(), failedReplicators.data());
 			auto pValidator = CreateEndDriveVerificationValidator();
 
 			// Act:
@@ -105,7 +105,7 @@ namespace catapult { namespace validators {
 			Failure_Service_Drive_Replicator_Not_Registered,
 			driveEntry,
 			secretLockInfo,
-			{ { test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Hash256>() } });
+			{ test::GenerateRandomByteArray<Key>() });
 	}
 
 	TEST(TEST_CLASS, FailureWhenParticipantRedundant) {
@@ -121,7 +121,7 @@ namespace catapult { namespace validators {
 			Failure_Service_Participant_Redundant,
 			driveEntry,
 			secretLockInfo,
-			{ { replicatorKey, test::GenerateRandomByteArray<Hash256>() },  { replicatorKey, test::GenerateRandomByteArray<Hash256>() } });
+			{ replicatorKey,  replicatorKey });
 	}
 
 	TEST(TEST_CLASS, Success) {
@@ -137,6 +137,6 @@ namespace catapult { namespace validators {
 			ValidationResult::Success,
 			driveEntry,
 			secretLockInfo,
-			{ { replicatorKey, test::GenerateRandomByteArray<Hash256>() } });
+			{ replicatorKey });
 	}
 }}

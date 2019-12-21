@@ -30,6 +30,7 @@ namespace catapult { namespace plugins {
 
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
 		constexpr auto Num_Failures = 3u;
+		constexpr auto Num_Block_Hashes = 5u;
 
 		template<typename TTraits>
 		auto CreateTransaction() {
@@ -48,7 +49,8 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Num_Failures * sizeof(VerificationFailure), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) +
+			Num_Failures * (sizeof(VerificationFailure) + Num_Block_Hashes * sizeof(Hash256)), realSize);
 	}
 
 	// region publish - basic
@@ -124,7 +126,10 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
 		EXPECT_EQ(Num_Failures, notification.FailureCount);
-		EXPECT_EQ_MEMORY(pTransaction->FailuresPtr(), notification.FailuresPtr, Num_Failures * sizeof(VerificationFailure));
+		auto failures = pTransaction->Transactions();
+		auto i = 0u;
+		for (auto iter = failures.begin(); iter != failures.end(); ++iter)
+			EXPECT_EQ(iter->Replicator, notification.FailedReplicatorsPtr[i++]);
 	}
 
 	// endregion
@@ -169,11 +174,11 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
 		EXPECT_EQ(Num_Failures, notification.ModificationsCount);
 		EXPECT_TRUE(notification.AllowMultipleRemove);
-		auto pFailure = pTransaction->FailuresPtr();
+		auto failures = pTransaction->Transactions();
 		auto pModifications = notification.ModificationsPtr;
-		for (auto i = 0u; i < notification.ModificationsCount; ++i, ++pFailure) {
-			EXPECT_EQ(CosignatoryModificationType::Del, pModifications[i].ModificationType);
-			EXPECT_EQ(pFailure->Replicator, pModifications[i].CosignatoryPublicKey);
+		for (auto iter = failures.begin(); iter != failures.end(); ++iter, ++pModifications) {
+			EXPECT_EQ(CosignatoryModificationType::Del, pModifications->ModificationType);
+			EXPECT_EQ(iter->Replicator, pModifications->CosignatoryPublicKey);
 		}
 	}
 
@@ -195,7 +200,10 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
 		EXPECT_EQ(Num_Failures, notification.FailureCount);
-		EXPECT_EQ_MEMORY(pTransaction->FailuresPtr(), notification.FailuresPtr, Num_Failures * sizeof(VerificationFailure));
+		auto failures = pTransaction->Transactions();
+		auto i = 0u;
+		for (auto iter = failures.begin(); iter != failures.end(); ++iter)
+			EXPECT_EQ(iter->Replicator, notification.FailedReplicatorsPtr[i++]);
 	}
 
 	// endregion

@@ -27,11 +27,18 @@ namespace catapult { namespace plugins {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
 
-						auto failureCount = transaction.FailureCount;
+						auto failures = transaction.Transactions(EntityContainerErrorPolicy::Suppress);
+						auto failureCount = std::distance(failures.cbegin(), failures.cend());
+						auto pFailedReplicators = sub.mempool().malloc<Key>(failureCount);
+						uint16_t i = 0u;
+						std::for_each(failures.cbegin(), failures.cend(), [&i, pFailedReplicators](const auto& failure) {
+							pFailedReplicators[i++] = failure.Replicator;
+						});
+
 						sub.notify(EndDriveVerificationNotification<1>(
 							transaction.Signer,
 							failureCount,
-							transaction.FailuresPtr()));
+							pFailedReplicators));
 
 						sub.notify(ProofPublicationNotification<1>(
 							transaction.Signer,
@@ -40,16 +47,15 @@ namespace catapult { namespace plugins {
 							extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, networkIdentifier))));
 
 						auto pModifications = sub.mempool().malloc<CosignatoryModification>(failureCount);
-						auto pFailure = transaction.FailuresPtr();
-						for (auto i = 0u; i < failureCount; ++i, ++pFailure) {
-							pModifications[i] = CosignatoryModification{model::CosignatoryModificationType::Del, pFailure->Replicator};
+						for (i = 0u; i < failureCount; ++i) {
+							pModifications[i] = CosignatoryModification{model::CosignatoryModificationType::Del, pFailedReplicators[i]};
 						}
 						sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, failureCount, pModifications, true /* AllowMultipleRemove */));
 
 						sub.notify(DriveVerificationPaymentNotification<1>(
 							transaction.Signer,
 							failureCount,
-							transaction.FailuresPtr()));
+							pFailedReplicators));
 
 						break;
 					}

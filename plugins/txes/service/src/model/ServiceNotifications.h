@@ -293,11 +293,11 @@ namespace catapult { namespace model {
 			NotificationType type,
 			const Key& drive,
 			uint16_t failureCount,
-			const VerificationFailure* pFailures)
+			const Key* pFailedReplicators)
 			: Notification(type, sizeof(BaseEndDriveVerificationNotification))
 			, DriveKey(drive)
 			, FailureCount(failureCount)
-			, FailuresPtr(pFailures)
+			, FailedReplicatorsPtr(pFailedReplicators)
 		{}
 
 	public:
@@ -308,7 +308,7 @@ namespace catapult { namespace model {
 		uint16_t FailureCount;
 
 		/// Verification failures.
-		const VerificationFailure* FailuresPtr;
+		const Key* FailedReplicatorsPtr;
 	};
 
 	/// Notification of an end drive verification.
@@ -325,8 +325,8 @@ namespace catapult { namespace model {
 		explicit EndDriveVerificationNotification(
 			const Key& drive,
 			uint16_t failureCount,
-			const VerificationFailure* pFailures)
-			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailures)
+			const Key* pFailedReplicators)
+			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailedReplicators)
 		{}
 	};
 
@@ -344,8 +344,8 @@ namespace catapult { namespace model {
 		explicit DriveVerificationPaymentNotification(
 			const Key& drive,
 			uint16_t failureCount,
-			const VerificationFailure* pFailures)
-			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailures)
+			const Key* pFailedReplicators)
+			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailedReplicators)
 		{}
 	};
 
