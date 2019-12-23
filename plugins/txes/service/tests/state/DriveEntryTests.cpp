@@ -152,6 +152,83 @@ namespace catapult { namespace state {
 		EXPECT_EQ(size, entry.size());
 	}
 
+	TEST(TEST_CLASS, CanAccessOccupiedSpace) {
+		// Arrange:
+		uint64_t occupiedSpace = 100u;
+		auto entry = DriveEntry(Key());
+
+		// Sanity:
+		ASSERT_EQ(0u, entry.occupiedSpace());
+
+		// Act:
+		entry.setOccupiedSpace(occupiedSpace);
+
+		// Assert:
+		EXPECT_EQ(occupiedSpace, entry.occupiedSpace());
+	}
+
+	TEST(TEST_CLASS, CannotIncreaseOccupiedSpaceWhenOverflows) {
+		// Arrange:
+		uint64_t occupiedSpace = 100u;
+		uint64_t delta = std::numeric_limits<uint64_t>::max();
+		auto entry = DriveEntry(Key());
+		entry.setOccupiedSpace(occupiedSpace);
+
+		// Sanity:
+		EXPECT_EQ(occupiedSpace, entry.occupiedSpace());
+
+		// Act + Assert:
+		EXPECT_THROW(entry.increaseOccupiedSpace(delta), catapult_invalid_argument);
+	}
+
+	TEST(TEST_CLASS, CanIncreaseOccupiedSpace) {
+		// Arrange:
+		uint64_t occupiedSpace = 100u;
+		uint64_t delta = 10u;
+		auto entry = DriveEntry(Key());
+		entry.setOccupiedSpace(occupiedSpace);
+
+		// Sanity:
+		EXPECT_EQ(occupiedSpace, entry.occupiedSpace());
+
+		// Act:
+		entry.increaseOccupiedSpace(delta);
+
+		// Assert:
+		EXPECT_EQ(occupiedSpace + delta, entry.occupiedSpace());
+	}
+
+	TEST(TEST_CLASS, CannotDecreaseOccupiedSpaceWhenDeltaTooBig) {
+		// Arrange:
+		uint64_t occupiedSpace = 100u;
+		uint64_t delta = 101u;
+		auto entry = DriveEntry(Key());
+		entry.setOccupiedSpace(occupiedSpace);
+
+		// Sanity:
+		EXPECT_EQ(occupiedSpace, entry.occupiedSpace());
+
+		// Act + Assert:
+		EXPECT_THROW(entry.decreaseOccupiedSpace(delta), catapult_invalid_argument);
+	}
+
+	TEST(TEST_CLASS, CanDecreaseOccupiedSpace) {
+		// Arrange:
+		uint64_t occupiedSpace = 100u;
+		uint64_t delta = 10u;
+		auto entry = DriveEntry(Key());
+		entry.setOccupiedSpace(occupiedSpace);
+
+		// Sanity:
+		EXPECT_EQ(occupiedSpace, entry.occupiedSpace());
+
+		// Act:
+		entry.decreaseOccupiedSpace(delta);
+
+		// Assert:
+		EXPECT_EQ(occupiedSpace - delta, entry.occupiedSpace());
+	}
+
 	TEST(TEST_CLASS, CanAccessReplicas) {
 		// Arrange:
 		uint16_t replicas = 10u;

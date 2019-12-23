@@ -164,6 +164,7 @@ namespace catapult { namespace state {
 		SaveBillingHistory(output, driveEntry.billingHistory());
 
 		io::Write64(output, driveEntry.size());
+		io::Write64(output, driveEntry.occupiedSpace());
 		io::Write16(output, driveEntry.replicas());
 		io::Write16(output, driveEntry.minReplicators());
 		io::Write8(output, driveEntry.percentApprovers());
@@ -203,6 +204,7 @@ namespace catapult { namespace state {
 		LoadBillingHistory(input, entry.billingHistory());
 
 		entry.setSize(io::Read64(input));
+		entry.setOccupiedSpace(io::Read64(input));
 		entry.setReplicas(io::Read16(input));
 		entry.setMinReplicators(io::Read16(input));
 		entry.setPercentApprovers(io::Read8(input));
