@@ -128,8 +128,10 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(Num_Failures, notification.FailureCount);
 		auto failures = pTransaction->Transactions();
 		auto i = 0u;
-		for (auto iter = failures.begin(); iter != failures.end(); ++iter)
-			EXPECT_EQ(iter->Replicator, notification.FailedReplicatorsPtr[i++]);
+		for (auto iter = failures.begin(); iter != failures.end(); ++iter) {
+			EXPECT_EQ(iter->Replicator, notification.FailedReplicatorsPtr[i]);
+			EXPECT_EQ(iter->BlockHashCount(), notification.FailedBlockHashCountsPtr[i++]);
+		}
 	}
 
 	// endregion
