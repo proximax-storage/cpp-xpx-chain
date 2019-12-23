@@ -143,6 +143,7 @@ namespace catapult { namespace plugins {
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
 					.add(validators::CreateEndDriveValidator(pConfigHolder))
+					// MaxFilesOnDriveValidator should be added after DriveFileSystemValidator
 					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder))
 					.add(validators::CreateStartDriveVerificationValidator())
 					.add(validators::CreateEndDriveVerificationValidator());

@@ -137,6 +137,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because the drive account doesn't contains streaming tokens.
 	DEFINE_SERVICE_RESULT(Doesnt_Contain_Streaming_Tokens, 42);
 
+	/// Validation failed because space occupied by files exceeded drive size.
+	DEFINE_SERVICE_RESULT(Drive_Size_Exceeded, 43);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

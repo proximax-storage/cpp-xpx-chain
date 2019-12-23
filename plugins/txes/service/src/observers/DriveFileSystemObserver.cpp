@@ -5,6 +5,7 @@
 **/
 
 #include "CommonDrive.h"
+#include <boost/multiprecision/cpp_int.hpp>
 
 namespace catapult { namespace observers {
 
@@ -22,6 +23,7 @@ namespace catapult { namespace observers {
                 driveEntry.setRootHash(notification.RootHash ^ notification.XorRootHash);
             }
 
+			boost::multiprecision::uint128_t occupiedSpace(driveEntry.occupiedSpace());
             auto& files = driveEntry.files();
             auto addActionsPtr = notification.AddActionsPtr;
             for (auto i = 0u; i < notification.AddActionsCount; ++i, ++addActionsPtr) {
@@ -30,12 +32,14 @@ namespace catapult { namespace observers {
                         state::FileInfo info;
                         info.Size = addActionsPtr->FileSize;
                         files.emplace(addActionsPtr->FileHash, info);
+						occupiedSpace += addActionsPtr->FileSize;
                     }
 
                     for (auto& replicator : driveEntry.replicators())
                         replicator.second.ActiveFilesWithoutDeposit.insert(addActionsPtr->FileHash);
                 } else {
                     files.erase(addActionsPtr->FileHash);
+					occupiedSpace -= addActionsPtr->FileSize;
 
                     for (auto& replicator : driveEntry.replicators())
                         replicator.second.ActiveFilesWithoutDeposit.erase(addActionsPtr->FileHash);
@@ -46,12 +50,16 @@ namespace catapult { namespace observers {
             for (auto i = 0u; i < notification.RemoveActionsCount; ++i, ++removeActionsPtr) {
                 if (NotifyMode::Commit == context.Mode) {
                     files.erase(removeActionsPtr->FileHash);
+					occupiedSpace -= removeActionsPtr->FileSize;
                 } else {
                     state::FileInfo info;
                     info.Size = removeActionsPtr->FileSize;
                     files.emplace(removeActionsPtr->FileHash, info);
+					occupiedSpace += removeActionsPtr->FileSize;
                 }
             }
+
+            driveEntry.setOccupiedSpace(occupiedSpace.convert_to<uint64_t>());
 
             auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
             for (auto& replicatorPair : driveEntry.replicators()) {
