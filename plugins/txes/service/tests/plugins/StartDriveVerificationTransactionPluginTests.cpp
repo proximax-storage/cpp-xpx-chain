@@ -43,7 +43,7 @@ namespace catapult { namespace plugins {
 			pluginConfig.MaxFilesOnDrive = 100;
 			pluginConfig.VerificationFee = Amount(1000);
 			pluginConfig.VerificationDuration = BlockDuration(500);
-			config.Network.SetPluginConfiguration(PLUGIN_NAME_HASH(service), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			return config.ToConst();
 		}
 

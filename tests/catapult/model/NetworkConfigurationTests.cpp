@@ -266,9 +266,9 @@ namespace catapult { namespace model {
 
 	namespace {
 		struct BetaConfiguration {
-        public:
-            static constexpr size_t Id = 0;
-	        static constexpr auto Name = "beta";
+		public:
+			static constexpr size_t Id = 0;
+			static constexpr auto Name = "beta";
 		public:
 			uint64_t Bar;
 			std::string Baz;
@@ -283,19 +283,19 @@ namespace catapult { namespace model {
 			}
 		};
 
-        struct GammaConfiguration {
-        public:
-            static constexpr auto Name = "gamma";
-        public:
-            uint64_t Foo;
+		struct GammaConfiguration {
+		public:
+			static constexpr auto Name = "gamma";
+		public:
+			uint64_t Foo;
 
-            static GammaConfiguration LoadFromBag(const utils::ConfigurationBag& bag) {
-                GammaConfiguration config;
-                utils::LoadIniProperty(bag, "", "Foo", config.Foo);
-                utils::VerifyBagSizeLte(bag, 1);
-                return config;
-            }
-        };
+			static GammaConfiguration LoadFromBag(const utils::ConfigurationBag& bag) {
+				GammaConfiguration config;
+				utils::LoadIniProperty(bag, "", "Foo", config.Foo);
+				utils::VerifyBagSizeLte(bag, 1);
+				return config;
+			}
+		};
 	}
 
 	TEST(TEST_CLASS, LoadPluginConfigurationSucceedsWhenPluginConfigurationIsPresent) {

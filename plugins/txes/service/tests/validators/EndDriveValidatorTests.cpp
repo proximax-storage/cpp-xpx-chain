@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EndDriveValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EndDrive, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(EndDrive, )
 
 	namespace {
 		using Notification = model::EndDriveNotification<1>;
@@ -28,14 +28,14 @@ namespace catapult { namespace validators {
 		constexpr MosaicId Storage_Mosaic_Id(4321);
 		const Key Long_Offer_Key = test::GenerateRandomByteArray<Key>();
 
-		auto CreateConfigHolder() {
+		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
 			config.Immutable.StorageMosaicId = Storage_Mosaic_Id;
 			auto pluginConfig = config::ExchangeConfiguration::Uninitialized();
 			pluginConfig.LongOfferKey = Long_Offer_Key;
-			config.Network.SetPluginConfiguration(PLUGIN_NAME_HASH(exchange), pluginConfig);
-			return config::CreateMockConfigurationHolder(config.ToConst());
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
 		}
 
 		void AssertValidationResult(
@@ -65,10 +65,10 @@ namespace catapult { namespace validators {
 				cache.commit(currentHeight);
 			}
 			Notification notification(driveEntry.key(), signer);
-			auto pValidator = CreateEndDriveValidator(CreateConfigHolder());
+			auto pValidator = CreateEndDriveValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, currentHeight);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(), currentHeight);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

@@ -15,8 +15,8 @@ namespace catapult { namespace config {
 
 	/// Exchange plugin configuration settings.
 	struct ExchangeConfiguration : public model::PluginConfiguration {
-    public:
-        DEFINE_CONFIG_CONSTANTS(exchange)
+	public:
+		DEFINE_CONFIG_CONSTANTS(exchange)
 
 	public:
 		/// Whether the plugin is enabled.

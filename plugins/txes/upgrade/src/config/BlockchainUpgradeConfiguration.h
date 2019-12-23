@@ -15,10 +15,10 @@ namespace catapult { namespace config {
 
 	/// Catapult upgrade plugin configuration settings.
 	struct BlockchainUpgradeConfiguration : public model::PluginConfiguration {
-    public:
-        DEFINE_CONFIG_CONSTANTS(upgrade)
+	public:
+		DEFINE_CONFIG_CONSTANTS(upgrade)
 
-    public:
+	public:
 		/// Minimum duration in blocks before forcing update.
 		BlockDuration MinUpgradePeriod;
 

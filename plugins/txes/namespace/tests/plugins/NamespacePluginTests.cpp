@@ -60,7 +60,7 @@ namespace catapult { namespace plugins {
 					}
 				}}));
 
-                config.template InitPluginConfiguration<config::NamespaceConfiguration>();
+				config.template InitPluginConfiguration<config::NamespaceConfiguration>();
 
 				auto manager = test::CreatePluginManager(config);
 				RegisterNamespaceSubsystem(manager);

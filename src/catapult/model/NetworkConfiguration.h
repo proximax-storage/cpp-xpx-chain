@@ -97,7 +97,7 @@ namespace catapult { namespace model {
 
 	private:
 		/// Map of plugin configurations.
-        mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> pluginConfigs;
+		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> pluginConfigs;
 
 	private:
 		NetworkConfiguration() = default;
@@ -122,8 +122,8 @@ namespace catapult { namespace model {
 		/// Sets \a config of plugin.
 		template<typename T>
 		void SetPluginConfiguration(const T& config) {
-            if (T::Id >= pluginConfigs.size())
-                CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "plugin has wrong Id", std::string(T::Name));
+			if (T::Id >= pluginConfigs.size())
+				CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "plugin has wrong Id", std::string(T::Name));
 
 			pluginConfigs[T::Id] = std::make_shared<T>(config);
 		}

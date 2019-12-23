@@ -723,9 +723,9 @@ namespace catapult { namespace harvesting {
 
 		auto config = CreateConfiguration(StateVerifyOptions::All);
 
-        test::MockExecutionConfiguration executionConfig(config);
-        executionConfig.pObserver->enableReceiptGeneration();
-        executionConfig.pObserver->enableRollbackEmulation();
+		test::MockExecutionConfiguration executionConfig(config);
+		executionConfig.pObserver->enableReceiptGeneration();
+		executionConfig.pObserver->enableRollbackEmulation();
 		FacadeTestContext context(config, executionConfig.Config);
 
 		auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));

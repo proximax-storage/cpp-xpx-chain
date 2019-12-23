@@ -36,14 +36,14 @@ namespace catapult { namespace config {
 
 		auto CreateMutableBlockchainConfiguration() {
 			test::MutableBlockchainConfiguration config;
-            config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
 
 			auto& networkConfig = config.Network;
 			networkConfig.ImportanceGrouping = 1;
 			networkConfig.MaxMosaicAtomicUnits = Amount(1000);
-            networkConfig.MaxRollbackBlocks = 5u;
-            networkConfig.ImportanceGrouping = 10u;
-            networkConfig.HarvestBeneficiaryPercentage = 10;
+			networkConfig.MaxRollbackBlocks = 5u;
+			networkConfig.ImportanceGrouping = 10u;
+			networkConfig.HarvestBeneficiaryPercentage = 10;
 
 			auto& nodeConfig = config.Node;
 			nodeConfig.FeeInterest = 1;

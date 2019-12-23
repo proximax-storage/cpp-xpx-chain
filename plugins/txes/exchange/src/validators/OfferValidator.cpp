@@ -12,8 +12,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::OfferNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(Offer, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(Offer, [pConfigHolder](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(Offer, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(Offer, [](const Notification& notification, const ValidatorContext& context) {
 			if (notification.OfferCount == 0)
 				return Failure_Exchange_No_Offers;
 

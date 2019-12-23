@@ -28,9 +28,9 @@ namespace catapult { namespace extensions {
 		chain::ExecutionConfiguration executionConfig;
 		executionConfig.NetworkIdentifier = pluginManager.immutableConfig().NetworkIdentifier;
 		executionConfig.MinFeeMultiplierSupplier = [&pluginManager](const Height& height) { return config::GetMinFeeMultiplier(pluginManager.configHolder()->Config(height)); };
-        executionConfig.ConfigSupplier = [&pluginManager](const Height& height) -> const config::BlockchainConfiguration& {
-        	return pluginManager.configHolder()->Config(height);
-        };
+		executionConfig.ConfigSupplier = [&pluginManager](const Height& height) -> const config::BlockchainConfiguration& {
+			return pluginManager.configHolder()->Config(height);
+		};
 
 		executionConfig.pObserver = pluginManager.createObserver();
 		executionConfig.pValidator = pluginManager.createStatefulValidator();

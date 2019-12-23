@@ -57,7 +57,7 @@ namespace catapult { namespace chain {
 
 		auto CreateConfiguration(const BlockFeeMultiplier& minFeeMultiplier) {
 			test::MutableBlockchainConfiguration config;
-            config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
 			config.Node.MinFeeMultiplier = minFeeMultiplier;
 			config.Node.FeeInterest = 1;
 			config.Node.FeeInterestDenominator = 1;

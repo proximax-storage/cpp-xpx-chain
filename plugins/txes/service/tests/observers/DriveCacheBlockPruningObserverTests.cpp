@@ -16,7 +16,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS DriveCacheBlockPruningObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(DriveCacheBlockPruning, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_OBSERVER_TESTS(DriveCacheBlockPruning)
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::DriveCacheFactory>;
@@ -24,10 +24,10 @@ namespace catapult { namespace observers {
 		constexpr uint32_t Max_Rollback_Blocks(50);
 		constexpr Height Prune_Height(55);
 
-		auto CreateConfigHolder() {
+		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
 			config.Network.MaxRollbackBlocks = Max_Rollback_Blocks;
-			return config::CreateMockConfigurationHolder(config.ToConst());
+			return config.ToConst();
 		}
 
 		state::DriveEntry CreateDriveEntry(const Height& end) {
@@ -70,9 +70,9 @@ namespace catapult { namespace observers {
 
 		void RunTest(NotifyMode mode, const CacheValues& values) {
 			// Arrange:
-			ObserverTestContext context(mode, Prune_Height + Height(Max_Rollback_Blocks));
+			ObserverTestContext context(mode, Prune_Height + Height(Max_Rollback_Blocks), CreateConfig());
 			auto notification = test::CreateBlockNotification();
-			auto pObserver = CreateDriveCacheBlockPruningObserver(CreateConfigHolder());
+			auto pObserver = CreateDriveCacheBlockPruningObserver();
 			auto& driveCache = context.cache().sub<cache::DriveCache>();
 
 			// Populate drive cache.

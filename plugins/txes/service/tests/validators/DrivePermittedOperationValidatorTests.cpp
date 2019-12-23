@@ -39,7 +39,8 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateDrivePermittedOperationValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, currentHeight);
+			auto result = test::ValidateNotification(*pValidator, notification, cache,
+					config::BlockchainConfiguration::Uninitialized(), currentHeight);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

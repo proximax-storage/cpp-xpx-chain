@@ -48,8 +48,9 @@ namespace catapult { namespace plugins {
 
 	void RegisterMultisigSubsystem(PluginManager& manager) {
 		manager.addPluginInitializer([](auto& config) {
-            config.template InitPluginConfiguration<config::MultisigConfiguration>();
+			config.template InitPluginConfiguration<config::MultisigConfiguration>();
 		});
+
 		manager.addTransactionSupport(CreateModifyMultisigAccountTransactionPlugin());
 
 		manager.addCacheSupport<cache::MultisigCacheStorage>(

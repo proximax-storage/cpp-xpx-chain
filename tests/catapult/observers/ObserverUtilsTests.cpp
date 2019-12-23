@@ -229,11 +229,11 @@ namespace catapult { namespace observers {
 			NotifyBlock(observer, context, Timestamp());
 		}
 
-        config::BlockchainConfiguration CreateBlockchainConfiguration() {
-            test::MutableBlockchainConfiguration config;
-            config.Network.BlockPruneInterval = 10;
-            return config.ToConst();
-        }
+		config::BlockchainConfiguration CreateBlockchainConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			config.Network.BlockPruneInterval = 10;
+			return config.ToConst();
+		}
 
 		void AssertNoPruning(const PruningObserver& observer, NotifyMode mode, Height height) {
 			// Arrange:
@@ -259,7 +259,7 @@ namespace catapult { namespace observers {
 			auto cache = CreateSimpleCatapultCache();
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
-            auto config = CreateBlockchainConfiguration();
+			auto config = CreateBlockchainConfiguration();
 			ObserverContext context({ cacheDelta, state }, config, height, mode, model::ResolverContext());
 
 			// Act:

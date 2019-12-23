@@ -17,9 +17,10 @@
 namespace catapult { namespace plugins {
 
 	void RegisterBlockchainUpgradeSubsystem(PluginManager& manager) {
-        manager.addPluginInitializer([](auto& config) {
+		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
-        });
+		});
+
 		manager.addTransactionSupport(CreateBlockchainUpgradeTransactionPlugin());
 
 		manager.addCacheSupport<cache::BlockchainUpgradeCacheStorage>(

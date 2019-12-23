@@ -36,11 +36,11 @@ namespace catapult { namespace validators {
 					[](const auto& unresolved) { return Amount(unresolved); });
 		}
 
-        auto CreateBlockchainConfiguration() {
-            test::MutableBlockchainConfiguration config;
-            config.Immutable.NetworkIdentifier = static_cast<model::NetworkIdentifier>(0xAD);
-            return config.ToConst();
-        }
+		auto CreateBlockchainConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = static_cast<model::NetworkIdentifier>(0xAD);
+			return config.ToConst();
+		}
 	}
 
 	TEST(TEST_CLASS, CanCreateValidatorContextAroundHeightAndNetworkAndCache) {

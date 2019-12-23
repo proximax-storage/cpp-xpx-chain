@@ -32,7 +32,8 @@ namespace catapult { namespace plugins {
 						));
 
 						const auto& config = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
-						const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>(PLUGIN_NAME_HASH(service));
+						const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>();
+
 						UnresolvedMosaic storageMosaic{config::GetUnresolvedStorageMosaicId(config.Immutable), pluginConfig.VerificationFee};
 						sub.notify(BalanceDebitNotification<1>(transaction.Signer, storageMosaic.MosaicId, storageMosaic.Amount));
 						sub.notify(SecretLockNotification<1>(

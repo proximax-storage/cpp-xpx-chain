@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ExchangeValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Exchange, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(Exchange, )
 
 	namespace {
 		using Notification = model::ExchangeNotification<1>;
@@ -27,13 +27,13 @@ namespace catapult { namespace validators {
 		constexpr MosaicId Storage_Mosaic_Id(1234);
 		const Key Long_Offer_Key = test::GenerateRandomByteArray<Key>();
 
-		auto CreateConfigHolder() {
+		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.StorageMosaicId = Storage_Mosaic_Id;
 			auto pluginConfig = config::ExchangeConfiguration::Uninitialized();
 			pluginConfig.LongOfferKey = Long_Offer_Key;
-			config.Network.SetPluginConfiguration(PLUGIN_NAME_HASH(exchange), pluginConfig);
-			return config::CreateMockConfigurationHolder(config.ToConst());
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
 		}
 
 		void AssertValidationResult(
@@ -64,10 +64,10 @@ namespace catapult { namespace validators {
 				cache.commit(currentHeight);
 			}
 			Notification notification(signer, offers.size(), offers.data());
-			auto pValidator = CreateExchangeValidator(CreateConfigHolder());
+			auto pValidator = CreateExchangeValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, currentHeight);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfig(), currentHeight);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

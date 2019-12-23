@@ -24,8 +24,8 @@ namespace catapult { namespace validators {
 			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
-            test::MutableBlockchainConfiguration config;
-            config.Network.Info.PublicKey = networkKey;
+			test::MutableBlockchainConfiguration config;
+			config.Network.Info.PublicKey = networkKey;
 			auto context = test::CreateValidatorContext(config.ToConst(), Height(), readOnlyCache);
 			auto pValidator = CreateNetworkConfigSignerValidator();
 

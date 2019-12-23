@@ -46,10 +46,10 @@ namespace catapult { namespace chain {
 		std::shared_ptr<plugins::PluginManager> CreatePluginManager() {
 			auto config = test::CreatePrototypicalBlockchainConfiguration();
 			const_cast<model::NetworkConfiguration&>(config.Network).Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", {
-			    { "maxMessageSize", "0" },
-			    { "maxMosaicsSize", "512" },
-			} }}));
-            const_cast<model::NetworkConfiguration&>(config.Network).template InitPluginConfiguration<config::TransferConfiguration>();
+				{ "maxMessageSize", "0" },
+				{ "maxMosaicsSize", "512" },
+				} }}));
+			const_cast<model::NetworkConfiguration&>(config.Network).template InitPluginConfiguration<config::TransferConfiguration>();
 
 			return test::CreatePluginManagerWithRealPlugins(config);
 		}

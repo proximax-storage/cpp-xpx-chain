@@ -27,9 +27,10 @@
 namespace catapult { namespace plugins {
 
 	void RegisterTransferSubsystem(PluginManager& manager) {
-        manager.addPluginInitializer([](auto& config) {
+		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::TransferConfiguration>();
-        });
+		});
+
 		manager.addTransactionSupport(CreateTransferTransactionPlugin());
 
 		manager.addStatelessValidatorHook([](auto& builder) {

@@ -40,7 +40,7 @@ namespace catapult { namespace test {
 
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(gracePeriodDuration.unwrap());
-            pluginConfig.MaxNamespaceDuration = maxNamespaceDuration;
+			pluginConfig.MaxNamespaceDuration = maxNamespaceDuration;
 			const_cast<model::NetworkConfiguration&>(config.Network).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			const_cast<model::NetworkConfiguration&>(config.Network).SetPluginConfiguration(pluginConfig);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);

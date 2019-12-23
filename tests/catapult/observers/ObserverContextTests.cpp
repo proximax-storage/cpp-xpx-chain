@@ -111,7 +111,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, CanCreateCommitObserverContextWithoutBlockStatementBuilder) {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
-		    auto config = config::BlockchainConfiguration::Uninitialized();
+			auto config = config::BlockchainConfiguration::Uninitialized();
 			ObserverContext context(ObserverState(cacheDelta, state), config, Default_Height, NotifyMode::Commit, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
@@ -125,7 +125,7 @@ namespace catapult { namespace observers {
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			model::BlockStatementBuilder blockStatementBuilder;
 			auto observerState = ObserverState(cacheDelta, state, blockStatementBuilder);
-            auto config = config::BlockchainConfiguration::Uninitialized();
+			auto config = config::BlockchainConfiguration::Uninitialized();
 			ObserverContext context(observerState, config, Default_Height, NotifyMode::Commit, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
@@ -142,7 +142,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, CanCreateRollbackObserverContextWithoutBlockStatementBuilder) {
 		// Act:
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
-            auto config = config::BlockchainConfiguration::Uninitialized();
+			auto config = config::BlockchainConfiguration::Uninitialized();
 			ObserverContext context(ObserverState(cacheDelta, state), config, Default_Height, NotifyMode::Rollback, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 
@@ -156,7 +156,7 @@ namespace catapult { namespace observers {
 		RunTestWithStateAndCache([](auto& cacheDelta, auto& state) {
 			model::BlockStatementBuilder blockStatementBuilder;
 			auto observerState = ObserverState(cacheDelta, state, blockStatementBuilder);
-            auto config = config::BlockchainConfiguration::Uninitialized();
+			auto config = config::BlockchainConfiguration::Uninitialized();
 			ObserverContext context(observerState, config, Default_Height, NotifyMode::Rollback, CreateResolverContext());
 			AddRandomReceipt(context.StatementBuilder());
 

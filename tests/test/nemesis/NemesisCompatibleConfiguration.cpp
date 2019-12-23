@@ -69,11 +69,11 @@ namespace catapult { namespace test {
 			{ "minUpgradePeriod", "360" },
 		} } }));
 
-        config.template InitPluginConfiguration<config::TransferConfiguration>();
-        config.template InitPluginConfiguration<config::MosaicConfiguration>();
-        config.template InitPluginConfiguration<config::NamespaceConfiguration>();
-        config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
-        config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
+		config.template InitPluginConfiguration<config::TransferConfiguration>();
+		config.template InitPluginConfiguration<config::MosaicConfiguration>();
+		config.template InitPluginConfiguration<config::NamespaceConfiguration>();
+		config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
+		config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
 	}
 
 	namespace {

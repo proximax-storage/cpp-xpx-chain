@@ -41,12 +41,12 @@ namespace catapult { namespace validators {
 			return crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
 		}
 
-        config::BlockchainConfiguration CreateBlockchainConfiguration() {
-            test::MutableBlockchainConfiguration config;
-            config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Zero;
-            config.Network.Info.PublicKey = GetNemesisAccount().publicKey();
-            return config.ToConst();
-        }
+		config::BlockchainConfiguration CreateBlockchainConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Zero;
+			config.Network.Info.PublicKey = GetNemesisAccount().publicKey();
+			return config.ToConst();
+		}
 
 		void AssertValidationResult(ValidationResult expectedResult, const Key& signer, Height::ValueType height) {
 			// Arrange:
