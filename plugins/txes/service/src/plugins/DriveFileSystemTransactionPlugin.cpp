@@ -19,8 +19,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
-			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight,
-								   NotificationSubscriber &sub) {
+			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight, NotificationSubscriber &sub) {
 				auto &blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
 				switch (transaction.EntityVersion()) {
 					case 1: {
@@ -42,13 +41,12 @@ namespace catapult { namespace plugins {
 						auto streamingMosaicId = UnresolvedMosaicId(blockChainConfig.Immutable.StreamingMosaicId.unwrap());
 
 						for (auto i = 0u; i < transaction.AddActionsCount; ++i, ++addActionsPtr) {
-							// TODO: Fix memory leak
-							auto deposit = new model::FileUpload{ transaction.DriveKey, addActionsPtr->FileSize };
+							auto pDeposit = sub.mempool().malloc(model::FileUpload(transaction.DriveKey, addActionsPtr->FileSize));
 							sub.notify(BalanceTransferNotification<1>(
 								transaction.Signer,
 								driveAddress,
 								streamingMosaicId,
-								UnresolvedAmount(0, UnresolvedAmountType::FileUpload, reinterpret_cast<uint8_t*>(deposit))
+								UnresolvedAmount(0, UnresolvedAmountType::FileUpload, pDeposit)
 							));
 						}
 

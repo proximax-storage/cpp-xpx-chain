@@ -56,6 +56,9 @@ namespace catapult { namespace model {
 
 		case LockHashAlgorithm::Op_Hash_256:
 			return CalculateHash256(crypto::Sha256Double, data);
+
+		case LockHashAlgorithm::Op_Internal:
+			return Hash256();
 		}
 
 		CATAPULT_THROW_INVALID_ARGUMENT_1("invalid hash algorithm", utils::to_underlying_type(hashAlgorithm));

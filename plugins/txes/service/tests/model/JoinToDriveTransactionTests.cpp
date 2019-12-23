@@ -1,0 +1,44 @@
+/**
+*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#include "src/model/JoinToDriveTransaction.h"
+#include "catapult/utils/MemoryUtils.h"
+#include "tests/test/core/TransactionTestUtils.h"
+#include "tests/test/nodeps/NumericTestUtils.h"
+#include "tests/TestHarness.h"
+
+namespace catapult { namespace model {
+
+	using TransactionType = JoinToDriveTransaction;
+
+#define TEST_CLASS JoinToDriveTransactionTests
+
+	// region size + properties
+
+	namespace {
+		template<typename T>
+		void AssertEntityHasExpectedSize(size_t baseSize) {
+			// Arrange:
+			auto expectedSize = baseSize // base
+					+ Key_Size; // drive key
+
+			// Assert:
+			EXPECT_EQ(expectedSize, sizeof(T));
+			EXPECT_EQ(baseSize + 32u, sizeof(T));
+		}
+
+		template<typename T>
+		void AssertTransactionHasExpectedProperties() {
+			// Assert:
+			EXPECT_EQ(Entity_Type_JoinToDrive, static_cast<EntityType>(T::Entity_Type));
+			EXPECT_EQ(1u, static_cast<VersionType>(T::Current_Version));
+		}
+	}
+
+	ADD_BASIC_TRANSACTION_SIZE_PROPERTY_TESTS(JoinToDrive)
+
+	// endregion
+}}

@@ -38,7 +38,7 @@ namespace catapult { namespace config {
 
 	private:
 		void cleanupRefs(ConfigRoot& root) {
-			cleanupRefs(root, root.Config.Network.MaxRollbackBlocks);
+			cleanupRefs(root, 4 * root.Config.Network.MaxRollbackBlocks);
 		}
 
 		inline void cleanupRefs(ConfigRoot& root, uint64_t size) {

@@ -6,12 +6,10 @@
 
 #include "catapult/model/Address.h"
 #include "FilesDepositTransactionPlugin.h"
-#include "plugins/txes/multisig/src/model/MultisigNotifications.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/FilesDepositTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 
 using namespace catapult::model;
 
@@ -20,8 +18,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder> &pConfigHolder) {
-			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight,
-								   NotificationSubscriber &sub) {
+			return [pConfigHolder](const TTransaction &transaction, const Height &associatedHeight, NotificationSubscriber &sub) {
 				auto &blockChainConfig = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
 				switch (transaction.EntityVersion()) {
 					case 1: {
@@ -35,17 +32,14 @@ namespace catapult { namespace plugins {
 						sub.notify(AccountPublicKeyNotification<1>(transaction.DriveKey));
 
 						auto filesPtr = transaction.FilesPtr();
-						auto driveAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, blockChainConfig.Immutable.NetworkIdentifier));
 						auto streamingMosaicId = UnresolvedMosaicId(blockChainConfig.Immutable.StreamingMosaicId.unwrap());
 
 						for (auto i = 0u; i < transaction.FilesCount; ++i, ++filesPtr) {
-							// TODO: Fix memory leak
-							auto deposit = new model::FileDeposit{ transaction.DriveKey, filesPtr->FileHash };
-							sub.notify(BalanceTransferNotification<1>(
+							auto pDeposit = sub.mempool().malloc(model::FileDeposit(transaction.DriveKey, filesPtr->FileHash));
+							sub.notify(BalanceDebitNotification<1>(
 								transaction.Signer,
-								driveAddress,
 								streamingMosaicId,
-								UnresolvedAmount(0, UnresolvedAmountType::FileDeposit, reinterpret_cast<uint8_t*>(deposit))
+								UnresolvedAmount(0, UnresolvedAmountType::FileDeposit, pDeposit)
 							));
 						}
 

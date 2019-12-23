@@ -54,6 +54,12 @@ namespace catapult { namespace model {
 			static constexpr auto HashFunc = crypto::Sha256Double;
 		};
 
+		struct Op_Internal_Traits {
+			using HashType = Hash256;
+			static constexpr auto HashAlgorithm = LockHashAlgorithm::Op_Internal;
+			static constexpr auto HashFunc = [](const RawBuffer&, Hash256&) { return Hash256(); };
+		};
+
 		template<typename TTraits>
 		void AssertCalculateHashReturnsProperHash() {
 			// Arrange:
@@ -86,12 +92,14 @@ namespace catapult { namespace model {
 
 	MAKE_CALCULATE_HASH_TEST(OpHash_256)
 
+	MAKE_CALCULATE_HASH_TEST(Op_Internal)
+
 	TEST(TEST_CLASS, CalculateHashThrowsForInvalidAlgorithm) {
 		// Arrange:
 		auto dataBuffer = test::GenerateRandomVector(123);
 
 		// Act + Assert:
-		auto algorithm = static_cast<LockHashAlgorithm>(utils::to_underlying_type(LockHashAlgorithm::Op_Hash_256) + 1);
+		auto algorithm = static_cast<LockHashAlgorithm>(utils::to_underlying_type(LockHashAlgorithm::Op_Internal) + 1);
 		EXPECT_THROW(CalculateHash(algorithm, dataBuffer), catapult_invalid_argument);
 	}
 

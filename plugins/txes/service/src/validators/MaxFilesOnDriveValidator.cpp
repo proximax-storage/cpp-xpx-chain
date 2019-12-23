@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
             //const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::ServiceConfiguration>(PLUGIN_NAME_HASH(service));
             const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::ServiceConfiguration>();
 
-			if (driveEntry.files().size() + notification.AddActionsCount >= pluginConfig.MaxFilesOnDrive)
+			if (driveEntry.files().size() + notification.AddActionsCount > pluginConfig.MaxFilesOnDrive)
 				return Failure_Service_Too_Many_Files_On_Drive;
 
 			return ValidationResult::Success;

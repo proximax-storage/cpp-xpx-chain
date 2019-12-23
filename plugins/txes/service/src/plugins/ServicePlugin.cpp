@@ -5,7 +5,6 @@
 **/
 
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/observers/ObserverUtils.h"
 #include "ServicePlugin.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
@@ -16,141 +15,155 @@
 #include "src/plugins/JoinToDriveTransactionPlugin.h"
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/plugins/EndDriveTransactionPlugin.h"
-#include "src/plugins/DeleteRewardTransactionPlugin.h"
+#include "src/plugins/DriveFilesRewardTransactionPlugin.h"
+#include "src/plugins/StartDriveVerificationTransactionPlugin.h"
+#include "src/plugins/EndDriveVerificationTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/utils/ServiceUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
 
 namespace catapult { namespace plugins {
 
-        namespace {
-            void extractOwner(const cache::DriveCache::CacheReadOnlyType& cache, const Key& publicKey, model::PublicKeySet& result) {
-                if (!cache.contains(publicKey)) {
-                    return;
-                }
+	namespace {
+		void extractOwner(const cache::DriveCache::CacheReadOnlyType& cache, const Key& publicKey, model::PublicKeySet& result) {
+			if (!cache.contains(publicKey))
+				return;
 
-                auto driveIter = cache.find(publicKey);
-                const auto& driveEntry = driveIter.get();
-                result.insert(driveEntry.owner());
+			auto driveIter = cache.find(publicKey);
+			const auto& driveEntry = driveIter.get();
+			result.insert(driveEntry.owner());
+		}
+
+		template<typename TUnresolvedData>
+		const TUnresolvedData* castToUnresolvedData(const UnresolvedAmountData* pData) {
+			if (!pData)
+				CATAPULT_THROW_RUNTIME_ERROR("unresolved amount data pointer is null")
+
+			auto pCast = dynamic_cast<const TUnresolvedData*>(pData);
+			if (!pCast)
+				CATAPULT_THROW_RUNTIME_ERROR("unresolved amount data pointer is of unexpected type")
+
+			return pCast;
+		}
+	}
+
+	void RegisterServiceSubsystem(PluginManager& manager) {
+        const auto& pConfigHolder = manager.configHolder();
+        const auto& immutableConfig = manager.immutableConfig();
+        manager.addTransactionSupport(CreatePrepareDriveTransactionPlugin());
+		manager.addTransactionSupport(CreateDriveFileSystemTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateFilesDepositTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateJoinToDriveTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateEndDriveTransactionPlugin());
+		manager.addTransactionSupport(CreateDriveFilesRewardTransactionPlugin());
+		manager.addTransactionSupport(CreateStartDriveVerificationTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig.NetworkIdentifier));
+
+		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
+			const auto& driveCache = cache.template sub<cache::DriveCache>();
+			auto result = model::PublicKeySet{ key };
+			extractOwner(driveCache, key, result);
+
+			return result;
+		});
+
+        manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+            const auto& driveCache = cache.template sub<cache::DriveCache>();
+            switch (unresolved.Type) {
+            	case UnresolvedAmountType::DriveDeposit: {
+					const auto &driveKey = castToUnresolvedData<model::DriveDeposit>(unresolved.DataPtr)->DriveKey;
+
+					if (driveCache.contains(driveKey)) {
+                        auto driveIter = driveCache.find(driveKey);
+                        const auto& driveEntry = driveIter.get();
+						resolved = utils::CalculateDriveDeposit(driveEntry);
+						return true;
+					}
+					break;
+				}
+				case UnresolvedAmountType::FileDeposit: {
+					auto fileDeposit = castToUnresolvedData<model::FileDeposit>(unresolved.DataPtr);
+
+					if (driveCache.contains(fileDeposit->DriveKey)) {
+					    auto driveIter = driveCache.find(fileDeposit->DriveKey);
+						const auto& driveEntry = driveIter.get();
+
+						if (driveEntry.files().count(fileDeposit->FileHash)) {
+							resolved = utils::CalculateFileDeposit(driveEntry, fileDeposit->FileHash);
+							return true;
+						}
+					}
+					break;
+				}
+				case UnresolvedAmountType::FileUpload: {
+					auto fileUpload = castToUnresolvedData<model::FileUpload>(unresolved.DataPtr);
+
+					if (driveCache.contains(fileUpload->DriveKey)) {
+                        auto driveIter = driveCache.find(fileUpload->DriveKey);
+                        const auto& driveEntry = driveIter.get();
+
+						resolved = utils::CalculateFileUpload(driveEntry, fileUpload->FileSize);
+						return true;
+					}
+					break;
+				}
+				default:
+					break;
             }
-        }
 
-        void RegisterServiceSubsystem(PluginManager& manager) {
-            manager.addPluginInitializer([](auto& config) {
-                config.template InitPluginConfiguration<config::ServiceConfiguration>();
-            });
+            return false;
+        });
 
-            const auto& pConfigHolder = manager.configHolder();
-            manager.addTransactionSupport(CreatePrepareDriveTransactionPlugin());
-            manager.addTransactionSupport(CreateDriveFileSystemTransactionPlugin(pConfigHolder));
-            manager.addTransactionSupport(CreateFilesDepositTransactionPlugin(pConfigHolder));
-            manager.addTransactionSupport(CreateJoinToDriveTransactionPlugin(pConfigHolder));
-            manager.addTransactionSupport(CreateEndDriveTransactionPlugin());
-            manager.addTransactionSupport(CreateDeleteRewardTransactionPlugin());
+		manager.addCacheSupport<cache::DriveCacheStorage>(
+			std::make_unique<cache::DriveCache>(manager.cacheConfig(cache::DriveCache::Name), pConfigHolder));
 
-            manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
-                const auto& driveCache = cache.template sub<cache::DriveCache>();
-                auto result = model::PublicKeySet{ key };
-                extractOwner(driveCache, key, result);
+		using DriveCacheHandlersService = CacheHandlers<cache::DriveCacheDescriptor>;
+		DriveCacheHandlersService::Register<model::FacilityCode::Drive>(manager);
 
-                return result;
-            });
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("DRIVE C"), [&cache]() {
+				return cache.sub<cache::DriveCache>().createView(cache.height())->size();
+			});
+		});
 
-            manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
-                const auto& driveCache = cache.template sub<cache::DriveCache>();
-                switch (unresolved.Type) {
-                    case UnresolvedAmountType::DriveDeposit: {
-                        const auto &driveKey = reinterpret_cast<model::DriveDeposit*>(unresolved.Data)->DriveKey;
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+					.add(validators::CreatePrepareDriveArgumentsValidator())
+					.add(validators::CreateServicePluginConfigValidator());
+		});
 
-                        if (driveCache.contains(driveKey)) {
-                            auto driveIter = driveCache.find(driveKey);
-                            const auto& driveEntry = driveIter.get();
-                            resolved = utils::CalculateDriveDeposit(driveEntry);
-                            return true;
-                        }
-                        break;
-                    }
-                    case UnresolvedAmountType::FileDeposit: {
-                        auto fileDeposit = reinterpret_cast<model::FileDeposit*>(unresolved.Data);
+		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
+			builder
+					.add(validators::CreateDriveValidator())
+					.add(validators::CreateExchangeValidator(pConfigHolder))
+					.add(validators::CreateDrivePermittedOperationValidator())
+                    .add(validators::CreateDriveFilesRewardValidator(immutableConfig.StreamingMosaicId))
+					.add(validators::CreateFilesDepositValidator())
+					.add(validators::CreateJoinToDriveValidator())
+					.add(validators::CreatePrepareDrivePermissionValidator())
+					.add(validators::CreateDriveFileSystemValidator())
+					.add(validators::CreateEndDriveValidator(pConfigHolder))
+					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder))
+					.add(validators::CreateStartDriveVerificationValidator())
+					.add(validators::CreateEndDriveVerificationValidator());
+		});
 
-                        if (driveCache.contains(fileDeposit->DriveKey)) {
-                            auto driveIter = driveCache.find(fileDeposit->DriveKey);
-                            const auto& driveEntry = driveIter.get();
+		manager.addObserverHook([pConfigHolder, &immutableConfig](auto& builder) {
+			builder
+					.add(observers::CreatePrepareDriveObserver())
+					.add(observers::CreateDriveFileSystemObserver(immutableConfig.StreamingMosaicId))
+					.add(observers::CreateFilesDepositObserver())
+					.add(observers::CreateJoinToDriveObserver())
+                    .add(observers::CreateDriveVerificationPaymentObserver(immutableConfig.StorageMosaicId))
+                    .add(observers::CreateStartBillingObserver(immutableConfig.StorageMosaicId))
+                    .add(observers::CreateEndBillingObserver(immutableConfig.StorageMosaicId))
+                    .add(observers::CreateEndDriveObserver(immutableConfig))
+                    .add(observers::CreateDriveFilesRewardObserver(immutableConfig))
+                    .add(observers::CreateDriveCacheBlockPruningObserver(pConfigHolder));
+		});
+	}
+}}
 
-                            if (driveEntry.files().count(fileDeposit->FileHash)) {
-                                resolved = utils::CalculateFileDeposit(driveEntry, fileDeposit->FileHash);
-                                return true;
-                            }
-                        }
-                        break;
-                    }
-                    case UnresolvedAmountType::FileUpload: {
-                        auto fileUpload = reinterpret_cast<model::FileUpload*>(unresolved.Data);
-
-                        if (driveCache.contains(fileUpload->DriveKey)) {
-                            auto driveIter = driveCache.find(fileUpload->DriveKey);
-                            const auto& driveEntry = driveIter.get();
-
-                            resolved = utils::CalculateFileUpload(driveEntry, fileUpload->FileSize);
-                            return true;
-                        }
-                        break;
-                    }
-                    default:
-                        break;
-                }
-
-                return false;
-            });
-
-            manager.addCacheSupport<cache::DriveCacheStorage>(
-                    std::make_unique<cache::DriveCache>(manager.cacheConfig(cache::DriveCache::Name), pConfigHolder));
-
-            using DriveCacheHandlersService = CacheHandlers<cache::DriveCacheDescriptor>;
-            DriveCacheHandlersService::Register<model::FacilityCode::Drive>(manager);
-
-            manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-                counters.emplace_back(utils::DiagnosticCounterId("DRIVE C"), [&cache]() {
-                    return cache.sub<cache::DriveCache>().createView(cache.height())->size();
-                });
-            });
-
-            manager.addStatelessValidatorHook([](auto& builder) {
-                builder
-                        .add(validators::CreatePrepareDriveArgumentsValidator())
-                        .add(validators::CreateDeleteRewardValidator())
-                        .add(validators::CreateServicePluginConfigValidator());
-            });
-
-            manager.addStatefulValidatorHook([pConfigHolder = manager.configHolder()](auto& builder) {
-                builder
-                        .add(validators::CreateDriveValidator())
-                        .add(validators::CreateExchangeValidator())
-                        .add(validators::CreateDrivePermittedOperationValidator())
-                        .add(validators::CreateFilesDepositValidator())
-                        .add(validators::CreateJoinToDriveValidator())
-                        .add(validators::CreatePrepareDrivePermissionValidator())
-                        .add(validators::CreateDriveFileSystemValidator())
-                        .add(validators::CreateEndDriveValidator())
-                        .add(validators::CreateRewardValidator())
-                        .add(validators::CreateMaxFilesOnDriveValidator());
-            });
-
-            manager.addObserverHook([pConfigHolder = manager.configHolder()](auto& builder) {
-                builder
-                        .add(observers::CreatePrepareDriveObserver())
-                        .add(observers::CreateDriveFileSystemObserver())
-                        .add(observers::CreateFilesDepositObserver())
-                        .add(observers::CreateJoinToDriveObserver())
-                        .add(observers::CreateDriveVerificationObserver())
-                        .add(observers::CreateStartBillingObserver())
-                        .add(observers::CreateEndBillingObserver())
-                        .add(observers::CreateEndDriveObserver())
-                        .add(observers::CreateRewardObserver())
-                        .add(observers::CreateDriveCacheBlockPruningObserver());
-            });
-        }
-    }}
 
 extern "C" PLUGIN_API
 void RegisterSubsystem(catapult::plugins::PluginManager& manager) {

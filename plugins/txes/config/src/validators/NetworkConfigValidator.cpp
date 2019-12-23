@@ -46,7 +46,7 @@ namespace catapult { namespace validators {
 					return Failure_NetworkConfig_ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks;
 
 				if (100u < networkConfig.HarvestBeneficiaryPercentage)
-					return Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hunderd;
+					return Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hundred;
 
 				auto totalInflation = context.Config.Inflation.InflationCalculator.sumAll();
 				auto totalCurrency = context.Config.Immutable.InitialCurrencyAtomicUnits + totalInflation.first;

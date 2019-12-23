@@ -7,8 +7,6 @@
 #include "Observers.h"
 #include "src/cache/DriveCache.h"
 #include "catapult/observers/ObserverUtils.h"
-#include "CommonDrive.h"
-#include <cmath>
 
 namespace catapult { namespace observers {
 
@@ -16,7 +14,11 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(DriveCacheBlockPruning, Notification)() {
 		return MAKE_OBSERVER(DriveCacheBlockPruning, Notification, [](const Notification&, ObserverContext& context) {
+			if (NotifyMode::Rollback == context.Mode)
+				return;
+
             const model::NetworkConfiguration &config = context.Config.Network;
+
             auto gracePeriod = BlockDuration(config.MaxRollbackBlocks);
             if (context.Height.unwrap() <= gracePeriod.unwrap())
                 return;
