@@ -228,13 +228,13 @@ namespace catapult { namespace state {
 			m_occupiedSpace = occupiedSpace;
 		}
 
-		/// Sets the drive occupied space.
+		/// Increases the drive occupied space by \a delta.
 		void increaseOccupiedSpace(const uint64_t& delta) {
 			if (!utils::CheckedAdd(m_occupiedSpace, delta))
                 CATAPULT_THROW_INVALID_ARGUMENT_2("occupied space overflow: occupiedSpace, delta", m_occupiedSpace, delta);
 		}
 
-		/// Sets the drive occupied space.
+		/// Decreases the drive occupied space by \a delta.
 		void decreaseOccupiedSpace(const uint64_t& delta) {
 			if (delta > m_occupiedSpace)
 				CATAPULT_THROW_INVALID_ARGUMENT_2("failed to decrease occupied space: occupiedSpace, delta", m_occupiedSpace, delta);
