@@ -30,18 +30,15 @@ namespace catapult { namespace plugins {
 						auto failures = transaction.Transactions(EntityContainerErrorPolicy::Suppress);
 						auto failureCount = std::distance(failures.cbegin(), failures.cend());
 						auto pFailedReplicators = sub.mempool().malloc<Key>(failureCount);
-						auto pFailedBlockHashCounts = sub.mempool().malloc<uint16_t>(failureCount);
 						uint16_t i = 0u;
-						std::for_each(failures.cbegin(), failures.cend(), [&i, pFailedReplicators, pFailedBlockHashCounts](const auto& failure) {
-							pFailedReplicators[i] = failure.Replicator;
-							pFailedBlockHashCounts[i++] = failure.BlockHashCount();
+						std::for_each(failures.cbegin(), failures.cend(), [&i, pFailedReplicators](const auto& failure) {
+							pFailedReplicators[i++] = failure.Replicator;
 						});
 
 						sub.notify(EndDriveVerificationNotification<1>(
 							transaction.Signer,
 							failureCount,
-							pFailedReplicators,
-							pFailedBlockHashCounts));
+							pFailedReplicators));
 
 						sub.notify(ProofPublicationNotification<1>(
 							transaction.Signer,

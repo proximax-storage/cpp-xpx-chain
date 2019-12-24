@@ -42,8 +42,7 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult,
 				const state::DriveEntry& driveEntry,
 				const state::SecretLockInfo& secretLockInfo,
-				const std::vector<Key>& failedReplicators = {},
-				const std::vector<uint16_t>& failedBlockHashCounts = {}) {
+				const std::vector<Key>& failedReplicators = {}) {
 			// Arrange:
 			Height currentHeight(1);
 			auto cache = test::DriveCacheFactory::Create();
@@ -58,7 +57,7 @@ namespace catapult { namespace validators {
 
 				cache.commit(currentHeight);
 			}
-			Notification notification(driveEntry.key(), failedReplicators.size(), failedReplicators.data(), failedBlockHashCounts.data());
+			Notification notification(driveEntry.key(), failedReplicators.size(), failedReplicators.data());
 			auto pValidator = CreateEndDriveVerificationValidator();
 
 			// Act:
@@ -95,21 +94,6 @@ namespace catapult { namespace validators {
 			secretLockInfo);
 	}
 
-	TEST(TEST_CLASS, FailureWhenBlockHashCountZero) {
-		// Arrange:
-		auto driveKey = test::GenerateRandomByteArray<Key>();
-		state::DriveEntry driveEntry(driveKey);
-		auto secretLockInfo = CreateLockInfo(driveKey);
-
-		// Assert:
-		AssertValidationResult(
-			Failure_Service_Failed_Block_Hashes_Missing,
-			driveEntry,
-			secretLockInfo,
-			{ test::GenerateRandomByteArray<Key>() },
-			{ 0u });
-	}
-
 	TEST(TEST_CLASS, FailureWhenReplicatorNotRegistered) {
 		// Arrange:
 		auto driveKey = test::GenerateRandomByteArray<Key>();
@@ -121,8 +105,7 @@ namespace catapult { namespace validators {
 			Failure_Service_Drive_Replicator_Not_Registered,
 			driveEntry,
 			secretLockInfo,
-			{ test::GenerateRandomByteArray<Key>() },
-			{ 5u });
+			{ test::GenerateRandomByteArray<Key>() });
 	}
 
 	TEST(TEST_CLASS, FailureWhenParticipantRedundant) {
@@ -138,8 +121,7 @@ namespace catapult { namespace validators {
 			Failure_Service_Participant_Redundant,
 			driveEntry,
 			secretLockInfo,
-			{ replicatorKey,  replicatorKey },
-			{ 5u, 6u });
+			{ replicatorKey,  replicatorKey });
 	}
 
 	TEST(TEST_CLASS, Success) {
@@ -155,7 +137,6 @@ namespace catapult { namespace validators {
 			ValidationResult::Success,
 			driveEntry,
 			secretLockInfo,
-			{ replicatorKey },
-			{ 5u });
+			{ replicatorKey });
 	}
 }}

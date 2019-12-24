@@ -27,11 +27,7 @@ namespace catapult { namespace validators {
 
 		std::set<Key> keys;
 		auto pFailedReplicators = notification.FailedReplicatorsPtr;
-		auto pFailedBlockHashCounts = notification.FailedBlockHashCountsPtr;
 		for (auto i = 0u; i < notification.FailureCount; ++i) {
-			if (!pFailedBlockHashCounts[i])
-				return Failure_Service_Failed_Block_Hashes_Missing;
-
 			keys.insert(pFailedReplicators[i]);
 			if (!driveEntry.replicators().count(pFailedReplicators[i]))
 				return Failure_Service_Drive_Replicator_Not_Registered;
