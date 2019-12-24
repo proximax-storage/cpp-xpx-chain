@@ -62,7 +62,7 @@ namespace catapult { namespace observers {
 		state::DriveEntry CreateExpectedDriveEntry(
 				state::DriveEntry& initialEntry,
 				uint8_t numFailures,
-				std::vector<model::VerificationFailure>& failures,
+				std::vector<Key>& failedReplicators,
 				std::map<Key, state::AccountState>& expectedAccounts) {
 			state::DriveEntry entry(initialEntry);
 
@@ -73,12 +73,12 @@ namespace catapult { namespace observers {
 			auto lastReplicatorStart = firstReplicatorStart - (Num_Replicators - 1);
 			auto sumTime = (firstReplicatorStart + lastReplicatorStart) * Num_Replicators / 2 - numFailures * (Billing_End - Current_Height).unwrap();
 
-			failures.reserve(numFailures);
+			failedReplicators.reserve(numFailures);
 			auto& replicators = entry.replicators();
 			auto replicatorIter = replicators.begin();
 			for (auto i = 0u; i < numFailures && replicatorIter != replicators.end(); ++i) {
 				auto replicatorKey = replicatorIter->first;
-				failures.push_back(model::VerificationFailure{ replicatorKey, test::GenerateRandomByteArray<Hash256>() });
+				failedReplicators.push_back(replicatorKey);
 				replicatorIter->second.End = Current_Height;
 				auto replicatorReward = Amount(driveBalance * (Current_Height - replicatorIter->second.Start).unwrap() / sumTime);
 				expectedAccounts.at(entry.key()).Balances.debit(Storage_Mosaic_Id, replicatorReward, Current_Height);
@@ -99,7 +99,7 @@ namespace catapult { namespace observers {
 		public:
 			state::DriveEntry InitialDriveEntry;
 			state::DriveEntry ExpectedDriveEntry;
-			std::vector<model::VerificationFailure> Failures;
+			std::vector<Key> FailedReplicators;
 			std::map<Key, state::AccountState> InitialAccounts;
 			std::map<Key, state::AccountState> ExpectedAccounts;
 			state::MultisigEntry InitialMultisigEntry;
@@ -111,8 +111,8 @@ namespace catapult { namespace observers {
 			ObserverTestContext context(mode, Current_Height);
 			Notification notification(
 				values.InitialDriveEntry.key(),
-				values.Failures.size(),
-				values.Failures.data());
+				values.FailedReplicators.size(),
+				values.FailedReplicators.data());
 			auto pObserver = CreateDriveVerificationPaymentObserver(Storage_Mosaic_Id);
 			auto& driveCache = context.cache().sub<cache::DriveCache>();
 			auto& multisigCache = context.cache().sub<cache::MultisigCache>();
@@ -151,7 +151,7 @@ namespace catapult { namespace observers {
 		CacheValues values;
 		values.InitialDriveEntry = CreateInitialDriveEntry(values.InitialAccounts);
 		values.ExpectedAccounts = values.InitialAccounts;
-		values.ExpectedDriveEntry = CreateExpectedDriveEntry(values.InitialDriveEntry, 0, values.Failures, values.ExpectedAccounts);
+		values.ExpectedDriveEntry = CreateExpectedDriveEntry(values.InitialDriveEntry, 0, values.FailedReplicators, values.ExpectedAccounts);
 		values.InitialMultisigEntry = CreateMultisigEntry(values.InitialDriveEntry.key(), 6, 6);
 		values.ExpectedMultisigEntry = CreateMultisigEntry(values.InitialDriveEntry.key(), 6, 6);
 
@@ -164,7 +164,7 @@ namespace catapult { namespace observers {
 		CacheValues values;
 		values.InitialDriveEntry = CreateInitialDriveEntry(values.InitialAccounts);
 		values.ExpectedAccounts = values.InitialAccounts;
-		values.ExpectedDriveEntry = CreateExpectedDriveEntry(values.InitialDriveEntry, 3, values.Failures, values.ExpectedAccounts);
+		values.ExpectedDriveEntry = CreateExpectedDriveEntry(values.InitialDriveEntry, 3, values.FailedReplicators, values.ExpectedAccounts);
 		values.InitialMultisigEntry = CreateMultisigEntry(values.InitialDriveEntry.key(), 6, 6);
 		values.ExpectedMultisigEntry = CreateMultisigEntry(values.InitialDriveEntry.key(), 5, 5);
 
@@ -177,7 +177,7 @@ namespace catapult { namespace observers {
 		CacheValues values;
 		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.ExpectedAccounts);
 		values.InitialAccounts = values.ExpectedAccounts;
-		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, 0, values.Failures, values.InitialAccounts);
+		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, 0, values.FailedReplicators, values.InitialAccounts);
 		values.InitialMultisigEntry = CreateMultisigEntry(values.InitialDriveEntry.key(), 5, 5);
 		values.ExpectedMultisigEntry = CreateMultisigEntry(values.InitialDriveEntry.key(), 5, 5);
 
@@ -190,7 +190,7 @@ namespace catapult { namespace observers {
 		CacheValues values;
 		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.ExpectedAccounts);
 		values.InitialAccounts = values.ExpectedAccounts;
-		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, 3, values.Failures, values.InitialAccounts);
+		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, 3, values.FailedReplicators, values.InitialAccounts);
 		values.InitialMultisigEntry = CreateMultisigEntry(values.InitialDriveEntry.key(), 5, 5);
 		values.ExpectedMultisigEntry = CreateMultisigEntry(values.InitialDriveEntry.key(), 6, 6);
 

@@ -26,10 +26,10 @@ namespace catapult { namespace validators {
 				return Failure_Service_Verification_Is_Not_Active;
 
 		std::set<Key> keys;
-		auto pFailure = notification.FailuresPtr;
-		for (auto i = 0u; i < notification.FailureCount; ++i, ++pFailure) {
-			keys.insert(pFailure->Replicator);
-			if (!driveEntry.replicators().count(pFailure->Replicator))
+		auto pFailedReplicators = notification.FailedReplicatorsPtr;
+		for (auto i = 0u; i < notification.FailureCount; ++i) {
+			keys.insert(pFailedReplicators[i]);
+			if (!driveEntry.replicators().count(pFailedReplicators[i]))
 				return Failure_Service_Drive_Replicator_Not_Registered;
 		}
 

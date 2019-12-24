@@ -84,6 +84,7 @@ namespace catapult { namespace test {
 		}
 
 		entry.setSize(test::Random());
+		entry.setOccupiedSpace(test::Random());
 		entry.setReplicas(test::Random16());
 		entry.setMinReplicators(test::Random16());
 		entry.setPercentApprovers(test::RandomByte());
@@ -208,6 +209,7 @@ namespace catapult { namespace test {
 		}
 
 		EXPECT_EQ(expectedEntry.size(), entry.size());
+		EXPECT_EQ(expectedEntry.occupiedSpace(), entry.occupiedSpace());
 		EXPECT_EQ(expectedEntry.replicas(), entry.replicas());
 		EXPECT_EQ(expectedEntry.minReplicators(), entry.minReplicators());
 		EXPECT_EQ(expectedEntry.percentApprovers(), entry.percentApprovers());

@@ -52,6 +52,7 @@ namespace catapult { namespace state {
 			// end region
 
 			sizeof(uint64_t) + // size
+			sizeof(uint64_t) + // occupied space
 			sizeof(uint16_t) + // replicas
 			sizeof(uint16_t) + // minReplicators
 			sizeof(uint8_t) + // percentApprovers
@@ -207,6 +208,8 @@ namespace catapult { namespace state {
 			// end region
 
 			EXPECT_EQ(entry.size(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+			EXPECT_EQ(entry.occupiedSpace(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.replicas(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
@@ -380,6 +383,8 @@ namespace catapult { namespace state {
 			}
 
 			memcpy(pData, &entry.size(), sizeof(uint64_t));
+			pData += sizeof(uint64_t);
+			memcpy(pData, &entry.occupiedSpace(), sizeof(uint64_t));
 			pData += sizeof(uint64_t);
 			memcpy(pData, &entry.replicas(), sizeof(uint16_t));
 			pData += sizeof(uint16_t);
