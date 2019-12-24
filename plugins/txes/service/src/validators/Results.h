@@ -140,6 +140,12 @@ namespace catapult { namespace validators {
 	/// Validation failed because space occupied by files exceeded drive size.
 	DEFINE_SERVICE_RESULT(Drive_Size_Exceeded, 43);
 
+	/// Validation failed because hashes of the blocks failed verification are missing.
+	DEFINE_SERVICE_RESULT(Failed_Block_Hashes_Missing, 44);
+
+	/// Validation failed because there are duplicate hashes of the blocks failed verification.
+	DEFINE_SERVICE_RESULT(Duplicate_Failed_Block_Hashes, 45);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

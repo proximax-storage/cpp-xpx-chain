@@ -31,9 +31,10 @@ namespace catapult { namespace plugins {
 						auto failureCount = std::distance(failures.cbegin(), failures.cend());
 						auto pFailedReplicators = sub.mempool().malloc<Key>(failureCount);
 						uint16_t i = 0u;
-						std::for_each(failures.cbegin(), failures.cend(), [&i, pFailedReplicators](const auto& failure) {
-							pFailedReplicators[i++] = failure.Replicator;
-						});
+						for (auto iter = failures.cbegin(); iter != failures.cend(); ++iter) {
+							pFailedReplicators[i++] = iter->Replicator;
+							sub.notify(FailedBlockHashesNotification<1>(iter->BlockHashCount(), iter->BlockHashesPtr()));
+						}
 
 						sub.notify(EndDriveVerificationNotification<1>(
 							transaction.Signer,

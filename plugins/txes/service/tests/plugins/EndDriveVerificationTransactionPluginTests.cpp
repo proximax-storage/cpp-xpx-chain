@@ -80,12 +80,15 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(5, sub.numNotifications());
-		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
-		EXPECT_EQ(Service_End_Drive_Verification_v1_Notification, sub.notificationTypes()[1]);
-		EXPECT_EQ(LockSecret_Proof_Publication_v1_Notification, sub.notificationTypes()[2]);
-		EXPECT_EQ(Multisig_Modify_Cosigners_v1_Notification, sub.notificationTypes()[3]);
-		EXPECT_EQ(Service_Drive_Verification_Payment_v1_Notification, sub.notificationTypes()[4]);
+		ASSERT_EQ(5 + Num_Failures, sub.numNotifications());
+		auto i = 0u;
+		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[i++]);
+		for (; i < Num_Failures + 1; ++i)
+			EXPECT_EQ(Service_Failed_Block_Hashes_v1_Notification, sub.notificationTypes()[i]);
+		EXPECT_EQ(Service_End_Drive_Verification_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(LockSecret_Proof_Publication_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Multisig_Modify_Cosigners_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Service_Drive_Verification_Payment_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion
@@ -106,6 +109,31 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
 		EXPECT_EQ(Entity_Type_End_Drive_Verification, notification.TransactionType);
+	}
+
+	// endregion
+
+	// region publish - end drive verification notification
+
+	PLUGIN_TEST(CanPublishFailedBlockHashesNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<FailedBlockHashesNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin(Network_Identifier);
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(Num_Failures, sub.numMatchingNotifications());
+		auto failures = pTransaction->Transactions();
+		auto i = 0u;
+		for (auto iter = failures.begin(); iter != failures.end(); ++iter) {
+			const auto& notification = sub.matchingNotifications()[i++];
+			auto blockHashCount = iter->BlockHashCount();
+			EXPECT_EQ(blockHashCount, notification.BlockHashCount);
+			EXPECT_EQ_MEMORY(iter->BlockHashesPtr(), notification.BlockHashesPtr, blockHashCount * Hash256_Size);
+		}
 	}
 
 	// endregion
