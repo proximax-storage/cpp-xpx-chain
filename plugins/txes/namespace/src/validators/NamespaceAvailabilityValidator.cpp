@@ -44,7 +44,7 @@ namespace catapult { namespace validators {
 				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 			auto height = context.Height;
-			const auto& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& networkConfig = context.Config.Network;
 			bool isEternalDurationSignedByNotNetworkPublicKey =
 				(Eternal_Artifact_Duration == notification.Duration && notification.Signer != networkConfig.Info.PublicKey);
 
