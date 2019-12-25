@@ -70,6 +70,7 @@ namespace catapult { namespace plugins {
 				return {
 					"PrepareDriveArgumentsValidator",
 					"ServicePluginConfigValidator",
+					"FailedBlockHashesValidator",
 				};
 			}
 

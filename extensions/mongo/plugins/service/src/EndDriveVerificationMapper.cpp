@@ -15,16 +15,22 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamEndDriveVerificationTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		auto addArray = builder << "verificationFailures" << bson_stream::open_array;
-		const auto* pFailure = transaction.FailuresPtr();
-		for (auto i = 0u; i < transaction.FailureCount; ++i, ++pFailure) {
-			addArray << bson_stream::open_document
-					 << "replicator" << ToBinary(pFailure->Replicator)
-					 << "blockHash" << ToBinary(pFailure->BlockHash)
-					 << bson_stream::close_document;
+		auto array = builder << "verificationFailures" << bson_stream::open_array;
+		auto failures = transaction.Transactions();
+		for (auto iter = failures.begin(); iter != failures.end(); ++iter) {
+			bson_stream::document failureBuilder;
+			failureBuilder << "replicator" << ToBinary(iter->Replicator);
+
+			auto blockHashArray = failureBuilder << "blockHashes" << bson_stream::open_array;
+			auto pBlockHashes = iter->BlockHashesPtr();
+			for (auto i = 0u; i < iter->BlockHashCount(); ++i)
+				blockHashArray << ToBinary(pBlockHashes[i]);
+
+			blockHashArray << bson_stream::close_array;
+			array << failureBuilder;
 		}
 
-		addArray << bson_stream::close_array;
+		array << bson_stream::close_array;
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(EndDriveVerification, StreamEndDriveVerificationTransaction)

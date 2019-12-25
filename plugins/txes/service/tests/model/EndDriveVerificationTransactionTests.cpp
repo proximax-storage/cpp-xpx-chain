@@ -6,9 +6,10 @@
 
 #include "src/model/EndDriveVerificationTransaction.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "tests/test/core/TransactionContainerTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
-#include "tests/test/core/VariableSizedEntityTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
+#include "tests/test/ServiceTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
@@ -21,12 +22,11 @@ namespace catapult { namespace model {
 		template<typename T>
 		void AssertEntityHasExpectedSize(size_t baseSize) {
 			// Arrange:
-			auto expectedSize = baseSize // base
-					+ sizeof(uint16_t); // failure count
+			auto expectedSize = baseSize; // base
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 2u, sizeof(T));
+			EXPECT_EQ(baseSize, sizeof(T));
 		}
 
 		template<typename T>
@@ -41,57 +41,111 @@ namespace catapult { namespace model {
 
 	// endregion
 
-	// region data pointers
+#define DATA_POINTER_TEST(TEST_NAME) \
+	template<typename T> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_Regular) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EndDriveVerificationTransaction>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Embedded) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EmbeddedEndDriveVerificationTransaction>(); } \
+	template<typename T> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	namespace {
-		struct EndDriveVerificationTransactionTraits {
-			static auto GenerateEntityWithAttachments(uint8_t failureCount) {
-				uint32_t entitySize = sizeof(EndDriveVerificationTransaction) + failureCount * sizeof(VerificationFailure);
-				auto pTransaction = utils::MakeUniqueWithSize<EndDriveVerificationTransaction>(entitySize);
-				pTransaction->Size = entitySize;
-				pTransaction->FailureCount = failureCount;
-				return pTransaction;
-			}
+		static constexpr auto Num_Failures = 3u;
+		static constexpr auto Block_Hash_Count = 5u;
 
-			template<typename TEntity>
-			static auto GetAttachmentPointer(TEntity& entity) {
-				return entity.FailuresPtr();
-			}
-		};
+		template<typename T>
+		VerificationFailure& GetSecondFailure(T& transaction) {
+			uint8_t* pData = reinterpret_cast<uint8_t*>(&transaction + 1);
+			return *reinterpret_cast<VerificationFailure*>(pData + reinterpret_cast<VerificationFailure*>(pData)->Size);
+		}
 	}
 
-	DEFINE_ATTACHMENT_POINTER_TESTS(TEST_CLASS, EndDriveVerificationTransactionTraits)
+	// region verification failures
+
+	DATA_POINTER_TEST(FailuresAreInaccessibleWhenTransactionHasNoFailures) {
+		// Arrange:
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(0);
+
+		// Act + Assert:
+		EXPECT_FALSE(!!pTransaction->TransactionsPtr());
+		EXPECT_EQ(0u, test::CountTransactions(pTransaction->Transactions()));
+	}
+
+	DATA_POINTER_TEST(FailuresAreAccessibleWhenTransactionHasFailures) {
+		// Arrange:
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(Num_Failures, Block_Hash_Count);
+		const auto* pTransactionEnd = test::AsVoidPointer(pTransaction.get() + 1);
+
+		// Act + Assert:
+		EXPECT_EQ(pTransactionEnd, pTransaction->TransactionsPtr());
+		EXPECT_EQ(Num_Failures, test::CountTransactions(pTransaction->Transactions()));
+	}
 
 	// endregion
 
-	// region CalculateRealSize
+	// region CalculateRealSize - no verification failures
 
-	TEST(TEST_CLASS, CanCalculateRealSizeWithReasonableValues) {
+	DATA_POINTER_TEST(SizeInvalidWhenReportedSizeIsZero) {
 		// Arrange:
-		EndDriveVerificationTransaction transaction;
-		transaction.Size = 0;
-		transaction.FailureCount = 10;
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(0);
+		pTransaction->Size = 0;
 
-		// Act:
-		auto realSize = EndDriveVerificationTransaction::CalculateRealSize(transaction);
-
-		// Assert:
-		EXPECT_EQ(sizeof(EndDriveVerificationTransaction) + 10 * sizeof(VerificationFailure), realSize);
+		// Act + Assert:
+		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), T::CalculateRealSize(*pTransaction));
 	}
 
-	TEST(TEST_CLASS, CalculateRealSizeDoesNotOverflowWithMaxValues) {
+	DATA_POINTER_TEST(SizeInvalidWhenReportedSizeIsLessThanHeaderSize) {
 		// Arrange:
-		EndDriveVerificationTransaction transaction;
-		test::SetMaxValue(transaction.Size);
-		test::SetMaxValue(transaction.FailureCount);
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(0);
+		--pTransaction->Size;
 
-		// Act:
-		auto realSize = EndDriveVerificationTransaction::CalculateRealSize(transaction);
+		// Act + Assert:
+		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), T::CalculateRealSize(*pTransaction));
+	}
 
-		// Assert:
-		ASSERT_EQ(0xFFFFFFFF, transaction.Size);
-		EXPECT_EQ(sizeof(EndDriveVerificationTransaction) + 0xFFFF * sizeof(VerificationFailure), realSize);
-		EXPECT_GT(0xFFFFFFFF, realSize);
+	DATA_POINTER_TEST(SizeValidWhenReportedSizeIsEqualToHeaderSize) {
+		// Arrange:
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(0);
+
+		// Act + Assert:
+		EXPECT_EQ(sizeof(T), T::CalculateRealSize(*pTransaction));
+	}
+
+	// endregion
+
+	// region CalculateRealSize - verification failure sizes
+
+	DATA_POINTER_TEST(SizeInvalidWhenAnyFailureHasZeroSize) {
+		// Arrange:
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(Num_Failures, Block_Hash_Count);
+		GetSecondFailure(*pTransaction).Size = 0;
+
+		// Act + Assert:
+		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), T::CalculateRealSize(*pTransaction));
+	}
+
+	DATA_POINTER_TEST(SizeInvalidWhenAnyFailureHasInvalidSize) {
+		// Arrange:
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(Num_Failures, Block_Hash_Count);
+		GetSecondFailure(*pTransaction).Size = 1;
+
+		// Act + Assert:
+		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), T::CalculateRealSize(*pTransaction));
+	}
+
+	DATA_POINTER_TEST(SizeInvalidWhenAnyFailureExpandsBeyondBuffer) {
+		// Arrange:
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(Num_Failures, Block_Hash_Count);
+		GetSecondFailure(*pTransaction).Size = pTransaction->Size - pTransaction->TransactionsPtr()->Size + 1;
+
+		// Act + Assert:
+		EXPECT_EQ(std::numeric_limits<uint64_t>::max(), T::CalculateRealSize(*pTransaction));
+	}
+
+	DATA_POINTER_TEST(SizeValidWhenReportedSizeIsEqualToHeaderSizePlusFailureSizes) {
+		// Arrange:
+		auto pTransaction = test::CreateEndDriveVerificationTransaction<T>(Num_Failures, Block_Hash_Count);
+
+		// Act + Assert:
+		EXPECT_EQ(sizeof(T) + Num_Failures * (sizeof(model::VerificationFailure) + Block_Hash_Count * sizeof(Hash256)), T::CalculateRealSize(*pTransaction));
 	}
 
 	// endregion

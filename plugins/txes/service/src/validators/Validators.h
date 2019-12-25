@@ -82,4 +82,9 @@ namespace catapult { namespace validators {
 	/// - Verification is in progress
 	/// - Failed replicators are registered to drive
 	DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
+
+	/// A validator implementation that applies to failed block hashes notification and validates that:
+	/// - there is at least one block hash
+	/// - there are no duplicate hashes
+	DECLARE_STATELESS_VALIDATOR(FailedBlockHashes, model::FailedBlockHashesNotification<1>)();
 }}

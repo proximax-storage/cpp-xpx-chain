@@ -23,7 +23,7 @@ namespace catapult { namespace validators {
 		using Notification = model::DriveFileSystemNotification<1>;
 
 		constexpr uint16_t Max_Files_On_Drive = 10;
-		constexpr uint16_t Add_Actions_Count = 5;
+		constexpr uint64_t Drive_Size = 1000;
 
 		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
@@ -35,7 +35,9 @@ namespace catapult { namespace validators {
 
 		void AssertValidationResult(
 				ValidationResult expectedResult,
-				const state::DriveEntry& driveEntry) {
+				const state::DriveEntry& driveEntry,
+				const std::vector<model::AddAction>& addActions,
+				const std::vector<model::RemoveAction>& removeActions) {
 			// Arrange:
 			Height currentHeight(1);
 			auto cache = test::DriveCacheFactory::Create();
@@ -45,7 +47,9 @@ namespace catapult { namespace validators {
 				driveCacheDelta.insert(driveEntry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(driveEntry.key(), Key(), Hash256(), Hash256(), Add_Actions_Count, nullptr, 0, nullptr);
+
+			Notification notification(driveEntry.key(), Key(), Hash256(), Hash256(),
+				addActions.size(), addActions.data(), removeActions.size(), removeActions.data());
 			auto pValidator = CreateMaxFilesOnDriveValidator();
 
 			// Act:
@@ -60,19 +64,63 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenMaximumExceeded) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
-		for (auto i = 0u; i < Max_Files_On_Drive - Add_Actions_Count + 2; ++i)
+		for (auto i = 0u; i < Max_Files_On_Drive; ++i)
 			driveEntry.files().emplace(test::GenerateRandomByteArray<Hash256>(), state::FileInfo{ test::Random() });
 
 		// Assert:
 		AssertValidationResult(
 			Failure_Service_Too_Many_Files_On_Drive,
-			driveEntry);
+			driveEntry,
+			{ model::AddAction{ { test::GenerateRandomByteArray<Hash256>() }, test::Random() } },
+			{});
+	}
+
+	TEST(TEST_CLASS, FailureWhenOccupiedSizeOverflows) {
+		// Arrange:
+		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setSize(Drive_Size);
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Service_Drive_Size_Exceeded,
+			driveEntry,
+			{
+				model::AddAction{ { test::GenerateRandomByteArray<Hash256>() }, std::numeric_limits<uint64_t>::max() }
+			},
+			{});
+	}
+
+	TEST(TEST_CLASS, FailureWhenDriveSizeExceeded) {
+		// Arrange:
+		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setSize(Drive_Size);
+		driveEntry.setOccupiedSpace(Drive_Size);
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Service_Drive_Size_Exceeded,
+			driveEntry,
+			{
+				model::AddAction{ { test::GenerateRandomByteArray<Hash256>() }, Drive_Size },
+				model::AddAction{ { test::GenerateRandomByteArray<Hash256>() }, Drive_Size }
+			},
+			{ model::RemoveAction{ { { test::GenerateRandomByteArray<Hash256>() }, Drive_Size } } });
 	}
 
 	TEST(TEST_CLASS, Success) {
+		// Arrange:
+		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		driveEntry.setSize(Drive_Size);
+		driveEntry.setOccupiedSpace(Drive_Size);
+
 		// Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
-			state::DriveEntry(test::GenerateRandomByteArray<Key>()));
+			driveEntry,
+			{
+				model::AddAction{ { test::GenerateRandomByteArray<Hash256>() }, Drive_Size / 2 },
+				model::AddAction{ { test::GenerateRandomByteArray<Hash256>() }, Drive_Size / 2 }
+			},
+			{ model::RemoveAction{ { { test::GenerateRandomByteArray<Hash256>() }, Drive_Size } } });
 	}
 }}

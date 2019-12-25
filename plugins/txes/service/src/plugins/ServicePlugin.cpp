@@ -136,7 +136,8 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 					.add(validators::CreatePrepareDriveArgumentsValidator())
-					.add(validators::CreateServicePluginConfigValidator());
+					.add(validators::CreateServicePluginConfigValidator())
+					.add(validators::CreateFailedBlockHashesValidator());
 		});
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {

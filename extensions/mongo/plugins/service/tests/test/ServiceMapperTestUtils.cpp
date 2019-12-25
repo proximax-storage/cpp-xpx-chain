@@ -92,7 +92,7 @@ namespace catapult { namespace test {
 	}
 
 	void AssertEqualDriveData(const state::DriveEntry& entry, const Address& address, const bsoncxx::document::view& dbDriveEntry) {
-		EXPECT_EQ(19u, test::GetFieldCount(dbDriveEntry));
+		EXPECT_EQ(20u, test::GetFieldCount(dbDriveEntry));
 
 		EXPECT_EQ(entry.key(), GetKeyValue(dbDriveEntry, "multisig"));
 		EXPECT_EQ(address, test::GetAddressValue(dbDriveEntry, "multisigAddress"));
@@ -105,6 +105,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry.billingPeriod().unwrap(), GetUint64(dbDriveEntry, "billingPeriod"));
 		EXPECT_EQ(entry.billingPrice().unwrap(), GetUint64(dbDriveEntry, "billingPrice"));
 		EXPECT_EQ(entry.size(), static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
+		EXPECT_EQ(entry.occupiedSpace(), static_cast<uint64_t>(dbDriveEntry["occupiedSpace"].get_int64()));
 		EXPECT_EQ(entry.replicas(), static_cast<uint16_t>(dbDriveEntry["replicas"].get_int32()));
 		EXPECT_EQ(entry.minReplicators(), static_cast<uint16_t>(dbDriveEntry["minReplicators"].get_int32()));
 		EXPECT_EQ(entry.percentApprovers(), static_cast<uint8_t>(dbDriveEntry["percentApprovers"].get_int32()));

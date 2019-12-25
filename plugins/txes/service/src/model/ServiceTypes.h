@@ -37,13 +37,37 @@ namespace catapult { namespace model {
     };
 
     /// Binary layout of failed verification data.
-    struct VerificationFailure {
+    struct VerificationFailure : public SizePrefixedEntity {
     public:
         /// The replicator that failed verification.
         Key Replicator;
 
-        /// The hash of the failed block.
-        Hash256 BlockHash;
+    public:
+		/// Count of the failed block hashes.
+        uint16_t BlockHashCount() const {
+            return (Size - sizeof(VerificationFailure)) / sizeof(Hash256);
+        }
+
+	private:
+		const uint8_t* PayloadStart() const {
+			return reinterpret_cast<const uint8_t*>(this) + sizeof(VerificationFailure);
+		}
+
+		uint8_t* PayloadStart() {
+			return reinterpret_cast<uint8_t*>(this) + sizeof(VerificationFailure);
+		}
+
+		template<typename T>
+		static auto* BlockHashesPtrT(T& failure) {
+			return failure.BlockHashCount() ? failure.PayloadStart() : nullptr;
+		}
+
+	public:
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(BlockHashes, Hash256)
+
+		bool IsSizeValid() const {
+			return Size == (sizeof(VerificationFailure) + BlockHashCount() * sizeof(Hash256));
+		}
     };
 
 #pragma pack(pop)
