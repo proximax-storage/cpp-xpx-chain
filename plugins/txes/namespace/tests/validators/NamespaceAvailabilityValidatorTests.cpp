@@ -40,6 +40,7 @@ namespace catapult { namespace validators {
 		constexpr BlockDuration Max_Duration(105);
 		constexpr BlockDuration Default_Duration(10);
 		constexpr BlockDuration Grace_Period_Duration(25);
+		const auto Nemesis_Signer = test::GenerateRandomByteArray<Key>();
 
 		template<typename TSeedCacheFunc>
 		auto CreateAndSeedCache(TSeedCacheFunc seedCache) {
@@ -67,6 +68,7 @@ namespace catapult { namespace validators {
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(Grace_Period_Duration.unwrap());
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
+			networkConfig.Info.PublicKey = Nemesis_Signer;
 			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
 			auto pValidator = CreateRootNamespaceAvailabilityValidator(pConfigHolder);
@@ -123,19 +125,25 @@ namespace catapult { namespace validators {
 	// region root - eternal namespace duration check
 
 	TEST(ROOT_TEST_CLASS, CanAddRootNamespaceWithEternalDurationInNemesis) {
-		// Act: try to create a root with an eternal duration
-		auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(26), Eternal_Artifact_Duration);
+		// Act: try to create a root with an eternal duration by signer different from nemesis signer
+		auto notification = model::RootNamespaceNotification<1>(test::GenerateRandomByteArray<Key>(), NamespaceId(26), Eternal_Artifact_Duration);
 		RunRootTest(ValidationResult::Success, notification, Height(1), SeedCacheWithRoot25);
 	}
 
+	TEST(ROOT_TEST_CLASS, CanAddRootNamespaceWithEternalDurationAfterNemesisByNemesisSigner) {
+		// Act: try to create a root with an eternal duration by nemesis signer
+		auto notification = model::RootNamespaceNotification<1>(Nemesis_Signer, NamespaceId(26), Eternal_Artifact_Duration);
+		RunRootTest(ValidationResult::Success, notification, Height(15), SeedCacheWithRoot25);
+	}
+
 	TEST(ROOT_TEST_CLASS, CannotAddRootNamespaceWithEternalDurationAfterNemesis) {
-		// Act: try to create a root with an eternal duration
-		auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(26), Eternal_Artifact_Duration);
+		// Act: try to create a root with an eternal duration by signer different from nemesis signer
+		auto notification = model::RootNamespaceNotification<1>(test::GenerateRandomByteArray<Key>(), NamespaceId(26), Eternal_Artifact_Duration);
 		RunRootTest(Failure_Namespace_Eternal_After_Nemesis_Block, notification, Height(15), SeedCacheWithRoot25);
 	}
 
 	TEST(ROOT_TEST_CLASS, CannotRenewNonEternalRootNamespaceWithEternalDurationAfterNemesis) {
-		// Act: try to renew a root with an eternal duration
+		// Act: try to renew a root with an eternal duration by random signer
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = model::RootNamespaceNotification<1>(signer, NamespaceId(25), Eternal_Artifact_Duration);
 		RunRootTest(Failure_Namespace_Eternal_After_Nemesis_Block, notification, Height(15), SeedCacheWithRoot25Signer(signer));
@@ -206,33 +214,53 @@ namespace catapult { namespace validators {
 	// region root - renew duration
 
 	namespace {
-		void AssertCannotChangeDuration(Height height, const state::NamespaceLifetime& lifetime, BlockDuration duration) {
+		void AssertChangeDuration(
+				ValidationResult expectedResult,
+				const Key& signer,
+				Height height,
+				const state::NamespaceLifetime& lifetime,
+				BlockDuration duration) {
 			// Act: try to extend a root that is already in the cache
-			auto signer = test::GenerateRandomByteArray<Key>();
 			auto notification = model::RootNamespaceNotification<1>(signer, NamespaceId(25), duration);
 			RunRootTest(
-					Failure_Namespace_Invalid_Duration,
-					notification,
-					height,
-					[&signer, &lifetime](auto& namespaceCacheDelta) {
-						// Arrange: create a cache with { 25 }
-						namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, lifetime));
+				expectedResult,
+				notification,
+				height,
+				[&signer, &lifetime](auto& namespaceCacheDelta) {
+					// Arrange: create a cache with { 25 }
+					namespaceCacheDelta.insert(state::RootNamespace(NamespaceId(25), signer, lifetime));
 
-						// Sanity:
-						test::AssertCacheContents(namespaceCacheDelta, { 25 });
-					});
+					// Sanity:
+					test::AssertCacheContents(namespaceCacheDelta, { 25 });
+				});
 		}
+
+		void AssertNemesisSignerCanChangeDuration(Height height, const state::NamespaceLifetime& lifetime, BlockDuration duration) {
+			AssertChangeDuration(ValidationResult::Success, Nemesis_Signer, height, lifetime, duration);
+		}
+
+		void AssertCannotChangeDuration(const Key& signer, Height height, const state::NamespaceLifetime& lifetime, BlockDuration duration) {
+			AssertChangeDuration(Failure_Namespace_Invalid_Duration, signer, height, lifetime, duration);
+		}
+	}
+
+	TEST(ROOT_TEST_CLASS, CanRenewNonEternalRootNamespaceWithEternalDurationByNemesisSigner) {
+		// Assert: extend a non-eternal namespace as eternal
+		AssertNemesisSignerCanChangeDuration(Height(1), test::CreateLifetime(10, 20), Eternal_Artifact_Duration);
+		AssertNemesisSignerCanChangeDuration(Height(100), test::CreateLifetime(10, 20), Eternal_Artifact_Duration);
 	}
 
 	TEST(ROOT_TEST_CLASS, CannotRenewNonEternalRootNamespaceWithEternalDurationInNemesis) {
 		// Assert: extend a non-eternal namespace as eternal
-		AssertCannotChangeDuration(Height(1), test::CreateLifetime(10, 20), Eternal_Artifact_Duration);
+		AssertCannotChangeDuration(test::GenerateRandomByteArray<Key>(), Height(1), test::CreateLifetime(10, 20), Eternal_Artifact_Duration);
 	}
 
 	TEST(ROOT_TEST_CLASS, CannotRenewRootNamespaceWithEternalDuration) {
 		// Assert: "extend" an external namespace
-		AssertCannotChangeDuration(Height(1), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), Eternal_Artifact_Duration);
-		AssertCannotChangeDuration(Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
+		AssertCannotChangeDuration(test::GenerateRandomByteArray<Key>(), Height(1), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), Eternal_Artifact_Duration);
+		AssertCannotChangeDuration(test::GenerateRandomByteArray<Key>(), Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
+		AssertCannotChangeDuration(Nemesis_Signer, Height(1), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), Eternal_Artifact_Duration);
+		AssertCannotChangeDuration(Nemesis_Signer, Height(100), test::CreateLifetime(10, 0xFFFF'FFFF'FFFF'FFFF), BlockDuration(2));
 	}
 
 	// endregion

@@ -129,7 +129,8 @@ namespace catapult { namespace plugins {
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 					.add(validators::CreatePrepareDriveArgumentsValidator())
-					.add(validators::CreateServicePluginConfigValidator());
+					.add(validators::CreateServicePluginConfigValidator())
+					.add(validators::CreateFailedBlockHashesValidator());
 		});
 
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
@@ -143,6 +144,7 @@ namespace catapult { namespace plugins {
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
 					.add(validators::CreateEndDriveValidator(pConfigHolder))
+					// MaxFilesOnDriveValidator should be added after DriveFileSystemValidator
 					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder))
 					.add(validators::CreateStartDriveVerificationValidator())
 					.add(validators::CreateEndDriveVerificationValidator());

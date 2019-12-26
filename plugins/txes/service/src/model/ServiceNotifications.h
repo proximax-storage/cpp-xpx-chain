@@ -42,6 +42,9 @@ namespace catapult { namespace model {
 	/// Defines a drive files reward notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Service, DriveFilesReward_v1, 0x000A);
 
+	/// Defines a failed block hashes notification type.
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Failed_Block_Hashes_v1, 0x000B);
+
 	/// Notification of a drive prepare.
 	template<VersionType version>
 	struct PrepareDriveNotification;
@@ -293,11 +296,11 @@ namespace catapult { namespace model {
 			NotificationType type,
 			const Key& drive,
 			uint16_t failureCount,
-			const VerificationFailure* pFailures)
+			const Key* pFailedReplicators)
 			: Notification(type, sizeof(BaseEndDriveVerificationNotification))
 			, DriveKey(drive)
 			, FailureCount(failureCount)
-			, FailuresPtr(pFailures)
+			, FailedReplicatorsPtr(pFailedReplicators)
 		{}
 
 	public:
@@ -308,7 +311,7 @@ namespace catapult { namespace model {
 		uint16_t FailureCount;
 
 		/// Verification failures.
-		const VerificationFailure* FailuresPtr;
+		const Key* FailedReplicatorsPtr;
 	};
 
 	/// Notification of an end drive verification.
@@ -325,8 +328,8 @@ namespace catapult { namespace model {
 		explicit EndDriveVerificationNotification(
 			const Key& drive,
 			uint16_t failureCount,
-			const VerificationFailure* pFailures)
-			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailures)
+			const Key* pFailedReplicators)
+			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailedReplicators)
 		{}
 	};
 
@@ -344,8 +347,8 @@ namespace catapult { namespace model {
 		explicit DriveVerificationPaymentNotification(
 			const Key& drive,
 			uint16_t failureCount,
-			const VerificationFailure* pFailures)
-			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailures)
+			const Key* pFailedReplicators)
+			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailedReplicators)
 		{}
 	};
 
@@ -426,5 +429,30 @@ namespace catapult { namespace model {
 
 		/// Upload infos count
 		uint32_t UploadInfosCount;
+	};
+
+	/// Notification of block hashes that failed verification.
+	template<VersionType version>
+	struct FailedBlockHashesNotification;
+
+	template<>
+	struct FailedBlockHashesNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_Failed_Block_Hashes_v1_Notification;
+
+	public:
+		explicit FailedBlockHashesNotification(const uint16_t& blockHashCount, const Hash256* pBlockHashes)
+				: Notification(Notification_Type, sizeof(FailedBlockHashesNotification<1>))
+				, BlockHashCount(blockHashCount)
+				, BlockHashesPtr(pBlockHashes)
+		{}
+
+	public:
+		/// Count of the hashes of the blocks that failed verification.
+		uint16_t BlockHashCount;
+
+		/// Array of the hashes of the blocks that failed verification.
+		const Hash256* BlockHashesPtr;
 	};
 }}

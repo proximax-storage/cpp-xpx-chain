@@ -37,6 +37,7 @@ namespace catapult { namespace observers {
 				auto fileHash = test::GenerateRandomByteArray<Hash256>();
 				uint64_t fileSize = (i + 1) * 100;
 				entry.files().emplace(fileHash, state::FileInfo{ fileSize });
+				entry.increaseOccupiedSpace(fileSize);
 				if (!!pAddActions)
 					pAddActions->push_back(model::AddAction{ { fileHash }, fileSize });
 				for (auto& replicator : entry.replicators())
@@ -87,6 +88,7 @@ namespace catapult { namespace observers {
 						accounts.at(replicatorPair.first).Balances.credit(Streaming_Mosaic_Id, Amount(fileIter->second.Size), Current_Height);
 					}
 				}
+				entry.decreaseOccupiedSpace(fileIter->second.Size);
 				fileIter = files.erase(fileIter);
 			}
 

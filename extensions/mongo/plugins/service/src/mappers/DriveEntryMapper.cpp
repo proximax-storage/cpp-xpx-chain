@@ -124,6 +124,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				<< "billingPeriod" << ToInt64(entry.billingPeriod())
 				<< "billingPrice" << ToInt64(entry.billingPrice())
 				<< "size" << static_cast<int64_t>(entry.size())
+				<< "occupiedSpace" << static_cast<int64_t>(entry.occupiedSpace())
 				<< "replicas" << entry.replicas()
 				<< "minReplicators" << static_cast<int16_t>(entry.minReplicators())
 				<< "percentApprovers" << static_cast<int8_t>(entry.percentApprovers());
@@ -264,6 +265,7 @@ namespace catapult { namespace mongo { namespace plugins {
         entry.setBillingPeriod(BlockDuration(dbDriveEntry["billingPeriod"].get_int64()));
         entry.setBillingPrice(Amount(dbDriveEntry["billingPrice"].get_int64()));
         entry.setSize(static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
+        entry.setOccupiedSpace(static_cast<uint64_t>(dbDriveEntry["occupiedSpace"].get_int64()));
         entry.setReplicas(static_cast<uint16_t>(dbDriveEntry["replicas"].get_int32()));
         entry.setMinReplicators(static_cast<uint16_t>(dbDriveEntry["minReplicators"].get_int32()));
         entry.setPercentApprovers(static_cast<uint8_t>(dbDriveEntry["percentApprovers"].get_int32()));
