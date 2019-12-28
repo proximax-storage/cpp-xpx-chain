@@ -194,9 +194,9 @@ namespace catapult { namespace chain {
 				uint64_t forkDepth,
 				const std::shared_ptr<RangeAggregator>& pRangeAggregator,
 				UnprocessedElements& unprocessedElements) {
-			auto remainingBlocks = maxBlocks - pRangeAggregator->numBlocks();
-			if (options.NumBlocks > remainingBlocks) {
-				options.NumBlocks = remainingBlocks;
+			maxBlocks -= pRangeAggregator->numBlocks();
+			if (options.NumBlocks > maxBlocks) {
+				options.NumBlocks = maxBlocks;
 			}
 			auto futureSupplier = CreateFutureSupplier(remoteChainApi, options);
 			return thread::compose(futureSupplier(height), [&remoteChainApi, options, maxBlocks, forkDepth, pRangeAggregator, &unprocessedElements](
