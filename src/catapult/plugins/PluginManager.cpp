@@ -280,6 +280,17 @@ namespace catapult { namespace plugins {
 		return model::ExtractorContext(bindExtractorToCache(addressesExtractors), bindExtractorToCache(publicKeysExtractors));
 	}
 
+	void PluginManager::addPluginInitializer(const PluginInitializer& initializer) {
+		m_pluginInitializers.push_back(initializer);
+	}
+
+	PluginManager::PluginInitializer PluginManager::createPluginInitializer() const {
+        return [initializers = m_pluginInitializers](auto& config) {
+            for (const auto& init : initializers)
+                init(config);
+        };
+	}
+
 	// endregion
 
 	// region publisher

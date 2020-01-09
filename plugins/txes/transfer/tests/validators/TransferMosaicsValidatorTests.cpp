@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS TransferMosaicsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(TransferMosaics, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMosaics)
 
 	namespace {
 		constexpr auto Success_Result = ValidationResult::Success;
@@ -40,14 +40,13 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::TransferConfiguration::Uninitialized();
 			pluginConfig.MaxMosaicsSize = maxMosaicsSize;
 			test::MutableBlockchainConfiguration mutableConfig;
-			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateTransferMosaicsValidator(pConfigHolder);
+			auto pValidator = CreateTransferMosaicsValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

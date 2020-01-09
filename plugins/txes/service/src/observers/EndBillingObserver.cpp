@@ -11,6 +11,7 @@ namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 
+
 	DECLARE_OBSERVER(EndBilling, Notification)(const MosaicId& storageMosaicId) {
 		return MAKE_OBSERVER(EndBilling, Notification, [storageMosaicId](const Notification&, ObserverContext& context) {
 			auto& driveCache = context.Cache.sub<cache::DriveCache>();

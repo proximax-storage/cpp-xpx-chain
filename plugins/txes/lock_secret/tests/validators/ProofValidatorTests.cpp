@@ -68,11 +68,13 @@ namespace catapult { namespace validators {
 		auto RunValidator(
 				cache::CatapultCache& cache,
 				const TValidator& validator,
-				const test::ProofNotificationBuilder& notificationBuilder) {
+				const test::ProofNotificationBuilder& notificationBuilder,
+				const config::BlockchainConfiguration& config = config::BlockchainConfiguration::Uninitialized()) {
 			return test::ValidateNotification(
 					validator,
 					notificationBuilder.notification(),
 					cache,
+					config,
 					notificationBuilder.notificationHeight());
 		}
 	}

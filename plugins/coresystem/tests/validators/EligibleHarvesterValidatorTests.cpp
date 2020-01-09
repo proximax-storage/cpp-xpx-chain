@@ -34,7 +34,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EligibleHarvesterValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(EligibleHarvester)
 
 	namespace {
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
@@ -67,15 +67,14 @@ namespace catapult { namespace validators {
 		auto key = test::GenerateRandomByteArray<Key>();
 		auto height = Height(1000);
 		AddAccount(cache, key, Amount(9999));
-		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-		auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
+		auto pValidator = CreateEligibleHarvesterValidator();
 
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto notification = test::CreateBlockNotification(signer);
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification, cache, height);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config, height);
 
 		// Assert:
 		EXPECT_EQ(Failure_Core_Block_Harvester_Ineligible, result);
@@ -94,13 +93,12 @@ namespace catapult { namespace validators {
 			auto key = test::GenerateRandomByteArray<Key>();
 			auto initialBalance = Amount(static_cast<Amount::ValueType>(1234 + minBalanceDelta));
 			AddAccount(cache, key, initialBalance);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-			auto pValidator = CreateEligibleHarvesterValidator(pConfigHolder);
+			auto pValidator = CreateEligibleHarvesterValidator();
 			auto notification = test::CreateBlockNotification(key);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, blockHeight);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config, blockHeight);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

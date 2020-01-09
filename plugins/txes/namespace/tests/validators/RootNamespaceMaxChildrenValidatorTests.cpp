@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RootNamespaceMaxChildrenValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceMaxChildren)
 
 	namespace {
 		auto CreateAndSeedCache() {
@@ -61,12 +61,12 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.MaxChildNamespaces = maxChildren;
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			auto pValidator = CreateRootNamespaceMaxChildrenValidator(pConfigHolder);
+			auto pValidator = CreateRootNamespaceMaxChildrenValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config());
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "maxChildren " << maxChildren;

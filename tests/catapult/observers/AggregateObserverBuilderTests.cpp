@@ -39,7 +39,8 @@ namespace catapult { namespace observers {
 				auto cache = test::CreateEmptyCatapultCache();
 				auto cacheDelta = cache.createDelta();
 				state::CatapultState state;
-				auto context = test::CreateObserverContext(cacheDelta, state, Height(123), mode);
+				auto config = config::BlockchainConfiguration::Uninitialized();
+				auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), mode);
 				test::ObserveNotification(*pAggregateObserver, test::TaggedNotification(notificationId), context);
 			}
 		};

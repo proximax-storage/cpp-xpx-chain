@@ -6,6 +6,8 @@
 
 #pragma once
 
+#include "catapult/config/ConfigConstants.h"
+
 namespace catapult { namespace model {
 
 	/// Plugin configuration base class.

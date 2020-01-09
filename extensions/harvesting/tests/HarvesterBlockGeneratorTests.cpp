@@ -59,7 +59,8 @@ namespace catapult { namespace harvesting {
 			explicit TestContext(model::TransactionSelectionStrategy strategy)
 					: m_pConfigHolder(CreateConfigHolder())
 					, m_catapultCache(test::CreateEmptyCatapultCache(m_pConfigHolder->Config(), CreateCacheConfiguration(m_dbDirGuard.name())))
-					, m_utFacadeFactory(m_catapultCache, m_pConfigHolder, m_executionConfig.Config)
+					, m_executionConfig(m_pConfigHolder->Config())
+					, m_utFacadeFactory(m_catapultCache, m_executionConfig.Config)
 					, m_pUtCache(test::CreateSeededMemoryUtCache(0))
 					, m_generator(CreateHarvesterBlockGenerator(strategy, m_utFacadeFactory, *m_pUtCache)) {
 				// add 5 transaction infos to UT cache with multipliers alternating between 10 and 20

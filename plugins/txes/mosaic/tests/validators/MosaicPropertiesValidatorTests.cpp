@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicPropertiesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicProperties, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicProperties)
 
 	namespace {
 		constexpr auto Max_Divisibility = std::numeric_limits<uint8_t>::max();
@@ -52,7 +52,7 @@ namespace catapult { namespace validators {
 			}
 			test::MutableBlockchainConfiguration config;
 			config.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			return config.ToConst();
 		}
 		auto Default_Config = CreateConfig(Max_Divisibility, Max_Duration);
@@ -60,14 +60,13 @@ namespace catapult { namespace validators {
 		void AssertFlagsResult(ValidationResult expectedResult, model::MosaicFlags flags) {
 			// Arrange:
 			auto cache = test::CreateEmptyCatapultCache(Default_Config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
-			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
+			auto pValidator = CreateMosaicPropertiesValidator();
 			model::MosaicPropertiesHeader header{};
 			header.Flags = flags;
 			auto notification = model::MosaicPropertiesNotification<1>(header, nullptr);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, Default_Config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "flags " << static_cast<uint16_t>(flags);
@@ -95,14 +94,13 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(maxDivisibility, Max_Duration);
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
+			auto pValidator = CreateMosaicPropertiesValidator();
 			model::MosaicPropertiesHeader header{};
 			header.Divisibility = divisibility;
 			auto notification = model::MosaicPropertiesNotification<1>(header, nullptr);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)
@@ -136,15 +134,14 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(Max_Divisibility, BlockDuration(maxDuration));
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
+			auto pValidator = CreateMosaicPropertiesValidator();
 			model::MosaicPropertiesHeader header{};
 			header.Count = 1;
 			auto properties = std::vector<model::MosaicProperty>{ { model::MosaicPropertyId::Duration, duration } };
 			auto notification = model::MosaicPropertiesNotification<1>(header, properties.data());
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "duration " << duration << ", maxDuration " << maxDuration;
@@ -179,14 +176,13 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, SuccessWhenValidatingMosaicWithNoOptionalProperties) {
 		// Arrange:
 		auto cache = test::CreateEmptyCatapultCache(Default_Config);
-		auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
-		auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
+		auto pValidator = CreateMosaicPropertiesValidator();
 		model::MosaicPropertiesHeader header{};
 		header.Count = 0;
 		auto notification = model::MosaicPropertiesNotification<1>(header, nullptr);
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification, cache);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, Default_Config);
 
 		// Assert:
 		EXPECT_EQ(ValidationResult::Success, result);
@@ -194,16 +190,15 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidatingMosaicWithDurationOptionalProperty) {
 		// Arrange:
-		auto cache = test::CreateEmptyCatapultCache(Default_Config);
-		auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
-		auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
+		auto cache = test::CreateEmptyCatapultCache(Default_Config);;
+		auto pValidator = CreateMosaicPropertiesValidator();
 		model::MosaicPropertiesHeader header{};
 		header.Count = 1;
 		auto properties = std::vector<model::MosaicProperty>{ { model::MosaicPropertyId::Duration, 123 } };
 		auto notification = model::MosaicPropertiesNotification<1>(header, properties.data());
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification, cache);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, Default_Config);
 
 		// Assert:
 		EXPECT_EQ(ValidationResult::Success, result);
@@ -215,14 +210,13 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult = Failure_Mosaic_Invalid_Property) {
 			// Arrange: create a transaction with a single property
 			auto cache = test::CreateEmptyCatapultCache(Default_Config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
-			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
+			auto pValidator = CreateMosaicPropertiesValidator();
 			model::MosaicPropertiesHeader header{};
 			header.Count = 1;
 			auto notification = model::MosaicPropertiesNotification<1>(header, &property);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, Default_Config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)
@@ -253,14 +247,13 @@ namespace catapult { namespace validators {
 			// Arrange: indicate the transaction contains extra properties
 			//          (validator will reject the transaction before dereferencing the extra properties)
 			auto cache = test::CreateEmptyCatapultCache(Default_Config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(Default_Config);
-			auto pValidator = CreateMosaicPropertiesValidator(pConfigHolder);
+			auto pValidator = CreateMosaicPropertiesValidator();
 			model::MosaicPropertiesHeader header{};
 			header.Count = count;
 			auto notification = model::MosaicPropertiesNotification<1>(header, nullptr);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, Default_Config);
 
 			// Assert:
 			EXPECT_EQ(Failure_Mosaic_Invalid_Property, result);

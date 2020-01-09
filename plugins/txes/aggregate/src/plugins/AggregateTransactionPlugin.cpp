@@ -54,8 +54,8 @@ namespace catapult { namespace plugins {
 
 			TransactionAttributes attributes(const Height& height) const override {
 				auto version = AggregateTransaction::Current_Version;
-				const model::NetworkConfiguration& networkConfig = m_pConfigHolder->ConfigAtHeightOrLatest(height).Network;
-				const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
+				const auto& config = m_pConfigHolder->ConfigAtHeightOrLatest(height);
+				const auto& pluginConfig = config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
 				return { version, version, pluginConfig.MaxBondedTransactionLifetime };
 			}
 

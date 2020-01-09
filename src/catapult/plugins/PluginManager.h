@@ -80,6 +80,8 @@ namespace catapult { namespace plugins {
 		using AddressesExtractor = Extractor<model::UnresolvedAddressSet, UnresolvedAddress>;
 		using PublicKeysExtractor = Extractor<model::PublicKeySet , Key>;
 
+		using PluginInitializer = std::function<void (model::NetworkConfiguration&)>;
+
 		using PublisherPointer = std::unique_ptr<model::NotificationPublisher>;
 
 	public:
@@ -233,6 +235,12 @@ namespace catapult { namespace plugins {
 		/// Creates a extractor context given \a cache.
 		model::ExtractorContext createExtractorContext(const cache::CatapultCache& cache) const;
 
+		/// Adds a config \a initializer.
+		void addPluginInitializer(const PluginInitializer& initializer);
+
+		/// Creates a config  initializer.
+		PluginInitializer createPluginInitializer() const;
+
 		// endregion
 
 		// region publisher
@@ -261,6 +269,8 @@ namespace catapult { namespace plugins {
 		std::vector<AmountResolver> m_amountResolvers;
 		std::vector<AddressesExtractor> m_addressesExtractors;
 		std::vector<PublicKeysExtractor> m_publicKeysExtractors;
+
+		std::vector<PluginInitializer> m_pluginInitializers;
 
 		bool m_shouldEnableVerifiableState;
 	};

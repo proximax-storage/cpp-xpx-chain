@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NamespaceDurationOverflowValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceDurationOverflow, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceDurationOverflow)
 
 	namespace {
 		// region test utils
@@ -51,11 +51,11 @@ namespace catapult { namespace validators {
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(options.GracePeriodDuration.unwrap());
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(options.MaxDuration.unwrap());
 			mutableConfig.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-			auto cache = test::NamespaceCacheFactory::Create(config, options.GracePeriodDuration);
+			auto cache = test::NamespaceCacheFactory::Create(config,
+			        options.GracePeriodDuration, pluginConfig.MaxNamespaceDuration );
 			{
 				auto cacheDelta = cache.createDelta();
 				auto& namespaceCacheDelta = cacheDelta.sub<cache::NamespaceCache>();
@@ -67,10 +67,10 @@ namespace catapult { namespace validators {
 				cache.commit(Height());
 			}
 
-			auto pValidator = CreateNamespaceDurationOverflowValidator(pConfigHolder);
+			auto pValidator = CreateNamespaceDurationOverflowValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, options.Height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config, options.Height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)

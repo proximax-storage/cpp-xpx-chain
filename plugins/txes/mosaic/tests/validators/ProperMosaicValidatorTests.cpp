@@ -63,7 +63,8 @@ namespace catapult { namespace validators {
 			cache.commit(Height());
 
 			auto readOnlyCache = delta.toReadOnly();
-			auto context = test::CreateValidatorContext(height, readOnlyCache);
+			auto config = config::BlockchainConfiguration::Uninitialized();
+			auto context = test::CreateValidatorContext(config, height, readOnlyCache);
 
 			// - set up a custom mosaic id resolver
 			const_cast<model::ResolverContext&>(context.Resolvers) = test::CreateResolverContextWithCustomDoublingMosaicResolver();

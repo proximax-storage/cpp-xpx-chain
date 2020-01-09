@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/model/NetworkInfo.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/observers/ObserverTypes.h"
@@ -29,8 +30,9 @@ namespace catapult { namespace chain {
 	/// Configuration for executing entities.
 	struct ExecutionConfiguration {
 	private:
-		using NetworkInfoSupplierFunc = std::function<model::NetworkInfo (const Height& height)>;
+
 		using MinFeeMultiplierSupplierFunc = std::function<BlockFeeMultiplier (const Height&)>;
+		using ConfigSupplierFunc = std::function<const config::BlockchainConfiguration& (const Height& height)>;
 		using ObserverPointer = std::shared_ptr<const observers::AggregateNotificationObserver>;
 		using ValidatorPointer = std::shared_ptr<const validators::stateful::AggregateNotificationValidator>;
 		using PublisherPointer = std::shared_ptr<const model::NotificationPublisher>;
@@ -40,8 +42,8 @@ namespace catapult { namespace chain {
 		/// Network identifier.
 		model::NetworkIdentifier NetworkIdentifier;
 
-		/// Network info supplier.
-		NetworkInfoSupplierFunc NetworkInfoSupplier;
+		/// Blockchain config supplier.
+		ConfigSupplierFunc ConfigSupplier;
 
 		/// Min transaction fee multiplier supplier.
 		MinFeeMultiplierSupplierFunc MinFeeMultiplierSupplier;

@@ -140,7 +140,7 @@ namespace catapult { namespace sync {
 						state.pluginManager().createObserver(),
 						state.pluginManager().createNotificationPublisher());
 				auto resolverContext = model::ResolverContext();
-				auto blockExecutionContext = chain::BlockExecutionContext(rootObserver, resolverContext, observerState);
+				auto blockExecutionContext = chain::BlockExecutionContext(rootObserver, resolverContext, state.pluginManager().configHolder(), observerState);
 
 				chain::ExecuteBlock(blockElement, blockExecutionContext);
 				state.cache().commit(blockElement.Block.Height);

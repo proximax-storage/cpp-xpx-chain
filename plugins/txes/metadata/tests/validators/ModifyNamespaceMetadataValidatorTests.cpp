@@ -60,8 +60,8 @@ namespace catapult { namespace validators {
 			auto namespacePluginConfig = config::NamespaceConfiguration::Uninitialized();
 			namespacePluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(100);
 			auto metadataPluginConfig = config::MetadataConfiguration::Uninitialized();
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), namespacePluginConfig);
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), metadataPluginConfig);
+			config.Network.SetPluginConfiguration(namespacePluginConfig);
+			config.Network.SetPluginConfiguration(metadataPluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
 			auto pValidator = CreateModifyNamespaceMetadataValidator();

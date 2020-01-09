@@ -24,6 +24,7 @@
 #include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/mocks/MockEntityObserver.h"
@@ -97,7 +98,7 @@ namespace catapult { namespace consumers {
 		// Arrange:
 		RunStateHashDisabledTest([](const auto& blockElement, const auto& observer, auto& state) {
 			// Act:
-			UndoBlock(blockElement, { observer, CreateResolverContext(), state }, UndoBlockType::Rollback);
+			UndoBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state }, UndoBlockType::Rollback);
 
 			// Assert:
 			EXPECT_EQ(8u, observer.versions().size());
@@ -112,7 +113,7 @@ namespace catapult { namespace consumers {
 		// Arrange:
 		RunStateHashDisabledTest([](const auto& blockElement, const auto& observer, auto& state) {
 			// Act:
-			UndoBlock(blockElement, { observer, CreateResolverContext(), state }, UndoBlockType::Common);
+			UndoBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state }, UndoBlockType::Common);
 
 			// Assert:
 			EXPECT_TRUE(observer.versions().empty());
@@ -162,7 +163,7 @@ namespace catapult { namespace consumers {
 		// Arrange:
 		RunStateHashEnabledTest([](const auto& blockElement, const auto& observer, auto& state) {
 			// Act:
-			UndoBlock(blockElement, { observer, CreateResolverContext(), state }, UndoBlockType::Rollback);
+			UndoBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state }, UndoBlockType::Rollback);
 
 			// Assert:
 			EXPECT_EQ(8u, observer.versions().size());
@@ -180,7 +181,7 @@ namespace catapult { namespace consumers {
 		// Arrange:
 		RunStateHashEnabledTest([](const auto& blockElement, const auto& observer, auto& state) {
 			// Act:
-			UndoBlock(blockElement, { observer, CreateResolverContext(), state }, UndoBlockType::Common);
+			UndoBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state }, UndoBlockType::Common);
 
 			// Assert:
 			EXPECT_TRUE(observer.versions().empty());

@@ -38,13 +38,13 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [pConfigHolder](
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 			auto height = context.Height;
-			const auto& networkConfig = pConfigHolder->Config(context.Height).Network;
+			const auto& networkConfig = context.Config.Network;
 			bool isEternalDurationSignedByNotNetworkPublicKey =
 				(Eternal_Artifact_Duration == notification.Duration && notification.Signer != networkConfig.Info.PublicKey);
 

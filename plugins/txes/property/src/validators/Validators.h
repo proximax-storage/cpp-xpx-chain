@@ -44,8 +44,7 @@ namespace catapult { namespace validators {
 	/* A validator implementation that applies to property notifications and validates that: */ \
 	/* - the maximum number of modifications (\a maxPropertyValues) is not exceeded */ \
 	/* - the maximum number of property values (\a maxPropertyValues) is not exeeded */ \
-	DECLARE_STATEFUL_VALIDATOR(Max##VALUE_NAME##PropertyValues, model::Modify##VALUE_NAME##PropertyNotification_v1)( \
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(Max##VALUE_NAME##PropertyValues, model::Modify##VALUE_NAME##PropertyNotification_v1)();
 
 	DECLARE_SHARED_VALIDATORS(Address)
 	DECLARE_SHARED_VALIDATORS(Mosaic)

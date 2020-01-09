@@ -32,7 +32,7 @@ namespace catapult { namespace model {
 		pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(234);
 		auto networkConfig = model::NetworkConfiguration::Uninitialized();
 		networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-		networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+		networkConfig.SetPluginConfiguration(pluginConfig);
 		NamespaceLifetimeConstraints constraints(networkConfig);
 
 		// Assert:

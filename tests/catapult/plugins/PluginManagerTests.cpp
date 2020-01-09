@@ -406,7 +406,8 @@ namespace catapult { namespace plugins {
 					: manager.createStatefulValidator();
 			auto notification = model::AccountPublicKeyNotification<1>(test::GenerateRandomByteArray<Key>());
 			auto cache = cache::CatapultCache({});
-			auto context = test::CreateValidatorContext(Height(123), cache.createView().toReadOnly());
+			auto config = config::BlockchainConfiguration::Uninitialized();
+			auto context = test::CreateValidatorContext(config, Height(123), cache.createView().toReadOnly());
 			return pValidator->validate(notification, context);
 		}
 	}

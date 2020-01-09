@@ -41,12 +41,11 @@ namespace catapult { namespace chain {
 				if (entityInfos.empty())
 					return ValidationResult::Neutral;
 
-				auto networkIdentifier = m_config.NetworkIdentifier;
-				auto network = m_config.NetworkInfoSupplier(height);
+				const auto& config = m_config.ConfigSupplier(height);
 				auto readOnlyCache = state.Cache.toReadOnly();
 				auto resolverContext = m_config.ResolverContextFactory(readOnlyCache);
-				auto validatorContext = ValidatorContext(height, timestamp, networkIdentifier, network, resolverContext, readOnlyCache);
-				auto observerContext = observers::ObserverContext(state, height, observers::NotifyMode::Commit, resolverContext);
+				auto validatorContext = ValidatorContext(config, height, timestamp, resolverContext, readOnlyCache);
+				auto observerContext = observers::ObserverContext(state, config, height, observers::NotifyMode::Commit, resolverContext);
 
 				ProcessingNotificationSubscriber sub(*m_config.pValidator, validatorContext, *m_config.pObserver, observerContext);
 				for (const auto& entityInfo : entityInfos) {

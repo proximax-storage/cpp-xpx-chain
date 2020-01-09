@@ -47,7 +47,8 @@ namespace catapult { namespace test {
 		// Arrange:
 		cache::CatapultCache cache({});
 		auto cacheView = cache.createView();
-		auto context = CreateValidatorContext(Height(123), cacheView.toReadOnly());
+		auto config = config::BlockchainConfiguration::Uninitialized();
+		auto context = CreateValidatorContext(config, Height(123), cacheView.toReadOnly());
 
 		// - create an aggregate with five validators
 		auto validators = AddSubValidators(builder, addValidator, 5);
@@ -81,7 +82,8 @@ namespace catapult { namespace test {
 		// Arrange:
 		cache::CatapultCache cache({});
 		auto cacheView = cache.createView();
-		auto context = CreateValidatorContext(Height(123), cacheView.toReadOnly());
+		auto config = config::BlockchainConfiguration::Uninitialized();
+		auto context = CreateValidatorContext(config, Height(123), cacheView.toReadOnly());
 
 		// - create an aggregate with five validators
 		auto validators = AddSubValidators(builder, addValidator, 5);

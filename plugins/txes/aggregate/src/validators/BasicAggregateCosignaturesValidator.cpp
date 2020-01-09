@@ -27,13 +27,12 @@ namespace catapult { namespace validators {
 
 	using Notification = model::AggregateCosignaturesNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, ([pConfigHolder](const auto& notification, const auto& context) {
+	DECLARE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(BasicAggregateCosignatures, ([](const auto& notification, const auto& context) {
 			if (0 == notification.TransactionsCount)
 				return Failure_Aggregate_No_Transactions;
 
-			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
-			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::AggregateConfiguration>(PLUGIN_NAME_HASH(aggregate));
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
 			if (pluginConfig.MaxTransactionsPerAggregate < notification.TransactionsCount)
 				return Failure_Aggregate_Too_Many_Transactions;
 

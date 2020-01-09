@@ -35,9 +35,9 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(Deadline, [pConfigHolder](const auto& notification, const auto& context) {
-			const model::NetworkConfiguration& config = pConfigHolder->Config(context.Height).Network;
+	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(Deadline, [](const auto& notification, const auto& context) {
+			const model::NetworkConfiguration& config = context.Config.Network;
 			return ValidateTransactionDeadline(
 				context.BlockTime,
 				notification.Deadline,

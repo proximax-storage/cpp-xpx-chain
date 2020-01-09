@@ -25,7 +25,7 @@
 namespace {
 	constexpr auto Process_Name = "broker";
 
-	void OptimizeConfigurationForBroker(catapult::config::BlockchainConfiguration& config) {
+	void OptimizeConfigurationForBroker(const catapult::config::BlockchainConfiguration& config) {
 		// fixup config for broker-specific optimizations
 		const_cast<bool&>(config.Immutable.ShouldEnableVerifiableState) = false;
 

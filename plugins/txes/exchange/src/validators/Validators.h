@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 	/// - Mosaic amount is not zero.
 	/// - Mosaic price is not zero.
 	/// - Mosaic is allowed for exchange.
-	DECLARE_STATEFUL_VALIDATOR(Offer, model::OfferNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(Offer, model::OfferNotification<1>)();
 
 	/// A validator implementation that applies to exchange notification and validates that:
 	/// - at least one offer to exchange is present.

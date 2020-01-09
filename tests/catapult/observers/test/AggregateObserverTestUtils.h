@@ -48,7 +48,8 @@ namespace catapult { namespace test {
 		state::CatapultState state;
 		cache::CatapultCache cache({});
 		auto cacheDelta = cache.createDelta();
-		auto context = test::CreateObserverContext(cacheDelta, state, Height(123), observers::NotifyMode::Commit);
+		auto config = config::BlockchainConfiguration::Uninitialized();
+		auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), observers::NotifyMode::Commit);
 
 		// - create an aggregate with five observers
 		auto observers = AddSubObservers(builder, addObserver, 5);
@@ -83,7 +84,8 @@ namespace catapult { namespace test {
 		state::CatapultState state;
 		cache::CatapultCache cache({});
 		auto cacheDelta = cache.createDelta();
-		auto context = test::CreateObserverContext(cacheDelta, state, Height(123), observers::NotifyMode::Commit);
+        auto config = config::BlockchainConfiguration::Uninitialized();
+		auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), observers::NotifyMode::Commit);
 
 		// - create an aggregate with five observers
 		auto observers = AddSubObservers(builder, addObserver, 5);
