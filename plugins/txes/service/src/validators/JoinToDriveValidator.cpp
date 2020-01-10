@@ -19,6 +19,9 @@ namespace catapult { namespace validators {
 		if (driveEntry.hasReplicator(notification.Replicator))
 			return Failure_Service_Replicator_Already_Connected_To_Drive;
 
+		if (driveEntry.replicators().size() >= driveEntry.replicas())
+			return Failure_Service_Max_Replicators_Reached;
+
 		return ValidationResult::Success;
 	});
 }}
