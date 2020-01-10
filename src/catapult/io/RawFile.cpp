@@ -339,5 +339,9 @@ namespace catapult { namespace io {
 		return m_position;
 	}
 
+	std::string RawFile::pathname() const {
+		return m_pathname;
+	}
+
 	// endregion
 }}
