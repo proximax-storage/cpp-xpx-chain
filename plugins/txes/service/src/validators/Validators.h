@@ -50,13 +50,13 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(Drive, model::DriveNotification<1>)();
 
 	/// A validator check that drive contains not many files
-	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, model::DriveFileSystemNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, model::DriveFileSystemNotification<1>)();
 
 	/// A validator check that exchange from replicators are valid
-	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)();
 
 	/// A validator check that end drive transaction is permitted
-	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)();
 
 	/// A validator check that replicators are valid(they are part of drive and put deposit for active files). That drive contains streaming tokens and drive in pending or finished state
 	DECLARE_STATEFUL_VALIDATOR(DriveFilesReward, model::DriveFilesRewardNotification<1>)(const MosaicId& streamingMosaicId);

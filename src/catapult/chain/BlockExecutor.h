@@ -29,13 +29,15 @@ namespace catapult { namespace chain {
 	/// Block execution context.
 	struct BlockExecutionContext {
 	public:
-		/// Creates a block execution context around \a observer, \a resolvers and \a state.
+		/// Creates a block execution context around \a observer, \a resolvers, \a configHolder and \a state.
 		BlockExecutionContext(
 				const observers::EntityObserver& observer,
 				const model::ResolverContext& resolvers,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder,
 				observers::ObserverState& state)
 				: Observer(observer)
 				, Resolvers(resolvers)
+				, ConfigHolder(configHolder)
 				, State(state)
 		{}
 
@@ -45,6 +47,9 @@ namespace catapult { namespace chain {
 
 		/// Alias resolvers.
 		const model::ResolverContext& Resolvers;
+
+		/// Config holder.
+		std::shared_ptr<config::BlockchainConfigurationHolder> ConfigHolder;
 
 		/// State to update during observation.
 		observers::ObserverState& State;

@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxTransactionsValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactions, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxTransactions)
 
 	namespace {
 		constexpr uint32_t Max_Transactions = 10;
@@ -44,11 +44,10 @@ namespace catapult { namespace validators {
 			mutableConfig.Network.MaxTransactionsPerBlock = Max_Transactions;
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateMaxTransactionsValidator(pConfigHolder);
+			auto pValidator = CreateMaxTransactionsValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

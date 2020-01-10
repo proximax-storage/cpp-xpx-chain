@@ -88,8 +88,8 @@ namespace catapult { namespace observers {
 		};
 	}
 
-	DECLARE_OBSERVER(ModifyContract, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(ModifyContract, Notification, [pConfigHolder](const auto& notification, const ObserverContext& context) {
+	DECLARE_OBSERVER(ModifyContract, Notification)() {
+		return MAKE_OBSERVER(ModifyContract, Notification, [](const auto& notification, const ObserverContext& context) {
 			auto& contractCache = context.Cache.sub<cache::ContractCache>();
 			ContractFacade contractFacade(contractCache, notification.Multisig);
 
@@ -118,8 +118,7 @@ namespace catapult { namespace observers {
 			auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
 			auto& multisigEntry = multisigCache.find(notification.Multisig).get();
 			float verifierCount = contractFacade.verifierCount();
-			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
-			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::ContractConfiguration>(PLUGIN_NAME_HASH(contract));
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::ContractConfiguration>();
 			multisigEntry.setMinApproval(ceil(verifierCount * pluginConfig.MinPercentageOfApproval / 100));
 			multisigEntry.setMinRemoval(ceil(verifierCount * pluginConfig.MinPercentageOfRemoval / 100));
 		});

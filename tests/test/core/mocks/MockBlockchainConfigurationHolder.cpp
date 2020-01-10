@@ -26,15 +26,15 @@ namespace catapult { namespace config {
 		SetConfig(Height{0}, config);
 	}
 
-	BlockchainConfiguration& MockBlockchainConfigurationHolder::Config(const Height&) {
+	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config(const Height&) {
 		return m_networkConfigs.get(Height{0});
 	}
 
-	BlockchainConfiguration& MockBlockchainConfigurationHolder::Config() {
+	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config() {
 		return m_networkConfigs.get(Height{0});
 	}
 
-	BlockchainConfiguration& MockBlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height&) {
+	const BlockchainConfiguration& MockBlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height&) {
 		return m_networkConfigs.get(Height{0});
 	}
 

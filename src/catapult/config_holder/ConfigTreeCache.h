@@ -30,13 +30,13 @@ namespace catapult { namespace config {
 
 		bool containsRef(const Height& height) const;
 
-		BlockchainConfiguration& insert(const Height& height, const BlockchainConfiguration& config);
+		const BlockchainConfiguration& insert(const Height& height, const BlockchainConfiguration& config);
 
-		BlockchainConfiguration& insertRef(const Height& refHeight, const Height& configHeight);
+		const BlockchainConfiguration& insertRef(const Height& refHeight, const Height& configHeight);
 
 		void erase(const Height& height);
 
-		BlockchainConfiguration& get(const Height& height);
+		const BlockchainConfiguration& get(const Height& height);
 
 	private:
 		void cleanupRefs(ConfigRoot& root) {

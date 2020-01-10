@@ -159,7 +159,7 @@ namespace catapult { namespace local {
 
 			const auto& block = blockElement.Block;
 			observers::NotificationObserverAdapter observer(m_observerFactory(block), m_pluginManager.createNotificationPublisher());
-			chain::ExecuteBlock(blockElement, { observer, resolverContext, observerState });
+			chain::ExecuteBlock(blockElement, { observer, resolverContext, m_pluginManager.configHolder(), observerState });
 
 			// populate patricia tree delta
 			auto stateHash = cacheDelta.calculateStateHash(block.Height).StateHash;

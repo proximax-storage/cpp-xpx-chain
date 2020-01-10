@@ -72,10 +72,9 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(MetadataModifications, [pConfigHolder](const Notification& notification, const ValidatorContext& context) {
-			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
-			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::MetadataConfiguration>(PLUGIN_NAME_HASH(metadata));
+	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(MetadataModifications, [](const Notification& notification, const ValidatorContext& context) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MetadataConfiguration>();
 			return validate(notification, context, pluginConfig.MaxFields);
 		});
 	}

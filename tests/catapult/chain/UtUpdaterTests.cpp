@@ -26,6 +26,7 @@
 #include "catapult/model/TransactionStatus.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 using catapult::validators::ValidationResult;
@@ -55,11 +56,12 @@ namespace catapult { namespace chain {
 		}
 
 		auto CreateConfiguration(const BlockFeeMultiplier& minFeeMultiplier) {
-			auto config = config::NodeConfiguration::Uninitialized();
-			config.MinFeeMultiplier = minFeeMultiplier;
-			config.FeeInterest = 1;
-			config.FeeInterestDenominator = 1;
-			return config;
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+			config.Node.MinFeeMultiplier = minFeeMultiplier;
+			config.Node.FeeInterest = 1;
+			config.Node.FeeInterestDenominator = 1;
+			return config.ToConst();
 		}
 
 		// region functional helpers
@@ -123,13 +125,12 @@ namespace catapult { namespace chain {
 			explicit UpdaterTestContext(
 					ThrottleMode throttleMode = ThrottleMode::Off,
 					BlockFeeMultiplier minFeeMultiplier = BlockFeeMultiplier())
-					: m_executionConfig(minFeeMultiplier)
+					: m_executionConfig(CreateConfiguration(minFeeMultiplier))
 					, m_cache(CreateCacheWithDefaultHeight())
 					, m_transactionsCache(cache::MemoryCacheOptions(1024, 1000))
 					, m_updater(
 							m_transactionsCache,
 							m_cache,
-							CreateConfiguration(minFeeMultiplier),
 							m_executionConfig.Config,
 							[]() { return Default_Time; },
 							[this](const auto& transaction, const Height&, const auto& hash, auto result) {

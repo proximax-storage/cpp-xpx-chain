@@ -19,10 +19,10 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(MetadataType, model::MetadataTypeNotification<1>)();
 
 	/// A validator implementation that applies to metadata field modification and validates that
-	DECLARE_STATEFUL_VALIDATOR(MetadataFieldModification, model::ModifyMetadataFieldNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MetadataFieldModification, model::ModifyMetadataFieldNotification<1>)();
 
 	/// A validator implementation that applies to metadata modifications check that modification is valid
-	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, model::MetadataModificationsNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MetadataModifications, model::MetadataModificationsNotification<1>)();
 
 	/// A validator implementation that applies to metadata check that operation is permitted and address exists
 	DECLARE_STATEFUL_VALIDATOR(ModifyAddressMetadata, model::ModifyAddressMetadataNotification_v1)();

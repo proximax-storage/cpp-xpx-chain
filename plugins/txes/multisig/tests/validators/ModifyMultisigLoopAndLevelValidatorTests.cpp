@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigLoopAndLevelValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigLoopAndLevel, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigLoopAndLevel,)
 
 	namespace {
 		constexpr auto Num_Network_Accounts = 14 + 4 + 2; // last two keys are unassigned (and not in multisig cache)
@@ -79,12 +79,12 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.MaxMultisigDepth = maxMultisigDepth;
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			auto pValidator = CreateModifyMultisigLoopAndLevelValidator(pConfigHolder);
+			auto pValidator = CreateModifyMultisigLoopAndLevelValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config());
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)

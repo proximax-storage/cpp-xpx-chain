@@ -27,6 +27,10 @@
 namespace catapult { namespace plugins {
 
 	void RegisterTransferSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::TransferConfiguration>();
+		});
+
 		manager.addTransactionSupport(CreateTransferTransactionPlugin());
 
 		manager.addStatelessValidatorHook([](auto& builder) {
@@ -34,11 +38,10 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateTransferPluginConfigValidator());
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateTransferMessageValidator(pConfigHolder))
-				.add(validators::CreateTransferMosaicsValidator(pConfigHolder));
+				.add(validators::CreateTransferMessageValidator())
+				.add(validators::CreateTransferMosaicsValidator());
 		});
 	}
 }}

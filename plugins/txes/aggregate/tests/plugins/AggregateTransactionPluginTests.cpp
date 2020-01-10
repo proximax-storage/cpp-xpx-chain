@@ -101,7 +101,7 @@ namespace catapult { namespace plugins {
 			auto blockchainConfig = model::NetworkConfiguration::Uninitialized();
 			auto aggregateConfig = config::AggregateConfiguration::Uninitialized();
 			aggregateConfig.MaxBondedTransactionLifetime = time;
-			blockchainConfig.SetPluginConfiguration(PLUGIN_NAME(aggregate), aggregateConfig);
+			blockchainConfig.SetPluginConfiguration(aggregateConfig);
 			return config::CreateMockConfigurationHolder(blockchainConfig);
 		}
 

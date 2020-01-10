@@ -13,6 +13,7 @@ namespace catapult { namespace observers {
     DECLARE_OBSERVER(StartBilling, Notification)(const MosaicId& storageMosaicId) {
         return MAKE_OBSERVER(StartBilling, Notification, [storageMosaicId](const Notification& notification, ObserverContext& context) {
             auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
+
             if (storageMosaicId != mosaicId)
                 return;
 

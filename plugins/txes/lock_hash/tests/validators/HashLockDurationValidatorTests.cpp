@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockDuration)
 
 	namespace {
 		struct HashTraits {
@@ -35,14 +35,18 @@ namespace catapult { namespace validators {
 			using NotificationType = model::HashLockDurationNotification<1>;
 			static constexpr auto Failure_Result = Failure_LockHash_Invalid_Duration;
 
-			static auto CreateValidator(BlockDuration maxDuration) {
+			static auto CreateConfigHolder(BlockDuration maxDuration) {
 				auto pluginConfig = config::HashLockConfiguration::Uninitialized();
 				pluginConfig.MaxHashLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
 				auto networkConfig = model::NetworkConfiguration::Uninitialized();
 				networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-				networkConfig.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
+				networkConfig.SetPluginConfiguration(pluginConfig);
 				auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-				return CreateHashLockDurationValidator(pConfigHolder);
+				return pConfigHolder;
+			}
+
+			static auto CreateValidator() {
+				return CreateHashLockDurationValidator();
 			}
 		};
 	}

@@ -74,6 +74,9 @@ namespace catapult { namespace config {
 		const config::SupportedEntityVersions SupportedEntityVersions;
 
 	public:
+		/// Creates an uninitialized blockchain configuration.
+		static BlockchainConfiguration Uninitialized();
+
 		/// Loads a blockchain configuration from \a resourcesPath given the specified extensions host (\a extensionsHost).
 		/// \note This function is expected to be called be before logging is enabled.
 		static BlockchainConfiguration LoadFromPath(const boost::filesystem::path& resourcesPath, const std::string& extensionsHost);

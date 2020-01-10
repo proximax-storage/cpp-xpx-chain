@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS HashLockMosaicValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(HashLockMosaic)
 
 	namespace {
 		constexpr MosaicId Currency_Mosaic_Id(1234);
@@ -42,14 +42,13 @@ namespace catapult { namespace validators {
 			pluginConfig.LockedFundsPerAggregate = requiredBondedAmount;
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
-			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(lockhash), pluginConfig);
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateHashLockMosaicValidator(pConfigHolder);
+			auto pValidator = CreateHashLockMosaicValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "notification with id " << mosaicId << " and amount " << bondedAmount;

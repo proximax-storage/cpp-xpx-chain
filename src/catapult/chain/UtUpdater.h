@@ -78,7 +78,6 @@ namespace catapult { namespace chain {
 		UtUpdater(
 				cache::UtCache& transactionsCache,
 				const cache::CatapultCache& confirmedCatapultCache,
-				const config::NodeConfiguration& config,
 				const ExecutionConfiguration& executionConfig,
 				const TimeSupplier& timeSupplier,
 				const FailedTransactionSink& failedTransactionSink,

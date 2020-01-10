@@ -30,6 +30,9 @@ namespace catapult { namespace config {
 	/// Mosaic plugin configuration settings.
 	struct MosaicConfiguration : public model::PluginConfiguration {
 	public:
+		DEFINE_CONFIG_CONSTANTS(mosaic)
+
+	public:
 		/// Maximum number of mosaics that an account can own.
 		uint16_t MaxMosaicsPerAccount;
 

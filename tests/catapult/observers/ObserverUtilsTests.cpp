@@ -22,8 +22,8 @@
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/cache/SimpleCache.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace observers {
 
@@ -37,7 +37,8 @@ namespace catapult { namespace observers {
 			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
-			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
+			auto config = config::BlockchainConfiguration::Uninitialized();
+			ObserverContext context({ cacheDelta, state }, config, height, mode, model::ResolverContext());
 
 			// Act:
 			auto result = ShouldPrune(context, pruneInterval);
@@ -228,12 +229,19 @@ namespace catapult { namespace observers {
 			NotifyBlock(observer, context, Timestamp());
 		}
 
+		config::BlockchainConfiguration CreateBlockchainConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			config.Network.BlockPruneInterval = 10;
+			return config.ToConst();
+		}
+
 		void AssertNoPruning(const PruningObserver& observer, NotifyMode mode, Height height) {
 			// Arrange:
 			auto cache = CreateSimpleCatapultCache();
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
-			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
+			auto config = CreateBlockchainConfiguration();
+			ObserverContext context({ cacheDelta, state }, config, height, mode, model::ResolverContext());
 
 			// Act:
 			NotifyBlock(observer, context);
@@ -251,7 +259,8 @@ namespace catapult { namespace observers {
 			auto cache = CreateSimpleCatapultCache();
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
-			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
+			auto config = CreateBlockchainConfiguration();
+			ObserverContext context({ cacheDelta, state }, config, height, mode, model::ResolverContext());
 
 			// Act:
 			NotifyBlock(observer, context);
@@ -269,7 +278,8 @@ namespace catapult { namespace observers {
 			auto cache = CreateSimpleCatapultCache();
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
-			ObserverContext context({ cacheDelta, state }, height, mode, model::ResolverContext());
+			auto config = CreateBlockchainConfiguration();
+			ObserverContext context({ cacheDelta, state }, config, height, mode, model::ResolverContext());
 
 			// Act:
 			NotifyBlock(observer, context, timestamp);
@@ -280,12 +290,6 @@ namespace catapult { namespace observers {
 			EXPECT_TRUE(subCache.pruneHeights().empty()) << message;
 			EXPECT_EQ(std::vector<Timestamp>({ timestamp }), subCache.pruneTimes()) << message;
 			EXPECT_TRUE(subCache.touchHeights().empty()) << message;
-		}
-
-		auto CreateConfigHolder() {
-			auto config = model::NetworkConfiguration::Uninitialized();
-			config.BlockPruneInterval = 10;
-			return config::CreateMockConfigurationHolder(config);
 		}
 	}
 
@@ -365,7 +369,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverIsCreatedWithCorrectName) {
 		// Act:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", CreateConfigHolder());
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo");
 
 		// Assert:
 		EXPECT_EQ("FooPruningObserver", pObserver->name());
@@ -373,7 +377,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverSkipsPruningWhenModeIsRollback) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", CreateConfigHolder());
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo");
 
 		// Act + Assert:
 		auto mode = NotifyMode::Rollback;
@@ -388,7 +392,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverSkipsPruningWhenHeightIsNotDivisibleByPruneInterval) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", CreateConfigHolder());
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo");
 
 		// Act + Assert:
 		auto mode = NotifyMode::Commit;
@@ -400,7 +404,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, CacheTimePruningObserverPrunesWhenHeightIsDivisibleByPruneInterval) {
 		// Arrange:
-		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo", CreateConfigHolder());
+		auto pObserver = CreateCacheTimePruningObserver<PrunableCache>("Foo");
 
 		// Act + Assert:
 		auto mode = NotifyMode::Commit;
@@ -426,7 +430,8 @@ namespace catapult { namespace observers {
 			auto cacheDelta = cache.createDelta();
 			state::CatapultState state;
 			model::BlockStatementBuilder statementBuilder;
-			ObserverContext context({ cacheDelta, state, statementBuilder }, height, mode, model::ResolverContext());
+			auto config = config::BlockchainConfiguration::Uninitialized();
+			ObserverContext context({ cacheDelta, state, statementBuilder }, config, height, mode, model::ResolverContext());
 
 			// Act:
 			NotifyBlock(observer, context);

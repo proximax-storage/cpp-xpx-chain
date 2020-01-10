@@ -140,7 +140,7 @@ namespace catapult { namespace local {
 				if (heights.Cache > heights.Storage)
 					CATAPULT_THROW_RUNTIME_ERROR_2("cache height is larger than storage height", heights.Cache, heights.Storage);
 
-				if (!stateRef().Config.Node.ShouldUseCacheDatabaseStorage)
+				if (!stateRef().ConfigHolder->Config().Node.ShouldUseCacheDatabaseStorage)
 					repairStateFromStorage(heights);
 
 				CATAPULT_LOG(info) << "loaded block chain (height = " << heights.Storage << ", score = " << m_score.get() << ")";
@@ -184,14 +184,15 @@ namespace catapult { namespace local {
 				// RepairState always needs to be called in order to recover broker messages
 				std::unique_ptr<subscribers::StateChangeSubscriber> pStateChangeRepairSubscriber;
 				std::unique_ptr<subscribers::StateChangeSubscriber> pDualStateChangeSubscriber;
-				if (stateRef().Config.Node.ShouldUseCacheDatabaseStorage) {
+				const auto& config = stateRef().ConfigHolder->Config();
+				if (config.Node.ShouldUseCacheDatabaseStorage) {
 					pStateChangeRepairSubscriber = CreateStateChangeRepairingSubscriber(stateRef().Cache, stateRef().Score);
 					pDualStateChangeSubscriber = std::make_unique<DualStateChangeSubscriber>(
 							*pStateChangeRepairSubscriber,
 							*m_pStateChangeSubscriber);
 				}
 
-				auto& repairSubscriber = stateRef().Config.Node.ShouldUseCacheDatabaseStorage
+				auto& repairSubscriber = config.Node.ShouldUseCacheDatabaseStorage
 						? *pDualStateChangeSubscriber
 						: *m_pStateChangeSubscriber;
 				RepairState(m_dataDirectory.spoolDir("state_change"), stateRef().Cache, *m_pStateChangeSubscriber, repairSubscriber);
@@ -228,7 +229,7 @@ namespace catapult { namespace local {
 
 		private:
 			extensions::LocalNodeStateRef stateRef() {
-				return extensions::LocalNodeStateRef(m_pBootstrapper->config(), m_catapultState, m_catapultCache, m_storage, m_score);
+				return extensions::LocalNodeStateRef(m_pBootstrapper->configHolder(), m_catapultState, m_catapultCache, m_storage, m_score);
 			}
 
 		private:

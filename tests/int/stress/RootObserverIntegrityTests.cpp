@@ -139,7 +139,7 @@ namespace catapult { namespace extensions {
 
 				auto delta = m_cache.createDelta();
 				auto observerState = observers::ObserverState(delta, m_state);
-				auto blockExecutionContext = chain::BlockExecutionContext(rootObserver, resolverContext, observerState);
+				auto blockExecutionContext = chain::BlockExecutionContext(rootObserver, resolverContext, m_pPluginManager->configHolder(), observerState);
 
 				// Act: use BlockExecutor to execute all transactions and blocks
 				if (NotifyMode::Commit == mode) {

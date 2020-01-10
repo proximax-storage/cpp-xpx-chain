@@ -267,6 +267,9 @@ namespace catapult { namespace model {
 	namespace {
 		struct BetaConfiguration {
 		public:
+			static constexpr size_t Id = 0;
+			static constexpr auto Name = "beta";
+		public:
 			uint64_t Bar;
 			std::string Baz;
 
@@ -279,6 +282,20 @@ namespace catapult { namespace model {
 				return config;
 			}
 		};
+
+		struct GammaConfiguration {
+		public:
+			static constexpr auto Name = "gamma";
+		public:
+			uint64_t Foo;
+
+			static GammaConfiguration LoadFromBag(const utils::ConfigurationBag& bag) {
+				GammaConfiguration config;
+				utils::LoadIniProperty(bag, "", "Foo", config.Foo);
+				utils::VerifyBagSizeLte(bag, 1);
+				return config;
+			}
+		};
 	}
 
 	TEST(TEST_CLASS, LoadPluginConfigurationSucceedsWhenPluginConfigurationIsPresent) {
@@ -287,7 +304,7 @@ namespace catapult { namespace model {
 		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties());
 
 		// Act:
-		auto betaConfig = LoadPluginConfiguration<BetaConfiguration>(config, "beta");
+		auto betaConfig = LoadPluginConfiguration<BetaConfiguration>(config);
 
 		// Assert:
 		EXPECT_EQ(11u, betaConfig.Bar);
@@ -300,7 +317,7 @@ namespace catapult { namespace model {
 		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties());
 
 		// Act + Assert:
-		EXPECT_THROW(LoadPluginConfiguration<BetaConfiguration>(config, "gamma"), utils::property_not_found_error);
+		EXPECT_THROW(LoadPluginConfiguration<GammaConfiguration>(config), catapult_invalid_argument);
 	}
 
 	// endregion

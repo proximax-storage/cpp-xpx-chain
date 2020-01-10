@@ -12,6 +12,7 @@ namespace catapult { namespace observers {
 
     DECLARE_OBSERVER(EndDrive, Notification)(const config::ImmutableConfiguration& config) {
         return MAKE_OBSERVER(EndDrive, Notification, [&config](const Notification& notification, ObserverContext& context) {
+
             auto& driveCache = context.Cache.sub<cache::DriveCache>();
             auto driveIter = driveCache.find(notification.DriveKey);
             auto& driveEntry = driveIter.get();

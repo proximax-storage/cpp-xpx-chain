@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS EntityVersionValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(EntityVersion)
 
 	namespace {
 		constexpr uint8_t Min_Entity_Version = 55;
@@ -48,9 +48,10 @@ namespace catapult { namespace validators {
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
-			auto context = ValidatorContext(Height(123), Timestamp(8888), model::NetworkIdentifier::Zero, model::NetworkInfo(), resolverContext, readOnlyCache);
+			auto pConfigHolder = CreateBlockchainConfigurationHolder();
+			auto context = ValidatorContext(pConfigHolder->Config(), Height(123), Timestamp(8888), resolverContext, readOnlyCache);
 			model::EntityNotification<1> notification(model::NetworkIdentifier::Zero, Entity_Type, version);
-			auto pValidator = CreateEntityVersionValidator(CreateBlockchainConfigurationHolder());
+			auto pValidator = CreateEntityVersionValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, context);

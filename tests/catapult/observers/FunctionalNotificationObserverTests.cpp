@@ -62,7 +62,8 @@ namespace catapult { namespace observers {
 		state::CatapultState state;
 		cache::CatapultCache cache({});
 		auto cacheDelta = cache.createDelta();
-		auto context = test::CreateObserverContext(cacheDelta, state, Height(123), NotifyMode::Commit);
+		auto config = config::BlockchainConfiguration::Uninitialized();
+		auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), NotifyMode::Commit);
 
 		auto publicKey = test::GenerateRandomByteArray<Key>();
 		NotificationType notification(publicKey);

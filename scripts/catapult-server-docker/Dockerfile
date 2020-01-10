@@ -96,6 +96,7 @@ RUN cd /catapult \
     && rm -rf _build \
     && mkdir _build && cd _build \
     && cmake -DCMAKE_BUILD_TYPE=Release  \
+
     -DCMAKE_CXX_FLAGS="-pthread -O3" \
     -DPYTHON_EXECUTABLE=/usr/bin/python3 \
     -DBSONCXX_LIB=/usr/local/lib/libbsoncxx.so \

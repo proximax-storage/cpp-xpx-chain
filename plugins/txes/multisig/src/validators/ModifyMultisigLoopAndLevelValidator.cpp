@@ -61,12 +61,11 @@ namespace catapult { namespace validators {
 		};
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [pConfigHolder](
+	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigLoopAndLevel, [](
 					const auto& notification,
 					const ValidatorContext& context) {
-			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
-			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME_HASH(multisig));
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MultisigConfiguration>();
 			auto checker = LoopAndLevelChecker(context.Cache.sub<cache::MultisigCache>(), pluginConfig.MaxMultisigDepth);
 			return checker.validate(notification.MultisigAccountKey, notification.CosignatoryKey);
 		});

@@ -16,7 +16,7 @@ namespace catapult { namespace config {
 		return m_references.count(height) > 0;
 	}
 
-	BlockchainConfiguration& ConfigTreeCache::insert(const Height& height, const BlockchainConfiguration& config) {
+	const BlockchainConfiguration& ConfigTreeCache::insert(const Height& height, const BlockchainConfiguration& config) {
 		if (m_configs.count(height))
 			CATAPULT_THROW_INVALID_ARGUMENT_1("duplicate config at height", height);
 
@@ -34,7 +34,7 @@ namespace catapult { namespace config {
 		return m_configs.at(height).Config;
 	}
 
-	BlockchainConfiguration& ConfigTreeCache::insertRef(const Height& refHeight, const Height& configHeight) {
+	const BlockchainConfiguration& ConfigTreeCache::insertRef(const Height& refHeight, const Height& configHeight) {
 		if (refHeight == configHeight)
 			CATAPULT_THROW_INVALID_ARGUMENT_1("reference is not allowed at the same height", configHeight);
 
@@ -70,7 +70,7 @@ namespace catapult { namespace config {
 		}
 	}
 
-	BlockchainConfiguration& ConfigTreeCache::get(const Height& height) {
+	const BlockchainConfiguration& ConfigTreeCache::get(const Height& height) {
 		auto iterRef = m_references.find(height);
 		if (iterRef != m_references.end())
 			return iterRef->second.Parent.Config;

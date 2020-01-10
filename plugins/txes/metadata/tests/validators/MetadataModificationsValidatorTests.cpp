@@ -20,7 +20,7 @@ namespace catapult { namespace validators {
 
 	constexpr uint8_t MaxFields = 5;
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MetadataModifications)
 
 	namespace {
 		const Address Raw_Data = test::GenerateRandomByteArray<Address>();
@@ -55,12 +55,11 @@ namespace catapult { namespace validators {
 			test::MutableBlockchainConfiguration mutableConfig;
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
 			pluginConfig.MaxFields = MaxFields;
-			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::MetadataCacheFactory::Create(config);
 			PopulateCache(cache, initValues);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateMetadataModificationsValidator(pConfigHolder);
+			auto pValidator = CreateMetadataModificationsValidator();
 
 			uint32_t sizeOfBuffer = 0;
 
@@ -88,7 +87,7 @@ namespace catapult { namespace validators {
 			auto notification = model::MetadataModificationsNotification<1>(metadataId, pointers);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

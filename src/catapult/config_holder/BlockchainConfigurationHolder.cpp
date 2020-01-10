@@ -14,7 +14,8 @@
 namespace catapult { namespace config {
 
 	BlockchainConfigurationHolder::BlockchainConfigurationHolder(cache::CatapultCache* pCache)
-			: m_pCache(pCache) {
+			: m_pCache(pCache)
+			, m_pluginInitializer([](auto&) {}) {
 		auto config = BlockchainConfiguration{
 			ImmutableConfiguration::Uninitialized(),
 			model::NetworkConfiguration::Uninitialized(),
@@ -47,7 +48,7 @@ namespace catapult { namespace config {
 		m_networkConfigs.insert(height, config);
 	}
 
-	BlockchainConfiguration& BlockchainConfigurationHolder::Config(const Height& height) {
+	const BlockchainConfiguration& BlockchainConfigurationHolder::Config(const Height& height) {
 		std::lock_guard<std::mutex> guard(m_mutex);
 		if (m_networkConfigs.containsRef(height) || m_networkConfigs.contains(height))
 			return m_networkConfigs.get(height);
@@ -72,6 +73,7 @@ namespace catapult { namespace config {
 
 		std::istringstream inputBlock(entry.networkConfig());
 		auto networkConfig =  model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
+        m_pluginInitializer(networkConfig);
 
 		std::istringstream inputVersions(entry.supportedEntityVersions());
 		config::SupportedEntityVersions supportedEntityVersions;
@@ -89,7 +91,7 @@ namespace catapult { namespace config {
 			supportedEntityVersions
 		);
 
-		auto& configRef = m_networkConfigs.insert(configHeight, config);
+		const auto& configRef = m_networkConfigs.insert(configHeight, config);
 
 		if (configHeight != height)
 			m_networkConfigs.insertRef(height, configHeight);
@@ -97,11 +99,11 @@ namespace catapult { namespace config {
 		return configRef;
 	}
 
-	BlockchainConfiguration& BlockchainConfigurationHolder::Config() {
+	const BlockchainConfiguration& BlockchainConfigurationHolder::Config() {
 		return Config(m_pCache != nullptr ? m_pCache->configHeight() : Height(0));
 	}
 
-	BlockchainConfiguration& BlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height& height) {
+	const BlockchainConfiguration& BlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height& height) {
 		if (height == HEIGHT_OF_LATEST_CONFIG)
 			return Config();
 		return Config(height);

@@ -29,7 +29,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicSupplyChangeAllowedValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicSupplyChangeAllowed)
 
 	namespace {
 		constexpr auto Max_Atomic_Units = Amount(std::numeric_limits<Amount::ValueType>::max());
@@ -44,10 +44,10 @@ namespace catapult { namespace validators {
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			networkConfig.MaxMosaicAtomicUnits = maxAtomicUnits;
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			auto pValidator = CreateMosaicSupplyChangeAllowedValidator(pConfigHolder);
+			auto pValidator = CreateMosaicSupplyChangeAllowedValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config(), height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "id " << notification.MosaicId << ", delta " << notification.Delta;

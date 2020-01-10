@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS RootNamespaceValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespace, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespace)
 
 	// region duration
 
@@ -41,15 +41,14 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxNamespaceDuration = utils::BlockSpan::FromHours(maxDuration);
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Network.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateRootNamespaceValidator(pConfigHolder);
+			auto pValidator = CreateRootNamespaceValidator();
 			auto notification = model::RootNamespaceNotification<1>(Key(), NamespaceId(), BlockDuration(duration));
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "duration " << duration << ", maxDuration " << maxDuration;
