@@ -23,7 +23,7 @@ namespace catapult { namespace config {
 		auto pair = m_configs.emplace(height, ConfigRoot { config, {} });
 		// Remove references to the previous config at heights where the new one applied.
 		if (pair.first != m_configs.begin()) {
-			auto references = (--pair.first)->second.Children;
+			auto& references = (--pair.first)->second.Children;
 			auto iter = references.lower_bound(height);
 			while (iter != references.end()) {
 				m_references.erase(*iter);
