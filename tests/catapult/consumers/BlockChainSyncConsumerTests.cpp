@@ -32,6 +32,8 @@
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
 #include "tests/TestHarness.h"
+#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 using catapult::disruptor::ConsumerInput;
 using catapult::disruptor::InputSource;
@@ -420,7 +422,7 @@ namespace catapult { namespace consumers {
 			disruptor::DisruptorConsumer Consumer;
 
 		public:
-			void seedStorage(Height desiredHeight, size_t numTransactionsPerBlock = 0) {
+			void seedStorage(Height desiredHeight, size_t numTransactionsPerBlock = 0, const test::ConstTransactions& desiredTransactions = {}) {
 				// Arrange:
 				auto height = Storage.view().chainHeight();
 				auto storageModifier = Storage.modifier();
@@ -429,7 +431,9 @@ namespace catapult { namespace consumers {
 					height = height + Height(1);
 
 					auto transactions = test::GenerateRandomTransactions(numTransactionsPerBlock);
-					auto pBlock = test::GenerateBlockWithTransactions(transactions);
+					auto pBlock = desiredTransactions.empty() ?
+						test::GenerateBlockWithTransactions(test::GenerateRandomTransactions(numTransactionsPerBlock)) :
+						test::GenerateBlockWithTransactions(desiredTransactions);
 					SetBlockHeight(*pBlock, height);
 
 					// - seed with random tx hashes
@@ -1151,6 +1155,113 @@ namespace catapult { namespace consumers {
 		ASSERT_EQ(2u, context.CommitStep.params().size());
 		EXPECT_EQ(CommitOperationStep::Blocks_Written, context.CommitStep.params()[0]);
 		EXPECT_EQ(CommitOperationStep::State_Written, context.CommitStep.params()[1]);
+	}
+
+	// endregion
+
+	// region network config transaction
+
+	namespace {
+		auto CreateNetworkConfigTransaction(const BlockDuration& applyHeightDelta) {
+			uint32_t size = sizeof(model::NetworkConfigTransaction);
+			auto pTransaction = utils::MakeUniqueWithSize<model::NetworkConfigTransaction>(size);
+			pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+			pTransaction->Type = model::NetworkConfigTransaction::Entity_Type;
+			pTransaction->Size = size;
+			pTransaction->ApplyHeightDelta = applyHeightDelta;
+			pTransaction->BlockChainConfigSize = 0;
+			pTransaction->SupportedEntityVersionsSize = 0;
+
+			return pTransaction;
+		}
+
+		auto CreateAggregateTransactionWithNetworkConfig(const BlockDuration& applyHeightDelta) {
+			uint32_t size = sizeof(model::AggregateTransaction) + sizeof(model::EmbeddedNetworkConfigTransaction);
+			auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction>(size);
+			pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+			pTransaction->Type = model::AggregateTransaction::Entity_Type;
+			pTransaction->Size = size;
+			pTransaction->PayloadSize = size - sizeof(model::AggregateTransaction);
+
+			auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
+			auto pEmbeddedTransaction = reinterpret_cast<model::EmbeddedNetworkConfigTransaction*>(pData);
+			pEmbeddedTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+			pEmbeddedTransaction->Size = sizeof(model::EmbeddedNetworkConfigTransaction);
+			pEmbeddedTransaction->Type = model::EmbeddedNetworkConfigTransaction::Entity_Type;
+			pEmbeddedTransaction->ApplyHeightDelta = applyHeightDelta;
+			pEmbeddedTransaction->BlockChainConfigSize = 0;
+			pEmbeddedTransaction->SupportedEntityVersionsSize = 0;
+
+			return pTransaction;
+		}
+
+		template<typename TTransaction>
+		void AssertBlocksWithNetworkConfigTransaction(
+				const BlockDuration& applyHeightDelta,
+				std::function<model::UniqueEntityPtr<TTransaction> (const BlockDuration&)> createTransaction,
+				bool localConfigTransaction) {
+			// Arrange: create a local storage with blocks 1-20 optionally with config transaction at height 12.
+			// And a remote storage with blocks 8-16 with config transaction at height 12.
+			Height localHeight(20);
+			Height configTransactionHeight(12);
+			uint64_t numRemoteBlocks = 9;
+			auto numBlocksBefore = numRemoteBlocks / 2;
+			auto numBlocksAfter = numBlocksBefore;
+
+			// Seed local storage.
+			ConsumerTestContext context;
+			test::ConstTransactions networkConfigTransaction{ createTransaction(applyHeightDelta) };
+			context.seedStorage(configTransactionHeight - Height(1));
+			if (localConfigTransaction)
+				context.seedStorage(configTransactionHeight, 0, networkConfigTransaction);
+			context.seedStorage(localHeight);
+
+			// Create remote block input.
+			auto input = CreateInput(configTransactionHeight - Height(numBlocksBefore), numBlocksBefore);
+			auto pBlock = test::GenerateBlockWithTransactions(test::TestBlockTransactions(networkConfigTransaction));
+			SetBlockHeight(*pBlock, configTransactionHeight);
+			input.blocks().push_back(test::BlockToBlockElement(*pBlock));
+			auto input2 = CreateInput(configTransactionHeight + Height(1), numBlocksAfter);
+			for (const auto& element : input2.blocks())
+				input.blocks().push_back(element);
+			for (auto& element : input.blocks())
+				const_cast<model::Block&>(element.Block).Difficulty = Difficulty(5);
+
+			// Act:
+			auto result = context.Consumer(input);
+
+			// Assert:
+			test::AssertContinued(result);
+			auto numInputBlocks = localConfigTransaction ?
+				numRemoteBlocks :
+				std::min(numBlocksBefore + applyHeightDelta.unwrap(), numRemoteBlocks);
+			EXPECT_EQ(numInputBlocks, input.blocks().size());
+			context.assertProcessorInvocation(input, (localHeight - configTransactionHeight).unwrap() + numBlocksBefore + 1);
+		}
+	}
+
+	TEST(TEST_CLASS, CommitBlocksBeforeNetworkConfig_RegularConfigTransaction) {
+		AssertBlocksWithNetworkConfigTransaction<model::NetworkConfigTransaction>(BlockDuration(2), CreateNetworkConfigTransaction, false);
+	}
+
+	TEST(TEST_CLASS, CommitBlocksBeforeNetworkConfig_EmbeddedConfigTransaction) {
+		AssertBlocksWithNetworkConfigTransaction<model::AggregateTransaction>(BlockDuration(2), CreateAggregateTransactionWithNetworkConfig, false);
+	}
+
+	TEST(TEST_CLASS, CommitAllBlocksWhenNetworkConfigPresentLocally_RegularConfigTransaction) {
+		AssertBlocksWithNetworkConfigTransaction<model::NetworkConfigTransaction>(BlockDuration(2), CreateNetworkConfigTransaction, true);
+	}
+
+	TEST(TEST_CLASS, CommitAllBlocksWhenNetworkConfigPresentLocally_EmbeddedConfigTransaction) {
+		AssertBlocksWithNetworkConfigTransaction<model::AggregateTransaction>(BlockDuration(2), CreateAggregateTransactionWithNetworkConfig, true);
+	}
+
+	TEST(TEST_CLASS, CommitAllBlocksWhenNetworkConfigNotAppliedInNewBlocks_RegularConfigTransaction) {
+		AssertBlocksWithNetworkConfigTransaction<model::NetworkConfigTransaction>(BlockDuration(10), CreateNetworkConfigTransaction, false);
+	}
+
+	TEST(TEST_CLASS, CommitAllBlocksWhenNetworkConfigNotAppliedInNewBlocks_EmbeddedConfigTransaction) {
+		AssertBlocksWithNetworkConfigTransaction<model::AggregateTransaction>(BlockDuration(10), CreateAggregateTransactionWithNetworkConfig, false);
 	}
 
 	// endregion

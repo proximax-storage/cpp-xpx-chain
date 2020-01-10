@@ -21,8 +21,6 @@
 #include "catapult/consumers/BlockConsumers.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/TimeSpan.h"
-#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
-#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
@@ -198,81 +196,6 @@ namespace catapult { namespace consumers {
 
 		// Assert:
 		test::AssertContinued(result);
-	}
-
-	// endregion
-
-	// region network config transaction
-
-	namespace {
-		auto CreateNetworkConfigTransaction(const BlockDuration& applyHeightDelta) {
-			uint32_t size = sizeof(model::NetworkConfigTransaction);
-			auto pTransaction = utils::MakeUniqueWithSize<model::NetworkConfigTransaction>(size);
-			pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
-			pTransaction->Type = model::NetworkConfigTransaction::Entity_Type;
-			pTransaction->Size = size;
-			pTransaction->ApplyHeightDelta = applyHeightDelta;
-			pTransaction->BlockChainConfigSize = 0;
-			pTransaction->SupportedEntityVersionsSize = 0;
-
-			return pTransaction;
-		}
-
-		auto CreateAggregateTransactionWithNetworkConfig(const BlockDuration& applyHeightDelta) {
-			uint32_t size = sizeof(model::AggregateTransaction) + sizeof(model::EmbeddedNetworkConfigTransaction);
-			auto pTransaction = utils::MakeUniqueWithSize<model::AggregateTransaction>(size);
-			pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
-			pTransaction->Type = model::AggregateTransaction::Entity_Type;
-			pTransaction->Size = size;
-			pTransaction->PayloadSize = size - sizeof(model::AggregateTransaction);
-
-			auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
-			auto pEmbeddedTransaction = reinterpret_cast<model::EmbeddedNetworkConfigTransaction*>(pData);
-			pEmbeddedTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
-			pEmbeddedTransaction->Size = sizeof(model::EmbeddedNetworkConfigTransaction);
-			pEmbeddedTransaction->Type = model::EmbeddedNetworkConfigTransaction::Entity_Type;
-			pEmbeddedTransaction->ApplyHeightDelta = applyHeightDelta;
-			pEmbeddedTransaction->BlockChainConfigSize = 0;
-			pEmbeddedTransaction->SupportedEntityVersionsSize = 0;
-
-			return pTransaction;
-		}
-
-		template<typename TTransaction>
-		void AssertBlocksWithNetworkConfigTransaction(
-				const BlockDuration& applyHeightDelta,
-				std::function<model::UniqueEntityPtr<TTransaction> (const BlockDuration&)> createTransaction,
-				bool success) {
-			auto elements = test::CreateBlockElements(3);
-			auto pTransaction = createTransaction(applyHeightDelta);
-			elements[0].Transactions.push_back(model::TransactionElement(*pTransaction));
-			auto consumer = CreateDefaultBlockChainCheckConsumer();
-
-			// Act:
-			auto result = consumer(elements);
-
-			// Assert:
-			if (success)
-				test::AssertContinued(result);
-			else
-				test::AssertAborted(result, Failure_Consumer_Remote_Chain_Unexpected_Network_Config_Transaction);
-		}
-	}
-
-	TEST(TEST_CLASS, ChainIsInvalidWhenBlocksContainUnexpectedNetworkConfigTransaction) {
-		AssertBlocksWithNetworkConfigTransaction<model::NetworkConfigTransaction>(BlockDuration(1), CreateNetworkConfigTransaction, false);
-	}
-
-	TEST(TEST_CLASS, ChainIsInvalidWhenBlocksContainUnexpectedEmbeddedNetworkConfigTransaction) {
-		AssertBlocksWithNetworkConfigTransaction<model::AggregateTransaction>(BlockDuration(1), CreateAggregateTransactionWithNetworkConfig, false);
-	}
-
-	TEST(TEST_CLASS, ChainIsValidWhenBlocksContainValidNetworkConfigTransaction) {
-		AssertBlocksWithNetworkConfigTransaction<model::NetworkConfigTransaction>(BlockDuration(3), CreateNetworkConfigTransaction, true);
-	}
-
-	TEST(TEST_CLASS, ChainIsValidWhenBlocksContainValidEmbeddedNetworkConfigTransaction) {
-		AssertBlocksWithNetworkConfigTransaction<model::AggregateTransaction>(BlockDuration(3), CreateAggregateTransactionWithNetworkConfig, true);
 	}
 
 	// endregion
