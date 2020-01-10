@@ -42,14 +42,14 @@ namespace catapult { namespace config {
 
 	void BlockchainConfigurationHolder::SetConfig(const Height& height, const BlockchainConfiguration& config) {
 		std::lock_guard<std::mutex> guard(m_mutex);
-		if (m_networkConfigs.contains(height))
+		if (m_networkConfigs.containsRef(height) || m_networkConfigs.contains(height))
 			m_networkConfigs.erase(height);
 		m_networkConfigs.insert(height, config);
 	}
 
 	BlockchainConfiguration& BlockchainConfigurationHolder::Config(const Height& height) {
 		std::lock_guard<std::mutex> guard(m_mutex);
-		if (m_networkConfigs.contains(height))
+		if (m_networkConfigs.containsRef(height) || m_networkConfigs.contains(height))
 			return m_networkConfigs.get(height);
 
 		// While we are loading nemesis block, config from cache is not ready, so let's use initial config

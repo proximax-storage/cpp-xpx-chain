@@ -28,6 +28,8 @@ namespace catapult { namespace config {
 	public:
 		bool contains(const Height& height) const;
 
+		bool containsRef(const Height& height) const;
+
 		BlockchainConfiguration& insert(const Height& height, const BlockchainConfiguration& config);
 
 		BlockchainConfiguration& insertRef(const Height& refHeight, const Height& configHeight);

@@ -57,7 +57,7 @@ namespace catapult { namespace config {
 		auto& result = testee.insertRef(Height{555}, Height{777});
 
 		// Assert:
-		EXPECT_TRUE(testee.contains(Height{555}));
+		EXPECT_TRUE(testee.containsRef(Height{555}));
 		EXPECT_EQ(5, result.Network.ImportanceGrouping);
 	}
 
@@ -107,13 +107,13 @@ namespace catapult { namespace config {
 
 		testee.insertRef(Height{555}, Height{777});
 		// Sanity
-		EXPECT_TRUE(testee.contains(Height{555}));
+		EXPECT_TRUE(testee.containsRef(Height{555}));
 
 		// Act:
 		testee.erase(Height{555});
 
 		// Assert:
-		EXPECT_FALSE(testee.contains(Height{555}));
+		EXPECT_FALSE(testee.containsRef(Height{555}));
 	}
 
 	// region get
@@ -146,7 +146,7 @@ namespace catapult { namespace config {
 
 		testee.insertRef(Height{555}, Height{777});
 		// Sanity
-		EXPECT_TRUE(testee.contains(Height{555}));
+		EXPECT_TRUE(testee.containsRef(Height{555}));
 
 		// Act:
 		auto& result = testee.get(Height{555});
