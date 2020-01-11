@@ -36,7 +36,8 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateJoinToDriveValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, currentHeight);
+			auto result = test::ValidateNotification(*pValidator, notification, cache,
+					config::BlockchainConfiguration::Uninitialized(), currentHeight);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
@@ -46,6 +47,7 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, FailureWhenReplicatorRegistered) {
 		// Arrange:
 		state::DriveEntry entry(test::GenerateRandomByteArray<Key>());
+		entry.setReplicas(1);
 		auto replicatorKey = test::GenerateRandomByteArray<Key>();
 		state::ReplicatorInfo replicatorInfo{ Height(1), Height(0), {}, {} };
 		entry.replicators().emplace(replicatorKey, replicatorInfo);
@@ -57,11 +59,28 @@ namespace catapult { namespace validators {
 			replicatorKey);
 	}
 
-	TEST(TEST_CLASS, Success) {
+	TEST(TEST_CLASS, FailureWhenMaxReplicatorsReached) {
+		// Arrange:
+		state::DriveEntry entry(test::GenerateRandomByteArray<Key>());
+		entry.setReplicas(1);
+		auto replicatorKey = test::GenerateRandomByteArray<Key>();
+		state::ReplicatorInfo replicatorInfo{ Height(1), Height(0), {}, {} };
+		entry.replicators().emplace(replicatorKey, replicatorInfo);
+
 		// Assert:
 		AssertValidationResult(
+			Failure_Service_Max_Replicators_Reached,
+			entry,
+			test::GenerateRandomByteArray<Key>());
+	}
+
+	TEST(TEST_CLASS, Success) {
+		// Assert:
+		state::DriveEntry entry(test::GenerateRandomByteArray<Key>());
+		entry.setReplicas(1);
+		AssertValidationResult(
 			ValidationResult::Success,
-			state::DriveEntry(test::GenerateRandomByteArray<Key>()),
+			entry,
 			test::GenerateRandomByteArray<Key>());
 	}
 }}

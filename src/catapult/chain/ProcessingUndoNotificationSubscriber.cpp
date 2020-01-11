@@ -35,6 +35,7 @@ namespace catapult { namespace chain {
 				: observers::NotifyMode::Commit;
 		auto undoObserverContext = observers::ObserverContext(
 				{ m_observerContext.Cache, m_observerContext.State },
+				m_observerContext.Config,
 				m_observerContext.Height,
 				undoMode,
 				m_observerContext.Resolvers);

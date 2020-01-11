@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <plugins/txes/exchange/src/config/ExchangeConfiguration.h>
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"
 #include "ExchangePlugin.h"
@@ -18,6 +19,11 @@
 namespace catapult { namespace plugins {
 
 	void RegisterExchangeSubsystem(PluginManager& manager) {
+
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::ExchangeConfiguration>();
+		});
+
 		const auto& immutableConfig = manager.immutableConfig();
 		manager.addTransactionSupport(CreateExchangeOfferTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateExchangeTransactionPlugin(immutableConfig));
@@ -41,9 +47,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateExchangePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateOfferValidator(pConfigHolder))
+				.add(validators::CreateOfferValidator())
 				.add(validators::CreateExchangeValidator())
 				.add(validators::CreateRemoveOfferValidator());
 		});
@@ -53,7 +59,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateOfferObserver())
 				.add(observers::CreateExchangeObserver())
 				.add(observers::CreateRemoveOfferObserver(pConfigHolder->Config().Immutable.CurrencyMosaicId))
-				.add(observers::CreateCleanupOffersObserver(pConfigHolder));
+				.add(observers::CreateCleanupOffersObserver());
 		});
 	}
 }}

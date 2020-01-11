@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateBlockchainVersionValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, Height(1));
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized(), Height(1));
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

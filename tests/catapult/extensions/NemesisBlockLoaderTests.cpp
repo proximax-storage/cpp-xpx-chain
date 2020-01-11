@@ -183,7 +183,7 @@ namespace catapult { namespace extensions {
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(pConfigHolder, model::InflationCalculator()));
+				.add(observers::CreateHarvestFeeObserver(model::InflationCalculator()));
 			return builder.build();
 		}
 
@@ -342,7 +342,7 @@ namespace catapult { namespace extensions {
 		struct ExecuteDefaultStateTraits {
 			static void Execute(NemesisBlockLoader& loader, const LocalNodeStateRef& stateRef, StateHashVerification) {
 				auto pNemesisBlockElement = stateRef.Storage.view().loadBlockElement(Height(1));
-				loader.execute(stateRef.Config, *pNemesisBlockElement);
+				loader.execute(stateRef.ConfigHolder, *pNemesisBlockElement);
 			}
 
 			template<typename TAssertAccountStateCache>

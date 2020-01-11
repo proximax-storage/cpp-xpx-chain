@@ -24,6 +24,7 @@
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace validators {
 
@@ -40,14 +41,22 @@ namespace catapult { namespace validators {
 			return crypto::KeyPair::FromString("0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF0123456789ABCDEF");
 		}
 
+		config::BlockchainConfiguration CreateBlockchainConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Zero;
+			config.Network.Info.PublicKey = GetNemesisAccount().publicKey();
+			return config.ToConst();
+		}
+
 		void AssertValidationResult(ValidationResult expectedResult, const Key& signer, Height::ValueType height) {
 			// Arrange:
 			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
-			model::NetworkInfo networkInfo(GetNemesisAccount().publicKey());
+
 			auto pValidator = CreateNemesisSinkValidator();
-			auto context = test::CreateValidatorContext(Height(height), model::NetworkIdentifier::Zero, networkInfo, readOnlyCache);
+			auto config = CreateBlockchainConfiguration();
+			auto context = test::CreateValidatorContext(config, Height(height), readOnlyCache);
 
 			auto signature = test::GenerateRandomByteArray<Signature>();
 			model::SignatureNotification<1> notification(signer, signature, {});

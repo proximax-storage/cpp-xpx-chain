@@ -86,7 +86,7 @@ namespace catapult { namespace harvesting {
 					, m_unlockedAccounts(100) {
 				// create the harvester
 				auto executionConfig = extensions::CreateExecutionConfiguration(*m_pPluginManager);
-				HarvestingUtFacadeFactory utFacadeFactory(m_cache, m_pPluginManager->configHolder(), executionConfig);
+				HarvestingUtFacadeFactory utFacadeFactory(m_cache, executionConfig);
 
 				auto strategy = model::TransactionSelectionStrategy::Oldest;
 				auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, m_transactionsCache);
@@ -169,7 +169,7 @@ namespace catapult { namespace harvesting {
 				observers::NotificationObserverAdapter entityObserver(
 						m_pPluginManager->createObserver(),
 						m_pPluginManager->createNotificationPublisher());
-				auto observerContext = observers::ObserverContext(observerState, Height(1), notifyMode, resolverContext);
+				auto observerContext = observers::ObserverContext(observerState, m_pPluginManager->configHolder()->Config(), Height(1), notifyMode, resolverContext);
 				entityObserver.notify(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, Height(1)), observerContext);
 				m_cache.commit(Height(1));
 			}

@@ -18,14 +18,14 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS BlockchainUpgradeValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(BlockchainUpgrade, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(BlockchainUpgrade)
 
 	namespace {
 		auto CreateConfigHolder(uint64_t minUpgradePeriod) {
 			test::MutableBlockchainConfiguration config;
 			auto pluginUpgrade = config::BlockchainUpgradeConfiguration::Uninitialized();
 			pluginUpgrade.MinUpgradePeriod = BlockDuration{minUpgradePeriod};
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(upgrade), pluginUpgrade);
+			config.Network.SetPluginConfiguration(pluginUpgrade);
 			return config::CreateMockConfigurationHolder(config.ToConst());
 		}
 
@@ -44,10 +44,10 @@ namespace catapult { namespace validators {
 				cache.commit(Height(1));
 			}
 			model::BlockchainUpgradeVersionNotification<1> notification(BlockDuration{upgradePeriod}, BlockchainVersion{nextBlockchainVersion});
-			auto pValidator = CreateBlockchainUpgradeValidator(CreateConfigHolder(minUpgradePeriod));
+			auto pValidator = CreateBlockchainUpgradeValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, Height(1));
+			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateConfigHolder(minUpgradePeriod)->Config(), Height(1));
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

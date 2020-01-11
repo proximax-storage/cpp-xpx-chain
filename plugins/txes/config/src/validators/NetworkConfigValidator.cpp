@@ -22,8 +22,9 @@ namespace catapult { namespace validators {
 			if (BlockDuration(0) == notification.ApplyHeightDelta)
 				return Failure_NetworkConfig_ApplyHeightDelta_Zero;
 
-			const auto& currentBlockChainConfig = pluginManager.configHolder()->Config(context.Height);
-			const auto& pluginConfig = currentBlockChainConfig.Network.GetPluginConfiguration<config::NetworkConfigConfiguration>(PLUGIN_NAME_HASH(config));
+			const auto& currentNetworkConfig = context.Config.Network;
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::NetworkConfigConfiguration>();
+
 			if (notification.BlockChainConfigSize > pluginConfig.MaxBlockChainConfigSize.bytes32())
 				return Failure_NetworkConfig_BlockChain_Config_Too_Large;
 
@@ -47,15 +48,15 @@ namespace catapult { namespace validators {
 				if (100u < networkConfig.HarvestBeneficiaryPercentage)
 					return Failure_NetworkConfig_HarvestBeneficiaryPercentage_Exceeds_One_Hundred;
 
-				auto totalInflation = currentBlockChainConfig.Inflation.InflationCalculator.sumAll();
-				auto totalCurrency = currentBlockChainConfig.Immutable.InitialCurrencyAtomicUnits + totalInflation.first;
+				auto totalInflation = context.Config.Inflation.InflationCalculator.sumAll();
+				auto totalCurrency = context.Config.Immutable.InitialCurrencyAtomicUnits + totalInflation.first;
 				if (totalCurrency > networkConfig.MaxMosaicAtomicUnits)
 					return Failure_NetworkConfig_MaxMosaicAtomicUnits_Invalid;
 			} catch (...) {
 				return Failure_NetworkConfig_BlockChain_Config_Malformed;
 			}
 
-			for (const auto& pair : currentBlockChainConfig.Network.Plugins) {
+			for (const auto& pair : currentNetworkConfig.Plugins) {
 				if (!networkConfig.Plugins.count(pair.first))
 					return Failure_NetworkConfig_Plugin_Config_Missing;
 			}
@@ -63,15 +64,17 @@ namespace catapult { namespace validators {
 			auto pValidator = pluginManager.createStatelessValidator();
 			for (const auto& pair : networkConfig.Plugins) {
 				auto result = pValidator->validate(model::PluginConfigNotification<1>{pair.first, pair.second});
-				if (IsValidationResultFailure(result))
-					return result;
+				if (IsValidationResultFailure(result)) {
+                    return result;
+                }
 			}
 
 			try {
 				std::istringstream configStream{std::string{(const char*)notification.SupportedEntityVersionsPtr, notification.SupportedEntityVersionsSize}};
 				auto supportedEntityVersions = config::LoadSupportedEntityVersions(configStream);
-				if (!supportedEntityVersions[model::Entity_Type_Network_Config].size())
-					return Failure_NetworkConfig_Network_Config_Trx_Cannot_Be_Unsupported;
+				if (!supportedEntityVersions[model::Entity_Type_Network_Config].size()) {
+                    return Failure_NetworkConfig_Network_Config_Trx_Cannot_Be_Unsupported;
+                }
 			} catch (...) {
 				return Failure_NetworkConfig_SupportedEntityVersions_Config_Malformed;
 			}

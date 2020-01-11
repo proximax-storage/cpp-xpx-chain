@@ -16,6 +16,9 @@ namespace catapult { namespace config {
 	/// Metadata plugin configuration settings.
 	struct MetadataConfiguration : public model::PluginConfiguration {
 	public:
+		DEFINE_CONFIG_CONSTANTS(metadata)
+
+	public:
 		/// Maximum fields in metadata.
 		uint8_t MaxFields;
 

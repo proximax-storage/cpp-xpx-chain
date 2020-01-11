@@ -48,7 +48,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateModifyMultisigInvalidCosignersValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized(), height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

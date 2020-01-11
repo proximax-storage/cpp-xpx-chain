@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <plugins/txes/namespace/src/config/NamespaceConfiguration.h>
 #include "src/plugins/NamespacePlugin.h"
 #include "src/cache/NamespaceCache.h"
 #include "src/model/NamespaceEntityType.h"
@@ -58,6 +59,8 @@ namespace catapult { namespace plugins {
 						{ "maxChildNamespaces", "0" }
 					}
 				}}));
+
+				config.template InitPluginConfiguration<config::NamespaceConfiguration>();
 
 				auto manager = test::CreatePluginManager(config);
 				RegisterNamespaceSubsystem(manager);

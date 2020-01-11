@@ -245,13 +245,19 @@ namespace catapult { namespace test {
 
 	struct MockExecutionConfiguration {
 	public:
-		MockExecutionConfiguration(BlockFeeMultiplier minFeeMultiplier = BlockFeeMultiplier())
+
+		MockExecutionConfiguration(const config::BlockchainConfiguration& config, BlockFeeMultiplier minFeeMultiplier)
 				: pObserver(std::make_shared<MockAggregateNotificationObserver>())
 				, pValidator(std::make_shared<MockAggregateNotificationValidator>())
 				, pNotificationPublisher(std::make_shared<MockNotificationPublisher>()) {
+
 			Config.NetworkIdentifier = Mock_Execution_Configuration_Network_Identifier;
-			Config.NetworkInfoSupplier = [](const Height&) { return model::NetworkInfo(); };
+
 			Config.MinFeeMultiplierSupplier = [minFeeMultiplier](const Height&) { return minFeeMultiplier; };
+			Config.ConfigSupplier = [config](const Height&) -> const config::BlockchainConfiguration& {
+				return config;
+			};
+
 			Config.pObserver = pObserver;
 			Config.pValidator = pValidator;
 			Config.pNotificationPublisher = pNotificationPublisher;
@@ -265,6 +271,18 @@ namespace catapult { namespace test {
 						[](const auto& unresolved) { return model::ResolverContext().resolve(unresolved); },
 						[](const auto& unresolved) { return model::ResolverContext().resolve(unresolved); });
 			};
+		}
+
+		MockExecutionConfiguration() :
+				MockExecutionConfiguration(config::BlockchainConfiguration::Uninitialized(), BlockFeeMultiplier()) {
+		}
+
+		MockExecutionConfiguration(BlockFeeMultiplier minFeeMultiplier) :
+                MockExecutionConfiguration(config::BlockchainConfiguration::Uninitialized(), minFeeMultiplier) {
+		}
+
+		MockExecutionConfiguration(const config::BlockchainConfiguration& config) :
+				MockExecutionConfiguration(config, BlockFeeMultiplier()) {
 		}
 
 	public:

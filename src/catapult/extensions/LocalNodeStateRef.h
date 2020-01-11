@@ -20,9 +20,11 @@
 
 #pragma once
 
+#include <memory>
+
 namespace catapult {
 	namespace cache { class CatapultCache; }
-	namespace config { class BlockchainConfiguration; }
+	namespace config { class BlockchainConfigurationHolder; }
 	namespace extensions { class LocalNodeChainScore; }
 	namespace io { class BlockStorageCache; }
 	namespace state { struct CatapultState; }
@@ -34,14 +36,14 @@ namespace catapult { namespace extensions {
 	struct LocalNodeStateRef {
 	public:
 		/// Creates a local node state ref referencing state composed of
-		/// \a config, \a state, \a cache, \a storage and \a score.
+		/// \a configHolder, \a state, \a cache, \a storage and \a score.
 		LocalNodeStateRef(
-				const config::BlockchainConfiguration& config,
+				const std::shared_ptr<config::BlockchainConfigurationHolder>& configHolder,
 				state::CatapultState& state,
 				cache::CatapultCache& cache,
 				io::BlockStorageCache& storage,
 				LocalNodeChainScore& score)
-				: Config(config)
+				: ConfigHolder(configHolder)
 				, State(state)
 				, Cache(cache)
 				, Storage(storage)
@@ -50,7 +52,7 @@ namespace catapult { namespace extensions {
 
 	public:
 		/// Blockchain configuration.
-		const config::BlockchainConfiguration& Config;
+		std::shared_ptr<config::BlockchainConfigurationHolder> ConfigHolder;
 
 		/// Local node state.
 		state::CatapultState& State;

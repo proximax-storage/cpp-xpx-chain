@@ -17,21 +17,21 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS OfferValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Offer, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(Offer, )
 
 	namespace {
 		using Notification = model::OfferNotification<1>;
 
 		constexpr MosaicId Currency_Mosaic_Id(1234);
 
-		auto CreateConfigHolder(const Key& longOfferKey) {
+		auto CreateConfig(const Key& longOfferKey) {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
 			auto pluginConfig = config::ExchangeConfiguration::Uninitialized();
 			pluginConfig.MaxOfferDuration = BlockDuration{500};
 			pluginConfig.LongOfferKey = longOfferKey;
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(exchange), pluginConfig);
-			return config::CreateMockConfigurationHolder(config.ToConst());
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
 		}
 
 		void AssertValidationResult(
@@ -49,11 +49,13 @@ namespace catapult { namespace validators {
 				exchangeDelta.insert(*pEntry);
 				cache.commit(currentHeight);
 			}
+
 			Notification notification(signer, offers.size(), offers.data());
-			auto pValidator = CreateOfferValidator(CreateConfigHolder(longOfferKey));
+			auto config = CreateConfig(longOfferKey);
+			auto pValidator = CreateOfferValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, currentHeight);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config, currentHeight);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

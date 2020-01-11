@@ -33,6 +33,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		PluginLoader pluginLoader(pConfigHolder);
 		pluginLoader.loadAll();
 		auto& pluginManager = pluginLoader.manager();
+		auto initializers = pluginManager.createPluginInitializer();
+		initializers(const_cast<model::NetworkConfiguration&>(pConfigHolder->Config().Network));
+		pConfigHolder->SetPluginInitializer(initializers);
 
 		// 2. prepare observer
 		observers::NotificationObserverAdapter entityObserver(pluginManager.createObserver(), pluginManager.createNotificationPublisher());
@@ -52,7 +55,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto resolverContext = pluginManager.createResolverContext(readOnlyCache);
 
 		// 5. execute block
-		chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, observerState });
+		chain::ExecuteBlock(blockElement, { entityObserver, resolverContext, pConfigHolder, observerState });
 		auto cacheStateHashInfo = pCacheDelta->calculateStateHash(blockElement.Block.Height);
 		auto blockReceiptsHash = pluginManager.immutableConfig().ShouldEnableVerifiableReceipts
 				? model::CalculateMerkleHash(*blockStatementBuilder.build())

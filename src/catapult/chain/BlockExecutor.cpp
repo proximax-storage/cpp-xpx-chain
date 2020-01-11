@@ -30,7 +30,13 @@ namespace catapult { namespace chain {
 				const BlockExecutionContext& executionContext,
 				Height height,
 				observers::NotifyMode mode) {
-			return observers::ObserverContext(executionContext.State, height, mode, executionContext.Resolvers);
+			return observers::ObserverContext(
+				executionContext.State,
+				executionContext.ConfigHolder->Config(height),
+				height,
+				mode,
+				executionContext.Resolvers
+			);
 		}
 
 		void ObserveAll(

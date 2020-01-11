@@ -15,14 +15,16 @@ namespace catapult { namespace config {
 	/// Service plugin configuration settings.
 	struct ServiceConfiguration : public model::PluginConfiguration {
 	public:
-	    /// Max files on drive at the moment
-	    uint16_t MaxFilesOnDrive;
+		/// Max files on drive at the moment
+		uint16_t MaxFilesOnDrive;
 
-	    /// Verification fee in streaming units.
-	    Amount VerificationFee;
+		DEFINE_CONFIG_CONSTANTS(service)
 
-	    /// Verification duration.
-	    BlockDuration VerificationDuration;
+		/// Verification fee in streaming units.
+		Amount VerificationFee;
+
+		/// Verification duration.
+		BlockDuration VerificationDuration;
 
 		/// Whether the plugin is enabled.
 		bool Enabled;

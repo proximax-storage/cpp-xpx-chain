@@ -18,7 +18,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS CleanupOffersObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(CleanupOffers, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_OBSERVER_TESTS(CleanupOffers,)
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::ExchangeCacheFactory>;
@@ -29,11 +29,11 @@ namespace catapult { namespace observers {
 		constexpr Height Current_Height(55);
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 
-		auto CreateConfigHolder() {
+		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
 			config.Network.MaxRollbackBlocks = Max_Rollback_Blocks;
-			return config::CreateMockConfigurationHolder(config.ToConst());
+			return config.ToConst();
 		}
 
 		struct CacheValues {
@@ -162,9 +162,9 @@ namespace catapult { namespace observers {
 
 		void RunTest(NotifyMode mode, const CacheValues& values) {
 			// Arrange:
-			ObserverTestContext context(mode, Current_Height);
+			ObserverTestContext context(mode, Current_Height, CreateConfig());
 			model::BlockNotification<1> notification = test::CreateBlockNotification();
-			auto pObserver = CreateCleanupOffersObserver(CreateConfigHolder());
+			auto pObserver = CreateCleanupOffersObserver();
 			auto& exchangeCache = context.cache().sub<cache::ExchangeCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 

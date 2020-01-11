@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS TransferMessageValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(TransferMessage)
 
 	namespace {
 		void AssertValidationResult(ValidationResult expectedResult, uint16_t messageSize, uint16_t maxMessageSize) {
@@ -39,14 +39,13 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::TransferConfiguration::Uninitialized();
 			pluginConfig.MaxMessageSize = maxMessageSize;
 			test::MutableBlockchainConfiguration mutableConfig;
-			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(transfer), pluginConfig);
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateTransferMessageValidator(pConfigHolder);
+			auto pValidator = CreateTransferMessageValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

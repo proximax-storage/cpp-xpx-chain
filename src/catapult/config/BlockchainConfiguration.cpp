@@ -74,6 +74,19 @@ namespace catapult { namespace config {
 				LoadSupportedEntityVersions(resourcesPath / "supported-entities.json"));
 	}
 
+	BlockchainConfiguration BlockchainConfiguration::Uninitialized() {
+		return BlockchainConfiguration(
+			ImmutableConfiguration::Uninitialized(),
+			model::NetworkConfiguration::Uninitialized(),
+			NodeConfiguration::Uninitialized(),
+			LoggingConfiguration::Uninitialized(),
+			UserConfiguration::Uninitialized(),
+			ExtensionsConfiguration::Uninitialized(),
+			InflationConfiguration::Uninitialized(),
+			config::SupportedEntityVersions()
+		);
+	}
+
 	// endregion
 
 	ionet::Node ToLocalNode(const BlockchainConfiguration& config) {

@@ -15,8 +15,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ExchangeNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(Exchange, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(Exchange, [pConfigHolder](const Notification& notification, const ValidatorContext& context) {
+	DECLARE_STATEFUL_VALIDATOR(Exchange, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(Exchange, [](const Notification& notification, const ValidatorContext& context) {
             const auto& driveCache = context.Cache.sub<cache::DriveCache>();
             if (!driveCache.contains(notification.Signer))
                 return ValidationResult::Success;
@@ -30,10 +30,11 @@ namespace catapult { namespace validators {
             if (driveEntry.processedDuration() >= driveEntry.duration())
                 return Failure_Service_Drive_Processed_Full_Duration;
 
-            const auto& config = pConfigHolder->Config(context.Height);
-            const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
+            //const auto& config = pConfigHolder->Config(context.Height);
+           // const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
+            const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::ExchangeConfiguration>();
             const auto& defaultOfferPublicKey = pluginConfig.LongOfferKey;
-            const auto& storageMosaicId = pConfigHolder->Config(context.Height).Immutable.StorageMosaicId;
+            const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
 
             const auto& exchangeCache = context.Cache.sub<cache::ExchangeCache>();
             if (!exchangeCache.contains(defaultOfferPublicKey))

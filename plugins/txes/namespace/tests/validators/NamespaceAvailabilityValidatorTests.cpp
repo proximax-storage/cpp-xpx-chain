@@ -33,7 +33,7 @@ namespace catapult { namespace validators {
 #define ROOT_TEST_CLASS RootNamespaceAvailabilityValidatorTests
 #define CHILD_TEST_CLASS ChildNamespaceAvailabilityValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(RootNamespaceAvailability,)
 	DEFINE_COMMON_VALIDATOR_TESTS(ChildNamespaceAvailability,)
 
 	namespace {
@@ -69,12 +69,13 @@ namespace catapult { namespace validators {
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
 			networkConfig.Info.PublicKey = Nemesis_Signer;
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
+
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			auto pValidator = CreateRootNamespaceAvailabilityValidator(pConfigHolder);
+			auto pValidator = CreateRootNamespaceAvailabilityValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config(), height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "height " << height << ", duration " << notification.Duration;
@@ -91,7 +92,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateChildNamespaceAvailabilityValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized(), height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "height " << height;

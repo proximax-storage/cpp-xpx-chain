@@ -43,9 +43,10 @@ namespace catapult { namespace model {
 
 		/// Creates a chain score from a 128-bit value composed of two 64-bit values (\a scoreHigh and \a scoreLow).
 		explicit ChainScore(uint64_t scoreHigh, uint64_t scoreLow) {
-			m_score = scoreHigh;
-			m_score <<= Bits_Per_Value;
-			m_score += scoreLow;
+			boost::multiprecision::uint128_t score(scoreHigh);
+			score <<= Bits_Per_Value;
+			score += scoreLow;
+			m_score = score;
 		}
 
 	public:
@@ -55,9 +56,10 @@ namespace catapult { namespace model {
 	public:
 		/// Gets an array representing the underlying score.
 		ArrayType toArray() const {
+			boost::multiprecision::uint128_t score(m_score);
 			return { {
-				static_cast<uint64_t>(m_score >> Bits_Per_Value),
-				static_cast<uint64_t>(m_score & std::numeric_limits<uint64_t>::max())
+				static_cast<uint64_t>(score >> Bits_Per_Value),
+				static_cast<uint64_t>(score & std::numeric_limits<uint64_t>::max())
 			} };
 		}
 
@@ -113,7 +115,7 @@ namespace catapult { namespace model {
 		}
 
 	private:
-		boost::multiprecision::uint128_t m_score;
+		boost::multiprecision::int128_t m_score;
 	};
 
 	/// Prototype for a function that returns a chain score.

@@ -22,10 +22,9 @@ namespace catapult { namespace observers {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_OBSERVER(CleanupOffers, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_OBSERVER(CleanupOffers, Notification, ([pConfigHolder](const Notification&, const ObserverContext& context) {
-			const auto& config = pConfigHolder->Config(context.Height);
-			auto currencyMosaicId = config.Immutable.CurrencyMosaicId;
+	DECLARE_OBSERVER(CleanupOffers, Notification)() {
+		return MAKE_OBSERVER(CleanupOffers, Notification, ([](const Notification&, const ObserverContext& context) {
+			auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
 			auto& cache = context.Cache.sub<cache::ExchangeCache>();
 			auto expiringOfferOwners = cache.expiringOfferOwners(context.Height);
 			for (const auto& key : expiringOfferOwners) {
@@ -53,7 +52,7 @@ namespace catapult { namespace observers {
 			if (NotifyMode::Rollback == context.Mode)
 				return;
 
-			auto maxRollbackBlocks = config.Network.MaxRollbackBlocks;
+			auto maxRollbackBlocks = context.Config.Network.MaxRollbackBlocks;
 			if (context.Height.unwrap() <= maxRollbackBlocks)
 				return;
 

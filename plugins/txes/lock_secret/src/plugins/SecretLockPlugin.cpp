@@ -20,6 +20,7 @@
 
 #include "SecretLockPlugin.h"
 #include "src/cache/SecretLockInfoCache.h"
+#include "src/config/SecretLockConfiguration.h"
 #include "src/model/SecretLockReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/SecretLockTransactionPlugin.h"
@@ -32,6 +33,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterSecretLockSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::SecretLockConfiguration>();
+		});
 		manager.addTransactionSupport(CreateSecretProofTransactionPlugin());
 		manager.addTransactionSupport(CreateSecretLockTransactionPlugin());
 
@@ -53,23 +57,22 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateSecretLockPluginConfigValidator());
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateSecretLockDurationValidator(pConfigHolder))
-				.add(validators::CreateProofSecretValidator(pConfigHolder))
+				.add(validators::CreateSecretLockDurationValidator())
+				.add(validators::CreateProofSecretValidator())
 				.add(validators::CreateSecretLockCacheUniqueValidator())
 				.add(validators::CreateProofValidator());
 		});
 
-		manager.addObserverHook([pConfigHolder](auto& builder) {
+		manager.addObserverHook([](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockSecret_Expired;
 			builder
 				.add(observers::CreateSecretLockObserver())
 				.add(observers::CreateExpiredSecretLockInfoObserver())
 				.add(observers::CreateProofObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::SecretLockInfoCache>("SecretLockInfo", expiryReceiptType))
-				.add(observers::CreateCacheBlockPruningObserver<cache::SecretLockInfoCache>("SecretLockInfo", 1, pConfigHolder));
+				.add(observers::CreateCacheBlockPruningObserver<cache::SecretLockInfoCache>("SecretLockInfo", 1));
 		});
 	}
 }}

@@ -17,7 +17,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MaxFilesOnDriveValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxFilesOnDrive, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxFilesOnDrive, )
 
 	namespace {
 		using Notification = model::DriveFileSystemNotification<1>;
@@ -25,12 +25,12 @@ namespace catapult { namespace validators {
 		constexpr uint16_t Max_Files_On_Drive = 10;
 		constexpr uint64_t Drive_Size = 1000;
 
-		auto CreateConfigHolder() {
+		auto CreateConfig() {
 			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::ServiceConfiguration::Uninitialized();
 			pluginConfig.MaxFilesOnDrive = Max_Files_On_Drive;
-			config.Network.SetPluginConfiguration(PLUGIN_NAME_HASH(service), pluginConfig);
-			return config::CreateMockConfigurationHolder(config.ToConst());
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return (config.ToConst());
 		}
 
 		void AssertValidationResult(
@@ -47,12 +47,14 @@ namespace catapult { namespace validators {
 				driveCacheDelta.insert(driveEntry);
 				cache.commit(currentHeight);
 			}
+
 			Notification notification(driveEntry.key(), Key(), Hash256(), Hash256(),
 				addActions.size(), addActions.data(), removeActions.size(), removeActions.data());
-			auto pValidator = CreateMaxFilesOnDriveValidator(CreateConfigHolder());
+			auto pValidator = CreateMaxFilesOnDriveValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, currentHeight);
+			auto result = test::ValidateNotification(*pValidator, notification, cache,
+					CreateConfig(), currentHeight);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

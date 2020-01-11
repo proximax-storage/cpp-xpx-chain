@@ -97,6 +97,9 @@ namespace catapult { namespace local {
 				CATAPULT_LOG(debug) << "initializing cache";
 				m_cacheHolder.cache() = m_pluginManager.createCache();
 				m_pluginManager.configHolder()->SetCache(&m_cacheHolder.cache());
+				auto initializers = m_pluginManager.createPluginInitializer();
+				initializers(const_cast<model::NetworkConfiguration&>(m_pluginManager.configHolder()->Config().Network));
+				m_pluginManager.configHolder()->SetPluginInitializer(initializers);
 
 				CATAPULT_LOG(debug) << "registering counters";
 				registerCounters();
@@ -160,7 +163,7 @@ namespace catapult { namespace local {
 				if (extensions::HasSerializedState(m_dataDirectory.dir("state")))
 					return false;
 
-				NemesisBlockNotifier notifier(config(), m_cacheHolder.cache(), m_storage, m_pluginManager);
+				NemesisBlockNotifier notifier(m_cacheHolder.cache(), m_storage, m_pluginManager);
 
 				if (m_pBlockChangeSubscriber)
 					notifier.raise(*m_pBlockChangeSubscriber);
@@ -232,7 +235,7 @@ namespace catapult { namespace local {
 				return m_pluginManager.configHolder()->Config();
 			}
 			extensions::LocalNodeStateRef stateRef() {
-				return extensions::LocalNodeStateRef(config(), m_catapultState, m_cacheHolder.cache(), m_storage, m_score);
+				return extensions::LocalNodeStateRef(m_pluginManager.configHolder(), m_catapultState, m_cacheHolder.cache(), m_storage, m_score);
 			}
 
 		private:

@@ -68,10 +68,12 @@ namespace catapult { namespace observers {
 
 	ObserverContext::ObserverContext(
 			const ObserverState& state,
+			const config::BlockchainConfiguration& config,
 			catapult::Height height,
 			NotifyMode mode,
 			const model::ResolverContext& resolvers)
 			: Cache(state.Cache)
+			, Config(config)
 			, State(state.State)
 			, Height(height)
 			, Mode(mode)

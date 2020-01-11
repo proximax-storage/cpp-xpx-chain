@@ -15,6 +15,9 @@ namespace catapult { namespace config {
 	/// Contract plugin configuration settings.
 	struct ContractConfiguration : public model::PluginConfiguration {
 	public:
+		DEFINE_CONFIG_CONSTANTS(contract)
+
+	public:
 		/// Minimum percentage of approval.
 		uint8_t MinPercentageOfApproval;
 

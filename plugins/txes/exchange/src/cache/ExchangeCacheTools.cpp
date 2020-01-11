@@ -11,12 +11,11 @@
 namespace catapult { namespace cache {
 
 	bool ExchangePluginEnabled(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, const Height& height) {
-		const auto& networkConfig = pConfigHolder->Config(height).Network;
-		if (networkConfig.Plugins.count(PLUGIN_NAME(exchange))) {
-			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
-			return pluginConfig.Enabled;
-		}
-
-		return false;
-	}
+        const auto &blockchainConfig = pConfigHolder->Config(height);
+        if (blockchainConfig.Network.Plugins.count(config::ExchangeConfiguration::Name)) {
+            const auto &pluginConfig = blockchainConfig.Network.template GetPluginConfiguration<config::ExchangeConfiguration>();
+            return pluginConfig.Enabled;
+        }
+        return false;
+    }
 }}

@@ -34,7 +34,7 @@ namespace catapult { namespace extensions {
 
 		// Assert:
 		EXPECT_EQ(model::NetworkIdentifier::Mijin_Test, config.NetworkIdentifier);
-		EXPECT_EQ(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key).publicKey(), config.NetworkInfoSupplier(Height{0}).PublicKey);
+		EXPECT_EQ(crypto::KeyPair::FromString(test::Mijin_Test_Nemesis_Private_Key).publicKey(), config.ConfigSupplier(Height{0}).Network.Info.PublicKey);
 		EXPECT_TRUE(!!config.pObserver);
 		EXPECT_TRUE(!!config.pValidator);
 		EXPECT_TRUE(!!config.pNotificationPublisher);

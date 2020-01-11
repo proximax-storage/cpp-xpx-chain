@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 			// Arrange:
 			test::MutableBlockchainConfiguration config;
 			auto pluginConfig = config::MetadataConfiguration::Uninitialized();
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(metadata), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			auto cache = test::MetadataCacheFactory::Create(config.ToConst());
 			PopulateCache(cache);
 			auto pValidator = CreateModifyAddressMetadataValidator();
