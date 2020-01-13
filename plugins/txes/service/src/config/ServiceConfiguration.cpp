@@ -29,6 +29,8 @@ namespace catapult { namespace config {
         TRY_LOAD_CHAIN_PROPERTY(VerificationFee);
         config.VerificationDuration = BlockDuration(240);
 		TRY_LOAD_CHAIN_PROPERTY(VerificationDuration);
+        config.DownloadDuration = BlockDuration(40320);
+		TRY_LOAD_CHAIN_PROPERTY(DownloadDuration);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

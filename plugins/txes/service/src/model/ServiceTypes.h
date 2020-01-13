@@ -36,6 +36,8 @@ namespace catapult { namespace model {
     struct RemoveAction : public AddAction {
     };
 
+    using DownloadAction = AddAction;
+
     /// Binary layout of failed verification data.
     struct VerificationFailure : public SizePrefixedEntity {
     public:

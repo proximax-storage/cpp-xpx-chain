@@ -201,6 +201,49 @@ namespace catapult { namespace test {
 
         return pTransaction;
     }
+
+	template<typename TArray>
+	TArray CreateByteArray(uint8_t index) {
+		TArray array;
+		array[index] = 1;
+		return array;
+	}
+
+    /// Creates a start file download transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateStartFileDownloadTransaction(size_t numFiles) {
+		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_StartFileDownload, numFiles * sizeof(model::DownloadAction));
+		pTransaction->Signer = CreateByteArray<Key>(0);
+		pTransaction->DriveKey = CreateByteArray<Key>(1);
+		pTransaction->FileCount = numFiles;
+
+        auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
+        for (auto i = 0u; i < numFiles; ++i) {
+			model::DownloadAction file{ { CreateByteArray<Hash256>(i + 2) }, (i + 1) * 100 };
+            memcpy(pData, static_cast<const void*>(&file), sizeof(model::DownloadAction));
+            pData += sizeof(model::DownloadAction);
+        }
+
+        return pTransaction;
+    }
+
+    /// Creates a end file download transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateEndFileDownloadTransaction(size_t numFiles) {
+		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_EndFileDownload, numFiles * sizeof(model::File));
+		pTransaction->Recipient = CreateByteArray<Key>(0);
+		pTransaction->Signer = CreateByteArray<Key>(1);
+		pTransaction->FileCount = numFiles;
+
+        auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
+        for (auto i = 0u; i < numFiles; ++i) {
+			model::File file{ CreateByteArray<Hash256>(i + 2) };
+            memcpy(pData, static_cast<const void*>(&file), sizeof(model::File));
+            pData += sizeof(model::File);
+        }
+
+        return pTransaction;
+    }
 }}
 
 

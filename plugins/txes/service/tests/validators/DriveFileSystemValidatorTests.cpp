@@ -156,7 +156,7 @@ namespace catapult { namespace validators {
 
 		// Assert:
 		AssertValidationResult(
-			Failure_Service_Remove_Files_Not_Same_File_Size,
+			Failure_Service_File_Size_Invalid,
 			entry,
 			entry.owner(),
 			rootHash,

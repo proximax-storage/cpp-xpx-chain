@@ -18,6 +18,8 @@
 #include "src/plugins/DriveFilesRewardTransactionPlugin.h"
 #include "src/plugins/StartDriveVerificationTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
+#include "src/plugins/StartFileDownloadTransactionPlugin.h"
+#include "src/plugins/EndFileDownloadTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/utils/ServiceUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -65,6 +67,8 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDriveFilesRewardTransactionPlugin());
 		manager.addTransactionSupport(CreateStartDriveVerificationTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig.NetworkIdentifier));
+		manager.addTransactionSupport(CreateStartFileDownloadTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateEndFileDownloadTransactionPlugin(immutableConfig));
 
 		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
 			const auto& driveCache = cache.template sub<cache::DriveCache>();
