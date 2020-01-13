@@ -76,10 +76,11 @@ namespace catapult { namespace io {
 
 	namespace {
 		[[noreturn]]
-		void ThrowReadError(size_t requestedBytes, size_t availableBytes) {
+		void ThrowReadError(const std::string& fileName, size_t requestedBytes, size_t availableBytes) {
+			std::string temp = "couldn't read from file" + fileName + ", requested size vs available";
 			CATAPULT_THROW_AND_LOG_2(
 					catapult_file_io_error,
-					"couldn't read from file, requested size vs available",
+					temp.c_str(),
 					requestedBytes,
 					availableBytes);
 		}
@@ -115,7 +116,7 @@ namespace catapult { namespace io {
 		m_bufferPosition = 0;
 
 		if (remainingRequestedBytes > m_numBytesInBuffer)
-			ThrowReadError(buffer.Size, m_numBytesInBuffer + outputPosition);
+			ThrowReadError(m_rawFile.pathname(), buffer.Size, m_numBytesInBuffer + outputPosition);
 
 		std::memcpy(buffer.pData + outputPosition, m_buffer.data(), remainingRequestedBytes);
 		m_bufferPosition += remainingRequestedBytes;

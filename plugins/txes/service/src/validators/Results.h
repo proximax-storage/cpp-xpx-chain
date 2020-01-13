@@ -146,6 +146,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because there are duplicate hashes of the blocks failed verification.
 	DEFINE_SERVICE_RESULT(Duplicate_Failed_Block_Hashes, 45);
 
+	/// Validation failed because there are enough replcators in drive.
+	DEFINE_SERVICE_RESULT(Max_Replicators_Reached, 46);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
