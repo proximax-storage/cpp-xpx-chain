@@ -26,6 +26,8 @@ namespace catapult { namespace mongo { namespace plugins {
 					model::Entity_Type_DriveFilesReward,
 					model::Entity_Type_Start_Drive_Verification,
 					model::Entity_Type_End_Drive_Verification,
+					model::Entity_Type_StartFileDownload,
+					model::Entity_Type_EndFileDownload,
 				};
 			}
 
