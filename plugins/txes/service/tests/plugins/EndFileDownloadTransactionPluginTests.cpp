@@ -87,11 +87,14 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(4u, sub.numNotifications());
-		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
-		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
-		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[2]);
-		EXPECT_EQ(LockSecret_Proof_Publication_v1_Notification, sub.notificationTypes()[3]);
+		ASSERT_EQ(3u + Num_Files, sub.numNotifications());
+		auto i = 0u;
+		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
+		while (i < 3u + Num_Files) {
+			EXPECT_EQ(LockSecret_Proof_Publication_v1_Notification, sub.notificationTypes()[i++]);
+		}
 	}
 
 	// endregion
@@ -151,12 +154,12 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Recipient, notification.Sender);
 		EXPECT_EQ(Review_Mosaic_Id, notification.MosaicId);
-		EXPECT_EQ(Amount(1), notification.Amount);
+		EXPECT_EQ(Amount(Num_Files), notification.Amount);
 	}
 
 	// endregion
 
-	// region publish - proof publication notification
+	// region publish - proof publication notifications
 
 	PLUGIN_TEST(CanPublishProofPublicationNotification) {
 		// Arrange:
@@ -168,16 +171,16 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Signer, notification.Signer);
-		EXPECT_EQ(LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
-		Hash256 hash;
-		for (auto i = 0u; i < 2 + Num_Files; ++i)
-			hash[i] = 1;
-		EXPECT_EQ(hash, notification.Secret);
-		auto recipient = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pTransaction->Signer, Network_Identifier));
-		EXPECT_EQ(recipient, notification.Recipient);
+		ASSERT_EQ(Num_Files, sub.numMatchingNotifications());
+		for (auto i = 0u; i < Num_Files; ++i) {
+			const auto& notification = sub.matchingNotifications()[i];
+			EXPECT_EQ(pTransaction->Signer, notification.Signer);
+			EXPECT_EQ(LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
+			auto secret = Hash256(pTransaction->Recipient.array()) ^ Hash256(pTransaction->Signer.array()) ^ pTransaction->FilesPtr()[i].FileHash;
+			EXPECT_EQ(secret, notification.Secret);
+			auto recipient = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pTransaction->Signer, Network_Identifier));
+			EXPECT_EQ(recipient, notification.Recipient);
+		}
 	}
 
 	// endregion

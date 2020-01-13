@@ -37,21 +37,20 @@ namespace catapult { namespace plugins {
 						const auto& config = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
 						const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>();
 						auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config.Immutable);
-						uint64_t totalSize = 0;
+						Amount totalAmount;
 						auto pFile = transaction.FilesPtr();
 						for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile) {
-							totalSize += pFile->FileSize;
+							auto amount = utils::CalculateFileDownload(pFile->FileSize);
+							totalAmount = totalAmount + amount;
+							sub.notify(SecretLockNotification<1>(
+								transaction.Signer,
+								UnresolvedMosaic{ streamingMosaicId, amount },
+								pluginConfig.DownloadDuration,
+								LockHashAlgorithm::Op_Internal,
+								utils::CalculateFileDownloadHash(transaction.Signer, transaction.DriveKey, pFile->FileHash),
+								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.Immutable.NetworkIdentifier))));
 						}
-						auto amount = utils::CalculateFileDownload(totalSize);
-
-						sub.notify(BalanceDebitNotification<1>(transaction.Signer, streamingMosaicId, amount));
-						sub.notify(SecretLockNotification<1>(
-							transaction.Signer,
-							UnresolvedMosaic{ streamingMosaicId, amount },
-							pluginConfig.DownloadDuration,
-							LockHashAlgorithm::Op_Internal,
-							utils::CalculateFileDownloadHash(transaction.Signer, transaction.DriveKey, transaction.FilesPtr(), transaction.FileCount),
-							extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.Immutable.NetworkIdentifier))));
+						sub.notify(BalanceDebitNotification<1>(transaction.Signer, streamingMosaicId, totalAmount));
 
 						break;
 					}

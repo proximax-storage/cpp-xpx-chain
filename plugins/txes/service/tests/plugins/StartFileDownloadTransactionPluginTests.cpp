@@ -91,11 +91,14 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(4u, sub.numNotifications());
-		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
-		EXPECT_EQ(Service_StartFileDownload_v1_Notification, sub.notificationTypes()[1]);
-		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[2]);
-		EXPECT_EQ(LockSecret_Secret_v1_Notification, sub.notificationTypes()[3]);
+		ASSERT_EQ(3u + Num_Files, sub.numNotifications());
+		auto i = 0u;
+		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Service_StartFileDownload_v1_Notification, sub.notificationTypes()[i++]);
+		while (i < 2u + Num_Files) {
+			EXPECT_EQ(LockSecret_Secret_v1_Notification, sub.notificationTypes()[i++]);
+		}
+		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion
@@ -164,7 +167,7 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
-	// region publish - secret lock notification
+	// region publish - secret lock notifications
 
 	PLUGIN_TEST(CanPublishSecretLockNotification) {
 		// Arrange:
@@ -176,19 +179,19 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Signer, notification.Signer);
-		EXPECT_EQ(Streaming_Mosaic_Id, notification.Mosaic.MosaicId);
-		EXPECT_EQ(Amount(Num_Files * (Num_Files + 1) / 2 * 100), notification.Mosaic.Amount);
-		EXPECT_EQ(BlockDuration(500), notification.Duration);
-		EXPECT_EQ(model::LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
-		Hash256 hash;
-		for (auto i = 0u; i < 2 + Num_Files; ++i)
-			hash[i] = 1;
-		EXPECT_EQ(hash, notification.Secret);
-		auto recipient = extensions::CopyToUnresolvedAddress(model::PublicKeyToAddress(pTransaction->DriveKey, Network_Identifier));
-		EXPECT_EQ(recipient, notification.Recipient);
+		ASSERT_EQ(Num_Files, sub.numMatchingNotifications());
+		for (auto i = 0u; i < Num_Files; ++i) {
+			const auto& notification = sub.matchingNotifications()[i];
+			EXPECT_EQ(pTransaction->Signer, notification.Signer);
+			EXPECT_EQ(Streaming_Mosaic_Id, notification.Mosaic.MosaicId);
+			EXPECT_EQ(Amount((i + 1) * 100), notification.Mosaic.Amount);
+			EXPECT_EQ(BlockDuration(500), notification.Duration);
+			EXPECT_EQ(model::LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
+			auto secret = Hash256(pTransaction->Signer.array()) ^ Hash256(pTransaction->DriveKey.array()) ^ pTransaction->FilesPtr()[i].FileHash;
+			EXPECT_EQ(secret, notification.Secret);
+			auto recipient = extensions::CopyToUnresolvedAddress(model::PublicKeyToAddress(pTransaction->DriveKey, Network_Identifier));
+			EXPECT_EQ(recipient, notification.Recipient);
+		}
 	}
 
 	// endregion

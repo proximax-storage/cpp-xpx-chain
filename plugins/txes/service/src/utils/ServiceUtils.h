@@ -35,14 +35,10 @@ namespace catapult { namespace utils {
         return Amount(size);
     }
 
-    template<typename TFile>
-    inline Hash256 CalculateFileDownloadHash(const Key& fileRecipientKey, const Key& driveKey, const TFile* pFile, uint16_t fileCount) {
+    inline Hash256 CalculateFileDownloadHash(const Key& fileRecipientKey, const Key& driveKey, const Hash256& fileHash) {
 		Hash256 hash(fileRecipientKey.array());
 		hash ^= Hash256(driveKey.array());
-		for (auto i = 0u; i < fileCount; ++i, ++pFile) {
-			hash ^= pFile->FileHash;
-		}
-
+		hash ^= fileHash;
 		return hash;
     }
 

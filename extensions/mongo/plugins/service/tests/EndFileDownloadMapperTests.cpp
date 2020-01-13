@@ -11,6 +11,8 @@
 #include "plugins/txes/service/src/model/EndFileDownloadTransaction.h"
 #include "plugins/txes/service/tests/test/ServiceTestUtils.h"
 
+using namespace catapult::mongo::mappers;
+
 namespace catapult { namespace mongo { namespace plugins {
 
 #define TEST_CLASS EndFileDownloadMapperTests
@@ -27,8 +29,9 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto fileIter = fileArray.cbegin();
 			auto pFile = transaction.FilesPtr();
 			for (uint8_t i = 0; i < transaction.FileCount; ++i, ++pFile, ++fileIter) {
-				const auto& dbFile = fileIter->get_document().view();
-				EXPECT_EQ(pFile->FileHash, test::GetHashValue(dbFile, "fileHash"));
+				Hash256 fileHash;
+				DbBinaryToModelArray(fileHash, fileIter->get_binary());
+				EXPECT_EQ(pFile->FileHash, fileHash);
 			}
 		}
 

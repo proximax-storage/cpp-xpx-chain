@@ -28,12 +28,15 @@ namespace catapult { namespace plugins {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
 						sub.notify(AccountPublicKeyNotification<1>(transaction.Recipient));
-						sub.notify(BalanceCreditNotification<1>(transaction.Recipient, config::GetUnresolvedReviewMosaicId(config), Amount(1)));
-						sub.notify(ProofPublicationNotification<1>(
-							transaction.Signer,
-							LockHashAlgorithm::Op_Internal,
-							utils::CalculateFileDownloadHash(transaction.Recipient, transaction.Signer, transaction.FilesPtr(), transaction.FileCount),
-							extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier))));
+						sub.notify(BalanceCreditNotification<1>(transaction.Recipient, config::GetUnresolvedReviewMosaicId(config), Amount(transaction.FileCount)));
+						auto pFile = transaction.FilesPtr();
+						for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile) {
+							sub.notify(ProofPublicationNotification<1>(
+								transaction.Signer,
+								LockHashAlgorithm::Op_Internal,
+								utils::CalculateFileDownloadHash(transaction.Recipient, transaction.Signer, pFile->FileHash),
+								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier))));
+						}
 
 						break;
 					}
