@@ -281,6 +281,10 @@ namespace catapult { namespace model {
 				utils::VerifyBagSizeLte(bag, 2);
 				return config;
 			}
+
+			static BetaConfiguration Uninitialized() {
+				return BetaConfiguration();
+			}
 		};
 
 		struct GammaConfiguration {
@@ -294,6 +298,10 @@ namespace catapult { namespace model {
 				utils::LoadIniProperty(bag, "", "Foo", config.Foo);
 				utils::VerifyBagSizeLte(bag, 1);
 				return config;
+			}
+
+			static GammaConfiguration Uninitialized() {
+				return GammaConfiguration();
 			}
 		};
 	}
@@ -311,13 +319,15 @@ namespace catapult { namespace model {
 		EXPECT_EQ("zeta", betaConfig.Baz);
 	}
 
-	TEST(TEST_CLASS, LoadPluginConfigurationFailsWhenPluginConfigurationIsNotPresent) {
+	TEST(TEST_CLASS, LoadPluginConfigurationDefaultWhenPluginConfigurationIsNotPresent) {
 		// Arrange:
 		using Traits = NetworkConfigurationTraits;
 		auto config = Traits::ConfigurationType::LoadFromBag(Traits::CreateProperties());
 
 		// Act + Assert:
-		EXPECT_THROW(LoadPluginConfiguration<GammaConfiguration>(config), catapult_invalid_argument);
+		auto loadedConfig = LoadPluginConfiguration<GammaConfiguration>(config);
+		auto expectedConfig = GammaConfiguration::Uninitialized();
+		EXPECT_EQ(expectedConfig.Foo, loadedConfig.Foo);
 	}
 
 	// endregion
