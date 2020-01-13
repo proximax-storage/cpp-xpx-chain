@@ -113,8 +113,10 @@ namespace catapult { namespace model {
 		template<typename T>
 		T LoadPluginConfiguration() const {
 			auto iter = Plugins.find(T::Name);
-			if (Plugins.cend() == iter)
-				CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "can't load plugin", std::string(T::Name));
+			if (Plugins.cend() == iter) {
+				CATAPULT_LOG(info) << "can't load plugin " << T::Name;
+				return T::Uninitialized();
+			}
 
 			return T::LoadFromBag(iter->second);
 		}
