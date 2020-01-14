@@ -16,11 +16,11 @@ namespace catapult { namespace mongo { namespace plugins {
 	template<typename TTransaction>
 	void StreamEndFileDownloadTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "recipient" << ToBinary(transaction.Recipient);
+		builder << "operationToken" << ToBinary(transaction.OperationToken);
 		auto array = builder << "files" << bson_stream::open_array;
 		auto pFile = transaction.FilesPtr();
-		for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile) {
+		for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile)
 			array << ToBinary(pFile->FileHash);
-		}
 
 		array << bson_stream::close_array;
 	}

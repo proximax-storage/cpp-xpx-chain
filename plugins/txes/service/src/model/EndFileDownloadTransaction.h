@@ -26,6 +26,9 @@ namespace catapult { namespace model {
 		/// Key of the file recipient.
 		Key Recipient;
 
+		/// Unique operation token.
+		Hash256 OperationToken;
+
 		/// Count of downloaded files.
 		uint16_t FileCount;
 

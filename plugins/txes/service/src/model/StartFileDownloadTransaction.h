@@ -26,6 +26,9 @@ namespace catapult { namespace model {
 		/// Drive key.
 		Key DriveKey;
 
+		/// Unique operation token.
+		Hash256 OperationToken;
+
 		/// Count of files to download.
 		uint16_t FileCount;
 

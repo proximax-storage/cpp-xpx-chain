@@ -23,6 +23,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		template<typename TTransaction>
 		void AssertEqualNonInheritedData(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
 			EXPECT_EQ(transaction.Recipient, test::GetKeyValue(dbTransaction, "recipient"));
+			EXPECT_EQ(transaction.OperationToken, test::GetHashValue(dbTransaction, "operationToken"));
 
 			const auto& fileArray = dbTransaction["files"].get_array().value;
 			ASSERT_EQ(transaction.FileCount, test::GetFieldCount(fileArray));
@@ -47,7 +48,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto view = builder.view();
 
 			// Assert:
-			EXPECT_EQ(2u, test::GetFieldCount(view));
+			EXPECT_EQ(3u, test::GetFieldCount(view));
 			AssertEqualNonInheritedData(*pTransaction, view);
 		}
 	}

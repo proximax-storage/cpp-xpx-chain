@@ -23,11 +23,12 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize = baseSize // base
 					+ Key_Size // file recipient key
+					+ Hash256_Size // operation token
 					+ sizeof(uint16_t); // file count
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 34u, sizeof(T));
+			EXPECT_EQ(baseSize + 66u, sizeof(T));
 		}
 
 		template<typename T>

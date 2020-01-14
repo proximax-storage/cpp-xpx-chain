@@ -47,7 +47,7 @@ namespace catapult { namespace plugins {
 								UnresolvedMosaic{ streamingMosaicId, amount },
 								pluginConfig.DownloadDuration,
 								LockHashAlgorithm::Op_Internal,
-								utils::CalculateFileDownloadHash(transaction.Signer, transaction.DriveKey, pFile->FileHash),
+								utils::CalculateFileDownloadHash(transaction.OperationToken, pFile->FileHash),
 								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.Immutable.NetworkIdentifier))));
 						}
 						sub.notify(BalanceDebitNotification<1>(transaction.Signer, streamingMosaicId, totalAmount));

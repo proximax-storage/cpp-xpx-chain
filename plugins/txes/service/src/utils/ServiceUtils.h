@@ -35,11 +35,8 @@ namespace catapult { namespace utils {
         return Amount(size);
     }
 
-    inline Hash256 CalculateFileDownloadHash(const Key& fileRecipientKey, const Key& driveKey, const Hash256& fileHash) {
-		Hash256 hash(fileRecipientKey.array());
-		hash ^= Hash256(driveKey.array());
-		hash ^= fileHash;
-		return hash;
+    inline Hash256 CalculateFileDownloadHash(const Hash256& operationToken, const Hash256& fileHash) {
+		return operationToken ^ fileHash;
     }
 
     template<typename TCache>

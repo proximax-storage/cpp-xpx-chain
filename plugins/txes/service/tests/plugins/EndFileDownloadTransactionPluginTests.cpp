@@ -176,7 +176,7 @@ namespace catapult { namespace plugins {
 			const auto& notification = sub.matchingNotifications()[i];
 			EXPECT_EQ(pTransaction->Signer, notification.Signer);
 			EXPECT_EQ(LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
-			auto secret = Hash256(pTransaction->Recipient.array()) ^ Hash256(pTransaction->Signer.array()) ^ pTransaction->FilesPtr()[i].FileHash;
+			auto secret = pTransaction->OperationToken ^ pTransaction->FilesPtr()[i].FileHash;
 			EXPECT_EQ(secret, notification.Secret);
 			auto recipient = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pTransaction->Signer, Network_Identifier));
 			EXPECT_EQ(recipient, notification.Recipient);

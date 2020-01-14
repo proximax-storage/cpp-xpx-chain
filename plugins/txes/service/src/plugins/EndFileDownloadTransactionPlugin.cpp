@@ -34,7 +34,7 @@ namespace catapult { namespace plugins {
 							sub.notify(ProofPublicationNotification<1>(
 								transaction.Signer,
 								LockHashAlgorithm::Op_Internal,
-								utils::CalculateFileDownloadHash(transaction.Recipient, transaction.Signer, pFile->FileHash),
+								utils::CalculateFileDownloadHash(transaction.OperationToken, pFile->FileHash),
 								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier))));
 						}
 

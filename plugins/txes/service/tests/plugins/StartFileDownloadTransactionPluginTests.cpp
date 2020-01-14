@@ -187,7 +187,7 @@ namespace catapult { namespace plugins {
 			EXPECT_EQ(Amount((i + 1) * 100), notification.Mosaic.Amount);
 			EXPECT_EQ(BlockDuration(500), notification.Duration);
 			EXPECT_EQ(model::LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
-			auto secret = Hash256(pTransaction->Signer.array()) ^ Hash256(pTransaction->DriveKey.array()) ^ pTransaction->FilesPtr()[i].FileHash;
+			auto secret = pTransaction->OperationToken ^ pTransaction->FilesPtr()[i].FileHash;
 			EXPECT_EQ(secret, notification.Secret);
 			auto recipient = extensions::CopyToUnresolvedAddress(model::PublicKeyToAddress(pTransaction->DriveKey, Network_Identifier));
 			EXPECT_EQ(recipient, notification.Recipient);
