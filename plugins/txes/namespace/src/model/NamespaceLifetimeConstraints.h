@@ -37,7 +37,7 @@ namespace catapult { namespace model {
 	public:
 		/// Maximum lifetime a namespace may have including the grace period.
 		BlockDuration maxNamespaceDuration() {
-			const auto& pluginConfig = m_networkConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
+			const auto& pluginConfig = m_networkConfig.template GetPluginConfiguration<config::NamespaceConfiguration>();
 			auto gracePeriodDuration = pluginConfig.NamespaceGracePeriodDuration.blocks(m_networkConfig.BlockGenerationTargetTime);
 			auto maxDuration = pluginConfig.MaxNamespaceDuration.blocks(m_networkConfig.BlockGenerationTargetTime);
 			return BlockDuration{maxDuration.unwrap() + gracePeriodDuration.unwrap()};

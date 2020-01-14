@@ -1,4 +1,4 @@
-/**
+ /**
 *** Copyright (c) 2016-present,
 *** Jaguar0625, gimre, BloodyRookie, Tech Bureau, Corp. All rights reserved.
 ***
@@ -27,8 +27,8 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ModifyMultisigCosignersNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, [pConfigHolder](
+	DECLARE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(ModifyMultisigMaxCosigners, [](
 				const auto& notification,
 				const ValidatorContext& context) {
 			size_t numCosignatories = 0u;
@@ -49,8 +49,7 @@ namespace catapult { namespace validators {
 				++pCosignatoryModification;
 			}
 
-			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
-			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::MultisigConfiguration>(PLUGIN_NAME_HASH(multisig));
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MultisigConfiguration>();
 			return numCosignatories > pluginConfig.MaxCosignersPerAccount ? Failure_Multisig_Modify_Max_Cosigners : ValidationResult::Success;
 		});
 	}

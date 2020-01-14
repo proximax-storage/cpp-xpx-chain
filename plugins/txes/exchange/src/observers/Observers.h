@@ -44,5 +44,5 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(RemoveOffer, model::RemoveOfferNotification<1>)(const MosaicId& currencyMosaicId);
 
 	/// Observes changes triggered by block notifications
-	DECLARE_OBSERVER(CleanupOffers, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_OBSERVER(CleanupOffers, model::BlockNotification<1>)();
 }}

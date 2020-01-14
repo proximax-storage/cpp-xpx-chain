@@ -29,6 +29,9 @@ namespace catapult { namespace config {
 	/// Multisig plugin configuration settings.
 	struct MultisigConfiguration : public model::PluginConfiguration {
 	public:
+		DEFINE_CONFIG_CONSTANTS(multisig)
+
+	public:
 		/// Maximum number of multisig levels.
 		uint8_t MaxMultisigDepth;
 

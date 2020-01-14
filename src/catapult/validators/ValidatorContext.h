@@ -19,6 +19,7 @@
 **/
 
 #pragma once
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/model/NetworkInfo.h"
 #include "catapult/model/ResolverContext.h"
@@ -31,23 +32,26 @@ namespace catapult { namespace validators {
 	/// Contextual information passed to stateful validators.
 	struct ValidatorContext {
 	public:
-		/// Creates a validator context around a \a height, \a blockTime, \a network, \a resolvers and \a cache.
+		/// Creates a validator context around a \a config, \a height, \a blockTime, \a resolvers and \a cache.
 		ValidatorContext(
+				const config::BlockchainConfiguration& config,
 				catapult::Height height,
 				Timestamp blockTime,
-				model::NetworkIdentifier networkIdentifier,
-				const model::NetworkInfo& network,
 				const model::ResolverContext& resolvers,
 				const cache::ReadOnlyCatapultCache& cache)
-				: Height(height)
-				, BlockTime(blockTime)
-				, NetworkIdentifier(networkIdentifier)
-				, Network(network)
+				: Config(config)
+                , Height(height)
+                , BlockTime(blockTime)
+				, NetworkIdentifier(config.Immutable.NetworkIdentifier)
+				, Network(config.Network.Info)
 				, Resolvers(resolvers)
 				, Cache(cache)
 		{}
 
 	public:
+		/// Blockchain config.
+		const config::BlockchainConfiguration& Config;
+
 		/// Current height.
 		const catapult::Height Height;
 

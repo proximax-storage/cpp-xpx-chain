@@ -43,7 +43,7 @@ namespace catapult { namespace local {
 					: m_pPluginManager(test::CreatePluginManagerWithRealPlugins(CreateConfiguration()))
 					, m_cache(m_pPluginManager->createCache())
 					, m_pStorage(mocks::CreateMemoryBlockStorageCache(numBlocks))
-					, m_notifier(m_pPluginManager->configHolder()->Config(), m_cache, *m_pStorage, *m_pPluginManager)
+					, m_notifier(m_cache, *m_pStorage, *m_pPluginManager)
 			{}
 
 		public:

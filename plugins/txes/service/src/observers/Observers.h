@@ -29,6 +29,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(JoinToDrive, model::JoinToDriveNotification<1>)();
 
 	/// Observes changes triggered by exchange Xpx to SO units.
+
 	DECLARE_OBSERVER(StartBilling, model::BalanceCreditNotification<1>)(const MosaicId& storageMosaicId);
 
 	/// Observes changes triggered at the end of billing period.
@@ -41,5 +42,5 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(DriveFilesReward, model::DriveFilesRewardNotification<1>)(const config::ImmutableConfiguration& config);
 
 	/// Observes changes triggered by block.
-	DECLARE_OBSERVER(DriveCacheBlockPruning, model::BlockNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_OBSERVER(DriveCacheBlockPruning, model::BlockNotification<1>)();
 }}

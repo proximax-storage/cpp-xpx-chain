@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS SecretLockDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(SecretLockDuration)
 
 	namespace {
 		auto networkConfig = model::NetworkConfiguration::Uninitialized();
@@ -37,13 +37,17 @@ namespace catapult { namespace validators {
 			using NotificationType = model::SecretLockDurationNotification<1>;
 			static constexpr auto Failure_Result = Failure_LockSecret_Invalid_Duration;
 
-			static auto CreateValidator(BlockDuration maxDuration) {
+			static auto CreateConfigHolder(BlockDuration maxDuration) {
 				auto pluginConfig = config::SecretLockConfiguration::Uninitialized();
 				pluginConfig.MaxSecretLockDuration = utils::BlockSpan::FromHours(maxDuration.unwrap());
 				networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-				networkConfig.SetPluginConfiguration(PLUGIN_NAME(locksecret), pluginConfig);
+				networkConfig.SetPluginConfiguration(pluginConfig);
 				auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-				return CreateSecretLockDurationValidator(pConfigHolder);
+				return pConfigHolder;
+			}
+
+			static auto CreateValidator() {
+				return CreateSecretLockDurationValidator();
 			}
 		};
 	}

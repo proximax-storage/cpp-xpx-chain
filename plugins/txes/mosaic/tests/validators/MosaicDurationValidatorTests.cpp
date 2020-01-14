@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicDurationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MosaicDuration)
 
 	namespace {
 		constexpr MosaicId Default_Mosaic_Id = MosaicId(0x1234);
@@ -63,12 +63,12 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxMosaicDuration = utils::BlockSpan::FromHours(123);
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
 			networkConfig.BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			auto pValidator = CreateMosaicDurationValidator(pConfigHolder);
+			auto pValidator = CreateMosaicDurationValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config(), height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "id " << notification.MosaicId;

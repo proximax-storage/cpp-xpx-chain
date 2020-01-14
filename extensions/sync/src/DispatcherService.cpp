@@ -147,7 +147,7 @@ namespace catapult { namespace sync {
 				rollbackInfo.modifier().increment();
 				auto readOnlyCache = observerState.Cache.toReadOnly();
 				auto resolverContext = pluginManager.createResolverContext(readOnlyCache);
-				UndoBlock(blockElement, { *pUndoObserver, resolverContext, observerState }, undoBlockType);
+				UndoBlock(blockElement, { *pUndoObserver, resolverContext, pluginManager.configHolder(), observerState }, undoBlockType);
 			};
 			syncHandlers.Processor = CreateSyncProcessor(state, extensions::CreateExecutionConfiguration(pluginManager));
 
@@ -326,7 +326,6 @@ namespace catapult { namespace sync {
 			auto pUtUpdater = std::make_shared<chain::UtUpdater>(
 					state.utCache(),
 					state.cache(),
-					state.config().Node,
 					extensions::CreateExecutionConfiguration(state.pluginManager()),
 					state.timeSupplier(),
 					extensions::SubscriberToSink(state.transactionStatusSubscriber()),

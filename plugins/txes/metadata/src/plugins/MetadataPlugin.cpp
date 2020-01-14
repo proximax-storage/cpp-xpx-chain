@@ -17,6 +17,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterMetadataSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::MetadataConfiguration>();
+		});
 		manager.addTransactionSupport(CreateAddressMetadataTransactionPlugin());
 		manager.addTransactionSupport(CreateMosaicMetadataTransactionPlugin());
 		manager.addTransactionSupport(CreateNamespaceMetadataTransactionPlugin());
@@ -39,14 +42,13 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMetadataPluginConfigValidator());
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateMetadataFieldModificationValidator(pConfigHolder))
+				.add(validators::CreateMetadataFieldModificationValidator())
 				.add(validators::CreateModifyAddressMetadataValidator())
 				.add(validators::CreateModifyMosaicMetadataValidator())
 				.add(validators::CreateModifyNamespaceMetadataValidator())
-				.add(validators::CreateMetadataModificationsValidator(pConfigHolder));
+				.add(validators::CreateMetadataModificationsValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -56,9 +58,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateNamespaceMetadataValueModificationObserver());
 		});
 
-		manager.addObserverHook([pConfigHolder](auto& builder) {
+		manager.addObserverHook([](auto& builder) {
 			builder
-				.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1, pConfigHolder));
+				.add(observers::CreateCacheBlockPruningObserver<cache::MetadataCache>("Metadata", 1));
 		});
 	}
 }}

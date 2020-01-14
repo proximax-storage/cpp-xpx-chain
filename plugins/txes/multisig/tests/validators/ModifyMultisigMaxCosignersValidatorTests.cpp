@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS ModifyMultisigMaxCosignersValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosigners, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(ModifyMultisigMaxCosigners)
 
 	namespace {
 		constexpr auto Add = model::CosignatoryModificationType::Add;
@@ -69,12 +69,12 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.MaxCosignersPerAccount = maxCosignersPerAccount;
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(multisig), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(networkConfig);
-			auto pValidator = CreateModifyMultisigMaxCosignersValidator(pConfigHolder);
+			auto pValidator = CreateModifyMultisigMaxCosignersValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config());
 
 			// Assert:
 			auto change = utils::Sum(modificationTypes, [](const auto& modificationType) { return Add == modificationType ? 1 : -1; });

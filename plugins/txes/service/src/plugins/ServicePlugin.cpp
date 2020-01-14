@@ -21,6 +21,7 @@
 #include "src/validators/Validators.h"
 #include "src/utils/ServiceUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
+#include "src/config/ServiceConfiguration.h"
 
 namespace catapult { namespace plugins {
 
@@ -48,6 +49,12 @@ namespace catapult { namespace plugins {
 	}
 
 	void RegisterServiceSubsystem(PluginManager& manager) {
+
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::ServiceConfiguration>();
+		});
+
+
         const auto& pConfigHolder = manager.configHolder();
         const auto& immutableConfig = manager.immutableConfig();
         manager.addTransactionSupport(CreatePrepareDriveTransactionPlugin());
@@ -136,16 +143,15 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 			builder
 					.add(validators::CreateDriveValidator())
-					.add(validators::CreateExchangeValidator(pConfigHolder))
+					.add(validators::CreateExchangeValidator())
 					.add(validators::CreateDrivePermittedOperationValidator())
                     .add(validators::CreateDriveFilesRewardValidator(immutableConfig.StreamingMosaicId))
 					.add(validators::CreateFilesDepositValidator())
 					.add(validators::CreateJoinToDriveValidator())
 					.add(validators::CreatePrepareDrivePermissionValidator())
 					.add(validators::CreateDriveFileSystemValidator())
-					.add(validators::CreateEndDriveValidator(pConfigHolder))
-					// MaxFilesOnDriveValidator should be added after DriveFileSystemValidator
-					.add(validators::CreateMaxFilesOnDriveValidator(pConfigHolder))
+					.add(validators::CreateEndDriveValidator())
+					.add(validators::CreateMaxFilesOnDriveValidator())
 					.add(validators::CreateStartDriveVerificationValidator())
 					.add(validators::CreateEndDriveVerificationValidator());
 		});
@@ -161,12 +167,13 @@ namespace catapult { namespace plugins {
                     .add(observers::CreateEndBillingObserver(immutableConfig.StorageMosaicId))
                     .add(observers::CreateEndDriveObserver(immutableConfig))
                     .add(observers::CreateDriveFilesRewardObserver(immutableConfig))
-                    .add(observers::CreateDriveCacheBlockPruningObserver(pConfigHolder));
+                    .add(observers::CreateDriveCacheBlockPruningObserver());
 		});
 	}
 }}
 
+
 extern "C" PLUGIN_API
 void RegisterSubsystem(catapult::plugins::PluginManager& manager) {
-	catapult::plugins::RegisterServiceSubsystem(manager);
+    catapult::plugins::RegisterServiceSubsystem(manager);
 }

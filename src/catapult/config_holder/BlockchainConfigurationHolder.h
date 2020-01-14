@@ -17,6 +17,8 @@ namespace catapult { namespace config {
 
 	class BlockchainConfigurationHolder {
 	public:
+		using PluginInitializer = std::function<void (model::NetworkConfiguration&)>;
+
 		explicit BlockchainConfigurationHolder(cache::CatapultCache* pCache);
 		virtual ~BlockchainConfigurationHolder() = default;
 
@@ -31,21 +33,26 @@ namespace catapult { namespace config {
 		void SetConfig(const Height& height, const BlockchainConfiguration& config);
 
 		/// Get \a config at \a height
-		virtual BlockchainConfiguration& Config(const Height& height);
+		virtual const BlockchainConfiguration& Config(const Height& height);
 
 		/// Get latest available config
-		virtual BlockchainConfiguration& Config();
+		virtual const BlockchainConfiguration& Config();
 
 		/// Get config at \a height or latest available config
-		virtual BlockchainConfiguration& ConfigAtHeightOrLatest(const Height& height);
+		virtual const BlockchainConfiguration& ConfigAtHeightOrLatest(const Height& height);
 
 		void SetCache(cache::CatapultCache* pCache) {
 			m_pCache = pCache;
 		}
 
+		void SetPluginInitializer(const PluginInitializer& initializer) {
+			m_pluginInitializer = initializer;
+		}
+
 	protected:
 		ConfigTreeCache m_networkConfigs;
 		cache::CatapultCache* m_pCache;
+		PluginInitializer m_pluginInitializer;
 		std::mutex m_mutex;
 	};
 }}

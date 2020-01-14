@@ -28,12 +28,10 @@ namespace catapult { namespace harvesting {
 	/// Facade around unconfirmed transactions cache and updater.
 	class HarvestingUtFacade {
 	public:
-		/// Creates a facade around \a blockTime, \a cache, \a pConfigHolder and \a executionConfig.
+		/// Creates a facade around \a blockTime, \a cache and \a executionConfig.
 		HarvestingUtFacade(
 				Timestamp blockTime,
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-				const config::BlockchainConfiguration& config,
 				const chain::ExecutionConfiguration& executionConfig);
 
 		/// Destroys the facade.
@@ -70,10 +68,9 @@ namespace catapult { namespace harvesting {
 	/// Factory for creating unconfirmed transactions facades.
 	class HarvestingUtFacadeFactory {
 	public:
-		/// Creates a factory around \a cache, \a pConfigHolder and \a executionConfig.
+		/// Creates a factory around \a cache and \a executionConfig.
 		HarvestingUtFacadeFactory(
 				const cache::CatapultCache& cache,
-				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const chain::ExecutionConfiguration& executionConfig);
 
 	public:
@@ -82,8 +79,6 @@ namespace catapult { namespace harvesting {
 
 	private:
 		const cache::CatapultCache& m_cache;
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
-		config::BlockchainConfiguration m_config;
 		chain::ExecutionConfiguration m_executionConfig;
 	};
 }}

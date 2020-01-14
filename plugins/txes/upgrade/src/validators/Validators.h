@@ -19,7 +19,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to blockchain upgrade notification and validates that:
 	/// - upgrade period is valid (greater or equal the minimum value set in config)
 	/// - no other upgrade is declared at the same height
-	DECLARE_STATEFUL_VALIDATOR(BlockchainUpgrade, model::BlockchainUpgradeVersionNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(BlockchainUpgrade, model::BlockchainUpgradeVersionNotification<1>)();
 
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the blockchain version is valid

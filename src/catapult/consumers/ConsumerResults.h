@@ -49,9 +49,6 @@ namespace catapult { namespace consumers {
 	/// Validation failed because the chain part contains duplicate transactions.
 	DEFINE_CONSUMER_RESULT(Remote_Chain_Duplicate_Transactions, 0x2003);
 
-	/// Validation failed because the chain part contains network config transaction that sets new config within that chain part.
-	DEFINE_CONSUMER_RESULT(Remote_Chain_Unexpected_Network_Config_Transaction, 0x2004);
-
 	/// Validation failed because the chain part does not link to the current chain.
 	DEFINE_CONSUMER_RESULT(Remote_Chain_Unlinked, 0x3001);
 

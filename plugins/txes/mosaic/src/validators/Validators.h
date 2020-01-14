@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 	/// - definition has divisibility no greater than \a maxDivisibility
 	/// - mosaic duration has a value not larger than \a maxMosaicDuration
 	/// - optional mosaic properties are sorted, known and not duplicative
-	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, model::MosaicPropertiesNotification<1>)();
 
 	/// A validator implementation that applies to mosaic nonce notifications and validates that:
 	/// - mosaic id is the expected id generated from signer and nonce
@@ -57,7 +57,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to mosaic definition notifications and validates that:
 	/// - the resulting mosaic duration is not larger than \a maxMosaicDuration and there was no overflow
-	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, model::MosaicDefinitionNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MosaicDuration, model::MosaicDefinitionNotification<1>)();
 
 	// endregion
 
@@ -78,11 +78,11 @@ namespace catapult { namespace validators {
 	/// - decrease does not cause owner amount to become negative
 	/// - increase does not cause total atomic units to exceed max atomic units
 	/// \note This validator is dependent on MosaicChangeAllowedValidator.
-	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MosaicSupplyChangeAllowed, model::MosaicSupplyChangeNotification<1>)();
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the account changing the supply does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsSupplyChange, model::MosaicSupplyChangeNotification<1>)();
 
 	// endregion
 
@@ -90,7 +90,7 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to all balance transfer notifications and validates that:
 	/// - the recipient does not exceed the maximum number of mosaics (\a maxMosaics) an account is allowed to own
-	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(MaxMosaicsBalanceTransfer, model::BalanceTransferNotification<1>)();
 
 	// endregion
 

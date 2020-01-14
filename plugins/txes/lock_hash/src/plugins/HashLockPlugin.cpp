@@ -31,6 +31,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterHashLockSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::HashLockConfiguration>();
+		});
 		manager.addTransactionSupport(CreateHashLockTransactionPlugin());
 
 		manager.addCacheSupport<cache::HashLockInfoCacheStorage>(
@@ -50,22 +53,21 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateHashLockPluginConfigValidator());
 		});
 
-		const auto& pConfigHolder = manager.configHolder();
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateHashLockDurationValidator(pConfigHolder))
-				.add(validators::CreateHashLockMosaicValidator(pConfigHolder))
+				.add(validators::CreateHashLockDurationValidator())
+				.add(validators::CreateHashLockMosaicValidator())
 				.add(validators::CreateAggregateHashPresentValidator())
 				.add(validators::CreateHashLockCacheUniqueValidator());
 		});
 
-		manager.addObserverHook([pConfigHolder](auto& builder) {
+		manager.addObserverHook([](auto& builder) {
 			auto expiryReceiptType = model::Receipt_Type_LockHash_Expired;
 			builder
 				.add(observers::CreateHashLockObserver())
 				.add(observers::CreateExpiredHashLockInfoObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::HashLockInfoCache>("HashLockInfo", expiryReceiptType))
-				.add(observers::CreateCacheBlockPruningObserver<cache::HashLockInfoCache>("HashLockInfo", 1, pConfigHolder))
+				.add(observers::CreateCacheBlockPruningObserver<cache::HashLockInfoCache>("HashLockInfo", 1))
 				.add(observers::CreateCompletedAggregateObserver());
 		});
 	}

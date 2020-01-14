@@ -1,0 +1,37 @@
+/**
+*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
+#pragma once
+#include <stdint.h>
+#include "catapult/utils/Casting.h"
+
+namespace catapult { namespace config {
+
+	/// Config ids for well-known caches.
+	enum class ConfigId : uint32_t {
+		aggregateConfigId,
+		configConfigId,
+		contractConfigId,
+		locksecretConfigId,
+		lockhashConfigId,
+		metadataConfigId,
+		mosaicConfigId,
+		multisigConfigId,
+		namespaceConfigId,
+		propertyConfigId,
+		serviceConfigId,
+		transferConfigId,
+		upgradeConfigId,
+        exchangeConfigId,
+        First = aggregateConfigId,
+        Latest = exchangeConfigId,
+	};
+
+/// Defines config constants for a config with \a NAME.
+#define DEFINE_CONFIG_CONSTANTS(NAME) \
+	static constexpr size_t Id = utils::to_underlying_type(ConfigId::NAME##ConfigId); \
+	static constexpr auto Name = "catapult.plugins."#NAME;
+}}

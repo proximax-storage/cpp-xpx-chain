@@ -317,8 +317,10 @@ namespace catapult { namespace test {
 				const config::BlockchainConfiguration& config,
 				const plugins::StorageConfiguration& storageConfig) {
 			std::vector<plugins::PluginModule> modules;
+
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig);
+
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.plugins.hashcache");
 

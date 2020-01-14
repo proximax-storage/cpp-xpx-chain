@@ -32,7 +32,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS DeadlineValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Deadline, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(Deadline)
 
 	namespace {
 		constexpr auto Block_Time = Timestamp(8888);
@@ -48,9 +48,9 @@ namespace catapult { namespace validators {
 			auto cacheView = cache.createView();
 			auto readOnlyCache = cacheView.toReadOnly();
 			auto resolverContext = test::CreateResolverContextXor();
-			auto context = ValidatorContext(Height(123), Block_Time, model::NetworkIdentifier::Mijin_Test, model::NetworkInfo(), resolverContext, readOnlyCache);
+			auto context = ValidatorContext(config, Height(123), Block_Time, resolverContext, readOnlyCache);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateDeadlineValidator(pConfigHolder);
+			auto pValidator = CreateDeadlineValidator();
 
 			model::TransactionDeadlineNotification<1> notification(deadline, maxCustomLifetime);
 

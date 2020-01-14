@@ -30,8 +30,8 @@
 
 namespace catapult { namespace validators {
 
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer, config::CreateMockConfigurationHolder())
-	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsBalanceTransfer)
+	DEFINE_COMMON_VALIDATOR_TESTS(MaxMosaicsSupplyChange)
 
 #define BALANCE_TRANSFER_TEST_CLASS BalanceTransferMaxMosaicsValidatorTests
 #define SUPPLY_CHANGE_TEST_CLASS SupplyChangeMaxMosaicsValidatorTests
@@ -58,7 +58,7 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
 			pluginConfig.MaxMosaicsPerAccount = maxMosaics;
 			auto networkConfig = model::NetworkConfiguration::Uninitialized();
-			networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), pluginConfig);
+			networkConfig.SetPluginConfiguration(pluginConfig);
 			return networkConfig;
 		}
 
@@ -71,11 +71,11 @@ namespace catapult { namespace validators {
 
 			auto config = CreateConfig(maxMosaics);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateMaxMosaicsBalanceTransferValidator(pConfigHolder);
+			auto pValidator = CreateMaxMosaicsBalanceTransferValidator();
 			auto notification = model::BalanceTransferNotification<1>(owner, unresolvedRecipient, mosaicId, amount);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config());
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "maxMosaics " << maxMosaics << ", mosaicId " << mosaicId << ", amount " << amount;
@@ -118,11 +118,11 @@ namespace catapult { namespace validators {
 
 			auto config = CreateConfig(maxMosaics);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateMaxMosaicsSupplyChangeValidator(pConfigHolder);
+			auto pValidator = CreateMaxMosaicsSupplyChangeValidator();
 			auto notification = model::MosaicSupplyChangeNotification<1>(owner, mosaicId, direction, Amount(100));
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, pConfigHolder->Config());
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)

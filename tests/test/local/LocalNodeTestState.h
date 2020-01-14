@@ -20,6 +20,8 @@
 
 #pragma once
 #include "catapult/extensions/LocalNodeStateRef.h"
+#include "catapult/config/BlockchainConfiguration.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include <memory>
 #include <string>
 

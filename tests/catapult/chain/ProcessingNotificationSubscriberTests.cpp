@@ -50,10 +50,11 @@ namespace catapult { namespace chain {
 		class TestContext {
 		public:
 			explicit TestContext(observers::NotifyMode executeMode = observers::NotifyMode::Commit)
-					: m_cache({})
+					: m_config(config::BlockchainConfiguration::Uninitialized())
+					, m_cache({})
 					, m_cacheDelta(m_cache.createDelta())
-					, m_validatorContext(test::CreateValidatorContext(Height(123), m_cacheDelta.toReadOnly()))
-					, m_observerContext({ m_cacheDelta, m_state }, Height(123), executeMode, CreateResolverContext())
+					, m_validatorContext(test::CreateValidatorContext(m_config, Height(123), m_cacheDelta.toReadOnly()))
+					, m_observerContext({ m_cacheDelta, m_state }, m_config, Height(123), executeMode, CreateResolverContext())
 					, m_sub(m_validator, m_validatorContext, m_observer, m_observerContext) {
 				CATAPULT_LOG(debug) << "preparing test context with execute mode " << executeMode;
 			}
@@ -122,6 +123,7 @@ namespace catapult { namespace chain {
 			mocks::MockNotificationValidator m_validator;
 			mocks::MockNotificationObserver m_observer;
 
+			config::BlockchainConfiguration m_config;
 			cache::CatapultCache m_cache;
 			cache::CatapultCacheDelta m_cacheDelta;
 			state::CatapultState m_state;

@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS HarvestFeeObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, config::CreateMockConfigurationHolder(), model::InflationCalculator())
+	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, model::InflationCalculator())
 
 	// region traits
 
@@ -109,8 +109,7 @@ namespace catapult { namespace observers {
 			mutableConfig.Network.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
 			auto config = mutableConfig.ToConst();
 			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pObserver = CreateHarvestFeeObserver(pConfigHolder, calculator);
+			auto pObserver = CreateHarvestFeeObserver(calculator);
 
 			// Act + Assert:
 			action(context, *pObserver);
@@ -492,7 +491,7 @@ namespace catapult { namespace observers {
 			auto config = mutableConfig.ToConst();
 			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-			auto pObserver = CreateHarvestFeeObserver(config::CreateMockConfigurationHolder(config), model::InflationCalculator());
+			auto pObserver = CreateHarvestFeeObserver(model::InflationCalculator());
 
 			auto signerPublicKey = test::GenerateRandomByteArray<Key>();
 			auto accountStateIter = RemoteAccountTraits::AddAccount(accountStateCache, signerPublicKey, Height(1));

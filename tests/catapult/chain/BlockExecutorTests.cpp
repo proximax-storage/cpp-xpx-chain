@@ -24,6 +24,7 @@
 #include "catapult/model/Block.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/other/mocks/MockEntityObserver.h"
 #include "tests/TestHarness.h"
@@ -74,7 +75,7 @@ namespace catapult { namespace chain {
 					observers::ObserverState& state) {
 				auto blockElement = test::BlockToBlockElement(block);
 				FixHashes(blockElement);
-				ExecuteBlock(blockElement, { observer, CreateResolverContext(), state });
+				ExecuteBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state });
 			}
 		};
 
@@ -99,7 +100,7 @@ namespace catapult { namespace chain {
 					observers::ObserverState& state) {
 				auto blockElement = test::BlockToBlockElement(block);
 				FixHashes(blockElement);
-				RollbackBlock(blockElement, { observer, CreateResolverContext(), state });
+				RollbackBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state });
 			}
 		};
 
@@ -253,7 +254,7 @@ namespace catapult { namespace chain {
 			EXPECT_TRUE(accountStateCache.contains(address));
 
 			// Act: trigger a rollback
-			RollbackBlock(model::BlockElement(*pBlock), { observer, CreateResolverContext(), state });
+			RollbackBlock(model::BlockElement(*pBlock), { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state });
 
 			// Assert: the account queued for removal should have been removed
 			EXPECT_EQ(2u, accountStateCache.size());

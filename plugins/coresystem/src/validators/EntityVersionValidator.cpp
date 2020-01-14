@@ -25,9 +25,9 @@ namespace catapult { namespace validators {
 
 	using Notification = model::EntityNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(EntityVersion, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(EntityVersion, [pConfigHolder](const auto& notification, const auto& context) {
-			const auto& supportedVersions = pConfigHolder->Config(context.Height).SupportedEntityVersions;
+	DECLARE_STATEFUL_VALIDATOR(EntityVersion, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(EntityVersion, [](const auto& notification, const auto& context) {
+			const auto& supportedVersions = context.Config.SupportedEntityVersions;
 			auto entityIter = supportedVersions.find(notification.EntityType);
 
 			if (entityIter == supportedVersions.end()) {

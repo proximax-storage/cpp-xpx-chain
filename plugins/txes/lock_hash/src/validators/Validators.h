@@ -30,12 +30,12 @@ namespace catapult { namespace validators {
 
 	/// A validator implementation that applies to hash lock notifications and validates that:
 	/// - lock duration is at most \a maxHashLockDuration
-	DECLARE_STATEFUL_VALIDATOR(HashLockDuration, model::HashLockDurationNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(HashLockDuration, model::HashLockDurationNotification<1>)();
 
 	/// A validator implementation that applies to hash lock mosaic notifications and validates that:
 	/// - mosaic id is \a currencyMosaicId
 	/// - mosaic amount is equal to \a lockedFundsPerAggregate
-	DECLARE_STATEFUL_VALIDATOR(HashLockMosaic, model::HashLockMosaicNotification<1>)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	DECLARE_STATEFUL_VALIDATOR(HashLockMosaic, model::HashLockMosaicNotification<1>)();
 
 	/// A validator implementation that applies to hash lock notifications and validates that:
 	/// - attached hash is not present in hash lock info cache

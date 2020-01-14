@@ -21,6 +21,7 @@
 #include "PropertyPlugin.h"
 #include "src/cache/PropertyCache.h"
 #include "src/cache/PropertyCacheStorage.h"
+#include "src/config/PropertyConfiguration.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/PropertyTransactionPlugin.h"
 #include "src/validators/Validators.h"
@@ -30,6 +31,9 @@
 namespace catapult { namespace plugins {
 
 	void RegisterPropertySubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::PropertyConfiguration>();
+		});
 		manager.addTransactionSupport(CreateAddressPropertyTransactionPlugin());
 		manager.addTransactionSupport(CreateMosaicPropertyTransactionPlugin());
 		manager.addTransactionSupport(CreateTransactionTypePropertyTransactionPlugin());
@@ -59,19 +63,19 @@ namespace catapult { namespace plugins {
 				.add(validators::CreatePropertyPluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateAddressPropertyRedundantModificationValidator())
 				.add(validators::CreateAddressPropertyValueModificationValidator())
-				.add(validators::CreateMaxAddressPropertyValuesValidator(pConfigHolder))
+				.add(validators::CreateMaxAddressPropertyValuesValidator())
 				.add(validators::CreateAddressInteractionValidator())
 				.add(validators::CreateMosaicPropertyRedundantModificationValidator())
 				.add(validators::CreateMosaicPropertyValueModificationValidator())
-				.add(validators::CreateMaxMosaicPropertyValuesValidator(pConfigHolder))
+				.add(validators::CreateMaxMosaicPropertyValuesValidator())
 				.add(validators::CreateMosaicRecipientValidator())
 				.add(validators::CreateTransactionTypePropertyRedundantModificationValidator())
 				.add(validators::CreateTransactionTypePropertyValueModificationValidator())
-				.add(validators::CreateMaxTransactionTypePropertyValuesValidator(pConfigHolder))
+				.add(validators::CreateMaxTransactionTypePropertyValuesValidator())
 				.add(validators::CreateTransactionTypeValidator())
 				.add(validators::CreateTransactionTypeNoSelfBlockingValidator());
 		});
