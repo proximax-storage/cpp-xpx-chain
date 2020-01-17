@@ -26,189 +26,54 @@ namespace catapult { namespace utils {
 
 #define TEST_CLASS SpinReaderWriterLockTests
 
-	// region basic - unlocked
-
-	TEST(TEST_CLASS, LockIsInitiallyUnlocked) {
-		// Act:
-		SpinReaderWriterLock lock;
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
-	// endregion
-
-	// region basic - read acquire
-
-	TEST(TEST_CLASS, CanAcquireReaderLock) {
-		// Act:
-		SpinReaderWriterLock lock;
-		auto readLock = lock.acquireReader();
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_TRUE(lock.isReaderActive());
-	}
-
-	TEST(TEST_CLASS, CanReleaseReaderLock) {
-		// Act:
-		SpinReaderWriterLock lock;
-		{
-			auto readLock = lock.acquireReader();
-		}
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
-	TEST(TEST_CLASS, CanReleaseReaderLockAfterMove) {
-		// Act:
-		SpinReaderWriterLock lock;
-		{
-			auto readLock = lock.acquireReader();
-			auto readLock2 = std::move(readLock);
-		}
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
-	// endregion
-
-	// region basic - write acquire
-
-	TEST(TEST_CLASS, CanAcquireWriterLock) {
-		// Act:
-		SpinReaderWriterLock lock;
-		auto writeLock = lock.acquireWriter();
-
-		// Assert:
-		EXPECT_TRUE(lock.isWriterPending());
-		EXPECT_TRUE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
-	TEST(TEST_CLASS, CanReleaseWriterLock) {
-		// Act:
-		SpinReaderWriterLock lock;
-		{
-			auto writeLock = lock.acquireWriter();
-		}
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
-	TEST(TEST_CLASS, CanReleaseWriterLockAfterMove) {
-		// Act:
-		SpinReaderWriterLock lock;
-		{
-			auto writeLock = lock.acquireWriter();
-			auto writeLock2 = std::move(writeLock);
-		}
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
-	// endregion
-
-	// region basic - write promotion
-
-	TEST(TEST_CLASS, CanPromoteReaderLockToWriterLock) {
-		// Act:
-		SpinReaderWriterLock lock;
-		auto readLock = lock.acquireReader();
-		auto writeLock = readLock.promoteToWriter();
-
-		// Assert:
-		EXPECT_TRUE(lock.isWriterPending());
-		EXPECT_TRUE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
-	TEST(TEST_CLASS, CanDemoteWriterLockToReaderLock) {
-		// Act:
-		SpinReaderWriterLock lock;
-		auto readLock = lock.acquireReader();
-		{
-			auto writeLock = readLock.promoteToWriter();
-		}
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_TRUE(lock.isReaderActive());
-	}
-
-	TEST(TEST_CLASS, CanReleasePromotedWriterLock) {
-		// Act:
-		SpinReaderWriterLock lock;
-		{
-			auto readLock = lock.acquireReader();
-			auto writeLock = readLock.promoteToWriter();
-		}
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
-	TEST(TEST_CLASS, CanReleasePromotedWriterLockAfterMove) {
-		// Act:
-		SpinReaderWriterLock lock;
-		{
-			auto readLock = lock.acquireReader();
-			auto writeLock = readLock.promoteToWriter();
-			auto writeLock2 = std::move(writeLock);
-		}
-
-		// Assert:
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
-	}
-
 	TEST(TEST_CLASS, CannotPromoteReaderLockToWriterLockMultipleTimes) {
 		// Arrange:
 		SpinReaderWriterLock lock;
 		auto readLock = lock.acquireReader();
 		auto writeLock = readLock.promoteToWriter();
 
-		// Act + Assert:
+		// Act + Assert: exception
 		EXPECT_THROW(readLock.promoteToWriter(), catapult_runtime_error);
 	}
 
-	TEST(TEST_CLASS, CanPromoteReaderLockToWriterLockAfterDemotion) {
-		// Act: acquire a reader and then promote, demote, promote
+	TEST(TEST_CLASS, CannotUpgradeMultiple) {
+		// Arrange:
 		SpinReaderWriterLock lock;
-		auto readLock = lock.acquireReader();
-		{
-			auto writeLock = readLock.promoteToWriter();
-		}
+		auto upgradeLock = lock.acquireUpgradableLock();
 
-		auto writeLock = readLock.promoteToWriter();
-
-		// Assert:
-		EXPECT_TRUE(lock.isWriterPending());
-		EXPECT_TRUE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
+		// Act + Assert: Exception
+		EXPECT_THROW(lock.acquireUpgradableLock(), catapult_runtime_error);
 	}
 
-	// endregion
+	TEST(TEST_CLASS, SingleThreadUpgradeOwnerShip) {
+		test::LockTestState state;
+		test::LockTestGuard testGuard(state);
+		SpinReaderWriterLock lock;
 
+		std::atomic<uint32_t> counter(0);
+		std::atomic<uint32_t> threadCount(0);
+
+		//acquire reader ahead
+		auto upgradeLock = lock.acquireUpgradableLock();
+
+		for( int i = 0; i < 2; i++ ) {
+			testGuard.Threads.create_thread([&] {
+				try {
+					auto upgradeInner = lock.acquireUpgradableLock();
+					counter++;
+				} catch (catapult_runtime_error& ex) {
+					CATAPULT_LOG(debug) << "Expected throw";
+				}
+
+				threadCount++;
+			});
+		}
+
+		WAIT_FOR_VALUE(2u, threadCount);
+
+		// Assert: only one thread accessed the counter
+		EXPECT_EQ(0u, counter);
+	}
 	// region lock traits
 
 	namespace {
@@ -236,6 +101,20 @@ namespace catapult { namespace utils {
 				SpinReaderWriterLock::WriterLockGuard m_writeLock;
 			};
 		};
+
+		struct UniqueWriterLockTraits {
+			class LockGuard {
+			public:
+				explicit LockGuard(SpinReaderWriterLock& lock)
+						: m_readLock(lock.acquireUpgradableLock())
+						, m_writeLock(m_readLock.promoteToWriter())
+				{}
+
+			private:
+				SpinReaderWriterLock::UpgradableReaderLockGuard m_readLock;
+				SpinReaderWriterLock::UniqueWriteLock m_writeLock;
+			};
+		};
 	}
 
 #define WRITER_LOCK_TRAITS_BASED_TEST(TEST_NAME) \
@@ -244,10 +123,16 @@ namespace catapult { namespace utils {
 	TEST(TEST_CLASS, TEST_NAME##_Acquire) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<WriterAcquireTraits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
+#define WRITER_LOCK_PLUS_UNIQUE_TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_Promotion) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<WriterPromotionTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Acquire) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<WriterAcquireTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_AcquireUnique) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<UniqueWriterLockTraits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
 	// endregion
 
 	// region lock - shared
-
 	TEST(TEST_CLASS, MultipleThreadsCanAcquireReaderLock) {
 		// Arrange:
 		SpinReaderWriterLock lock;
@@ -269,13 +154,8 @@ namespace catapult { namespace utils {
 
 		// Assert: all threads were able to access the counter
 		EXPECT_EQ(test::Num_Default_Lock_Threads, counter);
-		EXPECT_FALSE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_TRUE(lock.isReaderActive());
 	}
-
 	// endregion
-
 	// region lock - exclusive
 
 	namespace {
@@ -309,7 +189,7 @@ namespace catapult { namespace utils {
 
 	// region lock - reader / writer semantics
 
-	WRITER_LOCK_TRAITS_BASED_TEST(ReaderBlocksWriter) {
+	WRITER_LOCK_PLUS_UNIQUE_TRAITS_BASED_TEST(ReaderBlocksWriter) {
 		// Arrange:
 		SpinReaderWriterLock lock;
 		char value = '\0';
@@ -335,12 +215,9 @@ namespace catapult { namespace utils {
 		// Assert: only the reader was executed
 		EXPECT_EQ(1u, state.NumValueChanges);
 		EXPECT_EQ('r', value);
-		EXPECT_TRUE(lock.isWriterPending());
-		EXPECT_FALSE(lock.isWriterActive());
-		EXPECT_TRUE(lock.isReaderActive());
 	}
 
-	WRITER_LOCK_TRAITS_BASED_TEST(WriterBlocksReader) {
+	WRITER_LOCK_PLUS_UNIQUE_TRAITS_BASED_TEST(WriterBlocksReader) {
 		// Arrange:
 		SpinReaderWriterLock lock;
 		char value = '\0';
@@ -366,11 +243,7 @@ namespace catapult { namespace utils {
 		// Assert: only the writer was executed
 		EXPECT_EQ(1u, state.NumValueChanges);
 		EXPECT_EQ('w', value);
-		EXPECT_TRUE(lock.isWriterPending());
-		EXPECT_TRUE(lock.isWriterActive());
-		EXPECT_FALSE(lock.isReaderActive());
 	}
-
 	// endregion
 
 	// region lock - race states
@@ -431,7 +304,7 @@ namespace catapult { namespace utils {
 		};
 	}
 
-	WRITER_LOCK_TRAITS_BASED_TEST(WriterIsPreferredToReader) {
+	WRITER_LOCK_PLUS_UNIQUE_TRAITS_BASED_TEST(WriterIsPreferredToReader) {
 		// Arrange:
 		//  M: |ReadLock     |      # M acquires ReadLock while other threads are spawned
 		//  W:   |WriteLock**  |    # when M ReadLock is released, pending writer is unblocked
@@ -439,19 +312,22 @@ namespace catapult { namespace utils {
 		ReaderWriterRaceState<TTraits> state;
 		test::LockTestGuard testGuard(state);
 
+		// sometimes Reader thread runs first before writer thread
+		// therefore delay reader thread start until writer has started
+		bool writeThreadStarted = false;
+
 		// Act: spawn a reader thread
 		testGuard.Threads.create_thread([&] {
-			// - acquire a reader lock
-			auto readLock = state.Lock.acquireReader();
 
 			// - spawn a thread that will acquire a writer lock
 			testGuard.Threads.create_thread([&] {
 				state.doWriterWork();
+				writeThreadStarted = true;
 			});
 
 			// - spawn a thread that will acquire a reader lock after a writer is pending
 			testGuard.Threads.create_thread([&] {
-				WAIT_FOR_EXPR(state.Lock.isWriterPending());
+				while(!writeThreadStarted);
 				state.doReaderWork();
 			});
 
@@ -522,8 +398,6 @@ namespace catapult { namespace utils {
 
 		// Act: spawn a reader thread
 		testGuard.Threads.create_thread([&] {
-			// Act: acquire a reader lock
-			auto readLock = state.Lock.acquireReader();
 
 			// - spawn a thread that will acquire a writer lock after multiple readers (including itself) are active
 			testGuard.Threads.create_thread([&] {
@@ -554,6 +428,5 @@ namespace catapult { namespace utils {
 		// Assert: the reader was released first (the writer was blocked by the reader)
 		EXPECT_EQ('r', state.ReleasedThreadId);
 	}
-
 	// endregion
 }}
