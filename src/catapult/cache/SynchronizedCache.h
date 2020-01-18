@@ -224,7 +224,7 @@ namespace catapult { namespace cache {
 		/// Returns a locked cache delta based on this cache.
 		/// \note Changes to an attached delta can be committed by calling commit.
 		LockedCacheDelta<CacheDeltaType> createDelta(const Height& height) {
-			auto readLock = m_lock.acquireUpgradableLock();
+			auto readLock = m_lock.acquireUpgradableLock(false);
 
 			// notice that this is not a foolproof check since multiple threads could create multiple deltas at the same time
 			// but it is good enough as a sanity check

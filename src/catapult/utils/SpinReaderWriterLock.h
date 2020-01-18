@@ -22,15 +22,15 @@
 #include "catapult/exceptions.h"
 #include "catapult/functions.h"
 #include <atomic>
-#include <thread>
 #include <boost/thread/shared_mutex.hpp>
-#include <boost/thread/locks.hpp>
 
 namespace catapult { namespace utils {
 
+	// minutes before we declare waiting for lock as deadlock
+	const int deadlock_threshold_minutes = 10;
+
 	template<typename TReaderNotificationPolicy>
 	class BasicSpinReaderWriterLock : private TReaderNotificationPolicy {
-
 	public:
 		// region WriterLockGuard
 		/// RAII writer lock guard.
@@ -38,12 +38,16 @@ namespace catapult { namespace utils {
 		public:
 
 			/// \note This constructor is used when writer is created by promotion.
-			WriterLockGuard(boost::shared_mutex* mutex, const action& resetFunc)
-					: m_lock(*mutex)
+			WriterLockGuard(boost::upgrade_mutex* mutex, const action& resetFunc)
+					: m_lock(*mutex, boost::chrono::minutes (deadlock_threshold_minutes))
 					, m_resetFunc(resetFunc) {
+
+				if(!m_lock.owns_lock()) {
+					CATAPULT_THROW_RUNTIME_ERROR("Deadlock occur waiting for writer lock");
+				}
 			}
 
-			WriterLockGuard(boost::shared_mutex* mutex)
+			WriterLockGuard(boost::upgrade_mutex* mutex)
 					: m_lock(*mutex)
 					, m_resetFunc(0) {
 			}
@@ -63,7 +67,7 @@ namespace catapult { namespace utils {
 			WriterLockGuard(WriterLockGuard&&) = default;
 
 		private:
-			boost::unique_lock<boost::shared_mutex> m_lock;
+			boost::unique_lock<boost::upgrade_mutex> m_lock;
 			action m_resetFunc;
 		};
 
@@ -74,8 +78,13 @@ namespace catapult { namespace utils {
 		/// RAII reader lock guard.
 		class ReaderLockGuard {
 		public:
-			ReaderLockGuard(boost::shared_mutex* mutex)
-					: m_lock(*mutex){
+			ReaderLockGuard(boost::upgrade_mutex* mutex)
+					: m_lock(*mutex,
+							boost::chrono::minutes (deadlock_threshold_minutes)) {
+
+				if(!m_lock.owns_lock()) {
+					CATAPULT_THROW_RUNTIME_ERROR("Deadlock occur waiting for reader lock");
+				}
 			}
 
 			/// Default move constructor.
@@ -100,22 +109,27 @@ namespace catapult { namespace utils {
 		private:
 
 			void restoreReaderLock() {
-				m_lock = boost::shared_lock<boost::shared_mutex>(*m_lock.mutex());
+				m_lock = boost::shared_lock<boost::upgrade_mutex>(*m_lock.mutex());
 			}
 
 		private:
-			boost::shared_lock<boost::shared_mutex> m_lock;
+			boost::shared_lock<boost::upgrade_mutex> m_lock;
 		};
 		// endregion
 
 		// region unique writer lock
-		typedef boost::upgrade_to_unique_lock< boost::shared_mutex> UniqueWriteLock;
+		typedef boost::upgrade_to_unique_lock< boost::upgrade_mutex> UniqueWriteLock;
 		// endregion
 
 		// region UpgradableReaderLockGuard
+
+		// boost/thread/shared_mutex.hpp does not support upgrade timed lock(try_lock_upgrade_for),
+		// the alternative version in boost/thread/v2/shared_mutex.hpp cannot be used as the file has conflict with
+		// boost/thread/shared_mutex.hpp and both files define 'boost::shared_mutex' explicitly.
+		// boost/thread/shared_mutex.hpp is part of boost/thread.hpp which is potentially by other files.
 		class UpgradableReaderLockGuard {
 		public:
-			UpgradableReaderLockGuard(boost::shared_mutex* mutex)
+			UpgradableReaderLockGuard(boost::upgrade_mutex* mutex)
 					: m_upgradeLock(*mutex){
 			}
 
@@ -130,7 +144,7 @@ namespace catapult { namespace utils {
 			}
 
 		private:
-			boost::upgrade_lock<boost::shared_mutex> m_upgradeLock;
+			boost::upgrade_lock<boost::upgrade_mutex> m_upgradeLock;
 		};
 		// endregion
 
@@ -144,11 +158,13 @@ namespace catapult { namespace utils {
 			return ReaderLockGuard(&m_mutex);
 		}
 
-		inline UpgradableReaderLockGuard acquireUpgradableLock() {
-
-			if( !upgradeLockAllowed()) {
+		// \n wait parameter set to true if caller wants to wait
+		// else throw an exception immediately
+		inline UpgradableReaderLockGuard acquireUpgradableLock(bool wait = true) {
+			if( !wait && !upgradeLockAllowed()) {
 				CATAPULT_THROW_RUNTIME_ERROR("Upgrade ownership is not available");
 			}
+
 			return UpgradableReaderLockGuard(&m_mutex);
 		}
 		inline WriterLockGuard acquireWriter() {
@@ -159,10 +175,8 @@ namespace catapult { namespace utils {
 	private:
 		// \note: boost has no method to check whether mutex upgrade ownership was already
 		// owned by a thread, there is no exception or error thrown.
-		// To check if upgrade ownershi is available we will try to obtain it.
-		// if it is available, we immediately unlock since we need a scoped lock instead
+		// Instead we will try to obtain it and unlock immediately as we need scoped lock.
 		bool upgradeLockAllowed() {
-
 			if (m_mutex.try_lock_upgrade()) {
 				m_mutex.unlock_upgrade();
 				return true;
@@ -172,7 +186,7 @@ namespace catapult { namespace utils {
 		}
 
 	private:
-		mutable boost::shared_mutex m_mutex;
+		mutable boost::upgrade_mutex m_mutex;
 	};
 
 	/// No-op reader notification policy.

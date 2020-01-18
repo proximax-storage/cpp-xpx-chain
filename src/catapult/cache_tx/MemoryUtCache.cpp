@@ -126,7 +126,7 @@ namespace catapult { namespace cache {
 					TransactionDataContainer& transactionDataContainer,
 					IdLookup& idLookup,
 					AccountCounters& counters,
-					utils::SpinReaderWriterLock::ReaderLockGuard&& readLock)
+					utils::SpinReaderWriterLock::UpgradableReaderLockGuard&& readLock)
 					: m_maxCacheSize(maxCacheSize)
 					, m_idSequence(idSequence)
 					, m_transactionDataContainer(transactionDataContainer)
@@ -199,8 +199,8 @@ namespace catapult { namespace cache {
 			TransactionDataContainer& m_transactionDataContainer;
 			IdLookup& m_idLookup;
 			AccountCounters& m_counters;
-			utils::SpinReaderWriterLock::ReaderLockGuard m_readLock;
-			utils::SpinReaderWriterLock::WriterLockGuard m_writeLock;
+			utils::SpinReaderWriterLock::UpgradableReaderLockGuard m_readLock;
+			utils::SpinReaderWriterLock::UniqueWriteLock m_writeLock;
 		};
 	}
 
@@ -228,7 +228,7 @@ namespace catapult { namespace cache {
 	}
 
 	UtCacheModifierProxy MemoryUtCache::modifier() {
-		auto readLock = m_lock.acquireReader();
+		auto readLock = m_lock.acquireUpgradableLock();
 		return UtCacheModifierProxy(std::make_unique<MemoryUtCacheModifier>(
 				m_options.MaxCacheSize,
 				m_idSequence,

@@ -42,7 +42,7 @@ namespace catapult { namespace utils {
 		auto upgradeLock = lock.acquireUpgradableLock();
 
 		// Act + Assert: Exception
-		EXPECT_THROW(lock.acquireUpgradableLock(), catapult_runtime_error);
+		EXPECT_THROW(lock.acquireUpgradableLock(false), catapult_runtime_error);
 	}
 
 	TEST(TEST_CLASS, SingleThreadUpgradeOwnerShip) {
@@ -59,7 +59,7 @@ namespace catapult { namespace utils {
 		for( int i = 0; i < 2; i++ ) {
 			testGuard.Threads.create_thread([&] {
 				try {
-					auto upgradeInner = lock.acquireUpgradableLock();
+					auto upgradeInner = lock.acquireUpgradableLock(false);
 					counter++;
 				} catch (catapult_runtime_error& ex) {
 					CATAPULT_LOG(debug) << "Expected throw";

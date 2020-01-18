@@ -124,7 +124,7 @@ namespace catapult { namespace io {
 	BlockStorageModifier::BlockStorageModifier(
 			BlockStorage& storage,
 			PrunableBlockStorage& stagingStorage,
-			utils::SpinReaderWriterLock::ReaderLockGuard&& readLock,
+			utils::SpinReaderWriterLock::UpgradableReaderLockGuard&& readLock,
 			CachedData& cachedData)
 			: m_storage(storage)
 			, m_stagingStorage(stagingStorage)
@@ -178,7 +178,7 @@ namespace catapult { namespace io {
 	}
 
 	BlockStorageModifier BlockStorageCache::modifier() {
-		return BlockStorageModifier(*m_pStorage, *m_pStagingStorage, m_lock.acquireReader(), *m_pCachedData);
+		return BlockStorageModifier(*m_pStorage, *m_pStagingStorage, m_lock.acquireUpgradableLock(), *m_pCachedData);
 	}
 
 	// endregion
