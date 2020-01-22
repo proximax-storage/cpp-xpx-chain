@@ -23,8 +23,8 @@ namespace catapult { namespace model {
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_PrepareDrive, 1)
 
 	public:
-		/// Owner of drive.
-		Key Owner;
+		/// Key of drive.
+		Key DriveKey;
 
 		/// Duration of drive.
 		BlockDuration Duration;
@@ -60,6 +60,6 @@ namespace catapult { namespace model {
 
 	/// Extracts public keys of additional accounts that must approve \a transaction.
 	inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedPrepareDriveTransaction& transaction) {
-		return { transaction.Owner };
+		return { transaction.DriveKey };
 	}
 }}
