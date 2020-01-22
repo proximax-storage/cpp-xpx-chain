@@ -8,6 +8,8 @@
 #include "ServicePlugin.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
+#include "src/cache/DownloadCache.h"
+#include "src/cache/DownloadCacheStorage.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/DriveFileSystemTransactionPlugin.h"
@@ -137,6 +139,18 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.addCacheSupport<cache::DownloadCacheStorage>(
+			std::make_unique<cache::DownloadCache>(manager.cacheConfig(cache::DownloadCache::Name), pConfigHolder));
+
+		using DownloadCacheHandlersService = CacheHandlers<cache::DownloadCacheDescriptor>;
+		DownloadCacheHandlersService::Register<model::FacilityCode::Download>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("DOWNLOAD C"), [&cache]() {
+				return cache.sub<cache::DownloadCache>().createView(cache.height())->size();
+			});
+		});
+
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 					.add(validators::CreatePrepareDriveArgumentsValidator())
@@ -157,7 +171,9 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateEndDriveValidator())
 					.add(validators::CreateMaxFilesOnDriveValidator())
 					.add(validators::CreateStartDriveVerificationValidator())
-					.add(validators::CreateEndDriveVerificationValidator());
+					.add(validators::CreateEndDriveVerificationValidator())
+					.add(validators::CreateStartFileDownloadValidator())
+					.add(validators::CreateEndFileDownloadValidator());
 		});
 
 		manager.addObserverHook([pConfigHolder, &immutableConfig](auto& builder) {
@@ -171,7 +187,9 @@ namespace catapult { namespace plugins {
                     .add(observers::CreateEndBillingObserver(immutableConfig.StorageMosaicId))
                     .add(observers::CreateEndDriveObserver(immutableConfig))
                     .add(observers::CreateDriveFilesRewardObserver(immutableConfig))
-                    .add(observers::CreateDriveCacheBlockPruningObserver());
+                    .add(observers::CreateDriveCacheBlockPruningObserver())
+                    .add(observers::CreateStartFileDownloadObserver())
+                    .add(observers::CreateEndFileDownloadObserver());
 		});
 	}
 }}

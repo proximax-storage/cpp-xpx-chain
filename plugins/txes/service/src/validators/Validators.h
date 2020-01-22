@@ -93,5 +93,9 @@ namespace catapult { namespace validators {
 	/// - Files exist
 	/// - File sizes are valid
 	/// - File hashes are not duplicated
+	/// - File downloading is not in progress
 	DECLARE_STATEFUL_VALIDATOR(StartFileDownload, model::StartFileDownloadNotification<1>)();
+
+	/// - File downloading is in progress
+	DECLARE_STATEFUL_VALIDATOR(EndFileDownload, model::EndFileDownloadNotification<1>)();
 }}

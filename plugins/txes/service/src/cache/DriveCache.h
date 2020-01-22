@@ -21,7 +21,7 @@ namespace catapult { namespace cache {
 		DEFINE_CACHE_CONSTANTS(Drive)
 
 	public:
-		/// Creates a cache around \a config.
+		/// Creates a cache around \a config and \a pConfigHolder.
 		explicit DriveCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 			: SynchronizedCache<BasicDriveCache>(BasicDriveCache(config, std::move(pConfigHolder)))
 		{}

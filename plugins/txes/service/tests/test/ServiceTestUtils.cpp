@@ -228,6 +228,52 @@ namespace catapult { namespace test {
 
 		AssertEqualPayments(expectedEntry.uploadPayments(), entry.uploadPayments());
 	}
+
+	state::DownloadEntry CreateDownloadEntry(
+			Key driveKey,
+			uint32_t fileRecipientCount,
+			uint16_t downloadCount,
+			uint16_t fileCount) {
+		state::DownloadEntry entry(driveKey);
+		auto& fileRecipients = entry.fileRecipients();
+		for (auto i = 0u; i < fileRecipientCount; ++i) {
+			auto fileRecipient = test::GenerateRandomByteArray<Key>();
+			state::DownloadMap downloads;
+			for (auto k = 0u; k < downloadCount; ++k) {
+				auto operationToken = test::GenerateRandomByteArray<Hash256>();
+				std::set<Hash256> fileHashes;
+				for (auto l = 0u; l < fileCount; ++l)
+					fileHashes.insert(test::GenerateRandomByteArray<Hash256>());
+				downloads.emplace(operationToken, fileHashes);
+			}
+			fileRecipients.emplace(fileRecipient, downloads);
+		}
+
+		return entry;
+	}
+
+	void AssertEqualDownloadData(const state::DownloadEntry& entry1, const state::DownloadEntry& entry2) {
+		EXPECT_EQ(entry1.driveKey(), entry2.driveKey());
+		ASSERT_EQ(entry1.fileRecipients().size(), entry2.fileRecipients().size());
+		const auto& fileRecipients1 = entry1.fileRecipients();
+		const auto& fileRecipients2 = entry2.fileRecipients();
+		for (const auto& fileRecipientPair : fileRecipients1) {
+			const auto& downloads1 = fileRecipientPair.second;
+			ASSERT_TRUE(fileRecipients2.count(fileRecipientPair.first));
+			const auto& downloads2 = fileRecipients2.at(fileRecipientPair.first);
+			ASSERT_EQ(downloads1.size(), downloads2.size());
+			for (const auto& downloadPair : downloads1) {
+				const auto& fileHashes1 = downloadPair.second;
+				ASSERT_TRUE(downloads2.count(downloadPair.first));
+				const auto& fileHashes2 = downloads2.at(downloadPair.first);
+				ASSERT_EQ(fileHashes1.size(), fileHashes2.size());
+				for (const auto& fileHash : fileHashes1) {
+					ASSERT_TRUE(fileHashes2.count(fileHash));
+				}
+			}
+		}
+
+	}
 }}
 
 

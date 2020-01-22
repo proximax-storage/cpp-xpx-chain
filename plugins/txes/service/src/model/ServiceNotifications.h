@@ -46,7 +46,10 @@ namespace catapult { namespace model {
 	DEFINE_NOTIFICATION_TYPE(Validator, Service, Failed_Block_Hashes_v1, 0x000B);
 
 	/// Defines a start file download notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, StartFileDownload_v1, 0x000C);
+	DEFINE_NOTIFICATION_TYPE(All, Service, StartFileDownload_v1, 0x000C);
+
+	/// Defines an end file download notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, EndFileDownload_v1, 0x000D);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -459,21 +462,21 @@ namespace catapult { namespace model {
 		const Hash256* BlockHashesPtr;
 	};
 
-	/// Notification of start file download.
-	template<VersionType version>
-	struct StartFileDownloadNotification;
-
-	template<>
-	struct StartFileDownloadNotification<1> : public Notification {
+	/// Base notification of a file download.
+	template<typename TFile>
+	struct BaseFileDownloadNotification : public Notification {
 	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_StartFileDownload_v1_Notification;
-
-	public:
-		explicit StartFileDownloadNotification(const Key& driveKey, const Key& signer, const DownloadAction* ptr, uint16_t count)
-				: Notification(Notification_Type, sizeof(StartFileDownloadNotification<1>))
+		explicit BaseFileDownloadNotification(
+			NotificationType type,
+			const Key& driveKey,
+			const Key& fileRecipient,
+			const Hash256& operationToken,
+			const TFile* ptr,
+			uint16_t count)
+				: Notification(type, sizeof(BaseFileDownloadNotification))
 				, DriveKey(driveKey)
-				, Signer(signer)
+				, FileRecipient(fileRecipient)
+				, OperationToken(operationToken)
 				, FilesPtr(ptr)
 				, FileCount(count)
 		{}
@@ -483,12 +486,47 @@ namespace catapult { namespace model {
 		Key DriveKey;
 
 		/// File recipient.
-		Key Signer;
+		Key FileRecipient;
+
+		/// Operation token.
+		Hash256 OperationToken;
 
 		/// Array of files to download.
-		const DownloadAction* FilesPtr;
+		const TFile* FilesPtr;
 
 		/// Download file count.
 		uint16_t FileCount;
+	};
+
+	/// Notification of start file download.
+	template<VersionType version>
+	struct StartFileDownloadNotification;
+
+	template<>
+	struct StartFileDownloadNotification<1> : public BaseFileDownloadNotification<DownloadAction> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_StartFileDownload_v1_Notification;
+
+	public:
+		explicit StartFileDownloadNotification(const Key& driveKey, const Key& fileRecipient, const Hash256& operationToken, const DownloadAction* ptr, uint16_t count)
+				: BaseFileDownloadNotification(Notification_Type, driveKey, fileRecipient, operationToken, ptr, count)
+		{}
+	};
+
+	/// Notification of end file download.
+	template<VersionType version>
+	struct EndFileDownloadNotification;
+
+	template<>
+	struct EndFileDownloadNotification<1> : public BaseFileDownloadNotification<File> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_EndFileDownload_v1_Notification;
+
+	public:
+		explicit EndFileDownloadNotification(const Key& driveKey, const Key& fileRecipient, const Hash256& operationToken, const File* ptr, uint16_t count)
+				: BaseFileDownloadNotification(Notification_Type, driveKey, fileRecipient, operationToken, ptr, count)
+		{}
 	};
 }}

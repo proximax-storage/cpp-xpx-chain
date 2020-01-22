@@ -32,6 +32,9 @@ namespace catapult { namespace config {
 		/// Whether the plugin is enabled.
 		bool Enabled;
 
+		/// Whether the download cache is enabled.
+		bool DownloadCacheEnabled;
+
 	private:
 		ServiceConfiguration() = default;
 

@@ -138,7 +138,8 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
-		EXPECT_EQ(pTransaction->Signer, notification.Signer);
+		EXPECT_EQ(pTransaction->Signer, notification.FileRecipient);
+		EXPECT_EQ(pTransaction->OperationToken, notification.OperationToken);
 		EXPECT_EQ(Num_Files, notification.FileCount);
 		EXPECT_EQ(pTransaction->FilesPtr(), notification.FilesPtr);
 		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(DownloadAction));

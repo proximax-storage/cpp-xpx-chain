@@ -87,9 +87,10 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(3u + Num_Files, sub.numNotifications());
+		ASSERT_EQ(4u + Num_Files, sub.numNotifications());
 		auto i = 0u;
 		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Service_EndFileDownload_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
 		while (i < 3u + Num_Files) {
@@ -119,6 +120,30 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
+	// region publish - end file download notification
+
+	PLUGIN_TEST(CanPublishEndFileDownloadNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<EndFileDownloadNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
+		EXPECT_EQ(pTransaction->FileRecipient, notification.FileRecipient);
+		EXPECT_EQ(pTransaction->OperationToken, notification.OperationToken);
+		EXPECT_EQ(Num_Files, notification.FileCount);
+		EXPECT_EQ(pTransaction->FilesPtr(), notification.FilesPtr);
+		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(File));
+	}
+
+	// endregion
+
 	// region publish - account public key notification
 
 	PLUGIN_TEST(CanPublishAccountPublicKeyNotification) {
@@ -133,7 +158,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Recipient, notification.PublicKey);
+		EXPECT_EQ(pTransaction->FileRecipient, notification.PublicKey);
 	}
 
 	// endregion
@@ -152,7 +177,7 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Recipient, notification.Sender);
+		EXPECT_EQ(pTransaction->FileRecipient, notification.Sender);
 		EXPECT_EQ(Review_Mosaic_Id, notification.MosaicId);
 		EXPECT_EQ(Amount(Num_Files), notification.Amount);
 	}

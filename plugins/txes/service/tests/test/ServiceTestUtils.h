@@ -5,6 +5,8 @@
 **/
 
 #pragma once
+#include "src/cache/DownloadCache.h"
+#include "src/cache/DownloadCacheStorage.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
 #include "src/model/ServiceEntityType.h"
@@ -41,7 +43,7 @@ namespace catapult { namespace test {
 	/// Verifies that \a entry1 is equivalent to \a entry2.
 	void AssertEqualDriveData(const state::DriveEntry& entry1, const state::DriveEntry& entry2);
 
-	/// Cache factory for creating a catapult cache composed of drive cache, multisig cache and core caches.
+	/// Cache factory for creating a catapult cache composed of drive cache, multisig cache, secret lock cache and core caches.
 	struct DriveCacheFactory {
 	private:
 		static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
@@ -64,6 +66,42 @@ namespace catapult { namespace test {
 		/// Creates an empty catapult cache around \a config.
 		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
 			auto subCaches = CreateSubCachesWithDriveCache(config);
+			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
+			return cache::CatapultCache(std::move(subCaches));
+		}
+	};
+
+	/// Creates test drive entry.
+	state::DownloadEntry CreateDownloadEntry(
+		Key driveKey = test::GenerateRandomByteArray<Key>(),
+		uint32_t fileRecipientCount = 2,
+		uint16_t downloadCount = 2,
+		uint16_t fileCount = 2);
+
+	/// Verifies that \a entry1 is equivalent to \a entry2.
+	void AssertEqualDownloadData(const state::DownloadEntry& entry1, const state::DownloadEntry& entry2);
+
+	/// Cache factory for creating a catapult cache composed of download cache and core caches.
+	struct DownloadCacheFactory {
+	private:
+		static auto CreateSubCachesWithDownloadCache(const config::BlockchainConfiguration& config) {
+			auto id = std::max(cache::DriveCache::Id, cache::DownloadCache::Id);
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(id + 1);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			subCaches[cache::DriveCache::Id] = MakeSubCachePlugin<cache::DriveCache, cache::DriveCacheStorage>(pConfigHolder);
+			subCaches[cache::DownloadCache::Id] = MakeSubCachePlugin<cache::DownloadCache, cache::DownloadCacheStorage>(pConfigHolder);
+			return subCaches;
+		}
+
+	public:
+		/// Creates an empty catapult cache around default configuration.
+		static cache::CatapultCache Create() {
+			return Create(test::MutableBlockchainConfiguration().ToConst());
+		}
+
+		/// Creates an empty catapult cache around \a config.
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+			auto subCaches = CreateSubCachesWithDownloadCache(config);
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -224,7 +262,7 @@ namespace catapult { namespace test {
     template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateEndFileDownloadTransaction(size_t numFiles) {
 		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_EndFileDownload, numFiles * sizeof(model::File));
-		pTransaction->Recipient = test::GenerateRandomByteArray<Key>();
+		pTransaction->FileRecipient = test::GenerateRandomByteArray<Key>();
 		pTransaction->OperationToken = test::GenerateRandomByteArray<Hash256>();
 		pTransaction->FileCount = numFiles;
 

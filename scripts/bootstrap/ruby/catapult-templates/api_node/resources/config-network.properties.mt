@@ -123,3 +123,5 @@ maxFilesOnDrive = 32768
 verificationFee = 10
 verificationDuration = 240
 downloadDuration = 40320
+
+downloadCacheEnabled = true

@@ -5,6 +5,7 @@
 **/
 
 #include "Validators.h"
+#include "src/cache/DownloadCache.h"
 #include "src/cache/DriveCache.h"
 
 namespace catapult { namespace validators {
@@ -18,7 +19,7 @@ namespace catapult { namespace validators {
 		if (driveEntry.state() != state::DriveState::InProgress)
 			return Failure_Service_Drive_Is_Not_In_Progress;
 
-		if (driveEntry.replicators().count(notification.Signer))
+		if (driveEntry.replicators().count(notification.FileRecipient))
 			return Failure_Service_Operation_Is_Not_Permitted;
 
 		if (!notification.FileCount)
@@ -36,6 +37,25 @@ namespace catapult { namespace validators {
 
 		if (hashes.size() != notification.FileCount)
 			return Failure_Service_File_Hash_Redundant;
+
+		const auto& downloadCache = context.Cache.sub<cache::DownloadCache>();
+		if (downloadCache.contains(notification.DriveKey)) {
+			auto downloadCacheIter = downloadCache.find(notification.DriveKey);
+			const auto &downloadEntry = downloadCacheIter.get();
+			const auto& fileRecipients = downloadEntry.fileRecipients();
+			auto fileRecipientIter = fileRecipients.find(notification.FileRecipient);
+			if (fileRecipients.end() != fileRecipientIter) {
+				const auto& downloads = fileRecipientIter->second;
+				auto downloadIter = downloads.find(notification.OperationToken);
+				if (downloads.end() != downloadIter) {
+					pFile = notification.FilesPtr;
+					for (auto i = 0u; i < notification.FileCount; ++i, ++pFile) {
+						if (downloadIter->second.count(pFile->FileHash))
+							return Failure_Service_File_Download_Already_In_Progress;
+					}
+				}
+			}
+		}
 
 		return ValidationResult::Success;
 	});

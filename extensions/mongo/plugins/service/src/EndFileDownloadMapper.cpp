@@ -15,7 +15,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamEndFileDownloadTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		builder << "recipient" << ToBinary(transaction.Recipient);
+		builder << "fileRecipient" << ToBinary(transaction.FileRecipient);
 		builder << "operationToken" << ToBinary(transaction.OperationToken);
 		auto array = builder << "files" << bson_stream::open_array;
 		auto pFile = transaction.FilesPtr();

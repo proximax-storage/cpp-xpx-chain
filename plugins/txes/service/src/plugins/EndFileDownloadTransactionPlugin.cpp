@@ -27,8 +27,15 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
-						sub.notify(AccountPublicKeyNotification<1>(transaction.Recipient));
-						sub.notify(BalanceCreditNotification<1>(transaction.Recipient, config::GetUnresolvedReviewMosaicId(config), Amount(transaction.FileCount)));
+						sub.notify(EndFileDownloadNotification<1>(
+							transaction.Signer,
+							transaction.FileRecipient,
+							transaction.OperationToken,
+							transaction.FilesPtr(),
+							transaction.FileCount
+						));
+						sub.notify(AccountPublicKeyNotification<1>(transaction.FileRecipient));
+						sub.notify(BalanceCreditNotification<1>(transaction.FileRecipient, config::GetUnresolvedReviewMosaicId(config), Amount(transaction.FileCount)));
 						auto pFile = transaction.FilesPtr();
 						for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile) {
 							sub.notify(ProofPublicationNotification<1>(

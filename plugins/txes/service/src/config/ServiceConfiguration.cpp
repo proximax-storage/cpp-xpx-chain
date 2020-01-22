@@ -31,6 +31,8 @@ namespace catapult { namespace config {
 		TRY_LOAD_CHAIN_PROPERTY(VerificationDuration);
 		config.DownloadDuration = BlockDuration(40320);
 		TRY_LOAD_CHAIN_PROPERTY(DownloadDuration);
+		config.DownloadCacheEnabled = true;
+		TRY_LOAD_CHAIN_PROPERTY(DownloadCacheEnabled);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

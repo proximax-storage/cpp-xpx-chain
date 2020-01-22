@@ -30,6 +30,7 @@ namespace catapult { namespace plugins {
 						sub.notify(StartFileDownloadNotification<1>(
 							transaction.DriveKey,
 							transaction.Signer,
+							transaction.OperationToken,
 							transaction.FilesPtr(),
 							transaction.FileCount
 						));

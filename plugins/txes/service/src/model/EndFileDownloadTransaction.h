@@ -24,7 +24,7 @@ namespace catapult { namespace model {
 
 	public:
 		/// Key of the file recipient.
-		Key Recipient;
+		Key FileRecipient;
 
 		/// Unique operation token.
 		Hash256 OperationToken;
