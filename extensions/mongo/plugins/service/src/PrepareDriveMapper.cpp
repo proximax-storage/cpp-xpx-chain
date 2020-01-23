@@ -15,7 +15,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamPrepareDriveTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-		builder << "drive" << ToBinary(transaction.DriveKey);
+		builder << "owner" << ToBinary(transaction.Owner);
 		builder << "duration" << ToInt64(transaction.Duration);
 		builder << "billingPeriod" << ToInt64(transaction.BillingPeriod);
 		builder << "billingPrice" << ToInt64(transaction.BillingPrice);

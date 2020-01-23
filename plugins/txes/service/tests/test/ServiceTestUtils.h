@@ -190,7 +190,7 @@ namespace catapult { namespace test {
     template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreatePrepareDriveTransaction() {
 		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_PrepareDrive);
-		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->Owner = test::GenerateRandomByteArray<Key>();
 		pTransaction->Duration = BlockDuration(1000);
 		pTransaction->BillingPeriod = BlockDuration(100);
 		pTransaction->BillingPrice = Amount(100);

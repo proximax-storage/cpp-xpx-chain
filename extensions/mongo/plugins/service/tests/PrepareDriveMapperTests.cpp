@@ -20,7 +20,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		template<typename TTransaction>
 		void AssertEqualNonInheritedData(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
-			EXPECT_EQ(transaction.DriveKey, test::GetKeyValue(dbTransaction, "drive"));
+			EXPECT_EQ(transaction.Owner, test::GetKeyValue(dbTransaction, "owner"));
 			EXPECT_EQ(transaction.Duration.unwrap(), test::GetUint64(dbTransaction, "duration"));
 			EXPECT_EQ(transaction.BillingPeriod.unwrap(), test::GetUint64(dbTransaction, "billingPeriod"));
 			EXPECT_EQ(transaction.BillingPrice.unwrap(), test::GetUint64(dbTransaction, "billingPrice"));
