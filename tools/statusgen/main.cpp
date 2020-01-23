@@ -76,7 +76,6 @@ namespace catapult { namespace tools { namespace statusgen {
 				#include "../../plugins/txes/metadata/src/validators/Results.h"
 				#include "../../plugins/txes/exchange/src/validators/Results.h"
 				#include "../../plugins/txes/service/src/validators/Results.h"
-				#include "../../plugins/txes/supercontract/src/validators/Results.h"
 				#include "../../src/catapult/chain/ChainResults.h"
 				#include "../../src/catapult/consumers/ConsumerResults.h"
 				#include "../../src/catapult/extensions/Results.h"
