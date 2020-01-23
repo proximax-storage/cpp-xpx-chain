@@ -20,8 +20,8 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(PrepareDriveNotification<1>(
-					transaction.DriveKey,
 					transaction.Signer,
+					transaction.Owner,
 					transaction.Duration,
 					transaction.BillingPeriod,
 					transaction.BillingPrice,
