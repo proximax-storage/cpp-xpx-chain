@@ -23,6 +23,7 @@ namespace catapult { namespace config {
 		namespaceConfigId,
 		propertyConfigId,
 		serviceConfigId,
+		superContractConfigId,
 		transferConfigId,
 		upgradeConfigId,
         exchangeConfigId,

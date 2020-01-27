@@ -17,7 +17,7 @@ namespace catapult { namespace validators {
 		auto driveIter = driveCache.find(notification.DriveKey);
 		const auto& driveEntry = driveIter.get();
 
-        if (notification.Signer != driveEntry.owner())
+        if (!driveEntry.isOwner(notification.Signer))
             return Failure_Service_Operation_Is_Not_Permitted;
 
 		if (notification.XorRootHash == Hash256())

@@ -28,7 +28,7 @@ namespace catapult { namespace validators {
 		if (verificationStarted)
 			return Failure_Service_Verification_Has_Not_Timed_Out;
 
-		if (driveEntry.owner() != notification.Initiator && !driveEntry.replicators().count(notification.Initiator))
+		if (!driveEntry.isOwner(notification.Initiator) && !driveEntry.replicators().count(notification.Initiator))
 			return Failure_Service_Operation_Is_Not_Permitted;
 
 		return ValidationResult::Success;

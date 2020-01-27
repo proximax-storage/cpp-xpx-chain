@@ -122,3 +122,7 @@ enabled = true
 maxFilesOnDrive = 32768
 verificationFee = 10
 verificationDuration = 240
+
+[plugin:catapult.plugins.supercontract]
+
+enabled = true

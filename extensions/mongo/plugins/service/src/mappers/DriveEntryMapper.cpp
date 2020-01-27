@@ -135,6 +135,14 @@ namespace catapult { namespace mongo { namespace plugins {
 		StreamReplicators(builder, "removedReplicators", entry.removedReplicators());
 		StreamPaymentInformation(builder, "uploadPayments", entry.uploadPayments());
 
+		{
+			auto array = builder << "coowners" << bson_stream::open_array;
+			for (const auto& coowner : entry.coowners()) {
+				array << ToBinary(coowner);
+			}
+			array << bson_stream::close_array;
+		}
+
 		return doc
 				<< bson_stream::close_document
 				<< bson_stream::finalize;
@@ -275,6 +283,12 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
 		ReadReplicators(entry.removedReplicators(), dbDriveEntry["removedReplicators"].get_array().value);
         ReadPaymentInformation(entry.uploadPayments(), dbDriveEntry["uploadPayments"].get_array().value);
+
+		for (const auto& dbCoowner : dbDriveEntry["coowners"].get_array().value) {
+			Key coowner;
+			DbBinaryToModelArray(coowner, dbCoowner.get_binary());
+			entry.coowners().insert(coowner);
+		}
 
 		return entry;
 	}
