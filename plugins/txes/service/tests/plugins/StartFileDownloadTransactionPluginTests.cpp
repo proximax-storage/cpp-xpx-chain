@@ -5,6 +5,8 @@
 **/
 
 #include "catapult/model/Address.h"
+#include "catapult/model/EntityHasher.h"
+#include "catapult/utils/HexParser.h"
 #include "plugins/txes/lock_secret/src/model/LockHashAlgorithm.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
 #include "src/plugins/StartFileDownloadTransactionPlugin.h"
@@ -29,11 +31,13 @@ namespace catapult { namespace plugins {
 		constexpr UnresolvedMosaicId Streaming_Mosaic_Id(1234);
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
 		constexpr auto Num_Files = 3u;
+		const auto Generation_Hash = utils::ParseByteArray<GenerationHash>("CE076EF4ABFBC65B046987429E274EC31506D173E91BF102F16BEB7FB8176230");
 
 		auto CreateConfiguration() {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.StreamingMosaicId = MosaicId(Streaming_Mosaic_Id.unwrap());
 			config.Immutable.NetworkIdentifier = Network_Identifier;
+			config.Immutable.GenerationHash = Generation_Hash;
 			auto pluginConfig = config::ServiceConfiguration::Uninitialized();
 			pluginConfig.DownloadDuration = BlockDuration(500);
 			config.Network.SetPluginConfiguration(pluginConfig);
@@ -139,7 +143,6 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->Signer, notification.FileRecipient);
-		EXPECT_EQ(pTransaction->OperationToken, notification.OperationToken);
 		EXPECT_EQ(Num_Files, notification.FileCount);
 		EXPECT_EQ(pTransaction->FilesPtr(), notification.FilesPtr);
 		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(DownloadAction));
@@ -188,7 +191,8 @@ namespace catapult { namespace plugins {
 			EXPECT_EQ(Amount((i + 1) * 100), notification.Mosaic.Amount);
 			EXPECT_EQ(BlockDuration(500), notification.Duration);
 			EXPECT_EQ(model::LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
-			auto secret = pTransaction->OperationToken ^ pTransaction->FilesPtr()[i].FileHash;
+			auto operationToken = model::CalculateHash(*pTransaction, Generation_Hash);
+			auto secret = operationToken ^ pTransaction->FilesPtr()[i].FileHash;
 			EXPECT_EQ(secret, notification.Secret);
 			auto recipient = extensions::CopyToUnresolvedAddress(model::PublicKeyToAddress(pTransaction->DriveKey, Network_Identifier));
 			EXPECT_EQ(recipient, notification.Recipient);

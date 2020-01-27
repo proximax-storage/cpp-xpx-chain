@@ -27,16 +27,26 @@
 namespace catapult { namespace model {
 
 	namespace {
-		RawBuffer EntityDataBuffer(const VerifiableEntity& entity, size_t totalSize) {
-			auto headerSize = VerifiableEntity::Header_Size;
+		template<typename TEntity>
+		RawBuffer EntityDataBuffer(const TEntity& entity, size_t totalSize) {
+			auto headerSize = TEntity::Header_Size;
 			return { reinterpret_cast<const uint8_t*>(&entity) + headerSize, totalSize - headerSize };
 		}
 
-		Hash256 CalculateHash(const VerifiableEntity& entity, const RawBuffer& buffer, const GenerationHash* pGenerationHash) {
-			Hash256 entityHash;
-			crypto::Sha3_256_Builder sha3;
+		void UpdateHash(const VerifiableEntity& entity, crypto::Sha3_256_Builder& sha3) {
 			// "R" part of a signature
 			sha3.update({ entity.Signature.data(), Signature_Size / 2 });
+		}
+
+		void UpdateHash(const EmbeddedTransaction&, crypto::Sha3_256_Builder&) {
+			// Noop
+		}
+
+		template<typename TEntity>
+		Hash256 CalculateHash(const TEntity& entity, const RawBuffer& buffer, const GenerationHash* pGenerationHash) {
+			Hash256 entityHash;
+			crypto::Sha3_256_Builder sha3;
+			UpdateHash(entity, sha3);
 
 			// public key is added here to match Sign/Verify behavior, which explicitly hashes it
 			sha3.update(entity.Signer);
@@ -60,6 +70,10 @@ namespace catapult { namespace model {
 
 	Hash256 CalculateHash(const Transaction& transaction, const GenerationHash& generationHash, const RawBuffer& buffer) {
 		return CalculateHash(transaction, buffer, &generationHash);
+	}
+
+	Hash256 CalculateHash(const EmbeddedTransaction& transaction, const GenerationHash& generationHash) {
+		return CalculateHash(transaction, EntityDataBuffer(transaction, transaction.Size), &generationHash);
 	}
 
 	Hash256 CalculateMerkleComponentHash(

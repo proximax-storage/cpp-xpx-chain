@@ -35,7 +35,11 @@ namespace catapult { namespace model {
 #pragma pack(push, 1)
 
 	/// Binary layout for an embedded transaction (non-verifiable).
-	struct EmbeddedTransaction : public EntityBody<SizePrefixedEntity> {};
+	struct EmbeddedTransaction : public EntityBody<SizePrefixedEntity> {
+	public:
+		/// Size of the EmbeddedTransaction part that can be skipped when signing/verifying.
+		static constexpr size_t Header_Size = sizeof(uint32_t) + Key_Size;
+	};
 
 #pragma pack(pop)
 

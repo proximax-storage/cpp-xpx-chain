@@ -245,7 +245,6 @@ namespace catapult { namespace test {
 	model::UniqueEntityPtr<TTransaction> CreateStartFileDownloadTransaction(size_t numFiles) {
 		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_StartFileDownload, numFiles * sizeof(model::DownloadAction));
 		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
-		pTransaction->OperationToken = test::GenerateRandomByteArray<Hash256>();
 		pTransaction->FileCount = numFiles;
 
         auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);

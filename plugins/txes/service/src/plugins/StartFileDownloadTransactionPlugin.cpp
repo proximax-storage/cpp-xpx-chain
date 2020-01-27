@@ -6,9 +6,9 @@
 
 #include "StartFileDownloadTransactionPlugin.h"
 #include "catapult/model/Address.h"
+#include "catapult/model/EntityHasher.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/plugins/PluginUtils.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/config/ServiceConfiguration.h"
@@ -27,16 +27,17 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
+						const auto& config = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
+						const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>();
+						auto operationToken = model::CalculateHash(transaction, config.Immutable.GenerationHash);
 						sub.notify(StartFileDownloadNotification<1>(
 							transaction.DriveKey,
 							transaction.Signer,
-							transaction.OperationToken,
+							operationToken,
 							transaction.FilesPtr(),
 							transaction.FileCount
 						));
 
-						const auto& config = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
-						const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>();
 						auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config.Immutable);
 						Amount totalAmount;
 						auto pFile = transaction.FilesPtr();
@@ -48,7 +49,7 @@ namespace catapult { namespace plugins {
 								UnresolvedMosaic{ streamingMosaicId, amount },
 								pluginConfig.DownloadDuration,
 								LockHashAlgorithm::Op_Internal,
-								utils::CalculateFileDownloadHash(transaction.OperationToken, pFile->FileHash),
+								utils::CalculateFileDownloadHash(operationToken, pFile->FileHash),
 								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.Immutable.NetworkIdentifier))));
 						}
 						sub.notify(BalanceDebitNotification<1>(transaction.Signer, streamingMosaicId, totalAmount));
