@@ -6,10 +6,10 @@
 	db.drives.createIndex({ 'drive.replicators.replicator': 1 }, { unique: false });
 
 	db.createCollection('downloads');
-	db.downloads.createIndex({ 'downloadInfo.driveKey': 1 }, { unique: true });
-	db.downloads.createIndex({ 'downloadInfo.driveAddress': 1 }, { unique: true });
-	db.downloads.createIndex({ 'downloadInfo.fileRecipients.key': 1 }, { unique: false });
-	db.downloads.createIndex({ 'downloadInfo.fileRecipients.downloads.operationToken': 1 }, { unique: false });
+	db.downloads.createIndex({ 'downloadInfo.operationToken': 1 }, { unique: true });
+	db.downloads.createIndex({ 'downloadInfo.driveKey': 1 }, { unique: false });
+	db.downloads.createIndex({ 'downloadInfo.driveAddress': 1 }, { unique: false });
+	db.downloads.createIndex({ 'downloadInfo.fileRecipient': 1 }, { unique: false });
 
 	db.drives.getIndexes();
 	db.downloads.getIndexes();

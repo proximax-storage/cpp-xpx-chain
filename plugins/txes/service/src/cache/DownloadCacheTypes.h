@@ -6,9 +6,8 @@
 
 #pragma once
 #include "src/state/DownloadEntry.h"
-#include "catapult/cache/CacheDescriptorAdapters.h"
-#include "catapult/cache/SingleSetCacheTypesAdapter.h"
-#include "catapult/utils/Hashers.h"
+#include "plugins/txes/lock_shared/src/cache/LockInfoCacheTypes.h"
+#include "catapult/cache/ReadOnlyArtifactCache.h"
 
 namespace catapult {
 	namespace cache {
@@ -21,9 +20,6 @@ namespace catapult {
 		class DownloadCacheView;
 		struct DownloadEntryPrimarySerializer;
 		class DownloadPatriciaTree;
-
-		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
-		class ReadOnlyArtifactCache;
 	}
 }
 
@@ -36,7 +32,7 @@ namespace catapult { namespace cache {
 
 	public:
 		// key value types
-		using KeyType = Key;
+		using KeyType = Hash256;
 		using ValueType = state::DownloadEntry;
 
 		// cache types
@@ -48,17 +44,19 @@ namespace catapult { namespace cache {
 		using PatriciaTree = DownloadPatriciaTree;
 
 	public:
-		/// Gets the key corresponding to \a entry.
-		static const auto& GetKeyFromValue(const ValueType& entry) {
-			return entry.driveKey();
+		/// Gets the key corresponding to \a downloadEntry.
+		static const auto& GetKeyFromValue(const ValueType& downloadEntry) {
+			return downloadEntry.OperationToken;
 		}
 	};
 
-	/// Catapult upgrade cache types.
-	struct DownloadCacheTypes {
-		using PrimaryTypes = MutableUnorderedMapAdapter<DownloadCacheDescriptor, utils::ArrayHasher<Key>>;
-
-		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicDownloadCacheView, BasicDownloadCacheDelta, const Key&, state::DownloadEntry>;
+	/// Download cache types.
+	struct DownloadCacheTypes : public LockInfoCacheTypes<DownloadCacheDescriptor> {
+		using CacheReadOnlyType = ReadOnlyArtifactCache<
+			BasicDownloadCacheView,
+			BasicDownloadCacheDelta,
+			Hash256,
+			state::DownloadEntry>;
 
 		using BaseSetDeltaPointers = DownloadBaseSetDeltaPointers;
 		using BaseSets = DownloadBaseSets;

@@ -6,6 +6,7 @@
 
 #include "src/observers/Observers.h"
 #include "tests/test/ServiceTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
@@ -20,6 +21,19 @@ namespace catapult { namespace observers {
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::DownloadCacheFactory>;
 		using Notification = model::StartFileDownloadNotification<1>;
+
+		constexpr MosaicId Streaming_Mosaic_Id(1234);
+		constexpr auto Current_Height = Height(10);
+		constexpr auto Download_Duration = BlockDuration(20);
+
+		auto CreateConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.StreamingMosaicId = Streaming_Mosaic_Id;
+			auto pluginConfig = config::ServiceConfiguration::Uninitialized();
+			pluginConfig.DownloadDuration = Download_Duration;
+			config.Network.SetPluginConfiguration(pluginConfig);
+			return config.ToConst();
+		}
 
 		struct DownloadValues {
 		public:
@@ -43,17 +57,19 @@ namespace catapult { namespace observers {
 		};
 
 		state::DownloadEntry CreateEntry(const DownloadValues& values) {
-			state::DownloadEntry entry(values.DriveKey);
-			auto& fileHashes = entry.fileRecipients()[values.FileRecipient][values.OperationToken];
+			state::DownloadEntry entry(values.OperationToken);
+			entry.DriveKey = values.DriveKey;
+			entry.FileRecipient = values.FileRecipient;
+			entry.Height = Current_Height + Height(Download_Duration.unwrap());
 			for (const auto& file : values.Files)
-				fileHashes.insert(file.FileHash);
+				entry.Files.insert(file.FileHash);
 			return entry;
 		}
 	}
 
 	TEST(TEST_CLASS, StartFileDownload_Commit) {
 		// Arrange:
-		ObserverTestContext context(NotifyMode::Commit, Height(1));
+		ObserverTestContext context(NotifyMode::Commit, Current_Height, CreateConfiguration());
 		DownloadValues values;
 		Notification notification(values.DriveKey, values.FileRecipient, values.OperationToken, values.Files.data(), values.Files.size());
 		auto pObserver = CreateStartFileDownloadObserver();
@@ -61,16 +77,34 @@ namespace catapult { namespace observers {
 		// Act:
 		test::ObserveNotification(*pObserver, notification, context);
 
-		// Assert: check the cache
+		// Assert:
 		auto& downloadCache = context.cache().sub<cache::DownloadCache>();
-		auto downloadIter = downloadCache.find(values.DriveKey);
+		auto downloadIter = downloadCache.find(values.OperationToken);
 		const auto& actualEntry = downloadIter.get();
 		test::AssertEqualDownloadData(CreateEntry(values), actualEntry);
+
+		auto pStatement = context.statementBuilder().build();
+		ASSERT_EQ(1u, pStatement->TransactionStatements.size());
+		const auto& receiptPair = *pStatement->TransactionStatements.find(model::ReceiptSource());
+		ASSERT_EQ(1u, receiptPair.second.size());
+
+		const auto& receipt = static_cast<const model::BalanceChangeReceipt&>(receiptPair.second.receiptAt(0));
+		ASSERT_EQ(sizeof(model::BalanceChangeReceipt), receipt.Size);
+		EXPECT_EQ(1u, receipt.Version);
+		EXPECT_EQ(model::Receipt_Type_Drive_Download_Started, receipt.Type);
+		EXPECT_EQ(notification.FileRecipient, receipt.Account);
+		EXPECT_EQ(Streaming_Mosaic_Id, receipt.MosaicId);
+		uint64_t totalSize = 0u;
+		auto pFile = notification.FilesPtr;
+		for (auto i = 0u; i < notification.FileCount; ++i, ++pFile) {
+			totalSize += pFile->FileSize;
+		}
+		EXPECT_EQ(Amount(totalSize), receipt.Amount);
 	}
 
 	TEST(TEST_CLASS, StartFileDownload_Rollback) {
 		// Arrange:
-		ObserverTestContext context(NotifyMode::Rollback, Height(1));
+		ObserverTestContext context(NotifyMode::Rollback, Current_Height, CreateConfiguration());
 		DownloadValues values;
 		Notification notification(values.DriveKey, values.FileRecipient, values.OperationToken, values.Files.data(), values.Files.size());
 		auto pObserver = CreateStartFileDownloadObserver();
@@ -82,7 +116,10 @@ namespace catapult { namespace observers {
 		// Act:
 		test::ObserveNotification(*pObserver, notification, context);
 
-		// Assert: check the cache
-		EXPECT_FALSE(downloadCache.contains(values.DriveKey));
+		// Assert:
+		EXPECT_FALSE(downloadCache.contains(values.OperationToken));
+
+		auto pStatement = context.statementBuilder().build();
+		ASSERT_EQ(0u, pStatement->TransactionStatements.size());
 	}
 }}

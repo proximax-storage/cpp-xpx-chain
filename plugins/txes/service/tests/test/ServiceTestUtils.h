@@ -73,9 +73,10 @@ namespace catapult { namespace test {
 
 	/// Creates test drive entry.
 	state::DownloadEntry CreateDownloadEntry(
+		Hash256 operationToken = test::GenerateRandomByteArray<Hash256>(),
 		Key driveKey = test::GenerateRandomByteArray<Key>(),
-		uint32_t fileRecipientCount = 2,
-		uint16_t downloadCount = 2,
+		Key fileRecipient = test::GenerateRandomByteArray<Key>(),
+		Height height = test::GenerateRandomValue<Height>(),
 		uint16_t fileCount = 2);
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.

@@ -25,8 +25,6 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult,
 				const state::DriveEntry& driveEntry,
 				const state::DownloadEntry& downloadEntry,
-				const Key& fileRecipient,
-				const Hash256& operationToken,
 				const std::vector<model::DownloadAction>& files = {}) {
 			// Arrange:
 			Height currentHeight(10);
@@ -39,7 +37,7 @@ namespace catapult { namespace validators {
 				downloadCacheDelta.insert(downloadEntry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(driveEntry.key(), fileRecipient, operationToken, files.data(), files.size());
+			Notification notification(downloadEntry.DriveKey, downloadEntry.FileRecipient, downloadEntry.OperationToken, files.data(), files.size());
 			auto pValidator = CreateStartFileDownloadValidator();
 
 			// Act:
@@ -55,15 +53,15 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto driveKey = test::GenerateRandomByteArray<Key>();
 		state::DriveEntry driveEntry(driveKey);
-		state::DownloadEntry downloadEntry(driveKey);
+		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
+		downloadEntry.DriveKey = driveKey;
+		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 
 		// Assert:
 		AssertValidationResult(
 			Failure_Service_Drive_Is_Not_In_Progress,
 			driveEntry,
-			downloadEntry,
-			test::GenerateRandomByteArray<Key>(),
-			test::GenerateRandomByteArray<Hash256>());
+			downloadEntry);
 	}
 
 	TEST(TEST_CLASS, FailureWhenFileRecipientIsReplicator) {
@@ -73,15 +71,15 @@ namespace catapult { namespace validators {
 		driveEntry.setState(state::DriveState::InProgress);
 		auto replicatorKey = test::GenerateRandomByteArray<Key>();
 		driveEntry.replicators().emplace(replicatorKey, state::ReplicatorInfo{ Height(1), Height(10), {}, {} });
-		state::DownloadEntry downloadEntry(driveKey);
+		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
+		downloadEntry.DriveKey = driveKey;
+		downloadEntry.FileRecipient = replicatorKey;
 
 		// Assert:
 		AssertValidationResult(
 			Failure_Service_Operation_Is_Not_Permitted,
 			driveEntry,
-			downloadEntry,
-			replicatorKey,
-			test::GenerateRandomByteArray<Hash256>());
+			downloadEntry);
 	}
 
 	TEST(TEST_CLASS, FailureWhenNoFilesToDownload) {
@@ -89,15 +87,15 @@ namespace catapult { namespace validators {
 		auto driveKey = test::GenerateRandomByteArray<Key>();
 		state::DriveEntry driveEntry(driveKey);
 		driveEntry.setState(state::DriveState::InProgress);
-		state::DownloadEntry downloadEntry(driveKey);
+		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
+		downloadEntry.DriveKey = driveKey;
+		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 
 		// Assert:
 		AssertValidationResult(
 			Failure_Service_No_Files_To_Download,
 			driveEntry,
-			downloadEntry,
-			test::GenerateRandomByteArray<Key>(),
-			test::GenerateRandomByteArray<Hash256>());
+			downloadEntry);
 	}
 
 	TEST(TEST_CLASS, FailureWhenFileDoesntExist) {
@@ -105,15 +103,15 @@ namespace catapult { namespace validators {
 		auto driveKey = test::GenerateRandomByteArray<Key>();
 		state::DriveEntry driveEntry(driveKey);
 		driveEntry.setState(state::DriveState::InProgress);
-		state::DownloadEntry downloadEntry(driveKey);
+		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
+		downloadEntry.DriveKey = driveKey;
+		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 
 		// Assert:
 		AssertValidationResult(
 			Failure_Service_File_Doesnt_Exist,
 			driveEntry,
 			downloadEntry,
-			test::GenerateRandomByteArray<Key>(),
-			test::GenerateRandomByteArray<Hash256>(),
 			{ model::DownloadAction{ { test::GenerateRandomByteArray<Hash256>() }, test::Random() } });
 	}
 
@@ -125,15 +123,15 @@ namespace catapult { namespace validators {
 		auto fileHash = test::GenerateRandomByteArray<Hash256>();
 		auto fileSize = test::Random();
 		driveEntry.files().emplace(fileHash, state::FileInfo{ fileSize });
-		state::DownloadEntry downloadEntry(driveKey);
+		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
+		downloadEntry.DriveKey = driveKey;
+		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 
 		// Assert:
 		AssertValidationResult(
 			Failure_Service_File_Size_Invalid,
 			driveEntry,
 			downloadEntry,
-			test::GenerateRandomByteArray<Key>(),
-			test::GenerateRandomByteArray<Hash256>(),
 			{ model::DownloadAction{ { fileHash }, fileSize - 1 } });
 	}
 
@@ -145,39 +143,16 @@ namespace catapult { namespace validators {
 		auto fileHash = test::GenerateRandomByteArray<Hash256>();
 		auto fileSize = test::Random();
 		driveEntry.files().emplace(fileHash, state::FileInfo{ fileSize });
-		state::DownloadEntry downloadEntry(driveKey);
+		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
+		downloadEntry.DriveKey = driveKey;
+		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 
 		// Assert:
 		AssertValidationResult(
 			Failure_Service_File_Hash_Redundant,
 			driveEntry,
 			downloadEntry,
-			test::GenerateRandomByteArray<Key>(),
-			test::GenerateRandomByteArray<Hash256>(),
 			{ model::DownloadAction{ { fileHash }, fileSize }, model::DownloadAction{ { fileHash }, fileSize } });
-	}
-
-	TEST(TEST_CLASS, FailureWhenFileDownloadAlreadyInProgress) {
-		// Arrange:
-		auto driveKey = test::GenerateRandomByteArray<Key>();
-		state::DriveEntry driveEntry(driveKey);
-		driveEntry.setState(state::DriveState::InProgress);
-		auto fileHash = test::GenerateRandomByteArray<Hash256>();
-		auto fileSize = test::Random();
-		driveEntry.files().emplace(fileHash, state::FileInfo{ fileSize });
-		state::DownloadEntry downloadEntry(driveKey);
-		auto fileRecipient = test::GenerateRandomByteArray<Key>();
-		auto operationToken = test::GenerateRandomByteArray<Hash256>();
-		downloadEntry.fileRecipients()[fileRecipient][operationToken].insert(fileHash);
-
-		// Assert:
-		AssertValidationResult(
-			Failure_Service_File_Download_Already_In_Progress,
-			driveEntry,
-			downloadEntry,
-			fileRecipient,
-			operationToken,
-			{ model::DownloadAction{ { fileHash }, fileSize } });
 	}
 
 	TEST(TEST_CLASS, Success) {
@@ -188,15 +163,15 @@ namespace catapult { namespace validators {
 		auto fileHash = test::GenerateRandomByteArray<Hash256>();
 		auto fileSize = test::Random();
 		driveEntry.files().emplace(fileHash, state::FileInfo{ fileSize });
-		state::DownloadEntry downloadEntry(driveKey);
+		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
+		downloadEntry.DriveKey = driveKey;
+		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 
 		// Assert:
 		AssertValidationResult(
 			ValidationResult::Success,
 			driveEntry,
 			downloadEntry,
-			test::GenerateRandomByteArray<Key>(),
-			test::GenerateRandomByteArray<Hash256>(),
 			{ model::DownloadAction{ { fileHash }, fileSize } });
 	}
 }}

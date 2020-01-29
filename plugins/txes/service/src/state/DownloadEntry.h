@@ -5,46 +5,49 @@
 **/
 
 #pragma once
-#include "catapult/types.h"
-#include <map>
+#include "src/model/ServiceTypes.h"
+#include "plugins/txes/lock_shared/src/state/LockInfo.h"
 #include <set>
 
 namespace catapult { namespace state {
 
-	using DownloadMap = std::map<Hash256, std::set<Hash256>>;
-	using FileRecipientMap = std::map<Key, DownloadMap>;
-
-	// Download entry.
-	class DownloadEntry {
+	/// A download entry.
+	struct DownloadEntry {
 	public:
-		// Creates a download entry around \a driveKey.
-		DownloadEntry(const Key& driveKey)
-			: m_driveKey(driveKey)
+		/// Creates a default download entry.
+		DownloadEntry()
+		{}
+
+		/// Creates a default download entry around \a operationToken.
+		DownloadEntry(const Hash256& operationToken)
+			: OperationToken(operationToken)
 		{}
 
 	public:
-		/// Gets the drive key.
-		const Key& driveKey() const {
-			return m_driveKey;
+		/// Operation token.
+		Hash256 OperationToken;
+
+		/// Drive key.
+		Key DriveKey;
+
+		/// File recipient key.
+		Key FileRecipient;
+
+		/// Height at which download ends.
+		catapult::Height Height;
+
+		/// Hashes of files to download.
+		std::set<Hash256> Files;
+
+	public:
+		/// Returns status of download entry.
+		LockStatus status() const {
+			return Files.empty() ? LockStatus::Used : LockStatus::Unused;
 		}
 
-		/// Sets the \a driveKey.
-		void setDriveKey(const Key& driveKey) {
-			m_driveKey = driveKey;
+		/// Returns \c true if download entry is active at \a height.
+		constexpr bool isActive(catapult::Height height) const {
+			return height < Height && !Files.empty();
 		}
-
-		/// Gets the file recipients.
-		const FileRecipientMap& fileRecipients() const {
-			return m_fileRecipients;
-		}
-
-		/// Gets the file recipients.
-		FileRecipientMap& fileRecipients() {
-			return m_fileRecipients;
-		}
-
-	private:
-		Key m_driveKey;
-		FileRecipientMap m_fileRecipients;
 	};
 }}

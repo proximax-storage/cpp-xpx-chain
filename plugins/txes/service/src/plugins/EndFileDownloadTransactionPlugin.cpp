@@ -8,13 +8,10 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/plugins/PluginUtils.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/config/ServiceConfiguration.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/EndFileDownloadTransaction.h"
-#include "src/utils/ServiceUtils.h"
 
 using namespace catapult::model;
 
@@ -27,6 +24,7 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.Signer, transaction.Type));
+						sub.notify(AccountPublicKeyNotification<1>(transaction.FileRecipient));
 						sub.notify(EndFileDownloadNotification<1>(
 							transaction.Signer,
 							transaction.FileRecipient,
@@ -34,16 +32,7 @@ namespace catapult { namespace plugins {
 							transaction.FilesPtr(),
 							transaction.FileCount
 						));
-						sub.notify(AccountPublicKeyNotification<1>(transaction.FileRecipient));
 						sub.notify(BalanceCreditNotification<1>(transaction.FileRecipient, config::GetUnresolvedReviewMosaicId(config), Amount(transaction.FileCount)));
-						auto pFile = transaction.FilesPtr();
-						for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile) {
-							sub.notify(ProofPublicationNotification<1>(
-								transaction.Signer,
-								LockHashAlgorithm::Op_Internal,
-								utils::CalculateFileDownloadHash(transaction.OperationToken, pFile->FileHash),
-								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.Signer, config.NetworkIdentifier))));
-						}
 
 						break;
 					}

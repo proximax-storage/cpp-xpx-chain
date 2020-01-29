@@ -17,19 +17,16 @@ namespace catapult { namespace state {
 #define TEST_CLASS DownloadEntrySerializerTests
 
 	namespace {
-		constexpr auto File_Recipient_Count = 2;
-		constexpr auto Download_Count = 3;
 		constexpr auto File_Count = 4;
 
 		constexpr auto Entry_Size =
 			sizeof(VersionType) + // version
+			Hash256_Size + // operation token
 			Key_Size + // drive key
-			sizeof(uint32_t) + // file recipient count
-			File_Recipient_Count * Key_Size + // file recipient key
-			File_Recipient_Count * sizeof(uint32_t) + // download count
-			File_Recipient_Count * Download_Count * Hash256_Size + // operation token
-			File_Recipient_Count * Download_Count * sizeof(uint16_t) + // file count
-			File_Recipient_Count * Download_Count * File_Count * Hash256_Size; // file hashes
+			Key_Size + // file recipient key
+			sizeof(Height) + // end
+			sizeof(uint16_t) + // file count
+			File_Count * Hash256_Size; // file hashes
 
 		class TestContext {
 		public:
@@ -53,9 +50,10 @@ namespace catapult { namespace state {
 
 		auto CreateDownloadEntry() {
 			return test::CreateDownloadEntry(
+				test::GenerateRandomByteArray<Hash256>(),
 				test::GenerateRandomByteArray<Key>(),
-				File_Recipient_Count,
-				Download_Count,
+				test::GenerateRandomByteArray<Key>(),
+				test::GenerateRandomValue<Height>(),
 				File_Count);
 		}
 
@@ -63,28 +61,20 @@ namespace catapult { namespace state {
 			const auto* pExpectedEnd = pData + expectedSize;
 			EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
 			pData += sizeof(VersionType);
-			EXPECT_EQ_MEMORY(entry.driveKey().data(), pData, Key_Size);
+			EXPECT_EQ_MEMORY(entry.OperationToken.data(), pData, Hash256_Size);
+			pData += Hash256_Size;
+			EXPECT_EQ_MEMORY(entry.DriveKey.data(), pData, Key_Size);
 			pData += Key_Size;
+			EXPECT_EQ_MEMORY(entry.FileRecipient.data(), pData, Key_Size);
+			pData += Key_Size;
+			EXPECT_EQ(entry.Height.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
 
-			EXPECT_EQ(entry.fileRecipients().size(), *reinterpret_cast<const uint32_t*>(pData));
-			pData += sizeof(uint32_t);
-			for (const auto& fileRecipientPair : entry.fileRecipients()) {
-				EXPECT_EQ_MEMORY(fileRecipientPair.first.data(), pData, Key_Size);
-				pData += Key_Size;
-				const auto& downloads = fileRecipientPair.second;
-				EXPECT_EQ(downloads.size(), *reinterpret_cast<const uint32_t*>(pData));
-				pData += sizeof(uint32_t);
-				for (const auto& downloadPair : downloads) {
-					EXPECT_EQ_MEMORY(downloadPair.first.data(), pData, Hash256_Size);
-					pData += Hash256_Size;
-					const auto& fileHashes = downloadPair.second;
-					EXPECT_EQ(fileHashes.size(), *reinterpret_cast<const uint16_t*>(pData));
-					pData += sizeof(uint16_t);
-					for (const auto& fileHash : fileHashes) {
-						EXPECT_EQ_MEMORY(fileHash.data(), pData, Hash256_Size);
-						pData += Hash256_Size;
-					}
-				}
+			EXPECT_EQ(entry.Files.size(), *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
+			for (const auto& fileHash : entry.Files) {
+				EXPECT_EQ_MEMORY(fileHash.data(), pData, Hash256_Size);
+				pData += Hash256_Size;
 			}
 
 			EXPECT_EQ(pExpectedEnd, pData);
@@ -143,31 +133,21 @@ namespace catapult { namespace state {
 			auto* pData = buffer.data();
 			memcpy(pData, &version, sizeof(VersionType));
 			pData += sizeof(VersionType);
-			memcpy(pData, entry.driveKey().data(), Key_Size);
+			memcpy(pData, entry.OperationToken.data(), Hash256_Size);
+			pData += Hash256_Size;
+			memcpy(pData, entry.DriveKey.data(), Key_Size);
 			pData += Key_Size;
+			memcpy(pData, entry.FileRecipient.data(), Key_Size);
+			pData += Key_Size;
+			memcpy(pData, &entry.Height, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
 
-			auto fileRecipientCount = utils::checked_cast<size_t, uint32_t>(entry.fileRecipients().size());
-			memcpy(pData, &fileRecipientCount, sizeof(uint32_t));
-			pData += sizeof(uint32_t);
-			for (const auto& fileRecipientPair : entry.fileRecipients()) {
-				memcpy(pData, fileRecipientPair.first.data(), Key_Size);
-				pData += Key_Size;
-				const auto& downloads = fileRecipientPair.second;
-				auto downloadCount = utils::checked_cast<size_t, uint32_t>(downloads.size());
-				memcpy(pData, &downloadCount, sizeof(uint32_t));
-				pData += sizeof(uint32_t);
-				for (const auto& downloadPair : downloads) {
-					memcpy(pData, downloadPair.first.data(), Hash256_Size);
-					pData += Hash256_Size;
-					const auto& fileHashes = downloadPair.second;
-					auto fileCount = utils::checked_cast<size_t, uint16_t>(fileHashes.size());
-					memcpy(pData, &fileCount, sizeof(uint16_t));
-					pData += sizeof(uint16_t);
-					for (const auto& fileHash : fileHashes) {
-						memcpy(pData, fileHash.data(), Hash256_Size);
-						pData += Hash256_Size;
-					}
-				}
+			auto fileCount = utils::checked_cast<size_t, uint16_t>(entry.Files.size());
+			memcpy(pData, &fileCount, sizeof(uint16_t));
+			pData += sizeof(uint16_t);
+			for (const auto& fileHash : entry.Files) {
+				memcpy(pData, fileHash.data(), Hash256_Size);
+				pData += Hash256_Size;
 			}
 
 			return buffer;
@@ -180,7 +160,7 @@ namespace catapult { namespace state {
 			auto buffer = CreateEntryBuffer(originalEntry, version);
 
 			// Act:
-			state::DownloadEntry result(test::GenerateRandomByteArray<Key>());
+			state::DownloadEntry result;
 			test::RunLoadValueTest<DownloadEntrySerializer>(buffer, result);
 
 			// Assert:

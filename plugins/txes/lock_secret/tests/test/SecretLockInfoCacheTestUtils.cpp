@@ -23,7 +23,7 @@
 
 namespace catapult { namespace test {
 
-	BasicSecretLockInfoTestTraits::ValueType BasicSecretLockInfoTestTraits::CreateLockInfo(Height height) {
+	BasicSecretLockInfoTestTraits::ValueType BasicSecretLockInfoTestTraits::CreateLockInfo(Height height, state::LockStatus status) {
 		state::SecretLockInfo lockInfo(
 				GenerateRandomByteArray<Key>(),
 				MosaicId(Random()),
@@ -32,6 +32,7 @@ namespace catapult { namespace test {
 				static_cast<model::LockHashAlgorithm>(RandomByte()),
 				GenerateRandomByteArray<Hash256>(),
 				GenerateRandomByteArray<Address>());
+		lockInfo.Status = status;
 		lockInfo.CompositeHash = model::CalculateSecretLockInfoHash(lockInfo.Secret, lockInfo.Recipient);
 		return lockInfo;
 	}

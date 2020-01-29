@@ -49,4 +49,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by end file download.
 	DECLARE_OBSERVER(EndFileDownload, model::EndFileDownloadNotification<1>)();
+
+	/// Observes changes triggered by block.
+	DECLARE_OBSERVER(ExpiredFileDownload, model::BlockNotification<1>)();
 }}

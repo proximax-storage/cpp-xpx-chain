@@ -149,8 +149,8 @@ namespace catapult { namespace validators {
 	/// Validation failed because there are enough replcators in drive.
 	DEFINE_SERVICE_RESULT(Max_Replicators_Reached, 46);
 
-	/// Validation failed because file download is already in-progress.
-	DEFINE_SERVICE_RESULT(File_Download_Already_In_Progress, 47);
+		/// Validation failed because file recipient is invalid.
+	DEFINE_SERVICE_RESULT(Invalid_File_Recipient, 47);
 
 	/// Validation failed because file download not in-progress.
 	DEFINE_SERVICE_RESULT(File_Download_Not_In_Progress, 48);

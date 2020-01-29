@@ -11,36 +11,66 @@ namespace catapult { namespace state {
 
 #define TEST_CLASS DownloadEntryTests
 
-	TEST(TEST_CLASS, CanCreateDownloadEntry) {
+	TEST(TEST_CLASS, CanCreateDefaultDownloadEntry) {
 		// Act:
-		auto driveKey = test::GenerateRandomByteArray<Key>();
-		auto entry = DownloadEntry(driveKey);
+		DownloadEntry entry;
 
 		// Assert:
-		EXPECT_EQ(driveKey, entry.driveKey());
+		EXPECT_EQ(Hash256(), entry.OperationToken);
+		EXPECT_EQ(Key(), entry.DriveKey);
+		EXPECT_EQ(Key(), entry.FileRecipient);
+		EXPECT_EQ(Height(), entry.Height);
+		EXPECT_TRUE(entry.Files.empty());
 	}
 
-	TEST(TEST_CLASS, CanAccessFileRecipients) {
-		// Arrange:
-		auto fileRecipient = test::GenerateRandomByteArray<Key>();
-		auto operationToken = test::GenerateRandomByteArray<Hash256>();
-		std::set<Hash256> fileHashes{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
-		auto entry = DownloadEntry(Key());
-
-		// Sanity:
-		ASSERT_TRUE(entry.fileRecipients().empty());
-
+	TEST(TEST_CLASS, CanCreateDownloadEntryWithOperationToken) {
 		// Act:
-		for (const auto& fileHash : fileHashes) {
-			entry.fileRecipients()[fileRecipient][operationToken].insert(fileHash);
-		}
+		auto operationToken = test::GenerateRandomByteArray<Hash256>();
+		auto entry = DownloadEntry(operationToken);
 
 		// Assert:
-		ASSERT_EQ(1, entry.fileRecipients().size());
-		ASSERT_EQ(1, entry.fileRecipients().at(fileRecipient).size());
-		ASSERT_EQ(2, entry.fileRecipients().at(fileRecipient).at(operationToken).size());
-		for (const auto& fileHash : fileHashes) {
-			EXPECT_EQ(1, entry.fileRecipients().at(fileRecipient).at(operationToken).count(fileHash));
-		}
+		EXPECT_EQ(operationToken, entry.OperationToken);
+		EXPECT_EQ(Key(), entry.DriveKey);
+		EXPECT_EQ(Key(), entry.FileRecipient);
+		EXPECT_EQ(Height(), entry.Height);
+		EXPECT_TRUE(entry.Files.empty());
+	}
+
+	TEST(TEST_CLASS, IsActiveReturnsTrueWhenNotExpiredAndTheareAreFiles) {
+		// Act:
+		DownloadEntry entry;
+		entry.Height = Height(10);
+		entry.Files.insert(test::GenerateRandomByteArray<Hash256>());
+
+		// Assert:
+		EXPECT_TRUE(entry.isActive(Height(5)));
+	}
+
+	TEST(TEST_CLASS, IsActiveReturnsFalseWhenExpired) {
+		// Act:
+		DownloadEntry entry;
+		entry.Height = Height(10);
+		entry.Files.insert(test::GenerateRandomByteArray<Hash256>());
+
+		// Assert:
+		EXPECT_FALSE(entry.isActive(Height(20)));
+	}
+
+	TEST(TEST_CLASS, IsActiveReturnsFalseWhenNoFiles) {
+		// Act:
+		DownloadEntry entry;
+		entry.Height = Height(10);
+
+		// Assert:
+		EXPECT_FALSE(entry.isActive(Height(5)));
+	}
+
+	TEST(TEST_CLASS, IsActiveReturnsFalseWhenExpiredAndNoFiles) {
+		// Act:
+		DownloadEntry entry;
+		entry.Height = Height(10);
+
+		// Assert:
+		EXPECT_FALSE(entry.isActive(Height(20)));
 	}
 }}

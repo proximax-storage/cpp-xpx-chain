@@ -35,6 +35,14 @@ namespace catapult { namespace utils {
         return Amount(size);
     }
 
+    inline Amount CalculateFileDownload(const model::DownloadAction* pFile, uint16_t fileCount) {
+		uint64_t totalSize = 0u;
+		for (auto i = 0u; i < fileCount; ++i, ++pFile) {
+			totalSize += pFile->FileSize;
+		}
+        return Amount(totalSize);
+    }
+
     inline Hash256 CalculateFileDownloadHash(const Hash256& operationToken, const Hash256& fileHash) {
 		return operationToken ^ fileHash;
     }

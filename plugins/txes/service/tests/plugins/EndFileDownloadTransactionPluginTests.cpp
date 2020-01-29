@@ -12,7 +12,6 @@
 #include "src/model/ServiceNotifications.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
 
@@ -87,15 +86,11 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(4u + Num_Files, sub.numNotifications());
-		auto i = 0u;
-		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Service_EndFileDownload_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
-		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[i++]);
-		while (i < 3u + Num_Files) {
-			EXPECT_EQ(LockSecret_Proof_Publication_v1_Notification, sub.notificationTypes()[i++]);
-		}
+		ASSERT_EQ(4u, sub.numNotifications());
+		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
+		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
+		EXPECT_EQ(Service_EndFileDownload_v1_Notification, sub.notificationTypes()[2]);
+		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[3]);
 	}
 
 	// endregion
@@ -180,32 +175,6 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->FileRecipient, notification.Sender);
 		EXPECT_EQ(Review_Mosaic_Id, notification.MosaicId);
 		EXPECT_EQ(Amount(Num_Files), notification.Amount);
-	}
-
-	// endregion
-
-	// region publish - proof publication notifications
-
-	PLUGIN_TEST(CanPublishProofPublicationNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<ProofPublicationNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
-		auto pTransaction = CreateTransaction<TTraits>();
-
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-		// Assert:
-		ASSERT_EQ(Num_Files, sub.numMatchingNotifications());
-		for (auto i = 0u; i < Num_Files; ++i) {
-			const auto& notification = sub.matchingNotifications()[i];
-			EXPECT_EQ(pTransaction->Signer, notification.Signer);
-			EXPECT_EQ(LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
-			auto secret = pTransaction->OperationToken ^ pTransaction->FilesPtr()[i].FileHash;
-			EXPECT_EQ(secret, notification.Secret);
-			auto recipient = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pTransaction->Signer, Network_Identifier));
-			EXPECT_EQ(recipient, notification.Recipient);
-		}
 	}
 
 	// endregion

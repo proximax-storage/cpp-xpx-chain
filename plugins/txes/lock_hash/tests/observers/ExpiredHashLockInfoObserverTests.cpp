@@ -51,6 +51,17 @@ namespace catapult { namespace observers {
 				auto adjustedDelta = Amount(count * delta.unwrap());
 				return observers::NotifyMode::Commit == mode ? initialBalance + adjustedDelta : initialBalance - adjustedDelta;
 			}
+
+			static auto GetLockOwner(const state::HashLockInfo& lockInfo) {
+				return lockInfo.Account;
+			}
+
+			static ValueType CreateLockInfoWithAmount(MosaicId mosaicId, Amount amount, Height height, cache::CatapultCacheDelta&) {
+				auto lockInfo = CreateLockInfo(height);
+				lockInfo.MosaicId = mosaicId;
+				lockInfo.Amount = amount;
+				return lockInfo;
+			}
 		};
 	}
 

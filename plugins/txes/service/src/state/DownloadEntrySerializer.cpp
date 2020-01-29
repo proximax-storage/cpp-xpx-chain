@@ -15,21 +15,13 @@ namespace catapult { namespace state {
 		// write version
 		io::Write32(output, 1);
 
-		io::Write(output, entry.driveKey());
-		const auto& fileRecipients = entry.fileRecipients();
-		io::Write32(output, utils::checked_cast<size_t, uint32_t>(fileRecipients.size()));
-		for (const auto& fileRecipientPair : fileRecipients) {
-			io::Write(output, fileRecipientPair.first);
-			const auto& downloads = fileRecipientPair.second;
-			io::Write32(output, utils::checked_cast<size_t, uint32_t>(downloads.size()));
-			for (const auto& downloadPair : downloads) {
-				io::Write(output, downloadPair.first);
-				const auto& fileHashes = downloadPair.second;
-				io::Write16(output, utils::checked_cast<size_t, uint16_t>(fileHashes.size()));
-				for (const auto& fileHash : fileHashes)
-					io::Write(output, fileHash);
-			}
-		}
+		io::Write(output, entry.OperationToken);
+		io::Write(output, entry.DriveKey);
+		io::Write(output, entry.FileRecipient);
+		io::Write(output, entry.Height);
+		io::Write16(output, utils::checked_cast<size_t, uint16_t>(entry.Files.size()));
+		for (const auto& fileHash : entry.Files)
+			io::Write(output, fileHash);
 	}
 
 	DownloadEntry DownloadEntrySerializer::Load(io::InputStream& input) {
@@ -38,28 +30,16 @@ namespace catapult { namespace state {
 		if (version > 1)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of DownloadEntry", version);
 
-		Key driveKey;
-		io::Read(input, driveKey);
-		DownloadEntry entry(driveKey);
-		auto fileRecipientCount = io::Read32(input);
-		while (fileRecipientCount--) {
-			Key fileRecipientKey;
-			io::Read(input, fileRecipientKey);
-			DownloadMap downloads;
-			auto downloadCount = io::Read32(input);
-			while (downloadCount--) {
-				Hash256 operationToken;
-				io::Read(input, operationToken);
-				std::set<Hash256> fileHashes;
-				auto fileCount = io::Read16(input);
-				while (fileCount--) {
-					Hash256 fileHash;
-					io::Read(input, fileHash);
-					fileHashes.emplace(fileHash);
-				}
-				downloads.emplace(operationToken, fileHashes);
-			}
-			entry.fileRecipients().emplace(fileRecipientKey, downloads);
+		DownloadEntry entry;
+		io::Read(input, entry.OperationToken);
+		io::Read(input, entry.DriveKey);
+		io::Read(input, entry.FileRecipient);
+		io::Read(input, entry.Height);
+		auto fileCount = io::Read16(input);
+		while (fileCount--) {
+			Hash256 fileHash;
+			io::Read(input, fileHash);
+			entry.Files.insert(fileHash);
 		}
 
 		return entry;

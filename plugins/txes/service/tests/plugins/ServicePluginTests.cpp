@@ -109,6 +109,8 @@ namespace catapult { namespace plugins {
 					"DriveCacheBlockPruningObserver",
 					"StartFileDownloadObserver",
 					"EndFileDownloadObserver",
+					"DownloadCacheTouchObserver",
+					"DownloadCachePruningObserver",
 				};
 			}
 

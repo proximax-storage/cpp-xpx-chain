@@ -24,6 +24,7 @@
 #include "src/plugins/EndFileDownloadTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/utils/ServiceUtils.h"
+#include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
 #include "src/config/ServiceConfiguration.h"
 
@@ -69,7 +70,7 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDriveFilesRewardTransactionPlugin());
 		manager.addTransactionSupport(CreateStartDriveVerificationTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig.NetworkIdentifier));
-		manager.addTransactionSupport(CreateStartFileDownloadTransactionPlugin(pConfigHolder));
+		manager.addTransactionSupport(CreateStartFileDownloadTransactionPlugin(immutableConfig));
 		manager.addTransactionSupport(CreateEndFileDownloadTransactionPlugin(immutableConfig));
 
 		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
@@ -189,7 +190,9 @@ namespace catapult { namespace plugins {
                     .add(observers::CreateDriveFilesRewardObserver(immutableConfig))
                     .add(observers::CreateDriveCacheBlockPruningObserver())
                     .add(observers::CreateStartFileDownloadObserver())
-                    .add(observers::CreateEndFileDownloadObserver());
+                    .add(observers::CreateEndFileDownloadObserver())
+					.add(observers::CreateCacheBlockTouchObserver<cache::DownloadCache>("DownloadCache", model::Receipt_Type_Drive_Download_Expired))
+					.add(observers::CreateCacheBlockPruningObserver<cache::DownloadCache>("DownloadCache", 1));
 		});
 	}
 }}

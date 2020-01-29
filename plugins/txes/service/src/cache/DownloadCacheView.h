@@ -6,41 +6,20 @@
 
 #pragma once
 #include "DownloadBaseSets.h"
-#include "DownloadCacheSerializers.h"
 #include "ServiceCacheTools.h"
-#include "catapult/cache/CacheMixinAliases.h"
-#include "catapult/cache/ReadOnlyArtifactCache.h"
-#include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "plugins/txes/lock_shared/src/cache/LockInfoCacheView.h"
 
 namespace catapult { namespace cache {
 
-	/// Mixins used by the download cache view.
-	using DownloadCacheViewMixins = PatriciaTreeCacheMixins<DownloadCacheTypes::PrimaryTypes::BaseSetType, DownloadCacheDescriptor>;
-
 	/// Basic view on top of the download cache.
-	class BasicDownloadCacheView
-			: public utils::MoveOnly
-			, public DownloadCacheViewMixins::Size
-			, public DownloadCacheViewMixins::Contains
-			, public DownloadCacheViewMixins::Iteration
-			, public DownloadCacheViewMixins::ConstAccessor
-			, public DownloadCacheViewMixins::PatriciaTreeView
-			, public DownloadCacheViewMixins::Enable
-			, public DownloadCacheViewMixins::Height {
-	public:
-		using ReadOnlyView = DownloadCacheTypes::CacheReadOnlyType;
-
+	class BasicDownloadCacheView : public BasicLockInfoCacheView<DownloadCacheDescriptor, DownloadCacheTypes> {
 	public:
 		/// Creates a view around \a downloadSets and \a pConfigHolder.
 		explicit BasicDownloadCacheView(
 			const DownloadCacheTypes::BaseSets& downloadSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
-				: DownloadCacheViewMixins::Size(downloadSets.Primary)
-				, DownloadCacheViewMixins::Contains(downloadSets.Primary)
-				, DownloadCacheViewMixins::Iteration(downloadSets.Primary)
-				, DownloadCacheViewMixins::ConstAccessor(downloadSets.Primary)
-				, DownloadCacheViewMixins::PatriciaTreeView(downloadSets.PatriciaTree.get())
+				: BasicLockInfoCacheView<DownloadCacheDescriptor, DownloadCacheTypes>::BasicLockInfoCacheView(downloadSets)
 				, m_pConfigHolder(pConfigHolder)
 		{}
 
@@ -54,13 +33,13 @@ namespace catapult { namespace cache {
 	};
 
 	/// View on top of the download cache.
-	class DownloadCacheView : public ReadOnlyViewSupplier<BasicDownloadCacheView> {
+	class DownloadCacheView : public LockInfoCacheView<DownloadCacheDescriptor, DownloadCacheTypes, BasicDownloadCacheView> {
 	public:
 		/// Creates a view around \a downloadSets and \a pConfigHolder.
 		explicit DownloadCacheView(
 			const DownloadCacheTypes::BaseSets& downloadSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
-				: ReadOnlyViewSupplier(downloadSets, pConfigHolder)
+				: LockInfoCacheView<DownloadCacheDescriptor, DownloadCacheTypes, BasicDownloadCacheView>::LockInfoCacheView(downloadSets, pConfigHolder)
 		{}
 	};
 }}

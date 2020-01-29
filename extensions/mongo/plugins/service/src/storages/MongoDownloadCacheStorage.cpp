@@ -17,14 +17,14 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		struct DownloadCacheTraits : public storages::BasicMongoCacheStorageTraits<cache::DownloadCacheDescriptor> {
 			static constexpr const char* Collection_Name = "downloads";
-			static constexpr const char* Id_Property_Name = "downloadInfo.driveKey";
+			static constexpr const char* Id_Property_Name = "downloadInfo.operationToken";
 
 			static auto MapToMongoId(const KeyType& key) {
 				return mappers::ToBinary(key);
 			}
 
 			static auto MapToMongoDocument(const ModelType& entry, model::NetworkIdentifier networkIdentifier) {
-				return plugins::ToDbModel(entry, model::PublicKeyToAddress(entry.driveKey(), networkIdentifier));
+				return plugins::ToDbModel(entry, model::PublicKeyToAddress(entry.DriveKey, networkIdentifier));
 			}
 
 			static void Insert(CacheDeltaType& cache, const bsoncxx::document::view& document) {

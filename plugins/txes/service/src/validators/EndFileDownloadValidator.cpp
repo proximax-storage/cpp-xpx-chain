@@ -11,30 +11,31 @@ namespace catapult { namespace validators {
 
 	using Notification = model::EndFileDownloadNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(EndFileDownload, [](const Notification &notification, const ValidatorContext &context) {
+	DEFINE_STATEFUL_VALIDATOR(EndFileDownload, [](const Notification& notification, const ValidatorContext& context) {
+		if (!notification.FileCount)
+			return Failure_Service_No_Files_To_Download;
+
 		const auto& downloadCache = context.Cache.sub<cache::DownloadCache>();
-		if (downloadCache.contains(notification.DriveKey)) {
-			auto downloadCacheIter = downloadCache.find(notification.DriveKey);
-			const auto &downloadEntry = downloadCacheIter.get();
-			const auto& fileRecipients = downloadEntry.fileRecipients();
-			auto fileRecipientIter = fileRecipients.find(notification.FileRecipient);
-			if (fileRecipients.end() != fileRecipientIter) {
-				const auto& downloads = fileRecipientIter->second;
-				auto downloadIter = downloads.find(notification.OperationToken);
-				if (downloads.end() != downloadIter) {
-					std::set<Hash256> fileHashes;
-					auto pFile = notification.FilesPtr;
-					for (auto i = 0u; i < notification.FileCount; ++i, ++pFile) {
-						fileHashes.insert(pFile->FileHash);
-						if (!downloadIter->second.count(pFile->FileHash))
-							return Failure_Service_File_Download_Not_In_Progress;
-					}
+		if (downloadCache.contains(notification.OperationToken)) {
+			auto downloadCacheIter = downloadCache.find(notification.OperationToken);
+			const auto& downloadEntry = downloadCacheIter.get();
 
-					if (fileHashes.size() != notification.FileCount)
-						return Failure_Service_File_Hash_Redundant;
+			if (downloadEntry.FileRecipient != notification.FileRecipient)
+				return Failure_Service_Invalid_File_Recipient;
 
-					return ValidationResult::Success;
+			if (downloadEntry.Height >= context.Height) {
+				std::set<Hash256> fileHashes;
+				auto pFile = notification.FilesPtr;
+				for (auto i = 0u; i < notification.FileCount; ++i, ++pFile) {
+					fileHashes.insert(pFile->FileHash);
+					if (!downloadEntry.Files.count(pFile->FileHash))
+						return Failure_Service_File_Download_Not_In_Progress;
 				}
+
+				if (fileHashes.size() != notification.FileCount)
+					return Failure_Service_File_Hash_Redundant;
+
+				return ValidationResult::Success;
 			}
 		}
 

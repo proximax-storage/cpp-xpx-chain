@@ -7,15 +7,10 @@
 #pragma once
 #include "DownloadCacheTypes.h"
 #include "src/state/DownloadEntrySerializer.h"
-#include "catapult/cache/CacheStorageInclude.h"
+#include "plugins/txes/lock_shared/src/cache/LockInfoCacheStorage.h"
 
 namespace catapult { namespace cache {
 
 	/// Policy for saving and loading download cache data.
-	struct DownloadCacheStorage
-			: public CacheStorageForBasicInsertRemoveCache<DownloadCacheDescriptor>
-			, public state::DownloadEntrySerializer {
-		/// Loads \a entry into \a cacheDelta.
-		static void LoadInto(const ValueType& entry, DestinationType& cacheDelta);
-	};
+	struct DownloadCacheStorage : public LockInfoCacheStorage<DownloadCacheDescriptor, state::DownloadEntrySerializer> {};
 }}

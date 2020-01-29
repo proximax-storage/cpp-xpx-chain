@@ -21,39 +21,18 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			array << bson_stream::close_array;
 		}
-
-		void StreamDownloads(bson_stream::document& builder, const state::DownloadMap& downloads) {
-			auto array = builder << "downloads" << bson_stream::open_array;
-			for (const auto& downloadPair : downloads) {
-				bson_stream::document downloadBuilder;
-				downloadBuilder << "operationToken" << ToBinary(downloadPair.first);
-				StreamFiles(downloadBuilder, downloadPair.second);
-				array << downloadBuilder;
-			}
-
-			array << bson_stream::close_array;
-		}
-
-		void StreamFileRecipients(bson_stream::document& builder, const state::FileRecipientMap& fileRecipients) {
-			auto array = builder << "fileRecipients" << bson_stream::open_array;
-			for (const auto& fileRecipientPair : fileRecipients) {
-				bson_stream::document fileRecipientBuilder;
-				fileRecipientBuilder << "key" << ToBinary(fileRecipientPair.first);
-				StreamDownloads(fileRecipientBuilder, fileRecipientPair.second);
-				array << fileRecipientBuilder;
-			}
-
-			array << bson_stream::close_array;
-		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::DownloadEntry& entry, const Address& driveAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "downloadInfo" << bson_stream::open_document
-				<< "driveKey" << ToBinary(entry.driveKey())
-				<< "driveAddress" << ToBinary(driveAddress);
+				<< "operationToken" << ToBinary(entry.OperationToken)
+				<< "driveKey" << ToBinary(entry.DriveKey)
+				<< "driveAddress" << ToBinary(driveAddress)
+				<< "fileRecipient" << ToBinary(entry.FileRecipient)
+				<< "height" << ToInt64(entry.Height);
 
-		StreamFileRecipients(builder, entry.fileRecipients());
+		StreamFiles(builder, entry.Files);
 
 		return doc
 				<< bson_stream::close_document
@@ -72,39 +51,17 @@ namespace catapult { namespace mongo { namespace plugins {
 				fileHashes.insert(fileHash);
 			}
 		}
-
-		void ReadDownloads(state::DownloadMap& downloads, const bsoncxx::array::view& dbDownloads) {
-			for (const auto& dbDownload : dbDownloads) {
-				auto doc = dbDownload.get_document().view();
-
-                Hash256 operationToken;
-                DbBinaryToModelArray(operationToken, doc["operationToken"].get_binary());
-				std::set<Hash256> fileHashes;
-				ReadFiles(fileHashes, doc["files"].get_array().value);
-				downloads.emplace(operationToken, fileHashes);
-			}
-		}
-
-		void ReadFileRecipients(state::FileRecipientMap& fileRecipients, const bsoncxx::array::view& dbFileRecipients) {
-			for (const auto& dbFileRecipient : dbFileRecipients) {
-				auto doc = dbFileRecipient.get_document().view();
-
-				Key key;
-				DbBinaryToModelArray(key, doc["key"].get_binary());
-				state::DownloadMap downloads;
-				ReadDownloads(downloads, doc["downloads"].get_array().value);
-				fileRecipients.emplace(key, downloads);
-			}
-		}
 	}
 
 	state::DownloadEntry ToDownloadEntry(const bsoncxx::document::view& document) {
 		auto dbDownloadEntry = document["downloadInfo"];
-		Key driveKey;
-		DbBinaryToModelArray(driveKey, dbDownloadEntry["driveKey"].get_binary());
-		state::DownloadEntry entry(driveKey);
+		state::DownloadEntry entry;
+		DbBinaryToModelArray(entry.OperationToken, dbDownloadEntry["operationToken"].get_binary());
+		DbBinaryToModelArray(entry.DriveKey, dbDownloadEntry["driveKey"].get_binary());
+		DbBinaryToModelArray(entry.FileRecipient, dbDownloadEntry["fileRecipient"].get_binary());
+		entry.Height = Height(dbDownloadEntry["height"].get_int64());
 
-		ReadFileRecipients(entry.fileRecipients(), dbDownloadEntry["fileRecipients"].get_array().value);
+		ReadFiles(entry.Files, dbDownloadEntry["files"].get_array().value);
 
 		return entry;
 	}

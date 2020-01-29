@@ -126,36 +126,17 @@ namespace catapult { namespace test {
 				EXPECT_EQ(1, fileHashes.count(fileHash));
 			}
 		}
-
-		void AssertDownloads(const state::DownloadMap& downloads, const bsoncxx::array::view &dbDownloads) {
-			ASSERT_EQ(downloads.size(), test::GetFieldCount(dbDownloads));
-			for (const auto& dbDownload : dbDownloads) {
-				Hash256 operationToken;
-				DbBinaryToModelArray(operationToken, dbDownload["operationToken"].get_binary());
-				ASSERT_EQ(1, downloads.count(operationToken));
-				const auto& fileHashes = downloads.at(operationToken);
-				AssertFiles(fileHashes, dbDownload["files"].get_array().value);
-			}
-		}
-
-		void AssertFileRecipients(const state::FileRecipientMap& fileRecipients, const bsoncxx::array::view &dbFileRecipients) {
-			ASSERT_EQ(fileRecipients.size(), test::GetFieldCount(dbFileRecipients));
-			for (const auto &dbFileRecipient : dbFileRecipients) {
-				Key fileRecipient;
-				DbBinaryToModelArray(fileRecipient, dbFileRecipient["key"].get_binary());
-				ASSERT_EQ(1, fileRecipients.count(fileRecipient));
-				const auto& downloads = fileRecipients.at(fileRecipient);
-				AssertDownloads(downloads, dbFileRecipient["downloads"].get_array().value);
-			}
-		}
 	}
 
 	void AssertEqualDownloadData(const state::DownloadEntry& entry, const Address& address, const bsoncxx::document::view& dbDownloadEntry) {
-		EXPECT_EQ(3u, test::GetFieldCount(dbDownloadEntry));
+		ASSERT_EQ(6u, test::GetFieldCount(dbDownloadEntry));
 
-		EXPECT_EQ(entry.driveKey(), GetKeyValue(dbDownloadEntry, "driveKey"));
-		EXPECT_EQ(address, test::GetAddressValue(dbDownloadEntry, "driveAddress"));
+		EXPECT_EQ(entry.OperationToken, GetHashValue(dbDownloadEntry, "operationToken"));
+		EXPECT_EQ(entry.DriveKey, GetKeyValue(dbDownloadEntry, "driveKey"));
+		EXPECT_EQ(address, GetAddressValue(dbDownloadEntry, "driveAddress"));
+		EXPECT_EQ(entry.FileRecipient, GetKeyValue(dbDownloadEntry, "fileRecipient"));
+		EXPECT_EQ(entry.Height.unwrap(), GetUint64(dbDownloadEntry, "height"));
 
-		AssertFileRecipients(entry.fileRecipients(), dbDownloadEntry["fileRecipients"].get_array().value);
+		AssertFiles(entry.Files, dbDownloadEntry["files"].get_array().value);
 	}
 }}

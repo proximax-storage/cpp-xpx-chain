@@ -31,10 +31,10 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static ModelType GenerateRandomElement(uint32_t id) {
-				Key key;
-				std::memcpy(key.data(), &id, sizeof(id));
+				Hash256 operationToken;
+				std::memcpy(operationToken.data(), &id, sizeof(id));
 
-				auto entry = test::CreateDownloadEntry(key);
+				auto entry = test::CreateDownloadEntry(operationToken);
 
 				return entry;
 			}
@@ -46,25 +46,26 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			static void Remove(cache::CatapultCacheDelta& delta, const ModelType& entry) {
 				auto& offerCacheDelta = delta.sub<cache::DownloadCache>();
-				offerCacheDelta.remove(entry.driveKey());
+				offerCacheDelta.remove(entry.OperationToken);
 			}
 
 			static void Mutate(cache::CatapultCacheDelta& delta, ModelType& entry) {
 				// update expected
-				entry.fileRecipients().clear();
+				auto fileRecipient = test::GenerateRandomByteArray<Key>();
+				entry.FileRecipient = fileRecipient;
 
 				// update cache
 				auto& downloadCacheDelta = delta.sub<cache::DownloadCache>();
-				auto& entryFromCache = downloadCacheDelta.find(entry.driveKey()).get();
-				entryFromCache.fileRecipients().clear();
+				auto& entryFromCache = downloadCacheDelta.find(entry.OperationToken).get();
+				entryFromCache.FileRecipient = fileRecipient;
 			}
 
 			static auto GetFindFilter(const ModelType& entry) {
-				return document() << "downloadInfo.driveKey" << mappers::ToBinary(entry.driveKey()) << finalize;
+				return document() << "downloadInfo.operationToken" << mappers::ToBinary(entry.OperationToken) << finalize;
 			}
 
 			static void AssertEqual(const ModelType& entry, const bsoncxx::document::view& view) {
-				auto address = model::PublicKeyToAddress(entry.driveKey(), Network_Id);
+				auto address = model::PublicKeyToAddress(entry.DriveKey, Network_Id);
 				test::AssertEqualDownloadData(entry, address, view["downloadInfo"].get_document().view());
 			}
 		};

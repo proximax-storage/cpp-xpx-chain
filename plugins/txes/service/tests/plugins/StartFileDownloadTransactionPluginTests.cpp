@@ -5,7 +5,6 @@
 **/
 
 #include "catapult/model/Address.h"
-#include "catapult/model/EntityHasher.h"
 #include "catapult/utils/HexParser.h"
 #include "plugins/txes/lock_secret/src/model/LockHashAlgorithm.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
@@ -13,7 +12,6 @@
 #include "src/model/StartFileDownloadTransaction.h"
 #include "src/model/ServiceNotifications.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
@@ -26,7 +24,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS StartFileDownloadTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(StartFileDownload, std::shared_ptr<config::BlockchainConfigurationHolder>, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(StartFileDownload, config::ImmutableConfiguration, 1, 1,)
 
 		constexpr UnresolvedMosaicId Streaming_Mosaic_Id(1234);
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
@@ -38,10 +36,7 @@ namespace catapult { namespace plugins {
 			config.Immutable.StreamingMosaicId = MosaicId(Streaming_Mosaic_Id.unwrap());
 			config.Immutable.NetworkIdentifier = Network_Identifier;
 			config.Immutable.GenerationHash = Generation_Hash;
-			auto pluginConfig = config::ServiceConfiguration::Uninitialized();
-			pluginConfig.DownloadDuration = BlockDuration(500);
-			config.Network.SetPluginConfiguration(pluginConfig);
-			return config.ToConst();
+			return config.ToConst().Immutable;
 		}
 
 		template<typename TTraits>
@@ -54,11 +49,11 @@ namespace catapult { namespace plugins {
 		TEST_CLASS,
 		,
 		,Entity_Type_StartFileDownload,
-		config::CreateMockConfigurationHolder(CreateConfiguration()))
+		CreateConfiguration())
 
 	PLUGIN_TEST(CanCalculateSize) {
 		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -73,7 +68,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
 		// Arrange:
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
@@ -89,19 +84,16 @@ namespace catapult { namespace plugins {
 		// Arrange:
 		auto pTransaction = CreateTransaction<TTraits>();
 		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
 		// Act:
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(3u + Num_Files, sub.numNotifications());
+		ASSERT_EQ(3u, sub.numNotifications());
 		auto i = 0u;
 		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Service_StartFileDownload_v1_Notification, sub.notificationTypes()[i++]);
-		while (i < 2u + Num_Files) {
-			EXPECT_EQ(LockSecret_Secret_v1_Notification, sub.notificationTypes()[i++]);
-		}
 		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
@@ -112,7 +104,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishDriveNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<DriveNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -132,7 +124,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishStartFileDownloadNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<StartFileDownloadNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -155,7 +147,7 @@ namespace catapult { namespace plugins {
 	PLUGIN_TEST(CanPublishBalanceDebitNotification) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<BalanceDebitNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 		auto pTransaction = CreateTransaction<TTraits>();
 
 		// Act:
@@ -167,36 +159,6 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->Signer, notification.Sender);
 		EXPECT_EQ(Streaming_Mosaic_Id, notification.MosaicId);
 		EXPECT_EQ(Amount(Num_Files * (Num_Files + 1) / 2 * 100), notification.Amount);
-	}
-
-	// endregion
-
-	// region publish - secret lock notifications
-
-	PLUGIN_TEST(CanPublishSecretLockNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<SecretLockNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
-		auto pTransaction = CreateTransaction<TTraits>();
-
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-		// Assert:
-		ASSERT_EQ(Num_Files, sub.numMatchingNotifications());
-		for (auto i = 0u; i < Num_Files; ++i) {
-			const auto& notification = sub.matchingNotifications()[i];
-			EXPECT_EQ(pTransaction->Signer, notification.Signer);
-			EXPECT_EQ(Streaming_Mosaic_Id, notification.Mosaic.MosaicId);
-			EXPECT_EQ(Amount((i + 1) * 100), notification.Mosaic.Amount);
-			EXPECT_EQ(BlockDuration(500), notification.Duration);
-			EXPECT_EQ(model::LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
-			auto operationToken = model::CalculateHash(*pTransaction, Generation_Hash);
-			auto secret = operationToken ^ pTransaction->FilesPtr()[i].FileHash;
-			EXPECT_EQ(secret, notification.Secret);
-			auto recipient = extensions::CopyToUnresolvedAddress(model::PublicKeyToAddress(pTransaction->DriveKey, Network_Identifier));
-			EXPECT_EQ(recipient, notification.Recipient);
-		}
 	}
 
 	// endregion

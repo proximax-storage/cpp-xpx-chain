@@ -6,7 +6,7 @@
 
 #pragma once
 #include "catapult/plugins.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "catapult/config/ImmutableConfiguration.h"
 #include <memory>
 
 namespace catapult { namespace model { class TransactionPlugin; } }
@@ -15,5 +15,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates a start file download transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateStartFileDownloadTransactionPlugin(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+	std::unique_ptr<model::TransactionPlugin> CreateStartFileDownloadTransactionPlugin(const config::ImmutableConfiguration& config);
 }}

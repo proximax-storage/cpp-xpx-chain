@@ -7,31 +7,23 @@
 #pragma once
 #include "DownloadCacheSerializers.h"
 #include "DownloadCacheTypes.h"
-#include "catapult/cache/CachePatriciaTree.h"
-#include "catapult/cache/PatriciaTreeEncoderAdapters.h"
-#include "catapult/cache/SingleSetCacheTypesAdapter.h"
-#include "catapult/tree/BasePatriciaTree.h"
+#include "plugins/txes/lock_shared/src/cache/LockInfoBaseSets.h"
 
 namespace catapult { namespace cache {
 
-	using BasicDownloadPatriciaTree = tree::BasePatriciaTree<
-		SerializerHashedKeyEncoder<DownloadCacheDescriptor::Serializer>,
-		PatriciaTreeRdbDataSource,
-		utils::ArrayHasher<Key>>;
-
-	class DownloadPatriciaTree : public BasicDownloadPatriciaTree {
+	class DownloadPatriciaTree : public LockInfoPatriciaTree<DownloadCacheDescriptor> {
 	public:
-		using BasicDownloadPatriciaTree::BasicDownloadPatriciaTree;
+		using LockInfoPatriciaTree<DownloadCacheDescriptor>::LockInfoPatriciaTree;
 		using Serializer = DownloadCacheDescriptor::Serializer;
 	};
 
-	using DownloadSingleSetCacheTypesAdapter =
-		SingleSetAndPatriciaTreeCacheTypesAdapter<DownloadCacheTypes::PrimaryTypes, DownloadPatriciaTree>;
+	struct DownloadBaseSetDeltaPointers : public LockInfoBaseSetDeltaPointers<DownloadCacheTypes, DownloadCacheDescriptor>
+	{};
 
-	struct DownloadBaseSetDeltaPointers : public DownloadSingleSetCacheTypesAdapter::BaseSetDeltaPointers {
-	};
-
-	struct DownloadBaseSets : public DownloadSingleSetCacheTypesAdapter::BaseSets<DownloadBaseSetDeltaPointers> {
-		using DownloadSingleSetCacheTypesAdapter::BaseSets<DownloadBaseSetDeltaPointers>::BaseSets;
+	struct DownloadBaseSets : public LockInfoBaseSets<DownloadCacheTypes, DownloadCacheDescriptor, DownloadBaseSetDeltaPointers> {
+		using LockInfoBaseSets<
+			DownloadCacheTypes,
+			DownloadCacheDescriptor,
+			DownloadBaseSetDeltaPointers>::LockInfoBaseSets;
 	};
 }}

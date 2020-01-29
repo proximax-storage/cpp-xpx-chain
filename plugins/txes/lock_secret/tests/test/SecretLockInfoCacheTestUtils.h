@@ -34,8 +34,8 @@ namespace catapult { namespace test {
 
 		static constexpr auto ToKey = cache::SecretLockInfoCacheDescriptor::GetKeyFromValue;
 
-		/// Creates a secret lock info with given \a height.
-		static ValueType CreateLockInfo(Height height);
+		/// Creates a secret lock info with given \a height and \a status.
+		static ValueType CreateLockInfo(Height height, state::LockStatus status = state::LockStatus::Unused);
 
 		/// Creates a random secret lock info.
 		static ValueType CreateLockInfo();

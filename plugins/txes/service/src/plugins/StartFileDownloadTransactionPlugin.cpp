@@ -5,12 +5,9 @@
 **/
 
 #include "StartFileDownloadTransactionPlugin.h"
-#include "catapult/model/Address.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/config/ServiceConfiguration.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/StartFileDownloadTransaction.h"
@@ -22,14 +19,12 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTransaction>
-		auto CreatePublisher(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-			return [pConfigHolder](const TTransaction &transaction, const Height& associatedHeight, NotificationSubscriber &sub) {
+		auto CreatePublisher(const config::ImmutableConfiguration& config) {
+			return [config](const TTransaction &transaction, const Height&, NotificationSubscriber &sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
-						const auto& config = pConfigHolder->ConfigAtHeightOrLatest(associatedHeight);
-						const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ServiceConfiguration>();
-						auto operationToken = model::CalculateHash(transaction, config.Immutable.GenerationHash);
+						auto operationToken = model::CalculateHash(transaction, config.GenerationHash);
 						sub.notify(StartFileDownloadNotification<1>(
 							transaction.DriveKey,
 							transaction.Signer,
@@ -37,22 +32,11 @@ namespace catapult { namespace plugins {
 							transaction.FilesPtr(),
 							transaction.FileCount
 						));
-
-						auto streamingMosaicId = config::GetUnresolvedStreamingMosaicId(config.Immutable);
-						Amount totalAmount;
-						auto pFile = transaction.FilesPtr();
-						for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile) {
-							auto amount = utils::CalculateFileDownload(pFile->FileSize);
-							totalAmount = totalAmount + amount;
-							sub.notify(SecretLockNotification<1>(
-								transaction.Signer,
-								UnresolvedMosaic{ streamingMosaicId, amount },
-								pluginConfig.DownloadDuration,
-								LockHashAlgorithm::Op_Internal,
-								utils::CalculateFileDownloadHash(operationToken, pFile->FileHash),
-								extensions::CopyToUnresolvedAddress(PublicKeyToAddress(transaction.DriveKey, config.Immutable.NetworkIdentifier))));
-						}
-						sub.notify(BalanceDebitNotification<1>(transaction.Signer, streamingMosaicId, totalAmount));
+						sub.notify(BalanceDebitNotification<1>(
+							transaction.Signer,
+							config::GetUnresolvedStreamingMosaicId(config),
+							utils::CalculateFileDownload(transaction.FilesPtr(), transaction.FileCount)
+						));
 
 						break;
 					}
@@ -63,5 +47,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(StartFileDownload, Default, CreatePublisher, std::shared_ptr<config::BlockchainConfigurationHolder>)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(StartFileDownload, Default, CreatePublisher, config::ImmutableConfiguration)
 }}
