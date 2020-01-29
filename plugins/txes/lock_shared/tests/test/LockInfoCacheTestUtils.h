@@ -42,8 +42,11 @@ namespace catapult { namespace test {
 	/// Asserts that \a lhs and \a rhs are equal.
 	inline void AssertEqualLockInfo(const state::LockInfo& lhs, const state::LockInfo& rhs) {
 		EXPECT_EQ(lhs.Account, rhs.Account);
-		EXPECT_EQ(lhs.MosaicId, rhs.MosaicId);
-		EXPECT_EQ(lhs.Amount, rhs.Amount);
+		EXPECT_EQ(lhs.Mosaics.size(), rhs.Mosaics.size());
+		for (auto i = 0u; i < lhs.Mosaics.size(); ++i) {
+			EXPECT_EQ(lhs.Mosaics[i].MosaicId, rhs.Mosaics[i].MosaicId);
+			EXPECT_EQ(lhs.Mosaics[i].Amount, rhs.Mosaics[i].Amount);
+		}
 		EXPECT_EQ(lhs.Height, rhs.Height);
 		EXPECT_EQ(lhs.Status, rhs.Status);
 	}

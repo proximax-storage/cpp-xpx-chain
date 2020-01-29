@@ -84,11 +84,11 @@ namespace catapult { namespace plugins {
 							numCosignatures,
 							aggregate.CosignaturesPtr()));
 
-				// publish all sub-transaction information
-				for (const auto& subTransaction : aggregate.Transactions()) {
-					// - change source
-					constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
-					sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
+					// publish all sub-transaction information
+					for (const auto& subTransaction : aggregate.Transactions()) {
+						// - change source
+						constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
+						sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
 
 						// - signers and entity
 						sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));

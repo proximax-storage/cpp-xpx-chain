@@ -26,6 +26,80 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
+	template<VersionType version>
+	class LockInfoStreamer;
+
+	template<>
+	class LockInfoStreamer<1> {
+	public:
+		static void StreamLockInfo(
+				mappers::bson_stream::document& builder,
+				const state::LockInfo& lockInfo,
+				const Address& accountAddress) {
+			using namespace catapult::mongo::mappers;
+
+			builder
+					<< "account" << ToBinary(lockInfo.Account)
+					<< "accountAddress" << ToBinary(accountAddress)
+					<< "mosaicId" << ToInt64(lockInfo.Mosaics[0].MosaicId)
+					<< "amount" << ToInt64(lockInfo.Mosaics[0].Amount)
+					<< "height" << ToInt64(lockInfo.Height)
+					<< "status" << utils::to_underlying_type(lockInfo.Status);
+		}
+
+		static void ReadLockInfo(state::LockInfo& lockInfo, const bsoncxx::document::element dbLockInfo) {
+			using namespace catapult::mongo::mappers;
+
+			DbBinaryToModelArray(lockInfo.Account, dbLockInfo["account"].get_binary());
+			auto mosaicId = GetValue64<MosaicId>(dbLockInfo["mosaicId"]);
+			auto amount = GetValue64<Amount>(dbLockInfo["amount"]);
+			lockInfo.Mosaics.push_back(model::Mosaic{mosaicId, amount});
+			lockInfo.Height = GetValue64<Height>(dbLockInfo["height"]);
+			lockInfo.Status = static_cast<state::LockStatus>(ToUint8(dbLockInfo["status"].get_int32()));
+		}
+	};
+
+	template<>
+	class LockInfoStreamer<2> {
+	public:
+		static void StreamLockInfo(
+				mappers::bson_stream::document& builder,
+				const state::LockInfo& lockInfo,
+				const Address& accountAddress) {
+			using namespace catapult::mongo::mappers;
+
+			builder
+					<< "account" << ToBinary(lockInfo.Account)
+					<< "accountAddress" << ToBinary(accountAddress)
+					<< "height" << ToInt64(lockInfo.Height)
+					<< "status" << utils::to_underlying_type(lockInfo.Status);
+
+			auto array = builder << "mosaics" << bson_stream::open_array;
+			for (const auto& mosaic : lockInfo.Mosaics) {
+				array
+						<< bson_stream::open_document
+						<< "mosaicId" << ToInt64(mosaic.MosaicId)
+						<< "amount" << ToInt64(mosaic.Amount)
+						<< bson_stream::close_document;
+			}
+			array << bson_stream::close_array;
+		}
+
+		static void ReadLockInfo(state::LockInfo& lockInfo, const bsoncxx::document::element dbLockInfo) {
+			using namespace catapult::mongo::mappers;
+
+			DbBinaryToModelArray(lockInfo.Account, dbLockInfo["account"].get_binary());
+			lockInfo.Height = GetValue64<Height>(dbLockInfo["height"]);
+			lockInfo.Status = static_cast<state::LockStatus>(ToUint8(dbLockInfo["status"].get_int32()));
+
+			for (const auto& dbMosaic : dbLockInfo["mosaics"].get_array().value) {
+				auto mosaicId = GetValue64<MosaicId>(dbMosaic["mosaicId"]);
+				auto amount = GetValue64<Amount>(dbMosaic["amount"]);
+				lockInfo.Mosaics.push_back(model::Mosaic{mosaicId, amount});
+			}
+		}
+	};
+
 	/// Traits based lock info mapper.
 	template<typename TTraits>
 	class LockInfoMapper {
@@ -42,21 +116,6 @@ namespace catapult { namespace mongo { namespace plugins {
 					<< mappers::bson_stream::close_document;
 		}
 
-		static void StreamLockInfo(
-				mappers::bson_stream::document& builder,
-				const state::LockInfo& lockInfo,
-				const Address& accountAddress) {
-			using namespace catapult::mongo::mappers;
-
-			builder
-					<< "account" << ToBinary(lockInfo.Account)
-					<< "accountAddress" << ToBinary(accountAddress)
-					<< "mosaicId" << ToInt64(lockInfo.MosaicId)
-					<< "amount" << ToInt64(lockInfo.Amount)
-					<< "height" << ToInt64(lockInfo.Height)
-					<< "status" << utils::to_underlying_type(lockInfo.Status);
-		}
-
 	public:
 		static bsoncxx::document::value ToDbModel(const LockInfoType& lockInfo, const Address& accountAddress) {
 			// lock metadata
@@ -65,7 +124,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			// lock data
 			auto doc = builder << "lock" << mappers::bson_stream::open_document;
-			StreamLockInfo(builder, lockInfo, accountAddress);
+			LockInfoStreamer<TTraits::Version>::StreamLockInfo(builder, lockInfo, accountAddress);
 			TTraits::StreamLockInfo(builder, lockInfo);
 			return doc
 					<< mappers::bson_stream::close_document
@@ -76,21 +135,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		// region ToModel
 
-	private:
-		static void ReadLockInfo(state::LockInfo& lockInfo, const bsoncxx::document::element dbLockInfo) {
-			using namespace catapult::mongo::mappers;
-
-			DbBinaryToModelArray(lockInfo.Account, dbLockInfo["account"].get_binary());
-			lockInfo.MosaicId = GetValue64<MosaicId>(dbLockInfo["mosaicId"]);
-			lockInfo.Amount = GetValue64<Amount>(dbLockInfo["amount"]);
-			lockInfo.Height = GetValue64<Height>(dbLockInfo["height"]);
-			lockInfo.Status = static_cast<state::LockStatus>(ToUint8(dbLockInfo["status"].get_int32()));
-		}
-
 	public:
 		static void ToLockInfo(const bsoncxx::document::view& document, LockInfoType& lockInfo) {
 			auto dbLockInfo = document["lock"];
-			ReadLockInfo(lockInfo, dbLockInfo);
+			LockInfoStreamer<TTraits::Version>::ReadLockInfo(lockInfo, dbLockInfo);
 			TTraits::ReadLockInfo(lockInfo, dbLockInfo);
 		}
 

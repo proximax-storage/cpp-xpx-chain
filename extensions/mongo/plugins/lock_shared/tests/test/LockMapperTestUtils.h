@@ -39,11 +39,20 @@ namespace catapult { namespace test {
 	inline void AssertEqualBaseLockInfoData(
 			const state::LockInfo& lockInfo,
 			const Address& accountAddress,
-			const bsoncxx::document::view& dbLockInfo) {
+			const bsoncxx::document::view& dbLockInfo,
+			bool multipleMosaics = false) {
 		EXPECT_EQ(accountAddress, GetAddressValue(dbLockInfo, "accountAddress"));
 		EXPECT_EQ(lockInfo.Account, GetKeyValue(dbLockInfo, "account"));
-		EXPECT_EQ(lockInfo.MosaicId, MosaicId(GetUint64(dbLockInfo, "mosaicId")));
-		EXPECT_EQ(lockInfo.Amount, Amount(GetUint64(dbLockInfo, "amount")));
+		if (multipleMosaics) {
+			auto counter = 0u;
+			for (const auto& dbMosaic : dbLockInfo["mosaics"].get_array().value) {
+				EXPECT_EQ(lockInfo.Mosaics[counter].MosaicId, MosaicId(GetUint64(dbMosaic, "mosaicId")));
+				EXPECT_EQ(lockInfo.Mosaics[counter++].Amount, Amount(GetUint64(dbMosaic, "amount")));
+			}
+		} else {
+			EXPECT_EQ(lockInfo.Mosaics[0].MosaicId, MosaicId(GetUint64(dbLockInfo, "mosaicId")));
+			EXPECT_EQ(lockInfo.Mosaics[0].Amount, Amount(GetUint64(dbLockInfo, "amount")));
+		}
 		EXPECT_EQ(lockInfo.Height, Height(GetUint64(dbLockInfo, "height")));
 		EXPECT_EQ(lockInfo.Status, static_cast<state::LockStatus>(GetUint8(dbLockInfo, "status")));
 	}

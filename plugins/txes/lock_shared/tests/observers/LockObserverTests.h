@@ -54,8 +54,8 @@ namespace catapult { namespace observers {
 
 						const auto& lockInfo = lockInfoCacheDelta.find(key).get();
 						EXPECT_EQ(notification.Signer, lockInfo.Account);
-						EXPECT_EQ(notification.Mosaic.MosaicId, test::UnresolveXor(lockInfo.MosaicId));
-						EXPECT_EQ(notification.Mosaic.Amount, lockInfo.Amount);
+						EXPECT_EQ(notification.Mosaic.MosaicId, test::UnresolveXor(lockInfo.Mosaics[0].MosaicId));
+						EXPECT_EQ(notification.Mosaic.Amount, lockInfo.Mosaics[0].Amount);
 						EXPECT_EQ(DefaultHeight() + Height(notification.Duration.unwrap()), lockInfo.Height);
 
 						TTraits::AssertAddedLockInfo(lockInfo, notification);

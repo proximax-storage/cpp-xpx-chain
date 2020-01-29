@@ -29,6 +29,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		class SecretLockInfoMapperTraits {
 		public:
 			using LockInfoType = state::SecretLockInfo;
+			static constexpr VersionType Version = 1;
 
 		public:
 			static void StreamLockInfo(bson_stream::document& builder, const state::SecretLockInfo& secretLockInfo) {

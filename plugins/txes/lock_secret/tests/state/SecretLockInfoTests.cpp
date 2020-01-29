@@ -40,8 +40,9 @@ namespace catapult { namespace state {
 
 		// Assert:
 		EXPECT_EQ(account, lockInfo.Account);
-		EXPECT_EQ(MosaicId(123), lockInfo.MosaicId);
-		EXPECT_EQ(Amount(234), lockInfo.Amount);
+		EXPECT_EQ(1, lockInfo.Mosaics.size());
+		EXPECT_EQ(MosaicId(123), lockInfo.Mosaics[0].MosaicId);
+		EXPECT_EQ(Amount(234), lockInfo.Mosaics[0].Amount);
 		EXPECT_EQ(Height(345), lockInfo.Height);
 		EXPECT_EQ(model::LockHashAlgorithm::Op_Hash_160, lockInfo.HashAlgorithm);
 		EXPECT_EQ(secret, lockInfo.Secret);
