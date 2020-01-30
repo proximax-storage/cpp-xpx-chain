@@ -279,13 +279,7 @@ namespace catapult { namespace plugins {
 				EXPECT_EQ(NamespaceId(768), notification.NamespaceId);
 				EXPECT_EQ(parentId, notification.ParentId);
 				EXPECT_EQ(12u, notification.NameSize);
-                {
-                    auto lPtr = namespaceName;
-                    auto rPtr = notification.NamePtr;
-                    for (auto i = 0u; i < 12u; ++i, ++lPtr, ++rPtr) {
-                        EXPECT_EQ(*lPtr, *rPtr);
-                    }
-                }
+				EXPECT_EQ_MEMORY(namespaceName, notification.NamePtr, 12u);
 			}
 
 			void AssertNamespaceRootNotification(const Key& signer) {

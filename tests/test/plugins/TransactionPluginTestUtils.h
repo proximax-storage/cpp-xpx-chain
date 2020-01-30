@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/model/NotificationSubscriber.h"
+#include "plugins/txes/aggregate/src/plugins/Common.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -49,26 +50,7 @@ namespace catapult { namespace test {
 	template<typename TTransactionPlugin>
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::EmbeddedTransaction& transaction, model::NotificationSubscriber& sub) {
 		Timestamp deadline;
-		auto pUnique = sub.mempool().malloc<uint8_t >(transaction.Size + sizeof(deadline));
-		std::memcpy(
-			pUnique,
-			reinterpret_cast<const uint8_t*>(&transaction),
-			sizeof(transaction)
-		);
-		std::memcpy(
-			pUnique + sizeof(transaction),
-			reinterpret_cast<uint8_t*>(&deadline),
-			sizeof(deadline)
-		);
-		std::memcpy(
-			pUnique + sizeof(model::ExtendedEmbeddedTransaction),
-			reinterpret_cast<const uint8_t*>(&transaction) + sizeof(transaction),
-			transaction.Size - sizeof(transaction)
-		);
-
-		model::ExtendedEmbeddedTransaction& tx = *reinterpret_cast<model::ExtendedEmbeddedTransaction*>(pUnique);
-        tx.Size = transaction.Size + sizeof(deadline);
-		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(tx, Height{0}), sub);
+		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(plugins::ConvertEmbeddedTransaction(transaction, deadline, sub), Height{0}), sub);
 	}
 
 	/// Publishes \a transactionInfo to \a sub using \a plugin.
@@ -81,26 +63,8 @@ namespace catapult { namespace test {
 	template<typename TTransactionPlugin>
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::WeakEntityInfoT<model::EmbeddedTransaction>& transactionInfo, model::NotificationSubscriber& sub) {
 		Timestamp deadline;
-		const auto& transaction = transactionInfo.entity();
-		auto pUnique = sub.mempool().malloc<uint8_t >(transaction.Size + sizeof(deadline));
-		std::memcpy(
-			pUnique,
-			reinterpret_cast<const uint8_t*>(&transaction),
-			sizeof(transaction)
-		);
-		std::memcpy(
-			pUnique + sizeof(transaction),
-			reinterpret_cast<uint8_t*>(&deadline),
-			sizeof(deadline)
-		);
-		std::memcpy(
-			pUnique + sizeof(model::ExtendedEmbeddedTransaction),
-			reinterpret_cast<const uint8_t*>(&transaction) + sizeof(transaction),
-			transaction.Size - sizeof(transaction)
-		);
-		model::ExtendedEmbeddedTransaction& tx = *reinterpret_cast<model::ExtendedEmbeddedTransaction*>(pUnique);
-        tx.Size = transaction.Size + sizeof(deadline);
-		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(tx, transactionInfo.associatedHeight()), sub);
+		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(
+				plugins::ConvertEmbeddedTransaction(transactionInfo.entity(), deadline, sub), transactionInfo.associatedHeight()), sub);
 	}
 
 	// endregion
@@ -246,7 +210,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin(std::forward<TArgs>(args)...);
 
 			typename TTraits::TransactionType transaction;
-            transaction.Size = sizeof(transaction);
+			transaction.Size = sizeof(transaction);
 			transaction.Size = sizeof(typename TTraits::TransactionType) + 12;
 
 			// Act:
@@ -264,7 +228,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin(std::forward<TArgs>(args)...);
 
 			typename TTraits::TransactionType transaction;
-            transaction.Size = sizeof(transaction);
+			transaction.Size = sizeof(transaction);
 			test::FillWithRandomData(transaction.Signer);
 
 			// Act:

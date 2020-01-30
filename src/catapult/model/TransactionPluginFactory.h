@@ -51,10 +51,10 @@ namespace catapult { namespace model {
 		}
 
 	private:
-		template<typename TTransaction, typename TDerivedTransaction, typename TUniqueDerivedTransaction, typename TPlugin>
+		template<typename TTransaction, typename TDerivedTransaction, typename TExtendedDerivedTransaction, typename TPlugin>
 		class BasicTransactionPluginT : public TPlugin {
 		private:
-			using PublishFunc = consumer<const TUniqueDerivedTransaction&, const Height&, NotificationSubscriber&>;
+			using PublishFunc = consumer<const TExtendedDerivedTransaction&, const Height&, NotificationSubscriber&>;
 
 		public:
 			explicit BasicTransactionPluginT(const PublishFunc& publishFunc) : m_publishFunc(publishFunc)
@@ -76,7 +76,7 @@ namespace catapult { namespace model {
 
 		protected:
 			void publishImpl(const WeakEntityInfoT<TTransaction>& transactionInfo, NotificationSubscriber& sub) const {
-				m_publishFunc(static_cast<const TUniqueDerivedTransaction&>(transactionInfo.entity()), transactionInfo.associatedHeight(), sub);
+				m_publishFunc(static_cast<const TExtendedDerivedTransaction&>(transactionInfo.entity()), transactionInfo.associatedHeight(), sub);
 			}
 
 		private:

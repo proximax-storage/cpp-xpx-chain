@@ -44,11 +44,6 @@ namespace catapult { namespace model {
 
 		/// Cosignatory account public key.
 		Key CosignatoryPublicKey;
-
-	public:
-		bool operator==(const CosignatoryModification& other) const {
-			return other.ModificationType == this->ModificationType && this->CosignatoryPublicKey == other.CosignatoryPublicKey;
-		}
 	};
 
 	/// Binary layout for a modify multisig account transaction body.

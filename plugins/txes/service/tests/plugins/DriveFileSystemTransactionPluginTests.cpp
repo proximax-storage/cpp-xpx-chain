@@ -140,22 +140,8 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->RootHash, notification.RootHash);
 		EXPECT_EQ(pTransaction->XorRootHash, notification.XorRootHash);
 		EXPECT_EQ(pTransaction->AddActionsCount, notification.AddActionsCount);
-        {
-            auto lPtr = pTransaction->AddActionsPtr();
-            auto rPtr = notification.AddActionsPtr;
-            for (auto i = 0u; i < pTransaction->AddActionsCount; ++i, ++lPtr, ++rPtr) {
-                EXPECT_EQ(*lPtr, *rPtr);
-            }
-        }
 		EXPECT_EQ_MEMORY(pTransaction->AddActionsPtr(), notification.AddActionsPtr, Num_Add_Actions * sizeof(AddAction));
         EXPECT_EQ(pTransaction->RemoveActionsCount, notification.RemoveActionsCount);
-        {
-            auto lPtr = pTransaction->RemoveActionsPtr();
-            auto rPtr = notification.RemoveActionsPtr;
-            for (auto i = 0u; i < pTransaction->RemoveActionsCount; ++i, ++lPtr, ++rPtr) {
-                EXPECT_EQ(*lPtr, *rPtr);
-            }
-        }
 		EXPECT_EQ_MEMORY(pTransaction->RemoveActionsPtr(), notification.RemoveActionsPtr, Num_Remove_Actions * sizeof(RemoveAction));
 	}
 

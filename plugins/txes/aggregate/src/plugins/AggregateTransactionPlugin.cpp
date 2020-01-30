@@ -27,6 +27,7 @@
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/model/ExtendedEmbeddedTransaction.h"
 #include "catapult/plugins/PluginUtils.h"
+#include "Common.h"
 
 using namespace catapult::model;
 
@@ -107,28 +108,12 @@ namespace catapult { namespace plugins {
 								numCosignatures,
 								aggregate.CosignaturesPtr()));
 
-						auto pUnique = sub.mempool().malloc<uint8_t>(subTransaction.Size + sizeof(aggregate.Deadline));
-						std::memcpy(
-							pUnique,
-							reinterpret_cast<const uint8_t*>(&subTransaction),
-							sizeof(subTransaction)
-						);
-						std::memcpy(
-							pUnique + sizeof(subTransaction),
-							reinterpret_cast<const uint8_t*>(&aggregate.Deadline),
-							sizeof(aggregate.Deadline)
-						);
-						std::memcpy(
-							pUnique + sizeof(model::ExtendedEmbeddedTransaction),
-							reinterpret_cast<const uint8_t*>(&subTransaction) + sizeof(subTransaction),
-							subTransaction.Size - sizeof(subTransaction)
-						);
-						model::ExtendedEmbeddedTransaction& tx = *reinterpret_cast<model::ExtendedEmbeddedTransaction*>(pUnique);
-						tx.Size = subTransaction.Size + sizeof(aggregate.Deadline);
-
 						// - specific sub-transaction notifications
 						//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
-						WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo{tx, transactionInfo.associatedHeight()};
+						WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo{
+							ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub),
+							transactionInfo.associatedHeight()
+						};
 						plugin.publish(subTransactionInfo, sub);
 					}
 

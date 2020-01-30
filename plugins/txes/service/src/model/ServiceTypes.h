@@ -18,11 +18,6 @@ namespace catapult { namespace model {
     public:
         /// Hash of file.
         Hash256 FileHash;
-
-	public:
-		bool operator==(const File& other) const {
-			return other.FileHash == this->FileHash;
-		}
     };
 
     struct UploadInfo {
@@ -35,11 +30,6 @@ namespace catapult { namespace model {
     public:
         /// Size of file.
         uint64_t FileSize;
-
-	public:
-		bool operator==(const AddAction& other) const {
-			return other.FileSize == this->FileSize && static_cast<const File&>(*this) == static_cast<const File&>(other);
-		}
     };
 
     /// Binary layout of a remove action.

@@ -134,13 +134,6 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->Signer, notification.Replicator);
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(Num_Files, notification.FilesCount);
-        {
-            auto lPtr = pTransaction->FilesPtr();
-            auto rPtr = notification.FilesPtr;
-            for (auto i = 0u; i < Num_Files; ++i, ++lPtr, ++rPtr) {
-                EXPECT_EQ(*lPtr, *rPtr);
-            }
-        }
 		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(File));
 	}
 

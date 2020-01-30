@@ -158,11 +158,7 @@ namespace catapult { namespace plugins {
 
 		ASSERT_EQ(1u, mosaicsSub.numMatchingNotifications());
 		EXPECT_EQ(1u, mosaicsSub.matchingNotifications()[0].MosaicsCount);
-		auto lPtr = pTransaction->MosaicsPtr();
-		auto rPtr = mosaicsSub.matchingNotifications()[0].MosaicsPtr;
-		for (auto i = 0u; i < pTransaction->MosaicsCount; ++i, ++lPtr, ++rPtr) {
-			EXPECT_EQ(*lPtr, *rPtr);
-		}
+		EXPECT_EQ_MEMORY(pTransaction->MosaicsPtr(), mosaicsSub.matchingNotifications()[0].MosaicsPtr, pTransaction->MosaicsCount * sizeof(UnresolvedMosaic));
 	}
 
 	PLUGIN_TEST(CanExtractMultipleTransfers) {
@@ -190,11 +186,7 @@ namespace catapult { namespace plugins {
 
 		ASSERT_EQ(1u, mosaicsSub.numMatchingNotifications());
 		EXPECT_EQ(3u, mosaicsSub.matchingNotifications()[0].MosaicsCount);
-		auto lPtr = pTransaction->MosaicsPtr();
-		auto rPtr = mosaicsSub.matchingNotifications()[0].MosaicsPtr;
-		for (auto i = 0u; i < pTransaction->MosaicsCount; ++i, ++lPtr, ++rPtr) {
-			EXPECT_EQ(*lPtr, *rPtr);
-		}
+		EXPECT_EQ_MEMORY(pTransaction->MosaicsPtr(), mosaicsSub.matchingNotifications()[0].MosaicsPtr, pTransaction->MosaicsCount * sizeof(UnresolvedMosaic));
 	}
 
 	// endregion

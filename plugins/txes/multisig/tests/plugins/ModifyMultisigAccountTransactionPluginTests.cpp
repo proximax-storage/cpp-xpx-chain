@@ -186,13 +186,8 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
 		EXPECT_EQ(3, notification.ModificationsCount);
-		{
-			auto lPtr = pTransaction->ModificationsPtr();
-			auto rPtr = notification.ModificationsPtr;
-			for (auto i = 0u; i < pTransaction->ModificationsCount; ++i, ++lPtr, ++rPtr) {
-				EXPECT_EQ(*lPtr, *rPtr);
-			}
-		}
+		EXPECT_EQ_MEMORY(pTransaction->ModificationsPtr(), notification.ModificationsPtr, notification.ModificationsCount *
+				sizeof(pTransaction->ModificationsPtr()));
 	}
 
 	PLUGIN_TEST(NoCosignersNotificationWhenNoModificationIsPresent) {

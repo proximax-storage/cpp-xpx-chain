@@ -33,11 +33,6 @@ namespace catapult { namespace model {
 
 		/// Mosaic amount.
 		catapult::Amount Amount;
-
-	public:
-		bool operator==(const MosaicT& other) const {
-			return other.MosaicId == this->MosaicId && other.Amount == this->Amount;
-		}
 	};
 
 	using Mosaic = MosaicT<MosaicId>;

@@ -100,7 +100,7 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Owner);
 		EXPECT_EQ(4, notification.OfferCount);
-		EXPECT_EQ(*pTransaction->OffersPtr(), *notification.OffersPtr);
+		EXPECT_EQ_MEMORY(pTransaction->OffersPtr(), notification.OffersPtr, 4 * sizeof(OfferMosaic));
 	}
 
 	// endregion
