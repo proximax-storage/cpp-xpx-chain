@@ -77,6 +77,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		transaction.MessageSize = 0;
 		transaction.MosaicsCount = 0;
@@ -100,6 +101,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		transaction.MessageSize = 0;
 		transaction.MosaicsCount = 0;
@@ -156,7 +158,11 @@ namespace catapult { namespace plugins {
 
 		ASSERT_EQ(1u, mosaicsSub.numMatchingNotifications());
 		EXPECT_EQ(1u, mosaicsSub.matchingNotifications()[0].MosaicsCount);
-		EXPECT_EQ(pTransaction->MosaicsPtr(), mosaicsSub.matchingNotifications()[0].MosaicsPtr);
+		auto lPtr = pTransaction->MosaicsPtr();
+		auto rPtr = mosaicsSub.matchingNotifications()[0].MosaicsPtr;
+		for (auto i = 0u; i < pTransaction->MosaicsCount; ++i, ++lPtr, ++rPtr) {
+			EXPECT_EQ(*lPtr, *rPtr);
+		}
 	}
 
 	PLUGIN_TEST(CanExtractMultipleTransfers) {
@@ -184,7 +190,11 @@ namespace catapult { namespace plugins {
 
 		ASSERT_EQ(1u, mosaicsSub.numMatchingNotifications());
 		EXPECT_EQ(3u, mosaicsSub.matchingNotifications()[0].MosaicsCount);
-		EXPECT_EQ(pTransaction->MosaicsPtr(), mosaicsSub.matchingNotifications()[0].MosaicsPtr);
+		auto lPtr = pTransaction->MosaicsPtr();
+		auto rPtr = mosaicsSub.matchingNotifications()[0].MosaicsPtr;
+		for (auto i = 0u; i < pTransaction->MosaicsCount; ++i, ++lPtr, ++rPtr) {
+			EXPECT_EQ(*lPtr, *rPtr);
+		}
 	}
 
 	// endregion

@@ -171,9 +171,21 @@ namespace catapult { namespace plugins {
                 const auto& notification = sub.matchingNotifications()[counter++];
                 EXPECT_EQ(modification.ModificationType, notification.ModificationType);
                 EXPECT_EQ(modification.KeySize, notification.KeySize);
-                EXPECT_EQ(modification.KeyPtr(), notification.KeyPtr);
+                {
+                    auto lPtr = modification.KeyPtr();
+                    auto rPtr = notification.KeyPtr;
+                    for (auto i = 0u; i <modification.KeySize; ++i, ++lPtr, ++rPtr) {
+                        EXPECT_EQ(*lPtr, *rPtr);
+                    }
+                }
                 EXPECT_EQ(modification.ValueSize, notification.ValueSize);
-                EXPECT_EQ(modification.ValuePtr(), notification.ValuePtr);
+                {
+                    auto lPtr = modification.ValuePtr();
+                    auto rPtr = notification.ValuePtr;
+                    for (auto i = 0u; i <modification.ValueSize; ++i, ++lPtr, ++rPtr) {
+                        EXPECT_EQ(*lPtr, *rPtr);
+                    }
+                }
             }
 
             EXPECT_EQ(2u, counter);
@@ -207,9 +219,21 @@ namespace catapult { namespace plugins {
                 EXPECT_EQ(pTransaction->MetadataType, notification.MetadataType);
                 EXPECT_EQ(modification.ModificationType, notification.ModificationType);
                 EXPECT_EQ(modification.KeySize, notification.KeySize);
-                EXPECT_EQ(modification.KeyPtr(), notification.KeyPtr);
+                {
+                    auto lPtr = modification.KeyPtr();
+                    auto rPtr = notification.KeyPtr;
+                    for (auto i = 0u; i <modification.KeySize; ++i, ++lPtr, ++rPtr) {
+                        EXPECT_EQ(*lPtr, *rPtr);
+                    }
+                }
                 EXPECT_EQ(modification.ValueSize, notification.ValueSize);
-                EXPECT_EQ(modification.ValuePtr(), notification.ValuePtr);
+                {
+                    auto lPtr = modification.ValuePtr();
+                    auto rPtr = notification.ValuePtr;
+                    for (auto i = 0u; i <modification.ValueSize; ++i, ++lPtr, ++rPtr) {
+                        EXPECT_EQ(*lPtr, *rPtr);
+                    }
+                }
             }
 
             EXPECT_EQ(2u, counter);

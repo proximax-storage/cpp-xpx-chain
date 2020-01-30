@@ -148,7 +148,7 @@ namespace catapult { namespace mocks {
 
 		public:
 			void publish(const WeakEntityInfoT<EmbeddedTransaction>& transaction, NotificationSubscriber& sub) const override {
-				Publish(static_cast<const EmbeddedMockTransaction&>(transaction.entity()), m_options, sub);
+				Publish(static_cast<const ExtendedEmbeddedMockTransaction&>(transaction.entity()), m_options, sub);
 			}
 
 			utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction&) const override {

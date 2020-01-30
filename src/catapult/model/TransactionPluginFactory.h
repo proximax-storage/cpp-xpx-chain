@@ -39,22 +39,22 @@ namespace catapult { namespace model {
 	class TransactionPluginFactory {
 	public:
 		/// Creates an embedded transaction plugin around \a publishEmbeddedFunc.
-		template<typename TEmbeddedTransaction, typename TPublishEmbeddedFunc>
+		template<typename TEmbeddedTransaction, typename TExtendedEmbeddedTransaction, typename TPublishEmbeddedFunc>
 		static std::unique_ptr<EmbeddedTransactionPlugin> CreateEmbedded(TPublishEmbeddedFunc publishEmbeddedFunc) {
-			return std::make_unique<EmbeddedTransactionPluginT<TEmbeddedTransaction>>(publishEmbeddedFunc);
+			return std::make_unique<EmbeddedTransactionPluginT<TEmbeddedTransaction, TExtendedEmbeddedTransaction>>(publishEmbeddedFunc);
 		}
 
 		/// Creates a transaction plugin that supports embedding around \a publishFunc and \a publishEmbeddedFunc.
-		template<typename TTransaction, typename TEmbeddedTransaction, typename TPublishFunc, typename TPublishEmbeddedFunc>
+		template<typename TTransaction, typename TEmbeddedTransaction, typename TExtendedEmbeddedTransaction, typename TPublishFunc, typename TPublishEmbeddedFunc>
 		static std::unique_ptr<TransactionPlugin> Create(TPublishFunc publishFunc, TPublishEmbeddedFunc publishEmbeddedFunc) {
-			return std::make_unique<TransactionPluginT<TTransaction, TEmbeddedTransaction>>(publishFunc, publishEmbeddedFunc);
+			return std::make_unique<TransactionPluginT<TTransaction, TEmbeddedTransaction, TExtendedEmbeddedTransaction>>(publishFunc, publishEmbeddedFunc);
 		}
 
 	private:
-		template<typename TTransaction, typename TDerivedTransaction, typename TPlugin>
+		template<typename TTransaction, typename TDerivedTransaction, typename TUniqueDerivedTransaction, typename TPlugin>
 		class BasicTransactionPluginT : public TPlugin {
 		private:
-			using PublishFunc = consumer<const TDerivedTransaction&, const Height&, NotificationSubscriber&>;
+			using PublishFunc = consumer<const TUniqueDerivedTransaction&, const Height&, NotificationSubscriber&>;
 
 		public:
 			explicit BasicTransactionPluginT(const PublishFunc& publishFunc) : m_publishFunc(publishFunc)
@@ -76,18 +76,18 @@ namespace catapult { namespace model {
 
 		protected:
 			void publishImpl(const WeakEntityInfoT<TTransaction>& transactionInfo, NotificationSubscriber& sub) const {
-				m_publishFunc(static_cast<const TDerivedTransaction&>(transactionInfo.entity()), transactionInfo.associatedHeight(), sub);
+				m_publishFunc(static_cast<const TUniqueDerivedTransaction&>(transactionInfo.entity()), transactionInfo.associatedHeight(), sub);
 			}
 
 		private:
 			PublishFunc m_publishFunc;
 		};
 
-		template<typename TEmbeddedTransaction>
+		template<typename TEmbeddedTransaction, typename TExtendedEmbeddedTransaction>
 		class EmbeddedTransactionPluginT
-				: public BasicTransactionPluginT<EmbeddedTransaction, TEmbeddedTransaction, EmbeddedTransactionPlugin> {
+				: public BasicTransactionPluginT<EmbeddedTransaction, TEmbeddedTransaction, TExtendedEmbeddedTransaction, EmbeddedTransactionPlugin> {
 		private:
-			using BaseType = BasicTransactionPluginT<EmbeddedTransaction, TEmbeddedTransaction, EmbeddedTransactionPlugin>;
+			using BaseType = BasicTransactionPluginT<EmbeddedTransaction, TEmbeddedTransaction, TExtendedEmbeddedTransaction, EmbeddedTransactionPlugin>;
 
 		public:
 			template<typename TPublishEmbeddedFunc>
@@ -112,16 +112,16 @@ namespace catapult { namespace model {
 			}
 		};
 
-		template<typename TTransaction, typename TEmbeddedTransaction>
-		class TransactionPluginT : public BasicTransactionPluginT<Transaction, TTransaction, TransactionPlugin> {
+		template<typename TTransaction, typename TEmbeddedTransaction, typename TExtendedEmbeddedTransaction>
+		class TransactionPluginT : public BasicTransactionPluginT<Transaction, TTransaction, TTransaction, TransactionPlugin> {
 		private:
-			using BaseType = BasicTransactionPluginT<Transaction, TTransaction, TransactionPlugin>;
+			using BaseType = BasicTransactionPluginT<Transaction, TTransaction, TTransaction, TransactionPlugin>;
 
 		public:
 			template<typename TPublishFunc, typename TPublishEmbeddedFunc>
 			explicit TransactionPluginT(TPublishFunc publishFunc, TPublishEmbeddedFunc publishEmbeddedFunc)
 					: BaseType(publishFunc)
-					, m_pEmbeddedTransactionPlugin(CreateEmbedded<TEmbeddedTransaction>(publishEmbeddedFunc))
+					, m_pEmbeddedTransactionPlugin(CreateEmbedded<TEmbeddedTransaction, TExtendedEmbeddedTransaction>(publishEmbeddedFunc))
 			{}
 
 		public:
@@ -159,17 +159,17 @@ namespace catapult { namespace model {
 #define DEFINE_TRANSACTION_PLUGIN_FACTORY(NAME, OPTIONS, PUBLISH) \
 	std::unique_ptr<TransactionPlugin> Create##NAME##TransactionPlugin() { \
 		using Factory = TransactionPluginFactory<TransactionPluginFactoryOptions::OPTIONS>; \
-		return Factory::Create<NAME##Transaction, Embedded##NAME##Transaction>( \
+		return Factory::Create<NAME##Transaction, Embedded##NAME##Transaction, ExtendedEmbedded##NAME##Transaction>( \
 				PUBLISH<NAME##Transaction>, \
-				PUBLISH<Embedded##NAME##Transaction>); \
+				PUBLISH<ExtendedEmbedded##NAME##Transaction>); \
 	}
 
 /// Defines a transaction plugin factory for \a NAME transaction with \a OPTIONS using \a PUBLISH accepting \a CONFIG_TYPE configuration.
 #define DEFINE_TRANSACTION_PLUGIN_FACTORY_WITH_CONFIG(NAME, OPTIONS, PUBLISH, CONFIG_TYPE) \
 	std::unique_ptr<TransactionPlugin> Create##NAME##TransactionPlugin(const CONFIG_TYPE& config) { \
 		using Factory = TransactionPluginFactory<TransactionPluginFactoryOptions::OPTIONS>; \
-		return Factory::Create<NAME##Transaction, Embedded##NAME##Transaction>( \
+		return Factory::Create<NAME##Transaction, Embedded##NAME##Transaction, ExtendedEmbedded##NAME##Transaction>( \
 				PUBLISH<NAME##Transaction>(config), \
-				PUBLISH<Embedded##NAME##Transaction>(config)); \
+				PUBLISH<ExtendedEmbedded##NAME##Transaction>(config)); \
 	}
 }}

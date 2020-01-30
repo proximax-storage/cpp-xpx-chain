@@ -67,6 +67,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
 
 		// Act:
@@ -133,7 +134,13 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->Signer, notification.Replicator);
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(Num_Files, notification.FilesCount);
-		EXPECT_EQ(pTransaction->FilesPtr(), notification.FilesPtr);
+        {
+            auto lPtr = pTransaction->FilesPtr();
+            auto rPtr = notification.FilesPtr;
+            for (auto i = 0u; i < Num_Files; ++i, ++lPtr, ++rPtr) {
+                EXPECT_EQ(*lPtr, *rPtr);
+            }
+        }
 		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(File));
 	}
 

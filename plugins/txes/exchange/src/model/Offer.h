@@ -33,6 +33,11 @@ namespace catapult { namespace model {
 
 		/// Offer type.
 		OfferType Type;
+
+	public:
+		bool operator==(const Offer& other) const {
+			return other.Mosaic == this->Mosaic && other.Cost == this->Cost && other.Type == this->Type;
+		}
 	};
 
 	struct MatchedOffer : public Offer {
@@ -45,6 +50,11 @@ namespace catapult { namespace model {
 	public:
 		/// The duration of the offer.
 		BlockDuration Duration;
+
+	public:
+		bool operator==(const OfferWithDuration& other) const {
+			return other.Duration == this->Duration && static_cast<const Offer&>(*this) == static_cast<const Offer&>(other);
+		}
 	};
 
 	struct OfferMosaic {
@@ -53,6 +63,11 @@ namespace catapult { namespace model {
 
 		/// Offer type.
 		model::OfferType OfferType;
+
+	public:
+		bool operator==(const OfferMosaic& other) const {
+			return other.MosaicId == this->MosaicId && other.OfferType == this->OfferType;
+		}
 	};
 
 #pragma pack(pop)

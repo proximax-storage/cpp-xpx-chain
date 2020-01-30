@@ -66,6 +66,11 @@ namespace catapult { namespace model {
 
 		/// Property value.
 		TPropertyValue Value;
+
+	public:
+		bool operator==(const PropertyModification& other) const {
+			return other.ModificationType == this->ModificationType && this->Value == other.Value;
+		}
 	};
 
 #pragma pack(pop)

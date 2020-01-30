@@ -65,6 +65,7 @@ namespace catapult { namespace plugins {
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -111,7 +112,13 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
 		EXPECT_EQ(Offer_Count, notification.OfferCount);
-		EXPECT_EQ(pTransaction->OffersPtr(), notification.OffersPtr);
+		{
+			auto lPtr = pTransaction->OffersPtr();
+			auto rPtr = notification.OffersPtr;
+			for (auto i = 0u; i < Offer_Count; ++i, ++lPtr, ++rPtr) {
+				EXPECT_EQ(*lPtr, *rPtr);
+			}
+		}
 		EXPECT_EQ_MEMORY(pTransaction->OffersPtr(), notification.OffersPtr, Offer_Count * sizeof(model::MatchedOffer));
 	}
 
