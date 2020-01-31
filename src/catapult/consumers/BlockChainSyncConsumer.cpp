@@ -20,15 +20,14 @@
 
 #include "BlockConsumers.h"
 #include "ConsumerResultFactory.h"
-#include "InputUtils.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/utils/Casting.h"
 #include "catapult/utils/StackLogger.h"
+#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 namespace catapult { namespace consumers {
 
@@ -39,10 +38,42 @@ namespace catapult { namespace consumers {
 			return disruptor::CompletionStatus::Aborted == result.CompletionStatus;
 		}
 
+		Height GetConfigApplyHeightDelta(const model::Transaction& transaction) {
+			return Height(static_cast<const model::NetworkConfigTransaction&>(transaction).ApplyHeightDelta.unwrap());
+		}
+
+		Height GetConfigApplyHeightDelta(const model::EmbeddedTransaction& transaction) {
+			return Height(static_cast<const model::EmbeddedNetworkConfigTransaction&>(transaction).ApplyHeightDelta.unwrap());
+		}
+
+		void ExtractConfigHeights(const model::BlockElement& blockElement, std::set<Height>& configHeights) {
+			for (const auto& transactionElement : blockElement.Transactions) {
+				const auto& transaction = transactionElement.Transaction;
+				auto type = transaction.Type;
+				if (model::Entity_Type_Network_Config == type) {
+					configHeights.insert(blockElement.Block.Height + GetConfigApplyHeightDelta(transaction));
+				} else if (model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type) {
+					const auto& aggregate = static_cast<const model::AggregateTransaction&>(transaction);
+					for (const auto& subTransaction : aggregate.Transactions()) {
+						if (model::Entity_Type_Network_Config == subTransaction.Type) {
+							configHeights.insert(blockElement.Block.Height + GetConfigApplyHeightDelta(subTransaction));
+						}
+					}
+				}
+			}
+		}
+
+		void ExtractConfigHeights(const BlockElements& elements, std::set<Height>& configHeights) {
+			for (const auto& blockElement : elements) {
+				ExtractConfigHeights(blockElement, configHeights);
+			}
+		}
+
 		struct UnwindResult {
 		public:
 			model::ChainScore Score;
 			consumers::TransactionInfos TransactionInfos;
+			std::set<Height> ConfigHeights;
 
 		public:
 			void addBlockTransactionInfos(const std::shared_ptr<const model::BlockElement>& pBlockElement) {
@@ -158,7 +189,7 @@ namespace catapult { namespace consumers {
 			}
 
 		private:
-			ConsumerResult preprocess(const BlockElements& elements, InputSource source, SyncState& syncState) const {
+			ConsumerResult preprocess(BlockElements& elements, InputSource source, SyncState& syncState) const {
 				// 1. check that the peer chain can be linked to the current chain
 				auto storageView = m_storage.view();
 				auto peerStartHeight = elements[0].Block.Height;
@@ -194,6 +225,19 @@ namespace catapult { namespace consumers {
 					return Abort(Failure_Consumer_Remote_Chain_Score_Not_Better);
 				}
 
+				std::set<Height> remoteConfigHeights;
+				ExtractConfigHeights(elements, remoteConfigHeights);
+				for (const auto& height : remoteConfigHeights) {
+					auto newSize = (height - peerStartHeight).unwrap();
+					if (!unwindResult.ConfigHeights.count(height) && newSize < elements.size()) {
+						for (auto i = elements.size() - 1; i >= newSize; --i) {
+							peerScore -= model::ChainScore(chain::CalculateScore(*blocks[i - 1], *blocks[i]));
+							elements.pop_back();
+						}
+						break;
+					}
+				}
+
 				peerScore -= localScore; // calculate the score delta
 				syncState.update(std::move(pCommonBlockElement), std::move(peerScore), std::move(unwindResult.TransactionInfos));
 				return Continue();
@@ -222,6 +266,7 @@ namespace catapult { namespace consumers {
 				std::shared_ptr<const model::BlockElement> pChildBlockElement;
 				while (true) {
 					auto pParentBlockElement = storage.loadBlockElement(height);
+					ExtractConfigHeights(*pParentBlockElement, result.ConfigHeights);
 					if (pChildBlockElement) {
 						result.Score += model::ChainScore(chain::CalculateScore(pParentBlockElement->Block, pChildBlockElement->Block));
 

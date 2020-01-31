@@ -31,7 +31,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS NamespaceNameValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceName, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(NamespaceName)
 
 	namespace {
 		model::NamespaceNameNotification<1> CreateNamespaceNameNotification(uint8_t nameSize, const uint8_t* pName) {
@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 			pluginConfig.MaxNameSize = maxNameSize;
 			pluginConfig.ReservedRootNamespaceNames = reservedRootNamespaceNames;
 			test::MutableBlockchainConfiguration config;
-			config.Network.SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			config.Network.SetPluginConfiguration(pluginConfig);
 			return config.ToConst();
 		}
 	}
@@ -57,13 +57,12 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(maxNameSize, {});
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
+			auto pValidator = CreateNamespaceNameValidator();
 			auto name = std::string(nameSize, 'a');
 			auto notification = CreateNamespaceNameNotification(nameSize, reinterpret_cast<const uint8_t*>(name.data()));
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result)
@@ -102,14 +101,13 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(static_cast<uint8_t>(name.size()), {});
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
+			auto pValidator = CreateNamespaceNameValidator();
 			auto notification = CreateNamespaceNameNotification(
 					static_cast<uint8_t>(name.size()),
 					reinterpret_cast<const uint8_t*>(name.data()));
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "namespace with name " << name;
@@ -136,15 +134,14 @@ namespace catapult { namespace validators {
 		// Arrange: note that CreateNamespaceNameNotification creates proper id
 		auto config = CreateConfig(100, {});
 		auto cache = test::CreateEmptyCatapultCache(config);
-		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-		auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
+		auto pValidator = CreateNamespaceNameValidator();
 		auto name = std::string(10, 'a');
 		auto notification = CreateNamespaceNameNotification(
 				static_cast<uint8_t>(name.size()),
 				reinterpret_cast<const uint8_t*>(name.data()));
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification, cache);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 		// Assert:
 		EXPECT_EQ(ValidationResult::Success, result);
@@ -154,8 +151,7 @@ namespace catapult { namespace validators {
 		// Arrange: corrupt the id
 		auto config = CreateConfig(100, {});
 		auto cache = test::CreateEmptyCatapultCache(config);
-		auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-		auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
+		auto pValidator = CreateNamespaceNameValidator();
 		auto name = std::string(10, 'a');
 		auto notification = CreateNamespaceNameNotification(
 				static_cast<uint8_t>(name.size()),
@@ -163,7 +159,7 @@ namespace catapult { namespace validators {
 		notification.NamespaceId = notification.NamespaceId + NamespaceId(1);
 
 		// Act:
-		auto result = test::ValidateNotification(*pValidator, notification, cache);
+		auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 		// Assert:
 		EXPECT_EQ(Failure_Namespace_Name_Id_Mismatch, result);
@@ -197,12 +193,11 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto config = CreateConfig(20, { "foo", "foobar" });
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateNamespaceNameValidator(pConfigHolder);
+			auto pValidator = CreateNamespaceNameValidator();
 			auto notification = createNotification(name);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "namespace with name " << name;

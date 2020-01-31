@@ -31,6 +31,9 @@ namespace catapult { namespace config {
 	/// Hash lock plugin configuration settings.
 	struct HashLockConfiguration : public model::PluginConfiguration {
 	public:
+		DEFINE_CONFIG_CONSTANTS(lockhash)
+
+	public:
 		/// Amount that has to be locked per aggregate in partial cache.
 		Amount LockedFundsPerAggregate;
 

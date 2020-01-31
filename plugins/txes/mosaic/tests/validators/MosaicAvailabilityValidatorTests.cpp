@@ -59,7 +59,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateMosaicAvailabilityValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache, height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config::BlockchainConfiguration::Uninitialized(), height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result) << "height " << height << ", id " << notification.MosaicId;

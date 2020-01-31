@@ -77,6 +77,9 @@ namespace catapult { namespace io {
 		/// Returns position in the file.
 		uint64_t position() const;
 
+		/// Returns pathname of the file.
+		std::string pathname() const;
+
 	private:
 		class FileDescriptorHolder final {
 		public:

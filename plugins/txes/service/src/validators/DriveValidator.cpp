@@ -7,10 +7,7 @@
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
 #include "catapult/validators/ValidatorContext.h"
-#include "src/model/DriveFileSystemTransaction.h"
-#include "src/model/FilesDepositTransaction.h"
-#include "src/model/JoinToDriveTransaction.h"
-#include "src/model/EndDriveTransaction.h"
+#include "src/model/ServiceEntityType.h"
 #include <unordered_set>
 
 namespace catapult { namespace validators {
@@ -22,12 +19,13 @@ namespace catapult { namespace validators {
 		if (!driveCache.contains(notification.DriveKey))
 			return Failure_Service_Drive_Does_Not_Exist;
 
-		// TODO: Add verification type
 		static std::unordered_set<model::EntityType> blockedTransactionAfterFinish({
 		    model::Entity_Type_DriveFileSystem,
 		    model::Entity_Type_FilesDeposit,
 		    model::Entity_Type_JoinToDrive,
 		    model::Entity_Type_EndDrive,
+		    model::Entity_Type_Start_Drive_Verification,
+		    model::Entity_Type_End_Drive_Verification,
 		});
 
 		if (blockedTransactionAfterFinish.count(notification.TransactionType)) {
@@ -35,7 +33,7 @@ namespace catapult { namespace validators {
 			const auto& driveEntry = driveIter.get();
 
 			if (driveEntry.state() >= state::DriveState::Finished)
-				return Failure_Service_Drive_Already_Is_Finished;
+				return Failure_Service_Drive_Has_Ended;
 		}
 
 		return ValidationResult::Success;

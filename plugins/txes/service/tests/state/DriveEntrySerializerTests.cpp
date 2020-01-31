@@ -20,10 +20,12 @@ namespace catapult { namespace state {
 		constexpr auto Billing_History_Count = 2;
 		constexpr auto Drive_Payment_Count = 3;
 		constexpr auto File_Count = 4;
-		constexpr auto File_Action_Count = 5;
-		constexpr auto File_Payment_Count = 6;
-		constexpr auto Replicator_Count = 7;
-		constexpr auto File_Without_Deposit_Count = 8;
+		constexpr auto Replicator_Count = 5;
+		constexpr auto Active_Files_Without_Deposit_Count = 6;
+		constexpr auto Inactive_Files_Without_Deposit_Count = 7;
+		constexpr auto Height_Count = 8;
+		constexpr auto Removed_Replicator_Count = 9;
+		constexpr auto Upload_Payment_Count = 10;
 
 		constexpr auto Entry_Size =
 			sizeof(VersionType) + // version
@@ -50,36 +52,40 @@ namespace catapult { namespace state {
 			// end region
 
 			sizeof(uint64_t) + // size
+			sizeof(uint64_t) + // occupied space
 			sizeof(uint16_t) + // replicas
 			sizeof(uint16_t) + // minReplicators
 			sizeof(uint8_t) + // percentApprovers
 
-			// region file actions
+			// region files
 
 			sizeof(uint16_t) + // file count
 			File_Count * Hash256_Size + // file hash
 			File_Count * sizeof(uint64_t) + // file size
-			File_Count * sizeof(uint64_t) + // deposit
-			File_Count * sizeof(uint16_t) + // action count
-			File_Count * File_Action_Count * sizeof(uint8_t) + // action type
-			File_Count * File_Action_Count * sizeof(uint64_t) + // action height
-			File_Count * sizeof(uint16_t) + // file payment count
-			File_Count * File_Payment_Count * Key_Size + // Receiver
-			File_Count * File_Payment_Count * sizeof(uint64_t) + // Amount
-			File_Count * File_Payment_Count * sizeof(uint64_t) + // Height
 
 			// end region
 
 			// region replicators
 
-			sizeof(uint16_t) + // replicator count
-			Replicator_Count * Key_Size + // replicator public key
-			Replicator_Count * sizeof(uint64_t) + // Start
-			Replicator_Count * sizeof(uint64_t) + // End
-			Replicator_Count * sizeof(uint64_t) + // Deposit
-			Replicator_Count * sizeof(uint16_t) + // files without deposit count
-			Replicator_Count * File_Without_Deposit_Count * Hash256_Size + // file hash
-			Replicator_Count * File_Without_Deposit_Count * sizeof(uint16_t); // counter
+			2 * sizeof(uint16_t) + // replicator count
+			(Replicator_Count + Removed_Replicator_Count) * Key_Size + // replicator public key
+			(Replicator_Count + Removed_Replicator_Count) * sizeof(uint64_t) + // Start
+			(Replicator_Count + Removed_Replicator_Count) * sizeof(uint64_t) + // End
+			(Replicator_Count + Removed_Replicator_Count) * sizeof(uint16_t) + // active files without deposit count
+			(Replicator_Count + Removed_Replicator_Count) * Active_Files_Without_Deposit_Count * Hash256_Size + // file hash
+			(Replicator_Count + Removed_Replicator_Count) * sizeof(uint16_t) + // inactive files without deposit count
+			(Replicator_Count + Removed_Replicator_Count) * Inactive_Files_Without_Deposit_Count * Hash256_Size + // file hash
+			(Replicator_Count + Removed_Replicator_Count) * Inactive_Files_Without_Deposit_Count * sizeof(uint16_t) + // height count
+			(Replicator_Count + Removed_Replicator_Count) * Inactive_Files_Without_Deposit_Count * Height_Count * sizeof(Height) + // heights
+
+			// end region
+
+			// region upload payments
+
+			sizeof(uint16_t) + // payment count
+			Upload_Payment_Count * Key_Size + // Receiver
+			Upload_Payment_Count * sizeof(uint64_t) + // Amount
+			Upload_Payment_Count * sizeof(uint64_t); // Height
 
 			// end region
 
@@ -109,10 +115,12 @@ namespace catapult { namespace state {
 				Billing_History_Count,
 				Drive_Payment_Count,
 				File_Count,
-				File_Action_Count,
-				File_Payment_Count,
 				Replicator_Count,
-				File_Without_Deposit_Count);
+				Active_Files_Without_Deposit_Count,
+				Inactive_Files_Without_Deposit_Count,
+				Height_Count,
+				Removed_Replicator_Count,
+				Upload_Payment_Count);
 		}
 
 		void AssertPayments(const std::vector<PaymentInformation>& payments, const uint8_t*& pData) {
@@ -125,6 +133,40 @@ namespace catapult { namespace state {
 				pData += sizeof(uint64_t);
 				EXPECT_EQ(payment.Height.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
+			}
+		}
+
+		template<typename T>
+		void AssertReplicators(const T& replicators, const uint8_t*& pData) {
+			EXPECT_EQ(replicators.size(), *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
+			for (const auto& replicatorPair : replicators) {
+				EXPECT_EQ_MEMORY(replicatorPair.first.data(), pData, Key_Size);
+				pData += Key_Size;
+				EXPECT_EQ(replicatorPair.second.Start.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
+				EXPECT_EQ(replicatorPair.second.End.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
+
+				EXPECT_EQ(replicatorPair.second.ActiveFilesWithoutDeposit.size(), *reinterpret_cast<const uint16_t*>(pData));
+				pData += sizeof(uint16_t);
+				for (const auto& fileHash : replicatorPair.second.ActiveFilesWithoutDeposit) {
+					EXPECT_EQ_MEMORY(fileHash.data(), pData, Hash256_Size);
+					pData += Hash256_Size;
+				}
+
+				EXPECT_EQ(replicatorPair.second.InactiveFilesWithoutDeposit.size(), *reinterpret_cast<const uint16_t*>(pData));
+				pData += sizeof(uint16_t);
+				for (const auto& pair : replicatorPair.second.InactiveFilesWithoutDeposit) {
+					EXPECT_EQ_MEMORY(pair.first.data(), pData, Hash256_Size);
+					pData += Hash256_Size;
+					EXPECT_EQ(pair.second.size(), *reinterpret_cast<const uint16_t*>(pData));
+					pData += sizeof(uint16_t);
+					for (const auto& height : pair.second) {
+						EXPECT_EQ(height.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+						pData += sizeof(uint64_t);
+					}
+				}
 			}
 		}
 
@@ -167,6 +209,8 @@ namespace catapult { namespace state {
 
 			EXPECT_EQ(entry.size(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
+			EXPECT_EQ(entry.occupiedSpace(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.replicas(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
 			EXPECT_EQ(entry.minReplicators(), *reinterpret_cast<const uint16_t*>(pData));
@@ -183,46 +227,20 @@ namespace catapult { namespace state {
 				pData += Hash256_Size;
 				EXPECT_EQ(filePair.second.Size, *reinterpret_cast<const uint64_t*>(pData));
 				pData += sizeof(uint64_t);
-				EXPECT_EQ(filePair.second.Deposit.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
-				pData += sizeof(uint64_t);
-
-				EXPECT_EQ(filePair.second.Actions.size(), *reinterpret_cast<const uint16_t*>(pData));
-				pData += sizeof(uint16_t);
-				for (const auto& action : filePair.second.Actions) {
-					EXPECT_EQ(action.Type, static_cast<state::DriveActionType>(*pData));
-					pData++;
-					EXPECT_EQ(action.ActionHeight.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
-					pData += sizeof(uint64_t);
-				}
-
-				AssertPayments(filePair.second.Payments, pData);
 			}
 
 			// end region
 
 			// region replicators
 
-			EXPECT_EQ(entry.replicators().size(), *reinterpret_cast<const uint16_t*>(pData));
-			pData += sizeof(uint16_t);
-			for (const auto& replicatorPair : entry.replicators()) {
-				EXPECT_EQ_MEMORY(replicatorPair.first.data(), pData, Key_Size);
-				pData += Key_Size;
-				EXPECT_EQ(replicatorPair.second.Start.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
-				pData += sizeof(uint64_t);
-				EXPECT_EQ(replicatorPair.second.End.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
-				pData += sizeof(uint64_t);
-				EXPECT_EQ(replicatorPair.second.Deposit.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
-				pData += sizeof(uint64_t);
+			AssertReplicators(entry.replicators(), pData);
+			AssertReplicators(entry.removedReplicators(), pData);
 
-				EXPECT_EQ(replicatorPair.second.FilesWithoutDeposit.size(), *reinterpret_cast<const uint16_t*>(pData));
-				pData += sizeof(uint16_t);
-				for (const auto& pair : replicatorPair.second.FilesWithoutDeposit) {
-					EXPECT_EQ_MEMORY(pair.first.data(), pData, Hash256_Size);
-					pData += Hash256_Size;
-					EXPECT_EQ(pair.second, *reinterpret_cast<const uint16_t*>(pData));
-					pData += sizeof(uint16_t);
-				}
-			}
+			// end region
+
+			// region upload payments
+
+			AssertPayments(entry.uploadPayments(), pData);
 
 			// end region
 
@@ -290,6 +308,44 @@ namespace catapult { namespace state {
 			}
 		}
 
+		template<typename T>
+		void SaveReplicators(const T& replicators, uint8_t*& pData) {
+			uint16_t count = utils::checked_cast<size_t, uint16_t>(replicators.size());
+			memcpy(pData, &count, sizeof(uint16_t));
+			pData += sizeof(uint16_t);
+			for (const auto& replicatorPair : replicators) {
+				memcpy(pData, replicatorPair.first.data(), Key_Size);
+				pData += Key_Size;
+				memcpy(pData, &replicatorPair.second.Start, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+				memcpy(pData, &replicatorPair.second.End, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
+
+				count = utils::checked_cast<size_t, uint16_t>(replicatorPair.second.ActiveFilesWithoutDeposit.size());
+				memcpy(pData, &count, sizeof(uint16_t));
+				pData += sizeof(uint16_t);
+				for (const auto& fileHash : replicatorPair.second.ActiveFilesWithoutDeposit) {
+					memcpy(pData, fileHash.data(), Hash256_Size);
+					pData += Hash256_Size;
+				}
+
+				count = utils::checked_cast<size_t, uint16_t>(replicatorPair.second.InactiveFilesWithoutDeposit.size());
+				memcpy(pData, &count, sizeof(uint16_t));
+				pData += sizeof(uint16_t);
+				for (const auto& pair : replicatorPair.second.InactiveFilesWithoutDeposit) {
+					memcpy(pData, pair.first.data(), Hash256_Size);
+					pData += Hash256_Size;
+					count = utils::checked_cast<size_t, uint16_t>(pair.second.size());
+					memcpy(pData, &count, sizeof(uint16_t));
+					pData += sizeof(uint16_t);
+					for (const auto& height : pair.second) {
+						memcpy(pData, &height, sizeof(uint64_t));
+						pData += sizeof(uint64_t);
+					}
+				}
+			}
+		}
+
 		std::vector<uint8_t> CreateEntryBuffer(const state::DriveEntry& entry, VersionType version) {
 			std::vector<uint8_t> buffer(Entry_Size);
 
@@ -328,6 +384,8 @@ namespace catapult { namespace state {
 
 			memcpy(pData, &entry.size(), sizeof(uint64_t));
 			pData += sizeof(uint64_t);
+			memcpy(pData, &entry.occupiedSpace(), sizeof(uint64_t));
+			pData += sizeof(uint64_t);
 			memcpy(pData, &entry.replicas(), sizeof(uint16_t));
 			pData += sizeof(uint16_t);
 			memcpy(pData, &entry.minReplicators(), sizeof(uint16_t));
@@ -343,45 +401,12 @@ namespace catapult { namespace state {
 				pData += Hash256_Size;
 				memcpy(pData, &filePair.second.Size, sizeof(uint64_t));
 				pData += sizeof(uint64_t);
-				memcpy(pData, &filePair.second.Deposit, sizeof(uint64_t));
-				pData += sizeof(uint64_t);
-
-				uint16_t actionCount = utils::checked_cast<size_t, uint16_t>(filePair.second.Actions.size());
-				memcpy(pData, &actionCount, sizeof(uint16_t));
-				pData += sizeof(uint16_t);
-				for (const auto& action : filePair.second.Actions) {
-					*pData = utils::to_underlying_type(action.Type);
-					pData++;
-					memcpy(pData, &action.ActionHeight, sizeof(uint64_t));
-					pData += sizeof(uint64_t);
-				}
-
-				SavePayments(filePair.second.Payments, pData);
 			}
 
-			uint16_t replicatorCount = utils::checked_cast<size_t, uint16_t>(entry.replicators().size());
-			memcpy(pData, &replicatorCount, sizeof(uint16_t));
-			pData += sizeof(uint16_t);
-			for (const auto& replicatorPair : entry.replicators()) {
-				memcpy(pData, replicatorPair.first.data(), Key_Size);
-				pData += Key_Size;
-				memcpy(pData, &replicatorPair.second.Start, sizeof(uint64_t));
-				pData += sizeof(uint64_t);
-				memcpy(pData, &replicatorPair.second.End, sizeof(uint64_t));
-				pData += sizeof(uint64_t);
-				memcpy(pData, &replicatorPair.second.Deposit, sizeof(uint64_t));
-				pData += sizeof(uint64_t);
+			SaveReplicators(entry.replicators(), pData);
+			SaveReplicators(entry.removedReplicators(), pData);
 
-				uint16_t actionCount = utils::checked_cast<size_t, uint16_t>(replicatorPair.second.FilesWithoutDeposit.size());
-				memcpy(pData, &actionCount, sizeof(uint16_t));
-				pData += sizeof(uint16_t);
-				for (const auto& pair : replicatorPair.second.FilesWithoutDeposit) {
-					memcpy(pData, pair.first.data(), Hash256_Size);
-					pData += Hash256_Size;
-					memcpy(pData, &pair.second, sizeof(uint16_t));
-					pData += sizeof(uint16_t);
-				}
-			}
+			SavePayments(entry.uploadPayments(), pData);
 
 			return buffer;
 		}

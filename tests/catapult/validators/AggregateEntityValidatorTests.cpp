@@ -62,7 +62,8 @@ namespace catapult { namespace validators {
 			// Arrange:
 			auto cache = test::CreateEmptyCatapultCache();
 			auto cacheView = cache.createView();
-			auto context = test::CreateValidatorContext(Height(123), cacheView.toReadOnly());
+			auto config = config::BlockchainConfiguration::Uninitialized();
+			auto context = test::CreateValidatorContext(config, Height(123), cacheView.toReadOnly());
 			auto dispatcher = [&entity](const auto&, const auto& validationFunctions) {
 				Hash256 hash;
 				auto entityInfo = model::WeakEntityInfoT<model::VerifiableEntity>(entity, hash, Height{0});

@@ -21,6 +21,7 @@
 #pragma once
 #include "ObserverStatementBuilder.h"
 #include "catapult/cache/CatapultCacheDelta.h"
+#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/model/ResolverContext.h"
 #include "catapult/state/CatapultState.h"
 #include <iosfwd>
@@ -77,13 +78,16 @@ namespace catapult { namespace observers {
 	/// Context passed to all the observers.
 	struct ObserverContext {
 	public:
-		/// Creates an observer context around \a state at \a height with specified \a mode and \a resolvers.
+		/// Creates an observer context around \a state and \a config at \a height with specified \a mode and \a resolvers.
 		/// \note \a state is const to enable more consise code even though it only contains non-const references.
-		ObserverContext(const ObserverState& state, Height height, NotifyMode mode, const model::ResolverContext& resolvers);
+		ObserverContext(const ObserverState& state, const config::BlockchainConfiguration& config, Height height, NotifyMode mode, const model::ResolverContext& resolvers);
 
 	public:
 		/// Catapult cache.
 		cache::CatapultCacheDelta& Cache;
+
+		/// Blockchain config.
+		const config::BlockchainConfiguration& Config;
 
 		/// Catapult state.
 		state::CatapultState& State;

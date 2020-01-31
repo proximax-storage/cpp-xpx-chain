@@ -27,14 +27,13 @@ namespace catapult { namespace validators {
 
 	using Notification = model::HashLockMosaicNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(HashLockMosaic, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(HashLockMosaic, ([pConfigHolder](const auto& notification, const auto& context) {
-			const config::BlockchainConfiguration& config = pConfigHolder->Config(context.Height);
-			const auto& pluginConfig = config.Network.GetPluginConfiguration<config::HashLockConfiguration>(PLUGIN_NAME_HASH(lockhash));
+	DECLARE_STATEFUL_VALIDATOR(HashLockMosaic, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(HashLockMosaic, ([](const auto& notification, const auto& context) {
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::HashLockConfiguration>();
 			if (pluginConfig.LockedFundsPerAggregate != notification.Mosaic.Amount)
 				return Failure_LockHash_Invalid_Mosaic_Amount;
 
-			auto currencyMosaicId = context.Resolvers.resolve(config::GetUnresolvedCurrencyMosaicId(config.Immutable));
+			auto currencyMosaicId = context.Resolvers.resolve(config::GetUnresolvedCurrencyMosaicId(context.Config.Immutable));
 			return currencyMosaicId != context.Resolvers.resolve(notification.Mosaic.MosaicId)
 					? Failure_LockHash_Invalid_Mosaic_Id
 					: ValidationResult::Success;

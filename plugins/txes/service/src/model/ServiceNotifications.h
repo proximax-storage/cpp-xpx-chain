@@ -24,20 +24,26 @@ namespace catapult { namespace model {
 	/// Defines a drive files deposit notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Service, Files_Deposit_v1, 0x0004);
 
-	/// Defines a drive verification notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Drive_Verification_v1, 0x0005);
+	/// Defines a start drive verification notification type.
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Start_Drive_Verification_v1, 0x0005);
+
+	/// Defines an end drive verification notification type.
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, End_Drive_Verification_v1, 0x0006);
+
+	/// Defines a drive verification payment notification type.
+	DEFINE_NOTIFICATION_TYPE(Observer, Service, Drive_Verification_Payment_v1, 0x0007);
 
 	/// Defines a drive notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0006);
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Drive_v1, 0x0008);
 
 	/// Defines a end drive notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0007);
+	DEFINE_NOTIFICATION_TYPE(All, Service, End_Drive_v1, 0x0009);
 
-	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, Service, DeleteReward_v1, 0x0008);
+	/// Defines a drive files reward notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, DriveFilesReward_v1, 0x000A);
 
-	/// Defines a delete reward notification type.
-	DEFINE_NOTIFICATION_TYPE(All, Service, Reward_v1, 0x0009);
+	/// Defines a failed block hashes notification type.
+	DEFINE_NOTIFICATION_TYPE(Validator, Service, Failed_Block_Hashes_v1, 0x000B);
 
 	/// Notification of a drive prepare.
 	template<VersionType version>
@@ -98,7 +104,7 @@ namespace catapult { namespace model {
 		uint16_t MinReplicators;
 
 		/// Percent of approves from replicators to apply transaction.
-		int8_t PercentApprovers;
+		uint8_t PercentApprovers;
 	};
 
 	/// Notification of a drive deposit.
@@ -122,24 +128,44 @@ namespace catapult { namespace model {
 
 	public:
 		/// Public key of the drive multisig account.
-		const Key& DriveKey;
+		Key DriveKey;
 
 		/// Replicator public key.
-        const Key& Replicator;
+		Key Replicator;
 	};
 
-	struct DriveDeposit {
+	struct DriveDeposit : public UnresolvedAmountData {
+	public:
+		DriveDeposit(const Key& driveKey)
+			: DriveKey(driveKey)
+		{}
+
+	public:
 		const Key& DriveKey;
 	};
 
-	struct FileDeposit {
-		const Key& DriveKey;
-		const Hash256& FileHash;
+	struct FileDeposit : public UnresolvedAmountData {
+	public:
+		FileDeposit(const Key& driveKey, const Hash256& fileHash)
+			: DriveKey(driveKey)
+			, FileHash(fileHash)
+		{}
+
+	public:
+		Key DriveKey;
+		Hash256 FileHash;
 	};
 
-	struct FileUpload {
-		const Key& DriveKey;
-		const uint64_t& FileSize;
+	struct FileUpload : public UnresolvedAmountData {
+	public:
+		FileUpload(const Key& driveKey, const uint64_t& fileSize)
+			: DriveKey(driveKey)
+			, FileSize(fileSize)
+		{}
+
+	public:
+		Key DriveKey;
+		uint64_t FileSize;
 	};
 
 	/// Notification of a drive deposit.
@@ -175,25 +201,25 @@ namespace catapult { namespace model {
 
 	public:
 		/// Key of drive.
-		const Key& DriveKey;
+		Key DriveKey;
 
 		/// Signer of transaction.
-		const Key& Signer;
+		Key Signer;
 
 		/// A new RootHash of drive.
-		const Hash256& RootHash;
+		Hash256 RootHash;
 
 		/// Xor of a new RootHash of drive with previous RootHash.
-		const Hash256& XorRootHash;
+		Hash256 XorRootHash;
 
 		/// Count of add actions.
-		const uint16_t& AddActionsCount;
+		uint16_t AddActionsCount;
 
 		/// Actions to add files to drive.
 		const model::AddAction* AddActionsPtr;
 
 		/// Count of remove actions.
-		const uint16_t& RemoveActionsCount;
+		uint16_t RemoveActionsCount;
 
 		/// Actions to remove files from drive.
 		const model::RemoveAction* RemoveActionsPtr;
@@ -238,29 +264,92 @@ namespace catapult { namespace model {
 
 	/// Notification of a drive verification.
 	template<VersionType version>
-	struct DriveVerificationNotification;
+	struct StartDriveVerificationNotification;
 
 	template<>
-	struct DriveVerificationNotification<1> : public Notification {
+	struct StartDriveVerificationNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Drive_Verification_v1_Notification;
+		static constexpr auto Notification_Type = Service_Start_Drive_Verification_v1_Notification;
 
 	public:
-		explicit DriveVerificationNotification(
+		explicit StartDriveVerificationNotification(
 			const Key& drive,
-			const Key& replicator)
-			: Notification(Notification_Type, sizeof(DriveVerificationNotification<1>))
+			const Key& initiator)
+			: Notification(Notification_Type, sizeof(StartDriveVerificationNotification<1>))
 			, DriveKey(drive)
-			, Replicator(replicator)
+			, Initiator(initiator)
 		{}
 
 	public:
 		/// Public key of the drive multisig account.
 		Key DriveKey;
 
-		/// Replicator public key.
-		Key Replicator;
+		/// Verification initiator public key.
+		Key Initiator;
+	};
+
+	/// Base notification of an end drive verification.
+	struct BaseEndDriveVerificationNotification : public Notification {
+	public:
+		explicit BaseEndDriveVerificationNotification(
+			NotificationType type,
+			const Key& drive,
+			uint16_t failureCount,
+			const Key* pFailedReplicators)
+			: Notification(type, sizeof(BaseEndDriveVerificationNotification))
+			, DriveKey(drive)
+			, FailureCount(failureCount)
+			, FailedReplicatorsPtr(pFailedReplicators)
+		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Count of verification failures.
+		uint16_t FailureCount;
+
+		/// Verification failures.
+		const Key* FailedReplicatorsPtr;
+	};
+
+	/// Notification of an end drive verification.
+	template<VersionType version>
+	struct EndDriveVerificationNotification;
+
+	template<>
+	struct EndDriveVerificationNotification<1> : public BaseEndDriveVerificationNotification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_End_Drive_Verification_v1_Notification;
+
+	public:
+		explicit EndDriveVerificationNotification(
+			const Key& drive,
+			uint16_t failureCount,
+			const Key* pFailedReplicators)
+			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailedReplicators)
+		{}
+	};
+
+	/// Notification of a drive verification payment.
+	template<VersionType version>
+	struct DriveVerificationPaymentNotification;
+
+	template<>
+	struct DriveVerificationPaymentNotification<1> : public BaseEndDriveVerificationNotification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_Drive_Verification_Payment_v1_Notification;
+
+	public:
+		explicit DriveVerificationPaymentNotification(
+			const Key& drive,
+			uint16_t failureCount,
+			const Key* pFailedReplicators)
+			: BaseEndDriveVerificationNotification(Notification_Type, drive, failureCount, pFailedReplicators)
+		{}
 	};
 
 	/// Notification of a drive.
@@ -313,49 +402,57 @@ namespace catapult { namespace model {
 		Key Signer;
 	};
 
-	/// Notification of a delete reward.
+	/// Notification of a drive files reward.
 	template<VersionType version>
-	struct DeleteRewardNotification;
+	struct DriveFilesRewardNotification;
 
 	template<>
-	struct DeleteRewardNotification<1> : public Notification {
+	struct DriveFilesRewardNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_DeleteReward_v1_Notification;
+		static constexpr auto Notification_Type = Service_DriveFilesReward_v1_Notification;
 
 	public:
-		explicit DeleteRewardNotification(const std::vector<const model::DeletedFile*>& files)
-				: Notification(Notification_Type, sizeof(DeleteRewardNotification<1>))
-				, DeletedFiles(files)
+		explicit DriveFilesRewardNotification(const Key& key, const UploadInfo* ptr, uint32_t count)
+				: Notification(Notification_Type, sizeof(DriveFilesRewardNotification<1>))
+				, DriveKey(key)
+				, UploadInfoPtr(ptr)
+				, UploadInfosCount(count)
 		{}
 
 	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
 		/// Vector of deleted files.
-		const std::vector<const model::DeletedFile*>& DeletedFiles;
+		const UploadInfo* UploadInfoPtr;
+
+		/// Upload infos count
+		uint32_t UploadInfosCount;
 	};
 
-	/// Notification of a reward.
+	/// Notification of block hashes that failed verification.
 	template<VersionType version>
-	struct RewardNotification;
+	struct FailedBlockHashesNotification;
 
 	template<>
-	struct RewardNotification<1> : public Notification {
+	struct FailedBlockHashesNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Service_Reward_v1_Notification;
+		static constexpr auto Notification_Type = Service_Failed_Block_Hashes_v1_Notification;
 
 	public:
-		explicit RewardNotification(const Key& key, const model::DeletedFile* file)
-				: Notification(Notification_Type, sizeof(RewardNotification<1>))
-				, DriveKey(key)
-				, DeletedFile(file)
+		explicit FailedBlockHashesNotification(const uint16_t& blockHashCount, const Hash256* pBlockHashes)
+				: Notification(Notification_Type, sizeof(FailedBlockHashesNotification<1>))
+				, BlockHashCount(blockHashCount)
+				, BlockHashesPtr(pBlockHashes)
 		{}
 
 	public:
-        /// Public key of the drive multisig account.
-        Key DriveKey;
+		/// Count of the hashes of the blocks that failed verification.
+		uint16_t BlockHashCount;
 
-		/// Vector of deleted files.
-		const model::DeletedFile* DeletedFile;
+		/// Array of the hashes of the blocks that failed verification.
+		const Hash256* BlockHashesPtr;
 	};
 }}

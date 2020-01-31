@@ -47,7 +47,7 @@ namespace catapult { namespace test {
 
 	public:
 		extensions::LocalNodeStateRef ref() {
-			return extensions::LocalNodeStateRef(m_config, m_state, m_cache, m_storage, m_score);
+			return extensions::LocalNodeStateRef(config::CreateMockConfigurationHolder(m_config), m_state, m_cache, m_storage, m_score);
 		}
 
 	private:

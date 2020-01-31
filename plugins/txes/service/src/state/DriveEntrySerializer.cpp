@@ -61,16 +61,6 @@ namespace catapult { namespace state {
 			for (const auto& filePair : filesMap) {
 				io::Write(output, filePair.first);
 				io::Write64(output, filePair.second.Size);
-				io::Write(output, filePair.second.Deposit);
-
-				const auto& actions = filePair.second.Actions;
-				io::Write16(output, actions.size());
-				for (const auto& action : actions) {
-					io::Write8(output, utils::to_underlying_type(action.Type));
-					io::Write(output, action.ActionHeight);
-				}
-
-				SavePayments(output, filePair.second.Payments);
 			}
 		}
 
@@ -82,41 +72,47 @@ namespace catapult { namespace state {
 
 				FileInfo info;
 				info.Size = io::Read64(input);
-				io::Read(input, info.Deposit);
-
-				auto numActions = io::Read16(input);
-				while (numActions--) {
-					DriveAction action;
-					action.Type = static_cast<DriveActionType>(io::Read8(input));
-					io::Read(input, action.ActionHeight);
-
-					info.Actions.emplace_back(action);
-				}
-
-				LoadPayments(input, info.Payments);
-
 				filesMap.emplace(hashFile, info);
 			}
 		}
 
-		void SaveReplicators(io::OutputStream& output, const state::ReplicatorsMap& replicatorsMap) {
+		template<typename T>
+		void SaveReplicators(io::OutputStream& output, const T& replicatorsMap) {
 			io::Write16(output, replicatorsMap.size());
 			for (const auto& replicatorPair : replicatorsMap) {
 				io::Write(output, replicatorPair.first);
 				io::Write(output, replicatorPair.second.Start);
 				io::Write(output, replicatorPair.second.End);
-				io::Write(output, replicatorPair.second.Deposit);
 
-				const auto& deposits = replicatorPair.second.FilesWithoutDeposit;
-				io::Write16(output, deposits.size());
-				for (const auto& pair : deposits) {
-					io::Write(output, pair.first);
-					io::Write16(output, pair.second);
+				const auto& activeDeposits = replicatorPair.second.ActiveFilesWithoutDeposit;
+				io::Write16(output, activeDeposits.size());
+				for (const auto& fileHash : activeDeposits) {
+					io::Write(output, fileHash);
+				}
+
+				const auto& inactiveDeposits = replicatorPair.second.InactiveFilesWithoutDeposit;
+				io::Write16(output, inactiveDeposits.size());
+				for (const auto& fileHashPair : inactiveDeposits) {
+					io::Write(output, fileHashPair.first);
+					io::Write16(output, fileHashPair.second.size());
+					for (const auto& height : fileHashPair.second)
+						io::Write(output, height);
 				}
 			}
 		}
 
-		void LoadReplicators(io::InputStream& input, state::ReplicatorsMap& replicatorsMap) {
+		template<typename T>
+		inline void emplace(std::vector<T>& replicators, T&& p) {
+			replicators.emplace_back(p);
+		}
+
+		template<typename T1, typename T2>
+		inline void emplace(std::map<T1, T2>& replicators, std::pair<T1, T2>&& p) {
+			replicators.emplace(p);
+		}
+
+		template<typename T>
+		void LoadReplicators(io::InputStream& input, T& replicatorsMap) {
 			auto numReplicators = io::Read16(input);
 			while (numReplicators--) {
 				Key replicator;
@@ -125,18 +121,28 @@ namespace catapult { namespace state {
 				ReplicatorInfo info;
 				io::Read(input, info.Start);
 				io::Read(input, info.End);
-				io::Read(input, info.Deposit);
 
-				auto numDeposits = io::Read16(input);
-				while (numDeposits--) {
+				auto numActiveDeposits = io::Read16(input);
+				while (numActiveDeposits--) {
 					Hash256 fileHash;
 					io::Read(input, fileHash);
-					auto count = io::Read16(input);
 
-					info.FilesWithoutDeposit.emplace(fileHash, count);
+					info.ActiveFilesWithoutDeposit.emplace(fileHash);
 				}
 
-				replicatorsMap.emplace(replicator, info);
+				auto numInactiveDeposits = io::Read16(input);
+				while (numInactiveDeposits--) {
+					Hash256 fileHash;
+					io::Read(input, fileHash);
+
+					std::vector<Height> heights(io::Read16(input));
+					for (auto& height : heights)
+						io::Read(input, height);
+
+					info.InactiveFilesWithoutDeposit.emplace(fileHash, heights);
+				}
+
+				emplace(replicatorsMap, { replicator, info });
 			}
 		}
 	}
@@ -158,12 +164,15 @@ namespace catapult { namespace state {
 		SaveBillingHistory(output, driveEntry.billingHistory());
 
 		io::Write64(output, driveEntry.size());
+		io::Write64(output, driveEntry.occupiedSpace());
 		io::Write16(output, driveEntry.replicas());
 		io::Write16(output, driveEntry.minReplicators());
 		io::Write8(output, driveEntry.percentApprovers());
 
 		SaveFiles(output, driveEntry.files());
 		SaveReplicators(output, driveEntry.replicators());
+		SaveReplicators(output, driveEntry.removedReplicators());
+		SavePayments(output, driveEntry.uploadPayments());
 	}
 
 	DriveEntry DriveEntrySerializer::Load(io::InputStream& input) {
@@ -195,12 +204,15 @@ namespace catapult { namespace state {
 		LoadBillingHistory(input, entry.billingHistory());
 
 		entry.setSize(io::Read64(input));
+		entry.setOccupiedSpace(io::Read64(input));
 		entry.setReplicas(io::Read16(input));
 		entry.setMinReplicators(io::Read16(input));
 		entry.setPercentApprovers(io::Read8(input));
 
 		LoadFiles(input, entry.files());
 		LoadReplicators(input, entry.replicators());
+		LoadReplicators(input, entry.removedReplicators());
+		LoadPayments(input, entry.uploadPayments());
 
 		return entry;
 	}

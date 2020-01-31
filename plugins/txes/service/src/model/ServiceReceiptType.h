@@ -28,6 +28,14 @@ namespace catapult { namespace model {
 
 	DEFINE_RECEIPT_TYPE(Drive, Drive, Drive_State, 1);
 
+	DEFINE_RECEIPT_TYPE(Drive, Drive, Drive_Deposit_Credit, 2);
+
+	DEFINE_RECEIPT_TYPE(Drive, Drive, Drive_Deposit_Debit, 3);
+
+	DEFINE_RECEIPT_TYPE(Drive, Drive, Drive_Reward_Transfer_Credit, 4);
+
+	DEFINE_RECEIPT_TYPE(Drive, Drive, Drive_Reward_Transfer_Debit, 5);
+
 #ifndef CUSTOM_RECEIPT_TYPE_DEFINITION
 }}
 #endif

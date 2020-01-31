@@ -20,7 +20,6 @@
 
 #include "harvesting/src/UnlockedAccounts.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/nodeps/LockTestUtils.h"
 #include "tests/TestHarness.h"
 

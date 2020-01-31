@@ -25,6 +25,7 @@
 #include "src/cache/NamespaceCache.h"
 #include "src/cache/NamespaceCacheStorage.h"
 #include "src/cache/NamespaceCacheSubCachePlugin.h"
+#include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
@@ -128,6 +129,9 @@ namespace catapult { namespace plugins {
 		}
 
 		void RegisterNamespaceSubsystemOnly(PluginManager& manager) {
+			manager.addPluginInitializer([](auto& config) {
+				config.template InitPluginConfiguration<config::NamespaceConfiguration>();
+			});
 			const auto& pConfigHolder = manager.configHolder();
 			manager.addTransactionSupport(CreateRegisterNamespaceTransactionPlugin(pConfigHolder));
 
@@ -151,18 +155,18 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateNamespaceTypeValidator());
 			});
 
-			manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+			manager.addStatefulValidatorHook([](auto& builder) {
 				builder
-					.add(validators::CreateNamespaceNameValidator(pConfigHolder))
-					.add(validators::CreateRootNamespaceValidator(pConfigHolder))
-					.add(validators::CreateRootNamespaceAvailabilityValidator(pConfigHolder))
-					.add(validators::CreateNamespaceDurationOverflowValidator(pConfigHolder))
+					.add(validators::CreateNamespaceNameValidator())
+					.add(validators::CreateRootNamespaceValidator())
+					.add(validators::CreateRootNamespaceAvailabilityValidator())
+					.add(validators::CreateNamespaceDurationOverflowValidator())
 					// note that the following validator needs to run before the RootNamespaceMaxChildrenValidator
 					.add(validators::CreateChildNamespaceAvailabilityValidator())
-					.add(validators::CreateRootNamespaceMaxChildrenValidator(pConfigHolder));
+					.add(validators::CreateRootNamespaceMaxChildrenValidator());
 			});
 
-			manager.addObserverHook([pConfigHolder](auto& builder) {
+			manager.addObserverHook([](auto& builder) {
 				auto rentalFeeReceiptType = model::Receipt_Type_Namespace_Rental_Fee;
 				auto expiryReceiptType = model::Receipt_Type_Namespace_Expired;
 				builder
@@ -170,7 +174,7 @@ namespace catapult { namespace plugins {
 					.add(observers::CreateChildNamespaceObserver())
 					.add(observers::CreateRentalFeeObserver<model::NamespaceRentalFeeNotification<1>>("Namespace", rentalFeeReceiptType))
 					.add(observers::CreateCacheBlockTouchObserver<cache::NamespaceCache>("Namespace", expiryReceiptType))
-					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1, pConfigHolder));
+					.add(observers::CreateCacheBlockPruningObserver<cache::NamespaceCache>("Namespace", 1));
 			});
 		}
 

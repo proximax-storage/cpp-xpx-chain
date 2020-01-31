@@ -35,30 +35,33 @@ namespace catapult { namespace test {
 	public:
 		/// Creates a test context around \a mode and \a height.
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height)
-				: m_cache(TCacheFactory::Create())
+				: m_config(config::BlockchainConfiguration::Uninitialized())
+				, m_cache(TCacheFactory::Create())
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, height, mode, CreateResolverContextXor())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, mode, CreateResolverContextXor())
 		{}
 
 		/// Creates a test context around \a mode, \a height and \a config.
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const config::BlockchainConfiguration& config)
-				: m_cache(TCacheFactory::Create(config))
+				: m_config(config)
+				, m_cache(TCacheFactory::Create(m_config))
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, height, mode, CreateResolverContextXor())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, mode, CreateResolverContextXor())
 		{}
 
 		/// Creates a test context around \a mode, \a height and \a gracePeriodDuration.
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, BlockDuration gracePeriodDuration)
-				: m_cache(TCacheFactory::Create(gracePeriodDuration))
+				: m_config(config::BlockchainConfiguration::Uninitialized())
+				, m_cache(TCacheFactory::Create(gracePeriodDuration))
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, height, mode, CreateResolverContextXor())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, m_config, height, mode, CreateResolverContextXor())
 		{}
 
 		/// Creates a test context around \a mode, \a height, \a config and \a gracePeriodDuration.
 		explicit ObserverTestContextT(observers::NotifyMode mode, Height height, const config::BlockchainConfiguration& config, BlockDuration gracePeriodDuration)
 				: m_cache(TCacheFactory::Create(config, gracePeriodDuration))
 				, m_cacheDelta(m_cache.createDelta())
-				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, height, mode, CreateResolverContextXor())
+				, m_context({ m_cacheDelta, m_state, m_blockStatementBuilder }, config, height, mode, CreateResolverContextXor())
 		{}
 
 	public:
@@ -99,6 +102,7 @@ namespace catapult { namespace test {
 		}
 
 	private:
+		config::BlockchainConfiguration m_config;
 		cache::CatapultCache m_cache;
 		cache::CatapultCacheDelta m_cacheDelta;
 		state::CatapultState m_state;

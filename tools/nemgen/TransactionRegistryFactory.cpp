@@ -37,8 +37,9 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto mosaicConfig = config::MosaicConfiguration::Uninitialized();
 		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
 		auto networkConfig = model::NetworkConfiguration::Uninitialized();
-		networkConfig.SetPluginConfiguration(PLUGIN_NAME(mosaic), mosaicConfig);
-		networkConfig.SetPluginConfiguration(PLUGIN_NAME(namespace), namespaceConfig);
+		networkConfig.SetPluginConfiguration(mosaicConfig);
+
+		networkConfig.SetPluginConfiguration(namespaceConfig);
 		config::BlockchainConfiguration config{
 			config::ImmutableConfiguration::Uninitialized(),
 			std::move(networkConfig),

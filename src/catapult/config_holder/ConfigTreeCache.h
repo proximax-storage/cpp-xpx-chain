@@ -28,17 +28,19 @@ namespace catapult { namespace config {
 	public:
 		bool contains(const Height& height) const;
 
-		BlockchainConfiguration& insert(const Height& height, const BlockchainConfiguration& config);
+		bool containsRef(const Height& height) const;
 
-		BlockchainConfiguration& insertRef(const Height& refHeight, const Height& configHeight);
+		const BlockchainConfiguration& insert(const Height& height, const BlockchainConfiguration& config);
+
+		const BlockchainConfiguration& insertRef(const Height& refHeight, const Height& configHeight);
 
 		void erase(const Height& height);
 
-		BlockchainConfiguration& get(const Height& height);
+		const BlockchainConfiguration& get(const Height& height);
 
 	private:
 		void cleanupRefs(ConfigRoot& root) {
-			cleanupRefs(root, root.Config.Network.MaxRollbackBlocks);
+			cleanupRefs(root, 4 * root.Config.Network.MaxRollbackBlocks);
 		}
 
 		inline void cleanupRefs(ConfigRoot& root, uint64_t size) {

@@ -36,55 +36,63 @@ namespace catapult { namespace test {
 			}
 		}
 
-        void AssertFileActions(const std::vector<state::DriveAction>& actions, const bsoncxx::array::view& dbActions) {
-			ASSERT_EQ(actions.size(), test::GetFieldCount(dbActions));
-			auto i = 0u;
-            for (const auto& dbAction : dbActions) {
-				const auto& action = actions[i++];
-				EXPECT_EQ(action.Type, static_cast<state::DriveActionType>(static_cast<int8_t>(dbAction["type"].get_int32())));
-				EXPECT_EQ(action.ActionHeight.unwrap(), GetUint64(dbAction, "height"));
-            }
-        }
-
 		void AssertFiles(const state::FilesMap& files, const bsoncxx::array::view& dbFiles) {
 			ASSERT_EQ(files.size(), test::GetFieldCount(dbFiles));
 			for (const auto& dbFile : dbFiles) {
                 Hash256 fileHash;
                 DbBinaryToModelArray(fileHash, dbFile["fileHash"].get_binary());
                 auto info = files.at(fileHash);
-				EXPECT_EQ(info.Deposit.unwrap(), GetUint64(dbFile, "deposit"));
 				EXPECT_EQ(info.Size, GetUint64(dbFile, "size"));
-
-				AssertPaymentInformation(info.Payments, dbFile["payments"].get_array().value);
-				AssertFileActions(info.Actions, dbFile["actions"].get_array().value);
 			}
 		}
 
-        void AssertFilesWithoutDeposit(const std::map<Hash256, uint16_t>& files, const bsoncxx::array::view& dbFiles) {
+        void AssertActiveFilesWithoutDeposit(const std::set<Hash256>& files, const bsoncxx::array::view& dbFiles) {
+			ASSERT_EQ(files.size(), test::GetFieldCount(dbFiles));
+			for (const auto& dbFile : dbFiles) {
+                Hash256 fileHash;
+                DbBinaryToModelArray(fileHash, dbFile.get_binary());
+				EXPECT_EQ(1, files.count(fileHash));
+			}
+        }
+
+        void AssertInactiveFilesWithoutDeposit(const std::map<Hash256, std::vector<Height>>& files, const bsoncxx::array::view& dbFiles) {
 			ASSERT_EQ(files.size(), test::GetFieldCount(dbFiles));
 			for (const auto& dbFile : dbFiles) {
                 Hash256 fileHash;
                 DbBinaryToModelArray(fileHash, dbFile["fileHash"].get_binary());
-				EXPECT_EQ(files.at(fileHash), static_cast<uint16_t>(dbFile["count"].get_int32()));
+                auto heights = files.at(fileHash);
+                auto dbHeights = dbFile["heights"].get_array().value;
+				ASSERT_EQ(heights.size(), test::GetFieldCount(dbHeights));
+				auto counter = 0u;
+                for (const auto& dbHeight : dbHeights)
+					EXPECT_EQ(heights[counter++].unwrap(), static_cast<uint64_t>(dbHeight.get_int64().value));
 			}
         }
 
-        void AssertReplicators(const state::ReplicatorsMap& replicators, const bsoncxx::array::view& dbReplicatorsMap) {
+        template<typename T>
+        void AssertReplicators(const T& replicators, const bsoncxx::array::view& dbReplicatorsMap) {
+			ASSERT_EQ(replicators.size(), test::GetFieldCount(dbReplicatorsMap));
+
+			state::ReplicatorsMap replicatorMap;
+			for (const auto& replicator : replicators) {
+				replicatorMap.emplace(replicator.first, replicator.second);
+			}
+
             for (const auto& dbReplicator : dbReplicatorsMap) {
                 Key key;
                 DbBinaryToModelArray(key, dbReplicator["replicator"].get_binary());
-                const auto& replicator = replicators.at(key);
-				EXPECT_EQ(replicator.Deposit.unwrap(), GetUint64(dbReplicator, "deposit"));
+                const auto& replicator = replicatorMap.at(key);
 				EXPECT_EQ(replicator.Start.unwrap(), GetUint64(dbReplicator, "start"));
 				EXPECT_EQ(replicator.End.unwrap(), GetUint64(dbReplicator, "end"));
 
-				AssertFilesWithoutDeposit(replicator.FilesWithoutDeposit, dbReplicator["filesWithoutDeposit"].get_array().value);
+				AssertActiveFilesWithoutDeposit(replicator.ActiveFilesWithoutDeposit, dbReplicator["activeFilesWithoutDeposit"].get_array().value);
+				AssertInactiveFilesWithoutDeposit(replicator.InactiveFilesWithoutDeposit, dbReplicator["inactiveFilesWithoutDeposit"].get_array().value);
             }
         }
 	}
 
 	void AssertEqualDriveData(const state::DriveEntry& entry, const Address& address, const bsoncxx::document::view& dbDriveEntry) {
-		EXPECT_EQ(17u, test::GetFieldCount(dbDriveEntry));
+		EXPECT_EQ(20u, test::GetFieldCount(dbDriveEntry));
 
 		EXPECT_EQ(entry.key(), GetKeyValue(dbDriveEntry, "multisig"));
 		EXPECT_EQ(address, test::GetAddressValue(dbDriveEntry, "multisigAddress"));
@@ -97,6 +105,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry.billingPeriod().unwrap(), GetUint64(dbDriveEntry, "billingPeriod"));
 		EXPECT_EQ(entry.billingPrice().unwrap(), GetUint64(dbDriveEntry, "billingPrice"));
 		EXPECT_EQ(entry.size(), static_cast<uint64_t>(dbDriveEntry["size"].get_int64()));
+		EXPECT_EQ(entry.occupiedSpace(), static_cast<uint64_t>(dbDriveEntry["occupiedSpace"].get_int64()));
 		EXPECT_EQ(entry.replicas(), static_cast<uint16_t>(dbDriveEntry["replicas"].get_int32()));
 		EXPECT_EQ(entry.minReplicators(), static_cast<uint16_t>(dbDriveEntry["minReplicators"].get_int32()));
 		EXPECT_EQ(entry.percentApprovers(), static_cast<uint8_t>(dbDriveEntry["percentApprovers"].get_int32()));
@@ -104,5 +113,7 @@ namespace catapult { namespace test {
 		AssertBillingHistory(entry.billingHistory(), dbDriveEntry["billingHistory"].get_array().value);
 		AssertFiles(entry.files(), dbDriveEntry["files"].get_array().value);
 		AssertReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
+		AssertReplicators(entry.removedReplicators(), dbDriveEntry["removedReplicators"].get_array().value);
+		AssertPaymentInformation(entry.uploadPayments(), dbDriveEntry["uploadPayments"].get_array().value);
 	}
 }}

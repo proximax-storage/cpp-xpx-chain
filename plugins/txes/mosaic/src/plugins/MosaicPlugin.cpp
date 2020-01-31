@@ -23,6 +23,7 @@
 #include "MosaicSupplyChangeTransactionPlugin.h"
 #include "src/cache/MosaicCache.h"
 #include "src/cache/MosaicCacheStorage.h"
+#include "src/config/MosaicConfiguration.h"
 #include "src/model/MosaicReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
@@ -40,6 +41,9 @@ namespace catapult { namespace plugins {
 	}
 
 	void RegisterMosaicSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::MosaicConfiguration>();
+		});
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
@@ -62,17 +66,17 @@ namespace catapult { namespace plugins {
 		});
 
 		auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(manager.immutableConfig());
-		manager.addStatefulValidatorHook([pConfigHolder, currencyMosaicId](auto& builder) {
+		manager.addStatefulValidatorHook([currencyMosaicId](auto& builder) {
 			builder
-				.add(validators::CreateMosaicPropertiesValidator(pConfigHolder))
+				.add(validators::CreateMosaicPropertiesValidator())
 				.add(validators::CreateProperMosaicValidator())
 				.add(validators::CreateMosaicAvailabilityValidator())
-				.add(validators::CreateMosaicDurationValidator(pConfigHolder))
+				.add(validators::CreateMosaicDurationValidator())
 				.add(validators::CreateMosaicTransferValidator(currencyMosaicId))
-				.add(validators::CreateMaxMosaicsBalanceTransferValidator(pConfigHolder))
-				.add(validators::CreateMaxMosaicsSupplyChangeValidator(pConfigHolder))
+				.add(validators::CreateMaxMosaicsBalanceTransferValidator())
+				.add(validators::CreateMaxMosaicsSupplyChangeValidator())
 				// note that the following validator depends on MosaicChangeAllowedValidator
-				.add(validators::CreateMosaicSupplyChangeAllowedValidator(pConfigHolder));
+				.add(validators::CreateMosaicSupplyChangeAllowedValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {

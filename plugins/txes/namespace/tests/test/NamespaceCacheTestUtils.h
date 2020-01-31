@@ -32,14 +32,17 @@ namespace catapult { namespace test {
 	/// Cache factory for creating a catapult cache composed of only the namespace cache.
 	struct NamespaceCacheFactory {
 		/// Creates an empty catapult cache around \a config and \a gracePeriodDuration.
-		static cache::CatapultCache Create(const config::BlockchainConfiguration& config, BlockDuration gracePeriodDuration) {
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config, BlockDuration gracePeriodDuration,
+                                           utils::BlockSpan maxNamespaceDuration = utils::BlockSpan::FromHours(0)) {
+
 			auto cacheId = cache::NamespaceCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
 
 			auto pluginConfig = config::NamespaceConfiguration::Uninitialized();
 			pluginConfig.NamespaceGracePeriodDuration = utils::BlockSpan::FromHours(gracePeriodDuration.unwrap());
+			pluginConfig.MaxNamespaceDuration = maxNamespaceDuration;
 			const_cast<model::NetworkConfiguration&>(config.Network).BlockGenerationTargetTime = utils::TimeSpan::FromHours(1);
-			const_cast<model::NetworkConfiguration&>(config.Network).SetPluginConfiguration(PLUGIN_NAME(namespace), pluginConfig);
+			const_cast<model::NetworkConfiguration&>(config.Network).SetPluginConfiguration(pluginConfig);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			auto options = cache::NamespaceCacheTypes::Options{ pConfigHolder };
 			subCaches[cacheId] = MakeSubCachePlugin<cache::NamespaceCache, cache::NamespaceCacheStorage>(options);

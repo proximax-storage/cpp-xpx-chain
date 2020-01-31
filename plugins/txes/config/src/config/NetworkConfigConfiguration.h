@@ -5,8 +5,8 @@
 **/
 
 #pragma once
-#include "catapult/utils/FileSize.h"
 #include "catapult/model/PluginConfiguration.h"
+#include "catapult/utils/FileSize.h"
 #include <stdint.h>
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
@@ -15,6 +15,9 @@ namespace catapult { namespace config {
 
 	/// Network config plugin configuration settings.
 	struct NetworkConfigConfiguration : public model::PluginConfiguration {
+	public:
+		DEFINE_CONFIG_CONSTANTS(config)
+
 	public:
 		/// Maximum blockchain config data size.
 		utils::FileSize MaxBlockChainConfigSize;

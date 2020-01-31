@@ -30,7 +30,7 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS StrictAggregateCosignaturesValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(StrictAggregateCosignatures, config::CreateMockConfigurationHolder())
+	DEFINE_COMMON_VALIDATOR_TESTS(StrictAggregateCosignatures)
 
 	namespace {
 		using Keys = std::vector<Key>;
@@ -56,14 +56,13 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::AggregateConfiguration::Uninitialized();
 			pluginConfig.EnableStrictCosignatureCheck = true;
 			test::MutableBlockchainConfiguration mutableConfig;
-			mutableConfig.Network.SetPluginConfiguration(PLUGIN_NAME(aggregate), pluginConfig);
+			mutableConfig.Network.SetPluginConfiguration(pluginConfig);
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pValidator = CreateStrictAggregateCosignaturesValidator(pConfigHolder);
+			auto pValidator = CreateStrictAggregateCosignaturesValidator();
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);

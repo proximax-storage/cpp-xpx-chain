@@ -28,6 +28,10 @@
 namespace catapult { namespace plugins {
 
 	void RegisterAggregateSubsystem(PluginManager& manager) {
+		manager.addPluginInitializer([](auto& config) {
+			config.template InitPluginConfiguration<config::AggregateConfiguration>();
+		});
+
 		// configure the aggregate to allow all registered transactions that support embedding
 		// (this works because the transaction registry is held by reference)
 		const auto& transactionRegistry = manager.transactionRegistry();
@@ -39,11 +43,11 @@ namespace catapult { namespace plugins {
 			builder.add(validators::CreateAggregatePluginConfigValidator());
 		});
 
-		manager.addStatefulValidatorHook([pConfigHolder](auto& builder) {
+		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateBasicAggregateCosignaturesValidator(pConfigHolder))
-				.add(validators::CreateStrictAggregateCosignaturesValidator(pConfigHolder))
-				.add(validators::CreateAggregateTransactionTypeValidator(pConfigHolder));
+				.add(validators::CreateBasicAggregateCosignaturesValidator())
+				.add(validators::CreateStrictAggregateCosignaturesValidator())
+				.add(validators::CreateAggregateTransactionTypeValidator());
 		});
 	}
 }}

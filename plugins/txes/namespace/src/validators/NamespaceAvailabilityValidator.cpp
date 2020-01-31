@@ -38,14 +38,17 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [pConfigHolder](
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceAvailability, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespaceAvailability, [](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 			auto height = context.Height;
+			const auto& networkConfig = context.Config.Network;
+			bool isEternalDurationSignedByNotNetworkPublicKey =
+				(Eternal_Artifact_Duration == notification.Duration && notification.Signer != networkConfig.Info.PublicKey);
 
-			if (Height(1) != height && Eternal_Artifact_Duration == notification.Duration)
+			if (Height(1) != height && isEternalDurationSignedByNotNetworkPublicKey)
 				return Failure_Namespace_Eternal_After_Nemesis_Block;
 
 			if (!cache.contains(notification.NamespaceId))
@@ -53,7 +56,7 @@ namespace catapult { namespace validators {
 
 			auto namespaceIter = cache.find(notification.NamespaceId);
 			const auto& root = namespaceIter.get().root();
-			if (IsEternal(root.lifetime()) || Eternal_Artifact_Duration == notification.Duration)
+			if (IsEternal(root.lifetime()) || isEternalDurationSignedByNotNetworkPublicKey)
 				return Failure_Namespace_Invalid_Duration;
 
 			// if grace period after expiration has passed, any signer can claim the namespace

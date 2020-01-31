@@ -6,7 +6,7 @@
 
 #pragma once
 #include "catapult/model/PluginConfiguration.h"
-#include <stdint.h>
+#include "catapult/types.h"
 
 namespace catapult { namespace utils { class ConfigurationBag; } }
 
@@ -15,8 +15,16 @@ namespace catapult { namespace config {
 	/// Service plugin configuration settings.
 	struct ServiceConfiguration : public model::PluginConfiguration {
 	public:
-	    /// Max files on drive at the moment
-	    uint16_t MaxFilesOnDrive;
+		/// Max files on drive at the moment
+		uint16_t MaxFilesOnDrive;
+
+		DEFINE_CONFIG_CONSTANTS(service)
+
+		/// Verification fee in streaming units.
+		Amount VerificationFee;
+
+		/// Verification duration.
+		BlockDuration VerificationDuration;
 
 		/// Whether the plugin is enabled.
 		bool Enabled;

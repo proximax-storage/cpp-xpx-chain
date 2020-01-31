@@ -20,6 +20,7 @@
 
 #pragma once
 #include "Notifications.h"
+#include "catapult/utils/MemoryUtils.h"
 
 namespace catapult { namespace model {
 
@@ -31,5 +32,13 @@ namespace catapult { namespace model {
 	public:
 		/// Notifies the subscriber of \a notification.
 		virtual void notify(const Notification& notification) = 0;
+
+		/// A memory pool for allocating temporary objects.
+		utils::Mempool& mempool() {
+			return m_mempool;
+		}
+
+	private:
+		utils::Mempool m_mempool;
 	};
 }}

@@ -27,15 +27,14 @@ namespace catapult { namespace validators {
 
 	using Notification = model::ChildNamespaceNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, ([pConfigHolder](
+	DECLARE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(RootNamespaceMaxChildren, ([](
 				const auto& notification,
 				const ValidatorContext& context) {
 			const auto& cache = context.Cache.sub<cache::NamespaceCache>();
 			auto namespaceIter = cache.find(notification.ParentId);
 			const auto& parentEntry = namespaceIter.get();
-			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
-			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::NamespaceConfiguration>(PLUGIN_NAME_HASH(namespace));
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::NamespaceConfiguration>();
 			return pluginConfig.MaxChildNamespaces <= parentEntry.root().size() ? Failure_Namespace_Max_Children_Exceeded : ValidationResult::Success;
 		}));
 	}

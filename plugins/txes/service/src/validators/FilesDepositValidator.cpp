@@ -21,21 +21,19 @@ namespace catapult { namespace validators {
 		if (!driveEntry.replicators().count(notification.Replicator))
             return Failure_Service_Drive_Replicator_Not_Registered;
 
-		const auto& filesWithoutDeposit = driveEntry.replicators().at(notification.Replicator).FilesWithoutDeposit;
+		const auto& activeFilesWithoutDeposit = driveEntry.replicators().at(notification.Replicator).ActiveFilesWithoutDeposit;
 
 		({
-			std::map<Hash256, uint16_t> hashes;
+			std::set<Hash256> hashes;
 			auto filesPtr = notification.FilesPtr;
 			for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr) {
-				++hashes[filesPtr->FileHash];
-				if (!filesWithoutDeposit.count(filesPtr->FileHash))
-					return Failure_Service_File_Is_Not_Exist;
+				hashes.insert(filesPtr->FileHash);
+				if (!activeFilesWithoutDeposit.count(filesPtr->FileHash))
+					return Failure_Service_File_Doesnt_Exist;
 			}
 
-			filesPtr = notification.FilesPtr;
-			for (auto i = 0u; i < notification.FilesCount; ++i, ++filesPtr)
-				if (filesWithoutDeposit.at(filesPtr->FileHash) < hashes[filesPtr->FileHash])
-					return Failure_Service_File_Hash_Redudant;
+            if (hashes.size() != notification.FilesCount)
+                return Failure_Service_File_Hash_Redundant;
 		});
 
 		return ValidationResult::Success;

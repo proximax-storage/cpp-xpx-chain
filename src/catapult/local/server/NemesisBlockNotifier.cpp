@@ -44,12 +44,10 @@ namespace catapult { namespace local {
 	}
 
 	NemesisBlockNotifier::NemesisBlockNotifier(
-			const config::BlockchainConfiguration& config,
 			const cache::CatapultCache& cache,
 			const io::BlockStorageCache& storage,
 			const plugins::PluginManager& pluginManager)
-			: m_config(config)
-			, m_cache(cache)
+			: m_cache(cache)
 			, m_storage(storage)
 			, m_pluginManager(pluginManager)
 	{}
@@ -61,14 +59,14 @@ namespace catapult { namespace local {
 	}
 
 	void NemesisBlockNotifier::raise(subscribers::StateChangeSubscriber& subscriber) {
-		raise([&subscriber, &config = m_config, &cache = m_cache, &pluginManager = m_pluginManager](const auto& nemesisBlockElement) {
+		raise([&subscriber, &cache = m_cache, &pluginManager = m_pluginManager](const auto& nemesisBlockElement) {
 			// execute the nemesis block
 			auto cacheDetachableDelta = cache.createDetachableDelta();
 			auto cacheDetachedDelta = cacheDetachableDelta.detach();
 			auto pCacheDelta = cacheDetachedDelta.tryLock();
 
 			extensions::NemesisBlockLoader loader(*pCacheDelta, pluginManager, pluginManager.createObserver());
-			loader.execute(config, nemesisBlockElement);
+			loader.execute(pluginManager.configHolder(), nemesisBlockElement);
 
 			// notify nemesis cache state
 			auto nemesisChainScore = model::ChainScore(Nemesis_Chain_Score);

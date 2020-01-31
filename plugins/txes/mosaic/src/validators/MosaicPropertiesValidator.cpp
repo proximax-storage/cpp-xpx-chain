@@ -51,17 +51,16 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(MosaicProperties, ([pConfigHolder](const auto& notification, const auto& context) {
+	DECLARE_STATEFUL_VALIDATOR(MosaicProperties, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(MosaicProperties, ([](const auto& notification, const auto& context) {
 			if (!IsValidFlags(notification.PropertiesHeader.Flags))
 				return Failure_Mosaic_Invalid_Flags;
 
-			const model::NetworkConfiguration& networkConfig = pConfigHolder->Config(context.Height).Network;
-			const auto& pluginConfig = networkConfig.GetPluginConfiguration<config::MosaicConfiguration>(PLUGIN_NAME_HASH(mosaic));
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::MosaicConfiguration>();
 			if (notification.PropertiesHeader.Divisibility > pluginConfig.MaxMosaicDivisibility)
 				return Failure_Mosaic_Invalid_Divisibility;
 
-			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(networkConfig.BlockGenerationTargetTime);
+			auto maxMosaicDuration = pluginConfig.MaxMosaicDuration.blocks(context.Config.Network.BlockGenerationTargetTime);
 			return CheckOptionalProperties(notification, maxMosaicDuration);
 		}));
 	}

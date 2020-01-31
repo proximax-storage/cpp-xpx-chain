@@ -27,12 +27,12 @@ namespace catapult { namespace validators {
 
 	using Notification = model::BlockNotification<1>;
 
-	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, Notification)(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return MAKE_STATEFUL_VALIDATOR(EligibleHarvester, [pConfigHolder](
+	DECLARE_STATEFUL_VALIDATOR(EligibleHarvester, Notification)() {
+		return MAKE_STATEFUL_VALIDATOR(EligibleHarvester, [](
 				const auto& notification,
 				const ValidatorContext& context) {
 			cache::ImportanceView view(context.Cache.sub<cache::AccountStateCache>());
-			const model::NetworkConfiguration& config = pConfigHolder->Config(context.Height).Network;
+			const model::NetworkConfiguration& config = context.Config.Network;
 			return view.canHarvest(notification.Signer, context.Height, config.MinHarvesterBalance)
 					? ValidationResult::Success
 					: Failure_Core_Block_Harvester_Ineligible;
