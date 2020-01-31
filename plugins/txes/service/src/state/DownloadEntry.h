@@ -7,7 +7,7 @@
 #pragma once
 #include "src/model/ServiceTypes.h"
 #include "plugins/txes/lock_shared/src/state/LockInfo.h"
-#include <set>
+#include <map>
 
 namespace catapult { namespace state {
 
@@ -36,8 +36,8 @@ namespace catapult { namespace state {
 		/// Height at which download ends.
 		catapult::Height Height;
 
-		/// Hashes of files to download.
-		std::set<Hash256> Files;
+		/// Map where key is file hash and value is file size.
+		std::map<Hash256, uint64_t> Files;
 
 	public:
 		/// Returns status of download entry.

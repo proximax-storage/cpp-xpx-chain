@@ -240,7 +240,7 @@ namespace catapult { namespace test {
 		entry.FileRecipient = fileRecipient;
 		entry.Height = height;
 		for (auto l = 0u; l < fileCount; ++l)
-			entry.Files.insert(test::GenerateRandomByteArray<Hash256>());
+			entry.Files.emplace(test::GenerateRandomByteArray<Hash256>(), test::Random());
 
 		return entry;
 	}
@@ -251,8 +251,9 @@ namespace catapult { namespace test {
 		EXPECT_EQ(entry1.FileRecipient, entry2.FileRecipient);
 		EXPECT_EQ(entry1.Height, entry2.Height);
 		ASSERT_EQ(entry1.Files.size(), entry2.Files.size());
-		for (const auto& fileHash : entry1.Files)
-			ASSERT_TRUE(entry2.Files.count(fileHash));
+		for (const auto& pair : entry1.Files) {
+			ASSERT_EQ(pair.second, entry2.Files.at(pair.first));
+		}
 
 	}
 }}

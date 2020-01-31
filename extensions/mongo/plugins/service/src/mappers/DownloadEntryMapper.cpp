@@ -14,10 +14,15 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 
 	namespace {
-		void StreamFiles(bson_stream::document& builder, const std::set<Hash256>& fileHashes) {
+		void StreamFiles(bson_stream::document& builder, const std::map<Hash256, uint64_t>& files) {
 			auto array = builder << "files" << bson_stream::open_array;
-			for (const auto& fileHash : fileHashes)
-				array << ToBinary(fileHash);
+			for (const auto& pair : files) {
+				bson_stream::document fileBuilder;
+                fileBuilder
+					<< "fileHash" << ToBinary(pair.first)
+					<< "fileSize" << static_cast<int64_t>(pair.second);
+				array << fileBuilder;
+			}
 
 			array << bson_stream::close_array;
 		}
@@ -44,11 +49,13 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToModel
 
 	namespace {
-		void ReadFiles(std::set<Hash256>& fileHashes, const bsoncxx::array::view& dbFiles) {
+		void ReadFiles(std::map<Hash256, uint64_t>& files, const bsoncxx::array::view& dbFiles) {
 			for (const auto& dbFile : dbFiles) {
-				Hash256 fileHash;
-				DbBinaryToModelArray(fileHash, dbFile.get_binary());
-				fileHashes.insert(fileHash);
+				auto doc = dbFile.get_document().view();
+                Hash256 fileHash;
+                DbBinaryToModelArray(fileHash, doc["fileHash"].get_binary());
+                uint64_t fileSize = doc["fileSize"].get_int64();
+                files.emplace(fileHash, fileSize);
 			}
 		}
 	}

@@ -42,15 +42,11 @@ namespace catapult { namespace observers {
 				return downloadEntry.FileRecipient;
 			}
 
-			static ValueType CreateLockInfoWithAmount(MosaicId, Amount amount, Height height, cache::CatapultCacheDelta& cache) {
+			static ValueType CreateLockInfoWithAmount(MosaicId, Amount amount, Height height) {
 				auto downloadEntry = CreateLockInfo(height);
 				downloadEntry.Files.clear();
 				auto fileHash = test::GenerateRandomByteArray<Hash256>();
-				downloadEntry.Files.insert(fileHash);
-				state::DriveEntry driveEntry(downloadEntry.DriveKey);
-				driveEntry.files().emplace(fileHash, state::FileInfo{ amount.unwrap() });
-				auto& driveCache = cache.sub<cache::DriveCache>();
-				driveCache.insert(driveEntry);
+				downloadEntry.Files.emplace(fileHash, amount.unwrap());
 				return downloadEntry;
 			}
 		};

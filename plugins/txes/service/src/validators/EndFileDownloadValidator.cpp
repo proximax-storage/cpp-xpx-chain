@@ -30,6 +30,8 @@ namespace catapult { namespace validators {
 					fileHashes.insert(pFile->FileHash);
 					if (!downloadEntry.Files.count(pFile->FileHash))
 						return Failure_Service_File_Download_Not_In_Progress;
+					if (downloadEntry.Files.at(pFile->FileHash) != pFile->FileSize)
+						return Failure_Service_File_Size_Invalid;
 				}
 
 				if (fileHashes.size() != notification.FileCount)

@@ -25,12 +25,15 @@ namespace catapult { namespace plugins {
 		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(EndFileDownload, config::ImmutableConfiguration, 1, 1,)
 
 		constexpr UnresolvedMosaicId Review_Mosaic_Id(1234);
+		constexpr UnresolvedMosaicId Streaming_Mosaic_Id(5678);
 		constexpr auto Network_Identifier = NetworkIdentifier::Mijin_Test;
 		constexpr auto Num_Files = 3u;
+		constexpr auto File_Size = 10u;
 
 		auto CreateConfiguration() {
 			auto config = config::ImmutableConfiguration::Uninitialized();
 			config.ReviewMosaicId = MosaicId(Review_Mosaic_Id.unwrap());
+			config.StreamingMosaicId = MosaicId(Streaming_Mosaic_Id.unwrap());
 			config.NetworkIdentifier = Network_Identifier;
 			return config;
 		}
@@ -56,7 +59,7 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Num_Files * sizeof(File), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + Num_Files * sizeof(DownloadAction), realSize);
 	}
 
 	// region publish - basic
@@ -91,6 +94,7 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
 		EXPECT_EQ(Service_EndFileDownload_v1_Notification, sub.notificationTypes()[2]);
 		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[3]);
+		EXPECT_EQ(Core_Balance_Credit_v1_Notification, sub.notificationTypes()[4]);
 	}
 
 	// endregion
@@ -129,12 +133,11 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Signer, notification.DriveKey);
 		EXPECT_EQ(pTransaction->FileRecipient, notification.FileRecipient);
 		EXPECT_EQ(pTransaction->OperationToken, notification.OperationToken);
 		EXPECT_EQ(Num_Files, notification.FileCount);
 		EXPECT_EQ(pTransaction->FilesPtr(), notification.FilesPtr);
-		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(File));
+		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(DownloadAction));
 	}
 
 	// endregion
@@ -158,9 +161,9 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
-	// region publish - balance credit notification
+	// region publish - balance credit notifications
 
-	PLUGIN_TEST(CanPublishBalanceCreditNotification) {
+	PLUGIN_TEST(CanPublishBalanceCreditNotifications) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<BalanceCreditNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
@@ -170,11 +173,15 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->FileRecipient, notification.Sender);
-		EXPECT_EQ(Review_Mosaic_Id, notification.MosaicId);
-		EXPECT_EQ(Amount(Num_Files), notification.Amount);
+		ASSERT_EQ(2u, sub.numMatchingNotifications());
+		const auto& notification1 = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->FileRecipient, notification1.Sender);
+		EXPECT_EQ(Review_Mosaic_Id, notification1.MosaicId);
+		EXPECT_EQ(Amount(Num_Files), notification1.Amount);
+		const auto& notification2 = sub.matchingNotifications()[1];
+		EXPECT_EQ(pTransaction->Signer, notification2.Sender);
+		EXPECT_EQ(Streaming_Mosaic_Id, notification2.MosaicId);
+		EXPECT_EQ(Amount(Num_Files * File_Size), notification2.Amount);
 	}
 
 	// endregion

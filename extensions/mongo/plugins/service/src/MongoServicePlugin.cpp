@@ -17,6 +17,7 @@
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoDriveCacheStorage.h"
+#include "storages/MongoDownloadCacheStorage.h"
 #include "plugins/txes/service/src/model/ServiceReceiptType.h"
 
 extern "C" PLUGIN_API
@@ -35,6 +36,10 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
+		manager.mongoContext(),
+		manager.configHolder()
+	));
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadCacheStorage(
 		manager.mongoContext(),
 		manager.configHolder()
 	));

@@ -23,7 +23,7 @@ namespace catapult { namespace observers {
 			auto pFile = notification.FilesPtr;
 			for (auto i = 0; i < notification.FileCount; ++i, ++pFile) {
 				totalSize += pFile->FileSize;
-				downloadEntry.Files.emplace(pFile->FileHash);
+				downloadEntry.Files.emplace(pFile->FileHash, pFile->FileSize);
 			}
 			downloadCache.insert(downloadEntry);
 

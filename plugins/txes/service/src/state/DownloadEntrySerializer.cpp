@@ -20,8 +20,10 @@ namespace catapult { namespace state {
 		io::Write(output, entry.FileRecipient);
 		io::Write(output, entry.Height);
 		io::Write16(output, utils::checked_cast<size_t, uint16_t>(entry.Files.size()));
-		for (const auto& fileHash : entry.Files)
-			io::Write(output, fileHash);
+		for (const auto& pair : entry.Files) {
+			io::Write(output, pair.first);
+			io::Write64(output, pair.second);
+		}
 	}
 
 	DownloadEntry DownloadEntrySerializer::Load(io::InputStream& input) {
@@ -39,7 +41,8 @@ namespace catapult { namespace state {
 		while (fileCount--) {
 			Hash256 fileHash;
 			io::Read(input, fileHash);
-			entry.Files.insert(fileHash);
+			auto fileSize = io::Read64(input);
+			entry.Files.emplace(fileHash, fileSize);
 		}
 
 		return entry;

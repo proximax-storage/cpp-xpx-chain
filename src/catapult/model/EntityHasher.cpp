@@ -42,6 +42,10 @@ namespace catapult { namespace model {
 			// Noop
 		}
 
+		void UpdateHash(const ExtendedEmbeddedTransaction&, crypto::Sha3_256_Builder&) {
+			// Noop
+		}
+
 		template<typename TEntity>
 		Hash256 CalculateHash(const TEntity& entity, const RawBuffer& buffer, const GenerationHash* pGenerationHash) {
 			Hash256 entityHash;
@@ -73,6 +77,10 @@ namespace catapult { namespace model {
 	}
 
 	Hash256 CalculateHash(const EmbeddedTransaction& transaction, const GenerationHash& generationHash) {
+		return CalculateHash(transaction, EntityDataBuffer(transaction, transaction.Size), &generationHash);
+	}
+
+	Hash256 CalculateHash(const ExtendedEmbeddedTransaction& transaction, const GenerationHash& generationHash) {
 		return CalculateHash(transaction, EntityDataBuffer(transaction, transaction.Size), &generationHash);
 	}
 

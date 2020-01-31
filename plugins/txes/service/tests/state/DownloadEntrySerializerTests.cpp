@@ -26,7 +26,7 @@ namespace catapult { namespace state {
 			Key_Size + // file recipient key
 			sizeof(Height) + // end
 			sizeof(uint16_t) + // file count
-			File_Count * Hash256_Size; // file hashes
+			File_Count * (Hash256_Size + sizeof(uint64_t)); // file hashes and sizes
 
 		class TestContext {
 		public:
@@ -72,9 +72,11 @@ namespace catapult { namespace state {
 
 			EXPECT_EQ(entry.Files.size(), *reinterpret_cast<const uint16_t*>(pData));
 			pData += sizeof(uint16_t);
-			for (const auto& fileHash : entry.Files) {
-				EXPECT_EQ_MEMORY(fileHash.data(), pData, Hash256_Size);
+			for (const auto& pair : entry.Files) {
+				EXPECT_EQ_MEMORY(pair.first.data(), pData, Hash256_Size);
 				pData += Hash256_Size;
+				EXPECT_EQ(pair.second, *reinterpret_cast<const uint64_t*>(pData));
+				pData += sizeof(uint64_t);
 			}
 
 			EXPECT_EQ(pExpectedEnd, pData);
@@ -145,9 +147,11 @@ namespace catapult { namespace state {
 			auto fileCount = utils::checked_cast<size_t, uint16_t>(entry.Files.size());
 			memcpy(pData, &fileCount, sizeof(uint16_t));
 			pData += sizeof(uint16_t);
-			for (const auto& fileHash : entry.Files) {
-				memcpy(pData, fileHash.data(), Hash256_Size);
+			for (const auto& pair : entry.Files) {
+				memcpy(pData, pair.first.data(), Hash256_Size);
 				pData += Hash256_Size;
+				memcpy(pData, &pair.second, sizeof(uint64_t));
+				pData += sizeof(uint64_t);
 			}
 
 			return buffer;

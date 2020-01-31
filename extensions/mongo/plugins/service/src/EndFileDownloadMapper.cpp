@@ -19,8 +19,13 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "operationToken" << ToBinary(transaction.OperationToken);
 		auto array = builder << "files" << bson_stream::open_array;
 		auto pFile = transaction.FilesPtr();
-		for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile)
-			array << ToBinary(pFile->FileHash);
+		for (auto i = 0u; i < transaction.FileCount; ++i, ++pFile) {
+			array
+				<< bson_stream::open_document
+				<< "fileHash" << ToBinary(pFile->FileHash)
+				<< "fileSize" << static_cast<int64_t>(pFile->FileSize)
+				<< bson_stream::close_document;
+		}
 
 		array << bson_stream::close_array;
 	}

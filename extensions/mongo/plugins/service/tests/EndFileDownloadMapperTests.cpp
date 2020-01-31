@@ -30,9 +30,9 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto fileIter = fileArray.cbegin();
 			auto pFile = transaction.FilesPtr();
 			for (uint8_t i = 0; i < transaction.FileCount; ++i, ++pFile, ++fileIter) {
-				Hash256 fileHash;
-				DbBinaryToModelArray(fileHash, fileIter->get_binary());
-				EXPECT_EQ(pFile->FileHash, fileHash);
+				const auto& dbFile = fileIter->get_document().view();
+				EXPECT_EQ(pFile->FileHash, test::GetHashValue(dbFile, "fileHash"));
+				EXPECT_EQ(pFile->FileSize, test::GetUint64(dbFile, "fileSize"));
 			}
 		}
 

@@ -261,16 +261,16 @@ namespace catapult { namespace test {
     /// Creates a end file download transaction.
     template<typename TTransaction>
 	model::UniqueEntityPtr<TTransaction> CreateEndFileDownloadTransaction(size_t numFiles) {
-		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_EndFileDownload, numFiles * sizeof(model::File));
+		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_EndFileDownload, numFiles * sizeof(model::DownloadAction));
 		pTransaction->FileRecipient = test::GenerateRandomByteArray<Key>();
 		pTransaction->OperationToken = test::GenerateRandomByteArray<Hash256>();
 		pTransaction->FileCount = numFiles;
 
         auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
         for (auto i = 0u; i < numFiles; ++i) {
-			model::File file{ test::GenerateRandomByteArray<Hash256>() };
-            memcpy(pData, static_cast<const void*>(&file), sizeof(model::File));
-            pData += sizeof(model::File);
+			model::DownloadAction file{ { test::GenerateRandomByteArray<Hash256>() }, 10 };
+            memcpy(pData, static_cast<const void*>(&file), sizeof(model::DownloadAction));
+            pData += sizeof(model::DownloadAction);
         }
 
         return pTransaction;

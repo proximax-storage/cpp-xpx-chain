@@ -101,7 +101,7 @@ namespace catapult { namespace observers {
 				auto& accountStateCache = this->accountStateCache();
 				for (auto i = 0u; i < numLockInfos; ++i) {
 					// - lock info cache
-					auto lockInfo = TTraits::CreateLockInfoWithAmount(Lock_Mosaic_Id, Lock_Amount, heightGenerator(i), m_observerContext.cache());
+					auto lockInfo = TTraits::CreateLockInfoWithAmount(Lock_Mosaic_Id, Lock_Amount, heightGenerator(i));
 					auto lockOwner = TTraits::GetLockOwner(lockInfo);
 					keys.insert(lockOwner);
 					lockInfoCacheDelta.insert(lockInfo);

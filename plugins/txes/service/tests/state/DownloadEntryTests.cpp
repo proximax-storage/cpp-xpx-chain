@@ -40,7 +40,7 @@ namespace catapult { namespace state {
 		// Act:
 		DownloadEntry entry;
 		entry.Height = Height(10);
-		entry.Files.insert(test::GenerateRandomByteArray<Hash256>());
+		entry.Files.emplace(test::GenerateRandomByteArray<Hash256>(), test::Random());
 
 		// Assert:
 		EXPECT_TRUE(entry.isActive(Height(5)));
@@ -50,7 +50,7 @@ namespace catapult { namespace state {
 		// Act:
 		DownloadEntry entry;
 		entry.Height = Height(10);
-		entry.Files.insert(test::GenerateRandomByteArray<Hash256>());
+		entry.Files.emplace(test::GenerateRandomByteArray<Hash256>(), test::Random());
 
 		// Assert:
 		EXPECT_FALSE(entry.isActive(Height(20)));

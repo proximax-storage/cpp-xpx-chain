@@ -36,7 +36,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static std::string GetStorageName() {
-				return "{ DriveCache }";
+				return "{ DriveCache, DownloadCache }";
 			}
 		};
 	}

@@ -48,7 +48,7 @@ namespace catapult { namespace model {
 	namespace {
 		struct EndFileDownloadTransactionTraits {
 			static auto GenerateEntityWithAttachments(uint8_t fileCount) {
-				uint32_t entitySize = sizeof(EndFileDownloadTransaction) + fileCount * sizeof(File);
+				uint32_t entitySize = sizeof(EndFileDownloadTransaction) + fileCount * sizeof(DownloadAction);
 				auto pTransaction = utils::MakeUniqueWithSize<EndFileDownloadTransaction>(entitySize);
 				pTransaction->Size = entitySize;
 				pTransaction->FileCount = fileCount;
@@ -78,7 +78,7 @@ namespace catapult { namespace model {
 		auto realSize = EndFileDownloadTransaction::CalculateRealSize(transaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(EndFileDownloadTransaction) + 5 * sizeof(File), realSize);
+		EXPECT_EQ(sizeof(EndFileDownloadTransaction) + 5 * sizeof(DownloadAction), realSize);
 	}
 
 	TEST(TEST_CLASS, CalculateRealSizeDoesNotOverflowWithMaxValues) {
@@ -92,7 +92,7 @@ namespace catapult { namespace model {
 
 		// Assert:
 		ASSERT_EQ(0xFFFFFFFF, transaction.Size);
-		EXPECT_EQ(sizeof(EndFileDownloadTransaction) + 0xFFFF * sizeof(File), realSize);
+		EXPECT_EQ(sizeof(EndFileDownloadTransaction) + 0xFFFF * sizeof(DownloadAction), realSize);
 		EXPECT_GT(0xFFFFFFFF, realSize);
 	}
 

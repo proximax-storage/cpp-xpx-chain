@@ -118,12 +118,12 @@ namespace catapult { namespace test {
 	}
 
 	namespace {
-		void AssertFiles(const std::set<Hash256>& fileHashes, const bsoncxx::array::view& dbFiles) {
-			ASSERT_EQ(fileHashes.size(), test::GetFieldCount(dbFiles));
+		void AssertFiles(const std::map<Hash256, uint64_t>& files, const bsoncxx::array::view& dbFiles) {
+			ASSERT_EQ(files.size(), test::GetFieldCount(dbFiles));
 			for (const auto& dbFile : dbFiles) {
-				Hash256 fileHash;
-				DbBinaryToModelArray(fileHash, dbFile.get_binary());
-				EXPECT_EQ(1, fileHashes.count(fileHash));
+                Hash256 fileHash;
+                DbBinaryToModelArray(fileHash, dbFile["fileHash"].get_binary());
+				EXPECT_EQ(files.at(fileHash), GetUint64(dbFile, "fileSize"));
 			}
 		}
 	}

@@ -43,10 +43,6 @@ namespace catapult { namespace utils {
         return Amount(totalSize);
     }
 
-    inline Hash256 CalculateFileDownloadHash(const Hash256& operationToken, const Hash256& fileHash) {
-		return operationToken ^ fileHash;
-    }
-
     template<typename TCache>
     inline Amount GetDriveBalance(const state::DriveEntry& driveEntry, const TCache& cache, const MosaicId& storageMosaicId) {
         const auto& accountCache = cache.template sub<cache::AccountStateCache>();

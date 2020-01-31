@@ -27,7 +27,7 @@ namespace catapult { namespace validators {
 				const state::DownloadEntry& downloadEntry,
 				const Key& fileRecipient,
 				const Hash256& operationToken,
-				const std::vector<model::File>& files = {}) {
+				const std::vector<model::DownloadAction>& files = {}) {
 			// Arrange:
 			auto cache = test::DownloadCacheFactory::Create();
 			{
@@ -36,7 +36,7 @@ namespace catapult { namespace validators {
 				downloadCacheDelta.insert(downloadEntry);
 				cache.commit(Current_Height);
 			}
-			Notification notification(test::GenerateRandomByteArray<Key>(), fileRecipient, operationToken, files.data(), files.size());
+			Notification notification(fileRecipient, operationToken, files.data(), files.size());
 			auto pValidator = CreateEndFileDownloadValidator();
 
 			// Act:
@@ -72,7 +72,7 @@ namespace catapult { namespace validators {
 			downloadEntry,
 			downloadEntry.FileRecipient,
 			test::GenerateRandomByteArray<Hash256>(),
-			{ model::File{ test::GenerateRandomByteArray<Hash256>() } });
+			{ { { test::GenerateRandomByteArray<Hash256>() }, test::Random() } });
 	}
 
 	TEST(TEST_CLASS, FailureWhenFileRecipientInvalid) {
@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 			downloadEntry,
 			test::GenerateRandomByteArray<Key>(),
 			downloadEntry.OperationToken,
-			{ model::File{ test::GenerateRandomByteArray<Hash256>() } });
+			{ { { test::GenerateRandomByteArray<Hash256>() }, test::Random() } });
 	}
 
 	TEST(TEST_CLASS, FailureWhenDownloadExpired) {
@@ -101,15 +101,15 @@ namespace catapult { namespace validators {
 			downloadEntry,
 			downloadEntry.FileRecipient,
 			downloadEntry.OperationToken,
-			{ model::File{ test::GenerateRandomByteArray<Hash256>() } });
+			{ { { test::GenerateRandomByteArray<Hash256>() }, test::Random() } });
 	}
 
-	TEST(TEST_CLASS, FailureWhenFileHashNotFound) {
+	TEST(TEST_CLASS, FailureWhenFileNotFound) {
 		// Arrange:
 		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
 		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 		downloadEntry.Height = Current_Height + Height(1);
-		downloadEntry.Files = std::set<Hash256>{ test::GenerateRandomByteArray<Hash256>() };
+		downloadEntry.Files.emplace(test::GenerateRandomByteArray<Hash256>(), test::Random());
 
 		// Assert:
 		AssertValidationResult(
@@ -117,7 +117,24 @@ namespace catapult { namespace validators {
 			downloadEntry,
 			downloadEntry.FileRecipient,
 			downloadEntry.OperationToken,
-			{ model::File{ test::GenerateRandomByteArray<Hash256>() } });
+			{ { { test::GenerateRandomByteArray<Hash256>() }, test::Random() } });
+	}
+
+	TEST(TEST_CLASS, FailureWhenFileSizeInvalid) {
+		// Arrange:
+		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
+		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
+		downloadEntry.Height = Current_Height + Height(1);
+		auto fileHash = test::GenerateRandomByteArray<Hash256>();
+		downloadEntry.Files.emplace(fileHash, test::Random());
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Service_File_Size_Invalid,
+			downloadEntry,
+			downloadEntry.FileRecipient,
+			downloadEntry.OperationToken,
+			{ { { fileHash }, test::Random() } });
 	}
 
 	TEST(TEST_CLASS, FailureWhenFileHashRedundant) {
@@ -125,8 +142,9 @@ namespace catapult { namespace validators {
 		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
 		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 		downloadEntry.Height = Current_Height + Height(1);
-		std::set<Hash256> fileHashes{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
-		downloadEntry.Files = fileHashes;
+		auto fileHash = test::GenerateRandomByteArray<Hash256>();
+		auto fileSize = test::Random();
+		downloadEntry.Files.emplace(fileHash, fileSize);
 
 		// Assert:
 		AssertValidationResult(
@@ -134,7 +152,7 @@ namespace catapult { namespace validators {
 			downloadEntry,
 			downloadEntry.FileRecipient,
 			downloadEntry.OperationToken,
-			{ model::File{ *fileHashes.begin() }, model::File{ *fileHashes.begin() } });
+			{ { { fileHash }, fileSize }, { { fileHash }, fileSize } });
 	}
 
 	TEST(TEST_CLASS, Success) {
@@ -142,8 +160,10 @@ namespace catapult { namespace validators {
 		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
 		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
 		downloadEntry.Height = Current_Height + Height(1);
-		std::set<Hash256> fileHashes{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
-		downloadEntry.Files = fileHashes;
+		std::vector<Hash256> fileHashes{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
+		std::vector<uint64_t> fileSizes{ test::Random(), test::Random() };
+		downloadEntry.Files.emplace(fileHashes[0], fileSizes[0]);
+		downloadEntry.Files.emplace(fileHashes[1], fileSizes[1]);
 
 		// Assert:
 		AssertValidationResult(
@@ -151,6 +171,6 @@ namespace catapult { namespace validators {
 			downloadEntry,
 			downloadEntry.FileRecipient,
 			downloadEntry.OperationToken,
-			{ model::File{ *fileHashes.begin() }, model::File{ *++fileHashes.begin() } });
+			{ { { fileHashes[0] }, fileSizes[0] }, { { fileHashes[1] }, fileSizes[1] } });
 	}
 }}

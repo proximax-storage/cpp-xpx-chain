@@ -33,7 +33,7 @@ namespace catapult { namespace model {
 		uint16_t FileCount;
 
 		/// Hashes of the files downloaded from drive.
-		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Files, File)
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Files, DownloadAction)
 
 	private:
 		template<typename T>
@@ -45,7 +45,7 @@ namespace catapult { namespace model {
 	public:
 		// Calculates the real size of an end file download \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return 	sizeof(TransactionType) + transaction.FileCount * sizeof(File);
+			return 	sizeof(TransactionType) + transaction.FileCount * sizeof(DownloadAction);
 		}
 	};
 

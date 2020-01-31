@@ -463,18 +463,15 @@ namespace catapult { namespace model {
 	};
 
 	/// Base notification of a file download.
-	template<typename TFile>
 	struct BaseFileDownloadNotification : public Notification {
 	public:
 		explicit BaseFileDownloadNotification(
 			NotificationType type,
-			const Key& driveKey,
 			const Key& fileRecipient,
 			const Hash256& operationToken,
-			const TFile* ptr,
+			const DownloadAction* ptr,
 			uint16_t count)
 				: Notification(type, sizeof(BaseFileDownloadNotification))
-				, DriveKey(driveKey)
 				, FileRecipient(fileRecipient)
 				, OperationToken(operationToken)
 				, FilesPtr(ptr)
@@ -482,9 +479,6 @@ namespace catapult { namespace model {
 		{}
 
 	public:
-		/// Public key of the drive multisig account.
-		Key DriveKey;
-
 		/// File recipient.
 		Key FileRecipient;
 
@@ -492,7 +486,7 @@ namespace catapult { namespace model {
 		Hash256 OperationToken;
 
 		/// Array of files to download.
-		const TFile* FilesPtr;
+		const DownloadAction* FilesPtr;
 
 		/// Download file count.
 		uint16_t FileCount;
@@ -503,15 +497,20 @@ namespace catapult { namespace model {
 	struct StartFileDownloadNotification;
 
 	template<>
-	struct StartFileDownloadNotification<1> : public BaseFileDownloadNotification<DownloadAction> {
+	struct StartFileDownloadNotification<1> : public BaseFileDownloadNotification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Service_StartFileDownload_v1_Notification;
 
 	public:
 		explicit StartFileDownloadNotification(const Key& driveKey, const Key& fileRecipient, const Hash256& operationToken, const DownloadAction* ptr, uint16_t count)
-				: BaseFileDownloadNotification(Notification_Type, driveKey, fileRecipient, operationToken, ptr, count)
+				: BaseFileDownloadNotification(Notification_Type, fileRecipient, operationToken, ptr, count)
+				, DriveKey(driveKey)
 		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
 	};
 
 	/// Notification of end file download.
@@ -519,14 +518,14 @@ namespace catapult { namespace model {
 	struct EndFileDownloadNotification;
 
 	template<>
-	struct EndFileDownloadNotification<1> : public BaseFileDownloadNotification<File> {
+	struct EndFileDownloadNotification<1> : public BaseFileDownloadNotification {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Service_EndFileDownload_v1_Notification;
 
 	public:
-		explicit EndFileDownloadNotification(const Key& driveKey, const Key& fileRecipient, const Hash256& operationToken, const File* ptr, uint16_t count)
-				: BaseFileDownloadNotification(Notification_Type, driveKey, fileRecipient, operationToken, ptr, count)
+		explicit EndFileDownloadNotification(const Key& fileRecipient, const Hash256& operationToken, const DownloadAction* ptr, uint16_t count)
+				: BaseFileDownloadNotification(Notification_Type, fileRecipient, operationToken, ptr, count)
 		{}
 	};
 }}

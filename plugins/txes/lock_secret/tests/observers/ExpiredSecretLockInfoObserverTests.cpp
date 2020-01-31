@@ -55,7 +55,7 @@ namespace catapult { namespace observers {
 				return lockInfo.Account;
 			}
 
-			static ValueType CreateLockInfoWithAmount(MosaicId mosaicId, Amount amount, Height height, cache::CatapultCacheDelta&) {
+			static ValueType CreateLockInfoWithAmount(MosaicId mosaicId, Amount amount, Height height) {
 				auto lockInfo = CreateLockInfo(height);
 				lockInfo.MosaicId = mosaicId;
 				lockInfo.Amount = amount;

@@ -6,7 +6,6 @@
 
 #include "src/observers/Observers.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
@@ -62,7 +61,7 @@ namespace catapult { namespace observers {
 			entry.FileRecipient = values.FileRecipient;
 			entry.Height = Current_Height + Height(Download_Duration.unwrap());
 			for (const auto& file : values.Files)
-				entry.Files.insert(file.FileHash);
+				entry.Files.emplace(file.FileHash, file.FileSize);
 			return entry;
 		}
 	}

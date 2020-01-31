@@ -112,7 +112,7 @@ namespace catapult { namespace validators {
 			Failure_Service_File_Doesnt_Exist,
 			driveEntry,
 			downloadEntry,
-			{ model::DownloadAction{ { test::GenerateRandomByteArray<Hash256>() }, test::Random() } });
+			{ { { test::GenerateRandomByteArray<Hash256>() }, test::Random() } });
 	}
 
 	TEST(TEST_CLASS, FailureWhenFileSizeInvalid) {
@@ -132,7 +132,7 @@ namespace catapult { namespace validators {
 			Failure_Service_File_Size_Invalid,
 			driveEntry,
 			downloadEntry,
-			{ model::DownloadAction{ { fileHash }, fileSize - 1 } });
+			{ { { fileHash }, fileSize - 1 } });
 	}
 
 	TEST(TEST_CLASS, FailureWhenFileHashRedundant) {
@@ -152,7 +152,7 @@ namespace catapult { namespace validators {
 			Failure_Service_File_Hash_Redundant,
 			driveEntry,
 			downloadEntry,
-			{ model::DownloadAction{ { fileHash }, fileSize }, model::DownloadAction{ { fileHash }, fileSize } });
+			{ { { fileHash }, fileSize }, { { fileHash }, fileSize } });
 	}
 
 	TEST(TEST_CLASS, Success) {
@@ -172,6 +172,6 @@ namespace catapult { namespace validators {
 			ValidationResult::Success,
 			driveEntry,
 			downloadEntry,
-			{ model::DownloadAction{ { fileHash }, fileSize } });
+			{ { { fileHash }, fileSize } });
 	}
 }}
