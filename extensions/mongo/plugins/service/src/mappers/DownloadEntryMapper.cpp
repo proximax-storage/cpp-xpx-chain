@@ -18,7 +18,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto array = builder << "files" << bson_stream::open_array;
 			for (const auto& pair : files) {
 				bson_stream::document fileBuilder;
-                fileBuilder
+				fileBuilder
 					<< "fileHash" << ToBinary(pair.first)
 					<< "fileSize" << static_cast<int64_t>(pair.second);
 				array << fileBuilder;
@@ -52,10 +52,10 @@ namespace catapult { namespace mongo { namespace plugins {
 		void ReadFiles(std::map<Hash256, uint64_t>& files, const bsoncxx::array::view& dbFiles) {
 			for (const auto& dbFile : dbFiles) {
 				auto doc = dbFile.get_document().view();
-                Hash256 fileHash;
-                DbBinaryToModelArray(fileHash, doc["fileHash"].get_binary());
-                uint64_t fileSize = doc["fileSize"].get_int64();
-                files.emplace(fileHash, fileSize);
+				Hash256 fileHash;
+				DbBinaryToModelArray(fileHash, doc["fileHash"].get_binary());
+				uint64_t fileSize = doc["fileSize"].get_int64();
+				files.emplace(fileHash, fileSize);
 			}
 		}
 	}

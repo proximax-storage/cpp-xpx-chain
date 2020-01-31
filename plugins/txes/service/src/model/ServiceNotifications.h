@@ -467,11 +467,12 @@ namespace catapult { namespace model {
 	public:
 		explicit BaseFileDownloadNotification(
 			NotificationType type,
+			size_t size,
 			const Key& fileRecipient,
 			const Hash256& operationToken,
 			const DownloadAction* ptr,
 			uint16_t count)
-				: Notification(type, sizeof(BaseFileDownloadNotification))
+				: Notification(type, size)
 				, FileRecipient(fileRecipient)
 				, OperationToken(operationToken)
 				, FilesPtr(ptr)
@@ -504,7 +505,7 @@ namespace catapult { namespace model {
 
 	public:
 		explicit StartFileDownloadNotification(const Key& driveKey, const Key& fileRecipient, const Hash256& operationToken, const DownloadAction* ptr, uint16_t count)
-				: BaseFileDownloadNotification(Notification_Type, fileRecipient, operationToken, ptr, count)
+				: BaseFileDownloadNotification(Notification_Type, sizeof(StartFileDownloadNotification), fileRecipient, operationToken, ptr, count)
 				, DriveKey(driveKey)
 		{}
 
@@ -525,7 +526,7 @@ namespace catapult { namespace model {
 
 	public:
 		explicit EndFileDownloadNotification(const Key& fileRecipient, const Hash256& operationToken, const DownloadAction* ptr, uint16_t count)
-				: BaseFileDownloadNotification(Notification_Type, fileRecipient, operationToken, ptr, count)
+				: BaseFileDownloadNotification(Notification_Type, sizeof(EndFileDownloadNotification), fileRecipient, operationToken, ptr, count)
 		{}
 	};
 }}

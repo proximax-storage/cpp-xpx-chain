@@ -25,7 +25,7 @@ namespace catapult { namespace config {
 							{ "verificationFee", "10" },
 							{ "verificationDuration", "240" },
 							{ "downloadDuration", "40320" },
-							{ "downloadCacheEnabled", "true" },
+							{ "downloadCacheEnabled", "false" },
 						}
 					}
 				};
@@ -65,7 +65,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(Amount(10), config.VerificationFee);
 				EXPECT_EQ(BlockDuration(240), config.VerificationDuration);
 				EXPECT_EQ(BlockDuration(40320), config.DownloadDuration);
-				EXPECT_EQ(true, config.DownloadCacheEnabled);
+				EXPECT_EQ(false, config.DownloadCacheEnabled);
 			}
 		};
 	}

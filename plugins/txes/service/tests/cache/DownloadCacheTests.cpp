@@ -28,7 +28,7 @@ namespace catapult { namespace cache {
 				if (state::LockStatus::Used == status)
 					entry.Files.clear();
 				else if (entry.Files.empty())
-					entry.Files.insert(test::GenerateRandomByteArray<Hash256>());
+					entry.Files.emplace(test::GenerateRandomByteArray<Hash256>(), test::Random());
 			}
 		};
 

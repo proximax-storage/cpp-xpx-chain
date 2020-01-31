@@ -71,6 +71,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin(CreateConfiguration());
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
 
 		// Act:
@@ -136,7 +137,6 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->Signer, notification.FileRecipient);
 		EXPECT_EQ(Num_Files, notification.FileCount);
-		EXPECT_EQ(pTransaction->FilesPtr(), notification.FilesPtr);
 		EXPECT_EQ_MEMORY(pTransaction->FilesPtr(), notification.FilesPtr, Num_Files * sizeof(DownloadAction));
 	}
 

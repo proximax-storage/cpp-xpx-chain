@@ -14,18 +14,11 @@ namespace catapult { namespace observers {
 		auto downloadIter = downloadCache.find(notification.OperationToken);
 		auto& downloadEntry = downloadIter.get();
 
-		uint64_t totalSize = 0u;
-		auto streamingMosaicId = context.Config.Immutable.StreamingMosaicId;
 		if (NotifyMode::Commit == context.Mode) {
 			auto pFile = notification.FilesPtr;
 			for (auto i = 0; i < notification.FileCount; ++i, ++pFile) {
-				totalSize += pFile->FileSize;
 				downloadEntry.Files.erase(pFile->FileHash);
 			}
-
-			auto amount = utils::CalculateFileDownload(totalSize);
-			model::BalanceChangeReceipt receipt(model::Receipt_Type_Drive_Download_Completed, notification.FileRecipient, streamingMosaicId, amount);
-			context.StatementBuilder().addTransactionReceipt(receipt);
 		} else {
 			auto pFile = notification.FilesPtr;
 			for (auto i = 0; i < notification.FileCount; ++i, ++pFile) {

@@ -78,19 +78,6 @@ namespace catapult { namespace observers {
 		auto downloadIter = downloadCache.find(values.OperationToken);
 		const auto& actualEntry = downloadIter.get();
 		test::AssertEqualDownloadData(CreateDownloadEntry(values, false), actualEntry);
-
-		auto pStatement = context.statementBuilder().build();
-		ASSERT_EQ(1u, pStatement->TransactionStatements.size());
-		const auto& receiptPair = *pStatement->TransactionStatements.find(model::ReceiptSource());
-		ASSERT_EQ(1u, receiptPair.second.size());
-
-		const auto& receipt = static_cast<const model::BalanceChangeReceipt&>(receiptPair.second.receiptAt(0));
-		ASSERT_EQ(sizeof(model::BalanceChangeReceipt), receipt.Size);
-		EXPECT_EQ(1u, receipt.Version);
-		EXPECT_EQ(model::Receipt_Type_Drive_Download_Completed, receipt.Type);
-		EXPECT_EQ(values.FileRecipient, receipt.Account);
-		EXPECT_EQ(Streaming_Mosaic_Id, receipt.MosaicId);
-		EXPECT_EQ(Amount(File_Count * File_Size), receipt.Amount);
 	}
 
 	TEST(TEST_CLASS, EndFileDownload_Rollback) {
@@ -111,8 +98,5 @@ namespace catapult { namespace observers {
 		auto downloadIter = downloadCache.find(values.OperationToken);
 		const auto& actualEntry = downloadIter.get();
 		test::AssertEqualDownloadData(CreateDownloadEntry(values, true), actualEntry);
-
-		auto pStatement = context.statementBuilder().build();
-		ASSERT_EQ(0u, pStatement->TransactionStatements.size());
 	}
 }}
