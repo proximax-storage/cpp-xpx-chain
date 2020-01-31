@@ -63,6 +63,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 
 		// Act:
@@ -78,6 +79,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		transaction.MosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();
@@ -100,6 +102,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
 		transaction.MosaicId = test::GenerateRandomValue<UnresolvedMosaicId>();

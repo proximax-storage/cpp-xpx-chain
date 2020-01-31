@@ -130,6 +130,7 @@ namespace catapult { namespace plugins {
 			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
+			transaction.Size = sizeof(transaction);
 			transaction.Version = Transaction_Version;
 			transaction.ModificationsCount = 0;
 
@@ -184,7 +185,7 @@ namespace catapult { namespace plugins {
 			EXPECT_EQ(pTransaction->Signer, notification.Key);
 			EXPECT_EQ(pTransaction->PropertyType, notification.PropertyDescriptor.raw());
 			EXPECT_EQ(pTransaction->ModificationsCount, notification.ModificationsCount);
-			EXPECT_EQ(pTransaction->ModificationsPtr(), notification.ModificationsPtr);
+			EXPECT_EQ_MEMORY(pTransaction->ModificationsPtr(), notification.ModificationsPtr, pTransaction->ModificationsCount * sizeof(*pTransaction->ModificationsPtr()));
 		}
 
 		// endregion

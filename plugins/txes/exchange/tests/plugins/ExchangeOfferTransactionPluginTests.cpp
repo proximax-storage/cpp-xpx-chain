@@ -65,6 +65,7 @@ namespace catapult { namespace plugins {
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -109,7 +110,6 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Owner);
 		EXPECT_EQ(Offer_Count, notification.OfferCount);
-		EXPECT_EQ(pTransaction->OffersPtr(), notification.OffersPtr);
 		EXPECT_EQ_MEMORY(pTransaction->OffersPtr(), notification.OffersPtr, Offer_Count * sizeof(model::OfferWithDuration));
 	}
 

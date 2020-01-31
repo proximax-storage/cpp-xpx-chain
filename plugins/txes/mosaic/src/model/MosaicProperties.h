@@ -38,6 +38,11 @@ namespace catapult { namespace model {
 
 		/// Mosaic divisibility.
 		uint8_t Divisibility;
+
+	public:
+		bool operator==(const MosaicPropertiesHeader& other) const {
+			return other.Count == this->Count && this->Flags == other.Flags && this->Divisibility == other.Divisibility;
+		}
 	};
 
 #pragma pack(pop)
