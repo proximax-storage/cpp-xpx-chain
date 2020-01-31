@@ -93,6 +93,8 @@ pipeline {
                                 catapult.tools.network \
                                 catapult.tools.statusgen \
                                 -j4
+                                cd ..
+                                ./scripts/release-script/copyDeps.sh _build/bin/ ./deps
                             """    
                         }
                     }
