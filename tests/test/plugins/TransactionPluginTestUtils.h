@@ -20,6 +20,8 @@
 
 #pragma once
 #include "catapult/model/TransactionPlugin.h"
+#include "catapult/model/NotificationSubscriber.h"
+#include "plugins/txes/aggregate/src/plugins/Common.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
@@ -47,7 +49,8 @@ namespace catapult { namespace test {
 	/// Publishes embedded \a transaction notifications to \a sub using \a plugin.
 	template<typename TTransactionPlugin>
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::EmbeddedTransaction& transaction, model::NotificationSubscriber& sub) {
-		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(transaction, Height{0}), sub);
+		Timestamp deadline;
+		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(plugins::ConvertEmbeddedTransaction(transaction, deadline, sub), Height{0}), sub);
 	}
 
 	/// Publishes \a transactionInfo to \a sub using \a plugin.
@@ -59,7 +62,9 @@ namespace catapult { namespace test {
 	/// Publishes \a transactionInfo to \a sub using \a plugin.
 	template<typename TTransactionPlugin>
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::WeakEntityInfoT<model::EmbeddedTransaction>& transactionInfo, model::NotificationSubscriber& sub) {
-		plugin.publish(transactionInfo, sub);
+		Timestamp deadline;
+		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(
+				plugins::ConvertEmbeddedTransaction(transactionInfo.entity(), deadline, sub), transactionInfo.associatedHeight()), sub);
 	}
 
 	// endregion
@@ -205,6 +210,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin(std::forward<TArgs>(args)...);
 
 			typename TTraits::TransactionType transaction;
+			transaction.Size = sizeof(transaction);
 			transaction.Size = sizeof(typename TTraits::TransactionType) + 12;
 
 			// Act:
@@ -222,6 +228,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin(std::forward<TArgs>(args)...);
 
 			typename TTraits::TransactionType transaction;
+			transaction.Size = sizeof(transaction);
 			test::FillWithRandomData(transaction.Signer);
 
 			// Act:

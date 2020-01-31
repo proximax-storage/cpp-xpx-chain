@@ -45,9 +45,9 @@ namespace catapult { namespace model {
 			static constexpr auto Max_Supported_Version = TransactionType::Current_Version;
 
 			static auto CreatePlugin() {
-				return TransactionPluginFactory<Options>::template Create<mocks::MockTransaction, mocks::EmbeddedMockTransaction>(
+				return TransactionPluginFactory<Options>::template Create<mocks::MockTransaction, mocks::EmbeddedMockTransaction, mocks::ExtendedEmbeddedMockTransaction>(
 						Publish<mocks::MockTransaction>,
-						Publish<mocks::EmbeddedMockTransaction>);
+						Publish<mocks::ExtendedEmbeddedMockTransaction>);
 			}
 		};
 
@@ -62,8 +62,8 @@ namespace catapult { namespace model {
 			static constexpr auto Max_Supported_Version = TransactionType::Current_Version;
 
 			static auto CreatePlugin() {
-				return TransactionPluginFactory<Options>::template CreateEmbedded<mocks::EmbeddedMockTransaction>(
-						Publish<mocks::EmbeddedMockTransaction>);
+				return TransactionPluginFactory<Options>::template CreateEmbedded<mocks::EmbeddedMockTransaction, mocks::ExtendedEmbeddedMockTransaction>(
+						Publish<mocks::ExtendedEmbeddedMockTransaction>);
 			}
 		};
 
@@ -94,6 +94,7 @@ namespace catapult { namespace model {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		test::FillWithRandomData(transaction.Signer);
 		mocks::MockTypedNotificationSubscriber<BlockNotification<1>> sub;
 
