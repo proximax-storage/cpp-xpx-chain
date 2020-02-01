@@ -106,6 +106,7 @@ pipeline {
             steps {
                 echo 'Publish Image'
                 script {
+                    sh 'cp ci/debian/.dockerignore .'
                     def newImage = docker.build("${IMAGE}","-f ./ci/debian/Dockerfile .")
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                         newImage.push("debian-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
