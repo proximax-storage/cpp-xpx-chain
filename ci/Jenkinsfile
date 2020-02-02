@@ -11,7 +11,7 @@ pipeline {
     environment {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
-        IMAGE = "proximax-catapult-server"
+        IMAGE = "proximax/proximax-sirius-chain"
         BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.0-buster"
     }
 
@@ -103,16 +103,35 @@ pipeline {
             }
 		}
         stage('Publish Image') {
+            when {
+                tag "(\d+)\.(\d+)\.(\d+)\-buster"
+            }
             steps {
                 echo 'Publish Image'
                 script {
                     sh 'cp ci/debian/.dockerignore .'
                     def newImage = docker.build("${IMAGE}","-f ./ci/debian/Dockerfile .")
-                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        newImage.push("debian-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
+                    docker.withRegistry("", "jenkins-dockerhub"){
+                        newImage.push("${env.GIT_BRANCH}") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                    }
                     }
                 }
             }
+            post {
+                success {
+                    slackSend channel: '#devops',
+                        color: 'good',
+                        message: "Release with Tag *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker image ${IMAGE}:${env.GIT_BRANCH}"
+                }
+            }
+        }
+    }
+
+    post {
+        failure {
+            slackSend channel: '#devops',
+              color: 'bad',
+              message: "Branch *${env.GIT_BRANCH}* of *${currentBuild.fullDisplayName}* FAILED :scream:"
         }
     }
 }
