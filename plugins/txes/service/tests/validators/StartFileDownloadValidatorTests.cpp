@@ -48,6 +48,7 @@ namespace catapult { namespace validators {
 			EXPECT_EQ(expectedResult, result);
 		}
 	}
+
 	TEST(TEST_CLASS, FailureWhenFileRecipientIsReplicator) {
 		// Arrange:
 		auto driveKey = test::GenerateRandomByteArray<Key>();

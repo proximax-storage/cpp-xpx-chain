@@ -111,7 +111,7 @@ namespace catapult { namespace plugins {
 						// - specific sub-transaction notifications
 						//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
 						WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo{
-							ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub),
+							ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub.mempool()),
 							transactionInfo.associatedHeight()
 						};
 						plugin.publish(subTransactionInfo, sub);

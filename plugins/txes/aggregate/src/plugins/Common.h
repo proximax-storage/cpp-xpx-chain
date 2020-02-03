@@ -13,9 +13,9 @@
 namespace catapult { namespace plugins {
 
 	inline const model::ExtendedEmbeddedTransaction& ConvertEmbeddedTransaction(
-			const model::EmbeddedTransaction& subTransaction, const Timestamp& deadline, model::NotificationSubscriber& sub) {
+			const model::EmbeddedTransaction& subTransaction, const Timestamp& deadline, utils::Mempool& pool) {
 
-		auto pUnique = sub.mempool().malloc<uint8_t>(subTransaction.Size + sizeof(deadline));
+		auto pUnique = pool.malloc<uint8_t>(subTransaction.Size + sizeof(deadline));
 		std::memcpy(
 				pUnique,
 				reinterpret_cast<const uint8_t*>(&subTransaction),

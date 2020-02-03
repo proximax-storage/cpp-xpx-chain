@@ -50,7 +50,7 @@ namespace catapult { namespace test {
 	template<typename TTransactionPlugin>
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::EmbeddedTransaction& transaction, model::NotificationSubscriber& sub) {
 		Timestamp deadline;
-		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(plugins::ConvertEmbeddedTransaction(transaction, deadline, sub), Height{0}), sub);
+		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(plugins::ConvertEmbeddedTransaction(transaction, deadline, sub.mempool()), Height{0}), sub);
 	}
 
 	/// Publishes \a transactionInfo to \a sub using \a plugin.
@@ -64,7 +64,7 @@ namespace catapult { namespace test {
 	void PublishTransaction(const TTransactionPlugin& plugin, const model::WeakEntityInfoT<model::EmbeddedTransaction>& transactionInfo, model::NotificationSubscriber& sub) {
 		Timestamp deadline;
 		plugin.publish(model::WeakEntityInfoT<model::EmbeddedTransaction>(
-				plugins::ConvertEmbeddedTransaction(transactionInfo.entity(), deadline, sub), transactionInfo.associatedHeight()), sub);
+				plugins::ConvertEmbeddedTransaction(transactionInfo.entity(), deadline, sub.mempool()), transactionInfo.associatedHeight()), sub);
 	}
 
 	// endregion

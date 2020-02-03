@@ -38,10 +38,6 @@ namespace catapult { namespace model {
 			sha3.update({ entity.Signature.data(), Signature_Size / 2 });
 		}
 
-		void UpdateHash(const EmbeddedTransaction&, crypto::Sha3_256_Builder&) {
-			// Noop
-		}
-
 		void UpdateHash(const ExtendedEmbeddedTransaction&, crypto::Sha3_256_Builder&) {
 			// Noop
 		}
@@ -74,10 +70,6 @@ namespace catapult { namespace model {
 
 	Hash256 CalculateHash(const Transaction& transaction, const GenerationHash& generationHash, const RawBuffer& buffer) {
 		return CalculateHash(transaction, buffer, &generationHash);
-	}
-
-	Hash256 CalculateHash(const EmbeddedTransaction& transaction, const GenerationHash& generationHash) {
-		return CalculateHash(transaction, EntityDataBuffer(transaction, transaction.Size), &generationHash);
 	}
 
 	Hash256 CalculateHash(const ExtendedEmbeddedTransaction& transaction, const GenerationHash& generationHash) {

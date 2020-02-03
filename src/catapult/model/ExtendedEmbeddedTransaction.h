@@ -11,7 +11,7 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-	/// Binary layout for an unique embedded transaction (only blockchain usage, to calculate hash of inner transaction).
+	/// Binary layout for an extended embedded transaction (only blockchain usage, to calculate hash of inner transaction).
 	struct ExtendedEmbeddedTransaction : public EmbeddedTransaction {
 
         /// Transaction deadline.
