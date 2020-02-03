@@ -48,22 +48,6 @@ namespace catapult { namespace validators {
 			EXPECT_EQ(expectedResult, result);
 		}
 	}
-
-	TEST(TEST_CLASS, FailureWhenDriveIsNotInProgress) {
-		// Arrange:
-		auto driveKey = test::GenerateRandomByteArray<Key>();
-		state::DriveEntry driveEntry(driveKey);
-		state::DownloadEntry downloadEntry(test::GenerateRandomByteArray<Hash256>());
-		downloadEntry.DriveKey = driveKey;
-		downloadEntry.FileRecipient = test::GenerateRandomByteArray<Key>();
-
-		// Assert:
-		AssertValidationResult(
-			Failure_Service_Drive_Is_Not_In_Progress,
-			driveEntry,
-			downloadEntry);
-	}
-
 	TEST(TEST_CLASS, FailureWhenFileRecipientIsReplicator) {
 		// Arrange:
 		auto driveKey = test::GenerateRandomByteArray<Key>();

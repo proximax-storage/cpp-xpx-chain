@@ -15,9 +15,6 @@ namespace catapult { namespace validators {
 		const auto& driveCache = context.Cache.sub<cache::DriveCache>();
 		auto driveIter = driveCache.find(notification.DriveKey);
 		const auto &driveEntry = driveIter.get();
-		if (driveEntry.state() != state::DriveState::InProgress)
-			return Failure_Service_Drive_Is_Not_In_Progress;
-
 		if (driveEntry.replicators().count(notification.FileRecipient))
 			return Failure_Service_Operation_Is_Not_Permitted;
 
