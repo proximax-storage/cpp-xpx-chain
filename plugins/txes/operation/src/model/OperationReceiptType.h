@@ -16,7 +16,7 @@ namespace catapult { namespace model {
 	DEFINE_RECEIPT_TYPE(Operation, Operation, Operation_Started, 1);
 
 	/// Operation completion.
-	DEFINE_RECEIPT_TYPE(Operation, Operation, Operation_Completed, 2);
+	DEFINE_RECEIPT_TYPE(Operation, Operation, Operation_Ended, 2);
 
 	/// Operation expiration.
 	DEFINE_RECEIPT_TYPE(Operation, Operation, Operation_Expired, 3);

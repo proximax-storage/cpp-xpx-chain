@@ -9,9 +9,9 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::CompletedOperationNotification<1>;
+	using Notification = model::EndOperationNotification<1>;
 
-	DEFINE_STATEFUL_VALIDATOR(CompletedOperation, [](const auto& notification, const auto& context) {
+	DEFINE_STATEFUL_VALIDATOR(EndOperation, [](const auto& notification, const auto& context) {
 		const auto& operationCache = context.Cache.template sub<cache::OperationCache>();
 		if (!operationCache.contains(notification.OperationToken))
 			return Failure_Operation_Token_Invalid;

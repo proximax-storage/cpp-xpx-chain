@@ -123,7 +123,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			StreamLockMetadata(builder);
 
 			// lock data
-			auto doc = builder << "lock" << mappers::bson_stream::open_document;
+			auto doc = builder << TTraits::IdName << mappers::bson_stream::open_document;
 			LockInfoStreamer<TTraits::Version>::StreamLockInfo(builder, lockInfo, accountAddress);
 			TTraits::StreamLockInfo(builder, lockInfo);
 			return doc

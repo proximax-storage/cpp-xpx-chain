@@ -14,5 +14,5 @@ namespace catapult { namespace plugins {
 
 	/// Creates an operation token transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateOperationTokenTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateOperationIdentifyTransactionPlugin();
 }}

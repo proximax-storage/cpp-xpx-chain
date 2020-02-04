@@ -5,17 +5,36 @@
 **/
 
 #include "OperationEntrySerializer.h"
+#include "src/catapult/functions.h"
 
 namespace catapult { namespace state {
+
+	namespace {
+		template<typename TArray>
+		void SaveArray(const TArray& array, io::OutputStream& output) {
+			io::Write16(output, utils::checked_cast<size_t, uint16_t>(array.size()));
+			for (const auto& item : array)
+				io::Write(output, item);
+		}
+
+		template<typename TValue>
+		void LoadArray(io::InputStream& input, consumer<const TValue&> inserter) {
+			auto count = io::Read16(input);
+			while (count--) {
+				TValue item;
+				io::Read(input, item);
+				inserter(item);
+			}
+		}
+	}
 
 	void OperationEntryExtendedDataSerializer::Save(const OperationEntry& entry, io::OutputStream& output) {
 		// write version
 		io::Write32(output, 1);
 
 		output.write(entry.OperationToken);
-		io::Write16(output, utils::checked_cast<size_t, uint16_t>(entry.Executors.size()));
-		for (const auto& executor : entry.Executors)
-			io::Write(output, executor);
+		SaveArray(entry.Executors, output);
+		SaveArray(entry.TransactionHashes, output);
 	}
 
 	void OperationEntryExtendedDataSerializer::Load(io::InputStream& input, OperationEntry& entry) {
@@ -25,11 +44,7 @@ namespace catapult { namespace state {
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of OperationEntry", version);
 
 		input.read(entry.OperationToken);
-		auto executorCount = io::Read16(input);
-		while (executorCount--) {
-			Key executor;
-			io::Read(input, executor);
-			entry.Executors.insert(executor);
-		}
+		LoadArray<Key>(input, [&executors = entry.Executors](const auto& executor) { executors.insert(executor); });
+		LoadArray<Hash256>(input, [&hashes = entry.TransactionHashes](const auto& hash) { hashes.push_back(hash); });
 	}
 }}

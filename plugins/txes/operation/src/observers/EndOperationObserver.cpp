@@ -11,14 +11,14 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::CompletedOperationNotification<1>;
+	using Notification = model::EndOperationNotification<1>;
 
 	namespace {
 		struct OperationTraits {
 		public:
 			using CacheType = cache::OperationCache;
 			using Notification = observers::Notification;
-			static constexpr auto Receipt_Type = model::Receipt_Type_Operation_Completed;
+			static constexpr auto Receipt_Type = model::Receipt_Type_Operation_Ended;
 
 			static auto NotificationToKey(const Notification& notification, const model::ResolverContext&) {
 				return notification.OperationToken;
@@ -30,7 +30,7 @@ namespace catapult { namespace observers {
 		};
 	}
 
-	DEFINE_OBSERVER(CompletedOperation, Notification, [](const auto& notification, auto& context) {
+	DEFINE_OBSERVER(EndOperation, Notification, [](const auto& notification, auto& context) {
 		auto& operationCache = context.Cache.template sub<cache::OperationCache>();
 		auto operationCacheIter = operationCache.find(notification.OperationToken);
 		auto& operationEntry = operationCacheIter.get();

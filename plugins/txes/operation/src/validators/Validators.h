@@ -21,12 +21,12 @@ namespace catapult { namespace validators {
 	/// - executors not duplicated
 	DECLARE_STATELESS_VALIDATOR(StartOperation, model::StartOperationNotification<1>)();
 
-	/// A validator implementation that applies to completed operation notifications and validates that:
+	/// A validator implementation that applies to end operation notifications and validates that:
 	/// - operation token is valid
 	/// - operation is in-progress
 	/// - operation executor is valid
 	/// - spent mosaics are valid
-	DECLARE_STATEFUL_VALIDATOR(CompletedOperation, model::CompletedOperationNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(EndOperation, model::EndOperationNotification<1>)();
 
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid

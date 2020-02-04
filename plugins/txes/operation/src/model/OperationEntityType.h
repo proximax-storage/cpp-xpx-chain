@@ -12,8 +12,8 @@ namespace catapult { namespace model {
 
 #endif
 
-	/// Operation token transaction.
-	DEFINE_TRANSACTION_TYPE(Operation, OperationToken, 0x1);
+	/// Operation identify transaction.
+	DEFINE_TRANSACTION_TYPE(Operation, OperationIdentify, 0x1);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

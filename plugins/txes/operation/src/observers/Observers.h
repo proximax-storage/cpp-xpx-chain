@@ -14,8 +14,8 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by start operation notifications.
 	DECLARE_OBSERVER(StartOperation, model::StartOperationNotification<1>)();
 
-	/// Observes changes triggered by completed operation notifications.
-	DECLARE_OBSERVER(CompletedOperation, model::CompletedOperationNotification<1>)();
+	/// Observes changes triggered by end operation notifications.
+	DECLARE_OBSERVER(EndOperation, model::EndOperationNotification<1>)();
 
 	/// Observes changes triggered by block notifications.
 	DECLARE_OBSERVER(ExpiredOperation, model::BlockNotification<1>)();

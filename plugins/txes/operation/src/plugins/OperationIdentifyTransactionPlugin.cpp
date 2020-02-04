@@ -4,9 +4,9 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "OperationTokenTransactionPlugin.h"
+#include "OperationIdentifyTransactionPlugin.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "src/model/OperationTokenTransaction.h"
+#include "src/model/OperationIdentifyTransaction.h"
 
 using namespace catapult::model;
 
@@ -21,10 +21,10 @@ namespace catapult { namespace plugins {
 					break;
 				}
 				default:
-					CATAPULT_LOG(debug) << "invalid version of OperationTokenTransaction: " << transaction.EntityVersion();
+					CATAPULT_LOG(debug) << "invalid version of OperationIdentifyTransaction: " << transaction.EntityVersion();
 			}
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(OperationToken, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(OperationIdentify, Default, Publish)
 }}

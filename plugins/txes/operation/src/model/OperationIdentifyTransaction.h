@@ -12,27 +12,27 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-	/// Binary layout for an operation token transaction body.
+	/// Binary layout for an operation identify transaction body.
 	template<typename THeader>
-	struct OperationTokenTransactionBody : public THeader {
+	struct OperationIdentifyTransactionBody : public THeader {
 	private:
-		using TransactionType = OperationTokenTransactionBody<THeader>;
+		using TransactionType = OperationIdentifyTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_OperationToken, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_OperationIdentify, 1)
 
 	public:
 		/// Operation token.
 		Hash256 OperationToken;
 
 	public:
-		// Calculates the real size of an operation token transaction.
+		// Calculates the real size of an operation identify transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 			return sizeof(TransactionType);
 		}
 	};
 
-	DEFINE_EMBEDDABLE_TRANSACTION(OperationToken)
+	DEFINE_EMBEDDABLE_TRANSACTION(OperationIdentify)
 
 #pragma pack(pop)
 }}

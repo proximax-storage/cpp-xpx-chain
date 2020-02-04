@@ -7,6 +7,7 @@
 #pragma once
 #include "plugins/txes/lock_shared/src/state/LockInfo.h"
 #include <set>
+#include <vector>
 
 namespace catapult { namespace state {
 
@@ -29,5 +30,8 @@ namespace catapult { namespace state {
 
 		/// Executors.
 		std::set<Key> Executors;
+
+		/// Transaction hashes.
+		std::vector<Hash256> TransactionHashes;
 	};
 }}

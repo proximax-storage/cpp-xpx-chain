@@ -9,7 +9,7 @@
 #include "src/config/OperationConfiguration.h"
 #include "src/model/OperationReceiptType.h"
 #include "src/observers/Observers.h"
-#include "src/plugins/OperationTokenTransactionPlugin.h"
+#include "src/plugins/OperationIdentifyTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -21,7 +21,7 @@ namespace catapult { namespace plugins {
 			config.template InitPluginConfiguration<config::OperationConfiguration>();
 		});
 
-        manager.addTransactionSupport(CreateOperationTokenTransactionPlugin());
+        manager.addTransactionSupport(CreateOperationIdentifyTransactionPlugin());
 
 		manager.addCacheSupport<cache::OperationCacheStorage>(
 				std::make_unique<cache::OperationCache>(manager.cacheConfig(cache::OperationCache::Name)));
@@ -45,14 +45,14 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateOperationDurationValidator())
-				.add(validators::CreateCompletedOperationValidator());
+				.add(validators::CreateEndOperationValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder
 				.add(observers::CreateStartOperationObserver())
 				.add(observers::CreateExpiredOperationObserver())
-				.add(observers::CreateCompletedOperationObserver())
+				.add(observers::CreateEndOperationObserver())
 				.add(observers::CreateCacheBlockTouchObserver<cache::OperationCache>("Operation", model::Receipt_Type_Operation_Expired))
 				.add(observers::CreateCacheBlockPruningObserver<cache::OperationCache>("Operation", 1));
 		});

@@ -20,10 +20,10 @@ namespace catapult { namespace model {
 	/// Start operation.
 	DEFINE_OPERATION_NOTIFICATION(All, Start_v1, 0x0002);
 
-	/// Completed operation.
-	DEFINE_OPERATION_NOTIFICATION(All, Completed_v1, 0x0003);
+	/// End operation.
+	DEFINE_OPERATION_NOTIFICATION(All, End_v1, 0x0003);
 
-	/// Completed operation.
+	/// Mosaic.
 	DEFINE_OPERATION_NOTIFICATION(Validator, Mosaic_v1, 0x0004);
 
 #undef DEFINE_OPERATION_NOTIFICATION
@@ -81,24 +81,24 @@ namespace catapult { namespace model {
 		uint16_t ExecutorCount;
 	};
 
-	/// Notification of a completed operation notification.
+	/// Notification of an end operation notification.
 	template<VersionType version>
-	struct CompletedOperationNotification;
+	struct EndOperationNotification;
 
 	template<>
-	struct CompletedOperationNotification<1> : public Notification {
+	struct EndOperationNotification<1> : public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Operation_Completed_v1_Notification;
+		static constexpr auto Notification_Type = Operation_End_v1_Notification;
 
 	public:
-		/// Creates completed operation notification around \a executor, \a operationToken, \a pMosaics and \a mosaicCount.
-		CompletedOperationNotification(
+		/// Creates end operation notification around \a executor, \a operationToken, \a pMosaics and \a mosaicCount.
+		EndOperationNotification(
 			const Key& executor,
 			const Hash256& operationToken,
 			const UnresolvedMosaic* pMosaics,
 			uint8_t mosaicCount)
-				: Notification(Notification_Type, sizeof(CompletedOperationNotification<1>))
+				: Notification(Notification_Type, sizeof(EndOperationNotification<1>))
 				, Executor(executor)
 				, OperationToken(operationToken)
 				, MosaicsPtr(pMosaics)
@@ -119,7 +119,7 @@ namespace catapult { namespace model {
 		uint8_t MosaicCount;
 	};
 
-	/// Notification of a completed operation notification.
+	/// Notification of an end operation notification.
 	template<VersionType version>
 	struct OperationMosaicNotification;
 
@@ -130,7 +130,7 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Operation_Mosaic_v1_Notification;
 
 	public:
-		/// Creates completed operation notification around \a pMosaics and \a mosaicCount.
+		/// Creates end operation notification around \a pMosaics and \a mosaicCount.
 		OperationMosaicNotification(
 			const UnresolvedMosaic* pMosaics,
 			uint8_t mosaicCount)
