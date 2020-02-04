@@ -50,6 +50,17 @@ namespace catapult { namespace observers {
 			static Amount GetExpectedBlockSignerBalance(observers::NotifyMode, Amount initialBalance, Amount, size_t) {
 				return initialBalance;
 			}
+
+			static auto GetLockOwner(const state::SecretLockInfo& lockInfo) {
+				return lockInfo.Account;
+			}
+
+			static ValueType CreateLockInfoWithAmount(MosaicId mosaicId, Amount amount, Height height) {
+				auto lockInfo = CreateLockInfo(height);
+				lockInfo.MosaicId = mosaicId;
+				lockInfo.Amount = amount;
+				return lockInfo;
+			}
 		};
 	}
 

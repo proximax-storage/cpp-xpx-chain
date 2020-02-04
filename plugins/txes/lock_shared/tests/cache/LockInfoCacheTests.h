@@ -71,7 +71,7 @@ namespace catapult { namespace cache {
 		static ValueType CreateWithIdAndExpiration(uint8_t id, Height height, state::LockStatus status = state::LockStatus::Unused) {
 			auto lockInfo = CreateWithId(id);
 			lockInfo.Height = height;
-			lockInfo.Status = status;
+			LockInfoTraits::SetStatus(lockInfo, status);
 			return lockInfo;
 		}
 	};
@@ -288,9 +288,8 @@ namespace catapult { namespace cache {
 				// add another four lock infos that expire at height 40, two of which are used
 				auto delta = cache.createDelta(Height{0});
 				for (auto i = 0u; i < 4; ++i) {
-					auto lockInfo = TLockInfoTraits::CreateLockInfo(Height(40));
-					if (1 == i % 2)
-						lockInfo.Status = state::LockStatus::Used;
+					auto status = (1 == i % 2) ? state::LockStatus::Used : state::LockStatus::Unused;
+					auto lockInfo = TLockInfoTraits::CreateLockInfo(Height(40), status);
 
 					lockInfos.push_back(lockInfo);
 					delta->insert(lockInfos.back());

@@ -5,18 +5,30 @@
 **/
 
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/plugins/PluginUtils.h"
+#include "catapult/functions.h"
 #include "src/config/ServiceConfiguration.h"
 
 namespace catapult { namespace cache {
 
-	bool ServicePluginEnabled(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, const Height& height) {
-		const auto& blockchainConfig = pConfigHolder->Config(height);
-		if (blockchainConfig.Network.Plugins.count(config::ServiceConfiguration::Name)) {
-			const auto& pluginConfig = blockchainConfig.Network.template GetPluginConfiguration<config::ServiceConfiguration>();
-            return pluginConfig.Enabled;
-		}
+	namespace {
+		using PropertyGetter = std::function<bool (const config::ServiceConfiguration&)>;
 
-		return false;
+		bool GetProperty(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, const Height& height, const PropertyGetter& propertyGetter) {
+			const auto& blockchainConfig = pConfigHolder->Config(height);
+			if (blockchainConfig.Network.Plugins.count(config::ServiceConfiguration::Name)) {
+				const auto& pluginConfig = blockchainConfig.Network.template GetPluginConfiguration<config::ServiceConfiguration>();
+				return propertyGetter(pluginConfig);
+			}
+
+			return false;
+		}
+	}
+
+	bool ServicePluginEnabled(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, const Height& height) {
+		return GetProperty(pConfigHolder, height, [](const auto& config) { return config.Enabled; });
+	}
+
+	bool DownloadCacheEnabled(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, const Height& height) {
+		return GetProperty(pConfigHolder, height, [](const auto& config) { return config.DownloadCacheEnabled; });
 	}
 }}

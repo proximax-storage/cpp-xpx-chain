@@ -11,4 +11,6 @@ namespace catapult { namespace config { class BlockchainConfigurationHolder; } }
 namespace catapult { namespace cache {
 
 	bool ServicePluginEnabled(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, const Height& height);
+
+	bool DownloadCacheEnabled(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder, const Height& height);
 }}

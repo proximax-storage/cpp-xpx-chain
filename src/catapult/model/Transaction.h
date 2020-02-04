@@ -19,7 +19,6 @@
 **/
 
 #pragma once
-#include "EmbeddedTransaction.h"
 #include "ExtendedEmbeddedTransaction.h"
 #include "VerifiableEntity.h"
 
