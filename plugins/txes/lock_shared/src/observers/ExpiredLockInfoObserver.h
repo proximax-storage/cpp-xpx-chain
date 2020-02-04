@@ -37,11 +37,11 @@ namespace catapult { namespace observers {
 			auto accountStateIter = accountStateCache.find(ownerAccountIdSupplier(lockInfo));
 			auto& accountState = accountStateIter.get();
 			if (NotifyMode::Commit == context.Mode)
-				for (const auto& mosaic : lockInfo.Mosaics)
-					accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount, context.Height);
+				for (const auto& pair : lockInfo.Mosaics)
+					accountState.Balances.credit(pair.first, pair.second, context.Height);
 			else
-				for (const auto& mosaic : lockInfo.Mosaics)
-					accountState.Balances.debit(mosaic.MosaicId, mosaic.Amount, context.Height);
+				for (const auto& pair : lockInfo.Mosaics)
+					accountState.Balances.debit(pair.first, pair.second, context.Height);
 		});
 	}
 }}

@@ -42,8 +42,8 @@ namespace catapult { namespace state {
 			io::Write32(output, Version);
 
 			io::Write(output, lockInfo.Account);
-			io::Write(output, lockInfo.Mosaics[0].MosaicId);
-			io::Write(output, lockInfo.Mosaics[0].Amount);
+			io::Write(output, lockInfo.Mosaics.begin()->first);
+			io::Write(output, lockInfo.Mosaics.begin()->second);
 			io::Write(output, lockInfo.Height);
 			io::Write8(output, utils::to_underlying_type(lockInfo.Status));
 			TLockInfoSerializer::Save(lockInfo, output);
@@ -60,7 +60,7 @@ namespace catapult { namespace state {
 			io::Read(input, lockInfo.Account);
 			auto mosaicId = MosaicId{io::Read64(input)};
 			auto amount = Amount{io::Read64(input)};
-			lockInfo.Mosaics.push_back(model::Mosaic{mosaicId,  amount});
+			lockInfo.Mosaics.emplace(mosaicId,  amount);
 			io::Read(input, lockInfo.Height);
 			lockInfo.Status = static_cast<LockStatus>(io::Read8(input));
 			TLockInfoSerializer::Load(input, lockInfo);
@@ -84,9 +84,9 @@ namespace catapult { namespace state {
 			io::Write(output, lockInfo.Height);
 			io::Write8(output, utils::to_underlying_type(lockInfo.Status));
 			io::Write8(output, utils::checked_cast<size_t, uint8_t>(lockInfo.Mosaics.size()));
-			for (const auto& mosaic : lockInfo.Mosaics) {
-				io::Write(output, mosaic.MosaicId);
-				io::Write(output, mosaic.Amount);
+			for (const auto& pair : lockInfo.Mosaics) {
+				io::Write(output, pair.first);
+				io::Write(output, pair.second);
 			}
 
 			TLockInfoSerializer::Save(lockInfo, output);
@@ -104,11 +104,10 @@ namespace catapult { namespace state {
 			io::Read(input, lockInfo.Height);
 			lockInfo.Status = static_cast<LockStatus>(io::Read8(input));
 			auto mosaicCount = io::Read8(input);
-			lockInfo.Mosaics.reserve(mosaicCount);
-			for (auto i = 0u; i < mosaicCount; ++i) {
+			while (mosaicCount--) {
 				auto mosaicId = MosaicId{io::Read64(input)};
 				auto amount = Amount{io::Read64(input)};
-				lockInfo.Mosaics.push_back(model::Mosaic{mosaicId,  amount});
+				lockInfo.Mosaics.emplace(mosaicId,  amount);
 			}
 			TLockInfoSerializer::Load(input, lockInfo);
 			return lockInfo;

@@ -40,15 +40,15 @@ namespace catapult { namespace observers {
 					[&lockInfo, initialAmount](auto& cache, auto& accountState) {
 						cache.insert(lockInfo);
 						if (Amount(0) != initialAmount)
-							accountState.Balances.credit(lockInfo.Mosaics[0].MosaicId, initialAmount, accountState.AddressHeight);
+							accountState.Balances.credit(lockInfo.Mosaics.begin()->first, initialAmount, accountState.AddressHeight);
 					},
 					[&lockInfo, initialAmount](const auto& lockInfoCache, const auto& accountState, auto& observerContext) {
 						// Assert: status and balance
 						const auto& key = TTraits::BasicTraits::ToKey(lockInfo);
 						const auto& result = lockInfoCache.find(key).get();
 						EXPECT_EQ(state::LockStatus::Used, result.Status);
-						auto expectedBalance = lockInfo.Mosaics[0].Amount + initialAmount;
-						EXPECT_EQ(expectedBalance, accountState.Balances.get(result.Mosaics[0].MosaicId));
+						auto expectedBalance = lockInfo.Mosaics.begin()->second + initialAmount;
+						EXPECT_EQ(expectedBalance, accountState.Balances.get(result.Mosaics.begin()->first));
 
 						auto pStatement = observerContext.statementBuilder().build();
 						ASSERT_EQ(1u, pStatement->TransactionStatements.size());
@@ -60,8 +60,8 @@ namespace catapult { namespace observers {
 						EXPECT_EQ(1u, receipt.Version);
 						EXPECT_EQ(TTraits::Receipt_Type, receipt.Type);
 						EXPECT_EQ(accountState.PublicKey, receipt.Account);
-						EXPECT_EQ(lockInfo.Mosaics[0].MosaicId, receipt.MosaicId);
-						EXPECT_EQ(lockInfo.Mosaics[0].Amount, receipt.Amount);
+						EXPECT_EQ(lockInfo.Mosaics.begin()->first, receipt.MosaicId);
+						EXPECT_EQ(lockInfo.Mosaics.begin()->second, receipt.Amount);
 					});
 		}
 
@@ -85,15 +85,15 @@ namespace catapult { namespace observers {
 					lockInfo,
 					[&lockInfo](auto& cache, auto& accountState) {
 						cache.insert(lockInfo);
-						for (const auto& mosaic : lockInfo.Mosaics)
-							accountState.Balances.credit(mosaic.MosaicId, mosaic.Amount + Amount(100), accountState.AddressHeight);
+						for (const auto& pair : lockInfo.Mosaics)
+							accountState.Balances.credit(pair.first, pair.second + Amount(100), accountState.AddressHeight);
 					},
 					[&lockInfo](const auto& lockInfoCache, const auto& accountState, auto& observerContext) {
 						// Assert: status and balance
 						const auto& key = TTraits::BasicTraits::ToKey(lockInfo);
 						const auto& result = lockInfoCache.find(key).get();
 						EXPECT_EQ(state::LockStatus::Unused, result.Status);
-						EXPECT_EQ(Amount(100), accountState.Balances.get(lockInfo.Mosaics[0].MosaicId));
+						EXPECT_EQ(Amount(100), accountState.Balances.get(lockInfo.Mosaics.begin()->first));
 
 						auto pStatement = observerContext.statementBuilder().build();
 						ASSERT_EQ(0u, pStatement->TransactionStatements.size());

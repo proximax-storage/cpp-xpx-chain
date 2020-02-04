@@ -54,8 +54,8 @@ namespace catapult { namespace observers {
 
 						const auto& lockInfo = lockInfoCacheDelta.find(key).get();
 						EXPECT_EQ(notification.Signer, lockInfo.Account);
-						EXPECT_EQ(notification.Mosaic.MosaicId, test::UnresolveXor(lockInfo.Mosaics[0].MosaicId));
-						EXPECT_EQ(notification.Mosaic.Amount, lockInfo.Mosaics[0].Amount);
+						EXPECT_EQ(notification.MosaicsPtr->MosaicId, test::UnresolveXor(lockInfo.Mosaics.begin()->first));
+						EXPECT_EQ(notification.MosaicsPtr->Amount, lockInfo.Mosaics.begin()->second);
 						EXPECT_EQ(DefaultHeight() + Height(notification.Duration.unwrap()), lockInfo.Height);
 
 						TTraits::AssertAddedLockInfo(lockInfo, notification);
@@ -70,8 +70,8 @@ namespace catapult { namespace observers {
 						EXPECT_EQ(1u, receipt.Version);
 						EXPECT_EQ(TTraits::Debit_Receipt_Type, receipt.Type);
 						EXPECT_EQ(notification.Signer, receipt.Account);
-						EXPECT_EQ(notification.Mosaic.MosaicId, test::UnresolveXor(receipt.MosaicId));
-						EXPECT_EQ(notification.Mosaic.Amount, receipt.Amount);
+						EXPECT_EQ(notification.MosaicsPtr->MosaicId, test::UnresolveXor(receipt.MosaicId));
+						EXPECT_EQ(notification.MosaicsPtr->Amount, receipt.Amount);
 					});
 		}
 

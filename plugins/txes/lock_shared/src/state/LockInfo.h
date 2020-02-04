@@ -20,6 +20,7 @@
 
 #pragma once
 #include "catapult/model/Mosaic.h"
+#include <map>
 
 namespace catapult { namespace state {
 
@@ -42,16 +43,16 @@ namespace catapult { namespace state {
 		/// Creates a lock info around \a account, \a mosaicId, \a amount and \a height.
 		explicit LockInfo(const Key& account, MosaicId mosaicId, Amount amount, Height height)
 				: Account(account)
+				, Mosaics{{mosaicId,  amount}}
 				, Height(height)
-				, Status(LockStatus::Unused) {
-			Mosaics.push_back(model::Mosaic{mosaicId,  amount});
-		}
+				, Status(LockStatus::Unused)
+		{}
 
 	public:
 		/// Account.
 		Key Account;
 
-		std::vector<model::Mosaic> Mosaics;
+		std::map<MosaicId, Amount> Mosaics;
 
 		/// Height at which the lock expires.
 		catapult::Height Height;

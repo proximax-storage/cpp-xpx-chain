@@ -26,8 +26,9 @@ namespace catapult { namespace config {
 		transferConfigId,
 		upgradeConfigId,
         exchangeConfigId,
+        operationConfigId,
         First = aggregateConfigId,
-        Latest = exchangeConfigId,
+        Latest = operationConfigId,
 	};
 
 /// Defines config constants for a config with \a NAME.

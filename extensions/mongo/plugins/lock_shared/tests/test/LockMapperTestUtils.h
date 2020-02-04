@@ -44,14 +44,14 @@ namespace catapult { namespace test {
 		EXPECT_EQ(accountAddress, GetAddressValue(dbLockInfo, "accountAddress"));
 		EXPECT_EQ(lockInfo.Account, GetKeyValue(dbLockInfo, "account"));
 		if (multipleMosaics) {
-			auto counter = 0u;
+			ASSERT_EQ(lockInfo.Mosaics.size(), test::GetFieldCount(dbLockInfo));
 			for (const auto& dbMosaic : dbLockInfo["mosaics"].get_array().value) {
-				EXPECT_EQ(lockInfo.Mosaics[counter].MosaicId, MosaicId(GetUint64(dbMosaic, "mosaicId")));
-				EXPECT_EQ(lockInfo.Mosaics[counter++].Amount, Amount(GetUint64(dbMosaic, "amount")));
+				auto mosaicId = MosaicId(GetUint64(dbMosaic, "mosaicId"));
+				EXPECT_EQ(lockInfo.Mosaics.at(mosaicId), Amount(GetUint64(dbMosaic, "amount")));
 			}
 		} else {
-			EXPECT_EQ(lockInfo.Mosaics[0].MosaicId, MosaicId(GetUint64(dbLockInfo, "mosaicId")));
-			EXPECT_EQ(lockInfo.Mosaics[0].Amount, Amount(GetUint64(dbLockInfo, "amount")));
+			EXPECT_EQ(lockInfo.Mosaics.begin()->first, MosaicId(GetUint64(dbLockInfo, "mosaicId")));
+			EXPECT_EQ(lockInfo.Mosaics.begin()->second, Amount(GetUint64(dbLockInfo, "amount")));
 		}
 		EXPECT_EQ(lockInfo.Height, Height(GetUint64(dbLockInfo, "height")));
 		EXPECT_EQ(lockInfo.Status, static_cast<state::LockStatus>(GetUint8(dbLockInfo, "status")));
