@@ -10,6 +10,8 @@
 #include "src/model/OperationReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/OperationIdentifyTransactionPlugin.h"
+#include "src/plugins/StartOperationTransactionPlugin.h"
+#include "src/plugins/EndOperationTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
@@ -22,6 +24,8 @@ namespace catapult { namespace plugins {
 		});
 
         manager.addTransactionSupport(CreateOperationIdentifyTransactionPlugin());
+        manager.addTransactionSupport(CreateStartOperationTransactionPlugin());
+        manager.addTransactionSupport(CreateEndOperationTransactionPlugin());
 
 		manager.addCacheSupport<cache::OperationCacheStorage>(
 				std::make_unique<cache::OperationCache>(manager.cacheConfig(cache::OperationCache::Name)));

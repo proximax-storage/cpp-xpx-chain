@@ -10,6 +10,7 @@
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
+#include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 
 namespace catapult { namespace validators {
 
@@ -36,4 +37,9 @@ namespace catapult { namespace validators {
 	/// - mosaic ids are not duplicated
 	/// - mosaic amount is not zero
 	DECLARE_STATELESS_VALIDATOR(OperationMosaic, model::OperationMosaicNotification<1>)();
+
+	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
+	/// - operation identify transaction contains valid operation token
+	/// - operation identify transaction is the very first sub transaction
+	DECLARE_STATEFUL_VALIDATOR(AggregateTransaction, model::AggregateCosignaturesNotification<1>)();
 }}

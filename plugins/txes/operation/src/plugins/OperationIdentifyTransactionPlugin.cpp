@@ -26,5 +26,5 @@ namespace catapult { namespace plugins {
 		}
 	}
 
-	DEFINE_TRANSACTION_PLUGIN_FACTORY(OperationIdentify, Default, Publish)
+	DEFINE_TRANSACTION_PLUGIN_FACTORY(OperationIdentify, Only_Embeddable, Publish)
 }}

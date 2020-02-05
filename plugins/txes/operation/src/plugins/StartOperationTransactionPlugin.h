@@ -12,7 +12,7 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates an operation identify transaction plugin.
+	/// Creates a start operation transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateOperationIdentifyTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateStartOperationTransactionPlugin();
 }}

@@ -39,6 +39,9 @@ namespace catapult { namespace model {
 	/// Aggregate of specific type was received.
 	DEFINE_AGGREGATE_NOTIFICATION(Type_v1, 0x003, Validator);
 
+	/// Aggregate was received with hash and sub transactions.
+	DEFINE_AGGREGATE_NOTIFICATION(Hash_v1, 0x004, Observer);
+
 #undef DEFINE_AGGREGATE_NOTIFICATION
 
 	// endregion
@@ -144,5 +147,38 @@ namespace catapult { namespace model {
 	public:
 		/// Transaction entity type.
 		const EntityType& Type;
+	};
+
+	/// Notification of an aggregate transaction hash with sub transactions.
+	template<VersionType version>
+	struct AggregateTransactionHashNotification;
+
+	template<>
+	struct AggregateTransactionHashNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Aggregate_Hash_v1_Notification;
+
+	public:
+		/// Creates a notification around \a aggregateHash, \a transactionsCount and \a pTransactions.
+		explicit AggregateTransactionHashNotification(
+			const Hash256& aggregateHash,
+			size_t transactionsCount,
+			const EmbeddedTransaction* pTransactions)
+				: Notification(Notification_Type, sizeof(AggregateTransactionHashNotification<1>))
+				, AggregateHash(aggregateHash)
+				, TransactionsCount(transactionsCount)
+				, TransactionsPtr(pTransactions)
+		{}
+
+	public:
+		/// Hash of the aggregate transaction.
+		Hash256 AggregateHash;
+
+		/// Number of transactions.
+		size_t TransactionsCount;
+
+		/// Const pointer to the first transaction.
+		const EmbeddedTransaction* TransactionsPtr;
 	};
 }}

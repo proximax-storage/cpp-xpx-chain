@@ -45,6 +45,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because executor not registered with operation.
 	DEFINE_OPERATION_RESULT(Invalid_Executor, 10);
 
+	/// Validation failed because operation identify transaction is not the first sub transaction.
+	DEFINE_OPERATION_RESULT(Identify_Transaction_Misplaced, 11);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

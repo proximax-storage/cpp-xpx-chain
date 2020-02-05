@@ -19,9 +19,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/utils/ArraySet.h"
-#include "src/config/AggregateConfiguration.h"
-#include <unordered_map>
 
 namespace catapult { namespace validators {
 

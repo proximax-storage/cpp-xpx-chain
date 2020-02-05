@@ -7,6 +7,7 @@
 #pragma once
 #include "OperationEntityType.h"
 #include "catapult/model/Transaction.h"
+#include "catapult/utils/ArraySet.h"
 
 namespace catapult { namespace model {
 
@@ -35,4 +36,9 @@ namespace catapult { namespace model {
 	DEFINE_EMBEDDABLE_TRANSACTION(OperationIdentify)
 
 #pragma pack(pop)
+
+	/// Extracts public keys of additional accounts that must approve \a transaction.
+	inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedOperationIdentifyTransaction&) {
+		return {};
+	}
 }}
