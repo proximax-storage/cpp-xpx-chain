@@ -176,6 +176,16 @@
 			"supportedVersions": [1]
 		},
 		{
+			"name": "startFileDownload",
+			"type": "18778",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "endFileDownload",
+			"type": "19034",
+			"supportedVersions": [1]
+		},
+		{
 			"name": "operationIdentify",
 			"type": "16734",
 			"supportedVersions": [1]

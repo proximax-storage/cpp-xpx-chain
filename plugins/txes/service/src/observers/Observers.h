@@ -43,4 +43,13 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by block.
 	DECLARE_OBSERVER(DriveCacheBlockPruning, model::BlockNotification<1>)();
+
+	/// Observes changes triggered by start file download.
+	DECLARE_OBSERVER(StartFileDownload, model::StartFileDownloadNotification<1>)();
+
+	/// Observes changes triggered by end file download.
+	DECLARE_OBSERVER(EndFileDownload, model::EndFileDownloadNotification<1>)();
+
+	/// Observes changes triggered by block.
+	DECLARE_OBSERVER(ExpiredFileDownload, model::BlockNotification<1>)();
 }}

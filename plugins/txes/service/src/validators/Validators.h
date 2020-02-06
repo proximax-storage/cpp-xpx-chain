@@ -71,14 +71,12 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(ServicePluginConfig, model::PluginConfigNotification<1>)();
 
 	/// A validator check that:
-	/// - Drive exists
 	/// - Drive is in correct state
 	/// - Initiator is registered to drive
 	/// - Another verification is not in progress
 	DECLARE_STATEFUL_VALIDATOR(StartDriveVerification, model::StartDriveVerificationNotification<1>)();
 
 	/// A validator check that:
-	/// - Drive exists
 	/// - Verification is in progress
 	/// - Failed replicators are registered to drive
 	DECLARE_STATEFUL_VALIDATOR(EndDriveVerification, model::EndDriveVerificationNotification<1>)();
@@ -87,4 +85,17 @@ namespace catapult { namespace validators {
 	/// - there is at least one block hash
 	/// - there are no duplicate hashes
 	DECLARE_STATELESS_VALIDATOR(FailedBlockHashes, model::FailedBlockHashesNotification<1>)();
+
+	/// A validator check that:
+	/// - Drive is in correct state
+	/// - File recipient is not drive replicator
+	/// - There is at least one file to download
+	/// - Files exist
+	/// - File sizes are valid
+	/// - File hashes are not duplicated
+	/// - File downloading is not in progress
+	DECLARE_STATEFUL_VALIDATOR(StartFileDownload, model::StartFileDownloadNotification<1>)();
+
+	/// - File downloading is in progress
+	DECLARE_STATEFUL_VALIDATOR(EndFileDownload, model::EndFileDownloadNotification<1>)();
 }}

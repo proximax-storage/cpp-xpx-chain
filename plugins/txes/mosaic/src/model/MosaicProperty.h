@@ -73,6 +73,11 @@ namespace catapult { namespace model {
 
 		/// Mosaic property value.
 		uint64_t Value;
+
+	public:
+		bool operator==(const MosaicProperty& other) const {
+			return other.Id == this->Id && this->Value == other.Value;
+		}
 	};
 
 #pragma pack(pop)

@@ -171,9 +171,9 @@ namespace catapult { namespace plugins {
                 const auto& notification = sub.matchingNotifications()[counter++];
                 EXPECT_EQ(modification.ModificationType, notification.ModificationType);
                 EXPECT_EQ(modification.KeySize, notification.KeySize);
-                EXPECT_EQ(modification.KeyPtr(), notification.KeyPtr);
+                EXPECT_EQ_MEMORY(modification.KeyPtr(), notification.KeyPtr, modification.KeySize);
                 EXPECT_EQ(modification.ValueSize, notification.ValueSize);
-                EXPECT_EQ(modification.ValuePtr(), notification.ValuePtr);
+                EXPECT_EQ_MEMORY(modification.ValuePtr(), notification.ValuePtr, modification.ValueSize);
             }
 
             EXPECT_EQ(2u, counter);
@@ -207,9 +207,9 @@ namespace catapult { namespace plugins {
                 EXPECT_EQ(pTransaction->MetadataType, notification.MetadataType);
                 EXPECT_EQ(modification.ModificationType, notification.ModificationType);
                 EXPECT_EQ(modification.KeySize, notification.KeySize);
-                EXPECT_EQ(modification.KeyPtr(), notification.KeyPtr);
+                EXPECT_EQ_MEMORY(modification.KeyPtr(), notification.KeyPtr, modification.KeySize);
                 EXPECT_EQ(modification.ValueSize, notification.ValueSize);
-                EXPECT_EQ(modification.ValuePtr(), notification.ValuePtr);
+                EXPECT_EQ_MEMORY(modification.ValuePtr(), notification.ValuePtr, modification.ValueSize);
             }
 
             EXPECT_EQ(2u, counter);

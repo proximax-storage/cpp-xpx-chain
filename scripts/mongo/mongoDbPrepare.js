@@ -19,6 +19,7 @@
 		db.createCollection(collectionName);
 		addCommonTransactionIndexes(db[collectionName]);
 		db[collectionName].createIndex({ 'meta.aggregateHash': 1 }, makeSparse('meta.aggregateHash'));
+		db[collectionName].createIndex({ 'meta.uniqueAggregateHash': 1 }, makeSparse('meta.uniqueAggregateHash'));
 	}
 
 	db.createCollection('blocks');

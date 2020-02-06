@@ -52,6 +52,7 @@ namespace catapult { namespace plugins {
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
