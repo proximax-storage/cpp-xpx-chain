@@ -19,21 +19,19 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	DEFINE_STATEFUL_VALIDATOR(AggregateTransaction, [](const auto& notification, const auto& context) {
-		if (notification.TransactionsCount && model::Entity_Type_OperationIdentify == notification.TransactionsPtr->Type) {
-			const auto& operationCache = context.Cache.template sub<cache::OperationCache>();
-			const auto& operationToken = static_cast<const model::EmbeddedOperationIdentifyTransaction&>(*notification.TransactionsPtr).OperationToken;
-			if (Hash256() != operationToken && !operationCache.contains(operationToken))
-				return Failure_Operation_Token_Invalid;
-		}
-
+	DEFINE_STATELESS_VALIDATOR(AggregateTransaction, [](const auto& notification) {
 		const auto* pTransaction = notification.TransactionsPtr;
+		bool operationIdentifyPresent = (notification.TransactionsCount && model::Entity_Type_OperationIdentify == pTransaction->Type);
 		for (auto i = 1u; i < notification.TransactionsCount; ++i) {
+			if (model::Entity_Type_EndOperation == pTransaction->Type)
+				return Failure_Operation_End_Transaction_Misplaced;
+			pTransaction = AdvanceNext(pTransaction);
 			if (model::Entity_Type_OperationIdentify == pTransaction->Type)
 				return Failure_Operation_Identify_Transaction_Misplaced;
-
-			pTransaction = AdvanceNext(pTransaction);
 		}
+
+		if (operationIdentifyPresent && model::Entity_Type_OperationIdentify == pTransaction->Type)
+			return Failure_Operation_Identify_Transaction_Aggregated_With_End_Operation;
 
 		return ValidationResult::Success;
 	})

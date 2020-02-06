@@ -17,9 +17,6 @@ namespace catapult { namespace observers {
 			return;
 
 		const auto& operationToken = static_cast<const model::EmbeddedOperationIdentifyTransaction&>(*notification.TransactionsPtr).OperationToken;
-		if (Hash256() == operationToken)
-			return;
-
 		auto& operationCache = context.Cache.template sub<cache::OperationCache>();
 		auto operationCacheIter = operationCache.find(operationToken);
 		auto& operationEntry = operationCacheIter.get();

@@ -12,9 +12,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	template<typename TTransaction>
 	void StreamBasicOperationTransaction(bson_stream::document& builder, const TTransaction& transaction) {
-        auto array = builder << "mosaics" << bson_stream::open_array;
-        auto pMosaic = transaction.MosaicsPtr();
-        for (auto i = 0u; i < transaction.MosaicCount; ++i, ++pMosaic)
+		auto array = builder << "mosaics" << bson_stream::open_array;
+		auto pMosaic = transaction.MosaicsPtr();
+		for (auto i = 0u; i < transaction.MosaicCount; ++i, ++pMosaic)
 			StreamMosaic(array, pMosaic->MosaicId, pMosaic->Amount);
 
 		array << bson_stream::close_array;
