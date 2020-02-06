@@ -10,11 +10,7 @@
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
-//#include "catapult/cache_core/AccountStateCache.h"
-//#include "catapult/state/AccountState.h"
 #include "src/observers/CommonDrive.h"
-//#include "plugins/txes/multisig/src/cache/MultisigCache.h"
-//#include "plugins/txes/multisig/src/observers/MultisigAccountFacade.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 

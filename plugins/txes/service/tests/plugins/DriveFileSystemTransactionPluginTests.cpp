@@ -72,6 +72,7 @@ namespace catapult { namespace plugins {
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(NetworkIdentifier::Mijin_Test, std::numeric_limits<uint32_t>::max());
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -138,11 +139,9 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
 		EXPECT_EQ(pTransaction->RootHash, notification.RootHash);
 		EXPECT_EQ(pTransaction->XorRootHash, notification.XorRootHash);
-		EXPECT_EQ(Num_Add_Actions, notification.AddActionsCount);
-		EXPECT_EQ(pTransaction->AddActionsPtr(), notification.AddActionsPtr);
+		EXPECT_EQ(pTransaction->AddActionsCount, notification.AddActionsCount);
 		EXPECT_EQ_MEMORY(pTransaction->AddActionsPtr(), notification.AddActionsPtr, Num_Add_Actions * sizeof(AddAction));
-		EXPECT_EQ(Num_Remove_Actions, notification.RemoveActionsCount);
-		EXPECT_EQ(pTransaction->RemoveActionsPtr(), notification.RemoveActionsPtr);
+        EXPECT_EQ(pTransaction->RemoveActionsCount, notification.RemoveActionsCount);
 		EXPECT_EQ_MEMORY(pTransaction->RemoveActionsPtr(), notification.RemoveActionsPtr, Num_Remove_Actions * sizeof(RemoveAction));
 	}
 

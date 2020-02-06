@@ -41,6 +41,7 @@ namespace catapult { namespace cache {
 		BlockchainUpgrade,
 		Drive,
 		Exchange,
+		Download,
 		Operation,
 	};
 

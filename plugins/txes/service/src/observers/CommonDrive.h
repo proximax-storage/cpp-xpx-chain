@@ -7,6 +7,7 @@
 #pragma once
 
 #include "Observers.h"
+#include "src/cache/DownloadCache.h"
 #include "src/cache/DriveCache.h"
 #include "src/utils/ServiceUtils.h"
 #include "catapult/cache_core/AccountStateCache.h"

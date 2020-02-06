@@ -104,8 +104,8 @@ namespace catapult { namespace validators {
 	/// Validation failed because the participant is not part of drive.
 	DEFINE_SERVICE_RESULT(Participant_Is_Not_Registered_To_Drive, 30);
 
-	/// Validation failed because zero deleted files.
-	DEFINE_SERVICE_RESULT(Zero_Deleted_Files, 32);
+	/// Validation failed because given no files to download.
+	DEFINE_SERVICE_RESULT(No_Files_To_Download, 32);
 
 	/// Validation failed because zero infos.
 	DEFINE_SERVICE_RESULT(Zero_Infos, 33);
@@ -131,8 +131,8 @@ namespace catapult { namespace validators {
 	/// Validation failed because the replicator has active file without deposit.
 	DEFINE_SERVICE_RESULT(Replicator_Has_Active_File_Without_Deposit, 40);
 
-	/// Validation failed because the remove file not same file size.
-	DEFINE_SERVICE_RESULT(Remove_Files_Not_Same_File_Size, 41);
+	/// Validation failed because given file size doesn't match the size of the file in drive.
+	DEFINE_SERVICE_RESULT(File_Size_Invalid, 41);
 
 	/// Validation failed because the drive account doesn't contains streaming tokens.
 	DEFINE_SERVICE_RESULT(Doesnt_Contain_Streaming_Tokens, 42);
@@ -148,6 +148,12 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because there are enough replcators in drive.
 	DEFINE_SERVICE_RESULT(Max_Replicators_Reached, 46);
+
+		/// Validation failed because file recipient is invalid.
+	DEFINE_SERVICE_RESULT(Invalid_File_Recipient, 47);
+
+	/// Validation failed because file download not in-progress.
+	DEFINE_SERVICE_RESULT(File_Download_Not_In_Progress, 48);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

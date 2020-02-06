@@ -12,9 +12,12 @@
 #include "EndDriveVerificationMapper.h"
 #include "EndDriveMapper.h"
 #include "DriveFilesRewardMapper.h"
+#include "StartFileDownloadMapper.h"
+#include "EndFileDownloadMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoDriveCacheStorage.h"
+#include "storages/MongoDownloadCacheStorage.h"
 #include "plugins/txes/service/src/model/ServiceReceiptType.h"
 
 extern "C" PLUGIN_API
@@ -28,9 +31,15 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndDriveVerificationTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndDriveTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDriveFilesRewardTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateStartFileDownloadTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndFileDownloadTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDriveCacheStorage(
+		manager.mongoContext(),
+		manager.configHolder()
+	));
+	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoDownloadCacheStorage(
 		manager.mongoContext(),
 		manager.configHolder()
 	));

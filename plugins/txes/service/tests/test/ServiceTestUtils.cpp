@@ -228,6 +228,34 @@ namespace catapult { namespace test {
 
 		AssertEqualPayments(expectedEntry.uploadPayments(), entry.uploadPayments());
 	}
+
+	state::DownloadEntry CreateDownloadEntry(
+			Hash256 operationToken,
+			Key driveKey,
+			Key fileRecipient,
+			Height height,
+			uint16_t fileCount) {
+		state::DownloadEntry entry(operationToken);
+		entry.DriveKey = driveKey;
+		entry.FileRecipient = fileRecipient;
+		entry.Height = height;
+		for (auto l = 0u; l < fileCount; ++l)
+			entry.Files.emplace(test::GenerateRandomByteArray<Hash256>(), test::Random());
+
+		return entry;
+	}
+
+	void AssertEqualDownloadData(const state::DownloadEntry& entry1, const state::DownloadEntry& entry2) {
+		EXPECT_EQ(entry1.OperationToken, entry2.OperationToken);
+		EXPECT_EQ(entry1.DriveKey, entry2.DriveKey);
+		EXPECT_EQ(entry1.FileRecipient, entry2.FileRecipient);
+		EXPECT_EQ(entry1.Height, entry2.Height);
+		ASSERT_EQ(entry1.Files.size(), entry2.Files.size());
+		for (const auto& pair : entry1.Files) {
+			ASSERT_EQ(pair.second, entry2.Files.at(pair.first));
+		}
+
+	}
 }}
 
 

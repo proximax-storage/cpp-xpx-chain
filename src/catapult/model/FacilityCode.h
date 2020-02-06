@@ -61,7 +61,9 @@ namespace catapult { namespace model {
 		Drive = 0x5B,
 		/// Exchange facility code.
 		Exchange = 0x5D,
+		/// Download facility code.
+		Download = 0x5E,
 		/// Operation facility code.
-		Operation = 0x5E,
+		Operation = 0x5F,
 	};
 }}

@@ -22,6 +22,7 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 #include "catapult/utils/MemoryUtils.h"
+#include "catapult/model/EntityHasher.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionPluginTestUtils.h"
 #include "mongo/tests/test/mocks/MockTransactionMapper.h"
@@ -37,6 +38,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	namespace {
 		constexpr auto Entity_Type = static_cast<model::EntityType>(9876);
+		auto Immutable_Config = config::ImmutableConfiguration::Uninitialized();
 
 		auto AllocateAggregateTransaction(uint16_t numTransactions, uint16_t numCosignatures) {
 			uint32_t entitySize = sizeof(TransactionType)
@@ -54,7 +56,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	TEST(TEST_CLASS, CanCreatePlugin) {
 		// Act:
 		MongoTransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Entity_Type);
+		auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Immutable_Config, Entity_Type);
 
 		// Assert:
 		EXPECT_EQ(Entity_Type, pPlugin->type());
@@ -63,7 +65,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	TEST(TEST_CLASS, PluginDoesNotSupportEmbedding) {
 		// Arrange:
 		MongoTransactionRegistry registry;
-		auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Entity_Type);
+		auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Immutable_Config, Entity_Type);
 
 		// Act + Assert:
 		EXPECT_FALSE(pPlugin->supportsEmbedding());
@@ -88,7 +90,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			// - create the plugin
 			MongoTransactionRegistry registry;
-			auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Entity_Type);
+			auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Immutable_Config, Entity_Type);
 
 			// Act:
 			mappers::bson_stream::document builder;
@@ -143,7 +145,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			// - create the plugin
 			MongoTransactionRegistry registry;
 			registry.registerPlugin(mocks::CreateMockTransactionMongoPlugin());
-			auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Entity_Type);
+			auto pPlugin = CreateAggregateTransactionMongoPlugin(registry, Immutable_Config, Entity_Type);
 
 			// Act:
 			model::TransactionElement transactionElement(*pTransaction);
@@ -153,20 +155,28 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto metadata = MongoTransactionMetadata(transactionElement, Height(12), 2);
 			auto documents = pPlugin->extractDependentDocuments(*pTransaction, metadata);
 
+			utils::Mempool pool;
+
 			// Assert:
 			ASSERT_EQ(numTransactions, documents.size());
 
 			for (auto i = 0u; i < numTransactions; ++i) {
 				const auto& subTransaction = subTransactions[i];
 
+				auto uniqueAggregateHash = model::CalculateHash(
+					catapult::plugins::ConvertEmbeddedTransaction(subTransaction, pTransaction->Deadline, pool),
+					Immutable_Config.GenerationHash
+				);
+
 				// - the document has meta and transaction parts
 				auto view = documents[i].view();
 				EXPECT_EQ(2u, test::GetFieldCount(view));
 
 				auto metaView = view["meta"].get_document().view();
-				EXPECT_EQ(4u, test::GetFieldCount(metaView));
+				EXPECT_EQ(5u, test::GetFieldCount(metaView));
 				EXPECT_EQ(Height(12), Height(test::GetUint64(metaView, "height")));
 				EXPECT_EQ(metadata.EntityHash, test::GetHashValue(metaView, "aggregateHash"));
+				EXPECT_EQ(uniqueAggregateHash, test::GetHashValue(metaView, "uniqueAggregateHash"));
 				EXPECT_EQ(metadata.ObjectId, metaView["aggregateId"].get_oid().value);
 				EXPECT_EQ(i, test::GetUint32(metaView, "index"));
 

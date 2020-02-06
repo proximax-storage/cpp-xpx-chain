@@ -59,7 +59,19 @@ namespace catapult { namespace utils {
 			return temp;
 		}
 
+		ByteArray& operator^=(const ByteArray& a) {
+			for (auto i = 0u; i < this->size(); ++i)
+				this->m_array[i] = this->m_array[i] ^ a.m_array[i];
+
+			return *this;
+		}
+
 	public:
+		/// Returns the underlying array.
+		constexpr const std::array<uint8_t, N>& array() const {
+			return m_array;
+		}
+
 		/// Returns the array size.
 		constexpr size_t size() const {
 			return m_array.size();
