@@ -17,13 +17,13 @@ namespace catapult { namespace mongo { namespace plugins {
 	bsoncxx::document::value ToDbModel(const state::SuperContractEntry& entry, const Address& accountAddress) {
 		bson_stream::document builder;
 		auto doc = builder << "supercontract" << bson_stream::open_document
-				<< "multisig" << ToBinary(entry.key())
-				<< "multisigAddress" << ToBinary(accountAddress)
-				<< "start" << ToInt64(entry.start())
-				<< "end" << ToInt64(entry.end())
-				<< "mainDriveKey" << ToBinary(entry.mainDriveKey())
-				<< "fileHash" << ToBinary(entry.fileHash())
-				<< "version" << ToInt64(entry.version());
+						   << "multisig" << ToBinary(entry.key())
+						   << "multisigAddress" << ToBinary(accountAddress)
+						   << "start" << ToInt64(entry.start())
+						   << "end" << ToInt64(entry.end())
+						   << "mainDriveKey" << ToBinary(entry.mainDriveKey())
+						   << "fileHash" << ToBinary(entry.fileHash())
+						   << "version" << ToInt64(entry.version());
 
 		return doc
 				<< bson_stream::close_document
@@ -40,17 +40,17 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(multisig, dbContractEntry["multisig"].get_binary());
 		state::SuperContractEntry entry(multisig);
 
-        Key mainDriveKey;
-        DbBinaryToModelArray(mainDriveKey, dbContractEntry["mainDriveKey"].get_binary());
-        entry.setMainDriveKey(mainDriveKey);
+		Key mainDriveKey;
+		DbBinaryToModelArray(mainDriveKey, dbContractEntry["mainDriveKey"].get_binary());
+		entry.setMainDriveKey(mainDriveKey);
 
-        Hash256 fileHash;
-        DbBinaryToModelArray(fileHash, dbContractEntry["fileHash"].get_binary());
-        entry.setFileHash(fileHash);
+		Hash256 fileHash;
+		DbBinaryToModelArray(fileHash, dbContractEntry["fileHash"].get_binary());
+		entry.setFileHash(fileHash);
 
-        entry.setStart(Height(dbContractEntry["start"].get_int64()));
-        entry.setEnd(Height(dbContractEntry["end"].get_int64()));
-        entry.setVersion(BlockchainVersion(dbContractEntry["version"].get_int64()));
+		entry.setStart(Height(dbContractEntry["start"].get_int64()));
+		entry.setEnd(Height(dbContractEntry["end"].get_int64()));
+		entry.setVersion(BlockchainVersion(dbContractEntry["version"].get_int64()));
 
 		return entry;
 	}

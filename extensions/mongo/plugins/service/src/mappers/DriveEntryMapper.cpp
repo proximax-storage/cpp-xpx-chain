@@ -282,7 +282,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		ReadFiles(entry.files(), dbDriveEntry["files"].get_array().value);
 		ReadReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
 		ReadReplicators(entry.removedReplicators(), dbDriveEntry["removedReplicators"].get_array().value);
-        ReadPaymentInformation(entry.uploadPayments(), dbDriveEntry["uploadPayments"].get_array().value);
+		ReadPaymentInformation(entry.uploadPayments(), dbDriveEntry["uploadPayments"].get_array().value);
 
 		for (const auto& dbCoowner : dbDriveEntry["coowners"].get_array().value) {
 			Key coowner;

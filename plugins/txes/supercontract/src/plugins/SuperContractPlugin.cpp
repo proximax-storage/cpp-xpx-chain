@@ -7,7 +7,7 @@
 #include "catapult/plugins/PluginManager.h"
 #include "SuperContractPlugin.h"
 #include "src/cache/SuperContractCache.h"
-#include "src/cache/MongoSuperContractCacheStorage.h"
+#include "src/cache/SuperContractCacheStorage.h"
 #include "src/model/SuperContractNotifications.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/DeployTransactionPlugin.h"

@@ -21,7 +21,6 @@ namespace catapult {
 		class SuperContractCacheView;
 		struct SuperContractEntryPrimarySerializer;
 		class SuperContractPatriciaTree;
-		struct SuperContractHeightGroupingSerializer;
 
 		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
@@ -57,20 +56,7 @@ namespace catapult { namespace cache {
 
 	/// SuperContract cache types.
 	struct SuperContractCacheTypes {
-		struct HeightGroupingTypesDescriptor {
-		public:
-			using KeyType = Height;
-			using ValueType = utils::IdentifierGroup<Key, Height, utils::ArrayHasher<Key>>;
-			using Serializer = SuperContractHeightGroupingSerializer;
-
-		public:
-			static auto GetKeyFromValue(const ValueType& identifierGroup) {
-				return identifierGroup.key();
-			}
-		};
-
 		using PrimaryTypes = MutableUnorderedMapAdapter<SuperContractCacheDescriptor, utils::ArrayHasher<Key>>;
-		using HeightGroupingTypes = MutableUnorderedMapAdapter<HeightGroupingTypesDescriptor, utils::BaseValueHasher<Height>>;
 
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicSuperContractCacheView, BasicSuperContractCacheDelta, const Key&, state::SuperContractEntry>;
 

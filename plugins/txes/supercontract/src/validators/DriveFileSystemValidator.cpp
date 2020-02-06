@@ -17,8 +17,8 @@ namespace catapult { namespace validators {
 	using Notification = model::DriveFileSystemNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(DriveFileSystem, [](const Notification& notification, const ValidatorContext& context) {
-	    if (!notification.RemoveActionsCount)
-            return ValidationResult::Success;
+		if (!notification.RemoveActionsCount)
+			return ValidationResult::Success;
 
 		const auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
 
@@ -27,17 +27,17 @@ namespace catapult { namespace validators {
 		const state::DriveEntry& driveEntry = driveIter.get();
 
 		for (const auto& coowner : driveEntry.coowners()) {
-		    if (superContractCache.contains(coowner)) {
-                auto contractIter = superContractCache.find(coowner);
-                const state::SuperContractEntry& contractEntry = contractIter.get();
+			if (superContractCache.contains(coowner)) {
+				auto contractIter = superContractCache.find(coowner);
+				const state::SuperContractEntry& contractEntry = contractIter.get();
 
-                auto pRemove = notification.RemoveActionsPtr;
-                for (auto i = 0u; i < notification.RemoveActionsCount; ++i, ++pRemove) {
-                    if (pRemove->FileHash == contractEntry.fileHash()) {
-                        return Failure_SuperContract_Remove_Super_Contract_File;
-                    }
-                }
-		    }
+				auto pRemove = notification.RemoveActionsPtr;
+				for (auto i = 0u; i < notification.RemoveActionsCount; ++i, ++pRemove) {
+					if (pRemove->FileHash == contractEntry.fileHash()) {
+						return Failure_SuperContract_Remove_Super_Contract_File;
+					}
+				}
+			}
 		}
 
 		return ValidationResult::Success;

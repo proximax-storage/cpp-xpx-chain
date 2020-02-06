@@ -15,7 +15,4 @@ namespace catapult { namespace cache {
 	/// Primary serializer for super contract cache.
 	struct SuperContractEntryPrimarySerializer : public CacheSerializerAdapter<state::SuperContractEntrySerializer, SuperContractCacheDescriptor>
 	{};
-
-	/// Serializer for super contract cache height grouped elements.
-	struct SuperContractHeightGroupingSerializer : public IdentifierGroupSerializer<SuperContractCacheTypes::HeightGroupingTypesDescriptor> {};
 }}
