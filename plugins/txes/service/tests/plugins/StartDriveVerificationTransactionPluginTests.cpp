@@ -191,8 +191,8 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
-		EXPECT_EQ(Storage_Mosaic_Id, notification.Mosaic.MosaicId);
-		EXPECT_EQ(Amount(1000), notification.Mosaic.Amount);
+		EXPECT_EQ(Storage_Mosaic_Id, notification.MosaicsPtr->MosaicId);
+		EXPECT_EQ(Amount(1000), notification.MosaicsPtr->Amount);
 		EXPECT_EQ(BlockDuration(500), notification.Duration);
 		EXPECT_EQ(model::LockHashAlgorithm::Op_Internal, notification.HashAlgorithm);
 		EXPECT_EQ(Hash256(), notification.Secret);

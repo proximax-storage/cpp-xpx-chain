@@ -42,6 +42,7 @@ namespace catapult { namespace cache {
 		Drive,
 		Exchange,
 		SuperContract,
+		Operation,
 	};
 
 /// Defines cache constants for a cache with \a NAME.

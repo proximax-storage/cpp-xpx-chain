@@ -174,6 +174,11 @@
 			"name": "removeExchangeOffer",
 			"type": "17245",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "operationIdentify",
+			"type": "16734",
+			"supportedVersions": [1]
 		}
 	]
 }

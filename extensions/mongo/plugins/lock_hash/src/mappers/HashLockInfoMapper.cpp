@@ -29,6 +29,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		class HashLockInfoMapperTraits {
 		public:
 			using LockInfoType = state::HashLockInfo;
+			static constexpr VersionType Version = 1;
+			static constexpr char IdName[] = "lock";
 
 		public:
 			static void StreamLockInfo(bson_stream::document& builder, const state::HashLockInfo& hashLockInfo) {

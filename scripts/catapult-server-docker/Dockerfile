@@ -116,6 +116,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.mosaic \
     catapult.mongo.plugins.multisig \
     catapult.mongo.plugins.namespace \
+    catapult.mongo.plugins.operation \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
     catapult.mongo.plugins.upgrade \
@@ -134,6 +135,7 @@ RUN cd /catapult \
     catapult.plugins.mosaic \
     catapult.plugins.multisig \
     catapult.plugins.namespace \
+    catapult.plugins.operation \
     catapult.plugins.property \
     catapult.plugins.signature \
     catapult.plugins.transfer \

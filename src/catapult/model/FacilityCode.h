@@ -63,5 +63,7 @@ namespace catapult { namespace model {
 		Exchange = 0x5D,
 		/// SuperContract facility code.
 		SuperContract = 0x5E,
+		/// Operation facility code.
+		Operation = 0x5F,
 	};
 }}

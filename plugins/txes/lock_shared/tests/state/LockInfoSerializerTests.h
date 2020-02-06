@@ -36,8 +36,8 @@ namespace catapult { namespace state {
 		explicit PackedLockInfo(const LockInfo& lockInfo)
 				: Version(1)
 				, Account(lockInfo.Account)
-				, MosaicId(lockInfo.MosaicId)
-				, Amount(lockInfo.Amount)
+				, MosaicId(lockInfo.Mosaics.begin()->first)
+				, Amount(lockInfo.Mosaics.begin()->second)
 				, Height(lockInfo.Height)
 				, Status(lockInfo.Status)
 		{}
