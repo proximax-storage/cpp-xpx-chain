@@ -61,9 +61,11 @@ namespace catapult { namespace model {
 		Drive = 0x5B,
 		/// Exchange facility code.
 		Exchange = 0x5D,
-		/// SuperContract facility code.
-		SuperContract = 0x5E,
+		/// Download facility code.
+		Download = 0x5E,
 		/// Operation facility code.
 		Operation = 0x5F,
+		/// SuperContract facility code.
+		SuperContract = 0x60,
 	};
 }}

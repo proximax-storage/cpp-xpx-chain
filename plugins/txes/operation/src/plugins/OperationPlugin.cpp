@@ -43,12 +43,14 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateOperationPluginConfigValidator())
 				.add(validators::CreateStartOperationValidator())
+				.add(validators::CreateAggregateTransactionValidator())
 				.add(validators::CreateOperationMosaicValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateOperationDurationValidator())
+				.add(validators::CreateOperationIdentifyValidator())
 				.add(validators::CreateEndOperationValidator());
 		});
 
@@ -57,8 +59,10 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateStartOperationObserver())
 				.add(observers::CreateExpiredOperationObserver())
 				.add(observers::CreateEndOperationObserver())
-				.add(observers::CreateCacheBlockTouchObserver<cache::OperationCache>("Operation", model::Receipt_Type_Operation_Expired))
-				.add(observers::CreateCacheBlockPruningObserver<cache::OperationCache>("Operation", 1));
+				.add(observers::CreateAggregateTransactionHashObserver())
+				.add(observers::CreateCacheBlockTouchObserver<cache::OperationCache>("Operation", model::Receipt_Type_Operation_Expired));
+				// Uncomment in case of the operation cache requires cleanup.
+//				.add(observers::CreateCacheBlockPruningObserver<cache::OperationCache>("Operation", 1));
 		});
 	}
 }}

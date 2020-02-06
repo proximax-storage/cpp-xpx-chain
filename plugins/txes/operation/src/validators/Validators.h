@@ -39,7 +39,12 @@ namespace catapult { namespace validators {
 	DECLARE_STATELESS_VALIDATOR(OperationMosaic, model::OperationMosaicNotification<1>)();
 
 	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
-	/// - operation identify transaction contains valid operation token
 	/// - operation identify transaction is the very first sub transaction
-	DECLARE_STATEFUL_VALIDATOR(AggregateTransaction, model::AggregateCosignaturesNotification<1>)();
+	/// - end operation transaction is the very last sub transaction
+	/// - operation identify transaction is not aggregated with end operation transaction
+	DECLARE_STATELESS_VALIDATOR(AggregateTransaction, model::AggregateCosignaturesNotification<1>)();
+
+	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
+	/// - operation identify transaction contains valid operation token
+	DECLARE_STATEFUL_VALIDATOR(OperationIdentify, model::AggregateCosignaturesNotification<1>)();
 }}

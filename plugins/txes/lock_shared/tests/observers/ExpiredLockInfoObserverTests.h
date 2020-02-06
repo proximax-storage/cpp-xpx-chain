@@ -164,14 +164,6 @@ namespace catapult { namespace observers {
 			}
 
 		private:
-			static typename TTraits::ValueType CreateLockInfoWithAmount(Amount amount, Height height) {
-				auto lockInfo = TTraits::CreateLockInfo(height);
-				lockInfo.Mosaics.clear();
-				lockInfo.Mosaics.emplace(Lock_Mosaic_Id, amount);
-				return lockInfo;
-			}
-
-		private:
 			Height m_height;
 			NotifyMode m_mode;
 			model::Mosaic m_seedMosaic;
