@@ -6,7 +6,6 @@
 
 #pragma once
 #include "catapult/types.h"
-#include <vector>
 
 namespace catapult { namespace state {
 

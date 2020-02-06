@@ -20,7 +20,6 @@
 
 #pragma once
 #include "SecretLockInfoBaseSets.h"
-#include "SecretLockInfoCacheSerializers.h"
 #include "plugins/txes/lock_shared/src/cache/LockInfoCacheView.h"
 
 namespace catapult { namespace cache {

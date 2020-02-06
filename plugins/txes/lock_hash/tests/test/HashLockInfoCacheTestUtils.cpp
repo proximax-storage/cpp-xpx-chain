@@ -23,13 +23,15 @@
 
 namespace catapult { namespace test {
 
-	BasicHashLockInfoTestTraits::ValueType BasicHashLockInfoTestTraits::CreateLockInfo(Height height) {
-		return state::HashLockInfo(
+	BasicHashLockInfoTestTraits::ValueType BasicHashLockInfoTestTraits::CreateLockInfo(Height height, state::LockStatus status) {
+		auto lockInfo = state::HashLockInfo(
 				GenerateRandomByteArray<Key>(),
 				MosaicId(Random()),
 				Amount(Random()),
 				height,
 				GenerateRandomByteArray<Hash256>());
+		lockInfo.Status = status;
+		return lockInfo;
 	}
 
 	BasicHashLockInfoTestTraits::ValueType BasicHashLockInfoTestTraits::CreateLockInfo() {

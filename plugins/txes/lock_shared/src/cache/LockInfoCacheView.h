@@ -59,9 +59,10 @@ namespace catapult { namespace cache {
 	template<typename TDescriptor, typename TCacheTypes, typename TBasicView = BasicLockInfoCacheView<TDescriptor, TCacheTypes>>
 	class LockInfoCacheView : public ReadOnlyViewSupplier<TBasicView> {
 	public:
-		/// Creates a view around \a lockInfoSets.
-		explicit LockInfoCacheView(const typename TCacheTypes::BaseSets& lockInfoSets)
-				: ReadOnlyViewSupplier<TBasicView>(lockInfoSets)
+		/// Creates a view around \a lockInfoSets and \a args.
+		template<typename... TArgs>
+		explicit LockInfoCacheView(const typename TCacheTypes::BaseSets& lockInfoSets, TArgs&&... args)
+				: ReadOnlyViewSupplier<TBasicView>(lockInfoSets, std::forward<TArgs>(args)...)
 		{}
 	};
 }}

@@ -36,6 +36,12 @@ namespace catapult { namespace observers {
 
 		using HeightGenerator = std::function<Height (uint32_t)>;
 
+		static auto CreateConfiguration() {
+			test::MutableBlockchainConfiguration config;
+			config.Immutable.StreamingMosaicId = Lock_Mosaic_Id;
+			return config.ToConst();
+		}
+
 		// region no operation
 
 		static void AssertObserverDoesNothingWhenNoLockInfoExpired_OnCommit() {
@@ -84,7 +90,7 @@ namespace catapult { namespace observers {
 					: m_height(height)
 					, m_mode(mode)
 					, m_seedMosaic(seedMosaic)
-					, m_observerContext(m_mode, m_height)
+					, m_observerContext(m_mode, m_height, CreateConfiguration())
 			{}
 
 		public:
@@ -95,13 +101,14 @@ namespace catapult { namespace observers {
 				auto& accountStateCache = this->accountStateCache();
 				for (auto i = 0u; i < numLockInfos; ++i) {
 					// - lock info cache
-					auto lockInfo = CreateLockInfoWithAmount(Lock_Amount, heightGenerator(i));
-					keys.insert(lockInfo.Account);
+					auto lockInfo = TTraits::CreateLockInfoWithAmount(Lock_Mosaic_Id, Lock_Amount, heightGenerator(i));
+					auto lockOwner = TTraits::GetLockOwner(lockInfo);
+					keys.insert(lockOwner);
 					lockInfoCacheDelta.insert(lockInfo);
 
 					// - account state cache
-					accountStateCache.addAccount(lockInfo.Account, Height(1));
-					credit(accountStateCache.find(lockInfo.Account).get());
+					accountStateCache.addAccount(lockOwner, Height(1));
+					credit(accountStateCache.find(lockOwner).get());
 				}
 
 				return keys;

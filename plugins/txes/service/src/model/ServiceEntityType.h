@@ -30,11 +30,17 @@ namespace catapult { namespace model {
 	/// DriveFilesReward transaction.
 	DEFINE_TRANSACTION_TYPE(Service, DriveFilesReward, 0x6);
 
-	/// Verification transaction.
+	/// Start verification transaction.
 	DEFINE_TRANSACTION_TYPE(Service, Start_Drive_Verification, 0x7);
 
-	/// Verification transaction.
+	/// End verification transaction.
 	DEFINE_TRANSACTION_TYPE(Service, End_Drive_Verification, 0x8);
+
+	/// Start file download transaction.
+	DEFINE_TRANSACTION_TYPE(Service, StartFileDownload, 0x9);
+
+	/// End file download transaction.
+	DEFINE_TRANSACTION_TYPE(Service, EndFileDownload, 0xA);
 
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}

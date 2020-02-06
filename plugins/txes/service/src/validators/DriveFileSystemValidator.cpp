@@ -46,7 +46,7 @@ namespace catapult { namespace validators {
             	return Failure_Service_File_Doesnt_Exist;
             }
 			if (driveEntry.files().at(removeActionsPtr->FileHash).Size != removeActionsPtr->FileSize) {
-				return Failure_Service_Remove_Files_Not_Same_File_Size;
+				return Failure_Service_File_Size_Invalid;
 			}
 		}
 

@@ -63,6 +63,8 @@ namespace catapult { namespace validators {
 			model::Entity_Type_Exchange_Offer,
 			model::Entity_Type_Exchange,
 			model::Entity_Type_Remove_Exchange_Offer,
+			model::Entity_Type_StartFileDownload,
+			model::Entity_Type_EndFileDownload,
 		});
 
 		// Assert:
@@ -90,6 +92,7 @@ namespace catapult { namespace validators {
 			model::Entity_Type_Start_Drive_Verification,
 			model::Entity_Type_Exchange_Offer,
 			model::Entity_Type_Remove_Exchange_Offer,
+			model::Entity_Type_StartFileDownload,
 		});
 
 		// Assert:
@@ -114,6 +117,7 @@ namespace catapult { namespace validators {
 			model::Entity_Type_DriveFilesReward,
 			model::Entity_Type_End_Drive_Verification,
 			model::Entity_Type_Exchange,
+			model::Entity_Type_EndFileDownload,
 		});
 
 		// Assert:
