@@ -13,6 +13,10 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
+	using OperationResult = uint16_t;
+
+	constexpr OperationResult Operation_Result_None = 0;
+
 	/// Binary layout for a basic operation transaction body.
 	template<typename THeader>
 	struct BasicOperationTransactionBody : public THeader {

@@ -28,6 +28,9 @@ namespace catapult { namespace model {
 		/// Operation token.
 		Hash256 OperationToken;
 
+		/// Operation result.
+		OperationResult Result;
+
 	public:
 		// Calculates the real size of an end operation transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {

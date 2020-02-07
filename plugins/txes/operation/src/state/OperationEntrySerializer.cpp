@@ -35,6 +35,7 @@ namespace catapult { namespace state {
 		output.write(entry.OperationToken);
 		SaveArray(entry.Executors, output);
 		SaveArray(entry.TransactionHashes, output);
+		io::Write16(output, entry.Result);
 	}
 
 	void OperationEntryExtendedDataSerializer::Load(io::InputStream& input, OperationEntry& entry) {
@@ -46,5 +47,6 @@ namespace catapult { namespace state {
 		input.read(entry.OperationToken);
 		LoadArray<Key>(input, [&executors = entry.Executors](const auto& executor) { executors.insert(executor); });
 		LoadArray<Hash256>(input, [&hashes = entry.TransactionHashes](const auto& hash) { hashes.push_back(hash); });
+		entry.Result = io::Read16(input);
 	}
 }}
