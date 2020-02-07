@@ -42,12 +42,14 @@ namespace catapult { namespace mongo { namespace plugins {
 		public:
 			static void StreamLockInfo(bson_stream::document& builder, const state::OperationEntry& entry) {
 				builder << "token" << ToBinary(entry.OperationToken);
+				builder << "result" << static_cast<int32_t>(entry.Result);
 				StreamArray(builder, "executors", entry.Executors);
 				StreamArray(builder, "transactionHashes", entry.TransactionHashes);
 			}
 
 			static void ReadLockInfo(state::OperationEntry& entry, const bsoncxx::document::element dbOperationEntry) {
 				DbBinaryToModelArray(entry.OperationToken, dbOperationEntry["token"].get_binary());
+				entry.Result = static_cast<uint16_t>(dbOperationEntry["result"].get_int32());
 				ReadArray<Key>(dbOperationEntry["executors"].get_array().value,
 					[&executors = entry.Executors](const auto& executor) { executors.insert(executor); });
 				ReadArray<Hash256>(dbOperationEntry["transactionHashes"].get_array().value,

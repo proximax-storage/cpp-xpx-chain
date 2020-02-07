@@ -48,7 +48,8 @@ namespace catapult { namespace plugins {
 					transaction.Signer,
 					transaction.OperationToken,
 					transaction.MosaicsPtr(),
-					transaction.MosaicCount));
+					transaction.MosaicCount,
+					transaction.Result));
 				auto pMosaic = transaction.MosaicsPtr();
 				for (auto i = 0u; i < transaction.MosaicCount; ++i, ++pMosaic) {
 					sub.notify(BalanceCreditNotification<1>(transaction.Signer, pMosaic->MosaicId, pMosaic->Amount));

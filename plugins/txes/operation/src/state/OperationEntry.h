@@ -33,5 +33,8 @@ namespace catapult { namespace state {
 
 		/// Transaction hashes.
 		std::vector<Hash256> TransactionHashes;
+
+		/// Operation result.
+		uint16_t Result;
 	};
 }}

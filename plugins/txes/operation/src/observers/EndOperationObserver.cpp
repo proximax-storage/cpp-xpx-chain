@@ -7,6 +7,7 @@
 #include "Observers.h"
 #include "src/cache/OperationCache.h"
 #include "src/model/OperationReceiptType.h"
+#include "src/model/OperationTypes.h"
 #include "plugins/txes/lock_shared/src/observers/LockStatusAccountBalanceObserver.h"
 
 namespace catapult { namespace observers {
@@ -38,6 +39,7 @@ namespace catapult { namespace observers {
 		auto pMosaic = notification.MosaicsPtr;
 
 		if (NotifyMode::Commit == context.Mode) {
+			operationEntry.Result = notification.Result;
 			for (auto i = 0u; i < notification.MosaicCount; ++i, ++pMosaic) {
 				auto mosaicId = context.Resolvers.resolve(pMosaic->MosaicId);
 				auto& amount = mosaics.at(mosaicId);
@@ -48,6 +50,7 @@ namespace catapult { namespace observers {
 			if (mosaics.empty())
 				operationEntry.Status = state::LockStatus::Used;
 		} else {
+			operationEntry.Result = model::Operation_Result_None;
 			operationEntry.Status = state::LockStatus::Unused;
 			for (auto i = 0u; i < notification.MosaicCount; ++i, ++pMosaic) {
 				auto mosaicId = context.Resolvers.resolve(pMosaic->MosaicId);

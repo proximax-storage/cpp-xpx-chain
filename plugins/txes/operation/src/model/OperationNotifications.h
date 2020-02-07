@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "OperationTypes.h"
 #include "plugins/txes/lock_shared/src/model/LockNotifications.h"
 
 namespace catapult { namespace model {
@@ -97,12 +98,14 @@ namespace catapult { namespace model {
 			const Key& executor,
 			const Hash256& operationToken,
 			const UnresolvedMosaic* pMosaics,
-			uint8_t mosaicCount)
+			uint8_t mosaicCount,
+			OperationResult result)
 				: Notification(Notification_Type, sizeof(EndOperationNotification<1>))
 				, Executor(executor)
 				, OperationToken(operationToken)
 				, MosaicsPtr(pMosaics)
 				, MosaicCount(mosaicCount)
+				, Result(result)
 		{}
 
 	public:
@@ -117,6 +120,9 @@ namespace catapult { namespace model {
 
 		/// Spent mosaics count.
 		uint8_t MosaicCount;
+
+		/// Operation result.
+		OperationResult Result;
 	};
 
 	/// Notification of an end operation notification.
