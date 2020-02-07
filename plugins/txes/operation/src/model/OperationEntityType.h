@@ -15,6 +15,12 @@ namespace catapult { namespace model {
 	/// Operation identify transaction.
 	DEFINE_TRANSACTION_TYPE(Operation, OperationIdentify, 0x1);
 
+	/// Start operation transaction.
+	DEFINE_TRANSACTION_TYPE(Operation, StartOperation, 0x2);
+
+	/// End operation transaction.
+	DEFINE_TRANSACTION_TYPE(Operation, EndOperation, 0x3);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

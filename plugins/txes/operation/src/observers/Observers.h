@@ -8,6 +8,7 @@
 #include "src/model/OperationNotifications.h"
 #include "catapult/model/Notifications.h"
 #include "catapult/observers/ObserverTypes.h"
+#include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 
 namespace catapult { namespace observers {
 
@@ -19,4 +20,7 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by block notifications.
 	DECLARE_OBSERVER(ExpiredOperation, model::BlockNotification<1>)();
+
+	/// Observes changes triggered by aggregate transaction hash notifications.
+	DECLARE_OBSERVER(AggregateTransactionHash, model::AggregateTransactionHashNotification<1>)();
 }}
