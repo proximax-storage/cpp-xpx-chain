@@ -20,7 +20,10 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		template<typename TTransaction>
 		void AssertEqualNonInheritedData(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
-			EXPECT_EQ(transaction.Owner, test::GetKeyValue(dbTransaction, "owner"));
+			if (transaction.EntityVersion() == 1)
+				EXPECT_EQ(transaction.DriveKey, test::GetKeyValue(dbTransaction, "drive"));
+			else
+				EXPECT_EQ(transaction.Owner, test::GetKeyValue(dbTransaction, "owner"));
 			EXPECT_EQ(transaction.Duration.unwrap(), test::GetUint64(dbTransaction, "duration"));
 			EXPECT_EQ(transaction.BillingPeriod.unwrap(), test::GetUint64(dbTransaction, "billingPeriod"));
 			EXPECT_EQ(transaction.BillingPrice.unwrap(), test::GetUint64(dbTransaction, "billingPrice"));
@@ -31,9 +34,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		}
 
 		template<typename TTraits>
-		void AssertCanMapPrepareDriveTransaction() {
+		void AssertCanMapPrepareDriveTransaction(VersionType version) {
 			// Arrange:
-			auto pTransaction = test::CreatePrepareDriveTransaction<typename TTraits::TransactionType>();
+			auto pTransaction = test::CreatePrepareDriveTransaction<typename TTraits::TransactionType>(version);
 			auto pPlugin = TTraits::CreatePlugin();
 
 			// Act:
@@ -49,8 +52,13 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	DEFINE_BASIC_MONGO_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, model::Entity_Type_PrepareDrive)
 
-	PLUGIN_TEST(CanMapPrepareDriveTransaction) {
+	PLUGIN_TEST(CanMapPrepareDriveTransaction_v1) {
 		// Assert:
-		AssertCanMapPrepareDriveTransaction<TTraits>();
+		AssertCanMapPrepareDriveTransaction<TTraits>(1);
+	}
+
+	PLUGIN_TEST(CanMapPrepareDriveTransaction_v2) {
+		// Assert:
+		AssertCanMapPrepareDriveTransaction<TTraits>(2);
 	}
 }}}
