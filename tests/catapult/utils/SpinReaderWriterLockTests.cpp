@@ -314,7 +314,7 @@ namespace catapult { namespace utils {
 
 		// sometimes Reader thread runs first before writer thread
 		// therefore delay reader thread start until writer has started
-		bool writeThreadStarted = false;
+		std::atomic<bool> writeThreadStarted (false);
 
 		// Act: spawn a reader thread
 		testGuard.Threads.create_thread([&] {
@@ -327,7 +327,10 @@ namespace catapult { namespace utils {
 
 			// - spawn a thread that will acquire a reader lock after a writer is pending
 			testGuard.Threads.create_thread([&] {
-				while(!writeThreadStarted);
+				while(!writeThreadStarted) {
+					// prevent CPU Spin and hogging
+					test::Sleep(1);
+				}
 				state.doReaderWork();
 			});
 
