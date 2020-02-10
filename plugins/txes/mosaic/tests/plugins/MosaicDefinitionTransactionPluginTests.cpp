@@ -98,6 +98,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration(pluginConfig)));
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		transaction.PropertiesHeader.Count = 0;
 		test::FillWithRandomData(transaction.Signer);
@@ -126,6 +127,7 @@ namespace catapult { namespace plugins {
 
 			// - prepare the transaction
 			typename TTraits::TransactionType transaction;
+			transaction.Size = sizeof(transaction);
 			transaction.Version = Transaction_Version;
 			transaction.PropertiesHeader.Count = 0;
 			test::FillWithRandomData(transaction.Signer);
@@ -212,14 +214,14 @@ namespace catapult { namespace plugins {
 			void AssertOptionalMosaicProperties(const MosaicPropertiesHeader& mosaicPropertiesHeader, const MosaicProperty& property) {
 				ASSERT_EQ(1u, PropertiesSub.numMatchingNotifications());
 				const auto& notification = PropertiesSub.matchingNotifications()[0];
-				EXPECT_EQ(&mosaicPropertiesHeader, &notification.PropertiesHeader);
-				EXPECT_EQ(&property, notification.PropertiesPtr);
+				EXPECT_EQ(mosaicPropertiesHeader, notification.PropertiesHeader);
+				EXPECT_EQ(property, *notification.PropertiesPtr);
 			}
 
 			void AssertNoOptionalMosaicProperties(const MosaicPropertiesHeader& mosaicPropertiesHeader) {
 				ASSERT_EQ(1u, PropertiesSub.numMatchingNotifications());
 				const auto& notification = PropertiesSub.matchingNotifications()[0];
-				EXPECT_EQ(&mosaicPropertiesHeader, &notification.PropertiesHeader);
+				EXPECT_EQ(mosaicPropertiesHeader, notification.PropertiesHeader);
 				EXPECT_FALSE(!!notification.PropertiesPtr);
 			}
 

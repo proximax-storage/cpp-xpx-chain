@@ -51,6 +51,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
+			transaction.Size = sizeof(transaction);
 			transaction.Version = Transaction_Version;
 
 			// Act:
@@ -68,6 +69,7 @@ namespace catapult { namespace test {
 			auto pPlugin = TTraits::CreatePlugin();
 
 			typename TTraits::TransactionType transaction;
+			transaction.Size = sizeof(transaction);
 			transaction.Version = Transaction_Version;
 			transaction.NamespaceId = NamespaceId(123);
 			transaction.AliasAction = model::AliasAction::Unlink;

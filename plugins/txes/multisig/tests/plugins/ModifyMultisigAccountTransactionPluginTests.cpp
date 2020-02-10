@@ -145,6 +145,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		transaction.ModificationsCount = 0;
 		test::FillWithRandomData(transaction.Signer);
@@ -185,7 +186,8 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
 		EXPECT_EQ(3, notification.ModificationsCount);
-		EXPECT_EQ(pTransaction->ModificationsPtr(), notification.ModificationsPtr);
+		EXPECT_EQ_MEMORY(pTransaction->ModificationsPtr(), notification.ModificationsPtr, notification.ModificationsCount *
+				sizeof(pTransaction->ModificationsPtr()));
 	}
 
 	PLUGIN_TEST(NoCosignersNotificationWhenNoModificationIsPresent) {
@@ -194,6 +196,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		transaction.ModificationsCount = 0;
 

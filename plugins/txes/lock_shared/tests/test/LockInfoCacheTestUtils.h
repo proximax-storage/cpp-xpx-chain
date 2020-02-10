@@ -31,9 +31,8 @@ namespace catapult { namespace test {
 	auto CreateLockInfos(size_t count) {
 		std::vector<typename TLockInfoTraits::ValueType> lockInfos;
 		for (auto i = 0u; i < count; ++i) {
-			lockInfos.emplace_back(TLockInfoTraits::CreateLockInfo(Height((i + 1) * 10)));
-			if (0 == i % 2)
-				lockInfos.back().Status = state::LockStatus::Used;
+			auto status = (0 == i % 2) ? state::LockStatus::Used : state::LockStatus::Unused;
+			lockInfos.emplace_back(TLockInfoTraits::CreateLockInfo(Height((i + 1) * 10), status));
 		}
 
 		return lockInfos;

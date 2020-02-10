@@ -47,23 +47,25 @@ namespace catapult { namespace plugins {
 					model::Entity_Type_DriveFilesReward,
 					model::Entity_Type_Start_Drive_Verification,
 					model::Entity_Type_End_Drive_Verification,
+					model::Entity_Type_StartFileDownload,
+					model::Entity_Type_EndFileDownload,
 				};
 			}
 
 			static std::vector<std::string> GetCacheNames() {
-				return { "DriveCache" };
+				return { "DriveCache", "DownloadCache" };
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
-				return { ionet::PacketType::Drive_Infos };
+				return { ionet::PacketType::Drive_Infos, ionet::PacketType::Download_Infos };
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-				return { ionet::PacketType::Drive_State_Path };
+				return { ionet::PacketType::Drive_State_Path, ionet::PacketType::Download_State_Path };
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "DRIVE C" };
+				return { "DRIVE C", "DOWNLOAD C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
@@ -88,6 +90,8 @@ namespace catapult { namespace plugins {
 					"MaxFilesOnDriveValidator",
 					"StartDriveVerificationValidator",
 					"EndDriveVerificationValidator",
+					"StartFileDownloadValidator",
+					"EndFileDownloadValidator",
 				};
 			}
 
@@ -103,6 +107,10 @@ namespace catapult { namespace plugins {
 					"EndDriveObserver",
 					"DriveFilesRewardObserver",
 					"DriveCacheBlockPruningObserver",
+					"StartFileDownloadObserver",
+					"EndFileDownloadObserver",
+					"DownloadCacheTouchObserver",
+					"DownloadCachePruningObserver",
 				};
 			}
 

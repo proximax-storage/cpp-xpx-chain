@@ -6,10 +6,8 @@
 
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
-#include "catapult/model/EntityType.h"
 #include "src/model/ServiceEntityType.h"
 #include "plugins/txes/exchange/src/model/ExchangeTransaction.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
@@ -25,6 +23,7 @@ namespace catapult { namespace validators {
 		   model::Entity_Type_EndDrive,
 		   model::Entity_Type_Exchange,
 		   model::Entity_Type_End_Drive_Verification,
+		   model::Entity_Type_EndFileDownload,
 		});
 
 		return allowedTransactions.count(notification.Transaction.Type) ?

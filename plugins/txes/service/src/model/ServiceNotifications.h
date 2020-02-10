@@ -45,6 +45,12 @@ namespace catapult { namespace model {
 	/// Defines a failed block hashes notification type.
 	DEFINE_NOTIFICATION_TYPE(Validator, Service, Failed_Block_Hashes_v1, 0x000B);
 
+	/// Defines a start file download notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, StartFileDownload_v1, 0x000C);
+
+	/// Defines an end file download notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, EndFileDownload_v1, 0x000D);
+
 	/// Notification of a drive prepare.
 	template<VersionType version>
 	struct PrepareDriveNotification;
@@ -454,5 +460,73 @@ namespace catapult { namespace model {
 
 		/// Array of the hashes of the blocks that failed verification.
 		const Hash256* BlockHashesPtr;
+	};
+
+	/// Base notification of a file download.
+	struct BaseFileDownloadNotification : public Notification {
+	public:
+		explicit BaseFileDownloadNotification(
+			NotificationType type,
+			size_t size,
+			const Key& fileRecipient,
+			const Hash256& operationToken,
+			const DownloadAction* ptr,
+			uint16_t count)
+				: Notification(type, size)
+				, FileRecipient(fileRecipient)
+				, OperationToken(operationToken)
+				, FilesPtr(ptr)
+				, FileCount(count)
+		{}
+
+	public:
+		/// File recipient.
+		Key FileRecipient;
+
+		/// Operation token.
+		Hash256 OperationToken;
+
+		/// Array of files to download.
+		const DownloadAction* FilesPtr;
+
+		/// Download file count.
+		uint16_t FileCount;
+	};
+
+	/// Notification of start file download.
+	template<VersionType version>
+	struct StartFileDownloadNotification;
+
+	template<>
+	struct StartFileDownloadNotification<1> : public BaseFileDownloadNotification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_StartFileDownload_v1_Notification;
+
+	public:
+		explicit StartFileDownloadNotification(const Key& driveKey, const Key& fileRecipient, const Hash256& operationToken, const DownloadAction* ptr, uint16_t count)
+				: BaseFileDownloadNotification(Notification_Type, sizeof(StartFileDownloadNotification), fileRecipient, operationToken, ptr, count)
+				, DriveKey(driveKey)
+		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+	};
+
+	/// Notification of end file download.
+	template<VersionType version>
+	struct EndFileDownloadNotification;
+
+	template<>
+	struct EndFileDownloadNotification<1> : public BaseFileDownloadNotification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_EndFileDownload_v1_Notification;
+
+	public:
+		explicit EndFileDownloadNotification(const Key& fileRecipient, const Hash256& operationToken, const DownloadAction* ptr, uint16_t count)
+				: BaseFileDownloadNotification(Notification_Type, sizeof(EndFileDownloadNotification), fileRecipient, operationToken, ptr, count)
+		{}
 	};
 }}

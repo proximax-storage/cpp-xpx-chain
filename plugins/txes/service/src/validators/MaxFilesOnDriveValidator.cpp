@@ -8,7 +8,6 @@
 #include "src/cache/DriveCache.h"
 #include "src/config/ServiceConfiguration.h"
 #include "catapult/utils/IntegerMath.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 

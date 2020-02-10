@@ -21,6 +21,8 @@
 #include "AggregateMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
+#include "plugins/txes/aggregate/src/plugins/Common.h"
+#include "catapult/model/EntityHasher.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -47,8 +49,9 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		class AggregateTransactionPlugin : public MongoTransactionPlugin {
 		public:
-			AggregateTransactionPlugin(const MongoTransactionRegistry& transactionRegistry, model::EntityType transactionType)
+			AggregateTransactionPlugin(const MongoTransactionRegistry& transactionRegistry, const config::ImmutableConfiguration& config, model::EntityType transactionType)
 					: m_transactionRegistry(transactionRegistry)
+					, m_config(config)
 					, m_transactionType(transactionType)
 			{}
 
@@ -67,10 +70,17 @@ namespace catapult { namespace mongo { namespace plugins {
 					const MongoTransactionMetadata& metadata) const override {
 				const auto& aggregate = CastToDerivedType(transaction);
 
+				utils::Mempool pool;
+
 				auto i = 0;
 				std::vector<bsoncxx::document::value> documents;
 				for (const auto& subTransaction : aggregate.Transactions()) {
 					const auto& plugin = m_transactionRegistry.findPlugin(subTransaction.Type)->embeddedPlugin();
+
+					auto uniqueAggregateHash = model::CalculateHash(
+						catapult::plugins::ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, pool),
+						m_config.GenerationHash
+					);
 
 					// transaction metadata
 					bson_stream::document builder;
@@ -79,6 +89,7 @@ namespace catapult { namespace mongo { namespace plugins {
 							<< bson_stream::open_document
 								<< "height" << ToInt64(metadata.Height)
 								<< "aggregateHash" << ToBinary(metadata.EntityHash)
+								<< "uniqueAggregateHash" << ToBinary(uniqueAggregateHash)
 								<< "aggregateId" << metadata.ObjectId
 								<< "index" << static_cast<int32_t>(i++)
 							<< bson_stream::close_document;
@@ -105,13 +116,15 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		private:
 			const MongoTransactionRegistry& m_transactionRegistry;
+			config::ImmutableConfiguration m_config;
 			model::EntityType m_transactionType;
 		};
 	}
 
 	std::unique_ptr<MongoTransactionPlugin> CreateAggregateTransactionMongoPlugin(
 			const MongoTransactionRegistry& transactionRegistry,
+			const config::ImmutableConfiguration& immutableConfig,
 			model::EntityType transactionType) {
-		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, transactionType);
+		return std::make_unique<AggregateTransactionPlugin>(transactionRegistry, immutableConfig, transactionType);
 	}
 }}}

@@ -24,6 +24,8 @@ namespace catapult { namespace config {
 							{ "maxFilesOnDrive", "32768" },
 							{ "verificationFee", "10" },
 							{ "verificationDuration", "240" },
+							{ "downloadDuration", "40320" },
+							{ "downloadCacheEnabled", "false" },
 						}
 					}
 				};
@@ -34,7 +36,12 @@ namespace catapult { namespace config {
 			}
 
 			static bool IsPropertyOptional(const std::string& name) {
-				return std::set<std::string>{"maxFilesOnDrive", "verificationFee", "verificationDuration"}.count(name);
+				return std::set<std::string>{
+					"maxFilesOnDrive",
+					"verificationFee",
+					"verificationDuration",
+					"downloadDuration",
+					"downloadCacheEnabled"}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {
@@ -47,6 +54,8 @@ namespace catapult { namespace config {
 				EXPECT_EQ(0, config.MaxFilesOnDrive);
 				EXPECT_EQ(Amount(0), config.VerificationFee);
 				EXPECT_EQ(BlockDuration(0), config.VerificationDuration);
+				EXPECT_EQ(BlockDuration(0), config.DownloadDuration);
+				EXPECT_EQ(false, config.DownloadCacheEnabled);
 			}
 
 			static void AssertCustom(const ServiceConfiguration& config) {
@@ -55,6 +64,8 @@ namespace catapult { namespace config {
 				EXPECT_EQ(32768, config.MaxFilesOnDrive);
 				EXPECT_EQ(Amount(10), config.VerificationFee);
 				EXPECT_EQ(BlockDuration(240), config.VerificationDuration);
+				EXPECT_EQ(BlockDuration(40320), config.DownloadDuration);
+				EXPECT_EQ(false, config.DownloadCacheEnabled);
 			}
 		};
 	}

@@ -8,6 +8,8 @@
 #include "ServicePlugin.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
+#include "src/cache/DownloadCache.h"
+#include "src/cache/DownloadCacheStorage.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/DriveFileSystemTransactionPlugin.h"
@@ -18,8 +20,11 @@
 #include "src/plugins/DriveFilesRewardTransactionPlugin.h"
 #include "src/plugins/StartDriveVerificationTransactionPlugin.h"
 #include "src/plugins/EndDriveVerificationTransactionPlugin.h"
+#include "src/plugins/StartFileDownloadTransactionPlugin.h"
+#include "src/plugins/EndFileDownloadTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "src/utils/ServiceUtils.h"
+#include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
 #include "src/config/ServiceConfiguration.h"
 
@@ -65,6 +70,8 @@ namespace catapult { namespace plugins {
 		manager.addTransactionSupport(CreateDriveFilesRewardTransactionPlugin());
 		manager.addTransactionSupport(CreateStartDriveVerificationTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateEndDriveVerificationTransactionPlugin(immutableConfig.NetworkIdentifier));
+		manager.addTransactionSupport(CreateStartFileDownloadTransactionPlugin(immutableConfig));
+		manager.addTransactionSupport(CreateEndFileDownloadTransactionPlugin(immutableConfig));
 
 		manager.addPublicKeysExtractor([](const auto& cache, const auto& key) {
 			const auto& driveCache = cache.template sub<cache::DriveCache>();
@@ -133,6 +140,18 @@ namespace catapult { namespace plugins {
 			});
 		});
 
+		manager.addCacheSupport<cache::DownloadCacheStorage>(
+			std::make_unique<cache::DownloadCache>(manager.cacheConfig(cache::DownloadCache::Name), pConfigHolder));
+
+		using DownloadCacheHandlersService = CacheHandlers<cache::DownloadCacheDescriptor>;
+		DownloadCacheHandlersService::Register<model::FacilityCode::Download>(manager);
+
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("DOWNLOAD C"), [&cache]() {
+				return cache.sub<cache::DownloadCache>().createView(cache.height())->size();
+			});
+		});
+
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 					.add(validators::CreatePrepareDriveArgumentsValidator())
@@ -153,7 +172,9 @@ namespace catapult { namespace plugins {
 					.add(validators::CreateEndDriveValidator())
 					.add(validators::CreateMaxFilesOnDriveValidator())
 					.add(validators::CreateStartDriveVerificationValidator())
-					.add(validators::CreateEndDriveVerificationValidator());
+					.add(validators::CreateEndDriveVerificationValidator())
+					.add(validators::CreateStartFileDownloadValidator())
+					.add(validators::CreateEndFileDownloadValidator());
 		});
 
 		manager.addObserverHook([pConfigHolder, &immutableConfig](auto& builder) {
@@ -167,7 +188,11 @@ namespace catapult { namespace plugins {
                     .add(observers::CreateEndBillingObserver(immutableConfig.StorageMosaicId))
                     .add(observers::CreateEndDriveObserver(immutableConfig))
                     .add(observers::CreateDriveFilesRewardObserver(immutableConfig))
-                    .add(observers::CreateDriveCacheBlockPruningObserver());
+                    .add(observers::CreateDriveCacheBlockPruningObserver())
+                    .add(observers::CreateStartFileDownloadObserver())
+                    .add(observers::CreateEndFileDownloadObserver())
+					.add(observers::CreateCacheBlockTouchObserver<cache::DownloadCache>("DownloadCache", model::Receipt_Type_Drive_Download_Expired))
+					.add(observers::CreateCacheBlockPruningObserver<cache::DownloadCache>("DownloadCache", 1));
 		});
 	}
 }}
