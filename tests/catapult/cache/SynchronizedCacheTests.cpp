@@ -528,11 +528,11 @@ namespace catapult { namespace cache {
 			CATAPULT_LOG(debug) << "test thread waiting for flag";
 			WAIT_FOR_ONE_EXPR((int)flag); // waits for [A]
 
-			// - wait a bit to see if flag changes
-			test::Pause();
-
-			// Sanity: the flag should have only been updated by [A]
+			// Sanity: the flag should  be updated by [A] first
 			EXPECT_EQ(1u, flag);
+
+			// wait for a little for flag to update
+			test::Pause();
 
 			// Act: release the first (commit) lock
 			commitLockGuard.reset(); // signals [B (releases lock), C (acquires lock)]
