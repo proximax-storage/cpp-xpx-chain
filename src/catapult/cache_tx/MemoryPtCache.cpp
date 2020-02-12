@@ -171,7 +171,7 @@ namespace catapult { namespace cache {
 					uint64_t maxCacheSize,
 					PtDataContainer& transactionDataContainer,
 					std::set<state::TimestampedHash>& timestampedHashes,
-					utils::SpinReaderWriterLock::WriterLockGuard& writerLock)
+					utils::SpinReaderWriterLock::WriterLockGuard&& writerLock)
 					: m_maxCacheSize(maxCacheSize)
 					, m_transactionDataContainer(transactionDataContainer)
 					, m_timestampedHashes(timestampedHashes)
@@ -285,7 +285,7 @@ namespace catapult { namespace cache {
 				m_options.MaxCacheSize,
 				m_pImpl->TransactionDataContainer,
 				m_pImpl->TimestampedHashes,
-				writerLock));
+				std::move(writerLock)));
 	}
 
 	// endregion

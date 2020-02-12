@@ -126,7 +126,7 @@ namespace catapult { namespace cache {
 					TransactionDataContainer& transactionDataContainer,
 					IdLookup& idLookup,
 					AccountCounters& counters,
-					utils::SpinReaderWriterLock::WriterLockGuard& writerLock)
+					utils::SpinReaderWriterLock::WriterLockGuard&& writerLock)
 					: m_maxCacheSize(maxCacheSize)
 					, m_idSequence(idSequence)
 					, m_transactionDataContainer(transactionDataContainer)
@@ -233,7 +233,7 @@ namespace catapult { namespace cache {
 				m_pImpl->TransactionDataContainer,
 				m_pImpl->IdLookup,
 				m_pImpl->Counters,
-				writerLock));
+				std::move(writerLock)));
 	}
 
 	// endregion

@@ -67,7 +67,7 @@ namespace catapult { namespace io {
 		BlockStorageModifier(
 				BlockStorage& storage,
 				PrunableBlockStorage& stagingStorage,
-				utils::SpinReaderWriterLock::WriterLockGuard& writeLock,
+				utils::SpinReaderWriterLock::WriterLockGuard&& writeLock,
 				CachedData& cachedData);
 
 	public:
