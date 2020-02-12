@@ -48,10 +48,9 @@ namespace catapult { namespace cache {
 	class CacheHeightModifier : public utils::MoveOnly {
 	public:
 		/// Creates a write only view around \a height with lock context \a readLock.
-		explicit CacheHeightModifier(Height& height, utils::SpinReaderWriterLock::UpgradableReaderLockGuard&& readLock)
+		explicit CacheHeightModifier(Height& height, utils::SpinReaderWriterLock::WriterLockGuard& writeLock)
 				: m_height(height)
-				, m_readLock(std::move(readLock))
-				, m_writeLock(m_readLock.promoteToWriter())
+				, m_writeLock(std::move(writeLock))
 		{}
 
 	public:
@@ -62,8 +61,7 @@ namespace catapult { namespace cache {
 
 	private:
 		Height& m_height;
-		utils::SpinReaderWriterLock::UpgradableReaderLockGuard m_readLock;
-		utils::SpinReaderWriterLock::UniqueWriteLock m_writeLock;
+		utils::SpinReaderWriterLock::WriterLockGuard m_writeLock;
 	};
 
 	/// A synchronized height associated with a catapult cache.
@@ -77,8 +75,8 @@ namespace catapult { namespace cache {
 
 		/// Gets a write only view of the height.
 		CacheHeightModifier modifier() {
-			auto readLock = m_lock.acquireUpgradableLock();
-			return CacheHeightModifier(m_height, std::move(readLock));
+			auto writerLock = m_lock.acquireWriter();
+			return CacheHeightModifier(m_height, writerLock);
 		}
 
 	private:
