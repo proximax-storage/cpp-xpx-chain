@@ -18,10 +18,10 @@ namespace catapult { namespace model {
 	constexpr OperationResult Operation_Result_None = 0;
 
 	/// Binary layout for a basic operation transaction body.
-	template<typename THeader>
+	template<typename THeader, typename TDerived>
 	struct BasicOperationTransactionBody : public THeader {
 	private:
-		using TransactionType = BasicOperationTransactionBody<THeader>;
+		using TransactionType = BasicOperationTransactionBody<THeader, TDerived>;
 
 	public:
 		/// Number of mosaics.
@@ -33,7 +33,12 @@ namespace catapult { namespace model {
 	private:
 		template<typename T>
 		static auto* MosaicsPtrT(T& transaction) {
-			return transaction.MosaicCount ? THeader::PayloadStart(transaction) : nullptr;
+			return transaction.MosaicCount ? THeader::PayloadStart(static_cast<TDerived&>(transaction)) : nullptr;
+		}
+
+		template<typename T>
+		static auto* MosaicsPtrT(const T& transaction) {
+			return transaction.MosaicCount ? THeader::PayloadStart(static_cast<const TDerived&>(transaction)) : nullptr;
 		}
 
 	public:
@@ -44,11 +49,11 @@ namespace catapult { namespace model {
 	};
 
 	/// Binary layout for a basic start operation transaction body.
-	template<typename THeader>
-	struct BasicStartOperationTransactionBody : public BasicOperationTransactionBody<THeader> {
+	template<typename THeader, typename TDerived>
+	struct BasicStartOperationTransactionBody : public BasicOperationTransactionBody<THeader, TDerived> {
 	private:
-		using TransactionType = BasicStartOperationTransactionBody<THeader>;
-		using BaseTransactionType = BasicOperationTransactionBody<THeader>;
+		using TransactionType = BasicStartOperationTransactionBody<THeader, TDerived>;
+		using BaseTransactionType = BasicOperationTransactionBody<THeader, TDerived>;
 
 	public:
 		/// Operation duration.

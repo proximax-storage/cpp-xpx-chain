@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "src/model/OperationTypes.h"
 #include "plugins/txes/lock_shared/src/state/LockInfo.h"
 #include <set>
 #include <vector>
@@ -15,13 +16,16 @@ namespace catapult { namespace state {
 	struct OperationEntry : public LockInfo {
 	public:
 		/// Creates a default operation entry.
-		OperationEntry() : LockInfo()
+		OperationEntry()
+			: LockInfo()
+			, Result(model::Operation_Result_None)
 		{}
 
 		/// Creates a operation entry around \a operationToken.
 		OperationEntry(const Hash256& operationToken)
 			: LockInfo()
 			, OperationToken(operationToken)
+			, Result(model::Operation_Result_None)
 		{}
 
 	public:
@@ -35,6 +39,6 @@ namespace catapult { namespace state {
 		std::vector<Hash256> TransactionHashes;
 
 		/// Operation result.
-		uint16_t Result;
+		model::OperationResult Result;
 	};
 }}

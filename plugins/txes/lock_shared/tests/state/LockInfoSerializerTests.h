@@ -27,13 +27,18 @@ namespace catapult { namespace state {
 
 	// region PackedLockInfo
 
+	/// A packed lock info template.
+	template<VersionType version>
+	struct PackedLockInfo;
+
 #pragma pack(push, 1)
 
-	/// A packed lock info.
-	struct PackedLockInfo {
+	/// A packed lock info version 1.
+	template<>
+	struct PackedLockInfo<1> {
 	public:
 		/// Creates a lock info from \a lockInfo.
-		explicit PackedLockInfo(const LockInfo& lockInfo)
+		explicit PackedLockInfo<1>(const LockInfo& lockInfo)
 				: Version(1)
 				, Account(lockInfo.Account)
 				, MosaicId(lockInfo.Mosaics.begin()->first)
@@ -49,6 +54,34 @@ namespace catapult { namespace state {
 		catapult::Amount Amount;
 		catapult::Height Height;
 		LockStatus Status;
+	};
+
+	/// A packed lock info version 2.
+	template<>
+	struct PackedLockInfo<2> {
+	private:
+		static constexpr auto Num_Mosaics = 2u;
+
+	public:
+		/// Creates a lock info from \a lockInfo.
+		explicit PackedLockInfo<2>(const LockInfo& lockInfo)
+				: Version(2)
+				, Account(lockInfo.Account)
+				, Height(lockInfo.Height)
+				, Status(lockInfo.Status)
+				, MosaicCount(Num_Mosaics) {
+			auto i = 0u;
+			for (const auto& pair : lockInfo.Mosaics)
+				Mosaics[i++] = model::Mosaic{pair.first, pair.second};
+		}
+
+	public:
+		VersionType Version;
+		Key Account;
+		catapult::Height Height;
+		LockStatus Status;
+		uint8_t MosaicCount;
+		std::array<model::Mosaic, Num_Mosaics> Mosaics;
 	};
 
 #pragma pack(pop)

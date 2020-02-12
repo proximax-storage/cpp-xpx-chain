@@ -32,10 +32,10 @@ namespace catapult { namespace state {
 
 #pragma pack(push, 1)
 
-		struct PackedSecretLockInfo : public PackedLockInfo {
+		struct PackedSecretLockInfo : public PackedLockInfo<1> {
 		public:
 			explicit PackedSecretLockInfo(const SecretLockInfo& secretLockInfo)
-					: PackedLockInfo(secretLockInfo)
+					: PackedLockInfo<1>(secretLockInfo)
 					, Version(1)
 					, HashAlgorithm(secretLockInfo.HashAlgorithm)
 					, Secret(secretLockInfo.Secret)

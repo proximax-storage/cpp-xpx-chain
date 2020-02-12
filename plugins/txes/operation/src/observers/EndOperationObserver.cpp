@@ -49,7 +49,11 @@ namespace catapult { namespace observers {
 			}
 			if (mosaics.empty())
 				operationEntry.Status = state::LockStatus::Used;
-		} else {
+		}
+
+		LockStatusAccountBalanceObserver<OperationTraits>(notification, context);
+
+		if (NotifyMode::Rollback == context.Mode) {
 			operationEntry.Result = model::Operation_Result_None;
 			operationEntry.Status = state::LockStatus::Unused;
 			for (auto i = 0u; i < notification.MosaicCount; ++i, ++pMosaic) {
@@ -58,7 +62,5 @@ namespace catapult { namespace observers {
 				amount = amount + pMosaic->Amount;
 			}
 		}
-
-		LockStatusAccountBalanceObserver<OperationTraits>(notification, context);
 	});
 }}

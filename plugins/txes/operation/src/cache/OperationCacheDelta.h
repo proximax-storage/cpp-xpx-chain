@@ -7,6 +7,8 @@
 #pragma once
 #include "OperationBaseSets.h"
 #include "OperationCacheSerializers.h"
+#include "OperationCacheTools.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "plugins/txes/lock_shared/src/cache/LockInfoCacheDelta.h"
 
 namespace catapult { namespace cache {
@@ -14,16 +16,31 @@ namespace catapult { namespace cache {
 	/// Basic delta on top of the operation cache.
 	class BasicOperationCacheDelta : public BasicLockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes> {
 	public:
-		using BasicLockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes>::BasicLockInfoCacheDelta;
+		/// Creates a delta around \a operationSets and \a pConfigHolder.
+		explicit BasicOperationCacheDelta(
+			const OperationCacheTypes::BaseSetDeltaPointers& operationSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: BasicLockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes>::BasicLockInfoCacheDelta(operationSets)
+				, m_pConfigHolder(pConfigHolder)
+		{}
+
+	public:
+		bool enabled() const {
+			return OperationPluginEnabled(m_pConfigHolder, height());
+		}
+
+	private:
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the operation cache.
-	class OperationCacheDelta
-			: public LockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes, BasicOperationCacheDelta> {
+	class OperationCacheDelta : public LockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes, BasicOperationCacheDelta> {
 	public:
-		using LockInfoCacheDelta<
-				OperationCacheDescriptor,
-				OperationCacheTypes,
-				BasicOperationCacheDelta>::LockInfoCacheDelta;
+		/// Creates a delta around \a operationSets and \a pConfigHolder.
+		explicit OperationCacheDelta(
+			const OperationCacheTypes::BaseSetDeltaPointers& operationSets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: LockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes, BasicOperationCacheDelta>::LockInfoCacheDelta(operationSets, pConfigHolder)
+		{}
 	};
 }}
