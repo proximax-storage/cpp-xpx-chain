@@ -192,6 +192,24 @@ namespace catapult { namespace observers {
 				NotifyMode::Commit);
 	}
 
+		TRAITS_BASED_TEST(ObserverAddsField_WhenFieldRemovedAtTheSameHeight) {
+			// Act:
+			RunTest<TMetadataValueTraits>(
+				{ { "Key", "Value1", CurrentHeight }, { "Key", "Value2", Height(0) }, { "Key1", "Value4", Height(0) }, { "Key2", "Value5", CurrentHeight } },
+				{ "Key", "Value3", Add },
+				{ { "Key", "Value1", CurrentHeight }, { "Key", "Value2", CurrentHeight }, { "Key1", "Value4", Height(0) }, { "Key2", "Value5", CurrentHeight }, { "Key", "Value3", Height(0) } },
+				NotifyMode::Commit);
+		}
+
+		TRAITS_BASED_TEST(ObserverRemovesField_WhenFieldAddedAtTheSameHeight) {
+			// Act:
+			RunTest<TMetadataValueTraits>(
+				{ { "Key", "Value1", CurrentHeight }, { "Key", "Value2", CurrentHeight }, { "Key", "Value3", Height(0) }, { "Key1", "Value4", Height(0) }, { "Key2", "Value5", CurrentHeight } },
+				{ "Key", "", Del },
+				{ { "Key", "Value1", CurrentHeight }, { "Key", "Value2", CurrentHeight }, { "Key", "Value3", CurrentHeight }, { "Key1", "Value4", Height(0) }, { "Key2", "Value5", CurrentHeight } },
+				NotifyMode::Commit);
+		}
+
 	// endregion
 
 	// region rollback
