@@ -100,10 +100,9 @@ namespace catapult { namespace ionet {
 
 	NodeContainerModifier::NodeContainerModifier(
 			NodeContainerData& nodeContainerData,
-			utils::SpinReaderWriterLock::ReaderLockGuard&& readLock)
+			utils::SpinReaderWriterLock::WriterLockGuard&& writeLock)
 			: m_nodeContainerData(nodeContainerData)
-			, m_readLock(std::move(readLock))
-			, m_writeLock(m_readLock.promoteToWriter())
+			, m_writeLock(std::move(writeLock))
 	{}
 
 	bool NodeContainerModifier::add(const Node& node, NodeSource source) {
@@ -252,8 +251,8 @@ namespace catapult { namespace ionet {
 	}
 
 	NodeContainerModifier NodeContainer::modifier() {
-		auto readLock = m_lock.acquireReader();
-		return NodeContainerModifier(*m_pImpl, std::move(readLock));
+		auto writerLock = m_lock.acquireWriter();
+		return NodeContainerModifier(*m_pImpl, std::move(writerLock));
 	}
 
 	// endregion

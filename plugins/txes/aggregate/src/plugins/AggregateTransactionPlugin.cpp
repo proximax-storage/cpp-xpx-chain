@@ -25,7 +25,9 @@
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
+#include "catapult/model/ExtendedEmbeddedTransaction.h"
 #include "catapult/plugins/PluginUtils.h"
+#include "Common.h"
 
 using namespace catapult::model;
 
@@ -84,11 +86,11 @@ namespace catapult { namespace plugins {
 							numCosignatures,
 							aggregate.CosignaturesPtr()));
 
-				// publish all sub-transaction information
-				for (const auto& subTransaction : aggregate.Transactions()) {
-					// - change source
-					constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
-					sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
+					// publish all sub-transaction information
+					for (const auto& subTransaction : aggregate.Transactions()) {
+						// - change source
+						constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
+						sub.notify(SourceChangeNotification<1>(Relative, 0, Relative, 1));
 
 						// - signers and entity
 						sub.notify(AccountPublicKeyNotification<1>(subTransaction.Signer));
@@ -108,7 +110,10 @@ namespace catapult { namespace plugins {
 
 						// - specific sub-transaction notifications
 						//   (calculateRealSize would have failed if plugin is unknown or not embeddable)
-						WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo{subTransaction, transactionInfo.associatedHeight()};
+						WeakEntityInfoT<EmbeddedTransaction> subTransactionInfo{
+							ConvertEmbeddedTransaction(subTransaction, aggregate.Deadline, sub.mempool()),
+							transactionInfo.associatedHeight()
+						};
 						plugin.publish(subTransactionInfo, sub);
 					}
 

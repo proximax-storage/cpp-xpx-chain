@@ -31,6 +31,18 @@ namespace catapult { namespace utils {
         return Amount(driveEntry.replicas() * size);
     }
 
+    inline Amount CalculateFileDownload(const uint64_t& size) {
+        return Amount(size);
+    }
+
+    inline Amount CalculateFileDownload(const model::DownloadAction* pFile, uint16_t fileCount) {
+		uint64_t totalSize = 0u;
+		for (auto i = 0u; i < fileCount; ++i, ++pFile) {
+			totalSize += pFile->FileSize;
+		}
+        return Amount(totalSize);
+    }
+
     template<typename TCache>
     inline Amount GetDriveBalance(const state::DriveEntry& driveEntry, const TCache& cache, const MosaicId& storageMosaicId) {
         const auto& accountCache = cache.template sub<cache::AccountStateCache>();

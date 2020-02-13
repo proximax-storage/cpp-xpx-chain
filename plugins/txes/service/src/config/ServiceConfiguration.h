@@ -26,8 +26,14 @@ namespace catapult { namespace config {
 		/// Verification duration.
 		BlockDuration VerificationDuration;
 
+		/// File download duration.
+		BlockDuration DownloadDuration;
+
 		/// Whether the plugin is enabled.
 		bool Enabled;
+
+		/// Whether the download cache is enabled.
+		bool DownloadCacheEnabled;
 
 	private:
 		ServiceConfiguration() = default;

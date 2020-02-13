@@ -97,7 +97,7 @@ namespace catapult { namespace cache {
 		/// Processes all unused lock infos that expired at \a height by passing them to \a consumer
 		void processUnusedExpiredLocks(Height height, const consumer<const typename TDescriptor::ValueType>& consumer) const {
 			ForEachIdentifierWithGroup(utils::as_const(*m_pDelta), *m_pHeightGroupingDelta, height, [consumer, height](const auto& lockInfo) {
-				if (state::LockStatus::Unused == lockInfo.Status && lockInfo.Height == height)
+				if (state::LockStatus::Unused == lockInfo.status() && lockInfo.Height == height)
 					consumer(lockInfo);
 			});
 		}
@@ -111,9 +111,10 @@ namespace catapult { namespace cache {
 	template<typename TDescriptor, typename TCacheTypes, typename TBasicView = BasicLockInfoCacheDelta<TDescriptor, TCacheTypes>>
 	class LockInfoCacheDelta : public ReadOnlyViewSupplier<TBasicView> {
 	public:
-		/// Creates a delta around \a lockInfoSets.
-		explicit LockInfoCacheDelta(const typename TCacheTypes::BaseSetDeltaPointers& lockInfoSets)
-				: ReadOnlyViewSupplier<TBasicView>(lockInfoSets)
+		/// Creates a delta around \a lockInfoSets and \a args.
+		template<typename... TArgs>
+		explicit LockInfoCacheDelta(const typename TCacheTypes::BaseSetDeltaPointers& lockInfoSets, TArgs&&... args)
+				: ReadOnlyViewSupplier<TBasicView>(lockInfoSets, std::forward<TArgs>(args)...)
 		{}
 	};
 }}

@@ -23,7 +23,6 @@
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/core/BlockTestUtils.h"
-#include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/core/mocks/MockTransactionPluginWithCustomBuffers.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/TestHarness.h"

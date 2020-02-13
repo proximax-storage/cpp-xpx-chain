@@ -68,6 +68,7 @@ namespace catapult { namespace plugins {
 
 		typename TTraits::TransactionType transaction;
 		transaction.Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);

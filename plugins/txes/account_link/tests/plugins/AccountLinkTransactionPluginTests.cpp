@@ -65,6 +65,7 @@ namespace catapult { namespace plugins {
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Link;
 		transaction.Version = 0x2;
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -92,6 +93,7 @@ namespace catapult { namespace plugins {
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Link;
 		transaction.Version = 0x2;
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -112,6 +114,7 @@ namespace catapult { namespace plugins {
 		transaction.Type = static_cast<EntityType>(0x0815);
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.Version = 0x2;
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -136,6 +139,7 @@ namespace catapult { namespace plugins {
 		test::FillWithRandomData(transaction.RemoteAccountKey);
 		transaction.LinkAction = AccountLinkAction::Unlink;
 		transaction.Version = 0x2;
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -160,6 +164,7 @@ namespace catapult { namespace plugins {
 		typename TTraits::TransactionType transaction;
 		transaction.LinkAction = AccountLinkAction::Link;
 		transaction.Version = 0x2;
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -181,6 +186,7 @@ namespace catapult { namespace plugins {
 		typename TTraits::TransactionType transaction;
 		transaction.LinkAction = AccountLinkAction::Unlink;
 		transaction.Version = 0x2;
+		transaction.Size = sizeof(transaction);
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);

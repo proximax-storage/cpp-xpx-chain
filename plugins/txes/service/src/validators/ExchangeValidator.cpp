@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/ValidatorContext.h"
 #include "src/cache/DriveCache.h"
 #include "src/utils/ServiceUtils.h"
 #include "plugins/txes/exchange/src/cache/ExchangeCache.h"

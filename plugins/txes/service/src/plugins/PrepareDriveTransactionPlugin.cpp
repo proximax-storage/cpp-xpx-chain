@@ -20,6 +20,21 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(PrepareDriveNotification<1>(
+					transaction.DriveKey,
+					transaction.Signer,
+					transaction.Duration,
+					transaction.BillingPeriod,
+					transaction.BillingPrice,
+					transaction.DriveSize,
+					transaction.Replicas,
+					transaction.MinReplicators,
+					transaction.PercentApprovers
+				));
+                break;
+			}
+
+			case 2: {
+				sub.notify(PrepareDriveNotification<1>(
 					transaction.Signer,
 					transaction.Owner,
 					transaction.Duration,
@@ -32,6 +47,7 @@ namespace catapult { namespace plugins {
 				));
                 break;
 			}
+
 
 			default:
 				CATAPULT_LOG(debug) << "invalid version of PrepareDriveTransaction: " << transaction.EntityVersion();

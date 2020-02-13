@@ -28,7 +28,12 @@ namespace catapult { namespace cache {
 #define TEST_CLASS SecretLockInfoCacheTests
 
 	namespace {
-		struct SecretTraits : public test::BasicSecretLockInfoTestTraits {};
+		struct SecretTraits : public test::BasicSecretLockInfoTestTraits {
+		public:
+			static void SetStatus(state::SecretLockInfo& lockInfo, state::LockStatus status) {
+				lockInfo.Status = status;
+			}
+		};
 	}
 
 	DEFINE_LOCK_INFO_CACHE_TESTS(LockInfoCacheDeltaElementsMixinTraits<SecretTraits>, LockInfoCacheDeltaModificationPolicy<SecretTraits>,)

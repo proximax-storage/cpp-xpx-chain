@@ -75,6 +75,7 @@ namespace catapult { namespace plugins {
 			auto pTransaction = std::make_unique<typename TTraits::TransactionType>();
 			pTransaction->Version = Transaction_Version;
 			pTransaction->NamespaceType = namespaceType;
+			pTransaction->Size = sizeof(typename TTraits::TransactionType);
 			test::FillWithRandomData(pTransaction->Signer);
 			return pTransaction;
 		}
@@ -111,6 +112,7 @@ namespace catapult { namespace plugins {
 		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfig(pluginConfig)));
 
 		typename TTraits::TransactionType transaction;
+		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		transaction.Duration = BlockDuration(1);
 		test::FillWithRandomData(transaction.Signer);
@@ -277,7 +279,7 @@ namespace catapult { namespace plugins {
 				EXPECT_EQ(NamespaceId(768), notification.NamespaceId);
 				EXPECT_EQ(parentId, notification.ParentId);
 				EXPECT_EQ(12u, notification.NameSize);
-				EXPECT_EQ(namespaceName, notification.NamePtr);
+				EXPECT_EQ_MEMORY(namespaceName, notification.NamePtr, 12u);
 			}
 
 			void AssertNamespaceRootNotification(const Key& signer) {
