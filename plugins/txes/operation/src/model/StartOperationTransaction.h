@@ -15,10 +15,10 @@ namespace catapult { namespace model {
 
 	/// Binary layout for a start operation transaction body.
 	template<typename THeader>
-	struct StartOperationTransactionBody : public BasicStartOperationTransactionBody<THeader> {
+	struct StartOperationTransactionBody : public BasicStartOperationTransactionBody<THeader, StartOperationTransactionBody<THeader>> {
 	private:
 		using TransactionType = StartOperationTransactionBody<THeader>;
-		using BaseTransactionType = BasicStartOperationTransactionBody<THeader>;
+		using BaseTransactionType = BasicStartOperationTransactionBody<THeader, StartOperationTransactionBody<THeader>>;
 
 	public:
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_StartOperation, 1)

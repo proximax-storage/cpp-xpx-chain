@@ -16,10 +16,10 @@ namespace catapult { namespace model {
 
 	/// Binary layout for an end operation transaction body.
 	template<typename THeader>
-	struct EndOperationTransactionBody : public BasicOperationTransactionBody<THeader> {
+	struct EndOperationTransactionBody : public BasicOperationTransactionBody<THeader, EndOperationTransactionBody<THeader>> {
 	private:
 		using TransactionType = EndOperationTransactionBody<THeader>;
-		using BaseTransactionType = BasicOperationTransactionBody<THeader>;
+		using BaseTransactionType = BasicOperationTransactionBody<THeader, EndOperationTransactionBody<THeader>>;
 
 	public:
 		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_EndOperation, 1)
@@ -34,7 +34,7 @@ namespace catapult { namespace model {
 	public:
 		// Calculates the real size of an end operation transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return BaseTransactionType::CalculateRealSize(transaction) + sizeof(Hash256);
+			return BaseTransactionType::CalculateRealSize(transaction) + sizeof(Hash256) + sizeof(OperationResult);
 		}
 	};
 

@@ -44,8 +44,9 @@ namespace catapult { namespace test {
 		EXPECT_EQ(accountAddress, GetAddressValue(dbLockInfo, "accountAddress"));
 		EXPECT_EQ(lockInfo.Account, GetKeyValue(dbLockInfo, "account"));
 		if (multipleMosaics) {
-			ASSERT_EQ(lockInfo.Mosaics.size(), test::GetFieldCount(dbLockInfo));
-			for (const auto& dbMosaic : dbLockInfo["mosaics"].get_array().value) {
+			auto mosaicArray = dbLockInfo["mosaics"].get_array().value;
+			ASSERT_EQ(lockInfo.Mosaics.size(), test::GetFieldCount(mosaicArray));
+			for (const auto& dbMosaic : mosaicArray) {
 				auto mosaicId = MosaicId(GetUint64(dbMosaic, "mosaicId"));
 				EXPECT_EQ(lockInfo.Mosaics.at(mosaicId), Amount(GetUint64(dbMosaic, "amount")));
 			}

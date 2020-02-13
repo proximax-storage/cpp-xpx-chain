@@ -30,7 +30,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		public:
 			using LockInfoType = state::HashLockInfo;
 			static constexpr VersionType Version = 1;
-			static constexpr char IdName[] = "lock";
+			static constexpr char Doc_Name[] = "lock";
 
 		public:
 			static void StreamLockInfo(bson_stream::document& builder, const state::HashLockInfo& hashLockInfo) {

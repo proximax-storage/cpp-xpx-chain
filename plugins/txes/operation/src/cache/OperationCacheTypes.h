@@ -17,7 +17,6 @@ namespace catapult {
 		struct OperationBaseSets;
 		class OperationCache;
 		class OperationCacheDelta;
-		struct OperationCacheTypes;
 		class OperationCacheView;
 		class OperationPatriciaTree;
 		struct OperationPrimarySerializer;

@@ -41,9 +41,6 @@ namespace catapult { namespace model {
 	Hash256 CalculateHash(const Transaction& transaction, const GenerationHash& generationHash, const RawBuffer& buffer);
 
 	/// Calculates the hash for the given \a transaction for the network with the specified generation hash (\a generationHash).
-	Hash256 CalculateHash(const EmbeddedTransaction& transaction, const GenerationHash& generationHash);
-
-	/// Calculates the hash for the given \a transaction for the network with the specified generation hash (\a generationHash).
 	Hash256 CalculateHash(const ExtendedEmbeddedTransaction& transaction, const GenerationHash& generationHash);
 
 	/// Calculates the merkle component hash for the given \a transaction with \a transactionHash

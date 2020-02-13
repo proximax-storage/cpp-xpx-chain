@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/cache/OperationCache.h"
 #include "src/model/OperationIdentifyTransaction.h"
 
 namespace catapult { namespace validators {
@@ -30,7 +29,7 @@ namespace catapult { namespace validators {
 				return Failure_Operation_Identify_Transaction_Misplaced;
 		}
 
-		if (operationIdentifyPresent && model::Entity_Type_OperationIdentify == pTransaction->Type)
+		if (operationIdentifyPresent && model::Entity_Type_EndOperation == pTransaction->Type)
 			return Failure_Operation_Identify_Transaction_Aggregated_With_End_Operation;
 
 		return ValidationResult::Success;

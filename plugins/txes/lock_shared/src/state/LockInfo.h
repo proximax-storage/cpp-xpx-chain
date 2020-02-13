@@ -37,7 +37,7 @@ namespace catapult { namespace state {
 	struct LockInfo {
 	protected:
 		/// Creates a default lock info.
-		LockInfo()
+		LockInfo() : Status(LockStatus::Unused)
 		{}
 
 		/// Creates a lock info around \a account, \a mosaicId, \a amount and \a height.

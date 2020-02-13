@@ -37,7 +37,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		public:
 			using LockInfoType = state::OperationEntry;
 			static constexpr VersionType Version = 2;
-			static constexpr char IdName[] = "operation";
+			static constexpr char Doc_Name[] = "operation";
 
 		public:
 			static void StreamLockInfo(bson_stream::document& builder, const state::OperationEntry& entry) {

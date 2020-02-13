@@ -9,11 +9,12 @@
 #include "OperationCacheStorage.h"
 #include "OperationCacheView.h"
 #include "catapult/cache/BasicCache.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
 	/// Cache composed of operation information.
-	using BasicOperationCache = BasicCache<OperationCacheDescriptor, OperationCacheTypes::BaseSets>;
+	using BasicOperationCache = BasicCache<OperationCacheDescriptor, OperationCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
 
 	/// Synchronized cache composed of operation information.
 	class OperationCache : public SynchronizedCache<BasicOperationCache> {
@@ -21,9 +22,9 @@ namespace catapult { namespace cache {
 		DEFINE_CACHE_CONSTANTS(Operation)
 
 	public:
-		/// Creates a cache around \a config.
-		explicit OperationCache(const CacheConfiguration& config)
-				: SynchronizedCache<BasicOperationCache>(BasicOperationCache(config))
+		/// Creates a cache around \a config and \a pConfigHolder.
+		explicit OperationCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: SynchronizedCache<BasicOperationCache>(BasicOperationCache(config, std::move(pConfigHolder)))
 		{}
 	};
 }}

@@ -64,7 +64,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		/// Asserts that \a lockInfo and \a view are equal.
 		static void AssertEqual(const typename TLockInfoTraits::ModelType& lockInfo, const bsoncxx::document::view& view) {
 			auto address = model::PublicKeyToAddress(lockInfo.Account, Network_Id);
-			TLockInfoTraits::AssertEqualLockInfoData(lockInfo, address, view["lock"].get_document().view());
+			TLockInfoTraits::AssertEqualLockInfoData(lockInfo, address, view[TLockInfoTraits::Doc_Name].get_document().view());
 		}
 	};
 }}}

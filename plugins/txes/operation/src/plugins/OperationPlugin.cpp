@@ -23,12 +23,14 @@ namespace catapult { namespace plugins {
 			config.template InitPluginConfiguration<config::OperationConfiguration>();
 		});
 
+        const auto& immutableConfig = manager.immutableConfig();
         manager.addTransactionSupport(CreateOperationIdentifyTransactionPlugin());
-        manager.addTransactionSupport(CreateStartOperationTransactionPlugin());
+        manager.addTransactionSupport(CreateStartOperationTransactionPlugin(immutableConfig));
         manager.addTransactionSupport(CreateEndOperationTransactionPlugin());
 
+        const auto& pConfigHolder = manager.configHolder();
 		manager.addCacheSupport<cache::OperationCacheStorage>(
-				std::make_unique<cache::OperationCache>(manager.cacheConfig(cache::OperationCache::Name)));
+				std::make_unique<cache::OperationCache>(manager.cacheConfig(cache::OperationCache::Name), pConfigHolder));
 
 		using CacheHandlers = CacheHandlers<cache::OperationCacheDescriptor>;
 		CacheHandlers::Register<model::FacilityCode::Operation>(manager);
