@@ -7,7 +7,6 @@
 #include "Observers.h"
 #include "src/cache/MetadataCache.h"
 #include "src/state/MetadataUtils.h"
-#include "catapult/model/Address.h"
 #include "src/state/MetadataField.h"
 
 namespace catapult { namespace observers {
@@ -38,25 +37,22 @@ namespace catapult { namespace observers {
 			model::MetadataModificationType type = isCommitMode ?
 					notification.ModificationType : InvertModificationType(notification.ModificationType);
 
-			for (auto it = metadataEntry.fields().begin(); it != metadataEntry.fields().end();) {
+			for (auto it = metadataEntry.fields().end(); it != metadataEntry.fields().begin();) {
+				it--;
 				if (it->MetadataKey == key) {
 					if (isCommitMode) {
-						if (it->RemoveHeight.unwrap() == 0) {
+						if (it->RemoveHeight.unwrap() == 0)
 							it->RemoveHeight = context.Height;
-						}
-						++it;
 					} else {
 						if (type == model::MetadataModificationType::Del && it->RemoveHeight.unwrap() == 0){
 							it = metadataEntry.fields().erase(it);
 						} else {
-							if (it->RemoveHeight == context.Height){
+							if (it->RemoveHeight == context.Height) {
 								it->RemoveHeight = Height(0);
+								break;
 							}
-							++it;
 						}
 					}
-				} else {
-					++it;
 				}
 			}
 

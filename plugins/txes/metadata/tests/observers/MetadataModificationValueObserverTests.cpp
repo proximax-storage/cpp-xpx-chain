@@ -6,7 +6,6 @@
 
 
 #include "sdk/src/extensions/ConversionExtensions.h"
-#include "plugins/txes/namespace/src/model/NamespaceTypes.h"
 #include "src/observers/Observers.h"
 #include "catapult/model/Address.h"
 #include "tests/test/MetadataCacheTestUtils.h"
@@ -178,18 +177,18 @@ namespace catapult { namespace observers {
 	TRAITS_BASED_TEST(ObserverRemoveFieldFromMetadata_WhenItContainsRedefinedField) {
 		// Act:
 		RunTest<TMetadataValueTraits>(
-				{ { "Key", "Value1", Height(CurrentHeight.unwrap() - 1) }, { "Key", "Value2", Height(0) } },
+				{ { "Key", "Value1", CurrentHeight - Height(1) }, { "Key", "Value2", Height(0) } },
 				{ "Key", "", Del },
-				{ { "Key", "Value1", Height(CurrentHeight.unwrap() - 1) }, { "Key", "Value2", CurrentHeight } },
+				{ { "Key", "Value1", CurrentHeight - Height(1) }, { "Key", "Value2", CurrentHeight } },
 				 NotifyMode::Commit);
 	}
 
 	TRAITS_BASED_TEST(ObserverAddField_WhenIsContainsRemovedField) {
 		// Act:
 		RunTest<TMetadataValueTraits>(
-				{ { "Key", "Value1", Height(CurrentHeight.unwrap() - 1) } },
+				{ { "Key", "Value1", CurrentHeight - Height(1) } },
 				{ "Key", "Value2", Add },
-				{ { "Key", "Value1", Height(CurrentHeight.unwrap() - 1) }, { "Key", "Value2", Height(0) } },
+				{ { "Key", "Value1", CurrentHeight - Height(1) }, { "Key", "Value2", Height(0) } },
 				NotifyMode::Commit);
 	}
 
@@ -227,18 +226,36 @@ namespace catapult { namespace observers {
 	TRAITS_BASED_TEST(ObserverRevertRemoveFieldFromMetadata_WhenItContainsRedefinedField) {
 		// Act:
 		RunTest<TMetadataValueTraits>(
-				{ { "Key", "Value1", Height(CurrentHeight.unwrap() - 1) }, { "Key", "Value2", CurrentHeight } },
+				{ { "Key", "Value1", CurrentHeight - Height(1) }, { "Key", "Value2", CurrentHeight } },
 				{ "Key", "", Del },
-				{ { "Key", "Value1", Height(CurrentHeight.unwrap() - 1) }, { "Key", "Value2", Height(0) } },
+				{ { "Key", "Value1", CurrentHeight - Height(1) }, { "Key", "Value2", Height(0) } },
 				NotifyMode::Rollback);
 	}
 
 	TRAITS_BASED_TEST(ObserverRevertAddField_WhenIsContainsRemovedField) {
 		// Act:
 		RunTest<TMetadataValueTraits>(
-				{ { "Key", "Value1", Height(CurrentHeight.unwrap() - 1) }, { "Key", "Value2", Height(0) } },
+				{ { "Key", "Value1", CurrentHeight - Height(1) }, { "Key", "Value2", Height(0) } },
 				{ "Key", "Value2", Add },
-				{ { "Key", "Value1", Height(CurrentHeight.unwrap() - 1) } },
+				{ { "Key", "Value1", CurrentHeight - Height(1) } },
+				NotifyMode::Rollback);
+	}
+
+	TRAITS_BASED_TEST(ObserverRevertsLastAddedField) {
+		// Act:
+		RunTest<TMetadataValueTraits>(
+				{ { "Key", "Value1", CurrentHeight }, { "Key", "Value2", CurrentHeight }, { "Key", "Value3", Height(0) }, { "Key1", "Value4", Height(0) }, { "Key2", "Value5", CurrentHeight } },
+				{ "Key", "Value3", Add },
+				{ { "Key", "Value1", CurrentHeight }, { "Key", "Value2", Height(0) }, { "Key1", "Value4", Height(0) }, { "Key2", "Value5", CurrentHeight } },
+				NotifyMode::Rollback);
+	}
+
+	TRAITS_BASED_TEST(ObserverRevertsLastRemovedField) {
+		// Act:
+		RunTest<TMetadataValueTraits>(
+				{ { "Key", "Value1", CurrentHeight }, { "Key", "Value2", CurrentHeight }, { "Key", "Value3", CurrentHeight }, { "Key1", "Value4", Height(0) }, { "Key2", "Value5", CurrentHeight } },
+				{ "Key", "", Del },
+				{ { "Key", "Value1", CurrentHeight }, { "Key", "Value2", CurrentHeight }, { "Key", "Value3", Height(0) }, { "Key1", "Value4", Height(0) }, { "Key2", "Value5", CurrentHeight } },
 				NotifyMode::Rollback);
 	}
 
