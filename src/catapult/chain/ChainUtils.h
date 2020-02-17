@@ -21,11 +21,12 @@
 #pragma once
 #include "catapult/model/Block.h"
 #include "catapult/model/ChainScore.h"
+#include "catapult/model/NetworkConfiguration.h"
 #include <vector>
 
 namespace catapult {
 	namespace cache { class BlockDifficultyCache; }
-	namespace model { struct NetworkConfiguration; }
+	namespace config { struct BlockchainConfigurationHolder; }
 }
 
 namespace catapult { namespace chain {
@@ -33,13 +34,16 @@ namespace catapult { namespace chain {
 	/// Determines if \a parent with hash \a parentHash and \a child form a chain link.
 	bool IsChainLink(const model::Block& parent, const Hash256& parentHash, const model::Block& child);
 
-	/// Checks if the difficulties in \a blocks are consistent with the difficulties stored in \a cache
-	/// for the block chain described by \a config. If there is an inconsistency, the index of the first
-	/// difference is returned. Otherwise, the size of \a blocks is returned.
+	/// Checks if the difficulties in \a blocks are consistent with the difficulties stored in \a cache.
+	/// Each block difficulty calculation is performed with network config obtained from \a remotedConfigs,
+	/// if present at the block height, or from \a pConfigHolder.
+	/// If there is an inconsistency, the index of the first difference is returned. Otherwise, the size
+	/// of \a blocks is returned.
 	size_t CheckDifficulties(
-			const cache::BlockDifficultyCache& cache,
-			const std::vector<const model::Block*>& blocks,
-			const model::NetworkConfiguration& config);
+		const cache::BlockDifficultyCache& cache,
+		const std::vector<const model::Block*>& blocks,
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+		const model::NetworkConfigurations& remoteConfigs);
 
 	/// Calculates the partial chain score of \a blocks starting at \a parent.
 	model::ChainScore CalculatePartialChainScore(const model::Block& parent, const std::vector<const model::Block*>& blocks);

@@ -64,6 +64,9 @@ namespace catapult { namespace consumers {
 	/// Validation failed because the remote chain timestamp is too far in the future.
 	DEFINE_CONSUMER_RESULT(Remote_Chain_Too_Far_In_Future, 0x3005);
 
+	/// Validation failed because the remote chain contains a transaction with malformed network configuration.
+	DEFINE_CONSUMER_RESULT(Remote_Network_Config_Malformed, 0x3006);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

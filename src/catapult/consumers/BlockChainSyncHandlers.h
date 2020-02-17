@@ -74,7 +74,7 @@ namespace catapult { namespace consumers {
 	struct BlockChainSyncHandlers {
 	public:
 		/// Prototype for checking block difficulties.
-		using DifficultyCheckerFunc = predicate<const std::vector<const model::Block*>&, const cache::CatapultCache&>;
+		using DifficultyCheckerFunc = predicate<const std::vector<const model::Block*>&, const cache::CatapultCache&, const model::NetworkConfigurations&>;
 
 		/// Prototype for undoing a block.
 		/// \note This is called with all rolled back blocks and the (new) common block.

@@ -72,7 +72,7 @@ namespace catapult { namespace config {
 		auto entry = configCache->find(configHeight).get();
 
 		std::istringstream inputBlock(entry.networkConfig());
-		auto networkConfig =  model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
+		auto networkConfig = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
         m_pluginInitializer(networkConfig);
 
 		std::istringstream inputVersions(entry.supportedEntityVersions());
