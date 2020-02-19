@@ -19,7 +19,8 @@ namespace catapult { namespace validators {
 
 		static std::unordered_set<model::EntityType> blockedTransactionAfterFinish({
 		    model::Entity_Type_Deploy,
-		    model::Entity_Type_Execute,
+		    model::Entity_Type_StartExecute,
+		    model::Entity_Type_EndExecute,
 		});
 
 		if (blockedTransactionAfterFinish.count(notification.TransactionType)) {

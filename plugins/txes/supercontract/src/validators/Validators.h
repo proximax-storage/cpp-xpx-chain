@@ -23,4 +23,7 @@ namespace catapult { namespace validators {
 	/// TODO: During implementation of deactivating super contract also remember about DriveFinishNotification
 	/// A validator check that drive file system transaction doesn't remove super contract file
 	DECLARE_STATEFUL_VALIDATOR(DriveFileSystem, model::DriveFileSystemNotification<1>)();
+
+	/// A validator check that super contract is exist
+	DECLARE_STATEFUL_VALIDATOR(SuperContract, model::SuperContractNotification<1>)();
 }}

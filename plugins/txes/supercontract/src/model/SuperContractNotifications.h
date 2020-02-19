@@ -15,6 +15,9 @@ namespace catapult { namespace model {
 	/// Defines a prepare drive notification type.
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract, Deploy_v1, 0x0001);
 
+	/// Defines a prepare drive notification type.
+	DEFINE_NOTIFICATION_TYPE(Validator, SuperContract, SuperContract_v1, 0x0002);
+
     /// Deploy super contract notification.
     template<VersionType version>
     struct DeployNotification;
@@ -56,6 +59,27 @@ namespace catapult { namespace model {
 
         /// Version of super contract.
         BlockchainVersion SuperContractVersion;
+    };
+
+    /// Notification of a super contract.
+    template<VersionType version>
+    struct SuperContractNotification;
+
+    template<>
+    struct SuperContractNotification<1> : public Notification {
+    public:
+        /// Matching notification type.
+        static constexpr auto Notification_Type = SuperContract_SuperContract_v1_Notification;
+
+    public:
+        explicit SuperContractNotification(const Key& contract)
+                : Notification(Notification_Type, sizeof(SuperContractNotification<1>))
+                , SuperContractKey(contract)
+        {}
+
+    public:
+        /// Public key of the super contract multisig account.
+        Key SuperContractKey;
     };
 
 }}

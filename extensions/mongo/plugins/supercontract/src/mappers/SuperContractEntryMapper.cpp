@@ -23,7 +23,7 @@ namespace catapult { namespace mongo { namespace plugins {
 						   << "end" << ToInt64(entry.end())
 						   << "mainDriveKey" << ToBinary(entry.mainDriveKey())
 						   << "fileHash" << ToBinary(entry.fileHash())
-						   << "version" << ToInt64(entry.version());
+						   << "vmVersion" << ToInt64(entry.version());
 
 		return doc
 				<< bson_stream::close_document
@@ -50,7 +50,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		entry.setStart(Height(dbContractEntry["start"].get_int64()));
 		entry.setEnd(Height(dbContractEntry["end"].get_int64()));
-		entry.setVersion(BlockchainVersion(dbContractEntry["version"].get_int64()));
+		entry.setVersion(BlockchainVersion(dbContractEntry["vmVersion"].get_int64()));
 
 		return entry;
 	}

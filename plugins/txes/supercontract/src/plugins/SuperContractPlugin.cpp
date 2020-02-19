@@ -11,7 +11,8 @@
 #include "src/model/SuperContractNotifications.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/DeployTransactionPlugin.h"
-#include "src/plugins/ExecuteTransactionPlugin.h"
+#include "src/plugins/StartExecuteTransactionPlugin.h"
+#include "src/plugins/EndExecuteTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
 #include "src/config/SuperContractConfiguration.h"
@@ -26,13 +27,14 @@ namespace catapult { namespace plugins {
 
         const auto& pConfigHolder = manager.configHolder();
         manager.addTransactionSupport(CreateDeployTransactionPlugin());
-        manager.addTransactionSupport(CreateExecuteTransactionPlugin());
+        manager.addTransactionSupport(CreateStartExecuteTransactionPlugin(manager.configHolder()));
+        manager.addTransactionSupport(CreateEndExecuteTransactionPlugin());
 
 		manager.addCacheSupport<cache::SuperContractCacheStorage>(
 			std::make_unique<cache::SuperContractCache>(manager.cacheConfig(cache::SuperContractCache::Name), pConfigHolder));
 
 		using SuperContractCacheHandlersSuperContract = CacheHandlers<cache::SuperContractCacheDescriptor>;
-		SuperContractCacheHandlersSuperContract::Register<model::FacilityCode::Drive>(manager);
+		SuperContractCacheHandlersSuperContract::Register<model::FacilityCode::SuperContract>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("DRIVE C"), [&cache]() {
@@ -43,6 +45,7 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
 					.add(validators::CreateDriveValidator())
+					.add(validators::CreateSuperContractValidator())
 					.add(validators::CreateDeployValidator())
 					.add(validators::CreateDriveFileSystemValidator());
 		});

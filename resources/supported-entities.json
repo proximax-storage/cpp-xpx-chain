@@ -199,6 +199,21 @@
 			"name": "endOperation",
 			"type": "17247",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "deploy",
+			"type": "16736",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "startExecute",
+			"type": "16992",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "endExecute",
+			"type": "17248",
+			"supportedVersions": [1]
 		}
 	]
 }

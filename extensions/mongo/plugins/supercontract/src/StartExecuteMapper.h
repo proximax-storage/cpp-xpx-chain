@@ -9,7 +9,7 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 
-	/// Creates a mongo execute transaction plugin.
+	/// Creates a mongo start execute transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<MongoTransactionPlugin> CreateExecuteTransactionMongoPlugin();
+	std::unique_ptr<MongoTransactionPlugin> CreateStartExecuteTransactionMongoPlugin();
 }}}

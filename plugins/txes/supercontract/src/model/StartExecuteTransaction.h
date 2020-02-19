@@ -15,21 +15,21 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-    /// Binary layout for an execute transaction header.
+    /// Binary layout for an start execute transaction header.
     template<typename THeader>
-    struct ExecuteTransactionBody : public THeader {
+    struct StartExecuteTransactionBody : public THeader {
     private:
-        using TransactionType = ExecuteTransactionBody<THeader>;
+        using TransactionType = StartExecuteTransactionBody<THeader>;
 
     public:
-        DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Execute, 1)
+        DEFINE_TRANSACTION_CONSTANTS(Entity_Type_StartExecute, 1)
 
     public:
         /// Key of super contract account.
         Key SuperContract;
 
         /// Function size in bytes.
-        uint16_t FunctionSize;
+        uint8_t FunctionSize;
 
         /// Number of mosaics.
         uint8_t MosaicsCount;
@@ -74,12 +74,12 @@ namespace catapult { namespace model {
         }
     };
 
-    DEFINE_EMBEDDABLE_TRANSACTION(Execute)
+    DEFINE_EMBEDDABLE_TRANSACTION(StartExecute)
 
 #pragma pack(pop)
 
     /// Extracts public keys of additional accounts that must approve \a transaction.
-    inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedExecuteTransaction& transaction) {
+    inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedStartExecuteTransaction& transaction) {
         return { transaction.SuperContract };
     }
 }}

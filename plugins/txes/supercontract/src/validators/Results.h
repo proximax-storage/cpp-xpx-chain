@@ -29,6 +29,9 @@ namespace catapult { namespace validators {
 	/// Drive already ended, so you can create super contract on this drive.
 	DEFINE_SUPERCONTRACT_RESULT(Drive_Has_Ended, 5);
 
+	/// Super contract is not exist.
+	DEFINE_SUPERCONTRACT_RESULT(SuperContract_Is_Not_Exist, 6);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

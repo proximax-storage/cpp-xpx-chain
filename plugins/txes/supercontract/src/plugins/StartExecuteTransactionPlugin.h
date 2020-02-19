@@ -6,13 +6,14 @@
 
 #pragma once
 #include "catapult/plugins.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include <memory>
 
 namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a execute transaction plugin.
+	/// Creates a start execute transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateExecuteTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateStartExecuteTransactionPlugin(const std::shared_ptr<config::BlockchainConfigurationHolder>&);
 }}

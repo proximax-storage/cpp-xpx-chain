@@ -4,10 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "ExecuteMapper.h"
+#include "StartExecuteMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
-#include "src/model/ExecuteTransaction.h"
+#include "src/model/StartExecuteTransaction.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -26,12 +26,17 @@ namespace catapult { namespace mongo { namespace plugins {
 	}
 
 	template<typename TTransaction>
-	void StreamExecuteTransaction(bson_stream::document& builder, const TTransaction& transaction) {
+	void StreamStartExecuteTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		builder << "superContract" << ToBinary(transaction.SuperContract);
-		builder << "function" << ToBinary(transaction.FunctionPtr(), transaction.FunctionSize);
-		builder << "data" << ToBinary(transaction.DataPtr(), transaction.DataSize);
+		if (transaction.FunctionSize) {
+			builder << "function" << ToBinary(transaction.FunctionPtr(), transaction.FunctionSize);
+		}
+
+		if (transaction.DataSize) {
+			builder << "data" << ToBinary(transaction.DataPtr(), transaction.DataSize);
+		}
 		StreamMosaics(builder, transaction.MosaicsPtr(), transaction.MosaicsCount);
 	}
 
-	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(Execute, StreamExecuteTransaction)
+	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(StartExecute, StreamStartExecuteTransaction)
 }}}

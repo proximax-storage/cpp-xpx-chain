@@ -5,7 +5,8 @@
 **/
 
 #include "DeployMapper.h"
-#include "ExecuteMapper.h"
+#include "StartExecuteMapper.h"
+#include "EndExecuteMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoSuperContractCacheStorage.h"
@@ -14,7 +15,8 @@ extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	// transaction support
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateDeployTransactionMongoPlugin());
-	manager.addTransactionSupport(catapult::mongo::plugins::CreateExecuteTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateStartExecuteTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndExecuteTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoSuperContractCacheStorage(
