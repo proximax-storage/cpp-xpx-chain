@@ -102,6 +102,12 @@ childNamespaceRentalFee = 10'000'000'000
 
 maxChildNamespaces = 500
 
+[plugin:catapult.plugins.operation]
+
+enabled = true
+
+maxOperationDuration = 40320
+
 [plugin:catapult.plugins.property]
 
 maxPropertyValues = 512

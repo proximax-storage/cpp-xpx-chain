@@ -29,8 +29,8 @@ namespace catapult { namespace test {
 	template<typename TBaseLockNotification, typename TTransaction>
 	void AssertBaseLockNotification(const TBaseLockNotification& notification, const TTransaction& transaction) {
 		EXPECT_EQ(transaction.Signer, notification.Signer);
-		EXPECT_EQ(transaction.Mosaic.MosaicId, notification.Mosaic.MosaicId);
-		EXPECT_EQ(transaction.Mosaic.Amount, notification.Mosaic.Amount);
+		EXPECT_EQ(transaction.Mosaic.MosaicId, notification.MosaicsPtr->MosaicId);
+		EXPECT_EQ(transaction.Mosaic.Amount, notification.MosaicsPtr->Amount);
 		EXPECT_EQ(transaction.Duration, notification.Duration);
 	}
 

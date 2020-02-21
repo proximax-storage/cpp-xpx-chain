@@ -8,7 +8,6 @@
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

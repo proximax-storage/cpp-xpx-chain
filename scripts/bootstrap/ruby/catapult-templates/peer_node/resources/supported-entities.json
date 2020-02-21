@@ -184,6 +184,21 @@
 			"name": "endFileDownload",
 			"type": "19034",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "operationIdentify",
+			"type": "16734",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "startOperation",
+			"type": "16991",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "endOperation",
+			"type": "17247",
+			"supportedVersions": [1]
 		}
 	]
 }

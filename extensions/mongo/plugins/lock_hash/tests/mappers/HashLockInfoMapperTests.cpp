@@ -31,6 +31,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		struct HashLockInfoMapperTraits : public test::MongoHashLockInfoTestTraits {
 			static constexpr auto AssertEqualLockInfoData = test::AssertEqualLockInfoData;
+			static constexpr char Doc_Name[] = "lock";
 		};
 	}
 

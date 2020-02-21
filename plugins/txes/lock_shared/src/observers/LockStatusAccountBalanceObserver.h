@@ -40,14 +40,16 @@ namespace catapult { namespace observers {
 
 		if (NotifyMode::Rollback == context.Mode) {
 			lockInfo.Status = state::LockStatus::Unused;
-			accountState.Balances.debit(lockInfo.MosaicId, lockInfo.Amount, context.Height);
+			for (const auto& pair : lockInfo.Mosaics)
+				accountState.Balances.debit(pair.first, pair.second, context.Height);
 			return;
 		}
 
 		lockInfo.Status = state::LockStatus::Used;
-		accountState.Balances.credit(lockInfo.MosaicId, lockInfo.Amount, context.Height);
-
-		model::BalanceChangeReceipt receipt(TTraits::Receipt_Type, accountState.PublicKey, lockInfo.MosaicId, lockInfo.Amount);
-		context.StatementBuilder().addTransactionReceipt(receipt);
+		for (const auto& pair : lockInfo.Mosaics) {
+			accountState.Balances.credit(pair.first, pair.second, context.Height);
+			model::BalanceChangeReceipt receipt(TTraits::Receipt_Type, accountState.PublicKey, pair.first, pair.second);
+			context.StatementBuilder().addTransactionReceipt(receipt);
+		}
 	}
 }}

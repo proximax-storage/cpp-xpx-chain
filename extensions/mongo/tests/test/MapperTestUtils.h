@@ -119,6 +119,12 @@ namespace catapult { namespace test {
 		return MosaicId(GetUint64(doc, name));
 	}
 
+	/// Returns value \a name from a document (\a doc) as an unresolved mosaic id.
+	template<typename TDocument>
+	UnresolvedMosaicId GetUnresolveMosaicId(const TDocument& doc, const std::string& name) {
+		return UnresolvedMosaicId(GetUint64(doc, name));
+	}
+
 	/// Converts binary field \a name from a document (\a doc) to a hash.
 	template<typename TDocument>
 	Hash256 GetHashValue(const TDocument& doc, const std::string& name) {
