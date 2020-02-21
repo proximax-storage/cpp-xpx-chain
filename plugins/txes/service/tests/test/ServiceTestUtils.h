@@ -227,8 +227,9 @@ namespace catapult { namespace test {
 
     /// Creates a prepare drive transaction.
     template<typename TTransaction>
-	model::UniqueEntityPtr<TTransaction> CreatePrepareDriveTransaction() {
+	model::UniqueEntityPtr<TTransaction> CreatePrepareDriveTransaction(VersionType version) {
 		auto pTransaction = CreateDriveTransaction<TTransaction>(model::Entity_Type_PrepareDrive);
+		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Zero, version);
 		pTransaction->Owner = test::GenerateRandomByteArray<Key>();
 		pTransaction->Duration = BlockDuration(1000);
 		pTransaction->BillingPeriod = BlockDuration(100);

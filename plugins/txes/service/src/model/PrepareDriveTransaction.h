@@ -20,11 +20,20 @@ namespace catapult { namespace model {
 		using TransactionType = PrepareDriveTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_PrepareDrive, 1)
+		explicit PrepareDriveTransactionBody<THeader>() : Owner()
+		{}
 
 	public:
-		/// Owner of drive.
-		Key Owner;
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_PrepareDrive, 2)
+
+	public:
+		union {
+			/// Owner of drive.
+			Key Owner;
+
+			/// Key of drive.
+			Key DriveKey;
+		};
 
 		/// Duration of drive.
 		BlockDuration Duration;
@@ -32,7 +41,7 @@ namespace catapult { namespace model {
 		/// Billing period of drive.
 		BlockDuration BillingPeriod;
 
-		/// Price of drive for one billing period(storage units).
+		/// Price of drive for one billing period (storage units).
 		Amount BillingPrice;
 
 		/// Size of drive.
