@@ -7,6 +7,7 @@
 #pragma once
 #include "plugins/txes/config/src/cache/NetworkConfigCache.h"
 #include "plugins/txes/config/src/cache/NetworkConfigCacheStorage.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 
 namespace catapult { namespace cache { class CatapultCacheDelta; } }
@@ -16,11 +17,15 @@ namespace catapult { namespace test {
 	/// Cache factory for creating a catapult cache composed of only the config cache.
 	struct NetworkConfigCacheFactory {
 		/// Creates an empty catapult cache.
-		static cache::CatapultCache Create() {
+		static cache::CatapultCache Create(const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder = NULL) {
 			auto cacheId = cache::NetworkConfigCache::Id;
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::NetworkConfigCache, cache::NetworkConfigCacheStorage>();
-			return cache::CatapultCache(std::move(subCaches));
+			subCaches[cacheId] = test::MakeSubCachePlugin<cache::NetworkConfigCache, cache::NetworkConfigCacheStorage>(pConfigHolder);;
+			auto catapultCache =  cache::CatapultCache(std::move(subCaches));
+			if( pConfigHolder){
+				pConfigHolder->SetCache(&catapultCache);
+			}
+			return catapultCache;
 		}
 	};
 }}

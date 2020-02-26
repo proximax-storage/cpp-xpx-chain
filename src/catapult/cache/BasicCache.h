@@ -77,7 +77,7 @@ namespace catapult { namespace cache {
 			return TView(setView, std::get<TSubViewArgs>(m_subViewArgs)...);
 		}
 
-	private:
+	protected:
 		static void Commit(TBaseSet& m_set, const CacheDeltaType&, std::false_type) {
 			m_set.commit();
 		}

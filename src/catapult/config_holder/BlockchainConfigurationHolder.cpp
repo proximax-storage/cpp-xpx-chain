@@ -13,7 +13,7 @@
 
 namespace catapult { namespace config {
 
-	BlockchainConfigurationHolder::BlockchainConfigurationHolder(cache::CatapultCache* pCache)
+	BlockchainConfigurationHolder::BlockchainConfigurationHolder(cache::CatapultCache *pCache)
 			: m_pCache(pCache)
 			, m_pluginInitializer([](auto&) {}) {
 		auto config = BlockchainConfiguration{
@@ -50,6 +50,7 @@ namespace catapult { namespace config {
 
 	const BlockchainConfiguration& BlockchainConfigurationHolder::Config(const Height& height) {
 		std::lock_guard<std::mutex> guard(m_mutex);
+
 		if (m_networkConfigs.containsRef(height) || m_networkConfigs.contains(height))
 			return m_networkConfigs.get(height);
 
@@ -57,46 +58,13 @@ namespace catapult { namespace config {
 		if (height.unwrap() == 1)
 			return m_networkConfigs.get(Height(0));
 
-		if (!m_pCache)
-			CATAPULT_THROW_INVALID_ARGUMENT("cache pointer is not set");
-
-		auto configCache = m_pCache->sub<cache::NetworkConfigCache>().createView(height);
-		auto configHeight = configCache->FindConfigHeightAt(height);
+		auto configHeight = m_networkConfigs.GetLowerOrEqualHeightConfig(height);
 
 		if (m_networkConfigs.contains(configHeight))
 			return m_networkConfigs.insertRef(height, configHeight);
 
-		if (configHeight.unwrap() == 0)
-			CATAPULT_THROW_INVALID_ARGUMENT_1("failed to find config at height ", height);
+		CATAPULT_THROW_INVALID_ARGUMENT_1("UNEXPECTED config doesn't exist at height", height);
 
-		auto entry = configCache->find(configHeight).get();
-
-		std::istringstream inputBlock(entry.networkConfig());
-		auto networkConfig =  model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
-        m_pluginInitializer(networkConfig);
-
-		std::istringstream inputVersions(entry.supportedEntityVersions());
-		config::SupportedEntityVersions supportedEntityVersions;
-		supportedEntityVersions = LoadSupportedEntityVersions(inputVersions);
-
-		const auto& baseConfig = m_networkConfigs.get(Height(0));
-		auto config = BlockchainConfiguration(
-			baseConfig.Immutable,
-			networkConfig,
-			baseConfig.Node,
-			baseConfig.Logging,
-			baseConfig.User,
-			baseConfig.Extensions,
-			baseConfig.Inflation,
-			supportedEntityVersions
-		);
-
-		const auto& configRef = m_networkConfigs.insert(configHeight, config);
-
-		if (configHeight != height)
-			m_networkConfigs.insertRef(height, configHeight);
-
-		return configRef;
 	}
 
 	const BlockchainConfiguration& BlockchainConfigurationHolder::Config() {
@@ -107,5 +75,9 @@ namespace catapult { namespace config {
 		if (height == HEIGHT_OF_LATEST_CONFIG)
 			return Config();
 		return Config(height);
+	}
+
+	ConfigTreeCache& BlockchainConfigurationHolder::NetworkConfigs() {
+		return m_networkConfigs;
 	}
 }}

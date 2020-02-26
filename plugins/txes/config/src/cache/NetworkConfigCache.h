@@ -8,6 +8,9 @@
 #include "NetworkConfigCacheDelta.h"
 #include "NetworkConfigCacheView.h"
 #include "catapult/cache/BasicCache.h"
+#include "catapult/config/SupportedEntityVersions.h"
+#include "catapult/config/BlockchainConfiguration.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -18,8 +21,10 @@ namespace catapult { namespace cache {
 	class BasicNetworkConfigCache : public NetworkConfigBasicCache {
 	public:
 		/// Creates a cache.
-		explicit BasicNetworkConfigCache(const CacheConfiguration& config)
+		explicit BasicNetworkConfigCache(const CacheConfiguration& config,
+		                                 const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: NetworkConfigBasicCache(config)
+				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
@@ -30,6 +35,30 @@ namespace catapult { namespace cache {
 				delta.insertHeight(height);
 			commit(delta);
 		}
+
+		void commit(const CacheDeltaType& delta) {
+			Commit(m_set, delta, typename NetworkConfigCacheTypes::BaseSets::IsOrderedSet());
+
+			if( m_pConfigHolder == NULL)
+				return;
+			
+			auto elements = m_set.rebaseDetached();
+			for (const auto& xx : deltaset::MakeIterableView(elements.PrimaryHeights)) {
+				//xx.unwrap();
+				auto content = elements.pPrimary->find(xx);
+				auto entry = content.get();
+
+				m_pConfigHolder->InsertConfig(delta.height(), entry->networkConfig(),
+						entry->supportedEntityVersions());
+			}
+		}
+
+		void setBlockChainConfigHolder( const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+			m_pConfigHolder = pConfigHolder;
+		}
+
+	private:
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Synchronized cache composed of network config information.
@@ -39,7 +68,9 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config.
-		explicit NetworkConfigCache(const CacheConfiguration& config) : SynchronizedCacheWithInit<BasicNetworkConfigCache>(BasicNetworkConfigCache(config))
+		explicit NetworkConfigCache(const CacheConfiguration& config,
+		                            const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder = NULL)
+				: SynchronizedCacheWithInit<BasicNetworkConfigCache>(BasicNetworkConfigCache(config, pConfigHolder))
 		{}
 	};
 }}

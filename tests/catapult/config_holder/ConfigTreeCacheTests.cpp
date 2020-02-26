@@ -163,5 +163,29 @@ namespace catapult { namespace config {
 		EXPECT_THROW(testee.get(Height{777}), catapult_invalid_argument);
 	}
 
+	TEST(TEST_CLASS, GetLowerOrEqual) {
+		ConfigTreeCache testee;
+		test::MutableBlockchainConfiguration config;
+		config.Network.ImportanceGrouping = 5;
+
+		testee.insert(Height{0}, config.ToConst());
+		testee.insert(Height{1}, config.ToConst());
+
+		auto heightResult = testee.GetLowerOrEqualHeightConfig(Height{2});
+		EXPECT_EQ(Height{1}, heightResult);
+
+		testee.insert(Height{10}, config.ToConst());
+		heightResult = testee.GetLowerOrEqualHeightConfig(Height{5});
+		EXPECT_EQ(Height{1}, heightResult);
+
+		testee.insert(Height{15}, config.ToConst());
+
+		heightResult = testee.GetLowerOrEqualHeightConfig(Height{12});
+		EXPECT_EQ(Height{10}, heightResult);
+
+		heightResult = testee.GetLowerOrEqualHeightConfig(Height{15});
+		EXPECT_EQ(Height{15}, heightResult);
+
+	}
 	// endregion
 }}

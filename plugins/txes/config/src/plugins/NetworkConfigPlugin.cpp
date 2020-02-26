@@ -23,7 +23,8 @@ namespace catapult { namespace plugins {
 		});
 		manager.addTransactionSupport(CreateNetworkConfigTransactionPlugin());
 
-		manager.addCacheSupport(std::make_unique<cache::NetworkConfigCacheSubCachePlugin>(manager.cacheConfig(cache::NetworkConfigCache::Name)));
+		const auto& pConfigHolder = manager.configHolder();
+		manager.addCacheSupport(std::make_unique<cache::NetworkConfigCacheSubCachePlugin>(manager.cacheConfig(cache::NetworkConfigCache::Name),pConfigHolder));
 
 		using CacheHandlersNetworkConfig = CacheHandlers<cache::NetworkConfigCacheDescriptor>;
 		CacheHandlersNetworkConfig::Register<model::FacilityCode::NetworkConfig>(manager);
