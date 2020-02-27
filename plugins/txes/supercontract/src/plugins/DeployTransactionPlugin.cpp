@@ -27,7 +27,7 @@ namespace catapult { namespace plugins {
 				sub.notify(AccountPublicKeyNotification<1>(transaction.DriveKey));
 
 				auto pModification = sub.mempool().malloc(
-						CosignatoryModification{model::CosignatoryModificationType::Add, transaction.DriveKey});
+					CosignatoryModification{model::CosignatoryModificationType::Add, transaction.DriveKey});
 				sub.notify(ModifyMultisigCosignersNotification<1>(transaction.Signer, 1, pModification));
 				sub.notify(ModifyMultisigSettingsNotification<1>(transaction.Signer, 1, 1));
 
@@ -36,7 +36,7 @@ namespace catapult { namespace plugins {
 					transaction.Owner,
 					transaction.DriveKey,
 					transaction.FileHash,
-					transaction.SuperContractVersion
+					transaction.VmVersion
 				));
                 break;
 			}

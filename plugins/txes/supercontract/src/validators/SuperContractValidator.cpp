@@ -6,8 +6,6 @@
 
 #include "Validators.h"
 #include "src/cache/SuperContractCache.h"
-#include "catapult/validators/ValidatorContext.h"
-#include <unordered_set>
 
 namespace catapult { namespace validators {
 
@@ -17,7 +15,7 @@ namespace catapult { namespace validators {
 		const auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
 
 		if (!superContractCache.contains(notification.SuperContractKey))
-			return Failure_SuperContract_SuperContract_Is_Not_Exist;
+			return Failure_SuperContract_SuperContract_Does_Not_Exist;
 
 		return ValidationResult::Success;
 	});

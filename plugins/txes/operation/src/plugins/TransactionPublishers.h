@@ -13,20 +13,26 @@ using namespace catapult::model;
 namespace catapult { namespace plugins {
 
 	template<typename TTransaction>
-	void StartOperationPublisher(const TTransaction& transaction, NotificationSubscriber& sub, const GenerationHash& generationHash, const std::string& transactionName) {
+	void StartOperationPublisher(
+			const TTransaction& transaction,
+			NotificationSubscriber& sub,
+			const GenerationHash& generationHash,
+			const std::string& transactionName,
+			const Key* pExecutors,
+			uint8_t executorCount,
+			const BlockDuration& duration) {
 		switch (transaction.EntityVersion()) {
 			case 1: {
-				sub.notify(OperationDurationNotification<1>(transaction.Duration));
 				sub.notify(OperationMosaicNotification<1>(transaction.MosaicsPtr(), transaction.MosaicCount));
 				auto operationToken = CalculateHash(transaction, generationHash);
 				sub.notify(StartOperationNotification<1>(
 					operationToken,
 					transaction.Signer,
-					transaction.ExecutorsPtr(),
-					transaction.ExecutorCount,
+					pExecutors,
+					executorCount,
 					transaction.MosaicsPtr(),
 					transaction.MosaicCount,
-					transaction.Duration));
+					duration));
 				auto pMosaic = transaction.MosaicsPtr();
 				for (auto i = 0u; i < transaction.MosaicCount; ++i, ++pMosaic) {
 					sub.notify(BalanceDebitNotification<1>(transaction.Signer, pMosaic->MosaicId, pMosaic->Amount));
@@ -50,10 +56,6 @@ namespace catapult { namespace plugins {
 					transaction.MosaicsPtr(),
 					transaction.MosaicCount,
 					transaction.Result));
-				auto pMosaic = transaction.MosaicsPtr();
-				for (auto i = 0u; i < transaction.MosaicCount; ++i, ++pMosaic) {
-					sub.notify(BalanceCreditNotification<1>(transaction.Signer, pMosaic->MosaicId, pMosaic->Amount));
-				}
 
 				break;
 			}

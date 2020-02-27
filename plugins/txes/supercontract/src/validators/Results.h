@@ -21,7 +21,7 @@ namespace catapult { namespace validators {
 	DEFINE_SUPERCONTRACT_RESULT(Operation_Is_Not_Permitted, 2);
 
 	/// File related to super contract is not exist.
-	DEFINE_SUPERCONTRACT_RESULT(File_Is_Not_Exist, 3);
+	DEFINE_SUPERCONTRACT_RESULT(File_Does_Not_Exist, 3);
 
 	/// Someone try to remove file of super contract.
 	DEFINE_SUPERCONTRACT_RESULT(Remove_Super_Contract_File, 4);
@@ -29,8 +29,20 @@ namespace catapult { namespace validators {
 	/// Drive already ended, so you can create super contract on this drive.
 	DEFINE_SUPERCONTRACT_RESULT(Drive_Has_Ended, 5);
 
-	/// Super contract is not exist.
-	DEFINE_SUPERCONTRACT_RESULT(SuperContract_Is_Not_Exist, 6);
+	/// Super contract doesn't exist.
+	DEFINE_SUPERCONTRACT_RESULT(SuperContract_Does_Not_Exist, 6);
+
+	/// Validation failed because plugin configuration data is malformed.
+	DEFINE_SUPERCONTRACT_RESULT(Plugin_Config_Malformed, 7);
+
+	/// Validation failed because end execute transaction is not the last sub transaction.
+	DEFINE_SUPERCONTRACT_RESULT(End_Execute_Transaction_Misplaced, 8);
+
+	/// Validation failed because operation identify transaction is not the first sub transaction.
+	DEFINE_SUPERCONTRACT_RESULT(Operation_Identify_Transaction_Misplaced, 9);
+
+	/// Validation failed because operation identify transaction aggregated with end execute transaction.
+	DEFINE_SUPERCONTRACT_RESULT(Operation_Identify_Transaction_Aggregated_With_End_Execute, 10);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

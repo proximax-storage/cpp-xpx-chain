@@ -93,7 +93,7 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Operation_End_v1_Notification;
 
 	public:
-		/// Creates end operation notification around \a executor, \a operationToken, \a pMosaics and \a mosaicCount.
+		/// Creates end operation notification around \a executor, \a operationToken, \a pMosaics, \a mosaicCount and \a result.
 		EndOperationNotification(
 			const Key& executor,
 			const Hash256& operationToken,

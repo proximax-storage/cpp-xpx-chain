@@ -10,16 +10,18 @@
 #include "catapult/model/Transaction.h"
 #include "catapult/model/Mosaic.h"
 #include "catapult/utils/ArraySet.h"
+#include "plugins/txes/operation/src/model/OperationTypes.h"
 
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-    /// Binary layout for an start execute transaction header.
+    /// Binary layout for a start execute transaction header.
     template<typename THeader>
-    struct StartExecuteTransactionBody : public THeader {
+    struct StartExecuteTransactionBody : public BasicOperationTransactionBody<THeader, StartExecuteTransactionBody<THeader>> {
     private:
-        using TransactionType = StartExecuteTransactionBody<THeader>;
+		using TransactionType = StartExecuteTransactionBody<THeader>;
+		using BaseTransactionType = BasicOperationTransactionBody<THeader, StartExecuteTransactionBody<THeader>>;
 
     public:
         DEFINE_TRANSACTION_CONSTANTS(Entity_Type_StartExecute, 1)
@@ -31,17 +33,11 @@ namespace catapult { namespace model {
         /// Function size in bytes.
         uint8_t FunctionSize;
 
-        /// Number of mosaics.
-        uint8_t MosaicsCount;
-
         /// Data size in bytes.
         uint16_t DataSize;
 
         // followed by function name if FunctionSize != 0
         DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Function, uint8_t)
-
-        // followed by mosaics data if MosaicsCount != 0
-        DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Mosaics, UnresolvedMosaic)
 
         // followed by data if DataSize != 0
         DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Data, uint8_t)
@@ -49,28 +45,23 @@ namespace catapult { namespace model {
     private:
         template<typename T>
         static auto* FunctionPtrT(T& transaction) {
-            return transaction.FunctionSize ? THeader::PayloadStart(transaction) : nullptr;
-        }
-
-        template<typename T>
-        static auto* MosaicsPtrT(T& transaction) {
             auto* pPayloadStart = THeader::PayloadStart(transaction);
-            return transaction.MosaicsCount && pPayloadStart ? pPayloadStart + transaction.FunctionSize : nullptr;
+            return transaction.FunctionSize && pPayloadStart ? pPayloadStart + transaction.MosaicCount * sizeof(UnresolvedMosaic) : nullptr;
         }
 
         template<typename T>
         static auto* DataPtrT(T& transaction) {
             auto* pPayloadStart = THeader::PayloadStart(transaction);
             return transaction.DataSize && pPayloadStart ? pPayloadStart
-                + transaction.FunctionSize
-                + transaction.MosaicsCount * sizeof(UnresolvedMosaic) : nullptr;
+                + transaction.MosaicCount * sizeof(UnresolvedMosaic)
+                + transaction.FunctionSize : nullptr;
         }
 
     public:
         // Calculates the real size of execute \a transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-            return sizeof(TransactionType)
-                + transaction.FunctionSize + transaction.MosaicsCount * sizeof(UnresolvedMosaic) + transaction.DataSize;
+            return BaseTransactionType::CalculateRealSize(transaction) + Key_Size + sizeof(uint8_t) + sizeof(uint16_t) +
+                + transaction.FunctionSize + transaction.DataSize;
         }
     };
 

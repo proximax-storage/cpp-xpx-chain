@@ -5,33 +5,23 @@
 **/
 
 #include "Validators.h"
-#include "src/model/OperationIdentifyTransaction.h"
+#include "AggregateTransactionValidator.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::AggregateCosignaturesNotification<1>;
 
 	namespace {
-		const model::EmbeddedTransaction* AdvanceNext(const model::EmbeddedTransaction* pTransaction) {
-			const auto* pTransactionData = reinterpret_cast<const uint8_t*>(pTransaction);
-			return reinterpret_cast<const model::EmbeddedTransaction*>(pTransactionData + pTransaction->Size);
+		ValidationResult AggregateTransactionValidator(const Notification& notification) {
+			return ValidateAggregateTransaction<
+				model::Entity_Type_EndOperation,
+				Failure_Operation_End_Transaction_Misplaced,
+				Failure_Operation_Identify_Transaction_Misplaced,
+				Failure_Operation_Identify_Transaction_Aggregated_With_End_Operation>(notification);
 		}
 	}
 
 	DEFINE_STATELESS_VALIDATOR(AggregateTransaction, [](const auto& notification) {
-		const auto* pTransaction = notification.TransactionsPtr;
-		bool operationIdentifyPresent = (notification.TransactionsCount && model::Entity_Type_OperationIdentify == pTransaction->Type);
-		for (auto i = 1u; i < notification.TransactionsCount; ++i) {
-			if (model::Entity_Type_EndOperation == pTransaction->Type)
-				return Failure_Operation_End_Transaction_Misplaced;
-			pTransaction = AdvanceNext(pTransaction);
-			if (model::Entity_Type_OperationIdentify == pTransaction->Type)
-				return Failure_Operation_Identify_Transaction_Misplaced;
-		}
-
-		if (operationIdentifyPresent && model::Entity_Type_EndOperation == pTransaction->Type)
-			return Failure_Operation_Identify_Transaction_Aggregated_With_End_Operation;
-
-		return ValidationResult::Success;
+		return AggregateTransactionValidator(notification);
 	})
 }}

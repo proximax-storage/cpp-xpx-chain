@@ -10,6 +10,7 @@
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/model/SuperContractNotifications.h"
 #include "src/state/SuperContractEntry.h"
+#include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/service/src/model/ServiceNotifications.h"
 
 namespace catapult { namespace validators {
@@ -26,4 +27,14 @@ namespace catapult { namespace validators {
 
 	/// A validator check that super contract is exist
 	DECLARE_STATEFUL_VALIDATOR(SuperContract, model::SuperContractNotification<1>)();
+
+	/// A validator implementation that applies to plugin config notification and validates that:
+	/// - plugin configuration is valid
+	DECLARE_STATELESS_VALIDATOR(SuperContractPluginConfig, model::PluginConfigNotification<1>)();
+
+	/// A validator implementation that applies to aggregate cosignatures notifications and validates that:
+	/// - operation identify transaction is the very first sub transaction
+	/// - end execute transaction is the very last sub transaction
+	/// - operation identify transaction is not aggregated with end execute transaction
+	DECLARE_STATELESS_VALIDATOR(AggregateTransaction, model::AggregateCosignaturesNotification<1>)();
 }}

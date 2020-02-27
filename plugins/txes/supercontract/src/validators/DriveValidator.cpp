@@ -6,9 +6,7 @@
 
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
-#include "catapult/validators/ValidatorContext.h"
 #include "src/model/SuperContractEntityType.h"
-#include <unordered_set>
 
 namespace catapult { namespace validators {
 

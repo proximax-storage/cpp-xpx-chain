@@ -14,6 +14,7 @@
 #include "plugins/txes/lock_shared/tests/test/LockInfoCacheTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
@@ -92,7 +93,7 @@ namespace catapult { namespace test {
 	void GenerateMosaics(TTransaction* pTransaction, size_t numMosaics) {
 		auto* pData = reinterpret_cast<uint8_t*>(pTransaction + 1);
 		for (auto i = 0u; i < numMosaics; ++i) {
-			model::UnresolvedMosaic mosaic{UnresolvedMosaicId(i + 1), Amount((i + 1) * 10)};
+			model::UnresolvedMosaic mosaic{test::UnresolveXor(MosaicId(i + 1)), Amount((i + 1) * 10)};
 			memcpy(pData, static_cast<const void*>(&mosaic), sizeof(model::UnresolvedMosaic));
 			pData += sizeof(model::UnresolvedMosaic);
 		}
@@ -132,6 +133,7 @@ namespace catapult { namespace test {
 	model::UniqueEntityPtr<TTransaction> CreateEndOperationTransaction(size_t numMosaics) {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_EndOperation, numMosaics * sizeof(model::UnresolvedMosaic));
 		pTransaction->OperationToken = test::GenerateRandomByteArray<Hash256>();
+		pTransaction->Result = test::Random16();
 		pTransaction->MosaicCount = numMosaics;
 		GenerateMosaics(pTransaction.get(), numMosaics);
 

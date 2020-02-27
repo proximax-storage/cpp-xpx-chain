@@ -35,7 +35,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		if (transaction.DataSize) {
 			builder << "data" << ToBinary(transaction.DataPtr(), transaction.DataSize);
 		}
-		StreamMosaics(builder, transaction.MosaicsPtr(), transaction.MosaicsCount);
+		StreamMosaics(builder, transaction.MosaicsPtr(), transaction.MosaicCount);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(StartExecute, StreamStartExecuteTransaction)

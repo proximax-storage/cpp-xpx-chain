@@ -15,7 +15,6 @@
 #include "src/plugins/EndExecuteTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
-#include "src/config/SuperContractConfiguration.h"
 
 namespace catapult { namespace plugins {
 
@@ -37,22 +36,30 @@ namespace catapult { namespace plugins {
 		SuperContractCacheHandlersSuperContract::Register<model::FacilityCode::SuperContract>(manager);
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("DRIVE C"), [&cache]() {
+			counters.emplace_back(utils::DiagnosticCounterId("SC C"), [&cache]() {
 				return cache.sub<cache::SuperContractCache>().createView(cache.height())->size();
 			});
 		});
 
+		manager.addStatelessValidatorHook([](auto& builder) {
+			builder
+				.add(validators::CreateSuperContractPluginConfigValidator())
+				.add(validators::CreateAggregateTransactionValidator());
+		});
+
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-					.add(validators::CreateDriveValidator())
-					.add(validators::CreateSuperContractValidator())
-					.add(validators::CreateDeployValidator())
-					.add(validators::CreateDriveFileSystemValidator());
+				.add(validators::CreateDriveValidator())
+				.add(validators::CreateSuperContractValidator())
+				.add(validators::CreateDeployValidator())
+				.add(validators::CreateDriveFileSystemValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder
-					.add(observers::CreateDeployObserver());
+				.add(observers::CreateDeployObserver())
+				.add(observers::CreateEndExecuteObserver())
+				.add(observers::CreateAggregateTransactionHashObserver());
 		});
 	}
 }}

@@ -14,7 +14,7 @@ using namespace catapult::model;
 
 namespace catapult { namespace plugins {
 
-#define TEST_CLASS OperationTransactionPluginTests
+#define TEST_CLASS OperationIdentifyTransactionPluginTests
 
 	// region TransactionPlugin
 
