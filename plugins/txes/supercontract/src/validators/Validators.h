@@ -37,4 +37,8 @@ namespace catapult { namespace validators {
 	/// - end execute transaction is the very last sub transaction
 	/// - operation identify transaction is not aggregated with end execute transaction
 	DECLARE_STATELESS_VALIDATOR(AggregateTransaction, model::AggregateCosignaturesNotification<1>)();
+
+	/// A validator implementation that applies to aggregate embedded transaction notifications and validates that:
+	/// - end operation transaction doesn't end super contract execution
+	DECLARE_STATEFUL_VALIDATOR(EndOperationTransaction, model::AggregateEmbeddedTransactionNotification<1>)();
 }}

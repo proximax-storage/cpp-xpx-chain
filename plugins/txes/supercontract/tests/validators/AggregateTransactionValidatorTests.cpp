@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/operation/src/model/OperationIdentifyTransaction.h"
 #include "plugins/txes/operation/tests/test/OperationTestUtils.h"
 #include "src/model/EndExecuteTransaction.h"

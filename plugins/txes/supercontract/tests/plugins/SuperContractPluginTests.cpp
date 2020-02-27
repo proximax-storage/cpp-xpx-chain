@@ -73,6 +73,7 @@ namespace catapult { namespace plugins {
 					"SuperContractValidator",
 					"DeployValidator",
 					"DriveFileSystemValidator",
+					"EndOperationTransactionValidator",
 				};
 			}
 

@@ -52,7 +52,8 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDriveValidator())
 				.add(validators::CreateSuperContractValidator())
 				.add(validators::CreateDeployValidator())
-				.add(validators::CreateDriveFileSystemValidator());
+				.add(validators::CreateDriveFileSystemValidator())
+				.add(validators::CreateEndOperationTransactionValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
