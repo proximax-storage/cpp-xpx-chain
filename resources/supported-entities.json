@@ -214,6 +214,11 @@
 			"name": "endExecute",
 			"type": "17248",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "uploadFile",
+			"type": "17504",
+			"supportedVersions": [1]
 		}
 	]
 }
