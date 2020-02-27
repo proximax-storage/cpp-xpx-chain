@@ -12,7 +12,7 @@ namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates an end execute transaction plugin.
+	/// Creates an upload file transaction plugin.
 	PLUGIN_API
-	std::unique_ptr<model::TransactionPlugin> CreateEndExecuteTransactionPlugin();
+	std::unique_ptr<model::TransactionPlugin> CreateUploadFileTransactionPlugin();
 }}

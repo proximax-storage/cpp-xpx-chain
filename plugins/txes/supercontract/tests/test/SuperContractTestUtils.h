@@ -99,4 +99,31 @@ namespace catapult { namespace test {
 
         return pTransaction;
     }
+
+    /// Creates an upload file transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateUploadFileTransaction(size_t numAddActions, size_t numRemoveActions) {
+		auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_UploadFile,
+			numAddActions * sizeof(model::AddAction) + numRemoveActions * sizeof(model::RemoveAction));
+		pTransaction->DriveKey = test::GenerateRandomByteArray<Key>();
+		pTransaction->RootHash = test::GenerateRandomByteArray<Hash256>();
+		pTransaction->XorRootHash = test::GenerateRandomByteArray<Hash256>();
+		pTransaction->AddActionsCount = numAddActions;
+		pTransaction->RemoveActionsCount = numRemoveActions;
+
+        auto* pData = reinterpret_cast<uint8_t*>(pTransaction.get() + 1);
+		for (auto i = 0u; i < numAddActions; ++i) {
+			model::AddAction addAction{{test::GenerateRandomByteArray<Hash256>()}, test::Random()};
+            memcpy(pData, static_cast<const void*>(&addAction), sizeof(model::AddAction));
+            pData += sizeof(model::AddAction);
+        }
+
+		for (auto i = 0u; i < numRemoveActions; ++i) {
+			model::RemoveAction removeAction{{{test::GenerateRandomByteArray<Hash256>()}, test::Random()}};
+            memcpy(pData, static_cast<const void*>(&removeAction), sizeof(model::RemoveAction));
+            pData += sizeof(model::RemoveAction);
+        }
+
+        return pTransaction;
+    }
 }}

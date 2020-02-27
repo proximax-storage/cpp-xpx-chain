@@ -6,7 +6,8 @@
 
 #pragma once
 #include "SuperContractEntityType.h"
-#include "plugins/txes/operation/src/model/EndOperationTransaction.h"
+#include "catapult/utils/ArraySet.h"
+#include "plugins/txes/service/src/model/DriveFileSystemTransaction.h"
 
 namespace catapult { namespace model {
 
@@ -14,17 +15,17 @@ namespace catapult { namespace model {
 
     /// Binary layout for an end execute transaction header.
     template<typename THeader>
-    struct EndExecuteTransactionBody : public EndOperationTransactionBody<THeader> {
+    struct UploadFileTransactionBody : public DriveFileSystemTransactionBody<THeader> {
     public:
-        DEFINE_TRANSACTION_CONSTANTS(Entity_Type_EndExecute, 1)
+        DEFINE_TRANSACTION_CONSTANTS(Entity_Type_UploadFile, 1)
     };
 
-    DEFINE_EMBEDDABLE_TRANSACTION(EndExecute)
+    DEFINE_EMBEDDABLE_TRANSACTION(UploadFile)
 
 #pragma pack(pop)
 
     /// Extracts public keys of additional accounts that must approve \a transaction.
-    inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedEndExecuteTransaction&) {
+    inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedUploadFileTransaction&) {
         return {};
     }
 }}

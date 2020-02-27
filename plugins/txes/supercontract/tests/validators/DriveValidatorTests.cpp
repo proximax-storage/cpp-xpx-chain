@@ -55,6 +55,7 @@ namespace catapult { namespace validators {
 		    model::Entity_Type_Deploy,
 		    model::Entity_Type_StartExecute,
 		    model::Entity_Type_EndExecute,
+		    model::Entity_Type_UploadFile,
 		});
 
 		// Assert:
@@ -75,6 +76,7 @@ namespace catapult { namespace validators {
 		    model::Entity_Type_Deploy,
 		    model::Entity_Type_StartExecute,
 		    model::Entity_Type_EndExecute,
+		    model::Entity_Type_UploadFile,
 		});
 
 		// Assert:

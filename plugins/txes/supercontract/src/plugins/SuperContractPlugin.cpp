@@ -8,11 +8,11 @@
 #include "SuperContractPlugin.h"
 #include "src/cache/SuperContractCache.h"
 #include "src/cache/SuperContractCacheStorage.h"
-#include "src/model/SuperContractNotifications.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/DeployTransactionPlugin.h"
 #include "src/plugins/StartExecuteTransactionPlugin.h"
 #include "src/plugins/EndExecuteTransactionPlugin.h"
+#include "src/plugins/UploadFileTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
 
@@ -28,6 +28,7 @@ namespace catapult { namespace plugins {
         manager.addTransactionSupport(CreateDeployTransactionPlugin());
         manager.addTransactionSupport(CreateStartExecuteTransactionPlugin(manager.configHolder()));
         manager.addTransactionSupport(CreateEndExecuteTransactionPlugin());
+        manager.addTransactionSupport(CreateUploadFileTransactionPlugin());
 
 		manager.addCacheSupport<cache::SuperContractCacheStorage>(
 			std::make_unique<cache::SuperContractCache>(manager.cacheConfig(cache::SuperContractCache::Name), pConfigHolder));
