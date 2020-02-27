@@ -44,11 +44,10 @@ namespace catapult { namespace cache {
 			
 			auto elements = m_set.rebaseDetached();
 			for (const auto& xx : deltaset::MakeIterableView(elements.PrimaryHeights)) {
-				//xx.unwrap();
 				auto content = elements.pPrimary->find(xx);
 				auto entry = content.get();
 
-				m_pConfigHolder->InsertConfig(delta.height(), entry->networkConfig(),
+				m_pConfigHolder->InsertConfig(entry->height(), entry->networkConfig(),
 						entry->supportedEntityVersions());
 			}
 		}
