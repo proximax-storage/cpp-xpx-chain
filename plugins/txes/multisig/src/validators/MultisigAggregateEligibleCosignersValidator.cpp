@@ -28,11 +28,6 @@ namespace catapult { namespace validators {
 	using Notification = model::AggregateCosignaturesNotification<1>;
 
 	namespace {
-		const model::EmbeddedTransaction* AdvanceNext(const model::EmbeddedTransaction* pTransaction) {
-			const auto* pTransactionData = reinterpret_cast<const uint8_t*>(pTransaction);
-			return reinterpret_cast<const model::EmbeddedTransaction*>(pTransactionData + pTransaction->Size);
-		}
-
 		class AggregateCosignaturesChecker {
 		public:
 			explicit AggregateCosignaturesChecker(
@@ -58,7 +53,7 @@ namespace catapult { namespace validators {
 					for (const auto& requiredCosigner : transactionPlugin.additionalRequiredCosigners(*pTransaction))
 						findEligibleCosigners(requiredCosigner);
 
-					pTransaction = AdvanceNext(pTransaction);
+					pTransaction = model::AdvanceNext(pTransaction);
 				}
 
 				// check if all cosigners are in fact eligible

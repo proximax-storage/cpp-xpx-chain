@@ -34,7 +34,7 @@ namespace catapult { namespace model {
         Hash256 FileHash;
 
         /// A version of super contract.
-        BlockchainVersion SuperContractVersion;
+        catapult::VmVersion VmVersion;
 
     public:
         // Calculates the real size of a deploy \a transaction.

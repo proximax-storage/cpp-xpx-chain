@@ -35,13 +35,13 @@ namespace catapult { namespace model {
                 const Key& owner,
                 const Key& drive,
                 const Hash256& file,
-                const BlockchainVersion& version)
+                const VmVersion& version)
                 : Notification(Notification_Type, sizeof(DeployNotification<1>))
                 , SuperContract(contract)
                 , Owner(owner)
                 , Drive(drive)
                 , FileHash(file)
-                , SuperContractVersion(version)
+                , VmVersion(version)
         {}
 
     public:
@@ -58,7 +58,7 @@ namespace catapult { namespace model {
         const Hash256& FileHash;
 
         /// Version of super contract.
-        BlockchainVersion SuperContractVersion;
+        catapult::VmVersion VmVersion;
     };
 
     /// Notification of a super contract.

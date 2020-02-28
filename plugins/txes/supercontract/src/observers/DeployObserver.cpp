@@ -21,7 +21,7 @@ namespace catapult { namespace observers {
 			superContractEntry.setStart(context.Height);
 			superContractEntry.setFileHash(notification.FileHash);
 			superContractEntry.setMainDriveKey(notification.Drive);
-			superContractEntry.setVersion(notification.SuperContractVersion);
+			superContractEntry.setVmVersion(notification.VmVersion);
 			superContractCache.insert(superContractEntry);
 
 			driveEntry.coowners().insert(notification.SuperContract);

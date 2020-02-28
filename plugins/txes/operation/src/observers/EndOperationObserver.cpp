@@ -7,7 +7,6 @@
 #include "Observers.h"
 #include "src/cache/OperationCache.h"
 #include "src/model/OperationReceiptType.h"
-#include "src/model/OperationTypes.h"
 #include "plugins/txes/lock_shared/src/observers/LockStatusAccountBalanceObserver.h"
 
 namespace catapult { namespace observers {

@@ -18,7 +18,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		builder << "drive" << ToBinary(transaction.DriveKey);
 		builder << "owner" << ToBinary(transaction.Owner);
 		builder << "fileHash" << ToBinary(transaction.FileHash);
-		builder << "version" << ToInt64(transaction.SuperContractVersion);
+		builder << "vmVersion" << ToInt64(transaction.VmVersion);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(Deploy, StreamDeployTransaction)

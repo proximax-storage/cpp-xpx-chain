@@ -4,12 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/NotificationSubscriber.h"
-#include "catapult/model/TransactionPluginFactory.h"
 #include "EndExecuteTransactionPlugin.h"
-#include "plugins/txes/operation/src/model/OperationNotifications.h"
+#include "catapult/model/TransactionPluginFactory.h"
 #include "src/model/EndExecuteTransaction.h"
-#include "src/model/SuperContractNotifications.h"
+#include "plugins/txes/operation/src/plugins/TransactionPublishers.h"
 
 using namespace catapult::model;
 
@@ -18,22 +16,7 @@ namespace catapult { namespace plugins {
 	namespace {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
-			switch (transaction.EntityVersion()) {
-				case 1: {
-					sub.notify(OperationMosaicNotification<1>(transaction.MosaicsPtr(), transaction.MosaicCount));
-					sub.notify(EndOperationNotification<1>(
-						transaction.Signer,
-						transaction.OperationToken,
-						transaction.MosaicsPtr(),
-						transaction.MosaicCount,
-						transaction.Result
-					));
-
-					break;
-				}
-				default:
-					CATAPULT_LOG(debug) << "invalid version of EndExecuteTransaction: " << transaction.EntityVersion();
-			}
+			EndOperationPublisher(transaction, sub, "EndExecuteTransaction");
 		}
 	}
 

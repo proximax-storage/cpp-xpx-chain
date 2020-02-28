@@ -48,14 +48,14 @@ namespace catapult { namespace state {
 			return m_end;
 		}
 
-		/// Sets \a version of super contract.
-		void setVersion(const BlockchainVersion & version) {
-			m_version = version;
+		/// Sets VM \a version.
+		void setVmVersion(const VmVersion & version) {
+			m_vmVersion = version;
 		}
 
-		/// Gets end height of super contract.
-		const BlockchainVersion& version() const {
-			return m_version;
+		/// Gets VM version.
+		const VmVersion& vmVersion() const {
+			return m_vmVersion;
 		}
 
         /// Sets \a key of according main drive.
@@ -101,7 +101,7 @@ namespace catapult { namespace state {
 	private:
 		Height m_start;
 		Height m_end;
-		BlockchainVersion m_version;
+		VmVersion m_vmVersion;
 		Key m_mainDriveKey;
 		Hash256 m_fileHash;
 //		// TODO: In future we plan to have external executors

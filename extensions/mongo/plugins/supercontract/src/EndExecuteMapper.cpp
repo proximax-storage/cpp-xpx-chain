@@ -17,6 +17,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	void StreamEndExecuteTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 		StreamBasicOperationTransaction(builder, transaction);
 		builder << "operationToken" << ToBinary(transaction.OperationToken);
+		builder << "result" << static_cast<int32_t>(transaction.Result);
 	}
 
 	DEFINE_MONGO_TRANSACTION_PLUGIN_FACTORY(EndExecute, StreamEndExecuteTransaction)

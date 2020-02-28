@@ -15,7 +15,7 @@ namespace catapult { namespace config {
 	/// Super contract plugin configuration settings.
 	struct SuperContractConfiguration : public model::PluginConfiguration {
 	public:
-		DEFINE_CONFIG_CONSTANTS(superContract)
+		DEFINE_CONFIG_CONSTANTS(supercontract)
 
 		/// Whether the plugin is enabled.
 		bool Enabled;

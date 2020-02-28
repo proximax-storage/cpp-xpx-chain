@@ -5,11 +5,7 @@
 **/
 
 #pragma once
-#include "SuperContractTypes.h"
 #include "SuperContractEntityType.h"
-#include "catapult/model/Transaction.h"
-#include "catapult/model/Mosaic.h"
-#include "catapult/utils/ArraySet.h"
 #include "plugins/txes/operation/src/model/EndOperationTransaction.h"
 
 namespace catapult { namespace model {

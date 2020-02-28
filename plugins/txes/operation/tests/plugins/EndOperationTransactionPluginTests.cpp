@@ -149,7 +149,7 @@ namespace catapult { namespace plugins {
 		for (auto i = 0u; i < Num_Mosaics; ++i) {
 			const auto& notification = sub.matchingNotifications()[i];
 			EXPECT_EQ(pTransaction->Signer, notification.Sender);
-			EXPECT_EQ(UnresolvedMosaicId(i + 1), notification.MosaicId);
+			EXPECT_EQ(test::UnresolveXor(MosaicId(i + 1)), notification.MosaicId);
 			EXPECT_EQ(Amount((i + 1) * 10), notification.Amount);
 		}
 	}

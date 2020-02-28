@@ -52,4 +52,7 @@ namespace catapult { namespace model {
 
 	/// Sends all notifications from \a transaction to \a sub.
 	void PublishNotifications(const EmbeddedTransaction& transaction, NotificationSubscriber& sub);
+
+	/// Returns next embedded transaction in a contigous container.
+	const model::EmbeddedTransaction* AdvanceNext(const model::EmbeddedTransaction* pTransaction);
 }}

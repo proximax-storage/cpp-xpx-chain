@@ -6,14 +6,13 @@
 
 #pragma once
 #include "catapult/plugins.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include <memory>
 
 namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
 
-	/// Creates a end execute transaction plugin.
+	/// Creates an end execute transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<model::TransactionPlugin> CreateEndExecuteTransactionPlugin();
 }}

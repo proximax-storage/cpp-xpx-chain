@@ -6,9 +6,7 @@
 
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
-#include "catapult/validators/ValidatorContext.h"
 #include "src/model/SuperContractEntityType.h"
-#include <unordered_set>
 
 namespace catapult { namespace validators {
 
@@ -21,6 +19,7 @@ namespace catapult { namespace validators {
 		    model::Entity_Type_Deploy,
 		    model::Entity_Type_StartExecute,
 		    model::Entity_Type_EndExecute,
+		    model::Entity_Type_UploadFile,
 		});
 
 		if (blockedTransactionAfterFinish.count(notification.TransactionType)) {

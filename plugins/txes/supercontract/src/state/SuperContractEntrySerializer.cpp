@@ -20,7 +20,7 @@ namespace catapult { namespace state {
 		io::Write(output, entry.end());
 		io::Write(output, entry.mainDriveKey());
 		io::Write(output, entry.fileHash());
-		io::Write(output, entry.version());
+		io::Write(output, entry.vmVersion());
 	}
 
 	SuperContractEntry SuperContractEntrySerializer::Load(io::InputStream& input) {
@@ -44,7 +44,7 @@ namespace catapult { namespace state {
 		input.read(fileHash);
 		entry.setFileHash(fileHash);
 
-		entry.setVersion(BlockchainVersion(io::Read64(input)));
+		entry.setVmVersion(VmVersion(io::Read64(input)));
 
 		return entry;
 	}

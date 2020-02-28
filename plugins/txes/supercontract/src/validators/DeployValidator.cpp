@@ -7,10 +7,6 @@
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/SuperContractCache.h"
-#include "src/state/DriveEntry.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "src/model/SuperContractEntityType.h"
-#include <unordered_set>
 
 namespace catapult { namespace validators {
 
@@ -29,7 +25,7 @@ namespace catapult { namespace validators {
 			return Failure_SuperContract_Operation_Is_Not_Permitted;
 
 		if (!driveEntry.files().count(notification.FileHash))
-			return Failure_SuperContract_File_Is_Not_Exist;
+			return Failure_SuperContract_File_Does_Not_Exist;
 
 		return ValidationResult::Success;
 	});

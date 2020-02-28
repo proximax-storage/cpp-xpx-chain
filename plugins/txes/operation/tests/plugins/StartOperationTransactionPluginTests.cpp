@@ -11,7 +11,7 @@
 #include "tests/test/OperationTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "plugins/txes/aggregate/src/plugins/Common.h"
+#include "plugins/txes/aggregate/src/plugins/AggregateCommon.h"
 
 using namespace catapult::model;
 
@@ -101,11 +101,11 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(3u + Num_Mosaics, sub.numNotifications());
 		auto i = 0u;
-		EXPECT_EQ(Operation_Duration_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Operation_Mosaic_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Operation_Start_v1_Notification, sub.notificationTypes()[i++]);
-		for (; i < 3u + Num_Mosaics; ++i)
+		for (; i < 2u + Num_Mosaics; ++i)
 			EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i]);
+		EXPECT_EQ(Operation_Duration_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion
@@ -191,7 +191,7 @@ namespace catapult { namespace plugins {
 		for (auto i = 0u; i < Num_Mosaics; ++i) {
 			const auto& notification = sub.matchingNotifications()[i];
 			EXPECT_EQ(pTransaction->Signer, notification.Sender);
-			EXPECT_EQ(UnresolvedMosaicId(i + 1), notification.MosaicId);
+			EXPECT_EQ(test::UnresolveXor(MosaicId(i + 1)), notification.MosaicId);
 			EXPECT_EQ(Amount((i + 1) * 10), notification.Amount);
 		}
 	}
