@@ -24,6 +24,7 @@ namespace catapult { namespace observers {
 
 		constexpr auto Num_Mosaics = 5u;
 		const auto Current_Height = Height(123);
+		const auto Super_Contract_Key = test::GenerateRandomByteArray<Key>();
 
 		const std::vector<model::Cosignature> Cosignatures{
 			{ test::GenerateRandomByteArray<Key>(), test::GenerateRandomByteArray<Signature>() },
@@ -64,7 +65,16 @@ namespace catapult { namespace observers {
 		};
 
 		auto CreateEndExecuteTransaction() {
-			return test::CreateEndExecuteTransaction<model::EmbeddedEndExecuteTransaction>(Num_Mosaics);
+			auto pTransaction = test::CreateEndExecuteTransaction<model::EmbeddedEndExecuteTransaction>(Num_Mosaics);
+			pTransaction->Signer = Super_Contract_Key;
+			return pTransaction;
+		}
+
+		auto CreateSuperContractEntry(uint16_t executionCount) {
+			state::SuperContractEntry entry(Super_Contract_Key);
+			entry.setExecutionCount(executionCount);
+
+			return entry;
 		}
 	}
 
@@ -74,8 +84,10 @@ namespace catapult { namespace observers {
 		auto pTransaction = CreateEndExecuteTransaction();
 		Notification notification(test::GenerateRandomByteArray<Key>(), 1, pTransaction.get(), Cosignatures.size(), Cosignatures.data());
 		auto pObserver = CreateEndExecuteObserver();
+		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 
 		// Populate cache.
+		superContractCache.insert(CreateSuperContractEntry(10));
 		for (const auto& cosignature : Cosignatures)
 			test::SetCacheBalances(context.cache(), cosignature.Signer, Initial_Balances);
 
@@ -83,6 +95,10 @@ namespace catapult { namespace observers {
 		test::ObserveNotification(*pObserver, notification, context);
 
 		// Assert: check the cache
+		auto superContractCacheIter = superContractCache.find(Super_Contract_Key);
+		const auto& actualSuperContractEntry = superContractCacheIter.get();
+		test::AssertEqualSuperContractData(CreateSuperContractEntry(9), actualSuperContractEntry);
+
 		for (auto i = 0u; i < Cosignatures.size(); ++i)
 			test::AssertBalances(context.cache(), Cosignatures[i].Signer, Final_Balances[i]);
 	}
@@ -93,8 +109,10 @@ namespace catapult { namespace observers {
 		auto pTransaction = CreateEndExecuteTransaction();
 		Notification notification(test::GenerateRandomByteArray<Key>(), 1, pTransaction.get(), Cosignatures.size(), Cosignatures.data());
 		auto pObserver = CreateEndExecuteObserver();
+		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 
 		// Populate cache.
+		superContractCache.insert(CreateSuperContractEntry(10));
 		for (auto i = 0u; i < Cosignatures.size(); ++i)
 			test::SetCacheBalances(context.cache(), Cosignatures[i].Signer, Final_Balances[i]);
 
@@ -102,6 +120,10 @@ namespace catapult { namespace observers {
 		test::ObserveNotification(*pObserver, notification, context);
 
 		// Assert: check the cache
+		auto superContractCacheIter = superContractCache.find(Super_Contract_Key);
+		const auto& actualSuperContractEntry = superContractCacheIter.get();
+		test::AssertEqualSuperContractData(CreateSuperContractEntry(11), actualSuperContractEntry);
+
 		for (const auto& cosignature : Cosignatures)
 			test::AssertBalances(context.cache(), cosignature.Signer, Initial_Balances);
 	}

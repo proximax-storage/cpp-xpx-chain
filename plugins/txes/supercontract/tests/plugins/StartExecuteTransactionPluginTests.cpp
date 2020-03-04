@@ -112,31 +112,12 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(4u + Num_Mosaics, sub.numNotifications());
 		auto i = 0u;
-		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(SuperContract_SuperContract_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(SuperContract_StartExecute_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Operation_Mosaic_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Operation_Start_v1_Notification, sub.notificationTypes()[i++]);
 		for (; i < 2u + Num_Mosaics; ++i)
 			EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[i]);
-	}
-
-	// endregion
-
-	// region account public key notification
-
-	PLUGIN_TEST(CanPublishAccountPublicKeyNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<AccountPublicKeyNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
-		auto pTransaction = CreateTransaction<TTraits>();
-
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
-
-		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->SuperContract, notification.PublicKey);
 	}
 
 	// endregion
@@ -155,7 +136,26 @@ namespace catapult { namespace plugins {
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
 		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->SuperContract, notification.SuperContractKey);
+		EXPECT_EQ(pTransaction->SuperContract, notification.SuperContract);
+	}
+
+	// endregion
+
+	// region start execute notification
+
+	PLUGIN_TEST(CanPublishStartExecuteNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<StartExecuteNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin(config::CreateMockConfigurationHolder(CreateConfiguration()));
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->SuperContract, notification.SuperContract);
 	}
 
 	// endregion

@@ -20,7 +20,7 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
-						sub.notify(SuperContractNotification<1>(transaction.Signer));
+						sub.notify(SuperContractNotification<1>(transaction.Signer, transaction.Type));
 					    sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
 						sub.notify(DriveFileSystemNotification<1>(
 							transaction.DriveKey,

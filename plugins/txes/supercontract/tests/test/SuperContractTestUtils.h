@@ -27,11 +27,14 @@ namespace catapult { namespace test {
 	/// Creates test drive entry.
 	state::SuperContractEntry CreateSuperContractEntry(
 		Key key = test::GenerateRandomByteArray<Key>(),
+		state::SuperContractState state = static_cast<state::SuperContractState>(test::RandomByte()),
+		Key owner = test::GenerateRandomByteArray<Key>(),
 		Height start = test::GenerateRandomValue<Height>(),
 		Height end = test::GenerateRandomValue<Height>(),
 		VmVersion vmVersion = test::GenerateRandomValue<VmVersion>(),
 		Key mainDriveKey = test::GenerateRandomByteArray<Key>(),
-		Hash256 fileHash = test::GenerateRandomByteArray<Hash256>());
+		Hash256 fileHash = test::GenerateRandomByteArray<Hash256>(),
+		uint16_t executionCount = test::Random16());
 
 	/// Verifies that \a entry1 is equivalent to \a entry2.
 	void AssertEqualSuperContractData(const state::SuperContractEntry& entry1, const state::SuperContractEntry& entry2);
@@ -123,6 +126,15 @@ namespace catapult { namespace test {
             memcpy(pData, static_cast<const void*>(&removeAction), sizeof(model::RemoveAction));
             pData += sizeof(model::RemoveAction);
         }
+
+        return pTransaction;
+    }
+
+    /// Creates a deactivate transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateDeactivateTransaction() {
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_Deactivate);
+		pTransaction->SuperContract = test::GenerateRandomByteArray<Key>();
 
         return pTransaction;
     }

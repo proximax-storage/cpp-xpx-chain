@@ -13,6 +13,19 @@
 #include <map>
 
 namespace catapult { namespace state {
+
+    /// Super contract state.
+    enum class SuperContractState : uint8_t {
+        /// Super contract is active.
+        Active,
+
+        /// Super contract is deactivated by owner or executors.
+        DeactivatedByParticipant,
+
+        /// Super contract is deactivated by drive end.
+        DeactivatedByDriveEnd,
+    };
+
 //
 //	struct ExecutorInfo {
 //		Height Start;
@@ -25,9 +38,32 @@ namespace catapult { namespace state {
 	// Mixin for storing super contract details.
 	class SuperContractMixin {
 	public:
-		SuperContractMixin() = default;
+		SuperContractMixin()
+			: m_state(SuperContractState::Active)
+			, m_executionCount(0)
+		{}
 
 	public:
+		/// Sets \a state of super contract.
+		void setState(SuperContractState state) {
+			m_state = state;
+		}
+
+		/// Gets state of super contract.
+		SuperContractState state() const {
+			return m_state;
+		}
+
+        /// Sets \a owner of super contract.
+        void setOwner(const Key& owner) {
+            m_owner = owner;
+        }
+
+        /// Gets owner of super contract.
+        const Key& owner() const {
+            return m_owner;
+        }
+
 		/// Sets start \a height of super contract.
 		void setStart(const Height& height) {
 			m_start = height;
@@ -77,6 +113,30 @@ namespace catapult { namespace state {
         const Hash256& fileHash() const {
             return m_fileHash;
         }
+
+        /// Sets the \a executionCount.
+        void setExecutionCount(const uint16_t& executionCount) {
+            m_executionCount = executionCount;
+        }
+
+        /// Increments the execution count.
+        void incrementExecutionCount() {
+			if (std::numeric_limits<uint16_t>::max() == m_executionCount)
+				CATAPULT_THROW_RUNTIME_ERROR("failed to increment execution count, limit reached");
+            m_executionCount++;
+        }
+
+        /// Decrements the execution count.
+        void decrementExecutionCount() {
+			if (0 == m_executionCount)
+				CATAPULT_THROW_RUNTIME_ERROR("failed to decrement execution count below zero");
+            m_executionCount--;
+        }
+
+        /// Gets the execution count.
+        const uint16_t& executionCount() const {
+            return m_executionCount;
+        }
 //
 //		/// Gets executor infos.
 //		const ExecutorsMap& executors() const {
@@ -99,11 +159,14 @@ namespace catapult { namespace state {
 //		}
 
 	private:
+		SuperContractState m_state;
+		Key m_owner;
 		Height m_start;
 		Height m_end;
 		VmVersion m_vmVersion;
 		Key m_mainDriveKey;
 		Hash256 m_fileHash;
+		uint16_t m_executionCount;
 //		// TODO: In future we plan to have external executors
 //		ExecutorsMap m_executors;
 //		// TODO: In future we plan to support several drives for one super contract

@@ -7,6 +7,7 @@
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "src/model/EndExecuteTransaction.h"
+#include "src/cache/SuperContractCache.h"
 
 namespace catapult { namespace observers {
 
@@ -21,6 +22,16 @@ namespace catapult { namespace observers {
 			return;
 
 		const auto& endExecuteTransaction = static_cast<const model::EmbeddedEndExecuteTransaction&>(*pTransaction);
+
+		auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
+		auto superContractCacheIter = superContractCache.find(endExecuteTransaction.Signer);
+		auto& superContractEntry = superContractCacheIter.get();
+		if (NotifyMode::Commit == context.Mode) {
+			superContractEntry.decrementExecutionCount();
+		} else {
+			superContractEntry.incrementExecutionCount();
+		}
+
 		auto& accountStateCache = context.Cache.sub<cache::AccountStateCache>();
 		std::vector<cache::AccountStateCacheDeltaMixins::MutableAccessorKey::iterator> iterators;
 		iterators.reserve(notification.CosignaturesCount);

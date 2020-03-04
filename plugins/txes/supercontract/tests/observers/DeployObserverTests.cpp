@@ -37,6 +37,7 @@ namespace catapult { namespace observers {
 
 		auto CreateSuperContractEntry() {
 			state::SuperContractEntry entry(Super_Contract_Key);
+			entry.setOwner(Super_Contract_Owner_Key);
 			entry.setStart(Current_Height);
 			entry.setVmVersion(Vm_Version);
 			entry.setFileHash(File_Hash);

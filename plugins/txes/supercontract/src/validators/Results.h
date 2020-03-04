@@ -44,6 +44,15 @@ namespace catapult { namespace validators {
 	/// Validation failed because operation identify transaction aggregated with end execute transaction.
 	DEFINE_SUPERCONTRACT_RESULT(Operation_Identify_Transaction_Aggregated_With_End_Execute, 10);
 
+	/// Validation failed because execution count exceeded limit.
+	DEFINE_SUPERCONTRACT_RESULT(Execution_Count_Exceeded_Limit, 11);
+
+	/// Validation failed because execution is in-progress.
+	DEFINE_SUPERCONTRACT_RESULT(Execution_Is_In_Progress, 12);
+
+	/// Validation failed because execution is not in-progress.
+	DEFINE_SUPERCONTRACT_RESULT(Execution_Is_Not_In_Progress, 13);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
