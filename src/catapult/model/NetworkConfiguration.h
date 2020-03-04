@@ -88,6 +88,10 @@ namespace catapult { namespace model {
 		/// Maximum number of transactions per block.
 		uint32_t MaxTransactionsPerBlock;
 
+		/// \c true to allow non participants of inner transactions sign an aggregate or multisig transaction
+		/// \c false to restrict signer of transaction to only participants of inner transactions
+		bool AllowNonParticipantSigner;
+
 		/// Allows validation of unconfirmed transactions before including it into UT cache
 		/// that transaction fee is not less than the minimum calculated with minFeeMultiplier.
 		bool EnableUnconfirmedTransactionMinFeeValidation;

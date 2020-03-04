@@ -50,7 +50,8 @@ namespace catapult { namespace validators {
 			"harvestBeneficiaryPercentage = 10\n"
 			"\n"
 			"blockPruneInterval = 360\n"
-			"maxTransactionsPerBlock = 200'000\n\n"
+			"maxTransactionsPerBlock = 200'000\n"
+            "allowNonParticipantSigner = true\n\n"
 			"enableUnconfirmedTransactionMinFeeValidation = true\n\n"
 		};
 

@@ -258,6 +258,8 @@ namespace catapult { namespace test {
 
 		config.GreedDelta = 0.5;
 		config.GreedExponent = 2.0;
+
+		config.AllowNonParticipantSigner = true;
 		return config;
 	}
 

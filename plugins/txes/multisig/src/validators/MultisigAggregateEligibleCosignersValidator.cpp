@@ -38,11 +38,16 @@ namespace catapult { namespace validators {
 			explicit AggregateCosignaturesChecker(
 					const Notification& notification,
 					const model::TransactionRegistry& transactionRegistry,
-					const cache::MultisigCache::CacheReadOnlyType& multisigCache)
+					const cache::MultisigCache::CacheReadOnlyType& multisigCache,
+					bool allowNonParticipantSigner = false)
 					: m_notification(notification)
 					, m_transactionRegistry(transactionRegistry)
 					, m_multisigCache(multisigCache) {
-				m_cosigners.emplace(&m_notification.Signer, false);
+
+				if(!allowNonParticipantSigner) {
+					m_cosigners.emplace(&m_notification.Signer, false);
+				}
+
 				for (auto i = 0u; i < m_notification.CosignaturesCount; ++i)
 					m_cosigners.emplace(&m_notification.CosignaturesPtr[i].Signer, false);
 			}
@@ -106,7 +111,8 @@ namespace catapult { namespace validators {
 		return MAKE_STATEFUL_VALIDATOR(MultisigAggregateEligibleCosigners, [&transactionRegistry](
 				const Notification& notification,
 				const ValidatorContext& context) {
-			AggregateCosignaturesChecker checker(notification, transactionRegistry, context.Cache.sub<cache::MultisigCache>());
+			AggregateCosignaturesChecker checker(notification, transactionRegistry, context.Cache.sub<cache::MultisigCache>(),
+			        context.Config.Network.AllowNonParticipantSigner);
 			return checker.hasIneligibleCosigners() ? Failure_Aggregate_Ineligible_Cosigners : ValidationResult::Success;
 		});
 	}

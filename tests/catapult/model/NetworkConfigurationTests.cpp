@@ -69,6 +69,7 @@ namespace catapult { namespace model {
 
 							{ "blockPruneInterval", "432" },
 							{ "maxTransactionsPerBlock", "120" },
+							{ "allowNonParticipantSigner", "true" },
 
 							{ "enableUnconfirmedTransactionMinFeeValidation", "true" },
 						}

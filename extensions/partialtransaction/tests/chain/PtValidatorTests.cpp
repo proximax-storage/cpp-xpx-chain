@@ -18,6 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <tests/test/core/TransactionInfoTestUtils.h>
+#include <tests/test/other/MutableBlockchainConfiguration.h>
+#include <tests/test/local/LocalTestUtils.h>
 #include "partialtransaction/src/chain/PtValidator.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/aggregate/src/validators/Results.h"
@@ -26,8 +29,8 @@
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
+#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 using namespace catapult::validators;
 
@@ -85,14 +88,29 @@ namespace catapult { namespace chain {
 			model::NotificationType m_triggerType;
 		};
 
+		config::BlockchainConfiguration CreateBlockchainConfiguration(bool allowNonParticipantSigner) {
+			test::MutableBlockchainConfiguration config;
+
+			config.Immutable.NetworkIdentifier = model::NetworkIdentifier::Mijin_Test;
+			config.Network.AllowNonParticipantSigner = allowNonParticipantSigner;
+			config.Network.Plugins.emplace(PLUGIN_NAME(aggregate), utils::ConfigurationBag({{"", { { "maxTransactionsPerAggregate", "0" }, { "maxCosignaturesPerAggregate", "0" },
+							                                                                        { "enableStrictCosignatureCheck", "false" }, { "enableBondedAggregateSupport", "true"},
+							                                                                        { "maxBondedTransactionLifetime", "1h" }}}}));
+			config.SupportedEntityVersions = test::CreateSupportedEntityVersions();
+
+			return config.ToConst();
+		}
+
 		class TestContext {
 		public:
-			explicit TestContext(const ValidationResultOptions& options)
+			explicit TestContext(const ValidationResultOptions& options, bool allowNonParticipantSigner = true )
 					: m_cache(test::CreateEmptyCatapultCache())
-					, m_pluginManager(config::CreateMockConfigurationHolder(), plugins::StorageConfiguration()) {
+					, m_pluginManager(config::CreateMockConfigurationHolder(CreateBlockchainConfiguration(allowNonParticipantSigner)),
+							plugins::StorageConfiguration()) {
 				// Arrange: register mock support (for validatePartial)
 				auto pluginOptionFlags = mocks::PluginOptionFlags::Publish_Custom_Notifications;
-				m_pluginManager.addTransactionSupport(mocks::CreateMockTransactionPlugin(pluginOptionFlags));
+				m_pluginManager.addTransactionSupport(mocks::CreateMockTransactionPlugin(model::Entity_Type_Aggregate_Bonded,
+						pluginOptionFlags));
 
 				// - register a validator that will return the desired result
 				if (options.isStatefulResult()) {
@@ -138,6 +156,18 @@ namespace catapult { namespace chain {
 
 	// region validatePartial
 
+		namespace {
+			model::TransactionInfo CreateRandomTransactionInfo(const std::shared_ptr<const model::Transaction>& pTransaction) {
+				auto transactionInfo = test::CreateRandomTransactionInfo();
+				transactionInfo.pEntity = pTransaction;
+				return transactionInfo;
+			}
+
+			std::shared_ptr<model::AggregateTransaction> CreateRandomAggregateTransaction(uint32_t numCosignatures) {
+				return test::CreateRandomAggregateTransactionWithCosignatures(numCosignatures);
+			}
+		}
+
 	namespace {
 		struct ValidatePartialResult {
 			bool IsValid;
@@ -177,10 +207,10 @@ namespace catapult { namespace chain {
 			const auto& validator = context.validator();
 			const auto& notificationValidator = context.subValidatorAt(0); // partial
 
-			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
-			auto pTransaction = mocks::CreateMockTransaction(0);
-			auto transactionHash = test::GenerateRandomByteArray<Hash256>();
-			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash, Height{0}));
+			// Act: validatePartial will only be called with aggregates
+			auto pTransaction = CreateRandomAggregateTransaction(1);
+			auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
+			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionInfo.EntityHash, Height{0}));
 
 			// Assert: when valid, raw result should always be success (even when validationResult is suppressed failure)
 			EXPECT_EQ(isValid, result.Normalized);
@@ -195,7 +225,7 @@ namespace catapult { namespace chain {
 
 			// - correct transaction information is passed down (if validation wasn't short circuited)
 			if (notificationValidator.notificationTypes().size() > 1)
-				ValidateTransactionNotifications(notificationValidator.params(), transactionHash, pTransaction->Deadline, "basic");
+				ValidateTransactionNotifications(notificationValidator.params(), transactionInfo.EntityHash, pTransaction->Deadline, "basic");
 		}
 
 		void RunValidatePartialTest(const ValidationResultOptions& validationResultOptions, const ValidatePartialResult& expectedResult) {
@@ -271,10 +301,10 @@ namespace catapult { namespace chain {
 			const auto& basicNotificationValidator = context.subStatelessValidatorAt(0); // partial (basic)
 			const auto& customNotificationValidator = context.subStatelessValidatorAt(1); // partial (custom)
 
-			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
-			auto pTransaction = mocks::CreateMockTransaction(0);
-			auto transactionHash = test::GenerateRandomByteArray<Hash256>();
-			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionHash, Height{0}));
+			// Act: validatePartial will only be called with aggregates
+			auto pTransaction = CreateRandomAggregateTransaction(1);
+			auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
+			auto result = validator.validatePartial(model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionInfo.EntityHash, Height{0}));
 
 			// Assert:
 			EXPECT_FALSE(result.Normalized);
@@ -287,7 +317,7 @@ namespace catapult { namespace chain {
 			notificationTypesConsumer(allNotificationTypes);
 
 			// - correct transaction information is passed down
-			ValidateTransactionNotifications(basicNotificationValidator.params(), transactionHash, pTransaction->Deadline, "basic");
+			ValidateTransactionNotifications(basicNotificationValidator.params(), transactionInfo.EntityHash, pTransaction->Deadline, "basic");
 		}
 	}
 
@@ -386,6 +416,77 @@ namespace catapult { namespace chain {
 	TEST(TEST_CLASS, ValidateCosignersMapsFailureAggregateMissingCosignersToMissing) {
 		// Assert:
 		RunValidateCosignersTest(Failure_Aggregate_Missing_Cosigners, { CosignersValidationResult::Missing, true });
+	}
+
+	// endregion
+
+	// region allow non participant abt signer
+	namespace {
+		using EmbeddedTransactionType = mocks::EmbeddedMockTransaction;
+
+		std::shared_ptr<model::AggregateTransaction> CreateAggregateTransaction(
+				const Key &signer,
+				const std::vector<Key> &embeddedSigners,
+				uint8_t numTransactions) {
+
+			using TransactionType = model::AggregateTransaction;
+			uint32_t entitySize = sizeof(TransactionType) + numTransactions * sizeof(mocks::EmbeddedMockTransaction);
+
+			auto pTransaction = utils::MakeSharedWithSize<TransactionType>(entitySize);
+			pTransaction->Size = entitySize;
+			pTransaction->Type = model::Entity_Type_Aggregate_Bonded;
+			pTransaction->PayloadSize = numTransactions * sizeof(mocks::EmbeddedMockTransaction);
+			pTransaction->Signer = signer;
+
+			auto* pSubTransaction = static_cast<mocks::EmbeddedMockTransaction*>(pTransaction->TransactionsPtr());
+			for (auto i = 0u; i < numTransactions; ++i) {
+				pSubTransaction->Size = sizeof(mocks::EmbeddedMockTransaction);
+				pSubTransaction->Data.Size = 0;
+				pSubTransaction->Type = mocks::EmbeddedMockTransaction::Entity_Type;
+				pSubTransaction->Signer = embeddedSigners.at(i);
+
+				++pSubTransaction;
+			}
+
+			return pTransaction;
+		}
+
+		void RunValidateCosignersAllowNonParticipantTest(ValidationResultOptions expectedResult,
+		                                               const Key &signer, const std::vector<Key> &embeddedSigners,
+		                                               bool allowNonParticipantSigner) {
+			// Arrange:
+			TestContext context(expectedResult, allowNonParticipantSigner);
+			const auto &validator = context.validator();
+
+			// Act:
+			auto pTransaction = CreateAggregateTransaction(signer, embeddedSigners, embeddedSigners.size());
+			auto transactionInfo = CreateRandomTransactionInfo(pTransaction);
+			auto result = validator.validatePartial(
+					model::WeakEntityInfoT<model::Transaction>(*pTransaction, transactionInfo.EntityHash, Height{0}));
+
+			EXPECT_EQ(expectedResult.result(), result.Raw);
+
+		}
+	}
+
+	TEST(TEST_CLASS, ValidateAggregateSignerNotAllowIneligible) {
+		auto embeddedSigners = test::GenerateRandomDataVector<Key>(3);
+		auto ineligibleSigner = test::GenerateRandomByteArray<Key>();
+
+		RunValidateCosignersAllowNonParticipantTest(ValidationResult::Failure, ineligibleSigner, embeddedSigners, false);
+	}
+
+	TEST(TEST_CLASS, ValidateAggregateSignerAllowEligibleOnly) {
+		auto embeddedSigners = test::GenerateRandomDataVector<Key>(3);
+
+		RunValidateCosignersAllowNonParticipantTest(ValidationResult::Success, embeddedSigners.at(0), embeddedSigners, false);
+	}
+
+	TEST(TEST_CLASS, ValidateAggregateSignerAllowInEligible) {
+		auto embeddedSigners = test::GenerateRandomDataVector<Key>(3);
+		auto ineligibleSigner = test::GenerateRandomByteArray<Key>();
+
+		RunValidateCosignersAllowNonParticipantTest(ValidationResult::Success, ineligibleSigner, embeddedSigners, true);
 	}
 
 	// endregion

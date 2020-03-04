@@ -45,6 +45,7 @@ namespace catapult { namespace config {
 			"\n"
 			"blockPruneInterval = 360\n"
 			"maxTransactionsPerBlock = 200'000\n\n"
+			"allowNonParticipantSigner = true\n"
 			"enableUnconfirmedTransactionMinFeeValidation = true\n\n"
 			"[plugin:catapult.plugins.config]\n"
 			"\n"

@@ -70,6 +70,8 @@ namespace catapult { namespace model {
 		LOAD_CHAIN_PROPERTY(BlockPruneInterval);
 		LOAD_CHAIN_PROPERTY(MaxTransactionsPerBlock);
 
+		LOAD_CHAIN_PROPERTY(AllowNonParticipantSigner);
+
 #undef LOAD_CHAIN_PROPERTY
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "chain", #NAME, config.NAME)

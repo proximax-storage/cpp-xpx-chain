@@ -44,12 +44,19 @@ namespace catapult { namespace validators {
 			return transactionRegistry;
 		}
 
+		config::BlockchainConfiguration CreateBlockchainConfiguration(bool allowNonEligibleSigner) {
+			test::MutableBlockchainConfiguration config;
+			config.Network.AllowNonParticipantSigner = allowNonEligibleSigner;
+			return config.ToConst();
+		}
+
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const cache::CatapultCache& cache,
 				const Key& signer,
 				const std::vector<Key>& embeddedSigners,
-				const std::vector<Key>& cosigners) {
+				const std::vector<Key>& cosigners,
+				bool allowNonEligibleSigner = false) {
 			// Arrange: setup transactions
 			std::vector<uint8_t> txBuffer(sizeof(model::EmbeddedTransaction) * embeddedSigners.size());
 			auto* pTransactions = reinterpret_cast<model::EmbeddedTransaction*>(txBuffer.data());
@@ -69,7 +76,7 @@ namespace catapult { namespace validators {
 			auto pValidator = CreateMultisigAggregateEligibleCosignersValidator(transactionRegistry);
 
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, CreateBlockchainConfiguration(allowNonEligibleSigner));
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
@@ -104,12 +111,13 @@ namespace catapult { namespace validators {
 				ValidationResult expectedResult,
 				const Key& aggregateSigner,
 				const std::vector<Key>& embeddedSigners,
-				const std::vector<Key>& cosigners) {
+				const std::vector<Key>& cosigners,
+				bool allowNonEligibleSigner = false) {
 			// Arrange:
 			auto cache = TTraits::CreateCache(aggregateSigner);
 
 			// Assert:
-			AssertValidationResult(expectedResult, cache, aggregateSigner, embeddedSigners, cosigners);
+			AssertValidationResult(expectedResult, cache, aggregateSigner, embeddedSigners, cosigners, allowNonEligibleSigner);
 		}
 	}
 
@@ -166,6 +174,13 @@ namespace catapult { namespace validators {
 		AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, embeddedSigners[0], embeddedSigners, cosigners);
 	}
 
+	NON_MULTISIG_TRAITS_TEST(AggregateSignerIsIneligibleButAllowInConfig) {
+		auto embeddedSigners = test::GenerateRandomDataVector<Key>(3);
+		auto ineligibleSigner = test::GenerateRandomByteArray<Key>();
+
+		// Assert: success because we allow ineligible signer
+		AssertValidationResult<TTraits>(ValidationResult::Success, ineligibleSigner, embeddedSigners, { embeddedSigners[1] }, true);
+	}
 	// endregion
 
 	// region multisig

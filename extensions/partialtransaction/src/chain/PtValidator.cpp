@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include <plugins/txes/aggregate/src/model/AggregateTransaction.h>
 #include "PtValidator.h"
 #include "AggregateCosignersNotificationPublisher.h"
 #include "JointValidator.h"
@@ -61,6 +62,7 @@ namespace catapult { namespace chain {
 							pluginManager.createStatelessValidator(),
 							pluginManager.createNotificationPublisher(model::PublicationMode::Custom))
 					, m_pCosignersValidator(CreateJointValidator(cache, timeSupplier, pluginManager, [](auto) { return false; }))
+					, m_pluginManager(pluginManager)
 			{}
 
 		public:
@@ -68,6 +70,12 @@ namespace catapult { namespace chain {
 				// notice that partial validation has two differences relative to "normal" validation
 				// 1. missing cosigners failures are ignored
 				// 2. custom stateful validators are ignored
+				// 3. only top level aggregate signer check
+				if(!isABTSignerAllowed(transactionInfo)) {
+					CATAPULT_LOG(debug) << "partial transaction failed validation of aggregate signer(s)";
+					return {ValidationResult::Failure, false};
+				}
+
 				auto weakEntityInfo = transactionInfo.cast<model::VerifiableEntity>();
 				auto result = m_transactionValidator.validate(weakEntityInfo);
 				if (IsValidationResultSuccess(result)) {
@@ -86,12 +94,65 @@ namespace catapult { namespace chain {
 				m_aggregatePublisher.publish(transactionInfo, sub);
 				return { sub.result(), MapToCosignersValidationResult(sub.result()) };
 			}
+		private:
+			const model::EmbeddedTransaction* moveForward(const model::EmbeddedTransaction* pTransaction) const {
+				const auto* pTransactionData = reinterpret_cast<const uint8_t*>(pTransaction);
+				return reinterpret_cast<const model::EmbeddedTransaction*>(pTransactionData + pTransaction->Size);
+			}
 
+			bool isABTSignerAllowed( const model::WeakEntityInfoT<model::Transaction>& transactionInfo) const {
+
+				if(m_pluginManager.config().AllowNonParticipantSigner)
+					return true;
+
+				try {
+					auto weakEntityInfo = transactionInfo.cast<model::VerifiableEntity>();
+					auto pAggregate = weakEntityInfo.cast<const model::AggregateTransaction>();
+					const auto *pTransaction = pAggregate.entity().TransactionsPtr();
+					const auto *pCosignature = pAggregate.entity().CosignaturesPtr();
+
+					if(pAggregate.entity().Type != model::Entity_Type_Aggregate_Bonded){
+						return false;
+					}
+
+					auto cosignersCount = pAggregate.entity().CosignaturesCount();
+					auto transactionsCount = static_cast<uint32_t>(std::distance(
+							pAggregate.entity().Transactions().cbegin(),
+							pAggregate.entity().Transactions().cend()));
+
+					utils::ArrayPointerFlagMap<Key> cosigners;
+					cosigners.emplace(&pAggregate.entity().Signer, false);
+					for (auto i = 0u; i < cosignersCount; ++i) {
+						cosigners.emplace(&pCosignature->Signer, false);
+						++pCosignature;
+					}
+
+					for (auto i = 0u; i < transactionsCount; ++i) {
+						for (auto it = cosigners.begin(); it != cosigners.end(); it++) {
+							auto iter = cosigners.find(&pTransaction->Signer);
+							if (cosigners.cend() != iter)
+								iter->second = true;
+						}
+
+						pTransaction = moveForward(pTransaction);
+					}
+
+					return std::any_of(cosigners.cbegin(), cosigners.cend(), [](const auto &pair) {
+						return pair.second;
+					});
+
+				}catch(...) {
+					// unexpected error, probably that entity() is NULL or not set
+					CATAPULT_LOG(debug) << "Unexpected error while checking for signer in partial transaction ";
+					return false;
+				}
+			}
 		private:
 			NotificationValidatorAdapter m_transactionValidator;
 			NotificationValidatorAdapter m_statelessTransactionValidator;
 			AggregateCosignersNotificationPublisher m_aggregatePublisher;
 			std::unique_ptr<const stateless::NotificationValidator> m_pCosignersValidator;
+			const plugins::PluginManager& m_pluginManager;
 		};
 	}
 

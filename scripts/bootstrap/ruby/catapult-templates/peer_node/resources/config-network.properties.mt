@@ -25,7 +25,7 @@ harvestBeneficiaryPercentage = 10
 
 blockPruneInterval = 360
 maxTransactionsPerBlock = 200'000
-
+allowNonParticipantSigner = false
 enableUnconfirmedTransactionMinFeeValidation = true
 
 [plugin:catapult.plugins.accountlink]
