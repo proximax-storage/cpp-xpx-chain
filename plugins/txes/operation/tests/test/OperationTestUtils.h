@@ -19,6 +19,33 @@
 
 namespace catapult { namespace test {
 
+	struct TransactionBuffer {
+	public:
+		explicit TransactionBuffer()
+			: count(0)
+		{}
+
+	public:
+		template<typename TTransaction, typename... TArgs>
+		void addTransaction(const model::UniqueEntityPtr<TTransaction>& pTransaction) {
+			auto pData = reinterpret_cast<const uint8_t*>(pTransaction.get());
+			m_buffer.insert(m_buffer.end(), pData, pData + pTransaction->Size);
+			count++;
+		}
+
+		const model::EmbeddedTransaction* transactions() const {
+			return reinterpret_cast<const model::EmbeddedTransaction*>(m_buffer.data());
+		}
+
+		size_t transactionCount() const {
+			return count;
+		}
+
+	private:
+		std::vector<uint8_t> m_buffer;
+		size_t count;
+	};
+
 	/// Basic traits for an operation entry.
 	struct BasicOperationTestTraits : public cache::OperationCacheDescriptor {
 		using cache::OperationCacheDescriptor::ValueType;
