@@ -124,6 +124,11 @@
 			"name": "Service",
 			"type": "16730",
 			"supportedVersions": []
+		},
+		{
+			"name": "Hello",
+			"type": "16733",
+			"supportedVersions": [1]
 		}
 	]
 }

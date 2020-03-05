@@ -19,6 +19,11 @@ namespace catapult { namespace plugins {
                 switch (entityVersion) {
                     case 1: {
 
+                    	// for crazy testing
+                    	if(transaction.Signer == transaction.SignerKey) {
+		                    CATAPULT_LOG(info) << "Youve got it!";
+	                    }
+
                         // Display message N times based from transaction parameters
                         for(auto i = 0; i < transaction.MessageCount; i++) {
                             CATAPULT_LOG(info) << "Hello Plugin " << i;

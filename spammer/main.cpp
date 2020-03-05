@@ -74,7 +74,7 @@ crypto::KeyPair GenerateRandomKeyPair() {
 
 model::UniqueEntityPtr<model::Transaction> generateTransferTransaction(const GenerationHash& hash) {
 	auto signer = GenerateRandomKeyPair();
-	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Private_Test;
+	model::NetworkIdentifier networkIdentifier = model::NetworkIdentifier::Mijin_Test;
 
 	builders::TransferBuilder builder(networkIdentifier, signer.publicKey());
 	builder.setRecipient(test::GenerateRandomUnresolvedAddress(networkIdentifier));

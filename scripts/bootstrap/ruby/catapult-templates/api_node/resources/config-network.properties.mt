@@ -117,3 +117,6 @@ enabled = false
 
 minPercentageOfApproval = 100
 minPercentageOfRemoval = 66
+
+[plugin:catapult.plugins.hello]
+messageCount = 10
