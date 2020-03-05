@@ -7,11 +7,10 @@
 #include "plugins/txes/operation/tests/test/OperationTestUtils.h"
 #include "src/model/StartExecuteTransaction.h"
 #include "src/model/EndExecuteTransaction.h"
+#include "src/model/UploadFileTransaction.h"
 #include "src/observers/Observers.h"
-#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
 
@@ -31,16 +30,15 @@ namespace catapult { namespace observers {
 			return entry;
 		}
 
-		template<typename TTransaction>
 		void RunTest(
 				NotifyMode mode,
 				const Hash256& aggregateHash,
 				const std::vector<Hash256>& initialAggregateHashes,
 				const std::vector<Hash256>& expectedAggregateHashes,
-				const model::UniqueEntityPtr<TTransaction>& pSubTransaction) {
+				const test::TransactionBuffer& transactionBuffer) {
 			// Arrange:
 			ObserverTestContext context(mode, Height(124));
-			Notification notification(aggregateHash, pSubTransaction ? 1 : 0, pSubTransaction.get());
+			Notification notification(aggregateHash, transactionBuffer.transactionCount(), transactionBuffer.transactions());
 			auto pObserver = CreateAggregateTransactionHashObserver();
 			auto& operationCache = context.cache().sub<cache::OperationCache>();
 
@@ -61,23 +59,28 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, AggregateTransactionHash_Commit_NoSubTransactions) {
 		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
 		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
-		RunTest<model::EmbeddedStartExecuteTransaction>(
-			NotifyMode::Commit,
-			test::GenerateRandomByteArray<Hash256>(),
-			initialAggregateHashes,
-			expectedAggregateHashes,
-			nullptr);
-	}
 
-	TEST(TEST_CLASS, AggregateTransactionHash_Commit_LastSubTransactionNotEndExecute) {
-		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
-		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
 		RunTest(
 			NotifyMode::Commit,
 			test::GenerateRandomByteArray<Hash256>(),
 			initialAggregateHashes,
 			expectedAggregateHashes,
-			test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
+			test::TransactionBuffer());
+	}
+
+	TEST(TEST_CLASS, AggregateTransactionHash_Commit_NoEndExecuteTransaction) {
+		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
+		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
+		test::TransactionBuffer buffer;
+		buffer.addTransaction(test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
+		buffer.addTransaction(test::CreateUploadFileTransaction<model::EmbeddedUploadFileTransaction>(1, 1));
+
+		RunTest(
+			NotifyMode::Commit,
+			test::GenerateRandomByteArray<Hash256>(),
+			initialAggregateHashes,
+			expectedAggregateHashes,
+			buffer);
 	}
 
 	TEST(TEST_CLASS, AggregateTransactionHash_Commit_AddsTransactionHash) {
@@ -87,34 +90,44 @@ namespace catapult { namespace observers {
 		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
 		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
 		expectedAggregateHashes.push_back(aggregateHash);
+		test::TransactionBuffer buffer;
+		buffer.addTransaction(test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
+		buffer.addTransaction(test::CreateUploadFileTransaction<model::EmbeddedUploadFileTransaction>(1, 1));
+		buffer.addTransaction(pSubTransaction);
+
 		RunTest(
 			NotifyMode::Commit,
 			aggregateHash,
 			initialAggregateHashes,
 			expectedAggregateHashes,
-			pSubTransaction);
+			buffer);
 	}
 
 	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_NoSubTransactions) {
 		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
 		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
-		RunTest<model::EmbeddedStartExecuteTransaction>(
-			NotifyMode::Rollback,
-			test::GenerateRandomByteArray<Hash256>(),
-			initialAggregateHashes,
-			expectedAggregateHashes,
-			nullptr);
-	}
 
-	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_LastSubTransactionNotEndExecute) {
-		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
-		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
 		RunTest(
 			NotifyMode::Rollback,
 			test::GenerateRandomByteArray<Hash256>(),
 			initialAggregateHashes,
 			expectedAggregateHashes,
-			test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
+			test::TransactionBuffer());
+	}
+
+	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_NoEndExecuteTransaction) {
+		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
+		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
+		test::TransactionBuffer buffer;
+		buffer.addTransaction(test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
+		buffer.addTransaction(test::CreateUploadFileTransaction<model::EmbeddedUploadFileTransaction>(1, 1));
+
+		RunTest(
+			NotifyMode::Rollback,
+			test::GenerateRandomByteArray<Hash256>(),
+			initialAggregateHashes,
+			expectedAggregateHashes,
+			buffer);
 	}
 
 	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_RemovesLastTransactionHash) {
@@ -124,24 +137,34 @@ namespace catapult { namespace observers {
 		std::vector<Hash256> expectedAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
 		std::vector<Hash256> initialAggregateHashes = expectedAggregateHashes;
 		initialAggregateHashes.push_back(aggregateHash);
+		test::TransactionBuffer buffer;
+		buffer.addTransaction(test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
+		buffer.addTransaction(test::CreateUploadFileTransaction<model::EmbeddedUploadFileTransaction>(1, 1));
+		buffer.addTransaction(pSubTransaction);
+
 		RunTest(
 			NotifyMode::Rollback,
 			aggregateHash,
 			initialAggregateHashes,
 			expectedAggregateHashes,
-			pSubTransaction);
+			buffer);
 	}
 
 	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_FailsToRemoveMismatchedTransactionHash) {
 		auto pSubTransaction = test::CreateEndExecuteTransaction<model::EmbeddedEndExecuteTransaction>(1);
 		pSubTransaction->OperationToken = Operation_Token;
+		test::TransactionBuffer buffer;
+		buffer.addTransaction(test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
+		buffer.addTransaction(test::CreateUploadFileTransaction<model::EmbeddedUploadFileTransaction>(1, 1));
+		buffer.addTransaction(pSubTransaction);
+
 		EXPECT_THROW(
 			RunTest(
 				NotifyMode::Rollback,
 				test::GenerateRandomByteArray<Hash256>(),
 				{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() },
 				{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() },
-				pSubTransaction),
+				buffer),
 			catapult_runtime_error
 		);
 	}
