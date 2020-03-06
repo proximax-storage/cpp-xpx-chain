@@ -51,9 +51,6 @@ namespace catapult { namespace validators {
 	/// Validation failed because end operation transaction is not the last sub transaction.
 	DEFINE_OPERATION_RESULT(End_Transaction_Misplaced, 12);
 
-	/// Validation failed because operation identify transaction aggregated with end operation transaction.
-	DEFINE_OPERATION_RESULT(Identify_Transaction_Aggregated_With_End_Operation, 13);
-
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

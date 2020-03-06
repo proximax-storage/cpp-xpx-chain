@@ -4,29 +4,23 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "plugins/txes/operation/src/model/EndOperationTransaction.h"
-#include "plugins/txes/operation/tests/test/OperationTestUtils.h"
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/test/SuperContractTestUtils.h"
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS EndOperationTransactionValidatorTests
+#define TEST_CLASS EndOperationValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(EndOperationTransaction, )
+	DEFINE_COMMON_VALIDATOR_TESTS(EndOperation, )
 
 	namespace {
-		using Notification = model::AggregateEmbeddedTransactionNotification<1>;
-
-		auto CreateEndOperationTransaction() {
-			return test::CreateEndOperationTransaction<model::EmbeddedEndOperationTransaction>(1);
-		}
+		using Notification = model::EndOperationNotification<1>;
 
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const state::SuperContractEntry& entry,
-				const model::EmbeddedTransaction* pTransaction) {
+				const Key& signer) {
 			// Arrange:
 			Height currentHeight(1);
 			auto cache = test::SuperContractCacheFactory::Create();
@@ -36,8 +30,8 @@ namespace catapult { namespace validators {
 				superContractCacheDelta.insert(entry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(Key(), *pTransaction, 0, nullptr);
-			auto pValidator = CreateEndOperationTransactionValidator();
+			Notification notification(signer, Hash256(), nullptr, 0, model::Operation_Result_None);
+			auto pValidator = CreateEndOperationValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache,
@@ -50,16 +44,13 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenEndOperationEndsSuperContractExecution) {
 		// Arrange:
-		auto superContract = test::GenerateRandomByteArray<Key>();
-		state::SuperContractEntry entry(superContract);
-		auto pTransaction = CreateEndOperationTransaction();
-		pTransaction->Signer = superContract;
+		state::SuperContractEntry entry(test::GenerateRandomByteArray<Key>());
 
 		// Assert:
 		AssertValidationResult(
 			Failure_SuperContract_Operation_Is_Not_Permitted,
 			entry,
-			pTransaction.get());
+			entry.key());
 	}
 
 	TEST(TEST_CLASS, Success) {
@@ -67,6 +58,6 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 			ValidationResult::Success,
 			state::SuperContractEntry(test::GenerateRandomByteArray<Key>()),
-			CreateEndOperationTransaction().get());
+			test::GenerateRandomByteArray<Key>());
 	}
 }}

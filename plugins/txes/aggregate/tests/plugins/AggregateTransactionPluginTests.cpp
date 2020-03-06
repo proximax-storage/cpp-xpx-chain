@@ -400,6 +400,7 @@ namespace catapult { namespace plugins {
 
 				EXPECT_EQ(wrapper.pTransaction->Signer, notification.Signer) << message;
 				EXPECT_EQ(*wrapper.SubTransactions[i], notification.Transaction) << message;
+				EXPECT_EQ(i, notification.Index) << message;
 				EXPECT_EQ(numCosignatures, notification.CosignaturesCount) << message;
 				EXPECT_EQ(wrapper.pTransaction->CosignaturesPtr(), notification.CosignaturesPtr) << message;
 			}

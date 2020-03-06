@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
             transactionRegistry.registerPlugin(plugins::CreateModifyMultisigAccountTransactionPlugin());
 
             using Notification = model::AggregateEmbeddedTransactionNotification<1>;
-			Notification notification(signer, subTransaction, cosignatures.size(), cosignatures.data());
+			Notification notification(signer, subTransaction, -1, cosignatures.size(), cosignatures.data());
 			auto pValidator = CreateMultisigAggregateSufficientCosignersValidator(transactionRegistry);
 
 			// Act:

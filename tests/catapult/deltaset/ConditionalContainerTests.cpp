@@ -124,13 +124,11 @@ namespace catapult { namespace test {
 	using StorageSetType = deltaset::SetTraits::Types::StorageSetType;
 	using MemorySetType = deltaset::SetTraits::Types::MemorySetType;
 
-	void PruneBaseSet(StorageSetType& elements, const deltaset::PruningBoundary<StorageSetType::value_type>& pruningBoundary);
 	void PruneBaseSet(StorageSetType& elements, const deltaset::PruningBoundary<StorageSetType::value_type>& pruningBoundary) {
 		deltaset::PruneBaseSet(elements, pruningBoundary);
 	}
 
 	// need custom PruneBaseSet for unordered_set, which does not support lower_bound
-	void PruneBaseSet(MemorySetType& elements, const deltaset::PruningBoundary<MemorySetType::value_type>& pruningBoundary);
 	void PruneBaseSet(MemorySetType& elements, const deltaset::PruningBoundary<MemorySetType::value_type>& pruningBoundary) {
 		utils::map_erase_if(elements, [pruningBoundary](const auto& element) {
 			return element < pruningBoundary.value();

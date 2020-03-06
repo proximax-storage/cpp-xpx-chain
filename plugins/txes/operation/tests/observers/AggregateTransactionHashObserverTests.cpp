@@ -55,7 +55,25 @@ namespace catapult { namespace observers {
 			auto expectedEntry = CreateOperationEntry(expectedAggregateHashes);
 			test::AssertEqualOperationData(expectedEntry, actualEntry);
 		}
+
+		struct OperationIdentifyTraits {
+			static auto CreateTransaction() {
+				return test::CreateOperationIdentifyTransaction<model::EmbeddedOperationIdentifyTransaction>();
+			}
+		};
+
+		struct EndOperationTraits {
+			static auto CreateTransaction() {
+				return test::CreateEndOperationTransaction<model::EmbeddedEndOperationTransaction>(1);
+			}
+		};
 	}
+
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_OperationIdentify) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<OperationIdentifyTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_EndOperation) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<EndOperationTraits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	TEST(TEST_CLASS, AggregateTransactionHash_Commit_NoSubTransactions) {
 		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
@@ -83,8 +101,8 @@ namespace catapult { namespace observers {
 			buffer);
 	}
 
-	TEST(TEST_CLASS, AggregateTransactionHash_Commit_AddsTransactionHashOnOperationIdentify) {
-		auto pSubTransaction = test::CreateOperationIdentifyTransaction<model::EmbeddedOperationIdentifyTransaction>();
+	TRAITS_BASED_TEST(AggregateTransactionHash_Commit_AddsTransactionHash) {
+		auto pSubTransaction = TTraits::CreateTransaction();
 		pSubTransaction->OperationToken = Operation_Token;
 		auto aggregateHash = test::GenerateRandomByteArray<Hash256>();
 		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
@@ -94,26 +112,6 @@ namespace catapult { namespace observers {
 		buffer.addTransaction(pSubTransaction);
 		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
 		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
-
-		RunTest(
-			NotifyMode::Commit,
-			aggregateHash,
-			initialAggregateHashes,
-			expectedAggregateHashes,
-			buffer);
-	}
-
-	TEST(TEST_CLASS, AggregateTransactionHash_Commit_AddsTransactionHashOnEndOperation) {
-		auto pSubTransaction = test::CreateEndOperationTransaction<model::EmbeddedEndOperationTransaction>(1);
-		pSubTransaction->OperationToken = Operation_Token;
-		auto aggregateHash = test::GenerateRandomByteArray<Hash256>();
-		std::vector<Hash256> initialAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
-		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
-		expectedAggregateHashes.push_back(aggregateHash);
-		test::TransactionBuffer buffer;
-		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
-		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
-		buffer.addTransaction(pSubTransaction);
 
 		RunTest(
 			NotifyMode::Commit,
@@ -150,8 +148,8 @@ namespace catapult { namespace observers {
 			buffer);
 	}
 
-	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_RemovesLastTransactionHashOnOperationIdentify) {
-		auto pSubTransaction = test::CreateOperationIdentifyTransaction<model::EmbeddedOperationIdentifyTransaction>();
+	TRAITS_BASED_TEST(AggregateTransactionHash_Rollback_RemovesLastTransactionHash) {
+		auto pSubTransaction = TTraits::CreateTransaction();
 		pSubTransaction->OperationToken = Operation_Token;
 		auto aggregateHash = test::GenerateRandomByteArray<Hash256>();
 		std::vector<Hash256> expectedAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
@@ -170,54 +168,14 @@ namespace catapult { namespace observers {
 			buffer);
 	}
 
-	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_RemovesLastTransactionHashOnEndOperation) {
-		auto pSubTransaction = test::CreateEndOperationTransaction<model::EmbeddedEndOperationTransaction>(1);
-		pSubTransaction->OperationToken = Operation_Token;
-		auto aggregateHash = test::GenerateRandomByteArray<Hash256>();
-		std::vector<Hash256> expectedAggregateHashes = { test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() };
-		std::vector<Hash256> initialAggregateHashes = expectedAggregateHashes;
-		initialAggregateHashes.push_back(aggregateHash);
-		test::TransactionBuffer buffer;
-		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
-		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
-		buffer.addTransaction(pSubTransaction);
-
-		RunTest(
-			NotifyMode::Rollback,
-			aggregateHash,
-			initialAggregateHashes,
-			expectedAggregateHashes,
-			buffer);
-	}
-
-	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_FailsToRemoveMismatchedTransactionHashOnOperationIdentify) {
-		auto pSubTransaction = test::CreateOperationIdentifyTransaction<model::EmbeddedOperationIdentifyTransaction>();
+	TRAITS_BASED_TEST(AggregateTransactionHash_Rollback_FailsToRemoveMismatchedTransactionHash) {
+			auto pSubTransaction = TTraits::CreateTransaction();
 		pSubTransaction->OperationToken = Operation_Token;
 		auto aggregateHash = test::GenerateRandomByteArray<Hash256>();
 		test::TransactionBuffer buffer;
 		buffer.addTransaction(pSubTransaction);
 		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
 		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
-
-		EXPECT_THROW(
-			RunTest(
-				NotifyMode::Rollback,
-				aggregateHash,
-				{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() },
-				{ test::GenerateRandomByteArray<Hash256>(), test::GenerateRandomByteArray<Hash256>() },
-				buffer),
-			catapult_runtime_error
-		);
-	}
-
-	TEST(TEST_CLASS, AggregateTransactionHash_Rollback_FailsToRemoveMismatchedTransactionHashOnEndOperation) {
-		auto pSubTransaction = test::CreateEndOperationTransaction<model::EmbeddedEndOperationTransaction>(1);
-		pSubTransaction->OperationToken = Operation_Token;
-		auto aggregateHash = test::GenerateRandomByteArray<Hash256>();
-		test::TransactionBuffer buffer;
-		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
-		buffer.addTransaction(test::CreateStartOperationTransaction<model::EmbeddedStartOperationTransaction>(1, 1));
-		buffer.addTransaction(pSubTransaction);
 
 		EXPECT_THROW(
 			RunTest(

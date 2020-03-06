@@ -92,6 +92,7 @@ namespace catapult { namespace plugins {
 							aggregate.TransactionsPtr()));
 
 					// publish all sub-transaction information
+					size_t index = 0;
 					for (const auto& subTransaction : aggregate.Transactions()) {
 						// - change source
 						constexpr auto Relative = SourceChangeNotification<1>::SourceChangeType::Relative;
@@ -110,6 +111,7 @@ namespace catapult { namespace plugins {
 						sub.notify(AggregateEmbeddedTransactionNotification<1>(
 								aggregate.Signer,
 								subTransaction,
+								index++,
 								numCosignatures,
 								aggregate.CosignaturesPtr()));
 

@@ -11,6 +11,7 @@
 #include "src/model/SuperContractNotifications.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/service/src/model/ServiceNotifications.h"
+#include "plugins/txes/operation/src/model/OperationNotifications.h"
 
 namespace catapult { namespace validators {
 
@@ -42,10 +43,14 @@ namespace catapult { namespace validators {
 	/// - operation identify transaction is not aggregated with end execute transaction
 	DECLARE_STATELESS_VALIDATOR(AggregateTransaction, model::AggregateCosignaturesNotification<1>)();
 
-	/// A validator implementation that applies to aggregate embedded transaction notifications and validates that:
+	/// A validator implementation that applies to end operation notifications and validates that:
 	/// - end operation transaction doesn't end super contract execution
-	DECLARE_STATEFUL_VALIDATOR(EndOperationTransaction, model::AggregateEmbeddedTransactionNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(EndOperation, model::EndOperationNotification<1>)();
 
 	/// A validator check that deactivate transaction is valid
 	DECLARE_STATEFUL_VALIDATOR(Deactivate, model::DeactivateNotification<1>)();
+
+	/// A validator implementation that applies to aggregate embedded transaction notifications and validates that:
+	/// - end execute transaction is the very first in aggregate
+	DECLARE_STATELESS_VALIDATOR(EmbeddedTransaction, model::AggregateEmbeddedTransactionNotification<1>)();
 }}

@@ -15,9 +15,6 @@ namespace catapult { namespace observers {
 
 	DEFINE_OBSERVER(EndExecute, Notification, ([](const auto& notification, const ObserverContext& context) {
 		const auto* pTransaction = notification.TransactionsPtr;
-		for (auto i = 1u; i < notification.TransactionsCount; ++i) {
-			pTransaction = model::AdvanceNext(pTransaction);
-		}
 		if (!pTransaction || model::Entity_Type_EndExecute != pTransaction->Type)
 			return;
 

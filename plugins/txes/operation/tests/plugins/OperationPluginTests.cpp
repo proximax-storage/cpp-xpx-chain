@@ -63,9 +63,9 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
+					"EmbeddedTransactionValidator",
 					"OperationPluginConfigValidator",
 					"StartOperationValidator",
-					"AggregateTransactionValidator",
 					"OperationMosaicValidator",
 				};
 			}

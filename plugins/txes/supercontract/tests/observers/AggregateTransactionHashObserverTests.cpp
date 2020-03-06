@@ -91,9 +91,9 @@ namespace catapult { namespace observers {
 		std::vector<Hash256> expectedAggregateHashes = initialAggregateHashes;
 		expectedAggregateHashes.push_back(aggregateHash);
 		test::TransactionBuffer buffer;
+		buffer.addTransaction(pSubTransaction);
 		buffer.addTransaction(test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
 		buffer.addTransaction(test::CreateUploadFileTransaction<model::EmbeddedUploadFileTransaction>(1, 1));
-		buffer.addTransaction(pSubTransaction);
 
 		RunTest(
 			NotifyMode::Commit,
@@ -138,9 +138,9 @@ namespace catapult { namespace observers {
 		std::vector<Hash256> initialAggregateHashes = expectedAggregateHashes;
 		initialAggregateHashes.push_back(aggregateHash);
 		test::TransactionBuffer buffer;
+		buffer.addTransaction(pSubTransaction);
 		buffer.addTransaction(test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
 		buffer.addTransaction(test::CreateUploadFileTransaction<model::EmbeddedUploadFileTransaction>(1, 1));
-		buffer.addTransaction(pSubTransaction);
 
 		RunTest(
 			NotifyMode::Rollback,
@@ -154,9 +154,9 @@ namespace catapult { namespace observers {
 		auto pSubTransaction = test::CreateEndExecuteTransaction<model::EmbeddedEndExecuteTransaction>(1);
 		pSubTransaction->OperationToken = Operation_Token;
 		test::TransactionBuffer buffer;
+		buffer.addTransaction(pSubTransaction);
 		buffer.addTransaction(test::CreateStartExecuteTransaction<model::EmbeddedStartExecuteTransaction>(1, 1, 1));
 		buffer.addTransaction(test::CreateUploadFileTransaction<model::EmbeddedUploadFileTransaction>(1, 1));
-		buffer.addTransaction(pSubTransaction);
 
 		EXPECT_THROW(
 			RunTest(

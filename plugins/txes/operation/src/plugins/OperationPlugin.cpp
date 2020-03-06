@@ -43,9 +43,9 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
+				.add(validators::CreateEmbeddedTransactionValidator())
 				.add(validators::CreateOperationPluginConfigValidator())
 				.add(validators::CreateStartOperationValidator())
-				.add(validators::CreateAggregateTransactionValidator())
 				.add(validators::CreateOperationMosaicValidator());
 		});
 

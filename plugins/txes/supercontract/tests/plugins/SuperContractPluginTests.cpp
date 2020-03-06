@@ -64,8 +64,8 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
+					"EmbeddedTransactionValidator",
 					"SuperContractPluginConfigValidator",
-					"AggregateTransactionValidator",
 				};
 			}
 
@@ -76,7 +76,7 @@ namespace catapult { namespace plugins {
 					"SuperContractValidator",
 					"DeployValidator",
 					"DriveFileSystemValidator",
-					"EndOperationTransactionValidator",
+					"EndOperationValidator",
 					"DeactivateValidator",
 				};
 			}

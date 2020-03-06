@@ -46,8 +46,8 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateSuperContractPluginConfigValidator())
-				.add(validators::CreateAggregateTransactionValidator());
+				.add(validators::CreateEmbeddedTransactionValidator())
+				.add(validators::CreateSuperContractPluginConfigValidator());
 		});
 
 		manager.addStatefulValidatorHook([](auto& builder) {
@@ -57,7 +57,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateSuperContractValidator())
 				.add(validators::CreateDeployValidator())
 				.add(validators::CreateDriveFileSystemValidator())
-				.add(validators::CreateEndOperationTransactionValidator())
+				.add(validators::CreateEndOperationValidator())
 				.add(validators::CreateDeactivateValidator());
 		});
 

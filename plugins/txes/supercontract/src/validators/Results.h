@@ -38,12 +38,6 @@ namespace catapult { namespace validators {
 	/// Validation failed because end execute transaction is not the last sub transaction.
 	DEFINE_SUPERCONTRACT_RESULT(End_Execute_Transaction_Misplaced, 8);
 
-	/// Validation failed because operation identify transaction is not the first sub transaction.
-	DEFINE_SUPERCONTRACT_RESULT(Operation_Identify_Transaction_Misplaced, 9);
-
-	/// Validation failed because operation identify transaction aggregated with end execute transaction.
-	DEFINE_SUPERCONTRACT_RESULT(Operation_Identify_Transaction_Aggregated_With_End_Execute, 10);
-
 	/// Validation failed because execution count exceeded limit.
 	DEFINE_SUPERCONTRACT_RESULT(Execution_Count_Exceeded_Limit, 11);
 

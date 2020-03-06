@@ -83,19 +83,24 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Aggregate_EmbeddedTransaction_v1_Notification;
 
 	public:
-		/// Creates a notification around \a signer, \a transaction, \a cosignaturesCount and \a pCosignatures.
+		/// Creates a notification around \a signer, \a transaction, \a index, \a cosignaturesCount and \a pCosignatures.
 		explicit AggregateEmbeddedTransactionNotification(
 				const Key& signer,
 				const EmbeddedTransaction& transaction,
+				size_t index,
 				size_t cosignaturesCount,
 				const Cosignature* pCosignatures)
 				: BasicAggregateNotification<AggregateEmbeddedTransactionNotification<1>>(signer, cosignaturesCount, pCosignatures)
 				, Transaction(transaction)
+				, Index(index)
 		{}
 
 	public:
 		/// Embedded transaction.
 		const EmbeddedTransaction& Transaction;
+
+		/// Embedded transaction index.
+		size_t Index;
 	};
 
 	/// Notification of an aggregate transaction with transactions and cosignatures.

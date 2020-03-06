@@ -50,7 +50,7 @@ namespace catapult { namespace chain {
 		const auto& aggregate = CoerceToAggregate(transactionInfo.transaction());
 		auto numCosignatures = transactionInfo.cosignatures().size();
 		switch (aggregate.EntityVersion()) {
-		case 2:
+		case 2: {
 			sub.notify(model::AggregateCosignaturesNotification<1>(
 					aggregate.Signer,
 					static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
@@ -59,15 +59,18 @@ namespace catapult { namespace chain {
 					transactionInfo.cosignatures().data()));
 
 			// publish all sub-transaction information
+			size_t index = 0;
 			for (const auto& subTransaction : aggregate.Transactions()) {
 				// - generic sub-transaction notification
 				sub.notify(model::AggregateEmbeddedTransactionNotification<1>(
 						aggregate.Signer,
 						subTransaction,
+						index++,
 						numCosignatures,
 						transactionInfo.cosignatures().data()));
 			}
 			break;
+		}
 
 		default:
 			CATAPULT_LOG(debug) << "invalid version of AggregateTransaction: " << aggregate.EntityVersion();

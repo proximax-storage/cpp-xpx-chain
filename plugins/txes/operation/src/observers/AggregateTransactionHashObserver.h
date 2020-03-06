@@ -12,26 +12,10 @@ namespace catapult { namespace observers {
 
 	template<typename TTransaction>
 	void AggregateTransactionHashObserver(const model::AggregateTransactionHashNotification<1>& notification, ObserverContext& context) {
-		const model::EmbeddedTransaction* pTransaction = nullptr;
-		if (notification.TransactionsCount) {
-			const auto* pSubTransaction = notification.TransactionsPtr;
-			if (TTransaction::Entity_Type == pSubTransaction->Type) {
-				pTransaction = pSubTransaction;
-			} else {
-				for (auto i = 1u; i < notification.TransactionsCount; ++i) {
-					pSubTransaction = model::AdvanceNext(pSubTransaction);
-					if (TTransaction::Entity_Type == pSubTransaction->Type) {
-						pTransaction = pSubTransaction;
-						break;
-					}
-				}
-			}
-		}
-
-		if (!pTransaction)
+		if (!notification.TransactionsCount || TTransaction::Entity_Type != notification.TransactionsPtr->Type)
 			return;
 
-		const auto& operationToken = static_cast<const TTransaction&>(*pTransaction).OperationToken;
+		const auto& operationToken = static_cast<const TTransaction&>(*notification.TransactionsPtr).OperationToken;
 		auto& operationCache = context.Cache.sub<cache::OperationCache>();
 		auto operationCacheIter = operationCache.find(operationToken);
 		auto& operationEntry = operationCacheIter.get();
