@@ -89,10 +89,19 @@ namespace catapult { namespace test {
 				AssertInactiveFilesWithoutDeposit(replicator.InactiveFilesWithoutDeposit, dbReplicator["inactiveFilesWithoutDeposit"].get_array().value);
 			}
 		}
+
+		void AssertCoowners(const std::set<Key>& coowners, const bsoncxx::array::view& dbCoowners) {
+			ASSERT_EQ(coowners.size(), test::GetFieldCount(dbCoowners));
+			for (const auto& dbCoowner : dbCoowners) {
+				Key coowner;
+				DbBinaryToModelArray(coowner, dbCoowner.get_binary());
+				EXPECT_EQ(1, coowners.count(coowner));
+			}
+		}
 	}
 
 	void AssertEqualDriveData(const state::DriveEntry& entry, const Address& address, const bsoncxx::document::view& dbDriveEntry) {
-		EXPECT_EQ(20u, test::GetFieldCount(dbDriveEntry));
+		EXPECT_EQ(21u, test::GetFieldCount(dbDriveEntry));
 
 		EXPECT_EQ(entry.key(), GetKeyValue(dbDriveEntry, "multisig"));
 		EXPECT_EQ(address, test::GetAddressValue(dbDriveEntry, "multisigAddress"));
@@ -115,6 +124,7 @@ namespace catapult { namespace test {
 		AssertReplicators(entry.replicators(), dbDriveEntry["replicators"].get_array().value);
 		AssertReplicators(entry.removedReplicators(), dbDriveEntry["removedReplicators"].get_array().value);
 		AssertPaymentInformation(entry.uploadPayments(), dbDriveEntry["uploadPayments"].get_array().value);
+		AssertCoowners(entry.coowners(), dbDriveEntry["coowners"].get_array().value);
 	}
 
 	namespace {

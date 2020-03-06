@@ -60,4 +60,9 @@ namespace catapult { namespace model {
 	void PublishNotifications(const EmbeddedTransaction& transaction, NotificationSubscriber& sub) {
 		sub.notify(AccountPublicKeyNotification<1>(transaction.Signer));
 	}
+
+	const model::EmbeddedTransaction* AdvanceNext(const model::EmbeddedTransaction* pTransaction) {
+		const auto* pTransactionData = reinterpret_cast<const uint8_t*>(pTransaction);
+		return reinterpret_cast<const model::EmbeddedTransaction*>(pTransactionData + pTransaction->Size);
+	}
 }}

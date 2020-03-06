@@ -14,9 +14,37 @@
 #include "plugins/txes/lock_shared/tests/test/LockInfoCacheTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
+
+	struct TransactionBuffer {
+	public:
+		explicit TransactionBuffer()
+			: count(0)
+		{}
+
+	public:
+		template<typename TTransaction, typename... TArgs>
+		void addTransaction(const model::UniqueEntityPtr<TTransaction>& pTransaction) {
+			auto pData = reinterpret_cast<const uint8_t*>(pTransaction.get());
+			m_buffer.insert(m_buffer.end(), pData, pData + pTransaction->Size);
+			count++;
+		}
+
+		const model::EmbeddedTransaction* transactions() const {
+			return reinterpret_cast<const model::EmbeddedTransaction*>(m_buffer.data());
+		}
+
+		size_t transactionCount() const {
+			return count;
+		}
+
+	private:
+		std::vector<uint8_t> m_buffer;
+		size_t count;
+	};
 
 	/// Basic traits for an operation entry.
 	struct BasicOperationTestTraits : public cache::OperationCacheDescriptor {
@@ -89,10 +117,10 @@ namespace catapult { namespace test {
     }
 
     template<typename TTransaction>
-	void GenerateMosaics(TTransaction* pTransaction, size_t numMosaics) {
-		auto* pData = reinterpret_cast<uint8_t*>(pTransaction + 1);
+	void GenerateMosaics(TTransaction* pTransaction, size_t numMosaics, size_t offset = 0) {
+		auto* pData = reinterpret_cast<uint8_t*>(pTransaction + 1) + offset;
 		for (auto i = 0u; i < numMosaics; ++i) {
-			model::UnresolvedMosaic mosaic{UnresolvedMosaicId(i + 1), Amount((i + 1) * 10)};
+			model::UnresolvedMosaic mosaic{test::UnresolveXor(MosaicId(i + 1)), Amount((i + 1) * 10)};
 			memcpy(pData, static_cast<const void*>(&mosaic), sizeof(model::UnresolvedMosaic));
 			pData += sizeof(model::UnresolvedMosaic);
 		}
@@ -132,6 +160,7 @@ namespace catapult { namespace test {
 	model::UniqueEntityPtr<TTransaction> CreateEndOperationTransaction(size_t numMosaics) {
         auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_EndOperation, numMosaics * sizeof(model::UnresolvedMosaic));
 		pTransaction->OperationToken = test::GenerateRandomByteArray<Hash256>();
+		pTransaction->Result = test::Random16();
 		pTransaction->MosaicCount = numMosaics;
 		GenerateMosaics(pTransaction.get(), numMosaics);
 

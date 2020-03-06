@@ -15,7 +15,7 @@ namespace catapult { namespace test {
 	/// Verifies that \a dbOperationEntry is equivalent to model operation \a entry and \a address.
 	void AssertEqualMongoOperationData(const state::OperationEntry& entry, const Address& address, const bsoncxx::document::view& dbOperationEntry);
 
-	/// Verifies that \a dbOperationEntry is equivalent to model operation \a entry and \a address.
+	/// Verifies that mosaics in \a transaction are equivalent to mosaics in \a dbTransaction.
 	template<typename TTransaction>
 	void AssertEqualMosaics(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
 		const auto& mosaicArray = dbTransaction["mosaics"].get_array().value;

@@ -34,23 +34,6 @@ namespace catapult { namespace validators {
 			return test::CreateEndOperationTransaction<model::EmbeddedEndOperationTransaction>(5);
 		}
 
-
-		struct TransactionBuffer {
-		public:
-			template<typename TTransaction, typename... TArgs>
-			void addTransaction(model::UniqueEntityPtr<TTransaction> pTransaction) {
-				auto pData = reinterpret_cast<uint8_t*>(pTransaction.get());
-				m_buffer.insert(m_buffer.end(), pData, pData + pTransaction->Size);
-			}
-
-			const model::EmbeddedTransaction* transactions() {
-				return reinterpret_cast<const model::EmbeddedTransaction*>(m_buffer.data());
-			}
-
-		private:
-			std::vector<uint8_t> m_buffer;
-		};
-
 		void AssertValidationResult(ValidationResult expectedResult, const model::EmbeddedTransaction* pTransactions) {
 			// Arrange:
 			Notification notification(Key(), Num_Transactions, pTransactions, 0, nullptr);
@@ -66,7 +49,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenEndOperationMisplaced) {
 		// Arrange:
-		TransactionBuffer buffer;
+		test::TransactionBuffer buffer;
 		buffer.addTransaction(CreateStartOperationTransaction());
 		buffer.addTransaction(CreateEndOperationTransaction());
 		buffer.addTransaction(CreateStartOperationTransaction());
@@ -79,7 +62,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenOperationIdentifyMisplaced) {
 		// Arrange:
-		TransactionBuffer buffer;
+		test::TransactionBuffer buffer;
 		buffer.addTransaction(CreateStartOperationTransaction());
 		buffer.addTransaction(CreateOperationIdentifyTransaction());
 		buffer.addTransaction(CreateStartOperationTransaction());
@@ -92,7 +75,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, FailureWhenOperationIdentifyAggregatedWithEndOperation) {
 		// Arrange:
-		TransactionBuffer buffer;
+		test::TransactionBuffer buffer;
 		buffer.addTransaction(CreateOperationIdentifyTransaction());
 		buffer.addTransaction(CreateStartOperationTransaction());
 		buffer.addTransaction(CreateEndOperationTransaction());
@@ -105,7 +88,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidOperationIdentify) {
 		// Arrange:
-		TransactionBuffer buffer;
+		test::TransactionBuffer buffer;
 		buffer.addTransaction(CreateOperationIdentifyTransaction());
 		buffer.addTransaction(CreateStartOperationTransaction());
 		buffer.addTransaction(CreateStartOperationTransaction());
@@ -118,7 +101,7 @@ namespace catapult { namespace validators {
 
 	TEST(TEST_CLASS, SuccessWhenValidEndOperation) {
 		// Arrange:
-		TransactionBuffer buffer;
+		test::TransactionBuffer buffer;
 		buffer.addTransaction(CreateStartOperationTransaction());
 		buffer.addTransaction(CreateStartOperationTransaction());
 		buffer.addTransaction(CreateEndOperationTransaction());

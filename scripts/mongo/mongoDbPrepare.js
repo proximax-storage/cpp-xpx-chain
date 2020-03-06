@@ -48,6 +48,7 @@
 	db.createCollection('accounts');
 	db.accounts.createIndex({ 'account.publicKey': 1 }); // cannot be unique because zeroed public keys are stored
 	db.accounts.createIndex({ 'account.address': 1 }, { unique: true });
+	db.accounts.createIndex({ 'account.mosaics.id': 1, 'account.mosaics.amount': - 1}); // to optimize richlist performance
 
 	addTransactionCollection('unconfirmedTransactions');
 

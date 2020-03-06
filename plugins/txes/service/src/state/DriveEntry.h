@@ -296,6 +296,21 @@ namespace catapult { namespace state {
 			return m_replicators;
 		}
 
+		/// Gets co-owners of drive.
+		const std::set<Key>& coowners() const {
+			return m_coowners;
+		}
+
+		/// Gets co-owners of drive.
+		std::set<Key>& coowners() {
+			return m_coowners;
+		}
+
+		/// Check that \a key is owner.
+		bool isOwner(const Key& key) const {
+			return m_owner == key || m_coowners.count(key);
+		}
+
 		/// Gets removed replicator infos.
 		const RemovedReplicators& removedReplicators() const {
 			return m_removedReplicators;
@@ -350,6 +365,7 @@ namespace catapult { namespace state {
 		RemovedReplicators m_removedReplicators;
 		// Payments in streaming units. After end of drive and last streaming payment we will store the payment for xpx here.
 		UploadPayments m_uploadPayments;
+		std::set<Key> m_coowners;
 	};
 
 	// Drive entry.

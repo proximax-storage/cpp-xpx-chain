@@ -148,8 +148,13 @@ namespace catapult { namespace state {
 	}
 
 	void DriveEntrySerializer::Save(const DriveEntry& driveEntry, io::OutputStream& output) {
-		// write version
-		io::Write32(output, 1);
+		uint32_t version = 1;
+
+		if (driveEntry.coowners().size() > 0) {
+			version = 2;
+		}
+
+		io::Write32(output, version);
 
 		io::Write(output, driveEntry.key());
 		io::Write8(output, utils::to_underlying_type(driveEntry.state()));
@@ -173,12 +178,19 @@ namespace catapult { namespace state {
 		SaveReplicators(output, driveEntry.replicators());
 		SaveReplicators(output, driveEntry.removedReplicators());
 		SavePayments(output, driveEntry.uploadPayments());
+
+		if (version > 1) {
+			io::Write16(output, driveEntry.coowners().size());
+			for (const auto& coowner : driveEntry.coowners()) {
+				io::Write(output, coowner);
+			}
+		}
 	}
 
 	DriveEntry DriveEntrySerializer::Load(io::InputStream& input) {
 		// read version
 		VersionType version = io::Read32(input);
-		if (version > 1)
+		if (version > 2)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of DriveEntry", version);
 
 		Key key;
@@ -213,6 +225,16 @@ namespace catapult { namespace state {
 		LoadReplicators(input, entry.replicators());
 		LoadReplicators(input, entry.removedReplicators());
 		LoadPayments(input, entry.uploadPayments());
+
+		if (version > 1) {
+			auto numCoowners = io::Read16(input);
+			while (numCoowners--) {
+				Key coowner;
+				io::Read(input, coowner);
+
+				entry.coowners().insert(coowner);
+			}
+		}
 
 		return entry;
 	}

@@ -42,6 +42,7 @@ namespace catapult { namespace cache {
 		Drive,
 		Exchange,
 		Download,
+		SuperContract,
 		Operation,
 	};
 

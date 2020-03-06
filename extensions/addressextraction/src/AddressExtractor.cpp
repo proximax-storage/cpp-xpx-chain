@@ -34,7 +34,7 @@ namespace catapult { namespace addressextraction {
 		if (transactionInfo.OptionalExtractedAddresses)
 			return;
 
-		auto addresses = model::ExtractAddresses(*transactionInfo.pEntity, transactionInfo.AssociatedHeight, *m_pPublisher, m_extractorContextFactory());
+		auto addresses = model::ExtractAddresses(*transactionInfo.pEntity, transactionInfo.EntityHash, transactionInfo.AssociatedHeight, *m_pPublisher, m_extractorContextFactory());
 		transactionInfo.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>(std::move(addresses));
 	}
 
@@ -47,7 +47,7 @@ namespace catapult { namespace addressextraction {
 		if (transactionElement.OptionalExtractedAddresses)
 			return;
 
-		auto addresses = model::ExtractAddresses(transactionElement.Transaction, height, *m_pPublisher, m_extractorContextFactory());
+		auto addresses = model::ExtractAddresses(transactionElement.Transaction, transactionElement.EntityHash, height, *m_pPublisher, m_extractorContextFactory());
 		transactionElement.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>(std::move(addresses));
 	}
 
