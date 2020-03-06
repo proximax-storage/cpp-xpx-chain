@@ -6,7 +6,7 @@
 
 #pragma once
 #include "DriveCacheTypes.h"
-#include "src/state/DriveEntrySerializer.h"
+#include "plugins/txes/service/src/state/DriveEntrySerializer.h"
 #include "catapult/cache/CacheSerializerAdapter.h"
 #include "catapult/cache/IdentifierGroupSerializer.h"
 

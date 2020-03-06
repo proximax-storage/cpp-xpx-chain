@@ -38,6 +38,9 @@ namespace catapult { namespace plugins {
 			auto driveIter = cache.find(publicKey);
 			const auto& driveEntry = driveIter.get();
 			result.insert(driveEntry.owner());
+
+			for (const auto& coowner : driveEntry.coowners())
+				result.insert(coowner);
 		}
 
 		template<typename TUnresolvedData>

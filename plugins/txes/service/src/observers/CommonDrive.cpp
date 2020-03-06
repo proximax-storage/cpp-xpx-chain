@@ -136,11 +136,14 @@ namespace catapult { namespace observers {
 	void UpdateDriveMultisigSettings(state::DriveEntry& driveEntry, observers::ObserverContext& context) {
 		auto& multisigCache = context.Cache.sub<cache::MultisigCache>();
 		auto multisigIter = multisigCache.find(driveEntry.key());
-		auto& multisigEntry = multisigIter.get();
+		auto multisigEntry = multisigIter.tryGet();
+		if (!multisigEntry)
+		    return;
+
 		float cosignatoryCount = driveEntry.replicators().size();
 		uint8_t minCosignatory = ceil(cosignatoryCount * driveEntry.percentApprovers() / 100);
-		multisigEntry.setMinApproval(minCosignatory);
-		multisigEntry.setMinRemoval(minCosignatory);
+		multisigEntry->setMinApproval(minCosignatory);
+		multisigEntry->setMinRemoval(minCosignatory);
 	}
 
 	void RemoveDriveMultisig(state::DriveEntry& driveEntry, observers::ObserverContext& context) {

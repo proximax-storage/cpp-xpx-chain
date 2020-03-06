@@ -42,6 +42,9 @@ namespace catapult { namespace model {
 	/// Aggregate was received with hash and sub transactions.
 	DEFINE_AGGREGATE_NOTIFICATION(Hash_v1, 0x004, Observer);
 
+	/// Aggregate was received with cosignatures.
+	DEFINE_AGGREGATE_NOTIFICATION(Cosignatures_v2, 0x001, Observer);
+
 #undef DEFINE_AGGREGATE_NOTIFICATION
 
 	// endregion
@@ -125,6 +128,14 @@ namespace catapult { namespace model {
 
 		/// Const pointer to the first transaction.
 		const EmbeddedTransaction* TransactionsPtr;
+	};
+
+	template<>
+	struct AggregateCosignaturesNotification<2> : public AggregateCosignaturesNotification<1> {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Aggregate_Cosignatures_v2_Notification;
+		using AggregateCosignaturesNotification<1>::AggregateCosignaturesNotification;
 	};
 
 	/// Notification of transaction entity type.

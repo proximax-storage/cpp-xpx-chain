@@ -27,7 +27,7 @@
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/model/ExtendedEmbeddedTransaction.h"
 #include "catapult/plugins/PluginUtils.h"
-#include "Common.h"
+#include "AggregateCommon.h"
 
 using namespace catapult::model;
 

@@ -10,8 +10,8 @@ currencyMosaicId = 0x0DC6'7FBE'1CAD'29E3
 harvestingMosaicId = 0x0DC6'7FBE'1CAD'29E3
 storageMosaicId = 0x2651'4E2A'1EF3'3824
 streamingMosaicId = 0x6C5D'6875'08AC'9D75
-reviewMosaicId = 0x77E4'90CC'9B2A'F6F6
-superContractMosaicId = 0x77E4'90CC'9B2A'F6F6
+superContractMosaicId = 0x6EE9'5526'8A1C'33D9
+reviewMosaicId = 0x19C1'CD86'7406'54DC
 xarMosaicId = 0x77E4'90CC'9B2A'F6F6
 
 initialCurrencyAtomicUnits = 8'999'999'998'000'000

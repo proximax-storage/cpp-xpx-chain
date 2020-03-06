@@ -106,7 +106,7 @@ maxChildNamespaces = 500
 
 enabled = true
 
-maxOperationDuration = 40320
+maxOperationDuration = 2d
 
 [plugin:catapult.plugins.property]
 
@@ -131,3 +131,7 @@ verificationDuration = 240
 downloadDuration = 40320
 
 downloadCacheEnabled = true
+
+[plugin:catapult.plugins.supercontract]
+
+enabled = true
