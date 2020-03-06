@@ -20,6 +20,7 @@ namespace catapult { namespace mongo { namespace plugins {
 					model::Entity_Type_Deploy,
 					model::Entity_Type_StartExecute,
 					model::Entity_Type_EndExecute,
+					model::Entity_Type_UploadFile,
 				};
 			}
 
