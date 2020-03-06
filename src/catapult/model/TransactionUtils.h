@@ -31,7 +31,7 @@ namespace catapult {
 }
 
 namespace catapult { namespace model {
-	/// Extracts all addresses that are involved in \a transaction at \a height using \a notificationPublisher and \a extractorContext.
-	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Height& height,
+	/// Extracts all addresses that are involved in \a transaction at \a height with \a hash using \a notificationPublisher and \a extractorContext.
+	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Hash256& hash, const Height& height,
 			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext);
 }}

@@ -27,7 +27,7 @@
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/model/ExtendedEmbeddedTransaction.h"
 #include "catapult/plugins/PluginUtils.h"
-#include "Common.h"
+#include "AggregateCommon.h"
 
 using namespace catapult::model;
 
@@ -79,12 +79,17 @@ namespace catapult { namespace plugins {
 					// publish aggregate notifications
 					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
 					auto numCosignatures = aggregate.CosignaturesCount();
+					auto numTransactions = static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend()));
 					sub.notify(AggregateCosignaturesNotification<1>(
 							aggregate.Signer,
-							static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend())),
+							numTransactions,
 							aggregate.TransactionsPtr(),
 							numCosignatures,
 							aggregate.CosignaturesPtr()));
+					sub.notify(AggregateTransactionHashNotification<1>(
+							transactionInfo.hash(),
+							numTransactions,
+							aggregate.TransactionsPtr()));
 
 					// publish all sub-transaction information
 					for (const auto& subTransaction : aggregate.Transactions()) {

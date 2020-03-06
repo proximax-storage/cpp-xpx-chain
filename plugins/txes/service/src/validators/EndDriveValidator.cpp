@@ -20,7 +20,7 @@ namespace catapult { namespace validators {
 			auto driveIter = driveCache.find(notification.DriveKey);
 			const auto &driveEntry = driveIter.get();
 
-			if (driveEntry.owner() == notification.Signer) {
+			if (driveEntry.isOwner(notification.Signer)) {
 				return ValidationResult::Success;
 			} else if (driveEntry.key() == notification.Signer) {
 				if (driveEntry.state() != state::DriveState::Pending)

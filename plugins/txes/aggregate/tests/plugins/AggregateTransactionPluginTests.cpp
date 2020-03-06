@@ -20,7 +20,6 @@
 
 #include "src/config/AggregateConfiguration.h"
 #include "src/plugins/AggregateTransactionPlugin.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
 #include "catapult/model/Address.h"
@@ -217,18 +216,23 @@ namespace catapult { namespace plugins {
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(0, 0);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
-		test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
+		test::PublishTransaction(*pPlugin, model::WeakEntityInfoT<model::Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert:
+		// - 1 AggregateTransactionTypeNotification
 		// - 1 AggregateCosignaturesNotification
-		ASSERT_EQ(2u, sub.numNotifications());
+		// - 1 AggregateTransactionHashNotification
+		ASSERT_EQ(3u, sub.numNotifications());
 
 		// - aggregate transaction type notification must be the first raised notification
 		EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[0]);
 		// - aggregate cosignatures notification must be the second raised notification
 		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[1]);
+		// - aggregate transaction hash notification must be the third raised notification
+		EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[2]);
 	}
 
 	TEST(TEST_CLASS, CanRaiseCorrectNumberOfNotificationsFromAggregate) {
@@ -237,28 +241,32 @@ namespace catapult { namespace plugins {
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
-		test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
+		test::PublishTransaction(*pPlugin, model::WeakEntityInfoT<model::Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert:
 		// - 1 AggregateTransactionTypeNotification
 		// - 1 AggregateCosignaturesNotification
+		// - 1 AggregateTransactionHashNotification
 		// - 3 SignatureNotification (one per cosigner)
 		// - 2 SourceChangeNotification (one per embedded-mock)
 		// - 4 AccountPublicKeyNotification (two per embedded-mock; one signer and one recipient each)
 		// - 2 EntityNotification (one per embedded-mock)
 		// - 2 AggregateEmbeddedTransactionNotification (one per embedded-mock)
-		ASSERT_EQ(1u + 1 + 3 + 2 + 4 + 2 + 2, sub.numNotifications());
+		ASSERT_EQ(1u + 1 + 1 + 3 + 2 + 4 + 2 + 2, sub.numNotifications());
 
 		// - aggregate transaction type notification must be the first raised notification
 		EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[0]);
 		// - aggregate cosignatures notification must be the second raised notification
 		EXPECT_EQ(Aggregate_Cosignatures_v1_Notification, sub.notificationTypes()[1]);
+		// - aggregate transaction hash notification must be the third raised notification
+		EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[2]);
 
 		// - source change notification must be the first raised sub-transaction notification
 		for (auto i = 0u; i < 2u; ++i) {
-			auto offset = i * 5 + 1;
+			auto offset = i * 5 + 2;
 			auto message = "sub-transaction at " + std::to_string(i);
 			EXPECT_EQ(Core_Source_Change_v1_Notification, sub.notificationTypes()[offset + 1]) << message;
 			EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[offset + 2]) << message;
@@ -268,9 +276,9 @@ namespace catapult { namespace plugins {
 		}
 
 		// - signature notifications are raised last (and with wrong source) for performance reasons
-		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[12]);
 		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[13]);
 		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[14]);
+		EXPECT_EQ(Core_Signature_v1_Notification, sub.notificationTypes()[15]);
 	}
 
 	// endregion
@@ -301,9 +309,10 @@ namespace catapult { namespace plugins {
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
-		test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
+		test::PublishTransaction(*pPlugin, model::WeakEntityInfoT<model::Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert: 2 sub signer and 2 sub recipient notifications are raised
 		EXPECT_EQ(0u, sub.numAddresses());
@@ -321,9 +330,10 @@ namespace catapult { namespace plugins {
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
-		test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
+		test::PublishTransaction(*pPlugin, model::WeakEntityInfoT<model::Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert: one notification is raised for each embedded transaction
 		ASSERT_EQ(2u, sub.numMatchingNotifications());
@@ -348,9 +358,10 @@ namespace catapult { namespace plugins {
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
-		test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
+		test::PublishTransaction(*pPlugin, model::WeakEntityInfoT<model::Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert: one notification is raised for each embedded transaction
 		ASSERT_EQ(2u, sub.numMatchingNotifications());
@@ -376,9 +387,10 @@ namespace catapult { namespace plugins {
 			auto registry = mocks::CreateDefaultTransactionRegistry();
 			auto pPlugin = CreateTransactionPlugin(registry);
 			auto wrapper = CreateAggregateTransaction(numTransactions, numCosignatures);
+			auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 			// Act:
-			test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
+			test::PublishTransaction(*pPlugin, model::WeakEntityInfoT<model::Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 			// Assert: the plugin raises an embedded transaction notification for each transaction
 			ASSERT_EQ(numTransactions, sub.numMatchingNotifications());
@@ -462,9 +474,10 @@ namespace catapult { namespace plugins {
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(0, 0);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
-		test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
+		test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());
@@ -482,9 +495,10 @@ namespace catapult { namespace plugins {
 		auto registry = mocks::CreateDefaultTransactionRegistry();
 		auto pPlugin = CreateTransactionPlugin(registry);
 		auto wrapper = CreateAggregateTransaction(2, 3);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
 
 		// Act:
-		test::PublishTransaction(*pPlugin, *wrapper.pTransaction, sub);
+		test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
 
 		// Assert:
 		ASSERT_EQ(1u, sub.numMatchingNotifications());

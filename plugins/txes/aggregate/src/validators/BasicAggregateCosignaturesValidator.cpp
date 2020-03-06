@@ -20,8 +20,6 @@
 
 #include "Validators.h"
 #include "catapult/utils/ArraySet.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "src/config/AggregateConfiguration.h"
 
 namespace catapult { namespace validators {
 
