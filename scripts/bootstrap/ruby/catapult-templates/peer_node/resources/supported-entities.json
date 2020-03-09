@@ -123,7 +123,7 @@
 		{
 			"name": "PrepareDrive",
 			"type": "16730",
-			"supportedVersions": [1]
+			"supportedVersions": [2]
 		},
 		{
 			"name": "JoinToDrive",
@@ -213,6 +213,16 @@
 		{
 			"name": "endExecute",
 			"type": "17248",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "uploadFile",
+			"type": "17504",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "deactivate",
+			"type": "17760",
 			"supportedVersions": [1]
 		}
 	]

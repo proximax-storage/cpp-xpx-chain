@@ -141,7 +141,7 @@ RUN cd /catapult \
     catapult.plugins.transfer \
     catapult.plugins.upgrade \
     catapult.plugins.service \
-    catapult.plugins.superconract \
+    catapult.plugins.supercontract \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \

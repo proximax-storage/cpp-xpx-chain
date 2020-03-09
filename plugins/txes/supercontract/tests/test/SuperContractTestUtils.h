@@ -42,9 +42,8 @@ namespace catapult { namespace test {
 	/// Cache factory for creating a catapult cache composed of operation cache and core caches.
 	struct SuperContractCacheFactory {
 	private:
-		static auto CreateSubCachesWithSuperContractCache(const config::BlockchainConfiguration& config) {
+		static auto CreateSubCachesWithSuperContractCache(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder) {
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::OperationCache::Id + 1);
-			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			subCaches[cache::DriveCache::Id] = MakeSubCachePlugin<cache::DriveCache, cache::DriveCacheStorage>(pConfigHolder);
 			subCaches[cache::OperationCache::Id] = MakeSubCachePlugin<cache::OperationCache, cache::OperationCacheStorage>(pConfigHolder);
 			subCaches[cache::SuperContractCache::Id] = MakeSubCachePlugin<cache::SuperContractCache, cache::SuperContractCacheStorage>(pConfigHolder);
@@ -54,12 +53,16 @@ namespace catapult { namespace test {
 	public:
 		/// Creates an empty catapult cache around default configuration.
 		static cache::CatapultCache Create() {
-			return Create(test::MutableBlockchainConfiguration().ToConst());
+			auto pConfigHolder = config::CreateMockConfigurationHolder();
+			auto subCaches = CreateSubCachesWithSuperContractCache(pConfigHolder);
+			CoreSystemCacheFactory::CreateSubCaches(pConfigHolder->Config(), subCaches);
+			return cache::CatapultCache(std::move(subCaches));
 		}
 
 		/// Creates an empty catapult cache around \a config.
 		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
-			auto subCaches = CreateSubCachesWithSuperContractCache(config);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			auto subCaches = CreateSubCachesWithSuperContractCache(pConfigHolder);
 			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}
@@ -86,7 +89,7 @@ namespace catapult { namespace test {
 		pTransaction->MosaicCount = numMosaics;
 		pTransaction->FunctionSize = functionSize;
 		pTransaction->DataSize = dataSize;
-		GenerateMosaics(pTransaction.get(), numMosaics);
+		GenerateMosaics(pTransaction.get(), numMosaics, functionSize);
 
         return pTransaction;
     }
