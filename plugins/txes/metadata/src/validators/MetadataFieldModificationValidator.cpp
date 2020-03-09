@@ -7,7 +7,6 @@
 #include "Validators.h"
 #include "plugins/txes/metadata/src/model/MetadataTypes.h"
 #include "src/config/MetadataConfiguration.h"
-#include "catapult/model/NetworkConfiguration.h"
 
 namespace catapult { namespace validators {
 

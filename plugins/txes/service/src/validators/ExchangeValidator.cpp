@@ -29,8 +29,6 @@ namespace catapult { namespace validators {
             if (driveEntry.processedDuration() >= driveEntry.duration())
                 return Failure_Service_Drive_Processed_Full_Duration;
 
-            //const auto& config = pConfigHolder->Config(context.Height);
-           // const auto& pluginConfig = config.Network.GetPluginConfiguration<config::ExchangeConfiguration>(PLUGIN_NAME_HASH(exchange));
             const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::ExchangeConfiguration>();
             const auto& defaultOfferPublicKey = pluginConfig.LongOfferKey;
             const auto& storageMosaicId = context.Config.Immutable.StorageMosaicId;
