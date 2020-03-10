@@ -7,7 +7,6 @@
 #include "src/storages/MongoNetworkConfigCacheStorage.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
-#include "mongo/tests/test/MongoTestUtils.h"
 #include "plugins/txes/config/tests/test/NetworkConfigTestUtils.h"
 #include "tests/test/NetworkConfigMapperTestUtils.h"
 #include "tests/TestHarness.h"
@@ -34,7 +33,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			static ModelType GenerateRandomElement(uint32_t id) {
 				auto height = Height{id};
 
-				state::NetworkConfigEntry entry(height, "aaa", "bbb");
+				state::NetworkConfigEntry entry(height, test::networkConfig(), test::supportedVersions());
 
 				return entry;
 			}
@@ -51,14 +50,14 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			static void Mutate(cache::CatapultCacheDelta& delta, ModelType& entry) {
 				// update expected
-				entry.setBlockChainConfig("ccc");
-				entry.setSupportedEntityVersions("ddd");
+				entry.setBlockChainConfig(test::networkConfig());
+				entry.setSupportedEntityVersions(test::supportedVersions());
 
 				// update cache
 				auto& networkConfigCacheDelta = delta.sub<cache::NetworkConfigCache>();
 				auto& entryFromCache = networkConfigCacheDelta.find(entry.height()).get();
-				entryFromCache.setBlockChainConfig("ccc");
-				entryFromCache.setSupportedEntityVersions("ddd");
+				entryFromCache.setBlockChainConfig(test::networkConfig());
+				entryFromCache.setSupportedEntityVersions(test::supportedVersions());
 			}
 
 			static auto GetFindFilter(const ModelType& entry) {

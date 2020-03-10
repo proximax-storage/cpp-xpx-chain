@@ -122,7 +122,7 @@ namespace catapult { namespace validators {
 			if (seedConfigCache) {
 				auto delta = cache.createDelta();
 				auto& configCacheDelta = delta.sub<cache::NetworkConfigCache>();
-				configCacheDelta.insert(state::NetworkConfigEntry(Height(1 + applyHeightDelta.unwrap()), "BlockChainConfig", "SupportedEntityVersionsConfig"));
+				configCacheDelta.insert(state::NetworkConfigEntry(Height(1 + applyHeightDelta.unwrap()), networkConfig, supportedEntityVersions));
 				cache.commit(Height(1));
 			}
 			AssertValidationResult(expectedResult, networkConfig, supportedEntityVersions, pPluginManager, cache, applyHeightDelta);

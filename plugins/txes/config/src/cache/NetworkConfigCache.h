@@ -21,8 +21,9 @@ namespace catapult { namespace cache {
 	class BasicNetworkConfigCache : public NetworkConfigBasicCache {
 	public:
 		/// Creates a cache.
-		explicit BasicNetworkConfigCache(const CacheConfiguration& config,
-		                                 const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
+		explicit BasicNetworkConfigCache(
+			const CacheConfiguration& config,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: NetworkConfigBasicCache(config)
 				, m_pConfigHolder(pConfigHolder)
 		{}
@@ -37,23 +38,8 @@ namespace catapult { namespace cache {
 		}
 
 		void commit(const CacheDeltaType& delta) {
-			Commit(m_set, delta, typename NetworkConfigCacheTypes::BaseSets::IsOrderedSet());
-
-			if( m_pConfigHolder == NULL)
-				return;
-			
-			auto elements = m_set.rebaseDetached();
-			for (const auto& xx : deltaset::MakeIterableView(elements.PrimaryHeights)) {
-				auto content = elements.pPrimary->find(xx);
-				auto entry = content.get();
-
-				m_pConfigHolder->InsertConfig(entry->height(), entry->networkConfig(),
-						entry->supportedEntityVersions());
-			}
-		}
-
-		void setBlockChainConfigHolder( const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-			m_pConfigHolder = pConfigHolder;
+			delta.updateConfigHolder(m_pConfigHolder);
+			NetworkConfigBasicCache::commit(delta);
 		}
 
 	private:
@@ -67,8 +53,9 @@ namespace catapult { namespace cache {
 
 	public:
 		/// Creates a cache around \a config.
-		explicit NetworkConfigCache(const CacheConfiguration& config,
-		                            const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder = NULL)
+		explicit NetworkConfigCache(
+			const CacheConfiguration& config,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: SynchronizedCacheWithInit<BasicNetworkConfigCache>(BasicNetworkConfigCache(config, pConfigHolder))
 		{}
 	};

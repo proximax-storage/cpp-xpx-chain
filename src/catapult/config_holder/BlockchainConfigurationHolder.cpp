@@ -8,12 +8,11 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/exceptions.h"
 #include "catapult/io/Stream.h"
-#include "plugins/txes/config/src/cache/NetworkConfigCache.h"
 #include <fstream>
 
 namespace catapult { namespace config {
 
-	BlockchainConfigurationHolder::BlockchainConfigurationHolder(cache::CatapultCache *pCache)
+	BlockchainConfigurationHolder::BlockchainConfigurationHolder(cache::CatapultCache* pCache)
 			: m_pCache(pCache)
 			, m_pluginInitializer([](auto&) {}) {
 		auto config = BlockchainConfiguration{
@@ -38,33 +37,32 @@ namespace catapult { namespace config {
 		auto resourcesPath = GetResourcesPath(argc, argv);
 		std::cout << "loading resources from " << resourcesPath << std::endl;
 		SetConfig(Height(0), config::BlockchainConfiguration::LoadFromPath(resourcesPath, extensionsHost));
-		return m_networkConfigs.get(Height(0));
+		return m_configs.at(Height(0));
 	}
 
 	void BlockchainConfigurationHolder::SetConfig(const Height& height, const BlockchainConfiguration& config) {
 		std::lock_guard<std::mutex> guard(m_mutex);
-		if (m_networkConfigs.containsRef(height) || m_networkConfigs.contains(height))
-			m_networkConfigs.erase(height);
-		m_networkConfigs.insert(height, config);
+		m_configs.erase(height);
+		m_configs.insert({ height, config });
 	}
 
 	const BlockchainConfiguration& BlockchainConfigurationHolder::Config(const Height& height) {
 		std::lock_guard<std::mutex> guard(m_mutex);
 
-		if (m_networkConfigs.containsRef(height) || m_networkConfigs.contains(height))
-			return m_networkConfigs.get(height);
+		auto iter = m_configs.lower_bound(height);
 
-		// While we are loading nemesis block, config from cache is not ready, so let's use initial config
-		if (height.unwrap() == 1)
-			return m_networkConfigs.get(Height(0));
+		if (iter != m_configs.end() && iter->first != height) {
+			iter = (iter == m_configs.begin()) ? m_configs.end() : --iter;
+		} else if (iter == m_configs.end()) {
+			if (!m_configs.empty()) {
+				--iter;
+			}
+		}
 
-		auto configHeight = m_networkConfigs.GetLowerOrEqualHeightConfig(height);
+		if (iter == m_configs.end())
+			CATAPULT_THROW_INVALID_ARGUMENT_1("config not found at height", height);
 
-		if (m_networkConfigs.contains(configHeight))
-			return m_networkConfigs.insertRef(height, configHeight);
-
-		CATAPULT_THROW_INVALID_ARGUMENT_1("UNEXPECTED config doesn't exist at height", height);
-
+		return iter->second;
 	}
 
 	const BlockchainConfiguration& BlockchainConfigurationHolder::Config() {
@@ -77,7 +75,39 @@ namespace catapult { namespace config {
 		return Config(height);
 	}
 
-	ConfigTreeCache& BlockchainConfigurationHolder::NetworkConfigs() {
-		return m_networkConfigs;
+	void BlockchainConfigurationHolder::InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion) {
+		std::lock_guard<std::mutex> guard(m_mutex);
+
+		try {
+			std::istringstream inputBlock(strConfig);
+			auto networkConfig = model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
+			m_pluginInitializer(networkConfig);
+
+			std::istringstream inputVersions(supportedVersion);
+			config::SupportedEntityVersions supportedEntityVersions;
+			supportedEntityVersions = LoadSupportedEntityVersions(inputVersions);
+
+			const auto& baseConfig = m_configs.at(Height(0));
+			auto config = BlockchainConfiguration(
+					baseConfig.Immutable,
+					networkConfig,
+					baseConfig.Node,
+					baseConfig.Logging,
+					baseConfig.User,
+					baseConfig.Extensions,
+					baseConfig.Inflation,
+					supportedEntityVersions
+			);
+
+			m_configs.erase(height);
+			m_configs.insert({ height, config });
+		} catch (...) {
+			CATAPULT_THROW_INVALID_ARGUMENT_1("unable to insert to config holder at height", height);
+		}
+	}
+
+	void BlockchainConfigurationHolder::RemoveConfig(const Height& height){
+		std::lock_guard<std::mutex> guard(m_mutex);
+		m_configs.erase(height);
 	}
 }}

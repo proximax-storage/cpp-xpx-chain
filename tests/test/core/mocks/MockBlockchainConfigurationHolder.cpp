@@ -10,9 +10,8 @@
 namespace catapult { namespace config {
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder()
-			: BlockchainConfigurationHolder(nullptr) {
-		SetConfig(Height{0}, test::MutableBlockchainConfiguration().ToConst());
-	}
+			: BlockchainConfigurationHolder(nullptr)
+	{}
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const model::NetworkConfiguration& networkConfig)
 			: BlockchainConfigurationHolder(nullptr) {
@@ -27,15 +26,15 @@ namespace catapult { namespace config {
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config(const Height&) {
-		return m_networkConfigs.get(Height{0});
+		return m_configs.at(Height{0});
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config() {
-		return m_networkConfigs.get(Height{0});
+		return m_configs.at(Height{0});
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height&) {
-		return m_networkConfigs.get(Height{0});
+		return m_configs.at(Height{0});
 	}
 
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder() {

@@ -5,9 +5,11 @@
 **/
 
 #include "src/cache/NetworkConfigCache.h"
+#include "tests/test/NetworkConfigTestUtils.h"
 #include "tests/test/cache/CacheBasicTests.h"
 #include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 
@@ -19,7 +21,10 @@ namespace catapult { namespace cache {
 		struct NetworkConfigCacheMixinTraits {
 			class CacheType : public NetworkConfigCache {
 			public:
-				CacheType() : NetworkConfigCache(CacheConfiguration())
+				CacheType() : NetworkConfigCache(CacheConfiguration(), config::CreateMockConfigurationHolder())
+				{}
+
+				CacheType(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder) : NetworkConfigCache(CacheConfiguration(), pConfigHolder)
 				{}
 			};
 
@@ -39,14 +44,14 @@ namespace catapult { namespace cache {
 			}
 
 			static ValueType CreateWithId(uint8_t id) {
-				return state::NetworkConfigEntry(MakeId(id));
+				return state::NetworkConfigEntry(MakeId(id), test::networkConfig(), test::supportedVersions());
 			}
 		};
 
 		struct NetworkConfigEntryModificationPolicy : public test::DeltaRemoveInsertModificationPolicy {
 			static void Modify(NetworkConfigCacheDelta& delta, const state::NetworkConfigEntry& entry) {
 				auto& entryFromCache = delta.find(entry.height()).get();
-				entryFromCache.setBlockChainConfig(entryFromCache.networkConfig() + "\nnewField = 1");
+				entryFromCache.setBlockChainConfig(entryFromCache.networkConfig() + "\nenableUnconfirmedTransactionMinFeeValidation = false");
 			}
 		};
 	}
@@ -78,9 +83,8 @@ namespace catapult { namespace cache {
 
 		// - insert single account key
 		{
-
 			auto delta = cache.createDelta(Height{1});
-			delta->insert(state::NetworkConfigEntry(key));
+			delta->insert(state::NetworkConfigEntry(key, test::networkConfig(), test::supportedVersions()));
 			cache.commit();
 		}
 
@@ -91,16 +95,43 @@ namespace catapult { namespace cache {
 		{
 			auto delta = cache.createDelta(Height{1});
 			auto& entry = delta->find(key).get();
-			entry.setBlockChainConfig("networkConfig");
-			entry.setSupportedEntityVersions("supportedEntityVersions");
+			entry.setBlockChainConfig(test::networkConfig());
 			cache.commit();
 		}
 
 		// Assert:
 		auto view = cache.createView(Height{0});
 		const auto& entry = view->find(key).get();
-		EXPECT_EQ("networkConfig", entry.networkConfig());
-		EXPECT_EQ("supportedEntityVersions", entry.supportedEntityVersions());
+		EXPECT_EQ(test::networkConfig(), entry.networkConfig());
+		EXPECT_EQ(test::supportedVersions(), entry.supportedEntityVersions());
+	}
+
+	TEST(TEST_CLASS, CommitUpdatesConfigHolder) {
+		// Arrange:
+		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>();
+		NetworkConfigCacheMixinTraits::CacheType cache(pConfigHolder);
+
+		// Act:
+		{
+			auto delta = cache.createDelta(Height(444));
+			delta->insert(state::NetworkConfigEntry(Height(333), test::networkConfig(), test::supportedVersions()));
+			delta->insert(state::NetworkConfigEntry(Height(444), test::networkConfig(), test::supportedVersions()));
+			cache.commit();
+		}
+
+		{
+			auto delta = cache.createDelta(Height(777));
+			delta->insert(state::NetworkConfigEntry(Height(777), test::networkConfig(), test::supportedVersions()));
+			delta->remove(Height(333));
+			delta->remove(Height(444));
+			delta->remove(Height(777));
+			delta->insert(state::NetworkConfigEntry(Height(333),
+				test::networkConfig() + "\nenableUnconfirmedTransactionMinFeeValidation = false", test::supportedVersions()));
+			cache.commit();
+		}
+
+		// Assert:
+		EXPECT_EQ(false, pConfigHolder->Config(Height(777)).Network.EnableUnconfirmedTransactionMinFeeValidation);
 	}
 
 	// endregion

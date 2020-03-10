@@ -4,8 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "plugins/txes/config/tests/test/NetworkConfigTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
@@ -155,20 +155,16 @@ namespace catapult { namespace config {
 
 	TEST(TEST_CLASS, GetDefaultConfigAtHeightOne) {
 		// Arrange:
-		//auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
-		//BlockchainConfigurationHolder testee(&cache);
-		std::shared_ptr<BlockchainConfigurationHolder> testee(new BlockchainConfigurationHolder());
-		auto cache = test::NetworkConfigCacheFactory::Create(testee);
-
+		BlockchainConfigurationHolder testee;
 		test::MutableBlockchainConfiguration config;
 		config.Network.ImportanceGrouping = 5;
-		testee->SetConfig(Height{0}, config.ToConst());
+		testee.SetConfig(Height{0}, config.ToConst());
 
 		// Act:
-		auto& result = testee->Config(Height{777});
+		auto& result = testee.Config(Height{777});
 
 		// Assert:
-		EXPECT_EQ(5, testee->Config(Height{777}).Network.ImportanceGrouping);
+		EXPECT_EQ(5, testee.Config(Height{777}).Network.ImportanceGrouping);
 		EXPECT_EQ(0, result.SupportedEntityVersions.size());
 	}
 
@@ -187,48 +183,24 @@ namespace catapult { namespace config {
 		EXPECT_EQ(0, result.SupportedEntityVersions.size());
 	}
 
-	TEST(TEST_CLASS, CanGetConfigAtHeightFromCache) {
-		// Arrange:
-		std::shared_ptr<BlockchainConfigurationHolder> testee(new BlockchainConfigurationHolder());
-		auto cache = test::NetworkConfigCacheFactory::Create(testee);
-		//BlockchainConfigurationHolder testee(&cache);
-
-		auto delta = cache.createDelta();
-		auto& configCacheDelta = delta.sub<cache::NetworkConfigCache>();
-
-		configCacheDelta.insert(state::NetworkConfigEntry(Height(555), networkConfig, test::GetSupportedEntityVersionsString()));
-		cache.commit(Height(1));
-
-		// Act:
-		auto& result = testee->Config(Height{777});
-
-		// Assert:
-		EXPECT_EQ(7, result.Network.ImportanceGrouping);
-		EXPECT_EQ(24, result.SupportedEntityVersions.size());
-	}
-
 	namespace test_config_at_height {
 		class TestBlockchainConfigurationHolder : public BlockchainConfigurationHolder {
 		public:
 			using BlockchainConfigurationHolder::BlockchainConfigurationHolder;
 
 			void RemoveConfigAtZeroHeight() {
-				m_networkConfigs.erase(Height{0});
+				m_configs.erase(Height{0});
 			}
 		};
 	}
 
 	TEST(TEST_CLASS, GetConfigThrowsWhenConfigIsNotFoundInCache) {
 		// Arrange:
-		std::shared_ptr<test_config_at_height::TestBlockchainConfigurationHolder>
-		        testee(new test_config_at_height::TestBlockchainConfigurationHolder());
-
-		auto cache = test::NetworkConfigCacheFactory::Create(testee);
-
-		testee->RemoveConfigAtZeroHeight();
+		test_config_at_height::TestBlockchainConfigurationHolder testee;
+		testee.RemoveConfigAtZeroHeight();
 
 		// Act + Assert:
-		EXPECT_THROW(testee->Config(Height{777}), catapult_invalid_argument);
+		EXPECT_THROW(testee.Config(Height{777}), catapult_invalid_argument);
 	}
 
 	// endregion
@@ -238,8 +210,8 @@ namespace catapult { namespace config {
 	namespace test_config {
 		class TestBlockchainConfigurationHolder : public BlockchainConfigurationHolder {
 		public:
-			TestBlockchainConfigurationHolder()
-				: BlockchainConfigurationHolder()
+			TestBlockchainConfigurationHolder(cache::CatapultCache* pCache)
+				: BlockchainConfigurationHolder(pCache)
 				, NetworkConfig(test::MutableBlockchainConfiguration().ToConst())
 			{}
 
@@ -256,7 +228,7 @@ namespace catapult { namespace config {
 
 	TEST(TEST_CLASS, ConfigCalledAtZeroHeightWhenCacheNotSet) {
 		// Arrange:
-		test_config::TestBlockchainConfigurationHolder testee;
+		test_config::TestBlockchainConfigurationHolder testee(nullptr);
 
 		// Act:
 		testee.BlockchainConfigurationHolder::Config();
@@ -267,23 +239,19 @@ namespace catapult { namespace config {
 
 	TEST(TEST_CLASS, ConfigCalledAtCacheHeightWhenCacheSet) {
 		// Arrange:
-		std::shared_ptr<test_config::TestBlockchainConfigurationHolder>
-				testee(new test_config::TestBlockchainConfigurationHolder());
-
-		auto cache = test::NetworkConfigCacheFactory::Create(testee);
+		auto cache = test::CreateEmptyCatapultCache();
+		test_config::TestBlockchainConfigurationHolder testee(&cache);
 
 		auto delta = cache.createDelta();
-		auto& configCacheDelta = delta.sub<cache::NetworkConfigCache>();
-		configCacheDelta.insert(state::NetworkConfigEntry(Height(555), networkConfig,
-				test::GetSupportedEntityVersionsString()));
-
+		auto& accountCacheDelta = delta.sub<cache::AccountStateCache>();
+		accountCacheDelta.addAccount(test::GenerateRandomByteArray<Key>(), Height(111));
 		cache.commit(Height{777});
 
 		// Act:
-		testee->BlockchainConfigurationHolder::Config();
+		testee.BlockchainConfigurationHolder::Config();
 
 		// Assert:
-		EXPECT_EQ(Height{777}, testee->ConfigCalledAtHeight);
+		EXPECT_EQ(Height{777}, testee.ConfigCalledAtHeight);
 	}
 
 	// endregion
@@ -364,7 +332,7 @@ namespace catapult { namespace config {
 
 	TEST(TEST_CLASS, CacheSetAtConstruction) {
 		// Act:
-		auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
+		auto cache = test::CreateEmptyCatapultCache();
 		test_set_cache::TestBlockchainConfigurationHolder testee(&cache);
 
 		// Assert:
@@ -375,7 +343,7 @@ namespace catapult { namespace config {
 		// Arrange:
 		test_set_cache::TestBlockchainConfigurationHolder testee;
 		EXPECT_FALSE(testee.IsCacheSet());
-		auto cache = test::CreateEmptyCatapultCache<test::NetworkConfigCacheFactory>();
+		auto cache = test::CreateEmptyCatapultCache();
 
 		// Act:
 		testee.SetCache(&cache);
@@ -390,8 +358,7 @@ namespace catapult { namespace config {
 
 	TEST(TEST_CLASS, ConfigHolderIsThreadSafe) {
 		// Arrange:
-		std::shared_ptr<BlockchainConfigurationHolder> testee(new BlockchainConfigurationHolder());
-		auto cache = test::NetworkConfigCacheFactory::Create(testee);
+		BlockchainConfigurationHolder testee;
 		uint64_t iterationCount = 1000;
 
 		// Act:
@@ -400,13 +367,13 @@ namespace catapult { namespace config {
 			test::MutableBlockchainConfiguration mutableConfig;
 			for (uint64_t i = 1; i <= iterationCount; ++i) {
 				mutableConfig.Network.ImportanceGrouping = i;
-				testee->SetConfig(Height { i }, mutableConfig.ToConst());
+				testee.SetConfig(Height { i }, mutableConfig.ToConst());
 			}
 		});
 
 		threads.create_thread([&testee, iterationCount] {
 			for (;;) {
-				auto& config = testee->Config(Height { iterationCount });
+				auto& config = testee.Config(Height { iterationCount });
 				if (config.Network.ImportanceGrouping == iterationCount)
 					break;
 			}
