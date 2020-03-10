@@ -191,7 +191,6 @@ namespace catapult { namespace config {
 		// Arrange:
 		std::shared_ptr<BlockchainConfigurationHolder> testee(new BlockchainConfigurationHolder());
 		auto cache = test::NetworkConfigCacheFactory::Create(testee);
-		//BlockchainConfigurationHolder testee(&cache);
 
 		auto delta = cache.createDelta();
 		auto& configCacheDelta = delta.sub<cache::NetworkConfigCache>();

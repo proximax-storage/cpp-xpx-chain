@@ -59,12 +59,7 @@ namespace catapult { namespace config {
 			return m_networkConfigs.get(Height(0));
 
 		auto configHeight = m_networkConfigs.GetLowerOrEqualHeightConfig(height);
-
-		if (m_networkConfigs.contains(configHeight))
-			return m_networkConfigs.insertRef(height, configHeight);
-
-		CATAPULT_THROW_INVALID_ARGUMENT_1("UNEXPECTED config doesn't exist at height", height);
-
+		return m_networkConfigs.insertRef(height, configHeight);
 	}
 
 	const BlockchainConfiguration& BlockchainConfigurationHolder::Config() {
@@ -75,9 +70,5 @@ namespace catapult { namespace config {
 		if (height == HEIGHT_OF_LATEST_CONFIG)
 			return Config();
 		return Config(height);
-	}
-
-	ConfigTreeCache& BlockchainConfigurationHolder::NetworkConfigs() {
-		return m_networkConfigs;
 	}
 }}

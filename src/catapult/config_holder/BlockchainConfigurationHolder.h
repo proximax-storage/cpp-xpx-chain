@@ -50,7 +50,7 @@ namespace catapult { namespace config {
 			m_pluginInitializer = initializer;
 		}
 
-		inline void InsertConfig(const Height& height, const std::string &strConfig, const std::string &supportedVersion){
+		void InsertConfig(const Height& height, const std::string &strConfig, const std::string &supportedVersion){
 			try {
 				std::istringstream inputBlock(strConfig);
 				auto networkConfig = model::NetworkConfiguration::LoadFromBag(
@@ -82,7 +82,9 @@ namespace catapult { namespace config {
 			}
 		}
 
-		ConfigTreeCache& NetworkConfigs();
+		ConfigTreeCache& NetworkConfigs() {
+			return m_networkConfigs;
+		}
 
 	protected:
 		ConfigTreeCache m_networkConfigs;

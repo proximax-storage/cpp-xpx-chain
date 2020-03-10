@@ -111,13 +111,6 @@ namespace catapult { namespace config {
 			return Height(0);
 		}
 
-		void clearAll() {
-			m_configs.clear();
-			m_references.clear();
-		}
-
-		Height GetLastConfigKey();
-
 	private:
 		void cleanupRefs(ConfigRoot& root) {
 			cleanupRefs(root, 4 * root.Config.Network.MaxRollbackBlocks);

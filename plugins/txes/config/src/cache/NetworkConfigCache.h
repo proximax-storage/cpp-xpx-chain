@@ -37,23 +37,23 @@ namespace catapult { namespace cache {
 		}
 
 		void commit(const CacheDeltaType& delta) {
-			Commit(m_set, delta, typename NetworkConfigCacheTypes::BaseSets::IsOrderedSet());
+			if(m_pConfigHolder) {
+				auto addedElements = delta.addedElements();
+				auto modifiedElements = delta.modifiedElements();
+				auto removedElements = delta.removedElements();
 
-			if( m_pConfigHolder == NULL)
-				return;
-			
-			auto elements = m_set.rebaseDetached();
-			for (const auto& xx : deltaset::MakeIterableView(elements.PrimaryHeights)) {
-				auto content = elements.pPrimary->find(xx);
-				auto entry = content.get();
+				for (const auto *pElement : removedElements) {
+					m_pConfigHolder->NetworkConfigs().erase(pElement->height());
+				}
 
-				m_pConfigHolder->InsertConfig(entry->height(), entry->networkConfig(),
-						entry->supportedEntityVersions());
+				std::unordered_set<const state::NetworkConfigEntry*> arrElements[] = {addedElements, modifiedElements};
+				for (auto i = 0; i < 2; i++) {
+					for (const auto *pElement : arrElements[i]) {
+						m_pConfigHolder->InsertConfig(pElement->height(), pElement->networkConfig(), pElement->supportedEntityVersions());
+					}
+				}
 			}
-		}
-
-		void setBlockChainConfigHolder( const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-			m_pConfigHolder = pConfigHolder;
+			Commit(m_set, delta, typename NetworkConfigCacheTypes::BaseSets::IsOrderedSet());
 		}
 
 	private:
