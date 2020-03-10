@@ -84,7 +84,8 @@ namespace catapult { namespace cache {
 		// - insert single account key
 		{
 			auto delta = cache.createDelta(Height{1});
-			delta->insert(state::NetworkConfigEntry(key, test::networkConfig(), test::supportedVersions()));
+			delta->insert(state::NetworkConfigEntry(key,
+				test::networkConfig() + "\nenableUnconfirmedTransactionMinFeeValidation = false", test::supportedVersions()));
 			cache.commit();
 		}
 
