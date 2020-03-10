@@ -36,6 +36,7 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			static constexpr auto Collection_Name = "hashLockInfos";
 			static constexpr auto Id_Property_Name = "lock.hash";
+			static constexpr char Doc_Name[] = "lock";
 
 			static constexpr auto CreateCacheStorage = CreateMongoHashLockInfoCacheStorage;
 			static constexpr auto AssertEqualLockInfoData = test::AssertEqualLockInfoData;

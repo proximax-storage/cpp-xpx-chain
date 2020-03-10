@@ -23,11 +23,13 @@ namespace catapult { namespace config {
 		namespaceConfigId,
 		propertyConfigId,
 		serviceConfigId,
+		supercontractConfigId,
 		transferConfigId,
 		upgradeConfigId,
         exchangeConfigId,
-        First = aggregateConfigId,
-        Latest = exchangeConfigId,
+        operationConfigId,
+        First = static_cast<uint32_t>(aggregateConfigId),
+        Latest = static_cast<uint32_t>(operationConfigId),
 	};
 
 /// Defines config constants for a config with \a NAME.

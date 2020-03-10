@@ -42,37 +42,45 @@ namespace catapult { namespace observers {
 		static void AssertObserverAddsInfoOnCommit() {
 			// Act:
 			RunTest(
-					typename TTraits::ObserverTestContext(NotifyMode::Commit, DefaultHeight()),
-					[](const auto&, const auto&) {
-					},
-					// Assert: lock info was added to cache
-					[](const auto& lockInfoCacheDelta, const auto& notification, auto& observerContext) {
-						EXPECT_EQ(1u, lockInfoCacheDelta.size());
+				typename TTraits::ObserverTestContext(NotifyMode::Commit, DefaultHeight()),
+				[](const auto&, const auto&) {
+				},
+				// Assert: lock info was added to cache
+				[](const auto& lockInfoCacheDelta, const auto& notification, auto& observerContext) {
+					EXPECT_EQ(1u, lockInfoCacheDelta.size());
 
-						const auto& key = TTraits::ToKey(notification);
-						ASSERT_TRUE(lockInfoCacheDelta.contains(key));
+					const auto& key = TTraits::ToKey(notification);
+					ASSERT_TRUE(lockInfoCacheDelta.contains(key));
 
-						const auto& lockInfo = lockInfoCacheDelta.find(key).get();
-						EXPECT_EQ(notification.Signer, lockInfo.Account);
-						EXPECT_EQ(notification.Mosaic.MosaicId, test::UnresolveXor(lockInfo.MosaicId));
-						EXPECT_EQ(notification.Mosaic.Amount, lockInfo.Amount);
-						EXPECT_EQ(DefaultHeight() + Height(notification.Duration.unwrap()), lockInfo.Height);
+					const auto& lockInfo = lockInfoCacheDelta.find(key).get();
+					EXPECT_EQ(notification.Signer, lockInfo.Account);
+					EXPECT_EQ(notification.MosaicCount, lockInfo.Mosaics.size());
+					auto pMosaic = notification.MosaicsPtr;
+					for (auto i = 0u; i < notification.MosaicCount; ++i, ++pMosaic) {
+						auto resolver = test::CreateResolverContextXor();
+						auto mosaicId = resolver.resolve(pMosaic->MosaicId);
+						EXPECT_EQ(pMosaic->Amount, lockInfo.Mosaics.at(mosaicId));
+					}
+					EXPECT_EQ(DefaultHeight() + Height(notification.Duration.unwrap()), lockInfo.Height);
 
-						TTraits::AssertAddedLockInfo(lockInfo, notification);
+					TTraits::AssertAddedLockInfo(lockInfo, notification);
 
-						auto pStatement = observerContext.statementBuilder().build();
-						ASSERT_EQ(1u, pStatement->TransactionStatements.size());
-						const auto& receiptPair = *pStatement->TransactionStatements.find(model::ReceiptSource());
-						ASSERT_EQ(1u, receiptPair.second.size());
+					auto pStatement = observerContext.statementBuilder().build();
+					ASSERT_EQ(1u, pStatement->TransactionStatements.size());
+					const auto& receiptPair = *pStatement->TransactionStatements.find(model::ReceiptSource());
+					ASSERT_EQ(notification.MosaicCount, receiptPair.second.size());
 
-						const auto& receipt = static_cast<const model::BalanceChangeReceipt&>(receiptPair.second.receiptAt(0));
+					pMosaic = notification.MosaicsPtr;
+					for (auto i = 0u; i < notification.MosaicCount; ++i, ++pMosaic) {
+						const auto &receipt = static_cast<const model::BalanceChangeReceipt &>(receiptPair.second.receiptAt(i));
 						ASSERT_EQ(sizeof(model::BalanceChangeReceipt), receipt.Size);
 						EXPECT_EQ(1u, receipt.Version);
 						EXPECT_EQ(TTraits::Debit_Receipt_Type, receipt.Type);
 						EXPECT_EQ(notification.Signer, receipt.Account);
-						EXPECT_EQ(notification.Mosaic.MosaicId, test::UnresolveXor(receipt.MosaicId));
-						EXPECT_EQ(notification.Mosaic.Amount, receipt.Amount);
-					});
+						EXPECT_EQ(pMosaic->MosaicId, test::UnresolveXor(receipt.MosaicId));
+						EXPECT_EQ(pMosaic->Amount, receipt.Amount);
+					}
+				});
 		}
 
 		static void AssertObserverDoesNotOverwriteInfoOnCommit() {

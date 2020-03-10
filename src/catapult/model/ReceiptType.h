@@ -55,6 +55,9 @@ namespace catapult { namespace model {
 
 		/// Drive receipt.
 		Drive = 0x6,
+
+		/// Operation receipt.
+		Operation = 0x7,
 	};
 
 	/// Enumeration of receipt types.

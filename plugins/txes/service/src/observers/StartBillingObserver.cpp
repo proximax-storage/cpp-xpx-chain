@@ -36,7 +36,7 @@ namespace catapult { namespace observers {
                     driveCache.addBillingDrive(driveEntry.key(), driveEntry.billingHistory().back().End);
                 }
             } else {
-                if (driveEntry.state() == state::DriveState::InProgress && driveBalance < driveEntry.billingPrice()) {
+                if (driveEntry.state() == state::DriveState::InProgress && (driveBalance - notification.Amount) < driveEntry.billingPrice()) {
                     SetDriveState(driveEntry, context, state::DriveState::Pending);
 
                     driveCache.removeBillingDrive(driveEntry.key(), driveEntry.billingHistory().back().End);

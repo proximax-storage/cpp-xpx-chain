@@ -259,7 +259,7 @@ namespace catapult { namespace zeromq {
 
 		const auto& addresses = transactionInfo.OptionalAddresses
 				? *transactionInfo.OptionalAddresses
-				: model::ExtractAddresses(transactionInfo.Transaction, transactionInfo.AssociatedHeight, *m_pNotificationPublisher, m_extractorContextFactory());
+				: model::ExtractAddresses(transactionInfo.Transaction, transactionInfo.EntityHash, transactionInfo.AssociatedHeight, *m_pNotificationPublisher, m_extractorContextFactory());
 
 		if (addresses.empty())
 			CATAPULT_LOG(warning) << "no addresses are associated with transaction " << transactionInfo.EntityHash;

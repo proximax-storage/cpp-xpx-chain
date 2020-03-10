@@ -58,8 +58,8 @@ namespace catapult { namespace observers {
 
 			static ValueType CreateLockInfoWithAmount(MosaicId mosaicId, Amount amount, Height height) {
 				auto lockInfo = CreateLockInfo(height);
-				lockInfo.MosaicId = mosaicId;
-				lockInfo.Amount = amount;
+				lockInfo.Mosaics.clear();
+				lockInfo.Mosaics.emplace(mosaicId, amount);
 				return lockInfo;
 			}
 		};

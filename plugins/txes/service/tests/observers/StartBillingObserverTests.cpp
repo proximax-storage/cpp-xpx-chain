@@ -26,6 +26,7 @@ namespace catapult { namespace observers {
 		constexpr Height Current_Height(5);
 		constexpr BlockDuration Billing_Period(20);
 		constexpr Amount Billing_Price(1000);
+		constexpr Amount Credit_Amount(10);
 		constexpr auto Drive_Size = 100;
 
 		state::DriveEntry CreateInitialDriveEntry(
@@ -66,7 +67,7 @@ namespace catapult { namespace observers {
 		void RunTest(NotifyMode mode, const CacheValues& values, const Key& driveKey, const Height& currentHeight, const MosaicId& mosaicId) {
 			// Arrange:
 			ObserverTestContext context(mode, currentHeight);
-			Notification notification(driveKey, test::UnresolveXor(mosaicId), UnresolvedAmount(0));
+			Notification notification(driveKey, test::UnresolveXor(mosaicId), UnresolvedAmount(Credit_Amount.unwrap()));
 			auto pObserver = CreateStartBillingObserver(Storage_Mosaic_Id);
 			auto& driveCache = context.cache().sub<cache::DriveCache>();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
@@ -138,7 +139,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, StartBilling_Rollback) {
 		// Arrange:
 		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::Pending, Billing_Price - Amount(1));
+		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::Pending, Billing_Price + Credit_Amount - Amount(1));
 		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, state::DriveState::InProgress);
 
 		// Assert:
@@ -148,7 +149,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, StartBilling_Rollback_WrongMosaic) {
 		// Arrange:
 		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::InProgress, Billing_Price - Amount(1));
+		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::InProgress, Billing_Price + Credit_Amount - Amount(1));
 		values.InitialDriveEntry = values.ExpectedDriveEntry;
 
 		// Assert:
@@ -158,7 +159,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, StartBilling_Rollback_WrongSender) {
 		// Arrange:
 		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::InProgress, Billing_Price - Amount(1));
+		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::InProgress, Billing_Price + Credit_Amount - Amount(1));
 		values.InitialDriveEntry = values.ExpectedDriveEntry;
 
 		// Assert:
@@ -168,7 +169,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, StartBilling_Rollback_WrongState) {
 		// Arrange:
 		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::Pending, Billing_Price - Amount(1));
+		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::Pending, Billing_Price + Credit_Amount - Amount(1));
 		values.InitialDriveEntry = values.ExpectedDriveEntry;
 
 		// Assert:
@@ -178,7 +179,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, StartBilling_Rollback_ExceedingBalance) {
 		// Arrange:
 		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::Pending, Billing_Price);
+		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::Pending, Billing_Price + Credit_Amount);
 		values.InitialDriveEntry = values.ExpectedDriveEntry;
 
 		// Assert:
@@ -188,7 +189,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, StartBilling_Rollback_InvalidBillingPeriodEnd) {
 		// Arrange:
 		CacheValues values;
-		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::Pending, Billing_Price - Amount(1));
+		values.ExpectedDriveEntry = CreateInitialDriveEntry(values.DriveAccount, state::DriveState::Pending, Billing_Price + Credit_Amount - Amount(1));
 		values.InitialDriveEntry = CreateExpectedDriveEntry(values.ExpectedDriveEntry, state::DriveState::InProgress);
 		values.InitialDriveEntry.billingHistory().back().Start = Current_Height - Height(1);
 
