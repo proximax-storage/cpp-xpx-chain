@@ -101,9 +101,8 @@ namespace catapult { namespace observers {
 		void RunHarvestFeeObserverTest(
 				NotifyMode notifyMode,
 				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
-				const config::BlockchainConfiguration& config,
 				TAction action) {
-			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
+			test::AccountObserverTestContext context(notifyMode, Height{444}, pConfigHolder->Config());
 			auto pObserver = CreateHarvestFeeObserver(pConfigHolder);
 
 			// Act + Assert:
@@ -117,7 +116,7 @@ namespace catapult { namespace observers {
 			mutableConfig.Network.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
 			mutableConfig.Inflation = config::InflationConfiguration::Uninitialized();
 			auto config = mutableConfig.ToConst();
-			RunHarvestFeeObserverTest(notifyMode, config::CreateMockConfigurationHolder(config), config, action);
+			RunHarvestFeeObserverTest(notifyMode, config::CreateMockConfigurationHolder(config), action);
 		}
 	}
 
@@ -220,7 +219,7 @@ namespace catapult { namespace observers {
 			auto config = mutableConfig.ToConst();
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 
-			RunHarvestFeeObserverTest(notifyMode, pConfigHolder, config, [&](auto& context, const auto& observer) {
+			RunHarvestFeeObserverTest(notifyMode, pConfigHolder, [&](auto& context, const auto& observer) {
 				// - setup cache
 				auto& accountStateCache = context.cache().template sub<cache::AccountStateCache>();
 				auto harvesterAccountStateIter = MainAccountTraits::AddAccount(accountStateCache, signer, Height(1));
