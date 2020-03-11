@@ -21,7 +21,6 @@
 #include "src/model/AggregateTransaction.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/TransactionContainerTestUtils.h"
-#include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/TestHarness.h"
 
