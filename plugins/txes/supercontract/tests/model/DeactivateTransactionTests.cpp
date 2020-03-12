@@ -23,11 +23,12 @@ namespace catapult { namespace model {
 			// Arrange:
 			auto expectedSize =
 					baseSize // base
-					+ Key_Size; // super contract
+					+ Key_Size // super contract
+					+ Key_Size; // drive
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 32u, sizeof(T));
+			EXPECT_EQ(baseSize + 64u, sizeof(T));
 		}
 
 		template<typename T>

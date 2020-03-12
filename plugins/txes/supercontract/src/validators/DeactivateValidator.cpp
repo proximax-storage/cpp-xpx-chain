@@ -19,6 +19,9 @@ namespace catapult { namespace validators {
 		if (superContractEntry.owner() != notification.Signer && superContractEntry.mainDriveKey() != notification.Signer)
 			return Failure_SuperContract_Operation_Is_Not_Permitted;
 
+		if (superContractEntry.mainDriveKey() != notification.DriveKey)
+			return Failure_SuperContract_Invalid_Drive_Key;
+
 		if (superContractEntry.executionCount() > 0)
 			return Failure_SuperContract_Execution_Is_In_Progress;
 

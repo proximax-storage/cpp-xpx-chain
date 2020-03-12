@@ -33,7 +33,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, Deactivate_Commit) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Commit, Current_Height);
-		Notification notification(test::GenerateRandomByteArray<Key>(), Super_Contract_Key);
+		Notification notification(test::GenerateRandomByteArray<Key>(), Super_Contract_Key, test::GenerateRandomByteArray<Key>());
 		auto pObserver = CreateDeactivateObserver();
 		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 
@@ -51,7 +51,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, Deactivate_Rollback) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Rollback, Current_Height);
-		Notification notification(test::GenerateRandomByteArray<Key>(), Super_Contract_Key);
+		Notification notification(test::GenerateRandomByteArray<Key>(), Super_Contract_Key, test::GenerateRandomByteArray<Key>());
 		auto pObserver = CreateDeactivateObserver();
 		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 

@@ -116,14 +116,19 @@ namespace catapult { namespace model {
         /// Creates a notification around \a signer and \a superContract.
         explicit DeactivateNotification(
 			const Key& signer,
-			const Key& superContract)
+			const Key& superContract,
+			const Key& driveKey)
 			: BaseSuperContractNotification(Notification_Type, sizeof(DeactivateNotification<1>), superContract)
 			, Signer(signer)
+			, DriveKey(driveKey)
         {}
 
     public:
 		/// Signer.
 		const Key& Signer;
+
+        /// Drive key.
+        const Key& DriveKey;
     };
 
     /// Notification of a start execute super contract.

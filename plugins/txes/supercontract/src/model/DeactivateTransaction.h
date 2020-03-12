@@ -26,6 +26,9 @@ namespace catapult { namespace model {
         /// Super contract key.
         Key SuperContract;
 
+        /// Key of drive.
+        Key DriveKey;
+
     public:
         // Calculates the real size of a deactivate transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {

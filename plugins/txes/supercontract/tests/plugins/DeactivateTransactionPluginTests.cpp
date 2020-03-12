@@ -8,6 +8,7 @@
 #include "src/plugins/DeactivateTransactionPlugin.h"
 #include "src/model/DeactivateTransaction.h"
 #include "src/model/SuperContractNotifications.h"
+#include "plugins/txes/multisig/src/model/MultisigNotifications.h"
 #include "plugins/txes/operation/src/model/OperationNotifications.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
@@ -77,10 +78,11 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(2u, sub.numNotifications());
+		ASSERT_EQ(3u, sub.numNotifications());
 		auto i = 0u;
 		EXPECT_EQ(SuperContract_SuperContract_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(SuperContract_Deactivate_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(Multisig_Modify_Cosigners_v1_Notification, sub.notificationTypes()[i++]);
 	}
 
 	// endregion
@@ -120,6 +122,31 @@ namespace catapult { namespace plugins {
 		const auto& notification = sub.matchingNotifications()[0];
 		EXPECT_EQ(pTransaction->Signer, notification.Signer);
 		EXPECT_EQ(pTransaction->SuperContract, notification.SuperContract);
+		EXPECT_EQ(pTransaction->DriveKey, notification.DriveKey);
+	}
+
+	// endregion
+
+	// region publish modify multisig cosigners notification
+
+	PLUGIN_TEST(CanPublishModifyMultisigCosignersNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<ModifyMultisigCosignersNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin();
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->SuperContract, notification.Signer);
+		EXPECT_EQ(false, notification.AllowMultipleRemove);
+		EXPECT_EQ(1, notification.ModificationsCount);
+		auto pModification = notification.ModificationsPtr;
+		EXPECT_EQ(CosignatoryModificationType::Del, pModification->ModificationType);
+		EXPECT_EQ(pTransaction->DriveKey, pModification->CosignatoryPublicKey);
 	}
 
 	// endregion

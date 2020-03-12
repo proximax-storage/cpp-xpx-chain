@@ -53,6 +53,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because execution is not in-progress.
 	DEFINE_SUPERCONTRACT_RESULT(Execution_Is_Not_In_Progress, 13);
 
+	/// Validation failed because drive key is invalid.
+	DEFINE_SUPERCONTRACT_RESULT(Invalid_Drive_Key, 14);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -17,13 +17,13 @@ namespace catapult { namespace state {
     /// Super contract state.
     enum class SuperContractState : uint8_t {
         /// Super contract is active.
-        Active,
+        Active = 0,
 
         /// Super contract is deactivated by owner or executors.
-        DeactivatedByParticipant,
+        DeactivatedByParticipant = 100,
 
         /// Super contract is deactivated by drive end.
-        DeactivatedByDriveEnd,
+        DeactivatedByDriveEnd = 101,
     };
 
 //
