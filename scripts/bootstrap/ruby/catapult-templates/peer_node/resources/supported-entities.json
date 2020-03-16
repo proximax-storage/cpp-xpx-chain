@@ -98,12 +98,12 @@
 		{
 			"name": "Aggregate_Complete",
 			"type": "16705",
-			"supportedVersions": [2]
+			"supportedVersions": [2, 3]
 		},
 		{
 			"name": "Aggregate_Bonded",
 			"type": "16961",
-			"supportedVersions": [2]
+			"supportedVersions": [2, 3]
 		},
 		{
 			"name": "Mosaic_Definition",
