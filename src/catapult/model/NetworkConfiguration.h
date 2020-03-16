@@ -33,6 +33,10 @@
 
 namespace catapult { namespace model {
 
+	struct NetworkConfiguration;
+
+	using NetworkConfigurations = std::map<Height, NetworkConfiguration>;
+
 	/// Network configuration settings.
 	struct NetworkConfiguration {
 	public:
