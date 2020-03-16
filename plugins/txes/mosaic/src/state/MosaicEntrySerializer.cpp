@@ -24,12 +24,21 @@
 namespace catapult { namespace state {
 
 	namespace {
+		void SaveLevy(io::OutputStream& output, const model::MosaicLevy& levy) {
+			io::Write16(output, utils::to_underlying_type(levy.Type));
+			output.write(levy.Recipient);
+			io::Write(output, levy.MosaicId);
+			io::Write(output, levy.Fee);
+		}
+
 		void SaveDefinition(io::OutputStream& output, const MosaicDefinition& definition) {
 			io::Write(output, definition.height());
 			output.write(definition.owner());
 			io::Write32(output, definition.revision());
 			for (const auto& property : definition.properties())
 				io::Write64(output, property.Value);
+
+			SaveLevy(output, definition.levy());
 		}
 	}
 
@@ -53,7 +62,13 @@ namespace catapult { namespace state {
 			for (auto& value : values)
 				value = io::Read64(input);
 
-			return MosaicDefinition(height, owner, revision, model::MosaicProperties::FromValues(values));
+			model::MosaicLevy levy;
+			levy.Type = (model::LevyType)io::Read16(input);
+			input.read(levy.Recipient);
+			levy.MosaicId = io::Read<MosaicId>(input);
+			levy.Fee = io::Read<Amount>(input);
+
+			return MosaicDefinition(height, owner, revision, model::MosaicProperties::FromValues(values), levy);
 		}
 	}
 

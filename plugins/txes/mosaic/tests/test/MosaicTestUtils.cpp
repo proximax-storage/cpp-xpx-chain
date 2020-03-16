@@ -30,7 +30,7 @@ namespace catapult { namespace test {
 	}
 
 	state::MosaicDefinition CreateMosaicDefinition(Height height) {
-		return state::MosaicDefinition(height, test::GenerateRandomByteArray<Key>(), 3, model::MosaicProperties::FromValues({}));
+		return state::MosaicDefinition(height, test::GenerateRandomByteArray<Key>(), 3, model::MosaicProperties::FromValues({}), model::MosaicLevy());
 	}
 
 	state::MosaicEntry CreateMosaicEntry(MosaicId id, Amount supply) {
@@ -45,7 +45,7 @@ namespace catapult { namespace test {
 
 	namespace {
 		state::MosaicDefinition CreateMosaicDefinition(Height height, const Key& owner, BlockDuration duration) {
-			return state::MosaicDefinition(height, owner, 3, CreateMosaicPropertiesWithDuration(duration));
+			return state::MosaicDefinition(height, owner, 3, CreateMosaicPropertiesWithDuration(duration), model::MosaicLevy());
 		}
 	}
 

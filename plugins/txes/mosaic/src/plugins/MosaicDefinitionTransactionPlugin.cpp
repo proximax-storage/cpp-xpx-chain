@@ -77,7 +77,8 @@ namespace catapult { namespace plugins {
 					sub.notify(MosaicDefinitionNotification<1>(
 						transaction.Signer,
 						transaction.MosaicId,
-						ExtractAllProperties(transaction.PropertiesHeader, transaction.PropertiesPtr())));
+						ExtractAllProperties(transaction.PropertiesHeader, transaction.PropertiesPtr()),
+						transaction.Levy));
 					break;
 
 				default:

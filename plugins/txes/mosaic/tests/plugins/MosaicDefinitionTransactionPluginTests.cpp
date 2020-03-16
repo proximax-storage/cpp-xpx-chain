@@ -88,7 +88,7 @@ namespace catapult { namespace plugins {
 		auto realSize = pPlugin->calculateRealSize(transaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 2 * sizeof(MosaicProperty), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 2 * sizeof(MosaicProperty) + sizeof(MosaicLevy), realSize);
 	}
 
 	PLUGIN_TEST(CanExtractAccounts) {
@@ -172,7 +172,7 @@ namespace catapult { namespace plugins {
 		template<typename TTraits>
 		auto CreateTransactionWithProperties(uint8_t numProperties) {
 			using TransactionType = typename TTraits::TransactionType;
-			uint32_t entitySize = sizeof(TransactionType) + numProperties * sizeof(MosaicProperty);
+			uint32_t entitySize = sizeof(TransactionType) + sizeof(MosaicLevy) + numProperties * sizeof(MosaicProperty);
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
 			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;

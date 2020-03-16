@@ -67,7 +67,7 @@ namespace catapult { namespace validators {
 			values[utils::to_underlying_type(model::MosaicPropertyId::Flags)] = utils::to_underlying_type(flags);
 
 			auto& mosaicCacheDelta = delta.sub<cache::MosaicCache>();
-			auto definition = state::MosaicDefinition(Height(50), Key(), 3, model::MosaicProperties::FromValues(values));
+			auto definition = state::MosaicDefinition(Height(50), Key(), 3, model::MosaicProperties::FromValues(values), model::MosaicLevy());
 			auto entry = state::MosaicEntry(id, definition);
 			entry.increaseSupply(mosaicSupply);
 			mosaicCacheDelta.insert(entry);

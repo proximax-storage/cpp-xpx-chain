@@ -22,6 +22,7 @@
 #include "MosaicConstants.h"
 #include "MosaicEntityType.h"
 #include "MosaicProperties.h"
+#include "MosaicLevy.h"
 #include "catapult/model/Transaction.h"
 
 namespace catapult { namespace model {
@@ -45,6 +46,9 @@ namespace catapult { namespace model {
 		/// \note This must match the generated id.
 		catapult::MosaicId MosaicId;
 
+		/// Levy
+		MosaicLevy Levy;
+
 		/// Properties header.
 		MosaicPropertiesHeader PropertiesHeader;
 
@@ -60,7 +64,7 @@ namespace catapult { namespace model {
 	public:
 		/// Calculates the real size of mosaic definition \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.PropertiesHeader.Count * sizeof(MosaicProperty);
+			return sizeof(TransactionType) + transaction.PropertiesHeader.Count * sizeof(MosaicProperty) ;
 		}
 	};
 

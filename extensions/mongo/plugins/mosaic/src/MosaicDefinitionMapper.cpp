@@ -22,6 +22,7 @@
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/mosaic/src/model/MosaicDefinitionTransaction.h"
+#include "plugins/txes/mosaic/src/model/MosaicLevy.h"
 
 using namespace catapult::mongo::mappers;
 
@@ -46,6 +47,17 @@ namespace catapult { namespace mongo { namespace plugins {
 				StreamProperty(context, pProperty->Id, pProperty->Value);
 		}
 
+		void StreamLevyProperties(bson_stream::array_context& context, const model::MosaicLevy& levy)
+		{
+			context
+					<< bson_stream::open_document
+				//	<< "levyType" << utils::to_underlying_type(levy.Type)
+					<< "recipient" << ToBinary(levy.Recipient)
+					<< "mosaicId" << ToInt64(levy.MosaicId)
+					<< "fee" << ToInt64(levy.Fee)
+					<< bson_stream::close_document;
+		}
+
 		template<typename TTransaction>
 		void StreamTransaction(bson_stream::document& builder, const TTransaction& transaction) {
 			builder
@@ -55,6 +67,11 @@ namespace catapult { namespace mongo { namespace plugins {
 			StreamRequiredProperties(propertiesArray, transaction.PropertiesHeader);
 			StreamOptionalProperties(propertiesArray, transaction.PropertiesPtr(), transaction.PropertiesHeader.Count);
 			propertiesArray << bson_stream::close_array;
+
+			auto levy = builder << "levy" << bson_stream::open_array;
+			StreamLevyProperties(levy, transaction.Levy);
+			levy << bson_stream::close_array;
+
 		}
 	}
 

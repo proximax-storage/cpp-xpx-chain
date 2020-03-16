@@ -41,7 +41,7 @@ namespace catapult { namespace cache {
 
 			static auto CreateValue(MosaicId id) {
 				auto properties = test::CreateMosaicPropertiesWithDuration(BlockDuration(37));
-				auto definition = state::MosaicDefinition(Height(11), test::GenerateRandomByteArray<Key>(), 3, properties);
+				auto definition = state::MosaicDefinition(Height(11), test::GenerateRandomByteArray<Key>(), 3, properties, model::MosaicLevy()); //todo: need change
 				return state::MosaicEntry(id, definition);
 			}
 

@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "MosaicEntryMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/mosaic/src/state/MosaicEntry.h"
 #include "catapult/utils/Casting.h"
@@ -44,6 +43,16 @@ namespace catapult { namespace mongo { namespace plugins {
 		void StreamMosaicEntryMetadata(bson_stream::document& builder) {
 			builder << "meta" << bson_stream::open_document << bson_stream::close_document;
 		}
+
+		void StreamLevyProperties(bson_stream::document& builder, const model::MosaicLevy& levy)
+		{
+			builder << "levy" << bson_stream::open_document
+					<< "levyType" << utils::to_underlying_type(levy.Type)
+					<< "recipient" << ToBinary(levy.Recipient)
+					<< "mosaicId" << ToInt64(levy.MosaicId)
+					<< "fee" << ToInt64(levy.Fee)
+					<< bson_stream::close_document;
+		}
 	}
 
 	bsoncxx::document::value ToDbModel(const state::MosaicEntry& entry) {
@@ -59,6 +68,8 @@ namespace catapult { namespace mongo { namespace plugins {
 					<< "revision" << static_cast<int32_t>(definition.revision());
 
 		StreamProperties(builder, definition.properties());
+
+		StreamLevyProperties( builder, definition.levy());
 
 		doc << bson_stream::close_document;
 
@@ -81,6 +92,22 @@ namespace catapult { namespace mongo { namespace plugins {
 
 			return container;
 		}
+
+		auto GetUint64(const bsoncxx::document::view& doc, const std::string& name) {
+			return static_cast<uint64_t>(doc[name].get_int64().value);
+		}
+
+		model::MosaicLevy ReadLevy(const bsoncxx::document::view& dbLevy) {
+			model::LevyType type = static_cast<model::LevyType>(static_cast<uint32_t>(dbLevy["type"].get_int32()));
+			auto mosaicId = GetValue64<MosaicId>(dbLevy["mosaicId"]);
+
+			UnresolvedAddress address;
+			DbBinaryToModelArray(address, dbLevy["recipient"].get_binary());
+
+			Amount fee(GetUint64(dbLevy, "maxFee"));
+
+			return model::MosaicLevy(type, address, mosaicId, fee);
+		}
 	}
 
 	state::MosaicEntry ToMosaicEntry(const bsoncxx::document::view& document) {
@@ -93,8 +120,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		DbBinaryToModelArray(owner, dbMosaic["owner"].get_binary());
 		auto revision = ToUint32(dbMosaic["revision"].get_int32());
 		auto container = ReadProperties(dbMosaic["properties"].get_array().value);
+		auto levy = ReadLevy(dbMosaic["levy"].get_document().view());
 
-		auto definition = state::MosaicDefinition(height, owner, revision, model::MosaicProperties::FromValues(container));
+		auto definition = state::MosaicDefinition(height, owner, revision, model::MosaicProperties::FromValues(container), levy);
 		auto entry = state::MosaicEntry(id, definition);
 		entry.increaseSupply(supply);
 		return entry;

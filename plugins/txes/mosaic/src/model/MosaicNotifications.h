@@ -22,6 +22,7 @@
 #include "MosaicConstants.h"
 #include "MosaicProperties.h"
 #include "MosaicTypes.h"
+#include "MosaicLevy.h"
 #include "catapult/model/Notifications.h"
 
 namespace catapult { namespace model {
@@ -91,11 +92,13 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates a notification around \a signer, \a mosaicId and \a properties.
-		explicit MosaicDefinitionNotification(const Key& signer, MosaicId mosaicId, const MosaicProperties& properties)
+		explicit MosaicDefinitionNotification(const Key& signer, MosaicId mosaicId,
+				const MosaicProperties& properties, const MosaicLevy& levy)
 				: Notification(Notification_Type, sizeof(MosaicDefinitionNotification<1>))
 				, Signer(signer)
 				, MosaicId(mosaicId)
 				, Properties(properties)
+				, Levy(levy)
 		{}
 
 	public:
@@ -107,6 +110,9 @@ namespace catapult { namespace model {
 
 		/// Mosaic properties.
 		MosaicProperties Properties;
+
+		/// Mosaic Levy
+		MosaicLevy Levy;
 	};
 
 	/// Notification of a mosaic nonce and id.

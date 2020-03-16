@@ -39,7 +39,7 @@ namespace catapult { namespace observers {
 
 		model::MosaicDefinitionNotification<1> CreateDefaultNotification(const Key& signer) {
 			auto properties = model::MosaicProperties::FromValues({ { 3, 6, 15 } });
-			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties);
+			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties, model::MosaicLevy());
 		}
 
 		template<typename TSeedCacheFunc, typename TCheckCacheFunc>
@@ -67,7 +67,7 @@ namespace catapult { namespace observers {
 		}
 
 		void SeedCacheWithDefaultMosaic(cache::MosaicCacheDelta& mosaicCacheDelta) {
-			auto definition = state::MosaicDefinition(Seed_Height, Key(), 1, model::MosaicProperties::FromValues({ { 1, 2, 20 } }));
+			auto definition = state::MosaicDefinition(Seed_Height, Key(), 1, model::MosaicProperties::FromValues({ { 1, 2, 20 } }), model::MosaicLevy());
 			mosaicCacheDelta.insert(state::MosaicEntry(Default_Mosaic_Id, definition));
 
 			// Sanity:
@@ -139,7 +139,7 @@ namespace catapult { namespace observers {
 	namespace {
 		void AddTwoMosaics(cache::MosaicCacheDelta& mosaicCacheDelta, uint32_t revision) {
 			auto properties = model::MosaicProperties::FromValues({ { 2, 4, 20 + 15 } });
-			auto definition = state::MosaicDefinition(Seed_Height, Key(), revision, properties);
+			auto definition = state::MosaicDefinition(Seed_Height, Key(), revision, properties, model::MosaicLevy());
 			for (auto id : { Default_Mosaic_Id, MosaicId(987) })
 				mosaicCacheDelta.insert(state::MosaicEntry(id, definition));
 

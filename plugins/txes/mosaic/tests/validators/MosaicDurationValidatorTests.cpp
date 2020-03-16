@@ -38,7 +38,7 @@ namespace catapult { namespace validators {
 
 		model::MosaicDefinitionNotification<1> CreateNotification(const Key& signer, BlockDuration duration) {
 			auto properties = model::MosaicProperties::FromValues({ { 1, 2, duration.unwrap() } });
-			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties);
+			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties, model::MosaicLevy());
 		}
 
 		void AddMosaic(cache::CatapultCache& cache, const Key& owner, BlockDuration duration) {

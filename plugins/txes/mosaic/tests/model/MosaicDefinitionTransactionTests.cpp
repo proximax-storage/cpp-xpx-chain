@@ -43,11 +43,12 @@ namespace catapult { namespace model {
 					baseSize // base
 					+ sizeof(uint32_t) // nonce
 					+ sizeof(MosaicId) // id
-					+ expectedPropertiesHeaderSize;
+					+ expectedPropertiesHeaderSize
+					+ sizeof(MosaicLevy);
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 15u, sizeof(T));
+			EXPECT_EQ(baseSize + 15u + sizeof(MosaicLevy), sizeof(T));
 		}
 
 		template<typename T>
@@ -67,7 +68,7 @@ namespace catapult { namespace model {
 	namespace {
 		struct MosaicDefinitionTransactionTraits {
 			static auto GenerateEntityWithAttachments(uint8_t propertiesCount) {
-				uint32_t entitySize = sizeof(MosaicDefinitionTransaction) + propertiesCount * sizeof(MosaicProperty);
+				uint32_t entitySize = sizeof(MosaicDefinitionTransaction) + propertiesCount * sizeof(MosaicProperty) + sizeof(MosaicLevy);
 				auto pTransaction = utils::MakeUniqueWithSize<MosaicDefinitionTransaction>(entitySize);
 				pTransaction->Size = entitySize;
 				pTransaction->PropertiesHeader.Count = propertiesCount;

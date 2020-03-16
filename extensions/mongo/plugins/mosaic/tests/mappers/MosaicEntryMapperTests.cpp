@@ -35,7 +35,7 @@ namespace catapult { namespace mongo { namespace plugins {
 	namespace {
 		state::MosaicEntry CreateMosaicEntry() {
 			auto owner = test::GenerateRandomByteArray<Key>();
-			return test::CreateMosaicEntry(MosaicId(345), Height(123), owner, Amount(456), BlockDuration(12345));
+			return test::CreateMosaicEntry(MosaicId(345), Height(123), owner, Amount(456), BlockDuration(12345)); //todo: need change
 		}
 
 		void AssertEqualMosaicEntryMetadata(const bsoncxx::document::view& dbMetadata) {
