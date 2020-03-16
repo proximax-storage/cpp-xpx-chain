@@ -50,6 +50,9 @@ namespace catapult { namespace chain {
 		const auto& aggregate = CoerceToAggregate(transactionInfo.transaction());
 		auto numCosignatures = transactionInfo.cosignatures().size();
 		switch (aggregate.EntityVersion()) {
+		case 3:
+			[[fallthrough]];
+
 		case 2: {
 			sub.notify(model::AggregateCosignaturesNotification<1>(
 					aggregate.Signer,

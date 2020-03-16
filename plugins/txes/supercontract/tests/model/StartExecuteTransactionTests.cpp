@@ -51,7 +51,7 @@ namespace catapult { namespace model {
 
 	namespace {
 		struct StartExecuteTransactionTraits {
-			static auto GenerateEntityWithAttachments(uint8_t numMosaics, uint8_t functionSize, uint16_t dataSize) {
+			static auto GenerateEntityWithAttachments(uint8_t functionSize, uint8_t numMosaics, uint16_t dataSize) {
 				uint32_t entitySize = sizeof(TransactionType) + numMosaics * sizeof(model::UnresolvedMosaic) + functionSize + dataSize;
 				auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
 				pTransaction->Size = entitySize;
@@ -61,22 +61,22 @@ namespace catapult { namespace model {
 				return pTransaction;
 			}
 
-			static constexpr size_t GetAttachment1Size(uint8_t numMosaics) {
-				return numMosaics * sizeof(model::UnresolvedMosaic);
+			static constexpr size_t GetAttachment1Size(uint8_t functionSize) {
+				return functionSize;
 			}
 
-			static constexpr size_t GetAttachment2Size(uint8_t functionSize) {
-				return functionSize;
+			static constexpr size_t GetAttachment2Size(uint8_t numMosaics) {
+				return numMosaics * sizeof(model::UnresolvedMosaic);
 			}
 
 			template<typename TEntity>
 			static auto GetAttachmentPointer1(TEntity& entity) {
-				return entity.MosaicsPtr();
+				return entity.FunctionPtr();
 			}
 
 			template<typename TEntity>
 			static auto GetAttachmentPointer2(TEntity& entity) {
-				return entity.FunctionPtr();
+				return entity.MosaicsPtr();
 			}
 
 			template<typename TEntity>

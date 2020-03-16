@@ -21,7 +21,8 @@ namespace catapult { namespace validators {
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const state::SuperContractEntry& entry,
-				const Key& signer) {
+				const Key& signer,
+				const Key& driveKey) {
 			// Arrange:
 			Height currentHeight(1);
 			auto cache = test::SuperContractCacheFactory::Create();
@@ -31,7 +32,7 @@ namespace catapult { namespace validators {
 				superContractCacheDelta.insert(entry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(signer, entry.key());
+			Notification notification(signer, entry.key(), driveKey);
 			auto pValidator = CreateDeactivateValidator();
 
 			// Act:
@@ -49,52 +50,64 @@ namespace catapult { namespace validators {
 
 			return entry;
 		}
+
+		struct OwnerSignerTraits {
+			static Key signer(state::SuperContractEntry& entry) {
+				return entry.owner();
+			}
+		};
+
+		struct DriveSignerTraits {
+			static Key signer(state::SuperContractEntry& entry) {
+				return entry.mainDriveKey();
+			}
+		};
 	}
 
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_OwnerSigner) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<OwnerSignerTraits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_DriveSigner) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<DriveSignerTraits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
 	TEST(TEST_CLASS, FailureWhenSignerInvalid) {
+		// Arrange:
+		auto entry = CreateSuperContractEntry();
+
 		// Assert:
 		AssertValidationResult(
 			Failure_SuperContract_Operation_Is_Not_Permitted,
-			CreateSuperContractEntry(),
-			test::GenerateRandomByteArray<Key>());
-	}
-
-	TEST(TEST_CLASS, FailureWhenExecutionInProgress_SignerIsOwner) {
-		// Arrange:
-		auto entry = CreateSuperContractEntry();
-		entry.setExecutionCount(10);
-
-		// Assert:
-		AssertValidationResult(
-			Failure_SuperContract_Execution_Is_In_Progress,
 			entry,
-			entry.owner());
-	}
-
-	TEST(TEST_CLASS, FailureWhenExecutionInProgress_SignerIsMainDrive) {
-		// Arrange:
-		auto entry = CreateSuperContractEntry();
-		entry.setExecutionCount(10);
-
-		// Assert:
-		AssertValidationResult(
-			Failure_SuperContract_Execution_Is_In_Progress,
-			entry,
+			test::GenerateRandomByteArray<Key>(),
 			entry.mainDriveKey());
 	}
 
-	TEST(TEST_CLASS, Success_SignerIsOwner) {
+	TRAITS_BASED_TEST(FailureWhenDriveKeyInvalid) {
 		// Arrange:
 		auto entry = CreateSuperContractEntry();
 
 		// Assert:
 		AssertValidationResult(
-			ValidationResult::Success,
+			Failure_SuperContract_Invalid_Drive_Key,
 			entry,
-			entry.owner());
+			TTraits::signer(entry),
+			test::GenerateRandomByteArray<Key>());
 	}
 
-	TEST(TEST_CLASS, Success_SignerIsMainDrive) {
+	TRAITS_BASED_TEST(FailureWhenExecutionInProgress) {
+		// Arrange:
+		auto entry = CreateSuperContractEntry();
+		entry.setExecutionCount(10);
+
+		// Assert:
+		AssertValidationResult(
+			Failure_SuperContract_Execution_Is_In_Progress,
+			entry,
+			TTraits::signer(entry),
+			entry.mainDriveKey());
+	}
+
+	TRAITS_BASED_TEST(Success) {
 		// Arrange:
 		auto entry = CreateSuperContractEntry();
 
@@ -102,6 +115,7 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 			ValidationResult::Success,
 			entry,
+			TTraits::signer(entry),
 			entry.mainDriveKey());
 	}
 }}

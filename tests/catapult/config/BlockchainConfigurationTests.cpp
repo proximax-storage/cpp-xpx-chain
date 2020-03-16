@@ -62,8 +62,8 @@ namespace catapult { namespace config {
 			EXPECT_EQ(MosaicId(0x0DC6'7FBE'1CAD'29E3), config.HarvestingMosaicId);
 			EXPECT_EQ(MosaicId(0x2651'4E2A'1EF3'3824), config.StorageMosaicId);
 			EXPECT_EQ(MosaicId(0x6C5D'6875'08AC'9D75), config.StreamingMosaicId);
-			EXPECT_EQ(MosaicId(0x77E4'90CC'9B2A'F6F6), config.ReviewMosaicId);
-			EXPECT_EQ(MosaicId(0x77E4'90CC'9B2A'F6F6), config.SuperContractMosaicId);
+			EXPECT_EQ(MosaicId(0x19C1'CD86'7406'54DC), config.ReviewMosaicId);
+			EXPECT_EQ(MosaicId(0x6EE9'5526'8A1C'33D9), config.SuperContractMosaicId);
 			EXPECT_EQ(MosaicId(0x77E4'90CC'9B2A'F6F6), config.XarMosaicId);
 
 			EXPECT_EQ(Amount(8'999'999'998'000'000), config.InitialCurrencyAtomicUnits);

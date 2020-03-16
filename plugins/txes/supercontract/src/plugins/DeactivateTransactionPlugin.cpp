@@ -9,6 +9,7 @@
 #include "src/model/DeactivateTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "plugins/txes/multisig/src/model/MultisigNotifications.h"
 
 using namespace catapult::model;
 
@@ -22,8 +23,12 @@ namespace catapult { namespace plugins {
 				sub.notify(SuperContractNotification<1>(transaction.SuperContract, transaction.Type));
 				sub.notify(DeactivateNotification<1>(
 					transaction.Signer,
-					transaction.SuperContract
+					transaction.SuperContract,
+					transaction.DriveKey
 				));
+				auto pModification = sub.mempool().malloc(
+					CosignatoryModification{model::CosignatoryModificationType::Del, transaction.DriveKey});
+				sub.notify(ModifyMultisigCosignersNotification<1>(transaction.SuperContract, 1, pModification));
                 break;
 			}
 

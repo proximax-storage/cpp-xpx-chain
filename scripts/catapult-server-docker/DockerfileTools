@@ -109,7 +109,6 @@ RUN cd /catapult \
     catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.exchange \
-    catapult.mongo.plugins.service \
     catapult.mongo.plugins.lockhash \
     catapult.mongo.plugins.locksecret \
     catapult.mongo.plugins.metadata \
@@ -120,6 +119,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.property \
     catapult.mongo.plugins.transfer \
     catapult.mongo.plugins.upgrade \
+    catapult.mongo.plugins.service \
     catapult.mongo.plugins.supercontract \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \

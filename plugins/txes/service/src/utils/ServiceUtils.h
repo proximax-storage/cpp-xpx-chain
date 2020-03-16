@@ -44,11 +44,11 @@ namespace catapult { namespace utils {
     }
 
     template<typename TCache>
-    inline Amount GetDriveBalance(const state::DriveEntry& driveEntry, const TCache& cache, const MosaicId& storageMosaicId) {
+    inline Amount GetDriveBalance(const state::DriveEntry& driveEntry, const TCache& cache, const MosaicId& mosaicId) {
         const auto& accountCache = cache.template sub<cache::AccountStateCache>();
         auto accountIter = accountCache.find(driveEntry.key());
         const auto& driveAccount = accountIter.get();
-        return driveAccount.Balances.get(storageMosaicId);
+        return driveAccount.Balances.get(mosaicId);
     }
 
 }}
