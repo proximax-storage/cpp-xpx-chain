@@ -9,20 +9,23 @@
 
 namespace catapult { namespace config {
 
+	BlockchainConfiguration GetMockNetworkConfig(const model::NetworkConfiguration& networkConfig)
+	{
+		test::MutableBlockchainConfiguration config;
+		config.Network = networkConfig;
+		return config.ToConst();
+	}
+
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder()
 			: BlockchainConfigurationHolder(nullptr)
 	{}
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const model::NetworkConfiguration& networkConfig)
-			: BlockchainConfigurationHolder(nullptr) {
-		test::MutableBlockchainConfiguration config;
-		config.Network = networkConfig;
-		SetConfig(Height{0}, config.ToConst());
+			: BlockchainConfigurationHolder(GetMockNetworkConfig(networkConfig)) {
 	}
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const BlockchainConfiguration& config)
-			: BlockchainConfigurationHolder(nullptr) {
-		SetConfig(Height{0}, config);
+			: BlockchainConfigurationHolder(config) {
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config(const Height&) {

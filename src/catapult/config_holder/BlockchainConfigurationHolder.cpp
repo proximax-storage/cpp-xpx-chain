@@ -26,24 +26,18 @@ namespace catapult { namespace config {
 			SupportedEntityVersions()
 		};
 
-		SetConfig(Height(0), config);
+		m_configs.insert({ Height(0), config });
+	}
+
+	BlockchainConfigurationHolder::BlockchainConfigurationHolder(const BlockchainConfiguration& config)
+			:  m_pCache(nullptr)
+			, m_pluginInitializer([](auto&) {}){
+
+		m_configs.insert({ Height(0), config });
 	}
 
 	boost::filesystem::path BlockchainConfigurationHolder::GetResourcesPath(int argc, const char** argv) {
 		return boost::filesystem::path(argc > 1 ? argv[1] : "..") / "resources";
-	}
-
-	const BlockchainConfiguration& BlockchainConfigurationHolder::LoadConfig(int argc, const char** argv, const std::string& extensionsHost) {
-		auto resourcesPath = GetResourcesPath(argc, argv);
-		std::cout << "loading resources from " << resourcesPath << std::endl;
-		SetConfig(Height(0), config::BlockchainConfiguration::LoadFromPath(resourcesPath, extensionsHost));
-		return m_configs.at(Height(0));
-	}
-
-	void BlockchainConfigurationHolder::SetConfig(const Height& height, const BlockchainConfiguration& config) {
-		std::lock_guard<std::mutex> guard(m_mutex);
-		m_configs.erase(height);
-		m_configs.insert({ height, config });
 	}
 
 	const BlockchainConfiguration& BlockchainConfigurationHolder::Config(const Height& height) {

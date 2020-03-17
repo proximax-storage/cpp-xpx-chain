@@ -19,6 +19,7 @@ namespace catapult { namespace config {
 		using PluginInitializer = std::function<void(model::NetworkConfiguration&)>;
 
 		explicit BlockchainConfigurationHolder(cache::CatapultCache* pCache =  nullptr);
+		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config);
 
 		virtual ~BlockchainConfigurationHolder() = default;
 
@@ -26,11 +27,6 @@ namespace catapult { namespace config {
 		/// Extracts the resources path from the command line arguments.
 		/// \a argc commmand line arguments are accessible via \a argv.
 		static boost::filesystem::path GetResourcesPath(int argc, const char** argv);
-
-		const BlockchainConfiguration& LoadConfig(int argc, const char** argv, const std::string& extensionsHost);
-
-		/// Set \a config at \a height
-		void SetConfig(const Height& height, const BlockchainConfiguration& config);
 
 		/// Get \a config at \a height
 		virtual const BlockchainConfiguration& Config(const Height& height);

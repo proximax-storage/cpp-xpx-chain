@@ -81,7 +81,8 @@ namespace catapult { namespace config {
 		BlockchainConfigurationHolder testee;
 
 		// Act:
-		auto& result = testee.LoadConfig(0, nullptr, "server");
+		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(0, nullptr);
+		auto result = config::BlockchainConfiguration::LoadFromPath(resourcesPath, "server");
 
 		// Assert:
 		EXPECT_EQ(13, result.Extensions.Names.size());
@@ -92,7 +93,8 @@ namespace catapult { namespace config {
 		BlockchainConfigurationHolder testee;
 
 		// Act:
-		auto& result = testee.LoadConfig(0, nullptr, "recovery");
+		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(0, nullptr);
+		auto result = config::BlockchainConfiguration::LoadFromPath(resourcesPath, "recovery");
 
 		// Assert:
 		EXPECT_EQ(1, result.Extensions.Names.size());
@@ -103,7 +105,8 @@ namespace catapult { namespace config {
 		BlockchainConfigurationHolder testee;
 
 		// Act:
-		auto& result = testee.LoadConfig(0, nullptr, "broker");
+		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(0, nullptr);
+		auto result = config::BlockchainConfiguration::LoadFromPath(resourcesPath, "broker");
 
 		// Assert:
 		EXPECT_EQ(4, result.Extensions.Names.size());
@@ -112,53 +115,23 @@ namespace catapult { namespace config {
 	TEST(TEST_CLASS, LoadConfigThrowsWhenThereIsNoResourceFiles) {
 		// Arrange:
 		BlockchainConfigurationHolder testee;
-			const char* argv[] = { "", "/wrong_path" };
+		const char* argv[] = { "", "/wrong_path" };
+		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(2, argv);
 
 		// Act + Assert:
-		EXPECT_THROW(testee.LoadConfig(2, argv, "server"), catapult_runtime_error);
+		EXPECT_THROW(config::BlockchainConfiguration::LoadFromPath(resourcesPath, "server"), catapult_runtime_error);
 	}
 
 	// endregion
 
-	// region SetConfig
-
-	TEST(TEST_CLASS, CanSetConfig) {
-		// Arrange:
-		BlockchainConfigurationHolder testee;
-		test::MutableBlockchainConfiguration config;
-		config.Network.ImportanceGrouping = 5;
-
-		// Act:
-		testee.SetConfig(Height{777}, config.ToConst());
-
-		// Assert:
-		EXPECT_EQ(5, testee.Config(Height{777}).Network.ImportanceGrouping);
-	}
-
-	TEST(TEST_CLASS, CanSetConfigMoreThanOnce) {
-		// Arrange:
-		BlockchainConfigurationHolder testee;
-		test::MutableBlockchainConfiguration config;
-		config.Network.ImportanceGrouping = 5;
-		testee.SetConfig(Height{777}, config.ToConst());
-		EXPECT_EQ(5, testee.Config(Height{777}).Network.ImportanceGrouping);
-		config.Network.ImportanceGrouping = 7;
-
-		// Act:
-		testee.SetConfig(Height{777}, config.ToConst());
-
-		// Assert:
-		EXPECT_EQ(7, testee.Config(Height{777}).Network.ImportanceGrouping);
-	}
-
-	// region Config(const Height& height)
+	// region Constructor with config
 
 	TEST(TEST_CLASS, GetDefaultConfigAtHeightOne) {
 		// Arrange:
-		BlockchainConfigurationHolder testee;
+
 		test::MutableBlockchainConfiguration config;
 		config.Network.ImportanceGrouping = 5;
-		testee.SetConfig(Height{0}, config.ToConst());
+		BlockchainConfigurationHolder testee(config.ToConst());
 
 		// Act:
 		auto& result = testee.Config(Height{777});
@@ -168,20 +141,7 @@ namespace catapult { namespace config {
 		EXPECT_EQ(0, result.SupportedEntityVersions.size());
 	}
 
-	TEST(TEST_CLASS, CanGetConfigAtHeight) {
-		// Arrange:
-		BlockchainConfigurationHolder testee;
-		test::MutableBlockchainConfiguration config;
-		config.Network.ImportanceGrouping = 5;
-		testee.SetConfig(Height{777}, config.ToConst());
-
-		// Act:
-		auto& result = testee.Config(Height{777});
-
-		// Assert:
-		EXPECT_EQ(5, testee.Config(Height{777}).Network.ImportanceGrouping);
-		EXPECT_EQ(0, result.SupportedEntityVersions.size());
-	}
+	// end region
 
 	namespace test_config_at_height {
 		class TestBlockchainConfigurationHolder : public BlockchainConfigurationHolder {
@@ -355,33 +315,5 @@ namespace catapult { namespace config {
 	// endregion
 
 	// region thread safety
-
-	TEST(TEST_CLASS, ConfigHolderIsThreadSafe) {
-		// Arrange:
-		BlockchainConfigurationHolder testee;
-		uint64_t iterationCount = 1000;
-
-		// Act:
-		boost::thread_group threads;
-		threads.create_thread([&testee, iterationCount] {
-			test::MutableBlockchainConfiguration mutableConfig;
-			for (uint64_t i = 1; i <= iterationCount; ++i) {
-				mutableConfig.Network.ImportanceGrouping = i;
-				testee.SetConfig(Height { i }, mutableConfig.ToConst());
-			}
-		});
-
-		threads.create_thread([&testee, iterationCount] {
-			for (;;) {
-				auto& config = testee.Config(Height { iterationCount });
-				if (config.Network.ImportanceGrouping == iterationCount)
-					break;
-			}
-		});
-
-		// - wait for all threads
-		threads.join_all();
-	}
-
 	// endregion
 }}
