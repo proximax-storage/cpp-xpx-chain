@@ -85,7 +85,9 @@ namespace catapult { namespace plugins {
 				return {
 					"DeployObserver",
 					"StartExecuteObserver",
+					"EndExecuteCosignersObserver",
 					"EndExecuteObserver",
+					"ExpiredExecutionObserver",
 					"AggregateTransactionHashObserver",
 					"DeactivateObserver",
 					"EndDriveObserver",

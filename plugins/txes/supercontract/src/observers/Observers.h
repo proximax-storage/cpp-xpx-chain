@@ -21,7 +21,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(StartExecute, model::StartExecuteNotification<1>)();
 
 	/// Observes changes triggered by aggregate cosignatures notifications.
-	DECLARE_OBSERVER(EndExecute, model::AggregateCosignaturesNotification<2>)();
+	DECLARE_OBSERVER(EndExecuteCosigners, model::AggregateCosignaturesNotification<2>)();
 
 	/// Observes changes triggered by aggregate transaction hash notifications.
 	DECLARE_OBSERVER(AggregateTransactionHash, model::AggregateTransactionHashNotification<1>)();
@@ -29,6 +29,12 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by deactivate notifications.
 	DECLARE_OBSERVER(Deactivate, model::DeactivateNotification<1>)();
 
-	/// Observes changes triggered by the en drive transaction.
+	/// Observes changes triggered by the end drive notifications.
 	DECLARE_OBSERVER(EndDrive, model::EndDriveNotification<1>)();
+
+	/// Observes changes triggered by the end execute notifications.
+	DECLARE_OBSERVER(EndExecute, model::EndExecuteNotification<1>)();
+
+	/// Observes changes triggered by block notifications.
+	DECLARE_OBSERVER(ExpiredExecution, model::BlockNotification<1>)();
 }}
