@@ -22,7 +22,7 @@ namespace catapult { namespace model {
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract, StartExecute_v1, 0x0003);
 
 	/// Defines a deactivate notification type.
-	DEFINE_NOTIFICATION_TYPE(Validator, SuperContract, EndExecute_v1, 0x0004);
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract, EndExecute_v1, 0x0004);
 
 	/// Defines a deactivate notification type.
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract, Deactivate_v1, 0x0005);
