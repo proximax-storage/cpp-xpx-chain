@@ -4,21 +4,21 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "Observers.h"
+#include "Validators.h"
 #include "src/cache/SuperContractCache.h"
 
-namespace catapult { namespace observers {
+namespace catapult { namespace validators {
 
 	using Notification = model::EndExecuteNotification<1>;
 
-	DEFINE_OBSERVER(EndExecute, Notification, ([](const auto& notification, const ObserverContext& context) {
-		auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
+	DEFINE_STATEFUL_VALIDATOR(EndExecute, [](const Notification& notification, const ValidatorContext& context) {
+		const auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
 		auto superContractCacheIter = superContractCache.find(notification.SuperContract);
 		auto& superContractEntry = superContractCacheIter.get();
-		if (NotifyMode::Commit == context.Mode) {
-			superContractEntry.decrementExecutionCount();
-		} else {
-			superContractEntry.incrementExecutionCount();
-		}
-	}));
+
+		if (0 == superContractEntry.executionCount())
+			return Failure_SuperContract_Execution_Is_Not_In_Progress;
+
+		return ValidationResult::Success;
+	});
 }}

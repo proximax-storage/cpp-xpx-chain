@@ -56,6 +56,7 @@ namespace catapult { namespace validators {
 		driveEntry.coowners().insert(superContract);
 		state::SuperContractEntry superContractEntry(superContract);
 		superContractEntry.setFileHash(file);
+		superContractEntry.setState(state::SuperContractState::Active);
 
 		// Assert:
 		AssertValidationResult(
@@ -98,6 +99,27 @@ namespace catapult { namespace validators {
 			driveEntry,
 			superContractEntry,
 			{ { { { file }, 1000 } } });
+	}
+
+	TEST(TEST_CLASS, SuccessWhenSuperContractDeactivated) {
+		// Arrange:
+		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
+		auto file = test::GenerateRandomByteArray<Hash256>();
+		driveEntry.files().emplace(file, state::FileInfo{ 1000 });
+		auto superContract = test::GenerateRandomByteArray<Key>();
+		driveEntry.coowners().insert(superContract);
+		state::SuperContractEntry superContractEntry(superContract);
+		superContractEntry.setFileHash(file);
+
+		// Assert:
+		for (const auto& state : {state::SuperContractState::DeactivatedByParticipant, state::SuperContractState::DeactivatedByDriveEnd}) {
+			superContractEntry.setState(state);
+			AssertValidationResult(
+				ValidationResult::Success,
+				driveEntry,
+				superContractEntry,
+				{ { { { file }, 1000 } } });
+		}
 	}
 
 	TEST(TEST_CLASS, SuccessWhenNotRemovingSuperContractFile) {

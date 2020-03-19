@@ -11,13 +11,13 @@
 
 namespace catapult { namespace observers {
 
-#define TEST_CLASS EndExecuteObserverTests
+#define TEST_CLASS StartExecuteObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(EndExecute, )
+	DEFINE_COMMON_OBSERVER_TESTS(StartExecute, )
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::SuperContractCacheFactory>;
-		using Notification = model::EndExecuteNotification<1>;
+		using Notification = model::StartExecuteNotification<1>;
 
 		const auto Current_Height = test::GenerateRandomValue<Height>();
 		const auto Super_Contract_Key = test::GenerateRandomByteArray<Key>();
@@ -30,29 +30,11 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	TEST(TEST_CLASS, EndExecute_Commit) {
+	TEST(TEST_CLASS, StartExecute_Commit) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Commit, Current_Height);
 		Notification notification(Super_Contract_Key);
-		auto pObserver = CreateEndExecuteObserver();
-		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
-
-		// Populate cache.
-		superContractCache.insert(CreateSuperContractEntry(10));
-
-		// Act:
-		test::ObserveNotification(*pObserver, notification, context);
-
-		// Assert: check the cache
-		auto superContractCacheIter = superContractCache.find(Super_Contract_Key);
-		test::AssertEqualSuperContractData(CreateSuperContractEntry(9), superContractCacheIter.get());
-	}
-
-	TEST(TEST_CLASS, EndExecute_Rollback) {
-		// Arrange:
-		ObserverTestContext context(NotifyMode::Rollback, Current_Height);
-		Notification notification(Super_Contract_Key);
-		auto pObserver = CreateEndExecuteObserver();
+		auto pObserver = CreateStartExecuteObserver();
 		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
 
 		// Populate cache.
@@ -64,5 +46,23 @@ namespace catapult { namespace observers {
 		// Assert: check the cache
 		auto superContractCacheIter = superContractCache.find(Super_Contract_Key);
 		test::AssertEqualSuperContractData(CreateSuperContractEntry(11), superContractCacheIter.get());
+	}
+
+	TEST(TEST_CLASS, StartExecute_Rollback) {
+		// Arrange:
+		ObserverTestContext context(NotifyMode::Rollback, Current_Height);
+		Notification notification(Super_Contract_Key);
+		auto pObserver = CreateStartExecuteObserver();
+		auto& superContractCache = context.cache().sub<cache::SuperContractCache>();
+
+		// Populate cache.
+		superContractCache.insert(CreateSuperContractEntry(10));
+
+		// Act:
+		test::ObserveNotification(*pObserver, notification, context);
+
+		// Assert: check the cache
+		auto superContractCacheIter = superContractCache.find(Super_Contract_Key);
+		test::AssertEqualSuperContractData(CreateSuperContractEntry(9), superContractCacheIter.get());
 	}
 }}

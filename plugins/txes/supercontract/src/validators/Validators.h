@@ -9,17 +9,21 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 #include "src/model/SuperContractNotifications.h"
-#include "src/state/SuperContractEntry.h"
 #include "plugins/txes/aggregate/src/model/AggregateNotifications.h"
 #include "plugins/txes/service/src/model/ServiceNotifications.h"
 
 namespace catapult { namespace validators {
 
-	/// A validator check that drive is not finished
-	DECLARE_STATEFUL_VALIDATOR(Drive, model::DriveNotification<1>)();
-
 	/// A validator check that deploy transaction is valid
 	DECLARE_STATEFUL_VALIDATOR(Deploy, model::DeployNotification<1>)();
+
+	/// A validator implementation that applies to start execute notification and validates that:
+	/// - execution count doesn't overflow
+	DECLARE_STATEFUL_VALIDATOR(StartExecute, model::StartExecuteNotification<1>)();
+
+	/// A validator implementation that applies to end execute notification and validates that:
+	/// - execution count is not zero
+	DECLARE_STATEFUL_VALIDATOR(EndExecute, model::EndExecuteNotification<1>)();
 
 	/// TODO: During implementation of deactivating super contract also remember about DriveFinishNotification
 	/// A validator check that drive file system transaction doesn't remove super contract file
@@ -41,4 +45,7 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to aggregate embedded transaction notifications and validates that:
 	/// - end operation transaction doesn't end super contract execution
 	DECLARE_STATEFUL_VALIDATOR(EndOperationTransaction, model::AggregateEmbeddedTransactionNotification<1>)();
+
+	/// A validator check that deactivate transaction is valid
+	DECLARE_STATEFUL_VALIDATOR(Deactivate, model::DeactivateNotification<1>)();
 }}

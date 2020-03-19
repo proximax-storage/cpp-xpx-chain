@@ -9,16 +9,16 @@
 
 namespace catapult { namespace observers {
 
-	using Notification = model::EndExecuteNotification<1>;
+	using Notification = model::StartExecuteNotification<1>;
 
-	DEFINE_OBSERVER(EndExecute, Notification, ([](const auto& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(StartExecute, Notification, ([](const auto& notification, const ObserverContext& context) {
 		auto& superContractCache = context.Cache.sub<cache::SuperContractCache>();
 		auto superContractCacheIter = superContractCache.find(notification.SuperContract);
 		auto& superContractEntry = superContractCacheIter.get();
 		if (NotifyMode::Commit == context.Mode) {
-			superContractEntry.decrementExecutionCount();
-		} else {
 			superContractEntry.incrementExecutionCount();
+		} else {
+			superContractEntry.decrementExecutionCount();
 		}
 	}));
 }}

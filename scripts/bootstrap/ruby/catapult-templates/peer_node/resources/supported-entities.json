@@ -219,6 +219,11 @@
 			"name": "uploadFile",
 			"type": "17504",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "deactivate",
+			"type": "17760",
+			"supportedVersions": [1]
 		}
 	]
 }

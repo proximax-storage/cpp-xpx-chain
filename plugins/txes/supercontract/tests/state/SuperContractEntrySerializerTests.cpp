@@ -16,11 +16,14 @@ namespace catapult { namespace state {
 		constexpr auto Entry_Size =
 			sizeof(VersionType) + // version
 			Key_Size + // super contract key
+			sizeof(uint8_t) + // state
+			Key_Size + // owner
 			sizeof(Height) + // start
 			sizeof(Height) + // end
 			Key_Size + // main drive key
 			Hash256_Size + // file hash
-			sizeof(VmVersion); // VM version
+			sizeof(VmVersion) + // VM version
+			sizeof(uint16_t); // execution count
 
 		class TestContext {
 		public:
@@ -48,6 +51,10 @@ namespace catapult { namespace state {
 			pData += sizeof(VersionType);
 			EXPECT_EQ_MEMORY(entry.key().data(), pData, Key_Size);
 			pData += Key_Size;
+			EXPECT_EQ(entry.state(), static_cast<SuperContractState>(*pData));
+			pData++;
+			EXPECT_EQ_MEMORY(entry.owner().data(), pData, Key_Size);
+			pData += Key_Size;
 			EXPECT_EQ(entry.start().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
 			EXPECT_EQ(entry.end().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
@@ -58,6 +65,8 @@ namespace catapult { namespace state {
 			pData += Hash256_Size;
 			EXPECT_EQ(entry.vmVersion().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
 			pData += sizeof(uint64_t);
+			EXPECT_EQ(entry.executionCount(), *reinterpret_cast<const uint16_t*>(pData));
+			pData += sizeof(uint16_t);
 
 			EXPECT_EQ(pExpectedEnd, pData);
 		}
@@ -117,6 +126,10 @@ namespace catapult { namespace state {
 			pData += sizeof(VersionType);
 			memcpy(pData, entry.key().data(), Key_Size);
 			pData += Key_Size;
+			*pData = utils::to_underlying_type(entry.state());
+			pData++;
+			memcpy(pData, entry.owner().data(), Key_Size);
+			pData += Key_Size;
 			auto start = entry.start();
 			memcpy(pData, &start, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
@@ -130,6 +143,9 @@ namespace catapult { namespace state {
 			auto vmVersion = entry.vmVersion();
 			memcpy(pData, &vmVersion, sizeof(uint64_t));
 			pData += sizeof(uint64_t);
+			auto executionCount = entry.executionCount();
+			memcpy(pData, &executionCount, sizeof(uint16_t));
+			pData += sizeof(uint16_t);
 
 			return buffer;
 		}
