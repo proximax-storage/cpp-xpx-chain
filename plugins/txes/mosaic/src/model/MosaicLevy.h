@@ -4,7 +4,7 @@ namespace catapult { namespace model {
 	/// Available mosaic levy rule ids.
 	enum class LevyType : uint16_t {
 		/// Default there is no levy
-		None = 0x1,
+		None = 0x0,
 
 		/// Constant value
 		Absolute,
