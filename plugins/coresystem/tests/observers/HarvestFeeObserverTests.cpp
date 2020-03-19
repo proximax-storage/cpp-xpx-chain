@@ -31,7 +31,7 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS HarvestFeeObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, model::InflationCalculator())
+	DEFINE_COMMON_OBSERVER_TESTS(HarvestFee, config::CreateMockConfigurationHolder())
 
 	// region traits
 
@@ -100,16 +100,10 @@ namespace catapult { namespace observers {
 		template<typename TAction>
 		void RunHarvestFeeObserverTest(
 				NotifyMode notifyMode,
-				uint8_t harvestBeneficiaryPercentage,
-				const model::InflationCalculator& calculator,
+				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
 				TAction action) {
-			// Arrange:
-			test::MutableBlockchainConfiguration mutableConfig;
-			mutableConfig.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
-			mutableConfig.Network.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
-			auto config = mutableConfig.ToConst();
-			test::AccountObserverTestContext context(notifyMode, Height{444}, config);
-			auto pObserver = CreateHarvestFeeObserver(calculator);
+			test::AccountObserverTestContext context(notifyMode, Height{444}, pConfigHolder->Config());
+			auto pObserver = CreateHarvestFeeObserver(pConfigHolder);
 
 			// Act + Assert:
 			action(context, *pObserver);
@@ -117,7 +111,12 @@ namespace catapult { namespace observers {
 
 		template<typename TAction>
 		void RunHarvestFeeObserverTest(NotifyMode notifyMode, uint8_t harvestBeneficiaryPercentage, TAction action) {
-			RunHarvestFeeObserverTest(notifyMode, harvestBeneficiaryPercentage, model::InflationCalculator(), action);
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			mutableConfig.Network.HarvestBeneficiaryPercentage = harvestBeneficiaryPercentage;
+			mutableConfig.Inflation = config::InflationConfiguration::Uninitialized();
+			auto config = mutableConfig.ToConst();
+			RunHarvestFeeObserverTest(notifyMode, config::CreateMockConfigurationHolder(config), action);
 		}
 	}
 
@@ -209,11 +208,18 @@ namespace catapult { namespace observers {
 				const Key& beneficiary,
 				uint8_t percentage,
 				Amount totalFee,
-				const model::InflationCalculator& calculator,
+				const config::InflationConfiguration& inflationConfig,
 				const BalancesInfo& expectedFinalBalances,
 				const std::vector<ReceiptInfo>& expectedReceiptInfos) {
 			// Arrange:
-			RunHarvestFeeObserverTest(notifyMode, percentage, calculator, [&](auto& context, const auto& observer) {
+			test::MutableBlockchainConfiguration mutableConfig;
+			mutableConfig.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
+			mutableConfig.Network.HarvestBeneficiaryPercentage = percentage;
+			mutableConfig.Inflation = inflationConfig;
+			auto config = mutableConfig.ToConst();
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+
+			RunHarvestFeeObserverTest(notifyMode, pConfigHolder, [&](auto& context, const auto& observer) {
 				// - setup cache
 				auto& accountStateCache = context.cache().template sub<cache::AccountStateCache>();
 				auto harvesterAccountStateIter = MainAccountTraits::AddAccount(accountStateCache, signer, Height(1));
@@ -247,6 +253,7 @@ namespace catapult { namespace observers {
 				const auto& receiptPair = *pStatement->TransactionStatements.find(model::ReceiptSource());
 				ASSERT_EQ(expectedReceiptInfos.size(), receiptPair.second.size());
 
+				const auto& calculator = pConfigHolder->Config().Inflation.InflationCalculator;
 				auto inflationAmount = calculator.getSpotAmount(Height(444));
 				auto numInflationReceipts = Amount() == inflationAmount || NotifyMode::Rollback == notifyMode ? 0u : 1u;
 				auto numReceipts = expectedReceiptInfos.size();
@@ -278,7 +285,7 @@ namespace catapult { namespace observers {
 					beneficiary,
 					percentage,
 					totalFee,
-					model::InflationCalculator(),
+					config::InflationConfiguration::Uninitialized(),
 					expectedFinalBalances,
 					expectedReceiptInfos);
 		}
@@ -423,23 +430,28 @@ namespace catapult { namespace observers {
 	// region inflation
 
 	namespace {
-		auto CreateCustomCalculator() {
-			auto calculator = model::InflationCalculator();
-			calculator.add(Height(123), Amount(100));
-			calculator.add(Height(444), Amount(200));
-			calculator.add(Height(567), Amount(300));
-			return calculator;
+		static utils::ConfigurationBag::ValuesContainer CreateProperties() {
+			return {
+					{
+							"inflation",
+							{
+									{ "starting-at-height-123", "100" },
+									{ "starting-at-height-444", "200" },
+									{ "starting-at-height-567", "300" }
+							}
+					}
+			};
 		}
 	}
 
 	TEST(TEST_CLASS, HarvesterDoesNotShareInflationWhenBeneficiaryIsZeroKey_Commit) {
 		// Arrange: initial balances are 987 for signer and 234 for beneficiary, context height is 444
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto calculator = CreateCustomCalculator();
+		auto inflationConfig = config::InflationConfiguration::LoadFromBag(CreateProperties());
 		BalancesInfo finalBalances{ Amount(987 + 700), Amount(234) };
 
 		// Act + Assert: last receipt is the expected inflation receipt
-		AssertHarvesterSharesFees(NotifyMode::Commit, signer, Key(), 20, Amount(500), calculator, finalBalances, {
+		AssertHarvesterSharesFees(NotifyMode::Commit, signer, Key(), 20, Amount(500), inflationConfig, finalBalances, {
 			{ signer, Amount(700) }, { Key(), Amount(200) }
 		});
 	}
@@ -447,22 +459,22 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, HarvesterDoesNotShareInflationWhenBeneficiaryIsZeroKey_Rollback) {
 		// Arrange: initial balances are 987 for signer and 234 for beneficiary, context height is 444
 		auto signer = test::GenerateRandomByteArray<Key>();
-		auto calculator = CreateCustomCalculator();
+		auto inflationConfig = config::InflationConfiguration::LoadFromBag(CreateProperties());
 		BalancesInfo finalBalances{ Amount(987 - 700), Amount(234) };
 
 		// Act + Assert:
-		AssertHarvesterSharesFees(NotifyMode::Rollback, signer, Key(), 20, Amount(500), calculator, finalBalances, {});
+		AssertHarvesterSharesFees(NotifyMode::Rollback, signer, Key(), 20, Amount(500), inflationConfig, finalBalances, {});
 	}
 
 	TEST(TEST_CLASS, HarvesterSharesInflationAccordingToGivenPercentage_Commit) {
 		// Arrange: (500 + 200) * 0.2 = 140, initial balances are 987 for signer and 234 for beneficiary, context height is 444
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto beneficiary = test::GenerateRandomByteArray<Key>();
-		auto calculator = CreateCustomCalculator();
+		auto inflationConfig = config::InflationConfiguration::LoadFromBag(CreateProperties());
 		BalancesInfo finalBalances{ Amount(987 + 560), Amount(234 + 140) };
 
 		// Act + Assert: last receipt is the expected inflation receipt
-		AssertHarvesterSharesFees(NotifyMode::Commit, signer, beneficiary, 20, Amount(500), calculator, finalBalances, {
+		AssertHarvesterSharesFees(NotifyMode::Commit, signer, beneficiary, 20, Amount(500), inflationConfig, finalBalances, {
 			{ signer, Amount(560) }, { beneficiary, Amount(140) }, { Key(), Amount(200) }
 		});
 	}
@@ -471,11 +483,11 @@ namespace catapult { namespace observers {
 		// Arrange: (500 + 200) * 0.2 = 140, initial balances are 987 for signer and 234 for beneficiary, context height is 444
 		auto signer = test::GenerateRandomByteArray<Key>();
 		auto beneficiary = test::GenerateRandomByteArray<Key>();
-		auto calculator = CreateCustomCalculator();
+		auto inflationConfig = config::InflationConfiguration::LoadFromBag(CreateProperties());
 		BalancesInfo finalBalances{ Amount(987 - 560), Amount(234 - 140) };
 
 		// Act + Assert:
-		AssertHarvesterSharesFees(NotifyMode::Rollback, signer, beneficiary, 20, Amount(500), calculator, finalBalances, {});
+		AssertHarvesterSharesFees(NotifyMode::Rollback, signer, beneficiary, 20, Amount(500), inflationConfig, finalBalances, {});
 	}
 
 	// endregion
@@ -489,9 +501,10 @@ namespace catapult { namespace observers {
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
 			auto config = mutableConfig.ToConst();
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			test::AccountObserverTestContext context(NotifyMode::Commit, Height{444}, config);
 			auto& accountStateCache = context.cache().sub<cache::AccountStateCache>();
-			auto pObserver = CreateHarvestFeeObserver(model::InflationCalculator());
+			auto pObserver = CreateHarvestFeeObserver(pConfigHolder);
 
 			auto signerPublicKey = test::GenerateRandomByteArray<Key>();
 			auto accountStateIter = RemoteAccountTraits::AddAccount(accountStateCache, signerPublicKey, Height(1));

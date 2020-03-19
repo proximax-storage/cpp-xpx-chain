@@ -50,8 +50,8 @@ namespace catapult { namespace tools { namespace nemgen {
 			config::InflationConfiguration::Uninitialized(),
 			config::SupportedEntityVersions()
 		};
-		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(nullptr);
-		pConfigHolder->SetConfig(Height{0}, config);
+
+		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 		model::TransactionRegistry registry;
 		registry.registerPlugin(plugins::CreateMosaicAliasTransactionPlugin());
 		registry.registerPlugin(plugins::CreateMosaicDefinitionTransactionPlugin(pConfigHolder));

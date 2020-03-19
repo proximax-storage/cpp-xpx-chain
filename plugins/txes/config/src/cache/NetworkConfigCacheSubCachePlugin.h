@@ -31,6 +31,7 @@ namespace catapult { namespace cache {
 	class NetworkConfigCacheSubCachePlugin : public BaseNetworkConfigCacheSubCachePlugin {
 	public:
 		/// Creates a plugin around \a config and \a options.
-		explicit NetworkConfigCacheSubCachePlugin(const CacheConfiguration& config);
+		explicit NetworkConfigCacheSubCachePlugin(const CacheConfiguration& config,
+		                                          const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
 	};
 }}

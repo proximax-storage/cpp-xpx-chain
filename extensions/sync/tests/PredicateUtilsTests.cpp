@@ -142,8 +142,8 @@ namespace catapult { namespace sync {
 			pTransaction->Type = transactionType;
 			pTransaction->MaxFee = Amount(2'000'000);
 
-			auto serviceState = test::ServiceTestState();
-			serviceState.state().pluginManager().configHolder()->SetConfig(Height{0}, config);
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder(new config::BlockchainConfigurationHolder(config));
+			auto serviceState = test::ServiceTestState(cache::CatapultCache({}), pConfigHolder);
 
 			// Sanity:
 			EXPECT_EQ(cacheSize, utCacheModifier.size());
