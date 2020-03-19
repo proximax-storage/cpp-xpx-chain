@@ -21,6 +21,7 @@ namespace catapult { namespace plugins {
 			return [configHolder](const TTransaction &transaction, const Height& associatedHeight, NotificationSubscriber &sub) {
 				switch (transaction.EntityVersion()) {
 					case 1: {
+						sub.notify(AccountPublicKeyNotification<1>(transaction.SuperContract));
 						sub.notify(SuperContractNotification<1>(transaction.SuperContract, transaction.Type));
 						sub.notify(StartExecuteNotification<1>(transaction.SuperContract));
 						break;
