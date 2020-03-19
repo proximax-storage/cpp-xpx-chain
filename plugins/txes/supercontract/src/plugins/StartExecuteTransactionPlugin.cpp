@@ -22,7 +22,8 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(AccountPublicKeyNotification<1>(transaction.SuperContract));
-						sub.notify(SuperContractNotification<1>(transaction.SuperContract));
+						sub.notify(SuperContractNotification<1>(transaction.SuperContract, transaction.Type));
+						sub.notify(StartExecuteNotification<1>(transaction.SuperContract));
 						break;
 					}
 

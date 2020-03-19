@@ -26,7 +26,6 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_core/ImportanceView.h"
-#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
@@ -47,7 +46,6 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NodeContainer.h"
-#include "catapult/ionet/NodeInteractionResult.h"
 #include "catapult/model/NetworkConfiguration.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/subscribers/StateChangeSubscriber.h"
@@ -130,11 +128,13 @@ namespace catapult { namespace sync {
 			const auto& pluginManager = state.pluginManager();
 
 			BlockChainSyncHandlers syncHandlers;
-			syncHandlers.DifficultyChecker = [&rollbackInfo, &state](const auto& blocks, const cache::CatapultCache& cache) {
+			syncHandlers.DifficultyChecker = [&rollbackInfo, &state](
+					const auto& blocks,
+					const cache::CatapultCache& cache,
+					const model::NetworkConfigurations& remoteConfigs) {
 				if (!blocks.size())
 					return true;
-				const auto& networkConfig = state.config(blocks.back()->Height).Network;
-				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, networkConfig);
+				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, state.pluginManager().configHolder(), remoteConfigs);
 				rollbackInfo.modifier().reset();
 				return blocks.size() == result;
 			};

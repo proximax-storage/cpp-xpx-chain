@@ -70,6 +70,7 @@ namespace catapult { namespace plugins {
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
 				const auto& aggregate = CastToDerivedType(transactionInfo.entity());
 				auto numTransactions = static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend()));
+				auto numCosignatures = aggregate.CosignaturesCount();
 
 				switch (aggregate.EntityVersion()) {
 				case 3: {
@@ -77,6 +78,13 @@ namespace catapult { namespace plugins {
 						transactionInfo.hash(),
 						numTransactions,
 						aggregate.TransactionsPtr()));
+
+					sub.notify(AggregateCosignaturesNotification<2>(
+							aggregate.Signer,
+							numTransactions,
+							aggregate.TransactionsPtr(),
+							numCosignatures,
+							aggregate.CosignaturesPtr()));
 
 					[[fallthrough]];
 				}
@@ -86,7 +94,6 @@ namespace catapult { namespace plugins {
 
 					// publish aggregate notifications
 					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
-					auto numCosignatures = aggregate.CosignaturesCount();
 					sub.notify(AggregateCosignaturesNotification<1>(
 							aggregate.Signer,
 							numTransactions,

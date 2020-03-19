@@ -20,6 +20,20 @@ namespace catapult { namespace state {
 		EXPECT_EQ(key, entry.key());
 	}
 
+	TEST(TEST_CLASS, CanAccessState) {
+		// Arrange:
+		auto entry = SuperContractEntry(Key());
+
+		// Sanity:
+		EXPECT_EQ(state::SuperContractState::Active, entry.state());
+
+		// Act:
+		entry.setState(state::SuperContractState::DeactivatedByParticipant);
+
+		// Assert:
+		EXPECT_EQ(state::SuperContractState::DeactivatedByParticipant, entry.state());
+	}
+
 	TEST(TEST_CLASS, CanAccessStart) {
 		// Arrange:
 		auto entry = SuperContractEntry(Key());
@@ -91,5 +105,61 @@ namespace catapult { namespace state {
 
 		// Assert:
 		EXPECT_EQ(fileHash, entry.fileHash());
+	}
+
+	TEST(TEST_CLASS, CanAccessExecutionCount) {
+		// Arrange:
+		auto executionCount = test::Random16();
+		auto entry = SuperContractEntry(Key());
+
+		// Sanity:
+		ASSERT_EQ(0, entry.executionCount());
+
+		// Act:
+		entry.setExecutionCount(executionCount);
+
+		// Assert:
+		EXPECT_EQ(executionCount, entry.executionCount());
+	}
+
+	TEST(TEST_CLASS, CanIncrementExecutionCount) {
+		// Arrange:
+		auto entry = SuperContractEntry(Key());
+		entry.setExecutionCount(10);
+
+		// Act:
+		entry.incrementExecutionCount();
+
+		// Assert:
+		EXPECT_EQ(11, entry.executionCount());
+	}
+
+	TEST(TEST_CLASS, CannotIncrementExecutionCountWhenLimitReached) {
+		// Arrange:
+		auto entry = SuperContractEntry(Key());
+		entry.setExecutionCount(std::numeric_limits<uint16_t>::max());
+
+		// Act + Assert:
+		EXPECT_THROW(entry.incrementExecutionCount(), catapult_runtime_error);
+	}
+
+	TEST(TEST_CLASS, CanDecrementExecutionCount) {
+		// Arrange:
+		auto entry = SuperContractEntry(Key());
+		entry.setExecutionCount(10);
+
+		// Act:
+		entry.decrementExecutionCount();
+
+		// Assert:
+		EXPECT_EQ(9, entry.executionCount());
+	}
+
+	TEST(TEST_CLASS, CannotDecrementExecutionCountBelowZero) {
+		// Arrange:
+		auto entry = SuperContractEntry(Key());
+
+		// Act + Assert:
+		EXPECT_THROW(entry.decrementExecutionCount(), catapult_runtime_error);
 	}
 }}

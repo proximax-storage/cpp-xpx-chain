@@ -39,7 +39,8 @@ namespace catapult { namespace cache {
 		cache().init(heights);
 	}
 
-	NetworkConfigCacheSubCachePlugin::NetworkConfigCacheSubCachePlugin(const CacheConfiguration& config)
-			: BaseNetworkConfigCacheSubCachePlugin(std::make_unique<NetworkConfigCache>(config))
+	NetworkConfigCacheSubCachePlugin::NetworkConfigCacheSubCachePlugin(const CacheConfiguration& config,
+	                                                                   const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
+			: BaseNetworkConfigCacheSubCachePlugin(std::make_unique<NetworkConfigCache>(config, pConfigHolder))
 	{}
 }}

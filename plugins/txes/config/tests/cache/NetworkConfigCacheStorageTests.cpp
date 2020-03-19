@@ -6,6 +6,8 @@
 
 #include "src/cache/NetworkConfigCacheStorage.h"
 #include "src/cache/NetworkConfigCache.h"
+#include "tests/test/NetworkConfigTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
@@ -14,10 +16,10 @@ namespace catapult { namespace cache {
 
 	TEST(TEST_CLASS, CanLoadValueIntoCache) {
 		// Arrange: create a random value to insert
-		state::NetworkConfigEntry originalEntry(Height{1}, "networkConfig", "supportedEntityVersions");
+		state::NetworkConfigEntry originalEntry(Height{1}, test::networkConfig(), test::supportedVersions());
 
 		// Act:
-		NetworkConfigCache cache(CacheConfiguration{});
+		NetworkConfigCache cache(CacheConfiguration{}, config::CreateMockConfigurationHolder());
 		auto delta = cache.createDelta(Height{1});
 		NetworkConfigCacheStorage::LoadInto(originalEntry, *delta);
 		cache.commit();

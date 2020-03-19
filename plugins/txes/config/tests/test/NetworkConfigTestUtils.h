@@ -5,21 +5,39 @@
 **/
 
 #pragma once
+#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "plugins/txes/config/src/cache/NetworkConfigCache.h"
 #include "plugins/txes/config/src/cache/NetworkConfigCacheStorage.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace cache { class CatapultCacheDelta; } }
 
 namespace catapult { namespace test {
 
-	/// Cache factory for creating a catapult cache composed of only the config cache.
+	std::string networkConfig();
+	std::string supportedVersions();
+
 	struct NetworkConfigCacheFactory {
-		/// Creates an empty catapult cache.
+	private:
+		static auto CreateSubCachesWithDriveCache(const config::BlockchainConfiguration& config) {
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cache::BlockDifficultyCache::Id + 1);
+			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
+			subCaches[cache::NetworkConfigCache::Id] = test::MakeSubCachePlugin<cache::NetworkConfigCache, cache::NetworkConfigCacheStorage>(pConfigHolder);
+			return subCaches;
+		}
+
+	public:
+		/// Creates an empty catapult cache around default configuration.
 		static cache::CatapultCache Create() {
-			auto cacheId = cache::NetworkConfigCache::Id;
-			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
-			subCaches[cacheId] = test::MakeSubCachePlugin<cache::NetworkConfigCache, cache::NetworkConfigCacheStorage>();
+			return Create(test::MutableBlockchainConfiguration().ToConst());
+		}
+
+		/// Creates an empty catapult cache around \a config.
+		static cache::CatapultCache Create(const config::BlockchainConfiguration& config) {
+			auto subCaches = CreateSubCachesWithDriveCache(config);
+			CoreSystemCacheFactory::CreateSubCaches(config, subCaches);
 			return cache::CatapultCache(std::move(subCaches));
 		}
 	};

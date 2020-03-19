@@ -104,8 +104,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateBalanceTransferValidator());
 		});
 
-		const auto& calculator = manager.inflationConfig().InflationCalculator;
-		manager.addObserverHook([&calculator](auto& builder) {
+		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateSourceChangeObserver())
 				.add(observers::CreateAccountAddressObserver())
@@ -113,7 +112,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateBalanceDebitObserver())
 				.add(observers::CreateBalanceCreditObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(calculator))
+				.add(observers::CreateHarvestFeeObserver(pConfigHolder))
 				.add(observers::CreateTotalTransactionsObserver())
 				.add(observers::CreateSnapshotCleanUpObserver());
 		});

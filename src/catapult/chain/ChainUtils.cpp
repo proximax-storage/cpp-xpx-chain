@@ -37,44 +37,61 @@ namespace catapult { namespace chain {
 	namespace {
 		using DifficultySet = cache::BlockDifficultyCacheTypes::PrimaryTypes::BaseSetType::SetType::MemorySetType;
 
-		DifficultySet LoadDifficulties(
+		void LoadDifficulties(
+				DifficultySet& set,
 				const cache::BlockDifficultyCache& cache,
 				Height height,
-				const model::NetworkConfiguration& config) {
-			auto view = cache.createView(height);
-			auto range = view->difficultyInfos(height, config.MaxDifficultyBlocks);
-
-			DifficultySet set;
+				uint32_t numBlocks) {
+			auto range = cache.createView(height)->difficultyInfos(height, numBlocks);
 			set.insert(range.begin(), range.end());
-			return set;
 		}
 
-		Difficulty CalculateDifficulty(const DifficultySet& difficulties,
-				const state::BlockDifficultyInfo& nextBlockInfo, const model::NetworkConfiguration& config) {
-			return chain::CalculateDifficulty(cache::DifficultyInfoRange(difficulties.cbegin(), difficulties.cend()), nextBlockInfo, config);
+		auto FindConfig(const model::NetworkConfigurations& remoteConfigs, const Height& height) {
+			auto iter = remoteConfigs.lower_bound(height);
+			if (iter != remoteConfigs.end() && iter->first != height) {
+				if (iter == remoteConfigs.begin())
+					return remoteConfigs.end();
+				--iter;
+			} else if (iter == remoteConfigs.end() && !remoteConfigs.empty()) {
+				--iter;
+			}
+
+			return iter;
 		}
 	}
 
 	size_t CheckDifficulties(
 			const cache::BlockDifficultyCache& cache,
 			const std::vector<const model::Block*>& blocks,
-			const model::NetworkConfiguration& config) {
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			const model::NetworkConfigurations& remoteConfigs) {
 		if (blocks.empty())
 			return 0;
 
-		auto difficulties = LoadDifficulties(cache, blocks[0]->Height - Height(1), config);
-
+		DifficultySet difficulties;
 		size_t i = 0;
 		for (const auto* pBlock : blocks) {
-			auto difficulty = CalculateDifficulty(difficulties, state::BlockDifficultyInfo(*pBlock), config);
+			auto iter = FindConfig(remoteConfigs, pBlock->Height);
+			const auto& config = (remoteConfigs.end() != iter) ? iter->second : pConfigHolder->Config(pBlock->Height).Network;
+			if (difficulties.size() < config.MaxDifficultyBlocks) {
+				auto startHeight = difficulties.empty() ? blocks[0]->Height : difficulties.begin()->BlockHeight;
+				if (startHeight > Height(1))
+					LoadDifficulties(difficulties, cache, startHeight - Height(1), config.MaxDifficultyBlocks - difficulties.size());
+			}
+
+			auto startDifficultyIter = difficulties.cbegin();
+			if (difficulties.size() > config.MaxDifficultyBlocks) {
+				startDifficultyIter = difficulties.cend();
+				for (auto k = 0u; k < config.MaxDifficultyBlocks; ++k)
+					--startDifficultyIter;
+			}
+
+			auto difficulty = CalculateDifficulty(cache::DifficultyInfoRange(startDifficultyIter, difficulties.cend()), state::BlockDifficultyInfo(*pBlock), config);
 
 			if (difficulty != pBlock->Difficulty)
 				break;
 
 			difficulties.insert(state::BlockDifficultyInfo(*pBlock));
-
-			if (difficulties.size() > config.MaxDifficultyBlocks)
-				difficulties.erase(difficulties.cbegin());
 			++i;
 		}
 

@@ -62,7 +62,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, NetworkConfig_Commit) {
 		// Arrange:
-		auto values = NetworkConfigValues{ Height{1}, BlockDuration{2}, "aaa", "bbb" };
+		auto values = NetworkConfigValues{ Height{1}, BlockDuration{2}, test::networkConfig(), test::supportedVersions() };
 		auto notification = CreateNotification(values);
 
 		// Assert:
@@ -71,7 +71,7 @@ namespace catapult { namespace observers {
 
 	TEST(TEST_CLASS, NetworkConfig_Rollback) {
 		// Arrange:
-		auto values = NetworkConfigValues{ Height{2}, BlockDuration{3}, "ccc", "ddd" };
+		auto values = NetworkConfigValues{ Height{2}, BlockDuration{3}, test::networkConfig(), test::supportedVersions() };
 		auto notification = CreateNotification(values);
 
 		// Assert:

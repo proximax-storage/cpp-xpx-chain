@@ -16,11 +16,14 @@ namespace catapult { namespace state {
 		io::Write32(output, 1);
 
 		io::Write(output, entry.key());
+		io::Write8(output, utils::to_underlying_type(entry.state()));
+		io::Write(output, entry.owner());
 		io::Write(output, entry.start());
 		io::Write(output, entry.end());
 		io::Write(output, entry.mainDriveKey());
 		io::Write(output, entry.fileHash());
 		io::Write(output, entry.vmVersion());
+		io::Write16(output, entry.executionCount());
 	}
 
 	SuperContractEntry SuperContractEntrySerializer::Load(io::InputStream& input) {
@@ -32,6 +35,12 @@ namespace catapult { namespace state {
 		Key key;
 		input.read(key);
 		state::SuperContractEntry entry(key);
+
+		entry.setState(static_cast<SuperContractState>(io::Read8(input)));
+
+		Key owner;
+		input.read(owner);
+		entry.setOwner(owner);
 
 		entry.setStart(Height(io::Read64(input)));
 		entry.setEnd(Height(io::Read64(input)));
@@ -45,6 +54,7 @@ namespace catapult { namespace state {
 		entry.setFileHash(fileHash);
 
 		entry.setVmVersion(VmVersion(io::Read64(input)));
+		entry.setExecutionCount(io::Read16(input));
 
 		return entry;
 	}

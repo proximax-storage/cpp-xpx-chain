@@ -13,6 +13,7 @@
 #include "src/plugins/StartExecuteTransactionPlugin.h"
 #include "src/plugins/EndExecuteTransactionPlugin.h"
 #include "src/plugins/UploadFileTransactionPlugin.h"
+#include "src/plugins/DeactivateTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
 
@@ -29,6 +30,7 @@ namespace catapult { namespace plugins {
         manager.addTransactionSupport(CreateStartExecuteTransactionPlugin(manager.configHolder()));
         manager.addTransactionSupport(CreateEndExecuteTransactionPlugin());
         manager.addTransactionSupport(CreateUploadFileTransactionPlugin());
+        manager.addTransactionSupport(CreateDeactivateTransactionPlugin());
 
 		manager.addCacheSupport<cache::SuperContractCacheStorage>(
 			std::make_unique<cache::SuperContractCache>(manager.cacheConfig(cache::SuperContractCache::Name), pConfigHolder));
@@ -50,18 +52,25 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateDriveValidator())
+				.add(validators::CreateStartExecuteValidator())
+				.add(validators::CreateEndExecuteValidator())
 				.add(validators::CreateSuperContractValidator())
 				.add(validators::CreateDeployValidator())
 				.add(validators::CreateDriveFileSystemValidator())
-				.add(validators::CreateEndOperationTransactionValidator());
+				.add(validators::CreateEndOperationTransactionValidator())
+				.add(validators::CreateDeactivateValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
 			builder
 				.add(observers::CreateDeployObserver())
+				.add(observers::CreateStartExecuteObserver())
+				.add(observers::CreateEndExecuteCosignersObserver())
 				.add(observers::CreateEndExecuteObserver())
-				.add(observers::CreateAggregateTransactionHashObserver());
+				.add(observers::CreateExpiredExecutionObserver())
+				.add(observers::CreateAggregateTransactionHashObserver())
+				.add(observers::CreateDeactivateObserver())
+				.add(observers::CreateEndDriveObserver());
 		});
 	}
 }}

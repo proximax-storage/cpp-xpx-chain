@@ -66,8 +66,7 @@ namespace catapult { namespace tools { namespace nemgen {
 			int run(const Options& options) override {
 				// 1. load config
 				auto config = LoadConfiguration(m_resourcesPath);
-				auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(nullptr);
-				pConfigHolder->SetConfig(Height{0}, config);
+				auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
 				auto nemesisConfig = LoadNemesisConfiguration(m_nemesisPropertiesFilePath);
 				if (!LogAndValidateNemesisConfiguration(nemesisConfig))
 					return -1;

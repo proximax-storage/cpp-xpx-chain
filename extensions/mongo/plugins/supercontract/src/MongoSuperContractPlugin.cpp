@@ -8,6 +8,7 @@
 #include "StartExecuteMapper.h"
 #include "EndExecuteMapper.h"
 #include "UploadFileMapper.h"
+#include "DeactivateMapper.h"
 #include "mongo/src/MongoPluginManager.h"
 #include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoSuperContractCacheStorage.h"
@@ -19,6 +20,7 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateStartExecuteTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateEndExecuteTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateUploadFileTransactionMongoPlugin());
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateDeactivateTransactionMongoPlugin());
 
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoSuperContractCacheStorage(

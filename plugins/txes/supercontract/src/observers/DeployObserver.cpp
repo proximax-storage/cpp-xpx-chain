@@ -6,7 +6,7 @@
 
 #include "Observers.h"
 #include "plugins/txes/service/src/cache/DriveCache.h"
-#include "plugins/txes/service/src/state/DriveEntry.h"
+#include "src/cache/SuperContractCache.h"
 
 namespace catapult { namespace observers {
 
@@ -18,6 +18,7 @@ namespace catapult { namespace observers {
 
 		if (NotifyMode::Commit == context.Mode) {
 			state::SuperContractEntry superContractEntry(notification.SuperContract);
+			superContractEntry.setOwner(notification.Owner);
 			superContractEntry.setStart(context.Height);
 			superContractEntry.setFileHash(notification.FileHash);
 			superContractEntry.setMainDriveKey(notification.Drive);
