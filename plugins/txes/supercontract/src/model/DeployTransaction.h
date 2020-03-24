@@ -14,7 +14,7 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 
-    /// Binary layout for an deploy transaction header.
+    /// Binary layout for a deploy transaction header.
     template<typename THeader>
     struct DeployTransactionBody : public THeader {
     private:
@@ -37,7 +37,7 @@ namespace catapult { namespace model {
         catapult::VmVersion VmVersion;
 
     public:
-        // Calculates the real size of a deploy \a transaction.
+        // Calculates the real size of a deploy transaction.
         static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
             return sizeof(TransactionType);
         }

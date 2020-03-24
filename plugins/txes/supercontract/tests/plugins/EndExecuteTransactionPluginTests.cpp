@@ -7,6 +7,7 @@
 #include "catapult/model/EntityHasher.h"
 #include "src/plugins/EndExecuteTransactionPlugin.h"
 #include "src/model/EndExecuteTransaction.h"
+#include "src/model/SuperContractNotifications.h"
 #include "plugins/txes/operation/src/model/OperationNotifications.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
@@ -78,10 +79,50 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(2u, sub.numNotifications());
+		ASSERT_EQ(4u, sub.numNotifications());
 		auto i = 0u;
+		EXPECT_EQ(SuperContract_SuperContract_v1_Notification, sub.notificationTypes()[i++]);
+		EXPECT_EQ(SuperContract_EndExecute_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Operation_Mosaic_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Operation_End_v1_Notification, sub.notificationTypes()[i++]);
+	}
+
+	// endregion
+
+	// region super contract notification
+
+	PLUGIN_TEST(CanPublishSuperContractNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<SuperContractNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin();
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->Signer, notification.SuperContract);
+	}
+
+	// endregion
+
+	// region end execute notification
+
+	PLUGIN_TEST(CanPublishEndExecuteNotification) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<EndExecuteNotification<1>> sub;
+		auto pPlugin = TTraits::CreatePlugin();
+		auto pTransaction = CreateTransaction<TTraits>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(1u, sub.numMatchingNotifications());
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(pTransaction->Signer, notification.SuperContract);
 	}
 
 	// endregion

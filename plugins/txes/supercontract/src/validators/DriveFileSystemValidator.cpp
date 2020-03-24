@@ -7,10 +7,7 @@
 #include "Validators.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/SuperContractCache.h"
-#include "src/state/DriveEntry.h"
-#include "catapult/validators/ValidatorContext.h"
 #include "src/model/SuperContractEntityType.h"
-#include <unordered_set>
 
 namespace catapult { namespace validators {
 
@@ -31,10 +28,12 @@ namespace catapult { namespace validators {
 				auto contractIter = superContractCache.find(coowner);
 				const state::SuperContractEntry& contractEntry = contractIter.get();
 
-				auto pRemove = notification.RemoveActionsPtr;
-				for (auto i = 0u; i < notification.RemoveActionsCount; ++i, ++pRemove) {
-					if (pRemove->FileHash == contractEntry.fileHash()) {
-						return Failure_SuperContract_Remove_Super_Contract_File;
+				if (contractEntry.state() == state::SuperContractState::Active) {
+					auto pRemove = notification.RemoveActionsPtr;
+					for (auto i = 0u; i < notification.RemoveActionsCount; ++i, ++pRemove) {
+						if (pRemove->FileHash == contractEntry.fileHash()) {
+							return Failure_SuperContract_Remove_Super_Contract_File;
+						}
 					}
 				}
 			}

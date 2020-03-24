@@ -42,6 +42,7 @@ namespace catapult { namespace plugins {
 					model::Entity_Type_StartExecute,
 					model::Entity_Type_EndExecute,
 					model::Entity_Type_UploadFile,
+					model::Entity_Type_Deactivate,
 				};
 			}
 
@@ -71,18 +72,25 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
 					"EndOperationTransactionValidator",
-					"DriveValidator",
 					"SuperContractValidator",
 					"DriveFileSystemValidator",
 					"DeployValidator",
+					"StartExecuteValidator",
+					"EndExecuteValidator",
+					"DeactivateValidator",
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
-					"EndExecuteObserver",
 					"AggregateTransactionHashObserver",
+					"EndExecuteCosignersObserver",
+					"ExpiredExecutionObserver",
+					"EndDriveObserver",
 					"DeployObserver",
+					"StartExecuteObserver",
+					"EndExecuteObserver",
+					"DeactivateObserver",
 				};
 			}
 

@@ -16,12 +16,17 @@ namespace catapult { namespace test {
 			const state::SuperContractEntry& entry,
 			const Address& address,
 			const bsoncxx::document::view& dbSuperContractEntry) {
+		EXPECT_EQ(10u, test::GetFieldCount(dbSuperContractEntry));
+
 		EXPECT_EQ(entry.key(), GetKeyValue(dbSuperContractEntry, "multisig"));
 		EXPECT_EQ(address, GetAddressValue(dbSuperContractEntry, "multisigAddress"));
+		EXPECT_EQ(entry.state(), static_cast<state::SuperContractState>(GetUint8(dbSuperContractEntry, "state")));
+		EXPECT_EQ(entry.owner(), GetKeyValue(dbSuperContractEntry, "owner"));
 		EXPECT_EQ(entry.start().unwrap(), GetUint64(dbSuperContractEntry, "start"));
 		EXPECT_EQ(entry.end().unwrap(), GetUint64(dbSuperContractEntry, "end"));
+		EXPECT_EQ(entry.vmVersion().unwrap(), GetUint64(dbSuperContractEntry, "vmVersion"));
 		EXPECT_EQ(entry.mainDriveKey(), GetKeyValue(dbSuperContractEntry, "mainDriveKey"));
 		EXPECT_EQ(entry.fileHash(), GetHashValue(dbSuperContractEntry, "fileHash"));
-		EXPECT_EQ(entry.vmVersion().unwrap(), GetUint64(dbSuperContractEntry, "vmVersion"));
+		EXPECT_EQ(entry.executionCount(), GetUint16(dbSuperContractEntry, "executionCount"));
 	}
 }}

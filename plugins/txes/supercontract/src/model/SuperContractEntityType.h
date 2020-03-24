@@ -24,6 +24,9 @@ namespace catapult { namespace model {
 	/// Upload file transaction.
 	DEFINE_TRANSACTION_TYPE(SuperContract, UploadFile, 0x4);
 
+	/// Deactivate transaction.
+	DEFINE_TRANSACTION_TYPE(SuperContract, Deactivate, 0x5);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif
