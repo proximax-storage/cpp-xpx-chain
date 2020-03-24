@@ -30,12 +30,12 @@ namespace catapult { namespace observers {
 	class AggregateObserverBuilder {
 	private:
 		using NotificationObserverPointer = NotificationObserverPointerT<TNotification>;
-		using NotificationObserverPointerVector = std::vector<NotificationObserverPointer>;
+		using NotificationObserverPointerMap = std::map<model::NotificationType, std::vector<NotificationObserverPointer>>;
 
 	public:
 		/// Adds \a pObserver to the builder and allows chaining.
-		AggregateObserverBuilder& add(NotificationObserverPointer&& pObserver) {
-			m_observers.push_back(std::move(pObserver));
+		AggregateObserverBuilder& add(model::NotificationType type, NotificationObserverPointer&& pObserver) {
+			m_observers[type].push_back(std::move(pObserver));
 			return *this;
 		}
 
@@ -47,7 +47,7 @@ namespace catapult { namespace observers {
 	private:
 		class DefaultAggregateNotificationObserver : public AggregateNotificationObserverT<TNotification> {
 		public:
-			explicit DefaultAggregateNotificationObserver(NotificationObserverPointerVector&& observers)
+			explicit DefaultAggregateNotificationObserver(NotificationObserverPointerMap&& observers)
 					: m_observers(std::move(observers))
 					, m_name(utils::ReduceNames(utils::ExtractNames(m_observers)))
 			{}
@@ -62,25 +62,30 @@ namespace catapult { namespace observers {
 			}
 
 			void notify(const TNotification& notification, ObserverContext& context) const override {
+				auto observerIter = m_observers.find(notification.Type);
+				if (m_observers.end() == observerIter)
+					return;
+
+				const auto& observers = observerIter->second;
 				if (NotifyMode::Commit == context.Mode)
-					notifyAll(m_observers.cbegin(), m_observers.cend(), notification, context);
+					notify(observers.cbegin(), observers.cend(), notification, context);
 				else
-					notifyAll(m_observers.crbegin(), m_observers.crend(), notification, context);
+					notify(observers.crbegin(), observers.crend(), notification, context);
 			}
 
 		private:
 			template<typename TIter>
-			void notifyAll(TIter begin, TIter end, const TNotification& notification, ObserverContext& context) const {
+			void notify(TIter begin, TIter end, const TNotification& notification, ObserverContext& context) const {
 				for (auto iter = begin; end != iter; ++iter)
 					(*iter)->notify(notification, context);
 			}
 
 		private:
-			NotificationObserverPointerVector m_observers;
+			NotificationObserverPointerMap m_observers;
 			std::string m_name;
 		};
 
 	private:
-		NotificationObserverPointerVector m_observers;
+		NotificationObserverPointerMap m_observers;
 	};
 }}

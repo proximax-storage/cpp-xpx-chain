@@ -105,25 +105,25 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
 					"NamespaceNameValidator",
+					"AliasAvailabilityValidator",
 					"RootNamespaceValidator",
 					"RootNamespaceAvailabilityValidator",
 					"NamespaceDurationOverflowValidator",
 					"ChildNamespaceAvailabilityValidator",
 					"RootNamespaceMaxChildrenValidator",
-					"AliasAvailabilityValidator",
 					"UnlinkAliasedAddressConsistencyValidator",
+					"AddressAliasValidator",
 					"UnlinkAliasedMosaicIdConsistencyValidator",
-					"AddressAliasValidator"
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
-					"RootNamespaceObserver",
-					"ChildNamespaceObserver",
 					"NamespaceRentalFeeObserver",
 					"NamespaceTouchObserver",
 					"NamespacePruningObserver",
+					"RootNamespaceObserver",
+					"ChildNamespaceObserver",
 					"AliasedAddressObserver",
 					"AliasedMosaicIdObserver"
 				};

@@ -21,6 +21,7 @@
 #pragma once
 #include <string>
 #include <vector>
+#include <map>
 
 namespace catapult { namespace utils {
 
@@ -41,13 +42,29 @@ namespace catapult { namespace utils {
 		std::string m_name;
 	};
 
+	/// Extracts all names from \a namedObjects into \a names.
+	template<typename TNamedObjects>
+	void ExtractNames(const TNamedObjects& namedObjects, std::vector<std::string>& names) {
+		names.reserve(names.size() + namedObjects.size());
+		for (const auto& pObject : namedObjects)
+			names.push_back(pObject->name());
+	}
+
 	/// Extracts all names from \a namedObjects.
 	template<typename TNamedObjects>
 	std::vector<std::string> ExtractNames(const TNamedObjects& namedObjects) {
 		std::vector<std::string> names;
-		names.reserve(namedObjects.size());
-		for (const auto& pObject : namedObjects)
-			names.push_back(pObject->name());
+		ExtractNames(namedObjects, names);
+
+		return names;
+	}
+
+	/// Extracts all names from \a namedObjects.
+	template<typename TKey, typename TNamedObjects>
+	std::vector<std::string> ExtractNames(const std::map<TKey, TNamedObjects>& namedObjects) {
+		std::vector<std::string> names;
+		for (const auto& pair : namedObjects)
+			ExtractNames(pair.second, names);
 
 		return names;
 	}

@@ -57,7 +57,7 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<std::string> GetObserverNames() {
-				return { "TransactionHashObserver", "TransactionHashPruningObserver" };
+				return { "TransactionHashPruningObserver", "TransactionHashObserver" };
 			}
 		};
 	}

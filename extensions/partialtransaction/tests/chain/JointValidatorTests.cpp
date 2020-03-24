@@ -49,8 +49,8 @@ namespace catapult { namespace chain {
 
 		class TestContext {
 		private:
-			using StatelessValidatorPointer = std::unique_ptr<mocks::MockCapturingStatelessNotificationValidator>;
-			using StatefulValidatorPointer = std::unique_ptr<mocks::MockCapturingStatefulNotificationValidator>;
+			using StatelessValidatorPointer = std::unique_ptr<mocks::MockCapturingStatelessNotificationValidator<model::AccountPublicKeyNotification<1>>>;
+			using StatefulValidatorPointer = std::unique_ptr<mocks::MockCapturingStatefulNotificationValidator<model::AccountPublicKeyNotification<1>>>;
 
 		public:
 			TestContext() : TestContext("stateless", "stateful")
@@ -99,14 +99,14 @@ namespace catapult { namespace chain {
 			}
 
 		private:
-			StatelessValidatorPointer createStatelessValidator() {
+			std::unique_ptr<const validators::stateless::NotificationValidatorT<model::AccountPublicKeyNotification<1>>> createStatelessValidator() {
 				auto pValidator = std::make_unique<StatelessValidatorPointer::element_type>(m_statelessName);
 				pValidator->setResult(m_statelessResult);
 				m_pStatelessValidator = pValidator.get();
 				return pValidator;
 			}
 
-			StatefulValidatorPointer createStatefulValidator() {
+			std::unique_ptr<const validators::stateful::NotificationValidatorT<model::AccountPublicKeyNotification<1>>> createStatefulValidator() {
 				auto pValidator = std::make_unique<StatefulValidatorPointer::element_type>(m_statefulName);
 				pValidator->setResult(m_statefulResult);
 				m_pStatefulValidator = pValidator.get();
@@ -135,14 +135,14 @@ namespace catapult { namespace chain {
 				ASSERT_EQ(1u, m_pStatelessValidator->params().size());
 
 				const auto& params = m_pStatelessValidator->params()[0];
-				EXPECT_EQ(&notification, &params.Notification);
+				EXPECT_EQ(&notification, params.NotificationPtr);
 			}
 
 			void assertStatefulSingle(const model::Notification& notification) {
 				ASSERT_EQ(1u, m_pStatefulValidator->params().size());
 
 				const auto& params = m_pStatefulValidator->params()[0];
-				EXPECT_EQ(&notification, &params.Notification);
+				EXPECT_EQ(&notification, params.NotificationPtr);
 
 				EXPECT_EQ(Cache_Height, params.Height);
 				EXPECT_EQ(Default_Block_Time, params.BlockTime);
