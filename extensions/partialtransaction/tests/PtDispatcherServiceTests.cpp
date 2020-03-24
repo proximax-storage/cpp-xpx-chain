@@ -36,6 +36,7 @@
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
 #include "tests/test/nodeps/Nemesis.h"
+#include "tests/test/other/mocks/MockNotification.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace partialtransaction {
@@ -67,11 +68,11 @@ namespace catapult { namespace partialtransaction {
 			return Num_Cosignatures == aggregateNotification.CosignaturesCount;
 		}
 
-		class MockStatelessNotificationValidator : public validators::stateless::NotificationValidatorT<model::Notification> {
+		template<typename TNotification>
+		class BaseMockStatelessNotificationValidator : public validators::stateless::NotificationValidatorT<TNotification> {
 		public:
-			explicit MockStatelessNotificationValidator(validators::ValidationResult result)
+			explicit BaseMockStatelessNotificationValidator(validators::ValidationResult result)
 					: m_result(result)
-					, m_numCosigs(0)
 			{}
 
 		public:
@@ -79,27 +80,54 @@ namespace catapult { namespace partialtransaction {
 				return m_name;
 			}
 
-			validators::ValidationResult validate(const model::Notification& notification) const override {
-				if (notification.Type == model::Aggregate_Cosignatures_v1_Notification) {
-					return HasAllCosignatures(static_cast<const model::AggregateCosignaturesNotification<1>&>(notification))
-							? ValidationResult::Success
-							: validators::Failure_Aggregate_Missing_Cosigners;
-				}
-
-				if (notification.Type == model::Aggregate_EmbeddedTransaction_v1_Notification) {
-					return HasAllCosignatures(static_cast<const model::AggregateEmbeddedTransactionNotification<1>&>(notification))
-							? ValidationResult::Success
-							: validators::Failure_Aggregate_Ineligible_Cosigners;
-				}
-
+			ValidationResult validate(const TNotification&) const override {
 				return m_result;
 			}
 
-		private:
+		protected:
 			const std::string m_name = "MockStatelessNotificationValidator";
-			const validators::ValidationResult m_result;
-			mutable std::atomic<size_t> m_numCosigs;
+			const ValidationResult m_result;
 		};
+
+		template<typename TNotification>
+		class MockStatelessNotificationValidator : public BaseMockStatelessNotificationValidator<TNotification> {
+		public:
+			using BaseMockStatelessNotificationValidator<TNotification>::BaseMockStatelessNotificationValidator;
+		};
+
+		template<>
+		class MockStatelessNotificationValidator<model::AggregateCosignaturesNotification<1>>
+			: public BaseMockStatelessNotificationValidator<model::AggregateCosignaturesNotification<1>> {
+		public:
+			using BaseMockStatelessNotificationValidator<model::AggregateCosignaturesNotification<1>>::BaseMockStatelessNotificationValidator;
+
+		public:
+			ValidationResult validate(const model::AggregateCosignaturesNotification<1>& notification) const override {
+				return HasAllCosignatures(notification) ? ValidationResult::Success : validators::Failure_Aggregate_Missing_Cosigners;
+			}
+		};
+
+		template<>
+		class MockStatelessNotificationValidator<model::AggregateEmbeddedTransactionNotification<1>>
+			: public BaseMockStatelessNotificationValidator<model::AggregateEmbeddedTransactionNotification<1>> {
+		public:
+			using BaseMockStatelessNotificationValidator<model::AggregateEmbeddedTransactionNotification<1>>::BaseMockStatelessNotificationValidator;
+
+		public:
+			ValidationResult validate(const model::AggregateEmbeddedTransactionNotification<1>& notification) const override {
+				return HasAllCosignatures(notification) ? ValidationResult::Success : validators::Failure_Aggregate_Ineligible_Cosigners;
+			}
+		};
+
+		template<typename TNotification>
+		std::unique_ptr<const validators::NotificationValidatorT<TNotification>> CreateStatelessValidator(ValidationResult validationResult) {
+			return std::make_unique<MockStatelessNotificationValidator<TNotification>>(validationResult);
+		}
+
+		template<typename TNotification, typename TBuilder>
+		void AddStatelessValidator(TBuilder& builder, ValidationResult validationResult) {
+			builder.add(CreateStatelessValidator<TNotification>(validationResult));
+		}
 
 		class TestContext : public test::ServiceLocatorTestContext<PtDispatcherServiceTraits> {
 		public:
@@ -129,7 +157,14 @@ namespace catapult { namespace partialtransaction {
 				pluginManager.addTransactionSupport(mocks::CreateMockTransactionPlugin());
 
 				pluginManager.addStatelessValidatorHook([validationResult](auto& builder) {
-					builder.add(std::make_unique<MockStatelessNotificationValidator>(validationResult));
+					AddStatelessValidator<model::AggregateCosignaturesNotification<1>>(builder, validationResult);
+					AddStatelessValidator<model::AggregateEmbeddedTransactionNotification<1>>(builder, validationResult);
+					AddStatelessValidator<model::EntityNotification<1>>(builder, validationResult);
+					AddStatelessValidator<model::TransactionNotification<1>>(builder, validationResult);
+					AddStatelessValidator<model::TransactionDeadlineNotification<1>>(builder, validationResult);
+					AddStatelessValidator<model::TransactionFeeNotification<1>>(builder, validationResult);
+					AddStatelessValidator<model::BalanceDebitNotification<1>>(builder, validationResult);
+					AddStatelessValidator<model::SignatureNotification<1>>(builder, validationResult);
 				});
 
 				testState().state().hooks().setTransactionRangeConsumerFactory([&counter = m_numCompletedTransactions](auto) {

@@ -33,28 +33,14 @@ namespace catapult { namespace validators {
 	private:
 		template<typename TNotification>
 		using NotificationValidatorPointerT = std::unique_ptr<const NotificationValidatorT<TNotification, TArgs...>>;
-		using NotificationValidatorPredicate = predicate<const model::Notification&>;
 		using AggregateValidatorPointer = std::unique_ptr<const AggregateNotificationValidatorT<model::Notification, TArgs...>>;
 
 	public:
 		/// Adds a validator (\a pValidator) to the builder that is invoked only when matching notifications are processed.
 		template<typename TNotification>
 		DemuxValidatorBuilderT& add(NotificationValidatorPointerT<TNotification>&& pValidator) {
-			if constexpr (!std::is_same_v<model::Notification, TNotification>) {
-				auto predicate = [type = TNotification::Notification_Type](const auto& notification) {
-					return model::AreEqualExcludingChannel(type, notification.Type);
-				};
-				m_builder.add(std::make_unique<ConditionalValidator<TNotification>>(std::move(pValidator), predicate));
-				return *this;
-			} else {
-				m_builder.add(std::move(pValidator));
-				return *this;
-			}
-		}
-
-		/// Adds a validator (\a pValidator) to the builder that is always invoked.
-		DemuxValidatorBuilderT& add(NotificationValidatorPointerT<model::Notification>&& pValidator) {
-			return add<model::Notification>(std::move(pValidator));
+			m_builder.add(TNotification::Notification_Type, std::make_unique<NotificationValidatorAdapter<TNotification>>(std::move(pValidator)));
+			return *this;
 		}
 
 		/// Builds a demultiplexing validator that ignores suppressed failures according to \a isSuppressedFailure.
@@ -64,13 +50,10 @@ namespace catapult { namespace validators {
 
 	private:
 		template<typename TNotification>
-		class ConditionalValidator : public NotificationValidatorT<model::Notification, TArgs...> {
+		class NotificationValidatorAdapter : public NotificationValidatorT<model::Notification, TArgs...> {
 		public:
-			ConditionalValidator(
-					NotificationValidatorPointerT<TNotification>&& pValidator,
-					NotificationValidatorPredicate predicate)
-					: m_pValidator(std::move(pValidator))
-					, m_predicate(std::move(predicate))
+			NotificationValidatorAdapter(NotificationValidatorPointerT<TNotification>&& pValidator)
+				: m_pValidator(std::move(pValidator))
 			{}
 
 		public:
@@ -79,15 +62,11 @@ namespace catapult { namespace validators {
 			}
 
 			ValidationResult validate(const model::Notification& notification, TArgs&&... args) const override {
-				if (!m_predicate(notification))
-					return ValidationResult::Success;
-
 				return m_pValidator->validate(static_cast<const TNotification&>(notification), std::forward<TArgs>(args)...);
 			}
 
 		private:
 			NotificationValidatorPointerT<TNotification> m_pValidator;
-			NotificationValidatorPredicate m_predicate;
 		};
 
 	private:

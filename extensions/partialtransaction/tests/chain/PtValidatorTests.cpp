@@ -26,6 +26,7 @@
 #include "partialtransaction/tests/test/AggregateTransactionTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/mocks/MockCapturingNotificationValidator.h"
+#include "tests/test/other/mocks/MockNotification.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/TestHarness.h"
 
@@ -36,11 +37,10 @@ namespace catapult { namespace chain {
 #define TEST_CLASS PtValidatorTests
 
 	namespace {
-		using StatefulValidatorPointer = std::unique_ptr<mocks::MockCapturingStatefulNotificationValidator>;
-		using StatefulValidatorRawPointers = std::vector<const StatefulValidatorPointer::element_type*>;
-
-		using StatelessValidatorPointer = std::unique_ptr<mocks::MockCapturingStatelessNotificationValidator>;
-		using StatelessValidatorRawPointers = std::vector<const StatelessValidatorPointer::element_type*>;
+		template<typename TNotification>
+		using StatefulValidatorPointer = std::unique_ptr<mocks::MockCapturingStatefulNotificationValidator<TNotification>>;
+		template<typename TNotification>
+		using StatelessValidatorPointer = std::unique_ptr<mocks::MockCapturingStatelessNotificationValidator<TNotification>>;
 
 		constexpr auto Default_Block_Time = Timestamp(987);
 
@@ -94,20 +94,29 @@ namespace catapult { namespace chain {
 				auto pluginOptionFlags = mocks::PluginOptionFlags::Publish_Custom_Notifications;
 				m_pluginManager.addTransactionSupport(mocks::CreateMockTransactionPlugin(pluginOptionFlags));
 
+#define ADD_VALIDATORS(VALIDATOR_TYPE) \
+				std::vector<const mocks::BasicMockNotificationValidator*> subBasicValidators; \
+				std::vector<const test::ParamsCapture<mocks::VALIDATOR_TYPE##NotificationValidatorParams>*> subParamCapturers; \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::AggregateCosignaturesNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::AggregateEmbeddedTransactionNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::EntityNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::TransactionNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::TransactionDeadlineNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::TransactionFeeNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::BalanceDebitNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<model::SignatureNotification<1>>(options, subBasicValidators, subParamCapturers)); \
+				builder.add(create##VALIDATOR_TYPE##Validator<mocks::MockNotification<mocks::Mock_Validator_1_Notification>>(options, subBasicValidators, subParamCapturers)); \
+				basicValidators.push_back(subBasicValidators); \
+				paramCapturers.push_back(subParamCapturers);
+
 				// - register a validator that will return the desired result
 				if (options.isStatefulResult()) {
-					m_pluginManager.addStatefulValidatorHook([&options, &validators = m_statefulValidators](auto& builder) {
-						auto pValidator = std::make_unique<StatefulValidatorPointer::element_type>();
-						options.setResult(*pValidator);
-						validators.push_back(pValidator.get());
-						builder.add(std::move(pValidator));
+					m_pluginManager.addStatefulValidatorHook([&options, &basicValidators = m_basicValidators, &paramCapturers = m_statefulParamCapturers](auto& builder) {
+						ADD_VALIDATORS(Stateful);
 					});
 				} else {
-					m_pluginManager.addStatelessValidatorHook([&options, &validators = m_statelessValidators](auto& builder) {
-						auto pValidator = std::make_unique<StatelessValidatorPointer::element_type>();
-						options.setResult(*pValidator);
-						validators.push_back(pValidator.get());
-						builder.add(std::move(pValidator));
+					m_pluginManager.addStatelessValidatorHook([&options, &basicValidators = m_basicValidators, &paramCapturers = m_statelessParamCapturers](auto& builder) {
+						ADD_VALIDATORS(Stateless);
 					});
 				}
 
@@ -119,20 +128,73 @@ namespace catapult { namespace chain {
 				return *m_pValidator;
 			}
 
-			const auto& subValidatorAt(size_t index) {
-				return *m_statefulValidators[index];
+			auto notificationTypesAt(size_t index) {
+				return notificationTypes(m_basicValidators[index]);
 			}
 
-			const auto& subStatelessValidatorAt(size_t index) {
-				return *m_statelessValidators[index];
+			auto statefulValidatorCapturedParamsAt(size_t index) {
+				return capturedParams(m_statefulParamCapturers[index]);
+			}
+
+			auto statelessValidatorCapturedParamsAt(size_t index) {
+				return capturedParams(m_statelessParamCapturers[index]);
+			}
+
+		private:
+			template<typename TNotification>
+			static std::unique_ptr<const stateful::NotificationValidatorT<TNotification>> createStatefulValidator(
+					const ValidationResultOptions& options,
+					std::vector<const mocks::BasicMockNotificationValidator*>& basicValidators,
+					std::vector<const test::ParamsCapture<mocks::StatefulNotificationValidatorParams>*>& paramCapturers) {
+				auto pValidator = std::make_unique<typename StatefulValidatorPointer<TNotification>::element_type>();
+				options.setResult(*pValidator);
+				basicValidators.push_back(static_cast<const mocks::BasicMockNotificationValidator*>(pValidator.get()));
+				paramCapturers.push_back(static_cast<const test::ParamsCapture<mocks::StatefulNotificationValidatorParams>*>(pValidator.get()));
+
+				return pValidator;
+			}
+
+			template<typename TNotification>
+			static std::unique_ptr<const stateless::NotificationValidatorT<TNotification>> createStatelessValidator(
+					const ValidationResultOptions& options,
+					std::vector<const mocks::BasicMockNotificationValidator*>& basicValidators,
+					std::vector<const test::ParamsCapture<mocks::StatelessNotificationValidatorParams>*>& paramCapturers) {
+				auto pValidator = std::make_unique<typename StatelessValidatorPointer<TNotification>::element_type>();
+				options.setResult(*pValidator);
+				basicValidators.push_back(static_cast<const mocks::BasicMockNotificationValidator*>(pValidator.get()));
+				paramCapturers.push_back(static_cast<const test::ParamsCapture<mocks::StatelessNotificationValidatorParams>*>(pValidator.get()));
+
+				return pValidator;
+			}
+
+			std::vector<model::NotificationType> notificationTypes(const std::vector<const mocks::BasicMockNotificationValidator*>& basicValidatorPtrs) {
+				std::vector<model::NotificationType> result;
+				for (const auto* pBasicValidator : basicValidatorPtrs) {
+					const auto& notificationTypes = pBasicValidator->notificationTypes();
+					result.insert(result.end(), notificationTypes.begin(), notificationTypes.end());
+				}
+
+				return result;
+			}
+
+			template<typename TParams>
+			std::vector<TParams> capturedParams(const std::vector<const test::ParamsCapture<TParams>*>& paramCapturers) {
+				std::vector<TParams> result;
+				for (const auto* paramCapturer : paramCapturers) {
+					const auto& params = paramCapturer->params();
+					result.insert(result.end(), params.begin(), params.end());
+				}
+
+				return result;
 			}
 
 		private:
 			cache::CatapultCache m_cache;
 			plugins::PluginManager m_pluginManager;
 			std::unique_ptr<PtValidator> m_pValidator;
-			StatefulValidatorRawPointers m_statefulValidators;
-			StatelessValidatorRawPointers m_statelessValidators;
+			std::vector<std::vector<const mocks::BasicMockNotificationValidator*>> m_basicValidators;
+			std::vector<std::vector<const test::ParamsCapture<mocks::StatefulNotificationValidatorParams>*>> m_statefulParamCapturers;
+			std::vector<std::vector<const test::ParamsCapture<mocks::StatelessNotificationValidatorParams>*>> m_statelessParamCapturers;
 		};
 	}
 
@@ -175,7 +237,6 @@ namespace catapult { namespace chain {
 			// Arrange:
 			TestContext context(validationResultOptions);
 			const auto& validator = context.validator();
-			const auto& notificationValidator = context.subValidatorAt(0); // partial
 
 			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
 			auto pTransaction = mocks::CreateMockTransaction(0);
@@ -187,15 +248,17 @@ namespace catapult { namespace chain {
 			EXPECT_EQ(isValid ? ValidationResult::Success : validationResultOptions.result(), result.Raw);
 
 			// - short circuiting on failure
-			notificationTypesConsumer(notificationValidator.notificationTypes());
+			auto notificationTypes = context.notificationTypesAt(0); // partial
+			notificationTypesConsumer(notificationTypes);
 
 			// - correct timestamp was passed to validator
-			ASSERT_LE(1u, notificationValidator.params().size());
-			EXPECT_EQ(Default_Block_Time, notificationValidator.params()[0].BlockTime);
+			auto params = context.statefulValidatorCapturedParamsAt(0); // partial
+			ASSERT_LE(1u, params.size());
+			EXPECT_EQ(Default_Block_Time, params[0].BlockTime);
 
 			// - correct transaction information is passed down (if validation wasn't short circuited)
-			if (notificationValidator.notificationTypes().size() > 1)
-				ValidateTransactionNotifications(notificationValidator.params(), transactionHash, pTransaction->Deadline, "basic");
+			if (notificationTypes.size() > 1)
+				ValidateTransactionNotifications(params, transactionHash, pTransaction->Deadline, "basic");
 		}
 
 		void RunValidatePartialTest(const ValidationResultOptions& validationResultOptions, const ValidatePartialResult& expectedResult) {
@@ -268,8 +331,6 @@ namespace catapult { namespace chain {
 			ValidationResultOptions validationResultOptions{ ValidatorType::Stateless, notificationType };
 			TestContext context(validationResultOptions);
 			const auto& validator = context.validator();
-			const auto& basicNotificationValidator = context.subStatelessValidatorAt(0); // partial (basic)
-			const auto& customNotificationValidator = context.subStatelessValidatorAt(1); // partial (custom)
 
 			// Act: validatePartial does not filter transactions even though, in practice, it will only be called with aggregates
 			auto pTransaction = mocks::CreateMockTransaction(0);
@@ -281,13 +342,13 @@ namespace catapult { namespace chain {
 			EXPECT_EQ(validationResultOptions.result(), result.Raw);
 
 			// - merge notification types from both validators
-			auto allNotificationTypes = basicNotificationValidator.notificationTypes();
-			auto customNotificationTypes = customNotificationValidator.notificationTypes();
+			auto allNotificationTypes = context.notificationTypesAt(0); // partial (basic)
+			auto customNotificationTypes = context.notificationTypesAt(1); // partial (custom)
 			allNotificationTypes.insert(allNotificationTypes.end(), customNotificationTypes.cbegin(), customNotificationTypes.cend());
 			notificationTypesConsumer(allNotificationTypes);
 
 			// - correct transaction information is passed down
-			ValidateTransactionNotifications(basicNotificationValidator.params(), transactionHash, pTransaction->Deadline, "basic");
+			ValidateTransactionNotifications(context.statelessValidatorCapturedParamsAt(0), transactionHash, pTransaction->Deadline, "basic");
 		}
 	}
 
@@ -334,7 +395,6 @@ namespace catapult { namespace chain {
 			// Arrange:
 			TestContext context(validationResult);
 			const auto& validator = context.validator();
-			const auto& notificationValidator = context.subValidatorAt(1); // cosigners
 
 			// Act:
 			auto pTransaction = CreateAggregateTransaction(2);
@@ -346,7 +406,7 @@ namespace catapult { namespace chain {
 			EXPECT_EQ(validationResult, result.Raw);
 
 			// - short circuiting on failure
-			const auto& notificationTypes = notificationValidator.notificationTypes();
+			auto notificationTypes = context.notificationTypesAt(1); // cosigners
 			if (!expectedResult.IsShortCircuited) {
 				ASSERT_EQ(3u, notificationTypes.size());
 				EXPECT_EQ(model::Aggregate_Cosignatures_v1_Notification, notificationTypes[0]);
@@ -358,8 +418,9 @@ namespace catapult { namespace chain {
 			}
 
 			// - correct timestamp was passed to validator
-			ASSERT_LE(1u, notificationValidator.params().size());
-			EXPECT_EQ(Default_Block_Time, notificationValidator.params()[0].BlockTime);
+			auto params = context.statefulValidatorCapturedParamsAt(1); // cosigners
+			ASSERT_LE(1u, params.size());
+			EXPECT_EQ(Default_Block_Time, params[0].BlockTime);
 		}
 	}
 

@@ -70,47 +70,47 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
-					"PrepareDriveArgumentsValidator",
 					"ServicePluginConfigValidator",
 					"FailedBlockHashesValidator",
+					"PrepareDriveArgumentsValidator",
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"DriveValidator",
-					"ExchangeValidator",
 					"DrivePermittedOperationValidator",
-					"DriveFilesRewardValidator",
-					"FilesDepositValidator",
-					"JoinToDriveValidator",
-					"PrepareDrivePermissionValidator",
-					"DriveFileSystemValidator",
-					"EndDriveValidator",
-					"MaxFilesOnDriveValidator",
 					"StartDriveVerificationValidator",
 					"EndDriveVerificationValidator",
+					"DriveValidator",
+					"PrepareDrivePermissionValidator",
+					"DriveFileSystemValidator",
+					"MaxFilesOnDriveValidator",
+					"JoinToDriveValidator",
+					"FilesDepositValidator",
+					"EndDriveValidator",
+					"DriveFilesRewardValidator",
 					"StartFileDownloadValidator",
 					"EndFileDownloadValidator",
+					"ExchangeValidator",
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
-					"PrepareDriveObserver",
-					"DriveFileSystemObserver",
-					"FilesDepositObserver",
-					"JoinToDriveObserver",
 					"DriveVerificationPaymentObserver",
-					"StartBillingObserver",
 					"EndBillingObserver",
-					"EndDriveObserver",
-					"DriveFilesRewardObserver",
 					"DriveCacheBlockPruningObserver",
-					"StartFileDownloadObserver",
-					"EndFileDownloadObserver",
 					"DownloadCacheTouchObserver",
 					"DownloadCachePruningObserver",
+					"StartBillingObserver",
+					"PrepareDriveObserver",
+					"DriveFileSystemObserver",
+					"JoinToDriveObserver",
+					"FilesDepositObserver",
+					"EndDriveObserver",
+					"DriveFilesRewardObserver",
+					"StartFileDownloadObserver",
+					"EndFileDownloadObserver",
 				};
 			}
 

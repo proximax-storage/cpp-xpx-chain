@@ -42,31 +42,31 @@ namespace catapult { namespace extensions {
 
 		// - notice that only observers and validators registered in CreateDefaultPluginManagerWithRealPlugins are present
 		std::vector<std::string> expectedObserverNames{
+			"AccountPublicKeyObserver",
 			"SourceChangeObserver",
 			"AccountAddressObserver",
-			"AccountPublicKeyObserver",
-			"BalanceDebitObserver",
-			"BalanceCreditObserver",
 			"BalanceTransferObserver",
 			"HarvestFeeObserver",
 			"TotalTransactionsObserver",
 			"SnapshotCleanUpObserver",
 			"BlockDifficultyObserver",
 			"BlockDifficultyPruningObserver",
+			"TransactionHashPruningObserver",
 			"TransactionHashObserver",
-			"TransactionHashPruningObserver"
+			"BalanceDebitObserver",
+			"BalanceCreditObserver",
 		};
 		EXPECT_EQ(expectedObserverNames, config.pObserver->names());
 
 		std::vector<std::string> expectedValidatorNames{
 			"EntityVersionValidator",
-			"MaxTransactionsValidator",
-			"AddressValidator",
 			"DeadlineValidator",
-			"EligibleHarvesterValidator",
-			"BalanceDebitValidator",
+			"AddressValidator",
 			"BalanceTransferValidator",
-			"UniqueTransactionHashValidator"
+			"MaxTransactionsValidator",
+			"EligibleHarvesterValidator",
+			"UniqueTransactionHashValidator",
+			"BalanceDebitValidator",
 		};
 		EXPECT_EQ(expectedValidatorNames, config.pValidator->names());
 	}

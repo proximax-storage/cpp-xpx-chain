@@ -21,10 +21,10 @@
 #include "MockTransaction.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Random.h"
+#include "tests/test/other/mocks/MockNotification.h"
 
 using namespace catapult::model;
 
@@ -90,12 +90,12 @@ namespace catapult { namespace mocks {
 			sub.notify(AccountPublicKeyNotification<1>(mockTransaction.Recipient));
 
 			if (IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Custom_Notifications)) {
-				sub.notify(test::CreateNotification(Mock_Observer_1_Notification));
-				sub.notify(test::CreateNotification(Mock_Validator_1_Notification));
-				sub.notify(test::CreateNotification(Mock_All_1_Notification));
-				sub.notify(test::CreateNotification(Mock_Observer_2_Notification));
-				sub.notify(test::CreateNotification(Mock_Validator_2_Notification));
-				sub.notify(test::CreateNotification(Mock_All_2_Notification));
+				sub.notify(mocks::MockNotification<Mock_Observer_1_Notification>());
+				sub.notify(mocks::MockNotification<Mock_Validator_1_Notification>());
+				sub.notify(mocks::MockNotification<Mock_All_1_Notification>());
+				sub.notify(mocks::MockNotification<Mock_Observer_2_Notification>());
+				sub.notify(mocks::MockNotification<Mock_Validator_2_Notification>());
+				sub.notify(mocks::MockNotification<Mock_All_2_Notification>());
 			}
 
 			if (!IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Transfers))

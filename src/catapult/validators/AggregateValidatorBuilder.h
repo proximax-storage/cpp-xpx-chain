@@ -32,13 +32,13 @@ namespace catapult { namespace validators {
 	class AggregateValidatorBuilder {
 	private:
 		using NotificationValidatorPointer = std::unique_ptr<const NotificationValidatorT<TNotification, TArgs...>>;
-		using NotificationValidatorPointerVector = std::vector<NotificationValidatorPointer>;
+		using NotificationValidatorPointerMap = std::map<model::NotificationType, std::vector<NotificationValidatorPointer>>;
 		using AggregateValidatorPointer = std::unique_ptr<const AggregateNotificationValidatorT<TNotification, TArgs...>>;
 
 	public:
 		/// Adds \a pValidator to the builder and allows chaining.
-		AggregateValidatorBuilder& add(NotificationValidatorPointer&& pValidator) {
-			m_validators.push_back(std::move(pValidator));
+		AggregateValidatorBuilder& add(model::NotificationType type, NotificationValidatorPointer&& pValidator) {
+			m_validators[type].push_back(std::move(pValidator));
 			return *this;
 		}
 
@@ -51,7 +51,7 @@ namespace catapult { namespace validators {
 		class DefaultAggregateNotificationValidator : public AggregateNotificationValidatorT<TNotification, TArgs...> {
 		public:
 			explicit DefaultAggregateNotificationValidator(
-					NotificationValidatorPointerVector&& validators,
+					NotificationValidatorPointerMap&& validators,
 					ValidationResultPredicate isSuppressedFailure)
 					: m_validators(std::move(validators))
 					, m_isSuppressedFailure(std::move(isSuppressedFailure))
@@ -69,7 +69,12 @@ namespace catapult { namespace validators {
 
 			ValidationResult validate(const TNotification& notification, TArgs&&... args) const override {
 				auto aggregateResult = ValidationResult::Success;
-				for (const auto& pValidator : m_validators) {
+
+				auto validatorIter = m_validators.find(notification.Type);
+				if (m_validators.end() == validatorIter)
+					return aggregateResult;
+
+				for (const auto& pValidator : validatorIter->second) {
 					auto result = pValidator->validate(notification, std::forward<TArgs>(args)...);
 
 					// ignore suppressed failures
@@ -87,12 +92,12 @@ namespace catapult { namespace validators {
 			}
 
 		private:
-			NotificationValidatorPointerVector m_validators;
+			NotificationValidatorPointerMap m_validators;
 			ValidationResultPredicate m_isSuppressedFailure;
 			std::string m_name;
 		};
 
 	private:
-		NotificationValidatorPointerVector m_validators;
+		NotificationValidatorPointerMap m_validators;
 	};
 }}

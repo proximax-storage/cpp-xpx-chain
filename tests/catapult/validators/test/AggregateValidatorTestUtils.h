@@ -34,7 +34,7 @@ namespace catapult { namespace test {
 		for (auto i = 0u; i < count; ++i) {
 			auto pMockValidator = std::make_unique<mocks::MockNotificationValidator>(std::to_string(i));
 			validators.push_back(pMockValidator.get());
-			addValidator(builder, std::move(pMockValidator));
+			addValidator(builder, std::move(pMockValidator), static_cast<model::NotificationType>(i));
 		}
 
 		return validators;
@@ -68,10 +68,12 @@ namespace catapult { namespace test {
 			const auto& notificationTypes = pValidator->notificationTypes();
 			const auto message = "validator at " + std::to_string(i);
 
-			ASSERT_EQ(2u, notificationTypes.size()) << message;
-			EXPECT_EQ(notification1.Type, notificationTypes[0]) << message;
-			EXPECT_EQ(notification2.Type, notificationTypes[1]) << message;
-			++i;
+			if (2 == i++) {
+				ASSERT_EQ(1u, notificationTypes.size()) << message;
+				EXPECT_EQ(notification2.Type, notificationTypes[0]) << message;
+			} else {
+				EXPECT_EQ(0u, notificationTypes.size()) << message;
+			}
 		}
 	}
 
@@ -103,10 +105,12 @@ namespace catapult { namespace test {
 			const auto& contextPointers = pValidator->contextPointers();
 			const auto message = "validator at " + std::to_string(i);
 
-			ASSERT_EQ(2u, contextPointers.size()) << message;
-			EXPECT_EQ(&context, contextPointers[0]) << message;
-			EXPECT_EQ(&context, contextPointers[1]) << message;
-			++i;
+			if (2 == i++) {
+				ASSERT_EQ(1u, contextPointers.size()) << message;
+				EXPECT_EQ(&context, contextPointers[0]) << message;
+			} else {
+				EXPECT_EQ(0u, contextPointers.size()) << message;
+			}
 		}
 	}
 }}
