@@ -5,8 +5,6 @@
 **/
 
 #include "ExchangeCacheDelta.h"
-#include "ExchangeCacheTools.h"
-#include "catapult/plugins/PluginUtils.h"
 
 namespace catapult { namespace cache {
 
@@ -21,9 +19,9 @@ namespace catapult { namespace cache {
 			, ExchangeCacheDeltaMixins::BasicInsertRemove(*exchangeSets.pPrimary)
 			, ExchangeCacheDeltaMixins::Pruning(*exchangeSets.pPrimary, *exchangeSets.pHeightGrouping)
 			, ExchangeCacheDeltaMixins::DeltaElements(*exchangeSets.pPrimary)
+			, ExchangeCacheDeltaMixins::ConfigBasedEnable<config::ExchangeConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 			, m_pExchangeEntries(exchangeSets.pPrimary)
 			, m_pHeightGroupingDelta(exchangeSets.pHeightGrouping)
-			, m_pConfigHolder(pConfigHolder)
 	{}
 
 	void BasicExchangeCacheDelta::addExpiryHeight(const ExchangeCacheDescriptor::KeyType& owner, const Height& height) {
@@ -39,9 +37,5 @@ namespace catapult { namespace cache {
 	/// Touches the cache at \a height and returns identifiers of all deactivating elements.
 	BasicExchangeCacheDelta::OfferOwners BasicExchangeCacheDelta::expiringOfferOwners(Height height) {
 		return GetAllIdentifiersWithGroup(*m_pHeightGroupingDelta, height);
-	}
-
-	bool BasicExchangeCacheDelta::enabled() const {
-		return ExchangePluginEnabled(m_pConfigHolder, height());
 	}
 }}

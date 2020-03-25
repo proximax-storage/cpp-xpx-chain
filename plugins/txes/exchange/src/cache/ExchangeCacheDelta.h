@@ -11,6 +11,7 @@
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
+#include "src/config/ExchangeConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -32,8 +33,7 @@ namespace catapult { namespace cache {
 			, public ExchangeCacheDeltaMixins::BasicInsertRemove
 			, public ExchangeCacheDeltaMixins::Pruning
 			, public ExchangeCacheDeltaMixins::DeltaElements
-			, public ExchangeCacheDeltaMixins::Enable
-			, public ExchangeCacheDeltaMixins::Height {
+			, public ExchangeCacheDeltaMixins::ConfigBasedEnable<config::ExchangeConfiguration> {
 	public:
 		using ReadOnlyView = ExchangeCacheTypes::CacheReadOnlyType;
 		using OfferOwners = ExchangeCacheTypes::HeightGroupingTypes::BaseSetDeltaType::ElementType::Identifiers;
@@ -57,9 +57,6 @@ namespace catapult { namespace cache {
 
 		/// Returns owners of offers expiring at \a height.
 		OfferOwners expiringOfferOwners(Height height);
-
-		/// Returns \c true if the cache is enabled.
-		bool enabled() const;
 
 	private:
 		ExchangeCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pExchangeEntries;

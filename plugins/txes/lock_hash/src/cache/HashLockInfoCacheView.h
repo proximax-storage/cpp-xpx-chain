@@ -25,7 +25,10 @@
 namespace catapult { namespace cache {
 
 	/// Basic view on top of the hash lock info cache.
-	class BasicHashLockInfoCacheView : public BasicLockInfoCacheView<HashLockInfoCacheDescriptor, HashLockInfoCacheTypes> {
+	class BasicHashLockInfoCacheView
+		: public BasicLockInfoCacheView<HashLockInfoCacheDescriptor, HashLockInfoCacheTypes>
+		, public LockInfoCacheViewMixins<HashLockInfoCacheDescriptor, HashLockInfoCacheTypes>::Enable
+		, public LockInfoCacheViewMixins<HashLockInfoCacheDescriptor, HashLockInfoCacheTypes>::Height {
 	public:
 		using BasicLockInfoCacheView<HashLockInfoCacheDescriptor, HashLockInfoCacheTypes>::BasicLockInfoCacheView;
 	};

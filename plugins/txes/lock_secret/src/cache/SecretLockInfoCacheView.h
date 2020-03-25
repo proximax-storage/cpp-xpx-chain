@@ -25,7 +25,10 @@
 namespace catapult { namespace cache {
 
 	/// Basic view on top of the secret lock info cache.
-	class BasicSecretLockInfoCacheView : public BasicLockInfoCacheView<SecretLockInfoCacheDescriptor, SecretLockInfoCacheTypes> {
+	class BasicSecretLockInfoCacheView
+		: public BasicLockInfoCacheView<SecretLockInfoCacheDescriptor, SecretLockInfoCacheTypes>
+		, public LockInfoCacheViewMixins<SecretLockInfoCacheDescriptor, SecretLockInfoCacheTypes>::Enable
+		, public LockInfoCacheViewMixins<SecretLockInfoCacheDescriptor, SecretLockInfoCacheTypes>::Height {
 	public:
 		using BasicLockInfoCacheView<SecretLockInfoCacheDescriptor, SecretLockInfoCacheTypes>::BasicLockInfoCacheView;
 	};

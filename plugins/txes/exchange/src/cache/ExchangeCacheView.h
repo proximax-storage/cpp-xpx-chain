@@ -7,7 +7,6 @@
 #pragma once
 #include "ExchangeBaseSets.h"
 #include "ExchangeCacheSerializers.h"
-#include "ExchangeCacheTools.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -26,8 +25,7 @@ namespace catapult { namespace cache {
 			, public ExchangeCacheViewMixins::Iteration
 			, public ExchangeCacheViewMixins::ConstAccessor
 			, public ExchangeCacheViewMixins::PatriciaTreeView
-			, public ExchangeCacheViewMixins::Enable
-			, public ExchangeCacheViewMixins::Height {
+			, public ExchangeCacheViewMixins::ConfigBasedEnable<config::ExchangeConfiguration> {
 	public:
 		using ReadOnlyView = ExchangeCacheTypes::CacheReadOnlyType;
 
@@ -41,16 +39,8 @@ namespace catapult { namespace cache {
 				, ExchangeCacheViewMixins::Iteration(exchangeSets.Primary)
 				, ExchangeCacheViewMixins::ConstAccessor(exchangeSets.Primary)
 				, ExchangeCacheViewMixins::PatriciaTreeView(exchangeSets.PatriciaTree.get())
-				, m_pConfigHolder(pConfigHolder)
+				, ExchangeCacheViewMixins::ConfigBasedEnable<config::ExchangeConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
-
-	public:
-		bool enabled() const {
-			return ExchangePluginEnabled(m_pConfigHolder, height());
-		}
-
-	private:
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the exchange cache.
