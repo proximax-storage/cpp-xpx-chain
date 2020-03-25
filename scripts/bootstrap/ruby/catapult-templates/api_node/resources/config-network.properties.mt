@@ -135,3 +135,4 @@ downloadCacheEnabled = true
 [plugin:catapult.plugins.supercontract]
 
 enabled = true
+maxSuperContractsOnDrive = 10
