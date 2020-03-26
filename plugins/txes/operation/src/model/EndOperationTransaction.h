@@ -10,6 +10,8 @@
 #include "catapult/model/Transaction.h"
 #include "catapult/utils/ArraySet.h"
 
+namespace catapult { namespace config { class BlockchainConfiguration; } }
+
 namespace catapult { namespace model {
 
 #pragma pack(push, 1)
@@ -43,7 +45,7 @@ namespace catapult { namespace model {
 #pragma pack(pop)
 
 	/// Extracts public keys of additional accounts that must approve \a transaction.
-	inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedEndOperationTransaction&) {
+	inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedEndOperationTransaction&, const config::BlockchainConfiguration&) {
 		return {};
 	}
 }}
