@@ -21,6 +21,10 @@ namespace catapult { namespace validators {
 		auto driveIter = driveCache.find(notification.Drive);
 		const state::DriveEntry& driveEntry = driveIter.get();
 
+		const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::SuperContractConfiguration>();
+		if (driveEntry.coowners().size() >= pluginConfig.MaxSuperContractsOnDrive)
+			return Failure_SuperContract_Count_On_Drive_Exceeded_Limit;
+
 		if (!driveEntry.isOwner(notification.Owner))
 			return Failure_SuperContract_Operation_Is_Not_Permitted;
 
