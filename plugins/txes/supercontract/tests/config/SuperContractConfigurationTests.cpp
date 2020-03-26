@@ -20,6 +20,7 @@ namespace catapult { namespace config {
 						"",
 						{
 							{ "enabled", "true" },
+							{ "maxSuperContractsOnDrive", "10" },
 						}
 					}
 				};
@@ -29,8 +30,10 @@ namespace catapult { namespace config {
 				return true;
 			}
 
-			static bool IsPropertyOptional(const std::string&) {
-				return false;
+			static bool IsPropertyOptional(const std::string& name) {
+				return std::set<std::string>{
+						"maxSuperContractsOnDrive",
+					}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {
@@ -40,11 +43,13 @@ namespace catapult { namespace config {
 			static void AssertZero(const ConfigurationType& config) {
 				// Assert:
 				EXPECT_EQ(false, config.Enabled);
+				EXPECT_EQ(0, config.MaxSuperContractsOnDrive);
 			}
 
 			static void AssertCustom(const ConfigurationType& config) {
 				// Assert:
 				EXPECT_EQ(true, config.Enabled);
+				EXPECT_EQ(10, config.MaxSuperContractsOnDrive);
 			}
 		};
 	}

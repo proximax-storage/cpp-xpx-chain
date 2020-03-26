@@ -20,6 +20,9 @@ namespace catapult { namespace config {
 		/// Whether the plugin is enabled.
 		bool Enabled;
 
+		/// Maximum count of super contracts on a single drive.
+		uint16_t MaxSuperContractsOnDrive;
+
 	private:
 		SuperContractConfiguration() = default;
 

@@ -7,6 +7,7 @@
 #include "src/cache/SuperContractCache.h"
 #include "src/validators/Validators.h"
 #include "plugins/txes/service/src/cache/DriveCache.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/SuperContractTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
@@ -18,6 +19,7 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(Deploy, )
 
 	constexpr auto Current_Height = Height(10);
+	constexpr auto Max_Super_Contract_Count_On_Drive = 10u;
 
 	namespace {
 		using Notification = model::DeployNotification<1>;
@@ -45,9 +47,13 @@ namespace catapult { namespace validators {
 			Notification notification(superContract,owner, drive, file, test::GenerateRandomValue<VmVersion>());
 			auto pValidator = CreateDeployValidator();
 
+			test::MutableBlockchainConfiguration config;
+			auto pluginConfig = config::SuperContractConfiguration::Uninitialized();
+			pluginConfig.MaxSuperContractsOnDrive = Max_Super_Contract_Count_On_Drive;
+			config.Network.SetPluginConfiguration(pluginConfig);
+
 			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, cache,
-				config::BlockchainConfiguration::Uninitialized(), Current_Height);
+			auto result = test::ValidateNotification(*pValidator, notification, cache, config.ToConst(), Current_Height);
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
@@ -70,6 +76,23 @@ namespace catapult { namespace validators {
 			test::GenerateRandomByteArray<Hash256>(),
 			driveEntry,
 			&superContractEntry);
+	}
+
+	TEST(TEST_CLASS, FailureWhenSuperContractCountExceededLimit) {
+		// Arrange:
+		auto drive = test::GenerateRandomByteArray<Key>();
+		state::DriveEntry driveEntry(drive);
+		for (auto i = 0u; i < Max_Super_Contract_Count_On_Drive; ++i)
+			driveEntry.coowners().emplace(test::GenerateRandomByteArray<Key>());
+
+		// Assert:
+		AssertValidationResult(
+			Failure_SuperContract_Count_On_Drive_Exceeded_Limit,
+			test::GenerateRandomByteArray<Key>(),
+			test::GenerateRandomByteArray<Key>(),
+			drive,
+			test::GenerateRandomByteArray<Hash256>(),
+			driveEntry);
 	}
 
 	TEST(TEST_CLASS, FailureWhenOwnerInvalid) {

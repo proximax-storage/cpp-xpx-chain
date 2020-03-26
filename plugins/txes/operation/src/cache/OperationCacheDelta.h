@@ -7,30 +7,25 @@
 #pragma once
 #include "OperationBaseSets.h"
 #include "OperationCacheSerializers.h"
-#include "OperationCacheTools.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "plugins/txes/lock_shared/src/cache/LockInfoCacheDelta.h"
+#include "src/config/OperationConfiguration.h"
 
 namespace catapult { namespace cache {
 
 	/// Basic delta on top of the operation cache.
-	class BasicOperationCacheDelta : public BasicLockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes> {
+	class BasicOperationCacheDelta
+		: public BasicLockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes>
+		, public LockInfoCacheDeltaMixins<OperationCacheDescriptor, OperationCacheTypes>::ConfigBasedEnable<config::OperationConfiguration> {
 	public:
 		/// Creates a delta around \a operationSets and \a pConfigHolder.
 		explicit BasicOperationCacheDelta(
 			const OperationCacheTypes::BaseSetDeltaPointers& operationSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: BasicLockInfoCacheDelta<OperationCacheDescriptor, OperationCacheTypes>::BasicLockInfoCacheDelta(operationSets)
-				, m_pConfigHolder(pConfigHolder)
+				, LockInfoCacheDeltaMixins<OperationCacheDescriptor, OperationCacheTypes>::ConfigBasedEnable<config::OperationConfiguration>(
+					pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
-
-	public:
-		bool enabled() const {
-			return OperationPluginEnabled(m_pConfigHolder, height());
-		}
-
-	private:
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the operation cache.
