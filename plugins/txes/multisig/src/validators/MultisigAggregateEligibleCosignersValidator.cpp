@@ -33,10 +33,12 @@ namespace catapult { namespace validators {
 			explicit AggregateCosignaturesChecker(
 					const Notification& notification,
 					const model::TransactionRegistry& transactionRegistry,
-					const cache::MultisigCache::CacheReadOnlyType& multisigCache)
+					const cache::MultisigCache::CacheReadOnlyType& multisigCache,
+					const config::BlockchainConfiguration& config)
 					: m_notification(notification)
 					, m_transactionRegistry(transactionRegistry)
-					, m_multisigCache(multisigCache) {
+					, m_multisigCache(multisigCache)
+					, m_config(config) {
 				m_cosigners.emplace(&m_notification.Signer, false);
 				for (auto i = 0u; i < m_notification.CosignaturesCount; ++i)
 					m_cosigners.emplace(&m_notification.CosignaturesPtr[i].Signer, false);
@@ -50,7 +52,7 @@ namespace catapult { namespace validators {
 					findEligibleCosigners(pTransaction->Signer);
 
 					const auto& transactionPlugin = m_transactionRegistry.findPlugin(pTransaction->Type)->embeddedPlugin();
-					for (const auto& requiredCosigner : transactionPlugin.additionalRequiredCosigners(*pTransaction))
+					for (const auto& requiredCosigner : transactionPlugin.additionalRequiredCosigners(*pTransaction, m_config))
 						findEligibleCosigners(requiredCosigner);
 
 					pTransaction = model::AdvanceNext(pTransaction);
@@ -94,6 +96,7 @@ namespace catapult { namespace validators {
 			const model::TransactionRegistry& m_transactionRegistry;
 			const cache::MultisigCache::CacheReadOnlyType& m_multisigCache;
 			utils::ArrayPointerFlagMap<Key> m_cosigners;
+			const config::BlockchainConfiguration& m_config;
 		};
 	}
 
@@ -101,7 +104,7 @@ namespace catapult { namespace validators {
 		return MAKE_STATEFUL_VALIDATOR(MultisigAggregateEligibleCosigners, [&transactionRegistry](
 				const Notification& notification,
 				const ValidatorContext& context) {
-			AggregateCosignaturesChecker checker(notification, transactionRegistry, context.Cache.sub<cache::MultisigCache>());
+			AggregateCosignaturesChecker checker(notification, transactionRegistry, context.Cache.sub<cache::MultisigCache>(), context.Config);
 			return checker.hasIneligibleCosigners() ? Failure_Aggregate_Ineligible_Cosigners : ValidationResult::Success;
 		});
 	}

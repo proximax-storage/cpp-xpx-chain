@@ -80,7 +80,7 @@ namespace catapult { namespace mocks {
 		return utils::to_underlying_type(flag) == (utils::to_underlying_type(options) & utils::to_underlying_type(flag));
 	}
 
-	utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedMockTransaction& transaction) {
+	utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedMockTransaction& transaction, const config::BlockchainConfiguration&) {
 		return { Key{ { 1 } }, transaction.Recipient, Key{ { 2 } } };
 	}
 
@@ -151,7 +151,7 @@ namespace catapult { namespace mocks {
 				Publish(static_cast<const ExtendedEmbeddedMockTransaction&>(transaction.entity()), m_options, sub);
 			}
 
-			utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction&) const override {
+			utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction&, const config::BlockchainConfiguration&) const override {
 				return utils::KeySet();
 			}
 

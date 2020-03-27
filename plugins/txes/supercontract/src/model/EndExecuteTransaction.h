@@ -24,7 +24,7 @@ namespace catapult { namespace model {
 #pragma pack(pop)
 
     /// Extracts public keys of additional accounts that must approve \a transaction.
-    inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedEndExecuteTransaction&) {
+    inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedEndExecuteTransaction&, const config::BlockchainConfiguration&) {
         return {};
     }
 }}
