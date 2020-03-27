@@ -291,6 +291,7 @@ namespace catapult { namespace consumers {
 					}
 
 					if (height == commonBlockHeight) {
+						observerState.Cache.setHeight(height);
 						m_handlers.UndoBlock(*pParentBlockElement, observerState, UndoBlockType::Common);
 						break;
 					}
