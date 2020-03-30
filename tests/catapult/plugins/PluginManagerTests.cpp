@@ -20,7 +20,6 @@
 
 #include "catapult/plugins/PluginManager.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
-#include "catapult/cache/CatapultCache.h"
 #include "tests/test/cache/SimpleCache.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
@@ -28,7 +27,6 @@
 #include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
 
@@ -302,12 +300,12 @@ namespace catapult { namespace plugins {
 			std::string m_name;
 		};
 
-		auto CreateNamedStatelessValidator(const std::string& name) {
-			return std::make_unique<NamedValidatorT<model::Notification>>(name);
+		std::unique_ptr<const validators::NotificationValidatorT<model::AccountPublicKeyNotification<1>>> CreateNamedStatelessValidator(const std::string& name) {
+			return std::make_unique<NamedValidatorT<model::AccountPublicKeyNotification<1>>>(name);
 		}
 
-		auto CreateNamedStatefulValidator(const std::string& name) {
-			return std::make_unique<NamedValidatorT<model::Notification, const validators::ValidatorContext&>>(name);
+		std::unique_ptr<const validators::NotificationValidatorT<model::AccountPublicKeyNotification<1>, const validators::ValidatorContext&>> CreateNamedStatefulValidator(const std::string& name) {
+			return std::make_unique<NamedValidatorT<model::AccountPublicKeyNotification<1>, const validators::ValidatorContext&>>(name);
 		}
 	}
 
@@ -447,7 +445,7 @@ namespace catapult { namespace plugins {
 	// region observers
 
 	namespace {
-		class NamedObserver : public observers::NotificationObserverT<model::Notification> {
+		class NamedObserver : public observers::NotificationObserverT<model::AccountAddressNotification<1>> {
 		public:
 			explicit NamedObserver(const std::string& name) : m_name(name)
 			{}
@@ -457,7 +455,7 @@ namespace catapult { namespace plugins {
 				return m_name;
 			}
 
-			void notify(const model::Notification&, observers::ObserverContext&) const override {
+			void notify(const model::AccountAddressNotification<1>&, observers::ObserverContext&) const override {
 				CATAPULT_THROW_RUNTIME_ERROR("not implemented in mock");
 			}
 
@@ -465,7 +463,7 @@ namespace catapult { namespace plugins {
 			std::string m_name;
 		};
 
-		observers::NotificationObserverPointerT<model::Notification> CreateNamedObserver(const std::string& name) {
+		observers::NotificationObserverPointerT<model::AccountAddressNotification<1>> CreateNamedObserver(const std::string& name) {
 			return std::make_unique<NamedObserver>(name);
 		}
 

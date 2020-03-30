@@ -6,12 +6,12 @@
 
 #pragma once
 #include "SuperContractBaseSets.h"
-#include "SuperContractCacheTools.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
+#include "src/config/SuperContractConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -28,8 +28,7 @@ namespace catapult { namespace cache {
 		using ConstAccessor = PrimaryMixins::MutableAccessor;
 		using DeltaElements = PrimaryMixins::DeltaElements;
 		using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
-		using Enable = PrimaryMixins::Enable;
-		using Height = PrimaryMixins::Height;
+		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::SuperContractConfiguration>;
 	};
 
 	/// Basic delta on top of the super contract cache.
@@ -42,8 +41,7 @@ namespace catapult { namespace cache {
 			, public SuperContractCacheDeltaMixins::PatriciaTreeDelta
 			, public SuperContractCacheDeltaMixins::BasicInsertRemove
 			, public SuperContractCacheDeltaMixins::DeltaElements
-			, public SuperContractCacheDeltaMixins::Enable
-			, public SuperContractCacheDeltaMixins::Height {
+			, public SuperContractCacheDeltaMixins::ConfigBasedEnable {
 	public:
 		using ReadOnlyView = SuperContractCacheTypes::CacheReadOnlyType;
 
@@ -59,21 +57,16 @@ namespace catapult { namespace cache {
 				, SuperContractCacheDeltaMixins::PatriciaTreeDelta(*superContractSets.pPrimary, superContractSets.pPatriciaTree)
 				, SuperContractCacheDeltaMixins::BasicInsertRemove(*superContractSets.pPrimary)
 				, SuperContractCacheDeltaMixins::DeltaElements(*superContractSets.pPrimary)
+				, SuperContractCacheDeltaMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pSuperContractEntries(superContractSets.pPrimary)
-				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
 		using SuperContractCacheDeltaMixins::ConstAccessor::find;
 		using SuperContractCacheDeltaMixins::MutableAccessor::find;
 
-		bool enabled() const {
-			return SuperContractPluginEnabled(m_pConfigHolder, height());
-		}
-
 	private:
 		SuperContractCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pSuperContractEntries;
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the super contract cache.

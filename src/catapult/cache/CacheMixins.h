@@ -20,6 +20,7 @@
 
 #pragma once
 #include "IdentifierGroupCacheUtils.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 #include "catapult/deltaset/BaseSetDeltaIterationView.h"
 #include "catapult/deltaset/BaseSetIterationView.h"
@@ -394,5 +395,39 @@ namespace catapult { namespace cache {
 
 	private:
 		Height m_height;
+	};
+
+	/// A mixin for enabling/disabling a cache via plugin config.
+	template<typename PluginConfig>
+	class ConfigBasedEnableMixin : public HeightMixin {
+	public:
+		/// Creates a mixin around \a pConfigHolder and \a cacheEnabledPredicate.
+		explicit ConfigBasedEnableMixin(
+				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder,
+				predicate<const PluginConfig&> cacheEnabledPredicate)
+			: HeightMixin()
+			, m_pConfigHolder(pConfigHolder)
+			, m_cacheEnabledPredicate(cacheEnabledPredicate)
+		{}
+
+	public:
+		/// Noop
+		void setEnabled(bool) {
+		}
+
+		/// Returns \c true if the cache is enabled, otherwise \c false.
+		bool enabled() const {
+			const auto& blockchainConfig = m_pConfigHolder->Config(height());
+			if (blockchainConfig.Network.Plugins.count(PluginConfig::Name)) {
+				const auto& pluginConfig = blockchainConfig.Network.template GetPluginConfiguration<PluginConfig>();
+				return m_cacheEnabledPredicate(pluginConfig);
+			}
+
+			return false;
+		}
+
+	private:
+		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
+		predicate<const PluginConfig&> m_cacheEnabledPredicate;
 	};
 }}

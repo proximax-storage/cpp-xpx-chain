@@ -7,29 +7,23 @@
 #pragma once
 #include "OperationBaseSets.h"
 #include "OperationCacheSerializers.h"
-#include "OperationCacheTools.h"
 #include "plugins/txes/lock_shared/src/cache/LockInfoCacheView.h"
 
 namespace catapult { namespace cache {
 
 	/// Basic view on top of the operation cache.
-	class BasicOperationCacheView : public BasicLockInfoCacheView<OperationCacheDescriptor, OperationCacheTypes> {
+	class BasicOperationCacheView
+		: public BasicLockInfoCacheView<OperationCacheDescriptor, OperationCacheTypes>
+		, public LockInfoCacheViewMixins<OperationCacheDescriptor, OperationCacheTypes>::ConfigBasedEnable<config::OperationConfiguration> {
 	public:
 		/// Creates a view around \a operationSets and \a pConfigHolder.
 		explicit BasicOperationCacheView(
 			const OperationCacheTypes::BaseSets& operationSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: BasicLockInfoCacheView<OperationCacheDescriptor, OperationCacheTypes>::BasicLockInfoCacheView(operationSets)
-				, m_pConfigHolder(pConfigHolder)
+				, LockInfoCacheViewMixins<OperationCacheDescriptor, OperationCacheTypes>::ConfigBasedEnable<config::OperationConfiguration>(
+					pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
-
-	public:
-		bool enabled() const {
-			return OperationPluginEnabled(m_pConfigHolder, height());
-		}
-
-	private:
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the operation cache.

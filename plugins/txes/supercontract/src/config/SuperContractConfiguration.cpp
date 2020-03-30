@@ -23,12 +23,8 @@ namespace catapult { namespace config {
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
 
-//        config.MaxFilesOnDrive = 32768;
-//        TRY_LOAD_CHAIN_PROPERTY(MaxFilesOnDrive);
-//        config.VerificationFee = Amount(10);
-//        TRY_LOAD_CHAIN_PROPERTY(VerificationFee);
-//        config.VerificationDuration = BlockDuration(240);
-//		TRY_LOAD_CHAIN_PROPERTY(VerificationDuration);
+        config.MaxSuperContractsOnDrive = 10;
+        TRY_LOAD_CHAIN_PROPERTY(MaxSuperContractsOnDrive);
 
 #undef TRY_LOAD_CHAIN_PROPERTY
 

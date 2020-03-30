@@ -24,7 +24,6 @@
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/model/NotificationPublisher.h"
@@ -36,14 +35,48 @@
 namespace catapult { namespace extensions {
 
 	namespace {
+		class NemesisNotificationObserver : public observers::AggregateNotificationObserver {
+		private:
+			using NotificationObserverPointer1 = observers::NotificationObserverPointerT<model::BalanceTransferNotification<1>>;
+			using NotificationObserverPointer2 = observers::NotificationObserverPointerT<model::Notification>;
+
+		public:
+			explicit NemesisNotificationObserver(
+				NotificationObserverPointer1&& pObserver1,
+				NotificationObserverPointer2&& pObserver2)
+					: m_pObserver1(std::move(pObserver1))
+					, m_pObserver2(std::move(pObserver2))
+					, m_names{ m_pObserver1->name(), m_pObserver2->name() }
+					, m_name(utils::ReduceNames(m_names))
+			{}
+
+		public:
+			const std::string& name() const override {
+				return m_name;
+			}
+
+			std::vector<std::string> names() const override {
+				return m_names;
+			}
+
+			void notify(const model::Notification& notification, observers::ObserverContext& context) const override {
+				if (model::Core_Balance_Transfer_v1_Notification == notification.Type)
+					m_pObserver1->notify(static_cast<const model::BalanceTransferNotification<1>&>(notification), context);
+				m_pObserver2->notify(notification, context);
+			}
+
+		private:
+			NotificationObserverPointer1 m_pObserver1;
+			NotificationObserverPointer2 m_pObserver2;
+			std::vector<std::string> m_names;
+			std::string m_name;
+		};
+
 		std::unique_ptr<const observers::NotificationObserver> PrependFundingObserver(
 				const Key& nemesisPublicKey,
 				NemesisFundingState& nemesisFundingState,
 				std::unique_ptr<const observers::NotificationObserver>&& pObserver) {
-			observers::DemuxObserverBuilder builder;
-			builder.add(CreateNemesisFundingObserver(nemesisPublicKey, nemesisFundingState));
-			builder.add(std::move(pObserver));
-			return builder.build();
+			return std::make_unique<NemesisNotificationObserver>(CreateNemesisFundingObserver(nemesisPublicKey, nemesisFundingState), std::move(pObserver));
 		}
 
 		void LogNemesisBlockInfo(const model::BlockElement& blockElement) {

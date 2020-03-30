@@ -179,7 +179,7 @@ namespace catapult { namespace local {
 			model::ChainScore load(Height startHeight) {
 				auto observerFactory = [this](const auto& block) {
 					this->m_factoryHeights.push_back(block.Height);
-					return std::make_unique<mocks::MockBlockHeightCapturingNotificationObserver>(this->m_observerBlockHeights);
+					return std::make_unique<mocks::MockBlockHeightCapturingNotificationObserver<model::Notification>>(this->m_observerBlockHeights);
 				};
 
 				return LoadBlockChain(observerFactory, m_pluginManager, m_state.ref(), startHeight);

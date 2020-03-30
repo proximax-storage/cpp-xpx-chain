@@ -6,7 +6,6 @@
 
 #pragma once
 #include "SuperContractBaseSets.h"
-#include "SuperContractCacheTools.h"
 #include "SuperContractCacheSerializers.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
@@ -26,8 +25,7 @@ namespace catapult { namespace cache {
 			, public SuperContractCacheViewMixins::Iteration
 			, public SuperContractCacheViewMixins::ConstAccessor
 			, public SuperContractCacheViewMixins::PatriciaTreeView
-			, public SuperContractCacheViewMixins::Enable
-			, public SuperContractCacheViewMixins::Height {
+			, public SuperContractCacheViewMixins::ConfigBasedEnable<config::SuperContractConfiguration> {
 	public:
 		using ReadOnlyView = SuperContractCacheTypes::CacheReadOnlyType;
 
@@ -39,16 +37,8 @@ namespace catapult { namespace cache {
 				, SuperContractCacheViewMixins::Iteration(superContractSets.Primary)
 				, SuperContractCacheViewMixins::ConstAccessor(superContractSets.Primary)
 				, SuperContractCacheViewMixins::PatriciaTreeView(superContractSets.PatriciaTree.get())
-				, m_pConfigHolder(pConfigHolder)
+				, SuperContractCacheViewMixins::ConfigBasedEnable<config::SuperContractConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
-
-	public:
-		bool enabled() const {
-			return SuperContractPluginEnabled(m_pConfigHolder, height());
-		}
-
-	private:
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the super contract cache.

@@ -47,6 +47,8 @@ namespace catapult { namespace cache {
 		using DeltaElements = deltaset::DeltaElementsMixin<TSet>;
 
 		using Enable = EnableMixin;
+		template<typename PluginConfig>
+		using ConfigBasedEnable = ConfigBasedEnableMixin<PluginConfig>;
 		using Height = HeightMixin;
 	};
 
