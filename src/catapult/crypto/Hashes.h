@@ -40,6 +40,9 @@ namespace catapult { namespace crypto {
 	/// Calculates the 512-bit SHA3 hash of \a dataBuffer into \a hash.
 	void Sha3_512(const RawBuffer& dataBuffer, Hash512& hash) noexcept;
 
+	/// Calculates the 512-bit SHA3 hash of \a dataBuffer into \a hash.
+	void Sha3_512_CustomLength(const RawBuffer& dataBuffer, size_t dataBitLength, Hash512& hash) noexcept;
+
 	/// Calculates the 256-bit Keccak hash of \a dataBuffer into \a hash.
 	void Keccak_256(const RawBuffer& dataBuffer, Hash256& hash) noexcept;
 
@@ -69,6 +72,9 @@ namespace catapult { namespace crypto {
 	public:
 		/// Updates the state of hash with data inside \a dataBuffer.
 		void update(const RawBuffer& dataBuffer) noexcept;
+
+		/// Updates the state of hash with data inside \a dataBuffer.
+		void update(const RawBuffer& dataBuffer, size_t dataBitLength) noexcept;
 
 		/// Updates the state of hash with concatenated \a buffers.
 		void update(std::initializer_list<const RawBuffer> buffers) noexcept;

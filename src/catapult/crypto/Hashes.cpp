@@ -76,6 +76,13 @@ namespace catapult { namespace crypto {
 			hashBuilder.update(dataBuffer);
 			hashBuilder.final(hash);
 		}
+
+		template<typename TBuilder, typename THash>
+		void HashSingleBuffer(const RawBuffer& dataBuffer, size_t dataBitLength, THash& hash) noexcept {
+			TBuilder hashBuilder;
+			hashBuilder.update(dataBuffer, dataBitLength);
+			hashBuilder.final(hash);
+		}
 	}
 
 	void Sha3_256(const RawBuffer& dataBuffer, Hash256& hash) noexcept {
@@ -84,6 +91,10 @@ namespace catapult { namespace crypto {
 
 	void Sha3_512(const RawBuffer& dataBuffer, Hash512& hash) noexcept {
 		HashSingleBuffer<Sha3_512_Builder>(dataBuffer, hash);
+	}
+
+	void Sha3_512_CustomLength(const RawBuffer& dataBuffer, size_t dataBitLength, Hash512& hash) noexcept {
+		HashSingleBuffer<Sha3_512_Builder>(dataBuffer, dataBitLength, hash);
 	}
 
 	void Keccak_256(const RawBuffer& dataBuffer, Hash256& hash) noexcept {
@@ -133,6 +144,11 @@ namespace catapult { namespace crypto {
 	template<typename TModeTag, typename THashTag>
 	void KeccakBuilder<TModeTag, THashTag>::update(const RawBuffer& dataBuffer) noexcept {
 		Keccak_HashUpdate(CastToKeccakHashInstance(m_hashContext), dataBuffer.pData, dataBuffer.Size * 8);
+	}
+
+	template<typename TModeTag, typename THashTag>
+	void KeccakBuilder<TModeTag, THashTag>::update(const RawBuffer& dataBuffer, size_t dataBitLength) noexcept {
+		Keccak_HashUpdate(CastToKeccakHashInstance(m_hashContext), dataBuffer.pData, dataBitLength);
 	}
 
 	template<typename TModeTag, typename THashTag>
