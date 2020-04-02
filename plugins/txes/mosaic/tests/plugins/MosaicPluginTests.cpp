@@ -95,26 +95,24 @@ namespace catapult { namespace plugins {
 					"MosaicPropertiesValidator",
 					"MosaicTransferValidator",
 					"MaxMosaicsBalanceTransferValidator",
+					"MosaicLevyTransferValidator",
 					"MosaicAvailabilityValidator",
 					"MosaicDurationValidator",
+					"MosaicLevyDefinitionValidator",
 					"MaxMosaicsSupplyChangeValidator",
 					"MosaicSupplyChangeAllowedValidator",
-					"MosaicLevyTransferValidator",
 					"ModifyMosaicLevyValidator",
-					"MosaicLevyDefinitionValidator"
 				};
 			}
-
+			
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"MosaicRentalFeeObserver",
+					"LevyTransferObserver",
 					"MosaicTouchObserver",
 					"MosaicDefinitionObserver",
 					"MosaicSupplyChangeObserver",
-					"MosaicRentalFeeObserver",
-					"MosaicTouchObserver",
-					"LevyTransferObserver",
-					"ModifyLevyObserver"
+					"ModifyLevyObserver",
 				};
 			}
 
