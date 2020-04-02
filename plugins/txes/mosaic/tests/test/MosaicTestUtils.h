@@ -20,6 +20,10 @@
 
 #pragma once
 #include "src/state/MosaicEntry.h"
+#include "catapult/model/ResolverContext.h"
+#include "catapult/validators/ValidatorContext.h"
+#include "catapult/cache/CatapultCache.h"
+#include "tests/test/cache/BalanceTransferTestUtils.h"
 
 namespace catapult { namespace test {
 
@@ -38,6 +42,15 @@ namespace catapult { namespace test {
 	/// Creates a mosaic entry around \a id, \a height, \a owner, \a supply and \a duration.
 	state::MosaicEntry CreateMosaicEntry(MosaicId id, Height height, const Key& owner, Amount supply, BlockDuration duration);
 
+	/// Create a blank MosaicLevy Object
+	model::MosaicLevy CreateMosaicLevy();
+	
+	/// Create levy with success Parameters
+	model::MosaicLevy CreateCorrectMosaicLevy();
+	
+	/// Create balance object
+	test::BalanceTransfers CreateMosaicBalance(MosaicId id, Amount amount);
+	
 	/// Asserts that actual properties (\a actualProperties) exactly match expected properties (\a expectedProperties).
 	void AssertMosaicDefinitionProperties(
 			const model::MosaicProperties& expectedProperties,
@@ -45,4 +58,7 @@ namespace catapult { namespace test {
 
 	/// Asserts that mosaic entry \a actual is equal to \a expected.
 	void AssertEqual(const state::MosaicEntry& expected, const state::MosaicEntry& actual);
+	
+	/// converts percentage to fix point amount
+	Amount CreateMosaicLevyFeePercentile(float percentage);
 }}

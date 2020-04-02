@@ -45,7 +45,7 @@ namespace catapult { namespace validators {
 		}
 
 		state::MosaicDefinition CreateMosaicDefinition(Height height, const Key& owner, model::MosaicFlags flags) {
-			return state::MosaicDefinition(height, owner, 3, CreateMosaicProperties(flags), model::MosaicLevy());
+			return state::MosaicDefinition(height, owner, 3, CreateMosaicProperties(flags));
 		}
 
 		state::MosaicEntry CreateMosaicEntry(MosaicId mosaicId, const Key& owner, model::MosaicFlags flags) {

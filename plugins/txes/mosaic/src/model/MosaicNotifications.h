@@ -47,6 +47,9 @@ namespace catapult { namespace model {
 	/// Mosaic rental fee has been sent.
 	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
 
+	/// Mosaic Modify levy
+	DEFINE_MOSAIC_NOTIFICATION(Modify_Levy_v1, 0x0040, All);
+
 #undef DEFINE_MOSAIC_NOTIFICATION
 
 	// endregion
@@ -213,5 +216,39 @@ namespace catapult { namespace model {
 		UnresolvedAddress Recipient;
 	};
 
+	// endregion
+
+	// region mosaic modify levy
+	template<VersionType version>
+	struct MosaicModifyLevyNotification;
+
+	template<>
+	struct MosaicModifyLevyNotification<1> :  public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Mosaic_Modify_Levy_v1_Notification;
+
+	public:
+		explicit MosaicModifyLevyNotification(uint32_t flag, catapult::MosaicId mosaicId, MosaicLevy levy, Key signer)
+			: Notification(Notification_Type, sizeof(MosaicModifyLevyNotification<1>))
+			, ModifyFlag(flag)
+			, MosaicId(mosaicId)
+			, LevyInfo(levy)
+			, Signer(signer)
+		{}
+
+	public:
+		/// update type flag
+		uint32_t ModifyFlag;
+
+		/// Id of the mosaic.
+		catapult::MosaicId MosaicId;
+
+		/// levy container
+		MosaicLevy LevyInfo;
+
+		/// Signer of the transaction
+		Key Signer;
+	};
 	// endregion
 }}

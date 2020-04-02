@@ -23,6 +23,7 @@
 #include "src/model/TransferTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
+#include "plugins/txes/mosaic/src/model/MosaicLevy.h"
 
 using namespace catapult::model;
 
@@ -38,11 +39,13 @@ namespace catapult { namespace plugins {
 
 				const auto *pMosaics = transaction.MosaicsPtr();
 				for (auto i = 0u; i < transaction.MosaicsCount; ++i) {
+					auto pMosaicLevyData = sub.mempool().malloc(model::MosaicLevyData(pMosaics[i].MosaicId));
 					auto notification = BalanceTransferNotification<1>(
 						transaction.Signer,
 						transaction.Recipient,
 						pMosaics[i].MosaicId,
-						pMosaics[i].Amount);
+					    UnresolvedAmount(pMosaics[i].Amount.unwrap(), UnresolvedAmountType::LeviedTransfer, pMosaicLevyData));
+
 					sub.notify(notification);
 				}
 

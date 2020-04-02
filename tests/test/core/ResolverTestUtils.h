@@ -28,7 +28,10 @@ namespace catapult { namespace test {
 
 	/// Creates a resolver context that resolves unresolved mosaic ids and addresses by XORing.
 	model::ResolverContext CreateResolverContextXor();
-
+		
+	/// Creates a resolver context that resolves unresolved mosaic ids and addresses by unwrap
+	model::ResolverContext CreateMosaicResolverContextDefault();
+	
 	/// Unresolves \a mosaicId by XORing it.
 	UnresolvedMosaicId UnresolveXor(MosaicId mosaicId);
 

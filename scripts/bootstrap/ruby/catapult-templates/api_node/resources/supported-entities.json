@@ -108,12 +108,17 @@
 		{
 			"name": "Mosaic_Definition",
 			"type": "16717",
-			"supportedVersions": [3]
+			"supportedVersions": [3,4]
 		},
 		{
 			"name": "Mosaic_Supply_Change",
 			"type": "16973",
 			"supportedVersions": [2]
+		},
+		{
+			"name": "Mosaic_Modify_Levy",
+			"type": "17229",
+			"supportedVersions": [1]
 		},
 		{
 			"name": "Account_Link",

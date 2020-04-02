@@ -30,12 +30,11 @@ namespace catapult { namespace state {
 	public:
 		/// Creates a mosaic definition around \a height, \a owner, mosaic \a revision and mosaic \a properties.
 		explicit MosaicDefinition(Height height, const Key& owner, uint32_t revision,
-				const model::MosaicProperties& properties, const model::MosaicLevy& levy)
+				const model::MosaicProperties& properties)
 				: m_height(height)
 				, m_owner(owner)
 				, m_revision(revision)
 				, m_properties(properties)
-				, m_levy(levy)
 		{}
 
 	public:
@@ -68,15 +67,10 @@ namespace catapult { namespace state {
 			return m_properties;
 		}
 
-		const model::MosaicLevy& levy() const {
-			return m_levy;
-		}
-
 	private:
 		Height m_height;
 		Key m_owner;
 		uint32_t m_revision;
 		model::MosaicProperties m_properties;
-		model::MosaicLevy m_levy;
 	};
 }}

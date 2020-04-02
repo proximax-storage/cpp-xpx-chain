@@ -37,8 +37,6 @@ namespace catapult { namespace state {
 			io::Write32(output, definition.revision());
 			for (const auto& property : definition.properties())
 				io::Write64(output, property.Value);
-
-			SaveLevy(output, definition.levy());
 		}
 	}
 
@@ -49,9 +47,20 @@ namespace catapult { namespace state {
 		io::Write(output, entry.mosaicId());
 		io::Write(output, entry.supply());
 		SaveDefinition(output, entry.definition());
+		SaveLevy(output, entry.levy());
 	}
 
 	namespace {
+		model::MosaicLevy LoadMosaicLevy(io::InputStream& input) {
+			model::MosaicLevy levy;
+			levy.Type = (model::LevyType)io::Read16(input);
+			input.read(levy.Recipient);
+			levy.MosaicId = io::Read<MosaicId>(input);
+			levy.Fee = io::Read<Amount>(input);
+
+			return levy;
+		}
+
 		MosaicDefinition LoadDefinition(io::InputStream& input) {
 			Key owner;
 			auto height = io::Read<Height>(input);
@@ -62,13 +71,7 @@ namespace catapult { namespace state {
 			for (auto& value : values)
 				value = io::Read64(input);
 
-			model::MosaicLevy levy;
-			levy.Type = (model::LevyType)io::Read16(input);
-			input.read(levy.Recipient);
-			levy.MosaicId = io::Read<MosaicId>(input);
-			levy.Fee = io::Read<Amount>(input);
-
-			return MosaicDefinition(height, owner, revision, model::MosaicProperties::FromValues(values), levy);
+			return MosaicDefinition(height, owner, revision, model::MosaicProperties::FromValues(values));
 		}
 	}
 
@@ -81,8 +84,9 @@ namespace catapult { namespace state {
 		auto mosaicId = io::Read<MosaicId>(input);
 		auto supply = io::Read<Amount>(input);
 		auto definition = LoadDefinition(input);
+		auto levy = LoadMosaicLevy(input);
 
-		auto entry = MosaicEntry(mosaicId, definition);
+		auto entry = MosaicEntry(mosaicId, definition, levy);
 		entry.increaseSupply(supply);
 		return entry;
 	}

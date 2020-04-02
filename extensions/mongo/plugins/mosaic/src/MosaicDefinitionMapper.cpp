@@ -47,11 +47,11 @@ namespace catapult { namespace mongo { namespace plugins {
 				StreamProperty(context, pProperty->Id, pProperty->Value);
 		}
 
-		void StreamLevyProperties(bson_stream::array_context& context, const model::MosaicLevy& levy)
+		void StreamLevy(bson_stream::array_context& context, model::MosaicLevy& levy)
 		{
 			context
 					<< bson_stream::open_document
-				//	<< "levyType" << utils::to_underlying_type(levy.Type)
+					<< "type" << utils::to_underlying_type(levy.Type)
 					<< "recipient" << ToBinary(levy.Recipient)
 					<< "mosaicId" << ToInt64(levy.MosaicId)
 					<< "fee" << ToInt64(levy.Fee)
@@ -69,9 +69,10 @@ namespace catapult { namespace mongo { namespace plugins {
 			propertiesArray << bson_stream::close_array;
 
 			auto levy = builder << "levy" << bson_stream::open_array;
-			StreamLevyProperties(levy, transaction.Levy);
+			
+			model::MosaicLevy levyInfo = MOSAIC_DEFINITION_EXTRACT_LEVY(transaction);
+			StreamLevy(levy, levyInfo);
 			levy << bson_stream::close_array;
-
 		}
 	}
 

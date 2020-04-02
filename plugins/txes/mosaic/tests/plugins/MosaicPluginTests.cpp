@@ -60,7 +60,8 @@ namespace catapult { namespace plugins {
 			static std::vector<model::EntityType> GetTransactionTypes() {
 				return {
 					model::Entity_Type_Mosaic_Definition,
-					model::Entity_Type_Mosaic_Supply_Change
+					model::Entity_Type_Mosaic_Supply_Change,
+					model::Entity_Type_Mosaic_Modify_Levy
 				};
 			}
 
@@ -97,7 +98,10 @@ namespace catapult { namespace plugins {
 					"MosaicTransferValidator",
 					"MaxMosaicsBalanceTransferValidator",
 					"MaxMosaicsSupplyChangeValidator",
-					"MosaicSupplyChangeAllowedValidator"
+					"MosaicSupplyChangeAllowedValidator",
+					"MosaicLevyTransferValidator",
+					"ModifyMosaicLevyValidator",
+					"MosaicLevyDefinitionValidator"
 				};
 			}
 
@@ -106,7 +110,9 @@ namespace catapult { namespace plugins {
 					"MosaicDefinitionObserver",
 					"MosaicSupplyChangeObserver",
 					"MosaicRentalFeeObserver",
-					"MosaicTouchObserver"
+					"MosaicTouchObserver",
+					"LevyTransferObserver",
+					"ModifyLevyObserver"
 				};
 			}
 

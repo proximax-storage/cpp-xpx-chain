@@ -65,7 +65,10 @@ namespace catapult { namespace test {
 	/// Adds account \a owner to the account state cache in \a cache with \a amount units of mosaic \a id.
 	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, const Key& owner, Amount amount);
 
-	/// Asserts that \a cache exactly contains the mosaic ids in \a expectedIds.
+	/// Adds account \a owner to the account state cache in \a cache with \a amount units of mosaic \a id.
+	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, Address& owner, Amount amount);
+
+		/// Asserts that \a cache exactly contains the mosaic ids in \a expectedIds.
 	void AssertCacheContents(const cache::MosaicCache& cache, std::initializer_list<MosaicId::ValueType> expectedIds);
 
 	/// Asserts that \a cache exactly contains the mosaic ids in \a expectedIds.
@@ -73,4 +76,11 @@ namespace catapult { namespace test {
 
 	/// Asserts that \a cache exactly contains the mosaic ids in \a expectedIds.
 	void AssertCacheContents(const cache::MosaicCacheDelta& cache, std::initializer_list<MosaicId::ValueType> expectedIds);
+
+	/// Adds mosaic \a id to the mosaic cache in \a cache at \a height with \a mosaic levy
+	void AddMosaicWithLevy(cache::CatapultCacheDelta& cache, MosaicId id, Height height, BlockDuration duration, model::MosaicLevy levy);
+	
+	/// Adds mosaic \a id to the mosaic cache in \a cache at \a height with \a mosaic levy and owner
+	void AddMosaicWithLevy(cache::CatapultCacheDelta& cache, MosaicId id, Height height, BlockDuration duration, model::MosaicLevy levy, const Key& owner);
+
 }}

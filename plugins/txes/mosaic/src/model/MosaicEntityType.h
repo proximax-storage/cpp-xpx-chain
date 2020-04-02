@@ -32,6 +32,9 @@ namespace catapult { namespace model {
 	/// Mosaic supply change transaction.
 	DEFINE_TRANSACTION_TYPE(Mosaic, Mosaic_Supply_Change, 0x2);
 
+	/// Mosaic levy update/change
+	DEFINE_TRANSACTION_TYPE(Mosaic, Mosaic_Modify_Levy, 0x3);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

@@ -43,7 +43,7 @@ namespace catapult { namespace state {
 
 		MosaicDefinition CreateMosaicDefinition(uint64_t duration) {
 			auto owner = test::GenerateRandomByteArray<Key>();
-			return MosaicDefinition(Default_Height, owner, 3, test::CreateMosaicPropertiesWithDuration(BlockDuration(duration)), model::MosaicLevy());
+			return MosaicDefinition(Default_Height, owner, 3, test::CreateMosaicPropertiesWithDuration(BlockDuration(duration)));
 		}
 	}
 
@@ -55,7 +55,7 @@ namespace catapult { namespace state {
 		auto properties = model::MosaicProperties::FromValues({});
 
 		// Act:
-		MosaicDefinition definition(Height(877), owner, 3, properties, model::MosaicLevy());
+		MosaicDefinition definition(Height(877), owner, 3, properties);
 
 		// Assert:
 		EXPECT_EQ(Height(877), definition.height());
@@ -71,7 +71,7 @@ namespace catapult { namespace state {
 		auto properties = test::CreateMosaicPropertiesWithDuration(BlockDuration(3));
 
 		// Act:
-		MosaicDefinition definition(Height(877), owner, 3, properties, model::MosaicLevy());  //todo need change
+		MosaicDefinition definition(Height(877), owner, 3, properties);
 
 		// Assert:
 		EXPECT_EQ(Height(877), definition.height());

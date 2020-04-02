@@ -36,7 +36,15 @@ namespace catapult { namespace test {
 			const cache::ReadOnlyCatapultCache& cache) {
 		return validators::ValidatorContext(config, height, Timestamp(0), CreateResolverContextXor(), cache);
 	}
-
+		
+	inline validators::ValidatorContext CreateValidatorContext(
+		const config::BlockchainConfiguration& config,
+		Height height,
+		const cache::ReadOnlyCatapultCache& cache,
+		const model::ResolverContext& resolver) {
+		return validators::ValidatorContext(config, height, Timestamp(0), resolver, cache);
+	}
+	
 	// endregion
 
 	// region ValidateNotification
@@ -69,6 +77,21 @@ namespace catapult { namespace test {
 		auto cacheView = cache.createView();
 		auto readOnlyCache = cacheView.toReadOnly();
 		auto context = CreateValidatorContext(config, height, readOnlyCache);
+		return validator.validate(notification, context);
+	}
+		
+	/// Validates \a notification with \a validator using \a cache at \a height.
+	template<typename TNotification>
+	validators::ValidationResult ValidateNotification(
+			const validators::stateful::NotificationValidatorT<TNotification>& validator,
+			const TNotification& notification,
+			const cache::CatapultCache& cache,
+			const model::ResolverContext& resolver,
+			const config::BlockchainConfiguration& config = config::BlockchainConfiguration::Uninitialized(),
+			Height height = Height(1)) {
+		auto cacheView = cache.createView();
+		auto readOnlyCache = cacheView.toReadOnly();
+		auto context = CreateValidatorContext(config, height, readOnlyCache, resolver);
 		return validator.validate(notification, context);
 	}
 

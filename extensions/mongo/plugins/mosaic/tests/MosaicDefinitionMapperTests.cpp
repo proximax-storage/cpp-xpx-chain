@@ -102,7 +102,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			auto view = builder.view();
 
 			// Assert:
-			EXPECT_EQ(3u, test::GetFieldCount(view));
+			EXPECT_EQ(4u, test::GetFieldCount(view));
 			AssertMosaicDefinitionData(mosaicId, mosaicNonce, propertyValues, numExpectedProperties, view);
 		}
 	}

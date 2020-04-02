@@ -38,12 +38,13 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS MosaicDefinitionTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::BlockchainConfigurationHolder>, 3, 3,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(MosaicDefinition, std::shared_ptr<config::BlockchainConfigurationHolder>, 3, 4,)
 
 		constexpr UnresolvedMosaicId Currency_Mosaic_Id(1234);
 		constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
 		constexpr auto Transaction_Version = MakeVersion(Network_Identifier, 3);
-
+		constexpr auto Transaction_Version_4 = MakeVersion(Network_Identifier, 4);
+		
 		auto CreateMosaicConfiguration(Amount fee) {
 			auto pluginConfig = config::MosaicConfiguration::Uninitialized();
 			pluginConfig.MosaicRentalFeeSinkPublicKey = test::GenerateRandomByteArray<Key>();
@@ -84,11 +85,17 @@ namespace catapult { namespace plugins {
 		transaction.Size = 0;
 		transaction.PropertiesHeader.Count = 2;
 
-		// Act:
+		// Act: publish version 4
 		auto realSize = pPlugin->calculateRealSize(transaction);
 
 		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 2 * sizeof(MosaicProperty) + sizeof(MosaicLevy), realSize);
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 2 * sizeof(MosaicProperty), realSize);
+		
+		/// publish version 4
+		transaction.Version = Transaction_Version_4;
+		realSize = pPlugin->calculateRealSize(transaction);
+		
+		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + (2 * sizeof(MosaicProperty)) + sizeof(model::MosaicLevy), realSize);
 	}
 
 	PLUGIN_TEST(CanExtractAccounts) {
@@ -172,7 +179,7 @@ namespace catapult { namespace plugins {
 		template<typename TTraits>
 		auto CreateTransactionWithProperties(uint8_t numProperties) {
 			using TransactionType = typename TTraits::TransactionType;
-			uint32_t entitySize = sizeof(TransactionType) + sizeof(MosaicLevy) + numProperties * sizeof(MosaicProperty);
+			uint32_t entitySize = sizeof(TransactionType) + numProperties * sizeof(MosaicProperty);
 			auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
 			pTransaction->Version = Transaction_Version;
 			pTransaction->Size = entitySize;
@@ -292,6 +299,55 @@ namespace catapult { namespace plugins {
 		testContext.AssertMosaicDefinitionTransaction(signer, MosaicProperties::FromValues({ { 2, 7, 0 } }));
 		testContext.AssertMosaicRentalFeeNotification(signer, sinkAddress);
 	}
-
+	
+	PLUGIN_TEST(MosaicLevyNotSupportV3) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<MosaicDefinitionNotification<1>> sub;
+		auto pConfigHolder = config::CreateMockConfigurationHolder(CreateConfiguration(CreateMosaicConfiguration(Amount(0))));
+		auto pPlugin = TTraits::CreatePlugin(pConfigHolder);
+		
+		using TransactionType = typename TTraits::TransactionType;
+		uint32_t entitySize = sizeof(TransactionType) + 1 * sizeof(MosaicProperty);
+		auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+		pTransaction->Version = Transaction_Version;
+		pTransaction->Size = entitySize;
+		pTransaction->PropertiesHeader.Count = 1;
+		pTransaction->PropertiesPtr()[0] = { MosaicPropertyId::Duration, 5 };
+		test::FillWithRandomData(pTransaction->Signer);
+		
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+		
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(model::LevyType::None, notification.Levy.Type);
+		EXPECT_EQ(MosaicId(0), notification.Levy.MosaicId);
+		EXPECT_EQ(Amount(0), notification.Levy.Fee);
+	}
+	
+	PLUGIN_TEST(MosaicLevySupportV4) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<MosaicDefinitionNotification<1>> sub;
+		auto pConfigHolder = config::CreateMockConfigurationHolder(CreateConfiguration(CreateMosaicConfiguration(Amount(0))));
+		auto pPlugin = TTraits::CreatePlugin(pConfigHolder);
+		
+		using TransactionType = typename TTraits::TransactionType;
+		uint32_t entitySize = sizeof(TransactionType) + sizeof(MosaicLevy) + 1 * sizeof(MosaicProperty);
+		auto pTransaction = utils::MakeUniqueWithSize<TransactionType>(entitySize);
+		pTransaction->Version = Transaction_Version_4;
+		pTransaction->Size = entitySize;
+		pTransaction->PropertiesHeader.Count = 1;
+		pTransaction->PropertiesPtr()[0] = { MosaicPropertyId::Duration, 5 };
+		pTransaction->LevyPtr()[0] = model::MosaicLevy(model::LevyType::Percentile, catapult::UnresolvedAddress(), MosaicId(316), Amount(10));
+		test::FillWithRandomData(pTransaction->Signer);
+		
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+		
+		const auto& notification = sub.matchingNotifications()[0];
+		EXPECT_EQ(model::LevyType::Percentile, notification.Levy.Type);
+		EXPECT_EQ(pTransaction->LevyPtr()[0].Recipient, notification.Levy.Recipient);
+		EXPECT_EQ(MosaicId(316), notification.Levy.MosaicId);
+		EXPECT_EQ(Amount(10), notification.Levy.Fee);
+	}
 	// endregion
 }}

@@ -101,7 +101,7 @@ namespace catapult { namespace tools { namespace nemgen {
 				flags |= model::MosaicFlags::Supply_Mutable;
 
 			values[utils::to_underlying_type(model::MosaicPropertyId::Flags)] = utils::to_underlying_type(flags);
-			state::MosaicDefinition definition(Height(1), owner, 1, model::MosaicProperties::FromValues(values), model::MosaicLevy());
+			state::MosaicDefinition definition(Height(1), owner, 1, model::MosaicProperties::FromValues(values));
 			return ToMosaicEntry(definition, mosaicNonce, supply);
 		}
 

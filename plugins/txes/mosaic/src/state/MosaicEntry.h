@@ -20,6 +20,7 @@
 
 #pragma once
 #include "MosaicDefinition.h"
+#include "src/model/MosaicLevy.h"
 
 namespace catapult { namespace state {
 
@@ -44,13 +45,37 @@ namespace catapult { namespace state {
 
 	// endregion
 
+	// region MosaicEntryLevyMixin
+
+	class MosaicEntryLevyMixin {
+	public:
+		MosaicEntryLevyMixin(model::MosaicLevy levy)
+			: m_levy(levy) {}
+
+
+		const model::MosaicLevy& levy() const {
+			return (m_levy);
+		}
+
+		model::MosaicLevy& levyRef() {
+			return m_levy;
+		}
+
+	protected:
+		model::MosaicLevy m_levy;
+	};
+
+	// endregion
+
+
 	// region MosaicEntry
 
 	/// A tuple composed of a mosaic definition and its current state.
-	class MosaicEntry : public MosaicEntrySupplyMixin {
+	class MosaicEntry : public MosaicEntrySupplyMixin, public MosaicEntryLevyMixin {
 	public:
 		/// Creates a mosaic entry around mosaic \a id and mosaic \a definition.
-		MosaicEntry(MosaicId id, const MosaicDefinition& definition);
+		MosaicEntry(MosaicId id, const MosaicDefinition& definition,
+			model::MosaicLevy levy = model::MosaicLevy());
 
 	public:
 		/// Gets the mosaic id.

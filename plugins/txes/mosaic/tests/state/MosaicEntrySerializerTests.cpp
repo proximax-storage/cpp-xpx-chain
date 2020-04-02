@@ -98,7 +98,7 @@ namespace catapult { namespace state {
 		std::vector<uint8_t> buffer;
 		mocks::MockMemoryStream stream(buffer);
 
-		auto definition = MosaicDefinition(Height(888), test::GenerateRandomByteArray<Key>(), 5, CreateMosaicProperties(17), model::MosaicLevy()); //todo; need to change
+		auto definition = MosaicDefinition(Height(888), test::GenerateRandomByteArray<Key>(), 5, CreateMosaicProperties(17));
 		auto entry = MosaicEntry(MosaicId(123), definition);
 		entry.increaseSupply(Amount(111));
 

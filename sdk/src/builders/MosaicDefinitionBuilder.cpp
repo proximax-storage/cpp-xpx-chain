@@ -64,7 +64,8 @@ namespace catapult { namespace builders {
 		auto size = sizeof(TransactionType);
 		size += m_properties.size() * sizeof(model::MosaicProperty);
 		auto pTransaction = createTransaction<TransactionType>(size);
-
+		pTransaction->Version = 0x62000003;
+		
 		// 2. set fixed transaction fields
 		pTransaction->MosaicNonce = m_mosaicNonce;
 		pTransaction->MosaicId = model::GenerateMosaicId(signer(), m_mosaicNonce);

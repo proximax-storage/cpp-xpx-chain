@@ -47,7 +47,16 @@ namespace catapult { namespace test {
 					return Amount(unresolved);
 				});
 	}
-
+		
+	model::ResolverContext CreateMosaicResolverContextDefault()
+	{
+		// use custom mosaic resolver but default address resolver
+		return model::ResolverContext(
+			[](const auto &unresolved) { return MosaicId(unresolved.unwrap()); },
+			[](const auto &unresolved) { return model::ResolverContext().resolve(unresolved); },
+			[](const auto &unresolved) { return model::ResolverContext().resolve(unresolved); });
+	}
+		
 	UnresolvedMosaicId UnresolveXor(MosaicId mosaicId) {
 		return UnresolvedMosaicId(mosaicId.unwrap() ^ 0xFFFFFFFFFFFFFFFF);
 	}

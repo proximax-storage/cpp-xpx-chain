@@ -67,7 +67,7 @@ namespace catapult { namespace observers {
 		}
 
 		void SeedCacheWithDefaultMosaic(cache::MosaicCacheDelta& mosaicCacheDelta) {
-			auto definition = state::MosaicDefinition(Seed_Height, Key(), 1, model::MosaicProperties::FromValues({ { 1, 2, 20 } }), model::MosaicLevy());
+			auto definition = state::MosaicDefinition(Seed_Height, Key(), 1, model::MosaicProperties::FromValues({ { 1, 2, 20 }}));
 			mosaicCacheDelta.insert(state::MosaicEntry(Default_Mosaic_Id, definition));
 
 			// Sanity:
@@ -139,7 +139,7 @@ namespace catapult { namespace observers {
 	namespace {
 		void AddTwoMosaics(cache::MosaicCacheDelta& mosaicCacheDelta, uint32_t revision) {
 			auto properties = model::MosaicProperties::FromValues({ { 2, 4, 20 + 15 } });
-			auto definition = state::MosaicDefinition(Seed_Height, Key(), revision, properties, model::MosaicLevy());
+			auto definition = state::MosaicDefinition(Seed_Height, Key(), revision, properties);
 			for (auto id : { Default_Mosaic_Id, MosaicId(987) })
 				mosaicCacheDelta.insert(state::MosaicEntry(id, definition));
 

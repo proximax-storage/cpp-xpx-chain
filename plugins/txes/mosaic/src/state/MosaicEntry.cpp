@@ -43,8 +43,9 @@ namespace catapult { namespace state {
 
 	// region MosaicEntry
 
-	MosaicEntry::MosaicEntry(MosaicId id, const MosaicDefinition& definition)
-			: m_id(id)
+	MosaicEntry::MosaicEntry(MosaicId id, const MosaicDefinition& definition, model::MosaicLevy levy)
+			: MosaicEntryLevyMixin (levy)
+			, m_id(id)
 			, m_definition(definition)
 	{}
 

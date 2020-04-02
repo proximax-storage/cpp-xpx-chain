@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 			auto& mosaicCacheDelta = delta.sub<cache::MosaicCache>();
 			
 			model::MosaicProperties::PropertyValuesContainer values{};
-			auto definition = state::MosaicDefinition(Height(1), Mosaic_Owner, 3, model::MosaicProperties::FromValues(values), model::MosaicLevy());
+			auto definition = state::MosaicDefinition(Height(1), Mosaic_Owner, 3, model::MosaicProperties::FromValues(values));
 			auto entry = state::MosaicEntry(Mosaic_Id, definition);
 			entry.increaseSupply(Amount(666));
 			mosaicCacheDelta.insert(entry);

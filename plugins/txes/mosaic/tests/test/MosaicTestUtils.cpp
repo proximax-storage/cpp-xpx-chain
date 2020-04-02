@@ -30,7 +30,7 @@ namespace catapult { namespace test {
 	}
 
 	state::MosaicDefinition CreateMosaicDefinition(Height height) {
-		return state::MosaicDefinition(height, test::GenerateRandomByteArray<Key>(), 3, model::MosaicProperties::FromValues({}), model::MosaicLevy());
+		return state::MosaicDefinition(height, test::GenerateRandomByteArray<Key>(), 3, model::MosaicProperties::FromValues({}));
 	}
 
 	state::MosaicEntry CreateMosaicEntry(MosaicId id, Amount supply) {
@@ -42,10 +42,15 @@ namespace catapult { namespace test {
 		entry.increaseSupply(supply);
 		return entry;
 	}
-
+	
+	model::MosaicLevy CreateMosaicLevy()
+	{
+		return model::MosaicLevy(model::LevyType::None, catapult::UnresolvedAddress(), MosaicId(0),	Amount(0));
+	}
+	
 	namespace {
 		state::MosaicDefinition CreateMosaicDefinition(Height height, const Key& owner, BlockDuration duration) {
-			return state::MosaicDefinition(height, owner, 3, CreateMosaicPropertiesWithDuration(duration), model::MosaicLevy());
+			return state::MosaicDefinition(height, owner, 3, CreateMosaicPropertiesWithDuration(duration));
 		}
 	}
 
@@ -54,7 +59,25 @@ namespace catapult { namespace test {
 		entry.increaseSupply(supply);
 		return entry;
 	}
-
+	
+	test::BalanceTransfers CreateMosaicBalance(MosaicId id, Amount amount) {
+		return {{id, amount}};
+	}
+	
+	model::MosaicLevy CreateCorrectMosaicLevy()
+	{
+		auto levy = test::CreateMosaicLevy();
+		levy.Type = model::LevyType::Absolute;
+		levy.Recipient = test::GenerateRandomByteArray<UnresolvedAddress>();
+		levy.MosaicId = MosaicId(1000);
+		levy.Fee = test::CreateMosaicLevyFeePercentile(10); // 10% levy fee
+		return levy;
+	}
+	
+	Amount CreateMosaicLevyFeePercentile(float percentage) {
+		return Amount( percentage * model::MosaicLevyFeeDecimalPlace);
+	}
+	
 	namespace {
 		auto ToMosaicFlag(uint8_t value) {
 			return static_cast<model::MosaicFlags>(1 << value);

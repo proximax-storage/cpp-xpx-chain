@@ -250,7 +250,7 @@ namespace catapult { namespace validators {
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Mosaic_Definition\",\n"
 			"\t\t\t\"type\": \"16717\",\n"
-			"\t\t\t\"supportedVersions\": [3]\n"
+			"\t\t\t\"supportedVersions\": [4]\n"
 			"\t\t},\n"
 			"\t\t{\n"
 			"\t\t\t\"name\": \"Mosaic_Supply_Change\",\n"

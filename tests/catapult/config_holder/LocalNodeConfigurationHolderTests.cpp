@@ -198,7 +198,7 @@ namespace catapult { namespace config {
 
 		// Assert:
 		EXPECT_EQ(7, result.Network.ImportanceGrouping);
-		EXPECT_EQ(24, result.SupportedEntityVersions.size());
+		EXPECT_EQ(25, result.SupportedEntityVersions.size());
 	}
 
 	TEST(TEST_CLASS, GetConfigThrowsWhenCacheNotSet) {

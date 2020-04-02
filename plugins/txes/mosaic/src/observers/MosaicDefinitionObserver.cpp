@@ -52,8 +52,8 @@ namespace catapult { namespace observers {
 			const auto& currentDefinition = currentEntry.definition();
 			auto newProperties = MergeProperties(currentDefinition.properties(), notification.Properties, mode);
 			auto revision = NotifyMode::Commit == mode ? currentDefinition.revision() + 1 : currentDefinition.revision() - 1;
-			auto definition = state::MosaicDefinition(currentDefinition.height(), notification.Signer, revision, newProperties, notification.Levy);
-			return state::MosaicEntry(notification.MosaicId, definition);
+			auto definition = state::MosaicDefinition(currentDefinition.height(), notification.Signer, revision, newProperties);
+			return state::MosaicEntry(notification.MosaicId, definition, notification.Levy);
 		}
 	}
 
@@ -72,8 +72,8 @@ namespace catapult { namespace observers {
 
 			cache.insert(ApplyNotification(mosaicEntry, notification, context.Mode));
 		} else {
-			auto definition = state::MosaicDefinition(context.Height, notification.Signer, 1, notification.Properties, notification.Levy);
-			cache.insert(state::MosaicEntry(notification.MosaicId, definition));
+			auto definition = state::MosaicDefinition(context.Height, notification.Signer, 1, notification.Properties);
+			cache.insert(state::MosaicEntry(notification.MosaicId, definition, notification.Levy));
 		}
 	});
 }}

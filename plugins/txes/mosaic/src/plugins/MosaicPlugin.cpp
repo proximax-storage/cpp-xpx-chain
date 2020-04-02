@@ -21,6 +21,7 @@
 #include "MosaicPlugin.h"
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "MosaicSupplyChangeTransactionPlugin.h"
+#include "MosaicModifyLevyTransactionPlugin.h"
 #include "src/cache/MosaicCache.h"
 #include "src/cache/MosaicCacheStorage.h"
 #include "src/config/MosaicConfiguration.h"
@@ -31,6 +32,8 @@
 #include "catapult/observers/RentalFeeObserver.h"
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"
+#include "src/model/MosaicLevy.h"
+#include "src/utils/MosaicLevyCalculator.h"
 
 namespace catapult { namespace plugins {
 
@@ -47,6 +50,7 @@ namespace catapult { namespace plugins {
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
+		manager.addTransactionSupport(CreateMosaicModifyLevyTransactionPlugin());
 
 		manager.addCacheSupport<cache::MosaicCacheStorage>(
 				std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));
@@ -76,7 +80,11 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMaxMosaicsBalanceTransferValidator())
 				.add(validators::CreateMaxMosaicsSupplyChangeValidator())
 				// note that the following validator depends on MosaicChangeAllowedValidator
-				.add(validators::CreateMosaicSupplyChangeAllowedValidator());
+				.add(validators::CreateMosaicSupplyChangeAllowedValidator())
+				.add(validators::CreateMosaicLevyTransferValidator())
+				.add(validators::CreateModifyMosaicLevyValidator())
+				.add(validators::CreateMosaicLevyDefinitionValidator());
+
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -86,7 +94,42 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateMosaicDefinitionObserver())
 				.add(observers::CreateMosaicSupplyChangeObserver())
 				.add(observers::CreateRentalFeeObserver<model::MosaicRentalFeeNotification<1>>("Mosaic", rentalFeeReceiptType))
-				.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic", expiryReceiptType));
+				.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic", expiryReceiptType))
+				.add(observers::CreateLevyTransferObserver())
+				.add(observers::CreateModifyLevyObserver());
+		});
+
+		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+			const auto& mosaicCache = cache.template sub<cache::MosaicCache>();
+
+			switch (unresolved.Type) {
+				case UnresolvedAmountType::LeviedTransfer: {
+					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
+					if (!levyData) break;
+
+					MosaicId mosaicID(levyData->MosaicId.unwrap());
+					auto mosaicIter = mosaicCache.find(mosaicID);
+					if (!mosaicIter.tryGet()) return false;
+
+					auto &entry = mosaicIter.get();
+					auto& levy = entry.levy();
+
+					if(model::UnsetMosaicId == levy.MosaicId || levy.MosaicId.unwrap() == mosaicID.unwrap()){
+						/// we are using same mosaic for levy and main transaction
+						/// if other currency is used for levy, we return nothing
+						/// no deduction for this currency
+						utils::MosaicLevyCalculatorFactory factory;
+						auto result = factory.getCalculator(levy.Type)(unresolved, levy.Fee);
+						resolved = result.finalAmount;
+
+						return true;
+					}
+				}
+				default:
+					break;
+			}
+
+			return false;
 		});
 	}
 }}

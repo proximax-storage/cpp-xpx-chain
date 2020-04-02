@@ -43,19 +43,18 @@ namespace catapult { namespace model {
 					baseSize // base
 					+ sizeof(uint32_t) // nonce
 					+ sizeof(MosaicId) // id
-					+ expectedPropertiesHeaderSize
-					+ sizeof(MosaicLevy);
+					+ expectedPropertiesHeaderSize;
 
 			// Assert:
 			EXPECT_EQ(expectedSize, sizeof(T));
-			EXPECT_EQ(baseSize + 15u + sizeof(MosaicLevy), sizeof(T));
+			EXPECT_EQ(baseSize + 15u, sizeof(T));
 		}
 
 		template<typename T>
 		void AssertTransactionHasExpectedProperties() {
 			// Assert:
 			EXPECT_EQ(Entity_Type_Mosaic_Definition, T::Entity_Type);
-			EXPECT_EQ(3u, T::Current_Version);
+			EXPECT_EQ(4u, T::Current_Version);
 		}
 	}
 
@@ -68,10 +67,14 @@ namespace catapult { namespace model {
 	namespace {
 		struct MosaicDefinitionTransactionTraits {
 			static auto GenerateEntityWithAttachments(uint8_t propertiesCount) {
-				uint32_t entitySize = sizeof(MosaicDefinitionTransaction) + propertiesCount * sizeof(MosaicProperty) + sizeof(MosaicLevy);
+				constexpr auto Network_Identifier = model::NetworkIdentifier::Mijin_Test;
+				constexpr auto Transaction_Version = MakeVersion(Network_Identifier, 3);
+				
+				uint32_t entitySize = sizeof(MosaicDefinitionTransaction) + (propertiesCount * sizeof(MosaicProperty));
 				auto pTransaction = utils::MakeUniqueWithSize<MosaicDefinitionTransaction>(entitySize);
 				pTransaction->Size = entitySize;
 				pTransaction->PropertiesHeader.Count = propertiesCount;
+				pTransaction->Version = Transaction_Version;
 				return pTransaction;
 			}
 
@@ -97,9 +100,14 @@ namespace catapult { namespace model {
 		// Act:
 		auto realSize = MosaicDefinitionTransaction::CalculateRealSize(transaction);
 
+		size_t compareSize = sizeof(MosaicDefinitionTransaction) + (33 * sizeof(MosaicProperty));
+		if( transaction.EntityVersion() >= 4)
+			compareSize += sizeof(MosaicLevy);
+		
 		// Assert:
 		EXPECT_EQ(9u, sizeof(MosaicProperty));
-		EXPECT_EQ(sizeof(MosaicDefinitionTransaction) + 33 * sizeof(MosaicProperty), realSize);
+		EXPECT_EQ(compareSize, realSize);
+
 	}
 
 	TEST(TEST_CLASS, CalculateRealSizeDoesNotOverflowWithMaxValues) {
@@ -110,10 +118,14 @@ namespace catapult { namespace model {
 
 		// Act:
 		auto realSize = MosaicDefinitionTransaction::CalculateRealSize(transaction);
-
+		
+		size_t compareSize = sizeof(MosaicDefinitionTransaction) + (0xFF * sizeof(MosaicProperty));
+		if( transaction.EntityVersion() >= 4)
+			compareSize += sizeof(MosaicLevy);
+			
 		// Assert:
 		ASSERT_EQ(0xFFFFFFFF, transaction.Size);
-		EXPECT_EQ(sizeof(MosaicDefinitionTransaction) + 0xFF * sizeof(MosaicProperty), realSize);
+		EXPECT_EQ( compareSize, realSize);
 		EXPECT_GT(0xFFFFFFFF, realSize);
 	}
 

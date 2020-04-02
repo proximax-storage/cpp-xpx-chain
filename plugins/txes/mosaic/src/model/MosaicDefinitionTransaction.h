@@ -36,7 +36,7 @@ namespace catapult { namespace model {
 		using TransactionType = MosaicDefinitionTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Mosaic_Definition, 3)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Mosaic_Definition, 4)
 
 	public:
 		/// Mosaic nonce.
@@ -46,29 +46,42 @@ namespace catapult { namespace model {
 		/// \note This must match the generated id.
 		catapult::MosaicId MosaicId;
 
-		/// Levy
-		MosaicLevy Levy;
-
 		/// Properties header.
 		MosaicPropertiesHeader PropertiesHeader;
 
 		// followed by optional properties
 		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Properties, MosaicProperty)
-
+		
+		/// Levy
+		DEFINE_TRANSACTION_VARIABLE_DATA_ACCESSORS(Levy, MosaicLevy);
+		
 	private:
 		template<typename T>
 		static auto* PropertiesPtrT(T& transaction) {
 			return transaction.PropertiesHeader.Count ? THeader::PayloadStart(transaction) : nullptr;
 		}
 
+		template<typename T>
+		static auto* LevyPtrT(T& transaction) {
+			auto* pPayloadStart = THeader::PayloadStart(transaction);
+			return pPayloadStart && transaction.EntityVersion() >= transaction.Current_Version ?
+				pPayloadStart + transaction.PropertiesHeader.Count * sizeof(MosaicProperty) : nullptr;
+		}
+
 	public:
 		/// Calculates the real size of mosaic definition \a transaction.
 		static constexpr uint64_t CalculateRealSize(const TransactionType& transaction) noexcept {
-			return sizeof(TransactionType) + transaction.PropertiesHeader.Count * sizeof(MosaicProperty) ;
+			size_t size = sizeof(TransactionType) + (transaction.PropertiesHeader.Count * sizeof(MosaicProperty));
+			if (transaction.EntityVersion() >= transaction.Current_Version) {
+				size += sizeof(MosaicLevy);
+			}
+			return size;
 		}
 	};
 
 	DEFINE_EMBEDDABLE_TRANSACTION(MosaicDefinition)
-
+	
 #pragma pack(pop)
+	#define MOSAIC_DEFINITION_EXTRACT_LEVY(transaction) \
+		transaction.LevyPtr() ? *transaction.LevyPtr() : model::MosaicLevy();
 }}
