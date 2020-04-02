@@ -6,12 +6,12 @@
 
 #pragma once
 #include "DriveBaseSets.h"
-#include "ServiceCacheTools.h"
 #include "DriveCacheSerializers.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "src/config/ServiceConfiguration.h"
 
 namespace catapult { namespace cache {
 
@@ -26,8 +26,7 @@ namespace catapult { namespace cache {
 			, public DriveCacheViewMixins::Iteration
 			, public DriveCacheViewMixins::ConstAccessor
 			, public DriveCacheViewMixins::PatriciaTreeView
-			, public DriveCacheViewMixins::Enable
-			, public DriveCacheViewMixins::Height {
+			, public DriveCacheViewMixins::ConfigBasedEnable<config::ServiceConfiguration> {
 	public:
 		using ReadOnlyView = DriveCacheTypes::CacheReadOnlyType;
 
@@ -39,16 +38,8 @@ namespace catapult { namespace cache {
 				, DriveCacheViewMixins::Iteration(driveSets.Primary)
 				, DriveCacheViewMixins::ConstAccessor(driveSets.Primary)
 				, DriveCacheViewMixins::PatriciaTreeView(driveSets.PatriciaTree.get())
-				, m_pConfigHolder(pConfigHolder)
+				, DriveCacheViewMixins::ConfigBasedEnable<config::ServiceConfiguration>(pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
-
-	public:
-		bool enabled() const {
-			return ServicePluginEnabled(m_pConfigHolder, height());
-		}
-
-	private:
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the drive cache.

@@ -38,35 +38,49 @@ namespace catapult { namespace consumers {
 			return disruptor::CompletionStatus::Aborted == result.CompletionStatus;
 		}
 
-		Height GetConfigApplyHeightDelta(const model::Transaction& transaction) {
-			return Height(static_cast<const model::NetworkConfigTransaction&>(transaction).ApplyHeightDelta.unwrap());
+		model::NetworkConfiguration ParseConfig(const uint8_t* pConfig, uint16_t configSize) {
+			std::istringstream inputBlock(std::string(reinterpret_cast<const char*>(pConfig), configSize));
+			return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
 		}
 
-		Height GetConfigApplyHeightDelta(const model::EmbeddedTransaction& transaction) {
-			return Height(static_cast<const model::EmbeddedNetworkConfigTransaction&>(transaction).ApplyHeightDelta.unwrap());
+		template<typename TTransaction>
+		void AddConfig(model::NetworkConfigurations& configs, const Height& blockHeight, const TTransaction& transaction) {
+			configs.emplace(
+				blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()),
+				ParseConfig(transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize));
 		}
 
-		void ExtractConfigHeights(const model::BlockElement& blockElement, std::set<Height>& configHeights) {
-			for (const auto& transactionElement : blockElement.Transactions) {
-				const auto& transaction = transactionElement.Transaction;
-				auto type = transaction.Type;
-				if (model::Entity_Type_Network_Config == type) {
-					configHeights.insert(blockElement.Block.Height + GetConfigApplyHeightDelta(transaction));
-				} else if (model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type) {
-					const auto& aggregate = static_cast<const model::AggregateTransaction&>(transaction);
-					for (const auto& subTransaction : aggregate.Transactions()) {
-						if (model::Entity_Type_Network_Config == subTransaction.Type) {
-							configHeights.insert(blockElement.Block.Height + GetConfigApplyHeightDelta(subTransaction));
+		template<typename TTransaction>
+		void AddConfig(std::set<Height>& configHeights, const Height& blockHeight, const TTransaction& transaction) {
+			configHeights.insert(blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()));
+		}
+
+		template<typename TContainer>
+		bool ExtractConfigs(const BlockElements& elements, TContainer& configs) {
+			try {
+				for (const auto& blockElement : elements) {
+					for (const auto& transactionElement : blockElement.Transactions) {
+						const auto& transaction = transactionElement.Transaction;
+						auto type = transaction.Type;
+						if (model::Entity_Type_Network_Config == type) {
+							AddConfig(configs, blockElement.Block.Height,
+								static_cast<const model::NetworkConfigTransaction&>(transaction));
+						} else if (model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type) {
+							const auto& aggregate = static_cast<const model::AggregateTransaction&>(transaction);
+							for (const auto& subTransaction : aggregate.Transactions()) {
+								if (model::Entity_Type_Network_Config == subTransaction.Type) {
+									AddConfig(configs, blockElement.Block.Height,
+										static_cast<const model::EmbeddedNetworkConfigTransaction&>(subTransaction));
+								}
+							}
 						}
 					}
 				}
+			} catch (...) {
+				return false;
 			}
-		}
 
-		void ExtractConfigHeights(const BlockElements& elements, std::set<Height>& configHeights) {
-			for (const auto& blockElement : elements) {
-				ExtractConfigHeights(blockElement, configHeights);
-			}
+			return true;
 		}
 
 		struct UnwindResult {
@@ -202,9 +216,13 @@ namespace catapult { namespace consumers {
 				if (heightDifference > m_pConfigHolder->Config(localChainHeight).Network.MaxRollbackBlocks)
 					return Abort(Failure_Consumer_Remote_Chain_Too_Far_Behind);
 
+				model::NetworkConfigurations remoteConfigs;
+				if (!ExtractConfigs(elements, remoteConfigs))
+					return Abort(Failure_Consumer_Remote_Network_Config_Malformed);
+
 				// 3. check difficulties against difficulties in cache
 				auto blocks = ExtractBlocks(elements);
-				if (!m_handlers.DifficultyChecker(blocks, m_cache))
+				if (!m_handlers.DifficultyChecker(blocks, m_cache, remoteConfigs))
 					return Abort(Failure_Consumer_Remote_Chain_Mismatched_Difficulties);
 
 				// 4. unwind to the common block height and calculate the local chain score
@@ -225,11 +243,9 @@ namespace catapult { namespace consumers {
 					return Abort(Failure_Consumer_Remote_Chain_Score_Not_Better);
 				}
 
-				std::set<Height> remoteConfigHeights;
-				ExtractConfigHeights(elements, remoteConfigHeights);
-				for (const auto& height : remoteConfigHeights) {
-					auto newSize = (height - peerStartHeight).unwrap();
-					if (!unwindResult.ConfigHeights.count(height) && newSize < elements.size()) {
+				for (const auto& pair : remoteConfigs) {
+					auto newSize = (pair.first - peerStartHeight).unwrap();
+					if (!unwindResult.ConfigHeights.count(pair.first) && newSize < elements.size()) {
 						for (auto i = elements.size() - 1; i >= newSize; --i) {
 							peerScore -= model::ChainScore(chain::CalculateScore(*blocks[i - 1], *blocks[i]));
 							elements.pop_back();
@@ -266,7 +282,7 @@ namespace catapult { namespace consumers {
 				std::shared_ptr<const model::BlockElement> pChildBlockElement;
 				while (true) {
 					auto pParentBlockElement = storage.loadBlockElement(height);
-					ExtractConfigHeights(*pParentBlockElement, result.ConfigHeights);
+					ExtractConfigs({ *pParentBlockElement }, result.ConfigHeights);
 					if (pChildBlockElement) {
 						result.Score += model::ChainScore(chain::CalculateScore(pParentBlockElement->Block, pChildBlockElement->Block));
 

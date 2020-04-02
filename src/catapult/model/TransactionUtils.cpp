@@ -71,9 +71,9 @@ namespace catapult { namespace model {
 		};
 	}
 
-	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Height& height,
+	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Hash256& hash, const Height& height,
 			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext) {
-		WeakEntityInfo weakInfo(transaction, height);
+		WeakEntityInfo weakInfo(transaction, hash, height);
 		AddressCollector sub(NetworkIdentifier(weakInfo.entity().Network()), extractorContext);
 		notificationPublisher.publish(weakInfo, sub);
 		return sub.addresses();

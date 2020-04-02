@@ -15,6 +15,19 @@ namespace catapult { namespace plugins {
 		template<typename TTransaction>
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			EndOperationPublisher(transaction, sub, "EndOperationTransaction");
+
+			switch (transaction.EntityVersion()) {
+				case 1: {
+					auto pMosaic = transaction.MosaicsPtr();
+					for (auto i = 0u; i < transaction.MosaicCount; ++i, ++pMosaic) {
+						sub.notify(BalanceCreditNotification<1>(transaction.Signer, pMosaic->MosaicId, pMosaic->Amount));
+					}
+
+					break;
+				}
+				default:
+					CATAPULT_LOG(debug) << "invalid version of EndOperationTransaction: " << transaction.EntityVersion();
+			}
 		}
 	}
 

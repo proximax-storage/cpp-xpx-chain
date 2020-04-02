@@ -42,7 +42,7 @@ namespace catapult { namespace observers {
 	/// Observes block notifications and credits the harvester and optionally the beneficiary account with transaction fees
 	/// given the inflation \a calculator.
 	DECLARE_OBSERVER(HarvestFee, model::BlockNotification<1>)(
-		const model::InflationCalculator& calculator);
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pHolder);
 
 	/// Observes block difficulties.
 	DECLARE_OBSERVER(BlockDifficulty, model::BlockNotification<1>)();

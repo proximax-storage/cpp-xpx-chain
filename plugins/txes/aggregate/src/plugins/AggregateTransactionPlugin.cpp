@@ -26,8 +26,7 @@
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/model/ExtendedEmbeddedTransaction.h"
-#include "catapult/plugins/PluginUtils.h"
-#include "Common.h"
+#include "AggregateCommon.h"
 
 using namespace catapult::model;
 
@@ -55,10 +54,9 @@ namespace catapult { namespace plugins {
 			}
 
 			TransactionAttributes attributes(const Height& height) const override {
-				auto version = AggregateTransaction::Current_Version;
 				const auto& config = m_pConfigHolder->ConfigAtHeightOrLatest(height);
 				const auto& pluginConfig = config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
-				return { version, version, pluginConfig.MaxBondedTransactionLifetime };
+				return { AggregateTransaction::Min_Version, AggregateTransaction::Current_Version, pluginConfig.MaxBondedTransactionLifetime };
 			}
 
 			uint64_t calculateRealSize(const Transaction& transaction) const override {
@@ -71,25 +69,37 @@ namespace catapult { namespace plugins {
 
 			void publish(const WeakEntityInfoT<Transaction>& transactionInfo, NotificationSubscriber& sub) const override {
 				const auto& aggregate = CastToDerivedType(transactionInfo.entity());
+				auto numTransactions = static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend()));
+				auto numCosignatures = aggregate.CosignaturesCount();
 
 				switch (aggregate.EntityVersion()) {
+				case 3: {
+					sub.notify(AggregateTransactionHashNotification<1>(
+						transactionInfo.hash(),
+						numTransactions,
+						aggregate.TransactionsPtr()));
+
+					sub.notify(AggregateCosignaturesNotification<2>(
+							aggregate.Signer,
+							numTransactions,
+							aggregate.TransactionsPtr(),
+							numCosignatures,
+							aggregate.CosignaturesPtr()));
+
+					[[fallthrough]];
+				}
+
 				case 2: {
 					sub.notify(AggregateTransactionTypeNotification<1>(m_transactionType));
 
 					// publish aggregate notifications
 					// (notice that this must be raised before embedded transaction notifications in order for cosigner aggregation to work)
-					auto numCosignatures = aggregate.CosignaturesCount();
-					auto numTransactions = static_cast<uint32_t>(std::distance(aggregate.Transactions().cbegin(), aggregate.Transactions().cend()));
 					sub.notify(AggregateCosignaturesNotification<1>(
 							aggregate.Signer,
 							numTransactions,
 							aggregate.TransactionsPtr(),
 							numCosignatures,
 							aggregate.CosignaturesPtr()));
-					sub.notify(AggregateTransactionHashNotification<1>(
-							transactionInfo.hash(),
-							numTransactions,
-							aggregate.TransactionsPtr()));
 
 					// publish all sub-transaction information
 					for (const auto& subTransaction : aggregate.Transactions()) {

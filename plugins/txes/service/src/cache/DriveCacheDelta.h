@@ -6,7 +6,6 @@
 
 #pragma once
 #include "DriveBaseSets.h"
-#include "ServiceCacheTools.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -29,8 +28,7 @@ namespace catapult { namespace cache {
 		using ConstAccessor = PrimaryMixins::MutableAccessor;
 		using DeltaElements = PrimaryMixins::DeltaElements;
 		using BasicInsertRemove = PrimaryMixins::BasicInsertRemove;
-		using Enable = PrimaryMixins::Enable;
-		using Height = PrimaryMixins::Height;
+		using ConfigBasedEnable = PrimaryMixins::ConfigBasedEnable<config::ServiceConfiguration>;
 	};
 
 	/// Basic delta on top of the drive cache.
@@ -43,8 +41,7 @@ namespace catapult { namespace cache {
 			, public DriveCacheDeltaMixins::PatriciaTreeDelta
 			, public DriveCacheDeltaMixins::BasicInsertRemove
 			, public DriveCacheDeltaMixins::DeltaElements
-			, public DriveCacheDeltaMixins::Enable
-			, public DriveCacheDeltaMixins::Height {
+			, public DriveCacheDeltaMixins::ConfigBasedEnable {
 	public:
 		using ReadOnlyView = DriveCacheTypes::CacheReadOnlyType;
 
@@ -60,19 +57,15 @@ namespace catapult { namespace cache {
 				, DriveCacheDeltaMixins::PatriciaTreeDelta(*driveSets.pPrimary, driveSets.pPatriciaTree)
 				, DriveCacheDeltaMixins::BasicInsertRemove(*driveSets.pPrimary)
 				, DriveCacheDeltaMixins::DeltaElements(*driveSets.pPrimary)
+				, DriveCacheDeltaMixins::ConfigBasedEnable(pConfigHolder, [](const auto& config) { return config.Enabled; })
 				, m_pDriveEntries(driveSets.pPrimary)
 				, m_pBillingAtHeight(driveSets.pBillingGrouping)
 				, m_pRemoveAtHeight(driveSets.pRemoveGrouping)
-				, m_pConfigHolder(pConfigHolder)
 		{}
 
 	public:
 		using DriveCacheDeltaMixins::ConstAccessor::find;
 		using DriveCacheDeltaMixins::MutableAccessor::find;
-
-		bool enabled() const {
-			return ServicePluginEnabled(m_pConfigHolder, height());
-		}
 
 		void addBillingDrive(const DriveCacheDescriptor::KeyType& key, const Height& height) {
 			AddIdentifierWithGroup(*m_pBillingAtHeight, height, key);
@@ -109,7 +102,6 @@ namespace catapult { namespace cache {
 		DriveCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pDriveEntries;
 		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pBillingAtHeight;
 		DriveCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pRemoveAtHeight;
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the drive cache.

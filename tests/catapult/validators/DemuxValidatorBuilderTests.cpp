@@ -20,8 +20,9 @@
 
 #include "catapult/validators/DemuxValidatorBuilder.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "tests/catapult/validators/test/AggregateValidatorTestUtils.h"
+#include "tests/catapult/validators/test/MockTaggedBreadcrumbValidator.h"
+#include "tests/test/other/mocks/MockNotification.h"
+#include "tests/test/other/mocks/MockNotificationValidator.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -158,17 +159,83 @@ namespace catapult { namespace validators {
 
 	// region forwarding
 
+#define NOTIFICATION(i) mocks::MockNotification<static_cast<model::NotificationType>(i)>
+#define VALIDATOR(i) mocks::MockNotificationValidatorT<NOTIFICATION(i)>
+
+#define ADD_VALIDATOR(i) { \
+        std::unique_ptr<const validators::stateful::NotificationValidatorT<NOTIFICATION(i)>> pMockValidator = std::make_unique<VALIDATOR(i)>(std::to_string(i)); \
+        validators.push_back(pMockValidator.get()); \
+        builder.add(std::move(pMockValidator)); \
+	}
+
+#define ASSERT_VALIDATOR(i, GET_VALUES, EXPECTED_VALUE) { \
+		const auto& values = static_cast<const VALIDATOR(i)*>(validators[i])->GET_VALUES(); \
+		const auto message = "validator at " + std::to_string(i); \
+		if (2 == i) { \
+			ASSERT_EQ(1u, values.size()) << message; \
+			EXPECT_EQ(EXPECTED_VALUE, values[0]) << message; \
+		} else { \
+			EXPECT_EQ(0u, values.size()) << message; \
+		} \
+	}
+
+	template<typename TBuilder>
+	std::vector<const void*> AddSubValidators(TBuilder& builder) {
+		std::vector<const void*> validators;
+		ADD_VALIDATOR(0)
+		ADD_VALIDATOR(1)
+		ADD_VALIDATOR(2)
+		ADD_VALIDATOR(3)
+		ADD_VALIDATOR(4)
+
+		return validators;
+	}
+
+	/// Asserts that the validator created by \a builder delegates to all sub validators and passes notifications correctly.
+	template<typename TAssertFunc>
+	void AssertChildValidators(TAssertFunc assertFunc) {
+		// Arrange:
+		cache::CatapultCache cache({});
+		auto cacheView = cache.createView();
+		auto config = config::BlockchainConfiguration::Uninitialized();
+		auto context = test::CreateValidatorContext(config, Height(123), cacheView.toReadOnly());
+
+		// - create an aggregate with five validators
+		stateful::DemuxValidatorBuilder builder;
+		auto validators = AddSubValidators(builder);
+		auto pAggregateValidator = builder.build([](auto) { return false; });
+
+		// - create two notifications
+		auto notification1 = mocks::MockNotification<static_cast<model::NotificationType>(7)>();
+		auto notification2 = mocks::MockNotification<static_cast<model::NotificationType>(2)>();
+
+		// Act:
+		pAggregateValidator->validate(notification1, context);
+		pAggregateValidator->validate(notification2, context);
+
+		// Assert:
+		assertFunc(validators, notification2, context);
+	}
+
 	TEST(TEST_CLASS, NotificationsAreForwardedToChildValidators) {
 		// Assert:
-		test::AssertNotificationsAreForwardedToChildValidators(stateful::DemuxValidatorBuilder(), [](auto& builder, auto&& pValidator) {
-			builder.add(std::move(pValidator));
+		AssertChildValidators([](const auto& validators, const auto& notification, const auto&) {
+			ASSERT_VALIDATOR(0, notificationTypes, notification.Type)
+			ASSERT_VALIDATOR(1, notificationTypes, notification.Type)
+			ASSERT_VALIDATOR(2, notificationTypes, notification.Type)
+			ASSERT_VALIDATOR(3, notificationTypes, notification.Type)
+			ASSERT_VALIDATOR(4, notificationTypes, notification.Type)
 		});
 	}
 
 	TEST(TEST_CLASS, ContextsAreForwardedToChildValidators) {
 		// Assert:
-		test::AssertContextsAreForwardedToChildValidators(stateful::DemuxValidatorBuilder(), [](auto& builder, auto&& pValidator) {
-			builder.add(std::move(pValidator));
+		AssertChildValidators([](const auto& validators, const auto&, const auto& context) {
+			ASSERT_VALIDATOR(0, contextPointers, &context)
+			ASSERT_VALIDATOR(1, contextPointers, &context)
+			ASSERT_VALIDATOR(2, contextPointers, &context)
+			ASSERT_VALIDATOR(3, contextPointers, &context)
+			ASSERT_VALIDATOR(4, contextPointers, &context)
 		});
 	}
 
@@ -208,50 +275,36 @@ namespace catapult { namespace validators {
 				const std::string& name) {
 			return std::make_unique<MockBreadcrumbValidator<TNotification>>(name, breadcrumbs);
 		}
-
-		void AssertCanFilterValidatorsBasedOnNotificationType(const consumer<model::Notification&>& prepareNotification) {
-			// Arrange:
-			Breadcrumbs breadcrumbs;
-			stateful::DemuxValidatorBuilder builder;
-
-			auto cache = test::CreateEmptyCatapultCache();
-
-			builder
-				.add(CreateBreadcrumbValidator<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))
-				.add(CreateBreadcrumbValidator<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
-				.add(CreateBreadcrumbValidator(breadcrumbs, "zEtA"));
-			auto pValidator = builder.build([](auto) { return false; });
-
-			// Act:
-			auto notification = model::AccountPublicKeyNotification<1>(Key());
-			prepareNotification(notification);
-			auto result = test::ValidateNotification<model::Notification>(*pValidator, notification, cache);
-
-			// Assert:
-			EXPECT_EQ(ValidationResult::Success, result);
-
-			Breadcrumbs expectedNames{ "alpha", "OMEGA", "zEtA" };
-			EXPECT_EQ(expectedNames, pValidator->names());
-
-			// - alpha matches notification type
-			// - OMEGA does not match notification type
-			// - zEtA matches all types
-			Breadcrumbs expectedSelectedNames{ "alpha", "zEtA" };
-			EXPECT_EQ(expectedSelectedNames, breadcrumbs);
-		}
 	}
 
 	TEST(TEST_CLASS, CanFilterValidatorsBasedOnNotificationType) {
-		// Assert:
-		AssertCanFilterValidatorsBasedOnNotificationType([](const auto&) {});
-	}
+		// Arrange:
+		Breadcrumbs breadcrumbs;
+		stateful::DemuxValidatorBuilder builder;
 
-	TEST(TEST_CLASS, CanFilterValidatorsBasedOnNotificationTypeIgnoringChannel) {
+		auto cache = test::CreateEmptyCatapultCache();
+
+		builder
+			.add(CreateBreadcrumbValidator<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))
+			.add(CreateBreadcrumbValidator<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
+			.add(CreateBreadcrumbValidator<model::BalanceTransferNotification<1>>(breadcrumbs, "zEtA"));
+		auto pValidator = builder.build([](auto) { return false; });
+
+		// Act:
+		auto notification = model::AccountPublicKeyNotification<1>(Key());
+		auto result = test::ValidateNotification<model::Notification>(*pValidator, notification, cache);
+
 		// Assert:
-		AssertCanFilterValidatorsBasedOnNotificationType([](auto& notification) {
-			// Arrange: change notification by changing channel
-			model::SetNotificationChannel(notification.Type, model::NotificationChannel::None);
-		});
+		EXPECT_EQ(ValidationResult::Success, result);
+
+		Breadcrumbs expectedNames{ "alpha", "OMEGA", "zEtA" };
+		EXPECT_EQ(expectedNames, pValidator->names());
+
+		// - alpha matches notification type
+		// - OMEGA does not match notification type
+		// - zEtA does not match notification type
+		Breadcrumbs expectedSelectedNames{ "alpha" };
+		EXPECT_EQ(expectedSelectedNames, breadcrumbs);
 	}
 
 	// endregion

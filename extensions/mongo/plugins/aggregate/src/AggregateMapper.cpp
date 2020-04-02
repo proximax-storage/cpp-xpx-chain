@@ -21,7 +21,7 @@
 #include "AggregateMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
-#include "plugins/txes/aggregate/src/plugins/Common.h"
+#include "plugins/txes/aggregate/src/plugins/AggregateCommon.h"
 #include "catapult/model/EntityHasher.h"
 
 using namespace catapult::mongo::mappers;

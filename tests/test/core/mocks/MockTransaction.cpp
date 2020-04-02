@@ -21,10 +21,10 @@
 #include "MockTransaction.h"
 #include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Random.h"
+#include "tests/test/other/mocks/MockNotification.h"
 
 using namespace catapult::model;
 
@@ -80,7 +80,7 @@ namespace catapult { namespace mocks {
 		return utils::to_underlying_type(flag) == (utils::to_underlying_type(options) & utils::to_underlying_type(flag));
 	}
 
-	utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedMockTransaction& transaction) {
+	utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedMockTransaction& transaction, const config::BlockchainConfiguration&) {
 		return { Key{ { 1 } }, transaction.Recipient, Key{ { 2 } } };
 	}
 
@@ -90,12 +90,12 @@ namespace catapult { namespace mocks {
 			sub.notify(AccountPublicKeyNotification<1>(mockTransaction.Recipient));
 
 			if (IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Custom_Notifications)) {
-				sub.notify(test::CreateNotification(Mock_Observer_1_Notification));
-				sub.notify(test::CreateNotification(Mock_Validator_1_Notification));
-				sub.notify(test::CreateNotification(Mock_All_1_Notification));
-				sub.notify(test::CreateNotification(Mock_Observer_2_Notification));
-				sub.notify(test::CreateNotification(Mock_Validator_2_Notification));
-				sub.notify(test::CreateNotification(Mock_All_2_Notification));
+				sub.notify(mocks::MockNotification<Mock_Observer_1_Notification>());
+				sub.notify(mocks::MockNotification<Mock_Validator_1_Notification>());
+				sub.notify(mocks::MockNotification<Mock_All_1_Notification>());
+				sub.notify(mocks::MockNotification<Mock_Observer_2_Notification>());
+				sub.notify(mocks::MockNotification<Mock_Validator_2_Notification>());
+				sub.notify(mocks::MockNotification<Mock_All_2_Notification>());
 			}
 
 			if (!IsPluginOptionFlagSet(options, PluginOptionFlags::Publish_Transfers))
@@ -151,7 +151,7 @@ namespace catapult { namespace mocks {
 				Publish(static_cast<const ExtendedEmbeddedMockTransaction&>(transaction.entity()), m_options, sub);
 			}
 
-			utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction&) const override {
+			utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction&, const config::BlockchainConfiguration&) const override {
 				return utils::KeySet();
 			}
 

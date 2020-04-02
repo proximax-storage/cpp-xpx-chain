@@ -98,12 +98,12 @@
 		{
 			"name": "Aggregate_Complete",
 			"type": "16705",
-			"supportedVersions": [2]
+			"supportedVersions": [2, 3]
 		},
 		{
 			"name": "Aggregate_Bonded",
 			"type": "16961",
-			"supportedVersions": [2]
+			"supportedVersions": [2, 3]
 		},
 		{
 			"name": "Mosaic_Definition",
@@ -128,7 +128,7 @@
 		{
 			"name": "PrepareDrive",
 			"type": "16730",
-			"supportedVersions": [1]
+			"supportedVersions": [2]
 		},
 		{
 			"name": "JoinToDrive",
@@ -203,6 +203,31 @@
 		{
 			"name": "endOperation",
 			"type": "17247",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "deploy",
+			"type": "16736",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "startExecute",
+			"type": "16992",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "endExecute",
+			"type": "17248",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "uploadFile",
+			"type": "17504",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "deactivate",
+			"type": "17760",
 			"supportedVersions": [1]
 		}
 	]

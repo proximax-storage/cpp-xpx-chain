@@ -129,7 +129,7 @@ namespace catapult { namespace zeromq {
 			auto marker = TransactionMarker::Transaction_Marker;
 			auto height = blockElement.Block.Height;
 			for (const auto& transactionElement : blockElement.Transactions) {
-				auto addresses = model::ExtractAddresses(transactionElement.Transaction, Height{0}, context.notificationPublisher(), model::ExtractorContext());
+				auto addresses = model::ExtractAddresses(transactionElement.Transaction, transactionElement.EntityHash, Height{0}, context.notificationPublisher(), model::ExtractorContext());
 				auto& zmqSocket = context.zmqSocket();
 				test::AssertMessages(zmqSocket, marker, addresses, [&transactionElement, height](const auto& message, const auto& topic) {
 					test::AssertTransactionElementMessage(message, topic, transactionElement, height);

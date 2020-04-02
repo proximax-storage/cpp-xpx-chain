@@ -87,6 +87,8 @@ maxCosignersPerAccount = 10
 # 2^20
 maxCosignedAccountsPerAccount = 1048576
 
+newCosignersMustApprove = true
+
 [plugin:catapult.plugins.namespace]
 
 maxNameSize = 64
@@ -131,3 +133,8 @@ verificationDuration = 240
 downloadDuration = 40320
 
 downloadCacheEnabled = true
+
+[plugin:catapult.plugins.supercontract]
+
+enabled = true
+maxSuperContractsOnDrive = 10

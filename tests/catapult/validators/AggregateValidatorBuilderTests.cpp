@@ -53,7 +53,7 @@ namespace catapult { namespace validators {
 			auto pContext = std::make_unique<TestContext>();
 			AggregateValidatorBuilder<test::TaggedNotification, const ValidatorContext&> builder;
 			for (auto i = 0u; i < results.size(); ++i)
-				builder.add(mocks::CreateTaggedBreadcrumbValidator(static_cast<uint8_t>(i + 1), pContext->Breadcrumbs, results[i]));
+				builder.add(test::TaggedNotification::Notification_Type, mocks::CreateTaggedBreadcrumbValidator(static_cast<uint8_t>(i + 1), pContext->Breadcrumbs, results[i]));
 
 			pContext->pAggregateValidator = builder.build([failures = suppressedFailures](auto result) {
 				return failures.cend() != failures.find(result);
@@ -101,9 +101,9 @@ namespace catapult { namespace validators {
 		auto pContext = std::make_unique<TestContext>();
 		AggregateValidatorBuilder<test::TaggedNotification, const ValidatorContext&> builder;
 		builder
-			.add(mocks::CreateTaggedBreadcrumbValidator(2, pContext->Breadcrumbs))
-			.add(mocks::CreateTaggedBreadcrumbValidator(3, pContext->Breadcrumbs))
-			.add(mocks::CreateTaggedBreadcrumbValidator(4, pContext->Breadcrumbs));
+			.add(test::TaggedNotification::Notification_Type, mocks::CreateTaggedBreadcrumbValidator(2, pContext->Breadcrumbs))
+			.add(test::TaggedNotification::Notification_Type, mocks::CreateTaggedBreadcrumbValidator(3, pContext->Breadcrumbs))
+			.add(test::TaggedNotification::Notification_Type, mocks::CreateTaggedBreadcrumbValidator(4, pContext->Breadcrumbs));
 		pContext->pAggregateValidator = builder.build([](auto) { return false; });
 
 		// Act:
@@ -161,14 +161,14 @@ namespace catapult { namespace validators {
 		// Assert:
 		test::AssertNotificationsAreForwardedToChildValidators(
 				AggregateValidatorBuilder<model::Notification, const ValidatorContext&>(),
-				[](auto& builder, auto&& pValidator) { builder.add(std::move(pValidator)); });
+				[](auto& builder, auto&& pValidator, auto type) { builder.add(type, std::move(pValidator)); });
 	}
 
 	TEST(TEST_CLASS, ContextsAreForwardedToChildValidators) {
 		// Assert:
 		test::AssertContextsAreForwardedToChildValidators(
 				AggregateValidatorBuilder<model::Notification, const ValidatorContext&>(),
-				[](auto& builder, auto&& pValidator) { builder.add(std::move(pValidator)); });
+				[](auto& builder, auto&& pValidator, auto type) { builder.add(type, std::move(pValidator)); });
 	}
 
 	// endregion

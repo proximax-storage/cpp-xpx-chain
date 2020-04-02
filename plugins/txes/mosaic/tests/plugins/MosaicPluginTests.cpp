@@ -83,20 +83,20 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
+					"MosaicPluginConfigValidator",
 					"MosaicIdValidator",
 					"MosaicSupplyChangeValidator",
-					"MosaicPluginConfigValidator"
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"MosaicPropertiesValidator",
 					"ProperMosaicValidator",
-					"MosaicAvailabilityValidator",
-					"MosaicDurationValidator",
+					"MosaicPropertiesValidator",
 					"MosaicTransferValidator",
 					"MaxMosaicsBalanceTransferValidator",
+					"MosaicAvailabilityValidator",
+					"MosaicDurationValidator",
 					"MaxMosaicsSupplyChangeValidator",
 					"MosaicSupplyChangeAllowedValidator",
 					"MosaicLevyTransferValidator",
@@ -107,6 +107,8 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
+					"MosaicRentalFeeObserver",
+					"MosaicTouchObserver",
 					"MosaicDefinitionObserver",
 					"MosaicSupplyChangeObserver",
 					"MosaicRentalFeeObserver",

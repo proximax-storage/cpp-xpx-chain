@@ -37,7 +37,13 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(MaxCosignedAccountsPerAccount);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 3);
+#define TRY_LOAD_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
+
+        config.NewCosignersMustApprove = true;
+        TRY_LOAD_PROPERTY(NewCosignersMustApprove);
+
+#undef TRY_LOAD_PROPERTY
+
 		return config;
 	}
 }}

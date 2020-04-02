@@ -159,4 +159,7 @@ namespace catapult {
 
 	struct BlockchainVersion_tag {};
 	using BlockchainVersion = utils::BaseValue<uint64_t, BlockchainVersion_tag>;
+
+	struct VmVersion_tag {};
+	using VmVersion = utils::BaseValue<uint64_t, VmVersion_tag>;
 }

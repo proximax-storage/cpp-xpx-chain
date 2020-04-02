@@ -9,33 +9,35 @@
 
 namespace catapult { namespace config {
 
-	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder()
-			: BlockchainConfigurationHolder(nullptr) {
-		SetConfig(Height{0}, test::MutableBlockchainConfiguration().ToConst());
-	}
-
-	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const model::NetworkConfiguration& networkConfig)
-			: BlockchainConfigurationHolder(nullptr) {
+	BlockchainConfiguration GetMockNetworkConfig(const model::NetworkConfiguration& networkConfig)
+	{
 		test::MutableBlockchainConfiguration config;
 		config.Network = networkConfig;
-		SetConfig(Height{0}, config.ToConst());
+		return config.ToConst();
+	}
+
+	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder()
+			: BlockchainConfigurationHolder(nullptr)
+	{}
+
+	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const model::NetworkConfiguration& networkConfig)
+			: BlockchainConfigurationHolder(GetMockNetworkConfig(networkConfig)) {
 	}
 
 	MockBlockchainConfigurationHolder::MockBlockchainConfigurationHolder(const BlockchainConfiguration& config)
-			: BlockchainConfigurationHolder(nullptr) {
-		SetConfig(Height{0}, config);
+			: BlockchainConfigurationHolder(config) {
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config(const Height&) {
-		return m_networkConfigs.get(Height{0});
+		return m_configs.at(Height{0});
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::Config() {
-		return m_networkConfigs.get(Height{0});
+		return m_configs.at(Height{0});
 	}
 
 	const BlockchainConfiguration& MockBlockchainConfigurationHolder::ConfigAtHeightOrLatest(const Height&) {
-		return m_networkConfigs.get(Height{0});
+		return m_configs.at(Height{0});
 	}
 
 	std::shared_ptr<BlockchainConfigurationHolder> CreateMockConfigurationHolder() {

@@ -39,7 +39,7 @@ namespace catapult { namespace observers {
 
 		model::MosaicDefinitionNotification<1> CreateDefaultNotification(const Key& signer) {
 			auto properties = model::MosaicProperties::FromValues({ { 3, 6, 15 } });
-			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties, model::MosaicLevy());
+			return model::MosaicDefinitionNotification<1>(signer, Default_Mosaic_Id, properties);
 		}
 
 		template<typename TSeedCacheFunc, typename TCheckCacheFunc>

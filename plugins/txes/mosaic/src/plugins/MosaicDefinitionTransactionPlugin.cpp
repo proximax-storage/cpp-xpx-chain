@@ -94,7 +94,7 @@ namespace catapult { namespace plugins {
 				}
 				
 				/// Extracts public keys of additional accounts that must approve \a transaction.
-				utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction&) const override {
+				utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction&, const config::BlockchainConfiguration&) const override {
 					return utils::KeySet();
 				};
 				

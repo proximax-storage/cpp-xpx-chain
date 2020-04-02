@@ -22,6 +22,8 @@
 #include "MultisigEntityType.h"
 #include "catapult/model/Transaction.h"
 #include "catapult/utils/ArraySet.h"
+#include "catapult/config/BlockchainConfiguration.h"
+#include "src/config/MultisigConfiguration.h"
 
 namespace catapult { namespace model {
 
@@ -86,7 +88,13 @@ namespace catapult { namespace model {
 #pragma pack(pop)
 
 	/// Extracts public keys of additional accounts that must approve \a transaction.
-	inline utils::KeySet ExtractAdditionalRequiredCosigners(const EmbeddedModifyMultisigAccountTransaction& transaction) {
+	inline utils::KeySet ExtractAdditionalRequiredCosigners(
+			const EmbeddedModifyMultisigAccountTransaction& transaction,
+			const config::BlockchainConfiguration& config) {
+		const auto &pluginConfig = config.Network.template GetPluginConfiguration<config::MultisigConfiguration>();
+		if (!pluginConfig.NewCosignersMustApprove)
+			return utils::KeySet();
+
 		utils::KeySet addedCosignatoryKeys;
 		const auto* pModifications = transaction.ModificationsPtr();
 		for (auto i = 0u; i < transaction.ModificationsCount; ++i) {

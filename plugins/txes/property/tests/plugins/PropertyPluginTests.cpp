@@ -75,30 +75,30 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
-					"PropertyAddressNoSelfModificationValidator",
+					"PropertyPluginConfigValidator",
 					"PropertyTypeValidator",
 					"AddressPropertyModificationTypesValidator",
 					"MosaicPropertyModificationTypesValidator",
 					"TransactionTypePropertyModificationTypesValidator",
 					"TransactionTypePropertyModificationValuesValidator",
-					"PropertyPluginConfigValidator",
+					"PropertyAddressNoSelfModificationValidator",
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
-					"AddressPropertyRedundantModificationValidator",
-					"AddressPropertyValueModificationValidator",
-					"MaxAddressPropertyValuesValidator",
 					"AddressInteractionValidator",
+					"AddressPropertyRedundantModificationValidator",
+					"MaxAddressPropertyValuesValidator",
 					"MosaicPropertyRedundantModificationValidator",
-					"MosaicPropertyValueModificationValidator",
 					"MaxMosaicPropertyValuesValidator",
-					"MosaicRecipientValidator",
 					"TransactionTypePropertyRedundantModificationValidator",
-					"TransactionTypePropertyValueModificationValidator",
 					"MaxTransactionTypePropertyValuesValidator",
+					"MosaicRecipientValidator",
 					"TransactionTypeValidator",
+					"AddressPropertyValueModificationValidator",
+					"MosaicPropertyValueModificationValidator",
+					"TransactionTypePropertyValueModificationValidator",
 					"TransactionTypeNoSelfBlockingValidator"
 				};
 			}

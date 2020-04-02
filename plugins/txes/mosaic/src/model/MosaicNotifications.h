@@ -96,7 +96,7 @@ namespace catapult { namespace model {
 	public:
 		/// Creates a notification around \a signer, \a mosaicId and \a properties.
 		explicit MosaicDefinitionNotification(const Key& signer, MosaicId mosaicId,
-				const MosaicProperties& properties, const MosaicLevy& levy)
+				const MosaicProperties& properties, const MosaicLevy& levy = model::MosaicLevy())
 				: Notification(Notification_Type, sizeof(MosaicDefinitionNotification<1>))
 				, Signer(signer)
 				, MosaicId(mosaicId)

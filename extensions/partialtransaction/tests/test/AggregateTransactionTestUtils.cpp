@@ -28,7 +28,7 @@
 namespace catapult { namespace test {
 
 	namespace {
-		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 2);
+		constexpr auto Transaction_Version = MakeVersion(model::NetworkIdentifier::Mijin_Test, 3);
 	}
 
 	model::UniqueEntityPtr<model::AggregateTransaction> CreateRandomAggregateTransactionWithCosignatures(uint32_t numCosignatures) {

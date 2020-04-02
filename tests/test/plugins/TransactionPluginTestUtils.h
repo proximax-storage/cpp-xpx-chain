@@ -21,7 +21,7 @@
 #pragma once
 #include "catapult/model/TransactionPlugin.h"
 #include "catapult/model/NotificationSubscriber.h"
-#include "plugins/txes/aggregate/src/plugins/Common.h"
+#include "plugins/txes/aggregate/src/plugins/AggregateCommon.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace test {

@@ -67,42 +67,42 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
 					"EntityVersionValidator",
-					"MaxTransactionsValidator",
-					"AddressValidator",
 					"DeadlineValidator",
+					"AddressValidator",
+					"BalanceTransferValidator",
+					"MaxTransactionsValidator",
 					"EligibleHarvesterValidator",
 					"BalanceDebitValidator",
-					"BalanceTransferValidator"
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
+					"AccountPublicKeyObserver",
 					"SourceChangeObserver",
 					"AccountAddressObserver",
-					"AccountPublicKeyObserver",
-					"BalanceDebitObserver",
-					"BalanceCreditObserver",
 					"BalanceTransferObserver",
 					"HarvestFeeObserver",
 					"TotalTransactionsObserver",
 					"SnapshotCleanUpObserver",
 					"BlockDifficultyObserver",
 					"BlockDifficultyPruningObserver",
+					"BalanceDebitObserver",
+					"BalanceCreditObserver",
 				};
 			}
 
 			static std::vector<std::string> GetPermanentObserverNames() {
 				return {
+					"AccountPublicKeyObserver",
 					"SourceChangeObserver",
 					"AccountAddressObserver",
-					"AccountPublicKeyObserver",
-					"BalanceDebitObserver",
-					"BalanceCreditObserver",
 					"BalanceTransferObserver",
 					"HarvestFeeObserver",
 					"TotalTransactionsObserver",
 					"SnapshotCleanUpObserver",
+					"BalanceDebitObserver",
+					"BalanceCreditObserver",
 				};
 			}
 		};

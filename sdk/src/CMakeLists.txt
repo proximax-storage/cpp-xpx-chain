@@ -2,6 +2,7 @@ cmake_minimum_required(VERSION 3.2)
 
 set(TARGET_NAME catapult.sdk)
 
+include_directories(${PROJECT_SOURCE_DIR}/plugins/txes/multisig)
 catapult_library_target(${TARGET_NAME} builders extensions parsers)
 target_link_libraries(${TARGET_NAME} catapult.model
 	catapult.plugins.aggregate
