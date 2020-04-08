@@ -6,7 +6,6 @@
 
 #include "ExchangeEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
-#include "catapult/exceptions.h"
 #include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {
@@ -52,7 +51,7 @@ namespace catapult { namespace state {
 		}
 	}
 
-	void ExchangeEntrySerializer::Save(const ExchangeEntry& entry, io::OutputStream& output) {
+	void ExchangeEntryNonHistoricalSerializer::Save(const ExchangeEntry& entry, io::OutputStream& output) {
 		// write version
 		io::Write32(output, 1);
 
@@ -60,6 +59,10 @@ namespace catapult { namespace state {
 
 		WriteSellOffers(entry.sellOffers(), output);
 		WriteBuyOffers(entry.buyOffers(), output);
+	}
+
+	void ExchangeEntrySerializer::Save(const ExchangeEntry& entry, io::OutputStream& output) {
+		ExchangeEntryNonHistoricalSerializer::Save(entry, output);
 
 		WriteExpiredSellOffers(entry.expiredSellOffers(), output);
 		WriteExpiredBuyOffers(entry.expiredBuyOffers(), output);
@@ -116,7 +119,7 @@ namespace catapult { namespace state {
 		}
 	}
 
-	ExchangeEntry ExchangeEntrySerializer::Load(io::InputStream& input) {
+	ExchangeEntry ExchangeEntryNonHistoricalSerializer::Load(io::InputStream& input) {
 		// read version
 		VersionType version = io::Read32(input);
 		if (version > 1)
@@ -128,6 +131,12 @@ namespace catapult { namespace state {
 
 		ReadSellOffers(entry.sellOffers(), input);
 		ReadBuyOffers(entry.buyOffers(), input);
+
+		return entry;
+	}
+
+	ExchangeEntry ExchangeEntrySerializer::Load(io::InputStream& input) {
+		auto entry = ExchangeEntryNonHistoricalSerializer::Load(input);
 
 		ReadExpiredSellOffers(entry.expiredSellOffers(), input);
 		ReadExpiredBuyOffers(entry.expiredBuyOffers(), input);

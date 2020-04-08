@@ -5,7 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/ValidatorContext.h"
 #include "src/cache/ExchangeCache.h"
 
 namespace catapult { namespace validators {
@@ -14,6 +13,33 @@ namespace catapult { namespace validators {
 		template<typename TOffer>
 		bool OfferCostInvalid(TOffer& offer, const model::MatchedOffer* pMatchedOffer) {
 			return (offer.cost(pMatchedOffer->Mosaic.Amount) != pMatchedOffer->Cost);
+		}
+
+		template<typename TOfferMap, typename TExpiredOfferMap>
+		ValidationResult ValidateOffer(
+				const TOfferMap& offers,
+				const TExpiredOfferMap& expiredOffers,
+				const model::MatchedOffer* pMatchedOffer,
+				const MosaicId& mosaicId,
+				const Height& height) {
+			if (!offers.count(mosaicId))
+				return Failure_Exchange_Offer_Doesnt_Exist;
+
+			auto& offer = offers.at(mosaicId);
+			if (offer.Deadline <= height)
+				return Failure_Exchange_Offer_Expired;
+
+			if (OfferCostInvalid(offer, pMatchedOffer))
+				return Failure_Exchange_Invalid_Price;
+
+			if (offer.Amount < pMatchedOffer->Mosaic.Amount)
+				return Failure_Exchange_Not_Enough_Units_In_Offer;
+
+			// Check whether fulfilled offer can be moved to array of expired offers.
+			if (offer.Amount == pMatchedOffer->Mosaic.Amount && expiredOffers.count(height) && expiredOffers.at(height).count(mosaicId))
+				return Failure_Exchange_Cant_Remove_Offer_At_Height;
+
+			return ValidationResult::Success;
 		}
 	}
 
@@ -43,24 +69,14 @@ namespace catapult { namespace validators {
 			auto iter = cache.find(pMatchedOffer->Owner);
 			const auto& entry = iter.get();
 
+			auto result = ValidationResult::Success;
 			if (model::OfferType::Buy == pMatchedOffer->Type) {
-				if (!entry.buyOffers().count(mosaicId))
-					return Failure_Exchange_Offer_Doesnt_Exist;
-				if (OfferCostInvalid(entry.buyOffers().at(mosaicId), pMatchedOffer))
-					return Failure_Exchange_Invalid_Price;
+				result = ValidateOffer(entry.buyOffers(), entry.expiredBuyOffers(), pMatchedOffer, mosaicId, context.Height);
 			} else {
-				if (!entry.sellOffers().count(mosaicId))
-					return Failure_Exchange_Offer_Doesnt_Exist;
-				if (OfferCostInvalid(entry.sellOffers().at(mosaicId), pMatchedOffer))
-					return Failure_Exchange_Invalid_Price;
+				result = ValidateOffer(entry.sellOffers(), entry.expiredSellOffers(), pMatchedOffer, mosaicId, context.Height);
 			}
-
-			const auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
-				dynamic_cast<const state::OfferBase&>(entry.buyOffers().at(mosaicId)) :
-				dynamic_cast<const state::OfferBase&>(entry.sellOffers().at(mosaicId));
-
-			if (offer.Amount < pMatchedOffer->Mosaic.Amount)
-				return Failure_Exchange_Not_Enough_Units_In_Offer;
+			if (ValidationResult::Success != result)
+				return result;
 		}
 
 		return ValidationResult::Success;
