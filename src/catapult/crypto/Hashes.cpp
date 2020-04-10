@@ -89,6 +89,17 @@ namespace catapult { namespace crypto {
 		HashSingleBuffer<Sha3_256_Builder>(dataBuffer, hash);
 	}
 
+	void Sha3_256_CustomLength(const RawBuffer& dataBuffer, size_t dataBitLength, Hash256& hash) noexcept {
+		HashSingleBuffer<Sha3_256_Builder>(dataBuffer, dataBitLength, hash);
+	}
+
+	void Sha256_CustomLength(const RawBuffer& dataBuffer, size_t dataBitLength, Hash256& hash) noexcept {
+		crypto_hash_sha256_state state;
+		crypto_hash_sha256_init(&state);
+		crypto_hash_sha256_update(&state, dataBuffer.pData, dataBitLength);
+		crypto_hash_sha256_final(&state, hash.data());
+	}
+
 	void Sha3_512(const RawBuffer& dataBuffer, Hash512& hash) noexcept {
 		HashSingleBuffer<Sha3_512_Builder>(dataBuffer, hash);
 	}

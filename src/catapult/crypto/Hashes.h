@@ -37,6 +37,12 @@ namespace catapult { namespace crypto {
 	/// Calculates the 256-bit SHA3 hash of \a dataBuffer into \a hash.
 	void Sha3_256(const RawBuffer& dataBuffer, Hash256& hash) noexcept;
 
+	/// Calculates the 256-bit SHA3 hash of \a dataBuffer into \a hash.
+	void Sha3_256_CustomLength(const RawBuffer& dataBuffer, size_t dataBitLength, Hash256& hash) noexcept;
+
+	/// Calculates the 256-bit SHA2 hash of \a dataBuffer into \a hash.
+	void Sha256_CustomLength(const RawBuffer& dataBuffer, size_t dataBitLength, Hash256& hash) noexcept;
+
 	/// Calculates the 512-bit SHA3 hash of \a dataBuffer into \a hash.
 	void Sha3_512(const RawBuffer& dataBuffer, Hash512& hash) noexcept;
 
