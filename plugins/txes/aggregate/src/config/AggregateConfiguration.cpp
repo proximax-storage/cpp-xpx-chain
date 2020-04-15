@@ -39,9 +39,11 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(EnableBondedAggregateSupport);
 
 		LOAD_PROPERTY(MaxBondedTransactionLifetime);
+		
+		LOAD_PROPERTY(StrictSigner);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 5);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 6);
 		return config;
 	}
 }}

@@ -48,6 +48,10 @@ namespace catapult { namespace config {
 
 		/// Maximum lifetime a bonded transaction can have before it expires.
 		utils::TimeSpan MaxBondedTransactionLifetime;
+		
+		/// \c true will not allow non participant as a signer to aggregate
+		/// \c false will allow non participant as a signer to aggregate
+		bool StrictSigner;
 
 	private:
 		AggregateConfiguration() = default;

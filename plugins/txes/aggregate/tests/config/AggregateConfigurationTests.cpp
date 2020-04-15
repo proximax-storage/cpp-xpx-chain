@@ -39,7 +39,8 @@ namespace catapult { namespace config {
 							{ "enableStrictCosignatureCheck", "true" },
 							{ "enableBondedAggregateSupport", "true" },
 
-							{ "maxBondedTransactionLifetime", "14m" }
+							{ "maxBondedTransactionLifetime", "14m" },
+							{ "strictSigner", "true" }
 						}
 					}
 				};

@@ -44,7 +44,8 @@ namespace catapult { namespace plugins {
 						{ "enableStrictCosignatureCheck", EnableStrict ? "true" : "false" },
 						{ "enableBondedAggregateSupport", EnableBonded ? "true" : "false" },
 
-						{ "maxBondedTransactionLifetime", "1h" }
+						{ "maxBondedTransactionLifetime", "1h" },
+						{ "strictSigner", "true" }
 					}
 				}}));
 

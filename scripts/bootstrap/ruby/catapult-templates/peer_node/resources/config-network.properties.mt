@@ -41,6 +41,7 @@ enableStrictCosignatureCheck = false
 enableBondedAggregateSupport = true
 
 maxBondedTransactionLifetime = 48h
+strictSigner = true
 
 [plugin:catapult.plugins.config]
 
