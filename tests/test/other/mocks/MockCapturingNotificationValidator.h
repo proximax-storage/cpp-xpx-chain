@@ -55,30 +55,31 @@ namespace catapult { namespace mocks {
 	public:
 		/// Creates params around \a notification.
 		explicit StatelessNotificationValidatorParams(const model::Notification& notification)
-				: Notification(notification)
+				: NotificationPtr(&notification)
 				, TransactionNotificationInfo(notification)
 		{}
 
 	public:
-		/// Reference to the notification.
-		const model::Notification& Notification;
+		/// Pointer to the notification.
+		const model::Notification* NotificationPtr;
 
 		/// Transaction notification information (if applicable).
 		CapturedTransactionNotificationInfo TransactionNotificationInfo;
 	};
 
 	/// A mock stateless notification validator that captures parameters passed to validate.
+	template<typename TNotification>
 	class MockCapturingStatelessNotificationValidator
-			: public mocks::MockStatelessNotificationValidatorT<model::Notification>
+			: public mocks::MockStatelessNotificationValidatorT<TNotification>
 			, public test::ParamsCapture<StatelessNotificationValidatorParams> {
 	private:
-		using BaseType = mocks::MockStatelessNotificationValidatorT<model::Notification>;
+		using BaseType = mocks::MockStatelessNotificationValidatorT<TNotification>;
 
 	public:
 		using BaseType::MockStatelessNotificationValidatorT;
 
 	public:
-		validators::ValidationResult validate(const model::Notification& notification) const override {
+		validators::ValidationResult validate(const TNotification& notification) const override {
 			const_cast<MockCapturingStatelessNotificationValidator*>(this)->push(notification);
 			return BaseType::validate(notification);
 		}
@@ -89,7 +90,7 @@ namespace catapult { namespace mocks {
 	public:
 		/// Creates params around \a notification and \a context.
 		explicit StatefulNotificationValidatorParams(const model::Notification& notification, const validators::ValidatorContext& context)
-				: Notification(notification)
+				: NotificationPtr(&notification)
 				, TransactionNotificationInfo(notification)
 				, Height(context.Height)
 				, BlockTime(context.BlockTime)
@@ -99,20 +100,20 @@ namespace catapult { namespace mocks {
 		{}
 
 	public:
-		/// Reference to the notification.
-		const model::Notification& Notification;
+		/// Pointer to the notification.
+		const model::Notification* NotificationPtr;
 
 		/// Transaction notification information (if applicable).
 		CapturedTransactionNotificationInfo TransactionNotificationInfo;
 
 		/// Validation height.
-		const catapult::Height Height;
+		catapult::Height Height;
 
 		/// Validation block time.
-		const Timestamp BlockTime;
+		Timestamp BlockTime;
 
 		/// Validation network.
-		const model::NetworkIdentifier NetworkIdentifier;
+		model::NetworkIdentifier NetworkIdentifier;
 
 		/// \c true if the validation cache is marked.
 		bool IsMarkedCache;
@@ -122,18 +123,19 @@ namespace catapult { namespace mocks {
 	};
 
 	/// A mock stateful notification validator that captures parameters passed to validate.
+	template<typename TNotification>
 	class MockCapturingStatefulNotificationValidator
-			: public mocks::MockNotificationValidatorT<model::Notification>
+			: public mocks::MockNotificationValidatorT<TNotification>
 			, public test::ParamsCapture<StatefulNotificationValidatorParams> {
 	private:
-		using BaseType = mocks::MockNotificationValidatorT<model::Notification>;
+		using BaseType = mocks::MockNotificationValidatorT<TNotification>;
 
 	public:
 		using BaseType::MockNotificationValidatorT;
 
 	public:
 		validators::ValidationResult validate(
-				const model::Notification& notification,
+				const TNotification& notification,
 				const validators::ValidatorContext& context) const override {
 			const_cast<MockCapturingStatefulNotificationValidator*>(this)->push(notification, context);
 			return BaseType::validate(notification, context);

@@ -6,7 +6,6 @@
 
 #pragma once
 #include "catapult/config/BlockchainConfiguration.h"
-#include "ConfigTreeCache.h"
 #include <mutex>
 
 namespace catapult { namespace cache { class CatapultCache; } }
@@ -17,20 +16,17 @@ namespace catapult { namespace config {
 
 	class BlockchainConfigurationHolder {
 	public:
-		using PluginInitializer = std::function<void (model::NetworkConfiguration&)>;
+		using PluginInitializer = std::function<void(model::NetworkConfiguration&)>;
 
-		explicit BlockchainConfigurationHolder(cache::CatapultCache* pCache);
+		explicit BlockchainConfigurationHolder(cache::CatapultCache* pCache =  nullptr);
+		explicit BlockchainConfigurationHolder(const BlockchainConfiguration& config);
+
 		virtual ~BlockchainConfigurationHolder() = default;
 
 	public:
 		/// Extracts the resources path from the command line arguments.
 		/// \a argc commmand line arguments are accessible via \a argv.
 		static boost::filesystem::path GetResourcesPath(int argc, const char** argv);
-
-		const BlockchainConfiguration& LoadConfig(int argc, const char** argv, const std::string& extensionsHost);
-
-		/// Set \a config at \a height
-		void SetConfig(const Height& height, const BlockchainConfiguration& config);
 
 		/// Get \a config at \a height
 		virtual const BlockchainConfiguration& Config(const Height& height);
@@ -49,8 +45,11 @@ namespace catapult { namespace config {
 			m_pluginInitializer = initializer;
 		}
 
+		void InsertConfig(const Height& height, const std::string& strConfig, const std::string& supportedVersion);
+		void RemoveConfig(const Height& height);
+
 	protected:
-		ConfigTreeCache m_networkConfigs;
+		std::map<Height, BlockchainConfiguration> m_configs;
 		cache::CatapultCache* m_pCache;
 		PluginInitializer m_pluginInitializer;
 		std::mutex m_mutex;

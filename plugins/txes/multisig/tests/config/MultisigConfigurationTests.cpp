@@ -36,17 +36,20 @@ namespace catapult { namespace config {
 							{ "maxMultisigDepth", "159" },
 							{ "maxCosignersPerAccount", "23" },
 							{ "maxCosignedAccountsPerAccount", "77" },
+							{ "newCosignersMustApprove", "true" },
 						}
 					}
 				};
 			}
 
 			static bool SupportsUnknownProperties() {
-				return false;
+				return true;
 			}
 
-			static bool IsPropertyOptional(const std::string&) {
-				return false;
+			static bool IsPropertyOptional(const std::string& name) {
+				return std::set<std::string>{
+						"newCosignersMustApprove",
+					}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {
@@ -58,6 +61,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(0u, config.MaxMultisigDepth);
 				EXPECT_EQ(0u, config.MaxCosignersPerAccount);
 				EXPECT_EQ(0u, config.MaxCosignedAccountsPerAccount);
+				EXPECT_EQ(false, config.NewCosignersMustApprove);
 			}
 
 			static void AssertCustom(const MultisigConfiguration& config) {
@@ -65,6 +69,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(159u, config.MaxMultisigDepth);
 				EXPECT_EQ(23u, config.MaxCosignersPerAccount);
 				EXPECT_EQ(77u, config.MaxCosignedAccountsPerAccount);
+				EXPECT_EQ(true, config.NewCosignersMustApprove);
 			}
 		};
 	}

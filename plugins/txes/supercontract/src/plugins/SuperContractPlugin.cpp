@@ -65,7 +65,9 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreateDeployObserver())
 				.add(observers::CreateStartExecuteObserver())
+				.add(observers::CreateEndExecuteCosignersObserver())
 				.add(observers::CreateEndExecuteObserver())
+				.add(observers::CreateExpiredExecutionObserver())
 				.add(observers::CreateAggregateTransactionHashObserver())
 				.add(observers::CreateDeactivateObserver())
 				.add(observers::CreateEndDriveObserver());

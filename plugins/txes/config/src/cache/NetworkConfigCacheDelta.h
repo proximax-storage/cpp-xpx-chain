@@ -9,6 +9,7 @@
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
+#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/deltaset/BaseSetDelta.h"
 
 namespace catapult { namespace cache {
@@ -88,6 +89,27 @@ namespace catapult { namespace cache {
 			}
 
 			return result;
+		}
+
+		void updateConfigHolder(std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder) const {
+			auto deltas = m_pDeltaHeights->deltas();
+			auto added = deltas.Added;
+			added.insert(deltas.Copied.begin(), deltas.Copied.end());
+			auto removed = deltas.Removed;
+
+			for (const auto& height : added) {
+				if (removed.find(height) != removed.end()) {
+					removed.erase(height);
+				} else {
+					auto iter = m_pNetworkConfigEntries->find(height);
+					auto entry = iter.get();
+					pConfigHolder->InsertConfig(height, entry->networkConfig(), entry->supportedEntityVersions());
+				}
+			}
+
+			for (const auto& height : removed) {
+				pConfigHolder->RemoveConfig(height);
+			}
 		}
 
 	private:

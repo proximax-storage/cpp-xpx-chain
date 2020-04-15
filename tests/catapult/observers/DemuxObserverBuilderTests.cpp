@@ -19,7 +19,9 @@
 **/
 
 #include "catapult/observers/DemuxObserverBuilder.h"
-#include "tests/catapult/observers/test/AggregateObserverTestUtils.h"
+#include "tests/catapult/observers/test/MockTaggedBreadcrumbObserver.h"
+#include "tests/test/other/mocks/MockNotification.h"
+#include "tests/test/other/mocks/MockNotificationObserver.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 
@@ -157,17 +159,84 @@ namespace catapult { namespace observers {
 
 	// region forwarding
 
+#define NOTIFICATION(i) mocks::MockNotification<static_cast<model::NotificationType>(i)>
+#define OBSERVER(i) mocks::MockNotificationObserverT<NOTIFICATION(i)>
+
+#define ADD_OBSERVER(i) { \
+        std::unique_ptr<const NotificationObserverT<NOTIFICATION(i)>> pMockObserver = std::make_unique<OBSERVER(i)>(std::to_string(i)); \
+        observers.push_back(pMockObserver.get()); \
+        builder.add(std::move(pMockObserver)); \
+	}
+
+#define ASSERT_OBSERVER(i, GET_VALUES, EXPECTED_VALUE) { \
+		const auto& values = static_cast<const OBSERVER(i)*>(observers[i])->GET_VALUES(); \
+		const auto message = "observer at " + std::to_string(i); \
+		if (2 == i) { \
+			ASSERT_EQ(1u, values.size()) << message; \
+			EXPECT_EQ(EXPECTED_VALUE, values[0]) << message; \
+		} else { \
+			EXPECT_EQ(0u, values.size()) << message; \
+		} \
+	}
+
+	template<typename TBuilder>
+	std::vector<const void*> AddSubObservers(TBuilder& builder) {
+		std::vector<const void*> observers;
+		ADD_OBSERVER(0)
+		ADD_OBSERVER(1)
+		ADD_OBSERVER(2)
+		ADD_OBSERVER(3)
+		ADD_OBSERVER(4)
+
+		return observers;
+	}
+
+	/// Asserts that the observer created by \a builder delegates to all sub observers and passes notifications correctly.
+	template<typename TAssertFunc>
+	void AssertChildObservers(TAssertFunc assertFunc) {
+		// Arrange:
+		state::CatapultState state;
+		cache::CatapultCache cache({});
+		auto cacheDelta = cache.createDelta();
+		auto config = config::BlockchainConfiguration::Uninitialized();
+		auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), observers::NotifyMode::Commit);
+
+		// - create an aggregate with five observers
+		DemuxObserverBuilder builder;
+		auto observers = AddSubObservers(builder);
+		auto pAggregateObserver = builder.build();
+
+		// - create two notifications
+		auto notification1 = mocks::MockNotification<static_cast<model::NotificationType>(7)>();
+		auto notification2 = mocks::MockNotification<static_cast<model::NotificationType>(2)>();
+
+		// Act:
+		pAggregateObserver->notify(notification1, context);
+		pAggregateObserver->notify(notification2, context);
+
+		// Assert:
+		assertFunc(observers, notification2, context);
+	}
+
 	TEST(TEST_CLASS, NotificationsAreForwardedToChildObservers) {
 		// Assert:
-		test::AssertNotificationsAreForwardedToChildObservers(DemuxObserverBuilder(), [](auto& builder, auto&& pObserver) {
-			builder.template add<model::Notification>(std::move(pObserver));
+		AssertChildObservers([](const auto& observers, const auto& notification, const auto&) {
+			ASSERT_OBSERVER(0, notificationTypes, notification.Type)
+			ASSERT_OBSERVER(1, notificationTypes, notification.Type)
+			ASSERT_OBSERVER(2, notificationTypes, notification.Type)
+			ASSERT_OBSERVER(3, notificationTypes, notification.Type)
+			ASSERT_OBSERVER(4, notificationTypes, notification.Type)
 		});
 	}
 
 	TEST(TEST_CLASS, ContextsAreForwardedToChildObservers) {
 		// Assert:
-		test::AssertContextsAreForwardedToChildObservers(DemuxObserverBuilder(), [](auto& builder, auto&& pObserver) {
-			builder.template add<model::Notification>(std::move(pObserver));
+		AssertChildObservers([](const auto& observers, const auto&, const auto& context) {
+			ASSERT_OBSERVER(0, contextPointers, &context)
+			ASSERT_OBSERVER(1, contextPointers, &context)
+			ASSERT_OBSERVER(2, contextPointers, &context)
+			ASSERT_OBSERVER(3, contextPointers, &context)
+			ASSERT_OBSERVER(4, contextPointers, &context)
 		});
 	}
 
@@ -204,52 +273,38 @@ namespace catapult { namespace observers {
 		NotificationObserverPointerT<TNotification> CreateBreadcrumbObserver(Breadcrumbs& breadcrumbs, const std::string& name) {
 			return std::make_unique<MockBreadcrumbObserver<TNotification>>(name, breadcrumbs);
 		}
-
-		void AssertCanFilterObserversBasedOnNotificationType(const consumer<model::Notification&>& prepareNotification) {
-			// Arrange:
-			Breadcrumbs breadcrumbs;
-			DemuxObserverBuilder builder;
-
-			state::CatapultState state;
-			cache::CatapultCache cache({});
-			auto cacheDelta = cache.createDelta();
-			auto config = config::BlockchainConfiguration::Uninitialized();
-			auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), NotifyMode::Commit);
-
-			builder
-				.add(CreateBreadcrumbObserver<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))
-				.add(CreateBreadcrumbObserver<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
-				.add(CreateBreadcrumbObserver(breadcrumbs, "zEtA"));
-			auto pObserver = builder.build();
-
-			// Act:
-			auto notification = model::AccountPublicKeyNotification<1>(Key());
-			prepareNotification(notification);
-			test::ObserveNotification<model::Notification>(*pObserver, notification, context);
-
-			// Assert:
-			Breadcrumbs expectedNames{ "alpha", "OMEGA", "zEtA" };
-			EXPECT_EQ(expectedNames, pObserver->names());
-
-			// - alpha matches notification type
-			// - OMEGA does not match notification type
-			// - zEtA matches all types
-			Breadcrumbs expectedSelectedNames{ "alpha", "zEtA" };
-			EXPECT_EQ(expectedSelectedNames, breadcrumbs);
-		}
 	}
 
 	TEST(TEST_CLASS, CanFilterObserversBasedOnNotificationType) {
-		// Assert:
-		AssertCanFilterObserversBasedOnNotificationType([](const auto&) {});
-	}
+			// Arrange:
+		Breadcrumbs breadcrumbs;
+		DemuxObserverBuilder builder;
 
-	TEST(TEST_CLASS, CanFilterObserversBasedOnNotificationTypeIgnoringChannel) {
+		state::CatapultState state;
+		cache::CatapultCache cache({});
+		auto cacheDelta = cache.createDelta();
+		auto config = config::BlockchainConfiguration::Uninitialized();
+		auto context = test::CreateObserverContext(cacheDelta, state, config, Height(123), NotifyMode::Commit);
+
+		builder
+			.add(CreateBreadcrumbObserver<model::AccountPublicKeyNotification<1>>(breadcrumbs, "alpha"))
+			.add(CreateBreadcrumbObserver<model::AccountAddressNotification<1>>(breadcrumbs, "OMEGA"))
+			.add(CreateBreadcrumbObserver<model::BalanceTransferNotification<1>>(breadcrumbs, "zEtA"));
+		auto pObserver = builder.build();
+
+		// Act:
+		auto notification = model::AccountPublicKeyNotification<1>(Key());
+		test::ObserveNotification<model::Notification>(*pObserver, notification, context);
+
 		// Assert:
-		AssertCanFilterObserversBasedOnNotificationType([](auto& notification) {
-			// Arrange: change notification by changing channel
-			model::SetNotificationChannel(notification.Type, model::NotificationChannel::None);
-		});
+		Breadcrumbs expectedNames{ "alpha", "OMEGA", "zEtA" };
+		EXPECT_EQ(expectedNames, pObserver->names());
+
+		// - alpha matches notification type
+		// - OMEGA does not match notification type
+		// - zEtA does not match notification type
+		Breadcrumbs expectedSelectedNames{ "alpha" };
+		EXPECT_EQ(expectedSelectedNames, breadcrumbs);
 	}
 
 	// endregion

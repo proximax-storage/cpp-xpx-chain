@@ -81,11 +81,11 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
-					"HashLockObserver",
 					"ExpiredHashLockInfoObserver",
 					"HashLockInfoTouchObserver",
 					"HashLockInfoPruningObserver",
-					"CompletedAggregateObserver"
+					"CompletedAggregateObserver",
+					"HashLockObserver",
 				};
 			}
 

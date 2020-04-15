@@ -77,10 +77,10 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
+					"CleanupOffersObserver",
 					"OfferObserver",
 					"ExchangeObserver",
 					"RemoveOfferObserver",
-					"CleanupOffersObserver",
 				};
 			}
 

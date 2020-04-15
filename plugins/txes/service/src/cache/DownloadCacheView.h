@@ -6,30 +6,24 @@
 
 #pragma once
 #include "DownloadBaseSets.h"
-#include "ServiceCacheTools.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "plugins/txes/lock_shared/src/cache/LockInfoCacheView.h"
 
 namespace catapult { namespace cache {
 
 	/// Basic view on top of the download cache.
-	class BasicDownloadCacheView : public BasicLockInfoCacheView<DownloadCacheDescriptor, DownloadCacheTypes> {
+	class BasicDownloadCacheView
+		: public BasicLockInfoCacheView<DownloadCacheDescriptor, DownloadCacheTypes>
+		, public LockInfoCacheViewMixins<DownloadCacheDescriptor, DownloadCacheTypes>::ConfigBasedEnable<config::ServiceConfiguration> {
 	public:
 		/// Creates a view around \a downloadSets and \a pConfigHolder.
 		explicit BasicDownloadCacheView(
 			const DownloadCacheTypes::BaseSets& downloadSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: BasicLockInfoCacheView<DownloadCacheDescriptor, DownloadCacheTypes>::BasicLockInfoCacheView(downloadSets)
-				, m_pConfigHolder(pConfigHolder)
+				, LockInfoCacheViewMixins<DownloadCacheDescriptor, DownloadCacheTypes>::ConfigBasedEnable<config::ServiceConfiguration>(
+					pConfigHolder, [](const auto& config) { return config.DownloadCacheEnabled; })
 		{}
-
-	public:
-		bool enabled() const {
-			return DownloadCacheEnabled(m_pConfigHolder, height());
-		}
-
-	private:
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// View on top of the download cache.

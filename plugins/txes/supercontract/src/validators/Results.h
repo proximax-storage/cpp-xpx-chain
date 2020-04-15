@@ -50,6 +50,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because drive key is invalid.
 	DEFINE_SUPERCONTRACT_RESULT(Invalid_Drive_Key, 14);
 
+	/// Validation failed because super contract count on drive exceeded limit.
+	DEFINE_SUPERCONTRACT_RESULT(Count_On_Drive_Exceeded_Limit, 15);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

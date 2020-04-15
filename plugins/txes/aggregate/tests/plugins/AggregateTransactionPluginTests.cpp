@@ -228,13 +228,16 @@ namespace catapult { namespace plugins {
 
 		// Assert:
 		// - 1 AggregateTransactionHashNotification (version 3 and higher)
+		// - 1 AggregateCosignaturesNotification<2> (version 3 and higher)
 		// - 1 AggregateTransactionTypeNotification
-		// - 1 AggregateCosignaturesNotification
-		ASSERT_EQ(2u + (version > 2u ? 1 : 0), sub.numNotifications());
+		// - 1 AggregateCosignaturesNotification<1>
+		ASSERT_EQ(2u + (version > 2u ? 2 : 0), sub.numNotifications());
 
 		auto i = 0u;
-		if (version > 2u)
+		if (version > 2u) {
 			EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Aggregate_Cosignatures_v2_Notification, sub.notificationTypes()[i++]);
+		}
 		// - aggregate transaction type notification must be the first raised notification
 		EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[i++]);
 		// - aggregate cosignatures notification must be the second raised notification
@@ -254,18 +257,21 @@ namespace catapult { namespace plugins {
 
 		// Assert:
 		// - 1 AggregateTransactionHashNotification (version 3 and higher)
+		// - 1 AggregateCosignaturesNotification<2> (version 3 and higher)
 		// - 1 AggregateTransactionTypeNotification
-		// - 1 AggregateCosignaturesNotification
+		// - 1 AggregateCosignaturesNotification<1>
 		// - 3 SignatureNotification (one per cosigner)
 		// - 2 SourceChangeNotification (one per embedded-mock)
 		// - 4 AccountPublicKeyNotification (two per embedded-mock; one signer and one recipient each)
 		// - 2 EntityNotification (one per embedded-mock)
 		// - 2 AggregateEmbeddedTransactionNotification (one per embedded-mock)
-		ASSERT_EQ(1u + 1 + 3 + 2 + 4 + 2 + 2 + (version > 2u ? 1 : 0), sub.numNotifications());
+		ASSERT_EQ(1u + 1 + 3 + 2 + 4 + 2 + 2 + (version > 2u ? 2 : 0), sub.numNotifications());
 
 		auto i = 0u;
-		if (version > 2u)
+		if (version > 2u) {
 			EXPECT_EQ(Aggregate_Hash_v1_Notification, sub.notificationTypes()[i++]);
+			EXPECT_EQ(Aggregate_Cosignatures_v2_Notification, sub.notificationTypes()[i++]);
+		}
 		// - aggregate transaction type notification must be the first raised notification
 		EXPECT_EQ(Aggregate_Type_v1_Notification, sub.notificationTypes()[i++]);
 		// - aggregate cosignatures notification must be the second raised notification
@@ -473,9 +479,9 @@ namespace catapult { namespace plugins {
 
 	// endregion
 
-	// region publish - aggregate cosignatures
+	// region publish - aggregate cosignatures v1
 
-	TRAITS_BASED_TEST(CanRaiseAggregateCosignaturesNotificationsFromEmptyAggregate) {
+	TRAITS_BASED_TEST(CanRaiseV1AggregateCosignaturesNotificationsFromEmptyAggregate) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
@@ -496,7 +502,7 @@ namespace catapult { namespace plugins {
 		EXPECT_FALSE(!!notification.CosignaturesPtr);
 	}
 
-	TRAITS_BASED_TEST(CanRaiseAggregateCosignaturesNotificationsFromAggregate) {
+	TRAITS_BASED_TEST(CanRaiseV1AggregateCosignaturesNotificationsFromAggregate) {
 		// Arrange:
 		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<1>> sub;
 		auto registry = mocks::CreateDefaultTransactionRegistry();
@@ -637,6 +643,58 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region publish - aggregate cosignatures v2
+
+	TRAITS_BASED_TEST(CanRaiseV2AggregateCosignaturesNotificationsFromEmptyAggregate) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<2>> sub;
+		auto registry = mocks::CreateDefaultTransactionRegistry();
+		auto pPlugin = CreateTransactionPlugin(registry);
+		auto wrapper = CreateAggregateTransaction(0, 0, version);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
+
+		// Assert:
+		if (version > 2u) {
+			ASSERT_EQ(1u, sub.numMatchingNotifications());
+			const auto& notification = sub.matchingNotifications()[0];
+			EXPECT_EQ(wrapper.pTransaction->Signer, notification.Signer);
+			EXPECT_EQ(0u, notification.TransactionsCount);
+			EXPECT_FALSE(!!notification.TransactionsPtr);
+			EXPECT_EQ(0u, notification.CosignaturesCount);
+			EXPECT_FALSE(!!notification.CosignaturesPtr);
+		} else {
+			ASSERT_EQ(0u, sub.numMatchingNotifications());
+		}
+	}
+
+	TRAITS_BASED_TEST(CanRaiseV2AggregateCosignaturesNotificationsFromAggregate) {
+		// Arrange:
+		mocks::MockTypedNotificationSubscriber<AggregateCosignaturesNotification<2>> sub;
+		auto registry = mocks::CreateDefaultTransactionRegistry();
+		auto pPlugin = CreateTransactionPlugin(registry);
+		auto wrapper = CreateAggregateTransaction(2, 3, version);
+		auto aggregateDataHash = test::GenerateRandomByteArray<Hash256>();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, WeakEntityInfoT<Transaction>(*wrapper.pTransaction, aggregateDataHash, Height{0}), sub);
+
+		// Assert:
+		if (version > 2u) {
+			ASSERT_EQ(1u, sub.numMatchingNotifications());
+			const auto& notification = sub.matchingNotifications()[0];
+			EXPECT_EQ(wrapper.pTransaction->Signer, notification.Signer);
+			EXPECT_EQ(2u, notification.TransactionsCount);
+			EXPECT_EQ(wrapper.pTransaction->TransactionsPtr(), notification.TransactionsPtr);
+			EXPECT_EQ(3u, notification.CosignaturesCount);
+			EXPECT_EQ(wrapper.pTransaction->CosignaturesPtr(), notification.CosignaturesPtr);
+		} else {
+			ASSERT_EQ(0u, sub.numMatchingNotifications());
+		}
+	}
 
 	// endregion
 }}

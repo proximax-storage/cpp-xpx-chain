@@ -43,10 +43,12 @@ pipeline {
                                 catapult.mongo.plugins.mosaic \
                                 catapult.mongo.plugins.multisig \
                                 catapult.mongo.plugins.namespace \
+                                catapult.mongo.plugins.operation \
                                 catapult.mongo.plugins.property \
+                                catapult.mongo.plugins.service \
+                                catapult.mongo.plugins.supercontract \
                                 catapult.mongo.plugins.transfer \
                                 catapult.mongo.plugins.upgrade \
-                                catapult.mongo.plugins.service \
                                 catapult.plugins.accountlink \
                                 catapult.plugins.aggregate \
                                 catapult.plugins.config \
@@ -60,11 +62,13 @@ pipeline {
                                 catapult.plugins.mosaic \
                                 catapult.plugins.multisig \
                                 catapult.plugins.namespace \
+                                catapult.plugins.operation \
                                 catapult.plugins.property \
+                                catapult.plugins.service \
                                 catapult.plugins.signature \
+                                catapult.plugins.supercontract \
                                 catapult.plugins.transfer \
                                 catapult.plugins.upgrade \
-                                catapult.plugins.service \
                                 extension.addressextraction \
                                 extension.diagnostics \
                                 extension.eventsource \

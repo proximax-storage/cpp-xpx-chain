@@ -110,8 +110,9 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(4u + Num_Mosaics, sub.numNotifications());
+		ASSERT_EQ(5u + Num_Mosaics, sub.numNotifications());
 		auto i = 0u;
+		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(SuperContract_SuperContract_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(SuperContract_StartExecute_v1_Notification, sub.notificationTypes()[i++]);
 		EXPECT_EQ(Operation_Mosaic_v1_Notification, sub.notificationTypes()[i++]);

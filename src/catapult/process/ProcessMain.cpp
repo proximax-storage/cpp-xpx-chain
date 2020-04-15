@@ -96,8 +96,10 @@ namespace catapult { namespace process {
 		version::WriteVersionInformation(std::cout);
 
 		// 1. load and validate the configuration
-		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(nullptr);
-		const auto& config = pConfigHolder->LoadConfig(argc, argv, host);
+		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(argc, argv);
+		auto config = config::BlockchainConfiguration::LoadFromPath(resourcesPath, host);
+		auto pConfigHolder = std::make_shared<config::BlockchainConfigurationHolder>(config);
+
 		ValidateConfiguration(config);
 
 		// 2. initialize logging

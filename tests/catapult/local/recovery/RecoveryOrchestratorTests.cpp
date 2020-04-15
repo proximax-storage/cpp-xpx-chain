@@ -151,8 +151,8 @@ namespace catapult { namespace local {
 
 		// region test context
 
-		observers::NotificationObserverPointerT<model::Notification> CreateMockObserver(std::vector<Height>& heights) {
-			return std::make_unique<mocks::MockBlockHeightCapturingNotificationObserver>(heights);
+		observers::NotificationObserverPointerT<model::BlockNotification<1>> CreateMockObserver(std::vector<Height>& heights) {
+			return std::make_unique<mocks::MockBlockHeightCapturingNotificationObserver<model::BlockNotification<1>>>(heights);
 		}
 
 		enum class Flags : uint8_t {

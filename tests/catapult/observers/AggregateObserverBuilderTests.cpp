@@ -49,7 +49,7 @@ namespace catapult { namespace observers {
 			auto pContext = std::make_unique<TestContext>();
 			AggregateObserverBuilder<test::TaggedNotification> builder;
 			for (auto i = 0u; i < numObservers; ++i)
-				builder.add(mocks::CreateTaggedBreadcrumbObserver(static_cast<uint8_t>(i + 1), pContext->Breadcrumbs));
+				builder.add(test::TaggedNotification::Notification_Type, mocks::CreateTaggedBreadcrumbObserver(static_cast<uint8_t>(i + 1), pContext->Breadcrumbs));
 
 			pContext->pAggregateObserver = builder.build();
 			return pContext;
@@ -87,9 +87,9 @@ namespace catapult { namespace observers {
 		auto pContext = std::make_unique<TestContext>();
 		AggregateObserverBuilder<test::TaggedNotification> builder;
 		builder
-			.add(mocks::CreateTaggedBreadcrumbObserver(2, pContext->Breadcrumbs))
-			.add(mocks::CreateTaggedBreadcrumbObserver(3, pContext->Breadcrumbs))
-			.add(mocks::CreateTaggedBreadcrumbObserver(4, pContext->Breadcrumbs));
+			.add(test::TaggedNotification::Notification_Type, mocks::CreateTaggedBreadcrumbObserver(2, pContext->Breadcrumbs))
+			.add(test::TaggedNotification::Notification_Type, mocks::CreateTaggedBreadcrumbObserver(3, pContext->Breadcrumbs))
+			.add(test::TaggedNotification::Notification_Type, mocks::CreateTaggedBreadcrumbObserver(4, pContext->Breadcrumbs));
 		pContext->pAggregateObserver = builder.build();
 
 		// Act:
@@ -154,14 +154,14 @@ namespace catapult { namespace observers {
 		// Assert:
 		test::AssertNotificationsAreForwardedToChildObservers(
 				AggregateObserverBuilder<model::Notification>(),
-				[](auto& builder, auto&& pObserver) { builder.add(std::move(pObserver)); });
+				[](auto& builder, auto&& pObserver, auto type) { builder.add(type, std::move(pObserver)); });
 	}
 
 	TEST(TEST_CLASS, ContextsAreForwardedToChildObservers) {
 		// Assert:
 		test::AssertContextsAreForwardedToChildObservers(
 				AggregateObserverBuilder<model::Notification>(),
-				[](auto& builder, auto&& pObserver) { builder.add(std::move(pObserver)); });
+				[](auto& builder, auto&& pObserver, auto type) { builder.add(type, std::move(pObserver)); });
 	}
 
 	// endregion

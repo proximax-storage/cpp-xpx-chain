@@ -31,6 +31,7 @@ namespace catapult {
 		class NotificationSubscriber;
 		struct Transaction;
 	}
+	namespace config { class BlockchainConfiguration; }
 }
 
 namespace catapult { namespace model {
@@ -69,7 +70,7 @@ namespace catapult { namespace model {
 	class EmbeddedTransactionPlugin : public TransactionPluginT<EmbeddedTransaction> {
 	public:
 		/// Extracts public keys of additional accounts that must approve \a transaction.
-		virtual utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction& transaction) const = 0;
+		virtual utils::KeySet additionalRequiredCosigners(const EmbeddedTransaction& transaction, const config::BlockchainConfiguration& config) const = 0;
 
 		/// Sends all notifications from \a transaction to \a sub.
 		virtual void publish(const WeakEntityInfoT<EmbeddedTransaction>& transactionInfo, NotificationSubscriber& sub) const = 0;

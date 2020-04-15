@@ -183,7 +183,7 @@ namespace catapult { namespace extensions {
 				.add(observers::CreateAccountAddressObserver())
 				.add(observers::CreateAccountPublicKeyObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateHarvestFeeObserver(model::InflationCalculator()));
+				.add(observers::CreateHarvestFeeObserver(pConfigHolder));
 			return builder.build();
 		}
 

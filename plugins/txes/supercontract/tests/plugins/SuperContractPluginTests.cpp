@@ -64,31 +64,33 @@ namespace catapult { namespace plugins {
 
 			static std::vector<std::string> GetStatelessValidatorNames() {
 				return {
-					"EmbeddedTransactionValidator",
+					"AggregateTransactionValidator",
 					"SuperContractPluginConfigValidator",
 				};
 			}
 
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
+					"EndOperationTransactionValidator",
+					"SuperContractValidator",
+					"DriveFileSystemValidator",
+					"DeployValidator",
 					"StartExecuteValidator",
 					"EndExecuteValidator",
-					"SuperContractValidator",
-					"DeployValidator",
-					"DriveFileSystemValidator",
-					"EndOperationValidator",
 					"DeactivateValidator",
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
+					"AggregateTransactionHashObserver",
+					"EndExecuteCosignersObserver",
+					"ExpiredExecutionObserver",
+					"EndDriveObserver",
 					"DeployObserver",
 					"StartExecuteObserver",
 					"EndExecuteObserver",
-					"AggregateTransactionHashObserver",
 					"DeactivateObserver",
-					"EndDriveObserver",
 				};
 			}
 

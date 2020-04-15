@@ -6,30 +6,25 @@
 
 #pragma once
 #include "DownloadBaseSets.h"
-#include "ServiceCacheTools.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "plugins/txes/lock_shared/src/cache/LockInfoCacheDelta.h"
+#include "src/config/ServiceConfiguration.h"
 
 namespace catapult { namespace cache {
 
 	/// Basic delta on top of the download cache.
-	class BasicDownloadCacheDelta : public BasicLockInfoCacheDelta<DownloadCacheDescriptor, DownloadCacheTypes> {
+	class BasicDownloadCacheDelta
+		: public BasicLockInfoCacheDelta<DownloadCacheDescriptor, DownloadCacheTypes>
+		, public LockInfoCacheDeltaMixins<DownloadCacheDescriptor, DownloadCacheTypes>::ConfigBasedEnable<config::ServiceConfiguration> {
 	public:
 		/// Creates a delta around \a downloadSets and \a pConfigHolder.
 		explicit BasicDownloadCacheDelta(
 			const DownloadCacheTypes::BaseSetDeltaPointers& downloadSets,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: BasicLockInfoCacheDelta<DownloadCacheDescriptor, DownloadCacheTypes>::BasicLockInfoCacheDelta(downloadSets)
-				, m_pConfigHolder(pConfigHolder)
+				, LockInfoCacheDeltaMixins<DownloadCacheDescriptor, DownloadCacheTypes>::ConfigBasedEnable<config::ServiceConfiguration>(
+					pConfigHolder, [](const auto& config) { return config.DownloadCacheEnabled; })
 		{}
-
-	public:
-		bool enabled() const {
-			return DownloadCacheEnabled(m_pConfigHolder, height());
-		}
-
-	private:
-		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 	};
 
 	/// Delta on top of the download cache.

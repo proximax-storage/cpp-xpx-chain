@@ -72,16 +72,17 @@ namespace catapult { namespace observers {
 	}
 
 	DECLARE_OBSERVER(HarvestFee, Notification)(
-			const model::InflationCalculator& calculator) {
-		return MAKE_OBSERVER(HarvestFee, Notification, ([calculator](const auto& notification, auto& context) {
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
+		return MAKE_OBSERVER(HarvestFee, Notification, ([pConfigHolder](const auto& notification, auto& context) {
+			const auto& calculator = pConfigHolder->Config().Inflation.InflationCalculator;
 			auto inflationAmount = calculator.getSpotAmount(context.Height);
 			auto totalAmount = notification.TotalFee + inflationAmount;
 			auto config = context.Config;
 			auto percentage = config.Network.HarvestBeneficiaryPercentage;
 			auto mosaicId = config.Immutable.CurrencyMosaicId;
 			auto beneficiaryAmount = ShouldShareFees(notification.Signer, notification.Beneficiary, percentage)
-					? Amount(totalAmount.unwrap() * percentage / 100)
-					: Amount();
+			                         ? Amount(totalAmount.unwrap() * percentage / 100)
+			                         : Amount();
 			auto harvesterAmount = totalAmount - beneficiaryAmount;
 
 			// always create receipt for harvester

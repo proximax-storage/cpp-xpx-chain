@@ -25,17 +25,21 @@
 namespace catapult { namespace mocks {
 
 	/// Mock notification observer that captures block heights.
-	class MockBlockHeightCapturingNotificationObserver : public mocks::MockNotificationObserver {
+	template<typename TNotification>
+	class MockBlockHeightCapturingNotificationObserver;
+
+	template<>
+	class MockBlockHeightCapturingNotificationObserver<model::Notification> : public mocks::MockNotificationObserver {
 	public:
 		/// Creates a mock observer around \a blockHeights.
 		explicit MockBlockHeightCapturingNotificationObserver(std::vector<Height>& blockHeights)
-				: MockNotificationObserverT("MockBlockHeightCapturingNotificationObserver")
+				: MockNotificationObserver("MockBlockHeightCapturingNotificationObserver")
 				, m_blockHeights(blockHeights)
 		{}
 
 	public:
 		void notify(const model::Notification& notification, observers::ObserverContext& context) const override {
-			MockNotificationObserverT::notify(notification, context);
+			MockNotificationObserver::notify(notification, context);
 
 			// collect heights only when a block is processed
 			if (model::Core_Block_v1_Notification == notification.Type)
@@ -43,6 +47,29 @@ namespace catapult { namespace mocks {
 		}
 
 	private:
+		std::vector<Height>& m_blockHeights;
+	};
+
+	template<>
+	class MockBlockHeightCapturingNotificationObserver<model::BlockNotification<1>> : public observers::NotificationObserverT<model::BlockNotification<1>> {
+	public:
+		/// Creates a mock observer around \a blockHeights.
+		explicit MockBlockHeightCapturingNotificationObserver(std::vector<Height>& blockHeights)
+				: m_name("MockBlockHeightCapturingNotificationObserver")
+				, m_blockHeights(blockHeights)
+		{}
+
+	public:
+		const std::string& name() const override {
+			return m_name;
+		}
+
+		void notify(const model::BlockNotification<1>&, observers::ObserverContext& context) const override {
+			m_blockHeights.push_back(context.Height);
+		}
+
+	private:
+		std::string m_name;
 		std::vector<Height>& m_blockHeights;
 	};
 }}
