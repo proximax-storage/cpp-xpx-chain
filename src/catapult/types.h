@@ -81,7 +81,8 @@ namespace catapult {
 	    Default,
 	    DriveDeposit,
 	    FileDeposit,
-	    FileUpload
+	    FileUpload,
+		LeviedTransfer
 	};
 
 	struct UnresolvedAmountData {

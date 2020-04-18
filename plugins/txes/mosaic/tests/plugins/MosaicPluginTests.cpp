@@ -60,12 +60,14 @@ namespace catapult { namespace plugins {
 			static std::vector<model::EntityType> GetTransactionTypes() {
 				return {
 					model::Entity_Type_Mosaic_Definition,
-					model::Entity_Type_Mosaic_Supply_Change
+					model::Entity_Type_Mosaic_Supply_Change,
+					model::Entity_Type_Mosaic_Modify_Levy,
+					model::Entity_Type_Mosaic_Remove_Levy
 				};
 			}
 
 			static std::vector<std::string> GetCacheNames() {
-				return { "MosaicCache" };
+				return { "MosaicCache", "MosaicLevyCache" };
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
@@ -97,17 +99,23 @@ namespace catapult { namespace plugins {
 					"MosaicAvailabilityValidator",
 					"MosaicDurationValidator",
 					"MaxMosaicsSupplyChangeValidator",
-					"MosaicSupplyChangeAllowedValidator"
+					"MosaicSupplyChangeAllowedValidator",
+					"AddLevyValidator",
+					"UpdateLevyValidator",
+					"RemoveLevyValidator"
 				};
 			}
 
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"MosaicRentalFeeObserver",
+					"LevyTransferObserver",
 					"MosaicTouchObserver",
 					"MosaicDefinitionObserver",
 					"MosaicSupplyChangeObserver",
-				};
+					"AddLevyObserver",
+					"UpdateLevyObserver",
+					"RemoveLevyObserver"};
 			}
 
 			static std::vector<std::string> GetPermanentObserverNames() {

@@ -224,6 +224,16 @@
 			"name": "deactivate",
 			"type": "17760",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "Mosaic_Modify_Levy",
+			"type": "17229",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "Mosaic_Remove_Levy",
+			"type": "17485",
+			"supportedVersions": [1]
 		}
 	]
 }
