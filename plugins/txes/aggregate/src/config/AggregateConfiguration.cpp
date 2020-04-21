@@ -40,9 +40,15 @@ namespace catapult { namespace config {
 
 		LOAD_PROPERTY(MaxBondedTransactionLifetime);
 		
-		LOAD_PROPERTY(StrictSigner);
 #undef LOAD_PROPERTY
 
+#define TRY_LOAD_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
+		
+		config.StrictSigner = true;
+		TRY_LOAD_PROPERTY(StrictSigner);
+
+#undef TRY_LOAD_PROPERTY
+		
 		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 6);
 		return config;
 	}
