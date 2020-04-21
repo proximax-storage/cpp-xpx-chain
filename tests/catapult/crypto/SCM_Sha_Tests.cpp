@@ -147,40 +147,6 @@ namespace catapult { namespace crypto {
 	}
 
 	TEST(TEST_CLASS, SHA256MonteCarlo) {
-		// Arrange:
-		std::string file("SHA256Monte");
-		std::ifstream inputStream("../resources/" + file + ".req");
-		std::ofstream outputStream("../resources/result/" + file + ".rsp");
-		uint64_t lineNumber = 0u;
-		std::string line;
-		std::string message;
-		while (inputStream.good()) {
-			++lineNumber;
-
-			ReadLine(inputStream, line, lineNumber);
-			outputStream << line << std::endl;
-
-			if (line.empty())
-				continue;
-
-			auto pos = line.find("Seed = ");
-			if (std::string::npos == pos)
-				continue;
-			outputStream << std::endl;
-			message = line.substr(pos + std::string("Seed = ").size());
-
-			for (auto i = 0u; i < 100u; ++i) {
-				Hash256 hash;
-				for (auto j = 0u; j < 1000u; ++j) {
-					auto buffer = test::ToVector(message);
-					Sha256_CustomLength(buffer, buffer.size(), hash);
-					message = test::ToString(hash);
-				}
-
-				boost::to_lower(message);
-				outputStream << "j = " << i << std::endl;
-				outputStream << "MD = " << message << std::endl << std::endl;
-			}
-		}
+		TestMonteCarlo<Hash256>("SHA256Monte", Sha256);
 	}
 }}
