@@ -19,7 +19,7 @@ message(STATUS "BOOST_ROOT: $ENV{BOOST_ROOT}")
 set(CORE_CATAPULT_LIBS catapult.io catapult.ionet catapult.model catapult.thread catapult.utils)
 
 ### setup boost
-find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
+find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random stacktrace_backtrace REQUIRED)
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 ### setup rocksdb

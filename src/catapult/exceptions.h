@@ -26,6 +26,7 @@
 #include <boost/exception/exception.hpp>
 #include <boost/exception/info.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/stacktrace.hpp>
 #include <atomic>
 #include <exception>
 
@@ -140,6 +141,7 @@ namespace catapult {
 
 /// Macro used to throw a catapult exception.
 #define CATAPULT_THROW_EXCEPTION(EXCEPTION) \
+	CATAPULT_LOG(error) << "\nBacktrace: " << boost::stacktrace::stacktrace(); \
 	BOOST_THROW_EXCEPTION(EXCEPTION)
 
 /// Macro used to throw a catapult exception with zero parameters.
