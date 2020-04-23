@@ -199,12 +199,13 @@ endif()
 # used to define a catapult target (library, executable) and automatically enables PCH for clang
 function(catapult_target TARGET_NAME)
 	set_property(TARGET ${TARGET_NAME} PROPERTY CXX_STANDARD 17)
+	add_definitions(-DBOOST_STACKTRACE_USE_BACKTRACE)
 
 	# indicate boost as a dependency
-	target_link_libraries(${TARGET_NAME} ${Boost_LIBRARIES})
+	target_link_libraries(${TARGET_NAME} ${Boost_LIBRARIES} ${CMAKE_DL_LIBS})
 
 	# copy boost shared libraries
-	foreach(BOOST_COMPONENT ATOMIC SYSTEM DATE_TIME REGEX TIMER CHRONO LOG THREAD FILESYSTEM PROGRAM_OPTIONS)
+	foreach(BOOST_COMPONENT ATOMIC SYSTEM DATE_TIME REGEX TIMER CHRONO LOG THREAD FILESYSTEM PROGRAM_OPTIONS STACKTRACE_BACKTRACE)
 		if(MSVC)
 			# copy into ${CMAKE_RUNTIME_OUTPUT_DIRECTORY}/$(Configuration)
 			string(REPLACE ".lib" ".dll" BOOSTDLLNAME ${Boost_${BOOST_COMPONENT}_LIBRARY_RELEASE})
