@@ -43,6 +43,8 @@ namespace catapult { namespace plugins {
 					model::Entity_Type_EndExecute,
 					model::Entity_Type_UploadFile,
 					model::Entity_Type_Deactivate,
+					model::Entity_Type_Suspend,
+					model::Entity_Type_Resume,
 				};
 			}
 
@@ -78,6 +80,8 @@ namespace catapult { namespace plugins {
 					"StartExecuteValidator",
 					"EndExecuteValidator",
 					"DeactivateValidator",
+					"SuspendValidator",
+					"ResumeValidator",
 				};
 			}
 
@@ -91,6 +95,8 @@ namespace catapult { namespace plugins {
 					"StartExecuteObserver",
 					"EndExecuteObserver",
 					"DeactivateObserver",
+					"SuspendObserver",
+					"ResumeObserver",
 				};
 			}
 

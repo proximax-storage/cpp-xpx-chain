@@ -14,6 +14,8 @@
 #include "src/plugins/EndExecuteTransactionPlugin.h"
 #include "src/plugins/UploadFileTransactionPlugin.h"
 #include "src/plugins/DeactivateTransactionPlugin.h"
+#include "src/plugins/SuspendTransactionPlugin.h"
+#include "src/plugins/ResumeTransactionPlugin.h"
 #include "src/validators/Validators.h"
 #include "catapult/plugins/CacheHandlers.h"
 
@@ -31,6 +33,8 @@ namespace catapult { namespace plugins {
         manager.addTransactionSupport(CreateEndExecuteTransactionPlugin());
         manager.addTransactionSupport(CreateUploadFileTransactionPlugin());
         manager.addTransactionSupport(CreateDeactivateTransactionPlugin());
+        manager.addTransactionSupport(CreateSuspendTransactionPlugin());
+        manager.addTransactionSupport(CreateResumeTransactionPlugin());
 
 		manager.addCacheSupport<cache::SuperContractCacheStorage>(
 			std::make_unique<cache::SuperContractCache>(manager.cacheConfig(cache::SuperContractCache::Name), pConfigHolder));
@@ -58,7 +62,9 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateDeployValidator())
 				.add(validators::CreateDriveFileSystemValidator())
 				.add(validators::CreateEndOperationTransactionValidator())
-				.add(validators::CreateDeactivateValidator());
+				.add(validators::CreateDeactivateValidator())
+				.add(validators::CreateSuspendValidator())
+				.add(validators::CreateResumeValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -70,7 +76,9 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateExpiredExecutionObserver())
 				.add(observers::CreateAggregateTransactionHashObserver())
 				.add(observers::CreateDeactivateObserver())
-				.add(observers::CreateEndDriveObserver());
+				.add(observers::CreateEndDriveObserver())
+				.add(observers::CreateSuspendObserver())
+				.add(observers::CreateResumeObserver());
 		});
 	}
 }}

@@ -27,6 +27,12 @@ namespace catapult { namespace model {
 	/// Deactivate transaction.
 	DEFINE_TRANSACTION_TYPE(SuperContract, Deactivate, 0x5);
 
+	/// Suspend transaction.
+	DEFINE_TRANSACTION_TYPE(SuperContract, Suspend, 0x6);
+
+	/// /Resume transaction.
+	DEFINE_TRANSACTION_TYPE(SuperContract, Resume, 0x7);
+
 #ifndef CUSTOM_ENTITY_TYPE_DEFINITION
 }}
 #endif

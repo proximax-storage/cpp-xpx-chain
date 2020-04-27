@@ -27,6 +27,12 @@ namespace catapult { namespace model {
 	/// Defines a deactivate notification type.
 	DEFINE_NOTIFICATION_TYPE(All, SuperContract, Deactivate_v1, 0x0005);
 
+	/// Defines a suspend notification type.
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract, Suspend_v1, 0x0006);
+
+	/// Defines a resume notification type.
+	DEFINE_NOTIFICATION_TYPE(All, SuperContract, Resume_v1, 0x0007);
+
 	struct BaseSuperContractNotification : public Notification {
 	public:
 		explicit BaseSuperContractNotification(
@@ -113,7 +119,7 @@ namespace catapult { namespace model {
         static constexpr auto Notification_Type = SuperContract_Deactivate_v1_Notification;
 
     public:
-        /// Creates a notification around \a signer and \a superContract.
+        /// Creates a notification around \a signer, \a superContract and \a driveKey.
         explicit DeactivateNotification(
 			const Key& signer,
 			const Key& superContract,
@@ -163,4 +169,53 @@ namespace catapult { namespace model {
         {}
     };
 
+    struct BaseChangeSuperContractStateNotification : public BaseSuperContractNotification {
+    public:
+        explicit BaseChangeSuperContractStateNotification(
+			NotificationType type,
+			size_t size,
+			const Key& signer,
+			const Key& superContract)
+			: BaseSuperContractNotification(type, size, superContract)
+			, Signer(signer)
+        {}
+
+    public:
+		/// Signer.
+		const Key& Signer;
+    };
+
+    /// Suspend super contract notification.
+    template<VersionType version>
+    struct SuspendNotification;
+
+    template<>
+    struct SuspendNotification<1> : public BaseChangeSuperContractStateNotification {
+    public:
+        /// Matching notification type.
+        static constexpr auto Notification_Type = SuperContract_Suspend_v1_Notification;
+
+    public:
+        /// Creates a notification around \a signer and \a superContract.
+        explicit SuspendNotification(const Key& signer, const Key& superContract)
+			: BaseChangeSuperContractStateNotification(Notification_Type, sizeof(SuspendNotification<1>), signer, superContract)
+        {}
+    };
+
+    /// Resume super contract notification.
+    template<VersionType version>
+    struct ResumeNotification;
+
+    template<>
+    struct ResumeNotification<1> : public BaseChangeSuperContractStateNotification {
+    public:
+        /// Matching notification type.
+        static constexpr auto Notification_Type = SuperContract_Resume_v1_Notification;
+
+    public:
+        /// Creates a notification around \a signer and \a superContract.
+        explicit ResumeNotification(const Key& signer, const Key& superContract)
+			: BaseChangeSuperContractStateNotification(Notification_Type, sizeof(SuspendNotification<1>), signer, superContract)
+        {}
+    };
 }}

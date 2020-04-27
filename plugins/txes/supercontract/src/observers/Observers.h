@@ -37,4 +37,10 @@ namespace catapult { namespace observers {
 
 	/// Observes changes triggered by block notifications.
 	DECLARE_OBSERVER(ExpiredExecution, model::BlockNotification<1>)();
+
+	/// Observes changes triggered by suspend notifications.
+	DECLARE_OBSERVER(Suspend, model::SuspendNotification<1>)();
+
+	/// Observes changes triggered by resume notifications.
+	DECLARE_OBSERVER(Resume, model::ResumeNotification<1>)();
 }}

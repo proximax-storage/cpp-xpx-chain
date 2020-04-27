@@ -141,4 +141,22 @@ namespace catapult { namespace test {
 
         return pTransaction;
     }
+
+    /// Creates a suspend transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateSuspendTransaction() {
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_Suspend);
+		pTransaction->SuperContract = test::GenerateRandomByteArray<Key>();
+
+        return pTransaction;
+    }
+
+    /// Creates a resume transaction.
+    template<typename TTransaction>
+	model::UniqueEntityPtr<TTransaction> CreateResumeTransaction() {
+        auto pTransaction = CreateTransaction<TTransaction>(model::Entity_Type_Resume);
+		pTransaction->SuperContract = test::GenerateRandomByteArray<Key>();
+
+        return pTransaction;
+    }
 }}

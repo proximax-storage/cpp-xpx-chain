@@ -16,6 +16,9 @@ namespace catapult { namespace validators {
 		auto superContractCacheIter = superContractCache.find(notification.SuperContract);
 		auto& superContractEntry = superContractCacheIter.get();
 
+		if (superContractEntry.state() == state::SuperContractState::Suspended)
+			return Failure_SuperContract_Operation_Is_Not_Permitted;
+
 		if (std::numeric_limits<uint16_t>::max() == superContractEntry.executionCount())
 			return Failure_SuperContract_Execution_Count_Exceeded_Limit;
 

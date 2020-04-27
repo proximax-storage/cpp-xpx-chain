@@ -53,6 +53,8 @@ namespace catapult { namespace validators {
 			model::Entity_Type_EndExecute,
 			model::Entity_Type_UploadFile,
 			model::Entity_Type_Deactivate,
+			model::Entity_Type_Suspend,
+			model::Entity_Type_Resume,
 		});
 
 		// Assert:
@@ -73,6 +75,8 @@ namespace catapult { namespace validators {
 			std::unordered_set<model::EntityType> types({
 				model::Entity_Type_StartExecute,
 				model::Entity_Type_Deactivate,
+				model::Entity_Type_Suspend,
+				model::Entity_Type_Resume,
 			});
 
 			// Assert:
@@ -96,6 +100,8 @@ namespace catapult { namespace validators {
 			model::Entity_Type_EndExecute,
 			model::Entity_Type_UploadFile,
 			model::Entity_Type_Deactivate,
+			model::Entity_Type_Suspend,
+			model::Entity_Type_Resume,
 		});
 
 		// Assert:

@@ -24,9 +24,11 @@ namespace catapult { namespace validators {
 		static std::unordered_set<model::EntityType> blockedTransactionsAfterDeactivation({
 		    model::Entity_Type_StartExecute,
 		    model::Entity_Type_Deactivate,
+		    model::Entity_Type_Suspend,
+		    model::Entity_Type_Resume,
 		});
 
-		if (superContractEntry.state() > state::SuperContractState::Active &&
+		if (superContractEntry.state() > state::SuperContractState::Suspended &&
 			blockedTransactionsAfterDeactivation.count(notification.TransactionType))
 				return Failure_SuperContract_Operation_Is_Not_Permitted;
 

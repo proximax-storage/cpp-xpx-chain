@@ -19,6 +19,9 @@ namespace catapult { namespace state {
         /// Super contract is active.
         Active = 0,
 
+        /// Super contract is suspended.
+        Suspended = 50,
+
         /// Super contract is deactivated by owner or executors.
         DeactivatedByParticipant = 100,
 

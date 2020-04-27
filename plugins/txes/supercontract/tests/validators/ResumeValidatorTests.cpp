@@ -11,16 +11,17 @@
 
 namespace catapult { namespace validators {
 
-#define TEST_CLASS StartExecuteValidatorTests
+#define TEST_CLASS ResumeValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(StartExecute, )
+	DEFINE_COMMON_VALIDATOR_TESTS(Resume, )
 
 	namespace {
-		using Notification = model::StartExecuteNotification<1>;
+		using Notification = model::ResumeNotification<1>;
 
 		void AssertValidationResult(
 				ValidationResult expectedResult,
-				const state::SuperContractEntry& entry) {
+				const state::SuperContractEntry& entry,
+				const Key& signer) {
 			// Arrange:
 			Height currentHeight(1);
 			auto cache = test::SuperContractCacheFactory::Create();
@@ -30,8 +31,8 @@ namespace catapult { namespace validators {
 				superContractCacheDelta.insert(entry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(entry.key());
-			auto pValidator = CreateStartExecuteValidator();
+			Notification notification(signer, entry.key());
+			auto pValidator = CreateResumeValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache,
@@ -42,32 +43,40 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, FailureWhenSuperContractSuspended) {
+	TEST(TEST_CLASS, FailureWhenSignerInvalid) {
+		// Arrange:
+		state::SuperContractEntry entry(test::GenerateRandomByteArray<Key>());
+		entry.setState(state::SuperContractState::Suspended);
+		entry.setOwner(test::GenerateRandomByteArray<Key>());
+
+		// Assert:
+		AssertValidationResult(
+			Failure_SuperContract_Operation_Is_Not_Permitted,
+			entry,
+			test::GenerateRandomByteArray<Key>());
+	}
+
+	TEST(TEST_CLASS, FailureWhenStateIsNotSuspended) {
+		// Arrange:
+		state::SuperContractEntry entry(test::GenerateRandomByteArray<Key>());
+		entry.setOwner(test::GenerateRandomByteArray<Key>());
+
+		// Assert:
+		AssertValidationResult(
+			Failure_SuperContract_Operation_Is_Not_Permitted,
+			entry,
+			entry.owner());
+	}
+
+	TEST(TEST_CLASS, Success) {
 		// Arrange:
 		state::SuperContractEntry entry(test::GenerateRandomByteArray<Key>());
 		entry.setState(state::SuperContractState::Suspended);
 
 		// Assert:
 		AssertValidationResult(
-			Failure_SuperContract_Operation_Is_Not_Permitted,
-			entry);
-	}
-
-	TEST(TEST_CLASS, FailureWhenExecutionCountReachedLimit) {
-		// Arrange:
-		state::SuperContractEntry entry(test::GenerateRandomByteArray<Key>());
-		entry.setExecutionCount(std::numeric_limits<uint16_t>::max());
-
-		// Assert:
-		AssertValidationResult(
-			Failure_SuperContract_Execution_Count_Exceeded_Limit,
-			entry);
-	}
-
-	TEST(TEST_CLASS, Success) {
-		// Assert:
-		AssertValidationResult(
 			ValidationResult::Success,
-			state::SuperContractEntry(test::GenerateRandomByteArray<Key>()));
+			entry,
+			entry.owner());
 	}
 }}

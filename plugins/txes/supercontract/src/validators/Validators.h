@@ -48,4 +48,10 @@ namespace catapult { namespace validators {
 
 	/// A validator check that deactivate transaction is valid
 	DECLARE_STATEFUL_VALIDATOR(Deactivate, model::DeactivateNotification<1>)();
+
+	/// A validator check that suspend transaction is valid
+	DECLARE_STATEFUL_VALIDATOR(Suspend, model::SuspendNotification<1>)();
+
+	/// A validator check that resume transaction is valid
+	DECLARE_STATEFUL_VALIDATOR(Resume, model::ResumeNotification<1>)();
 }}

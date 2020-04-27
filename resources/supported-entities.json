@@ -224,6 +224,16 @@
 			"name": "deactivate",
 			"type": "17760",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "suspend",
+			"type": "18016",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "resume",
+			"type": "18272",
+			"supportedVersions": [1]
 		}
 	]
 }
