@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <plugins/txes/aggregate/src/config/AggregateConfiguration.h>
+#include "plugins/txes/aggregate/src/config/AggregateConfiguration.h"
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
 #include "catapult/model/TransactionPlugin.h"

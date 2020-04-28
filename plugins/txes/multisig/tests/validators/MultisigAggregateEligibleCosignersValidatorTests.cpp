@@ -26,7 +26,7 @@
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
-#include <plugins/txes/aggregate/src/config/AggregateConfiguration.h>
+#include "plugins/txes/aggregate/src/config/AggregateConfiguration.h"
 
 namespace catapult { namespace validators {
 
