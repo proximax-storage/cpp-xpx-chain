@@ -174,6 +174,7 @@ namespace catapult { namespace state {
 
 		// Assert:
 		EXPECT_EQ(owner, entry.owner());
+		EXPECT_EQ(2, entry.version());
 	}
 
 	TRAITS_BASED_TEST(CanAccessOffers) {

@@ -5,9 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "catapult/config/SupportedEntityVersions.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/plugins/PluginManager.h"
 #include "catapult/validators/ValidatorContext.h"
 #include "src/cache/NetworkConfigCache.h"
 #include "src/config/NetworkConfigConfiguration.h"

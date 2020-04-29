@@ -63,10 +63,11 @@ namespace catapult { namespace test {
 	}
 
 	void AssertEqualExchangeData(const state::ExchangeEntry& entry, const Address& address, const bsoncxx::document::view& dbExchangeEntry) {
-		EXPECT_EQ(6u, test::GetFieldCount(dbExchangeEntry));
+		EXPECT_EQ(7u, test::GetFieldCount(dbExchangeEntry));
 
 		EXPECT_EQ(entry.owner(), GetKeyValue(dbExchangeEntry, "owner"));
 		EXPECT_EQ(address, test::GetAddressValue(dbExchangeEntry, "ownerAddress"));
+		EXPECT_EQ(entry.version(), GetUint32(dbExchangeEntry, "version"));
 
 		AssertBuyOffers(entry.buyOffers(), dbExchangeEntry["buyOffers"].get_array().value);
 		AssertSellOffers(entry.sellOffers(), dbExchangeEntry["sellOffers"].get_array().value);

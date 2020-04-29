@@ -15,10 +15,11 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	DEFINE_OBSERVER(Offer, model::OfferNotification<1>, ([](const auto& notification, const ObserverContext& context) {
+	template<VersionType version>
+	void OfferObserver(const model::OfferNotification<version>& notification, const ObserverContext& context) {
 		auto& cache = context.Cache.sub<cache::ExchangeCache>();
 		if (NotifyMode::Commit == context.Mode && !cache.contains(notification.Owner))
-			cache.insert(state::ExchangeEntry(notification.Owner));
+			cache.insert(state::ExchangeEntry(notification.Owner, version));
 		auto iter = cache.find(notification.Owner);
 		auto& entry = iter.get();
 		OfferExpiryUpdater offerExpiryUpdater(cache, entry);
@@ -33,5 +34,8 @@ namespace catapult { namespace observers {
 				entry.removeOffer(pOffer->Type, mosaicId);
 			}
 		}
-	}));
+	}
+
+	DEFINE_OBSERVER(OfferV1, model::OfferNotification<1>, OfferObserver<1>);
+	DEFINE_OBSERVER(OfferV2, model::OfferNotification<2>, OfferObserver<2>);
 }}

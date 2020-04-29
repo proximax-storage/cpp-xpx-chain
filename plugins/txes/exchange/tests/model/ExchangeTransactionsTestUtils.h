@@ -26,10 +26,10 @@ namespace catapult { namespace model {
 	}
 
 	template<typename TTransaction>
-	void AssertTransactionHasExpectedProperties(EntityType entityType) {
+	void AssertTransactionHasExpectedProperties(EntityType entityType, VersionType version = 1) {
 		// Assert:
 		EXPECT_EQ(entityType, TTransaction::Entity_Type);
-		EXPECT_EQ(1u, TTransaction::Current_Version);
+		EXPECT_EQ(version, TTransaction::Current_Version);
 	}
 
 	template<typename TTransaction, typename TOffer>

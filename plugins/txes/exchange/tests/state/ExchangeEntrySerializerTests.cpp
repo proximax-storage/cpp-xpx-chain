@@ -109,10 +109,10 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void AssertEntryBuffer(const ExchangeEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version, bool assertHistory) {
+		void AssertEntryBuffer(const ExchangeEntry& entry, const uint8_t* pData, size_t expectedSize, bool assertHistory) {
 			const auto* pExpectedEnd = pData + expectedSize;
 
-			EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
+			EXPECT_EQ(entry.version(), *reinterpret_cast<const VersionType*>(pData));
 			pData += sizeof(VersionType);
 			auto owner = Extract<Key_Size>(pData);
 			EXPECT_EQ(entry.owner(), owner);
@@ -129,37 +129,37 @@ namespace catapult { namespace state {
 			EXPECT_EQ(pExpectedEnd, pData);
 		}
 
-		template<typename TTraits>
+		template<typename TTraits, typename TSerializer>
 		void AssertCanSaveSingleEntry(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto entry = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count);
+			auto entry = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
 
 			// Act:
-			TTraits::Serializer::Save(entry, context.outputStream());
+			TSerializer::Save(entry, context.outputStream());
 
 			// Assert:
 			ASSERT_EQ(TTraits::Entry_Size, context.buffer().size());
-			TTraits::AssertBuffer(entry, context.buffer().data(), version);
+			TTraits::AssertBuffer(entry, context.buffer().data());
 		}
 
-		template<typename TTraits>
+		template<typename TTraits, typename TSerializer>
 		void AssertCanSaveMultipleEntries(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto entry1 = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count);
-			auto entry2 = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count);
+			auto entry1 = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
+			auto entry2 = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
 
 			// Act:
-			TTraits::Serializer::Save(entry1, context.outputStream());
-			TTraits::Serializer::Save(entry2, context.outputStream());
+			TSerializer::Save(entry1, context.outputStream());
+			TSerializer::Save(entry2, context.outputStream());
 
 			// Assert:
 			ASSERT_EQ(2 * TTraits::Entry_Size, context.buffer().size());
 			const auto* pBuffer1 = context.buffer().data();
 			const auto* pBuffer2 = pBuffer1 + TTraits::Entry_Size;
-			TTraits::AssertBuffer(entry1, pBuffer1, version);
-			TTraits::AssertBuffer(entry2, pBuffer2, version);
+			TTraits::AssertBuffer(entry1, pBuffer1);
+			TTraits::AssertBuffer(entry2, pBuffer2);
 		}
 
 		// endregion
@@ -227,10 +227,11 @@ namespace catapult { namespace state {
 			}
 		}
 
-		std::vector<uint8_t> CreateEntryBuffer(const ExchangeEntry& entry, VersionType version, size_t expectedSize, bool writeHistory) {
+		std::vector<uint8_t> CreateEntryBuffer(const ExchangeEntry& entry, size_t expectedSize, bool writeHistory) {
 			std::vector<uint8_t> buffer(expectedSize);
 
 			auto* pData = buffer.data();
+			auto version = entry.version();
 			memcpy(pData, &version, sizeof(VersionType));
 			pData += sizeof(VersionType);
 			memcpy(pData, entry.owner().data(), Key_Size);
@@ -247,17 +248,17 @@ namespace catapult { namespace state {
 			return buffer;
 		}
 
-		template<typename TTraits>
+		template<typename TTraits, typename TSerializer>
 		void AssertCanLoadSingleEntry(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto originalEntry = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count);
-			auto buffer = TTraits::CreateBuffer(originalEntry, version);
+			auto originalEntry = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
+			auto buffer = TTraits::CreateBuffer(originalEntry);
 			TTraits::AdaptEntry(originalEntry);
 
 			// Act:
 			ExchangeEntry result((Key()));
-			test::RunLoadValueTest<typename TTraits::Serializer>(buffer, result);
+			test::RunLoadValueTest<TSerializer>(buffer, result);
 
 			// Assert:
 			test::AssertEqualExchangeData(originalEntry, result);
@@ -267,15 +268,14 @@ namespace catapult { namespace state {
 
 		struct NonHistoricalTraits {
 		public:
-			using Serializer = ExchangeEntryNonHistoricalSerializer;
 			static constexpr auto Entry_Size = Entry_Size_Without_History;
 
-			static void AssertBuffer(const ExchangeEntry& entry, const uint8_t* pData, VersionType version) {
-				AssertEntryBuffer(entry, pData, Entry_Size_Without_History, version, false);
+			static void AssertBuffer(const ExchangeEntry& entry, const uint8_t* pData) {
+				AssertEntryBuffer(entry, pData, Entry_Size_Without_History, false);
 			}
 
-			static std::vector<uint8_t> CreateBuffer(const ExchangeEntry& entry, VersionType version) {
-				return CreateEntryBuffer(entry, version, Entry_Size_Without_History, false);
+			static std::vector<uint8_t> CreateBuffer(const ExchangeEntry& entry) {
+				return CreateEntryBuffer(entry, Entry_Size_Without_History, false);
 			}
 
 			static void AdaptEntry(ExchangeEntry& entry) {
@@ -286,15 +286,14 @@ namespace catapult { namespace state {
 
 		struct HistoricalTraits {
 		public:
-			using Serializer = ExchangeEntrySerializer;
 			static constexpr auto Entry_Size = Entry_Size_With_History;
 
-			static void AssertBuffer(const ExchangeEntry& entry, const uint8_t* pData, VersionType version) {
-				AssertEntryBuffer(entry, pData, Entry_Size_With_History, version, true);
+			static void AssertBuffer(const ExchangeEntry& entry, const uint8_t* pData) {
+				AssertEntryBuffer(entry, pData, Entry_Size_With_History, true);
 			}
 
-			static std::vector<uint8_t> CreateBuffer(const ExchangeEntry& entry, VersionType version) {
-				return CreateEntryBuffer(entry, version, Entry_Size_With_History, true);
+			static std::vector<uint8_t> CreateBuffer(const ExchangeEntry& entry) {
+				return CreateEntryBuffer(entry, Entry_Size_With_History, true);
 			}
 
 			static void AdaptEntry(ExchangeEntry&) {
@@ -303,20 +302,22 @@ namespace catapult { namespace state {
 	}
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_NonHistorical) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<NonHistoricalTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Historical) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits>(); } \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+	template<typename TTraits, typename TSerializer> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version); \
+	TEST(TEST_CLASS, TEST_NAME##_NonHistorical_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntryNonHistoricalSerializer>(1); } \
+	TEST(TEST_CLASS, TEST_NAME##_Historical_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntrySerializer>(1); } \
+	TEST(TEST_CLASS, TEST_NAME##_NonHistorical_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<NonHistoricalTraits, ExchangeEntryNonHistoricalSerializer>(2); } \
+	TEST(TEST_CLASS, TEST_NAME##_Historical_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntrySerializer>(2); } \
+	template<typename TTraits, typename TSerializer> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version)
 
-	TRAITS_BASED_TEST(CanSaveSingleEntry_v1) {
-		AssertCanSaveSingleEntry<TTraits>(1);
+	TRAITS_BASED_TEST(CanSaveSingleEntry) {
+		AssertCanSaveSingleEntry<TTraits, TSerializer>(version);
 	}
 
-	TRAITS_BASED_TEST(CanSaveMultipleEntries_v1) {
-		AssertCanSaveMultipleEntries<TTraits>(1);
+	TRAITS_BASED_TEST(CanSaveMultipleEntries) {
+		AssertCanSaveMultipleEntries<TTraits, TSerializer>(version);
 	}
 
-	TRAITS_BASED_TEST(CanLoadSingleEntry_v1) {
-		AssertCanLoadSingleEntry<TTraits>(1);
+	TRAITS_BASED_TEST(CanLoadSingleEntry) {
+		AssertCanLoadSingleEntry<TTraits, TSerializer>(version);
 	}
 }}
