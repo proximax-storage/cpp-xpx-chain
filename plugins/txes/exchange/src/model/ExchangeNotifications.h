@@ -15,7 +15,7 @@ namespace catapult { namespace model {
 /// Defines an exchange notification type with \a DESCRIPTION, \a CODE and \a CHANNEL.
 #define DEFINE_EXCHANGE_NOTIFICATION(DESCRIPTION, CODE, CHANNEL) DEFINE_NOTIFICATION_TYPE(CHANNEL, Exchange, DESCRIPTION, CODE)
 
-	/// Offer.
+	/// Offer v1.
 	DEFINE_EXCHANGE_NOTIFICATION(Offer_v1, 0x001, All);
 
 	/// Exchange.
@@ -24,25 +24,21 @@ namespace catapult { namespace model {
 	/// Remove offer.
 	DEFINE_EXCHANGE_NOTIFICATION(Remove_Offer_v1, 0x003, All);
 
+	/// Offer v2.
+	DEFINE_EXCHANGE_NOTIFICATION(Offer_v2, 0x004, All);
+
 #undef DEFINE_EXCHANGE_NOTIFICATION
 
 	// endregion
 
-	/// Notification of an offer.
-	template<VersionType version>
-	struct OfferNotification;
-
-	template<>
-	struct OfferNotification<1> : public Notification {
+	struct BaseOfferNotification : public Notification {
 	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Exchange_Offer_v1_Notification;
-	public:
-		OfferNotification(
+		BaseOfferNotification(
+				NotificationType type,
 				const Key& owner,
 				uint8_t offerCount,
 				const OfferWithDuration* pOffers)
-			: Notification(Notification_Type, sizeof(OfferNotification<1>))
+			: Notification(type, sizeof(BaseOfferNotification))
 			, Owner(owner)
 			, OfferCount(offerCount)
 			, OffersPtr(pOffers)
@@ -57,6 +53,40 @@ namespace catapult { namespace model {
 
 		/// Offers.
 		const OfferWithDuration* OffersPtr;
+	};
+
+	/// Notification of an offer.
+	template<VersionType version>
+	struct OfferNotification;
+
+	template<>
+	struct OfferNotification<1> : public BaseOfferNotification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Exchange_Offer_v1_Notification;
+
+	public:
+		OfferNotification(
+				const Key& owner,
+				uint8_t offerCount,
+				const OfferWithDuration* pOffers)
+			: BaseOfferNotification(Notification_Type, owner, offerCount, pOffers)
+		{}
+	};
+
+	template<>
+	struct OfferNotification<2> : public BaseOfferNotification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Exchange_Offer_v2_Notification;
+
+	public:
+		OfferNotification(
+				const Key& owner,
+				uint8_t offerCount,
+				const OfferWithDuration* pOffers)
+			: BaseOfferNotification(Notification_Type, owner, offerCount, pOffers)
+		{}
 	};
 
 	/// Notification of an exchange.

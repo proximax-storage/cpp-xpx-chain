@@ -6,7 +6,6 @@
 
 #include "Observers.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "src/cache/ExchangeCache.h"
 
 namespace catapult { namespace observers {
 

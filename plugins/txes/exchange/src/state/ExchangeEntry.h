@@ -49,15 +49,22 @@ namespace catapult { namespace state {
 	// Exchange entry.
 	class ExchangeEntry {
 	public:
-		// Creates an exchange entry around \a owner.
-		ExchangeEntry(const Key& owner)
+		// Creates an exchange entry around \a owner and \a version.
+		ExchangeEntry(const Key& owner, VersionType version = Current_Version)
 			: m_owner(owner)
+			, m_version(version)
 		{}
 
 	public:
 		static constexpr Height Invalid_Expiry_Height = Height(0);
+		static constexpr VersionType Current_Version = 2;
 
 	public:
+		/// Gets the entry version.
+		VersionType version() const {
+			return m_version;
+		}
+
 		/// Gets the owner of the offers.
 		const Key& owner() const {
 			return m_owner;
@@ -135,6 +142,7 @@ namespace catapult { namespace state {
 
 	private:
 		Key m_owner;
+		VersionType m_version;
 		SellOfferMap m_sellOffers;
 		BuyOfferMap m_buyOffers;
 		ExpiredSellOfferMap m_expiredSellOffers;

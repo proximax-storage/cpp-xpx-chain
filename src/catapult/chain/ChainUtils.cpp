@@ -21,8 +21,6 @@
 #include "ChainUtils.h"
 #include "BlockDifficultyScorer.h"
 #include "BlockScorer.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/BlockUtils.h"
 
 namespace catapult { namespace chain {

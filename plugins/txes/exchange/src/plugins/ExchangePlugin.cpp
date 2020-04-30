@@ -49,14 +49,16 @@ namespace catapult { namespace plugins {
 
 		manager.addStatefulValidatorHook([](auto& builder) {
 			builder
-				.add(validators::CreateOfferValidator())
+				.add(validators::CreateOfferV1Validator())
+				.add(validators::CreateOfferV2Validator())
 				.add(validators::CreateExchangeValidator())
 				.add(validators::CreateRemoveOfferValidator());
 		});
 
 		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
-				.add(observers::CreateOfferObserver())
+				.add(observers::CreateOfferV1Observer())
+				.add(observers::CreateOfferV2Observer())
 				.add(observers::CreateExchangeObserver())
 				.add(observers::CreateRemoveOfferObserver(pConfigHolder->Config().Immutable.CurrencyMosaicId))
 				.add(observers::CreateCleanupOffersObserver());

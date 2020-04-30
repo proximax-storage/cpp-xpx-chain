@@ -171,13 +171,18 @@ namespace catapult { namespace state {
 			if (expiredOffers.count(height)) {
 				auto& expiredOffersAtHeight = expiredOffers.at(height);
 				for (auto iter = expiredOffersAtHeight.begin(); iter != expiredOffersAtHeight.end();) {
-					if (offers.count(iter->first))
-						CATAPULT_THROW_RUNTIME_ERROR_2("offer exists at height", iter->first, height);
-					offers.emplace(iter->first, iter->second);
-					action(offers.find(iter->first));
-					iter = expiredOffersAtHeight.erase(iter);
+					if (iter->second.Deadline == height) {
+						if (offers.count(iter->first))
+							CATAPULT_THROW_RUNTIME_ERROR_2("offer exists at height", iter->first, height);
+						offers.emplace(iter->first, iter->second);
+						action(offers.find(iter->first));
+						iter = expiredOffersAtHeight.erase(iter);
+					} else {
+						++iter;
+					}
 				}
-				expiredOffers.erase(height);
+				if (expiredOffersAtHeight.empty())
+					expiredOffers.erase(height);
 			}
 		}
 	}

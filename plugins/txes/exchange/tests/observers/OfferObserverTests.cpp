@@ -13,11 +13,11 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS OfferObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(Offer, )
+	DEFINE_COMMON_OBSERVER_TESTS(OfferV1, )
+	DEFINE_COMMON_OBSERVER_TESTS(OfferV2, )
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::ExchangeCacheFactory>;
-		using Notification = model::OfferNotification<1>;
 
 		struct OfferValues {
 		public:
@@ -31,8 +31,9 @@ namespace catapult { namespace observers {
 			std::vector<model::OfferWithDuration> Offers;
 		};
 
-		std::unique_ptr<Notification> CreateNotification(OfferValues& values) {
-			return std::make_unique<Notification>(
+		template<VersionType version>
+		std::unique_ptr<model::OfferNotification<version>> CreateNotification(OfferValues& values) {
+			return std::make_unique<model::OfferNotification<version>>(
 				values.Owner,
 				values.Offers.size(),
 				values.Offers.data());
@@ -43,20 +44,21 @@ namespace catapult { namespace observers {
 			return Height((duration.unwrap() < maxDeadline - currentHeight.unwrap()) ? currentHeight.unwrap() + duration.unwrap() : maxDeadline);
 		}
 
+		template<typename TTraits>
 		void RunTest(
 				NotifyMode mode,
-				const Notification& notification,
+				const model::OfferNotification<TTraits::Version>& notification,
 				bool entryExists,
 				const OfferValues& expectedValues) {
 			// Arrange:
 			Height currentHeight(1);
 			ObserverTestContext context(mode, currentHeight);
-			auto pObserver = CreateOfferObserver();
+			auto pObserver = TTraits::CreateObserver();
 			auto& delta = context.cache().sub<cache::ExchangeCache>();
 
 			if (NotifyMode::Rollback == mode) {
 				// Populate cache.
-				state::ExchangeEntry entry(notification.Owner);
+				state::ExchangeEntry entry(notification.Owner, TTraits::Version);
 				for (const auto& offer : expectedValues.Offers) {
 					auto mosaicId = context.observerContext().Resolvers.resolve(offer.Mosaic.MosaicId);
 					auto deadline = GetOfferDeadline(offer.Duration, context.observerContext().Height);
@@ -101,23 +103,43 @@ namespace catapult { namespace observers {
 				}
 			);
 		}
+
+		struct ObserverV1Traits {
+			static constexpr VersionType Version = 1;
+			static auto CreateObserver() {
+				return CreateOfferV1Observer();
+			}
+		};
+
+		struct ObserverV2Traits {
+			static constexpr VersionType Version = 2;
+			static auto CreateObserver() {
+				return CreateOfferV2Observer();
+			}
+		};
 	}
 
-	TEST(TEST_CLASS, Offer_Commit) {
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ObserverV1Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ObserverV2Traits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(Offer_Commit) {
 		// Arrange:
 		auto values = CreateOfferValues();
-		auto pNotification = CreateNotification(values);
+		auto pNotification = CreateNotification<TTraits::Version>(values);
 
 		// Assert:
-		RunTest(NotifyMode::Commit, *pNotification, true, values);
+		RunTest<TTraits>(NotifyMode::Commit, *pNotification, true, values);
 	}
 
-	TEST(TEST_CLASS, Offer_Rollback) {
+	TRAITS_BASED_TEST(Offer_Rollback) {
 		// Arrange:
 		auto values = CreateOfferValues();
-		auto pNotification = CreateNotification(values);
+		auto pNotification = CreateNotification<TTraits::Version>(values);
 
 		// Assert:
-		RunTest(NotifyMode::Rollback, *pNotification, false, values);
+		RunTest<TTraits>(NotifyMode::Rollback, *pNotification, false, values);
 	}
 }}

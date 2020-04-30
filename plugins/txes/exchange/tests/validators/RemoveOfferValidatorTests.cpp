@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 				const std::vector<model::OfferMosaic> offers = {},
 				const state::ExchangeEntry* pEntry = nullptr) {
 			// Arrange:
-			Height currentHeight(1);
+			Height currentHeight(10);
 			auto cache = test::ExchangeCacheFactory::Create();
 			if (pEntry) {
 				auto delta = cache.createDelta();
@@ -79,6 +79,24 @@ namespace catapult { namespace validators {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
 		state::ExchangeEntry entry(offerOwner);
+		entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(20)}});
+		entry.buyOffers().emplace(MosaicId(1), state::BuyOffer{state::OfferBase{Amount(20), Amount(20), Amount(200), Height(20)}, Amount(100)});
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Exchange_Duplicated_Offer_In_Request,
+			offerOwner,
+			{
+				model::OfferMosaic{test::UnresolveXor(MosaicId(1)), TTraits::OfferType},
+				model::OfferMosaic{test::UnresolveXor(MosaicId(1)), TTraits::OfferType},
+			},
+			&entry);
+	}
+
+	TRAITS_BASED_TEST(FailureWhenOfferNotFound) {
+		// Arrange:
+		auto offerOwner = test::GenerateRandomByteArray<Key>();
+		state::ExchangeEntry entry(offerOwner);
 
 		// Assert:
 		AssertValidationResult(
@@ -90,12 +108,48 @@ namespace catapult { namespace validators {
 			&entry);
 	}
 
+	TRAITS_BASED_TEST(FailureWhenOfferExpired) {
+		// Arrange:
+		auto offerOwner = test::GenerateRandomByteArray<Key>();
+		state::ExchangeEntry entry(offerOwner);
+		entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(10)}});
+		entry.buyOffers().emplace(MosaicId(1), state::BuyOffer{state::OfferBase{Amount(20), Amount(20), Amount(200), Height(10)}, Amount(100)});
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Exchange_Offer_Expired,
+			offerOwner,
+			{
+				model::OfferMosaic{test::UnresolveXor(MosaicId(1)), TTraits::OfferType},
+			},
+			&entry);
+	}
+
+	TRAITS_BASED_TEST(FailureWhenOfferAlreadyRemovedAtHeight) {
+		// Arrange:
+		auto offerOwner = test::GenerateRandomByteArray<Key>();
+		state::ExchangeEntry entry(offerOwner);
+		entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(20)}});
+		entry.buyOffers().emplace(MosaicId(1), state::BuyOffer{state::OfferBase{Amount(20), Amount(20), Amount(200), Height(20)}, Amount(100)});
+		entry.expiredSellOffers()[Height(10)].emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(20)}});
+		entry.expiredBuyOffers()[Height(10)].emplace(MosaicId(1), state::BuyOffer{state::OfferBase{Amount(20), Amount(20), Amount(200), Height(20)}, Amount(100)});
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Exchange_Cant_Remove_Offer_At_Height,
+			offerOwner,
+			{
+				model::OfferMosaic{test::UnresolveXor(MosaicId(1)), TTraits::OfferType},
+			},
+			&entry);
+	}
+
 	TEST(TEST_CLASS, Success) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
 		state::ExchangeEntry entry(offerOwner);
-		entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(1)}});
-		entry.buyOffers().emplace(MosaicId(2), state::BuyOffer{state::OfferBase{Amount(20), Amount(20), Amount(200), Height(1)}, Amount(100)});
+		entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(20)}});
+		entry.buyOffers().emplace(MosaicId(2), state::BuyOffer{state::OfferBase{Amount(20), Amount(20), Amount(200), Height(20)}, Amount(100)});
 
 		// Assert:
 		AssertValidationResult(
