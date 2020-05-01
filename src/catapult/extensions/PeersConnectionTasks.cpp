@@ -63,7 +63,7 @@ namespace catapult { namespace extensions {
 				cache::ImportanceView importanceView(readOnlyAccountStateCache);
 				return ImportanceDescriptor{
 					importanceView.getAccountImportanceOrDefault(publicKey, cacheView.height()),
-					state.config(state.cache().height()).Network.TotalChainImportance
+					state.config().Network.TotalChainImportance
 				};
 			})
 	{}

@@ -21,7 +21,7 @@ namespace catapult { namespace test {
 	state::OfferBase GenerateOffer();
 
 	/// Creates test exchange entry.
-	state::ExchangeEntry CreateExchangeEntry(uint8_t offerCount = 5, uint8_t expiredOfferCount = 5, Key key = test::GenerateRandomByteArray<Key>());
+	state::ExchangeEntry CreateExchangeEntry(uint8_t offerCount = 5, uint8_t expiredOfferCount = 5, Key key = test::GenerateRandomByteArray<Key>(), VersionType version = 1);
 
 	/// Verifies that \a offer1 is equivalent to \a offer2.
 	void AssertOffer(const model::Offer& offer1, const model::Offer& offer2);
@@ -34,10 +34,10 @@ namespace catapult { namespace test {
 
     /// Creates an exchange transaction with \a offers.
     template<typename TTransaction, typename TOffer>
-	model::UniqueEntityPtr<TTransaction> CreateExchangeTransaction(std::initializer_list<TOffer> offers) {
+	model::UniqueEntityPtr<TTransaction> CreateExchangeTransaction(std::initializer_list<TOffer> offers, VersionType version = 1) {
         uint32_t entitySize = sizeof(TTransaction) + offers.size() * sizeof(TOffer);
         auto pTransaction = utils::MakeUniqueWithSize<TTransaction>(entitySize);
-		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, 1);
+		pTransaction->Version = model::MakeVersion(model::NetworkIdentifier::Mijin_Test, version);
 		pTransaction->Signer = test::GenerateRandomByteArray<Key>();
         pTransaction->Size = entitySize;
 		pTransaction->OfferCount = offers.size();

@@ -6,7 +6,6 @@
 
 #include "ExchangeEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
-#include "catapult/exceptions.h"
 #include "catapult/utils/Casting.h"
 
 namespace catapult { namespace state {
@@ -50,19 +49,29 @@ namespace catapult { namespace state {
 				WriteBuyOffers(pair.second, output);
 			}
 		}
+
+		void SaveExchangeEntry(const ExchangeEntry& entry, io::OutputStream& output, bool saveExpiredOffers = true) {
+			// write version
+			io::Write32(output, entry.version());
+
+			io::Write(output, entry.owner());
+
+			WriteSellOffers(entry.sellOffers(), output);
+			WriteBuyOffers(entry.buyOffers(), output);
+
+			if (saveExpiredOffers) {
+				WriteExpiredSellOffers(entry.expiredSellOffers(), output);
+				WriteExpiredBuyOffers(entry.expiredBuyOffers(), output);
+			}
+		}
+	}
+
+	void ExchangeEntryNonHistoricalSerializer::Save(const ExchangeEntry& entry, io::OutputStream& output) {
+		SaveExchangeEntry(entry, output, (1 == entry.version()));
 	}
 
 	void ExchangeEntrySerializer::Save(const ExchangeEntry& entry, io::OutputStream& output) {
-		// write version
-		io::Write32(output, 1);
-
-		io::Write(output, entry.owner());
-
-		WriteSellOffers(entry.sellOffers(), output);
-		WriteBuyOffers(entry.buyOffers(), output);
-
-		WriteExpiredSellOffers(entry.expiredSellOffers(), output);
-		WriteExpiredBuyOffers(entry.expiredBuyOffers(), output);
+		SaveExchangeEntry(entry, output);
 	}
 
 	namespace {
@@ -114,24 +123,34 @@ namespace catapult { namespace state {
 				offers.emplace(height, expiredOffers);
 			}
 		}
+
+		ExchangeEntry LoadExchangeEntry(io::InputStream& input, const predicate<VersionType>& loadExpiredOffers) {
+			// read version
+			VersionType version = io::Read32(input);
+			if (version > 2)
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ExchangeEntry", version);
+
+			Key owner;
+			io::Read(input, owner);
+			state::ExchangeEntry entry(owner, version);
+
+			ReadSellOffers(entry.sellOffers(), input);
+			ReadBuyOffers(entry.buyOffers(), input);
+
+			if (loadExpiredOffers(version)) {
+				ReadExpiredSellOffers(entry.expiredSellOffers(), input);
+				ReadExpiredBuyOffers(entry.expiredBuyOffers(), input);
+			}
+
+			return entry;
+		}
+	}
+
+	ExchangeEntry ExchangeEntryNonHistoricalSerializer::Load(io::InputStream& input) {
+		return LoadExchangeEntry(input, [](auto version) { return (1 == version); });
 	}
 
 	ExchangeEntry ExchangeEntrySerializer::Load(io::InputStream& input) {
-		// read version
-		VersionType version = io::Read32(input);
-		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ExchangeEntry", version);
-
-		Key owner;
-		io::Read(input, owner);
-		state::ExchangeEntry entry(owner);
-
-		ReadSellOffers(entry.sellOffers(), input);
-		ReadBuyOffers(entry.buyOffers(), input);
-
-		ReadExpiredSellOffers(entry.expiredSellOffers(), input);
-		ReadExpiredBuyOffers(entry.expiredBuyOffers(), input);
-
-		return entry;
+		return LoadExchangeEntry(input, [](auto) { return true; });
 	}
 }}

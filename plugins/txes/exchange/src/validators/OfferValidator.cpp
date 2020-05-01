@@ -6,18 +6,16 @@
 
 #include "Validators.h"
 #include "src/cache/ExchangeCache.h"
-#include "src/config/ExchangeConfiguration.h"
 
 namespace catapult { namespace validators {
 
-	using Notification = model::OfferNotification<1>;
-
-	DECLARE_STATEFUL_VALIDATOR(Offer, Notification)() {
-		return MAKE_STATEFUL_VALIDATOR(Offer, [](const Notification& notification, const ValidatorContext& context) {
+	namespace {
+		template<VersionType version>
+		ValidationResult OfferValidator(const model::OfferNotification<version> &notification, const ValidatorContext &context) {
 			if (notification.OfferCount == 0)
 				return Failure_Exchange_No_Offers;
 
-            const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::ExchangeConfiguration>();
+			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::ExchangeConfiguration>();
 
 			std::set<MosaicId> offeredMosaicIds;
 			auto* pOffer = notification.OffersPtr;
@@ -44,21 +42,24 @@ namespace catapult { namespace validators {
 					return Failure_Exchange_Mosaic_Not_Allowed;
 			}
 
-            const auto& cache = context.Cache.sub<cache::ExchangeCache>();
+			const auto& cache = context.Cache.sub<cache::ExchangeCache>();
 
-            if (!cache.contains(notification.Owner))
-                return ValidationResult::Success;
+			if (!cache.contains(notification.Owner))
+				return ValidationResult::Success;
 
-            auto iter = cache.find(notification.Owner);
-            const auto& entry = iter.get();
-            pOffer = notification.OffersPtr;
-            for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
-                auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
-                if (entry.offerExists(pOffer->Type, mosaicId))
-                    return Failure_Exchange_Offer_Exists;
-            }
+			auto iter = cache.find(notification.Owner);
+			const auto& entry = iter.get();
+			pOffer = notification.OffersPtr;
+			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
+				auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
+				if (entry.offerExists(pOffer->Type, mosaicId))
+					return Failure_Exchange_Offer_Exists;
+			}
 
 			return ValidationResult::Success;
-		})
+		}
 	}
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(OfferV1, model::OfferNotification<1>, OfferValidator<1>)
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(OfferV2, model::OfferNotification<2>, OfferValidator<2>)
 }}

@@ -15,14 +15,14 @@
 namespace catapult { namespace cache {
 
 	using BasicExchangePatriciaTree = tree::BasePatriciaTree<
-		SerializerHashedKeyEncoder<ExchangeCacheDescriptor::Serializer>,
+		SerializerHashedKeyEncoder<ExchangeEntryPatriciaTreeSerializer>,
 		PatriciaTreeRdbDataSource,
 		utils::ArrayHasher<Key>>;
 
 	class ExchangePatriciaTree : public BasicExchangePatriciaTree {
 	public:
 		using BasicExchangePatriciaTree::BasicExchangePatriciaTree;
-		using Serializer = ExchangeCacheDescriptor::Serializer;
+		using Serializer = ExchangeEntryPatriciaTreeSerializer;
 	};
 
 	struct ExchangeBaseSetDeltaPointers {

@@ -72,7 +72,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		bson_stream::document builder;
 		auto doc = builder << "exchange" << bson_stream::open_document
 				<< "owner" << ToBinary(entry.owner())
-				<< "ownerAddress" << ToBinary(ownerAddress);
+				<< "ownerAddress" << ToBinary(ownerAddress)
+				<< "version" << static_cast<int32_t>(entry.version());
 
 		StreamBuyOffers(builder, entry.buyOffers());
 		StreamSellOffers(builder, entry.sellOffers());
@@ -144,7 +145,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto dbExchangeEntry = document["exchange"];
 		Key owner;
 		DbBinaryToModelArray(owner, dbExchangeEntry["owner"].get_binary());
-		state::ExchangeEntry entry(owner);
+		auto version = ToUint32(dbExchangeEntry["version"].get_int32());
+		state::ExchangeEntry entry(owner, version);
 
 		ReadBuyOffers(dbExchangeEntry["buyOffers"].get_array().value, entry.buyOffers());
 		ReadSellOffers(dbExchangeEntry["sellOffers"].get_array().value, entry.sellOffers());

@@ -174,6 +174,7 @@ namespace catapult { namespace state {
 
 		// Assert:
 		EXPECT_EQ(owner, entry.owner());
+		EXPECT_EQ(2, entry.version());
 	}
 
 	TRAITS_BASED_TEST(CanAccessOffers) {
@@ -402,13 +403,17 @@ namespace catapult { namespace state {
 		entry.buyOffers().emplace(MosaicId(1), BuyOffer{ { Amount(10), Amount(10), Amount(100), Height(3) }, Amount(100) });
 		entry.sellOffers().emplace(MosaicId(4), SellOffer{ { Amount(40), Amount(40), Amount(400), Height(1) } });
 		entry.expiredSellOffers()[Height(2)].emplace(MosaicId(2), SellOffer{ { Amount(20), Amount(20), Amount(200), Height(2) } });
+		entry.expiredSellOffers()[Height(2)].emplace(MosaicId(3), SellOffer{ { Amount(20), Amount(20), Amount(200), Height(3) } });
 		entry.expiredBuyOffers()[Height(2)].emplace(MosaicId(3), BuyOffer{ { Amount(30), Amount(30), Amount(300), Height(2) }, Amount(300) });
+		entry.expiredBuyOffers()[Height(2)].emplace(MosaicId(4), BuyOffer{ { Amount(30), Amount(30), Amount(300), Height(3) }, Amount(300) });
 
 		auto expectedEntry = ExchangeEntry(Key());
 		expectedEntry.buyOffers().emplace(MosaicId(1), BuyOffer{ { Amount(10), Amount(10), Amount(100), Height(3) }, Amount(100) });
 		expectedEntry.sellOffers().emplace(MosaicId(2), SellOffer{ { Amount(20), Amount(20), Amount(200), Height(2) } });
 		expectedEntry.buyOffers().emplace(MosaicId(3), BuyOffer{ { Amount(30), Amount(30), Amount(300), Height(2) }, Amount(300) });
 		expectedEntry.sellOffers().emplace(MosaicId(4), SellOffer{ { Amount(40), Amount(40), Amount(400), Height(1) } });
+		expectedEntry.expiredSellOffers()[Height(2)].emplace(MosaicId(3), SellOffer{ { Amount(20), Amount(20), Amount(200), Height(3) } });
+		expectedEntry.expiredBuyOffers()[Height(2)].emplace(MosaicId(4), BuyOffer{ { Amount(30), Amount(30), Amount(300), Height(3) }, Amount(300) });
 
 		// Act:
 		entry.unexpireOffers(
