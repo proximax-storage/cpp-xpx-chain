@@ -10,33 +10,89 @@
 #include "catapult/exceptions.h"
 
 namespace catapult { namespace state {
+	
+	namespace {
+		void WriteLevyData(io::OutputStream &output, const state::LevyEntryData &levy) {
+			
+			io::Write16(output, utils::to_underlying_type(levy.Type));
+			output.write(levy.Recipient);
+			io::Write(output, levy.MosaicId);
+			io::Write(output, levy.Fee);
+		}
 		
-	void LevyEntrySerializer::Save(const LevyEntry& entry, io::OutputStream& output) {
-		// write version
-		io::Write32(output, 1);
+		LevyEntryData ReadLevyData(io::InputStream &input) {
+			Address recipient;
+			model::LevyType type = (model::LevyType)io::Read16(input);
+			input.read(recipient);
+			MosaicId mosaicId = io::Read<MosaicId>(input);
+			Amount fee = io::Read<Amount>(input);
+			return LevyEntryData(type, recipient, mosaicId, fee);
+		}
 		
-		io::Write(output, entry.mosaicId());
 		
-		io::Write16(output, utils::to_underlying_type(entry.levy().Type));
-		output.write(entry.levy().Recipient);
-		io::Write(output, entry.levy().MosaicId);
-		io::Write(output, entry.levy().Fee);
+		void SaveLevyEntry(const LevyEntry &entry, io::OutputStream &output, bool includeHistory = true) {
+			// write version
+			io::Write32(output, 1);
+			io::Write(output, entry.mosaicId());
+			
+			if (entry.levy() != nullptr) {
+				io::Write8(output, 1);
+				WriteLevyData(output, *entry.levy());
+			} else {
+				io::Write8(output, 0);
+			}
+
+			if (includeHistory) {
+				io::Write16(output, utils::checked_cast<size_t, uint16_t>(entry.updateHistories().size()));
+				auto history = entry.updateHistories();
+				for (const auto &pair : history) {
+					io::Write(output, pair.first);
+					WriteLevyData(output, pair.second);
+				}
+			}
+		}
+		
+		LevyEntry LoadLevyEntry(io::InputStream& input, bool loadHistory = true) {
+			// read version
+			VersionType version = io::Read32(input);
+			if (version > 1)
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of LevyEntry", version);
+			
+			auto mosaicId = io::Read<MosaicId>(input);
+			auto levyExist = io::Read8(input);
+			std::shared_ptr<LevyEntryData> pLevy(nullptr);
+			
+			if(levyExist)
+				pLevy = std::make_shared<LevyEntryData>(ReadLevyData(input));
+			
+			state::LevyEntry entry(mosaicId, pLevy);
+			
+			if(loadHistory) {
+				uint16_t count = io::Read16(input);
+				for(auto i=0; i < count; i++) {
+					auto height = io::Read<Height>(input);
+					auto levyData = ReadLevyData(input);
+					entry.updateHistories().emplace(height, levyData);
+				}
+			}
+			
+			return entry;
+		}
 	}
-		
+	
+	void LevyEntrySerializer::Save(const LevyEntry& entry, io::OutputStream& output) {
+		SaveLevyEntry(entry, output);
+	}
+	
+	void LevyEntryNonHistoricalSerializer::Save(const LevyEntry& entry, io::OutputStream& output) {
+		SaveLevyEntry(entry, output, false);
+	}
+	
 	LevyEntry LevyEntrySerializer::Load(io::InputStream& input) {
-		// read version
-		VersionType version = io::Read32(input);
-		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of LevyEntry", version);
-		
-		auto mosaicId = io::Read<MosaicId>(input);
-		
-		model::MosaicLevy levy;
-		levy.Type = (model::LevyType)io::Read16(input);
-		input.read(levy.Recipient);
-		levy.MosaicId = io::Read<MosaicId>(input);
-		levy.Fee = io::Read<Amount>(input);
-		
-		return state::LevyEntry(mosaicId, levy);
+		return LoadLevyEntry(input);
+	}
+	
+	LevyEntry LevyEntryNonHistoricalSerializer::Load(io::InputStream& input) {
+		return LoadLevyEntry(input, false);
 	}
 }}

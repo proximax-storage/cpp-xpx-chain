@@ -20,9 +20,8 @@ namespace catapult { namespace test {
 
 		utils::MosaicLevyCalculatorFactory factory;
 		auto  result = factory.getCalculator(model::LevyType::None)(amount, levyFee );
-
-		EXPECT_EQ(Amount(100), result.finalAmount);
-		EXPECT_EQ(Amount(0), result.levyAmount);
+		
+		EXPECT_EQ(Amount(0), result);
 	}
 
 	TEST(TEST_CLASS, CalculatorTestAbsolute) {
@@ -31,9 +30,8 @@ namespace catapult { namespace test {
 
 		utils::MosaicLevyCalculatorFactory factory;
 		auto  result = factory.getCalculator(model::LevyType::Absolute)(amount, levyFee );
-
-		EXPECT_EQ(Amount(50), result.finalAmount);
-		EXPECT_EQ(Amount(50), result.levyAmount);
+		
+		EXPECT_EQ(Amount(50), result);
 	}
 
 	TEST(TEST_CLASS, CalculatorTestPercentile) {
@@ -42,20 +40,17 @@ namespace catapult { namespace test {
 
 		utils::MosaicLevyCalculatorFactory factory;
 		auto  result = factory.getCalculator(model::LevyType::Percentile)(amount, levyFee );
-
-		EXPECT_EQ(Amount(985), result.finalAmount);
-		EXPECT_EQ(Amount(15), result.levyAmount);
+		
+		EXPECT_EQ(Amount(15), result);
 		
 		levyFee = test::CreateMosaicLevyFeePercentile(50);                          // 50%  levy fee
 		result = factory.getCalculator(model::LevyType::Percentile)(amount, levyFee );
-			
-		EXPECT_EQ(Amount(500), result.finalAmount);
-		EXPECT_EQ(Amount(500), result.levyAmount);
+		
+		EXPECT_EQ(Amount(500), result);
 			
 		levyFee = test::CreateMosaicLevyFeePercentile(0.125);                         // 0.125%  levy fee
 		result = factory.getCalculator(model::LevyType::Percentile)(amount, levyFee );
-			
-		EXPECT_EQ(Amount(999), result.finalAmount);     // should be 998.75 but decinal place cut off
-		EXPECT_EQ(Amount(1), result.levyAmount);        // should be 1.25 but decimal place cut off
+		
+		EXPECT_EQ(Amount(1), result);        // should be 1.25 but decimal place cut off
 	}
 }}

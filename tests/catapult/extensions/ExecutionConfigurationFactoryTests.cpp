@@ -46,6 +46,7 @@ namespace catapult { namespace extensions {
 			"SourceChangeObserver",
 			"AccountAddressObserver",
 			"BalanceTransferObserver",
+			"BalanceLevyTransferObserver",
 			"HarvestFeeObserver",
 			"TotalTransactionsObserver",
 			"SnapshotCleanUpObserver",

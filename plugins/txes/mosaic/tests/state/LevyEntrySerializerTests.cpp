@@ -13,89 +13,256 @@ namespace catapult { namespace state {
 
 #define TEST_CLASS LevyEntrySerializerTests
 		
-		// region headers
+	// region headers
 
-#pragma pack(push, 1)
+	namespace {
 		
-		namespace {
-			struct LevyEntryHeader {
-				VersionType Version;
-				catapult::MosaicId MosaicId;
-				model::MosaicLevy Levy;
-			};
+		constexpr size_t History_Count = 1;
+		constexpr auto LevyDataEntry_Size =
+			sizeof(model::LevyType)
+			+ Address_Decoded_Size
+			+ sizeof(uint64_t)
+			+ sizeof(uint64_t);
+		
+		constexpr auto Entry_Size_With_History =
+			sizeof(VersionType)
+			+ sizeof(uint64_t)
+			+ sizeof(uint8_t)
+			+ LevyDataEntry_Size
+			+ sizeof(uint16_t);
+		
+		constexpr auto Entry_Size_Without_History =
+			sizeof(VersionType)
+			+ sizeof(uint64_t)
+			+ sizeof(uint8_t)
+			+ LevyDataEntry_Size;
+
+		void WriteLevyData(const LevyEntryData& entryData, uint8_t*& pData) {
 			
-			void AssertEntryHeader(
-				const std::vector<uint8_t>& buffer,
-				VersionType version,
-				MosaicId mosaicId,
-				model::MosaicLevy levy) {
-				auto message = "entry header at 0";
-				const auto& entryHeader = reinterpret_cast<const LevyEntryHeader&>(buffer[0]);
+			memcpy(pData, &entryData.Type, sizeof(model::LevyType));
+			pData += sizeof(model::LevyType);
+			
+			memcpy(pData, entryData.Recipient.data(), Address_Decoded_Size);
+			pData += Address_Decoded_Size;
+			
+			auto value = entryData.MosaicId.unwrap();
+			memcpy(pData, &value, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
+			
+			value = entryData.Fee.unwrap();
+			memcpy(pData, &value, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
+			
+		}
+
+		std::vector<uint8_t> CreateEntryBuffer(const LevyEntry& entry, size_t expectedSize, bool writeHistory) {
+			std::vector<uint8_t> buffer(expectedSize);
+			auto* pData = buffer.data();
+			auto version = 1;
+			memcpy(pData, &version, sizeof(VersionType));
+			pData += sizeof(VersionType);
+			
+			auto value = entry.mosaicId().unwrap();
+			memcpy(pData, &value, sizeof(uint64_t));
+			pData += sizeof(uint64_t);
+			
+			uint8_t flag = 0;
+			if(entry.levy()) {
+				flag = 1;
+				memcpy(pData, &flag, sizeof(uint8_t));
+				pData += sizeof(uint8_t);
 				
-				// - id and supply
-				EXPECT_EQ(version, entryHeader.Version) << message;
-				EXPECT_EQ(mosaicId, entryHeader.MosaicId) << message;
-				
-				EXPECT_EQ(entryHeader.Levy.Type, levy.Type);
-				EXPECT_EQ(entryHeader.Levy.Fee, levy.Fee);
-				EXPECT_EQ(entryHeader.Levy.Recipient, levy.Recipient);
-				EXPECT_EQ(entryHeader.Levy.MosaicId, levy.MosaicId);
+				WriteLevyData(*entry.levy(), pData);
+			}else{
+				memcpy(pData, &flag, sizeof(uint8_t));
+				pData += sizeof(uint8_t);
+			}
+			
+			if (writeHistory) {
+				auto size = utils::checked_cast<size_t, uint16_t>(entry.updateHistories().size());
+				memcpy(pData, &size, sizeof(uint16_t));
+				pData += sizeof(uint16_t);
+				if( size > 0) {
+					for (const auto &pair : entry.updateHistories()) {
+						auto height = pair.first.unwrap();
+						memcpy(pData, &height, sizeof(uint64_t));
+						pData += sizeof(uint64_t);
+						WriteLevyData(pair.second, pData);
+					}
+				}
+			}
+			
+			return buffer;
+		}
+
+		void AssertLevyData(
+			const state::LevyEntryData& rhs,
+			const state::LevyEntryData& lhs) {
+
+			EXPECT_EQ(rhs.Type, lhs.Type);
+			EXPECT_EQ(rhs.Fee, lhs.Fee);
+			EXPECT_EQ(rhs.Recipient, lhs.Recipient);
+			EXPECT_EQ(rhs.MosaicId, lhs.MosaicId);
+		}
+
+		template<std::size_t N>
+		std::array<uint8_t, N> Extract(const uint8_t* data) {
+			std::array<uint8_t, N> buffer = { 0 };
+			memcpy(buffer.data(), data, N);
+			return buffer;
+		}
+		
+		void AssertLevyEntry(const state::LevyEntryData& data, const uint8_t*& pData) {
+			EXPECT_EQ(data.Type, *reinterpret_cast<const model::LevyType*>(pData));
+			pData += sizeof(model::LevyType);
+			
+			std::array<uint8_t, Address_Decoded_Size> recipient = { 0 };
+			memcpy(recipient.data(), pData, Address_Decoded_Size);
+			
+			EXPECT_EQ(data.Recipient, recipient);
+			pData += Address_Decoded_Size;
+			
+			EXPECT_EQ(data.MosaicId.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+			
+			EXPECT_EQ(data.Fee.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+		}
+
+		void AssertLevyEntry(
+			const state::LevyEntry& rhs,
+			const state::LevyEntry& lhs,
+			bool withHistory = false) {
+			
+			EXPECT_EQ(rhs.mosaicId(), lhs.mosaicId());
+			
+			if (rhs.levy() && lhs.levy()) {
+				AssertLevyData(*rhs.levy(), *lhs.levy());
+		    } else {
+				EXPECT_EQ(rhs.levy(), nullptr);
+				EXPECT_EQ(lhs.levy(), nullptr);
+			}
+			
+			if(!withHistory) {
+				EXPECT_EQ(rhs.updateHistories().size(), 0);
+				return;
+			}
+			
+			EXPECT_EQ(rhs.updateHistories().size(), lhs.updateHistories().size());
+			for (const auto& pair : rhs.updateHistories()) {
+				AssertLevyData(pair.second, lhs.updateHistories().find(pair.first)->second);
 			}
 		}
 
-#pragma pack(pop)
-		
-		// endregion
-		
-		// region Save
-		
-		TEST(TEST_CLASS, CanSaveEntry) {
-			// Arrange:
+		void AssertEntryBuffer(const LevyEntry& entry, const uint8_t* pData, size_t expectedSize, bool assertLevyData, bool assertHistory) {
+			const auto* pExpectedEnd = pData + expectedSize;
+			
+			EXPECT_EQ(1, *reinterpret_cast<const VersionType*>(pData));
+			pData += sizeof(VersionType);
+			
+			EXPECT_EQ(entry.mosaicId().unwrap(), *reinterpret_cast<const uint64_t*>(pData));
+			pData += sizeof(uint64_t);
+			
+			EXPECT_EQ(entry.levy()? 1:0, *reinterpret_cast<const uint8_t*>(pData));
+			pData += sizeof(uint8_t);
+			
+			if(assertLevyData && entry.levy()) {
+				AssertLevyEntry(*entry.levy(), pData);
+			}
+			
+			if(assertHistory)  {
+				EXPECT_EQ(entry.updateHistories().size(), *reinterpret_cast<const uint16_t*>(pData));
+				pData += sizeof(uint16_t);
+				
+				if( entry.updateHistories().size() > 0) {
+					for (const auto &pair : entry.updateHistories()) {
+						EXPECT_EQ(pair.first.unwrap(), *reinterpret_cast<const uint64_t *>(pData));
+						pData += sizeof(uint64_t);
+						
+						AssertLevyEntry(pair.second, pData);
+					}
+				}
+			}
+			
+			EXPECT_EQ(pExpectedEnd, pData);
+		}
+	}
+	
+	// endregion
+	
+	// region Save
+	namespace {
+		template<typename TSerializer>
+		void SerializerSaveTest(bool withLevy,  bool withHistoryEntry, bool writeHistory = true) {
+			
 			std::vector<uint8_t> buffer;
 			mocks::MockMemoryStream stream(buffer);
-			auto levy = test::CreateValidMosaicLevy();
-			auto entry = LevyEntry(MosaicId(123), levy);
+			auto entry = test::CreateLevyEntry(withLevy, withHistoryEntry);
+			size_t size = writeHistory? Entry_Size_With_History +
+				(entry.updateHistories().size() * (sizeof(uint64_t) + LevyDataEntry_Size))
+				: Entry_Size_Without_History;
+			
+			if(!withLevy)
+				size -= LevyDataEntry_Size;
 			
 			// Act:
-			LevyEntrySerializer::Save(entry, stream);
+			TSerializer::Save(entry, stream);
 			
 			// Assert:
-			AssertEntryHeader(buffer, VersionType{1}, MosaicId(123), levy);
+			AssertEntryBuffer(entry, buffer.data(), size, withLevy, writeHistory);
 		}
-		
-		// endregion
-		
-		// region Load
-		
-		namespace {
-			void AssertLevyEntry(
-				const state::LevyEntry& entry,
-				MosaicId mosaicId,
-				model::MosaicLevy levy) {
-				auto message = "entry " + std::to_string(entry.mosaicId().unwrap());
-				
-				// - entry
-				EXPECT_EQ(mosaicId, entry.mosaicId()) << message;
-				EXPECT_EQ(entry.levy().Type, levy.Type);
-				EXPECT_EQ(entry.levy().Fee, levy.Fee);
-				EXPECT_EQ(entry.levy().Recipient, levy.Recipient);
-				EXPECT_EQ(entry.levy().MosaicId, levy.MosaicId);
+	}
+	
+	TEST(TEST_CLASS, CanSaveEntry) {
+		bool withLevy = true;
+		for(auto i = 0; i < 2; i++) {
+			bool withHistory = true;
+			for(auto j = 0; j < 2; j++) {
+				SerializerSaveTest<LevyEntrySerializer>(withLevy, withHistory);
+				SerializerSaveTest<LevyEntryNonHistoricalSerializer>(withLevy, withHistory,false);
+				withHistory = !withHistory;
 			}
+			withLevy = !withLevy;
 		}
-		
-		TEST(TEST_CLASS, CanLoadEntry) {
-			// Arrange:
-			std::vector<uint8_t> buffer(sizeof(LevyEntryHeader));
-			auto levy = test::CreateValidMosaicLevy();
-			reinterpret_cast<LevyEntryHeader&>(buffer[0]) = { VersionType{1}, MosaicId(123), {levy.Type, levy.Recipient, levy.MosaicId, levy.Fee}};
+	}
+	// endregion
+
+	// region Load
+	namespace {
+		template<typename TSerializer>
+		void SerializerLoadTest(bool withLevy, bool withHistoryEntry, bool bufferWithHistory = true) {
+			
+			auto inputEntry = test::CreateLevyEntry(withLevy, withHistoryEntry);
+			
+			size_t size = bufferWithHistory? Entry_Size_With_History +
+				(inputEntry.updateHistories().size() * (sizeof(uint64_t) + LevyDataEntry_Size))
+			    : Entry_Size_Without_History;
+			
+			if(!withLevy)
+				size -= LevyDataEntry_Size;
+			
+			std::vector<uint8_t>  buffer = CreateEntryBuffer(inputEntry, size, bufferWithHistory);
 			mocks::MockMemoryStream stream(buffer);
 			
 			// Act:
-			auto entry = LevyEntrySerializer::Load(stream);
+			auto entry = TSerializer::Load(stream);
 			
 			// Assert:
-			AssertLevyEntry(entry, MosaicId(123), levy);
+			AssertLevyEntry(entry, inputEntry, bufferWithHistory);
 		}
-		
-		// endregion
-	}}
+	}
+	
+	TEST(TEST_CLASS, CanLoadEntry) {
+		bool withLevy = true;
+		for(auto i = 0; i < 2; i++) {
+			bool withHistoryEntry = true;
+			for(auto j = 0; j < 2; j++) {
+				SerializerLoadTest<LevyEntrySerializer>(withLevy, withHistoryEntry);
+				SerializerLoadTest<LevyEntryNonHistoricalSerializer>(withLevy, withHistoryEntry, false);
+				withHistoryEntry = !withHistoryEntry;
+			}
+			withLevy = !withLevy;
+		}
+	}
+	// endregion
+}}

@@ -49,6 +49,7 @@ namespace catapult { namespace plugins {
 		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::MosaicConfiguration>();
 		});
+		
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
@@ -59,7 +60,7 @@ namespace catapult { namespace plugins {
 				std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));
 		
 		manager.addCacheSupport<cache::LevyCacheStorage>(
-			std::make_unique<cache::LevyCache>(manager.cacheConfig(cache::LevyCache::Name)));
+			std::make_unique<cache::LevyCache>(manager.cacheConfig(cache::LevyCache::Name), pConfigHolder));
 
 		using CacheHandlersMosaic = CacheHandlers<cache::MosaicCacheDescriptor>;
 		CacheHandlersMosaic::Register<model::FacilityCode::Mosaic>(manager);
@@ -87,8 +88,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMaxMosaicsSupplyChangeValidator())
 				// note that the following validator depends on MosaicChangeAllowedValidator
 				.add(validators::CreateMosaicSupplyChangeAllowedValidator())
-				.add(validators::CreateAddLevyValidator())
-				.add(validators::CreateUpdateLevyValidator())
+				.add(validators::CreateModifyLevyValidator())
 				.add(validators::CreateRemoveLevyValidator());
 		});
 
@@ -100,44 +100,82 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateMosaicSupplyChangeObserver())
 				.add(observers::CreateRentalFeeObserver<model::MosaicRentalFeeNotification<1>>("Mosaic", rentalFeeReceiptType))
 				.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic", expiryReceiptType))
-				.add(observers::CreateLevyTransferObserver())
-				.add(observers::CreateAddLevyObserver())
-				.add(observers::CreateUpdateLevyObserver())
-				.add(observers::CreateRemoveLevyObserver());
+				.add(observers::CreateModifyLevyObserver())
+				.add(observers::CreateRemoveLevyObserver())
+				.add(observers::CreatePruneLevyHistoryObserver());
+		});
+		
+		/// region resolvers
+		manager.addLevyAddressResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+			const auto& levyCache = cache.template sub<cache::LevyCache>();
+			
+			switch (unresolved.Type) {
+				case UnresolvedCommonType::MosaicLevy: {
+					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
+					if (!levyData)
+						break;
+					
+					MosaicId mosaicId(levyData->MosaicId.unwrap());
+					auto mosaicIter = levyCache.find(mosaicId);
+					if (!mosaicIter.tryGet())
+						return false;
+					
+					auto& entry = mosaicIter.get();
+					auto pLevy = entry.levy();
+					resolved = pLevy->Recipient;
+					return true;
+				}
+				default:
+					break;
+			}
+			return false;
+		});
+		
+		manager.addLevyMosaicResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+			const auto& levyCache = cache.template sub<cache::LevyCache>();
+			MosaicId mosaicId = MosaicId(unresolved.unwrap());
+			auto mosaicIter = levyCache.find(mosaicId);
+			if (!mosaicIter.tryGet())
+				return false;
+			
+			auto& entry = mosaicIter.get();
+			auto pLevy = entry.levy();
+			resolved = pLevy->MosaicId;
+			return true;
 		});
 		
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			const auto& levyCache = cache.template sub<cache::LevyCache>();
 			
+			/// return true and Amount(0) to prevent other resolver from sedinging an amount if there is error
+			resolved = Amount(0);
+			
 			switch (unresolved.Type) {
-				case UnresolvedAmountType::LeviedTransfer: {
+				case UnresolvedAmountType::MosaicLevy: {
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
-					if (!levyData) break;
+					if (!levyData) {
+						break;
+					}
 					
 					MosaicId mosaicID(levyData->MosaicId.unwrap());
 					auto mosaicIter = levyCache.find(mosaicID);
-					if (!mosaicIter.tryGet()) return false;
-					
-					auto &entry = mosaicIter.get();
-					auto& levy = entry.levy();
-					
-					if(model::UnsetMosaicId == levy.MosaicId || levy.MosaicId.unwrap() == mosaicID.unwrap()){
-						/// we are using same mosaic for levy and main transaction
-						/// if other currency is used for levy, we return nothing
-						/// no deduction for this currency
-						utils::MosaicLevyCalculatorFactory factory;
-						auto result = factory.getCalculator(levy.Type)(unresolved, levy.Fee);
-						resolved = result.finalAmount;
-						
-						return true;
+					if (!mosaicIter.tryGet()) {
+						break;
 					}
+					
+					auto& entry = mosaicIter.get();
+					auto pLevy = entry.levy();
+					
+					utils::MosaicLevyCalculatorFactory factory;
+					resolved = factory.getCalculator(pLevy->Type)(unresolved, pLevy->Fee);
 				}
 				default:
 					break;
 			}
 			
-			return false;
+			return true;
 		});
+		/// end region
 	}
 }}
 

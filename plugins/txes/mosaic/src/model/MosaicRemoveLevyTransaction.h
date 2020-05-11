@@ -24,7 +24,7 @@ namespace catapult { namespace model {
 	public:
 		
 		/// Id of the mosaic.
-		catapult::MosaicId MosaicId;
+		UnresolvedMosaicId MosaicId;
 		
 	public:
 		/// Calculates the real size of mosaic definition \a transaction.

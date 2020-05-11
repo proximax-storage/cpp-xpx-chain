@@ -5,6 +5,8 @@
 **/
 
 #pragma once
+
+#include "src/config/MosaicConfiguration.h"
 #include "LevyBaseSets.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
@@ -14,7 +16,11 @@
 namespace catapult { namespace cache {
 		
 		/// Mixins used by the catapult upgrade cache delta.
-		using LevyCacheDeltaMixins = PatriciaTreeCacheMixins<LevyCacheTypes::PrimaryTypes::BaseSetDeltaType, LevyCacheDescriptor>;
+		struct LevyCacheDeltaMixins : public PatriciaTreeCacheMixins<LevyCacheTypes::PrimaryTypes::BaseSetDeltaType, LevyCacheDescriptor> {
+			using Pruning = HeightBasedPruningMixin<
+				LevyCacheTypes::PrimaryTypes::BaseSetDeltaType,
+				LevyCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
+		};
 		
 		/// Basic delta on top of the catapult upgrade cache.
 		class BasicLevyCacheDelta
@@ -25,23 +31,28 @@ namespace catapult { namespace cache {
 				, public LevyCacheDeltaMixins::MutableAccessor
 				, public LevyCacheDeltaMixins::PatriciaTreeDelta
 				, public LevyCacheDeltaMixins::BasicInsertRemove
+				, public LevyCacheDeltaMixins::Pruning
 				, public LevyCacheDeltaMixins::DeltaElements
-				, public LevyCacheDeltaMixins::Enable
-				, public LevyCacheDeltaMixins::Height {
+				, public LevyCacheDeltaMixins::ConfigBasedEnable<config::MosaicConfiguration> {
 		public:
 			using ReadOnlyView = LevyCacheTypes::CacheReadOnlyType;
-		
+			using CachedMosaicIdByHeight = LevyCacheTypes::HeightGroupingTypes::BaseSetDeltaType::ElementType::Identifiers;
+			
 		public:
 			/// Creates a delta around \a LevySets.
-			explicit BasicLevyCacheDelta(const LevyCacheTypes::BaseSetDeltaPointers& LevySets)
+			explicit BasicLevyCacheDelta(const LevyCacheTypes::BaseSetDeltaPointers& LevySets,
+				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 				: LevyCacheDeltaMixins::Size(*LevySets.pPrimary)
 				, LevyCacheDeltaMixins::Contains(*LevySets.pPrimary)
 				, LevyCacheDeltaMixins::ConstAccessor(*LevySets.pPrimary)
 				, LevyCacheDeltaMixins::MutableAccessor(*LevySets.pPrimary)
 				, LevyCacheDeltaMixins::PatriciaTreeDelta(*LevySets.pPrimary, LevySets.pPatriciaTree)
 				, LevyCacheDeltaMixins::BasicInsertRemove(*LevySets.pPrimary)
+				, LevyCacheDeltaMixins::Pruning(*LevySets.pPrimary, *LevySets.pHistoryAtHeight)
 				, LevyCacheDeltaMixins::DeltaElements(*LevySets.pPrimary)
+				, LevyCacheDeltaMixins::ConfigBasedEnable<config::MosaicConfiguration>(pConfigHolder, [](const auto& config) { return config.LevyCacheEnabled; })
 				, m_pLevyEntries(LevySets.pPrimary)
+				, m_pHistoryAtHeight(LevySets.pHistoryAtHeight)
 			{}
 		
 		public:
@@ -52,20 +63,32 @@ namespace catapult { namespace cache {
 			/// Inserts the mosaic \a entry into the cache.
 			void insert(const state::LevyEntry& entry);
 			
+			/// return the cached mosaicIDs by identifier group
+			CachedMosaicIdByHeight getCachedMosaicIdsByHeight(const Height& height);
+			
 			/// Removes the value identified by \a mosaicId from the cache.
 			void remove(MosaicId mosaicId);
 			
+			void markHistoryForRemove(const LevyCacheDescriptor::KeyType& key, const Height& height) {
+				AddIdentifierWithGroup(*m_pHistoryAtHeight, height, key);
+			}
+			
+			void unmarkHistoryForRemove(const LevyCacheDescriptor::KeyType& key, const Height& height) {
+				RemoveIdentifierWithGroup(*m_pHistoryAtHeight, height, key);
+			}
+			
 		private:
 			LevyCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pLevyEntries;
-			
+			LevyCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pHistoryAtHeight;
 		};
 		
 		/// Delta on top of the catapult upgrade cache.
 		class LevyCacheDelta : public ReadOnlyViewSupplier<BasicLevyCacheDelta> {
 		public:
 			/// Creates a delta around \a LevySets.
-			explicit LevyCacheDelta(const LevyCacheTypes::BaseSetDeltaPointers& LevySets)
-				: ReadOnlyViewSupplier(LevySets)
+			explicit LevyCacheDelta(const LevyCacheTypes::BaseSetDeltaPointers& LevySets,
+				std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+				: ReadOnlyViewSupplier(LevySets, pConfigHolder)
 			{}
 		};
 	}}

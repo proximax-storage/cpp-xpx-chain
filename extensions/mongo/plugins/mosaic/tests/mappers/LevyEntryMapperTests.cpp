@@ -34,26 +34,38 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToDbModel
 	
 	namespace {
-		state::LevyEntry CreateLevyEntry() {
-			auto levy = test::CreateValidMosaicLevy();
-			return state::LevyEntry(MosaicId(123), levy);
+		void RunTestToDbModel(bool withLevy, bool withHistory, size_t expectedFieldCount) {
+			// Arrange:
+			auto entry = test::CreateLevyEntry(withLevy, withHistory);
+			
+			// Act:
+			auto document = ToDbModel(entry);
+			auto documentView = document.view();
+			
+			// Assert:
+			EXPECT_EQ(1u, test::GetFieldCount(documentView));
+			
+			auto levyView = documentView["levy"].get_document().view();
+			EXPECT_EQ(expectedFieldCount, test::GetFieldCount(levyView));
+			
+			if(withLevy)
+				test::AssertEqualLevyData(entry, levyView);
+			
+			if(withHistory)
+				test::AssetEqualHistory(entry, levyView);
 		}
 	}
 	
 	TEST(TEST_CLASS, CanMapLevyEntry_ModelToDbModel) {
-		// Arrange:
-		auto entry = CreateLevyEntry();
-		
-		// Act:
-		auto document = ToDbModel(entry);
-		auto documentView = document.view();
-		
-		// Assert:
-		EXPECT_EQ(1u, test::GetFieldCount(documentView));
-		
-		auto levyView = documentView["levy"].get_document().view();
-		EXPECT_EQ(2u, test::GetFieldCount(levyView));
-		test::AssertEqualLevyData(entry, levyView);
+		bool withLevy = true;
+		for(auto i = 0; i < 2; i++) {
+			bool withHistoryEntry = true;
+			for(auto j = 0; j < 2; j++) {
+				RunTestToDbModel(withLevy, withHistoryEntry, withLevy ? 4u : 3u);
+				withHistoryEntry = !withHistoryEntry;
+			}
+			withLevy = !withLevy;
+		}
 	}
 	
 	// endregion
@@ -61,25 +73,43 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToLevyEntry
 	
 	namespace {
-		bsoncxx::document::value CreateDbLevyEntry() {
-			return ToDbModel(CreateLevyEntry());
+		bsoncxx::document::value CreateDbLevyEntry(bool withLevy, bool withHistory) {
+			auto entry = test::CreateLevyEntry(withLevy, withHistory);
+			return ToDbModel(entry);
+		}
+		
+		void RunTestToLevyEntry(bool withLevy, bool withHistory, size_t expectedFieldCount) {
+			// Arrange:
+			auto dbEntry = CreateDbLevyEntry(withLevy, withHistory);
+			
+			// Act:
+			auto entry = ToLevyEntry(dbEntry);
+			
+			// Assert: only the mosaic field (not meta) is mapped to the model
+			auto view = dbEntry.view();
+			EXPECT_EQ(1u, test::GetFieldCount(view));
+			
+			auto mosaicView = view["levy"].get_document().view();
+			EXPECT_EQ(expectedFieldCount, test::GetFieldCount(mosaicView));
+			
+			if(withLevy)
+				test::AssertEqualLevyData(entry, mosaicView);
+			
+			if(withHistory)
+				test::AssetEqualHistory(entry, mosaicView);
 		}
 	}
 	
 	TEST(TEST_CLASS, CanMapLevyEntry_DbModelToModel) {
-		// Arrange:
-		auto dbEntry = CreateDbLevyEntry();
-		
-		// Act:
-		auto entry = ToLevyEntry(dbEntry);
-		
-		// Assert: only the mosaic field (not meta) is mapped to the model
-		auto view = dbEntry.view();
-		EXPECT_EQ(1u, test::GetFieldCount(view));
-		
-		auto mosaicView = view["levy"].get_document().view();
-		EXPECT_EQ(2u, test::GetFieldCount(mosaicView));
-		test::AssertEqualLevyData(entry, mosaicView);
+		bool withLevy = true;
+		for(auto i = 0; i < 2; i++) {
+			bool withHistoryEntry = true;
+			for(auto j = 0; j < 2; j++) {
+				RunTestToLevyEntry(withLevy, withHistoryEntry, withLevy ? 4u : 3u);
+				withHistoryEntry = !withHistoryEntry;
+			}
+			withLevy = !withLevy;
+		}
 	}
 	
 	// endregion

@@ -20,14 +20,12 @@ namespace catapult { namespace model {
 				// Arrange:
 				auto expectedSize =
 						baseSize // base
-						+ sizeof(uint32_t )     // command
-						+ sizeof(uint32_t )     // updateFlag
 						+ sizeof(MosaicId)      // mosaic id
-						+ sizeof(model::MosaicLevy); // levy
+						+ sizeof(model::MosaicLevyRaw); // levy
 
 				// Assert:
 				EXPECT_EQ(expectedSize, sizeof(T));
-				EXPECT_EQ(baseSize + 59u, sizeof(T));
+				EXPECT_EQ(baseSize + sizeof(MosaicId) + sizeof(model::MosaicLevyRaw), sizeof(T));
 			}
 
 			template<typename T>

@@ -4,6 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 #pragma once
+
+#include "src/catapult/utils/IdentifierGroup.h"
 #include "src/state/LevyEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
@@ -20,6 +22,7 @@ namespace catapult {
 		class LevyCacheView;
 		struct LevyEntryPrimarySerializer;
 		class LevyPatriciaTree;
+		struct LevyHeightGroupingSerializer;
 		
 		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
@@ -53,15 +56,27 @@ namespace catapult { namespace cache {
 		}
 	};
 		
-	/// Catapult upgrade cache types.
+	/// Levy cache types.
 	struct LevyCacheTypes {
-			
+		struct HeightGroupingTypesDescriptor {
+		public:
+			using KeyType = Height;
+			using ValueType = utils::IdentifierGroup<MosaicId, Height, utils::BaseValueHasher<MosaicId>>;
+			using Serializer = LevyHeightGroupingSerializer;
+		
+		public:
+			static auto GetKeyFromValue(const ValueType& identifierGroup) {
+				return identifierGroup.key();
+			}
+		};
+		
 		// important, when using Key as type, use ArrayHasher and not BaseValueHasher
 		// data type Key is defined as a utils::ByteArray
 		// BaseValueHasher is for utils::BaseValue type
 		using PrimaryTypes = MutableUnorderedMapAdapter<LevyCacheDescriptor, utils::BaseValueHasher<MosaicId>>;
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicLevyCacheView, BasicLevyCacheDelta, const MosaicId&, state::LevyEntry>;
-			
+		using HeightGroupingTypes = MutableUnorderedMapAdapter<HeightGroupingTypesDescriptor, utils::BaseValueHasher<Height>>;
+		
 		using BaseSetDeltaPointers = LevyBaseSetDeltaPointers;
 		using BaseSets = LevyBaseSets;
 	};

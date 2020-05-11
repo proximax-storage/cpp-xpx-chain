@@ -7,9 +7,6 @@
 #include "catapult/types.h"
 
 namespace catapult { namespace model {
-
-	/// unset mosaic ID, use the current mosaic during levy
-	constexpr catapult::MosaicId UnsetMosaicId (0);
 	
 	/// Levy fee effectivve decimal places
 	constexpr uint64_t MosaicLevyFeeDecimalPlace = 100'000;
@@ -27,7 +24,7 @@ namespace catapult { namespace model {
 	};
 
 #pragma pack(push, 1)
-	struct MosaicLevy {
+	struct MosaicLevyRaw {
 		
 		/// Levy type
 		LevyType Type;
@@ -36,20 +33,20 @@ namespace catapult { namespace model {
 		catapult::UnresolvedAddress Recipient;
 
 		// Levy mosaic currency
-		catapult::MosaicId MosaicId;
+		UnresolvedMosaicId MosaicId;
 
 		/// the set Levy fee
 		catapult::Amount Fee;
 
 		/// default constructor
-		MosaicLevy()
+		MosaicLevyRaw()
 			: Type(LevyType::None)
 			, Recipient(catapult::UnresolvedAddress())
 			, MosaicId(0)
 			, Fee(Amount(0)) {
 		}
 		
-		MosaicLevy(MosaicLevy *pLevy)
+		MosaicLevyRaw(MosaicLevyRaw *pLevy)
 			: Type(pLevy->Type)
 			, Recipient(pLevy->Recipient)
 			, MosaicId(pLevy->MosaicId)
@@ -57,7 +54,7 @@ namespace catapult { namespace model {
 			
 		}
 		/// constructor with params
-		MosaicLevy(LevyType type, UnresolvedAddress recipient, catapult::MosaicId mosaicId, catapult::Amount fee)
+		MosaicLevyRaw(LevyType type, UnresolvedAddress recipient, UnresolvedMosaicId mosaicId, catapult::Amount fee)
 			: Type(type)
 			, Recipient(recipient)
 			, MosaicId(mosaicId)

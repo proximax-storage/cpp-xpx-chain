@@ -23,19 +23,20 @@ namespace catapult { namespace cache {
 			, public LevyCacheViewMixins::Iteration
 			, public LevyCacheViewMixins::ConstAccessor
 			, public LevyCacheViewMixins::PatriciaTreeView
-			, public LevyCacheViewMixins::Enable
-			, public LevyCacheViewMixins::Height {
+			, public LevyCacheViewMixins::ConfigBasedEnable<config::MosaicConfiguration> {
 	public:
 		using ReadOnlyView = LevyCacheTypes::CacheReadOnlyType;
 		
 	public:
 		/// Creates a view around \a LevySets.
-		explicit BasicLevyCacheView(const LevyCacheTypes::BaseSets& LevySets)
+		explicit BasicLevyCacheView(const LevyCacheTypes::BaseSets& LevySets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
 			: LevyCacheViewMixins::Size(LevySets.Primary)
 			, LevyCacheViewMixins::Contains(LevySets.Primary)
 			, LevyCacheViewMixins::Iteration(LevySets.Primary)
 			, LevyCacheViewMixins::ConstAccessor(LevySets.Primary)
 			, LevyCacheViewMixins::PatriciaTreeView(LevySets.PatriciaTree.get())
+			, LevyCacheViewMixins::ConfigBasedEnable<config::MosaicConfiguration>(pConfigHolder, [](const auto& config) { return config.LevyCacheEnabled; })
 		{}
 	};
 		
@@ -43,8 +44,9 @@ namespace catapult { namespace cache {
 	class LevyCacheView : public ReadOnlyViewSupplier<BasicLevyCacheView> {
 	public:
 		/// Creates a view around \a LevySets.
-		explicit LevyCacheView(const LevyCacheTypes::BaseSets& LevySets)
-			: ReadOnlyViewSupplier(LevySets)
+		explicit LevyCacheView(const LevyCacheTypes::BaseSets& LevySets,
+			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+			: ReadOnlyViewSupplier(LevySets, pConfigHolder)
 			{}
 	};
 }}

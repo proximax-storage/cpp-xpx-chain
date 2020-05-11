@@ -9,23 +9,11 @@
 #include <functional>
 
 namespace catapult { namespace utils {
-
-	/// result after levy was computed
-	struct MosaicLevyCalcResult
-	{
-		Amount finalAmount;
-		Amount levyAmount;
-
-		MosaicLevyCalcResult(Amount amount, Amount levy)
-			: finalAmount(amount)
-			, levyAmount(levy) {
-		}
-	};
-
+	
 	/// A factory for creating mosaic levy calculator.
 	class MosaicLevyCalculatorFactory {
 	public:
-		using MosaicLevyCalculator = std::function<MosaicLevyCalcResult (Amount amount, Amount levy)>;
+		using MosaicLevyCalculator = std::function<Amount (Amount amount, Amount levy)>;
 
 	public:
 		/// Creates a mosaic levy rule factory.

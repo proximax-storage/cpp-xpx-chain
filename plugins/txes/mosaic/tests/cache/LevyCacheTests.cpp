@@ -23,7 +23,7 @@ namespace catapult { namespace cache {
 		struct LevyCacheMixinTraits {
 			class CacheType : public LevyCache {
 			public:
-				CacheType() : LevyCache(CacheConfiguration())
+				CacheType() : LevyCache(CacheConfiguration(), config::CreateMockConfigurationHolder())
 				{}
 			};
 			
@@ -46,7 +46,6 @@ namespace catapult { namespace cache {
 				auto levy = test::CreateValidMosaicLevy();
 				return state::LevyEntry(MakeId(id), levy);
 			}
-			
 		};
 	}
 	

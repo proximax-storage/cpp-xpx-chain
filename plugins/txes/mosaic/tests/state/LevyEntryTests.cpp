@@ -13,20 +13,22 @@ namespace catapult { namespace state {
 #define TEST_CLASS LevyEntryTests
 	
 	// region ctor
-	
+
 	TEST(TEST_CLASS, CanCreateLevyEntry) {
 		// Arrange:
 		auto levy = test::CreateValidMosaicLevy();
+		auto pLevy = std::make_shared<state::LevyEntryData>(levy);
 		
 		// Act:
-		auto entry = LevyEntry(MosaicId(225), levy);
+		auto entry = LevyEntry(MosaicId(225), std::move(pLevy));
 		
 		// Assert:
 		EXPECT_EQ(MosaicId(225), entry.mosaicId());
-		EXPECT_EQ(model::LevyType::Absolute, entry.levy().Type);
-		EXPECT_EQ(MosaicId(1000), entry.levy().MosaicId);
+		EXPECT_EQ(levy.Type, entry.levy()->Type);
+		EXPECT_EQ(levy.MosaicId, entry.levy()->MosaicId);
+		EXPECT_EQ(levy.Recipient, entry.levy()->Recipient);
+		EXPECT_EQ(levy.Fee, entry.levy()->Fee);
 	}
 	
 	// endregion
-	
 }}

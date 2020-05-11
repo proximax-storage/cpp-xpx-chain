@@ -10,7 +10,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			
 	namespace {
 		
-		void StreamLevy(bson_stream::array_context& context, model::MosaicLevy levy)
+		void StreamLevy(bson_stream::array_context& context, model::MosaicLevyRaw levy)
 		{
 			context
 				<< bson_stream::open_document

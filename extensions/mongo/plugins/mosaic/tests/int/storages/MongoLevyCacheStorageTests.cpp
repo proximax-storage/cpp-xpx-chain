@@ -66,7 +66,7 @@ namespace catapult { namespace mongo { namespace plugins {
 				// update cache
 				auto& LevyCacheDelta = delta.sub<cache::LevyCache>();
 				auto& entryFromCache = LevyCacheDelta.find(entry.mosaicId()).get();
-				entryFromCache.levyRef().Fee = Amount(1000);
+				entryFromCache.levy()->Fee = Amount(1000);
 			}
 			
 			static auto GetFindFilter(const ModelType& entry) {

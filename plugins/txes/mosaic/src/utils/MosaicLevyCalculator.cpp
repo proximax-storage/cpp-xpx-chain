@@ -11,23 +11,19 @@ namespace catapult { namespace utils {
 
 	MosaicLevyCalculatorFactory::MosaicLevyCalculatorFactory() {
 			// No Levy
-			m_calculators.push_back([](Amount amount, Amount) {
-				return MosaicLevyCalcResult(amount, Amount(0));
+			m_calculators.push_back([](Amount, Amount) {
+				return Amount(0);
 			});
 
 			// absolute or constant calculator
-			m_calculators.push_back([](Amount amount, Amount levy) {
-				Amount finalAmount = amount - levy;
-				return MosaicLevyCalcResult(finalAmount.unwrap() ? finalAmount : Amount(0), levy);
+			m_calculators.push_back([](Amount, Amount levy) {
+				return levy;
 			});
 
 			// percentile fee
 			m_calculators.push_back([](Amount amount, Amount levy) {
 				float pct = (levy.unwrap() / (float) model::MosaicLevyFeeDecimalPlace) / 100.0f;
-				Amount tax = Amount(amount.unwrap() * pct);
-				Amount finalAmount = amount - tax;
-				
-				return MosaicLevyCalcResult(finalAmount.unwrap() ? finalAmount : Amount(0), tax);
+				return Amount(amount.unwrap() * pct);
 			});
 		}
 

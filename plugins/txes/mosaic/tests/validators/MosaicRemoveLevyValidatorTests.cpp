@@ -22,7 +22,8 @@ namespace catapult {
 		
 		/// region helper functions
 		namespace {
-			auto Currency_Mosaic_Id = MosaicId(123);
+			auto Unresolved_Mosaic_Id = UnresolvedMosaicId(1234);
+			auto Currency_Mosaic_Id = MosaicId(Unresolved_Mosaic_Id.unwrap());
 			
 			/// This itself looks like a common function, all Notification inherit from Notification object
 			void AssertValidationResult(ValidationResult expectedResult, const MosaicId& mosaicId, const Key& signer,
@@ -30,7 +31,7 @@ namespace catapult {
 				
 				// Arrange:
 				auto pValidator = CreateRemoveLevyValidator();
-				auto notification = model::MosaicRemoveLevyNotification<1>(mosaicId, signer);
+				auto notification = model::MosaicRemoveLevyNotification<1>(test::UnresolveXor(mosaicId), signer);
 				
 				auto result = test::ValidateNotification(*pValidator, notification, cache);
 				

@@ -13,8 +13,7 @@
 namespace catapult {
 	namespace utils {
 		
-		///TODO: to be changed based on new fee implementation
-		bool IsMosaicLevyFeeValid(const model::MosaicLevy &levy) {
+		bool IsMosaicLevyFeeValid(const model::MosaicLevyRaw &levy) {
 			auto fee = levy.Fee;
 			if (fee <= Amount(0))
 				return false;
@@ -42,6 +41,10 @@ namespace catapult {
 		
 		bool IsAddressValid(catapult::UnresolvedAddress address, const validators::ValidatorContext& context)
 		{
+			// If address is blank or zero return invalid
+			if( address == UnresolvedAddress())
+				return false;
+
 			auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			auto resolvedAddress = context.Resolvers.resolve(address);
 			auto  accountStateKeyIter = cache.find(resolvedAddress);

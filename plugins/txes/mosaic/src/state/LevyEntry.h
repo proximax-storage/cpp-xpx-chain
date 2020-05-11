@@ -4,40 +4,96 @@
 *** license that can be found in the LICENSE file.
 **/
 #pragma once
+#include <map>
+#include <memory>
 #include "catapult/types.h"
-#include <vector>
 #include "src/model/MosaicLevy.h"
 
 namespace catapult { namespace state {
 		
-		// Catapult upgrade entry.
-		class LevyEntry {
-		public:
-			LevyEntry() : m_mosaicId(0)
-			{}
-			
-			LevyEntry(MosaicId& id) : m_mosaicId(id)
-			{}
-			
-			LevyEntry(const MosaicId& mosaicId, const model::MosaicLevy& levy)
-				: m_mosaicId(mosaicId), m_levy(levy)
-			{}
-			
-		public:
-			
-			const MosaicId& mosaicId() const {
-				return m_mosaicId;
-			}
-			
-			model::MosaicLevy& levyRef() {
-				return m_levy;
-			}
-			const model::MosaicLevy& levy() const {
-				return m_levy;
-			}
-			
-		private:
-			MosaicId m_mosaicId;
-			model::MosaicLevy m_levy;
-		};
-	}}
+	// Catapult upgrade entry.
+	struct LevyEntryData {
+		/// Levy type
+		model::LevyType Type;
+		
+		/// Transaction recipient.
+		catapult::Address Recipient;
+		
+		// Levy mosaic currency
+		catapult::MosaicId MosaicId;
+		
+		/// the set Levy fee
+		catapult::Amount Fee;
+		
+		/// default constructor
+		LevyEntryData()
+			: Type(model::LevyType::None)
+			, Recipient(catapult::Address ())
+			, MosaicId(0)
+			, Fee(Amount(0)) {
+		}
+		
+		LevyEntryData(model::LevyType type, catapult::Address recipient, catapult::MosaicId mosaicId, catapult::Amount fee)
+			: Type(type)
+			, Recipient(recipient)
+			, MosaicId(mosaicId)
+			, Fee(fee) {
+			//...
+		}
+	};
+	
+	using LevyHistoryMap = std::map<Height, LevyEntryData>;
+	
+	class LevyEntry {
+	public:
+		LevyEntry()
+			: m_mosaicId(0)
+			, m_pLevy(nullptr)
+			 {}
+		
+		LevyEntry(const MosaicId& mosaicId, const LevyEntryData& levy)
+			: m_mosaicId(mosaicId)
+			, m_pLevy(new LevyEntryData(levy)) {
+		}
+		
+		LevyEntry(const MosaicId& mosaicId, std::shared_ptr<LevyEntryData> pLevy)
+			: m_mosaicId(mosaicId)
+			, m_pLevy(pLevy)
+		{
+			if(pLevy == nullptr) return;
+		}
+		
+	public:
+
+		void update(const LevyEntryData& levy, const Height& height);
+		
+		void remove(const Height& height);
+		
+		void undo(const Height& height);
+		
+		bool hasUpdateHistory();
+		
+	public:
+		const MosaicId& mosaicId() const {
+			return m_mosaicId;
+		}
+		
+		const std::shared_ptr<LevyEntryData> levy() const {
+			return m_pLevy;
+		}
+		
+		/// Gets the list of update history
+		LevyHistoryMap& updateHistories() {
+			return m_updateHistories;
+		}
+		
+		const LevyHistoryMap& updateHistories() const{
+			return m_updateHistories;
+		}
+		
+	private:
+		MosaicId m_mosaicId;
+		std::shared_ptr<LevyEntryData> m_pLevy;
+		LevyHistoryMap m_updateHistories;
+	};
+}}

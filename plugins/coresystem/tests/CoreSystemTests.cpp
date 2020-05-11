@@ -98,6 +98,7 @@ namespace catapult { namespace plugins {
 					"SourceChangeObserver",
 					"AccountAddressObserver",
 					"BalanceTransferObserver",
+					"BalanceLevyTransferObserver",
 					"HarvestFeeObserver",
 					"TotalTransactionsObserver",
 					"SnapshotCleanUpObserver",

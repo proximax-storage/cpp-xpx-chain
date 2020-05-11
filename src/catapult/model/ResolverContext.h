@@ -32,16 +32,23 @@ namespace catapult { namespace model {
 		using MosaicResolver = Resolver<UnresolvedMosaicId, MosaicId>;
 		using AddressResolver = Resolver<UnresolvedAddress, Address>;
 		using AmountResolver = Resolver<UnresolvedAmount, Amount>;
-
+		using LevyMosaicResolver = Resolver<UnresolvedLevyMosaicId, MosaicId>;
+		using LevyAddressResolver = Resolver<UnresolvedLevyAddress, Address>;
+		
 	public:
 		/// Creates a default context.
 		ResolverContext();
-
+		
+		/// Creates a context around \a mosaicResolver, \a addressResolver, \a amountResolver and levy resolvers
+		ResolverContext(const MosaicResolver &mosaicResolver, const AddressResolver &addressResolver,
+						const AmountResolver &amountResolver);
+		
 		/// Creates a context around \a mosaicResolver, \a addressResolver and \a amountResolver.
-		ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver, const AmountResolver& amountResolver);
+		ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver,
+						const AmountResolver& amountResolver, const LevyMosaicResolver& levyMosaicResolver,
+						const LevyAddressResolver& levyAddressResolver);
 
-	public:
-		/// Resolves mosaic id (\a mosaicId).
+/// Resolves mosaic id (\a mosaicId).
 		MosaicId resolve(UnresolvedMosaicId mosaicId) const;
 
 		/// Resolves \a address.
@@ -49,10 +56,18 @@ namespace catapult { namespace model {
 
 		/// Resolves \a amount.
 		Amount resolve(const UnresolvedAmount& amount) const;
-
+		
+		/// Resolves levy mosaic id (\a mosaicId).
+		MosaicId resolve(UnresolvedLevyMosaicId mosaicId) const;
+		
+		/// Resolves \a levy address.
+		Address resolve(const UnresolvedLevyAddress& address) const;
+		
 	private:
 		MosaicResolver m_mosaicResolver;
 		AddressResolver m_addressResolver;
 		AmountResolver m_amountResolver;
+		LevyMosaicResolver m_levyMosaicResolver;
+		LevyAddressResolver m_levyAddressResolver;
 	};
 }}

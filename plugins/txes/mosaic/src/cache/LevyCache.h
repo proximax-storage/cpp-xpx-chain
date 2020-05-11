@@ -11,7 +11,7 @@
 namespace catapult { namespace cache {
 		
 	/// Cache composed of catapult upgrade information.
-	using BasicLevyCache = BasicCache<LevyCacheDescriptor, LevyCacheTypes::BaseSets>;
+	using BasicLevyCache = BasicCache<LevyCacheDescriptor, LevyCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
 		
 	/// Synchronized cache composed of catapult upgrade information.
 	class LevyCache : public SynchronizedCache<BasicLevyCache> {
@@ -20,7 +20,8 @@ namespace catapult { namespace cache {
 		
 	public:
 		/// Creates a cache around \a config.
-		explicit LevyCache(const CacheConfiguration& config) : SynchronizedCache<BasicLevyCache>(BasicLevyCache(config))
+		explicit LevyCache(const CacheConfiguration& config, std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
+			: SynchronizedCache<BasicLevyCache>(BasicLevyCache(config, std::move(pConfigHolder)))
 		{}
 	};
 }}

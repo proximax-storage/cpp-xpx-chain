@@ -13,42 +13,59 @@
 #include "tests/test/LevyTestUtils.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
-#include "catapult/constants.h"
 
 namespace catapult {
 	namespace validators {
 
-#define TEST_CLASS MosaicAddLevyValidatorTests
+#define TEST_CLASS MosaicModifyLevyValidatorTests
 		
-		DEFINE_COMMON_VALIDATOR_TESTS(AddLevy,)
+		DEFINE_COMMON_VALIDATOR_TESTS(ModifyLevy,)
 		
 		/// region helper functions
 		namespace {
-			auto Currency_Mosaic_Id = MosaicId(1234);
+			auto Unresolved_Mosaic_Id = UnresolvedMosaicId(1234);
+			auto Currency_Mosaic_Id = MosaicId(Unresolved_Mosaic_Id.unwrap());
 			using LevySetupFunc = std::function<void (cache::CatapultCacheDelta&, const Key&)>;
 			
-			model::MosaicAddLevyNotification<1> CreateDefaultNotification(const Key& signer, const model::MosaicLevy& levy) {
-				return model::MosaicAddLevyNotification<1>(Currency_Mosaic_Id, levy, signer);
+			model::MosaicModifyLevyNotification<1> CreateDefaultNotification(const Key& signer, const model::MosaicLevyRaw& levy) {
+				auto xORLevy = model::MosaicLevyRaw(levy.Type,
+					levy.Recipient,
+					test::UnresolveXor(MosaicId(levy.MosaicId.unwrap())),
+					levy.Fee);
+				
+				return model::MosaicModifyLevyNotification<1>(test::UnresolveXor(Currency_Mosaic_Id), xORLevy, signer);
 			}
 			
-			model::MosaicLevy CreateLevyWithType() {
-				auto levy = model::MosaicLevy();
+			model::MosaicLevyRaw CreateValidMosaicLevyRaw()
+			{
+				auto levy = model::MosaicLevyRaw();
 				levy.Type = model::LevyType::Absolute;
+				levy.Recipient = test::GenerateRandomByteArray<UnresolvedAddress>();
+				levy.MosaicId = UnresolvedMosaicId(1000);
+				levy.Fee = test::CreateMosaicLevyFeePercentile(10); // 10% levy fee
 				return levy;
 			}
 			
-			model::MosaicLevy CreateLevyWithPercentile(float percentage) {
-				auto levy = model::MosaicLevy();
+			model::MosaicLevyRaw CreateLevyWithPercentile(float percentage) {
+				auto levy = CreateValidMosaicLevyRaw();
 				levy.Type = model::LevyType::Percentile;
 				levy.Fee = test::CreateMosaicLevyFeePercentile(percentage);    // 300%
 
 				return levy;
 			}
 			
-			model::MosaicLevy CreateValidMosaicLevyXor(const MosaicId& mosaicId)
+			model::MosaicLevyRaw CreateLevyWithType() {
+				auto levy = CreateValidMosaicLevyRaw();
+				levy.Type = model::LevyType::Absolute;
+				levy.Fee = Amount(0);
+				levy.Recipient = test::GenerateRandomByteArray<UnresolvedAddress>();
+				return levy;
+			}
+			
+			model::MosaicLevyRaw CreateValidMosaicLevyXor(const UnresolvedMosaicId& mosaicId)
 			{
 				auto recipient = test::GenerateRandomByteArray<Address>();
-				auto levy = model::MosaicLevy();
+				auto levy = model::MosaicLevyRaw();
 				levy.Type = model::LevyType::Absolute;
 				levy.Recipient = test::UnresolveXor(recipient);
 				levy.MosaicId = mosaicId;
@@ -66,11 +83,12 @@ namespace catapult {
 			}
 			
 			/// This itself looks like a common function, all Notification inherit from Notification object
-			void AssertValidationResult(ValidationResult expectedResult, model::MosaicAddLevyNotification<1> notification,
-			                            cache::CatapultCache &cache) {
+			void AssertValidationResult(ValidationResult expectedResult,
+				model::MosaicModifyLevyNotification<1> notification,
+			    cache::CatapultCache &cache) {
 				
 				// Arrange:
-				auto pValidator = CreateAddLevyValidator();
+				auto pValidator = CreateModifyLevyValidator();
 				
 				auto result = test::ValidateNotification(*pValidator, notification, cache);
 				
@@ -84,12 +102,7 @@ namespace catapult {
 				test::AddMosaic(delta, Currency_Mosaic_Id, Height(1), Amount(100), signer);
 			}
 			
-			void SetupBaseMosaicWithLevy(cache::CatapultCacheDelta& delta, const Key& signer)
-			{
-				test::AddMosaicWithLevy(delta, Currency_Mosaic_Id, Height(1), test::CreateValidMosaicLevy(), signer);
-			}
-			
-			void AssertLevyParameterTest(ValidationResult expectedResult,  const model::MosaicLevy& levy,
+			void AssertLevyParameterTest(ValidationResult expectedResult,  const model::MosaicLevyRaw& levy,
 			                             bool validRecipient, const MosaicId& recipientBalanceMosaicId,
 			                             bool validSigner, LevySetupFunc action) {
 				
@@ -101,7 +114,7 @@ namespace catapult {
 				auto notification = CreateDefaultNotification(signer, levy);
 				
 				action(delta, (validSigner)? signer:owner);
-				   
+				
 				if( validRecipient ) {
 					auto sinkResolved = ResolveAddress(levy.Recipient);
 					test::SetCacheBalances(delta, sinkResolved,
@@ -119,19 +132,13 @@ namespace catapult {
 		
 		TEST(TEST_CLASS, BaseMosaicIdNotFound) {
 			AssertLevyParameterTest(Failure_Mosaic_Id_Not_Found,
-				test::CreateValidMosaicLevy(), false,
+				CreateValidMosaicLevyRaw(), false,
 			    MosaicId(0), false, [](cache::CatapultCacheDelta&, const Key&) {});
-		}
-		
-		TEST(TEST_CLASS, LevyAlreadyExist) {
-			AssertLevyParameterTest(Failure_Mosaic_Levy_Already_Exist,
-				CreateValidMosaicLevyXor(Currency_Mosaic_Id), true,
-				Currency_Mosaic_Id, true, SetupBaseMosaicWithLevy);
 		}
 		
 		TEST(TEST_CLASS, SignerIsInvalid) {
 			AssertLevyParameterTest(Failure_Mosaic_Ineligible_Signer,
-				test::CreateValidMosaicLevy(), false,
+				CreateValidMosaicLevyRaw(), false,
 				MosaicId(0), false, SetupBaseMosaic);
 		}
 		
@@ -143,7 +150,7 @@ namespace catapult {
 		
 		TEST(TEST_CLASS, MosaicLevyIdNotFound) {
 			AssertLevyParameterTest(Failure_Mosaic_Id_Not_Found,
-				CreateValidMosaicLevyXor(MosaicId(1000)), true,
+				CreateValidMosaicLevyXor(UnresolvedMosaicId(1000)), true,
 				MosaicId(1000), true, SetupBaseMosaic);
 		}
 		
@@ -160,7 +167,7 @@ namespace catapult {
 		
 		TEST(TEST_CLASS, AddMosaicLevyOK) {
 			AssertLevyParameterTest(ValidationResult::Success,
-				CreateValidMosaicLevyXor(MosaicId(0)),
+				CreateValidMosaicLevyXor(Unresolved_Mosaic_Id),
 				true, Currency_Mosaic_Id, true, SetupBaseMosaic);
 		}
 

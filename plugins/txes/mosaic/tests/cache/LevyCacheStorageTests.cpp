@@ -13,13 +13,12 @@
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
-		
 	namespace {
 		struct LevyCacheStorageTraits {
 			using StorageType = LevyCacheStorage;
 			class CacheType : public LevyCache {
 			public:
-				CacheType() : LevyCache(CacheConfiguration())
+				CacheType() : LevyCache(CacheConfiguration(), config::CreateMockConfigurationHolder())
 				{}
 			};
 			
@@ -34,10 +33,10 @@ namespace catapult { namespace cache {
 			
 			static void AssertEqual(const state::LevyEntry& lhs, const state::LevyEntry& rhs) {
 				EXPECT_EQ(lhs.mosaicId(), rhs.mosaicId());
-				EXPECT_EQ(lhs.levy().Type, rhs.levy().Type);
-				EXPECT_EQ(lhs.levy().Fee, rhs.levy().Fee);
-				EXPECT_EQ(lhs.levy().Recipient, rhs.levy().Recipient);
-				EXPECT_EQ(lhs.levy().MosaicId, rhs.levy().MosaicId);
+				EXPECT_EQ(lhs.levy()->Type, rhs.levy()->Type);
+				EXPECT_EQ(lhs.levy()->Fee, rhs.levy()->Fee);
+				EXPECT_EQ(lhs.levy()->Recipient, rhs.levy()->Recipient);
+				EXPECT_EQ(lhs.levy()->MosaicId, rhs.levy()->MosaicId);
 			}
 		};
 	}

@@ -47,11 +47,8 @@ namespace catapult { namespace model {
 	/// Mosaic rental fee has been sent.
 	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
 		
-	/// Add mosaic levy
-	DEFINE_MOSAIC_NOTIFICATION(Add_Levy_v1, 0x0040, All);
-		
-	/// Update mosaic levy
-	DEFINE_MOSAIC_NOTIFICATION(Update_Levy_v1, 0x0041, All);
+	/// Modify mosaic levy, represents Add and/or transaction
+	DEFINE_MOSAIC_NOTIFICATION(Modify_Levy_v1, 0x0040, All);
 		
 	/// Remove mosaic levy
 	DEFINE_MOSAIC_NOTIFICATION(Remove_Levy_v1, 0x0042, All);
@@ -221,17 +218,17 @@ namespace catapult { namespace model {
 		
 	// region mosaic modify levy
 	template<VersionType version>
-	struct MosaicAddLevyNotification;
+	struct MosaicModifyLevyNotification;
 	
 	template<>
-	struct MosaicAddLevyNotification<1> :  public Notification {
+	struct MosaicModifyLevyNotification<1> :  public Notification {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Add_Levy_v1_Notification;
+		static constexpr auto Notification_Type = Mosaic_Modify_Levy_v1_Notification;
 	
 	public:
-		explicit MosaicAddLevyNotification(catapult::MosaicId mosaicId, MosaicLevy levy, Key signer)
-			: Notification(Notification_Type, sizeof(MosaicAddLevyNotification<1>))
+		explicit MosaicModifyLevyNotification(const UnresolvedMosaicId & mosaicId, const MosaicLevyRaw& levy, const Key& signer)
+			: Notification(Notification_Type, sizeof(MosaicModifyLevyNotification<1>))
 			, MosaicId(mosaicId)
 			, Levy(levy)
 			, Signer(signer)
@@ -240,48 +237,15 @@ namespace catapult { namespace model {
 	public:
 		
 		/// Id of the mosaic.
-		catapult::MosaicId MosaicId;
+		UnresolvedMosaicId MosaicId;
 		
 		/// levy container
-		MosaicLevy Levy;
+		MosaicLevyRaw Levy;
 		
 		/// Signer of the transaction
 		Key Signer;
 	};
 	
-	template<VersionType version>
-	struct MosaicUpdateLevyNotification;
-	template<>
-	struct MosaicUpdateLevyNotification<1> :  public Notification {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Mosaic_Update_Levy_v1_Notification;
-	
-	public:
-		explicit MosaicUpdateLevyNotification(
-			uint32_t updateFlag,
-			catapult::MosaicId mosaicId, MosaicLevy levy, Key signer)
-			: Notification(Notification_Type, sizeof(MosaicUpdateLevyNotification<1>))
-			, UpdateFlag(updateFlag)
-			, MosaicId(mosaicId)
-			, Levy(levy)
-			, Signer(signer)
-		{}
-	
-	public:
-		
-		/// update type flag
-		uint32_t UpdateFlag;
-		
-		/// Id of the mosaic.
-		catapult::MosaicId MosaicId;
-		
-		/// levy container
-		MosaicLevy Levy;
-		
-		/// Signer of the transaction
-		Key Signer;
-	};
 	// endregion
 	
 	template<VersionType version>
@@ -293,7 +257,7 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Mosaic_Remove_Levy_v1_Notification;
 	
 	public:
-		explicit MosaicRemoveLevyNotification(catapult::MosaicId mosaicId, Key signer)
+		explicit MosaicRemoveLevyNotification(UnresolvedMosaicId mosaicId, Key signer)
 			: Notification(Notification_Type, sizeof(MosaicRemoveLevyNotification<1>))
 			, MosaicId(mosaicId)
 			, Signer(signer)
@@ -302,7 +266,7 @@ namespace catapult { namespace model {
 	public:
 		
 		/// Id of the mosaic.
-		catapult::MosaicId MosaicId;
+		UnresolvedMosaicId MosaicId;
 		
 		/// Signer of the transaction
 		Key Signer;

@@ -12,7 +12,7 @@ namespace catapult {
 	namespace  utils {
 		/// compute if levy fee is valid
 		validators::ValidationResult IsLevyTransactionValid(const Key& signer, MosaicId id, const validators::ValidatorContext& context);
-		bool IsMosaicLevyFeeValid(const model::MosaicLevy &levy);
+		bool IsMosaicLevyFeeValid(const model::MosaicLevyRaw &levy);
 		bool IsMosaicIdValid(MosaicId id,  const validators::ValidatorContext& context);
 		bool IsAddressValid(catapult::UnresolvedAddress address, const validators::ValidatorContext& context);
 	}

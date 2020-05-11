@@ -17,44 +17,86 @@ namespace catapult {
 
 #define TEST_CLASS MosaicRemoveLevyObserver
 		
-		using ObserverTestContext = test::ObserverTestContextT<test::LevyCacheFactory>;
+	using ObserverTestContext = test::ObserverTestContextT<test::LevyCacheFactory>;
+	
+	/// region Add levy
+	DEFINE_COMMON_OBSERVER_TESTS(RemoveLevy, )
+
+	namespace {
+		Height height(444);
+		using LevySetupFunc = std::function<void (cache::CatapultCacheDelta&, const state::LevyEntryData&, const MosaicId& mosaicId, const Key&)>;
+		using TestResultFunc = std::function<void (cache::CatapultCacheDelta&, const MosaicId& mosaicId)>;
 		
-		/// region Add levy
-		DEFINE_COMMON_OBSERVER_TESTS(RemoveLevy, )
-
-		namespace {
-			void RunTest(ObserverTestContext& context, const MosaicId& id, const Key& signer ) {
-				// Arrange:
-				auto pObserver = CreateRemoveLevyObserver();
-				
-				// Act
-				auto notification = model::MosaicRemoveLevyNotification<1>(id, signer);
-
-				// Trigger
-				test::ObserveNotification(*pObserver, notification, context);
-			}
+		void RunTest(ObserverTestContext& context, const UnresolvedMosaicId& id, const Key& signer ) {
+			// Arrange:
+			auto pObserver = CreateRemoveLevyObserver();
 			
+			// Act
+			auto notification = model::MosaicRemoveLevyNotification<1>(id, signer);
+
+			// Trigger
+			test::ObserveNotification(*pObserver, notification, context);
 		}
 		
-		TEST(TEST_CLASS, RemoveMosaicLevyCommit) {
+		void RunTest(const NotifyMode& mode, LevySetupFunc action, TestResultFunc result) {
 			
-			ObserverTestContext context(NotifyMode::Commit, Height{444});
+			ObserverTestContext context(mode, height);
 			
 			auto signer = test::GenerateRandomByteArray<Key>();
 			auto levy = test::CreateValidMosaicLevy();
-			auto mosaicId = MosaicId(123);
+			auto unresolvedMosaicId = UnresolvedMosaicId (123);
+			auto mosaicId = MosaicId(unresolvedMosaicId.unwrap());
 			
-			test::AddMosaicWithLevy(context.cache(), mosaicId, Height(1), levy, signer);
+			action(context.cache(), levy, mosaicId, signer);
 			
-			RunTest(context, mosaicId, signer);
+			RunTest(context,  test::UnresolveXor(mosaicId), signer);
 			
-			auto& levyCache = context.cache().sub<cache::LevyCache>();
-			auto iter = levyCache.find(mosaicId);
-			
-			EXPECT_EQ(iter.tryGet(), nullptr);
+			result(context.cache(), mosaicId);
 		}
-		
-		/// end region
-		
 	}
-}
+	
+	TEST(TEST_CLASS, RemoveMosaicLevyCommit) {
+			
+		RunTest(NotifyMode::Commit,[](cache::CatapultCacheDelta& cache, const state::LevyEntryData& levy,
+			const MosaicId& mosaicId, const Key& signer){
+			test::AddMosaicWithLevy(cache, mosaicId, Height(1), levy, signer);
+		},[](cache::CatapultCacheDelta& cache, const MosaicId& mosaicId){
+			auto& levyCache = cache.sub<cache::LevyCache>();
+			auto iter = levyCache.find(mosaicId);
+			auto& entry = iter.get();
+			EXPECT_EQ(entry.levy(), nullptr);
+		
+		});
+	}
+	
+	TEST(TEST_CLASS, RemoveMosaicLevyRollback) {
+		
+		auto historyData = state::LevyEntryData();
+		historyData.Type = model::LevyType::Absolute;
+		historyData.Recipient = test::GenerateRandomByteArray<Address>();
+		historyData.MosaicId = MosaicId(1000);
+		historyData.Fee = test::CreateMosaicLevyFeePercentile(10);
+		
+		RunTest(NotifyMode::Rollback,[&historyData](cache::CatapultCacheDelta& cache, const state::LevyEntryData& levy,
+		                              const MosaicId& mosaicId, const Key& signer){
+			
+			test::AddMosaicWithLevy(cache, mosaicId, Height(1), levy, signer);
+			
+			auto& levyCache = cache.sub<cache::LevyCache>();
+			auto iter = levyCache.find(mosaicId);
+			auto& entry = iter.get();
+			entry.updateHistories().emplace(height, historyData);
+			
+		},[&historyData](cache::CatapultCacheDelta& cache, const MosaicId& mosaicId){
+			
+			auto& levyCache = cache.sub<cache::LevyCache>();
+			auto iter = levyCache.find(mosaicId);
+			auto resolverContext = test::CreateResolverContextXor();
+			auto result = iter.get().levy();
+			
+			test::AssertLevy(*result, historyData);
+			
+		});
+	}
+	/// end region
+}}

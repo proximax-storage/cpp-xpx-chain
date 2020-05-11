@@ -100,8 +100,7 @@ namespace catapult { namespace plugins {
 					"MosaicDurationValidator",
 					"MaxMosaicsSupplyChangeValidator",
 					"MosaicSupplyChangeAllowedValidator",
-					"AddLevyValidator",
-					"UpdateLevyValidator",
+					"ModifyLevyValidator",
 					"RemoveLevyValidator"
 				};
 			}
@@ -109,13 +108,13 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetObserverNames() {
 				return {
 					"MosaicRentalFeeObserver",
-					"LevyTransferObserver",
 					"MosaicTouchObserver",
+					"PruneLevyHistoryObserver",
 					"MosaicDefinitionObserver",
 					"MosaicSupplyChangeObserver",
-					"AddLevyObserver",
-					"UpdateLevyObserver",
-					"RemoveLevyObserver"};
+					"ModifyLevyObserver",
+					"RemoveLevyObserver"
+				};
 			}
 
 			static std::vector<std::string> GetPermanentObserverNames() {

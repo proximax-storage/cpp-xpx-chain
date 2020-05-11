@@ -50,7 +50,6 @@ namespace catapult { namespace plugins {
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
-		transaction.Command = ModifyLevyTransactionCommand::Add;
 		
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);
@@ -61,16 +60,15 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishMosaicModifyLevyNotifiation) {
 		// Arrange:
-		mocks::MockTypedNotificationSubscriber<MosaicAddLevyNotification<1>> sub;
+		mocks::MockTypedNotificationSubscriber<MosaicModifyLevyNotification<1>> sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
 		typename TTraits::TransactionType transaction;
 		transaction.Size = sizeof(transaction);
 		transaction.Version = Transaction_Version;
 		test::FillWithRandomData(transaction.Signer);
-		transaction.Command = ModifyLevyTransactionCommand::Add;
-		transaction.MosaicId = test::GenerateRandomValue<MosaicId>();
-		transaction.Levy = MosaicLevy(LevyType::None, catapult::UnresolvedAddress(), MosaicId(0),	Amount(0));
+		transaction.MosaicId = UnresolvedMosaicId(123);
+		transaction.Levy = MosaicLevyRaw(LevyType::None, catapult::UnresolvedAddress(), UnresolvedMosaicId(0),	Amount(0));
 
 		// Act:
 		test::PublishTransaction(*pPlugin, transaction, sub);

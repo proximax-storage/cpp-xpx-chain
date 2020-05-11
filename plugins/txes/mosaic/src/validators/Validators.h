@@ -98,15 +98,15 @@ namespace catapult { namespace validators {
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(MosaicPluginConfig, model::PluginConfigNotification<1>)();
 	
-	/// A validator implementation that applies to update/change of mosaic levy and validates that
-	/// - ...
-	DECLARE_STATEFUL_VALIDATOR(UpdateLevy, model::MosaicUpdateLevyNotification<1>)();
-	
-	/// A validator implementation that applies to during addition of levy
-	DECLARE_STATEFUL_VALIDATOR(AddLevy, model::MosaicAddLevyNotification<1>)();
+	/// A validator implementation that applies to during addition or modification of levy
+	/// - check if signer is eligible
+	/// - check if recipient address is valid
+	/// - check if fee is valid
+	/// - check mosaic Id is valid
+	DECLARE_STATEFUL_VALIDATOR(ModifyLevy, model::MosaicModifyLevyNotification<1>)();
 	
 	/// A validator implementation that checks for valid removal of levy
-	// - check if signer is eligible
-	// - check if mosaic id exist
+	/// - check if signer is eligible
+	/// - check if mosaic id exist
 	DECLARE_STATEFUL_VALIDATOR(RemoveLevy, model::MosaicRemoveLevyNotification<1>)();
 }}

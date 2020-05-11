@@ -19,22 +19,10 @@ namespace catapult { namespace plugins {
 		void Publish(const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 			switch (transaction.EntityVersion()) {
 				case 1:
-					switch(transaction.Command) {
-						case ModifyLevyTransactionCommand::Add:
-							sub.notify(MosaicAddLevyNotification<1>(
-								transaction.MosaicId,
-								transaction.Levy,
-								transaction.Signer));
-							break;
-						case ModifyLevyTransactionCommand::Update:
-							sub.notify(MosaicUpdateLevyNotification<1>(
-								transaction.UpdateFlag,
-								transaction.MosaicId,
-								transaction.Levy,
-								transaction.Signer));
-							break;
-					}
-				
+					sub.notify(MosaicModifyLevyNotification<1>(
+						transaction.MosaicId,
+						transaction.Levy,
+						transaction.Signer));
 				break;
 				
 				default:

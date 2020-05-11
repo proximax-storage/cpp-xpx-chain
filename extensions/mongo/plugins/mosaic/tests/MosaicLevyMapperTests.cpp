@@ -24,8 +24,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto pPlugin = CreateMosaicModifyLevyTransactionMongoPlugin();
 		
 		model::MosaicModifyLevyTransaction transaction;
-		transaction.Command = model::ModifyLevyTransactionCommand::Add;
-		transaction.MosaicId = MosaicId(123);
+		transaction.MosaicId = UnresolvedMosaicId (123);
 		
 		// Act:
 		mappers::bson_stream::document builder;

@@ -17,5 +17,14 @@ namespace catapult { namespace state {
 		/// Loads a single value from \a input.
 		static LevyEntry Load(io::InputStream& input);
 	};
+		
+	/// Policy for saving and loading levy entry data without historical information.
+	struct LevyEntryNonHistoricalSerializer {
+		/// Saves \a entry to \a output.
+		static void Save(const LevyEntry& entry, io::OutputStream& output);
+		
+		/// Loads a single value from \a input.
+		static LevyEntry Load(io::InputStream& input);
+	};
 }}
 

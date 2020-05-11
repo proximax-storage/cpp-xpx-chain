@@ -19,100 +19,125 @@ namespace catapult {
 	namespace observers {
 
 #define TEST_CLASS MosaicModifyLevyObserver
+	
+	/// region Add levy
+	DEFINE_COMMON_OBSERVER_TESTS(ModifyLevy, )
+	
+	namespace {
 		
 		using ObserverTestContext = test::ObserverTestContextT<test::LevyCacheFactory>;
-		constexpr UnresolvedMosaicId unresMosaicId(1234);
-		auto Currency_Mosaic_Id = MosaicId(unresMosaicId.unwrap());
 		
-		/// region Add levy
-		DEFINE_COMMON_OBSERVER_TESTS(AddLevy, )
-		DEFINE_COMMON_OBSERVER_TESTS(UpdateLevy, )
+		auto Unresolved_Mosaic_Id = UnresolvedMosaicId(1234);
+		auto Currency_Mosaic_Id = MosaicId(Unresolved_Mosaic_Id.unwrap());
+		Height height(444);
 		
-		namespace {
-			void RunAddTest(ObserverTestContext& context) {
-				auto pObserver = CreateAddLevyObserver();
-
-				auto owner = test::GenerateRandomByteArray<Key>();
-
-				test::AddMosaic(context.cache(), Currency_Mosaic_Id, Height(7),
-					Eternal_Artifact_Duration, Amount(10000));
-				
-				test::AddMosaicOwner(context.cache(), Currency_Mosaic_Id, owner, Amount(100000));
-				
-				auto notification = model::MosaicAddLevyNotification<1>(
-						Currency_Mosaic_Id,
-						model::MosaicLevy(model::LevyType::Percentile,catapult::UnresolvedAddress(),
-								MosaicId(0), Amount(50)), owner);
-
-				test::ObserveNotification(*pObserver, notification, context);
-			}
+		using LevySetupFunc = std::function<void (cache::CatapultCacheDelta&, const state::LevyEntryData&, const Key&)>;
+		using TestResultFunc = std::function<void (cache::CatapultCacheDelta&, const model::MosaicLevyRaw&, const state::LevyEntryData&)>;
+		
+		void RunModifyTest(ObserverTestContext& context, const model::MosaicLevyRaw& levy) {
+			auto pObserver = CreateModifyLevyObserver();
 			
-			void RunUpdateTest(ObserverTestContext& context) {
-				auto pObserver = CreateUpdateLevyObserver();
-				
-				auto owner = test::GenerateRandomByteArray<Key>();
-				auto notification = model::MosaicUpdateLevyNotification<1>(
-					model::MosaicLevyModifyBitChangeType | model::MosaicLevyModifyBitChangeLevyFee,
-					Currency_Mosaic_Id,
-					model::MosaicLevy(model::LevyType::Absolute,catapult::UnresolvedAddress(),
-						MosaicId(0), Amount(10)), owner);
-				
-				test::ObserveNotification(*pObserver, notification, context);
-			}
+			auto owner = test::GenerateRandomByteArray<Key>();
+			
+			auto notification = model::MosaicModifyLevyNotification<1>(
+				test::UnresolveXor(Currency_Mosaic_Id), levy, owner);
+
+			test::ObserveNotification(*pObserver, notification, context);
 		}
-
-		TEST(TEST_CLASS, ModifyMosaicAddLevyCommit) {
-
-			ObserverTestContext context(NotifyMode::Commit, Height{444});
+	
+		void RunTest(const NotifyMode& mode, LevySetupFunc action, TestResultFunc result) {
 			
-			RunAddTest(context);
-
-			auto& levyCache = context.cache().sub<cache::LevyCache>();
-			auto iter = levyCache.find(Currency_Mosaic_Id);
-			auto& entry = iter.get();
-			auto& levy = entry.levy();
-
-			EXPECT_EQ(levy.Type, model::LevyType::Percentile);
-			EXPECT_EQ(levy.Recipient, catapult::UnresolvedAddress());
-			EXPECT_EQ(levy.MosaicId, MosaicId(0));
-			EXPECT_EQ(levy.Fee, Amount(50));
-		}
-
-		TEST(TEST_CLASS, ModifyLevyRollbackTest) {
-
-			ObserverTestContext context(NotifyMode::Rollback, Height{444});
+			ObserverTestContext context(mode, height);
+			auto recipient = test::GenerateRandomByteArray<Address>();
+			auto signer = test::GenerateRandomByteArray<Key>();
+			auto oldLevyEntry = test::CreateValidMosaicLevy();
 			
-			RunAddTest(context);
-
-			auto& levyCache = context.cache().sub<cache::LevyCache>();
-			auto iter = levyCache.find(Currency_Mosaic_Id);
+			auto levy = model::MosaicLevyRaw(model::LevyType::Percentile,
+				test::UnresolveXor(recipient), test::UnresolveXor(Currency_Mosaic_Id), Amount(50));
 			
-			EXPECT_EQ(iter.tryGet(), nullptr);
+			action(context.cache(), oldLevyEntry, signer);
+			
+			RunModifyTest(context, levy);
+			
+			result(context.cache(), levy, oldLevyEntry);
 		}
 		
-		/// end region
-		
-		/// start region Update levy
-		TEST(TEST_CLASS, UpdateLevyInformation) {
-			
-			ObserverTestContext context(NotifyMode::Commit, Height{444});
-			
-			/// run add observer first to add levy to cache
-			RunAddTest(context);
-			
-			// update levy information
-			RunUpdateTest(context);
-			
-			auto& levyCache = context.cache().sub<cache::LevyCache>();
-			auto iter = levyCache.find(Currency_Mosaic_Id);
-			auto& entry = iter.get();
-			auto& levy = entry.levy();
-			
-			EXPECT_EQ(levy.Type, model::LevyType::Absolute);
-			EXPECT_EQ(levy.Recipient, catapult::UnresolvedAddress());
-			EXPECT_EQ(levy.MosaicId, MosaicId(0));
-			EXPECT_EQ(levy.Fee, Amount(10));
+		state::LevyEntry& GetLevyEntryFromCache(cache::CatapultCacheDelta& cache, const MosaicId& mosaicId) {
+			auto& levyCache = cache.sub<cache::LevyCache>();
+			auto iter = levyCache.find(mosaicId);
+			return iter.get();
 		}
-		/// end region
 	}
-}
+		
+	TEST(TEST_CLASS, AddNewLevyCommitTest) {
+		RunTest(
+		NotifyMode::Commit,
+		[](cache::CatapultCacheDelta& cache, const state::LevyEntryData&, const Key&){
+			test::AddMosaic(cache, Currency_Mosaic_Id, Height(7),
+				Eternal_Artifact_Duration, Amount(10000));
+			},
+			[](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw& levy, const state::LevyEntryData&) {
+				auto result = GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
+				auto resolverContext = test::CreateResolverContextXor();
+				
+				test::AssertLevy(*result.levy(), levy, resolverContext);
+		});
+	}
+		
+	TEST(TEST_CLASS, RollbackLevyWithoutHistoryTest) {
+		RunTest(
+			NotifyMode::Rollback,
+			[](cache::CatapultCacheDelta& cache, const state::LevyEntryData& levyEntry, const Key& signer){
+				test::AddMosaicWithLevy(cache, Currency_Mosaic_Id, Height(1), levyEntry, signer);},
+				[](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw&, const state::LevyEntryData&) {
+					auto& levyCache = cache.sub<cache::LevyCache>();
+					auto iter = levyCache.find(Currency_Mosaic_Id);
+					
+					EXPECT_EQ(iter.tryGet(), nullptr);
+			});
+	}
+	
+	TEST(TEST_CLASS, ModifyMosaicUpdateLevyCommit) {
+		RunTest(
+			NotifyMode::Commit,
+			[](cache::CatapultCacheDelta& cache, const state::LevyEntryData& levyEntry, const Key& signer){
+				test::AddMosaicWithLevy(cache, Currency_Mosaic_Id, Height(1), levyEntry, signer);},
+			[](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw& levy, const state::LevyEntryData& oldEntry) {
+				auto entry = GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
+				auto result = entry.levy();
+				auto resolverContext = test::CreateResolverContextXor();
+				
+				test::AssertLevy(*result, levy, resolverContext);
+				
+				auto updateEntry = entry.updateHistories().at(height);
+				test::AssertLevy(updateEntry, oldEntry);
+			});
+	}
+	
+	TEST(TEST_CLASS, ModifyMosaicUpdateLevyRollbackWithHistory) {
+		auto historyData = state::LevyEntryData();
+		historyData.Type = model::LevyType::Absolute;
+		historyData.Recipient = test::GenerateRandomByteArray<Address>();
+		historyData.MosaicId = MosaicId(1000);
+		historyData.Fee = test::CreateMosaicLevyFeePercentile(10); // 10% levy fee
+		
+		RunTest(
+			NotifyMode::Rollback,
+			[&historyData](cache::CatapultCacheDelta& cache, const state::LevyEntryData& levyEntry, const Key& signer) {
+				test::AddMosaicWithLevy(cache, Currency_Mosaic_Id, Height(1), levyEntry, signer);
+				
+				auto& entry = GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
+				entry.updateHistories().emplace(height, historyData);
+				
+				// add more history data
+				for(auto i = 0; i < 10; i++) {
+					auto history = test::CreateValidMosaicLevy();
+					entry.updateHistories().emplace(Height(100+i), history);
+				}
+			},
+			[&historyData](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw&, const state::LevyEntryData&) {
+				auto& entry = GetLevyEntryFromCache(cache, Currency_Mosaic_Id);;
+				test::AssertLevy(*entry.levy(), historyData);
+			});
+	}
+}}

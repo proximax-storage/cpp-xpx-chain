@@ -15,14 +15,17 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::MosaicAddLevyNotification<1>;
+	using Notification = model::MosaicModifyLevyNotification<1>;
 
 
-	ValidationResult MosaicAddLevyValidatorDetail(const Notification& notification,
+	ValidationResult MosaicModifyevyValidatorDetail(const Notification& notification,
 	                                                   const ValidatorContext& context) {
 		
+		MosaicId baseMosaicId = context.Resolvers.resolve(notification.MosaicId);
+		MosaicId levyMosaicId = context.Resolvers.resolve(notification.Levy.MosaicId);
+		
 		/// 1. check if signer is eligible and mosaic ID to be added levy for is valid
-		auto result = utils::IsLevyTransactionValid(notification.Signer, notification.MosaicId, context);
+		auto result = utils::IsLevyTransactionValid(notification.Signer, baseMosaicId, context);
 		if(result != ValidationResult::Success) return result;
 		
 		/// 2. levy is not available
@@ -30,35 +33,24 @@ namespace catapult { namespace validators {
 			return ValidationResult::Success;
 		
 		/// 3. check address validity
-		if(! utils::IsAddressValid(notification.Levy.Recipient, context)) {
+		if(! utils::IsAddressValid(notification.Levy.Recipient, context))
 			return Failure_Mosaic_Recipient_Levy_Not_Exist;
-		}
 		
 		/// 4. fees is valid
 		if(!utils::IsMosaicLevyFeeValid(notification.Levy)){
 			return Failure_Mosaic_Invalid_Levy_Fee;
 		}
 		
-		/// 5. Check MosaicID if existing if it is not 0 (use default)
-		if(notification.Levy.MosaicId != model::UnsetMosaicId) {
-			if(!utils::IsMosaicIdValid(notification.Levy.MosaicId, context)) {
+		/// 5. Check MosaicID if valid
+		if(!utils::IsMosaicIdValid(levyMosaicId, context))
 				return Failure_Mosaic_Id_Not_Found;
-			}
-		}
-		
-		/// 6. Check if levy is already in cache
-		auto& cache = context.Cache.sub<cache::LevyCache>();
-		auto iter = cache.find(notification.MosaicId);
-		if(iter.tryGet()) {
-			return Failure_Mosaic_Levy_Already_Exist;
-		}
 		
 		return ValidationResult::Success;
 	}
 
-	DECLARE_STATEFUL_VALIDATOR(AddLevy, Notification)( ) {
-		return MAKE_STATEFUL_VALIDATOR(AddLevy, [](const auto& notification, const auto& context) {
-			return MosaicAddLevyValidatorDetail(notification, context);
+	DECLARE_STATEFUL_VALIDATOR(ModifyLevy, Notification)( ) {
+		return MAKE_STATEFUL_VALIDATOR(ModifyLevy, [](const auto& notification, const auto& context) {
+			return MosaicModifyevyValidatorDetail(notification, context);
 		});
 	}
 }}
