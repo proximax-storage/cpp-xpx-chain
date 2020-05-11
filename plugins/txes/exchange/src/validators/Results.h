@@ -57,8 +57,14 @@ namespace catapult { namespace validators {
 	/// Validation failed because offer already exists.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Exists, 14);
 
-	/// Validation failed offer duration is zero.
+	/// Validation failed because offer duration is zero.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Zero_Offer_Duration, 15);
+
+	/// Validation failed because offer expired.
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Expired, 16);
+
+	/// Validation failed because there is already removed offer at the height.
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Cant_Remove_Offer_At_Height, 17);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

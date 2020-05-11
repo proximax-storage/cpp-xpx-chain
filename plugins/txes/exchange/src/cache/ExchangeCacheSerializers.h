@@ -15,6 +15,10 @@ namespace catapult { namespace cache {
 	/// Primary serializer for exchange cache.
 	struct ExchangeEntryPrimarySerializer : public CacheSerializerAdapter<state::ExchangeEntrySerializer, ExchangeCacheDescriptor> {};
 
+	/// Primary serializer for exchange cache for patricia tree hashes.
+	/// \note This serializer excludes expired offers.
+	struct ExchangeEntryPatriciaTreeSerializer : public CacheSerializerAdapter<state::ExchangeEntryNonHistoricalSerializer, ExchangeCacheDescriptor> {};
+
 	/// Serializer for exchange cache height grouped elements.
 	struct ExchangeHeightGroupingSerializer : public IdentifierGroupSerializer<ExchangeCacheTypes::HeightGroupingTypesDescriptor> {};
 }}

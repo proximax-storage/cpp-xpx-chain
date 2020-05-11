@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 				const state::ExchangeEntry* pEntry = nullptr,
 				const Key& signer = test::GenerateRandomByteArray<Key>()) {
 			// Arrange:
-			Height currentHeight(1);
+			Height currentHeight(10);
 			auto cache = test::ExchangeCacheFactory::Create();
 			if (pEntry) {
 				auto delta = cache.createDelta();
@@ -46,15 +46,17 @@ namespace catapult { namespace validators {
 
 		struct SellOfferTraits {
 			static constexpr auto OfferType = model::OfferType::Sell;
-			static void InsertOffer(state::ExchangeEntry& entry) {
-				entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(1)}});
+			static void InsertOffer(state::ExchangeEntry& entry, const Height& deadline = Height(20)) {
+				entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), deadline}});
+				entry.expiredSellOffers()[Height(10)].emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), deadline}});
 			}
 		};
 
 		struct BuyOfferTraits {
 			static constexpr auto OfferType = model::OfferType::Buy;
-			static void InsertOffer(state::ExchangeEntry& entry) {
-				entry.buyOffers().emplace(MosaicId(1), state::BuyOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(1)}, Amount(100)});
+			static void InsertOffer(state::ExchangeEntry& entry, const Height& deadline = Height(20)) {
+				entry.buyOffers().emplace(MosaicId(1), state::BuyOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), deadline}, Amount(100)});
+				entry.expiredBuyOffers()[Height(10)].emplace(MosaicId(1), state::BuyOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), deadline}, Amount(100)});
 			}
 		};
 	}
@@ -104,8 +106,8 @@ namespace catapult { namespace validators {
 		AssertValidationResult(
 			Failure_Exchange_Duplicated_Offer_In_Request,
 			{
-				model::MatchedOffer{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TTraits::OfferType}, offerOwner},
-				model::MatchedOffer{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TTraits::OfferType}, offerOwner},
+				model::MatchedOffer{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(5)}, Amount(50), TTraits::OfferType}, offerOwner},
+				model::MatchedOffer{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(5)}, Amount(50), TTraits::OfferType}, offerOwner},
 			},
 			&entry);
 	}
@@ -118,6 +120,21 @@ namespace catapult { namespace validators {
 		// Assert:
 		AssertValidationResult(
 			Failure_Exchange_Offer_Doesnt_Exist,
+			{
+				model::MatchedOffer{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TTraits::OfferType}, offerOwner},
+			},
+			&entry);
+	}
+
+	TRAITS_BASED_TEST(FailureWhenOfferExpired) {
+		// Arrange:
+		auto offerOwner = test::GenerateRandomByteArray<Key>();
+		state::ExchangeEntry entry(offerOwner);
+		TTraits::InsertOffer(entry, Height(10));
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Exchange_Offer_Expired,
 			{
 				model::MatchedOffer{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TTraits::OfferType}, offerOwner},
 			},
@@ -154,12 +171,27 @@ namespace catapult { namespace validators {
 			&entry);
 	}
 
+	TRAITS_BASED_TEST(FailureWhenOfferCantBeRemoved) {
+		// Arrange:
+		auto offerOwner = test::GenerateRandomByteArray<Key>();
+		state::ExchangeEntry entry(offerOwner);
+		TTraits::InsertOffer(entry);
+
+		// Assert:
+		AssertValidationResult(
+			Failure_Exchange_Cant_Remove_Offer_At_Height,
+			{
+				model::MatchedOffer{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TTraits::OfferType}, offerOwner},
+			},
+			&entry);
+	}
+
 	TEST(TEST_CLASS, Success) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
 		state::ExchangeEntry entry(offerOwner);
-		entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(1)}});
-		entry.buyOffers().emplace(MosaicId(2), state::BuyOffer{state::OfferBase{Amount(20), Amount(20), Amount(200), Height(1)}, Amount(100)});
+		entry.sellOffers().emplace(MosaicId(1), state::SellOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(20)}});
+		entry.buyOffers().emplace(MosaicId(2), state::BuyOffer{state::OfferBase{Amount(20), Amount(20), Amount(200), Height(20)}, Amount(100)});
 
 		// Assert:
 		AssertValidationResult(

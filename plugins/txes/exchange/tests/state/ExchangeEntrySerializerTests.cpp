@@ -16,11 +16,13 @@ namespace catapult { namespace state {
 	namespace {
 		constexpr size_t Offer_Count = 2;
 		constexpr size_t Expired_Offer_Count = 2;
-		constexpr auto Entry_Size =
+		constexpr auto Entry_Size_Without_History =
 			sizeof(VersionType)
 			+ Key_Size
 			+ 1 + Offer_Count * (sizeof(MosaicId) + sizeof(OfferBase))
-			+ 1 + Offer_Count * (sizeof(MosaicId) + sizeof(OfferBase) + sizeof(Amount))
+			+ 1 + Offer_Count * (sizeof(MosaicId) + sizeof(OfferBase) + sizeof(Amount));
+		constexpr auto Entry_Size_With_History =
+			Entry_Size_Without_History
 			+ 2 + Expired_Offer_Count * (sizeof(Height) + 1 + sizeof(MosaicId) + sizeof(OfferBase))
 			+ 2 + Expired_Offer_Count * (sizeof(Height) + 1 + sizeof(MosaicId) + sizeof(OfferBase) + sizeof(Amount));
 
@@ -50,6 +52,8 @@ namespace catapult { namespace state {
 			memcpy(buffer.data(), data, N);
 			return buffer;
 		}
+
+		// region Save
 
 		void AssertOfferBase(const OfferBase& offer, const uint8_t*& pData) {
 			EXPECT_EQ(offer.Amount.unwrap(), *reinterpret_cast<const uint64_t*>(pData));
@@ -105,10 +109,10 @@ namespace catapult { namespace state {
 			}
 		}
 
-		void AssertEntryBuffer(const ExchangeEntry& entry, const uint8_t* pData, size_t expectedSize, VersionType version) {
+		void AssertEntryBuffer(const ExchangeEntry& entry, const uint8_t* pData, size_t expectedSize, bool assertHistory) {
 			const auto* pExpectedEnd = pData + expectedSize;
 
-			EXPECT_EQ(version, *reinterpret_cast<const VersionType*>(pData));
+			EXPECT_EQ(entry.version(), *reinterpret_cast<const VersionType*>(pData));
 			pData += sizeof(VersionType);
 			auto owner = Extract<Key_Size>(pData);
 			EXPECT_EQ(entry.owner(), owner);
@@ -117,59 +121,51 @@ namespace catapult { namespace state {
 			AssertSellOffers(entry.sellOffers(), pData);
 			AssertBuyOffers(entry.buyOffers(), pData);
 
-			AssertExpiredSellOffers(entry.expiredSellOffers(), pData);
-			AssertExpiredBuyOffers(entry.expiredBuyOffers(), pData);
+			if (assertHistory) {
+				AssertExpiredSellOffers(entry.expiredSellOffers(), pData);
+				AssertExpiredBuyOffers(entry.expiredBuyOffers(), pData);
+			}
 
 			EXPECT_EQ(pExpectedEnd, pData);
 		}
 
+		template<typename TTraits, typename TSerializer>
 		void AssertCanSaveSingleEntry(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto entry = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count);
+			auto entry = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
 
 			// Act:
-			ExchangeEntrySerializer::Save(entry, context.outputStream());
+			TSerializer::Save(entry, context.outputStream());
 
 			// Assert:
-			ASSERT_EQ(Entry_Size, context.buffer().size());
-			AssertEntryBuffer(entry, context.buffer().data(), Entry_Size, version);
+			ASSERT_EQ(TTraits::Entry_Size, context.buffer().size());
+			TTraits::AssertBuffer(entry, context.buffer().data());
 		}
 
+		template<typename TTraits, typename TSerializer>
 		void AssertCanSaveMultipleEntries(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto entry1 = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count);
-			auto entry2 = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count);
+			auto entry1 = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
+			auto entry2 = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
 
 			// Act:
-			ExchangeEntrySerializer::Save(entry1, context.outputStream());
-			ExchangeEntrySerializer::Save(entry2, context.outputStream());
+			TSerializer::Save(entry1, context.outputStream());
+			TSerializer::Save(entry2, context.outputStream());
 
 			// Assert:
-			ASSERT_EQ(2 * Entry_Size, context.buffer().size());
+			ASSERT_EQ(2 * TTraits::Entry_Size, context.buffer().size());
 			const auto* pBuffer1 = context.buffer().data();
-			const auto* pBuffer2 = pBuffer1 + Entry_Size;
-			AssertEntryBuffer(entry1, pBuffer1, Entry_Size, version);
-			AssertEntryBuffer(entry2, pBuffer2, Entry_Size, version);
+			const auto* pBuffer2 = pBuffer1 + TTraits::Entry_Size;
+			TTraits::AssertBuffer(entry1, pBuffer1);
+			TTraits::AssertBuffer(entry2, pBuffer2);
 		}
-	}
 
-	// region Save
+		// endregion
 
-	TEST(TEST_CLASS, CanSaveSingleEntry_v1) {
-		AssertCanSaveSingleEntry(1);
-	}
+		// region Load
 
-	TEST(TEST_CLASS, CanSaveMultipleEntries_v1) {
-		AssertCanSaveMultipleEntries(1);
-	}
-
-	// endregion
-
-	// region Load
-
-	namespace {
 		void WriteOfferBase(const MosaicId& mosaicId, const OfferBase& offer, uint8_t*& pData) {
 			auto value = mosaicId.unwrap();
 			memcpy(pData, &value, sizeof(uint64_t));
@@ -231,10 +227,11 @@ namespace catapult { namespace state {
 			}
 		}
 
-		std::vector<uint8_t> CreateEntryBuffer(const ExchangeEntry& entry, VersionType version) {
-			std::vector<uint8_t> buffer(Entry_Size);
+		std::vector<uint8_t> CreateEntryBuffer(const ExchangeEntry& entry, size_t expectedSize, bool writeHistory) {
+			std::vector<uint8_t> buffer(expectedSize);
 
 			auto* pData = buffer.data();
+			auto version = entry.version();
 			memcpy(pData, &version, sizeof(VersionType));
 			pData += sizeof(VersionType);
 			memcpy(pData, entry.owner().data(), Key_Size);
@@ -243,30 +240,84 @@ namespace catapult { namespace state {
 			WriteSellOffers(entry.sellOffers(), pData);
 			WriteBuyOffers(entry.buyOffers(), pData);
 
-			WriteExpiredSellOffers(entry.expiredSellOffers(), pData);
-			WriteExpiredBuyOffers(entry.expiredBuyOffers(), pData);
+			if (writeHistory) {
+				WriteExpiredSellOffers(entry.expiredSellOffers(), pData);
+				WriteExpiredBuyOffers(entry.expiredBuyOffers(), pData);
+			}
 
 			return buffer;
 		}
 
+		template<typename TTraits, typename TSerializer>
 		void AssertCanLoadSingleEntry(VersionType version) {
 			// Arrange:
 			TestContext context;
-			auto originalEntry = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count);
-			auto buffer = CreateEntryBuffer(originalEntry, version);
+			auto originalEntry = test::CreateExchangeEntry(Offer_Count, Expired_Offer_Count, test::GenerateRandomByteArray<Key>(), version);
+			auto buffer = TTraits::CreateBuffer(originalEntry);
+			TTraits::AdaptEntry(originalEntry);
 
 			// Act:
 			ExchangeEntry result((Key()));
-			test::RunLoadValueTest<ExchangeEntrySerializer>(buffer, result);
+			test::RunLoadValueTest<TSerializer>(buffer, result);
 
 			// Assert:
 			test::AssertEqualExchangeData(originalEntry, result);
 		}
+
+		// endregion
+
+		struct NonHistoricalTraits {
+		public:
+			static constexpr auto Entry_Size = Entry_Size_Without_History;
+
+			static void AssertBuffer(const ExchangeEntry& entry, const uint8_t* pData) {
+				AssertEntryBuffer(entry, pData, Entry_Size_Without_History, false);
+			}
+
+			static std::vector<uint8_t> CreateBuffer(const ExchangeEntry& entry) {
+				return CreateEntryBuffer(entry, Entry_Size_Without_History, false);
+			}
+
+			static void AdaptEntry(ExchangeEntry& entry) {
+				entry.expiredSellOffers().clear();
+				entry.expiredBuyOffers().clear();
+			}
+		};
+
+		struct HistoricalTraits {
+		public:
+			static constexpr auto Entry_Size = Entry_Size_With_History;
+
+			static void AssertBuffer(const ExchangeEntry& entry, const uint8_t* pData) {
+				AssertEntryBuffer(entry, pData, Entry_Size_With_History, true);
+			}
+
+			static std::vector<uint8_t> CreateBuffer(const ExchangeEntry& entry) {
+				return CreateEntryBuffer(entry, Entry_Size_With_History, true);
+			}
+
+			static void AdaptEntry(ExchangeEntry&) {
+			}
+		};
 	}
 
-	TEST(TEST_CLASS, CanLoadSingleEntry_v1) {
-		AssertCanLoadSingleEntry(1);
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits, typename TSerializer> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version); \
+	TEST(TEST_CLASS, TEST_NAME##_NonHistorical_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntryNonHistoricalSerializer>(1); } \
+	TEST(TEST_CLASS, TEST_NAME##_Historical_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntrySerializer>(1); } \
+	TEST(TEST_CLASS, TEST_NAME##_NonHistorical_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<NonHistoricalTraits, ExchangeEntryNonHistoricalSerializer>(2); } \
+	TEST(TEST_CLASS, TEST_NAME##_Historical_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntrySerializer>(2); } \
+	template<typename TTraits, typename TSerializer> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version)
+
+	TRAITS_BASED_TEST(CanSaveSingleEntry) {
+		AssertCanSaveSingleEntry<TTraits, TSerializer>(version);
 	}
 
-	// endregion
+	TRAITS_BASED_TEST(CanSaveMultipleEntries) {
+		AssertCanSaveMultipleEntries<TTraits, TSerializer>(version);
+	}
+
+	TRAITS_BASED_TEST(CanLoadSingleEntry) {
+		AssertCanLoadSingleEntry<TTraits, TSerializer>(version);
+	}
 }}

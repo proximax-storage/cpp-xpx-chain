@@ -16,30 +16,39 @@ using namespace catapult::model;
 namespace catapult { namespace plugins {
 
 	namespace {
+		template<typename TTransaction, VersionType version>
+		void Publish(const TTransaction& transaction, NotificationSubscriber& sub, const config::ImmutableConfiguration& config) {
+			sub.notify(OfferNotification<version>(
+				transaction.Signer,
+				transaction.OfferCount,
+				transaction.OffersPtr()));
+
+			Amount lockAmount(0);
+			auto pOffer = transaction.OffersPtr();
+			for (uint8_t i = 0; i < transaction.OfferCount; ++i, ++pOffer) {
+				if (model::OfferType::Buy == pOffer->Type) {
+					lockAmount = Amount(lockAmount.unwrap() + pOffer->Cost.unwrap());
+				} else {
+					sub.notify(BalanceDebitNotification<1>(transaction.Signer, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
+				}
+			}
+
+			if (Amount(0) != lockAmount) {
+				auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+				sub.notify(BalanceDebitNotification<1>(transaction.Signer, currencyMosaicId, lockAmount));
+			}
+		}
+
 		template<typename TTransaction>
 		auto CreatePublisher(const config::ImmutableConfiguration& config) {
 			return [config](const TTransaction& transaction, const Height&, NotificationSubscriber& sub) {
 				switch (transaction.EntityVersion()) {
 				case 1: {
-					sub.notify(OfferNotification<1>(
-						transaction.Signer,
-						transaction.OfferCount,
-						transaction.OffersPtr()));
-
-					Amount lockAmount(0);
-					auto pOffer = transaction.OffersPtr();
-					for (uint8_t i = 0; i < transaction.OfferCount; ++i, ++pOffer) {
-						if (model::OfferType::Buy == pOffer->Type) {
-							lockAmount = Amount(lockAmount.unwrap() + pOffer->Cost.unwrap());
-						} else {
-							sub.notify(BalanceDebitNotification<1>(transaction.Signer, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
-						}
-					}
-
-					if (Amount(0) != lockAmount) {
-						auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
-						sub.notify(BalanceDebitNotification<1>(transaction.Signer, currencyMosaicId, lockAmount));
-					}
+					Publish<TTransaction, 1>(transaction, sub, config);
+					break;
+				}
+				case 2: {
+					Publish<TTransaction, 2>(transaction, sub, config);
 					break;
 				}
 				default:

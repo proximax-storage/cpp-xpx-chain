@@ -18,8 +18,8 @@ namespace catapult { namespace test {
 		};
 	}
 
-	state::ExchangeEntry CreateExchangeEntry(uint8_t offerCount, uint8_t expiredOfferCount, Key key) {
-		state::ExchangeEntry entry(key);
+	state::ExchangeEntry CreateExchangeEntry(uint8_t offerCount, uint8_t expiredOfferCount, Key key, VersionType version) {
+		state::ExchangeEntry entry(key, version);
 		for (uint8_t i = 1; i <= offerCount; ++i) {
 			entry.buyOffers().emplace(MosaicId(i), state::BuyOffer{test::GenerateOffer(), test::GenerateRandomValue<Amount>()});
 			entry.sellOffers().emplace(MosaicId(i), state::SellOffer{test::GenerateOffer()});
@@ -77,6 +77,7 @@ namespace catapult { namespace test {
 	}
 
 	void AssertEqualExchangeData(const state::ExchangeEntry& entry1, const state::ExchangeEntry& entry2) {
+		EXPECT_EQ(entry1.version(), entry2.version());
 		EXPECT_EQ(entry1.owner(), entry2.owner());
 		AssertOffers(entry1.buyOffers(), entry2.buyOffers());
 		AssertOffers(entry1.sellOffers(), entry2.sellOffers());

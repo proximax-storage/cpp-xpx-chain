@@ -17,11 +17,10 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS OfferValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(Offer, )
+	DEFINE_COMMON_VALIDATOR_TESTS(OfferV1, )
+	DEFINE_COMMON_VALIDATOR_TESTS(OfferV2, )
 
 	namespace {
-		using Notification = model::OfferNotification<1>;
-
 		constexpr MosaicId Currency_Mosaic_Id(1234);
 
 		auto CreateConfig(const Key& longOfferKey) {
@@ -34,6 +33,7 @@ namespace catapult { namespace validators {
 			return (config.ToConst());
 		}
 
+		template<typename TTraits>
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const std::vector<model::OfferWithDuration> offers = {},
@@ -50,9 +50,9 @@ namespace catapult { namespace validators {
 				cache.commit(currentHeight);
 			}
 
-			Notification notification(signer, offers.size(), offers.data());
+			model::OfferNotification<TTraits::Version> notification(signer, offers.size(), offers.data());
 			auto config = CreateConfig(longOfferKey);
-			auto pValidator = CreateOfferValidator();
+			auto pValidator = TTraits::CreateValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config, currentHeight);
@@ -74,23 +74,39 @@ namespace catapult { namespace validators {
 				entry.buyOffers().emplace(MosaicId(1), state::BuyOffer{state::OfferBase{Amount(10), Amount(10), Amount(100), Height(1)}, Amount(100)});
 			}
 		};
+
+		struct ValidatorV1Traits {
+			static constexpr VersionType Version = 1;
+			static auto CreateValidator() {
+				return CreateOfferV1Validator();
+			}
+		};
+
+		struct ValidatorV2Traits {
+			static constexpr VersionType Version = 2;
+			static auto CreateValidator() {
+				return CreateOfferV2Validator();
+			}
+		};
 	}
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
-	TEST(TEST_CLASS, TEST_NAME##_Sell) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SellOfferTraits>(); } \
-	TEST(TEST_CLASS, TEST_NAME##_Buy) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits>(); } \
-	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+	template<typename TOfferTraits, typename TValidatorTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_Sell_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SellOfferTraits, ValidatorV1Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Buy_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV1Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Sell_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SellOfferTraits, ValidatorV2Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Buy_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV2Traits>(); } \
+	template<typename TOfferTraits, typename TValidatorTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
-	TEST(TEST_CLASS, FailureWhenNoOffers) {
+	TRAITS_BASED_TEST(FailureWhenNoOffers) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			Failure_Exchange_No_Offers);
 	}
 
-	TEST(TEST_CLASS, FailureWhenDuplicatedOffersInRequest) {
+	TRAITS_BASED_TEST(FailureWhenDuplicatedOffersInRequest) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			Failure_Exchange_Duplicated_Offer_In_Request,
 			{
 				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), model::OfferType::Sell}, BlockDuration(100)},
@@ -98,9 +114,9 @@ namespace catapult { namespace validators {
 			});
 	}
 
-	TEST(TEST_CLASS, FailureWhenOfferDurationZero) {
+	TRAITS_BASED_TEST(FailureWhenOfferDurationZero) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			Failure_Exchange_Zero_Offer_Duration,
 			{
 				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), model::OfferType::Sell}, BlockDuration(0)},
@@ -109,59 +125,59 @@ namespace catapult { namespace validators {
 
 	TRAITS_BASED_TEST(FailureWhenOfferDurationTooLarge) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			Failure_Exchange_Offer_Duration_Too_Large,
 			{
-				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TTraits::OfferType}, BlockDuration(1000)},
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TOfferTraits::OfferType}, BlockDuration(1000)},
 			});
 	}
 
 	TRAITS_BASED_TEST(FailureWhenOfferZeroAmount) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			Failure_Exchange_Zero_Amount,
 			{
-				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(0)}, Amount(100), TTraits::OfferType}, BlockDuration(100)},
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(0)}, Amount(100), TOfferTraits::OfferType}, BlockDuration(100)},
 			});
 	}
 
 	TRAITS_BASED_TEST(FailureWhenOfferZeroPrice) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			Failure_Exchange_Zero_Price,
 			{
-				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(0), TTraits::OfferType}, BlockDuration(100)},
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(0), TOfferTraits::OfferType}, BlockDuration(100)},
 			});
 	}
 
 	TRAITS_BASED_TEST(FailureWhenSellOfferMosaicNotAllowed) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			Failure_Exchange_Mosaic_Not_Allowed,
 			{
-				model::OfferWithDuration{model::Offer{{test::UnresolveXor(Currency_Mosaic_Id), Amount(10)}, Amount(100), TTraits::OfferType}, BlockDuration(100)},
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(Currency_Mosaic_Id), Amount(10)}, Amount(100), TOfferTraits::OfferType}, BlockDuration(100)},
 			});
 	}
 
 	TRAITS_BASED_TEST(FailureWhenOfferAlreadyExists) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
-		state::ExchangeEntry entry(offerOwner);
-		TTraits::InsertOffer(entry);
+		state::ExchangeEntry entry(offerOwner, 1);
+		TOfferTraits::InsertOffer(entry);
 
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			Failure_Exchange_Offer_Exists,
 			{
-				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TTraits::OfferType}, BlockDuration(100)},
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), TOfferTraits::OfferType}, BlockDuration(100)},
 			},
 			offerOwner,
 			&entry);
 	}
 
-	TEST(TEST_CLASS, Success) {
+	TRAITS_BASED_TEST(Success) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			ValidationResult::Success,
 			{
 				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), model::OfferType::Sell}, BlockDuration(100)},
@@ -170,12 +186,12 @@ namespace catapult { namespace validators {
 			test::GenerateRandomByteArray<Key>());
 	}
 
-	TEST(TEST_CLASS, Success_LongOffer) {
+	TRAITS_BASED_TEST(Success_LongOffer) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
 
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TValidatorTraits>(
 			ValidationResult::Success,
 			{
 				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), model::OfferType::Sell}, BlockDuration(1000)},

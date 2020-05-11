@@ -13,13 +13,14 @@
 
 namespace catapult { namespace validators {
 
-	/// A validator implementation that applies to offer notification and validates that:
+	/// A validator implementation that applies to offer notifications and validates that:
 	/// - at least one offer to add is present
 	/// - offer duration does not exceed maximum if transaction signer is not nemesis signer.
 	/// - Mosaic amount is not zero.
 	/// - Mosaic price is not zero.
 	/// - Mosaic is allowed for exchange.
-	DECLARE_STATEFUL_VALIDATOR(Offer, model::OfferNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(OfferV1, model::OfferNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(OfferV2, model::OfferNotification<2>)();
 
 	/// A validator implementation that applies to exchange notification and validates that:
 	/// - at least one offer to exchange is present.
