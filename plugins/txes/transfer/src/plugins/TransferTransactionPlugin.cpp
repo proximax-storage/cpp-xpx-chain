@@ -46,14 +46,15 @@ namespace catapult { namespace plugins {
 						pMosaics[i].MosaicId,
 						pMosaics[i].Amount);
 					
+					sub.notify(notification);
+					
 					auto pMosaicLevyData = sub.mempool().malloc(model::MosaicLevyData(pMosaics[i].MosaicId));
 					auto levyTransferNotification = BalanceTransferNotification<2>(
 						transaction.Signer,
 						UnresolvedLevyAddress(transaction.Recipient.array(), UnresolvedCommonType::MosaicLevy, pMosaicLevyData),
 						UnresolvedLevyMosaicId(pMosaics[i].MosaicId.unwrap()),
-						pMosaics[i].Amount);
-
-					sub.notify(notification);
+						UnresolvedAmount(pMosaics[i].Amount.unwrap(), UnresolvedAmountType::MosaicLevy, pMosaicLevyData));
+					
 					sub.notify(levyTransferNotification);
 				}
 

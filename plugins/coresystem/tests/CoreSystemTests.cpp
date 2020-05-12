@@ -89,6 +89,7 @@ namespace catapult { namespace plugins {
 					"BlockDifficultyPruningObserver",
 					"BalanceDebitObserver",
 					"BalanceCreditObserver",
+					"BalanceLevyTransferObserver",
 				};
 			}
 
@@ -98,12 +99,12 @@ namespace catapult { namespace plugins {
 					"SourceChangeObserver",
 					"AccountAddressObserver",
 					"BalanceTransferObserver",
-					"BalanceLevyTransferObserver",
 					"HarvestFeeObserver",
 					"TotalTransactionsObserver",
 					"SnapshotCleanUpObserver",
 					"BalanceDebitObserver",
 					"BalanceCreditObserver",
+					"BalanceLevyTransferObserver",
 				};
 			}
 		};

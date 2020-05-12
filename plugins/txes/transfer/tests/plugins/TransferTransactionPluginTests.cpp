@@ -152,7 +152,7 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, mosaicsSub);
 
 		// Assert:
-		EXPECT_EQ(4u, sub.numNotifications());
+		EXPECT_EQ(5u, sub.numNotifications());
 		EXPECT_EQ(1u, sub.numTransfers());
 		EXPECT_TRUE(sub.contains(pTransaction->Signer, pTransaction->Recipient, UnresolvedMosaicId(123), Amount(9876)));
 
@@ -178,7 +178,7 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, mosaicsSub);
 
 		// Assert:
-		EXPECT_EQ(6u, sub.numNotifications());
+		EXPECT_EQ(9u, sub.numNotifications());
 		EXPECT_EQ(3u, sub.numTransfers());
 		EXPECT_TRUE(sub.contains(pTransaction->Signer, pTransaction->Recipient, UnresolvedMosaicId(123), Amount(9876)));
 		EXPECT_TRUE(sub.contains(pTransaction->Signer, pTransaction->Recipient, UnresolvedMosaicId(777), Amount(444)));

@@ -86,6 +86,16 @@ namespace catapult { namespace plugins {
 			return true;
 		}
 
+		template <typename TUnresolvedAddress>
+		bool AddressResolver(const cache::ReadOnlyCatapultCache& cache, const TUnresolvedAddress& unresolved, Address& resolved ) {
+			auto namespaceCache = cache.template sub<cache::NamespaceCache>();
+			NamespaceId namespaceId;
+			std::memcpy(static_cast<void*>(&namespaceId), unresolved.data() + 1, sizeof(NamespaceId));
+			return RunNamespaceResolver(namespaceCache, namespaceId, state::AliasType::Address, resolved, [](const auto& alias) {
+				return alias.address();
+			});
+		}
+		
 		void RegisterNamespaceAliasResolvers(PluginManager& manager) {
 			manager.addMosaicResolver([](const auto&, const auto& unresolved, auto& resolved) {
 				constexpr uint64_t Namespace_Flag = 1ull << 63;
@@ -115,12 +125,11 @@ namespace catapult { namespace plugins {
 			});
 
 			manager.addAddressResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
-				auto namespaceCache = cache.template sub<cache::NamespaceCache>();
-				NamespaceId namespaceId;
-				std::memcpy(static_cast<void*>(&namespaceId), unresolved.data() + 1, sizeof(NamespaceId));
-				return RunNamespaceResolver(namespaceCache, namespaceId, state::AliasType::Address, resolved, [](const auto& alias) {
-					return alias.address();
-				});
+				return AddressResolver<UnresolvedAddress>(cache, unresolved, resolved);
+			});
+			
+			manager.addLevyAddressResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+				return AddressResolver<UnresolvedLevyAddress>(cache, unresolved, resolved);
 			});
 		}
 

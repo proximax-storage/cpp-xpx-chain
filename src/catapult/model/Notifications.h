@@ -166,7 +166,7 @@ namespace catapult { namespace model {
 	struct BalanceTransferNotification<2> : public BasicBalanceNotification<BalanceTransferNotification<2>, UnresolvedLevyMosaicId> {
 	public:
 		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Balance_Transfer_v1_Notification;
+		static constexpr auto Notification_Type = Core_Balance_Transfer_v2_Notification;
 	
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a unresolved amount.

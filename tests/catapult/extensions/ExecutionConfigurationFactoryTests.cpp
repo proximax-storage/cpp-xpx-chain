@@ -46,7 +46,6 @@ namespace catapult { namespace extensions {
 			"SourceChangeObserver",
 			"AccountAddressObserver",
 			"BalanceTransferObserver",
-			"BalanceLevyTransferObserver",
 			"HarvestFeeObserver",
 			"TotalTransactionsObserver",
 			"SnapshotCleanUpObserver",
@@ -56,6 +55,7 @@ namespace catapult { namespace extensions {
 			"TransactionHashObserver",
 			"BalanceDebitObserver",
 			"BalanceCreditObserver",
+			"BalanceLevyTransferObserver",
 		};
 		EXPECT_EQ(expectedObserverNames, config.pObserver->names());
 

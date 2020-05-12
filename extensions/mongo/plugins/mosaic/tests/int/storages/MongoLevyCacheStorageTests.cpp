@@ -38,7 +38,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			using CacheType = cache::LevyCache;
 			using ModelType = state::LevyEntry;
 			
-			static constexpr auto Collection_Name = "mosaics";
+			static constexpr auto Collection_Name = "levy";
 			static constexpr auto Network_Id = static_cast<model::NetworkIdentifier>(0x5A);
 			static constexpr auto CreateCacheStorage = CreateMongoLevyCacheStorage;
 			
@@ -70,11 +70,11 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 			
 			static auto GetFindFilter(const ModelType& entry) {
-				return document() << "mosaic.mosaicId" << mappers::ToInt64(entry.mosaicId()) << finalize;
+				return document() << "levy.mosaicId" << mappers::ToInt64(entry.mosaicId()) << finalize;
 			}
 			
 			static void AssertEqual(const ModelType& entry, const bsoncxx::document::view& view) {
-				test::AssertEqualLevyData(entry, view);
+				test::AssertEqualLevyData(entry, view["levy"].get_document().view());
 			}
 		};
 	}

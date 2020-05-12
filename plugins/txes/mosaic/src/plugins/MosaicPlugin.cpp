@@ -146,12 +146,15 @@ namespace catapult { namespace plugins {
 		
 		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			const auto& levyCache = cache.template sub<cache::LevyCache>();
-			
-			/// return true and Amount(0) to prevent other resolver from sedinging an amount if there is error
-			resolved = Amount(0);
+			auto result = false;
 			
 			switch (unresolved.Type) {
 				case UnresolvedAmountType::MosaicLevy: {
+					
+					/// return true and Amount(0) to prevent other resolver from sending an amount if there are no levy info
+					resolved = Amount(0);
+					result = true;
+					
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
 					if (!levyData) {
 						break;
@@ -168,12 +171,14 @@ namespace catapult { namespace plugins {
 					
 					utils::MosaicLevyCalculatorFactory factory;
 					resolved = factory.getCalculator(pLevy->Type)(unresolved, pLevy->Fee);
+					
+					[[fallthrough]];
 				}
 				default:
 					break;
 			}
 			
-			return true;
+			return result;
 		});
 		/// end region
 	}
