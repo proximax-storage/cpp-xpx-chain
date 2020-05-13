@@ -257,7 +257,7 @@ namespace catapult { namespace model {
 		static constexpr auto Notification_Type = Mosaic_Remove_Levy_v1_Notification;
 	
 	public:
-		explicit MosaicRemoveLevyNotification(UnresolvedMosaicId mosaicId, Key signer)
+		explicit MosaicRemoveLevyNotification(UnresolvedMosaicId mosaicId, const Key& signer)
 			: Notification(Notification_Type, sizeof(MosaicRemoveLevyNotification<1>))
 			, MosaicId(mosaicId)
 			, Signer(signer)

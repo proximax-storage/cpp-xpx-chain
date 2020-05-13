@@ -156,15 +156,13 @@ namespace catapult { namespace plugins {
 					result = true;
 					
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
-					if (!levyData) {
+					if (!levyData)
 						break;
-					}
 					
 					MosaicId mosaicID(levyData->MosaicId.unwrap());
 					auto mosaicIter = levyCache.find(mosaicID);
-					if (!mosaicIter.tryGet()) {
+					if (!mosaicIter.tryGet())
 						break;
-					}
 					
 					auto& entry = mosaicIter.get();
 					auto pLevy = entry.levy();

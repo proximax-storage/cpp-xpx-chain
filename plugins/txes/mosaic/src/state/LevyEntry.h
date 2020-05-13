@@ -46,11 +46,6 @@ namespace catapult { namespace state {
 	
 	class LevyEntry {
 	public:
-		LevyEntry()
-			: m_mosaicId(0)
-			, m_pLevy(nullptr)
-			 {}
-		
 		LevyEntry(const MosaicId& mosaicId, const LevyEntryData& levy)
 			: m_mosaicId(mosaicId)
 			, m_pLevy(new LevyEntryData(levy)) {
