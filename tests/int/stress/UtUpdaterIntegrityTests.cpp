@@ -59,7 +59,7 @@ namespace catapult { namespace chain {
 
                 { "mosaicRentalFeeSinkPublicKey", test::Mosaic_Rental_Fee_Sink_Public_Key },
                 { "mosaicRentalFee", "500" },
-                {"levyCacheEnabled", "true"}
+                {"levyEnabled", "true"}
             } } }));
 			
 			const_cast<model::NetworkConfiguration&>(config.Network).template InitPluginConfiguration<config::TransferConfiguration>();

@@ -80,7 +80,7 @@ maxMosaicDivisibility = 6
 mosaicRentalFeeSinkPublicKey = 53E140B5947F104CABC2D6FE8BAEDBC30EF9A0609C717D9613DE593EC2A266D3
 mosaicRentalFee = 10'000'000'000
 
-levyCacheEnabled = true
+levyEnabled = true
 
 [plugin:catapult.plugins.multisig]
 

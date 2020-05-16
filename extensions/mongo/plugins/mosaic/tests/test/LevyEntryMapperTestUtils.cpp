@@ -25,16 +25,19 @@ namespace catapult { namespace test {
 		EXPECT_EQ(levy->Fee, fee);
 	}
 	
-	void AssetEqualHistory(const state::LevyEntry& entry, const bsoncxx::document::view& dbMosaic) {
+	void AssetEqualHistory(state::LevyEntry& entry, const bsoncxx::document::view& dbMosaic) {
 		auto historyEntry = dbMosaic["history"].get_array().value;
 		
 		auto historyCount = 0;
+		auto history = entry.updateHistory();
 		for (const auto& dbHistoryItem : historyEntry) {
 			auto doc = dbHistoryItem.get_document().view();
 			auto height = Height{static_cast<uint64_t>(doc["height"].get_int64())};
 			auto lhs = levy::ReadLevy(doc);
 			
-			auto rhs = entry.updateHistories().find(height)->second;
+			EXPECT_EQ(history[historyCount].first, height);
+			
+			auto rhs = history[historyCount].second;
 			EXPECT_EQ(rhs.Type, lhs.Type);
 			EXPECT_EQ(rhs.Recipient, lhs.Recipient);
 			EXPECT_EQ(rhs.MosaicId, lhs.MosaicId);
@@ -43,6 +46,6 @@ namespace catapult { namespace test {
 			historyCount++;
 		}
 		
-		EXPECT_EQ(entry.updateHistories().size(), historyCount);
+		EXPECT_EQ(entry.updateHistory().size(), historyCount);
 	}
 }}

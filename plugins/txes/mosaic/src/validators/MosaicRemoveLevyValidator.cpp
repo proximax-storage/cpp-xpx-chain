@@ -19,12 +19,19 @@ namespace catapult { namespace validators {
 		/// 1. check if signer is eligible and mosaic ID to be removed is valid
 		auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
 		auto result = utils::IsLevyTransactionValid(notification.Signer, mosaicId, context);
-		if(result != ValidationResult::Success) return result;
+		if(result != ValidationResult::Success)
+			return result;
 		
 		/// 2. Check if levy for this mosaicID exist
 		auto& levyCache = context.Cache.sub<cache::LevyCache>();
 		auto iter = levyCache.find(mosaicId);
-		if(!iter.tryGet()) return Failure_Mosaic_Levy_Not_Found;
+		if(!iter.tryGet())
+			return Failure_Mosaic_Levy_Not_Found;
+		
+		/// 3. Check if current levy is set
+		auto entry = iter.get();
+		if( entry.levy() == nullptr)
+			return Failure_Mosaic_Current_Levy_Not_Set;
 		
 		return ValidationResult::Success;
 	}

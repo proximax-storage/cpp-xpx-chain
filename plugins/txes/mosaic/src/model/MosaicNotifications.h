@@ -47,10 +47,10 @@ namespace catapult { namespace model {
 	/// Mosaic rental fee has been sent.
 	DEFINE_MOSAIC_NOTIFICATION(Rental_Fee_v1, 0x0030, Observer);
 		
-	/// Modify mosaic levy, represents Add and/or transaction
+	/// levy information has been modified
 	DEFINE_MOSAIC_NOTIFICATION(Modify_Levy_v1, 0x0040, All);
 		
-	/// Remove mosaic levy
+	/// levy remove transaction has been sent
 	DEFINE_MOSAIC_NOTIFICATION(Remove_Levy_v1, 0x0042, All);
 	
 #undef DEFINE_MOSAIC_NOTIFICATION

@@ -10,5 +10,5 @@ namespace catapult { namespace test {
 	void AssertEqualLevyData(const state::LevyEntry& entry, const bsoncxx::document::view& dbMosaic);
 	
 	/// checks for history entries against mongo
-	void AssetEqualHistory(const state::LevyEntry& entry, const bsoncxx::document::view& dbMosaic);
+	void AssetEqualHistory(state::LevyEntry& entry, const bsoncxx::document::view& dbMosaic);
 }}

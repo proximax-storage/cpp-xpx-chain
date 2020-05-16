@@ -79,11 +79,11 @@ namespace catapult { namespace state {
 			}
 			
 			if (writeHistory) {
-				auto size = utils::checked_cast<size_t, uint16_t>(entry.updateHistories().size());
+				auto size = utils::checked_cast<size_t, uint16_t>(entry.updateHistory().size());
 				memcpy(pData, &size, sizeof(uint16_t));
 				pData += sizeof(uint16_t);
 				if( size > 0) {
-					for (const auto &pair : entry.updateHistories()) {
+					for (const auto &pair : entry.updateHistory()) {
 						auto height = pair.first.unwrap();
 						memcpy(pData, &height, sizeof(uint64_t));
 						pData += sizeof(uint64_t);
@@ -144,13 +144,19 @@ namespace catapult { namespace state {
 			}
 			
 			if(!withHistory) {
-				EXPECT_EQ(rhs.updateHistories().size(), 0);
+				EXPECT_EQ(rhs.updateHistory().size(), 0);
 				return;
 			}
 			
-			EXPECT_EQ(rhs.updateHistories().size(), lhs.updateHistories().size());
-			for (const auto& pair : rhs.updateHistories()) {
-				AssertLevyData(pair.second, lhs.updateHistories().find(pair.first)->second);
+			EXPECT_EQ(rhs.updateHistory().size(), lhs.updateHistory().size());
+			
+			for( size_t i = 0; i < rhs.updateHistory().size(); i++) {
+				
+				auto rhsPair = rhs.updateHistory()[i];
+				auto lhsPair = lhs.updateHistory()[i];
+				
+				EXPECT_EQ(rhsPair.first, lhsPair.first);
+				AssertLevyData(rhsPair.second, lhsPair.second);
 			}
 		}
 
@@ -171,11 +177,11 @@ namespace catapult { namespace state {
 			}
 			
 			if(assertHistory)  {
-				EXPECT_EQ(entry.updateHistories().size(), *reinterpret_cast<const uint16_t*>(pData));
+				EXPECT_EQ(entry.updateHistory().size(), *reinterpret_cast<const uint16_t*>(pData));
 				pData += sizeof(uint16_t);
 				
-				if( entry.updateHistories().size() > 0) {
-					for (const auto &pair : entry.updateHistories()) {
+				if( entry.updateHistory().size() > 0) {
+					for (const auto &pair : entry.updateHistory()) {
 						EXPECT_EQ(pair.first.unwrap(), *reinterpret_cast<const uint64_t *>(pData));
 						pData += sizeof(uint64_t);
 						
@@ -199,7 +205,7 @@ namespace catapult { namespace state {
 			mocks::MockMemoryStream stream(buffer);
 			auto entry = test::CreateLevyEntry(withLevy, withHistoryEntry);
 			size_t size = writeHistory? Entry_Size_With_History +
-				(entry.updateHistories().size() * (sizeof(uint64_t) + LevyDataEntry_Size))
+				(entry.updateHistory().size() * (sizeof(uint64_t) + LevyDataEntry_Size))
 				: Entry_Size_Without_History;
 			
 			if(!withLevy)
@@ -235,7 +241,7 @@ namespace catapult { namespace state {
 			auto inputEntry = test::CreateLevyEntry(withLevy, withHistoryEntry);
 			
 			size_t size = bufferWithHistory? Entry_Size_With_History +
-				(inputEntry.updateHistories().size() * (sizeof(uint64_t) + LevyDataEntry_Size))
+				(inputEntry.updateHistory().size() * (sizeof(uint64_t) + LevyDataEntry_Size))
 			    : Entry_Size_Without_History;
 			
 			if(!withLevy)

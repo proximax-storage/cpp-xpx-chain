@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <src/catapult/utils/Casting.h>
+#include "catapult/utils/Casting.h"
 #include "LevyEntrySerializer.h"
 #include "catapult/io/PodIoUtils.h"
 #include "catapult/exceptions.h"
@@ -43,8 +43,8 @@ namespace catapult { namespace state {
 			}
 
 			if (includeHistory) {
-				io::Write16(output, utils::checked_cast<size_t, uint16_t>(entry.updateHistories().size()));
-				auto history = entry.updateHistories();
+				io::Write16(output, utils::checked_cast<size_t, uint16_t>(entry.updateHistory().size()));
+				auto history = entry.updateHistory();
 				for (const auto &pair : history) {
 					io::Write(output, pair.first);
 					WriteLevyData(output, pair.second);
@@ -72,7 +72,7 @@ namespace catapult { namespace state {
 				for(auto i=0; i < count; i++) {
 					auto height = io::Read<Height>(input);
 					auto levyData = ReadLevyData(input);
-					entry.updateHistories().emplace(height, levyData);
+					entry.updateHistory().push_back(std::make_pair(height, std::move(levyData)));
 				}
 			}
 			

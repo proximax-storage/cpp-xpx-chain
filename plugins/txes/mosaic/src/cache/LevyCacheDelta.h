@@ -50,7 +50,7 @@ namespace catapult { namespace cache {
 				, LevyCacheDeltaMixins::BasicInsertRemove(*LevySets.pPrimary)
 				, LevyCacheDeltaMixins::Pruning(*LevySets.pPrimary, *LevySets.pHistoryAtHeight)
 				, LevyCacheDeltaMixins::DeltaElements(*LevySets.pPrimary)
-				, LevyCacheDeltaMixins::ConfigBasedEnable<config::MosaicConfiguration>(pConfigHolder, [](const auto& config) { return config.LevyCacheEnabled; })
+				, LevyCacheDeltaMixins::ConfigBasedEnable<config::MosaicConfiguration>(pConfigHolder, [](const auto& config) { return config.LevyEnabled; })
 				, m_pLevyEntries(LevySets.pPrimary)
 				, m_pHistoryAtHeight(LevySets.pHistoryAtHeight)
 			{}
@@ -60,14 +60,9 @@ namespace catapult { namespace cache {
 			using LevyCacheDeltaMixins::MutableAccessor::find;
 			
 		public:
-			/// Inserts the mosaic \a entry into the cache.
-			void insert(const state::LevyEntry& entry);
 			
 			/// return the cached mosaicIDs by identifier group
 			CachedMosaicIdByHeight getCachedMosaicIdsByHeight(const Height& height);
-			
-			/// Removes the value identified by \a mosaicId from the cache.
-			void remove(MosaicId mosaicId);
 			
 			void markHistoryForRemove(const LevyCacheDescriptor::KeyType& key, const Height& height) {
 				AddIdentifierWithGroup(*m_pHistoryAtHeight, height, key);

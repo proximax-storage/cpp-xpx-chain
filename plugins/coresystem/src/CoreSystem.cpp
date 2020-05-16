@@ -112,7 +112,7 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateBalanceDebitObserver())
 				.add(observers::CreateBalanceCreditObserver())
 				.add(observers::CreateBalanceTransferObserver())
-				.add(observers::CreateBalanceLevyTransferObserver())
+				.add(observers::CreateLevyTransferObserver())
 				.add(observers::CreateHarvestFeeObserver(pConfigHolder))
 				.add(observers::CreateTotalTransactionsObserver())
 				.add(observers::CreateSnapshotCleanUpObserver());

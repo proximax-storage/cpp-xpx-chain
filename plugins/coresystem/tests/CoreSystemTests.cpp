@@ -89,7 +89,7 @@ namespace catapult { namespace plugins {
 					"BlockDifficultyPruningObserver",
 					"BalanceDebitObserver",
 					"BalanceCreditObserver",
-					"BalanceLevyTransferObserver",
+					"LevyTransferObserver",
 				};
 			}
 
@@ -104,7 +104,7 @@ namespace catapult { namespace plugins {
 					"SnapshotCleanUpObserver",
 					"BalanceDebitObserver",
 					"BalanceCreditObserver",
-					"BalanceLevyTransferObserver",
+					"LevyTransferObserver",
 				};
 			}
 		};

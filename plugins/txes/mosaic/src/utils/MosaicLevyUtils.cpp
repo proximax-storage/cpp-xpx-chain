@@ -21,9 +21,8 @@ namespace catapult {
 			/// Fee should not be greather than 100%
 			if (levy.Type == model::LevyType::Percentile) {
 				float pct = (levy.Fee.unwrap() / (float) model::MosaicLevyFeeDecimalPlace);
-				if( pct > 100) {
+				if(pct > 100)
 					return false;
-				}
 			}
 			
 			return true;
@@ -33,42 +32,36 @@ namespace catapult {
 		{
 			auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
 			auto mosaicIter = mosaicCache.find(id);
-			if( !mosaicIter.tryGet()) {
+			if( !mosaicIter.tryGet())
 				return false;
-			}
+			
 			return true;
 		}
 		
 		bool IsAddressValid(catapult::UnresolvedAddress address, const validators::ValidatorContext& context)
 		{
-			// If address is blank or zero return invalid
-			if( address == UnresolvedAddress())
-				return false;
-
 			auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			auto resolvedAddress = context.Resolvers.resolve(address);
 			auto  accountStateKeyIter = cache.find(resolvedAddress);
-			if( !accountStateKeyIter.tryGet() ) {
+			if( !accountStateKeyIter.tryGet() )
 				return false;
-			}
+			
 			return true;
 		}
 		
 		validators::ValidationResult IsLevyTransactionValid(const Key& signer, MosaicId id,
 			const validators::ValidatorContext& context)
 		{
+			if(!IsMosaicIdValid(id, context))
+				return validators::Failure_Mosaic_Id_Not_Found;
+			
 			auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
 			auto mosaicIter = mosaicCache.find(id);
-			if( !mosaicIter.tryGet()) {
-				return validators::Failure_Mosaic_Id_Not_Found;
-			}
-			
 			auto& entry = mosaicIter.get();
 			
 			/// 0. check if signer allowed to modify levy
-			if(entry.definition().owner() != signer) {
+			if(entry.definition().owner() != signer)
 				return validators::Failure_Mosaic_Ineligible_Signer;
-			}
 			
 			return validators::ValidationResult::Success;
 		}

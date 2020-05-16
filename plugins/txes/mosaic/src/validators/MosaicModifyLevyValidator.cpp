@@ -26,24 +26,25 @@ namespace catapult { namespace validators {
 		
 		/// 1. check if signer is eligible and mosaic ID to be added levy for is valid
 		auto result = utils::IsLevyTransactionValid(notification.Signer, baseMosaicId, context);
-		if(result != ValidationResult::Success) return result;
+		if(result != ValidationResult::Success)
+			return result;
 		
-		/// 2. levy is not available
-		if( notification.Levy.Type == model::LevyType::None)
-			return ValidationResult::Success;
+		/// 2. levy type is invalid beyond allowed
+		if( notification.Levy.Type <= model::LevyType::None
+			|| notification.Levy.Type > model::LevyType::Percentile)
+			return Failure_Mosaic_Invalid_Levy_Type;
 		
 		/// 3. check address validity
 		if(! utils::IsAddressValid(notification.Levy.Recipient, context))
 			return Failure_Mosaic_Recipient_Levy_Not_Exist;
 		
 		/// 4. fees is valid
-		if(!utils::IsMosaicLevyFeeValid(notification.Levy)){
+		if(!utils::IsMosaicLevyFeeValid(notification.Levy))
 			return Failure_Mosaic_Invalid_Levy_Fee;
-		}
 		
 		/// 5. Check MosaicID if valid
 		if(!utils::IsMosaicIdValid(levyMosaicId, context))
-				return Failure_Mosaic_Id_Not_Found;
+			return Failure_Mosaic_Id_Not_Found;
 		
 		return ValidationResult::Success;
 	}

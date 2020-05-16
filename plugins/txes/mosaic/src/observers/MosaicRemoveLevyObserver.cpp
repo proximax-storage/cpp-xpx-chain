@@ -12,7 +12,7 @@ namespace catapult { namespace observers {
 		
 	using Notification = model::MosaicRemoveLevyNotification<1>;
 
-	void AddLevyObserverDetail(
+	void RemoveLevyObserverDetail(
 		const Notification& notification,
 		const ObserverContext& context) {
 		
@@ -25,12 +25,12 @@ namespace catapult { namespace observers {
 			entry.remove(context.Height);
 			cache.markHistoryForRemove(mosaicId, context.Height);
 		} else if( NotifyMode::Rollback == context.Mode) {
-			entry.undo(context.Height);
+			entry.undo();
 			cache.unmarkHistoryForRemove(mosaicId, context.Height);
 		}
 	}
 
 	DEFINE_OBSERVER(RemoveLevy, Notification, [](const auto& notification, const ObserverContext& context) {
-		AddLevyObserverDetail(notification, context);
+		RemoveLevyObserverDetail(notification, context);
 	});
 }}

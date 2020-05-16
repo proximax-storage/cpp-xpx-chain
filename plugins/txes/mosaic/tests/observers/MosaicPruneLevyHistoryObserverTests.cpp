@@ -62,10 +62,8 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, PruneLevySpecificHistory) {
 		
 		RunTest(true, true, 3, [](auto&){}, [](cache::CatapultCacheDelta& cache){
-			auto& levyCache = cache.sub<cache::LevyCache>();
-			auto iter = levyCache.find(MosaicId(123));
-			auto& entry = iter.get();
-			EXPECT_EQ(entry.updateHistories().size(), 2);
+			auto& entry = test::GetLevyEntryFromCache(cache, MosaicId(123));
+			EXPECT_EQ(entry.updateHistory().size(), 2);
 		});
 	}
 	
@@ -85,10 +83,20 @@ namespace catapult { namespace observers {
 			levyCache.unmarkHistoryForRemove(MosaicId(123), OldestHeight);
 			
 			},[](cache::CatapultCacheDelta& cache){
-			auto& levyCache = cache.sub<cache::LevyCache>();
-			auto iter = levyCache.find(MosaicId(123));
-			auto& entry = iter.get();
-			EXPECT_EQ(entry.updateHistories().size(), 3);
+			auto& entry = test::GetLevyEntryFromCache(cache, MosaicId(123));
+			EXPECT_EQ(entry.updateHistory().size(), 3);
+		});
+	}
+	
+	TEST(TEST_CLASS, PruneLevyMultipleHistory) {
+		
+		RunTest(true, true, 3,[](cache::CatapultCacheDelta& cache){
+			/// add one more history with similar height as the entry to be pruned
+			auto& entry = test::GetLevyEntryFromCache(cache, MosaicId(123));
+			entry.updateHistory().push_back(std::make_pair(OldestHeight, test::CreateValidMosaicLevy()));
+		},[](cache::CatapultCacheDelta& cache){
+			auto& entry = test::GetLevyEntryFromCache(cache, MosaicId(123));
+			EXPECT_EQ(entry.updateHistory().size(), 2);
 		});
 	}
 }}

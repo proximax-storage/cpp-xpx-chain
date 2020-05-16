@@ -16,9 +16,9 @@ namespace catapult { namespace mongo { namespace plugins {
 			        << "fee" << ToInt64(levy.Fee);
 		}
 		
-		void StreamHistory(bson_stream::document& builder, const state::LevyHistoryMap& historyMap) {
+		void StreamHistory(bson_stream::document& builder, const state::LevyHistoryList & historyList) {
 			auto historyInfo = builder << "history" << bson_stream::open_array;
-			for (const auto& history : historyMap) {
+			for (const auto& history : historyList) {
 				bson_stream::document levyHistoryBuilder;
 				levyHistoryBuilder << "height" << ToInt64(history.first);
 				StreamLevy(levyHistoryBuilder, history.second);
@@ -28,12 +28,12 @@ namespace catapult { namespace mongo { namespace plugins {
 			historyInfo << bson_stream::close_array;
 		}
 		
-		void ReadHistory(const bsoncxx::array::view& historyEntry, state::LevyHistoryMap& historyMap) {
+		void ReadHistory(const bsoncxx::array::view& historyEntry, state::LevyHistoryList& historyList) {
 			for (const auto& dbHistoryItem : historyEntry) {
 				auto doc = dbHistoryItem.get_document().view();
 				auto height = Height{static_cast<uint64_t>(doc["height"].get_int64())};
 				state::LevyEntryData entry = levy::ReadLevy(doc);
-				historyMap.emplace(height, entry);
+				historyList.push_back(std::make_pair(height, entry));
 			}
 		}
 	}
@@ -53,7 +53,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			builder << bson_stream::close_document;
 		}
 		
-		StreamHistory(builder, entry.updateHistories());
+		StreamHistory(builder, entry.updateHistory());
 		
 		doc << bson_stream::close_document;
 		
@@ -78,7 +78,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		auto entry = state::LevyEntry(id, pLevy);
 		
 		// load histories
-		ReadHistory(dbMosaic["history"].get_array().value, entry.updateHistories());
+		ReadHistory(dbMosaic["history"].get_array().value, entry.updateHistory());
 		
 		return entry;
 	}

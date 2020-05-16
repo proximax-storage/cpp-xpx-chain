@@ -24,24 +24,23 @@ namespace catapult { namespace observers {
 		auto& cache = context.Cache.sub<cache::LevyCache>();
 		auto iter = cache.find(mosaicId);
 		
-		auto levyData = state::LevyEntryData(notification.Levy.Type,
+		auto pLevy = std::make_unique<state::LevyEntryData>(notification.Levy.Type,
 			address, levyMosaicId, notification.Levy.Fee);
-		
-		auto pLevy = std::make_unique<state::LevyEntryData>(levyData);
+	
 		if (NotifyMode::Commit == context.Mode) {
 			if(iter.tryGet()) {
 				auto& entry = iter.get();
-				entry.update(levyData, context.Height);
+				entry.update(*pLevy, context.Height);
 				cache.markHistoryForRemove(mosaicId, context.Height);
 				
 			}else{
 				cache.insert(state::LevyEntry(mosaicId, std::move(pLevy)));
 			}
 		}
-		else if (NotifyMode::Rollback == context.Mode && iter.tryGet()) {
+		else if (NotifyMode::Rollback == context.Mode) {
 			auto& entry = iter.get();
 			if(entry.hasUpdateHistory()) {
-				entry.undo(context.Height);
+				entry.undo();
 				cache.unmarkHistoryForRemove(mosaicId, context.Height);
 			}
 			else {

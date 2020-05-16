@@ -48,5 +48,5 @@ namespace catapult { namespace observers {
 	}
 	
 	DEFINE_OBSERVER(BalanceTransfer, model::BalanceTransferNotification<1>, BalanceTransfer<model::BalanceTransferNotification<1>>)
-	DEFINE_OBSERVER(BalanceLevyTransfer, model::BalanceTransferNotification<2>, BalanceTransfer<model::BalanceTransferNotification<2>>)
+	DEFINE_OBSERVER(LevyTransfer, model::LevyTransferNotification<1>, BalanceTransfer<model::LevyTransferNotification<1>>)
 }}

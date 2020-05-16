@@ -8,14 +8,6 @@
 #include "catapult/cache/IdentifierGroupCacheUtils.h"
 
 namespace catapult { namespace cache {
-	void BasicLevyCacheDelta::insert(const state::LevyEntry& entry) {
-		LevyCacheDeltaMixins::BasicInsertRemove::insert(entry);
-	}
-	
-	void BasicLevyCacheDelta::remove(MosaicId mosaicId) {
-		LevyCacheDeltaMixins::BasicInsertRemove::remove(mosaicId);
-	}
-		
 	BasicLevyCacheDelta::CachedMosaicIdByHeight BasicLevyCacheDelta::getCachedMosaicIdsByHeight(const Height& height) {
 		return GetAllIdentifiersWithGroup(*m_pHistoryAtHeight, height);
 	}

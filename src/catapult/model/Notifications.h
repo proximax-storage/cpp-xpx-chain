@@ -161,16 +161,20 @@ namespace catapult { namespace model {
 		/// Recipient.
 		UnresolvedAddress Recipient;
 	};
-		
+	
+	/// Notifies a balance transfer from sender to recipient.
+	template<VersionType version>
+	struct LevyTransferNotification;
+	
 	template<>
-	struct BalanceTransferNotification<2> : public BasicBalanceNotification<BalanceTransferNotification<2>, UnresolvedLevyMosaicId> {
+	struct LevyTransferNotification<1> : public BasicBalanceNotification<LevyTransferNotification<1>, UnresolvedLevyMosaicId> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Balance_Transfer_v2_Notification;
 	
 	public:
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a unresolved amount.
-		BalanceTransferNotification(
+		LevyTransferNotification(
 			const Key& sender,
 			const UnresolvedLevyAddress& recipient,
 			UnresolvedLevyMosaicId mosaicId,
@@ -180,7 +184,7 @@ namespace catapult { namespace model {
 		{}
 		
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
-		BalanceTransferNotification(
+		LevyTransferNotification(
 			const Key& sender,
 			const UnresolvedLevyAddress& recipient,
 			UnresolvedLevyMosaicId mosaicId,

@@ -43,8 +43,8 @@ namespace catapult { namespace config {
 #undef LOAD_PROPERTY
 
 #define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
-		config.LevyCacheEnabled = false;
-		TRY_LOAD_CHAIN_PROPERTY(LevyCacheEnabled);
+		config.LevyEnabled = false;
+		TRY_LOAD_CHAIN_PROPERTY(LevyEnabled);
 #undef TRY_LOAD_CHAIN_PROPERTY
 		
 		return config;

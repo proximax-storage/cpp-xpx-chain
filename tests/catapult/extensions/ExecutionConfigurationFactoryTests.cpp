@@ -55,7 +55,7 @@ namespace catapult { namespace extensions {
 			"TransactionHashObserver",
 			"BalanceDebitObserver",
 			"BalanceCreditObserver",
-			"BalanceLevyTransferObserver",
+			"LevyTransferObserver",
 		};
 		EXPECT_EQ(expectedObserverNames, config.pObserver->names());
 

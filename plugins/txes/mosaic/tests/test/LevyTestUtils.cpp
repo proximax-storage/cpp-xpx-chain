@@ -29,8 +29,8 @@ namespace catapult { namespace test {
 		
 		if(withHistory) {
 			for( auto i = 0u; i < historyCount; i++)
-				entry.updateHistories().emplace(Height(baseHeight.unwrap() + i),
-					test::CreateValidMosaicLevy());
+				entry.updateHistory().push_back(
+					std::make_pair(Height(baseHeight.unwrap() + i), test::CreateValidMosaicLevy()));
 		}
 		
 		return entry;
@@ -80,5 +80,11 @@ namespace catapult { namespace test {
 		EXPECT_EQ(rhs.Recipient, resolver.resolve(raw.Recipient));
 		EXPECT_EQ(rhs.MosaicId, resolver.resolve(raw.MosaicId));
 		EXPECT_EQ(rhs.Fee, raw.Fee);
+	}
+	
+	state::LevyEntry& GetLevyEntryFromCache(cache::CatapultCacheDelta& cache, const MosaicId& mosaicId) {
+		auto& levyCache = cache.sub<cache::LevyCache>();
+		auto iter = levyCache.find(mosaicId);
+		return iter.get();
 	}
 }}

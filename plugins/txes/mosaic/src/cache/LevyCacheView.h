@@ -36,7 +36,7 @@ namespace catapult { namespace cache {
 			, LevyCacheViewMixins::Iteration(LevySets.Primary)
 			, LevyCacheViewMixins::ConstAccessor(LevySets.Primary)
 			, LevyCacheViewMixins::PatriciaTreeView(LevySets.PatriciaTree.get())
-			, LevyCacheViewMixins::ConfigBasedEnable<config::MosaicConfiguration>(pConfigHolder, [](const auto& config) { return config.LevyCacheEnabled; })
+			, LevyCacheViewMixins::ConfigBasedEnable<config::MosaicConfiguration>(pConfigHolder, [](const auto& config) { return config.LevyEnabled; })
 		{}
 	};
 		

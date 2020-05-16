@@ -61,7 +61,7 @@ namespace catapult { namespace observers {
 	DECLARE_OBSERVER(BalanceTransfer, model::BalanceTransferNotification<1>)();
 		
 	/// Observes balance changes triggered by balance transfer notifications version 2.
-	DECLARE_OBSERVER(BalanceLevyTransfer, model::BalanceTransferNotification<2>)();
+	DECLARE_OBSERVER(LevyTransfer, model::LevyTransferNotification<1>)();
 
 	/// Observes balance changes triggered by balance debit notifications.
 	DECLARE_OBSERVER(BalanceDebit, model::BalanceDebitNotification<1>)();

@@ -61,12 +61,6 @@ namespace catapult {
 			
 			result(context.cache(), levy, oldLevyEntry);
 		}
-		
-		state::LevyEntry& GetLevyEntryFromCache(cache::CatapultCacheDelta& cache, const MosaicId& mosaicId) {
-			auto& levyCache = cache.sub<cache::LevyCache>();
-			auto iter = levyCache.find(mosaicId);
-			return iter.get();
-		}
 	}
 		
 	TEST(TEST_CLASS, AddNewLevyCommitTest) {
@@ -77,13 +71,13 @@ namespace catapult {
 				Eternal_Artifact_Duration, Amount(10000));
 			},
 			[](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw& levy, const state::LevyEntryData&) {
-				auto result = GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
+				auto result = test::GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
 				auto resolverContext = test::CreateResolverContextXor();
 				
 				test::AssertLevy(*result.levy(), levy, resolverContext);
 		});
 	}
-		
+	
 	TEST(TEST_CLASS, RollbackLevyWithoutHistoryTest) {
 		RunTest(
 			NotifyMode::Rollback,
@@ -103,14 +97,17 @@ namespace catapult {
 			[](cache::CatapultCacheDelta& cache, const state::LevyEntryData& levyEntry, const Key& signer){
 				test::AddMosaicWithLevy(cache, Currency_Mosaic_Id, Height(1), levyEntry, signer);},
 			[](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw& levy, const state::LevyEntryData& oldEntry) {
-				auto entry = GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
+				auto entry = test::GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
 				auto result = entry.levy();
 				auto resolverContext = test::CreateResolverContextXor();
 				
 				test::AssertLevy(*result, levy, resolverContext);
 				
-				auto updateEntry = entry.updateHistories().at(height);
-				test::AssertLevy(updateEntry, oldEntry);
+				EXPECT_EQ(entry.updateHistory().size(), 1);
+				
+				auto iterator = entry.historyAtHeight(height);
+				if( iterator != entry.updateHistory().end())
+					test::AssertLevy(iterator->second, oldEntry);
 			});
 	}
 	
@@ -126,17 +123,19 @@ namespace catapult {
 			[&historyData](cache::CatapultCacheDelta& cache, const state::LevyEntryData& levyEntry, const Key& signer) {
 				test::AddMosaicWithLevy(cache, Currency_Mosaic_Id, Height(1), levyEntry, signer);
 				
-				auto& entry = GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
-				entry.updateHistories().emplace(height, historyData);
+				auto& entry = test::GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
 				
-				// add more history data
+				// add dummy history data
 				for(auto i = 0; i < 10; i++) {
 					auto history = test::CreateValidMosaicLevy();
-					entry.updateHistories().emplace(Height(100+i), history);
+					entry.updateHistory().push_back(std::make_pair(Height(100+i), history));
 				}
+				
+				entry.updateHistory().push_back(std::make_pair(height, historyData));
+				
 			},
 			[&historyData](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw&, const state::LevyEntryData&) {
-				auto& entry = GetLevyEntryFromCache(cache, Currency_Mosaic_Id);;
+				auto& entry = test::GetLevyEntryFromCache(cache, Currency_Mosaic_Id);;
 				test::AssertLevy(*entry.levy(), historyData);
 			});
 	}

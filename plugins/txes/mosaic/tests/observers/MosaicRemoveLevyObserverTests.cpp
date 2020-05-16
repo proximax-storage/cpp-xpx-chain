@@ -61,9 +61,7 @@ namespace catapult {
 			const MosaicId& mosaicId, const Key& signer){
 			test::AddMosaicWithLevy(cache, mosaicId, Height(1), levy, signer);
 		},[](cache::CatapultCacheDelta& cache, const MosaicId& mosaicId){
-			auto& levyCache = cache.sub<cache::LevyCache>();
-			auto iter = levyCache.find(mosaicId);
-			auto& entry = iter.get();
+			auto& entry = test::GetLevyEntryFromCache(cache, mosaicId);
 			EXPECT_EQ(entry.levy(), nullptr);
 		
 		});
@@ -82,17 +80,13 @@ namespace catapult {
 			
 			test::AddMosaicWithLevy(cache, mosaicId, Height(1), levy, signer);
 			
-			auto& levyCache = cache.sub<cache::LevyCache>();
-			auto iter = levyCache.find(mosaicId);
-			auto& entry = iter.get();
-			entry.updateHistories().emplace(height, historyData);
+			auto& entry = test::GetLevyEntryFromCache(cache, mosaicId);
+			entry.updateHistory().push_back(std::make_pair(height, std::move(historyData)));
 			
 		},[&historyData](cache::CatapultCacheDelta& cache, const MosaicId& mosaicId){
 			
-			auto& levyCache = cache.sub<cache::LevyCache>();
-			auto iter = levyCache.find(mosaicId);
 			auto resolverContext = test::CreateResolverContextXor();
-			auto result = iter.get().levy();
+			auto result = test::GetLevyEntryFromCache(cache, mosaicId).levy();
 			
 			test::AssertLevy(*result, historyData);
 			

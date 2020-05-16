@@ -69,6 +69,11 @@ namespace catapult { namespace validators {
 	/// Levy already exist for this mosaic ID
 	DEFINE_MOSAIC_RESULT(Levy_Already_Exist, 13);
 	
+	/// Levy type should not be empty
+	DEFINE_MOSAIC_RESULT(Invalid_Levy_Type, 14);
+	
+	/// Current levy not set
+	DEFINE_MOSAIC_RESULT(Current_Levy_Not_Set, 15);
 	// endregion
 
 	// region mosaic

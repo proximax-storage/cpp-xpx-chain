@@ -10,12 +10,16 @@
 namespace catapult { namespace observers {
 		
 	using Notification = model::BlockNotification<1>;
-
+	
 	namespace {
-		void RemoveExpiredHistory(state::LevyHistoryMap& history, const Height& height) {
-			auto iterator = history.find(height);
-			if( iterator != history.end()) {
-				history.erase(iterator);
+		void PruneHistory(state::LevyHistoryIterator& iterator,
+			state::LevyHistoryList& list, const Height& height) {
+			
+			while( iterator != list.end()) {
+				if( iterator->first == height)
+					iterator = list.erase(iterator);
+				else
+					iterator++;
 			}
 		}
 	}
@@ -27,11 +31,11 @@ namespace catapult { namespace observers {
 		
 		const model::NetworkConfiguration &config = context.Config.Network;
 		
-		auto gracePeriod = BlockDuration(config.MaxRollbackBlocks);
-		if (context.Height.unwrap() <= gracePeriod.unwrap())
+		auto gracePeriod = Height(config.MaxRollbackBlocks);
+		if (context.Height <= gracePeriod)
 			return;
 		
-		auto pruneHeight = Height(context.Height.unwrap() - gracePeriod.unwrap());
+		auto pruneHeight = context.Height - gracePeriod;
 		auto &cache = context.Cache.sub<cache::LevyCache>();
 		
 		auto cachedMosaicIds = cache.getCachedMosaicIdsByHeight(pruneHeight);
@@ -39,7 +43,8 @@ namespace catapult { namespace observers {
 			auto cacheIter = cache.find(mosaicId);
 			auto &entry = cacheIter.get();
 			
-			RemoveExpiredHistory(entry.updateHistories(), pruneHeight);
+			auto iterator = entry.historyAtHeight(pruneHeight);
+			PruneHistory(iterator, entry.updateHistory(), pruneHeight);
 			
 			if( entry.levy() == nullptr && !entry.hasUpdateHistory())
 				cache.remove(mosaicId);

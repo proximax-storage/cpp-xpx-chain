@@ -107,6 +107,7 @@ namespace catapult { namespace validators {
 	
 	/// A validator implementation that checks for valid removal of levy
 	/// - check if signer is eligible
-	/// - check if mosaic id exist
+	/// - check if levy for this mosaicID exist
+	/// - check if current levy is set
 	DECLARE_STATEFUL_VALIDATOR(RemoveLevy, model::MosaicRemoveLevyNotification<1>)();
 }}

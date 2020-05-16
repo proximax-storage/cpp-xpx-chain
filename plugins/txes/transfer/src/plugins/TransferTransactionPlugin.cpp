@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <plugins/txes/mosaic/src/model/MosaicLevy.h>
+#include "plugins/txes/mosaic/src/model/MosaicLevy.h"
 #include "TransferTransactionPlugin.h"
 #include "src/model/TransferNotifications.h"
 #include "src/model/TransferTransaction.h"
@@ -49,7 +49,7 @@ namespace catapult { namespace plugins {
 					sub.notify(notification);
 					
 					auto pMosaicLevyData = sub.mempool().malloc(model::MosaicLevyData(pMosaics[i].MosaicId));
-					auto levyTransferNotification = BalanceTransferNotification<2>(
+					auto levyTransferNotification = LevyTransferNotification<1>(
 						transaction.Signer,
 						UnresolvedLevyAddress(transaction.Recipient.array(), UnresolvedCommonType::MosaicLevy, pMosaicLevyData),
 						UnresolvedLevyMosaicId(pMosaics[i].MosaicId.unwrap()),

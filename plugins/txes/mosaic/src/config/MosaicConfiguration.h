@@ -49,7 +49,7 @@ namespace catapult { namespace config {
 		Amount MosaicRentalFee;
 		
 		/// Whether the levy cache is enabled.
-		bool LevyCacheEnabled;
+		bool LevyEnabled;
 		
 	private:
 		MosaicConfiguration() = default;

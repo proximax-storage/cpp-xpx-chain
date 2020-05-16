@@ -73,4 +73,6 @@ namespace catapult { namespace test {
 	void AssertLevy(const state::LevyEntryData& rhs, const state::LevyEntryData& lsh);
 	
 	void AssertLevy(const state::LevyEntryData& rhs, const model::MosaicLevyRaw& raw, model::ResolverContext resolver);
+	
+	state::LevyEntry& GetLevyEntryFromCache(cache::CatapultCacheDelta& cache, const MosaicId& mosaicId);
 }}

@@ -52,7 +52,7 @@ namespace catapult { namespace config {
 
 			static bool IsPropertyOptional(const std::string& name) {
 				return std::set<std::string>{
-					"levyCacheEnable"}.count(name);
+					"levyEnable"}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {

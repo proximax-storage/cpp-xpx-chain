@@ -42,7 +42,9 @@ namespace catapult { namespace state {
 		}
 	};
 	
-	using LevyHistoryMap = std::map<Height, LevyEntryData>;
+	using LevyHistoryPair = std::pair<Height, LevyEntryData>;
+	using LevyHistoryList = std::vector<LevyHistoryPair>;
+	using LevyHistoryIterator = state::LevyHistoryList::iterator;
 	
 	class LevyEntry {
 	public:
@@ -64,9 +66,11 @@ namespace catapult { namespace state {
 		
 		void remove(const Height& height);
 		
-		void undo(const Height& height);
+		void undo();
 		
 		bool hasUpdateHistory();
+		
+		LevyHistoryIterator historyAtHeight(const Height& height);
 		
 	public:
 		const MosaicId& mosaicId() const {
@@ -78,17 +82,17 @@ namespace catapult { namespace state {
 		}
 		
 		/// Gets the list of update history
-		LevyHistoryMap& updateHistories() {
-			return m_updateHistories;
+		LevyHistoryList& updateHistory() {
+			return m_updateHistory;
 		}
 		
-		const LevyHistoryMap& updateHistories() const{
-			return m_updateHistories;
+		const LevyHistoryList& updateHistory() const{
+			return m_updateHistory;
 		}
 		
 	private:
 		MosaicId m_mosaicId;
 		std::shared_ptr<LevyEntryData> m_pLevy;
-		LevyHistoryMap m_updateHistories;
+		LevyHistoryList m_updateHistory;
 	};
 }}
