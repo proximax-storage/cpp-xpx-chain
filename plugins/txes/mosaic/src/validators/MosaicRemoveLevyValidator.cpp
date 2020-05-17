@@ -18,7 +18,7 @@ namespace catapult { namespace validators {
 		
 		/// 1. check if signer is eligible and mosaic ID to be removed is valid
 		auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
-		auto result = utils::IsLevyTransactionValid(notification.Signer, mosaicId, context);
+		auto result = utils::ValidateLevyTransaction(notification.Signer, mosaicId, context);
 		if(result != ValidationResult::Success)
 			return result;
 		

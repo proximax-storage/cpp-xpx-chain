@@ -12,14 +12,10 @@ namespace catapult { namespace observers {
 	using Notification = model::BlockNotification<1>;
 	
 	namespace {
-		void PruneHistory(state::LevyHistoryIterator& iterator,
-			state::LevyHistoryList& list, const Height& height) {
-			
-			while( iterator != list.end()) {
-				if( iterator->first == height)
-					iterator = list.erase(iterator);
-				else
-					iterator++;
+		void PruneHistory(state::LevyHistoryList& list, const Height& height) {
+			state::LevyHistoryIterator iterator = list.begin();
+			while( iterator != list.end() && iterator->first <= height) {
+				iterator = list.erase(iterator);
 			}
 		}
 	}
@@ -43,8 +39,7 @@ namespace catapult { namespace observers {
 			auto cacheIter = cache.find(mosaicId);
 			auto &entry = cacheIter.get();
 			
-			auto iterator = entry.historyAtHeight(pruneHeight);
-			PruneHistory(iterator, entry.updateHistory(), pruneHeight);
+			PruneHistory(entry.updateHistory(), pruneHeight);
 			
 			if( entry.levy() == nullptr && !entry.hasUpdateHistory())
 				cache.remove(mosaicId);

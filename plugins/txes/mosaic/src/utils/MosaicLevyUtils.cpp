@@ -49,14 +49,14 @@ namespace catapult {
 			return true;
 		}
 		
-		validators::ValidationResult IsLevyTransactionValid(const Key& signer, MosaicId id,
+		validators::ValidationResult ValidateLevyTransaction(const Key& signer, MosaicId id,
 			const validators::ValidatorContext& context)
 		{
-			if(!IsMosaicIdValid(id, context))
-				return validators::Failure_Mosaic_Id_Not_Found;
-			
 			auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
 			auto mosaicIter = mosaicCache.find(id);
+			if( !mosaicIter.tryGet())
+				return validators::Failure_Mosaic_Id_Not_Found;
+			
 			auto& entry = mosaicIter.get();
 			
 			/// 0. check if signer allowed to modify levy

@@ -25,7 +25,7 @@ namespace catapult { namespace validators {
 		MosaicId levyMosaicId = context.Resolvers.resolve(notification.Levy.MosaicId);
 		
 		/// 1. check if signer is eligible and mosaic ID to be added levy for is valid
-		auto result = utils::IsLevyTransactionValid(notification.Signer, baseMosaicId, context);
+		auto result = utils::ValidateLevyTransaction(notification.Signer, baseMosaicId, context);
 		if(result != ValidationResult::Success)
 			return result;
 		

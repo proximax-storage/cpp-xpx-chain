@@ -90,13 +90,27 @@ namespace catapult { namespace observers {
 	
 	TEST(TEST_CLASS, PruneLevyMultipleHistory) {
 		
-		RunTest(true, true, 3,[](cache::CatapultCacheDelta& cache){
-			/// add one more history with similar height as the entry to be pruned
-			auto& entry = test::GetLevyEntryFromCache(cache, MosaicId(123));
-			entry.updateHistory().push_back(std::make_pair(OldestHeight, test::CreateValidMosaicLevy()));
-		},[](cache::CatapultCacheDelta& cache){
-			auto& entry = test::GetLevyEntryFromCache(cache, MosaicId(123));
-			EXPECT_EQ(entry.updateHistory().size(), 2);
-		});
+		for(size_t range = 0 ; range < 5; range++ ){
+			RunTest(true, true, 0,[range](cache::CatapultCacheDelta& cache){
+				auto& entry = test::GetLevyEntryFromCache(cache, MosaicId(123));
+				
+				// add history before
+				for(size_t i = OldestHeight.unwrap() - range; i <= OldestHeight.unwrap(); i++)
+					entry.updateHistory().push_back(std::make_pair(Height(i) , test::CreateValidMosaicLevy()));
+				
+				// add random height at the prune height
+				auto random = test::Random() % 10;
+				for(size_t i = 0; i < random; i++)
+					entry.updateHistory().push_back(std::make_pair(OldestHeight , test::CreateValidMosaicLevy()));
+				
+				// add history after
+				for(size_t i = 0;  i <= range; i++)
+					entry.updateHistory().push_back(std::make_pair(OldestHeight + Height(i) , test::CreateValidMosaicLevy()));
+				
+			},[range](cache::CatapultCacheDelta& cache){
+				auto& entry = test::GetLevyEntryFromCache(cache, MosaicId(123));
+				EXPECT_EQ(entry.updateHistory().size(), range);
+			});
+		}
 	}
 }}
