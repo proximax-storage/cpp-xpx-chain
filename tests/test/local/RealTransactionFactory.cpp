@@ -22,7 +22,6 @@
 #include "sdk/src/builders/AddressAliasBuilder.h"
 #include "sdk/src/builders/RegisterNamespaceBuilder.h"
 #include "sdk/src/builders/TransferBuilder.h"
-#include "sdk/src/builders/MosaicModifyLevyBuilder.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "plugins/txes/namespace/src/model/NamespaceIdGenerator.h"
@@ -123,21 +122,5 @@ namespace catapult { namespace test {
 		return std::move(pTransaction);
 	}
 
-	// endregion
-	
-	// region mosaic modify levy transaction
-	model::UniqueEntityPtr<model::Transaction> CreateMosaicModifyLevyTransaction(
-		const crypto::KeyPair& signer,
-		const UnresolvedMosaicId& mosaicId,
-		const model::MosaicLevyRaw& levy) {
-		
-		builders::MosaicModifyLevyBuilder builder(Network_Identifier, signer.publicKey());
-		builder.setMosaicId(mosaicId);
-		builder.setMosaicLevy(levy);
-		auto pTransaction = builder.build();
-		
-		extensions::TransactionExtensions(GetNemesisGenerationHash()).sign(signer, *pTransaction);
-		return std::move(pTransaction);
-	}
 	// endregion
 }}

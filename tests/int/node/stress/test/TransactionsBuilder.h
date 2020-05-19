@@ -19,8 +19,6 @@
 **/
 
 #pragma once
-
-#include <plugins/txes/mosaic/src/model/MosaicLevy.h>
 #include "BasicTransactionsBuilder.h"
 
 namespace catapult { namespace test {
@@ -37,12 +35,6 @@ namespace catapult { namespace test {
 			size_t AddressAliasId; // optional
 		};
 
-		struct ModifyLevyDescriptor {
-			size_t OwnerId;
-			UnresolvedMosaicId MosaicId;
-			model::MosaicLevyRaw Levy;
-		};
-		
 		// endregion
 
 	public:
@@ -60,18 +52,13 @@ namespace catapult { namespace test {
 		/// Adds a root namespace registration for namespace \a name by \a ownerId for specified \a duration,
 		/// optionally setting an alias for \a aliasId.
 		void addNamespace(size_t ownerId, const std::string& name, BlockDuration duration, size_t aliasId = 0);
-		
-		/// Adds a mosaic modify levy transaction with \a mosaic Id and \a levy data
-		void addMosaicModifyLevy(size_t ownerId, const UnresolvedMosaicId& mosaicId, const model::MosaicLevyRaw& levy);
-		
+
 	private:
 		model::UniqueEntityPtr<model::Transaction> createRegisterNamespace(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
 
 		model::UniqueEntityPtr<model::Transaction> createAddressAlias(const NamespaceDescriptor& descriptor, Timestamp deadline) const;
-		
-		model::UniqueEntityPtr<model::Transaction> createMosaicModifyLevy(const ModifyLevyDescriptor& descriptor, Timestamp deadline) const;
 
 	private:
-		enum class DescriptorType { Namespace = 1, Alias, MosaicModifyLevy };
+		enum class DescriptorType { Namespace = 1, Alias };
 	};
 }}
