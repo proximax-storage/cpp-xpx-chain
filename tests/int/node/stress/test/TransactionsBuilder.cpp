@@ -42,8 +42,11 @@ namespace catapult { namespace test {
 
 		case DescriptorType::Alias:
 			return createAddressAlias(CastToDescriptor<NamespaceDescriptor>(pDescriptor), deadline);
+			
+		case DescriptorType ::MosaicModifyLevy:
+			return createMosaicModifyLevy(CastToDescriptor<ModifyLevyDescriptor>(pDescriptor), deadline);
 		}
-
+		
 		return nullptr;
 	}
 
@@ -57,6 +60,11 @@ namespace catapult { namespace test {
 
 		if (0 != descriptor.AddressAliasId)
 			add(DescriptorType::Alias, descriptor);
+	}
+	
+	void TransactionsBuilder::addMosaicModifyLevy(size_t ownerId, const UnresolvedMosaicId& mosaicId, const model::MosaicLevyRaw& levy){
+		auto descriptor = ModifyLevyDescriptor{ ownerId, mosaicId, levy };
+		add(DescriptorType::MosaicModifyLevy, descriptor);
 	}
 
 	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::createRegisterNamespace(
@@ -77,6 +85,15 @@ namespace catapult { namespace test {
 		auto pTransaction = CreateRootAddressAliasTransaction(ownerKeyPair, descriptor.Name, aliasedAddress);
 		return SignWithDeadline(std::move(pTransaction), ownerKeyPair, deadline);
 	}
-
+	
+	model::UniqueEntityPtr<model::Transaction> TransactionsBuilder::createMosaicModifyLevy(
+		const ModifyLevyDescriptor& descriptor,
+		Timestamp deadline) const {
+		const auto& ownerKeyPair = accounts().getKeyPair(descriptor.OwnerId);
+		
+		auto pTransaction = CreateMosaicModifyLevyTransaction(ownerKeyPair, descriptor.MosaicId, descriptor.Levy);
+		return SignWithDeadline(std::move(pTransaction), ownerKeyPair, deadline);
+	}
+	
 	// endregion
 }}

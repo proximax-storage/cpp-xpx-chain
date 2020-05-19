@@ -18,6 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "sdk/src/extensions/ConversionExtensions.h"
+#include "tests/test/nodeps/TestConstants.h"
 #include "tests/int/node/stress/test/LocalNodeSyncIntegrityTestUtils.h"
 #include "tests/int/node/stress/test/TransactionsBuilder.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
@@ -36,7 +38,7 @@ namespace catapult { namespace local {
 
 	namespace {
 		template<typename TTestContext>
-		std::vector<Hash256> RunApplyAliasTest(TTestContext& context) {
+		std::vector<Hash256> RunApplyAliasTest(const TTestContext& context) {
 			// Arrange:
 			std::vector<Hash256> stateHashes;
 			test::WaitForBoot(context);
@@ -44,11 +46,11 @@ namespace catapult { namespace local {
 
 			// Sanity:
 			EXPECT_EQ(Height(1), context.height());
-
-			// - prepare transactions
+			
 			test::Accounts accounts(3);
 			test::TransactionsBuilder transactionsBuilder(accounts);
-
+			
+			// - prepare transactions
 			// - make transfers to the accounts to be aliased so that they're in the account state cache
 			transactionsBuilder.addTransfer(0, 1, Amount(1));
 			transactionsBuilder.addTransfer(0, 2, Amount(1));
@@ -72,7 +74,7 @@ namespace catapult { namespace local {
 			// Act:
 			test::ExternalSourceConnection connection;
 			auto pIo = test::PushEntity(connection, ionet::PacketType::Push_Block, pBlock);
-
+			
 			// - wait for the chain height to change and for all height readers to disconnect
 			test::WaitForHeightAndElements(context, Height(2), 1, 1);
 			stateHashes.emplace_back(test::GetStateHash(context));
@@ -101,10 +103,41 @@ namespace catapult { namespace local {
 		test::AssertAllZero(stateHashes, 2);
 	}
 
+	void SendLevy(const test::StateHashEnabledTestContext& context) {
+		test::Accounts accounts(3);
+		test::TransactionsBuilder transactionsBuilder(accounts);
+		test::WaitForBoot(context);
+		
+		///----
+		auto mosaicId = extensions::CastToUnresolvedMosaicId(test::Default_Currency_Mosaic_Id);
+		auto levy = model::MosaicLevyRaw(model::LevyType::Absolute, test::GenerateRandomByteArray<UnresolvedAddress>(),
+		                                 mosaicId, Amount(100));
+		transactionsBuilder.addMosaicModifyLevy(0, mosaicId, levy);
+		
+		auto mosaicStorageMosaicId =  UnresolvedMosaicId(0xFF8918A670A31F3A);
+		auto levyStorageMosaic = model::MosaicLevyRaw(model::LevyType::Absolute, test::GenerateRandomByteArray<UnresolvedAddress>(),
+		                                              mosaicStorageMosaicId, Amount(100));
+		transactionsBuilder.addMosaicModifyLevy(0, mosaicStorageMosaicId, levyStorageMosaic);
+		///----
+		
+		auto stateHashCalculator = context.createStateHashCalculator();
+		BlockChainBuilder builder(accounts, stateHashCalculator);
+		auto pBlock = utils::UniqueToShared(builder.asSingleBlock(transactionsBuilder));
+		// Act:
+		test::ExternalSourceConnection connection;
+		auto pIo = test::PushEntity(connection, ionet::PacketType::Push_Block, pBlock);
+		
+		// - wait for the chain height to change and for all height readers to disconnect
+		test::WaitForHeightAndElements(context, Height(1), 1, 1);
+	}
+	
+
 	NO_STRESS_TEST(TEST_CLASS, CanApplyAliasWithStateHashEnabled) {
 		// Arrange:
 		test::StateHashEnabledTestContext context;
-
+		
+		SendLevy(context);
+		
 		// Act + Assert:
 		auto stateHashes = RunApplyAliasTest(context);
 
@@ -116,7 +149,6 @@ namespace catapult { namespace local {
 	// endregion
 
 	// region alias application + rollback
-
 	namespace {
 		auto CreateTimeSpan(uint64_t numSeconds) {
 			return utils::TimeSpan::FromSeconds(numSeconds);
@@ -227,6 +259,5 @@ namespace catapult { namespace local {
 		test::AssertAllNonZero(stateHashes, 2);
 		test::AssertUnique(stateHashes);
 	}
-
 	// endregion
 }}

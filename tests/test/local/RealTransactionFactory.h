@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/types.h"
 #include "catapult/model/EntityPtr.h"
+#include "plugins/txes/mosaic/src/model/MosaicLevy.h"
 #include <memory>
 #include <vector>
 
@@ -63,4 +64,10 @@ namespace catapult { namespace test {
 			const crypto::KeyPair& signer,
 			const std::string& name,
 			const Address& address);
+	
+	/// Creates a signed mosaic modify levy transaction with \a signer, mosaic Id \a mosaicId and \a levy.
+	model::UniqueEntityPtr<model::Transaction> CreateMosaicModifyLevyTransaction(
+		const crypto::KeyPair& signer,
+		const UnresolvedMosaicId& mosaicId,
+		const model::MosaicLevyRaw& levy);
 }}
