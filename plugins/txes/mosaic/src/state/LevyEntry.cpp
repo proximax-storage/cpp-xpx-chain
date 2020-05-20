@@ -12,23 +12,31 @@ namespace catapult { namespace state {
 		if(m_pLevy) {
 			auto pair = std::make_pair(height, std::move(*m_pLevy));
 			m_updateHistory.push_back(pair);
+		} else {
+			auto pair = std::make_pair(height, LevyEntryData());
+			m_updateHistory.push_back(pair);
 		}
 		
 		m_pLevy = std::make_shared<LevyEntryData>(levy);
 	}
 		
 	void LevyEntry::remove(const Height& height) {
-		if(m_pLevy) {
-			auto pair = std::make_pair(height, std::move(*m_pLevy));
-			m_updateHistory.push_back(pair);
-		}
+		if(!m_pLevy)
+			return;
+		
+		auto pair = std::make_pair(height, std::move(*m_pLevy));
+		m_updateHistory.push_back(pair);
 		
 		m_pLevy = nullptr;
 	}
 	
 	void LevyEntry::undo() {
 		auto historyPair = m_updateHistory.back();
-		m_pLevy = std::make_shared<LevyEntryData>(historyPair.second);
+		if( historyPair.second.Type == model::LevyType::None)
+			m_pLevy = nullptr;
+		else
+			m_pLevy = std::make_shared<LevyEntryData>(historyPair.second);
+		
 		m_updateHistory.pop_back();
 	}
 		

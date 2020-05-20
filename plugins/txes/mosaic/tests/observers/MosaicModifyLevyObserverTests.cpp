@@ -139,4 +139,54 @@ namespace catapult {
 				test::AssertLevy(*entry.levy(), historyData);
 			});
 	}
+	
+	TEST(TEST_CLASS, ModifyMosaicUpdateLevyWithRemovedLevyCommit) {
+		RunTest(
+			NotifyMode::Commit,
+			[](cache::CatapultCacheDelta& cache, const state::LevyEntryData&, const Key& signer){
+				
+				test::AddMosaic(cache, Currency_Mosaic_Id, Height(7), Eternal_Artifact_Duration, signer);
+				
+				auto& levyCache = cache.sub<cache::LevyCache>();
+				auto entry = state::LevyEntry(Currency_Mosaic_Id, nullptr);
+				levyCache.insert(entry);
+				
+				},
+			[](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw& levy, const state::LevyEntryData&) {
+				auto entry = test::GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
+				auto result = entry.levy();
+				auto resolverContext = test::CreateResolverContextXor();
+				
+				test::AssertLevy(*result, levy, resolverContext);
+				
+				EXPECT_EQ(entry.updateHistory().size(), 1);
+				
+				auto iterator = entry.historyAtHeight(height);
+				if( iterator != entry.updateHistory().end()){
+					EXPECT_EQ(model::LevyType::None, iterator->second.Type);
+				}
+			});
+	}
+	
+	TEST(TEST_CLASS, ModifyMosaicUpdateLevyRollbackWithNullHistory) {
+		RunTest(
+			NotifyMode::Rollback,
+			[](cache::CatapultCacheDelta& cache, const state::LevyEntryData& levyEntry, const Key& signer) {
+				test::AddMosaicWithLevy(cache, Currency_Mosaic_Id, Height(1), levyEntry, signer);
+				
+				auto historyData = state::LevyEntryData();
+				historyData.Type = model::LevyType::None;
+				historyData.Recipient = test::GenerateRandomByteArray<Address>();
+				historyData.MosaicId = MosaicId(0);
+				historyData.Fee = Amount(0);
+				
+				auto& entry = test::GetLevyEntryFromCache(cache, Currency_Mosaic_Id);
+				entry.updateHistory().push_back(std::make_pair(height, historyData));
+				
+			},
+			[](cache::CatapultCacheDelta& cache, const model::MosaicLevyRaw&, const state::LevyEntryData&) {
+				auto& entry = test::GetLevyEntryFromCache(cache, Currency_Mosaic_Id);;
+				EXPECT_EQ(entry.levy(), nullptr);
+			});
+	}
 }}
