@@ -70,8 +70,6 @@ namespace catapult { namespace state {
 		
 		bool hasUpdateHistory();
 		
-		LevyHistoryIterator historyAtHeight(const Height& height);
-		
 	public:
 		const MosaicId& mosaicId() const {
 			return m_mosaicId;

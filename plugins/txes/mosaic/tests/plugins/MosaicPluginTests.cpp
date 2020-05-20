@@ -71,15 +71,15 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-				return { ionet::PacketType::Mosaic_State_Path };
+				return { ionet::PacketType::Mosaic_State_Path, ionet::PacketType::Levy_State_Path };
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
-				return { ionet::PacketType::Mosaic_Infos };
+				return { ionet::PacketType::Mosaic_Infos, ionet::PacketType::Levy_Infos };
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {
-				return { "MOSAIC C" };
+				return { "MOSAIC C", "LEVY C" };
 			}
 
 			static std::vector<std::string> GetStatelessValidatorNames() {

@@ -68,7 +68,16 @@ namespace catapult { namespace plugins {
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C"), [&cache]() { return GetMosaicView(cache)->size(); });
 		});
-
+		
+		using CacheHandlersLevy= CacheHandlers<cache::LevyCacheDescriptor>;
+		CacheHandlersLevy::Register<model::FacilityCode::Levy>(manager);
+		
+		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
+			counters.emplace_back(utils::DiagnosticCounterId("LEVY C"), [&cache]() {
+				return cache.sub<cache::LevyCache>().createView(cache.height())->size();
+			});
+		});
+		
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateMosaicIdValidator())
@@ -106,17 +115,16 @@ namespace catapult { namespace plugins {
 				.add(observers::CreatePruneLevyHistoryObserver());
 		});
 		
-		/// region resolvers
+		/// region resolver
 		manager.addLevyAddressResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
 			const auto& levyCache = cache.template sub<cache::LevyCache>();
 			
 			switch (unresolved.Type) {
 				case UnresolvedCommonType::MosaicLevy: {
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
-					if (!levyData)
-						break;
+					assert (levyData != nullptr);
 					
-					MosaicId mosaicId(levyData->MosaicId.unwrap());
+					MosaicId mosaicId = MosaicId(levyData->MosaicId.unwrap());
 					auto mosaicIter = levyCache.find(mosaicId);
 					if (!mosaicIter.tryGet())
 						return false;
@@ -165,11 +173,10 @@ namespace catapult { namespace plugins {
 					result = true;
 					
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
-					if (!levyData)
-						break;
+					assert (levyData != nullptr);
 					
-					MosaicId mosaicID(levyData->MosaicId.unwrap());
-					auto mosaicIter = levyCache.find(mosaicID);
+					MosaicId mosaicId = MosaicId(levyData->MosaicId.unwrap());
+					auto mosaicIter = levyCache.find(mosaicId);
 					if (!mosaicIter.tryGet())
 						break;
 					

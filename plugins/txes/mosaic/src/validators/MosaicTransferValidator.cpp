@@ -20,7 +20,6 @@
 
 #include "Validators.h"
 #include "ActiveMosaicView.h"
-#include "src/cache/MosaicCache.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/validators/ValidatorContext.h"

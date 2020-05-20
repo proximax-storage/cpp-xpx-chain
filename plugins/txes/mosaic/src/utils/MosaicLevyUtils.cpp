@@ -9,6 +9,7 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "src/model/MosaicLevy.h"
 #include "src/validators/Validators.h"
+#include "src/validators/ActiveMosaicView.h"
 
 namespace catapult {
 	namespace utils {
@@ -33,6 +34,13 @@ namespace catapult {
 			auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
 			auto mosaicIter = mosaicCache.find(id);
 			if( !mosaicIter.tryGet())
+				return false;
+			
+			// check that the mosaic is still active
+			validators::ActiveMosaicView::FindIterator activeMosaicIter;
+			validators::ActiveMosaicView activeMosaicView(context.Cache);
+			auto result = activeMosaicView.tryGet(id, context.Height, activeMosaicIter);
+			if (!IsValidationResultSuccess(result))
 				return false;
 			
 			return true;

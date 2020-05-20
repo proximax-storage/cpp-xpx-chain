@@ -43,14 +43,4 @@ namespace catapult { namespace state {
 	bool LevyEntry::hasUpdateHistory() {
 		return m_updateHistory.size() > 0;
 	}
-	
-	state::LevyHistoryList::iterator LevyEntry::historyAtHeight(const Height& height)
-	{
-		state::LevyHistoryList::iterator iterator = std::find_if(m_updateHistory.begin(), m_updateHistory.end(),
-			[&height](const state::LevyHistoryPair& pair) {
-				return (pair.first == height);
-		});
-		
-		return iterator;
-	}
 }}

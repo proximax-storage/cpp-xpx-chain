@@ -1,5 +1,5 @@
 
-#include "MosaicLevyMapper.h"
+#include "MosaicModifyLevyMapper.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/mosaic/src/model/MosaicModifyLevyTransaction.h"

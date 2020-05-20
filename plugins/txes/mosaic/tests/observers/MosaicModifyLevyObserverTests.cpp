@@ -105,7 +105,12 @@ namespace catapult {
 				
 				EXPECT_EQ(entry.updateHistory().size(), 1);
 				
-				auto iterator = entry.historyAtHeight(height);
+				auto history = entry.updateHistory();
+				state::LevyHistoryList::iterator iterator = std::find_if(history.begin(), history.end(),
+					[](const state::LevyHistoryPair& pair) {
+						return (pair.first == height);
+				});
+				
 				if( iterator != entry.updateHistory().end())
 					test::AssertLevy(iterator->second, oldEntry);
 			});
@@ -161,7 +166,12 @@ namespace catapult {
 				
 				EXPECT_EQ(entry.updateHistory().size(), 1);
 				
-				auto iterator = entry.historyAtHeight(height);
+				auto history = entry.updateHistory();
+				state::LevyHistoryList::iterator iterator = std::find_if(history.begin(), history.end(),
+					[](const state::LevyHistoryPair& pair) {
+		                return (pair.first == height);
+				});
+				
 				if( iterator != entry.updateHistory().end()){
 					EXPECT_EQ(model::LevyType::None, iterator->second.Type);
 				}

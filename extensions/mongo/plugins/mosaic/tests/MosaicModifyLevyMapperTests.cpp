@@ -1,5 +1,5 @@
 
-#include "src/MosaicLevyMapper.h"
+#include "src/MosaicModifyLevyMapper.h"
 #include "plugins/txes/mosaic/src/model/MosaicModifyLevyTransaction.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/TestHarness.h"

@@ -21,7 +21,8 @@
 #include "MosaicDefinitionMapper.h"
 #include "MosaicExpiryReceiptMapper.h"
 #include "MosaicSupplyChangeMapper.h"
-#include "MosaicLevyMapper.h"
+#include "MosaicModifyLevyMapper.h"
+#include "MosaicRemoveLevyMapper.h"
 #include "storages/MongoMosaicCacheStorage.h"
 #include "storages/MongoLevyCacheStorage.h"
 #include "mongo/src/MongoPluginManager.h"
@@ -34,7 +35,8 @@ void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicDefinitionTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicSupplyChangeTransactionMongoPlugin());
 	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicModifyLevyTransactionMongoPlugin());
-
+	manager.addTransactionSupport(catapult::mongo::plugins::CreateMosaicRemoveLevyTransactionMongoPlugin());
+	
 	// cache storage support
 	manager.addStorageSupport(catapult::mongo::plugins::CreateMongoMosaicCacheStorage(
 			manager.mongoContext(),

@@ -34,7 +34,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				return {
 					model::Entity_Type_Mosaic_Definition,
 					model::Entity_Type_Mosaic_Supply_Change,
-					model::Entity_Type_Mosaic_Modify_Levy
+					model::Entity_Type_Mosaic_Modify_Levy,
+					model::Entity_Type_Mosaic_Remove_Levy
 				};
 			}
 
