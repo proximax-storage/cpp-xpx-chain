@@ -76,7 +76,7 @@ namespace catapult { namespace validators {
 	
 	// region validator definition
 
-	#define DEFINE_MOSAIC_TRANFER_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE) \
+	#define DEFINE_MOSAIC_TRANSFER_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE) \
 		DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(UnresolvedMosaicId currencyMosaicId) { \
 			using ValidatorType = stateful::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>; \
 			return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [currencyMosaicId]( \
@@ -85,8 +85,8 @@ namespace catapult { namespace validators {
 				return MosaicTransferValidatorDetail<NOTIFICATION_TYPE>(notification, context, currencyMosaicId); }); \
 	}
 	
-	DEFINE_MOSAIC_TRANFER_VALIDATOR(MosaicTransfer, BalanceTransferNotification)
-	DEFINE_MOSAIC_TRANFER_VALIDATOR(LevyTransfer, LevyTransferNotification)
+	DEFINE_MOSAIC_TRANSFER_VALIDATOR(MosaicTransfer, BalanceTransferNotification)
+		DEFINE_MOSAIC_TRANSFER_VALIDATOR(LevyTransfer, LevyTransferNotification)
 	
 	//end region validator definition
 	

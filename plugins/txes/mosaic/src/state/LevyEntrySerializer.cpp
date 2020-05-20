@@ -29,7 +29,6 @@ namespace catapult { namespace state {
 			return LevyEntryData(type, recipient, mosaicId, fee);
 		}
 		
-		
 		void SaveLevyEntry(const LevyEntry &entry, io::OutputStream &output, bool includeHistory = true) {
 			// write version
 			io::Write32(output, 1);
