@@ -68,6 +68,7 @@ namespace catapult { namespace extensions {
 			"EligibleHarvesterValidator",
 			"UniqueTransactionHashValidator",
 			"BalanceDebitValidator",
+			"LevyBalanceValidator"
 		};
 		EXPECT_EQ(expectedValidatorNames, config.pValidator->names());
 	}

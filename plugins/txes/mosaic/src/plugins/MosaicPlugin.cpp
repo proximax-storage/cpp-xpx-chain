@@ -84,6 +84,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMosaicAvailabilityValidator())
 				.add(validators::CreateMosaicDurationValidator())
 				.add(validators::CreateMosaicTransferValidator(currencyMosaicId))
+				.add(validators::CreateLevyTransferValidator(currencyMosaicId))
 				.add(validators::CreateMaxMosaicsBalanceTransferValidator())
 				.add(validators::CreateMaxMosaicsSupplyChangeValidator())
 				// note that the following validator depends on MosaicChangeAllowedValidator

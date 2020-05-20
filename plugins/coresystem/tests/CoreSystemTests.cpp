@@ -73,6 +73,7 @@ namespace catapult { namespace plugins {
 					"MaxTransactionsValidator",
 					"EligibleHarvesterValidator",
 					"BalanceDebitValidator",
+					"LevyBalanceValidator"
 				};
 			}
 
