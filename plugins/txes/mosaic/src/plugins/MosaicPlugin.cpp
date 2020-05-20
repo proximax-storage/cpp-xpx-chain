@@ -123,6 +123,10 @@ namespace catapult { namespace plugins {
 					
 					auto& entry = mosaicIter.get();
 					auto pLevy = entry.levy();
+					
+					if(pLevy == nullptr)
+						return false;
+					
 					resolved = pLevy->Recipient;
 					return true;
 				}
@@ -141,6 +145,10 @@ namespace catapult { namespace plugins {
 			
 			auto& entry = mosaicIter.get();
 			auto pLevy = entry.levy();
+			
+			if(pLevy == nullptr)
+				return false;
+			
 			resolved = pLevy->MosaicId;
 			return true;
 		});
@@ -167,6 +175,9 @@ namespace catapult { namespace plugins {
 					
 					auto& entry = mosaicIter.get();
 					auto pLevy = entry.levy();
+					
+					if(pLevy == nullptr)
+						break;
 					
 					utils::MosaicLevyCalculatorFactory factory;
 					resolved = factory.getCalculator(pLevy->Type)(unresolved, pLevy->Fee);
