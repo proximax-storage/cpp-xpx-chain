@@ -116,7 +116,7 @@ namespace catapult { namespace plugins {
 		});
 		
 		/// region resolver
-		manager.addLevyAddressResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+		manager.addLevyAddressResolver([&manager](const auto& cache, const auto& unresolved, auto& resolved) {
 			const auto& levyCache = cache.template sub<cache::LevyCache>();
 			
 			switch (unresolved.Type) {
@@ -124,7 +124,8 @@ namespace catapult { namespace plugins {
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
 					assert (levyData != nullptr);
 					
-					MosaicId mosaicId = MosaicId(levyData->MosaicId.unwrap());
+					auto resolverContext = manager.createResolverContext(cache);
+					auto mosaicId = resolverContext.resolve(levyData->MosaicId);
 					auto mosaicIter = levyCache.find(mosaicId);
 					if (!mosaicIter.tryGet())
 						return false;
@@ -161,7 +162,7 @@ namespace catapult { namespace plugins {
 			return true;
 		});
 		
-		manager.addAmountResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+		manager.addAmountResolver([&manager](const auto& cache, const auto& unresolved, auto& resolved) {
 			const auto& levyCache = cache.template sub<cache::LevyCache>();
 			auto result = false;
 			
@@ -175,7 +176,8 @@ namespace catapult { namespace plugins {
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
 					assert (levyData != nullptr);
 					
-					MosaicId mosaicId = MosaicId(levyData->MosaicId.unwrap());
+					auto resolverContext = manager.createResolverContext(cache);
+					auto mosaicId = resolverContext.resolve(levyData->MosaicId);
 					auto mosaicIter = levyCache.find(mosaicId);
 					if (!mosaicIter.tryGet())
 						break;
