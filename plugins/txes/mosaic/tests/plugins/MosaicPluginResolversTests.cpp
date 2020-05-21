@@ -61,20 +61,14 @@ namespace catapult { namespace plugins {
 		/// create unresolved data
 		utils::Mempool pool;
 		auto pMosaicLevyData = pool.malloc(model::MosaicLevyData(Unresolved_Mosaic_Id));
-		auto transferAmount = Amount(2000000);
 		auto unresolvedMosaicId = catapult::UnresolvedLevyMosaicId(Unresolved_Mosaic_Id.unwrap());
-		
+		auto unresolvedAmount = UnresolvedAmount(Amount(2000000), UnresolvedAmountType::MosaicLevy, pMosaicLevyData);
 		auto unresolvedAddress = catapult::UnresolvedLevyAddress(test::GenerateRandomByteArray<UnresolvedAddress>().array(),
 		    catapult::UnresolvedCommonType::MosaicLevy, pMosaicLevyData);
 		
-		auto unresolvedAmount = UnresolvedAmount(transferAmount, UnresolvedAmountType::MosaicLevy, pMosaicLevyData);
-		
-		auto cacheDetachableDelta = cache.createDetachableDelta();
-		auto cacheDetachedDelta = cacheDetachableDelta.detach();
-		auto pCacheDelta = cacheDetachedDelta.tryLock();
-		auto readOnlyCache = pCacheDelta->toReadOnly();
-		
-		auto resolverContext = manager.createResolverContext(readOnlyCache);
+		auto cacheView = cache.createView();
+		auto readOnly = cacheView.toReadOnly();
+		auto resolverContext = manager.createResolverContext(readOnly);
 		
 		auto levyMosaicId = resolverContext.resolve(unresolvedMosaicId);
 		auto recipient = resolverContext.resolve(unresolvedAddress);
@@ -83,5 +77,21 @@ namespace catapult { namespace plugins {
 		EXPECT_EQ(levyMosaicId, oldLevyEntry.MosaicId);
 		EXPECT_EQ(recipient, oldLevyEntry.Recipient);
 		EXPECT_EQ(amount, oldLevyEntry.Fee);
+	}
+	
+	TEST(TEST_CLASS, ResolveMosaicLevyAssertNull) {
+		auto manager = SetUpPluginManager();
+		
+		auto unresolvedMosaicId = UnresolvedAmount(Amount(100), UnresolvedAmountType::MosaicLevy, nullptr);
+		auto unresolvedAddress = catapult::UnresolvedLevyAddress(test::GenerateRandomByteArray<UnresolvedAddress>().array(),
+			catapult::UnresolvedCommonType::MosaicLevy, nullptr);
+		
+		auto cache = manager.createCache();
+		auto cacheView = cache.createView();
+		auto readOnly = cacheView.toReadOnly();
+		auto resolverContext = manager.createResolverContext(readOnly);
+		
+		EXPECT_THROW(resolverContext.resolve(unresolvedMosaicId), catapult_runtime_error);
+		EXPECT_THROW(resolverContext.resolve(unresolvedAddress), catapult_runtime_error);
 	}
 }}

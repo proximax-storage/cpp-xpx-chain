@@ -36,6 +36,7 @@
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"
 #include "src/utils/MosaicLevyCalculator.h"
+#include "src/catapult/exceptions.h"
 
 namespace catapult { namespace plugins {
 
@@ -122,7 +123,8 @@ namespace catapult { namespace plugins {
 			switch (unresolved.Type) {
 				case UnresolvedCommonType::MosaicLevy: {
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
-					assert (levyData != nullptr);
+					if (!levyData)
+						CATAPULT_THROW_RUNTIME_ERROR("levy data should not be empty when calling levy resolver");
 					
 					auto resolverContext = manager.createResolverContext(cache);
 					auto mosaicId = resolverContext.resolve(levyData->MosaicId);
@@ -174,7 +176,8 @@ namespace catapult { namespace plugins {
 					result = true;
 					
 					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
-					assert (levyData != nullptr);
+					if (!levyData)
+						CATAPULT_THROW_RUNTIME_ERROR("levy data should not be empty when calling levy resolver");
 					
 					auto resolverContext = manager.createResolverContext(cache);
 					auto mosaicId = resolverContext.resolve(levyData->MosaicId);
