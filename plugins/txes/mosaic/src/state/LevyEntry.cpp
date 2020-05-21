@@ -5,6 +5,7 @@
 **/
 #include <algorithm>
 #include "LevyEntry.h"
+#include "src/catapult/exceptions.h"
 
 namespace catapult { namespace state {
 	
@@ -22,7 +23,7 @@ namespace catapult { namespace state {
 		
 	void LevyEntry::remove(const Height& height) {
 		if(!m_pLevy)
-			return;
+			CATAPULT_THROW_RUNTIME_ERROR("attempting to delete an empty levy");
 		
 		auto pair = std::make_pair(height, std::move(*m_pLevy));
 		m_updateHistory.push_back(pair);

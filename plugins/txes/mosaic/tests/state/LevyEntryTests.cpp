@@ -30,5 +30,13 @@ namespace catapult { namespace state {
 		EXPECT_EQ(levy.Fee, entry.levy()->Fee);
 	}
 	
+	TEST(TEST_CLASS, AssertNullRemoveEmpty) {
+		// Arrange:
+		auto entry = LevyEntry(MosaicId(225), nullptr);
+		
+		// Assert:
+		EXPECT_THROW(entry.remove(Height(1)), catapult_runtime_error);
+	}
+	
 	// endregion
 }}

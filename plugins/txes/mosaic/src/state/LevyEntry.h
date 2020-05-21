@@ -55,9 +55,7 @@ namespace catapult { namespace state {
 		
 		LevyEntry(const MosaicId& mosaicId, std::shared_ptr<LevyEntryData> pLevy)
 			: m_mosaicId(mosaicId)
-			, m_pLevy(pLevy)
-		{
-			if(pLevy == nullptr) return;
+			, m_pLevy(pLevy) {
 		}
 		
 	public:

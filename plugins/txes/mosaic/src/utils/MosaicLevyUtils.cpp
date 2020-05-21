@@ -31,11 +31,6 @@ namespace catapult {
 		
 		bool IsMosaicIdValid(MosaicId id,  const validators::ValidatorContext& context)
 		{
-			auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
-			auto mosaicIter = mosaicCache.find(id);
-			if( !mosaicIter.tryGet())
-				return false;
-			
 			// check that the mosaic is still active
 			validators::ActiveMosaicView::FindIterator activeMosaicIter;
 			validators::ActiveMosaicView activeMosaicView(context.Cache);
@@ -60,11 +55,11 @@ namespace catapult {
 		validators::ValidationResult ValidateLevyTransaction(const Key& signer, MosaicId id,
 			const validators::ValidatorContext& context)
 		{
-			auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
-			auto mosaicIter = mosaicCache.find(id);
-			if( !mosaicIter.tryGet())
+			if(!IsMosaicIdValid(id, context))
 				return validators::Failure_Mosaic_Id_Not_Found;
 			
+			auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
+			auto mosaicIter = mosaicCache.find(id);
 			auto& entry = mosaicIter.get();
 			
 			/// 0. check if signer allowed to modify levy
