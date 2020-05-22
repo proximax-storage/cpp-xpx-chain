@@ -82,7 +82,7 @@ namespace catapult { namespace plugins {
 	TEST(TEST_CLASS, ResolveMosaicLevyAssertNull) {
 		auto manager = SetUpPluginManager();
 		
-		auto unresolvedMosaicId = UnresolvedAmount(Amount(100), UnresolvedAmountType::MosaicLevy, nullptr);
+		auto unresolvedAmount = UnresolvedAmount(Amount(100), UnresolvedAmountType::MosaicLevy, nullptr);
 		auto unresolvedAddress = catapult::UnresolvedLevyAddress(test::GenerateRandomByteArray<UnresolvedAddress>().array(),
 			catapult::UnresolvedCommonType::MosaicLevy, nullptr);
 		
@@ -91,7 +91,7 @@ namespace catapult { namespace plugins {
 		auto readOnly = cacheView.toReadOnly();
 		auto resolverContext = manager.createResolverContext(readOnly);
 		
-		EXPECT_THROW(resolverContext.resolve(unresolvedMosaicId), catapult_runtime_error);
+		EXPECT_THROW(resolverContext.resolve(unresolvedAmount), catapult_runtime_error);
 		EXPECT_THROW(resolverContext.resolve(unresolvedAddress), catapult_runtime_error);
 	}
 }}

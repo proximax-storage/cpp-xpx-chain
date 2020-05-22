@@ -147,9 +147,13 @@ namespace catapult { namespace plugins {
 			return false;
 		});
 		
-		manager.addLevyMosaicResolver([](const auto& cache, const auto& unresolved, auto& resolved) {
+		manager.addLevyMosaicResolver([&manager](const auto& cache, const auto& unresolved, auto& resolved) {
 			const auto& levyCache = cache.template sub<cache::LevyCache>();
-			MosaicId mosaicId = MosaicId(unresolved.unwrap());
+			
+			UnresolvedMosaicId unresolvedMosaicId = UnresolvedMosaicId(unresolved.unwrap());
+			auto resolverContext = manager.createResolverContext(cache);
+			auto mosaicId = resolverContext.resolve(unresolvedMosaicId);
+			
 			auto mosaicIter = levyCache.find(mosaicId);
 			if (!mosaicIter.tryGet())
 				return false;
