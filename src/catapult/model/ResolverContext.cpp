@@ -23,23 +23,52 @@
 
 namespace catapult { namespace model {
 
+	namespace {
+		template <typename TUnresolvedAddres>
+		Address ResolveAddress(TUnresolvedAddres address) {
+			Address resolvedAddress;
+			std::memcpy(resolvedAddress.data(), address.data(), address.size());
+			return resolvedAddress;
+		}
+		
+		template <typename TMosaicId>
+		MosaicId ResolveMosaicId(TMosaicId mosaicId) {
+			return MosaicId(mosaicId.unwrap());
+		}
+	}
+	
 	ResolverContext::ResolverContext()
 			: ResolverContext(
-					[](auto mosaicId) { return MosaicId(mosaicId.unwrap()); },
+					[](auto mosaicId) { return ResolveMosaicId<UnresolvedMosaicId>(mosaicId); },
 					[](const auto& address) {
-						Address resolvedAddress;
-						std::memcpy(resolvedAddress.data(), address.data(), address.size());
-						return resolvedAddress;
+						return ResolveAddress<UnresolvedAddress>(address);
 					},
 					[](const auto& amount) {
 						return amount;
+					},
+					[](auto mosaicId) { return ResolveMosaicId<UnresolvedLevyMosaicId>(mosaicId); },
+					[](const auto& address) {
+						return ResolveAddress<UnresolvedLevyAddress>(address);
 					})
 	{}
 
-	ResolverContext::ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver, const AmountResolver& amountResolver)
+	ResolverContext::ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver,
+		const AmountResolver& amountResolver, const LevyMosaicResolver& levyMosaicResolver,
+	    const LevyAddressResolver& levyAddressResolver)
 			: m_mosaicResolver(mosaicResolver)
 			, m_addressResolver(addressResolver)
 			, m_amountResolver(amountResolver)
+			, m_levyMosaicResolver(levyMosaicResolver)
+			, m_levyAddressResolver(levyAddressResolver)
+	{}
+		
+	ResolverContext::ResolverContext(const MosaicResolver& mosaicResolver, const AddressResolver& addressResolver,
+		const AmountResolver& amountResolver)
+		: m_mosaicResolver(mosaicResolver)
+		, m_addressResolver(addressResolver)
+		, m_amountResolver(amountResolver)
+		, m_levyMosaicResolver([](auto mosaicId) { return ResolveMosaicId<UnresolvedLevyMosaicId>(mosaicId); })
+		, m_levyAddressResolver([](const auto& address) {return ResolveAddress<UnresolvedLevyAddress>(address);})
 	{}
 
 	MosaicId ResolverContext::resolve(UnresolvedMosaicId mosaicId) const {
@@ -52,5 +81,15 @@ namespace catapult { namespace model {
 
 	Amount ResolverContext::resolve(const UnresolvedAmount& amount) const {
 		return m_amountResolver(amount);
+	}
+		
+	/// Resolves levy mosaic id (\a mosaicId).
+	MosaicId ResolverContext::resolve(UnresolvedLevyMosaicId mosaicId) const {
+		return m_levyMosaicResolver(mosaicId);
+	}
+	
+	/// Resolves \a levy address.
+	Address ResolverContext::resolve(const UnresolvedLevyAddress& address) const {
+		return m_levyAddressResolver(address);
 	}
 }}

@@ -96,6 +96,7 @@ namespace catapult { namespace plugins {
 					"MaxTransactionTypePropertyValuesValidator",
 					"MosaicRecipientValidator",
 					"TransactionTypeValidator",
+					"LevyRecipientValidator",
 					"AddressPropertyValueModificationValidator",
 					"MosaicPropertyValueModificationValidator",
 					"TransactionTypePropertyValueModificationValidator",

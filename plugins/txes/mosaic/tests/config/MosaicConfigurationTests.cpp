@@ -24,7 +24,6 @@
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace config {
-
 	namespace {
 		constexpr auto Mosaic_Rental_Fee_Sink_Public_Key = "F76B23F89550EF41E2FE4C6016D8829F1CB8E4ADAB1826EB4B735A25959886ED";
 
@@ -48,11 +47,12 @@ namespace catapult { namespace config {
 			}
 
 			static bool SupportsUnknownProperties() {
-				return false;
+				return true;
 			}
 
-			static bool IsPropertyOptional(const std::string&) {
-				return false;
+			static bool IsPropertyOptional(const std::string& name) {
+				return std::set<std::string>{
+					"levyEnable"}.count(name);
 			}
 
 			static bool IsSectionOptional(const std::string&) {

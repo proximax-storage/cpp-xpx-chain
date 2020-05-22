@@ -26,15 +26,21 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::BalanceTransferNotification<1>;
-
-	DEFINE_STATEFUL_VALIDATOR(MosaicRecipient, [](const auto& notification, const ValidatorContext& context) {
+	using BalanceTransferNotification = model::BalanceTransferNotification<1>;
+	using LevyTransferNotification = model::LevyTransferNotification<1>;
+	
+	template<typename TNotification>
+	ValidationResult MosaicRecipientValidatorDetail(const TNotification& notification, const ValidatorContext& context) {
 		AccountPropertyView view(context.Cache);
 		if (!view.initialize(context.Resolvers.resolve(notification.Recipient)))
 			return ValidationResult::Success;
-
+		
 		auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
 		auto isTransferAllowed = view.isAllowed(model::PropertyType::MosaicId, mosaicId);
 		return isTransferAllowed ? ValidationResult::Success : Failure_Property_Mosaic_Transfer_Not_Allowed;
-	});
+	}
+		
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(MosaicRecipient, BalanceTransferNotification, MosaicRecipientValidatorDetail<BalanceTransferNotification>)
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(LevyRecipient, LevyTransferNotification, MosaicRecipientValidatorDetail<LevyTransferNotification>)
+	
 }}

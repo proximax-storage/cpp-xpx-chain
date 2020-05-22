@@ -73,6 +73,7 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMosaicPropertyValueModificationValidator())
 				.add(validators::CreateMaxMosaicPropertyValuesValidator())
 				.add(validators::CreateMosaicRecipientValidator())
+				.add(validators::CreateLevyRecipientValidator())
 				.add(validators::CreateTransactionTypePropertyRedundantModificationValidator())
 				.add(validators::CreateTransactionTypePropertyValueModificationValidator())
 				.add(validators::CreateMaxTransactionTypePropertyValuesValidator())
