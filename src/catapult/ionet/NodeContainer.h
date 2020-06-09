@@ -66,7 +66,7 @@ namespace catapult { namespace ionet {
 	class NodeContainerModifier : utils::MoveOnly {
 	public:
 		/// Creates a view around \a nodeContainerData with lock context \a readLock.
-		NodeContainerModifier(NodeContainerData& nodeContainerData, utils::SpinReaderWriterLock::WriterLockGuard&& readLock);
+		NodeContainerModifier(NodeContainerData& nodeContainerData, utils::SpinReaderWriterLock::ReaderLockGuard&& readLock);
 
 	public:
 		/// Adds a \a node to the collection with \a source.
@@ -101,6 +101,7 @@ namespace catapult { namespace ionet {
 
 	private:
 		NodeContainerData& m_nodeContainerData;
+		utils::SpinReaderWriterLock::ReaderLockGuard m_readLock;
 		utils::SpinReaderWriterLock::WriterLockGuard m_writeLock;
 	};
 
