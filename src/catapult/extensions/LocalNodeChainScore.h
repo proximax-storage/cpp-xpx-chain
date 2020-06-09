@@ -44,14 +44,16 @@ namespace catapult { namespace extensions {
 
 		/// Sets the current chain score to \a chainScore.
 		void set(const model::ChainScore& chainScore) {
-			auto writeLock = m_lock.acquireWriter();
+			auto readLock = m_lock.acquireReader();
+			auto writeLock = readLock.promoteToWriter();
 			m_score = chainScore;
 		}
 
 	public:
 		/// Adds \a rhs to this chain score.
 		LocalNodeChainScore& operator+=(const model::ChainScore& rhs) {
-			auto writeLock = m_lock.acquireWriter();
+			auto readLock = m_lock.acquireReader();
+			auto writeLock = readLock.promoteToWriter();
 			m_score += rhs;
 			return *this;
 		}

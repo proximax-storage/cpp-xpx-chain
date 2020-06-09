@@ -35,7 +35,7 @@ namespace catapult { namespace cache {
 		struct CacheViewReadLockPair {
 		public:
 			/// Creates a pair around \a cacheView and \a readLock.
-			CacheViewReadLockPair(TCacheView&& cacheView, utils::SpinReaderWriterLock::UpgradableReaderLockGuard&& readLock)
+			CacheViewReadLockPair(TCacheView&& cacheView, utils::SpinReaderWriterLock::ReaderLockGuard&& readLock)
 					: CacheView(std::move(cacheView))
 					, ReadLock(std::move(readLock))
 			{}
@@ -45,7 +45,7 @@ namespace catapult { namespace cache {
 			TCacheView CacheView;
 
 			/// Read lock.
-			utils::SpinReaderWriterLock::UpgradableReaderLockGuard ReadLock;
+			utils::SpinReaderWriterLock::ReaderLockGuard ReadLock;
 		};
 
 		// endregion
@@ -224,7 +224,7 @@ namespace catapult { namespace cache {
 		/// Returns a locked cache delta based on this cache.
 		/// \note Changes to an attached delta can be committed by calling commit.
 		LockedCacheDelta<CacheDeltaType> createDelta(const Height& height) {
-			auto readLock = m_lock.acquireUpgradableLock(false);
+			auto readLock = m_lock.acquireReader();
 
 			// notice that this is not a foolproof check since multiple threads could create multiple deltas at the same time
 			// but it is good enough as a sanity check
