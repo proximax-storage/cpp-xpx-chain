@@ -171,11 +171,12 @@ namespace catapult { namespace cache {
 					uint64_t maxCacheSize,
 					PtDataContainer& transactionDataContainer,
 					std::set<state::TimestampedHash>& timestampedHashes,
-					utils::SpinReaderWriterLock::WriterLockGuard&& writerLock)
+					utils::SpinReaderWriterLock::ReaderLockGuard&& readLock)
 					: m_maxCacheSize(maxCacheSize)
 					, m_transactionDataContainer(transactionDataContainer)
 					, m_timestampedHashes(timestampedHashes)
-					, m_writeLock(std::move(writerLock))
+					, m_readLock(std::move(readLock))
+					, m_writeLock(m_readLock.promoteToWriter())
 			{}
 
 		public:
@@ -254,6 +255,7 @@ namespace catapult { namespace cache {
 			uint64_t m_maxCacheSize;
 			PtDataContainer& m_transactionDataContainer;
 			std::set<state::TimestampedHash>& m_timestampedHashes;
+			utils::SpinReaderWriterLock::ReaderLockGuard m_readLock;
 			utils::SpinReaderWriterLock::WriterLockGuard m_writeLock;
 		};
 	}
@@ -280,12 +282,12 @@ namespace catapult { namespace cache {
 	}
 
 	PtCacheModifierProxy MemoryPtCache::modifier() {
-		auto writerLock = m_lock.acquireWriter();
+		auto readLock = m_lock.acquireReader();
 		return PtCacheModifierProxy(std::make_unique<MemoryPtCacheModifier>(
 				m_options.MaxCacheSize,
 				m_pImpl->TransactionDataContainer,
 				m_pImpl->TimestampedHashes,
-				std::move(writerLock)));
+				std::move(readLock)));
 	}
 
 	// endregion
