@@ -27,9 +27,6 @@ namespace catapult { namespace observers {
 
 		if (!initialValues.count(minExpiryHeight))
 			m_cache.addExpiryHeight(owner, minExpiryHeight);
-
-		if (m_entry.empty())
-			m_cache.remove(owner);
 	}
 
 	void CreditAccount(const Key& owner, const MosaicId& mosaicId, const Amount& amount, const ObserverContext &context) {
