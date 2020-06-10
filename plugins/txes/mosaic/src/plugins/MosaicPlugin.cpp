@@ -165,6 +165,8 @@ namespace catapult { namespace plugins {
 				if(pLevy != nullptr)
 					resolved = pLevy->MosaicId;
 			}
+			
+			return true;
 		});
 		
 		manager.addAmountResolver([&manager](const auto& cache, const auto& unresolved, auto& resolved) {
