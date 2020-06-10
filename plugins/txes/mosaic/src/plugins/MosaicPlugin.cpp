@@ -154,18 +154,17 @@ namespace catapult { namespace plugins {
 			auto resolverContext = manager.createResolverContext(cache);
 			auto mosaicId = resolverContext.resolve(unresolvedMosaicId);
 			
+			// If there are no levy, resolved to base mosaic
+			resolved = mosaicId;
+			
 			auto mosaicIter = levyCache.find(mosaicId);
-			if (!mosaicIter.tryGet())
-				return false;
-			
-			auto& entry = mosaicIter.get();
-			auto pLevy = entry.levy();
-			
-			if(pLevy == nullptr)
-				return false;
-			
-			resolved = pLevy->MosaicId;
-			return true;
+			if (mosaicIter.tryGet()) {
+				auto& entry = mosaicIter.get();
+				auto pLevy = entry.levy();
+				
+				if(pLevy != nullptr)
+					resolved = pLevy->MosaicId;
+			}
 		});
 		
 		manager.addAmountResolver([&manager](const auto& cache, const auto& unresolved, auto& resolved) {
