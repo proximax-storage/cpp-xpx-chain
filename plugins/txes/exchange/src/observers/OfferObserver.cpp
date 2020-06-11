@@ -34,6 +34,9 @@ namespace catapult { namespace observers {
 				entry.removeOffer(pOffer->Type, mosaicId);
 			}
 		}
+
+		if (NotifyMode::Rollback == context.Mode && entry.empty())
+			cache.remove(notification.Owner);
 	}
 
 	DEFINE_OBSERVER(OfferV1, model::OfferNotification<1>, OfferObserver<1>);
