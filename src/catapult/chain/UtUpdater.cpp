@@ -31,14 +31,25 @@
 namespace catapult { namespace chain {
 
 	namespace {
+
+		struct FailureInfo {
+			const model::Transaction& Transaction;
+			const Hash256& Hash;
+			Height EffectiveHeight;
+			validators::ValidationResult Result;
+		};
+
 		struct ApplyState {
-			constexpr ApplyState(cache::UtCacheModifierProxy& modifier, cache::CatapultCacheDelta& unconfirmedCatapultCache)
+			constexpr ApplyState(cache::UtCacheModifierProxy& modifier,
+					cache::CatapultCacheDelta& unconfirmedCatapultCache, std::vector<FailureInfo>& failureTransactions)
 					: Modifier(modifier)
 					, UnconfirmedCatapultCache(unconfirmedCatapultCache)
+					, FailureTransactions(failureTransactions)
 			{}
 
 			cache::UtCacheModifierProxy& Modifier;
 			cache::CatapultCacheDelta& UnconfirmedCatapultCache;
+			std::vector<FailureInfo>& FailureTransactions;
 		};
 	}
 
@@ -61,18 +72,26 @@ namespace catapult { namespace chain {
 
 	public:
 		void update(const std::vector<model::TransactionInfo>& utInfos) {
-			// 1. lock the UT cache and lock the unconfirmed copy
-			auto modifier = m_transactionsCache.modifier();
-			auto pUnconfirmedCatapultCache = m_detachedCatapultCache.getAndTryLock();
-			if (!pUnconfirmedCatapultCache) {
-				// if there is no unconfirmed cache state, it means that a block update is forthcoming
-				// just add all to the cache and they will be validated later
-				addAll(modifier, utInfos);
-				return;
+			std::vector<FailureInfo> failureTransactions;
+
+			{
+				// 1. lock the UT cache and lock the unconfirmed copy
+				auto modifier = m_transactionsCache.modifier();
+				auto pUnconfirmedCatapultCache = m_detachedCatapultCache.getAndTryLock();
+				if (!pUnconfirmedCatapultCache) {
+					// if there is no unconfirmed cache state, it means that a block update is forthcoming
+					// just add all to the cache and they will be validated later
+					addAll(modifier, utInfos);
+					return;
+				}
+
+				auto applyState = ApplyState(modifier, *pUnconfirmedCatapultCache, failureTransactions);
+				apply(applyState, utInfos, TransactionSource::New);
 			}
 
-			auto applyState = ApplyState(modifier, *pUnconfirmedCatapultCache);
-			apply(applyState, utInfos, TransactionSource::New);
+			for (const auto& info : failureTransactions) {
+				m_failedTransactionSink(info.Transaction, info.EffectiveHeight, info.Hash, info.Result);
+			}
 		}
 
 		void update(const utils::HashPointerSet& confirmedTransactionHashes, const std::vector<model::TransactionInfo>& utInfos) {
@@ -86,18 +105,26 @@ namespace catapult { namespace chain {
 			//    other update overload applies transactions to rebased cache before UT lock is held
 			auto modifier = m_transactionsCache.modifier();
 			auto originalTransactionInfos = modifier.removeAll();
+			std::vector<FailureInfo> failureTransactions;
 
-			// 2. lock the catapult cache and rebase the unconfirmed catapult cache
-			auto pUnconfirmedCatapultCache = m_detachedCatapultCache.rebaseAndLock();
+			{
+				// 2. lock the catapult cache and rebase the unconfirmed catapult cache
+				auto pUnconfirmedCatapultCache = m_detachedCatapultCache.rebaseAndLock();
 
-			// 3. add back reverted txes
-			auto applyState = ApplyState(modifier, *pUnconfirmedCatapultCache);
-			apply(applyState, utInfos, TransactionSource::Reverted);
+				// 3. add back reverted txes
+				auto applyState = ApplyState(modifier, *pUnconfirmedCatapultCache, failureTransactions);
+				apply(applyState, utInfos, TransactionSource::Reverted);
 
-			// 4. add back original txes that have not been confirmed
-			apply(applyState, originalTransactionInfos, TransactionSource::Existing, [&confirmedTransactionHashes](const auto& info) {
-				return confirmedTransactionHashes.cend() == confirmedTransactionHashes.find(&info.EntityHash);
-			});
+				// 4. add back original txes that have not been confirmed
+				apply(applyState, originalTransactionInfos, TransactionSource::Existing, [&confirmedTransactionHashes](const auto& info) {
+				  return confirmedTransactionHashes.cend() == confirmedTransactionHashes.find(&info.EntityHash);
+				});
+			}
+
+			// 5. Notify about failed transactions
+			for (const auto& info : failureTransactions) {
+				m_failedTransactionSink(info.Transaction, info.EffectiveHeight, info.Hash, info.Result);
+			}
 		}
 
 	private:
@@ -149,7 +176,7 @@ namespace catapult { namespace chain {
 
 				if (throttle(utInfo, transactionSource, applyState, readOnlyCache)) {
 					CATAPULT_LOG(warning) << "dropping transaction " << entityHash << " due to throttle";
-					m_failedTransactionSink(entity, effectiveHeight, entityHash, Failure_Chain_Unconfirmed_Cache_Too_Full);
+					applyState.FailureTransactions.emplace_back(FailureInfo{ entity, entityHash, effectiveHeight, Failure_Chain_Unconfirmed_Cache_Too_Full });
 					continue;
 				}
 
@@ -169,7 +196,7 @@ namespace catapult { namespace chain {
 
 					// only forward failure (not neutral) results
 					if (IsValidationResultFailure(sub.result()))
-						m_failedTransactionSink(entity, effectiveHeight, entityHash, sub.result());
+						applyState.FailureTransactions.emplace_back(FailureInfo{ entity, entityHash, effectiveHeight, sub.result() });
 
 					sub.undo();
 					applyState.Modifier.remove(entityHash);
