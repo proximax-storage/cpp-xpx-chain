@@ -35,7 +35,7 @@ namespace catapult { namespace observers {
 			}
 		}
 
-		if (NotifyMode::Rollback == context.Mode && entry.empty())
+		if (NotifyMode::Rollback == context.Mode && entry.empty() && entry.version() > 1)
 			cache.remove(notification.Owner);
 	}
 
