@@ -27,6 +27,7 @@
 #include "src/MongoPluginLoader.h"
 #include "src/MongoPluginManager.h"
 #include "src/MongoPtStorage.h"
+#include "src/MongoService.h"
 #include "src/MongoTransactionStatusStorage.h"
 #include "src/MongoTransactionStorage.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
@@ -66,20 +67,6 @@ namespace catapult { namespace mongo {
 			collection.delete_many({});
 		}
 
-		class MongoServices {
-		public:
-			MongoServices(
-					const std::shared_ptr<const MongoStorageContext>& pContext,
-					const std::shared_ptr<const MongoTransactionRegistry>& pRegistry)
-					: m_pContext(pContext)
-					, m_pRegistry(pRegistry)
-			{}
-
-		private:
-			std::shared_ptr<const MongoStorageContext> m_pContext;
-			std::shared_ptr<const MongoTransactionRegistry> m_pRegistry;
-		};
-
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
 			mongocxx::instance::current();
 
@@ -111,11 +98,8 @@ namespace catapult { namespace mongo {
 			auto pChainScoreProvider = CreateMongoChainScoreProvider(*pMongoContext);
 			auto pExternalCacheStorage = pPluginManager->createStorage();
 
-			// add a dummy service for extending service lifetimes
-			bootstrapper.extensionManager().addServiceRegistrar(extensions::CreateRootedServiceRegistrar(
-					std::make_shared<MongoServices>(pMongoContext, pTransactionRegistry),
-					"mongo.services",
-					extensions::ServiceRegistrarPhase::Initial_With_Modules));
+			// register services
+			bootstrapper.extensionManager().addServiceRegistrar(CreateMongoServiceRegistrar(pMongoContext, pTransactionRegistry));
 
 			// add a pre load handler for initializing (nemesis) storage
 			// (pPluginManager is kept alive by pTransactionRegistry)
