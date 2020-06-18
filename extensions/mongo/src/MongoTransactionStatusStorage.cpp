@@ -30,7 +30,8 @@ using namespace bsoncxx::builder::stream;
 namespace catapult { namespace mongo {
 
 	namespace {
-		constexpr auto Collection_Name = "transactionStatuses";
+		constexpr auto Transactions_Collection_Name = "transactions";
+		constexpr auto Transaction_Statuses_Collection_Name = "transactionStatuses";
 
 		auto CreateFilter(const std::string& fieldName) {
 			return [fieldName](const auto& status) {
@@ -49,7 +50,7 @@ namespace catapult { namespace mongo {
 			MongoTransactionStatusStorage(MongoStorageContext& context)
 					: m_context(context)
 					, m_database(m_context.createDatabaseConnection())
-					, m_errorPolicy(m_context.createCollectionErrorPolicy(Collection_Name))
+					, m_errorPolicy(m_context.createCollectionErrorPolicy(Transaction_Statuses_Collection_Name))
 			{}
 
 		public:
@@ -65,12 +66,30 @@ namespace catapult { namespace mongo {
 					transactionStatuses = std::move(m_transactionStatuses);
 				}
 
+				auto transactionCollection = m_database[Transactions_Collection_Name];
+				auto iter = transactionStatuses.begin();
+				while (iter != transactionStatuses.end()) {
+					auto filter = document()
+						<< "$or"
+							<< open_array
+								<< open_document << "meta.hash" << mappers::ToBinary(iter->Hash) << close_document
+								<< open_document << "meta.aggregateHash" << mappers::ToBinary(iter->Hash) << close_document
+							<< close_array
+						<< finalize;
+					auto transactionDoc = transactionCollection.find_one(filter.view());
+					if (transactionDoc.is_initialized()) {
+						iter = transactionStatuses.erase(iter);
+					} else {
+						++iter;
+					}
+				}
+
 				if (transactionStatuses.empty())
 					return;
 
-				// upsert into transaction statuses collection
+				// upsert into transaction statuses transactionCollection
 				auto results = m_context.bulkWriter().bulkUpsert(
-						Collection_Name,
+						Transaction_Statuses_Collection_Name,
 						transactionStatuses,
 						[](const auto& status, auto) { return mappers::ToDbModel(status); },
 						CreateFilter("hash")).get();
@@ -82,7 +101,7 @@ namespace catapult { namespace mongo {
 			MongoStorageContext& m_context;
 			MongoDatabase m_database;
 			MongoErrorPolicy m_errorPolicy;
-			std::vector<model::TransactionStatus> m_transactionStatuses;
+			std::list<model::TransactionStatus> m_transactionStatuses;
 			utils::SpinLock m_lock;
 		};
 	}
