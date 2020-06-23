@@ -107,8 +107,8 @@ namespace catapult { namespace harvesting {
 		bool process(const Processor& processor) {
 			// 1. prepare state
 			auto catapultState = state::CatapultState();
-			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), networkConfig().ImportanceGrouping);
 			const auto& config = m_executionConfig.ConfigSupplier(height());
+			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), config.Network.ImportanceGrouping);
 			auto observerState = config.Immutable.ShouldEnableVerifiableReceipts
 					? observers::ObserverState(*m_pCacheDelta, catapultState, m_blockStatementBuilder)
 					: observers::ObserverState(*m_pCacheDelta, catapultState);
@@ -156,10 +156,6 @@ namespace catapult { namespace harvesting {
 				sub.undo();
 				return true;
 			});
-		}
-
-		const model::NetworkConfiguration& networkConfig() {
-			return m_executionConfig.ConfigSupplier(height()).Network;
 		}
 
 	private:
