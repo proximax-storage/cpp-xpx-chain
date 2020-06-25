@@ -23,6 +23,7 @@
 #include "MongoTransactionMetadata.h"
 #include "mappers/MapperUtils.h"
 #include "mappers/TransactionMapper.h"
+#include <boost/optional.hpp>
 
 using namespace bsoncxx::builder::stream;
 

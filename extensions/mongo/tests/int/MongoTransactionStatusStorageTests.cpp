@@ -19,14 +19,15 @@
 **/
 
 #include "mongo/src/MongoTransactionStatusStorage.h"
-#include "mongo/src/MongoTransactionStorage.h"
 #include "mongo/src/MongoBulkWriter.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/model/TransactionStatus.h"
-#include "catapult/cache_tx/UtChangeSubscriber.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
+#include "tests/TestHarness.h"
+#include <mongocxx/instance.hpp>
+#include <unordered_set>
 
 using namespace bsoncxx::builder::stream;
 
@@ -36,8 +37,7 @@ namespace catapult { namespace mongo {
 
 	namespace {
 		constexpr size_t Num_Transaction_Statuses = 10;
-		constexpr auto Transactions_Collection_Name = "transactions";
-		constexpr auto Transaction_Statuses_Collection_Name = "transactionStatuses";
+		constexpr auto Collection_Name = "transactionStatuses";
 
 		using TransactionStatusesMap = std::unordered_map<Hash256, model::TransactionStatus, utils::ArrayHasher<Hash256>>;
 
@@ -58,22 +58,13 @@ namespace catapult { namespace mongo {
 		public:
 			explicit TransactionStatusSubscriberContext(size_t numTransactionStatuses)
 					: m_pMongoContext(ResetDatabaseAndCreateMongoContext())
-					, m_pTransactionStatusSubscriber(CreateMongoTransactionStatusStorage(*m_pMongoContext))
+					, m_pSubscriber(CreateMongoTransactionStatusStorage(*m_pMongoContext))
 					, m_statuses(CreateTransactionStatuses(numTransactionStatuses))
-					, m_transactionRegistry(test::CreateDefaultMongoTransactionRegistry())
-					, m_pUtChangeSubscriber(CreateMongoTransactionStorage(
-						*m_pMongoContext,
-						m_transactionRegistry,
-						Transactions_Collection_Name))
 			{}
 
 		public:
-			subscribers::TransactionStatusSubscriber& transactionStatusSubscriber() {
-				return *m_pTransactionStatusSubscriber;
-			}
-
-			cache::UtChangeSubscriber& utChangeSubscriber() {
-				return *m_pUtChangeSubscriber;
+			subscribers::TransactionStatusSubscriber& subscriber() {
+				return *m_pSubscriber;
 			}
 
 			const std::vector<model::TransactionStatus>& statuses() const {
@@ -89,22 +80,20 @@ namespace catapult { namespace mongo {
 			}
 
 			void saveTransactionStatus(const model::TransactionStatus& status) {
-				m_pTransactionStatusSubscriber->notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), Height(), status.Hash, status.Status);
-				m_pTransactionStatusSubscriber->flush();
+				m_pSubscriber->notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), Height(), status.Hash, status.Status);
+				m_pSubscriber->flush();
 			}
 
 		private:
 			std::unique_ptr<MongoStorageContext> m_pMongoContext;
-			std::unique_ptr<subscribers::TransactionStatusSubscriber> m_pTransactionStatusSubscriber;
+			std::unique_ptr<subscribers::TransactionStatusSubscriber> m_pSubscriber;
 			std::vector<model::TransactionStatus> m_statuses;
-			MongoTransactionRegistry m_transactionRegistry;
-			std::unique_ptr<cache::UtChangeSubscriber> m_pUtChangeSubscriber;
 		};
 
 		void AssertTransactionStatuses(const TransactionStatusesMap& expectedTransactionStatuses) {
 			auto connection = test::CreateDbConnection();
 			auto database = connection[test::DatabaseName()];
-			auto collection = database[Transaction_Statuses_Collection_Name];
+			auto collection = database[Collection_Name];
 
 			// Assert: check collection size
 			EXPECT_EQ(expectedTransactionStatuses.size(), static_cast<size_t>(collection.count_documents({})));
@@ -131,7 +120,7 @@ namespace catapult { namespace mongo {
 		TransactionStatusSubscriberContext context(1);
 
 		// Sanity:
-		test::AssertCollectionSize(Transaction_Statuses_Collection_Name, 0);
+		test::AssertCollectionSize(Collection_Name, 0);
 
 		// Act:
 		context.saveTransactionStatus(context.statuses().back());
@@ -145,7 +134,7 @@ namespace catapult { namespace mongo {
 		TransactionStatusSubscriberContext context(Num_Transaction_Statuses);
 
 		// Sanity:
-		test::AssertCollectionSize(Transaction_Statuses_Collection_Name, 0);
+		test::AssertCollectionSize(Collection_Name, 0);
 
 		// Act:
 		for (const auto& status : context.statuses())
@@ -163,7 +152,7 @@ namespace catapult { namespace mongo {
 		context.saveTransactionStatus(status);
 
 		// Sanity:
-		test::AssertCollectionSize(Transaction_Statuses_Collection_Name, 1);
+		test::AssertCollectionSize(Collection_Name, 1);
 
 		// Act:
 		for (auto i = 0u; i < 10; ++i) {
@@ -186,16 +175,16 @@ namespace catapult { namespace mongo {
 		TransactionStatusSubscriberContext context(Num_Transaction_Statuses);
 		auto& transactionStatuses = context.statuses();
 		for (const auto& status : transactionStatuses)
-			context.transactionStatusSubscriber().notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), Height(), status.Hash, status.Status);
+			context.subscriber().notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), Height(), status.Hash, status.Status);
 
 		// Sanity:
-		test::AssertCollectionSize(Transaction_Statuses_Collection_Name, 0);
+		test::AssertCollectionSize(Collection_Name, 0);
 
 		// Act:
-		context.transactionStatusSubscriber().flush();
+		context.subscriber().flush();
 
 		// Assert:
-		test::AssertCollectionSize(Transaction_Statuses_Collection_Name, transactionStatuses.size());
+		test::AssertCollectionSize(Collection_Name, transactionStatuses.size());
 	}
 
 	TEST(TEST_CLASS, FlushIsNoOpWhenNoDataIsPending) {
@@ -203,42 +192,13 @@ namespace catapult { namespace mongo {
 		TransactionStatusSubscriberContext context(Num_Transaction_Statuses);
 
 		// Sanity:
-		test::AssertCollectionSize(Transaction_Statuses_Collection_Name, 0);
+		test::AssertCollectionSize(Collection_Name, 0);
 
 		// Act:
-		context.transactionStatusSubscriber().flush();
+		context.subscriber().flush();
 
 		// Assert:
-		test::AssertCollectionSize(Transaction_Statuses_Collection_Name, 0);
-	}
-
-	TEST(TEST_CLASS, FlushDoesNotWriteStatusesOfConfirmedTransactions) {
-		// Arrange:
-		TransactionStatusSubscriberContext context(Num_Transaction_Statuses);
-		auto& transactionStatuses = context.statuses();
-		model::TransactionInfosSet transactionInfos;
-		for (auto i = 1u; i < Num_Transaction_Statuses; ++i) {
-			const auto& status = transactionStatuses[i];
-			auto pTransaction = utils::UniqueToShared(test::GenerateTransactionWithDeadline(status.Deadline));
-			context.transactionStatusSubscriber().notifyStatus(*pTransaction, Height(), status.Hash, status.Status);
-			model::TransactionInfo transactionInfo(pTransaction, status.Hash, Height());
-			transactionInfo.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>();
-			transactionInfos.emplace(transactionInfo.copy());
-		}
-		const auto& status = transactionStatuses[0];
-		context.transactionStatusSubscriber().notifyStatus(*test::GenerateTransactionWithDeadline(status.Deadline), Height(), status.Hash, status.Status);
-
-		// Sanity:
-		test::AssertCollectionSize(Transaction_Statuses_Collection_Name, 0);
-
-		// Act:
-		context.utChangeSubscriber().notifyAdds(transactionInfos);
-		context.transactionStatusSubscriber().flush();
-
-		// Assert:
-		TransactionStatusesMap map;
-		map.emplace(status.Hash, status);
-		AssertTransactionStatuses(map);
+		test::AssertCollectionSize(Collection_Name, 0);
 	}
 
 	// endregion
