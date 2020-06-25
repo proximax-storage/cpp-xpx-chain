@@ -22,6 +22,7 @@
 #include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
 #include "tests/test/HashLockInfoCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
@@ -51,16 +52,19 @@ namespace catapult { namespace validators {
 				cache::CatapultCache& cache,
 				const Hash256& transactionHash,
 				model::EntityType transactionType,
-				Height notificationHeight) {
+				Height notificationHeight,
+				bool enableHashLockValidation = true) {
 			// Arrange:
 			auto pValidator = CreateAggregateHashPresentValidator();
+			test::MutableBlockchainConfiguration config;
+			config.Network.EnableHashLockValidation = enableHashLockValidation;
 
 			// Act:
 			return test::ValidateNotification<model::TransactionNotification<1>>(
 					*pValidator,
 					CreateNotification(transactionHash, transactionType),
 					cache,
-					config::BlockchainConfiguration::Uninitialized(),
+					config.ToConst(),
 					notificationHeight);
 		}
 	}
@@ -71,6 +75,17 @@ namespace catapult { namespace validators {
 
 		// Act:
 		auto result = RunValidator(cache, test::GenerateRandomByteArray<Hash256>(), model::Entity_Type_Aggregate_Complete, Height());
+
+		// Assert:
+		EXPECT_EQ(ValidationResult::Success, result);
+	}
+
+	TEST(TEST_CLASS, SuccessWhenValidationDisabled) {
+		// Arrange:
+		auto cache = CreateCache(test::GenerateRandomByteArray<Hash256>(), Height());
+
+		// Act:
+		auto result = RunValidator(cache, test::GenerateRandomByteArray<Hash256>(), model::Entity_Type_Aggregate_Bonded, Height(), false);
 
 		// Assert:
 		EXPECT_EQ(ValidationResult::Success, result);

@@ -71,6 +71,7 @@ namespace catapult { namespace model {
 							{ "maxTransactionsPerBlock", "120" },
 
 							{ "enableUnconfirmedTransactionMinFeeValidation", "true" },
+							{ "enableHashLockValidation", "true" },
 						}
 					},
 					{
@@ -98,7 +99,10 @@ namespace catapult { namespace model {
 			}
 
 			static bool IsPropertyOptional(const std::string& name) {
-				return "enableUnconfirmedTransactionMinFeeValidation" == name;
+				return std::set<std::string>{
+					"enableUnconfirmedTransactionMinFeeValidation",
+					"enableHashLockValidation",
+					}.count(name);
 			}
 
 			static void AssertZero(const NetworkConfiguration& config) {
@@ -128,6 +132,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(0u, config.MaxTransactionsPerBlock);
 
 				EXPECT_EQ(false, config.EnableUnconfirmedTransactionMinFeeValidation);
+				EXPECT_EQ(false, config.EnableHashLockValidation);
 
 				EXPECT_TRUE(config.Plugins.empty());
 			}
@@ -159,6 +164,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(120u, config.MaxTransactionsPerBlock);
 
 				EXPECT_EQ(true, config.EnableUnconfirmedTransactionMinFeeValidation);
+				EXPECT_EQ(true, config.EnableHashLockValidation);
 
 				EXPECT_EQ(2u, config.Plugins.size());
 				const auto& pluginAlphaBag = config.Plugins.find("alpha")->second;

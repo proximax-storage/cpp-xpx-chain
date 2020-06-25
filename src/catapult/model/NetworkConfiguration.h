@@ -96,6 +96,10 @@ namespace catapult { namespace model {
 		/// that transaction fee is not less than the minimum calculated with minFeeMultiplier.
 		bool EnableUnconfirmedTransactionMinFeeValidation;
 
+		/// Allows validation that incomplete aggregate transactions must have an active,
+		/// unused hash lock.
+		bool EnableHashLockValidation;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 

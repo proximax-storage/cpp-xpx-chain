@@ -21,14 +21,13 @@
 #include "Validators.h"
 #include "src/cache/HashLockInfoCache.h"
 #include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 
 	using Notification = model::TransactionNotification<1>;
 
 	DEFINE_STATEFUL_VALIDATOR(AggregateHashPresent, [](const auto& notification, const auto& context) {
-		if (model::Entity_Type_Aggregate_Bonded != notification.TransactionType)
+		if (model::Entity_Type_Aggregate_Bonded != notification.TransactionType || !context.Config.Network.EnableHashLockValidation)
 			return ValidationResult::Success;
 
 		const auto& cache = context.Cache.template sub<cache::HashLockInfoCache>();

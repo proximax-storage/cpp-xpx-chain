@@ -93,6 +93,7 @@ namespace catapult { namespace config {
 			EXPECT_EQ(200'000u, config.MaxTransactionsPerBlock);
 
 			EXPECT_EQ(true, config.EnableUnconfirmedTransactionMinFeeValidation);
+			EXPECT_EQ(true, config.EnableHashLockValidation);
 
 			EXPECT_FALSE(config.Plugins.empty());
 		}

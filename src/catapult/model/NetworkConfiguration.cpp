@@ -77,6 +77,9 @@ namespace catapult { namespace model {
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
 
+		config.EnableHashLockValidation = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableHashLockValidation);
+
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		size_t numPluginProperties = 0;
