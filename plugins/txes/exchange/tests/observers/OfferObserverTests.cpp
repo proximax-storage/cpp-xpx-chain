@@ -15,6 +15,7 @@ namespace catapult { namespace observers {
 
 	DEFINE_COMMON_OBSERVER_TESTS(OfferV1, )
 	DEFINE_COMMON_OBSERVER_TESTS(OfferV2, )
+	DEFINE_COMMON_OBSERVER_TESTS(OfferV3, )
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::ExchangeCacheFactory>;
@@ -117,12 +118,20 @@ namespace catapult { namespace observers {
 				return CreateOfferV2Observer();
 			}
 		};
+
+		struct ObserverV3Traits {
+			static constexpr VersionType Version = 3;
+			static auto CreateObserver() {
+				return CreateOfferV3Observer();
+			}
+		};
 	}
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
 	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ObserverV1Traits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ObserverV2Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ObserverV3Traits>(); } \
 	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	TRAITS_BASED_TEST(Offer_Commit) {

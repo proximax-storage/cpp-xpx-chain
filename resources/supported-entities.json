@@ -163,7 +163,7 @@
 		{
 			"name": "exchangeOffer",
 			"type": "16733",
-			"supportedVersions": [2]
+			"supportedVersions": [3]
 		},
 		{
 			"name": "exchange",

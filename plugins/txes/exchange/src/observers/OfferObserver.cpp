@@ -35,10 +35,11 @@ namespace catapult { namespace observers {
 			}
 		}
 
-		if (NotifyMode::Rollback == context.Mode && entry.empty() && entry.version() > 1)
+		if (NotifyMode::Rollback == context.Mode && entry.empty() && entry.version() > 2)
 			cache.remove(notification.Owner);
 	}
 
 	DEFINE_OBSERVER(OfferV1, model::OfferNotification<1>, OfferObserver<1>);
 	DEFINE_OBSERVER(OfferV2, model::OfferNotification<2>, OfferObserver<2>);
+	DEFINE_OBSERVER(OfferV3, model::OfferNotification<3>, OfferObserver<3>);
 }}

@@ -37,6 +37,7 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by offer notifications
 	DECLARE_OBSERVER(OfferV1, model::OfferNotification<1>)();
 	DECLARE_OBSERVER(OfferV2, model::OfferNotification<2>)();
+	DECLARE_OBSERVER(OfferV3, model::OfferNotification<3>)();
 
 	/// Observes changes triggered by exchange notifications
 	DECLARE_OBSERVER(Exchange, model::ExchangeNotification<1>)();
