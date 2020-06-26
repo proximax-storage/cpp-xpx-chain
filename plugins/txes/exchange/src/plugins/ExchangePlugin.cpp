@@ -51,6 +51,7 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateOfferV1Validator())
 				.add(validators::CreateOfferV2Validator())
+				.add(validators::CreateOfferV3Validator())
 				.add(validators::CreateExchangeValidator())
 				.add(validators::CreateRemoveOfferValidator());
 		});
@@ -59,6 +60,7 @@ namespace catapult { namespace plugins {
 			builder
 				.add(observers::CreateOfferV1Observer())
 				.add(observers::CreateOfferV2Observer())
+				.add(observers::CreateOfferV3Observer())
 				.add(observers::CreateExchangeObserver())
 				.add(observers::CreateRemoveOfferObserver(pConfigHolder->Config().Immutable.CurrencyMosaicId))
 				.add(observers::CreateCleanupOffersObserver());

@@ -27,6 +27,9 @@ namespace catapult { namespace model {
 	/// Offer v2.
 	DEFINE_EXCHANGE_NOTIFICATION(Offer_v2, 0x004, All);
 
+	/// Offer v3.
+	DEFINE_EXCHANGE_NOTIFICATION(Offer_v3, 0x005, All);
+
 #undef DEFINE_EXCHANGE_NOTIFICATION
 
 	// endregion
@@ -79,6 +82,21 @@ namespace catapult { namespace model {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Exchange_Offer_v2_Notification;
+
+	public:
+		OfferNotification(
+				const Key& owner,
+				uint8_t offerCount,
+				const OfferWithDuration* pOffers)
+			: BaseOfferNotification(Notification_Type, owner, offerCount, pOffers)
+		{}
+	};
+
+	template<>
+	struct OfferNotification<3> : public BaseOfferNotification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Exchange_Offer_v3_Notification;
 
 	public:
 		OfferNotification(

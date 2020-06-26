@@ -73,6 +73,7 @@ namespace catapult { namespace plugins {
 					"ExchangeValidator",
 					"RemoveOfferValidator",
 					"OfferV2Validator",
+					"OfferV3Validator",
 				};
 			}
 
@@ -83,6 +84,7 @@ namespace catapult { namespace plugins {
 					"ExchangeObserver",
 					"RemoveOfferObserver",
 					"OfferV2Observer",
+					"OfferV3Observer",
 				};
 			}
 

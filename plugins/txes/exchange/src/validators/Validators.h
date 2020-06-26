@@ -21,6 +21,7 @@ namespace catapult { namespace validators {
 	/// - Mosaic is allowed for exchange.
 	DECLARE_STATEFUL_VALIDATOR(OfferV1, model::OfferNotification<1>)();
 	DECLARE_STATEFUL_VALIDATOR(OfferV2, model::OfferNotification<2>)();
+	DECLARE_STATEFUL_VALIDATOR(OfferV3, model::OfferNotification<3>)();
 
 	/// A validator implementation that applies to exchange notification and validates that:
 	/// - at least one offer to exchange is present.

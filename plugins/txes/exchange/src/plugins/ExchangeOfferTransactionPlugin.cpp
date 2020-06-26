@@ -51,6 +51,10 @@ namespace catapult { namespace plugins {
 					Publish<TTransaction, 2>(transaction, sub, config);
 					break;
 				}
+				case 3: {
+					Publish<TTransaction, 3>(transaction, sub, config);
+					break;
+				}
 				default:
 					CATAPULT_LOG(debug) << "invalid version of ExchangeOfferTransaction: " << transaction.EntityVersion();
 				}

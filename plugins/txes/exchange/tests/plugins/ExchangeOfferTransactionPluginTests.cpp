@@ -20,7 +20,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS ExchangeOfferTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(ExchangeOffer, config::ImmutableConfiguration, 2, 2,)
+		DEFINE_TRANSACTION_PLUGIN_WITH_CONFIG_TEST_TRAITS(ExchangeOffer, config::ImmutableConfiguration, 3, 3,)
 
 		constexpr auto Offer_Count = 4u;
 
@@ -62,6 +62,10 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanCalculateSize_v2) {
 		AssertCanCalculateSize<TTraits>(2);
+	}
+
+	PLUGIN_TEST(CanCalculateSize_v3) {
+		AssertCanCalculateSize<TTraits>(3);
 	}
 
 	// region publish - basic
@@ -111,6 +115,10 @@ namespace catapult { namespace plugins {
 		AssertCanPublishCorrectNumberOfNotifications<TTraits>(2, Exchange_Offer_v2_Notification);
 	}
 
+	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_v3) {
+		AssertCanPublishCorrectNumberOfNotifications<TTraits>(3, Exchange_Offer_v3_Notification);
+	}
+
 	// endregion
 
 	// region publish - offer notification
@@ -142,6 +150,10 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishOfferNotification_v2) {
 		AssertCanPublishOfferNotification<TTraits, 2>();
+	}
+
+	PLUGIN_TEST(CanPublishOfferNotification_v3) {
+		AssertCanPublishOfferNotification<TTraits, 3>();
 	}
 
 	// endregion
@@ -187,6 +199,10 @@ namespace catapult { namespace plugins {
 
 	PLUGIN_TEST(CanPublishBalanceDebitNotifications_v2) {
 		AssertCanPublishBalanceDebitNotifications<TTraits>(2);
+	}
+
+	PLUGIN_TEST(CanPublishBalanceDebitNotifications_v3) {
+		AssertCanPublishBalanceDebitNotifications<TTraits>(3);
 	}
 
 	// endregion
