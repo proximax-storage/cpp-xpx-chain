@@ -29,12 +29,17 @@ namespace catapult { namespace addressextraction {
 
 	namespace {
 		void RegisterExtension(extensions::ProcessBootstrapper& bootstrapper) {
+			
 			auto pAddressExtractor = std::make_shared<AddressExtractor>(
 				bootstrapper.pluginManager().createNotificationPublisher(),
 				[&bootstrapper]() {
 					return bootstrapper.pluginManager().createExtractorContext(bootstrapper.cacheHolder().cache());
-				}
-			);
+				},
+				[&bootstrapper](UnresolvedAddress address) {
+					auto cache = bootstrapper.cacheHolder().cache().createView().toReadOnly();
+					auto resolver =  bootstrapper.pluginManager().createResolverContext(cache);
+					return resolver.resolve(address);
+				});
 
 			// add a dummy service for extending service lifetimes
 			bootstrapper.extensionManager().addServiceRegistrar(extensions::CreateRootedServiceRegistrar(

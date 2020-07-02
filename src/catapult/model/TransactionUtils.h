@@ -21,6 +21,7 @@
 #pragma once
 #include "ContainerTypes.h"
 #include "ExtractorContext.h"
+#include "ResolverContext.h"
 #include <functional>
 
 namespace catapult {
@@ -28,10 +29,18 @@ namespace catapult {
 		class NotificationPublisher;
 		struct Transaction;
 	}
+	namespace {
+		using AddressResolver = std::function<Address (UnresolvedAddress)>;
+	}
 }
 
 namespace catapult { namespace model {
+	
 	/// Extracts all addresses that are involved in \a transaction at \a height with \a hash using \a notificationPublisher and \a extractorContext.
 	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Hash256& hash, const Height& height,
-			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext);
+	                                      const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext);
+		
+	/// Extracts all addresses that are involved in \a transaction at \a height with \a hash using \a notificationPublisher and \a extractorContext and \a resolverContext
+	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Hash256& hash, const Height& height,
+			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext, const  AddressResolver& resolverContext);
 }}

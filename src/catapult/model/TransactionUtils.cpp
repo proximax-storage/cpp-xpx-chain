@@ -24,6 +24,7 @@
 #include "NotificationSubscriber.h"
 #include "ResolverContext.h"
 #include "Transaction.h"
+#include "sdk/src/extensions/ConversionExtensions.h"
 
 namespace catapult { namespace model {
 
@@ -77,5 +78,17 @@ namespace catapult { namespace model {
 		AddressCollector sub(NetworkIdentifier(weakInfo.entity().Network()), extractorContext);
 		notificationPublisher.publish(weakInfo, sub);
 		return sub.addresses();
+	}
+		
+	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Hash256& hash, const Height& height,
+	                                      const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext,
+	                                      const AddressResolver& resolver) {
+		UnresolvedAddressSet newSet;
+		UnresolvedAddressSet addresses = ExtractAddresses(transaction, hash, height, notificationPublisher, extractorContext);
+		for (const auto& address : addresses) {
+			auto resolved = resolver(address);
+			newSet.insert(extensions::CopyToUnresolvedAddress(resolved));
+		}
+		return newSet;
 	}
 }}
