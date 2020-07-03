@@ -4,7 +4,7 @@
 
 ```bash
 cd cpp-xpx-chain
-docker build -t proximax-sirius-blockchain -f ./scripts/catapult-server-docker/Dockerfile .
+docker build -t proximax-sirius-blockchain -f ./scripts/catapult-server-docker/DockerfileDebian .
 ```
 
 ## Run container

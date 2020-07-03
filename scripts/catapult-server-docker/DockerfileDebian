@@ -23,6 +23,7 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libboost-thread-dev \
   libboost-filesystem-dev \
   libboost-program-options-dev \
+  libboost-stacktrace-dev \
   libboost-random-dev \
   libmongoc-dev
 
