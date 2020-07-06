@@ -29,10 +29,27 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	using Notification = model::RemoveOfferNotification<1>;
+	DECLARE_OBSERVER(RemoveOfferV1, model::RemoveOfferNotification<1>)(const MosaicId& currencyMosaicId) {
+		return MAKE_OBSERVER(RemoveOfferV1, model::RemoveOfferNotification<1>, ([currencyMosaicId](const model::RemoveOfferNotification<1>& notification, const ObserverContext& context) {
+			auto& cache = context.Cache.sub<cache::ExchangeCache>();
+			auto iter = cache.find(notification.Owner);
+			auto& entry = iter.get();
+			OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 
-	DECLARE_OBSERVER(RemoveOffer, Notification)(const MosaicId& currencyMosaicId) {
-		return MAKE_OBSERVER(RemoveOffer, Notification, ([currencyMosaicId](const Notification& notification, const ObserverContext& context) {
+			auto pOffer = notification.OffersPtr;
+			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
+				auto mosaicId = context.Resolvers.resolve(pOffer->MosaicId);
+				CreditAccount(entry, pOffer->OfferType, currencyMosaicId, mosaicId, context);
+				if (NotifyMode::Commit == context.Mode)
+					entry.expireOffer(pOffer->OfferType, mosaicId, context.Height);
+				else
+					entry.unexpireOffer(pOffer->OfferType, mosaicId, context.Height);
+			}
+		}))
+	}
+
+	DECLARE_OBSERVER(RemoveOfferV2, model::RemoveOfferNotification<2>)(const MosaicId& currencyMosaicId) {
+		return MAKE_OBSERVER(RemoveOfferV2, model::RemoveOfferNotification<2>, ([currencyMosaicId](const model::RemoveOfferNotification<2>& notification, const ObserverContext& context) {
 			auto& cache = context.Cache.sub<cache::ExchangeCache>();
 			auto iter = cache.find(notification.Owner);
 			auto& entry = iter.get();

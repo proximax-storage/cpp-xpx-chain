@@ -20,6 +20,7 @@ namespace catapult { namespace validators {
 	DEFINE_COMMON_VALIDATOR_TESTS(OfferV1, )
 	DEFINE_COMMON_VALIDATOR_TESTS(OfferV2, )
 	DEFINE_COMMON_VALIDATOR_TESTS(OfferV3, )
+	DEFINE_COMMON_VALIDATOR_TESTS(OfferV4, )
 
 	namespace {
 		constexpr MosaicId Currency_Mosaic_Id(1234);
@@ -96,6 +97,13 @@ namespace catapult { namespace validators {
 				return CreateOfferV3Validator();
 			}
 		};
+
+		struct ValidatorV4Traits {
+			static constexpr VersionType Version = 4;
+			static auto CreateValidator() {
+				return CreateOfferV4Validator();
+			}
+		};
 	}
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
@@ -106,6 +114,8 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, TEST_NAME##_Buy_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV2Traits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_Sell_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SellOfferTraits, ValidatorV3Traits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_Buy_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV3Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Sell_v4) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SellOfferTraits, ValidatorV4Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Buy_v4) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV4Traits>(); } \
 	template<typename TOfferTraits, typename TValidatorTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	TRAITS_BASED_TEST(FailureWhenNoOffers) {

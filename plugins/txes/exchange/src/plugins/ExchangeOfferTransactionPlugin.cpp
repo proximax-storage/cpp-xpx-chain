@@ -55,6 +55,28 @@ namespace catapult { namespace plugins {
 					Publish<TTransaction, 3>(transaction, sub, config);
 					break;
 				}
+				case 4: {
+					sub.notify(OfferNotification<4>(
+							transaction.Signer,
+							transaction.OfferCount,
+							transaction.OffersPtr()));
+
+					Amount lockAmount(0);
+					auto pOffer = transaction.OffersPtr();
+					for (uint8_t i = 0; i < transaction.OfferCount; ++i, ++pOffer) {
+						if (model::OfferType::Buy == pOffer->Type) {
+							lockAmount = Amount(lockAmount.unwrap() + pOffer->Cost.unwrap());
+						} else if (model::OfferType::Sell == pOffer->Type) {
+							sub.notify(BalanceDebitNotification<1>(transaction.Signer, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
+						}
+					}
+
+					if (Amount(0) != lockAmount) {
+						auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+						sub.notify(BalanceDebitNotification<1>(transaction.Signer, currencyMosaicId, lockAmount));
+					}
+					break;
+				}
 				default:
 					CATAPULT_LOG(debug) << "invalid version of ExchangeOfferTransaction: " << transaction.EntityVersion();
 				}

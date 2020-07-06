@@ -18,6 +18,9 @@ namespace catapult { namespace model {
 
 		/// Buy offer.
 		Buy,
+
+		Begin = Sell,
+		End = Buy,
 	};
 
 	/// Insertion operator for outputting \a type to \a out.

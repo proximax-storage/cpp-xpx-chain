@@ -21,9 +21,9 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS RemoveExchangeOfferTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(RemoveExchangeOffer, 1, 1,)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(RemoveExchangeOffer, 2, 2,)
 
-		template<typename TTraits>
+		template<typename TTraits, VersionType Version>
 		auto CreateTransaction() {
 			return test::CreateExchangeTransaction<typename TTraits::TransactionType, model::OfferMosaic>(
 				{
@@ -31,23 +31,35 @@ namespace catapult { namespace plugins {
 					model::OfferMosaic{UnresolvedMosaicId(2), model::OfferType::Buy},
 					model::OfferMosaic{UnresolvedMosaicId(3), model::OfferType::Sell},
 					model::OfferMosaic{UnresolvedMosaicId(4), model::OfferType::Buy},
-				}
+				},
+				Version
 			);
 		}
 	}
 
 	DEFINE_BASIC_EMBEDDABLE_TRANSACTION_PLUGIN_TESTS(TEST_CLASS,,, Entity_Type_Remove_Exchange_Offer)
 
-	PLUGIN_TEST(CanCalculateSize) {
-		// Arrange:
-		auto pPlugin = TTraits::CreatePlugin();
-		auto pTransaction = CreateTransaction<TTraits>();
+	namespace {
+		template<typename TTraits, VersionType Version>
+		void AssertCanCalculateSize() {
+			// Arrange:
+			auto pPlugin = TTraits::CreatePlugin();
+			auto pTransaction = CreateTransaction<TTraits, Version>();
 
-		// Act:
-		auto realSize = pPlugin->calculateRealSize(*pTransaction);
+			// Act:
+			auto realSize = pPlugin->calculateRealSize(*pTransaction);
 
-		// Assert:
-		EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 4 * sizeof(model::OfferMosaic), realSize);
+			// Assert:
+			EXPECT_EQ(sizeof(typename TTraits::TransactionType) + 4 * sizeof(model::OfferMosaic), realSize);
+		}
+	}
+
+	PLUGIN_TEST(CanCalculateSize_v1) {
+		AssertCanCalculateSize<TTraits, 1>();
+	}
+
+	PLUGIN_TEST(CanCalculateSize_v2) {
+		AssertCanCalculateSize<TTraits, 2>();
 	}
 
 	// region publish - basic
@@ -68,39 +80,62 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(0, sub.numNotifications());
 	}
 
-	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
-		// Arrange:
-		auto pTransaction = CreateTransaction<TTraits>();
-		mocks::MockNotificationSubscriber sub;
-		auto pPlugin = TTraits::CreatePlugin();
 
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+	namespace {
+		template<typename TTraits, VersionType Version>
+		void AssertCanPublishCorrectNumberOfNotifications(NotificationType expectedExchangeOfferType) {
+			// Arrange:
+			auto pTransaction = CreateTransaction<TTraits, Version>();
+			mocks::MockNotificationSubscriber sub;
+			auto pPlugin = TTraits::CreatePlugin();
 
-		// Assert:
-		ASSERT_EQ(1, sub.numNotifications());
-		EXPECT_EQ(Exchange_Remove_Offer_v1_Notification, sub.notificationTypes()[0]);
+			// Act:
+			test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+			// Assert:
+			ASSERT_EQ(1, sub.numNotifications());
+			EXPECT_EQ(expectedExchangeOfferType, sub.notificationTypes()[0]);
+		}
+	}
+
+	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_v1) {
+		AssertCanPublishCorrectNumberOfNotifications<TTraits, 1>(Exchange_Remove_Offer_v1_Notification);
+	}
+
+	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_v2) {
+		AssertCanPublishCorrectNumberOfNotifications<TTraits, 2>(Exchange_Remove_Offer_v2_Notification);
 	}
 
 	// endregion
 
 	// region publish - remove offer notification
 
-	PLUGIN_TEST(CanPublishRemoveOfferNotification) {
-		// Arrange:
-		mocks::MockTypedNotificationSubscriber<RemoveOfferNotification<1>> sub;
-		auto pPlugin = TTraits::CreatePlugin();
-		auto pTransaction = CreateTransaction<TTraits>();
+	namespace {
+		template<typename TTraits, VersionType Version>
+		void AssertCanPublishRemoveOfferNotification() {
+			// Arrange:
+			mocks::MockTypedNotificationSubscriber<RemoveOfferNotification<Version>> sub;
+			auto pPlugin = TTraits::CreatePlugin();
+			auto pTransaction = CreateTransaction<TTraits, Version>();
 
-		// Act:
-		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+			// Act:
+			test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
-		// Assert:
-		ASSERT_EQ(1u, sub.numMatchingNotifications());
-		const auto& notification = sub.matchingNotifications()[0];
-		EXPECT_EQ(pTransaction->Signer, notification.Owner);
-		EXPECT_EQ(4, notification.OfferCount);
-		EXPECT_EQ_MEMORY(pTransaction->OffersPtr(), notification.OffersPtr, 4 * sizeof(OfferMosaic));
+			// Assert:
+			ASSERT_EQ(1u, sub.numMatchingNotifications());
+			const auto& notification = sub.matchingNotifications()[0];
+			EXPECT_EQ(pTransaction->Signer, notification.Owner);
+			EXPECT_EQ(4, notification.OfferCount);
+			EXPECT_EQ_MEMORY(pTransaction->OffersPtr(), notification.OffersPtr, 4 * sizeof(OfferMosaic));
+		}
+	}
+
+	PLUGIN_TEST(CanPublishRemoveOfferNotification_v1) {
+		AssertCanPublishRemoveOfferNotification<TTraits, 1>();
+	}
+
+	PLUGIN_TEST(CanPublishRemoveOfferNotification_v2) {
+		AssertCanPublishRemoveOfferNotification<TTraits, 2>();
 	}
 
 	// endregion
