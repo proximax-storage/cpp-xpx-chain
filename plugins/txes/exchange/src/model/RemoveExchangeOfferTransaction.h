@@ -20,7 +20,7 @@ namespace catapult { namespace model {
 		using TransactionType = RemoveExchangeOfferTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Remove_Exchange_Offer, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Remove_Exchange_Offer, 2)
 
 	public:
 		uint8_t OfferCount;

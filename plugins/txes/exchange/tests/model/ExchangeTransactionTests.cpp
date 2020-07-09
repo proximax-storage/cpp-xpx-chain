@@ -18,7 +18,7 @@ namespace catapult { namespace model {
 	namespace {
 		template<typename T>
 		void AssertTransactionHasExpectedProperties() {
-			AssertTransactionHasExpectedProperties<T>(Entity_Type_Exchange);
+			AssertTransactionHasExpectedProperties<T>(Entity_Type_Exchange, 2);
 		}
 	}
 

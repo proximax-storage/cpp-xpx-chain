@@ -66,6 +66,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because there is already removed offer at the height.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Cant_Remove_Offer_At_Height, 17);
 
+	/// Validation failed because there is incorrect type of offer.
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Incorrect_Offer_Type, 18);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

@@ -42,4 +42,5 @@ namespace catapult { namespace observers {
 	DEFINE_OBSERVER(OfferV1, model::OfferNotification<1>, OfferObserver<1>);
 	DEFINE_OBSERVER(OfferV2, model::OfferNotification<2>, OfferObserver<2>);
 	DEFINE_OBSERVER(OfferV3, model::OfferNotification<3>, OfferObserver<3>);
+	DEFINE_OBSERVER(OfferV4, model::OfferNotification<4>, OfferObserver<4>);
 }}

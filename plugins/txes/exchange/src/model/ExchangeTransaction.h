@@ -20,7 +20,7 @@ namespace catapult { namespace model {
 		using TransactionType = ExchangeTransactionBody<THeader>;
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Exchange, 1)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_Exchange, 2)
 
 	public:
 		uint8_t OfferCount;
