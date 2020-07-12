@@ -34,8 +34,8 @@ namespace catapult { namespace mongo { namespace plugins {
 		state::NetworkConfigEntry entry;
 		auto dbNetworkConfigEntry = document["networkConfig"];
 		entry.setHeight(Height{static_cast<uint64_t>(dbNetworkConfigEntry["height"].get_int64())});
-		entry.setBlockChainConfig(dbNetworkConfigEntry["networkConfig"].get_utf8().value.to_string());
-		entry.setSupportedEntityVersions(dbNetworkConfigEntry["supportedEntityVersions"].get_utf8().value.to_string());
+		entry.setBlockChainConfig(std::string(dbNetworkConfigEntry["networkConfig"].get_utf8().value));
+		entry.setSupportedEntityVersions(std::string(dbNetworkConfigEntry["supportedEntityVersions"].get_utf8().value));
 
 		return entry;
 	}

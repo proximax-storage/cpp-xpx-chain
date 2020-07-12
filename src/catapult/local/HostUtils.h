@@ -36,11 +36,11 @@ namespace catapult { namespace local {
 		auto pHost = std::make_unique<THost>(std::forward<TArgs>(args)...);
 		try {
 			pHost->boot();
-		} catch (const std::exception& ex) {
+		} catch(...) {
 			// log the exception and rethrow as a new exception in case the exception source is a dynamic plugin
 			// (this avoids a potential crash in the calling code, which would occur if the host destructor unloads the source plugin)
 			CATAPULT_LOG(fatal) << UNHANDLED_EXCEPTION_MESSAGE("boot");
-			CATAPULT_THROW_RUNTIME_ERROR(ex.what());
+			CATAPULT_THROW_RUNTIME_ERROR(boost::current_exception_diagnostic_information().c_str());
 		}
 
 		return std::move(pHost);
