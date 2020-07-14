@@ -89,8 +89,8 @@ namespace catapult { namespace model {
 
 	public:
 		/// Creates hash lock notification around \a signer, \a mosaic, \a duration and \a hash.
-		HashLockNotification(const Key& signer, const UnresolvedMosaic& mosaic, BlockDuration duration, const Hash256& hash)
-				: BaseLockNotification(signer, &mosaic, 1, duration)
+		HashLockNotification(const Key& signer, const UnresolvedMosaic& mosaic, BlockDuration duration, const Hash256& hash, const VersionType& version = 1)
+				: BaseLockNotification(signer, &mosaic, 1, duration, version)
 				, Hash(hash)
 		{}
 
@@ -98,4 +98,5 @@ namespace catapult { namespace model {
 		/// Hash.
 		const Hash256& Hash;
 	};
+	
 }}

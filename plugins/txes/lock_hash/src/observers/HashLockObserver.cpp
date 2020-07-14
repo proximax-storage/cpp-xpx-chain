@@ -28,8 +28,8 @@ namespace catapult { namespace observers {
 	using Notification = model::HashLockNotification<1>;
 
 	namespace {
-		auto CreateLockInfo(const Key& account, MosaicId mosaicId, Height endHeight, const Notification& notification) {
-			return state::HashLockInfo(account, mosaicId, notification.MosaicsPtr->Amount, endHeight, notification.Hash);
+		auto CreateLockInfo(const Key& account, MosaicId mosaicId, Height endHeight, const Notification& notification, const VersionType& version) {
+			return state::HashLockInfo(account, mosaicId, notification.MosaicsPtr->Amount, endHeight, notification.Hash, version);
 		}
 	}
 
@@ -38,7 +38,7 @@ namespace catapult { namespace observers {
 		if (NotifyMode::Commit == context.Mode) {
 			auto endHeight = context.Height + Height(notification.Duration.unwrap());
 			auto mosaicId = context.Resolvers.resolve(notification.MosaicsPtr->MosaicId);
-			cache.insert(CreateLockInfo(notification.Signer, mosaicId, endHeight, notification));
+			cache.insert(CreateLockInfo(notification.Signer, mosaicId, endHeight, notification, notification.Version));
 
 			auto receiptType = model::Receipt_Type_LockHash_Created;
 			model::BalanceChangeReceipt receipt(receiptType, notification.Signer, mosaicId, notification.MosaicsPtr->Amount);

@@ -33,13 +33,13 @@ namespace catapult { namespace state {
 	template<typename TLockInfo, typename TLockInfoSerializer>
 	struct LockInfoSerializer<TLockInfo, TLockInfoSerializer, 1> {
 	public:
-		static constexpr VersionType Version = 1;
+		static constexpr VersionType LatestVersion = 2;
 
 	public:
 		/// Saves \a lockInfo to \a output.
 		static void Save(const TLockInfo& lockInfo, io::OutputStream& output){
 			// write version
-			io::Write32(output, Version);
+			io::Write32(output, lockInfo.Version);
 
 			io::Write(output, lockInfo.Account);
 			io::Write(output, lockInfo.Mosaics.begin()->first);
@@ -53,10 +53,12 @@ namespace catapult { namespace state {
 		static TLockInfo Load(io::InputStream& input){
 			// read version
 			VersionType version = io::Read32(input);
-			if (version != Version)
-				CATAPULT_THROW_RUNTIME_ERROR_2("invalid version of LockInfo (expected, actual)", Version, version);
+			if (version <= 0 || version > LatestVersion)
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of LockInfo ", version);
 
 			TLockInfo lockInfo;
+			
+			lockInfo.Version = version;
 			io::Read(input, lockInfo.Account);
 			auto mosaicId = MosaicId{io::Read64(input)};
 			auto amount = Amount{io::Read64(input)};
