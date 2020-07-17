@@ -5,6 +5,8 @@
 **/
 
 #pragma once
+
+#include "plugins/txes/mosaic/src/cache/MosaicCache.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "catapult/model/EntityBody.h"
 #include "catapult/model/NetworkInfo.h"
@@ -55,10 +57,14 @@ namespace catapult { namespace test {
 	struct ExchangeCacheFactory {
 	private:
 		static auto CreateSubCachesWithExchangeCache(const config::BlockchainConfiguration& config) {
-			auto cacheId = cache::ExchangeCache::Id;
-			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(cacheId + 1);
+			auto exchangeCacheId = cache::ExchangeCache::Id;
+			auto mosaicCacheId = cache::MosaicCache::Id;
+			
+			auto max = exchangeCacheId > mosaicCacheId? exchangeCacheId : mosaicCacheId;
+			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(max + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			subCaches[cacheId] = MakeSubCachePlugin<cache::ExchangeCache, cache::ExchangeCacheStorage>(pConfigHolder);
+			subCaches[exchangeCacheId] = MakeSubCachePlugin<cache::ExchangeCache, cache::ExchangeCacheStorage>(pConfigHolder);
+			subCaches[mosaicCacheId] = MakeSubCachePlugin<cache::MosaicCache, cache::MosaicCacheStorage>();
 			return subCaches;
 		}
 
