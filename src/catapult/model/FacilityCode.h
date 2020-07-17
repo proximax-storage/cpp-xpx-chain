@@ -67,7 +67,5 @@ namespace catapult { namespace model {
 		Operation = 0x5F,
 		/// SuperContract facility code.
 		SuperContract = 0x60,
-		/// Levy facility code.
-		Levy = 0x4F,
 	};
 }}

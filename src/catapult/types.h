@@ -27,97 +27,7 @@
 #include <unordered_set>
 
 namespace catapult {
-	
-	// region Unresolved Data container
-	enum class UnresolvedCommonType : uint8_t {
-		Default,
-		MosaicLevy
-	};
-	
-	struct UnresolvedData {
-		virtual ~UnresolvedData(){}
-	};
-	
-	template<typename TUnresolvedInternalType, typename TData>
-	struct UnresolvedContainerBase {
-		
-		constexpr UnresolvedContainerBase()
-			: Type(TUnresolvedInternalType::Default)
-			, DataPtr(nullptr) {
-		}
-		
-		constexpr explicit UnresolvedContainerBase (const TUnresolvedInternalType& type, const TData* pData)
-			: Type(type)
-			, DataPtr(pData)
-		{}
-	
-	public:
-		TUnresolvedInternalType Type;
-		const TData* DataPtr;
-	};
-	
-	template<typename TBaseType, typename TUnresolvedInternalType, typename TData>
-	struct UnresolvedValueContainer
-		: public TBaseType
-			, UnresolvedContainerBase<TUnresolvedInternalType,TData> {
-		
-		constexpr UnresolvedValueContainer()
-			: TBaseType()
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>() {
-		}
-		
-		constexpr UnresolvedValueContainer(const TBaseType& value)
-			: TBaseType(value)
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>()
-		{}
-		
-		constexpr explicit UnresolvedValueContainer(uint64_t value)
-			: TBaseType(value)
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>()
-		{}
-		
-		/// Creates unresolved container from \a value, \a type and \a data.
-		constexpr explicit UnresolvedValueContainer(uint64_t value, const TUnresolvedInternalType& type, const TData* pData = nullptr)
-			: TBaseType(value)
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>(type, pData)
-		{}
-		
-		/// Creates unresolved container by copy constructor, \a type and \a data.
-		constexpr explicit UnresolvedValueContainer(const TBaseType& value, const TUnresolvedInternalType& type, const TData* pData = nullptr)
-			: TBaseType(value)
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>(type, pData)
-		{}
-	};
-	
-	template<size_t N, typename TTag, typename TUnresolvedInternalType = UnresolvedCommonType, typename TData = UnresolvedData>
-	struct UnresolvedValueArrayContainer
-		: public utils::ByteArray<N, TTag>
-			, UnresolvedContainerBase<TUnresolvedInternalType,TData> {
-		
-		constexpr UnresolvedValueArrayContainer()
-			: utils::ByteArray<N, TTag>()
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>() {
-		}
-		
-		/// Creates a byte array around \a array.
-		constexpr UnresolvedValueArrayContainer(const std::array<uint8_t, N>& array)
-			: utils::ByteArray<N, TTag>(array)
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>()
-		{}
-		
-		constexpr explicit UnresolvedValueArrayContainer(utils::ByteArray<N, TTag> value, const TUnresolvedInternalType& type, const TData* pData = nullptr)
-			: utils::ByteArray<N, TTag>(value)
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>(type, pData)
-		{}
-		
-		constexpr explicit UnresolvedValueArrayContainer(const std::array<uint8_t, N>& array, const TUnresolvedInternalType& type, const TData* pData = nullptr)
-			: utils::ByteArray<N, TTag>(array)
-			, UnresolvedContainerBase<TUnresolvedInternalType, TData>(type, pData)
-		{}
-	};
-	
-	// end region Unresolved Data container
-	
+
 	// region byte arrays (ex address)
 
 	constexpr size_t Signature_Size = 64;
@@ -156,43 +66,54 @@ namespace catapult {
 
 	struct UnresolvedAddress_tag {};
 	using UnresolvedAddress = utils::ByteArray<Address_Decoded_Size, UnresolvedAddress_tag>;
-	
-	struct UnresolvedLevyAddress_tag {};
-	using UnresolvedLevyAddress = UnresolvedValueArrayContainer<Address_Decoded_Size, UnresolvedLevyAddress_tag>;
-	
+
 	// endregion
 
 	// region base values
 
 	struct Timestamp_tag {};
 	using Timestamp = utils::BaseValue<uint64_t, Timestamp_tag>;
-	
+
 	struct Amount_tag {};
 	using Amount = utils::BaseValue<uint64_t, Amount_tag>;
-	
-	enum class UnresolvedAmountType : uint8_t {
-		Default,
-		DriveDeposit,
-		FileDeposit,
-		FileUpload,
-		MosaicLevy
+
+	enum UnresolvedAmountType : uint8_t {
+	    Default,
+	    DriveDeposit,
+	    FileDeposit,
+	    FileUpload
 	};
-	
-	struct UnresolvedAmountData : public UnresolvedData{
+
+	struct UnresolvedAmountData {
 		virtual ~UnresolvedAmountData(){}
 	};
-	
-	using UnresolvedAmount = UnresolvedValueContainer<Amount, UnresolvedAmountType, UnresolvedAmountData>;
-	
+
+	struct UnresolvedAmount : public Amount {
+		/// Creates unresolved amount from \a value.
+		constexpr explicit UnresolvedAmount(uint64_t value = 0)
+		: Amount(value)
+		, Type(UnresolvedAmountType::Default)
+		, DataPtr(nullptr)
+		{}
+
+		/// Creates unresolved amount from \a value, \a type and \a data.
+		constexpr explicit UnresolvedAmount(uint64_t value, const UnresolvedAmountType& type, const UnresolvedAmountData* pData)
+		: Amount(value)
+		, Type(type)
+		, DataPtr(pData)
+		{}
+
+	public:
+		UnresolvedAmountType Type;
+		const UnresolvedAmountData* DataPtr;
+	};
+
 	struct MosaicId_tag {};
 	using MosaicId = utils::BaseValue<uint64_t, MosaicId_tag>;
 
 	struct UnresolvedMosaicId_tag {};
 	using UnresolvedMosaicId = utils::BaseValue<uint64_t, UnresolvedMosaicId_tag>;
-	
-	struct UnresolvedLevyMosaicId_tag {};
-	using UnresolvedLevyMosaicId =  utils::BaseValue<uint64_t, UnresolvedLevyMosaicId_tag>;
-	
+
 	struct Height_tag {};
 	using Height = utils::BaseValue<uint64_t, Height_tag>;
 

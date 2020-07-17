@@ -73,7 +73,6 @@ namespace catapult { namespace plugins {
 					"MaxTransactionsValidator",
 					"EligibleHarvesterValidator",
 					"BalanceDebitValidator",
-					"LevyBalanceValidator"
 				};
 			}
 
@@ -90,7 +89,6 @@ namespace catapult { namespace plugins {
 					"BlockDifficultyPruningObserver",
 					"BalanceDebitObserver",
 					"BalanceCreditObserver",
-					"LevyTransferObserver",
 				};
 			}
 
@@ -105,7 +103,6 @@ namespace catapult { namespace plugins {
 					"SnapshotCleanUpObserver",
 					"BalanceDebitObserver",
 					"BalanceCreditObserver",
-					"LevyTransferObserver",
 				};
 			}
 		};

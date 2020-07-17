@@ -72,11 +72,6 @@ namespace catapult { namespace validators {
 	/// - transferred mosaic is active and is transferable
 	/// - as an optimization, special currency mosaic (\a currencyMosaicId) transfers are always allowed
 	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, model::BalanceTransferNotification<1>)(UnresolvedMosaicId currencyMosaicId);
-		
-	/// A validator implementation that applies to all levy transfer notifications and validates that:
-	/// - transferred mosaic is active and is transferable
-	/// - as an optimization, special currency mosaic (\a currencyMosaicId) transfers are always allowed
-	DECLARE_STATEFUL_VALIDATOR(LevyTransfer, model::LevyTransferNotification<1>)(UnresolvedMosaicId currencyMosaicId);
 
 	/// A validator implementation that applies to mosaic supply change notifications and validates that:
 	/// - the affected mosaic has mutable supply
@@ -102,17 +97,4 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(MosaicPluginConfig, model::PluginConfigNotification<1>)();
-	
-	/// A validator implementation that applies to during addition or modification of levy
-	/// - check if signer is eligible
-	/// - check if recipient address is valid
-	/// - check if fee is valid
-	/// - check mosaic Id is valid
-	DECLARE_STATEFUL_VALIDATOR(ModifyLevy, model::MosaicModifyLevyNotification<1>)();
-	
-	/// A validator implementation that checks for valid removal of levy
-	/// - check if signer is eligible
-	/// - check if levy for this mosaicID exist
-	/// - check if current levy is set
-	DECLARE_STATEFUL_VALIDATOR(RemoveLevy, model::MosaicRemoveLevyNotification<1>)();
 }}
