@@ -128,9 +128,6 @@ namespace catapult { namespace model {
 
 	/// Mosaic was credited to account.
 	DEFINE_CORE_NOTIFICATION(Balance_Credit_v1, 0x000E, All);
-	
-	/// Mosaic Levy was transferred between two accounts.
-	DEFINE_CORE_NOTIFICATION(Levy_Transfer_v1, 0x0010, All);
 
 #undef DEFINE_CORE_NOTIFICATION
 

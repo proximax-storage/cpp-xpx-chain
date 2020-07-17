@@ -149,8 +149,6 @@ namespace catapult { namespace ionet {
 	/* Super contract state path has been requested by a client. */ \
 	ENUM_VALUE(SuperContract_State_Path, FACILITY_BASED_CODE(800, SuperContract)) \
 	\
-	/* Super contract state path has been requested by a client. */ \
-	ENUM_VALUE(Levy_State_Path, FACILITY_BASED_CODE(800, Levy)) \
 	/* diagnostic packets have types [1100, 2000) */ \
 	\
 	/* Request for the current diagnostic counter values. */ \
@@ -214,10 +212,7 @@ namespace catapult { namespace ionet {
 	ENUM_VALUE(Operation_Infos, FACILITY_BASED_CODE(1200, Operation)) \
 	\
 	/* Super contract infos have been requested by a client. */ \
-	ENUM_VALUE(SuperContract_Infos, FACILITY_BASED_CODE(1200, SuperContract)) \
-	\
-	/* Super contract infos have been requested by a client. */ \
-	ENUM_VALUE(Levy_Infos, FACILITY_BASED_CODE(1200, Levy)) \
+	ENUM_VALUE(SuperContract_Infos, FACILITY_BASED_CODE(1200, SuperContract))
 
 #define ENUM_VALUE(LABEL, VALUE) LABEL = VALUE,
 	/// An enumeration of known packet types.

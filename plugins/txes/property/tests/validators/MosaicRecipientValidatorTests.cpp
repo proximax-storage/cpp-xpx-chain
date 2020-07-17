@@ -28,18 +28,8 @@ namespace catapult { namespace validators {
 #define TEST_CLASS MosaicRecipientValidatorTests
 
 	DEFINE_COMMON_VALIDATOR_TESTS(MosaicRecipient,)
-	DEFINE_COMMON_VALIDATOR_TESTS(LevyRecipient,)
-	
+
 	namespace {
-		model::ResolverContext CreateResolverContext(MosaicId mosaicId, Address recipient) {
-			return model::ResolverContext(
-				[](const auto&) { return MosaicId(1); },
-				[](const auto&) { return Address(); },
-				[](const auto&) { return Amount(1000); },
-				[mosaicId](const auto&) { return MosaicId(mosaicId);; },
-				[recipient](const auto&) { return recipient; });
-		}
-		
 		template<typename TOperationTraits>
 		void PopulateCache(cache::CatapultCache& cache, const Address& accountAddress, const std::vector<MosaicId>& mosaicIds) {
 			auto delta = cache.createDelta();
@@ -73,37 +63,6 @@ namespace catapult { namespace validators {
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
 		}
-		
-		template<typename TOperationTraits>
-		void AssertLevyValidationResult(
-			ValidationResult expectedResult,
-			const Address& accountAddress,
-			const std::vector<MosaicId>& mosaicIds,
-			const Address& recipient,
-			MosaicId mosaicId) {
-			// Arrange:
-			auto cache = test::PropertyCacheFactory::Create();
-			
-			PopulateCache<TOperationTraits>(cache, accountAddress, mosaicIds);
-			auto pValidator = CreateLevyRecipientValidator();
-			auto sender = test::GenerateRandomByteArray<Key>();
-			
-			auto notification = model::LevyTransferNotification<1>(sender, UnresolvedLevyAddress(),
-				UnresolvedLevyMosaicId(444), UnresolvedAmount(100));
-			
-			auto resolverContext = CreateResolverContext(mosaicId, recipient);
-			
-			auto cacheView = cache.createView();
-			auto readOnlyCache = cacheView.toReadOnly();
-			auto validatorContext = ValidatorContext(config::BlockchainConfiguration::Uninitialized(),Height(1),
-				Timestamp(0), resolverContext, readOnlyCache);
-			
-			// Act:
-			auto result = test::ValidateNotification(*pValidator, notification, validatorContext);
-			
-			// Assert:
-			EXPECT_EQ(expectedResult, result);
-		}
 	}
 
 	// region failure
@@ -134,33 +93,7 @@ namespace catapult { namespace validators {
 				test::UnresolveXor(accountAddress),
 				test::UnresolveXor(values[1]));
 	}
-	
-	TEST(TEST_CLASS, FailureWhenLevyRecipientIsKnownAndMosaicIdIsNotContainedInValues_Allow) {
-		// Arrange:
-		auto accountAddress = test::GenerateRandomByteArray<Address>();
-		
-		// Act:
-		AssertLevyValidationResult<test::AllowTraits>(
-			Failure_Property_Mosaic_Transfer_Not_Allowed,
-			accountAddress,
-			test::GenerateRandomDataVector<MosaicId>(3),
-			accountAddress,
-			MosaicId(1));
-	}
-		
-	TEST(TEST_CLASS, FailureWhenLevyRecipientIsKnownAndMosaicIdIsContainedInValues_Block) {
-		// Arrange:
-		auto accountAddress = test::GenerateRandomByteArray<Address>();
-		auto values = test::GenerateRandomDataVector<MosaicId>(3);
-		
-		// Act:
-		AssertLevyValidationResult<test::BlockTraits>(
-			Failure_Property_Mosaic_Transfer_Not_Allowed,
-			accountAddress,
-			values,
-			accountAddress,
-			values[1]);
-	}
+
 	// endregion
 
 	// region success
@@ -196,33 +129,7 @@ namespace catapult { namespace validators {
 				test::UnresolveXor(accountAddress),
 				test::GenerateRandomValue<UnresolvedMosaicId>());
 	}
-	
-	TRAITS_BASED_TEST(SuccessWhenLevyRecipientIsNotKnown) {
-		// Arrange:
-		auto accountAddress = test::GenerateRandomByteArray<Address>();
-		
-		// Act:
-		AssertLevyValidationResult<TTraits>(
-			ValidationResult::Success,
-			accountAddress,
-			test::GenerateRandomDataVector<MosaicId>(3),
-			test::GenerateRandomByteArray<Address>(),
-			MosaicId());
-	}
-	
-	TRAITS_BASED_TEST(SuccessWhenLevyRecipientIsKnownButPropertyHasNoValues) {
-		// Arrange:
-		auto accountAddress = test::GenerateRandomByteArray<Address>();
-		
-		// Act:
-		AssertLevyValidationResult<TTraits>(
-			ValidationResult::Success,
-			accountAddress,
-			test::GenerateRandomDataVector<MosaicId>(0),
-			accountAddress,
-			MosaicId());
-	}
-	
+
 	namespace {
 		template<typename TOperationTraits>
 		void AssertSuccess(const std::vector<MosaicId>& mosaicIds, UnresolvedMosaicId transferredMosaicId) {
@@ -236,20 +143,6 @@ namespace catapult { namespace validators {
 					mosaicIds,
 					test::UnresolveXor(accountAddress),
 					transferredMosaicId);
-		}
-		
-		template<typename TOperationTraits>
-		void AssertSuccessLevy(const std::vector<MosaicId>& mosaicIds, MosaicId transferredMosaicId) {
-			// Arrange:
-			auto accountAddress = test::GenerateRandomByteArray<Address>();
-			
-			// Act:
-			AssertLevyValidationResult<TOperationTraits>(
-				ValidationResult::Success,
-				accountAddress,
-				mosaicIds,
-				accountAddress,
-				transferredMosaicId);
 		}
 	}
 
@@ -265,18 +158,6 @@ namespace catapult { namespace validators {
 		// Act:
 		AssertSuccess<test::BlockTraits>(test::GenerateRandomDataVector<MosaicId>(3), test::GenerateRandomValue<UnresolvedMosaicId>());
 	}
-	
-	TEST(TEST_CLASS, SuccessWhenAllConditionsAreMetLevy_Allow) {
-		// Arrange:
-		auto mosaicIds = test::GenerateRandomDataVector<MosaicId>(3);
-		
-		// Act:
-		AssertSuccessLevy<test::AllowTraits>(mosaicIds, mosaicIds[1]);
-	}
-	
-	TEST(TEST_CLASS, SuccessWhenAllConditionsAreMetLevy_Block) {
-		// Act:
-		AssertSuccessLevy<test::BlockTraits>(test::GenerateRandomDataVector<MosaicId>(3), test::GenerateRandomValue<MosaicId>());
-	}
+
 	// endregion
 }}

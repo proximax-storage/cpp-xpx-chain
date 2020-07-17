@@ -55,10 +55,7 @@ namespace catapult { namespace test {
 
 	/// Adds mosaic \a id to the mosaic cache in \a cache at \a height with \a duration and \a owner.
 	void AddMosaic(cache::CatapultCacheDelta& cache, MosaicId id, Height height, BlockDuration duration, const Key& owner);
-	
-	/// Adds mosaic \a id to the mosaic cache in \a cache at \a height with \a duration and \a supply.
-	void AddMosaic(cache::CatapultCacheDelta& cache, MosaicId id, Height height, Amount supply, const Key& owner);
-	
+
 	/// Adds eternal mosaic \a id to the mosaic cache in \a cache at \a height.
 	void AddEternalMosaic(cache::CatapultCacheDelta& cache, MosaicId id, Height height);
 
@@ -67,10 +64,7 @@ namespace catapult { namespace test {
 
 	/// Adds account \a owner to the account state cache in \a cache with \a amount units of mosaic \a id.
 	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, const Key& owner, Amount amount);
-	
-	/// Adds account \a owner to the account state cache in \a cache with \a amount units of mosaic \a id.
-	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, Address& owner, Amount amount);
-	
+
 	/// Asserts that \a cache exactly contains the mosaic ids in \a expectedIds.
 	void AssertCacheContents(const cache::MosaicCache& cache, std::initializer_list<MosaicId::ValueType> expectedIds);
 

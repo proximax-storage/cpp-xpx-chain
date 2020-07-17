@@ -21,12 +21,8 @@
 #include "MosaicPlugin.h"
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "MosaicSupplyChangeTransactionPlugin.h"
-#include "MosaicModifyLevyTransactionPlugin.h"
-#include "MosaicRemoveLevyTransactionPlugin.h"
 #include "src/cache/MosaicCache.h"
-#include "src/cache/LevyCache.h"
 #include "src/cache/MosaicCacheStorage.h"
-#include "src/cache/LevyCacheStorage.h"
 #include "src/config/MosaicConfiguration.h"
 #include "src/model/MosaicReceiptType.h"
 #include "src/observers/Observers.h"
@@ -35,8 +31,6 @@
 #include "catapult/observers/RentalFeeObserver.h"
 #include "catapult/plugins/CacheHandlers.h"
 #include "catapult/plugins/PluginManager.h"
-#include "src/utils/MosaicLevyCalculator.h"
-#include "src/catapult/exceptions.h"
 
 namespace catapult { namespace plugins {
 
@@ -50,35 +44,20 @@ namespace catapult { namespace plugins {
 		manager.addPluginInitializer([](auto& config) {
 			config.template InitPluginConfiguration<config::MosaicConfiguration>();
 		});
-		
 		const auto& pConfigHolder = manager.configHolder();
 		manager.addTransactionSupport(CreateMosaicDefinitionTransactionPlugin(pConfigHolder));
 		manager.addTransactionSupport(CreateMosaicSupplyChangeTransactionPlugin());
-		manager.addTransactionSupport(CreateMosaicModifyLevyTransactionPlugin());
-		manager.addTransactionSupport(CreateMosaicRemoveLevyTransactionPlugin());
-		
+
 		manager.addCacheSupport<cache::MosaicCacheStorage>(
 				std::make_unique<cache::MosaicCache>(manager.cacheConfig(cache::MosaicCache::Name)));
-		
-		manager.addCacheSupport<cache::LevyCacheStorage>(
-			std::make_unique<cache::LevyCache>(manager.cacheConfig(cache::LevyCache::Name), pConfigHolder));
 
-		using CacheHandlersMosaic = CacheHandlers<cache::MosaicCacheDescriptor>;
-		CacheHandlersMosaic::Register<model::FacilityCode::Mosaic>(manager);
-		
+		using CacheHandlers = CacheHandlers<cache::MosaicCacheDescriptor>;
+		CacheHandlers::Register<model::FacilityCode::Mosaic>(manager);
+
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("MOSAIC C"), [&cache]() { return GetMosaicView(cache)->size(); });
 		});
-		
-		using CacheHandlersLevy= CacheHandlers<cache::LevyCacheDescriptor>;
-		CacheHandlersLevy::Register<model::FacilityCode::Levy>(manager);
-		
-		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
-			counters.emplace_back(utils::DiagnosticCounterId("LEVY C"), [&cache]() {
-				return cache.sub<cache::LevyCache>().createView(cache.height())->size();
-			});
-		});
-		
+
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
 				.add(validators::CreateMosaicIdValidator())
@@ -94,13 +73,10 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateMosaicAvailabilityValidator())
 				.add(validators::CreateMosaicDurationValidator())
 				.add(validators::CreateMosaicTransferValidator(currencyMosaicId))
-				.add(validators::CreateLevyTransferValidator(currencyMosaicId))
 				.add(validators::CreateMaxMosaicsBalanceTransferValidator())
 				.add(validators::CreateMaxMosaicsSupplyChangeValidator())
 				// note that the following validator depends on MosaicChangeAllowedValidator
-				.add(validators::CreateMosaicSupplyChangeAllowedValidator())
-				.add(validators::CreateModifyLevyValidator())
-				.add(validators::CreateRemoveLevyValidator());
+				.add(validators::CreateMosaicSupplyChangeAllowedValidator());
 		});
 
 		manager.addObserverHook([](auto& builder) {
@@ -110,103 +86,8 @@ namespace catapult { namespace plugins {
 				.add(observers::CreateMosaicDefinitionObserver())
 				.add(observers::CreateMosaicSupplyChangeObserver())
 				.add(observers::CreateRentalFeeObserver<model::MosaicRentalFeeNotification<1>>("Mosaic", rentalFeeReceiptType))
-				.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic", expiryReceiptType))
-				.add(observers::CreateModifyLevyObserver())
-				.add(observers::CreateRemoveLevyObserver())
-				.add(observers::CreatePruneLevyHistoryObserver());
+				.add(observers::CreateCacheBlockTouchObserver<cache::MosaicCache>("Mosaic", expiryReceiptType));
 		});
-		
-		/// region resolver
-		manager.addLevyAddressResolver([&manager](const auto& cache, const auto& unresolved, auto& resolved) {
-			const auto& levyCache = cache.template sub<cache::LevyCache>();
-			
-			switch (unresolved.Type) {
-				case UnresolvedCommonType::MosaicLevy: {
-					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
-					if (!levyData)
-						CATAPULT_THROW_RUNTIME_ERROR("levy data should not be empty when calling levy resolver");
-					
-					auto resolverContext = manager.createResolverContext(cache);
-					auto mosaicId = resolverContext.resolve(levyData->MosaicId);
-					auto mosaicIter = levyCache.find(mosaicId);
-					if (!mosaicIter.tryGet())
-						return false;
-					
-					auto& entry = mosaicIter.get();
-					auto pLevy = entry.levy();
-					
-					if(pLevy == nullptr)
-						return false;
-					
-					resolved = pLevy->Recipient;
-					return true;
-				}
-				default:
-					break;
-			}
-			return false;
-		});
-		
-		manager.addLevyMosaicResolver([&manager](const auto& cache, const auto& unresolved, auto& resolved) {
-			const auto& levyCache = cache.template sub<cache::LevyCache>();
-			
-			UnresolvedMosaicId unresolvedMosaicId = UnresolvedMosaicId(unresolved.unwrap());
-			auto resolverContext = manager.createResolverContext(cache);
-			auto mosaicId = resolverContext.resolve(unresolvedMosaicId);
-			
-			auto mosaicIter = levyCache.find(mosaicId);
-			if (!mosaicIter.tryGet())
-				return false;
-			
-			auto& entry = mosaicIter.get();
-			auto pLevy = entry.levy();
-			
-			if(pLevy == nullptr)
-				return false;
-			
-			resolved = pLevy->MosaicId;
-			return true;
-		});
-		
-		manager.addAmountResolver([&manager](const auto& cache, const auto& unresolved, auto& resolved) {
-			const auto& levyCache = cache.template sub<cache::LevyCache>();
-			auto result = false;
-			
-			switch (unresolved.Type) {
-				case UnresolvedAmountType::MosaicLevy: {
-					
-					/// return true and Amount(0) to prevent other resolver from sending an amount if there are no levy info
-					resolved = Amount(0);
-					result = true;
-					
-					auto levyData = dynamic_cast<const model::MosaicLevyData *>(unresolved.DataPtr);
-					if (!levyData)
-						CATAPULT_THROW_RUNTIME_ERROR("levy data should not be empty when calling levy resolver");
-					
-					auto resolverContext = manager.createResolverContext(cache);
-					auto mosaicId = resolverContext.resolve(levyData->MosaicId);
-					auto mosaicIter = levyCache.find(mosaicId);
-					if (!mosaicIter.tryGet())
-						break;
-					
-					auto& entry = mosaicIter.get();
-					auto pLevy = entry.levy();
-					
-					if(pLevy == nullptr)
-						break;
-					
-					utils::MosaicLevyCalculatorFactory factory;
-					resolved = factory.getCalculator(pLevy->Type)(unresolved, pLevy->Fee);
-					
-					[[fallthrough]];
-				}
-				default:
-					break;
-			}
-			
-			return result;
-		});
-		/// end region
 	}
 }}
 
