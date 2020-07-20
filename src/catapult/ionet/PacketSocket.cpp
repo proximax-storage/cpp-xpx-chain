@@ -336,7 +336,7 @@ namespace catapult { namespace ionet {
 					: m_acceptor(acceptor)
 					, m_configureSocket(configureSocket)
 					, m_accept(accept)
-					, m_pSocket(std::make_shared<StrandedPacketSocket>(m_acceptor.get_io_context(), options))
+					, m_pSocket(std::make_shared<StrandedPacketSocket>(static_cast<boost::asio::io_context&>(m_acceptor.get_executor().context()), options))
 			{}
 
 		public:

@@ -52,7 +52,7 @@ namespace catapult { namespace test {
 			// - parse the line
 			auto result = lineParser(parts);
 			if (!result.second) {
-				FAIL() << "malformed line: " << line;
+				CATAPULT_THROW_INVALID_ARGUMENT(line.c_str());
 				continue;
 			}
 

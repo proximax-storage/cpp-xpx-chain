@@ -36,9 +36,9 @@ namespace catapult { namespace mongo { namespace plugins {
 		void AssertEqualNonInheritedData(const TTransaction& transaction, const bsoncxx::document::view& dbTransaction) {
 			EXPECT_EQ(transaction.ApplyHeightDelta.unwrap(), test::GetInt64(dbTransaction, "applyHeightDelta"));
 			auto networkConfig = std::string((const char*)transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize);
-			EXPECT_EQ(networkConfig, dbTransaction["networkConfig"].get_utf8().value.to_string());
+			EXPECT_EQ(networkConfig, std::string(dbTransaction["networkConfig"].get_utf8().value));
 			auto supportedEntityVersions = std::string((const char*)transaction.SupportedEntityVersionsPtr(), transaction.SupportedEntityVersionsSize);
-			EXPECT_EQ(supportedEntityVersions, dbTransaction["supportedEntityVersions"].get_utf8().value.to_string());
+			EXPECT_EQ(supportedEntityVersions, std::string(dbTransaction["supportedEntityVersions"].get_utf8().value));
 		}
 
 		template<typename TTraits>
