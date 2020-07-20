@@ -60,7 +60,7 @@ namespace catapult { namespace test {
 			auto exchangeCacheId = cache::ExchangeCache::Id;
 			auto mosaicCacheId = cache::MosaicCache::Id;
 			
-			auto max = exchangeCacheId > mosaicCacheId? exchangeCacheId : mosaicCacheId;
+			auto max = std::max(exchangeCacheId, mosaicCacheId);
 			std::vector<std::unique_ptr<cache::SubCachePlugin>> subCaches(max + 1);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
 			subCaches[exchangeCacheId] = MakeSubCachePlugin<cache::ExchangeCache, cache::ExchangeCacheStorage>(pConfigHolder);
