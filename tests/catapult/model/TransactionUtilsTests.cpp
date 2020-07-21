@@ -94,12 +94,7 @@ namespace catapult { namespace model {
 			MockNotificationPublisher notificationPublisher(mode);
 			
 			// Act:
-			auto addresses = ExtractAddresses(*pTransaction, Hash256{}, Height(), notificationPublisher,model::ExtractorContext(),
-				[](UnresolvedAddress address){
-					Address resolvedAddress;
-		            std::memcpy(resolvedAddress.data(), address.data(), address.size());
-		            return resolvedAddress;
-			});
+			auto addresses = ExtractAddresses(*pTransaction, Hash256{}, Height(), notificationPublisher,model::ExtractorContext());
 			
 			// Assert:
 			EXPECT_EQ(2u, addresses.size());

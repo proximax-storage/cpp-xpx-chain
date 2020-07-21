@@ -82,12 +82,16 @@ namespace catapult { namespace model {
 		
 	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Hash256& hash, const Height& height,
 	                                      const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext,
-	                                      const AddressResolver& resolver) {
+	                                      const util::ResolverContextHandle& resolverHandle) {
 		UnresolvedAddressSet newSet;
 		UnresolvedAddressSet addresses = ExtractAddresses(transaction, hash, height, notificationPublisher, extractorContext);
+		auto cache = resolverHandle.CacheFactory();
+		auto resolver = resolverHandle.ResolverFactory(cache);
+		
 		for (const auto& address : addresses) {
-			auto resolved = resolver(address);
+			auto resolved = resolver.resolve(address);
 			newSet.insert(extensions::CopyToUnresolvedAddress(resolved));
+			newSet.insert(address);
 		}
 		return newSet;
 	}

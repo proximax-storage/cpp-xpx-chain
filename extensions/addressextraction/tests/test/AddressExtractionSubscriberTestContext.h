@@ -44,12 +44,16 @@ namespace catapult { namespace test {
 				, m_pNotificationPublisher(std::make_unique<mocks::MockNotificationPublisher>())
 				, m_notificationPublisher(*m_pNotificationPublisher)
 				, m_extractor(std::move(m_pNotificationPublisher), [](){ return model::ExtractorContext(); }
-				, [](UnresolvedAddress address){
-					Address resolvedAddress;
-					std::memcpy(resolvedAddress.data(), address.data(), address.size());
-					return resolvedAddress;
-				})
-		{}
+				, []() {
+					return util::ResolverContextHandle(
+		              [](){
+			              return test::CoreSystemCacheFactory::Create().createView().toReadOnly();
+		              },
+		              [](auto&){
+			              return test::CreateResolverContextXor();
+		              });
+	              }) {
+		}
 
 	public:
 		/// Asserts that \a action results in no extracted addresses.

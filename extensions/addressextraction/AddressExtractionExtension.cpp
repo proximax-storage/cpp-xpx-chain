@@ -35,10 +35,14 @@ namespace catapult { namespace addressextraction {
 				[&bootstrapper]() {
 					return bootstrapper.pluginManager().createExtractorContext(bootstrapper.cacheHolder().cache());
 				},
-				[&bootstrapper](UnresolvedAddress address) {
-					auto cache = bootstrapper.cacheHolder().cache().createView().toReadOnly();
-					auto resolver =  bootstrapper.pluginManager().createResolverContext(cache);
-					return resolver.resolve(address);
+				[&bootstrapper]() {
+					return util::ResolverContextHandle(
+						[&bootstrapper](){
+							return bootstrapper.cacheHolder().cache().createView().toReadOnly();
+						},
+						[&bootstrapper](auto& cache){
+							return bootstrapper.pluginManager().createResolverContext(cache);
+						});
 				});
 
 			// add a dummy service for extending service lifetimes
