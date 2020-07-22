@@ -91,7 +91,8 @@ namespace catapult { namespace plugins {
 					"DriveFilesRewardValidator",
 					"StartFileDownloadValidator",
 					"EndFileDownloadValidator",
-					"ExchangeValidator",
+					"ExchangeV1Validator",
+					"ExchangeV2Validator",
 				};
 			}
 
