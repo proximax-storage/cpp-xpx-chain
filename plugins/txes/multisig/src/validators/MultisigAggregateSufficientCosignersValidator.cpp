@@ -86,7 +86,7 @@ namespace catapult { namespace validators {
 		public:
 			bool hasSufficientCosigners() {
 				const auto& transactionPlugin = m_transactionRegistry.findPlugin(m_notification.Transaction.Type)->embeddedPlugin();
-				auto requiredPublicKeys = transactionPlugin.additionalRequiredCosigners(m_notification.Transaction, m_config);
+				utils::KeySet requiredPublicKeys;
 				requiredPublicKeys.insert(m_notification.Transaction.Signer);
 
 				auto operationType = GetOperationType(m_notification.Transaction);
