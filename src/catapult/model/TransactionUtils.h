@@ -21,17 +21,40 @@
 #pragma once
 #include "ContainerTypes.h"
 #include "ExtractorContext.h"
+#include "ResolverContext.h"
 #include <functional>
+#include "src/catapult/cache/CatapultCacheView.h"
+#include "src/catapult/cache/ReadOnlyCatapultCache.h"
 
 namespace catapult {
 	namespace model {
 		class NotificationPublisher;
 		struct Transaction;
 	}
+	
+	namespace util {
+		
+		using ReadOnlyCacheFactory = std::function<cache::ReadOnlyCatapultCache()>;
+		using ResolverContextFactory = std::function<model::ResolverContext(cache::ReadOnlyCatapultCache&)>;
+		
+		struct ResolverContextHandle {
+			ReadOnlyCacheFactory CacheFactory;
+			ResolverContextFactory ResolverFactory;
+			ResolverContextHandle(const ReadOnlyCacheFactory& cacheFactory, const ResolverContextFactory& resolverFactory)
+				: CacheFactory(cacheFactory)
+				, ResolverFactory(resolverFactory){
+			}
+		};
+	}
 }
 
 namespace catapult { namespace model {
+	
 	/// Extracts all addresses that are involved in \a transaction at \a height with \a hash using \a notificationPublisher and \a extractorContext.
 	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Hash256& hash, const Height& height,
-			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext);
+	                                      const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext);
+		
+	/// Extracts all addresses that are involved in \a transaction at \a height with \a hash using \a notificationPublisher and \a extractorContext and \a resolverContext
+	UnresolvedAddressSet ExtractAddresses(const Transaction& transaction, const Hash256& hash, const Height& height,
+			const NotificationPublisher& notificationPublisher, const ExtractorContext& extractorContext, const util::ResolverContextHandle& resolverHandle);
 }}
