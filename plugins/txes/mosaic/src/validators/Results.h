@@ -47,7 +47,36 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because the id is not the expected id generated from signer and nonce.
 	DEFINE_MOSAIC_RESULT(Id_Mismatch, 6);
-
+		
+	/// Levy fund insufficient
+	DEFINE_MOSAIC_RESULT(Insufficient_Levy_Balance, 7);
+		
+	/// Levy fund insufficient
+	DEFINE_MOSAIC_RESULT(Recipient_Levy_Not_Exist, 8);
+		
+	/// Levy invalid fees
+	DEFINE_MOSAIC_RESULT(Invalid_Levy_Fee, 9);
+		
+	/// Ineligible cosigner
+	DEFINE_MOSAIC_RESULT(Ineligible_Signer, 10);
+		
+	/// Not allow modify levy
+	DEFINE_MOSAIC_RESULT(Id_Not_Found, 11);
+		
+	/// Levy not found
+	DEFINE_MOSAIC_RESULT(Levy_Entry_Not_Found, 12);
+		
+	/// Levy already exist for this mosaic ID
+	DEFINE_MOSAIC_RESULT(Levy_Already_Exist, 13);
+	
+	/// Levy type should not be empty
+	DEFINE_MOSAIC_RESULT(Invalid_Levy_Type, 14);
+	
+	/// Current levy not set
+	DEFINE_MOSAIC_RESULT(Current_Levy_Not_Set, 15);
+	
+	/// MosaicLevy Set Expired
+	DEFINE_MOSAIC_RESULT(Levy_Mosaic_Not_Found_Or_Expired, 16);
 	// endregion
 
 	// region mosaic
