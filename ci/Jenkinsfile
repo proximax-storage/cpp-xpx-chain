@@ -97,7 +97,7 @@ pipeline {
                 script {
                     def newImage = docker.build("${IMAGE}")
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        if(${env.GIT_BRANCH} == 'develop'){
+                        if( env.GIT_BRANCH == 'develop'){
                             newImage.push("develop-jenkins-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
                             newImage.push("develop") // update Docker image develop
                         }else{
