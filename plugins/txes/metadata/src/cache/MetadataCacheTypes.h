@@ -73,7 +73,7 @@ namespace catapult { namespace cache {
 		struct HeightGroupingTypesDescriptor {
 		public:
 			using KeyType = Height;
-			using ValueType = utils::IdentifierGroup<Hash256, Height, utils::ArrayHasher<Hash256>>;
+			using ValueType = utils::UnorderedIdentifierGroup<Hash256, Height, utils::ArrayHasher<Hash256>>;
 			using Serializer = MetadataHeightGroupingSerializer;
 
 		public:
