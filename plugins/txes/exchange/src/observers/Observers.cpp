@@ -28,7 +28,7 @@ namespace catapult { namespace observers {
 		if (!initialValues.count(minExpiryHeight))
 			m_cache.addExpiryHeight(owner, minExpiryHeight);
 
-		if (m_entry.empty())
+		if (m_entry.version() < 3 && m_entry.empty())
 			m_cache.remove(owner);
 	}
 

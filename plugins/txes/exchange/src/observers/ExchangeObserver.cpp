@@ -20,23 +20,28 @@ namespace catapult { namespace observers {
 			}
 			return dynamic_cast<state::OfferBase&>(offer);
 		}
+
+		template<VersionType Version>
+		void handler_v1(const model::ExchangeNotification<Version>& notification, const ObserverContext& context) {
+			auto& cache = context.Cache.sub<cache::ExchangeCache>();
+			auto pMatchedOffer = notification.OffersPtr;
+			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pMatchedOffer) {
+				auto mosaicId = context.Resolvers.resolve(pMatchedOffer->Mosaic.MosaicId);
+				auto iter = cache.find(pMatchedOffer->Owner);
+				auto& entry = iter.get();
+				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+				if (context.Mode == NotifyMode::Rollback && !entry.offerExists(pMatchedOffer->Type, mosaicId))
+					entry.unexpireOffer(pMatchedOffer->Type, mosaicId, context.Height);
+				auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
+				              ModifyOffer(entry.buyOffers(), mosaicId, context.Mode, pMatchedOffer) :
+				              ModifyOffer(entry.sellOffers(), mosaicId, context.Mode, pMatchedOffer);
+				if (context.Mode == NotifyMode::Commit && Amount(0) == offer.Amount)
+					entry.expireOffer(pMatchedOffer->Type, mosaicId, context.Height);
+			}
+		}
 	}
 
-	DEFINE_OBSERVER(Exchange, model::ExchangeNotification<1>, [](const auto& notification, const ObserverContext& context) {
-		auto& cache = context.Cache.sub<cache::ExchangeCache>();
-		auto pMatchedOffer = notification.OffersPtr;
-		for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pMatchedOffer) {
-			auto mosaicId = context.Resolvers.resolve(pMatchedOffer->Mosaic.MosaicId);
-			auto iter = cache.find(pMatchedOffer->Owner);
-			auto& entry = iter.get();
-			OfferExpiryUpdater offerExpiryUpdater(cache, entry);
-			if (context.Mode == NotifyMode::Rollback && !entry.offerExists(pMatchedOffer->Type, mosaicId))
-				entry.unexpireOffer(pMatchedOffer->Type, mosaicId, context.Height);
-			auto& offer = (model::OfferType::Buy == pMatchedOffer->Type) ?
-				ModifyOffer(entry.buyOffers(), mosaicId, context.Mode, pMatchedOffer) :
-				ModifyOffer(entry.sellOffers(), mosaicId, context.Mode, pMatchedOffer);
-			if (context.Mode == NotifyMode::Commit && Amount(0) == offer.Amount)
-				entry.expireOffer(pMatchedOffer->Type, mosaicId, context.Height);
-		}
-	});
+	DEFINE_OBSERVER(ExchangeV1, model::ExchangeNotification<1>, handler_v1<1>);
+
+	DEFINE_OBSERVER(ExchangeV2, model::ExchangeNotification<2>, handler_v1<2>);
 }}

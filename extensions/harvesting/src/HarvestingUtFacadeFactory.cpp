@@ -48,7 +48,16 @@ namespace catapult { namespace harvesting {
 
 	public:
 		bool apply(const model::TransactionInfo& transactionInfo) {
-			return apply(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, height()));
+			auto originalSource = m_blockStatementBuilder.source();
+
+			if (apply(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, height())))
+				return true;
+
+			auto finalSource = m_blockStatementBuilder.source();
+			if (originalSource.PrimaryId != finalSource.PrimaryId)
+				m_blockStatementBuilder.popSource();
+
+			return false;
 		}
 
 		void unapply(const model::TransactionInfo& transactionInfo) {
@@ -73,12 +82,12 @@ namespace catapult { namespace harvesting {
 			}
 
 			// 3. execute block (using zero hash)
-			if (!apply(model::WeakEntityInfo(*pBlock, Hash256(), height())))
+			if (!apply(model::WeakEntityInfo(*pBlock, Hash256(), pBlock->Height)))
 				return nullptr;
 
 			// 4. update block fields
 			pBlock->StateHash = config.Immutable.ShouldEnableVerifiableState
-					? m_pCacheDelta->calculateStateHash(height()).StateHash
+					? m_pCacheDelta->calculateStateHash(pBlock->Height).StateHash
 					: Hash256();
 
 			pBlock->BlockReceiptsHash = config.Immutable.ShouldEnableVerifiableReceipts
@@ -98,8 +107,8 @@ namespace catapult { namespace harvesting {
 		bool process(const Processor& processor) {
 			// 1. prepare state
 			auto catapultState = state::CatapultState();
-			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), networkConfig().ImportanceGrouping);
 			const auto& config = m_executionConfig.ConfigSupplier(height());
+			catapultState.LastRecalculationHeight = model::ConvertToImportanceHeight(height(), config.Network.ImportanceGrouping);
 			auto observerState = config.Immutable.ShouldEnableVerifiableReceipts
 					? observers::ObserverState(*m_pCacheDelta, catapultState, m_blockStatementBuilder)
 					: observers::ObserverState(*m_pCacheDelta, catapultState);
@@ -147,10 +156,6 @@ namespace catapult { namespace harvesting {
 				sub.undo();
 				return true;
 			});
-		}
-
-		const model::NetworkConfiguration& networkConfig() {
-			return m_executionConfig.ConfigSupplier(height()).Network;
 		}
 
 	private:

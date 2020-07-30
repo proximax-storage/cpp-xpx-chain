@@ -192,7 +192,8 @@ namespace catapult { namespace observers {
 
 			for (auto i = values.ExpectedEntries.size(); i < values.InitialEntries.size(); ++i) {
 				auto iter = exchangeCache.find(values.InitialEntries[i].owner());
-				ASSERT_EQ(nullptr, iter.tryGet());
+				const auto& entry = iter.get();
+				test::AssertEqualExchangeData(state::ExchangeEntry(entry.owner()), entry);
 			}
 
 			for (const auto& expectedAccount : values.ExpectedAccounts) {

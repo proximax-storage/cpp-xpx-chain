@@ -39,10 +39,11 @@ namespace catapult { namespace validators {
 		const auto Max_Transaction_Lifetime = []() { return utils::TimeSpan::FromHours(2); }();
 		constexpr auto TimeSpanFromHours = utils::TimeSpan::FromHours;
 
-		void AssertValidationResult(ValidationResult expectedResult, Timestamp deadline, const utils::TimeSpan& maxCustomLifetime) {
+		void AssertValidationResult(ValidationResult expectedResult, Timestamp deadline, const utils::TimeSpan& maxCustomLifetime, bool enableDeadlineValidation = true) {
 			// Arrange:
 			test::MutableBlockchainConfiguration mutableConfig;
 			mutableConfig.Network.MaxTransactionLifetime = Max_Transaction_Lifetime;
+			mutableConfig.Network.EnableDeadlineValidation = enableDeadlineValidation;
 			auto config = mutableConfig.ToConst();
 			auto cache = test::CreateEmptyCatapultCache(config);
 			auto cacheView = cache.createView();
@@ -68,6 +69,13 @@ namespace catapult { namespace validators {
 		// Assert:
 		for (auto i = 0u; i < 4; ++i)
 			AssertValidationResult(Failure_Core_Past_Deadline, Block_Time - Timestamp(1), TimeSpanFromHours(i));
+	}
+
+	TEST(TEST_CLASS, SuccessWhenTransactionDeadlineIsLessThanBlockTimeAndValidationDisabled) {
+		// Assert:
+		for (auto i = 0u; i < 4; ++i)
+			AssertValidationResult(ValidationResult::Success, Block_Time - Timestamp(1),
+								   TimeSpanFromHours(i), false /* enableDeadlineValidation */);
 	}
 
 	TEST(TEST_CLASS, SuccessWhenTransactionDeadlineIsEqualToBlockTime) {

@@ -21,6 +21,8 @@ namespace catapult { namespace validators {
 	/// - Mosaic is allowed for exchange.
 	DECLARE_STATEFUL_VALIDATOR(OfferV1, model::OfferNotification<1>)();
 	DECLARE_STATEFUL_VALIDATOR(OfferV2, model::OfferNotification<2>)();
+	DECLARE_STATEFUL_VALIDATOR(OfferV3, model::OfferNotification<3>)();
+	DECLARE_STATEFUL_VALIDATOR(OfferV4, model::OfferNotification<4>)();
 
 	/// A validator implementation that applies to exchange notification and validates that:
 	/// - at least one offer to exchange is present.
@@ -30,14 +32,16 @@ namespace catapult { namespace validators {
 	/// - matched offers have valid mosaic prices.
 	/// - matched offers are not expired.
 	/// - matched offers have required mosaic amounts.
-	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ExchangeV1, model::ExchangeNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ExchangeV2, model::ExchangeNotification<2>)();
 
 	/// A validator implementation that applies to remove offer notification and validates that:
 	/// - at least one offer to remove is present.
 	/// - account has offers.
 	/// - offers exist.
 	/// - transaction signer owns offers.
-	DECLARE_STATEFUL_VALIDATOR(RemoveOffer, model::RemoveOfferNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(RemoveOfferV1, model::RemoveOfferNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(RemoveOfferV2, model::RemoveOfferNotification<2>)();
 
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid

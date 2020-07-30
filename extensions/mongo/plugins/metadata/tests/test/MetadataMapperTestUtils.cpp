@@ -18,8 +18,8 @@ namespace catapult { namespace test {
 			ASSERT_EQ(fields.size(), test::GetFieldCount(dbFields));
 
 			for (const auto& dbField : dbFields) {
-				std::string key = dbField["key"].get_utf8().value.to_string();
-				std::string value = dbField["value"].get_utf8().value.to_string();
+				std::string key = std::string(dbField["key"].get_utf8().value);
+				std::string value = std::string(dbField["value"].get_utf8().value);
 				auto iter = std::find_if(fields.begin(), fields.end(), [&key, &value](const state::MetadataField& field) {
 					return (field.MetadataKey == key) && (field.MetadataValue == value);
 				});

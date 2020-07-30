@@ -165,7 +165,8 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 			builder
 					.add(validators::CreateDriveValidator())
-					.add(validators::CreateExchangeValidator())
+					.add(validators::CreateExchangeV1Validator())
+					.add(validators::CreateExchangeV2Validator())
 					.add(validators::CreateDrivePermittedOperationValidator())
                     .add(validators::CreateDriveFilesRewardValidator(immutableConfig.StreamingMosaicId))
 					.add(validators::CreateFilesDepositValidator())

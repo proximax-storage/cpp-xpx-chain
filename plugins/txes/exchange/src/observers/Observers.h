@@ -37,12 +37,16 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by offer notifications
 	DECLARE_OBSERVER(OfferV1, model::OfferNotification<1>)();
 	DECLARE_OBSERVER(OfferV2, model::OfferNotification<2>)();
+	DECLARE_OBSERVER(OfferV3, model::OfferNotification<3>)();
+	DECLARE_OBSERVER(OfferV4, model::OfferNotification<4>)();
 
 	/// Observes changes triggered by exchange notifications
-	DECLARE_OBSERVER(Exchange, model::ExchangeNotification<1>)();
+	DECLARE_OBSERVER(ExchangeV1, model::ExchangeNotification<1>)();
+	DECLARE_OBSERVER(ExchangeV2, model::ExchangeNotification<2>)();
 
 	/// Observes changes triggered by remove offer notifications
-	DECLARE_OBSERVER(RemoveOffer, model::RemoveOfferNotification<1>)(const MosaicId& currencyMosaicId);
+	DECLARE_OBSERVER(RemoveOfferV1, model::RemoveOfferNotification<1>)(const MosaicId& currencyMosaicId);
+	DECLARE_OBSERVER(RemoveOfferV2, model::RemoveOfferNotification<2>)(const MosaicId& currencyMosaicId);
 
 	/// Observes changes triggered by block notifications
 	DECLARE_OBSERVER(CleanupOffers, model::BlockNotification<1>)();
