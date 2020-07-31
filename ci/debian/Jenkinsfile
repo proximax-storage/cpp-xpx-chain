@@ -12,7 +12,7 @@ pipeline {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
         IMAGE = "proximax/proximax-sirius-chain"
-        BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.0-buster"
+        BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.1-buster"
         PRIVATE_IMAGE = "proximax/proximax-sirius-chain-private"
     }
 
@@ -110,14 +110,17 @@ pipeline {
         
         stage('Build and Publish Private Image') {
             when {
-                branch 'develop'
+                anyOf {
+                    branch 'develop';
+                    branch 'release-candidate-*'
+                }
             }
             steps {
                 echo 'Build and Publish Private Image'
                 script {
                     def newImage = docker.build("${PRIVATE_IMAGE}","-f ./ci/debian/Dockerfile .")
                     docker.withRegistry("", "jenkins-dockerhub"){
-                        newImage.push("develop-jenkins-build-${env.BUILD_NUMBER}") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
+                        newImage.push("${env.GIT_BRANCH}-${env.BUILD_NUMBER}") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
                     }
                 }
             }
