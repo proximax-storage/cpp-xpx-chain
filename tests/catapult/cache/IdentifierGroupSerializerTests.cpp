@@ -31,7 +31,7 @@ namespace catapult { namespace cache {
 		struct TimeBasedDescriptor {
 		public:
 			using KeyType = Timestamp;
-			using ValueType = utils::IdentifierGroup<Height, Timestamp, utils::BaseValueHasher<Height>>;
+			using ValueType = utils::UnorderedIdentifierGroup<Height, Timestamp, utils::BaseValueHasher<Height>>;
 		};
 
 		using Serializer = IdentifierGroupSerializer<TimeBasedDescriptor>;

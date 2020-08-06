@@ -32,14 +32,14 @@ namespace catapult { namespace test {
 		// region TestHeightGroupedCacheDescriptor
 
 		/// Identifier group that groups int values by height.
-		class TestIdentifierGroup : public utils::IdentifierGroup<int, Height, std::hash<int>> {
+		class TestIdentifierGroup : public utils::UnorderedIdentifierGroup<int, Height, std::hash<int>> {
 		public:
 #ifdef _MSC_VER
 			TestIdentifierGroup() : TestIdentifierGroup(Height())
 			{}
 #endif
 
-			using utils::IdentifierGroup<int, Height, std::hash<int>>::IdentifierGroup;
+			using utils::UnorderedIdentifierGroup<int, Height, std::hash<int>>::UnorderedIdentifierGroup;
 		};
 
 		/// Cache descriptor for cache of values grouped by height.
