@@ -31,6 +31,7 @@ namespace catapult { namespace validators {
 						{ "enableBondedAggregateSupport", "true" },
 
 						{ "maxBondedTransactionLifetime", "48h" },
+						{ "strictSigner", "true" },
 					}
 				}});
 			}

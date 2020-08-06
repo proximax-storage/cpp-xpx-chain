@@ -12,7 +12,7 @@ namespace catapult { namespace test {
 
 	void AssertEqualNetworkConfigData(const state::NetworkConfigEntry& entry, const bsoncxx::document::view& dbConfigEntry) {
 		EXPECT_EQ(entry.height(), mongo::mappers::GetValue64<Height>(dbConfigEntry["height"]));
-		EXPECT_EQ(entry.networkConfig(), dbConfigEntry["networkConfig"].get_utf8().value.to_string());
-		EXPECT_EQ(entry.supportedEntityVersions(), dbConfigEntry["supportedEntityVersions"].get_utf8().value.to_string());
+		EXPECT_EQ(entry.networkConfig(), std::string(dbConfigEntry["networkConfig"].get_utf8().value));
+		EXPECT_EQ(entry.supportedEntityVersions(), std::string(dbConfigEntry["supportedEntityVersions"].get_utf8().value));
 	}
 }}

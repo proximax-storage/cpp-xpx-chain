@@ -22,53 +22,99 @@
 #include "catapult/exceptions.h"
 #include "catapult/functions.h"
 #include <atomic>
-#include <boost/thread/shared_mutex.hpp>
+#include <thread>
 
 namespace catapult { namespace utils {
 
-	// minutes before we declare waiting for lock as deadlock
-	const int deadlock_threshold_minutes = 10;
+#ifndef DEADLOCK_THRESHOLD_MILLISECONDS
+#define DEADLOCK_THRESHOLD_MILLISECONDS 10 * 60 * 1000 // 10 minutes
+#endif
 
+	// minutes before we declare waiting for lock as deadlock
+	constexpr auto deadlock_threshold = std::chrono::milliseconds(DEADLOCK_THRESHOLD_MILLISECONDS);
+
+	/// Custom reader writer lock implemented by using an atomic that allows multiple readers and a single writer
+	/// and prefers writers.
+	/// \note
+	/// - 128 max writers
+	/// - 256 max readers
+	/// - writer lock must be acquired via a reader lock promotion
 	template<typename TReaderNotificationPolicy>
 	class BasicSpinReaderWriterLock : private TReaderNotificationPolicy {
+	private:
+		// 0[active writer]|1234567[total writers]|01234567[total readers]
+		static constexpr uint16_t Active_Writer_Flag = 0x8000;
+		static constexpr uint16_t Pending_Writer_Mask = 0x7F00;
+		static constexpr uint16_t Reader_Mask = 0x00FF;
+		static constexpr uint16_t Writer_Mask = Pending_Writer_Mask | Active_Writer_Flag;
+
+		static constexpr uint16_t Active_Reader_Increment = 0x0001;
+		static constexpr uint16_t Pending_Writer_Increment = 0x0100;
+
+	private:
+#pragma push_macro("Yield")
+#undef Yield
+		static void Yield() {
+			std::this_thread::yield();
+		}
+#pragma pop_macro("Yield")
+
+	private:
+		// region LockGuard
+
+		/// Base class for RAII lock guards.
+		class LockGuard {
+		protected:
+			explicit LockGuard(const action& resetFunc)
+					: m_resetFunc(resetFunc)
+					, m_isMoved(false)
+			{}
+
+			~LockGuard() {
+				if (m_isMoved)
+					return;
+
+				m_resetFunc();
+			}
+
+		public:
+			LockGuard(LockGuard&& rhs) : m_resetFunc(rhs.m_resetFunc), m_isMoved(false) {
+				rhs.m_isMoved = true;
+			}
+
+		private:
+			action m_resetFunc;
+			bool m_isMoved;
+		};
+
+		// endregion
+
 	public:
 		// region WriterLockGuard
+
 		/// RAII writer lock guard.
-		class WriterLockGuard {
+		class WriterLockGuard : public LockGuard {
 		public:
+			/// Creates a guard around \a value.
+			explicit WriterLockGuard(std::atomic<uint16_t>& value)
+					: LockGuard([&value]() {
+						// unset the active writer flag
+						value.fetch_sub(Active_Writer_Flag + Pending_Writer_Increment);
+					})
+			{}
 
+			/// Creates a guard around \a value and \a isActive.
 			/// \note This constructor is used when writer is created by promotion.
-			WriterLockGuard(boost::upgrade_mutex* mutex, const action& resetFunc)
-					: m_lock(*mutex, boost::chrono::minutes (deadlock_threshold_minutes))
-					, m_resetFunc(resetFunc) {
-
-				if(!m_lock.owns_lock()) {
-					CATAPULT_THROW_RUNTIME_ERROR("Deadlock occur waiting for writer lock");
-				}
-			}
-
-			WriterLockGuard(boost::upgrade_mutex* mutex)
-					: m_lock(*mutex)
-					, m_resetFunc(0) {
-			}
-
-			~WriterLockGuard() {
-				if(m_lock.owns_lock())
-				{
-					m_lock.unlock();
-
-					if(m_resetFunc) {
-						m_resetFunc();
-					}
-				}
-			}
+			explicit WriterLockGuard(std::atomic<uint16_t>& value, bool& isActive)
+					: LockGuard([&value, &isActive]() {
+						// unset the active writer flag and change the writer to a reader
+						value.fetch_sub(Active_Writer_Flag + Pending_Writer_Increment - Active_Reader_Increment);
+						isActive = false;
+					})
+			{}
 
 			/// Default move constructor.
 			WriterLockGuard(WriterLockGuard&&) = default;
-
-		private:
-			boost::unique_lock<boost::upgrade_mutex> m_lock;
-			action m_resetFunc;
 		};
 
 		// endregion
@@ -76,117 +122,136 @@ namespace catapult { namespace utils {
 		// region ReaderLockGuard
 
 		/// RAII reader lock guard.
-		class ReaderLockGuard {
+		class ReaderLockGuard : public LockGuard {
 		public:
-			ReaderLockGuard(boost::upgrade_mutex* mutex)
-					: m_lock(*mutex,
-							boost::chrono::minutes (deadlock_threshold_minutes)) {
-
-				if(!m_lock.owns_lock()) {
-					CATAPULT_THROW_RUNTIME_ERROR("Deadlock occur waiting for reader lock");
-				}
+			/// Creates a guard around \a value and \a notificationPolicy.
+			explicit ReaderLockGuard(std::atomic<uint16_t>& value, TReaderNotificationPolicy& notificationPolicy)
+					: LockGuard([&value, &notificationPolicy]() {
+						// decrease the number of readers by one
+						value.fetch_sub(Active_Reader_Increment);
+						notificationPolicy.readerReleased();
+					})
+					, m_value(value)
+					, m_isWriterActive(false) {
+				notificationPolicy.readerAcquired();
 			}
 
 			/// Default move constructor.
 			ReaderLockGuard(ReaderLockGuard&&) = default;
 
 		public:
-
 			/// Promotes this reader lock to a writer lock.
+			/// \note Deadlock is possible when promoteToWriter is called concurrently by multiple threads for the same lock.
+			///       Each of the concurrent threads holds a reader lock, so a writer lock cannot be acquired by any thread.
 			WriterLockGuard promoteToWriter() {
-				if( m_lock.owns_lock())	{
-					m_lock.unlock();
-				} else {
-					CATAPULT_THROW_RUNTIME_ERROR("Unable to promoteToWriter, "
-								  "reader does not own lock");
-				}
+				markActiveWriter();
 
-				return WriterLockGuard(m_lock.mutex(), [&]() {
-					restoreReaderLock();
-				});
+				// mark a pending write by changing the reader to a writer
+				m_value.fetch_add(Pending_Writer_Increment - Active_Reader_Increment);
+
+				// wait for exclusive access
+				AcquireWriter(m_value);
+				return WriterLockGuard(m_value, m_isWriterActive);
 			}
 
 		private:
+			void markActiveWriter() {
+				if (m_isWriterActive)
+					CATAPULT_THROW_RUNTIME_ERROR("reader lock has already been promoted");
 
-			void restoreReaderLock() {
-				m_lock = boost::shared_lock<boost::upgrade_mutex>(*m_lock.mutex());
+				m_isWriterActive = true;
 			}
 
 		private:
-			boost::shared_lock<boost::upgrade_mutex> m_lock;
+			std::atomic<uint16_t>& m_value;
+			bool m_isWriterActive;
 		};
-		// endregion
 
-		// region unique writer lock
-		typedef boost::upgrade_to_unique_lock< boost::upgrade_mutex> UniqueWriteLock;
-		// endregion
-
-		// region UpgradableReaderLockGuard
-
-		// boost/thread/shared_mutex.hpp does not support upgrade timed lock(try_lock_upgrade_for),
-		// the alternative version in boost/thread/v2/shared_mutex.hpp cannot be used as the file has conflict with
-		// boost/thread/shared_mutex.hpp and both files define 'boost::shared_mutex' explicitly.
-		// boost/thread/shared_mutex.hpp is part of boost/thread.hpp which is potentially by other files.
-		class UpgradableReaderLockGuard {
-		public:
-			UpgradableReaderLockGuard(boost::upgrade_mutex* mutex)
-					: m_upgradeLock(*mutex){
-			}
-
-			/// Default move constructor.
-			UpgradableReaderLockGuard(UpgradableReaderLockGuard&&) = default;
-
-		public:
-
-			/// Promotes this reader lock to a writer lock.
-			UniqueWriteLock promoteToWriter() {
-				return UniqueWriteLock(m_upgradeLock);
-			}
-
-		private:
-			boost::upgrade_lock<boost::upgrade_mutex> m_upgradeLock;
-		};
 		// endregion
 
 	public:
 		/// Creates an unlocked lock.
-		BasicSpinReaderWriterLock() = default;
+		BasicSpinReaderWriterLock() : m_value(0)
+		{}
 
 	public:
+		/// Returns \c true if there is a pending (or active) writer.
+		inline bool isWriterPending() const {
+			return isSet(Pending_Writer_Mask);
+		}
 
+		/// Returns \c true if there is an active writer.
+		inline bool isWriterActive() const {
+			return isSet(Active_Writer_Flag);
+		}
+
+		/// Returns \c true if there is an active reader.
+		inline bool isReaderActive() const {
+			return isSet(Reader_Mask);
+		}
+
+	private:
+		inline bool isSet(uint16_t mask) const {
+			return 0 != (m_value & mask);
+		}
+
+	public:
+		/// Blocks until a reader lock can be acquired.
 		inline ReaderLockGuard acquireReader() {
-			return ReaderLockGuard(&m_mutex);
-		}
+			uint16_t current = m_value;
+			auto start = std::chrono::high_resolution_clock::now();
+			auto end = start + deadlock_threshold;
 
-		// \n wait parameter set to true if caller wants to wait
-		// else throw an exception immediately
-		inline UpgradableReaderLockGuard acquireUpgradableLock(bool wait = true) {
-			if( !wait && !upgradeLockAllowed()) {
-				CATAPULT_THROW_RUNTIME_ERROR("Upgrade ownership is not available");
+			for (;;) {
+				if (std::chrono::high_resolution_clock::now() > end)
+					CATAPULT_THROW_RUNTIME_ERROR("Deadlock occur waiting for reader lock");
+
+				// wait for any pending writes to complete
+				if (0 != (current & Pending_Writer_Mask)) {
+					Yield();
+					current = m_value;
+					continue;
+				}
+
+				// try to increment the number of readers by one
+				uint16_t desired = current + Active_Reader_Increment;
+				if (m_value.compare_exchange_strong(current, desired))
+					break;
+
+				Yield();
 			}
 
-			return UpgradableReaderLockGuard(&m_mutex);
+			return ReaderLockGuard(m_value, *this);
 		}
+
+		/// Blocks until a writer lock can be acquired.
 		inline WriterLockGuard acquireWriter() {
+			// mark a pending write
+			m_value.fetch_add(Pending_Writer_Increment);
 
-			return WriterLockGuard(&m_mutex);
+			// wait for exclusive access
+			AcquireWriter(m_value);
+			return WriterLockGuard(m_value);
 		}
 
 	private:
-		// \note: boost has no method to check whether mutex upgrade ownership was already
-		// owned by a thread, there is no exception or error thrown.
-		// Instead we will try to obtain it and unlock immediately as we need scoped lock.
-		bool upgradeLockAllowed() {
-			if (m_mutex.try_lock_upgrade()) {
-				m_mutex.unlock_upgrade();
-				return true;
+		static void AcquireWriter(std::atomic<uint16_t>& value) {
+			// wait for exclusive access (when there is no active writer and no readers)
+			uint16_t expected = value & Pending_Writer_Mask;
+			auto start = std::chrono::high_resolution_clock::now();
+			auto end = start + deadlock_threshold;
+
+			while (!value.compare_exchange_strong(expected, expected | Active_Writer_Flag)) {
+				if (std::chrono::high_resolution_clock::now() > end)
+					CATAPULT_THROW_RUNTIME_ERROR("Deadlock occur waiting for writer lock");
+
+				Yield();
+				expected = value & Pending_Writer_Mask;
 			}
-
-			return false;
 		}
 
 	private:
-		mutable boost::upgrade_mutex m_mutex;
+		std::atomic<uint16_t> m_value;
 	};
 
 	/// No-op reader notification policy.

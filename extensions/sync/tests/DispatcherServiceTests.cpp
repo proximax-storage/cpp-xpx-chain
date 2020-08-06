@@ -934,6 +934,7 @@ namespace catapult { namespace sync {
 			// - wait for the transactions to flow through the consumers
 			WAIT_FOR_ONE_EXPR(context.counter(Transaction_Elements_Counter_Name));
 			WAIT_FOR_VALUE_EXPR(expectedCacheSize, context.testState().state().utCache().view().size());
+			WAIT_FOR_VALUE_EXPR(maxCacheSize - expectedCacheSize, context.numTransactionStatuses());
 
 			// Assert:
 			EXPECT_EQ(expectedCacheSize, context.testState().state().utCache().view().size());

@@ -38,6 +38,7 @@ namespace catapult { namespace harvesting {
 
 	namespace {
 		constexpr Timestamp Max_Time(std::numeric_limits<int64_t>::max());
+		constexpr Timestamp Min_Time(0);
 		constexpr auto Harvesting_Mosaic_Id = MosaicId(9876);
 
 		auto CreateConfigHolder() {
@@ -90,6 +91,7 @@ namespace catapult { namespace harvesting {
 				pLastBlock->Size = sizeof(model::BlockHeader);
 				pLastBlock->Height = Height(1);
 				pLastBlock->Difficulty = Difficulty(NEMESIS_BLOCK_DIFFICULTY);
+				pLastBlock->Timestamp = Timestamp(Max_Time.unwrap() / 2);
 			}
 
 			size_t NumHarvestingAllowedCalls;
@@ -167,6 +169,28 @@ namespace catapult { namespace harvesting {
 		EXPECT_EQ(1u, options.NumHarvestingAllowedCalls);
 		EXPECT_EQ(0u, options.NumLastBlockElementSupplierCalls);
 		EXPECT_EQ(0u, options.NumTimeSupplierCalls);
+		EXPECT_EQ(0u, options.NumRangeConsumerCalls);
+		EXPECT_EQ(Height(0), options.BlockHeight);
+		EXPECT_EQ(Key(), options.BlockSigner);
+	}
+
+	TEST(TEST_CLASS, TaskIsShortCircuitedWhenTimeIsNewBlockIsLowerThanTimeOfPreviousBlock) {
+		// Arrange:
+		TaskOptionsWithCounters options;
+		options.TimeSupplier = [&options]() {
+			++options.NumTimeSupplierCalls;
+			return Min_Time;
+		};
+		HarvesterContext context(*options.pLastBlock);
+		ScheduledHarvesterTask task(options, CreateHarvester(context));
+
+		// Act:
+		task.harvest();
+
+		// Assert:
+		EXPECT_EQ(1u, options.NumHarvestingAllowedCalls);
+		EXPECT_EQ(1u, options.NumLastBlockElementSupplierCalls);
+		EXPECT_EQ(1u, options.NumTimeSupplierCalls);
 		EXPECT_EQ(0u, options.NumRangeConsumerCalls);
 		EXPECT_EQ(Height(0), options.BlockHeight);
 		EXPECT_EQ(Key(), options.BlockSigner);

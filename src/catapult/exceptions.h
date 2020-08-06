@@ -26,7 +26,11 @@
 #include <boost/exception/exception.hpp>
 #include <boost/exception/info.hpp>
 #include <boost/throw_exception.hpp>
+
+#ifdef SHOW_BACKTRACE
 #include <boost/stacktrace.hpp>
+#endif
+
 #include <atomic>
 #include <exception>
 

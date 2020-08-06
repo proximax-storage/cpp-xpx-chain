@@ -199,7 +199,6 @@ endif()
 # used to define a catapult target (library, executable) and automatically enables PCH for clang
 function(catapult_target TARGET_NAME)
 	set_property(TARGET ${TARGET_NAME} PROPERTY CXX_STANDARD 17)
-	add_definitions(-DBOOST_STACKTRACE_USE_BACKTRACE)
 
 	# indicate boost as a dependency
 	target_link_libraries(${TARGET_NAME} ${Boost_LIBRARIES} ${CMAKE_DL_LIBS})

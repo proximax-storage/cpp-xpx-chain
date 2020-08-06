@@ -1,172 +1,23 @@
-NOTE: In both linux and windows commands we're using `\` as marker for line continuations
+# Building on Windows
 
-Building on Ubuntu 18.04 (LTS)
-===
-
-Prerequisites
----
-
-```sh
-sudo apt install autoconf libtool cmake curl git xz-utils \
-    libatomic-ops-dev libunwind-dev g++ gdb libgflags-dev \
-    libsnappy-dev ninja-build python3 python3-ply
-```
-
-Boost
----
-
-```sh
-curl -o boost_1_69_0.tar.gz -SL \
-    https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz
-tar -xzf boost_1_69_0.tar.gz
-
-## WARNING: below use $HOME rather than ~ - boost scripts might treat it literally
-mkdir boost-build-1.69.0
-cd boost_1_69_0
-./bootstrap.sh --prefix=${HOME}/boost-build-1.69.0
-./b2 --prefix=${HOME}/boost-build-1.69.0 -j 4 stage release
-./b2 install --prefix=${HOME}/boost-build-1.69.0
-```
-
-Gtest
----
-
-```sh
-git clone https://github.com/google/googletest.git googletest.git
-cd googletest.git
-git checkout release-1.8.0
-
-mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON ..
-make
-sudo make install
-```
-
-Google benchmark
----
-
-```sh
-git clone https://github.com/google/benchmark.git google.benchmark.git
-cd google.benchmark.git
-git checkout v1.4.1
-
-mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DBENCHMARK_ENABLE_GTEST_TESTS=OFF ..
-make
-sudo make install
-```
-
-Mongo
----
-
-mongo-c
-
-```sh
-git clone https://github.com/mongodb/mongo-c-driver.git mongo-c-driver.git
-cd mongo-c-driver.git
-git checkout 1.13.0
-
-mkdir _build && cd _build
-cmake -DENABLE_AUTOMATIC_INIT_AND_CLEANUP=OFF -DCMAKE_BUILD_TYPE=Release \
-    -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make
-sudo make install
-```
-
-mongocxx
-```sh
-git clone https://github.com/mongodb/mongo-cxx-driver.git mongo-cxx-driver.git
-cd mongo-cxx-driver.git
-git checkout r3.4.0
-
-### apply a patch...
-sed -i 's/kvp("maxAwaitTimeMS", count)/kvp("maxAwaitTimeMS", static_cast<int64_t>(count))/' \
-    src/mongocxx/options/change_stream.cpp
-
-mkdir _build && cd _build
-cmake -DLIBBSON_DIR=/usr/local -DBOOST_ROOT=~/boost-build-1.69.0 \
-    -DLIBMONGOC_DIR=/usr/local -DBSONCXX_POLY_USE_BOOST=1 \
-    -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make
-sudo make install
-```
-
-ZMQ
----
-
-NOTE: we're currently NOT coupled to any specific ZMQ version, this might change in future
-
-libzmq
-```sh
-git clone git://github.com/zeromq/libzmq.git libzmq.git
-cd libzmq.git
-# on master already
-
-mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make
-sudo make install
-```
-
-cppzmq
-```sh
-git clone https://github.com/zeromq/cppzmq.git cppzmq.git
-cd cppzmq.git
-# on master already
-
-mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make
-sudo make install
-```
-
-Rocks
----
-
-Currently ubuntu 18.04 has gflags in version 2.2.1 and snappy in version 1.1.7 which are OK
-
-rocks
-```sh
-git clone https://github.com/facebook/rocksdb.git rocksdb.git
-cd rocksdb.git
-git checkout -B "5.18.fb" "origin/5.18.fb"
-
-mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
-make
-sudo make install
-```
-
-Sirius-Chain
----
-
-```sh
-git clone https://github.com/proximax-storage/cpp-xpx-chain.git
-cd cpp-xpx-chain
-
-mkdir _build && cd _build
-cmake -DBOOST_ROOT=~/boost-build-1.69.0 -DCMAKE_BUILD_TYPE=Release -G Ninja ..
-ninja publish
-ninja -j4
-```
-
-Building on Windows
-===
-
-Prerequisites
----
-
- * cmake
- * git
- * python 3.x
- * Visual Studio Community 2017
+NOTE: Commands are using `\` as marker for line continuations
 
 NOTE: building instructions should be executed from `VS x64 native command prompt`
 
 NOTE: following instructions use X:\devlibs as a destination location for libraries
 
-Boost
----
+## Prerequisites
+
+ * OpenSSL dev libraries (built for/with MSVC)
+ * cmake (at least 3.14)
+ * git
+ * python 3.x
+ * Visual Studio Community 2017 (at least 15.8)
+
+### Boost
+
+download and unpack:
+    https://dl.bintray.com/boostorg/release/1.71.0/source/boost_1_71_0.tar.gz
 
 ```bat
 bootstrap.bat
@@ -177,8 +28,7 @@ b2 address-model=64 --build-dir="X:\devlibs\2017\boost.build" toolset=msvc \
     stage release --without-python
 ```
 
-Gtest
----
+### Gtest
 
 ```bat
 git clone https://github.com/google/googletest.git googletest.git
@@ -192,13 +42,12 @@ msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 ALL_BUILD.vcxproj
 msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 INSTALL.vcxproj
 ```
 
-Google benchmark
----
+### Google benchmark
 
 ```bat
 git clone https://github.com/google/benchmark.git google.benchmark.git
 cd google.benchmark.git
-git checkout v1.4.1
+git checkout v1.5.0
 
 mkdir _build && cd _build
 cmake -G "Visual Studio 15 2017 Win64" \
@@ -217,7 +66,7 @@ mongo-c
 ```bat
 git clone https://github.com/mongodb/mongo-c-driver.git mongo-c-driver.git
 cd mongo-c-driver.git
-git checkout 1.13.0
+git checkout 1.15.1
 
 mkdir _build && cd _build
 cmake -G "Visual Studio 15 2017 Win64" -DENABLE_EXTRA_ALIGNMENT=OFF \
@@ -226,33 +75,31 @@ msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 ALL_BUILD.vcxproj
 msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 INSTALL.vcxproj
 ```
 
+NOTE: there's double invocation of cmake, to set CXXFLAGS properly.
+
 mongocxx
 ```bat
-git clone https://github.com/mongodb/mongo-cxx-driver.git mongo-cxx-driver.git
+git clone https://github.com/nemtech/mongo-cxx-driver.git mongo-cxx-driver.git
 cd mongo-cxx-driver.git
-git checkout r3.4.0
+git checkout r3.4.0-nem
 
 # CMAKE_PREFIX_PATH - required for finding mongo-c
 mkdir _build && cd _build
-cmake.exe -G "Visual Studio 15 2017 Win64" \
+cmake -E env CXXFLAGS="/Zc:__cplusplus" cmake.exe -G "Visual Studio 15 2017 Win64" \
+    -DCMAKE_CXX_STANDARD=17 \
     -DCMAKE_PREFIX_PATH=X:\devlibs\2017\libmongoc \
-    -DBOOST_ROOT=X:\devlibs\2017\boost.bin \
-    -DBSONCXX_POLY_USE_BOOST=1 \
     -DCMAKE_INSTALL_PREFIX=X:\devlibs\2017\libmongocxx ..
 msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 ALL_BUILD.vcxproj
 msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 INSTALL.vcxproj
 ```
 
-ZMQ
----
-
-NOTE: we're currently NOT coupled to any specific ZMQ version, this might change in future
+### ZMQ
 
 libzmq
 ```bat
 git clone git://github.com/zeromq/libzmq.git libzmq.git
 cd libzmq.git
-# on master already
+git checkout v4.3.2
 
 mkdir _build && cd _build
 cmake -G "Visual Studio 15 2017 Win64" -DCMAKE_INSTALL_PREFIX=X:\devlibs\2017\libzmq ..
@@ -266,7 +113,7 @@ cppzmq
 ```bat
 git clone https://github.com/zeromq/cppzmq.git cppzmq.git
 cd cppzmq.git
-# on master already
+git checkout v4.4.1
 
 mkdir _build && cd _build
 cmake -G "Visual Studio 15 2017 Win64" \
@@ -276,8 +123,7 @@ msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 ALL_BUILD.vcxproj
 msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 INSTALL.vcxproj
 ```
 
-Rocks
----
+### Rocks
 
 gflags
 ```bat
@@ -306,9 +152,9 @@ msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 INSTALL.vcxproj
 
 rocks
 ```bat
-git clone https://github.com/facebook/rocksdb.git rocksdb.git
+git clone https://github.com/nemtech/rocksdb.git rocksdb.git
 cd rocksdb.git
-git checkout -B "5.18.fb" "origin/5.18.fb"
+git checkout v6.6.4-nem
 ```
 
 edit `thirdparty.inc`
@@ -335,8 +181,7 @@ msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 ALL_BUILD.vcxproj
 msbuild /p:Configuration=RelWithDebInfo /p:Platform=x64 INSTALL.vcxproj
 ```
 
-Sirius-Chain
----
+### Blockchain
 
 full cmake:
 ```bat
@@ -348,6 +193,7 @@ cmake -G "Visual Studio 15 2017 Win64" \
     -DBOOST_ROOT=X:\devlibs\2017\boost.bin \
     -DGTEST_ROOT=X:\devlibs\2017\googletest \
     -Dbenchmark_DIR=X:\devlibs\2017\googlebench\lib\cmake\benchmark \
+    -DOPENSSL_ROOT_DIR=X:\devlibs\openssl-1.1.1\x64 \
     -DCMAKE_PREFIX_PATH=X:\devlibs\2017\libmongocxx;X:\devlibs\2017\libmongoc \
     -DZeroMQ_DIR=X:\devlibs\2017\libzmq\CMake \
     -Dcppzmq_DIR=X:\devlibs\2017\cppzmq\share\cmake\cppzmq \

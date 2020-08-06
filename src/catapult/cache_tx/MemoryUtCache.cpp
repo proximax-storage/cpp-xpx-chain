@@ -120,19 +120,19 @@ namespace catapult { namespace cache {
 			using IdLookup = std::unordered_map<Hash256, size_t, utils::ArrayHasher<Hash256>>;
 
 		public:
-			explicit MemoryUtCacheModifier(
+			MemoryUtCacheModifier(
 					uint64_t maxCacheSize,
 					size_t& idSequence,
 					TransactionDataContainer& transactionDataContainer,
 					IdLookup& idLookup,
 					AccountCounters& counters,
-					utils::SpinReaderWriterLock::WriterLockGuard&& writerLock)
+					utils::SpinReaderWriterLock::WriterLockGuard&& writeLock)
 					: m_maxCacheSize(maxCacheSize)
 					, m_idSequence(idSequence)
 					, m_transactionDataContainer(transactionDataContainer)
 					, m_idLookup(idLookup)
 					, m_counters(counters)
-					, m_writeLock(std::move(writerLock))
+					, m_writeLock(std::move(writeLock))
 			{}
 
 		public:
@@ -226,14 +226,14 @@ namespace catapult { namespace cache {
 	}
 
 	UtCacheModifierProxy MemoryUtCache::modifier() {
-		auto writerLock = m_lock.acquireWriter();
+		auto writeLock = m_lock.acquireWriter();
 		return UtCacheModifierProxy(std::make_unique<MemoryUtCacheModifier>(
 				m_options.MaxCacheSize,
 				m_idSequence,
 				m_pImpl->TransactionDataContainer,
 				m_pImpl->IdLookup,
 				m_pImpl->Counters,
-				std::move(writerLock)));
+				std::move(writeLock)));
 	}
 
 	// endregion

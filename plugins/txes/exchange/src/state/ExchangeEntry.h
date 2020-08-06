@@ -57,7 +57,7 @@ namespace catapult { namespace state {
 
 	public:
 		static constexpr Height Invalid_Expiry_Height = Height(0);
-		static constexpr VersionType Current_Version = 2;
+		static constexpr VersionType Current_Version = 3;
 
 	public:
 		/// Gets the entry version.

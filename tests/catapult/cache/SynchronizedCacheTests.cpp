@@ -560,10 +560,6 @@ namespace catapult { namespace cache {
 		AssertCommitBlocksOperation([](auto& cache) {
 			// Act + Assert:
 			EXPECT_THROW(cache.createDelta(Height{0}), catapult_runtime_error);
-
-			//sometimes exception above completes faster than threads A & b
-			//add small delay to give time for other thread to complete
-			test::Pause();
 		});
 	}
 

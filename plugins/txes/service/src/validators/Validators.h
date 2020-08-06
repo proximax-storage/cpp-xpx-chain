@@ -53,7 +53,8 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, model::DriveFileSystemNotification<1>)();
 
 	/// A validator check that exchange from replicators are valid
-	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ExchangeV1, model::ExchangeNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ExchangeV2, model::ExchangeNotification<2>)();
 
 	/// A validator check that end drive transaction is permitted
 	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)();

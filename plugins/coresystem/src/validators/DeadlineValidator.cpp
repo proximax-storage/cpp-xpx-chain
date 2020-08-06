@@ -37,11 +37,15 @@ namespace catapult { namespace validators {
 
 	DECLARE_STATEFUL_VALIDATOR(Deadline, Notification)() {
 		return MAKE_STATEFUL_VALIDATOR(Deadline, [](const auto& notification, const auto& context) {
-			const model::NetworkConfiguration& config = context.Config.Network;
-			return ValidateTransactionDeadline(
-				context.BlockTime,
-				notification.Deadline,
-				utils::TimeSpan() == notification.MaxLifetime ? config.MaxTransactionLifetime : notification.MaxLifetime);
+		  const model::NetworkConfiguration& config = context.Config.Network;
+		  if (!config.EnableDeadlineValidation) {
+			  return ValidationResult::Success;
+		  }
+
+		  return ValidateTransactionDeadline(
+				  context.BlockTime,
+				  notification.Deadline,
+				  utils::TimeSpan() == notification.MaxLifetime ? config.MaxTransactionLifetime : notification.MaxLifetime);
 		});
 	}
 }}
