@@ -17,8 +17,6 @@ namespace catapult { namespace observers {
 		explicit OfferExpiryUpdater(cache::ExchangeCacheDelta& cache, state::ExchangeEntry& entry)
 			: m_cache(cache)
 			, m_entry(entry)
-			, m_initialExpiryHeight(m_entry.minExpiryHeight())
-			, m_initialPruneHeight(m_entry.minPruneHeight())
 		{}
 
 		~OfferExpiryUpdater();
@@ -28,8 +26,6 @@ namespace catapult { namespace observers {
 	private:
 		cache::ExchangeCacheDelta& m_cache;
 		state::ExchangeEntry& m_entry;
-		Height m_initialExpiryHeight;
-		Height m_initialPruneHeight;
 	};
 
 	void CreditAccount(const Key& owner, const MosaicId& mosaicId, const Amount& amount, const ObserverContext &context);

@@ -23,47 +23,53 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(CleanupOffers, Notification)() {
 		return MAKE_OBSERVER(CleanupOffers, Notification, ([](const Notification&, const ObserverContext& context) {
-			auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
-			auto& cache = context.Cache.sub<cache::ExchangeCache>();
-			auto expiringOfferOwners = cache.expiringOfferOwners(context.Height);
-			for (const auto& key : expiringOfferOwners) {
-				auto cacheIter = cache.find(key);
-				auto& entry = cacheIter.get();
-				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+		  auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		  auto& cache = context.Cache.sub<cache::ExchangeCache>();
+		  auto expiringOfferOwners = cache.expiringOfferOwners(context.Height);
+		  for (const auto& key : expiringOfferOwners) {
+			  auto cacheIter = cache.find(key);
+			  auto& entry = cacheIter.get();
+			  OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 
-				Amount xpxAmount(0);
-				auto onBuyOfferExpired = [&xpxAmount](const state::BuyOfferMap::const_iterator& iter) {
-					xpxAmount = xpxAmount + iter->second.ResidualCost;
-				};
-				auto onSellOfferExpired = [&entry, currencyMosaicId, &context](const state::SellOfferMap::const_iterator& iter) {
-					CreditAccount(entry.owner(), iter->first, iter->second.Amount, context);
-				};
+			  Amount xpxAmount(0);
+			  auto onBuyOfferExpired = [&xpxAmount](const state::BuyOfferMap::const_iterator& iter) {
+				xpxAmount = xpxAmount + iter->second.ResidualCost;
+			  };
+			  auto onSellOfferExpired = [&entry, currencyMosaicId, &context](const state::SellOfferMap::const_iterator& iter) {
+				CreditAccount(entry.owner(), iter->first, iter->second.Amount, context);
+			  };
 
-				if (NotifyMode::Commit == context.Mode) {
-					entry.expireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
-				} else {
-					entry.unexpireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
-				}
+			  if (NotifyMode::Commit == context.Mode) {
+				  entry.expireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
+			  } else {
+				  entry.unexpireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
+			  }
 
-				CreditAccount(entry.owner(), currencyMosaicId, xpxAmount, context);
-			}
+			  CreditAccount(entry.owner(), currencyMosaicId, xpxAmount, context);
+		  }
 
-			if (NotifyMode::Rollback == context.Mode)
-				return;
+		  if (NotifyMode::Rollback == context.Mode)
+			  return;
 
-			auto maxRollbackBlocks = context.Config.Network.MaxRollbackBlocks;
-			if (context.Height.unwrap() <= maxRollbackBlocks)
-				return;
+		  auto maxRollbackBlocks = context.Config.Network.MaxRollbackBlocks;
+		  if (context.Height.unwrap() <= maxRollbackBlocks)
+			  return;
 
-			auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
-			expiringOfferOwners = cache.expiringOfferOwners(pruneHeight);
-			for (const auto& key : expiringOfferOwners) {
-				auto cacheIter = cache.find(key);
-				auto& entry = cacheIter.get();
-				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
-				RemoveExpiredOffers(entry.expiredBuyOffers(), pruneHeight);
-				RemoveExpiredOffers(entry.expiredSellOffers(), pruneHeight);
-			}
+		  auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
+		  expiringOfferOwners = cache.expiringOfferOwners(pruneHeight);
+		  for (const auto& key : expiringOfferOwners) {
+			  auto cacheIter = cache.find(key);
+			  auto& entry = cacheIter.get();
+			  OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+			  RemoveExpiredOffers(entry.expiredBuyOffers(), pruneHeight);
+			  RemoveExpiredOffers(entry.expiredSellOffers(), pruneHeight);
+		  }
+
+		  auto cleanUpHeight = Height(context.Height.unwrap() - 2 * maxRollbackBlocks);
+		  expiringOfferOwners = cache.expiringOfferOwners(cleanUpHeight);
+		  for (const auto& key : expiringOfferOwners) {
+			  cache.removeExpiryHeight(key, cleanUpHeight);
+		  }
 		}))
 	}
 }}
