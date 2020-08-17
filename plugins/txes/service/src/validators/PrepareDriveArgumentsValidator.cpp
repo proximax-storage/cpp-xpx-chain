@@ -8,9 +8,10 @@
 
 namespace catapult { namespace validators {
 
-	using Notification = model::PrepareDriveNotification<1>;
+	namespace {
 
-	DEFINE_STATELESS_VALIDATOR(PrepareDriveArguments, [](const Notification& notification) {
+		template<VersionType version>
+		ValidationResult handler_v1(const model::PrepareDriveNotification<version> &notification) {
 			if (notification.Duration.unwrap() <= 0)
 				return Failure_Service_Drive_Invalid_Duration;
 
@@ -39,6 +40,9 @@ namespace catapult { namespace validators {
 				return Failure_Service_Min_Replicators_More_Than_Replicas;
 
 			return ValidationResult::Success;
-		});
+		}
 	}
-}
+
+	DEFINE_STATELESS_VALIDATOR_WITH_TYPE(PrepareDriveArgumentsV1, model::PrepareDriveNotification<1>, handler_v1<1>)
+	DEFINE_STATELESS_VALIDATOR_WITH_TYPE(PrepareDriveArgumentsV2, model::PrepareDriveNotification<2>, handler_v1<2>)
+}}
