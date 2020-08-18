@@ -14,7 +14,10 @@
 namespace catapult { namespace observers {
 
 	/// Observes changes triggered by prepare drive notifications.
-	DECLARE_OBSERVER(PrepareDrive, model::PrepareDriveNotification<1>)();
+	DECLARE_OBSERVER(PrepareDriveV1, model::PrepareDriveNotification<1>)();
+
+	/// Observes changes triggered by prepare drive notifications.
+	DECLARE_OBSERVER(PrepareDriveV2, model::PrepareDriveNotification<2>)();
 
 	/// Observes changes triggered by drive file system notifications.
 	DECLARE_OBSERVER(DriveFileSystem, model::DriveFileSystemNotification<1>)(const MosaicId& streamingMosaicId);

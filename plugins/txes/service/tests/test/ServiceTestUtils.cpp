@@ -196,6 +196,7 @@ namespace catapult { namespace test {
 		EXPECT_EQ(expectedEntry.duration(), entry.duration());
 		EXPECT_EQ(expectedEntry.billingPeriod(), entry.billingPeriod());
 		EXPECT_EQ(expectedEntry.billingPrice(), entry.billingPrice());
+		EXPECT_EQ(expectedEntry.version(), entry.version());
 
 		const auto& expectedBillingHistory = expectedEntry.billingHistory();
 		const auto& billingHistory = entry.billingHistory();

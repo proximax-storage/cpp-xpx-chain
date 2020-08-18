@@ -28,7 +28,12 @@ namespace catapult { namespace observers {
 		  auto expiringOfferOwners = cache.expiringOfferOwners(context.Height);
 		  for (const auto& key : expiringOfferOwners) {
 			  auto cacheIter = cache.find(key);
-			  auto& entry = cacheIter.get();
+			  auto* pEntry = cacheIter.tryGet();
+			  // Entry can not exist because in old versions of blockchain we remove exchange entry
+			  if (!pEntry)
+			  	continue;
+
+			  auto& entry = *pEntry;
 			  OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 
 			  Amount xpxAmount(0);
@@ -59,7 +64,12 @@ namespace catapult { namespace observers {
 		  expiringOfferOwners = cache.expiringOfferOwners(pruneHeight);
 		  for (const auto& key : expiringOfferOwners) {
 			  auto cacheIter = cache.find(key);
-			  auto& entry = cacheIter.get();
+			  auto* pEntry = cacheIter.tryGet();
+			  // Entry can not exist because in old versions of blockchain we remove exchange entry
+			  if (!pEntry)
+				  continue;
+
+			  auto& entry = *pEntry;
 			  OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 			  RemoveExpiredOffers(entry.expiredBuyOffers(), pruneHeight);
 			  RemoveExpiredOffers(entry.expiredSellOffers(), pruneHeight);

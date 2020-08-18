@@ -26,7 +26,7 @@ namespace catapult { namespace model {
 		{}
 
 	public:
-		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_PrepareDrive, 2)
+		DEFINE_TRANSACTION_CONSTANTS(Entity_Type_PrepareDrive, 3)
 
 	public:
 		union {
