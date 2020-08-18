@@ -372,7 +372,7 @@ namespace catapult { namespace state {
 	class DriveEntry : public DriveMixin {
 	public:
 		// Creates a drive entry around \a key.
-		explicit DriveEntry(const Key& key) : m_key(key)
+		explicit DriveEntry(const Key& key) : m_key(key), m_version(1)
 		{}
 
 	public:
@@ -381,7 +381,16 @@ namespace catapult { namespace state {
 			return m_key;
 		}
 
+		void setVersion(VersionType version) {
+			m_version = version;
+		}
+
+		VersionType version() const {
+			return m_version;
+		}
+
 	private:
 		Key m_key;
+		VersionType m_version;
 	};
 }}
