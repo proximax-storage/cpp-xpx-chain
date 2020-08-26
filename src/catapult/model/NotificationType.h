@@ -132,6 +132,9 @@ namespace catapult { namespace model {
 	/// Mosaic Levy was transferred between two accounts.
 	DEFINE_CORE_NOTIFICATION(Levy_Transfer_v1, 0x0010, All);
 
+	/// Block cosignatures.
+	DEFINE_CORE_NOTIFICATION(Block_Cosignatures_v1, 0x0011, Validator);
+
 #undef DEFINE_CORE_NOTIFICATION
 
 	// endregion

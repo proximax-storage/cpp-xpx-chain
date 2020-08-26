@@ -134,8 +134,8 @@ namespace catapult { namespace test {
 			ASSERT_TRUE(view.contains(Default_Storage_Mosaic_Id));
 			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Storage_Mosaic_Id).get().supply());
 
-			ASSERT_TRUE(view.contains(Default_Streamin_Mosaic_Id));
-			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Streamin_Mosaic_Id).get().supply());
+			ASSERT_TRUE(view.contains(Default_Streaming_Mosaic_Id));
+			EXPECT_EQ(Amount(8'999'999'998'000'000), view.find(Default_Streaming_Mosaic_Id).get().supply());
 		}
 	}
 

@@ -54,6 +54,7 @@ endfunction()
 
 add_subdirectory(account_link)
 add_subdirectory(aggregate)
+add_subdirectory(committee)
 add_subdirectory(config)
 add_subdirectory(contract)
 add_subdirectory(exchange)

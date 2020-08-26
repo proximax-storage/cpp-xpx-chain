@@ -234,6 +234,16 @@
 			"name": "Mosaic_Remove_Levy",
 			"type": "17485",
 			"supportedVersions": [1]
+		},
+		{
+			"name": "addHarvester",
+			"type": "16737",
+			"supportedVersions": [1]
+		},
+		{
+			"name": "removeHarvester",
+			"type": "16993",
+			"supportedVersions": [1]
 		}
 	]
 }

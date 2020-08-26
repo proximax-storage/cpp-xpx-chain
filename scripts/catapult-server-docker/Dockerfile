@@ -107,6 +107,7 @@ RUN cd /catapult \
 # Required extensions
     catapult.mongo.plugins.accountlink \
     catapult.mongo.plugins.aggregate \
+    catapult.mongo.plugins.committee \
     catapult.mongo.plugins.config \
     catapult.mongo.plugins.contract \
     catapult.mongo.plugins.exchange \
@@ -124,6 +125,7 @@ RUN cd /catapult \
     catapult.mongo.plugins.supercontract \
     catapult.plugins.accountlink \
     catapult.plugins.aggregate \
+    catapult.plugins.committee \
     catapult.plugins.config \
     catapult.plugins.contract \
     catapult.plugins.exchange \

@@ -22,6 +22,7 @@
 #include "catapult/cache/CacheConfiguration.h"
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "catapult/cache/ReadOnlyCatapultCache.h"
+#include "catapult/chain/CommitteeManager.h"
 #include "catapult/config/InflationConfiguration.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
@@ -258,6 +259,16 @@ namespace catapult { namespace plugins {
 
 		// endregion
 
+		// region committee
+
+		/// Sets a committee manager.
+		void setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager);
+
+		/// Gets committee manager.
+		chain::CommitteeManager& getCommitteeManager();
+
+		// endregion
+
 	private:
 		std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
 		StorageConfiguration m_storageConfig;
@@ -284,6 +295,8 @@ namespace catapult { namespace plugins {
 		std::vector<PluginInitializer> m_pluginInitializers;
 
 		bool m_shouldEnableVerifiableState;
+
+		std::shared_ptr<chain::CommitteeManager> m_pCommitteeManager;
 	};
 }}
 

@@ -97,7 +97,7 @@ namespace catapult { namespace test {
 			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xFF8918A670A31F3A), Default_Storage_Mosaic_Id);
 
 			blockStatementBuilder.setSource({ aliasFirstUsedPrimarySourceIds[2], 0 });
-			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xEF77EF3F741EE7EA), Default_Streamin_Mosaic_Id);
+			blockStatementBuilder.addResolution(UnresolvedMosaicId(0xEF77EF3F741EE7EA), Default_Streaming_Mosaic_Id);
 
 			// 3. calculate the block receipts hash
 			auto pStatement = blockStatementBuilder.build();

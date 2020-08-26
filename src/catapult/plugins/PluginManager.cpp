@@ -314,4 +314,24 @@ namespace catapult { namespace plugins {
 	}
 
 	// endregion
+
+	// region committee
+
+	/// Sets a committee manager.
+	void PluginManager::setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager) {
+		if (!!m_pCommitteeManager)
+			CATAPULT_THROW_RUNTIME_ERROR("committee manager already set");
+
+		m_pCommitteeManager = pManager;
+	}
+
+	/// Gets committee manager.
+	chain::CommitteeManager& PluginManager::getCommitteeManager() {
+		if (!m_pCommitteeManager)
+			CATAPULT_THROW_RUNTIME_ERROR("committee manager not set");
+
+		return *m_pCommitteeManager;
+	}
+
+	// endregion
 }}

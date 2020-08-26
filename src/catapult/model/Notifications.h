@@ -20,6 +20,7 @@
 
 #pragma once
 #include "ContainerTypes.h"
+#include "Cosignature.h"
 #include "EntityType.h"
 #include "NetworkInfo.h"
 #include "NotificationType.h"
@@ -314,6 +315,50 @@ namespace catapult { namespace model {
 
 		/// Number of block transactions.
 		uint32_t NumTransactions;
+
+		/// The part of the transaction fee harvester is willing to get.
+		uint32_t FeeInterest;
+
+		/// Denominator of the transaction fee.
+		uint32_t FeeInterestDenominator;
+	};
+
+	/// Notifies the cosignatures of a block.
+	template<VersionType version>
+	struct BlockCosignaturesNotification;
+
+	template<>
+	struct BlockCosignaturesNotification<1> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Core_Block_Cosignatures_v1_Notification;
+
+	public:
+		/// Creates a block notification around \a signer, \a numCosignatures, \a pCosignatures,
+		/// \a feeInterest and \a feeInterestDenominator.
+		 BlockCosignaturesNotification(
+			const Key& signer,
+			size_t numCosignatures,
+			const Cosignature* pCosignatures,
+			uint32_t feeInterest,
+			uint32_t feeInterestDenominator)
+				: Notification(Notification_Type, sizeof(BlockCosignaturesNotification<1>))
+				, Signer(signer)
+				, NumCosignatures(numCosignatures)
+				, CosignaturesPtr(pCosignatures)
+				, FeeInterest(feeInterest)
+				, FeeInterestDenominator(feeInterestDenominator)
+		{}
+
+	public:
+		/// Block signer.
+		const Key& Signer;
+
+		/// Number of block cosignatures.
+		size_t NumCosignatures;
+
+		/// Block cosignatures.
+		const Cosignature* CosignaturesPtr;
 
 		/// The part of the transaction fee harvester is willing to get.
 		uint32_t FeeInterest;

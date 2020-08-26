@@ -69,5 +69,7 @@ namespace catapult { namespace model {
 		SuperContract = 0x60,
 		/// Levy facility code.
 		Levy = 0x4F,
+		/// Committee facility code.
+		Committee = 0x61,
 	};
 }}
