@@ -78,7 +78,10 @@ namespace catapult { namespace test {
 			catapult::Timestamp Timestamp;
 		};
 
-		model::UniqueEntityPtr<model::Block> GenerateBlock(const TestBlockTransactions& transactions, const TestBlockOptions& options) {
+		model::UniqueEntityPtr<model::Block> GenerateBlock(
+				const TestBlockTransactions& transactions,
+				const TestBlockOptions& options,
+				size_t numCosignatures = 0) {
 			model::PreviousBlockContext context;
 			auto pBlock = model::CreateBlock(context, Network_Identifier, options.Signer.publicKey(), transactions.get());
 			RandomizeBlock(*pBlock);
@@ -92,7 +95,19 @@ namespace catapult { namespace test {
 					transaction.Deadline = options.Timestamp + Timestamp(1);
 			}
 
-			return pBlock;
+			if (!numCosignatures)
+				return pBlock;
+
+			auto pBlockWithCosignatures = utils::MakeUniqueWithSize<model::Block>(pBlock->Size + numCosignatures * sizeof(model::Cosignature));
+			auto* pData = reinterpret_cast<uint8_t*>(pBlockWithCosignatures.get());
+			std::memcpy(pData, pBlock.get(), pBlock->Size);
+			auto pCosignature = pBlockWithCosignatures->CosignaturesPtr();
+			for (auto i = 0u; i < pBlockWithCosignatures->CosignaturesCount(); ++i, ++pCosignature) {
+				FillWithRandomData(pCosignature->Signer);
+				FillWithRandomData(pCosignature->Signature);
+			}
+
+			return pBlockWithCosignatures;
 		}
 	}
 
@@ -121,6 +136,17 @@ namespace catapult { namespace test {
 		blockOptions.Height = height;
 		blockOptions.Timestamp = timestamp;
 		return GenerateBlock(numTransactions, blockOptions);
+	}
+
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactionsAndCosignatures(const TestBlockTransactions& transactions, size_t numCosignatures) {
+		return GenerateBlock(transactions, TestBlockOptions(GenerateKeyPair()), numCosignatures);
+	}
+
+	model::UniqueEntityPtr<model::Block> GenerateBlockWithTransactionsAndCosignatures(size_t numTransactions, Height height, size_t numCosignatures) {
+		auto signer = GenerateKeyPair();
+		auto blockOptions = TestBlockOptions(signer);
+		blockOptions.Height = height;
+		return GenerateBlock(numTransactions, blockOptions, numCosignatures);
 	}
 
 	model::UniqueEntityPtr<model::Block> GenerateDeterministicBlock() {

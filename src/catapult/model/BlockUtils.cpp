@@ -20,11 +20,8 @@
 
 #include "BlockUtils.h"
 #include "FeeUtils.h"
-#include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/crypto/Signer.h"
-#include "catapult/utils/MemoryUtils.h"
-#include <cstring>
 
 namespace catapult { namespace model {
 
@@ -115,10 +112,12 @@ namespace catapult { namespace model {
 				NetworkIdentifier networkIdentifier,
 				const Key& signerPublicKey,
 				const TContainer& transactions) {
-			auto size = sizeof(BlockHeader) + CalculateTotalSize(transactions);
+			auto transactionPayloadSize = CalculateTotalSize(transactions);
+			auto size = sizeof(BlockHeader) + transactionPayloadSize;
 			auto pBlock = utils::MakeUniqueWithSize<Block>(size);
 			std::memset(static_cast<void*>(pBlock.get()), 0, sizeof(BlockHeader));
 			pBlock->Size = static_cast<uint32_t>(size);
+			pBlock->TransactionPayloadSize = transactionPayloadSize;
 
 			pBlock->Signer = signerPublicKey;
 			pBlock->Version = MakeVersion(networkIdentifier, Block::Current_Version);
@@ -144,10 +143,12 @@ namespace catapult { namespace model {
 	}
 
 	UniqueEntityPtr<Block> StitchBlock(const BlockHeader& blockHeader, const Transactions& transactions) {
-		auto size = sizeof(BlockHeader) + CalculateTotalSize(transactions);
+		auto transactionPayloadSize = CalculateTotalSize(transactions);
+		auto size = sizeof(BlockHeader) + transactionPayloadSize;
 		auto pBlock = utils::MakeUniqueWithSize<Block>(size);
 		std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(BlockHeader));
 		pBlock->Size = static_cast<uint32_t>(size);
+		pBlock->TransactionPayloadSize = transactionPayloadSize;
 
 		// append all the transactions
 		auto pDestination = reinterpret_cast<uint8_t*>(pBlock->TransactionsPtr());

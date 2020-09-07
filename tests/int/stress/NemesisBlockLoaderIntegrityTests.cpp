@@ -26,7 +26,6 @@
 #include "tests/test/nemesis/NemesisTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/MijinConstants.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 
@@ -41,8 +40,8 @@ namespace catapult { namespace extensions {
 		// 3) Num_Nemesis_Accounts transfer transactions
 
 		constexpr auto Num_Nemesis_Accounts = CountOf(test::Mijin_Test_Private_Keys);
-		constexpr auto Num_Nemesis_Namespaces = 4;
-		constexpr auto Num_Nemesis_Mosaics = 3;
+		constexpr auto Num_Nemesis_Namespaces = 6;
+		constexpr auto Num_Nemesis_Mosaics = 5;
 		constexpr auto Num_Nemesis_Config = 1;
 		constexpr auto Num_Nemesis_Upgrade = 1;
 		constexpr auto Num_Nemesis_Transactions = Num_Nemesis_Namespaces + 3 * Num_Nemesis_Mosaics + Num_Nemesis_Accounts + Num_Nemesis_Config + Num_Nemesis_Upgrade;

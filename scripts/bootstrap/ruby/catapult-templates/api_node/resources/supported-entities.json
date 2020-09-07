@@ -3,7 +3,7 @@
 		{
 			"name": "Block",
 			"type": "33091",
-			"supportedVersions": [3]
+			"supportedVersions": [4]
 		},
 		{
 			"name": "Nemesis_Block",

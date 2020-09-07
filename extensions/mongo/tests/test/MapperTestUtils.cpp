@@ -21,14 +21,9 @@
 #include "MapperTestUtils.h"
 #include "mongo/src/MongoTransactionMetadata.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "catapult/model/Block.h"
-#include "catapult/model/ContainerTypes.h"
-#include "catapult/model/Cosignature.h"
-#include "catapult/model/Receipt.h"
 #include "catapult/state/AccountState.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/TestHarness.h"
-#include <bsoncxx/types.hpp>
 
 namespace catapult { namespace test {
 
@@ -95,7 +90,7 @@ namespace catapult { namespace test {
 
 	void AssertEqualBlockData(const model::Block& block, const bsoncxx::document::view& dbBlock) {
 		// - 4 fields from VerifiableEntity, 9 fields from Block
-		EXPECT_EQ(15u, GetFieldCount(dbBlock));
+		EXPECT_EQ(17u, GetFieldCount(dbBlock));
 		AssertEqualVerifiableEntityData(block, dbBlock);
 
 		EXPECT_EQ(block.Height, Height(GetUint64(dbBlock, "height")));
@@ -109,6 +104,8 @@ namespace catapult { namespace test {
 		EXPECT_EQ(block.Beneficiary, GetKeyValue(dbBlock, "beneficiary"));
 		EXPECT_EQ(block.FeeInterest, GetUint32(dbBlock, "feeInterest"));
 		EXPECT_EQ(block.FeeInterestDenominator, GetUint32(dbBlock, "feeInterestDenominator"));
+		EXPECT_EQ(block.Round, GetUint16(dbBlock, "round"));
+		EXPECT_EQ(block.TransactionPayloadSize, GetUint32(dbBlock, "transactionPayloadSize"));
 	}
 
 	void AssertEqualBlockMetadata(
@@ -119,7 +116,7 @@ namespace catapult { namespace test {
 			const std::vector<Hash256>& transactionMerkleTree,
 			const std::vector<Hash256>& statementMerkleTree,
 			const bsoncxx::document::view& dbBlockMetadata) {
-		auto expectedFieldCount = statementMerkleTree.empty() ? 6u : 8u;
+		auto expectedFieldCount = statementMerkleTree.empty() ? 7u : 9u;
 		EXPECT_EQ(expectedFieldCount, GetFieldCount(dbBlockMetadata));
 		EXPECT_EQ(blockElement.EntityHash, GetHashValue(dbBlockMetadata, "hash"));
 		EXPECT_EQ(blockElement.GenerationHash, GetGenerationHashValue(dbBlockMetadata, "generationHash"));
@@ -132,6 +129,12 @@ namespace catapult { namespace test {
 			EXPECT_EQ(numStatements, GetInt32(dbBlockMetadata, "numStatements"));
 			AssertEqualHashArray(statementMerkleTree, dbBlockMetadata["statementMerkleTree"].get_array().value);
 		}
+
+		auto dbCosignatures = dbBlockMetadata["cosignatures"].get_array().value;
+		const auto& block = blockElement.Block;
+		auto numCosignatures = block.CosignaturesCount();
+		ASSERT_EQ(numCosignatures, test::GetFieldCount(dbCosignatures));
+		test::AssertEqualCosignatures(numCosignatures, block.CosignaturesPtr(), dbCosignatures);
 	}
 
 	void AssertEqualAccountState(const state::AccountState& accountState, const bsoncxx::document::view& dbAccount) {
@@ -186,6 +189,15 @@ namespace catapult { namespace test {
 			EXPECT_EQ(expectedCosignature.Signer, GetKeyValue(cosignatureView, "signer"));
 			EXPECT_EQ(expectedCosignature.Signature, GetSignatureValue(cosignatureView, "signature"));
 			++iter;
+		}
+	}
+
+	void AssertEqualCosignatures(size_t numCosignatures, const model::Cosignature* pCosignature, const bsoncxx::array::view& dbCosignatures) {
+		auto iter = dbCosignatures.cbegin();
+		for (auto i = 0u; i < numCosignatures; ++i, ++iter, ++pCosignature) {
+			auto cosignatureView = iter->get_document().view();
+			EXPECT_EQ(pCosignature->Signer, GetKeyValue(cosignatureView, "signer"));
+			EXPECT_EQ(pCosignature->Signature, GetSignatureValue(cosignatureView, "signature"));
 		}
 	}
 

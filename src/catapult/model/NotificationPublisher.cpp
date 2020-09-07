@@ -19,7 +19,6 @@
 **/
 
 #include "NotificationPublisher.h"
-#include "Block.h"
 #include "BlockUtils.h"
 #include "FeeUtils.h"
 #include "NotificationSubscriber.h"
@@ -88,8 +87,23 @@ namespace catapult { namespace model {
 			}
 
 			void publish(const Block& block, NotificationSubscriber& sub) const {
+				auto headerSize = VerifiableEntity::Header_Size;
+				auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
+
 				// raise an entity notification
 				switch (block.EntityVersion()) {
+				case 4: {
+					auto pCosignature = block.CosignaturesPtr();
+					auto cosignaturesCount = block.CosignaturesCount();
+
+					sub.notify(BlockCosignaturesNotification<1>(block.Signer, cosignaturesCount, pCosignature, block.FeeInterest, block.FeeInterestDenominator));
+
+					for (auto i = 0u; i < cosignaturesCount; ++i, ++pCosignature)
+						sub.notify(SignatureNotification<1>(pCosignature->Signer, pCosignature->Signature, blockData));
+
+					[[fallthrough]];
+				}
+
 				case 3: {
 					// raise an account public key notification
 					if (Key() != block.Beneficiary)
@@ -106,8 +120,6 @@ namespace catapult { namespace model {
 					sub.notify(blockNotification);
 
 					// raise a signature notification
-					auto headerSize = VerifiableEntity::Header_Size;
-					auto blockData = RawBuffer{ reinterpret_cast<const uint8_t*>(&block) + headerSize, sizeof(BlockHeader) - headerSize };
 					sub.notify(SignatureNotification<1>(block.Signer, block.Signature, blockData));
 					break;
 				}

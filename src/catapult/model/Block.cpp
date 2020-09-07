@@ -19,17 +19,24 @@
 **/
 
 #include "Block.h"
-#include <algorithm>
-#include <cstring>
 
 namespace catapult { namespace model {
 
 	size_t GetTransactionPayloadSize(const BlockHeader& header) {
-		return header.Size - sizeof(BlockHeader);
+		return header.TransactionPayloadSize;
+	}
+
+	namespace {
+		constexpr bool IsPayloadSizeValid(const Block& block) {
+			return
+				block.Size >= sizeof(BlockHeader) &&
+				block.Size - sizeof(BlockHeader) >= block.TransactionPayloadSize &&
+				0 == (block.Size - sizeof(BlockHeader) - block.TransactionPayloadSize) % sizeof(Cosignature);
+		}
 	}
 
 	bool IsSizeValid(const Block& block, const TransactionRegistry& registry) {
-		if (block.Size < sizeof(BlockHeader)) {
+		if (!IsPayloadSizeValid(block)) {
 			CATAPULT_LOG(warning) << block.Type << " block failed size validation with size " << block.Size;
 			return false;
 		}

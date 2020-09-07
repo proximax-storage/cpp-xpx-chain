@@ -220,6 +220,10 @@ namespace catapult { namespace test {
 	/// Verifies that model \a expectedCosignatures and db cosignatures (\a dbCosignatures) are equivalent.
 	void AssertEqualCosignatures(const std::vector<model::Cosignature>& expectedCosignatures, const bsoncxx::array::view& dbCosignatures);
 
+	/// Verifies that model cosignatures (\a numCosignatures pointed to by \a pCosignature) and db cosignatures
+	/// (\a dbCosignatures) are equivalent.
+	void AssertEqualCosignatures(size_t numCosignatures, const model::Cosignature* pCosignature, const bsoncxx::array::view& dbCosignatures);
+
 	/// Verifies that model \a receipt and db receipt (\a dbReceipt) are equivalent.
 	void AssertEqualReceiptData(const model::Receipt& receipt, const bsoncxx::document::view& dbReceipt);
 

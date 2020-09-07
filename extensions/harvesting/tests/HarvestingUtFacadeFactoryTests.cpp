@@ -26,7 +26,6 @@
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
 
@@ -453,6 +452,7 @@ namespace catapult { namespace harvesting {
 		RunUtFacadeTest(0, [](auto& facade, const auto&, const auto& executionConfig) {
 			// Act: commit
 			auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
+			pBlockHeader->TransactionPayloadSize = 0u;
 			auto pBlock = facade.commit(*pBlockHeader);
 
 			// Assert: transactions have been removed
@@ -488,6 +488,7 @@ namespace catapult { namespace harvesting {
 			// Act: commit (update header size to match expected)
 			auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
 			pBlockHeader->Size += transactionsSize;
+			pBlockHeader->TransactionPayloadSize = transactionsSize;
 			auto pBlock = facade.commit(*pBlockHeader);
 
 			// Assert: transactions have been removed

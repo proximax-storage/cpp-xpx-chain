@@ -19,10 +19,8 @@
 **/
 
 #include "catapult/ionet/PacketEntityUtils.h"
-#include "catapult/ionet/IoTypes.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/PacketTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace ionet {
 
@@ -351,7 +349,7 @@ namespace catapult { namespace ionet {
 	PACKET_SINGLE_ENTITY_TEST(CanExtractSingleBlockWithTransaction) {
 		// Arrange: create a packet containing a block with one transaction
 		ByteBuffer buffer(Block_Transaction_Packet_Size);
-		const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
+		const auto& packet = test::SetPushBlockPacketInBuffer(buffer, Transaction_Size);
 		SetTransactionAt(buffer, static_cast<uint32_t>(buffer.size() - Transaction_Size));
 
 		// Act:
@@ -371,7 +369,7 @@ namespace catapult { namespace ionet {
 			buffer.resize(Block_Transaction_Packet_Size + 2 * sizeof(model::BlockHeader));
 			const auto& packet = test::SetPushBlockPacketInBuffer(buffer);
 			test::SetBlockAt(buffer, sizeof(Packet)); // block 1
-			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeader), Block_Transaction_Size); // block 2
+			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeader), Block_Transaction_Size, Transaction_Size); // block 2
 			SetTransactionAt(buffer, sizeof(Packet) + 2 * sizeof(model::BlockHeader)); // block 2 tx
 			test::SetBlockAt(buffer, sizeof(Packet) + sizeof(model::BlockHeader) + Block_Transaction_Size); // block 3
 			return packet;

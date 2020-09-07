@@ -20,9 +20,7 @@
 
 #include "BlockMapper.h"
 #include "MapperUtils.h"
-#include "catapult/crypto/MerkleHashBuilder.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/model/Elements.h"
 #include "catapult/model/EntityHasher.h"
 
 namespace catapult { namespace mongo { namespace mappers {
@@ -34,6 +32,22 @@ namespace catapult { namespace mongo { namespace mappers {
 				hashArray << ToBinary(hash);
 
 			hashArray << bson_stream::close_array;
+		}
+
+		void StreamCosignatureArray(
+				bson_stream::document& builder,
+				size_t numCosignatures,
+				const model::Cosignature* pCosignature) {
+			auto cosignatureArray = builder << "cosignatures" << bson_stream::open_array;
+			for (auto i = 0u; i < numCosignatures; ++i, ++pCosignature) {
+				cosignatureArray
+					<< bson_stream::open_document
+					<< "signer" << ToBinary(pCosignature->Signer)
+					<< "signature" << ToBinary(pCosignature->Signature)
+					<< bson_stream::close_document;
+			}
+
+			cosignatureArray << bson_stream::close_array;
 		}
 
 		void StreamBlockBasicMetadata(bson_stream::document& builder, const model::BlockElement& blockElement, Amount totalFee) {
@@ -74,6 +88,8 @@ namespace catapult { namespace mongo { namespace mappers {
 			StreamBlockMerkleTree(builder, "numStatements", numStatements, "statementMerkleTree", statementMerkleTree);
 		}
 
+		StreamCosignatureArray(builder, block.CosignaturesCount(), block.CosignaturesPtr());
+
 		builder << bson_stream::close_document;
 
 		// block data
@@ -89,7 +105,9 @@ namespace catapult { namespace mongo { namespace mappers {
 				<< "stateHash" << ToBinary(block.StateHash)
 				<< "beneficiary" << ToBinary(block.Beneficiary)
 				<< "feeInterest" << static_cast<int32_t>(block.FeeInterest)
-				<< "feeInterestDenominator" << static_cast<int32_t>(block.FeeInterestDenominator);
+				<< "feeInterestDenominator" << static_cast<int32_t>(block.FeeInterestDenominator)
+				<< "round" << static_cast<int32_t>(block.Round)
+				<< "transactionPayloadSize" << static_cast<int32_t>(block.TransactionPayloadSize);
 		builder << bson_stream::close_document;
 		return builder << bson_stream::finalize;
 	}

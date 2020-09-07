@@ -21,10 +21,8 @@
 #pragma once
 #include "Transaction.h"
 #include "TransactionContainer.h"
-#include "VerifiableEntity.h"
+#include "catapult/model/Cosignature.h"
 #include "catapult/types.h"
-#include <memory>
-#include <vector>
 
 namespace catapult { namespace model {
 
@@ -34,7 +32,7 @@ namespace catapult { namespace model {
 	struct BlockHeader : public VerifiableEntity {
 	public:
 		/// Block format version.
-		static constexpr VersionType Current_Version = 3;
+		static constexpr VersionType Current_Version = 4;
 
 	public:
 		/// Height of a block.
@@ -71,10 +69,60 @@ namespace catapult { namespace model {
 
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
+
+		/// Committee round (number of attempts to generate this block).
+		uint16_t Round;
+
+		/// Transaction payload size in bytes.
+		/// \note This is the total number of bytes occupied by all transactions.
+		uint32_t TransactionPayloadSize;
+
+		// followed by transaction data
+		// followed by cosignatures data
 	};
 
 	/// Binary layout for a block.
-	struct Block : public TransactionContainer<BlockHeader, Transaction> {};
+	struct Block : public TransactionContainer<BlockHeader, Transaction> {
+	private:
+		template<typename T>
+		static auto* CosignaturesPtrT(T& block) {
+			return block.Size <= sizeof(T) + block.TransactionPayloadSize
+					? nullptr
+					: block.ToBytePointer() + sizeof(T) + block.TransactionPayloadSize;
+		}
+
+		template<typename T>
+		static size_t CosignaturesCountT(T& block) {
+			return block.Size <= sizeof(T) + block.TransactionPayloadSize
+					? 0
+					: (block.Size - sizeof(T) - block.TransactionPayloadSize) / sizeof(Cosignature);
+		}
+
+	public:
+		/// Returns a const pointer to the first cosignature contained in this block.
+		/// \note The returned pointer is null if the block has an invalid size.
+		const Cosignature* CosignaturesPtr() const {
+			return reinterpret_cast<const Cosignature*>(CosignaturesPtrT(*this));
+		}
+
+		/// Returns a pointer to the first cosignature contained in this block.
+		/// \note The returned pointer is null if the block has an invalid size.
+		Cosignature* CosignaturesPtr() {
+			return reinterpret_cast<Cosignature*>(CosignaturesPtrT(*this));
+		}
+
+		/// Returns the number of cosignatures attached to this block.
+		/// \note The returned value is zero if the block has an invalid size.
+		size_t CosignaturesCount() const {
+			return CosignaturesCountT(*this);
+		}
+
+		/// Returns the number of cosignatures attached to this block.
+		/// \note The returned value is zero if the block has an invalid size.
+		size_t CosignaturesCount() {
+			return CosignaturesCountT(*this);
+		}
+	};
 
 #pragma pack(pop)
 
