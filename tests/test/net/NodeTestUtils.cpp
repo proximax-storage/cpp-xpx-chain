@@ -19,9 +19,6 @@
 **/
 
 #include "NodeTestUtils.h"
-#include "catapult/ionet/NodeInteractionResult.h"
-#include "catapult/utils/Casting.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 

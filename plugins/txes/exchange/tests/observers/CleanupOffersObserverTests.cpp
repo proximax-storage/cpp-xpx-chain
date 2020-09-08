@@ -8,9 +8,7 @@
 #include "catapult/model/Address.h"
 #include "src/observers/Observers.h"
 #include "tests/test/ExchangeTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 

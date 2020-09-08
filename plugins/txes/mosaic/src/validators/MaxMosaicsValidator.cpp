@@ -20,9 +20,6 @@
 
 #include "Validators.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/state/AccountBalances.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "src/config/MosaicConfiguration.h"
 
 namespace catapult { namespace validators {

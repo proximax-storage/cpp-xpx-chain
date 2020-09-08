@@ -19,9 +19,7 @@
 **/
 
 #include "catapult/model/WeakEntityInfo.h"
-#include "catapult/model/Block.h"
 #include "tests/test/nodeps/Equality.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

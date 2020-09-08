@@ -4,16 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/Address.h"
 #include "catapult/utils/HexParser.h"
-#include "plugins/txes/lock_secret/src/model/LockHashAlgorithm.h"
-#include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
 #include "src/plugins/StartFileDownloadTransactionPlugin.h"
 #include "src/model/StartFileDownloadTransaction.h"
-#include "src/model/ServiceNotifications.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
 

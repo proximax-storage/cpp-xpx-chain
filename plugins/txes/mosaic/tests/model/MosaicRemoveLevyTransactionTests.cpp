@@ -3,10 +3,9 @@
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
+
 #include "src/model/MosaicRemoveLevyTransaction.h"
 #include "tests/test/core/TransactionTestUtils.h"
-#include "tests/TestHarness.h"
-#include "src/model/MosaicLevy.h"
 
 namespace catapult { namespace model {
 

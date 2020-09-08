@@ -22,7 +22,6 @@
 #include "catapult/cache/CatapultCacheBuilder.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/cache/SimpleCache.h"
-#include "tests/TestHarness.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace observers {

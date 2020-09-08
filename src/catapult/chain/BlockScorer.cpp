@@ -20,9 +20,7 @@
 
 #include "BlockScorer.h"
 #include "catapult/model/Block.h"
-#include "catapult/model/ImportanceHeight.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/utils/IntegerMath.h"
 
 namespace catapult { namespace chain {
 

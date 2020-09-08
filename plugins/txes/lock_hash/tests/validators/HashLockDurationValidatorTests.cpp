@@ -19,7 +19,6 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "src/state/HashLockInfo.h"
 #include "plugins/txes/lock_shared/tests/validators/LockDurationValidatorTests.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 

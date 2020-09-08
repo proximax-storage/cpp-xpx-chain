@@ -22,7 +22,6 @@
 #include "HarvestingConfiguration.h"
 #include "catapult/crypto/KeyUtils.h"
 #include "catapult/utils/ConfigurationBag.h"
-#include "catapult/utils/HexParser.h"
 
 namespace catapult { namespace harvesting {
 

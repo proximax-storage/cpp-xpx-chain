@@ -23,7 +23,6 @@
 #include "tests/test/AccountPropertiesTestUtils.h"
 #include "tests/test/core/SerializerOrderingTests.h"
 #include "tests/test/core/SerializerTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace state {
 

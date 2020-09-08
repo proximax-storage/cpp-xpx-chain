@@ -22,7 +22,6 @@
 #include "tests/test/MultisigCacheTestUtils.h"
 #include "tests/test/MultisigTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
 

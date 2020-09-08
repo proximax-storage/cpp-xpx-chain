@@ -19,8 +19,6 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "src/cache/MosaicCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/constants.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

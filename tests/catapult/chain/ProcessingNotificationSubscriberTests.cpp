@@ -19,11 +19,8 @@
 **/
 
 #include "catapult/chain/ProcessingNotificationSubscriber.h"
-#include "tests/test/core/NotificationTestUtils.h"
-#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
-#include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
 

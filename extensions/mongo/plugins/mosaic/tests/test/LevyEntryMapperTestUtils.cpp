@@ -1,6 +1,10 @@
+/**
+*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
+
 #include "LevyEntryMapperTestUtils.h"
-#include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/mosaic/src/state/LevyEntry.h"
 #include "src/utils/LevyMapperUtils.h"
 #include "tests/TestHarness.h"
 

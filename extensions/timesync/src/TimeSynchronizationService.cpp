@@ -27,8 +27,6 @@
 #include "timesync/src/handlers/TimeSyncHandlers.h"
 #include "catapult/extensions/NetworkUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
-#include "catapult/extensions/ServiceState.h"
-#include "catapult/utils/NetworkTime.h"
 
 namespace catapult { namespace timesync {
 

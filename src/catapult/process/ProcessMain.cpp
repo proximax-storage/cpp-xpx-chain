@@ -27,9 +27,7 @@
 #include "catapult/io/FileLock.h"
 #include "catapult/thread/ThreadInfo.h"
 #include "catapult/utils/ExceptionLogging.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/version/version.h"
-#include <iostream>
 
 namespace catapult { namespace process {
 

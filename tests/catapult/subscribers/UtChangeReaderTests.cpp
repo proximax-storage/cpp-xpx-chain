@@ -24,7 +24,6 @@
 #include "catapult/subscribers/SubscriberOperationTypes.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/test/other/mocks/MockUtChangeSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace subscribers {
 

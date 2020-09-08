@@ -19,7 +19,6 @@
 **/
 
 #include "JointValidator.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/validators/ValidatorContext.h"
 

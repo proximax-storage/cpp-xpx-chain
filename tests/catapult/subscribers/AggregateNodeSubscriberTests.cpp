@@ -22,7 +22,6 @@
 #include "catapult/ionet/Node.h"
 #include "tests/catapult/subscribers/test/AggregateSubscriberTestContext.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace subscribers {
 

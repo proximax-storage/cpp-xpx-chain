@@ -22,7 +22,6 @@
 #include "catapult/utils/ConfigurationUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace config {
 

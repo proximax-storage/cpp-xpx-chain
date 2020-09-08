@@ -18,11 +18,9 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/cache/MosaicCacheStorage.h"
 #include "src/cache/MosaicCache.h"
 #include "tests/test/MosaicTestUtils.h"
 #include "tests/test/cache/CacheStorageTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

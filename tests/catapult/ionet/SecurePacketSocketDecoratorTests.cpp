@@ -21,12 +21,9 @@
 #include "catapult/ionet/SecurePacketSocketDecorator.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/ionet/PacketSocket.h"
-#include "catapult/utils/FileSize.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/PacketIoTestUtils.h"
 #include "tests/test/core/PacketTestUtils.h"
-#include "tests/test/core/mocks/MockPacketIo.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace ionet {
 

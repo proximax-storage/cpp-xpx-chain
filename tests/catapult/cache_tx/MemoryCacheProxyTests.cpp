@@ -18,10 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/cache_tx/MemoryCacheProxy.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

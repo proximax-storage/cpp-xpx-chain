@@ -22,9 +22,6 @@
 #include "CompareChains.h"
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/thread/FutureUtils.h"
-#include "catapult/utils/SpinLock.h"
 #include <queue>
 
 namespace catapult { namespace chain {

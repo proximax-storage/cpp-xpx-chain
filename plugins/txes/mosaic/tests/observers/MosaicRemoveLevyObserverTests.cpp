@@ -3,17 +3,14 @@
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
+
 #include "src/observers/Observers.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
-#include "plugins/txes/mosaic/src/model/MosaicLevy.h"
-#include "src/model/MosaicEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/LevyTestUtils.h"
-#include "src/model/MosaicRemoveLevyTransaction.h"
-#include "src/cache/LevyCache.h"
-namespace catapult {
-	namespace observers {
+
+namespace catapult { namespace observers {
 
 #define TEST_CLASS MosaicRemoveLevyObserver
 		

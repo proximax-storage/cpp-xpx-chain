@@ -26,9 +26,7 @@
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/thread/TimedCallback.h"
 #include "catapult/utils/ModificationSafeIterableContainer.h"
-#include "catapult/utils/SpinLock.h"
 #include "catapult/utils/ThrottleLogger.h"
-#include <list>
 
 namespace catapult { namespace net {
 

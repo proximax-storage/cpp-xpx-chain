@@ -19,7 +19,6 @@
 **/
 
 #include "Observers.h"
-#include "src/cache/MultisigCache.h"
 #include "src/observers/MultisigAccountFacade.h"
 
 namespace catapult { namespace observers {

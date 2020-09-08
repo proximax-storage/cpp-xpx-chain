@@ -24,8 +24,6 @@
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
-#include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 using catapult::disruptor::ConsumerInput;
 using catapult::disruptor::InputSource;

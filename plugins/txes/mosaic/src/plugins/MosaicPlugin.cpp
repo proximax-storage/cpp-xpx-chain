@@ -25,18 +25,14 @@
 #include "MosaicRemoveLevyTransactionPlugin.h"
 #include "src/cache/MosaicCache.h"
 #include "src/cache/LevyCache.h"
-#include "src/cache/MosaicCacheStorage.h"
 #include "src/cache/LevyCacheStorage.h"
-#include "src/config/MosaicConfiguration.h"
 #include "src/model/MosaicReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/observers/RentalFeeObserver.h"
 #include "catapult/plugins/CacheHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 #include "src/utils/MosaicLevyCalculator.h"
-#include "src/catapult/exceptions.h"
 
 namespace catapult { namespace plugins {
 

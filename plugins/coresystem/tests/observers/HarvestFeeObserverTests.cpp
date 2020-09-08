@@ -19,7 +19,6 @@
 **/
 
 #include "src/observers/Observers.h"
-#include "catapult/model/InflationCalculator.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/NotificationTestUtils.h"

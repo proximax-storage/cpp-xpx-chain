@@ -19,7 +19,6 @@
 **/
 
 #include "NamespaceIdGenerator.h"
-#include "NamespaceConstants.h"
 #include "catapult/crypto/Hashes.h"
 
 namespace catapult { namespace model {

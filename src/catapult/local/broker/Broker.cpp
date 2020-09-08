@@ -21,7 +21,6 @@
 #include "Broker.h"
 #include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
-#include "catapult/io/FileQueue.h"
 #include "catapult/local/HostUtils.h"
 #include "catapult/subscribers/BlockChangeReader.h"
 #include "catapult/subscribers/BrokerMessageReaders.h"

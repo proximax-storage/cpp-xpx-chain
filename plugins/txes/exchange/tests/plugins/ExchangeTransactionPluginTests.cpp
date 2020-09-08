@@ -5,8 +5,6 @@
 **/
 
 #include "catapult/model/Address.h"
-#include "catapult/model/EntityHasher.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/plugins/ExchangeTransactionPlugin.h"
 #include "src/model/ExchangeTransaction.h"
@@ -14,9 +12,6 @@
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ExchangeTestUtils.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 

@@ -1,11 +1,14 @@
+/**
+*** Copyright 2020 ProximaX Limited. All rights reserved.
+*** Use of this source code is governed by the Apache 2.0
+*** license that can be found in the LICENSE file.
+**/
 
 #include "src/MosaicRemoveLevyMapper.h"
+#include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/mosaic/src/model/MosaicModifyLevyTransaction.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/TestHarness.h"
-
-#include "mongo/src/mappers/MapperUtils.h"
-#include "catapult/constants.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

@@ -24,7 +24,6 @@
 #include "plugins/txes/aggregate/src/model/AggregateEntityType.h"
 #include "plugins/txes/lock_shared/tests/observers/LockStatusAndBalanceObserverTests.h"
 #include "tests/test/HashLockInfoCacheTestUtils.h"
-#include "tests/test/plugins/ObserverTestUtils.h"
 
 namespace catapult { namespace observers {
 

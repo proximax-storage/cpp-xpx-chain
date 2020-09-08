@@ -6,7 +6,6 @@
 
 #include "Validators.h"
 #include "src/cache/LevyCache.h"
-#include "src/model/MosaicLevy.h"
 #include "src/utils/MosaicLevyUtils.h"
 
 namespace catapult { namespace validators {

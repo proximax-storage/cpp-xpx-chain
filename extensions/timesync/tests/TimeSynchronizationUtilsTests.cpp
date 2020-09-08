@@ -19,21 +19,16 @@
 **/
 
 #include "timesync/src/TimeSynchronizationUtils.h"
-#include "timesync/src/CommunicationTimestamps.h"
 #include "timesync/src/TimeSynchronizationConfiguration.h"
 #include "timesync/src/TimeSynchronizationState.h"
 #include "timesync/src/TimeSynchronizer.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/ionet/Node.h"
 #include "timesync/tests/test/TimeSynchronizationCacheTestUtils.h"
 #include "timesync/tests/test/TimeSynchronizationTestUtils.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 namespace catapult { namespace timesync {
 

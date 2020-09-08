@@ -19,13 +19,8 @@
 **/
 
 #include "catapult/extensions/NodeSelector.h"
-#include "catapult/ionet/NodeContainer.h"
-#include "catapult/ionet/NodeInteractionResult.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/other/NodeSelectorTestUtils.h"
-#include "tests/TestHarness.h"
-#include <numeric>
-#include <random>
 
 namespace catapult { namespace extensions {
 

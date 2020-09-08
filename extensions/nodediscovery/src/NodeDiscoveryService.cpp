@@ -26,11 +26,9 @@
 #include "catapult/extensions/NetworkUtils.h"
 #include "catapult/extensions/NodeInteractionUtils.h"
 #include "catapult/extensions/ServiceLocator.h"
-#include "catapult/extensions/ServiceState.h"
 #include "catapult/ionet/NetworkNode.h"
 #include "catapult/ionet/NodeContainer.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
-#include "catapult/subscribers/NodeSubscriber.h"
 
 namespace catapult { namespace nodediscovery {
 

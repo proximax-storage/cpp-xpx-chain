@@ -6,12 +6,9 @@
 
 #include "src/plugins/EndDriveTransactionPlugin.h"
 #include "src/model/EndDriveTransaction.h"
-#include "src/model/ServiceNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 

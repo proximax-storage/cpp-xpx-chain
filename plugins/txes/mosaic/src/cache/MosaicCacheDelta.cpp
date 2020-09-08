@@ -19,9 +19,6 @@
 **/
 
 #include "MosaicCacheDelta.h"
-#include "catapult/cache/IdentifierGroupCacheUtils.h"
-#include "catapult/utils/Casting.h"
-#include <unordered_set>
 
 namespace catapult { namespace cache {
 

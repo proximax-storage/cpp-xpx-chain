@@ -5,8 +5,6 @@
 **/
 
 #pragma once
-
-#pragma once
 #include "catapult/plugins.h"
 #include <memory>
 

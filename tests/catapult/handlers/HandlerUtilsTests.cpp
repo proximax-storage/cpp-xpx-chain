@@ -19,8 +19,6 @@
 **/
 
 #include "catapult/handlers/HandlerUtils.h"
-#include "catapult/model/Block.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "tests/test/core/PacketTestUtils.h"
 #include "tests/TestHarness.h"
 

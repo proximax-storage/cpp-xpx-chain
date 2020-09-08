@@ -21,7 +21,6 @@
 #include "catapult/model/ContiguousEntityContainer.h"
 #include "tests/test/nodeps/IteratorTestTraits.h"
 #include "tests/TestHarness.h"
-#include <vector>
 
 namespace catapult { namespace model {
 

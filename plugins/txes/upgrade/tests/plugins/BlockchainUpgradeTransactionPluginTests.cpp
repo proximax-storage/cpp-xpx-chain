@@ -4,14 +4,11 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/utils/MemoryUtils.h"
 #include "src/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "src/model/BlockchainUpgradeTransaction.h"
 #include "src/model/BlockchainUpgradeNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 

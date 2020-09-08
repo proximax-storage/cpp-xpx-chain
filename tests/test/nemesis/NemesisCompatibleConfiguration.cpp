@@ -26,7 +26,6 @@
 #include "NemesisCompatibleConfiguration.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
-#include "catapult/crypto/KeyUtils.h"
 
 namespace catapult { namespace test {
 

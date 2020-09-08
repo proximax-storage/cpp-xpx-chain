@@ -23,7 +23,6 @@
 #include "InputUtils.h"
 #include "catapult/io/PodIoUtils.h"
 #include "catapult/io/RawFile.h"
-#include <boost/filesystem/path.hpp>
 
 namespace catapult { namespace consumers {
 

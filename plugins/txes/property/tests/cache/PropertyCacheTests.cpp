@@ -20,7 +20,6 @@
 
 #include "src/cache/PropertyCache.h"
 #include "tests/test/cache/CacheBasicTests.h"
-#include "tests/test/cache/CacheMixinsTests.h"
 #include "tests/test/cache/DeltaElementsMixinTests.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"

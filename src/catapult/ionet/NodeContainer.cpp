@@ -19,8 +19,6 @@
 **/
 
 #include "NodeContainer.h"
-#include "NodeInteractionResult.h"
-#include "catapult/utils/HexFormatter.h"
 
 namespace catapult { namespace ionet { struct NodeData; } }
 

@@ -21,7 +21,6 @@
 #include "catapult/thread/MultiServicePool.h"
 #include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
-#include "tests/TestHarness.h"
 #include <mutex>
 
 namespace catapult { namespace thread {

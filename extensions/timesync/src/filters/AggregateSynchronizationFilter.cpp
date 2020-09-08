@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "SynchronizationFilters.h"
 #include "AggregateSynchronizationFilter.h"
 #include "catapult/utils/ContainerHelpers.h"
 

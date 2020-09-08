@@ -6,7 +6,6 @@
 
 #include "src/config/OperationConfiguration.h"
 #include "src/validators/Validators.h"
-#include "src/state/OperationEntry.h"
 #include "plugins/txes/lock_shared/tests/validators/LockDurationValidatorTests.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 

@@ -5,9 +5,7 @@
 **/
 
 #include "src/config/ServiceConfiguration.h"
-#include "catapult/crypto/KeyUtils.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace config {
 

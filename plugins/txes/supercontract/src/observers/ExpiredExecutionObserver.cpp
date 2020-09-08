@@ -7,7 +7,6 @@
 #include "Observers.h"
 #include "src/cache/SuperContractCache.h"
 #include "plugins/txes/operation/src/cache/OperationCache.h"
-#include "catapult/observers/ObserverUtils.h"
 
 namespace catapult { namespace observers {
 

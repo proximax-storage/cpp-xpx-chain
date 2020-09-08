@@ -20,8 +20,6 @@
 
 #include "catapult/deltaset/BaseSetUtils.h"
 #include "tests/catapult/deltaset/test/BaseSetTestsInclude.h"
-#include "tests/TestHarness.h"
-#include <vector>
 
 namespace catapult { namespace deltaset {
 

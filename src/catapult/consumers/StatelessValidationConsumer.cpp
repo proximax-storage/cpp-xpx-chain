@@ -20,11 +20,9 @@
 
 #include "BlockConsumers.h"
 #include "ConsumerResultFactory.h"
-#include "InputUtils.h"
 #include "TransactionConsumers.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "catapult/validators/AggregateValidationResult.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace consumers {
 

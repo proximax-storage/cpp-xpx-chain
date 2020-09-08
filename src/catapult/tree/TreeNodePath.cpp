@@ -21,7 +21,6 @@
 #include "TreeNodePath.h"
 #include "catapult/utils/HexFormatter.h"
 #include <cstring>
-#include <ostream>
 
 namespace catapult { namespace tree {
 

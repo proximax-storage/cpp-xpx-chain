@@ -37,9 +37,7 @@
 #include "catapult/model/Address.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
-#include "catapult/utils/HexParser.h"
 #include "catapult/version/version.h"
-#include "boost/filesystem.hpp"
 
 namespace catapult { namespace tools { namespace nemgen {
 

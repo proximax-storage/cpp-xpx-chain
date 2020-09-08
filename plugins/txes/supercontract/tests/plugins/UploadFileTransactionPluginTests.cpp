@@ -4,16 +4,12 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/Address.h"
 #include "src/plugins/UploadFileTransactionPlugin.h"
 #include "src/model/SuperContractNotifications.h"
 #include "src/model/UploadFileTransaction.h"
-#include "plugins/txes/service/src/model/ServiceNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/SuperContractTestUtils.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 

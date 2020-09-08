@@ -20,10 +20,8 @@
 
 #include "catapult/handlers/ChainHandlers.h"
 #include "catapult/api/ChainPackets.h"
-#include "catapult/utils/FileSize.h"
 #include "tests/catapult/handlers/test/HeightRequestHandlerTests.h"
 #include "tests/test/core/PacketTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace handlers {
 

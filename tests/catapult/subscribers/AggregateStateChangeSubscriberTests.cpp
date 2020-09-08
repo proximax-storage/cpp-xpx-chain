@@ -20,12 +20,9 @@
 
 #include "catapult/subscribers/AggregateStateChangeSubscriber.h"
 #include "catapult/subscribers/StateChangeInfo.h"
-#include "catapult/model/NetworkConfiguration.h"
-#include "catapult/model/ChainScore.h"
 #include "tests/catapult/subscribers/test/AggregateSubscriberTestContext.h"
 #include "tests/catapult/subscribers/test/UnsupportedSubscribers.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace subscribers {
 

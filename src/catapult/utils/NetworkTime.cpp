@@ -20,7 +20,6 @@
 
 #include "NetworkTime.h"
 #include "Casting.h"
-#include <limits>
 
 namespace catapult { namespace utils {
 

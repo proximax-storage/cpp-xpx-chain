@@ -22,7 +22,6 @@
 #include "tests/int/node/test/LocalNodeApiTraits.h"
 #include "tests/int/node/test/LocalNodeRequestTestUtils.h"
 #include "tests/int/node/test/PeerLocalNodeTestContext.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 

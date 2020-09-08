@@ -18,12 +18,10 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/plugins/PluginUtils.h"
 #include "src/plugins/TransferPlugin.h"
 #include "plugins/txes/transfer/src/model/TransferEntityType.h"
 #include "tests/test/plugins/PluginManagerFactory.h"
 #include "tests/test/plugins/PluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace plugins {
 

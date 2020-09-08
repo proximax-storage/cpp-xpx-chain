@@ -3,11 +3,10 @@
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
-#include "src/state/LevyEntrySerializer.h"
+
 #include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/TestHarness.h"
-#include "src/model/MosaicLevy.h"
-#include <tests/test/LevyTestUtils.h>
+#include "tests/test/LevyTestUtils.h"
 
 namespace catapult { namespace state {
 

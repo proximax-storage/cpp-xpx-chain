@@ -21,7 +21,6 @@
 #include "catapult/local/recovery/StorageStart.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace local {
 

@@ -19,7 +19,6 @@
 **/
 
 #include "UnlockedAccounts.h"
-#include "catapult/utils/MacroBasedEnumIncludes.h"
 
 namespace catapult { namespace harvesting {
 

@@ -22,7 +22,6 @@
 #include "CryptoUtils.h"
 #include "Hashes.h"
 #include "catapult/exceptions.h"
-#include <cstring>
 #include <ref10/crypto_verify_32.h>
 
 extern "C" {

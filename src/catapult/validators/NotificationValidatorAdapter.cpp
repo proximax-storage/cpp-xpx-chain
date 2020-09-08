@@ -20,7 +20,6 @@
 
 #include "NotificationValidatorAdapter.h"
 #include "ValidatingNotificationSubscriber.h"
-#include "catapult/model/TransactionPlugin.h"
 
 namespace catapult { namespace validators {
 

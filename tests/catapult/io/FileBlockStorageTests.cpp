@@ -22,8 +22,6 @@
 #include "tests/test/core/BlockStorageTests.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
-#include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace io {
 

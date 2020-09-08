@@ -20,7 +20,6 @@
 
 #include "src/observers/Observers.h"
 #include "tests/test/MultisigCacheTestUtils.h"
-#include "tests/test/MultisigTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 

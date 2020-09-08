@@ -19,15 +19,12 @@
 **/
 
 #include "catapult/subscribers/SubscriptionManager.h"
-#include "catapult/config/BlockchainConfiguration.h"
-#include "catapult/ionet/Node.h"
 #include "catapult/model/ChainScore.h"
 #include "tests/catapult/subscribers/test/UnsupportedSubscribers.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/other/mocks/MockBlockChangeSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace subscribers {
 

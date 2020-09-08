@@ -19,11 +19,9 @@
 **/
 
 #include "mongo/src/MongoPtStorage.h"
-#include "catapult/model/Cosignature.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTransactionStorageTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 

@@ -24,7 +24,6 @@
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
 #include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"

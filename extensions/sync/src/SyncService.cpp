@@ -24,7 +24,6 @@
 #include "catapult/api/RemoteChainApi.h"
 #include "catapult/api/RemoteTransactionApi.h"
 #include "catapult/chain/UtSynchronizer.h"
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/PeersConnectionTasks.h"
 #include "catapult/extensions/SynchronizerTaskCallbacks.h"

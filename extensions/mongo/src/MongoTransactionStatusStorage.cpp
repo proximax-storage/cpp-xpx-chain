@@ -24,7 +24,6 @@
 #include "mappers/TransactionStatusMapper.h"
 #include "catapult/model/TransactionStatus.h"
 #include "catapult/utils/SpinLock.h"
-#include <mongocxx/client.hpp>
 
 using namespace bsoncxx::builder::stream;
 

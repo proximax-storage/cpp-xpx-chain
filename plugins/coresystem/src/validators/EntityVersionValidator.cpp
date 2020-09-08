@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <src/catapult/validators/ValidatorContext.h>
 #include "Validators.h"
 
 namespace catapult { namespace validators {

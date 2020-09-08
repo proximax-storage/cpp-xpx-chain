@@ -10,7 +10,6 @@
 #include "UploadFileMapper.h"
 #include "DeactivateMapper.h"
 #include "mongo/src/MongoPluginManager.h"
-#include "mongo/src/MongoReceiptPluginFactory.h"
 #include "storages/MongoSuperContractCacheStorage.h"
 
 extern "C" PLUGIN_API

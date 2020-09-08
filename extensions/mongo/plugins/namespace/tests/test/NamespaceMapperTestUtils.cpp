@@ -22,8 +22,6 @@
 #include "src/mappers/NamespaceDescriptor.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "plugins/txes/namespace/src/model/NamespaceTypes.h"
-#include "plugins/txes/namespace/src/state/RootNamespace.h"
-#include "catapult/utils/Casting.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/TestHarness.h"
 

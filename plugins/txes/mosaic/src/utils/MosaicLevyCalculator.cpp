@@ -4,7 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <src/catapult/utils/Casting.h>
+#include "catapult/utils/Casting.h"
 #include "MosaicLevyCalculator.h"
 
 namespace catapult { namespace utils {

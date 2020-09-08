@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "Address.h"
 #include "ExtractorContext.h"
 
 namespace catapult { namespace model {

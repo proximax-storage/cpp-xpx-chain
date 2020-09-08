@@ -11,7 +11,6 @@
 #include "src/model/StartDriveVerificationTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "catapult/plugins/PluginUtils.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
 

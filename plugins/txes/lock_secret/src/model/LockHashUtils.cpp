@@ -21,7 +21,6 @@
 #include "LockHashUtils.h"
 #include "catapult/crypto/Hashes.h"
 #include "catapult/utils/Casting.h"
-#include "catapult/exceptions.h"
 
 namespace catapult { namespace model {
 

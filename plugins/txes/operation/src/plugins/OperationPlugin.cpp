@@ -6,7 +6,6 @@
 
 #include "OperationPlugin.h"
 #include "src/cache/OperationCache.h"
-#include "src/config/OperationConfiguration.h"
 #include "src/model/OperationReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/OperationIdentifyTransactionPlugin.h"

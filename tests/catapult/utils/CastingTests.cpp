@@ -20,8 +20,6 @@
 
 #include "catapult/utils/Casting.h"
 #include "tests/TestHarness.h"
-#include <functional>
-#include <sstream>
 
 namespace catapult { namespace utils {
 

@@ -18,11 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/exceptions.h"
 #include "tests/TestHarness.h"
-#include <boost/exception/diagnostic_information.hpp>
-#include <sstream>
-#include <vector>
 
 namespace catapult {
 

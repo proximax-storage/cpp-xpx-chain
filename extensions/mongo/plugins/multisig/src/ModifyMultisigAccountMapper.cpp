@@ -21,7 +21,6 @@
 #include "ModifyMultisigAccountMapper.h"
 #include "mongo/src/MongoTransactionPluginFactory.h"
 #include "mongo/src/mappers/MultisigMapper.h"
-#include "plugins/txes/multisig/src/model/ModifyMultisigAccountTransaction.h"
 
 using namespace catapult::mongo::mappers;
 

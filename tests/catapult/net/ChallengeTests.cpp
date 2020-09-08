@@ -21,7 +21,6 @@
 #include "catapult/net/Challenge.h"
 #include "catapult/crypto/Signer.h"
 #include "tests/test/core/AddressTestUtils.h"
-#include "tests/test/net/NodeTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace net {

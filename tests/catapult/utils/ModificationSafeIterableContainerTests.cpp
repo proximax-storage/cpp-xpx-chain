@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/utils/ModificationSafeIterableContainer.h"
-#include "catapult/utils/Logging.h"
 #include "tests/TestHarness.h"
 #include <list>
 

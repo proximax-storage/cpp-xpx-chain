@@ -5,7 +5,6 @@
 **/
 
 #include "SuperContractTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 

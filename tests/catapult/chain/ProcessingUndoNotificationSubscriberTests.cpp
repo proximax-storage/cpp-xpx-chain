@@ -20,7 +20,6 @@
 
 #include "catapult/chain/ProcessingUndoNotificationSubscriber.h"
 #include "catapult/cache/CatapultCache.h"
-#include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/other/mocks/MockNotificationObserver.h"
 #include "tests/TestHarness.h"

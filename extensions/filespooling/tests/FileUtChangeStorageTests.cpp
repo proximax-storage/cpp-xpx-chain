@@ -22,7 +22,6 @@
 #include "catapult/subscribers/SubscriberOperationTypes.h"
 #include "filespooling/tests/test/FileTransactionsChangeStorageContext.h"
 #include "filespooling/tests/test/StorageTransactionInfoTestUtils.h"
-#include "tests/test/core/AddressTestUtils.h"
 
 namespace catapult { namespace filespooling {
 

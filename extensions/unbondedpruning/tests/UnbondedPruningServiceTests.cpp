@@ -20,13 +20,11 @@
 
 #include "unbondedpruning/src/UnbondedPruningService.h"
 #include "plugins/txes/lock_hash/src/model/HashLockNotifications.h"
-#include "catapult/consumers/BlockChainSyncHandlers.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/mocks/MockTransactionPluginUnsupported.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace unbondedpruning {
 

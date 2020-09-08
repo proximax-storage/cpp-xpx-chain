@@ -4,11 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include <plugins/txes/exchange/src/config/ExchangeConfiguration.h>
 #include "catapult/plugins/CacheHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 #include "ExchangePlugin.h"
-#include "src/cache/ExchangeCache.h"
 #include "src/cache/ExchangeCacheStorage.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/ExchangeOfferTransactionPlugin.h"

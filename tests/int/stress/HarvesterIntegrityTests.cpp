@@ -19,10 +19,8 @@
 **/
 
 #include "extensions/harvesting/src/Harvester.h"
-#include "extensions/harvesting/src/HarvesterBlockGenerator.h"
 #include "extensions/harvesting/src/HarvestingUtFacadeFactory.h"
 #include "plugins/services/hashcache/src/cache/HashCacheStorage.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
@@ -35,9 +33,6 @@
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/nodeps/Nemesis.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 #include <boost/thread.hpp>
 
 namespace catapult { namespace harvesting {

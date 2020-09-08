@@ -19,11 +19,7 @@
 **/
 
 #include "ConfigurationTestUtils.h"
-#include "catapult/utils/Logging.h"
-#include <boost/filesystem/path.hpp>
-#include <boost/filesystem.hpp>
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 
 namespace pt = boost::property_tree;
 

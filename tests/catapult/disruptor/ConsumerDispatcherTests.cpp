@@ -19,13 +19,10 @@
 **/
 
 #include "catapult/disruptor/ConsumerDispatcher.h"
-#include "catapult/model/RangeTypes.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/nodeps/Atomics.h"
-#include "tests/test/nodeps/AtomicVector.h"
 #include "tests/test/nodeps/Functional.h"
 #include "tests/test/other/DisruptorTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace disruptor {
 

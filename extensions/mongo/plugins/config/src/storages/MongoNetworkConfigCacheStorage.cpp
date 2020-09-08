@@ -8,7 +8,6 @@
 #include "src/mappers/NetworkConfigEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "plugins/txes/config/src/cache/NetworkConfigCache.h"
-#include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;
 

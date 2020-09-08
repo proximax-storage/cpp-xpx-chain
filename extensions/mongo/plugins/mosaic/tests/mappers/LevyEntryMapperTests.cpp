@@ -20,10 +20,8 @@
 
 #include "src/mappers/LevyEntryMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/mosaic/src/state/LevyEntry.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "plugins/txes/mosaic/tests/test/LevyTestUtils.h"
-#include "tests/test/MosaicMapperTestUtils.h"
 #include "tests/test/LevyEntryMapperTestUtils.h"
 #include "tests/TestHarness.h"
 

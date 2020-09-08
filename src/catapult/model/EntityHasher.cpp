@@ -21,7 +21,6 @@
 #include "EntityHasher.h"
 #include "Elements.h"
 #include "TransactionPlugin.h"
-#include "catapult/crypto/Hashes.h"
 #include "catapult/crypto/MerkleHashBuilder.h"
 
 namespace catapult { namespace model {

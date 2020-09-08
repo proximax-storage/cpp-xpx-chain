@@ -5,11 +5,8 @@
 **/
 
 #include "catapult/config/ImmutableConfiguration.h"
-#include "catapult/crypto/KeyUtils.h"
-#include "catapult/utils/ConfigurationUtils.h"
 #include "catapult/utils/HexParser.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace config {
 

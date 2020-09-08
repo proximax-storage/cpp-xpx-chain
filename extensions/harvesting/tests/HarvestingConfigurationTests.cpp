@@ -20,7 +20,6 @@
 
 #include "harvesting/src/HarvestingConfiguration.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace harvesting {
 

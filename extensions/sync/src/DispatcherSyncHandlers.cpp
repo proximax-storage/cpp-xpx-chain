@@ -21,7 +21,6 @@
 #include "DispatcherSyncHandlers.h"
 #include "catapult/cache/CacheStorage.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"
 #include "catapult/io/IndexFile.h"

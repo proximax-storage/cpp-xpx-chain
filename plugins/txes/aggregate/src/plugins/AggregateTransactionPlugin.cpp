@@ -22,10 +22,7 @@
 #include "src/config/AggregateConfiguration.h"
 #include "src/model/AggregateNotifications.h"
 #include "src/model/AggregateTransaction.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
-#include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPlugin.h"
-#include "catapult/model/ExtendedEmbeddedTransaction.h"
 #include "AggregateCommon.h"
 
 using namespace catapult::model;

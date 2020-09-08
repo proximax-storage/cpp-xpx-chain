@@ -19,16 +19,12 @@
 **/
 
 #include "catapult/extensions/DispatcherUtils.h"
-#include "catapult/config/NodeConfiguration.h"
-#include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/extensions/ServiceLocator.h"
-#include "catapult/utils/TimeSpan.h"
 #include "tests/test/core/SchedulerTestUtils.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/nodeps/Atomics.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

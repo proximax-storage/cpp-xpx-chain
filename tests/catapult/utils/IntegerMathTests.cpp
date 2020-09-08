@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/utils/IntegerMath.h"
-#include "tests/test/nodeps/Random.h"
 #include "tests/TestHarness.h"
 #include <cmath>
 

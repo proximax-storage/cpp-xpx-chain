@@ -19,16 +19,10 @@
 **/
 
 #include "catapult/net/AsyncTcpServer.h"
-#include "catapult/ionet/PacketSocket.h"
-#include "catapult/thread/IoThreadPool.h"
-#include "catapult/utils/AtomicIncrementDecrementGuard.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/core/WaitFunctions.h"
 #include "tests/test/net/SocketTestUtils.h"
-#include <boost/asio/steady_timer.hpp>
 #include <boost/thread.hpp>
-#include <memory>
-#include <thread>
 
 namespace catapult { namespace net {
 

@@ -22,18 +22,14 @@
 #include "AddressAliasTransactionPlugin.h"
 #include "MosaicAliasTransactionPlugin.h"
 #include "RegisterNamespaceTransactionPlugin.h"
-#include "src/cache/NamespaceCache.h"
-#include "src/cache/NamespaceCacheStorage.h"
 #include "src/cache/NamespaceCacheSubCachePlugin.h"
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NamespaceReceiptType.h"
 #include "src/observers/Observers.h"
 #include "src/validators/Validators.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/observers/RentalFeeObserver.h"
 #include "catapult/plugins/CacheHandlers.h"
-#include "catapult/plugins/PluginManager.h"
 
 namespace catapult { namespace plugins {
 

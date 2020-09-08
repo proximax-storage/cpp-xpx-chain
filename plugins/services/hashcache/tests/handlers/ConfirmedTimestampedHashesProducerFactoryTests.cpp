@@ -20,10 +20,8 @@
 
 #include "src/handlers/ConfirmedTimestampedHashesProducerFactory.h"
 #include "src/cache/HashCache.h"
-#include "catapult/utils/TimeSpan.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace handlers {
 

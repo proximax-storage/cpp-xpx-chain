@@ -7,10 +7,8 @@
 #include "src/model/OperationReceiptType.h"
 #include "src/observers/Observers.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
-#include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/OperationTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
 

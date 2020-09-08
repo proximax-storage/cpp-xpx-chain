@@ -20,7 +20,6 @@
 
 #include "catapult/model/ChainScore.h"
 #include "tests/test/nodeps/Comparison.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

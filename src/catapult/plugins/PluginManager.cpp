@@ -19,7 +19,6 @@
 **/
 
 #include "PluginManager.h"
-#include <boost/filesystem/path.hpp>
 
 namespace catapult { namespace plugins {
 

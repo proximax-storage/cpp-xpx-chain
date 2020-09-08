@@ -22,11 +22,9 @@
 #include "ChainResults.h"
 #include "ProcessingNotificationSubscriber.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache/RelockableDetachedCatapultCache.h"
 #include "catapult/cache_tx/UtCache.h"
 #include "catapult/model/FeeUtils.h"
-#include "catapult/utils/HexFormatter.h"
 
 namespace catapult { namespace chain {
 

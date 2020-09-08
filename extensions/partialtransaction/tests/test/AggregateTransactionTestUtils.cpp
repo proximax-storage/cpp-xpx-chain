@@ -20,10 +20,8 @@
 
 #include "AggregateTransactionTestUtils.h"
 #include "catapult/crypto/Signer.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 

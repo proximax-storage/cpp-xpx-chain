@@ -21,7 +21,6 @@
 #include "NemesisConfigurationLoader.h"
 #include "catapult/model/Address.h"
 #include "catapult/utils/ConfigurationBag.h"
-#include "catapult/utils/HexFormatter.h"
 #include <boost/filesystem.hpp>
 
 namespace catapult { namespace tools { namespace nemgen {

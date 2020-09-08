@@ -13,7 +13,6 @@
 #include "plugins/txes/metadata/src/model/NamespaceMetadataTransaction.h"
 #include "plugins/txes/metadata/src/state/MetadataUtils.h"
 #include "plugins/txes/metadata/tests/test/MetadataTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

@@ -20,9 +20,7 @@
 
 #include "catapult/handlers/CacheEntryInfosProducerFactory.h"
 #include "tests/test/core/EntityTestUtils.h"
-#include "tests/TestHarness.h"
 #include <numeric>
-#include <unordered_map>
 
 namespace catapult { namespace handlers {
 

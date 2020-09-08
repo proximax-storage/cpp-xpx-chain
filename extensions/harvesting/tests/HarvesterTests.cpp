@@ -22,20 +22,15 @@
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
-#include "catapult/model/Block.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/TransactionPlugin.h"
 #include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/test/nodeps/Waits.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include "catapult/constants.h"
 
 using catapult::crypto::KeyPair;
 

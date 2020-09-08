@@ -19,7 +19,6 @@
 **/
 
 #include "Validators.h"
-#include "src/state/AccountProperties.h"
 
 namespace catapult { namespace validators {
 

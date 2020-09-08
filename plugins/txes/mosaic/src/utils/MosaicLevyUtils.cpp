@@ -4,10 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/MosaicCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "src/model/MosaicLevy.h"
 #include "src/validators/Validators.h"
 #include "src/validators/ActiveMosaicView.h"
 

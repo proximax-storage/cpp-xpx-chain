@@ -19,7 +19,6 @@
 **/
 
 #include "SecretLockInfoCacheTestUtils.h"
-#include "tests/test/nodeps/Random.h"
 
 namespace catapult { namespace test {
 

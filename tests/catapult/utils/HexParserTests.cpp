@@ -20,8 +20,6 @@
 
 #include "catapult/utils/HexParser.h"
 #include "tests/TestHarness.h"
-#include <array>
-#include <vector>
 
 namespace catapult { namespace utils {
 

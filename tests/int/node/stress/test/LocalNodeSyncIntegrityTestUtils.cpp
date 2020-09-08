@@ -22,7 +22,6 @@
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/Address.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace test {
 

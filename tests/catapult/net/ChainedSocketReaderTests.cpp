@@ -19,11 +19,8 @@
 **/
 
 #include "catapult/net/ChainedSocketReader.h"
-#include "catapult/ionet/BufferedPacketIo.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/ionet/SocketReader.h"
-#include "catapult/thread/IoThreadPool.h"
-#include "tests/test/core/PacketTestUtils.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/net/ClientSocket.h"
 #include "tests/test/net/SocketTestUtils.h"

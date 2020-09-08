@@ -4,9 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/state/CommitteeEntrySerializer.h"
 #include "tests/test/CommitteeTestUtils.h"
-#include "tests/test/core/SerializerOrderingTests.h"
 #include "tests/test/core/SerializerTestUtils.h"
 
 namespace catapult { namespace state {

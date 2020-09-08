@@ -19,14 +19,10 @@
 **/
 
 #include "PeersConnectionTasks.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/ionet/NodeInteractionResult.h"
 #include "catapult/net/PacketWriters.h"
-#include "catapult/thread/FutureUtils.h"
-#include "catapult/utils/Logging.h"
 
 namespace catapult { namespace extensions {
 

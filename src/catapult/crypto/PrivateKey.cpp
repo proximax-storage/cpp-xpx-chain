@@ -21,7 +21,6 @@
 #include "PrivateKey.h"
 #include "SecureZero.h"
 #include "catapult/utils/HexParser.h"
-#include <algorithm>
 
 namespace catapult { namespace crypto {
 

@@ -19,8 +19,6 @@
 **/
 
 #include "PacketExtractor.h"
-#include "catapult/utils/Logging.h"
-#include <cstring>
 
 namespace catapult { namespace ionet {
 

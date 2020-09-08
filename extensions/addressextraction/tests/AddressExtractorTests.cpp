@@ -23,7 +23,6 @@
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace addressextraction {
 

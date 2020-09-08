@@ -7,15 +7,11 @@
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
-#include "plugins/txes/mosaic/src/model/MosaicLevy.h"
-#include "catapult/types.h"
-#include "src/model/MosaicEntityType.h"
 #include "tests/test/LevyTestUtils.h"
 #include "tests/test/MosaicCacheTestUtils.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
 
-namespace catapult {
-	namespace validators {
+namespace catapult { namespace validators {
 
 #define TEST_CLASS MosaicModifyLevyValidatorTests
 		

@@ -19,7 +19,6 @@
 **/
 
 #include "DisruptorBarriers.h"
-#include "catapult/exceptions.h"
 
 namespace catapult { namespace disruptor {
 

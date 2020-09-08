@@ -27,7 +27,6 @@
 #include "AggregateUtChangeSubscriber.h"
 #include "catapult/cache_tx/AggregatePtCache.h"
 #include "catapult/cache_tx/AggregateUtCache.h"
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/io/AggregateBlockStorage.h"
 
 namespace catapult { namespace subscribers {

@@ -23,11 +23,9 @@
 #include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/model/Address.h"
 #include "mongo/tests/test/MongoHistoricalCacheStorageTests.h"
-#include "mongo/tests/test/MongoTestUtils.h"
 #include "plugins/txes/namespace/tests/test/NamespaceCacheTestUtils.h"
 #include "plugins/txes/namespace/tests/test/NamespaceTestUtils.h"
 #include "tests/test/NamespaceMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 

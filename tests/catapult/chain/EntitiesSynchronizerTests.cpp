@@ -22,9 +22,7 @@
 #include "catapult/chain/RemoteNodeSynchronizer.h"
 #include "catapult/handlers/HandlerTypes.h"
 #include "tests/catapult/chain/test/MockChainApi.h"
-#include "tests/test/core/HashTestUtils.h"
 #include "tests/test/other/EntitiesSynchronizerTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace chain {
 

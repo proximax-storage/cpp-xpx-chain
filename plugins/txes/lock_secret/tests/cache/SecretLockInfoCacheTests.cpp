@@ -18,10 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "src/cache/SecretLockInfoCache.h"
 #include "plugins/txes/lock_shared/tests/cache/LockInfoCacheTests.h"
 #include "tests/test/SecretLockInfoCacheTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

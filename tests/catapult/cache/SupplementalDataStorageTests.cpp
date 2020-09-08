@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/cache/SupplementalDataStorage.h"
-#include "catapult/cache/SupplementalData.h"
 #include "tests/test/core/mocks/MockMemoryStream.h"
 #include "tests/TestHarness.h"
 

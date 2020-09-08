@@ -23,7 +23,6 @@
 #include "MemoryCounters.h"
 #include "NemesisBlockNotifier.h"
 #include "NodeUtils.h"
-#include "catapult/config/CatapultDataDirectory.h"
 #include "catapult/extensions/ConfigurationUtils.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
 #include "catapult/extensions/LocalNodeStateFileStorage.h"

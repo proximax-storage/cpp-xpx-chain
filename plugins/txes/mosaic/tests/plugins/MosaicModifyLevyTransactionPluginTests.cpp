@@ -3,13 +3,12 @@
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
+
 #include "src/plugins/MosaicModifyLevyTransactionPlugin.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/MosaicNotifications.h"
 #include "src/model/MosaicModifyLevyTransaction.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::model;
 

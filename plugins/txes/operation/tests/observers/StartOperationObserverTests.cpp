@@ -7,7 +7,6 @@
 #include "src/observers/Observers.h"
 #include "src/model/OperationReceiptType.h"
 #include "plugins/txes/lock_shared/tests/observers/LockObserverTests.h"
-#include "tests/test/OperationTestUtils.h"
 #include "tests/test/OperationNotificationsTestUtils.h"
 
 namespace catapult { namespace observers {

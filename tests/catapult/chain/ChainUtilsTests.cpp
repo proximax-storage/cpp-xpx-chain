@@ -20,14 +20,10 @@
 
 #include "catapult/constants.h"
 #include "catapult/chain/ChainUtils.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "catapult/model/EntityHasher.h"
-#include "catapult/utils/TimeSpan.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace chain {
 

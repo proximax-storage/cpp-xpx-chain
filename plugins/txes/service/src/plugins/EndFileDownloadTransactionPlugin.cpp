@@ -5,11 +5,8 @@
 **/
 
 #include "EndFileDownloadTransactionPlugin.h"
-#include "catapult/model/Address.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
-#include "src/config/ServiceConfiguration.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/EndFileDownloadTransaction.h"
 #include "src/utils/ServiceUtils.h"

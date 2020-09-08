@@ -19,7 +19,6 @@
 **/
 
 #include "HexParser.h"
-#include <string>
 
 namespace catapult { namespace utils {
 

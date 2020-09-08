@@ -25,7 +25,6 @@
 #include "NemesisExecutionHasher.h"
 #include "tools/ToolConfigurationUtils.h"
 #include "catapult/io/RawFile.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace tools { namespace nemgen {
 

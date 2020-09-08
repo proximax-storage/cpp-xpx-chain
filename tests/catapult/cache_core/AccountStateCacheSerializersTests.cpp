@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/cache_core/AccountStateCacheSerializers.h"
-#include "tests/test/core/AccountStateTestUtils.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {

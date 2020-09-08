@@ -21,7 +21,6 @@
 #include "mongo/src/mappers/ReceiptMapper.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/mocks/MockReceiptMapper.h"
-#include "tests/test/core/mocks/MockReceipt.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace mappers {

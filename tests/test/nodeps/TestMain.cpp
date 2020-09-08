@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/utils/ConfigurationValueParsers.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/version/version.h"
 #include "tests/TestHarness.h"
 #include <thread>

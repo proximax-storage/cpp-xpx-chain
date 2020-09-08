@@ -5,7 +5,6 @@
 **/
 
 #include "LevyCacheDelta.h"
-#include "catapult/cache/IdentifierGroupCacheUtils.h"
 
 namespace catapult { namespace cache {
 	BasicLevyCacheDelta::CachedMosaicIdByHeight BasicLevyCacheDelta::getCachedMosaicIdsByHeight(const Height& height) {

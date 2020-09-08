@@ -22,8 +22,6 @@
 #include "Address.h"
 #include "NotificationPublisher.h"
 #include "NotificationSubscriber.h"
-#include "ResolverContext.h"
-#include "Transaction.h"
 
 namespace catapult { namespace model {
 

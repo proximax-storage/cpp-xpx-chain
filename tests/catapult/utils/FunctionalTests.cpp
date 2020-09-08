@@ -20,14 +20,8 @@
 
 #include "catapult/utils/Functional.h"
 #include "tests/TestHarness.h"
-#include <algorithm>
 #include <list>
-#include <map>
 #include <numeric>
-#include <set>
-#include <string>
-#include <unordered_set>
-#include <vector>
 
 namespace catapult { namespace utils {
 

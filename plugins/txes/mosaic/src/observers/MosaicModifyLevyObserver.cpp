@@ -6,7 +6,6 @@
 
 #include "Observers.h"
 #include "src/cache/LevyCache.h"
-#include "src/model/MosaicLevy.h"
 
 namespace catapult { namespace observers {
 

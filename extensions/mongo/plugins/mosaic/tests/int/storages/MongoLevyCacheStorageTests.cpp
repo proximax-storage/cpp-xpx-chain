@@ -21,11 +21,8 @@
 #include "src/storages/MongoLevyCacheStorage.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
-#include "mongo/tests/test/MongoTestUtils.h"
 #include "plugins/txes/mosaic/tests/test/LevyTestUtils.h"
-#include "plugins/txes/mosaic/src/state/LevyEntry.h"
 #include "tests/test/LevyEntryMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace bsoncxx::builder::stream;
 

@@ -19,13 +19,11 @@
 **/
 
 #include "catapult/cache_tx/MemoryUtCache.h"
-#include "catapult/utils/ShortHash.h"
 #include "tests/catapult/cache_tx/test/TransactionCacheTests.h"
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/core/EntityTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/nodeps/LockTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

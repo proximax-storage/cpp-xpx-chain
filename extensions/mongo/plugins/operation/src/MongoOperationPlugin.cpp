@@ -9,7 +9,6 @@
 #include "EndOperationMapper.h"
 #include "storages/MongoOperationCacheStorage.h"
 #include "mongo/src/MongoPluginManager.h"
-#include "mongo/src/MongoReceiptPluginFactory.h"
 
 extern "C" PLUGIN_API
 void RegisterMongoSubsystem(catapult::mongo::MongoPluginManager& manager) {

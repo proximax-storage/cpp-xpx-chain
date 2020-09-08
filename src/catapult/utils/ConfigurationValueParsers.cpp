@@ -22,7 +22,6 @@
 #include "BlockSpan.h"
 #include "FileSize.h"
 #include "HexParser.h"
-#include "TimeSpan.h"
 #include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace utils {

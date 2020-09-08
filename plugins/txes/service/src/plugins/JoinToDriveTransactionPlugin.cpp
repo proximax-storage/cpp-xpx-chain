@@ -4,14 +4,12 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/Address.h"
 #include "JoinToDriveTransactionPlugin.h"
 #include "plugins/txes/multisig/src/model/MultisigNotifications.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/JoinToDriveTransaction.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 
 using namespace catapult::model;
 

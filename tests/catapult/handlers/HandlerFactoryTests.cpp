@@ -19,11 +19,9 @@
 **/
 
 #include "catapult/handlers/HandlerFactory.h"
-#include "catapult/handlers/BasicProducer.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/PacketTestUtils.h"
 #include "tests/TestHarness.h"
-#include <numeric>
 
 namespace catapult { namespace handlers {
 

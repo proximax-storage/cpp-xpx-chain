@@ -19,7 +19,6 @@
 **/
 
 #include "HashCacheDelta.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 
 namespace catapult { namespace cache {
 

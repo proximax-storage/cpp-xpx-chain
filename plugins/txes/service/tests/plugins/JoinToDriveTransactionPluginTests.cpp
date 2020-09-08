@@ -6,15 +6,10 @@
 
 #include "src/plugins/JoinToDriveTransactionPlugin.h"
 #include "src/model/JoinToDriveTransaction.h"
-#include "src/model/ServiceNotifications.h"
 #include "plugins/txes/multisig/src/model/MultisigNotifications.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 

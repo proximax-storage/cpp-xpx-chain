@@ -21,16 +21,11 @@
 #include "NemesisBlockLoader.h"
 #include "LocalNodeStateRef.h"
 #include "NemesisFundingObserver.h"
-#include "catapult/cache/CatapultCache.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/NotificationPublisher.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "catapult/plugins/PluginManager.h"
-#include "catapult/utils/IntegerMath.h"
 
 namespace catapult { namespace extensions {
 

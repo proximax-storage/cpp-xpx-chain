@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/chain/UtUpdater.h"
-#include "catapult/cache/CatapultCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/chain/ChainResults.h"
 #include "catapult/model/FeeUtils.h"
@@ -27,7 +26,6 @@
 #include "tests/test/cache/UtTestUtils.h"
 #include "tests/test/other/MockExecutionConfiguration.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 
 using catapult::validators::ValidationResult;
 

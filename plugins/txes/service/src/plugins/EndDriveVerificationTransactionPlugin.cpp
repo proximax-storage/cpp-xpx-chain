@@ -12,7 +12,6 @@
 #include "src/model/ServiceNotifications.h"
 #include "src/model/EndDriveVerificationTransaction.h"
 #include "plugins/txes/multisig/src/model/MultisigNotifications.h"
-#include "plugins/txes/lock_secret/src/model/LockHashAlgorithm.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
 
 using namespace catapult::model;

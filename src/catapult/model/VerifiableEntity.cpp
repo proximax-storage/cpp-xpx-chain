@@ -20,7 +20,6 @@
 
 #include "VerifiableEntity.h"
 #include "Block.h"
-#include "Transaction.h"
 
 namespace catapult { namespace model {
 

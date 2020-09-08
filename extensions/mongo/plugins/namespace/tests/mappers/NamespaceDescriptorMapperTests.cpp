@@ -20,7 +20,6 @@
 
 #include "src/mappers/NamespaceDescriptorMapper.h"
 #include "mongo/src/mappers/MapperUtils.h"
-#include "plugins/txes/namespace/src/state/RootNamespace.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "tests/test/NamespaceMapperTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"

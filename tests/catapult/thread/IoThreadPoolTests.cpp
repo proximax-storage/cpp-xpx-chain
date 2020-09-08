@@ -20,12 +20,8 @@
 
 #include "catapult/thread/IoThreadPool.h"
 #include "catapult/ionet/IoTypes.h"
-#include "catapult/utils/AtomicIncrementDecrementGuard.h"
 #include "tests/test/core/WaitFunctions.h"
 #include "tests/TestHarness.h"
-#include <boost/thread.hpp>
-#include <memory>
-#include <thread>
 
 namespace catapult { namespace thread {
 

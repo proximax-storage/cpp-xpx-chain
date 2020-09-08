@@ -19,12 +19,10 @@
 **/
 
 #include "src/plugins/MosaicSupplyChangeTransactionPlugin.h"
-#include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/model/MosaicNotifications.h"
 #include "src/model/MosaicSupplyChangeTransaction.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::model;
 

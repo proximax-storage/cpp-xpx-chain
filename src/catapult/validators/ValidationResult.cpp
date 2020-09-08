@@ -19,8 +19,6 @@
 **/
 
 #include "ValidationResult.h"
-#include "catapult/utils/HexFormatter.h"
-#include <iostream>
 
 namespace catapult { namespace validators {
 

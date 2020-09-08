@@ -21,7 +21,6 @@
 #include "catapult/thread/ParallelFor.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/nodeps/BasicMultiThreadedState.h"
-#include "tests/TestHarness.h"
 #include <list>
 #include <numeric>
 

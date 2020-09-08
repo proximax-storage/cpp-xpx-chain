@@ -19,10 +19,7 @@
 **/
 
 #include "catapult/observers/AggregateObserverBuilder.h"
-#include "catapult/cache/CatapultCache.h"
 #include "tests/catapult/observers/test/AggregateObserverTestUtils.h"
-#include "tests/test/plugins/ObserverTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
 

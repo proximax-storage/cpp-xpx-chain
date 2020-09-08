@@ -19,7 +19,6 @@
 **/
 
 #include "ObserverContext.h"
-#include "catapult/utils/MacroBasedEnumIncludes.h"
 
 namespace catapult { namespace observers {
 

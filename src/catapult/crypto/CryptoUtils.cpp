@@ -21,7 +21,6 @@
 #include "CryptoUtils.h"
 #include "Hashes.h"
 #include "PrivateKey.h"
-#include "SecureZero.h"
 #ifdef SIGNATURE_SCHEME_NIS1
 #include <algorithm>
 #endif

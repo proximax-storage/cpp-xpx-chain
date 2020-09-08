@@ -27,7 +27,6 @@
 #include "plugins/txes/namespace/src/plugins/MosaicAliasTransactionPlugin.h"
 #include "plugins/txes/namespace/src/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "plugins/txes/transfer/src/plugins/TransferTransactionPlugin.h"
-#include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/RealTransactionFactory.h"
 

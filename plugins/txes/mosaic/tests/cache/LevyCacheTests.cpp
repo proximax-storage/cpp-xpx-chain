@@ -4,14 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/LevyCache.h"
-#include "src/state/LevyEntry.h"
-#include "src/model/MosaicLevy.h"
-#include "tests/test/MosaicTestUtils.h"
 #include "tests/test/LevyTestUtils.h"
 #include "tests/test/cache/CacheBasicTests.h"
-#include "tests/test/cache/CacheMixinsTests.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

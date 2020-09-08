@@ -6,7 +6,6 @@
 
 #include "Validators.h"
 #include "plugins/txes/mosaic/src/cache/MosaicCache.h"
-#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
 

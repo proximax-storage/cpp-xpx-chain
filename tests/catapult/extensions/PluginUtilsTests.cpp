@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/extensions/PluginUtils.h"
-#include "catapult/config/BlockchainConfiguration.h"
 #include "catapult/validators/AggregateEntityValidator.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"

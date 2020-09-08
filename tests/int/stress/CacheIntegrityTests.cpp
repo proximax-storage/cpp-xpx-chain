@@ -20,17 +20,12 @@
 
 #include "plugins/services/hashcache/src/cache/HashCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/model/Address.h"
-#include "catapult/model/NetworkInfo.h"
-#include "catapult/utils/SpinLock.h"
 #include "tests/int/stress/test/StressThreadLogger.h"
-#include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 #include <boost/thread.hpp>
-#include <random>
 
 namespace catapult { namespace cache {
 

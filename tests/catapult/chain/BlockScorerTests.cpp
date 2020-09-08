@@ -20,7 +20,6 @@
 
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/model/Block.h"
-#include "catapult/utils/Logging.h"
 #include "tests/TestHarness.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/nodeps/TestConstants.h"

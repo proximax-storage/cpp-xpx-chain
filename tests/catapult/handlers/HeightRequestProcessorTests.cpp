@@ -21,7 +21,6 @@
 #include "catapult/handlers/HeightRequestProcessor.h"
 #include "catapult/api/ChainPackets.h"
 #include "tests/catapult/handlers/test/HeightRequestHandlerTests.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace handlers {
 

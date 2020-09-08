@@ -5,10 +5,8 @@
 **/
 
 #include "Validators.h"
-#include "catapult/validators/ValidatorContext.h"
 #include "catapult/version/version.h"
 #include "plugins/txes/upgrade/src/cache/BlockchainUpgradeCache.h"
-#include "plugins/txes/upgrade/src/state/BlockchainUpgradeEntry.h"
 
 namespace catapult { namespace validators {
 

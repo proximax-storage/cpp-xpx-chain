@@ -9,7 +9,6 @@
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
 #include "plugins/txes/operation/tests/test/OperationTestUtils.h"
 #include "tests/test/OperationMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

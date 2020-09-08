@@ -6,9 +6,6 @@
 
 #include "BlockchainConfigurationHolder.h"
 #include "catapult/cache/CatapultCache.h"
-#include "catapult/exceptions.h"
-#include "catapult/io/Stream.h"
-#include <fstream>
 
 namespace catapult { namespace config {
 

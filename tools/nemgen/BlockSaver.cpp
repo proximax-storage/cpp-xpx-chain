@@ -20,12 +20,7 @@
 
 #include "BlockSaver.h"
 #include "NemesisConfiguration.h"
-#include "catapult/extensions/BlockExtensions.h"
 #include "catapult/io/FileBlockStorage.h"
-#include "catapult/io/IndexFile.h"
-#include "catapult/utils/HexFormatter.h"
-#include "catapult/utils/HexParser.h"
-#include <boost/filesystem.hpp>
 
 namespace catapult { namespace tools { namespace nemgen {
 

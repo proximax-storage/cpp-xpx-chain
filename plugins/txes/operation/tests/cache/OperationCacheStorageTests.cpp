@@ -4,11 +4,8 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/OperationCacheStorage.h"
 #include "plugins/txes/lock_shared/tests/cache/LockInfoCacheStorageTests.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/OperationTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

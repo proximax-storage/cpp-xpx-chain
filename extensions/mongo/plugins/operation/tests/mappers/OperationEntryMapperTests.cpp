@@ -8,8 +8,6 @@
 #include "mongo/plugins/lock_shared/tests/mappers/LockInfoMapperTests.h"
 #include "tests/test/MongoOperationTestTraits.h"
 #include "tests/test/OperationMapperTestUtils.h"
-#include "tests/TestHarness.h"
-#include <mongocxx/client.hpp>
 
 namespace catapult { namespace mongo { namespace plugins {
 

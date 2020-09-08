@@ -22,7 +22,6 @@
 #include "mongo/plugins/lock_shared/tests/mappers/LockInfoMapperTests.h"
 #include "tests/test/MongoSecretLockInfoTestTraits.h"
 #include "tests/test/SecretLockMapperTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

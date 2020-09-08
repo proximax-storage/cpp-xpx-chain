@@ -21,7 +21,6 @@
 #include "MemoryPtCache.h"
 #include "CacheSizeLogger.h"
 #include "catapult/crypto/Hashes.h"
-#include "catapult/model/Cosignature.h"
 #include "catapult/state/TimestampedHash.h"
 #include <set>
 

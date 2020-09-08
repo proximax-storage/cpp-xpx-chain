@@ -4,15 +4,12 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/utils/MemoryUtils.h"
 #include "src/plugins/RemoveExchangeOfferTransactionPlugin.h"
 #include "src/model/RemoveExchangeOfferTransaction.h"
 #include "src/model/ExchangeNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ExchangeTestUtils.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 

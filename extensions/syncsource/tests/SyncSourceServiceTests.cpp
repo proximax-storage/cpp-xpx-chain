@@ -20,10 +20,8 @@
 
 #include "syncsource/src/SyncSourceService.h"
 #include "tests/test/core/PacketTestUtils.h"
-#include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace syncsource {
 

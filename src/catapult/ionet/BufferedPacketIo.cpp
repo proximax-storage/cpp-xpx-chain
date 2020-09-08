@@ -20,7 +20,6 @@
 
 #include "BufferedPacketIo.h"
 #include "PacketIo.h"
-#include "catapult/utils/Logging.h"
 #include <deque>
 
 namespace catapult { namespace ionet {

@@ -20,7 +20,6 @@
 
 #include "AggregateUtCache.h"
 #include "BasicAggregateTransactionsCache.h"
-#include "UtChangeSubscriber.h"
 
 namespace catapult { namespace cache {
 

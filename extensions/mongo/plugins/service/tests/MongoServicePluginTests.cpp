@@ -7,7 +7,6 @@
 #include "mongo/tests/test/MongoPluginTestUtils.h"
 #include "plugins/txes/service/src/model/ServiceEntityType.h"
 #include "plugins/txes/service/src/model/ServiceReceiptType.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace mongo { namespace plugins {
 

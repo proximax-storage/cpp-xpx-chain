@@ -19,7 +19,6 @@
 **/
 
 #include "ScheduledHarvesterTask.h"
-#include "catapult/utils/HexFormatter.h"
 
 namespace catapult { namespace harvesting {
 

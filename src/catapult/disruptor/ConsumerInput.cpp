@@ -19,8 +19,6 @@
 **/
 
 #include "ConsumerInput.h"
-#include "catapult/utils/HexFormatter.h"
-#include <ostream>
 
 namespace catapult { namespace disruptor {
 

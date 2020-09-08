@@ -5,7 +5,6 @@
 **/
 
 #include "RemoveExchangeOfferTransactionPlugin.h"
-#include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "src/model/RemoveExchangeOfferTransaction.h"
 #include "src/model/ExchangeNotifications.h"

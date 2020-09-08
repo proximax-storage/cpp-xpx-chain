@@ -19,7 +19,6 @@
 **/
 
 #include "src/validators/Validators.h"
-#include "tests/test/SecretLockInfoCacheTestUtils.h"
 #include "tests/test/SecretLockNotificationsTestUtils.h"
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

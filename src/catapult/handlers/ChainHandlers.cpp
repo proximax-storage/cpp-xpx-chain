@@ -22,11 +22,7 @@
 #include "HandlerUtils.h"
 #include "HeightRequestProcessor.h"
 #include "catapult/api/ChainPackets.h"
-#include "catapult/io/BlockStorageCache.h"
-#include "catapult/ionet/PacketEntityUtils.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
-#include "catapult/model/Block.h"
-#include "catapult/model/BlockUtils.h"
 
 namespace catapult { namespace handlers {
 

@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/model/EntityHasher.h"
 #include "src/plugins/EndOperationTransactionPlugin.h"
 #include "src/model/OperationNotifications.h"
 #include "src/model/EndOperationTransaction.h"

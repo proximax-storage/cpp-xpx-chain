@@ -18,7 +18,6 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <src/catapult/config_holder/BlockchainConfigurationHolder.h>
 #include "MosaicDefinitionTransactionPlugin.h"
 #include "src/model/MosaicDefinitionTransaction.h"
 #include "src/model/MosaicNotifications.h"
@@ -26,7 +25,6 @@
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
 #include "catapult/model/Address.h"
-#include "catapult/plugins/PluginUtils.h"
 
 using namespace catapult::model;
 

@@ -5,12 +5,6 @@
 **/
 
 #include "Validators.h"
-#include "src/cache/MosaicCache.h"
-#include "src/cache/LevyCache.h"
-#include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/validators/ValidatorContext.h"
-#include "src/model/MosaicLevy.h"
-#include "src/model/MosaicModifyLevyTransaction.h"
 #include "src/utils/MosaicLevyUtils.h"
 
 namespace catapult { namespace validators {

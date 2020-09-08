@@ -19,9 +19,7 @@
 **/
 
 #include "partialtransaction/src/handlers/CosignatureHandler.h"
-#include "catapult/model/TransactionPlugin.h"
 #include "tests/test/core/PushHandlerTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace handlers {
 

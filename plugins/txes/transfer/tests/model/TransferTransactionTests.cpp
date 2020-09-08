@@ -23,7 +23,6 @@
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/VariableSizedEntityTestUtils.h"
 #include "tests/test/nodeps/NumericTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

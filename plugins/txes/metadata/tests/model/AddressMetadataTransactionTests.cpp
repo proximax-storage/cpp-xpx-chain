@@ -4,9 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/utils/MemoryUtils.h"
 #include "src/model/AddressMetadataTransaction.h"
-#include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/core/TransactionContainerTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/MetadataTestUtils.h"

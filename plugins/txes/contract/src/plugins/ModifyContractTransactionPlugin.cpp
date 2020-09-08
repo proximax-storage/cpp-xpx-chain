@@ -8,7 +8,6 @@
 #include "catapult/model/TransactionPluginFactory.h"
 #include "ModifyContractTransactionPlugin.h"
 #include "plugins/txes/multisig/src/model/MultisigNotifications.h"
-#include "src/model/ModifyContractTransaction.h"
 #include "src/model/ContractNotifications.h"
 
 using namespace catapult::model;

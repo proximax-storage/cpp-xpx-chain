@@ -20,7 +20,6 @@
 
 #include "ConfigurationBag.h"
 #include <boost/property_tree/ini_parser.hpp>
-#include <boost/property_tree/ptree.hpp>
 
 namespace pt = boost::property_tree;
 

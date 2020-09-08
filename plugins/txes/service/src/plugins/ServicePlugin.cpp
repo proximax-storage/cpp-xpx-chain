@@ -4,14 +4,10 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/plugins/PluginManager.h"
 #include "ServicePlugin.h"
 #include "src/cache/DriveCache.h"
 #include "src/cache/DriveCacheStorage.h"
-#include "src/cache/DownloadCache.h"
 #include "src/cache/DownloadCacheStorage.h"
-#include "src/model/ServiceNotifications.h"
-#include "src/observers/Observers.h"
 #include "src/plugins/DriveFileSystemTransactionPlugin.h"
 #include "src/plugins/FilesDepositTransactionPlugin.h"
 #include "src/plugins/JoinToDriveTransactionPlugin.h"
@@ -23,10 +19,8 @@
 #include "src/plugins/StartFileDownloadTransactionPlugin.h"
 #include "src/plugins/EndFileDownloadTransactionPlugin.h"
 #include "src/validators/Validators.h"
-#include "src/utils/ServiceUtils.h"
 #include "catapult/observers/ObserverUtils.h"
 #include "catapult/plugins/CacheHandlers.h"
-#include "src/config/ServiceConfiguration.h"
 
 namespace catapult { namespace plugins {
 

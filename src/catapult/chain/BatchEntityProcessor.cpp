@@ -20,7 +20,6 @@
 
 #include "BatchEntityProcessor.h"
 #include "ProcessingNotificationSubscriber.h"
-#include "catapult/cache/CatapultCache.h"
 
 using namespace catapult::validators;
 

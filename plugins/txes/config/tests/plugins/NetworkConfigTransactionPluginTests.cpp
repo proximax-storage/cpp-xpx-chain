@@ -4,13 +4,11 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "catapult/utils/MemoryUtils.h"
 #include "src/plugins/NetworkConfigTransactionPlugin.h"
 #include "src/model/NetworkConfigTransaction.h"
 #include "src/model/NetworkConfigNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
-#include "tests/TestHarness.h"
 
 using namespace catapult::model;
 

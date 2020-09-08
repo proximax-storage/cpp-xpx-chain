@@ -21,8 +21,6 @@
 #include "catapult/consumers/BlockConsumers.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
-#include "catapult/io/BlockStorageCache.h"
-#include "catapult/model/ChainScore.h"
 #include "sdk/src/builders/NetworkConfigBuilder.h"
 #include "tests/catapult/consumers/test/ConsumerInputFactory.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
@@ -32,8 +30,6 @@
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/nodeps/ParamsCapture.h"
-#include "tests/TestHarness.h"
-#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
 #include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 using catapult::disruptor::ConsumerInput;

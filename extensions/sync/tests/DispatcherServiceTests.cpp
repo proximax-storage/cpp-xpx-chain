@@ -21,12 +21,10 @@
 #include "sync/src/DispatcherService.h"
 #include "sdk/src/extensions/TransactionExtensions.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/disruptor/ConsumerDispatcher.h"
 #include "catapult/io/IndexFile.h"
 #include "catapult/model/BlockUtils.h"
-#include "catapult/utils/NetworkTime.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
@@ -38,8 +36,6 @@
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
-#include <boost/filesystem.hpp>
 
 using ValidationResult = catapult::validators::ValidationResult;
 

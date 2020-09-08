@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/CommitteeCache.h"
 #include "src/validators/Validators.h"
 #include "tests/test/CommitteeTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"

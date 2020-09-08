@@ -19,13 +19,11 @@
 **/
 
 #include "TransactionRegistryFactory.h"
-#include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/plugins/NetworkConfigTransactionPlugin.h"
 #include "catapult/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
 #include "catapult/plugins/MosaicDefinitionTransactionPlugin.h"
 #include "catapult/plugins/MosaicSupplyChangeTransactionPlugin.h"
-#include "catapult/plugins/PluginUtils.h"
 #include "catapult/plugins/RegisterNamespaceTransactionPlugin.h"
 #include "catapult/plugins/TransferTransactionPlugin.h"
 #include "mosaic/src/config/MosaicConfiguration.h"

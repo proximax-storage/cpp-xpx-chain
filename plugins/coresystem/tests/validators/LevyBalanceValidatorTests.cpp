@@ -7,7 +7,6 @@
 #include "src/validators/Validators.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
-#include "catapult/types.h"
 #include "tests/test/cache/BalanceTransferTestUtils.h"
 
 namespace catapult { namespace validators {

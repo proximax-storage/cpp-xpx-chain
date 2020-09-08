@@ -6,8 +6,6 @@
 
 #include "src/utils/MosaicLevyCalculator.h"
 #include "tests/TestHarness.h"
-#include "src/model/MosaicLevy.h"
-#include "tests/test/MosaicTestUtils.h"
 #include "tests/test/LevyTestUtils.h"
 
 namespace catapult { namespace test {

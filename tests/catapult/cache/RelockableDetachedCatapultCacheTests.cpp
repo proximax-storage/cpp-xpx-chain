@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/cache/RelockableDetachedCatapultCache.h"
-#include "catapult/model/NetworkConfiguration.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/TestHarness.h"
 

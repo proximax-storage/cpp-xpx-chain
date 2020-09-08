@@ -21,7 +21,6 @@
 #include "ConsumerUtils.h"
 #include "ConsumerResults.h"
 #include "catapult/disruptor/ConsumerInput.h"
-#include "catapult/ionet/NodeInteractionResult.h"
 
 namespace catapult { namespace consumers {
 

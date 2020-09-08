@@ -8,7 +8,6 @@
 #include "src/mappers/CommitteeEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "plugins/txes/committee/src/cache/CommitteeCache.h"
-#include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;
 

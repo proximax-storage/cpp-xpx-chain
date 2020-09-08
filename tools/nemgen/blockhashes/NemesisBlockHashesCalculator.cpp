@@ -20,7 +20,6 @@
 
 #include "NemesisBlockHashesCalculator.h"
 #include "PluginLoader.h"
-#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/chain/BlockExecutor.h"
 #include "catapult/observers/NotificationObserverAdapter.h"
 

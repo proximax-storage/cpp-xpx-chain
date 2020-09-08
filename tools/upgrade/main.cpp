@@ -8,22 +8,17 @@
 #include "catapult/builders/BlockchainUpgradeBuilder.h"
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/crypto/KeyUtils.h"
-#include "catapult/exceptions.h"
 #include "catapult/extensions/TransactionExtensions.h"
 #include "catapult/ionet/Node.h"
 #include "catapult/ionet/PacketPayloadFactory.h"
 #include "catapult/ionet/PacketSocket.h"
-#include "catapult/net/PeerConnectCode.h"
 #include "catapult/net/VerifyPeer.h"
 #include "catapult/utils/FileSize.h"
 #include "catapult/utils/HexParser.h"
-#include "catapult/utils/Logging.h"
 #include "catapult/utils/NetworkTime.h"
 #include "tools/ToolMain.h"
 #include <boost/algorithm/string/split.hpp>
-#include <boost/asio.hpp>
 #include <boost/filesystem.hpp>
-#include <boost/lexical_cast.hpp>
 
 namespace catapult { namespace tools { namespace upgrade {
 

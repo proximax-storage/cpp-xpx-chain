@@ -8,7 +8,6 @@
 #include "catapult/model/EntityHasher.h"
 #include "catapult/model/NotificationSubscriber.h"
 #include "catapult/model/TransactionPluginFactory.h"
-#include "src/config/ServiceConfiguration.h"
 #include "src/model/ServiceNotifications.h"
 #include "src/model/StartFileDownloadTransaction.h"
 #include "src/utils/ServiceUtils.h"

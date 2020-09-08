@@ -18,9 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/cache/ReadOnlySimpleCache.h"
 #include "tests/test/cache/SimpleCache.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

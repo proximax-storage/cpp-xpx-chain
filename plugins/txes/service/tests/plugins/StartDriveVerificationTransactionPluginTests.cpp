@@ -5,23 +5,13 @@
 **/
 
 #include "catapult/model/Address.h"
-#include "catapult/plugins/PluginUtils.h"
-#include "catapult/utils/MemoryUtils.h"
-#include "src/config/ServiceConfiguration.h"
 #include "src/plugins/StartDriveVerificationTransactionPlugin.h"
 #include "src/model/StartDriveVerificationTransaction.h"
-#include "src/model/ServiceNotifications.h"
 #include "sdk/src/extensions/ConversionExtensions.h"
-#include "plugins/txes/multisig/src/model/MultisigNotifications.h"
-#include "plugins/txes/lock_secret/src/model/LockHashAlgorithm.h"
 #include "plugins/txes/lock_secret/src/model/SecretLockNotifications.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
-#include <limits>
 
 using namespace catapult::model;
 

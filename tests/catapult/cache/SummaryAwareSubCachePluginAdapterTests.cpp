@@ -20,7 +20,6 @@
 
 #include "catapult/cache/SummaryAwareSubCachePluginAdapter.h"
 #include "tests/test/cache/SimpleCache.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

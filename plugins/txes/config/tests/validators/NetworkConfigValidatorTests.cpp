@@ -4,16 +4,11 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/NetworkConfigCache.h"
-#include "src/cache/NetworkConfigCacheStorage.h"
 #include "src/config/NetworkConfigConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/NetworkConfigTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
-#include "tests/test/other/MutableBlockchainConfiguration.h"
-#include "tests/TestHarness.h"
 #include <boost/algorithm/string/replace.hpp>
 
 namespace catapult { namespace validators {

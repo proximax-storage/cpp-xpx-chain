@@ -19,19 +19,13 @@
 **/
 
 #include "nodediscovery/src/NodeDiscoveryService.h"
-#include "catapult/config/BlockchainConfiguration.h"
-#include "catapult/ionet/NetworkNode.h"
-#include "catapult/net/ServerConnector.h"
-#include "catapult/net/VerifyPeer.h"
 #include "nodediscovery/tests/test/NodeDiscoveryTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
 #include "tests/test/core/mocks/MockPacketIo.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/net/BriefServerRequestorTestUtils.h"
-#include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/net/mocks/MockPacketWriters.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace nodediscovery {
 

@@ -19,10 +19,8 @@
 **/
 
 #include "ChainedSocketReader.h"
-#include "catapult/ionet/BufferedPacketIo.h"
 #include "catapult/ionet/PacketSocket.h"
 #include "catapult/ionet/SocketReader.h"
-#include "catapult/utils/Logging.h"
 
 namespace catapult { namespace net {
 

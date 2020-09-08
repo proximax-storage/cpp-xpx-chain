@@ -20,7 +20,6 @@
 
 #include "catapult/utils/StackLogger.h"
 #include "tests/catapult/utils/test/LoggingTestUtils.h"
-#include "tests/test/nodeps/Filesystem.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace utils {

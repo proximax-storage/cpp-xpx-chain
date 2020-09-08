@@ -28,7 +28,6 @@
 #include "catapult/extensions/ServiceLocator.h"
 #include "catapult/extensions/SynchronizerTaskCallbacks.h"
 #include "catapult/net/PacketWriters.h"
-#include "catapult/thread/MultiServicePool.h"
 
 namespace catapult { namespace partialtransaction {
 

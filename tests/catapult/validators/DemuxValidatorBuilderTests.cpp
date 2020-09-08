@@ -19,7 +19,6 @@
 **/
 
 #include "catapult/validators/DemuxValidatorBuilder.h"
-#include "catapult/cache/CatapultCache.h"
 #include "tests/catapult/validators/test/MockTaggedBreadcrumbValidator.h"
 #include "tests/test/other/mocks/MockNotification.h"
 #include "tests/test/other/mocks/MockNotificationValidator.h"

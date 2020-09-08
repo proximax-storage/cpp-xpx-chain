@@ -21,17 +21,13 @@
 #include "catapult/consumers/BlockConsumers.h"
 #include "sdk/src/extensions/BlockExtensions.h"
 #include "catapult/consumers/TransactionConsumers.h"
-#include "catapult/crypto/Hashes.h"
 #include "catapult/model/EntityHasher.h"
 #include "catapult/utils/HexParser.h"
-#include "catapult/exceptions.h"
 #include "tests/catapult/consumers/test/ConsumerTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/PacketTestUtils.h"
-#include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/core/mocks/MockTransactionPluginWithCustomBuffers.h"
 #include "tests/test/nodeps/TestConstants.h"
-#include "tests/TestHarness.h"
 
 using catapult::disruptor::ConsumerInput;
 

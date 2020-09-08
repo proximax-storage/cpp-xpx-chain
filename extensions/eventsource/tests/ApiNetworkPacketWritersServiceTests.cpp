@@ -21,7 +21,6 @@
 #include "eventsource/src/ApiNetworkPacketWritersService.h"
 #include "tests/test/local/PacketWritersServiceTestUtils.h"
 #include "tests/test/local/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace eventsource {
 

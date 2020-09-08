@@ -4,10 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/cache/SuperContractCacheStorage.h"
-#include "src/cache/SuperContractCache.h"
 #include "tests/test/SuperContractTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace cache {
 

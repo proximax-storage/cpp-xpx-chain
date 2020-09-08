@@ -4,9 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/observers/Observers.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/test/core/NotificationTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
 #include "tests/TestHarness.h"
 

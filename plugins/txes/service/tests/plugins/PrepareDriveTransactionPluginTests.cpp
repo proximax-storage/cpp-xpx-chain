@@ -6,7 +6,6 @@
 
 #include "src/plugins/PrepareDriveTransactionPlugin.h"
 #include "src/model/PrepareDriveTransaction.h"
-#include "src/model/ServiceNotifications.h"
 #include "tests/test/core/mocks/MockNotificationSubscriber.h"
 #include "tests/test/plugins/TransactionPluginTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"

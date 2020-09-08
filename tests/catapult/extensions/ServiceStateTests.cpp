@@ -19,10 +19,7 @@
 **/
 
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/extensions/LocalNodeChainScore.h"
-#include "catapult/extensions/ServiceLocator.h"
-#include "catapult/ionet/NodeContainer.h"
 #include "catapult/thread/MultiServicePool.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
@@ -30,8 +27,6 @@
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
 #include "tests/test/other/mocks/MockTransactionStatusSubscriber.h"
-#include "tests/test/plugins/PluginManagerFactory.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace extensions {
 

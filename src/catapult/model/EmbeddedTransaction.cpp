@@ -20,7 +20,6 @@
 
 #include "EmbeddedTransaction.h"
 #include "NotificationSubscriber.h"
-#include "Transaction.h"
 #include "TransactionPlugin.h"
 
 namespace catapult { namespace model {

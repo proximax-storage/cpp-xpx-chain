@@ -20,7 +20,6 @@
 
 #include "src/state/SecretLockInfo.h"
 #include "plugins/txes/lock_shared/tests/state/LockInfoTests.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace state {
 

@@ -22,7 +22,6 @@
 #include "src/config/NamespaceConfiguration.h"
 #include "src/model/NameChecker.h"
 #include "src/model/NamespaceIdGenerator.h"
-#include "catapult/utils/Hashers.h"
 
 namespace catapult { namespace validators {
 

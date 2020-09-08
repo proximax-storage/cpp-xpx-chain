@@ -18,9 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "catapult/deltaset/BaseSetFindIterator.h"
 #include "tests/catapult/deltaset/test/BaseSetTestsInclude.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace deltaset {
 

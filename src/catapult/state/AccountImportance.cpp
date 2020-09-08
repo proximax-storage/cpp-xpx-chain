@@ -19,7 +19,6 @@
 **/
 
 #include "AccountImportance.h"
-#include <algorithm>
 
 namespace catapult { namespace state {
 

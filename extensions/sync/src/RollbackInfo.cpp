@@ -20,7 +20,6 @@
 
 #include "RollbackInfo.h"
 #include "catapult/extensions/ServiceState.h"
-#include "catapult/model/Elements.h"
 
 namespace catapult { namespace sync {
 

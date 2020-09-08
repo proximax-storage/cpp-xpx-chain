@@ -19,15 +19,11 @@
 **/
 
 #include "mongo/src/MongoTransactionStatusStorage.h"
-#include "mongo/src/MongoBulkWriter.h"
 #include "mongo/src/mappers/MapperUtils.h"
 #include "catapult/model/TransactionStatus.h"
 #include "mongo/tests/test/MapperTestUtils.h"
 #include "mongo/tests/test/MongoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
-#include "tests/TestHarness.h"
-#include <mongocxx/instance.hpp>
-#include <unordered_set>
 
 using namespace bsoncxx::builder::stream;
 

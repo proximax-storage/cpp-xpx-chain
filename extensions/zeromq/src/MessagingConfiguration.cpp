@@ -20,7 +20,6 @@
 
 #include "MessagingConfiguration.h"
 #include "catapult/config/ConfigurationFileLoader.h"
-#include "catapult/utils/ConfigurationBag.h"
 #include "catapult/utils/ConfigurationUtils.h"
 
 namespace catapult { namespace zeromq {

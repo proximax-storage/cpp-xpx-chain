@@ -7,10 +7,8 @@
 
 #include "sdk/src/extensions/ConversionExtensions.h"
 #include "src/observers/Observers.h"
-#include "catapult/model/Address.h"
 #include "tests/test/MetadataCacheTestUtils.h"
 #include "tests/test/plugins/ObserverTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace observers {
 

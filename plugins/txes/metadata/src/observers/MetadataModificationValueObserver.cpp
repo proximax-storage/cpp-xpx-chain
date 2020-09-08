@@ -6,8 +6,6 @@
 
 #include "Observers.h"
 #include "src/cache/MetadataCache.h"
-#include "src/state/MetadataUtils.h"
-#include "src/state/MetadataField.h"
 
 namespace catapult { namespace observers {
 

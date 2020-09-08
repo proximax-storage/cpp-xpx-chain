@@ -5,12 +5,9 @@
 **/
 
 #include "src/model/EndDriveVerificationTransaction.h"
-#include "catapult/utils/MemoryUtils.h"
 #include "tests/test/core/TransactionContainerTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
-#include "tests/test/nodeps/NumericTestUtils.h"
 #include "tests/test/ServiceTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace model {
 

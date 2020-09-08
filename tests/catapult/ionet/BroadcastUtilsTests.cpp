@@ -21,8 +21,6 @@
 #include "catapult/ionet/BroadcastUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/PacketPayloadTestUtils.h"
-#include "tests/test/core/TransactionTestUtils.h"
-#include "tests/TestHarness.h"
 
 namespace catapult { namespace ionet {
 

@@ -19,10 +19,7 @@
 **/
 
 #include "tools/ToolMain.h"
-#include "catapult/model/FacilityCode.h"
-#include "catapult/utils/HexFormatter.h"
 #include "../../src/catapult/validators/ValidationResult.h" /* notice that validators are not in sdk */
-#include <iostream>
 
 using namespace catapult::validators;
 

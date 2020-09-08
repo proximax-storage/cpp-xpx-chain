@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/state/LevyEntry.h"
 #include "tests/test/LevyTestUtils.h"
 #include "tests/TestHarness.h"
 

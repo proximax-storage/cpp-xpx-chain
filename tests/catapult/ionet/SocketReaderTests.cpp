@@ -19,16 +19,11 @@
 **/
 
 #include "catapult/ionet/SocketReader.h"
-#include "catapult/ionet/BufferedPacketIo.h"
-#include "catapult/ionet/IoTypes.h"
 #include "catapult/ionet/PacketSocket.h"
-#include "catapult/thread/IoThreadPool.h"
 #include "tests/test/core/ThreadPoolTestUtils.h"
 #include "tests/test/net/ClientSocket.h"
 #include "tests/test/net/SocketTestUtils.h"
 #include "tests/test/nodeps/Atomics.h"
-#include "tests/TestHarness.h"
-#include <set>
 
 namespace catapult { namespace ionet {
 

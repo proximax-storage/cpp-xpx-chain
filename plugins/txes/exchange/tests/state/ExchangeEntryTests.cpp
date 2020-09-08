@@ -4,7 +4,6 @@
 *** license that can be found in the LICENSE file.
 **/
 
-#include "src/state/ExchangeEntry.h"
 #include "tests/test/ExchangeTestUtils.h"
 #include "tests/TestHarness.h"
 

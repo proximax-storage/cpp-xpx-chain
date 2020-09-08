@@ -20,8 +20,6 @@
 
 #include "src/config/TransferConfiguration.h"
 #include "src/validators/Validators.h"
-#include "tests/test/cache/CacheTestUtils.h"
-#include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
 #include "tests/TestHarness.h"
