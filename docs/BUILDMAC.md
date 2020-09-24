@@ -122,7 +122,7 @@ cd rocksdb.git
 git checkout v6.6.4-nem
 
 mkdir _build && cd _build
-cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local ..
+cmake -DCMAKE_BUILD_TYPE=Release -DWITH_TESTS=OFF -DCMAKE_INSTALL_PREFIX=/usr/local -DWITH_SNAPPY=1 ..
 make
 sudo make install
 cd ../..
