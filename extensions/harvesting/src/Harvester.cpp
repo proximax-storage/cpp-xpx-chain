@@ -121,9 +121,7 @@ namespace catapult { namespace harvesting {
 		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.Immutable.NetworkIdentifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
 		auto pBlock = m_blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock);
 
-		// If BlockGenerationTargetTime is zero, it means that we are trying to generate blocks as fast as it is possible.
-		// But in this case we don't need empty blocks without transactions.
-		if (config.Network.BlockGenerationTargetTime.millis() == 0 && !pBlock->TransactionsPtr())
+		if (config.Node.RejectEmptyBlocks && !pBlock->TransactionsPtr())
 			return nullptr;
 
 		if (pBlock)
