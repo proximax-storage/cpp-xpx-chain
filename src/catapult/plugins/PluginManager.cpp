@@ -325,7 +325,7 @@ namespace catapult { namespace plugins {
 	}
 
 	/// Gets committee manager.
-	chain::CommitteeManager& PluginManager::getCommitteeManager() {
+	chain::CommitteeManager& PluginManager::getCommitteeManager() const {
 		if (!m_pCommitteeManager)
 			CATAPULT_THROW_RUNTIME_ERROR("committee manager not set");
 

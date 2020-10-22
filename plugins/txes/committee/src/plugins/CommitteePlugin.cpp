@@ -29,9 +29,6 @@ namespace catapult { namespace plugins {
 		manager.addCacheSupport<cache::CommitteeCacheStorage>(
 			std::make_unique<cache::CommitteeCache>(manager.cacheConfig(cache::CommitteeCache::Name), pAccountCollector, pConfigHolder));
 
-		using CacheHandlersCommittee = CacheHandlers<cache::CommitteeCacheDescriptor>;
-		CacheHandlersCommittee::Register<model::FacilityCode::Committee>(manager);
-
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("COMMITTEE C"), [&cache]() {
 				return cache.sub<cache::CommitteeCache>().createView(cache.height())->size();

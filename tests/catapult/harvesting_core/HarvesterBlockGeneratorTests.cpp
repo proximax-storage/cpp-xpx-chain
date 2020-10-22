@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "harvesting/src/HarvesterBlockGenerator.h"
-#include "harvesting/src/HarvestingUtFacadeFactory.h"
+#include "catapult/harvesting_core/HarvesterBlockGenerator.h"
+#include "catapult/harvesting_core/HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/cache_tx/MemoryUtCache.h"
 #include "catapult/model/BlockUtils.h"

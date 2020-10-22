@@ -44,8 +44,15 @@ namespace catapult { namespace model {
 	/// \note All header data is assumed to be present and valid.
 	void SignBlockHeader(const crypto::KeyPair& signer, Block& block);
 
+	/// Cosigns \a block header as \a signer placing result into \a signature.
+	/// \note All header data is assumed to be present and valid.
+	void CosignBlockHeader(const crypto::KeyPair& signer, Block& block, Signature& signature);
+
 	/// Validates signature of \a block header.
 	bool VerifyBlockHeaderSignature(const Block& block);
+
+	/// Validates \a cosignature of \a block header.
+	bool VerifyBlockHeaderCosignature(const Block& block, const model::Cosignature& cosignature);
 
 	// endregion
 

@@ -28,6 +28,11 @@ maxTransactionsPerBlock = 200'000
 
 enableUnconfirmedTransactionMinFeeValidation = true
 
+committeeSize = 21
+committeeApproval = 0.67
+committeePhaseTime = 5s
+committeeTimeAdjustment = 1.1
+
 [plugin:catapult.plugins.accountlink]
 dummy = to trigger plugin load
 

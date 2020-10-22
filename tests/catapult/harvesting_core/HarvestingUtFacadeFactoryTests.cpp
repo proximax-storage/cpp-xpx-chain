@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "harvesting/src/HarvestingUtFacadeFactory.h"
+#include "catapult/harvesting_core/HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
 #include "catapult/model/BlockUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"

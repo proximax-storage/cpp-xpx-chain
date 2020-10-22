@@ -33,7 +33,6 @@ namespace catapult { namespace test {
 #ifdef SIGNATURE_SCHEME_NIS1
 	constexpr auto Deterministic_Block_Hash_String = "80ED33530BE86977CCE8A84208F9D1C0404A12D53FFCDF442CA6FBD0F691AE35";
 #else
-//	constexpr auto Deterministic_Block_Hash_String = "AC9668D0057CFF9D430D824DA3FF352A12BEE847B8CA6F94B5E25DE219D1179F";
 	constexpr auto Deterministic_Block_Hash_String = "6A3D3136662471BF8B7B18837D8E2EF4231BE4CBD226A1F96084B822AAEA0506";
 #endif
 

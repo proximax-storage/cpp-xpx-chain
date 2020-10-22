@@ -6,7 +6,7 @@
 
 #pragma once
 #include "CommitteeAccountCollector.h"
-#include "CommitteeBaseSets.h"
+#include "CommitteeCacheTypes.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -17,7 +17,7 @@
 namespace catapult { namespace cache {
 
 	/// Mixins used by the network config cache delta.
-	using CommitteeCacheDeltaMixins = PatriciaTreeCacheMixins<CommitteeCacheTypes::PrimaryTypes::BaseSetDeltaType, CommitteeCacheDescriptor>;
+	using CommitteeCacheDeltaMixins = BasicCacheMixins<CommitteeCacheTypes::PrimaryTypes::BaseSetDeltaType, CommitteeCacheDescriptor>;
 
 	/// Basic delta on top of the network config cache.
 	class BasicCommitteeCacheDelta
@@ -26,7 +26,6 @@ namespace catapult { namespace cache {
 			, public CommitteeCacheDeltaMixins::Contains
 			, public CommitteeCacheDeltaMixins::ConstAccessor
 			, public CommitteeCacheDeltaMixins::MutableAccessor
-			, public CommitteeCacheDeltaMixins::PatriciaTreeDelta
 			, public CommitteeCacheDeltaMixins::BasicInsertRemove
 			, public CommitteeCacheDeltaMixins::DeltaElements
 			, public CommitteeCacheDeltaMixins::ConfigBasedEnable<config::CommitteeConfiguration> {
@@ -42,12 +41,11 @@ namespace catapult { namespace cache {
 				, CommitteeCacheDeltaMixins::Contains(*committeeSets.pPrimary)
 				, CommitteeCacheDeltaMixins::ConstAccessor(*committeeSets.pPrimary)
 				, CommitteeCacheDeltaMixins::MutableAccessor(*committeeSets.pPrimary)
-				, CommitteeCacheDeltaMixins::PatriciaTreeDelta(*committeeSets.pPrimary, committeeSets.pPatriciaTree)
 				, CommitteeCacheDeltaMixins::BasicInsertRemove(*committeeSets.pPrimary)
 				, CommitteeCacheDeltaMixins::DeltaElements(*committeeSets.pPrimary)
 				, CommitteeCacheDeltaMixins::ConfigBasedEnable<config::CommitteeConfiguration>(
 					pConfigHolder, [](const auto& config) { return config.Enabled; })
-				, m_pCommitteEntries(committeeSets.pPrimary)
+				, m_pCommitteeEntries(committeeSets.pPrimary)
 		{}
 
 	public:
@@ -55,8 +53,8 @@ namespace catapult { namespace cache {
 		using CommitteeCacheDeltaMixins::MutableAccessor::find;
 
 	public:
-		void updateAccountCollector(std::shared_ptr<CommitteeAccountCollector> pAccountCollector) const {
-			auto deltas = m_pCommitteEntries->deltas();
+		void updateAccountCollector(const std::shared_ptr<CommitteeAccountCollector>& pAccountCollector) const {
+			auto deltas = m_pCommitteeEntries->deltas();
 			auto added = deltas.Added;
 			added.insert(deltas.Copied.begin(), deltas.Copied.end());
 			auto removed = deltas.Removed;
@@ -75,7 +73,7 @@ namespace catapult { namespace cache {
 		}
 
 	private:
-		CommitteeCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pCommitteEntries;
+		CommitteeCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pCommitteeEntries;
 	};
 
 	/// Delta on top of the committee cache.

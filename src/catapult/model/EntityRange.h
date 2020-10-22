@@ -164,7 +164,7 @@ namespace catapult { namespace model {
 			SingleEntityRange() : SubRange()
 			{}
 
-			explicit SingleEntityRange(model::UniqueEntityPtr<TEntity>&& pEntity)
+			explicit SingleEntityRange(std::shared_ptr<TEntity>&& pEntity)
 					: SubRange(pEntity->Size)
 					, m_pSingleEntity(std::move(pEntity)) {
 				SubRange::entities().push_back(m_pSingleEntity.get());
@@ -290,7 +290,7 @@ namespace catapult { namespace model {
 		}
 
 		/// Creates an entity range around a single entity (\a pEntity).
-		static EntityRange FromEntity(model::UniqueEntityPtr<TEntity>&& pEntity) {
+		static EntityRange FromEntity(std::shared_ptr<TEntity> pEntity) {
 			return EntityRange(SingleEntityRange(std::move(pEntity)));
 		}
 

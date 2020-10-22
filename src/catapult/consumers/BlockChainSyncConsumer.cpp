@@ -19,14 +19,13 @@
 **/
 
 #include "BlockConsumers.h"
+#include "ConsumerUtils.h"
 #include "ConsumerResultFactory.h"
 #include "catapult/cache/CatapultCache.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/chain/ChainUtils.h"
 #include "catapult/io/BlockStorageCache.h"
 #include "catapult/utils/StackLogger.h"
-#include "plugins/txes/config/src/model/NetworkConfigTransaction.h"
-#include "plugins/txes/aggregate/src/model/AggregateTransaction.h"
 
 namespace catapult { namespace consumers {
 
@@ -35,51 +34,6 @@ namespace catapult { namespace consumers {
 
 		constexpr bool IsAborted(const disruptor::ConsumerResult& result) {
 			return disruptor::CompletionStatus::Aborted == result.CompletionStatus;
-		}
-
-		model::NetworkConfiguration ParseConfig(const uint8_t* pConfig, uint16_t configSize) {
-			std::istringstream inputBlock(std::string(reinterpret_cast<const char*>(pConfig), configSize));
-			return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
-		}
-
-		template<typename TTransaction>
-		void AddConfig(model::NetworkConfigurations& configs, const Height& blockHeight, const TTransaction& transaction) {
-			configs.emplace(
-				blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()),
-				ParseConfig(transaction.BlockChainConfigPtr(), transaction.BlockChainConfigSize));
-		}
-
-		template<typename TTransaction>
-		void AddConfig(std::set<Height>& configHeights, const Height& blockHeight, const TTransaction& transaction) {
-			configHeights.insert(blockHeight +  Height(transaction.ApplyHeightDelta.unwrap()));
-		}
-
-		template<typename TContainer>
-		bool ExtractConfigs(const BlockElements& elements, TContainer& configs) {
-			try {
-				for (const auto& blockElement : elements) {
-					for (const auto& transactionElement : blockElement.Transactions) {
-						const auto& transaction = transactionElement.Transaction;
-						auto type = transaction.Type;
-						if (model::Entity_Type_Network_Config == type) {
-							AddConfig(configs, blockElement.Block.Height,
-								static_cast<const model::NetworkConfigTransaction&>(transaction));
-						} else if (model::Entity_Type_Aggregate_Complete == type || model::Entity_Type_Aggregate_Bonded == type) {
-							const auto& aggregate = static_cast<const model::AggregateTransaction&>(transaction);
-							for (const auto& subTransaction : aggregate.Transactions()) {
-								if (model::Entity_Type_Network_Config == subTransaction.Type) {
-									AddConfig(configs, blockElement.Block.Height,
-										static_cast<const model::EmbeddedNetworkConfigTransaction&>(subTransaction));
-								}
-							}
-						}
-					}
-				}
-			} catch (...) {
-				return false;
-			}
-
-			return true;
 		}
 
 		struct UnwindResult {

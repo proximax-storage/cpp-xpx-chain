@@ -27,8 +27,6 @@ namespace catapult { namespace chain {
 		uint16_t Round;
 	};
 
-	using BlockElementSupplier = supplier<std::shared_ptr<const model::BlockElement>>;
-
 	/// Interface for committee manager.
 	class CommitteeManager : public utils::NonCopyable {
 	public:
@@ -43,18 +41,21 @@ namespace catapult { namespace chain {
 
 		/// Returns the committee selected by the last call of selectCommittee()
 		/// or empty committee after reset().
-		const Committee& committee() {
+		const Committee& committee() const {
 			return m_committee;
 		}
 
 		/// Sets last block element \a supplier.
-		void setLastBlockElementSupplier(const BlockElementSupplier& supplier);
+		void setLastBlockElementSupplier(const model::BlockElementSupplier& supplier);
 
 		/// Gets last block element supplier.
-		const BlockElementSupplier& lastBlockElementSupplier();
+		const model::BlockElementSupplier& lastBlockElementSupplier();
+
+		/// Returns the weight of the account by \a accountKey.
+		virtual double weight(const Key& accountKey) const = 0;
 
 	protected:
-		BlockElementSupplier m_lastBlockElementSupplier;
+		model::BlockElementSupplier m_lastBlockElementSupplier;
 		Committee m_committee;
 	};
 }}

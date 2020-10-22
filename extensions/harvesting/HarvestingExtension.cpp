@@ -19,7 +19,7 @@
 **/
 
 #include "src/HarvestingService.h"
-#include "src/ValidateHarvestingConfiguration.h"
+#include "catapult/harvesting_core/ValidateHarvestingConfiguration.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
 
 namespace catapult { namespace harvesting {

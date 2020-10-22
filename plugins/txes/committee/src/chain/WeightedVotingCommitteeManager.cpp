@@ -75,6 +75,10 @@ namespace catapult { namespace chain {
 				return (x.value() > y.value());
 			}
 		};
+
+		double CalculateWeight(const state::AccountData& accountData) {
+			return 1.0 / (1.0 + std::exp(-accountData.Activity));
+		}
 	}
 
 	WeightedVotingCommitteeManager::WeightedVotingCommitteeManager(const std::shared_ptr<cache::CommitteeAccountCollector>& pAccountCollector)
@@ -85,6 +89,13 @@ namespace catapult { namespace chain {
 	void WeightedVotingCommitteeManager::reset() {
 		m_hashes.clear();
 		m_committee = Committee();
+	}
+
+	double WeightedVotingCommitteeManager::weight(const Key& accountKey) const {
+		const auto& accounts = m_pAccountCollector->accounts();
+		auto iter = accounts.find(accountKey);
+
+		return (accounts.end() != iter) ? CalculateWeight(iter->second) : 0.0;
 	}
 
 	const Committee& WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig) {
@@ -101,7 +112,7 @@ namespace catapult { namespace chain {
 				continue;
 
 			const auto& key = pair.first;
-			auto weight = 1.0 / (1.0 + std::exp(-accountData.Activity));
+			auto weight = CalculateWeight(accountData);
 			const auto& hash = round ?
 				m_pHasher->calculateHash(m_hashes.at(key)) :
 				m_pHasher->calculateHash(m_hashes[key], generationHash, key);

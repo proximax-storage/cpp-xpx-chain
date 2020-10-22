@@ -6,7 +6,6 @@
 
 #pragma once
 #include "src/chain/WeightedVotingCommitteeManager.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "plugins/txes/committee/src/cache/CommitteeAccountCollector.h"
 #include "plugins/txes/committee/src/cache/CommitteeCache.h"
 #include "plugins/txes/committee/src/cache/CommitteeCacheStorage.h"

@@ -265,7 +265,7 @@ namespace catapult { namespace plugins {
 		void setCommitteeManager(const std::shared_ptr<chain::CommitteeManager>& pManager);
 
 		/// Gets committee manager.
-		chain::CommitteeManager& getCommitteeManager();
+		chain::CommitteeManager& getCommitteeManager() const;
 
 		// endregion
 

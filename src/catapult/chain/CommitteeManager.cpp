@@ -8,14 +8,14 @@
 
 namespace catapult { namespace chain {
 
-	void CommitteeManager::setLastBlockElementSupplier(const BlockElementSupplier& supplier) {
+	void CommitteeManager::setLastBlockElementSupplier(const model::BlockElementSupplier& supplier) {
 		if (!!m_lastBlockElementSupplier)
 			CATAPULT_THROW_RUNTIME_ERROR("last block element supplier already set");
 
 		m_lastBlockElementSupplier = supplier;
 	}
 
-	const BlockElementSupplier& CommitteeManager::lastBlockElementSupplier() {
+	const model::BlockElementSupplier& CommitteeManager::lastBlockElementSupplier() {
 		if (!m_lastBlockElementSupplier)
 			CATAPULT_THROW_RUNTIME_ERROR("last block element supplier not set");
 

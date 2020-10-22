@@ -34,6 +34,10 @@ namespace catapult { namespace net {
 		/// After \a ioDuration elapses, the connections will timeout.
 		std::vector<ionet::NodePacketIoPair> pickMatching(const utils::TimeSpan& ioDuration, ionet::NodeRoles roles) const;
 
+		/// Retrieves \a numRequested io pairs around an active connections from a picker with compatible \a role.
+		/// After \a ioDuration elapses, the connections will timeout.
+		std::vector<ionet::NodePacketIoPair> pickMultiple(size_t numRequested, const utils::TimeSpan& ioDuration, ionet::NodeRoles role) const;
+
 	private:
 		std::vector<std::pair<ionet::NodeRoles, PacketIoPicker*>> m_pickers;
 	};

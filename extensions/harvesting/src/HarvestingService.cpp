@@ -19,7 +19,7 @@
 **/
 
 #include "HarvestingService.h"
-#include "HarvestingUtFacadeFactory.h"
+#include "catapult/harvesting_core/HarvestingUtFacadeFactory.h"
 #include "ScheduledHarvesterTask.h"
 #include "catapult/cache_core/ImportanceView.h"
 #include "catapult/crypto/KeyUtils.h"

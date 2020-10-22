@@ -44,4 +44,16 @@ namespace catapult { namespace net {
 
 		return ioPairs;
 	}
+
+	std::vector<ionet::NodePacketIoPair> PacketIoPickerContainer::pickMultiple(
+			size_t numRequested,
+			const utils::TimeSpan& ioDuration,
+			ionet::NodeRoles role) const {
+		for (const auto& pickerPair : m_pickers) {
+			if (HasFlag(role, pickerPair.first))
+				return PickMultiple(*pickerPair.second, numRequested, ioDuration);
+		}
+
+		return std::vector<ionet::NodePacketIoPair>();
+	}
 }}

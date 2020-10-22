@@ -18,8 +18,8 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "harvesting/src/ValidateHarvestingConfiguration.h"
-#include "harvesting/src/HarvestingConfiguration.h"
+#include "catapult/harvesting_core/ValidateHarvestingConfiguration.h"
+#include "catapult/harvesting_core/HarvestingConfiguration.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include "tests/TestHarness.h"
 

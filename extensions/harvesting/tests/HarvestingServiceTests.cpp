@@ -19,7 +19,7 @@
 **/
 
 #include "harvesting/src/HarvestingService.h"
-#include "harvesting/src/UnlockedAccounts.h"
+#include "catapult/harvesting_core/UnlockedAccounts.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"

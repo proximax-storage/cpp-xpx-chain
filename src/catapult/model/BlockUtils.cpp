@@ -61,8 +61,16 @@ namespace catapult { namespace model {
 		crypto::Sign(signer, BlockDataBuffer(block), block.Signature);
 	}
 
+	void CosignBlockHeader(const crypto::KeyPair& signer, Block& block, Signature& signature) {
+		crypto::Sign(signer, BlockDataBuffer(block), signature);
+	}
+
 	bool VerifyBlockHeaderSignature(const Block& block) {
 		return crypto::Verify(block.Signer, BlockDataBuffer(block), block.Signature);
+	}
+
+	bool VerifyBlockHeaderCosignature(const Block& block, const model::Cosignature& cosignature) {
+		return crypto::Verify(cosignature.Signer, BlockDataBuffer(block), cosignature.Signature);
 	}
 
 	// endregion

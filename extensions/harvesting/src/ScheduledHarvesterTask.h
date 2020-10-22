@@ -35,7 +35,7 @@ namespace catapult { namespace harvesting {
 		predicate<> HarvestingAllowed;
 
 		/// Supplies information about the last block of the chain.
-		supplier<std::shared_ptr<const model::BlockElement>> LastBlockElementSupplier;
+		model::BlockElementSupplier LastBlockElementSupplier;
 
 		/// Supplies the current network time.
 		chain::TimeSupplier TimeSupplier;

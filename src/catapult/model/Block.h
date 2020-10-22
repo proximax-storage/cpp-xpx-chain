@@ -70,8 +70,8 @@ namespace catapult { namespace model {
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
 
-		/// Committee round (number of attempts to generate this block).
-		uint16_t Round;
+		/// Time lapse in milliseconds of the committee phase of the round this block was generated in.
+		uint64_t CommitteePhaseTime;
 
 		/// Transaction payload size in bytes.
 		/// \note This is the total number of bytes occupied by all transactions.

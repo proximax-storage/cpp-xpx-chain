@@ -40,4 +40,9 @@ namespace catapult { namespace consumers {
 
 		return ionet::NodeInteractionResult(sourcePublicKey, code);
 	}
+
+	model::NetworkConfiguration ParseConfig(const uint8_t* pConfig, uint16_t configSize) {
+		std::istringstream inputBlock(std::string(reinterpret_cast<const char*>(pConfig), configSize));
+		return model::NetworkConfiguration::LoadFromBag(utils::ConfigurationBag::FromStream(inputBlock));
+	}
 }}

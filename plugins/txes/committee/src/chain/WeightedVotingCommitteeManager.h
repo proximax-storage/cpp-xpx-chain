@@ -30,6 +30,8 @@ namespace catapult { namespace chain {
 
 		void reset() override;
 
+		double weight(const Key& accountKey) const override;
+
 	public:
 		const std::shared_ptr<cache::CommitteeAccountCollector>& accountCollector() {
 			return m_pAccountCollector;

@@ -69,6 +69,12 @@ namespace catapult { namespace model {
 							{ "maxTransactionsPerBlock", "120" },
 
 							{ "enableUnconfirmedTransactionMinFeeValidation", "true" },
+
+							{ "committeeSize", "21" },
+							{ "committeeApproval", "0.67" },
+							{ "committeePhaseTime", "5s" },
+							{ "minCommitteePhaseTime", "300ms" },
+							{ "committeeTimeAdjustment", "1.1" },
 						}
 					},
 					{
@@ -96,7 +102,14 @@ namespace catapult { namespace model {
 			}
 
 			static bool IsPropertyOptional(const std::string& name) {
-				return "enableUnconfirmedTransactionMinFeeValidation" == name;
+				return std::set<std::string>{
+					"enableUnconfirmedTransactionMinFeeValidation",
+					"committeeSize",
+					"committeeApproval",
+					"committeePhaseTime",
+					"minCommitteePhaseTime",
+					"committeeTimeAdjustment",
+				}.count(name);
 			}
 
 			static void AssertZero(const NetworkConfiguration& config) {
@@ -126,6 +139,12 @@ namespace catapult { namespace model {
 				EXPECT_EQ(0u, config.MaxTransactionsPerBlock);
 
 				EXPECT_EQ(false, config.EnableUnconfirmedTransactionMinFeeValidation);
+
+				EXPECT_EQ(0u, config.CommitteeSize);
+				EXPECT_EQ(0.0, config.CommitteeApproval);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MinCommitteePhaseTime);
+				EXPECT_EQ(0.0, config.CommitteeTimeAdjustment);
 
 				EXPECT_TRUE(config.Plugins.empty());
 			}
@@ -157,6 +176,12 @@ namespace catapult { namespace model {
 				EXPECT_EQ(120u, config.MaxTransactionsPerBlock);
 
 				EXPECT_EQ(true, config.EnableUnconfirmedTransactionMinFeeValidation);
+
+				EXPECT_EQ(21u, config.CommitteeSize);
+				EXPECT_EQ(0.67, config.CommitteeApproval);
+				EXPECT_EQ(utils::TimeSpan::FromSeconds(5), config.CommitteePhaseTime);
+				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(300), config.MinCommitteePhaseTime);
+				EXPECT_EQ(1.1, config.CommitteeTimeAdjustment);
 
 				EXPECT_EQ(2u, config.Plugins.size());
 				const auto& pluginAlphaBag = config.Plugins.find("alpha")->second;

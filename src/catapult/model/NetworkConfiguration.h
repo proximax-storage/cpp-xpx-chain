@@ -96,6 +96,21 @@ namespace catapult { namespace model {
 		/// that transaction fee is not less than the minimum calculated with minFeeMultiplier.
 		bool EnableUnconfirmedTransactionMinFeeValidation;
 
+		/// Number of nodes in committee.
+		uint32_t CommitteeSize;
+
+		/// Sum of positive vote weights compared to total sum required for committee approval.
+		double CommitteeApproval;
+
+		/// Time per each committee phase.
+		utils::TimeSpan CommitteePhaseTime;
+
+		/// Minimal time per each committee phase.
+		utils::TimeSpan MinCommitteePhaseTime;
+
+		/// Time adjustment after each committee round.
+		double CommitteeTimeAdjustment;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 

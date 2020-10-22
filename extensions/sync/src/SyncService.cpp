@@ -50,7 +50,7 @@ namespace catapult { namespace sync {
 			return chainSynchronizerConfig;
 		}
 
-		thread::Task CreateSynchronizerTask(extensions::ServiceState& state, net::PacketWriters& packetWriters) {
+		thread::Task CreateSynchronizerTask(extensions::ServiceState& state, std::weak_ptr<net::PacketWriters> pPacketWriters) {
 			const auto& config = state.config();
 			auto chainSynchronizer = chain::CreateChainSynchronizer(
 					api::CreateLocalChainApi(state.storage(), [&score = state.score()]() {
@@ -65,13 +65,13 @@ namespace catapult { namespace sync {
 			task.Callback = CreateSynchronizerTaskCallback(
 					std::move(chainSynchronizer),
 					api::CreateRemoteChainApi,
-					packetWriters,
+					pPacketWriters,
 					state,
 					task.Name);
 			return task;
 		}
 
-		thread::Task CreatePullUtTask(const extensions::ServiceState& state, net::PacketWriters& packetWriters) {
+		thread::Task CreatePullUtTask(const extensions::ServiceState& state, std::weak_ptr<net::PacketWriters> pPacketWriters) {
 			auto utSynchronizer = chain::CreateUtSynchronizer(
 					[pConfigHolder = state.pluginManager().configHolder()]() {
 						return config::GetMinFeeMultiplier(pConfigHolder->Config());
@@ -84,7 +84,7 @@ namespace catapult { namespace sync {
 			task.Callback = CreateChainSyncAwareSynchronizerTaskCallback(
 					std::move(utSynchronizer),
 					api::CreateRemoteTransactionApi,
-					packetWriters,
+					pPacketWriters,
 					state,
 					task.Name);
 			return task;
@@ -101,12 +101,12 @@ namespace catapult { namespace sync {
 			}
 
 			void registerServices(extensions::ServiceLocator& locator, extensions::ServiceState& state) override {
-				auto& packetWriters = *GetPacketWriters(locator);
+				auto pPacketWriters = GetPacketWriters(locator);
 
 				// add tasks
-				state.tasks().push_back(CreateConnectPeersTask(state, packetWriters));
-				state.tasks().push_back(CreateSynchronizerTask(state, packetWriters));
-				state.tasks().push_back(CreatePullUtTask(state, packetWriters));
+				state.tasks().push_back(CreateConnectPeersTask(state, *pPacketWriters));
+				state.tasks().push_back(CreateSynchronizerTask(state, pPacketWriters));
+				state.tasks().push_back(CreatePullUtTask(state, pPacketWriters));
 			}
 		};
 	}

@@ -20,7 +20,6 @@ namespace catapult {
 		class CommitteeCacheDelta;
 		class CommitteeCacheView;
 		struct CommitteeEntryPrimarySerializer;
-		class CommitteePatriciaTree;
 
 		template<typename TCache, typename TCacheDelta, typename TKey, typename TGetResult>
 		class ReadOnlyArtifactCache;
@@ -45,7 +44,6 @@ namespace catapult { namespace cache {
 		using CacheViewType = CommitteeCacheView;
 
 		using Serializer = CommitteeEntryPrimarySerializer;
-		using PatriciaTree = CommitteePatriciaTree;
 
 	public:
 		/// Gets the key corresponding to \a entry.
@@ -55,12 +53,8 @@ namespace catapult { namespace cache {
 	};
 
 	/// Committee cache types.
-	struct CommitteeCacheTypes {
-		using PrimaryTypes = MutableUnorderedMapAdapter<CommitteeCacheDescriptor, utils::ArrayHasher<Key>>;
-
+	struct CommitteeCacheTypes
+		: public SingleSetCacheTypesAdapter<MutableUnorderedMapAdapter<CommitteeCacheDescriptor, utils::ArrayHasher<Key>>> {
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicCommitteeCacheView, BasicCommitteeCacheDelta, const Key&, state::CommitteeEntry>;
-
-		using BaseSetDeltaPointers = CommitteeBaseSetDeltaPointers;
-		using BaseSets = CommitteeBaseSets;
 	};
 }}

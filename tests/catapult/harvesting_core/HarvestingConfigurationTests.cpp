@@ -18,7 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include "harvesting/src/HarvestingConfiguration.h"
+#include "catapult/harvesting_core/HarvestingConfiguration.h"
 #include "tests/test/nodeps/ConfigurationTestUtils.h"
 
 namespace catapult { namespace harvesting {

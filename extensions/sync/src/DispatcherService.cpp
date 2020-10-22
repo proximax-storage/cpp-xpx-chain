@@ -120,13 +120,13 @@ namespace catapult { namespace sync {
 			const auto& pluginManager = state.pluginManager();
 
 			BlockChainSyncHandlers syncHandlers;
-			syncHandlers.DifficultyChecker = [&rollbackInfo, &state](
+			syncHandlers.DifficultyChecker = [&rollbackInfo, &pluginManager](
 					const auto& blocks,
 					const cache::CatapultCache& cache,
 					const model::NetworkConfigurations& remoteConfigs) {
 				if (!blocks.size())
 					return true;
-				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, state.pluginManager().configHolder(), remoteConfigs);
+				auto result = chain::CheckDifficulties(cache.sub<cache::BlockDifficultyCache>(), blocks, pluginManager.configHolder(), remoteConfigs);
 				rollbackInfo.modifier().reset();
 				return blocks.size() == result;
 			};
@@ -185,12 +185,13 @@ namespace catapult { namespace sync {
 			std::shared_ptr<ConsumerDispatcher> build(
 					const std::shared_ptr<thread::IoThreadPool>& pValidatorPool,
 					RollbackInfo& rollbackInfo) {
+				const auto& pluginManager = m_state.pluginManager();
 				m_consumers.push_back(CreateBlockChainCheckConsumer(
 						m_nodeConfig.MaxBlocksPerSyncAttempt,
-						m_state.pluginManager().configHolder(),
+						pluginManager.configHolder(),
 						m_state.timeSupplier()));
 				m_consumers.push_back(CreateBlockStatelessValidationConsumer(
-						extensions::CreateStatelessValidator(m_state.pluginManager()),
+						extensions::CreateStatelessValidator(pluginManager),
 						validators::CreateParallelValidationPolicy(pValidatorPool),
 						ToRequiresValidationPredicate(m_state.hooks().knownHashPredicate(m_state.utCache()))));
 
@@ -199,7 +200,7 @@ namespace catapult { namespace sync {
 						m_state.cache(),
 						m_state.state(),
 						m_state.storage(),
-						m_state.pluginManager().configHolder(),
+						pluginManager.configHolder(),
 						CreateBlockChainSyncHandlers(m_state, rollbackInfo)));
 
 				if (m_state.config().Node.ShouldEnableAutoSyncCleanup)
