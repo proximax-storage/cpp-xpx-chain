@@ -24,6 +24,7 @@
 #include "tests/test/MultisigTestUtils.h"
 #include "tests/test/core/mocks/MockTransaction.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
+#include "plugins/txes/aggregate/src/config/AggregateConfiguration.h"
 
 namespace catapult { namespace validators {
 
@@ -48,7 +49,9 @@ namespace catapult { namespace validators {
 				const Key& signer,
 				const std::vector<Key>& embeddedSigners,
 				const std::vector<Key>& cosigners,
-				bool newCosignersMustApprove) {
+				bool newCosignersMustApprove,
+				bool strictSigner) {
+
 			// Arrange: setup transactions
 			std::vector<uint8_t> txBuffer(sizeof(model::EmbeddedTransaction) * embeddedSigners.size());
 			auto* pTransactions = reinterpret_cast<model::EmbeddedTransaction*>(txBuffer.data());
@@ -71,6 +74,10 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.NewCosignersMustApprove = newCosignersMustApprove;
 			config.Network.SetPluginConfiguration(pluginConfig);
+
+			auto aggregateConfig = config::AggregateConfiguration::Uninitialized();
+			aggregateConfig.StrictSigner = strictSigner;
+			config.Network.SetPluginConfiguration(aggregateConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config.ToConst());
@@ -109,12 +116,13 @@ namespace catapult { namespace validators {
 				const Key& aggregateSigner,
 				const std::vector<Key>& embeddedSigners,
 				const std::vector<Key>& cosigners,
-				bool newCosignersMustApprove) {
+				bool newCosignersMustApprove,
+				bool strictSigner) {
 			// Arrange:
 			auto cache = TTraits::CreateCache(aggregateSigner);
 
 			// Assert:
-			AssertValidationResult(expectedResult, cache, aggregateSigner, embeddedSigners, cosigners, newCosignersMustApprove);
+			AssertValidationResult(expectedResult, cache, aggregateSigner, embeddedSigners, cosigners, newCosignersMustApprove, strictSigner);
 		}
 	}
 
@@ -134,7 +142,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedSigner : embeddedSigners) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult<TTraits>(ValidationResult::Success, embeddedSigners[0], embeddedSigners, { embeddedSigner }, newCosignersMustApprove);
+			AssertValidationResult<TTraits>(ValidationResult::Success, embeddedSigners[0], embeddedSigners, { embeddedSigner }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -144,7 +152,7 @@ namespace catapult { namespace validators {
 		auto ineligibleSigner = test::GenerateRandomByteArray<Key>();
 
 		// Assert: invalid because cosigner is not an embedded transaction signer
-		AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, embeddedSigners[0], embeddedSigners, { ineligibleSigner }, newCosignersMustApprove);
+		AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, embeddedSigners[0], embeddedSigners, { ineligibleSigner }, newCosignersMustApprove, true);
 	}
 
 	NON_MULTISIG_TRAITS_TEST(AggregateSignerIsIneligibleWhenItIsUnrelatedAccount) {
@@ -153,7 +161,7 @@ namespace catapult { namespace validators {
 		auto ineligibleSigner = test::GenerateRandomByteArray<Key>();
 
 		// Assert: invalid because aggregate signer is not an embedded transaction signer
-		AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, ineligibleSigner, embeddedSigners, { embeddedSigners[1] }, newCosignersMustApprove);
+		AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, ineligibleSigner, embeddedSigners, { embeddedSigners[1] }, newCosignersMustApprove, true);
 	}
 
 	NON_MULTISIG_TRAITS_TEST(CosignersAreEligibleWhenAllMatchEmbeddedTransactionSigners) {
@@ -161,7 +169,7 @@ namespace catapult { namespace validators {
 		auto embeddedSigners = test::GenerateRandomDataVector<Key>(3);
 
 		// Assert: valid because aggregate signer and all cosigners are also embedded transaction signers
-		AssertValidationResult<TTraits>(ValidationResult::Success, embeddedSigners[0], embeddedSigners, embeddedSigners, newCosignersMustApprove);
+		AssertValidationResult<TTraits>(ValidationResult::Success, embeddedSigners[0], embeddedSigners, embeddedSigners, newCosignersMustApprove, true);
 	}
 
 	NON_MULTISIG_TRAITS_TEST(CosignersAreIneligibleWhenAnyDoesNotMatchEmbeddedTransactionSigner) {
@@ -170,7 +178,15 @@ namespace catapult { namespace validators {
 		auto cosigners = { embeddedSigners[0], test::GenerateRandomByteArray<Key>(), embeddedSigners[2] };
 
 		// Assert: invalid because a single cosigner is not an embedded transaction signer
-		AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, embeddedSigners[0], embeddedSigners, cosigners, newCosignersMustApprove);
+		AssertValidationResult<TTraits>(Failure_Aggregate_Ineligible_Cosigners, embeddedSigners[0], embeddedSigners, cosigners, newCosignersMustApprove, true);
+	}
+
+	NON_MULTISIG_TRAITS_TEST(AggregateSignerIsIneligibleButAllowInConfig) {
+		auto embeddedSigners = test::GenerateRandomDataVector<Key>(3);
+		auto ineligibleSigner = test::GenerateRandomByteArray<Key>();
+
+		// Assert: success because we allow ineligible signer
+		AssertValidationResult<TTraits>(ValidationResult::Success, ineligibleSigner, embeddedSigners, { embeddedSigners[1] }, newCosignersMustApprove, false);
 	}
 
 	// endregion
@@ -205,7 +221,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedCosignatory : embeddedCosignatories) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, embeddedSigners[0], embeddedSigners, { embeddedCosignatory }, newCosignersMustApprove);
+			AssertValidationResult(ValidationResult::Success, cache, embeddedSigners[0], embeddedSigners, { embeddedCosignatory }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -219,7 +235,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedCosignatory : embeddedCosignatories) {
 			CATAPULT_LOG(debug) << "signing aggregate with " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, embeddedCosignatory, embeddedSigners, { embeddedSigners[0] }, newCosignersMustApprove);
+			AssertValidationResult(ValidationResult::Success, cache, embeddedCosignatory, embeddedSigners, { embeddedSigners[0] }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -250,7 +266,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedCosignatory : embeddedCosignatoriesL2) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, embeddedSigners[0], embeddedSigners, { embeddedCosignatory }, newCosignersMustApprove);
+			AssertValidationResult(ValidationResult::Success, cache, embeddedSigners[0], embeddedSigners, { embeddedCosignatory }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -265,7 +281,7 @@ namespace catapult { namespace validators {
 		auto i = 0u;
 		for (const auto& embeddedCosignatory : embeddedCosignatoriesL2) {
 			CATAPULT_LOG(debug) << "signing aggregate with " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, embeddedCosignatory, embeddedSigners, { embeddedSigners[0] }, newCosignersMustApprove);
+			AssertValidationResult(ValidationResult::Success, cache, embeddedCosignatory, embeddedSigners, { embeddedSigners[0] }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -283,7 +299,8 @@ namespace catapult { namespace validators {
 				const Key& signer,
 				const model::EmbeddedTransaction& transaction,
 				const std::vector<Key>& cosigners,
-				bool newCosignersMustApprove) {
+				bool newCosignersMustApprove,
+				bool strictSigner) {
 			// Arrange: setup cosignatures
 			auto cosignatures = test::GenerateCosignaturesFromCosigners(cosigners);
 			auto transactionRegistry = CreateTransactionRegistry();
@@ -296,6 +313,10 @@ namespace catapult { namespace validators {
 			auto pluginConfig = config::MultisigConfiguration::Uninitialized();
 			pluginConfig.NewCosignersMustApprove = newCosignersMustApprove;
 			config.Network.SetPluginConfiguration(pluginConfig);
+
+			auto aggregateConfig = config::AggregateConfiguration::Uninitialized();
+			aggregateConfig.StrictSigner = strictSigner;
+			config.Network.SetPluginConfiguration(aggregateConfig);
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache, config.ToConst());
@@ -316,7 +337,7 @@ namespace catapult { namespace validators {
 		const auto* pModifications = pTransaction->ModificationsPtr();
 		for (const auto& cosignatory : { signer, pModifications[0].CosignatoryPublicKey, pModifications[2].CosignatoryPublicKey }) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult(ValidationResult::Success, cache, signer, *pTransaction, { cosignatory }, true);
+			AssertValidationResult(ValidationResult::Success, cache, signer, *pTransaction, { cosignatory }, true, true);
 		}
 	}
 
@@ -331,7 +352,7 @@ namespace catapult { namespace validators {
 		const auto* pModifications = pTransaction->ModificationsPtr();
 		for (const auto& cosignatory : { pModifications[1].CosignatoryPublicKey, pModifications[3].CosignatoryPublicKey }) {
 			CATAPULT_LOG(debug) << "cosigning with cosigner " << i++;
-			AssertValidationResult(Failure_Aggregate_Ineligible_Cosigners, cache, signer, *pTransaction, { cosignatory }, newCosignersMustApprove);
+			AssertValidationResult(Failure_Aggregate_Ineligible_Cosigners, cache, signer, *pTransaction, { cosignatory }, newCosignersMustApprove, true);
 		}
 	}
 
@@ -344,7 +365,7 @@ namespace catapult { namespace validators {
 
 		// Assert: existing eligibility is retained
 		//         (the embedded tx signer account is still allowed to sign even though it was deleted from a multisig account)
-		AssertValidationResult(ValidationResult::Success, cache, signer, *pTransaction, { signer }, newCosignersMustApprove);
+		AssertValidationResult(ValidationResult::Success, cache, signer, *pTransaction, { signer }, newCosignersMustApprove,true);
 	}
 
 	// endregion

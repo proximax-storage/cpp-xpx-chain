@@ -38,15 +38,6 @@ namespace catapult { namespace test {
 		auto definition = state::MosaicDefinition(height, owner, 1, test::CreateMosaicPropertiesWithDuration(duration));
 		mosaicCacheDelta.insert(state::MosaicEntry(id, definition));
 	}
-	
-	void AddMosaic(cache::CatapultCacheDelta& cache, MosaicId id, Height height, Amount supply, const Key& owner)
-	{
-		auto& mosaicCacheDelta = cache.sub<cache::MosaicCache>();
-		auto definition = state::MosaicDefinition(height, owner, 1, model::MosaicProperties::FromValues({}));
-		auto entry = state::MosaicEntry(id, definition);
-		entry.increaseSupply(supply);
-		mosaicCacheDelta.insert(entry);
-	}
 
 	void AddEternalMosaic(cache::CatapultCacheDelta& cache, MosaicId id, Height height) {
 		AddEternalMosaic(cache, id, height, Key());
@@ -59,12 +50,6 @@ namespace catapult { namespace test {
 	}
 
 	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, const Key& owner, Amount amount) {
-		auto& accountStateCacheDelta = cache.sub<cache::AccountStateCache>();
-		accountStateCacheDelta.addAccount(owner, Height(1));
-		accountStateCacheDelta.find(owner).get().Balances.credit(id, amount);
-	}
-	
-	void AddMosaicOwner(cache::CatapultCacheDelta& cache, MosaicId id, Address& owner, Amount amount) {
 		auto& accountStateCacheDelta = cache.sub<cache::AccountStateCache>();
 		accountStateCacheDelta.addAccount(owner, Height(1));
 		accountStateCacheDelta.find(owner).get().Balances.credit(id, amount);

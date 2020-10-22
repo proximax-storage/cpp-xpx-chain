@@ -68,9 +68,13 @@ namespace catapult { namespace plugins {
 			static std::vector<std::string> GetStatefulValidatorNames() {
 				return {
 					"OfferV1Validator",
-					"ExchangeValidator",
-					"RemoveOfferValidator",
 					"OfferV2Validator",
+					"OfferV3Validator",
+					"OfferV4Validator",
+					"ExchangeV1Validator",
+					"ExchangeV2Validator",
+					"RemoveOfferV1Validator",
+					"RemoveOfferV2Validator",
 				};
 			}
 
@@ -78,9 +82,13 @@ namespace catapult { namespace plugins {
 				return {
 					"CleanupOffersObserver",
 					"OfferV1Observer",
-					"ExchangeObserver",
-					"RemoveOfferObserver",
 					"OfferV2Observer",
+					"OfferV3Observer",
+					"OfferV4Observer",
+					"ExchangeV1Observer",
+					"ExchangeV2Observer",
+					"RemoveOfferV1Observer",
+					"RemoveOfferV2Observer",
 				};
 			}
 

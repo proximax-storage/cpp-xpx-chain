@@ -30,27 +30,19 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	template<typename TNotification>
-	void BalanceTransfer(const TNotification& notification, const ObserverContext& context) {
+	DEFINE_OBSERVER(BalanceTransfer, model::BalanceTransferNotification<1>, [](const auto& notification, const ObserverContext& context) {
 		auto& cache = context.Cache.sub<cache::AccountStateCache>();
-		auto amount = context.Resolvers.resolve(notification.Amount);
-		
-		if(amount.unwrap() == 0)
-			return;
-		
 		auto senderIter = cache.find(notification.Sender);
 		auto recipientIter = cache.find(context.Resolvers.resolve(notification.Recipient));
+
 		auto& senderState = senderIter.get();
 		auto& recipientState = recipientIter.get();
-		
+
 		auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
-	
+		auto amount = context.Resolvers.resolve(notification.Amount);
 		if (NotifyMode::Commit == context.Mode)
 			Transfer(senderState, recipientState, mosaicId, amount, context.Height);
 		else
 			Transfer(recipientState, senderState, mosaicId, amount, context.Height);
-	}
-	
-	DEFINE_OBSERVER(BalanceTransfer, model::BalanceTransferNotification<1>, BalanceTransfer<model::BalanceTransferNotification<1>>)
-	DEFINE_OBSERVER(LevyTransfer, model::LevyTransferNotification<1>, BalanceTransfer<model::LevyTransferNotification<1>>)
+	});
 }}

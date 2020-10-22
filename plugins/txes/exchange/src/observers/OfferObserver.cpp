@@ -34,8 +34,35 @@ namespace catapult { namespace observers {
 				entry.removeOffer(pOffer->Type, mosaicId);
 			}
 		}
+
+		if (NotifyMode::Rollback == context.Mode && entry.empty() && entry.version() > 2)
+			cache.remove(notification.Owner);
 	}
 
 	DEFINE_OBSERVER(OfferV1, model::OfferNotification<1>, OfferObserver<1>);
 	DEFINE_OBSERVER(OfferV2, model::OfferNotification<2>, OfferObserver<2>);
+	DEFINE_OBSERVER(OfferV3, model::OfferNotification<3>, OfferObserver<3>);
+	DEFINE_OBSERVER(OfferV4, model::OfferNotification<4>, [](const model::OfferNotification<4>& notification, const ObserverContext& context) {
+            auto& cache = context.Cache.sub<cache::ExchangeCache>();
+            if (NotifyMode::Commit == context.Mode && !cache.contains(notification.Owner))
+                cache.insert(state::ExchangeEntry(notification.Owner, 3));
+
+            auto iter = cache.find(notification.Owner);
+            auto& entry = iter.get();
+            OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+
+            const auto* pOffer = notification.OffersPtr;
+            for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
+                auto mosaicId = context.Resolvers.resolve(pOffer->Mosaic.MosaicId);
+                if (NotifyMode::Commit == context.Mode) {
+                    auto deadline = GetOfferDeadline(pOffer->Duration, context.Height);
+                    entry.addOffer(mosaicId, pOffer, deadline);
+                } else {
+                    entry.removeOffer(pOffer->Type, mosaicId);
+                }
+            }
+
+            if (NotifyMode::Rollback == context.Mode && entry.empty())
+                cache.remove(notification.Owner);
+    });
 }}

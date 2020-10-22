@@ -65,6 +65,12 @@ namespace catapult { namespace validators {
 
 	/// Validation failed because there is already removed offer at the height.
 	DEFINE_CATAPULT_EXCHANGE_RESULT(Cant_Remove_Offer_At_Height, 17);
+	
+	/// Validation failed because offer duration exceeds mosaic duration
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Offer_Duration_Exceeds_Mosaic_Duration, 18);
+
+	/// Validation failed because there is incorrect type of offer.
+	DEFINE_CATAPULT_EXCHANGE_RESULT(Incorrect_Offer_Type, 19);
 
 #ifndef CUSTOM_RESULT_DEFINITION
 }}

@@ -32,9 +32,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			static std::vector<model::EntityType> GetTransactionTypes() {
 				return {
 					model::Entity_Type_Mosaic_Definition,
-					model::Entity_Type_Mosaic_Supply_Change,
-					model::Entity_Type_Mosaic_Modify_Levy,
-					model::Entity_Type_Mosaic_Remove_Levy
+					model::Entity_Type_Mosaic_Supply_Change
 				};
 			}
 
@@ -46,7 +44,7 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static std::string GetStorageName() {
-				return "{ MosaicCache, MosaicLevyCache }";
+				return "{ MosaicCache }";
 			}
 		};
 	}

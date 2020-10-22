@@ -100,11 +100,11 @@ namespace catapult { namespace model {
 	// region balance
 
 	/// A basic balance notification.
-	template<typename TDerivedNotification, typename TUnresolvedMosaicId = UnresolvedMosaicId>
+	template<typename TDerivedNotification>
 	struct BasicBalanceNotification : public Notification {
 	public:
 		/// Creates a notification around \a sender, \a mosaicId and \a amount.
-		BasicBalanceNotification(const Key& sender, TUnresolvedMosaicId mosaicId, UnresolvedAmount amount)
+		BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, UnresolvedAmount amount)
 				: Notification(TDerivedNotification::Notification_Type, sizeof(TDerivedNotification))
 				, Sender(sender)
 				, MosaicId(mosaicId)
@@ -112,7 +112,7 @@ namespace catapult { namespace model {
 		{}
 
 		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
-		BasicBalanceNotification(const Key& sender, TUnresolvedMosaicId mosaicId, catapult::Amount amount)
+		BasicBalanceNotification(const Key& sender, UnresolvedMosaicId mosaicId, catapult::Amount amount)
 				: BasicBalanceNotification(sender, mosaicId, UnresolvedAmount(amount.unwrap()))
 		{}
 
@@ -121,7 +121,7 @@ namespace catapult { namespace model {
 		const Key& Sender;
 
 		/// Mosaic id.
-		TUnresolvedMosaicId MosaicId;
+		UnresolvedMosaicId MosaicId;
 
 		/// Amount.
 		UnresolvedAmount Amount;
@@ -132,7 +132,7 @@ namespace catapult { namespace model {
 	struct BalanceTransferNotification;
 
 	template<>
-	struct BalanceTransferNotification<1> : public BasicBalanceNotification<BalanceTransferNotification<1>, UnresolvedMosaicId> {
+	struct BalanceTransferNotification<1> : public BasicBalanceNotification<BalanceTransferNotification<1>> {
 	public:
 		/// Matching notification type.
 		static constexpr auto Notification_Type = Core_Balance_Transfer_v1_Notification;
@@ -161,42 +161,6 @@ namespace catapult { namespace model {
 	public:
 		/// Recipient.
 		UnresolvedAddress Recipient;
-	};
-	
-	/// Notifies a balance transfer from sender to recipient.
-	template<VersionType version>
-	struct LevyTransferNotification;
-	
-	template<>
-	struct LevyTransferNotification<1> : public BasicBalanceNotification<LevyTransferNotification<1>, UnresolvedLevyMosaicId> {
-	public:
-		/// Matching notification type.
-		static constexpr auto Notification_Type = Core_Levy_Transfer_v1_Notification;
-	
-	public:
-		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a unresolved amount.
-		LevyTransferNotification(
-			const Key& sender,
-			const UnresolvedLevyAddress& recipient,
-			UnresolvedLevyMosaicId mosaicId,
-			catapult::UnresolvedAmount unresolvedAmount)
-			: BasicBalanceNotification(sender, mosaicId, unresolvedAmount)
-			, Recipient(recipient)
-		{}
-		
-		/// Creates a notification around \a sender, \a recipient, \a mosaicId and \a amount.
-		LevyTransferNotification(
-			const Key& sender,
-			const UnresolvedLevyAddress& recipient,
-			UnresolvedLevyMosaicId mosaicId,
-			catapult::Amount amount)
-			: BasicBalanceNotification(sender, mosaicId, amount)
-			, Recipient(recipient)
-		{}
-	
-	public:
-		/// Recipient.
-		UnresolvedLevyAddress Recipient;
 	};
 
 	/// Notifies a balance debit by sender.

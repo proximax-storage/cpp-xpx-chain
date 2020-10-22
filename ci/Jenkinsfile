@@ -86,7 +86,10 @@ pipeline {
 
         stage('Build and Publish Develop Image') {
             when {
-                branch 'develop'  // only run this stage in the develop branch
+                anyOf {
+                    branch 'develop';
+                    branch 'release-candidate-*'
+                }
             }
             steps {
                 echo 'Build and Publish Image'
@@ -94,8 +97,13 @@ pipeline {
                 script {
                     def newImage = docker.build("${IMAGE}")
                     docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
-                        newImage.push("develop-jenkins-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
-                        newImage.push("develop") // update Docker image develop
+                        if( env.GIT_BRANCH == 'develop'){
+                            newImage.push("develop-jenkins-build-${env.BUILD_NUMBER}") // also push using Jenkins build number
+                            newImage.push("develop") // update Docker image develop
+                        }else{
+                            newImage.push("${env.GIT_BRANCH}-${env.BUILD_NUMBER}")
+                        }
+                        
                     }
                 }
             }
@@ -103,7 +111,7 @@ pipeline {
                 success {
                     slackSend channel: '#devops',
                         color: 'good',
-                        message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${DOCKER_REGISTRY}/${IMAGE}:develop-jenkins-build-${env.BUILD_NUMBER} and ${DOCKER_REGISTRY}/${IMAGE}:develop"
+                        message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${DOCKER_REGISTRY}/${IMAGE}:${env.GIT_BRANCH}-${env.BUILD_NUMBER}"
                 }
             }
         }

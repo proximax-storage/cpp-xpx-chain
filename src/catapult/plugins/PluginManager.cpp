@@ -213,15 +213,7 @@ namespace catapult { namespace plugins {
 	void PluginManager::addAmountResolver(const AmountResolver& resolver) {
 		m_amountResolvers.push_back(resolver);
 	}
-	
-	void PluginManager::addLevyMosaicResolver(const LevyMosaicResolver& resolver) {
-		m_levyMosaicResolvers.push_back(resolver);
-	}
 
-	void PluginManager::addLevyAddressResolver(const LevyAddressResolver& resolver) {
-		m_levyAddressResolvers.push_back(resolver);
-	}
-	
 	namespace {
 		template<typename TResolved, typename TResolvers>
 		auto BuildResolver(const TResolvers& resolvers) {
@@ -241,18 +233,12 @@ namespace catapult { namespace plugins {
 		auto mosaicResolver = BuildResolver<MosaicId>(m_mosaicResolvers);
 		auto addressResolver = BuildResolver<Address>(m_addressResolvers);
 		auto amountResolver = BuildResolver<Amount>(m_amountResolvers);
-		auto levyMosaicResolver = BuildResolver<MosaicId>(m_levyMosaicResolvers);
-		auto levyAddressResolver = BuildResolver<Address>(m_levyAddressResolvers);
-		
+
 		auto bindResolverToCache = [&cache](const auto& resolver) {
 			return [&cache, resolver](const auto& unresolved) { return resolver(cache, unresolved); };
 		};
 
-		return model::ResolverContext(bindResolverToCache(mosaicResolver),
-			bindResolverToCache(addressResolver),
-			bindResolverToCache(amountResolver),
-			bindResolverToCache(levyMosaicResolver),
-			bindResolverToCache(levyAddressResolver));
+		return model::ResolverContext(bindResolverToCache(mosaicResolver), bindResolverToCache(addressResolver), bindResolverToCache(amountResolver));
 	}
 
 	void PluginManager::addAddressesExtractor(const AddressesExtractor& extractor) {

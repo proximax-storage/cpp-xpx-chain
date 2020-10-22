@@ -54,7 +54,6 @@ namespace catapult { namespace extensions {
 			"TransactionHashObserver",
 			"BalanceDebitObserver",
 			"BalanceCreditObserver",
-			"LevyTransferObserver",
 		};
 		EXPECT_EQ(expectedObserverNames, config.pObserver->names());
 
@@ -67,7 +66,6 @@ namespace catapult { namespace extensions {
 			"EligibleHarvesterValidator",
 			"UniqueTransactionHashValidator",
 			"BalanceDebitValidator",
-			"LevyBalanceValidator"
 		};
 		EXPECT_EQ(expectedValidatorNames, config.pValidator->names());
 	}

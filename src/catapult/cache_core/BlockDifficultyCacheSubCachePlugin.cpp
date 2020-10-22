@@ -28,8 +28,13 @@ namespace catapult { namespace cache {
 		io::Write64(output, delta.size());
 
 		auto pIterableView = delta.tryMakeIterableView();
-		for (const auto& value : *pIterableView)
-			BlockDifficultyCacheStorage::Save(value, output);
+		for (auto iter = pIterableView->begin(); iter != pIterableView->end();) {
+			BlockDifficultyCacheStorage::Save(*iter, output);
+			auto prevIter = iter;
+			++iter;
+			if (iter != pIterableView->end() && prevIter->BlockHeight >= iter->BlockHeight)
+				CATAPULT_THROW_RUNTIME_ERROR("next block difficulty height can't be lower");
+		}
 
 		output.flush();
 	}

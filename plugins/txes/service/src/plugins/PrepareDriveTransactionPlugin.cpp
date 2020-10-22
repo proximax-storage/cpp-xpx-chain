@@ -20,32 +20,47 @@ namespace catapult { namespace plugins {
 			switch (transaction.EntityVersion()) {
 			case 1: {
 				sub.notify(PrepareDriveNotification<1>(
-					transaction.DriveKey,
-					transaction.Signer,
-					transaction.Duration,
-					transaction.BillingPeriod,
-					transaction.BillingPrice,
-					transaction.DriveSize,
-					transaction.Replicas,
-					transaction.MinReplicators,
-					transaction.PercentApprovers
+						transaction.DriveKey,
+						transaction.Signer,
+						transaction.Duration,
+						transaction.BillingPeriod,
+						transaction.BillingPrice,
+						transaction.DriveSize,
+						transaction.Replicas,
+						transaction.MinReplicators,
+						transaction.PercentApprovers
 				));
-                break;
+				break;
 			}
 
 			case 2: {
 				sub.notify(PrepareDriveNotification<1>(
-					transaction.Signer,
-					transaction.Owner,
-					transaction.Duration,
-					transaction.BillingPeriod,
-					transaction.BillingPrice,
-					transaction.DriveSize,
-					transaction.Replicas,
-					transaction.MinReplicators,
-					transaction.PercentApprovers
+						transaction.Signer,
+						transaction.Owner,
+						transaction.Duration,
+						transaction.BillingPeriod,
+						transaction.BillingPrice,
+						transaction.DriveSize,
+						transaction.Replicas,
+						transaction.MinReplicators,
+						transaction.PercentApprovers
 				));
-                break;
+				break;
+			}
+
+			case 3: {
+				sub.notify(PrepareDriveNotification<2>(
+						transaction.Signer,
+						transaction.Owner,
+						transaction.Duration,
+						transaction.BillingPeriod,
+						transaction.BillingPrice,
+						transaction.DriveSize,
+						transaction.Replicas,
+						transaction.MinReplicators,
+						transaction.PercentApprovers
+				));
+				break;
 			}
 
 

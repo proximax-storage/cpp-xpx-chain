@@ -90,7 +90,7 @@ namespace catapult { namespace cache {
 
         void prune(Height height, observers::ObserverContext&) {
             ForEachIdentifierWithGroup(*m_pDriveEntries, *m_pRemoveAtHeight, height, [&](state::DriveEntry& driveEntry) {
-                if (driveEntry.end() == height) {
+                if (driveEntry.end() == height && driveEntry.version() < 3) {
 					m_pDriveEntries->remove(driveEntry.key());
                 }
             });

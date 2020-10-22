@@ -18,7 +18,7 @@ namespace catapult { namespace observers {
             auto end = (Height(0) == replicator.End) ? last.End.unwrap() : std::min(last.End.unwrap(), replicator.End.unwrap());
             if (end < start)
             	CATAPULT_THROW_RUNTIME_ERROR_2("invalid replicator time", start, end);
-            return end - start;
+            return std::max(end - start, static_cast<uint64_t>(1));
         }
     }
 

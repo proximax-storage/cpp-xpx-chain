@@ -20,21 +20,23 @@
 
 #include "AddressExtractor.h"
 #include "catapult/model/Elements.h"
-#include "catapult/model/TransactionUtils.h"
 
 namespace catapult { namespace addressextraction {
 
 	AddressExtractor::AddressExtractor(std::unique_ptr<const model::NotificationPublisher>&& pPublisher,
-			const model::ExtractorContextFactoryFunc & contextFactory)
+			const model::ExtractorContextFactoryFunc & contextFactory, const ResolverHandleFactory& resolver)
 			: m_pPublisher(std::move(pPublisher))
 			, m_extractorContextFactory(contextFactory)
+			, m_resolverHandleFactory(resolver)
 	{}
 
 	void AddressExtractor::extract(model::TransactionInfo& transactionInfo) const {
 		if (transactionInfo.OptionalExtractedAddresses)
 			return;
-
-		auto addresses = model::ExtractAddresses(*transactionInfo.pEntity, transactionInfo.EntityHash, transactionInfo.AssociatedHeight, *m_pPublisher, m_extractorContextFactory());
+		
+		auto addresses = model::ExtractAddresses(*transactionInfo.pEntity, transactionInfo.EntityHash,
+			transactionInfo.AssociatedHeight, *m_pPublisher, m_extractorContextFactory(), m_resolverHandleFactory());
+		
 		transactionInfo.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>(std::move(addresses));
 	}
 
@@ -46,8 +48,10 @@ namespace catapult { namespace addressextraction {
 	void AddressExtractor::extract(model::TransactionElement& transactionElement, const Height& height) const {
 		if (transactionElement.OptionalExtractedAddresses)
 			return;
-
-		auto addresses = model::ExtractAddresses(transactionElement.Transaction, transactionElement.EntityHash, height, *m_pPublisher, m_extractorContextFactory());
+		
+		auto addresses = model::ExtractAddresses(transactionElement.Transaction, transactionElement.EntityHash, height,
+			*m_pPublisher, m_extractorContextFactory(), m_resolverHandleFactory());
+		
 		transactionElement.OptionalExtractedAddresses = std::make_shared<model::UnresolvedAddressSet>(std::move(addresses));
 	}
 

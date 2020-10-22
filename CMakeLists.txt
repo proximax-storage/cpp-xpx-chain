@@ -8,9 +8,9 @@ option(SANITIZE_UNDEFINED "Enable undefined behavior sanitizer" OFF)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DDEADLOCK_THRESHOLD_MILLISECONDS=600000")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -pthread -DDEADLOCK_THRESHOLD_MILLISECONDS=600000 -w")
 set(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} -O3")
-set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSHOW_BACKTRACE")
+
 message(STATUS "CATAPULT_VERSION_DESCRIPTION: ${CATAPULT_VERSION_DESCRIPTION}")
 message(STATUS "CMAKE_CXX_COMPILER_ID: ${CMAKE_CXX_COMPILER_ID}")
 message(STATUS "CMAKE_CXX_FLAGS: ${CMAKE_CXX_FLAGS}")
@@ -20,7 +20,15 @@ message(STATUS "BOOST_ROOT: $ENV{BOOST_ROOT}")
 set(CORE_CATAPULT_LIBS catapult.io catapult.ionet catapult.model catapult.thread catapult.utils)
 
 ### setup boost
-find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random stacktrace_backtrace REQUIRED)
+
+if("${CMAKE_CXX_COMPILER_ID}" MATCHES "Clang")
+	find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random REQUIRED)
+else()
+	find_package(Boost COMPONENTS atomic system date_time regex timer chrono log thread filesystem program_options random stacktrace_backtrace REQUIRED)
+	add_definitions(-DBOOST_STACKTRACE_USE_BACKTRACE)
+	set(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG} -DSHOW_BACKTRACE")
+endif()
+
 include_directories(SYSTEM ${Boost_INCLUDE_DIR})
 
 ### setup rocksdb

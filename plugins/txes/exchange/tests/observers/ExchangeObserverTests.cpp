@@ -13,11 +13,11 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS ExchangeObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(Exchange, )
+	DEFINE_COMMON_OBSERVER_TESTS(ExchangeV1, )
+	DEFINE_COMMON_OBSERVER_TESTS(ExchangeV2, )
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::ExchangeCacheFactory>;
-		using Notification = model::ExchangeNotification<1>;
 
 		struct ExchangeValues {
 		public:
@@ -42,6 +42,7 @@ namespace catapult { namespace observers {
 			state::ExchangeEntry ExpectedEntry;
 		};
 
+		template<typename Notification>
 		std::unique_ptr<Notification> CreateNotification(const ExchangeValues& values) {
 			return std::make_unique<Notification>(
 				values.InitialEntry.owner(),
@@ -73,12 +74,13 @@ namespace catapult { namespace observers {
 				std::move(expectedEntry));
 		}
 
+		template<typename TTraits>
 		void RunTest(NotifyMode mode, const ExchangeValues& values, std::initializer_list<Height> expiryHeights) {
 			// Arrange:
 			Height currentHeight(1);
 			ObserverTestContext context(mode, currentHeight);
-			auto pNotification = CreateNotification(values);
-			auto pObserver = CreateExchangeObserver();
+			auto pNotification = CreateNotification<model::ExchangeNotification<TTraits::Version>>(values);
+			auto pObserver = TTraits::CreateObserver();
 			auto& delta = context.cache().sub<cache::ExchangeCache>();
 			const auto& owner = values.InitialEntry.owner();
 
@@ -102,7 +104,27 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	TEST(TEST_CLASS, Exchange_Commit) {
+	struct ExchangeObserverV1Traits {
+		static constexpr VersionType Version = 1;
+		static auto CreateObserver() {
+			return CreateExchangeV1Observer();
+		}
+	};
+
+	struct ExchangeObserverV2Traits {
+		static constexpr VersionType Version = 2;
+		static auto CreateObserver() {
+			return CreateExchangeV2Observer();
+		}
+	};
+
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ExchangeObserverV1Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<ExchangeObserverV2Traits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(Exchange_Commit) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
 		state::ExchangeEntry initialEntry(offerOwner);
@@ -111,10 +133,10 @@ namespace catapult { namespace observers {
 		auto values = CreateExchangeValues(std::move(initialEntry), std::move(expectedEntry), offerOwner);
 
 		// Assert:
-		RunTest(NotifyMode::Commit, values, { Height(1), Height(15) });
+		RunTest<TTraits>(NotifyMode::Commit, values, { Height(1), Height(15) });
 	}
 
-	TEST(TEST_CLASS, Exchange_Rollback) {
+	TRAITS_BASED_TEST(Exchange_Rollback) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
 		state::ExchangeEntry initialEntry(offerOwner);
@@ -123,6 +145,6 @@ namespace catapult { namespace observers {
 		auto values = CreateExchangeValues(std::move(initialEntry), std::move(expectedEntry), offerOwner);
 
 		// Assert:
-		RunTest(NotifyMode::Rollback, values, { Height(5) });
+		RunTest<TTraits>(NotifyMode::Rollback, values, { Height(5) });
 	}
 }}

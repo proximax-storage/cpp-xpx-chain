@@ -13,11 +13,12 @@ namespace catapult { namespace validators {
 
 #define TEST_CLASS PrepareDrivePermissionValidatorTests
 
-	DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrivePermission, )
+	DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrivePermissionV1, )
+	DEFINE_COMMON_VALIDATOR_TESTS(PrepareDrivePermissionV2, )
 
 	namespace {
-		using Notification = model::PrepareDriveNotification<1>;
 
+		template<typename TTraits>
 		void AssertValidationResult(
 				ValidationResult expectedResult,
 				const state::DriveEntry* pDriveEntry,
@@ -31,8 +32,8 @@ namespace catapult { namespace validators {
 				driveCacheDelta.insert(*pDriveEntry);
 				cache.commit(currentHeight);
 			}
-			Notification notification(driveKey, Key(), BlockDuration(), BlockDuration(), Amount(), 0, 0, 0, 0);
-			auto pValidator = CreatePrepareDrivePermissionValidator();
+			model::PrepareDriveNotification<TTraits::Version> notification(driveKey, Key(), BlockDuration(), BlockDuration(), Amount(), 0, 0, 0, 0);
+			auto pValidator = TTraits::CreateValidator();
 
 			// Act:
 			auto result = test::ValidateNotification(*pValidator, notification, cache,
@@ -43,20 +44,40 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	TEST(TEST_CLASS, FailureWhenDriveExists) {
+	struct PreparePermissionValidatorV1Traits {
+		static constexpr VersionType Version = 1;
+		static auto CreateValidator() {
+			return CreatePrepareDrivePermissionV1Validator();
+		}
+	};
+
+	struct PreparePermissionValidatorV2Traits {
+		static constexpr VersionType Version = 2;
+		static auto CreateValidator() {
+			return CreatePrepareDrivePermissionV2Validator();
+		}
+	};
+
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PreparePermissionValidatorV1Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PreparePermissionValidatorV2Traits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(FailureWhenDriveExists) {
 		// Arrange:
 		state::DriveEntry driveEntry(test::GenerateRandomByteArray<Key>());
 
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TTraits>(
 			Failure_Service_Drive_Already_Exists,
 			&driveEntry,
 			driveEntry.key());
 	}
 
-	TEST(TEST_CLASS, Success) {
+	TRAITS_BASED_TEST(Success) {
 		// Assert:
-		AssertValidationResult(
+		AssertValidationResult<TTraits>(
 			ValidationResult::Success,
 			nullptr,
 			test::GenerateRandomByteArray<Key>());

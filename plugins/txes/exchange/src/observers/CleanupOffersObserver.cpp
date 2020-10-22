@@ -22,47 +22,63 @@ namespace catapult { namespace observers {
 
 	DECLARE_OBSERVER(CleanupOffers, Notification)() {
 		return MAKE_OBSERVER(CleanupOffers, Notification, ([](const Notification&, const ObserverContext& context) {
-			auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
-			auto& cache = context.Cache.sub<cache::ExchangeCache>();
-			auto expiringOfferOwners = cache.expiringOfferOwners(context.Height);
-			for (const auto& key : expiringOfferOwners) {
-				auto cacheIter = cache.find(key);
-				auto& entry = cacheIter.get();
-				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+		  auto currencyMosaicId = context.Config.Immutable.CurrencyMosaicId;
+		  auto& cache = context.Cache.sub<cache::ExchangeCache>();
+		  auto expiringOfferOwners = cache.expiringOfferOwners(context.Height);
+		  for (const auto& key : expiringOfferOwners) {
+			  auto cacheIter = cache.find(key);
+			  auto* pEntry = cacheIter.tryGet();
+			  // Entry can not exist because in old versions of blockchain we remove exchange entry
+			  if (!pEntry)
+			  	continue;
 
-				Amount xpxAmount(0);
-				auto onBuyOfferExpired = [&xpxAmount](const state::BuyOfferMap::const_iterator& iter) {
-					xpxAmount = xpxAmount + iter->second.ResidualCost;
-				};
-				auto onSellOfferExpired = [&entry, currencyMosaicId, &context](const state::SellOfferMap::const_iterator& iter) {
-					CreditAccount(entry.owner(), iter->first, iter->second.Amount, context);
-				};
+			  auto& entry = *pEntry;
+			  OfferExpiryUpdater offerExpiryUpdater(cache, entry);
 
-				if (NotifyMode::Commit == context.Mode) {
-					entry.expireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
-				} else {
-					entry.unexpireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
-				}
+			  Amount xpxAmount(0);
+			  auto onBuyOfferExpired = [&xpxAmount](const state::BuyOfferMap::const_iterator& iter) {
+				xpxAmount = xpxAmount + iter->second.ResidualCost;
+			  };
+			  auto onSellOfferExpired = [&entry, currencyMosaicId, &context](const state::SellOfferMap::const_iterator& iter) {
+				CreditAccount(entry.owner(), iter->first, iter->second.Amount, context);
+			  };
 
-				CreditAccount(entry.owner(), currencyMosaicId, xpxAmount, context);
-			}
+			  if (NotifyMode::Commit == context.Mode) {
+				  entry.expireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
+			  } else {
+				  entry.unexpireOffers(context.Height, onBuyOfferExpired, onSellOfferExpired);
+			  }
 
-			if (NotifyMode::Rollback == context.Mode)
-				return;
+			  CreditAccount(entry.owner(), currencyMosaicId, xpxAmount, context);
+		  }
 
-			auto maxRollbackBlocks = context.Config.Network.MaxRollbackBlocks;
-			if (context.Height.unwrap() <= maxRollbackBlocks)
-				return;
+		  if (NotifyMode::Rollback == context.Mode)
+			  return;
 
-			auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
-			expiringOfferOwners = cache.expiringOfferOwners(pruneHeight);
-			for (const auto& key : expiringOfferOwners) {
-				auto cacheIter = cache.find(key);
-				auto& entry = cacheIter.get();
-				OfferExpiryUpdater offerExpiryUpdater(cache, entry);
-				RemoveExpiredOffers(entry.expiredBuyOffers(), pruneHeight);
-				RemoveExpiredOffers(entry.expiredSellOffers(), pruneHeight);
-			}
+		  auto maxRollbackBlocks = context.Config.Network.MaxRollbackBlocks;
+		  if (context.Height.unwrap() <= maxRollbackBlocks)
+			  return;
+
+		  auto pruneHeight = Height(context.Height.unwrap() - maxRollbackBlocks);
+		  expiringOfferOwners = cache.expiringOfferOwners(pruneHeight);
+		  for (const auto& key : expiringOfferOwners) {
+			  auto cacheIter = cache.find(key);
+			  auto* pEntry = cacheIter.tryGet();
+			  // Entry can not exist because in old versions of blockchain we remove exchange entry
+			  if (!pEntry)
+				  continue;
+
+			  auto& entry = *pEntry;
+			  OfferExpiryUpdater offerExpiryUpdater(cache, entry);
+			  RemoveExpiredOffers(entry.expiredBuyOffers(), pruneHeight);
+			  RemoveExpiredOffers(entry.expiredSellOffers(), pruneHeight);
+		  }
+
+		  auto cleanUpHeight = Height(context.Height.unwrap() - 2 * maxRollbackBlocks);
+		  expiringOfferOwners = cache.expiringOfferOwners(cleanUpHeight);
+		  for (const auto& key : expiringOfferOwners) {
+			  cache.removeExpiryHeight(key, cleanUpHeight);
+		  }
 		}))
 	}
 }}
