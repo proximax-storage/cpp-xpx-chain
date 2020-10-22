@@ -153,10 +153,10 @@ namespace catapult { namespace fastfinality {
 				};
 
 				RegisterPullCommitteeStageHandler(pFsm, packetHandlers);
-				RegisterPushProposedBlockHandler(pFsm, packetHandlers, pluginManager);
+				RegisterPushProposedBlockHandler(pFsm, packetHandlers, pluginManager, packetPayloadSink);
 				RegisterPullProposedBlockHandler(pFsm, packetHandlers);
-				RegisterPushPrevoteMessageHandler(pFsm, packetHandlers);
-				RegisterPushPrecommitMessageHandler(pFsm, packetHandlers);
+				RegisterPushPrevoteMessageHandler(pFsm, packetHandlers, packetPayloadSink);
+				RegisterPushPrecommitMessageHandler(pFsm, packetHandlers, packetPayloadSink);
 
 				auto& committeeData = pFsm->committeeData();
 				committeeData.setUnlockedAccounts(CreateUnlockedAccounts(m_harvestingConfig));
@@ -194,7 +194,8 @@ namespace catapult { namespace fastfinality {
 				actions.WaitForProposal = CreateDefaultWaitForProposalAction(
 					pFsm,
 					CreateRemoteProposedBlockRetriever(packetIoPickers, pluginManager.transactionRegistry()),
-					pConfigHolder);
+					pConfigHolder,
+					packetPayloadSink);
 				actions.ValidateProposal = CreateDefaultValidateProposalAction(
 					pFsm,
 					state,

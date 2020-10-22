@@ -76,7 +76,8 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultWaitForProposalAction(
 		const std::shared_ptr<WeightedVotingFsm>& pFsm,
 		const RemoteProposedBlockRetriever& retriever,
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder);
+		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+		const extensions::PacketPayloadSink& packetPayloadSink);
 
 	action CreateDefaultValidateProposalAction(
 		const std::shared_ptr<WeightedVotingFsm>& pFsm,

@@ -39,8 +39,9 @@ namespace catapult { namespace fastfinality {
 	void RegisterPushProposedBlockHandler(
 			const std::shared_ptr<WeightedVotingFsm>& pFsm,
 			ionet::ServerPacketHandlers& handlers,
-			const plugins::PluginManager& pluginManager) {
-		handlers.registerHandler(ionet::PacketType::Push_Proposed_Block, [pFsm, &pluginManager](
+			const plugins::PluginManager& pluginManager,
+			const extensions::PacketPayloadSink& packetPayloadSink) {
+		handlers.registerHandler(ionet::PacketType::Push_Proposed_Block, [pFsm, &pluginManager, packetPayloadSink](
 				const auto& packet,
 				const auto&) {
 			auto& committeeData = pFsm->committeeData();
@@ -51,21 +52,15 @@ namespace catapult { namespace fastfinality {
 			}
 
 			const auto& registry = pluginManager.transactionRegistry();
-			auto range = ionet::ExtractEntitiesFromPacket<model::Block>(packet, [&registry](const auto& entity) {
+			auto pBlock = utils::UniqueToShared(ionet::ExtractEntityFromPacket<model::Block>(packet, [&registry](const auto& entity) {
 				return IsSizeValid(entity, registry);
-			});
-			if (range.empty()) {
-				CATAPULT_LOG(warning) << "rejecting empty range: " << packet;
-				return;
-			} else if (range.size() > 1u) {
-				CATAPULT_LOG(warning) << "rejecting multiple range: " << packet;
+			}));
+			if (!pBlock) {
+				CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
 				return;
 			}
 
 			CATAPULT_LOG(trace) << "received valid " << packet;
-			auto blocks = model::BlockRange::ExtractEntitiesFromRange(std::move(range));
-			auto pBlock = blocks.front();
-
 			const auto& committee = pluginManager.getCommitteeManager().committee();
 			if (pBlock->Signer != committee.BlockProposer) {
 				CATAPULT_LOG(warning) << "rejecting proposal (signer invalid " << pBlock->Signer
@@ -85,6 +80,8 @@ namespace catapult { namespace fastfinality {
 					committeeData.setProposalMultiple(true);
 				}
 				return;
+			} else {
+				packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Proposed_Block, pBlock));
 			}
 
 			committeeData.setProposedBlock(pBlock);
@@ -116,13 +113,15 @@ namespace catapult { namespace fastfinality {
 	namespace {
 		template<typename TPacket>
 		void RegisterPushVoteMessageHandler(
-			const std::shared_ptr<WeightedVotingFsm>& pFsm,
-			consumer<const Key&, const Signature&> addVote,
-			CommitteePhase committeePhase,
-			ionet::PacketType packetType,
-			ionet::ServerPacketHandlers& handlers,
-			const std::string& name) {
-			handlers.registerHandler(packetType, [pFsm, addVote, committeePhase, &name](
+				const std::shared_ptr<WeightedVotingFsm>& pFsm,
+				consumer<const Key&, const Signature&> addVote,
+				predicate<const Key&> hasVote,
+				const extensions::PacketPayloadSink& packetPayloadSink,
+				CommitteePhase committeePhase,
+				ionet::PacketType packetType,
+				ionet::ServerPacketHandlers& handlers,
+				const std::string& name) {
+			handlers.registerHandler(packetType, [pFsm, addVote, hasVote, committeePhase, &name, packetPayloadSink](
 					const auto& packet,
 					auto&) {
 				auto& committeeData = pFsm->committeeData();
@@ -132,15 +131,23 @@ namespace catapult { namespace fastfinality {
 					return;
 				}
 
-				auto pProposedBlock = committeeData.proposedBlock();
-				if (!pProposedBlock) {
-					CATAPULT_LOG(trace) << "rejecting " << name << ", no proposed block";
-					return;
-				}
-
 				const auto* pPacket = ionet::CoercePacket<TPacket>(&packet);
 				if (!pPacket) {
 					CATAPULT_LOG(warning) << "rejecting invalid packet: " << packet;
+					return;
+				}
+
+				if (hasVote(pPacket->Message.BlockCosignature.Signer)) {
+					return;
+				} else {
+					auto pPacketCopy = ionet::CreateSharedPacket<TPacket>();
+					std::memcpy(pPacketCopy.get(), pPacket, pPacket->Size);
+					packetPayloadSink(ionet::PacketPayload(pPacketCopy));
+				}
+
+				auto pProposedBlock = committeeData.proposedBlock();
+				if (!pProposedBlock) {
+					CATAPULT_LOG(trace) << "rejecting " << name << ", no proposed block";
 					return;
 				}
 
@@ -168,10 +175,13 @@ namespace catapult { namespace fastfinality {
 
 	void RegisterPushPrevoteMessageHandler(
 			const std::shared_ptr<WeightedVotingFsm>& pFsm,
-			ionet::ServerPacketHandlers& handlers) {
+			ionet::ServerPacketHandlers& handlers,
+			const extensions::PacketPayloadSink& packetPayloadSink) {
 		RegisterPushVoteMessageHandler<PrevoteMessagePacket>(
 			pFsm,
 			[pFsm](const Key& signer, const Signature& signature) { pFsm->committeeData().addPrevote(signer, signature); },
+			[pFsm](const Key& signer) { return pFsm->committeeData().hasPrevote(signer); },
+			packetPayloadSink,
 			CommitteePhase::Prevote,
 			ionet::PacketType::Push_Prevote_Message,
 			handlers,
@@ -180,10 +190,13 @@ namespace catapult { namespace fastfinality {
 
 	void RegisterPushPrecommitMessageHandler(
 			const std::shared_ptr<WeightedVotingFsm>& pFsm,
-			ionet::ServerPacketHandlers& handlers) {
+			ionet::ServerPacketHandlers& handlers,
+			const extensions::PacketPayloadSink& packetPayloadSink) {
 		RegisterPushVoteMessageHandler<PrecommitMessagePacket>(
 			pFsm,
 			[pFsm](const Key& signer, const Signature& signature) { pFsm->committeeData().addPrecommit(signer, signature); },
+			[pFsm](const Key& signer) { return pFsm->committeeData().hasPrecommit(signer); },
+			packetPayloadSink,
 			CommitteePhase::Precommit,
 			ionet::PacketType::Push_Precommit_Message,
 			handlers,

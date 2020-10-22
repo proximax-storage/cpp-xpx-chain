@@ -322,8 +322,9 @@ namespace catapult { namespace fastfinality {
 		void TryGetProposedBlock(
 				const std::shared_ptr<WeightedVotingFsm>& pFsm,
 				const RemoteProposedBlockRetriever& retriever,
-				const model::NetworkConfiguration& config) {
-			retriever(config.CommitteeSize).then([pFsm, &config](auto&& blocksFuture) {
+				const model::NetworkConfiguration& config,
+				const extensions::PacketPayloadSink& packetPayloadSink) {
+			retriever(config.CommitteeSize).then([pFsm, &config, packetPayloadSink](auto&& blocksFuture) {
 				auto blocks = blocksFuture.get();
 				std::vector<std::pair<Hash256, std::shared_ptr<model::Block>>> hashBlockPairs;
 				for (const auto& pBlock : blocks)
@@ -334,6 +335,7 @@ namespace catapult { namespace fastfinality {
 					for (const auto& hashBlockPair : hashBlockPairs) {
 						if (hashBlockPair.first == frequencyPair.first) {
 							pFsm->committeeData().setProposedBlock(hashBlockPair.second);
+							packetPayloadSink(ionet::PacketPayloadFactory::FromEntity(ionet::PacketType::Push_Proposed_Block, hashBlockPair.second));
 							return;
 						}
 					}
@@ -345,10 +347,11 @@ namespace catapult { namespace fastfinality {
 	action CreateDefaultWaitForProposalAction(
 			const std::shared_ptr<WeightedVotingFsm>& pFsm,
 			const RemoteProposedBlockRetriever& retriever,
-			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) {
-		return [pFsm, retriever, pConfigHolder]() {
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			const extensions::PacketPayloadSink& packetPayloadSink) {
+		return [pFsm, retriever, pConfigHolder, packetPayloadSink]() {
 			if (!pFsm->committeeData().proposedBlock())
-				TryGetProposedBlock(pFsm, retriever, pConfigHolder->Config().Network);
+				TryGetProposedBlock(pFsm, retriever, pConfigHolder->Config().Network, packetPayloadSink);
 
 			DelayAction(pFsm, pFsm->committeeData().committeeStage().PhaseTimeMillis, [pFsm] {
 				const auto& committeeData = pFsm->committeeData();

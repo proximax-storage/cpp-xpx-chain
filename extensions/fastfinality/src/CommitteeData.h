@@ -126,6 +126,11 @@ namespace catapult { namespace fastfinality {
 			return m_prevotes.at(signer);
 		}
 
+		bool hasPrevote(const Key& signer) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			return (m_prevotes.find(signer) != m_prevotes.end());
+		}
+
 		void addPrecommit(const Key& signer, const Signature& signature) {
 			std::lock_guard<std::mutex> guard(m_mutex);
 			m_precommits.emplace(signer, signature);
@@ -139,6 +144,11 @@ namespace catapult { namespace fastfinality {
 		auto precommits() const {
 			std::lock_guard<std::mutex> guard(m_mutex);
 			return m_precommits;
+		}
+
+		bool hasPrecommit(const Key& signer) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			return (m_precommits.find(signer) != m_precommits.end());
 		}
 
 	private:

@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/extensions/ServerHooks.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/thread/Future.h"
 #include "catapult/types.h"
@@ -40,7 +41,8 @@ namespace catapult { namespace fastfinality {
 	void RegisterPushProposedBlockHandler(
 		const std::shared_ptr<WeightedVotingFsm>& pFsm,
 		ionet::ServerPacketHandlers& handlers,
-		const plugins::PluginManager& pluginManager);
+		const plugins::PluginManager& pluginManager,
+		const extensions::PacketPayloadSink& packetPayloadSink);
 
 	/// Registers a pull proposed block handler in \a handlers verifying data with \a pFsm and \a pluginManager.
 	void RegisterPullProposedBlockHandler(
@@ -50,10 +52,12 @@ namespace catapult { namespace fastfinality {
 	/// Registers a push prevote message handler in \a handlers constructing response from \a pFsm.
 	void RegisterPushPrevoteMessageHandler(
 		const std::shared_ptr<WeightedVotingFsm>& pFsm,
-		ionet::ServerPacketHandlers& handlers);
+		ionet::ServerPacketHandlers& handlers,
+		const extensions::PacketPayloadSink& packetPayloadSink);
 
 	/// Registers a push precommit message handler in \a handlers that adds the message to \a pFsm.
 	void RegisterPushPrecommitMessageHandler(
 		const std::shared_ptr<WeightedVotingFsm>& pFsm,
-		ionet::ServerPacketHandlers& handlers);
+		ionet::ServerPacketHandlers& handlers,
+		const extensions::PacketPayloadSink& packetPayloadSink);
 }}
