@@ -127,7 +127,7 @@ namespace catapult { namespace state {
 		ExchangeEntry LoadExchangeEntry(io::InputStream& input, const predicate<VersionType>& loadExpiredOffers) {
 			// read version
 			VersionType version = io::Read32(input);
-			if (version > 2)
+			if (version > 3)
 				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of ExchangeEntry", version);
 
 			Key owner;

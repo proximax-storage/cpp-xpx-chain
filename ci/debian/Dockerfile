@@ -1,18 +1,21 @@
-FROM debian:10-slim
+FROM debian:unstable-20200607
 
 COPY ./deps /
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
-  libboost-atomic1.67.0 \
-  libboost-chrono1.67.0 \
-  libboost-date-time1.67.0 \
-  libboost-regex1.67.0 \
-  libboost-system1.67.0 \
-  libboost-timer1.67.0 \
-  libboost-log1.67.0 \
-  libboost-thread1.67.0 \
-  libboost-program-options1.67.0 \
-  libboost-random1.67.0 \
+  libboost-atomic-dev \
+  libboost-date-time-dev \
+  libboost-regex-dev \
+  libboost-system-dev \
+  libboost-timer-dev \
+  libboost-chrono-dev \
+  libboost-log-dev \
+  libboost-thread-dev \
+  libboost-filesystem-dev \
+  libboost-program-options-dev \
+  libboost-stacktrace-dev \
+  libboost-random-dev \
+  libzstd-dev \
   librocksdb5.17 
 
 COPY _build/bin /sirius/bin

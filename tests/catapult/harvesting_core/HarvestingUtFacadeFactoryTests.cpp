@@ -625,7 +625,8 @@ namespace catapult { namespace harvesting {
 
 		Hash256 CalculateEnabledTestStateHash(
 				const cache::CatapultCache& cache,
-				const std::vector<model::TransactionInfo>& transactionInfos) {
+				const std::vector<model::TransactionInfo>& transactionInfos,
+				const std::vector<size_t>& indexToMultiplierMap = {}) {
 			auto cacheDetachableDelta = cache.createDetachableDelta();
 			auto cacheDetachedDelta = cacheDetachableDelta.detach();
 			auto pCacheDelta = cacheDetachedDelta.tryLock();
@@ -634,7 +635,10 @@ namespace catapult { namespace harvesting {
 			for (auto& transactionInfo : transactionInfos) {
 				auto& accountStateCacheDelta = pCacheDelta->sub<cache::AccountStateCache>();
 				auto accountStateIter = accountStateCacheDelta.find(transactionInfo.pEntity->Signer);
-				accountStateIter.get().Balances.credit(Currency_Mosaic_Id, Amount(i * transactionInfo.pEntity->Size));
+
+				auto multiplier = indexToMultiplierMap.empty() ? i : indexToMultiplierMap[i - 1];
+				auto surplus = Amount(multiplier * transactionInfo.pEntity->Size);
+				accountStateIter.get().Balances.credit(Currency_Mosaic_Id, Amount(surplus));
 				++i;
 			}
 
@@ -748,6 +752,49 @@ namespace catapult { namespace harvesting {
 
 		auto expectedReceiptsHash = CalculateEnabledTestReceiptsHash(2 * (3 + 1));
 		auto expectedStateHash = CalculateEnabledTestStateHash(context.cache(), expectedTransactionInfos);
+
+		EXPECT_EQ(expectedReceiptsHash, pBlock->BlockReceiptsHash);
+		EXPECT_EQ(expectedStateHash, pBlock->StateHash);
+	}
+
+	TEST(TEST_CLASS, NonzeroHashesAreReturnedWhenVerifiableReceiptsAndStateAreEnabledAfterApplyOperationWithSomeFailures) {
+		// Arrange: prepare context
+		auto config = CreateConfiguration(StateVerifyOptions::All);
+		test::MockExecutionConfiguration executionConfig(config);
+		executionConfig.pObserver->enableReceiptGeneration();
+		executionConfig.pObserver->enableRollbackEmulation();
+		FacadeTestContext context(
+			config,
+			executionConfig.Config
+		);
+
+		auto pBlockHeader = CreateBlockHeaderWithHeight(Default_Height + Height(1));
+		pBlockHeader->FeeMultiplier = BlockFeeMultiplier(1);
+		context.prepareSignerAccount(pBlockHeader->Signer);
+
+		auto transactionInfos = CreateTransactionInfosWithIncreasingMultipliers(5);
+		context.prepareTransactionSignerAccounts(transactionInfos);
+
+		// - mark two failures (triggers are intentionally different to maximize coverage)
+		executionConfig.pValidator->setResult(validators::ValidationResult::Failure, transactionInfos[1].EntityHash, 2);
+		executionConfig.pValidator->setResult(validators::ValidationResult::Failure, transactionInfos[3].EntityHash, 1);
+
+		// Act: apply 5 transactions with two failures (but no undos)
+		auto pBlock = context.generate(*pBlockHeader, transactionInfos, 0);
+
+		// Assert: check the block execution dependent hashes
+		ASSERT_TRUE(!!pBlock);
+
+		std::vector<model::TransactionInfo> expectedTransactionInfos;
+		for (auto i : { 0u, 2u, 4u })
+			expectedTransactionInfos.push_back(transactionInfos[i].copy());
+
+		auto expectedReceiptsHash = CalculateEnabledTestReceiptsHash(2 * (3 + 1));
+		auto expectedStateHash = CalculateEnabledTestStateHash(context.cache(), expectedTransactionInfos, {
+				// multipliers are configured as `index + 1`, but there are gaps because transactions at indexes 1 and 3 were dropped
+				// remaining transactions have initial indexes of { 0, 2, 4 }, which implies multipliers of { 1, 3, 5 }
+				1, 3, 5
+		});
 
 		EXPECT_EQ(expectedReceiptsHash, pBlock->BlockReceiptsHash);
 		EXPECT_EQ(expectedStateHash, pBlock->StateHash);

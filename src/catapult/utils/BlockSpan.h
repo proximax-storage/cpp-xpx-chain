@@ -63,7 +63,7 @@ namespace catapult { namespace utils {
 			if (m_hours > std::numeric_limits<uint64_t>::max() / millisPerHour)
 				CATAPULT_THROW_RUNTIME_ERROR_1("overflow while calculating blocks from hours", m_hours);
 
-			return BlockDuration(m_hours * millisPerHour / generationTargetTime.millis());
+			return BlockDuration(m_hours * millisPerHour / std::max(generationTargetTime.millis(), static_cast<u_int64_t>(1)));
 		}
 
 	public:

@@ -26,9 +26,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	using Notification = model::RemoveOfferNotification<1>;
-
-	DEFINE_STATEFUL_VALIDATOR(RemoveOffer, ([](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(RemoveOfferV1, model::RemoveOfferNotification<1>, ([](const model::RemoveOfferNotification<1>& notification, const ValidatorContext& context) {
 		if (notification.OfferCount == 0)
 			return Failure_Exchange_No_Offered_Mosaics_To_Remove;
 
@@ -59,5 +57,41 @@ namespace catapult { namespace validators {
 		}
 
 		return ValidationResult::Success;
+	}));
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(RemoveOfferV2, model::RemoveOfferNotification<2>, ([](const model::RemoveOfferNotification<2>& notification, const ValidatorContext& context) {
+	  if (notification.OfferCount == 0)
+		  return Failure_Exchange_No_Offered_Mosaics_To_Remove;
+
+	  auto& cache = context.Cache.sub<cache::ExchangeCache>();
+	  if (!cache.contains(notification.Owner))
+		  return Failure_Exchange_Account_Doesnt_Have_Any_Offer;
+
+	  auto iter = cache.find(notification.Owner);
+	  const auto& entry = iter.get();
+	  std::set<std::pair<model::OfferType, MosaicId>> offers;
+	  auto pOffer = notification.OffersPtr;
+	  for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
+		  auto mosaicId = context.Resolvers.resolve(pOffer->MosaicId);
+
+		  std::pair<model::OfferType, MosaicId> pair(pOffer->OfferType, mosaicId);
+		  if (offers.count(pair))
+			  return Failure_Exchange_Duplicated_Offer_In_Request;
+		  offers.insert(pair);
+
+		  auto result = ValidationResult::Success;
+		  if (model::OfferType::Buy == pOffer->OfferType) {
+			  result = ValidateOffer(entry.buyOffers(), entry.expiredBuyOffers(), mosaicId, context.Height);
+		  } else if (model::OfferType::Sell == pOffer->OfferType) {
+			  result = ValidateOffer(entry.sellOffers(), entry.expiredSellOffers(), mosaicId, context.Height);
+		  } else {
+		  	return Failure_Exchange_Incorrect_Offer_Type;
+		  }
+
+		  if (ValidationResult::Success != result)
+			  return result;
+	  }
+
+	  return ValidationResult::Success;
 	}));
 }}

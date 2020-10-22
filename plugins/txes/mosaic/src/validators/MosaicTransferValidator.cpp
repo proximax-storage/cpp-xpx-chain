@@ -20,19 +20,20 @@
 
 #include "Validators.h"
 #include "ActiveMosaicView.h"
+#include "src/cache/MosaicCache.h"
+#include "catapult/cache/ReadOnlyCatapultCache.h"
 #include "catapult/cache_core/AccountStateCache.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace validators {
-	
-	using BalanceTransferNotification = model::BalanceTransferNotification<1>;
-	using LevyTransferNotification = model::LevyTransferNotification<1>;
-	
+
+	using Notification = model::BalanceTransferNotification<1>;
+
 	namespace {
-		template <typename TNotification>
 		bool IsMosaicOwnerParticipant(
 				const cache::ReadOnlyCatapultCache& cache,
 				const Key& owner,
-				const TNotification& notification,
+				const Notification& notification,
 				const model::ResolverContext& resolvers) {
 			if (owner == notification.Sender)
 				return true;
@@ -44,47 +45,29 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	template <typename TNotification>
-	ValidationResult MosaicTransferValidatorDetail(const TNotification& notification, const ValidatorContext& context,const UnresolvedMosaicId& currencyMosaicId)
-	{
-		// 0. allow currency mosaic id
-		auto mosaicId = context.Resolvers.resolve(notification.MosaicId);
-		if (currencyMosaicId.unwrap() == mosaicId.unwrap())
-			return ValidationResult::Success;
-		
-		// 1. check that the mosaic exists
-		ActiveMosaicView::FindIterator mosaicIter;
-		ActiveMosaicView activeMosaicView(context.Cache);
-		auto result = activeMosaicView.tryGet(mosaicId, context.Height, mosaicIter);
-		if (!IsValidationResultSuccess(result))
-			return result;
-		
-		// 2. if it's transferable there's nothing else to check
-		const auto& entry = mosaicIter.get();
-		if (entry.definition().properties().is(model::MosaicFlags::Transferable))
-			return ValidationResult::Success;
-		
-		// 3. if it's NOT transferable then owner must be either sender or recipient
-		if (!IsMosaicOwnerParticipant<TNotification>(context.Cache, entry.definition().owner(), notification, context.Resolvers))
-			return Failure_Mosaic_Non_Transferable;
-		
-		return ValidationResult::Success;
-	}
-	
-	// region validator definition
+	DECLARE_STATEFUL_VALIDATOR(MosaicTransfer, Notification)(UnresolvedMosaicId currencyMosaicId) {
+		return MAKE_STATEFUL_VALIDATOR(MosaicTransfer, [currencyMosaicId](const auto& notification, const auto& context) {
+			// 0. allow currency mosaic id
+			if (currencyMosaicId == notification.MosaicId)
+				return ValidationResult::Success;
 
-	#define DEFINE_MOSAIC_TRANSFER_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE) \
-		DECLARE_STATEFUL_VALIDATOR(VALIDATOR_NAME, NOTIFICATION_TYPE)(UnresolvedMosaicId currencyMosaicId) { \
-			using ValidatorType = stateful::FunctionalNotificationValidatorT<NOTIFICATION_TYPE>; \
-			return std::make_unique<ValidatorType>(#VALIDATOR_NAME "Validator", [currencyMosaicId]( \
-					const auto& notification, \
-					const auto& context) { \
-				return MosaicTransferValidatorDetail<NOTIFICATION_TYPE>(notification, context, currencyMosaicId); }); \
+			// 1. check that the mosaic exists
+			ActiveMosaicView::FindIterator mosaicIter;
+			ActiveMosaicView activeMosaicView(context.Cache);
+			auto result = activeMosaicView.tryGet(context.Resolvers.resolve(notification.MosaicId), context.Height, mosaicIter);
+			if (!IsValidationResultSuccess(result))
+				return result;
+
+			// 2. if it's transferable there's nothing else to check
+			const auto& entry = mosaicIter.get();
+			if (entry.definition().properties().is(model::MosaicFlags::Transferable))
+				return ValidationResult::Success;
+
+			// 3. if it's NOT transferable then owner must be either sender or recipient
+			if (!IsMosaicOwnerParticipant(context.Cache, entry.definition().owner(), notification, context.Resolvers))
+				return Failure_Mosaic_Non_Transferable;
+
+			return ValidationResult::Success;
+		});
 	}
-	
-	DEFINE_MOSAIC_TRANSFER_VALIDATOR(MosaicTransfer, BalanceTransferNotification)
-		DEFINE_MOSAIC_TRANSFER_VALIDATOR(LevyTransfer, LevyTransferNotification)
-	
-	//end region validator definition
-	
 }}

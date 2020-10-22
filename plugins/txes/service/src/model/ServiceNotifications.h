@@ -51,6 +51,9 @@ namespace catapult { namespace model {
 	/// Defines an end file download notification type.
 	DEFINE_NOTIFICATION_TYPE(All, Service, EndFileDownload_v1, 0x000D);
 
+	/// Defines a prepare drive notification type.
+	DEFINE_NOTIFICATION_TYPE(All, Service, Prepare_Drive_v2, 0x000E);
+
 	/// Notification of a drive prepare.
 	template<VersionType version>
 	struct PrepareDriveNotification;
@@ -93,6 +96,64 @@ namespace catapult { namespace model {
 
         /// Duration of drive.
         BlockDuration Duration;
+
+		/// Billing period of drive.
+		BlockDuration BillingPeriod;
+
+		/// Billing price of drive in storage units.
+		Amount BillingPrice;
+
+		/// The size of the drive.
+		uint64_t DriveSize;
+
+		/// The number of drive replicas.
+		uint16_t Replicas;
+
+		/// Minimal count of replicator to send transaction from name of drive.
+		uint16_t MinReplicators;
+
+		/// Percent of approves from replicators to apply transaction.
+		uint8_t PercentApprovers;
+	};
+
+	template<>
+	struct PrepareDriveNotification<2> : public Notification {
+	public:
+		/// Matching notification type.
+		static constexpr auto Notification_Type = Service_Prepare_Drive_v2_Notification;
+
+	public:
+		explicit PrepareDriveNotification(
+				const Key& drive,
+				const Key& owner,
+				const BlockDuration& duration,
+				const BlockDuration& billingPeriod,
+				const Amount& billingPrice,
+				uint64_t size,
+				uint16_t replicas,
+				uint16_t minReplicators,
+				uint8_t percentApprovers)
+				: Notification(Notification_Type, sizeof(PrepareDriveNotification<1>))
+				, DriveKey(drive)
+				, Owner(owner)
+				, Duration(duration)
+				, BillingPeriod(billingPeriod)
+				, BillingPrice(billingPrice)
+				, DriveSize(size)
+				, Replicas(replicas)
+				, MinReplicators(minReplicators)
+				, PercentApprovers(percentApprovers)
+		{}
+
+	public:
+		/// Public key of the drive multisig account.
+		Key DriveKey;
+
+		/// Public key of the drive owner.
+		Key Owner;
+
+		/// Duration of drive.
+		BlockDuration Duration;
 
 		/// Billing period of drive.
 		BlockDuration BillingPeriod;

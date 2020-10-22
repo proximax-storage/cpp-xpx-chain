@@ -49,6 +49,7 @@ namespace catapult { namespace harvesting {
 		auto CreateConfiguration() {
 			auto networkConfig = test::CreatePrototypicalNetworkConfiguration();
 			networkConfig.MinHarvesterBalance = Amount(500'000);
+			networkConfig.EnableDeadlineValidation = true;
 			networkConfig.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 
 			auto config = test::CreatePrototypicalBlockchainConfiguration(std::move(networkConfig), "");

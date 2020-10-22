@@ -96,6 +96,9 @@ namespace catapult { namespace model {
 		/// that transaction fee is not less than the minimum calculated with minFeeMultiplier.
 		bool EnableUnconfirmedTransactionMinFeeValidation;
 
+		/// Allows validate deadline of transaction. It means that you can send old transactions to blockchain if it is false.
+		bool EnableDeadlineValidation;
+
 		/// Number of nodes in committee.
 		uint32_t CommitteeSize;
 

@@ -4,9 +4,13 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include <plugins/txes/mosaic/tests/test/MosaicCacheTestUtils.h>
+#include "src/cache/ExchangeCache.h"
+#include "src/config/ExchangeConfiguration.h"
 #include "src/validators/Validators.h"
 #include "tests/test/ExchangeTestUtils.h"
 #include "tests/test/plugins/ValidatorTestUtils.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
 
 namespace catapult { namespace validators {
@@ -15,10 +19,13 @@ namespace catapult { namespace validators {
 
 	DEFINE_COMMON_VALIDATOR_TESTS(OfferV1, )
 	DEFINE_COMMON_VALIDATOR_TESTS(OfferV2, )
+	DEFINE_COMMON_VALIDATOR_TESTS(OfferV3, )
+	DEFINE_COMMON_VALIDATOR_TESTS(OfferV4, )
 
 	namespace {
 		constexpr MosaicId Currency_Mosaic_Id(1234);
-
+		using MosaicSetup = std::function<void(cache::CatapultCacheDelta&)>;
+		
 		auto CreateConfig(const Key& longOfferKey) {
 			test::MutableBlockchainConfiguration config;
 			config.Immutable.CurrencyMosaicId = Currency_Mosaic_Id;
@@ -29,9 +36,32 @@ namespace catapult { namespace validators {
 			return (config.ToConst());
 		}
 
+		model::MosaicProperties CreateMosaicPropertiesWithDuration(BlockDuration duration) {
+			model::MosaicProperties::PropertyValuesContainer values{};
+			values[utils::to_underlying_type(model::MosaicPropertyId::Duration)] = duration.unwrap();
+			return model::MosaicProperties::FromValues(values);
+		}
+		
+		void AddMosaic(cache::CatapultCacheDelta& cache, MosaicId id, Height height, BlockDuration duration, Amount supply) {
+			auto& mosaicCacheDelta = cache.sub<cache::MosaicCache>();
+			auto definition = state::MosaicDefinition(height, Key(), 1, CreateMosaicPropertiesWithDuration(duration));
+			auto entry = state::MosaicEntry(id, definition);
+			entry.increaseSupply(supply);
+			mosaicCacheDelta.insert(entry);
+		}
+		
+		void AddMosaicEternal(cache::CatapultCacheDelta& cache, MosaicId id, Amount supply) {
+			auto& mosaicCacheDelta = cache.sub<cache::MosaicCache>();
+			auto definition = state::MosaicDefinition(Height(1), Key(), 1,  model::MosaicProperties::FromValues({}));
+			auto entry = state::MosaicEntry(id, definition);
+			entry.increaseSupply(supply);
+			mosaicCacheDelta.insert(entry);
+		}
+		
 		template<typename TTraits>
-		void AssertValidationResult(
+		void AssertValidationResultBase(
 				ValidationResult expectedResult,
+				MosaicSetup setup,
 				const std::vector<model::OfferWithDuration> offers = {},
 				const Key& signer = test::GenerateRandomByteArray<Key>(),
 				const state::ExchangeEntry* pEntry = nullptr,
@@ -39,8 +69,12 @@ namespace catapult { namespace validators {
 			// Arrange:
 			Height currentHeight(1);
 			auto cache = test::ExchangeCacheFactory::Create();
+			
+			auto delta = cache.createDelta();
+			setup(delta);
+			cache.commit(Height());
+			
 			if (pEntry) {
-				auto delta = cache.createDelta();
 				auto& exchangeDelta = delta.sub<cache::ExchangeCache>();
 				exchangeDelta.insert(*pEntry);
 				cache.commit(currentHeight);
@@ -55,6 +89,40 @@ namespace catapult { namespace validators {
 
 			// Assert:
 			EXPECT_EQ(expectedResult, result);
+		}
+			
+		template<typename TTraits>
+		void AssertValidationResult(
+			ValidationResult expectedResult,
+			const std::vector<model::OfferWithDuration> offers = {},
+			const Key& signer = test::GenerateRandomByteArray<Key>(),
+			const state::ExchangeEntry* pEntry = nullptr,
+			const Key& longOfferKey = test::GenerateRandomByteArray<Key>()) {
+			
+			AssertValidationResultBase<TTraits>(
+				expectedResult,
+				[](cache::CatapultCacheDelta& delta){
+					AddMosaicEternal(delta, MosaicId(1), Amount(100));
+					AddMosaicEternal(delta, MosaicId(2), Amount(100));
+					AddMosaicEternal(delta, Currency_Mosaic_Id, Amount(100));
+				}, offers, signer, pEntry, longOfferKey);
+		}
+		
+		template<typename TTraits>
+		void AssertValidationResultExpiringMosaic(
+			ValidationResult expectedResult,
+			const std::vector<model::OfferWithDuration> offers = {},
+			const Key& signer = test::GenerateRandomByteArray<Key>(),
+			const state::ExchangeEntry* pEntry = nullptr,
+			const Key& longOfferKey = test::GenerateRandomByteArray<Key>()) {
+			
+			AssertValidationResultBase<TTraits>(
+				expectedResult,
+				[](cache::CatapultCacheDelta& delta){
+					AddMosaic(delta, MosaicId(1), Height(1), BlockDuration(50), Amount(100));
+					AddMosaic(delta, MosaicId(2), Height(1), BlockDuration(50),Amount(100));
+					AddMosaic(delta, Currency_Mosaic_Id, Height(1), BlockDuration(50),Amount(100));
+				}, offers, signer, pEntry, longOfferKey);
 		}
 
 		struct SellOfferTraits {
@@ -84,6 +152,20 @@ namespace catapult { namespace validators {
 				return CreateOfferV2Validator();
 			}
 		};
+
+		struct ValidatorV3Traits {
+			static constexpr VersionType Version = 3;
+			static auto CreateValidator() {
+				return CreateOfferV3Validator();
+			}
+		};
+
+		struct ValidatorV4Traits {
+			static constexpr VersionType Version = 4;
+			static auto CreateValidator() {
+				return CreateOfferV4Validator();
+			}
+		};
 	}
 
 #define TRAITS_BASED_TEST(TEST_NAME) \
@@ -92,6 +174,10 @@ namespace catapult { namespace validators {
 	TEST(TEST_CLASS, TEST_NAME##_Buy_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV1Traits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_Sell_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SellOfferTraits, ValidatorV2Traits>(); } \
 	TEST(TEST_CLASS, TEST_NAME##_Buy_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV2Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Sell_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SellOfferTraits, ValidatorV3Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Buy_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV3Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Sell_v4) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<SellOfferTraits, ValidatorV4Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_Buy_v4) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<BuyOfferTraits, ValidatorV4Traits>(); } \
 	template<typename TOfferTraits, typename TValidatorTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
 
 	TRAITS_BASED_TEST(FailureWhenNoOffers) {
@@ -189,6 +275,38 @@ namespace catapult { namespace validators {
 		// Assert:
 		AssertValidationResult<TValidatorTraits>(
 			ValidationResult::Success,
+			{
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), model::OfferType::Sell}, BlockDuration(1000)},
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(2)), Amount(20)}, Amount(200), model::OfferType::Buy}, BlockDuration(2000)},
+			},
+			offerOwner,
+			nullptr,
+			offerOwner);
+	}
+	
+	TRAITS_BASED_TEST(SuccessWhenOfferDurationInsideMosaicDuration) {
+		// Arrange:
+		auto offerOwner = test::GenerateRandomByteArray<Key>();
+		
+		// Assert:
+		AssertValidationResultExpiringMosaic<TValidatorTraits>(
+			ValidationResult::Success,
+			{
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), model::OfferType::Sell}, BlockDuration(50)},
+				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(2)), Amount(20)}, Amount(200), model::OfferType::Buy}, BlockDuration(50)},
+			},
+			offerOwner,
+			nullptr,
+			offerOwner);
+	}
+	
+	TRAITS_BASED_TEST(FailureWhenOfferDurationExceedMosaicDuration) {
+		// Arrange:
+		auto offerOwner = test::GenerateRandomByteArray<Key>();
+		
+		// Assert:
+		AssertValidationResultExpiringMosaic<TValidatorTraits>(
+			Failure_Exchange_Offer_Duration_Exceeds_Mosaic_Duration,
 			{
 				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(1)), Amount(10)}, Amount(100), model::OfferType::Sell}, BlockDuration(1000)},
 				model::OfferWithDuration{model::Offer{{test::UnresolveXor(MosaicId(2)), Amount(20)}, Amount(200), model::OfferType::Buy}, BlockDuration(2000)},

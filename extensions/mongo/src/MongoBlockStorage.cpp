@@ -28,6 +28,7 @@
 #include "mappers/ResolutionStatementMapper.h"
 #include "mappers/TransactionMapper.h"
 #include "mappers/TransactionStatementMapper.h"
+#include "mappers/PublicKeyStatementMapper.h"
 
 using namespace bsoncxx::builder::stream;
 
@@ -58,7 +59,7 @@ namespace catapult { namespace mongo {
 
 			// in idempotent mode, if blockElement is already in the database, this call will be bypassed
 			// so nonzero inserted_count check is proper
-			auto result = blocks.insert_one(dbBlock.view()).get().result();
+			auto result = blocks.insert_one(dbBlock.view()).value().result();
 			if (0 == result.inserted_count())
 				CATAPULT_THROW_RUNTIME_ERROR("saveBlock failed: block header was not inserted");
 		}
@@ -115,7 +116,15 @@ namespace catapult { namespace mongo {
 			futures.emplace_back(bulkWriter.bulkInsert("mosaicResolutionStatements", blockStatement.MosaicResolutionStatements, [height](
 					const auto& pair,
 					auto) {
-				return mappers::ToDbModel(height, pair.second);
+			  return mappers::ToDbModel(height, pair.second);
+			}));
+
+			// mosaic resolution statements
+			numExpectedInserts.emplace_back(blockStatement.PublicKeyStatements.size());
+			futures.emplace_back(bulkWriter.bulkInsert("publicKeyStatements", blockStatement.PublicKeyStatements, [height, &registry](
+					const auto& pair,
+					auto) {
+			  return mappers::ToDbModel(height, pair.second, registry);
 			}));
 
 			auto statementsFuture = thread::when_all(std::move(futures)).then([height, numExpectedInserts, &errorPolicy](
@@ -233,6 +242,7 @@ namespace catapult { namespace mongo {
 				DropDocuments(m_database, "transactionStatements", "height", height);
 				DropDocuments(m_database, "addressResolutionStatements", "height", height);
 				DropDocuments(m_database, "mosaicResolutionStatements", "height", height);
+				DropDocuments(m_database, "publicKeyStatements", "height", height);
 			}
 
 		private:

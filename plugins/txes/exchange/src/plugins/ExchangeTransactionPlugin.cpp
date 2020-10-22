@@ -40,6 +40,26 @@ namespace catapult { namespace plugins {
 					}
 					break;
 				}
+				case 2: {
+					sub.notify(ExchangeNotification<2>(
+						transaction.Signer,
+						transaction.OfferCount,
+						transaction.OffersPtr()));
+
+					auto currencyMosaicId = config::GetUnresolvedCurrencyMosaicId(config);
+					auto pOffer = transaction.OffersPtr();
+					for (uint8_t i = 0; i < transaction.OfferCount; ++i, ++pOffer) {
+						auto offerOwnerAddress = extensions::CopyToUnresolvedAddress(PublicKeyToAddress(pOffer->Owner, config.NetworkIdentifier));
+						if (model::OfferType::Sell == pOffer->Type) {
+							sub.notify(BalanceTransferNotification<1>(transaction.Signer, offerOwnerAddress, currencyMosaicId, pOffer->Cost));
+							sub.notify(BalanceCreditNotification<1>(transaction.Signer, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
+						} else if (model::OfferType::Buy == pOffer->Type) {
+							sub.notify(BalanceTransferNotification<1>(transaction.Signer, offerOwnerAddress, pOffer->Mosaic.MosaicId, pOffer->Mosaic.Amount));
+							sub.notify(BalanceCreditNotification<1>(transaction.Signer, currencyMosaicId, pOffer->Cost));
+						}
+					}
+					break;
+				}
 				default:
 					CATAPULT_LOG(debug) << "invalid version of ExchangeTransaction: " << transaction.EntityVersion();
 				}

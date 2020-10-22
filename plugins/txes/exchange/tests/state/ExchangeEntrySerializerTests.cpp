@@ -305,6 +305,8 @@ namespace catapult { namespace state {
 	TEST(TEST_CLASS, TEST_NAME##_Historical_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntrySerializer>(1); } \
 	TEST(TEST_CLASS, TEST_NAME##_NonHistorical_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<NonHistoricalTraits, ExchangeEntryNonHistoricalSerializer>(2); } \
 	TEST(TEST_CLASS, TEST_NAME##_Historical_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntrySerializer>(2); } \
+	TEST(TEST_CLASS, TEST_NAME##_NonHistorical_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<NonHistoricalTraits, ExchangeEntryNonHistoricalSerializer>(3); } \
+	TEST(TEST_CLASS, TEST_NAME##_Historical_v3) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<HistoricalTraits, ExchangeEntrySerializer>(3); } \
 	template<typename TTraits, typename TSerializer> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(VersionType version)
 
 	TRAITS_BASED_TEST(CanSaveSingleEntry) {

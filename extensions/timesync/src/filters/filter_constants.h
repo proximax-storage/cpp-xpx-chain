@@ -40,5 +40,5 @@ namespace catapult { namespace timesync { namespace filters {
 	constexpr double Alpha = 0.4;
 
 	/// Maximum time in ms that a response to a time sync request may take.
-	constexpr int64_t Tolerated_Duration_Maximum = 1000;
+	constexpr int64_t Tolerated_Duration_Maximum = 3000;
 }}}

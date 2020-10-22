@@ -59,10 +59,10 @@ namespace catapult { namespace mongo { namespace plugins {
                         static_cast<model::MetadataModificationType>(test::GetUint8(iter->get_document().view(), "modificationType")));
                 EXPECT_EQ(
                         std::string(modification.KeyPtr(), modification.KeySize),
-                        iter->get_document().view()["key"].get_utf8().value.to_string());
+						std::string(iter->get_document().view()["key"].get_utf8().value));
                 EXPECT_EQ(
                         std::string(modification.ValuePtr(), modification.ValueSize),
-                        iter->get_document().view()["value"].get_utf8().value.to_string());
+						std::string(iter->get_document().view()["value"].get_utf8().value));
                 ++iter;
             }
         }

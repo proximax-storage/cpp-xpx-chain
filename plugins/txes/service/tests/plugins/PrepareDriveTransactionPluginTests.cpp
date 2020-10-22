@@ -17,7 +17,7 @@ namespace catapult { namespace plugins {
 #define TEST_CLASS PrepareDriveTransactionPluginTests
 
 	namespace {
-		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(PrepareDrive, 2, 2,)
+		DEFINE_TRANSACTION_PLUGIN_TEST_TRAITS(PrepareDrive, 3, 3,)
 
 		template<typename TTraits>
 		auto CreateTransaction(VersionType version) {
@@ -50,6 +50,10 @@ namespace catapult { namespace plugins {
 			AssertCanCalculateSize<TTraits>(2);
 	}
 
+	PLUGIN_TEST(CanCalculateSize_v3) {
+			AssertCanCalculateSize<TTraits>(3);
+	}
+
 	// region publish - basic
 
 	PLUGIN_TEST(PublishesNoNotificationWhenTransactionVersionIsInvalid) {
@@ -70,7 +74,7 @@ namespace catapult { namespace plugins {
 
 	namespace {
 		template<typename TTraits>
-		void AssertCanPublishCorrectNumberOfNotifications(VersionType version) {
+		void AssertCanPublishCorrectNumberOfNotifications(VersionType version, NotificationType expectedNotification) {
 			// Arrange:
 			auto pTransaction = CreateTransaction<TTraits>(version);
 			mocks::MockNotificationSubscriber sub;
@@ -81,16 +85,20 @@ namespace catapult { namespace plugins {
 
 			// Assert:
 			ASSERT_EQ(1, sub.numNotifications());
-			EXPECT_EQ(Service_Prepare_Drive_v1_Notification, sub.notificationTypes()[0]);
+			EXPECT_EQ(expectedNotification, sub.notificationTypes()[0]);
 		}
 	}
 
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_v1) {
-		AssertCanPublishCorrectNumberOfNotifications<TTraits>(1);
+		AssertCanPublishCorrectNumberOfNotifications<TTraits>(1, Service_Prepare_Drive_v1_Notification);
 	}
 
 	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_v2) {
-		AssertCanPublishCorrectNumberOfNotifications<TTraits>(2);
+		AssertCanPublishCorrectNumberOfNotifications<TTraits>(2, Service_Prepare_Drive_v1_Notification);
+	}
+
+	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_v3) {
+		AssertCanPublishCorrectNumberOfNotifications<TTraits>(3, Service_Prepare_Drive_v2_Notification);
 	}
 
 	// endregion
@@ -98,10 +106,10 @@ namespace catapult { namespace plugins {
 	// region publish - prepare drive notification
 
 	namespace {
-		template<typename TTraits>
+		template<typename TTraits, VersionType Version>
 		void AssertCanPublishPrepareDriveNotification(VersionType version) {
 			// Arrange:
-			mocks::MockTypedNotificationSubscriber<PrepareDriveNotification<1>> sub;
+			mocks::MockTypedNotificationSubscriber<PrepareDriveNotification<Version>> sub;
 			auto pPlugin = TTraits::CreatePlugin();
 
 			auto pTransaction = CreateTransaction<TTraits>(version);
@@ -129,11 +137,15 @@ namespace catapult { namespace plugins {
 	}
 
 	PLUGIN_TEST(CanPublishPrepareDriveNotification_v1) {
-		AssertCanPublishPrepareDriveNotification<TTraits>(1);
+		AssertCanPublishPrepareDriveNotification<TTraits, 1>(1);
 	}
 
 	PLUGIN_TEST(CanPublishPrepareDriveNotification_v2) {
-		AssertCanPublishPrepareDriveNotification<TTraits>(2);
+		AssertCanPublishPrepareDriveNotification<TTraits, 1>(2);
+	}
+
+	PLUGIN_TEST(CanPublishPrepareDriveNotification_v3) {
+		AssertCanPublishPrepareDriveNotification<TTraits, 2>(3);
 	}
 
 	// endregion

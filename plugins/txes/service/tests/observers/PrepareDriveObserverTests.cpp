@@ -12,7 +12,8 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS PrepareDriveObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(PrepareDrive, )
+	DEFINE_COMMON_OBSERVER_TESTS(PrepareDriveV1, )
+	DEFINE_COMMON_OBSERVER_TESTS(PrepareDriveV2, )
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::DriveCacheFactory>;
@@ -29,7 +30,28 @@ namespace catapult { namespace observers {
 		const uint16_t Min_Replicators = test::Random16();
 		const uint8_t Percent_Approvers = test::RandomByte();
 
-		std::unique_ptr<state::DriveEntry> CreateDriveEntry() {
+		template<VersionType Version>
+		std::unique_ptr<model::PrepareDriveNotification<Version>> CreateNotification() {
+			return std::make_unique<model::PrepareDriveNotification<Version>>(model::PrepareDriveNotification<Version>(
+				Drive_Key,
+				Owner,
+				Duration,
+				Billing_Period,
+				Billing_Price,
+				Size,
+				Replicas,
+				Min_Replicators,
+				Percent_Approvers));
+		}
+	}
+
+	struct PrepareObserverV1Traits {
+		static constexpr VersionType Version = 1;
+		static auto CreateObserver() {
+			return CreatePrepareDriveV1Observer();
+		}
+
+		static std::unique_ptr<state::DriveEntry> CreateDriveEntry() {
 			auto pEntry = std::make_unique<state::DriveEntry>(state::DriveEntry(Drive_Key));
 			pEntry->setState(state::DriveState::NotStarted);
 			pEntry->setOwner(Owner);
@@ -44,28 +66,45 @@ namespace catapult { namespace observers {
 
 			return pEntry;
 		}
+	};
 
-		std::unique_ptr<Notification> CreateNotification() {
-			return std::make_unique<Notification>(Notification(
-				Drive_Key,
-				Owner,
-				Duration,
-				Billing_Period,
-				Billing_Price,
-				Size,
-				Replicas,
-				Min_Replicators,
-				Percent_Approvers));
+	struct PrepareObserverV2Traits {
+		static constexpr VersionType Version = 2;
+		static auto CreateObserver() {
+			return CreatePrepareDriveV2Observer();
 		}
-	}
 
-	TEST(TEST_CLASS, PrepareDrive_Commit) {
+		static std::unique_ptr<state::DriveEntry> CreateDriveEntry() {
+			auto pEntry = std::make_unique<state::DriveEntry>(state::DriveEntry(Drive_Key));
+			pEntry->setState(state::DriveState::NotStarted);
+			pEntry->setOwner(Owner);
+			pEntry->setStart(Current_Height);
+			pEntry->setDuration(Duration);
+			pEntry->setBillingPeriod(Billing_Period);
+			pEntry->setBillingPrice(Billing_Price);
+			pEntry->setSize(Size);
+			pEntry->setReplicas(Replicas);
+			pEntry->setMinReplicators(Min_Replicators);
+			pEntry->setPercentApprovers(Percent_Approvers);
+			pEntry->setVersion(3);
+
+			return pEntry;
+		}
+	};
+
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PrepareObserverV1Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<PrepareObserverV2Traits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(PrepareDrive_Commit) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Commit, Current_Height);
-		auto pNotification = CreateNotification();
-		auto pObserver = CreatePrepareDriveObserver();
+		auto pNotification = CreateNotification<TTraits::Version>();
+		auto pObserver = TTraits::CreateObserver();
 		auto& driveCache = context.cache().sub<cache::DriveCache>();
-		auto pExpectedDriveEntry = CreateDriveEntry();
+		auto pExpectedDriveEntry = TTraits::CreateDriveEntry();
 
 		// Act:
 		test::ObserveNotification(*pObserver, *pNotification, context);
@@ -76,13 +115,13 @@ namespace catapult { namespace observers {
 		test::AssertEqualDriveData(*pExpectedDriveEntry, actualEntry);
 	}
 
-	TEST(TEST_CLASS, PrepareDrive_Rollback) {
+	TRAITS_BASED_TEST(PrepareDrive_Rollback) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Rollback, Current_Height);
-		auto pNotification = CreateNotification();
-		auto pObserver = CreatePrepareDriveObserver();
+		auto pNotification = CreateNotification<TTraits::Version>();
+		auto pObserver = TTraits::CreateObserver();
 		auto& driveCache = context.cache().sub<cache::DriveCache>();
-		auto pEntry = CreateDriveEntry();
+		auto pEntry = TTraits::CreateDriveEntry();
 
 		// Populate drive cache.
 		driveCache.insert(*pEntry);

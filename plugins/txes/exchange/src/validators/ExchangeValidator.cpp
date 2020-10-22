@@ -43,9 +43,7 @@ namespace catapult { namespace validators {
 		}
 	}
 
-	using Notification = model::ExchangeNotification<1>;
-
-	DEFINE_STATEFUL_VALIDATOR(Exchange, ([](const Notification& notification, const ValidatorContext& context) {
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ExchangeV1, model::ExchangeNotification<1>, ([](const model::ExchangeNotification<1>& notification, const ValidatorContext& context) {
 		if (notification.OfferCount == 0)
 			return Failure_Exchange_No_Offers;
 
@@ -81,4 +79,44 @@ namespace catapult { namespace validators {
 
 		return ValidationResult::Success;
 	}));
+
+	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(ExchangeV2, model::ExchangeNotification<2>, ([](const model::ExchangeNotification<2>& notification, const ValidatorContext& context) {
+	  if (notification.OfferCount == 0)
+		  return Failure_Exchange_No_Offers;
+
+	  const auto& cache = context.Cache.sub<cache::ExchangeCache>();
+
+	  std::set<std::pair<Key, MosaicId>> offers;
+	  const auto* pMatchedOffer = notification.OffersPtr;
+	  for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pMatchedOffer) {
+		  if (pMatchedOffer->Owner == notification.Signer)
+			  return Failure_Exchange_Buying_Own_Units_Is_Not_Allowed;
+
+		  if (!cache.contains(pMatchedOffer->Owner))
+			  return Failure_Exchange_Account_Doesnt_Have_Any_Offer;
+
+		  auto mosaicId = context.Resolvers.resolve(pMatchedOffer->Mosaic.MosaicId);
+		  std::pair<Key, MosaicId> pair(pMatchedOffer->Owner, mosaicId);
+		  if (offers.count(pair))
+			  return Failure_Exchange_Duplicated_Offer_In_Request;
+		  offers.insert(pair);
+
+		  auto iter = cache.find(pMatchedOffer->Owner);
+		  const auto& entry = iter.get();
+
+		  auto result = ValidationResult::Success;
+		  if (model::OfferType::Buy == pMatchedOffer->Type) {
+			  result = ValidateOffer(entry.buyOffers(), entry.expiredBuyOffers(), pMatchedOffer, mosaicId, context.Height);
+		  } else if (model::OfferType::Sell == pMatchedOffer->Type) {
+			  result = ValidateOffer(entry.sellOffers(), entry.expiredSellOffers(), pMatchedOffer, mosaicId, context.Height);
+		  } else {
+		  	return Failure_Exchange_Incorrect_Offer_Type;
+		  }
+
+		  if (ValidationResult::Success != result)
+			  return result;
+	  }
+
+	  return ValidationResult::Success;
+	}))
 }}

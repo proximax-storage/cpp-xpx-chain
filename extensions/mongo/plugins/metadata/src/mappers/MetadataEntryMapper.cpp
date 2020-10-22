@@ -56,8 +56,8 @@ namespace catapult { namespace mongo { namespace plugins {
 
 		auto dbFields = dbMetadataEntry["fields"].get_array().value;
 		for (const auto& dbField : dbFields) {
-			std::string key = dbField["key"].get_utf8().value.to_string();
-			std::string value = dbField["value"].get_utf8().value.to_string();
+			std::string key = std::string(dbField["key"].get_utf8().value);
+			std::string value = std::string(dbField["value"].get_utf8().value);
 
 			metadataEntry.fields().emplace_back(state::MetadataField{ key, value, Height(0) });
 		}

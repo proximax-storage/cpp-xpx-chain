@@ -23,6 +23,12 @@ namespace catapult { namespace plugins {
 					transaction.OfferCount,
 					transaction.OffersPtr()));
 				break;
+			case 2:
+				sub.notify(RemoveOfferNotification<2>(
+					transaction.Signer,
+					transaction.OfferCount,
+					transaction.OffersPtr()));
+				break;
 
 			default:
 				CATAPULT_LOG(debug) << "invalid version of RemoveOfferTransaction: " << transaction.EntityVersion();

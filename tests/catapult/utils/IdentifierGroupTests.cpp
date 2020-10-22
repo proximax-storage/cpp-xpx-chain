@@ -31,7 +31,7 @@ namespace catapult { namespace utils {
 		using TestKey = BaseValue<uint64_t, TestKey_tag>;
 
 		// Height grouped by TestKey
-		using TestIdentifierGroup = IdentifierGroup<Height, TestKey, BaseValueHasher<Height>>;
+		using TestIdentifierGroup = UnorderedIdentifierGroup<Height, TestKey, BaseValueHasher<Height>>;
 
 		void AssertIdentifiers(const TestIdentifierGroup::Identifiers& ids, const std::vector<Height::ValueType>& expectedIds) {
 			ASSERT_EQ(expectedIds.size(), ids.size());

@@ -70,9 +70,7 @@ namespace catapult { namespace plugins {
 		using MosaicResolver = Resolver<UnresolvedMosaicId, MosaicId>;
 		using AddressResolver = Resolver<UnresolvedAddress, Address>;
 		using AmountResolver = Resolver<catapult::UnresolvedAmount, Amount>;
-		using LevyMosaicResolver = Resolver<UnresolvedLevyMosaicId, MosaicId>;
-		using LevyAddressResolver = Resolver<UnresolvedLevyAddress, Address>;
-		
+
 		template<typename TUnresolved, typename TResolved>
 		using AggregateResolver = std::function<TResolved (const cache::ReadOnlyCatapultCache&, const TUnresolved&)>;
 		using AggregateMosaicResolver = AggregateResolver<UnresolvedMosaicId, MosaicId>;
@@ -225,13 +223,7 @@ namespace catapult { namespace plugins {
 
 		/// Adds an amount \a resolver.
 		void addAmountResolver(const AmountResolver& resolver);
-		
-		/// Adds a Levy mosaic \a resolver.
-		void addLevyMosaicResolver(const LevyMosaicResolver& resolver);
-		
-		/// Adds a Levy address \a resolver.
-		void addLevyAddressResolver(const LevyAddressResolver& resolver);
-		
+
 		/// Creates a resolver context given \a cache.
 		model::ResolverContext createResolverContext(const cache::ReadOnlyCatapultCache& cache) const;
 
@@ -286,9 +278,6 @@ namespace catapult { namespace plugins {
 		std::vector<MosaicResolver> m_mosaicResolvers;
 		std::vector<AddressResolver> m_addressResolvers;
 		std::vector<AmountResolver> m_amountResolvers;
-		std::vector<LevyMosaicResolver> m_levyMosaicResolvers;
-		std::vector<LevyAddressResolver> m_levyAddressResolvers;
-		
 		std::vector<AddressesExtractor> m_addressesExtractors;
 		std::vector<PublicKeysExtractor> m_publicKeysExtractors;
 

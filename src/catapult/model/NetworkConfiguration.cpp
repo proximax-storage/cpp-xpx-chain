@@ -75,6 +75,8 @@ namespace catapult { namespace model {
 
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableUnconfirmedTransactionMinFeeValidation);
+		config.EnableDeadlineValidation = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableDeadlineValidation);
 
 		config.CommitteeSize = 21;
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeSize);

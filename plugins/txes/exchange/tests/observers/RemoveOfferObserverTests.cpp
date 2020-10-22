@@ -14,11 +14,11 @@ namespace catapult { namespace observers {
 
 #define TEST_CLASS RemoveOfferObserverTests
 
-	DEFINE_COMMON_OBSERVER_TESTS(RemoveOffer, MosaicId())
+	DEFINE_COMMON_OBSERVER_TESTS(RemoveOfferV1, MosaicId())
+	DEFINE_COMMON_OBSERVER_TESTS(RemoveOfferV2, MosaicId())
 
 	namespace {
 		using ObserverTestContext = test::ObserverTestContextT<test::ExchangeCacheFactory>;
-		using Notification = model::RemoveOfferNotification<1>;
 
 		constexpr MosaicId Currency_Mosaic_Id(1234);
 
@@ -45,8 +45,9 @@ namespace catapult { namespace observers {
 			state::ExchangeEntry ExpectedEntry;
 		};
 
-		std::unique_ptr<Notification> CreateNotification(const RemoveOfferValues& values) {
-			return std::make_unique<Notification>(
+		template<VersionType Version>
+		std::unique_ptr<model::RemoveOfferNotification<Version>> CreateNotification(const RemoveOfferValues& values) {
+			return std::make_unique<model::RemoveOfferNotification<Version>>(
 				values.InitialEntry.owner(),
 				values.OffersToRemove.size(),
 				values.OffersToRemove.data());
@@ -74,12 +75,13 @@ namespace catapult { namespace observers {
 				std::move(expectedEntry));
 		}
 
+		template<typename TTraits>
 		void RunTest(NotifyMode mode, const RemoveOfferValues& values, std::initializer_list<Height> expiryHeights) {
 			// Arrange:
 			Height currentHeight(1);
 			ObserverTestContext context(mode, currentHeight);
-			auto pNotification = CreateNotification(values);
-			auto pObserver = CreateRemoveOfferObserver(Currency_Mosaic_Id);
+			auto pNotification = CreateNotification<TTraits::Version>(values);
+			auto pObserver = TTraits::CreateObserver();
 			auto& accountCache = context.cache().sub<cache::AccountStateCache>();
 			auto& exchangeCache = context.cache().sub<cache::ExchangeCache>();
 			auto owner = values.InitialEntry.owner();
@@ -117,7 +119,27 @@ namespace catapult { namespace observers {
 		}
 	}
 
-	TEST(TEST_CLASS, RemoveOffer_Commit) {
+	struct RemoveOfferObserverV1Traits {
+		static constexpr VersionType Version = 1;
+		static auto CreateObserver() {
+			return CreateRemoveOfferV1Observer(Currency_Mosaic_Id);
+		}
+	};
+
+	struct RemoveOfferObserverV2Traits {
+		static constexpr VersionType Version = 2;
+		static auto CreateObserver() {
+			return CreateRemoveOfferV2Observer(Currency_Mosaic_Id);
+		}
+	};
+
+#define TRAITS_BASED_TEST(TEST_NAME) \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)(); \
+	TEST(TEST_CLASS, TEST_NAME##_v1) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RemoveOfferObserverV1Traits>(); } \
+	TEST(TEST_CLASS, TEST_NAME##_v2) { TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)<RemoveOfferObserverV2Traits>(); } \
+	template<typename TTraits> void TRAITS_TEST_NAME(TEST_CLASS, TEST_NAME)()
+
+	TRAITS_BASED_TEST(RemoveOffer_Commit) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
 		state::ExchangeEntry initialEntry(offerOwner);
@@ -126,10 +148,10 @@ namespace catapult { namespace observers {
 		auto values = CreateRemoveOfferValues(std::move(initialEntry), std::move(expectedEntry));
 
 		// Assert:
-		RunTest(NotifyMode::Commit, values, {});
+		RunTest<TTraits>(NotifyMode::Commit, values, {});
 	}
 
-	TEST(TEST_CLASS, RemoveOffer_Rollback) {
+	TRAITS_BASED_TEST(RemoveOffer_Rollback) {
 		// Arrange:
 		auto offerOwner = test::GenerateRandomByteArray<Key>();
 		state::ExchangeEntry initialEntry(offerOwner);
@@ -138,6 +160,6 @@ namespace catapult { namespace observers {
 		auto values = CreateRemoveOfferValues(std::move(initialEntry), std::move(expectedEntry));
 
 		// Assert:
-		RunTest(NotifyMode::Rollback, values, { Height(5) });
+		RunTest<TTraits>(NotifyMode::Rollback, values, { Height(5) });
 	}
 }}

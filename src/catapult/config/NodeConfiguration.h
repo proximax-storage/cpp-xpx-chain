@@ -86,6 +86,9 @@ namespace catapult { namespace config {
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
 
+		/// \c true if reject empty blocks.
+		bool RejectEmptyBlocks;
+
 		/// Transaction selection strategy used for syncing and harvesting unconfirmed transactions.
 		model::TransactionSelectionStrategy TransactionSelectionStrategy{};
 

@@ -27,7 +27,11 @@ namespace catapult { namespace harvesting {
 			return;
 
 		auto pLastBlockElement = m_lastBlockElementSupplier();
-		auto pBlock = m_pHarvester->harvest(*pLastBlockElement, m_timeSupplier());
+		auto timestamp = m_timeSupplier();
+		if (timestamp <= pLastBlockElement->Block.Timestamp)
+			return;
+
+		auto pBlock = m_pHarvester->harvest(*pLastBlockElement, timestamp);
 		if (!pBlock)
 			return;
 

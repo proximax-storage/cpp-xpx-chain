@@ -81,7 +81,7 @@ namespace catapult { namespace cache {
 		struct HeightGroupingTypesDescriptor {
 		public:
 			using KeyType = Height;
-			using ValueType = utils::IdentifierGroup<MosaicId, Height, utils::BaseValueHasher<MosaicId>>;
+			using ValueType = utils::UnorderedIdentifierGroup<MosaicId, Height, utils::BaseValueHasher<MosaicId>>;
 			using Serializer = MosaicHeightGroupingSerializer;
 
 		public:
