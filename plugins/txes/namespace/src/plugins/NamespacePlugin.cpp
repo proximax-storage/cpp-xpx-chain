@@ -85,7 +85,7 @@ namespace catapult { namespace plugins {
 			aliasValue = aliasValueAccessor(alias);
 			return true;
 		}
-		
+
 		void RegisterNamespaceAliasResolvers(PluginManager& manager) {
 			manager.addMosaicResolver([](const auto&, const auto& unresolved, auto& resolved) {
 				constexpr uint64_t Namespace_Flag = 1ull << 63;

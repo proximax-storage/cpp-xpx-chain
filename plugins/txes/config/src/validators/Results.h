@@ -53,6 +53,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because ApplyHeightDelta is zero.
 	DEFINE_CATAPULT_CONFIG_RESULT(ApplyHeightDelta_Zero, 13);
 
+	/// Validation failed because block generation time is zero in public network.
+	DEFINE_CATAPULT_CONFIG_RESULT(Block_Generation_Time_Zero_Public, 14);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

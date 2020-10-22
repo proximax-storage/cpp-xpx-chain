@@ -51,16 +51,24 @@ namespace catapult { namespace plugins {
 			builder
 				.add(validators::CreateOfferV1Validator())
 				.add(validators::CreateOfferV2Validator())
-				.add(validators::CreateExchangeValidator())
-				.add(validators::CreateRemoveOfferValidator());
+				.add(validators::CreateOfferV3Validator())
+				.add(validators::CreateOfferV4Validator())
+				.add(validators::CreateExchangeV1Validator())
+				.add(validators::CreateExchangeV2Validator())
+				.add(validators::CreateRemoveOfferV1Validator())
+				.add(validators::CreateRemoveOfferV2Validator());
 		});
 
 		manager.addObserverHook([pConfigHolder](auto& builder) {
 			builder
 				.add(observers::CreateOfferV1Observer())
 				.add(observers::CreateOfferV2Observer())
-				.add(observers::CreateExchangeObserver())
-				.add(observers::CreateRemoveOfferObserver(pConfigHolder->Config().Immutable.CurrencyMosaicId))
+				.add(observers::CreateOfferV3Observer())
+				.add(observers::CreateOfferV4Observer())
+				.add(observers::CreateExchangeV1Observer())
+				.add(observers::CreateExchangeV2Observer())
+				.add(observers::CreateRemoveOfferV1Observer(pConfigHolder->Config().Immutable.CurrencyMosaicId))
+				.add(observers::CreateRemoveOfferV2Observer(pConfigHolder->Config().Immutable.CurrencyMosaicId))
 				.add(observers::CreateCleanupOffersObserver());
 		});
 	}

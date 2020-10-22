@@ -42,11 +42,7 @@ namespace catapult { namespace config {
 
 #undef LOAD_PROPERTY
 
-#define TRY_LOAD_CHAIN_PROPERTY(NAME) utils::TryLoadIniProperty(bag, "", #NAME, config.NAME)
-		config.LevyEnabled = false;
-		TRY_LOAD_CHAIN_PROPERTY(LevyEnabled);
-#undef TRY_LOAD_CHAIN_PROPERTY
-		
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 5);
 		return config;
 	}
 }}

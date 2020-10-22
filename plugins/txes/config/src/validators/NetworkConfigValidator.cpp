@@ -39,6 +39,10 @@ namespace catapult { namespace validators {
 				auto bag = utils::ConfigurationBag::FromStream(configStream);
 				networkConfig = model::NetworkConfiguration::LoadFromBag(bag);
 
+				if (context.Config.Immutable.NetworkIdentifier == model::NetworkIdentifier::Public &&
+					networkConfig.BlockGenerationTargetTime.millis() == 0)
+					return Failure_NetworkConfig_Block_Generation_Time_Zero_Public;
+
 				if (2 * networkConfig.ImportanceGrouping <= networkConfig.MaxRollbackBlocks)
 					return Failure_NetworkConfig_ImportanceGrouping_Less_Or_Equal_Half_MaxRollbackBlocks;
 

@@ -38,32 +38,32 @@ namespace catapult { namespace config {
 		template<typename T>
 		auto GetOptional(const pt::ptree& tree, const std::string& key) {
 			auto value = tree.get_optional<T>(key);
-			return value.is_initialized() ? value.get() : T();
+			return value.has_value() ? value.value() : T();
 		}
 
 		template<typename T>
 		auto Get(const pt::ptree& tree, const std::string& key) {
 			// use get_optional instead of get in order to allow better error messages to propagate out
 			auto value = tree.get_optional<T>(key);
-			if (!value.is_initialized()) {
+			if (!value.has_value()) {
 				std::ostringstream message;
 				message << "required property '" << key << "' was not found in json";
 				CATAPULT_THROW_RUNTIME_ERROR(message.str().c_str());
 			}
 
-			return value.get();
+			return value.value();
 		}
 
 		auto GetChild(const pt::ptree& tree, const std::string& key) {
 			// use get_child_optional instead of get_child in order to allow better error messages to propagate out
 			auto value = tree.get_child_optional(key);
-			if (!value.is_initialized()) {
+			if (!value.has_value()) {
 				std::ostringstream message;
 				message << "required child '" << key << "' was not found in json";
 				CATAPULT_THROW_RUNTIME_ERROR(message.str().c_str());
 			}
 
-			return value.get();
+			return value.value();
 		}
 
 		ionet::NodeRoles ParseRoles(const std::string& str) {

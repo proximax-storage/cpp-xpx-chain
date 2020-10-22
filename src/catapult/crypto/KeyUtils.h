@@ -21,6 +21,7 @@
 #pragma once
 #include "catapult/utils/HexFormatter.h"
 #include "catapult/types.h"
+#include <sstream>
 
 namespace catapult { namespace crypto { class PrivateKey; } }
 

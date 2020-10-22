@@ -10,25 +10,15 @@
 namespace catapult { namespace observers {
 
 	OfferExpiryUpdater::~OfferExpiryUpdater() {
-		auto owner = m_entry.owner();
-		std::set<Height> initialValues{m_initialExpiryHeight, m_initialPruneHeight};
+		const auto& owner = m_entry.owner();
 		auto minExpiryHeight = m_entry.minExpiryHeight();
 		auto minPruneHeight = m_entry.minPruneHeight();
-		std::set<Height> newValues{minExpiryHeight, minPruneHeight};
 
-		if (!newValues.count(m_initialPruneHeight))
-			m_cache.removeExpiryHeight(owner, m_initialPruneHeight);
+		m_cache.addExpiryHeight(owner, minPruneHeight);
+		m_cache.addExpiryHeight(owner, minExpiryHeight);
 
-		if (!newValues.count(m_initialExpiryHeight))
-			m_cache.removeExpiryHeight(owner, m_initialExpiryHeight);
-
-		if (!initialValues.count(minPruneHeight))
-			m_cache.addExpiryHeight(owner, minPruneHeight);
-
-		if (!initialValues.count(minExpiryHeight))
-			m_cache.addExpiryHeight(owner, minExpiryHeight);
-
-		if (m_entry.empty())
+		// We don't need touch cache. It is old code, so we support removing for old versions of transaction.
+		if (m_entry.version() < 3 && m_entry.empty())
 			m_cache.remove(owner);
 	}
 

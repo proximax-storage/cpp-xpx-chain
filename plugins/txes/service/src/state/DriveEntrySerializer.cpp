@@ -148,10 +148,10 @@ namespace catapult { namespace state {
 	}
 
 	void DriveEntrySerializer::Save(const DriveEntry& driveEntry, io::OutputStream& output) {
-		uint32_t version = 1;
+		auto version = driveEntry.version();
 
 		if (driveEntry.coowners().size() > 0) {
-			version = 2;
+			version = std::max(VersionType(2), version);
 		}
 
 		io::Write32(output, version);
@@ -190,12 +190,13 @@ namespace catapult { namespace state {
 	DriveEntry DriveEntrySerializer::Load(io::InputStream& input) {
 		// read version
 		VersionType version = io::Read32(input);
-		if (version > 2)
+		if (version > 3)
 			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of DriveEntry", version);
 
 		Key key;
 		input.read(key);
 		state::DriveEntry entry(key);
+		entry.setVersion(version);
 
 		entry.setState(static_cast<DriveState>(io::Read8(input)));
 

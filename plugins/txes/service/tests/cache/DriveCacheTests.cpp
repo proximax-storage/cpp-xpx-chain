@@ -110,5 +110,38 @@ namespace catapult { namespace cache {
 		EXPECT_EQ(Expected_Start_Height, entry.start());
 	}
 
+	TEST(TEST_CLASS, ProcessBillingDrivesOrdered) {
+		// Arrange:
+		DriveCacheMixinTraits::CacheType cache;
+		const auto Drive_Count = 10u;
+
+		// - insert many drives with end at Height 2 in order 10 9 8 7 ...
+		{
+			auto delta = cache.createDelta(Height(1));
+
+			for (uint8_t i = Drive_Count; i > 0; --i) {
+				auto key = Key{ { i } };
+				auto entry = test::CreateDriveEntry(key);
+				entry.setStart(Initial_Start_Height);
+				delta->insert(entry);
+				delta->addBillingDrive(entry.key(), Height(2));
+			}
+			cache.commit();
+		}
+
+		// Sanity:
+		EXPECT_EQ(10, cache.createView(Height(1))->size());
+
+		{
+			// Assert:
+			auto delta = cache.createDelta(Height(2));
+			uint8_t counter = 1;
+			// - drive must be process in order 1 2 3 4 ...
+			delta->processBillingDrives(Height(2), [&counter](state::DriveEntry& driveEntry) {
+				EXPECT_EQ(Key{ { counter++ } }, driveEntry.key());
+			});
+		}
+	}
+
 	// endregion
 }}

@@ -72,7 +72,8 @@ namespace catapult { namespace plugins {
 				return {
 					"ServicePluginConfigValidator",
 					"FailedBlockHashesValidator",
-					"PrepareDriveArgumentsValidator",
+					"PrepareDriveArgumentsV1Validator",
+					"PrepareDriveArgumentsV2Validator",
 				};
 			}
 
@@ -82,7 +83,7 @@ namespace catapult { namespace plugins {
 					"StartDriveVerificationValidator",
 					"EndDriveVerificationValidator",
 					"DriveValidator",
-					"PrepareDrivePermissionValidator",
+					"PrepareDrivePermissionV1Validator",
 					"DriveFileSystemValidator",
 					"MaxFilesOnDriveValidator",
 					"JoinToDriveValidator",
@@ -91,7 +92,9 @@ namespace catapult { namespace plugins {
 					"DriveFilesRewardValidator",
 					"StartFileDownloadValidator",
 					"EndFileDownloadValidator",
-					"ExchangeValidator",
+					"PrepareDrivePermissionV2Validator",
+					"ExchangeV1Validator",
+					"ExchangeV2Validator",
 				};
 			}
 
@@ -103,7 +106,7 @@ namespace catapult { namespace plugins {
 					"DownloadCacheTouchObserver",
 					"DownloadCachePruningObserver",
 					"StartBillingObserver",
-					"PrepareDriveObserver",
+					"PrepareDriveV1Observer",
 					"DriveFileSystemObserver",
 					"JoinToDriveObserver",
 					"FilesDepositObserver",
@@ -111,6 +114,7 @@ namespace catapult { namespace plugins {
 					"DriveFilesRewardObserver",
 					"StartFileDownloadObserver",
 					"EndFileDownloadObserver",
+					"PrepareDriveV2Observer",
 				};
 			}
 

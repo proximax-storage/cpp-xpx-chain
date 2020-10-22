@@ -19,12 +19,15 @@
 **/
 
 #pragma once
+
+#include "tests/test/cache/CacheTestUtils.h"
 #include "addressextraction/src/AddressExtractor.h"
 #include "catapult/model/Elements.h"
 #include "tests/test/core/TransactionInfoTestUtils.h"
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/TestHarness.h"
+#include "tests/test/core/ResolverTestUtils.h"
 
 namespace catapult { namespace test {
 
@@ -40,8 +43,17 @@ namespace catapult { namespace test {
 				: m_subscriberFactory(subscriberFactory)
 				, m_pNotificationPublisher(std::make_unique<mocks::MockNotificationPublisher>())
 				, m_notificationPublisher(*m_pNotificationPublisher)
-				, m_extractor(std::move(m_pNotificationPublisher), [](){ return model::ExtractorContext(); })
-		{}
+				, m_extractor(std::move(m_pNotificationPublisher), [](){ return model::ExtractorContext(); }
+				, []() {
+					return util::ResolverContextHandle(
+		              [](){
+			              return test::CoreSystemCacheFactory::Create().createView().toReadOnly();
+		              },
+		              [](auto&){
+			              return test::CreateResolverContextXor();
+		              });
+	              }) {
+		}
 
 	public:
 		/// Asserts that \a action results in no extracted addresses.

@@ -157,7 +157,8 @@ namespace catapult { namespace plugins {
 
 		manager.addStatelessValidatorHook([](auto& builder) {
 			builder
-					.add(validators::CreatePrepareDriveArgumentsValidator())
+					.add(validators::CreatePrepareDriveArgumentsV1Validator())
+					.add(validators::CreatePrepareDriveArgumentsV2Validator())
 					.add(validators::CreateServicePluginConfigValidator())
 					.add(validators::CreateFailedBlockHashesValidator());
 		});
@@ -165,12 +166,14 @@ namespace catapult { namespace plugins {
 		manager.addStatefulValidatorHook([pConfigHolder, &immutableConfig](auto& builder) {
 			builder
 					.add(validators::CreateDriveValidator())
-					.add(validators::CreateExchangeValidator())
+					.add(validators::CreateExchangeV1Validator())
+					.add(validators::CreateExchangeV2Validator())
 					.add(validators::CreateDrivePermittedOperationValidator())
                     .add(validators::CreateDriveFilesRewardValidator(immutableConfig.StreamingMosaicId))
 					.add(validators::CreateFilesDepositValidator())
 					.add(validators::CreateJoinToDriveValidator())
-					.add(validators::CreatePrepareDrivePermissionValidator())
+					.add(validators::CreatePrepareDrivePermissionV1Validator())
+					.add(validators::CreatePrepareDrivePermissionV2Validator())
 					.add(validators::CreateDriveFileSystemValidator())
 					.add(validators::CreateEndDriveValidator())
 					.add(validators::CreateMaxFilesOnDriveValidator())
@@ -182,7 +185,8 @@ namespace catapult { namespace plugins {
 
 		manager.addObserverHook([pConfigHolder, &immutableConfig](auto& builder) {
 			builder
-					.add(observers::CreatePrepareDriveObserver())
+					.add(observers::CreatePrepareDriveV1Observer())
+					.add(observers::CreatePrepareDriveV2Observer())
 					.add(observers::CreateDriveFileSystemObserver(immutableConfig.StreamingMosaicId))
 					.add(observers::CreateFilesDepositObserver())
 					.add(observers::CreateJoinToDriveObserver())

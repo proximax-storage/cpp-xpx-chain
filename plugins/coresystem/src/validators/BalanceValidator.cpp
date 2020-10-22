@@ -27,8 +27,7 @@ namespace catapult { namespace validators {
 
 	using BalanceTransferNotification = model::BalanceTransferNotification<1>;
 	using BalanceDebitNotification = model::BalanceDebitNotification<1>;
-	using LevyTransferNotification = model::LevyTransferNotification<1>;
-	
+
 	namespace {
 		bool FindAccountBalance(const cache::ReadOnlyAccountStateCache& cache, const Key& publicKey, MosaicId mosaicId, Amount& amount) {
 			auto accountStateKeyIter = cache.find(publicKey);
@@ -62,5 +61,4 @@ namespace catapult { namespace validators {
 
 	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(BalanceTransfer, BalanceTransferNotification, CheckBalance<BalanceTransferNotification>)
 	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(BalanceDebit, BalanceDebitNotification, CheckBalance<BalanceDebitNotification>)
-	DEFINE_STATEFUL_VALIDATOR_WITH_TYPE(LevyBalance, LevyTransferNotification, CheckBalance<LevyTransferNotification>)
 }}

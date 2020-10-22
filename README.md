@@ -7,7 +7,7 @@ Official ProximaX Sirius-Chain Server Code.
 The ProximaX Sirius-Chain Server code is the server code implementation of ProximaX blockchain layer.
 
 ## Building
-Detailed building instructions are [here](BUILDING.md).
+Detailed building instructions are [here](docs/README.md).
 
 ## Contributing
 Before contributing please [read this](CONTRIBUTING.md).

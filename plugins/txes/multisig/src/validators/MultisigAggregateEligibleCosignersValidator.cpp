@@ -18,6 +18,7 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
+#include "plugins/txes/aggregate/src/config/AggregateConfiguration.h"
 #include "Validators.h"
 #include "src/cache/MultisigCache.h"
 #include "catapult/model/TransactionPlugin.h"
@@ -39,7 +40,12 @@ namespace catapult { namespace validators {
 					, m_transactionRegistry(transactionRegistry)
 					, m_multisigCache(multisigCache)
 					, m_config(config) {
-				m_cosigners.emplace(&m_notification.Signer, false);
+				
+				const auto& pluginConfig = config.Network.template GetPluginConfiguration<config::AggregateConfiguration>();
+				
+				if(pluginConfig.StrictSigner)
+					m_cosigners.emplace(&m_notification.Signer, false);
+				
 				for (auto i = 0u; i < m_notification.CosignaturesCount; ++i)
 					m_cosigners.emplace(&m_notification.CosignaturesPtr[i].Signer, false);
 			}

@@ -27,6 +27,8 @@
 namespace catapult { namespace chain {
 
 	namespace {
+		constexpr uint64_t MILLISECONDS_PER_SECOND{1000};
+
 		constexpr utils::TimeSpan TimeBetweenBlocks(const model::Block& parent, const model::Block& block) {
 			return utils::TimeSpan::FromDifference(block.Timestamp, parent.Timestamp);
 		}
@@ -57,7 +59,8 @@ namespace catapult { namespace chain {
 			uint32_t feeInterest,
 			uint32_t feeInterestDenominator) {
 		double target(difficulty.unwrap());
-		target *= timeSpan.seconds();
+		target *= timeSpan.millis();
+		target /= MILLISECONDS_PER_SECOND;
 		target *= signerImportance.unwrap();
 		double greed = feeInterest;
 		greed /= feeInterestDenominator;

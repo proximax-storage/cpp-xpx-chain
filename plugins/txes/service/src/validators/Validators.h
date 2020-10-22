@@ -25,11 +25,13 @@ namespace catapult { namespace validators {
 	/// - duration % billingPeriod == 0
 	/// - Percent approvers in range 0-100
 	/// - Min replicators <= replicas
-	DECLARE_STATELESS_VALIDATOR(PrepareDriveArguments, model::PrepareDriveNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(PrepareDriveArgumentsV1, model::PrepareDriveNotification<1>)();
+	DECLARE_STATELESS_VALIDATOR(PrepareDriveArgumentsV2, model::PrepareDriveNotification<2>)();
 
 	/// A validator implementation that applies to drive prepare drive notifications and validates that:
 	/// - the drive is not exist
-	DECLARE_STATEFUL_VALIDATOR(PrepareDrivePermission, model::PrepareDriveNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(PrepareDrivePermissionV1, model::PrepareDriveNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(PrepareDrivePermissionV2, model::PrepareDriveNotification<2>)();
 
 	/// A validator check that operation is permitted by drive multisig.
 	DECLARE_STATEFUL_VALIDATOR(DrivePermittedOperation, model::AggregateEmbeddedTransactionNotification<1>)();
@@ -53,7 +55,8 @@ namespace catapult { namespace validators {
 	DECLARE_STATEFUL_VALIDATOR(MaxFilesOnDrive, model::DriveFileSystemNotification<1>)();
 
 	/// A validator check that exchange from replicators are valid
-	DECLARE_STATEFUL_VALIDATOR(Exchange, model::ExchangeNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ExchangeV1, model::ExchangeNotification<1>)();
+	DECLARE_STATEFUL_VALIDATOR(ExchangeV2, model::ExchangeNotification<2>)();
 
 	/// A validator check that end drive transaction is permitted
 	DECLARE_STATEFUL_VALIDATOR(EndDrive, model::EndDriveNotification<1>)();

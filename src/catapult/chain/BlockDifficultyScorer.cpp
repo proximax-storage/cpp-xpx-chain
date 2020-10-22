@@ -38,6 +38,13 @@ namespace catapult { namespace chain {
 			const cache::DifficultyInfoRange& difficultyInfos,
 			const state::BlockDifficultyInfo& nextBlockInfo,
 			const model::NetworkConfiguration& config) {
+
+		if (config.BlockGenerationTargetTime.millis() == 0) {
+			// if Block GenerationTarget Time is zero, it means, that we want generate blocks as fast as it is possible,
+			// so difficulty of each block must be the highest
+			return Difficulty(std::numeric_limits<uint64_t>::max());
+		}
+
 		// note that difficultyInfos is sorted by both heights and timestamps, so the first info has the smallest
 		// height and earliest timestamp and the last info has the largest height and latest timestamp
 		size_t historySize = std::distance(difficultyInfos.begin(), difficultyInfos.end());

@@ -117,9 +117,13 @@ namespace catapult { namespace harvesting {
 		if (!pHarvesterKeyPair)
 			return nullptr;
 
-		utils::StackLogger stackLogger("generating candidate block", utils::LogLevel::Debug);
+		utils::SlowOperationLogger stackLogger("generating candidate block", utils::LogLevel::Debug, utils::TimeSpan::FromMilliseconds(100));
 		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.Immutable.NetworkIdentifier, pHarvesterKeyPair->publicKey(), m_beneficiary);
 		auto pBlock = m_blockGenerator(*pBlockHeader, config.Network.MaxTransactionsPerBlock);
+
+		if (config.Node.RejectEmptyBlocks && !pBlock->TransactionsPtr())
+			return nullptr;
+
 		if (pBlock)
 			SignBlockHeader(*pHarvesterKeyPair, *pBlock);
 
