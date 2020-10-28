@@ -24,6 +24,8 @@
 #include "tests/test/core/TransactionTestUtils.h"
 #include "tests/test/core/mocks/MockNotificationPublisher.h"
 #include "tests/TestHarness.h"
+#include "tests/test/core/ResolverTestUtils.h"
+#include "tests/test/cache/CacheTestUtils.h"
 
 namespace catapult { namespace addressextraction {
 
@@ -31,13 +33,22 @@ namespace catapult { namespace addressextraction {
 
 	namespace {
 		// region TestContext
-
+		
 		class TestContext {
 		public:
 			TestContext()
 					: m_pNotificationPublisher(std::make_unique<mocks::MockNotificationPublisher>())
 					, m_notificationPublisher(*m_pNotificationPublisher)
-					, m_extractor(std::move(m_pNotificationPublisher), [](){ return model::ExtractorContext(); })
+					, m_extractor(std::move(m_pNotificationPublisher), [](){ return model::ExtractorContext(); }
+					,  []() {
+						return util::ResolverContextHandle(
+							[](){
+								return test::CoreSystemCacheFactory::Create().createView().toReadOnly();
+							},
+							[](auto&){
+								return test::CreateResolverContextXor();
+							});
+					})
 			{}
 
 		public:

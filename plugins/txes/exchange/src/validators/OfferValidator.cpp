@@ -4,6 +4,7 @@
 *** license that can be found in the LICENSE file.
 **/
 
+#include "plugins/txes/mosaic/src/cache/MosaicCache.h"
 #include "Validators.h"
 #include "src/cache/ExchangeCache.h"
 
@@ -16,7 +17,8 @@ namespace catapult { namespace validators {
 				return Failure_Exchange_No_Offers;
 
 			const auto& pluginConfig = context.Config.Network.template GetPluginConfiguration<config::ExchangeConfiguration>();
-
+			const auto& mosaicCache = context.Cache.sub<cache::MosaicCache>();
+			
 			std::set<MosaicId> offeredMosaicIds;
 			auto* pOffer = notification.OffersPtr;
 			for (uint8_t i = 0; i < notification.OfferCount; ++i, ++pOffer) {
@@ -31,7 +33,16 @@ namespace catapult { namespace validators {
 
 				if (pOffer->Duration > pluginConfig.MaxOfferDuration && notification.Owner != pluginConfig.LongOfferKey)
 					return Failure_Exchange_Offer_Duration_Too_Large;
-
+				
+				auto mosaicEntry = mosaicCache.find(mosaicId).get();
+				auto mosaicBlockDuration = mosaicEntry.definition().properties().duration();
+				
+				Height maxMosaicHeight = Height(context.Height.unwrap() + mosaicBlockDuration.unwrap());
+				Height maxOfferHeight = Height(context.Height.unwrap() + pOffer->Duration.unwrap());
+				
+				if (!mosaicEntry.definition().isEternal() && maxOfferHeight > maxMosaicHeight)
+					return Failure_Exchange_Offer_Duration_Exceeds_Mosaic_Duration;
+				
 				if (pOffer->Mosaic.Amount == Amount(0))
 					return Failure_Exchange_Zero_Amount;
 
