@@ -1,5 +1,5 @@
 /**
-*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Copyright 2020 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -14,7 +14,7 @@ namespace catapult { namespace state {
 	namespace {
 		void WriteLevyData(io::OutputStream &output, const state::LevyEntryData &levy) {
 			
-			io::Write16(output, utils::to_underlying_type(levy.Type));
+			io::Write8(output, utils::to_underlying_type(levy.Type));
 			output.write(levy.Recipient);
 			io::Write(output, levy.MosaicId);
 			io::Write(output, levy.Fee);
@@ -22,7 +22,7 @@ namespace catapult { namespace state {
 		
 		LevyEntryData ReadLevyData(io::InputStream &input) {
 			Address recipient;
-			model::LevyType type = (model::LevyType)io::Read16(input);
+			model::LevyType type = (model::LevyType)io::Read8(input);
 			input.read(recipient);
 			MosaicId mosaicId = io::Read<MosaicId>(input);
 			Amount fee = io::Read<Amount>(input);

@@ -12,7 +12,7 @@ namespace catapult { namespace model {
 	constexpr uint64_t MosaicLevyFeeDecimalPlace = 100'000;
 	
 	/// Available mosaic levy rule ids.
-	enum class LevyType : uint16_t {
+	enum class LevyType : uint8_t {
 		/// Default there is no levy
 		None = 0x0,
 

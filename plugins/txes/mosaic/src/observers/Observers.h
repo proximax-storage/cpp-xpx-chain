@@ -42,6 +42,6 @@ namespace catapult { namespace observers {
 	/// Observes changes triggered by block notifications
 	DECLARE_OBSERVER(PruneLevyHistory, model::BlockNotification<1>)();
 	
-	/// Observes changes triggered by block notifications
+	/// Observes balance changes triggered by balance transfer notifications.
 	DECLARE_OBSERVER(LevyBalanceTransfer, model::BalanceTransferNotification<1>)();
 }}

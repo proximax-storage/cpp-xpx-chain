@@ -1,5 +1,5 @@
 /**
-*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Copyright 2020 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -35,10 +35,7 @@ namespace catapult {
 			validators::ActiveMosaicView::FindIterator activeMosaicIter;
 			validators::ActiveMosaicView activeMosaicView(context.Cache);
 			auto result = activeMosaicView.tryGet(id, context.Height, activeMosaicIter);
-			if (!IsValidationResultSuccess(result))
-				return false;
-			
-			return true;
+			return IsValidationResultSuccess(result);
 		}
 		
 		bool IsAddressValid(catapult::UnresolvedAddress address, const validators::ValidatorContext& context)
@@ -46,10 +43,7 @@ namespace catapult {
 			auto& cache = context.Cache.sub<cache::AccountStateCache>();
 			auto resolvedAddress = context.Resolvers.resolve(address);
 			auto  accountStateKeyIter = cache.find(resolvedAddress);
-			if( !accountStateKeyIter.tryGet() )
-				return false;
-			
-			return true;
+			return accountStateKeyIter.tryGet();
 		}
 		
 		validators::ValidationResult CheckLevyOperationAllowed(const Key& signer, MosaicId id,

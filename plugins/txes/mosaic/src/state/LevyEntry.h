@@ -1,5 +1,5 @@
 /**
-*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Copyright 2020 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -50,7 +50,7 @@ namespace catapult { namespace state {
 	public:
 		LevyEntry(const MosaicId& mosaicId, const LevyEntryData& levy)
 			: m_mosaicId(mosaicId)
-			, m_pLevy(new LevyEntryData(levy)) {
+			, m_pLevy(std::make_shared<LevyEntryData>(levy)){
 		}
 		
 		LevyEntry(const MosaicId& mosaicId, std::shared_ptr<LevyEntryData> pLevy)

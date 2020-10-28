@@ -1,5 +1,5 @@
 /**
-*** Copyright 2019 ProximaX Limited. All rights reserved.
+*** Copyright 2020 ProximaX Limited. All rights reserved.
 *** Use of this source code is governed by the Apache 2.0
 *** license that can be found in the LICENSE file.
 **/
@@ -13,7 +13,7 @@ namespace catapult { namespace cache {
 	/// Cache composed of catapult upgrade information.
 	using BasicLevyCache = BasicCache<LevyCacheDescriptor, LevyCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
 		
-	/// Synchronized cache composed of catapult upgrade information.
+	/// Synchronized cache composed of levy information.
 	class LevyCache : public SynchronizedCache<BasicLevyCache> {
 	public:
 		DEFINE_CACHE_CONSTANTS(MosaicLevy)
