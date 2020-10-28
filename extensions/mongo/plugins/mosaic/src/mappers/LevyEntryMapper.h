@@ -4,7 +4,7 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 			
-	/// Maps a mosaic \a entry to the corresponding db model value.
+	/// Maps a levy \a entry to the corresponding db model value.
 	bsoncxx::document::value ToDbModel(state::LevyEntry entry);
 			
 	/// Maps a database \a document to the corresponding model value.

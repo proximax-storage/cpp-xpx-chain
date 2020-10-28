@@ -12,7 +12,7 @@ namespace catapult { namespace model {
 
 #pragma pack(push, 1)
 	
-		/// Binary layout for a mosaic modify levy transaction body.
+		/// Binary layout for a  modify levy transaction body.
 		template<typename THeader>
 		struct MosaicModifyLevyTransactionBody : public THeader {
 		private:
@@ -30,7 +30,7 @@ namespace catapult { namespace model {
 			model::MosaicLevyRaw Levy;
 
 		public:
-			/// Calculates the real size of mosaic definition \a transaction.
+			/// Calculates the real size of modify levy \a transaction.
 			static constexpr uint64_t CalculateRealSize(const TransactionType&) noexcept {
 				return sizeof(TransactionType);
 			}

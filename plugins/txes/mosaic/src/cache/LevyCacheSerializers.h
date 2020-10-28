@@ -11,14 +11,13 @@
 
 namespace catapult { namespace cache {
 		
-	/// Primary serializer for catapult upgrade cache.
+	/// Primary serializer for levy cache.
 	struct LevyEntryPrimarySerializer : public CacheSerializerAdapter<state::LevyEntrySerializer, LevyCacheDescriptor>
 	{};
 		
-	/// Primary serializer for levy cache for patricia tree hashes.
-	/// \note This serializer excludes expired offers.
+	/// Serializer for levy cache without historical information
 	struct LevyEntryPatriciaTreeSerializer : public CacheSerializerAdapter<state::LevyEntryNonHistoricalSerializer, LevyCacheDescriptor> {};
 	
-	/// Serializer for metadata cache height grouped elements.
+	/// Serializer for levy cache height grouped elements.
 	struct LevyHeightGroupingSerializer : public IdentifierGroupSerializer<LevyCacheTypes::HeightGroupingTypesDescriptor> {};
 }}

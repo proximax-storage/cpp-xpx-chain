@@ -9,7 +9,7 @@
 
 namespace catapult { namespace state {
 		
-	/// Policy for saving and loading catapult upgrade entry data.
+	/// Policy for saving and loading levy entry data.
 	struct LevyEntrySerializer {
 		/// Saves \a entry to \a output.
 		static void Save(const LevyEntry& entry, io::OutputStream& output);

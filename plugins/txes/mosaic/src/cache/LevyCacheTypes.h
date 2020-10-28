@@ -31,7 +31,7 @@ namespace catapult {
 
 namespace catapult { namespace cache {
 		
-	/// Describes a catapult upgrade cache.
+	/// Describes a levy cache.
 	struct LevyCacheDescriptor {
 	public:
 		static constexpr auto Name = "LevyCache";

@@ -3,7 +3,7 @@
 
 namespace catapult { namespace mongo { namespace plugins {
 			
-	/// Creates a mongo mosaic definition transaction plugin.
+	/// Creates a mongo remove levy definition transaction plugin.
 	PLUGIN_API
 		std::unique_ptr<MongoTransactionPlugin> CreateMosaicRemoveLevyTransactionMongoPlugin();
 }}}

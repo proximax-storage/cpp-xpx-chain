@@ -10,7 +10,7 @@
 
 namespace catapult { namespace cache {
 		
-		/// Policy for saving and loading catapult upgrade cache data.
+		/// Policy for saving and loading levy cache data.
 		struct LevyCacheStorage
 			: public CacheStorageForBasicInsertRemoveCache<LevyCacheDescriptor>
 				, public state::LevyEntrySerializer {

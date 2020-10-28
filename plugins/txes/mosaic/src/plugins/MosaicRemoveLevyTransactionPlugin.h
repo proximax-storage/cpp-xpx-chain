@@ -10,8 +10,8 @@
 namespace catapult { namespace model { class TransactionPlugin; } }
 
 namespace catapult { namespace plugins {
-		
-	/// Creates a mosaic supply change transaction plugin.
+	
+	/// Creates a remove levy transaction plugin.
 	PLUGIN_API
 	std::unique_ptr<model::TransactionPlugin> CreateMosaicRemoveLevyTransactionPlugin();
 }}

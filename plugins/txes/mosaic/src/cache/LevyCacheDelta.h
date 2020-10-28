@@ -15,14 +15,14 @@
 
 namespace catapult { namespace cache {
 		
-		/// Mixins used by the catapult upgrade cache delta.
+		/// Mixins used by the levy cache delta.
 		struct LevyCacheDeltaMixins : public PatriciaTreeCacheMixins<LevyCacheTypes::PrimaryTypes::BaseSetDeltaType, LevyCacheDescriptor> {
 			using Pruning = HeightBasedPruningMixin<
 				LevyCacheTypes::PrimaryTypes::BaseSetDeltaType,
 				LevyCacheTypes::HeightGroupingTypes::BaseSetDeltaType>;
 		};
 		
-		/// Basic delta on top of the catapult upgrade cache.
+		/// Basic delta on top of levy cache.
 		class BasicLevyCacheDelta
 			: public utils::MoveOnly
 				, public LevyCacheDeltaMixins::Size
@@ -77,7 +77,7 @@ namespace catapult { namespace cache {
 			LevyCacheTypes::HeightGroupingTypes::BaseSetDeltaPointerType m_pHistoryAtHeight;
 		};
 		
-		/// Delta on top of the catapult upgrade cache.
+		/// Delta on top of the levy cache.
 		class LevyCacheDelta : public ReadOnlyViewSupplier<BasicLevyCacheDelta> {
 		public:
 			/// Creates a delta around \a LevySets.

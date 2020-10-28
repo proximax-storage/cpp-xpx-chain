@@ -12,10 +12,10 @@
 
 namespace catapult { namespace cache {
 		
-	/// Mixins used by the catapult upgrade cache view.
+	/// Mixins used by the levy cache view.
 	using LevyCacheViewMixins = PatriciaTreeCacheMixins<LevyCacheTypes::PrimaryTypes::BaseSetType, LevyCacheDescriptor>;
 		
-	/// Basic view on top of the catapult upgrade cache.
+	/// Basic view on top of the levy cache.
 	class BasicLevyCacheView
 		: public utils::MoveOnly
 			, public LevyCacheViewMixins::Size
@@ -40,7 +40,7 @@ namespace catapult { namespace cache {
 		{}
 	};
 		
-	/// View on top of the catapult upgrade cache.
+	/// View on top of the levy cache.
 	class LevyCacheView : public ReadOnlyViewSupplier<BasicLevyCacheView> {
 	public:
 		/// Creates a view around \a LevySets.

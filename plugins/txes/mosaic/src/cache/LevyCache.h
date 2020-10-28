@@ -10,7 +10,7 @@
 
 namespace catapult { namespace cache {
 		
-	/// Cache composed of catapult upgrade information.
+	/// Cache composed of levy information.
 	using BasicLevyCache = BasicCache<LevyCacheDescriptor, LevyCacheTypes::BaseSets, std::shared_ptr<config::BlockchainConfigurationHolder>>;
 		
 	/// Synchronized cache composed of levy information.

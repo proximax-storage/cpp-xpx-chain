@@ -11,7 +11,7 @@
 
 namespace catapult { namespace state {
 		
-	// Catapult upgrade entry.
+	// Catapult levy entry.
 	struct LevyEntryData {
 		/// Levy type
 		model::LevyType Type;
