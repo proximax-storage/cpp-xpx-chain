@@ -99,11 +99,12 @@ namespace catapult { namespace plugins {
 		test::PublishTransaction(*pPlugin, *pTransaction, sub);
 
 		// Assert:
-		ASSERT_EQ(4, sub.numNotifications());
+		ASSERT_EQ(5, sub.numNotifications());
 		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
-		EXPECT_EQ(Service_Start_Drive_Verification_v1_Notification, sub.notificationTypes()[1]);
-		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[2]);
-		EXPECT_EQ(LockSecret_Secret_v1_Notification, sub.notificationTypes()[3]);
+		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
+		EXPECT_EQ(Service_Start_Drive_Verification_v1_Notification, sub.notificationTypes()[2]);
+		EXPECT_EQ(Core_Balance_Debit_v1_Notification, sub.notificationTypes()[3]);
+		EXPECT_EQ(LockSecret_Secret_v1_Notification, sub.notificationTypes()[4]);
 	}
 
 	// endregion
