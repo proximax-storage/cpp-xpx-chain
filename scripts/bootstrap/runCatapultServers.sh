@@ -1,5 +1,5 @@
-PATH_TO_CATAPULT_SERVER="/home/green/482.solutions.proximax/proximax-catapult-server"
-PATH_TO_BOOTSTRAP="/home/green/482.solutions.proximax/proximax-catapult-server/scripts/bootstrap"
+PATH_TO_CATAPULT_SERVER="/Users/green/Proximax/cpp-xpx-chain"
+PATH_TO_BOOTSTRAP=$PATH_TO_CATAPULT_SERVER/scripts/bootstrap
 
 
 WORK_DIR=$PATH_TO_CATAPULT_SERVER/cmake-build-debug
@@ -17,7 +17,7 @@ mkdir -p $WORK_DIR/addresses
 if [ ! -f $formatted_address_path ] ;
 then
     bash -c "$WORK_DIR/bin/catapult.tools.address --generate=$num_addresses -n mijin-test > $raw_addresses_path"
-    ash -c "$PATH_TO_BOOTSTRAP/ruby/bin/store-addresses-if-needed.rb $WORK_DIR/addresses/raw-addresses.txt $WORK_DIR/addresses/addresses.yaml"
+    bash -c "$PATH_TO_BOOTSTRAP/ruby/bin/store-addresses-if-needed.rb $WORK_DIR/addresses/raw-addresses.txt $WORK_DIR/addresses/addresses.yaml"
 fi
 
 mkdir -p $WORK_DIR/config-build
@@ -33,8 +33,17 @@ generate_nem()
       exit 1
     fi
 
-    sed -i "/dataDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+    if [[ "$OSTYPE" == "darwin"* ]]; then
+          # Mac OSX
+          sed -i '' "/dataDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+          sed -i '' "/pluginsDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+    else
+          # Unknown.
+          sed -i "/dataDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+          sed -i "/pluginsDirectory/d" $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+    fi
     echo "dataDirectory = $WORK_DIR/data/$1/data" >> $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
+    echo "pluginsDirectory = $WORK_DIR/bin" >> $WORK_DIR/config-build/$1/userconfig/resources/config-user.properties
 
     if [ ! -d $WORK_DIR/data/$1/data/00000 ]; then
 
@@ -55,7 +64,7 @@ generate_nem()
       echo "no need to run nemgen"
     fi
 
-#    $WORK_DIR/bin/sirius.bc $WORK_DIR/config-build/$1/userconfig & > /dev/null 2>&1 &
+    $WORK_DIR/bin/sirius.bc $WORK_DIR/config-build/$1/userconfig & > /dev/null 2>&1 &
     echo "You can find logs in '$WORK_DIR/data/$1/'"
 }
 

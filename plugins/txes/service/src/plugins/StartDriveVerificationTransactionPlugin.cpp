@@ -26,6 +26,7 @@ namespace catapult { namespace plugins {
 				switch (transaction.EntityVersion()) {
 					case 1: {
 						sub.notify(DriveNotification<1>(transaction.DriveKey, transaction.Type));
+						sub.notify(AccountPublicKeyNotification<1>(transaction.DriveKey));
 						sub.notify(StartDriveVerificationNotification<1>(
 							transaction.DriveKey,
 							transaction.Signer

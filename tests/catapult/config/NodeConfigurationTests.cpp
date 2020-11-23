@@ -54,6 +54,7 @@ namespace catapult { namespace config {
 							{ "minFeeMultiplier", "864" },
 							{ "feeInterest", "1" },
 							{ "feeInterestDenominator", "1" },
+							{ "rejectEmptyBlocks", "true" },
 							{ "transactionSelectionStrategy", "maximize-fee" },
 							{ "unconfirmedTransactionsCacheMaxResponseSize", "234KB" },
 							{ "unconfirmedTransactionsCacheMaxSize", "98'763" },
@@ -146,6 +147,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(BlockFeeMultiplier(0), config.MinFeeMultiplier);
 				EXPECT_EQ(0u, config.FeeInterest);
 				EXPECT_EQ(0u, config.FeeInterestDenominator);
+				EXPECT_FALSE(config.RejectEmptyBlocks);
 				EXPECT_EQ(model::TransactionSelectionStrategy::Oldest, config.TransactionSelectionStrategy);
 				EXPECT_EQ(utils::FileSize::FromMegabytes(0), config.UnconfirmedTransactionsCacheMaxResponseSize);
 				EXPECT_EQ(0u, config.UnconfirmedTransactionsCacheMaxSize);
@@ -211,6 +213,7 @@ namespace catapult { namespace config {
 				EXPECT_EQ(BlockFeeMultiplier(864), config.MinFeeMultiplier);
 				EXPECT_EQ(1, config.FeeInterest);
 				EXPECT_EQ(1, config.FeeInterestDenominator);
+				EXPECT_TRUE(config.RejectEmptyBlocks);
 				EXPECT_EQ(model::TransactionSelectionStrategy::Maximize_Fee, config.TransactionSelectionStrategy);
 				EXPECT_EQ(utils::FileSize::FromKilobytes(234), config.UnconfirmedTransactionsCacheMaxResponseSize);
 				EXPECT_EQ(98'763u, config.UnconfirmedTransactionsCacheMaxSize);
