@@ -31,6 +31,7 @@
 #include "tests/test/core/BlockStorageTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/core/TransactionStatusTestUtils.h"
 #include "tests/test/local/LocalNodeTestState.h"
@@ -246,12 +247,14 @@ namespace catapult { namespace local {
 //						pConfigHolder,
 //						resourcesDirectory(),
 //						extensions::ProcessDisposition::Recovery,
-//						"RecoveryOrchestratorTests");
+//						"RecoveryOrchestratorTests",
+//						std::make_shared<mocks::MockLicenseManager>());
 				auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
 						config::CreateMockConfigurationHolder(config),
 						resourcesDirectory(),
 						extensions::ProcessDisposition::Recovery,
-						"RecoveryOrchestratorTests");
+						"RecoveryOrchestratorTests",
+						std::make_shared<mocks::MockLicenseManager>());
 				pBootstrapper->loadExtensions();
 
 				if (m_enableBlockChangeSubscriber)

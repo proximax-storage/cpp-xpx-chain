@@ -44,6 +44,12 @@ if(CATAPULT_DOCKER_TESTS)
 	add_definitions(-DCATAPULT_DOCKER_TESTS)
 endif()
 
+### licensing settings
+if(LICENSE_PUBLIC_KEY)
+	message(STATUS "LICENSE_PUBLIC_KEY: ${LICENSE_PUBLIC_KEY}")
+	add_definitions(-DLICENSE_PUBLIC_KEY="${LICENSE_PUBLIC_KEY}")
+endif()
+
 ### set compiler settings
 if(MSVC)
 	set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /W4 /WX /EHsc")

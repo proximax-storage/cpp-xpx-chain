@@ -76,7 +76,11 @@ namespace catapult { namespace harvesting {
 			});
 		}
 
-		thread::Task CreateHarvestingTask(extensions::ServiceState& state, UnlockedAccounts& unlockedAccounts, const Key& beneficiary) {
+		thread::Task CreateHarvestingTask(
+				extensions::ServiceState& state,
+				UnlockedAccounts& unlockedAccounts,
+				const Key& beneficiary,
+				const std::shared_ptr<licensing::LicenseManager>& pLicenseManager) {
 			const auto& cache = state.cache();
 			const auto& pConfigHolder = state.pluginManager().configHolder();
 			const auto& utCache = state.utCache();
@@ -87,7 +91,7 @@ namespace catapult { namespace harvesting {
 			auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, utCache);
 			auto pHarvesterTask = std::make_shared<ScheduledHarvesterTask>(
 					CreateHarvesterTaskOptions(state),
-					std::make_unique<Harvester>(cache, pConfigHolder, beneficiary, unlockedAccounts, blockGenerator));
+					std::make_unique<Harvester>(cache, pConfigHolder, beneficiary, unlockedAccounts, blockGenerator, pLicenseManager));
 
 			return thread::CreateNamedTask("harvesting task", [&cache, &unlockedAccounts, pHarvesterTask, pConfigHolder]() {
 				// prune accounts that are not eligible to harvest the next block
@@ -101,7 +105,11 @@ namespace catapult { namespace harvesting {
 
 		class HarvestingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
-			explicit HarvestingServiceRegistrar(const HarvestingConfiguration& config) : m_config(config)
+			explicit HarvestingServiceRegistrar(
+				const HarvestingConfiguration& config,
+				const std::shared_ptr<licensing::LicenseManager>& pLicenseManager)
+					: m_config(config)
+					, m_pLicenseManager(pLicenseManager)
 			{}
 
 			extensions::ServiceRegistrarInfo info() const override {
@@ -121,15 +129,18 @@ namespace catapult { namespace harvesting {
 
 				// add tasks
 				auto beneficiary = crypto::ParseKey(m_config.Beneficiary);
-				state.tasks().push_back(CreateHarvestingTask(state, *pUnlockedAccounts, beneficiary));
+				state.tasks().push_back(CreateHarvestingTask(state, *pUnlockedAccounts, beneficiary, m_pLicenseManager));
 			}
 
 		private:
 			HarvestingConfiguration m_config;
+			std::shared_ptr<licensing::LicenseManager> m_pLicenseManager;
 		};
 	}
 
-	DECLARE_SERVICE_REGISTRAR(Harvesting)(const HarvestingConfiguration& config) {
-		return std::make_unique<HarvestingServiceRegistrar>(config);
+	DECLARE_SERVICE_REGISTRAR(Harvesting)(
+			const HarvestingConfiguration& config,
+			const std::shared_ptr<licensing::LicenseManager>& pLicenseManager) {
+		return std::make_unique<HarvestingServiceRegistrar>(config, pLicenseManager);
 	}
 }}

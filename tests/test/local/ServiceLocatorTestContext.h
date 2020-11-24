@@ -32,6 +32,7 @@
 #include "tests/test/core/AddressTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
 #include "tests/test/core/SchedulerTestUtils.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/core/mocks/MockMemoryBlockStorage.h"
 #include "tests/test/other/mocks/MockNodeSubscriber.h"
 #include "tests/test/other/mocks/MockStateChangeSubscriber.h"
@@ -76,7 +77,7 @@ namespace catapult { namespace test {
 				, m_catapultCache(std::move(cache))
 				, m_storage(std::make_unique<mocks::MockMemoryBlockStorage>(), std::make_unique<mocks::MockMemoryBlockStorage>())
 				, m_pUtCache(CreateUtCacheProxy())
-				, m_pluginManager(pConfigHolder, plugins::StorageConfiguration())
+				, m_pluginManager(pConfigHolder, plugins::StorageConfiguration(), std::make_shared<mocks::MockLicenseManager>())
 				, m_pool("service locator test context", 2)
 				, m_state(
 						m_nodes,

@@ -25,10 +25,12 @@ namespace catapult { namespace plugins {
 
 	PluginManager::PluginManager(
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-			const StorageConfiguration& storageConfig)
-			: m_pConfigHolder(pConfigHolder)
-			, m_storageConfig(storageConfig)
-			, m_shouldEnableVerifiableState(immutableConfig().ShouldEnableVerifiableState)
+			const StorageConfiguration& storageConfig,
+			const std::shared_ptr<licensing::LicenseManager>& pLicenseManager)
+		: m_pConfigHolder(pConfigHolder)
+		, m_storageConfig(storageConfig)
+		, m_shouldEnableVerifiableState(immutableConfig().ShouldEnableVerifiableState)
+		, m_pLicenseManager(pLicenseManager)
 	{}
 
 	// region config
@@ -65,6 +67,10 @@ namespace catapult { namespace plugins {
 				(boost::filesystem::path(m_storageConfig.CacheDatabaseDirectory) / name).generic_string(),
 				m_storageConfig.MaxCacheDatabaseWriteBatchSize,
 				m_shouldEnableVerifiableState ? cache::PatriciaTreeStorageMode::Enabled : cache::PatriciaTreeStorageMode::Disabled);
+	}
+
+	const std::shared_ptr<licensing::LicenseManager>& PluginManager::licenseManager() const {
+		return m_pLicenseManager;
 	}
 
 	void PluginManager::setShouldEnableVerifiableState(bool shouldEnableVerifiableState) {

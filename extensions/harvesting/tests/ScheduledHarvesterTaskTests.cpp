@@ -25,6 +25,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
@@ -144,11 +145,18 @@ namespace catapult { namespace harvesting {
 		};
 
 		auto CreateHarvester(HarvesterContext& context) {
-			return std::make_unique<Harvester>(context.Cache, context.pConfigHolder, Key(), context.Accounts, [](const auto& blockHeader, auto) {
-				auto pBlock = utils::MakeUniqueWithSize<model::Block>(sizeof(model::Block));
-				std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
-				return pBlock;
-			});
+			return std::make_unique<Harvester>(
+				context.Cache,
+				context.pConfigHolder,
+				Key(),
+				context.Accounts,
+				[](const auto& blockHeader, auto) {
+					auto pBlock = utils::MakeUniqueWithSize<model::Block>(sizeof(model::Block));
+					std::memcpy(static_cast<void*>(pBlock.get()), &blockHeader, sizeof(model::BlockHeader));
+					return pBlock;
+				},
+				std::make_shared<mocks::MockLicenseManager>()
+			);
 		}
 	}
 

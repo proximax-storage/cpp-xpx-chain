@@ -91,8 +91,10 @@ namespace catapult { namespace plugins {
 				.add(validators::CreateTransactionFeeValidator());
 		});
 
-		manager.addStatefulValidatorHook([networkIdentifier](auto& builder) {
+		const auto& pLicenseManager = manager.licenseManager();
+		manager.addStatefulValidatorHook([networkIdentifier, pLicenseManager](auto& builder) {
 			builder
+				.add(validators::CreateLicenseValidator(pLicenseManager))
 				.add(validators::CreateEntityVersionValidator())
 				.add(validators::CreateMaxTransactionsValidator())
 				.add(validators::CreateAddressValidator(networkIdentifier))

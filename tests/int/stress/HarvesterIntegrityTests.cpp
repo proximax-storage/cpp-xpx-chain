@@ -30,6 +30,7 @@
 #include "catapult/observers/NotificationObserverAdapter.h"
 #include "tests/test/cache/CacheTestUtils.h"
 #include "tests/test/core/BlockTestUtils.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/RealTransactionFactory.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -91,7 +92,13 @@ namespace catapult { namespace harvesting {
 
 				auto strategy = model::TransactionSelectionStrategy::Oldest;
 				auto blockGenerator = CreateHarvesterBlockGenerator(strategy, utFacadeFactory, m_transactionsCache);
-				m_pHarvester = std::make_unique<Harvester>(m_cache, m_pPluginManager->configHolder(), Key(), m_unlockedAccounts, blockGenerator);
+				m_pHarvester = std::make_unique<Harvester>(
+					m_cache,
+					m_pPluginManager->configHolder(),
+					Key(),
+					m_unlockedAccounts,
+					blockGenerator,
+					std::make_shared<mocks::MockLicenseManager>());
 			}
 
 		public:

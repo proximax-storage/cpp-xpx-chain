@@ -22,6 +22,7 @@
 #include "CacheHolder.h"
 #include "ExtensionManager.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
+#include "catapult/licensing/LicenseManager.h"
 #include "catapult/plugins/PluginManager.h"
 #include "catapult/plugins/PluginModule.h"
 #include "catapult/subscribers/SubscriptionManager.h"
@@ -42,12 +43,14 @@ namespace catapult { namespace extensions {
 	/// Process bootstrapper.
 	class ProcessBootstrapper {
 	public:
-		/// Creates a process bootstrapper around \a pConfigHolder, \a resourcesPath, \a disposition and \a servicePoolName.
+		/// Creates a process bootstrapper around \a pConfigHolder, \a resourcesPath, \a disposition,
+		/// \a servicePoolName and \a pLicenseManager.
 		ProcessBootstrapper(
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const std::string& resourcesPath,
 				ProcessDisposition disposition,
-				const std::string& servicePoolName);
+				const std::string& servicePoolName,
+				std::shared_ptr<licensing::LicenseManager> pLicenseManager);
 
 	public:
 		/// Gets the configuration.
@@ -87,6 +90,9 @@ namespace catapult { namespace extensions {
 		/// Gets the const cache holder.
 		const CacheHolder& cacheHolder() const;
 
+		/// Gets the license manager.
+		const std::shared_ptr<licensing::LicenseManager>& licenseManager() const;
+
 	public:
 		/// Loads all configured extensions.
 		void loadExtensions();
@@ -103,6 +109,7 @@ namespace catapult { namespace extensions {
 
 		ExtensionManager m_extensionManager;
 		subscribers::SubscriptionManager m_subscriptionManager;
+		std::shared_ptr<licensing::LicenseManager> m_pLicenseManager;
 		plugins::PluginManager m_pluginManager;
 		std::vector<ionet::Node> m_nodes;
 		CacheHolder m_cacheHolder;

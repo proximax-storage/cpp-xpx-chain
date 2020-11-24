@@ -23,6 +23,7 @@
 #include "harvesting/src/UnlockedAccounts.h"
 #include "catapult/cache_core/BlockDifficultyCache.h"
 #include "tests/test/cache/CacheTestUtils.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/local/ServiceLocatorTestContext.h"
 #include "tests/test/local/ServiceTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -49,7 +50,7 @@ namespace catapult { namespace harvesting {
 
 		struct HarvestingServiceTraits {
 			static auto CreateRegistrar(const HarvestingConfiguration& config) {
-				return CreateHarvestingServiceRegistrar(config);
+				return CreateHarvestingServiceRegistrar(config, std::make_shared<mocks::MockLicenseManager>());
 			}
 
 			static auto CreateRegistrar() {

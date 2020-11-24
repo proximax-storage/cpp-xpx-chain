@@ -31,6 +31,7 @@
 #include "tests/test/core/BlockTestUtils.h"
 #include "tests/test/core/KeyPairTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/nodeps/TestConstants.h"
 #include "tests/test/nodeps/Waits.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
@@ -148,7 +149,13 @@ namespace catapult { namespace harvesting {
 					const config::BlockchainConfiguration& config,
 					const BlockGenerator& blockGenerator) {
 				auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-				return std::make_unique<Harvester>(Cache, pConfigHolder, Beneficiary, *pUnlockedAccounts, blockGenerator);
+				return std::make_unique<Harvester>(
+					Cache,
+					pConfigHolder,
+					Beneficiary,
+					*pUnlockedAccounts,
+					blockGenerator,
+					std::make_shared<mocks::MockLicenseManager>());
 			}
 
 		private:

@@ -26,7 +26,10 @@
 #include "catapult/model/Elements.h"
 #include "catapult/model/EntityInfo.h"
 
-namespace catapult { namespace harvesting { struct BlockExecutionHashes; } }
+namespace catapult {
+	namespace harvesting { struct BlockExecutionHashes; }
+	namespace licensing { struct LicenseManager; }
+}
 
 namespace catapult { namespace harvesting {
 
@@ -34,13 +37,15 @@ namespace catapult { namespace harvesting {
 	class Harvester {
 	public:
 		/// Creates a harvester around a catapult \a cache, \a pConfigHolder, a \a beneficiary,
-		/// an unlocked accounts set (\a unlockedAccounts) and \a blockGenerator used to customize block generation.
+		/// an unlocked accounts set (\a unlockedAccounts), \a blockGenerator used to customize block generation,
+		/// and \a pLicenseManager.
 		explicit Harvester(
 				const cache::CatapultCache& cache,
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 				const Key& beneficiary,
 				const UnlockedAccounts& unlockedAccounts,
-				const BlockGenerator& blockGenerator);
+				const BlockGenerator& blockGenerator,
+				const std::shared_ptr<licensing::LicenseManager>& pLicenseManager);
 
 	public:
 		/// Creates the best block (if any) harvested by any unlocked account.
@@ -53,5 +58,6 @@ namespace catapult { namespace harvesting {
 		const Key m_beneficiary;
 		const UnlockedAccounts& m_unlockedAccounts;
 		BlockGenerator m_blockGenerator;
+		std::shared_ptr<licensing::LicenseManager> m_pLicenseManager;
 	};
 }}

@@ -23,6 +23,7 @@
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/BlockScorer.h"
 #include "catapult/crypto/KeyPair.h"
+#include "catapult/licensing/LicenseManager.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/utils/StackLogger.h"
 
@@ -71,12 +72,14 @@ namespace catapult { namespace harvesting {
 			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const Key& beneficiary,
 			const UnlockedAccounts& unlockedAccounts,
-			const BlockGenerator& blockGenerator)
-			: m_cache(cache)
-			, m_pConfigHolder(pConfigHolder)
-			, m_beneficiary(beneficiary)
-			, m_unlockedAccounts(unlockedAccounts)
-			, m_blockGenerator(blockGenerator)
+			const BlockGenerator& blockGenerator,
+			const std::shared_ptr<licensing::LicenseManager>& pLicenseManager)
+		: m_cache(cache)
+		, m_pConfigHolder(pConfigHolder)
+		, m_beneficiary(beneficiary)
+		, m_unlockedAccounts(unlockedAccounts)
+		, m_blockGenerator(blockGenerator)
+		, m_pLicenseManager(pLicenseManager)
 	{}
 
 	model::UniqueEntityPtr<model::Block> Harvester::harvest(const model::BlockElement& lastBlockElement, Timestamp timestamp) {
@@ -116,6 +119,11 @@ namespace catapult { namespace harvesting {
 
 		if (!pHarvesterKeyPair)
 			return nullptr;
+
+		if (!m_pLicenseManager->blockGeneratingAllowedAt(context.Height)) {
+			CATAPULT_LOG(warning) << "harvest block at " << context.Height << " is not allowed due to license invalid or expired";
+			return nullptr;
+		}
 
 		utils::SlowOperationLogger stackLogger("generating candidate block", utils::LogLevel::Debug, utils::TimeSpan::FromMilliseconds(100));
 		auto pBlockHeader = CreateUnsignedBlockHeader(context, config.Immutable.NetworkIdentifier, pHarvesterKeyPair->publicKey(), m_beneficiary);

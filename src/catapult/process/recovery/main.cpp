@@ -35,7 +35,11 @@ int main(int argc, const char** argv) {
 		// create bootstrapper
 		auto resourcesPath = config::BlockchainConfigurationHolder::GetResourcesPath(argc, argv).generic_string();
 		auto disposition = extensions::ProcessDisposition::Recovery;
-		auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(pConfigHolder, resourcesPath, disposition, Process_Name);
+		auto pLicenseManager = licensing::CreateDefaultLicenseManager(
+			LICENSE_PUBLIC_KEY,
+			licensing::LicensingConfiguration::LoadFromPath(resourcesPath),
+			pConfigHolder);
+		auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(pConfigHolder, resourcesPath, disposition, Process_Name, pLicenseManager);
 
 		// register extension(s)
 		pBootstrapper->loadExtensions();

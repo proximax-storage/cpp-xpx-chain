@@ -30,7 +30,7 @@ namespace catapult { namespace harvesting {
 			auto config = HarvestingConfiguration::LoadFromPath(bootstrapper.resourcesPath());
 			ValidateHarvestingConfiguration(config);
 
-			bootstrapper.extensionManager().addServiceRegistrar(CreateHarvestingServiceRegistrar(config));
+			bootstrapper.extensionManager().addServiceRegistrar(CreateHarvestingServiceRegistrar(config, bootstrapper.licenseManager()));
 		}
 	}
 }}

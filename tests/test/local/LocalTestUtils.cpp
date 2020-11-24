@@ -25,6 +25,7 @@
 #include "catapult/plugins/PluginLoader.h"
 #include "plugins/txes/transfer/src/model/TransferTransaction.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
 #include "tests/test/nodeps/Nemesis.h"
@@ -319,7 +320,7 @@ namespace catapult { namespace test {
 			std::vector<plugins::PluginModule> modules;
 
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig);
+			auto pPluginManager = std::make_shared<plugins::PluginManager>(pConfigHolder, storageConfig, std::make_shared<mocks::MockLicenseManager>());
 
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.coresystem");
 			LoadPluginByName(*pPluginManager, modules, "", "catapult.plugins.hashcache");

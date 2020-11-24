@@ -23,6 +23,7 @@
 #include "catapult/subscribers/SubscriberOperationTypes.h"
 #include "tests/catapult/local/broker/test/BrokerTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/local/MessageIngestionTestContext.h"
 #include "tests/TestHarness.h"
@@ -47,7 +48,8 @@ namespace catapult { namespace local {
 					pConfigHolder,
 					resourcesDirectory(),
 					extensions::ProcessDisposition::Production,
-					"BrokerTests");
+					"BrokerTests",
+					std::make_shared<mocks::MockLicenseManager>());
 
 			m_pBroker = CreateBroker(std::move(pBootstrapper));
 		}
