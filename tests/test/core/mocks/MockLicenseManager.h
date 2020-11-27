@@ -17,11 +17,11 @@ namespace catapult { namespace mocks {
 		{}
 
 	public:
-		bool blockGeneratingAllowedAt(const Height&) const override {
+		bool blockGeneratingAllowedAt(const Height&) override {
 			return m_blockGeneratingAllowed;
 		}
 
-		bool blockConsumingAllowedAt(const Height&) const override {
+		bool blockConsumingAllowedAt(const Height&) override {
 			return m_blockConsumingAllowed;
 		}
 

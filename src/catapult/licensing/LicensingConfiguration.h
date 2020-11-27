@@ -5,6 +5,7 @@
 **/
 
 #pragma once
+#include "catapult/utils/TimeSpan.h"
 #include <boost/filesystem/path.hpp>
 #include <string>
 
@@ -20,6 +21,9 @@ namespace catapult { namespace licensing {
 
 		/// License server port.
 		uint16_t LicenseServerPort;
+
+		/// License request timeout.
+		utils::TimeSpan LicenseRequestTimeout;
 
 	private:
 		LicensingConfiguration() = default;

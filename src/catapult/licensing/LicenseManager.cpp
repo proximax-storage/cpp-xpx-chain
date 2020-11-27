@@ -80,19 +80,21 @@ namespace catapult { namespace licensing {
 		struct DefaultLicenseManager : public LicenseManager {
 		public:
 			explicit DefaultLicenseManager(
-				const std::string& licenseKey,
+					const std::string& licenseKey,
 					const LicensingConfiguration& licensingConfig,
 					const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder)
 				: m_pConfigHolder(pConfigHolder)
-				, m_node(crypto::FormatKeyAsString(crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey).publicKey()))
 				, m_licenseKey(crypto::ParseKey(licenseKey))
+				, m_node(crypto::FormatKeyAsString(crypto::KeyPair::FromString(pConfigHolder->Config().User.BootKey).publicKey()))
 				, m_licenseFile(boost::filesystem::path(pConfigHolder->Config().User.DataDirectory) / License_File)
 				, m_pLicense(ReadLicense(m_licenseFile, crypto::FormatKeyAsString(pConfigHolder->Config().Network.Info.PublicKey), m_node, m_licenseKey))
-				, m_licensingConfig(licensingConfig)
+				, m_serverHost(licensingConfig.LicenseServerHost)
+				, m_serverPort(std::to_string(licensingConfig.LicenseServerPort))
+				, m_licenseRequestTimeout(std::chrono::milliseconds(licensingConfig.LicenseRequestTimeout.millis()))
 			{}
 
 		public:
-			bool blockGeneratingAllowedAt(const Height& height) const override {
+			bool blockGeneratingAllowedAt(const Height& height) override {
 				std::lock_guard<std::mutex> lock(m_mutex);
 
 				if (m_pLicense && (m_pLicense->MinHeight <= height && height <= m_pLicense->MaxHeight))
@@ -103,7 +105,7 @@ namespace catapult { namespace licensing {
 				return m_pLicense && (m_pLicense->MinHeight <= height && height <= m_pLicense->MaxHeight);
 			}
 
-			bool blockConsumingAllowedAt(const Height& height) const override {
+			bool blockConsumingAllowedAt(const Height& height) override {
 				std::lock_guard<std::mutex> lock(m_mutex);
 
 				if (m_pLicense && (height <= m_pLicense->MaxHeight))
@@ -115,48 +117,82 @@ namespace catapult { namespace licensing {
 			}
 
 		private:
-			void requestLicense() const {
+			void requestLicense() {
+				boost::asio::io_context io_context;
+				boost::asio::ip::tcp::resolver resolver(io_context);
+				m_pSocket = std::make_unique<boost::asio::ip::tcp::socket>(io_context);
+				m_pBuffer = std::make_unique<boost::asio::streambuf>();
+
+				resolver.async_resolve(m_serverHost, m_serverPort,
+					boost::bind(
+						&DefaultLicenseManager::handleResolve,
+						this,
+						boost::asio::placeholders::error,
+						boost::asio::placeholders::iterator));
+
+				io_context.run_for(m_licenseRequestTimeout);
+
+				m_pSocket.reset(nullptr);
+				m_pBuffer.reset(nullptr);
+			}
+
+			void handleResolve(const boost::system::error_code& err, boost::asio::ip::tcp::resolver::results_type iter) {
+				if (err) {
+					CATAPULT_LOG(warning) << "couldn't resolve address " << m_serverHost << ": " << err;
+					return;
+				}
+
+				m_pSocket->async_connect(iter->endpoint(),
+					boost::bind(
+						&DefaultLicenseManager::handleConnect,
+						this,
+						boost::asio::placeholders::error));
+			}
+
+			void handleConnect(const boost::system::error_code& err) {
+				if (err) {
+					CATAPULT_LOG(warning) << "couldn't connect to the license server: " << err;
+					return;
+				}
+
+				boost::property_tree::ptree requestJson;
+				m_network = crypto::FormatKeyAsString(m_pConfigHolder->Config().Network.Info.PublicKey);
+				requestJson.add("network", m_network);
+				requestJson.add("node", m_node);
+				std::ostringstream out;
+				boost::property_tree::write_json(out, requestJson);
+				auto request = out.str();
+
+				boost::asio::async_write(*m_pSocket, boost::asio::buffer(request),
+					boost::bind(
+						&DefaultLicenseManager::handleWrite,
+						this,
+						boost::asio::placeholders::error,
+						boost::asio::placeholders::bytes_transferred));
+			}
+
+			void handleWrite(const boost::system::error_code& err, size_t) {
+				if (err) {
+					CATAPULT_LOG(warning) << "couldn't send request to the license server: " << err;
+					return;
+				}
+
+				boost::asio::async_read(*m_pSocket, *m_pBuffer, boost::asio::transfer_all(),
+					boost::bind(
+						&DefaultLicenseManager::handleRead,
+						this,
+						boost::asio::placeholders::error,
+						boost::asio::placeholders::bytes_transferred));
+			}
+
+			void handleRead(const boost::system::error_code& err, size_t) {
+				if (err && err != boost::asio::error::eof) {
+					CATAPULT_LOG(warning) << "couldn't receive response from the license server: " << err;
+					return;
+				}
+
 				try {
-					boost::asio::io_context io_context;
-					boost::system::error_code err;
-
-					boost::asio::ip::tcp::resolver resolver(io_context);
-					auto iter = resolver.resolve(
-						m_licensingConfig.LicenseServerHost, std::to_string(m_licensingConfig.LicenseServerPort), err);
-					if (err) {
-						CATAPULT_LOG(warning) << "couldn't resolve address " << m_licensingConfig.LicenseServerHost << ": " << err;
-						return;
-					}
-
-					boost::asio::ip::tcp::socket socket(io_context);
-					socket.connect(iter->endpoint(), err);
-					if (err) {
-						CATAPULT_LOG(warning) << "couldn't connect to the license server: " << err;
-						return;
-					}
-
-					boost::property_tree::ptree requestJson;
-					auto network = crypto::FormatKeyAsString(m_pConfigHolder->Config().Network.Info.PublicKey);
-					requestJson.add("network", network);
-					requestJson.add("node", m_node);
-					std::ostringstream out;
-					boost::property_tree::write_json(out, requestJson);
-					auto request = out.str();
-
-					boost::asio::write(socket, boost::asio::buffer(request), err);
-					if (err) {
-						CATAPULT_LOG(warning) << "couldn't send request to the license server: " << err;
-						return;
-					}
-
-					boost::asio::streambuf buffer;
-					boost::asio::read(socket, buffer, boost::asio::transfer_all(), err);
-					if (err && err != boost::asio::error::eof) {
-						CATAPULT_LOG(warning) << "couldn't receive response from the license server: " << err;
-						return;
-					}
-
-					const char* response = boost::asio::buffer_cast<const char*>(buffer.data());
+					auto response = std::string(boost::asio::buffer_cast<const char*>(m_pBuffer->data()));
 					boost::property_tree::ptree responseJson;
 					std::istringstream in(response);
 					boost::property_tree::read_json(in, responseJson);
@@ -164,30 +200,40 @@ namespace catapult { namespace licensing {
 					auto failure = responseJson.get_child_optional("failure");
 					if (failure.has_value()) {
 						auto description = failure->get<std::string>("description");
-						CATAPULT_LOG(warning) << "failed to get license: " << description;
+						CATAPULT_LOG(warning) << "license server responded with error: " << description;
 						return;
 					}
 
 					auto licenseJson = responseJson.get_child("license");
 
-					m_pLicense = ReadLicense(licenseJson, network, m_node, m_licenseKey);
+					m_pLicense = ReadLicense(licenseJson, m_network, m_node, m_licenseKey);
 
 					boost::property_tree::write_json(m_licenseFile.generic_string(), responseJson);
 
 				} catch (const std::exception& err) {
-					CATAPULT_LOG(warning) << err.what();
-					return;
+					CATAPULT_LOG(warning) << "failed to parse license server response: " << err.what();
 				}
 			}
 
 		private:
 			std::shared_ptr<config::BlockchainConfigurationHolder> m_pConfigHolder;
-			std::string m_node;
-			Key m_licenseKey;
+
 			boost::filesystem::path m_licenseFile;
-			mutable std::unique_ptr<License> m_pLicense;
-			LicensingConfiguration m_licensingConfig;
-			mutable std::mutex m_mutex;
+			Key m_licenseKey;
+
+			std::string m_network;
+			std::string m_node;
+
+			std::unique_ptr<License> m_pLicense;
+
+			std::string m_serverHost;
+			std::string m_serverPort;
+			std::chrono::milliseconds m_licenseRequestTimeout;
+
+			std::unique_ptr<boost::asio::ip::tcp::socket> m_pSocket;
+			std::unique_ptr<boost::asio::streambuf> m_pBuffer;
+
+			std::mutex m_mutex;
 		};
 	}
 

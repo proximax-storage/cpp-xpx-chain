@@ -23,10 +23,11 @@ namespace catapult { namespace licensing {
 
 		LOAD_LICENSING_PROPERTY(LicenseServerHost);
 		LOAD_LICENSING_PROPERTY(LicenseServerPort);
+		LOAD_LICENSING_PROPERTY(LicenseRequestTimeout);
 
 #undef LOAD_LICENSING_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, 2);
+		utils::VerifyBagSizeLte(bag, 3);
 		return config;
 	}
 
