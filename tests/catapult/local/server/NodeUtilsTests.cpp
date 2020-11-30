@@ -22,6 +22,7 @@
 #include "catapult/crypto/KeyPair.h"
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/net/NodeTestUtils.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
 #include "tests/TestHarness.h"
@@ -35,7 +36,12 @@ namespace catapult { namespace local {
 	namespace {
 		auto CreateBootstrapper(const config::BlockchainConfiguration& config) {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			return extensions::ProcessBootstrapper(pConfigHolder, "", extensions::ProcessDisposition::Production, "bootstrapper");
+			return extensions::ProcessBootstrapper(
+				pConfigHolder,
+				"",
+				extensions::ProcessDisposition::Production,
+				"bootstrapper",
+				std::make_shared<mocks::MockLicenseManager>());
 		}
 
 		auto CreateBlockchainConfiguration(const std::string& bootKey, const std::string& host, const std::string& name) {

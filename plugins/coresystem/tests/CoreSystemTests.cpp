@@ -70,6 +70,7 @@ namespace catapult { namespace plugins {
 					"DeadlineValidator",
 					"AddressValidator",
 					"BalanceTransferValidator",
+					"LicenseValidator",
 					"MaxTransactionsValidator",
 					"EligibleHarvesterValidator",
 					"BalanceDebitValidator",

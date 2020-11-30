@@ -63,6 +63,7 @@ namespace catapult { namespace extensions {
 			"DeadlineValidator",
 			"AddressValidator",
 			"BalanceTransferValidator",
+			"LicenseValidator",
 			"MaxTransactionsValidator",
 			"EligibleHarvesterValidator",
 			"UniqueTransactionHashValidator",

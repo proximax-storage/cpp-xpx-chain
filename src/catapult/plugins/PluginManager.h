@@ -25,6 +25,7 @@
 #include "catapult/config/InflationConfiguration.h"
 #include "catapult/config_holder/BlockchainConfigurationHolder.h"
 #include "catapult/ionet/PacketHandlers.h"
+#include "catapult/licensing/LicenseManager.h"
 #include "catapult/model/ExtractorContext.h"
 #include "catapult/model/NotificationPublisher.h"
 #include "catapult/model/TransactionPlugin.h"
@@ -88,7 +89,8 @@ namespace catapult { namespace plugins {
 		/// Creates a new plugin manager around \a config and \a storageConfig.
 		PluginManager(
 				const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
-				const StorageConfiguration& storageConfig);
+				const StorageConfiguration& storageConfig,
+				const std::shared_ptr<licensing::LicenseManager>& pLicenseManager = nullptr);
 
 	public:
 		// region config
@@ -113,6 +115,9 @@ namespace catapult { namespace plugins {
 
 		/// Gets the immutable network configuration.
 		const config::ImmutableConfiguration& immutableConfig() const;
+
+		/// Gets the license manager.
+		const std::shared_ptr<licensing::LicenseManager>& licenseManager() const;
 
 		/// Sets whether verifiable state should be enabled or not (\a shouldEnableVerifiableState).
 		void setShouldEnableVerifiableState(bool shouldEnableVerifiableState);
@@ -273,6 +278,8 @@ namespace catapult { namespace plugins {
 		std::vector<PluginInitializer> m_pluginInitializers;
 
 		bool m_shouldEnableVerifiableState;
+
+		std::shared_ptr<licensing::LicenseManager> m_pLicenseManager;
 	};
 }}
 

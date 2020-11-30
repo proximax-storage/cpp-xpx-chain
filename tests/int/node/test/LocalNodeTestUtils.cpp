@@ -22,6 +22,7 @@
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "tests/test/local/NetworkTestUtils.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 
 namespace catapult { namespace test {
 
@@ -102,7 +103,8 @@ namespace catapult { namespace test {
 
 		const auto& resourcesPath = config.User.DataDirectory + "/resources";
 		auto disposition = extensions::ProcessDisposition::Production;
-		auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(pConfigHolder, resourcesPath, disposition, "Partner");
+		auto pBootstrapper = std::make_unique<extensions::ProcessBootstrapper>(
+			pConfigHolder, resourcesPath, disposition, "Partner", std::make_shared<mocks::MockLicenseManager>());
 		pBootstrapper->loadExtensions();
 
 		return local::CreateLocalNode(keyPair, std::move(pBootstrapper));

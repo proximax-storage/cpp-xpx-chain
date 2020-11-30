@@ -26,6 +26,8 @@
 #include "catapult/validators/ValidatorContext.h"
 #include "catapult/validators/ValidatorTypes.h"
 
+namespace catapult { namespace licensing { class LicenseManager; } }
+
 namespace catapult { namespace validators {
 
 	// region Address
@@ -66,6 +68,10 @@ namespace catapult { namespace validators {
 	/// A validator implementation that applies to all block notifications and validates that:
 	/// - the block has valid FeeInterest and FeeInterestDenominator
 	DECLARE_STATELESS_VALIDATOR(Greed, model::BlockNotification<1>)();
+
+	/// A validator implementation that applies to all block notifications and validates that:
+	/// - the block consuming is entitled by license
+	DECLARE_STATEFUL_VALIDATOR(License, model::BlockNotification<1>)(const std::shared_ptr<licensing::LicenseManager>& pLicenseManager);
 
 	// endregion
 

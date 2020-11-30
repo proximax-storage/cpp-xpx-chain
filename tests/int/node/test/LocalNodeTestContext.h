@@ -27,6 +27,7 @@
 #include "catapult/extensions/ServiceState.h"
 #include "catapult/local/server/LocalNode.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/core/StorageTestUtils.h"
 #include "tests/test/nemesis/NemesisCompatibleConfiguration.h"
 #include "tests/test/nodeps/Filesystem.h"
@@ -187,7 +188,8 @@ namespace catapult { namespace test {
 					pConfigHolder,
 					resourcesDirectory(),
 					extensions::ProcessDisposition::Production,
-					"LocalNodeTests");
+					"LocalNodeTests",
+					std::make_shared<mocks::MockLicenseManager>());
 			pBootstrapper->addStaticNodes(m_nodes);
 
 			auto& extensionManager = pBootstrapper->extensionManager();

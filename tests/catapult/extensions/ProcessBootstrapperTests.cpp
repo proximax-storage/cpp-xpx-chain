@@ -21,6 +21,7 @@
 #include "catapult/extensions/ProcessBootstrapper.h"
 #include "catapult/plugins/PluginExceptions.h"
 #include "tests/test/core/mocks/MockBlockchainConfigurationHolder.h"
+#include "tests/test/core/mocks/MockLicenseManager.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/MutableBlockchainConfiguration.h"
@@ -40,7 +41,12 @@ namespace catapult { namespace extensions {
 		const_cast<std::string&>(pConfigHolder->Config().User.DataDirectory) = "base_data_dir";
 
 		// Act:
-		ProcessBootstrapper bootstrapper(pConfigHolder, "resources path", ProcessDisposition::Recovery, "bootstrapper");
+		ProcessBootstrapper bootstrapper(
+			pConfigHolder,
+			"resources path",
+			ProcessDisposition::Recovery,
+			"bootstrapper",
+			std::make_shared<mocks::MockLicenseManager>());
 
 		// Assert: compare BlockPruneInterval as a sentinel value because the bootstrapper copies the config
 		EXPECT_EQ(15u, bootstrapper.config(Height{0}).Network.BlockPruneInterval);
@@ -72,7 +78,12 @@ namespace catapult { namespace extensions {
 	namespace {
 		ProcessBootstrapper CreateBootstrapper(const config::BlockchainConfiguration& config) {
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
-			return ProcessBootstrapper(pConfigHolder, "resources path", ProcessDisposition::Production, "bootstrapper");
+			return ProcessBootstrapper(
+				pConfigHolder,
+				"resources path",
+				ProcessDisposition::Production,
+				"bootstrapper",
+				std::make_shared<mocks::MockLicenseManager>());
 		}
 
 		template<typename TAction>

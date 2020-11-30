@@ -27,21 +27,26 @@
 namespace catapult { namespace extensions {
 
 	ProcessBootstrapper::ProcessBootstrapper(
-		const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
+			const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder,
 			const std::string& resourcesPath,
 			ProcessDisposition disposition,
-			const std::string& servicePoolName)
-			: m_pConfigHolder(pConfigHolder)
-			, m_resourcesPath(resourcesPath)
-			, m_disposition(disposition)
-			, m_pMultiServicePool(std::make_unique<thread::MultiServicePool>(
-					servicePoolName,
-					thread::MultiServicePool::DefaultPoolConcurrency(),
-					m_pConfigHolder->Config().Node.ShouldUseSingleThreadPool
-							? thread::MultiServicePool::IsolatedPoolMode::Disabled
-							: thread::MultiServicePool::IsolatedPoolMode::Enabled))
-			, m_subscriptionManager(m_pConfigHolder->Config())
-			, m_pluginManager(m_pConfigHolder, CreateStorageConfiguration(m_pConfigHolder->Config()))
+			const std::string& servicePoolName,
+			std::shared_ptr<licensing::LicenseManager> pLicenseManager)
+		: m_pConfigHolder(pConfigHolder)
+		, m_resourcesPath(resourcesPath)
+		, m_disposition(disposition)
+		, m_pMultiServicePool(std::make_unique<thread::MultiServicePool>(
+				servicePoolName,
+				thread::MultiServicePool::DefaultPoolConcurrency(),
+				m_pConfigHolder->Config().Node.ShouldUseSingleThreadPool
+						? thread::MultiServicePool::IsolatedPoolMode::Disabled
+						: thread::MultiServicePool::IsolatedPoolMode::Enabled))
+		, m_subscriptionManager(m_pConfigHolder->Config())
+		, m_pLicenseManager(pLicenseManager)
+		, m_pluginManager(
+			m_pConfigHolder,
+			CreateStorageConfiguration(m_pConfigHolder->Config()),
+			m_pLicenseManager)
 	{}
 
 	const config::BlockchainConfiguration& ProcessBootstrapper::config(const Height& height) const {
@@ -90,6 +95,10 @@ namespace catapult { namespace extensions {
 
 	const CacheHolder& ProcessBootstrapper::cacheHolder() const {
 		return m_cacheHolder;
+	}
+
+	const std::shared_ptr<licensing::LicenseManager>& ProcessBootstrapper::licenseManager() const {
+		return m_pLicenseManager;
 	}
 
 	namespace {

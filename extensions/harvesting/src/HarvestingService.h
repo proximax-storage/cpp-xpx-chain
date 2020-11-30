@@ -22,9 +22,13 @@
 #include "HarvestingConfiguration.h"
 #include "catapult/extensions/ServiceRegistrar.h"
 
+namespace catapult { namespace licensing { class LicenseManager; } }
+
 namespace catapult { namespace harvesting {
 
-	/// Creates a registrar for a harvesting service around \a config.
+	/// Creates a registrar for a harvesting service around \a config and \a pLicenseManager.
 	/// \note This service is responsible for enabling node harvesting.
-	DECLARE_SERVICE_REGISTRAR(Harvesting)(const HarvestingConfiguration& config);
+	DECLARE_SERVICE_REGISTRAR(Harvesting)(
+		const HarvestingConfiguration& config,
+		const std::shared_ptr<licensing::LicenseManager>& pLicenseManager);
 }}

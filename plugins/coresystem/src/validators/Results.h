@@ -64,6 +64,9 @@ namespace catapult { namespace validators {
 	/// Validation failed because a block has invalid FeeInterestDenominator.
 	DEFINE_CORE_RESULT(Invalid_FeeInterestDenominator, 25);
 
+	/// Validation failed because a block consuming is not allowed due to invalid or expired license.
+	DEFINE_CORE_RESULT(License_Invalid_Or_Expired, 26);
+
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif
