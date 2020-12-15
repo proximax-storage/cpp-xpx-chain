@@ -19,31 +19,9 @@
 **/
 
 #include "NotificationObserverAdapter.h"
-#include "catapult/model/NotificationSubscriber.h"
+#include "ObservingNotificationSubscriber.h"
 
 namespace catapult { namespace observers {
-
-	namespace {
-		class ObservingNotificationSubscriber : public model::NotificationSubscriber {
-		public:
-			explicit ObservingNotificationSubscriber(const NotificationObserver& observer, ObserverContext& context)
-					: m_observer(observer)
-					, m_context(context)
-			{}
-
-		public:
-			void notify(const model::Notification& notification) override {
-				if (!IsSet(notification.Type, model::NotificationChannel::Observer))
-					return;
-
-				m_observer.notify(notification, m_context);
-			}
-
-		private:
-			const NotificationObserver& m_observer;
-			ObserverContext& m_context;
-		};
-	}
 
 	NotificationObserverAdapter::NotificationObserverAdapter(
 			NotificationObserverPointer&& pObserver,

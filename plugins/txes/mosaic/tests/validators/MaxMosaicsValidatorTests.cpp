@@ -34,6 +34,10 @@ namespace catapult { namespace validators {
 #define SUPPLY_CHANGE_TEST_CLASS SupplyChangeMaxMosaicsValidatorTests
 
 	namespace {
+		auto CreateCache() {
+			return test::CoreSystemCacheFactory::Create();
+		}
+
 		template<typename TKey>
 		auto CreateAndSeedCache(const TKey& key) {
 			auto cache = test::CoreSystemCacheFactory::Create();
@@ -59,12 +63,12 @@ namespace catapult { namespace validators {
 			return networkConfig;
 		}
 
-		void RunBalanceTransferTest(ValidationResult expectedResult, uint16_t maxMosaics, UnresolvedMosaicId mosaicId, Amount amount) {
+		void RunBalanceTransferTest(ValidationResult expectedResult, uint16_t maxMosaics, UnresolvedMosaicId mosaicId, Amount amount, bool seedCache = true) {
 			// Arrange:
 			auto owner = test::GenerateRandomByteArray<Key>();
 			auto recipient = test::GenerateRandomByteArray<Address>();
 			auto unresolvedRecipient = test::UnresolveXor(recipient);
-			auto cache = CreateAndSeedCache(recipient);
+			auto cache = seedCache ? CreateAndSeedCache(recipient) : CreateCache();
 
 			auto config = CreateConfig(maxMosaics);
 			auto pConfigHolder = config::CreateMockConfigurationHolder(config);
@@ -84,6 +88,11 @@ namespace catapult { namespace validators {
 		RunBalanceTransferTest(Failure_Mosaic_Max_Mosaics_Exceeded, 1, test::UnresolveXor(MosaicId(6)), Amount(100));
 		RunBalanceTransferTest(Failure_Mosaic_Max_Mosaics_Exceeded, 4, test::UnresolveXor(MosaicId(6)), Amount(100));
 		RunBalanceTransferTest(Failure_Mosaic_Max_Mosaics_Exceeded, 5, test::UnresolveXor(MosaicId(6)), Amount(100));
+	}
+
+	TEST(BALANCE_TRANSFER_TEST_CLASS, SuccessWhenRecipientAccountDoesntExist) {
+		// Act:
+		RunBalanceTransferTest(ValidationResult::Success, 5, test::UnresolveXor(MosaicId(6)), Amount(100), false);
 	}
 
 	TEST(BALANCE_TRANSFER_TEST_CLASS, SuccessWhenAmountIsZero) {

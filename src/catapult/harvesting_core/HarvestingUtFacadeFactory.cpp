@@ -20,9 +20,11 @@
 
 #include "HarvestingUtFacadeFactory.h"
 #include "catapult/cache_core/AccountStateCache.h"
-#include "catapult/chain/ProcessingNotificationSubscriber.h"
 #include "catapult/model/BlockUtils.h"
 #include "catapult/model/FeeUtils.h"
+#include "catapult/observers/ObservingNotificationSubscriber.h"
+#include "catapult/validators/ValidatingNotificationSubscriber.h"
+#include "catapult/validators/ValidatorContext.h"
 
 namespace catapult { namespace harvesting {
 
@@ -31,14 +33,14 @@ namespace catapult { namespace harvesting {
 	class HarvestingUtFacade::Impl {
 	public:
 		Impl(
-				Timestamp blockTime,
-				const cache::CatapultCache& cache,
-				const chain::ExecutionConfiguration& executionConfig)
-				: m_blockTime(blockTime)
-				, m_executionConfig(executionConfig)
-				, m_cacheDetachableDelta(cache.createDetachableDelta(Height(1)))
-				, m_cacheDetachedDelta(m_cacheDetachableDelta.detach())
-				, m_pCacheDelta(m_cacheDetachedDelta.tryLock())
+			Timestamp blockTime,
+			const cache::CatapultCache& cache,
+			const chain::ExecutionConfiguration& executionConfig)
+			: m_blockTime(blockTime)
+			, m_executionConfig(executionConfig)
+			, m_cacheDetachableDelta(cache.createDetachableDelta(Height(1)))
+			, m_cacheDetachedDelta(m_cacheDetachableDelta.detach())
+			, m_pCacheDelta(m_cacheDetachedDelta.tryLock())
 		{}
 
 	public:
@@ -58,11 +60,6 @@ namespace catapult { namespace harvesting {
 				m_blockStatementBuilder.popSource();
 
 			return false;
-		}
-
-		void unapply(const model::TransactionInfo& transactionInfo) {
-			unapply(model::WeakEntityInfo(*transactionInfo.pEntity, transactionInfo.EntityHash, height()));
-			m_blockStatementBuilder.popSource();
 		}
 
 		model::UniqueEntityPtr<model::Block> commit(const model::BlockHeader& blockHeader, const model::Transactions& transactions) {
@@ -133,27 +130,17 @@ namespace catapult { namespace harvesting {
 					const auto& validatorContext,
 					const auto& observer,
 					auto& observerContext) {
-				chain::ProcessingNotificationSubscriber sub(validator, validatorContext, observer, observerContext);
-				sub.enableUndo();
+				// validate entity
+				validators::ValidatingNotificationSubscriber validatingSubscriber(validator, validatorContext);
+				publisher.publish(weakEntityInfo, validatingSubscriber);
+
+				if (!validators::IsValidationResultSuccess(validatingSubscriber.result()))
+					return false;
 
 				// execute entity
-				publisher.publish(weakEntityInfo, sub);
-				if (validators::IsValidationResultSuccess(sub.result()))
-					return true;
+				observers::ObservingNotificationSubscriber observingSubscriber(observer, observerContext);
+				publisher.publish(weakEntityInfo, observingSubscriber);
 
-				sub.undo();
-				return false;
-			});
-		}
-
-		void unapply(const model::WeakEntityInfo& weakEntityInfo) {
-			const auto& publisher = *m_executionConfig.pNotificationPublisher;
-			process([&weakEntityInfo, &publisher](const auto&, const auto&, const auto& observer, auto& observerContext) {
-				chain::ProcessingUndoNotificationSubscriber sub(observer, observerContext);
-
-				// execute entity
-				publisher.publish(weakEntityInfo, sub);
-				sub.undo();
 				return true;
 			});
 		}
@@ -198,14 +185,6 @@ namespace catapult { namespace harvesting {
 
 		m_transactionInfos.push_back(transactionInfo.copy());
 		return true;
-	}
-
-	void HarvestingUtFacade::unapply() {
-		if (m_transactionInfos.empty())
-			CATAPULT_THROW_OUT_OF_RANGE("cannot call unapply when no transactions have been applied");
-
-		m_pImpl->unapply(m_transactionInfos.back());
-		m_transactionInfos.pop_back();
 	}
 
 	model::UniqueEntityPtr<model::Block> HarvestingUtFacade::commit(const model::BlockHeader& blockHeader) {

@@ -34,11 +34,8 @@ namespace catapult { namespace harvesting {
 		/// Optimal fee multiplier.
 		BlockFeeMultiplier FeeMultiplier;
 
-		/// Transactions (shared pointers) (ordered).
-		model::Transactions Transactions;
-
-		/// Transaction hashes (ordered).
-		std::vector<Hash256> TransactionHashes;
+		/// Transaction info pointers (ordered).
+		std::vector<const model::TransactionInfo*> Transactions;
 
 		/// Aggregate transactions hash.
 		Hash256 TransactionsHash;

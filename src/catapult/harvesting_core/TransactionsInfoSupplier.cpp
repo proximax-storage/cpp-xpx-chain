@@ -42,18 +42,12 @@ namespace catapult { namespace harvesting {
 			}
 		};
 
-		TransactionsInfo ToTransactionsInfo(const TransactionInfoPointers& transactionInfoPointers, BlockFeeMultiplier feeMultiplier) {
+		TransactionsInfo ToTransactionsInfo(TransactionInfoPointers&& transactionInfoPointers, BlockFeeMultiplier feeMultiplier) {
 			TransactionsInfo transactionsInfo;
 			transactionsInfo.FeeMultiplier = feeMultiplier;
-			transactionsInfo.Transactions.reserve(transactionInfoPointers.size());
-			transactionsInfo.TransactionHashes.reserve(transactionInfoPointers.size());
+			transactionsInfo.Transactions = std::move(transactionInfoPointers);
 
-			for (const auto* pTransactionInfo : transactionInfoPointers) {
-				transactionsInfo.Transactions.push_back(pTransactionInfo->pEntity);
-				transactionsInfo.TransactionHashes.push_back(pTransactionInfo->EntityHash);
-			}
-
-			CalculateBlockTransactionsHash(transactionInfoPointers, transactionsInfo.TransactionsHash);
+			CalculateBlockTransactionsHash(transactionsInfo.Transactions, transactionsInfo.TransactionsHash);
 			return transactionsInfo;
 		}
 
@@ -71,7 +65,7 @@ namespace catapult { namespace harvesting {
 				minFeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(*(*minIter)->pEntity);
 			}
 
-			return ToTransactionsInfo(candidates, minFeeMultiplier);
+			return ToTransactionsInfo(std::move(candidates), minFeeMultiplier);
 		}
 
 		TransactionsInfo SupplyMinimumFee(const cache::MemoryUtCacheView& utCacheView, HarvestingUtFacade& utFacade, uint32_t count) {
@@ -87,7 +81,7 @@ namespace catapult { namespace harvesting {
 			if (!candidates.empty())
 				minFeeMultiplier = model::CalculateTransactionMaxFeeMultiplier(*candidates[0]->pEntity);
 
-			return ToTransactionsInfo(candidates, minFeeMultiplier);
+			return ToTransactionsInfo(std::move(candidates), minFeeMultiplier);
 		}
 
 		TransactionsInfo SupplyMaximumFee(const cache::MemoryUtCacheView& utCacheView, HarvestingUtFacade& utFacade, uint32_t count) {
@@ -103,13 +97,11 @@ namespace catapult { namespace harvesting {
 				return true;
 			});
 
-			// 2. pick the best fee policy and truncate the transactions and facade
+			// 2. pick the best fee policy and truncate the transactions
 			const auto& bestFeePolicy = maximizer.best();
 			candidates.resize(bestFeePolicy.NumTransactions);
-			while (utFacade.size() > bestFeePolicy.NumTransactions)
-				utFacade.unapply();
 
-			return ToTransactionsInfo(candidates, bestFeePolicy.FeeMultiplier);
+			return ToTransactionsInfo(std::move(candidates), bestFeePolicy.FeeMultiplier);
 		}
 	}
 

@@ -48,13 +48,12 @@ namespace catapult { namespace harvesting {
 		}
 
 		void AssertConsistent(const TransactionsInfo& transactionsInfo, const HarvestingUtFacade& facade) {
-			// Assert: transactionsInfo and facade should contain exact same transactions (and hashes)
-			ASSERT_EQ(transactionsInfo.Transactions.size(), facade.size());
-			ASSERT_EQ(transactionsInfo.TransactionHashes.size(), facade.size());
+			// Assert: facade should contain transactionsInfo
+			ASSERT_LE(transactionsInfo.Transactions.size(), facade.size());
 
-			for (auto i = 0u; i < facade.size(); ++i) {
-				EXPECT_EQ(*transactionsInfo.Transactions[i], *facade.transactionInfos()[i].pEntity) << i;
-				EXPECT_EQ(transactionsInfo.TransactionHashes[i], facade.transactionInfos()[i].EntityHash) << i;
+			for (auto i = 0u; i < transactionsInfo.Transactions.size(); ++i) {
+				EXPECT_EQ(*transactionsInfo.Transactions[i]->pEntity, *facade.transactionInfos()[i].pEntity) << i;
+				EXPECT_EQ(transactionsInfo.Transactions[i]->EntityHash, facade.transactionInfos()[i].EntityHash) << i;
 			}
 		}
 
@@ -151,11 +150,10 @@ namespace catapult { namespace harvesting {
 			// - check transactions
 			auto expectedCount = expectedTransactionInfos.size();
 			ASSERT_EQ(expectedCount, transactionsInfo.Transactions.size());
-			ASSERT_EQ(expectedCount, transactionsInfo.TransactionHashes.size());
 			for (auto i = 0u; i < expectedCount; ++i) {
 				const auto& expectedTransactionInfo = *expectedTransactionInfos[i];
-				EXPECT_EQ(*expectedTransactionInfo.pEntity, *transactionsInfo.Transactions[i]) << "transaction at " << i;
-				EXPECT_EQ(expectedTransactionInfo.EntityHash, transactionsInfo.TransactionHashes[i]) << "transaction hash at " << i;
+				EXPECT_EQ(*expectedTransactionInfo.pEntity, *transactionsInfo.Transactions[i]->pEntity) << "transaction at " << i;
+				EXPECT_EQ(expectedTransactionInfo.EntityHash, transactionsInfo.Transactions[i]->EntityHash) << "transaction hash at " << i;
 			}
 
 			// - check aggregate hash

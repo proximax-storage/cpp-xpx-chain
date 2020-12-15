@@ -58,7 +58,17 @@ namespace catapult { namespace harvesting {
 			// 2. select transactions
 			auto transactionsInfo = transactionsInfoSupplier(*pUtFacade, maxTransactionsPerBlock);
 
-			// 3. build a block
+			// 3. re-apply transactions if they were truncated
+			if (pUtFacade->size() != transactionsInfo.Transactions.size()) {
+				pUtFacade.reset(nullptr);
+				pUtFacade = utFacadeFactory.create(blockHeader.Timestamp);
+				for (auto pTransactionInfo : transactionsInfo.Transactions) {
+					if (!pUtFacade->apply(*pTransactionInfo))
+						CATAPULT_THROW_RUNTIME_ERROR_1("transaction re-applying failed", pTransactionInfo->EntityHash)
+				}
+			}
+
+			// 4. build a block
 			auto pBlock = GenerateBlock(*pUtFacade, blockHeader, transactionsInfo);
 			if (!pBlock) {
 				CATAPULT_LOG(warning) << "failed to generate harvested block";

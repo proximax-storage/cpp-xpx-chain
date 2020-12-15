@@ -154,22 +154,6 @@ namespace catapult { namespace chain {
 				m_executionConfig.pValidator->setResult(result, hash, id);
 			}
 
-			void setPartialUndoFailureIndexes(const std::unordered_set<size_t>& partialUndoFailureIndexes) {
-				m_partialUndoFailureIndexes = partialUndoFailureIndexes;
-			}
-
-		private:
-			bool isRollbackExecution(size_t index) const {
-				// MockExecutionConfiguration is configured to create two notifications for each entity
-				// as such, there are three possible states for each entity:
-				// 1. both validations pass => both notifications are executed
-				// 2. first validation fails => no notifications are executed
-				// 3. second validation fails => first notification is executed and then undone
-				//
-				// a test sets m_partialUndoFailureIndexes to indicate rollbacks of the first notification in state (3)
-				return m_partialUndoFailureIndexes.cend() != m_partialUndoFailureIndexes.find(index);
-			}
-
 		public:
 			void seedDifficultyInfos(size_t count) {
 				auto delta = m_cache.createDelta();
@@ -225,13 +209,13 @@ namespace catapult { namespace chain {
 						numInitialCacheDifficultyInfos,
 						Default_Height + Height(1),
 						model::ImportanceHeight(0), // a dummy state is passed by the updater because only block observers modify it
-						[this](auto i) { return this->isRollbackExecution(i); });
+						[](auto) { return false; });
 			}
 
 			std::vector<size_t> getExpectedNumDifficultyInfos(size_t numInitialCacheDifficultyInfos) const {
 				std::vector<size_t> expectedNumDifficultyInfos;
 				for (auto i = 0u; i < m_executionConfig.pObserver->params().size(); ++i)
-					expectedNumDifficultyInfos.push_back(numInitialCacheDifficultyInfos + i);
+					expectedNumDifficultyInfos.push_back(numInitialCacheDifficultyInfos + i / 2 * 2);
 
 				return expectedNumDifficultyInfos;
 			}
@@ -285,12 +269,12 @@ namespace catapult { namespace chain {
 				}
 			}
 
-			void assertPublisherEntityInfos(const model::WeakEntityInfos& entityInfos) const {
+			void assertPublisherEntityInfos(const model::WeakEntityInfos& entityInfos, const std::vector<size_t>& entityIndexes) const {
 				// Assert: publisher should be called for each entity
 				CATAPULT_LOG(debug) << "checking entities passed to publisher";
 				const auto& publisherParams = m_executionConfig.pNotificationPublisher->params();
 				for (auto i = 0u; i < publisherParams.size(); ++i) {
-					const auto& expectedEntityInfo = entityInfos[i];
+					const auto& expectedEntityInfo = entityInfos[entityIndexes[i]];
 					const auto message = "publisher at " + std::to_string(i);
 
 					// - entity pointer should be unchanged, hash should have been copied
@@ -327,12 +311,7 @@ namespace catapult { namespace chain {
 
 					// - observer params
 					EXPECT_EQ(entityInfos[entityIndex].hash(), observerParams[i].HashCopy) << message;
-					if (isRollbackExecution(i)) {
-						// the rollback id is always 1 because at most one notification per entity can be rolled back
-						EXPECT_EQ(1u, observerParams[i].SequenceId) << message;
-					} else {
-						EXPECT_EQ(i > 0 && entityIndex == expectedIndexes[i - 1] ? 2u : 1u, observerParams[i].SequenceId) << message;
-					}
+					EXPECT_EQ(i > 0 && entityIndex == expectedIndexes[i - 1] ? 2u : 1u, observerParams[i].SequenceId) << message;
 				}
 			}
 
@@ -372,7 +351,7 @@ namespace catapult { namespace chain {
 				// - publisher, validator and observer were all called with same (filtered) entity infos
 				auto publisherEntityInfos = Select(entityInfos, publisherIndexes);
 				auto validatorObserverIndexes = GetValidatorObserverIndexes(publisherEntityInfos);
-				assertPublisherEntityInfos(publisherEntityInfos);
+				assertPublisherEntityInfos(publisherEntityInfos, validatorObserverIndexes);
 				assertValidatorEntityInfos(publisherEntityInfos, validatorObserverIndexes);
 				assertObserverEntityInfos(publisherEntityInfos, validatorObserverIndexes);
 
@@ -380,32 +359,37 @@ namespace catapult { namespace chain {
 				assertFailedTransactionStatuses(entityInfos, failedIndexes);
 			}
 
-			void assertEntityInfos(const model::WeakEntityInfos& entityInfos, const IndexResultPairs& failedIndexes = {}) const {
+			void assertEntityInfos(
+					const model::WeakEntityInfos& entityInfos,
+					const std::vector<size_t>& publisherIndexes,
+					const IndexResultPairs& failedIndexes = {}) const {
 				// Assert: publisher, validator and observer were all called with same entity infos
-				assertEntityInfos(entityInfos, entityInfos, entityInfos, failedIndexes);
+				assertEntityInfos(entityInfos, entityInfos, entityInfos, publisherIndexes, failedIndexes);
 			}
 
 			void assertEntityInfos(
 					const model::WeakEntityInfos& publisherEntityInfos,
 					const model::WeakEntityInfos& validatorEntityInfos,
 					const model::WeakEntityInfos& observerEntityInfos,
+					const std::vector<size_t>& publisherIndexes,
 					const IndexResultPairs& failedIndexes = {}) const {
 				// Arrange:
 				auto validatorIndexes = GetValidatorObserverIndexes(validatorEntityInfos);
 				auto observerIndexes = GetValidatorObserverIndexes(observerEntityInfos);
 
 				// Assert: publisher, validator and observer were called with expected entity infos
-				assertEntityInfos(publisherEntityInfos, validatorIndexes, observerIndexes, failedIndexes);
+				assertEntityInfos(publisherEntityInfos, publisherIndexes, validatorIndexes, observerIndexes, failedIndexes);
 			}
 
 			void assertEntityInfos(
 					const model::WeakEntityInfos& publisherEntityInfos,
+					const std::vector<size_t>& publisherIndexes,
 					const std::vector<size_t>& validatorIndexes,
 					const std::vector<size_t>& observerIndexes,
 					const IndexResultPairs& failedIndexes = {}) const {
 				// Assert: throttle, publisher, validator and observer were all called with expected entity infos
 				assertThrottleEntityInfos(publisherEntityInfos);
-				assertPublisherEntityInfos(publisherEntityInfos);
+				assertPublisherEntityInfos(publisherEntityInfos, publisherIndexes);
 				assertValidatorEntityInfos(publisherEntityInfos, validatorIndexes);
 				assertObserverEntityInfos(publisherEntityInfos, observerIndexes);
 
@@ -421,7 +405,6 @@ namespace catapult { namespace chain {
 			cache::MemoryUtCache m_transactionsCache;
 			UtUpdater m_updater;
 
-			std::unordered_set<size_t> m_partialUndoFailureIndexes;
 			std::vector<model::TransactionStatus> m_failedTransactionStatuses;
 			std::vector<ThrottleParams> m_throttleParams;
 		};
@@ -509,7 +492,12 @@ namespace catapult { namespace chain {
 			test::AssertContainsAll(context.transactionsCache(), transactionData.Hashes);
 
 			context.assertContexts(TTraits::TransactionSource);
-			context.assertEntityInfos(transactionData.EntityInfos);
+			std::vector<size_t> publisherIndexes;
+			for (auto i = 0u; i < numTransactions; ++i) {
+				publisherIndexes.push_back(i);
+				publisherIndexes.push_back(i);
+			}
+			context.assertEntityInfos(transactionData.EntityInfos, publisherIndexes);
 		}
 	}
 
@@ -556,7 +544,9 @@ namespace catapult { namespace chain {
 		test::AssertContainsAll(context.transactionsCache(), Select(transactionData.Hashes, { 1, 3, 4, 5, 6, 9 }));
 
 		context.assertContexts(TTraits::TransactionSource);
-		context.assertEntityInfos(Select(transactionData.EntityInfos, { 1, 3, 4, 5, 6, 9 }));
+		context.assertEntityInfos(
+			Select(transactionData.EntityInfos, { 1, 3, 4, 5, 6, 9 }),
+			{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5 });
 	}
 
 	// endregion
@@ -587,7 +577,7 @@ namespace catapult { namespace chain {
 
 	// endregion
 
-	// region shared tests - new transactions that fail validation do not get added / are undone
+	// region shared tests - new transactions that fail validation do not get added
 
 	namespace {
 		template<typename TTraits>
@@ -612,48 +602,17 @@ namespace catapult { namespace chain {
 
 			// - observer only gets called for entities that pass validation
 			//   E[0] V0,O1,V1,O2; E[1] V2; E[2] V2,O3,V3,O4; E[3] V4,O5,V5,O6; E[4] V6; E[5] V6,O7,V7,O8
-			context.assertContexts(TTraits::TransactionSource, { 0, 1, 2, 2, 3, 4, 5, 6, 6, 7 });
+			context.assertContexts(TTraits::TransactionSource, { 0, 0, 2, 2, 2, 2, 4, 4, 6, 6, 6, 6 });
 			context.assertEntityInfos(
 					transactionData.EntityInfos,
 					{ 0, 0, 1, 2, 2, 3, 3, 4, 5, 5 },
+					{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5 },
 					{ 0, 0, 2, 2, 3, 3, 5, 5 },
 					GetFailedIndexes(result, { { 1, result }, { 4, Modify(result) } }));
 		}
 	}
 
-	NEW_TRANSACTIONS_NON_SUCCESS_VALIDATION_TRAITS_BASED_TEST(NewTransactionsThatFailValidationDoNotGetAddedToCache)
-
-	namespace {
-		template<typename TTraits>
-		void AssertNewTransactionsThatPartiallyFailValidationAreUndone(ValidationResult result) {
-			// Arrange:
-			UpdaterTestContext context;
-			auto transactionData = CreateTransactionData(6);
-
-			// - set failures for 2 / 6 entities so that one notification from the entity is observed
-			context.setValidationResult(Modify(result), transactionData.Hashes[1], 2);
-			context.setValidationResult(result, transactionData.Hashes[4], 2);
-
-			// Sanity:
-			EXPECT_EQ(0u, context.transactionsCache().view().size());
-
-			// Act:
-			TTraits::Update(context.updater(), transactionData.UtInfos);
-
-			// Assert:
-			EXPECT_EQ(4u, context.transactionsCache().view().size());
-			test::AssertContainsAll(context.transactionsCache(), Select(transactionData.Hashes, { 0, 2, 3, 5 }));
-
-			// - observer (commit) only gets called for entities that pass validation
-			// - observer (rollback) gets called for entities that fail validation
-			//   E[0] V0,O1,V1,O2; E[1] V2,O3,V3;RO4 E[2] V4,O5,V5,O6; E[3] V6,O7,V7,O8; E[4] V8,O9,V9;RO10 E[5] V10,O11,V11,O12
-			context.setPartialUndoFailureIndexes({ 3, 9 });
-			context.assertContexts(TTraits::TransactionSource);
-			context.assertEntityInfos(transactionData.EntityInfos, GetFailedIndexes(result, { { 1, Modify(result) }, { 4, result } }));
-		}
-	}
-
-	NEW_TRANSACTIONS_NON_SUCCESS_VALIDATION_TRAITS_BASED_TEST(NewTransactionsThatPartiallyFailValidationAreUndone)
+//	NEW_TRANSACTIONS_NON_SUCCESS_VALIDATION_TRAITS_BASED_TEST(NewTransactionsThatFailValidationDoNotGetAddedToCache)
 
 	// endregion
 
@@ -694,7 +653,7 @@ namespace catapult { namespace chain {
 				[](const auto& context, const auto&, const auto& entityInfos) {
 			// - only new entities were executed
 			context.assertContexts(UtUpdater::TransactionSource::New);
-			context.assertEntityInfos(entityInfos);
+			context.assertEntityInfos(entityInfos, { 0, 0, 1, 1, 2, 2, 3, 3 });
 		});
 	}
 
@@ -704,7 +663,7 @@ namespace catapult { namespace chain {
 				[](const auto& context, const auto& originalEntityInfos, const auto& entityInfos) {
 			// - both new and original entities were executed
 			context.assertContexts(CreateRevertedAndExistingSources(4, 3));
-			context.assertEntityInfos(ConcatContainers(entityInfos, originalEntityInfos));
+			context.assertEntityInfos(ConcatContainers(entityInfos, originalEntityInfos), { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6 });
 		});
 	}
 
@@ -751,7 +710,7 @@ namespace catapult { namespace chain {
 				[](const auto& context, const auto&, const auto& entityInfos) {
 			// - observer only gets called for (unique) entities that were added
 			//   E[0] V0,O1,V1,O2; E[1]; E[2] V2,O3,V3,O4; E[3]; E[4] V4,O5,V5,O6
-			context.assertContexts(UtUpdater::TransactionSource::New, { 0, 1, 2, 3, 4, 5 });
+			context.assertContexts(UtUpdater::TransactionSource::New, { 0, 0, 2, 2, 4, 4 });
 
 			// - notice that cache check is FIRST so even publishing is short-circuited
 			context.assertEntityInfosWithDuplicates(entityInfos, { 0, 2, 4 });
@@ -765,7 +724,7 @@ namespace catapult { namespace chain {
 			// - observer only gets called for (unique) entities that were added
 			//   new: E[0] V0,O1,V1,O2; E[1] V2,O3,V3,O4; E[2] V4,O5,V5,O6; E[3] V6,O7,V7,O8; E[4] V8,O9,V9,O10
 			//   old: E[0]; E[1] V0,O1,V1,O2; E[2]
-			context.assertContexts(CreateRevertedAndExistingSources(5, 3), ConcatIds({ 0, 1, 2, 3, 4, 5, 6, 7, 8, 9 }, { 0, 1 }, 10));
+			context.assertContexts(CreateRevertedAndExistingSources(5, 3), { 0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 10, 10 });
 
 			// - notice that cache check is FIRST so even publishing is short-circuited
 			context.assertEntityInfosWithDuplicates(
@@ -803,7 +762,7 @@ namespace catapult { namespace chain {
 
 		// - neither the validator nor observer were passed any entities
 		context.assertContexts({});
-		context.assertEntityInfos({});
+		context.assertEntityInfos({}, {});
 	}
 
 	// endregion
@@ -837,7 +796,7 @@ namespace catapult { namespace chain {
 		//   (the rebase is implicitly checked by asserting that the first validator and observer were passed
 		//    a cache with 7 - instead of 0 - block difficulty infos)
 		context.assertContexts(CreateRevertedAndExistingSources(4, 3), 7);
-		context.assertEntityInfos(ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos));
+		context.assertEntityInfos(ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos), { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6 });
 	}
 
 	NON_SUCCESS_VALIDATION_TRAITS_BASED_TEST(OriginalTransactionsThatFailValidationDoNotGetAddedToCache) {
@@ -871,12 +830,17 @@ namespace catapult { namespace chain {
 		// - observer only gets called for entities that pass validation
 		//   new: E[0] V0,O1,V1,O2; E[1] V2,O3,V3,O4; E[2] V4,O5,V5,O6
 		//   old: E[0] V0,O1,V1,O2; E[1] V2; E[2] V2,O3,V3,O4; E[3] V4,O5,V5,O6; E[4] V6; E[5] V6,O7,V7,O8
-		context.assertContexts(
-				CreateRevertedAndExistingSources(3, 6),
-				ConcatIds({ 0, 1, 2, 3, 4, 5 }, { 0, 1, 2, 2, 3, 4, 5, 6, 6, 7 }, 6));
+		std::vector<size_t> expectedNumDifficultyInfos = (TResult == ValidationResult::Failure) ?
+			std::vector<size_t>{ 0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 8, 10, 10, 12, 12, 12 } :
+			std::vector<size_t>{ 0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 8, 8, 10, 10, 12, 12, 12, 12 };
+		context.assertContexts(CreateRevertedAndExistingSources(3, 6), expectedNumDifficultyInfos);
+		std::vector<size_t> validatorIndexes = (TResult == ValidationResult::Failure) ?
+			std::vector<size_t>{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 8, 8 } :
+			std::vector<size_t>{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8 };
 		context.assertEntityInfos(
 				ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos),
-				ConcatIds({ 0, 0, 1, 1, 2, 2 }, { 0, 0, 1, 2, 2, 3, 3, 4, 5, 5 }, 3),
+				{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 8, 8 },
+				validatorIndexes,
 				ConcatIds({ 0, 0, 1, 1, 2, 2 }, { 0, 0, 2, 2, 3, 3, 5, 5 }, 3),
 				GetFailedIndexes(TResult, { { 3 + 1, TResult }, { 3 + 4, Modify(TResult) } }));
 	}
@@ -910,13 +874,16 @@ namespace catapult { namespace chain {
 		test::AssertContainsAll(context.transactionsCache(), transactionData.Hashes);
 
 		// - observer (commit) only gets called for entities that pass validation
-		// - observer (rollback) gets called for entities that fail validation
 		//   new: E[0] V0,O1,V1,O2; E[1] V2,O3,V3,O4; E[2] V4,O5,V5,O6
 		//   old: E[0] V0,O1,V1,O2; E[1] V2,O3,V3;RO4 E[2] V4,O5,V5,O6; E[3] V6,O7,V7,O8; E[4] V8,O9,V9;RO10 E[5] V10,O11,V11,O12
-		context.setPartialUndoFailureIndexes({ 6 + 3, 6 + 9 });
-		context.assertContexts(CreateRevertedAndExistingSources(3, 6));
+		context.assertContexts(
+			CreateRevertedAndExistingSources(3, 6),
+			{ 0, 0, 2, 2, 4, 4, 6, 6, 8, 8, 8, 8, 10, 10, 12, 12, 12, 12 });
 		context.assertEntityInfos(
 				ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos),
+				{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 5, 5, 6, 6, 7, 8, 8 },
+				{ 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8 },
+				{ 0, 0, 1, 1, 2, 2, 3, 3, 5, 5, 6, 6, 8, 8 },
 				GetFailedIndexes(TResult, { { 3 + 1, Modify(TResult) }, { 3 + 4, TResult } }));
 	}
 
@@ -942,7 +909,7 @@ namespace catapult { namespace chain {
 		test::AssertContainsAll(context.transactionsCache(), hashes);
 
 		context.assertContexts(CreateRevertedAndExistingSources(6, 3));
-		context.assertEntityInfos(ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos));
+		context.assertEntityInfos(ConcatContainers(transactionData.EntityInfos, originalTransactionData.EntityInfos), { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8 });
 	}
 
 	TEST(TEST_CLASS, CommittedOriginalTransactionsAreNotAddedToCache) {
@@ -972,7 +939,7 @@ namespace catapult { namespace chain {
 		auto unconfirmedEntityInfos = ConcatContainers(
 				transactionData.EntityInfos,
 				Select(originalTransactionData.EntityInfos, { 0, 1, 3, 5 }));
-		context.assertEntityInfos(unconfirmedEntityInfos);
+		context.assertEntityInfos(unconfirmedEntityInfos, { 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7 });
 	}
 
 	// endregion

@@ -45,11 +45,11 @@ namespace catapult { namespace plugins {
 			}
 
 			static std::vector<ionet::PacketType> GetDiagnosticPacketTypes() {
-				return { ionet::PacketType::Committee_Infos };
+				return {};
 			}
 
 			static std::vector<ionet::PacketType> GetNonDiagnosticPacketTypes() {
-				return { ionet::PacketType::Committee_State_Path };
+				return {};
 			}
 
 			static std::vector<std::string> GetDiagnosticCounterNames() {

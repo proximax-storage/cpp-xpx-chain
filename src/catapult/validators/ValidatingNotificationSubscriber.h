@@ -26,12 +26,14 @@
 namespace catapult { namespace validators {
 
 	/// A notification subscriber that validates notifications.
+	template<typename TValidator, typename... TArgs>
 	class ValidatingNotificationSubscriber : public model::NotificationSubscriber {
 	public:
 		/// Creates a validating notification subscriber around \a validator.
-		explicit ValidatingNotificationSubscriber(const stateless::NotificationValidator& validator)
+		explicit ValidatingNotificationSubscriber(const TValidator& validator, const TArgs&... args)
 				: m_validator(validator)
 				, m_result(ValidationResult::Success)
+				, m_args(args...)
 		{}
 
 	public:
@@ -48,12 +50,24 @@ namespace catapult { namespace validators {
 			if (IsValidationResultFailure(m_result))
 				return;
 
-			auto result = m_validator.validate(notification);
+			auto result = validate(notification);
 			AggregateValidationResult(m_result, result);
 		}
 
 	private:
-		const stateless::NotificationValidator& m_validator;
+		template<typename T = std::tuple<TArgs...>, std::enable_if_t<!std::tuple_size_v<T>, bool> = true>
+		ValidationResult validate(const model::Notification& notification) {
+			return m_validator.validate(notification);
+		}
+
+		template<typename T = std::tuple<TArgs...>, std::enable_if_t<std::tuple_size_v<T>, bool> = true>
+		ValidationResult validate(const model::Notification& notification) {
+			return m_validator.validate(notification, std::get<0>(m_args));
+		}
+
+	private:
+		const TValidator& m_validator;
 		ValidationResult m_result;
+		std::tuple<TArgs...> m_args;
 	};
 }}

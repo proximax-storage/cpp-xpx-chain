@@ -51,9 +51,6 @@ namespace catapult { namespace harvesting {
 		/// Attempts to apply \a transactionInfo to the cache.
 		bool apply(const model::TransactionInfo& transactionInfo);
 
-		/// Unapplies last successfully applied transaction.
-		void unapply();
-
 		/// Commits all transactions into a block with specified seed header (\a blockHeader).
 		model::UniqueEntityPtr<model::Block> commit(const model::BlockHeader& blockHeader);
 
