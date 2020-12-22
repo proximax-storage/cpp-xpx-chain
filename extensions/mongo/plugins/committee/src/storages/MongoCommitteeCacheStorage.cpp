@@ -8,6 +8,7 @@
 #include "src/mappers/CommitteeEntryMapper.h"
 #include "mongo/src/storages/MongoCacheStorage.h"
 #include "plugins/txes/committee/src/cache/CommitteeCache.h"
+#include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;
 
@@ -22,8 +23,8 @@ namespace catapult { namespace mongo { namespace plugins {
 				return mappers::ToBinary(key);
 			}
 
-			static auto MapToMongoDocument(const ModelType& entry, model::NetworkIdentifier) {
-				return plugins::ToDbModel(entry);
+			static auto MapToMongoDocument(const ModelType& entry, model::NetworkIdentifier networkIdentifier) {
+				return plugins::ToDbModel(entry, model::PublicKeyToAddress(entry.key(), networkIdentifier));
 			}
 
 			static void Insert(CacheDeltaType& cache, const bsoncxx::document::view& document) {
