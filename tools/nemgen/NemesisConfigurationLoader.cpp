@@ -19,6 +19,7 @@
 **/
 
 #include "NemesisConfigurationLoader.h"
+#include "catapult/crypto/KeyPair.h"
 #include "catapult/model/Address.h"
 #include "catapult/utils/ConfigurationBag.h"
 #include <boost/filesystem.hpp>
@@ -96,6 +97,21 @@ namespace catapult { namespace tools { namespace nemgen {
 
 			return true;
 		}
+
+		bool LogHarvesters(const NemesisConfiguration& config) {
+			CATAPULT_LOG(debug) << "Harvester private keys";
+			for (const auto& harvesterPrivateKey: config.HarvesterPrivateKeys) {
+				CATAPULT_LOG(debug) << " - " << harvesterPrivateKey;
+				try {
+					crypto::KeyPair::FromString(harvesterPrivateKey);
+				} catch (...) {
+					CATAPULT_LOG(warning) << "harvester private key " << harvesterPrivateKey << " is invalid";
+					return false;
+				}
+			}
+
+			return true;
+		}
 	}
 
 	NemesisConfiguration LoadNemesisConfiguration(const std::string& configPath) {
@@ -122,6 +138,6 @@ namespace catapult { namespace tools { namespace nemgen {
 		LogNamespaces(config);
 
 		// - mosaic definitions and distribution
-		return LogMosaicDefinitions(config) && LogMosaicDistribution(config);
+		return LogMosaicDefinitions(config) && LogMosaicDistribution(config) && LogHarvesters(config);
 	}
 }}}
