@@ -237,7 +237,7 @@ namespace catapult { namespace plugins {
 		model::ExtractorContext createExtractorContext(const cache::CatapultCache& cache) const;
 
 		/// Adds a config \a initializer.
-		void addPluginInitializer(const PluginInitializer& initializer);
+		void addPluginInitializer(PluginInitializer&& initializer);
 
 		/// Creates a config  initializer.
 		PluginInitializer createPluginInitializer() const;

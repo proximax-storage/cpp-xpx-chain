@@ -52,7 +52,7 @@ strictSigner = true
 
 enabled = true
 
-committeeNumber = 21
+committeeNumber = 5
 minGreed = 0.1
 # log(7/3)
 initialActivity = 0.367976785

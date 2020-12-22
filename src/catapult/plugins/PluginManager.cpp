@@ -279,8 +279,8 @@ namespace catapult { namespace plugins {
 		return model::ExtractorContext(bindExtractorToCache(addressesExtractors), bindExtractorToCache(publicKeysExtractors));
 	}
 
-	void PluginManager::addPluginInitializer(const PluginInitializer& initializer) {
-		m_pluginInitializers.push_back(initializer);
+	void PluginManager::addPluginInitializer(PluginInitializer&& initializer) {
+		m_pluginInitializers.push_back(std::move(initializer));
 	}
 
 	PluginManager::PluginInitializer PluginManager::createPluginInitializer() const {

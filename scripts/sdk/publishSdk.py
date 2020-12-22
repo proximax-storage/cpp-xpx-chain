@@ -179,7 +179,7 @@ def publish_all():
     for component in ['api', 'config', 'crypto', 'io', 'ionet', 'model', 'net', 'state', 'thread', 'utils', 'version']:
         publisher.publish_component(component)
 
-    for transaction in ['account_link', 'aggregate', 'config', 'contract', 'lock_hash', 'lock_secret', 'mosaic', 'multisig', 'namespace', 'property', 'transfer', 'upgrade']:
+    for transaction in ['account_link', 'aggregate', 'committee', 'config', 'contract', 'lock_hash', 'lock_secret', 'mosaic', 'multisig', 'namespace', 'property', 'transfer', 'upgrade']:
         publisher.publish_plugin('txes', transaction, ['model', 'plugins', 'state'])
 
     for service in ['hashcache']:

@@ -20,6 +20,7 @@
 
 #include "LocalNodeRequestTestUtils.h"
 #include "sdk/src/extensions/BlockExtensions.h"
+#include "plugins/txes/committee/src/plugins/AddHarvesterTransactionPlugin.h"
 #include "plugins/txes/config/src/plugins/NetworkConfigTransactionPlugin.h"
 #include "plugins/txes/upgrade/src/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "plugins/txes/mosaic/src/plugins/MosaicDefinitionTransactionPlugin.h"
@@ -43,6 +44,7 @@ namespace catapult { namespace test {
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		registry.registerPlugin(plugins::CreateNetworkConfigTransactionPlugin());
 		registry.registerPlugin(plugins::CreateBlockchainUpgradeTransactionPlugin());
+		registry.registerPlugin(plugins::CreateAddHarvesterTransactionPlugin());
 		return registry;
 	}
 

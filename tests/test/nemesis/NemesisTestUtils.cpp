@@ -100,7 +100,7 @@ namespace catapult { namespace test {
 
 		void AssertNemesisState(const cache::AccountStateCacheView& view) {
 			// Assert:
-			EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys), view.size());
+			EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys) + 22u, view.size());
 
 			// - check nemesis account
 			AssertNemesisAccount(view);

@@ -18,11 +18,12 @@
 *** along with Catapult. If not, see <http://www.gnu.org/licenses/>.
 **/
 
-#include <plugins/txes/namespace/src/config/NamespaceConfiguration.h>
-#include <plugins/txes/mosaic/src/config/MosaicConfiguration.h>
-#include <plugins/txes/transfer/src/config/TransferConfiguration.h>
-#include <plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h>
-#include <plugins/txes/config/src/config/NetworkConfigConfiguration.h>
+#include "plugins/txes/namespace/src/config/NamespaceConfiguration.h"
+#include "plugins/txes/mosaic/src/config/MosaicConfiguration.h"
+#include "plugins/txes/transfer/src/config/TransferConfiguration.h"
+#include "plugins/txes/upgrade/src/config/BlockchainUpgradeConfiguration.h"
+#include "plugins/txes/config/src/config/NetworkConfigConfiguration.h"
+#include "plugins/txes/committee/src/config/CommitteeConfiguration.h"
 #include "NemesisCompatibleConfiguration.h"
 #include "tests/test/local/LocalTestUtils.h"
 #include "tests/test/nodeps/MijinConstants.h"
@@ -67,12 +68,23 @@ namespace catapult { namespace test {
 		config.Plugins.emplace(PLUGIN_NAME(upgrade), utils::ConfigurationBag({ { "", {
 			{ "minUpgradePeriod", "360" },
 		} } }));
+		config.Plugins.emplace(PLUGIN_NAME(committee), utils::ConfigurationBag({ { "", {
+			{ "enabled", "true" },
+
+			{ "committeeNumber", "21" },
+			{ "minGreed", "0.1" },
+			{ "initialActivity", "0.367976785" },
+			{ "activityDelta", "0.00001" },
+			{ "activityCommitteeCosignedDelta", "0.01" },
+			{ "activityCommitteeNotCosignedDelta", "0.02" },
+		} } }));
 
 		config.template InitPluginConfiguration<config::TransferConfiguration>();
 		config.template InitPluginConfiguration<config::MosaicConfiguration>();
 		config.template InitPluginConfiguration<config::NamespaceConfiguration>();
 		config.template InitPluginConfiguration<config::BlockchainUpgradeConfiguration>();
 		config.template InitPluginConfiguration<config::NetworkConfigConfiguration>();
+		config.template InitPluginConfiguration<config::CommitteeConfiguration>();
 	}
 
 	namespace {

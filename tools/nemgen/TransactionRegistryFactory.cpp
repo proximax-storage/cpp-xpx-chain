@@ -19,6 +19,7 @@
 **/
 
 #include "TransactionRegistryFactory.h"
+#include "catapult/plugins/AddHarvesterTransactionPlugin.h"
 #include "catapult/plugins/NetworkConfigTransactionPlugin.h"
 #include "catapult/plugins/BlockchainUpgradeTransactionPlugin.h"
 #include "catapult/plugins/MosaicAliasTransactionPlugin.h"
@@ -36,8 +37,8 @@ namespace catapult { namespace tools { namespace nemgen {
 		auto namespaceConfig = config::NamespaceConfiguration::Uninitialized();
 		auto networkConfig = model::NetworkConfiguration::Uninitialized();
 		networkConfig.SetPluginConfiguration(mosaicConfig);
-
 		networkConfig.SetPluginConfiguration(namespaceConfig);
+
 		config::BlockchainConfiguration config{
 			config::ImmutableConfiguration::Uninitialized(),
 			std::move(networkConfig),
@@ -58,6 +59,7 @@ namespace catapult { namespace tools { namespace nemgen {
 		registry.registerPlugin(plugins::CreateTransferTransactionPlugin());
 		registry.registerPlugin(plugins::CreateNetworkConfigTransactionPlugin());
 		registry.registerPlugin(plugins::CreateBlockchainUpgradeTransactionPlugin());
+		registry.registerPlugin(plugins::CreateAddHarvesterTransactionPlugin());
 		return registry;
 	}
 }}}

@@ -18,6 +18,7 @@ target_link_libraries(${TARGET_NAME}
 	catapult.plugins.namespace
 	catapult.plugins.transfer
 	catapult.plugins.upgrade
+	catapult.plugins.committee
 	catapult.crypto
 	catapult.config
 	catapult.config_holder)

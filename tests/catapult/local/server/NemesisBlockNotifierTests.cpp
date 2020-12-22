@@ -180,7 +180,7 @@ namespace catapult { namespace local {
 		EXPECT_EQ(Height(1), stateChangeInfo.Height);
 
 		// - check account state changes
-		EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys), addedAddresses.size());
+		EXPECT_EQ(3u + CountOf(test::Mijin_Test_Private_Keys) + 22u, addedAddresses.size());
 
 		// - check nemesis and rental fee sinks
 		EXPECT_TRUE(ContainsModifiedPrivate(addedAddresses, test::Mijin_Test_Nemesis_Private_Key));

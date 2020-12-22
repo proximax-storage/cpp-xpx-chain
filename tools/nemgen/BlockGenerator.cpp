@@ -22,6 +22,7 @@
 #include "NemesisConfiguration.h"
 #include "NemesisExecutionHasher.h"
 #include "TransactionRegistryFactory.h"
+#include "catapult/builders/AddHarvesterBuilder.h"
 #include "catapult/builders/NetworkConfigBuilder.h"
 #include "catapult/builders/BlockchainUpgradeBuilder.h"
 #include "catapult/builders/MosaicAliasBuilder.h"
@@ -168,6 +169,13 @@ namespace catapult { namespace tools { namespace nemgen {
 				signAndAdd(builder.build());
 			}
 
+			void addHarvester(const std::string& harvesterPrivateKey) {
+				auto signer = crypto::KeyPair::FromString(harvesterPrivateKey);
+				builders::AddHarvesterBuilder builder(m_networkIdentifier, signer.publicKey());
+
+				signAndAdd(builder.build(), signer);
+			}
+
 		public:
 			const model::Transactions& transactions() const {
 				return m_transactions;
@@ -175,8 +183,12 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		private:
 			void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction) {
+				signAndAdd(std::move(pTransaction), m_signer);
+			}
+
+			void signAndAdd(model::UniqueEntityPtr<model::Transaction>&& pTransaction, const crypto::KeyPair& signer) {
 				pTransaction->Deadline = Timestamp(1);
-				extensions::TransactionExtensions(m_generationHash).sign(m_signer, *pTransaction);
+				extensions::TransactionExtensions(m_generationHash).sign(signer, *pTransaction);
 				m_transactions.push_back(std::move(pTransaction));
 			}
 
@@ -245,6 +257,10 @@ namespace catapult { namespace tools { namespace nemgen {
 
 		transactions.addConfig(resourcesPath);
 		transactions.addUpgrade();
+
+		for (const auto& key : config.HarvesterPrivateKeys) {
+			transactions.addHarvester(key);
+		}
 
 		model::PreviousBlockContext context;
 		auto pBlock = model::CreateBlock(context, config.NetworkIdentifier, signer.publicKey(), transactions.transactions());
