@@ -3,6 +3,7 @@
 	db.drives.createIndex({ 'drive.multisig': 1 }, { unique: true });
 	db.drives.createIndex({ 'drive.multisigAddress': 1 }, { unique: true });
 	db.drives.createIndex({ 'drive.owner': 1 }, { unique: false });
+	db.drives.createIndex({ 'drive.state': 1 }, { unique: false });
 	db.drives.createIndex({ 'drive.replicators.replicator': 1 }, { unique: false });
 
 	db.createCollection('downloads');
