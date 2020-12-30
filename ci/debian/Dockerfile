@@ -1,6 +1,5 @@
-#FROM debian:unstable-20200607
 FROM debian:stable-slim
-#COPY ./deps /
+COPY ./deps /
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
   libboost-atomic-dev \
@@ -18,8 +17,8 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   libzstd-dev \
   librocksdb5.17 
 
-#COPY _build/bin /sirius/bin
+COPY _build/bin /sirius/bin
 
-#ENTRYPOINT [ "/sirius/bin/sirius.bc" ]
+ENTRYPOINT [ "/sirius/bin/sirius.bc" ]
 
-#CMD [ "/chainconfig"]
+CMD [ "/chainconfig"]
