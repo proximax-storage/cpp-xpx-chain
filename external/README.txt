@@ -1,3 +1,6 @@
+blst - is a BLS12-381 signature library focused on performance and security. It is written in C and assembly.
+https://github.com/supranational/blst
+
 ref10 - public domain, implementation from supercop
 http://bench.cr.yp.to/supercop/supercop-20190110.tar.xz
 crypo_sign\ed25519\ref10

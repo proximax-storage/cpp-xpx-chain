@@ -30,8 +30,10 @@ namespace catapult {
 
 	// region byte arrays (ex address)
 
+	constexpr size_t BLS_Signature_Size = 96;
 	constexpr size_t Signature_Size = 64;
 	constexpr size_t Key_Size = 32;
+	constexpr size_t BLS_Public_Key_Size = 48;
 	constexpr size_t Hash512_Size = 64;
 	constexpr size_t Hash256_Size = 32;
 	constexpr size_t Hash160_Size = 20;
@@ -39,8 +41,12 @@ namespace catapult {
 	struct Signature_tag {};
 	using Signature = utils::ByteArray<Signature_Size, Signature_tag>;
 
+	using BLSSignature = utils::Bytes<BLS_Signature_Size>;
+
 	struct Key_tag {};
 	using Key = utils::ByteArray<Key_Size, Key_tag>;
+
+	using BLSPublicKey = utils::Bytes<BLS_Public_Key_Size>;
 
 	struct Hash512_tag { static constexpr auto Byte_Size = 64; };
 	using Hash512 = utils::ByteArray<Hash512_Size, Hash512_tag>;

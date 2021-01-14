@@ -62,6 +62,44 @@ namespace catapult { namespace crypto {
 		Key m_publicKey;
 	};
 
+	/// Represents a BLS pair of private key with associated public key.
+	class BLSKeyPair final {
+	private:
+		explicit BLSKeyPair(BLSPrivateKey&& privateKey) : m_privateKey(std::move(privateKey)) {
+			ExtractPublicKeyFromPrivateKey(m_privateKey, m_publicKey);
+		}
+
+	public:
+		/// Creates a key pair from \a privateKey.
+		static auto FromPrivate(BLSPrivateKey&& privateKey) {
+			return BLSKeyPair(std::move(privateKey));
+		}
+
+		/// Creates a key pair from \a privateKey.
+		static auto FromString(const std::string& privateKey) {
+			return FromPrivate(BLSPrivateKey::FromString(privateKey));
+		}
+
+		/// Creates a key pair from \a privateKey.
+		static auto FromRawString(const std::string& privateKey) {
+			return FromPrivate(BLSPrivateKey::FromRawString(privateKey));
+		}
+
+		/// Returns a private key of a key pair.
+		const auto& privateKey() const {
+			return m_privateKey;
+		}
+
+		/// Returns a public key of a key pair.
+		const auto& publicKey() const {
+			return m_publicKey;
+		}
+
+	private:
+		BLSPrivateKey m_privateKey;
+		BLSPublicKey m_publicKey;
+	};
+
 #ifdef SPAMMER_TOOL
 #pragma pack(pop)
 #endif
