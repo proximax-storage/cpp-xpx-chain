@@ -23,41 +23,41 @@ namespace catapult {
 
 namespace catapult { namespace fastfinality {
 
-	/// A retriever that returns the block hashes at given height from a number of peers and attaches packet io pair to each hash.
-	using RemoteBlockHashesIoRetriever = std::function<thread::future<std::vector<std::pair<Hash256, std::shared_ptr<ionet::NodePacketIoPair>>>> (size_t, const Height&)>;
+	/// A retriever that returns the network chain heights for all available peers.
+	using RemoteChainHeightsRetriever = std::function<thread::future<std::vector<Height>> ()>;
 
-	/// A retriever that returns the network committee stages from a number of peers.
-	using RemoteCommitteeStagesRetriever = std::function<thread::future<std::vector<CommitteeStage>> (size_t)>;
+	/// A retriever that returns the block hashes at given height from all available peers and attaches node info to each hash.
+	using RemoteBlockHashesRetriever = std::function<thread::future<std::vector<std::pair<Hash256, Key>>> (const Height&)>;
 
-	/// A retriever that returns the proposed block from a number of peers.
-	using RemoteProposedBlockRetriever = std::function<thread::future<std::vector<std::shared_ptr<model::Block>>> (size_t)>;
+	/// A retriever that returns the network committee stages from all available peers.
+	using RemoteCommitteeStagesRetriever = std::function<thread::future<std::vector<CommitteeStage>> ()>;
 
-	/// Registers a committee stage pull handler in \a handlers constructing response from \a pFsm.
+	/// Registers a committee stage pull handler in \a handlers constructing response from \a pFsmWeak.
 	void RegisterPullCommitteeStageHandler(
-		const std::shared_ptr<WeightedVotingFsm>& pFsm,
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers);
 
-	/// Registers a push proposed block handler in \a handlers verifying data with \a pFsm and \a pluginManager.
+	/// Registers a push proposed block handler in \a handlers.
 	void RegisterPushProposedBlockHandler(
-		const std::shared_ptr<WeightedVotingFsm>& pFsm,
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers,
 		const plugins::PluginManager& pluginManager,
-		const extensions::PacketPayloadSink& packetPayloadSink);
+		const model::BlockElementSupplier& lastBlockElementSupplier);
 
-	/// Registers a pull proposed block handler in \a handlers verifying data with \a pFsm and \a pluginManager.
-	void RegisterPullProposedBlockHandler(
-		const std::shared_ptr<WeightedVotingFsm>& pFsm,
+	/// Registers a push confirmed block handler in \a handlers verifying data with \a pFsmWeak and \a pluginManager.
+	void RegisterPushConfirmedBlockHandler(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		ionet::ServerPacketHandlers& handlers,
+		const plugins::PluginManager& pluginManager,
+		const model::BlockElementSupplier& lastBlockElementSupplier);
+
+	/// Registers a push prevote message handler in \a handlers constructing response from \a pFsmWeak.
+	void RegisterPushPrevoteMessageHandler(
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers);
 
-	/// Registers a push prevote message handler in \a handlers constructing response from \a pFsm.
-	void RegisterPushPrevoteMessageHandler(
-		const std::shared_ptr<WeightedVotingFsm>& pFsm,
-		ionet::ServerPacketHandlers& handlers,
-		const extensions::PacketPayloadSink& packetPayloadSink);
-
-	/// Registers a push precommit message handler in \a handlers that adds the message to \a pFsm.
+	/// Registers a push precommit message handler in \a handlers that adds the message to \a pFsmWeak.
 	void RegisterPushPrecommitMessageHandler(
-		const std::shared_ptr<WeightedVotingFsm>& pFsm,
-		ionet::ServerPacketHandlers& handlers,
-		const extensions::PacketPayloadSink& packetPayloadSink);
+		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
+		ionet::ServerPacketHandlers& handlers);
 }}

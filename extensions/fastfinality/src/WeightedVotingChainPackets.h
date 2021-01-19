@@ -10,6 +10,7 @@
 #include "catapult/ionet/Packet.h"
 #include "catapult/ionet/PacketEntityUtils.h"
 #include "catapult/ionet/PacketPayload.h"
+#include "catapult/model/Cosignature.h"
 
 namespace catapult { namespace fastfinality {
 
@@ -18,7 +19,7 @@ namespace catapult { namespace fastfinality {
 	struct CommitteeStageResponse : public ionet::Packet {
 		static constexpr ionet::PacketType Packet_Type = ionet::PacketType::Pull_Committee_Stage;
 
-		uint16_t Round = 0u;
+		int16_t Round = -1;
 		CommitteePhase Phase = CommitteePhase::None;
 		Timestamp RoundStart;
 		uint64_t PhaseTimeMillis = 0u;
@@ -48,33 +49,13 @@ namespace catapult { namespace fastfinality {
 		}
 	};
 
-	struct PullProposedBlockTraits : public api::RegistryDependentTraits<model::Block> {
-	public:
-		using ResultType = std::shared_ptr<model::Block>;
-		static constexpr auto Packet_Type = ionet::PacketType::Pull_Proposed_Block;
-		static constexpr auto Friendly_Name = "proposed block";
-
-		static auto CreateRequestPacketPayload() {
-			return ionet::PacketPayload(Packet_Type);
-		}
-
-	public:
-		using RegistryDependentTraits::RegistryDependentTraits;
-
-		bool tryParseResult(const ionet::Packet& packet, ResultType& result) const {
-			result = ionet::ExtractEntityFromPacket<model::Block>(packet, *this);
-			return !!result;
-		}
-	};
-
 	enum class CommitteeMessageType : uint8_t {
 		Prevote,
 		Precommit,
 	};
 
-	template<CommitteeMessageType MessageType>
 	struct CommitteeMessage {
-		const CommitteeMessageType Type = MessageType;
+		CommitteeMessageType Type;
 		Hash256 BlockHash;
 		model::Cosignature BlockCosignature;
 	};
@@ -82,8 +63,9 @@ namespace catapult { namespace fastfinality {
 	template<ionet::PacketType PacketType, CommitteeMessageType MessageType>
 	struct CommitteeMessagePacket : public ionet::Packet {
 		static constexpr ionet::PacketType Packet_Type = PacketType;
+		static constexpr CommitteeMessageType Message_Type = MessageType;
 
-		CommitteeMessage<MessageType> Message;
+		CommitteeMessage Message;
 		Signature MessageSignature;
 	};
 
@@ -91,7 +73,7 @@ namespace catapult { namespace fastfinality {
 	RawBuffer CommitteeMessageDataBuffer(const CommitteeMessagePacket<PacketType, MessageType>& packet) {
 		return {
 			reinterpret_cast<const uint8_t*>(&packet) + sizeof(ionet::Packet),
-			sizeof(CommitteeMessage<MessageType>)
+			sizeof(CommitteeMessage)
 		};
 	}
 

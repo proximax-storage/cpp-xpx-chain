@@ -41,12 +41,13 @@ namespace catapult { namespace model {
 				+ Key_Size // beneficiary
 				+ sizeof(uint32_t) // fee interest
 				+ sizeof(uint32_t) // fee interest divisibility
+				+ sizeof(int16_t) // committee round
 				+ sizeof(uint64_t) // committee phase time
 				+ sizeof(uint32_t); // transaction payload size
 
 		// Assert:
 		EXPECT_EQ(expectedSize, sizeof(BlockHeader));
-		EXPECT_EQ(106u + 208u, sizeof(BlockHeader));
+		EXPECT_EQ(106u + 210u, sizeof(BlockHeader));
 
 		EXPECT_EQ(sizeof(BlockHeader), sizeof(decltype(Block()))); // use decltype to bypass lint rule
 	}

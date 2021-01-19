@@ -6,6 +6,7 @@
 
 #pragma once
 #include "CommitteeStage.h"
+#include "WeightedVotingChainPackets.h"
 #include "catapult/model/EntityHasher.h"
 #include <atomic>
 #include <map>
@@ -21,7 +22,8 @@ namespace catapult {
 
 namespace catapult { namespace fastfinality {
 
-	using VoteMap = std::map<Key, Signature>;
+	template<typename TPacket>
+	using VoteMap = std::map<Key, std::shared_ptr<TPacket>>;
 
 	class CommitteeData {
 	public:
@@ -29,7 +31,6 @@ namespace catapult { namespace fastfinality {
 			: m_stage(CommitteeStage{})
 			, m_pBlockProposer(nullptr)
 			, m_totalSumOfVotes(0.0)
-			, m_proposalMultiple(false)
 		{}
 
 	public:
@@ -84,7 +85,7 @@ namespace catapult { namespace fastfinality {
 		void setProposedBlock(std::shared_ptr<model::Block> pBlock) {
 			{
 				std::lock_guard<std::mutex> guard(m_mutex);
-				m_proposedBlockHash = !!pBlock ? model::CalculateHash(*pBlock) : Hash256{};
+				m_proposedBlockHash = pBlock ? model::CalculateHash(*pBlock) : Hash256{};
 			}
 			std::atomic_store(&m_pProposedBlock, pBlock);
 		}
@@ -93,12 +94,12 @@ namespace catapult { namespace fastfinality {
 			return std::atomic_load(&m_pProposedBlock);
 		}
 
-		void setProposalMultiple(bool value) {
-			m_proposalMultiple = value;
+		void setConfirmedBlock(std::shared_ptr<model::Block> pBlock) {
+			std::atomic_store(&m_pConfirmedBlock, pBlock);
 		}
 
-		auto proposalMultiple() const {
-			return m_proposalMultiple.load();
+		auto confirmedBlock() const {
+			return std::atomic_load(&m_pConfirmedBlock);
 		}
 
 		auto proposedBlockHash() const {
@@ -106,39 +107,9 @@ namespace catapult { namespace fastfinality {
 			return m_proposedBlockHash;
 		}
 
-		void addPrevote(const Key& signer, const Signature& signature) {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			m_prevotes.emplace(signer, signature);
-		}
-
-		void clearPrevotes() {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			m_prevotes.clear();
-		}
-
 		auto prevotes() const {
 			std::lock_guard<std::mutex> guard(m_mutex);
 			return m_prevotes;
-		}
-
-		auto getPrevote(const Key& signer) {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			return m_prevotes.at(signer);
-		}
-
-		bool hasPrevote(const Key& signer) {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			return (m_prevotes.find(signer) != m_prevotes.end());
-		}
-
-		void addPrecommit(const Key& signer, const Signature& signature) {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			m_precommits.emplace(signer, signature);
-		}
-
-		void clearPrecommits() {
-			std::lock_guard<std::mutex> guard(m_mutex);
-			m_precommits.clear();
 		}
 
 		auto precommits() const {
@@ -146,9 +117,34 @@ namespace catapult { namespace fastfinality {
 			return m_precommits;
 		}
 
-		bool hasPrecommit(const Key& signer) {
+		void addVote(std::shared_ptr<PrevoteMessagePacket>&& pPacket) {
 			std::lock_guard<std::mutex> guard(m_mutex);
-			return (m_precommits.find(signer) != m_precommits.end());
+			m_prevotes.emplace(pPacket->Message.BlockCosignature.Signer, std::move(pPacket));
+		}
+
+		void addVote(std::shared_ptr<PrecommitMessagePacket>&& pPacket) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			m_precommits.emplace(pPacket->Message.BlockCosignature.Signer, std::move(pPacket));
+		}
+
+		void clearVotes() {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			m_prevotes.clear();
+			m_precommits.clear();
+		}
+
+		bool hasVote(const Key& signer, CommitteeMessageType type) {
+			std::lock_guard<std::mutex> guard(m_mutex);
+			switch (type) {
+				case CommitteeMessageType::Prevote:
+					return (m_prevotes.find(signer) != m_prevotes.end());
+
+				case CommitteeMessageType::Precommit:
+					return (m_precommits.find(signer) != m_precommits.end());
+
+				default:
+					return false;
+			}
 		}
 
 	private:
@@ -162,12 +158,11 @@ namespace catapult { namespace fastfinality {
 		double m_totalSumOfVotes;
 
 		std::shared_ptr<model::Block> m_pProposedBlock;
-		std::atomic_bool m_proposalMultiple;
 		Hash256 m_proposedBlockHash;
+		std::shared_ptr<model::Block> m_pConfirmedBlock;
 
-		VoteMap m_prevotes;
-		VoteMap m_precommits;
-
+		VoteMap<PrevoteMessagePacket> m_prevotes;
+		VoteMap<PrecommitMessagePacket> m_precommits;
 		mutable std::mutex m_mutex;
 	};
 }}

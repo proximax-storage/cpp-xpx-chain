@@ -96,7 +96,7 @@ namespace catapult { namespace model {
 					auto pCosignature = block.CosignaturesPtr();
 					auto cosignaturesCount = block.CosignaturesCount();
 
-					sub.notify(BlockCosignaturesNotification<1>(block.Signer, cosignaturesCount, pCosignature, block.FeeInterest, block.FeeInterestDenominator));
+					sub.notify(BlockCosignaturesNotification<1>(block.Signer, block.Round, cosignaturesCount, pCosignature, block.FeeInterest, block.FeeInterestDenominator));
 
 					for (auto i = 0u; i < cosignaturesCount; ++i, ++pCosignature)
 						sub.notify(SignatureNotification<1>(pCosignature->Signer, pCosignature->Signature, blockData));

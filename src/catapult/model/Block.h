@@ -70,6 +70,9 @@ namespace catapult { namespace model {
 		/// Denominator of the transaction fee.
 		uint32_t FeeInterestDenominator;
 
+		/// Committee round (number of attempts to generate this block).
+		int16_t Round;
+
 		/// Time lapse in milliseconds of the committee phase of the round this block was generated in.
 		uint64_t CommitteePhaseTime;
 

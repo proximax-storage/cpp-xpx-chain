@@ -101,8 +101,8 @@ namespace catapult { namespace chain {
 	const Committee& WeightedVotingCommitteeManager::selectCommittee(const model::NetworkConfiguration& networkConfig) {
 		auto generationHash = lastBlockElementSupplier()()->GenerationHash;
 		const auto& accounts = m_pAccountCollector->accounts();
-		auto round = m_committee.Round;
-		m_committee = Committee(round + 1);
+		auto previousRound = m_committee.Round;
+		m_committee = Committee(previousRound + 1);
 
 		// Compute account rates and sort them in descending order.
 		std::multimap<double, Key, std::greater<>> rates;
@@ -113,9 +113,9 @@ namespace catapult { namespace chain {
 
 			const auto& key = pair.first;
 			auto weight = CalculateWeight(accountData);
-			const auto& hash = round ?
-				m_pHasher->calculateHash(m_hashes.at(key)) :
-				m_pHasher->calculateHash(m_hashes[key], generationHash, key);
+			const auto& hash = previousRound < 0 ?
+				m_pHasher->calculateHash(m_hashes[key], generationHash, key) :
+				m_pHasher->calculateHash(m_hashes.at(key));
 			auto hit = *reinterpret_cast<const uint64_t*>(hash.data());
 			if (hit == 0u)
 				hit = 1u;
@@ -128,22 +128,20 @@ namespace catapult { namespace chain {
 		// the committee.
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		auto endRateIter = rates.begin();
-		for (auto i = 0u; i < config.CommitteeNumber && endRateIter != rates.end(); ++i, ++endRateIter);
+		for (auto i = 0u; i < networkConfig.CommitteeSize && endRateIter != rates.end(); ++i, ++endRateIter);
 		if (endRateIter != rates.end())
 			endRateIter = rates.equal_range(endRateIter->first).second;
 		std::map<Rate, Key, RateGreater> committeeCandidates;
 		for (auto rateIter = rates.begin(); rateIter != endRateIter; ++rateIter)
 			committeeCandidates.emplace(Rate(rateIter->first, rateIter->second, *m_pHasher), rateIter->second);
 
-		// TODO: what if factual committee number is zero or less than CommitteeNumber?
-		if (committeeCandidates.empty()) {
-			return m_committee;
-		}
+		if (committeeCandidates.empty())
+			CATAPULT_THROW_RUNTIME_ERROR_1("committee empty", m_committee.Round);
 
 		// Select the first 21 candidates to the committee and select block proposer.
 		std::map<Rate, Key, RateLess> blockProposerCandidates;
 		auto candidateIter = committeeCandidates.begin();
-		for (auto i = 0u; i < config.CommitteeNumber && candidateIter != committeeCandidates.end(); ++i, ++candidateIter) {
+		for (auto i = 0u; i < networkConfig.CommitteeSize && candidateIter != committeeCandidates.end(); ++i, ++candidateIter) {
 			const auto& key = candidateIter->second;
 			m_committee.Cosigners.insert(key);
 
@@ -151,6 +149,9 @@ namespace catapult { namespace chain {
 			auto hit = *reinterpret_cast<const uint64_t*>(m_hashes.at(key).data());
 			blockProposerCandidates.emplace(Rate(greed * hit, key, *m_pHasher), key);
 		}
+
+		if (m_committee.Cosigners.size() < networkConfig.CommitteeSize)
+			CATAPULT_THROW_RUNTIME_ERROR_2("committee not full", m_committee.Cosigners.size(), networkConfig.CommitteeSize);
 
 		m_committee.BlockProposer = blockProposerCandidates.begin()->second;
 		m_committee.Cosigners.erase(m_committee.BlockProposer);

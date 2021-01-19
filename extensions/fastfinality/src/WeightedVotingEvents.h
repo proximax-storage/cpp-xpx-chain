@@ -32,15 +32,18 @@ namespace catapult { namespace fastfinality {
 		CommitteePhase Phase;
 	};
 
+	struct UnexpectedBlockHeight{};
+
 	struct BlockProposingFailed{};
 	struct BlockProposingSucceeded{};
 
-	struct MultipleProposal{};
 	struct ProposalNotReceived{};
 	struct ProposalReceived{};
 
 	struct ProposalInvalid{};
 	struct ProposalValid{};
+
+	struct ProposalPhaseEnded{};
 
 	struct SumOfPrevotesInsufficient{};
 	struct SumOfPrevotesSufficient{};
@@ -51,5 +54,8 @@ namespace catapult { namespace fastfinality {
 	struct CommitBlockFailed{};
 	struct CommitBlockSucceeded{};
 
-	struct RoundEnded{};
+	struct ConfirmedBlockNotReceived{};
+	struct ConfirmedBlockReceived{};
+
+	struct Stop{};
 }}

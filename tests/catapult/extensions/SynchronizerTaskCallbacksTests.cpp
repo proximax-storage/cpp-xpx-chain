@@ -46,7 +46,7 @@ namespace catapult { namespace extensions {
 		template<typename TTraits>
 		thread::TaskCallback ProcessSyncAndCapture(
 				test::ServiceTestState& testState,
-				const std::shared_ptr<net::PacketIoPicker>& pPacketIoPicker,
+				net::PacketIoPicker& packetIoPicker,
 				bool isChainSynced,
 				TaskCallbackParamsCapture& capture,
 				ionet::NodeInteractionResultCode code = ionet::NodeInteractionResultCode::Success) {
@@ -69,7 +69,7 @@ namespace catapult { namespace extensions {
 				capture.pFactoryTransactionRegistry = &registry;
 				return std::make_unique<int>(Default_Action_Api_Id);
 			};
-			return TTraits::CreateTask(std::move(synchronizer), remoteApiFactory, pPacketIoPicker, testState.state(), "test");
+			return TTraits::CreateTask(std::move(synchronizer), remoteApiFactory, packetIoPicker, testState.state(), "test");
 		}
 
 		struct DefaultCallbackTraits {
@@ -94,11 +94,11 @@ namespace catapult { namespace extensions {
 		void AssertActionIsSkippedWhenNoPeerIsAvailable() {
 			// Arrange: create an empty writers
 			test::ServiceTestState testState;
-			auto pWriters = std::make_shared<mocks::PickOneAwareMockPacketWriters>();
+			mocks::PickOneAwareMockPacketWriters writers;
 
 			// Act:
 			TaskCallbackParamsCapture capture;
-			auto result = ProcessSyncAndCapture<TTraits>(testState, pWriters, true, capture)().get();
+			auto result = ProcessSyncAndCapture<TTraits>(testState, writers, true, capture)().get();
 
 			// Assert:
 			EXPECT_EQ(thread::TaskResult::Continue, result);
@@ -107,8 +107,8 @@ namespace catapult { namespace extensions {
 			EXPECT_EQ(TTraits::Num_Expected_Chain_Synced_Calls, capture.NumChainSyncedCalls);
 
 			// - pick one was called
-			ASSERT_EQ(1u, pWriters->numPickOneCalls());
-			EXPECT_EQ(Default_Timeout_Seconds, pWriters->pickOneDurations()[0].seconds());
+			ASSERT_EQ(1u, writers.numPickOneCalls());
+			EXPECT_EQ(Default_Timeout_Seconds, writers.pickOneDurations()[0].seconds());
 
 			// - other calls were bypassed
 			EXPECT_EQ(0u, capture.NumFactoryCalls);
@@ -121,13 +121,13 @@ namespace catapult { namespace extensions {
 			test::ServiceTestState testState;
 			auto pPacketIo = std::make_shared<mocks::MockPacketIo>();
 			auto identityKey = test::GenerateRandomByteArray<Key>();
-			auto pWriters = std::make_shared<mocks::PickOneAwareMockPacketWriters>();
-			pWriters->setPacketIo(pPacketIo);
-			pWriters->setNodeIdentity(identityKey);
+			mocks::PickOneAwareMockPacketWriters writers;
+			writers.setPacketIo(pPacketIo);
+			writers.setNodeIdentity(identityKey);
 
 			// Act:
 			TaskCallbackParamsCapture capture;
-			auto result = ProcessSyncAndCapture<TTraits>(testState, pWriters, isChainSynced, capture)().get();
+			auto result = ProcessSyncAndCapture<TTraits>(testState, writers, isChainSynced, capture)().get();
 
 			// Assert:
 			EXPECT_EQ(thread::TaskResult::Continue, result);
@@ -136,8 +136,8 @@ namespace catapult { namespace extensions {
 			EXPECT_EQ(TTraits::Num_Expected_Chain_Synced_Calls, capture.NumChainSyncedCalls);
 
 			// - pick one was called
-			ASSERT_EQ(1u, pWriters->numPickOneCalls());
-			EXPECT_EQ(Default_Timeout_Seconds, pWriters->pickOneDurations()[0].seconds());
+			ASSERT_EQ(1u, writers.numPickOneCalls());
+			EXPECT_EQ(Default_Timeout_Seconds, writers.pickOneDurations()[0].seconds());
 
 			// - factory was called
 			EXPECT_EQ(1u, capture.NumFactoryCalls);
@@ -175,12 +175,12 @@ namespace catapult { namespace extensions {
 		// Arrange: create writers with a valid packet
 		test::ServiceTestState testState;
 		auto pPacketIo = std::make_shared<mocks::MockPacketIo>();
-		auto pWriters = std::make_shared<mocks::PickOneAwareMockPacketWriters>();
-		pWriters->setPacketIo(pPacketIo);
+		mocks::PickOneAwareMockPacketWriters writers;
+		writers.setPacketIo(pPacketIo);
 
 		// Act:
 		TaskCallbackParamsCapture capture;
-		auto result = ProcessSyncAndCapture<ChainSyncAwareCallbackTraits>(testState, pWriters, false, capture)().get();
+		auto result = ProcessSyncAndCapture<ChainSyncAwareCallbackTraits>(testState, writers, false, capture)().get();
 
 		// Assert:
 		EXPECT_EQ(thread::TaskResult::Continue, result);
@@ -189,7 +189,7 @@ namespace catapult { namespace extensions {
 		EXPECT_EQ(1u, capture.NumChainSyncedCalls);
 
 		// - pick one was bypassed
-		EXPECT_EQ(0u, pWriters->numPickOneCalls());
+		EXPECT_EQ(0u, writers.numPickOneCalls());
 
 		// - other calls were bypassed
 		EXPECT_EQ(0u, capture.NumFactoryCalls);
@@ -208,9 +208,9 @@ namespace catapult { namespace extensions {
 			test::ServiceTestState testState;
 			auto nodeIdentity = test::GenerateRandomByteArray<Key>();
 			auto pPacketIo = std::make_shared<mocks::MockPacketIo>();
-			auto pWriters = std::make_shared<mocks::PickOneAwareMockPacketWriters>();
-			pWriters->setPacketIo(pPacketIo);
-			pWriters->setNodeIdentity(nodeIdentity);
+			mocks::PickOneAwareMockPacketWriters writers;
+			writers.setPacketIo(pPacketIo);
+			writers.setNodeIdentity(nodeIdentity);
 
 			{
 				auto nodesModifier = testState.state().nodes().modifier();
@@ -219,7 +219,7 @@ namespace catapult { namespace extensions {
 
 			// Act:
 			TaskCallbackParamsCapture capture;
-			auto result = ProcessSyncAndCapture<DefaultCallbackTraits>(testState, pWriters, true, capture, code)().get();
+			auto result = ProcessSyncAndCapture<DefaultCallbackTraits>(testState, writers, true, capture, code)().get();
 
 			// Assert:
 			EXPECT_EQ(thread::TaskResult::Continue, result);

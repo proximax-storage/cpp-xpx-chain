@@ -13,9 +13,9 @@ namespace catapult { namespace fastfinality {
 #pragma pack(push, 1)
 
 	struct CommitteeStage {
-		uint16_t Round = 0u;
+		int16_t Round = -1;
 		CommitteePhase Phase = CommitteePhase::None;
-		utils::TimePoint RoundStart;
+		utils::TimePoint RoundStart = utils::ToTimePoint(utils::NetworkTime());
 		uint64_t PhaseTimeMillis = 0u;
 
 		constexpr bool operator<(const CommitteeStage& rhs) const {

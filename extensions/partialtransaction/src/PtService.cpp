@@ -48,7 +48,7 @@ namespace catapult { namespace partialtransaction {
 		thread::Task CreatePullPtTask(
 				extensions::ServiceLocator& locator,
 				const extensions::ServiceState& state,
-				std::weak_ptr<net::PacketWriters> pPacketWriters) {
+				net::PacketWriters& packetWriters) {
 			const auto& ptCache = GetMemoryPtCache(locator);
 			const auto& serverHooks = GetPtServerHooks(locator);
 			auto ptSynchronizer = chain::CreatePtSynchronizer(
@@ -60,7 +60,7 @@ namespace catapult { namespace partialtransaction {
 			task.Callback = CreateChainSyncAwareSynchronizerTaskCallback(
 					std::move(ptSynchronizer),
 					api::CreateRemotePtApi,
-					pPacketWriters,
+					packetWriters,
 					state,
 					task.Name);
 			return task;
@@ -88,7 +88,7 @@ namespace catapult { namespace partialtransaction {
 
 				// add tasks
 				state.tasks().push_back(CreateConnectPeersTask(state, *pWriters));
-				state.tasks().push_back(CreatePullPtTask(locator, state, pWriters));
+				state.tasks().push_back(CreatePullPtTask(locator, state, *pWriters));
 			}
 		};
 	}

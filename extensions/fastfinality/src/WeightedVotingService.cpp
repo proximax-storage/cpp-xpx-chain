@@ -27,22 +27,47 @@ namespace catapult { namespace fastfinality {
 
 				auto unlockResult = pUnlockedAccounts->modifier().add(std::move(keyPair));
 				CATAPULT_LOG(info)
-						<< "Added account " << publicKey
-						<< " for harvesting with result " << unlockResult;
+					<< "Added account " << publicKey
+					<< " for harvesting with result " << unlockResult;
 			}
 
 			return pUnlockedAccounts;
 		}
 
-		auto CreateRemoteBlockHashesIoRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
-			return [&packetIoPickers](auto numPeers, const Height& height) {
-				std::vector<thread::future<std::pair<Hash256, std::shared_ptr<ionet::NodePacketIoPair>>>> futures;
+		auto CreateRemoteChainHeightsRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
+			return [&packetIoPickers]() {
+				std::vector<thread::future<Height>> heightFutures;
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
-				auto packetIoPairs = packetIoPickers.pickMultiple(numPeers, timeout, ionet::NodeRoles::Peer);
+				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
+				if (packetIoPairs.empty()) {
+					CATAPULT_LOG(warning) << "could not find any peer for detecting chain heights";
+					return thread::make_ready_future(std::vector<Height>());
+				}
+
+				for (const auto& packetIoPair : packetIoPairs) {
+					auto pPacketIo = packetIoPair.io();
+					auto pChainApi = api::CreateRemoteChainApiWithoutRegistry(*pPacketIo);
+					heightFutures.push_back(pChainApi->chainInfo().then([pPacketIo](auto&& infoFuture) {
+						return infoFuture.get().Height;
+					}));
+				}
+
+				return thread::when_all(std::move(heightFutures)).then([](auto&& completedFutures) {
+					return thread::get_all_ignore_exceptional(completedFutures.get());
+				});
+			};
+		}
+
+		auto CreateRemoteBlockHashesIoRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
+			return [&packetIoPickers](const Height& height) {
+				std::vector<thread::future<std::pair<Hash256, Key>>> futures;
+				auto timeout = utils::TimeSpan::FromSeconds(5);
+
+				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
 				if (packetIoPairs.empty()) {
 					CATAPULT_LOG(warning) << "could not find any peer for pulling block hashes";
-					return thread::make_ready_future(std::vector<std::pair<Hash256, std::shared_ptr<ionet::NodePacketIoPair>>>());
+					return thread::make_ready_future(std::vector<std::pair<Hash256, Key>>());
 				}
 
 				for (const auto& packetIoPair : packetIoPairs) {
@@ -50,7 +75,7 @@ namespace catapult { namespace fastfinality {
 					auto pChainApi = api::CreateRemoteChainApiWithoutRegistry(*pPacketIoPair->io());
 					futures.push_back(pChainApi->hashesFrom(height, 1u).then([pPacketIoPair](auto&& hashesFuture) {
 						auto hash = *hashesFuture.get().cbegin();
-						return std::make_pair(hash, pPacketIoPair);
+						return std::make_pair(hash, pPacketIoPair->node().identityKey());
 					}));
 				}
 
@@ -61,11 +86,11 @@ namespace catapult { namespace fastfinality {
 		}
 
 		auto CreateRemoteCommitteeStagesRetriever(const net::PacketIoPickerContainer& packetIoPickers) {
-			return [&packetIoPickers](auto numPeers) {
+			return [&packetIoPickers]() {
 				std::vector<thread::future<CommitteeStage>> committeeStageFutures;
 				auto timeout = utils::TimeSpan::FromSeconds(5);
 
-				auto packetIoPairs = packetIoPickers.pickMultiple(numPeers, timeout, ionet::NodeRoles::Peer);
+				auto packetIoPairs = packetIoPickers.pickMultiple(timeout);
 				if (packetIoPairs.empty()) {
 					CATAPULT_LOG(warning) << "could not find any peer for detecting committee stage";
 					return thread::make_ready_future(std::vector<CommitteeStage>());
@@ -85,33 +110,6 @@ namespace catapult { namespace fastfinality {
 			};
 		}
 
-		auto CreateRemoteProposedBlockRetriever(
-				const net::PacketIoPickerContainer& packetIoPickers,
-				const model::TransactionRegistry& transactionRegistry) {
-			return [&packetIoPickers, &transactionRegistry](auto numPeers) {
-				std::vector<thread::future<std::shared_ptr<model::Block>>> blockFutures;
-				auto timeout = utils::TimeSpan::FromSeconds(5);
-
-				auto packetIoPairs = packetIoPickers.pickMultiple(numPeers, timeout, ionet::NodeRoles::Peer);
-				if (packetIoPairs.empty()) {
-					CATAPULT_LOG(warning) << "could not find any peer for pulling proposed block";
-					return thread::make_ready_future(std::vector<std::shared_ptr<model::Block>>());
-				}
-
-				for (const auto& packetIoPair : packetIoPairs) {
-					auto pPacketIo = packetIoPair.io();
-					api::RemoteRequestDispatcher dispatcher{*pPacketIo};
-					blockFutures.push_back(dispatcher.dispatch(PullProposedBlockTraits{transactionRegistry}).then([pPacketIo](auto&& blockFuture) {
-						return blockFuture.get();
-					}));
-				}
-
-				return thread::when_all(std::move(blockFutures)).then([](auto&& completedFutures) {
-					return thread::get_all_ignore_exceptional(completedFutures.get());
-				});
-			};
-		}
-
 		auto CreateHarvesterBlockGenerator(extensions::ServiceState& state) {
 			auto strategy = state.config().Node.TransactionSelectionStrategy;
 			auto executionConfig = extensions::CreateExecutionConfiguration(state.pluginManager());
@@ -119,6 +117,34 @@ namespace catapult { namespace fastfinality {
 
 			return harvesting::CreateHarvesterBlockGenerator(strategy, utFacadeFactory, state.utCache());
 		}
+
+		class WeightedVotingService {
+		public:
+			explicit WeightedVotingService(std::shared_ptr<thread::IoThreadPool> pPool)
+				: m_pFsm(std::make_shared<WeightedVotingFsm>(pPool))
+				, m_strand(pPool->ioContext())
+			{}
+
+		public:
+			void start() {
+				boost::asio::post(m_strand, [this] {
+					m_pFsm->start();
+				});
+			}
+
+			void shutdown() {
+				m_pFsm->shutdown();
+				m_pFsm = nullptr;
+			}
+
+			const std::shared_ptr<WeightedVotingFsm>& fsm() {
+				return m_pFsm;
+			}
+
+		private:
+			std::shared_ptr<WeightedVotingFsm> m_pFsm;
+			boost::asio::io_context::strand m_strand;
+		};
 
 		class WeightedVotingServiceRegistrar : public extensions::ServiceRegistrar {
 		public:
@@ -137,9 +163,10 @@ namespace catapult { namespace fastfinality {
 				auto pValidatorPool = state.pool().pushIsolatedPool("proposal validator");
 
 				auto pServiceGroup = state.pool().pushServiceGroup("weighted voting");
-				auto pFsm = pServiceGroup->pushService([](std::shared_ptr<thread::IoThreadPool> pPool) {
-					return std::make_shared<WeightedVotingFsm>(pPool);
+				auto pService = pServiceGroup->pushService([](std::shared_ptr<thread::IoThreadPool> pPool) {
+					return std::make_shared<WeightedVotingService>(pPool);
 				});
+				auto pFsmShared = pService->fsm();
 
 				auto& packetHandlers = state.packetHandlers();
 				const auto& pluginManager = state.pluginManager();
@@ -151,68 +178,75 @@ namespace catapult { namespace fastfinality {
 					auto storageView = storage.view();
 					return storageView.loadBlockElement(storageView.chainHeight());
 				};
+				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
-				RegisterPullCommitteeStageHandler(pFsm, packetHandlers);
-				RegisterPushProposedBlockHandler(pFsm, packetHandlers, pluginManager, packetPayloadSink);
-				RegisterPullProposedBlockHandler(pFsm, packetHandlers);
-				RegisterPushPrevoteMessageHandler(pFsm, packetHandlers, packetPayloadSink);
-				RegisterPushPrecommitMessageHandler(pFsm, packetHandlers, packetPayloadSink);
+				RegisterPullCommitteeStageHandler(pFsmShared, packetHandlers);
+				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager, lastBlockElementSupplier);
+				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager, lastBlockElementSupplier);
+				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
+				RegisterPushPrecommitMessageHandler(pFsmShared, packetHandlers);
 
-				auto& committeeData = pFsm->committeeData();
+				auto& committeeData = pFsmShared->committeeData();
 				committeeData.setUnlockedAccounts(CreateUnlockedAccounts(m_harvestingConfig));
 				committeeData.setBeneficiary(crypto::ParseKey(m_harvestingConfig.Beneficiary));
-				auto& actions = pFsm->actions();
+				auto& actions = pFsmShared->actions();
+				auto blockRangeConsumer = state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Pull);
 
 				actions.CheckLocalChain = CreateDefaultCheckLocalChainAction(
-					pFsm,
-					state.hooks().remoteChainHeightsRetriever(),
+					pFsmShared,
+					CreateRemoteChainHeightsRetriever(packetIoPickers),
 					pConfigHolder,
 					[&state] { return state.storage().view().chainHeight(); });
 				actions.ResetLocalChain = CreateDefaultResetLocalChainAction();
 				actions.SelectPeers = CreateDefaultSelectPeersAction(
-					pFsm,
+					pFsmShared,
 					CreateRemoteBlockHashesIoRetriever(packetIoPickers),
 					pConfigHolder);
-				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(pFsm, state);
+				actions.DownloadBlocks = CreateDefaultDownloadBlocksAction(
+					pFsmShared,
+					state,
+					blockRangeConsumer,
+					pluginManager.getCommitteeManager());
 				actions.DetectStage = CreateDefaultDetectStageAction(
-					pFsm,
+					pFsmShared,
 					CreateRemoteCommitteeStagesRetriever(packetIoPickers),
 					pConfigHolder,
 					timeSupplier,
-					lastBlockElementSupplier);
+					lastBlockElementSupplier,
+					pluginManager.getCommitteeManager());
 				actions.SelectCommittee = CreateDefaultSelectCommitteeAction(
-					pFsm,
+					pFsmShared,
 					pluginManager.getCommitteeManager(),
 					pConfigHolder);
 				actions.ProposeBlock = CreateDefaultProposeBlockAction(
-					pFsm,
+					pFsmShared,
 					state.cache(),
 					pConfigHolder,
 					CreateHarvesterBlockGenerator(state),
-					lastBlockElementSupplier,
-					packetPayloadSink);
-				actions.WaitForProposal = CreateDefaultWaitForProposalAction(
-					pFsm,
-					CreateRemoteProposedBlockRetriever(packetIoPickers, pluginManager.transactionRegistry()),
-					pConfigHolder,
-					packetPayloadSink);
+					lastBlockElementSupplier);
+				actions.WaitForProposal = CreateDefaultWaitForProposalAction(pFsmShared, pConfigHolder, lastBlockElementSupplier);
 				actions.ValidateProposal = CreateDefaultValidateProposalAction(
-					pFsm,
+					pFsmShared,
 					state,
 					lastBlockElementSupplier,
 					pValidatorPool);
-				actions.WaitForPrevotes = CreateDefaultWaitForPrevotesAction(pFsm, pluginManager);
-				actions.WaitForPrecommits = CreateDefaultWaitForPrecommitsAction(pFsm, pluginManager);
-				actions.BroadcastPrevote = CreateDefaultBroadcastPrevoteAction(pFsm, packetPayloadSink);
-				actions.BroadcastPrecommit = CreateDefaultBroadcastPrecommitAction(pFsm, packetPayloadSink);
+				actions.WaitForProposalPhaseEnd = CreateDefaultWaitForProposalPhaseEndAction(pFsmShared, pConfigHolder, packetPayloadSink);
+				actions.WaitForPrevotes = CreateDefaultWaitForPrevotesAction(pFsmShared, pluginManager, packetPayloadSink);
+				actions.WaitForPrecommits = CreateDefaultWaitForPrecommitsAction(pFsmShared, pluginManager, packetPayloadSink);
+				actions.AddPrevote = CreateDefaultAddPrevoteAction(pFsmShared);
+				actions.AddPrecommit = CreateDefaultAddPrecommitAction(pFsmShared);
+				actions.UpdateConfirmedBlock = CreateDefaultUpdateConfirmedBlockAction(pFsmShared, pluginManager.getCommitteeManager());
 				actions.CommitConfirmedBlock = CreateDefaultCommitConfirmedBlockAction(
-					pFsm,
-					state.hooks().completionAwareBlockRangeConsumerFactory()(disruptor::InputSource::Remote_Push));
-				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsm, pConfigHolder);
-				actions.ResetRound = CreateDefaultResetRoundAction(pFsm, pConfigHolder);
-				actions.WaitForRoundEnd = CreateDefaultWaitForRoundEndAction(pFsm);
+					pFsmShared,
+					blockRangeConsumer,
+					pConfigHolder,
+					packetPayloadSink,
+					pluginManager.getCommitteeManager());
+				actions.IncrementRound = CreateDefaultIncrementRoundAction(pFsmShared, pConfigHolder);
+				actions.ResetRound = CreateDefaultResetRoundAction(pFsmShared, pConfigHolder, pluginManager.getCommitteeManager());
+				actions.WaitForConfirmedBlock = CreateDefaultWaitForConfirmedBlockAction(pFsmShared, lastBlockElementSupplier);
 
-				pFsm->start();
+				pService->start();
 			}
 
 		private:

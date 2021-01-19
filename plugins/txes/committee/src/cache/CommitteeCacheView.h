@@ -5,7 +5,7 @@
 **/
 
 #pragma once
-#include "CommitteeCacheSerializers.h"
+#include "CommitteeBaseSets.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -13,7 +13,7 @@
 namespace catapult { namespace cache {
 
 	/// Mixins used by the committee cache view.
-	using CommitteeCacheViewMixins = BasicCacheMixins<CommitteeCacheTypes::PrimaryTypes::BaseSetType, CommitteeCacheDescriptor>;
+	using CommitteeCacheViewMixins = PatriciaTreeCacheMixins<CommitteeCacheTypes::PrimaryTypes::BaseSetType, CommitteeCacheDescriptor>;
 
 	/// Basic view on top of the committee cache.
 	class BasicCommitteeCacheView
@@ -22,6 +22,7 @@ namespace catapult { namespace cache {
 			, public CommitteeCacheViewMixins::Contains
 			, public CommitteeCacheViewMixins::Iteration
 			, public CommitteeCacheViewMixins::ConstAccessor
+			, public CommitteeCacheViewMixins::PatriciaTreeView
 			, public CommitteeCacheViewMixins::ConfigBasedEnable<config::CommitteeConfiguration> {
 	public:
 		using ReadOnlyView = CommitteeCacheTypes::CacheReadOnlyType;
@@ -35,6 +36,7 @@ namespace catapult { namespace cache {
 				, CommitteeCacheViewMixins::Contains(committeeSets.Primary)
 				, CommitteeCacheViewMixins::Iteration(committeeSets.Primary)
 				, CommitteeCacheViewMixins::ConstAccessor(committeeSets.Primary)
+				, CommitteeCacheViewMixins::PatriciaTreeView(committeeSets.PatriciaTree.get())
 				, CommitteeCacheViewMixins::ConfigBasedEnable<config::CommitteeConfiguration>(
 					pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}

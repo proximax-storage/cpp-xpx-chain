@@ -25,7 +25,6 @@ namespace catapult { namespace validators {
 					"",
 					{
 						{ "enabled", "true" },
-						{ "committeeNumber", "21" },
 						{ "minGreed", "0.1" },
 						{ "initialActivity", "0.367976785" },
 						{ "activityDelta", "0.00001" },

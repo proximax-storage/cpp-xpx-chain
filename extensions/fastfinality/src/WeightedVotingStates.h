@@ -10,6 +10,8 @@ namespace catapult { namespace fastfinality {
 
 	struct InitialState{};
 
+	struct StopWaiting{};
+
 	struct LocalChainCheck{};
 	struct PeersSelection{};
 	struct BlocksDownloading{};
@@ -20,9 +22,10 @@ namespace catapult { namespace fastfinality {
 	struct CommitteeSelection{};
 	struct BlockProposing{};
 	struct ProposalWaiting{};
-	struct RoundEndWaiting{};
 	struct ProposalValidation{};
+	struct ProposalPhaseEndWaiting{};
 	struct Prevote{};
 	struct Precommit{};
 	struct Commit{};
+	struct ConfirmedBlockWaiting{};
 }}

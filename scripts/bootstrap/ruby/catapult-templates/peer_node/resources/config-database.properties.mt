@@ -9,6 +9,7 @@ shouldPruneFileStorage = true
 
 catapult.mongo.plugins.accountlink = true
 catapult.mongo.plugins.aggregate = true
+catapult.mongo.plugins.committee = true
 catapult.mongo.plugins.config = true
 catapult.mongo.plugins.exchange = true
 catapult.mongo.plugins.lockhash = true

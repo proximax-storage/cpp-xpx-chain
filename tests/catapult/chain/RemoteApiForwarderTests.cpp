@@ -58,12 +58,12 @@ namespace catapult { namespace chain {
 
 	TEST(TEST_CLASS, ActionIsSkippedWhenNoPeerIsAvailable) {
 		// Arrange: create an empty writers
-		auto pWriters = std::make_shared<mocks::PickOneAwareMockPacketWriters>();
-		pWriters->setNodeIdentity(test::GenerateRandomByteArray<Key>());
+		mocks::PickOneAwareMockPacketWriters writers;
+		writers.setNodeIdentity(test::GenerateRandomByteArray<Key>());
 
 		// - create the forwarder
 		model::TransactionRegistry registry;
-		RemoteApiForwarder forwarder(pWriters, registry, utils::TimeSpan::FromSeconds(4), "test");
+		RemoteApiForwarder forwarder(writers, registry, utils::TimeSpan::FromSeconds(4), "test");
 
 		// Act:
 		ProcessSyncParamsCapture capture;
@@ -74,8 +74,8 @@ namespace catapult { namespace chain {
 		EXPECT_EQ(ionet::NodeInteractionResultCode::None, result.Code);
 
 		// - pick one was called
-		ASSERT_EQ(1u, pWriters->numPickOneCalls());
-		EXPECT_EQ(utils::TimeSpan::FromSeconds(4), pWriters->pickOneDurations()[0]);
+		ASSERT_EQ(1u, writers.numPickOneCalls());
+		EXPECT_EQ(utils::TimeSpan::FromSeconds(4), writers.pickOneDurations()[0]);
 
 		// - other calls were bypassed
 		EXPECT_EQ(0u, capture.NumFactoryCalls);
@@ -86,13 +86,13 @@ namespace catapult { namespace chain {
 		// Arrange: create writers with a valid packet
 		auto pPacketIo = std::make_shared<mocks::MockPacketIo>();
 		auto identityKey = test::GenerateRandomByteArray<Key>();
-		auto pWriters = std::make_shared<mocks::PickOneAwareMockPacketWriters>();
-		pWriters->setPacketIo(pPacketIo);
-		pWriters->setNodeIdentity(identityKey);
+		mocks::PickOneAwareMockPacketWriters writers;
+		writers.setPacketIo(pPacketIo);
+		writers.setNodeIdentity(identityKey);
 
 		// - create the forwarder
 		model::TransactionRegistry registry;
-		RemoteApiForwarder forwarder(pWriters, registry, utils::TimeSpan::FromSeconds(4), "test");
+		RemoteApiForwarder forwarder(writers, registry, utils::TimeSpan::FromSeconds(4), "test");
 
 		// Act:
 		ProcessSyncParamsCapture capture;
@@ -103,8 +103,8 @@ namespace catapult { namespace chain {
 		EXPECT_EQ(ionet::NodeInteractionResultCode::Success, result.Code);
 
 		// - pick one was called
-		ASSERT_EQ(1u, pWriters->numPickOneCalls());
-		EXPECT_EQ(utils::TimeSpan::FromSeconds(4), pWriters->pickOneDurations()[0]);
+		ASSERT_EQ(1u, writers.numPickOneCalls());
+		EXPECT_EQ(utils::TimeSpan::FromSeconds(4), writers.pickOneDurations()[0]);
 
 		// - factory was called (node identity should be propagated down)
 		EXPECT_EQ(1u, capture.NumFactoryCalls);

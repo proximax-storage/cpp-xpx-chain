@@ -56,6 +56,15 @@ namespace catapult { namespace mocks {
 			return ionet::NodePacketIoPair(node, m_packetIos[m_nextIndex - 1]);
 		}
 
+		ionet::NodePacketIoPair pickOne(const utils::TimeSpan& ioDuration, const Key& identityKey) override {
+			m_durations.push_back(ioDuration);
+			if (m_nextIndex++ >= m_packetIos.size())
+				return ionet::NodePacketIoPair();
+
+			auto node = ionet::Node(identityKey, {}, { model::NetworkIdentifier::Zero, std::to_string(m_nextIndex) });
+			return ionet::NodePacketIoPair(node, m_packetIos[m_nextIndex - 1]);
+		}
+
 	private:
 		size_t m_nextIndex;
 		std::vector<std::shared_ptr<mocks::MockPacketIo>> m_packetIos;

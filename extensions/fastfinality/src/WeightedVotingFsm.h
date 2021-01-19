@@ -13,10 +13,15 @@ namespace catapult { namespace ionet { class NodePacketIoPair; } }
 
 namespace catapult { namespace fastfinality {
 
+#define TRY_GET_FSM() \
+		auto pFsmShared = pFsmWeak.lock(); \
+		if (!pFsmShared) \
+            return;
+
 	struct ChainSyncData {
 		Height NetworkHeight = Height(0);
 		Height LocalHeight = Height(0);
-		std::vector<std::shared_ptr<ionet::NodePacketIoPair>> PacketIoPairs;
+		std::vector<Key> NodeIdentityKeys;
 	};
 
 	class WeightedVotingFsm {
@@ -25,6 +30,7 @@ namespace catapult { namespace fastfinality {
 			: m_pPool(std::move(pPool))
 			, m_timer(m_pPool->ioContext())
 			, m_sm(boost::sml::sm<WeightedVotingTransitionTable>(m_actions))
+			, m_stopped(false)
 		{}
 
 	public:
@@ -38,9 +44,15 @@ namespace catapult { namespace fastfinality {
 		}
 
 		void shutdown() {
+			m_stopped = true;
 			m_timer.cancel();
+			processEvent(Stop{});
 			m_actions = WeightedVotingActions{};
 			m_pPool = nullptr;
+		}
+
+		auto& ioContext() {
+			return m_pPool->ioContext();
 		}
 
 		auto& timer() {
@@ -72,9 +84,12 @@ namespace catapult { namespace fastfinality {
 			m_committeeData.localCommittee().clear();
 			m_committeeData.setTotalSumOfVotes(0.0);
 			m_committeeData.setProposedBlock(nullptr);
-			m_committeeData.setProposalMultiple(false);
-			m_committeeData.clearPrevotes();
-			m_committeeData.clearPrecommits();
+			m_committeeData.setConfirmedBlock(nullptr);
+			m_committeeData.clearVotes();
+		}
+
+		bool stopped() const {
+			return m_stopped;
 		}
 
 	private:
@@ -84,5 +99,6 @@ namespace catapult { namespace fastfinality {
 		boost::sml::sm<WeightedVotingTransitionTable> m_sm;
 		std::unique_ptr<ChainSyncData> m_pChainSyncData;
 		CommitteeData m_committeeData;
+		bool m_stopped;
 	};
 }}

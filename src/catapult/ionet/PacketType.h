@@ -72,14 +72,14 @@ namespace catapult { namespace ionet {
 	/* A block proposed by committee has been pushed by a peer. */ \
 	ENUM_VALUE(Push_Proposed_Block, 14) \
 	\
-	/* A block proposed by committee has been requested by a peer. */ \
-	ENUM_VALUE(Pull_Proposed_Block, 15) \
-	\
 	/* A prevote message has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Prevote_Message, 16) \
+	ENUM_VALUE(Push_Prevote_Message, 15) \
 	\
 	/* A precommit message has been pushed by a peer. */ \
-	ENUM_VALUE(Push_Precommit_Message, 17) \
+	ENUM_VALUE(Push_Precommit_Message, 16) \
+	\
+	/* A block confirmed by committee has been pushed by a peer. */ \
+	ENUM_VALUE(Push_Confirmed_Block, 17) \
 	\
 	/* api only packets have types [500, 600) */ \
 	\

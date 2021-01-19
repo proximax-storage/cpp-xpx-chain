@@ -111,6 +111,10 @@ namespace catapult { namespace model {
 		/// Minimal time per each committee phase.
 		utils::TimeSpan MinCommitteePhaseTime;
 
+		/// Fraction of CommitteePhaseTime that committee waits for precommits, the rest of CommitteePhaseTime
+		/// is for confirmed block committing.
+		double CommitteePrecommitWait;
+
 		/// Time adjustment after each committee round.
 		double CommitteeTimeAdjustment;
 

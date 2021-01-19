@@ -12,7 +12,7 @@ namespace catapult { namespace chain {
 
 	struct Committee {
 	public:
-		explicit Committee(uint16_t round = 0)
+		explicit Committee(int16_t round = -1)
 			: Round(round)
 		{}
 
@@ -24,7 +24,7 @@ namespace catapult { namespace chain {
 		Key BlockProposer;
 
 		/// Committee round (number of attempts to generate a block).
-		uint16_t Round;
+		int16_t Round;
 	};
 
 	/// Interface for committee manager.

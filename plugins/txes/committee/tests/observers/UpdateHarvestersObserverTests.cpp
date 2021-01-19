@@ -63,7 +63,7 @@ namespace catapult { namespace observers {
 		for (const auto& cosigner : cosigners) {
 			committee.Cosigners.insert(cosigner);
 		}
-		committee.Round = 1u;
+		committee.Round = 1;
 		pCommitteeManager->setCommittee(committee);
 
 		std::vector<model::Cosignature> cosignatures{
@@ -71,7 +71,7 @@ namespace catapult { namespace observers {
 			{ cosigners[3], test::GenerateRandomByteArray<Signature>() },
 		};
 
-		auto notification = Notification(Block_Signer_Key, cosignatures.size(), cosignatures.data(), Fee_Interest, Fee_Interest_Denominator);
+		auto notification = Notification(Block_Signer_Key, committee.Round, cosignatures.size(), cosignatures.data(), Fee_Interest, Fee_Interest_Denominator);
 
 		auto pObserver = CreateUpdateHarvestersObserver(pCommitteeManager);
 		auto& committeeCache = context.cache().sub<cache::CommitteeCache>();
@@ -121,7 +121,7 @@ namespace catapult { namespace observers {
 	TEST(TEST_CLASS, UpdateHarvesters_Rollback) {
 		// Arrange:
 		ObserverTestContext context(NotifyMode::Rollback, Current_Height);
-		auto notification = Notification(Block_Signer_Key, 0u, nullptr, Fee_Interest, Fee_Interest_Denominator);
+		auto notification = Notification(Block_Signer_Key, 0u, 0u, nullptr, Fee_Interest, Fee_Interest_Denominator);
 		auto pObserver = CreateUpdateHarvestersObserver(nullptr);
 
 		// Act:

@@ -89,9 +89,13 @@ namespace catapult { namespace net {
 				}
 			}
 
-			bool pickOne(WriterState& state) {
+			bool pickOne(WriterState& state, const Key& identityKey) {
 				utils::SpinLockGuard guard(m_lock);
-				auto* pState = m_writers.nextIf(IsStateAvailable);
+				auto* pState = (Key() == identityKey) ?
+					m_writers.nextIf(IsStateAvailable) :
+					m_writers.nextIf([&identityKey](const WriterState& state) {
+						return IsStateAvailable(state) && (state.Node.identityKey() == identityKey);
+					});
 				if (!pState)
 					return false;
 
@@ -297,8 +301,12 @@ namespace catapult { namespace net {
 			}
 
 			ionet::NodePacketIoPair pickOne(const utils::TimeSpan& ioDuration) override {
+				return pickOne(ioDuration, Key());
+			}
+
+			ionet::NodePacketIoPair pickOne(const utils::TimeSpan& ioDuration, const Key& identityKey) override {
 				WriterState state;
-				if (!m_writers.pickOne(state)) {
+				if (!m_writers.pickOne(state, identityKey)) {
 					CATAPULT_LOG_THROTTLE(warning, 60'000) << "no packet io available for checkout";
 					return ionet::NodePacketIoPair();
 				}
