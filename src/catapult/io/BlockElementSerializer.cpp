@@ -34,7 +34,8 @@ namespace catapult { namespace io {
 			// read block
 			std::shared_ptr<model::Block> pBlock;
 			if (entity.EntityVersion() <= 3) {
-				auto newFieldsSize = sizeof(uint64_t) // CommitteePhaseTime
+				auto newFieldsSize = sizeof(int16_t) // round
+					+ sizeof(uint64_t) // CommitteePhaseTime
 					+ sizeof(uint32_t); // TransactionPayloadSize
 				auto size = entity.Size + newFieldsSize;
 				pBlock = utils::MakeSharedWithSize<model::Block>(size);
