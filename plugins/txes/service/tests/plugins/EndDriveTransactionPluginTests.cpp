@@ -57,9 +57,10 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(0, sub.numNotifications());
 	}
 
-	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications) {
+	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_SameDriveKey) {
 		// Arrange:
 		auto pTransaction = CreateTransaction<TTraits>();
+		pTransaction->Signer = pTransaction->DriveKey;
 		mocks::MockNotificationSubscriber sub;
 		auto pPlugin = TTraits::CreatePlugin();
 
@@ -70,6 +71,22 @@ namespace catapult { namespace plugins {
 		ASSERT_EQ(2, sub.numNotifications());
 		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
 		EXPECT_EQ(Service_End_Drive_v1_Notification, sub.notificationTypes()[1]);
+	}
+
+	PLUGIN_TEST(CanPublishCorrectNumberOfNotifications_DifferentDriveKey) {
+		// Arrange:
+		auto pTransaction = CreateTransaction<TTraits>();
+		mocks::MockNotificationSubscriber sub;
+		auto pPlugin = TTraits::CreatePlugin();
+
+		// Act:
+		test::PublishTransaction(*pPlugin, *pTransaction, sub);
+
+		// Assert:
+		ASSERT_EQ(3, sub.numNotifications());
+		EXPECT_EQ(Service_Drive_v1_Notification, sub.notificationTypes()[0]);
+		EXPECT_EQ(Core_Register_Account_Public_Key_v1_Notification, sub.notificationTypes()[1]);
+		EXPECT_EQ(Service_End_Drive_v1_Notification, sub.notificationTypes()[2]);
 	}
 
 	// endregion
