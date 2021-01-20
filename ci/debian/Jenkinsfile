@@ -11,9 +11,8 @@ pipeline {
     environment {
         DOCKER_REGISTRY = "249767383774.dkr.ecr.ap-southeast-1.amazonaws.com"
         CREDENTIAL_ID = "ecr:ap-southeast-1:jenkins-ecr"
-        IMAGE = "proximax/proximax-sirius-chain"
+        IMAGE = "proximax-sirius-chain"
         BUILD_IMAGE = "proximax-catapult-server-dependencies-build-image:v1.1-buster"
-        PRIVATE_IMAGE = "proximax/proximax-sirius-chain-private"
     }
 
 	stages {
@@ -108,32 +107,7 @@ pipeline {
             }
 		}
         
-        stage('Build and Publish Private Image') {
-            when {
-                anyOf {
-                    branch 'develop';
-                    branch 'release-candidate-*'
-                }
-            }
-            steps {
-                echo 'Build and Publish Private Image'
-                script {
-                    def newImage = docker.build("${PRIVATE_IMAGE}","-f ./ci/debian/Dockerfile .")
-                    docker.withRegistry("", "jenkins-dockerhub"){
-                        newImage.push("${env.GIT_BRANCH}-${env.BUILD_NUMBER}") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
-                    }
-                }
-            }
-            post {
-                success {
-                    slackSend channel: '#devops',
-                        color: 'good',
-                        message: "Branch *${env.GIT_BRANCH}* build of *${currentBuild.fullDisplayName}* completed successfully :100:\nPushed Docker images ${PRIVATE_IMAGE}:develop-jenkins-build-${env.BUILD_NUMBER}"
-                }
-            }
-        }
-
-        stage('Build and Publish Public Image') {
+        stage('Build and Publish Image') {
             when {
                 tag 'v*-buster'
             }
@@ -142,7 +116,7 @@ pipeline {
                 script {
                     sh 'cp ci/debian/.dockerignore .'
                     def newImage = docker.build("${IMAGE}","-f ./ci/debian/Dockerfile .")
-                    docker.withRegistry("", "jenkins-dockerhub"){
+                    docker.withRegistry("https://${DOCKER_REGISTRY}", "${CREDENTIAL_ID}"){
                         newImage.push("${env.GIT_BRANCH}") // if a tag commit, then env.GIT_BRANCH returns the tag name instead of a branch
                     }
                 }
