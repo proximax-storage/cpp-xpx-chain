@@ -1,5 +1,4 @@
-FROM debian:unstable-20200607
-
+FROM debian:stable-slim
 COPY ./deps /
 
 RUN apt-get update && apt-get install --no-install-recommends -y \
