@@ -22,9 +22,6 @@ namespace catapult { namespace config {
 		/// Whether the plugin is enabled.
 		bool Enabled;
 
-		/// Committee number.
-		uint8_t CommitteeNumber;
-
 		/// Min greed value when selecting block proposer.
 		double MinGreed;
 

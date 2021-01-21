@@ -6,8 +6,7 @@
 
 #include "catapult/plugins/CacheHandlers.h"
 #include "CommitteePlugin.h"
-#include "src/cache/CommitteeCache.h"
-#include "src/cache/CommitteeCacheStorage.h"
+#include "src/cache/CommitteeCacheSubCachePlugin.h"
 #include "src/chain/WeightedVotingCommitteeManager.h"
 #include "src/observers/Observers.h"
 #include "src/plugins/AddHarvesterTransactionPlugin.h"
@@ -26,11 +25,7 @@ namespace catapult { namespace plugins {
 
 		auto pAccountCollector = std::make_shared<cache::CommitteeAccountCollector>();
 		auto pConfigHolder = manager.configHolder();
-		manager.addCacheSupport<cache::CommitteeCacheStorage>(
-			std::make_unique<cache::CommitteeCache>(manager.cacheConfig(cache::CommitteeCache::Name), pAccountCollector, pConfigHolder));
-
-		using CacheHandlersCommittee = CacheHandlers<cache::CommitteeCacheDescriptor>;
-		CacheHandlersCommittee::Register<model::FacilityCode::Committee>(manager);
+		manager.addCacheSupport(std::make_unique<cache::CommitteeCacheSubCachePlugin>(manager.cacheConfig(cache::CommitteeCache::Name), pAccountCollector, pConfigHolder));
 
 		manager.addDiagnosticCounterHook([](auto& counters, const cache::CatapultCache& cache) {
 			counters.emplace_back(utils::DiagnosticCounterId("COMMITTEE C"), [&cache]() {

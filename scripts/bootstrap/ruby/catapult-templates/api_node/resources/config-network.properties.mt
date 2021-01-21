@@ -4,7 +4,7 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 0s
+blockGenerationTargetTime = 10s
 blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
@@ -28,6 +28,13 @@ maxTransactionsPerBlock = 200'000
 
 enableUnconfirmedTransactionMinFeeValidation = true
 
+committeeSize = 21
+committeeApproval = 0.67
+committeePhaseTime = 5s
+minCommitteePhaseTime = 300ms
+committeePrecommitWait = 0.8
+committeeTimeAdjustment = 1.1
+
 [plugin:catapult.plugins.accountlink]
 dummy = to trigger plugin load
 
@@ -47,7 +54,6 @@ strictSigner = true
 
 enabled = true
 
-committeeNumber = 21
 minGreed = 0.1
 # log(7/3)
 initialActivity = 0.367976785

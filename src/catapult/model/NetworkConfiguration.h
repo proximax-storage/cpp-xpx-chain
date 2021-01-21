@@ -99,12 +99,31 @@ namespace catapult { namespace model {
 		/// Allows validate deadline of transaction. It means that you can send old transactions to blockchain if it is false.
 		bool EnableDeadlineValidation;
 
+		/// Number of nodes in committee.
+		uint32_t CommitteeSize;
+
+		/// Sum of positive vote weights compared to total sum required for committee approval.
+		double CommitteeApproval;
+
+		/// Time per each committee phase.
+		utils::TimeSpan CommitteePhaseTime;
+
+		/// Minimal time per each committee phase.
+		utils::TimeSpan MinCommitteePhaseTime;
+
+		/// Fraction of CommitteePhaseTime that committee waits for precommits, the rest of CommitteePhaseTime
+		/// is for confirmed block committing.
+		double CommitteePrecommitWait;
+
+		/// Time adjustment after each committee round.
+		double CommitteeTimeAdjustment;
+
 		/// Unparsed map of plugin configuration bags.
 		std::unordered_map<std::string, utils::ConfigurationBag> Plugins;
 
 	private:
 		/// Map of plugin configurations.
-		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> pluginConfigs;
+		mutable std::array<std::shared_ptr<PluginConfiguration>, size_t(config::ConfigId::Latest) + 1> m_pluginConfigs;
 
 	private:
 		NetworkConfiguration() = default;
@@ -131,10 +150,10 @@ namespace catapult { namespace model {
 		/// Sets \a config of plugin.
 		template<typename T>
 		void SetPluginConfiguration(const T& config) {
-			if (T::Id >= pluginConfigs.size())
+			if (T::Id >= m_pluginConfigs.size())
 				CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "plugin has wrong Id", std::string(T::Name));
 
-			pluginConfigs[T::Id] = std::make_shared<T>(config);
+			m_pluginConfigs[T::Id] = std::make_shared<T>(config);
 		}
 
 		/// Inits config of plugin with \a pluginNameHash.
@@ -146,10 +165,16 @@ namespace catapult { namespace model {
 		/// Returns plugin configuration for plugin with \a pluginNameHash.
 		template<typename T>
 		const T& GetPluginConfiguration() const {
-			if (T::Id >= pluginConfigs.size() || !pluginConfigs[T::Id])
+			if (T::Id >= m_pluginConfigs.size() || !m_pluginConfigs[T::Id])
 				CATAPULT_THROW_AND_LOG_1(catapult_invalid_argument, "plugin configuration not found", std::string(T::Name));
 
-			return *dynamic_cast<const T*>(pluginConfigs[T::Id].get());
+			return *dynamic_cast<const T*>(m_pluginConfigs[T::Id].get());
+		}
+
+		/// Removes all plugin configs.
+		void ClearPluginConfigurations() const {
+			for (auto i = 0u; i < m_pluginConfigs.size(); ++i)
+				m_pluginConfigs[i] = nullptr;
 		}
 	};
 

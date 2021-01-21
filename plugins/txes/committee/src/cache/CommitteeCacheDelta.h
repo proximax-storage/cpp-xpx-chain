@@ -16,10 +16,10 @@
 
 namespace catapult { namespace cache {
 
-	/// Mixins used by the network config cache delta.
+	/// Mixins used by the committee cache delta.
 	using CommitteeCacheDeltaMixins = PatriciaTreeCacheMixins<CommitteeCacheTypes::PrimaryTypes::BaseSetDeltaType, CommitteeCacheDescriptor>;
 
-	/// Basic delta on top of the network config cache.
+	/// Basic delta on top of the committee cache.
 	class BasicCommitteeCacheDelta
 			: public utils::MoveOnly
 			, public CommitteeCacheDeltaMixins::Size
@@ -47,7 +47,9 @@ namespace catapult { namespace cache {
 				, CommitteeCacheDeltaMixins::DeltaElements(*committeeSets.pPrimary)
 				, CommitteeCacheDeltaMixins::ConfigBasedEnable<config::CommitteeConfiguration>(
 					pConfigHolder, [](const auto& config) { return config.Enabled; })
-				, m_pCommitteEntries(committeeSets.pPrimary)
+				, m_pCommitteeEntries(committeeSets.pPrimary)
+				, m_pDeltaKeys(committeeSets.pDeltaKeys)
+				, m_PrimaryKeys(committeeSets.PrimaryKeys)
 		{}
 
 	public:
@@ -55,27 +57,70 @@ namespace catapult { namespace cache {
 		using CommitteeCacheDeltaMixins::MutableAccessor::find;
 
 	public:
-		void updateAccountCollector(std::shared_ptr<CommitteeAccountCollector> pAccountCollector) const {
-			auto deltas = m_pCommitteEntries->deltas();
+		/// Inserts the committee \a entry into the cache.
+		void insert(const state::CommitteeEntry& entry) {
+			CommitteeCacheDeltaMixins::BasicInsertRemove::insert(entry);
+			insertKey(entry.key());
+		}
+
+		/// Inserts the \a key into the cache.
+		void insertKey(const Key& key) {
+			if (!m_pDeltaKeys->contains(key))
+				m_pDeltaKeys->insert(key);
+		}
+
+		/// Removes the committee \a entry into the cache.
+		void remove(const Key& key) {
+			CommitteeCacheDeltaMixins::BasicInsertRemove::remove(key);
+			if (m_pDeltaKeys->contains(key))
+				m_pDeltaKeys->remove(key);
+		}
+
+		/// Returns keys available after commit
+		std::set<Key> keys() const {
+			std::set<Key> result;
+			for (const auto& key : deltaset::MakeIterableView(m_PrimaryKeys)) {
+				result.insert(key);
+			}
+
+			auto deltas = m_pDeltaKeys->deltas();
+
+			for (const auto& key : deltas.Added) {
+				result.insert(key);
+			}
+
+			for (const auto& key : deltas.Removed) {
+				result.erase(key);
+			}
+
+			return result;
+		}
+
+		void updateAccountCollector(const std::shared_ptr<CommitteeAccountCollector>& pAccountCollector) const {
+			auto deltas = m_pDeltaKeys->deltas();
 			auto added = deltas.Added;
 			added.insert(deltas.Copied.begin(), deltas.Copied.end());
 			auto removed = deltas.Removed;
 
-			for (const auto& pair : added) {
-				if (removed.find(pair.first) != removed.end()) {
-					removed.erase(pair.first);
+			for (const auto& key : added) {
+				if (removed.find(key) != removed.end()) {
+					removed.erase(key);
 				} else {
-					pAccountCollector->addAccount(pair.second);
+					auto iter = m_pCommitteeEntries->find(key);
+					auto pEntry = iter.get();
+					pAccountCollector->addAccount(*pEntry);
 				}
 			}
 
-			for (const auto& pair : removed) {
-				pAccountCollector->removeAccount(pair.first);
+			for (const auto& key : removed) {
+				pAccountCollector->removeAccount(key);
 			}
 		}
 
 	private:
-		CommitteeCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pCommitteEntries;
+		CommitteeCacheTypes::PrimaryTypes::BaseSetDeltaPointerType m_pCommitteeEntries;
+		CommitteeCacheTypes::KeyTypes::BaseSetDeltaPointerType m_pDeltaKeys;
+		const CommitteeCacheTypes::KeyTypes::BaseSetType& m_PrimaryKeys;
 	};
 
 	/// Delta on top of the committee cache.
