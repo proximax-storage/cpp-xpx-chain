@@ -26,15 +26,6 @@ namespace catapult { namespace validators {
 	/// Validation failed because the account does not exist.
 	DEFINE_CATAPULT_COMMITTEE_RESULT(Account_Does_Not_Exist, 4);
 
-	/// Validation failed because block signer is invalid.
-	DEFINE_CATAPULT_COMMITTEE_RESULT(Invalid_Block_Signer, 5);
-
-	/// Validation failed because committee is invalid.
-	DEFINE_CATAPULT_COMMITTEE_RESULT(Invalid_Committee, 6);
-
-	/// Validation failed because committee number is invalid.
-	DEFINE_CATAPULT_COMMITTEE_RESULT(Invalid_Committee_Number, 7);
-
 #ifndef CUSTOM_RESULT_DEFINITION
 }}
 #endif

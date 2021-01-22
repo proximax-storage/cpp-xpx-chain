@@ -11,7 +11,7 @@
 namespace catapult { namespace mongo { namespace plugins {
 
 	/// Maps a committee \a entry to the corresponding db model value.
-	bsoncxx::document::value ToDbModel(const state::CommitteeEntry& entry);
+	bsoncxx::document::value ToDbModel(const state::CommitteeEntry& entry, const Address& address);
 
 	/// Maps a database \a document to the corresponding model value.
 	state::CommitteeEntry ToCommitteeEntry(const bsoncxx::document::view& document);

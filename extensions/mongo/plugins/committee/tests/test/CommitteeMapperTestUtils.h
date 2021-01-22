@@ -10,6 +10,6 @@
 
 namespace catapult { namespace test {
 
-	/// Verifies that \a dbEntry is equivalent to \a entry.
-	void AssertEqualCommitteeData(const state::CommitteeEntry& entry, const bsoncxx::document::view& dbEntry);
+	/// Verifies that \a dbEntry is equivalent to \a entry and \a address.
+	void AssertEqualCommitteeData(const state::CommitteeEntry& entry, const Address& address, const bsoncxx::document::view& dbEntry);
 }}

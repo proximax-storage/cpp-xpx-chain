@@ -27,6 +27,14 @@ namespace catapult { namespace cache {
 		{}
 
 	public:
+		/// Initializes the cache with \a keys.
+		void init(const std::unordered_set<Key, utils::ArrayHasher<Key>>& keys) {
+			auto delta = createDelta(Height());
+			for (const auto& key : keys)
+				delta.insertKey(key);
+			commit(delta);
+		}
+
 		void commit(const CacheDeltaType& delta) {
 			delta.updateAccountCollector(m_pAccountCollector);
 			CommitteeBasicCache::commit(delta);
@@ -37,7 +45,7 @@ namespace catapult { namespace cache {
 	};
 
 	/// Synchronized cache composed of committee information.
-	class CommitteeCache : public SynchronizedCache<BasicCommitteeCache> {
+	class CommitteeCache : public SynchronizedCacheWithInit<BasicCommitteeCache> {
 	public:
 		DEFINE_CACHE_CONSTANTS(Committee)
 
@@ -47,7 +55,7 @@ namespace catapult { namespace cache {
 			const CacheConfiguration& config,
 			const std::shared_ptr<CommitteeAccountCollector>& pAccountCollector,
 			std::shared_ptr<config::BlockchainConfigurationHolder> pConfigHolder)
-				: SynchronizedCache(BasicCommitteeCache(config, pAccountCollector, pConfigHolder))
+				: SynchronizedCacheWithInit(BasicCommitteeCache(config, pAccountCollector, pConfigHolder))
 		{}
 	};
 }}

@@ -128,7 +128,7 @@ namespace catapult { namespace chain {
 		// the committee.
 		const auto& config = networkConfig.GetPluginConfiguration<config::CommitteeConfiguration>();
 		auto endRateIter = rates.begin();
-		for (auto i = 0u; i < config.CommitteeNumber && endRateIter != rates.end(); ++i, ++endRateIter);
+		for (auto i = 0u; i < networkConfig.CommitteeSize && endRateIter != rates.end(); ++i, ++endRateIter);
 		if (endRateIter != rates.end())
 			endRateIter = rates.equal_range(endRateIter->first).second;
 		std::map<Rate, Key, RateGreater> committeeCandidates;
@@ -143,7 +143,7 @@ namespace catapult { namespace chain {
 		// Select the first 21 candidates to the committee and select block proposer.
 		std::map<Rate, Key, RateLess> blockProposerCandidates;
 		auto candidateIter = committeeCandidates.begin();
-		for (auto i = 0u; i < config.CommitteeNumber && candidateIter != committeeCandidates.end(); ++i, ++candidateIter) {
+		for (auto i = 0u; i < networkConfig.CommitteeSize && candidateIter != committeeCandidates.end(); ++i, ++candidateIter) {
 			const auto& key = candidateIter->second;
 			m_committee.Cosigners.insert(key);
 

@@ -17,7 +17,7 @@
 namespace catapult { namespace test {
 
 	constexpr double Min_Greed = 0.1;
-	constexpr double Initial_Activity = std::log(static_cast<double>(7.0)/3.0);
+	constexpr double Initial_Activity = 0.367976785;
 	
 	state::CommitteeEntry CreateCommitteeEntry(
 		Key key = test::GenerateRandomByteArray<Key>(),

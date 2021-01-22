@@ -74,6 +74,7 @@ namespace catapult { namespace model {
 							{ "committeeApproval", "0.67" },
 							{ "committeePhaseTime", "5s" },
 							{ "minCommitteePhaseTime", "300ms" },
+							{ "committeePrecommitWait", "0.8" },
 							{ "committeeTimeAdjustment", "1.1" },
 						}
 					},
@@ -108,6 +109,7 @@ namespace catapult { namespace model {
 					"committeeApproval",
 					"committeePhaseTime",
 					"minCommitteePhaseTime",
+					"committeePrecommitWait",
 					"committeeTimeAdjustment",
 				}.count(name);
 			}
@@ -144,6 +146,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(0.0, config.CommitteeApproval);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.CommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMinutes(0), config.MinCommitteePhaseTime);
+				EXPECT_EQ(0.0, config.CommitteePrecommitWait);
 				EXPECT_EQ(0.0, config.CommitteeTimeAdjustment);
 
 				EXPECT_TRUE(config.Plugins.empty());
@@ -181,6 +184,7 @@ namespace catapult { namespace model {
 				EXPECT_EQ(0.67, config.CommitteeApproval);
 				EXPECT_EQ(utils::TimeSpan::FromSeconds(5), config.CommitteePhaseTime);
 				EXPECT_EQ(utils::TimeSpan::FromMilliseconds(300), config.MinCommitteePhaseTime);
+				EXPECT_EQ(0.8, config.CommitteePrecommitWait);
 				EXPECT_EQ(1.1, config.CommitteeTimeAdjustment);
 
 				EXPECT_EQ(2u, config.Plugins.size());

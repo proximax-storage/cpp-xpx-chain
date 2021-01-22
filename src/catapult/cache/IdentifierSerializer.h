@@ -12,7 +12,7 @@
 namespace catapult { namespace cache {
 
 	template<typename TDescriptor>
-	class IdentifierSerializer {
+	class UnorderedSetIdentifierSerializer {
 	private:
 		using ValueType = typename TDescriptor::ValueType;
 
@@ -42,7 +42,14 @@ namespace catapult { namespace cache {
 
 			return value;
 		}
+	};
 
+	template<typename TDescriptor>
+	class IdentifierSerializer : public UnorderedSetIdentifierSerializer<TDescriptor> {
+	private:
+		using ValueType = typename TDescriptor::ValueType;
+
+	public:
 		/// Converts \a key to pruning boundary.
 		static uint64_t KeyToBoundary(const ValueType& key) {
 			return TDescriptor::KeyToBoundary(key);
