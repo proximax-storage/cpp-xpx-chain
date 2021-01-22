@@ -4,7 +4,7 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 0s
+blockGenerationTargetTime = 10s
 blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
@@ -31,6 +31,8 @@ enableUnconfirmedTransactionMinFeeValidation = true
 committeeSize = 21
 committeeApproval = 0.67
 committeePhaseTime = 5s
+minCommitteePhaseTime = 300ms
+committeePrecommitWait = 0.8
 committeeTimeAdjustment = 1.1
 
 [plugin:catapult.plugins.accountlink]
@@ -52,7 +54,6 @@ strictSigner = true
 
 enabled = true
 
-committeeNumber = 5
 minGreed = 0.1
 # log(7/3)
 initialActivity = 0.367976785

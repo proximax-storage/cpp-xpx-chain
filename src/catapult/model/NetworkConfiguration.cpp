@@ -86,6 +86,8 @@ namespace catapult { namespace model {
 		TRY_LOAD_CHAIN_PROPERTY(CommitteePhaseTime);
 		config.MinCommitteePhaseTime = utils::TimeSpan::FromMilliseconds(300);
 		TRY_LOAD_CHAIN_PROPERTY(MinCommitteePhaseTime);
+		config.CommitteePrecommitWait = 0.8;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteePrecommitWait);
 		config.CommitteeTimeAdjustment = 1.1;
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeTimeAdjustment);
 

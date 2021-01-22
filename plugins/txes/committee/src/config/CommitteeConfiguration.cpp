@@ -18,7 +18,6 @@ namespace catapult { namespace config {
 
 #define LOAD_PROPERTY(NAME) utils::LoadIniProperty(bag, "", #NAME, config.NAME)
 		LOAD_PROPERTY(Enabled);
-		LOAD_PROPERTY(CommitteeNumber);
 		LOAD_PROPERTY(MinGreed);
 		LOAD_PROPERTY(InitialActivity);
 		LOAD_PROPERTY(ActivityDelta);
@@ -26,7 +25,7 @@ namespace catapult { namespace config {
 		LOAD_PROPERTY(ActivityCommitteeNotCosignedDelta);
 #undef LOAD_PROPERTY
 
-		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 7);
+		utils::VerifyBagSizeLte(bag, PluginConfiguration::CommonPropertyNumber() + 6);
 		return config;
 	}
 }}

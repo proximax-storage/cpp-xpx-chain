@@ -19,7 +19,6 @@ namespace catapult { namespace config {
 						"",
 						{
 							{ "enabled", "true" },
-							{ "committeeNumber", "21" },
 							{ "minGreed", "0.1" },
 							{ "initialActivity", "0.367976785" },
 							{ "activityDelta", "0.00001" },
@@ -45,7 +44,6 @@ namespace catapult { namespace config {
 			static void AssertZero(const CommitteeConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(false, config.Enabled);
-				EXPECT_EQ(0u, config.CommitteeNumber);
 				EXPECT_EQ(0.0, config.MinGreed);
 				EXPECT_EQ(0.0, config.InitialActivity);
 				EXPECT_EQ(0.0, config.ActivityDelta);
@@ -56,7 +54,6 @@ namespace catapult { namespace config {
 			static void AssertCustom(const CommitteeConfiguration& config) {
 				// Assert:
 				EXPECT_EQ(true, config.Enabled);
-				EXPECT_EQ(21u, config.CommitteeNumber);
 				EXPECT_EQ(0.1, config.MinGreed);
 				EXPECT_EQ(0.367976785, config.InitialActivity);
 				EXPECT_EQ(0.00001, config.ActivityDelta);
