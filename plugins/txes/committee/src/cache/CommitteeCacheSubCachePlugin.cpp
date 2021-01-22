@@ -26,18 +26,22 @@ namespace catapult { namespace cache {
 	}
 
 	void CommitteeCacheSummaryCacheStorage::loadAll(io::InputStream& input, size_t) {
-		// read version
-		VersionType version = io::Read32(input);
-		if (version > 1)
-			CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of committee cache summary", version);
-
-		auto keysSize = io::Read64(input);
 		std::unordered_set<Key, utils::ArrayHasher<Key>> keys;
-		for (auto i = 0u; i < keysSize; ++i) {
-			Key key;
-			io::Read(input, key);
-			keys.insert(key);
+		// TODO: remove this temporary workaround after mainnet upgrade to 0.8.0
+		if (!input.eof()) {
+			// read version
+			VersionType version = io::Read32(input);
+			if (version > 1)
+				CATAPULT_THROW_RUNTIME_ERROR_1("invalid version of committee cache summary", version);
+
+			auto keysSize = io::Read64(input);
+			for (auto i = 0u; i < keysSize; ++i) {
+				Key key;
+				io::Read(input, key);
+				keys.insert(key);
+			}
 		}
+
 		cache().init(keys);
 	}
 

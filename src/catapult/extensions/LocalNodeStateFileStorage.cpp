@@ -62,7 +62,12 @@ namespace catapult { namespace extensions {
 
 	namespace {
 		io::BufferedInputFileStream OpenInputStream(const config::CatapultDirectory& directory, const std::string& filename) {
-			return io::BufferedInputFileStream(io::RawFile(directory.file(filename), io::OpenMode::Read_Only));
+			// TODO: remove this temporary workaround after mainnet upgrade to 0.8.0
+			auto filepath = directory.file(filename);
+			if (!boost::filesystem::exists(filepath))
+				return io::BufferedInputFileStream(io::RawFile(filepath, io::OpenMode::Read_Write));
+
+			return io::BufferedInputFileStream(io::RawFile(filepath, io::OpenMode::Read_Only));
 		}
 
 		bool LoadStateFromDirectory(
