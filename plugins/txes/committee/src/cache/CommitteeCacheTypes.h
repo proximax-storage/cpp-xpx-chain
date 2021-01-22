@@ -7,6 +7,7 @@
 #pragma once
 #include "src/state/CommitteeEntry.h"
 #include "catapult/cache/CacheDescriptorAdapters.h"
+#include "catapult/cache/IdentifierSerializer.h"
 #include "catapult/cache/SingleSetCacheTypesAdapter.h"
 #include "catapult/utils/Hashers.h"
 
@@ -56,9 +57,32 @@ namespace catapult { namespace cache {
 
 	/// Committee cache types.
 	struct CommitteeCacheTypes {
-		using PrimaryTypes = MutableUnorderedMapAdapter<CommitteeCacheDescriptor, utils::ArrayHasher<Key>>;
-
 		using CacheReadOnlyType = ReadOnlyArtifactCache<BasicCommitteeCacheView, BasicCommitteeCacheDelta, const Key&, state::CommitteeEntry>;
+
+		// region secondary descriptors
+
+		struct KeyTypesDescriptor {
+		public:
+			using ValueType = Key;
+			using KeyType = Key;
+
+			// cache types
+			using CacheType = CommitteeCache;
+			using CacheDeltaType = CommitteeCacheDelta;
+			using CacheViewType = CommitteeCacheView;
+
+			using Serializer = UnorderedSetIdentifierSerializer<KeyTypesDescriptor>;
+
+		public:
+			static auto GetKeyFromValue(const ValueType& key) {
+				return key;
+			}
+		};
+
+		// endregion
+
+		using PrimaryTypes = MutableUnorderedMapAdapter<CommitteeCacheDescriptor, utils::ArrayHasher<Key>>;
+		using KeyTypes = MutableUnorderedMemorySetAdapter<KeyTypesDescriptor, utils::ArrayHasher<Key>>;
 
 		using BaseSetDeltaPointers = CommitteeBaseSetDeltaPointers;
 		using BaseSets = CommitteeBaseSets;

@@ -25,13 +25,50 @@ namespace catapult { namespace cache {
 		using Serializer = CommitteeCacheDescriptor::Serializer;
 	};
 
-	using CommitteeSingleSetCacheTypesAdapter =
-		SingleSetAndPatriciaTreeCacheTypesAdapter<CommitteeCacheTypes::PrimaryTypes, CommitteePatriciaTree>;
-
-	struct CommitteeBaseSetDeltaPointers : public CommitteeSingleSetCacheTypesAdapter::BaseSetDeltaPointers {
+	struct CommitteeBaseSetDeltaPointers {
+		CommitteeCacheTypes::PrimaryTypes::BaseSetDeltaPointerType pPrimary;
+		CommitteeCacheTypes::KeyTypes::BaseSetDeltaPointerType pDeltaKeys;
+		const CommitteeCacheTypes::KeyTypes::BaseSetType& PrimaryKeys;
+		std::shared_ptr<CommitteePatriciaTree::DeltaType> pPatriciaTree;
 	};
 
-	struct CommitteeBaseSets : public CommitteeSingleSetCacheTypesAdapter::BaseSets<CommitteeBaseSetDeltaPointers> {
-		using CommitteeSingleSetCacheTypesAdapter::BaseSets<CommitteeBaseSetDeltaPointers>::BaseSets;
+	struct CommitteeBaseSets : public CacheDatabaseMixin {
+	public:
+		/// Indicates the set is not ordered.
+		using IsOrderedSet = std::false_type;
+
+	public:
+		explicit CommitteeBaseSets(const CacheConfiguration& config)
+				: CacheDatabaseMixin(config, { "default" })
+				, Primary(GetContainerMode(config), database(), 0)
+				, Keys(deltaset::ConditionalContainerMode::Memory, database(), -1)
+				, PatriciaTree(hasPatriciaTreeSupport(), database(), 1)
+		{}
+
+	public:
+		CommitteeCacheTypes::PrimaryTypes::BaseSetType Primary;
+		CommitteeCacheTypes::KeyTypes::BaseSetType Keys;
+		CachePatriciaTree<CommitteePatriciaTree> PatriciaTree;
+
+	public:
+		CommitteeBaseSetDeltaPointers rebase() {
+			return { Primary.rebase(), Keys.rebase(), Keys, PatriciaTree.rebase() };
+		}
+
+		CommitteeBaseSetDeltaPointers rebaseDetached() const {
+			return {
+				Primary.rebaseDetached(),
+				Keys.rebaseDetached(),
+				Keys,
+				PatriciaTree.rebaseDetached()
+			};
+		}
+
+		void commit() {
+			Primary.commit();
+			Keys.commit();
+			PatriciaTree.commit();
+			flush();
+		}
 	};
 }}

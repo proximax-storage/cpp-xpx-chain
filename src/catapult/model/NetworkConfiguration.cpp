@@ -78,6 +78,19 @@ namespace catapult { namespace model {
 		config.EnableDeadlineValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableDeadlineValidation);
 
+		config.CommitteeSize = 21;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeSize);
+		config.CommitteeApproval = 0.67;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeApproval);
+		config.CommitteePhaseTime = utils::TimeSpan::FromSeconds(5);
+		TRY_LOAD_CHAIN_PROPERTY(CommitteePhaseTime);
+		config.MinCommitteePhaseTime = utils::TimeSpan::FromMilliseconds(300);
+		TRY_LOAD_CHAIN_PROPERTY(MinCommitteePhaseTime);
+		config.CommitteePrecommitWait = 0.8;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteePrecommitWait);
+		config.CommitteeTimeAdjustment = 1.1;
+		TRY_LOAD_CHAIN_PROPERTY(CommitteeTimeAdjustment);
+
 #undef TRY_LOAD_CHAIN_PROPERTY
 
 		size_t numPluginProperties = 0;

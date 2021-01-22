@@ -9,6 +9,7 @@
 #include "mongo/tests/test/MongoFlatCacheStorageTests.h"
 #include "plugins/txes/committee/tests/test/CommitteeTestUtils.h"
 #include "tests/test/CommitteeMapperTestUtils.h"
+#include "catapult/model/Address.h"
 
 using namespace bsoncxx::builder::stream;
 
@@ -63,7 +64,8 @@ namespace catapult { namespace mongo { namespace plugins {
 			}
 
 			static void AssertEqual(const ModelType& entry, const bsoncxx::document::view& view) {
-				test::AssertEqualCommitteeData(entry, view["harvester"].get_document().view());
+				auto address = model::PublicKeyToAddress(entry.key(), Network_Id);
+				test::AssertEqualCommitteeData(entry, address, view["harvester"].get_document().view());
 			}
 		};
 	}

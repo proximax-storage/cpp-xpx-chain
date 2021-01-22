@@ -6,7 +6,6 @@
 
 #pragma once
 #include "CommitteeBaseSets.h"
-#include "CommitteeCacheSerializers.h"
 #include "catapult/cache/CacheMixinAliases.h"
 #include "catapult/cache/ReadOnlyArtifactCache.h"
 #include "catapult/cache/ReadOnlyViewSupplier.h"
@@ -24,7 +23,7 @@ namespace catapult { namespace cache {
 			, public CommitteeCacheViewMixins::Iteration
 			, public CommitteeCacheViewMixins::ConstAccessor
 			, public CommitteeCacheViewMixins::PatriciaTreeView
-			, public CommitteeCacheDeltaMixins::ConfigBasedEnable<config::CommitteeConfiguration> {
+			, public CommitteeCacheViewMixins::ConfigBasedEnable<config::CommitteeConfiguration> {
 	public:
 		using ReadOnlyView = CommitteeCacheTypes::CacheReadOnlyType;
 
@@ -38,7 +37,7 @@ namespace catapult { namespace cache {
 				, CommitteeCacheViewMixins::Iteration(committeeSets.Primary)
 				, CommitteeCacheViewMixins::ConstAccessor(committeeSets.Primary)
 				, CommitteeCacheViewMixins::PatriciaTreeView(committeeSets.PatriciaTree.get())
-				, CommitteeCacheDeltaMixins::ConfigBasedEnable<config::CommitteeConfiguration>(
+				, CommitteeCacheViewMixins::ConfigBasedEnable<config::CommitteeConfiguration>(
 					pConfigHolder, [](const auto& config) { return config.Enabled; })
 		{}
 	};

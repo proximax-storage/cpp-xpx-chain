@@ -6,7 +6,6 @@
 
 #pragma once
 #include "src/chain/WeightedVotingCommitteeManager.h"
-#include "catapult/cache_core/BlockDifficultyCache.h"
 #include "plugins/txes/committee/src/cache/CommitteeAccountCollector.h"
 #include "plugins/txes/committee/src/cache/CommitteeCache.h"
 #include "plugins/txes/committee/src/cache/CommitteeCacheStorage.h"
@@ -18,7 +17,7 @@
 namespace catapult { namespace test {
 
 	constexpr double Min_Greed = 0.1;
-	constexpr double Initial_Activity = std::log(static_cast<double>(7.0)/3.0);
+	constexpr double Initial_Activity = 0.367976785;
 	
 	state::CommitteeEntry CreateCommitteeEntry(
 		Key key = test::GenerateRandomByteArray<Key>(),
