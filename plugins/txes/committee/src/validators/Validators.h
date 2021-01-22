@@ -22,13 +22,6 @@ namespace catapult { namespace validators {
 	/// - harvester is registered
 	DECLARE_STATEFUL_VALIDATOR(RemoveHarvester, model::RemoveHarvesterNotification<1>)();
 
-	/// A validator implementation that applies to block cosignatures notification and validates that:
-	/// - block signer is valid
-	/// - cosignatures number does not exceed committee number
-	/// - all cosigners are eligible
-	DECLARE_STATELESS_VALIDATOR(Committee, model::BlockCosignaturesNotification<1>)(
-		const std::shared_ptr<chain::WeightedVotingCommitteeManager>& pCommitteeManager);
-
 	/// A validator implementation that applies to plugin config notification and validates that:
 	/// - plugin configuration is valid
 	DECLARE_STATELESS_VALIDATOR(CommitteePluginConfig, model::PluginConfigNotification<1>)();

@@ -13,10 +13,11 @@ namespace catapult { namespace mongo { namespace plugins {
 
 	// region ToDbModel
 
-	bsoncxx::document::value ToDbModel(const state::CommitteeEntry& entry) {
+	bsoncxx::document::value ToDbModel(const state::CommitteeEntry& entry, const Address& address) {
 		bson_stream::document builder;
 		auto doc = builder << "harvester" << bson_stream::open_document
 				<< "key" << ToBinary(entry.key())
+				<< "address" << ToBinary(address)
 				<< "lastSigningBlockHeight" << ToInt64(entry.lastSigningBlockHeight())
 				<< "effectiveBalance" << ToInt64(entry.effectiveBalance())
 				<< "canHarvest" << entry.canHarvest()

@@ -20,14 +20,15 @@ namespace catapult { namespace mongo { namespace plugins {
 	TEST(TEST_CLASS, CanMapCommitteeEntry_ModelToDbModel) {
 		// Arrange:
 		auto entry = test::CreateCommitteeEntry();
+		auto address = test::GenerateRandomByteArray<Address>();
 
 		// Act:
-		auto document = ToDbModel(entry);
+		auto document = ToDbModel(entry, address);
 		auto view = document.view();
 
 		// Assert:
 		EXPECT_EQ(1u, test::GetFieldCount(view));
-		test::AssertEqualCommitteeData(entry, view["harvester"].get_document().view());
+		test::AssertEqualCommitteeData(entry, address, view["harvester"].get_document().view());
 	}
 
 	// endregion
@@ -35,14 +36,15 @@ namespace catapult { namespace mongo { namespace plugins {
 	// region ToCommitteeEntry
 
 	namespace {
-		bsoncxx::document::value CreateDbCommitteeEntry() {
-			return ToDbModel(test::CreateCommitteeEntry());
+		bsoncxx::document::value CreateDbCommitteeEntry(const Address& address) {
+			return ToDbModel(test::CreateCommitteeEntry(), address);
 		}
 	}
 
 	TEST(TEST_CLASS, CanMapCommitteeEntry_DbModelToModel) {
 		// Arrange:
-		auto dbCommitteeEntry = CreateDbCommitteeEntry();
+		auto address = test::GenerateRandomByteArray<Address>();
+		auto dbCommitteeEntry = CreateDbCommitteeEntry(address);
 
 		// Act:
 		auto entry = ToCommitteeEntry(dbCommitteeEntry);
@@ -50,7 +52,7 @@ namespace catapult { namespace mongo { namespace plugins {
 		// Assert:
 		auto view = dbCommitteeEntry.view();
 		EXPECT_EQ(1u, test::GetFieldCount(view));
-		test::AssertEqualCommitteeData(entry, view["harvester"].get_document().view());
+		test::AssertEqualCommitteeData(entry, address, view["harvester"].get_document().view());
 	}
 
 	// endregion
