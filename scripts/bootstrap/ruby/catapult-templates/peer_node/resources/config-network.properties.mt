@@ -4,7 +4,7 @@ publicKey = {{network_public_key}}
 
 [chain]
 
-blockGenerationTargetTime = 0s
+blockGenerationTargetTime = 10s
 blockTimeSmoothingFactor = 1000
 
 greedDelta = 0.5
