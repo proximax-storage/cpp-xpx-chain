@@ -178,7 +178,9 @@ namespace catapult { namespace utils {
 	public:
 		/// Creates a zero-initialized byte array.
 		constexpr Bytes() : m_array()
-		{}
+		{
+			memset(m_array, 0, sizeof(m_array));
+		}
 
 		/// Creates a copy of \a rhs.
 		constexpr Bytes(const Bytes& rhs) = default;

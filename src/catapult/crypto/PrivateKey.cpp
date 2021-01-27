@@ -107,7 +107,7 @@ namespace catapult { namespace crypto {
 	}
 
 	BLSPrivateKey::~BLSPrivateKey() {
-		SecureZero(m_array, 32);
+		SecureZero(m_array, Key_Size);
 	}
 
 	BLSPrivateKey BLSPrivateKey::FromString(const char* const pRawKey, size_t keySize) {
