@@ -182,7 +182,7 @@ namespace catapult { namespace consumers {
 				syncState = SyncState(m_cache, m_state);
 				auto commonBlockHeight = peerStartHeight - Height(1);
 				auto observerState = syncState.observerState();
-				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, observerState);
+				auto unwindResult = unwindLocalChain(localChainHeight, commonBlockHeight, storageView, observerState, m_pConfigHolder);
 				const auto& localScore = unwindResult.Score;
 
 				// 5. calculate the remote chain score
@@ -226,7 +226,8 @@ namespace catapult { namespace consumers {
 					Height localChainHeight,
 					Height commonBlockHeight,
 					const io::BlockStorageView& storage,
-					observers::ObserverState& observerState) const {
+					observers::ObserverState& observerState,
+					const std::shared_ptr<config::BlockchainConfigurationHolder>& pConfigHolder) const {
 				UnwindResult result;
 				if (localChainHeight == commonBlockHeight)
 					return result;
@@ -245,11 +246,11 @@ namespace catapult { namespace consumers {
 
 					if (height == commonBlockHeight) {
 						observerState.Cache.setHeight(height);
-						m_handlers.UndoBlock(*pParentBlockElement, observerState, UndoBlockType::Common);
+						m_handlers.UndoBlock(pConfigHolder->Config(height).Network, *pParentBlockElement, observerState, UndoBlockType::Common);
 						break;
 					}
 
-					m_handlers.UndoBlock(*pParentBlockElement, observerState, UndoBlockType::Rollback);
+					m_handlers.UndoBlock(pConfigHolder->Config(height).Network, *pParentBlockElement, observerState, UndoBlockType::Rollback);
 					pChildBlockElement = std::move(pParentBlockElement);
 					height = height - Height(1);
 				}

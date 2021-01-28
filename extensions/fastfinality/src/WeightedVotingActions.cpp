@@ -457,7 +457,11 @@ namespace catapult { namespace fastfinality {
 				[pFsmWeak] {
 					TRY_GET_FSM()
 
-					pFsmShared->processEvent(ProposalReceived{});
+					if (pFsmShared->committeeData().proposedBlock()) {
+						pFsmShared->processEvent(ProposalReceived{});
+					} else {
+						pFsmShared->processEvent(ProposalNotReceived{});
+					}
 				}
 			);
 		};

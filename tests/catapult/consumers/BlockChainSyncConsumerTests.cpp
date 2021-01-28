@@ -143,7 +143,7 @@ namespace catapult { namespace consumers {
 
 		class MockUndoBlock : public test::ParamsCapture<UndoBlockParams> {
 		public:
-			void operator()(const model::BlockElement& blockElement, observers::ObserverState& state, UndoBlockType undoBlockType) const {
+			void operator()(const model::NetworkConfiguration&, const model::BlockElement& blockElement, observers::ObserverState& state, UndoBlockType undoBlockType) const {
 				const_cast<MockUndoBlock*>(this)->push(blockElement, state, undoBlockType);
 
 				// simulate undoing a block by modifying the state to mark it
@@ -385,8 +385,8 @@ namespace catapult { namespace consumers {
 				handlers.DifficultyChecker = [this](const auto& blocks, const auto& cache, const auto& remoteConfigs) {
 					return DifficultyChecker(blocks, cache, remoteConfigs);
 				};
-				handlers.UndoBlock = [this](const auto& block, auto& state, auto undoBlockType) {
-					return UndoBlock(block, state, undoBlockType);
+				handlers.UndoBlock = [this](const auto& config, const auto& block, auto& state, auto undoBlockType) {
+					return UndoBlock(config, block, state, undoBlockType);
 				};
 				handlers.Processor = [this](const auto& parentBlockInfo, auto& elements, auto& state) {
 					return Processor(parentBlockInfo, elements, state);

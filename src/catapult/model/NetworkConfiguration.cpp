@@ -78,6 +78,13 @@ namespace catapult { namespace model {
 		config.EnableDeadlineValidation = true;
 		TRY_LOAD_CHAIN_PROPERTY(EnableDeadlineValidation);
 
+		config.EnableUndoBlock = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableUndoBlock);
+		config.EnableBlockSync = true;
+		TRY_LOAD_CHAIN_PROPERTY(EnableBlockSync);
+
+		config.EnableWeightedVoting = false;
+		TRY_LOAD_CHAIN_PROPERTY(EnableWeightedVoting);
 		config.CommitteeSize = 21;
 		TRY_LOAD_CHAIN_PROPERTY(CommitteeSize);
 		config.CommitteeApproval = 0.67;

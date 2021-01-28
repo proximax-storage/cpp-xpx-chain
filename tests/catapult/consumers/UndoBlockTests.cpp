@@ -27,6 +27,7 @@
 #include "tests/test/core/ResolverTestUtils.h"
 #include "tests/test/nodeps/Filesystem.h"
 #include "tests/test/other/mocks/MockEntityObserver.h"
+#include "tests/test/other/MutableBlockchainConfiguration.h"
 
 namespace catapult { namespace consumers {
 
@@ -68,6 +69,12 @@ namespace catapult { namespace consumers {
 				EXPECT_EQ(MosaicId(22), context.Resolvers.resolve(UnresolvedMosaicId(11)));
 			}
 		}
+
+		auto CreateConfig(bool enableUndoBlock = true) {
+			test::MutableBlockchainConfiguration config;
+			config.Network.EnableUndoBlock = enableUndoBlock;
+			return config.ToConst();
+		}
 	}
 
 	// region state hash disabled
@@ -95,8 +102,11 @@ namespace catapult { namespace consumers {
 	TEST(TEST_CLASS, RollbackBlockIsUndoneWhenStateHashIsDisabled) {
 		// Arrange:
 		RunStateHashDisabledTest([](const auto& blockElement, const auto& observer, auto& state) {
+			// Arrange:
+			auto pConfigHolder = config::CreateMockConfigurationHolder(CreateConfig());
+
 			// Act:
-			UndoBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state }, UndoBlockType::Rollback);
+			UndoBlock(pConfigHolder->Config().Network, blockElement, { observer, CreateResolverContext(), pConfigHolder, state }, UndoBlockType::Rollback);
 
 			// Assert:
 			EXPECT_EQ(8u, observer.versions().size());
@@ -110,12 +120,26 @@ namespace catapult { namespace consumers {
 	TEST(TEST_CLASS, CommonBlockIsIgnoredWhenStateHashIsDisabled) {
 		// Arrange:
 		RunStateHashDisabledTest([](const auto& blockElement, const auto& observer, auto& state) {
+			// Arrange:
+			auto pConfigHolder = config::CreateMockConfigurationHolder(CreateConfig());
+
 			// Act:
-			UndoBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state }, UndoBlockType::Common);
+			UndoBlock(pConfigHolder->Config().Network, blockElement, { observer, CreateResolverContext(), pConfigHolder, state }, UndoBlockType::Common);
 
 			// Assert:
 			EXPECT_TRUE(observer.versions().empty());
 			EXPECT_TRUE(observer.contexts().empty());
+		});
+	}
+
+	TEST(TEST_CLASS, RollbackBlockAssertWhenUndoBlockDisabled) {
+		// Arrange:
+		RunStateHashDisabledTest([](const auto& blockElement, const auto& observer, auto& state) {
+			// Arrange:
+			auto pConfigHolder = config::CreateMockConfigurationHolder(CreateConfig(false));
+
+			// Act:
+			EXPECT_THROW(UndoBlock(pConfigHolder->Config().Network, blockElement, { observer, CreateResolverContext(), pConfigHolder, state }, UndoBlockType::Rollback), catapult_runtime_error);
 		});
 	}
 
@@ -160,8 +184,11 @@ namespace catapult { namespace consumers {
 	TEST(TEST_CLASS, RollbackBlockIsUndoneWhenStateHashIsEnabled) {
 		// Arrange:
 		RunStateHashEnabledTest([](const auto& blockElement, const auto& observer, auto& state) {
+			// Arrange:
+			auto pConfigHolder = config::CreateMockConfigurationHolder(CreateConfig());
+
 			// Act:
-			UndoBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state }, UndoBlockType::Rollback);
+			UndoBlock(pConfigHolder->Config().Network, blockElement, { observer, CreateResolverContext(), pConfigHolder, state }, UndoBlockType::Rollback);
 
 			// Assert:
 			EXPECT_EQ(8u, observer.versions().size());
@@ -178,8 +205,11 @@ namespace catapult { namespace consumers {
 	TEST(TEST_CLASS, CommonBlockUpdatesStateHashWhenStateHashIsEnabled) {
 		// Arrange:
 		RunStateHashEnabledTest([](const auto& blockElement, const auto& observer, auto& state) {
+			// Arrange:
+			auto pConfigHolder = config::CreateMockConfigurationHolder(CreateConfig());
+
 			// Act:
-			UndoBlock(blockElement, { observer, CreateResolverContext(), config::CreateMockConfigurationHolder(), state }, UndoBlockType::Common);
+			UndoBlock(pConfigHolder->Config().Network, blockElement, { observer, CreateResolverContext(), pConfigHolder, state }, UndoBlockType::Common);
 
 			// Assert:
 			EXPECT_TRUE(observer.versions().empty());
@@ -187,6 +217,17 @@ namespace catapult { namespace consumers {
 
 			// - the tree was changed
 			EXPECT_EQ(Hash256(), state.Cache.calculateStateHash(blockElement.Block.Height).SubCacheMerkleRoots[0]);
+		});
+	}
+
+	TEST(TEST_CLASS, CommonBlockAssertWhenUndoBlockDisabled) {
+		// Arrange:
+		RunStateHashEnabledTest([](const auto& blockElement, const auto& observer, auto& state) {
+			// Arrange:
+			auto pConfigHolder = config::CreateMockConfigurationHolder(CreateConfig(false));
+
+			// Act:
+			EXPECT_THROW(UndoBlock(pConfigHolder->Config().Network, blockElement, { observer, CreateResolverContext(), pConfigHolder, state }, UndoBlockType::Common), catapult_runtime_error);
 		});
 	}
 

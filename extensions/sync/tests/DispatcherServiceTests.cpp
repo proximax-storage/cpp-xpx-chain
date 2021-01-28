@@ -156,6 +156,9 @@ namespace catapult { namespace sync {
 				// override data directory
 				auto& state = testState().state();
 				const_cast<std::string&>(state.config().User.DataDirectory) = m_tempDir.name();
+				const_cast<bool&>(state.config().Network.EnableUndoBlock) = true;
+				const_cast<bool&>(state.config().Network.EnableBlockSync) = true;
+				const_cast<bool&>(state.config().Network.EnableWeightedVoting) = false;
 
 				// initialize the cache
 				InitializeCatapultCacheForDispatcherTests(state.cache(), GetBlockSignerKeyPair());

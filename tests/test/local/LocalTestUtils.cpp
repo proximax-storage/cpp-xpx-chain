@@ -253,6 +253,11 @@ namespace catapult { namespace test {
 
 		config.EnableUnconfirmedTransactionMinFeeValidation = true;
 
+		config.EnableUndoBlock = true;
+		config.EnableBlockSync = true;
+
+		config.EnableWeightedVoting = false;
+
 		config.GreedDelta = 0.5;
 		config.GreedExponent = 2.0;
 		return config;

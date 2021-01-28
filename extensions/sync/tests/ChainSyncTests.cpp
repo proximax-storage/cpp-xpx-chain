@@ -70,6 +70,9 @@ namespace catapult { namespace sync {
 			config.Network.BlockPruneInterval = 360u;
 			config.Network.GreedDelta = 0.5;
 			config.Network.GreedExponent = 2.0;
+			config.Network.EnableUndoBlock = true;
+			config.Network.EnableBlockSync = true;
+			config.Network.EnableWeightedVoting = false;
 			config.Network.Plugins.emplace(PLUGIN_NAME(transfer), utils::ConfigurationBag({{ "", { { "maxMessageSize", "0" }, { "maxMosaicsSize", "512" } } }}));
 
 			config.Node.MaxBlocksPerSyncAttempt = 30u;

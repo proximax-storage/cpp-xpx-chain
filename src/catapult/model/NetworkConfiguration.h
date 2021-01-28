@@ -99,6 +99,15 @@ namespace catapult { namespace model {
 		/// Allows validate deadline of transaction. It means that you can send old transactions to blockchain if it is false.
 		bool EnableDeadlineValidation;
 
+		/// Allows block rollback.
+		bool EnableUndoBlock;
+
+		/// Allows block synchronization using block synchronizer.
+		bool EnableBlockSync;
+
+		/// Allows weighted voting consensus.
+		bool EnableWeightedVoting;
+
 		/// Number of nodes in committee.
 		uint32_t CommitteeSize;
 

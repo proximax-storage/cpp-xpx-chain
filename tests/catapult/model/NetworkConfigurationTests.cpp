@@ -70,6 +70,10 @@ namespace catapult { namespace model {
 
 							{ "enableUnconfirmedTransactionMinFeeValidation", "true" },
 
+							{ "enableUndoBlock", "true" },
+							{ "enableBlockSync", "true" },
+
+							{ "enableWeightedVoting", "false" },
 							{ "committeeSize", "21" },
 							{ "committeeApproval", "0.67" },
 							{ "committeePhaseTime", "5s" },
@@ -105,6 +109,9 @@ namespace catapult { namespace model {
 			static bool IsPropertyOptional(const std::string& name) {
 				return std::set<std::string>{
 					"enableUnconfirmedTransactionMinFeeValidation",
+					"enableUndoBlock",
+					"enableBlockSync",
+					"enableWeightedVoting",
 					"committeeSize",
 					"committeeApproval",
 					"committeePhaseTime",

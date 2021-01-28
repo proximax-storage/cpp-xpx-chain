@@ -87,6 +87,9 @@ namespace catapult { namespace chain {
 	{}
 
 	bool BlockHitPredicate::operator()(const model::Block& parentBlock, const model::Block& block, const GenerationHash& generationHash) const {
+		if (m_pConfigHolder->Config().Network.EnableWeightedVoting)
+			return true;
+
 		auto importance = m_importanceLookup(block.Signer, block.Height);
 		auto hit = CalculateHit(generationHash);
 		auto target = CalculateTarget(parentBlock, block, importance, m_pConfigHolder->Config(block.Height).Network);
@@ -94,6 +97,9 @@ namespace catapult { namespace chain {
 	}
 
 	bool BlockHitPredicate::operator()(const BlockHitContext& context) const {
+		if (m_pConfigHolder->Config().Network.EnableWeightedVoting)
+			return true;
+
 		auto importance = m_importanceLookup(context.Signer, context.Height);
 		auto hit = CalculateHit(context.GenerationHash);
 		auto target = CalculateTarget(

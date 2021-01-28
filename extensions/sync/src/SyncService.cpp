@@ -62,12 +62,18 @@ namespace catapult { namespace sync {
 
 			thread::Task task;
 			task.Name = "synchronizer task";
-			task.Callback = CreateSynchronizerTaskCallback(
+			auto synchronizerTaskCallback = CreateSynchronizerTaskCallback(
 					std::move(chainSynchronizer),
 					api::CreateRemoteChainApi,
 					packetWriters,
 					state,
 					task.Name);
+			task.Callback = [&state, synchronizerTaskCallback]() {
+				if (state.config().Network.EnableBlockSync)
+					return synchronizerTaskCallback();
+
+				return thread::make_ready_future(thread::TaskResult::Continue);
+			};
 			return task;
 		}
 
@@ -105,11 +111,8 @@ namespace catapult { namespace sync {
 
 				// add tasks
 				state.tasks().push_back(CreateConnectPeersTask(state, packetWriters));
+				state.tasks().push_back(CreateSynchronizerTask(state, packetWriters));
 				state.tasks().push_back(CreatePullUtTask(state, packetWriters));
-
-				const auto& extensionNames = state.config().Extensions.Names;
-				if (std::find(extensionNames.cbegin(), extensionNames.cend(), "extension.fastfinality") == extensionNames.cend())
-					state.tasks().push_back(CreateSynchronizerTask(state, packetWriters));
 			}
 		};
 	}

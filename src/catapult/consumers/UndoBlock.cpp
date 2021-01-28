@@ -24,17 +24,24 @@
 namespace catapult { namespace consumers {
 
 	void UndoBlock(
+			const model::NetworkConfiguration& config,
 			const model::BlockElement& blockElement,
 			const chain::BlockExecutionContext& executionContext,
 			UndoBlockType undoBlockType) {
 		switch (undoBlockType) {
 			case UndoBlockType::Rollback:
+				if (!config.EnableUndoBlock)
+					CATAPULT_THROW_RUNTIME_ERROR_1("rolling back block at height", blockElement.Block.Height);
+
 				// always rollback individual blocks because rocks state storage is independent of rocks tree storage
 				CATAPULT_LOG(debug) << "rolling back block at height " << blockElement.Block.Height;
 				chain::RollbackBlock(blockElement, executionContext);
 				break;
 
 			case UndoBlockType::Common:
+				if (!config.EnableUndoBlock)
+					CATAPULT_THROW_RUNTIME_ERROR_1("rolling back state hash to height", blockElement.Block.Height);
+
 				if (!blockElement.SubCacheMerkleRoots.empty()) {
 					// reset merkle roots when enabled (this is required to properly handle pruned, expired state entries)
 					CATAPULT_LOG(debug) << "rolling back state hash to height " << blockElement.Block.Height;
