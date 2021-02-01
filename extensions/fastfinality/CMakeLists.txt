@@ -7,5 +7,4 @@ target_link_libraries(extension.fastfinality
     catapult.cache_core
     catapult.cache_tx
     catapult.consumers
-    catapult.harvesting_core
-    atomic)
+    catapult.harvesting_core)
