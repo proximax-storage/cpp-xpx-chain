@@ -11,7 +11,6 @@
 #include "catapult/extensions/PluginUtils.h"
 #include "catapult/chain/BlockDifficultyScorer.h"
 #include "catapult/chain/ChainUtils.h"
-#include "catapult/chain/RemoteApiForwarder.h"
 #include "catapult/crypto/Signer.h"
 #include "catapult/extensions/ExecutionConfigurationFactory.h"
 #include "catapult/harvesting_core/UnlockedAccounts.h"

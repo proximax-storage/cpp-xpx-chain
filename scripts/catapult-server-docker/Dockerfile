@@ -1,4 +1,4 @@
-FROM ubuntu:16.04
+FROM ubuntu:18.04
 
 WORKDIR /tmp
 
@@ -39,7 +39,9 @@ RUN git clone https://gitlab.kitware.com/cmake/cmake.git -b v3.11.1 --depth 1 \
 RUN wget https://dl.bintray.com/boostorg/release/1.69.0/source/boost_1_69_0.tar.gz \
   && tar xzf boost_1_69_0.tar.gz && cd boost_1_69_0 \
   && ./bootstrap.sh && ./b2 toolset=gcc install --prefix=/usr/local -j4 \
-  && cd - && rm boost_1_69_0.tar.gz && rm -rf boost_1_69_0.tar.gz
+  && cd - && rm boost_1_69_0.tar.gz && rm -rf boost_1_69_0.tar.gz \
+  && wget https://raw.githubusercontent.com/boost-ext/sml/master/include/boost/sml.hpp \
+  && mv sml.hpp /usr/local/include/boost
 
 # gtest
 RUN git clone https://github.com/google/googletest.git -b release-1.8.0 --depth 1 \
@@ -147,6 +149,7 @@ RUN cd /catapult \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
+    extension.fastfinality \
     extension.filespooling \
     extension.harvesting \
     extension.hashcache \

@@ -112,6 +112,7 @@ RUN cd /catapult \
     extension.addressextraction \
     extension.diagnostics \
     extension.eventsource \
+    extension.fastfinality \
     extension.filespooling \
     extension.harvesting \
     extension.hashcache \

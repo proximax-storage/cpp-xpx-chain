@@ -37,19 +37,17 @@ namespace catapult { namespace fastfinality {
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers);
 
-	/// Registers a push proposed block handler in \a handlers.
+	/// Registers a push proposed block handler in \a handlers verifying data with \a pFsmWeak and \a pluginManager.
 	void RegisterPushProposedBlockHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers,
-		const plugins::PluginManager& pluginManager,
-		const model::BlockElementSupplier& lastBlockElementSupplier);
+		const plugins::PluginManager& pluginManager);
 
 	/// Registers a push confirmed block handler in \a handlers verifying data with \a pFsmWeak and \a pluginManager.
 	void RegisterPushConfirmedBlockHandler(
 		std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 		ionet::ServerPacketHandlers& handlers,
-		const plugins::PluginManager& pluginManager,
-		const model::BlockElementSupplier& lastBlockElementSupplier);
+		const plugins::PluginManager& pluginManager);
 
 	/// Registers a push prevote message handler in \a handlers constructing response from \a pFsmWeak.
 	void RegisterPushPrevoteMessageHandler(

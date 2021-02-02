@@ -42,9 +42,8 @@ namespace catapult { namespace fastfinality {
 	void RegisterPushProposedBlockHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,
-			const plugins::PluginManager& pluginManager,
-			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		handlers.registerHandler(ionet::PacketType::Push_Proposed_Block, [pFsmWeak, &pluginManager, lastBlockElementSupplier](
+			const plugins::PluginManager& pluginManager) {
+		handlers.registerHandler(ionet::PacketType::Push_Proposed_Block, [pFsmWeak, &pluginManager](
 				const auto& packet, const auto&) {
 			TRY_GET_FSM()
 
@@ -80,9 +79,8 @@ namespace catapult { namespace fastfinality {
 	void RegisterPushConfirmedBlockHandler(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			ionet::ServerPacketHandlers& handlers,
-			const plugins::PluginManager& pluginManager,
-			const model::BlockElementSupplier& lastBlockElementSupplier) {
-		handlers.registerHandler(ionet::PacketType::Push_Confirmed_Block, [pFsmWeak, &pluginManager, lastBlockElementSupplier](
+			const plugins::PluginManager& pluginManager) {
+		handlers.registerHandler(ionet::PacketType::Push_Confirmed_Block, [pFsmWeak, &pluginManager](
 				const auto& packet, const auto&) {
 			TRY_GET_FSM()
 

@@ -181,8 +181,8 @@ namespace catapult { namespace fastfinality {
 				pluginManager.getCommitteeManager().setLastBlockElementSupplier(lastBlockElementSupplier);
 
 				RegisterPullCommitteeStageHandler(pFsmShared, packetHandlers);
-				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager, lastBlockElementSupplier);
-				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager, lastBlockElementSupplier);
+				RegisterPushProposedBlockHandler(pFsmShared, packetHandlers, pluginManager);
+				RegisterPushConfirmedBlockHandler(pFsmShared, packetHandlers, pluginManager);
 				RegisterPushPrevoteMessageHandler(pFsmShared, packetHandlers);
 				RegisterPushPrecommitMessageHandler(pFsmShared, packetHandlers);
 
