@@ -44,6 +44,28 @@ namespace catapult { namespace fastfinality {
 
 			return std::make_pair(mostFrequentValue, maxFrequency);
 		}
+
+		void DelayAction(std::shared_ptr<WeightedVotingFsm> pFsmShared, uint64_t delay, action callback, action cancelledCallback = [](){}) {
+			auto& timer = pFsmShared->timer();
+			auto& committeeData = pFsmShared->committeeData();
+			std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
+			timer.expires_at(committeeData.committeeStage().RoundStart + std::chrono::milliseconds(delay));
+			timer.async_wait([pFsmWeak, callback, cancelledCallback, delay](const boost::system::error_code& ec) {
+				TRY_GET_FSM()
+
+				if (ec) {
+					if (ec == boost::asio::error::operation_aborted) {
+						if (!pFsmShared->stopped())
+							cancelledCallback();
+						return;
+					}
+
+					CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
+				}
+
+				callback();
+			});
+		}
 	}
 
 	action CreateDefaultCheckLocalChainAction(
@@ -80,8 +102,12 @@ namespace catapult { namespace fastfinality {
 					pFsmShared->processEvent(NetworkHeightEqualToLocal{});
 				}
 			} else {
-				std::this_thread::sleep_for(std::chrono::milliseconds(config.MinCommitteePhaseTime.millis()));
-				pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+				DelayAction(pFsmShared, config.MinCommitteePhaseTime.millis(),
+					[pFsmWeak] {
+						TRY_GET_FSM()
+						pFsmShared->processEvent(NetworkHeightDetectionFailure{});
+					}
+				);
 			}
 		};
 	}
@@ -248,6 +274,18 @@ namespace catapult { namespace fastfinality {
 		};
 	}
 
+	namespace {
+		void OnStageDetectionFailed(std::shared_ptr<WeightedVotingFsm> pFsmShared, const model::NetworkConfiguration& config) {
+			std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
+			DelayAction(pFsmShared, config.MinCommitteePhaseTime.millis(),
+				[pFsmWeak] {
+					TRY_GET_FSM()
+					pFsmShared->processEvent(StageDetectionFailed{});
+				}
+			);
+		}
+	}
+
 	action CreateDefaultDetectStageAction(
 			std::weak_ptr<WeightedVotingFsm> pFsmWeak,
 			const RemoteCommitteeStagesRetriever& retriever,
@@ -268,19 +306,24 @@ namespace catapult { namespace fastfinality {
 
 			auto pair = FindMostFrequentValue<CommitteeStage>(stages, [] (const auto& stage) { return stage; });
 
-			const auto& config = pConfigHolder->Config().Network;
-			auto requestDelay = std::chrono::milliseconds(config.MinCommitteePhaseTime.millis());
 			auto& committeeData = pFsmShared->committeeData();
+			auto pLastBlockElement = lastBlockElementSupplier();
+			const auto& block = pLastBlockElement->Block;
+			const auto& config = pConfigHolder->Config().Network;
+			auto committeePhaseTime = ((Height(1) == block.Height) || (block.EntityVersion() < 4u)) ?
+				config.CommitteePhaseTime.millis() : block.CommitteePhaseTime;
 			if (!PeerNumberSufficient(pair.second, config)) {
-				std::this_thread::sleep_for(requestDelay);
-
-				pFsmShared->processEvent(StageDetectionFailed{});
-
+				OnStageDetectionFailed(pFsmShared, config);
 			} else if (CommitteePhase::None == pair.first.Phase) {
-				auto pLastBlockElement = lastBlockElementSupplier();
-				const auto& block = pLastBlockElement->Block;
-				auto committeePhaseTime = ((Height(1) == block.Height) || (block.EntityVersion() < 4u)) ?
-					config.CommitteePhaseTime.millis() : block.CommitteePhaseTime;
+				committeeData.setCommitteeStage(CommitteeStage{
+					0u,
+					CommitteePhase::Prepare,
+					utils::ToTimePoint(timeSupplier()),
+					committeePhaseTime
+				});
+
+				OnStageDetectionFailed(pFsmShared, config);
+			} else if (CommitteePhase::Prepare == pair.first.Phase) {
 				committeeData.setCommitteeStage(CommitteeStage{
 					0u,
 					CommitteePhase::Propose,
@@ -288,10 +331,7 @@ namespace catapult { namespace fastfinality {
 					committeePhaseTime
 				});
 
-				std::this_thread::sleep_for(requestDelay);
-
-				pFsmShared->processEvent(StageDetectionFailed{});
-
+				OnStageDetectionFailed(pFsmShared, config);
 			} else {
 				committeeData.setCommitteeStage(pair.first);
 
@@ -309,7 +349,7 @@ namespace catapult { namespace fastfinality {
 
 			auto& committeeData = pFsmShared->committeeData();
 			auto stage = committeeData.committeeStage();
-			if (CommitteePhase::None == stage.Phase)
+			if (CommitteePhase::Prepare >= stage.Phase)
 				CATAPULT_THROW_RUNTIME_ERROR("committee phase is not set");
 
 			if (committeeManager.committee().Round > stage.Round)
@@ -375,28 +415,6 @@ namespace catapult { namespace fastfinality {
 				return chain::TryCalculateDifficulty(cache, state::BlockDifficultyInfo(Height, Timestamp, Difficulty), config, Difficulty);
 			}
 		};
-
-		void DelayAction(std::shared_ptr<WeightedVotingFsm> pFsmShared, uint64_t delay, action callback, action cancelledCallback = [](){}) {
-			auto& timer = pFsmShared->timer();
-			auto& committeeData = pFsmShared->committeeData();
-			std::weak_ptr<WeightedVotingFsm> pFsmWeak = pFsmShared;
-			timer.expires_at(committeeData.committeeStage().RoundStart + std::chrono::milliseconds(delay));
-			timer.async_wait([pFsmWeak, callback, cancelledCallback, delay](const boost::system::error_code& ec) {
-				TRY_GET_FSM()
-
-				if (ec) {
-					if (ec == boost::asio::error::operation_aborted) {
-						if (!pFsmShared->stopped())
-							cancelledCallback();
-						return;
-					}
-
-					CATAPULT_THROW_EXCEPTION(boost::system::system_error(ec));
-				}
-
-				callback();
-			});
-		}
 	}
 
 	action CreateDefaultProposeBlockAction(
