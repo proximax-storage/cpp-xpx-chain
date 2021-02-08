@@ -40,6 +40,7 @@ namespace catapult { namespace fastfinality {
 
 		template<typename TEvent>
 		void processEvent(const TEvent& event) {
+			CATAPULT_LOG(debug) << __PRETTY_FUNCTION__;
 			m_sm.process_event(event);
 		}
 

@@ -103,6 +103,7 @@ namespace catapult { namespace chain {
 		const auto& accounts = m_pAccountCollector->accounts();
 		auto previousRound = m_committee.Round;
 		m_committee = Committee(previousRound + 1);
+		CATAPULT_LOG(debug) << "selecting committee for round " << m_committee.Round;
 
 		// Compute account rates and sort them in descending order.
 		std::multimap<double, Key, std::greater<>> rates;
