@@ -33,7 +33,7 @@ pipeline {
                                 make \
                                 catapult.mongo.plugins.accountlink \
                                 catapult.mongo.plugins.aggregate \
-				catapult.mongo.plugins.committee \
+				                catapult.mongo.plugins.committee \
                                 catapult.mongo.plugins.config \
                                 catapult.mongo.plugins.contract \
                                 catapult.mongo.plugins.exchange \
@@ -51,7 +51,7 @@ pipeline {
                                 catapult.mongo.plugins.upgrade \
                                 catapult.plugins.accountlink \
                                 catapult.plugins.aggregate \
-				catapult.plugins.committee \
+				                catapult.plugins.committee \
                                 catapult.plugins.config \
                                 catapult.plugins.contract \
                                 catapult.plugins.exchange \
@@ -73,7 +73,7 @@ pipeline {
                                 extension.addressextraction \
                                 extension.diagnostics \
                                 extension.eventsource \
-				extension.fastfinality \
+				                extension.fastfinality \
                                 extension.filespooling \
                                 extension.harvesting \
                                 extension.hashcache \
