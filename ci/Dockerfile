@@ -1,13 +1,13 @@
-FROM ubuntu:18.04
+FROM ubuntu:20.04
 
 # copy required libs
 COPY ./deps /
 
 # copy executables
-COPY ./_build/bin /catapult/bin
+COPY ./_build/bin /sirius/bin
 
 # sirius.bc as the entry point
-ENTRYPOINT ["/catapult/bin/sirius.bc"]
+ENTRYPOINT ["/sirius/bin/sirius.bc"]
 
 # set the config directory by default
-CMD ["/catapultconfig"]
+CMD ["/chainconfig"]
